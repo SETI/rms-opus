@@ -1,0 +1,8 @@
+{# this is wrapped in a div class = .gallery #}
+{% for i in images  %} 
+	<li id = "thumb__{{i.ring_obs_id}}"> 
+		<a href = "/mobile/image/{{ i.ring_obs_id }}.html" >
+			<img src = "{{ IMAGE_HTTP_PATH }}{{ i.thumb }}">
+		</a>
+	</li>   
+{% endfor %}

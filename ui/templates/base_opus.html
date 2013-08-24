@@ -1,0 +1,153 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+   <div id="maincontainer">
+
+		{% block top_section %}
+		<div id="topsection">
+
+				<span><h1>OPUS2 *Demo*</h1> </span>
+
+				<div id = "restart">
+					<a href = "/">restart</a>
+				</div>
+
+		</div> <!-- topsection -->
+		{% endblock %}
+
+        <div id = "tabs" class = "ui-tabs">
+		        <div id = "tabs_header">
+				<ul>
+				<li class = "tab-no-close">
+					<a href="#search">
+						<span>Search</span>
+					</a>
+				</li>
+				<li id = "browse_tab" class = "tab-no-close">
+					<a href="#browse">
+						<span>Results:</span>
+						<span id = "result_count"></span>
+					</a>
+				</li>
+				<li id = "detail_tab" class = "tab-no-close">
+					<a href="#detail">
+						<span>Detail: </span>
+						<span id = "detail_extra"></span>
+					</a>
+				</li>
+				<li id = "collections_tab" class = "tab-no-close">
+					<a href="#collections">
+						<span>Collections </span>
+						<span class = "collections_extra"></span>
+					</a>
+				</li>
+			</ul>
+
+			</div> <!-- tabs_header -->
+
+
+			<div id = "search">
+				{% block base_search %}{% endblock %}
+			</div>
+
+			<div id = "detail"></div>
+
+			<div id = "collections"></div>
+
+			<div id = "browse">
+ 		    {% block browse_container %}
+
+		        <div class = "browse_controls_container">
+
+					<ul  class = "browse_controls nav">
+				    <li id = "paging">
+				 		<a href = "" class = "prev">prev</a>
+				   		<a href = "" class = "next">next</a>
+				    </li>
+					<li>
+						page <input type = "text" size = "4" id = "{{ prefix }}page_no" class = "page_no" value = "">
+			    		of <span id = "{{ prefix }}pages">{{ pages }}..</span>
+				    </li>
+					<li>
+						<a href = "" class = "gallery_view">gallery view</a>
+					</li><li>
+					   <a href = "" class = "data_view">table view</a>
+					</li>
+					<li class = "cart_control">
+							<span><a href = "" class = "addrange">add range</a></span>
+							<span class = "collections_extra"></span>
+					</li>
+					<li>
+						<a href = "" class = "get_column_chooser">choose columns</a>
+
+					</li>
+			   		</ul>
+		   		</div>   <!-- browse_controls_container -->
+
+
+		   		<div class = "browse_content">
+
+
+					<div class = "data_container ui-widget ui-helper-clearfix"></div>
+
+					<ul class = "gallery ui-widget ui-helper-clearfix"></ul>
+
+					<div class = "nav button browse_footer">
+						<span class = "browse_footer_label"><a href = "">more</a></span>
+						<span class = "browse_footer_checkbox"></span>
+					</div>  <!-- browse_footer -->
+
+				{% block browse %}{% endblock %}
+
+
+				</div> <!--  browse_content -->
+
+		{% endblock %} {# browse_container #}
+
+		<div id = "column_chooser"></div>
+
+	    </div> <!-- end browse -->
+
+
+	</div>  <!-- end #tabs -->
+</div>  <!-- end maincontainer -->
+
+{% endblock %}
+
+{% block footer %}
+<div id="footer">
+	<a href="http://www.dynamicdrive.com/style/layouts/item/css-liquid-layout-21-fixed-fluid/" target = "_blank">Dynamic Drive CSS Library</a>
+</div>
+{% endblock %}
+
+{% block debug %}
+<div id = "debug"></div>
+{% endblock %}
+
+{% block more_end %}
+
+{# opus.all.min.js #}
+<!--
+<script src = "{{MEDIA_URL }}js/opus_all.min.js" type="text/javascript"></script>
+-->
+
+
+{# opus.js #}
+<script src = "{{MEDIA_URL }}js/opus.js" type="text/javascript"></script>
+<script src = "{{MEDIA_URL }}js/utils.js" type="text/javascript"></script>
+<script src = "{{MEDIA_URL }}js/collections.js" type="text/javascript"></script>
+<script src = "{{MEDIA_URL }}js/browse.js" type="text/javascript"></script>
+<script src = "{{MEDIA_URL }}js/detail.js" type="text/javascript"></script>
+<script src = "{{MEDIA_URL }}js/search.js" type="text/javascript"></script>
+<script src = "{{MEDIA_URL }}js/widgets.js" type="text/javascript"></script>
+<script src = "{{MEDIA_URL }}js/menu.js" type="text/javascript"></script>
+<script src = "{{MEDIA_URL }}js/tabs.js" type="text/javascript"></script>
+<script src = "{{MEDIA_URL }}js/hash.js" type="text/javascript"></script>
+{# end opus.js #}
+
+{% endblock %}
+
+
+
+

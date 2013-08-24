@@ -1,0 +1,13 @@
+{% extends "mbase.html" %}
+
+{% block mcontent %}  
+
+	<div id = "detail_data">   
+		<table>
+		{% for k,v in data.items %} 
+		<tr><td>{{ k }}:</td><td>{{ v }}</td></tr>
+		{% endfor %}
+	    </table>		
+	</div>
+	
+{% endblock %}

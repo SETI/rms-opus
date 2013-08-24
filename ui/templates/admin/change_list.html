@@ -1,0 +1,22 @@
+{% extends "admin_copies/change_list.html" %}
+      
+	{% block extrahead %}
+	{{ block.super }}
+	{{ media.js }}
+
+    <script>(function($){jQuery = $.noConflict(true);})(django.jQuery);</script>
+	<script type="text/javascript" src="/static_media/js/libs/admin/admin-list-reorder.js"></script>
+	<script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8.5/jquery-ui.min.js"></script>
+       
+	{% if action_form %}{% if actions_on_top or actions_on_bottom %}
+
+	<script type="text/javascript">
+	(function($) {
+	    $(document).ready(function($) {
+	        $("tr input.action-select").actions();
+	    });
+	})(django.jQuery);
+	</script>
+	{% endif %}{% endif %}
+	
+	{% endblock %}	

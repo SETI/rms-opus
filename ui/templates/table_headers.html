@@ -1,0 +1,40 @@
+{% comment %}
+    col.0 = slug
+	col.1 = label
+{% endcomment %}      
+<table class = "data_table">            
+    
+	<thead>
+	{% for col in columns %}
+
+	<th class = "{{ col.0 }}"> 
+			
+		<div class = "column_main">    
+				<img src = "/static_media/images/col_move_handle.png">
+				<span class = "column_label">{{ col.1 }}</span>
+		</div>
+
+		<div class = "column_ordering"> 
+			<img src = "/static_media/images/col_reorder.png">
+			<img src = "/static_media/images/col_reorder.png">
+		</div>
+		
+	</th>	 
+
+    {% endfor %}       
+    </thead>
+
+	<tbody></tbody>
+	
+</table>
+   
+<div id="column_header_menu">
+	<ul style = "list-style-type:none">
+		<li><a href = "">Odyssey Moon</a></li><li><a href = "">Astrobotic</a></li><li><a href = "">Team Italia</a></li><li><a href = "">Next Giant Leap</a></li>
+		<hr>
+		<li><a href = "">FREDNET</a></li><li><a href = "">ARCA</a></li><li><a href = "">Moon Express</a></li><li><a href = "">STELLAR</a></li>
+		<hr>
+		<li><a href = "">JURBAN</a></li><li><a href = "">Independence-X</a></li><li><a href = "">Omega Envoy</a></li><li><a href = "">SYNERGY MOON</a></li>
+	</ul>
+</div>
+

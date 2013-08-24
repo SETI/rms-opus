@@ -1,0 +1,12 @@
+{% extends "mbase.html" %}
+
+{% block homepage_img %}
+{% endblock %}
+
+{% block mcontent %}  
+
+	<a target = "_blank" href = "http://pds-rings.seti.org/search/info_page/index.php?ring_obs_id={{ img.opus1_ring_obs_id }}" >
+		<img width = "100%" src = "{{ IMAGE_HTTP_PATH }}{{ img.med }}">
+	</a>
+
+{% endblock %}

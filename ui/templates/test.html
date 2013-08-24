@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+
+{% block more_head %}   
+                 
+<script type="javascript">     
+$(document).ready(function() {   
+
+    $('.menu_list li a').click(function() { 
+        input = $(this).parent().find('input');
+        if (!input.attr('checked')) {   
+            alert('checking box');
+            input.attr('checked',true);  
+        } else {
+            alert('UNchecking box');
+            input.attr('checked',false);  
+        }            
+        alert('triggering');
+        input.trigger('click');   
+        alert('and scene');
+        return false;
+        
+    });
+     
+    $('.column_checkbox input[type="checkbox"].param_input').click(function(event) {
+
+        if ($(this).is(':checked')) {     
+            alert('checked');
+            // checkbox is checked
+        } else {    
+            alert('unchecked');
+            // checkbox is unchecked
+        }    
+     });
+
+
+}	
+</script>
+
+{% endblock %}  
+
+{% block content %} 
+	<ul class = "menu_list">
+		<li>
+			<span class = "column_checkbox">
+				<input class = "param_input" type = "checkbox">
+				</span>
+			<a href = "">click click</a>
+		</li>
+	</ul>
+
+{% endblock %}     
+
+{% block scripts %}
+{% endblock %}     

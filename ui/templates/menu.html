@@ -1,0 +1,51 @@
+{% extends "base_search.html" %}   
+
+
+{% block menu %}
+	 <ul class = "groups">
+     {% for group in menu.groups %}
+			<li class = "{{ group.name|slugify }}">
+			<div class = "group_label">
+				<span class = "menu_group_triangle opened_triangle">&nbsp;</span>
+				<a title = "{{ group.name }}" href = "">{{ group.name }}</a>
+			</div>
+			
+			<ul class = "cats">
+				{% for cat in menu.cats %} 
+				 
+					{% if group.id = cat.group_id %}  
+					<li class = "{{ cat.label|slugify }}"> 
+						<span class = "column_checkbox"><input title = "check all in group" class = "cat_input" type = "checkbox" data-slug="{{ param.slug }}"></span>
+						<span class = "cat_label">  
+							<span class = "menu_cat_triangle closed_triangle">&nbsp;</span>
+							<a href = "" title = "{{ cat.label }}" >{{ cat.label }}</a>
+                        </span>  
+					
+						<ul class = "menu_list">
+						{% for param in menu.params %}
+							{% if param.category.name == cat.name %}
+								<li>
+									<span class = "column_checkbox"><input id = "{{ namespace }}__{{ param.slug }}" class = "param_input" type = "checkbox" data-slug="{{ param.slug }}" data-label = "{{ param.label }}" 
+									{% for slug in cols %}
+									    {% if slug == param.slug %}
+											checked   
+										{% endif %}	
+									{% endfor %}	
+									></span>
+									<a data-cat = "{{ cat.label|slugify }}" data-slug = "{{ param.slug }}" data-group = "{{ group.name|slugify }}" title = "{{ param.label }}" href = "">{{ param.label }}</a>
+								</li>
+							{% endif %}
+						{% endfor %}
+						</ul>
+					</li>	
+					{% endif %}	 
+				{% endfor %} {# end for cat in cats #}
+			</ul>	<!-- cat labels -->
+		
+		</li>	
+		{% endfor %} {# end for group in groups #}  
+		</ul> <!-- group labels -->      
+{% endblock %}        
+
+
+

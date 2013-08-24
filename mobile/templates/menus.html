@@ -1,0 +1,25 @@
+{% extends "mbase.html" %}
+        
+{% block mcontent %}  
+  	           
+		<ul class = "menu" data-role="listview" data-theme="a">
+			{% for inst in instruments %}
+				<li>{{ inst.instrument_id }}
+					<ul class = "menu" data-role="listview" data-theme="a">
+						{% for vol in volumes %} 
+							{% if vol.instrument_id = inst.instrument_id %}
+							    <li>   
+									<a class = "gallery_link" id = "gallery__{{ vol.volume_id}}" href = "#gallery_page">{{ vol.volume_id }}</a>
+								</li> 
+								 {% endif %}
+						{% endfor %}	
+					</ul>
+				 </li>
+			{% endfor %}	
+		</ul>    
+	   
+{% endblock %}
+
+	
+	
+	

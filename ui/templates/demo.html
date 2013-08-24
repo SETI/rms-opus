@@ -1,0 +1,76 @@
+{% extends 'base.html' %}
+    
+{% block more_head %}    
+
+	
+	<style>      
+	#banner {
+		width:100%;
+		background: #C0C0C0;
+		display:block;
+		height:75px;
+		padding-bottom:20px;
+		
+	}
+	#quick_menu {
+		border:1px solid black;
+		width:25%;    
+		padding:20px;  
+		float:left;
+	}
+	#quick_menu ul{
+		margin-left:-40px;
+	}
+	#quick_menu ul li{
+		display:inline; 
+	}   
+
+	#quick_menu ul li label{
+		font-size:150%;
+		font-weight:bold;
+		
+	}	
+	#quick_menu ul li ul li label{
+		white-space:nowrap;   
+		font-size:100%;
+		font-weight:normal;
+	}   
+	#quick_content {
+		float:left;
+		width:70%;
+	}
+	</style>            
+
+
+{% endblock %}                     
+
+
+{% block content %}                     
+ 
+<div id = "banner"></div>
+
+<div id = "quick_menu">
+	<ul>{% for label,widget in widgets.items %}
+		<li>
+			{{ widget }}   
+			<br><br>
+		</li>
+		{% endfor %}	
+	</ul>
+</div>
+
+<div id = "quick_content">   
+	<ul id = "gallery">
+		{% for i in images  %} 
+			<li><img  id = "{{ size }}__{{ i.ring_obs_id }}" src = "http://pds-rings.seti.org/browse/{{ i.thumb }}">
+			<br>
+			<a href = "http://pds-rings.seti.org/browse/{{ i.full }}" rel = "shadowbox" class = "shadowbox">view</a>
+		{% endfor %}
+	</ul>	
+                        
+</div>
+
+
+<div style = "clear:all"></div>
+
+{% endblock %}                     

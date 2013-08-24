@@ -1,0 +1,58 @@
+<div id = "detail_image">
+	<a class = "shadowbox" href = "{{ path }}{{ img.full }}" rel="shadowbox" target = "_blank">  
+	<img  id = "detail__{{ img.ring_obs_id }}" src = "{{ path }}{{ img.med }}">
+	</a>
+</div>      
+
+<h2> Products: </h2>  
+<ul>
+{% for product_type, files in file_list.items %} 
+   <li><strong>{{ product_type }}</strong>   
+	<ul>
+	   {% for f in files %}                 
+			<li><a href = "{{ f.link }}">{{ f.ext }}</a> </li>
+		{% endfor %}                                          
+	</ul>
+{% endfor %}            
+</ul>  
+<div id = "zip_file">
+<a id = "create_zip_file" href = "/zip/{{ img.ring_obs_id}}.json">create_tar_archive</a> 	
+</div>   
+
+<div><h2>Rings Node generated products:</h2>                  
+	<p>JPGs: 
+	 <a target = "_blank" href = "{{ path }}{{ img.full }}">full</a>   •      
+	 <a target = "_blank" href = "{{ path }}{{ img.med }}">medium</a>  • 
+	 <a target = "_blank" href = "{{ path }}{{ img.small }}">small</a> • 
+ <a target = "_blank" href = "{{ path }}{{ img.thumb }}">thumb</a>  
+</p>
+<div>
+         
+
+<h2>Data:</h2>
+<div>    
+<a href = "/api/detail/{{ img.ring_obs_id }}.json" target = "_blank">grab json</a>
+</div>     
+<div>    
+<a href = "/api/detail/{{ img.ring_obs_id }}.csv" target = "_blank">grab comma-delimited</a>
+</div>  
+                                        
+<ul id = "detail_data">                    
+	{% for group,cat in data.data.items %} 
+		<li>{{ group }}: 
+			<ul>
+			{% for cat,values  in cat.items %} 
+				<li>{{ cat }}: 
+					<ul>
+					{% for param,val  in values.items %} 
+					<li>
+					{{ param }}: {{val}}
+					</li>
+					{% endfor %}            
+					</ul>
+				</li>
+			{% endfor %}            
+			</ul> 
+		</li>	
+	{% endfor %}
+</ul>

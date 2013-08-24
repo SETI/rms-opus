@@ -1,0 +1,11 @@
+{% extends "menu.html" %}
+
+{# pass globals to js here #}   
+                
+{% block more_head %}              
+	<script  type="text/javascript" >
+
+		default_columns = '{{ defaults.DEFAULT_COLUMNS }}';
+
+	</script>
+{% endblock %}

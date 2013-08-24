@@ -1,0 +1,40 @@
+{% comment %}
+	this is all inside of: <li id="widget__{{ slug }}" class = "widget">
+{% endcomment %}
+    
+
+	<div class = "widget_draghandle">
+
+		<span class = "closed_triangle minimize_widget">&nbsp;</span>
+
+		<div class = "widget_minimized">
+		</div>       
+   
+		<div class = "widget_title">
+
+			<h2 class = "widget_label">{{ label }} </h2> 
+			<span class = "pause_widget">         
+				<input class = "pause_widget" type = "checkbox" checked>
+				<!-- a href = ""  class = "pause_widget">pause</a --> 
+			</span>  
+			
+			<span class = "spinner">&nbsp;</span>
+     
+			<ul id = "widget_control_{{ slug }}" class = "widget_controls">
+				<li><a href = ""  class = "remove_widget">X</a></li> 
+			</ul>		                                               
+			<div style = "clear:both"></div>	
+			
+        </div>  <!-- widget_title -->       
+    </div>  <!-- widget_draghandle -->
+    
+	<div class = "widget_scroll_wrapper"> 
+        
+		<div class = "widget_inner {{form_type}}">
+			<section>
+				<span class = "widget_form">{{ form|safe }}</span>    
+				<div style = "clear:both"></div>	
+			 </section>	
+		</div>   <!-- widget_inner -->  
+
+	</div>  <!-- widget_scroll_wrapper  -->

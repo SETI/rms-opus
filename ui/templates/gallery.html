@@ -1,0 +1,39 @@
+{% comment %}
+	this is wrapped inside <ul id="gallery"> 
+{% endcomment %}
+
+
+
+{% for i in data  %} 
+	
+<li id = "gallery__{{i.ring_obs_id}}"> 
+	<a title = "{{ i.ring_obs_id }}" class = "shadowbox" href = "{{ path }}{{ i.full }}" rel = "shadowbox[gallery];options={continuous:true}">
+				<img width = "140" src = "{{ path }}{{ i.img }}"></a>
+         
+         <div style = "font-size:60%; overflow:hidden; width:140px;">
+						<div title = "{{ i.ring_obs_id }}" style = " float:right">
+							{{ i.ring_obs_id }}
+						</div>
+				</div>		
+		
+	    <ul class="gallery_icons ui-widget ui-helper-clearfix"> 
+            
+ 	   		<li><input id="galleryinput__{{ i.ring_obs_id }}" class = "gallery_checkbox" type = "checkbox"
+	        {% if i.in_collection %}
+	        	checked
+			{% endif %}
+			></li>
+
+			<li class = "ui-state-default ui-corner-all" title = ".ui-icon-zoomin">  
+				<span id = "{{ size }}__{{ i.ring_obs_id }}" class = "ui-icon ui-icon-document get_detail_icon" ></span>
+			</li>
+
+         	
+			<!-- li class = "ui-state-default ui-corner-all" title = "">  
+				<a class = "get_detail_icon ui-icon ui-icon-document" href = "http://127.0.0.1:8000/api/detailquick/{{i.ring_obs_id}}.html?cols={{ columns_str }}">&nbsp;</a>
+			</li -->
+		</ul>
+
+</li>
+
+{% endfor %}

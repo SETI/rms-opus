@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+
+{% block more_head %}
+<link rel="stylesheet" href="{{ MEDIA_URL }}styles/api_guide.css" type="text/css" media="screen">
+{% endblock %}
+
+{% block content %}
+ 
+
+<h1>OPUS 2 API Guide</h1>
+
+<div class = "jumpto">
+{% for group in groups %}
+<a href = "#{{ group.name|slugify }}">{{ group.name }}</a> <br>
+{% endfor %}
+</div>
+
+{% for group in groups %}
+	<div class = "section">
+	<a name = "{{ group.name|slugify }}"></a>
+	
+	<h2>{{ group.name }}</h2>   
+	<p>{{ group.desc }}</p>
+    
+	{% for resource in group.resource_set.all %}
+  
+  		<div class = "intro">
+			<h3>{{ resource.name }}</h3>  
+		
+			<p>{{ resource.desc }}</p>     
+		</div>
+
+	   <ul class = "keyvals">
+	        
+			{% for keyval in resource.keyvalue_set.all %}
+				 <li><strong>{{keyval.key}}: </strong> {{keyval.value}} </li>
+	            
+		    {% endfor %}
+		</ul>	
+		
+		<div class = "examples">  
+			<strong> Example: </strong>   
+		  	
+			<ul>  
+			{% for example in resource.example_set.all %} 
+				
+  		  		<li><p id = "example_intro">{{ example.intro }}  </p>
+    
+		    	<p><a href = "{{ base_url }}{{ example.link }}" target = "_blank">
+					{{ base_url }}{{ example.link }}
+				</a></p> 
+
+				<p class = "cutpaste"> 
+					<!-- curl -O {{ base_url }}{{ example.link }} -->
+					<input type = "text" value = "wget {{ base_url }}{{ example.link }}"> 
+				</p>
+	
+				</li>
+		    
+			{% endfor %}
+
+			</ul>
+	   </div>            
+	</ul>  
+	{% endfor %}
+
+<a href = "#">back to top</a>	 
+</div> <!-- groups -->
+{% endfor %}
+      
+
+{% endblock %} 
+   
+		
+
+
