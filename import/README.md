@@ -1,25 +1,29 @@
 # Once you deploy a database to OPUS 1 this procedure will magically update OPUS 2 with the same data.
 
-## backup the database
+1. backup the opus databased to a dump file
+
 ```
 mysqldump --opt opus > opus.sql -p
 ```
 
-## make database backup copies of a few utility tables
+- make database backup copies of a few utility tables
+
 ```
 mysql opus < backup_util_tables.sql -p -v
 ```
 
-## rsync local to pds-tools at ~/lballard/opus
+- rsync local to pds-tools at ~/lballard/opus
+
 ```
 git push
 bash deploy/deploy_opus_local.bash
 ```
 
-## then run the fab file:
+- then run the fab file:
+
 ```
 fab -H lballard@pds-rings-tools.seti.org deploy_opus2:volumes=COISS_2060,NHJULO_1001,COCIRS_5403
-## or
+or
 fab -H lballard@pds-rings-tools.seti.org deploy_opus2:volumes=all
 
 ```
