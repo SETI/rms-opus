@@ -1,4 +1,6 @@
-search/models.py
+search/models.py  # this file is generated dynamically during import procedures
+import/import.sql
+import/search.sql
 downloads/test_runs
 search/models.py
 import/models.py
@@ -12,7 +14,6 @@ testbed
 *.*.bak
 sqlall.txt
 temp*.*
-*.sql
 *.json
 libs
 .DS_Store

@@ -20,7 +20,7 @@ fab -H lballard@pds-rings-tools.seti.org deploy_opus2:volumes=all
 
 or
 
-fab -H lballard@pds-rings-tools.seti.org deploy_opus2:volumes='COISS_2060,NHJULO_1001,COCIRS_5403'
+fab -H lballard@pds-rings-tools.seti.org deploy_opus2:volumes=COISS_2060,NHJULO_1001,COCIRS_5403
 
 fab -H lballard@pds-rings-tools.seti.org deploy_opus2 -set volumes='COISS_2060,NHJULO_1001,COCIRS_5403'
 
@@ -41,7 +41,7 @@ def deploy_opus2(volumes='COISS_2060,NHJULO_1001,COCIRS_5403'):
     mysql_user = env.user
 
     # init
-    with('cd /home/lballard/opus/')
+    with cd('/home/lballard/opus/'):
 
         # drop and create new opus
         run('mysql opus < import/drop_and_create_opus.sql -u%s -p%s' % (mysql_user, mysql_pass))

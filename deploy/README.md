@@ -17,17 +17,14 @@ then rsync to ~/. on server (not production dir) (this way cuz couldn't clone bi
 bash deploy/deploy_opus_local.bash
 ```
 
-then on pds-tools: **NOTE: this assumes the latest stable of search/models.py lives at ~/opus on the server, it will fetch the model from there and deploy it to production!!!
-
-```
-sudo bash deploy_opus.bash
-```
-
 todo:
 
 ```
 sudo bash deploy_opus.bash: prevent_model_script_deploy=True
 ```
+
+then on pds-tools: **NOTE: this assumes the latest stable of search/models.py lives at ~/opus on the server, it will fetch the model from there and deploy it to production!!!
+
 
 deploy static assets to s3 if needed (or see next)
 
