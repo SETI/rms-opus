@@ -47,6 +47,14 @@ don't forget to tell Apache you've updated the code:
 sudo touch *.wsgi
 ```
 
+To deploy, be sure and reset the memcached, kill what is currently running then
+issue the same commands again, find them like so:
+
+```
+ps aux | grep memcache
+```
+
+
 ## The End.
 
 

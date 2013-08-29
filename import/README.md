@@ -24,7 +24,10 @@ sudo bash deploy/deploy_opus_local.bash
 ```
 cd import
 fab -H lballard@pds-rings-tools.seti.org deploy_opus2:volumes=COISS_2060\,NHJULO_1001\,COCIRS_5403
-or
+
+# or
+
+cd import
 fab -H lballard@pds-rings-tools.seti.org deploy_opus2:volumes=all
 
 ```
@@ -37,5 +40,13 @@ The fab file does the following on the server specified on the command line:
 -  rmakes it's own custom text dump of the OPUS1 database
 
 -  imports the text dump into the OPUS2 schema
+
+
+To deploy, be sure and reset the memcached, kill what is currently running then
+issue the same commands again, find them like so:
+
+```
+ps aux | grep memcache
+```
 
 
