@@ -555,7 +555,8 @@ update files set mission = 'VG' where instrument_id = 'VGISS';
 
 # restore file_sizes
 drop table if exists opus.file_sizes;
-create table opus.file_sizes select * from Observations.file_sizes where volume_id in (select * from all_volumes_temp);
+create table opus.file_sizes like Observations.file_sizes;
+insert into opus.file_sizes select * from Observations.file_sizes where volume_id in (select * from all_volumes_temp);
 alter table file_sizes add key (ring_obs_id);
 update opus.file_sizes,opus.observations set file_sizes.ring_obs_id = observations.ring_obs_id where file_sizes.ring_obs_id = observations.opus1_ring_obs_id;
 alter table file_sizes add key (name);
