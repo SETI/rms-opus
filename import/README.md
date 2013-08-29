@@ -16,13 +16,14 @@ mysql opus < backup_util_tables.sql -p -v
 
 ```
 git push
-bash deploy/deploy_opus_local.bash
+sudo bash deploy/deploy_opus_local.bash
 ```
 
 - then run the fab file:
 
 ```
-fab -H lballard@pds-rings-tools.seti.org deploy_opus2:volumes=COISS_2060,NHJULO_1001,COCIRS_5403
+cd import
+fab -H lballard@pds-rings-tools.seti.org deploy_opus2:volumes=COISS_2060\,NHJULO_1001\,COCIRS_5403
 or
 fab -H lballard@pds-rings-tools.seti.org deploy_opus2:volumes=all
 

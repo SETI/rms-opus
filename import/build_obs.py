@@ -58,6 +58,9 @@ except:
     print "please specify volume list or 'all' as 2nd arg"
     sys.exit()
 
+if volumes == 'all':
+    volumes = ''  # nothing to add to the query
+
 # params_cats_file = '/users/lballard/projects/opus/import/params_cats.json'
 
 # Set up the Django Enviroment for running as shell script

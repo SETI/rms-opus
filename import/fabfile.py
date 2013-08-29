@@ -47,7 +47,7 @@ def deploy_opus2(volumes='COISS_2060,NHJULO_1001,COCIRS_5403'):
         run('mysql opus < import/drop_and_create_opus.sql -u%s -p%s' % (mysql_user, mysql_pass))
 
         # setup local env for development deploy at home/user/
-        run('cp /home/django/djcode/opus/secrets.py /.')
+        run('cp /home/django/djcode/opus/secrets.py .')
         run('cp /home/django/djcode/opus/settings_prod.py settings_local.py')
 
         # create the django models
@@ -76,12 +76,12 @@ def deploy_opus2(volumes='COISS_2060,NHJULO_1001,COCIRS_5403'):
             run('python manage.py syncdb --noinput')
 
         # some extra fixes to the opus mysql tables
-        # put few random patches and sql here
+        # sorry to put a few random patches and sql here
         run('mysql opus < import/extra_sql_fixes.sql -u%s -p%s' % (mysql_user, mysql_pass))
 
         # now import the data
-        run('nohup mysql opus < import/import.sql -u%s -p%s -v > import/log.txt &' % (mysql_user, mysql_pass))
+        run('mysql opus < import/import.sql -u%s -p%s -v' % (mysql_user, mysql_pass))
 
-        print("\n Done!!! now go to the server and: \n tail -f ~/opus/import/log.txt")
+        print("\n Done!!! now go to the server and: \n ps aux | grep mysql")
 
 
