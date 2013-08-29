@@ -18,6 +18,21 @@
 #
 #
 #####################################################################################################
+# Set up the Django Enviroment for running as shell script
+import sys
+sys.path.append('/users/lballard/projects/')
+sys.path.append('/users/lballard/projects/opus/')
+sys.path.append('/home/lballard/')
+sys.path.append('/home/lballard/opus/')
+from opus import settings
+from django.core.management import setup_environ
+setup_environ(settings)
+
+# script imports
+from django.db import connection
+from django.core.management import call_command
+from django.db.models import get_model
+import settings
 
 opus1 = 'Observations' # from here
 opus2 = 'opus'         # to here
@@ -58,26 +73,13 @@ except:
     print "please specify volume list or 'all' as 2nd arg"
     sys.exit()
 
-if volumes == [all]:
+if volumes == ['all']:
     volumes = []  # nothing to add to the query
 
+print volumes
+sys.exit()
+
 # params_cats_file = '/users/lballard/projects/opus/import/params_cats.json'
-
-# Set up the Django Enviroment for running as shell script
-import sys
-sys.path.append('/users/lballard/projects/')
-sys.path.append('/users/lballard/projects/opus/')
-sys.path.append('/home/lballard/')
-sys.path.append('/home/lballard/opus/')
-from opus import settings
-from django.core.management import setup_environ
-setup_environ(settings)
-
-# script imports
-from django.db import connection
-from django.core.management import call_command
-from django.db.models import get_model
-import settings
 
 # hello mysql
 cursor = connection.cursor()
