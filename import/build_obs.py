@@ -76,8 +76,6 @@ except:
 if volumes == ['all']:
     volumes = []  # nothing to add to the query
 
-print volumes
-sys.exit()
 
 # params_cats_file = '/users/lballard/projects/opus/import/params_cats.json'
 
