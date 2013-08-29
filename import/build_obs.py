@@ -527,13 +527,15 @@ insert into opus.guide_group select * from opus_hack.guide_group;
 insert into opus.guide_keyvalue select * from opus_hack.guide_keyvalue;
 insert into opus.guide_resource select * from opus_hack.guide_resource;
 
+# main table needs some keys for the next part
+alter table opus.observations add key  (opus1_ring_obs_id);
+alter table opus.observations add key  (ring_obs_id);
+
 # restore the files table
 drop table if exists opus.files;
 create table opus.files like Observations.files;
 insert into opus.files select * from Observations.files where volume_id in (select * from all_volumes_temp);
 alter table files change column no id int(7) not null;
-alter table opus.observations add key  (opus1_ring_obs_id);
-alter table opus.observations add key  (ring_obs_id);
 update opus.files,opus.observations set files.ring_obs_id = observations.ring_obs_id where files.ring_obs_id = observations.opus1_ring_obs_id;
 alter table files add column mission char(15);
 update files set mission = 'CO' where instrument_id like 'CO%';
@@ -543,8 +545,7 @@ update files set mission = 'VG' where instrument_id = 'VGISS';
 
 # restore file_sizes
 drop table if exists opus.file_sizes;
-create table opus.file_sizes like Observations.file_sizes;
-insert into opus.file_sizes select * from Observations.file_sizes where volume_id in (select * from all_volumes_temp);
+create table opus.file_sizes select * from Observations.file_sizes where volume_id in (select * from all_volumes_temp);
 alter table file_sizes add key (ring_obs_id);
 update opus.file_sizes,opus.observations set file_sizes.ring_obs_id = observations.ring_obs_id where file_sizes.ring_obs_id = observations.opus1_ring_obs_id;
 alter table file_sizes add key (name);
