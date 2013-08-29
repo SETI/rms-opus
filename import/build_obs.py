@@ -367,6 +367,18 @@ if to_print == 'sql':
     print "SET SQL_MODE = 'STRICT_ALL_TABLES'; \n"
     print "SET foreign_key_checks = 0; \n"
 
+    print """
+    DELIMITER //
+    CREATE PROCEDURE `vols` (IN my_table VARCHAR(200))
+    BEGIN
+        SET @sql = CONCAT('SELECT volume_id,count(*) FROM ',my_table,' group by volume_id order by volume_id');
+        PREPARE s1 from @sql;
+        EXECUTE s1;
+    END //
+    DELIMITER;
+    """
+
+
     # param_info queries
     print "#\n# param_info queries"
     for q in param_info_sql:
@@ -588,14 +600,7 @@ update observations as a, obs_VG_VGISS as b set b.primary_file_spec = a.primary_
 #cleanup
 SET foreign_key_checks = 1;
 
-DELIMITER //
-CREATE PROCEDURE `vols` (IN my_table VARCHAR(200))
-BEGIN
-    SET @sql = CONCAT('SELECT volume_id,count(*) FROM ',my_table,' group by volume_id order by volume_id');
-    PREPARE s1 from @sql;
-    EXECUTE s1;
-END //
-DELIMITER ;
+
 
 
 select ('BYE !!!!!');
