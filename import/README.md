@@ -60,4 +60,17 @@ fab -H lballard@pds-rings-tools.seti.org import_data:volumes=all > log.txt
 ps aux | grep memcache
 ```
 
+- you might need this:
+
+
+```
+DELIMITER //
+CREATE PROCEDURE `vols` (IN my_table VARCHAR(200))
+BEGIN
+    SET @sql = CONCAT('SELECT volume_id,count(*) FROM ',my_table,' group by volume_id order by volume_id');
+    PREPARE s1 from @sql;
+    EXECUTE s1;
+END //
+DELIMITER ;
+```
 
