@@ -541,8 +541,11 @@ insert into opus.guide_resource select * from opus_hack.guide_resource;
 
 # restore the files table
 drop table if exists opus.files;
-create table opus.files select * from Observations.files where volume_id in (select * from all_volumes_temp);
+create table opus.files like Observations.files;
+insert into opus.files select * from Observations.files where volume_id in (select * from all_volumes_temp);
 alter table files change column no id int(7) not null;
+alter table opus.observations add key  (opus1_ring_obs_id);
+alter table opus.observations add key  (ring_obs_id);
 update opus.files,opus.observations set files.ring_obs_id = observations.ring_obs_id where files.ring_obs_id = observations.opus1_ring_obs_id;
 alter table files add column mission char(15);
 update files set mission = 'CO' where instrument_id like 'CO%';
