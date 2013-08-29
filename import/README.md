@@ -16,7 +16,7 @@ mysql opus < backup_util_tables.sql -p -v
 
 ```
 git push
-sudo bash deploy/deploy_opus_local.bash
+sudo bash -v deploy/deploy_opus_local.bash
 ```
 
 - then run the fab file:
