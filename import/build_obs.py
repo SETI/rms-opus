@@ -375,7 +375,7 @@ if to_print == 'sql':
         PREPARE s1 from @sql;
         EXECUTE s1;
     END //
-    DELIMITER;
+    DELIMITER ;
     """
 
 

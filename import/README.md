@@ -19,16 +19,16 @@ git push
 sudo bash -v deploy/deploy_opus_local.bash
 ```
 
-- then run the fab file:
+- then build the opus 2 database:
 
 ```
 cd import
-fab -H lballard@pds-rings-tools.seti.org deploy_opus2:volumes=COISS_2060\,NHJULO_1001\,COCIRS_5403
+fab -H lballard@pds-rings-tools.seti.org build_opus2:volumes=COISS_2060\,NHJULO_1001\,COCIRS_5403
 
 # or
 
 cd import
-fab -H lballard@pds-rings-tools.seti.org deploy_opus2:volumes=all > log.txt
+fab -H lballard@pds-rings-tools.seti.org build_opus2:volumes=all > log.txt
 
 ```
 The fab file does the following on the server specified on the command line:
@@ -39,11 +39,22 @@ The fab file does the following on the server specified on the command line:
 
 -  rmakes it's own custom text dump of the OPUS1 database
 
--  imports the text dump into the OPUS2 schema
 
 
-To deploy, be sure and reset the memcached, kill what is currently running then
-issue the same commands again, find them like so:
+- then import the data
+
+```
+fab -H lballard@pds-rings-tools.seti.org import_data:volumes=COISS_2060\,NHJULO_1001\,COCIRS_5403
+
+# or
+
+fab -H lballard@pds-rings-tools.seti.org import_data:volumes=all > log.txt
+
+```
+
+
+
+- To deploy, be sure and reset the memcached, kill what is currently running then issue the same commands again, find them like so:
 
 ```
 ps aux | grep memcache

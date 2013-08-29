@@ -33,8 +33,23 @@ fab -H lballard@pds-rings-tools.seti.org deploy_opus2
 def host_type(**kwargs):
     run('uname -s')
 
+def import_data(volumes='COISS_2060,NHJULO_1001,COCIRS_5403'):
+
+    # get server mysql username and pw
+    mysql_pass = getpass.getpass('Enter mysql password: ')
+    mysql_user = env.user
+
+    # init
+    with cd('/home/lballard/opus/'):
+
+        # now import the data
+        run('mysql opus < import/import.sql -u%s -p%s -v' % (mysql_user, mysql_pass))
+
+        print("\n Done!!! now go to the server and: \n ps aux | grep mysql")
+
+
 # volumes like models COISS_2060,NHJULO_1001,COCIRS_5403 or 'all'
-def deploy_opus2(volumes='COISS_2060,NHJULO_1001,COCIRS_5403'):
+def build_opus2(volumes='COISS_2060,NHJULO_1001,COCIRS_5403'):
 
     # get server mysql username and pw
     mysql_pass = getpass.getpass('Enter mysql password: ')
@@ -79,9 +94,5 @@ def deploy_opus2(volumes='COISS_2060,NHJULO_1001,COCIRS_5403'):
         # sorry to put a few random patches and sql here
         run('mysql opus < import/extra_sql_fixes.sql -u%s -p%s' % (mysql_user, mysql_pass))
 
-        # now import the data
-        run('mysql opus < import/import.sql -u%s -p%s -v' % (mysql_user, mysql_pass))
-
-        print("\n Done!!! now go to the server and: \n ps aux | grep mysql")
 
 
