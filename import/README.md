@@ -28,7 +28,7 @@ fab -H lballard@pds-rings-tools.seti.org deploy_opus2:volumes=COISS_2060\,NHJULO
 # or
 
 cd import
-fab -H lballard@pds-rings-tools.seti.org deploy_opus2:volumes=all
+fab -H lballard@pds-rings-tools.seti.org deploy_opus2:volumes=all > log.txt
 
 ```
 The fab file does the following on the server specified on the command line:
