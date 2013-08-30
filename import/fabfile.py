@@ -45,7 +45,9 @@ def import_data(volumes='COISS_2060,NHJULO_1001,COCIRS_5403'):
         # now import the data
         run('mysql opus < import/import.sql -u%s -p%s -v' % (mysql_user, mysql_pass))
 
-        print("\n Done!!! now go to the server and: \n ps aux | grep mysql")
+        run('python import/custom_keys.py')
+
+        print("\n Done!!! ")
 
 
 # volumes like models COISS_2060,NHJULO_1001,COCIRS_5403 or 'all'
@@ -93,7 +95,5 @@ def build_opus2(volumes='COISS_2060,NHJULO_1001,COCIRS_5403'):
         # some extra fixes to the opus mysql tables
         # sorry to put a few random patches and sql here
         run('mysql opus < import/extra_sql_fixes.sql -u%s -p%s' % (mysql_user, mysql_pass))
-
-        run('python custom_keys.py')
 
 
