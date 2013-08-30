@@ -94,5 +94,6 @@ def build_opus2(volumes='COISS_2060,NHJULO_1001,COCIRS_5403'):
         # sorry to put a few random patches and sql here
         run('mysql opus < import/extra_sql_fixes.sql -u%s -p%s' % (mysql_user, mysql_pass))
 
+        run('python custom_keys.py')
 
 

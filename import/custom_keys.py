@@ -1,3 +1,20 @@
+"""
+
+_mult columns are not indexed during the deply process because there are more than 64 mult fields
+in the main table, which crashes into mysql's 64 key limit
+
+But many of these columns will not ever be queried from that big table, only fields
+that do not have a 'mission' and 'instrument' listed in the ParamInfo model get queried
+against the main table.
+
+If a mult field in the 'observations' table does not have a mission or instrument then
+index that field in the 'observations' table, if it does have a mission/instrument
+listed then index the field in the mission or instrument table.
+
+This is to be run as part of data import process.
+
+
+"""
 import sys
 sys.path.append('/users/lballard/projects/')
 sys.path.append('/users/lballard/projects/opus/')
