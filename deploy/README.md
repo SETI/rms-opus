@@ -17,11 +17,24 @@ then rsync to ~/. on server (not production dir) (this way cuz couldn't clone bi
 bash deploy/deploy_opus_local.bash
 ```
 
-todo:
+take backup of production
 
 ```
-sudo bash deploy_opus.bash: prevent_model_script_deploy=True
+rsync -r -vc /home/django/djcode/opus ~/backups/.
+
 ```
+
+
+on the server move to production:
+
+```
+sudo rsync -r -vc ~/opus /home/django/djcode/.
+```
+
+
+
+rsync -r -vc -e ~/opus /home/django/djcode/.
+
 
 then on pds-tools: **NOTE: this assumes the latest stable of search/models.py lives at ~/opus on the server, it will fetch the model from there and deploy it to production!!!
 
