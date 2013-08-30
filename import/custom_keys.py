@@ -59,5 +59,5 @@ for row in rows:
         print 'tables: ' + ', '.join(index_tables)
         for table in index_tables:
             q = "alter table %s add index (%s)" % (table, field)
-            cursor.execute(q)
             print q
+            cursor.execute(q)

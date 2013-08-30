@@ -20,9 +20,6 @@
 #####################################################################################################
 # Set up the Django Enviroment for running as shell script
 import sys
-sys.path.append('/users/lballard/projects/')
-sys.path.append('/users/lballard/projects/opus/')
-sys.path.append('/home/lballard/')
 sys.path.append('/home/lballard/opus/')
 from opus import settings
 from django.core.management import setup_environ
