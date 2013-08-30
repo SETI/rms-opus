@@ -8,8 +8,11 @@ that do not have a 'mission' and 'instrument' listed in the ParamInfo model get 
 against the main table.
 
 If a mult field in the 'observations' table does not have a mission or instrument then
-index that field in the 'observations' table, if it does have a mission/instrument
-listed then index the field in the mission or instrument table.
+index that field in the 'observations' table, since that's where queries for it will
+happen.. if it does have a mission/instrument listed then index the field
+in the mission and/or instrument table.
+
+(see getQueryTable() method in search/views.py might make it clearer)
 
 This is to be run as part of data import process.
 
