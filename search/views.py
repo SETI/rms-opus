@@ -153,29 +153,33 @@ def getUserQueryTable(selections,extras={}):
     (the function urlToSearchParams take the user http request object and
     creates the data objects that are passed to this function)
 
-    OPUS allows querying of different datasets in the same query, in what would normally break
-    a simple relational ' AND ' type string of where clauses.
+    OPUS allows querying of different datasets in the same query, in what would
+    normally break a simple relational ' AND ' type string of where clauses.
     (for example: no observation possesses both a voyager and a cassini filter)
 
-    To accomplish this each parameter has a 'join_type' below, either 'aux' or 'base'
-    whether or not the row in param_info has a value for instrument or mission fields decides this
-    mission specific params have a mission_id in this field, instrument specific params have an instrument_id
-    Base groups are common to all observations, aux groups are specific to a mission or an instrument
-    all params with join type 'base' in a request are joined together with 'and' in a group,
-    call it 'Base Group'
+    To accomplish this each parameter has a 'join_type' below, either 'aux' or 'base'.
+    'Base' fields are common to all observations, and 'aux' fields are common only to
+    one mission and possibly a single instrument.  Mission-specific params have a mission_id
+    in the mission field of the ParmaInfo model (param_info table), and instrument-specific
+    params have an instrument_id in the instrument field. Params in a search are grouped
+    together in a field, so all 'base' params are grouped together, and 'aux' types are
+    grouped by mission/instrument. This way we can construct UNION queries that will
+    allow searching accross missions without cancelling anything out.
 
-    (planet = Saturn and target = Pan)
+    For example this query:
 
-    params with 'aux' join_type are "AND" joined *each in turn* with a copy of Base group,
-    then each resulting set is joined together with 'OR' like:
+    (planet = Saturn, target = Pan, COISS_filter = RED, VGISS_filter = BLUE)
+
+    params with 'aux' join_type are "AND" joined *each in turn* with a copy of
+    Base group, then each resulting set is joined together with 'UNION' like:
 
     (planet = Saturn and target = Pan) and (COISS_filter = RED)
-    or
+    UNION
     (planet = Saturn and target = Pan) and (VGISS_filter = BLUE)
 
     to explain this:
-    say we want data from voyager and cassini ISS, defining a different filter for each,
-    http request looks like this:
+    say we want data from voyager and cassini ISS, defining a different filter
+    for each, http request looks like this:
 
     ?planet=Saturn&target=Pan&vgissfilter=GRN&coissfilter=GREEN
 
@@ -189,11 +193,13 @@ def getUserQueryTable(selections,extras={}):
     with this information this function builds a where clause like so:
 
     (planet = saturn and target = pan and vgissfilter = GRN)
-    OR
+    UNION
     (planet = saturn and target = pan and coissfilter = GREEN)
 
     aka:
-    (base group ' AND ' aux1)  OR  (base group ' AND ' aux2) ...
+    (base group ' AND ' aux1)  UNION  (base group ' AND ' aux2) ...
+
+    crazy huh?
 
     """
     # housekeeping
@@ -228,7 +234,7 @@ def getUserQueryTable(selections,extras={}):
     inst_params     = {} # instrument params by param_name key
 
     # helpers to keep track of stuff
-    inst_missions   = {} # tracker, instrument key corresponds to mission value
+    inst_missions   = {} # tracker, instrument key corresponds to mission value (what?)
     finished_ranges = [] # range params that have been handled already (avoids repeating range clauses for each side of range.. lame huh?)
     combined_mission_clauses = {} # combined base clauses by mission
 
@@ -241,21 +247,20 @@ def getUserQueryTable(selections,extras={}):
         special_query = param_info.special_query
         mission = param_info.mission
         instrument = param_info.instrument
-        mission = param_info.mission
         param_name_no_num = stripNumericSuffix(param_name)
         # related_table_name = param_info.related_table_name
         # related_table_field_name = param_info.related_table_field_name
 
-        related_table_name = None
-        related_table_field_name = None # not fleshed out functionality
-
-        # having a mission_id indicates this should be aux type
-        # you can't have an instrument_id without a mission_id
-        join_type = 'aux' if mission else 'base'
-
         # fetch any qtypes
         try:    qtypes = all_qtypes[param_name_no_num]
         except: qtypes = []
+
+        related_table_name = None
+        related_table_field_name = None # not fleshed out functionality (but what WAS it?)
+
+        # having a mission_id indicates this should be aux type
+        # (you can't have an instrument_id without a mission_id)
+        join_type = 'aux' if mission else 'base'
 
         # add any related table info to main query structure
         if related_table_name:
@@ -302,14 +307,13 @@ def getUserQueryTable(selections,extras={}):
 
     query = "create table " + connection.ops.quote_name(ptbl) + ' ' + where_clause
 
-
-    #### not handling related right now but they are partially implemented #####
+    #### not handling related right now but they are partially implemented ##### note: WTF?
 
     # print 'trying ' + query + ' , ' + str(grand_param_list) # shows in unit testing
     try: # now create our table
         cursor.execute(query, grand_param_list) # aaaaand secure
-
         # print 'query ok'
+        # this should be a celery task:
         cursor.execute("alter table " + connection.ops.quote_name(ptbl) + " add unique key(id)  ")
         # print 'execute ok'
         cache.set(cache_key,ptbl,0)
