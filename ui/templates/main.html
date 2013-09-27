@@ -1,11 +1,12 @@
 {% extends "menu.html" %}
 
-{# pass globals to js here #}   
-                
-{% block more_head %}              
+{# pass to js here pass vars to js #}
+
+{% block more_head %}
 	<script  type="text/javascript" >
 
 		default_columns = '{{ defaults.DEFAULT_COLUMNS }}';
+        static_url = '{{ STATIC_URL }}';
 
 	</script>
 {% endblock %}
