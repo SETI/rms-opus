@@ -71,7 +71,7 @@ var opus = {
     // Vars
     // default vars are found in the menu.html template
     // and declared in ui.views.defaults
-    spinner: '<img border = "0" src = "http://pds-rings.seti.org/~lballard/django_opus/static_media/images/spinner_12px.gif">',
+    spinner: '<img border = "0" src = "{{ MEDIA_URL }}images/spinner_12px.gif">',
 
     // avoiding race conditions in ajax calls
     lastRequestNo: 0,          // holds request numbers for main result count loop,
