@@ -757,7 +757,7 @@ var o_browse = {
 
             $('#column_chooser').jqmShow();
 
-            url = '/forms/column_chooser.html?' + o_hash.getHash();
+            url = 'forms/column_chooser.html?' + o_hash.getHash();
             $('#column_chooser').load( url, function(response, status, xhr)  {
                        opus.column_chooser_drawn=true;
 
