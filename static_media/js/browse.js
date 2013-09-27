@@ -508,7 +508,7 @@ var o_browse = {
                 o_browse.startDataTable(namespace);
                 return; // startDataTable() starts data table and then calls getBrowseTab again
             }
-            url = '/api/data.html?'
+            url = '/opus/api/data.html?'
         }
 
 
