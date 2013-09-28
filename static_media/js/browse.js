@@ -235,7 +235,6 @@ var o_browse = {
             label = $(this).data('label');
             cols = opus.prefs['cols'];
 
-
             if ($(this).is(':checked')) {
                 // checkbox is checked
                 if (jQuery.inArray(slug,cols) < 0) {
@@ -258,7 +257,18 @@ var o_browse = {
             }
             opus.prefs['cols'] = cols;
             o_hash.updateHash();
+
+            // we are about to update the same page we just updated, it will replace
+            // the one that is showing, so unset the last_page var
+            view_info = o_browse.getViewInfo();
+            view_var = view_info['view_var'];
+            last_page = opus.last_page[view_var][opus.prefs.browse];
+            opus.last_page[view_var][opus.prefs.browse] = last_page - 1;
+
+
+            // now update the browse table
             o_browse.updateBrowse();
+
          });
 
          $('#column_chooser .cats input[type="checkbox"].cat_input').click(function() {
@@ -292,7 +302,7 @@ var o_browse = {
              }
              opus.prefs['cols'] = cols;
              o_hash.updateHash();
-             o_browse.updateBrowse();
+
          });
     },
 
@@ -491,6 +501,7 @@ var o_browse = {
         view_info = o_browse.getViewInfo();
         namespace = view_info['namespace'];
         view_var = view_info['view_var'];
+
         prefix = view_info['prefix'];
         add_to_url = view_info['add_to_url'];
 
@@ -540,6 +551,8 @@ var o_browse = {
             $('#' + prefix + 'page_no', namespace).val(page); // reset the display
         }
 
+        if (!page) page = 1;  //
+
         // did we already fetch this page?
         last_page = opus.last_page[view_var][opus.prefs.browse];
         if (page == last_page && !opus.browse_tab_click) {
@@ -559,6 +572,7 @@ var o_browse = {
             $('.infinite_scroll_spinner', namespace).show();
         }
         url += '&page=' + page;
+
 
 
         // NOTE if you change alt_size=full here you must also change it in gallery.html template
@@ -791,6 +805,17 @@ var o_browse = {
             // if we are in gallery - just change the data-struct that gallery draws from
             // if we are in table -
             // $('.gallery', '#browse').html(opus.spinner);
+
+            // we are about to update the same page we just updated, it will replace
+            // the one that is showing, so unset the last_page var
+            view_info = o_browse.getViewInfo();
+            view_var = view_info['view_var'];
+            last_page = opus.last_page[view_var][opus.prefs.browse];
+            opus.last_page[view_var][opus.prefs.browse] = last_page - 1;
+
+            o_browse.updateBrowse();
+
+
             o_browse.updateBrowse();
         },
 
