@@ -4,6 +4,8 @@ see requirements.txt
 memcached daemon must be running on server
 OR if it's not then comment out the cache_backend line in settings.py
 
+see also the doc/ directory
+
 # Apps:
 
 # search
