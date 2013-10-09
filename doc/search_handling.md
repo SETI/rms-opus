@@ -1,27 +1,29 @@
+### Database Schema and Caching Strategies
+
 There is a big flat table in the OPUS 2 database (minus all the surface geometry fields) but it is not used for search queries. It's used as a tool for displaying the data as an html table. It is a way to return data quickly, not to search it. It provides a big easy target for fetching rows we already know we want.
 
 The actual tables used for searching look like this:
 
- obs_CO
- obs_CO_COCIRS
- obs_CO_COISS
- obs_GO
- obs_GO_GOSSI
- obs_VG
- obs_VG_VGISS
- obs_CO_COVIMS
- obs_NH
- obs_NH_NHJULO
+     obs_CO
+     obs_CO_COCIRS
+     obs_CO_COISS
+     obs_GO
+     obs_GO_GOSSI
+     obs_VG
+     obs_VG_VGISS
+     obs_CO_COVIMS
+     obs_NH
+     obs_NH_NHJULO
 
 There is a bit of de-normalization in the collection of tables that are used for search queries, evident in how they are named. During a user's search these tables are joined together by joins and by UNION queries when needed (UNION to provide cross mission/instrument searching).
 
 The Big Table is a collection of all fields from the tables above, and does not include fields from the surface geometry tables. Since  surface geometry tables are sharded into separate targets, they are stored as separate tables and are joined in when the user wants them, they look like this:
 
-obs_surface_geometry__aegaeon
-obs_surface_geometry__albiorix
-obs_surface_geometry__anthe
-obs_surface_geometry__atlas
-obs_surface_geometry__… etc ..
+    obs_surface_geometry__aegaeon
+    obs_surface_geometry__albiorix
+    obs_surface_geometry__anthe
+    obs_surface_geometry__atlas
+    obs_surface_geometry__… etc ..
 
 
 Here is how the Big denormalized table comes into play:
