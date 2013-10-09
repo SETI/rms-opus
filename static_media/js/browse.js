@@ -8,6 +8,19 @@ var o_browse = {
 
     browseBehaviors: function() {
 
+        $('.column_ordering a', '#browse').live("click", function() {
+            var order = $(this).parent().parent().attr("class");
+            if ($(this).attr("class") == "descending") {
+                order = '-' + order;
+            }
+            opus.prefs['order'] = order;
+            opus.browse_tab_click = true;
+            opus.last_page = {'browse':{'data':0, 'gallery':0 }};  // may need this too: 'colls_browse':{ 'data':0, 'gallery':0 }};
+            o_browse.updatePage(1);
+            return false;
+        });
+
+
         // add a new range pair
         $('.addrange', '#browse').live("click", function() {
             if ($('.addrange', '#browse').text() != "add range") {
@@ -21,10 +34,10 @@ var o_browse = {
 
         //hover states on the static widgets
 		$('.gallery_icons li.ui-state-default, .chosen_column_close', '#browse').live({
-                mouseenter:
-			        function() { $(this).addClass('ui-state-hover'); },
-			    mouseleave:
-			        function() { $(this).removeClass('ui-state-hover'); }
+            mouseenter:
+                function() { $(this).addClass('ui-state-hover'); },
+            mouseleave:
+                function() { $(this).removeClass('ui-state-hover'); }
 		});
 
 
@@ -32,18 +45,18 @@ var o_browse = {
         // gallery and table checkboxes
         // $('.gallery_icons input, .data_table input','#browse').live("click", function() {
         $('.gallery_icons input, .data_table input').live("click", function() {
-            ring_obs_id = $(this).attr("id").split('__')[1]
+            ring_obs_id = $(this).attr("id").split('__')[1];
             $(this).is(':checked') ? action = 'add' :  action = 'remove';
 
             // make sure the checkbox for this observation in the other view (either data or gallery)
             // is also checked/unchecked - if that view is drawn
             browse_views = ['data','gallery'];
-            for (key in browse_views) {
-                bview = browse_views[key]
+            for (var key in browse_views) {
+                bview = browse_views[key];
                 checked = false;
                 if (action == 'add') checked = true;
                 try {
-                    $('#' + bview + 'input__' + ring_obs_id).attr('checked',checked)
+                    $('#' + bview + 'input__' + ring_obs_id).attr('checked',checked);
                 } catch(e) { } // view not drawn yet so no worries
             }
 
@@ -51,7 +64,7 @@ var o_browse = {
                 o_collections.editCollection(ring_obs_id,action);
             } else {
                 // addrange clicked
-                element = "li"
+                element = "li";
                 if (opus.prefs.browse == 'data') {
                         element = "td";
                 }
@@ -59,7 +72,7 @@ var o_browse = {
                     // this is the min side of the range
                     $('.addrange','#browse').text("select range end");
                     index = $(element).index($(this).parent());
-                    opus.addrange_min = { "index":index, "ring_obs_id":ring_obs_id }
+                    opus.addrange_min = { "index":index, "ring_obs_id":ring_obs_id };
                 } else {
                     // we have both sides of range
                     $('.addrange','#browse').text("add range");
@@ -129,7 +142,7 @@ var o_browse = {
         $('.next, .prev').live('click', function() {
             // all this does is update the number that shows in the box and then calls textInputMonitor
             page_no_elem = $(this).parent().next().find('.page_no');
-            this_page = parseInt(page_no_elem.val());
+            this_page = parseInt(page_no_elem.val(), 10);
             if ( $(this).hasClass("next")) {
                 page = this_page + 1;
             } else if ($(this).hasClass("prev")) {
@@ -142,11 +155,11 @@ var o_browse = {
 
         // change page
         $('#page_no','#browse').live("change",function() {
-            page = parseInt($(this).val());
+            page = parseInt($(this).val(), 10);
             o_browse.updatePage(page);
         });
         $('#colls_page_no','#collections').live("change",function() {
-            page = parseInt($(this).val());
+            page = parseInt($(this).val(), 10);
             o_browse.updatePage(page);
         });
 
@@ -402,11 +415,11 @@ var o_browse = {
 
     checkRangeBoxes: function(ring_obs_id1, ring_obs_id2) {
         elements = ['#gallery__','#data__'];
-        for (key in elements) {
+        for (var key in elements) {
             element = elements[key];
             next_id = ring_obs_id1;
             while (next_id != ring_obs_id2) {
-                next = $(element + next_id, '#browse').next()
+                next = $(element + next_id, '#browse').next();
                 if (next.hasClass("inifite_scroll_page")) {
                     // this is the infinite scroll indicator, continue to next
                     next = $(element + next_id, '#browse').next().next();
@@ -430,7 +443,7 @@ var o_browse = {
     startDataTable: function(namespace) {
         url = '/opus/table_headers.html?' + o_hash.getHash() + '&reqno=' + opus.lastRequestNo;
         if (namespace == '#collections') {
-            url += '&colls=true'
+            url += '&colls=true';
         }
         $.ajax({ url: url,
                 success: function(html) {
@@ -451,7 +464,8 @@ var o_browse = {
 
         id = 'inifite_scroll_' + browse_prefix + opus.prefs.browse + '__' + page;
 
-        data = '<tr class = "inifite_scroll_page"> \
+        /*jshint multistr: true */
+        data = '<tr class = "inifite_scroll_page">\
                 <td><span class = "back_to_top"><a href = "#top">top</a></span></td> \
                 <td colspan = "' + opus.prefs['cols'].length + '">\
                 <span class = "infinite_scroll_page_container" id = "' + id + '">Page ' + page + '</span><span class = "infinite_scroll_spinner">' + opus.spinner + '</span> \
@@ -492,7 +506,7 @@ var o_browse = {
             prefix = '';
             add_to_url = "";
         }
-        return {'namespace':namespace, 'view_var':view_var, 'prefix':prefix, 'add_to_url':add_to_url}
+        return {'namespace':namespace, 'view_var':view_var, 'prefix':prefix, 'add_to_url':add_to_url};
 
     },
 
@@ -511,7 +525,7 @@ var o_browse = {
 
         o_browse.browseControlIndicator(false);
 
-        var url = "/opus/api/images/small.html?alt_size=full&"
+        var url = "/opus/api/images/small.html?alt_size=full&";
 
         if (opus.prefs[prefix + 'browse'] == 'data') {
 
@@ -519,9 +533,8 @@ var o_browse = {
                 o_browse.startDataTable(namespace);
                 return; // startDataTable() starts data table and then calls getBrowseTab again
             }
-            url = '/opus/api/data.html?'
+            url = '/opus/api/data.html?';
         }
-
 
         url += o_hash.getHash() + '&reqno=' + opus.lastRequestNo + add_to_url;
 
@@ -540,7 +553,7 @@ var o_browse = {
         if (opus.browse_footer_clicked) {
             opus.browse_footer_clicked=false;
             needs_indicator_bar = true;
-            page = parseInt(start_page) + parseInt(footer_clicks);
+            page = parseInt(start_page, 10) + parseInt(footer_clicks, 10);
         } else {
             page = start_page;
         }
@@ -552,6 +565,7 @@ var o_browse = {
         }
 
         if (!page) page = 1;  //
+
 
         // did we already fetch this page?
         last_page = opus.last_page[view_var][opus.prefs.browse];
@@ -582,6 +596,7 @@ var o_browse = {
                function appendBrowsePage() {
                    // append browse page
 
+
                     /**
                     if (footer_clicks) {
                         // user is infinite scrolling, append a row that indicates page number here
@@ -589,7 +604,6 @@ var o_browse = {
                     }
                     **/
 
-                    // alert(html);
                     opus.prefs[view_var] == 'gallery' ? $('.gallery', namespace).append(html) : $(".data_table", namespace).append(html);
 
                     opus.last_page[view_var][opus.prefs.browse] = page;
@@ -610,7 +624,7 @@ var o_browse = {
                     opus.prefs[view_var] == 'gallery' ? footer_clicks = opus.browse_footer_clicks[prefix + 'gallery'] : footer_clicks = opus.browse_footer_clicks[prefix + 'data'];
 
                     // if they've clicked here x times show the checkbox
-                    if (parseInt(footer_clicks) > opus.footer_clicks_trigger) {
+                    if (parseInt(footer_clicks, 10) > opus.footer_clicks_trigger) {
                         $('.browse_footer_checkbox', namespace).html('<input type="checkbox" name="browse_auto" ' + opus.browse_auto + '>load automatically when scrolling to end');
                     }
                }
@@ -639,27 +653,27 @@ var o_browse = {
     textInputMonitor: function(field,ms) {
 
         // which field are we working on? defines which global monitor list we use
-    	switch(field) {
-    		case 'page':
-    			field_monitor = opus.page_monitor;
-    			prefix = '';
-    			break;
-    		case 'colls_page':
-    			field_monitor = opus.page_colls_monitor;
-    			prefix = 'colls_';
-    			break;
-    		default:
-    		    var field_monitor = opus.text_field_monitor;
-    	}
-    	var value = parseInt($('#' + prefix + 'page_no').val());
+        switch(field) {
+            case 'page':
+                field_monitor = opus.page_monitor;
+                prefix = '';
+                break;
+            case 'colls_page':
+                field_monitor = opus.page_colls_monitor;
+                prefix = 'colls_';
+                break;
+            default:
+                var field_monitor = opus.text_field_monitor;
+            }
+            var value = parseInt($('#' + prefix + 'page_no').val(), 10);
 
         if (opus.input_timer) clearTimeout(opus.input_timer);
 
 		opus.input_timer = setTimeout(
-		    function() {
+            function() {
                 if (field_monitor[field_monitor.length-1]  == value){
 					// the user has not moved in 2 seconds
-					o_browse.updatePage(parseInt(value));
+					o_browse.updatePage(parseInt(value, 10));
 					// opus.force_load = true;
 					// setTimeout("o_hash.updateHash()",0);
 					// tidy up, keep the array small..
@@ -670,23 +684,22 @@ var o_browse = {
                     field_monitor[field_monitor.length]  = value;
 					o_browse.textInputMonitor(field,ms);
 				}
-		    },ms);
+            },ms);
 
-        	// update the global monitor
-        	switch(field) {
-        		case 'page':
-        				opus.page_monitor = field_monitor;
-        				break;
-        		case 'page_colls':
-        				opus.page_colls_monitor = field_monitor;
-        				break;
-        		default:
-        				opus.text_field_monitor = field_monitor;
-        	}
+            // update the global monitor
+            switch(field) {
+                case 'page':
+                opus.page_monitor = field_monitor;
+                break;
+            case 'page_colls':
+                opus.page_colls_monitor = field_monitor;
+                break;
+            default:
+                opus.text_field_monitor = field_monitor;            }
         },
 
         updatePage: function(page) {
-            opus.browse_footer_clicks = {'gallery':0, 'data':0}
+            opus.browse_footer_clicks = {'gallery':0, 'data':0};
 			opus.prefs.page = page;
 			o_hash.updateHash();
 			$('.gallery', '#browse').empty();
@@ -704,8 +717,7 @@ var o_browse = {
                 var elemTop = $(elem).offset().top;
                 var elemBottom = elemTop + $(elem).height();
 
-                return ((elemBottom >= docViewTop) && (elemTop <= docViewBottom)
-                  && (elemBottom <= docViewBottom) &&  (elemTop >= docViewTop) );
+                return ((elemBottom >= docViewTop) && (elemTop <= docViewBottom) && (elemBottom <= docViewBottom) &&  (elemTop >= docViewTop) );
         },
 
 
@@ -735,12 +747,12 @@ var o_browse = {
                     // aka they are checking the box for the first time,
                     // slight pause to let them see their check get drawn
                    delay = 500;
-                   opus.browse_auto = 'checked'
+                   opus.browse_auto = 'checked';
                }
            } else { // auto box is unchecked
                opus.browse_auto = '';
                opus.prefs.browse == 'gallery' ? opus.browse_footer_clicks['gallery']++ : opus.browse_footer_clicks['data']++;
-               setTimeout('o_browse.getBrowseTab()',delay)
+               setTimeout('o_browse.getBrowseTab()',delay);
            }
 
            return false;
@@ -767,7 +779,7 @@ var o_browse = {
             $('#column_chooser').html(opus.spinner);
             $('#column_chooser').jqm({
                 overlay: 0,
-            })
+            });
 
             $('#column_chooser').jqmShow();
 
@@ -796,11 +808,11 @@ var o_browse = {
         },
 
         columnsDragged: function(element) {
-            var cols = $(element).sortable('toArray')
+            var cols = $(element).sortable('toArray');
             $.each(cols, function(key, value)  {
                 cols[key] = value.split('__')[1];
-            })
-            opus.prefs['cols'] = cols
+            });
+            opus.prefs['cols'] = cols;
             o_hash.updateHash();
             // if we are in gallery - just change the data-struct that gallery draws from
             // if we are in table -

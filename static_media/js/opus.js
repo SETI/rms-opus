@@ -89,6 +89,7 @@ var opus = {
             'browse':'gallery',        // which view is showing on the browse tab, gallery or table
             'colls_browse':'gallery',  // which view is showing on the collections page, gallery or table
             'detail':'',
+            'order':'',
             'cols': default_columns.split(','),
      }, // pref changes do not trigger load()
 
