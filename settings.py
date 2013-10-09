@@ -138,6 +138,7 @@ INSTALLED_APPS = (
     'results',
     'ui',
     'user_collections',
+    'tools',
 )
 
 STATICFILES_DIRS = (os.path.join(PROJECT_ROOT, 'static_media'),)
@@ -276,6 +277,10 @@ LOGGING = {
             'level': 'DEBUG',
         },
         'user_collections': {
+            'handlers': ['console', 'logfile'],
+            'level': 'DEBUG',
+        },
+        'tools': {
             'handlers': ['console', 'logfile'],
             'level': 'DEBUG',
         },

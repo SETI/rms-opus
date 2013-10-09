@@ -25,7 +25,7 @@ def getData(request,fmt):
     """
     a page of results for a given search
     """
-    [page_no,limit,page,page_ids] = getPage(request)
+    [page_no, limit,page, page_ids, order] = getPage(request)
     table_headers = request.GET.get('table_headers',False)
     if (table_headers=='False'): table_headers = False
     checkboxes = True if (request.is_ajax()) else False
@@ -46,7 +46,7 @@ def getData(request,fmt):
 
     data = {'page_no':page_no, 'limit':limit, 'page':page, 'count':len(page)}
 
-    return responseFormats(data,fmt,template='data.html',labels=labels,table_headers=table_headers,checkboxes=checkboxes, collection=collection)
+    return responseFormats(data,fmt,template='data.html', labels=labels,table_headers=table_headers,checkboxes=checkboxes, collection=collection, order=order)
 
 def getDetail(request,ring_obs_id='',fmt='json'):
     """
@@ -111,7 +111,7 @@ def getImages(request,size,fmt):
     columns = request.GET.get('cols',settings.DEFAULT_COLUMNS)
 
 
-    [page_no,limit,page,page_ids] = getPage(request)
+    [page_no, limit, page, page_ids, order] = getPage(request)
     image_links   = Image.objects.filter(ring_obs_id__in=page_ids)
 
     if alt_size:
@@ -140,7 +140,7 @@ def getImages(request,size,fmt):
         template = 'gallery.html'
     else: template = 'image_list.html'
 
-    return responseFormats({'data':[i for i in image_links]},fmt, path=path, size=size, alt_size=alt_size, columns_str=columns.split(','), all_collections = in_collections(request), template=template)
+    return responseFormats({'data':[i for i in image_links]},fmt, size=size, path=path, alt_size=alt_size, columns_str=columns.split(','), all_collections=in_collections(request), template=template, order=order)
 
 
 
@@ -154,7 +154,7 @@ def getImage(request,size='med', ring_obs_id='',fmt='mouse'):      # mouse?
     img = Image.objects.filter(ring_obs_id=ring_obs_id).values(size)[0][size]
     path = settings.IMAGE_HTTP_PATH
 
-    return responseFormats({'data':[{'img':img}]},fmt,path=path, size=size,template='image_list.html')
+    return responseFormats({'data':[{'img':img}]},fmt, size=size, path=path, template='image_list.html')
 
 def file_name_cleanup(base_file):
     base_file = base_file.replace('.','/')
@@ -387,7 +387,7 @@ def getPage(request):
             new_row.append(row[col])
         page += [new_row]
 
-    return [page_no, limit, page, page_ids]
+    return [page_no, limit, page, page_ids, order]
 
 
 
