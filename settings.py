@@ -207,6 +207,82 @@ DEBUG_TOOLBAR_PANELS = (
     'debug_toolbar.panels.logger.LoggingPanel',
 )
 
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': True,
+    'formatters': {
+        'standard': {
+            'format' : "[%(asctime)s] %(levelname)s [%(name)s:%(lineno)s] %(message)s",
+            'datefmt' : "%d/%b/%Y %H:%M:%S"
+        },
+    },
+    'handlers': {
+        'null': {
+            'level':'DEBUG',
+            'class':'django.utils.log.NullHandler',
+        },
+        'logfile': {
+            'level':'DEBUG',
+            'class':'logging.handlers.RotatingFileHandler',
+            'filename': PROJECT_ROOT + "/logfile",
+            'maxBytes': 50000,
+            'backupCount': 2,
+            'formatter': 'standard',
+        },
+        'console':{
+            'level':'INFO',
+            'class':'logging.StreamHandler',
+            'formatter': 'standard'
+        },
+    },
+    'loggers': {
+        'django': {
+            'handlers':['console'],
+            'propagate': True,
+            'level':'WARN',
+        },
+        'django.db.backends': {
+            'handlers': ['console'],
+            'level': 'DEBUG',
+            'propagate': False,
+        },
+        'results': {
+            'handlers': ['console', 'logfile'],
+            'level': 'DEBUG',
+        },
+        'search': {
+            'handlers': ['console', 'logfile'],
+            'level': 'DEBUG',
+        },
+        'guide': {
+            'handlers': ['console', 'logfile'],
+            'level': 'DEBUG',
+        },
+        'metadata': {
+            'handlers': ['console', 'logfile'],
+            'level': 'DEBUG',
+        },
+        'paraminfo': {
+            'handlers': ['console', 'logfile'],
+            'level': 'DEBUG',
+        },
+        'ui': {
+            'handlers': ['console', 'logfile'],
+            'level': 'DEBUG',
+        },
+        'testbed': {
+            'handlers': ['console', 'logfile'],
+            'level': 'DEBUG',
+        },
+        'user_collections': {
+            'handlers': ['console', 'logfile'],
+            'level': 'DEBUG',
+        },
+    }
+}
+
+
 BASE_PATH = ''  # production base path is handled by apache, local is not.
 try:
     from settings_local import *
