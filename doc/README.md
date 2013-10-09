@@ -1,0 +1,1 @@
+going to try to add some documentation here as a suppliment to the main readme, to explain some of the more complicated parts or architecture decisions in case they are not evident enough in code comments..
