@@ -4,6 +4,10 @@ var o_browse = {
       *
       *  all the things that happen on the browse tab
       *
+      *  do not underestimate this most magical method:
+      • 
+      •  o_browse.updatePage(no)
+      *
       **/
 
     browseBehaviors: function() {
@@ -275,12 +279,11 @@ var o_browse = {
             // the one that is showing, so unset the last_page var
             view_info = o_browse.getViewInfo();
             view_var = view_info['view_var'];
-            last_page = opus.last_page[view_var][opus.prefs.browse];
-            opus.last_page[view_var][opus.prefs.browse] = last_page - 1;
-
+            // set last page to one before first page that is showing in the interface
+            opus.last_page[view_var][opus.prefs.browse] = opus.prefs.page - 1;
 
             // now update the browse table
-            o_browse.updateBrowse();
+            o_browse.updatePage(opus.prefs.page);
 
          });
 
@@ -564,7 +567,9 @@ var o_browse = {
             $('#' + prefix + 'page_no', namespace).val(page); // reset the display
         }
 
-        if (!page) page = 1;  //
+        if (!page) {
+            page = 1;  //
+        }
 
 
         // did we already fetch this page?
@@ -725,7 +730,6 @@ var o_browse = {
         browseScrollWatch: function() {
             // this is for the infinite scroll footer bar
             if (opus.browse_auto && o_browse.isScrolledIntoView('#end_of_page')) {
-
                 if (opus.prefs.view=='browse') {
                     opus.prefs.browse == 'gallery' ? opus.browse_footer_clicks['gallery']++ : opus.browse_footer_clicks['data']++;
                 } else if (opus.prefs.view=='collections'){
