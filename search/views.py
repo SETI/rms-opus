@@ -3,9 +3,8 @@
 #   search.views
 #
 ################################################
-from opus.search.models import *
-from opus.paraminfo.models import *
-from opus.metadata.views import *
+from search.models import *
+from paraminfo.models import *
 from django.shortcuts import render_to_response
 from django.http import HttpResponse, Http404
 from django.core import serializers
@@ -17,9 +16,10 @@ from django.core.cache import cache
 import subprocess, operator, hashlib, os, re
 from tools.app_utils import *
 from tools.views import *
-from search.forms import *
 
-# NOTE: forehead smack.
+
+import logging
+log = logging.getLogger(__name__)
 
 def urlToSearchParams(request_get):
     """
@@ -143,8 +143,8 @@ def getQueryTable(mission,instrument):
 
     return table.lower()
 
-
 def getUserQueryTable(selections,extras={}):
+
 
     """
     This is THE main data query place.  Performs a data search and creates
@@ -214,7 +214,6 @@ def getUserQueryTable(selections,extras={}):
     # table may already exist
     no     = setUserSearchNo(selections,extras)
     ptbl   = getUserSearchTableName(no)
-
     cache_key = 'cache_table:' + str(no)
     if (cache.get(cache_key)):
         return cache.get(cache_key)
@@ -307,18 +306,23 @@ def getUserQueryTable(selections,extras={}):
 
     query = "create table " + connection.ops.quote_name(ptbl) + ' ' + where_clause
 
+
     #### not handling related right now but they are partially implemented ##### note: WTF?
 
     # print 'trying ' + query + ' , ' + str(grand_param_list) # shows in unit testing
     try: # now create our table
         cursor.execute(query, grand_param_list) # aaaaand secure
+        log.debug(query % tuple(grand_param_list))
         # print 'query ok'
         # this should be a celery task:
+        log.debug("alter table " + connection.ops.quote_name(ptbl) + " add unique key(id) ")
         cursor.execute("alter table " + connection.ops.quote_name(ptbl) + " add unique key(id)  ")
         # print 'execute ok'
         cache.set(cache_key,ptbl,0)
         return ptbl
+
     except:
+        log.debug('query execute failed')
         # import sys
         # print sys.exc_info()[1] + ': ' + print sys.exc_info()[1]
         return False
@@ -641,7 +645,6 @@ def rangeQuery(selections,param_name,qtypes):
         try:    value_max = values_max[i]
         except: value_max = None
 
-        # print 'hello ' + str(value_min) + ' ' + str(value_max) + ' ' + str(qtype) + ' ' + str(qtype[0])
 
         if value_min is not None and value_max is not None:
             (value_min,value_max) = sorted([value_min,value_max]) # reverse value_min and value_max if value_min < value_max
@@ -725,5 +728,6 @@ def stringQuery(param_name,value_list, qtypes):
     return [q , str_v_list]
 
 
-
+from metadata.views import *
+from search.forms import *
 

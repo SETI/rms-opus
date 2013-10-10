@@ -342,7 +342,7 @@ def getPage(request):
         page_no = request.GET.get('page',1)
         page_no = int(page_no)
         (selections,extras) = urlToSearchParams(request.GET)
-        table               = getUserQueryTable(selections,extras)
+        table = getUserQueryTable(selections,extras)
 
         # join it with Observations table where all results are found
         where   = "observations.id = " + connection.ops.quote_name(table) + ".id"
