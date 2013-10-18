@@ -587,8 +587,12 @@ var o_browse = {
 
         if (needs_indicator_bar) {
             indicator_row = o_browse.infiniteScrollPageIndicatorRow(page);
-            opus.prefs[view_var] == 'gallery' ? $(indicator_row).appendTo('.gallery', namespace).show() : $(indicator_row).appendTo(".data_table", namespace).show();
-            $('.infinite_scroll_spinner', namespace).show();
+            if (opus.prefs[view_var] == 'gallery') {
+                $(indicator_row).appendTo('.gallery', namespace).show()
+            } else {
+                $(".data_table tr:last", namespace).after(indicator_row);
+                $(".data_table tr:last", namespace).show();  // i dunno why couldn't chain these 2
+            }
         }
         url += '&page=' + page;
 
