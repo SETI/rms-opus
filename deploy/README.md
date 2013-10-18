@@ -5,19 +5,19 @@ if you are instead looking to update the OPUS database with new data, see import
 lots of this will all be moved to fabric files.
 
 
-locally, push code to remote repo on Bitbucket, check it out at ~/. (anything but dev dir)
+locally, push code to remote repo on Bitbucket
 
 ```
 git push
 ```
 
-then rsync to ~/. on server (not production dir) (this way cuz couldn't clone bitbucket from server)
+the next script will check out the remote repo, then rsync to ~/. on server (not production dir) (this way cuz couldn't clone bitbucket from server)
 
 ```
 bash deploy/deploy_opus_local.bash
 ```
 
-take backup of production
+on production, take backup of production deployment
 
 ```
 rsync -r -vc /home/django/djcode/opus ~/backups/.
