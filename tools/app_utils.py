@@ -193,6 +193,3 @@ def sortDict(mydict):
     for key in sorted(mydict.iterkeys()):
         newdict[key] = mydict[key]
     return newdict
-
-
-

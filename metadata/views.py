@@ -36,8 +36,6 @@ def getResultCount(request,fmt='json'):
 
     table = getUserQueryTable(selections,extras)
 
-    log.debug('got ' + str(table))
-
     if table is False:
         #print 'getUserQueryTable says: no table'
         count = False;
