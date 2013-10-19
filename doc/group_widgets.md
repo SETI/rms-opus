@@ -1,5 +1,5 @@
 
-========  Creating Grouped Widgets ========
+## Creating Grouped Widgets
 
 Some multi-checkbox widgets have too many options, so you want to group them
 to trigger grouping for a widget do this:
@@ -46,3 +46,23 @@ That's all.
 This will trigger ui.models.getWidget and search.forms.searchForm to create a grouped wiget
 Note the widget ui display will default to all groups being closed. If you want one default open or other
 behaviors you must code that in the javascript, see method customWidgetBehaviors.
+
+### Note:
+
+If you do not see the grouping you expect, make sure the 'grouping' field is added to the model spec in search.models, ie:
+
+    class MultTargetName(models.Model):
+        value = models.CharField(unique=True, max_length=50, blank=True, null = True)
+        label = models.CharField(unique=True, max_length=50, blank=True, null = True)
+        disp_order = models.IntegerField(null=True, blank=True)
+        display = models.CharField(max_length=9)
+        default_fade = models.CharField(max_length=9)
+        grouping = models.CharField(max_length=7)
+
+        def __unicode__(self):
+            return self.label
+
+        class Meta:
+            db_table = u'mult_target_name'
+
+

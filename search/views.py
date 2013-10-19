@@ -312,10 +312,8 @@ def getUserQueryTable(selections,extras={}):
     # print 'trying ' + query + ' , ' + str(grand_param_list) # shows in unit testing
     try: # now create our table
         cursor.execute(query, grand_param_list) # aaaaand secure
-        log.debug(query % tuple(grand_param_list))
         # print 'query ok'
         # this should be a celery task:
-        log.debug("alter table " + connection.ops.quote_name(ptbl) + " add unique key(id) ")
         cursor.execute("alter table " + connection.ops.quote_name(ptbl) + " add unique key(id)  ")
         # print 'execute ok'
         cache.set(cache_key,ptbl,0)
