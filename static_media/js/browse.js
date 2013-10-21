@@ -223,12 +223,13 @@ var o_browse = {
 
     addColumnChooserBehaviors: function() {
 
+        // close the chooser box dialogue thingy
         $('#column_chooser .close').click(function() {
              $('#column_chooser').jqmHide();
              return false;
         });
 
-
+        // a column is checked/unchecked
         $('.menu_list li a','#browse').click(function() {
             input = $(this).parent().find('input');
             if (!input.attr('checked')) {
@@ -240,6 +241,7 @@ var o_browse = {
             return false;
         });
 
+        // removes chosen column with X
         $('.chosen_column_close').live("click",function() {
             slug = $(this).parent().attr('id').split('__')[1];
             input = $('#column_chooser_input__' + slug);
@@ -247,6 +249,7 @@ var o_browse = {
             input.change();
         });
 
+        // a column is checked/unchecked, adds to / removes from 'chosen' column
         $('.column_checkbox input[type="checkbox"].param_input', '#browse').change(function() {
             slug = $(this).data('slug');
             label = $(this).data('label');
@@ -287,9 +290,9 @@ var o_browse = {
 
          });
 
-         $('#column_chooser .cats input[type="checkbox"].cat_input').click(function() {
+         // group header checkbox - lets user add/remove group of columns at a time
+         $('#column_chooser input[type="checkbox"].cat_input').click(function() {
              cols = opus.prefs['cols'];
-
              if ($(this).is(':checked')) {
                  // group header checkbox is checked, now check all params in group
                  $(this).parent().parent().find('.menu_list input[type="checkbox"]').each(function() {
@@ -318,6 +321,16 @@ var o_browse = {
              }
              opus.prefs['cols'] = cols;
              o_hash.updateHash();
+
+            // we are about to update the same page we just updated, it will replace
+            // the one that is showing, so unset the last_page var
+            view_info = o_browse.getViewInfo();
+            view_var = view_info['view_var'];
+            // set last page to one before first page that is showing in the interface
+            opus.last_page[view_var][opus.prefs.browse] = opus.prefs.page - 1;
+
+            // now update the browse table
+            o_browse.updatePage(opus.prefs.page);
 
          });
     },
@@ -792,6 +805,7 @@ var o_browse = {
             $('#column_chooser').jqmShow();
 
             url = 'forms/column_chooser.html?' + o_hash.getHash();
+
             $('#column_chooser').load( url, function(response, status, xhr)  {
                        opus.column_chooser_drawn=true;
 
