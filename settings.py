@@ -168,8 +168,8 @@ ERROR_LOG_PATH = PROJECT_ROOT + "logs/opus_log.txt"
 IMAGE_TYPES = ['Thumb','Small','Med','Full']
 
 
-base_volumes_path = 'volumes/pdsdata/volumes/';
-FILE_PATH  = base_volumes_path + 'pdsdata/'
+base_volumes_path = 'volumes/pdsdata/';
+FILE_PATH  = base_volumes_path + 'volumes/'
 FILE_HTTP_PATH  = 'http://pds-rings.seti.org/volumes/'
 DERIVED_PATH  = base_volumes_path + 'derived/'
 DERIVED_HTTP_PATH  = 'http://pds-rings.seti.org/derived/'

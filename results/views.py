@@ -50,10 +50,11 @@ def getData(request,fmt):
 
 def getDetail(request,ring_obs_id='',fmt='json'):
     """
-    results for a single observation  THIS IS HORRID!!!!!
+    results for a single observation
+    all the data, in categories and groups
+
     """
     if not ring_obs_id: return
-
 
     data = SortedDict({})
     # mission and instrument values for this ring_obs_id
@@ -211,6 +212,10 @@ def getFiles(ring_obs_id,fmt='raw', loc_type="url", product_types=[], previews=[
         files_table_rows = Files.objects.filter(ring_obs_id=ring_obs_id)
 
         for f in files_table_rows:
+
+            # append new base paths
+            path = path + f.base_path.split('/')[-2:-1][0] + '/'
+
             file_extensions = []
             # volume_loc = getAltVolumeLocs(volume_id)
             volume_loc = f.volume_id
@@ -263,9 +268,12 @@ def getFiles(ring_obs_id,fmt='raw', loc_type="url", product_types=[], previews=[
                 else:
                     path = settings.FILE_HTTP_PATH
 
+
+            base_vol_path = Files.objects.filter(ring_obs_id=ring_obs_id)[0].base_path.split('/')[-2:-1][0] + '/'  # base_path in db
+            path = path + base_vol_path
+
             for extension in file_extensions:
                 file_names[ring_obs_id][f.product_type]  += [path + volume_loc + '/' + base_file + '.' + extension]
-
             # // add the original file
             file_names[ring_obs_id][f.product_type]  += [path + volume_loc + '/' + base_file + '.' + ext]
 

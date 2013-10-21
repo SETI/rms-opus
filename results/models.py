@@ -7,14 +7,14 @@ class Image(models.Model):
     thumb = models.CharField(max_length=255, blank=True)
     small = models.CharField(max_length=255, blank=True)
     med = models.CharField(max_length=255, blank=True)
-    full = models.CharField(max_length=255, blank=True)  
+    full = models.CharField(max_length=255, blank=True)
     # opus1_ring_obs_id = models.CharField(max_length=40)
-    
+
     class Meta:
         db_table = u'images'
 
-    def __unicode__(self):  
-        return self.ring_obs_id     
+    def __unicode__(self):
+        return self.ring_obs_id
 
 class FileSizes(models.Model):
     name = models.CharField(max_length=90)
@@ -23,17 +23,17 @@ class FileSizes(models.Model):
     volume_id = models.CharField(max_length=75, db_column='VOLUME_ID', blank=True) # Field name made lo$
     file_type = models.CharField(max_length=25)
     obs_general_no = models.IntegerField(null=True,blank=True)
-    PRODUCT_TYPE = models.CharField(max_length=30) 
-    file_name = models.CharField(max_length=80) 
-    base_path = models.CharField(max_length=50) 
-    
+    PRODUCT_TYPE = models.CharField(max_length=30)
+    file_name = models.CharField(max_length=80)
+    base_path = models.CharField(max_length=50)
+
     class Meta:
         db_table = u'file_sizes'
-    
-                                   
-    def __unicode__(self):  
+
+
+    def __unicode__(self):
         return self.name
-    
+
 class Files(models.Model):
     ring_obs_id = models.CharField(max_length=40, blank=True)
     file_specification_name = models.CharField(max_length=180, db_column='FILE_SPECIFICATION_NAME') # F$
@@ -52,10 +52,11 @@ class Files(models.Model):
     msb_ext = models.CharField(max_length=12, db_column='MSB_ext', blank=True) # Field name made lowerc$
     detached_label_ext = models.CharField(max_length=12, blank=True)
     extra_files = models.TextField(blank=True)
+    base_path = models.CharField(max_length=60)
     mission = models.TextField(blank=True)
     class Meta:
         db_table = u'files'
-    
-                                   
-    def __unicode__(self):  
-        return self.ring_obs_id    
+
+
+    def __unicode__(self):
+        return self.ring_obs_id
