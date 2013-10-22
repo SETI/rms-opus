@@ -155,7 +155,8 @@ CACHES = {
 INTERNAL_IPS = ("127.0.0.1",)
 
 # app constants
-TAR_FILE_PATH = PROJECT_ROOT + '/downloads'
+TAR_FILE_PATH =  '/usr/share/nginx/www/opus'  # this is user created tar files
+TAR_FILE_URI_PATH = 'http://pds-rings-downloads.seti.org/opus/'
 C_PATH          = ''
 IMAGE_HTTP_PATH = 'http://pds-rings.seti.org/browse/'
 DEFAULT_COLUMNS = 'ringobsid,planet,target,phase1'
@@ -173,7 +174,6 @@ FILE_PATH  = base_volumes_path + 'volumes/'
 FILE_HTTP_PATH  = 'http://pds-rings.seti.org/volumes/'
 DERIVED_PATH  = base_volumes_path + 'derived/'
 DERIVED_HTTP_PATH  = 'http://pds-rings.seti.org/derived/'
-TAR_FILE_PATH = base_volumes_path + ''
 IMAGE_HTTP_PATH = 'http://pds-rings.seti.org/browse/'
 IMAGE_PATH = '/volumes/pdsdata/volumes/'
 MAX_CUM_DOWNLAOD_SIZE = 5*1024*1024*1024 # 5 gigs max cum downloads
@@ -182,7 +182,6 @@ MAX_CUM_DOWNLAOD_SIZE = 5*1024*1024*1024 # 5 gigs max cum downloads
 # prod
 # VOLUMES_PATH  = '/volumes/pdsdata/volumes/'
 # DERIVED_PATH  = '/volumes/pdsdata/derived/'
-# TAR_FILE_PATH     = '/library/webserver/something/'
 
 
 TEST_RUNNER = 'django_nose.NoseTestSuiteRunner'
@@ -281,6 +280,10 @@ LOGGING = {
             'level': 'DEBUG',
         },
         'tools': {
+            'handlers': ['console', 'logfile'],
+            'level': 'DEBUG',
+        },
+        'downloads': {
             'handlers': ['console', 'logfile'],
             'level': 'DEBUG',
         },

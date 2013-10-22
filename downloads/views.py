@@ -14,6 +14,9 @@ import datetime
 import hashlib
 import os
 
+import logging
+log = logging.getLogger(__name__)
+
 def create_zip_filename(ring_obs_id=None):
     if not ring_obs_id:
         letters = random.choice(string.ascii_letters) + random.choice(string.ascii_letters) + random.choice(string.ascii_letters)
@@ -88,13 +91,13 @@ def get_download_info(request, collection=""):
 
 
 def get_cum_downlaod_size(request, download_size):
-    cum_downlaod_size = download_size
+    cum_downlaod_size = int(download_size) if download_size else 0
     if request.session.get('cum_downlaod_size'):
-        cum_downlaod_size = request.session.get('cum_downlaod_size') + download_size
+        cum_downlaod_size = request.session.get('cum_downlaod_size') + int(download_size)
     request.session['cum_downlaod_size'] = cum_downlaod_size
     return cum_downlaod_size
 
-def create_download(request, collection_name, ring_obs_ids=None, fmt="raw"):
+def create_download(request, collection_name='', ring_obs_ids=None, fmt="raw"):
 
     fmt = request.GET.get('fmt', None)
     product_types = request.GET.get('types', '')
@@ -115,31 +118,38 @@ def create_download(request, collection_name, ring_obs_ids=None, fmt="raw"):
     else:
         zip_file_name = create_zip_filename();
 
+    log.info(zip_file_name)
+
     chksum_file_name = settings.TAR_FILE_PATH + "checksum_" + zip_file_name.split(".")[0] + ".txt"
     manifest_file_name = settings.TAR_FILE_PATH + "manifest_" + zip_file_name.split(".")[0] + ".txt"
 
+    log.info(chksum_file_name)
+    log.info(manifest_file_name)
+
     # lisa
-    # files = getFiles(ring_obs_ids,"raw", "path", product_types, previews)
+    files = getFiles(ring_obs_ids,"raw", "path", product_types, previews)
     # return getFiles(ring_obs_ids,"raw", loc_type = 'path')
-    from results.views import *
-    files = getFiles(ring_obs_ids,"raw", "url", product_types, previews)
-    return HttpResponse(simplejson.dumps(files), mimetype="application/json")
+    # from results.views import *
+    # files = getFiles(ring_obs_ids,"raw", "url", product_types, previews)
+    # return HttpResponse(simplejson.dumps(files), mimetype="application/json")
 
     tar = tarfile.open(settings.TAR_FILE_PATH + zip_file_name, 'w:gz')
     chksum = open(chksum_file_name,"w")
     manifest = open(manifest_file_name,"w")
     size = get_download_size(files, product_types, previews)
 
+    """
     cum_downlaod_size = get_cum_downlaod_size(request,size)
     if cum_downlaod_size > settings.MAX_CUM_DOWNLAOD_SIZE:
         # user is trying to download > MAX_CUM_DOWNLAOD_SIZE
         return HttpResponse("Sorry, Max cumulative download size reached " + str(cum_downlaod_size) + ' > ' + str(settings.MAX_CUM_DOWNLAOD_SIZE))
-
+    """
 
     errors = []
     added = False
     for ring_obs_id,products in files.items():
         for product_type,file_list in products.items():
+            log.info(file_list)
             for name in file_list:
                 try:
                     digest="%s:%s"%(name.split("/")[-1], md5(name))
@@ -155,6 +165,7 @@ def create_download(request, collection_name, ring_obs_ids=None, fmt="raw"):
 
     manifest.write("errors:"+"\n")
     for e in errors:
+        log.info(e)
         manifest.write(e+"\n")
 
     manifest.close()
@@ -163,7 +174,7 @@ def create_download(request, collection_name, ring_obs_ids=None, fmt="raw"):
     tar.add(manifest_file_name, arcname="manifest.txt")
     tar.close()
 
-    zip_url = settings.MEDIA_URL + "downloads/" + zip_file_name
+    zip_url = settings.TAR_FILE_URI_PATH + zip_file_name
 
     if not added:
         zip_url = "No Files Found"
