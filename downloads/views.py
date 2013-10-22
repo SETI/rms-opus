@@ -171,7 +171,6 @@ def create_download(request, collection_name='', ring_obs_ids=None, fmt="raw"):
     zip_url = settings.TAR_FILE_URI_PATH + zip_file_name
 
     if not added:
-	log.info(file_list)
         zip_url = "No Files Found"
 
     if fmt == 'json':
