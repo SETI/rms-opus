@@ -11,9 +11,6 @@ from paraminfo.models import *
 from metadata.views import *
 from user_collections.views import *
 from django.http import Http404
-from django.conf import settings
-from django.core import serializers
-from django.template import RequestContext
 from django.shortcuts import render_to_response
 from tools.app_utils import *
 from django.utils.datastructures import SortedDict
