@@ -1,76 +1,80 @@
 {% extends "base_opus.html" %}
-                   
+
 {# this is in the '#collections' div / jquery context}
 
-{% block base %} 
+{% block base %}
 {% block content %}
-{% block browse_controls %}                   
-{% block browse_container %}          
-  
-             
-{% for c in collection %}      
+{% block browse_controls %}
+{% block browse_container %}
+
+
+{% for c in collection %}
 	'{{ c }}',
-{% endfor %}         
+{% endfor %}
 
 <div id = "collections_summary">
-	<h2>Collections Summary</h2> 
+	<h2>Collections Summary</h2>
 	Total Files: <span id = "total_files">{{download_count}}</span>
 	&nbsp;&nbsp;&nbsp;
 	Total Size (before zip): <span id = "download_size">{{download_size}}</span>
 	<p>>> <a href = "" id = "collections_summary_more">show options</a></p>
-	                   
-	<h3><a href = "" id = "download_options_link">Download</a></h3> 
+
+	<h3><a href = "" id = "download_options_link">Download</a></h3>
 	<div id = "downlaod_options">
 	<p><strong>Product Types:</strong></p>
 	<ul id = "product_types">
 	 {% for ptype in product_types %}
 		    <li><span> <input type = "checkbox" value = "{{ ptype.product_type }}"
-						{% for k,v in product_counts.items %} {# loop through product count list #} 
+						{% for k,v in product_counts.items %} {# loop through product count list #}
 						  	{% if k == ptype.product_type %} {# if this product_type matches outer loop ptype, draw.. #}
-                    {% if v > 0 %}    {# this has a number, check the input adn display number #}  
+                    {% if v > 0 %}    {# this has a number, check the input adn display number #}
 									  	 checked>
 											 <span>{{ ptype.product_type }}</span>
 											 <span class = "product_count hints"> {{ v }}</span>
-										{% else %}{% if v == 0 %} {# this doesn't have number, display with fadey class #}  
+										{% else %}{% if v == 0 %} {# this doesn't have number, display with fadey class #}
 											><span class = "fadey">{{ ptype.product_type }}</span>
-										{% endif %}{% endif %}	        
+										{% endif %}{% endif %}
 
-							  {% endif %}  
-						{% endfor %} 
+							  {% endif %}
+						{% endfor %}
 						</span>
-				</li>     
-				
-	 {% endfor %} 
-	</ul>			
-	
-	<p><strong>Preview Images:</strong></p>        
+				</li>
+
+	 {% endfor %}
+	</ul>
+
+	<p><strong>Preview Images:</strong></p>
 	<ul id = "image_types">
 	 {% for i in image_types %}
 		    <li><input type = "checkbox" value = "{{ i }}"> {{ i }} <span class = "hints">{{ image_count }}</span></li>
-	 {% endfor %} 
+	 {% endfor %}
 	</ul>
-	    
+
 	<div class = "download_buttons">
 	<ul>
 	<li><a id = "create_zip_file" href = "/collections/download/default.zip">Create Tar Archive</a></li>
   </ul>
 	</div>
-	
+
+    <div id = "zip_files">
+
+    </div>
+
   </div>
 
   <h3>
-	<a href = "" id = "empty_collection">remove all<a/>	
-  </3>          
+	<a href = "" id = "empty_collection">remove all<a/>
+  </3>
 
 </div>
 
-	               
+
 <div id = "collections_browse">
-                          
-	{{ block.super }}                    
+
+	{{ block.super }}
 
 </div>
-  
+
 
 
 

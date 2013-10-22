@@ -43,11 +43,15 @@ var o_collections = {
 
          // click
          $('a#create_zip_file','#collections').live("click", function() {
-               add_to_url = [];
-               add_to_url = o_collections.getDownloadFiltersChecked();
-               url = 'collections/download/default.zip?' + add_to_url
-               window.open(url,'_blank');
-               return false;
+                $('#zip_file', "#detail").html(opus.spinner + " zipping files");
+                add_to_url = [];
+                add_to_url = o_collections.getDownloadFiltersChecked();
+                url = 'collections/download/default.zip?' + add_to_url;
+                $.ajax({ url: url,
+                     success: function(json){
+                         $('#zip_files').append('<a href = "' + json + '">' + json + '</a>').show();
+                     }});
+                return false;
          });
 
 
