@@ -155,7 +155,6 @@ CACHES = {
 INTERNAL_IPS = ("127.0.0.1",)
 
 # app constants
-TAR_FILE_PATH =  '/usr/share/nginx/www/opus/'  # this is user created tar files
 TAR_FILE_URI_PATH = 'http://pds-rings-downloads.seti.org/opus/'
 C_PATH          = ''
 IMAGE_HTTP_PATH = 'http://pds-rings.seti.org/browse/'
