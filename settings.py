@@ -168,19 +168,11 @@ ERROR_LOG_PATH = PROJECT_ROOT + "logs/opus_log.txt"
 IMAGE_TYPES = ['Thumb','Small','Med','Full']
 
 
-base_volumes_path = 'volumes/pdsdata/';
-FILE_PATH  = base_volumes_path + 'volumes/'
 FILE_HTTP_PATH  = 'http://pds-rings.seti.org/volumes/'
-DERIVED_PATH  = base_volumes_path + 'derived/'
 DERIVED_HTTP_PATH  = 'http://pds-rings.seti.org/derived/'
 IMAGE_HTTP_PATH = 'http://pds-rings.seti.org/browse/'
-IMAGE_PATH = '/volumes/pdsdata/volumes/'
 MAX_CUM_DOWNLAOD_SIZE = 5*1024*1024*1024 # 5 gigs max cum downloads
 
-
-# prod
-# VOLUMES_PATH  = '/volumes/pdsdata/volumes/'
-# DERIVED_PATH  = '/volumes/pdsdata/derived/'
 
 
 TEST_RUNNER = 'django_nose.NoseTestSuiteRunner'
