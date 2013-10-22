@@ -49,7 +49,7 @@ var o_collections = {
                 url = 'collections/download/default.zip?' + add_to_url;
                 $.ajax({ url: url,
                      success: function(json){
-                         $('#zip_files').append('<a href = "' + json + '">' + json + '</a>').show();
+                         $('#zip_files').append('<p><a href = "' + json + '">' + json + '</a></p>').show();
                      }});
                 return false;
          });
