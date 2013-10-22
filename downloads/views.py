@@ -127,9 +127,10 @@ def create_download(request, collection_name='', ring_obs_ids=None, fmt="raw"):
     log.info(manifest_file_name)
 
     # lisa
+    from results.views import *
     files = getFiles(ring_obs_ids,"raw", "path", product_types, previews)
     # return getFiles(ring_obs_ids,"raw", loc_type = 'path')
-    # from results.views import *
+    #
     # files = getFiles(ring_obs_ids,"raw", "url", product_types, previews)
     # return HttpResponse(simplejson.dumps(files), mimetype="application/json")
 
