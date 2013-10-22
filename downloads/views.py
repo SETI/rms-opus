@@ -118,13 +118,8 @@ def create_download(request, collection_name='', ring_obs_ids=None, fmt="raw"):
     else:
         zip_file_name = create_zip_filename();
 
-    log.info(zip_file_name)
-
     chksum_file_name = settings.TAR_FILE_PATH + "checksum_" + zip_file_name.split(".")[0] + ".txt"
     manifest_file_name = settings.TAR_FILE_PATH + "manifest_" + zip_file_name.split(".")[0] + ".txt"
-
-    log.info(chksum_file_name)
-    log.info(manifest_file_name)
 
     # lisa
     from results.views import *
@@ -150,7 +145,6 @@ def create_download(request, collection_name='', ring_obs_ids=None, fmt="raw"):
     added = False
     for ring_obs_id,products in files.items():
         for product_type,file_list in products.items():
-            log.info(file_list)
             for name in file_list:
                 try:
                     digest="%s:%s"%(name.split("/")[-1], md5(name))
@@ -166,7 +160,6 @@ def create_download(request, collection_name='', ring_obs_ids=None, fmt="raw"):
 
     manifest.write("errors:"+"\n")
     for e in errors:
-        log.info(e)
         manifest.write(e+"\n")
 
     manifest.close()
