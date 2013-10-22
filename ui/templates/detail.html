@@ -16,7 +16,7 @@
 {% endfor %}
 </ul>
 <div id = "zip_file">
-<a id = "create_zip_file" href = "opus/zip/{{ img.ring_obs_id}}.json">create_tar_archive</a>
+<a id = "create_zip_file" href = "/zip/{{ img.ring_obs_id}}.json">create_tar_archive</a>
 </div>
 
 <div><h2>Rings Node generated products:</h2>
@@ -31,10 +31,10 @@
 
 <h2>Data:</h2>
 <div>
-<a href = "opus/api/detail/{{ img.ring_obs_id }}.json" target = "_blank">grab json</a>
+<a href = "/api/detail/{{ img.ring_obs_id }}.json" target = "_blank">grab json</a>
 </div>
 <div>
-<a href = "opus/api/detail/{{ img.ring_obs_id }}.csv" target = "_blank">grab comma-delimited</a>
+<a href = "/api/detail/{{ img.ring_obs_id }}.csv" target = "_blank">grab comma-delimited</a>
 </div>
 
 <ul id = "detail_data">
