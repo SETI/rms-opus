@@ -1,3 +1,11 @@
+# hold up, this is all changed, currently working on:
+
+build_db.py
+build_models.py
+
+to build the NEW schema
+
+
 # Once you deploy a database to OPUS 1 this procedure will magically update OPUS 2 with the same data.
 
 1. backup the opus databased to a dump file

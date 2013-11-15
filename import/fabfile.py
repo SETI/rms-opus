@@ -13,7 +13,7 @@ The Django models it creates at search/models.py should be deployed to productio
 It should make a backup of current OPUS2 database before deleting it.
 
 Currently assumes OPUS1 database is named 'Observations' and OPUS2 is called 'opus' heh heh.
-
+Change that at top of build_obs.py
 ----
 
 fab -H lballard@pds-rings-tools.seti.org deploy_opus2:volumes=all
@@ -60,7 +60,7 @@ def build_opus2(volumes='COISS_2060,NHJULO_1001,COCIRS_5403'):
     # init
     with cd('/home/lballard/opus/'):
 
-        # drop and create new opus
+        # drop and create new empty opus
         run('mysql opus < import/drop_and_create_opus.sql -u%s -p%s' % (mysql_user, mysql_pass))
 
         # setup local env for development deploy at home/user/

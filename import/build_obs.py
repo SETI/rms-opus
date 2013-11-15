@@ -1,6 +1,14 @@
 #!/usr/bin/env python
 ####################################################################################################
 #
+#  DEBRACATED!
+#
+#  NOTE::
+#
+#   THIS FILE HAS BEEN REPLACED
+#
+#   SEE build_models.py and build_db.py
+#
 #   Has 2 uses:
 #
 #   prints all search and param_info models by reading OPUS 1 database (named Observations)
@@ -44,8 +52,8 @@ if len(sys.argv) < 2:
 
     This script prints statements to stdout
 
-    1st arg is what want to make: either 'models' or 'sql'
-    2nd arumnet is a list of volumes, with no spaces
+    1st arg is what you want to make: either 'models' or 'sql'
+    2nd arg is a list of volumes, with no spaces
 
     Like so:
 
@@ -321,14 +329,16 @@ for row in rows:
     field_def = "    " + field_names[len(field_names)-1] + ' = ' + model_def + "\n"
 
     # now add the field definitions to the models
+    # first the big Obs table
     Obs_model += field_def + fkey_field_def
 
-    # loop through all the shard tables
+    # then each shard
     for shard,shard_abbrevs in shards.items():
         # we only want to add the field def to this shard model if it is a global field (no abbrev)
         # or if the abbrevs match those defined in shards
         if not abbrev or abbrev in shard_abbrevs['prefixes']:
            vars()['Obs' + shard + '_model'] += field_def + fkey_field_def
+
 
 # now for the param_info model data transfers
 fields = []
@@ -343,17 +353,20 @@ param_info_sql += ["delete from opus.param_info"]
 hacked_exclude = ("'" + "','".join(exclude) + "'").split(',')
 param_info_sql += ["insert into opus.param_info select " + ','.join(fields) + " from " + opus1 + ".forms " + where_clause % tuple(hacked_exclude)]
 
+
 # update the display prefs for each field in the new param_info table
+param_info_sql += ["update opus.param_info as params," + opus1 + ".forms as forms set params.display = true where forms.display = 'Y' and params.id = forms.no"]
+param_info_sql += ["update opus.param_info as params," + opus1 + ".forms as forms set params.display_results = true where forms.display_results = 'Y' and params.id = forms.no"]
+# param_info_sql += ["update param_info set name = concat('mov_', name) where category_name = 'obs_movies'"]
+
+
+# what in the fuck?
 fields = []
 cursor.execute("desc " + opus1 + ".table_names")
 rows = cursor.fetchall()
 for row in rows:
     field = row[0]
     fields += [field]
-param_info_sql += ["update opus.param_info as params," + opus1 + ".forms as forms set params.display = true where forms.display = 'Y' and params.id = forms.no"]
-param_info_sql += ["update opus.param_info as params," + opus1 + ".forms as forms set params.display_results = true where forms.display_results = 'Y' and params.id = forms.no"]
-# param_info_sql += ["update param_info set name = concat('mov_', name) where category_name = 'obs_movies'"]
-
 
 
 
