@@ -235,6 +235,7 @@ create table %s.guide_example like opus_hack.guide_example;
 create table %s.guide_group like opus_hack.guide_group;
 create table %s.guide_keyvalue like opus_hack.guide_keyvalue;
 create table %s.guide_resource like opus_hack.guide_resource;
+create table %s.user_searches like opus_hack.user_searches;
 insert into %s.guide_example select * from opus_hack.guide_example;
 insert into %s.guide_group select * from opus_hack.guide_group;
 insert into %s.guide_keyvalue select * from opus_hack.guide_keyvalue;
