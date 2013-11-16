@@ -189,11 +189,12 @@ def getUserQueryTable(selections,extras={}):
             q_objects.append(Q(**{"%s__in" % mult_name: mult_values }))
 
 
-        # RANGE
+        # RANGE including LONG
         if form_type in settings.RANGE_FIELDS:
             if special_query == 'long':
                 lq = longitudeQuery(selections,param_name)
                 long_querys.append(lq)
+                continue
 
             if param_name_no_num in finished_ranges:
                 # this prevents range queries from getting through twice
@@ -236,6 +237,8 @@ def range_query_object(selections, param_name, qtypes):
     """
     builds query for numeric ranges where 2 data columns represent min and max values
     """
+    param_name_no_num = stripNumericSuffix(param_name)
+
     param_info    = ParamInfo.objects.get(name=param_name)
     form_type     = param_info.form_type
     special_query = param_info.special_query
@@ -315,6 +318,7 @@ def range_query_object(selections, param_name, qtypes):
 
         q_exp = q_exp1 & q_exp2 if q_exp2 else q_exp1
         all_query_expressions.append(q_exp)
+        i+=1
 
     # now we have all query expressions, join them with 'OR'
     return reduce(OR, all_query_expressions)
