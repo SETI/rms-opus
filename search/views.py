@@ -5,6 +5,7 @@
 ################################################
 from search.models import *
 from paraminfo.models import *
+from operator import __or__ as OR
 from django.shortcuts import render_to_response
 from django.http import HttpResponse, Http404
 from django.core import serializers
@@ -147,13 +148,15 @@ def getUserQueryTable(selections,extras={}):
     if 'qtypes' in extras:
         all_qtypes = extras['qtypes']
 
-    # check if this table already exists:
+    # check if this search table already exists:
     no     = setUserSearchNo(selections,extras)
     ptbl   = getUserSearchTableName(no)
+
     # see if memcache knows about it:
     cache_key = 'cache_table:' + str(no)
     if (cache.get(cache_key )):
         return cache.get(cache_key)
+
     # check if table exists in db
     try:
         cursor.execute("desc " + ptbl)
@@ -161,8 +164,9 @@ def getUserQueryTable(selections,extras={}):
     except DatabaseError:
         pass
 
-    # cache table dose not exist, we will make one:
-    kwargs = {}  # for building up the query object
+    # cache table dose not exist, we will make one by runing the query
+    long_querys = []  # special longitudinal queries are pure sql
+    q_objects = [] # for building up the query object
     for param_name, value_list in selections.items():
         param_info = ParamInfo.objects.get(name=param_name)
         form_type = param_info.form_type
@@ -175,29 +179,47 @@ def getUserQueryTable(selections,extras={}):
         try:    qtypes = all_qtypes[param_name_no_num]
         except: qtypes = []
 
-        # now build the kwargs to run the query, by form_type:
+        # now build the q_objects to run the query, by form_type:
 
         # MULTs
         if form_type in settings.MULT_FORM_TYPES:
             mult_name = "mult_" + table_name + "_" + param_name
             model = get_model('search',mult_name.title().replace('_',''))
             mult_values = [x['pk'] for x in list(model.objects.filter(label__in=value_list).values('pk'))]
-            kwargs[mult_name + "__in"] = mult_values
+            q_objects.append(Q(**{"%s__in" % mult_name: mult_values }))
+
 
         # RANGE
         if form_type in settings.RANGE_FIELDS:
+            if special_query == 'long':
+                lq = longitudeQuery(selections,param_name)
+                long_querys.append(lq)
+
             if param_name_no_num in finished_ranges:
                 # this prevents range queries from getting through twice
                 # if one range side has been processed can skip the 2nd
                 continue # this range has already been done, clause for both sides built, skip to next param in loop
             else: finished_ranges += [param_name_no_num]
 
+            q_obj = range_query_object(selections, param_name, qtypes)
+            q_objects.append(q_obj)
+
+
 
     try: # now create our table
+
+        # construct our query, we'll be using the sql django makes
         cursor = connection.cursor()
-        q = str(ObsGeneral.objects.filter(**kwargs).values('pk').query)
+        q = str(ObsGeneral.objects.filter(*q_objects).values('pk').query)
+
+        # append any longitudinal queries to the query string
+        if long_querys:
+            for q in long_querys:
+                q += " and (%s) " % q
+
+        # with this we can create a table that contains the single row
         cursor.execute("create table " + ptbl + " " + q)
-        # this should be spawned to a backend process:
+        # add the key, note this should be spawned to a backend process:
         cursor.execute("alter table " + connection.ops.quote_name(ptbl) + " add unique key(id)  ")
         # print 'execute ok'
         cache.set(cache_key,ptbl,0)
@@ -208,6 +230,94 @@ def getUserQueryTable(selections,extras={}):
         # import sys
         # print sys.exc_info()[1] + ': ' + print sys.exc_info()[1]
         return False
+
+
+def range_query_object(selections, param_name, qtypes):
+    """
+    builds query for numeric ranges where 2 data columns represent min and max values
+    """
+    param_info    = ParamInfo.objects.get(name=param_name)
+    form_type     = param_info.form_type
+    special_query = param_info.special_query
+
+    param_name_min = param_name_no_num + '1'
+    param_name_max = param_name_no_num + '2'
+
+    try:    values_min = selections[param_name_min]
+    except: values_min = []
+    try:    values_max = selections[param_name_max]
+    except: values_max = []
+
+    # if these are times convert values from time string to seconds
+    if form_type == 'TIME':
+        values_min = convertTimes(values_min,conversion_script='time_to_seconds')
+        try:
+            index = values_min.index(None)
+            raise Exception("InvalidTimes")
+        except: pass
+        values_max = convertTimes(values_max,conversion_script='time_to_seconds')
+        try:
+            index = values_max.index(None)
+            raise Exception("InvalidTimes")
+        except: pass
+
+    try:   qtype = qtypes[0]
+    except IndexError: qtypes += ['any'] # defaults to any
+
+    count = len(values_max) if len(values_max) > len(values_min) else len(values_min) # how many times to go thru this loop:
+    i=0
+
+    all_query_expressions = []  # these will be joined by OR
+    while i < count:
+        try:    qtype = qtypes[i]
+        except: qtype = qtypes[0]
+
+        try:    value_min = values_min[i]
+        except: value_min = None
+        try:    value_max = values_max[i]
+        except: value_max = None
+
+        if value_min is not None and value_max is not None:
+            (value_min,value_max) = sorted([value_min,value_max]) # reverse value_min and value_max if value_min < value_max
+
+
+        q_exp1, q_exp2 = None, None
+        if qtype == 'all':
+
+            if value_min:
+                # param_name_min <= value_min
+                q_exp1 = Q(**{"%s__lte" % param_name_min: value_min })
+
+            if value_max:
+                # param_name_max >= value_max
+                q_exp2 = Q(**{"%s__gte" % param_name_max: value_max })
+
+        elif qtype == 'only':
+
+            if value_min:
+                # param_name_min >= value_min
+                q_exp1 = Q(**{"%s__gte" % param_name_min: value_min })
+
+            if value_max:
+                # param_name_max <= value_max
+                q_exp2 = Q(**{"%s__lte" % param_name_max: value_max })
+
+        else: # defaults to qtype = any
+
+            if value_max:
+                # param_name_min <= value_max
+                q_exp1 = Q(**{"%s__lte" % param_name_min: value_max })
+
+            if value_min:
+                # param_name_max >= value_min
+                q_exp2 = Q(**{"%s__gte" % param_name_max: value_min })
+
+
+        q_exp = q_exp1 & q_exp2 if q_exp2 else q_exp1
+        all_query_expressions.append(q_exp)
+
+    # now we have all query expressions, join them with 'OR'
+    return reduce(OR, all_query_expressions)
 
 
 def longitudeQuery(selections,param_name):
@@ -252,7 +362,7 @@ def longitudeQuery(selections,param_name):
 
     # print 'clauses ' + str(clauses)
     # print 'params ' + str(params)
-    return [' OR '.join(clauses), params]
+    return ' OR '.join(clauses), params
 
 
 def convertTimes(value_list,conversion_script='time_to_seconds'):
