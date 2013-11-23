@@ -96,133 +96,8 @@ class myFirstTests(TestCase):
         self.assertEqual(table,'cache_1')
 
 
-    """
-    def test__overrides_mult_query_type_with_range(self):
-        #  overides mult query type with RANGE
-        selections = {}
-        selections['FILTER'] = ['ORANGE','violet']
-        extras={}
-        qtypes = {}
-        qtypes['VGISS_FILTER'] = 'range'
-        extras['qtypes'] = qtypes
-        table = getUserQueryTable(selections,extras)
-        print "table = " + str(table) + "\n" + str(selections)
-        self.assertEqual(table,'cache_7')
-        # 2nd
-        table = getUserQueryTable(selections)
-        self.assertEqual(table,'cache_7')
-
-
-        # user enteres the range kinda backwards
-        selections = {}
-        selections['VGISS_FILTER'] = ['violet','ORANGE']
-        extras={}
-        qtypes = {}
-        qtypes['VGISS_FILTER'] = 'range'
-        extras['qtypes'] = qtypes
-        table = getUserQueryTable(selections,extras)
-        print "table = " + str(table) + "\n" + str(selections)
-        self.assertEqual(table,'cache_8')
-        # 2nd
-        table = getUserQueryTable(selections)
-        self.assertEqual(table,'cache_8')
-
-        # user enteres the range kinda backwards
-        selections = {}
-        selections['VGISS_FILTER'] = ['violet','ORANGE']
-        extras={}
-        qtypes = {}
-        qtypes['VGISS_FILTER'] = 'range'
-        extras['qtypes'] = qtypes
-        table = getUserQueryTable(selections,extras)
-        print "table = " + str(table) + "\n" + str(selections)
-        self.assertEqual(table,'cache_8')
-        # 2nd
-        table = getUserQueryTable(selections)
-        self.assertEqual(table,'cache_8')
-
-        # user overides mult query with string type query
-        selections = {}
-        selections['COISS_FILTER'] = ['IR']
-        extras={}
-        qtypes = {}
-        qtypes['COISS_FILTER'] = 'contains'
-        extras['qtypes'] = qtypes
-        table = getUserQueryTable(selections,extras)
-        print "table = " + str(table) + "\n" + str(selections)
-        self.assertEqual(table,'cache_9')
-        # 2nd
-        table = getUserQueryTable(selections)
-        self.assertEqual(table,'cache_9')
-
-        # user overides string query with range query
-        selections = {}
-        selections['note'] = ['Incomplete','Z']
-        extras={}
-        qtypes = {}
-        qtypes['note'] = 'range'
-        extras['qtypes'] = qtypes
-        table = getUserQueryTable(selections,extras)
-        print "table = " + str(table) + "\n" + str(selections)
-        self.assertEqual(table,'cache_10')
-        # 2nd
-        table = getUserQueryTable(selections)
-        self.assertEqual(table,'cache_10')
-
-
-
-
-        # some aux and base mix queries
-        selections = {}
-        selections['planet_id'] = ['Jupiter']
-        selections['COISS_FILTER'] = ['red']
-        selections['VGISS_FILTER'] = ['violet','GREEN']
-        selections['cassini_activity_name'] = ['catface','doggie']
-
-        table = getUserQueryTable(selections)
-        print "table = " + str(table) + "\n" + str(selections)
-        self.assertEqual(table,'cache_11')
-        # 2nd
-        table = getUserQueryTable(selections)
-        self.assertEqual(table,'cache_11')
-
-
-        # some aux and base mix queries
-        selections = {}
-        selections['planet_id'] = ['Jupiter']
-        selections['COISS_FILTER'] = ['red']
-        selections['VGISS_FILTER'] = ['violet','GREEN']
-        selections['cassini_activity_name'] = ['catface']
-        table = getUserQueryTable(selections)
-        print "table = " + str(table) + "\n" + str(selections)
-        self.assertEqual(table,'cache_12')
-        # 2nd
-        table = getUserQueryTable(selections)
-        self.assertEqual(table,'cache_12')
-
-        # mission and general only
-        selections = {}
-        selections['planet_id'] = ['Jupiter']
-        selections['cassini_activity_name'] = ['catface']
-        table = getUserQueryTable(selections)
-        print "table = " + str(table) + "\n" + str(selections)
-        self.assertEqual(table,'cache_13')
-        # 2nd
-        table = getUserQueryTable(selections)
-        self.assertEqual(table,'cache_13')
-
-        # we need to tear down all these tables now!!!!!! here is why:
-        # what we've done is create 6 tables, but the save() method that records the metadata in user_searches
-        # about how to use these tables will not be seen by other tests, because each test goes back to the fixture
-        # which for the user_searches table is EMPTY! sooooo...
-        # these 6 tables we created will still be there but when another test goes to set user_searches id = 1
-        # for a completely different search it will still want to use table = cache_1 which we built here!
-        self.teardown()
-
-    """
     ## longitude query tests
-
-    def test__longitudeQuery_single(self):
+   def test__longitudeQuery_single(self):
         #single longitude set
         selections = {}
         selections['obs_general.declination1'] = [58]
@@ -273,6 +148,8 @@ class myFirstTests(TestCase):
             longitudeQuery(selections,'obs_general.declination1')
         except KeyError, IndexError:
             pass
+
+
 
     ##  Range Query tests
     def test__range_query_any(self):
@@ -442,6 +319,7 @@ class myFirstTests(TestCase):
         print str(q)
         # time_sec2 >= -649993324.720000
         self.assertEqual(str(q),"(AND: ('obs_general.time_sec2__gte', -649950124.72000003))")
+
 
 
     ## test urlToSearchParam
