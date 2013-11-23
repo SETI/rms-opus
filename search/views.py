@@ -3,17 +3,14 @@
 #   search.views
 #
 ################################################
-import subprocess, operator, hashlib, os, re
+import hashlib
 from operator import __or__ as OR
 import julian
 from pyparsing import ParseException
-from django.shortcuts import render_to_response
-from django.http import HttpResponse, Http404
-from django.core import serializers
 from django.utils import simplejson
 from django.conf import settings
 from django.db.models import Q, get_model
-from django.db import connection, transaction, DatabaseError
+from django.db import connection, DatabaseError
 from django.core.cache import cache
 from search.models import *
 from paraminfo.models import *
@@ -61,6 +58,7 @@ def getUserQueryTable(selections,extras={}):
     # keeping track of some things
     long_querys = []  # special longitudinal queries are pure sql
     q_objects = [] # for building up the query object
+    finished_ranges = []  # ranges are done for both sides at once.. so track which are finished to avoid duplicates
 
     # buld the django query
     for param_name, value_list in selections.items():
