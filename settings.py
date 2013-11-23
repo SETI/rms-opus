@@ -5,6 +5,9 @@ PROJECT_ROOT = os.path.dirname(__file__)
 sys.path.insert(0, PROJECT_ROOT)
 from secrets import *
 
+TIME_LIB_PATH          = "/library/webserver/bin/timeconvert/"
+sys.path.append(TIME_LIB_PATH)
+
 DEBUG = False
 TEMPLATE_DEBUG = DEBUG
 
@@ -156,7 +159,6 @@ INTERNAL_IPS = ("127.0.0.1",)
 
 # app constants
 TAR_FILE_URI_PATH = 'http://pds-rings-downloads.seti.org/opus/'
-C_PATH          = ''
 IMAGE_HTTP_PATH = 'http://pds-rings.seti.org/browse/'
 DEFAULT_COLUMNS = 'ringobsid,planet,target,phase1'
 IMAGE_COLUMNS   = ['thumb.jpg','small.jpg','med.jpg','large.jpg']
