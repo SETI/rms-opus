@@ -36,10 +36,7 @@ cursor = connection.cursor()
 
 class myFirstTests(TestCase):
 
-    """
-    #fixtures = ['multPlanetID.json','UserSearches.json','Observations.json','ParamInfo.json']
-    fixtures = ['search.json','paraminfo.json']
-    """
+    # setup
     c = Client()
     param_name = 'obs_general.planet_id'
     selections = {}
@@ -56,24 +53,8 @@ class myFirstTests(TestCase):
             print q
             cursor.execute(q)
 
-    """
 
-
-    def test__getResults(self):
-        print 'in getResults test'
-        response = self.c.get('/search/results/data/?planet=Jupiter')
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(len(response.content), 104098)
-
-
-    def test__getImages(self):
-        response = self.c.get('/search/results/images/?planet=Jupiter')
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(len(response.content), 42292)
-
-
-
-    """
+    ## getUserQueryTable
     def test__getUserQueryTable(self):
         self.teardown()
         # simple base join types only
@@ -87,59 +68,68 @@ class myFirstTests(TestCase):
         self.assertEqual(table,'cache_1')
 
 
-    ## longitude query tests
-    def test__longitudeQuery_single(self):
-        #single longitude set
-        selections = {}
-        selections['obs_general.declination1'] = [58]
-        selections['obs_general.declination2'] = [61]
-        q= longitudeQuery(selections,'obs_general.declination1')
-        print selections
-        print q
-        expect = '(abs(abs(mod(59.5 - obs_general.declination + 180., 360.)) - 180.) <= 1.5 + obs_general.d_declination)'
-        self.assertEqual(q,expect)
 
-    def test__longitudeQuery_double(self):
-        # double
-        selections = {}
-        selections['obs_general.declination1'] = [58,75]
-        selections['obs_general.declination2'] = [61,83]
-        q = longitudeQuery(selections,'obs_general.declination1')
-        print q
-        expect = "(abs(abs(mod(59.5 - obs_general.declination + 180., 360.)) - 180.) <= 1.5 + obs_general.d_declination) OR (abs(abs(mod(79.0 - obs_general.declination + 180., 360.)) - 180.) <= 4.0 + obs_general.d_declination)"
-        self.assertEqual(q,expect)
+    ## test urlToSearchParam
 
-    def test__longitudeQuery_one_side(self):
-        # missing value raises exception
-        selections = {}
-        selections['obs_general.declination1'] = [58]
-        # self.assertRaises(IndexError, longitudeQuery(selections,'declination1'))
-        try:
-            longitudeQuery(selections,'obs_general.declination1')
-        except KeyError, IndexError:
-            pass
+    def test__urlToSearchParams_stringsearch(self):
+        q = QueryDict("note=Incomplete")
+        result = urlToSearchParams(q)
+        print result
+        self.assertEqual(result,[{u'obs_general.note': [u'Incomplete']}, {'qtypes': {}}])
 
-    def test__longitudeQuery_other_side(self):
-        # missing value raises exception
-        selections = {}
-        selections['obs_general.declination2'] = [58]
-        # self.assertRaises(IndexError, longitudeQuery(selections,'declination1'))
-        try:
-            longitudeQuery(selections,'obs_general.declination1')
-        except KeyError, IndexError:
-            pass
 
-    def test__longitudeQuery_lop_sided(self):
-        # missing value raises exception
-        selections = {}
-        selections['obs_general.declination1'] = [58,75]
-        selections['obs_general.declination2'] = [61]
-        # self.assertRaises(IndexError, longitudeQuery(selections,'declination1'))
-        try:
-            longitudeQuery(selections,'obs_general.declination1')
-        except KeyError, IndexError:
-            pass
+    def test__urlToSearchParams_mults(self):
+        q = QueryDict("planet=SATURN&target=PAN")
+        result = urlToSearchParams(q)
+        self.assertEqual(result,[{u'obs_general.target_name': [u'PAN'], u'obs_general.planet_id': [u'SATURN']}, {'qtypes': {}}])
 
+
+    def test__urlToSearchParams_stringmultmix(self):
+        q = QueryDict("planet=SATURN&target=PAN&note=Incomplete&qtype-note=contains")
+        result = urlToSearchParams(q)
+        # setup assert:
+        excpected = [{u'obs_general.note': [u'Incomplete'], u'obs_general.planet_id': [u'SATURN'], u'obs_general.target_name': [u'PAN']}, {'qtypes': {u'obs_general.note': [u'contains']}}]
+        self.assertEqual(result,excpected)
+
+    def test__urlToSearchParams_mix_with_note(self):
+        q = QueryDict('planet=Jupiter&note=Manually,Incomplete&qtype-note=contains,begins')
+        result = urlToSearchParams(q)
+        # setup assert:
+        selections = {}
+        extras={}
+        qtypes = {}
+        selections['obs_general.planet_id'] = ['Jupiter']
+        selections['obs_general.note'] = ['Manually','Incomplete']
+        qtypes['obs_general.note'] = ['contains','begins']
+        extras['qtypes'] = qtypes
+        self.assertEqual(result,[selections,extras])
+
+    def test__urlToSearchParams_ring_rad_rangea(self):
+        q = QueryDict("ringradius1=60000&ringradius2=80000")
+        result = urlToSearchParams(q)
+        # setup assert:
+        selections = {}
+        extras={}
+        qtypes = {}
+        selections['obs_ring_geometry.ring_radius1'] = ['60000']
+        selections['obs_ring_geometry.ring_radius2'] = ['80000']
+        extras['qtypes'] = qtypes
+        self.assertEqual(result,[selections,extras])
+
+
+    ##  setUserSearchNo
+    def test_setUserSearchNo(self):
+        no = setUserSearchNo(self.selections)
+        self.assertTrue(no)
+
+    def test_setUserSearchNo_2_planets(self):
+        selections = {}
+        selections['obs_general.planet_id'] = ['Saturn']
+        no = setUserSearchNo(selections)
+        print no
+        # breaking this, this test needs to see if there are any rows in the table
+        self.assertGreater(no, 0)
+        self.teardown()
 
 
     ##  Range Query tests
@@ -312,131 +302,61 @@ class myFirstTests(TestCase):
         self.assertEqual(str(q),"(AND: ('obs_general.time_sec2__gte', -649950124.72000003))")
 
 
-
-    ## test urlToSearchParam
-
-    def test__urlToSearchParams_stringsearch(self):
-        q = QueryDict("note=Incomplete")
-        result = urlToSearchParams(q)
-        print result
-        self.assertEqual(result,[{u'obs_general.note': [u'Incomplete']}, {'qtypes': {}}])
-
-
-    def test__urlToSearchParams_mults(self):
-        q = QueryDict("planet=SATURN&target=PAN")
-        result = urlToSearchParams(q)
-        self.assertEqual(result,[{u'obs_general.target_name': [u'PAN'], u'obs_general.planet_id': [u'SATURN']}, {'qtypes': {}}])
-
-
-    def test__urlToSearchParams_stringmultmix(self):
-        q = QueryDict("planet=SATURN&target=PAN&note=Incomplete&qtype-note=contains")
-        result = urlToSearchParams(q)
-        # setup assert:
-        excpected = [{u'obs_general.note': [u'Incomplete'], u'obs_general.planet_id': [u'SATURN'], u'obs_general.target_name': [u'PAN']}, {'qtypes': {u'obs_general.note': [u'contains']}}]
-        self.assertEqual(result,excpected)
-
-    def test__urlToSearchParams_mix_with_note(self):
-        q = QueryDict('planet=Jupiter&note=Manually,Incomplete&qtype-note=contains,begins')
-        result = urlToSearchParams(q)
-        # setup assert:
+    ## longitude query tests
+    def test__longitudeQuery_single(self):
+        #single longitude set
         selections = {}
-        extras={}
-        qtypes = {}
-        selections['obs_general.planet_id'] = ['Jupiter']
-        selections['obs_general.note'] = ['Manually','Incomplete']
-        qtypes['obs_general.note'] = ['contains','begins']
-        extras['qtypes'] = qtypes
-        self.assertEqual(result,[selections,extras])
+        selections['obs_general.declination1'] = [58]
+        selections['obs_general.declination2'] = [61]
+        q= longitudeQuery(selections,'obs_general.declination1')
+        print selections
+        print q
+        expect = '(abs(abs(mod(59.5 - obs_general.declination + 180., 360.)) - 180.) <= 1.5 + obs_general.d_declination)'
+        self.assertEqual(q,expect)
 
-    def test__urlToSearchParams_ring_rad_rangea(self):
-        q = QueryDict("ringradius1=60000&ringradius2=80000")
-        result = urlToSearchParams(q)
-        # setup assert:
+    def test__longitudeQuery_double(self):
+        # double
         selections = {}
-        extras={}
-        qtypes = {}
-        selections['obs_ring_geometry.ring_radius1'] = ['60000']
-        selections['obs_ring_geometry.ring_radius2'] = ['80000']
-        extras['qtypes'] = qtypes
-        self.assertEqual(result,[selections,extras])
+        selections['obs_general.declination1'] = [58,75]
+        selections['obs_general.declination2'] = [61,83]
+        q = longitudeQuery(selections,'obs_general.declination1')
+        print q
+        expect = "(abs(abs(mod(59.5 - obs_general.declination + 180., 360.)) - 180.) <= 1.5 + obs_general.d_declination) OR (abs(abs(mod(79.0 - obs_general.declination + 180., 360.)) - 180.) <= 4.0 + obs_general.d_declination)"
+        self.assertEqual(q,expect)
 
-    """
-
-    def test_resultCount(self):
-        response = self.c.get('opus/result_count/?planet=Saturn')
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.content, '{"result_count": 0}')
-
-        response = self.c.get('/search/result_count/?planet=Jupiter')
-        self.assertEqual(response.content, '{"result_count": 2000}')
-
-        response = self.c.get('/search/result_count/?planet=Jupiter&target=SKY')
-        self.assertEqual(response.content, '{"result_count": 12}')
-        self.teardown()
-
-        response = self.c.get('/search/result_count/?planet=Jupiter&target=IO,PANDORA')
-        self.assertEqual(response.content, '{"result_count": 38}')
-        self.teardown()
-
-        # some range queries.. single no qtype (defaults any)
-        response = self.c.get('/search/result_count/?ringradius1=60000&ringradius2=80000')
-        self.assertEqual(response.content, '{"result_count": 187}')
-        self.teardown()
-
-        # qtype all
-        response = self.c.get('/search/result_count/?ringradius1=60000&ringradius2=80000&qtype-ringradius=all')
-        self.assertEqual(response.content, '{"result_count": 187}')
-        self.teardown()
-
-        # qtype only
-        response = self.c.get('/search/result_count/?ringradius1=60000&ringradius2=80000&qtype-ringradius=only')
-        self.assertEqual(response.content, '{"result_count": 0}')
-        self.teardown()
-
-        # mult ranges qtype only 1 given as all
-        response = self.c.get('/search/result_count/?ringradius1=60000&ringradius2=80000,120000&qtype-ringradius=all')
-        self.assertEqual(response.content, '{"result_count": 187}')
-        self.teardown()
-
-        # mission and general only
-        response = self.c.get('/search/result_count/?planet=Jupiter&cassiniactivityname=catface')
-        self.assertEqual(response.content, '{"result_count": 1592}')
-        self.teardown()
-
-    """
-
-
-    """
-    def test_getValidMults_planet(self):
-        response = self.c.get('opus/mults/ids/?field=planet&planet=Jupiter')
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.content, '{"mults": {"3": 2000}, "field": "planet"}')
-
-    def test_getValidMults_target(self):
-        response = self.c.get('/search/mults/ids/?field=target&planet=Jupiter')
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.content, '{"mults": {"6": 11, "60": 5, "10": 54, "18": 8, "20": 81, "25": 38, "28": 1803}, "field": "target"}')
-        self.teardown()
-
-    def test_getValidMults_by_labels(self):
-        # getting by labels
-        response = self.c.get('/search/mults/labels/?field=target&planet=Jupiter')
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.content, '{"mults": {"EUROPA": 8, "AMALTHEA": 11, "GANYMEDE": 81, "CALLISTO": 54, "JUPITER": 1803, "IO": 38, "THEBE": 5}, "field": "target"}')
-
-    """
-
-    # just making sure these run and return a number as expected
-    def test_setUserSearchNo(self):
-        no = setUserSearchNo(self.selections)
-        self.assertTrue(no)
-
-    def test_setUserSearchNo_2_planets(self):
+    def test__longitudeQuery_one_side(self):
+        # missing value raises exception
         selections = {}
-        selections['planet_id'] = ['Saturn','Jupiter']
-        no = setUserSearchNo(selections)
-        print no
-        self.assertTrue(no)
-        self.teardown()
+        selections['obs_general.declination1'] = [58]
+        # self.assertRaises(IndexError, longitudeQuery(selections,'declination1'))
+        try:
+            longitudeQuery(selections,'obs_general.declination1')
+        except KeyError, IndexError:
+            pass
+
+    def test__longitudeQuery_other_side(self):
+        # missing value raises exception
+        selections = {}
+        selections['obs_general.declination2'] = [58]
+        # self.assertRaises(IndexError, longitudeQuery(selections,'declination1'))
+        try:
+            longitudeQuery(selections,'obs_general.declination1')
+        except KeyError, IndexError:
+            pass
+
+    def test__longitudeQuery_lop_sided(self):
+        # missing value raises exception
+        selections = {}
+        selections['obs_general.declination1'] = [58,75]
+        selections['obs_general.declination2'] = [61]
+        # self.assertRaises(IndexError, longitudeQuery(selections,'declination1'))
+        try:
+            longitudeQuery(selections,'obs_general.declination1')
+        except KeyError, IndexError:
+            pass
+
+
+
+
 
 
