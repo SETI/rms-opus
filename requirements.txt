@@ -18,8 +18,10 @@ docutils==0.11
 ipython==0.13.2
 mock==1.0.1
 nose==1.3.0
+numpy==1.7.1
 paramiko==1.11.0
 pycrypto==2.6
+pyparsing==2.0.1
 python-memcached==1.48
 readline==6.2.4.1
 rst==0.1
