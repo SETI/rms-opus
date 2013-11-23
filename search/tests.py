@@ -57,15 +57,6 @@ class myFirstTests(TestCase):
             cursor.execute(q)
 
     """
-    def test__getRangeEndpoints(self):
-        selections = {}
-        selections['declination1'] = [58]
-        selections['declination2'] = [61]
-        qtypes = {}
-        extras = {}
-        extras['qtypes'] = qtypes
-        ep = getRangeEndpoints(selections,extras,'declination1','declination2')
-        self.assertEqual(ep,[59.5, 'declination', 1.5, 'd_declination'])
 
 
     def test__getResults(self):
@@ -97,7 +88,7 @@ class myFirstTests(TestCase):
 
 
     ## longitude query tests
-   def test__longitudeQuery_single(self):
+    def test__longitudeQuery_single(self):
         #single longitude set
         selections = {}
         selections['obs_general.declination1'] = [58]
@@ -433,14 +424,19 @@ class myFirstTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.content, '{"mults": {"EUROPA": 8, "AMALTHEA": 11, "GANYMEDE": 81, "CALLISTO": 54, "JUPITER": 1803, "IO": 38, "THEBE": 5}, "field": "target"}')
 
+    """
+
+    # just making sure these run and return a number as expected
     def test_setUserSearchNo(self):
         no = setUserSearchNo(self.selections)
         self.assertTrue(no)
+
+    def test_setUserSearchNo_2_planets(self):
         selections = {}
         selections['planet_id'] = ['Saturn','Jupiter']
         no = setUserSearchNo(selections)
+        print no
         self.assertTrue(no)
         self.teardown()
 
-    """
 
