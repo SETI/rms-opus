@@ -463,16 +463,16 @@ class myFirstTests(TestCase):
         new_times = convertTimes(times)
         self.assertEqual(new_times,[1923176.48, None])
 
-    """
     def test__findInvalidTimes(self):
-        times         = ['2008-10-20 12:59:333','cats','dogs']
+        times         = ['1979-05-28T10:17:37.28','cats','dogs']
         invalid_times = findInvalidTimes(times)
+        print invalid_times
         self.assertEqual(invalid_times,['cats','dogs'])
 
-        times         = ['2008-10-20 12:59:333']
+    def test__findInvalidTimes2(self):
+        times         = ['1979-05-28T10:17:37.28']
         invalid_times = findInvalidTimes(times)
         self.assertEqual(invalid_times,None)
-    """
 
 
     def test_range_query_time_any(self):

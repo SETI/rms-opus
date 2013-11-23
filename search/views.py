@@ -407,6 +407,7 @@ def findInvalidTimes(value_list):
     we know that value_list contains None values before passing it to this
     """
     converted_value_list = convertTimes(value_list)
+    print converted_value_list
     try:
         index = converted_value_list.index(None) # invalid times were submitted
         invalids = []
