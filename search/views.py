@@ -67,10 +67,11 @@ def getUserQueryTable(selections,extras={}):
 
         # lookup info about this param_name
         param_name_no_num = stripNumericSuffix(param_name)  # this is used later for other things!
-        param_info = ParamInfo.objects.get(name=param_name)
+        cat_name = param_name.split('.')[0]
+        name = param_name.split('.')[1]
+        param_info = ParamInfo.objects.get(name=name, category_name = cat_name)
         form_type = param_info.form_type
         special_query = param_info.special_query
-        table_name = param_info.category_name
 
         # define any qtypes for this param_name from query
         qtypes = all_qtypes[param_name_no_num] if param_name_no_num in all_qtypes else []
@@ -79,7 +80,7 @@ def getUserQueryTable(selections,extras={}):
 
         # MULTs
         if form_type in settings.MULT_FORM_TYPES:
-            mult_name = "mult_" + table_name + "_" + param_name
+            mult_name = "mult_" + '_'.join(param_name.split('.'))
             model = get_model('search',mult_name.title().replace('_',''))
             mult_values = [x['pk'] for x in list(model.objects.filter(label__in=value_list).values('pk'))]
             q_objects.append(Q(**{"%s__in" % mult_name: mult_values }))
@@ -87,7 +88,7 @@ def getUserQueryTable(selections,extras={}):
         # RANGE
         if form_type in settings.RANGE_FIELDS:
 
-            # longitude queries
+           # longitude queries
             if special_query == 'long':
                 # this parameter requires a longitudinal query
                 # these are crazy sql and can't use Django's model interface
@@ -171,8 +172,11 @@ def urlToSearchParams(request_get):
             slug              = searchparam[0]
             slug_no_num       = stripNumericSuffix(slug)
             param_info        = ParamInfo.objects.get(slug=slug)
-            param_name        = param_info.name
+            cat_name          = param_info.category_name
+            name              = param_info.name
             form_type         = param_info.form_type
+
+            param_name = "%s.%s" % (cat_name, name)
             param_name_no_num = stripNumericSuffix(param_name)
 
             if form_type in settings.MULT_FORM_TYPES:
@@ -254,7 +258,9 @@ def range_query_object(selections, param_name, qtypes):
     """
 
     # grab some info about this param
-    param_info    = ParamInfo.objects.get(name=param_name)
+    cat_name = param_name.split('.')[0]
+    name = param_name.split('.')[1]
+    param_info    = ParamInfo.objects.get(category_name=cat_name, name=name)
     form_type     = param_info.form_type
     special_query = param_info.special_query
 
@@ -356,13 +362,16 @@ def longitudeQuery(selections,param_name):
     # or ranges are lopsided, all ranges for LONG query must have both sides defined
     # returns string sql
 
-    clauses = []
-    params  = []
+    clauses = []  # we may have a number of clauses to piece together
+    params  = []  # we are building a sql string
 
+    cat_name = param_name.split('.')[0]
+    name = param_name.split('.')[1]
+    name_no_num = stripNumericSuffix(name)
     param_name_no_num = stripNumericSuffix(param_name)
     param_name_min    = param_name_no_num + '1'
     param_name_max    = param_name_no_num + '2'
-    col_d_long        = 'd_' + param_name_no_num
+    col_d_long        = cat_name + '.d_' + name_no_num
 
     values_min = selections[param_name_min]
     values_max = selections[param_name_max]
