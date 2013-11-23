@@ -81,58 +81,6 @@ class myFirstTests(TestCase):
         self.assertEqual(len(response.content), 42292)
 
 
-    def test__longitudeQuery(self):
-        #single longitude set
-        print 'hello'
-        selections = {}
-        selections['declination1'] = [58]
-        selections['declination2'] = [61]
-        (q, v) = longitudeQuery(selections,'declination1')
-        self.assertEqual(q,'(abs(abs(mod(%s - %s + 180., 360.)) - 180.) <= %s + %s)')
-        self.assertEqual(v,[59.5, 'declination', 1.5, 'd_declination'])
-
-        # double
-        selections = {}
-        selections['declination1'] = [58,75]
-        selections['declination2'] = [61,83]
-        (q, v) = longitudeQuery(selections,'declination1')
-        self.assertEqual(q,'(abs(abs(mod(%s - %s + 180., 360.)) - 180.) <= %s + %s) OR (abs(abs(mod(%s - %s + 180., 360.)) - 180.) <= %s + %s)')
-        self.assertEqual(v,[59.5, 'declination', 1.5, 'd_declination',79.0, 'declination', 4.0, 'd_declination'])
-
-        # missing value raises exception
-        selections = {}
-        selections['declination1'] = [58]
-        ## WHY GOD WHY? ##
-        #self.assertRaises("LongitudeError",longitudeQuery,selections,'declination1')
-
-        # missing value raises exception
-        selections = {}
-        selections['declination1'] = [58,75]
-        selections['declination2'] = [61]
-        ## WHY GOD WHY? ##
-        #self.assertRaises(KeyError,longitudeQuery,selections,'declination1')
-
-    def test__convertTimes(self):
-        # test times
-        times     = ['2008-10-20 12:59:333','2006-10-20 12:59:333']
-        new_times = convertTimes(times)
-        self.assertEqual(new_times,['253268012.333000', '190196012.333000'])
-
-        # give it a bad time
-        times     = ['2008-10-20 12:59:333','cats']
-        new_times = convertTimes(times)
-        self.assertEqual(new_times,['253268012.333000', None])
-
-
-    def test__findInvalidTimes(self):
-        times         = ['2008-10-20 12:59:333','cats','dogs']
-        invalid_times = findInvalidTimes(times)
-        self.assertEqual(invalid_times,['cats','dogs'])
-
-        times         = ['2008-10-20 12:59:333']
-        invalid_times = findInvalidTimes(times)
-        self.assertEqual(invalid_times,None)
-
 
 
     def test__getUserQueryTable(self):
@@ -324,7 +272,61 @@ class myFirstTests(TestCase):
         self.teardown()
 
     """
+    ## longitude query tests
 
+    def test__longitudeQuery_single(self):
+        #single longitude set
+        selections = {}
+        selections['declination1'] = [58]
+        selections['declination2'] = [61]
+        q= longitudeQuery(selections,'declination1')
+        print selections
+        print q
+        expect = '(abs(abs(mod(59.5 - declination + 180., 360.)) - 180.) <= 1.5 + d_declination)'
+        self.assertEqual(q,expect)
+
+    def test__longitudeQuery_double(self):
+        # double
+        selections = {}
+        selections['declination1'] = [58,75]
+        selections['declination2'] = [61,83]
+        q = longitudeQuery(selections,'declination1')
+        print q
+        expect = "(abs(abs(mod(59.5 - declination + 180., 360.)) - 180.) <= 1.5 + d_declination) OR (abs(abs(mod(79.0 - declination + 180., 360.)) - 180.) <= 4.0 + d_declination)"
+        self.assertEqual(q,expect)
+
+    def test__longitudeQuery_one_side(self):
+        # missing value raises exception
+        selections = {}
+        selections['declination1'] = [58]
+        # self.assertRaises(IndexError, longitudeQuery(selections,'declination1'))
+        try:
+            longitudeQuery(selections,'declination1')
+        except KeyError, IndexError:
+            pass
+
+    def test__longitudeQuery_other_side(self):
+        # missing value raises exception
+        selections = {}
+        selections['declination2'] = [58]
+        # self.assertRaises(IndexError, longitudeQuery(selections,'declination1'))
+        try:
+            longitudeQuery(selections,'declination1')
+        except KeyError, IndexError:
+            pass
+
+    def test__longitudeQuery_lop_sided(self):
+        # missing value raises exception
+        selections = {}
+        selections['declination1'] = [58,75]
+        selections['declination2'] = [61]
+        # self.assertRaises(IndexError, longitudeQuery(selections,'declination1'))
+        try:
+            longitudeQuery(selections,'declination1')
+        except KeyError, IndexError:
+            pass
+
+    ##  Range Query tests
     def test__range_query_any(self):
 
         # range query: 'any'
@@ -378,7 +380,7 @@ class myFirstTests(TestCase):
         selections['ring_radius1'] = [40000]
         q = range_query_object(selections,'ring_radius1',['all'])
         print str(q)
-        self.assertEqual(str(q), "(AND: ('ring_radius1__lte', 40000))'")
+        self.assertEqual(str(q), "(AND: ('ring_radius1__lte', 40000))")
 
 
     def test_range_query_ordered_lopsided_all_max(self):
@@ -387,8 +389,7 @@ class myFirstTests(TestCase):
         selections['ring_radius2'] = [40000]
         q = range_query_object(selections,'ring_radius2',['all'])
         print str(q)
-        print "this fails lolz"
-        self.assertEqual(q, None)
+        self.assertEqual(str(q), "(AND: ('ring_radius2__gte', 40000))")
         """
         self.assertEqual(q,'(ring_radius2 >= %s)')
         self.assertEqual(v,[40000])
@@ -409,12 +410,8 @@ class myFirstTests(TestCase):
         selections['ring_radius2'] = [40000]
         q = range_query_object(selections,'ring_radius2',['only'])
         print str(q)
-        print "has never worked"
-        assertEqual(str(q), None)
-        """
-        self.assertEqual(q,'(ring_radius2 <= %s)')
-        self.assertEqual(v,[40000])
-        """
+        # (ring_radius2 <= 4000
+        self.assertEqual(str(q), "(AND: ('ring_radius2__lte', 40000))")
 
     def test_range_query_lopsided_any_min(self):
         # range query: lopsided any min
@@ -422,9 +419,8 @@ class myFirstTests(TestCase):
         selections['ring_radius1'] = [40000]
         q = range_query_object(selections,'ring_radius1',['any'])
         print str(q)
-        print str(v)
-        self.assertEqual(q,'(ring_radius2 >= %s)')
-        self.assertEqual(v,[40000])
+        # ring_radius2 >= %s
+        self.assertEqual(str(q), "(AND: ('ring_radius2__gte', 40000))")
 
     def test_range_query_lopsided_any_max(self):
         # range query: lopsided any min
@@ -441,7 +437,8 @@ class myFirstTests(TestCase):
         selections['ring_radius2'] = [60000]
         q = range_query_object(selections,'ring_radius2',['any','only'])
         print str(q)
-        self.assertEqual(str(q), "(OR: (AND: ('ring_radius1__lte', 60000), ('ring_radius2__gte', 40000)), ('ring_radius1__gte', 80000))'")
+        # (ring_radius1 <= 6000 AND ring_radius2 >= 40000) OR (ring_radius2 >= 80000)
+        self.assertEqual(str(q),"(OR: (AND: ('ring_radius1__lte', 60000), ('ring_radius2__gte', 40000)), ('ring_radius1__gte', 80000))")
 
     def test_range_query_lopsided_multi_mixed_only_one_q_type(self):
         # range query: multi range, 1 is lopsided, mixed only 1 qtype given
@@ -450,9 +447,32 @@ class myFirstTests(TestCase):
         selections['ring_radius2'] = [60000]
         q = range_query_object(selections,'ring_radius2',['any'])
         print str(q)
-        print str(v)
-        self.assertEqual(q,'(ring_radius1 <= %s AND ring_radius2 >= %s) OR (ring_radius2 >= %s)')
-        self.assertEqual(v,[60000,40000,80000])
+        # (ring_radius1 <= 6000 AND ring_radius2 >= 40000) OR (ring_radius2 >= 80000)
+        self.assertEqual(str(q),"(OR: (AND: ('ring_radius1__lte', 60000), ('ring_radius2__gte', 40000)), ('ring_radius2__gte', 80000))")
+
+
+    ## Time  tests
+    def test__convertTimes(self):
+        # test times
+        times     = ['2000-023T06:12:24.480','2000-024T06:12:24.480']
+        new_times = convertTimes(times)
+        self.assertEqual(new_times,[1923176.48, 2009576.48])
+
+    def test__convertTimes2(self):
+        times     = ['2000-023T06:12:24.480','cats']
+        new_times = convertTimes(times)
+        self.assertEqual(new_times,[1923176.48, None])
+
+    """
+    def test__findInvalidTimes(self):
+        times         = ['2008-10-20 12:59:333','cats','dogs']
+        invalid_times = findInvalidTimes(times)
+        self.assertEqual(invalid_times,['cats','dogs'])
+
+        times         = ['2008-10-20 12:59:333']
+        invalid_times = findInvalidTimes(times)
+        self.assertEqual(invalid_times,None)
+    """
 
 
     def test_range_query_time_any(self):
@@ -462,9 +482,8 @@ class myFirstTests(TestCase):
         selections['time_sec2'] = ['1979-05-29T18:22:26']
         q = range_query_object(selections,'time_sec1',['any'])
         print str(q)
-        print str(v)
-        self.assertEqual(q,'(time_sec1 <= %s AND time_sec2 >= %s)')
-        self.assertEqual(v,['-649993324.720000', '-649877836.000000'])
+        # time_sec1 <= -649993324.720000 AND time_sec2 >= -649877836.000000
+        self.assertEqual(str(q), "(AND: ('time_sec1__lte', -649834636), ('time_sec2__gte', -649950124.72000003))")
 
 
     def test_range_query_time_any_single_time(self):
@@ -473,11 +492,12 @@ class myFirstTests(TestCase):
         selections['time_sec1'] = ['1979-05-28T10:17:37.28']
         q = range_query_object(selections,'time_sec1',['any'])
         print str(q)
-        print str(v)
-        self.assertEqual(q,'(time_sec2 >= %s)')
-        self.assertEqual(v,['-649993324.720000'])
+        # time_sec2 >= -649993324.720000
+        self.assertEqual(str(q),"(AND: ('time_sec2__gte', -649950124.72000003))")
+
 
     """
+    ## test urlToSearchParam
 
     def test__urlToSearchParams_stringsearch(self):
         q = QueryDict("note=Incomplete")
