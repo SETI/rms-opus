@@ -13,7 +13,7 @@ from django.core import serializers
 from django.utils import simplejson
 from django.conf import settings
 from django.db.models import Q, get_model
-from django.db import connection, transaction
+from django.db import connection, transaction, DatabaseError
 from django.core.cache import cache
 from search.models import *
 from paraminfo.models import *
@@ -39,14 +39,22 @@ def getUserQueryTable(selections,extras={}):
     if len(selections.keys()) < 1: return False
     all_qtypes = extras['qtypes'] if 'qtypes' in extras else []
 
-    # do we have a cache key set in memcache already?
-    cache_key = 'cache_table:' + str(no)
-    if (cache.get(cache_key )):
-        return cache.get(cache_key)
-
-    # not in memcache, perhaps it still exists in db though: (memcached was flushed)
+    # do we have a cache key
     no     = setUserSearchNo(selections,extras)
     ptbl   = getUserSearchTableName(no)
+
+    # is this key set in memcached
+    cache_key = 'cache_table:' + str(no)
+    if (cache.get(cache_key)):
+        return cache.get(cache_key)
+
+    # it could still exist in database
+    try:
+        cursor.execute("desc cache_%s" % str(no))
+        cache.set(cache_key,ptbl,0)
+        return 'cache_%s' % str(no)
+    except DatabaseError:
+        pass  # no table is there, we go on to build it below
 
     ## cache table dose not exist, we will make one by doing some data querying:
 
@@ -108,7 +116,6 @@ def getUserQueryTable(selections,extras={}):
 
         # construct our query, we'll be breaking into raw sql, but for that
         # we'll be using the sql django generates through its model interface
-        cursor = connection.cursor()
         q = str(ObsGeneral.objects.filter(*q_objects).values('pk').query)
 
         # append any longitudinal queries to the query string
@@ -180,6 +187,7 @@ def urlToSearchParams(request_get):
                 qtypes[param_name_no_num] = request_get.get('qtype-'+slug_no_num,False).strip(',').split(',')
             except: pass
         except: pass # the param passed doesn't exist or is a USER PREF AAAAAACK
+
     if len(selections.keys()) > 0:
         extras  = {}
         extras['qtypes'] = qtypes

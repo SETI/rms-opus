@@ -32,6 +32,8 @@ from search.views import *
 from results.views import *
 from django.http import QueryDict
 
+cursor = connection.cursor()
+
 class myFirstTests(TestCase):
 
     """
@@ -43,7 +45,6 @@ class myFirstTests(TestCase):
     selections = {}
     selections['planet_id'] = ['Jupiter']
 
-    """
     def teardown(self):
         cursor = connection.cursor()
         cursor.execute("delete from user_searches")
@@ -54,7 +55,6 @@ class myFirstTests(TestCase):
             q = 'drop table ' + row[0]
             print q
             cursor.execute(q)
-    """
 
     """
     def test__getRangeEndpoints(self):
@@ -82,78 +82,25 @@ class myFirstTests(TestCase):
 
 
 
-
+    """
     def test__getUserQueryTable(self):
         self.teardown()
         # simple base join types only
         table = getUserQueryTable(self.selections)
         print "table = " + str(table) + "\n" + str(self.selections)
         self.assertEqual(table,'cache_1')
+
+    def test__getUserQueryTable_table_already_exists(self):
         # the 2nd time through you're testing whether it returns the table that is already there
         table = getUserQueryTable(self.selections)
         self.assertEqual(table,'cache_1')
 
-        # some aux and base mix queries
-        selections = {}
-        selections['planet_id']    = ['Jupiter']
-        selections['COISS_FILTER'] = ['red']
-        selections['VGISS_FILTER'] = ['violet','ORANGE']
-        table = getUserQueryTable(selections)
-        print "table = " + str(table) + "\n" + str(selections)
-        self.assertEqual(table,'cache_2')
-        # 2nd
-        table = getUserQueryTable(selections)
-        self.assertEqual(table,'cache_2')
 
-        # some aux and base mix queries
-        selections = {}
-        selections['planet_id'] = ['Jupiter']
-        selections['COISS_FILTER'] = ['red']
-        selections['VGISS_FILTER'] = ['violet','GREEN']
-        table = getUserQueryTable(selections)
-        print "table = " + str(table) + "\n" + str(selections)
-        self.assertEqual(table,'cache_3')
-        # 2nd
-        table = getUserQueryTable(selections)
-        self.assertEqual(table,'cache_3')
-
-        # some aux and base mix queries
-        # only aux joins no base joins
-        selections = {}
-        selections['coiss_filter'] = ['red']
-        selections['VGISS_FILTER'] = ['violet','ORANGE']
-        table = getUserQueryTable(selections)
-        print "table = " + str(table) + "\n" + str(selections)
-        self.assertEqual(table,'cache_4')
-        # 2nd
-        table = getUserQueryTable(selections)
-        self.assertEqual(table,'cache_4')
-
-        # only aux joins no base joins
-        selections = {}
-        selections['coiss_filter'] = ['red','IR5']
-        selections['VGISS_FILTER'] = ['violet','ORANGE']
-        table = getUserQueryTable(selections)
-        print "table = " + str(table) + "\n" + str(selections)
-        self.assertEqual(table,'cache_5')
-        # 2nd
-        table = getUserQueryTable(selections)
-        self.assertEqual(table,'cache_5')
-
-        # only aux joins no base joins
-        selections = {}
-        selections['planet_id'] = ['Saturn']
-        table = getUserQueryTable(selections)
-        print "table = " + str(table) + "\n" + str(selections)
-        self.assertEqual(table,'cache_6')
-        # 2nd
-        table = getUserQueryTable(selections)
-        self.assertEqual(table,'cache_6')
-
-
+    """
+    def test__overrides_mult_query_type_with_range(self):
         #  overides mult query type with RANGE
         selections = {}
-        selections['VGISS_FILTER'] = ['ORANGE','violet']
+        selections['FILTER'] = ['ORANGE','violet']
         extras={}
         qtypes = {}
         qtypes['VGISS_FILTER'] = 'range'
@@ -164,6 +111,7 @@ class myFirstTests(TestCase):
         # 2nd
         table = getUserQueryTable(selections)
         self.assertEqual(table,'cache_7')
+
 
         # user enteres the range kinda backwards
         selections = {}
@@ -496,7 +444,6 @@ class myFirstTests(TestCase):
         self.assertEqual(str(q),"(AND: ('time_sec2__gte', -649950124.72000003))")
 
 
-    """
     ## test urlToSearchParam
 
     def test__urlToSearchParams_stringsearch(self):
@@ -509,21 +456,13 @@ class myFirstTests(TestCase):
         selections['note'] = ['Incomplete']
         extras['qtypes'] = qtypes
         self.assertEqual(result,[selections,extras])
-        self.teardown()
 
 
     def test__urlToSearchParams_mults(self):
         q = QueryDict("planet=SATURN&target=PAN")
         result = urlToSearchParams(q)
-        # setup assert:
-        selections = {}
-        extras={}
-        qtypes = {}
-        selections['planet_id'] = ['SATURN']
-        selections['target_name'] = ['PAN']
-        extras['qtypes'] = qtypes
-        self.assertEqual(result,[selections,extras])
-        self.teardown()
+        self.assertEqual(result,[{u'target_name': [u'PAN'], u'planet_id': [u'SATURN']}, {'qtypes': {}}])
+
 
     def test__urlToSearchParams_stringmultmix(self):
         q = QueryDict("planet=SATURN&target=PAN&note=Incomplete&qtype-note=contains")
@@ -539,6 +478,7 @@ class myFirstTests(TestCase):
         extras['qtypes'] = qtypes
         self.assertEqual(result,[selections,extras])
 
+    def test__urlToSearchParams_mix_with_note(self):
         q = QueryDict('planet=Jupiter&note=Manually,Incomplete&qtype-note=contains,begins')
         result = urlToSearchParams(q)
         # setup assert:
@@ -550,8 +490,8 @@ class myFirstTests(TestCase):
         qtypes['note'] = ['contains','begins']
         extras['qtypes'] = qtypes
         self.assertEqual(result,[selections,extras])
-        self.teardown()
 
+    def test__urlToSearchParams_ring_rad_rangea(self):
         q = QueryDict("ringradius1=60000&ringradius2=80000")
         result = urlToSearchParams(q)
         # setup assert:
@@ -563,8 +503,10 @@ class myFirstTests(TestCase):
         extras['qtypes'] = qtypes
         self.assertEqual(result,[selections,extras])
 
+    """
+
     def test_resultCount(self):
-        response = self.c.get('/search/result_count/?planet=Saturn')
+        response = self.c.get('opus/result_count/?planet=Saturn')
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.content, '{"result_count": 0}')
 
@@ -606,26 +548,25 @@ class myFirstTests(TestCase):
 
     """
 
-    """
 
-    def test_getValidMults(self):
-                response = self.c.get('/search/mults/ids/?field=planet&planet=Jupiter')
+    """
+    def test_getValidMults_planet(self):
+        response = self.c.get('opus/mults/ids/?field=planet&planet=Jupiter')
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.content, '{"mults": {"3": 2000}, "field": "planet"}')
-        self.teardown()
+
+    def test_getValidMults_target(self):
         response = self.c.get('/search/mults/ids/?field=target&planet=Jupiter')
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.content, '{"mults": {"6": 11, "60": 5, "10": 54, "18": 8, "20": 81, "25": 38, "28": 1803}, "field": "target"}')
         self.teardown()
 
+    def test_getValidMults_by_labels(self):
         # getting by labels
         response = self.c.get('/search/mults/labels/?field=target&planet=Jupiter')
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.content, '{"mults": {"EUROPA": 8, "AMALTHEA": 11, "GANYMEDE": 81, "CALLISTO": 54, "JUPITER": 1803, "IO": 38, "THEBE": 5}, "field": "target"}')
-        self.teardown()
-    """
 
-    """
     def test_setUserSearchNo(self):
         no = setUserSearchNo(self.selections)
         self.assertTrue(no)
