@@ -256,8 +256,8 @@ def range_query_object(selections, param_name, qtypes):
     """
 
     # grab some info about this param
-    cat_name = param_name.split('.')[0]
-    name = param_name.split('.')[1]
+    cat_name      = param_name.split('.')[0]
+    name          = param_name.split('.')[1]
     param_info    = ParamInfo.objects.get(category_name=cat_name, name=name)
     form_type     = param_info.form_type
     special_query = param_info.special_query
@@ -367,9 +367,9 @@ def longitudeQuery(selections,param_name):
     name = param_name.split('.')[1]
     name_no_num = stripNumericSuffix(name)
     param_name_no_num = stripNumericSuffix(param_name)
-    param_name_min    = param_name_no_num + '1'
-    param_name_max    = param_name_no_num + '2'
-    col_d_long        = cat_name + '.d_' + name_no_num
+    param_name_min = param_name_no_num + '1'
+    param_name_max = param_name_no_num + '2'
+    col_d_long = cat_name + '.d_' + name_no_num
 
     values_min = selections[param_name_min]
     values_max = selections[param_name_max]
@@ -389,7 +389,7 @@ def longitudeQuery(selections,param_name):
             longit = (value_min + value_max)/2.
             d_long = longit - value_min
         else:
-            longit   = (value_min + value_max + 360.)/2.
+            longit = (value_min + value_max + 360.)/2.
             d_long = longit - value_min
 
         if (longit >= 360): longit = longit - 360.
