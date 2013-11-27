@@ -45,6 +45,7 @@ if len(sys.argv) < 2:
 
 
 volumes = sys.argv[1].split(',')
+volumes.sort()
 
 if volumes == ['all']:
     volumes = []  # nothing to add to the query
