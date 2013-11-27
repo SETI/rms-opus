@@ -215,7 +215,7 @@ for x in exclude:
 cursor.execute(q, exclude)
 
 # some fiddly updates to the param_info_table
-cursor.execute("alter table param_info add unique index (slug)")
+cursor.execute("alter table %s.param_info add unique index (slug)" % opus2)
 cursor.execute("update %s.param_info as params, %s.forms as forms set params.display = true where forms.display = 'Y' and params.id = forms.no" % (opus2, opus1))
 cursor.execute("update %s.param_info as params, %s.forms as forms set params.display_results = true where forms.display_results = 'Y' and params.id = forms.no" % (opus2, opus1))
 cursor.execute("update " + opus2 + ".param_info set form_type = 'RANGE' where form_type = 'None' and name like %s or name like %s" , ('%1', '%2'))
