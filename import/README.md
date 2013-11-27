@@ -1,9 +1,12 @@
 # hold up, this is all changed, currently working on:
 
+run in this order:
 build_db.py
 build_models.py
 
 to build the NEW schema
+
+
 
 
 # Once you deploy a database to OPUS 1 this procedure will magically update OPUS 2 with the same data.
