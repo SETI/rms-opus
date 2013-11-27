@@ -51,7 +51,8 @@ CREATE TABLE `param_info` (
   `search_form` varchar(63) DEFAULT NULL,
   `mission` varchar(15) DEFAULT NULL,
   `instrument` varchar(15) DEFAULT NULL,
-  `sub_heading` varchar(150) DEFAULT NULL
+  `sub_heading` varchar(150) DEFAULT NULL,
+  primary key (category_id, name)
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
