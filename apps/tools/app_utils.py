@@ -174,7 +174,7 @@ def downloadFileName():
 
 def getMultName(param_name):
     """ mult foreign key tables are named like so """
-    return 'mult_' + str(param_name);
+    return "mult_" + '_'.join(param_name.split('.'))
 
 def getUserSearchTableName(no):
     """ a bit of text manipulation, user search tables are stored like so: """
