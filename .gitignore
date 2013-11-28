@@ -10,7 +10,6 @@ venv
 log.txt
 secrets.py
 *.pyc
-testbed
 *.bak
 *.*.bak
 sqlall.txt
