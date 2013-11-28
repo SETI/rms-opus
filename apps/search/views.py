@@ -13,7 +13,7 @@ from django.db.models import Q, get_model
 from django.db import connection, DatabaseError
 from django.core.cache import cache
 from search.models import *
-from paraminfo.models import *
+from paraminfo.views import *
 from tools.app_utils import *
 from tools.views import *
 
@@ -178,15 +178,19 @@ def urlToSearchParams(request_get):
     qtypes     = {}
 
     for searchparam in request_get.items():
-        try:
+        # try:
             slug              = searchparam[0]
             slug_no_num       = stripNumericSuffix(slug)
-            param_info        = ParamInfo.objects
-            if 'surface_target' in request_get:
-                param_info = param_info.filter(category_name__contains=request_get['surface_target'])
-            else:
-                param_info = param_info.exclude(category_name__contains='obs_surface_geometry')
 
+            print slug
+
+            qtype = False  # assume this is not a qtype statement
+            if slug.find('qtype') == 0:
+                qtype = True  # this is a statement of query type!
+                slug = slug.split('-')[1]
+                slug_no_num = stripNumericSuffix(slug)
+
+            param_info        = narrowParamInfoByRequest(request_get)
             param_info = param_info.get(slug=slug)
             cat_name          = param_info.category_name
             name              = param_info.name
@@ -195,18 +199,20 @@ def urlToSearchParams(request_get):
             param_name = "%s.%s" % (cat_name, name)
             param_name_no_num = stripNumericSuffix(param_name)
 
+            if qtype:
+                print slug_no_num
+                qtypes[param_name_no_num] = request_get.get('qtype-'+slug_no_num,False).strip(',').split(',')
+                continue
+
+
             if form_type in settings.MULT_FORM_TYPES:
                 # mult for types can be sorted to save duplicate queries being built
                 selections[param_name] = sorted(searchparam[1].strip(',').split(','))
             else:
                 # no other form types can be sorted since qtype depends on ordering
                 selections[param_name] = searchparam[1].strip(',').split(',')
-            try:
-                # checking for passed extra query instructions for this param
-                # we always want to check the param name without the numeric suffix for ranges:
-                qtypes[param_name_no_num] = request_get.get('qtype-'+slug_no_num,False).strip(',').split(',')
-            except: pass
-        except: pass # the param passed doesn't exist or is a USER PREF AAAAAACK
+
+        # except: pass # the param passed doesn't exist or is a USER PREF AAAAAACK
 
     if len(selections.keys()) > 0:
         extras  = {}
