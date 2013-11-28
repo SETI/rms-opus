@@ -221,7 +221,9 @@ cursor.execute("update " + opus2 + ".param_info set form_type = 'RANGE' where fo
 cursor.execute("update %s.param_info set slug = 'target' where name = 'target_name'" % opus2)
 cursor.execute("update %s.param_info set display = NULL where display = 'N'" % opus2)
 cursor.execute("update %s.param_info set slug = 'planet' where name = 'planet_id'" % opus2)
-cursor.execute("update %s.param_info set slug = 'surface_target' where slug = 'target' and category_name = 'obs_surface_geometry';" % opus2)
+cursor.execute("update %s.param_info set slug = 'surface_target' where slug = 'target' and category_name = 'obs_surface_geometry'" % opus2)
+q = "delete from %s.param_info where slug = 'target'" % opus2
+cursor.execute(q + " and category_name like %s" , 'obs_surface%')
 
 # ----------- creating the grouping, category, and guide tables --------------#
 queries = """
