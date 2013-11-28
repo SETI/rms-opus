@@ -24,7 +24,6 @@ import settings
 from django.core.management import setup_environ
 setup_environ(settings)
 
-
 from django.test import TestCase
 from django.test.client import Client
 from django.db.models import get_model
@@ -126,15 +125,9 @@ class myFirstTests(TestCase):
     def test__urlToSearchParams_mix_with_note(self):
         q = QueryDict('planet=Jupiter&note=Manually,Incomplete&qtype-note=contains,begins')
         result = urlToSearchParams(q)
-        # setup assert:
-        selections = {}
-        extras={}
-        qtypes = {}
-        selections['obs_general.planet_id'] = ['Jupiter']
-        selections['obs_general.note'] = ['Manually','Incomplete']
-        qtypes['obs_general.note'] = ['contains','begins']
-        extras['qtypes'] = qtypes
-        self.assertEqual(result,[selections,extras])
+        print result
+        expected = [{u'obs_general.planet_id': [u'Jupiter'], u'obs_general.note': [u'Manually', u'Incomplete']}, {'qtypes': {u'obs_general.note': [u'contains', u'begins']}}]
+        self.assertEqual(result,expected)
 
     def test__urlToSearchParams_ring_rad_rangea(self):
         q = QueryDict("ringradius1=60000&ringradius2=80000")
