@@ -21,31 +21,10 @@ import logging
 log = logging.getLogger(__name__)
 
 def constructQueryString(selections, extras={}):
+
     cursor = connection.cursor()
 
-    # housekeeping
-    if selections is False: return False
-    if len(selections.keys()) < 1: return False
     all_qtypes = extras['qtypes'] if 'qtypes' in extras else []
-
-    # do we have a cache key
-    no     = setUserSearchNo(selections,extras)
-    ptbl   = getUserSearchTableName(no)
-
-    # is this key set in memcached
-    cache_key = 'cache_table:' + str(no)
-    if (cache.get(cache_key)):
-        return cache.get(cache_key)
-
-    # it could still exist in database
-    try:
-        cursor.execute("desc cache_%s" % str(no))
-        cache.set(cache_key,ptbl,0)
-        return 'cache_%s' % str(no)
-    except DatabaseError:
-        pass  # no table is there, we go on to build it below
-
-    ## cache table dose not exist, we will make one by doing some data querying:
 
     # keeping track of some things
     long_querys = []  # special longitudinal queries are pure sql
@@ -129,7 +108,28 @@ def getUserQueryTable(selections,extras={}):
     """
     cursor = connection.cursor()
 
+    # housekeeping
+    if selections is False: return False
+    if len(selections.keys()) < 1: return False
 
+    # do we have a cache key
+    no     = setUserSearchNo(selections,extras)
+    ptbl   = getUserSearchTableName(no)
+
+    # is this key set in memcached
+    cache_key = 'cache_table:' + str(no)
+    if (cache.get(cache_key)):
+        return cache.get(cache_key)
+
+    # it could still exist in database
+    try:
+        cursor.execute("desc cache_%s" % str(no))
+        cache.set(cache_key,ptbl,0)
+        return 'cache_%s' % str(no)
+    except DatabaseError:
+        pass  # no table is there, we go on to build it below
+
+    ## cache table dose not exist, we will make one by doing some data querying:
     q = constructQueryString(selections, extras)
 
     try:
