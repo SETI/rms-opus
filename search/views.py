@@ -58,6 +58,7 @@ def constructQueryString(selections, extras={}):
         # lookup info about this param_name
         param_name_no_num = stripNumericSuffix(param_name)  # this is used later for other things!
         cat_name = param_name.split('.')[0]
+        cat_model_name = ''.join(cat_name.lower().split('_'))
         name = param_name.split('.')[1]
         param_info = ParamInfo.objects.get(name=name, category_name = cat_name)
         form_type = param_info.form_type
@@ -73,7 +74,10 @@ def constructQueryString(selections, extras={}):
             mult_name = "mult_" + '_'.join(param_name.split('.'))
             model = get_model('search',mult_name.title().replace('_',''))
             mult_values = [x['pk'] for x in list(model.objects.filter(label__in=value_list).values('pk'))]
-            q_objects.append(Q(**{"%s__in" % mult_name: mult_values }))
+            if cat_name != 'obs_general':
+                q_objects.append(Q(**{"%s__%s__in" % (cat_model_name, mult_name): mult_values }))
+            else:
+                q_objects.append(Q(**{"%s__in" % mult_name: mult_values }))
 
         # RANGE
         if form_type in settings.RANGE_FIELDS:
@@ -180,8 +184,10 @@ def urlToSearchParams(request_get):
             param_info        = ParamInfo.objects
             if 'surface_target' in request_get:
                 param_info = param_info.filter(category_name__contains=request_get['surface_target'])
+            else:
+                param_info = param_info.exclude(category_name__contains='obs_surface_geometry')
+
             param_info = param_info.get(slug=slug)
-            param_info        = ParamInfo.objects.get(slug=slug)
             cat_name          = param_info.category_name
             name              = param_info.name
             form_type         = param_info.form_type
