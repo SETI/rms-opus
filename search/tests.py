@@ -27,6 +27,7 @@ setup_environ(settings)
 
 from django.test import TestCase
 from django.test.client import Client
+from django.db.models import get_model
 
 from search.views import *
 from results.views import *
@@ -40,7 +41,7 @@ class myFirstTests(TestCase):
     c = Client()
     param_name = 'obs_general.planet_id'
     selections = {}
-    selections[param_name] = ['Jupiter']
+    selections[param_name] = ['Saturn']
 
     def teardown(self):
         cursor = connection.cursor()
@@ -52,6 +53,39 @@ class myFirstTests(TestCase):
             q = 'drop table ' + row[0]
             print q
             cursor.execute(q)
+
+    ## constructQueryString
+    def test__constructQueryString_mults_planet(self):
+        q = constructQueryString(self.selections)
+        expected = "SELECT `obs_general`.`id` FROM `obs_general` WHERE `obs_general`.`mult_obs_general_planet_id` IN (5)"
+        self.assertEqual(q,expected)
+
+    def test__constructQueryString_mults_with_target(self):
+        selections = {}
+        selections['obs_general.planet_id'] = ["Saturn"]
+        selections['obs_general.target_name'] = ["PAN"]
+        q = constructQueryString(selections)
+        expected = "SELECT `obs_general`.`id` FROM `obs_general` WHERE (`obs_general`.`mult_obs_general_target_name` IN (42) AND `obs_general`.`mult_obs_general_planet_id` IN (5))"
+        self.assertEqual(q,expected)
+
+    def test__constructQueryString_mults_with_join(self):
+        selections = {}
+        selections['obs_general.planet_id'] = ["Saturn"]
+        selections['obs_instrument_COISS.camera'] = ["Wide Angle"]
+        q = constructQueryString(selections)
+        expected = "SELECT `obs_general`.`id` FROM `obs_general` INNER JOIN `obs_instrument_COISS` ON (`obs_general`.`id` = `obs_instrument_COISS`.`obs_general_id`) WHERE (`obs_general`.`mult_obs_general_planet_id` IN (5) AND `obs_instrument_COISS`.`mult_obs_instrument_COISS_camera` IN (1))"
+        self.assertEqual(q,expected)
+
+    def test__constructQueryString_mults_with_3_table_join(self):
+        selections = {}
+        selections['obs_general.planet_id'] = ["Saturn"]
+        selections['obs_general.target_name'] = ["PAN"]
+        selections['obs_instrument_COISS.camera'] = ["Narrow Angle"]
+        selections['obs_mission_cassini.rev_no'] = ['165','166']
+        q = constructQueryString(selections)
+        expected = "SELECT `obs_general`.`id` FROM `obs_general` INNER JOIN `obs_mission_cassini` ON (`obs_general`.`id` = `obs_mission_cassini`.`obs_general_id`) INNER JOIN `obs_instrument_COISS` ON (`obs_general`.`id` = `obs_instrument_COISS`.`obs_general_id`) WHERE (`obs_general`.`mult_obs_general_target_name` IN (42) AND `obs_general`.`mult_obs_general_planet_id` IN (5) AND `obs_mission_cassini`.`mult_obs_mission_cassini_rev_no` IN (289, 290) AND `obs_instrument_COISS`.`mult_obs_instrument_COISS_camera` IN (2))"
+
+        self.assertEqual(q,expected)
 
 
     ## getUserQueryTable
@@ -68,9 +102,7 @@ class myFirstTests(TestCase):
         self.assertEqual(table,'cache_1')
 
 
-
     ## test urlToSearchParam
-
     def test__urlToSearchParams_stringsearch(self):
         q = QueryDict("note=Incomplete")
         result = urlToSearchParams(q)
@@ -134,7 +166,6 @@ class myFirstTests(TestCase):
 
     ##  Range Query tests
     def test__range_query_any(self):
-
         # range query: 'any'
         selections = {}
         selections['obs_ring_geometry.ring_radius1'] = [10000]
