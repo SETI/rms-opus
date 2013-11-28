@@ -221,7 +221,7 @@ cursor.execute("update " + opus2 + ".param_info set form_type = 'RANGE' where fo
 cursor.execute("update %s.param_info set slug = 'target' where name = 'target_name'" % opus2)
 cursor.execute("update %s.param_info set display = NULL where display = 'N'" % opus2)
 cursor.execute("update %s.param_info set slug = 'planet' where name = 'planet_id'" % opus2)
-
+cursor.execute("update %s.param_info set slug = 'surface_target' where slug = 'target' and category_name = 'obs_surface_geometry';" % opus2)
 
 # ----------- creating the grouping, category, and guide tables --------------#
 queries = """
@@ -230,7 +230,6 @@ create table %s.groups like opus_hack.groups;
 create table %s.categories like opus_hack.categories;
 insert into %s.groups select * from opus_hack.groups;
 insert into %s.categories select * from opus_hack.categories;
-update %s.param_info n, opus_hack.param_info o set n.category_id = o.category_id, n.category_name = o.category_name where n.name = o.name;
 create table %s.guide_example like opus_hack.guide_example;
 create table %s.guide_group like opus_hack.guide_group;
 create table %s.guide_keyvalue like opus_hack.guide_keyvalue;
