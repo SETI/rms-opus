@@ -20,15 +20,7 @@ from tools.views import *
 import logging
 log = logging.getLogger(__name__)
 
-def getUserQueryTable(selections,extras={}):
-    """
-    This is THE main data query place.  Performs a data search and creates
-    a table of Ids that match the result rows.
-
-    (the function urlToSearchParams take the user http request object and
-    creates the data objects that are passed to this function)
-
-    """
+def constructQueryString(selections, extras={}):
     cursor = connection.cursor()
 
     # housekeeping
@@ -111,16 +103,32 @@ def getUserQueryTable(selections,extras={}):
             q_objects.append(q_obj)
 
 
-    try: # now create our table
+    # construct our query, we'll be breaking into raw sql, but for that
+    # we'll be using the sql django generates through its model interface
+    q = str(ObsGeneral.objects.filter(*q_objects).values('pk').query)
 
-        # construct our query, we'll be breaking into raw sql, but for that
-        # we'll be using the sql django generates through its model interface
-        q = str(ObsGeneral.objects.filter(*q_objects).values('pk').query)
+    # append any longitudinal queries to the query string
+    if long_querys:
+        q += " ".join([" and (%s) " % q for q in long_querys])
 
-        # append any longitudinal queries to the query string
-        if long_querys:
-            q += " ".join([" and (%s) " % q for q in long_querys])
+    return q
 
+
+def getUserQueryTable(selections,extras={}):
+    """
+    This is THE main data query place.  Performs a data search and creates
+    a table of Ids that match the result rows.
+
+    (the function urlToSearchParams take the user http request object and
+    creates the data objects that are passed to this function)
+
+    """
+    cursor = connection.cursor()
+
+
+    q = constructQueryString(selections, extras)
+
+    try:
         # with this we can create a table that contains the single row
         cursor.execute("create table " + ptbl + " " + q)
         # add the key **** this, and perhaps the create statement too, can be spawned to a backend process ****
@@ -130,7 +138,7 @@ def getUserQueryTable(selections,extras={}):
         cache.set(cache_key,ptbl,0)
         return ptbl
 
-    except:
+    except DatabaseError:
         log.debug('query execute failed')
         # import sys
         # print sys.exc_info()[1] + ': ' + print sys.exc_info()[1]
@@ -169,6 +177,10 @@ def urlToSearchParams(request_get):
         try:
             slug              = searchparam[0]
             slug_no_num       = stripNumericSuffix(slug)
+            param_info        = ParamInfo.objects
+            if 'surface_target' in request_get:
+                param_info = param_info.filter(category_name__contains=request_get['surface_target'])
+            param_info = param_info.get(slug=slug)
             param_info        = ParamInfo.objects.get(slug=slug)
             cat_name          = param_info.category_name
             name              = param_info.name
