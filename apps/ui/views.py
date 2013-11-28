@@ -25,19 +25,10 @@ log = logging.getLogger(__name__)
 def mainSite(request, template="main.html"):
     # main site needs a few things:
     menu = getMenuLabels()
-    defaults = getDefaults() # i don't like this here.
     namespace = 'search'
 
     return render_to_response(template,locals(), context_instance=RequestContext(request))
 
-def getDefaults():
-    # js declares these in the main.html template
-    # passed by the categoryLinks method below
-    # declared in the template like: {{ defaults.DEFAULT_COLUMNS }}
-
-    return {
-        'DEFAULT_COLUMNS': settings.DEFAULT_COLUMNS,
-    }
 
 def getDataTable(request,template='table_headers.html'):
     slugs = request.GET.get('cols',settings.DEFAULT_COLUMNS)
@@ -47,8 +38,9 @@ def getDataTable(request,template='table_headers.html'):
     if (request.is_ajax()):
         columns.append(["collection","Collect"])
 
+    param_info  = narrowParamInfoByRequest(request.GET)
     for slug in slugs:
-        columns.append([slug, ParamInfo.objects.get(slug=slug).label_results])
+        columns.append([slug, param_info.objects.get(slug=slug).label_results])
 
     return render_to_response(template,locals(), context_instance=RequestContext(request))
 
@@ -71,8 +63,10 @@ def getWidget(request, **kwargs):
     fmt = kwargs['fmt']
     form = ''
 
-    form_type = ParamInfo.objects.get(slug=slug.split('_')[0]).form_type
-    param_name = ParamInfo.objects.get(slug=slug.split('_')[0]).name
+    param_info  = narrowParamInfoByRequest(request.GET)
+
+    form_type = param_info.objects.get(slug=slug.split('_')[0]).form_type
+    param_name = param_info.objects.get(slug=slug.split('_')[0]).name
 
     form_vals = {slug:None}
     auto_id = True
@@ -204,7 +198,8 @@ def getWidget(request, **kwargs):
             form_vals = {slug:selections[param_name]}
         form = SearchForm(form_vals, auto_id=auto_id).as_ul()
 
-    label = ParamInfo.objects.get(slug=slug).label
+    param_info  = narrowParamInfoByRequest(request.GET)
+    label = param_info.objects.get(slug=slug).label
 
     if fmt == 'raw':
         return str(form)
@@ -245,6 +240,7 @@ def getResults(request,view='gallery'):
 def getQuickPage(request,template='demo.html'):
     widgets = {}
     images = Image.objects.all()[0:100]
+
     for param in ParamInfo.objects.filter(rank=1):
         # widgets[param.label] = str(getWidget(request,param.slug))
         widgets[param.label] = getWidget(request,param=param,slug=param.slug,fmt='raw')
@@ -281,14 +277,16 @@ def getDetailQuick(request, **kwargs):
     slugs = request.GET.get('cols',False)
     ring_obs_id = kwargs['ring_obs_id']
 
+    param_info  = narrowParamInfoByRequest(request.GET)
+
     data = {}
     if slugs:
         fields = []
         slugs = slugs.split(',')
         for slug in slugs:
-            fields += [ParamInfo.objects.get(slug=slug)]
+            fields += [param_info.objects.get(slug=slug)]
     else:
-        fields = ParamInfo.objects.filter(display_results='Y')
+        fields = param_info.objects.filter(display_results='Y')
 
     for field in fields:
         try:
@@ -300,7 +298,7 @@ def getDetailQuick(request, **kwargs):
 def getColumnLabels(slugs):
     labels = {}
     for slug in slugs:
-        labels[slug] = ParamInfo.objects.get(slug=slug).label_results
+        labels[slug] = param_info.objects.get(slug=slug).label_results
     return labels
 
 

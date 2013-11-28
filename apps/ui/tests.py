@@ -60,10 +60,6 @@ class UITests(TestCase):
         self.assertGreater(len(response.content), 104098)
 
 
-
-    def test__getDefaults(self):
-        self.assertEqual(True, False)
-
     def test__getDataTable(self):
         self.assertEqual(True, False)
 
