@@ -172,13 +172,6 @@ def downloadFileName():
     return 'ringdata_' + randstr + '_' + 'T'.join(str(datetime.utcnow()).split(' '))
 
 
-def getMultName(param_name):
-    """ mult foreign key tables are named like so """
-    return "mult_" + '_'.join(param_name.split('.'))
-
-def getUserSearchTableName(no):
-    """ a bit of text manipulation, user search tables are stored like so: """
-    return 'cache_' + str(no);
 
 def stripNumericSuffix(name):
     try:    return re.match("(.*)[1|2]",name).group(1)
