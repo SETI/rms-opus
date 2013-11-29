@@ -8,6 +8,20 @@
 
 from django.db import models
 
+class Partable(models.Model):
+    trigger_tab = models.CharField(max_length=200)
+    trigger_col = models.CharField(max_length=200)
+    trigger_val = models.CharField(max_length=60)
+    partable = models.CharField(max_length=200)
+    display = models.CharField(max_length=1)
+    disp_order = models.IntegerField(null=True, blank=True)
+
+    class Meta:
+        db_table = u'trigger_tab'
+        unique_together = ('trigger_col', 'trigger_val','trigger_tab')
+        ordering = [disp_order]
+
+
 class UserSearches(models.Model):
     # the table that describes a search that was issued by a user during a session
     selections_json = models.TextField()
