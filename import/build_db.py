@@ -260,6 +260,18 @@ cursor.execute("alter table %s.files change column no id int(7) not null" % (opu
 # and take care of the ring_obs_id transform
 cursor.execute("update %s.files t,%s.obs_general o set t.ring_obs_id = o.ring_obs_id where t.ring_obs_id = o.opus1_ring_obs_id" % (opus2, opus2))
 
+cursor.execute("alter table %s.files add column mission_id char(2) not null" % (opus2))
+cursor.execute("select distinct instrument_id from %s.files" % opus2)
+all_inst_ids = [row[0] for row in cursor.fetchall() if row[0]]
+for instrument_id in all_inst_ids:
+    mission_id = 'NH' if instrument_id.strip() == 'LORRI' else instrument_id[0:2]
+    cursor.execute("update %s.files set mission_id = '%s' where instrument_id = '%s'" % (opus2, mission_id, instrument_id))
+
+
+
+# now copy all these tables to the new opus database
+for tbl in mult_tables:
+
 
 # ----------- restore file_sizes  -------------#
 cursor.execute("create table %s.file_sizes like %s.file_sizes" % (opus2, opus1))

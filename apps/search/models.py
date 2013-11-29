@@ -19,7 +19,7 @@ class Partable(models.Model):
     class Meta:
         db_table = u'trigger_tab'
         unique_together = ('trigger_col', 'trigger_val','trigger_tab')
-        ordering = [disp_order]
+        ordering = ['disp_order']
 
 
 class UserSearches(models.Model):
