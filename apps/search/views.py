@@ -179,35 +179,35 @@ def urlToSearchParams(request_get):
 
     for searchparam in request_get.items():
         # try:
-            slug              = searchparam[0]
-            slug_no_num       = stripNumericSuffix(slug)
+        slug              = searchparam[0]
+        slug_no_num       = stripNumericSuffix(slug)
 
-            print slug
+        print slug
 
-            qtype = False  # assume this is not a qtype statement
-            if slug.find('qtype') == 0:
-                qtype = True  # this is a statement of query type!
-                slug = slug.split('-')[1]
-                slug_no_num = stripNumericSuffix(slug)
+        qtype = False  # assume this is not a qtype statement
+        if slug.find('qtype') == 0:
+            qtype = True  # this is a statement of query type!
+            slug = slug.split('-')[1]
+            slug_no_num = stripNumericSuffix(slug)
 
-            param_info = ParamInfo.objects.get(slug=slug)
-            form_type = param_info.form_type
+        param_info = ParamInfo.objects.get(slug=slug)
+        form_type = param_info.form_type
 
-            param_name = param_info.param_name()
-            param_name_no_num = stripNumericSuffix(param_name)
+        param_name = param_info.param_name()
+        param_name_no_num = stripNumericSuffix(param_name)
 
-            if qtype:
-                print slug_no_num
-                qtypes[param_name_no_num] = request_get.get('qtype-'+slug_no_num,False).strip(',').split(',')
-                continue
+        if qtype:
+            print slug_no_num
+            qtypes[param_name_no_num] = request_get.get('qtype-'+slug_no_num,False).strip(',').split(',')
+            continue
 
 
-            if form_type in settings.MULT_FORM_TYPES:
-                # mult for types can be sorted to save duplicate queries being built
-                selections[param_name] = sorted(searchparam[1].strip(',').split(','))
-            else:
-                # no other form types can be sorted since qtype depends on ordering
-                selections[param_name] = searchparam[1].strip(',').split(',')
+        if form_type in settings.MULT_FORM_TYPES:
+            # mult for types can be sorted to save duplicate queries being built
+            selections[param_name] = sorted(searchparam[1].strip(',').split(','))
+        else:
+            # no other form types can be sorted since qtype depends on ordering
+            selections[param_name] = searchparam[1].strip(',').split(',')
 
         # except: pass # the param passed doesn't exist or is a USER PREF AAAAAACK
 
@@ -219,7 +219,8 @@ def urlToSearchParams(request_get):
         results.append(extras)
         return results
 
-    else: return False
+    else:
+        return False
 
 
 def setUserSearchNo(selections,extras={}):
