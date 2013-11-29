@@ -160,6 +160,7 @@ for row in param_info_rows:
         mult_model = "class " + mult_model_name + "(models.Model):" + mult_model_core
         mult_model += "class Meta:\n"
         mult_model += "        db_table = u'" + mult_table + "'\n"
+        mult_model += "        ordering = [disp_order]\n"
         mult_models += [mult_model]
         fkey_field_def = "    " + mult_table + ' = models.ForeignKey(' + mult_model_name + ', db_column="' + mult_table + '", db_index=False, null=True, blank=True)'
 
@@ -205,6 +206,20 @@ models_dot_py =  """
 
 from django.db import models
 
+class Partable(models.Model):
+    trigger_tab = models.CharField(max_length=200)
+    trigger_col = models.CharField(max_length=200)
+    trigger_val = models.CharField(max_length=60)
+    partable = models.CharField(max_length=200)
+    display = models.CharField(max_length=1)
+    disp_order = models.IntegerField(null=True, blank=True)
+
+    class Meta:
+        db_table = u'trigger_tab'
+        unique_together = ('trigger_col', 'trigger_val','trigger_tab')
+        ordering = [disp_order]
+
+
 class UserSearches(models.Model):
     # the table that describes a search that was issued by a user during a session
     selections_json = models.TextField()
@@ -221,7 +236,6 @@ class UserSearches(models.Model):
         db_table = u'user_searches'
         unique_together = ('selections_hash', 'string_selects_hash','units_hash','qtypes_hash')
 
-
 """.format(volumes_str)
 
 models_dot_py += "\n\n".join(mult_models)
@@ -233,6 +247,7 @@ for choice_name,choices in field_choices.items():
 
 models_dot_py += "\n"
 
+# print all data classes
 for table in all_field_defs:
     model_name = ''.join(table.title().split('_'))
     models_dot_py +=  "class %s(models.Model): \n" % model_name

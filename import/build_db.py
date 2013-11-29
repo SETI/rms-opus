@@ -292,6 +292,10 @@ cursor.execute("alter table %s.images add unique key (ring_obs_id)" % (opus2))
 cursor.execute("update %s.images t,%s.obs_general o set t.ring_obs_id = o.ring_obs_id where t.ring_obs_id = o.opus1_ring_obs_id" % (opus2, opus2))
 
 
+# ----------- build partable -------------#
+cursor.execute("create table %s.partables select no, trigger_tab, trigger_col, trigger_val, partable, display, disp_order from %s.partables where display = 'Y' order by disp_order" % (opus2, opus1))
+cursor.execute(" alter table %s.partables change column no id tinyint(2) unsigned not null auto_increment primary key" % opus2)
+
 # ------------ cleanup ------------ #
 transaction.commit_unless_managed()  # flushes any waiting queries
 cursor.execute("SET foreign_key_checks = 1")
