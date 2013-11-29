@@ -111,8 +111,7 @@ class SearchForm(forms.Form):
 
             elif form_type in settings.MULT_FIELDS:
                 #self.fields[slug]= MultiStringField(forms.Field)
-                """" HOUSTON WE HAVE A PROBLE """""
-                param_name = ParamInfo.objects.get(slug=slug).name
+                param_name = ParamInfo.objects.get(slug=slug).param_name()
                 mult_param = getMultName(param_name)
                 model      = get_model('search',mult_param.title().replace('_',''))
 
