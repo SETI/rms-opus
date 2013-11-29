@@ -40,13 +40,6 @@ class metadataTests(TestCase):
             cursor.execute(q)
 
 
-    def test__getResults(self):
-        print 'in getResults test'
-        response = self.c.get('/search/api/data/?planet=Saturn')
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(len(response.content), 104098)
-
-
     def test__getImages(self):
         response = self.c.get('/search/results/images/?planet=Jupiter')
         self.assertEqual(response.status_code, 200)

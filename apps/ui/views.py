@@ -10,6 +10,7 @@ from paraminfo.models import *
 from results.views import *
 from django.template import RequestContext
 from django.shortcuts import render_to_response
+from django.db.models import get_model
 from django.http import HttpResponse
 from django.core.exceptions import FieldError
 import settings
@@ -31,16 +32,16 @@ def mainSite(request, template="main.html"):
 
 
 def getDataTable(request,template='table_headers.html'):
-    slugs = request.GET.get('cols',settings.DEFAULT_COLUMNS)
+    slugs = request.GET.get('cols', settings.DEFAULT_COLUMNS)
     slugs = verifyColumns(slugs.split(','))
 
     columns = []
     if (request.is_ajax()):
         columns.append(["collection","Collect"])
 
-    param_info  = narrowParamInfoByRequest(request.GET)
+    param_info  = ParamInfo.objects
     for slug in slugs:
-        columns.append([slug, param_info.objects.get(slug=slug).label_results])
+        columns.append([slug, param_info.get(slug=slug).label_results])
 
     return render_to_response(template,locals(), context_instance=RequestContext(request))
 
@@ -63,10 +64,10 @@ def getWidget(request, **kwargs):
     fmt = kwargs['fmt']
     form = ''
 
-    param_info  = narrowParamInfoByRequest(request.GET)
+    param_info  = ParamInfo.objects.get(slug=slug)
 
-    form_type = param_info.objects.get(slug=slug.split('_')[0]).form_type
-    param_name = param_info.objects.get(slug=slug.split('_')[0]).name
+    form_type = param_info.form_type
+    param_name = param_info.param_name()
 
     form_vals = {slug:None}
     auto_id = True
@@ -170,6 +171,7 @@ def getWidget(request, **kwargs):
         # determine if this mult param has a grouping field (see doc/group_widgets.md for howto on grouping fields)
         mult_param = getMultName(param_name)
         model      = get_model('search',mult_param.title().replace('_',''))
+
         log.debug(param_name)
         try:
             grouping = model.objects.distinct().values('grouping')
@@ -198,8 +200,8 @@ def getWidget(request, **kwargs):
             form_vals = {slug:selections[param_name]}
         form = SearchForm(form_vals, auto_id=auto_id).as_ul()
 
-    param_info  = narrowParamInfoByRequest(request.GET)
-    label = param_info.objects.get(slug=slug).label
+    param_info  = ParamInfo.objects.get(slug=slug)
+    label = param_info.label
 
     if fmt == 'raw':
         return str(form)
@@ -221,19 +223,6 @@ def detailPage(request,ring_obs_id, template='detail.html'):
     data = getDetail(request,ring_obs_id=ring_obs_id)
     return render_to_response(template,locals(), context_instance=RequestContext(request))
 """
-
-def getResults(request,view='gallery'):
-
-    [page_no,limit,page,page_ids] = getPage(request)
-
-    if view == 'table':
-        template = 'table'
-        pass
-    else:
-        template = 'gallery'
-        images = getImages(request,size,raw)
-
-    return render_to_response(template,locals(), context_instance=RequestContext(request))
 
 
 
@@ -277,14 +266,14 @@ def getDetailQuick(request, **kwargs):
     slugs = request.GET.get('cols',False)
     ring_obs_id = kwargs['ring_obs_id']
 
-    param_info  = narrowParamInfoByRequest(request.GET)
+    param_info  = ParamInfo.objects
 
     data = {}
     if slugs:
         fields = []
         slugs = slugs.split(',')
         for slug in slugs:
-            fields += [param_info.objects.get(slug=slug)]
+            fields += [param_info.get(slug=slug)]
     else:
         fields = param_info.objects.filter(display_results='Y')
 
@@ -298,7 +287,7 @@ def getDetailQuick(request, **kwargs):
 def getColumnLabels(slugs):
     labels = {}
     for slug in slugs:
-        labels[slug] = param_info.objects.get(slug=slug).label_results
+        labels[slug] = param_info.get(slug=slug).label_results
     return labels
 
 
