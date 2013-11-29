@@ -42,7 +42,6 @@ class ParamInfoTests(TestCase):
     selections = {}
     selections[param_name] = ['Jupiter']
 
-
     def test__param_name_for_target_slug(self):
         # this will catch when we forget to futz with target fields in param_info table
         param_name = ParamInfo.objects.get(slug='target').param_name()
