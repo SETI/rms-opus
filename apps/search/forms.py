@@ -51,7 +51,7 @@ class SearchForm(forms.Form):
     this only uses default form type, we want to pass in user defined form types,
     qtypes gets played here!
 
-    >>>> from opus.search.forms import *
+    >>>> from search.forms import *
     >>>> auto_id = False
     >>>> slug1 = 'planet'
     >>>> slug2 = 'target'
@@ -65,7 +65,7 @@ class SearchForm(forms.Form):
         super(SearchForm, self).__init__(*args, **kwargs)
 
         # this makes getMultName() below not choke, circular import issue? not sure..but this fixes
-        from opus.metadata.views import getMultName
+        from metadata.views import getMultName
 
         for slug,values in args[0].items():
             try:
@@ -111,6 +111,7 @@ class SearchForm(forms.Form):
 
             elif form_type in settings.MULT_FIELDS:
                 #self.fields[slug]= MultiStringField(forms.Field)
+                """" HOUSTON WE HAVE A PROBLE """""
                 param_name = ParamInfo.objects.get(slug=slug).name
                 mult_param = getMultName(param_name)
                 model      = get_model('search',mult_param.title().replace('_',''))

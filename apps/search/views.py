@@ -190,13 +190,10 @@ def urlToSearchParams(request_get):
                 slug = slug.split('-')[1]
                 slug_no_num = stripNumericSuffix(slug)
 
-            param_info        = narrowParamInfoByRequest(request_get)
-            param_info = param_info.get(slug=slug)
-            cat_name          = param_info.category_name
-            name              = param_info.name
-            form_type         = param_info.form_type
+            param_info = ParamInfo.objects.get(slug=slug)
+            form_type = param_info.form_type
 
-            param_name = "%s.%s" % (cat_name, name)
+            param_name = param_info.param_name()
             param_name_no_num = stripNumericSuffix(param_name)
 
             if qtype:
