@@ -158,7 +158,9 @@ CACHES = {
 
 INTERNAL_IPS = ("127.0.0.1",)
 
-# app constants
+## App constants
+
+BASE_TABLES = ['obs_general', 'obs_ring_geometry','obs_wavelength','obs_type_image']  # tables in which every observation in the database appears:
 TAR_FILE_URI_PATH = 'http://pds-rings-downloads.seti.org/opus/'
 IMAGE_HTTP_PATH = 'http://pds-rings.seti.org/browse/'
 DEFAULT_COLUMNS = 'ringobsid,planet,target,phase1'
