@@ -97,6 +97,44 @@ def getDetail(request,ring_obs_id='',fmt='json'):
     return responseFormats({'data':data},fmt,template='detail.html')
 
 
+def get_triggered_tables(selections, extras):
+    """
+    this looks at user request and returns triggered tables
+    always returns the settings.BASETABLES
+    """
+    # first add the base tables
+    triggered_tables = [t for t in settings.BASE_TABLES]
+    query_result_table = getUserQueryTable(selections,extras)
+
+    # now see if any m ore tables are triggered from query
+    for partable in Partable.objects.all():
+        # we are joining the results of a user's query - the single column table of ids
+        # with the trigger_tab listed in the partable,
+        trigger_tab = partable.trigger_tab
+        trigger_col = partable.trigger_col
+        trigger_val = partable.trigger_val
+        partable = partable.partable
+
+        if partable in triggered_tables:
+            continue  # already triggered, no need to check
+
+        trigger_model = get_model('search', ''.join(trigger_tab.title().split('_')))
+        if trigger_tab == 'obs_general':
+            where   = trigger_tab + ".id = " + query_result_table + ".id"
+        else:
+            where   = trigger_tab + ".obs_general_id = " + query_result_table + ".id"
+
+        results = trigger_model.objects.extra(where=[where], tables=[query_result_table]).distinct().values(trigger_col)
+
+        if len(results) == 1 and results[0][trigger_col] == trigger_val:
+            # we has a triggered table
+            triggered_tables.append(partable)
+
+
+    triggered_tables.sort()
+    return triggered_tables
+
+
 # this should return an image for every row..
 def getImages(request,size,fmt):
     """

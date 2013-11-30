@@ -1,4 +1,5 @@
 from django.db import models
+from paraminfo.models import *
 
 class Image(models.Model):
     ring_obs_id = models.CharField(max_length=40)
@@ -53,10 +54,10 @@ class Files(models.Model):
     detached_label_ext = models.CharField(max_length=12, blank=True)
     extra_files = models.TextField(blank=True)
     base_path = models.CharField(max_length=60)
-    mission = models.TextField(blank=True)
+    mission_id = models.TextField(blank=True)
+
     class Meta:
         db_table = u'files'
-
 
     def __unicode__(self):
         return self.ring_obs_id
