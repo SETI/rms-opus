@@ -215,7 +215,7 @@ class Partable(models.Model):
     disp_order = models.IntegerField(null=True, blank=True)
 
     class Meta:
-        db_table = u'trigger_tab'
+        db_table = u'partables'
         unique_together = ('trigger_col', 'trigger_val','trigger_tab')
         ordering = ['disp_order']
 
