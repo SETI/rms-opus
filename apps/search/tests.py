@@ -59,6 +59,15 @@ class myFirstTests(TestCase):
         expected = "SELECT `obs_general`.`id` FROM `obs_general` WHERE `obs_general`.`mult_obs_general_planet_id` IN (5)"
         self.assertEqual(q,expected)
 
+    def test__constructQueryString_mults_planet_instrumentCOISS(self):
+        selections = {}
+        selections['obs_general.planet_id'] = ['Saturn']
+        selections['obs_general.instrument_id'] = ['COISS']
+        q = constructQueryString(selections)
+        print q
+        expected = "SELECT `obs_general`.`id` FROM `obs_general` WHERE (`obs_general`.`mult_obs_general_planet_id` IN (5) AND `obs_general`.`mult_obs_general_instrument_id` IN (2))"
+        self.assertEqual(q,expected)
+
     def test__constructQueryString_mults_with_target(self):
         selections = {}
         selections['obs_general.planet_id'] = ["Saturn"]
@@ -113,6 +122,11 @@ class myFirstTests(TestCase):
         q = QueryDict("planet=SATURN&target=PAN")
         result = urlToSearchParams(q)
         self.assertEqual(result,[{u'obs_general.target_name': [u'PAN'], u'obs_general.planet_id': [u'SATURN']}, {'qtypes': {}}])
+
+    def test__urlToSearchParams_mults_instrument(self):
+        q = QueryDict("planet=SATURN&instrumentid=COISS")
+        result = urlToSearchParams(q)
+        self.assertEqual(result,[{u'obs_general.instrument_id': [u'COISS'], u'obs_general.planet_id': [u'SATURN']}, {'qtypes': {}}])
 
 
     def test__urlToSearchParams_stringmultmix(self):
