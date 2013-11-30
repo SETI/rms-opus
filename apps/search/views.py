@@ -51,8 +51,9 @@ def constructQueryString(selections, extras={}):
         # MULTs
         if form_type in settings.MULT_FORM_TYPES:
             mult_name = getMultName(param_name)
-            model = get_model('search',mult_name.title().replace('_',''))
-            mult_values = [x['pk'] for x in list(model.objects.filter(label__in=value_list).values('pk'))]
+            model_name = mult_name.title().replace('_','')
+            model = get_model('search',model_name)
+            mult_values = [x['pk'] for x in list(model.objects.filter(Q(label__in=value_list) | Q(value__in=value_list) ).values('pk'))]
             if cat_name != 'obs_general':
                 q_objects.append(Q(**{"%s__%s__in" % (cat_model_name, mult_name): mult_values }))
             else:
