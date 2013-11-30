@@ -34,6 +34,7 @@ def constructQueryString(selections, extras={}):
     # buld the django query
     for param_name, value_list in selections.items():
 
+        value_list = [s.strip() for s in value_list]
         # lookup info about this param_name
         param_name_no_num = stripNumericSuffix(param_name)  # this is used later for other things!
         cat_name = param_name.split('.')[0]
@@ -87,9 +88,12 @@ def constructQueryString(selections, extras={}):
             q_objects.append(q_obj)
 
 
+
+
     # construct our query, we'll be breaking into raw sql, but for that
     # we'll be using the sql django generates through its model interface
     q = str(ObsGeneral.objects.filter(*q_objects).values('pk').query)
+
 
     # append any longitudinal queries to the query string
     if long_querys:
@@ -119,6 +123,7 @@ def getUserQueryTable(selections,extras={}):
 
     # is this key set in memcached
     cache_key = 'cache_table:' + str(no)
+
     if (cache.get(cache_key)):
         return cache.get(cache_key)
 
@@ -183,8 +188,6 @@ def urlToSearchParams(request_get):
         slug              = searchparam[0]
         slug_no_num       = stripNumericSuffix(slug)
 
-        print slug
-
         qtype = False  # assume this is not a qtype statement
         if slug.find('qtype') == 0:
             qtype = True  # this is a statement of query type!
@@ -198,7 +201,6 @@ def urlToSearchParams(request_get):
         param_name_no_num = stripNumericSuffix(param_name)
 
         if qtype:
-            print slug_no_num
             qtypes[param_name_no_num] = request_get.get('qtype-'+slug_no_num,False).strip(',').split(',')
             continue
 
@@ -445,7 +447,6 @@ def findInvalidTimes(value_list):
     we know that value_list contains None values before passing it to this
     """
     converted_value_list = convertTimes(value_list)
-    print converted_value_list
     try:
         index = converted_value_list.index(None) # invalid times were submitted
         invalids = []
