@@ -252,6 +252,9 @@ class TableName(models.Model):
 """.format(volumes_str)
 
 models_dot_py += "\n\n".join(mult_models)
+models_dot_py += "\n"
+models_dot_py += "\n"
+
 
 # print all the mult field choices
 models_dot_py += "# choices for all the mult fields in all data tables \n"
