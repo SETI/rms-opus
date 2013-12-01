@@ -18,7 +18,7 @@ class Group(models.Model):
 
     class Meta:
         db_table = u'groups'
-        ordering = ('disp_order',)
+        ordering = ['disp_order']
 
     def __unicode__(self):
         return self.name
