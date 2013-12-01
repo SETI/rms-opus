@@ -4,16 +4,17 @@
 #
 ################################################
 import settings
+from django.http import Http404
+from django.shortcuts import render_to_response
+from django.utils.datastructures import SortedDict
+from django.db.models import get_model
 from search.views import *
 from search.models import *
 from results.models import *
 from paraminfo.models import *
 from metadata.views import *
 from user_collections.views import *
-from django.http import Http404
-from django.shortcuts import render_to_response
 from tools.app_utils import *
-from django.utils.datastructures import SortedDict
 
 import logging
 log = logging.getLogger(__name__)
@@ -56,14 +57,53 @@ def getDetail(request,ring_obs_id='',fmt='json'):
     data = SortedDict({})
     # mission and instrument values for this ring_obs_id
     try:
-        mission = Files.objects.filter(ring_obs_id=ring_obs_id)[:1][0].mission
-        instrument = Files.objects.filter(ring_obs_id=ring_obs_id)[:1][0].instrument_id
+        mission = ObsGeneral.objects.get(ring_obs_id=ring_obs_id).mission_id
+        instrument = ObsGeneral.objects.get(ring_obs_id=ring_obs_id).instrument_id
     except Files.DoesNotExist:
         raise Http404
 
-    results = Observations.objects.filter(ring_obs_id=ring_obs_id)
+    # look up any triggered tables definied by the user's query
+    selections, extras = {}, {}
+    if request.GET:
+        (selections,extras) = urlToSearchParams(request.GET)
+    triggered_tables = get_triggered_tables(selections, extras)
 
-    flat_data = SortedDict({}) # this is to build a csv
+    # triggered tables are nice, but we also just want to know all data for this ring_obs_id
+    # so while a table may not be triggered by selections, it still should show
+    # up in a single obs detail page if the obs is in that table
+    # so what tables to look in?
+    # grab mission and instrument table
+    triggered_tables.append(TableName.objects.get(table_name__startswith='obs_mission', mission_id=mission).table_name)
+    triggered_tables.append('obs_instrument_' + instrument)
+    # mission tables are named a little trippier
+    # inspect obs_surface_geometry table to get smaller geo tables
+    surface_geo_targets = ObsSurfaceGeometry.objects.filter(ring_obs_id=ring_obs_id).values('target_name')
+    for target in surface_geo_targets:
+        triggered_tables.append('obs_surface_geometry__' + target['target_name'])
+
+    # now it's something like:
+    for table_name in triggered_tables:
+        table = TableName.objects.get(table_name=table_name)
+        label = table.label
+        table_name = table.table_name
+        model_name = ''.join(table_name.title().split('_'))
+        table_model = get_model('search', model_name)
+        all_params = [param.name for param in ParamInfo.objects.filter(category_name=table_name, display_results=1)]
+        results = table_model.objects.filter(ring_obs_id=ring_obs_id).values(*all_params)[0]
+
+        data[label] = results
+
+    import json
+    if fmt == 'json':
+        return HttpResponse(json.dumps(data), content_type="application/json")
+    if fmt == 'html':
+        return responseFormats({'data':data},fmt,template='detail.html')
+
+
+    """
+    THIS WILL BE REPLACED.
+    leaving it for now because it is what the detail.html template expects
+    results = ObsGeneral.objects.filter(ring_obs_id=ring_obs_id)
     for group in Group.objects.filter(display="Y"):
         group_name = group.name.strip()
         data[group_name] = SortedDict({})
@@ -74,14 +114,12 @@ def getDetail(request,ring_obs_id='',fmt='json'):
                 # if mission or instrument is declared and do not match what is in files table
                 # then do not return them as they are irrelevent to this observation
                 # (for example: VGISS_camera is not relevant to a COISS image)
-                if param.mission:
-                    if param.mission != mission:
-                        continue
-                if param.instrument:
-                    if param.instrument != instrument:
-                        continue
+                if param.mission and param.mission != mission:
+                    continue
+                if param.instrument and param.instrument != instrument:
+                    continue
 
-                param_name = param.name.strip()
+                param_name = param.param_name()
                 data[group_name][cat_name][param.slug.strip()] = results.values(param_name)[0][param_name]
                 flat_data[param.slug.strip()] = results.values(param_name)[0][param_name]
 
@@ -89,12 +127,15 @@ def getDetail(request,ring_obs_id='',fmt='json'):
                 del data[group_name][cat_name] # clean up empties
         if not len(data[group_name]):
             del data[group_name] # clean up empties
-
     if fmt == 'csv':
         # return HttpResponse(','.join(column_values))
         return responseFormats({'data':[flat_data]},fmt,template='detail.html')
 
-    return responseFormats({'data':data},fmt,template='detail.html')
+    return responseFormats({'data':detail},fmt,template='detail.html')
+    """
+
+
+
 
 
 def get_triggered_tables(selections, extras):
@@ -106,7 +147,7 @@ def get_triggered_tables(selections, extras):
     triggered_tables = [t for t in settings.BASE_TABLES]
     query_result_table = getUserQueryTable(selections,extras)
 
-    # now see if any m ore tables are triggered from query
+    # now see if any more tables are triggered from query
     for partable in Partable.objects.all():
         # we are joining the results of a user's query - the single column table of ids
         # with the trigger_tab listed in the partable,
@@ -119,20 +160,25 @@ def get_triggered_tables(selections, extras):
             continue  # already triggered, no need to check
 
         trigger_model = get_model('search', ''.join(trigger_tab.title().split('_')))
-        if trigger_tab == 'obs_general':
-            where   = trigger_tab + ".id = " + query_result_table + ".id"
-        else:
-            where   = trigger_tab + ".obs_general_id = " + query_result_table + ".id"
-
-        results = trigger_model.objects.extra(where=[where], tables=[query_result_table]).distinct().values(trigger_col)
+        results = trigger_model.objects
+        if query_result_table:
+            if trigger_tab == 'obs_general':
+                where   = trigger_tab + ".id = " + query_result_table + ".id"
+            else:
+                where   = trigger_tab + ".obs_general_id = " + query_result_table + ".id"
+            results = results.extra(where=[where], tables=[query_result_table])
+        results = results.distinct().values(trigger_col)
 
         if len(results) == 1 and results[0][trigger_col] == trigger_val:
             # we has a triggered table
             triggered_tables.append(partable)
 
+    # now hack in the proper ordering of tables
+    final_table_list = []
+    for table in TableName.objects.filter(table_name__in=triggered_tables).values('table_name'):
+        final_table_list.append(table['table_name'])
 
-    triggered_tables.sort()
-    return triggered_tables
+    return final_table_list
 
 
 # this should return an image for every row..
