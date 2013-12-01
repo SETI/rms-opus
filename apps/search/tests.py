@@ -59,6 +59,15 @@ class myFirstTests(TestCase):
         expected = "SELECT `obs_general`.`id` FROM `obs_general` WHERE `obs_general`.`mult_obs_general_planet_id` IN (5)"
         self.assertEqual(q,expected)
 
+    def test__constructQueryString_range_single_qtype(self):
+        q = QueryDict("ringradius1=60000&ringradius2=80000,120000&qtype-ringradius=all")
+        selections, extras = urlToSearchParams(q)
+        q = constructQueryString(selections, extras)
+        print q
+        expected = "SELECT `obs_general`.`id` FROM `obs_general` INNER JOIN `obs_ring_geometry` ON (`obs_general`.`id` = `obs_ring_geometry`.`obs_general_id`) WHERE ((`obs_ring_geometry`.`ring_radius1` <= 60000.0  AND `obs_ring_geometry`.`ring_radius2` >= 80000.0 ) OR `obs_ring_geometry`.`ring_radius2` >= 120000.0 )"
+        self.assertEqual(q,expected)
+
+
     def test__constructQueryString_mults_planet_instrumentCOISS(self):
         selections = {}
         selections['obs_general.planet_id'] = ['Saturn']
@@ -116,6 +125,13 @@ class myFirstTests(TestCase):
         result = urlToSearchParams(q)
         print result
         self.assertEqual(result,[{u'obs_general.note': [u'Incomplete']}, {'qtypes': {}}])
+
+    def test__urlToSearchParams_range_single_qtype(self):
+        q = QueryDict("ringradius1=60000&ringradius2=80000,120000&qtype-ringradius=all")
+        result = urlToSearchParams(q)
+        print result
+        expected = [{u'obs_ring_geometry.ring_radius2': [u'80000', u'120000'], u'obs_ring_geometry.ring_radius1': [u'60000']}, {'qtypes': {u'obs_ring_geometry.ring_radius': [u'all']}}]
+        self.assertEqual(result,expected)
 
 
     def test__urlToSearchParams_mults(self):
@@ -179,7 +195,7 @@ class myFirstTests(TestCase):
         selections['obs_ring_geometry.ring_radius2'] = [40000]
         q = range_query_object(selections,'obs_ring_geometry.ring_radius1',['any'])
         print str(q)
-        self.assertEqual(str(q),"(AND: ('obs_ring_geometry.ring_radius1__lte', 40000), ('obs_ring_geometry.ring_radius2__gte', 10000))")
+        self.assertEqual(str(q),"(AND: (u'obsringgeometry__ring_radius1__lte', 40000), (u'obsringgeometry__ring_radius2__gte', 10000))")
 
     def test_range_query_only(self):
         # range query: 'only'
@@ -188,7 +204,7 @@ class myFirstTests(TestCase):
         selections['obs_ring_geometry.ring_radius2'] = [40000]
         q = range_query_object(selections,'obs_ring_geometry.ring_radius1',['only'])
         print str(q)
-        self.assertEqual(str(q), "(AND: ('obs_ring_geometry.ring_radius1__gte', 10000), ('obs_ring_geometry.ring_radius2__lte', 40000))")
+        self.assertEqual(str(q), "(AND: (u'obsringgeometry__ring_radius1__gte', 10000), (u'obsringgeometry__ring_radius2__lte', 40000))")
 
     def test_range_query_all(self):
         # range query: 'all'
@@ -197,7 +213,7 @@ class myFirstTests(TestCase):
         selections['obs_ring_geometry.ring_radius2'] = [40000]
         q = range_query_object(selections,'obs_ring_geometry.ring_radius1',['all'])
         print str(q)
-        self.assertEqual(str(q), "(AND: ('obs_ring_geometry.ring_radius1__lte', 10000), ('obs_ring_geometry.ring_radius2__gte', 40000))")
+        self.assertEqual(str(q), "(AND: (u'obsringgeometry__ring_radius1__lte', 10000), (u'obsringgeometry__ring_radius2__gte', 40000))")
 
     def test_range_query_multi(self):
         # range query: multi
@@ -206,7 +222,7 @@ class myFirstTests(TestCase):
         selections['obs_ring_geometry.ring_radius2'] = [40000,80000]
         q = range_query_object(selections,'obs_ring_geometry.ring_radius1',['all'])
         print str(q)
-        self.assertEqual(str(q), "(OR: (AND: ('obs_ring_geometry.ring_radius1__lte', 10000), ('obs_ring_geometry.ring_radius2__gte', 40000)), (AND: ('obs_ring_geometry.ring_radius1__lte', 60000), ('obs_ring_geometry.ring_radius2__gte', 80000)))")
+        self.assertEqual(str(q), "(OR: (AND: (u'obsringgeometry__ring_radius1__lte', 10000), (u'obsringgeometry__ring_radius2__gte', 40000)), (AND: (u'obsringgeometry__ring_radius1__lte', 60000), (u'obsringgeometry__ring_radius2__gte', 80000)))")
 
     def test_range_query_ordered_backwards(self):
         # range query: ordered backwards
@@ -215,7 +231,7 @@ class myFirstTests(TestCase):
         selections['obs_ring_geometry.ring_radius2'] = [10000,80000]
         q = range_query_object(selections,'obs_ring_geometry.ring_radius1',['all'])
         print str(q)
-        self.assertEqual(str(q), "(OR: (AND: ('obs_ring_geometry.ring_radius1__lte', 10000), ('obs_ring_geometry.ring_radius2__gte', 40000)), (AND: ('obs_ring_geometry.ring_radius1__lte', 60000), ('obs_ring_geometry.ring_radius2__gte', 80000)))")
+        self.assertEqual(str(q), "(OR: (AND: (u'obsringgeometry__ring_radius1__lte', 10000), (u'obsringgeometry__ring_radius2__gte', 40000)), (AND: (u'obsringgeometry__ring_radius1__lte', 60000), (u'obsringgeometry__ring_radius2__gte', 80000)))")
 
 
     def test_range_query_ordered_lopsided_all(self):
@@ -224,7 +240,7 @@ class myFirstTests(TestCase):
         selections['obs_ring_geometry.ring_radius1'] = [40000]
         q = range_query_object(selections,'obs_ring_geometry.ring_radius1',['all'])
         print str(q)
-        self.assertEqual(str(q), "(AND: ('obs_ring_geometry.ring_radius1__lte', 40000))")
+        self.assertEqual(str(q), "(AND: (u'obsringgeometry__ring_radius1__lte', 40000))")
 
 
     def test_range_query_ordered_lopsided_all_max(self):
@@ -233,7 +249,7 @@ class myFirstTests(TestCase):
         selections['obs_ring_geometry.ring_radius2'] = [40000]
         q = range_query_object(selections,'obs_ring_geometry.ring_radius2',['all'])
         print str(q)
-        self.assertEqual(str(q), "(AND: ('obs_ring_geometry.ring_radius2__gte', 40000))")
+        self.assertEqual(str(q), "(AND: (u'obsringgeometry__ring_radius2__gte', 40000))")
         """
         self.assertEqual(q,'(obs_ring_geometry.ring_radius2 >= %s)')
         self.assertEqual(v,[40000])
@@ -245,7 +261,7 @@ class myFirstTests(TestCase):
         selections['obs_ring_geometry.ring_radius1'] = [40000]
         q = range_query_object(selections,'obs_ring_geometry.ring_radius1',['only'])
         print str(q)
-        self.assertEqual(str(q), "(AND: ('obs_ring_geometry.ring_radius1__gte', 40000))")
+        self.assertEqual(str(q), "(AND: (u'obsringgeometry__ring_radius1__gte', 40000))")
 
 
     def test_range_query_lopsided_only_max(self):
@@ -255,7 +271,7 @@ class myFirstTests(TestCase):
         q = range_query_object(selections,'obs_ring_geometry.ring_radius2',['only'])
         print str(q)
         # (ring_radius2 <= 4000
-        self.assertEqual(str(q), "(AND: ('obs_ring_geometry.ring_radius2__lte', 40000))")
+        self.assertEqual(str(q), "(AND: (u'obsringgeometry__ring_radius2__lte', 40000))")
 
     def test_range_query_lopsided_any_min(self):
         # range query: lopsided any min
@@ -264,7 +280,7 @@ class myFirstTests(TestCase):
         q = range_query_object(selections,'obs_ring_geometry.ring_radius1',['any'])
         print str(q)
         # ring_radius2 >= %s
-        self.assertEqual(str(q), "(AND: ('obs_ring_geometry.ring_radius2__gte', 40000))")
+        self.assertEqual(str(q), "(AND: (u'obsringgeometry__ring_radius2__gte', 40000))")
 
     def test_range_query_lopsided_any_max(self):
         # range query: lopsided any min
@@ -272,7 +288,7 @@ class myFirstTests(TestCase):
         selections['obs_ring_geometry.ring_radius2'] = [40000]
         q = range_query_object(selections,'obs_ring_geometry.ring_radius2',['any'])
         print str(q)
-        self.assertEqual(str(q), "(AND: ('obs_ring_geometry.ring_radius1__lte', 40000))")
+        self.assertEqual(str(q), "(AND: (u'obsringgeometry__ring_radius1__lte', 40000))")
 
     def test_range_query_lopsided_multi_mixed_q_types(self):
         # range query: multi range, 1 is lopsided, mixed qtypes
@@ -282,7 +298,7 @@ class myFirstTests(TestCase):
         q = range_query_object(selections,'obs_ring_geometry.ring_radius2',['any','only'])
         print str(q)
         # (ring_radius1 <= 6000 AND ring_radius2 >= 40000) OR (ring_radius2 >= 80000)
-        self.assertEqual(str(q),"(OR: (AND: ('obs_ring_geometry.ring_radius1__lte', 60000), ('obs_ring_geometry.ring_radius2__gte', 40000)), ('obs_ring_geometry.ring_radius1__gte', 80000))")
+        self.assertEqual(str(q),"(OR: (AND: (u'obsringgeometry__ring_radius1__lte', 60000), (u'obsringgeometry__ring_radius2__gte', 40000)), (u'obsringgeometry__ring_radius1__gte', 80000))")
 
     def test_range_query_lopsided_multi_mixed_only_one_q_type(self):
         # range query: multi range, 1 is lopsided, mixed only 1 qtype given
@@ -292,7 +308,7 @@ class myFirstTests(TestCase):
         q = range_query_object(selections,'obs_ring_geometry.ring_radius2',['any'])
         print str(q)
         # (ring_radius1 <= 6000 AND ring_radius2 >= 40000) OR (ring_radius2 >= 80000)
-        self.assertEqual(str(q),"(OR: (AND: ('obs_ring_geometry.ring_radius1__lte', 60000), ('obs_ring_geometry.ring_radius2__gte', 40000)), ('obs_ring_geometry.ring_radius2__gte', 80000))")
+        self.assertEqual(str(q),"(OR: (AND: (u'obsringgeometry__ring_radius1__lte', 60000), (u'obsringgeometry__ring_radius2__gte', 40000)), (u'obsringgeometry__ring_radius2__gte', 80000))")
 
 
     ## Time  tests
@@ -327,7 +343,7 @@ class myFirstTests(TestCase):
         q = range_query_object(selections,'obs_general.time_sec1',['any'])
         print str(q)
         # time_sec1 <= -649993324.720000 AND time_sec2 >= -649877836.000000
-        self.assertEqual(str(q), "(AND: ('obs_general.time_sec1__lte', -649834636), ('obs_general.time_sec2__gte', -649950124.72000003))")
+        self.assertEqual(str(q), "(AND: (u'obsgeneral__time_sec1__lte', -649834636), (u'obsgeneral__time_sec2__gte', -649950124.72000003))")
 
 
     def test_range_query_time_any_single_time(self):
@@ -337,7 +353,7 @@ class myFirstTests(TestCase):
         q = range_query_object(selections,'obs_general.time_sec1',['any'])
         print str(q)
         # time_sec2 >= -649993324.720000
-        self.assertEqual(str(q),"(AND: ('obs_general.time_sec2__gte', -649950124.72000003))")
+        self.assertEqual(str(q),"(AND: (u'obsgeneral__time_sec2__gte', -649950124.72000003))")
 
 
     ## longitude query tests

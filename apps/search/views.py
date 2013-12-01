@@ -10,6 +10,7 @@ from pyparsing import ParseException
 from django.utils import simplejson
 from django.conf import settings
 from django.db.models import Q, get_model
+from django.db.models.sql.datastructures import EmptyResultSet
 from django.db import connection, DatabaseError
 from django.core.cache import cache
 from search.models import *
@@ -26,6 +27,7 @@ def constructQueryString(selections, extras={}):
 
     all_qtypes = extras['qtypes'] if 'qtypes' in extras else []
 
+    print all_qtypes
     # keeping track of some things
     long_querys = []  # special longitudinal queries are pure sql
     q_objects = [] # for building up the query object
@@ -87,19 +89,18 @@ def constructQueryString(selections, extras={}):
             q_obj = range_query_object(selections, param_name, qtypes)
             q_objects.append(q_obj)
 
-
-
-
     # construct our query, we'll be breaking into raw sql, but for that
     # we'll be using the sql django generates through its model interface
-    q = str(ObsGeneral.objects.filter(*q_objects).values('pk').query)
+    try:
+        q = str(ObsGeneral.objects.filter(*q_objects).values('pk').query)
+        # append any longitudinal queries to the query string
+        if long_querys:
+            q += " ".join([" and (%s) " % q for q in long_querys])
+        return q
 
+    except EmptyResultSet:
+        return False
 
-    # append any longitudinal queries to the query string
-    if long_querys:
-        q += " ".join([" and (%s) " % q for q in long_querys])
-
-    return q
 
 
 def getUserQueryTable(selections,extras={}):
@@ -114,12 +115,13 @@ def getUserQueryTable(selections,extras={}):
     cursor = connection.cursor()
 
     # housekeeping
-    if selections is False: return False
-    if len(selections.keys()) < 1: return False
+    if not selections:
+        return False
 
     # do we have a cache key
     no     = setUserSearchNo(selections,extras)
     ptbl   = getUserSearchTableName(no)
+
 
     # is this key set in memcached
     cache_key = 'cache_table:' + str(no)
@@ -138,6 +140,9 @@ def getUserQueryTable(selections,extras={}):
     ## cache table dose not exist, we will make one by doing some data querying:
     q = constructQueryString(selections, extras)
 
+    if not q:
+        return False
+
     try:
         # with this we can create a table that contains the single row
         cursor.execute("create table " + ptbl + " " + q)
@@ -150,6 +155,7 @@ def getUserQueryTable(selections,extras={}):
 
     except DatabaseError:
         log.debug('query execute failed')
+        print 'returning false'
         # import sys
         # print sys.exc_info()[1] + ': ' + print sys.exc_info()[1]
         return False
@@ -194,7 +200,11 @@ def urlToSearchParams(request_get):
             slug = slug.split('-')[1]
             slug_no_num = stripNumericSuffix(slug)
 
-        param_info = ParamInfo.objects.get(slug=slug)
+        try:
+            param_info = ParamInfo.objects.get(slug=slug)
+        except ParamInfo.DoesNotExist:
+            param_info = ParamInfo.objects.get(slug=slug + '1')  #  qtypes for ranges come through as the param_name_no num which doesn't exist in param_info, so grab the param_info for the lower side of hte ragne
+
         form_type = param_info.form_type
 
         param_name = param_info.param_name()
@@ -285,12 +295,20 @@ def range_query_object(selections, param_name, qtypes):
     name          = param_name.split('.')[1]
     param_info    = ParamInfo.objects.get(category_name=cat_name, name=name)
     form_type     = param_info.form_type
+    table_name = param_info.category_name
     special_query = param_info.special_query
 
     # we will define both sides of the query, so define those param names
     param_name_no_num = stripNumericSuffix(param_name)
     param_name_min = param_name_no_num + '1'
     param_name_max = param_name_no_num + '2'
+
+    # to follow related models, we need the lowercase model name, not the param name
+    param_model_name_min = table_name.replace('_','') + '__' + param_name_min.split('.')[1]
+    param_model_name_max = table_name.replace('_','') + '__' + param_name_max.split('.')[1]
+
+    print param_model_name_min
+    print param_model_name_max
 
     # grab min and max values from query selections object
     values_min = selections[param_name_min] if param_name_min in selections else []
@@ -332,37 +350,39 @@ def range_query_object(selections, param_name, qtypes):
         if value_min is not None and value_max is not None:
             (value_min,value_max) = sorted([value_min,value_max])
 
+
+
         # we should end up with 2 query expressions
         q_exp, q_exp1, q_exp2 = None, None, None
         if qtype == 'all':
 
             if value_min:
                 # param_name_min <= value_min
-                q_exp1 = Q(**{"%s__lte" % param_name_min: value_min })
+                q_exp1 = Q(**{"%s__lte" % param_model_name_min: value_min })
 
             if value_max:
                 # param_name_max >= value_max
-                q_exp2 = Q(**{"%s__gte" % param_name_max: value_max })
+                q_exp2 = Q(**{"%s__gte" % param_model_name_max: value_max })
 
         elif qtype == 'only':
 
             if value_min:
                 # param_name_min >= value_min
-                q_exp1 = Q(**{"%s__gte" % param_name_min: value_min })
+                q_exp1 = Q(**{"%s__gte" % param_model_name_min: value_min })
 
             if value_max:
                 # param_name_max <= value_max
-                q_exp2 = Q(**{"%s__lte" % param_name_max: value_max })
+                q_exp2 = Q(**{"%s__lte" % param_model_name_max: value_max })
 
         else: # defaults to qtype = any
 
             if value_max:
                 # param_name_min <= value_max
-                q_exp1 = Q(**{"%s__lte" % param_name_min: value_max })
+                q_exp1 = Q(**{"%s__lte" % param_model_name_min: value_max })
 
             if value_min:
                 # param_name_max >= value_min
-                q_exp2 = Q(**{"%s__gte" % param_name_max: value_min })
+                q_exp2 = Q(**{"%s__gte" % param_model_name_max: value_min })
 
 
         # put the query expressions together as "&" queries
@@ -372,6 +392,7 @@ def range_query_object(selections, param_name, qtypes):
             q_exp = q_exp1
         elif q_exp2:
             q_exp = q_exp2
+
 
         all_query_expressions.append(q_exp)
         i+=1
