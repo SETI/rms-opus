@@ -49,39 +49,36 @@ def getData(request,fmt):
 def getDetail(request,ring_obs_id='',fmt='json'):
     """
     results for a single observation
-    all the data, in categories and groups
+    all the data, in categories
 
     """
-    if not ring_obs_id: return
+    if not ring_obs_id: return Http404
 
     data = SortedDict({})
-    # mission and instrument values for this ring_obs_id
+
+    # find all the tables (categories) this observation belongs to,
+    # start with base_tables:
+    triggered_tables = [t for t in settings.BASE_TABLES]
+
+    # grab mission and instrument tables
+    # mission and instrument values for this ring_obs_id are in ObsGeneral model:
     try:
         mission = ObsGeneral.objects.get(ring_obs_id=ring_obs_id).mission_id
         instrument = ObsGeneral.objects.get(ring_obs_id=ring_obs_id).instrument_id
-    except Files.DoesNotExist:
+    except ObsGeneral.DoesNotExist:
         raise Http404
-
-    # look up any triggered tables definied by the user's query
-    selections, extras = {}, {}
-    if request.GET:
-        (selections,extras) = urlToSearchParams(request.GET)
-    triggered_tables = get_triggered_tables(selections, extras)
-
-    # triggered tables are nice, but we also just want to know all data for this ring_obs_id
-    # so while a table may not be triggered by selections, it still should show
-    # up in a single obs detail page if the obs is in that table
-    # so what tables to look in?
-    # grab mission and instrument table
+    # lookup the table name for this observation's mission and instrument
+    # (misison tables are named a little trippy in TableName model / table_names table)
     triggered_tables.append(TableName.objects.get(table_name__startswith='obs_mission', mission_id=mission).table_name)
     triggered_tables.append('obs_instrument_' + instrument)
-    # mission tables are named a little trippier
-    # inspect obs_surface_geometry table to get smaller geo tables
+
+    # find any surface geo tables that contain this observation:
+    # start by finding all surface targets for this ring_obs_id, then append the matching surface tables
     surface_geo_targets = ObsSurfaceGeometry.objects.filter(ring_obs_id=ring_obs_id).values('target_name')
     for target in surface_geo_targets:
         triggered_tables.append('obs_surface_geometry__' + target['target_name'])
 
-    # now it's something like:
+    # now find all params and their values in each of these tables:
     for table_name in triggered_tables:
         table = TableName.objects.get(table_name=table_name)
         label = table.label
@@ -138,7 +135,7 @@ def getDetail(request,ring_obs_id='',fmt='json'):
 
 
 
-def get_triggered_tables(selections, extras):
+def get_triggered_tables(selections, extras = {}):
     """
     this looks at user request and returns triggered tables
     always returns the settings.BASETABLES
@@ -147,6 +144,8 @@ def get_triggered_tables(selections, extras):
     triggered_tables = [t for t in settings.BASE_TABLES]
     query_result_table = getUserQueryTable(selections,extras)
 
+    print triggered_tables
+    print 'hello'
     # now see if any more tables are triggered from query
     for partable in Partable.objects.all():
         # we are joining the results of a user's query - the single column table of ids
