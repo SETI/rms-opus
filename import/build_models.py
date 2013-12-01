@@ -261,11 +261,14 @@ for choice_name,choices in field_choices.items():
 models_dot_py += "\n"
 
 # print all data classes
+models_dot_py += "# Data Models: \n"
 for table in all_field_defs:
     model_name = ''.join(table.title().split('_'))
     models_dot_py +=  "class %s(models.Model): \n" % model_name
     for field_def in all_field_defs[table]:
         models_dot_py += "%s \n" % field_def
+    models_dot_py += "    ring_obs_id = models.CharField(max_length=40, blank=True, null=True) \n"
+
     meta_stmt = """
     class Meta:
         db_table = '{0}'
