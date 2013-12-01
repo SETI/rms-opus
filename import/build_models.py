@@ -160,7 +160,7 @@ for row in param_info_rows:
         mult_model = "class " + mult_model_name + "(models.Model):" + mult_model_core
         mult_model += "class Meta:\n"
         mult_model += "        db_table = u'" + mult_table + "'\n"
-        mult_model += "        ordering = [disp_order]\n"
+        mult_model += "        ordering = ['disp_order']\n"
         mult_models += [mult_model]
         fkey_field_def = "    " + mult_table + ' = models.ForeignKey(' + mult_model_name + ', db_column="' + mult_table + '", db_index=False, null=True, blank=True)'
 
@@ -237,13 +237,17 @@ class UserSearches(models.Model):
         db_table = u'user_searches'
         unique_together = ('selections_hash', 'string_selects_hash','units_hash','qtypes_hash')
 
-class TableNames(models.Model):
+class TableName(models.Model):
     table_name = models.CharField(max_length=60)
-    div_title = models.CharField(div_title=60)
+    label = models.CharField(max_length=60)
     display = models.CharField(max_length=1)
     disp_order = models.IntegerField(null=True, blank=True)
+    mission_id = models.CharField(max_length=2)
     alert = models.TextField()
 
+    class Meta:
+        db_table = u'table_names'
+        ordering = ['disp_order']
 
 """.format(volumes_str)
 

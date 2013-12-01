@@ -274,6 +274,12 @@ cursor.execute("create table %s.table_names like %s.table_names" % (opus2, opus1
 cursor.execute("insert into %s.table_names select * from %s.table_names" % (opus2, opus1, volumes_str))
 cursor.execute("alter table %s.table_names change column no id int(9) not null auto_increment" % (opus2))
 cursor.execute("alter table %s.table_names change column rings display char(1) default 'Y'" % (opus2))
+cursor.execute("alter table %s.table_names change column div_title label char(60)" % (opus2))
+cursor.execute("alter table %s.table_names add column mission_id char(2)" % opus2)
+cursor.execute("update %s.table_names set mission_id = 'CO' where table_name = 'obs_mission_cassini'" % opus2)
+cursor.execute("update %s.table_names set mission_id = 'GO' where table_name = 'obs_mission_galileo'" % opus2)
+cursor.execute("update %s.table_names set mission_id = 'NH' where table_name = 'obs_mission_new_horizons'" % opus2)
+cursor.execute("update %s.table_names set mission_id = 'VG' where table_name = 'obs_mission_voyager'" % opus2)
 
 # ----------- restore file_sizes  -------------#
 cursor.execute("create table %s.file_sizes like %s.file_sizes" % (opus2, opus1))
