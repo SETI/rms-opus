@@ -269,9 +269,11 @@ for instrument_id in all_inst_ids:
 
 
 
-# now copy all these tables to the new opus database
-for tbl in mult_tables:
-
+# ----------- restore table_names  -------------#
+cursor.execute("create table %s.table_names like %s.table_names" % (opus2, opus1))
+cursor.execute("insert into %s.table_names select * from %s.table_names" % (opus2, opus1, volumes_str))
+cursor.execute("alter table %s.table_names change column no id int(9) not null auto_increment" % (opus2))
+cursor.execute("alter table %s.table_names change column rings display char(1) default 'Y'" % (opus2))
 
 # ----------- restore file_sizes  -------------#
 cursor.execute("create table %s.file_sizes like %s.file_sizes" % (opus2, opus1))
