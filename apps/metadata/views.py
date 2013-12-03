@@ -45,12 +45,11 @@ def getResultCount(request,fmt='json'):
         count = 'not found'
         return HttpResponse(simplejson.dumps({'result_count':count}),  mimetype='application/json')
 
-
     table = getUserQueryTable(selections,extras)
 
     if table is False:
-        #print 'getUserQueryTable says: no table'
-        count = False;
+        print 'getUserQueryTable says: no table'
+        count = 0;
     else:
         cache_key    = "resultcount:" + table
         if (cache.get(cache_key)):
@@ -62,7 +61,7 @@ def getResultCount(request,fmt='json'):
                 count = cursor.fetchone()
                 count = count[0]
             except:
-                count = False
+                count = 0
 
         cache.set(cache_key,count,0)
 
@@ -87,29 +86,14 @@ def getValidMults(request,slug,fmt='json'):
 
     qtypes     = extras['qtypes']
     param_info = ParamInfo.objects.get(slug=slug)
-    param_name = param_info.name
-    mission = param_info.mission
-    instrument = param_info.instrument
-
+    table_name = param_info.category_name
+    param_name = param_info.param_name()
 
     # if this param is in selections we want to remove it,
     # want mults for a param as they would be without itself
     if param_name in selections:
         del selections[param_name]
 
-    # if the other members of selections are from different missions or instruments
-    # they will nullify this query, so we remove them too
-    if mission:
-        for name,value in selections.items():
-            if mission != ParamInfo.objects.get(name=name).mission:
-                del selections[name]
-    if instrument:
-        for name,value in selections.items():
-            if instrument != ParamInfo.objects.get(name=name).instrument:
-                del selections[name]
-
-
-    # if removing current param leaves no other selections we handle that
     has_selections = True
     if len(selections.keys()) < 1: has_selections = False
 
@@ -117,34 +101,34 @@ def getValidMults(request,slug,fmt='json'):
 
     if (cache.get(cache_key) is not None):
         mults = cache.get(cache_key)
+
     else:
 
         mult_name  = getMultName(param_name) # the name of the field to query
-        model      = get_model('search',mult_name.title().replace('_',''))
-
+        mult_model = get_model('search',mult_name.title().replace('_',''))
+        table_model = get_model('search', table_name.title().replace('_',''))
 
         mults = {}  # info to return
-        results    = Observations.objects.values(mult_name).annotate(Count(mult_name))  # this is a count(*), group_by query!
+        results    = table_model.objects.values(mult_name).annotate(Count(mult_name))  # this is a count(*), group_by query!
 
         if has_selections:
             # selections are constrained so join in the user_table
             user_table = getUserQueryTable(selections,extras)
-            where   = "observations.id = " + user_table + ".id"
+            where   = table_name + ".id = " + user_table + ".id"
             results = results.extra(where=[where],tables=[user_table])
 
 
         for row in results:
             mult_id = row[mult_name]
             try:
-                try:    mult = model.objects.get(id=mult_id).label
+                try:    mult = mult_model.objects.get(id=mult_id).label
                 except: mult = mult_id  # fall back to id if there is no label
 
                 mults[mult] = row[mult_name + '__count']
             except: pass # a none object may be found in the data but if it doesn't have a table row we don't handle it
 
+        cache.set(cache_key,mults,0)
 
-
-    cache.set(cache_key,mults,0)
     multdata = { 'field':slug,'mults':mults }
 
     if (request.is_ajax()):
@@ -242,7 +226,6 @@ def getFields(request,**kwargs):
 
     return responseFormats(fields,fmt,template='detail.html')
 
-from search.views import urlToSearchParams, setUserSearchNo, getUserQueryTable
 
 def getCats(request, **kwargs):
 
@@ -263,4 +246,5 @@ def getCats(request, **kwargs):
 
     return responseFormats(fields,fmt,template='detail.html')
 
+from search.views import urlToSearchParams, setUserSearchNo, getUserQueryTable
 
