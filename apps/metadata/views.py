@@ -3,12 +3,15 @@
 #   metadata.views
 #
 ################################################
-from search.views import *
-from paraminfo.models import *
+from django.core.cache import cache
 from django.utils import simplejson
 from django.http import HttpResponse
-from django.db.models import Avg, Max, Min, Count
-from tools.app_utils import *
+from django.db.models import Avg, Max, Min, Count, get_model
+from django.db import connection
+from paraminfo.models import ParamInfo
+
+# from paraminfo.models import *
+from tools.app_utils import responseFormats
 import settings
 
 
@@ -239,6 +242,7 @@ def getFields(request,**kwargs):
 
     return responseFormats(fields,fmt,template='detail.html')
 
+from search.views import urlToSearchParams, setUserSearchNo, getUserQueryTable
 
 def getCats(request, **kwargs):
 

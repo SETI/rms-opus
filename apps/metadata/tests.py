@@ -14,10 +14,14 @@ setup_environ(settings)
 
 from django.test import TestCase
 from django.test.client import Client
+from django.db import connection
 
+from metadata.views import *
+
+"""
 from search.views import *
 from results.views import *
-from django.http import QueryDict
+"""
 
 cursor = connection.cursor()
 

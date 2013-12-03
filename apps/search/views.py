@@ -13,10 +13,14 @@ from django.db.models import Q, get_model
 from django.db.models.sql.datastructures import EmptyResultSet
 from django.db import connection, DatabaseError
 from django.core.cache import cache
-from search.models import *
-from paraminfo.views import *
+
+"""
 from tools.app_utils import *
-from tools.views import *
+from metadata.views import *
+"""
+from search.models import *
+from tools.app_utils import stripNumericSuffix, sortDict
+from paraminfo.views import ParamInfo
 
 import logging
 log = logging.getLogger(__name__)
@@ -34,6 +38,7 @@ def constructQueryString(selections, extras={}):
     finished_ranges = []  # ranges are done for both sides at once.. so track which are finished to avoid duplicates
 
     # buld the django query
+    from metadata.views import getMultName  # avoids circular import issue
     for param_name, value_list in selections.items():
 
         value_list = [s.strip() for s in value_list]
@@ -480,7 +485,10 @@ def findInvalidTimes(value_list):
         return invalids
     except ValueError: pass
 
+"""
 # circular import issues
 from metadata.views import *
 from search.forms import *
+"""
+from metadata.views import getUserSearchTableName
 

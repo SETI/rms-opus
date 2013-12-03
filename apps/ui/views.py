@@ -5,6 +5,7 @@
 ################################################
 from search.models import *
 from search.views import *
+from search.forms import SearchForm
 from metadata.views import *
 from paraminfo.models import *
 from results.views import *
