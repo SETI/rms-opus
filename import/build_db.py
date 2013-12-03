@@ -203,6 +203,8 @@ for tbl in mult_tables:
 
 
 
+cursor.execute("create view %s.grouping_target_name as select * from mult_obs_general_planet_id" % (opus2))
+
 # ------------ copy over the 'forms' table into the new 'param_info' table  ------------#
 
 # first, build the empty forms table in the new db - the table schema lives in a dump file in the repo
@@ -227,7 +229,6 @@ cursor.execute(q + " and category_name like %s" , 'obs_surface%')
 
 # ----------- creating the grouping, category, and guide tables --------------#
 queries = """
-create view %s.grouping_target_name as select * from mult_obs_general_planet_id;
 create table %s.groups like opus_hack.groups;
 create table %s.categories like opus_hack.categories;
 insert into %s.groups select * from opus_hack.groups;
