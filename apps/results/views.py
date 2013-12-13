@@ -25,6 +25,7 @@ def getData(request,fmt):
     a page of results for a given search
     """
     [page_no, limit,page, page_ids, order] = getPage(request)
+
     table_headers = request.GET.get('table_headers',False)
     if (table_headers=='False'): table_headers = False
     checkboxes = True if (request.is_ajax()) else False
@@ -44,6 +45,7 @@ def getData(request,fmt):
     collection = in_collections(request)
 
     data = {'page_no':page_no, 'limit':limit, 'page':page, 'count':len(page)}
+
 
     return responseFormats(data,fmt,template='data.html', labels=labels,table_headers=table_headers,checkboxes=checkboxes, collection=collection, order=order)
 
@@ -423,49 +425,37 @@ def getPage(request):
     except ValueError:
         pass  # obs_general isn't in there
 
-
-
     if not collection_page:
+        # this is a data table page
+
         order = request.GET.get('order',False)
+
+        # figure out column order in table
         if order:
             try:
-                order_param = order.strip('-')  # strip off any minus sign to look up param name
-                descending = order[0] if (order[0] == '-') else None
-                order = ParamInfo.objects.get(slug=order_param).param_name()
+                order_slug = order.strip('-')  # strip off any minus sign to look up param name
+                descending = '-' if (order_slug[0] == '-') else None
+                order = ParamInfo.objects.get(slug=order_slug).disp_order
                 if descending:
                     order = '-' + order
             except DoesNotExist:
                 order = False
 
-
+        # figure out page we are asking for
         page_no = request.GET.get('page',1)
         page_no = int(page_no)
 
-
-        # ok now that we have everything from the url (sheesh) get stuff from db
+        # ok now that we have everything from the url et stuff from db
         (selections,extras) = urlToSearchParams(request.GET)
         user_query_table = getUserQueryTable(selections,extras)
 
-
-
-        # what tables do we need to join in
-        """
-        HOUSTON WE HAVE A PROBLEM
-
-        # right here it is joining the user query table with the single big Observations table
-
-        BUT we no longer have a big Observations table, so you need to join the cache table
-        with all the tables required by columns, and obs_general
-
-        """
-
+        # figure out what tables do we need to join in and build query
         triggered_tables.append(user_query_table)
         where   = "obs_general.id = " + connection.ops.quote_name(user_query_table) + ".id"
         results = ObsGeneral.objects.extra(where=[where], tables=triggered_tables)
 
     else:
         # this is for a collection
-
         order = request.GET.get('colls_order', False)
         if order:
             try:
@@ -505,9 +495,10 @@ def getPage(request):
 
     results = results.values(*column_values)[offset:offset+limit]
 
+
     page_ids = [o['ring_obs_id'] for o in results]
 
-    return [page_no, limit, results, page_ids, order]
+    return [page_no, limit, list(results), page_ids, order]
 
 
 
