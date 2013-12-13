@@ -21,7 +21,7 @@ from paraminfo.models import *
 
 base_urlpatterns = patterns( 'results.views',
     (r'^api/data.(json|zip|html|csv)$', 'getData'),
-    (r'^api/detail/(?P<ring_obs_id>\w+).(?P<fmt>[json|zip|html|csv]+)$', 'getDetail'),
+    (r'^api/detail/(?P<ring_obs_id>\w+).(?P<fmt>[json|zip|html]+)$', 'getDetail'),
     (r'^api/images/(thumb|small|med|full).(json|zip|html|csv)$','getImages'),
     (r'^api/image/(?P<size>[thumb|small|med|full]+)/(?P<ring_obs_id>\w+).(?P<fmt>[json|zip|html|csv]+)$', 'getImage'),
     (r'^api/files/(?P<ring_obs_id>\w+).(?P<fmt>[json|zip|html|csv]+)$','getFiles'),
@@ -60,7 +60,6 @@ base_urlpatterns += patterns('ui.views',
     (r'^quick.html$', 'getQuickPage'),
     (r'^forms/widget/(?P<slug>[-\sa-zA-Z0-9]+).(?P<fmt>[json|zip|html|csv]+)$', 'getWidget'),
     (r'^forms/column_chooser.html$', 'getColumnChooser'),
-    # (r'^api/detailpage/(?P<ring_obs_id>\w+).(?P<fmt>[json|zip|html|csv]+)$', 'getDetailPage'),
     # (r'^api/detailquick/(?P<ring_obs_id>\w+).(?P<fmt>[json|zip|html|csv]+)$', 'getDetailQuick'),
 )
 
