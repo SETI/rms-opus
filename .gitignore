@@ -9,6 +9,7 @@ settings_local.py
 venv
 log.txt
 secrets.py
+*.min.js
 *.pyc
 *.bak
 *.*.bak
