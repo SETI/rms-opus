@@ -241,13 +241,14 @@ def getDetailPage(request, **kwargs):
     template="detail.html"
     slugs = request.GET.get('cols',False)
     ring_obs_id = kwargs['ring_obs_id']
-    img = Image.objects.get(ring_obs_id=ring_obs_id)
+
+    img = get_object_or_404(Image, ring_obs_id=ring_obs_id)
     base_vol_path = Files.objects.filter(ring_obs_id=ring_obs_id)[0].base_path.split('/')[-2:-1][0] + '/' # base_path in the db
     path = settings.IMAGE_HTTP_PATH + base_vol_path
-
     # get the data for this obs
     data = getDetail(request,ring_obs_id=ring_obs_id,fmt='raw')
-    error_log('hi ' + ring_obs_id)
+
+
 
     #files = getFiles(ring_obs_id=ring_obs_id,fmt='raw')['data'][ring_obs_id]
     files = getFiles(ring_obs_id,fmt='raw')[ring_obs_id]

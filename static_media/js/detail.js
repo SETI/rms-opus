@@ -6,9 +6,7 @@ var o_detail = {
         $('#detail').html(opus.spinner);
         $('#detail_extra').html(ring_obs_id);
         $("#tabs").tabs("select","#detail");
-        $("#detail").load("/opus/api/detailpage/" + ring_obs_id + ".html", function(){ });
+        $("#detail").load("/opus/api/detail/" + ring_obs_id + ".html", function(){ });
     },
-
-
 
 };

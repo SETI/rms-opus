@@ -4,6 +4,7 @@
 #
 ################################################
 import settings
+import json
 from django.http import Http404
 from django.shortcuts import render_to_response
 from django.utils.datastructures import SortedDict
@@ -52,7 +53,12 @@ def getDetail(request,ring_obs_id='',fmt='json'):
     all the data, in categories
 
     """
+
     if not ring_obs_id: return Http404
+
+    if fmt == 'html':
+        from ui.views import getDetailPage
+        return getDetailPage(request, ring_obs_id=ring_obs_id, fmt=fmt)
 
     data = SortedDict({})
 
@@ -72,6 +78,7 @@ def getDetail(request,ring_obs_id='',fmt='json'):
     triggered_tables.append(TableName.objects.get(table_name__startswith='obs_mission', mission_id=mission).table_name)
     triggered_tables.append('obs_instrument_' + instrument)
 
+
     # find any surface geo tables that contain this observation:
     # start by finding all surface targets for this ring_obs_id, then append the matching surface tables
     surface_geo_targets = ObsSurfaceGeometry.objects.filter(ring_obs_id=ring_obs_id).values('target_name')
@@ -90,12 +97,11 @@ def getDetail(request,ring_obs_id='',fmt='json'):
 
         data[label] = results
 
-    import json
+
     if fmt == 'json':
         return HttpResponse(json.dumps(data), content_type="application/json")
-    if fmt == 'html':
-        return responseFormats({'data':data},fmt,template='detail.html')
-
+    if fmt == 'raw':
+        return data
 
     """
     THIS WILL BE REPLACED.
@@ -138,14 +144,12 @@ def getDetail(request,ring_obs_id='',fmt='json'):
 def get_triggered_tables(selections, extras = {}):
     """
     this looks at user request and returns triggered tables
-    always returns the settings.BASETABLES
+    always returns the settings.BASE_TABLES
     """
     # first add the base tables
     triggered_tables = [t for t in settings.BASE_TABLES]
     query_result_table = getUserQueryTable(selections,extras)
 
-    print triggered_tables
-    print 'hello'
     # now see if any more tables are triggered from query
     for partable in Partable.objects.all():
         # we are joining the results of a user's query - the single column table of ids
@@ -190,7 +194,6 @@ def getImages(request,size,fmt):
     """
     alt_size = request.GET.get('alt_size','')
     columns = request.GET.get('cols',settings.DEFAULT_COLUMNS)
-
 
     [page_no, limit, page, page_ids, order] = getPage(request)
     image_links   = Image.objects.filter(ring_obs_id__in=page_ids)
@@ -399,9 +402,10 @@ def getFiles(ring_obs_id,fmt='raw', loc_type="url", product_types=[], previews=[
 
 def getPage(request):
     """
-    the gets the metadata
-    get some stuff from the url or fall back to defaults
+    the gets the metadata to build a page of results
     """
+
+    # get some stuff from the url or fall back to defaults
     collection_page = (request.GET.get('colls',False))
     limit = request.GET.get('limit',100)
     limit = int(limit)
@@ -410,9 +414,16 @@ def getPage(request):
     columns = []
     for slug in column_slugs:
         try:
-            columns += [ParamInfo.objects.get(slug=slug).name]
+            columns += [ParamInfo.objects.get(slug=slug).param_name()]
         except ParamInfo.DoesNotExist:
             pass
+    triggered_tables = list(set([param_name.split('.')[0] for param_name in columns]))
+    try:
+        triggered_tables.remove('obs_general')  # we remove it because it is the primary model so don't need to add it to extra tables
+    except ValueError:
+        pass  # obs_general isn't in there
+
+
 
     if not collection_page:
         order = request.GET.get('order',False)
@@ -420,7 +431,7 @@ def getPage(request):
             try:
                 order_param = order.strip('-')  # strip off any minus sign to look up param name
                 descending = order[0] if (order[0] == '-') else None
-                order = ParamInfo.objects.get(slug=order_param).name
+                order = ParamInfo.objects.get(slug=order_param).param_name()
                 if descending:
                     order = '-' + order
             except DoesNotExist:
@@ -429,16 +440,32 @@ def getPage(request):
 
         page_no = request.GET.get('page',1)
         page_no = int(page_no)
-        (selections,extras) = urlToSearchParams(request.GET)
-        table = getUserQueryTable(selections,extras)
 
-        # join it with Observations table where all results are found
-        where   = "observations.id = " + connection.ops.quote_name(table) + ".id"
-        results = Observations.objects.extra(where=[where], tables=[table])
-        if order:
-            results = results.order_by(order)
+
+        # ok now that we have everything from the url (sheesh) get stuff from db
+        (selections,extras) = urlToSearchParams(request.GET)
+        user_query_table = getUserQueryTable(selections,extras)
+
+
+
+        # what tables do we need to join in
+        """
+        HOUSTON WE HAVE A PROBLEM
+
+        # right here it is joining the user query table with the single big Observations table
+
+        BUT we no longer have a big Observations table, so you need to join the cache table
+        with all the tables required by columns, and obs_general
+
+        """
+
+        triggered_tables.append(user_query_table)
+        where   = "obs_general.id = " + connection.ops.quote_name(user_query_table) + ".id"
+        results = ObsGeneral.objects.extra(where=[where], tables=triggered_tables)
+
     else:
         # this is for a collection
+
         order = request.GET.get('colls_order', False)
         if order:
             try:
@@ -453,29 +480,34 @@ def getPage(request):
 
         page_no = request.GET.get('colls_page',1)
         page_no = int(page_no)
+
         from user_collections.views import *  # circular import problem
         collection = get_collection(request)
         if not collection:
             raise Http404
         results = Observations.objects.filter(ring_obs_id__in=collection)
-        if order:
-            results = results.order_by(order)
+
+    # now we have results object (either search or collections)
+    if order:
+        results = results.order_by(order)
+
+    # this is the thing you pass to django model via values()
+    # so we have the table names a bit to get what django wants:
+    column_values = []
+    for param_name in columns:
+        table_name = param_name.split('.')[0]
+        if table_name == 'obs_general':
+            column_values.append(param_name.split('.')[1])
+        else:
+            column_values.append(param_name.split('.')[0].lower().replace('_','') + '__' + param_name.split('.')[1])
 
     offset = (page_no-1)*limit # we don't use Django's pagination because of that count(*) that it does.
-    results = results.values(*columns)[offset:offset+limit]
+
+    results = results.values(*column_values)[offset:offset+limit]
 
     page_ids = [o['ring_obs_id'] for o in results]
 
-
-    # fix ordering of columns to match that defined by url
-    page = []
-    for row in results:
-        new_row = []
-        for col in columns:
-            new_row.append(row[col])
-        page += [new_row]
-
-    return [page_no, limit, page, page_ids, order]
+    return [page_no, limit, results, page_ids, order]
 
 
 

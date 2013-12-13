@@ -38,21 +38,15 @@
 </div>
 
 <ul id = "detail_data">
-	{% for group,cat in data.data.items %}
-		<li>{{ group }}:
-			<ul>
-			{% for cat,values  in cat.items %}
-				<li>{{ cat }}:
-					<ul>
-					{% for param,val  in values.items %}
-					<li>
-					{{ param }}: {{val}}
-					</li>
-					{% endfor %}
-					</ul>
-				</li>
-			{% endfor %}
-			</ul>
-		</li>
+	{% for cat,d in data.items %}
+	<li>{{ cat }}:
+		<ul>
+		{% for param,val  in d.items %}
+			<li>
+			{{ param }}: {{val}}
+			</li>
+		{% endfor %}
+		</ul>
 	{% endfor %}
 </ul>
+

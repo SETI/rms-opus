@@ -54,19 +54,22 @@ base_urlpatterns += patterns('downloads.views',
 base_urlpatterns += patterns('ui.views',
     # (r'^$', direct_to_template, {'template': 'maintenance.html'}),
     (r'^$', 'mainSite'),
+    (r'^opus/$', 'mainSite'),
     (r'^table_headers.html$', 'getDataTable'),
     (r'^menu.html$', 'getMenuLabels'),
     (r'^quick.html$', 'getQuickPage'),
     (r'^forms/widget/(?P<slug>[-\sa-zA-Z0-9]+).(?P<fmt>[json|zip|html|csv]+)$', 'getWidget'),
     (r'^forms/column_chooser.html$', 'getColumnChooser'),
-    (r'^api/detailpage/(?P<ring_obs_id>\w+).(?P<fmt>[json|zip|html|csv]+)$', 'getDetailPage'),
-    (r'^api/detailquick/(?P<ring_obs_id>\w+).(?P<fmt>[json|zip|html|csv]+)$', 'getDetailQuick'),
+    # (r'^api/detailpage/(?P<ring_obs_id>\w+).(?P<fmt>[json|zip|html|csv]+)$', 'getDetailPage'),
+    # (r'^api/detailquick/(?P<ring_obs_id>\w+).(?P<fmt>[json|zip|html|csv]+)$', 'getDetailQuick'),
 )
+
 
 # guide - app runs guide to  api
 base_urlpatterns += patterns('guide.views',
     (r'^api/$', 'guide'),
     (r'^api/guide.html$', 'guide'))  # api help pages
+
 
 # user_collections - all your carts are belong to us
 base_urlpatterns += patterns('user_collections.views',
@@ -76,6 +79,7 @@ base_urlpatterns += patterns('user_collections.views',
     (r'^collections/reset.html$', 'reset_sess'),
     (r'^collections/(?P<collection>[default]+)/(?P<action>[addrange|removerange]+)/test.html$', 'edit_collection_range'),
 )
+
 
 # mobile - mobile volumes browser
 base_urlpatterns += patterns('mobile.views',
