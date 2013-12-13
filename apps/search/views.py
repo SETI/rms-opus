@@ -208,7 +208,11 @@ def urlToSearchParams(request_get):
         try:
             param_info = ParamInfo.objects.get(slug=slug)
         except ParamInfo.DoesNotExist:
-            param_info = ParamInfo.objects.get(slug=slug + '1')  #  qtypes for ranges come through as the param_name_no num which doesn't exist in param_info, so grab the param_info for the lower side of hte ragne
+            try:
+                param_info = ParamInfo.objects.get(slug=slug + '1')  #  qtypes for ranges come through as the param_name_no num which doesn't exist in param_info, so grab the param_info for the lower side of hte ragne
+            except ParamInfo.DoesNotExist:
+                # this is not a query param, ignore it
+                continue
 
         form_type = param_info.form_type
 
@@ -343,7 +347,7 @@ def range_query_object(selections, param_name, qtypes):
     while i < count:
 
         # define some things
-        value_min, value_max, q_type = None, None, qtypes[0]
+        value_min, value_max, q_type = None, None, qtype
         try: value_min = values_min[i]
         except IndexError: pass
         try: value_max = values_max[i]
