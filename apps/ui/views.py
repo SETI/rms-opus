@@ -3,18 +3,18 @@
 #   UI.views
 #
 ################################################
+import settings
+from django.template import RequestContext
+from django.shortcuts import render_to_response, get_object_or_404
+from django.db.models import get_model
+from django.http import HttpResponse
+from django.core.exceptions import FieldError
 from search.models import *
 from search.views import *
 from search.forms import SearchForm
 from metadata.views import *
 from paraminfo.models import *
 from results.views import *
-from django.template import RequestContext
-from django.shortcuts import render_to_response
-from django.db.models import get_model
-from django.http import HttpResponse
-from django.core.exceptions import FieldError
-import settings
 
 # guide only
 import json
@@ -178,7 +178,7 @@ def getWidget(request, **kwargs):
             grouping = model.objects.distinct().values('grouping')
 
             log.debug(str(grouping))
-            grouping_table = 'grouping_' + mult_param[5:len(mult_param)]
+            grouping_table = 'grouping_' + param_name.split('.')[1]
             grouping_model = get_model('metadata',grouping_table.title().replace('_',''))
             for group_info in grouping_model.objects.order_by('disp_order'):
                 gvalue = group_info.value
