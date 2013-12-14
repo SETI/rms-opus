@@ -48,19 +48,23 @@ def responseFormats(data, fmt, **kwargs):
 
         try:
             return HttpResponse(simplejson.dumps(data), mimetype='application/json')
-        except:
-            data = serializers.serialize('json',data)
-            return HttpResponse(data, mimetype='application/json')
+        except TypeError:
+            # data is not serializable via simplejson (what?) so try this other way (huh?)
+            import json
+            return HttpResponse(json.dumps(data), mimetype='application/json')
 
     elif fmt == 'html':
+
         try: path = data['path']
         except: path = ''
 
         for d in data:
+
             if type(data[d]).__name__ in ['list']:
+                # it's a list and apparently we assume
+                # that it is the actual data not its metadata #forheadsmack#
 
                 if d in ignore: continue
-
                 returndata = {'data':data[d]}
 
                 if 'size' in kwargs:
@@ -71,14 +75,13 @@ def responseFormats(data, fmt, **kwargs):
                     returndata['columns_str'] = ','.join(kwargs['columns_str'])
                 if 'labels' in kwargs:
                     returndata['labels'] = kwargs['labels']
-                if 'table_headers' in kwargs:
-                    returndata['table_headers'] = kwargs['table_headers']
                 if 'checkboxes' in kwargs:
                     returndata['checkboxes'] = kwargs['checkboxes']
                 if 'collection' in kwargs:
                     returndata['collection'] = kwargs['collection']
 
                 return render_to_response(kwargs['template'],returndata)
+
 
                 # if type(data[d][0]).__name__ == 'dict':
                 #     return render_to_response(kwargs['template'],returndata)

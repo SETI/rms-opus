@@ -32,18 +32,24 @@ def mainSite(request, template="main.html"):
     return render_to_response(template,locals(), context_instance=RequestContext(request))
 
 
-def getDataTable(request,template='table_headers.html'):
+def getDataTableHeaders(request,template='table_headers.html'):
     slugs = request.GET.get('cols', settings.DEFAULT_COLUMNS)
+    if not slugs: slugs = settings.DEFAULT_COLUMNS
     slugs = verifyColumns(slugs.split(','))
-
     columns = []
+
+    # if this is an ajax call it means it's from our app, so append the
+    # checkbox column for adding to selections
     if (request.is_ajax()):
         columns.append(["collection","Collect"])
 
     param_info  = ParamInfo.objects
     for slug in slugs:
-        columns.append([slug, param_info.get(slug=slug).label_results])
-
+        if slug and slug != 'ring_obs_id':
+            try:
+                columns.append([slug, param_info.get(slug=slug).label_results])
+            except ParamInfo.DoesNotExist:
+                pass
     return render_to_response(template,locals(), context_instance=RequestContext(request))
 
 

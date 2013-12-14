@@ -1,28 +1,27 @@
-{% if table_headers  %} 
+{% if table_headers  %}
 	<tr>
-		{% for label in labels %}	
+		{% for label in labels %}
 			<th>{{ label }}</th>
 		{% endfor %}
 	</tr>
 
-{% endif %}            
+{% endif %}
 
-	    
-{% for row in data  %}                   
-	<tr id = "data__{{ row.0 }}">
+{% for row in data  %}
+	<tr id = "data__{{ row.ring_obs_id }}">
 		{% if checkboxes %}
    		<td>
-			<input id="datainput__{{ row.0 }}" class = "data_checkbox" type = "checkbox"
+			<input id="datainput__{{ row.ring_obs_id }}" class = "data_checkbox" type = "checkbox"
 	        {% if row.0 in collection %}
 	        	checked
 			{% endif %}
 		></td>
 		{% endif   %}
-		{% for v in row %}               
+		{% for v in row %}
 		    <td>{{ v }}</td>
-		{% endfor %}       
+		{% endfor %}
 	</tr>
 
 {% endfor %}
 
-  
+{% debug %}

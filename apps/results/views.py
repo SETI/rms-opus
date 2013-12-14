@@ -26,18 +26,15 @@ def getData(request,fmt):
     """
     [page_no, limit,page, page_ids, order] = getPage(request)
 
-    table_headers = request.GET.get('table_headers',False)
-    if (table_headers=='False'): table_headers = False
     checkboxes = True if (request.is_ajax()) else False
 
-    column_slugs = request.GET.get('cols',settings.DEFAULT_COLUMNS)
-    column_slugs = verifyColumns(column_slugs.split(','))
+    slugs = request.GET.get('cols',settings.DEFAULT_COLUMNS)
+    if not slugs: slugs = settings.DEFAULT_COLUMNS  # i dunno why this is necessary
 
     labels = []
-    if table_headers:
-        for slug in column_slugs:
-            labels += [ParamInfo.objects.get(slug=slug).label_results]
-        labels = ("add," + labels) if (request.is_ajax()) else labels
+    for slug in slugs.split(','):
+        labels += [ParamInfo.objects.get(slug=slug).label_results]
+    labels = labels.insert(0, "add") if (request.is_ajax()) else labels  # adds a column for checkbox add-to-collections
 
 
     from user_collections.views import *
@@ -46,8 +43,7 @@ def getData(request,fmt):
 
     data = {'page_no':page_no, 'limit':limit, 'page':page, 'count':len(page)}
 
-
-    return responseFormats(data,fmt,template='data.html', labels=labels,table_headers=table_headers,checkboxes=checkboxes, collection=collection, order=order)
+    return responseFormats(data,fmt,template='data.html', labels=labels,checkboxes=checkboxes, collection=collection, order=order)
 
 def getDetail(request,ring_obs_id='',fmt='json'):
     """
@@ -411,14 +407,17 @@ def getPage(request):
     collection_page = (request.GET.get('colls',False))
     limit = request.GET.get('limit',100)
     limit = int(limit)
-    column_slugs = request.GET.get('cols',settings.DEFAULT_COLUMNS)
-    column_slugs = verifyColumns(column_slugs.split(','))
+    slugs = request.GET.get('cols', settings.DEFAULT_COLUMNS)
+    if not slugs:
+        slugs = settings.DEFAULT_COLUMNS  # i dunno why the above doesn't suffice
+
     columns = []
-    for slug in column_slugs:
+    for slug in slugs.split(','):
         try:
             columns += [ParamInfo.objects.get(slug=slug).param_name()]
         except ParamInfo.DoesNotExist:
             pass
+
     triggered_tables = list(set([param_name.split('.')[0] for param_name in columns]))
     try:
         triggered_tables.remove('obs_general')  # we remove it because it is the primary model so don't need to add it to extra tables
@@ -433,9 +432,9 @@ def getPage(request):
         # figure out column order in table
         if order:
             try:
+                descending = '-' if order[0] == '-' else None
                 order_slug = order.strip('-')  # strip off any minus sign to look up param name
-                descending = '-' if (order_slug[0] == '-') else None
-                order = ParamInfo.objects.get(slug=order_slug).disp_order
+                order = ParamInfo.objects.get(slug=order_slug).param_name()
                 if descending:
                     order = '-' + order
             except DoesNotExist:
@@ -493,10 +492,8 @@ def getPage(request):
 
     offset = (page_no-1)*limit # we don't use Django's pagination because of that count(*) that it does.
 
-    results = results.values(*column_values)[offset:offset+limit]
-
-
-    page_ids = [o['ring_obs_id'] for o in results]
+    results = results.values_list(*column_values)[offset:offset+limit]
+    page_ids = [o['ring_obs_id'] for o in results.values('ring_obs_id')[offset:offset+limit]]
 
     return [page_no, limit, list(results), page_ids, order]
 
