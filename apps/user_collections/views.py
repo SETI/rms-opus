@@ -98,9 +98,34 @@ def view_collection(request, collection_name, template="collections.html"):
     # return HttpResponse(files['data']['S_IMG_CO_ISS_1633303611_W'])
 
     # a page of results for the frontend
-    results = Observations.objects.filter(ring_obs_id__in=collection).values(*columns)[offset:offset+limit]
+    """
+    HOUSTON WE HAVE A PROBLEM
+    """
+    # ok now that we have everything from the url et stuff from db
 
-    prefix = "colls_"
+    # this is the thing you pass to django model via values()
+    # so we have the table names a bit to get what django wants:
+    column_values = []
+    for param_name in columns:
+        table_name = param_name.split('.')[0]
+        if table_name == 'obs_general':
+            column_values.append(param_name.split('.')[1])
+        else:
+            column_values.append(param_name.split('.')[0].lower().replace('_','') + '__' + param_name.split('.')[1])
+
+    # figure out what tables do we need to join in and build query
+    triggered_tables = list(set([t.split('.')[0] for t in columns]))
+    try:
+        triggered_tables.remove('obs_general')
+    except ValueError:
+        pass  # obs_general table wasn't in there for whatever reason
+
+
+    # bring in the  triggered_tables
+    results = ObsGeneral.objects.extra(tables=triggered_tables)
+
+    # and apply the filtering
+    results = results.filter(ring_obs_id__in=collection).values(*column_values)[offset:offset+limit]
 
     page_ids = [o['ring_obs_id'] for o in results]
     return render_to_response(template,locals(), context_instance=RequestContext(request))
