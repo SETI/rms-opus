@@ -9,6 +9,7 @@ see also the doc/ directory
 
 ## This is how the project is organized into separate apps:
 
+
 ### search
 
 this is the api that does all the querying of the database for searching

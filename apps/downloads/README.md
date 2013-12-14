@@ -1,0 +1,1 @@
+This app provides the shopping card download functionality.
