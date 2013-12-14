@@ -45,61 +45,95 @@ class metadataTests(TestCase):
 
 
     def test_resultCount(self):
-        response = self.c.get('/opus/result_count/?planet=Saturn')
+        response = self.c.get('/opus/api/meta/result_count.json?planet=Saturn')
+        print response.content
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.content, '{"result_count": 0}')
+        self.assertEqual(response.content, '{"data": [{"result_count": 11373}]}')
 
-        response = self.c.get('/search/result_count/?planet=Jupiter')
-        self.assertEqual(response.content, '{"result_count": 2000}')
+    def test_resultcount_with_url_cruft(self):
+        response = self.c.get('/opus/api/meta/result_count.json?planet=Saturn&view=search&page=1&colls_page=1&limit=100&widgets=planet,target&widgets2=&browse=gallery&colls_browse=gallery&detail=&order=&cols=&reqno=1')
+        print response.content
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.content, '{"data": [{"result_count": 11373}]}')
 
-        response = self.c.get('/search/result_count/?planet=Jupiter&target=SKY')
-        self.assertEqual(response.content, '{"result_count": 12}')
+
+    def test_result_count_target_PAN(self):
+        response = self.c.get('/opus/api/meta/result_count.json?planet=Saturn&target=PANDORA')
+        print response.content
+        self.assertEqual(response.content, '{"data": [{"result_count": 23}]}')
+
+    def test_result_count_target_SKY(self):
+        response = self.c.get('/opus/api/meta/result_count.json?planet=Saturn&target=SKY')
+        print response.content
+        self.assertEqual(response.content, '{"data": [{"result_count": 1635}]}')
         self.teardown()
 
-        response = self.c.get('/search/result_count/?planet=Jupiter&target=IO,PANDORA')
-        self.assertEqual(response.content, '{"result_count": 38}')
+    def test_result_count_multi_target(self):
+        response = self.c.get('/opus/api/meta/result_count.json?planet=Saturn&target=IO,PANDORA')
+        print response.content
+        self.assertEqual(response.content, '{"data": [{"result_count": 23}]}')
         self.teardown()
 
+    def test_result_count_ring_rad_range(self):
         # some range queries.. single no qtype (defaults any)
-        response = self.c.get('/search/result_count/?ringradius1=60000&ringradius2=80000')
-        self.assertEqual(response.content, '{"result_count": 187}')
+        response = self.c.get('/opus/api/meta/result_count.json?ringradius1=60000&ringradius2=80000')
+        print response.content
+        self.assertEqual(response.content, '{"data": [{"result_count": 1422}]}')
         self.teardown()
 
-        # qtype all
-        response = self.c.get('/search/result_count/?ringradius1=60000&ringradius2=80000&qtype-ringradius=all')
-        self.assertEqual(response.content, '{"result_count": 187}')
+    def test_result_count_ring_rad_range_qtype_all(self):
+        response = self.c.get('/opus/api/meta/result_count.json?ringradius1=60000&ringradius2=80000&qtype-ringradius=all')
+        print response.content
+        self.assertEqual(response.content, '{"data": [{"result_count": 1138}]}')
         self.teardown()
 
+    def test_result_count_ring_rad_range_qtype_only(self):
         # qtype only
-        response = self.c.get('/search/result_count/?ringradius1=60000&ringradius2=80000&qtype-ringradius=only')
-        self.assertEqual(response.content, '{"result_count": 0}')
+        response = self.c.get('/opus/api/meta/result_count.json?ringradius1=60000&ringradius2=80000&qtype-ringradius=only')
+        print response.content
+        self.assertEqual(response.content, '{"data": [{"result_count": 0}]}')
         self.teardown()
 
+    def test_result_count_multi_range_single_qtype(self):
         # mult ranges qtype only 1 given as all
-        response = self.c.get('/search/result_count/?ringradius1=60000&ringradius2=80000,120000&qtype-ringradius=all')
-        self.assertEqual(response.content, '{"result_count": 187}')
+        response = self.c.get('/opus/api/meta/result_count.json?ringradius1=60000&ringradius2=80000,120000&qtype-ringradius=all')
+        print response.content
+        self.assertEqual(response.content, '{"data": [{"result_count": 7904}]}')
         self.teardown()
 
+    def test_result_count_mission_general_only(self):
         # mission and general only
-        response = self.c.get('/search/result_count/?planet=Jupiter&cassiniactivityname=catface')
-        self.assertEqual(response.content, '{"result_count": 1592}')
+        response = self.c.get('/opus/api/meta/result_count.json?planet=Neptune&missionid=VG')
+        print response.content
+        self.assertEqual(response.content, '{"data": [{"result_count": 1360}]}')
+        self.teardown()
+
+    def test_result_count_empty_result_set(self):
+        # mission and general only
+        response = self.c.get('/opus/api/meta/result_count.json?planet=Saturn&missionid=VGISS')
+        print response.content
+        self.assertEqual(response.content, '{"data": [{"result_count": 0}]}')
         self.teardown()
 
 
-    def test_getValidMults_planet(self):
-        response = self.c.get('opus/mults/ids/?field=planet&planet=Jupiter')
+    def test_getValidMults_planet_SAT_for_target(self):
+        response = self.c.get('/opus/api/meta/mults/target.json?planet=Saturn')
+        print response.content
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.content, '{"mults": {"3": 2000}, "field": "planet"}')
+        self.assertEqual(response.content, '{"mults": {"8": 28, "11": 25, "13": 180, "16": 406, "17": 23, "21": 153, "23": 232, "24": 1022, "27": 29, "30": 20, "41": 40, "43": 23, "47": 35, "48": 107, "49": 81, "50": 786, "51": 3083, "54": 1635, "56": 48, "58": 24, "59": 74, "61": 2269, "66": 196, "96": 22, "106": 465, "107": 145, "111": 125, "112": 97}, "field": "target"}')
 
-    def test_getValidMults_target(self):
-        response = self.c.get('/search/mults/ids/?field=target&planet=Jupiter')
+    def test_getValidMults_planet_sat_for_planet(self):
+        response = self.c.get('/opus/api/meta/mults/planet.json?planet=Saturn')
+        print response.content
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.content, '{"mults": {"6": 11, "60": 5, "10": 54, "18": 8, "20": 81, "25": 38, "28": 1803}, "field": "target"}')
+        self.assertEqual(response.content, '{"mults": {"Saturn": 11373, "Neptune": 1360}, "field": "planet"}')
         self.teardown()
+
+        """
 
     def test_getValidMults_by_labels(self):
         # getting by labels
-        response = self.c.get('/search/mults/labels/?field=target&planet=Jupiter')
+        response = self.c.get('/opus/api/meta/mults/labels/?field=target&planet=Saturn')
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.content, '{"mults": {"EUROPA": 8, "AMALTHEA": 11, "GANYMEDE": 81, "CALLISTO": 54, "JUPITER": 1803, "IO": 38, "THEBE": 5}, "field": "target"}')
-
+        self.assertEqual(response.content, '{"mults": {"EUROPA": 8, "AMALTHEA": 11, "GANYMEDE": 81, "CALLISTO": 54, "Saturn": 1803, "IO": 38, "THEBE": 5}, "field": "target"}')
+        """

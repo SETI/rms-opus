@@ -53,43 +53,60 @@ class UITests(TestCase):
             print q
             cursor.execute(q)
 
-
     def test__mainSite(self):
         response = self.c.get('/opus/')
         self.assertEqual(response.status_code, 200)
         self.assertGreater(len(response.content), 104098)
 
-
+    #
     def test__getDataTable(self):
-        self.assertEqual(True, False)
+        response = self.c.get('/opus/table_headers.html')
+        self.assertEqual(response.status_code, 200)
+        self.assertGreater(len(response.content), 2000)
+        self.assertEqual(str(response.content).strip().find('<table class = "data_table">'), 0 )
 
+    def test__getWidget_planet_json(self):
+        response = self.c.get('/opus/forms/widget/planet.html')
+        self.assertEqual(response.status_code, 200)
+        self.assertGreater(len(response.content), 2000)
+        self.assertEqual(str(response.content).strip().find('<div class = "widget_draghandle">'), 0 )
+
+    def test__getWidget_target_json(self):
+        response = self.c.get('/opus/forms/widget/target.html')
+        self.assertEqual(response.status_code, 200)
+        self.assertGreater(len(response.content), 2000)
+        self.assertEqual(str(response.content).strip().find('<div class = "widget_draghandle">'), 0 )
+
+    """
     def test__getMenuLabels(self):
-        self.assertEqual(True, False)
-
-    def test__getWidget(self):
-        self.assertEqual(True, False)
-
-    def test__getResults(self):
         self.assertEqual(True, False)
 
     def test__getQuickPage(self):
         self.assertEqual(True, False)
 
+    """
+
     def test__getDetailPage(self):
-        self.assertEqual(True, False)
+        response = self.c.get('/opus/api/detailpage/S_IMG_CO_ISS_1686170088_N.json')
+        self.assertEqual(response.status_code, 200)
+        self.assertGreater(len(response.content), 2000)
 
-    def test__getDetailQuick(self):
-        self.assertEqual(True, False)
 
-    def test__getDetailQuick(self):
-        self.assertEqual(True, False)
-
+    """
     def test__getColumnLabels(self):
+        self.assertEqual(True, False)
+
+
+    def test__getDetailQuick(self):
+        self.assertEqual(True, False)
+
+    def test__getDetailQuick(self):
         self.assertEqual(True, False)
 
     def test__getColumnChooser(self):
         self.assertEqual(True, False)
 
+    """
 
 
 
