@@ -474,7 +474,19 @@ def getPage(request):
         collection = get_collection(request)
         if not collection:
             raise Http404
-        results = Observations.objects.filter(ring_obs_id__in=collection)
+
+        # figure out what tables do we need to join in and build query
+        triggered_tables = list(set([t.split('.')[0] for t in columns]))
+        try:
+            triggered_tables.remove('obs_general')
+        except ValueError:
+            pass  # obs_general table wasn't in there for whatever reason
+
+        # bring in the  triggered_tables
+        results = ObsGeneral.objects.extra(tables=triggered_tables)
+
+        # and do the filtering
+        results = results.filter(ring_obs_id__in=collection)
 
     # now we have results object (either search or collections)
     if order:

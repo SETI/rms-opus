@@ -8,10 +8,6 @@
 {% block browse_container %}
 
 
-{% for c in collection %}
-	'{{ c }}',
-{% endfor %}
-
 <div id = "collections_summary">
 	<h2>Collections Summary</h2>
 	Total Files: <span id = "total_files">{{download_count}}</span>
