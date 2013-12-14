@@ -65,10 +65,10 @@ def view_collection(request, collection_name, template="collections.html"):
     order = int(request.GET.get('order',150))
     column_slugs = request.GET.get('cols',settings.DEFAULT_COLUMNS)
     from results.views import *
-    column_slugs = verifyColumns(column_slugs.split(','))
+    column_slugs = column_slugs.split(',')
     columns = []
     for slug in column_slugs:
-        columns += [ParamInfo.objects.get(slug=slug).name]
+        columns += [ParamInfo.objects.get(slug=slug).param_name()]
     offset = (page_no-1)*limit
 
     # collection

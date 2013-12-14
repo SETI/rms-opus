@@ -35,7 +35,7 @@ def mainSite(request, template="main.html"):
 def getDataTableHeaders(request,template='table_headers.html'):
     slugs = request.GET.get('cols', settings.DEFAULT_COLUMNS)
     if not slugs: slugs = settings.DEFAULT_COLUMNS
-    slugs = verifyColumns(slugs.split(','))
+    slugs = slugs.split(',')
     columns = []
 
     # if this is an ajax call it means it's from our app, so append the
@@ -300,9 +300,9 @@ def getColumnLabels(slugs):
 
 
 def getColumnChooser(request, **kwargs):
-    cols = request.GET.get('cols',settings.DEFAULT_COLUMNS)
-    cols = verifyColumns(cols.split(','))
-    labels = getColumnLabels(cols)
+    slugs = request.GET.get('cols',settings.DEFAULT_COLUMNS)
+    slugs = slugs.split(',')
+    labels = getColumnLabels(slugs)
     menu = getMenuLabels()
     namespace = 'column_chooser_input'
     return render_to_response("choose_columns.html",locals(), context_instance=RequestContext(request))
