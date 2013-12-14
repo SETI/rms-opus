@@ -94,13 +94,13 @@ TEMPLATE_CONTEXT_PROCESSORS = (
 
 MIDDLEWARE_CLASSES = (
     'django.middleware.gzip.GZipMiddleware',
-    #'django.middleware.cache.UpdateCacheMiddleware',
+    'django.middleware.cache.UpdateCacheMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
-    #'django.middleware.cache.FetchFromCacheMiddleware',
+    'django.middleware.cache.FetchFromCacheMiddleware',
     # prod remove:
     #'debug_toolbar.middleware.DebugToolbarMiddleware',
 )
