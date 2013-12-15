@@ -65,7 +65,7 @@ var o_collections = {
          });
 
          $('#empty_collection').live("click", function() {
-             if (confirm("are you sure?")) {
+             if (confirm("are you sure you want to delete all observations in your collection?")) {
                  o_collections.emptyCollection();
                }
              return false;
