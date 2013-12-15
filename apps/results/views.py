@@ -194,12 +194,16 @@ def getImages(request,size,fmt):
     columns = request.GET.get('cols',settings.DEFAULT_COLUMNS)
 
     [page_no, limit, page, page_ids, order] = getPage(request)
-    image_links   = Image.objects.filter(ring_obs_id__in=page_ids)
+
+    image_links = Image.objects.filter(ring_obs_id__in=page_ids)
+
+    # print page_ids
 
     if alt_size:
         image_links = image_links.values('ring_obs_id',size,alt_size);
     else:
         image_links = image_links.values('ring_obs_id',size);
+
 
     # to lamely preserve the order of page_ids
     ordered_image_links = []
@@ -222,6 +226,7 @@ def getImages(request,size,fmt):
         template = 'gallery.html'
     else: template = 'image_list.html'
 
+    # print image_links
     return responseFormats({'data':[i for i in image_links]},fmt, size=size, path=path, alt_size=alt_size, columns_str=columns.split(','), all_collections=in_collections(request), template=template, order=order)
 
 
@@ -505,7 +510,15 @@ def getPage(request):
     offset = (page_no-1)*limit # we don't use Django's pagination because of that count(*) that it does.
 
     results = results.values_list(*column_values)[offset:offset+limit]
-    page_ids = [o['ring_obs_id'] for o in results.values('ring_obs_id')[offset:offset+limit]]
+
+    # print results
+    # this whole page_ids thing is just rediculous, the caller can get it from the result set
+    # especially if we are saying that the id is always at index 0
+    page_ids = [o[0] for o in results]
+
+    # print page_ids
+    # print results.query
+    # print list(results)
 
     return [page_no, limit, list(results), page_ids, order]
 
