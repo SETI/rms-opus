@@ -1,4 +1,5 @@
 logfile
+logfile.*
 search/models.py  # this file is generated dynamically during import procedures
 import/import.sql
 import/search.sql
