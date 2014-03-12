@@ -36,8 +36,8 @@ base_urlpatterns += patterns('metadata.views',
     (r'^api/meta/range/endpoints/(?P<slug>[-\sa-zA-Z1-9]+).(?P<fmt>[json|zip|html|csv]+)$', 'getRangeEndpoints'),
     (r'^api/fields/(?P<field>\w+).(?P<fmt>[json|zip|html|csv]+)$','getFields'),
     (r'^api/fields.(?P<fmt>[json|zip|html|csv]+)$', 'getFields'),
-    (r'^api/category/(?P<category>\w+).(?P<fmt>[json|zip|html|csv]+)$','getCats'),
-    (r'^api/categories.(?P<fmt>[json|zip|html|csv]+)$', 'getCats'),
+    # (r'^api/category/(?P<category>\w+).(?P<fmt>[json|zip|html|csv]+)$','getCats'),
+    # (r'^api/categories.(?P<fmt>[json|zip|html|csv]+)$', 'getCats'),
     # (r'^api/meta/histogram/(?P<fmt>[labels|ids]+)/.(?P<fmt>[json|zip|html|csv]+)$', 'getValidMults'),   # returns mult values+counts
 )
 

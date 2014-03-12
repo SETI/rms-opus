@@ -1,51 +1,83 @@
-{% extends "base_search.html" %}   
-
+{% extends "base_search.html" %}
 
 {% block menu %}
-	 <ul class = "groups">
-     {% for group in menu.groups %}
-			<li class = "{{ group.name|slugify }}">
+	<ul class = "groups">
+    {% for div_name, div_label in menu.div_labels.items %}
+		<li class = "{{ div.label|slugify }}">
 			<div class = "group_label">
-				<span class = "menu_group_triangle opened_triangle">&nbsp;</span>
-				<a title = "{{ group.name }}" href = "">{{ group.name }}</a>
+				<span class = "menu_div_triangle opened_triangle">&nbsp;</span>
+				<a title = "{{ div_name }}" href = "">{{ div_label }}</a>
 			</div>
-			
-			<ul class = "cats">
-				{% for cat in menu.cats %} 
-				 
-					{% if group.id = cat.group_id %}  
-					<li class = "{{ cat.label|slugify }}"> 
-						<span class = "column_checkbox"><input title = "check all in group" class = "cat_input" type = "checkbox" data-slug="{{ param.slug }}"></span>
-						<span class = "cat_label">  
-							<span class = "menu_cat_triangle closed_triangle">&nbsp;</span>
-							<a href = "" title = "{{ cat.label }}" >{{ cat.label }}</a>
-                        </span>  
-					
-						<ul class = "menu_list">
-						{% for param in menu.params %}
-							{% if param.category.name == cat.name %}
-								<li>
-									<span class = "column_checkbox"><input id = "{{ namespace }}__{{ param.slug }}" class = "param_input" type = "checkbox" data-slug="{{ param.slug }}" data-label = "{{ param.label }}" 
-									{% for slug in cols %}
-									    {% if slug == param.slug %}
-											checked   
-										{% endif %}	
-									{% endfor %}	
-									></span>
-									<a data-cat = "{{ cat.label|slugify }}" data-slug = "{{ param.slug }}" data-group = "{{ group.name|slugify }}" title = "{{ param.label }}" href = "">{{ param.label }}</a>
-								</li>
-							{% endif %}
-						{% endfor %}
-						</ul>
-					</li>	
-					{% endif %}	 
-				{% endfor %} {# end for cat in cats #}
-			</ul>	<!-- cat labels -->
-		
-		</li>	
-		{% endfor %} {# end for group in groups #}  
-		</ul> <!-- group labels -->      
-{% endblock %}        
+
+            {% for name, info in menu.data.items %}
+            {# loop through all names then check if we have *this* div_name #}
+
+                {% if name == div_name %}
+                    {# this param_name is contained in this div #}
+                    {% if info.has_sub_heading %}
+
+                        {# this div has sub_headings, start sub_heading loop#}
+
+                        <ul class = "cats">
+                        {% for sub_head,params in info.data.items %}
+
+                            <li class = "{{ sub_head|slugify }}">
+                            <span class = "column_checkbox"><!-- for closing this list of items -->
+                            <input title = "check all in group" class = "cat_input" type = "checkbox" data-slug="{{ param.slug }}"></span>
+                            <span class = "cat_label">
+                                <div class = "div_label">
+                                <span class = "menu_div_triangle opened_triangle">&nbsp;</span>
+                                <a title = "{{ sub_head|slugify }}" href = "">{{ sub_head }}</a>
+                            </div>
+
+                            <ul style = "display:block" class = "menu_list">
+                            {% for p in params %}
+                                {% if p.cat_name == sub_head.slugify %}
+                                    <li>
+                                        <span class = "column_checkbox"><input id = "{{ namespace }}__{{ p.slug }}" class = "param_input" type = "checkbox" data-slug="{{ p.slug }}" data-label = "{{ p.label }}"
+                                        {% for slug in cols %}
+                                            {% if slug == p.slug %}
+                                                checked
+                                            {% endif %}
+                                        {% endfor %}
+                                        ></span>
+                                        <a data-cat = "{{ sub_head|slugify }}" data-slug = "{{ p.slug }}" data-group = "{{ div_name|slugify }}" title = "{{ p.label }}" href = "">{{ p.label }}</a>
+                                    </li>
+                                {% endif %}
+                            {% endfor %}
+                        </ul></li>
+                        {% endfor %}
+                    </ul>
+
+                    {% else %}
+                        {# this div does not have any sub_headings #}
+                        <ul style = "display:block" class = "menu_list">
+                        {% for p in info.data %}
+                                {% if p.cat_name == sub_head.slugify %}
+                                    <li>
+                                        <span class = "column_checkbox"><input id = "{{ namespace }}__{{ p.slug }}" class = "param_input" type = "checkbox" data-slug="{{ p.slug }}" data-label = "{{ p.label }}"
+                                        {% for slug in cols %}
+                                            {% if slug == p.slug %}
+                                                checked
+                                            {% endif %}
+                                        {% endfor %}
+                                        ></span>
+                                        <a data-cat = "{{ sub_head|slugify }}" data-slug = "{{ p.slug }}" data-group = "{{ div_name|slugify }}" title = "{{ p.label }}" href = "">{{ p.label }}</a>
+                                    </li>
+                                {% endif %}
+                            {% endfor %}
+
+                    {% endif %}
+                {% endif %}
+
+            {% endfor %}
+
+
+
+		</li>
+		{% endfor %} {# end for div in menu.divs #}
+	</ul> <!-- div labels -->
+{% endblock %}
 
 
 

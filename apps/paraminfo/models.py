@@ -3,50 +3,6 @@ from django.contrib.contenttypes.models import ContentType
 from django.core.urlresolvers import reverse
 
 
-class Group(models.Model):
-    """
-    Param Groups
-
-    the search interface has tons of params that can be searched,
-    so we divide them into groups, and divide each group into categories
-
-    """
-    name = models.CharField(max_length=150, blank=True)
-    display = models.BooleanField(default=True)
-    disp_order = models.IntegerField(blank=True, null=True)
-    alert = models.TextField(blank=True, null=True)
-
-    class Meta:
-        db_table = u'groups'
-        ordering = ['disp_order']
-
-    def __unicode__(self):
-        return self.name
-
-
-
-class Category(models.Model):
-    """
-    Param Categories
-
-    the search interface has tons of params that can be searched,
-    so we divide them into groups, and divide each group into categories
-
-    """
-    name = models.CharField(max_length=150, blank=True)
-    label = models.CharField(max_length=108, blank=True)
-    display = models.BooleanField(default=True)
-    disp_order = models.IntegerField(blank=True, null=True)
-    alert = models.TextField(blank=True, null=True)
-    group = models.ForeignKey(Group, blank=True, null = True)
-    # group = models.ForeignKey(Groups, related_name="groups", blank=True, null = True)
-
-    class Meta:
-        db_table = u'categories'
-        ordering = ('disp_order',)
-
-    def __unicode__(self):
-        return self.name
 
 
 RANK_CHOICES = (('0','Advanced'),('1','Basic'))
@@ -76,7 +32,6 @@ class ParamInfo(models.Model):
     (planet='Saturn' and target='A ring' and instrument = 'COISS' and filter = "violet")
 
     """
-    category = models.ForeignKey(Category, blank=True, null = True)
     name = models.CharField(max_length=87)
     type = models.CharField(max_length=18, blank=True)
     length = models.IntegerField()
@@ -111,8 +66,8 @@ class ParamInfo(models.Model):
 #    group = models.ForeignKey("Groups", blank=True, null = True)
 
     class Meta:
-        db_table = u'param_info'
-        ordering = ('disp_order',)
+        db_table = ('param_info')
+        ordering = ('category_name', 'sub_heading', 'disp_order')
 
     def __unicode__(self):
         return u"%s" % self.name

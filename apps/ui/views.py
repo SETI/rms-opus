@@ -3,18 +3,27 @@
 #   UI.views
 #
 ################################################
+# computer
 import settings
+
+# django things
 from django.template import RequestContext
 from django.shortcuts import render_to_response, get_object_or_404
 from django.db.models import get_model
 from django.http import HttpResponse
 from django.core.exceptions import FieldError
+
+# lib things
+from annoying.decorators import render_to
+
+# opus things
 from search.models import *
 from search.views import *
 from search.forms import SearchForm
 from metadata.views import *
 from paraminfo.models import *
 from results.views import *
+
 
 # guide only
 import json
@@ -26,7 +35,7 @@ log = logging.getLogger(__name__)
 
 def mainSite(request, template="main.html"):
     # main site needs a few things:
-    menu = getMenuLabels()
+    menu = getMenuLabels(request)
     namespace = 'search'
 
     return render_to_response(template,locals(), context_instance=RequestContext(request))
@@ -53,15 +62,49 @@ def getDataTableHeaders(request,template='table_headers.html'):
     return render_to_response(template,locals(), context_instance=RequestContext(request))
 
 
-def getMenuLabels():
+# @render_to('menu.html')
+def getMenuLabels(request):
     """
     the categories in the menu on the search form
+    category_name is really div_title
+    todo: change name of  field 'category_name' in param_info table to 'div_title'
     """
-    groups = Group.objects.filter(display=True)
-    cats = Category.objects.filter(display=True).distinct()
-    params = ParamInfo.objects.filter(display=True)
 
-    return {'groups':groups, 'cats':cats, 'params':params }
+    params = ParamInfo.objects.filter(display='Y')
+    divs = TableName.objects.filter(display='Y')
+
+    # build a struct that relates sub_headings to div_titles
+    sub_headings = {}
+    for p in params:
+        sub_headings.setdefault(p.category_name, []).append(p.sub_heading)
+    for s in sub_headings:
+        sub_headings[s] = list(set(sub_headings[s]))
+        if sub_headings[s] == [None]:
+            sub_headings[s] = None
+
+    # build a nice data struct form the mu&*!#$@!ing template
+    menu_data = {}
+    for d in divs:
+        menu_data.setdefault(d.table_name, {})
+
+        if d.table_name in sub_headings and sub_headings[d.table_name]:
+            # this div is divided into sub headings
+            menu_data[d.table_name]['has_sub_heading'] = True
+            # menu_data[d.table_name]['data'] = {'hello':[5,4,3,2,1],'goodbye':[1,2,3,4,5]} # todo
+            menu_data[d.table_name].setdefault('data', {})
+            for sub_head in sub_headings[d.table_name]:
+                menu_data[d.table_name]['data'][sub_head] = ParamInfo.objects.filter(display='Y', category_name = d.table_name, sub_heading = sub_head)
+
+
+        else:
+            # this div has not sub headings
+            menu_data[d.table_name]['has_sub_heading'] = False
+            for p in ParamInfo.objects.filter(display='Y', category_name=d.table_name):
+                menu_data[d.table_name].setdefault('data', []).append(p)
+
+    div_labels = {d.table_name:d.label for d in TableName.objects.filter(display='Y')}
+
+    return {'data': menu_data, 'div_labels': div_labels}
 
 
 def getWidget(request, **kwargs):
@@ -140,7 +183,7 @@ def getWidget(request, **kwargs):
                 else:
                     form = '<span>'+add_str+'</span><ul>' + form + '</ul>'  # add input link comes before form
                 if lngth > 1:
-                    form = form + '</span><div style="clear: both;"></div></section><section><span class="widget_form">'
+                    form = form + '</span><div style = "clear: both;"></div></section><section><span class="widget_form">'
                 key = key+1
 
 
@@ -295,7 +338,7 @@ def getDetailQuick(request, **kwargs):
 def getColumnLabels(slugs):
     labels = {}
     for slug in slugs:
-        labels[slug] = param_info.get(slug=slug).label_results
+        labels[slug] = ParamInfo.objects.get(slug=slug).label_results
     return labels
 
 
