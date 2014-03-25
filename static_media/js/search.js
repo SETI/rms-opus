@@ -207,6 +207,7 @@ var o_search = {
     getSearchTab: function() {
         // widgets1 is the left column of widgets, wigets2 is the optional right col
 
+        // get any prefs from cookies
         if (!opus.prefs.widgets.length && $.cookie("widgets")) {
             opus.prefs.widgets = $.cookie("widgets").split(',');
         }
@@ -214,6 +215,7 @@ var o_search = {
             opus.prefs.widgets2 = $.cookie("widgets2").split(',');
         }
 
+        // find and place the widgets
         if (!opus.prefs.widgets.length && !opus.prefs.widgets2.length) {
             // no widgets defined, get the default widgets
             opus.prefs.widgets = ['planet','target'];
@@ -228,18 +230,18 @@ var o_search = {
 
         o_widgets.updateWidgetCookies();
 
-	    for (key in opus.prefs.widgets) {  // fetch each widget
-	        slug = opus.prefs.widgets[key];
-	        if (jQuery.inArray(slug, opus.widgets_drawn) < 0) {  // only draw if not already drawn
-	            o_widgets.getWidget(slug,'#formscolumn1');
-	        }
-	    }
-	    for (key in jQuery.unique(opus.prefs.widgets2)) {  // fetch each widget
-	        slug = opus.prefs.widgets2[key];
-	        if (jQuery.inArray(slug, opus.widgets_drawn) < 0) {  // only draw if not already drawn
-    	        o_widgets.getWidget(slug,'#formscolumn2');
-    	    }
-	    }
+        for (key in opus.prefs.widgets) {  // fetch each widget
+            slug = opus.prefs.widgets[key];
+            if (jQuery.inArray(slug, opus.widgets_drawn) < 0) {  // only draw if not already drawn
+                o_widgets.getWidget(slug,'#formscolumn1');
+            }
+        }
+        for (key in jQuery.unique(opus.prefs.widgets2)) {  // fetch each widget
+            slug = opus.prefs.widgets2[key];
+            if (jQuery.inArray(slug, opus.widgets_drawn) < 0) {  // only draw if not already drawn
+       	        o_widgets.getWidget(slug,'#formscolumn2');
+       	    }
+        }
     },
 
 

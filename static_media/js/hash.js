@@ -8,7 +8,6 @@ var o_hash = {
     // updates the hash according to user selections
     updateHash: function(){
 
-
       hash = [];
       for (param in opus.selections) {
           if (opus.selections[param].length){
@@ -98,11 +97,11 @@ var o_hash = {
 
 
     initFromHash: function(){
-        hash = o_hash.getHash().split('&');
-        if (!hash) return;
-
+        hash = o_hash.getHash();
+        if (!hash) { return; }
         // first are any custom widget sizes in the hash?
         // just updating prefs here..
+        hash = hash.split('&');
         for (q in hash) {
             slug = hash[q].split('=')[0];
             value = hash[q].split('=')[1];
