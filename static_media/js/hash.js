@@ -45,12 +45,8 @@ var o_hash = {
           } else {
 
             hash[hash.length] = key + '=' + opus.prefs[key];
-
           }
-
       }
-
-
       window.location.hash = '/' + hash.join('&');
     },
 
@@ -65,33 +61,33 @@ var o_hash = {
 
     // part is part of the hash, selections or prefs
     getSelectionsFromHash: function() {
-    	var hash = o_hash.getHash();
-    	if (!hash) return;
+        var hash = o_hash.getHash();
+        if (!hash) return;
 
-    	if (hash.search('&') > -1) {
-    		var pairs = hash.split('&');
-    	}
-    	else var pairs = [hash];
-    	var selections = {};  // the new set of pairs that will not include the result_table specific session vars
+        if (hash.search('&') > -1) {
+        	var pairs = hash.split('&');
+        }
+        else var pairs = [hash];
+        var selections = {};  // the new set of pairs that will not include the result_table specific session vars
 
-    	for (var i=0;i<pairs.length;i++) {
-    		var param 	= pairs[i].split('=')[0];
-    		var value 	= pairs[i].split('=')[1];
-    		if (!param) continue;
-    		if (!(param in opus.prefs) && !param.match(/sz-.*/)) {
+        for (var i=0;i< pairs.length;i++) {
+        	var param 	= pairs[i].split('=')[0];
+        	var value 	= pairs[i].split('=')[1];
+        	if (!param) continue;
+        	if (!(param in opus.prefs) && !param.match(/sz-.*/)) {
 
-    		    if (param in selections) {
-    		        selections[param].push(value)
-    		    } else {
-    		        selections[param] = [value]
-    		    }
-    		} else {
-    		    if (param  == 'qtype-phase') console.log('nope')
-    		}
-    	}
-    	if (!jQuery.isEmptyObject(selections)) {
-    	    return selections
-    	}
+        	    if (param in selections) {
+        	        selections[param].push(value)
+        	    } else {
+        	        selections[param] = [value]
+        	    }
+        	} else {
+        	    if (param  == 'qtype-phase') console.log('nope')
+        	}
+        }
+        if (!jQuery.isEmptyObject(selections)) {
+            return selections
+        }
 
     },
 

@@ -47,6 +47,9 @@ class TableName(models.Model):
     mission_id = models.CharField(max_length=2)
     alert = models.TextField()
 
+    def __unicode__(self):
+        return self.label
+
     class Meta:
         db_table = u'table_names'
         ordering = ['disp_order']

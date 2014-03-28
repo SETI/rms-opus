@@ -215,6 +215,11 @@ var o_search = {
             opus.prefs.widgets2 = $.cookie("widgets2").split(',');
         }
 
+        // get menu
+        console.log('hello getSearchTab, going for menu');
+        o_menu.getMenu();
+        console.log('back from getMenu()');
+
         // find and place the widgets
         if (!opus.prefs.widgets.length && !opus.prefs.widgets2.length) {
             // no widgets defined, get the default widgets
@@ -239,9 +244,10 @@ var o_search = {
         for (key in jQuery.unique(opus.prefs.widgets2)) {  // fetch each widget
             slug = opus.prefs.widgets2[key];
             if (jQuery.inArray(slug, opus.widgets_drawn) < 0) {  // only draw if not already drawn
-       	        o_widgets.getWidget(slug,'#formscolumn2');
-       	    }
+      	        o_widgets.getWidget(slug,'#formscolumn2');
+      	    }
         }
+
     },
 
 

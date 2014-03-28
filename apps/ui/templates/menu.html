@@ -1,18 +1,15 @@
-{% extends "base_search.html" %}
-
-{% block menu %}
 	<ul class = "groups">
-    {% for div_name, div_label in menu.div_labels.items %}
+    {% for div in menu.divs %}
 		<li class = "{{ div.label|slugify }}">
 			<div class = "group_label">
 				<span class = "menu_div_triangle opened_triangle">&nbsp;</span>
-				<a title = "{{ div_name }}" href = "">{{ div_label }}</a>
+				<a title = "{{ div.table_name }}" href = "">{{ div.label }}</a>
 			</div>
 
             {% for name, info in menu.data.items %}
-            {# loop through all names then check if we have *this* div_name #}
+            {# loop through all names then check if we have *this* div.table_name #}
 
-                {% if name == div_name %}
+                {% if name == div.table_name %}
                     {# this param_name is contained in this div #}
                     {% if info.has_sub_heading %}
 
@@ -25,7 +22,7 @@
                             <span class = "column_checkbox"><!-- for closing this list of items -->
                             <input title = "check all in group" class = "cat_input" type = "checkbox" data-slug="{{ param.slug }}"></span>
                             <span class = "cat_label">
-                                <div class = "div_label">
+                                <div class = "div.label">
                                 <span class = "menu_div_triangle opened_triangle">&nbsp;</span>
                                 <a title = "{{ sub_head|slugify }}" href = "">{{ sub_head }}</a>
                             </div>
@@ -41,11 +38,11 @@
                                             {% endif %}
                                         {% endfor %}
                                         ></span>
-                                        <a data-cat = "{{ sub_head|slugify }}" data-slug = "{{ p.slug }}" data-group = "{{ div_name|slugify }}" title = "{{ p.label }}" href = "">{{ p.label }}</a>
+                                        <a data-cat = "{{ sub_head|slugify }}" data-slug = "{{ p.slug }}" data-group = "{{ div.table_name|slugify }}" title = "{{ p.label }}" href = "">{{ p.label }}</a>
                                     </li>
                                 {% endif %}
                             {% endfor %}
-                        </ul></li>
+                            </ul></li>
                         {% endfor %}
                     </ul>
 
@@ -62,10 +59,11 @@
                                             {% endif %}
                                         {% endfor %}
                                         ></span>
-                                        <a data-cat = "{{ sub_head|slugify }}" data-slug = "{{ p.slug }}" data-group = "{{ div_name|slugify }}" title = "{{ p.label }}" href = "">{{ p.label }}</a>
+                                        <a data-cat = "{{ sub_head|slugify }}" data-slug = "{{ p.slug }}" data-group = "{{ div.table_name|slugify }}" title = "{{ p.label }}" href = "">{{ p.label }}</a>
                                     </li>
                                 {% endif %}
                             {% endfor %}
+                        </ul>
 
                     {% endif %}
                 {% endif %}
@@ -77,7 +75,6 @@
 		</li>
 		{% endfor %} {# end for div in menu.divs #}
 	</ul> <!-- div labels -->
-{% endblock %}
 
 
 

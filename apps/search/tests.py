@@ -144,6 +144,11 @@ class myFirstTests(TestCase):
         result = urlToSearchParams(q)
         self.assertEqual(result,[{u'obs_general.instrument_id': [u'COISS'], u'obs_general.planet_id': [u'SATURN']}, {'qtypes': {}}])
 
+    def test__urlToSearchParams_with_join(self):
+        q = QueryDict("planet=Saturn&ringradius1=60000")
+        result = urlToSearchParams(q)
+        self.assertEqual(result,[{u'obs_general.planet_id': [u'Saturn'], u'obs_ring_geometry.ring_radius1': [u'60000']}, {'qtypes': {}}])
+
 
     def test__urlToSearchParams_stringmultmix(self):
         q = QueryDict("planet=SATURN&target=PAN&note=Incomplete&qtype-note=contains")

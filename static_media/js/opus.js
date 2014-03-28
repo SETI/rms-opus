@@ -3,6 +3,8 @@
  *
  */
 
+
+
 $(document).ready(function() {
 
 
@@ -10,8 +12,7 @@ $(document).ready(function() {
         // skip the automatic setup - gallery images not added to
         skipSetup: true
     });
-
-    o_hash.initFromHash();
+    o_hash.initFromHash(); // just returns null if no hash
 
     // initiate the correct view behavior - which tab is on top on page load
     switch(opus.prefs.view) {
@@ -49,7 +50,7 @@ $(document).ready(function() {
 
     opus.addAllBehaviors();
 
-   	// watching the url for changes
+    // watching the url for changes
     setInterval(opus.load, 1000);
 
     $('#search').css('display','inline-block');
@@ -157,6 +158,7 @@ var opus = {
               if (opus.last_selections) {
       	          opus.last_selections = {};
       	      }
+              console.log('return from load');
       	      return;
       	  }
           if (o_utils.areObjectsEqual(selections, opus.last_selections))  {
@@ -255,5 +257,4 @@ var opus = {
     }
 
 }; // end opus namespace
-
 

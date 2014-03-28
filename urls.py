@@ -9,10 +9,11 @@ from django.conf.urls.defaults import *
 
 from django.conf import settings
 from django.contrib import admin
+from django.conf.urls import patterns, url, include
 admin.autodiscover()
 
 from paraminfo.models import *
-
+from ui.views import main_site
 # from django.views.generic.simple import direct_to_template
 
 # -------- OPUS Apps -------------------------------------
@@ -52,10 +53,10 @@ base_urlpatterns += patterns('downloads.views',
 # UI resources - the homepage
 base_urlpatterns += patterns('ui.views',
     # (r'^$', direct_to_template, {'template': 'maintenance.html'}),
-    (r'^$', 'mainSite'),
-    (r'^opus/$', 'mainSite'),
+    (r'^$', main_site.as_view()),
+    (r'^opus/$', main_site.as_view()),
     (r'^table_headers.html$', 'getDataTableHeaders'),
-    (r'^menu.html$', 'getMenuLabels'),
+    (r'^opus/menu.html$', 'getMenuLabels'),
     (r'^quick.html$', 'getQuickPage'),
     (r'^forms/widget/(?P<slug>[-\sa-zA-Z0-9]+).(?P<fmt>[json|zip|html|csv]+)$', 'getWidget'),
     (r'^forms/column_chooser.html$', 'getColumnChooser'),

@@ -23,6 +23,7 @@ from search.forms import SearchForm
 from metadata.views import *
 from paraminfo.models import *
 from results.views import *
+from django.views.generic import TemplateView
 
 
 # guide only
@@ -33,12 +34,10 @@ import logging
 log = logging.getLogger(__name__)
 
 
-def mainSite(request, template="main.html"):
-    # main site needs a few things:
-    menu = getMenuLabels(request)
-    namespace = 'search'
+from django.views.generic import TemplateView
 
-    return render_to_response(template,locals(), context_instance=RequestContext(request))
+class main_site(TemplateView):
+    template_name = "base_opus.html"
 
 
 def getDataTableHeaders(request,template='table_headers.html'):
@@ -62,7 +61,7 @@ def getDataTableHeaders(request,template='table_headers.html'):
     return render_to_response(template,locals(), context_instance=RequestContext(request))
 
 
-# @render_to('menu.html')
+@render_to('menu.html')
 def getMenuLabels(request):
     """
     the categories in the menu on the search form
@@ -70,8 +69,14 @@ def getMenuLabels(request):
     todo: change name of  field 'category_name' in param_info table to 'div_title'
     """
 
-    params = ParamInfo.objects.filter(display='Y')
-    divs = TableName.objects.filter(display='Y')
+    selections, extras = {}, {}
+    if request.GET:
+        (selections,extras) = urlToSearchParams(request.GET)
+
+    triggered_tables = get_triggered_tables(selections, extras)
+
+    params = ParamInfo.objects.filter(display='Y', category_name__in=triggered_tables)
+    divs = TableName.objects.filter(display='Y', table_name__in=triggered_tables)
 
     # build a struct that relates sub_headings to div_titles
     sub_headings = {}
@@ -95,16 +100,15 @@ def getMenuLabels(request):
             for sub_head in sub_headings[d.table_name]:
                 menu_data[d.table_name]['data'][sub_head] = ParamInfo.objects.filter(display='Y', category_name = d.table_name, sub_heading = sub_head)
 
-
         else:
             # this div has not sub headings
             menu_data[d.table_name]['has_sub_heading'] = False
             for p in ParamInfo.objects.filter(display='Y', category_name=d.table_name):
                 menu_data[d.table_name].setdefault('data', []).append(p)
 
-    div_labels = {d.table_name:d.label for d in TableName.objects.filter(display='Y')}
+    # div_labels = {d.table_name:d.label for d in TableName.objects.filter(display='Y', table_name__in=triggered_tables)}
 
-    return {'data': menu_data, 'div_labels': div_labels}
+    return {'menu': {'data': menu_data, 'divs': divs}}
 
 
 def getWidget(request, **kwargs):
@@ -346,7 +350,7 @@ def getColumnChooser(request, **kwargs):
     slugs = request.GET.get('cols',settings.DEFAULT_COLUMNS)
     slugs = slugs.split(',')
     labels = getColumnLabels(slugs)
-    menu = getMenuLabels()
+    menu = getMenuLabels(request)
     namespace = 'column_chooser_input'
     return render_to_response("choose_columns.html",locals(), context_instance=RequestContext(request))
 

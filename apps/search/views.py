@@ -95,7 +95,7 @@ def constructQueryString(selections, extras={}):
             q_objects.append(q_obj)
 
     # construct our query, we'll be breaking into raw sql, but for that
-    # we'll be using the sql django generates through its model interface
+    # we'll be using the sql django generates through its model interface (what?)
     try:
         q = str(ObsGeneral.objects.filter(*q_objects).values('pk').query)
         # append any longitudinal queries to the query string
@@ -183,7 +183,7 @@ def urlToSearchParams(request_get):
 
     >>>> from search.views import *
     >>>> from django.http import QueryDict
-    >>>> q = QueryDict("planet=Jupiter")
+    >>>> q = QueryDict("planet=Saturn")
     >>>> (selections,extras) = urlToSearchParams(q)
     >>>> selections
     {'planet_id': [u'Jupiter']}
@@ -218,6 +218,7 @@ def urlToSearchParams(request_get):
 
         param_name = param_info.param_name()
         param_name_no_num = stripNumericSuffix(param_name)
+
 
         if qtype:
             qtypes[param_name_no_num] = request_get.get('qtype-'+slug_no_num,False).strip(',').split(',')
