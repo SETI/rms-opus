@@ -54,6 +54,7 @@ $(document).ready(function() {
     setInterval(opus.load, 1000);
 
     $('#search').css('display','inline-block');
+
     o_collections.initCollection();
 
 });
@@ -158,7 +159,6 @@ var opus = {
               if (opus.last_selections) {
       	          opus.last_selections = {};
       	      }
-              console.log('return from load');
       	      return;
       	  }
           if (o_utils.areObjectsEqual(selections, opus.last_selections))  {
@@ -212,6 +212,8 @@ var opus = {
                   }
                   $('#browse_tab').fadeIn();
                   opus.updateResultCount(json['data'][0]['result_count']);
+
+                  o_menu.getMenu();
 
                   // if all we wanted was a new gallery page we can stop here
                   opus.pages = Math.ceil(opus.result_count/opus.prefs.limit);

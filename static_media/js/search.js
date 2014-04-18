@@ -216,9 +216,7 @@ var o_search = {
         }
 
         // get menu
-        console.log('hello getSearchTab, going for menu');
         o_menu.getMenu();
-        console.log('back from getMenu()');
 
         // find and place the widgets
         if (!opus.prefs.widgets.length && !opus.prefs.widgets2.length) {

@@ -11,7 +11,7 @@ var o_hash = {
       hash = [];
       for (param in opus.selections) {
           if (opus.selections[param].length){
-              hash[hash.length] = param + '=' + opus.selections[param].join(',');
+              hash[hash.length] = param + '=' + opus.selections[param].join(',').replace(' ','+');
           }
       }
 

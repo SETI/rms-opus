@@ -59,13 +59,9 @@ var o_menu = {
      },
 
      getMenu: function() {
-        console.log('hello inside getMenu')
         hash = o_hash.getHash();
-        console.log('hash: ' + hash);
         $( "#leftcolumn" ).load( "/opus/menu.html?" + hash, function() {
-          console.log( "Load was performed." );
         });
-        console.log('ok menu ')
      },
 
      updateMenuIndicators: function() {
