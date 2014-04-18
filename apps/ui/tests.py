@@ -78,7 +78,7 @@ class UITests(TestCase):
         self.assertEqual(str(response.content).strip().find('<div class = "widget_draghandle">'), 0 )
 
     """
-    def test__getMenuLabels(self):
+    def test__getMenu(self):
         self.assertEqual(True, False)
 
     def test__getQuickPage(self):

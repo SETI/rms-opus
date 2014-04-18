@@ -60,8 +60,12 @@ def getDataTableHeaders(request,template='table_headers.html'):
                 pass
     return render_to_response(template,locals(), context_instance=RequestContext(request))
 
-
 @render_to('menu.html')
+def getMenu(request):
+    """ such a hack, need to get menu sometimes without rendering, this is for column chooser
+    couldn't get template include/block.super to heed GET vars """
+    return getMenuLabels(request)
+
 def getMenuLabels(request):
     """
     the categories in the menu on the search form
@@ -226,11 +230,9 @@ def getWidget(request, **kwargs):
         mult_param = getMultName(param_name)
         model      = get_model('search',mult_param.title().replace('_',''))
 
-        log.debug(param_name)
         try:
             grouping = model.objects.distinct().values('grouping')
 
-            log.debug(str(grouping))
             grouping_table = 'grouping_' + param_name.split('.')[1]
             grouping_model = get_model('metadata',grouping_table.title().replace('_',''))
             for group_info in grouping_model.objects.order_by('disp_order'):
@@ -347,11 +349,14 @@ def getColumnLabels(slugs):
 
 
 def getColumnChooser(request, **kwargs):
-    slugs = request.GET.get('cols',settings.DEFAULT_COLUMNS)
-    slugs = slugs.split(',')
+    slugs = request.GET.get('cols', settings.DEFAULT_COLUMNS).split(',')
+    slugs = filter(None, slugs) # sometimes 'cols' is in url but is blank, fails above
+    if not slugs:
+        slugs = settings.DEFAULT_COLUMNS.split(',')
     labels = getColumnLabels(slugs)
-    menu = getMenuLabels(request)
     namespace = 'column_chooser_input'
+    menu = getMenuLabels(request)['menu']
+    log.debug(menu)
     return render_to_response("choose_columns.html",locals(), context_instance=RequestContext(request))
 
 

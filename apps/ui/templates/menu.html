@@ -1,3 +1,4 @@
+{% block menu %}
 	<ul class = "groups">
     {% for div in menu.divs %}
 		<li class = "{{ div.label|slugify }}">
@@ -77,4 +78,4 @@
 	</ul> <!-- div labels -->
 
 
-
+{% endblock %}

@@ -1,32 +1,27 @@
-{% extends "menu.html" %}   
+{% extends "menu.html" %}
 
-{% block base %} 
-{% block content %}
-{% block base_search %} 
-{% block menu %}            
-                         
-<a class = "close">X</a>   
+{% block menu %}
+
+<a class = "close">X</a>
 
 <div class = "all_columns">
 
-	{{ block.super }} {# renders menu.html #}                   
+    {% with 'menu' as expectedVarName %}
+	{{ block.super }} {# renders menu.html #}
+    {% endwith %}
 
-</div>            
+</div>
 
-<div class = "chosen_columns">    
+<div class = "chosen_columns">
 	<ul>
 		{% for slug,label in labels.items %}
 			<li id="cchoose__{{ slug }}">{{ label }}
-					<span class = "chosen_column_close">X</span>	 
+					<span class = "chosen_column_close">X</span>
 			</li>
-		{% endfor %}            
+		{% endfor %}
 	</ul>
 </div>
 
-{% endblock %} {# menu #}
-{% endblock %} {# base_search #}
-{% endblock %} {# content #}
-{% endblock %} {# base #}
+{% endblock %}
 
 
-                                                                          
