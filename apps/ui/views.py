@@ -39,6 +39,10 @@ from django.views.generic import TemplateView
 class main_site(TemplateView):
     template_name = "base_opus.html"
 
+    def get_context_data(self, **kwargs):
+        context = super(main_site, self).get_context_data(**kwargs)
+        context['default_columns'] = settings.DEFAULT_COLUMNS
+        return context
 
 def getDataTableHeaders(request,template='table_headers.html'):
     slugs = request.GET.get('cols', settings.DEFAULT_COLUMNS)
@@ -356,7 +360,6 @@ def getColumnChooser(request, **kwargs):
     labels = getColumnLabels(slugs)
     namespace = 'column_chooser_input'
     menu = getMenuLabels(request)['menu']
-    log.debug(menu)
     return render_to_response("choose_columns.html",locals(), context_instance=RequestContext(request))
 
 
