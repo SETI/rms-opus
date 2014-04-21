@@ -221,7 +221,7 @@ LOGGING = {
         'logfile': {
             'level':'DEBUG',
             'class':'logging.handlers.RotatingFileHandler',
-            'filename': PROJECT_ROOT + "/logfile",
+            'filename': PROJECT_ROOT + "/logs/opus_log.txt",
             'maxBytes': 50000,
             'backupCount': 2,
             'formatter': 'standard',
