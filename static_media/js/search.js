@@ -45,7 +45,7 @@ var o_search = {
                 if (opus.search_form_cols==2) o_widgets.resetWidgetScrolls(); // reset all scroll positions
                 // first move the widgets to the first column
                 opus.search_form_cols = 1;
-                $('#formscolumn1').width('78%');
+                $('#formscolumn1').width('70%');
                 $('#formscolumn2 .widget').each(function() {
                     $(this).appendTo('#formscolumn1');
                     slug = $(this).attr('id').split('__')[1];
