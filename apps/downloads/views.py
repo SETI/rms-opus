@@ -1,5 +1,5 @@
 from results.views import *
-from tools.views import *
+from tools.app_utils import *
 from user_collections.views import *
 from django.contrib.sessions.models import Session
 from django.core import serializers

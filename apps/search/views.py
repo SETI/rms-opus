@@ -20,7 +20,7 @@ from metadata.views import *
 """
 from search.models import *
 from tools.app_utils import stripNumericSuffix, sortDict
-from paraminfo.views import ParamInfo
+from paraminfo.models import ParamInfo
 
 import logging
 log = logging.getLogger(__name__)

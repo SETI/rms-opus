@@ -2,7 +2,7 @@ import settings
 from django.http import HttpResponse
 from django.utils import simplejson
 from django.template import RequestContext
-from tools.views import *
+from tools.app_utils import *
 from results.views import *
 from downloads.views import *
 
