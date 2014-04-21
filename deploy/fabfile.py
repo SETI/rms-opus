@@ -9,19 +9,13 @@ def push():
     pushes code to repo and pushes repo to staging
     """
 
-    # first push code to bitbucket
-    with lcd('/Users/lballard/projects/opus/'):
-        local('git push')
-
     # then checkout code from repo in another directory, and transfer that copy to server
     with lcd('/Users/lballard/'):
         # clean up old deploys
         local('rm -rf ~/opus')
-        local('rm -rf ~/opus2')
 
         # grab the remote repo (this is all because couldn't grab remote from server)
-        local('git clone git@bitbucket.org:ringsnode/opus2.git')
-        local('mv opus2 opus')
+        local('git clone file:////Users/lballard/projects/opus')
 
         # zip the javascript files, dunno why it commented out, broken?
         # local('python opus/deploy/deploy.py')
