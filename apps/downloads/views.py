@@ -46,7 +46,7 @@ def get_download_size(files, product_types, previews):
             if (not product_types) | (ptype in product_types.split(',')):
                 urls += [files[ring_obs_id][ptype] for ptype in files[ring_obs_id]][0] # list of all urls
 
-    file_names = [('/').join(u.split('/')[4:len(u)]) for u in urls] # split off domain and directory, that's how their stored in file_sizes
+    file_names = [('/').join(u.split('/')[4:len(u)]) for u in urls] # split off domain and directory, that's how they're stored in file_sizes
     try:
         size = FileSizes.objects.filter(name__in=file_names).aggregate(Sum('size'))['size__sum']
     except TypeError:
@@ -57,7 +57,7 @@ def get_download_size(files, product_types, previews):
 # http://pds-rings.seti.org/volumes/
 def get_download_info(request, collection=""):
     if not collection:
-        from user_collections.views import * # circumvent the circular dependency.. James Bennett say so!
+        from user_collections.views import * # circumvent the circular dependency.. James Bennett says it's ok!
         collection = get_collection(request)
 
     fmt = request.GET.get('fmt', None)
@@ -129,7 +129,7 @@ def create_download(request, collection_name='', ring_obs_ids=None, fmt="raw"):
     # files = getFiles(ring_obs_ids,"raw", "url", product_types, previews)
     # return HttpResponse(simplejson.dumps(files), mimetype="application/json")
 
-    tar = tarfile.open(settings.TAR_FILE_PATH + zip_file_name, 'w:gz')
+    tar = tarfile.open(settings.TAR_FILE_PATH + zip_file_name, "w:gz")
     chksum = open(chksum_file_name,"w")
     manifest = open(manifest_file_name,"w")
     size = get_download_size(files, product_types, previews)

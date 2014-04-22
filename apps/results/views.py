@@ -187,7 +187,7 @@ def getImages(request,size,fmt):
     """
     this returns rows from images table that correspond to request
     some rows will not have images, this function doesn't return 'image_not_found' information
-    if a row doesn't have an image you get nothing. you lose. good day sir.
+    if a row doesn't have an image you get nothing. you lose. good day sir. #fixme #todo
 
     """
     alt_size = request.GET.get('alt_size','')
@@ -200,10 +200,16 @@ def getImages(request,size,fmt):
     # print page_ids
 
     if alt_size:
-        image_links = image_links.values('ring_obs_id',size,alt_size);
+        image_links = image_links.values('ring_obs_id',size,alt_size)
     else:
-        image_links = image_links.values('ring_obs_id',size);
+        image_links = image_links.values('ring_obs_id',size)
 
+    # add the base_path to each image
+    all_sizes = ['small','thumb','med','full']
+    for k, im in enumerate(image_links):
+        for s in all_sizes:
+            if s in im:
+                image_links[k][s] = getBasePath(im['ring_obs_id']) + im[s]
 
     # to lamely preserve the order of page_ids
     ordered_image_links = []
@@ -230,6 +236,10 @@ def getImages(request,size,fmt):
     return responseFormats({'data':[i for i in image_links]},fmt, size=size, path=path, alt_size=alt_size, columns_str=columns.split(','), all_collections=in_collections(request), template=template, order=order)
 
 
+def getBasePath(ring_obs_id):
+    file_path = Files.objects.filter(ring_obs_id=ring_obs_id)[0].base_path
+    return '/'.join(file_path.split('/')[-2:])
+
 
 def getImage(request,size='med', ring_obs_id='',fmt='mouse'):      # mouse?
     """
@@ -239,9 +249,8 @@ def getImage(request,size='med', ring_obs_id='',fmt='mouse'):      # mouse?
     return HttpResponse(img + "<br>" + ring_obs_id + ' ' + size +' '+ fmt)
     """
     img = Image.objects.filter(ring_obs_id=ring_obs_id).values(size)[0][size]
-    path = settings.IMAGE_HTTP_PATH
-
-    return responseFormats({'data':[{'img':img}]},fmt, size=size, path=path, template='image_list.html')
+    path = settings.IMAGE_HTTP_PATH + getBasePath(ring_obs_id)
+    return responseFormats({'data':[{'img':img, 'path':path}]}, fmt, size=size, path=path, template='image_list.html')
 
 def file_name_cleanup(base_file):
     base_file = base_file.replace('.','/')
@@ -276,7 +285,7 @@ def getFilesAPI(request,ring_obs_id='',fmt='raw', loc_type="url"):
 
 
 # loc_type = path or url
-def getFiles(ring_obs_id,fmt='raw', loc_type="url", product_types=[], previews=[]):
+def getFiles(ring_obs_id, fmt='raw', loc_type="url", product_types=[], previews=[]):
     if ring_obs_id:
         if type(ring_obs_id) is unicode:
             ring_obs_ids = [ring_obs_id]
@@ -383,11 +392,12 @@ def getFiles(ring_obs_id,fmt='raw', loc_type="url", product_types=[], previews=[
             for size in previews.split(','):
                 url_info = getImage(False,size.lower(), ring_obs_id,'raw')
                 url = url_info['data'][0]['img']
+                base_path = url_info['data'][0]['path']
                 if url:
                     if loc_type == 'path':
-                        url = settings.IMAGE_PATH + url
+                        url = settings.IMAGE_PATH + getBasePath(ring_obs_id) + url
                     else:
-                        url = settings.IMAGE_HTTP_PATH + url
+                        url = base_path + url
 
                     file_names[ring_obs_id]['preview_image'].append(url) # ugh! this is cuz it goes through that stoopit utils too
 
