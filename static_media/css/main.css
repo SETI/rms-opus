@@ -311,6 +311,25 @@ a:active {text-decoration:none;} /* selected link */
 
 /***************************/
 
+
+/*  http://stackoverflow.com/questions/17859993/basic-css-how-to-overlay-a-div-with-semi-transparent-div-on-top */
+.dimmed {
+  position: relative;
+}
+
+.dimmed:after {
+  content: " ";
+  z-index: 10;
+  display: block;
+  position: absolute;
+  height: 100%;
+  top: 0;
+  left: 0;
+  right: 0;
+  background: rgba(0, 0, 0, 0.5);
+}
+/* */
+
 .cats {
     margin:0;
     padding:0;

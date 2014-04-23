@@ -59,8 +59,11 @@ var o_menu = {
      },
 
      getMenu: function() {
+        $("#leftcolumn" ).addClass('dimmed');
+
         hash = o_hash.getHash();
         $( "#leftcolumn" ).load( "/opus/menu.html?" + hash, function() {
+            $("#leftcolumn" ).removeClass('dimmed');
         });
      },
 
