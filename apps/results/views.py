@@ -309,7 +309,7 @@ def getFiles(ring_obs_id, fmt='raw', loc_type="url", product_types=[], previews=
         for f in files_table_rows:
 
             # append new base paths
-            path = path + f.base_path.split('/')[-2:-1][0] + '/'
+            path = path + getBasePath(ring_obs_id)
 
             file_extensions = []
             # volume_loc = getAltVolumeLocs(volume_id)
@@ -322,12 +322,8 @@ def getFiles(ring_obs_id, fmt='raw', loc_type="url", product_types=[], previews=
             if f.extra_files:
                 extra_files = f.extra_files.split(',')
 
-            file_name_split = f.file_specification_name.split('.')
-
-            ext = file_name_split.pop()
-            base_file = ''.join(file_name_split)
-
-            #----- thought that was craycray? Now it gets craycray -----#
+            ext = f.file_specification_name.split('.').pop()
+            base_file = ''.join(f.file_specification_name.split('.'))
 
             # // sometimes in GO the volume_id is appended already
             if base_file.find(f.volume_id + ":")>-1:
@@ -351,7 +347,7 @@ def getFiles(ring_obs_id, fmt='raw', loc_type="url", product_types=[], previews=
             for extra in extra_files:
                 file_names[ring_obs_id][f.product_type]  += [path + volume_loc + '/' + extra]
 
-            # now adjust the path whether this is on the derived directory or now
+            # now adjust the path whether this is on the derived directory or not
             if (f.product_type) == 'CALIBRATED':
                 if loc_type != 'url':
                     path = settings.DERIVED_PATH

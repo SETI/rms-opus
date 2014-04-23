@@ -124,6 +124,7 @@ def create_download(request, collection_name='', ring_obs_ids=None, fmt="raw"):
     # lisa
     from results.views import *
     files = getFiles(ring_obs_ids,"raw", "path", product_types, previews)
+
     # return getFiles(ring_obs_ids,"raw", loc_type = 'path')
     #
     # files = getFiles(ring_obs_ids,"raw", "url", product_types, previews)
