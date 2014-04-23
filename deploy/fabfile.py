@@ -33,7 +33,7 @@ def deploy():
         run('sudo touch /home/django/djcode/opus/*.wsgi')
 
 def memcache_reboot():
-        run('killall memcached')
+        run('sudo killall memcached')
         run('/usr/bin/memcached -m 64 -p 11211 -l 127.0.0.1 -d')
 
 
