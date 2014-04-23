@@ -48,7 +48,7 @@ var o_menu = {
             o_menu.updateMenuIndicators();
             $(this).next().slideToggle("fast");
         } else {
-            // this is closing, slide it shut THEN update teh indicators... UX, baby.
+            // this is closing, slide it shut THEN update teh indicators... UX!
             $(this).next().slideToggle('fast', function() {
         	    o_menu.updateMenuIndicators();
         	});
@@ -59,8 +59,7 @@ var o_menu = {
      },
 
      getMenu: function() {
-        $("#leftcolumn" ).addClass('dimmed');
-
+        $("#leftcolumn" ).addClass('dimmed');  // dim the menu when it's in transition
         hash = o_hash.getHash();
         $( "#leftcolumn" ).load( "/opus/menu.html?" + hash, function() {
             $("#leftcolumn" ).removeClass('dimmed');
