@@ -66,8 +66,10 @@ def getDataTableHeaders(request,template='table_headers.html'):
 
 @render_to('menu.html')
 def getMenu(request):
-    """ such a hack, need to get menu sometimes without rendering, this is for column chooser
-    couldn't get template include/block.super to heed GET vars """
+
+    """ such a hack, need to get menu sometimes without rendering,
+        ie from another view.. so this is for column chooser
+        couldn't get template include/block.super to heed GET vars """
     return getMenuLabels(request)
 
 def getMenuLabels(request):
@@ -77,11 +79,15 @@ def getMenuLabels(request):
     todo: change name of  field 'category_name' in param_info table to 'div_title'
     """
 
+
     selections, extras = {}, {}
     if request.GET:
         (selections,extras) = urlToSearchParams(request.GET)
 
-    triggered_tables = get_triggered_tables(selections, extras)
+    if not selections:
+        triggered_tables = settings.BASE_TABLES
+    else:
+        triggered_tables = get_triggered_tables(selections, extras)
 
     params = ParamInfo.objects.filter(display='Y', category_name__in=triggered_tables)
     divs = TableName.objects.filter(display='Y', table_name__in=triggered_tables)
@@ -120,6 +126,8 @@ def getMenuLabels(request):
 
 
 def getWidget(request, **kwargs):
+
+
 
     """ search form widget as string, http response"""
     slug = kwargs['slug']
@@ -236,7 +244,6 @@ def getWidget(request, **kwargs):
 
         try:
             grouping = model.objects.distinct().values('grouping')
-
             grouping_table = 'grouping_' + param_name.split('.')[1]
             grouping_model = get_model('metadata',grouping_table.title().replace('_',''))
             for group_info in grouping_model.objects.order_by('disp_order'):

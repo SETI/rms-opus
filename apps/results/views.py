@@ -144,11 +144,15 @@ def get_triggered_tables(selections, extras = {}):
     this looks at user request and returns triggered tables
     always returns the settings.BASE_TABLES
     """
+    if not selections:
+        return settings.BASE_TABLES
+
     # first add the base tables
     triggered_tables = [t for t in settings.BASE_TABLES]
     query_result_table = getUserQueryTable(selections,extras)
 
     # now see if any more tables are triggered from query
+    queries = {}  # keep track of queries
     for partable in Partable.objects.all():
         # we are joining the results of a user's query - the single column table of ids
         # with the trigger_tab listed in the partable,
@@ -160,15 +164,23 @@ def get_triggered_tables(selections, extras = {}):
         if partable in triggered_tables:
             continue  # already triggered, no need to check
 
-        trigger_model = get_model('search', ''.join(trigger_tab.title().split('_')))
-        results = trigger_model.objects
-        if query_result_table:
-            if trigger_tab == 'obs_general':
-                where   = trigger_tab + ".id = " + query_result_table + ".id"
-            else:
-                where   = trigger_tab + ".obs_general_id = " + query_result_table + ".id"
-            results = results.extra(where=[where], tables=[query_result_table])
-        results = results.distinct().values(trigger_col)
+        # get query
+        # did we already do this query?
+
+        if trigger_tab + trigger_col in queries:
+            results = queries[trigger_tab + trigger_col]
+        else:
+            trigger_model = get_model('search', ''.join(trigger_tab.title().split('_')))
+            results = trigger_model.objects
+            if query_result_table:
+                if trigger_tab == 'obs_general':
+                    where   = trigger_tab + ".id = " + query_result_table + ".id"
+                else:
+                    where   = trigger_tab + ".obs_general_id = " + query_result_table + ".id"
+                results = results.extra(where=[where], tables=[query_result_table])
+            results = results.distinct().values(trigger_col)
+            queries.setdefault(trigger_tab + trigger_col, results)
+
 
         if len(results) == 1 and results[0][trigger_col] == trigger_val:
             # we has a triggered table
