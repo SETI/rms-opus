@@ -1,12 +1,14 @@
 drop table if exists opus_hack.groups;
 drop table if exists opus_hack.categories;
 drop table if exists opus_hack.param_info;
-drop table if exists opus_hack.images;
+drop table if exists opus_hack.images
+drop table if exists opus_hack.partables
 
 create table opus_hack.groups select * from groups;
 create table opus_hack.categories select * from categories;
 create table opus_hack.param_info select * from param_info;
 create table opus_hack.images select * from images;
+create table opus_hack.images select * from partables;
 
 drop table if exists opus_hack.guide_example;
 drop table if exists opus_hack.guide_group;

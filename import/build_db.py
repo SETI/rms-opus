@@ -13,6 +13,7 @@ from os import system
 from django.db import transaction, connection
 from django.core.management import  call_command
 from django.db.models import get_model
+from django.db.utils import DatabaseError
 from django.utils.datastructures import SortedDict
 from settings import DATABASES, MULT_FIELDS
 
@@ -35,6 +36,10 @@ if len(sys.argv) < 2:
 
     make sure there are no spaces in your volume list!
 
+    you can also do all volumes:
+
+    python build_db.py all
+
     this script assumes we are connecting an old database named Observations
     to a new one named opus. These names can be changed at the top of the script
 
@@ -47,10 +52,11 @@ if len(sys.argv) < 2:
 volumes = sys.argv[1].split(',')
 volumes.sort()
 
+volumes_str = '"' + ('","').join(volumes) + '"'
 if volumes == ['all']:
     volumes = []  # nothing to add to the query
+    volumes_str = ''
 
-volumes_str = '"' + ('","').join(volumes) + '"'
 
 
 # ------------ some initial defining of things ------------#
@@ -58,7 +64,7 @@ volumes_str = '"' + ('","').join(volumes) + '"'
 # hello mysql
 
 cursor = connection.cursor()
-cursor.execute("SET SQL_MODE = 'STRICT_ALL_TABLES'")
+# cursor.execute("SET SQL_MODE = 'STRICT_ALL_TABLES'")
 cursor.execute("SET foreign_key_checks = 0")
 
 field_choices = {} # we will build a bunch of tuples that hold choices for the mult fields
@@ -105,7 +111,9 @@ for tbl in obs_tables:
     # create the new table
     q_create = "create table %s.%s like %s.%s"
     q_params = [opus2, tbl, opus1, tbl]
-    cursor.execute(q_create % tuple(q_params))  # using % over comma here because we are substituting a table name and don't want Django to be adding quotes
+    q = q_create % tuple(q_params)  # using % instead of comma here because we are substituting a table name and don't want Django to be adding quotes
+    print q
+    cursor.execute(q)
 
     # copy the data over from the old table to the new
     q_insert = "insert into %s.%s select %s.* from %s.%s"
@@ -127,28 +135,46 @@ for tbl in obs_tables:
     # the obs_general table is the main holder of the PK to all other tables
     # it's called obs_general_no in opus1, so here we change it to
     # "id" for the obs_general_table and "obs_general_id" for all other tables
-    field_name, prime_decl, unique = ('obs_general_id', '', True)
+
+    # some constants for this table, the field name and the primary key declaration for the query
+    field_name = 'obs_general_id'
     if tbl == 'obs_general':
-        field_name, prime_decl = ('id', 'auto_increment primary key')
+        field_name = 'id'
+    if tbl  in ['obs_movies'] and tbl.find('obs_surface') > -1:
+        field_name = 'id'
 
+    # obs_general_no is the PK or Foreign Key for all tables, change its name to field_name
+    alter_query = "alter table %s.%s change obs_general_no %s mediumint(8) unsigned not null" % (opus2, tbl, field_name)
+    if tbl == 'obs_general':
+        alter_query = "alter table %s.%s change obs_general_no %s mediumint(8) unsigned not null auto_increment " % (opus2, tbl, field_name)
+    try:
+        print alter_query
+        cursor.execute(alter_query)
+    except Warning:
+        pass  # it's ok, the query executed it's just that I upgraded mysql
+
+    # opus1 uses obs_general_no as PK in all tables, but django would prefer to use its own id field
+    """
+    # removed, just handle the exception in the execute statement below
+    unique = False
     if tbl not in ['obs_movies'] and tbl.find('obs_surface') == -1:
-        # obs_general_no is the auto_increment primary key for this table, change it to 'id'
-        cursor.execute("alter table %s.%s add unique index(obs_general_no)" % (opus2, tbl))  # placeholder index, with auto_increment won't let you drop primary, must have some unique key
+        unique = True
+    """
+    try:
         cursor.execute("drop index `PRIMARY` on %s.%s" % (opus2, tbl))  # drop the primary index so we can change this field
-    else:
-        unique = False  # the obs_general_id FK field in these tables is not unique
+    except DatabaseError:
+        pass  # some tables don't have this index
 
-    # alter the field name
-    alter_query = "alter table %s.%s change obs_general_no %s mediumint(8) unsigned not null %s" % (opus2, tbl, field_name, prime_decl)  # change the field, adding the primary key
-    if unique:
-        alter_query += " unique "
-    cursor.execute(alter_query)
-
-    # now add a primary key 'id' to all tables
+    # now add a primary key 'id' to all tables (except obs_general, and multi tables) for django to use
+    # this was removed, was it important? -->
+    #    if tbl not in ['obs_movies'] and tbl.find('obs_surface') == -1:
+    #        # something..
     if tbl != 'obs_general':
-        cursor.execute("alter table %s.%s add column id mediumint(8) unsigned not null auto_increment primary key" % (opus2, tbl))
+        alter_query = "alter table %s.%s add column id mediumint(8) unsigned not null auto_increment primary key" % (opus2, tbl)
+        print alter_query
+        cursor.execute(alter_query)
 
-
+# done looping through obs tables
 
 # ------------ Now update all the rings_obs_ids in all the created tables ------------#
 # opus2 has a different style of ring_obs_ids than opus1 - underscores replace slashes
@@ -191,9 +217,19 @@ for tbl in mult_tables:
     cursor.execute(q_create % tuple(q_params))  # using % over comma here because we are substituting a table name and don't want Django to be adding quotes
 
     # handle the changing of the key and field from 'no' to 'id' for Django happyness
-    cursor.execute("alter table %s.%s add unique index(no)" % (opus2, tbl))  # placeholder index, with auto_increment won't let you drop primary, must have some unique key
+
+    try:
+        cursor.execute("alter table %s.%s add unique index(no)" % (opus2, tbl))  # placeholder index, with auto_increment won't let you drop primary, must have some unique key
+    except Warning:
+        pass  # upgrade probs, query executed ok
+
     cursor.execute("drop index `PRIMARY` on %s.%s" % (opus2, tbl))  # drop the primary index so we can cange this field
-    cursor.execute("alter table %s.%s change no id int(3) unsigned not null auto_increment primary key;" % (opus2, tbl))  # change the field, adding the primary key
+
+    try:
+        cursor.execute("alter table %s.%s change no id int(3) unsigned not null auto_increment primary key;" % (opus2, tbl))  # change the field, adding the primary key
+    except Warning:
+        pass  # upgrade probs, query executed ok
+
     cursor.execute("drop index no on %s.%s" % (opus2, tbl))  # drop the placeholder index
 
     # copy over the data from old mult table to new
@@ -203,12 +239,16 @@ for tbl in mult_tables:
 
 
 
-cursor.execute("create view %s.grouping_target_name as select * from mult_obs_general_planet_id" % (opus2))
+cursor.execute("create view %s.grouping_target_name as select * from %s.mult_obs_general_planet_id" % (opus2, opus2))
+
 
 # ------------ copy over the 'forms' table into the new 'param_info' table  ------------#
 
-# first, build the empty forms table in the new db - the table schema lives in a dump file in the repo
-system("mysql %s < import/param_info_table.sql -u%s -p%s" % (opus2, DATABASES['default']['USER'], DATABASES['default']['PASSWORD']))
+# first, fetch the tables:
+# system("mysql %s < import/backup_util_tables.sql -u%s -p%s" % (opus2, DATABASES['default']['USER'], DATABASES['default']['PASSWORD'])))
+
+# first, build the empty param_info table in the new db - the table schema lives in a dump file in the repo
+system("mysql %s < ~/projects/opus/import/param_info_table.sql -u%s -p%s" % (opus2, DATABASES['default']['USER'], DATABASES['default']['PASSWORD']))
 
 # and import the data
 q = "insert into %s.param_info select * from %s.forms where (display = 'Y' or display_results = 'Y')" % (opus2, opus1)
@@ -233,19 +273,25 @@ create table %s.groups like opus_hack.groups;
 create table %s.categories like opus_hack.categories;
 insert into %s.groups select * from opus_hack.groups;
 insert into %s.categories select * from opus_hack.categories;
+
 create table %s.guide_example like opus_hack.guide_example;
 create table %s.guide_group like opus_hack.guide_group;
 create table %s.guide_keyvalue like opus_hack.guide_keyvalue;
 create table %s.guide_resource like opus_hack.guide_resource;
 create table %s.user_searches like opus_hack.user_searches;
+# no need to copy the user_searches data right?;
 insert into %s.guide_example select * from opus_hack.guide_example;
 insert into %s.guide_group select * from opus_hack.guide_group;
 insert into %s.guide_keyvalue select * from opus_hack.guide_keyvalue;
 insert into %s.guide_resource select * from opus_hack.guide_resource;
+
+create table %s.partables like opus_hack.partables;
+insert into %s.partables select * from opus_hack.partables;
+
 """
 
 for q in queries.split(';'):
-    if not q.strip(): continue
+    if not q.strip(): continue  # skip blank lines
     print q % opus2
     cursor.execute(q % opus2)
 
@@ -272,7 +318,7 @@ for instrument_id in all_inst_ids:
 
 # ----------- restore table_names  -------------#
 cursor.execute("create table %s.table_names like %s.table_names" % (opus2, opus1))
-cursor.execute("insert into %s.table_names select * from %s.table_names" % (opus2, opus1, volumes_str))
+cursor.execute("insert into %s.table_names select * from %s.table_names" % (opus2, opus1))
 cursor.execute("alter table %s.table_names change column no id int(9) not null auto_increment" % (opus2))
 cursor.execute("alter table %s.table_names change column rings display char(1) default 'Y'" % (opus2))
 cursor.execute("alter table %s.table_names change column div_title label char(60)" % (opus2))
@@ -288,34 +334,32 @@ cursor.execute("insert into %s.file_sizes select * from %s.file_sizes where volu
 cursor.execute("alter table %s.file_sizes add column id int(9) not null auto_increment primary key" % (opus2))
 cursor.execute("update %s.file_sizes t,%s.obs_general o set t.ring_obs_id = o.ring_obs_id where t.ring_obs_id = o.opus1_ring_obs_id" % (opus2, opus2))
 
-
 # ----------- restore files_not_found -------------#
-cursor.execute("create table %s.files_not_found like %s.files_not_found" % (opus2, opus1))
-cursor.execute("insert into %s.files_not_found select * from %s.files_not_found where %s.files_not_found.volume_id IN (%s)" % (opus2, opus1, opus1, volumes_str))
-cursor.execute("drop index `PRIMARY` on %s.files_not_found" % (opus2))  # drop the primary index so we can cange this field
+q = "create table %s.files_not_found select * from %s.files_not_found" % (opus2, opus1)
+if volumes_str:
+    q = q + " where %s.files_not_found.volume_id IN (%s)" % (opus1, volumes_str)
+cursor.execute(q)
 cursor.execute("alter table %s.files_not_found add column id int(8) not null auto_increment primary key" % (opus2))
 cursor.execute("alter table %s.files_not_found add unique key (name)" % (opus2))
+cursor.execute("alter table %s.files_not_found add key (ring_obs_id)" % (opus2))
+cursor.execute("alter table %s.files_not_found add key (obs_general_no)" % (opus2))
 cursor.execute("update %s.files_not_found t,%s.obs_general o set t.ring_obs_id = o.ring_obs_id where t.ring_obs_id = o.opus1_ring_obs_id" % (opus2, opus2))
 
 
 # ----------- restore images -------------#
 # first make sure that old db has volume_id in images table
 cursor.execute("update %s.images as i, %s.obs_general as g set i.volume_id = g.volume_id where i.ring_obs_id = g.ring_obs_id" % (opus1, opus1))
-cursor.execute("create table %s.images like %s.images" % (opus2, opus1))
-cursor.execute("alter table %s.images add key (volume_id)" % (opus2))
-q = "insert into %s.images select * from %s.images " % (opus2, opus1)
+q = "create table %s.images select * from %s.images" % (opus2, opus1)
 if volumes:
-    q += "where %s.images.volume_id in (%s)" % (opus1, volumes_str)
+    q = q + " where %s.images.volume_id in (%s)" % (opus1, volumes_str)
 cursor.execute(q)
-cursor.execute("drop index `PRIMARY` on %s.images" % (opus2))  # drop the primary index so we can cange this field
 cursor.execute("alter table %s.images add column id bigint not null auto_increment primary key" % (opus2))
 cursor.execute("alter table %s.images add unique key (ring_obs_id)" % (opus2))
+cursor.execute("alter table %s.images add key (ring_obs_id)" % (opus2))
+cursor.execute("alter table %s.images add key (obs_general_no)" % (opus2))
 cursor.execute("update %s.images t,%s.obs_general o set t.ring_obs_id = o.ring_obs_id where t.ring_obs_id = o.opus1_ring_obs_id" % (opus2, opus2))
 
 
-# ----------- build partable -------------#
-cursor.execute("create table %s.partables select no, trigger_tab, trigger_col, trigger_val, partable, display, disp_order from %s.partables where display = 'Y' order by disp_order" % (opus2, opus1))
-cursor.execute(" alter table %s.partables change column no id tinyint(2) unsigned not null auto_increment primary key" % opus2)
 
 # ------------ cleanup ------------ #
 transaction.commit_unless_managed()  # flushes any waiting queries
