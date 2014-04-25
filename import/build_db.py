@@ -95,8 +95,6 @@ mult_model_core = """
 # exclude these field_names with these table_names found in Observations.forms
 exclude = ['%movies%',"%mvf_c%",'file_sizes']
 
-
-
 # ------------ first, copy all the Obs_ tables from Observations to opus ------------#
 
 obs_exclude = ['obs_rg_COISS_2075', 'obs_surface_geometry_raw'] # obs-like tables to exclude
@@ -140,7 +138,7 @@ for tbl in obs_tables:
     field_name = 'obs_general_id'
     if tbl == 'obs_general':
         field_name = 'id'
-    if tbl  in ['obs_movies'] and tbl.find('obs_surface') > -1:
+    if tbl in ['obs_movies'] and tbl.find('obs_surface') > -1:
         field_name = 'id'
 
     # obs_general_no is the PK or Foreign Key for all tables, change its name to field_name
@@ -173,6 +171,13 @@ for tbl in obs_tables:
         alter_query = "alter table %s.%s add column id mediumint(8) unsigned not null auto_increment primary key" % (opus2, tbl)
         print alter_query
         cursor.execute(alter_query)
+
+    # and add the key for obs_general_no field
+    if tbl != 'obs_general':
+        if tbl not in ['obs_movies'] and tbl.find('obs_surface') == -1:
+            alter_query = "alter table %s.%s add unique key (obs_general_id)" % (opus2, tbl)
+            print alter_query
+            cursor.execute(alter_query)
 
 # done looping through obs tables
 
@@ -279,7 +284,6 @@ create table %s.guide_group like opus_hack.guide_group;
 create table %s.guide_keyvalue like opus_hack.guide_keyvalue;
 create table %s.guide_resource like opus_hack.guide_resource;
 create table %s.user_searches like opus_hack.user_searches;
-# no need to copy the user_searches data right?;
 insert into %s.guide_example select * from opus_hack.guide_example;
 insert into %s.guide_group select * from opus_hack.guide_group;
 insert into %s.guide_keyvalue select * from opus_hack.guide_keyvalue;
@@ -288,9 +292,19 @@ insert into %s.guide_resource select * from opus_hack.guide_resource;
 create table %s.partables like opus_hack.partables;
 insert into %s.partables select * from opus_hack.partables;
 
+create table %s.django_admin_log like opus_hack.django_admin_log;
+create table %s.django_content_type like opus_hack.django_content_type;
+create table %s.django_session like opus_hack.django_session;
+create table %s.django_site     like opus_hack.django_site    ;
+
+insert into %s.django_admin_log select * from opus_hack.django_admin_log;
+insert into %s.django_content_type select * from opus_hack.django_content_type;
+insert into %s.django_session select * from opus_hack.django_session;
+insert into %s.django_site select * from opus_hack.django_site;
+
 """
 
-for q in queries.split(';'):
+for q in queries.strip().split(';'):
     if not q.strip(): continue  # skip blank lines
     print q % opus2
     cursor.execute(q % opus2)
@@ -330,7 +344,10 @@ cursor.execute("update %s.table_names set mission_id = 'VG' where table_name = '
 
 # ----------- restore file_sizes  -------------#
 cursor.execute("create table %s.file_sizes like %s.file_sizes" % (opus2, opus1))
-cursor.execute("insert into %s.file_sizes select * from %s.file_sizes where volume_id in (%s)" % (opus2, opus1, volumes_str))
+q = "replace into %s.file_sizes select * from %s.file_sizes " % (opus2, opus1)
+if volumes_str:
+    q = q + " where %s.file_sizes.volume_id IN (%s)" % (opus1, volumes_str)
+cursor.execute(q)
 cursor.execute("alter table %s.file_sizes add column id int(9) not null auto_increment primary key" % (opus2))
 cursor.execute("update %s.file_sizes t,%s.obs_general o set t.ring_obs_id = o.ring_obs_id where t.ring_obs_id = o.opus1_ring_obs_id" % (opus2, opus2))
 
@@ -342,7 +359,6 @@ cursor.execute(q)
 cursor.execute("alter table %s.files_not_found add column id int(8) not null auto_increment primary key" % (opus2))
 cursor.execute("alter table %s.files_not_found add unique key (name)" % (opus2))
 cursor.execute("alter table %s.files_not_found add key (ring_obs_id)" % (opus2))
-cursor.execute("alter table %s.files_not_found add key (obs_general_no)" % (opus2))
 cursor.execute("update %s.files_not_found t,%s.obs_general o set t.ring_obs_id = o.ring_obs_id where t.ring_obs_id = o.opus1_ring_obs_id" % (opus2, opus2))
 
 
@@ -356,7 +372,6 @@ cursor.execute(q)
 cursor.execute("alter table %s.images add column id bigint not null auto_increment primary key" % (opus2))
 cursor.execute("alter table %s.images add unique key (ring_obs_id)" % (opus2))
 cursor.execute("alter table %s.images add key (ring_obs_id)" % (opus2))
-cursor.execute("alter table %s.images add key (obs_general_no)" % (opus2))
 cursor.execute("update %s.images t,%s.obs_general o set t.ring_obs_id = o.ring_obs_id where t.ring_obs_id = o.opus1_ring_obs_id" % (opus2, opus2))
 
 
