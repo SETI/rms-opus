@@ -10,8 +10,10 @@ from django.db.models import Avg, Max, Min, Count, get_model
 from django.db import connection
 from paraminfo.models import ParamInfo
 
+from search.models import *
+
 # from paraminfo.models import *
-from tools.app_utils import responseFormats
+from tools.app_utils import responseFormats, stripNumericSuffix
 import settings
 
 
@@ -100,6 +102,7 @@ def getValidMults(request,slug,fmt='json'):
     cache_key  = "mults" + param_name + str(setUserSearchNo(selections))
 
     if (cache.get(cache_key) is not None):
+
         mults = cache.get(cache_key)
 
     else:
@@ -139,7 +142,7 @@ def getValidMults(request,slug,fmt='json'):
 
 
 
-def getRangeEndpoints(request,slug,fmt):
+def getRangeEndpoints(request,slug,fmt='json'):
     """
     returns valid range endpoints for field given selections and extras
     """
@@ -148,24 +151,30 @@ def getRangeEndpoints(request,slug,fmt):
 
     #    extras['qtypes']['']
 
-    param_name = str(ParamInfo.objects.get(slug=slug))
-    param_name1 = stripNumericSuffix(param_name) + '1'
-    param_name2 = stripNumericSuffix(param_name) + '2'
+    param_info = ParamInfo.objects.get(slug=slug)
+
+    param_name = param_info.param_name()
+    table_name = param_info.category_name
+    param_name1 = stripNumericSuffix(param_name.split('.')[1]) + '1'
+    param_name2 = stripNumericSuffix(param_name.split('.')[1]) + '2'
     param_name_no_num = stripNumericSuffix(param_name1)
+    table_model = get_model('search', table_name.title().replace('_',''))
 
     try:
         (selections,extras) = urlToSearchParams(request.GET)
         user_table = getUserQueryTable(selections,extras)
+        has_selections = True
 
-        # we remove this param from the user's query if it's there, because
-        # otherwise it will just return it's own values
-        if param_name1 in selections:
-            del selections[param_name1]
-        if param_name2 in selections:
-            del selections[param_name2]
-
-    except:
+    except TypeError:
+        has_selections = False
         user_table = False
+
+    # we remove this param from the user's query if it's there, because
+    # otherwise it will just return it's own values
+    if param_name1 in selections:
+        del selections[param_name1]
+    if param_name2 in selections:
+        del selections[param_name2]
 
     # cached already?
     cache_key  = "rangeep" + param_name_no_num
@@ -175,27 +184,33 @@ def getRangeEndpoints(request,slug,fmt):
         range_endpoints = cache.get(cache_key)
         return responseFormats(range_endpoints,fmt,template='mults.html')
 
+    results    = table_model.objects # this is a count(*), group_by query!
+    if table_name == 'obs_general':
+        where = table_name + ".id = " + user_table + ".id"
+    else:
+        where = table_name + ".obs_general_id = " + user_table + ".id"
 
-    if user_table:
-        # get endpoints
-        where = "observations.id = " + user_table + ".id"
-        range_endpoints          = Observations.objects.extra(where = [where], tables = [user_table]).aggregate(min = Min(param_name1),max = Max(param_name1))
+    if has_selections:
+        # has selections, tie query to user_table
+        range_endpoints = results.extra(where = [where], tables = [user_table]).aggregate(min = Min(param_name1), max = Max(param_name1))
 
         # get count of nulls
-        where = "observations.id = " + user_table + ".id and " + param_name1 + " is null and " + param_name2 + " is null "
-        range_endpoints['nulls'] = Observations.objects.extra(where = [where], tables = [user_table]).count()
+        where = where + " and " + param_name1 + " is null and " + param_name2 + " is null "
+        range_endpoints['nulls'] = results.extra(where=[where],tables=[user_table]).count()
+
     else:
-        # endpoints
-        range_endpoints          = Observations.objects.all().aggregate(min = Min('ring_radius1'),max = Max('ring_radius2'))
+        # no user query table, just hit the whole table
+
+        range_endpoints  = results.all().aggregate(min = Min('ring_radius1'),max = Max('ring_radius2'))
 
         # count of nulls
         where = param_name1 + " is null and " + param_name2 + " is null "
-        range_endpoints['nulls'] = Observations.objects.filter(ring_radius1__isnull=True).count()
+        range_endpoints['nulls'] = results.all().extra(where=[where]).count()
 
 
-    if abs(range_endpoints['min']) > 1000:
+    if abs(range_endpoints['min']) > 999000:
         range_endpoints['min'] = format(1.0*range_endpoints['min'],'.3');
-    if abs(range_endpoints['max']) > 1000:
+    if abs(range_endpoints['max']) > 999000:
         range_endpoints['max'] = format(1.0*range_endpoints['max'],'.3');
 
 

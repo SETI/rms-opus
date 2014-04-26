@@ -31,7 +31,6 @@ def constructQueryString(selections, extras={}):
 
     all_qtypes = extras['qtypes'] if 'qtypes' in extras else []
 
-    print all_qtypes
     # keeping track of some things
     long_querys = []  # special longitudinal queries are pure sql
     q_objects = [] # for building up the query object
