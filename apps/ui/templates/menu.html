@@ -14,7 +14,7 @@
                     {# this param_name is contained in this div #}
                     {% if info.has_sub_heading %}
 
-                        {# this div has sub_headings, start sub_heading loop#}
+                        {# #### this div has sub_headings, start sub_heading loop #### #}
 
                         <ul class = "cats">
                         {% for sub_head,params in info.data.items %}
@@ -48,7 +48,8 @@
                     </ul>
 
                     {% else %}
-                        {# this div does not have any sub_headings #}
+                        {# #### this div does not have any sub_headings #### #}
+
                         <ul class = "menu_list">
                         {% for p in info.data %}
                                 {% if p.cat_name == sub_head.slugify %}

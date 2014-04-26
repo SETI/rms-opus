@@ -335,7 +335,6 @@ a:active {text-decoration:none;} /* selected link */
     padding:0;
 }
 #search .cats .menu_list {
-    display:none;
 }
 #browse .cats .menu_list {
     padding:0;
