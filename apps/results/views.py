@@ -147,6 +147,12 @@ def get_triggered_tables(selections, extras = {}):
     if not selections:
         return settings.BASE_TABLES
 
+    # look for cache:
+    cache_no = getUserQueryTable(selections,extras)
+    cache_key = 'triggered_tables_' + cache_no
+    if (cache.get(cache_key)):
+        return cache.get(cache_key)
+
     # first add the base tables
     triggered_tables = [t for t in settings.BASE_TABLES]
     query_result_table = getUserQueryTable(selections,extras)
@@ -190,6 +196,8 @@ def get_triggered_tables(selections, extras = {}):
     final_table_list = []
     for table in TableName.objects.filter(table_name__in=triggered_tables).values('table_name'):
         final_table_list.append(table['table_name'])
+
+    cache.set(cache_key, final_table_list, 0)
 
     return final_table_list
 
