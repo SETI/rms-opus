@@ -9,7 +9,7 @@ var o_hash = {
     updateHash: function(){
 
       hash = [];
-      for (param in opus.selections) {
+      for (var param in opus.selections) {
           if (opus.selections[param].length){
               hash[hash.length] = param + '=' + opus.selections[param].join(',').replace(' ','+');
           }
@@ -19,7 +19,7 @@ var o_hash = {
 
       o_widgets.pauseWidgetControlVisibility(opus.selections);
 
-      for (key in opus.extras) {
+      for (var key in opus.extras) {
 
           try {
               hash[hash.length] = key + '=' + opus.extras[key].join(',');
@@ -62,31 +62,32 @@ var o_hash = {
     // part is part of the hash, selections or prefs
     getSelectionsFromHash: function() {
         var hash = o_hash.getHash();
+        var pairs;
         if (!hash) return;
 
         if (hash.search('&') > -1) {
-        	var pairs = hash.split('&');
+            pairs = hash.split('&');
         }
-        else var pairs = [hash];
+        else pairs = [hash];
         var selections = {};  // the new set of pairs that will not include the result_table specific session vars
 
         for (var i=0;i< pairs.length;i++) {
-        	var param 	= pairs[i].split('=')[0];
-        	var value 	= pairs[i].split('=')[1];
-        	if (!param) continue;
-        	if (!(param in opus.prefs) && !param.match(/sz-.*/)) {
+            var param = pairs[i].split('=')[0];
+            var value = pairs[i].split('=')[1];
+            if (!param) continue;
+            if (!(param in opus.prefs) && !param.match(/sz-.*/)) {
 
-        	    if (param in selections) {
-        	        selections[param].push(value)
-        	    } else {
-        	        selections[param] = [value]
-        	    }
-        	} else {
-        	    if (param  == 'qtype-phase') console.log('nope')
-        	}
+            if (param in selections) {
+                selections[param].push(value);
+            } else {
+                selections[param] = [value];
+                }
+            } else {
+            if (param  == 'qtype-phase') console.log('nope');
+            }
         }
         if (!jQuery.isEmptyObject(selections)) {
-            return selections
+            return selections;
         }
 
     },
@@ -98,12 +99,12 @@ var o_hash = {
         // first are any custom widget sizes in the hash?
         // just updating prefs here..
         hash = hash.split('&');
-        for (q in hash) {
+        for (var q in hash) {
             slug = hash[q].split('=')[0];
             value = hash[q].split('=')[1];
 
             if (slug.match(/sz-.*/)) {
-                var id = slug.match(/sz-(.*)/)[1]
+                var id = slug.match(/sz-(.*)/)[1];
                 // opus.extras['sz-' + id] = value;
                 opus.prefs.widget_size[id] = value.split('+')[0];
 
@@ -112,7 +113,7 @@ var o_hash = {
             }
             else if (slug.match(/qtype-.*/)) {
                 // range drop down, add the qtype to the global extras array
-                var id = slug.match(/qtype-(.*)/)[1]
+                var id = slug.match(/qtype-(.*)/)[1];
                 opus.extras['qtype-' + id] = value.split(',');
             }
             // look for prefs
