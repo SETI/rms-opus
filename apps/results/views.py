@@ -192,6 +192,12 @@ def get_triggered_tables(selections, extras = {}):
             # we has a triggered table
             triggered_tables.append(partable)
 
+        # surface geometry have multiple targets per observation
+        # so we just want to know if our val is in the result (not the only result)
+        if trigger_tab == 'obs_surface_geometry' and trigger_val == selections['obs_surface_geometry.target_name'][0]:
+            if trigger_val in [r['target_name'] for r in results]:
+                triggered_tables.append(partable)
+
     # now hack in the proper ordering of tables
     final_table_list = []
     for table in TableName.objects.filter(table_name__in=triggered_tables).values('table_name'):

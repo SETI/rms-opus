@@ -312,6 +312,11 @@ a:active {text-decoration:none;} /* selected link */
 /***************************/
 
 
+.menu_spinner {
+    display:none;
+    margin-left:10%;
+}
+
 /*  http://stackoverflow.com/questions/17859993/basic-css-how-to-overlay-a-div-with-semi-transparent-div-on-top */
 .dimmed {
   position: relative;
@@ -574,14 +579,18 @@ ul .gallery {
 .opened_triangle {
     background-image: url('http://pds-rings.seti.org/~lballard/django_opus/static_media/images/hide.png');
 }
-.spinning {
+.spinning, .spinner {
     background-image: url('http://pds-rings.seti.org/~lballard/django_opus/static_media/images/spinner.gif');
 }
-.closed_triangle, .opened_triangle, .spinning {
+.closed_triangle, .opened_triangle, .spinning, .spinner {
     width:20px;
     display:inline-block;
     background-repeat: no-repeat;
 }
+.spinner {
+    display:none;
+}
+
 .widget_draghandle >.closed_triangle {
     margin-top:4px;
 }

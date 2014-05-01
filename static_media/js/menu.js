@@ -59,10 +59,10 @@ var o_menu = {
      },
 
      getMenu: function() {
-        $("#leftcolumn" ).addClass('dimmed');  // dim the menu when it's in transition
+        $('.menu_spinner').fadeIn("fast");
         hash = o_hash.getHash();
         $( "#leftcolumn" ).load( "/opus/menu.html?" + hash, function() {
-            $("#leftcolumn" ).removeClass('dimmed');
+            $('.menu_spinner').fadeOut("fast");
         });
      },
 

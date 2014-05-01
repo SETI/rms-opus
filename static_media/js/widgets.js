@@ -31,6 +31,7 @@ var o_widgets = {
            opus.user_clicked=true
            id = $(this).attr("id").split('_')[0];
            value = $(this).attr("value");
+
            if ($(this).attr("checked")) {
                if (opus.selections[id]) {
                    values = opus.selections[id]; // this param already has been constrained
@@ -39,6 +40,12 @@ var o_widgets = {
                }
                values[values.length] = value;    // add the new value to the array of values
                opus.selections[id] = values;     // add the array of values to selections
+
+               // special menu behavior for surface geo
+               if (id == 'surfacetarget') {
+                $('li.new-cassini-surface-geometry-beta-test ul.menu_list').append('<li><span class = "spinning">&nbsp;</span></li>');
+               }
+
            } else {
                remove = opus.selections[id].indexOf(value); // find index of value to remove
                opus.selections[id].splice(remove,1);        // remove value from array
