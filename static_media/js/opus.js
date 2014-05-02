@@ -119,6 +119,7 @@ var opus = {
     search_form_cols:1, // the number of search form cols, 1 or 2
     widget_full_sizes:{}, // when a widget is minimized and doesn't have a custom size defined we keep track of what the full size was so we can restore it when they unminimize/maximize widget
     menu_list_indicators: {'slug':[], 'cat':[], 'group':[] },
+    menu_cats_open: ['obs_general'],  // keep track of menu items that are open
 
     // browse tab
     pages:0, // total number of pages

@@ -12,7 +12,9 @@
             {# loop through all names then check if we have *this* div.table_name #}
 
                 {% if name == div.table_name %}
+
                     {# this param_name is contained in this div #}
+
                     {% if info.has_sub_heading %}
 
                         {# #### this div has sub_headings, start sub_heading loop #### #}
@@ -23,10 +25,11 @@
                             <li class = "{{ sub_head|slugify }}">
                             <span class = "column_checkbox"><!-- for closing this list of items -->
                             <input title = "check all in group" class = "cat_input" type = "checkbox" data-slug="{{ param.slug }}"></span>
-                            <span class = "cat_label">
+                            <div class = "cat_label">
                                 <div class = "div.label">
-                                <span class = "menu_div_triangle opened_triangle">&nbsp;</span>
-                                <a title = "{{ sub_head|slugify }}" href = "">{{ sub_head }}</a>
+                                    <span class = "menu_div_triangle closed_triangle">&nbsp;</span>
+                                    <a title = "{{ sub_head|slugify }}" href = "">{{ sub_head }}</a>
+                                </div>
                             </div>
 
                             <ul class = "menu_list">

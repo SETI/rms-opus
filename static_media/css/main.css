@@ -7,6 +7,10 @@ body{
     font-family: Verdana, Arial, Helvetica, sans-serif;
 }
 
+.red_border {
+    border:2px solid red;
+}
+
 #collections_summary ul { /* for in Safari it was flowing out the side */
     width:90%;
 }
@@ -339,7 +343,8 @@ a:active {text-decoration:none;} /* selected link */
     margin:0;
     padding:0;
 }
-#search .cats .menu_list {
+#search .cats, #search .menu_list {
+    display:none;
 }
 #browse .cats .menu_list {
     padding:0;

@@ -22,7 +22,7 @@ var o_menu = {
              o_hash.updateHash();
              return false; });
 
-
+         // open close menu groups
          $(".cat_label").live("click", function(){
                 $(this).find('.menu_cat_triangle').toggleClass('closed_triangle');
                 $(this).find('.menu_cat_triangle').toggleClass('opened_triangle');
@@ -39,21 +39,42 @@ var o_menu = {
                 return false;
           });
 
+         // this is the 2nd level menu groupings (ie geometries)
+         $(".cat_label", "#search #leftcolumn").live("click", function(){
+            $(this).find('.menu_div_triangle').toggleClass('closed_triangle');
+            $(this).find('.menu_div_triangle').toggleClass('opened_triangle');
+         });
 
-         $(".group_label").live("click", function(){
-        $(this).find('.menu_group_triangle').toggleClass('closed_triangle');
-        $(this).find('.menu_group_triangle').toggleClass('opened_triangle');
-        if ($(this).find('.menu_group_triangle').hasClass('opened_triangle')) {
-            // this is opening, update the menu indicators immediately
-            o_menu.updateMenuIndicators();
-            $(this).next().slideToggle("fast");
-        } else {
-            // this is closing, slide it shut THEN update teh indicators... UX!
-            $(this).next().slideToggle('fast', function() {
-        	    o_menu.updateMenuIndicators();
-        	});
-        }
-            return false;
+         // click a menu label and the group opens
+         $(".group_label", "#search #leftcolumn").live("click", function(){
+
+            var cat = $(this).find('a').attr("title");
+
+            $(this).find('.menu_div_triangle').toggleClass('closed_triangle');
+            $(this).find('.menu_div_triangle').toggleClass('opened_triangle');
+
+            if ($(this).find('.menu_div_triangle').hasClass('opened_triangle')) {
+                // this is opening, update the menu indicators immediately
+                o_menu.updateMenuIndicators();
+                $(this).next().slideToggle("fast");
+
+                // keep track of what's open
+                if (jQuery.inArray(cat, opus.menu_cats_open) < 0) {
+                    opus.menu_cats_open.push(cat);
+                }
+
+            } else {
+                // this is closing, slide it shut THEN update teh indicators... UX!
+                $(this).next().slideToggle('fast', function() {
+                    o_menu.updateMenuIndicators();
+
+                    if (jQuery.inArray(cat, opus.menu_cats_open) >= 0) {
+                        opus.menu_cats_open.splice(opus.menu_cats_open.indexOf(cat));
+                    }
+                });
+            }
+
+                return false;
         });
 
      },
@@ -62,6 +83,19 @@ var o_menu = {
         $('.menu_spinner').fadeIn("fast");
         hash = o_hash.getHash();
         $( "#leftcolumn" ).load( "/opus/menu.html?" + hash, function() {
+
+            // open menu items that were open before
+            for (var key in opus.menu_cats_open) {
+                cat_name = opus.menu_cats_open[key];
+                $('a[title="' + cat_name + '"]', '#search #leftcolumn').trigger("click");
+            }
+
+            // open any newly arrived surface geo tables
+            geo_cat = $('a[title^="obs_surface_geometry__"]', '#search #leftcolumn').attr("title");
+            if (geo_cat && jQuery.inArray(geo_cat, opus.menu_cats_open) < 0) {
+                $('a[title="' + geo_cat + '"]', '#search #leftcolumn').trigger("click");
+            }
+
             $('.menu_spinner').fadeOut("fast");
         });
      },
@@ -119,7 +153,7 @@ var o_menu = {
 
                  // check if the parent group of this slug is closed,
                  // if the parent group is closed add indicator to group label
-                 if ($('li.' + group + ' .menu_group_triangle', '#search').hasClass('closed_triangle')) {
+                 if ($('li.' + group + ' .menu_div_triangle', '#search').hasClass('closed_triangle')) {
                      $('li.' + group).addClass('menu_list_indicator_on');
                  } else {
                      $('li.' + group).removeClass('menu_list_indicator_on');
