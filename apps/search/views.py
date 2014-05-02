@@ -313,11 +313,8 @@ def range_query_object(selections, param_name, qtypes):
     param_name_max = param_name_no_num + '2'
 
     # to follow related models, we need the lowercase model name, not the param name
-    param_model_name_min = table_name.replace('_','') + '__' + param_name_min.split('.')[1]
-    param_model_name_max = table_name.replace('_','') + '__' + param_name_max.split('.')[1]
-
-    print param_model_name_min
-    print param_model_name_max
+    param_model_name_min = table_name.lower().replace('_','') + '__' + param_name_min.split('.')[1]
+    param_model_name_max = table_name.lower().replace('_','') + '__' + param_name_max.split('.')[1]
 
     # grab min and max values from query selections object
     values_min = selections[param_name_min] if param_name_min in selections else []
