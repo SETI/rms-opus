@@ -43,7 +43,7 @@ var o_widgets = {
 
                // special menu behavior for surface geo
                if (id == 'surfacetarget') {
-                $('li.new-cassini-surface-geometry-beta-test ul.menu_list').append('<li><span class = "spinning">&nbsp;</span></li>');
+                $('li.cassini-surface-geometry ul.menu_list').append('<li><span class = "spinning">&nbsp;</span></li>');
                }
 
            } else {
