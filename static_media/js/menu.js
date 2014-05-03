@@ -26,16 +26,17 @@ var o_menu = {
          $(".cat_label").live("click", function(){
                 $(this).find('.menu_cat_triangle').toggleClass('closed_triangle');
                 $(this).find('.menu_cat_triangle').toggleClass('opened_triangle');
-        		if ($(this).find('.menu_cat_triangle').hasClass('opened_triangle')) {
-        		    // this is opening, update the menu indicators immediately
-        		    o_menu.updateMenuIndicators();
-        		    $(this).next().slideToggle("fast");
-        		} else {
-        		    // this is closing, slide it shut THEN update teh indicators... UX, baby.
-        		    $(this).next().slideToggle('fast', function() {
-            		    o_menu.updateMenuIndicators();
-            		});
-        		}
+                if ($(this).find('.menu_cat_triangle').hasClass('opened_triangle')) {
+                    // this is opening, update the menu indicators immediately
+                    o_menu.updateMenuIndicators();
+                    $(this).next().slideToggle("fast");
+                } else {
+                    // this is closing, slide it shut THEN update teh indicators... UX, baby.
+                    $(this).next().slideToggle('fast', function() {
+                        o_menu.updateMenuIndicators();
+                    });
+                }
+
                 return false;
           });
 
@@ -55,6 +56,7 @@ var o_menu = {
 
             if ($(this).find('.menu_div_triangle').hasClass('opened_triangle')) {
                 // this is opening, update the menu indicators immediately
+
                 o_menu.updateMenuIndicators();
                 $(this).next().slideToggle("fast");
 
@@ -62,6 +64,12 @@ var o_menu = {
                 if (jQuery.inArray(cat, opus.menu_cats_open) < 0) {
                     opus.menu_cats_open.push(cat);
                 }
+
+                // check if this menu group only has one option, if so just open that widget
+                if ($(this).next().children().size() == 1) {
+                    $(this).next().find('li a').trigger("click");
+                }
+
 
             } else {
                 // this is closing, slide it shut THEN update teh indicators... UX!
