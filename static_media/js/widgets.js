@@ -74,14 +74,17 @@ var o_widgets = {
                delete opus.selections[slug];
            }
            if (jQuery.inArray(slug,opus.prefs.widgets) > -1) {
-               opus.prefs.widgets.splice(jQuery.inArray(slug,opus.prefs.widgets),1); }
+               opus.prefs.widgets.splice(opus.prefs.widgets.indexOf(slug)); }
+
            if (jQuery.inArray(slug,opus.prefs.widgets2) > -1) {
-               opus.prefs.widgets2.splice(jQuery.inArray(slug,opus.prefs.widgets2),1); }
+               opus.prefs.widgets2.splice(opus.prefs.widgets2.indexOf(slug)); }
+
            if (jQuery.inArray(slug,opus.widgets_drawn) > -1) {
-               opus.widgets_drawn.splice(jQuery.inArray(slug,opus.widgets_drawn),1); }
+               opus.widgets_drawn.splice(opus.widgets_drawn.indexOf(slug)); }
+
            if (jQuery.inArray(slug, opus.widget_elements_drawn) > -1) {
-               opus.widget_elements_drawn.splice(jQuery.inArray(slug, opus.widget_elements_drawn), 1);
-               }
+               opus.widget_elements_drawn.splice(opus.widget_elements_drawn.indexOf(slug)); }
+
            delete opus.extras['qtype-'+slug];
            delete opus.extras['z-'+slug];
            o_hash.updateHash();
@@ -450,9 +453,11 @@ var o_widgets = {
          if (!slug) return;
 
          if (jQuery.inArray(slug, opus.widgets_drawn) > -1) {
+            alert('widget already draw')
              return; // widget already drawn
          }
          if (jQuery.inArray(slug, opus.widgets_fetching) > -1) {
+            alert('widget currently fetching')
              return; // widget being fetched
          }
 
@@ -566,6 +571,10 @@ var o_widgets = {
                  }
              });
 
+             if (jQuery.inArray(slug,opus.widgets_fetching) > -1) {
+                 opus.widgets_fetching.splice(opus.widgets_fetching.indexOf(slug));
+             }
+
              // add the spans for the the range hinting
              $('#' + widget + ' .widget_inner').after( function () {
                  var span_id = 'hint__' + slug;
@@ -573,15 +582,9 @@ var o_widgets = {
              });
              if (o_hash.getHash()) o_search.getHinting(slug);
 
-             if (jQuery.inArray(slug,opus.widgets_fetching) > -1) {
-                 opus.widgets_fetching.splice(jQuery.inArray(slug,opus.widgets_fetching), slug);
-             }
              opus.widgets_drawn.push(slug);
 
              o_widgets.customWidgetBehaviors(slug);
-
-
-
 
       }); // end function success, end ajax
      }, // end func
