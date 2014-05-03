@@ -81,7 +81,8 @@ def getDetail(request,ring_obs_id='',fmt='json'):
     # start by finding all surface targets for this ring_obs_id, then append the matching surface tables
     surface_geo_targets = ObsSurfaceGeometry.objects.filter(ring_obs_id=ring_obs_id).values('target_name')
     for target in surface_geo_targets:
-        triggered_tables.append('obs_surface_geometry__' + target['target_name'])
+        if not target['target_name']: continue  # sometimes it's  None
+        triggered_tables.append('   ' + target['target_name'])
 
     # now find all params and their values in each of these tables:
     for table_name in triggered_tables:
