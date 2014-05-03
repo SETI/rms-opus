@@ -453,11 +453,9 @@ var o_widgets = {
          if (!slug) return;
 
          if (jQuery.inArray(slug, opus.widgets_drawn) > -1) {
-            alert('widget already draw')
              return; // widget already drawn
          }
          if (jQuery.inArray(slug, opus.widgets_fetching) > -1) {
-            alert('widget currently fetching')
              return; // widget being fetched
          }
 
