@@ -1,58 +1,66 @@
-{% block base %}
 <!DOCTYPE html>
+<html lang="en">
 
-<head>
-<meta charset="UTF-8">
-
-<title>OPUS 2 -- DEMO ONLY!!!</title>
-
-<link rel="stylesheet" href="{{ MEDIA_URL }}css/flick/jquery-ui-1.8.14.custom.css" type="text/css" media="screen">
-<!--link rel="stylesheet" href="{{ MEDIA_URL }}css/smoothness/jquery-ui-1.8.17.custom.css" type="text/css" media="screen"  -->
-<link rel="stylesheet" href="{{ MEDIA_URL }}css/shadowbox/shadowbox-3.0.3/shadowbox.css" type="text/css" media="screen">
-<link rel="stylesheet" href="{{ MEDIA_URL }}css/jqModal.css" type="text/css" media="screen">
-
-<!-- script src="{{ MEDIA_URL}}js/libs/jquery-1.7.1.min.js"></script -->
-<!-- script src="{{ MEDIA_URL}}js/libs/jquery-ui-1.8.11.custom.min.js"></script -->
-
-<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
-<script src="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8.17/jquery-ui.min.js"></script>
-
-<link rel="stylesheet" href="{{ MEDIA_URL }}css/main.css" type="text/css" media="screen">
-
-
-<script  type="text/javascript" >
-
-    default_columns = '{{ default_columns }}';
-    static_url = '{{ STATIC_URL }}';
-
-</script>
-
-
-</head>
+{% include "header.html" %}
 
 <body>
 
-<div id = "content">
-{% block content %}
-{% endblock %}
-</div>
+<div class="navbar navbar-default" id="navbar">
+    <script type="text/javascript">
+    try{ace.settings.check('navbar' , 'fixed')}catch(e){}
+    </script>
 
-{% block scripts %}
-<script src = "{{MEDIA_URL }}js/libs/jqModal.js" type="text/javascript" ></script>
-<script src = "{{MEDIA_URL }}js/libs/StickyTableHeaders.js" type="text/javascript" ></script>
-<script src = "{{MEDIA_URL }}js/libs/scroll-startstop.events.jquery.js" type="text/javascript" ></script>
-<script src = "{{MEDIA_URL }}js/libs/shadowbox.js" type="text/javascript" ></script>
-<script src = "{{MEDIA_URL }}js/libs/jquery-cookie/jquery.cookie.js" type="text/javascript" ></script>
+    <div class="navbar-container" id="navbar-container">
+
+        <div class="navbar-header pull-left">
+            <a href="#" class="navbar-brand">
+            <small>
+            <i class="{{opus_icon}}"></i>
+            OPUS
+            </small>
+            </a><!-- /.brand -->
+        </div><!-- /.navbar-header -->
+
+        <div class="navbar-header pull-right"  id = "restart">
+            <a href = "/opus/">restart</a>
+        </div><!-- /.navbar-header -->
+
+    </div><!--  navbar-container -->
+</div><!-- navbar -->
+
+<div class="main-container" id="main-container">
+    <script type="text/javascript">
+    try{ace.settings.check('main-container' , 'fixed')}catch(e){}
+    </script>
+    <div class="main-container-inner">
+
+        <a class="menu-toggler" id="menu-toggler" href="#">
+            <span class="menu-text"></span>
+        </a>
 
 
-{% endblock  %}
+        <!-- tabs -->
+        {% include "tabs.html" %}
 
 
-{% block more_end %}
-{% endblock %}
+        <!-- main content -->
+        <div class="main-content">
+            hello main-content
+            <div class="page-content">
+                hello page-content
+            </div><!--/.page-content-->
+        </div><!--/.main-content -->
 
+    </div><!--/.main-container-inner-->
+
+    <a href="#" id="btn-scroll-up" class="btn-scroll-up btn btn-sm btn-inverse">
+        <i class="icon-double-angle-up icon-only bigger-110"></i>
+    </a>
+
+</div><!--/.main-container-->
+
+{% include "footer.html" %}
 
 <div id = "end_of_page"><p>&nbsp;</p></div>
 </body>
 </html>
-{% endblock %} {# base block #}

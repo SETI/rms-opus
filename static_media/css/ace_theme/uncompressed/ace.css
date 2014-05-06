@@ -1859,8 +1859,10 @@ blockquote.pull-right {
   }
 }
 .sidebar {
-  width: 190px;
+  width: 280px  ;
   float: left;
+  margin-left:-15px;
+  margin-top:-15px;
   position: relative;
   border: 1px solid #cccccc;
   border-width: 0 1px 0 0;
@@ -1868,9 +1870,8 @@ blockquote.pull-right {
 }
 .sidebar:before {
   /* the grey background of sidebar */
-
   content: "";
-  display: block;
+  display: none; /* we don't need it, we are putting this *inside* a tab */
   width: 190px;
   position: fixed;
   bottom: 0;
