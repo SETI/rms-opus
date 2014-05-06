@@ -1,0 +1,45 @@
+<head>
+    <meta charset="utf-8" />
+    <title>OPUS 2 - Demo Only</title>
+    <meta name="description" content="OPUS Search Tool - NASA PDS Rings Node" />
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <!-- basic styles -->
+    <link href="{{ MEDIA_URL }}css/ace_theme/uncompressed/bootstrap.css" rel="stylesheet" />
+
+    <link rel="stylesheet" href="{{ MEDIA_URL }}css/ace_theme/uncompressed/font-awesome.css" />
+
+    <!-- ace styles -->
+    <link rel="stylesheet" href="{{ MEDIA_URL }}css/ace_theme/uncompressed/ace.css" />
+    <link rel="stylesheet" href="{{ MEDIA_URL }}css/ace_theme/uncompressed/ace-rtl.css" />
+    <link rel="stylesheet" href="{{ MEDIA_URL }}css/ace_theme/uncompressed/ace-skins.css" />
+
+    <!--[if lte IE 8]>
+      <link rel="stylesheet" href="{{ MEDIA_URL }}css/ace_theme/uncompressed/ace-ie.css" />
+    <![endif]-->
+
+    <!-- inline styles related to this page -->
+    {% block page_styles %} {% endblock %}
+    <style>
+    {% block inline_styles %} {% endblock %}
+    </style>
+
+    <!-- ace settings handler -->
+    <script src="{{ MEDIA_URL }}js/ace_theme/uncompressed/ace-extra.js"></script>
+
+    <!-- HTML5 shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!--[if lt IE 9]>
+    <script src="{{ MEDIA_URL }}js/ace_theme/uncompressed/html5shiv.js"></script>
+    <script src="{{ MEDIA_URL }}js/ace_theme/uncompressed/respond.js"></script>
+    <![endif]-->
+
+    <script  type="text/javascript" >
+
+        default_columns = '{{ default_columns }}';
+        static_url = '{{ STATIC_URL }}';
+
+    </script>
+
+
+</head>
