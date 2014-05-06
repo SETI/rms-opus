@@ -14,7 +14,7 @@ def push():
         # clean up old deploys
         local('rm -rf ~/opus')
 
-        # grab the remote repo (this is all because couldn't grab remote from server)
+        # grab the local repo (this is all because couldn't grab remote from server)
         local('git clone file:////Users/lballard/projects/opus')
 
         # zip the javascript files, dunno why it commented out, broken?
