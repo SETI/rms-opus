@@ -1,86 +1,67 @@
-{% block menu %}
-    <div class = "menu_spinner spinner">&nbsp;</div>
-	<ul class = "groups">
-    {% for div in menu.divs %}
-		<li class = "{{ div.label|slugify }}">
-			<div class = "group_label">
-				<span class = "menu_div_triangle closed_triangle">&nbsp;</span>
-				<a title = "{{ div.table_name }}" href = "">{{ div.label }}</a>
-			</div>
 
-            {% for name, info in menu.data.items %}
-            {# loop through all names then check if we have *this* div.table_name #}
+<ul class="nav nav-list"> <!-- was groups -->
+<!-- i class = "menu_spinner spinner"></i -->
+{% for div in menu.divs %}
 
-                {% if name == div.table_name %}
+	<li>
+        <a href="#" class="dropdown-toggle">
+            <i class="icon-desktop"></i>
+            <span class="menu-text"> {{ div.label }} </span>
+            <b class="arrow icon-angle-down"></b>
+        </a>
 
-                    {# this param_name is contained in this div #}
+        <ul class="submenu"><!-- all div labels have level 2 submenu to list params-->
 
-                    {% if info.has_sub_heading %}
+        {# loop through all params then check if this param belongs to this div.table_name, because templates #}
+        {% for name, info in menu.data.items %}
+            {% if name == div.table_name %}  {# this param_name IS contained in this div #}
 
-                        {# #### this div has sub_headings, start sub_heading loop #### #}
+                {% if info.has_sub_heading %}
 
-                        <ul class = "cats">
-                        {% for sub_head,params in info.data.items %}
+                    {#  this div has sub_headings, level-3 menu sections.. start sub_heading loop  #}
+                    {% for sub_head,params in info.data.items %}
+                        {% if p.cat_name == sub_head.slugify %}
+                        <li>
+                            <a class="dropdown-toggle" data-cat = "{{ sub_head|slugify }}" data-slug = "{{ p.slug }}" data-group = "{{ div.table_name|slugify }}" title = "{{ p.label }}" href = "">
+                                <i class="icon-double-angle-right"></i>
+                                {{ sub_head }}
+                                <b class="arrow icon-angle-down"></b>
+                            </a>
 
-                            <li class = "{{ sub_head|slugify }}">
-                            <span class = "column_checkbox"><!-- for closing this list of items -->
-                            <input title = "check all in group" class = "cat_input" type = "checkbox" data-slug="{{ param.slug }}"></span>
-                            <div class = "cat_label">
-                                <div class = "div.label">
-                                    <span class = "menu_div_triangle closed_triangle">&nbsp;</span>
-                                    <a title = "{{ sub_head|slugify }}" href = "">{{ sub_head }}</a>
-                                </div>
-                            </div>
-
-                            <ul class = "menu_list">
+                            <ul class="submenu">
                             {% for p in params %}
                                 {% if p.cat_name == sub_head.slugify %}
-                                    <li>
-                                        <span class = "column_checkbox"><input id = "{{ namespace }}__{{ p.slug }}" class = "param_input" type = "checkbox" data-slug="{{ p.slug }}" data-label = "{{ p.label }}"
-                                        {% for slug in cols %}
-                                            {% if slug == p.slug %}
-                                                checked
-                                            {% endif %}
-                                        {% endfor %}
-                                        ></span>
-                                        <a data-cat = "{{ sub_head|slugify }}" data-slug = "{{ p.slug }}" data-group = "{{ div.table_name|slugify }}" title = "{{ p.label }}" href = "">{{ p.label }}</a>
-                                    </li>
+                                <li>
+                                    <a data-cat = "{{ sub_head|slugify }}" data-slug = "{{ p.slug }}" data-group = "{{ div.table_name|slugify }}" title = "{{ p.label }}" href = "">
+                                        <i class="icon-leaf"></i>
+                                        {{ p.label }}
+                                    </a>
+                                </li>
                                 {% endif %}
-                            {% endfor %}
-                            </ul></li>
-                        {% endfor %}
-                    </ul>
+                            {% endfor %} {# p in params #}
+                            </ul>
 
-                    {% else %}
-                        {# #### this div does not have any sub_headings #### #}
+                        </li>
+                        {% endif %} {# if p.cat_name == sub_head.slugify #}
 
-                        <ul class = "menu_list">
-                        {% for p in info.data %}
-                                {% if p.cat_name == sub_head.slugify %}
-                                    <li>
-                                        <span class = "column_checkbox"><input id = "{{ namespace }}__{{ p.slug }}" class = "param_input" type = "checkbox" data-slug="{{ p.slug }}" data-label = "{{ p.label }}"
-                                        {% for slug in cols %}
-                                            {% if slug == p.slug %}
-                                                checked
-                                            {% endif %}
-                                        {% endfor %}
-                                        ></span>
-                                        <a data-cat = "{{ sub_head|slugify }}" data-slug = "{{ p.slug }}" data-group = "{{ div.table_name|slugify }}" title = "{{ p.label }}" href = "">{{ p.label }}</a>
-                                    </li>
-                                {% endif %}
-                            {% endfor %}
-                        </ul>
+                    {% endfor %} {# for sub_head, params in info.data.items #}
 
-                    {% endif %}
+                {% else %}
+                    {#  this div does not have sub_headings, list the params  #}
+                    {% for p in info.data %}
+                        <li>
+                            <a data-cat = "{{ sub_head|slugify }}" data-slug = "{{ p.slug }}" data-group = "{{ div.table_name|slugify }}" title = "{{ p.label }}" href = "">
+                                <i class="icon-plus"></i>
+                                {{ p.label }}
+                            </a>
+                        </li>
+                    {% endfor %}
                 {% endif %}
 
-            {% endfor %}
+            {% endif %} {# nem == div.table_name #}
+        {% endfor %} {# for name, info in menu.data.items #}
+        </ul>
+    </li>
+{% endfor %} {# for div in menu.divs #}
+</ul>
 
-
-
-		</li>
-		{% endfor %} {# end for div in menu.divs #}
-	</ul> <!-- div labels -->
-
-
-{% endblock %}

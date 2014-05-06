@@ -44,7 +44,7 @@ ace.handle_side_menu = function($) {
 
 	var touch = "ontouchend" in document;
 	//opening submenu
-	$('.nav-list').on(ace.click_event, function(e){
+	$('.sidebar').on(ace.click_event, '.nav-list', function(e){
 		//check to see if we have clicked on an element which is inside a .dropdown-toggle element?!
 		//if so, it means we should toggle a submenu
 		var link_element = $(e.target).closest('a');
