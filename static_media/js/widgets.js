@@ -430,21 +430,22 @@ var o_widgets = {
  	        o_search.addSecondFormsCol();
  	     }
 
-         for (k in opus.prefs.widgets) {
+         for (var k in opus.prefs.widgets) {
              slug = opus.prefs.widgets[k];
              widget = 'widget__' + slug;
              var html = '<li id = "' + widget + '" class = "widget"></li>';
-             $(html).hide().appendTo('#formscolumn1').show("blind",{direction: "vertical" },200);
-             opus.widget_elements_drawn.push(slug);
-         }
-         for (k in opus.prefs.widgets2) {
-             slug = opus.prefs.widgets2[k];
-             widget = 'widget__' + opus.prefs.widgets2[k];
-             var html = '<li id = "' + widget + '" class = "widget"></li>';
-             $(html).hide().appendTo('#formscolumn2').show("blind",{direction: "vertical" },200);
+             $(html).appendTo('#search_widgets1 ');
+             // $(html).hide().appendTo('#search_widgets1').show("blind",{direction: "vertical" },200);
              opus.widget_elements_drawn.push(slug);
          }
 
+         for (k in opus.prefs.widgets2) {
+             slug = opus.prefs.widgets2[k];
+             widget = 'widget__' + opus.prefs.widgets2[k];
+             html = '<li id = "' + widget + '" class = "widget"></li>';
+             $(html).hide().appendTo('#search_widgets2').show("blind",{direction: "vertical" },200);
+             opus.widget_elements_drawn.push(slug);
+         }
      },
 
           // adds a widget and its behaviors, adjusts the opus.prefs variable to include this widget, will not update the hash
@@ -458,6 +459,7 @@ var o_widgets = {
          if (jQuery.inArray(slug, opus.widgets_fetching) > -1) {
              return; // widget being fetched
          }
+
 
          var widget = 'widget__' + slug;
 
