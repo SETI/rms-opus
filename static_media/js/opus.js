@@ -7,18 +7,15 @@
 
 $(document).ready(function() {
 
-
-    Shadowbox.init({
-        // skip the automatic setup - gallery images not added to
-        skipSetup: true
-    });
     o_hash.initFromHash(); // just returns null if no hash
 
     // initiate the correct view behavior - which tab is on top on page load
     switch(opus.prefs.view) {
 
         case 'search':
+            alert('hello')
             o_search.getSearchTab();
+            return;
             break;
 
         case 'browse':
