@@ -37,11 +37,13 @@ log = logging.getLogger(__name__)
 from django.views.generic import TemplateView
 
 class main_site(TemplateView):
-    template_name = "base_opus.html"
+    template_name = "base.html"
 
     def get_context_data(self, **kwargs):
         context = super(main_site, self).get_context_data(**kwargs)
+        menu = getMenuLabels('')
         context['default_columns'] = settings.DEFAULT_COLUMNS
+        context['menu'] = menu['menu']
         return context
 
 def getDataTableHeaders(request,template='table_headers.html'):
@@ -80,9 +82,10 @@ def getMenuLabels(request):
     """
 
 
-    selections, extras = {}, {}
-    if request.GET:
+    if request and request.GET:
         (selections,extras) = urlToSearchParams(request.GET)
+    else:
+        selections = None
 
     if not selections:
         triggered_tables = settings.BASE_TABLES
