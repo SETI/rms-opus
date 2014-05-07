@@ -8,25 +8,6 @@ var o_search = {
 
     searchBehaviors: function() {
 
-        /** this is handled by cookie now in o_widgets.getWidget()
-        // restart button preserves widget arrangement
-        $('#restart>a').live("click", function() {
-            hash = [];
-            if (opus.prefs.widgets.length || opus.prefs.widgets2.length) {
-
-                if (opus.prefs.widgets.length) hash[hash.length] = "widgets=" + opus.prefs.widgets.join(',');
-                if (opus.prefs.widgets2.length) hash[hash.length] = 'widgets2=' + opus.prefs.widgets2.join(',');
-            }
-            // $(this).attr("href",'/#/' + hash.join('&'));
-            $('.formscolumn').html('');
-            $('#formscolumn1').html(opus.spinner);
-            window.location.hash =  '/' + hash.join('&');
-            window.location.reload(true);
-            return false;
-
-        });
-        **/
-
         $('#result_count').parent().hover(
             function(){ $('#result_count').addClass('result_count_hover'); },
             function(){ $('#result_count').removeClass('result_count_hover'); }
@@ -239,6 +220,7 @@ var o_search = {
                 o_widgets.getWidget(slug,'#formscolumn1');
             }
         }
+
         for (key in jQuery.unique(opus.prefs.widgets2)) {  // fetch each widget
             slug = opus.prefs.widgets2[key];
             if (jQuery.inArray(slug, opus.widgets_drawn) < 0) {  // only draw if not already drawn
