@@ -15,7 +15,6 @@ $(document).ready(function() {
         case 'search':
             alert('hello')
             o_search.getSearchTab();
-            return;
             break;
 
         case 'browse':
@@ -42,8 +41,6 @@ $(document).ready(function() {
         default:
             o_search.getSearchTab();
     }
-
-    o_tabs.initTabs();
 
     opus.addAllBehaviors();
 
