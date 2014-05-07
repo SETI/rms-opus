@@ -9,8 +9,8 @@ var o_widgets = {
 
     addWidgetBehaviors: function() {
 
-
-	    // widgets are draggable
+        // widgets are draggable
+        /*
         $('#formscolumn1, #formscolumn2', '#search').sortable({
                 handle:'.widget_draghandle',
                 cursor: 'crosshair',
@@ -18,21 +18,27 @@ var o_widgets = {
                     o_widgets.widgetDrop(ui);
                 }
         });
+        */
 
         // open/close mult groupings in widgetts
+        /*
         $('.mult_group_label', '#search').live('click',function() {
             $(this).next().slideToggle('fast');
             $(this).find(">:first-child").toggleClass('opened_triangle');
             $(this).find(">:first-child").toggleClass('closed_triangle');
         });
+        */
 
         // mult widget behaviors - user clicks a multi-select checkbox
-        $('.multichoice','#search').live('change', function() {
+        /**** what? MOVE TO search.js *******/
+        $('#search').on('change', 'input.multichoice', function() {
            opus.user_clicked=true
            id = $(this).attr("id").split('_')[0];
            value = $(this).attr("value");
+           alert(id + '=' + value);
 
-           if ($(this).attr("checked")) {
+           if ($(this).is(':checked')) {
+
                if (opus.selections[id]) {
                    values = opus.selections[id]; // this param already has been constrained
                }else {
@@ -180,7 +186,7 @@ var o_widgets = {
             case 'planet':
                 // user checks a planet box - open the corresponding target group
                 // adding a behavior: checking a planet box opens the corresponding targets
-                $('#widget__planet input:checkbox:checked', '#search').live('change',function() {
+                $('#search').on('change', '#widget__planet input:checkbox:checked', function() {
                     if ($('#mult_group_' + $(this).attr('value')).prev().find(">:first-child").hasClass("closed_triangle")) {
                         // a planet is .chosen_columns, and its corresponding target is not already open
                         mult_id = '#mult_group_' + $(this).attr('value');
@@ -547,7 +553,7 @@ var o_widgets = {
                  **/
 
 
-             form_type = $('#widget__' + slug + ' .widget_inner').attr("class").split(' ')[1];
+             // form_type = $('#widget__' + slug + ' .widget_inner').attr("class").split(' ')[1];
 
              // if we are drawing a range widget we need to check if the qtype dropdown is
              // already defined by the url:
