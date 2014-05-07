@@ -8,7 +8,6 @@ var o_menu = {
 
      menuBehaviors: function() {
          // search menu behaviors
-         // why was this here?
 
          // click param in menu get new widget
          $('.menu_list li a','#search').live("click", function() {
@@ -88,23 +87,25 @@ var o_menu = {
      },
 
      getMenu: function() {
-        $('.menu_spinner').fadeIn("fast");
-        hash = o_hash.getHash();
-        $( "#leftcolumn" ).load( "/opus/menu.html?" + hash, function() {
-
+        // $('.menu_spinner').fadeIn("fast");
+        // hash = o_hash.getHash();
+        hash = '';
+        $( "#sidebar").load( "/opus/menu.html?" + hash, function() {
+            /*
             // open menu items that were open before
             for (var key in opus.menu_cats_open) {
                 cat_name = opus.menu_cats_open[key];
-                $('a[title="' + cat_name + '"]', '#search #leftcolumn').trigger("click");
+                $('a[title="' + cat_name + '"]', '#search #sidebar').trigger("click");
             }
 
             // open any newly arrived surface geo tables
             geo_cat = $('a[title^="obs_surface_geometry__"]', '#search #leftcolumn').attr("title");
             if (geo_cat && jQuery.inArray(geo_cat, opus.menu_cats_open) < 0) {
-                $('a[title="' + geo_cat + '"]', '#search #leftcolumn').trigger("click");
+                $('a[title="' + geo_cat + '"]', '#search #sidebar').trigger("click");
             }
 
             $('.menu_spinner').fadeOut("fast");
+            */
         });
      },
 
