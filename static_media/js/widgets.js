@@ -30,12 +30,16 @@ var o_widgets = {
         */
 
         // mult widget behaviors - user clicks a multi-select checkbox
-        /**** what? MOVE TO search.js *******/
+
+        /***********************************************************/
+        /**** what? WHY IS THIS HERE MOVE TO search.js       *******/
+        /**** OR move all those behaviors into here because wtf ****/
+        /***********************************************************/
+
         $('#search').on('change', 'input.multichoice', function() {
            opus.user_clicked=true
            id = $(this).attr("id").split('_')[0];
            value = $(this).attr("value");
-           alert(id + '=' + value);
 
            if ($(this).is(':checked')) {
 
@@ -490,7 +494,7 @@ var o_widgets = {
             o_widgets.updateWidgetCookies();
             // these sometimes get drawn on page load by placeWidgetContainers, but not this time:
             var html = '<li id = "' + widget + '" class = "widget"></li>';
-            $(html).hide().appendTo(formscolumn).show("blind",{direction: "vertical" },200);
+            $(html).hide().appendTo(formscolumn).show("slow");
             opus.widget_elements_drawn.push(slug);
         }
 
@@ -591,6 +595,7 @@ var o_widgets = {
              opus.widgets_drawn.push(slug);
 
              o_widgets.customWidgetBehaviors(slug);
+             console.info('getWidget ok')
 
       }); // end function success, end ajax
      }, // end func
