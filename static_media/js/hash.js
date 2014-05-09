@@ -15,8 +15,6 @@ var o_hash = {
           }
       }
 
-      o_menu.updateMenuIndicators();
-
       o_widgets.pauseWidgetControlVisibility(opus.selections);
 
       for (var key in opus.extras) {

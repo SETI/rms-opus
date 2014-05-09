@@ -490,6 +490,7 @@ var o_widgets = {
 
         // add the div that will hold the widget
         if (jQuery.inArray(slug,opus.widget_elements_drawn) < 0) {
+
             opus.prefs.widgets.push(slug);
             o_widgets.updateWidgetCookies();
             // these sometimes get drawn on page load by placeWidgetContainers, but not this time:
