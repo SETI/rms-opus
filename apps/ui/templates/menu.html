@@ -4,7 +4,7 @@
 {% for div in menu.divs %}
 
 	<li>
-        <a href="#" class="dropdown-toggle">
+        <a href="#" class="dropdown-toggle {{ div.table_name }}" data-cat = "{{ div.table_name }}">
             <i class="icon-desktop"></i>
             <span class="menu-text"> {{ div.label }} </span>
             <b class="arrow icon-angle-down"></b>
@@ -22,7 +22,7 @@
                     {% for sub_head,params in info.data.items %}
                         {% if p.cat_name == sub_head.slugify %}
                         <li>
-                            <a class="dropdown-toggle" data-cat = "{{ sub_head|slugify }}" data-slug = "{{ p.slug }}" data-group = "{{ div.table_name|slugify }}" title = "{{ p.label }}" href = "">
+                            <a class="dropdown-toggle {{ sub_head|slugify }}" data-group = "{{ sub_head|slugify }}" title = "{{ p.label }}" href = "">
                                 <i class="icon-double-angle-right"></i>
                                 {{ sub_head }}
                                 <b class="arrow icon-angle-down"></b>
@@ -32,7 +32,7 @@
                             {% for p in params %}
                                 {% if p.cat_name == sub_head.slugify %}
                                 <li>
-                                    <a data-cat = "{{ sub_head|slugify }}" data-slug = "{{ p.slug }}" data-group = "{{ div.table_name|slugify }}" title = "{{ p.label }}" href = "">
+                                    <a data-slug = "{{ p.slug }}" title = "{{ p.label }}" href = "">
                                         <i class="icon-leaf"></i>
                                         {{ p.label }}
                                     </a>
@@ -50,7 +50,7 @@
                     {#  this div does not have sub_headings, list the params  #}
                     {% for p in info.data %}
                         <li>
-                            <a data-cat = "{{ sub_head|slugify }}" data-slug = "{{ p.slug }}" data-group = "{{ div.table_name|slugify }}" title = "{{ p.label }}" href = "">
+                            <a data-slug = "{{ p.slug }}" title = "{{ p.label }}" href = "">
                                 <i class="icon-plus"></i>
                                 {{ p.label }}
                             </a>

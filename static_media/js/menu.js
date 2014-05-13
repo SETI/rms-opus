@@ -52,13 +52,18 @@ var o_menu = {
         // $('.menu_spinner').fadeIn("fast");
         hash = o_hash.getHash();
         $( "#sidebar").load( "/opus/menu.html?" + hash, function() {
-            /*
+
             // open menu items that were open before
-            for (var key in opus.menu_cats_open) {
-                cat_name = opus.menu_cats_open[key];
-                $('a[title="' + cat_name + '"]', '#search #sidebar').trigger("click");
+            for (var key in opus.menu_state['cats']) {
+                cat_name = opus.menu_state['cats'][key];
+                $("." + cat_name, ".sidebar").trigger(ace.click_event);
+            }
+            for (var key in opus.menu_state['groups']) {
+                group_name = opus.menu_state['groups'][key];
+                $("." + group_name, ".sidebar").trigger(ace.click_event);
             }
 
+            /*
             // open any newly arrived surface geo tables
             geo_cat = $('a[title^="obs_surface_geometry__"]', '#search #leftcolumn').attr("title");
             if (geo_cat && jQuery.inArray(geo_cat, opus.menu_cats_open) < 0) {
