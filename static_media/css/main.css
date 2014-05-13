@@ -1,3 +1,7 @@
+body {
+  min-height: 2000px;
+  padding-top: 42px;
+}
 #search_widgets1 li, #search_widgets2 li {
     display:inline;
     list-style-type:none;
@@ -7,6 +11,23 @@
     display:inline;
     list-style-type:none;
 }
+.red_border {
+    border:2px solid red;
+}
+
+.spinner {
+    background-image: url('http://pds-rings.seti.org/~lballard/django_opus/static_media/images/spinner.gif');
+}
+
+.my-pulsating-icon {
+                  /* pulsating duration repetition timing_function delay */
+     -moz-animation: pulsating 2s 2 linear 1s;
+  -webkit-animation: pulsating 2s 2 linear 1s;
+       -o-animation: pulsating 2s 2 linear 1s;
+      -ms-animation: pulsating 2s 2 linear 1s;
+          animation: pulsating 2s 2 linear 1s;
+}
+
 
 /* body{
     margin:0;
