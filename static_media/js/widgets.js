@@ -51,9 +51,10 @@ var o_widgets = {
                values[values.length] = value;    // add the new value to the array of values
                opus.selections[id] = values;     // add the array of values to selections
 
-               // special menu behavior for surface geo
+               // special menu behavior for surface geo, slide in a loading indicator..
                if (id == 'surfacetarget') {
-                    $('a.surfacetarget').parent().append('<li style = "margin-left:50%" class = "spinner">&nbsp;</li>').delay(500);
+                    var surface_loading = '<li style = "margin-left:50%; display:none" class = "spinner">&nbsp;</li>';
+                    $(surface_loading).appendTo($('a.surfacetarget').parent()).slideDown("slow").delay(500);
                }
 
            } else {
