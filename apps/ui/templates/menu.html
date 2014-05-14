@@ -7,7 +7,7 @@
         <a href="#" title = "{{ div.table_name }}" class="dropdown-toggle {{ div.table_name }}" data-cat = "{{ div.table_name }}">
             <i class="icon-desktop"></i>
             <span class="menu-text"> {{ div.label }} </span>
-            <b class="arrow icon-angle-down"></b>
+            <b class="arrow fa fa-angle-down"></b>
         </a>
 
         <ul class="submenu"><!-- all div labels have level 2 submenu to list params-->
@@ -23,9 +23,9 @@
                         {% if p.cat_name == sub_head.slugify %}
                         <li>
                             <a class="dropdown-toggle {{ sub_head|slugify }}" data-group = "{{ sub_head|slugify }}" title = "{{ p.label }}" href = "">
-                                <i class="icon-double-angle-right"></i>
+                                <i class="fa fa-angle-double-right"></i>
                                 {{ sub_head }}
-                                <b class="arrow icon-angle-down"></b>
+                                <b class="arrow fa fa-angle-down"></b>
                             </a>
 
                             <ul class="submenu">
@@ -33,7 +33,7 @@
                                 {% if p.cat_name == sub_head.slugify %}
                                 <li>
                                     <a data-slug = "{{ p.slug }}" title = "{{ p.label }}" href = "">
-                                        <i class="icon-leaf"></i>
+                                        <i class="fa fa-plus"></i>
                                         {{ p.label }}
                                     </a>
                                 </li>
@@ -52,7 +52,7 @@
                     {% for p in info.data %}
                         <li>
                             <a data-slug = "{{ p.slug }}" class = "{{ p.slug }}" title = "{{ p.label }}" href = "">
-                                <i class="icon-plus"></i>
+                                <i class="fa fa-plus"></i>
                                 {{ p.label }}
                             </a>
                         </li>
