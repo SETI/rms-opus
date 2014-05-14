@@ -22,14 +22,12 @@ body {
     background-repeat: no-repeat;
 }
 
-.my-pulsating-icon {
-                  /* pulsating duration repetition timing_function delay */
-     -moz-animation: pulsating 2s 2 linear 1s;
-  -webkit-animation: pulsating 2s 2 linear 1s;
-       -o-animation: pulsating 2s 2 linear 1s;
-      -ms-animation: pulsating 2s 2 linear 1s;
-          animation: pulsating 2s 2 linear 1s;
+.menu_spinner {
+    display:none;
+    margin-left:5px;
+    width:30px;
 }
+
 
 
 /* body{
@@ -349,11 +347,6 @@ a:active {text-decoration:none;}
 
 
 
-
-.menu_spinner {
-    display:none;
-    margin-left:10%;
-}
 
 
 .dimmed {

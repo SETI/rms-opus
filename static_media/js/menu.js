@@ -10,7 +10,7 @@ var o_menu = {
          // search menu behaviors
 
          // click param in menu get new widget
-         $('#search').on("click", '.submenu li a', function() {
+         $('.sidebar').on("click", '.submenu li a', function() {
              slug = $(this).data('slug');
              if (!slug) { return; }
              if (jQuery.inArray(slug, opus.widgets_drawn)>-1){
@@ -79,7 +79,7 @@ var o_menu = {
      },
 
      getMenu: function() {
-        // $('.menu_spinner').fadeIn("fast");
+        $('.menu_spinner').fadeIn("fast");
         hash = o_hash.getHash();
         $( "#sidebar").load( "/opus/menu.html?" + hash, function() {
 
