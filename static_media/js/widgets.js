@@ -53,7 +53,7 @@ var o_widgets = {
 
                // special menu behavior for surface geo
                if (id == 'surfacetarget') {
-                $('li.cassini-surface-geometry ul.menu_list').append('<li><span class = "spinning">&nbsp;</span></li>');
+                    $('a.surfacetarget').parent().append('<li style = "margin-left:50%" class = "spinner">&nbsp;</li>').delay(500);
                }
 
            } else {

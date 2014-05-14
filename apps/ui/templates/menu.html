@@ -4,7 +4,7 @@
 {% for div in menu.divs %}
 
 	<li>
-        <a href="#" class="dropdown-toggle {{ div.table_name }}" data-cat = "{{ div.table_name }}">
+        <a href="#" title = "{{ div.table_name }}" class="dropdown-toggle {{ div.table_name }}" data-cat = "{{ div.table_name }}">
             <i class="icon-desktop"></i>
             <span class="menu-text"> {{ div.label }} </span>
             <b class="arrow icon-angle-down"></b>
@@ -42,6 +42,7 @@
                             </ul>
 
                         </li>
+
                         {% endif %} {# if p.cat_name == sub_head.slugify #}
 
                     {% endfor %} {# for sub_head, params in info.data.items #}
@@ -50,18 +51,21 @@
                     {#  this div does not have sub_headings, list the params  #}
                     {% for p in info.data %}
                         <li>
-                            <a data-slug = "{{ p.slug }}" title = "{{ p.label }}" href = "">
+                            <a data-slug = "{{ p.slug }}" class = "{{ p.slug }}" title = "{{ p.label }}" href = "">
                                 <i class="icon-plus"></i>
                                 {{ p.label }}
                             </a>
                         </li>
+
                     {% endfor %}
                 {% endif %}
 
             {% endif %} {# nem == div.table_name #}
         {% endfor %} {# for name, info in menu.data.items #}
         </ul>
+
     </li>
+
 {% endfor %} {# for div in menu.divs #}
 </ul>
 

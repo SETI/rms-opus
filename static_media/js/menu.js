@@ -63,15 +63,14 @@ var o_menu = {
                 $("." + group_name, ".sidebar").trigger(ace.click_event);
             }
 
-            /*
             // open any newly arrived surface geo tables
-            geo_cat = $('a[title^="obs_surface_geometry__"]', '#search #leftcolumn').attr("title");
+            geo_cat = $('a[title^="obs_surface_geometry__"]', '.sidebar').attr("title");
             if (geo_cat && jQuery.inArray(geo_cat, opus.menu_cats_open) < 0) {
-                $('a[title="' + geo_cat + '"]', '#search #sidebar').trigger("click");
+                $('a[title="' + geo_cat + '"]', '.sidebar').trigger(ace.click_event);
             }
 
             $('.menu_spinner').fadeOut("fast");
-            */
+
         });
      },
 
