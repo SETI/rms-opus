@@ -75,6 +75,7 @@ ace.handle_side_menu = function($) {
 
 		//if we are opening this submenu, close all other submenus except the ".active" one
         /*
+
 		if(! $(sub).is(':visible') ) {//if not open and visible, let's open it and make it visible
 		  var parent_ul = $(sub.parentNode).closest('ul');
 		  if($minimized && parent_ul.hasClass('nav-list')) return;
@@ -97,31 +98,6 @@ ace.handle_side_menu = function($) {
 		if($minimized && $(sub.parentNode.parentNode).hasClass('nav-list')) return false;
 
 		$(sub).slideToggle(200).parent().toggleClass('open');
-
-
-        // for opus: keeping track of menu state, since menu is constantly refreshed
-        // menu cats
-        if ($(link_element).data( "cat" )) {
-            cat_name = $(link_element).data( "cat" );
-            if ($(sub).parent().hasClass('open')) {
-                if (jQuery.inArray(cat_name, opus.menu_state['cats']) < 0) {
-                    opus.menu_state['cats'].push(cat_name);
-                }
-            } else {
-                opus.menu_state['cats'].splice(opus.menu_state['cats'].indexOf(cat_name));
-            }
-        }
-        // menu groups
-        if ($(link_element).data( "group" )) {
-            group_name = $(link_element).data( "group" );
-            if ($(sub).parent().hasClass('open')) {
-                if (jQuery.inArray(group_name, opus.menu_state['groups']) < 0) {
-                    opus.menu_state['groups'].push(group_name);
-                }
-            } else {
-                opus.menu_state['groups'].splice(opus.menu_state['groups'].indexOf(group_name));
-            }
-        }
 
 		return false;
 	 })

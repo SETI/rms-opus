@@ -29,21 +29,51 @@ var o_menu = {
          });
 
 
-        // need to keep track of what menu groups are open, something like:
-        /*
-        if (jQuery.inArray(cat, opus.menu_cats_open) < 0) {
-            opus.menu_cats_open.push(cat);
-        }
-        */
+        // menu state - keep track of what menu items are open
+        $('.sidebar').on(ace.click_event, '.nav-list', function(e){
+            var link_element = $(e.target).closest('a');
+            if(!link_element || link_element.length == 0) return;//if not clicked inside a link element
 
-        // check if this menu group only has one option, if so just open that widget
-        // I'm commenting this out because I do not agree that it is desirable
-        // with the new menu behavior
-        /*
-        if ($(this).next().children().size() == 1) {
-            $(this).next().find('li a').trigger("click");
-        }
-        */
+            var sub = link_element.next().get(0);
+
+            // for opus: keeping track of menu state, since menu is constantly refreshed
+            // menu cats
+            if ($(link_element).data( "cat" )) {
+                cat_name = $(link_element).data( "cat" );
+                if ($(sub).parent().hasClass('open')) {
+                    if (jQuery.inArray(cat_name, opus.menu_state['cats']) < 0) {
+                        opus.menu_state['cats'].push(cat_name);
+                    }
+                } else {
+                    opus.menu_state['cats'].splice(opus.menu_state['cats'].indexOf(cat_name));
+                }
+            }
+            // menu groups
+            if ($(link_element).data( "group" )) {
+                group_name = $(link_element).data( "group" );
+                if ($(sub).parent().hasClass('open')) {
+                    if (jQuery.inArray(group_name, opus.menu_state['groups']) < 0) {
+                        opus.menu_state['groups'].push(group_name);
+                    }
+                } else {
+                    opus.menu_state['groups'].splice(opus.menu_state['groups'].indexOf(group_name));
+                }
+            }
+
+
+            // check if this menu group only has one option, if so just open that widget
+            // I'm commenting this out because I do not agree that it is desirable
+            // with the new menu
+            /*
+            if ($(this).next().children().size() == 1) {
+                $(this).next().find('li a').trigger("click");
+            }
+            */
+
+            return false;
+        });
+
+
 
 
      },
