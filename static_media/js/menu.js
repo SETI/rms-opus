@@ -86,17 +86,30 @@ var o_menu = {
             // open menu items that were open before
             for (var key in opus.menu_state['cats']) {
                 cat_name = opus.menu_state['cats'][key];
-                $("." + cat_name, ".sidebar").trigger(ace.click_event);
+                link = $("a." + cat_name, ".sidebar");
+                sub = link.next().get(0);
+                $(sub).toggle().parent().toggleClass('open');
+
+                // $("." + cat_name, ".sidebar").trigger(ace.click_event);
             }
             for (var key in opus.menu_state['groups']) {
                 group_name = opus.menu_state['groups'][key];
-                $("." + group_name, ".sidebar").trigger(ace.click_event);
+                link = $("a." + group_name, ".sidebar");
+                sub = link.next().get(0);
+                $(sub).toggle().parent().toggleClass('open');
+                // $("." + group_name, ".sidebar").trigger(ace.click_event);
             }
 
             // open any newly arrived surface geo tables
+            // todo: this could be problematic if user wants to close it and keep it closed..
             geo_cat = $('a[title^="obs_surface_geometry__"]', '.sidebar').attr("title");
-            if (geo_cat && jQuery.inArray(geo_cat, opus.menu_cats_open) < 0) {
-                $('a[title="' + geo_cat + '"]', '.sidebar').trigger(ace.click_event);
+            if (geo_cat && jQuery.inArray(geo_cat, opus.menu_state['cats']) < 0) {
+                // open it
+                link = $("a." + geo_cat, ".sidebar");
+                sub = link.next().get(0);
+                $(sub).slideToggle(400).parent().toggleClass('open');
+                // and add it to open cats list
+                opus.menu_state['cats'].push(geo_cat);
             }
 
             $('.menu_spinner').fadeOut("fast");
