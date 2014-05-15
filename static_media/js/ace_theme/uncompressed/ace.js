@@ -480,7 +480,7 @@ ace.handle_side_menu = function($) {
 	var ios_fix = ace.vars['ios_safari'];//navigator.userAgent.match(/OS (5|6|7)(_\d)+ like Mac OS X/i);
 
 	//toggling submenu
-	$(document).on(ace.click_event+'.ace.submenu', '.sidebar .nav-list', function (ev) {
+	$('.sidebar').on(ace.click_event+'.ace.submenu', '.nav-list', function (ev) {
 		var nav_list = this;
 
 		//check to see if we have clicked on an element which is inside a .dropdown-toggle element?!
@@ -544,11 +544,14 @@ ace.handle_side_menu = function($) {
 		//if not open and visible, let's open it and make it visible
 		if( sub.scrollHeight == 0 ) {
 		  $(parent_ul).find('> .open > .submenu').each(function() {
+
 			//close all other open submenus except for the active one
+            /*
 			if(this != sub && !$(this.parentNode).hasClass('active')) {
 				height_change -= this.scrollHeight;
 				ace.submenu.hide(this, duration);
 			}
+            */
 		  })
 		}
 
