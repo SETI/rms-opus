@@ -1,4 +1,10 @@
-if(! ('ace' in window) ) window['ace'] = {}
+if( !('ace' in window) ) window['ace'] = {}
+if( !('vars' in window['ace']) ) {
+  window['ace'].vars = {
+	 'icon'	: ' ace-icon ',
+	'.icon'	: '.ace-icon'
+  }
+}
 
 ace.config = {
  cookie_expiry : 604800, //1 week duration for saved settings
@@ -23,85 +29,120 @@ ace.settings = {
 		ace.data.remove('settings', item+'-'+status)
 	},
 
-	navbar_fixed : function(fix) {
+	navbar_fixed : function(fix , save, chain) {
+		var navbar = document.getElementById('navbar');
+		if(!navbar) return false;
+	
 		fix = fix || false;
-		if(!fix && ace.settings.is('sidebar', 'fixed')) {
-			ace.settings.sidebar_fixed(false);
+		if(!fix && chain !== false) {
+			//unfix sidebar as well
+			var sidebar = null;
+			if(
+				ace.settings.is('sidebar', 'fixed')
+				||
+				((sidebar = document.getElementById('sidebar')) && ace.hasClass(sidebar , 'sidebar-fixed'))
+			 )
+			{
+				ace.settings.sidebar_fixed(false);
+			}
 		}
 		
-		var navbar = document.getElementById('navbar');
 		if(fix) {
 			if(!ace.hasClass(navbar , 'navbar-fixed-top'))  ace.addClass(navbar , 'navbar-fixed-top');
-			if(!ace.hasClass(document.body , 'navbar-fixed'))  ace.addClass(document.body , 'navbar-fixed');
 			
-			ace.settings.set('navbar', 'fixed');
+			if(save !== false) ace.settings.set('navbar', 'fixed');
 		} else {
 			ace.removeClass(navbar , 'navbar-fixed-top');
-			ace.removeClass(document.body , 'navbar-fixed');
 			
-			ace.settings.unset('navbar', 'fixed');
+			if(save !== false) ace.settings.unset('navbar', 'fixed');
 		}
 		
 		document.getElementById('ace-settings-navbar').checked = fix;
+		
+		if(window.jQuery) jQuery(document).trigger('settings.ace', ['navbar_fixed' , fix]);
 	},
 
 
-	breadcrumbs_fixed : function(fix) {
+	sidebar_fixed : function(fix , save, chain) {
+		var sidebar = document.getElementById('sidebar');
+		if(!sidebar) return false;
+	
 		fix = fix || false;
-		if(fix && !ace.settings.is('sidebar', 'fixed')) {
-			ace.settings.sidebar_fixed(true);
+		if(!fix && chain !== false) {
+			//unfix breadcrumbs as well
+			var breadcrumbs = null;
+			if(
+				ace.settings.is('breadcrumbs', 'fixed')
+				||
+				((breadcrumbs = document.getElementById('breadcrumbs')) && ace.hasClass(breadcrumbs , 'breadcrumbs-fixed'))
+			 )
+			{
+				ace.settings.breadcrumbs_fixed(false);
+			}
 		}
 
-		var breadcrumbs = document.getElementById('breadcrumbs');
-		if(fix) {
-			if(!ace.hasClass(breadcrumbs , 'breadcrumbs-fixed'))  ace.addClass(breadcrumbs , 'breadcrumbs-fixed');
-			if(!ace.hasClass(document.body , 'breadcrumbs-fixed'))  ace.addClass(document.body , 'breadcrumbs-fixed');
-			
-			ace.settings.set('breadcrumbs', 'fixed');
-		} else {
-			ace.removeClass(breadcrumbs , 'breadcrumbs-fixed');
-			ace.removeClass(document.body , 'breadcrumbs-fixed');
-			
-			ace.settings.unset('breadcrumbs', 'fixed');
-		}
-		document.getElementById('ace-settings-breadcrumbs').checked = fix;
-	},
-
-
-	sidebar_fixed : function(fix) {
-		fix = fix || false;
-		if(!fix && ace.settings.is('breadcrumbs', 'fixed')) {
-			ace.settings.breadcrumbs_fixed(false);
-		}
-
-		if( fix && !ace.settings.is('navbar', 'fixed') ) {
+		if( fix && chain !== false && !ace.settings.is('navbar', 'fixed') ) {
 			ace.settings.navbar_fixed(true);
 		}
 
-		var sidebar = document.getElementById('sidebar');
 		if(fix) {
-			if( !ace.hasClass(sidebar , 'sidebar-fixed') )  ace.addClass(sidebar , 'sidebar-fixed');
-			ace.settings.set('sidebar', 'fixed');
+			if( !ace.hasClass(sidebar , 'sidebar-fixed') )  {
+				ace.addClass(sidebar , 'sidebar-fixed');
+				var toggler = document.getElementById('menu-toggler');
+
+				if(toggler) ace.addClass(toggler , 'fixed');
+			}
+			if(save !== false) ace.settings.set('sidebar', 'fixed');
 		} else {
 			ace.removeClass(sidebar , 'sidebar-fixed');
-			ace.settings.unset('sidebar', 'fixed');
+			var toggler = document.getElementById('menu-toggler');
+			if(toggler) ace.removeClass(toggler , 'fixed');
+
+			if(save !== false) ace.settings.unset('sidebar', 'fixed');
 		}
 		document.getElementById('ace-settings-sidebar').checked = fix;
+		
+		if(window.jQuery) jQuery(document).trigger('settings.ace', ['sidebar_fixed' , fix]);
+	},
+	
+	//fixed position
+	breadcrumbs_fixed : function(fix , save, chain) {
+		var breadcrumbs = document.getElementById('breadcrumbs');
+		if(!breadcrumbs) return false;
+	
+		fix = fix || false;
+		if(fix && chain !== false && !ace.settings.is('sidebar', 'fixed')) {
+			ace.settings.sidebar_fixed(true);
+		}
+
+		if(fix) {
+			if(!ace.hasClass(breadcrumbs , 'breadcrumbs-fixed'))  ace.addClass(breadcrumbs , 'breadcrumbs-fixed');
+			if(save !== false) ace.settings.set('breadcrumbs', 'fixed');
+		} else {
+			ace.removeClass(breadcrumbs , 'breadcrumbs-fixed');
+			if(save !== false) ace.settings.unset('breadcrumbs', 'fixed');
+		}
+		document.getElementById('ace-settings-breadcrumbs').checked = fix;
+		
+		if(window.jQuery) jQuery(document).trigger('settings.ace', ['breadcrumbs_fixed' , fix]);
 	},
 
-	main_container_fixed : function(inside) {
+	//fixed size
+	main_container_fixed : function(inside , save) {
 		inside = inside || false;
 
 		var main_container = document.getElementById('main-container');
+		if(!main_container) return false;
+		
 		var navbar_container = document.getElementById('navbar-container');
 		if(inside) {
 			if( !ace.hasClass(main_container , 'container') )  ace.addClass(main_container , 'container');
 			if( !ace.hasClass(navbar_container , 'container') )  ace.addClass(navbar_container , 'container');
-			ace.settings.set('main-container', 'fixed');
+			if( save !== false ) ace.settings.set('main-container', 'fixed');
 		} else {
 			ace.removeClass(main_container , 'container');
 			ace.removeClass(navbar_container , 'container');
-			ace.settings.unset('main-container', 'fixed');
+			if(save !== false) ace.settings.unset('main-container', 'fixed');
 		}
 		document.getElementById('ace-settings-add-container').checked = inside;
 		
@@ -114,32 +155,53 @@ ace.settings = {
 			ace.toggleClass(sidebar , 'menu-min')
 			setTimeout(function() {	ace.toggleClass(sidebar , 'menu-min') } , 0)
 		}
+		
+		if(window.jQuery) jQuery(document).trigger('settings.ace', ['main_container_fixed' , inside]);
 	},
 
-	sidebar_collapsed : function(collpase) {
+	sidebar_collapsed : function(collpase , save) {
+		var sidebar = document.getElementById('sidebar');
+		if(!sidebar) return false;
+
 		collpase = collpase || false;
 
-		var sidebar = document.getElementById('sidebar');
-		var icon = document.getElementById('sidebar-collapse').querySelector('[class*="icon-"]');
-		var $icon1 = icon.getAttribute('data-icon1');//the icon for expanded state
-		var $icon2 = icon.getAttribute('data-icon2');//the icon for collapsed state
+		var src = ace.isHTTMlElement(this) ? this : sidebar.querySelector('.sidebar-collapse');
+		var icon = src ? src.querySelector(ace.vars['.icon']) : null, icon1, icon2;
+		/**
+		if(!icon) {
+			//for example sidebar-collapse button can be inside navbar without an icon
+			src = sidebar.querySelector('.sidebar-collapse');
+			icon = src ? src.querySelector(ace.vars['.icon']) : null;
+		}
+		*/
+
+		if(icon) {
+			icon1 = icon.getAttribute('data-icon1');//the icon for expanded state
+			icon2 = icon.getAttribute('data-icon2');//the icon for collapsed state
+		}
 
 		if(collpase) {
 			ace.addClass(sidebar , 'menu-min');
-			ace.removeClass(icon , $icon1);
-			ace.addClass(icon , $icon2);
+			if(icon) {
+				ace.removeClass(icon , icon1);
+				ace.addClass(icon , icon2);
+			}
 
-			ace.settings.set('sidebar', 'collapsed');
+			if(save !== false) ace.settings.set('sidebar', 'collapsed');
 		} else {
 			ace.removeClass(sidebar , 'menu-min');
-			ace.removeClass(icon , $icon2);
-			ace.addClass(icon , $icon1);
+			if(icon) {
+				ace.removeClass(icon , icon2);
+				ace.addClass(icon , icon1);
+			}
 
-			ace.settings.unset('sidebar', 'collapsed');
+			if(save !== false) ace.settings.unset('sidebar', 'collapsed');
 		}
 
-	},
+		if(window.jQuery) jQuery(document).trigger('settings.ace', ['sidebar_collapsed' , collpase]);
+	}
 	/**
+	,
 	select_skin : function(skin) {
 	}
 	*/
@@ -150,7 +212,7 @@ ace.settings = {
 ace.settings.check = function(item, val) {
 	if(! ace.settings.exists(item, val) ) return;//no such setting specified
 	var status = ace.settings.is(item, val);//is breadcrumbs-fixed? or is sidebar-collapsed? etc
-	
+
 	var mustHaveClass = {
 		'navbar-fixed' : 'navbar-fixed-top',
 		'sidebar-fixed' : 'sidebar-fixed',
@@ -167,7 +229,7 @@ ace.settings.check = function(item, val) {
 	
 	var target = document.getElementById(item);//#navbar, #sidebar, #breadcrumbs
 	if(status != ace.hasClass(target , mustHaveClass[item+'-'+val])) {
-		ace.settings[item.replace('-','_')+'_'+val](status);//call the relevant function to mage the changes
+		ace.settings[item.replace('-','_')+'_'+val](status);//call the relevant function to make the changes
 	}
 }
 
@@ -370,15 +432,15 @@ ace.sizeof = function(obj) {
 }
 
 //because jQuery may not be loaded at this stage, we use our own toggleClass
-ace.hasClass = function(elem, className) {
-	return (" " + elem.className + " ").indexOf(" " + className + " ") > -1;
-}
+ace.hasClass = function(elem, className) {	return (" " + elem.className + " ").indexOf(" " + className + " ") > -1; }
+
 ace.addClass = function(elem, className) {
  if (!ace.hasClass(elem, className)) {
 	var currentClass = elem.className;
 	elem.className = currentClass + (currentClass.length? " " : "") + className;
  }
 }
+
 ace.removeClass = function(elem, className) {ace.replaceClass(elem, className);}
 
 ace.replaceClass = function(elem, className, newClass) {
@@ -394,7 +456,9 @@ ace.toggleClass = function(elem, className) {
 	else ace.addClass(elem, className);
 }
 
-
+ace.isHTTMlElement = function(elem) {
+ return window.HTMLElement ? elem instanceof HTMLElement : ('nodeType' in elem ? elem.nodeType == 1 : false);
+}
 
 
 //data_storage instance used inside ace.settings etc
