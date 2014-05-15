@@ -4,22 +4,27 @@
 
 <div class="row">
     <div class="col-xs-12 col-sm-12 widget-container-span">
-        <div class="widget-box">
-            <div class="widget-header header-color-blue2">
-                <h5>{{ label }} </h5>
+        <div class="widget-box widget-color-blue2">
+            <div class="widget-header">
+                <h5 class="widget-title">{{ label }} </h5>
                 <div class="widget-toolbar">
-                    <a href="#" data-action="collapse"><i class="fa fa-chevron-up"></i></a>
-                    <a href="#" data-action="close"><i class="fa fa-times"></i></a>
-                </div>
-            </div>
+
+                        <a href="#" data-action="collapse">
+                            <i class="ace-icon fa fa-chevron-up" data-icon-show="fa-chevron-down" data-icon-hide="fa-chevron-up"></i>
+                        </a>
+
+                        <a href="#" data-action="close"><i class="ace-icon fa fa-times"></i></a>
+
+                </div><!-- /widget-toolbar -->
+            </div><!-- /widget-header -->
 
             <div class="widget-body">
-             <div class="widget-main">
-                <ul>
-                    {{ form|safe }}
-                </ul>
-             </div>
-            </div>
-        </div>
-    </div>
-</div>
+                <div class="widget-main">
+                    <ul>
+                        {{ form|safe }}
+                    </ul>
+                </div><!-- /widget-main -->
+            </div><!-- /widget-body -->
+        </div><!-- /widget-box -->
+    </div><!-- widget-container-span -->
+</div><!-- /row -->
