@@ -5,33 +5,48 @@
 
  <body class="no-skin">
 
-<div class="navbar navbar-default navbar-fixed-top" id="navbar">
-    <script type="text/javascript">
-    try{ace.settings.check('navbar' , 'fixed')}catch(e){}
-    </script>
+<div class="navbar navbar-default navbar-fixed-top" id="navbar" role="navigation">
 
-    <div class="navbar-container" id="navbar-container">
+    <div class="navbar-container-fluid" id="navbar-container">
 
         <div class="navbar-header pull-left">
+
+
             <a href="#" class="navbar-brand">
             <small>
             <i class="{{opus_icon}}"></i>
             OPUS
             </small>
             </a><!-- /.brand -->
+
         </div><!-- /.navbar-header -->
 
-        <div class="navbar-header pull-right"  id = "restart">
-            <a href = "/opus/">restart</a>
-        </div><!-- /.navbar-header -->
+       <div class="navbar-collapse collapse">
+            <ul class="nav navbar-nav">
+                <li class="active"><a href="#">Search</a></li>
+                <li><a href="#">Browse Results &nbsp;&nbsp; <span id = "result_count" class="badge badge-primary badge-xlg badge-success">0</span></a></li>
+                <li><a href="#">Collection</a></li>
+
+                <li class="dropdown">
+                    <a href="#" class="dropdown-toggle" data-toggle="dropdown">Detail <b class="caret"></b></a>
+                    <ul class="dropdown-menu">
+                      <li><a href="#">S/IMG/CO/ISS/1444749756/W</a></li>
+                      <li><a href="#">S/IMG/CO/ISS/1444749812/W </a></li>
+                      <li><a href="#">S/IMG/CO/ISS/1444750028/W</a></li>
+                    </ul>
+                </li>
+            </ul>
+
+            <ul class="nav navbar-nav navbar-right">
+                <li class="active"><a href="./">Restart</a></li>
+            </ul>
+        </div><!-- navbar-collapse -->
 
     </div><!--  navbar-container -->
 </div><!-- navbar -->
 
 <div class="main-container" id="main-container">
-    <script type="text/javascript">
-    try{ace.settings.check('main-container' , 'fixed')}catch(e){}
-    </script>
+
     <div class="main-container-inner">
 
         <a class="menu-toggler" id="menu-toggler" href="#">

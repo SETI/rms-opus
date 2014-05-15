@@ -35,6 +35,11 @@ body {
     width:30px;
 }
 
+.badge-xlg {
+    font-size:115%;
+    font-weight:bold;
+    padding:5px;
+}
 /*
 .mult_group_label {
     display:block;
