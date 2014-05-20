@@ -2,6 +2,12 @@ body {
   min-height: 2000px;
   padding-top: 42px;
 }
+#results, #collection, #detail {
+    display:none;
+}
+.navbar-fixed-top + .main-container {
+    padding-top:20px;
+}
 #search_widgets1 li, #search_widgets2 li {
     display:inline;
     list-style-type:none;
@@ -11,17 +17,10 @@ body {
     display:inline;
     list-style-type:none;
 }
-.red_border {
-    border:2px solid red;
-}
 .sidebar {
-    margin-left:-12px;
-    width:250px;
+    margin-left:3px;
+    width:270px;
 }
-.nav-tabs {
-    margin-top:-35px;
-}
-
 .spinner {
     background-image: url('http://pds-rings.seti.org/~lballard/django_opus/static_media/images/spinner.gif');
     width:20px;

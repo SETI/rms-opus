@@ -9,11 +9,31 @@ $(document).ready(function() {
 
     o_hash.initFromHash(); // just returns null if no hash
 
+
+    // main menu behaviors
+    $('.navbar-nav li').on("click", function() {
+
+        // handle showing what menu tab is active
+        $('.navbar-nav li').each(function(index) {
+            if ($(this).hasClass("active")) {
+                $(this).toggleClass("active");
+                return false; // aka break from each
+            }
+        });
+
+        tab = $(this).find('a').attr('href').substring(1);
+        if (tab) {
+            $(this).addClass("active");
+            opus.prefs.view = tab;
+            return false;
+        }
+
+    });
+
     // initiate the correct view behavior - which tab is on top on page load
     switch(opus.prefs.view) {
 
         case 'search':
-            alert('hello')
             o_search.getSearchTab();
             break;
 
