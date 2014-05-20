@@ -23,6 +23,9 @@ $(document).ready(function() {
 
         tab = $(this).find('a').attr('href').substring(1);
         if (tab) {
+            if (tab == '/') {
+                return true;
+            }
             $(this).addClass("active");
             opus.prefs.view = tab;
             return false;
