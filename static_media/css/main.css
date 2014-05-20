@@ -5,8 +5,12 @@ body {
 #results, #collection, #detail {
     display:none;
 }
-.navbar-fixed-top + .main-container {
+#search, #results, #collection, #detail {
     padding-top:20px;
+}
+
+.navbar-fixed-top + .main-container {
+    padding-top:0px;
 }
 #search_widgets1 li, #search_widgets2 li {
     display:inline;
