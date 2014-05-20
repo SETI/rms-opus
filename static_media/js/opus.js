@@ -9,9 +9,8 @@ $(document).ready(function() {
 
     o_hash.initFromHash(); // just returns null if no hash
 
-
-    // main menu behaviors
-    $('.navbar-nav li').on("click", function() {
+    // main navbar behaviors
+    $('#navbar').on("click", '.navbar-nav li', function() {
 
         // handle showing what menu tab is active
         $('.navbar-nav li').each(function(index) {
@@ -22,53 +21,32 @@ $(document).ready(function() {
         });
 
         tab = $(this).find('a').attr('href').substring(1);
-        if (tab) {
-            if (tab == '/') {
-                return true;
-            }
-            $(this).addClass("active");
-            opus.prefs.view = tab;
-            return false;
+        if (tab == '/') {
+            return true;
         }
+        if (!tab) { tab = "search"; }
+        $(this).addClass("active");
+        opus.prefs.view = tab;
+
+        opus.changeTab();
+
+        return false;
 
     });
 
+    // figure out which tab is up now
+    opus.changeTab();
+
+
+    $('.navbar-nav li a[href="#search"]', '#navbar').trigger("click");
+
     // initiate the correct view behavior - which tab is on top on page load
-    switch(opus.prefs.view) {
-
-        case 'search':
-            o_search.getSearchTab();
-            break;
-
-        case 'browse':
-            if (opus.prefs.browse == 'data') {
-                $('.data_container','#browse').show();
-                $(',gallery','#browse').hide();
-            }
-            o_browse.getBrowseTab();
-            break;
-
-        case 'detail':
-            o_detail.getDetail(opus.prefs.detail);
-            break;
-
-        case 'collections':
-            opus.collection_change = true;
-            if (opus.prefs.colls_browse == 'data') {
-                $('.data_container','#collections').show();
-                $(',gallery','#collections').hide();
-            }
-            o_collections.getCollectionsTab();
-            break;
-
-        default:
-            o_search.getSearchTab();
-    }
 
     opus.addAllBehaviors();
 
     // watching the url for changes
     setInterval(opus.load, 1000);
+    return;
 
     $('#search').css('display','inline-block');
 
