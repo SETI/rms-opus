@@ -1,39 +1,35 @@
-{% comment %}
-	this gets wrapped inside <ul id="gallery">
-{% endcomment %}
-
-
-
+<ul class="ace-thumbnails clearfix">
 {% for i in data  %}
 
 <li id = "gallery__{{i.ring_obs_id}}">
-	<a title = "{{ i.ring_obs_id }}" class = "shadowbox" href = "{{ path }}{{ i.full }}" rel = "shadowbox[gallery];options={continuous:true}">
-				<img width = "140" src = "{{ path }}{{ i.img }}"></a>
+	<a class = "shadowbox" href = "{{ path }}{{ i.full }}" data-rel="colorbox">
+		<img width = "175" alt="{{ i.ring_obs_id }}" src = "{{ path }}{{ i.img }}">
 
-         <div style = "font-size:60%; overflow:hidden; width:140px;">
-						<div title = "{{ i.ring_obs_id }}" style = " float:right">
-							{{ i.ring_obs_id }}
-						</div>
-				</div>
+         <!-- div class="text">
+            <div class="inner">{{ i.ring_obs_id }}</div>
+         </div -->
 
-	    <ul class="gallery_icons ui-widget ui-helper-clearfix">
+    </a>
 
- 	   		<li><input id="galleryinput__{{ i.ring_obs_id }}" class = "gallery_checkbox" type = "checkbox"
-	        {% if i.in_collection %}
-	        	checked
-			{% endif %}
-			></li>
+    <div class="tools tools-bottom">
+        <a href="#">
+            <i class="ace-icon fa fa-link"></i>
+        </a>
 
-			<li class = "ui-state-default ui-corner-all" title = ".ui-icon-zoomin">
-				<span id = "{{ size }}__{{ i.ring_obs_id }}" class = "ui-icon ui-icon-document get_detail_icon" ></span>
-			</li>
+        <a href="#">
+            <i class="ace-icon fa fa-paperclip"></i>
+        </a>
 
+        <a href="#">
+            <i class="ace-icon fa fa-pencil"></i>
+        </a>
 
-			<!-- li class = "ui-state-default ui-corner-all" title = "">
-				<a class = "get_detail_icon ui-icon ui-icon-document" href = "http://127.0.0.1:8000/api/detailquick/{{i.ring_obs_id}}.html?cols={{ columns_str }}">&nbsp;</a>
-			</li -->
-		</ul>
+        <a href="#">
+            <i class="ace-icon fa fa-times red"></i>
+        </a>
+    </div>
+
 
 </li>
-
 {% endfor %}
+</ul>

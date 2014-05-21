@@ -610,14 +610,12 @@ var o_browse = {
         url += '&page=' + page;
 
 
-
         // NOTE if you change alt_size=full here you must also change it in gallery.html template
         $.ajax({ url: url,
             success: function(html){
                // bring in the new images
                function appendBrowsePage() {
                    // append browse page
-
 
                     /**
                     if (footer_clicks) {
@@ -634,9 +632,6 @@ var o_browse = {
 
                     // turn the scroll watch timer back on
                     opus.scroll_watch_interval = setInterval(o_browse.browseScrollWatch, 1000);
-
-                    // ignite the shadowbox
-                    Shadowbox.setup(".gallery .shadowbox", namespace);
 
                     // bring back the nav bar and footer button
                     $('.nav', namespace).css('visibility','visible');
@@ -667,6 +662,9 @@ var o_browse = {
                */
 
             }
+
+
+
         });
     },
 

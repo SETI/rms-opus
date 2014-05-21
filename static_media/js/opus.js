@@ -237,16 +237,61 @@ var opus = {
     updateResultCount: function(result_count) {
       opus.result_count = result_count;
       $('#result_count').fadeOut('fast', function() {
-          $(this).html('<span>' + o_utils.addCommas(opus.result_count) + '</span>').fadeIn('fast');
+        $(this).html(o_utils.addCommas(opus.result_count)).fadeIn('fast') ;
       });
     },
 
+
+    changeTab: function() {
+        $('#search, #detail, #collection, #browse').hide();
+
+        switch(opus.prefs.view) {
+
+            case 'search':
+                $('#search').show();
+                o_search.getSearchTab();
+                break;
+
+            case 'browse':
+                if (opus.prefs.browse == 'data') {
+                    $('.data_container','#browse').show();
+                    $(',gallery','#browse').hide();
+                }
+                $('#browse').show();
+                o_browse.getBrowseTab();
+                break;
+
+            case 'detail':
+                $('#detail').show();
+                o_detail.getDetail(opus.prefs.detail);
+                break;
+
+            case 'collections':
+                $('#collection').show();
+                opus.collection_change = true;
+                if (opus.prefs.colls_browse == 'data') {
+                    $('.data_container','#collections').show();
+                    $(',gallery','#collections').hide();
+                }
+                o_collections.getCollectionsTab();
+                break;
+
+            default:
+                o_search.getSearchTab();
+
+        } // end switch
+
+
+    },
+
+
     addAllBehaviors: function() {
+        o_widgets.addWidgetBehaviors();
+        o_menu.menuBehaviors();
+        return;
         o_search.searchBehaviors();
         o_browse.browseBehaviors();
         o_collections.collectionBehaviors();
-        o_widgets.addWidgetBehaviors();
-        o_menu.menuBehaviors();
 
 
         // these are the default open groups/cats

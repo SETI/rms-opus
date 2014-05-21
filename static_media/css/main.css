@@ -2,10 +2,13 @@ body {
   min-height: 2000px;
   padding-top: 42px;
 }
-#results, #collection, #detail {
+ul.ace-thumbnails {
+    margin:0; padding:0;
+}
+#browse, #collection, #detail {
     display:none;
 }
-#search, #results, #collection, #detail {
+#search, #browse, #collection, #detail {
     padding-top:20px;
 }
 
