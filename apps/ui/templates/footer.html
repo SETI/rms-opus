@@ -1,8 +1,11 @@
 <!-- basic scripts -->
 <!--[if !IE]> -->
+
+<script src="http://ajax.googleapis.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
 <script type="text/javascript">
- window.jQuery || document.write("<script src='http://ajax.googleapis.com/ajax/libs/jquery/2.0.3/jquery.min.js'>"+"<"+"/script>");
+ window.jQuery || document.write("<script src='{{ MEDIA_URL }}js/libs/jquery-2.0.3.min.js'>"+"<"+"/script>");
 </script>
+
 <!-- <![endif]-->
 <!--[if IE]>
 <script type="text/javascript">
@@ -10,9 +13,7 @@
 </script>
 <![endif]-->
 
-<script type="text/javascript">
-    if("ontouchend" in document) document.write("<script src='{{ MEDIA_URL }}js/ace_theme/uncompressed/jquery.mobile.custom.js'>"+"<"+"/script>");
-</script>
+<script src="{{ MEDIA_URL }}js/ace_theme/uncompressed/jquery.mobile.custom.js"></script>
 
 <script src="{{ MEDIA_URL }}js/ace_theme/uncompressed/bootstrap.js"></script>
 
