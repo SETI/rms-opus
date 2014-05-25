@@ -16,13 +16,13 @@ var o_browse = {
         $('#browse').on("click", ".tools-bottom a", function() {
 
             $ring_obs_id = $(this).parent().parent().attr("id").substring(9);
-            alert($ring_obs_id);
 
             if ($(this).find('i').hasClass('fa-link')) {
                 alert('this is a link')
             }
             if ($(this).find('i').hasClass('fa-search-plus')) {
-                alert('this is a search')
+                // trigger colorbox, same as clicking anywhere on the thumbnail
+                $('#gallery__' + $ring_obs_id + "> a").trigger("click");
             }
             if ($(this).find('i').hasClass('fa-check')) {
                 alert('this is a check')
