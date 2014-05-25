@@ -2,7 +2,8 @@
 {% for i in data  %}
 
     <li id = "gallery__{{i.ring_obs_id}}">
-    	<a href = "{{ path }}{{ i.full }}" data-rel="colorbox">
+
+    	<a class = "activeThumbnail" href = "{{ path }}{{ i.full }}" data-rel="colorbox">
     		<img width = "150px" alt="{{ i.ring_obs_id }}" src = "{{ path }}{{ i.img }}">
 
              <!-- div class="text">
@@ -28,6 +29,7 @@
 
         </div>
 
+        <div class = "thumb_overlay">&nbsp;</div>
 
     </li>
 {% endfor %}

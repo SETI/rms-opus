@@ -16,17 +16,20 @@ var o_browse = {
         $('#browse').on("click", ".tools-bottom a", function() {
 
             $ring_obs_id = $(this).parent().parent().attr("id").substring(9);
+            $(this).parent().show();
 
             if ($(this).find('i').hasClass('fa-link')) {
-                alert('this is a link')
+                alert('this is a link to detail page')
             }
             if ($(this).find('i').hasClass('fa-search-plus')) {
                 // trigger colorbox, same as clicking anywhere on the thumbnail
                 $('#gallery__' + $ring_obs_id + "> a").trigger("click");
             }
             if ($(this).find('i').hasClass('fa-check')) {
-                alert('this is a check')
+                $(this).addClass("green");
+                $('#gallery__' + $ring_obs_id + ' .thumb_overlay').toggleClass('thumb_selected');
             }
+
 
             return false;
         });
