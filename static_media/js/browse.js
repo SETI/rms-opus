@@ -26,7 +26,8 @@ var o_browse = {
                 $('#gallery__' + $ring_obs_id + "> a").trigger("click");
             }
             if ($(this).find('i').hasClass('fa-check')) {
-                $(this).addClass("green");
+                $(this).parent().toggleClass("in");
+                $(this).find('i').toggleClass('thumb_selected_icon');
                 $('#gallery__' + $ring_obs_id + ' .thumb_overlay').toggleClass('thumb_selected');
             }
 

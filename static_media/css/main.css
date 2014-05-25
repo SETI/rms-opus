@@ -12,6 +12,10 @@
 .thumb_selected {
     border:2px solid #00FFFF;
 }
+.thumb_selected_icon {
+    color:#00FFFF;
+    font-size:130%;
+}
 
 
 body {
