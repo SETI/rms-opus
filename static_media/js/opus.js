@@ -288,9 +288,9 @@ var opus = {
     addAllBehaviors: function() {
         o_widgets.addWidgetBehaviors();
         o_menu.menuBehaviors();
+        o_browse.browseBehaviors();
         return;
         o_search.searchBehaviors();
-        o_browse.browseBehaviors();
         o_collections.collectionBehaviors();
 
 

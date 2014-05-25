@@ -1,35 +1,34 @@
 <ul class="ace-thumbnails clearfix">
 {% for i in data  %}
 
-<li id = "gallery__{{i.ring_obs_id}}">
-	<a class = "shadowbox" href = "{{ path }}{{ i.full }}" data-rel="colorbox">
-		<img width = "150px" alt="{{ i.ring_obs_id }}" src = "{{ path }}{{ i.img }}">
+    <li id = "gallery__{{i.ring_obs_id}}">
+    	<a href = "{{ path }}{{ i.full }}" data-rel="colorbox">
+    		<img width = "150px" alt="{{ i.ring_obs_id }}" src = "{{ path }}{{ i.img }}">
 
-         <!-- div class="text">
-            <div class="inner">{{ i.ring_obs_id }}</div>
-         </div -->
+             <!-- div class="text">
+                <div class="inner">{{ i.ring_obs_id }}</div>
+             </div -->
 
-    </a>
-
-    <div class="tools tools-bottom">
-        <a href="#">
-            <i class="fa fa-link"></i>
         </a>
 
-        <a href="#">
-            <i class="fa fa-paperclip"></i>
-        </a>
+        <div class="tools tools-bottom">
 
-        <a href="#">
-            <i class="ace-icon fa fa-pencil"></i>
-        </a>
+            <a href="#">
+                <i class="ace-icon fa fa-link"></i>
+            </a>
 
-        <a href="#">
-            <i class="ace-icon fa fa-times red"></i>
-        </a>
-    </div>
+            <a href="#">
+                <i class="ace-icon fa fa-search-plus"></i>
+            </a>
+
+            <a href="#">
+                <i class="ace-icon fa fa-check"></i>
+            </a>
 
 
-</li>
+        </div>
+
+
+    </li>
 {% endfor %}
 </ul>

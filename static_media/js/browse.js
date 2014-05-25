@@ -12,6 +12,27 @@ var o_browse = {
 
     browseBehaviors: function() {
 
+
+        $('#browse').on("click", ".tools-bottom a", function() {
+
+            $ring_obs_id = $(this).parent().parent().attr("id").substring(9);
+            alert($ring_obs_id);
+
+            if ($(this).find('i').hasClass('fa-link')) {
+                alert('this is a link')
+            }
+            if ($(this).find('i').hasClass('fa-search-plus')) {
+                alert('this is a search')
+            }
+            if ($(this).find('i').hasClass('fa-check')) {
+                alert('this is a check')
+            }
+
+            return false;
+        });
+
+
+        /*
         $('.column_ordering a', '#browse').live("click", function() {
             var order = $(this).parent().parent().attr("class");
             if ($(this).attr("class") == "descending") {
@@ -94,9 +115,8 @@ var o_browse = {
                     o_collections.editCollection(range,'addrange');
                 }
             }
+
         });
-
-
 
         view_info = o_browse.getViewInfo();
         namespace = view_info['namespace'];
@@ -135,12 +155,6 @@ var o_browse = {
             return false;
         });
 
-
-        /* we are making this default no click necessary
-        $('.browse_footer', '#browse').bind('click', function() {
-           o_browse.GalleryFooterClick();
-        });
-        */
 
         // results paging
         $('.next, .prev').live('click', function() {
@@ -196,7 +210,10 @@ var o_browse = {
                 return false;
         });
 
-    },
+    */
+
+
+    }, // end browse behaviors
 
     browseControlIndicator: function(id) {
         view_info = o_browse.getViewInfo();
