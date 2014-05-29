@@ -581,6 +581,8 @@ var o_browse = {
 
     getBrowseTab: function() {
 
+        var url = "/opus/api/images/small.html?alt_size=full&";
+
         view_info = o_browse.getViewInfo();
         namespace = view_info['namespace'];
         view_var = view_info['view_var'];
@@ -593,8 +595,6 @@ var o_browse = {
         clearInterval(opus.scroll_watch_interval); // hold on cowboy only 1 page at a time
 
         o_browse.browseControlIndicator(false);
-
-        var url = "/opus/api/images/small.html?alt_size=full&";
 
         if (opus.prefs[prefix + 'browse'] == 'data') {
 
