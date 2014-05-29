@@ -31,8 +31,10 @@ var o_browse = {
             $(this).parent().show();
 
             // click to view detail page
-            if ($(this).find('i').hasClass('fa-link')) {
-                alert('this is a link to detail page')
+            if ($(this).find('i').hasClass('fa-list-alt')) {
+                opus.prefs.view = 'detail';
+                opus.prefs.detail = ring_obs_id;
+                opus.changeTab();
             }
 
             // click to view colorbox

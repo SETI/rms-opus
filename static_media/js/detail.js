@@ -5,7 +5,6 @@ var o_detail = {
         $('#detail_tab').fadeIn();
         $('#detail').html(opus.spinner);
         $('#detail_extra').html(ring_obs_id);
-        $("#tabs").tabs("select","#detail");
         $("#detail").load("/opus/api/detail/" + ring_obs_id + ".html", function(){ });
     },
 

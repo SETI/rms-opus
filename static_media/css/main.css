@@ -1,6 +1,7 @@
 .paging_indicator {
 }
 
+
 .browse_nav {
     position:fixed;
     top:45px;
@@ -41,8 +42,9 @@ float:right;
 }
 
 body {
-  min-height: 2-5px;-5px;-5px;px;
+  min-height: 500px;
   padding-top: 42px;
+
 }
 ul.ace-thumbnails {
     margin:-5px;; padding:-5px;;
@@ -53,11 +55,15 @@ ul.ace-thumbnails {
 #search, #browse, #collection, #detail {
     margin-top: -30px;
 }
+#detail {
+    padding:50px;
+}
+
 #browse {
     margin-top:20px;
 }
 .navbar-fixed-top + .main-container {
-    padding-top:-5px;px;
+    padding-top:-5px;
 }
 #search_widgets1 li, #search_widgets2 li {
     display:inline;
