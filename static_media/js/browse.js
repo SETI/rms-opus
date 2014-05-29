@@ -487,12 +487,15 @@ var o_browse = {
                 // $(next).find('input').attr('checked',true);
                 if (!next_element.find('.tools').hasClass("in")) {  // if not already checked
                     icon_a_element = next_element.find('.fa-check').parent(); //
-                    o_browse.toggleBrowseInCollectionStyle(ring_obs_id, icon_a_element);
+                    try {
+                        ring_obs_id = next_element.attr("id").split('__')[1];
+                        o_browse.toggleBrowseInCollectionStyle(ring_obs_id, icon_a_element);
+                    } catch(e) {}
                 }
 
                 // now move along
                 try {
-                    current_id = $(next_element).attr("id").split('__')[1];
+                    current_id = next_element.attr("id").split('__')[1];
                 } catch(e) {
                     break;  // no next_id means the view isn't drawn, so we don't need to worry about it
                 }
