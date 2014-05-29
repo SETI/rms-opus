@@ -3,8 +3,9 @@
 
     <li id = "gallery__{{i.ring_obs_id}}">
 
+        <!-- see getBrowseTab to control full and thumb sizes -->
     	<a class = "activeThumbnail" href = "{{ path }}{{ i.full }}" data-rel="colorbox">
-    		<img width = "150px" alt="{{ i.ring_obs_id }}" src = "{{ path }}{{ i.img }}">
+            <img width = "125px" alt="{{ i.ring_obs_id }}" src = "{{ path }}{{ i.img }}">
 
              <!-- div class="text">
                 <div class="inner">{{ i.ring_obs_id }}</div>
