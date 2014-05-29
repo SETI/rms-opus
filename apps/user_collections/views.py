@@ -6,7 +6,8 @@ from tools.app_utils import *
 from results.views import *
 from downloads.views import *
 
-
+import logging
+log = logging.getLogger(__name__)
 
 def sleepy():
     ''' ***************************************** remove me ***************************************** '''

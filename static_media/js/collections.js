@@ -8,6 +8,7 @@ var o_collections = {
      collectionBehaviors: function() {
 
 
+        // collection details hide/show
          $('#collections_summary_more','#collections').live("click", function() {
              if (opus.colls_options_viz) {
                  opus.colls_options_viz=false;
@@ -22,11 +23,10 @@ var o_collections = {
          });
 
 
+         // download options hide/show
          $('#download_options_link','#collections').live("click", function() {
              $('#download_options','#collections').slideToggle();
          });
-
-
 
          // check an input on selected products and images updates file_info
          $('#collections_summary input','#collections').live("click",function() {
@@ -37,11 +37,9 @@ var o_collections = {
                           $('#total_files').html(json['size']);
                           $('#download_size').html(json['count']);
                   }});
-
-
          });
 
-         // click
+         // click create zip file link on collections page
          $('a#create_zip_file','#collections').live("click", function() {
                 $('#zip_file', "#detail").html(opus.spinner + " zipping files");
                 add_to_url = [];
@@ -55,6 +53,7 @@ var o_collections = {
          });
 
 
+         // click create zip file link on detail page
          $('#create_zip_file', "#detail").live("click",function() {
              $('#zip_file', "#detail").html(opus.spinner + " zipping files");
               $.ajax({ url: $(this).attr("href"),
@@ -64,6 +63,7 @@ var o_collections = {
               return false;
          });
 
+         // empty collection button
          $('#empty_collection').live("click", function() {
              if (confirm("are you sure you want to delete all observations in your collection?")) {
                  o_collections.emptyCollection();
@@ -71,6 +71,8 @@ var o_collections = {
              return false;
          });
      },
+
+     // download filters
      getDownloadFiltersChecked: function() {
          // returned as url string
          product_types = [];
@@ -113,6 +115,7 @@ var o_collections = {
             }});
     },
 
+    // get Collections tab
     getCollectionsTab: function() {
         if (opus.collection_change) {
             // collection has changed wince tab was last drwan, fetch anew
@@ -127,8 +130,9 @@ var o_collections = {
         }
     },
 
+    // when you add to a collection you are really adding to a queue, this processes that queue
     processCollectionQueue: function() {
-        // start processing at the lowest item in queue
+        // start the lowest item in the queue, then trigger sendCollectionRequest again?
         found = false;
         for (request_no in opus.collection_queue) {
             if (!opus.collection_queue[request_no]['sent']) {
@@ -136,6 +140,7 @@ var o_collections = {
                 // this request is waiting to be sent
                 action = opus.collection_queue[request_no]['action'];
                 ringobsid = opus.collection_queue[request_no]['ringobsid'];
+                // alert('calling sendCollectionRequest for ' + ring_obs_id);
                 o_collections.sendCollectionRequest(action,ringobsid,request_no);
             }
         }
@@ -147,6 +152,10 @@ var o_collections = {
 
     // action = add/remove/addrange/removerange
     sendCollectionRequest: function(action,ringobsid,request_no) {
+        // this sends the ajax call to edit the cart on the server
+        // but this should really be a private method
+        // for adding/removing from cart see edit_collection()
+
         if (!opus.collection_q_intrvl) {
             opus.collection_q_intrvl = setInterval("o_collections.processCollectionQueue()", 3000); // resends any stray requests not recvd back from server
         }
@@ -178,10 +187,14 @@ var o_collections = {
         } else {
             url += "&ringobsid=" + ringobsid;
         }
+
+        // alert('sending ajax ')
         $.ajax({ url: url,
                   dataType:"json",
                success: function(json){
+
                    if (!json) {
+                        // alert('no json kay bai')
                        return;
                    }
                    try {
@@ -195,11 +208,12 @@ var o_collections = {
                    if (server_latest_processed == opus.lastCartRequestNo) {
                         // server has process all collection requests, this count is valid
                         count = json['count'];
+                        // alert('count: ' + count);
                         opus.colls_pages = Math.ceil(count/opus.prefs.limit);
-                        $('.collections_extra').html('(' + count + ')');
+                        $('#collections_count').html(count);
                         o_collections.resetCollectionQueue();
                    } else {
-                       alert('server last ' + server_latest_processed + ' client: ' + opus.lastCartRequestNo)
+                       // // alert('server last ' + server_latest_processed + ' client: ' + opus.lastCartRequestNo)
                    }
                }});
     },

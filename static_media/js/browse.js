@@ -12,23 +12,82 @@ var o_browse = {
 
     browseBehaviors: function() {
 
-
         $('#browse').on("click", ".tools-bottom a", function() {
 
-            $ring_obs_id = $(this).parent().parent().attr("id").substring(9);
+            ring_obs_id = $(this).parent().parent().attr("id").substring(9);
             $(this).parent().show();
 
+            // click to view detail page
             if ($(this).find('i').hasClass('fa-link')) {
                 alert('this is a link to detail page')
             }
+
+            // click to view colorbox
             if ($(this).find('i').hasClass('fa-search-plus')) {
                 // trigger colorbox, same as clicking anywhere on the thumbnail
-                $('#gallery__' + $ring_obs_id + "> a").trigger("click");
+                $('#gallery__' + ring_obs_id + "> a").trigger("click");
             }
+
+            // click to add/remove from  cart
             if ($(this).find('i').hasClass('fa-check')) {
-                $(this).parent().toggleClass("in");
+
+                // handle the visual indication of state
+                $(this).parent().toggleClass("in"); // this class keeps parent visible when mouseout
                 $(this).find('i').toggleClass('thumb_selected_icon');
-                $('#gallery__' + $ring_obs_id + ' .thumb_overlay').toggleClass('thumb_selected');
+                $('#gallery__' + ring_obs_id + ' .thumb_overlay').toggleClass('thumb_selected');
+
+                // is this checked? or unchecked..
+                action = 'remove';
+                if ($(this).parent().hasClass("in")) {
+                    action = 'add';  // this ring_obs_id is being added to cart
+                }
+                // alert(action + ' ' + ring_obs_id);
+
+                // make sure the checkbox for this observation in the other view (either data or gallery)
+                // is also checked/unchecked - if that view is drawn
+                browse_views = ['data','gallery'];
+                for (var key in browse_views) {
+                    bview = browse_views[key];
+                    checked = false;
+                    if (action == 'add') checked = true;
+                    try {
+                        $('#' + bview + 'input__' + ring_obs_id).attr('checked',checked);
+                    } catch(e) { } // view not drawn yet so no worries
+                }
+                // alert('still alive')
+
+                if (!opus.addrange_clicked) {
+                    o_collections.editCollection(ring_obs_id,action);
+                } else {
+                    // addrange clicked
+                    element = "li";
+                    if (opus.prefs.browse == 'data') {
+                            element = "td";
+                    }
+                    if (!opus.addrange_min) {
+                        // this is the min side of the range
+                        $('.addrange','#browse').text("select range end");
+                        index = $(element).index($(this).parent());
+                        opus.addrange_min = { "index":index, "ring_obs_id":ring_obs_id };
+                    } else {
+                        // we have both sides of range
+                        $('.addrange','#browse').text("add range");
+                        index = $(element).index($(this).parent());
+                        if (index > opus.addrange_min['index']) {
+                            range = opus.addrange_min['ring_obs_id'] + "," + ring_obs_id;
+                            o_browse.checkRangeBoxes(opus.addrange_min['ring_obs_id'], ring_obs_id);
+                        } else {
+                            // user clicked later box first, reverse them for server..
+                            range = ring_obs_id + "," + opus.addrange_min['ring_obs_id'];
+                            o_browse.checkRangeBoxes(ring_obs_id, opus.addrange_min['ring_obs_id']);
+                        }
+                        opus.addrange_clicked = false;
+                        opus.addrange_min = false;
+                        o_collections.editCollection(range,'addrange');
+                    }
+                }
+
+
             }
 
 
@@ -49,79 +108,16 @@ var o_browse = {
             return false;
         });
 
-
-        // add a new range pair
-        $('.addrange', '#browse').live("click", function() {
-            if ($('.addrange', '#browse').text() != "add range") {
-                alert('please select an observation to begin your range');
-                return false;
-            }
-            opus.addrange_clicked = true;
-            $('.addrange','#browse').text("select range start");
-            return false;
-        });
-
-        //hover states on the static widgets
-		$('.gallery_icons li.ui-state-default, .chosen_column_close', '#browse').live({
-            mouseenter:
-                function() { $(this).addClass('ui-state-hover'); },
-            mouseleave:
-                function() { $(this).removeClass('ui-state-hover'); }
-		});
-
-
+        */
 
         // gallery and table checkboxes
         // $('.gallery_icons input, .data_table input','#browse').live("click", function() {
-        $('.gallery_icons input, .data_table input').live("click", function() {
-            ring_obs_id = $(this).attr("id").split('__')[1];
-            $(this).is(':checked') ? action = 'add' :  action = 'remove';
+        $('.gallery_icons input, .data_table input').on("click", "a", function() {
 
-            // make sure the checkbox for this observation in the other view (either data or gallery)
-            // is also checked/unchecked - if that view is drawn
-            browse_views = ['data','gallery'];
-            for (var key in browse_views) {
-                bview = browse_views[key];
-                checked = false;
-                if (action == 'add') checked = true;
-                try {
-                    $('#' + bview + 'input__' + ring_obs_id).attr('checked',checked);
-                } catch(e) { } // view not drawn yet so no worries
-            }
-
-            if (!opus.addrange_clicked) {
-                o_collections.editCollection(ring_obs_id,action);
-            } else {
-                // addrange clicked
-                element = "li";
-                if (opus.prefs.browse == 'data') {
-                        element = "td";
-                }
-                if (!opus.addrange_min) {
-                    // this is the min side of the range
-                    $('.addrange','#browse').text("select range end");
-                    index = $(element).index($(this).parent());
-                    opus.addrange_min = { "index":index, "ring_obs_id":ring_obs_id };
-                } else {
-                    // we have both sides of range
-                    $('.addrange','#browse').text("add range");
-                    index = $(element).index($(this).parent());
-                    if (index > opus.addrange_min['index']) {
-                        range = opus.addrange_min['ring_obs_id'] + "," + ring_obs_id;
-                        o_browse.checkRangeBoxes(opus.addrange_min['ring_obs_id'], ring_obs_id);
-                    } else {
-                        // user clicked later box first, reverse them for server..
-                        range = ring_obs_id + "," + opus.addrange_min['ring_obs_id'];
-                        o_browse.checkRangeBoxes(ring_obs_id, opus.addrange_min['ring_obs_id']);
-                    }
-                    opus.addrange_clicked = false;
-                    opus.addrange_min = false;
-                    o_collections.editCollection(range,'addrange');
-                }
-            }
 
         });
 
+        /*
         view_info = o_browse.getViewInfo();
         namespace = view_info['namespace'];
         view_var = view_info['view_var'];
@@ -668,6 +664,13 @@ var o_browse = {
                }
                appendBrowsePage();
 
+            // get the browse nav header
+            $.ajax({ url: "browse_headers.html",
+                success: function(html){
+                   $('.browse_nav').html(html);
+            }});
+
+
             var $overflow = '';
             var colorbox_params = {
                 rel: 'colorbox',
@@ -694,8 +697,8 @@ var o_browse = {
                     $.colorbox.resize();
                 }
             };
+            $('.ace-thumbnails [data-rel="colorbox"]').colorbox(colorbox_params);
 
-    $('.ace-thumbnails [data-rel="colorbox"]').colorbox(colorbox_params);
 
                /* we are removing this footer, scrolling is always auto
                // if user is in auto mode remove the classes from the footer that make it appear clickable

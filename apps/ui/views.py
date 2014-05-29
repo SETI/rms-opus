@@ -46,7 +46,13 @@ class main_site(TemplateView):
         context['menu'] = menu['menu']
         return context
 
-def getDataTableHeaders(request,template='table_headers.html'):
+def get_browse_headers(request,template='browse_headers.html'):
+    return render_to_response(template,locals(), context_instance=RequestContext(request))
+
+
+
+
+def get_table_headers(request,template='table_headers.html'):
     slugs = request.GET.get('cols', settings.DEFAULT_COLUMNS)
     if not slugs: slugs = settings.DEFAULT_COLUMNS
     slugs = slugs.split(',')
@@ -80,7 +86,6 @@ def getMenuLabels(request):
     category_name is really div_title
     todo: change name of  field 'category_name' in param_info table to 'div_title'
     """
-
 
     if request and request.GET:
         (selections,extras) = urlToSearchParams(request.GET)
