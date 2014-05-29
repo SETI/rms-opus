@@ -188,10 +188,10 @@ var o_collections = {
             url += "&ringobsid=" + ringobsid;
         }
 
-        // alert('sending ajax ')
         $.ajax({ url: url,
-                  dataType:"json",
-               success: function(json){
+              dataType:"json", success: function(json){
+
+                   // alert(JSON.stringify(json));
 
                    if (!json) {
                         // alert('no json kay bai')
@@ -244,9 +244,9 @@ var o_collections = {
     editCollection: function(ring_obs_id, action) {
         opus.collection_change = true;
         opus.last_page.colls_browse = { 'data':0, 'gallery':0 };
-        opus.lastCartRequestNo++
-        $('.collections_extra').html(opus.spinner);
-        $('#collections_tab').fadeIn();
+        opus.lastCartRequestNo++;
+        // $('.collections_extra').html(opus.spinner);
+        // $('#collections_tab').fadeIn();
         opus.collection_queue[opus.lastCartRequestNo] = {"action":action, "ringobsid":ring_obs_id, "sent":false}
         o_collections.processCollectionQueue();
     },

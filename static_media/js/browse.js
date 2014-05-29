@@ -12,6 +12,19 @@ var o_browse = {
 
     browseBehaviors: function() {
 
+       // add a new range pair
+        $('#browse').on("click", '.addrange', function() {
+
+            if ($('.addrange', '#browse').text() != "add range") {
+                alert('please select an observation to begin your range');
+                return false;
+            }
+            opus.addrange_clicked = true;
+            $('.addrange','#browse').text("select range start");
+            return false;
+        });
+
+        // click a browse tools icon
         $('#browse').on("click", ".tools-bottom a", function() {
 
             ring_obs_id = $(this).parent().parent().attr("id").substring(9);
@@ -32,16 +45,13 @@ var o_browse = {
             if ($(this).find('i').hasClass('fa-check')) {
 
                 // handle the visual indication of state
-                $(this).parent().toggleClass("in"); // this class keeps parent visible when mouseout
-                $(this).find('i').toggleClass('thumb_selected_icon');
-                $('#gallery__' + ring_obs_id + ' .thumb_overlay').toggleClass('thumb_selected');
+                o_browse.toggleBrowseInCollectionStyle(ring_obs_id, this);
 
                 // is this checked? or unchecked..
                 action = 'remove';
                 if ($(this).parent().hasClass("in")) {
                     action = 'add';  // this ring_obs_id is being added to cart
                 }
-                // alert(action + ' ' + ring_obs_id);
 
                 // make sure the checkbox for this observation in the other view (either data or gallery)
                 // is also checked/unchecked - if that view is drawn
@@ -54,25 +64,33 @@ var o_browse = {
                         $('#' + bview + 'input__' + ring_obs_id).attr('checked',checked);
                     } catch(e) { } // view not drawn yet so no worries
                 }
-                // alert('still alive')
 
+                // check if we are clicking as part of an 'add range' interaction
                 if (!opus.addrange_clicked) {
+
+                    // no add range, just add this obs to collection
                     o_collections.editCollection(ring_obs_id,action);
+
                 } else {
                     // addrange clicked
+
                     element = "li";
                     if (opus.prefs.browse == 'data') {
                             element = "td";
                     }
                     if (!opus.addrange_min) {
+
                         // this is the min side of the range
                         $('.addrange','#browse').text("select range end");
-                        index = $(element).index($(this).parent());
+                        index = $('#gallery__' + ring_obs_id).index();
                         opus.addrange_min = { "index":index, "ring_obs_id":ring_obs_id };
+
                     } else {
                         // we have both sides of range
+
                         $('.addrange','#browse').text("add range");
-                        index = $(element).index($(this).parent());
+                        index = $('#gallery__' + ring_obs_id).index();
+
                         if (index > opus.addrange_min['index']) {
                             range = opus.addrange_min['ring_obs_id'] + "," + ring_obs_id;
                             o_browse.checkRangeBoxes(opus.addrange_min['ring_obs_id'], ring_obs_id);
@@ -81,19 +99,18 @@ var o_browse = {
                             range = ring_obs_id + "," + opus.addrange_min['ring_obs_id'];
                             o_browse.checkRangeBoxes(ring_obs_id, opus.addrange_min['ring_obs_id']);
                         }
+
+                        o_collections.editCollection(range,'addrange');
+
                         opus.addrange_clicked = false;
                         opus.addrange_min = false;
-                        o_collections.editCollection(range,'addrange');
+
                     }
                 }
-
-
             }
 
-
             return false;
-        });
-
+        }); // end click a browse tools icon
 
         /*
         $('.column_ordering a', '#browse').live("click", function() {
@@ -110,12 +127,6 @@ var o_browse = {
 
         */
 
-        // gallery and table checkboxes
-        // $('.gallery_icons input, .data_table input','#browse').live("click", function() {
-        $('.gallery_icons input, .data_table input').on("click", "a", function() {
-
-
-        });
 
         /*
         view_info = o_browse.getViewInfo();
@@ -214,6 +225,14 @@ var o_browse = {
 
 
     }, // end browse behaviors
+
+
+    toggleBrowseInCollectionStyle: function(ring_obs_id, icon_a_element) {
+        $(icon_a_element).parent().toggleClass("in"); // this class keeps parent visible when mouseout
+        $(icon_a_element).find('i').toggleClass('thumb_selected_icon');
+        $('#gallery__' + ring_obs_id + ' .thumb_overlay').toggleClass('thumb_selected');
+    },
+
 
     browseControlIndicator: function(id) {
         view_info = o_browse.getViewInfo();
@@ -446,20 +465,34 @@ var o_browse = {
 
     */
 
+
     checkRangeBoxes: function(ring_obs_id1, ring_obs_id2) {
+        // make all list/td elements bt r1 and r2 be added to cart
+
         elements = ['#gallery__','#data__'];
         for (var key in elements) {
             element = elements[key];
-            next_id = ring_obs_id1;
-            while (next_id != ring_obs_id2) {
-                next = $(element + next_id, '#browse').next();
-                if (next.hasClass("inifite_scroll_page")) {
+            current_id = ring_obs_id1;
+            while (current_id != ring_obs_id2) {
+
+                // we know that the endpoints are already checked, so start with the next li element
+                next_element = $(element + current_id, '#browse').next();
+                /*
+                if (next_element.hasClass("inifite_scroll_page")) {
                     // this is the infinite scroll indicator, continue to next
-                    next = $(element + next_id, '#browse').next().next();
+                    next_element = $(element + current_id, '#browse').next().next();
                 }
-                $(next).find('input').attr('checked',true);
+                */
+                // check the boxes:
+                // $(next).find('input').attr('checked',true);
+                if (!next_element.find('.tools').hasClass("in")) {  // if not already checked
+                    icon_a_element = next_element.find('.fa-check').parent(); //
+                    o_browse.toggleBrowseInCollectionStyle(ring_obs_id, icon_a_element);
+                }
+
+                // now move along
                 try {
-                    next_id = $(next).attr("id").split('__')[1];
+                    current_id = $(next_element).attr("id").split('__')[1];
                 } catch(e) {
                     break;  // no next_id means the view isn't drawn, so we don't need to worry about it
                 }
