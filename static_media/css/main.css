@@ -1,3 +1,6 @@
+.paging_indicator {
+}
+
 .browse_nav {
     position:fixed;
     top:45px;
@@ -13,7 +16,7 @@
     right:0;
     bottom:0;
     pointer-events:none;
-    z-index:9999;
+    z-index:999;
     /* border:7px solid #49afcd; */
 }
 .thumb_overlay a:hover { color:#00FFFF; font-size:130% }
