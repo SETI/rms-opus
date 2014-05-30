@@ -13,10 +13,22 @@
 
         </a>
 
-        <div class="tools tools-bottom">
+        <div class="tools tools-bottom
+
+            {% if i.in_collection %}
+               in
+            {% endif %}
+
+            ">
 
             <a href="#">
-                <i class="gallery_icons ace-icon fa fa-check"></i>
+                <i class="gallery_icons ace-icon fa fa-check
+
+                {% if i.in_collection %}
+                   thumb_selected_icon
+                {% endif %}
+
+                "></i>
             </a>
 
             <!-- a href="#">
@@ -30,7 +42,13 @@
 
         </div>
 
-        <div class = "thumb_overlay">&nbsp;</div>
+        <div class = "thumb_overlay
+
+            {% if i.in_collection %}
+               thumb_selected
+            {% endif %}
+
+        ">&nbsp;</div>
 
     </li>
 {% endfor %}
