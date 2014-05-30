@@ -108,7 +108,7 @@ var o_collections = {
                        opus.last_page.colls_browse = { 'data':0, 'gallery':0 }; // reset the last_page drawn tracker
                        $('#collections_tab').fadeIn();
                        opus.colls_pages = Math.ceil(count/opus.prefs.limit);
-                       $('.collections_extra').html('(' + count + ')');
+                        $('#collections_count').html(count);
 
                    }
                    opus.lastCartRequestNo = parseInt(json['expected_request_no']) - 1
