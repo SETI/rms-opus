@@ -8,47 +8,46 @@
 $(document).ready(function() {
 
     o_hash.initFromHash(); // just returns null if no hash
+    if (!opus.prefs.view) {
+        opus.prefs.view = 'search';
+    }
+    opus.changeTab();
 
-    // main navbar behaviors
+    // add the navbar clicking behaviors, selecting which tab to view:
+    // see triggerNavbarClick
     $('#navbar').on("click", '.navbar-nav li', function() {
 
-        // handle showing what menu tab is active
-        $('.navbar-nav li').each(function(index) {
+        // remove the active class on whatever other tab it is on
+        $('.navbar-nav li', '#navbar').each(function(index, value) {
             if ($(this).hasClass("active")) {
                 $(this).toggleClass("active");
-                return false; // aka break from each
+                return false; // we found the active one, so break from this each
             }
         });
+        $(this).addClass("active");
 
+        // find out which tab they clicked
         tab = $(this).find('a').attr('href').substring(1);
         if (tab == '/') {
-            return true;
+            return true;  // they clicked the brand icon, take them to its link
         }
-        if (!tab) { tab = "search"; }
-        $(this).addClass("active");
-        opus.prefs.view = tab;
 
+        if (!tab) { tab = opus.prefs.search; }
+        opus.prefs.view = tab;
+        o_hash.updateHash();
         opus.changeTab();
+
+        $(this).find('a').blur(); // or else it holds the hover style which is stoo pid.
 
         return false;
 
     });
 
-    // figure out which tab is up now
-    opus.changeTab();
-
-
-    $('.navbar-nav li a[href="#search"]', '#navbar').trigger("click");
-
-    // initiate the correct view behavior - which tab is on top on page load
-
     opus.addAllBehaviors();
 
-    // watching the url for changes
+    // watch the url for changes
     setInterval(opus.load, 1000);
     return;
-
-    $('#search').css('display','inline-block');
 
     o_collections.initCollection();
 
@@ -76,7 +75,7 @@ var opus = {
     lastCartRequestNo: 0,
 
     // client side prefs, changes to these do not trigger page/query load
-    prefs:{ 'view':'search',
+    prefs:{ 'view':'',
             'page':1,
             'colls_page':1,
             'limit': 100,
@@ -241,8 +240,12 @@ var opus = {
       });
     },
 
+    triggerNavbarClick: function() {
+        $('.navbar-nav li a[href="#' + opus.prefs.view + '"]', '#navbar').trigger("click");
+    },
 
     changeTab: function() {
+        // first hide everything
         $('#search, #detail, #collection, #browse').hide();
 
         switch(opus.prefs.view) {

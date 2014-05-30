@@ -12,7 +12,7 @@ var o_browse = {
 
     browseBehaviors: function() {
 
-       // add a new range pair
+       // 'add range' adds a range of observations to collection
         $('#browse').on("click", '.addrange', function() {
 
             if ($('.addrange', '#browse').text() != "add range") {
@@ -34,7 +34,7 @@ var o_browse = {
             if ($(this).find('i').hasClass('fa-list-alt')) {
                 opus.prefs.view = 'detail';
                 opus.prefs.detail = ring_obs_id;
-                opus.changeTab();
+                opus.triggerNavbarClick();
             }
 
             // click to view colorbox
@@ -688,11 +688,6 @@ var o_browse = {
                     // turn the scroll watch timer back on
                     opus.scroll_watch_interval = setInterval(o_browse.browseScrollWatch, 1000);
 
-                    // bring back the nav bar and footer button
-                    $('.nav', namespace).css('visibility','visible');
-                    /* this is now default no showing/hiding
-                        $('.browse_footer_label', '#browse').html('<a href = "">more</a>');
-                    */
                     opus.prefs[view_var] == 'gallery' ? footer_clicks = opus.browse_footer_clicks[prefix + 'gallery'] : footer_clicks = opus.browse_footer_clicks[prefix + 'data'];
 
                     // if they've clicked here x times show the checkbox
@@ -702,59 +697,41 @@ var o_browse = {
                }
                appendBrowsePage();
 
-            // get the browse nav header
-            $.ajax({ url: "browse_headers.html",
-                success: function(html){
-                   $('.browse_nav').html(html);
-            }});
+                // get the browse nav header
+                $.ajax({ url: "browse_headers.html",
+                    success: function(html){
+                       $('.browse_nav').html(html);
+                }});
 
+                var $overflow = '';
+                var colorbox_params = {
+                    rel: 'colorbox',
 
-            var $overflow = '';
-            var colorbox_params = {
-                rel: 'colorbox',
+                    className:"gallery_overlay_bg",
 
-                className:"gallery_overlay_bg",
-
-                reposition:false,
-                scalePhotos:true,
-                scrolling:false,
-                previous: '<i class="ace-icon fa fa-arrow-left"></i>',
-                next: '<i class="ace-icon fa fa-arrow-right"></i>',
-                close:'&times;',
-                current:'{current} of {total}',
-                maxWidth:'100%',
-                maxHeight:'100%',
-                onOpen:function(){
-                    $overflow = document.body.style.overflow;
-                    document.body.style.overflow = 'hidden';
-                },
-                onClosed:function(){
-                    document.body.style.overflow = $overflow;
-                },
-                onComplete:function(){
-                    $.colorbox.resize();
-                }
-            };
-            $('.ace-thumbnails [data-rel="colorbox"]').colorbox(colorbox_params);
-
-
-               /* we are removing this footer, scrolling is always auto
-               // if user is in auto mode remove the classes from the footer that make it appear clickable
-               if (opus.browse_auto == 'checked' && !opus.browse_footer_style_disabled) {
-                   // $(',browse_footer', '#browse').css('cursor','auto');
-                   $('.browse_footer', '#browse').removeClass('button');
-                   $('.browse_footer', '#browse').addClass('button_disabled');
-                   opus.browse_footer_style_disabled = true;
-               } else if (opus.browse_auto != 'checked' && opus.browse_footer_style_disabled) {
-                   $('.browse_footer', '#browse').removeClass('button_disabled');
-                   $('.browse_footer', '#browse').addClass('button');
-                   opus.browse_footer_style_disabled = false;
-               }
-               */
+                    reposition:false,
+                    scalePhotos:true,
+                    scrolling:false,
+                    previous: '<i class="ace-icon fa fa-arrow-left"></i>',
+                    next: '<i class="ace-icon fa fa-arrow-right"></i>',
+                    close:'&times;',
+                    current:'{current} of {total}',
+                    maxWidth:'100%',
+                    maxHeight:'100%',
+                    onOpen:function(){
+                        $overflow = document.body.style.overflow;
+                        document.body.style.overflow = 'hidden';
+                    },
+                    onClosed:function(){
+                        document.body.style.overflow = $overflow;
+                    },
+                    onComplete:function(){
+                        $.colorbox.resize();
+                    }
+                };
+                $('.ace-thumbnails [data-rel="colorbox"]').colorbox(colorbox_params);
 
             }
-
-
 
         });
     },
