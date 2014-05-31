@@ -1,7 +1,11 @@
 .paging_indicator {
+    color:white;
+    margin-top:15px;
 }
-
-
+.paging_indicator input[type="text"] {
+    width:40px;
+    height:20px;
+}
 .browse_nav {
     position:fixed;
     top:45px;
@@ -35,10 +39,8 @@ a i.fa-search-plus:hover {
     visibility: visible;
 }
 
-
 .ace-thumbnails > li > .tools.tools-bottom a{
-float:right;
-
+    float:right;
 }
 
 body {
@@ -76,11 +78,11 @@ ul.ace-thumbnails {
 }
 .sidebar {
     margin-left:3px;
-    width:27-5px;px;
+    width:275px
 }
 .spinner {
     background-image: url('http://pds-rings.seti.org/~lballard/django_opus/static_media/images/spinner.gif');
-    width:2-5px;px;
+    width:25px;
     display:inline-block;
     background-repeat: no-repeat;
 }
