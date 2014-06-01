@@ -566,8 +566,8 @@ var o_browse = {
     */
     getViewInfo: function() {
         // this function handles fetching the browse views - gallery or table - for both the Browse and Collections tabs
-        if (opus.prefs.view == 'collections') {
-            namespace = '#collections';
+        if (opus.prefs.view == 'collection') {
+            namespace = '#collection';
             view_var = 'colls_browse';  // which view is showing on page, gallery or table, contained in opus.prefs.[view_var]
             prefix = 'colls_';
             add_to_url = "&colls=true";
@@ -613,7 +613,6 @@ var o_browse = {
         $('#' + prefix + 'pages', namespace).html(opus[prefix + 'pages']);
 
         // $(".browse_footer_label", '#browse').empty().html(opus.spinner);   made default
-
 
         opus.prefs[view_var] == 'gallery' ? footer_clicks = opus.browse_footer_clicks[prefix + 'gallery'] : footer_clicks = opus.browse_footer_clicks[prefix + 'data'];
 
@@ -664,7 +663,6 @@ var o_browse = {
         }
         url += '&page=' + page;
 
-
         // NOTE if you change alt_size=full here you must also change it in gallery.html template
         $.ajax({ url: url,
             success: function(html){
@@ -695,12 +693,14 @@ var o_browse = {
                         $('.browse_footer_checkbox', namespace).html('<input type="checkbox" name="browse_auto" ' + opus.browse_auto + '>load automatically when scrolling to end');
                     }
                }
+
+
                appendBrowsePage();
 
                 // get the browse nav header
                 $.ajax({ url: "browse_headers.html",
                     success: function(html){
-                       $('.browse_nav').html(html);
+                       $('.browse_nav', namespace).html(html);
                 }});
 
                 var $overflow = '';

@@ -273,7 +273,7 @@ var opus = {
                 $('#collection').show();
                 opus.collection_change = true;
                 if (opus.prefs.colls_browse == 'data') {
-                    $('.data_container','#collection').show();
+                    $('.data_table','#collection').show();
                     $(',gallery','#collection').hide();
                 }
                 o_collections.getCollectionsTab();
@@ -283,7 +283,6 @@ var opus = {
                 o_search.getSearchTab();
 
         } // end switch
-
 
     },
 
