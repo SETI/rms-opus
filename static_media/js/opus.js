@@ -269,12 +269,12 @@ var opus = {
                 o_detail.getDetail(opus.prefs.detail);
                 break;
 
-            case 'collections':
+            case 'collection':
                 $('#collection').show();
                 opus.collection_change = true;
                 if (opus.prefs.colls_browse == 'data') {
-                    $('.data_container','#collections').show();
-                    $(',gallery','#collections').hide();
+                    $('.data_container','#collection').show();
+                    $(',gallery','#collection').hide();
                 }
                 o_collections.getCollectionsTab();
                 break;
@@ -292,9 +292,9 @@ var opus = {
         o_widgets.addWidgetBehaviors();
         o_menu.menuBehaviors();
         o_browse.browseBehaviors();
+        o_collections.collectionBehaviors();
         return;
         o_search.searchBehaviors();
-        o_collections.collectionBehaviors();
 
 
         // these are the default open groups/cats

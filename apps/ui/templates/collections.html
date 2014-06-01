@@ -1,12 +1,4 @@
-{% extends "base_opus.html" %}
-
-{# this is in the '#collections' div / jquery context}
-
-{% block base %}
-{% block content %}
-{% block browse_controls %}
-{% block browse_container %}
-
+{% include "browse_headers.html" %}
 
 <div id = "collections_summary">
 	<h2>Collection Summary</h2>
@@ -67,18 +59,7 @@
 
 <div id = "collections_browse">
 
-	{{ block.super }}
 
 </div>
 
 
-
-
-
-
-
-
-{% endblock %} {# browse_container #}
-{% endblock %} {# browse_controls #}
-{% endblock %} {# content #}
-{% endblock %} {# basee #}

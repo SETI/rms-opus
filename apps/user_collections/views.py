@@ -65,7 +65,9 @@ def view_collection(request, collection_name, template="collections.html"):
     limit = int(request.GET.get('limit',100))
     order = int(request.GET.get('order',150))
     column_slugs = request.GET.get('cols',settings.DEFAULT_COLUMNS)
-    from results.views import *
+
+    from results.views import *  # circulosity
+
     column_slugs = column_slugs.split(',')
     columns = []
     for slug in column_slugs:
