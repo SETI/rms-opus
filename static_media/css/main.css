@@ -1,3 +1,9 @@
+#collections_summary {
+    width:60%;
+    margin:auto;
+    padding:20px 30px;
+}
+
 .paging_indicator {
     color:white;
     margin-top:15px;
@@ -6,7 +12,11 @@
     width:40px;
     height:20px;
 }
-.browse_nav {
+#collection .browse_nav {
+    z-index:9999;
+    width:100%;
+}
+#browse .browse_nav {
     position:fixed;
     top:45px;
     left:0;
