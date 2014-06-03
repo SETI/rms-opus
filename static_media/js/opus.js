@@ -248,10 +248,11 @@ var opus = {
         // first hide everything
         $('#search, #detail, #collection, #browse').hide();
 
+
         switch(opus.prefs.view) {
 
             case 'search':
-                $('#search').show();
+                $('#search').fadeIn();
                 o_search.getSearchTab();
                 break;
 
@@ -260,22 +261,22 @@ var opus = {
                     $('.data_container','#browse').show();
                     $(',gallery','#browse').hide();
                 }
-                $('#browse').show();
+                $('#browse').fadeIn();
                 o_browse.getBrowseTab();
                 break;
 
             case 'detail':
-                $('#detail').show();
+                $('#detail').fadeIn();
                 o_detail.getDetail(opus.prefs.detail);
                 break;
 
             case 'collection':
-                $('#collection').show();
                 opus.collection_change = true;
                 if (opus.prefs.colls_browse == 'data') {
                     $('.data_table','#collection').show();
                     $(',gallery','#collection').hide();
                 }
+                $('#collection').fadeIn();
                 o_collections.getCollectionsTab();
                 break;
 
