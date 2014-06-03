@@ -77,6 +77,13 @@ ul.ace-thumbnails {
 .navbar-fixed-top + .main-container {
     padding-top:-5px;
 }
+.navbar-nav li.active:hover {
+    background: white !important;
+}
+.navbar-nav li.active a:hover {
+    color: #383838 !important;
+}
+
 #search_widgets1 li, #search_widgets2 li {
     display:inline;
     list-style-type:none;
