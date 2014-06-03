@@ -219,7 +219,7 @@ var o_collections = {
     emptyCollection: function() {
         o_collections.resetCollectionQueue();
         opus.lastCartRequestNo = 0;
-        $('.collections_extra').html('(0)');
+        $('#collection_count').html('0');
         $.ajax({ url: "/opus/collections/reset.html"});
         function collTransition() {
             $('.gallery, .data_table','#collection').fadeOut(function() {
@@ -231,6 +231,7 @@ var o_collections = {
         // uncheck any range boxes
         $('.gallery input', '#browse').attr('checked',false);
         $('.data_container input, .gallery input', '#collection').attr('checked',false);
+
     },
 
     resetCollectionQueue: function() {
