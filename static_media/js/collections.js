@@ -219,8 +219,11 @@ var o_collections = {
     emptyCollection: function() {
         o_collections.resetCollectionQueue();
         opus.lastCartRequestNo = 0;
+        // change indicator to zero and let the server know:
         $('#collection_count').html('0');
         $.ajax({ url: "/opus/collections/reset.html"});
+
+        // hide the collection data viewing page
         function collTransition() {
             $('.gallery, .data_table','#collection').fadeOut(function() {
                 $('.gallery, .data_table','#collection').empty();
@@ -228,10 +231,11 @@ var o_collections = {
             $('.gallery, .data_table','#collection').fadeIn();
         }
         collTransition();
-        // uncheck any range boxes
-        $('.gallery input', '#browse').attr('checked',false);
-        $('.data_container input, .gallery input', '#collection').attr('checked',false);
 
+        // remove 'in collection' styles in gallery/data view
+        $('.tools-bottom', '.gallery').removeClass("in"); // this class keeps parent visible when mouseout
+        $('i.fa-check', '.gallery').removeClass('thumb_selected_icon');
+        $('.thumb_overlay', '.gallery').removeClass('thumb_selected');
     },
 
     resetCollectionQueue: function() {
