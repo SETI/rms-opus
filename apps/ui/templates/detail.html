@@ -1,49 +1,55 @@
-<div id = "detail_image">
-	<a class = "shadowbox" href = "{{ path }}{{ img.full }}" rel="shadowbox" target = "_blank">
-	<img  id = "detail__{{ img.ring_obs_id }}" src = "{{ path }}{{ img.med }}">
-	</a>
-</div>
+<div class = "col-md-6"><!-- data col -->
 
-<h2> Products: </h2>
-<ul>
-{% for product_type, files in file_list.items %}
-   <li><strong>{{ product_type }}</strong>
-	<ul>
-	   {% for f in files %}
-			<li><a href = "{{ f.link }}">{{ f.ext }}</a> </li>
-		{% endfor %}
-	</ul>
-{% endfor %}
-</ul>
-<div id = "zip_file">
-<a id = "create_zip_file" href = "zip/{{ img.ring_obs_id}}.json">create_tar_archive</a>
-</div>
+    <h2> Products: </h2>
 
-<div><h2>Rings Node generated products:</h2>
+    <ul>
+        {% for product_type, files in file_list.items %}
+           <li><strong>{{ product_type }}</strong>
+            	<ul>
+            	   {% for f in files %}
+            			<li><a href = "{{ f.link }}" target = "_blank">{{ f.ext }}</a> </li>
+            		{% endfor %}
+            	</ul>
+            </li>
+        {% endfor %}
+    </ul>
+
+    <p>
+        <a id = "create_zip_file" href = "zip/{{ img.ring_obs_id}}.json">create_tar_archive</a>
+    </p>
+
+    <h2>Rings Node generated products:</h2>
+
 	<p>JPGs:
-	 <a target = "_blank" href = "{{ path }}{{ img.full }}">full</a>   •
-	 <a target = "_blank" href = "{{ path }}{{ img.med }}">medium</a>  •
-	 <a target = "_blank" href = "{{ path }}{{ img.small }}">small</a> •
- <a target = "_blank" href = "{{ path }}{{ img.thumb }}">thumb</a>
-</p>
-<div>
+    	 <a target = "_blank" href = "{{ path }}{{ img.full }}">full</a>   •
+    	 <a target = "_blank" href = "{{ path }}{{ img.med }}">medium</a>  •
+    	 <a target = "_blank" href = "{{ path }}{{ img.small }}">small</a> •
+         <a target = "_blank" href = "{{ path }}{{ img.thumb }}">thumb</a>
+    </p>
 
+    <h2>Data:</h2>
 
-<h2>Data:</h2>
-<div>
-<a href = "api/detail/{{ img.ring_obs_id }}.json" target = "_blank">grab json</a>
+    <p>
+        <a href = "api/detail/{{ img.ring_obs_id }}.json" target = "_blank">get as json</a>
+    </p>
+
+    <ul id = "detail_data">
+        {% for cat,d in data.items %}
+        <li>{{ cat }}:
+            <ul>
+            {% for param,val  in d.items %}
+                <li>
+                {{ param }}: {{val}}
+                </li>
+            {% endfor %}
+            </ul>
+        {% endfor %}
+    </ul>
+
+</div><!-- /data col -->
+
+<div id = "detail_image" class = "col-md-6">
+    <a class = "shadowbox" href = "{{ path }}{{ img.full }}" rel="shadowbox" target = "_blank">
+        <img  id = "detail__{{ img.ring_obs_id }}" src = "{{ path }}{{ img.med }}">
+    </a>
 </div>
-
-<ul id = "detail_data">
-	{% for cat,d in data.items %}
-	<li>{{ cat }}:
-		<ul>
-		{% for param,val  in d.items %}
-			<li>
-			{{ param }}: {{val}}
-			</li>
-		{% endfor %}
-		</ul>
-	{% endfor %}
-</ul>
-
