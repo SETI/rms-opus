@@ -1,61 +1,59 @@
-<div id = "collections_summary" class="widget-box">
+<div id = "collections_summary" class="">
 
-    <div class="widget-header widget-header-small widget-header-fla">In Your Collection</div>
+    <h2>In Your Collection</h2>
 
-    <div class="widget-body">
-        Total Files: <span id = "total_files">{{download_count}}</span>
-    	&nbsp;&nbsp;&nbsp;
-    	Total Size (before zip): <span id = "download_size">{{download_size}}</span>
+    Total Files: <span id = "total_files">{{download_count}}</span>
+	&nbsp;&nbsp;&nbsp;
+	Total Size (before zip): <span id = "download_size">{{download_size}}</span>
 
-    	<h3><a href = "" id = "download_options_link">Download</a></h3>
+	<h3><a href = "" id = "download_options_link">Download</a></h3>
 
-    	<div id = "downlaod_options">
-        	<p><strong>Product Types:</strong></p>
+	<div id = "downlaod_options">
+    	<p><strong>Product Types:</strong></p>
 
-        	<ul id = "product_types" class = "list-inline">
-        	 {% for ptype in product_types %}
-                <li><span> <input type = "checkbox" value = "{{ ptype.product_type }}"
-                		{% for k,v in product_counts.items %} {# loop through product count list #}
-                		  	{% if k == ptype.product_type %} {# if this product_type matches outer loop ptype, draw.. #}
-                    {% if v > 0 %}    {# this has a number, check the input adn display number #}
-                					  	 checked>
-                							 <span>{{ ptype.product_type }}</span>
-                							 <span class = "product_count hints"> {{ v }}</span>
-                						{% else %}{% if v == 0 %} {# this doesn't have number, display with fadey class #}
-                							><span class = "fadey">{{ ptype.product_type }}</span>
-                						{% endif %}{% endif %}
+    	<ul id = "product_types" class = "list-inline">
+    	 {% for ptype in product_types %}
+            <li><span> <input type = "checkbox" value = "{{ ptype.product_type }}"
+            		{% for k,v in product_counts.items %} {# loop through product count list #}
+            		  	{% if k == ptype.product_type %} {# if this product_type matches outer loop ptype, draw.. #}
+                {% if v > 0 %}    {# this has a number, check the input adn display number #}
+            					  	 checked>
+            							 <span>{{ ptype.product_type }}</span>
+            							 <span class = "product_count hints"> {{ v }}</span>
+            						{% else %}{% if v == 0 %} {# this doesn't have number, display with fadey class #}
+            							><span class = "fadey">{{ ptype.product_type }}</span>
+            						{% endif %}{% endif %}
 
-                			  {% endif %}
-                		{% endfor %}
-                		</span>
-                </li>
+            			  {% endif %}
+            		{% endfor %}
+            		</span>
+            </li>
 
-        	 {% endfor %}
-        	</ul>
+    	 {% endfor %}
+    	</ul>
 
-        	<p><strong>Compressed Images:</strong></p>
-        	<ul id = "image_types" class = "list-inline">
-        	 {% for i in image_types %}
-        		    <li><input type = "checkbox" value = "{{ i }}"> {{ i }} <span class = "hints">{{ image_count }}</span></li>
-        	 {% endfor %}
-        	</ul>
+    	<p><strong>Compressed Images:</strong></p>
+    	<ul id = "image_types" class = "list-inline">
+    	 {% for i in image_types %}
+    		    <li><input type = "checkbox" value = "{{ i }}"> {{ i }} <span class = "hints">{{ image_count }}</span></li>
+    	 {% endfor %}
+    	</ul>
 
-        	<div class = "download_buttons">
-                <ul class = "list-inline">
-                    <li><a id = "create_zip_file" href = "/collections/download/default.zip">Create Tar Archive</a></li>
-                </ul>
-        	</div>
+    	<div class = "download_buttons">
+            <ul class = "list-inline">
+                <li><a id = "create_zip_file" href = "/collections/download/default.zip">Create Tar Archive</a></li>
+            </ul>
+    	</div>
 
-            <div id = "zip_files"></div>
+        <div id = "zip_files"></div>
 
-        </div><!-- /downlaod_options -->
+    </div><!-- /downlaod_options -->
 
-        <h3>
-            <a href = "" id = "empty_collection">remove all<a/>
-        </h3>
+    <h3>
+        <a href = "" id = "empty_collection">remove all<a/>
+    </h3>
 
-    </div><!-- /widget-body -->
-</div><!-- /collections_summary widget_box -->
+</div><!-- /collections_summary  -->
 
 <div id = "collections_browse">
 
