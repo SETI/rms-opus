@@ -51,6 +51,9 @@ body {
 .collection_details {
     padding:20px 40px;
 }
+.collection_download_button {
+    padding-top:0px;
+}
 ul.ace-thumbnails {
     margin:-5px;; padding:-5px;;
 }
