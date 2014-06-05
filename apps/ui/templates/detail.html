@@ -1,7 +1,11 @@
 <div class = "col-md-6"><!-- data col -->
 
     <div class = "well well-lg col-md-12">
-        <h2> PDS Products </h2>
+
+        <h1>Ring Observation Detail </h1>
+        <p><b>Ring Observation ID: </b>{{ img.ring_obs_id}}</p>
+
+        <h3> PDS Products: </h3>
 
         <div class = "col-md-8">
 
@@ -13,19 +17,23 @@
                     		{% endfor %}
                 {% endfor %}
             </ul>
+
         </div>
-        <div class = "col-lg-4 collection_download_button">
+
+        <div class = "col-md-4 collection_download_button">
             <a title = "download as tar archive" id = "create_zip_file" href = "zip/{{ img.ring_obs_id}}.json">
                 <button type="button" class="btn btn-sm btn-purple">
                     <b>Download All</b>
                 </button>
             </a>
         </div>
+
+
     </div>
 
     <div class = "col-md-12 well well-lg">
 
-        <h2>Rings Node supplimental products</h2>
+        <h2>Rings Node Supplemental Products:</h2>
 
             <ul class = "list-inline">
                 Preview Images:
@@ -42,7 +50,7 @@
 
 
     <div class = "col-md-12 well well-lg ">
-        <h3>OPUS Metadata </h3>
+        <h3>Metadata for this Observation:</h3>
 
         <ul id = "detail_data" class = "">
             {% for cat,d in data.items %}

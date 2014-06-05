@@ -668,16 +668,9 @@ var o_browse = {
             success: function(html){
                // bring in the new images
                function appendBrowsePage() {
-                   // append browse page
 
-                    /**
-                    if (footer_clicks) {
-                        // user is infinite scrolling, append a row that indicates page number here
-                        // opus.prefs.browse == 'gallery' ? $(html).appendTo('.gallery', '#browse') : $(html).appendTo(".data_table",'#browse');
-                    }
-                    **/
-
-                    opus.prefs[view_var] == 'gallery' ? $('.gallery', namespace).append(html) : $(".data_table", namespace).append(html);
+                    // append browse page
+                    $(html).hide().appendTo($('.' + opus.prefs[view_var], namespace)).fadeIn();
 
                     opus.last_page[view_var][opus.prefs.browse] = page;
 

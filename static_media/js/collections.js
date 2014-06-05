@@ -116,12 +116,16 @@ var o_collections = {
 
     // get Collections tab
     getCollectionsTab: function() {
+
+        clearInterval(opus.scroll_watch_interval); // hold on cowboy only 1 page at a time
+
         if (opus.collection_change) {
             // collection has changed wince tab was last drwan, fetch anew
             $('.collection_details', '#collection').html(opus.spinner);
             $.ajax({ url: "/opus/collections/default/view.html",
                    success: function(html){
-                       $('.collection_details', '#collection').html(html);
+
+                       $('.collection_details', '#collection').hide().html(html).fadeIn();
                        opus.collection_change = false;
                        o_browse.getBrowseTab();
                        $('#colls_pages').html(opus.colls_pages);
