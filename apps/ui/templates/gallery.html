@@ -2,8 +2,6 @@
 {% for i in data  %}
 
     <li id = "gallery__{{i.ring_obs_id}}">
-
-        <!-- see getBrowseTab to control full and thumb sizes -->
     	<a class = "activeThumbnail" href = "{{ path }}{{ i.full }}" data-rel="colorbox">
             <img width = "125px" alt="{{ i.ring_obs_id }}" src = "{{ path }}{{ i.img }}">
 
@@ -15,11 +13,7 @@
 
         <div class="tools tools-bottom
 
-            {% if i.in_collection %}
-               in
-            {% endif %}
-
-            ">
+            {% if i.in_collection %} in {% endif %} ">
 
             <a href="#">
                 <i class="gallery_icons ace-icon fa fa-check
@@ -44,9 +38,7 @@
 
         <div class = "thumb_overlay
 
-            {% if i.in_collection %}
-               thumb_selected
-            {% endif %}
+            {% if i.in_collection %}  thumb_selected  {% endif %}
 
         ">&nbsp;</div>
 
