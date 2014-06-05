@@ -25,7 +25,7 @@ var o_browse = {
         });
 
         // click a browse tools icon
-        $('#browse').on("click", ".tools-bottom a", function() {
+        $('.gallery').on("click", ".tools-bottom a", function() {
 
             ring_obs_id = $(this).parent().parent().attr("id").substring(9);
             $(this).parent().show();
