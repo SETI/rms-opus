@@ -2,26 +2,26 @@
     col.0 = slug
 	col.1 = label
 {% endcomment %}
-<table class = "data_table">
+<table class = "data_table table table-striped table-bordered table-hover">
 
 	<thead>
-	{% for col in columns %}
+        <tr>
+        	{% for col in columns %}
 
-	<th class = "{{ col.0 }}">
+        	<th class = "{{ col.0 }} center">
+        		<div class = "column_main">
+        			<img src = "{{ MEDIA_URL }}images/col_move_handle.png">
+        			<span class = "column_label">{{ col.1 }}</span>
+        		</div>
 
-		<div class = "column_main">
-			<img src = "{{ MEDIA_URL }}images/col_move_handle.png">
-			<span class = "column_label">{{ col.1 }}</span>
-		</div>
+        		<div class = "column_ordering">
+        			<a class = "ascending" href = ""><img src = "{{ MEDIA_URL }}images/col_reorder.png"></a>
+        			<a class = "descending" href = ""><img src = "{{ MEDIA_URL }}images/col_reorder.png"></a>
+        		</div>
 
-		<div class = "column_ordering">
-			<a class = "ascending" href = ""><img src = "{{ MEDIA_URL }}images/col_reorder.png"></a>
-			<a class = "descending" href = ""><img src = "{{ MEDIA_URL }}images/col_reorder.png"></a>
-		</div>
-
-	</th>
-
-    {% endfor %}
+        	</th>
+            {% endfor %}
+        </tr>
     </thead>
 
 	<tbody></tbody>

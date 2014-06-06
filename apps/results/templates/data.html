@@ -10,15 +10,16 @@
 {% for row in data  %}
 	<tr id = "data__{{ row.ring_obs_id }}">
 		{% if checkboxes %}
-   		<td>
-			<input id="datainput__{{ row.ring_obs_id }}" class = "data_checkbox" type = "checkbox"
+   		<td class = "center">
+            <label class="position-relative">
+    			<input id="datainput__{{ row.ring_obs_id }}" class = "data_checkbox checkbox" type = "checkbox"
 	        {% if row.0 in collection %}
 	        	checked
 			{% endif %}
-		></td>
+		></label></td>
 		{% endif   %}
 		{% for v in row %}
-		    <td>{{ v }}</td>
+		    <td class = "center">{{ v }}</td>
 		{% endfor %}
 	</tr>
 

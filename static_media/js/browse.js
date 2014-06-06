@@ -12,7 +12,21 @@ var o_browse = {
 
     browseBehaviors: function() {
 
-       // 'add range' adds a range of observations to collection
+         // the gallery/table toggle
+         $('#browse').on("click", '.browse_view', function() {
+
+            var browse_view = $(this).text().split(' ')[1];  // table or gallery
+            if (browse_view == 'gallery') {
+                opus.prefs.browse = 'gallery';
+            } else {
+                opus.prefs.browse = 'data';
+            }
+            o_browse.getBrowseTab();
+
+            return false;
+        });
+
+      // 'add range' adds a range of observations to collection
         $('#browse').on("click", '.addrange', function() {
 
             if ($('.addrange', '#browse').text() != "add range") {
@@ -57,13 +71,12 @@ var o_browse = {
 
                 // make sure the checkbox for this observation in the other view (either data or gallery)
                 // is also checked/unchecked - if that view is drawn
-                browse_views = ['data','gallery'];
-                for (var key in browse_views) {
-                    bview = browse_views[key];
+                for (var key in opus.all_browse_views) {
+                    bv = opus.all_browse_views[key];
                     checked = false;
                     if (action == 'add') checked = true;
                     try {
-                        $('#' + bview + 'input__' + ring_obs_id).attr('checked',checked);
+                        $('#' + bv + 'input__' + ring_obs_id).attr('checked',checked);
                     } catch(e) { } // view not drawn yet so no worries
                 }
 
@@ -133,9 +146,10 @@ var o_browse = {
         /*
         view_info = o_browse.getViewInfo();
         namespace = view_info['namespace'];
-        view_var = view_info['view_var'];
         prefix = view_info['prefix'];
         add_to_url = view_info['add_to_url'];
+
+        view_var = opus.prefs[prefix + 'browse'];
 
         // change to gallery view
         $('.gallery_view').live('click',function() {
@@ -239,9 +253,10 @@ var o_browse = {
     browseControlIndicator: function(id) {
         view_info = o_browse.getViewInfo();
         namespace = view_info['namespace'];
-        view_var = view_info['view_var'];
         prefix = view_info['prefix'];
         add_to_url = view_info['add_to_url'];
+
+        view_var = opus.prefs[prefix + 'browse'];
 
         // show on the browse menu container what view we are in.
         $('.browse_controls li', namespace).removeClass('view_indicator');
@@ -319,9 +334,10 @@ var o_browse = {
             // we are about to update the same page we just updated, it will replace
             // the one that is showing, so unset the last_page var
             view_info = o_browse.getViewInfo();
-            view_var = view_info['view_var'];
+            prefix = view_info['prefix'];
+            view_var = opus.prefs[prefix + 'browse'];
             // set last page to one before first page that is showing in the interface
-            opus.last_page[view_var][opus.prefs.browse] = opus.prefs.page - 1;
+            opus.last_page[prefix + 'browse'][view_var] = opus.prefs.page - 1;
 
             // now update the browse table
             o_browse.updatePage(opus.prefs.page);
@@ -363,9 +379,10 @@ var o_browse = {
             // we are about to update the same page we just updated, it will replace
             // the one that is showing, so unset the last_page var
             view_info = o_browse.getViewInfo();
-            view_var = view_info['view_var'];
+            prefix = view_info['prefix'];
+            view_var = opus.prefs[prefix + 'browse'];
             // set last page to one before first page that is showing in the interface
-            opus.last_page[view_var][opus.prefs.browse] = opus.prefs.page - 1;
+            opus.last_page[prefix + 'browse'][view_var] = opus.prefs.page - 1;
 
             // now update the browse table
             o_browse.updatePage(opus.prefs.page);
@@ -518,12 +535,15 @@ var o_browse = {
         }
         $.ajax({ url: url,
                 success: function(html) {
-                    $('.data_container', namespace).html(html);
+                    opus.table_headers_drawn = true;
+                    $('.data', namespace).html(html);
                     o_browse.getBrowseTab();
-                    $(".data_container .column_label", namespace).each(function() {
-                        o_browse.createTooltip(this, $(this).text() );
+                    $(".data .column_label", namespace).each(function() {
+
+                        //o_browse.createTooltip(this, $(this).text() );
+
                      }); // end each
-                     $(".data_table", namespace).stickyTableHeaders({ fixedOffset: 125 });
+                     $(".data", namespace).stickyTableHeaders({ fixedOffset: 100 });
 
                 }
         });
@@ -553,6 +573,7 @@ var o_browse = {
         return data;
     },
 
+
     // there are interactions that are applied to different code snippets,
     // this returns the namespace, view_var, prefix, and add_to_url
     // that distinguishes collections vs result tab views
@@ -568,16 +589,14 @@ var o_browse = {
         // this function handles fetching the browse views - gallery or table - for both the Browse and Collections tabs
         if (opus.prefs.view == 'collection') {
             namespace = '#collection';
-            view_var = 'colls_browse';  // which view is showing on page, gallery or table, contained in opus.prefs.[view_var]
             prefix = 'colls_';
             add_to_url = "&colls=true";
         } else {
             namespace = '#browse';
-            view_var = 'browse';
             prefix = '';
             add_to_url = "";
         }
-        return {'namespace':namespace, 'view_var':view_var, 'prefix':prefix, 'add_to_url':add_to_url};
+        return {'namespace':namespace, 'prefix':prefix, 'add_to_url':add_to_url};
 
     },
 
@@ -587,10 +606,10 @@ var o_browse = {
 
         view_info = o_browse.getViewInfo();
         namespace = view_info['namespace'];
-        view_var = view_info['view_var'];
-
         prefix = view_info['prefix'];
         add_to_url = view_info['add_to_url'];
+
+        view_var = opus.prefs[prefix + 'browse'];  // either 'gallery' or 'data'
 
         opus.browse_empty = false;
 
@@ -600,7 +619,7 @@ var o_browse = {
 
         if (opus.prefs[prefix + 'browse'] == 'data') {
 
-            if (!$('.data_table', namespace).length) {
+            if (!opus.table_headers_drawn) {
                 o_browse.startDataTable(namespace);
                 return; // startDataTable() starts data table and then calls getBrowseTab again
             }
@@ -640,7 +659,7 @@ var o_browse = {
 
 
         // did we already fetch this page?
-        last_page = opus.last_page[view_var][opus.prefs.browse];
+        last_page = opus.last_page[prefix + 'browse'][view_var];
         if (page == last_page && !opus.browse_tab_click) {
             // we already fetched this page, do nothing
             return;
@@ -670,9 +689,21 @@ var o_browse = {
                function appendBrowsePage() {
 
                     // append browse page
-                    $(html).hide().appendTo($('.' + opus.prefs[view_var], namespace)).fadeIn();
+                    for (var v in opus.all_browse_views) {
+                        var bv = opus.all_browse_views[v];
+                        if ($('.' + bv, namespace).is(":visible")) {
+                            $('.' + bv, namespace).fadeOut();
+                        }
+                    }
 
-                    opus.last_page[view_var][opus.prefs.browse] = page;
+                    if (view_var == 'data') {
+                        $('.' + view_var + ' tbody', namespace).append(html);
+                    } else {
+                        $('.' + view_var, namespace).append(html);
+                    }
+                    $('.' + view_var, namespace).fadeIn();
+
+                    opus.last_page[prefix + 'browse'][view_var] = page;
 
                     $('.infinite_scroll_spinner', namespace).fadeOut("fast");
 
@@ -693,7 +724,15 @@ var o_browse = {
                 // get the browse nav header
                 $.ajax({ url: "browse_headers.html",
                     success: function(html){
-                       $('.browse_nav', namespace).html(html);
+                       $('.browse_nav', namespace).hide().html(html);
+
+                            // change the link text
+                            if (opus.prefs.browse == 'gallery') {
+                                $('.browse_view', namespace).text('view table');
+                            } else {
+                                $('.browse_view', namespace).text('view gallery');
+                            }
+                        $('.browse_nav', namespace).fadeIn();
                 }});
 
                 var $overflow = '';
@@ -901,15 +940,18 @@ var o_browse = {
 
             // we are about to update the same page we just updated, it will replace
             // the one that is showing, so unset the last_page var
+            // we are about to update the same page we just updated, it will replace
+            // the one that is showing, so unset the last_page var
             view_info = o_browse.getViewInfo();
-            view_var = view_info['view_var'];
-            last_page = opus.last_page[view_var][opus.prefs.browse];
-            opus.last_page[view_var][opus.prefs.browse] = last_page - 1;
+            prefix = view_info['prefix'];
+            view_var = opus.prefs[prefix + 'browse'];
+            // set last page to one before first page that is showing in the interface
+            opus.last_page[prefix + 'browse'][view_var] = opus.prefs.page - 1;
+                        // now update the browse table
+            o_browse.updatePage(opus.prefs.page);
 
             o_browse.updateBrowse();
 
-
-            o_browse.updateBrowse();
         },
 
 
