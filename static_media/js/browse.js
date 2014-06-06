@@ -16,12 +16,28 @@ var o_browse = {
          $('#browse').on("click", '.browse_view', function() {
 
             var browse_view = $(this).text().split(' ')[1];  // table or gallery
+            var hiding, showing
             if (browse_view == 'gallery') {
-                opus.prefs.browse = 'gallery';
+                hiding = 'data';
+                showing = 'gallery';
             } else {
-                opus.prefs.browse = 'data';
+                hiding = 'gallery';
+                showing = 'data';
             }
-            o_browse.getBrowseTab();
+            opus.prefs.browse = showing;
+            o_hash.updateHash();
+            $('.' + hiding, namespace).hide();
+            $('.' + showing, namespace).fadeIn();
+            if (!$('.' + showing, namespace).length) {
+                o_browse.getBrowseTab();
+            } else {
+                // change the text on the link in the browse nav
+                if (opus.prefs.browse == 'gallery') {
+                    $('.browse_view', namespace).text('view table');
+                } else {
+                    $('.browse_view', namespace).text('view gallery');
+                }
+            }
 
             return false;
         });
@@ -144,45 +160,6 @@ var o_browse = {
 
 
         /*
-        view_info = o_browse.getViewInfo();
-        namespace = view_info['namespace'];
-        prefix = view_info['prefix'];
-        add_to_url = view_info['add_to_url'];
-
-        view_var = opus.prefs[prefix + 'browse'];
-
-        // change to gallery view
-        $('.gallery_view').live('click',function() {
-            o_browse.browseControlIndicator('.gallery_view');
-            if (opus.prefs[prefix + 'browse'] == 'data') {
-                opus.prefs[prefix + 'browse'] = 'gallery';
-                o_hash.updateHash();
-                $('.data_container', namespace).hide();
-                $('.gallery', namespace).show();
-                if (!$('.gallery ul', namespace).length) {
-                    o_browse.getBrowseTab();
-                }
-            }
-            return false;
-        });
-
-        // change to data view
-        $('.data_view').live('click',function() {
-            o_browse.browseControlIndicator('.data_view');
-            if (opus.prefs[prefix + 'browse'] == 'gallery') {
-                opus.prefs[prefix + 'browse'] = 'data';
-                o_hash.updateHash();
-                $('.gallery', namespace).hide();
-                $('.data_container',namespace).show();
-                if (!$('.data_table', namespace).length) {
-                    o_browse.getBrowseTab();
-                }
-
-            }
-            return false;
-        });
-
-
         // results paging
         $('.next, .prev').live('click', function() {
             // all this does is update the number that shows in the box and then calls textInputMonitor
@@ -725,7 +702,6 @@ var o_browse = {
                 $.ajax({ url: "browse_headers.html",
                     success: function(html){
                        $('.browse_nav', namespace).hide().html(html);
-
                             // change the link text
                             if (opus.prefs.browse == 'gallery') {
                                 $('.browse_view', namespace).text('view table');
