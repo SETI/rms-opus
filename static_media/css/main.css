@@ -48,8 +48,7 @@ body {
   padding-top: 42px;
 
 }
-.data_table {
-    border:1px solid red;
+.data_table  {
     padding:0;
     margin-top:-20px;
 }
