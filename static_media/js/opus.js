@@ -75,19 +75,19 @@ var opus = {
     lastCartRequestNo: 0,
 
     // client side prefs, changes to these do not trigger page/query load
-    prefs:{ 'view':'',
-            'page':1,
-            'colls_page':1,
-            'limit': 100,
-            'widgets':[],
-            'widgets2':[],
-            'widget_size':{},
-            'widget_scroll':{},
-            'browse':'gallery',        // which view is showing on the browse tab, gallery or table
+    prefs:{ 'view':'', // search, browse, collection, detail
+            'browse':'gallery', // which view is showing on the browse tab, gallery or table
             'colls_browse':'gallery',  // which view is showing on the collections page, gallery or table
-            'detail':'',
-            'order':'',
-            'cols': default_columns.split(','),
+            'page':1,  // what page are we on
+            'colls_page':1,
+            'limit': 100, // results per page
+            'order':'',  // result table ordering
+            'cols': default_columns.split(','),  // default result table columns
+            'widgets':[], // search tab widget columns
+            'widgets2':[],
+            'widget_size':{}, // search tab resized widgets
+            'widget_scroll':{}, // search tab widget internal scroll saved
+            'detail':'', // ring_obs_id of detail page content
      }, // pref changes do not trigger load()
 
     // additional defaults are in base.html
@@ -131,7 +131,9 @@ var opus = {
     current_page_msg:"",
     column_chooser_drawn:false,
     last_page:{ 'browse':{ 'data':0, 'gallery':0 }, 'colls_browse':{ 'data':0, 'gallery':0 }},
+    last_scroll:{ 'browse':{ 'data':0, 'gallery':0 }, 'colls_browse':{ 'data':0, 'gallery':0 }},
     browse_tab_click:false,
+
 
     // collections
     collection_queue:[],
