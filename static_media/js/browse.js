@@ -668,17 +668,16 @@ var o_browse = {
                     // append browse page
                     for (var v in opus.all_browse_views) {
                         var bv = opus.all_browse_views[v];
-                        if ($('.' + bv, namespace).is(":visible")) {
-                            $('.' + bv, namespace).fadeOut();
+                        if ($('.' + bv, namespace).is(":visible") & bv != opus.prefs.browse) {
+                            $('.' + bv, namespace).hide();
                         }
                     }
 
                     if (view_var == 'data') {
-                        $('.' + view_var + ' tbody', namespace).append(html);
+                        $(html).appendTo($('.' + view_var + ' tbody', namespace)).fadeIn();
                     } else {
-                        $('.' + view_var, namespace).append(html);
+                        $(html).appendTo($('.' + view_var, namespace)).fadeIn();
                     }
-                    $('.' + view_var, namespace).fadeIn();
 
                     opus.last_page[prefix + 'browse'][view_var] = page;
 
@@ -695,22 +694,24 @@ var o_browse = {
                     }
                }
 
-
                appendBrowsePage();
 
                 // get the browse nav header
-                $.ajax({ url: "browse_headers.html",
-                    success: function(html){
-                       $('.browse_nav', namespace).hide().html(html);
-                            // change the link text
-                            if (opus.prefs.browse == 'gallery') {
-                                $('.browse_view', namespace).text('view table');
-                            } else {
-                                $('.browse_view', namespace).text('view gallery');
-                            }
-                        $('.browse_nav', namespace).fadeIn();
-                }});
+                if (!$('.get_column_chooser', namespace).length) {
+                    $.ajax({ url: "browse_headers.html",
+                        success: function(html){
+                           $('.browse_nav', namespace).hide().html(html);
+                                // change the link text
+                                if (opus.prefs.browse == 'gallery') {
+                                    $('.browse_view', namespace).text('view table');
+                                } else {
+                                    $('.browse_view', namespace).text('view gallery');
+                                }
+                            $('.browse_nav', namespace).show();
+                    }});
+                }
 
+                // setup colorbox
                 var $overflow = '';
                 var colorbox_params = {
                     rel: 'colorbox',

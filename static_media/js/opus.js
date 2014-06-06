@@ -74,10 +74,10 @@ var opus = {
     lastRequestNo: 0,          // holds request numbers for main result count loop,
     lastCartRequestNo: 0,
 
-    // client side prefs, changes to these do not trigger page/query load
+    // client side prefs, changes to these *do not trigger results to refresh*
     prefs:{ 'view':'', // search, browse, collection, detail
-            'browse':'gallery', // which view is showing on the browse tab, gallery or table
-            'colls_browse':'gallery',  // which view is showing on the collections page, gallery or table
+            'browse':'gallery', // which view is showing on the browse tab, gallery or data, see all_browse_views
+            'colls_browse':'gallery',  // which view is showing on the collections page, gallery or data
             'page':1,  // what page are we on
             'colls_page':1,
             'limit': 100, // results per page
@@ -88,7 +88,10 @@ var opus = {
             'widget_size':{}, // search tab resized widgets
             'widget_scroll':{}, // search tab widget internal scroll saved
             'detail':'', // ring_obs_id of detail page content
+
      }, // pref changes do not trigger load()
+
+    all_browse_views: ['gallery','data'],
 
     // additional defaults are in base.html
 
@@ -124,12 +127,13 @@ var opus = {
     browse_auto:'.chosen_columns', // we are turning this on as default
     browse_footer_style_disabled: false,  // keeps track of whether we have
     scroll_watch_interval:'',
-    browse_empty:true, // zero results on browse tab AND no ajax calls to get data have been sent
+    browse_empty:true, // true if zero results on browse tab AND no ajax calls to get data have been sent
     footer_clicks_trigger: 0, // number of results footer clicks *after first* to trigger form that lets user set auto, -1 to turn off (not tested)
     page_bar_offsets:{},  // list of bars that indicate page in infinite scrolling
     browse_controls_fixed:false, // indicates whether browse controle bar is fixed at top of screen
     current_page_msg:"",
     column_chooser_drawn:false,
+    table_headers_drawn:false,
     last_page:{ 'browse':{ 'data':0, 'gallery':0 }, 'colls_browse':{ 'data':0, 'gallery':0 }},
     last_scroll:{ 'browse':{ 'data':0, 'gallery':0 }, 'colls_browse':{ 'data':0, 'gallery':0 }},
     browse_tab_click:false,
