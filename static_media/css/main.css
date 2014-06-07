@@ -14,6 +14,13 @@
     width:100%;
 }
 
+.end_of_page {
+    display:block;
+    margin-top:15px;
+    height:10px;
+}
+
+
 .thumb_overlay {
     position:absolute;
     top:0;
@@ -917,12 +924,6 @@ ul.gallery_icons {
 .remove_widget:hover {
     text-decoration:none;
     color:#4-5px;4-5px;4-5px;;
-}
-
-#end_of_page {
-    margin-top:15px;
-    display:block;
-    height:5px;
 }
 
 .browse_footer a:link {color: white; text-decoration:none;}
