@@ -105,7 +105,6 @@ var o_widgets = {
         });
 
         // "pause"
-        // $('input[name=browse_auto]').is(':.chosen_columns')
         $('input.pause_widget', '#' + widget).change(function() {
             // $(this).text('resume');
             if (!$(this).is(':checked')) {
@@ -597,7 +596,7 @@ var o_widgets = {
              opus.widgets_drawn.push(slug);
 
              o_widgets.customWidgetBehaviors(slug);
-             console.info('getWidget ok')
+
 
       }); // end function success, end ajax
      }, // end func
