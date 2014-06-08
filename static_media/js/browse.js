@@ -512,6 +512,7 @@ var o_browse = {
 
     },
 
+    // footer bar, indicator bar, browse footer bar
     infiniteScrollPageIndicatorRow: function(page) {
         // this is the bar that appears below each infinite scroll page to indicate page no
 
@@ -521,14 +522,19 @@ var o_browse = {
 
         /*jshint multistr: true */
         data = '<tr class = "inifite_scroll_page">\
-                <td><span class = "back_to_top"><a href = "#top">top</a></span></td> \
-                <td colspan = "' + opus.prefs['cols'].length + '">\
-                <span class = "infinite_scroll_page_container" id = "' + id + '">Page ' + page + '</span><span class = "infinite_scroll_spinner">' + opus.spinner + '</span> \
-                </td></tr>';
+                    <td colspan = "' + (opus.prefs['cols'].length +1) + '">\
+                        <div class="navbar-inverse"> \
+                            <span class = "back_to_top"><a href = "#top">back to top</a></span> \
+                            <span class = "infinite_scroll_page_container" id = "' + id + '">Page ' + page + '</span><span class = "infinite_scroll_spinner">' + opus.spinner + '</span> \
+                        </div>\
+                </td>\
+                </tr>';
 
-        gallery = '<li class = "inifite_scroll_page">\
-                   <span class = "back_to_top"><a href = "#top">back to top</a></span>\
-                   <span class = "infinite_scroll_page_container" id = "' + id + '">Page ' + page + '</span><span class = "infinite_scroll_spinner">' + opus.spinner + '</span></li>';
+        gallery = '<li class = "inifite_scroll_page navbar-inverse">\
+                       <span class = "back_to_top"><a href = "#top">back to top</a></span>\
+                       <span class = "infinite_scroll_page_container" id = "' + id + '">Page ' + page + '</span>\
+                       <span class = "infinite_scroll_spinner">' + opus.spinner + '</span>\
+                   </li>';
 
         // opus.page_bar_offsets['#'+id] = false; // we look up the page loc later - to be continued
 
@@ -669,7 +675,7 @@ var o_browse = {
                 // get the browse nav header
                 $.ajax({ url: "browse_headers.html",
                     success: function(html){
-                        $('.browse_nav', namespace).hide().html(html);
+                        $('.browse_nav', namespace).html(html);
                         // change the link text
                         if (opus.prefs.browse == 'gallery') {
                             $('.browse_view', namespace).text('view table');
@@ -680,7 +686,6 @@ var o_browse = {
                         $('#' + prefix + 'page_no', namespace).val(page);
                         $('#' + prefix + 'pages', namespace).html(page);
 
-                        $('.browse_nav', namespace).show();
                 }});
 
                 // setup colorbox

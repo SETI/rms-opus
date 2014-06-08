@@ -1,18 +1,36 @@
-.inifite_scroll_page, .data_table tr.inifite_scroll_page td, .infinite_scroll_page_container {
-    color:white;
-    background-color:#A8A8A8;
-    padding:-5px;px 5px 5px 5px;
-    font-weight:bold;
-    text-align:left;
+tr div.navbar-inverse {
+    margin:0;
+    padding:10px;
 }
-li.inifite_scroll_page, .infinite_scroll_page_container {
+.inifite_scroll_page {
+    color:white;
+    padding:10px;
+    text-align:center;
+    margin:2px;
+}
+.inifite_scroll_page {
     float:none;
     clear:both;
-    width:98%;
+    width:100%;
 }
 .inifite_scroll_page {
     display:none;
 }
+li.inifite_scroll_page  {
+    list-style-type: none;
+    margin-bottom:5px;
+}
+.infinite_scroll_spinner {
+    margin-left:5px;
+}
+.back_to_top {
+    float:right;
+    margin-right:20px;
+}
+.back_to_top a:link {color: white; text-decoration:none;}
+.back_to_top a:visited {color: white; text-decoration:none;}
+.back_to_top a:hover {color: white; text-decoration:underline;}
+.back_to_top a:active {color: white; text-decoration:none;}
 
 
 .paging_indicator {
@@ -875,10 +893,6 @@ a.remove_string:hover {text-decoration:none;}
     text-align:left;
     font-size:9-5px;%;
 }
-.back_to_top a:link {color: white; text-decoration:none;}
-.back_to_top a:visited {text-decoration:none;}
-.back_to_top a:hover {text-decoration:underline;}
-.back_to_top a:active {text-decoration:none;}
 
 
 .browse_footer {
