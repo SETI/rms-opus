@@ -53,7 +53,9 @@ var o_browse = {
             }
 
             // reset scroll position (later we'll be smarter)
-            window.scroll(0,0);
+
+            // window.scroll(0,0);
+            window.scroll(0,opus.browse_view_scrolls[showing]); // restore previous scroll position
 
             return false;
         });
@@ -595,6 +597,7 @@ var o_browse = {
 
         // figure out the page
         start_page = opus.prefs.page[prefix + view_var]; // default: {'gallery':1, 'data':1, 'colls_gallery':1, 'colls_data':1 };
+
         needs_indicator_bar = false; // whether we need to draw the footer page indicator bar
         if (opus.browse_footer_clicked) {
             // browse footer was "clicked" (or scrolled into view) so yes, we need the bar
@@ -602,7 +605,6 @@ var o_browse = {
             opus.browse_footer_clicked = false; // done with this
         }
         page = parseInt(start_page, 10) + parseInt(footer_clicks, 10);
-
         // some outlier things that can go wrong with page (when user entered page #)
         if (!page) {
             page = 1;
@@ -792,26 +794,22 @@ var o_browse = {
 
         // this is on a setInterval
         browseScrollWatch: function() {
-            // this is for the infinite scroll footer bar
-            if (o_browse.isScrolledIntoView('.end_of_page')) {
-                // scroll is in view, up the "footer clicks" for this view
-                view_info = o_browse.getViewInfo();
-                prefix = view_info['prefix']; // none or colls_
-                view_var = opus.prefs[prefix + 'browse'];  // data or gallery
-                opus.browse_footer_clicks[prefix + view_var]++;
-                opus.browse_footer_clicked=true;
-                o_browse.getBrowseTab();
-            }
-        },
 
-        GalleryFooterClick: function() {
-            opus.browse_footer_clicked=true;
             view_info = o_browse.getViewInfo();
             prefix = view_info['prefix']; // none or colls_
             view_var = opus.prefs[prefix + 'browse'];  // data or gallery
-            opus.browse_footer_clicks[prefix + view_var]++;
-            o_browse.getBrowseTab();
-            return false;
+
+            // keep track of each views scroll position because UX
+            opus.browse_view_scrolls[prefix + view_var] = $(window).scrollTop();
+
+            // this is for the infinite scroll footer bar
+            if (o_browse.isScrolledIntoView('.end_of_page')) {
+                // scroll is in view, up the "footer clicks" for this view
+                opus.browse_footer_clicks[prefix + view_var] = opus.browse_footer_clicks[prefix + view_var] + 1;
+
+                opus.browse_footer_clicked=true;
+                o_browse.getBrowseTab();
+            }
         },
 
         getColumnChooser: function() {

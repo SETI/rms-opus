@@ -48,6 +48,7 @@ $(document).ready(function() {
 
     // watch the url for changes
     setInterval(opus.load, 1000);
+
     return;
 
     o_collections.initCollection();
@@ -126,7 +127,7 @@ var opus = {
     browse_footer_clicked:false,
     browse_auto:'.chosen_columns', // we are turning this on as default
     browse_footer_style_disabled: false,  // keeps track of whether we have
-    scroll_watch_interval:'',
+    scroll_watch_interval:'', // holder for setInterval timer
     browse_empty:true, // true if zero results on browse tab AND no ajax calls to get data have been sent
     footer_clicks_trigger: 0, // number of results footer clicks *after first* to trigger form that lets user set auto, -1 to turn off (not tested)
     page_bar_offsets:{},  // list of bars that indicate page in infinite scrolling
@@ -135,6 +136,7 @@ var opus = {
     column_chooser_drawn:false,
     table_headers_drawn:false,  // have we drawn the table headers
     gallery_begun:false, // have we started the gallery view
+    browse_view_scrolls: reset_browse_view_scrolls, // same defaults as footer clicks (definied in header.html)
 
 
     // collections
@@ -147,6 +149,7 @@ var opus = {
     colls_options_viz:false,
 
     //------------------------------------------------------------------------------------//
+
 
     load: function () {
       	  selections = o_hash.getSelectionsFromHash();
@@ -174,6 +177,7 @@ var opus = {
                   $('.data', '#browse').empty();
                   opus.browse_empty = true;  // now they are empty
                   opus.browse_footer_clicks = reset_footer_clicks;
+
               }
           }
           opus.force_load = false;
