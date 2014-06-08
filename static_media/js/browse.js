@@ -47,6 +47,9 @@ var o_browse = {
             if ((opus.prefs.browse == 'gallery' && !opus.gallery_begun) ||
                 (opus.prefs.browse == 'data' && !opus.table_headers_drawn)) {
                 o_browse.getBrowseTab();
+            } else {
+                // not loading browse, turn scroll watch back on
+                opus.scroll_watch_interval = setInterval(o_browse.browseScrollWatch, 1000);
             }
 
             // reset scroll position (later we'll be smarter)
@@ -652,13 +655,14 @@ var o_browse = {
                     // fade out the spinner
                     $('.infinite_scroll_spinner', namespace).fadeOut("fast");
 
-                    // turn the scroll watch timer back on
-                    opus.scroll_watch_interval = setInterval(o_browse.browseScrollWatch, 1000);
-
                }
 
                // doit!
                appendBrowsePage();
+
+                // turn the scroll watch timer back on
+                opus.scroll_watch_interval = setInterval(o_browse.browseScrollWatch, 1000);
+
 
                 // get the browse nav header
                 $.ajax({ url: "browse_headers.html",
@@ -780,8 +784,9 @@ var o_browse = {
 
                 var elemTop = $(elem).offset().top;
                 var elemBottom = elemTop + $(elem).height();
+                var answer = (elemBottom >= docViewTop) && (elemTop <= docViewBottom) && (elemBottom <= docViewBottom) &&  (elemTop >= docViewTop);
 
-                return ((elemBottom >= docViewTop) && (elemTop <= docViewBottom) && (elemBottom <= docViewBottom) &&  (elemTop >= docViewTop) );
+                return (answer);
         },
 
 
