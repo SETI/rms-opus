@@ -1,3 +1,20 @@
+.inifite_scroll_page, .data_table tr.inifite_scroll_page td, .infinite_scroll_page_container {
+    color:white;
+    background-color:#A8A8A8;
+    padding:-5px;px 5px 5px 5px;
+    font-weight:bold;
+    text-align:left;
+}
+li.inifite_scroll_page, .infinite_scroll_page_container {
+    float:none;
+    clear:both;
+    width:98%;
+}
+.inifite_scroll_page {
+    display:none;
+}
+
+
 .paging_indicator {
     color:white;
     margin-top:15px;
@@ -939,21 +956,6 @@ ul.gallery_icons {
 .infinite_scroll_page_container {
     margin:-5px;;
     padding:-5px;;
-}
-.inifite_scroll_page, .data_table tr.inifite_scroll_page td, .infinite_scroll_page_container {
-    color:white;
-    background-color:#A8A8A8;
-    padding:-5px;px 5px 5px 5px;
-    font-weight:bold;
-    text-align:left;
-}
-li.inifite_scroll_page, .infinite_scroll_page_container {
-    float:none;
-    clear:both;
-    width:98%;
-}
-.inifite_scroll_page {
-    display:none;
 }
 .infinite_scroll_page_container  {
     margin-left:5-5px;-5px;px;

@@ -7,6 +7,7 @@
 
 $(document).ready(function() {
 
+
     o_hash.initFromHash(); // just returns null if no hash
     if (!opus.prefs.view) {
         opus.prefs.view = 'search';
@@ -76,10 +77,9 @@ var opus = {
 
     // client side prefs, changes to these *do not trigger results to refresh*
     prefs:{ 'view':'', // search, browse, collection, detail
-            'browse':'gallery', // which view is showing on the browse tab, gallery or data, see all_browse_views
+            'browse':'gallery', //either 'gallery' or 'data', see all_browse_views below
             'colls_browse':'gallery',  // which view is showing on the collections page, gallery or data
-            'page':1,  // what page are we on
-            'colls_page':1,
+            'page':default_pages,  // what page are we on, per view, default defined in header.html
             'limit': 100, // results per page
             'order':'',  // result table ordering
             'cols': default_columns.split(','),  // default result table columns
@@ -119,10 +119,10 @@ var opus = {
     menu_state: {'cats':['obs_general'], 'groups':[]},  // keep track of menu items that are open
 
     // browse tab
-    pages:0, // total number of pages
+    pages:0, // total number of pages this result
     colls_pages:0, // total number of collections pages
     text_field_monitor:[], // holds text-field-entries during polling
-    browse_footer_clicks:{'gallery':0, 'data':0, 'colls_gallery':0, 'colls_data':0 },
+    browse_footer_clicks:reset_footer_clicks, // defined in header.html
     browse_footer_clicked:false,
     browse_auto:'.chosen_columns', // we are turning this on as default
     browse_footer_style_disabled: false,  // keeps track of whether we have
@@ -133,10 +133,8 @@ var opus = {
     browse_controls_fixed:false, // indicates whether browse controle bar is fixed at top of screen
     current_page_msg:"",
     column_chooser_drawn:false,
-    table_headers_drawn:false,
-    last_page:{ 'browse':{ 'data':0, 'gallery':0 }, 'colls_browse':{ 'data':0, 'gallery':0 }},
-    last_scroll:{ 'browse':{ 'data':0, 'gallery':0 }, 'colls_browse':{ 'data':0, 'gallery':0 }},
-    browse_tab_click:false,
+    table_headers_drawn:false,  // have we drawn the table headers
+    gallery_begun:false, // have we started the gallery view
 
 
     // collections
@@ -168,15 +166,14 @@ var opus = {
                   return;
               }
           } else {
-              // selections changed, reset page
+              // selections have changed, reset page
               if (!opus.browse_empty) {
                   // there was a last selections, clear results containers
                   opus.prefs.page = 1;
                   $('.gallery', '#browse').empty();
-                  $('.data_container', '#browse').empty();
-                  opus.browse_footer_clicks['gallery']=0;
-                  opus.browse_footer_clicks['data']=0;
-                  opus.browse_empty = true;
+                  $('.data', '#browse').empty();
+                  opus.browse_empty = true;  // now they are empty
+                  opus.browse_footer_clicks = reset_footer_clicks;
               }
           }
           opus.force_load = false;

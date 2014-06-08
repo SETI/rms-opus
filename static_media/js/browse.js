@@ -12,10 +12,14 @@ var o_browse = {
 
     browseBehaviors: function() {
 
+
          // the gallery/table toggle
          $('#browse').on("click", '.browse_view', function() {
 
-            clearInterval(opus.scroll_watch_interval); // hold on cowboy only 1 page at a time
+            if (opus.scroll_watch_interval) {
+                clearInterval(opus.scroll_watch_interval); // hold on cowgirl only 1 page at a time
+            }
+
             var browse_view = $(this).text().split(' ')[1];  // table or gallery
             var hiding, showing;
             if (browse_view == 'gallery') {
@@ -39,15 +43,24 @@ var o_browse = {
                 $('.browse_view', namespace).text('view gallery');
             }
 
-            o_browse.getBrowseTab();
+            // do we need to fetch a new browse tab?
+            if ((opus.prefs.browse == 'gallery' && !opus.gallery_begun) ||
+                (opus.prefs.browse == 'data' && !opus.table_headers_drawn)) {
+                o_browse.getBrowseTab();
+            }
+
+            // reset scroll position (later we'll be smarter)
+            window.scroll(0,0);
 
             return false;
         });
 
-      // 'add range' adds a range of observations to collection
+
+
+        // 'add range' adds a range of observations to collection
         $('#browse').on("click", '.addrange', function() {
 
-            if ($('.addrange', '#browse').text() != "add range") {
+            if ($('.addrange', '#browse').text() == "add range") {
                 alert('please select an observation to begin your range');
                 return false;
             }
@@ -55,6 +68,7 @@ var o_browse = {
             $('.addrange','#browse').text("select range start");
             return false;
         });
+
 
         // click a gallery tool icon
         $('.gallery').on("click", ".tools-bottom a", function() {
@@ -152,8 +166,6 @@ var o_browse = {
                 order = '-' + order;
             }
             opus.prefs['order'] = order;
-            opus.browse_tab_click = true;
-            opus.last_page = {'browse':{'data':0, 'gallery':0 }};  // may need this too: 'colls_browse':{ 'data':0, 'gallery':0 }};
             o_browse.updatePage(1);
             return false;
         });
@@ -230,30 +242,6 @@ var o_browse = {
     },
 
 
-    browseControlIndicator: function(id) {
-        view_info = o_browse.getViewInfo();
-        namespace = view_info['namespace'];
-        prefix = view_info['prefix'];
-        add_to_url = view_info['add_to_url'];
-
-        view_var = opus.prefs[prefix + 'browse'];
-
-        // show on the browse menu container what view we are in.
-        $('.browse_controls li', namespace).removeClass('view_indicator');
-        if (id) {
-            $(id).parent().addClass('view_indicator');
-            return;
-        }
-        switch (opus.prefs[prefix+'browse']) {
-            case 'data':
-                $('.data_view', namespace).parent().addClass('view_indicator');
-                break;
-
-            default:
-                $('.gallery_view', namespace).parent().addClass('view_indicator');
-        }
-    },
-
     addColumnChooserBehaviors: function() {
 
         // close the chooser box dialogue thingy
@@ -312,13 +300,11 @@ var o_browse = {
             o_hash.updateHash();
 
             // we are about to update the same page we just updated, it will replace
-            // the one that is showing, so unset the last_page var
+            // the one that is showing,
             view_info = o_browse.getViewInfo();
             prefix = view_info['prefix'];
             view_var = opus.prefs[prefix + 'browse'];
             // set last page to one before first page that is showing in the interface
-            opus.last_page[prefix + 'browse'][view_var] = opus.prefs.page - 1;
-
             // now update the browse table
             o_browse.updatePage(opus.prefs.page);
 
@@ -357,12 +343,11 @@ var o_browse = {
              o_hash.updateHash();
 
             // we are about to update the same page we just updated, it will replace
-            // the one that is showing, so unset the last_page var
+            // the one that is showing,
             view_info = o_browse.getViewInfo();
             prefix = view_info['prefix'];
             view_var = opus.prefs[prefix + 'browse'];
             // set last page to one before first page that is showing in the interface
-            opus.last_page[prefix + 'browse'][view_var] = opus.prefs.page - 1;
 
             // now update the browse table
             o_browse.updatePage(opus.prefs.page);
@@ -502,12 +487,6 @@ var o_browse = {
         }
     },
 
-    createTooltip: function(element, title) {
-        $(element).jqm();
-
-    },
-
-
     startDataTable: function(namespace) {
         url = '/opus/table_headers.html?' + o_hash.getHash() + '&reqno=' + opus.lastRequestNo;
         if (namespace == '#collections') {
@@ -520,8 +499,6 @@ var o_browse = {
                     o_browse.getBrowseTab();
                     $(".data .column_label", namespace).each(function() {
 
-                        //o_browse.createTooltip(this, $(this).text() );
-
                      }); // end each
                      $(".data", namespace).stickyTableHeaders({ fixedOffset: 100 });
 
@@ -531,6 +508,8 @@ var o_browse = {
     },
 
     infiniteScrollPageIndicatorRow: function(page) {
+        // this is the bar that appears below each infinite scroll page to indicate page no
+
         opus.prefs.view == 'browse' ? browse_prefix = '' : browse_prefix = 'colls_';
 
         id = 'inifite_scroll_' + browse_prefix + opus.prefs.browse + '__' + page;
@@ -549,7 +528,8 @@ var o_browse = {
         // opus.page_bar_offsets['#'+id] = false; // we look up the page loc later - to be continued
 
         if (opus.prefs.browse == 'gallery') {
-            return gallery; }
+            return gallery;
+        }
         return data;
     },
 
@@ -566,7 +546,8 @@ var o_browse = {
         add_to_url = view_info['add_to_url'];
     */
     getViewInfo: function() {
-        // this function handles fetching the browse views - gallery or table - for both the Browse and Collections tabs
+        // this function returns some data you need depending on whether
+        // you are in #collection or #browse views
         if (opus.prefs.view == 'collection') {
             namespace = '#collection';
             prefix = 'colls_';
@@ -583,17 +564,17 @@ var o_browse = {
     getBrowseTab: function() {
 
         view_info = o_browse.getViewInfo();
-        namespace = view_info['namespace'];
-        prefix = view_info['prefix'];
-        add_to_url = view_info['add_to_url'];
+        namespace = view_info['namespace']; // either '#collection' or '#browse'
+        prefix = view_info['prefix'];       // either 'colls_' or ''
+        add_to_url = view_info['add_to_url'];  // adds colls=true if in collections view
 
         view_var = opus.prefs[prefix + 'browse'];  // either 'gallery' or 'data'
 
-        opus.browse_empty = false;
+        opus.browse_empty = false; // true if zero results on browse tab AND no ajax calls to get data have been sent
 
-        clearInterval(opus.scroll_watch_interval); // hold on cowboy only 1 page at a time
-
-        o_browse.browseControlIndicator(false);
+        if (opus.scroll_watch_interval) {
+            clearInterval(opus.scroll_watch_interval); // hold on cowgirl only 1 page at a time
+        }
 
         var url = "/opus/api/images/small.html?alt_size=full&";
         if (opus.prefs[prefix + 'browse'] == 'data') {
@@ -605,57 +586,37 @@ var o_browse = {
                 return; // startDataTable() starts data table and then calls getBrowseTab again
             }
         }
-
         url += o_hash.getHash() + '&reqno=' + opus.lastRequestNo + add_to_url;
 
-        // $(".browse_footer_label", '#browse').empty().html(opus.spinner);   made default
-
-        footer_clicks = opus.browse_footer_clicks[prefix + view_var];
+        footer_clicks = opus.browse_footer_clicks[prefix + view_var]; // default: {'gallery':0, 'data':0, 'colls_gallery':0, 'colls_data':0 };
 
         // figure out the page
-        start_page = opus.prefs[prefix + 'page'];
-        needs_indicator_bar = false;
+        start_page = opus.prefs.page[prefix + view_var]; // default: {'gallery':1, 'data':1, 'colls_gallery':1, 'colls_data':1 };
+        needs_indicator_bar = false; // whether we need to draw the footer page indicator bar
         if (opus.browse_footer_clicked) {
-            opus.browse_footer_clicked=false;
+            // browse footer was "clicked" (or scrolled into view) so yes, we need the bar
             needs_indicator_bar = true;
-            page = parseInt(start_page, 10) + parseInt(footer_clicks, 10);
-        } else {
-
-            page = start_page;
+            opus.browse_footer_clicked = false; // done with this
         }
+        page = parseInt(start_page, 10) + parseInt(footer_clicks, 10);
 
-
-        if (opus[prefix + 'pages'] && page > opus[prefix + 'pages']) {
-            // the page is higher than the total number of pages, reset it to the last page
-            page = opus[prefix + 'pages'];
-        }
-
+        // some outlier things that can go wrong with page (when user entered page #)
         if (!page) {
-           page = 1;  //
+            page = 1;
         }
-
-        // update the page_no and pages display
-        $('#' + prefix + 'page_no', namespace).val(page);
-        $('#' + prefix + 'pages', namespace).html(page);
-
-
-        // did we already fetch this page?
-        last_page = opus.last_page[prefix + 'browse'][view_var];
-        if (page == last_page && !opus.browse_tab_click) {
-            // we already fetched this page, do nothing
-            return;
-        }
-        opus.browse_tab_click = false;
-
-        if (page < 1) {
+        else if (page < 1) {
             page = 1;
             $('#' + prefix + 'page_no', namespace).val(page); // reset the display
+        }
+        if (opus[prefix + 'pages'] && page > opus[prefix + 'pages']) {
+            // page is higher than the total number of pages, reset it to the last page
+            page = opus[prefix + 'pages'];
         }
 
         if (needs_indicator_bar) {
             indicator_row = o_browse.infiniteScrollPageIndicatorRow(page);
-            if (opus.prefs[view_var] == 'gallery') {
-                $(indicator_row).appendTo('.gallery', namespace).show()
+            if (view_var == 'gallery') {
+                $(indicator_row).appendTo('.gallery', namespace).show();
             } else {
                 $(".data_table tr:last", namespace).after(indicator_row);
                 $(".data_table tr:last", namespace).show();  // i dunno why couldn't chain these 2
@@ -663,13 +624,16 @@ var o_browse = {
         }
         url += '&page=' + page;
 
+        opus.prefs[prefix + view_var] = page;
+
         // NOTE if you change alt_size=full here you must also change it in gallery.html template
         $.ajax({ url: url,
             success: function(html){
-               // bring in the new images
-               function appendBrowsePage() {
 
-                    // append browse page
+               // bring in the new page
+               function appendBrowsePage() { // for chaining effects
+
+                    // hide the views that aren't supposed to be showing
                     for (var v in opus.all_browse_views) {
                         var bv = opus.all_browse_views[v];
                         if ($('.' + bv, namespace).is(":visible") && bv != opus.prefs.browse) {
@@ -677,14 +641,15 @@ var o_browse = {
                         }
                     }
 
+                    // append the new html
                     if (view_var == 'data') {
                         $(html).appendTo($('.' + view_var + ' tbody', namespace)).fadeIn();
                     } else {
+                        opus.gallery_begun = true;
                         $(html).appendTo($('.' + view_var, namespace)).fadeIn();
                     }
 
-                    opus.last_page[prefix + 'browse'][view_var] = page;
-
+                    // fade out the spinner
                     $('.infinite_scroll_spinner', namespace).fadeOut("fast");
 
                     // turn the scroll watch timer back on
@@ -692,6 +657,7 @@ var o_browse = {
 
                }
 
+               // doit!
                appendBrowsePage();
 
                 // get the browse nav header
@@ -704,6 +670,10 @@ var o_browse = {
                         } else {
                             $('.browse_view', namespace).text('view gallery');
                         }
+                        // update the page_no and pages display
+                        $('#' + prefix + 'page_no', namespace).val(page);
+                        $('#' + prefix + 'pages', namespace).html(page);
+
                         $('.browse_nav', namespace).show();
                 }});
 
@@ -742,7 +712,7 @@ var o_browse = {
     },
 
 
-    // we watch the paging inputs to wait for pauses before we trigger page change. UX, baby.
+    // we watch the paging input fields to wait for pauses before we trigger page change. UX, baby.
     textInputMonitor: function(field,ms) {
 
         // which field are we working on? defines which global monitor list we use
@@ -793,7 +763,7 @@ var o_browse = {
 
         updatePage: function(page) {
             // when you have to redraw the page
-            opus.browse_footer_clicks = {'gallery':0, 'data':0};
+            opus.browse_footer_clicks = reset_footer_clicks;
 			opus.prefs.page = page;
 			o_hash.updateHash();
 			$('.gallery', '#browse').empty();
@@ -901,15 +871,11 @@ var o_browse = {
             // $('.gallery', '#browse').html(opus.spinner);
 
             // we are about to update the same page we just updated, it will replace
-            // the one that is showing, so unset the last_page var
-            // we are about to update the same page we just updated, it will replace
-            // the one that is showing, so unset the last_page var
+            // the one that is showing,
             view_info = o_browse.getViewInfo();
             prefix = view_info['prefix'];
             view_var = opus.prefs[prefix + 'browse'];
             // set last page to one before first page that is showing in the interface
-            opus.last_page[prefix + 'browse'][view_var] = opus.prefs.page - 1;
-                        // now update the browse table
             o_browse.updatePage(opus.prefs.page);
 
             o_browse.updateBrowse();
