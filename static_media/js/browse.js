@@ -66,12 +66,11 @@ var o_browse = {
         $('#browse').on("click", '.addrange', function() {
 
             if ($('.addrange', '#browse').text() == "add range") {
-                alert('please select an observation to begin your range');
+                // alert('please select an observation to begin your range');
+                opus.addrange_clicked = true;
+                $('.addrange','#browse').text("select range start");
                 return false;
             }
-            opus.addrange_clicked = true;
-            $('.addrange','#browse').text("select range start");
-            return false;
         });
 
 
@@ -570,6 +569,24 @@ var o_browse = {
         }
         return {'namespace':namespace, 'prefix':prefix, 'add_to_url':add_to_url};
 
+    },
+
+    getCurrentPage: function() {
+        // sometimes other functions need to know current page for whatever view we
+        // are currently looking at..
+        var prefix, page;
+        if (opus.prefs.view == 'collection') {
+            prefix = 'colls_';
+        }
+        if (opus.prefs.view == 'browse') {
+            if (opus.prefs.browse == 'data') {
+                page = opus.prefs.page[prefix + 'data'];
+            } else {
+                page = opus.prefs.page[prefix + 'gallery'];
+            }
+        }
+        if (!page) { page = 1; }
+        return page;
     },
 
     getBrowseTab: function() {

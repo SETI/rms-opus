@@ -159,34 +159,37 @@ var o_collections = {
         // but this should really be a private method
         // for adding/removing from cart see edit_collection()
 
+
         if (!opus.collection_q_intrvl) {
             opus.collection_q_intrvl = setInterval("o_collections.processCollectionQueue()", 3000); // resends any stray requests not recvd back from server
         }
 
         url = "/opus/collections/default/" + action + ".json?request=" + request_no;
-        if (action == 'addrange' || action == 'removerange') {
-            url += "&addrange=" + ringobsid
+        if (action == 'addrange') {
+            url += "&addrange=" + ringobsid;
+            // need to send to server what page this range lands and what limit of that page is
+            // limit should include all observations showing on page
+            // must adjust limit + page to account for total number of results showing on page
+
+            // server uses offset = (page_no-1)*limit
+            // i.e. the offset of the 23rd page at 100 per page starts with the 2200st record:
+
+            // first find what does opus.prefs.page say we are looking at:
+            current_page = o_browse.getCurrentPage();
+
+            offset = (current_page-1) * opus.prefs.limit;
+
+            // now find the number of results showing on the page, different from opus.prefs.limit:
+            // number of "pages" showing on screen at any time = limit * (1+footer_clicks)
+            // i.e., you've got 100 on screen, you click footer 4 times, now you've got 500 showing
+            // multiply that by 2 because our results may span no more than 2 "pages" at our new limit on the server
+            limit = 2 * opus.prefs.limit * current_page;
+
+            // server says offset = (page_no-1)*limit
+            // solve that equation for page our new page value:
+            page = Math.floor(offset/limit + 1);
+            url += '&limit=' + limit + '&page=' + page;
             url += '&' + o_hash.getHash();
-            opus.prefs.browse == 'gallery' ? footer_clicks = opus.browse_footer_clicks['gallery'] : footer_clicks = opus.browse_footer_clicks['data'];
-            if (footer_clicks) {
-                // user is using infinite scroll
-                // must adjust limit + page to account for total number of results showing on page
-
-                // server uses offset = (page_no-1)*limit
-                // i.e. the offset of the 23rd page at 100 per page starts with the 2200st record:
-                offset = (opus.prefs.page-1) * opus.prefs.limit;
-
-                // now find the number of results showing on the page, different from opus.prefs.limit:
-                // number of "pages" showing on screen at any time = limit * (1+footer_clicks)
-                // i.e., you've got 100 on screen, you click footer 4 times, now you've got 500 showing
-                // multiply that by 2 because our results may span no more than 2 "pages" at our new limit on the server
-                limit = 2 * opus.prefs.limit * (1 + parseInt(footer_clicks));
-
-                // server says offset = (page_no-1)*limit
-                // solve that equation for page:
-                page = Math.floor(offset/limit + 1);
-                url += '&limit=' + limit + '&page=' + page;
-            }
         } else {
             url += "&ringobsid=" + ringobsid;
         }
@@ -244,13 +247,11 @@ var o_collections = {
 
     resetCollectionQueue: function() {
         clearInterval(opus.collection_q_intrvl);
-        opus.collection_q_intrvl = false;
         opus.collection_queue = [];
     },
 
     editCollection: function(ring_obs_id, action) {
         opus.collection_change = true;
-        opus.last_page.colls_browse = { 'data':0, 'gallery':0 };
         opus.lastCartRequestNo++;
         // $('.collections_extra').html(opus.spinner);
         // $('#collection_tab').fadeIn();
