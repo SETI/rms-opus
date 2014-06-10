@@ -162,17 +162,15 @@ def check_collection_args(request,**kwargs):
     else:
         (action, collection_name, ring_obs_id, request_no, expected_request_no) = check_collection_args(request, **kwargs)
     """
-
-
-    """
-    **********************************************bring me back*****************************************************
     if request.is_ajax() == False:
-        return "sorry! this is an ajax only resource"
-    ****************************************************************************************************************
-    """
+        return HttpResponseNotFound('<h1>Page not found</h1>')
+
     # collection and action are part of the url conf so you won't get in without one
-    action = kwargs['action']
-    collection_name = 'collection__' + kwargs['collection']
+    try:
+        action = kwargs['action']
+        collection_name = 'collection__' + kwargs['collection']
+    except KeyError:
+        return HttpResponseNotFound('<h1>Page not found</h1>')
 
     ring_obs_id = request.GET.get('ringobsid', False)
     request_no = request.GET.get('request', False)

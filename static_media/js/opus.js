@@ -49,9 +49,10 @@ $(document).ready(function() {
     // watch the url for changes
     setInterval(opus.load, 1000);
 
+    o_collections.initCollection();
+
     return;
 
-    o_collections.initCollection();
 
 });
 

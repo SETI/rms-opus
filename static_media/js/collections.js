@@ -104,7 +104,6 @@ var o_collections = {
                    count = json['count'];
                    if (parseInt(count)) {
                        opus.collection_change = true;
-                       opus.last_page.colls_browse = { 'data':0, 'gallery':0 }; // reset the last_page drawn tracker
                        $('#collection_tab').fadeIn();
                        opus.colls_pages = Math.ceil(count/opus.prefs.limit);
                         $('#collection_count').html(count);
@@ -196,8 +195,6 @@ var o_collections = {
 
         $.ajax({ url: url,
               dataType:"json", success: function(json){
-
-                   // alert(JSON.stringify(json));
 
                    if (!json) {
                         // alert('no json kay bai')
