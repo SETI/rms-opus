@@ -2,8 +2,6 @@
 
 {% block menu %}
 
-<a class = "close">X</a>
-
 <div class = "all_columns">
 
     {% with 'menu' as expectedVarName %}
@@ -12,7 +10,7 @@
 
 </div>
 
-<div class = "chosen_columns">
+<div class = "widget-box widget-color-blue chosen_columns">
 	<ul>
 		{% for slug,label in labels.items %}
 			<li id="cchoose__{{ slug }}">{{ label }}
@@ -22,6 +20,6 @@
 	</ul>
 </div>
 
-{% endblock %}
 
+{% endblock %}
 
