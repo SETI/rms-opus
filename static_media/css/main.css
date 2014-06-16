@@ -1,3 +1,80 @@
+/* column chooser things */
+i.fa-check {
+    display:none;
+}
+
+.column_chooser .all_columns .fa-plus {
+    display:none;
+}
+.ui-dialog .ui-dialog-titlebar-close {
+    float: right;
+    margin-right:-35px;
+    height:25px;
+}
+
+.fixed {
+    position: fixed;
+    top: 30px;
+    margin-left: 720px;
+}
+
+.column_chooser {
+    display:none;
+    overflow:scroll;
+    margin:20px;
+}
+.column_chooser input {
+    display:inline;
+    margin-right:3px;
+    margin-bottom:3px;
+
+}
+i.fa-check {
+    display:none;
+}
+.column_chooser .column_checkbox {
+    display:inline;
+}
+.column_chooser ul li {
+    text-decoration:none;
+    margin:5px;
+}
+.all_columns   {
+    height: 450px;
+    overflow:scroll;
+}
+.all_columns ul li {
+    padding-bottom:3px;
+
+}
+.all_columns .cat_label {
+    margin-top:15px;
+    margin-bottom:-5px;
+}
+.chosen_columns ul li:hover{ cursor:crosshair; }
+.chosen_columns ul li .chosen_column_close:hover{ cursor:pointer; }
+
+.chosen_column_close {
+    float:right;
+}
+
+.chosen_columns {
+    border:0;
+    z-index:9999;
+}
+.chosen_columns ul li {
+    padding:5px 15px;
+    border:1px dotted gray;
+    list-style-type:none;
+    background:white;
+ }
+
+
+#sidebar input {
+    display:none;
+}
+
+/* */
 tr div.navbar-inverse {
     margin:0;
     padding:10px;
@@ -45,7 +122,7 @@ li.inifite_scroll_page  {
     position:fixed;
     top:45px;
     left:0;
-    z-index:9999;
+    z-index:999;
     width:100%;
 }
 
@@ -63,7 +140,7 @@ li.inifite_scroll_page  {
     right:0;
     bottom:0;
     pointer-events:none;
-    z-index:999;
+    z-index:99;
     /* border:7px solid #49afcd; */
 }
 .thumb_overlay a:hover { color:#00FFFF; font-size:130% }
@@ -101,7 +178,8 @@ body {
     padding-top:0px;
 }
 ul.ace-thumbnails {
-    margin:-5px;; padding:-5px;;
+    margin:-5px;
+    padding:-5px;
 }
 #browse, #collection, #detail {
     display:none;
@@ -252,63 +330,6 @@ ul.ace-thumbnails {
 #search .column_checkbox {
     display:none;
 }
-#column_chooser .column_checkbox {
-    display:inline;
-}
-
-#column_chooser {
-    position:fixed;
-    top:153px;
-    left:2-5px;-5px;px;
-    display:none;
-    background:white;
-    border:3px solid #A8A8A8;
-    width: 62-5px;px;
-    height:4-5px;-5px;px;
-    overflow-y:auto;
-    font-size:8-5px;%;
-    padding:2-5px;px 3-5px;px;
-}
-#column_chooser ul li {
-    text-decoration:none;
-    margin:-5px;;
-
-}
-.all_columns   {
-    float:left;
-    width:29-5px;px;
-    padding:-5px;;
-    margin:-5px;;
-
-}
-.all_columns ul li {
-    padding-bottom:3px;
-
-}
-.all_columns .cat_label {
-    margin-top:1-5px;px;
-    margin-bottom:-5px;
-}
-
-.chosen_columns ul li:hover{ cursor:crosshair; }
-.chosen_columns ul li .chosen_column_close:hover{ cursor:pointer; }
-
-.chosen_columns {
-    color:gray;
-    float:right;
-    width:29-5px;px;
-    margin:-5px;;
-    margin-right:1-5px;px;
-    padding:-5px;;
-
-}
-
-.chosen_columns ul li {
-    padding:5px 15px;
-    border:1px dotted gray;
-    list-style-type:none;
-    background:white;
- }
 
 
 .chosen_column_close {
@@ -587,28 +608,28 @@ ul.menu_list li {
 }
 
 .data_table {
-	margin:-5px;;
-	padding:-5px;;    border-width: 1px;
-	border-spacing: -5px;px;
-	border-style: none;
-	border-color: gray;
-	border-collapse: collapse;
-	background-color: white;
-	font-size:85%;
+    margin:-5px;;
+    padding:-5px;;    border-width: 1px;
+    border-spacing: -5px;px;
+    border-style: none;
+    border-color: gray;
+    border-collapse: collapse;
+    background-color: white;
+    font-size:85%;
 }
 .data_table th {
-	border-width: 1px;
-	border-style: inset;
-	border-color: gray;
-	background-color: white;
+    border-width: 1px;
+    border-style: inset;
+    border-color: gray;
+    background-color: white;
 
 }
 .data_table td {
-	border-width: 1px;
-	border-style: inset;
-	border-color: gray;
-	background-color: white;
-	text-align:center;
+    border-width: 1px;
+    border-style: inset;
+    border-color: gray;
+    background-color: white;
+    text-align:center;
     padding:-5px;px auto;
 
 }
@@ -975,3 +996,4 @@ ul.gallery_icons {
     margin-left:5-5px;-5px;px;
 
 }
+d

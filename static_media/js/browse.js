@@ -12,7 +12,6 @@ var o_browse = {
 
     browseBehaviors: function() {
 
-
          // the gallery/table toggle
          $('#browse').on("click", '.browse_view', function() {
 
@@ -170,7 +169,8 @@ var o_browse = {
                 order = '-' + order;
             }
             opus.prefs['order'] = order;
-            o_browse.updatePage(1);
+            opus.prefs.page = default_pages; // reset pages to 1 when col ordering changes
+            o_browse.updatePage();
             return false;
         });
 
@@ -204,37 +204,25 @@ var o_browse = {
         });
 
 
-        // gallery thumbnail behaviors
-        $('.get_detail_icon','#browse').live('click', function() {
-            var ring_obs_id = $(this).attr("id").split('__')[1].split('/').join('-');
-
-            // now ajax get the detail page:
-            o_detail.getDetail(ring_obs_id);
-
-            }); // end live
+        */
 
         // back to top link at bottom of gallery
-        $('a[href=#top]','#browse').live('click',function() {
+        $('#browse').on('click', 'a[href=#top]', function() {
             $('html, body').animate({scrollTop:0}, 'slow');
             return false;
         });
 
-        */
 
         // this controls the page indicator bars you get with infinie scroll
         $(window).scroll(function() {
              o_browse.fixBrowseControls();
           });
 
-        /*
         // close/open column chooser
-        $('.get_column_chooser').live('click', function() {
+        $('#browse').on("click", '.get_column_chooser', function() {
                 o_browse.getColumnChooser();
                 return false;
         });
-
-    */
-
 
     }, // end browse behaviors
 
@@ -248,26 +236,56 @@ var o_browse = {
 
     addColumnChooserBehaviors: function() {
 
-        // close the chooser box dialogue thingy
-        $('#column_chooser .close').click(function() {
-             $('#column_chooser').jqmHide();
-             return false;
-        });
-
         // a column is checked/unchecked
-        $('.menu_list li a','#browse').click(function() {
-            input = $(this).parent().find('input');
-            if (!input.attr('checked')) {
-                input.attr('checked',true);
+        $('.column_chooser').on("click", '.submenu li a', function() {
+
+            slug = $(this).data('slug');
+            label = $(this).attr("title");
+            cols = opus.prefs['cols'];
+            checkmark = $(this).find('i').first();
+
+            if (!checkmark.is(":visible")) {
+
+                checkmark.show();
+
+                if (jQuery.inArray(slug,cols) < 0) {
+                    // this slug was previously unselected, add to cols
+                    $('<li id = "cchoose__' + slug + '">' + label + '<span class = "chosen_column_close">X</span></li>').hide().appendTo('.chosen_columns>ul').fadeIn();
+                    cols.push(slug);
+                }
+
             } else {
-                input.attr('checked',false);
+
+                checkmark.hide();
+
+                if (jQuery.inArray(slug,cols) > -1) {
+                    // slug had been checked, removed from the chosen
+                    cols.splice(jQuery.inArray(slug,cols),1);
+                    $('#cchoose__' + slug).fadeOut(function() {
+                        $(this).remove();
+                    });
+                }
             }
-            input.change(); // you have to do this to get the change event below to fire
+
+            opus.prefs['cols'] = cols;
+
+
+            // we are about to update the same page we just updated, it will replace
+            // the one that is showing,
+            // set last page to one before first page that is showing in the interface
+            // now update the browse table
+            if (view_var == 'data') {
+                o_browse.updatePage();
+            } else {
+                o_hash.updateHash();
+            }
+
             return false;
         });
 
+
         // removes chosen column with X
-        $('.chosen_column_close').live("click",function() {
+        $('.column_chooser').on("click",'.chosen_column_close', function() {
             slug = $(this).parent().attr('id').split('__')[1];
             input = $('#column_chooser_input__' + slug);
             input.attr('checked',false);
@@ -277,7 +295,7 @@ var o_browse = {
         // a column is checked/unchecked, adds to / removes from 'chosen' column
         $('.column_checkbox input[type="checkbox"].param_input', '#browse').change(function() {
             slug = $(this).data('slug');
-            label = $(this).data('label');
+            label = $(this).attr("title");
             cols = opus.prefs['cols'];
 
             if ($(this).is(':checked')) {
@@ -301,16 +319,10 @@ var o_browse = {
                 }
             }
             opus.prefs['cols'] = cols;
-            o_hash.updateHash();
 
             // we are about to update the same page we just updated, it will replace
             // the one that is showing,
-            view_info = o_browse.getViewInfo();
-            prefix = view_info['prefix'];
-            view_var = opus.prefs[prefix + 'browse'];
-            // set last page to one before first page that is showing in the interface
-            // now update the browse table
-            o_browse.updatePage(opus.prefs.page);
+            o_browse.updatePage();
 
          });
 
@@ -344,17 +356,10 @@ var o_browse = {
                  });
              }
              opus.prefs['cols'] = cols;
-             o_hash.updateHash();
 
             // we are about to update the same page we just updated, it will replace
             // the one that is showing,
-            view_info = o_browse.getViewInfo();
-            prefix = view_info['prefix'];
-            view_var = opus.prefs[prefix + 'browse'];
-            // set last page to one before first page that is showing in the interface
-
-            // now update the browse table
-            o_browse.updatePage(opus.prefs.page);
+            o_browse.updatePage();
 
          });
     },
@@ -497,16 +502,12 @@ var o_browse = {
             url += '&colls=true';
         }
         $.ajax({ url: url,
-                success: function(html) {
-                    opus.table_headers_drawn = true;
-                    $('.data', namespace).html(html);
-                    o_browse.getBrowseTab();
-                    $(".data .column_label", namespace).each(function() {
-
-                     }); // end each
-                     $(".data", namespace).stickyTableHeaders({ fixedOffset: 100 });
-
-                }
+            success: function(html) {
+                opus.table_headers_drawn = true;
+                $('.data', namespace).append(html);
+                $(".data", namespace).stickyTableHeaders({ fixedOffset: 100 });
+                o_browse.getBrowseTab();
+            }
         });
 
     },
@@ -640,7 +641,6 @@ var o_browse = {
             // page is higher than the total number of pages, reset it to the last page
             page = opus[prefix + 'pages'];
         }
-
         if (needs_indicator_bar) {
             indicator_row = o_browse.infiniteScrollPageIndicatorRow(page);
             if (view_var == 'gallery') {
@@ -657,7 +657,6 @@ var o_browse = {
         // NOTE if you change alt_size=full here you must also change it in gallery.html template
         $.ajax({ url: url,
             success: function(html){
-
                // bring in the new page
                function appendBrowsePage() { // for chaining effects
 
@@ -668,7 +667,6 @@ var o_browse = {
                             $('.' + bv, namespace).hide();
                         }
                     }
-
                     // append the new html
                     if (view_var == 'data') {
                         $(html).appendTo($('.' + view_var + ' tbody', namespace)).fadeIn();
@@ -742,7 +740,8 @@ var o_browse = {
 
     // we watch the paging input fields to wait for pauses before we trigger page change. UX, baby.
     textInputMonitor: function(field,ms) {
-
+        return;
+        /*
         // which field are we working on? defines which global monitor list we use
         switch(field) {
             case 'page':
@@ -787,17 +786,31 @@ var o_browse = {
                 break;
             default:
                 opus.text_field_monitor = field_monitor;            }
+            */
         },
 
-        updatePage: function(page) {
-            // when you have to redraw the page
-            opus.browse_footer_clicks = reset_footer_clicks;
-			opus.prefs.page = page;
-			o_hash.updateHash();
-			$('.gallery', '#browse').empty();
-			$(".data", '#browse').empty();
-            o_browse.getBrowseTab();
 
+        updatePage: function() {
+
+            /*
+            reloads the current results view from server and
+            sets other views back to undrawn
+            gets page/view info from from getViewInfo()
+            and opus.prefs[prefix + 'browse']
+            */
+            // get view/page info:
+            view_info = o_browse.getViewInfo();
+            namespace = view_info['namespace'];  // either '#collection' or '#browse'
+            prefix = view_info['prefix'];  // either 'colls_' or ''
+            view_var = opus.prefs[prefix + 'browse'];  // data or gallery
+
+            opus.browse_footer_clicks = reset_footer_clicks;
+            browse_view_scrolls = reset_browse_view_scrolls;
+            opus.browse_empty = true;
+            opus.table_headers_drawn = false;
+            $('.data','#browse').empty();
+			o_hash.updateHash();
+            o_browse.getBrowseTab();
         },
 
         // http://stackoverflow.com/questions/487073/jquery-check-if-element-is-visible-after-scroling thanks!
@@ -837,51 +850,62 @@ var o_browse = {
         getColumnChooser: function() {
             /**
             offset = $('.data_table', '#browse').offset().top + $('.data_table .column_label', '#browse').height() + 10;
-            left = $('.get_column_chooser').parent().offset().left - $('#column_chooser').width()  ;
-            $('#column_chooser').css('top', Math.floor(offset) + 'px');
-            $('#column_chooser').css('left', Math.floor(left) + 'px');
+            left = $('.get_column_chooser').parent().offset().left - $('.column_chooser').width()  ;
+            $('.column_chooser').css('top', Math.floor(offset) + 'px');
+            $('.column_chooser').css('left', Math.floor(left) + 'px');
             **/
 
+
             if (opus.column_chooser_drawn) {
-                if ($('#column_chooser').is(":visible")) {
-                    $('#column_chooser').effect("highlight", {}, 3000);
+                console.log('already drawn gonna try and show you it!')
+                if ($('.column_chooser').is(":visible")) {
+                    $('.column_chooser').css("top", $(window).scrollTop());
+                    $('.column_chooser').effect("highlight", {}, 3000);
                 } else {
-                    $('#column_chooser').jqmShow();
+                    // wtf
+                    console.log('var says drawn but jquery says not visible')
+                    $('.column_chooser').dialog({
+                            height: 600,
+                            width: 900,
+                            modal: true,
+                            resizable: true,
+                            draggable:true,
+                            dialogClass: 'no-close success-dialog'
+                        });
                 }
                 return;
             }
 
             // column_chooser has not been drawn, fetch it from the server and apply its behaviors:
-            $('#column_chooser').html(opus.spinner);
-            $('#column_chooser').jqm({
-                overlay: 0,
-            });
+            console.log('not drawn, drawing now.. ')
+            $('.column_chooser').html(opus.spinner);
+            $('.column_chooser').dialog({
+                    height: 600,
+                    width: 900,
+                    modal: true,
+                    resizable: true,
+                    draggable:true,
+                    dialogClass: 'no-close success-dialog'
+                });
 
-            $('#column_chooser').jqmShow();
 
             url = 'forms/column_chooser.html?' + o_hash.getHash();
 
-            $('#column_chooser').load( url, function(response, status, xhr)  {
-                       opus.column_chooser_drawn=true;
+            $('.column_chooser').load( url, function(response, status, xhr)  {
 
-                       // we keep these all open in the column chooser, they are all closed by default
-                       $('.menu_cat_triangle','#browse').toggleClass('opened_triangle');
-                       $('.menu_cat_triangle','#browse').toggleClass('closed_triangle');
+               opus.column_chooser_drawn=true;  // this gets saved not redrawn
 
-                       o_browse.addColumnChooserBehaviors();
-                       $('#column_chooser','#browse').draggable();
-                       $('#column_chooser','#browse').resizable();
+               o_browse.addColumnChooserBehaviors();
 
-                       // dragging to reorder the chosen
-                       $( ".chosen_columns>ul").sortable({
-                           cursor: 'crosshair',
-                           stop: function(event, ui) { o_browse.columnsDragged(this); }
-                       });
+               // we keep these all open in the column chooser, they are all closed by default
+               /* todo */
 
+               // dragging to reorder the chosen
+               $( ".chosen_columns>ul").sortable({
+                   cursor: 'crosshair',
+                   stop: function(event, ui) { o_browse.columnsDragged(this); }
+               });
             });
-
-
-
         },
 
         columnsDragged: function(element) {
@@ -890,32 +914,19 @@ var o_browse = {
                 cols[key] = value.split('__')[1];
             });
             opus.prefs['cols'] = cols;
-            o_hash.updateHash();
             // if we are in gallery - just change the data-struct that gallery draws from
             // if we are in table -
             // $('.gallery', '#browse').html(opus.spinner);
 
             // we are about to update the same page we just updated, it will replace
             // the one that is showing,
-            view_info = o_browse.getViewInfo();
-            prefix = view_info['prefix'];
-            view_var = opus.prefs[prefix + 'browse'];
+
             // set last page to one before first page that is showing in the interface
-            o_browse.updatePage(opus.prefs.page);
-
-            o_browse.updateBrowse();
+            o_browse.updatePage();
 
         },
 
 
-        // this is used to update the browse tab after a column change
-        updateBrowse: function() {
-            opus.browse_footer_clicks['gallery'] = 0;
-            opus.browse_footer_clicks['data'] = 0;
-            $('.data','#browse').remove();
-            $('.gallery','#browse').remove();
-            o_browse.getBrowseTab();
-        },
 
 
 

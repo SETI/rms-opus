@@ -2,7 +2,7 @@
 
 {% block menu %}
 
-<div class = "all_columns">
+<div class = "all_columns col-md-6">
 
     {% with 'menu' as expectedVarName %}
 	{{ block.super }} {# renders menu.html #}
@@ -10,7 +10,7 @@
 
 </div>
 
-<div class = "widget-box widget-color-blue chosen_columns">
+<div class = "widget-box chosen_columns col-md-6">
 	<ul>
 		{% for slug,label in labels.items %}
 			<li id="cchoose__{{ slug }}">{{ label }}

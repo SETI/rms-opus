@@ -480,7 +480,7 @@ ace.handle_side_menu = function($) {
 	var ios_fix = ace.vars['ios_safari'];//navigator.userAgent.match(/OS (5|6|7)(_\d)+ like Mac OS X/i);
 
 	//toggling submenu
-	$('.sidebar').on(ace.click_event+'.ace.submenu', '.nav-list', function (ev) {
+	$('.sidebar, .column_chooser').on(ace.click_event+'.ace.submenu', '.nav-list', function (ev) {
 		var nav_list = this;
 
 		//check to see if we have clicked on an element which is inside a .dropdown-toggle element?!
