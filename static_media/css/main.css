@@ -1,5 +1,5 @@
 /* column chooser things */
-i.fa-check {
+.column_chooser .all_columns i.fa-check {
     display:none;
 }
 
@@ -28,9 +28,6 @@ i.fa-check {
     margin-right:3px;
     margin-bottom:3px;
 
-}
-i.fa-check {
-    display:none;
 }
 .column_chooser .column_checkbox {
     display:inline;
