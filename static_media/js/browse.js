@@ -688,7 +688,7 @@ var o_browse = {
 
 
                 // get the browse nav header
-                $.ajax({ url: "browse_headers.html",
+                $.ajax({ url: "opus/browse_headers.html",
                     success: function(html){
                         $('.browse_nav', namespace).html(html);
                         // change the link text
@@ -859,11 +859,13 @@ var o_browse = {
             if (opus.column_chooser_drawn) {
                 console.log('already drawn gonna try and show you it!')
                 if ($('.column_chooser').is(":visible")) {
-                    $('.column_chooser').css("top", $(window).scrollTop());
+                    var scrollto = $(window).scrollTop() + 20;
+                    console.log('is visible, scrolling to ' + scrolto);
+                    $('.column_chooser').css("top", scrollto);
                     $('.column_chooser').effect("highlight", {}, 3000);
                 } else {
                     // wtf
-                    console.log('var says drawn but jquery says not visible')
+                    console.log('var says drawn but jquery says not visible.. drawing it!');
                     $('.column_chooser').dialog({
                             height: 600,
                             width: 900,
