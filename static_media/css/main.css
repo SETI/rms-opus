@@ -66,8 +66,12 @@
     background:white;
  }
 
+.hints {
+    color:green;
+    margin: 0 2px 0 5px;
+}
 
-#sidebar input {
+#sidebar i.fa-check {
     display:none;
 }
 
