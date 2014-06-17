@@ -14,7 +14,7 @@ you can also do:
 
 deploy static assets to s3 if needed (or see next)
 
-    python manage.py collectstatic
+    python ../manage.py collectstatic
 
 you can deploy one-off static files with s3cmd instead of collectstatic, for example:
 

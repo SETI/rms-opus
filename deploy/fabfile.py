@@ -4,6 +4,10 @@ from fabric.contrib.console import confirm
 root_path = '/Users/lballard/'
 env.hosts = ['pds-rings-tools.seti.org']
 
+deploy_dir = 'opus'
+
+git_branch = 'newtheme'
+
 def push():
     """
     pushes code to repo and pushes repo to staging
@@ -15,7 +19,7 @@ def push():
         local('rm -rf ~/opus')
 
         # grab the local repo (this is all because couldn't grab remote from server)
-        local('git clone file:////Users/lballard/projects/opus')
+        local('git clone -b ' + git_branch + ' file:////Users/lballard/projects/opus')
 
         # zip the javascript files, dunno why it commented out, broken?
         # local('python opus/deploy/deploy.py')
@@ -28,9 +32,9 @@ def deploy():
     take a backup of the currently deployed source on the server
     """
     with cd('/home/lballard/'):
-        run('rsync -r -vc /home/django/djcode/opus backups/.')
-        run('sudo rsync -r -vc opus /home/django/djcode/.')
-        run('sudo touch /home/django/djcode/opus/*.wsgi')
+        run('sudo rsync -r -vc --exclude logs /home/django/djcode/' + deploy_dir + ' backups/.')
+        run('sudo rsync -r -vc --exclude logs ' + deploy_dir + ' /home/django/djcode/.')
+        run('sudo touch /home/django/djcode/' + deploy_dir + '/*.wsgi')
 
 def memcache_reboot():
         run('sudo killall memcached')
