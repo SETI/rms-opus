@@ -116,8 +116,6 @@ li.inifite_scroll_page  {
     margin-top:15px;
 }
 .paging_indicator input[type="text"] {
-    width:40px;
-    height:20px;
 }
 #browse .browse_nav {
     position:fixed;
