@@ -505,7 +505,7 @@ var o_browse = {
             success: function(html) {
                 opus.table_headers_drawn = true;
                 $('.data', namespace).append(html);
-                $(".data", namespace).stickyTableHeaders({ fixedOffset: 90 });
+                $(".data", namespace).stickyTableHeaders({ fixedOffset: 85 });
                 o_browse.getBrowseTab();
             }
         });
