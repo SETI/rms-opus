@@ -214,8 +214,8 @@ ul.ace-thumbnails {
     list-style-type:none;
 }
 .sidebar {
-    margin-left:3px;
-    width:275px
+    margin-left:15px;
+    width:300px;
 }
 .spinner {
     background-image: url('http://pds-rings.seti.org/~lballard/django_opus/static_media/images/spinner.gif');
