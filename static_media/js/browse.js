@@ -12,6 +12,13 @@ var o_browse = {
 
     browseBehaviors: function() {
 
+        $('#navbar').on("click", ".restart", function() {
+            window.location.hash = '';
+            window.location.href = "/opus";
+            location.reload();
+            return false;
+        }),
+
          // the gallery/table toggle
          $('#browse').on("click", '.browse_view', function() {
 
