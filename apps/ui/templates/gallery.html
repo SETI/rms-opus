@@ -1,7 +1,8 @@
 <ul class="ace-thumbnails">{% for i in data  %}
     <li id = "gallery__{{i.ring_obs_id}}">
     	<a class = "activeThumbnail" href = "{{ path }}{{ i.full }}" data-rel="colorbox">
-            <img width = "125px" alt="{{ i.ring_obs_id }}" src = "{{ path }}{{ i.img }}">
+            <img width = "125px" alt="{{ i.ring_obs_id }}" title = "{{ i.ring_obs_id }}"
+            src = "{{ path }}{{ i.img }}">
 
              <!-- div class="text">
                 <div class="inner">{{ i.ring_obs_id }}</div>
