@@ -35,6 +35,7 @@ def deploy():
         run('sudo rsync -r -vc --exclude logs /home/django/djcode/' + deploy_dir + ' backups/.')
         run('sudo rsync -r -vc --exclude logs ' + deploy_dir + ' /home/django/djcode/.')
         run('sudo touch /home/django/djcode/' + deploy_dir + '/*.wsgi')
+        run('sudo touch /home/django/djcode/' + deploy_dir + '/apache/*.wsgi')
 
 def memcache_reboot():
         run('sudo killall memcached')
