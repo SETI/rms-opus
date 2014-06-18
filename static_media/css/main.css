@@ -193,6 +193,7 @@ ul.ace-thumbnails {
 #browse {
     margin-top:20px;
     margin-right:5px;
+    min-height:1000px;
 }
 .navbar-fixed-top + .main-container {
     padding-top:-5px;
