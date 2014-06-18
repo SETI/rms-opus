@@ -207,10 +207,15 @@ def reset_sess(request):
     try:
         del request.session['queue']
         request.session['expected_request_no'] = 1
+    except KeyError:
+        pass
+
+    try:
         del request.session['collection__default']
         request.session['test'] = False
     except KeyError:
         pass
+
     return HttpResponse("session reset")
 
 
