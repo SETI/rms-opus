@@ -153,47 +153,42 @@ var opus = {
 
 
     load: function () {
-      	  selections = o_hash.getSelectionsFromHash();
-      	  if (!selections) {
-              if (opus.result_count!='0') {
-                  $('.hints').html("");  // remove all hints
-                  opus.updateResultCount('0');
+        selections = o_hash.getSelectionsFromHash();
+        if (!selections) {
+            if (opus.result_count != '0') {
+              $('.hints').html("");  // remove all hints
+              opus.updateResultCount('0');
+            }
+            if (opus.last_selections) {
+                  opus.last_selections = {};
               }
-              if (opus.last_selections) {
-      	          opus.last_selections = {};
-      	      }
-      	      return;
-      	  }
-          if (o_utils.areObjectsEqual(selections, opus.last_selections))  {
-              // selections haven't changed
-              if (!opus.force_load) { // only non-loading pref changes
-                  return;
-              }
-          } else {
-              // selections have changed, reset page
-              if (!opus.browse_empty) {
-                  // there was a last selections, clear results containers
-                  opus.prefs.page = 1;
-                  $('.gallery', '#browse').empty();
-                  $('.data', '#browse').empty();
-                  opus.browse_empty = true;  // now they are empty
-                  opus.browse_footer_clicks = reset_footer_clicks;
+          return;
+        }
 
-              }
-          }
-          opus.force_load = false;
-          if (!Object.keys(selections).length) {
-              opus.last_selections = {};
-              if (opus.result_count!='0') {
-                  $('.hints').html("");  // remove all hinting
-                  opus.updateResultCount('0');
-              }
-              return;
-          }
-          // start the result count spinner and do the yellow flasj
-          $('#result_count').html(opus.spinner).parent().effect("highlight", {}, 500);
-
-
+        if (o_utils.areObjectsEqual(selections, opus.last_selections))  {
+            // selections haven't changed
+            if (!opus.force_load) { // only non-loading pref changes
+                return;
+            }
+        } else {
+            // selections have changed, reset page
+            if (!opus.browse_empty) {
+                // there was a last selections, clear results containers
+                opus.prefs.page = default_pages;
+                o_browse.resetQuery();
+            }
+        }
+        opus.force_load = false;
+        if (!Object.keys(selections).length) {
+            opus.last_selections = {};
+            if (opus.result_count!='0') {
+                $('.hints').html("");  // remove all hinting
+                opus.updateResultCount('0');
+            }
+            return;
+        }
+        // start the result count spinner and do the yellow flasj
+        $('#result_count').html(opus.spinner).parent().effect("highlight", {}, 500);
           // query string has changed
           opus.last_selections = selections;
 
@@ -267,7 +262,7 @@ var opus = {
             case 'browse':
                 if (opus.prefs.browse == 'data') {
                     $('.data_container','#browse').show();
-                    $(',gallery','#browse').hide();
+                    $('.gallery','#browse').hide();
                 }
                 $('#browse').fadeIn();
                 o_browse.getBrowseTab();
@@ -282,7 +277,7 @@ var opus = {
                 opus.collection_change = true;
                 if (opus.prefs.colls_browse == 'data') {
                     $('.data_table','#collection').show();
-                    $(',gallery','#collection').hide();
+                    $('.gallery','#collection').hide();
                 }
                 $('#collection').fadeIn();
                 o_collections.getCollectionsTab();

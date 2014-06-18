@@ -790,14 +790,12 @@ var o_browse = {
         },
 
 
-        updatePage: function() {
-
+        resetQuery: function() {
             /*
-            reloads the current results view from server and
-            sets other views back to undrawn
-            gets page/view info from from getViewInfo()
-            and opus.prefs[prefix + 'browse']
+            when the user changes the query and all this stuff is already drawn
+            need to reset all of it
             */
+
             // get view/page info:
             view_info = o_browse.getViewInfo();
             namespace = view_info['namespace'];  // either '#collection' or '#browse'
@@ -808,8 +806,21 @@ var o_browse = {
             browse_view_scrolls = reset_browse_view_scrolls;
             opus.browse_empty = true;
             opus.table_headers_drawn = false;
-            $('.data','#browse').empty();
-			o_hash.updateHash();
+            $('.data').empty();  // yes all namespaces
+            $('.gallery').empty();
+            o_hash.updateHash();
+
+        },
+
+        updatePage: function() {
+
+            /*
+            reloads the current results view from server and
+            sets other views back to undrawn
+            gets page/view info from from getViewInfo()
+            and opus.prefs[prefix + 'browse']
+            */
+            o_browse.resetQuery();
             o_browse.getBrowseTab();
         },
 
@@ -857,15 +868,12 @@ var o_browse = {
 
 
             if (opus.column_chooser_drawn) {
-                console.log('already drawn gonna try and show you it!')
                 if ($('.column_chooser').is(":visible")) {
                     var scrollto = $(window).scrollTop() + 20;
-                    console.log('is visible, scrolling to ' + scrolto);
                     $('.column_chooser').css("top", scrollto);
                     $('.column_chooser').effect("highlight", {}, 3000);
                 } else {
                     // wtf
-                    console.log('var says drawn but jquery says not visible.. drawing it!');
                     $('.column_chooser').dialog({
                             height: 600,
                             width: 900,
@@ -879,7 +887,6 @@ var o_browse = {
             }
 
             // column_chooser has not been drawn, fetch it from the server and apply its behaviors:
-            console.log('not drawn, drawing now.. ')
             $('.column_chooser').html(opus.spinner);
             $('.column_chooser').dialog({
                     height: 600,
