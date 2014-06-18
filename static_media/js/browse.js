@@ -505,7 +505,7 @@ var o_browse = {
             success: function(html) {
                 opus.table_headers_drawn = true;
                 $('.data', namespace).append(html);
-                $(".data", namespace).stickyTableHeaders({ fixedOffset: 100 });
+                $(".data", namespace).stickyTableHeaders({ fixedOffset: 90 });
                 o_browse.getBrowseTab();
             }
         });
@@ -688,7 +688,7 @@ var o_browse = {
 
 
                 // get the browse nav header
-                $.ajax({ url: "opus/browse_headers.html",
+                $.ajax({ url: "/opus/browse_headers.html",
                     success: function(html){
                         $('.browse_nav', namespace).html(html);
                         // change the link text
