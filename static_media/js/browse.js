@@ -503,9 +503,9 @@ var o_browse = {
         }
         $.ajax({ url: url,
             success: function(html) {
-                opus.table_headers_drawn = true;
                 $('.data', namespace).append(html);
-                $(".data", namespace).stickyTableHeaders({ fixedOffset: 85 });
+                $(".data .data_table", namespace).stickyTableHeaders({ fixedOffset: 85 });
+                opus.table_headers_drawn = true;
                 o_browse.getBrowseTab();
             }
         });
