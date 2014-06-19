@@ -350,8 +350,8 @@ def getFiles(ring_obs_id, fmt='raw', loc_type="url", product_types=[], previews=
             if f.extra_files:
                 extra_files = f.extra_files.split(',')
 
-            ext = f.file_specification_name.split('.').pop()
-            base_file = ''.join(f.file_specification_name.split('.'))
+            ext = ''.join(f.file_specification_name.split('.')[-1:])
+            base_file = ''.join(f.file_specification_name.split('.')[:-1])
 
             # // sometimes in GO the volume_id is appended already
             if base_file.find(f.volume_id + ":")>-1:

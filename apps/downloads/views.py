@@ -147,11 +147,11 @@ def create_download(request, collection_name='', ring_obs_ids=None, fmt="raw"):
     for ring_obs_id,products in files.items():
         for product_type,file_list in products.items():
             for name in file_list:
+                digest="%s:%s"%(name.split("/")[-1], md5(name))
+                mdigest="%s:%s"%(ring_obs_id, name.split("/")[-1])
+                chksum.write(digest+"\n")
+                manifest.write(mdigest+"\n")
                 try:
-                    digest="%s:%s"%(name.split("/")[-1], md5(name))
-                    mdigest="%s:%s"%(ring_obs_id, name.split("/")[-1])
-                    chksum.write(digest+"\n")
-                    manifest.write(mdigest+"\n")
                     tar.add(name, arcname=name.split("/")[-1]) # arcname = fielname only, not full path
                     added = True
                 except Exception,e:
@@ -170,6 +170,7 @@ def create_download(request, collection_name='', ring_obs_ids=None, fmt="raw"):
     tar.close()
 
     zip_url = settings.TAR_FILE_URI_PATH + zip_file_name
+
 
     if not added:
         zip_url = "No Files Found"

@@ -22,31 +22,27 @@ var o_collections = {
          });
 
 
-         // download options hide/show
-         $('#collection').on("click", '#download_options_link', function() {
-             $('#download_options','#collection').slideToggle();
-         });
-
          // check an input on selected products and images updates file_info
          $('#collection').on("click",'#collection_summary input', function() {
              add_to_url = o_collections.getDownloadFiltersChecked();
              url = "/opus/collections/download/info?" + add_to_url;
              $.ajax({ url: url + '&fmt=json',
-                      success: function(json){
-                          $('#total_files').html(json['size']);
-                          $('#download_size').html(json['count']);
-                  }});
+                success: function(json){
+                    $('#total_files').html(json['size']);
+                    $('#download_size').html(json['count']);
+                }});
          });
 
-         // click create zip file link on collections page
-         $('#collection').on("click", 'a#create_zip_file', function() {
-                $('#zip_file', "#detail").html(opus.spinner + " zipping files");
+         // click create download zip file link on collections page
+         $('#collection').on("click", '#collections_summary a#create_zip_file button', function() {
+                $('#zip_files .spinner', "#collections_summary").fadeIn();
                 add_to_url = [];
                 add_to_url = o_collections.getDownloadFiltersChecked();
                 url = 'collections/download/default.zip?' + add_to_url;
                 $.ajax({ url: url,
                      success: function(json){
-                         $('#zip_files').append('<p><a href = "' + json + '">' + json + '</a></p>').show();
+                        $('#zip_files .spinner', "#collections_summary").fadeOut();
+                        $('#zip_files', "#collections_summary").append('<p><a href = "' + json + '">' + json + '</a></p>');
                      }});
                 return false;
          });
@@ -77,17 +73,16 @@ var o_collections = {
          product_types = [];
          image_types = [];
          add_to_url = [];
-         $('ul#product_types input[@type=checkbox]:checked').each(function(){
+         $('ul#product_types input:checkbox:checked').each(function(){
                product_types.push($(this).val());
              });
          if (product_types.length) {}
-         $('ul#image_types input[@type=checkbox]:checked').each(function(){
+         $('ul#image_types input:checkbox:checked').each(function(){
                image_types.push($(this).val());
              });
-
         checked_filters = {"types":product_types, "previews":image_types };
 
-        for (filter_name in checked_filters) {
+        for (var filter_name in checked_filters) {
           if (checked_filters[filter_name].length) {
               add_to_url.push(filter_name + "=" + checked_filters[filter_name].join(','));
           }

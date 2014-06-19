@@ -236,6 +236,11 @@ ul.ace-thumbnails {
     font-weight:bold;
     padding:5px;
 }
+
+
+#zip_files .spinner {
+    display:none;
+}
 /*
 .mult_group_label {
     display:block;
