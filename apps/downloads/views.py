@@ -155,6 +155,7 @@ def create_download(request, collection_name='', ring_obs_ids=None, fmt="raw"):
                     tar.add(name, arcname=name.split("/")[-1]) # arcname = fielname only, not full path
                     added = True
                 except Exception,e:
+                    log.error(e);
                     errors.append("could not find: " + name.split("/")[-1])
                     # print "could not find " + name
 
@@ -171,8 +172,8 @@ def create_download(request, collection_name='', ring_obs_ids=None, fmt="raw"):
 
     zip_url = settings.TAR_FILE_URI_PATH + zip_file_name
 
-
     if not added:
+        log.error('no files found for download cart ' + manifest_file_name);
         zip_url = "No Files Found"
 
     if fmt == 'json':
