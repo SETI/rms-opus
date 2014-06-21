@@ -54,6 +54,11 @@ def get_browse_headers(request,template='browse_headers.html'):
 
 def get_table_headers(request,template='table_headers.html'):
     slugs = request.GET.get('cols', settings.DEFAULT_COLUMNS)
+    order = request.GET.get('order', None)
+    if order:
+        sort_icon = 'fa-sort-desc' if order[0] == '-' else 'fa-sort-asc'
+        order = order[1:] if order[0] == '-' else order
+
     if not slugs: slugs = settings.DEFAULT_COLUMNS
     slugs = slugs.split(',')
     columns = []

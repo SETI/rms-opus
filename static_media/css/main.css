@@ -170,6 +170,9 @@ body {
     padding:0;
     margin-top:-20px;
 }
+.data_table .column_ordering {
+    margin:0 10px;
+}
 .collection_details {
     padding:20px 40px;
 }
@@ -240,6 +243,9 @@ ul.ace-thumbnails {
 
 #zip_files .spinner {
     display:none;
+}
+.data_table th a {
+    display:block;
 }
 /*
 .mult_group_label {

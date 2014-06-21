@@ -8,16 +8,18 @@
         <tr>
         	{% for col in columns %}
 
-        	<th class = "{{ col.0 }} center">
-        		<div class = "column_main">
-        			<img src = "{{ MEDIA_URL }}images/col_move_handle.png">
-        			<span class = "column_label">{{ col.1 }}</span>
+        	<th class = "center">
+        			<a href = "" data-slug = "{{ col.0 }}">{{ col.1 }}
+                    <span class = "column_ordering fa
+                    {% if order == col.0 %}
+                        {{ sort_icon }}
+                    {% else %}
+                        fa-sort
+                    {% endif %}
+                    "></span>
+                    </a>
         		</div>
 
-        		<div class = "column_ordering">
-        			<a class = "ascending" href = ""><img src = "{{ MEDIA_URL }}images/col_reorder.png"></a>
-        			<a class = "descending" href = ""><img src = "{{ MEDIA_URL }}images/col_reorder.png"></a>
-        		</div>
 
         	</th>
             {% endfor %}

@@ -169,19 +169,31 @@ var o_browse = {
             return false;
         }); // end click a browse tools icon
 
-        /*
-        $('.column_ordering a', '#browse').live("click", function() {
-            var order = $(this).parent().parent().attr("class");
-            if ($(this).attr("class") == "descending") {
-                order = '-' + order;
+        $('#browse').on("click", '.data_table th a',  function() {
+            var order_by =  $(this).data('slug');
+            var order_indicator = $(this).find('.column_ordering');
+
+            if (order_indicator.hasClass('fa-sort-asc')) {
+                // currently ascending, change to descending order
+                order_indicator.removeClass('fa-sort-asc');
+                order_indicator.addClass('fa-sort-desc');
+                order_by = '-' + order_by
+
+            } else if (order_indicator.hasClass('fa-sort-desc')) {
+                // change to not ordered
+                order_indicator.removeClass('fa-sort-desc');
+                order_by = "";
+
+            } else {
+                // not currently ordered, change to ascending
+                order_indicator.addClass('fa-sort-asc');
             }
-            opus.prefs['order'] = order;
+            opus.prefs['order'] = order_by;
             opus.prefs.page = default_pages; // reset pages to 1 when col ordering changes
             o_browse.updatePage();
             return false;
         });
 
-        */
 
 
         /*
