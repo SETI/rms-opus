@@ -8,11 +8,11 @@
 {% endif %}
 
 {% for row in data  %}
-	<tr id = "data__{{ row.ring_obs_id }}">
+	<tr id = "data__{{ row.0 }}">
 		{% if checkboxes %}
    		<td class = "center">
             <label class="position-relative">
-    			<input id="datainput__{{ row.ring_obs_id }}" class = "data_checkbox checkbox" type = "checkbox"
+    			<input id="datainput__{{ row.0 }}" class = "data_checkbox checkbox" type = "checkbox"
 	        {% if row.0 in collection %}
 	        	checked
 			{% endif %}

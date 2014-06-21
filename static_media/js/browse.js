@@ -12,6 +12,7 @@ var o_browse = {
 
     browseBehaviors: function() {
 
+        // restart button
         $('#navbar').on("click", ".restart", function() {
             window.location.hash = '';
             window.location.href = "/opus";
@@ -19,7 +20,7 @@ var o_browse = {
             return false;
         }),
 
-         // the gallery/table toggle
+         // browse nav menu - the gallery/table toggle
          $('#browse').on("click", '.browse_view', function() {
 
             if (opus.scroll_watch_interval) {
@@ -68,19 +69,27 @@ var o_browse = {
 
 
 
-        // 'add range' adds a range of observations to collection
+        // browse nav menu - add range - begins add range interaction
         $('#browse').on("click", '.addrange', function() {
 
             if ($('.addrange', '#browse').text() == "add range") {
-                // alert('please select an observation to begin your range');
                 opus.addrange_clicked = true;
                 $('.addrange','#browse').text("select range start");
+                alert(opus.addrange_clicked)
                 return false;
             }
         });
 
 
-        // click a gallery tool icon
+        // data_table - click a table row adds to card
+        $('#browse').on("click", ".data_table tr", function() {
+            ring_obs_id = $(this).attr("id").substring(6);
+            alert(ring_obs_id);
+
+
+        });
+
+        // thumbnail overlay tools
         $('.gallery').on("click", ".tools-bottom a", function() {
 
             ring_obs_id = $(this).parent().parent().attr("id").substring(9);
@@ -102,7 +111,9 @@ var o_browse = {
             // click to add/remove from  cart
             if ($(this).find('i').hasClass('fa-check')) {
 
-                // handle the visual indication of state
+                // user has checked a checkbox or clicked the checkmark on a thumbnail
+
+                // toggle thumbnail indicator state
                 o_browse.toggleBrowseInCollectionStyle(ring_obs_id, this);
 
                 // is this checked? or unchecked..
@@ -110,6 +121,7 @@ var o_browse = {
                 if ($(this).parent().hasClass("in")) {
                     action = 'add';  // this ring_obs_id is being added to cart
                 }
+
 
                 // make sure the checkbox for this observation in the other view (either data or gallery)
                 // is also checked/unchecked - if that view is drawn
@@ -131,21 +143,22 @@ var o_browse = {
                 } else {
                     // addrange clicked
 
-                    element = "li";
+                    element = "li";  // elements to loop thru
                     if (opus.prefs.browse == 'data') {
                             element = "td";
                     }
-                    if (!opus.addrange_min) {
 
+                    if (!opus.addrange_min) {
                         // this is the min side of the range
                         $('.addrange','#browse').text("select range end");
                         index = $('#gallery__' + ring_obs_id).index();
                         opus.addrange_min = { "index":index, "ring_obs_id":ring_obs_id };
 
                     } else {
-                        // we have both sides of range
 
+                        // we have both sides of range
                         $('.addrange','#browse').text("add range");
+
                         index = $('#gallery__' + ring_obs_id).index();
 
                         if (index > opus.addrange_min['index']) {
@@ -155,7 +168,7 @@ var o_browse = {
                             // user clicked later box first, reverse them for server..
                             range = ring_obs_id + "," + opus.addrange_min['ring_obs_id'];
                             o_browse.checkRangeBoxes(ring_obs_id, opus.addrange_min['ring_obs_id']);
-                        }
+                        }  // i don't like this
 
                         o_collections.editCollection(range,'addrange');
 
@@ -167,8 +180,11 @@ var o_browse = {
             }
 
             return false;
+
         }); // end click a browse tools icon
 
+
+        // click table column header to reorder by that column
         $('#browse').on("click", '.data_table th a',  function() {
             var order_by =  $(this).data('slug');
             var order_indicator = $(this).find('.column_ordering');
@@ -244,6 +260,9 @@ var o_browse = {
         });
 
     }, // end browse behaviors
+
+
+
 
 
     toggleBrowseInCollectionStyle: function(ring_obs_id, icon_a_element) {
@@ -417,65 +436,6 @@ var o_browse = {
         }
         **/
     },
-
-
-    /*
-    // this is a lot of crap for keeping track of scroll position for when user returns to the page from another page - to be coninued
-     $(window).resize(function() {
-         // browser has been resized!
-         // reset any page_bar locations
-         for (element in opus.page_bar_offsets) {
-             if (opus.page_bar_offsets[element]) { // only if they've already been set
-                 opus.page_bar_offsets[element] = Math.floor($(element).parent().offset().top);
-             }
-         }
-    });
-
-
-    // see element name of current page showing
-    // used to scroll to same location when switching from table to gallery view
-    currentPageInView: function() {
-
-        last_element = '';
-        greater_than_found = false;
-        page = false;
-
-        window_scroll = $(window).scrollTop();
-
-        for (element in opus.page_bar_offsets) {
-
-            if (!opus.page_bar_offsets[element]) {
-                // this one hasn't been set yet, find location of this page bar element
-                opus.page_bar_offsets[element] = Math.floor($(element).parent().offset().top);
-            }
-
-            scrolltop = opus.page_bar_offsets[element];
-
-
-            if (window_scroll >= scrolltop) {
-                // user has scrolled past this element
-                greater_than_found = true;
-            } else if (greater_than_found) {
-                    // this element is less than the scroll pos and the last element was greater
-                    // so the last element is what page we are on
-                    page = $(last_element).attr("id").split('__')[1];
-                    break; // got what we wanted
-            }
-
-            last_element=element;
-        }
-
-        if (!page) {
-            if (greater_than_found) {
-                page = $(last_element).attr("id").split('__')[1];
-            } else {
-                page = opus.prefs.page;
-            }
-        }
-        return 'inifite_scroll_' + opus.prefs.browse + '__' + page;
-    },
-
-    */
 
 
     checkRangeBoxes: function(ring_obs_id1, ring_obs_id2) {

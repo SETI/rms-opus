@@ -1,8 +1,11 @@
 var o_collections = {
     /**
      *
-     *  managing collections and
+     *  managing collections communication between server and client and
      *  all interaction on the collections tab
+     *
+     *  for the visual interaction on the browse table/gallery view when adding/removing
+     *  from cart see browse.js
      *
      **/
      collectionBehaviors: function() {
