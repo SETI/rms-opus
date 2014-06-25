@@ -85,7 +85,7 @@ class SearchForm(forms.Form):
                      label = '',
                      widget=forms.Select(
                         choices=choices,
-                        attrs={'tabindex':0}
+                        attrs={'tabindex':0, 'class':'STRING'}
                      ),
                 )
 
@@ -97,14 +97,14 @@ class SearchForm(forms.Form):
                 self.fields[slug] = MultiFloatField(
                      required=False,
                      label = label,
-                     widget = forms.TextInput(attrs={'class':label}),
+                     widget = forms.TextInput(attrs={'class':label + ' RANGE'}),
                 )
                 self.fields['qtype-'+slug_no_num] = forms.CharField(
                      required=False,
                      label = '',
                      widget=forms.Select(
                         choices=choices,
-                        attrs={'tabindex':0}
+                        attrs={'tabindex':0, 'class':"RANGE"}
                      ),
                 )
                 self.fields.keyOrder = [slug_no_num+'1', slug_no_num+'2', 'qtype-'+slug_no_num]  # makes sure min is first! boo ya!

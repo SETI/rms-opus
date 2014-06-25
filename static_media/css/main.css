@@ -1,4 +1,9 @@
 /* column chooser things */
+
+#search .add_input {
+    display:none;
+}
+
 .column_chooser .all_columns i.fa-check {
     display:none;
 }

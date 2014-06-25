@@ -140,8 +140,6 @@ def getMenuLabels(request):
 
 def getWidget(request, **kwargs):
 
-
-
     """ search form widget as string, http response"""
     slug = kwargs['slug']
     fmt = kwargs['fmt']

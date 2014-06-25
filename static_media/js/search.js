@@ -7,13 +7,16 @@ var o_search = {
      **/
 
     searchBehaviors: function() {
-
+        /*
+        // result count display hover
         $('#result_count').parent().hover(
             function(){ $('#result_count').addClass('result_count_hover'); },
             function(){ $('#result_count').removeClass('result_count_hover'); }
         )
+        */
 
         // the split form buttons - view the search form in 1 or 2 columns
+        /*
         $('#split_search_form a').live('click', function() {
             col = $(this).attr("href");
             if (col == '#2col') {
@@ -42,12 +45,15 @@ var o_search = {
                 $('#formscolumn2').remove();
             }
 
+
             o_widgets.updateWidgetCookies();
             return false;
         });
+        */
 
+        // filling in a range or string search field = update the hash
         // range behaviors and string behaviors for search widgets - input box
-        $('.RANGE input, .STRING input','#search').live('change', function() {
+        $('#search').on('change', 'input.STRING, input.RANGE', function() {
 
             opus.user_clicked=true;
             slug = $(this).attr("name");
@@ -80,17 +86,15 @@ var o_search = {
         });
 
         // range behaviors and string behaviors for search widgets - qtype select dropdown
-        $('select','#search').live('change',function() {
+        $('#search').on('change','select', function() {
+
             opus.user_clicked=true;
             var qtypes = [];
-            var form_type = $(this).parent().parent().parent().parent().attr("class").split(' ')[1];
-
+            var form_type = $(this).attr("class");
 
             if (form_type == 'RANGE') {
                 slug_no_num = $(this).attr("name").match(/-(.*)/)[1];
                 slug = slug_no_num + '1';
-
-
 
                 $('#widget__' + slug + ' select').each(function() {
                     qtypes[qtypes.length] = $(this).val();
@@ -107,11 +111,10 @@ var o_search = {
             o_hash.updateHash();
         });
 
-        // add range add string search behaviors
-        $('.STRING a.add_input, .RANGE a.add_input','#search').live("click", function() {
-
-            slug = $(this).parent().parent().parent().parent().parent().parent().attr("id").match(/\__(.*)/)[1]; // shoot me now.
-
+        // "add range" and "add string" search behaviors -- todo
+        $('#search').on("click", 'a.add_input, a.add_input', function() {
+            return false;
+            slug = $(this).parent().parent().parent().parent().attr("class").split(' ')[0].match(/\__(.*)/)[1]; // shoot me now.
             count = $('#widget__' + slug + ' input').length + 1;
 
             // no bring in another note form
@@ -126,8 +129,9 @@ var o_search = {
 
         });
 
-        // add range add string search behaviors - remove string
-        $('.STRING a.remove_input, .RANGE a.remove_input','#search').live("click", function() {
+        // add range add string search behaviors - remove string -- todo
+        $('#search').on("click", '.STRING a.remove_input, .RANGE a.remove_input', function() {
+            return false;
 
             var slug = $(this).parent().parent().parent().parent().parent().parent().attr("id").match(/\__(.*)/)[1];
             form_type = 'STRING';
@@ -186,6 +190,7 @@ var o_search = {
     },
 
     getSearchTab: function() {
+
         // widgets1 is the left column of widgets, wigets2 is the optional right col
 
         // get any prefs from cookies

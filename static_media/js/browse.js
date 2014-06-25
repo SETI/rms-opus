@@ -620,6 +620,7 @@ var o_browse = {
             // page is higher than the total number of pages, reset it to the last page
             page = opus[prefix + 'pages'];
         }
+
         if (needs_indicator_bar) {
             indicator_row = o_browse.infiniteScrollPageIndicatorRow(page);
             if (view_var == 'gallery') {
@@ -781,7 +782,7 @@ var o_browse = {
             prefix = view_info['prefix'];  // either 'colls_' or ''
             view_var = opus.prefs[prefix + 'browse'];  // data or gallery
 
-            opus.browse_footer_clicks = reset_footer_clicks;
+            opus.browse_footer_clicks = {"gallery":0, "data":0, "colls_gallery":0, "colls_data":0 };
             browse_view_scrolls = reset_browse_view_scrolls;
             opus.browse_empty = true;
             opus.table_headers_drawn = false;

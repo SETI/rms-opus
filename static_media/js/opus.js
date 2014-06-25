@@ -296,8 +296,8 @@ var opus = {
         o_menu.menuBehaviors();
         o_browse.browseBehaviors();
         o_collections.collectionBehaviors();
-        return;
         o_search.searchBehaviors();
+        return;
 
 
         // these are the default open groups/cats
