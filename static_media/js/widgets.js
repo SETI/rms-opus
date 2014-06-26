@@ -203,10 +203,10 @@ var o_widgets = {
                 $('#widget__planet input:checkbox:checked', '#search').each(function() {
                     if ($(this).attr('id') && $(this).attr('id').split('_')[0] == 'planet') { // confine to param/vals - not other input controls
                         mult_id = '#mult_group_' + $(this).attr('value');
-                        if ($(mult_id).prev().find(">:first-child").hasClass("closed_triangle")) {
-                            // group is not already open
-                            $(mult_id).prev().trigger('click');
-                        }
+                        mult_id = '#mult_group_' + $(this).attr('value');
+                        $(mult_id).find('.indicator').addClass('fa-plus');
+                        $(mult_id).find('.indicator').removeClass('fa-minus');
+                        $(mult_id).next().slideDown("fast");
                     }
                 });
                 break;
