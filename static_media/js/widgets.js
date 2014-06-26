@@ -21,13 +21,11 @@ var o_widgets = {
         */
 
         // open/close mult groupings in widgetts
-        /*
-        $('.mult_group_label', '#search').live('click',function() {
-            $(this).next().slideToggle('fast');
-            $(this).find(">:first-child").toggleClass('opened_triangle');
-            $(this).find(">:first-child").toggleClass('closed_triangle');
+        $('#search').on('click', '.mult_group_label_container', function () {
+            $(this).find('.indicator').toggleClass('fa-plus');
+            $(this).find('.indicator').toggleClass('fa-minus');
+            $(this).next().slideToggle("fast");
         });
-        */
 
         // mult widget behaviors - user clicks a multi-select checkbox
 
@@ -191,11 +189,11 @@ var o_widgets = {
                 // user checks a planet box - open the corresponding target group
                 // adding a behavior: checking a planet box opens the corresponding targets
                 $('#search').on('change', '#widget__planet input:checkbox:checked', function() {
-                    if ($('#mult_group_' + $(this).attr('value')).prev().find(">:first-child").hasClass("closed_triangle")) {
-                        // a planet is .chosen_columns, and its corresponding target is not already open
-                        mult_id = '#mult_group_' + $(this).attr('value');
-                        $(mult_id).prev().trigger('click');
-                    }
+                    // a planet is .chosen_columns, and its corresponding target is not already open
+                    mult_id = '#mult_group_' + $(this).attr('value');
+                    $(mult_id).find('.indicator').addClass('fa-plus');
+                    $(mult_id).find('.indicator').removeClass('fa-minus');
+                    $(mult_id).next().slideDown("fast");
                 });
                 break;
 
