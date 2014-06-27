@@ -505,6 +505,19 @@ var o_widgets = {
                          handles: 's',
                       });
 
+                // scroll to and highlight the widget
+                if ($('#' + widget).offset().top > $(window).height() - 50
+                    ) {
+                    $('html, body').animate({
+                            scrollTop: $('#' + widget).offset().top + 50
+                        }
+                        , 2000);
+                }
+                setTimeout(function(){
+                    $('.' + widget + ' .widget-main').effect("highlight", "slow");
+                }, 1000);
+
+
                 // $('.minimize_widget', '#' + widget).toggleClass('opened_triangle');
                 // $('.minimize_widget', '#' + widget).toggleClass('closed_triangle');
 

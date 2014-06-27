@@ -79,11 +79,6 @@
 #sidebar i.fa-check {
     display:none;
 }
-#sidebar {
-    overflow:scroll;
-    padding-right:10px;
-    height:700px;
-}
 
 /* */
 tr div.navbar-inverse {
@@ -231,9 +226,13 @@ ul.ace-thumbnails {
     display:inline;
     list-style-type:none;
 }
-.sidebar {
+
+
+#sidebar {
+    padding-right:10px;
+    height:800px;
     margin-left:15px;
-    width:300px;
+    width:330px;
 }
 .spinner {
     background-image: url('http://pds-rings.seti.org/~lballard/django_opus/static_media/images/spinner.gif');
