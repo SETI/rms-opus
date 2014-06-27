@@ -16,18 +16,8 @@ var o_menu = {
              if (jQuery.inArray(slug, opus.widgets_drawn)>-1){
                  // widget is already showing do not fetch another
                  try {
-                    $('#widget__'+slug + ' .widget-main').effect("highlight", "slow");
-                    if ($('#widget__' + slug).offset().top > $(window).height() - 50
-                        ) {
-                        $('html, body').animate({
-                                scrollTop: $('#widget__' + slug).offset().top + 50
-                            }
-                            , 2000);
-                    }
-                    setTimeout(function(){
-                        $('.widget__' + slug + ' .widget-main').effect("highlight", "slow");
-                    }, 1000);
-
+                    // scroll to widget and highlight it
+                    o_widgets.scrollToWidget('widget__'+slug);
 
                 } catch(e) {
                     return false;

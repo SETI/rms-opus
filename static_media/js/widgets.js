@@ -505,18 +505,7 @@ var o_widgets = {
                          handles: 's',
                       });
 
-                // scroll to and highlight the widget
-                if ($('#' + widget).offset().top > $(window).height() - 50
-                    ) {
-                    $('html, body').animate({
-                            scrollTop: $('#' + widget).offset().top + 50
-                        }
-                        , 2000);
-                }
-                setTimeout(function(){
-                    $('.' + widget + ' .widget-main').effect("highlight", "slow");
-                }, 1000);
-
+                o_widgets.scrollToWidget(widget);
 
                 // $('.minimize_widget', '#' + widget).toggleClass('opened_triangle');
                 // $('.minimize_widget', '#' + widget).toggleClass('closed_triangle');
@@ -616,6 +605,26 @@ var o_widgets = {
       }); // end function success, end ajax
      }, // end func
 
+
+     scrollToWidget: function(widget) {
+        // scrolls window to a widget and highlights the widge
+        // widget is like: "widget__" + slug
+        console.log($('#' + widget).offset().top);
+        console.log($(window).height());
+        console.log('--------------');
+        if ($('#' + widget).offset().top > $(window).height() - 50
+            |
+            $(window).height() > 2 * $(window).height()
+            ) {
+            $('html, body').animate({
+                    scrollTop: $('#' + widget).offset().top + 50
+                }, 2000);
+        }
+        setTimeout(function(){
+            $('.' + widget + ' .widget-main').effect("highlight", "slow");
+        }, 1000);
+
+     },
 
 
      constructWidgetSizeHash: function(slug) {
