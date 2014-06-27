@@ -609,9 +609,6 @@ var o_widgets = {
      scrollToWidget: function(widget) {
         // scrolls window to a widget and highlights the widge
         // widget is like: "widget__" + slug
-        console.log($('#' + widget).offset().top);
-        console.log($(window).height());
-        console.log('--------------');
         if ($('#' + widget).offset().top > $(window).height() - 50
             |
             $(window).height() > 2 * $(window).height()
