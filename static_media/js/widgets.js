@@ -429,7 +429,6 @@ var o_widgets = {
          $.cookie("widgets2", opus.prefs.widgets2.join(','), { expires: 21});
      },
 
-
      placeWidgetContainers: function() {
          // this is for when you are first drawing the browse tab and there
          // multiple widgets being requested at once and we want to preserve their order
@@ -506,8 +505,8 @@ var o_widgets = {
                          handles: 's',
                       });
 
-                $('.minimize_widget', '#' + widget).toggleClass('opened_triangle');
-                $('.minimize_widget', '#' + widget).toggleClass('closed_triangle');
+                // $('.minimize_widget', '#' + widget).toggleClass('opened_triangle');
+                // $('.minimize_widget', '#' + widget).toggleClass('closed_triangle');
 
                 o_widgets.pauseWidgetControlVisibility(opus.selections);
 
@@ -515,6 +514,10 @@ var o_widgets = {
                 if (formscolumn == '#formscolumn1') {
                     // o_widgets.adjustWidgetWidth('#' + widget);
                 }
+
+                // adjust the navbar height
+                var sidebar_height = $('.main-container-inner').height() > 800 ? $('.main-container-inner').height() : 800;
+                $('#sidebar').height(sidebar_height);
 
                 // bind the resize behavior\
                 // if you don't bind it this way the 'trigger' won't work later
@@ -579,6 +582,7 @@ var o_widgets = {
                      return '<span class = "hints" id = "' + span_id + '"></span>';
                  }
              });
+
 
              if (jQuery.inArray(slug,opus.widgets_fetching) > -1) {
                  opus.widgets_fetching.splice(opus.widgets_fetching.indexOf(slug));
