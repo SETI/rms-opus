@@ -44,6 +44,22 @@ $(document).ready(function() {
 
     });
 
+    // restart button behavior
+    $('#navbar').on("click", ".restart", function() {
+
+        // this might be temporary, reset widgets on restart
+        opus.prefs.widgets = [];
+        opus.prefs.widgets2 = [];
+        opus.widgets_drawn = [];
+        o_widgets.updateWidgetCookies();
+        // end widgets part
+
+        window.location.hash = '';
+        window.location.href = "/opus";
+        return false;
+    }),
+
+
     opus.addAllBehaviors();
 
     // watch the url for changes
