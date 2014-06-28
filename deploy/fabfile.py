@@ -8,6 +8,7 @@ deploy_dir = 'opus'
 
 git_branch = 'newtheme'
 
+
 def push():
     """
     pushes code to repo and pushes repo to staging
@@ -36,6 +37,9 @@ def deploy():
         run('sudo rsync -r -vc --exclude logs ' + deploy_dir + ' /home/django/djcode/.')
         run('sudo touch /home/django/djcode/' + deploy_dir + '/*.wsgi')
         run('sudo touch /home/django/djcode/' + deploy_dir + '/apache/*.wsgi')
+
+        run('sudo python /home/django/djcode/opus/apps/tools/reset_deploy_datetime.py')
+
 
 def memcache_reboot():
         run('sudo killall memcached')

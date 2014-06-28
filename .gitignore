@@ -26,3 +26,4 @@ images
 *.marks
 *.wsgi
 *.log
+apps/tools/deploy_datetime.py

@@ -94,12 +94,13 @@ TEMPLATE_CONTEXT_PROCESSORS = (
 
 MIDDLEWARE_CLASSES = (
     'django.middleware.gzip.GZipMiddleware',
-    'django.middleware.cache.UpdateCacheMiddleware',
+    'django.middleware.common.CommonMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
-    'django.middleware.common.CommonMiddleware',
+    'last_modified.middleware.CacheControlMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
+    'django.middleware.cache.UpdateCacheMiddleware',
     'django.middleware.cache.FetchFromCacheMiddleware',
     # prod remove:
     #'debug_toolbar.middleware.DebugToolbarMiddleware',
@@ -155,6 +156,11 @@ CACHES = {
         "LOCATION": "127.0.0.1:11211",
     },
 }
+
+# for last_modified middleware
+LAST_MODIFIED_FUNC = 'tools.last_mod.last_mod'
+CACHE_MAX_AGE = 3600 * 24 * 120  # the last number is the number of days
+
 
 INTERNAL_IPS = ("127.0.0.1",)
 
