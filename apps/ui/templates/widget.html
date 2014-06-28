@@ -7,6 +7,7 @@
         <div class="widget-box widget-color-blue2">
             <div class="widget-header">
                 <h5 class="widget-title">{{ label }} </h5>
+                <span class = "spinner">&nbsp;</span>
                 <div class="widget-toolbar">
 
                         <a href="#" data-action="collapse">
@@ -20,6 +21,7 @@
 
             <div class="widget__{{ slug }} widget-body">
                 <div class="widget-main">
+                    <div id = "hint__{{ slug }}" class = "range_hints"></div>
                     <ul>
                         {{ form|safe }}
                     </ul>

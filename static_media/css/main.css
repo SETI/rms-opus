@@ -75,6 +75,12 @@
     color:green;
     margin: 0 2px 0 5px;
 }
+.range_hints {
+    display:block;
+    clear:both;
+    padding: 5px 0 10px 50px;
+    color: green;
+}
 
 #sidebar i.fa-check {
     display:none;
@@ -270,6 +276,7 @@ ul.ace-thumbnails {
 .mult_group {
     display:none;
 }
+
 
 
 
@@ -863,10 +870,6 @@ h2.widget_label {
 
 }
 
-.range_hints {
-    clear:both;
-    padding:-5px;px 1-5px;px 1-5px;px 15px;
-}
 li .STRING {
     list-style-type:none;
     margin:-5px;px 1-5px;px;

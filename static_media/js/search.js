@@ -272,14 +272,13 @@ var o_search = {
 
     getRangeEndpoints: function(slug) {
 
-        $('#widget__' + slug + ' .spinner').addClass('spinning');
+        $('#widget__' + slug + ' .spinner').fadeIn();
 
         var url = "/opus/api/meta/range/endpoints/" + slug + ".json?" + o_hash.getHash() +  '&reqno=' + opus.lastRequestNo;
             $.ajax({url: url,
                 dataType:"json",
                 success: function(multdata){
-
-                    $('#widget__' + slug + ' .spinner').removeClass('spinning');
+                    $('#widget__' + slug + ' .spinner').fadeOut();
 
                     if (multdata['reqno'] < opus.lastRequestNo) {
                         return;
@@ -307,14 +306,14 @@ var o_search = {
     getValidMults: function (slug) {
         // turn on spinner
         if (jQuery.isEmptyObject(o_hash.getSelectionsFromHash())) return;
-        $('#widget__' + slug + ' .spinner').addClass('spinning');
+        $('#widget__' + slug + ' .spinner').fadeIn();
 
         var url = "/opus/api/meta/mults/" + slug + ".json?" + o_hash.getHash() +  '&reqno=' + opus.lastRequestNo;
         $.ajax({url: url,
             dataType:"json",
             success: function(multdata){
 
-                $('#widget__' + slug + ' .spinner').removeClass('spinning');
+                $('#widget__' + slug + ' .spinner').fadeOut('');
 
                 if (multdata['reqno'] < opus.lastRequestNo) {
                     return;
