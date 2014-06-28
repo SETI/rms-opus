@@ -517,7 +517,7 @@ var o_widgets = {
                     // o_widgets.adjustWidgetWidth('#' + widget);
                 }
 
-                // adjust the navbar height
+                // adjust the navbar height after bringing in new widget
                 var sidebar_height = $('.main-container-inner').height() > 800 ? $('.main-container-inner').height() : 800;
                 $('#sidebar').height(sidebar_height);
 
@@ -575,27 +575,28 @@ var o_widgets = {
              o_widgets.widgetControlBehaviors(slug);
 
              // add the spans that hold the hinting
-             $('#' + widget + ' ul label').after( function () {
-                 var value = $(this).find('input').attr("value");
-                 try {
-                     span_id = 'hint__' + value.split(' ').join('_');
-                     return '<span class = "hints" id = "' + span_id + '"></span>';
-                 } catch(e) {
-                     return '<span class = "hints" id = "' + span_id + '"></span>';
-                 }
-             });
+             try {
+                 $('#' + widget + ' ul label').after( function () {
+                     var value = $(this).find('input').attr("value");
+                     try {
+                         span_id = 'hint__' + value.split(' ').join('_');
+                         return '<span class = "hints" id = "' + span_id + '"></span>';
+                     } catch(e) {
+                         return '<span class = "hints" id = "' + span_id + '"></span>';
+                     }
+                 });
+                 } catch(e) { } // these only apply to mult widgets
 
 
              if (jQuery.inArray(slug,opus.widgets_fetching) > -1) {
                  opus.widgets_fetching.splice(opus.widgets_fetching.indexOf(slug));
              }
 
-             // add the spans for the the range hinting
-             $('#' + widget + ' .widget_inner').after( function () {
-                 var span_id = 'hint__' + slug;
-                 return '<div class = "hints range_hints" id = "' + span_id + '"></div>';
-             });
-             if (o_hash.getHash()) o_search.getHinting(slug);
+            if (o_hash.getHash()) {
+                o_search.getHinting(slug);
+            } else {
+                $('#widget__' + slug + ' .spinner').fadeOut();
+            }
 
              opus.widgets_drawn.push(slug);
 
