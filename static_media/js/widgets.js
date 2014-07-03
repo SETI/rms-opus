@@ -34,6 +34,9 @@ var o_widgets = {
             opus.prefs.widgets2.splice(opus.prefs.widgets2.indexOf(slug));
             opus.widgets_drawn.splice(opus.widgets_drawn.indexOf(slug));
             opus.widget_elements_drawn.splice(opus.widget_elements_drawn.indexOf(slug));
+            if (slug in opus.selections) {
+                delete opus.selections[slug];
+            }
             o_hash.updateHash();
             o_widgets.updateWidgetCookies();
         });
