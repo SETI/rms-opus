@@ -117,9 +117,11 @@ def getValidMults(request,slug,fmt='json'):
         if has_selections:
             # selections are constrained so join in the user_table
             user_table = getUserQueryTable(selections,extras)
-            where   = table_name + ".id = " + user_table + ".id"
+            if table_name == 'obs_general':
+                where   = table_name + ".id = " + user_table + ".id"
+            else:
+                where   = table_name + ".obs_general_id = " + user_table + ".id"
             results = results.extra(where=[where],tables=[user_table])
-
 
         for row in results:
             mult_id = row[mult_name]
