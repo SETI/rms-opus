@@ -27,6 +27,16 @@ var o_widgets = {
             $(this).next().slideToggle("fast");
         });
 
+        // close a widget
+        $('#search').on('click', '.close_widget', function() {
+            slug = $(this).data('slug');
+            opus.prefs.widgets.splice(opus.prefs.widgets.indexOf(slug));
+            opus.prefs.widgets2.splice(opus.prefs.widgets2.indexOf(slug));
+            opus.widgets_drawn.splice(opus.widgets_drawn.indexOf(slug));
+            opus.widget_elements_drawn.splice(opus.widget_elements_drawn.indexOf(slug));
+            o_hash.updateHash();
+            o_widgets.updateWidgetCookies();
+        });
         // mult widget behaviors - user clicks a multi-select checkbox
 
         /***********************************************************/
@@ -467,7 +477,6 @@ var o_widgets = {
              return; // widget being fetched
          }
 
-
          var widget = 'widget__' + slug;
 
          opus.widgets_fetching.push(slug);
@@ -495,7 +504,6 @@ var o_widgets = {
             $(html).hide().appendTo(formscolumn).show("slow");
             opus.widget_elements_drawn.push(slug);
         }
-
         $.ajax({ url: "/opus/forms/widget/" + slug + '.html?' + o_hash.getHash(),
              success: function(widget_str){
 
