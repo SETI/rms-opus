@@ -590,7 +590,7 @@ var o_widgets = {
                  $('#' + widget + ' ul label').after( function () {
                      var value = $(this).find('input').attr("value");
                      try {
-                         span_id = 'hint__' + value.split(' ').join('_');
+                         span_id = 'hint__' + slug + '_' + value.split(' ').join('_');
                          return '<span class = "hints" id = "' + span_id + '"></span>';
                      } catch(e) {
                          return '<span class = "hints" id = "' + span_id + '"></span>';

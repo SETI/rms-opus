@@ -323,7 +323,7 @@ var o_search = {
                 mults = multdata['mults'];
                 $('#' + widget + ' input').each( function() {
                     value = $(this).attr('value');
-                    id = '#hint__' + value.split(' ').join('_'); // id of hinting span
+                    id = '#hint__' + slug + "_" + value.split(' ').join('_'); // id of hinting span
                     if (mults[value]){
                           $(id).html('<span>' + mults[value] + '</span>');
                     } else $(id).html('<span>0</span>');
