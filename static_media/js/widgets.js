@@ -603,10 +603,10 @@ var o_widgets = {
                  opus.widgets_fetching.splice(opus.widgets_fetching.indexOf(slug));
              }
 
-            if (o_hash.getHash()) {
-                o_search.getHinting(slug);
+            if (jQuery.isEmptyObject(opus.selections)) {
+                $('#widget__' + slug + ' .spinner').fadeOut('');
             } else {
-                $('#widget__' + slug + ' .spinner').fadeOut();
+                o_search.getHinting(slug);
             }
 
              opus.widgets_drawn.push(slug);
