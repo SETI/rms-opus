@@ -60,23 +60,43 @@ var o_browse = {
         });
 
 
-
         // browse nav menu - add range - begins add range interaction
         $('#browse').on("click", '.addrange', function() {
 
             if ($('.addrange', '#browse').text() == "add range") {
                 opus.addrange_clicked = true;
                 $('.addrange','#browse').text("select range start");
-                alert(opus.addrange_clicked)
                 return false;
             }
         });
 
-
-        // data_table - click a table row adds to card
+        // data_table - click a table row adds to cart
         $('#browse').on("click", ".data_table tr", function() {
             ring_obs_id = $(this).attr("id").substring(6);
-            alert(ring_obs_id);
+            $(this).find('.data_checkbox').toggleClass('fa-check-square-o').toggleClass('fa-square-o');
+            action = 'remove';
+            if ($(this).find('.data_checkbox').hasClass('fa-check-square-o')) {
+                // this is checked, we are unchecking it now
+                action = 'add';
+            }
+
+            // make sure the checkbox for this observation in the other view (either data or gallery)
+            // is also checked/unchecked - if that view is drawn
+            try {
+                o_browse.toggleBrowseInCollectionStyle(ring_obs_id, ".tools-bottom a");
+            } catch(e) { } // view not drawn yet so no worries
+
+            // check if we are clicking as part of an 'add range' interaction
+            if (!opus.addrange_clicked) {
+
+                // no add range, just add this obs to collection
+                o_collections.editCollection(ring_obs_id,action);
+
+            } else {
+
+                o_browse.addRangeHandler(ring_obs_id);
+            }
+
 
 
         });
@@ -117,14 +137,9 @@ var o_browse = {
 
                 // make sure the checkbox for this observation in the other view (either data or gallery)
                 // is also checked/unchecked - if that view is drawn
-                for (var key in opus.all_browse_views) {
-                    bv = opus.all_browse_views[key];
-                    checked = false;
-                    if (action == 'add') checked = true;
-                    try {
-                        $('#' + bv + 'input__' + ring_obs_id).attr('checked',checked);
-                    } catch(e) { } // view not drawn yet so no worries
-                }
+                try {
+                    $('#data__' + ring_obs_id).find('.data_checkbox').toggleClass('fa-check-square-o').toggleClass('fa-square-o');
+                } catch(e) { } // view not drawn yet so no worries
 
                 // check if we are clicking as part of an 'add range' interaction
                 if (!opus.addrange_clicked) {
@@ -135,39 +150,7 @@ var o_browse = {
                 } else {
                     // addrange clicked
 
-                    element = "li";  // elements to loop thru
-                    if (opus.prefs.browse == 'data') {
-                            element = "td";
-                    }
-
-                    if (!opus.addrange_min) {
-                        // this is the min side of the range
-                        $('.addrange','#browse').text("select range end");
-                        index = $('#gallery__' + ring_obs_id).index();
-                        opus.addrange_min = { "index":index, "ring_obs_id":ring_obs_id };
-
-                    } else {
-
-                        // we have both sides of range
-                        $('.addrange','#browse').text("add range");
-
-                        index = $('#gallery__' + ring_obs_id).index();
-
-                        if (index > opus.addrange_min['index']) {
-                            range = opus.addrange_min['ring_obs_id'] + "," + ring_obs_id;
-                            o_browse.checkRangeBoxes(opus.addrange_min['ring_obs_id'], ring_obs_id);
-                        } else {
-                            // user clicked later box first, reverse them for server..
-                            range = ring_obs_id + "," + opus.addrange_min['ring_obs_id'];
-                            o_browse.checkRangeBoxes(ring_obs_id, opus.addrange_min['ring_obs_id']);
-                        }  // i don't like this
-
-                        o_collections.editCollection(range,'addrange');
-
-                        opus.addrange_clicked = false;
-                        opus.addrange_min = false;
-
-                    }
+                    addRangeHandler(ring_obs_id);
                 }
             }
 
@@ -255,11 +238,47 @@ var o_browse = {
 
 
 
+    addRangeHandler: function(ring_obs_id) {
 
+        element = "li";  // elements to loop thru
+        if (opus.prefs.browse == 'data') {
+                element = "td";
+        }
+
+        if (!opus.addrange_min) {
+            // this is the min side of the range
+            $('.addrange','#browse').text("select range end");
+            index = $('#' + opus.prefs.browse + '__' + ring_obs_id).index();
+            opus.addrange_min = { "index":index, "ring_obs_id":ring_obs_id };
+
+        } else {
+
+            // we have both sides of range
+            $('.addrange','#browse').text("add range");
+
+            index = $('#' + opus.prefs.browse + '__' + ring_obs_id).index();
+
+            if (index > opus.addrange_min['index']) {
+                range = opus.addrange_min['ring_obs_id'] + "," + ring_obs_id;
+                o_browse.checkRangeBoxes(opus.addrange_min['ring_obs_id'], ring_obs_id);
+            } else {
+                // user clicked later box first, reverse them for server..
+                range = ring_obs_id + "," + opus.addrange_min['ring_obs_id'];
+                o_browse.checkRangeBoxes(ring_obs_id, opus.addrange_min['ring_obs_id']);
+            }  // i don't like this
+
+            o_collections.editCollection(range,'addrange');
+
+            opus.addrange_clicked = false;
+            opus.addrange_min = false;
+
+        }
+
+    },
 
     toggleBrowseInCollectionStyle: function(ring_obs_id, icon_a_element) {
-        $(icon_a_element).parent().toggleClass("in"); // this class keeps parent visible when mouseout
-        $(icon_a_element).find('i').toggleClass('thumb_selected_icon');
+        $('#gallery__' + ring_obs_id + ' ' + icon_a_element).parent().toggleClass("in"); // this class keeps parent visible when mouseout
+        $('#gallery__' + ring_obs_id + ' ' + icon_a_element).find('i').toggleClass('thumb_selected_icon');
         $('#gallery__' + ring_obs_id + ' .thumb_overlay').toggleClass('thumb_selected');
     },
 
@@ -429,7 +448,7 @@ var o_browse = {
         **/
     },
 
-
+    // checkboxes
     checkRangeBoxes: function(ring_obs_id1, ring_obs_id2) {
         // make all list/td elements bt r1 and r2 be added to cart
 
@@ -441,20 +460,28 @@ var o_browse = {
 
                 // we know that the endpoints are already checked, so start with the next li element
                 next_element = $(element + current_id, '#browse').next();
-                /*
+
                 if (next_element.hasClass("inifite_scroll_page")) {
                     // this is the infinite scroll indicator, continue to next
                     next_element = $(element + current_id, '#browse').next().next();
                 }
-                */
+
                 // check the boxes:
-                // $(next).find('input').attr('checked',true);
-                if (!next_element.find('.tools').hasClass("in")) {  // if not already checked
-                    icon_a_element = next_element.find('.fa-check').parent(); //
-                    try {
-                        ring_obs_id = next_element.attr("id").split('__')[1];
-                        o_browse.toggleBrowseInCollectionStyle(ring_obs_id, icon_a_element);
-                    } catch(e) {}
+                if (element == "#gallery__") {
+                    // $(next).find('input').attr('checked',true);
+                    if (!next_element.find('.tools').hasClass("in")) {  // if not already checked
+                        icon_a_element = next_element.find('.fa-check').parent(); //
+                        try {
+                            ring_obs_id = next_element.attr("id").split('__')[1];
+                            o_browse.toggleBrowseInCollectionStyle(ring_obs_id, icon_a_element);
+                        } catch(e) {}
+                    }
+                } else {
+                    if (!next_element.find('.data_checkbox').hasClass('fa-check-square-o')) {
+                        // box is not checked so checkity check it
+                        next_element.find('.data_checkbox').toggleClass('fa-check-square-o').toggleClass('fa-square-o');
+                    }
+
                 }
 
                 // now move along

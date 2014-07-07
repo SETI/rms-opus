@@ -162,15 +162,16 @@ def check_collection_args(request,**kwargs):
     else:
         (action, collection_name, ring_obs_id, request_no, expected_request_no) = check_collection_args(request, **kwargs)
     """
+
     if request.is_ajax() == False:
-        return HttpResponseNotFound('<h1>Page not found</h1>')
+        return 'Page not found'
 
     # collection and action are part of the url conf so you won't get in without one
     try:
         action = kwargs['action']
         collection_name = 'collection__' + kwargs['collection']
     except KeyError:
-        return HttpResponseNotFound('<h1>Page not found</h1>')
+        return 'Page not found'
 
     ring_obs_id = request.GET.get('ringobsid', False)
     request_no = request.GET.get('request', False)
@@ -252,12 +253,12 @@ def edit_collection(request, **kwargs):
     if request.session.get(collection_name):
         collection = request.session.get(collection_name)
 
-
     all_collections = []
     if request.session.get("all_collections"):
         all_collections = request.session.get("all_collections")
     if collection_name not in all_collections:
         all_collections.append(collection_name)
+
 
     if action == 'add':
         if ring_obs_id in collection: # if it's already there, remove it and add it again, user may be futzing with order

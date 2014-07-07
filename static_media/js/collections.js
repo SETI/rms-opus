@@ -250,7 +250,7 @@ var o_collections = {
         opus.lastCartRequestNo++;
         // $('.collections_extra').html(opus.spinner);
         // $('#collection_tab').fadeIn();
-        opus.collection_queue[opus.lastCartRequestNo] = {"action":action, "ringobsid":ring_obs_id, "sent":false}
+        opus.collection_queue[opus.lastCartRequestNo] = {"action":action, "ringobsid":ring_obs_id, "sent":false};
         o_collections.processCollectionQueue();
     },
 
