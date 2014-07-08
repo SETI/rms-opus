@@ -583,6 +583,7 @@ var o_browse = {
             }
         }
         if (!page) { page = 1; }
+
         return page;
     },
 
@@ -594,8 +595,6 @@ var o_browse = {
         add_to_url = view_info['add_to_url'];  // adds colls=true if in collections view
 
         view_var = opus.prefs[prefix + 'browse'];  // either 'gallery' or 'data'
-
-        opus.browse_empty = false; // true if zero results on browse tab AND no ajax calls to get data have been sent
 
         if (opus.scroll_watch_interval) {
             clearInterval(opus.scroll_watch_interval); // hold on cowgirl only 1 page at a time
@@ -618,12 +617,6 @@ var o_browse = {
         // figure out the page
         start_page = opus.prefs.page[prefix + view_var]; // default: {'gallery':1, 'data':1, 'colls_gallery':1, 'colls_data':1 };
 
-        needs_indicator_bar = false; // whether we need to draw the footer page indicator bar
-        if (opus.browse_footer_clicked) {
-            // browse footer was "clicked" (or scrolled into view) so yes, we need the bar
-            needs_indicator_bar = true;
-            opus.browse_footer_clicked = false; // done with this
-        }
         page = parseInt(start_page, 10) + parseInt(footer_clicks, 10);
         // some outlier things that can go wrong with page (when user entered page #)
         if (!page) {
@@ -633,12 +626,13 @@ var o_browse = {
             page = 1;
             $('#' + prefix + 'page_no', namespace).val(page); // reset the display
         }
+
         if (opus[prefix + 'pages'] && page > opus[prefix + 'pages']) {
             // page is higher than the total number of pages, reset it to the last page
             page = opus[prefix + 'pages'];
         }
 
-        if (needs_indicator_bar) {
+        if (page > 1) {
             indicator_row = o_browse.infiniteScrollPageIndicatorRow(page);
             if (view_var == 'gallery') {
                 $(indicator_row).appendTo('.gallery', namespace).show();
@@ -647,9 +641,11 @@ var o_browse = {
                 $(".data_table tr:last", namespace).show();  // i dunno why couldn't chain these 2
             }
         }
+
         url += '&page=' + page;
 
         opus.prefs[prefix + view_var] = page;
+
 
         // NOTE if you change alt_size=full here you must also change it in gallery.html template
         $.ajax({ url: url,
@@ -801,7 +797,6 @@ var o_browse = {
 
             opus.browse_footer_clicks = {"gallery":0, "data":0, "colls_gallery":0, "colls_data":0 };
             browse_view_scrolls = reset_browse_view_scrolls;
-            opus.browse_empty = true;
             opus.table_headers_drawn = false;
             $('.data').empty();  // yes all namespaces
             $('.gallery').empty();
@@ -847,10 +842,14 @@ var o_browse = {
 
             // this is for the infinite scroll footer bar
             if (o_browse.isScrolledIntoView('.end_of_page')) {
+
+                if (opus.browse_footer_clicks[prefix + view_var] > (opus.pages -2)) {
+                    return; // this can't be! so just don't
+                }
+
                 // scroll is in view, up the "footer clicks" for this view
                 opus.browse_footer_clicks[prefix + view_var] = opus.browse_footer_clicks[prefix + view_var] + 1;
 
-                opus.browse_footer_clicked=true;
                 o_browse.getBrowseTab();
             }
         },

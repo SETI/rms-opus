@@ -141,11 +141,9 @@ var opus = {
     colls_pages:0, // total number of collections pages
     text_field_monitor:[], // holds text-field-entries during polling
     browse_footer_clicks:reset_footer_clicks, // defined in header.html
-    browse_footer_clicked:false,
     browse_auto:'.chosen_columns', // we are turning this on as default
     browse_footer_style_disabled: false,  // keeps track of whether we have
     scroll_watch_interval:'', // holder for setInterval timer
-    browse_empty:true, // true if zero results on browse tab AND no ajax calls to get data have been sent
     footer_clicks_trigger: 0, // number of results footer clicks *after first* to trigger form that lets user set auto, -1 to turn off (not tested)
     page_bar_offsets:{},  // list of bars that indicate page in infinite scrolling
     browse_controls_fixed:false, // indicates whether browse controle bar is fixed at top of screen
@@ -188,11 +186,9 @@ var opus = {
             }
         } else {
             // selections have changed, reset page
-            if (!opus.browse_empty) {
-                // there was a last selections, clear results containers
-                opus.prefs.page = default_pages;
-                o_browse.resetQuery();
-            }
+            // there was a last selections, clear results containers
+            opus.prefs.page = default_pages;
+            o_browse.resetQuery();
         }
         opus.force_load = false;
         if (!Object.keys(selections).length) {
