@@ -83,7 +83,7 @@ var o_browse = {
             // make sure the checkbox for this observation in the other view (either data or gallery)
             // is also checked/unchecked - if that view is drawn
             try {
-                o_browse.toggleBrowseInCollectionStyle(ring_obs_id, ".tools-bottom a");
+                o_browse.toggleBrowseInCollectionStyle(ring_obs_id);
             } catch(e) { } // view not drawn yet so no worries
 
             // check if we are clicking as part of an 'add range' interaction
@@ -126,7 +126,7 @@ var o_browse = {
                 // user has checked a checkbox or clicked the checkmark on a thumbnail
 
                 // toggle thumbnail indicator state
-                o_browse.toggleBrowseInCollectionStyle(ring_obs_id, this);
+                o_browse.toggleBrowseInCollectionStyle(ring_obs_id);
 
                 // is this checked? or unchecked..
                 action = 'remove';
@@ -149,8 +149,7 @@ var o_browse = {
 
                 } else {
                     // addrange clicked
-
-                    addRangeHandler(ring_obs_id);
+                    o_browse.addRangeHandler(ring_obs_id);
                 }
             }
 
@@ -276,7 +275,8 @@ var o_browse = {
 
     },
 
-    toggleBrowseInCollectionStyle: function(ring_obs_id, icon_a_element) {
+    toggleBrowseInCollectionStyle: function(ring_obs_id) {
+        icon_a_element = ".tools-bottom a"
         $('#gallery__' + ring_obs_id + ' ' + icon_a_element).parent().toggleClass("in"); // this class keeps parent visible when mouseout
         $('#gallery__' + ring_obs_id + ' ' + icon_a_element).find('i').toggleClass('thumb_selected_icon');
         $('#gallery__' + ring_obs_id + ' .thumb_overlay').toggleClass('thumb_selected');
@@ -467,13 +467,11 @@ var o_browse = {
                 }
 
                 // check the boxes:
-                if (element == "#gallery__") {
-                    // $(next).find('input').attr('checked',true);
+                if (element == '#gallery__') {
                     if (!next_element.find('.tools').hasClass("in")) {  // if not already checked
-                        icon_a_element = next_element.find('.fa-check').parent(); //
                         try {
                             ring_obs_id = next_element.attr("id").split('__')[1];
-                            o_browse.toggleBrowseInCollectionStyle(ring_obs_id, icon_a_element);
+                            o_browse.toggleBrowseInCollectionStyle(ring_obs_id);
                         } catch(e) {}
                     }
                 } else {
