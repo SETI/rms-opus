@@ -52,7 +52,6 @@ var o_browse = {
             }
 
             // reset scroll position (later we'll be smarter)
-
             // window.scroll(0,0);
             window.scroll(0,opus.browse_view_scrolls[showing]); // restore previous scroll position
 
@@ -632,6 +631,7 @@ var o_browse = {
             page = opus[prefix + 'pages'];
         }
 
+        // draw indicator bar if needed
         if (page > 1) {
             indicator_row = o_browse.infiniteScrollPageIndicatorRow(page);
             if (view_var == 'gallery') {
@@ -673,6 +673,24 @@ var o_browse = {
 
                }
 
+                // get the browse nav header
+                if (!opus.gallery_begun) {
+                    $.ajax({ url: "/opus/browse_headers.html",
+                        success: function(html){
+                            $('.browse_nav', namespace).html(html);
+                            // change the link text
+                            if (opus.prefs.browse == 'gallery') {
+                                $('.browse_view', namespace).text('view table');
+                            } else {
+                                $('.browse_view', namespace).text('view gallery');
+                            }
+                            // update the page_no and pages display
+                            $('#' + prefix + 'page_no', namespace).val(page);
+                            $('#' + prefix + 'pages', namespace).html(page);
+
+                    }});
+                }
+
                // doit!
                appendBrowsePage();
 
@@ -680,21 +698,6 @@ var o_browse = {
                 opus.scroll_watch_interval = setInterval(o_browse.browseScrollWatch, 1000);
 
 
-                // get the browse nav header
-                $.ajax({ url: "/opus/browse_headers.html",
-                    success: function(html){
-                        $('.browse_nav', namespace).html(html);
-                        // change the link text
-                        if (opus.prefs.browse == 'gallery') {
-                            $('.browse_view', namespace).text('view table');
-                        } else {
-                            $('.browse_view', namespace).text('view gallery');
-                        }
-                        // update the page_no and pages display
-                        $('#' + prefix + 'page_no', namespace).val(page);
-                        $('#' + prefix + 'pages', namespace).html(page);
-
-                }});
 
                 // setup colorbox
                 var $overflow = '';
@@ -843,7 +846,7 @@ var o_browse = {
             // this is for the infinite scroll footer bar
             if (o_browse.isScrolledIntoView('.end_of_page')) {
 
-                if (opus.browse_footer_clicks[prefix + view_var] > (opus.pages -2)) {
+                if (opus.browse_footer_clicks[prefix + view_var] > (opus[prefix + 'pages'] -2)) {
                     return; // this can't be! so just don't
                 }
 
