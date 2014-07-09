@@ -179,6 +179,7 @@ var o_browse = {
             }
             opus.prefs['order'] = order_by;
             opus.prefs.page = default_pages; // reset pages to 1 when col ordering changes
+
             o_browse.updatePage();
             return false;
         });
@@ -791,16 +792,10 @@ var o_browse = {
             when the user changes the query and all this stuff is already drawn
             need to reset all of it
             */
-
-            // get view/page info:
-            view_info = o_browse.getViewInfo();
-            namespace = view_info['namespace'];  // either '#collection' or '#browse'
-            prefix = view_info['prefix'];  // either 'colls_' or ''
-            view_var = opus.prefs[prefix + 'browse'];  // data or gallery
-
             opus.browse_footer_clicks = {"gallery":0, "data":0, "colls_gallery":0, "colls_data":0 };
             browse_view_scrolls = reset_browse_view_scrolls;
             opus.table_headers_drawn = false;
+            opus.gallery_begun = false;
             $('.data').empty();  // yes all namespaces
             $('.gallery').empty();
             o_hash.updateHash();
