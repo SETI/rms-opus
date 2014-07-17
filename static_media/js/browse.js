@@ -19,7 +19,7 @@ var o_browse = {
                 clearInterval(opus.scroll_watch_interval); // hold on cowgirl only 1 page at a time
             }
 
-            var browse_view = $(this).text().split(' ')[1];  // table or gallery
+            var browse_view = $(this).text().split(' ')[1];  // data or gallery
             var hiding, showing;
             if (browse_view == 'gallery') {
                 hiding = 'data';
@@ -50,6 +50,8 @@ var o_browse = {
                 // not loading browse, turn scroll watch back on
                 opus.scroll_watch_interval = setInterval(o_browse.browseScrollWatch, 1000);
             }
+
+            // $('#' + prefix + 'page', namespace).val(opus.prefs.page[prefix + showing]);
 
             // reset scroll position (later we'll be smarter)
             // window.scroll(0,0);
@@ -186,11 +188,10 @@ var o_browse = {
 
 
 
-        /*
         // results paging
-        $('.next, .prev').live('click', function() {
+        $("#browse").on("click", "a.next, a.prev", function() {
             // all this does is update the number that shows in the box and then calls textInputMonitor
-            page_no_elem = $(this).parent().next().find('.page_no');
+            page_no_elem = $(this).parent().parent().find('.page_no');
             this_page = parseInt(page_no_elem.val(), 10);
             if ( $(this).hasClass("next")) {
                 page = this_page + 1;
@@ -198,12 +199,13 @@ var o_browse = {
                  page = this_page - 1;
             }
             page_no_elem.val(page);
-            o_browse.textInputMonitor(page_no_elem.attr("id"),500);
+            o_browse.textInputMonitor();
             return false;
         });
 
-        // change page
-        $('#page_no','#browse').live("change",function() {
+        // change page manually
+        /*
+        $('#page_no','#browse').on("change",function() {
             page = parseInt($(this).val(), 10);
             o_browse.updatePage(page);
         });
@@ -235,7 +237,54 @@ var o_browse = {
 
     }, // end browse behaviors
 
+    pageInViewIndicator: function() {
+        // what page no is currently scrolled into view?
+        view_info = o_browse.getViewInfo();
+        namespace = view_info['namespace']; // either '#collection' or '#browse'
+        prefix = view_info['prefix'];       // either 'colls_' or ''
+        add_to_url = view_info['add_to_url'];  // adds colls=true if in collections view
 
+        view_var = opus.prefs[prefix + 'browse'];  // either 'gallery' or 'data'
+
+        first_page = opus.prefs.page[prefix + view_var];
+
+        page = first_page;
+        /*
+        if (page == 1) {
+            page = 2; // there is never a page 1 indicator bar, start with 2
+        }
+        */
+
+
+        if ($(window).scrollTop() === 0 || opus.browse_footer_clicks[prefix + view_var] === 0) {
+            // there has been no scrolling, set it to first page
+            $('#' + prefix + 'page', namespace).val(first_page);
+            return;
+        }
+
+        no_length = 0;
+        while (page <= (opus.browse_footer_clicks[prefix + view_var] + first_page)) { // opus.pages
+            elem = '#infinite_scroll_' + prefix + opus.prefs.browse + '__' + page;
+            if ($(elem).length) {
+                elem_scroll = $(elem, namespace).offset().top;
+                if (elem_scroll + $(window).height() >  $('.top_navbar', namespace).offset().top ) {
+                    // the first one that's greater than the window is the page
+                    $('#' + prefix + 'page', namespace).val(page);
+                    return;
+                }
+
+            } else {
+                no_length = no_length + 1; // if we hit 2 in a row stop checking
+                if (no_length > 2) {
+                    // there aren't any more, if we are still here then:
+                    break;
+                }
+            }
+            page = page + 1;
+        }
+
+
+    },
 
     addRangeHandler: function(ring_obs_id) {
 
@@ -430,7 +479,7 @@ var o_browse = {
         }
 
         // this is for fixing the browse_controls
-        if (o_browse.isScrolledIntoView('.browse_controls_container')) {
+        if (o_browse.isAlmostScrolledIntoView('.browse_controls_container')) {
             if (opus.browse_controls_fixed) {
                 // browse controls container is in view,
                 // but browse controls are still fixed at top of page, move it back
@@ -461,7 +510,7 @@ var o_browse = {
                 // we know that the endpoints are already checked, so start with the next li element
                 next_element = $(element + current_id, '#browse').next();
 
-                if (next_element.hasClass("inifite_scroll_page")) {
+                if (next_element.hasClass("infinite_scroll_page")) {
                     // this is the infinite scroll indicator, continue to next
                     next_element = $(element + current_id, '#browse').next().next();
                 }
@@ -514,10 +563,10 @@ var o_browse = {
 
         opus.prefs.view == 'browse' ? browse_prefix = '' : browse_prefix = 'colls_';
 
-        id = 'inifite_scroll_' + browse_prefix + opus.prefs.browse + '__' + page;
+        id = 'infinite_scroll_' + browse_prefix + opus.prefs.browse + '__' + page;
 
         /*jshint multistr: true */
-        data = '<tr class = "inifite_scroll_page">\
+        data = '<tr class = "infinite_scroll_page">\
                     <td colspan = "' + (opus.prefs['cols'].length +1) + '">\
                         <div class="navbar-inverse"> \
                             <span class = "back_to_top"><a href = "#top">back to top</a></span> \
@@ -526,7 +575,7 @@ var o_browse = {
                 </td>\
                 </tr>';
 
-        gallery = '<li class = "inifite_scroll_page navbar-inverse">\
+        gallery = '<li class = "infinite_scroll_page navbar-inverse">\
                        <span class = "back_to_top"><a href = "#top">back to top</a></span>\
                        <span class = "infinite_scroll_page_container" id = "' + id + '">Page ' + page + '</span>\
                        <span class = "infinite_scroll_spinner">' + opus.spinner + '</span>\
@@ -643,10 +692,10 @@ var o_browse = {
             }
         }
 
+
         url += '&page=' + page;
 
         opus.prefs[prefix + view_var] = page;
-
 
         // NOTE if you change alt_size=full here you must also change it in gallery.html template
         $.ajax({ url: url,
@@ -674,7 +723,7 @@ var o_browse = {
 
                }
 
-                // get the browse nav header
+                // get the browse nav header?
                 if (!opus.gallery_begun) {
                     $.ajax({ url: "/opus/browse_headers.html",
                         success: function(html){
@@ -685,20 +734,20 @@ var o_browse = {
                             } else {
                                 $('.browse_view', namespace).text('view gallery');
                             }
-                            // update the page_no and pages display
-                            $('#' + prefix + 'page_no', namespace).val(page);
-                            $('#' + prefix + 'pages', namespace).html(page);
-
                     }});
                 }
 
-               // doit!
-               appendBrowsePage();
+                // doit!
+                appendBrowsePage();
+
+                o_browse.pageInViewIndicator();
+
+                // $('#' + prefix + 'page', namespace).html(page);
 
                 // turn the scroll watch timer back on
                 opus.scroll_watch_interval = setInterval(o_browse.browseScrollWatch, 1000);
 
-
+                o_browse.textInputMonitor();
 
                 // setup colorbox
                 var $overflow = '';
@@ -735,27 +784,24 @@ var o_browse = {
     },
 
 
-    // we watch the paging input fields to wait for pauses before we trigger page change. UX, baby.
-    textInputMonitor: function(field,ms) {
-        return;
-        /*
+    // we watch the paging input fields to wait for pauses before we trigger page change. UX!
+    // this funciton starts that monitor based on what view is currently up
+    // it also clears any old one.
+    textInputMonitor: function() {
         // which field are we working on? defines which global monitor list we use
-        switch(field) {
-            case 'page':
-                field_monitor = opus.page_monitor;
-                prefix = '';
-                break;
-            case 'colls_page':
-                field_monitor = opus.page_colls_monitor;
-                prefix = 'colls_';
-                break;
-            default:
-                var field_monitor = opus.text_field_monitor;
-            }
-            var value = parseInt($('#' + prefix + 'page_no').val(), 10);
 
+        ms = 500;
+
+        view_var = opus.prefs[prefix + 'browse'];  // either 'gallery' or 'data'
+        view_info = o_browse.getViewInfo();
+        namespace = view_info['namespace']; // either '#collection' or '#browse'
+        prefix = view_info['prefix'];       // either 'colls_' or ''
+
+        field_monitor = opus[prefix + 'page_monitor_' + view_var];
+        var value = parseInt($('#' + prefix + 'page_no').val(), 10);
+
+        // clear the old monitor and start a new one
         if (opus.input_timer) clearTimeout(opus.input_timer);
-
 		opus.input_timer = setTimeout(
             function() {
                 if (field_monitor[field_monitor.length-1]  == value){
@@ -764,26 +810,17 @@ var o_browse = {
 					// opus.force_load = true;
 					// setTimeout("o_hash.updateHash()",0);
 					// tidy up, keep the array small..
-					if (field_monitor.length > 3) field_monitor.shift();
+					if (field_monitor.length > 3) field_monitor.shift(); // keep it trimmed
 				} else {
 					// array is changing, user is still typing
 					// maintain our array with our new value
                     field_monitor[field_monitor.length]  = value;
-					o_browse.textInputMonitor(field,ms);
+					// o_browse.textInputMonitor();
 				}
             },ms);
 
             // update the global monitor
-            switch(field) {
-                case 'page':
-                opus.page_monitor = field_monitor;
-                break;
-            case 'page_colls':
-                opus.page_colls_monitor = field_monitor;
-                break;
-            default:
-                opus.text_field_monitor = field_monitor;            }
-            */
+            opus[prefix + 'page_monitor_' + view_var] = field_monitor;
         },
 
 
@@ -815,16 +852,16 @@ var o_browse = {
         },
 
         // http://stackoverflow.com/questions/487073/jquery-check-if-element-is-visible-after-scroling thanks!
-        isScrolledIntoView: function(elem) {
+        isAlmostScrolledIntoView: function(elem) {
 
-                var docViewTop = $(window).scrollTop();
-                var docViewBottom = docViewTop + $(window).height();
+            var docViewTop = $(window).scrollTop() + $(window).height()/4;
+            var docViewBottom = docViewTop + $(window).height();
 
-                var elemTop = $(elem).offset().top;
-                var elemBottom = elemTop + $(elem).height();
-                var answer = (elemBottom >= docViewTop) && (elemTop <= docViewBottom) && (elemBottom <= docViewBottom) &&  (elemTop >= docViewTop);
+            var elemTop = $(elem).offset().top;
+            var elemBottom = elemTop + $(elem).height();
+            var answer = (elemBottom >= docViewTop) && (elemTop <= docViewBottom) && (elemBottom <= docViewBottom) &&  (elemTop >= docViewTop);
 
-                return (answer);
+            return (answer);
         },
 
 
@@ -838,8 +875,10 @@ var o_browse = {
             // keep track of each views scroll position because UX
             opus.browse_view_scrolls[prefix + view_var] = $(window).scrollTop();
 
+            o_browse.pageInViewIndicator();
+
             // this is for the infinite scroll footer bar
-            if (o_browse.isScrolledIntoView('.end_of_page')) {
+            if (o_browse.isAlmostScrolledIntoView('.end_of_page')) {
 
                 if (opus.browse_footer_clicks[prefix + view_var] > (opus[prefix + 'pages'] -2)) {
                     return; // this can't be! so just don't

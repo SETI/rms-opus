@@ -125,7 +125,8 @@ var opus = {
     // searching - ui
     activeWidgetRequest: [],   // prevents repeat calling to server to get widgets
     user_clicked:true, // if false form updates when hash changes
-    page_monitor:[],       // holds page number in results during polling
+    page_monitor_data:[],       // holds page number in results during polling
+    page_monitor_gallery:[],       // holds page number in results during polling
     input_timer:false,     // triggers start of polling an input field when true
     widgets_drawn:[], // keeps track of what widgets are actually drawn
     widgets_fetching:[], // this widget is currently being fetched
@@ -139,7 +140,6 @@ var opus = {
     // browse tab
     pages:0, // total number of pages this result
     colls_pages:0, // total number of collections pages
-    text_field_monitor:[], // holds text-field-entries during polling
     browse_footer_clicks:reset_footer_clicks, // defined in header.html
     browse_auto:'.chosen_columns', // we are turning this on as default
     browse_footer_style_disabled: false,  // keeps track of whether we have
@@ -159,7 +159,8 @@ var opus = {
     collection_change:false, // collection has changed wince last load of collection_tab
     addrange_clicked:false,
     addrange_min:false,
-    page_colls_monitor:[],  // cart view has it's own page count
+    colls_page_monitor_gallery:[],  // cart view has it's own page count
+    colls_page_monitor_data:[],  // cart view has it's own page count
     collection_q_intrvl: false,
     colls_options_viz:false,
 
