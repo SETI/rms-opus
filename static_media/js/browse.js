@@ -187,7 +187,6 @@ var o_browse = {
         });
 
 
-
         // results paging
         $("#browse").on("click", "a.next, a.prev", function() {
             // all this does is update the number that shows in the box and then calls textInputMonitor
@@ -238,7 +237,7 @@ var o_browse = {
     }, // end browse behaviors
 
     pageInViewIndicator: function() {
-        // what page no is currently scrolled into view?
+        // what page no is currently scrolled more into view?
         view_info = o_browse.getViewInfo();
         namespace = view_info['namespace']; // either '#collection' or '#browse'
         prefix = view_info['prefix'];       // either 'colls_' or ''
@@ -248,14 +247,6 @@ var o_browse = {
 
         first_page = opus.prefs.page[prefix + view_var];
 
-        page = first_page;
-        /*
-        if (page == 1) {
-            page = 2; // there is never a page 1 indicator bar, start with 2
-        }
-        */
-
-
         if ($(window).scrollTop() === 0 || opus.browse_footer_clicks[prefix + view_var] === 0) {
             // there has been no scrolling, set it to first page
             $('#' + prefix + 'page', namespace).val(first_page);
@@ -263,11 +254,12 @@ var o_browse = {
         }
 
         no_length = 0;
+        page = first_page;
         while (page <= (opus.browse_footer_clicks[prefix + view_var] + first_page)) { // opus.pages
             elem = '#infinite_scroll_' + prefix + opus.prefs.browse + '__' + page;
             if ($(elem).length) {
                 elem_scroll = $(elem, namespace).offset().top;
-                if (elem_scroll + $(window).height() >  $('.top_navbar', namespace).offset().top ) {
+                if (Math.abs(elem_scroll  -  $('.top_navbar', namespace).offset().top ) < $(window).height()/2) {
                     // the first one that's greater than the window is the page
                     $('#' + prefix + 'page', namespace).val(page);
                     return;
