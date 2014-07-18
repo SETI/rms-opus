@@ -100,8 +100,11 @@ var o_collections = {
             dataType:"json",
             success: function(json){
                    count = json['count'];
-                   if (parseInt(count)) {
+                   if (parseInt(count, 10)) {
                        opus.collection_change = true;
+
+                        opus.mainTabDisplay('collection');  // make sure the main site tab label is displayed
+
                        $('#collection_tab').fadeIn();
                        opus.colls_pages = Math.ceil(count/opus.prefs.limit);
                         $('#collection_count').html(count);
@@ -114,7 +117,9 @@ var o_collections = {
     // get Collections tab
     getCollectionsTab: function() {
 
+
         clearInterval(opus.scroll_watch_interval); // hold on cowboy only 1 page at a time
+
 
         if (opus.collection_change) {
             // collection has changed wince tab was last drwan, fetch anew
@@ -246,6 +251,9 @@ var o_collections = {
     },
 
     editCollection: function(ring_obs_id, action) {
+
+        opus.mainTabDisplay('collection');  // make sure the main site tab label is displayed
+
         opus.collection_change = true;
         opus.lastCartRequestNo++;
         // $('.collections_extra').html(opus.spinner);

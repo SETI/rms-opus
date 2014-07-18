@@ -107,6 +107,9 @@ var o_browse = {
 
             // click to view detail page
             if ($(this).find('i').hasClass('fa-list-alt')) {
+
+                opus.mainTabDisplay('detail');  // make sure the main site tab label is displayed
+
                 opus.prefs.view = 'detail';
                 opus.prefs.detail = ring_obs_id;
                 opus.triggerNavbarClick();

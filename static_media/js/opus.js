@@ -93,11 +93,14 @@ var opus = {
     lastRequestNo: 0,          // holds request numbers for main result count loop,
     lastCartRequestNo: 0,
 
+
+
     // client side prefs, changes to these *do not trigger results to refresh*
     prefs:{ 'view':'', // search, browse, collection, detail
             'browse':'gallery', //either 'gallery' or 'data', see all_browse_views below
             'colls_browse':'gallery',  // which view is showing on the collections page, gallery or data
             'page':default_pages,  // what page are we on, per view, default defined in header.html
+                                   // like {"gallery":1, "data":1, "colls_gallery":1, "colls_data":1 };
             'limit': 100, // results per page
             'order':'',  // result table ordering
             'cols': default_columns.split(','),  // default result table columns
@@ -224,6 +227,8 @@ var opus = {
                   $('#browse_tab').fadeIn();
                   opus.updateResultCount(json['data'][0]['result_count']);
 
+                  opus.mainTabDisplay('results');  // make sure the main site tab label is displayed
+
                   o_menu.getMenu();
 
                   // if all we wanted was a new gallery page we can stop here
@@ -303,6 +308,30 @@ var opus = {
 
     },
 
+    mainTabDisplay: function(tabname) {
+        // tab labels at the top of the site are not displayed all at once
+        // they appear as they are triggered, for example result tab appears when there
+        // become some results, etc
+
+        switch (tabname) {
+            case "results":
+                child = 2;  // results is the 2nd tab
+                break;
+
+            case "collection":
+                child = 3;
+                break;
+
+            case "detail":
+                child = 4;
+                break;
+        }
+
+        if (!$('ul.main_site_tabs li:nth-child(' + child + ')').is(":visible")) {
+            $('ul.main_site_tabs li:nth-child(' + child + ')').fadeIn();
+        }
+
+    },
 
     addAllBehaviors: function() {
         o_widgets.addWidgetBehaviors();
