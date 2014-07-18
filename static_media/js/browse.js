@@ -51,10 +51,7 @@ var o_browse = {
                 opus.scroll_watch_interval = setInterval(o_browse.browseScrollWatch, 1000);
             }
 
-            // $('#' + prefix + 'page', namespace).val(opus.prefs.page[prefix + showing]);
-
-            // reset scroll position (later we'll be smarter)
-            // window.scroll(0,0);
+            // reset scroll position
             window.scroll(0,opus.browse_view_scrolls[showing]); // restore previous scroll position
 
             return false;
@@ -187,16 +184,28 @@ var o_browse = {
         });
 
 
-        // results paging
+        // results paging - next/prev links
         $("#browse").on("click", "a.next, a.prev", function() {
+
+            clearInterval(opus.scroll_watch_interval);  // turn this off while manually paging
+
+            view_info = o_browse.getViewInfo();
+            namespace = view_info['namespace']; // either '#collection' or '#browse'
+            prefix = view_info['prefix'];       // either 'colls_' or ''
+
             // all this does is update the number that shows in the box and then calls textInputMonitor
-            page_no_elem = $(this).parent().parent().find('.page_no');
-            this_page = parseInt(page_no_elem.val(), 10);
-            if ( $(this).hasClass("next")) {
-                page = this_page + 1;
-            } else if ($(this).hasClass("prev")) {
-                 page = this_page - 1;
+            page_no_elem = $(this).parent().parent().find('input#page');
+            this_page = page_no_elem.val();
+            if (!this_page) {
+                this_page = opus.prefs[prefix + 'page'];
             }
+
+            if ( $(this).hasClass("next")) {
+                page = parseInt(this_page, 10) + 1;
+            } else if ($(this).hasClass("prev")) {
+                 page = parseInt(this_page, 10) - 1;
+            }
+            page_no_elem.css('color', 'red');
             page_no_elem.val(page);
             o_browse.textInputMonitor();
             return false;
@@ -734,12 +743,8 @@ var o_browse = {
 
                 o_browse.pageInViewIndicator();
 
-                // $('#' + prefix + 'page', namespace).html(page);
-
                 // turn the scroll watch timer back on
                 opus.scroll_watch_interval = setInterval(o_browse.browseScrollWatch, 1000);
-
-                o_browse.textInputMonitor();
 
                 // setup colorbox
                 var $overflow = '';
@@ -779,40 +784,51 @@ var o_browse = {
     // we watch the paging input fields to wait for pauses before we trigger page change. UX!
     // this funciton starts that monitor based on what view is currently up
     // it also clears any old one.
+    // so it records the current value of #page input and then checks again ms later
+    // if they match, it triggers refresh, if not then the user is still typing so moves on
     textInputMonitor: function() {
         // which field are we working on? defines which global monitor list we use
+        ms = 1500;
 
-        ms = 500;
-
-        view_var = opus.prefs[prefix + 'browse'];  // either 'gallery' or 'data'
         view_info = o_browse.getViewInfo();
         namespace = view_info['namespace']; // either '#collection' or '#browse'
         prefix = view_info['prefix'];       // either 'colls_' or ''
+        view_var = opus.prefs[prefix + 'browse'];  // either 'gallery' or 'data'
 
         field_monitor = opus[prefix + 'page_monitor_' + view_var];
-        var value = parseInt($('#' + prefix + 'page_no').val(), 10);
 
-        // clear the old monitor and start a new one
+        // check the current value of the page indicator input now, then again in ms (2 seconds ish)
+        var value = parseInt($('#page', namespace).val(), 10);
+
+        // clear any old monitor and start a new one
         if (opus.input_timer) clearTimeout(opus.input_timer);
 		opus.input_timer = setTimeout(
             function() {
-                if (field_monitor[field_monitor.length-1]  == value){
-					// the user has not moved in 2 seconds
-					o_browse.updatePage(parseInt(value, 10));
+
+                if (field_monitor[field_monitor.length-1] == value){
+					// the user has not moved in ms
+                    page_no_elem.css('color', 'black'); // change indicator color back to black
+                    // change both views to the new page
+                    opus.prefs.page[prefix + 'data'] = parseInt(value, 10);
+                    opus.prefs.page[prefix + 'gallery'] = parseInt(value, 10);
+					o_browse.updatePage();
 					// opus.force_load = true;
 					// setTimeout("o_hash.updateHash()",0);
 					// tidy up, keep the array small..
-					if (field_monitor.length > 3) field_monitor.shift(); // keep it trimmed
+					if (field_monitor.length > 3) field_monitor.shift(); // just keeping it trimmed
 				} else {
-					// array is changing, user is still typing
+					// array is changing fastly, user is still typing
 					// maintain our array with our new value
-                    field_monitor[field_monitor.length]  = value;
+                    if (value) {
+                        field_monitor[field_monitor.length]  = value;
+                        o_browse.textInputMonitor();
+                    }
 					// o_browse.textInputMonitor();
 				}
             },ms);
 
-            // update the global monitor
-            opus[prefix + 'page_monitor_' + view_var] = field_monitor;
+
+            opus[prefix + 'page_monitor_' + view_var] = field_monitor;  // update the global monitor
         },
 
 
