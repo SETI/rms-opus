@@ -212,18 +212,20 @@ var o_browse = {
         });
 
         // change page manually
-        /*
-        $('#page_no','#browse').on("change",function() {
+            $('#browse').on("change", '#page','#browse', function() {
             page = parseInt($(this).val(), 10);
+            if (!page) { page = 1; }
+            opus.prefs.page['data'] = parseInt(page, 10);
+            opus.prefs.page['gallery'] = parseInt(page, 10);
             o_browse.updatePage(page);
         });
-        $('#colls_page_no','#collections').live("change",function() {
+        $('#collections').on("change",'#colls_page', function() {
             page = parseInt($(this).val(), 10);
+            if (!page) { page = 1; }
+            opus.prefs.page['colls_data'] = parseInt(page, 10);
+            opus.prefs.page['colls_gallery'] = parseInt(page, 10);
             o_browse.updatePage(page);
         });
-
-
-        */
 
         // back to top link at bottom of gallery
         $('#browse').on('click', 'a[href=#top]', function() {
