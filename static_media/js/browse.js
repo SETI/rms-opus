@@ -623,16 +623,15 @@ var o_browse = {
     getCurrentPage: function() {
         // sometimes other functions need to know current page for whatever view we
         // are currently looking at..
-        var prefix, page;
-        if (opus.prefs.view == 'collection') {
-            prefix = 'colls_';
-        }
-        if (opus.prefs.view == 'browse') {
-            if (opus.prefs.browse == 'data') {
-                page = opus.prefs.page[prefix + 'data'];
-            } else {
-                page = opus.prefs.page[prefix + 'gallery'];
-            }
+        view_info = o_browse.getViewInfo();
+        namespace = view_info['namespace']; // either '#collection' or '#browse'
+        prefix = view_info['prefix'];       // either 'colls_' or ''
+        view_var = opus.prefs[prefix + 'browse'];  // either 'gallery' or 'data'
+
+        if (view_var == 'data') {
+            page = opus.prefs.page[prefix + 'data'];
+        } else {
+            page = opus.prefs.page[prefix + 'gallery'];
         }
         if (!page) { page = 1; }
 
@@ -737,6 +736,9 @@ var o_browse = {
                             } else {
                                 $('.browse_view', namespace).text('view gallery');
                             }
+                            // total pages indicator
+                            $('#' + prefix + 'pages', namespace).html(opus[prefix + 'pages']);
+
                     }});
                 }
 
