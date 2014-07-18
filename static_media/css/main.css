@@ -123,18 +123,20 @@ li.infinite_scroll_page  {
 
 
 .paging_indicator {
-    color:white;
-    margin-top:15px;
+    margin:0 10px;
+    margin-top:7px;
+    color:#A8A8A8;
+    font-size:92%;
 }
-.paging_indicator input[type="text"] {
-}
-#browse .browse_nav {
+
+.browse_nav {
     position:fixed;
     top:45px;
     left:0;
     z-index:999;
     width:100%;
 }
+
 
 .end_of_page {
     display:block;
