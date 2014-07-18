@@ -132,9 +132,14 @@ var o_hash = {
                     if (value) {
                         opus.prefs[slug] = value.split(',');
                     }
-                } else if (slug == 'page' || slug == 'limit') {
+                } else if (slug == 'page') {
                     if (value) {
-                        opus.prefs[slug] = parseInt(value);
+                        opus.prefs.page['gallery'] = parseInt(value, 10);
+                        opus.prefs.page['data'] = parseInt(value, 10);
+                    }
+                } else if (slug == 'limit') {
+                    if (value) {
+                        opus.prefs[slug] = parseInt(value, 10);
                     }
                 } else if (slug=='cols') {
                     if (value) {
