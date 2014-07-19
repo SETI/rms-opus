@@ -155,7 +155,7 @@ var opus = {
     table_headers_drawn:false,  // have we drawn the table headers
     gallery_begun:false, // have we started the gallery view
     browse_view_scrolls: reset_browse_view_scrolls, // same defaults as footer clicks (definied in header.html)
-
+                                                    // {"gallery":0, "data":0, "colls_gallery":0, "colls_data":0 };
 
     // collections
     collection_queue:[],
@@ -309,6 +309,7 @@ var opus = {
     },
 
     mainTabDisplay: function(tabname) {
+        // progressive disclosing of main site tabs
         // tab labels at the top of the site are not displayed all at once
         // they appear as they are triggered, for example result tab appears when there
         // become some results, etc
