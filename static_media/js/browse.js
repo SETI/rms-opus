@@ -660,6 +660,7 @@ var o_browse = {
 
             // get table headers for table view
             if (!opus.table_headers_drawn) {
+                window.scroll(0,0);  // sometimes you have scrolled down in the search tab
                 o_browse.startDataTable(namespace);
                 return; // startDataTable() starts data table and then calls getBrowseTab again
             }
@@ -741,7 +742,7 @@ var o_browse = {
                             }
                             // total pages indicator
                             $('#' + prefix + 'pages', namespace).html(opus[prefix + 'pages']);
-
+                            window.scroll(0,0);  // sometimes you have scrolled down the search tab
                     }});
                 }
 
