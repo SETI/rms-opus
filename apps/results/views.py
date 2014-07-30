@@ -189,8 +189,7 @@ def get_triggered_tables(selections, extras = {}):
             results = results.distinct().values(trigger_col)
             queries.setdefault(trigger_tab + trigger_col, results)
 
-
-        if len(results) == 1 and results[0][trigger_col] == trigger_val:
+        if (len(results) == 1) and (unicode(results[0][trigger_col]) == trigger_val):
             # we has a triggered table
             triggered_tables.append(partable)
 
