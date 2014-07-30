@@ -111,7 +111,19 @@ for tbl in obs_tables:
     q_params = [opus2, tbl, opus1, tbl]
     q = q_create % tuple(q_params)  # using % instead of comma here because we are substituting a table name and don't want Django to be adding quotes
     print q
-    cursor.execute(q)
+    try:
+        cursor.execute(q)
+    except DatabaseError:
+        print """
+                failed to create first table, does it already exist?
+
+                You may need to:
+
+                    drop database opus;
+                    create database opus;
+                """
+        sys.exit()
+
 
     # copy the data over from the old table to the new
     q_insert = "insert into %s.%s select %s.* from %s.%s"
@@ -268,7 +280,7 @@ cursor.execute("update " + opus2 + ".param_info set form_type = 'RANGE' where fo
 cursor.execute("update %s.param_info set slug = 'target' where name = 'target_name'" % opus2)
 cursor.execute("update %s.param_info set display = NULL where display = 'N'" % opus2)
 cursor.execute("update %s.param_info set slug = 'planet' where name = 'planet_id'" % opus2)
-cursor.execute("update %s.param_info set slug = 'surface_target' where slug = 'target' and category_name = 'obs_surface_geometry'" % opus2)
+cursor.execute("update %s.param_info set slug = 'surfacetarget' where slug = 'target' and category_name = 'obs_surface_geometry'" % opus2)
 q = "delete from %s.param_info where slug = 'target'" % opus2
 cursor.execute(q + " and category_name like %s" , 'obs_surface%')
 
@@ -380,4 +392,4 @@ cursor.execute("update %s.images t,%s.obs_general o set t.ring_obs_id = o.ring_o
 transaction.commit_unless_managed()  # flushes any waiting queries
 cursor.execute("SET foreign_key_checks = 1")
 
-print("Bye!")
+print("build of %s 2 database is complete. Bye!" % opus2);
