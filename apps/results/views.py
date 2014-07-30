@@ -146,13 +146,13 @@ def get_triggered_tables(selections, extras = {}):
     always returns the settings.BASE_TABLES
     """
     if not selections:
-        return settings.BASE_TABLES
+        return sorted(settings.BASE_TABLES)
 
     # look for cache:
     cache_no = getUserQueryTable(selections,extras)
     cache_key = 'triggered_tables_' + cache_no
     if (cache.get(cache_key)):
-        return cache.get(cache_key)
+        return sorted(cache.get(cache_key))
 
     # first add the base tables
     triggered_tables = [t for t in settings.BASE_TABLES]
@@ -167,6 +167,7 @@ def get_triggered_tables(selections, extras = {}):
         trigger_col = partable.trigger_col
         trigger_val = partable.trigger_val
         partable = partable.partable
+
 
         if partable in triggered_tables:
             continue  # already triggered, no need to check
@@ -207,7 +208,7 @@ def get_triggered_tables(selections, extras = {}):
 
     cache.set(cache_key, final_table_list, 0)
 
-    return final_table_list
+    return sorted(final_table_list)
 
 
 # this should return an image for every row..
