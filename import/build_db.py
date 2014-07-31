@@ -3,7 +3,10 @@ import sys
 # sys.path.append('/home/lballard/opus/')
 # sys.path.append('/Users/lballard/projects/')
 # from opus import settings
-sys.path.append('/users/lballard/projects/opus/')
+
+base_path = '/home/django/djcode/opus/'
+sys.path.append(base_path)
+# sys.path.append('/home/django/djcode/opus') srvr o_O
 import settings
 from django.core.management import setup_environ
 setup_environ(settings)
@@ -18,7 +21,7 @@ from django.utils.datastructures import SortedDict
 from settings import DATABASES, MULT_FIELDS
 
 opus1 = 'Observations' # from here
-opus2 = 'opus3'   # to here
+opus2 = 'opus'   # to here
 
 #----  shell argvs --------#
 import sys
@@ -95,13 +98,15 @@ mult_model_core = """
 # exclude these field_names with these table_names found in Observations.forms
 exclude = ['%movies%',"%mvf_c%",'file_sizes']
 
-# ------------ first, copy all the Obs_ tables from Observations to opus ------------#
 
+# ------------ we will copy all the Obs_ tables from Observations to opus ------------#
 obs_exclude = ['obs_rg_COISS_2075', 'obs_surface_geometry_raw'] # obs-like tables to exclude
 cursor.execute("use %s" % opus1)
 cursor.execute("show tables like %s", 'obs%')
 obs_tables = [row[0] for row in cursor.fetchall() if row[0] not in obs_exclude]
 
+
+# ------------------------ begin the beguine -----------------------------------#
 # loop thru all obs tables in the old opus database
 # and copy these tables to the new opus database
 for tbl in obs_tables:
@@ -265,7 +270,8 @@ cursor.execute("create view %s.grouping_target_name as select * from %s.mult_obs
 # system("mysql %s < import/backup_util_tables.sql -u%s -p%s" % (opus2, DATABASES['default']['USER'], DATABASES['default']['PASSWORD'])))
 
 # first, build the empty param_info table in the new db - the table schema lives in a dump file in the repo
-system("mysql %s < ~/projects/opus/import/param_info_table.sql -u%s -p%s" % (opus2, DATABASES['default']['USER'], DATABASES['default']['PASSWORD']))
+print "building param_info from %simport/param_info_table.sql " % base_path
+system("mysql %s < %simport/param_info_table.sql -u%s -p%s" % (opus2, base_path, DATABASES['default']['USER'], DATABASES['default']['PASSWORD']))
 
 # and import the data
 q = "insert into %s.param_info select * from %s.forms where (display = 'Y' or display_results = 'Y')" % (opus2, opus1)
@@ -281,6 +287,7 @@ cursor.execute("update %s.param_info set slug = 'target' where name = 'target_na
 cursor.execute("update %s.param_info set display = NULL where display = 'N'" % opus2)
 cursor.execute("update %s.param_info set slug = 'planet' where name = 'planet_id'" % opus2)
 cursor.execute("update %s.param_info set slug = 'surfacetarget' where slug = 'target' and category_name = 'obs_surface_geometry'" % opus2)
+cursor.execute("update %s.param_info set form_type = 'TIME' where slug = 'timesec2'" % opus2)
 q = "delete from %s.param_info where slug = 'target'" % opus2
 cursor.execute(q + " and category_name like %s" , 'obs_surface%')
 
