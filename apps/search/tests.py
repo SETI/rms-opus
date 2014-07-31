@@ -100,7 +100,7 @@ class searchTests(TestCase):
         selections['obs_general.planet_id'] = ["Saturn"]
         selections['obs_instrument_COISS.camera'] = ["Wide Angle"]
         q = constructQueryString(selections)
-        expected = "SELECT `obs_general`.`id` FROM `obs_general` INNER JOIN `obs_instrument_COISS` ON (`obs_general`.`id` = `obs_instrument_COISS`.`obs_general_id`) WHERE (`obs_general`.`mult_obs_general_planet_id` IN (7) AND `obs_instrument_COISS`.`mult_obs_instrument_coiss_camera` IN (1))"
+        expected = "SELECT `obs_general`.`id` FROM `obs_general` INNER JOIN `obs_instrument_COISS` ON (`obs_general`.`id` = `obs_instrument_COISS`.`obs_general_id`) WHERE (`obs_general`.`mult_obs_general_planet_id` IN (7) AND `obs_instrument_COISS`.`mult_obs_instrument_COISS_camera` IN (1))"
         self.assertEqual(q,expected)
 
     def test__constructQueryString_mults_with_3_table_join(self):
@@ -111,7 +111,7 @@ class searchTests(TestCase):
         selections['obs_mission_cassini.rev_no'] = ['165','166']
         q = constructQueryString(selections)
         print q
-        expected = "SELECT `obs_general`.`id` FROM `obs_general` INNER JOIN `obs_mission_cassini` ON (`obs_general`.`id` = `obs_mission_cassini`.`obs_general_id`) INNER JOIN `obs_instrument_COISS` ON (`obs_general`.`id` = `obs_instrument_COISS`.`obs_general_id`) WHERE (`obs_general`.`mult_obs_general_target_name` IN (42) AND `obs_general`.`mult_obs_general_planet_id` IN (7) AND `obs_mission_cassini`.`mult_obs_mission_cassini_rev_no` IN (289, 290) AND `obs_instrument_COISS`.`mult_obs_instrument_coiss_camera` IN (2))"
+        expected = "SELECT `obs_general`.`id` FROM `obs_general` INNER JOIN `obs_mission_cassini` ON (`obs_general`.`id` = `obs_mission_cassini`.`obs_general_id`) INNER JOIN `obs_instrument_COISS` ON (`obs_general`.`id` = `obs_instrument_COISS`.`obs_general_id`) WHERE (`obs_general`.`mult_obs_general_target_name` IN (42) AND `obs_general`.`mult_obs_general_planet_id` IN (7) AND `obs_mission_cassini`.`mult_obs_mission_cassini_rev_no` IN (289, 290) AND `obs_instrument_COISS`.`mult_obs_instrument_COISS_camera` IN (2))"
 
         self.assertEqual(q,expected)
 
@@ -153,7 +153,7 @@ class searchTests(TestCase):
         q = QueryDict("ringradius1=60000&ringradius2=80000,120000&qtype-ringradius=all")
         result = urlToSearchParams(q)
         print result
-        expected = [{u'obs_ring_geometry.ring_radius2': [u'80000', u'120000'], u'obs_ring_geometry.ring_radius1': [u'60000']}, {'qtypes': {u'obs_ring_geometry.ring_radius': [u'all']}}]
+        expected = [{u'obs_ring_geometry.ring_radius2': [80000.0, 120000.0], u'obs_ring_geometry.ring_radius1': [60000.0]}, {'qtypes': {u'obs_ring_geometry.ring_radius': [u'all']}}]
         self.assertEqual(result,expected)
 
 
@@ -170,7 +170,7 @@ class searchTests(TestCase):
     def test__urlToSearchParams_with_join(self):
         q = QueryDict("planet=Saturn&ringradius1=60000")
         result = urlToSearchParams(q)
-        self.assertEqual(result,[{u'obs_general.planet_id': [u'Saturn'], u'obs_ring_geometry.ring_radius1': [u'60000']}, {'qtypes': {}}])
+        self.assertEqual(result,[{u'obs_general.planet_id': [u'Saturn'], u'obs_ring_geometry.ring_radius1': [60000]}, {'qtypes': {}}])
 
 
     def test__urlToSearchParams_stringmultmix(self):
@@ -194,8 +194,8 @@ class searchTests(TestCase):
         selections = {}
         extras={}
         qtypes = {}
-        selections['obs_ring_geometry.ring_radius1'] = ['60000']
-        selections['obs_ring_geometry.ring_radius2'] = ['80000']
+        selections['obs_ring_geometry.ring_radius1'] = [60000]
+        selections['obs_ring_geometry.ring_radius2'] = [80000]
         extras['qtypes'] = qtypes
         self.assertEqual(result,[selections,extras])
 
