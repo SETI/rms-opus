@@ -40,7 +40,6 @@ def constructQueryString(selections, extras={}):
     from metadata.views import getMultName  # avoids circular import issue
     for param_name, value_list in selections.items():
 
-        value_list = [s.strip() for s in value_list]
         # lookup info about this param_name
         param_name_no_num = stripNumericSuffix(param_name)  # this is used later for other things!
         cat_name = param_name.split('.')[0]
@@ -69,7 +68,7 @@ def constructQueryString(selections, extras={}):
         # RANGE
         if form_type in settings.RANGE_FIELDS:
 
-           # longitude queries
+            # longitude queries
             if special_query == 'long':
                 # this parameter requires a longitudinal query
                 # these are crazy sql and can't use Django's model interface
@@ -229,7 +228,10 @@ def urlToSearchParams(request_get):
             selections[param_name] = sorted(searchparam[1].strip(',').split(','))
         else:
             # no other form types can be sorted since qtype depends on ordering
-            selections[param_name] = searchparam[1].strip(',').split(',')
+            if searchparam[1]:  ## handles one sideds
+                selections[param_name] = searchparam[1].strip(',').split(',')
+                if form_type == "RANGE":
+                    selections[param_name] = map(float, selections[param_name])
 
         # except: pass # the param passed doesn't exist or is a USER PREF AAAAAACK
 
@@ -356,8 +358,6 @@ def range_query_object(selections, param_name, qtypes):
         if value_min is not None and value_max is not None:
             (value_min,value_max) = sorted([value_min,value_max])
 
-
-
         # we should end up with 2 query expressions
         q_exp, q_exp1, q_exp2 = None, None, None
         if qtype == 'all':
@@ -381,7 +381,6 @@ def range_query_object(selections, param_name, qtypes):
                 q_exp2 = Q(**{"%s__lte" % param_model_name_max: value_max })
 
         else: # defaults to qtype = any
-
             if value_max:
                 # param_name_min <= value_max
                 q_exp1 = Q(**{"%s__lte" % param_model_name_min: value_max })
@@ -390,7 +389,6 @@ def range_query_object(selections, param_name, qtypes):
                 # param_name_max >= value_min
                 q_exp2 = Q(**{"%s__gte" % param_model_name_max: value_min })
 
-
         # put the query expressions together as "&" queries
         if q_exp1 and q_exp2:
             q_exp = q_exp1 & q_exp2
@@ -398,7 +396,6 @@ def range_query_object(selections, param_name, qtypes):
             q_exp = q_exp1
         elif q_exp2:
             q_exp = q_exp2
-
 
         all_query_expressions.append(q_exp)
         i+=1

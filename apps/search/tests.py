@@ -17,7 +17,7 @@ analyze table user_searches;
 *****************************
 """
 import sys
-# sys.path.append('/home/lballard/opus/')  #srvr
+# sys.path.append('/home/django/djcode/opus')  #srvr
 sys.path.append('/users/lballard/projects/opus/')
 # from opus import settings
 import settings
@@ -34,7 +34,7 @@ from django.http import QueryDict
 
 cursor = connection.cursor()
 
-class myFirstTests(TestCase):
+class searchTests(TestCase):
 
     # setup
     c = Client()
@@ -54,9 +54,19 @@ class myFirstTests(TestCase):
             cursor.execute(q)
 
     ## constructQueryString
+
+    def test__constructQueryString_from_url_one_sided(self):
+        q = QueryDict("planet=Saturn&instrumentid=Cassini+ISS&phase1=80&phase2=")
+        (selections,extras) = urlToSearchParams(q)
+        expected = {u'obs_general.planet_id': [u'Saturn'], u'obs_general.instrument_id': [u'Cassini ISS'], u'obs_ring_geometry.phase1': [80.0]}
+        print selections
+        self.assertEqual(selections,expected)
+
+
     def test__constructQueryString_mults_planet(self):
         q = constructQueryString(self.selections)
-        expected = "SELECT `obs_general`.`id` FROM `obs_general` WHERE `obs_general`.`mult_obs_general_planet_id` IN (5)"
+        print q
+        expected = "SELECT `obs_general`.`id` FROM `obs_general` WHERE `obs_general`.`mult_obs_general_planet_id` IN (7)"
         self.assertEqual(q,expected)
 
     def test__constructQueryString_range_single_qtype(self):
@@ -74,7 +84,7 @@ class myFirstTests(TestCase):
         selections['obs_general.instrument_id'] = ['COISS']
         q = constructQueryString(selections)
         print q
-        expected = "SELECT `obs_general`.`id` FROM `obs_general` WHERE (`obs_general`.`mult_obs_general_planet_id` IN (5) AND `obs_general`.`mult_obs_general_instrument_id` IN (2))"
+        expected = "SELECT `obs_general`.`id` FROM `obs_general` WHERE (`obs_general`.`mult_obs_general_planet_id` IN (7) AND `obs_general`.`mult_obs_general_instrument_id` IN (2))"
         self.assertEqual(q,expected)
 
     def test__constructQueryString_mults_with_target(self):
@@ -82,7 +92,7 @@ class myFirstTests(TestCase):
         selections['obs_general.planet_id'] = ["Saturn"]
         selections['obs_general.target_name'] = ["PAN"]
         q = constructQueryString(selections)
-        expected = "SELECT `obs_general`.`id` FROM `obs_general` WHERE (`obs_general`.`mult_obs_general_target_name` IN (42) AND `obs_general`.`mult_obs_general_planet_id` IN (5))"
+        expected = "SELECT `obs_general`.`id` FROM `obs_general` WHERE (`obs_general`.`mult_obs_general_target_name` IN (42) AND `obs_general`.`mult_obs_general_planet_id` IN (7))"
         self.assertEqual(q,expected)
 
     def test__constructQueryString_mults_with_join(self):
@@ -90,7 +100,7 @@ class myFirstTests(TestCase):
         selections['obs_general.planet_id'] = ["Saturn"]
         selections['obs_instrument_COISS.camera'] = ["Wide Angle"]
         q = constructQueryString(selections)
-        expected = "SELECT `obs_general`.`id` FROM `obs_general` INNER JOIN `obs_instrument_COISS` ON (`obs_general`.`id` = `obs_instrument_COISS`.`obs_general_id`) WHERE (`obs_general`.`mult_obs_general_planet_id` IN (5) AND `obs_instrument_COISS`.`mult_obs_instrument_COISS_camera` IN (1))"
+        expected = "SELECT `obs_general`.`id` FROM `obs_general` INNER JOIN `obs_instrument_COISS` ON (`obs_general`.`id` = `obs_instrument_COISS`.`obs_general_id`) WHERE (`obs_general`.`mult_obs_general_planet_id` IN (7) AND `obs_instrument_COISS`.`mult_obs_instrument_coiss_camera` IN (1))"
         self.assertEqual(q,expected)
 
     def test__constructQueryString_mults_with_3_table_join(self):
@@ -100,7 +110,8 @@ class myFirstTests(TestCase):
         selections['obs_instrument_COISS.camera'] = ["Narrow Angle"]
         selections['obs_mission_cassini.rev_no'] = ['165','166']
         q = constructQueryString(selections)
-        expected = "SELECT `obs_general`.`id` FROM `obs_general` INNER JOIN `obs_mission_cassini` ON (`obs_general`.`id` = `obs_mission_cassini`.`obs_general_id`) INNER JOIN `obs_instrument_COISS` ON (`obs_general`.`id` = `obs_instrument_COISS`.`obs_general_id`) WHERE (`obs_general`.`mult_obs_general_target_name` IN (42) AND `obs_general`.`mult_obs_general_planet_id` IN (5) AND `obs_mission_cassini`.`mult_obs_mission_cassini_rev_no` IN (289, 290) AND `obs_instrument_COISS`.`mult_obs_instrument_COISS_camera` IN (2))"
+        print q
+        expected = "SELECT `obs_general`.`id` FROM `obs_general` INNER JOIN `obs_mission_cassini` ON (`obs_general`.`id` = `obs_mission_cassini`.`obs_general_id`) INNER JOIN `obs_instrument_COISS` ON (`obs_general`.`id` = `obs_instrument_COISS`.`obs_general_id`) WHERE (`obs_general`.`mult_obs_general_target_name` IN (42) AND `obs_general`.`mult_obs_general_planet_id` IN (7) AND `obs_mission_cassini`.`mult_obs_mission_cassini_rev_no` IN (289, 290) AND `obs_instrument_COISS`.`mult_obs_instrument_coiss_camera` IN (2))"
 
         self.assertEqual(q,expected)
 
@@ -120,6 +131,18 @@ class myFirstTests(TestCase):
 
 
     ## test urlToSearchParam
+    def test__urlToSearchParams_Any_Not_All_Strings_One_Side(self):
+        q = QueryDict("planet=Saturn&instrumentid=Cassini+ISS&phase1=80&phase2=")
+        result = urlToSearchParams(q)
+        print result
+        self.assertEqual(result,[{u'obs_general.planet_id': [u'Saturn'], u'obs_general.instrument_id': [u'Cassini ISS'], u'obs_ring_geometry.phase1': [80]}, {'qtypes': {}}])
+
+    def test__urlToSearchParams_Not_All_Strings(self):
+        q = QueryDict("planet=Saturn&instrumentid=Cassini+ISS&phase1=80&phase2=165")
+        result = urlToSearchParams(q)
+        print result
+        self.assertEqual(result,[{u'obs_general.planet_id': [u'Saturn'], u'obs_general.instrument_id': [u'Cassini ISS'], u'obs_ring_geometry.phase1': [80], u'obs_ring_geometry.phase2': [165]}, {'qtypes': {}}])
+
     def test__urlToSearchParams_stringsearch(self):
         q = QueryDict("note=Incomplete")
         result = urlToSearchParams(q)
@@ -178,11 +201,11 @@ class myFirstTests(TestCase):
 
 
     ##  setUserSearchNo
-    def test_setUserSearchNo(self):
+    def test__setUserSearchNo(self):
         no = setUserSearchNo(self.selections)
         self.assertTrue(no)
 
-    def test_setUserSearchNo_2_planets(self):
+    def test__setUserSearchNo_2_planets(self):
         selections = {}
         selections['obs_general.planet_id'] = ['Saturn']
         no = setUserSearchNo(selections)
@@ -202,7 +225,7 @@ class myFirstTests(TestCase):
         print str(q)
         self.assertEqual(str(q),"(AND: (u'obsringgeometry__ring_radius1__lte', 40000), (u'obsringgeometry__ring_radius2__gte', 10000))")
 
-    def test_range_query_only(self):
+    def test__range_query_only(self):
         # range query: 'only'
         selections = {}
         selections['obs_ring_geometry.ring_radius1'] = [10000]
@@ -211,7 +234,7 @@ class myFirstTests(TestCase):
         print str(q)
         self.assertEqual(str(q), "(AND: (u'obsringgeometry__ring_radius1__gte', 10000), (u'obsringgeometry__ring_radius2__lte', 40000))")
 
-    def test_range_query_all(self):
+    def test__range_query_all(self):
         # range query: 'all'
         selections = {}
         selections['obs_ring_geometry.ring_radius1'] = [10000]
@@ -220,7 +243,7 @@ class myFirstTests(TestCase):
         print str(q)
         self.assertEqual(str(q), "(AND: (u'obsringgeometry__ring_radius1__lte', 10000), (u'obsringgeometry__ring_radius2__gte', 40000))")
 
-    def test_range_query_multi(self):
+    def test__range_query_multi(self):
         # range query: multi
         selections = {}
         selections['obs_ring_geometry.ring_radius1'] = [10000,60000]
@@ -229,7 +252,7 @@ class myFirstTests(TestCase):
         print str(q)
         self.assertEqual(str(q), "(OR: (AND: (u'obsringgeometry__ring_radius1__lte', 10000), (u'obsringgeometry__ring_radius2__gte', 40000)), (AND: (u'obsringgeometry__ring_radius1__lte', 60000), (u'obsringgeometry__ring_radius2__gte', 80000)))")
 
-    def test_range_query_ordered_backwards(self):
+    def test__range_query_ordered_backwards(self):
         # range query: ordered backwards
         selections = {}
         selections['obs_ring_geometry.ring_radius1'] = [40000,60000]
@@ -239,7 +262,7 @@ class myFirstTests(TestCase):
         self.assertEqual(str(q), "(OR: (AND: (u'obsringgeometry__ring_radius1__lte', 10000), (u'obsringgeometry__ring_radius2__gte', 40000)), (AND: (u'obsringgeometry__ring_radius1__lte', 60000), (u'obsringgeometry__ring_radius2__gte', 80000)))")
 
 
-    def test_range_query_ordered_lopsided_all(self):
+    def test__range_query_ordered_lopsided_all(self):
         # range query: lopsided all
         selections = {}
         selections['obs_ring_geometry.ring_radius1'] = [40000]
@@ -248,7 +271,7 @@ class myFirstTests(TestCase):
         self.assertEqual(str(q), "(AND: (u'obsringgeometry__ring_radius1__lte', 40000))")
 
 
-    def test_range_query_ordered_lopsided_all_max(self):
+    def test__range_query_ordered_lopsided_all_max(self):
         # range query: lopsided all max
         selections = {}
         selections['obs_ring_geometry.ring_radius2'] = [40000]
@@ -260,7 +283,7 @@ class myFirstTests(TestCase):
         self.assertEqual(v,[40000])
         """
 
-    def test_range_query_lopsided_only_min(self):
+    def test__range_query_lopsided_only_min(self):
         # range query: lopsided only min
         selections = {}
         selections['obs_ring_geometry.ring_radius1'] = [40000]
@@ -269,7 +292,7 @@ class myFirstTests(TestCase):
         self.assertEqual(str(q), "(AND: (u'obsringgeometry__ring_radius1__gte', 40000))")
 
 
-    def test_range_query_lopsided_only_max(self):
+    def test__range_query_lopsided_only_max(self):
         # range query: lopsided only max
         selections = {}
         selections['obs_ring_geometry.ring_radius2'] = [40000]
@@ -278,7 +301,7 @@ class myFirstTests(TestCase):
         # (ring_radius2 <= 4000
         self.assertEqual(str(q), "(AND: (u'obsringgeometry__ring_radius2__lte', 40000))")
 
-    def test_range_query_lopsided_any_min(self):
+    def test__range_query_lopsided_any_min(self):
         # range query: lopsided any min
         selections = {}
         selections['obs_ring_geometry.ring_radius1'] = [40000]
@@ -287,7 +310,7 @@ class myFirstTests(TestCase):
         # ring_radius2 >= %s
         self.assertEqual(str(q), "(AND: (u'obsringgeometry__ring_radius2__gte', 40000))")
 
-    def test_range_query_lopsided_any_max(self):
+    def test__range_query_lopsided_any_max(self):
         # range query: lopsided any min
         selections = {}
         selections['obs_ring_geometry.ring_radius2'] = [40000]
@@ -295,7 +318,7 @@ class myFirstTests(TestCase):
         print str(q)
         self.assertEqual(str(q), "(AND: (u'obsringgeometry__ring_radius1__lte', 40000))")
 
-    def test_range_query_lopsided_multi_mixed_q_types(self):
+    def test__range_query_lopsided_multi_mixed_q_types(self):
         # range query: multi range, 1 is lopsided, mixed qtypes
         selections = {}
         selections['obs_ring_geometry.ring_radius1'] = [40000,80000]
@@ -305,7 +328,7 @@ class myFirstTests(TestCase):
         # (ring_radius1 <= 6000 AND ring_radius2 >= 40000) OR (ring_radius2 >= 80000)
         self.assertEqual(str(q),"(OR: (AND: (u'obsringgeometry__ring_radius1__lte', 60000), (u'obsringgeometry__ring_radius2__gte', 40000)), (u'obsringgeometry__ring_radius1__gte', 80000))")
 
-    def test_range_query_lopsided_multi_mixed_only_one_q_type(self):
+    def test__range_query_lopsided_multi_mixed_only_one_q_type(self):
         # range query: multi range, 1 is lopsided, mixed only 1 qtype given
         selections = {}
         selections['obs_ring_geometry.ring_radius1'] = [40000,80000]
@@ -321,6 +344,8 @@ class myFirstTests(TestCase):
         # test times
         times     = ['2000-023T06:12:24.480','2000-024T06:12:24.480']
         new_times = convertTimes(times)
+        print times
+        print new_times
         self.assertEqual(new_times,[1923176.48, 2009576.48])
 
     def test__convertTimes2(self):
@@ -340,7 +365,7 @@ class myFirstTests(TestCase):
         self.assertEqual(invalid_times,None)
 
 
-    def test_range_query_time_any(self):
+    def test__range_query_time_any(self):
         # range query: form type = TIME, qtype any
         selections = {}
         selections['obs_general.time_sec1'] = ['1979-05-28T10:17:37.28']
@@ -351,7 +376,7 @@ class myFirstTests(TestCase):
         self.assertEqual(str(q), "(AND: (u'obsgeneral__time_sec1__lte', -649834636), (u'obsgeneral__time_sec2__gte', -649950124.72000003))")
 
 
-    def test_range_query_time_any_single_time(self):
+    def test__range_query_time_any_single_time(self):
         # range query: form type = TIME, qtype any
         selections = {}
         selections['obs_general.time_sec1'] = ['1979-05-28T10:17:37.28']
