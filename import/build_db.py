@@ -18,7 +18,7 @@ from django.utils.datastructures import SortedDict
 from settings import DATABASES, MULT_FIELDS
 
 opus1 = 'Observations' # from here
-opus2 = 'opus'   # to here
+opus2 = 'opus3'   # to here
 
 #----  shell argvs --------#
 import sys
@@ -32,7 +32,7 @@ if len(sys.argv) < 2:
 
     Like so:
 
-    python build_db.py COISS_2060,NHJULO_1001,COCIRS_5403
+    python build_db.py COCIRS_5909,COISS_2068,COISS_2069,COVIMS_0040,VGISS_8207
 
     make sure there are no spaces in your volume list!
 
