@@ -43,12 +43,28 @@ class metadataTests(TestCase):
             print q
             cursor.execute(q)
 
+    def test_obs_general_time_fields_have_correct_form_type(self):
+        print 'hello'
+        q = "select count(*) from param_info where form_type = 'TIME' and category_name = 'obs_general'"
+        print q
+        cursor.execute(q)
+        print 'ok'
+        c = cursor.numrows(q)
+        print c
+        print 'that was c'
+        self.assertEqual(c, 2)
 
-    def test_resultCount(self):
+    def test_getResultCount(self):
         response = self.c.get('/opus/api/meta/result_count.json?planet=Saturn')
         print response.content
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.content, '{"data": [{"result_count": 11373}]}')
+
+    def test_getResultCount_times(self):
+        response = self.c.get('/opus/api/meta/result_count.json?planet=Saturn&timesec1=2009-12-23&timesec2=2009-12-28')
+        print response.content
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.content, '{"data": [{"result_count": 882}]}')
 
     def test_resultcount_with_url_cruft(self):
         response = self.c.get('/opus/api/meta/result_count.json?planet=Saturn&view=search&page=1&colls_page=1&limit=100&widgets=planet,target&widgets2=&browse=gallery&colls_browse=gallery&detail=&order=&cols=&reqno=1')
@@ -120,7 +136,7 @@ class metadataTests(TestCase):
         response = self.c.get('/opus/api/meta/mults/target.json?planet=Saturn')
         print response.content
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.content, '{"mults": {"8": 28, "11": 25, "13": 180, "16": 406, "17": 23, "21": 153, "23": 232, "24": 1022, "27": 29, "30": 20, "41": 40, "43": 23, "47": 35, "48": 107, "49": 81, "50": 786, "51": 3083, "54": 1635, "56": 48, "58": 24, "59": 74, "61": 2269, "66": 196, "96": 22, "106": 465, "107": 145, "111": 125, "112": 97}, "field": "target"}')
+        self.assertEqual(response.content, '{"mults": {"UNKNOWN": 196, "PAALIAQ": 465, "SKY": 1635, "METHONE": 20, "JANUS": 29, "EPIMETHEUS": 23, "ATLAS": 28, "SATURN": 3083, "SUTTUNGR": 125, "DIONE": 180, "TITAN": 2269, "SUN": 48, "HYPERION": 232, "CALYPSO": 25, "PALLENE": 40, "TETHYS": 74, "S RINGS": 786, "POLYDEUCES": 35, "PANDORA": 23, "S12_2004": 145, "ENCELADUS": 406, "TELESTO": 24, "PROMETHEUS": 107, "ANTHE": 22, "RHEA": 81, "TARQEQ": 97, "IAPETUS": 1022, "HELENE": 153}, "field": "target"}')
 
     def test_getValidMults_planet_sat_for_planet(self):
         response = self.c.get('/opus/api/meta/mults/planet.json?planet=Saturn')

@@ -68,6 +68,7 @@ def constructQueryString(selections, extras={}):
         # RANGE
         if form_type in settings.RANGE_FIELDS:
 
+
             # longitude queries
             if special_query == 'long':
                 # this parameter requires a longitudinal query
@@ -90,15 +91,19 @@ def constructQueryString(selections, extras={}):
 
             # get the range query object and append it to the query
             q_obj = range_query_object(selections, param_name, qtypes)
+
             q_objects.append(q_obj)
 
     # construct our query, we'll be breaking into raw sql, but for that
-    # we'll be using the sql django generates through its model interface (what?)
+    # we'll be using the sql django generates through its model interface
     try:
+        # print ObsGeneral.objects.filter(*q_objects)
         q = str(ObsGeneral.objects.filter(*q_objects).values('pk').query)
+
         # append any longitudinal queries to the query string
         if long_querys:
             q += " ".join([" and (%s) " % q for q in long_querys])
+
         return q
 
     except EmptyResultSet:
@@ -121,10 +126,10 @@ def getUserQueryTable(selections,extras={}):
     if not selections:
         return False
 
+
     # do we have a cache key
     no     = setUserSearchNo(selections,extras)
     ptbl   = getUserSearchTableName(no)
-
 
     # is this key set in memcached
     cache_key = 'cache_table:' + str(no)
@@ -158,7 +163,6 @@ def getUserQueryTable(selections,extras={}):
 
     except DatabaseError:
         log.debug('query execute failed')
-        print 'returning false'
         # import sys
         # print sys.exc_info()[1] + ': ' + print sys.exc_info()[1]
         return False
@@ -222,12 +226,11 @@ def urlToSearchParams(request_get):
             qtypes[param_name_no_num] = request_get.get('qtype-'+slug_no_num,False).strip(',').split(',')
             continue
 
-
         if form_type in settings.MULT_FORM_TYPES:
-            # mult for types can be sorted to save duplicate queries being built
+            # mult form types can be sorted to save duplicate queries being built
             selections[param_name] = sorted(searchparam[1].strip(',').split(','))
         else:
-            # no other form types can be sorted since qtype depends on ordering
+            # no other form types can be sorted since their ordering corresponds to qtype ordering
             if searchparam[1]:  ## handles one sideds
                 selections[param_name] = searchparam[1].strip(',').split(',')
                 if form_type == "RANGE":
@@ -315,8 +318,13 @@ def range_query_object(selections, param_name, qtypes):
     param_name_max = param_name_no_num + '2'
 
     # to follow related models, we need the lowercase model name, not the param name
-    param_model_name_min = table_name.lower().replace('_','') + '__' + param_name_min.split('.')[1]
-    param_model_name_max = table_name.lower().replace('_','') + '__' + param_name_max.split('.')[1]
+    # UNLESS this param is in the obs_General table, then must leave out the model name!
+    if table_name == 'obs_general':
+        param_model_name_min = param_name_min.split('.')[1]
+        param_model_name_max = param_name_max.split('.')[1]
+    else:
+        param_model_name_min = table_name.lower().replace('_','') + '__' + param_name_min.split('.')[1]
+        param_model_name_max = table_name.lower().replace('_','') + '__' + param_name_max.split('.')[1]
 
     # grab min and max values from query selections object
     values_min = selections[param_name_min] if param_name_min in selections else []
@@ -325,6 +333,7 @@ def range_query_object(selections, param_name, qtypes):
     # if these are times convert values from time string to seconds
     if form_type == 'TIME':
         values_min = convertTimes(values_min,conversion_script='time_to_seconds')
+
         try:
             index = values_min.index(None)
             raise Exception("InvalidTimes")
@@ -400,6 +409,7 @@ def range_query_object(selections, param_name, qtypes):
         all_query_expressions.append(q_exp)
         i+=1
 
+
     # now we have all query expressions, join them with 'OR'
     return reduce(OR, all_query_expressions)
 
@@ -461,6 +471,7 @@ def convertTimes(value_list,conversion_script='time_to_seconds'):
             time_sec = julian.tai_from_day(day) + sec
             converted += [time_sec]
         except ParseException:
+            logging.debug("could not convert time " + time)
             converted += [None]
     return converted
 

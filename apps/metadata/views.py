@@ -40,17 +40,16 @@ def getResultCount(request,fmt='json'):
         return HttpResponse(simplejson.dumps({'result_count':'0'}),  mimetype='application/json')
 
     (selections,extras) = urlToSearchParams(request.GET)
-
     reqno = request.GET.get('reqno','')
 
     if selections is False:
         count = 'not found'
         return HttpResponse(simplejson.dumps({'result_count':count}),  mimetype='application/json')
 
+
     table = getUserQueryTable(selections,extras)
 
     if table is False:
-        print 'getUserQueryTable says: no table'
         count = 0;
     else:
         cache_key    = "resultcount:" + table

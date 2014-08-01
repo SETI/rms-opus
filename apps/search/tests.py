@@ -55,6 +55,13 @@ class searchTests(TestCase):
 
     ## constructQueryString
 
+    def test__constructQueryString_times(self):
+        q = QueryDict('planet=Saturn&timesec1=2000-023T06:00&timesec2=2000-024T06:00')
+        (selections,extras) = urlToSearchParams(q)
+        expected = {u'obs_general.planet_id': [u'Saturn'], u'obs_general.time_sec2': [u'2000-024T06:00'], u'obs_general.time_sec1': [u'2000-023T06:00']}
+        print selections
+        self.assertEqual(selections,expected)
+
     def test__constructQueryString_from_url_one_sided(self):
         q = QueryDict("planet=Saturn&instrumentid=Cassini+ISS&phase1=80&phase2=")
         (selections,extras) = urlToSearchParams(q)
@@ -117,12 +124,19 @@ class searchTests(TestCase):
 
 
     ## getUserQueryTable
+
     def test__getUserQueryTable(self):
         self.teardown()
         # simple base join types only
         table = getUserQueryTable(self.selections)
         print "table = " + str(table) + "\n" + str(self.selections)
         self.assertEqual(table,'cache_1')
+
+    def test__getUserQueryTable_with_times(self):
+        selections = {u'obs_general.planet_id': [u'Saturn'], u'obs_general.time_sec2': [u'2009-12-28'], u'obs_general.time_sec1': [u'2009-12-23']}
+        table = getUserQueryTable(selections)
+        print table
+        self.assertGreater(len(table), 0)
 
     def test__getUserQueryTable_table_already_exists(self):
         # the 2nd time through you're testing whether it returns the table that is already there
@@ -131,6 +145,12 @@ class searchTests(TestCase):
 
 
     ## test urlToSearchParam
+    def test__urlToSearchParams_time(self):
+        q = QueryDict("planet=Saturn&timesec1=2000-023T06&timesec2=2000-024T06")
+        result = urlToSearchParams(q)
+        print result
+        self.assertEqual(result,[{u'obs_general.planet_id': [u'Saturn'], u'obs_general.time_sec2': [u'2000-024T06'], u'obs_general.time_sec1': [u'2000-023T06']}, {'qtypes': {}}])
+
     def test__urlToSearchParams_Any_Not_All_Strings_One_Side(self):
         q = QueryDict("planet=Saturn&instrumentid=Cassini+ISS&phase1=80&phase2=")
         result = urlToSearchParams(q)
@@ -205,6 +225,13 @@ class searchTests(TestCase):
         no = setUserSearchNo(self.selections)
         self.assertTrue(no)
 
+    def test__setUserSearchNo_with_times(self):
+        selections = {u'obs_general.planet_id': [u'Saturn'], u'obs_general.time_sec2': [u'2009-12-28'], u'obs_general.time_sec1': [u'2009-12-23']}
+        search_no = setUserSearchNo(selections)
+        print search_no
+        self.assertGreater(len(str(search_no)), 0)
+
+
     def test__setUserSearchNo_2_planets(self):
         selections = {}
         selections['obs_general.planet_id'] = ['Saturn']
@@ -216,6 +243,14 @@ class searchTests(TestCase):
 
 
     ##  Range Query tests
+
+    def test_range_query_any_times(self):
+        selections = {u'obs_general.planet_id': [u'Saturn'], u'obs_general.time_sec2': [u'2000-024T06'], u'obs_general.time_sec1': [u'2000-023T06']}
+        q = range_query_object(selections,'obs_general.time_sec1',['any'])
+        print str(q)
+        self.assertEqual(str(q),"something sensible")
+
+
     def test__range_query_any(self):
         # range query: 'any'
         selections = {}
@@ -340,6 +375,14 @@ class searchTests(TestCase):
 
 
     ## Time  tests
+    def test__convertTimes_shorties(self):
+        # test times
+        times     = ['2000-023T06:00','2000-024T06:00']
+        new_times = convertTimes(times)
+        print times
+        print new_times
+        self.assertEqual(new_times,[1922432, 2008832])
+
     def test__convertTimes(self):
         # test times
         times     = ['2000-023T06:12:24.480','2000-024T06:12:24.480']
