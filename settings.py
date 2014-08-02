@@ -6,9 +6,6 @@ sys.path.insert(0, PROJECT_ROOT)
 sys.path.insert(0, os.path.join(PROJECT_ROOT, 'apps'))
 from secrets import *
 
-TIME_LIB_PATH          = "/library/webserver/bin/timeconvert/"
-sys.path.append(TIME_LIB_PATH)
-
 DEBUG = False
 TEMPLATE_DEBUG = DEBUG
 
