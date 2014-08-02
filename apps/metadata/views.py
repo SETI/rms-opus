@@ -155,6 +155,7 @@ def getRangeEndpoints(request,slug,fmt='json'):
     param_info = ParamInfo.objects.get(slug=slug)
 
     param_name = param_info.param_name()
+    form_type = param_info.form_type
     table_name = param_info.category_name
     param_name1 = stripNumericSuffix(param_name.split('.')[1]) + '1'
     param_name2 = stripNumericSuffix(param_name.split('.')[1]) + '2'
@@ -202,18 +203,22 @@ def getRangeEndpoints(request,slug,fmt='json'):
     else:
         # no user query table, just hit the whole table
 
-        range_endpoints  = results.all().aggregate(min = Min('ring_radius1'),max = Max('ring_radius2'))
+        range_endpoints  = results.all().aggregate(min = Min(param_name1),max = Max(param_name2))
 
         # count of nulls
         where = param_name1 + " is null and " + param_name2 + " is null "
         range_endpoints['nulls'] = results.all().extra(where=[where]).count()
 
-
-    if abs(range_endpoints['min']) > 999000:
-        range_endpoints['min'] = format(1.0*range_endpoints['min'],'.3');
-    if abs(range_endpoints['max']) > 999000:
-        range_endpoints['max'] = format(1.0*range_endpoints['max'],'.3');
-
+    # convert time_sec to human readable
+    if form_type == "TIME":
+        range_endpoints['min'] = ObsGeneral.objects.filter(**{param_name1:range_endpoints['min']})[0].time1
+        range_endpoints['max'] = ObsGeneral.objects.filter(**{param_name1:range_endpoints['max']})[0].time1
+        pass  # ObsGeneral.objects.filter(param_name1=)
+    else:
+        if abs(range_endpoints['min']) > 999000:
+            range_endpoints['min'] = format(1.0*range_endpoints['min'],'.3');
+        if abs(range_endpoints['max']) > 999000:
+            range_endpoints['max'] = format(1.0*range_endpoints['max'],'.3');
 
     cache.set(cache_key,range_endpoints,0)
 

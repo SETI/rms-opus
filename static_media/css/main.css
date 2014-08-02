@@ -88,6 +88,9 @@
     padding: 5px 0 10px 50px;
     color: green;
 }
+.range_hints span {
+    margin-right: 5px;
+}
 
 #sidebar i.fa-check {
     display:none;

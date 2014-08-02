@@ -43,6 +43,19 @@ class metadataTests(TestCase):
             print q
             cursor.execute(q)
 
+
+
+    def test__getRangeEndpoints_times(self):
+        response = self.c.get('http://127.0.0.1:8000/opus/api/meta/range/endpoints/timesec1.json?planet=Saturn&view=search&browse=gallery&colls_browse=gallery&page=1&limit=100&order=&cols=ringobsid,planet,target,phase1&widgets=planet,target,timesec1&widgets2=&detail=&reqno=1')
+        print response.content
+        print 'ok'
+        expected = '{"max": "2011-269T19:59:13.124", "nulls": 0, "min": "2009-09-01T00:00:01"}'
+        print 'expected'
+        print expected
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.content, expected)
+
+
     def test_obs_general_time_fields_have_correct_form_type(self):
         print 'hello'
         q = "select count(*) from param_info where form_type = 'TIME' and category_name = 'obs_general'"
@@ -144,6 +157,7 @@ class metadataTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.content, '{"mults": {"Saturn": 11373, "Neptune": 1360}, "field": "planet"}')
         self.teardown()
+
 
         """
 
