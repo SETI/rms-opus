@@ -278,6 +278,8 @@ q = "insert into %s.param_info select * from %s.forms where (display = 'Y' or di
 for x in exclude:
     q = q + " and table_name not like %s "
 cursor.execute(q, exclude)
+q = "insert into %s.param_info select * from %s.forms where table_name = 'obs_general' and name in ('time1','time2')" % (opus2, opus1)
+cursor.execute(q)
 
 # some fiddly updates to the param_info_table
 cursor.execute("update %s.param_info as params, %s.forms as forms set params.display = true where forms.display = 'Y' and params.id = forms.no" % (opus2, opus1))
