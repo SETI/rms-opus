@@ -9,6 +9,8 @@ from secrets import *
 DEBUG = False
 TEMPLATE_DEBUG = DEBUG
 
+SESSION_EXPIRE_AT_BROWSER_CLOSE = True 
+
 ADMINS = (
     ('Lisa Ballard', 'lballard@seti.org'),
 )
