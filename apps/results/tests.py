@@ -23,7 +23,7 @@ from results.views import *
 
 cursor = connection.cursor()
 
-class metadataTests(TestCase):
+class resultsTests(TestCase):
 
     c = Client()
     param_name = 'obs_general.planet_id'
