@@ -193,21 +193,13 @@ def is_odd(num):
 @never_cache
 def reset_sess(request):
 
-    try:
-        request.session["queue"] = {}
-        request.session['expected_request_no'] = 1
-    except KeyError:
-        log.debug('FAIL = reset session expected_request_no')
-        pass
+    request.session["queue"] = {}
+    request.session['expected_request_no'] = 1
+    request.session['collection__default'] = {}
+    request.session['test'] = False
 
-    try:
-        request.session['collection__default'] = {}
-        request.session['test'] = False
-    except KeyError:
-        log.debug('FAIL - reset session expected_request_no')
-        pass
-
-    return HttpResponse(str(request.session.session_key))
+    # return HttpResponse(str(request.session.session_key))
+    return HttpResponse("session reset")
 
 def edit_collection(request, **kwargs):
     """
@@ -222,6 +214,14 @@ def edit_collection(request, **kwargs):
     # just add this request to the queue, every request gets queued
     add_to_queue(request, request_no, collection_name, action, ring_obs_id)
 
+    """
+    turning this off for now, we will get the queue of whatever request_no is passed
+    to us, without checking against what is expected_request_no
+    by turning this off we are at risk of ajax race conditions
+    but it's breaking something and no time fo dat right now
+    Issue is here:
+    https://bitbucket.org/ringsnode/opus2/issue/75/collections-downloads-majorly-broken
+    # todo:
     # now look for the mext expected request in the queue
     if get_queued(request, expected_request_no):
         # found the next expected request in the queue
@@ -229,6 +229,9 @@ def edit_collection(request, **kwargs):
     else:
         # the expected request has not yet arrived, do nothing
         return HttpResponse(simplejson.dumps({"err":"waiting"}))
+    """
+    # instead of the above we are doing this:
+    (collection_name,action,ring_obs_id) = get_queued(request, request_no)
 
 
     collection = []
