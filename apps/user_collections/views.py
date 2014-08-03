@@ -228,7 +228,6 @@ def edit_collection(request, **kwargs):
     # just add this request to the queue, every request gets queued
     add_to_queue(request, request_no, collection_name, action, ring_obs_id)
 
-
     # now look for the mext expected request in the queue
     if get_queued(request, expected_request_no):
         # found the next expected request in the queue
@@ -236,12 +235,6 @@ def edit_collection(request, **kwargs):
     else:
         # the expected request has not yet arrived, do nothing
         return HttpResponse(simplejson.dumps({"err":"waiting"}))
-        """
-        # testing stuff:
-        msg = "doing nothing: expected request not received yet! " + str(expected_request_no)
-        q = request.session.get("queue") if request.session.get("queue") else ''
-        return HttpResponse(simplejson.dumps({"msg":msg, "queue": q}))
-        """
 
     collection = []
     if request.session.get(collection_name):
