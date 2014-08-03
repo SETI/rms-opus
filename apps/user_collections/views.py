@@ -193,11 +193,7 @@ def is_odd(num):
 @never_cache
 def reset_sess(request):
 
-    request.session["queue"] = {}
-    request.session['expected_request_no'] = 1
-    request.session['collection__default'] = {}
-    request.session['test'] = False
-
+    request.session.flush()
     # return HttpResponse(str(request.session.session_key))
     return HttpResponse("session reset")
 
