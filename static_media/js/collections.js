@@ -224,11 +224,17 @@ var o_collections = {
     },
 
     emptyCollection: function() {
+        // remove all
         o_collections.resetCollectionQueue();
         opus.lastCartRequestNo = 0;
         // change indicator to zero and let the server know:
-        $('#collection_count').html('0');
-        $.ajax({ url: "/opus/collections/reset.html"});
+
+        $.ajax({ url: "/opus/collections/reset.html",
+            success: function(html){
+                $('#collection_count').html('0');
+            }, error: function(e) {
+            }
+        });
 
         // hide the collection data viewing page
         function collTransition() {

@@ -5,6 +5,8 @@ from django.template import RequestContext
 from tools.app_utils import *
 from results.views import *
 from downloads.views import *
+from django.views.decorators.cache import never_cache
+
 
 import logging
 log = logging.getLogger(__name__)
@@ -43,11 +45,6 @@ def get_collection(request, collection_name='default'):
         collection = request.session.get(collection_name)
         return collection
     return False
-
-
-
-
-
 
 def view_collection(request, collection_name, template="collections.html"):
     # return getData(request,'html', True)
@@ -128,9 +125,6 @@ def view_collection(request, collection_name, template="collections.html"):
     return render_to_response(template,locals(), context_instance=RequestContext(request))
 
 
-
-
-
 def collection_status(request, **kwargs):
     collection_name = 'collection__' + kwargs['collection']
     collection = []
@@ -198,20 +192,24 @@ def check_collection_args(request,**kwargs):
 def is_odd(num):
         return num & 1 and True or False
 
+@never_cache
 def reset_sess(request):
+
     try:
-        del request.session['queue']
+        request.session["queue"] = {}
         request.session['expected_request_no'] = 1
     except KeyError:
+        log.debug('FAIL = reset session expected_request_no')
         pass
 
     try:
-        del request.session['collection__default']
+        request.session['collection__default'] = {}
         request.session['test'] = False
     except KeyError:
+        log.debug('FAIL - reset session expected_request_no')
         pass
 
-    return HttpResponse("session reset")
+    return HttpResponse(str(request.session.session_key))
 
 
 def edit_collection(request, **kwargs):
@@ -219,7 +217,6 @@ def edit_collection(request, **kwargs):
     return reset_sess(request);
     """
     checkArgs = check_collection_args(request, **kwargs)
-
     if type(checkArgs).__name__ == 'list':
         (action, collection_name, ring_obs_id, request_no, expected_request_no) = checkArgs
     else:
@@ -236,16 +233,19 @@ def edit_collection(request, **kwargs):
         # the expected request has not yet arrived, do nothing
         return HttpResponse(simplejson.dumps({"err":"waiting"}))
 
+
     collection = []
     if request.session.get(collection_name):
         collection = request.session.get(collection_name)
 
+    """
+    turning this off for now
     all_collections = []
     if request.session.get("all_collections"):
         all_collections = request.session.get("all_collections")
     if collection_name not in all_collections:
         all_collections.append(collection_name)
-
+    """
 
     if action == 'add':
         if ring_obs_id in collection: # if it's already there, remove it and add it again, user may be futzing with order
@@ -259,12 +259,11 @@ def edit_collection(request, **kwargs):
         if not collection:
             return HttpResponse("failfail<br>")
 
-    next_request_no = expected_request_no + 1
+    next_request_no = int(expected_request_no) + 1
     remove_from_queue(request, expected_request_no) # we are handling this one now
-
     request.session['expected_request_no'] = next_request_no
     request.session[collection_name] = collection
-    request.session['all_collections'] = all_collections
+    # request.session['all_collections'] = all_collections
 
     # so we did the next expected, is there another subsequent to that?
     if get_queued(request, next_request_no):
@@ -341,12 +340,8 @@ def add_to_queue(request, request_no, collection_name, action, ring_obs_id):
 
 
 def remove_from_queue(request, request_no):
-    queue = {}
-    if not request.session.get("queue"):
-        queue = request.session.get("queue")
-    if request_no in queue:
-        del queue[request_no]
-        request.session["queue"] = queue
+    if request_no in request.session["queue"]:
+        del request.session["queue"][request_no]
     return True
 
 
@@ -365,8 +360,8 @@ def get_queued(request, request_no):
         return False
 
 
-# avoiding a circular dependency, even James Bennett does this! http://is.gd/TGblFO
-# well ok I moved to the end of module because it's needed in 2 methods here :0
+# avoiding a circular dependency, even James Bennett does this okayyyy! http://is.gd/TGblFO
+# well ok I moved to the end of module because it's needed in 2 methods here o_0
 from search.views import *
 from results.views import *
 from downloads.views import *
