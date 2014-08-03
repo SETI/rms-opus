@@ -16,6 +16,8 @@ from paraminfo.models import *
 from metadata.views import *
 from user_collections.views import *
 from tools.app_utils import *
+from django.views.decorators.cache import never_cache
+
 
 import logging
 log = logging.getLogger(__name__)
@@ -211,6 +213,8 @@ def get_triggered_tables(selections, extras = {}):
 
 
 # this should return an image for every row..
+
+@never_cache
 def getImages(request,size,fmt):
     """
     this returns rows from images table that correspond to request
@@ -319,7 +323,9 @@ def getFiles(ring_obs_id, fmt='raw', loc_type="url", product_types=[], previews=
             ring_obs_ids = [ring_obs_id]
         else:
             ring_obs_ids = ring_obs_id
-    else: return HttpResponse('EPIC FAIL')
+    else:
+        log.error('404: no files found for ' + str(ring_obs_id))
+        return False
 
     file_names = {}
 

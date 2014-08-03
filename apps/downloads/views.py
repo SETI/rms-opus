@@ -1,18 +1,14 @@
-from results.views import *
-from tools.app_utils import *
-from user_collections.views import *
-from django.contrib.sessions.models import Session
-from django.core import serializers
-from django.http import HttpResponse
-from django.db.models import Sum
-import settings
-import StringIO
-import tarfile
 import random
 import string
 import datetime
 import hashlib
-import os
+import tarfile
+from results.views import *
+from tools.app_utils import *
+from user_collections.views import *
+from django.http import HttpResponse
+from django.db.models import Sum
+import settings
 
 import logging
 log = logging.getLogger(__name__)

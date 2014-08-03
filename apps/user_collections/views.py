@@ -1,5 +1,5 @@
 import settings
-from django.http import HttpResponse
+from django.http import HttpResponse, Http404
 from django.utils import simplejson
 from django.template import RequestContext
 from tools.app_utils import *
@@ -10,6 +10,7 @@ from django.views.decorators.cache import never_cache
 
 import logging
 log = logging.getLogger(__name__)
+
 
 def in_collections(request):
     """
@@ -25,7 +26,6 @@ def in_collections(request):
                 all_ids.append(ring_obs_id)
 
     return list(set(all_ids)) # makes unique
-
 
 
 def set_collection(request,collection_name='default'):
@@ -46,6 +46,7 @@ def get_collection(request, collection_name='default'):
         return collection
     return False
 
+@never_cache
 def view_collection(request, collection_name, template="collections.html"):
     # return getData(request,'html', True)
     session_key = request.session.session_key
@@ -125,6 +126,7 @@ def view_collection(request, collection_name, template="collections.html"):
     return render_to_response(template,locals(), context_instance=RequestContext(request))
 
 
+@never_cache
 def collection_status(request, **kwargs):
     collection_name = 'collection__' + kwargs['collection']
     collection = []
@@ -139,7 +141,6 @@ def collection_status(request, **kwargs):
     return HttpResponse(simplejson.dumps({"count":len(collection), "expected_request_no": expected_request_no }))
 
 
-
 def check_collection_args(request,**kwargs):
     """
     # this just checks that we have all we need to process an edit_collection
@@ -150,9 +151,6 @@ def check_collection_args(request,**kwargs):
     else:
         (action, collection_name, ring_obs_id, request_no, expected_request_no) = check_collection_args(request, **kwargs)
     """
-
-    if request.is_ajax() == False:
-        return 'Page not found'
 
     # collection and action are part of the url conf so you won't get in without one
     try:
@@ -210,7 +208,6 @@ def reset_sess(request):
         pass
 
     return HttpResponse(str(request.session.session_key))
-
 
 def edit_collection(request, **kwargs):
     """
