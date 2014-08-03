@@ -9,13 +9,6 @@ from downloads.views import *
 import logging
 log = logging.getLogger(__name__)
 
-def sleepy():
-    ''' ***************************************** remove me ***************************************** '''
-    ''' ***************************************** xxxxxx xx ***************************************** '''
-    import time
-    time.sleep(2);
-
-
 def in_collections(request):
     """
     returns flat list of ring_obs_ids as found in all user collections, for indication when displaying in browse
@@ -131,6 +124,7 @@ def view_collection(request, collection_name, template="collections.html"):
     results = results.filter(ring_obs_id__in=collection).values(*column_values)[offset:offset+limit]
 
     page_ids = [o['ring_obs_id'] for o in results]
+
     return render_to_response(template,locals(), context_instance=RequestContext(request))
 
 

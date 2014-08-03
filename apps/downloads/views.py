@@ -40,6 +40,7 @@ def md5(filename):
 def get_download_size(files, product_types, previews):
     # takes file_names as returned by getFiles()
     # returns size in bytes as int
+
     urls = []
     for ring_obs_id in files:
         for ptype in files[ring_obs_id]:
@@ -111,7 +112,7 @@ def create_download(request, collection_name='', ring_obs_ids=None, fmt="raw"):
     # get product info about this product
     # [optimize] [cleanup] this should use from db rather than string of text https://docs.djangoproject.com/en/1.3/ref/models/querysets/
 
-    if type(ring_obs_ids) is unicode:
+    if type(ring_obs_ids) is unicode or type(ring_obs_ids).__name__ == 'str':
         # a single ring_obs_id
         zip_file_name = create_zip_filename(ring_obs_ids);
         ring_obs_ids = [ring_obs_ids]
@@ -120,6 +121,7 @@ def create_download(request, collection_name='', ring_obs_ids=None, fmt="raw"):
 
     chksum_file_name = settings.TAR_FILE_PATH + "checksum_" + zip_file_name.split(".")[0] + ".txt"
     manifest_file_name = settings.TAR_FILE_PATH + "manifest_" + zip_file_name.split(".")[0] + ".txt"
+
 
     # lisa
     from results.views import *
@@ -135,12 +137,10 @@ def create_download(request, collection_name='', ring_obs_ids=None, fmt="raw"):
     manifest = open(manifest_file_name,"w")
     size = get_download_size(files, product_types, previews)
 
-    """
     cum_downlaod_size = get_cum_downlaod_size(request,size)
     if cum_downlaod_size > settings.MAX_CUM_DOWNLAOD_SIZE:
         # user is trying to download > MAX_CUM_DOWNLAOD_SIZE
         return HttpResponse("Sorry, Max cumulative download size reached " + str(cum_downlaod_size) + ' > ' + str(settings.MAX_CUM_DOWNLAOD_SIZE))
-    """
 
     errors = []
     added = False

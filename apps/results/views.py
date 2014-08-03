@@ -315,7 +315,7 @@ def getFilesAPI(request,ring_obs_id='',fmt='raw', loc_type="url"):
 # loc_type = path or url
 def getFiles(ring_obs_id, fmt='raw', loc_type="url", product_types=[], previews=[]):
     if ring_obs_id:
-        if type(ring_obs_id) is unicode:
+        if type(ring_obs_id) is unicode or type(ring_obs_id).__name__ == 'str':
             ring_obs_ids = [ring_obs_id]
         else:
             ring_obs_ids = ring_obs_id
@@ -399,15 +399,6 @@ def getFiles(ring_obs_id, fmt='raw', loc_type="url", product_types=[], previews=
             file_names[ring_obs_id][f.product_type] = list(set(file_names[ring_obs_id][f.product_type])) #  makes unique
             file_names[ring_obs_id][f.product_type].sort()
             file_names[ring_obs_id][f.product_type].reverse()
-
-    # filter by product_type?
-    if len(product_types):
-        filtered_file_names = {}
-        for ring_obs_id in file_names:
-            for product_type in file_names[ring_obs_id]:
-                if product_type in product_types:
-                    filtered_file_names[ring_obs_id] = {product_type:file_names[ring_obs_id][product_type]}
-        file_names = filtered_file_names
 
     # add some preview images?
     if len(previews):
