@@ -48,7 +48,6 @@ var o_widgets = {
         /***********************************************************/
 
         $('#search').on('change', 'input.multichoice', function() {
-           opus.user_clicked=true
            id = $(this).attr("id").split('_')[0];
            value = $(this).attr("value");
 
@@ -116,7 +115,7 @@ var o_widgets = {
         });
 
         // "pause"
-        $('input.pause_widget', '#' + widget).change(function() {
+        $('input.widget_pause', '#' + widget).change(function() {
             // $(this).text('resume');
             if (!$(this).is(':checked')) {
                 $(' .widget_form  li, .mult_group_label', '#' + widget).fadeTo('slow',0.6);
@@ -133,6 +132,8 @@ var o_widgets = {
                 }
                 o_hash.updateHash();
             }  else {
+                // this box is checked
+
                 $(' .widget_form  li, .mult_group_label', '#' + widget).fadeTo('slow',1.0);
                 $('#' + widget).animate({borderColor:"#C8C8C8"},"slow");
                 $('#' + widget + ' .widget_inner input').removeAttr("disabled");

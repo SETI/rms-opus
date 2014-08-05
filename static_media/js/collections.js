@@ -163,7 +163,7 @@ var o_collections = {
 
 
         if (!opus.collection_q_intrvl) {
-            opus.collection_q_intrvl = setInterval("o_collections.processCollectionQueue()", 3000); // resends any stray requests not recvd back from server
+            opus.collection_q_intrvl = setInterval("o_collections.processCollectionQueue()", 500); // resends any stray requests not recvd back from server
         }
 
         url = "/opus/collections/default/" + action + ".json?request=" + request_no;

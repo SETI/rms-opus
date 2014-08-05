@@ -15,9 +15,7 @@ var o_browse = {
          // browse nav menu - the gallery/table toggle
          $('#browse').on("click", '.browse_view', function() {
 
-            if (opus.scroll_watch_interval) {
-                clearInterval(opus.scroll_watch_interval); // hold on cowgirl only 1 page at a time
-            }
+            clearInterval(opus.scroll_watch_interval); // hold on cowgirl only 1 page at a time
 
             var browse_view = $(this).text().split(' ')[1];  // data or gallery
             var hiding, showing;
@@ -48,6 +46,7 @@ var o_browse = {
                 o_browse.getBrowseTab();
             } else {
                 // not loading browse, turn scroll watch back on
+                clearInterval(opus.scroll_watch_interval);  // always shut off just before, just in case
                 opus.scroll_watch_interval = setInterval(o_browse.browseScrollWatch, 1000);
             }
 
@@ -650,9 +649,7 @@ var o_browse = {
 
         view_var = opus.prefs[prefix + 'browse'];  // either 'gallery' or 'data'
 
-        if (opus.scroll_watch_interval) {
-            clearInterval(opus.scroll_watch_interval); // hold on cowgirl only 1 page at a time
-        }
+        clearInterval(opus.scroll_watch_interval); // hold on cowgirl only 1 page at a time
 
         var url = "/opus/api/images/small.html?alt_size=full&";
         if (opus.prefs[prefix + 'browse'] == 'data') {
@@ -673,6 +670,7 @@ var o_browse = {
         start_page = opus.prefs.page[prefix + view_var]; // default: {'gallery':1, 'data':1, 'colls_gallery':1, 'colls_data':1 };
 
         page = parseInt(start_page, 10) + parseInt(footer_clicks, 10);
+
         // some outlier things that can go wrong with page (when user entered page #)
         if (!page) {
             page = 1;
@@ -703,11 +701,18 @@ var o_browse = {
 
         opus.prefs[prefix + view_var] = page;
 
+        // wait! is this page already drawn?
+        if (opus.last_page_drawn[prefix + view_var] == page) {
+            return; // chill chill chill
+        }
+
         // NOTE if you change alt_size=full here you must also change it in gallery.html template
         $.ajax({ url: url,
             success: function(html){
                // bring in the new page
-               function appendBrowsePage() { // for chaining effects
+
+               function appendBrowsePage(page, prefix, view_var) { // for chaining effects
+
 
                     // hide the views that aren't supposed to be showing
                     for (var v in opus.all_browse_views) {
@@ -744,14 +749,19 @@ var o_browse = {
                             $('#' + prefix + 'pages', namespace).html(opus[prefix + 'pages']);
                             window.scroll(0,0);  // sometimes you have scrolled down the search tab
                     }});
+
                 }
 
                 // doit!
-                appendBrowsePage();
+                appendBrowsePage(page, prefix, view_var);
+                opus.last_page_drawn[prefix + view_var] = page;
+
+
 
                 o_browse.pageInViewIndicator();
 
                 // turn the scroll watch timer back on
+                clearInterval(opus.scroll_watch_interval);  // always shut off just before, just in case
                 opus.scroll_watch_interval = setInterval(o_browse.browseScrollWatch, 1000);
 
                 // setup colorbox
@@ -845,12 +855,14 @@ var o_browse = {
             when the user changes the query and all this stuff is already drawn
             need to reset all of it
             */
+            $('.data').empty();  // yes all namespaces
+            $('.gallery').empty();
             opus.browse_footer_clicks = {"gallery":0, "data":0, "colls_gallery":0, "colls_data":0 };
+            opus.last_page_drawn = {"gallery":0, "data":0, "colls_gallery":0, "colls_data":0 };
+            opus.collection_change = true;  // forces redraw of collections tab because reset_last_page_drawn
             browse_view_scrolls = reset_browse_view_scrolls;
             opus.table_headers_drawn = false;
             opus.gallery_begun = false;
-            $('.data').empty();  // yes all namespaces
-            $('.gallery').empty();
             o_hash.updateHash();
 
         },

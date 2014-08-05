@@ -55,7 +55,6 @@ var o_search = {
         // range behaviors and string behaviors for search widgets - input box
         $('#search').on('change', 'input.STRING, input.RANGE', function() {
 
-            opus.user_clicked=true;
             slug = $(this).attr("name");
             css_class = $(this).attr("class").split(' ')[0]; // class will be STRING, min or max
 
@@ -88,7 +87,6 @@ var o_search = {
         // range behaviors and string behaviors for search widgets - qtype select dropdown
         $('#search').on('change','select', function() {
 
-            opus.user_clicked=true;
             var qtypes = [];
             var form_type = $(this).attr("class");
 
@@ -191,6 +189,7 @@ var o_search = {
 
     getSearchTab: function() {
 
+        if (opus.search_tab_drawn) { return; }
         // widgets1 is the left column of widgets, wigets2 is the optional right col
 
         // get any prefs from cookies
@@ -229,9 +228,10 @@ var o_search = {
         for (key in jQuery.unique(opus.prefs.widgets2)) {  // fetch each widget
             slug = opus.prefs.widgets2[key];
             if (jQuery.inArray(slug, opus.widgets_drawn) < 0) {  // only draw if not already drawn
-      	        o_widgets.getWidget(slug,'#formscolumn2');
-      	    }
+                o_widgets.getWidget(slug,'#formscolumn2');
+            }
         }
+        opus.search_tab_drawn = true;
 
     },
 

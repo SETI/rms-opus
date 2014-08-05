@@ -3,10 +3,7 @@
  *
  */
 
-
-
 $(document).ready(function() {
-
 
     o_hash.initFromHash(); // just returns null if no hash
     if (!opus.prefs.view) {
@@ -44,7 +41,7 @@ $(document).ready(function() {
 
     });
 
-    // restart button behavior
+    // restart button behavior - start over button
     $('#navbar').on("click", ".restart", function() {
 
         // this removes all from collection on every restart, a stop-gap until we fix issue
@@ -65,7 +62,7 @@ $(document).ready(function() {
 
     opus.addAllBehaviors();
 
-    // watch the url for changes
+    // watch the url for changes, this runs continuously
     setInterval(opus.load, 1000);
 
     o_collections.initCollection();
@@ -129,8 +126,8 @@ var opus = {
     force_load: false, // set this to true to force load() when selections haven't chnaged
 
     // searching - ui
+    search_tab_drawn: false,
     activeWidgetRequest: [],   // prevents repeat calling to server to get widgets
-    user_clicked:true, // if false form updates when hash changes
     page_monitor_data:[],       // holds page number in results during polling
     page_monitor_gallery:[],       // holds page number in results during polling
     input_timer:false,     // triggers start of polling an input field when true
@@ -144,6 +141,8 @@ var opus = {
     menu_state: {'cats':['obs_general'], 'groups':[]},  // keep track of menu items that are open
 
     // browse tab
+    last_page_drawn: reset_last_page_drawn, // defined in header.html,
+                                      // like: {"gallery":0, "data":0, "colls_gallery":0, "colls_data":0 };
     pages:0, // total number of pages this result
     colls_pages:0, // total number of collections pages
     browse_footer_clicks:reset_footer_clicks, // defined in header.html
@@ -165,8 +164,6 @@ var opus = {
     collection_change:false, // collection has changed wince last load of collection_tab
     addrange_clicked:false,
     addrange_min:false,
-    colls_page_monitor_gallery:[],  // cart view has it's own page count
-    colls_page_monitor_data:[],  // cart view has it's own page count
     collection_q_intrvl: false,
     colls_options_viz:false,
 
@@ -174,31 +171,39 @@ var opus = {
 
 
     load: function () {
+
         selections = o_hash.getSelectionsFromHash();
+
         if (!selections) {
+            // handle if there are no selections
             if (opus.result_count != '0') {
               $('.hints').html("");  // remove all hints
               opus.updateResultCount('0');
             }
             if (opus.last_selections) {
                   opus.last_selections = {};
-              }
+            }
           return;
         }
 
+        // if selections different from last_selections
         if (o_utils.areObjectsEqual(selections, opus.last_selections))  {
-            // selections haven't changed
-            if (!opus.force_load) { // only non-loading pref changes
+            // selections have not changed
+            if (!opus.force_load) { // so we do only non-reloading pref changes
                 return;
             }
+            opus.force_load = false;
         } else {
             // selections have changed, reset page
-            // there was a last selections, clear results containers
+            // if there was a last selections, clear results containers
+            // and reset any browse tab things
             opus.prefs.page = default_pages;
             o_browse.resetQuery();
         }
-        opus.force_load = false;
-        if (!Object.keys(selections).length) {
+
+
+
+        if (!Object.keys(opus.selections).length) {
             opus.last_selections = {};
             if (opus.result_count!='0') {
                 $('.hints').html("");  // remove all hinting
@@ -210,12 +215,6 @@ var opus = {
         $('#result_count').html(opus.spinner).parent().effect("highlight", {}, 500);
           // query string has changed
           opus.last_selections = selections;
-
-          if (!opus.user_clicked) {
-              opus.user_clicked=true;
-             //  window.location.reload(true);
-          }
-
 
           opus.lastRequestNo++;
 
@@ -249,12 +248,9 @@ var opus = {
                           slug = opus.prefs[col][k];
                           o_search.getHinting(slug);
                       } // end for widget in..
-                  }
-
+                  } // endfor
               } // end result count success
           }); // end result count ajax
-
-        if (Object.keys(selections).length) opus.user_clicked=false
     }, // endfunc jeezumcrow! #shootmenow
 
     updateResultCount: function(result_count) {
@@ -269,13 +265,15 @@ var opus = {
     },
 
     changeTab: function() {
-        // first hide everything
+        // first hide everything and stop any interval timers
         $('#search, #detail, #collection, #browse').hide();
-
+        clearInterval(opus.scroll_watch_interval);
+        clearInterval(opus.collection_q_intrvl);
 
         switch(opus.prefs.view) {
 
             case 'search':
+                window.scroll(0,0);
                 $('#search').fadeIn();
                 o_search.getSearchTab();
                 break;
@@ -287,11 +285,15 @@ var opus = {
                 }
                 $('#browse').fadeIn();
                 o_browse.getBrowseTab();
+
                 break;
 
             case 'detail':
                 $('#detail').fadeIn();
                 o_detail.getDetail(opus.prefs.detail);
+
+                opus.collection_q_intrvl = setInterval("o_collections.processCollectionQueue()", 1000); // resends any stray requests not recvd back from server
+
                 break;
 
             case 'collection':
@@ -302,6 +304,9 @@ var opus = {
                 }
                 $('#collection').fadeIn();
                 o_collections.getCollectionsTab();
+
+                opus.collection_q_intrvl = setInterval("o_collections.processCollectionQueue()", 1000); // resends any stray requests not recvd back from server
+
                 break;
 
             default:
