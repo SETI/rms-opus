@@ -1,5 +1,9 @@
 /* column chooser things */
 
+html > body.no-skin > div#main-container.main-container > div.main-container-inner > div.row > div.col-md-12 {
+    margin:0; padding:0;
+}
+
 .main_site_tabs li {
     display:none;
 }
@@ -207,6 +211,7 @@ ul.ace-thumbnails {
     padding:-5px;
 }
 #browse, #collection, #detail {
+    padding:0; margin:0;
     display:none;
 }
 #search, #browse, #collection, #detail {
@@ -217,8 +222,15 @@ ul.ace-thumbnails {
 }
 
 #browse {
-    margin-top:20px;
-    margin-right:5px;
+    margin-top:15px;
+    min-height:1000px;
+}
+#browse .gallery {
+    margin:0; padding:0;
+    background-color: #303030; /* #383838; */
+    padding-left:20px;
+    padding-top:10px;
+    margin-top:-10px;
     min-height:1000px;
 }
 .navbar-fixed-top + .main-container {
