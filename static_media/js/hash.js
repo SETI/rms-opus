@@ -150,12 +150,16 @@ var o_hash = {
                         opus.prefs[slug] = value;
                 }
 
+                /*
+                using page this way is deprecated, fix me!
                 if (slug=='page')  {
                     $('#page_no', '#browse').val(opus.prefs.page);
                 }
+
                 if (slug=='colls_page')  {
                     $('#colls_page_no', '#collections').val(opus.prefs.colls_page);
                 }
+                */
 
 
             } else {
