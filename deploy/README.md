@@ -4,7 +4,7 @@ if you are instead looking to update the OPUS database with new data, see import
 
 lots of this will all be moved to fabric files.
 
-    fab push deploy memcache_reboot
+    fab push deploy cache_reboot
 
 you can also do:
 
@@ -21,6 +21,7 @@ you might have to fucking 'make public' on s3 if you do this
 
     s3cmd put static_media/css/main.css s3://opus-static/css/main.css
 
+    s3cmd put static_media/js/collections.js s3://opus-static/js/collections.js
     s3cmd put static_media/js/widgets.js s3://opus-static/js/widgets.js
     s3cmd put static_media/js/search.js s3://opus-static/js/search.js
     s3cmd put static_media/js/opus.js s3://opus-static/js/opus.js

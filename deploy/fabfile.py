@@ -41,9 +41,12 @@ def deploy():
         run('sudo python /home/django/djcode/opus/apps/tools/reset_deploy_datetime.py')
 
 
-def memcache_reboot():
+def cache_reboot():
+        # reset memcache
         run('sudo killall memcached')
         run('/usr/bin/memcached -m 64 -p 11211 -l 127.0.0.1 -d')
+        # reset django cache
+        run('sudo python /home/django/djcode/' + deploy_dir + '/deploy/cache_clear.py')
 
 
 
