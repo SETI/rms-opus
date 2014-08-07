@@ -45,7 +45,7 @@ $(document).ready(function() {
     $('#navbar').on("click", ".restart", function() {
 
         // this removes all from collection on every restart, a stop-gap until we fix issue
-        $.ajax({ url: "/opus/collections/reset.html"});
+        // $.ajax({ url: "/opus/collections/reset.html"});
 
         // this might be temporary, reset widgets on restart
         opus.prefs.widgets = [];
