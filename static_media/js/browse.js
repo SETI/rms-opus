@@ -188,6 +188,7 @@ var o_browse = {
 
         // results paging - next/prev links
         $("#browse").on("click", "a.next, a.prev", function() {
+            // all this does is update the number that shows in the box and then calls textInputMonitor
 
             clearInterval(opus.scroll_watch_interval);  // turn this off while manually paging
 
@@ -195,7 +196,6 @@ var o_browse = {
             namespace = view_info['namespace']; // either '#collection' or '#browse'
             prefix = view_info['prefix'];       // either 'colls_' or ''
 
-            // all this does is update the number that shows in the box and then calls textInputMonitor
             page_no_elem = $(this).parent().parent().find('input#page');
             this_page = page_no_elem.val();
             if (!this_page) {
@@ -236,11 +236,6 @@ var o_browse = {
         });
 
 
-        // this controls the page indicator bars you get with infinie scroll
-        $(window).scroll(function() {
-             o_browse.fixBrowseControls();
-          });
-
         // close/open column chooser
         $('#browse').on("click", '.get_column_chooser', function() {
                 o_browse.getColumnChooser();
@@ -255,6 +250,11 @@ var o_browse = {
         namespace = view_info['namespace']; // either '#collection' or '#browse'
         prefix = view_info['prefix'];       // either 'colls_' or ''
         add_to_url = view_info['add_to_url'];  // adds colls=true if in collections view
+
+        if ($('#' + prefix + 'page', namespace).is(":focus")) {
+            // the page element has focus, user is typing, so leave it alone!
+            return;
+        }
 
         view_var = opus.prefs[prefix + 'browse'];  // either 'gallery' or 'data'
 
@@ -467,40 +467,6 @@ var o_browse = {
          });
     },
 
-    fixBrowseControls: function() {
-        return;
-        /**
-        if (opus.prefs.view != "browse") return;
-
-        window_scroll = $(window).scrollTop();
-
-        if (!window_scroll) {
-            // we are at teh top of page
-            if (opus.current_fixed_bar) {
-                // we scrolled to top from elsewhere, unfix the control bar
-                $(opus.current_fixed_bar).removeClass('browse_fixed');
-            }
-            return;
-        }
-
-        // this is for fixing the browse_controls
-        if (o_browse.isAlmostScrolledIntoView('.browse_controls_container')) {
-            if (opus.browse_controls_fixed) {
-                // browse controls container is in view,
-                // but browse controls are still fixed at top of page, move it back
-                opus.browse_controls_fixed = false;
-                $('.browse_controls','#browse').removeClass('browse_fixed');
-            }
-        } else {
-            if (!opus.browse_controls_fixed) {
-                // user is scrolling down the page and gallery controls have floated away
-                // bring them back to top of page so they can be accessed
-                opus.browse_controls_fixed = true;
-                $('.browse_controls').addClass("browse_fixed");
-            }
-        }
-        **/
-    },
 
     // checkboxes
     checkRangeBoxes: function(ring_obs_id1, ring_obs_id2) {
@@ -819,7 +785,7 @@ var o_browse = {
         var value = parseInt($('#page', namespace).val(), 10);
 
         // clear any old monitor and start a new one
-        if (opus.input_timer) clearTimeout(opus.input_timer);
+        clearTimeout(opus.input_timer);
 		opus.input_timer = setTimeout(
             function() {
 

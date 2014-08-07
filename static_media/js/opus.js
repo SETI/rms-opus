@@ -142,7 +142,6 @@ var opus = {
 
     // browse tab
     last_page_drawn: reset_last_page_drawn, // defined in header.html,
-                                      // like: {"gallery":0, "data":0, "colls_gallery":0, "colls_data":0 };
     pages:0, // total number of pages this result
     colls_pages:0, // total number of collections pages
     browse_footer_clicks:reset_footer_clicks, // defined in header.html
@@ -151,7 +150,6 @@ var opus = {
     scroll_watch_interval:'', // holder for setInterval timer
     footer_clicks_trigger: 0, // number of results footer clicks *after first* to trigger form that lets user set auto, -1 to turn off (not tested)
     page_bar_offsets:{},  // list of bars that indicate page in infinite scrolling
-    browse_controls_fixed:false, // indicates whether browse controle bar is fixed at top of screen
     current_page_msg:"",
     column_chooser_drawn:false,
     table_headers_drawn:false,  // have we drawn the table headers
@@ -171,7 +169,6 @@ var opus = {
 
 
     load: function () {
-
         selections = o_hash.getSelectionsFromHash();
 
         if (!selections) {
