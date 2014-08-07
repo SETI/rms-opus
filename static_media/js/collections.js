@@ -41,7 +41,7 @@ var o_collections = {
                 $('#zip_files .spinner', "#collections_summary").fadeIn();
                 add_to_url = [];
                 add_to_url = o_collections.getDownloadFiltersChecked();
-                url = 'collections/download/default.zip?' + add_to_url;
+                url = '/opus/collections/download/default.zip?' + add_to_url;
                 $.ajax({ url: url,
                      success: function(json){
                         $('#zip_files .spinner', "#collections_summary").fadeOut();
