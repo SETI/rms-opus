@@ -5,7 +5,7 @@ from StringIO import StringIO
 from zipfile import ZipFile
 from django.http import HttpResponse
 from django.shortcuts import render_to_response
-from datetime import datetime
+import datetime
 import random, string, csv, settings, re
 from django.core import serializers
 
@@ -172,7 +172,7 @@ def zipped(data):
 
 def downloadFileName():
     randstr = random.choice(string.ascii_lowercase) + random.choice(string.ascii_lowercase) + random.choice(string.ascii_lowercase)
-    return 'ringdata_' + randstr + '_' + 'T'.join(str(datetime.utcnow()).split(' '))
+    return 'ringdata_' + randstr + '_' + 'T'.join(str(datetime.datetime.utcnow()).split(' '))
 
 
 
