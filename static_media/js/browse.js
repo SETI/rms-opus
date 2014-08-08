@@ -236,7 +236,7 @@ var o_browse = {
         });
 
 
-        // close/open column chooser
+        // close/open column chooser, aka "choose columns"
         $('#browse').on("click", '.get_column_chooser', function() {
                 o_browse.getColumnChooser();
                 return false;
@@ -925,7 +925,7 @@ var o_browse = {
                 });
 
 
-            url = 'forms/column_chooser.html?' + o_hash.getHash();
+            url = '/opus/forms/column_chooser.html?' + o_hash.getHash();
 
             $('.column_chooser').load( url, function(response, status, xhr)  {
 
