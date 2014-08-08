@@ -395,7 +395,7 @@ var o_browse = {
 
             checkmark.hide();
 
-            if (jQuery.inArray(slug,cols) > -1) {
+            if (jQuery.inArray(slug,opus.prefs['cols']) > -1) {
                 // slug had been checked, removed from the chosen
                 cols.splice(jQuery.inArray(slug,opus.prefs['cols']),1);
                 $('#cchoose__' + slug).fadeOut(function() {
@@ -913,10 +913,12 @@ var o_browse = {
             if (opus.column_chooser_drawn) {
                 if ($('.column_chooser').is(":visible")) {
                     var scrollto = $(window).scrollTop() + 20;
+                    console.log(' scrolling to ' + scrollto);
                     $('.column_chooser').css("top", scrollto);
                     $('.column_chooser').effect("highlight", {}, 3000);
                 } else {
                     // wtf
+                    console.log('??? mystery place ???')
                     $('.column_chooser').dialog({
                             height: 600,
                             width: 900,
@@ -930,6 +932,7 @@ var o_browse = {
             }
 
             // column_chooser has not been drawn, fetch it from the server and apply its behaviors:
+            console.log('drawing column chooser for first time')
             $('.column_chooser').html(opus.spinner);
             $('.column_chooser').dialog({
                     height: 600,
@@ -942,7 +945,6 @@ var o_browse = {
 
 
             url = '/opus/forms/column_chooser.html?' + o_hash.getHash();
-
             $('.column_chooser').load( url, function(response, status, xhr)  {
 
                opus.column_chooser_drawn=true;  // this gets saved not redrawn
