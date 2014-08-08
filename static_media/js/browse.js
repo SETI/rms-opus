@@ -407,44 +407,6 @@ var o_browse = {
 
         });
 
-        /*
-        // a column is checked/unchecked, adds to / removes from 'chosen' column
-        $('.column_checkbox input[type="checkbox"].param_input', '#browse').change(function() {
-            slug = $(this).data('slug');
-            label = $(this).attr("title");
-            cols = opus.prefs['cols'];
-
-            if ($(this).is(':checked')) {
-                // checkbox is checked
-                if (jQuery.inArray(slug,cols) < 0) {
-                    // this slug was previously unselected, add to cols
-                    // $('#cchoose__' + slug).fadeOut().remove();
-                    $('<li id = "cchoose__' + slug + '">' + label + '<span class = "chosen_column_close">X</span></li>').hide().appendTo('.chosen_columns>ul').fadeIn();
-                    cols.push(slug);
-                }
-            } else {
-
-                // checkbox is unchecked
-                if (jQuery.inArray(slug,cols) > -1) {
-                    // slug had been checked, removed from the chosen
-                    cols.splice(jQuery.inArray(slug,cols),1);
-
-                    $('#cchoose__' + slug).fadeOut(function() {
-                        $(this).remove();
-                    });
-                }
-            }
-
-            opus.prefs['cols'] = cols;
-
-            // we are about to update the same page we just updated, it will replace
-            // the one that is showing,
-            o_browse.updatePage();
-
-        });
-
-        */
-
          // group header checkbox - lets user add/remove group of columns at a time
          $('#column_chooser input[type="checkbox"].cat_input').click(function() {
              cols = opus.prefs['cols'];
@@ -911,36 +873,28 @@ var o_browse = {
             **/
 
             if (opus.column_chooser_drawn) {
-                if ($('.column_chooser').is(":visible")) {
-                    var scrollto = $(window).scrollTop() + 20;
-                    console.log(' scrolling to ' + scrollto);
-                    $('.column_chooser').css("top", scrollto);
-                    $('.column_chooser').effect("highlight", {}, 3000);
-                } else {
-                    // wtf
-                    console.log('??? mystery place ???')
+                // it's already drawn, just move it into view
+                if (!$('.column_chooser').is(":visible")) {
+                    // wtf drawn but not visible?
                     $('.column_chooser').dialog({
                             height: 600,
                             width: 900,
                             modal: true,
-                            resizable: true,
                             draggable:true,
-                            dialogClass: 'no-close success-dialog'
+                            dialogClass: 'no-close success-dialog fixed-dialog'
                         });
                 }
                 return;
             }
 
             // column_chooser has not been drawn, fetch it from the server and apply its behaviors:
-            console.log('drawing column chooser for first time')
             $('.column_chooser').html(opus.spinner);
             $('.column_chooser').dialog({
                     height: 600,
                     width: 900,
                     modal: true,
-                    resizable: true,
                     draggable:true,
-                    dialogClass: 'no-close success-dialog'
+                    dialogClass: 'no-close success-dialog fixed-dialog'
                 });
 
 

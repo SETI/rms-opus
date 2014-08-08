@@ -27,7 +27,11 @@ html > body.no-skin > div#main-container.main-container > div.main-container-inn
     margin-right:-35px;
     height:25px;
 }
-
+.fixed-dialog {
+  position: fixed;
+  top: 50px;
+  left: 50px;
+}
 .fixed {
     position: fixed;
     top: 30px;
