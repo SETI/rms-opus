@@ -158,7 +158,7 @@ var o_browse = {
         }); // end click a browse tools icon
 
 
-        // click table column header to reorder by that column
+        // click tafble column header to reorder by that column
         $('#browse').on("click", '.data_table th a',  function() {
             var order_by =  $(this).data('slug');
             var order_indicator = $(this).find('.column_ordering');
@@ -337,6 +337,7 @@ var o_browse = {
     },
 
 
+    // column chooser behaviors
     addColumnChooserBehaviors: function() {
 
         // a column is checked/unchecked
@@ -390,11 +391,23 @@ var o_browse = {
         // removes chosen column with X
         $('.column_chooser').on("click",'.chosen_column_close', function() {
             slug = $(this).parent().attr('id').split('__')[1];
-            input = $('#column_chooser_input__' + slug);
-            input.attr('checked',false);
-            input.change();
+            checkmark = $('.all_columns .' + slug).find('i').first();
+
+            checkmark.hide();
+
+            if (jQuery.inArray(slug,cols) > -1) {
+                // slug had been checked, removed from the chosen
+                cols.splice(jQuery.inArray(slug,opus.prefs['cols']),1);
+                $('#cchoose__' + slug).fadeOut(function() {
+                    $(this).remove();
+                });
+            }
+
+            o_browse.updatePage();
+
         });
 
+        /*
         // a column is checked/unchecked, adds to / removes from 'chosen' column
         $('.column_checkbox input[type="checkbox"].param_input', '#browse').change(function() {
             slug = $(this).data('slug');
@@ -421,13 +434,16 @@ var o_browse = {
                     });
                 }
             }
+
             opus.prefs['cols'] = cols;
 
             // we are about to update the same page we just updated, it will replace
             // the one that is showing,
             o_browse.updatePage();
 
-         });
+        });
+
+        */
 
          // group header checkbox - lets user add/remove group of columns at a time
          $('#column_chooser input[type="checkbox"].cat_input').click(function() {
@@ -885,6 +901,7 @@ var o_browse = {
             }
         },
 
+        // column chooser
         getColumnChooser: function() {
             /**
             offset = $('.data_table', '#browse').offset().top + $('.data_table .column_label', '#browse').height() + 10;
@@ -892,7 +909,6 @@ var o_browse = {
             $('.column_chooser').css('top', Math.floor(offset) + 'px');
             $('.column_chooser').css('left', Math.floor(left) + 'px');
             **/
-
 
             if (opus.column_chooser_drawn) {
                 if ($('.column_chooser').is(":visible")) {
