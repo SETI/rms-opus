@@ -6,7 +6,7 @@ env.hosts = ['pds-rings-tools.seti.org']
 
 deploy_dir = 'opus'
 
-git_branch = 'newtheme'
+git_branch = 'master'
 
 
 def push():
@@ -20,6 +20,7 @@ def push():
         local('rm -rf ~/opus')
 
         # grab the local repo (this is all because couldn't grab remote from server)
+        # local('git clone -b ' + git_branch + ' git@bitbucket.org:ringsnode/opus2.git')
         local('git clone -b ' + git_branch + ' file:////Users/lballard/projects/opus')
 
         # zip the javascript files, dunno why it commented out, broken?
