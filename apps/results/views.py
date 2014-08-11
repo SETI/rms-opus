@@ -130,7 +130,7 @@ def get_triggered_tables(selections, extras = {}):
 
     # look for cache:
     cache_no = getUserQueryTable(selections,extras)
-    cache_key = 'triggered_tables_' + cache_no
+    cache_key = 'triggered_tables_' + str(cache_no)
     if (cache.get(cache_key)):
         return sorted(cache.get(cache_key))
 
