@@ -63,28 +63,7 @@ def getDetail(request,ring_obs_id='',fmt='json'):
     data = SortedDict({})
 
     # find all the tables (categories) this observation belongs to,
-    # start with base_tables:
-    triggered_tables = [t for t in settings.BASE_TABLES]
-
-    # grab mission and instrument tables
-    # mission and instrument values for this ring_obs_id are in ObsGeneral model:
-    try:
-        mission = ObsGeneral.objects.get(ring_obs_id=ring_obs_id).mission_id
-        instrument = ObsGeneral.objects.get(ring_obs_id=ring_obs_id).instrument_id
-    except ObsGeneral.DoesNotExist:
-        raise Http404
-    # lookup the table name for this observation's mission and instrument
-    # (misison tables are named a little trippy in TableName model / table_names table)
-    triggered_tables.append(TableName.objects.get(table_name__startswith='obs_mission', mission_id=mission).table_name)
-    triggered_tables.append('obs_instrument_' + instrument)
-
-
-    # find any surface geo tables that contain this observation:
-    # start by finding all surface targets for this ring_obs_id, then append the matching surface tables
-    surface_geo_targets = ObsSurfaceGeometry.objects.filter(ring_obs_id=ring_obs_id).values('target_name')
-    for target in surface_geo_targets:
-        if not target['target_name']: continue  # sometimes it's  None
-        triggered_tables.append('obs_surface_geometry__' + target['target_name'])
+    triggered_tables = get_triggered_tables({'obs_general.ring_obs_id':[ring_obs_id]}, extras = {})
 
     # now find all params and their values in each of these tables:
     for table_name in triggered_tables:
@@ -97,7 +76,6 @@ def getDetail(request,ring_obs_id='',fmt='json'):
         results = table_model.objects.filter(ring_obs_id=ring_obs_id).values(*all_params)[0]
 
         data[label] = results
-
 
     if fmt == 'json':
         return HttpResponse(json.dumps(data), content_type="application/json")
