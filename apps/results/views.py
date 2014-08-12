@@ -60,6 +60,10 @@ def getDetail(request,ring_obs_id='',fmt='json'):
         from ui.views import getDetailPage
         return getDetailPage(request, ring_obs_id=ring_obs_id, fmt=fmt)
 
+    col_slugs = request.GET.get('cols', False)
+    if col_slugs:
+        col_slugs = col_slugs.split(',')
+
     data = SortedDict({})
 
     # find all the tables (categories) this observation belongs to,
@@ -72,10 +76,21 @@ def getDetail(request,ring_obs_id='',fmt='json'):
         table_name = table.table_name
         model_name = ''.join(table_name.title().split('_'))
         table_model = get_model('search', model_name)
-        all_params = [param.name for param in ParamInfo.objects.filter(category_name=table_name, display_results=1)]
-        results = table_model.objects.filter(ring_obs_id=ring_obs_id).values(*all_params)[0]
 
-        data[label] = results
+        if not col_slugs:
+            all_params = [param.name for param in ParamInfo.objects.filter(category_name=table_name, display_results=1)]
+        else:
+            all_params = []
+            for slug in col_slugs:
+                param_name = ParamInfo.objects.get(slug=slug).param_name()
+
+                if table_name == param_name.split('.')[0]:
+                    all_params.append(param_name.split('.')[1])
+
+        if all_params:
+            results = table_model.objects.filter(ring_obs_id=ring_obs_id).values(*all_params)[0]
+
+            data[label] = results
 
     if fmt == 'json':
         return HttpResponse(json.dumps(data), content_type="application/json")
