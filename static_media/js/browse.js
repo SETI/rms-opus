@@ -342,8 +342,12 @@ var o_browse = {
 
         // a column is checked/unchecked
         $('.column_chooser').on("click", '.submenu li a', function() {
-
             slug = $(this).data('slug');
+
+            if (!slug) {
+                return true;  // just a 2nd level menu click, move along
+            }
+
             label = $(this).attr("title");
             cols = opus.prefs['cols'];
             checkmark = $(this).find('i').first();
