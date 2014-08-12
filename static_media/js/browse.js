@@ -830,9 +830,9 @@ var o_browse = {
             if (!$('.gallery_data_viewer').is(':visible')) {
                 return;  // user has since turned off data viewing - solves a race condition
             }
+            $('.gallery_data_viewer').empty();
+            $('.gallery_data_viewer').append("<h2>" + ring_obs_id + "</h2>");
             for (var table in json) {
-                $('.gallery_data_viewer').empty();
-                $('.gallery_data_viewer').append("<h2>" + ring_obs_id + "</h2>");
                 $('.gallery_data_viewer').append('<dl>');
                 $('.gallery_data_viewer').append('<h3>' + table + ':</h3>');
                 for (var param in json[table]) {
