@@ -38,7 +38,7 @@
                             {% for p in params %}
                                 {% if p.cat_name == sub_head.slugify %}
                                 <li>
-                                    <a data-slug = "{{ p.slug }}" title = "{{ p.label }}" href = "">
+                                    <a data-slug = "{{ p.slug }}" class = "{{ p.slug }}" title = "{{ p.label }}" href = "">
                                         <i class = "fa fa-check"></i>
                                         <i class="fa fa-plus"></i>
                                         {{ p.label }}
