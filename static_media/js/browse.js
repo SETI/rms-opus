@@ -821,6 +821,10 @@ var o_browse = {
 
     updateColorboxDataViewer: function(ring_obs_id) {
 
+        if (ring_obs_id != $.colorbox.element().parent().attr("id").split('__')[1]) {
+            return;  // user has since moved onto another image, solves a race condition
+        }
+
         url = '/opus/api/detail/' + ring_obs_id + ".json?cols=" + opus.prefs['cols'].join(',');
         $.getJSON(url, function(json) {
 
@@ -833,8 +837,7 @@ var o_browse = {
             $('.gallery_data_viewer').empty();
             $('.gallery_data_viewer').append("<h2>" + ring_obs_id + "</h2>");
             for (var table in json) {
-                $('.gallery_data_viewer').append('<dl>');
-                $('.gallery_data_viewer').append('<h3>' + table + ':</h3>');
+                $('.gallery_data_viewer').append('<dl><h3>' + table + ':</h3>');
                 for (var param in json[table]) {
                     $('.gallery_data_viewer').append('<dt>' + param + ':</dt>');
                     $('.gallery_data_viewer').append('<dd>' + json[table][param] + '</dd>');
@@ -842,7 +845,7 @@ var o_browse = {
                 $('.gallery_data_viewer').append('</dl>');
             }
             if ($(window).width() > 1500) {
-                $('.gallery_data_viewer').animate("right", parseInt($(window).width()/2 - $('#colorbox').width()) + "px");
+                $('.gallery_data_viewer').css("right", parseInt($(window).width()/2 - $('#colorbox').width(), 10) + "px");
             }
 
         });
