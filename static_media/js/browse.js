@@ -915,6 +915,12 @@ var o_browse = {
 
                opus.column_chooser_drawn=true;  // this gets saved not redrawn
 
+               // disply check next to any default columns
+                for (var key in opus.prefs['cols']) {
+                    $('.column_chooser .' + opus.prefs['cols'][key]).find('i').first().show();
+                }
+
+
                o_browse.addColumnChooserBehaviors();
 
                // we keep these all open in the column chooser, they are all closed by default
