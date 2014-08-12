@@ -947,8 +947,15 @@ var o_browse = {
             // we are about to update the same page we just updated, it will replace
             // the one that is showing,
 
+            // we are about to update the same page we just updated, it will replace
+            // the one that is showing,
             // set last page to one before first page that is showing in the interface
-            o_browse.updatePage();
+            // now update the browse table
+            if (opus.prefs.browse == 'data') {
+                o_browse.updatePage();
+            } else {
+                o_hash.updateHash();
+            }
 
         },
 
