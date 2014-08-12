@@ -103,7 +103,7 @@ var opus = {
                                    // like {"gallery":1, "data":1, "colls_gallery":1, "colls_data":1 };
             'limit': 100, // results per page
             'order':'',  // result table ordering
-            'cols': default_columns.split(','),  // default result table columns
+            'cols': default_columns.split(','),  // default result table columns by slug
             'widgets':[], // search tab widget columns
             'widgets2':[],
             'widget_size':{}, // search tab resized widgets

@@ -3,11 +3,11 @@ import string
 import datetime
 import hashlib
 import tarfile
+from django.http import HttpResponse
+from django.db.models import Sum
 from results.views import *
 from tools.app_utils import *
 from user_collections.views import *
-from django.http import HttpResponse
-from django.db.models import Sum
 import settings
 
 import logging

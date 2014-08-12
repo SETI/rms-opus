@@ -713,47 +713,52 @@ var o_browse = {
                 opus.last_page_drawn[prefix + view_var] = page;
 
 
-
                 o_browse.pageInViewIndicator();
 
                 // turn the scroll watch timer back on
                 clearInterval(opus.scroll_watch_interval);  // always shut off just before, just in case
                 opus.scroll_watch_interval = setInterval(o_browse.browseScrollWatch, 1000);
 
-                // setup colorbox
-                var $overflow = '';
-                var colorbox_params = {
-                    rel: 'colorbox',
-
-                    className:"gallery_overlay_bg",
-
-                    reposition:false,
-                    scalePhotos:true,
-                    scrolling:false,
-                    previous: '<i class="ace-icon fa fa-arrow-left"></i>',
-                    next: '<i class="ace-icon fa fa-arrow-right"></i>',
-                    close:'&times;',
-                    current:'{current} of {total}',
-                    maxWidth:'100%',
-                    maxHeight:'100%',
-                    onOpen:function(){
-                        $overflow = document.body.style.overflow;
-                        document.body.style.overflow = 'hidden';
-                    },
-                    onClosed:function(){
-                        document.body.style.overflow = $overflow;
-                    },
-                    onComplete:function(){
-                        $.colorbox.resize();
-                    }
-                };
-                $('.ace-thumbnails [data-rel="colorbox"]').colorbox(colorbox_params);
-
+                o_browse.initColorbox();
             }
 
         });
     },
 
+
+    initColorbox: function() {
+        // setup colorbox
+        var $overflow = '';
+        var colorbox_params = {
+            rel: 'colorbox',
+            className:"gallery_overlay_bg",
+            reposition:false,
+            scrolling:true,
+            previous: '<i class="ace-icon fa fa-arrow-left"></i>',
+            next: '<i class="ace-icon fa fa-arrow-right"></i>',
+            close:'&times;',
+            current:'{current} of {total}',
+            maxWidth:'100%',
+            maxHeight:'100%',
+            fastIframe: false,
+            onOpen:function(){
+                $overflow = document.body.style.overflow;
+                document.body.style.overflow = 'hidden';
+            },
+            onClosed:function(){
+                document.body.style.overflow = $overflow;
+            },
+            onComplete:function(){
+                $.colorbox.resize();
+            }
+        };
+        $('.ace-thumbnails [data-rel="colorbox"]').colorbox(colorbox_params);
+    },
+
+    getGalleryData: function() {
+
+
+    },
 
     // we watch the paging input fields to wait for pauses before we trigger page change. UX!
     // this funciton starts that monitor based on what view is currently up

@@ -1,10 +1,5 @@
 """
-This file demonstrates two different styles of tests (one doctest and one
-unittest). These will both pass when you run "manage.py test".
-
-Replace these with more appropriate tests for your application.
-
-*************** PLEASE NOTE ***************
+if you run this locally:
 
 be sure and delete all from user_searches before you build the 'search' fixture
 otherwise your cache_x table names will never match
