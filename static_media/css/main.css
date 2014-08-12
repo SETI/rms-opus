@@ -1,4 +1,25 @@
 /* column chooser things */
+#cboxContent img{
+}
+.colorbox_data_img {
+    width:50px;
+}
+.gallery_data_viewer {
+    position: fixed;
+    top:28px;
+    right:10px;
+    width:280px;
+    height:80%;
+    padding:10px 20px;
+    margin:10px;
+    border:1px solid white;
+    overflow-y: scroll;
+    background:black;
+    color:white;
+    z-index:99999;
+
+
+}
 
 html > body.no-skin > div#main-container.main-container > div.main-container-inner > div.row > div.col-md-12 {
     margin:0; padding:0;

@@ -214,13 +214,14 @@ var o_browse = {
         });
 
         // change page manually
-            $('#browse').on("change", '#page','#browse', function() {
+        $('#browse').on("change", '#page','#browse', function() {
             page = parseInt($(this).val(), 10);
             if (!page) { page = 1; }
             opus.prefs.page['data'] = parseInt(page, 10);
             opus.prefs.page['gallery'] = parseInt(page, 10);
             o_browse.updatePage(page);
         });
+        // TODO combine this and the above
         $('#collections').on("change",'#colls_page', function() {
             page = parseInt($(this).val(), 10);
             if (!page) { page = 1; }
@@ -234,7 +235,6 @@ var o_browse = {
             $('html, body').animate({scrollTop:0}, 'slow');
             return false;
         });
-
 
         // close/open column chooser, aka "choose columns"
         $('#browse').on("click", '.get_column_chooser', function() {
@@ -740,16 +740,27 @@ var o_browse = {
             current:'{current} of {total}',
             maxWidth:'100%',
             maxHeight:'100%',
+            loop:false,
             fastIframe: false,
             onOpen:function(){
+                // prevent scrolling for duration of colorbox display
                 $overflow = document.body.style.overflow;
                 document.body.style.overflow = 'hidden';
             },
             onClosed:function(){
-                document.body.style.overflow = $overflow;
+                $('#cboxContent .gallery_data_viewer').hide();
+                document.body.style.overflow = $overflow;  // return overflow to default.
             },
             onComplete:function(){
-                $.colorbox.resize();
+                if (opus.prefs.gallery_data_viewer) {
+                    // $('#cboxContent img').css({width: '50%', height: '50%', marginRight:0}, 1000);
+                    if (!$('#cboxContent .gallery_data_viewer').is(':visible')) {
+                        $('#cboxContent').append('<div class = "gallery_data_viewer">blah blah blah<br>blah blah blah<div>');
+                        $('.gallery_data_viewer').draggable();
+                    }
+                }
+
+                $.colorbox.resize(); // i dunno why
             }
         };
         $('.ace-thumbnails [data-rel="colorbox"]').colorbox(colorbox_params);
