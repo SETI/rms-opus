@@ -101,6 +101,7 @@ var opus = {
             'colls_browse':'gallery',  // which view is showing on the collections page, gallery or data
             'page':default_pages,  // what page are we on, per view, default defined in header.html
                                    // like {"gallery":1, "data":1, "colls_gallery":1, "colls_data":1 };
+            'gallery_data_viewer': true, // true if you want to view data in the box rather than img
             'limit': 100, // results per page
             'order':'',  // result table ordering
             'cols': default_columns.split(','),  // default result table columns by slug

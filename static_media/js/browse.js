@@ -743,32 +743,109 @@ var o_browse = {
             loop:false,
             fastIframe: false,
             onOpen:function(){
-                // prevent scrolling for duration of colorbox display
+                // prevent scrolling for duration that colorbox is visible
                 $overflow = document.body.style.overflow;
                 document.body.style.overflow = 'hidden';
+            },
+            onLoad:function() {
+                if (opus.prefs.gallery_data_viewer) {
+
+                    ring_obs_id = $.colorbox.element().parent().attr("id").split('__')[1];
+
+                    // draw the viewer if not already..
+                    if (!$('#cboxContent .gallery_data_viewer').is(':visible')) {
+                        $('#cboxContent').append('<div class = "gallery_data_viewer"><div>');
+                        $('.gallery_data_viewer').draggable();
+                    }
+
+                    // append the data to the data view container
+                    $('.gallery_data_viewer').empty();
+                    $('.gallery_data_viewer').append("<h2>" + ring_obs_id + "</h2>");
+
+                }
+
             },
             onClosed:function(){
                 $('#cboxContent .gallery_data_viewer').hide();
                 document.body.style.overflow = $overflow;  // return overflow to default.
             },
             onComplete:function(){
-                if (opus.prefs.gallery_data_viewer) {
-                    // $('#cboxContent img').css({width: '50%', height: '50%', marginRight:0}, 1000);
-                    if (!$('#cboxContent .gallery_data_viewer').is(':visible')) {
-                        $('#cboxContent').append('<div class = "gallery_data_viewer">blah blah blah<br>blah blah blah<div>');
-                        $('.gallery_data_viewer').draggable();
-                    }
-                }
 
+                if (!opus.prefs.gallery_data_viewer) {
+
+                    // add the "show data" button to the colorbox controls
+                    $('#cboxLoadedContent').append('<div id="colorbox-extra-info"><button class = "colorbox_data_button" style="display: block;" type="button">show data</div>');
+
+                } else {
+
+                    // add the "hide data" button to the colorbox controls
+                    $('#cboxLoadedContent').append('<div id="colorbox-extra-info"><button class = "colorbox_data_button" style="display: block;" type="button">hide data</div>');
+
+                    ring_obs_id = $.colorbox.element().parent().attr("id").split('__')[1];
+
+                    // update the view data
+                    colorbox_timeout = setTimeout(function () {
+                        // if user is still even looking at this image
+                        if (ring_obs_id == $.colorbox.element().parent().attr("id").split('__')[1]) {
+                            o_browse.updateColorboxDataViewer(ring_obs_id);
+                        } else {
+                        }
+                    }, 500);
+                }
                 $.colorbox.resize(); // i dunno why
             }
         };
+
         $('.ace-thumbnails [data-rel="colorbox"]').colorbox(colorbox_params);
+
+        // add colorbox hide/show data button behaviors
+        $("#colorbox").on("click",'.colorbox_data_button', function() {
+            button_text = $(this).text();
+
+            if (button_text == "hide data") {
+                $(this).text("show data");
+                opus.prefs.gallery_data_viewer = false;
+                $('.gallery_data_viewer').hide();
+            } else {
+                $(this).text("hide data");
+                ring_obs_id = $.colorbox.element().parent().attr("id").split('__')[1];
+                opus.prefs.gallery_data_viewer = true;
+                $('.gallery_data_viewer').empty();
+                $('.gallery_data_viewer').append("<h2>" + ring_obs_id + "</h2>");
+                $('.gallery_data_viewer').fadeIn();
+                o_browse.updateColorboxDataViewer(ring_obs_id);
+            }
+        });
+
     },
 
-    getGalleryData: function() {
+    updateColorboxDataViewer: function(ring_obs_id) {
 
+        url = '/opus/api/detail/' + ring_obs_id + ".json?cols=" + opus.prefs['cols'].join(',');
+        $.getJSON(url, function(json) {
 
+            if (ring_obs_id != $.colorbox.element().parent().attr("id").split('__')[1]) {
+                return;  // user has since moved onto another image, solves a race condition
+            }
+            if (!$('.gallery_data_viewer').is(':visible')) {
+                return;  // user has since turned off data viewing - solves a race condition
+            }
+            for (var table in json) {
+                $('.gallery_data_viewer').empty();
+                $('.gallery_data_viewer').append("<h2>" + ring_obs_id + "</h2>");
+                $('.gallery_data_viewer').append('<dl>');
+                $('.gallery_data_viewer').append('<h3>' + table + ':</h3>');
+                for (var param in json[table]) {
+                    $('.gallery_data_viewer').append('<dt>' + param + ':</dt>');
+                    $('.gallery_data_viewer').append('<dd>' + json[table][param] + '</dd>');
+                }
+                $('.gallery_data_viewer').append('</dl>');
+            }
+            if ($(window).width() > 1500) {
+                $('.gallery_data_viewer').animate("right", parseInt($(window).width()/2 - $('#colorbox').width()) + "px");
+            }
+
+        });
     },
 
     // we watch the paging input fields to wait for pauses before we trigger page change. UX!

@@ -1,8 +1,10 @@
 /* column chooser things */
-#cboxContent img{
-}
-.colorbox_data_img {
-    width:50px;
+
+#colorbox-extra-info {
+    position: absolute;
+    bottom: -5px;
+    left: 180px;
+    padding: 10px;
 }
 .gallery_data_viewer {
     position: fixed;
@@ -10,15 +12,29 @@
     right:10px;
     width:280px;
     height:80%;
-    padding:10px 20px;
+    padding:20px;
     margin:10px;
     border:1px solid white;
     overflow-y: scroll;
     background:black;
     color:white;
     z-index:99999;
-
-
+}
+.gallery_data_viewer h2 { /* ring_obs_it at top of data viewer */
+    font-size:95%;
+}
+.gallery_data_viewer h3 { /* table name header */
+    margin:0; padding:0;
+    margin-top:15px;
+    margin-bottom:5px;
+    font-size:100%;
+    color:#D0D0D0;
+}
+.gallery_data_viewer dt {
+    color:#3399ff;
+}
+.gallery_data_viewer dd {
+    margin-bottom:5px;
 }
 
 html > body.no-skin > div#main-container.main-container > div.main-container-inner > div.row > div.col-md-12 {
