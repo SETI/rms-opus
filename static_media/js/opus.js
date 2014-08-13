@@ -113,6 +113,7 @@ var opus = {
 
      }, // pref changes do not trigger load()
 
+    gallery_data: {},  // holds gallery column data
     all_browse_views: ['gallery','data'],
 
     // additional defaults are in base.html

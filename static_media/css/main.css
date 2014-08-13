@@ -6,6 +6,11 @@
     left: 180px;
     padding: 10px;
 }
+#colorbox-extra-info>div{
+}
+#colorbox-extra-info button{
+    float:right;
+}
 .gallery_data_viewer {
     position: fixed;
     top:28px;
@@ -23,7 +28,7 @@
 .gallery_data_viewer h2 { /* ring_obs_it at top of data viewer */
     font-size:95%;
 }
-.gallery_data_viewer h3 { /* table name header */
+.gallery_data_viewer h3 { /* table name header - */
     margin:0; padding:0;
     margin-top:15px;
     margin-bottom:5px;

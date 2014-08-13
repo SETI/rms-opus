@@ -400,7 +400,7 @@ var o_browse = {
 
             if (jQuery.inArray(slug,opus.prefs['cols']) > -1) {
                 // slug had been checked, removed from the chosen
-                cols.splice(jQuery.inArray(slug,opus.prefs['cols']),1);
+                opus.prefs['cols'].splice(jQuery.inArray(slug,opus.prefs['cols']),1);
                 $('#cchoose__' + slug).fadeOut(function() {
                     $(this).remove();
                 });
@@ -452,7 +452,13 @@ var o_browse = {
 
             // we are about to update the same page we just updated, it will replace
             // the one that is showing,
-            o_browse.updatePage();
+            // set last page to one before first page that is showing in the interface
+            // now update the browse table
+            if (opus.prefs.browse == 'data') {
+                o_browse.updatePage();
+            } else {
+                o_hash.updateHash();
+            }
 
          });
     },
@@ -607,9 +613,9 @@ var o_browse = {
 
         clearInterval(opus.scroll_watch_interval); // hold on cowgirl only 1 page at a time
 
-        var url = "/opus/api/images/small.html?alt_size=full&";
+        var base_url = "/opus/api/images/small.html?alt_size=full&";
         if (opus.prefs[prefix + 'browse'] == 'data') {
-            url = '/opus/api/data.html?';
+            base_url = '/opus/api/data.html?';
 
             // get table headers for table view
             if (!opus.table_headers_drawn) {
@@ -618,7 +624,7 @@ var o_browse = {
                 return; // startDataTable() starts data table and then calls getBrowseTab again
             }
         }
-        url += o_hash.getHash() + '&reqno=' + opus.lastRequestNo + add_to_url;
+        url = o_hash.getHash() + '&reqno=' + opus.lastRequestNo + add_to_url;
 
         footer_clicks = opus.browse_footer_clicks[prefix + view_var]; // default: {'gallery':0, 'data':0, 'colls_gallery':0, 'colls_data':0 };
 
@@ -663,7 +669,7 @@ var o_browse = {
         }
 
         // NOTE if you change alt_size=full here you must also change it in gallery.html template
-        $.ajax({ url: url,
+        $.ajax({ url: base_url + url,
             success: function(html){
                // bring in the new page
 
@@ -689,6 +695,8 @@ var o_browse = {
                     $('.infinite_scroll_spinner', namespace).fadeOut("fast");
 
                }
+
+            o_browse.getBrowseData(page);
 
                 // get the browse nav header?
                 if (!opus.gallery_begun) {
@@ -720,10 +728,48 @@ var o_browse = {
                 opus.scroll_watch_interval = setInterval(o_browse.browseScrollWatch, 1000);
 
                 o_browse.initColorbox();
+
             }
 
         });
     },
+
+    getBrowseData: function(page) {
+
+        base_url = '/opus/api/data.json?';
+
+        // we have to do a little hacking of the hash, we want page as we want it and ring_obs_id too
+        new_hash = [];
+        for (var i in o_hash.getHash().split('&')) {
+            param = o_hash.getHash().split('&')[i].split('=')[0];
+            values = o_hash.getHash().split('&')[i].split('=')[1].split(',');
+
+            // make sure ring_obs_id is in columns
+            if (param == 'cols') {
+                if (jQuery.inArray('ringobsid', values) < 0) {
+                    values.push('ringobsid');
+                }
+                columns = values.join(',');  // we need this after the ajax call
+            }
+            // make sure page is the page we were passed
+            if (param == 'page') {
+                values = [page];
+            }
+            // join them all together again
+            new_hash.push(param + '=' + values.join(','));
+        }
+        new_hash = new_hash.join('&');
+
+        $.getJSON(base_url + new_hash, function(json) {
+            // assign to data object
+            for (var i in json.page) {
+                ring_obs_id = json.page[i][columns.indexOf('ringobsid')];
+                opus.gallery_data[ring_obs_id] = json.page[i];
+            }
+        });
+
+    },
+
 
 
     initColorbox: function() {
@@ -759,8 +805,7 @@ var o_browse = {
                     }
 
                     // append the data to the data view container
-                    $('.gallery_data_viewer').empty();
-                    $('.gallery_data_viewer').append("<h2>" + ring_obs_id + "</h2>");
+                    $('.gallery_data_viewer').html("<h2>" + ring_obs_id + "</h2>");
 
                 }
 
@@ -771,28 +816,24 @@ var o_browse = {
             },
             onComplete:function(){
 
+
                 if (!opus.prefs.gallery_data_viewer) {
 
                     // add the "show data" button to the colorbox controls
-                    $('#cboxLoadedContent').append('<div id="colorbox-extra-info"><button class = "colorbox_data_button" style="display: block;" type="button">show data</div>');
+                    $('#cboxLoadedContent').append('<div id="colorbox-extra-info">' + ring_obs_id + '<button class = "colorbox_data_button" type="button">show data</div>');
 
                 } else {
 
-                    // add the "hide data" button to the colorbox controls
-                    $('#cboxLoadedContent').append('<div id="colorbox-extra-info"><button class = "colorbox_data_button" style="display: block;" type="button">hide data</div>');
-
+                    // add the "hide data" button and the ring_obs_idto the colorbox controls
+                    $('#cboxLoadedContent').append('<div id="colorbox-extra-info">' + ring_obs_id + '<button class = "colorbox_data_button" style="display: block;" type="button">hide data</button>')
+                    // $('#cboxLoadedContent').append();
                     ring_obs_id = $.colorbox.element().parent().attr("id").split('__')[1];
 
                     // update the view data
-                    colorbox_timeout = setTimeout(function () {
-                        // if user is still even looking at this image
-                        if (ring_obs_id == $.colorbox.element().parent().attr("id").split('__')[1]) {
-                            o_browse.updateColorboxDataViewer(ring_obs_id);
-                        } else {
-                        }
-                    }, 500);
+                    o_browse.updateColorboxDataViewer(ring_obs_id);
                 }
                 $.colorbox.resize(); // i dunno why
+                $('#colorbox-extra-info').width($('#colorbox').width()/2.3);
             }
         };
 
@@ -810,45 +851,29 @@ var o_browse = {
                 $(this).text("hide data");
                 ring_obs_id = $.colorbox.element().parent().attr("id").split('__')[1];
                 opus.prefs.gallery_data_viewer = true;
-                $('.gallery_data_viewer').empty();
-                $('.gallery_data_viewer').append("<h2>" + ring_obs_id + "</h2>");
-                $('.gallery_data_viewer').fadeIn();
+                $('.gallery_data_viewer').html("<h2>" + ring_obs_id + "</h2>").fadeIn();
                 o_browse.updateColorboxDataViewer(ring_obs_id);
-            }
-        });
+
+        }});
 
     },
 
     updateColorboxDataViewer: function(ring_obs_id) {
 
-        if (ring_obs_id != $.colorbox.element().parent().attr("id").split('__')[1]) {
-            return;  // user has since moved onto another image, solves a race condition
+        html = ''
+        for (var i in opus.prefs['cols']) {
+            column = opus.prefs['cols'][i];
+            value = opus.gallery_data[ring_obs_id][i];
+            html += '<dt>' + column + ':</dt><dd>' + value + '</dd>';
+        }
+        html += '</dl>';
+        $('.gallery_data_viewer').html(html);
+
+        // some alignment adjustments
+        if ($(window).width() > 1500) {
+            $('.gallery_data_viewer').css("right", parseInt($(window).width()/2 - $('#colorbox').width(), 10) + "px");
         }
 
-        url = '/opus/api/detail/' + ring_obs_id + ".json?cols=" + opus.prefs['cols'].join(',');
-        $.getJSON(url, function(json) {
-
-            if (ring_obs_id != $.colorbox.element().parent().attr("id").split('__')[1]) {
-                return;  // user has since moved onto another image, solves a race condition
-            }
-            if (!$('.gallery_data_viewer').is(':visible')) {
-                return;  // user has since turned off data viewing - solves a race condition
-            }
-            $('.gallery_data_viewer').empty();
-            $('.gallery_data_viewer').append("<h2>" + ring_obs_id + "</h2>");
-            for (var table in json) {
-                $('.gallery_data_viewer').append('<dl><h3>' + table + ':</h3>');
-                for (var param in json[table]) {
-                    $('.gallery_data_viewer').append('<dt>' + param + ':</dt>');
-                    $('.gallery_data_viewer').append('<dd>' + json[table][param] + '</dd>');
-                }
-                $('.gallery_data_viewer').append('</dl>');
-            }
-            if ($(window).width() > 1500) {
-                $('.gallery_data_viewer').css("right", parseInt($(window).width()/2 - $('#colorbox').width(), 10) + "px");
-            }
-
-        });
     },
 
     // we watch the paging input fields to wait for pauses before we trigger page change. UX!
@@ -909,6 +934,7 @@ var o_browse = {
             */
             $('.data').empty();  // yes all namespaces
             $('.gallery').empty();
+            opus.gallery_data = [];
             opus.browse_footer_clicks = {"gallery":0, "data":0, "colls_gallery":0, "colls_data":0 };
             opus.last_page_drawn = {"gallery":0, "data":0, "colls_gallery":0, "colls_data":0 };
             opus.collection_change = true;  // forces redraw of collections tab because reset_last_page_drawn
