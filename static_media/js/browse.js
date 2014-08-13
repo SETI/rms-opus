@@ -94,8 +94,6 @@ var o_browse = {
                 o_browse.addRangeHandler(ring_obs_id);
             }
 
-
-
         });
 
         // thumbnail overlay tools
@@ -163,7 +161,7 @@ var o_browse = {
                 // currently ascending, change to descending order
                 order_indicator.removeClass('fa-sort-asc');
                 order_indicator.addClass('fa-sort-desc');
-                order_by = '-' + order_by
+                order_by = '-' + order_by;
 
             } else if (order_indicator.hasClass('fa-sort-desc')) {
                 // change to not ordered
@@ -333,7 +331,7 @@ var o_browse = {
     },
 
     toggleBrowseInCollectionStyle: function(ring_obs_id) {
-        icon_a_element = ".tools-bottom a"
+        icon_a_element = ".tools-bottom a";
         $('#gallery__' + ring_obs_id + ' ' + icon_a_element).parent().toggleClass("in"); // this class keeps parent visible when mouseout
         $('#gallery__' + ring_obs_id + ' ' + icon_a_element).find('i').toggleClass('thumb_selected_icon');
         $('#gallery__' + ring_obs_id + ' .thumb_overlay').toggleClass('thumb_selected');
@@ -531,7 +529,7 @@ var o_browse = {
     infiniteScrollPageIndicatorRow: function(page) {
         // this is the bar that appears below each infinite scroll page to indicate page no
 
-        opus.prefs.view == 'browse' ? browse_prefix = '' : browse_prefix = 'colls_';
+        (opus.prefs.view == 'browse') ? browse_prefix = '' : browse_prefix = 'colls_';
 
         id = 'infinite_scroll_' + browse_prefix + opus.prefs.browse + '__' + page;
 
@@ -827,7 +825,7 @@ var o_browse = {
                 } else {
 
                     // add the "hide data" button and the ring_obs_idto the colorbox controls
-                    $('#cboxLoadedContent').append('<div id="colorbox-extra-info">' + ring_obs_id + '<button class = "colorbox_data_button" style="display: block;" type="button">hide data</button>')
+                    $('#cboxLoadedContent').append('<div id="colorbox-extra-info">' + ring_obs_id + '<button class = "colorbox_data_button" style="display: block;" type="button">hide data</button>');
                     // $('#cboxLoadedContent').append();
                     ring_obs_id = $.colorbox.element().parent().attr("id").split('__')[1];
 
@@ -862,7 +860,7 @@ var o_browse = {
 
     updateColorboxDataViewer: function(ring_obs_id) {
 
-        html = ''
+        html = '';
         for (var i in opus.prefs['cols']) {
             column = opus.prefs['cols'][i];
             value = opus.gallery_data[ring_obs_id][i];
@@ -871,7 +869,7 @@ var o_browse = {
         html += '</dl>';
 
         // add a link to detail page
-        html += '<hr><p><a href = "/opus/detail/' + ring_obs_id + '.html" class = "gallery_data_link" data-ringobsid="' + ring_obs_id + '">View Detail</a></p>';
+        html += '<p><a href = "/opus/detail/' + ring_obs_id + '.html" class = "gallery_data_link" data-ringobsid="' + ring_obs_id + '">View Detail</a></p>';
 
         $('.gallery_data_viewer').html(html);
 
