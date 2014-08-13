@@ -106,12 +106,8 @@ var o_browse = {
 
             // click to view detail page
             if ($(this).find('i').hasClass('fa-list-alt')) {
+                o_browse.openDetailTab(ring_obs_id);
 
-                opus.mainTabDisplay('detail');  // make sure the main site tab label is displayed
-
-                opus.prefs.view = 'detail';
-                opus.prefs.detail = ring_obs_id;
-                opus.triggerNavbarClick();
             }
 
             // click to view colorbox
@@ -243,6 +239,13 @@ var o_browse = {
         });
 
     }, // end browse behaviors
+
+    openDetailTab: function(ring_obs_id) {
+        opus.mainTabDisplay('detail');  // make sure the main site tab label is displayed
+        opus.prefs.view = 'detail';
+        opus.prefs.detail = ring_obs_id;
+        opus.triggerNavbarClick();
+    },
 
     pageInViewIndicator: function() {
         // what page no is currently scrolled more into view?
@@ -866,7 +869,21 @@ var o_browse = {
             html += '<dt>' + column + ':</dt><dd>' + value + '</dd>';
         }
         html += '</dl>';
+
+        // add a link to detail page
+        html += '<hr><p><a href = "/opus/detail/' + ring_obs_id + '.html" class = "gallery_data_link" data-ringobsid="' + ring_obs_id + '">View Detail</a></p>';
+
         $('.gallery_data_viewer').html(html);
+
+        // add data viewer behaviors
+        console.log('adding data viewer behaves');
+        $('.gallery_data_viewer').on("click", '.gallery_data_link', function() {
+            ring_obs_id = $(this).data('ringobsid');
+            o_browse.openDetailTab(ring_obs_id);
+            $.colorbox.close();
+            console.log('ok');
+            return false;
+        });
 
         // some alignment adjustments
         if ($(window).width() > 1500) {
@@ -874,6 +891,8 @@ var o_browse = {
         }
 
     },
+
+
 
     // we watch the paging input fields to wait for pauses before we trigger page change. UX!
     // this funciton starts that monitor based on what view is currently up

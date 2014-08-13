@@ -1,5 +1,11 @@
 /* column chooser things */
 
+.gallery_data_link {
+    margin-top:70px;
+    font-size:130%;
+    padding:5px 0px;
+    color: #3399ff;
+}
 #colorbox-extra-info {
     position: absolute;
     bottom: -5px;
@@ -216,7 +222,7 @@ li.infinite_scroll_page  {
     z-index:99;
     /* border:7px solid #49afcd; */
 }
-.thumb_overlay a:hover { color:#00FFFF; font-size:130% }
+.thumb_overlay a:hover { color:#00FFFF; font-size:130%;}
 
 .thumb_selected {
     border:2px solid #00FFFF;
