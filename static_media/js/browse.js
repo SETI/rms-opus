@@ -799,8 +799,8 @@ var o_browse = {
                     ring_obs_id = $.colorbox.element().parent().attr("id").split('__')[1];
 
                     // draw the viewer if not already..
-                    if (!$('#cboxContent .gallery_data_viewer').is(':visible')) {
-                        $('#cboxContent').append('<div class = "gallery_data_viewer"><div>');
+                    if (!$('#cboxOverlay .gallery_data_viewer').is(':visible')) {
+                        $('#cboxOverlay').append('<div class = "gallery_data_viewer"><div>');
                         $('.gallery_data_viewer').draggable();
                     }
 
@@ -815,7 +815,6 @@ var o_browse = {
                 document.body.style.overflow = $overflow;  // return overflow to default.
             },
             onComplete:function(){
-
 
                 if (!opus.prefs.gallery_data_viewer) {
 

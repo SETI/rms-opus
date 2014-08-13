@@ -5,6 +5,7 @@
     bottom: -5px;
     left: 180px;
     padding: 10px;
+
 }
 #colorbox-extra-info>div{
 }
@@ -21,9 +22,9 @@
     margin:10px;
     border:1px solid white;
     overflow-y: scroll;
-    background:black;
+    background:#101010;
+    opacity: 0.9;
     color:white;
-    z-index:99999;
 }
 .gallery_data_viewer h2 { /* ring_obs_it at top of data viewer */
     font-size:95%;
