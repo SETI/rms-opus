@@ -26,14 +26,15 @@ var o_collections = {
 
 
          // check an input on selected products and images updates file_info
-         $('#collection').on("click",'#collection_summary input', function() {
+         $('#collection').on("click",'#downlaod_options input', function() {
              add_to_url = o_collections.getDownloadFiltersChecked();
              url = "/opus/collections/download/info?" + add_to_url;
              $.ajax({ url: url + '&fmt=json',
                 success: function(json){
-                    $('#total_files').html(json['size']);
-                    $('#download_size').html(json['count']);
+                    $('#total_files').fadeOut().html(json['size']).fadeIn();
+                    $('#download_size').fadeOut().html(json['count']).fadeIn();
                 }});
+
          });
 
          // click create download zip file link on collections page
