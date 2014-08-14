@@ -82,7 +82,6 @@ def getDetail(request,ring_obs_id='',fmt='json'):
         model_name = ''.join(table_name.title().split('_'))
         table_model = get_model('search', model_name)
 
-        log.error(table_name)
         if not col_slugs:
             all_params = [param.name for param in ParamInfo.objects.filter(category_name=table_name, display_results=1)]
         else:

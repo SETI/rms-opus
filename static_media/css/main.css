@@ -1,5 +1,12 @@
 /* column chooser things */
 
+.gallery_image_focus {
+    margin:0; padding:0;
+    border:1px solid #D0CFCF;
+}
+.ul.ace-thumbnails>li a {
+    margin:0; padding:0;
+}
 .gallery_data_link {
     margin-top:70px;
     font-size:130%;
@@ -240,6 +247,7 @@ a i.fa-search-plus:hover {
 .ace-thumbnails > li > .tools.tools-bottom a{
     float:right;
 }
+
 
 body {
   min-height: 500px;

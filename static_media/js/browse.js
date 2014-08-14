@@ -12,8 +12,20 @@ var o_browse = {
 
     browseBehaviors: function() {
 
-         // browse nav menu - the gallery/table toggle
-         $('#browse').on("click", '.browse_view', function() {
+        // mouse over a thumbnail
+        $('#browse').on("mouseenter", "ul.ace-thumbnails li",  // , ul.ace-thumbnails li>.tools
+            function() {
+                // element = ".gallery_image_focus > a.activeThumbnail.cboxElement > img";
+                // $(element).removeClass("gallery_image_focus");
+                $(this).find('.thumb_overlay').addClass("gallery_image_focus");
+                // $(this).parent().find('.thumb_overlay').addClass("gallery_image_focus");
+                // $('#gallery__' + ring_obs_id + ' ' + icon_a_element)
+            }).on('mouseleave', 'ul.ace-thumbnails li', function() {
+                $(this).find('.thumb_overlay').removeClass("gallery_image_focus");
+            });
+
+        // browse nav menu - the gallery/table toggle
+        $('#browse').on("click", '.browse_view', function() {
 
             clearInterval(opus.scroll_watch_interval); // hold on cowgirl only 1 page at a time
 
@@ -104,7 +116,13 @@ var o_browse = {
 
             // click to view detail page
             if ($(this).find('i').hasClass('fa-list-alt')) {
+                // leave a highlight on the clicked thumbnail
                 o_browse.openDetailTab(ring_obs_id);
+                setTimeout(function() {
+                    // i don't know why it needs this timeout but it does o_o
+                    $(' .thumb_overlay').removeClass("gallery_image_focus");  // remove any old
+                    $('#gallery__' + ring_obs_id + ' .thumb_overlay').addClass("gallery_image_focus");
+                }, 200);
 
             }
 
@@ -814,6 +832,12 @@ var o_browse = {
             onClosed:function(){
                 $('#cboxContent .gallery_data_viewer').hide();
                 document.body.style.overflow = $overflow;  // return overflow to default.
+
+                // add indicator around the thumb corresponding to the closed image
+                ring_obs_id = $.colorbox.element().parent().attr("id").split('__')[1];
+                $(' .thumb_overlay').removeClass("gallery_image_focus");  // remove any old
+                $('#gallery__' + ring_obs_id + ' .thumb_overlay').addClass("gallery_image_focus");
+
             },
             onComplete:function(){
 
@@ -874,12 +898,10 @@ var o_browse = {
         $('.gallery_data_viewer').html(html);
 
         // add data viewer behaviors
-        console.log('adding data viewer behaves');
         $('.gallery_data_viewer').on("click", '.gallery_data_link', function() {
             ring_obs_id = $(this).data('ringobsid');
             o_browse.openDetailTab(ring_obs_id);
             $.colorbox.close();
-            console.log('ok');
             return false;
         });
 
