@@ -60,23 +60,29 @@ def getDetail(request,ring_obs_id='',fmt='json'):
         from ui.views import getDetailPage
         return getDetailPage(request, ring_obs_id=ring_obs_id, fmt=fmt)
 
-    col_slugs = request.GET.get('cols', False)
+    try:
+        col_slugs = request.GET.get('cols', False)
+    except AttributeError:
+        col_slugs = ''
+        pass  # no request, prolly me a the shell
+
     if col_slugs:
         col_slugs = col_slugs.split(',')
+
 
     data = SortedDict({})
 
     # find all the tables (categories) this observation belongs to,
-    triggered_tables = get_triggered_tables({'obs_general.ring_obs_id':[ring_obs_id]}, extras = {})
+    all_tables = TableName.objects.filter(display='Y')
 
     # now find all params and their values in each of these tables:
-    for table_name in triggered_tables:
-        table = TableName.objects.get(table_name=table_name)
+    for table in all_tables:
         label = table.label
         table_name = table.table_name
         model_name = ''.join(table_name.title().split('_'))
         table_model = get_model('search', model_name)
 
+        log.error(table_name)
         if not col_slugs:
             all_params = [param.name for param in ParamInfo.objects.filter(category_name=table_name, display_results=1)]
         else:
@@ -88,51 +94,16 @@ def getDetail(request,ring_obs_id='',fmt='json'):
                     all_params.append(param_name.split('.')[1])
 
         if all_params:
-            results = table_model.objects.filter(ring_obs_id=ring_obs_id).values(*all_params)[0]
-
-            data[label] = results
+            try:
+                results = table_model.objects.filter(ring_obs_id=ring_obs_id).values(*all_params)[0]
+                data[label] = results
+            except AttributeError: pass  # no results found in this table, move along
+            except IndexError: pass  # no results found in this table, move along
 
     if fmt == 'json':
         return HttpResponse(json.dumps(data), content_type="application/json")
     if fmt == 'raw':
         return data
-
-    """
-    THIS WILL BE REPLACED.
-    leaving it for now because it is what the detail.html template expects
-    results = ObsGeneral.objects.filter(ring_obs_id=ring_obs_id)
-    for group in Group.objects.filter(display="Y"):
-        group_name = group.name.strip()
-        data[group_name] = SortedDict({})
-        for cat in Category.objects.filter(display="Y", group = group) :
-            cat_name = cat.name.strip()
-            data[group_name][cat_name] = SortedDict({})
-            for param in ParamInfo.objects.filter(display_results='Y', category = cat):
-                # if mission or instrument is declared and do not match what is in files table
-                # then do not return them as they are irrelevent to this observation
-                # (for example: VGISS_camera is not relevant to a COISS image)
-                if param.mission and param.mission != mission:
-                    continue
-                if param.instrument and param.instrument != instrument:
-                    continue
-
-                param_name = param.param_name()
-                data[group_name][cat_name][param.slug.strip()] = results.values(param_name)[0][param_name]
-                flat_data[param.slug.strip()] = results.values(param_name)[0][param_name]
-
-            if not len(data[group_name][cat_name]):
-                del data[group_name][cat_name] # clean up empties
-        if not len(data[group_name]):
-            del data[group_name] # clean up empties
-    if fmt == 'csv':
-        # return HttpResponse(','.join(column_values))
-        return responseFormats({'data':[flat_data]},fmt,template='detail.html')
-
-    return responseFormats({'data':detail},fmt,template='detail.html')
-    """
-
-
-
 
 
 def get_triggered_tables(selections, extras = {}):

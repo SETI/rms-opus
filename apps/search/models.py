@@ -1373,6 +1373,7 @@ class ObsInstrumentGossi(models.Model):
 class ObsInstrumentNhjulo(models.Model):
     obs_general = models.ForeignKey(ObsGeneral, db_column="obs_general_id", null=True, blank=True)
     SEQUENCE_ID = models.CharField(max_length=32, blank=True, null=True)
+    BIN_MODE = models.CharField(max_length=3, blank=True, null=True)
     spacecraft_clock_count1 = models.FloatField(null=True, blank=True)
     spacecraft_clock_count2 = models.FloatField(null=True, blank=True)
     ring_obs_id = models.CharField(max_length=40, blank=True, null=True)
