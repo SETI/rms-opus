@@ -9,7 +9,7 @@ from django.db.models import Sum
 from results.views import *
 from tools.app_utils import *
 from user_collections.views import *
-from hurry.filesize import size
+from hurry.filesize import size as nice_file_size
 import settings
 import logging
 
@@ -40,10 +40,14 @@ def get_download_size(files, product_types=[], previews=[]):
     # returns size in bytes as int
     urls = []
     total_size = 0
+
+    # ugly patch
     for ring_obs_id in files:
 
         # get the preview image sizes
-        for size_str in [p.lower() for p in previews]:
+
+        for size_str in filter(None, [p.lower() for p in previews]):
+
             img = Image.objects.filter(ring_obs_id=ring_obs_id).values(size_str)[0][size_str]
 
             print settings.IMAGE_PATH + img
@@ -97,12 +101,12 @@ def get_download_info(request, collection=""):
 
     download_size = get_download_size(files, product_types.split(','), previews.split(',') )
 
-    download_size = size(download_size)  # pretty print it
+    download_size = nice_file_size(download_size)  # pretty print it
 
     if fmt == 'json':
         return HttpResponse(simplejson.dumps({'size':download_size, 'count':count}), mimetype='application/json')
     else:
-        return {'size':size, 'count':count}
+        return {'size':download_size, 'count':count}
 
 
 
