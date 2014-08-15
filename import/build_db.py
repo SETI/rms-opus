@@ -292,6 +292,8 @@ cursor.execute("update %s.param_info set slug = 'surfacetarget' where slug = 'ta
 cursor.execute("update %s.param_info set form_type = 'TIME' where slug = 'timesec2'" % opus2)
 q = "delete from %s.param_info where slug = 'target'" % opus2
 cursor.execute(q + " and category_name like %s" , 'obs_surface%')
+cursor.execute("update %s.param_info set display = 1 where name = 'primary_file_spec'" % opus2)
+
 
 # ----------- creating the grouping, category, and guide tables --------------#
 queries = """
