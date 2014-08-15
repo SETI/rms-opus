@@ -79,6 +79,7 @@ def get_download_info(request, collection=""):
     else:
         size = str(size) + " MB"
 
+    size = "0"  # TODO
     if fmt == 'json':
         return HttpResponse(simplejson.dumps({'size':size, 'count':count}), mimetype='application/json')
     else:
