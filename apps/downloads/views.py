@@ -36,14 +36,13 @@ def md5(filename):
 def get_download_size(files, product_types, previews):
     # takes file_names as returned by getFiles()
     # returns size in bytes as int
-
     urls = []
     for ring_obs_id in files:
         for ptype in files[ring_obs_id]:
             if (not product_types) | (ptype in product_types.split(',')):
                 urls += [files[ring_obs_id][ptype] for ptype in files[ring_obs_id]][0] # list of all urls
 
-    file_names = [('/').join(u.split('/')[4:len(u)]) for u in urls] # split off domain and directory, that's how they're stored in file_sizes
+    file_names = [('/').join(u.split('/')[6:len(u)]) for u in urls] # split off domain and directory, that's how they're stored in file_sizes
     try:
         size = FileSizes.objects.filter(name__in=file_names).aggregate(Sum('size'))['size__sum']
     except TypeError:
@@ -96,7 +95,11 @@ def get_cum_downlaod_size(request, download_size):
 
 def create_download(request, collection_name='', ring_obs_ids=None, fmt="raw"):
 
-    fmt = request.GET.get('fmt', None)
+    try:
+        fmt = request.GET.get('fmt', None)
+    except:
+        pass  # just wanna test this
+
     product_types = request.GET.get('types', '')
     previews = request.GET.get('previews', '')
 
@@ -153,7 +156,7 @@ def create_download(request, collection_name='', ring_obs_ids=None, fmt="raw"):
                 except Exception,e:
                     log.error(e);
                     errors.append("could not find: " + name.split("/")[-1])
-                    # print "could not find " + name
+                    # "could not find " + name
 
 
     manifest.write("errors:"+"\n")
