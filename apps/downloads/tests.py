@@ -52,3 +52,11 @@ class downloadsTests(TestCase):
         files = getFiles(ring_obs_ids,"raw", "path")
         size = get_download_size(files, 'CALIBRATED_IMAGE', ['small'])
         self.assertGreater(size, 0)
+
+    def test__get_download_size_empty_product_types(self):
+        ring_obs_ids = 'S_IMG_CO_ISS_1680806066_N'
+        files = getFiles(ring_obs_ids,"raw", "path")
+        size = get_download_size(files, '', [])
+        self.assertLess(size, 2250000)  # about 2 MB
+
+

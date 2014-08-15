@@ -1,3 +1,4 @@
+from os.path import getsize
 import random
 import string
 import datetime
@@ -8,9 +9,10 @@ from django.db.models import Sum
 from results.views import *
 from tools.app_utils import *
 from user_collections.views import *
+from hurry.filesize import size
 import settings
-
 import logging
+
 log = logging.getLogger(__name__)
 
 def create_zip_filename(ring_obs_id=None):
@@ -33,22 +35,43 @@ def md5(filename):
         return d.hexdigest()
 
 
-def get_download_size(files, product_types, previews):
+def get_download_size(files, product_types=[], previews=[]):
     # takes file_names as returned by getFiles()
     # returns size in bytes as int
     urls = []
+    total_size = 0
     for ring_obs_id in files:
+
+        # get the preview image sizes
+        for size_str in [p.lower() for p in previews]:
+            img = Image.objects.filter(ring_obs_id=ring_obs_id).values(size_str)[0][size_str]
+
+            print settings.IMAGE_PATH + img
+
+            try:
+                size = getsize(settings.IMAGE_PATH + img)
+                print settings.IMAGE_PATH + img
+                print size_str + ' ' + str(size)
+                total_size += size
+            except OSError:
+                log.error('could not find file: ' + settings.IMAGE_PATH + img);
+
+        # get the PDS product sizes
         for ptype in files[ring_obs_id]:
-            if (not product_types) | (ptype in product_types.split(',')):
+            if (not product_types) | (ptype in product_types):
                 urls += [files[ring_obs_id][ptype] for ptype in files[ring_obs_id]][0] # list of all urls
+
 
     file_names = [('/').join(u.split('/')[6:len(u)]) for u in urls] # split off domain and directory, that's how they're stored in file_sizes
     try:
-        size = FileSizes.objects.filter(name__in=file_names).aggregate(Sum('size'))['size__sum']
-    except TypeError:
-        size = 0    # no file found, move along
+        for f in FileSizes.objects.filter(name__in=file_names).values('name','size').distinct():
+            total_size += f['size']
+            print f['name'] + ' ' + str(f['size'])
 
-    return size  # bytes!
+    except TypeError:
+        pass    # no file found, move along to browse images
+
+    return total_size  # bytes!
 
 # http://pds-rings.seti.org/volumes/
 def get_download_info(request, collection=""):
@@ -72,16 +95,12 @@ def get_download_info(request, collection=""):
 
     count = len(urls)
 
-    size = get_download_size(files, product_types, previews)
+    download_size = get_download_size(files, product_types.split(','), previews.split(',') )
 
-    if size > 1000:
-        size = str(size/1024) + " GB"
-    else:
-        size = str(size) + " MB"
+    download_size = size(download_size)  # pretty print it
 
-    size = "0"  # TODO
     if fmt == 'json':
-        return HttpResponse(simplejson.dumps({'size':size, 'count':count}), mimetype='application/json')
+        return HttpResponse(simplejson.dumps({'size':download_size, 'count':count}), mimetype='application/json')
     else:
         return {'size':size, 'count':count}
 
@@ -135,7 +154,7 @@ def create_download(request, collection_name='', ring_obs_ids=None, fmt="raw"):
     tar = tarfile.open(settings.TAR_FILE_PATH + zip_file_name, "w:gz")
     chksum = open(chksum_file_name,"w")
     manifest = open(manifest_file_name,"w")
-    size = get_download_size(files, product_types, previews)
+    size = get_download_size(files, product_types.split(','), previews)
 
     cum_downlaod_size = get_cum_downlaod_size(request,size)
     if cum_downlaod_size > settings.MAX_CUM_DOWNLAOD_SIZE:
