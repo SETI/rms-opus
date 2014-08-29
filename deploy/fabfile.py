@@ -8,7 +8,7 @@ deploy_dir = 'opus'
 
 git_branch = 'master'
 
-def tests():
+def tests_local():
     """
     runs all unit tests locally
     """
@@ -47,10 +47,6 @@ def deploy():
 
         run('sudo python /home/django/djcode/opus/apps/tools/reset_deploy_datetime.py')
 
-    # run all tests on production
-    with cd('/home/django/djcode/opus/'):
-        run('REUSE_DB=1 python manage.py test apps')
-
 
 def cache_reboot():
         # reset memcache
@@ -58,6 +54,11 @@ def cache_reboot():
         run('/usr/bin/memcached -m 64 -p 11211 -l 127.0.0.1 -d')
         # reset django cache
         run('sudo python /home/django/djcode/' + deploy_dir + '/deploy/cache_clear.py')
+
+def tests_prod():
+    # run all tests on production
+    with cd('/home/django/djcode/opus/'):
+        run('REUSE_DB=1 python manage.py test apps')
 
 
 
