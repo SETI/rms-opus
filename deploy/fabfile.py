@@ -8,6 +8,12 @@ deploy_dir = 'opus'
 
 git_branch = 'master'
 
+def tests():
+    """
+    runs all unit tests locally
+    """
+    with lcd(root_path + '/projects/opus/'):
+        local("REUSE_DB=1 python manage.py test apps")
 
 def push():
     """
@@ -40,6 +46,10 @@ def deploy():
         run('sudo touch /home/django/djcode/' + deploy_dir + '/apache/*.wsgi')
 
         run('sudo python /home/django/djcode/opus/apps/tools/reset_deploy_datetime.py')
+
+    # run all tests on production
+    with cd('/home/django/djcode/opus/'):
+        run('REUSE_DB=1 python manage.py test apps')
 
 
 def cache_reboot():

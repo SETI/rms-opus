@@ -2,14 +2,6 @@
 #  user_collections
 
 """
-import sys
-# sys.path.append('/home/django/djcode/opus')  #srvr
-sys.path.append('/users/lballard/projects/opus/')
-# from opus import settings
-import settings
-from django.core.management import setup_environ
-setup_environ(settings)
-
 from django.test import TestCase
 from django.test.client import Client
 from django.db.models import get_model
@@ -27,7 +19,6 @@ class user_CollectionsTests(TestCase):
     def test__edit_collection(self):
         response = self.c.get('/opus/collections/default/add.json?request=1&ringobsid=S_IMG_CO_ISS_1680806160_N', HTTP_X_REQUESTED_WITH='XMLHttpRequest')
         print response.content.strip()
-
         self.assertEqual(response.status_code, 200)
-        self.assertGreater(len(response.content), 2000)
+        self.assertGreater(len(response.content), 42)
 

@@ -4,7 +4,7 @@ if you are instead looking to update the OPUS database with new data, see import
 
 lots of this will all be moved to fabric files.
 
-    fab push deploy cache_reboot
+    fab tests push deploy cache_reboot
 
 you can also do:
 

@@ -48,26 +48,27 @@ class UITests(TestCase):
     def test__mainSite(self):
         response = self.c.get('/opus/')
         self.assertEqual(response.status_code, 200)
-        self.assertGreater(len(response.content), 104098)
+        self.assertGreater(len(response.content), 40000)
 
     #
     def test__getDataTable(self):
         response = self.c.get('/opus/table_headers.html')
+        print response.content
         self.assertEqual(response.status_code, 200)
-        self.assertGreater(len(response.content), 2000)
-        self.assertEqual(str(response.content).strip().find('<table class = "data_table">'), 0 )
+        self.assertGreater(len(response.content), 1400)
+        self.assertEqual(str(response.content).strip().find('<table class = "data_table'), 0 )
 
     def test__getWidget_planet_json(self):
         response = self.c.get('/opus/forms/widget/planet.html')
         self.assertEqual(response.status_code, 200)
         self.assertGreater(len(response.content), 2000)
-        self.assertEqual(str(response.content).strip().find('<div class = "widget_draghandle">'), 0 )
+        self.assertEqual(str(response.content).strip().find('<div class="row'), 0 )
 
     def test__getWidget_target_json(self):
         response = self.c.get('/opus/forms/widget/target.html')
         self.assertEqual(response.status_code, 200)
         self.assertGreater(len(response.content), 2000)
-        self.assertEqual(str(response.content).strip().find('<div class = "widget_draghandle">'), 0 )
+        self.assertEqual(str(response.content).strip().find('<div class="row'), 0 )
 
     """
     def test__getMenu(self):
@@ -79,7 +80,7 @@ class UITests(TestCase):
     """
 
     def test__getDetailPage(self):
-        response = self.c.get('/opus/api/detailpage/S_IMG_CO_ISS_1686170088_N.json')
+        response = self.c.get('/opus/api/detail/S_IMG_CO_ISS_1686170088_N.json')
         self.assertEqual(response.status_code, 200)
         self.assertGreater(len(response.content), 2000)
 

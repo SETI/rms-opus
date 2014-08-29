@@ -8,11 +8,6 @@ from django.db import connection
 
 from metadata.views import *
 
-"""
-from search.views import *
-from results.views import *
-"""
-
 cursor = connection.cursor()
 
 class metadataTests(TestCase):
@@ -33,8 +28,6 @@ class metadataTests(TestCase):
             print q
             cursor.execute(q)
 
-
-
     def test__getRangeEndpoints_times(self):
         url = '/opus/api/meta/range/endpoints/timesec1.json?planet=Saturn&view=search&browse=gallery&colls_browse=gallery&page=1&limit=100&order=&cols=ringobsid,planet,target,phase1&widgets=planet,target,timesec1&widgets2=&detail=&reqno=1'
         print url
@@ -46,18 +39,6 @@ class metadataTests(TestCase):
         print expected
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.content, expected)
-
-
-    def test_obs_general_time_fields_have_correct_form_type(self):
-        print 'hello'
-        q = "select count(*) from param_info where form_type = 'TIME' and category_name = 'obs_general'"
-        print q
-        cursor.execute(q)
-        print 'ok'
-        c = cursor.numrows(q)
-        print c
-        print 'that was c'
-        self.assertEqual(c, 2)
 
     def test_getResultCount(self):
         response = self.c.get('/opus/api/meta/result_count.json?planet=Saturn')

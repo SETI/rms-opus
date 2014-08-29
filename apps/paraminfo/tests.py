@@ -45,6 +45,10 @@ class ParamInfoTests(TestCase):
         for param in all_params:
             self.assertGreater(len(param.slug), 0)
 
+    def test_obs_general_time_fields_have_correct_form_type(self):
+        count = len(ParamInfo.objects.filter(form_type='TIME', category_name='obs_general'))
+        self.assertEqual(count, 2)
+
 
 
 

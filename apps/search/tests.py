@@ -61,7 +61,7 @@ class searchTests(TestCase):
         q = constructQueryString(self.selections)
         print q
         expected = "SELECT `obs_general`.`id` FROM `obs_general` WHERE `obs_general`.`mult_obs_general_planet_id` IN (7)"
-        self.assertEqual(q,expected)
+        self.assertEqual("".join(q.split()),"".join(expected.split()))  # strips all whitespace b4 compare
 
     def test__constructQueryString_range_single_qtype(self):
         q = QueryDict("ringradius1=60000&ringradius2=80000,120000&qtype-ringradius=all")
@@ -69,8 +69,7 @@ class searchTests(TestCase):
         q = constructQueryString(selections, extras)
         print q
         expected = "SELECT `obs_general`.`id` FROM `obs_general` INNER JOIN `obs_ring_geometry` ON (`obs_general`.`id` = `obs_ring_geometry`.`obs_general_id`) WHERE ((`obs_ring_geometry`.`ring_radius1` <= 60000.0  AND `obs_ring_geometry`.`ring_radius2` >= 80000.0 ) OR `obs_ring_geometry`.`ring_radius2` >= 120000.0 )"
-        self.assertEqual(q,expected)
-
+        self.assertEqual("".join(q.split()),"".join(expected.split()))  # strips all whitespace b4 compare
 
     def test__constructQueryString_mults_planet_instrumentCOISS(self):
         selections = {}
@@ -79,7 +78,7 @@ class searchTests(TestCase):
         q = constructQueryString(selections)
         print q
         expected = "SELECT `obs_general`.`id` FROM `obs_general` WHERE (`obs_general`.`mult_obs_general_planet_id` IN (7) AND `obs_general`.`mult_obs_general_instrument_id` IN (2))"
-        self.assertEqual(q,expected)
+        self.assertEqual("".join(q.split()),"".join(expected.split()))  # strips all whitespace b4 compare
 
     def test__constructQueryString_mults_with_target(self):
         selections = {}
@@ -87,7 +86,7 @@ class searchTests(TestCase):
         selections['obs_general.target_name'] = ["PAN"]
         q = constructQueryString(selections)
         expected = "SELECT `obs_general`.`id` FROM `obs_general` WHERE (`obs_general`.`mult_obs_general_target_name` IN (42) AND `obs_general`.`mult_obs_general_planet_id` IN (7))"
-        self.assertEqual(q,expected)
+        self.assertEqual("".join(q.split()),"".join(expected.split()))  # strips all whitespace b4 compare
 
     def test__constructQueryString_mults_with_join(self):
         selections = {}
@@ -95,7 +94,10 @@ class searchTests(TestCase):
         selections['obs_instrument_COISS.camera'] = ["Wide Angle"]
         q = constructQueryString(selections)
         expected = "SELECT `obs_general`.`id` FROM `obs_general` INNER JOIN `obs_instrument_COISS` ON (`obs_general`.`id` = `obs_instrument_COISS`.`obs_general_id`) WHERE (`obs_general`.`mult_obs_general_planet_id` IN (7) AND `obs_instrument_COISS`.`mult_obs_instrument_COISS_camera` IN (1))"
-        self.assertEqual(q,expected)
+        print q
+        print 'expected:'
+        print expected
+        self.assertEqual("".join(q.split()),"".join(expected.split()))  # strips all whitespace b4 compare
 
     def test__constructQueryString_mults_with_3_table_join(self):
         selections = {}
@@ -105,8 +107,9 @@ class searchTests(TestCase):
         selections['obs_mission_cassini.rev_no'] = ['165','166']
         q = constructQueryString(selections)
         print q
-        expected = "SELECT `obs_general`.`id` FROM `obs_general` INNER JOIN `obs_mission_cassini` ON (`obs_general`.`id` = `obs_mission_cassini`.`obs_general_id`) INNER JOIN `obs_instrument_COISS` ON (`obs_general`.`id` = `obs_instrument_COISS`.`obs_general_id`) WHERE (`obs_general`.`mult_obs_general_target_name` IN (42) AND `obs_general`.`mult_obs_general_planet_id` IN (7) AND `obs_mission_cassini`.`mult_obs_mission_cassini_rev_no` IN (289, 290) AND `obs_instrument_COISS`.`mult_obs_instrument_COISS_camera` IN (2))"
-
+        expected = "SELECT `obs_general`.`id` FROM `obs_general` INNER JOIN `obs_mission_cassini` ON ( `obs_general`.`id` = `obs_mission_cassini`.`obs_general_id` ) INNER JOIN `obs_instrument_COISS` ON ( `obs_general`.`id` = `obs_instrument_COISS`.`obs_general_id` ) WHERE (`obs_general`.`mult_obs_general_target_name` IN (42) AND `obs_general`.`mult_obs_general_planet_id` IN (7) AND `obs_mission_cassini`.`mult_obs_mission_cassini_rev_no` IN (289, 290) AND `obs_instrument_COISS`.`mult_obs_instrument_COISS_camera` IN (2))"
+        print 'expected:'
+        print expected
         self.assertEqual(q,expected)
 
 
@@ -232,10 +235,12 @@ class searchTests(TestCase):
     ##  Range Query tests
 
     def test_range_query_any_times(self):
-        selections = {u'obs_general.planet_id': [u'Saturn'], u'obs_general.time_sec2': [u'2000-024T06'], u'obs_general.time_sec1': [u'2000-023T06']}
-        q = range_query_object(selections,'obs_general.time_sec1',['any'])
-        print str(q)
-        self.assertEqual(str(q),"something sensible")
+        selections = {u'obs_general.planet_id': [u'Saturn'], u'obs_general.time_sec2': [u'2000-024'], u'obs_general.time_sec1': [u'2000-023']}
+        q = str(range_query_object(selections,'obs_general.time_sec1',['any']))
+        print q
+        expected = "(AND: ('time_sec1__lte', 1987232), ('time_sec2__gte', 1900832))"
+        print expected
+        self.assertEqual("".join(q.split()),"".join(expected.split()))  # strips all whitespace b4 compare
 
 
     def test__range_query_any(self):
@@ -400,20 +405,24 @@ class searchTests(TestCase):
         selections = {}
         selections['obs_general.time_sec1'] = ['1979-05-28T10:17:37.28']
         selections['obs_general.time_sec2'] = ['1979-05-29T18:22:26']
-        q = range_query_object(selections,'obs_general.time_sec1',['any'])
-        print str(q)
+        q = str(range_query_object(selections,'obs_general.time_sec1',['any']))
+        print q
         # time_sec1 <= -649993324.720000 AND time_sec2 >= -649877836.000000
-        self.assertEqual(str(q), "(AND: (u'obsgeneral__time_sec1__lte', -649834636), (u'obsgeneral__time_sec2__gte', -649950124.72000003))")
+        expected = "(AND: ('time_sec1__lte', -649834636), ('time_sec2__gte', -649950124.72000003))"
+        print 'expected:'
+        print expected
+        self.assertEqual("".join(q.split()),"".join(expected.split()))  # strips all whitespace b4 compare
 
 
     def test__range_query_time_any_single_time(self):
         # range query: form type = TIME, qtype any
         selections = {}
         selections['obs_general.time_sec1'] = ['1979-05-28T10:17:37.28']
-        q = range_query_object(selections,'obs_general.time_sec1',['any'])
+        q = str(range_query_object(selections,'obs_general.time_sec1',['any']))
         print str(q)
         # time_sec2 >= -649993324.720000
-        self.assertEqual(str(q),"(AND: (u'obsgeneral__time_sec2__gte', -649950124.72000003))")
+        expected = "(AND: ('time_sec2__gte', -649950124.72000003))"
+        self.assertEqual("".join(q.split()),"".join(expected.split()))  # strips all whitespace b4 compare
 
 
     ## longitude query tests
