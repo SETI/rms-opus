@@ -41,33 +41,31 @@ def get_download_size(files, product_types=[], previews=[]):
     # returns size in bytes as int
     urls = []
     total_size = 0
-
     # ugly patch
     for ring_obs_id in files:
 
         # get the preview image sizes
 
         for size_str in filter(None, [p.lower() for p in previews]):
-
             img = Image.objects.filter(ring_obs_id=ring_obs_id).values(size_str)[0][size_str]
 
-            print settings.IMAGE_PATH + img
-
+            from results.views import get_base_path
             try:
-                size = getsize(settings.IMAGE_PATH + img)
-                print settings.IMAGE_PATH + img
-                print size_str + ' ' + str(size)
+                img_path = settings.IMAGE_PATH + get_base_path(ring_obs_id)
+                size = getsize(img_path + img)
                 total_size += size
+
             except OSError:
-                log.error('could not find file: ' + settings.IMAGE_PATH + img);
+                log.error('could not find file: ' + img_path + img);
 
         # get the PDS product sizes
         for ptype in files[ring_obs_id]:
+
             if (not product_types) | (ptype in product_types):
                 urls += [files[ring_obs_id][ptype] for ptype in files[ring_obs_id]][0] # list of all urls
 
-
     file_names = [('/').join(u.split('/')[6:len(u)]) for u in urls] # split off domain and directory, that's how they're stored in file_sizes
+
     try:
         for f in FileSizes.objects.filter(name__in=file_names).values('name','size').distinct():
             total_size += f['size']
