@@ -91,7 +91,7 @@ class searchTests(TestCase):
     def test__constructQueryString_mults_with_join(self):
         selections = {}
         selections['obs_general.planet_id'] = ["Saturn"]
-        selections['obs_instrument_COISS.camera'] = ["Wide Angle"]
+        selections['obs_instrument_coiss.camera'] = ["Wide Angle"]
         q = constructQueryString(selections)
         expected = "SELECT `obs_general`.`id` FROM `obs_general` INNER JOIN `obs_instrument_COISS` ON (`obs_general`.`id` = `obs_instrument_COISS`.`obs_general_id`) WHERE (`obs_general`.`mult_obs_general_planet_id` IN (7) AND `obs_instrument_COISS`.`mult_obs_instrument_COISS_camera` IN (1))"
         print q
@@ -103,7 +103,7 @@ class searchTests(TestCase):
         selections = {}
         selections['obs_general.planet_id'] = ["Saturn"]
         selections['obs_general.target_name'] = ["PAN"]
-        selections['obs_instrument_COISS.camera'] = ["Narrow Angle"]
+        selections['obs_instrument_coiss.camera'] = ["Narrow Angle"]
         selections['obs_mission_cassini.rev_no'] = ['165','166']
         q = constructQueryString(selections)
         print q
