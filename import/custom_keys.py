@@ -19,13 +19,16 @@ This is to be run as part of data import process.
 
 """
 import sys
+# Set up the Django Enviroment for running as shell script
 sys.path.append('/users/lballard/projects/')
 sys.path.append('/users/lballard/projects/opus/')
 sys.path.append('/home/lballard/')
 sys.path.append('/home/lballard/opus/')
-from opus import settings
-from django.core.management import setup_environ
-setup_environ(settings)
+# sys.path.append('/home/django/djcode/opus')  #srvr
+# from opus import settings
+from django.conf import settings
+from settings import CACHES, DATABASES
+settings.configure(CACHES=CACHES, DATABASES=DATABASES) # include any other settings you might need
 
 # script imports
 from django.db import connection

@@ -1,5 +1,5 @@
+import json
 from django.http import HttpResponse
-from django.utils import simplejson
 from django.http import Http404
 from StringIO import StringIO
 from zipfile import ZipFile
@@ -47,10 +47,9 @@ def responseFormats(data, fmt, **kwargs):
             data['order'] = kwargs['order']
 
         try:
-            return HttpResponse(simplejson.dumps(data), mimetype='application/json')
+            return HttpResponse(json.dumps(data), mimetype='application/json')
         except TypeError:
-            # data is not serializable via simplejson (what?) so try this other way (huh?)
-            import json
+            # data is not serializable via json (what?) so try this other way (huh?)
             return HttpResponse(json.dumps(data), mimetype='application/json')
 
     elif fmt == 'html':
@@ -93,7 +92,7 @@ def responseFormats(data, fmt, **kwargs):
 
 
     elif fmt == 'zip':
-        return zipped(simplejson.dumps(data))
+        return zipped(json.dumps(data))
 
     elif fmt == 'raw':
         return data

@@ -4,6 +4,7 @@ import string
 import datetime
 import hashlib
 import tarfile
+import json
 from django.http import HttpResponse
 from django.db.models import Sum
 from results.views import *
@@ -104,7 +105,7 @@ def get_download_info(request, collection=""):
     download_size = nice_file_size(download_size)  # pretty print it
 
     if fmt == 'json':
-        return HttpResponse(simplejson.dumps({'size':download_size, 'count':count}), mimetype='application/json')
+        return HttpResponse(json.dumps({'size':download_size, 'count':count}), mimetype='application/json')
     else:
         return {'size':download_size, 'count':count}
 
@@ -153,7 +154,7 @@ def create_download(request, collection_name='', ring_obs_ids=None, fmt="raw"):
     # return getFiles(ring_obs_ids,"raw", loc_type = 'path')
     #
     # files = getFiles(ring_obs_ids,"raw", "url", product_types, previews)
-    # return HttpResponse(simplejson.dumps(files), mimetype="application/json")
+    # return HttpResponse(json.dumps(files), mimetype="application/json")
 
     tar = tarfile.open(settings.TAR_FILE_PATH + zip_file_name, "w:gz")
     chksum = open(chksum_file_name,"w")
@@ -200,7 +201,7 @@ def create_download(request, collection_name='', ring_obs_ids=None, fmt="raw"):
         zip_url = "No Files Found"
 
     if fmt == 'json':
-        return HttpResponse(simplejson.dumps(zip_url), mimetype='application/json')
+        return HttpResponse(json.dumps(zip_url), mimetype='application/json')
 
     return HttpResponse(zip_url)
 

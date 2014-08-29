@@ -6,8 +6,8 @@
 import hashlib
 from operator import __or__ as OR
 import julian
+import json
 from pyparsing import ParseException
-from django.utils import simplejson
 from django.conf import settings
 from django.db.models import Q, get_model
 from django.db.models.sql.datastructures import EmptyResultSet
@@ -266,20 +266,20 @@ def setUserSearchNo(selections,extras={}):
             if len(extras['qtypes'][k])==1 and extras['qtypes'][k][0]==None:
                 extras['qtypes'].pop(k)
         if len(extras['qtypes']):
-            qtypes_json = str(simplejson.dumps(sortDict(extras['qtypes'])))
+            qtypes_json = str(json.dumps(sortDict(extras['qtypes'])))
             qtypes_hash = hashlib.md5(qtypes_json).hexdigest()
 
     units_json = units_hash = None
     if 'units' in extras:
-        units_json = str(simplejson.dumps(sortDict(extras['units'])))
+        units_json = str(json.dumps(sortDict(extras['units'])))
         units_hash = hashlib.md5(units_json).hexdigest()
 
     string_selects_json = string_selects_hash = None
     if 'string_selects' in extras:
-        string_selects_json = str(simplejson.dumps(sortDict(extras['string_selects'])))
+        string_selects_json = str(json.dumps(sortDict(extras['string_selects'])))
         string_selects_hash = hashlib.md5(string_selects_json).hexdigest()
 
-    selections_json = str(simplejson.dumps(selections))
+    selections_json = str(json.dumps(selections))
     selections_hash = hashlib.md5(selections_json).hexdigest()
 
     # do we already have this cached?

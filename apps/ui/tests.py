@@ -16,14 +16,6 @@ analyze table user_searches;
 
 *****************************
 """
-import sys
-# sys.path.append('/home/lballard/opus/')  #srvr
-sys.path.append('/users/lballard/projects/opus/')
-# from opus import settings
-import settings
-from django.core.management import setup_environ
-setup_environ(settings)
-
 from django.test import TestCase
 from django.test.client import Client
 from django.db.models import get_model

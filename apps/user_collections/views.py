@@ -1,6 +1,6 @@
 import settings
+import json
 from django.http import HttpResponse, Http404
-from django.utils import simplejson
 from django.template import RequestContext
 from tools.app_utils import *
 from results.views import *
@@ -138,7 +138,7 @@ def collection_status(request, **kwargs):
     except KeyError:
         expected_request_no = 1
 
-    return HttpResponse(simplejson.dumps({"count":len(collection), "expected_request_no": expected_request_no }))
+    return HttpResponse(json.dumps({"count":len(collection), "expected_request_no": expected_request_no }))
 
 
 def check_collection_args(request,**kwargs):
@@ -205,7 +205,7 @@ def edit_collection(request, **kwargs):
     if type(checkArgs).__name__ == 'list':
         (action, collection_name, ring_obs_id, request_no, expected_request_no) = checkArgs
     else:
-        return HttpResponse(simplejson.dumps({"err":checkArgs}))
+        return HttpResponse(json.dumps({"err":checkArgs}))
 
     # just add this request to the queue, every request gets queued
     add_to_queue(request, request_no, collection_name, action, ring_obs_id)
@@ -224,7 +224,7 @@ def edit_collection(request, **kwargs):
         (collection_name,action,ring_obs_id) = get_queued(request, expected_request_no)
     else:
         # the expected request has not yet arrived, do nothing
-        return HttpResponse(simplejson.dumps({"err":"waiting"}))
+        return HttpResponse(json.dumps({"err":"waiting"}))
     """
     # instead of the above we are doing this:
     (collection_name,action,ring_obs_id) = get_queued(request, request_no)
@@ -273,10 +273,8 @@ def edit_collection(request, **kwargs):
     except:
         json = collection
     """
-    json = {"err":False, "count":len(collection), "request_no":expected_request_no}
-    return HttpResponse(simplejson.dumps(json))
-
-
+    json_data = {"err":False, "count":len(collection), "request_no":expected_request_no}
+    return HttpResponse(json.dumps(json_data))
 
 
 def edit_collection_range(request, **kwargs):
@@ -299,7 +297,7 @@ def edit_collection_range(request, **kwargs):
     selected_range = []
     in_range = False  # loop has reached the range selected
 
-    # return HttpResponse(simplejson.dumps(data['page']));
+    # return HttpResponse(json.dumps(data['page']));
     for row in data['page']:
         ring_obs_id = row[0]
         if ring_obs_id == min_id:

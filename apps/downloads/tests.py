@@ -2,14 +2,6 @@
 # downloads tests
 
 """
-import sys
-# sys.path.append('/home/django/djcode/opus')  #srvr
-sys.path.append('/users/lballard/projects/opus/')
-# from opus import settings
-import settings
-from django.core.management import setup_environ
-setup_environ(settings)
-
 from django.test import TestCase
 from django.test.client import Client
 from django.db.models import get_model
@@ -28,6 +20,13 @@ class downloadsTests(TestCase):
 
     c = Client()
 
+    def test__get_download_size_browse_images_being_counted(self):
+        ring_obs_ids = 'S_IMG_CO_ISS_1680806066_N'
+        files = getFiles(ring_obs_ids,"raw", "path")
+        size1 = get_download_size(files, product_types=['CALIBRATED'], previews=['Full'])
+        size2 = get_download_size(files, product_types=['CALIBRATED'], previews=['Full','Med'])
+        self.assertNotEqual(size1, size2)
+
     # get_download_size(
     def test__get_download_size_COISS(self):
         ring_obs_ids = 'S_IMG_CO_ISS_1680806066_N'
@@ -38,7 +37,7 @@ class downloadsTests(TestCase):
     def test__get_download_size_COCIRS(self):
         ring_obs_ids = 'S_SPEC_CO_CIRS_1630456943_FP1'
         files = getFiles(ring_obs_ids,"raw", "path")
-        size = get_download_size(files, 'CALIBRATED_SPECTRUM', ['Thumb'])
+        size = get_download_size(files, 'CALIBRATED_SPECTRUM', [])
         self.assertGreater(size, 0)
 
     def test__get_download_size_COVIMS(self):
@@ -58,5 +57,4 @@ class downloadsTests(TestCase):
         files = getFiles(ring_obs_ids,"raw", "path")
         size = get_download_size(files, '', [])
         self.assertLess(size, 2250000)  # about 2 MB
-
 

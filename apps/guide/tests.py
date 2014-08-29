@@ -4,6 +4,9 @@ unittest). These will both pass when you run "manage.py test".
 
 Replace these with more appropriate tests for your application.
 """
+from django.conf import settings
+from settings import CACHES, DATABASES
+settings.configure(CACHES=CACHES, DATABASES=DATABASES) # include any other settings you might need
 
 from django.test import TestCase
 

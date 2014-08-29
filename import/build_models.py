@@ -11,12 +11,12 @@
 """
 # Set up the Django Enviroment for running as shell script
 import sys
-# sys.path.append('/home/lballard/opus/')  #srvr
+# sys.path.append('/home/django/djcode/opus')  #srvr
 sys.path.append('/users/lballard/projects/opus/')
 # from opus import settings
-import settings
-from django.core.management import setup_environ
-setup_environ(settings)
+from django.conf import settings
+from settings import CACHES, DATABASES
+settings.configure(CACHES=CACHES, DATABASES=DATABASES) # include any other settings you might need
 
 # script imports
 from django.db import transaction, connection

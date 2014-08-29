@@ -3,8 +3,8 @@
 #   metadata.views
 #
 ################################################
+import json
 from django.core.cache import cache
-from django.utils import simplejson
 from django.http import HttpResponse
 from django.db.models import Avg, Max, Min, Count, get_model
 from django.db import connection
@@ -37,14 +37,14 @@ def getResultCount(request,fmt='json'):
     """
 
     if request.GET is None:
-        return HttpResponse(simplejson.dumps({'result_count':'0'}),  mimetype='application/json')
+        return HttpResponse(json.dumps({'result_count':'0'}),  mimetype='application/json')
 
     (selections,extras) = urlToSearchParams(request.GET)
     reqno = request.GET.get('reqno','')
 
     if selections is False:
         count = 'not found'
-        return HttpResponse(simplejson.dumps({'result_count':count}),  mimetype='application/json')
+        return HttpResponse(json.dumps({'result_count':count}),  mimetype='application/json')
 
 
     table = getUserQueryTable(selections,extras)
@@ -142,7 +142,7 @@ def getValidMults(request,slug,fmt='json'):
     return responseFormats(multdata,fmt,template='mults.html')
 
 
-
+# todo: why is this camel case?
 def getRangeEndpoints(request,slug,fmt='json'):
     """
     returns valid range endpoints for field given selections and extras

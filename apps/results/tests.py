@@ -2,15 +2,6 @@
 # results tests
 
 """
-
-import sys
-# sys.path.append('/home/lballard/opus/')  #srvr
-sys.path.append('/users/lballard/projects/opus/')
-# from opus import settings
-import settings
-from django.core.management import setup_environ
-setup_environ(settings)
-
 import json
 import requests
 from django.test import TestCase

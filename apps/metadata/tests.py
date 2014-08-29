@@ -2,16 +2,6 @@
 # metadata tests
 
 """
-
-import sys
-# sys.path.append('/home/lballard/opus/')  #srvr
-sys.path.append('/users/lballard/projects/opus/')
-# from opus import settings
-import settings
-from django.core.management import setup_environ
-setup_environ(settings)
-
-
 from django.test import TestCase
 from django.test.client import Client
 from django.db import connection
@@ -46,11 +36,13 @@ class metadataTests(TestCase):
 
 
     def test__getRangeEndpoints_times(self):
-        response = self.c.get('http://127.0.0.1:8000/opus/api/meta/range/endpoints/timesec1.json?planet=Saturn&view=search&browse=gallery&colls_browse=gallery&page=1&limit=100&order=&cols=ringobsid,planet,target,phase1&widgets=planet,target,timesec1&widgets2=&detail=&reqno=1')
+        url = '/opus/api/meta/range/endpoints/timesec1.json?planet=Saturn&view=search&browse=gallery&colls_browse=gallery&page=1&limit=100&order=&cols=ringobsid,planet,target,phase1&widgets=planet,target,timesec1&widgets2=&detail=&reqno=1'
+        print url
+        response = self.c.get(url)
+        print 'got:'
         print response.content
-        print 'ok'
         expected = '{"max": "2011-269T19:59:13.124", "nulls": 0, "min": "2009-09-01T00:00:01"}'
-        print 'expected'
+        print 'expected:'
         print expected
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.content, expected)

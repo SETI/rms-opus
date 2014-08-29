@@ -1,3 +1,14 @@
+## run all the tests
+
+    REUSE_DB=1 python manage.py test apps
+
+best to create the test database manually:
+
+    mysqldump opus3 --opt > opus3.sql
+    mysql test_opus3 < opus3.sql
+
+
+
 ## Dependencies
 
 see requirements.txt
