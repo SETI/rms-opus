@@ -19,6 +19,9 @@ from search.views import *
 from results.views import *
 from django.http import QueryDict
 
+from django.conf import settings
+settings.CACHE_BACKEND = 'dummy:///'
+
 cursor = connection.cursor()
 
 class searchTests(TestCase):
@@ -91,7 +94,7 @@ class searchTests(TestCase):
     def test__constructQueryString_mults_with_join(self):
         selections = {}
         selections['obs_general.planet_id'] = ["Saturn"]
-        selections['obs_instrument_coiss.camera'] = ["Wide Angle"]
+        selections['obs_instrument_COISS.camera'] = ["Wide Angle"]
         q = constructQueryString(selections)
         expected = "SELECT `obs_general`.`id` FROM `obs_general` INNER JOIN `obs_instrument_COISS` ON (`obs_general`.`id` = `obs_instrument_COISS`.`obs_general_id`) WHERE (`obs_general`.`mult_obs_general_planet_id` IN (7) AND `obs_instrument_COISS`.`mult_obs_instrument_COISS_camera` IN (1))"
         print q
@@ -103,7 +106,7 @@ class searchTests(TestCase):
         selections = {}
         selections['obs_general.planet_id'] = ["Saturn"]
         selections['obs_general.target_name'] = ["PAN"]
-        selections['obs_instrument_coiss.camera'] = ["Narrow Angle"]
+        selections['obs_instrument_COISS.camera'] = ["Narrow Angle"]
         selections['obs_mission_cassini.rev_no'] = ['165','166']
         q = constructQueryString(selections)
         print q
@@ -120,7 +123,7 @@ class searchTests(TestCase):
         # simple base join types only
         table = getUserQueryTable(self.selections)
         print "table = " + str(table) + "\n" + str(self.selections)
-        self.assertEqual(table,'cache_1')
+        self.assertEqual(table.split('_')[0],'cache')
 
     def test__getUserQueryTable_with_times(self):
         selections = {u'obs_general.planet_id': [u'Saturn'], u'obs_general.time_sec2': [u'2009-12-28'], u'obs_general.time_sec1': [u'2009-12-23']}
@@ -131,8 +134,7 @@ class searchTests(TestCase):
     def test__getUserQueryTable_table_already_exists(self):
         # the 2nd time through you're testing whether it returns the table that is already there
         table = getUserQueryTable(self.selections)
-        self.assertEqual(table,'cache_1')
-
+        self.assertEqual(table.split('_')[0],'cache')
 
     ## test urlToSearchParam
     def test__urlToSearchParams_time(self):

@@ -51,7 +51,7 @@ def import_data(volumes='COISS_2060,NHJULO_1001,COCIRS_5403'):
 
 
 # volumes like models COISS_2060,NHJULO_1001,COCIRS_5403 or 'all'
-def build_opus2(volumes='COISS_2060,NHJULO_1001,COCIRS_5403'):
+def build_opus2(volumes='COCIRS_5909,COISS_2068,COISS_2069,COVIMS_0040,VGISS_8207'):
 
     # get server mysql username and pw
     mysql_pass = getpass.getpass('Enter mysql password: ')

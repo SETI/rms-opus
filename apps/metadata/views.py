@@ -21,6 +21,7 @@ import logging
 log = logging.getLogger(__name__)
 
 def getMultName(param_name):
+
     """ mult foreign key tables are named like so """
     return "mult_" + '_'.join(param_name.split('.'))
 

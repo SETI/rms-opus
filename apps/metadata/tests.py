@@ -28,19 +28,26 @@ class metadataTests(TestCase):
         print 'expected:'
         print expected
         self.assertEqual(response.status_code, 200)
+
         self.assertEqual(response.content, expected)
 
     def test_getResultCount(self):
         response = self.c.get('/opus/api/meta/result_count.json?planet=Saturn')
-        print response.content
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.content, '{"data": [{"result_count": 11373}]}')
+        jdata = json.loads(response.content)
+        result_count = int(jdata['data'][0]['result_count'])
+        print result_count
+        self.assertGreater(result_count, 11000)
 
     def test_getResultCount_times(self):
         response = self.c.get('/opus/api/meta/result_count.json?planet=Saturn&timesec1=2009-12-23&timesec2=2009-12-28')
         print response.content
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.content, '{"data": [{"result_count": 882}]}')
+        jdata = json.loads(response.content)
+
+        result_count = int(jdata['data'][0]['result_count'])
+        print result_count
+        self.assertGreater(result_count, 880)
 
     def test_resultcount_with_url_cruft(self):
         url = '/opus/api/meta/result_count.json?planet=Saturn&view=search&page=1&colls_page=1&limit=100&widgets=planet,target&widgets2=&browse=gallery&colls_browse=gallery&detail=&order=&cols=&reqno=1'
@@ -140,6 +147,7 @@ class metadataTests(TestCase):
 
     def test_getValidMults_planet_sat_for_planet(self):
         response = self.c.get('/opus/api/meta/mults/planet.json?planet=Saturn')
+
         print response.content
         self.assertEqual(response.status_code, 200)
 

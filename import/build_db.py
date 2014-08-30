@@ -1,7 +1,7 @@
 # Set up the Django Enviroment for running as shell script
 import sys
-# sys.path.append('/home/django/djcode/opus')  #srvr
-sys.path.append('/users/lballard/projects/opus/')
+sys.path.append('/home/django/djcode/opus')  #srvr
+# sys.path.append('/users/lballard/projects/opus/')
 # from opus import settings
 from django.conf import settings
 from settings import CACHES, DATABASES
@@ -17,7 +17,8 @@ from django.utils.datastructures import SortedDict
 from settings import DATABASES, MULT_FIELDS
 
 opus1 = 'Observations' # from here
-opus2 = 'opus'   # to here
+opus2 = 'opus_small'   # to here
+
 
 #----  shell argvs --------#
 import sys
@@ -120,9 +121,9 @@ for tbl in obs_tables:
 
                 You may need to:
 
-                    drop database opus;
-                    create database opus;
-                """
+                    drop database %s;
+                    create database %s;
+                """ % (opus2, opus2)
         sys.exit()
 
 
@@ -266,8 +267,8 @@ cursor.execute("create view %s.grouping_target_name as select * from %s.mult_obs
 # system("mysql %s < import/backup_util_tables.sql -u%s -p%s" % (opus2, DATABASES['default']['USER'], DATABASES['default']['PASSWORD'])))
 
 # first, build the empty param_info table in the new db - the table schema lives in a dump file in the repo
-print "building param_info from %simport/param_info_table.sql " % base_path
-system("mysql %s < %simport/param_info_table.sql -u%s -p%s" % (opus2, base_path, DATABASES['default']['USER'], DATABASES['default']['PASSWORD']))
+print "building param_info from import/param_info_table.sql "
+system("mysql %s < import/param_info_table.sql -u%s -p%s" % (opus2, DATABASES['default']['USER'], DATABASES['default']['PASSWORD']))
 
 # and import the data
 q = "insert into %s.param_info select * from %s.forms where (display = 'Y' or display_results = 'Y')" % (opus2, opus1)

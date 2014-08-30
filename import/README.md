@@ -10,7 +10,7 @@ takes care of django files too
 so just run build_db.py and that's your db
 
 
-/// old stuff:
+/// old stuff: ** don't use the fab file **
 
 
 # Once you deploy a database to OPUS 1 this procedure will magically update OPUS 2 with the same data.
