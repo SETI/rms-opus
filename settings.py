@@ -9,7 +9,7 @@ from secrets import *
 DEBUG = False
 TEMPLATE_DEBUG = DEBUG
 
-SESSION_EXPIRE_AT_BROWSER_CLOSE = True 
+SESSION_EXPIRE_AT_BROWSER_CLOSE = True
 
 ADMINS = (
     ('Lisa Ballard', 'lballard@seti.org'),
@@ -111,12 +111,12 @@ TEMPLATE_DIRS = (
     # Put strings here, like "/home/html/django_templates" or "C:/www/django/templates".
     # Always use forward slashes, even on Windows.
     # Don't forget to use absolute paths, not relative paths.
-    '/home/django/djcode/opus',
-    '/home/django/djcode/opus/ui/templates/',
-    '/home/django/djcode/opus/results/templates/',
-    '/home/django/djcode/opus/metadata/templates/',
-    '/home/django/djcode/opus/quide/templates/',
-    '/home/django/djcode/opus/mobile/templates/',
+    PROJECT_ROOT + '/apps/',
+    PROJECT_ROOT + '/apps/ui/templates/',
+    PROJECT_ROOT + '/apps/results/templates/',
+    PROJECT_ROOT + '/apps/metadata/templates/',
+    PROJECT_ROOT + '/apps/quide/templates/',
+    PROJECT_ROOT + '/apps/mobile/templates/',
 )
 
 INSTALLED_APPS = (
