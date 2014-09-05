@@ -178,21 +178,38 @@ var o_collections = {
             // i.e. the offset of the 23rd page at 100 per page starts with the 2200st record:
 
             // first find what does opus.prefs.page say we are looking at:
-            current_page = o_browse.getCurrentPage();
+            view_info = o_browse.getViewInfo();
+            namespace = view_info['namespace']; // either '#collection' or '#browse'
+            prefix = view_info['prefix'];       // either 'colls_' or ''
+            view_var = opus.prefs[prefix + 'browse'];  // either 'gallery' or 'data'
 
-            offset = (current_page-1) * opus.prefs.limit;
+            first_page = o_browse.getCurrentPage();
+            last_page = opus.last_page_drawn[prefix + view_var];
 
             // now find the number of results showing on the page, different from opus.prefs.limit:
             // number of "pages" showing on screen at any time = limit * (1+footer_clicks)
             // i.e., you've got 100 on screen, you click footer 4 times, now you've got 500 showing
             // multiply that by 2 because our results may span no more than 2 "pages" at our new limit on the server
-            limit = 2 * opus.prefs.limit * current_page;
+            limit = opus.prefs.limit * (last_page - first_page + 1);
 
             // server says offset = (page_no-1)*limit
             // solve that equation for page our new page value:
-            page = Math.floor(offset/limit + 1);
-            url += '&limit=' + limit + '&page=' + page;
             url += '&' + o_hash.getHash();
+
+            // update the page and limit in url
+            url_split = url.split('&');
+            for (key in url_split) {
+                param = url_split[key].split('=')[0];
+                if (param == 'page') {
+                    delete url_split[key];
+                }
+                if (param == 'limit') {
+                    delete url_split[key];
+                }
+            }
+            url = url_split.join('&');
+            url = url + "&limit=" + limit + "&page=" + first_page;
+
         } else {
             url += "&ringobsid=" + ringobsid;
         }

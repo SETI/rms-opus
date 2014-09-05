@@ -630,8 +630,6 @@ var o_browse = {
 
         view_var = opus.prefs[prefix + 'browse'];  // either 'gallery' or 'data'
 
-        clearInterval(opus.scroll_watch_interval); // hold on cowgirl only 1 page at a time
-
         var base_url = "/opus/api/images/small.html?alt_size=full&";
         if (opus.prefs[prefix + 'browse'] == 'data') {
             base_url = '/opus/api/data.html?';
@@ -640,6 +638,7 @@ var o_browse = {
             if (!opus.table_headers_drawn) {
                 window.scroll(0,0);  // sometimes you have scrolled down in the search tab
                 o_browse.startDataTable(namespace);
+
                 return; // startDataTable() starts data table and then calls getBrowseTab again
             }
         }
@@ -677,15 +676,15 @@ var o_browse = {
             }
         }
 
-
         url += '&page=' + page;
-
-        opus.prefs[prefix + view_var] = page;
 
         // wait! is this page already drawn?
         if (opus.last_page_drawn[prefix + view_var] == page) {
+            opus.scroll_watch_interval = setInterval(o_browse.browseScrollWatch, 1000);
             return; // chill chill chill
         }
+        clearInterval(opus.scroll_watch_interval); // hold on cowgirl only 1 page at a time
+
 
         // NOTE if you change alt_size=full here you must also change it in gallery.html template
         $.ajax({ url: base_url + url,
@@ -1011,6 +1010,7 @@ var o_browse = {
 
         // this is on a setInterval
         browseScrollWatch: function() {
+
 
             view_info = o_browse.getViewInfo();
             prefix = view_info['prefix']; // none or colls_
