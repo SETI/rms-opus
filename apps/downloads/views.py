@@ -36,7 +36,7 @@ def md5(filename):
         return d.hexdigest()
 
 
-def get_download_size(files, product_types=[], previews=[]):
+def get_download_size(files, product_types, previews):
     # takes file_names as returned by getFiles()
     # returns size in bytes as int
     urls = []
@@ -47,6 +47,7 @@ def get_download_size(files, product_types=[], previews=[]):
         # get the preview image sizes
 
         for size_str in filter(None, [p.lower() for p in previews]):
+            log.debug(previews)
             img = Image.objects.filter(ring_obs_id=ring_obs_id).values(size_str)[0][size_str]
 
             from results.views import get_base_path
@@ -157,7 +158,7 @@ def create_download(request, collection_name='', ring_obs_ids=None, fmt="raw"):
     tar = tarfile.open(settings.TAR_FILE_PATH + zip_file_name, "w:gz")
     chksum = open(chksum_file_name,"w")
     manifest = open(manifest_file_name,"w")
-    size = get_download_size(files, product_types.split(','), previews)
+    size = get_download_size(files, product_types.split(','), previews.split(','))
 
     cum_downlaod_size = get_cum_downlaod_size(request,size)
     if cum_downlaod_size > settings.MAX_CUM_DOWNLAOD_SIZE:

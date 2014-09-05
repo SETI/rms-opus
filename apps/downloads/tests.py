@@ -23,8 +23,9 @@ class downloadsTests(TestCase):
     def test__get_download_size_browse_images_being_counted(self):
         ring_obs_ids = 'S_IMG_CO_ISS_1680806066_N'
         files = getFiles(ring_obs_ids,"raw", "path")
-        size1 = get_download_size(files, product_types=['CALIBRATED'], previews=['Full'])
-        size2 = get_download_size(files, product_types=['CALIBRATED'], previews=['Full','Med'])
+        product_types=['CALIBRATED']
+        size1 = get_download_size(files, product_types, ['Full'])
+        size2 = get_download_size(files, product_types, ['Med'])
         self.assertNotEqual(size1, size2)
 
     # get_download_size(
