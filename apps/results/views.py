@@ -217,9 +217,9 @@ def getImages(request,size,fmt):
     all_collections = get_collection(request, "default")
 
     # find which are in collections, mark unfound images 'not found'
-    if all_collections:
-        for image in image_links:
-            image['img'] = image[size] if image[size] else 'not found'
+    for image in image_links:
+        image['img'] = image[size] if image[size] else 'not found'
+        if all_collections:
             from user_collections.views import *
             if image['ring_obs_id'] in all_collections:
                 image['in_collection'] = True
