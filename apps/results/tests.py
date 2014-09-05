@@ -122,4 +122,4 @@ class resultsTests(TestCase):
     def test__getImages(self):
         response = self.c.get('/opus/api/images/small.json?planet=Saturn')
         self.assertEqual(response.status_code, 200)
-        self.assertGreater(len(response.content), 19000)
+        self.assertGreater(len(response.content), 13000)

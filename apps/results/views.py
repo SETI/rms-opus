@@ -214,12 +214,15 @@ def getImages(request,size,fmt):
                 ordered_image_links.append(link)
     image_links = ordered_image_links
 
+    all_collections = get_collection(request, "default")
+
     # find which are in collections, mark unfound images 'not found'
-    for image in image_links:
-        image['img'] = image[size] if image[size] else 'not found'
-        from user_collections.views import *
-        if image['ring_obs_id'] in get_collection(request, "default"):
-            image['in_collection'] = True
+    if all_collections:
+        for image in image_links:
+            image['img'] = image[size] if image[size] else 'not found'
+            from user_collections.views import *
+            if image['ring_obs_id'] in all_collections:
+                image['in_collection'] = True
 
     path = settings.IMAGE_HTTP_PATH
 
@@ -227,7 +230,7 @@ def getImages(request,size,fmt):
         template = 'gallery.html'
     else: template = 'image_list.html'
 
-    all_collections = get_collection(request, "default")
+
 
     # print image_links
     return responseFormats({'data':[i for i in image_links]},fmt, size=size, path=path, alt_size=alt_size, columns_str=columns.split(','), all_collections=all_collections, template=template, order=order)
