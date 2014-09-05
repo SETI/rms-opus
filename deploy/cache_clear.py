@@ -1,6 +1,8 @@
 import sys
-from settings import PROJECT_ROOT
-sys.path.append(PROJECT_ROOT)
+import os
+
+base_path = '/'.join(os.path.realpath(__file__).split('/')[:-2])
+sys.path.append(base_path)
 
 from django.conf import settings
 from settings import CACHES
