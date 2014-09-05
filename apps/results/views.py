@@ -41,7 +41,7 @@ def getData(request,fmt):
 
     from user_collections.views import *
 
-    collection = in_collections(request)
+    collection = get_collection(request, "default")
 
     data = {'page_no':page_no, 'limit':limit, 'page':page, 'count':len(page)}
 
@@ -218,7 +218,7 @@ def getImages(request,size,fmt):
     for image in image_links:
         image['img'] = image[size] if image[size] else 'not found'
         from user_collections.views import *
-        if image['ring_obs_id'] in in_collections(request):
+        if image['ring_obs_id'] in get_collection(request, "default"):
             image['in_collection'] = True
 
     path = settings.IMAGE_HTTP_PATH
@@ -227,8 +227,10 @@ def getImages(request,size,fmt):
         template = 'gallery.html'
     else: template = 'image_list.html'
 
+    all_collections = get_collection(request, "default")
+
     # print image_links
-    return responseFormats({'data':[i for i in image_links]},fmt, size=size, path=path, alt_size=alt_size, columns_str=columns.split(','), all_collections=in_collections(request), template=template, order=order)
+    return responseFormats({'data':[i for i in image_links]},fmt, size=size, path=path, alt_size=alt_size, columns_str=columns.split(','), all_collections=all_collections, template=template, order=order)
 
 
 def get_base_path(ring_obs_id):

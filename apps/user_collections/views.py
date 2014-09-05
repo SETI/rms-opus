@@ -1,3 +1,8 @@
+################################################
+#
+#   user_collections.views
+#
+################################################import settings
 import settings
 import json
 from django.http import HttpResponse, Http404
@@ -10,22 +15,6 @@ from django.views.decorators.cache import never_cache
 
 import logging
 log = logging.getLogger(__name__)
-
-
-def in_collections(request):
-    """
-    returns flat list of ring_obs_ids as found in all user collections, for indication when displaying in browse
-    """
-    if not request.session.get("all_collections"):
-        return []
-
-    all_ids = []
-    for collection_name in request.session.get("all_collections"):
-        if request.session.get(collection_name):
-            for ring_obs_id in request.session.get(collection_name):
-                all_ids.append(ring_obs_id)
-
-    return list(set(all_ids)) # makes unique
 
 
 def set_collection(request,collection_name='default'):

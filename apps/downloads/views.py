@@ -47,7 +47,6 @@ def get_download_size(files, product_types, previews):
         # get the preview image sizes
 
         for size_str in filter(None, [p.lower() for p in previews]):
-            log.debug(previews)
             img = Image.objects.filter(ring_obs_id=ring_obs_id).values(size_str)[0][size_str]
 
             from results.views import get_base_path
