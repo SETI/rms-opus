@@ -37,15 +37,17 @@ var o_collections = {
 
          });
 
-         // click create download zip file link on collections page
+
+
+         // Download Zipped Archive button - click create download zip file link on collections page
          $('#collection').on("click", '#collections_summary a#create_zip_file button', function() {
-                $('#zip_files .spinner', "#collections_summary").fadeIn();
+                 $('.spinner', "#collections_summary").fadeIn();
                 add_to_url = [];
                 add_to_url = o_collections.getDownloadFiltersChecked();
                 url = '/opus/collections/download/default.zip?' + add_to_url;
                 $.ajax({ url: url,
                      success: function(json){
-                        $('#zip_files .spinner', "#collections_summary").fadeOut();
+                        $('.spinner', "#collections_summary").show();
                         $('#zip_files', "#collections_summary").append('<p><a href = "' + json + '">' + json + '</a></p>');
                      }});
                 return false;

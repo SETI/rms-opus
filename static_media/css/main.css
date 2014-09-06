@@ -278,6 +278,9 @@ ul.ace-thumbnails {
 #search, #browse, #collection, #detail {
     margin-top: -30px;
 }
+#collection {
+    margin-top:20px;
+}
 #detail {
     padding:20px 50px;
 }
@@ -331,11 +334,15 @@ ul.ace-thumbnails {
 }
 .spinner {
     background-image: url('http://pds-rings.seti.org/~lballard/django_opus/static_media/images/spinner.gif');
-    width:25px;
+    width:30px;
     display:inline-block;
     background-repeat: no-repeat;
 }
-
+#collections_summary .spinner {
+    display:none;
+    margin:0px 10px;
+    width:30px;
+}
 .menu_spinner {
     display:none;
     margin-left:5px;

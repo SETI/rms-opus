@@ -12,10 +12,8 @@ from results.views import *
 from downloads.views import *
 from django.views.decorators.cache import never_cache
 
-
 import logging
 log = logging.getLogger(__name__)
-
 
 def set_collection(request,collection_name='default'):
     try:
