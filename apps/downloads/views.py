@@ -5,7 +5,7 @@ import datetime
 import hashlib
 import tarfile
 import json
-from django.http import HttpResponse
+from django.http import HttpResponse, Http404
 from django.db.models import Sum
 from results.views import *
 from tools.app_utils import *
@@ -196,7 +196,7 @@ def create_download(request, collection_name='', ring_obs_ids=None, fmt="raw"):
 
     if not added:
         log.error('no files found for download cart ' + manifest_file_name);
-        zip_url = "No Files Found"
+        raise Http404
 
     if fmt == 'json':
         return HttpResponse(json.dumps(zip_url), mimetype='application/json')

@@ -41,15 +41,25 @@ var o_collections = {
 
          // Download Zipped Archive button - click create download zip file link on collections page
          $('#collection').on("click", '#collections_summary a#create_zip_file button', function() {
-                 $('.spinner', "#collections_summary").fadeIn();
-                add_to_url = [];
+                $('.spinner', "#collections_summary").fadeIn();
+                add_to_url = '';
                 add_to_url = o_collections.getDownloadFiltersChecked();
                 url = '/opus/collections/download/default.zip?' + add_to_url;
                 $.ajax({ url: url,
-                     success: function(json){
-                        $('.spinner', "#collections_summary").show();
-                        $('#zip_files', "#collections_summary").append('<p><a href = "' + json + '">' + json + '</a></p>');
-                     }});
+                    success: function(filename){
+                        if (filename) {
+                            $('<li><a href = "' + filename + '">' + filename + '</a></li>').hide().prependTo('ul.zipped_files', "#collections_summary").slideDown('slow');
+                            $('.spinner', "#collections_summary").fadeOut();
+                        } else {
+                            $('<li>No Files Found</li>').hide().prependTo('ul.zipped_files', "#collections_summary").slideDown('fast');
+                        }
+
+                    },
+                    error: function(e) {
+                        $('<li>No Files Found</li>').hide().prependTo('ul.zipped_files', "#collections_summary").slideDown('fast');
+                    }
+
+                });
                 return false;
          });
 
