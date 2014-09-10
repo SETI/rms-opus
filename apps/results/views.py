@@ -26,7 +26,7 @@ def getData(request,fmt):
     """
     a page of results for a given search
     """
-    [page_no, limit,page, page_ids, order] = getPage(request)
+    [page_no, limit, page, page_ids, order] = getPage(request)
 
     checkboxes = True if (request.is_ajax()) else False
 
@@ -519,7 +519,19 @@ def getPage(request):
         else:
             column_values.append(param_name.split('.')[0].lower().replace('_','') + '__' + param_name.split('.')[1])
 
-    offset = (page_no-1)*limit # we don't use Django's pagination because of that count(*) that it does.
+
+    """
+    this may be an aweful hack.
+    the limit is pretty much always 100, the user cannot change it in the interface
+    but as an aide to finding the right chunk of a result set to search for
+    in an 'add range' situation, the front end may send a large limit, like say
+    page_no = 42 and limit = 400
+    that means start the page at 42 and go 4 pages, and somewhere in there is our range
+    so the way of computing starting offset here should always use the base_limit of 100
+    using the passed limit will result inthe wront offset because of way offset is computed here
+    """
+    base_limit = 100  # see above
+    offset = (page_no-1)*base_limit # we don't use Django's pagination because of that count(*) that it does.
 
     results = results.values_list(*column_values)[offset:offset+limit]
 

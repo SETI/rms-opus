@@ -284,9 +284,12 @@ def edit_collection_range(request, **kwargs):
     selected_range = []
     in_range = False  # loop has reached the range selected
 
+
     # return HttpResponse(json.dumps(data['page']));
     for row in data['page']:
+
         ring_obs_id = row[0]
+
         if ring_obs_id == min_id:
             in_range = True;
         if in_range:
@@ -301,6 +304,11 @@ def edit_collection_range(request, **kwargs):
             if action == 'removerange':
                 for ring_obs_id in selected_range:
                     collection.remove(ring_obs_id)
+
+    if not selected_range:
+        log.error("edit_collection_range failed to find range " + id_range)
+        log.error(selections)
+
 
     if len(collection):
         return collection
