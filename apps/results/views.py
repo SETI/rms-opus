@@ -18,7 +18,6 @@ from user_collections.views import *
 from tools.app_utils import *
 from django.views.decorators.cache import never_cache
 
-
 import logging
 log = logging.getLogger(__name__)
 
@@ -188,12 +187,14 @@ def getImages(request,size,fmt):
     alt_size = request.GET.get('alt_size','')
     columns = request.GET.get('cols',settings.DEFAULT_COLUMNS)
 
-    [page_no, limit, page, page_ids, order] = getPage(request)
+    try:
+        [page_no, limit, page, page_ids, order] = getPage(request)
+    except SyntaxError:  # getPage returns False
+        return Http404
 
     image_links = Image.objects.filter(ring_obs_id__in=page_ids)
 
     # print page_ids
-
     if alt_size:
         image_links = image_links.values('ring_obs_id',size,alt_size)
     else:
@@ -419,7 +420,6 @@ def getPage(request):
     """
     the gets the metadata to build a page of results
     """
-
     # get some stuff from the url or fall back to defaults
     collection_page = (request.GET.get('colls',False))
     limit = request.GET.get('limit',100)
@@ -461,7 +461,7 @@ def getPage(request):
         page_no = request.GET.get('page',1)
         page_no = int(page_no)
 
-        # ok now that we have everything from the url et stuff from db
+        # ok now that we have everything from the url get stuff from db
         (selections,extras) = urlToSearchParams(request.GET)
         user_query_table = getUserQueryTable(selections,extras)
 
@@ -534,12 +534,15 @@ def getPage(request):
     offset = (page_no-1)*base_limit # we don't use Django's pagination because of that count(*) that it does.
 
     results = results.values_list(*column_values)[offset:offset+limit]
+    log.debug(results.query)
 
     # print results
     # this whole page_ids thing is just rediculous, the caller can get it from the result set
     # especially if we are saying that the id is always at index 0
     page_ids = [o[0] for o in results]
 
+    if not len(page_ids):
+        return False
     # print page_ids
     # print results.query
     # print list(results)
