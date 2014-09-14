@@ -192,6 +192,7 @@ def getImages(request,size,fmt):
     except SyntaxError:  # getPage returns False
         return Http404
 
+    log.debug('got page of length ' + str(len(page_ids)))
     image_links = Image.objects.filter(ring_obs_id__in=page_ids)
 
     # print page_ids
@@ -437,7 +438,8 @@ def getPage(request):
 
     triggered_tables = list(set([param_name.split('.')[0] for param_name in columns]))
     try:
-        triggered_tables.remove('obs_general')  # we remove it because it is the primary model so don't need to add it to extra tables
+        triggered_tables.remove('obs_general')  # we remove it because it is the primary
+                                                # model so don't need to add it to extra tables
     except ValueError:
         pass  # obs_general isn't in there
 
@@ -533,8 +535,8 @@ def getPage(request):
     base_limit = 100  # see above
     offset = (page_no-1)*base_limit # we don't use Django's pagination because of that count(*) that it does.
 
-    results = results.values_list(*column_values)[offset:offset+limit]
-    log.debug(results.query)
+    results = results.values_list(*column_values)[offset:offset+int(limit)]
+    log.debug(str(results.query))
 
     # print results
     # this whole page_ids thing is just rediculous, the caller can get it from the result set
