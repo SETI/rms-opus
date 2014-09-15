@@ -189,7 +189,7 @@ def getImages(request,size,fmt):
 
     try:
         [page_no, limit, page, page_ids, order] = getPage(request)
-    except SyntaxError:  # getPage returns False
+    except TypeError:  # getPage returns False
         return Http404
 
     log.debug('got page of length ' + str(len(page_ids)))
