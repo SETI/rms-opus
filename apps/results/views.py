@@ -46,14 +46,15 @@ def getData(request,fmt):
 
     return responseFormats(data,fmt,template='data.html', labels=labels,checkboxes=checkboxes, collection=collection, order=order)
 
-def getDetail(request,ring_obs_id='',fmt='json'):
+def getDetail(request,ring_obs_id,fmt):
     """
     results for a single observation
     all the data, in categories
 
     """
-
+    if not fmt: fmt = 'json'
     if not ring_obs_id: return Http404
+
 
     if fmt == 'html':
         from ui.views import getDetailPage
@@ -67,7 +68,6 @@ def getDetail(request,ring_obs_id='',fmt='json'):
 
     if col_slugs:
         col_slugs = col_slugs.split(',')
-
 
     data = SortedDict({})
 
@@ -97,6 +97,7 @@ def getDetail(request,ring_obs_id='',fmt='json'):
                 data[label] = results
             except AttributeError: pass  # no results found in this table, move along
             except IndexError: pass  # no results found in this table, move along
+
 
     if fmt == 'json':
         return HttpResponse(json.dumps(data), content_type="application/json")
