@@ -31,6 +31,7 @@ class searchTests(TestCase):
     param_name = 'obs_general.planet_id'
     selections = {}
     selections[param_name] = ['Saturn']
+    extras = {}
 
     def teardown(self):
         cursor = connection.cursor()
@@ -43,25 +44,30 @@ class searchTests(TestCase):
             print q
             cursor.execute(q)
 
+
+    def test__constructQueryString_string(self):
+        selections = {'obs_general.primary_file_spec': ['C11399XX']}
+        sql, params = constructQueryString(selections, {})
+        q = sql % params
+        print q
+        expected = "SELECT `obs_general`.`id` FROM `obs_general` WHERE `obs_general`.`primary_file_spec` LIKE %C11399XX%"
+        self.assertEqual("".join(q.split()),"".join(expected.split()))  # strips all whitespace b4 compare
+
+    def test__constructQueryString_string_with_qtype(self):
+        selections = {'obs_general.primary_file_spec': ['C11399XX']}
+        extras = {'qtypes': {'obs_general.primary_file_spec': ['contains']}}
+        sql, params = constructQueryString(selections, extras)
+        q = sql % params
+
+        print q
+        expected = "SELECT `obs_general`.`id` FROM `obs_general` WHERE `obs_general`.`primary_file_spec` LIKE %C11399XX%"
+        self.assertEqual("".join(q.split()),"".join(expected.split()))  # strips all whitespace b4 compare
+
+
     ## constructQueryString
-
-    def test__constructQueryString_times(self):
-        q = QueryDict('planet=Saturn&timesec1=2000-023T06:00&timesec2=2000-024T06:00')
-        (selections,extras) = urlToSearchParams(q)
-        expected = {u'obs_general.planet_id': [u'Saturn'], u'obs_general.time_sec2': [u'2000-024T06:00'], u'obs_general.time_sec1': [u'2000-023T06:00']}
-        print selections
-        self.assertEqual(selections,expected)
-
-    def test__constructQueryString_from_url_one_sided(self):
-        q = QueryDict("planet=Saturn&instrumentid=Cassini+ISS&phase1=80&phase2=")
-        (selections,extras) = urlToSearchParams(q)
-        expected = {u'obs_general.planet_id': [u'Saturn'], u'obs_general.instrument_id': [u'Cassini ISS'], u'obs_ring_geometry.phase1': [80.0]}
-        print selections
-        self.assertEqual(selections,expected)
-
-
     def test__constructQueryString_mults_planet(self):
-        q = constructQueryString(self.selections)
+        sql, params = constructQueryString(self.selections, self.extras)
+        q = sql % params
         print q
         expected = "SELECT `obs_general`.`id` FROM `obs_general` WHERE `obs_general`.`mult_obs_general_planet_id` IN (7)"
         self.assertEqual("".join(q.split()),"".join(expected.split()))  # strips all whitespace b4 compare
@@ -69,16 +75,22 @@ class searchTests(TestCase):
     def test__constructQueryString_range_single_qtype(self):
         q = QueryDict("ringradius1=60000&ringradius2=80000,120000&qtype-ringradius=all")
         selections, extras = urlToSearchParams(q)
-        q = constructQueryString(selections, extras)
+        sql, params = constructQueryString(selections, extras)
+        q = sql % params
+        print 'extras: '
         print q
-        expected = "SELECT `obs_general`.`id` FROM `obs_general` INNER JOIN `obs_ring_geometry` ON (`obs_general`.`id` = `obs_ring_geometry`.`obs_general_id`) WHERE ((`obs_ring_geometry`.`ring_radius1` <= 60000.0  AND `obs_ring_geometry`.`ring_radius2` >= 80000.0 ) OR `obs_ring_geometry`.`ring_radius2` >= 120000.0 )"
+        expected = "SELECT `obs_general`.`id` FROM `obs_general` INNER JOIN `obs_ring_geometry` ON (`obs_general`.`id` = `obs_ring_geometry`.`obs_general_id`) \
+                    WHERE ((`obs_ring_geometry`.`ring_radius1` <= 60000.0  AND `obs_ring_geometry`.`ring_radius2` >= 80000.0 ) OR `obs_ring_geometry`.`ring_radius2` >= 120000.0 )"
+        print 'expected:'
+        print expected
         self.assertEqual("".join(q.split()),"".join(expected.split()))  # strips all whitespace b4 compare
 
     def test__constructQueryString_mults_planet_instrumentCOISS(self):
         selections = {}
         selections['obs_general.planet_id'] = ['Saturn']
         selections['obs_general.instrument_id'] = ['COISS']
-        q = constructQueryString(selections)
+        sql, params = constructQueryString(selections, {})
+        q = sql % params
         print q
         expected = "SELECT `obs_general`.`id` FROM `obs_general` WHERE (`obs_general`.`mult_obs_general_planet_id` IN (7) AND `obs_general`.`mult_obs_general_instrument_id` IN (2))"
         self.assertEqual("".join(q.split()),"".join(expected.split()))  # strips all whitespace b4 compare
@@ -87,7 +99,9 @@ class searchTests(TestCase):
         selections = {}
         selections['obs_general.planet_id'] = ["Saturn"]
         selections['obs_general.target_name'] = ["PAN"]
-        q = constructQueryString(selections)
+        sql, params = constructQueryString(selections, {})
+        q = sql % params
+        print q
         expected = "SELECT `obs_general`.`id` FROM `obs_general` WHERE (`obs_general`.`mult_obs_general_target_name` IN (42) AND `obs_general`.`mult_obs_general_planet_id` IN (7))"
         self.assertEqual("".join(q.split()),"".join(expected.split()))  # strips all whitespace b4 compare
 
@@ -95,7 +109,9 @@ class searchTests(TestCase):
         selections = {}
         selections['obs_general.planet_id'] = ["Saturn"]
         selections['obs_instrument_COISS.camera'] = ["Wide Angle"]
-        q = constructQueryString(selections)
+        sql, params = constructQueryString(selections, {})
+        q = sql % params
+        print q
         expected = "SELECT `obs_general`.`id` FROM `obs_general` INNER JOIN `obs_instrument_COISS` ON (`obs_general`.`id` = `obs_instrument_COISS`.`obs_general_id`) WHERE (`obs_general`.`mult_obs_general_planet_id` IN (7) AND `obs_instrument_COISS`.`mult_obs_instrument_COISS_camera` IN (1))"
         print q
         print 'expected:'
@@ -108,12 +124,15 @@ class searchTests(TestCase):
         selections['obs_general.target_name'] = ["PAN"]
         selections['obs_instrument_COISS.camera'] = ["Narrow Angle"]
         selections['obs_mission_cassini.rev_no'] = ['165','166']
-        q = constructQueryString(selections)
+        sql, params = constructQueryString(selections, {})
+        q = sql % params
         print q
         expected = "SELECT `obs_general`.`id` FROM `obs_general` INNER JOIN `obs_mission_cassini` ON ( `obs_general`.`id` = `obs_mission_cassini`.`obs_general_id` ) INNER JOIN `obs_instrument_COISS` ON ( `obs_general`.`id` = `obs_instrument_COISS`.`obs_general_id` ) WHERE (`obs_general`.`mult_obs_general_target_name` IN (42) AND `obs_general`.`mult_obs_general_planet_id` IN (7) AND `obs_mission_cassini`.`mult_obs_mission_cassini_rev_no` IN (289, 290) AND `obs_instrument_COISS`.`mult_obs_instrument_COISS_camera` IN (2))"
         print 'expected:'
         print expected
         self.assertEqual(q,expected)
+
+
 
 
     ## getUserQueryTable
@@ -137,6 +156,20 @@ class searchTests(TestCase):
         self.assertEqual(table.split('_')[0],'cache')
 
     ## test urlToSearchParam
+    def test__urlToSearchParams_times(self):
+        q = QueryDict('planet=Saturn&timesec1=2000-023T06:00&timesec2=2000-024T06:00')
+        (selections,extras) = urlToSearchParams(q)
+        expected = {u'obs_general.planet_id': [u'Saturn'], u'obs_general.time_sec2': [u'2000-024T06:00'], u'obs_general.time_sec1': [u'2000-023T06:00']}
+        print selections
+        self.assertEqual(selections,expected)
+
+    def test__urlToSearchParams_from_url_one_sided(self):
+        q = QueryDict("planet=Saturn&instrumentid=Cassini+ISS&phase1=80&phase2=")
+        (selections,extras) = urlToSearchParams(q)
+        expected = {u'obs_general.planet_id': [u'Saturn'], u'obs_general.instrument_id': [u'Cassini ISS'], u'obs_ring_geometry.phase1': [80.0]}
+        print selections
+        self.assertEqual(selections,expected)
+
     def test__urlToSearchParams_time(self):
         q = QueryDict("planet=Saturn&timesec1=2000-023T06&timesec2=2000-024T06")
         result = urlToSearchParams(q)
@@ -433,7 +466,8 @@ class searchTests(TestCase):
         selections = {}
         selections['obs_general.declination1'] = [58]
         selections['obs_general.declination2'] = [61]
-        q= longitudeQuery(selections,'obs_general.declination1')
+        sql, params = longitudeQuery(selections,'obs_general.declination1')
+        q = sql % params
         print selections
         print q
         expect = '(abs(abs(mod(59.5 - obs_general.declination + 180., 360.)) - 180.) <= 1.5 + obs_general.d_declination)'
@@ -444,7 +478,8 @@ class searchTests(TestCase):
         selections = {}
         selections['obs_general.declination1'] = [58,75]
         selections['obs_general.declination2'] = [61,83]
-        q = longitudeQuery(selections,'obs_general.declination1')
+        sql, params = longitudeQuery(selections,'obs_general.declination1')
+        q = sql % params
         print q
         expect = "(abs(abs(mod(59.5 - obs_general.declination + 180., 360.)) - 180.) <= 1.5 + obs_general.d_declination) OR (abs(abs(mod(79.0 - obs_general.declination + 180., 360.)) - 180.) <= 4.0 + obs_general.d_declination)"
         self.assertEqual(q,expect)
@@ -455,7 +490,7 @@ class searchTests(TestCase):
         selections['obs_general.declination1'] = [58]
         # self.assertRaises(IndexError, longitudeQuery(selections,'declination1'))
         try:
-            longitudeQuery(selections,'obs_general.declination1')
+            sql, params = longitudeQuery(selections,'obs_general.declination1')
         except KeyError, IndexError:
             pass
 
@@ -465,7 +500,7 @@ class searchTests(TestCase):
         selections['obs_general.declination2'] = [58]
         # self.assertRaises(IndexError, longitudeQuery(selections,'declination1'))
         try:
-            longitudeQuery(selections,'obs_general.declination1')
+            sql, params = longitudeQuery(selections,'obs_general.declination1')
         except KeyError, IndexError:
             pass
 
@@ -476,12 +511,9 @@ class searchTests(TestCase):
         selections['obs_general.declination2'] = [61]
         # self.assertRaises(IndexError, longitudeQuery(selections,'declination1'))
         try:
-            longitudeQuery(selections,'obs_general.declination1')
+            sql, params = longitudeQuery(selections,'obs_general.declination1')
         except KeyError, IndexError:
             pass
-
-
-
 
 
 

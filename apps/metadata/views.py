@@ -5,6 +5,7 @@
 ################################################
 import json
 from django.core.cache import cache
+from django.http import Http404
 from django.http import HttpResponse
 from django.db.models import Avg, Max, Min, Count, get_model
 from django.db import connection
@@ -40,7 +41,13 @@ def getResultCount(request,fmt='json'):
     if request.GET is None:
         return HttpResponse(json.dumps({'result_count':'0'}),  mimetype='application/json')
 
-    (selections,extras) = urlToSearchParams(request.GET)
+    try:
+        (selections,extras) = urlToSearchParams(request.GET)
+    except TypeError:
+        log.error("could not find selections for request")
+        log.error(request.GET)
+        raise Http404
+
     reqno = request.GET.get('reqno','')
 
     if selections is False:

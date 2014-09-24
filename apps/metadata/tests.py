@@ -39,6 +39,22 @@ class metadataTests(TestCase):
         print result_count
         self.assertGreater(result_count, 11000)
 
+    def test_getResultCount_string_no_qtype(self):
+        response = self.c.get('/opus/api/meta/result_count.json?primaryfilespec=C11399XX')
+        self.assertEqual(response.status_code, 200)
+        jdata = json.loads(response.content)
+        result_count = int(jdata['data'][0]['result_count'])
+        print result_count
+        self.assertEqual(result_count, 5)
+
+    def test_getResultCount_string_with_qtype(self):
+        response = self.c.get('/opus/api/meta/result_count.json?primaryfilespec=C11399XX&qtype-primaryfilespec=contains')
+        self.assertEqual(response.status_code, 200)
+        jdata = json.loads(response.content)
+        result_count = int(jdata['data'][0]['result_count'])
+        print result_count
+        self.assertEqual(result_count, 5)
+
     def test_getResultCount_times(self):
         response = self.c.get('/opus/api/meta/result_count.json?planet=Saturn&timesec1=2009-12-23&timesec2=2009-12-28')
         print response.content

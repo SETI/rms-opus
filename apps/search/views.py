@@ -25,15 +25,13 @@ from paraminfo.models import ParamInfo
 import logging
 log = logging.getLogger(__name__)
 
-def constructQueryString(selections, extras={}):
-
-    cursor = connection.cursor()
+def constructQueryString(selections, extras):
 
     all_qtypes = extras['qtypes'] if 'qtypes' in extras else []
-
     # keeping track of some things
     long_querys = []  # special longitudinal queries are pure sql
-    q_objects = [] # for building up the query object
+    string_queries = []  # special handling for string queries ugh!
+    q_objects = []  # for building up the query object
     finished_ranges = []  # ranges are done for both sides at once.. so track which are finished to avoid duplicates
 
     # buld the django query
@@ -67,8 +65,6 @@ def constructQueryString(selections, extras={}):
 
         # RANGE
         if form_type in settings.RANGE_FIELDS:
-
-
             # longitude queries
             if special_query == 'long':
                 # this parameter requires a longitudinal query
@@ -77,8 +73,8 @@ def constructQueryString(selections, extras={}):
                 # statements to sql these are tacked on at the end
                 # both sides of range must be defined by user for this to work
                 if selections[param_name_no_num + '1'] and selections[param_name_no_num + '2']:
-                    lq = longitudeQuery(selections,param_name)
-                    long_querys.append(lq)
+                    lq, lq_params = longitudeQuery(selections,param_name)
+                    long_querys.append((lq, lq_params))
                 else:
                     raise ValidationError
 
@@ -94,17 +90,26 @@ def constructQueryString(selections, extras={}):
 
             q_objects.append(q_obj)
 
+
+        # STRING
+        if form_type == 'STRING':
+            q_obj = string_query_object(param_name, value_list, qtypes)
+            q_objects.append(q_obj)
+
     # construct our query, we'll be breaking into raw sql, but for that
     # we'll be using the sql django generates through its model interface
     try:
         # print ObsGeneral.objects.filter(*q_objects)
-        q = str(ObsGeneral.objects.filter(*q_objects).values('pk').query)
+
+        sql, params = ObsGeneral.objects.filter(*q_objects).values('pk').query.sql_with_params()
 
         # append any longitudinal queries to the query string
         if long_querys:
-            q += " ".join([" and (%s) " % q for q in long_querys])
+            # q += " ".join([" and (%s) " % long_query for long_query in long_querys])
+            sql += " ".join([" and (%s) " % long_query[0] for long_query in long_querys])
+            params += [long_query[1] for long_query in long_querys]
 
-        return q
+        return sql, params
 
     except EmptyResultSet:
         return False
@@ -146,14 +151,17 @@ def getUserQueryTable(selections,extras={}):
         pass  # no table is there, we go on to build it below
 
     ## cache table dose not exist, we will make one by doing some data querying:
-    q = constructQueryString(selections, extras)
+    try:
+        sql, params = constructQueryString(selections, extras)
+    except TypeError:
+        return False
 
-    if not q:
+    if not sql:
         return False
 
     try:
         # with this we can create a table that contains the single row
-        cursor.execute("create table " + ptbl + " " + q)
+        cursor.execute("create table " + ptbl + " " + sql, params)
         # add the key **** this, and perhaps the create statement too, can be spawned to a backend process ****
         cursor.execute("alter table " + connection.ops.quote_name(ptbl) + " add unique key(id)  ")
 
@@ -162,9 +170,11 @@ def getUserQueryTable(selections,extras={}):
         return ptbl
 
     except DatabaseError:
-        log.debug('query execute failed')
-        # import sys
-        # print sys.exc_info()[1] + ': ' + print sys.exc_info()[1]
+        log.error('query execute failed: create/alter table ' + ptbl + " " + sql)
+        log.error(params)
+        import sys
+        log.error(sys.exc_info()[1])
+        log.error(sys.exc_info()[1])
         return False
 
 
@@ -298,12 +308,43 @@ def setUserSearchNo(selections,extras={}):
     return s.id
 
 
+def string_query_object(param_name, value_list, qtypes):
+    param_model_name = param_name.split('.')[1]
+
+    for key,value in enumerate(value_list):
+
+        qtype = qtypes[key] if key in qtypes else 'contains'
+
+        if qtype == 'contains':
+
+            q_exp = Q(**{"%s__icontains" % param_model_name: value })
+            pass
+
+        if qtype == 'begins':
+            q_exp = Q(**{"%s__startswith" % param_model_name: value })
+            pass
+
+        if qtype == 'ends':
+            q_exp = Q(**{"%s__endswith" % param_model_name: value })
+            pass
+
+        if qtype == 'matches':
+            q_exp = Q(**{"%s" % param_model_name: value })
+            pass
+
+        if qtype == 'excludes':
+            q_exp = ~Q(**{"%s__icontains" % param_model_name: value })
+            pass
+
+    return q_exp
 
 def range_query_object(selections, param_name, qtypes):
     """
     builds query for numeric ranges where 2 data columns represent min and max values
-    """
+    any all only
+    any / all / only
 
+    """
     # grab some info about this param
     cat_name      = param_name.split('.')[0]
     name          = param_name.split('.')[1]
@@ -358,8 +399,10 @@ def range_query_object(selections, param_name, qtypes):
         value_min, value_max, q_type = None, None, qtype
         try: value_min = values_min[i]
         except IndexError: pass
+
         try: value_max = values_max[i]
         except IndexError: pass
+
         try: qtype = qtypes[i]
         except IndexError: pass
 
@@ -369,6 +412,7 @@ def range_query_object(selections, param_name, qtypes):
 
         # we should end up with 2 query expressions
         q_exp, q_exp1, q_exp2 = None, None, None
+
         if qtype == 'all':
 
             if value_min:
@@ -459,7 +503,7 @@ def longitudeQuery(selections,param_name):
 
         i+=1
 
-    return ' OR '.join(clauses) % tuple(params)
+    return ' OR '.join(clauses), tuple(params)
 
 
 def convertTimes(value_list,conversion_script='time_to_seconds'):
