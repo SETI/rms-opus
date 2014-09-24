@@ -58,10 +58,12 @@ var o_search = {
             slug = $(this).attr("name");
             css_class = $(this).attr("class").split(' ')[0]; // class will be STRING, min or max
 
+
             // get values of all inputs
             var values = [];
             if (css_class == 'STRING') {
-                $('#widget__' + slug + ' .widget_inner input').each(function() {
+
+                $('#widget__' + slug + ' input.STRING').each(function() {
                     values[values.length] = $(this).val();
                 });
                 opus.selections[slug] = values;
