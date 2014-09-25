@@ -262,11 +262,18 @@ var o_search = {
     },
 
     getHinting: function(slug) {
+
         if (slug.match(/.*(1|2)/)) {
             // this is a range field
             o_search.getRangeEndpoints(slug);
 
         } else {
+
+            if ($('.widget__' + slug + ' input.STRING').length) {
+                // this is a string search, no hinting happens for these
+                $('#widget__' + slug + ' .spinner').fadeOut();
+                return;
+            }
             // mult field
             o_search.getValidMults(slug);
         }
