@@ -194,7 +194,12 @@ def getImages(request,size,fmt):
         return Http404
 
     log.debug('got page of length ' + str(len(page_ids)))
+    log.debug(page_ids)
     image_links = Image.objects.filter(ring_obs_id__in=page_ids)
+
+    if not image_links:
+        log.error('no image found for:')
+        log.error(page_ids[:50])
 
     # print page_ids
     if alt_size:
@@ -209,12 +214,18 @@ def getImages(request,size,fmt):
             if s in im:
                 image_links[k][s] = get_base_path(im['ring_obs_id']) + im[s]
 
-    # to lamely preserve the order of page_ids
+    # to preserve the order of page_ids as lamely as possible :P
     ordered_image_links = []
     for ring_obs_id in page_ids:
+        found = False
         for link in image_links:
             if ring_obs_id == link['ring_obs_id']:
+                found == True
                 ordered_image_links.append(link)
+        if not found:
+            # return the thumbnail not found link
+            ordered_image_links.append({size:settings.THUMBNAIL_NOT_FOUND, 'ring_obs_id':ring_obs_id})
+
     image_links = ordered_image_links
 
     all_collections = get_collection(request, "default")
@@ -232,8 +243,6 @@ def getImages(request,size,fmt):
     if (request.is_ajax()):
         template = 'gallery.html'
     else: template = 'image_list.html'
-
-
 
     # print image_links
     return responseFormats({'data':[i for i in image_links]},fmt, size=size, path=path, alt_size=alt_size, columns_str=columns.split(','), all_collections=all_collections, template=template, order=order)
