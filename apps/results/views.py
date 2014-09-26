@@ -220,7 +220,7 @@ def getImages(request,size,fmt):
         found = False
         for link in image_links:
             if ring_obs_id == link['ring_obs_id']:
-                found == True
+                found = True
                 ordered_image_links.append(link)
         if not found:
             # return the thumbnail not found link
