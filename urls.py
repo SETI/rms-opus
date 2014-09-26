@@ -22,7 +22,7 @@ from ui.views import main_site
 
 base_urlpatterns = patterns( 'results.views',
     (r'^api/data.(json|zip|html|csv)$', 'getData'),
-    (r'^api/detail/(?P<ring_obs_id>\w+).(?P<fmt>[json|zip|html]+)$', 'getDetail'),
+    (r'^api/detail/(?P<ring_obs_id>[0-9a-zA-Z\-_]+).(?P<fmt>[json|zip|html]+)$', 'getDetail'),
     (r'^api/images/(thumb|small|med|full).(json|zip|html|csv)$','getImages'),
     (r'^api/image/(?P<size>[thumb|small|med|full]+)/(?P<ring_obs_id>\w+).(?P<fmt>[json|zip|html|csv]+)$', 'getImage'),
     (r'^api/files/(?P<ring_obs_id>\w+).(?P<fmt>[json|zip|html|csv]+)$','getFiles'),
@@ -34,7 +34,7 @@ base_urlpatterns = patterns( 'results.views',
 base_urlpatterns += patterns('metadata.views',
     (r'^api/meta/result_count.(?P<fmt>[json|zip|html|csv]+)$', 'getResultCount'),
     (r'^api/meta/mults/(?P<slug>[-\sa-zA-Z]+).(?P<fmt>[json|zip|html|csv]+)$', 'getValidMults'),
-    (r'^api/meta/range/endpoints/(?P<slug>[-\sa-zA-Z1-9]+).(?P<fmt>[json|zip|html|csv]+)$', 'getRangeEndpoints'),
+    (r'^api/meta/range/endpoints/(?P<slug>[-\sa-zA-Z0-9]+).(?P<fmt>[json|zip|html|csv]+)$', 'getRangeEndpoints'),
     (r'^api/fields/(?P<field>\w+).(?P<fmt>[json|zip|html|csv]+)$','getFields'),
     (r'^api/fields.(?P<fmt>[json|zip|html|csv]+)$', 'getFields'),
     # (r'^api/category/(?P<category>\w+).(?P<fmt>[json|zip|html|csv]+)$','getCats'),
@@ -68,6 +68,7 @@ base_urlpatterns += patterns('ui.views',
 # guide - app runs guide to  api
 base_urlpatterns += patterns('guide.views',
     (r'^api/$', 'guide'),
+    (r'^developer/$', 'guide'),  # api help pages
     (r'^api/guide.html$', 'guide'))  # api help pages
 
 
