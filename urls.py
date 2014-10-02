@@ -15,6 +15,7 @@ admin.autodiscover()
 from paraminfo.models import *
 from ui.views import main_site
 # from django.views.generic.simple import direct_to_template
+from django.views.generic import TemplateView
 
 # -------- OPUS Apps -------------------------------------
 
@@ -52,7 +53,7 @@ base_urlpatterns += patterns('downloads.views',
 
 # UI resources - the homepage
 base_urlpatterns += patterns('ui.views',
-    # (r'^$', direct_to_template, {'template': 'maintenance.html'}),
+    # url(r'^$', TemplateView.as_view(template_name='maintenance.html'), name="home"),
     (r'^$', main_site.as_view()),
     (r'^opus/$', main_site.as_view()),
     (r'^table_headers.html$', 'get_table_headers'),
