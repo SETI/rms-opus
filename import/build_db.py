@@ -115,7 +115,8 @@ for tbl in obs_tables:
     print q
     try:
         cursor.execute(q)
-    except DatabaseError:
+    except DatabaseError, e:
+        print e
         print """
                 failed to create first table, does it already exist?
 
