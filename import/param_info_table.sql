@@ -1,8 +1,8 @@
--- MySQL dump 10.13  Distrib 5.5.17, for osx10.6 (i386)
+-- MySQL dump 10.13  Distrib 5.5.38, for debian-linux-gnu (x86_64)
 --
--- Host: localhost    Database: opus_hack
+-- Host: localhost    Database: opus
 -- ------------------------------------------------------
--- Server version	5.5.17
+-- Server version	5.5.38-0ubuntu0.12.04.1
 
 /*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
 /*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
@@ -52,7 +52,7 @@ CREATE TABLE `param_info` (
   `mission` varchar(15) DEFAULT NULL,
   `instrument` varchar(15) DEFAULT NULL,
   `sub_heading` varchar(150) DEFAULT NULL,
-  primary key (category_name, name)
+  PRIMARY KEY (`category_name`,`name`)
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
@@ -65,4 +65,4 @@ CREATE TABLE `param_info` (
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2013-11-08 16:52:19
+-- Dump completed on 2014-10-02 15:05:41
