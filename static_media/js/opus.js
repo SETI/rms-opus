@@ -6,6 +6,7 @@
 $(document).ready(function() {
 
     o_hash.initFromHash(); // just returns null if no hash
+
     if (!opus.prefs.view) {
         opus.prefs.view = 'search';
     }
@@ -59,7 +60,6 @@ $(document).ready(function() {
         return false;
     }),
 
-
     opus.addAllBehaviors();
 
     // watch the url for changes, this runs continuously
@@ -67,8 +67,8 @@ $(document).ready(function() {
 
     o_collections.initCollection();
 
-    return;
 
+    return;
 
 });
 
@@ -192,8 +192,9 @@ var opus = {
                 return;
             }
             opus.force_load = false;
-        } else {
-            // selections have changed, reset page
+        } else if (!jQuery.isEmptyObject(opus.last_selections)) {
+
+            // selections have changed (and last_selections is not empty)
             // if there was a last selections, clear results containers
             // and reset any browse tab things
             opus.prefs.page = default_pages;
