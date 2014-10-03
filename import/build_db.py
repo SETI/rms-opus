@@ -17,7 +17,7 @@ from django.utils.datastructures import SortedDict
 from settings import DATABASES, MULT_FIELDS
 
 opus1 = 'Observations' # from here
-opus2 = 'opus_small'   # to here
+opus2 = 'opus2'   # to here
 
 
 #----  shell argvs --------#
@@ -268,8 +268,8 @@ cursor.execute("create view %s.grouping_target_name as select * from %s.mult_obs
 # system("mysql %s < import/backup_util_tables.sql -u%s -p%s" % (opus2, DATABASES['default']['USER'], DATABASES['default']['PASSWORD'])))
 
 # first, build the empty param_info table in the new db - the table schema lives in a dump file in the repo
-print "building param_info from import/param_info_table.sql "
-system("mysql %s < import/param_info_table.sql -u%s -p%s" % (opus2, DATABASES['default']['USER'], DATABASES['default']['PASSWORD']))
+print "building param_info from param_info_table.sql "
+system("mysql %s < param_info_table.sql -u%s -p%s" % (opus2, DATABASES['default']['USER'], DATABASES['default']['PASSWORD']))
 
 # and import the data
 q = "insert into %s.param_info select * from %s.forms where (display = 'Y' or display_results = 'Y')" % (opus2, opus1)
