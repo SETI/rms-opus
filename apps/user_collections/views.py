@@ -54,7 +54,7 @@ def view_collection(request, collection_name, template="collections.html"):
 
     # collection
     collection = get_collection(request, collection_name)
-    files = getFiles(collection, "raw")
+    files = getFiles(collection, fmt="raw")
     product_types = Files.objects.all().values('product_type').distinct()
 
     # downlaod_info

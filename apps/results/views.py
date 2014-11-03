@@ -304,12 +304,22 @@ def getFilesAPI(request,ring_obs_id='',fmt='raw', loc_type="url"):
         for p in page:
             ring_obs_id.append(p[0])
 
-    return getFiles(ring_obs_id,fmt, loc_type, product_types,images)
+    return getFiles(ring_obs_id, fmt=fmt, loc_type=loc_type, product_types=product_types, previews=images)
 
 
 
 # loc_type = path or url
-def getFiles(ring_obs_id, fmt='raw', loc_type="url", product_types=[], previews=[]):
+def getFiles(ring_obs_id, fmt=None, loc_type=None, product_types=None, previews=None):
+
+    if not fmt:
+        fmt = 'raw'
+    if not loc_type:
+        loc_type = 'url'
+    if not product_types:
+        product_types = []
+    if not previews:
+        previews = []
+
     if ring_obs_id:
         if type(ring_obs_id) is unicode or type(ring_obs_id).__name__ == 'str':
             ring_obs_ids = [ring_obs_id]
@@ -340,7 +350,11 @@ def getFiles(ring_obs_id, fmt='raw', loc_type="url", product_types=[], previews=
 
             file_extensions = []
             # volume_loc = getAltVolumeLocs(volume_id)
-            volume_loc = f.volume_id
+            # volume_loc = f.volume_id
+            try:
+                volume_loc = ObsGeneral.objects.filter(ring_obs_id=ring_obs_id)[0].volume_id
+            except IndexError:
+                volume_loc = f.volume_id
 
             if f.product_type not in file_names[ring_obs_id]:
                 file_names[ring_obs_id][f.product_type] = []

@@ -89,7 +89,7 @@ def get_download_info(request, collection=""):
     # make a flat list of file_names
     urls = []
     from results.views import *
-    files = getFiles(collection, "raw", "url", product_types, previews)
+    files = getFiles(collection, fmt="raw", loc_type="url", product_types=product_types, previews=previews)
 
     for ring_obs_id in files:
         for ptype in files[ring_obs_id]:
@@ -147,11 +147,7 @@ def create_download(request, collection_name='', ring_obs_ids=None, fmt="raw"):
 
     # lisa
     from results.views import *
-    files = getFiles(ring_obs_ids,"raw", "path", product_types, previews)
-
-    # return getFiles(ring_obs_ids,"raw", loc_type = 'path')
-    #
-    # files = getFiles(ring_obs_ids,"raw", "url", product_types, previews)
+    files = getFiles(ring_obs_ids,fmt="raw", loc_type="path", product_types=product_types, previews=previews)
     # return HttpResponse(json.dumps(files), mimetype="application/json")
 
     tar = tarfile.open(settings.TAR_FILE_PATH + zip_file_name, "w:gz")
