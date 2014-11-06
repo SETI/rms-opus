@@ -4,7 +4,7 @@ sys.path.append('/home/django/djcode/opus')  #srvr
 # sys.path.append('/users/lballard/projects/opus/')
 # from opus import settings
 from django.conf import settings
-from settings import CACHES, DATABASES
+from settings import CACHES, DATABASES  # DATABASES creds only
 settings.configure(CACHES=CACHES, DATABASES=DATABASES) # include any other settings you might need
 
 # script imports
@@ -14,10 +14,10 @@ from django.core.management import  call_command
 from django.db.models import get_model
 from django.db.utils import DatabaseError
 from django.utils.datastructures import SortedDict
-from settings import DATABASES, MULT_FIELDS
+from settings import DATABASES, MULT_FIELDS  # DATABASES creds only
 
-opus1 = 'Observations' # from here
-opus2 = 'opus2'   # to here
+opus1 = 'Observations2' # from here
+opus2 = 'opus'   # to here
 
 
 #----  shell argvs --------#
@@ -295,6 +295,7 @@ cursor.execute("update %s.param_info set display = 1 where name = 'primary_file_
 cursor.execute("update %s.param_info set display_results = 1 where slug = 'time1' or slug = 'time2'" % opus2)
 # update param_info set display_results = 1 where slug = 'timesec1' or slug = 'timesec2';
 cursor.execute("update %s.param_info set display_results = 1 where slug = 'timesec1' or slug = 'timesec2';" % opus2)
+cursor.execute("update %s.param_info set form_type = 'STRING' where name = 'primary_file_spec'" % opus2)
 
 
 # ----------- creating the grouping, category, and guide tables --------------#
