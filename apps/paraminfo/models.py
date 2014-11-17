@@ -9,6 +9,8 @@ RANK_CHOICES = (('0','Advanced'),('1','Basic'))
 
 class ParamInfo(models.Model):
     """
+
+    ** DEPRECATED **
     This model describes every searchable param in the database (aka fields in the Observations model)
     each has attributes like display, display order, query type, slug, etc..
 
