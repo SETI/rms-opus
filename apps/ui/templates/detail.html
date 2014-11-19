@@ -12,11 +12,12 @@
                 {% for product_type, files in file_list.items %}
                     <ul class = "list-inline">
                     {{ product_type }}:
-                    	   {% for f in files %}
-                    			<li><a href = "{{ f.link }}" target = "_blank">{{ f.ext }}</a> </li>
-                    		{% endfor %}
-                {% endfor %}
+
+            	    {% for f in files %}
+            			<li><a href = "{{ f.link }}" target = "_blank">{{ f.ext }}</a> </li>
+            		{% endfor %}
             </ul>
+                {% endfor %}
 
         </div>
 
@@ -72,4 +73,15 @@
     <a class = "shadowbox" href = "{{ path }}{{ img.full }}" rel="shadowbox" target = "_blank">
         <img  id = "detail__{{ img.ring_obs_id }}" src = "{{ path }}{{ img.med }}">
     </a>
+
+    <div>
+        <p>
+            {% if preview_guide_url %}
+
+                Read about <a href = "{{ preview_guide_url }}" target = "_blank">how to interpret {{ instrument_id }} preview images</a>
+
+            {% endif %}
+        </p>
+
+    </div>
 </div>

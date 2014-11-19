@@ -343,10 +343,20 @@ def getDetailPage(request, **kwargs):
     img = get_object_or_404(Image, ring_obs_id=ring_obs_id)
     base_vol_path = Files.objects.filter(ring_obs_id=ring_obs_id)[0].base_path.split('/')[-2:-1][0] + '/' # base_path in the db
     path = settings.IMAGE_HTTP_PATH + base_vol_path
+    instrument_id = ObsGeneral.objects.filter(ring_obs_id=ring_obs_id).values('instrument_id')[0]['instrument_id']
+
+    # get the preview guide url
+    preview_guide_url = ''
+    if instrument_id == 'COCIRS':
+        preview_guide_url = 'http://pds-rings.seti.org/cassini/cirs/COCIRS_previews.txt'
+    if instrument_id == 'COUVIS':
+        preview_guide_url = 'http://pds-rings.seti.org/cassini/uvis/UVIS_previews.txt'
+    if instrument_id == 'COVIMS':
+        preview_guide_url = 'http://pds-rings.seti.org/cassini/vims/COVIMS_previews.txt'
+
+
     # get the data for this obs
     data = getDetail(request,ring_obs_id=ring_obs_id,fmt='raw')
-
-
 
     #files = getFiles(ring_obs_id=ring_obs_id,fmt='raw')['data'][ring_obs_id]
     files = getFiles(ring_obs_id,fmt='raw')[ring_obs_id]

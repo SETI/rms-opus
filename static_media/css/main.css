@@ -289,6 +289,10 @@ ul.ace-thumbnails {
 #detail {
     padding:20px 50px;
 }
+#detail_image div p {
+    margin-top:10px;
+    font-size: 1.2em;
+}
 
 #browse {
     margin-top:15px;
