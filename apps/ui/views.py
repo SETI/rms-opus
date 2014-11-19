@@ -82,7 +82,7 @@ def getMenu(request):
     """ hack, need to get menu sometimes without rendering,
         ie from another view.. so this is for column chooser
         couldn't get template include/block.super to heed GET vars """
-    return getMenuLabels(request,'results')
+    return getMenuLabels(request,'search')
 
 
 def getMenuLabels(request, labels_view):
@@ -96,7 +96,7 @@ def getMenuLabels(request, labels_view):
     todo: change name of  field 'category_name' in param_info table to 'div_title'
     """
 
-    labels_view = 'search' if labels_view == 'search' else 'results'
+    labels_view = 'results' if labels_view == 'results' else 'search'
 
     if request and request.GET:
         (selections,extras) = urlToSearchParams(request.GET)
