@@ -296,7 +296,7 @@ cursor.execute("update %s.param_info set display_results = 1 where slug = 'time1
 # update param_info set display_results = 1 where slug = 'timesec1' or slug = 'timesec2';
 cursor.execute("update %s.param_info set display_results = 1 where slug = 'timesec1' or slug = 'timesec2';" % opus2)
 cursor.execute("update %s.param_info set form_type = 'STRING' where name = 'primary_file_spec'" % opus2)
-
+cursor.execute("update %s.param_info  set label = label_results where category_name = 'obs_general' and name in ('time1','time2');" % opus2)
 
 # ----------- creating the grouping, category, and guide tables --------------#
 queries = """

@@ -41,15 +41,14 @@ class main_site(TemplateView):
 
     def get_context_data(self, **kwargs):
         context = super(main_site, self).get_context_data(**kwargs)
-        menu = getMenuLabels('')
+        menu = getMenuLabels('', 'search')
         context['default_columns'] = settings.DEFAULT_COLUMNS
         context['menu'] = menu['menu']
         return context
 
+
 def get_browse_headers(request,template='browse_headers.html'):
     return render_to_response(template,locals(), context_instance=RequestContext(request))
-
-
 
 
 def get_table_headers(request,template='table_headers.html'):
@@ -77,20 +76,27 @@ def get_table_headers(request,template='table_headers.html'):
                 pass
     return render_to_response(template,locals(), context_instance=RequestContext(request))
 
+
 @render_to('menu.html')
 def getMenu(request):
-
-    """ such a hack, need to get menu sometimes without rendering,
+    """ hack, need to get menu sometimes without rendering,
         ie from another view.. so this is for column chooser
         couldn't get template include/block.super to heed GET vars """
-    return getMenuLabels(request)
+    return getMenuLabels(request,'results')
 
-def getMenuLabels(request):
+
+def getMenuLabels(request, labels_view):
     """
     the categories in the menu on the search form
     category_name is really div_title
+
+    labels_view speaks to whether we fetch the label for 'label' or 'label_results'
+    from the param_info model
+
     todo: change name of  field 'category_name' in param_info table to 'div_title'
     """
+
+    labels_view = 'search' if labels_view == 'search' else 'results'
 
     if request and request.GET:
         (selections,extras) = urlToSearchParams(request.GET)
@@ -102,8 +108,12 @@ def getMenuLabels(request):
     else:
         triggered_tables = get_triggered_tables(selections, extras)
 
-    params = ParamInfo.objects.filter(display='Y', category_name__in=triggered_tables)
     divs = TableName.objects.filter(display='Y', table_name__in=triggered_tables)
+
+    if labels_view == 'search':
+        params = ParamInfo.objects.filter(display=1, category_name__in=triggered_tables)
+    else:
+        params = ParamInfo.objects.filter(display_results=1, category_name__in=triggered_tables)
 
     # build a struct that relates sub_headings to div_titles
     sub_headings = {}
@@ -125,13 +135,23 @@ def getMenuLabels(request):
             # menu_data[d.table_name]['data'] = {'hello':[5,4,3,2,1],'goodbye':[1,2,3,4,5]} # todo
             menu_data[d.table_name].setdefault('data', {})
             for sub_head in sub_headings[d.table_name]:
-                menu_data[d.table_name]['data'][sub_head] = ParamInfo.objects.filter(display='Y', category_name = d.table_name, sub_heading = sub_head)
+
+                if labels_view == 'search':
+                    menu_data[d.table_name]['data'][sub_head] = ParamInfo.objects.filter(display=1, category_name = d.table_name, sub_heading = sub_head)
+                else:  # lables for results or search view
+                    menu_data[d.table_name]['data'][sub_head] = ParamInfo.objects.filter(display_results=1, category_name = d.table_name, sub_heading = sub_head)
 
         else:
             # this div has not sub headings
             menu_data[d.table_name]['has_sub_heading'] = False
-            for p in ParamInfo.objects.filter(display='Y', category_name=d.table_name):
-                menu_data[d.table_name].setdefault('data', []).append(p)
+
+            if labels_view == 'search':
+                for p in ParamInfo.objects.filter(display=1, category_name=d.table_name):
+                    menu_data[d.table_name].setdefault('data', []).append(p)
+            else:
+                for p in ParamInfo.objects.filter(display_results=1, category_name=d.table_name):
+                    menu_data[d.table_name].setdefault('data', []).append(p)
+
 
     # div_labels = {d.table_name:d.label for d in TableName.objects.filter(display='Y', table_name__in=triggered_tables)}
 
@@ -340,6 +360,7 @@ def getDetailPage(request, **kwargs):
 
     return render_to_response(template,locals(), context_instance=RequestContext(request))
 
+
 # I can't explain, other than it's named badly
 def getDetailQuick(request, **kwargs):
     template="detail_quick.html"
@@ -363,7 +384,7 @@ def getDetailQuick(request, **kwargs):
         except:pass
     return render_to_response(template,locals(), context_instance=RequestContext(request))
 
-
+#
 def getColumnLabels(slugs):
     labels = {}
     for slug in slugs:
@@ -378,7 +399,7 @@ def getColumnChooser(request, **kwargs):
         slugs = settings.DEFAULT_COLUMNS.split(',')
     labels = getColumnLabels(slugs)
     namespace = 'column_chooser_input'
-    menu = getMenuLabels(request)['menu']
+    menu = getMenuLabels(request, 'results')['menu']
     return render_to_response("choose_columns.html",locals(), context_instance=RequestContext(request))
 
 
