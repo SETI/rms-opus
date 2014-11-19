@@ -174,7 +174,7 @@ var opus = {
         selections = o_hash.getSelectionsFromHash();
 
         if (!selections) {
-            // handle if there are no selections
+
             if (opus.result_count != '0') {
               $('.hints').html("");  // remove all hints
               opus.updateResultCount('0');
@@ -182,7 +182,9 @@ var opus = {
             if (opus.last_selections) {
                   opus.last_selections = {};
             }
-          return;
+            o_browse.resetQuery();
+
+            return;
         }
 
         // if selections different from last_selections
@@ -192,6 +194,7 @@ var opus = {
                 return;
             }
             opus.force_load = false;
+
         } else if (!jQuery.isEmptyObject(opus.last_selections)) {
 
             // selections have changed (and last_selections is not empty)
@@ -200,7 +203,6 @@ var opus = {
             opus.prefs.page = default_pages;
             o_browse.resetQuery();
         }
-
 
 
         if (!Object.keys(opus.selections).length) {
