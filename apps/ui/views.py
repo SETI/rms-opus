@@ -341,7 +341,7 @@ def getDetailPage(request, **kwargs):
     ring_obs_id = kwargs['ring_obs_id']
 
     img = get_object_or_404(Image, ring_obs_id=ring_obs_id)
-    base_vol_path = Files.objects.filter(ring_obs_id=ring_obs_id)[0].base_path.split('/')[-2:-1][0] + '/' # base_path in the db
+    base_vol_path = get_base_path(ring_obs_id)
     path = settings.IMAGE_HTTP_PATH + base_vol_path
     instrument_id = ObsGeneral.objects.filter(ring_obs_id=ring_obs_id).values('instrument_id')[0]['instrument_id']
 
