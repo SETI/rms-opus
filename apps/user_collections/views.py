@@ -5,6 +5,7 @@
 ################################################import settings
 import settings
 import json
+from collections import OrderedDict
 from django.http import HttpResponse, Http404
 from django.template import RequestContext
 from tools.app_utils import *
@@ -66,7 +67,7 @@ def view_collection(request, collection_name, template="collections.html"):
 
     # images
     images = Image.objects.filter(ring_obs_id__in=collection)
-    image_types = dict([(i,0) for i in settings.IMAGE_TYPES])   # dict with image_types as keys and all values set to zero
+    image_types = OrderedDict([(i,0) for i in settings.IMAGE_TYPES])   # dict with image_types as keys and all values set to zero
     image_count = len(images)
 
     # product files

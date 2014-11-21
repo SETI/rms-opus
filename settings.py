@@ -176,7 +176,7 @@ MULT_FIELDS	= ['GROUP','TARGETS']
 DEFAULT_LIMIT = 100
 MULT_FORM_TYPES = ('GROUP','TARGETS');
 ERROR_LOG_PATH = PROJECT_ROOT + "logs/opus_log.txt"
-IMAGE_TYPES = ['Thumb','Small','Med','Full']
+IMAGE_TYPES = ['Full Res','Medium','Small','Thumb']
 THUMBNAIL_NOT_FOUND = 'http://pds-rings.seti.org/search/app/images/thumbnail_not_found.png'
 
 FILE_HTTP_PATH  = 'http://pds-rings.seti.org/volumes/'
