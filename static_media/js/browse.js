@@ -860,6 +860,9 @@ var o_browse = {
                     // append the data to the data view container
                     $('.gallery_data_viewer').html("<h2>" + ring_obs_id + "</h2>");
 
+                    // update the view data
+                    o_browse.updateColorboxDataViewer(ring_obs_id);
+
                 }
 
             },
@@ -887,8 +890,6 @@ var o_browse = {
                     // $('#cboxLoadedContent').append();
                     ring_obs_id = $.colorbox.element().parent().attr("id").split('__')[1];
 
-                    // update the view data
-                    o_browse.updateColorboxDataViewer(ring_obs_id);
                 }
                 $.colorbox.resize(); // i dunno why
                 $('#colorbox-extra-info').width($('#colorbox').width()/2.3);
