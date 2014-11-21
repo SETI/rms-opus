@@ -108,7 +108,9 @@ var o_hash = {
         // first are any custom widget sizes in the hash?
         // just updating prefs here..
         hash = hash.split('&');
+
         for (var q in hash) {
+
             slug = hash[q].split('=')[0];
             value = hash[q].split('=')[1];
 
@@ -149,18 +151,6 @@ var o_hash = {
                 else if (value) {
                         opus.prefs[slug] = value;
                 }
-
-                /*
-                using page this way is deprecated, fix me!
-                if (slug=='page')  {
-                    $('#page_no', '#browse').val(opus.prefs.page);
-                }
-
-                if (slug=='colls_page')  {
-                    $('#colls_page_no', '#collections').val(opus.prefs.colls_page);
-                }
-                */
-
 
             } else {
                 // these are search params/value!

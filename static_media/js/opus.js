@@ -5,6 +5,7 @@
 
 $(document).ready(function() {
 
+
     o_hash.initFromHash(); // just returns null if no hash
 
     if (!opus.prefs.view) {
@@ -42,6 +43,7 @@ $(document).ready(function() {
 
     });
 
+
     // restart button behavior - start over button
     $('#navbar').on("click", ".restart", function() {
 
@@ -60,13 +62,13 @@ $(document).ready(function() {
         return false;
     }),
 
+
     opus.addAllBehaviors();
 
     // watch the url for changes, this runs continuously
     setInterval(opus.load, 1000);
 
     o_collections.initCollection();
-
 
     return;
 
@@ -94,7 +96,6 @@ var opus = {
     lastCartRequestNo: 0,
 
 
-
     // client side prefs, changes to these *do not trigger results to refresh*
     prefs:{ 'view':'', // search, browse, collection, detail
             'browse':'gallery', //either 'gallery' or 'data', see all_browse_views below
@@ -115,6 +116,9 @@ var opus = {
 
     gallery_data: {},  // holds gallery column data
     all_browse_views: ['gallery','data'],
+
+    pages_drawn: {"colls_gallery": [], "gallery": []},  // keeping track of currently rendered gallery pages
+                                                          // so underlying data can be refreshed after 'choose columns'
 
     // additional defaults are in base.html
 
