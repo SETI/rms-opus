@@ -345,9 +345,6 @@ def getFiles(ring_obs_id, fmt=None, loc_type=None, product_types=None, previews=
 
         for f in files_table_rows:
 
-            # append new base paths
-            path = path + get_base_path(ring_obs_id)
-
             file_extensions = []
             # volume_loc = getAltVolumeLocs(volume_id)
             # volume_loc = f.volume_id
@@ -364,17 +361,14 @@ def getFiles(ring_obs_id, fmt=None, loc_type=None, product_types=None, previews=
                 extra_files = f.extra_files.split(',')
 
             ext = ''.join(f.file_specification_name.split('.')[-1:])
-            base_file = ''.join(f.file_specification_name.split('.')[:-1])
+            base_file = '.'.join(f.file_specification_name.split('.')[:-1])
 
             # // sometimes in GO the volume_id is appended already
             if base_file.find(f.volume_id + ":")>-1:
-                base_file_split = base_file.split(':')
-                base_file = ''.join(base_file_split[1:len(base_file_split)])
+                base_file = ''.join(base_file.split(':')[1:len(base_file.split(':'))])
 
             # // strange punctuation in the base file name is really a directory division
-            base_file = file_name_cleanup(base_file)
-
-            base_file = base_file.strip('/') # trim leading and trailing slashes
+            base_file = file_name_cleanup(base_file).strip('/')
 
             if f.label_type.upper() == 'DETACHED':
                 file_extensions += ['LBL']
@@ -399,6 +393,8 @@ def getFiles(ring_obs_id, fmt=None, loc_type=None, product_types=None, previews=
                     path = settings.FILE_PATH
                 else:
                     path = settings.FILE_HTTP_PATH
+
+            path = path + get_base_path(ring_obs_id)
 
             for extension in file_extensions:
                 file_names[ring_obs_id][f.product_type]  += [path + volume_loc + '/' + base_file + '.' + extension]
