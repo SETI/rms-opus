@@ -400,14 +400,10 @@ def getFiles(ring_obs_id, fmt=None, loc_type=None, product_types=None, previews=
                 else:
                     path = settings.FILE_HTTP_PATH
 
-
-            base_vol_path = Files.objects.filter(ring_obs_id=ring_obs_id)[0].base_path.split('/')[-2:-1][0] + '/'  # base_path in db
-            path = path + base_vol_path
-
             for extension in file_extensions:
                 file_names[ring_obs_id][f.product_type]  += [path + volume_loc + '/' + base_file + '.' + extension]
             # // add the original file
-            file_names[ring_obs_id][f.product_type]  += [path + volume_loc + '/' + base_file + '.' + ext]
+            file_names[ring_obs_id][f.product_type]  += [path + '/' + volume_loc + '/' + base_file + '.' + ext]
 
             file_names[ring_obs_id][f.product_type] = list(set(file_names[ring_obs_id][f.product_type])) #  makes unique
             file_names[ring_obs_id][f.product_type].sort()
