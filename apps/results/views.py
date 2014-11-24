@@ -256,10 +256,6 @@ def get_base_path(ring_obs_id):
     except IndexError:
         return
 
-    # volume_id hack for LORRI
-    if volume_id == 'NHJULO_1001':
-        volume_id = 'NHJULO_2001'
-
     file_path = Files.objects.filter(ring_obs_id=ring_obs_id, volume_id=volume_id)[0].base_path
 
     return '/'.join(file_path.split('/')[-2:])
@@ -328,7 +324,6 @@ def getFiles(ring_obs_id, fmt=None, loc_type=None, product_types=None, previews=
     else:
         log.error('404: no files found for ' + str(ring_obs_id))
         return False
-
 
     file_names = {}
 
