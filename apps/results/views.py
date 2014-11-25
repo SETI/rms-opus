@@ -390,7 +390,7 @@ def getFiles(ring_obs_id, fmt=None, loc_type=None, product_types=None, previews=
                 else:
                     path = settings.FILE_HTTP_PATH
 
-            path = path + f.base_path.split('/')[-1:1]  # base path like xxx
+            path = path + f.base_path.split('/')[-2] + '/'  # base path like xxx
 
             for extension in file_extensions:
                 file_names[ring_obs_id][f.product_type]  += [path + volume_loc + '/' + base_file + '.' + extension]
