@@ -212,7 +212,7 @@ def getImages(request,size,fmt):
     for k, im in enumerate(image_links):
         for s in all_sizes:
             if s in im:
-                image_links[k][s] = get_base_path(im['ring_obs_id']) + im[s]
+                image_links[k][s] = get_base_path_previews(im['ring_obs_id']) + im[s]
 
     # to preserve the order of page_ids as lamely as possible :P
     ordered_image_links = []
@@ -248,7 +248,7 @@ def getImages(request,size,fmt):
     return responseFormats({'data':[i for i in image_links]},fmt, size=size, path=path, alt_size=alt_size, columns_str=columns.split(','), all_collections=all_collections, template=template, order=order)
 
 
-def get_base_path(ring_obs_id):
+def get_base_path_previews(ring_obs_id):
     # find the proper volume_id to pass to the Files table before asking for file_path
     # (sometimes the Files table has extra entries for an observation with funky paths)
     try:
@@ -269,7 +269,7 @@ def getImage(request,size='med', ring_obs_id='',fmt='mouse'):      # mouse?
     return HttpResponse(img + "<br>" + ring_obs_id + ' ' + size +' '+ fmt)
     """
     img = Image.objects.filter(ring_obs_id=ring_obs_id).values(size)[0][size]
-    path = settings.IMAGE_HTTP_PATH + get_base_path(ring_obs_id)
+    path = settings.IMAGE_HTTP_PATH + get_base_path_previews(ring_obs_id)
     return responseFormats({'data':[{'img':img, 'path':path}]}, fmt, size=size, path=path, template='image_list.html')
 
 def file_name_cleanup(base_file):
@@ -341,11 +341,12 @@ def getFiles(ring_obs_id, fmt=None, loc_type=None, product_types=None, previews=
         for f in files_table_rows:
 
             file_extensions = []
-            # volume_loc = getAltVolumeLocs(volume_id)
-            # volume_loc = f.volume_id
             try:
                 volume_loc = ObsGeneral.objects.filter(ring_obs_id=ring_obs_id)[0].volume_id
             except IndexError:
+                volume_loc = f.volume_id
+
+            if f.instrument_id == "LORRI":
                 volume_loc = f.volume_id
 
             if f.product_type not in file_names[ring_obs_id]:
@@ -389,7 +390,7 @@ def getFiles(ring_obs_id, fmt=None, loc_type=None, product_types=None, previews=
                 else:
                     path = settings.FILE_HTTP_PATH
 
-            path = path + get_base_path(ring_obs_id)
+            path = path + f.base_path.split('/')[-1:1]  # base path like xxx
 
             for extension in file_extensions:
                 file_names[ring_obs_id][f.product_type]  += [path + volume_loc + '/' + base_file + '.' + extension]
@@ -410,7 +411,7 @@ def getFiles(ring_obs_id, fmt=None, loc_type=None, product_types=None, previews=
                 base_path = url_info['data'][0]['path']
                 if url:
                     if loc_type == 'path':
-                        url = settings.IMAGE_PATH + get_base_path(ring_obs_id) + url
+                        url = settings.IMAGE_PATH + get_base_path_previews(ring_obs_id) + url
                     else:
                         url = base_path + url
 

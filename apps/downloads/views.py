@@ -1,4 +1,4 @@
-from os.path import getsize
+get_from os.path import getsize
 import random
 import string
 import datetime
@@ -49,9 +49,9 @@ def get_download_size(files, product_types, previews):
         for size_str in filter(None, [p.lower() for p in previews]):
             img = Image.objects.filter(ring_obs_id=ring_obs_id).values(size_str)[0][size_str]
 
-            from results.views import get_base_path
+            from results.views import get_base_path_previews
             try:
-                img_path = settings.IMAGE_PATH + get_base_path(ring_obs_id)
+                img_path = settings.IMAGE_PATH + get_base_path_previews(ring_obs_id)
                 size = getsize(img_path + img)
                 total_size += size
 
