@@ -1,4 +1,4 @@
-get_from os.path import getsize
+from os.path import getsize
 import random
 import string
 import datetime
