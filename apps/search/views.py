@@ -260,7 +260,7 @@ def urlToSearchParams(request_get):
         return False
 
 
-def setUserSearchNo(selections,extras={}):
+def setUserSearchNo(selections,extras=None):
     """
     creates a new row in userSearches model for every search request
     [cleanup,optimize]
@@ -268,6 +268,9 @@ def setUserSearchNo(selections,extras={}):
     this method looks in user_searches table for current selections
     if none exist creates it, returns id key
     """
+    if not extras:
+        extras = {}
+
     qtypes_json = qtypes_hash = None
     if 'qtypes' in extras:
         # 'any' is the default qtype, so lets not set that in the cache, set 'any' = None

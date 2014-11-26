@@ -91,9 +91,9 @@ def getValidMults(request,slug,fmt='json'):
     """
     try:
         (selections,extras) = urlToSearchParams(request.GET)
-    except: return False
+    except:
+        selections = {}
 
-    qtypes     = extras['qtypes']
     param_info = ParamInfo.objects.get(slug=slug)
     table_name = param_info.category_name
     param_name = param_info.param_name()

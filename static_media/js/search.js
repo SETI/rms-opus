@@ -314,7 +314,6 @@ var o_search = {
 
     getValidMults: function (slug) {
         // turn on spinner
-        if (jQuery.isEmptyObject(o_hash.getSelectionsFromHash())) return;
         $('#widget__' + slug + ' .spinner').fadeIn();
 
         var url = "/opus/api/meta/mults/" + slug + ".json?" + o_hash.getHash() +  '&reqno=' + opus.lastRequestNo;

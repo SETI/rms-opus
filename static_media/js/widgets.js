@@ -615,6 +615,8 @@ var o_widgets = {
              o_widgets.customWidgetBehaviors(slug);
 
 
+             o_search.getHinting(slug);
+
       }); // end function success, end ajax
      }, // end func
 

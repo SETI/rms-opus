@@ -357,7 +357,7 @@ var opus = {
         return;
 
 
-        // these are the default open groups/cats
+        // these are the default open groups/cats in search tab side menu
         $(".cat_label", "li.target-body", "#search").trigger("click");
 
     }
