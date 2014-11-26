@@ -349,6 +349,7 @@ def getFiles(ring_obs_id, fmt=None, loc_type=None, product_types=None, previews=
             except IndexError:
                 volume_loc = f.volume_id
 
+            # hack for LORRI strangeness
             if f.instrument_id == "LORRI":
                 volume_loc = f.volume_id
 
@@ -370,7 +371,8 @@ def getFiles(ring_obs_id, fmt=None, loc_type=None, product_types=None, previews=
             base_file = file_name_cleanup(base_file).strip('/')
 
             if f.label_type.upper() == 'DETACHED':
-                file_extensions += ['LBL']
+                if f.product_type not in ['TIFF_PREVIEW_IMAGE','JPEG_PREVIEW_IMAGE']:  # HST hack
+                    file_extensions += ['LBL']
 
             if f.ascii_ext: file_extensions += [f.ascii_ext]
             if f.lsb_ext: file_extensions += [f.lsb_ext]
