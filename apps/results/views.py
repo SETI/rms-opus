@@ -374,6 +374,8 @@ def getFiles(ring_obs_id, fmt=None, loc_type=None, product_types=None, previews=
             if f.msb_ext: file_extensions += [f.msb_ext]
             if f.detached_label_ext: file_extensions += [f.detached_label_ext]
 
+            file_extensions = list(set(file_extensions))
+
             # extras are never found in the derived directory, so get those first
             for extra in extra_files:
                 file_names[ring_obs_id][f.product_type]  += [path + volume_loc + '/' + extra]
