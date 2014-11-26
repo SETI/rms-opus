@@ -334,7 +334,13 @@ var o_search = {
                     id = '#hint__' + slug + "_" + value.split(' ').join('_'); // id of hinting span
                     if (mults[value]){
                           $(id).html('<span>' + mults[value] + '</span>');
-                    } else $(id).html('<span>0</span>');
+                          if ($(id).parent().hasClass("fadey")) {
+                            $(id).parent().removeClass("fadey");
+                          }
+                    } else {
+                        $(id).html('<span>0</span>');
+                        $(id).parent().addClass("fadey");
+                    }
 
                 });
 
