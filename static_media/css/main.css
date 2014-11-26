@@ -332,11 +332,15 @@ ul.ace-thumbnails {
 }
 .widget-main ul li ul li {
    white-space:nowrap;
+
  }
 .widget-main ul li {
     margin-right: 5px;
     display:inline;
     list-style-type:none;
+}
+.widget-main label {
+    font-size:95%;
 }
 
 
