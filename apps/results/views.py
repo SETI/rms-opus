@@ -256,6 +256,9 @@ def get_base_path_previews(ring_obs_id):
     except IndexError:
         return
 
+    if volume_id == 'NHJULO_1xxx':
+        volume_id = 'NHJULO_2xxx'  # NHJULO needs some help
+
     file_path = Files.objects.filter(ring_obs_id=ring_obs_id, volume_id=volume_id)[0].base_path
 
     return '/'.join(file_path.split('/')[-2:])
