@@ -43,7 +43,19 @@ def constructQueryString(selections, extras):
         cat_name = param_name.split('.')[0]
         cat_model_name = ''.join(cat_name.lower().split('_'))
         name = param_name.split('.')[1]
-        param_info = ParamInfo.objects.get(name=name, category_name = cat_name)
+
+        try:
+            param_info    = ParamInfo.objects.get(category_name=cat_name, name=name)
+        except ParamInfo.DoesNotExist:
+            # single column range queries will not have the numeric suffix
+            try:
+                single_col_range = True
+                name_no_num = stripNumericSuffix(name)
+                param_info    = ParamInfo.objects.get(category_name=cat_name, name=name_no_num)
+            except ParamInfo.DoesNotExist:
+                return False
+
+
         form_type = param_info.form_type
         special_query = param_info.special_query
 

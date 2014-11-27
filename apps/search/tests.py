@@ -53,6 +53,14 @@ class searchTests(TestCase):
         expected = "SELECT `obs_general`.`id` FROM `obs_general` WHERE `obs_general`.`primary_file_spec` LIKE %C11399XX%"
         self.assertEqual("".join(q.split()),"".join(expected.split()))  # strips all whitespace b4 compare
 
+    def test__constructQueryString_single_column_range(self):
+        selections = {u'obs_ring_geometry.ring_center_phase1': [20.0], u'obs_ring_geometry.ring_center_phase2': [180.0]}
+        sql, params = constructQueryString(selections, {})
+        q = sql % params
+        print q
+        expected = "SELECT `obs_general`.`id` FROM `obs_general` INNER JOIN `obs_ring_geometry` ON ( `obs_general`.`id` = `obs_ring_geometry`.`obs_general_id` ) WHERE (`obs_ring_geometry`.`ring_center_phase` <= 180.0  AND `obs_ring_geometry`.`ring_center_phase` >= 20.0 )"
+        self.assertEqual("".join(q.split()),"".join(expected.split()))  # strips all whitespace b4 compare
+
     def test__constructQueryString_string_with_qtype(self):
         selections = {'obs_general.primary_file_spec': ['C11399XX']}
         extras = {'qtypes': {'obs_general.primary_file_spec': ['contains']}}
