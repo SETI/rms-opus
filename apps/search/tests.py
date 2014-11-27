@@ -277,6 +277,15 @@ class searchTests(TestCase):
 
     ##  Range Query tests
 
+
+    def test_range_query_single_col_range_all(self):
+        selections = {u'obs_ring_geometry.ring_center_phase1': [20.0], u'obs_ring_geometry.ring_center_phase2': [180.0]}
+        q = str(range_query_object(selections,'obs_ring_geometry.ring_center_phase1',['all']))
+        print q
+        expected = "(AND: (u'obsringgeometry__ring_center_phase__lte', 20.0), (u'obsringgeometry__ring_center_phase__gte', 180.0))"
+        print expected
+        self.assertEqual("".join(q.split()),"".join(expected.split()))  # strips all whitespace b4 compare
+
     def test_range_query_any_times(self):
         selections = {u'obs_general.planet_id': [u'Saturn'], u'obs_general.time_sec2': [u'2000-024'], u'obs_general.time_sec1': [u'2000-023']}
         q = str(range_query_object(selections,'obs_general.time_sec1',['any']))

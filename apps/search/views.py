@@ -227,7 +227,7 @@ def urlToSearchParams(request_get):
                 try:
                     param_info = ParamInfo.objects.get(slug=slug + '1')  #  qtypes for ranges come through as the param_name_no num which doesn't exist in param_info, so grab the param_info for the lower side of hte ragne
                     # this is not a query param, ignore it
-                except:
+                except ParamInfo.DoesNotExist:
                     continue
 
         param_name = param_info.param_name()
@@ -362,15 +362,37 @@ def range_query_object(selections, param_name, qtypes):
     # grab some info about this param
     cat_name      = param_name.split('.')[0]
     name          = param_name.split('.')[1]
-    param_info    = ParamInfo.objects.get(category_name=cat_name, name=name)
+    single_col_range = False
+
+    try:
+        param_info    = ParamInfo.objects.get(category_name=cat_name, name=name)
+    except ParamInfo.DoesNotExist:
+        # single column range queries will not have the numeric suffix
+        try:
+            single_col_range = True
+            name_no_num = stripNumericSuffix(name)
+            param_info    = ParamInfo.objects.get(category_name=cat_name, name=name_no_num)
+        except ParamInfo.DoesNotExist:
+            return False
+
     form_type     = param_info.form_type
     table_name = param_info.category_name
-    special_query = param_info.special_query
 
     # we will define both sides of the query, so define those param names
     param_name_no_num = stripNumericSuffix(param_name)
     param_name_min = param_name_no_num + '1'
     param_name_max = param_name_no_num + '2'
+
+    print param_name_min, param_name_max
+
+    # grab min and max values from query selections object
+    values_min = selections[param_name_min] if param_name_min in selections else []
+    values_max = selections[param_name_max] if param_name_max in selections else []
+
+    # but, for constructing the query,
+    # if this is a single column range, the param_names are both the same
+    if single_col_range:
+        param_name_min = param_name_max = param_name_no_num
 
     # to follow related models, we need the lowercase model name, not the param name
     # UNLESS this param is in the obs_General table, then must leave out the model name!
@@ -380,10 +402,6 @@ def range_query_object(selections, param_name, qtypes):
     else:
         param_model_name_min = table_name.lower().replace('_','') + '__' + param_name_min.split('.')[1]
         param_model_name_max = table_name.lower().replace('_','') + '__' + param_name_max.split('.')[1]
-
-    # grab min and max values from query selections object
-    values_min = selections[param_name_min] if param_name_min in selections else []
-    values_max = selections[param_name_max] if param_name_max in selections else []
 
     # if these are times convert values from time string to seconds
     if form_type == 'TIME':
