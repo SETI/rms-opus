@@ -25,6 +25,52 @@ from paraminfo.models import ParamInfo
 import logging
 log = logging.getLogger(__name__)
 
+
+def get_param_info_by_slug(slug):
+    slug_no_num = stripNumericSuffix(slug)
+
+    try:
+        return ParamInfo.objects.get(slug=slug_no_num)
+    except ParamInfo.DoesNotExist:
+        try:
+            return ParamInfo.objects.get(slug=slug)  #  qtypes for ranges come through as the param_name_no num which doesn't exist in param_info, so grab the param_info for the lower side of hte ragne
+        except ParamInfo.DoesNotExist:
+            try:
+                return ParamInfo.objects.get(slug=slug + '1')  #  qtypes for ranges come through as the param_name_no num which doesn't exist in param_info, so grab the param_info for the lower side of hte ragne
+                # this is not a query param, ignore it
+            except ParamInfo.DoesNotExist:
+                return False
+
+def get_param_info_by_param(param_name):
+    cat_name      = param_name.split('.')[0]
+    name          = param_name.split('.')[1]
+
+    try:
+        return ParamInfo.objects.get(category_name=cat_name, name=name)
+    except ParamInfo.DoesNotExist:
+        # single column range queries will not have the numeric suffix
+        try:
+            name_no_num = stripNumericSuffix(name)
+            return ParamInfo.objects.get(category_name=cat_name, name=name_no_num)
+        except ParamInfo.DoesNotExist:
+            return False
+
+def is_single_column_range(param_name):
+    cat_name      = param_name.split('.')[0]
+    name          = param_name.split('.')[1]
+
+    try:
+        param_info = ParamInfo.objects.get(category_name=cat_name, name=name)
+        return False
+    except ParamInfo.DoesNotExist:
+        # single column range queries will not have the numeric suffix
+        try:
+            name_no_num = stripNumericSuffix(name)
+            return ParamInfo.objects.get(category_name=cat_name, name=name_no_num)
+        except ParamInfo.DoesNotExist:
+            return False
+
+
 def constructQueryString(selections, extras):
 
     all_qtypes = extras['qtypes'] if 'qtypes' in extras else []
@@ -44,17 +90,9 @@ def constructQueryString(selections, extras):
         cat_model_name = ''.join(cat_name.lower().split('_'))
         name = param_name.split('.')[1]
 
-        try:
-            param_info    = ParamInfo.objects.get(category_name=cat_name, name=name)
-        except ParamInfo.DoesNotExist:
-            # single column range queries will not have the numeric suffix
-            try:
-                single_col_range = True
-                name_no_num = stripNumericSuffix(name)
-                param_info    = ParamInfo.objects.get(category_name=cat_name, name=name_no_num)
-            except ParamInfo.DoesNotExist:
-                return False
-
+        param_info = get_param_info_by_param(param_name)
+        if not param_info:
+            return False
 
         form_type = param_info.form_type
         special_query = param_info.special_query
@@ -230,17 +268,9 @@ def urlToSearchParams(request_get):
             slug = slug.split('-')[1]
             slug_no_num = stripNumericSuffix(slug)
 
-        try:
-            param_info = ParamInfo.objects.get(slug=slug_no_num)
-        except ParamInfo.DoesNotExist:
-            try:
-                param_info = ParamInfo.objects.get(slug=slug)  #  qtypes for ranges come through as the param_name_no num which doesn't exist in param_info, so grab the param_info for the lower side of hte ragne
-            except ParamInfo.DoesNotExist:
-                try:
-                    param_info = ParamInfo.objects.get(slug=slug + '1')  #  qtypes for ranges come through as the param_name_no num which doesn't exist in param_info, so grab the param_info for the lower side of hte ragne
-                    # this is not a query param, ignore it
-                except ParamInfo.DoesNotExist:
-                    continue
+        param_info = get_param_info_by_slug(slug)
+        if not param_info:
+            continue
 
         param_name = param_info.param_name()
         form_type = param_info.form_type
@@ -372,20 +402,9 @@ def range_query_object(selections, param_name, qtypes):
 
     """
     # grab some info about this param
-    cat_name      = param_name.split('.')[0]
-    name          = param_name.split('.')[1]
-    single_col_range = False
-
-    try:
-        param_info    = ParamInfo.objects.get(category_name=cat_name, name=name)
-    except ParamInfo.DoesNotExist:
-        # single column range queries will not have the numeric suffix
-        try:
-            single_col_range = True
-            name_no_num = stripNumericSuffix(name)
-            param_info    = ParamInfo.objects.get(category_name=cat_name, name=name_no_num)
-        except ParamInfo.DoesNotExist:
-            return False
+    param_info = get_param_info_by_param(param_name)
+    if not param_info:
+        return False
 
     form_type     = param_info.form_type
     table_name = param_info.category_name
@@ -403,7 +422,7 @@ def range_query_object(selections, param_name, qtypes):
 
     # but, for constructing the query,
     # if this is a single column range, the param_names are both the same
-    if single_col_range:
+    if is_single_column_range(param_name):
         param_name_min = param_name_max = param_name_no_num
 
     # to follow related models, we need the lowercase model name, not the param name
