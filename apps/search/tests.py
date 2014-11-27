@@ -155,7 +155,15 @@ class searchTests(TestCase):
         table = getUserQueryTable(self.selections)
         self.assertEqual(table.split('_')[0],'cache')
 
+
     ## test urlToSearchParam
+    def test__urlToSearchParams_single_column_range(self):
+        q = QueryDict('ringcenterphase1=20&ringcenterphase2=180')
+        (selections,extras) = urlToSearchParams(q)
+        expected = {u'obs_ring_geometry.ring_center_phase1': [20.0], u'obs_ring_geometry.ring_center_phase2': [180.0]}
+        print selections
+        self.assertEqual(selections,expected)
+
     def test__urlToSearchParams_times(self):
         q = QueryDict('planet=Saturn&timesec1=2000-023T06:00&timesec2=2000-024T06:00')
         (selections,extras) = urlToSearchParams(q)
@@ -458,7 +466,6 @@ class searchTests(TestCase):
         # time_sec2 >= -649993324.720000
         expected = "(AND: ('time_sec2__gte', -649950124.72000003))"
         self.assertEqual("".join(q.split()),"".join(expected.split()))  # strips all whitespace b4 compare
-
 
     ## longitude query tests
     def test__longitudeQuery_single(self):

@@ -208,8 +208,9 @@ def urlToSearchParams(request_get):
 
     for searchparam in request_get.items():
         # try:
-        slug              = searchparam[0]
-        slug_no_num       = stripNumericSuffix(slug)
+        slug = searchparam[0]
+        slug_no_num = stripNumericSuffix(slug)
+        values = searchparam[1].strip(',').split(',')
 
         qtype = False  # assume this is not a qtype statement
         if slug.find('qtype') == 0:
@@ -218,19 +219,21 @@ def urlToSearchParams(request_get):
             slug_no_num = stripNumericSuffix(slug)
 
         try:
-            param_info = ParamInfo.objects.get(slug=slug)
+            param_info = ParamInfo.objects.get(slug=slug_no_num)
         except ParamInfo.DoesNotExist:
             try:
-                param_info = ParamInfo.objects.get(slug=slug + '1')  #  qtypes for ranges come through as the param_name_no num which doesn't exist in param_info, so grab the param_info for the lower side of hte ragne
+                param_info = ParamInfo.objects.get(slug=slug)  #  qtypes for ranges come through as the param_name_no num which doesn't exist in param_info, so grab the param_info for the lower side of hte ragne
             except ParamInfo.DoesNotExist:
-                # this is not a query param, ignore it
-                continue
-
-        form_type = param_info.form_type
+                try:
+                    param_info = ParamInfo.objects.get(slug=slug + '1')  #  qtypes for ranges come through as the param_name_no num which doesn't exist in param_info, so grab the param_info for the lower side of hte ragne
+                    # this is not a query param, ignore it
+                except:
+                    continue
 
         param_name = param_info.param_name()
-        param_name_no_num = stripNumericSuffix(param_name)
+        form_type = param_info.form_type
 
+        param_name_no_num = stripNumericSuffix(param_name)
 
         if qtype:
             qtypes[param_name_no_num] = request_get.get('qtype-'+slug_no_num,False).strip(',').split(',')
@@ -239,12 +242,20 @@ def urlToSearchParams(request_get):
         if form_type in settings.MULT_FORM_TYPES:
             # mult form types can be sorted to save duplicate queries being built
             selections[param_name] = sorted(searchparam[1].strip(',').split(','))
+
         else:
             # no other form types can be sorted since their ordering corresponds to qtype ordering
-            if searchparam[1]:  ## handles one sideds
-                selections[param_name] = searchparam[1].strip(',').split(',')
+            if searchparam[1]:  # if it has a value
                 if form_type == "RANGE":
-                    selections[param_name] = map(float, selections[param_name])
+                    if param_name == param_name_no_num:
+                        # this is a single column range query
+                        ext = slug[-1]
+                        selections[param_name + ext] = map(float, values)
+                    else:
+                        # normal 2-column range query
+                        selections[param_name] = map(float, values)
+                else:
+                    selections[param_name] = values
 
         # except: pass # the param passed doesn't exist or is a USER PREF AAAAAACK
 
