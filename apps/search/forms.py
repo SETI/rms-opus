@@ -1,5 +1,6 @@
 from django import forms
 from metadata.views import *
+from search.views import get_param_info_by_slug
 from django.db.models import get_model
 from paraminfo.models import *
 from tools.app_utils import *
@@ -67,9 +68,13 @@ class SearchForm(forms.Form):
         # this makes getMultName() below not choke, circular import issue? not sure..but this fixes
         from metadata.views import getMultName
 
+
         for slug,values in args[0].items():
+
+            param_info = get_param_info_by_slug(slug)
+
             try:
-                form_type = ParamInfo.objects.get(slug=slug).form_type
+                form_type = param_info.form_type
             except ParamInfo.DoesNotExist:
                 continue    # this is not a query param, probably a qtype, move along
 
@@ -90,10 +95,15 @@ class SearchForm(forms.Form):
                 )
 
             if form_type in settings.RANGE_FIELDS:
+
                 choices =  (('any','any'),('all','all'),('only','only'))
                 slug_no_num = stripNumericSuffix(slug)
                 num = getNumericSuffix(slug)
-                label = 'min' if num == '1' else 'max'
+                if not num:
+                    slug = slug + '1'
+
+                label = 'max' if num == '2' else 'min'
+
                 self.fields[slug] = MultiFloatField(
                      required=False,
                      label = label,

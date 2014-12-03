@@ -10,6 +10,7 @@ from django.http import HttpResponse
 from django.db.models import Avg, Max, Min, Count, get_model
 from django.db import connection
 from paraminfo.models import ParamInfo
+from search.views import get_param_info_by_slug
 
 from search.models import *
 
@@ -94,7 +95,8 @@ def getValidMults(request,slug,fmt='json'):
     except:
         selections = {}
 
-    param_info = ParamInfo.objects.get(slug=slug)
+    param_info = get_param_info_by_slug(slug)
+
     table_name = param_info.category_name
     param_name = param_info.param_name()
 
@@ -160,7 +162,7 @@ def getRangeEndpoints(request,slug,fmt='json'):
 
     #    extras['qtypes']['']
 
-    param_info = ParamInfo.objects.get(slug=slug)
+    param_info = get_param_info_by_slug(slug)
 
     param_name = param_info.param_name()
     form_type = param_info.form_type
@@ -170,12 +172,16 @@ def getRangeEndpoints(request,slug,fmt='json'):
     param_name_no_num = stripNumericSuffix(param_name1)
     table_model = get_model('search', table_name.title().replace('_',''))
 
+    if form_type == 'RANGE' and '1' not in param_info.slug:
+        param_name1 = param_name2 = param_name_no_num
+
     try:
         (selections,extras) = urlToSearchParams(request.GET)
         user_table = getUserQueryTable(selections,extras)
         has_selections = True
 
     except TypeError:
+        selections = {}
         has_selections = False
         user_table = False
 
@@ -196,9 +202,9 @@ def getRangeEndpoints(request,slug,fmt='json'):
 
     results    = table_model.objects # this is a count(*), group_by query!
     if table_name == 'obs_general':
-        where = table_name + ".id = " + user_table + ".id"
+        where = "%s.id = %s.id" % (table_name, user_table)
     else:
-        where = table_name + ".obs_general_id = " + user_table + ".id"
+        where = "%s.obs_general_id = %s.id" % (table_name, user_table)
 
     if has_selections:
         # has selections, tie query to user_table

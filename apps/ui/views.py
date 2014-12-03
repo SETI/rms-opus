@@ -84,6 +84,16 @@ def getMenu(request):
         couldn't get template include/block.super to heed GET vars """
     return getMenuLabels(request,'search')
 
+def normalize_single_colun_range_slug(param_info):
+    # hack for single column range queries:
+    # want the slug to be 'slug1' in menu not just 'slug'
+    # param_info is param_info object for a single slug
+    if param_info.form_type == 'RANGE' and '1' not in param_info.slug:
+        param_info.slug = param_info.slug + '1'
+        return param_info.slug
+    else:
+        return param_info.slug
+
 
 def getMenuLabels(request, labels_view):
     """
@@ -141,17 +151,22 @@ def getMenuLabels(request, labels_view):
                 else:  # lables for results or search view
                     menu_data[d.table_name]['data'][sub_head] = ParamInfo.objects.filter(display_results=1, category_name = d.table_name, sub_heading = sub_head)
 
+                for p in menu_data[d.table_name]['data'][sub_head]:
+                    p.slug = normalize_single_colun_range_slug(p)
+
         else:
-            # this div has not sub headings
+            # this div has no sub headings
             menu_data[d.table_name]['has_sub_heading'] = False
 
             if labels_view == 'search':
                 for p in ParamInfo.objects.filter(display=1, category_name=d.table_name):
+
+
                     menu_data[d.table_name].setdefault('data', []).append(p)
             else:
                 for p in ParamInfo.objects.filter(display_results=1, category_name=d.table_name):
-                    menu_data[d.table_name].setdefault('data', []).append(p)
 
+                    menu_data[d.table_name].setdefault('data', []).append(p)
 
     # div_labels = {d.table_name:d.label for d in TableName.objects.filter(display='Y', table_name__in=triggered_tables)}
 
@@ -165,7 +180,7 @@ def getWidget(request, **kwargs):
     fmt = kwargs['fmt']
     form = ''
 
-    param_info  = ParamInfo.objects.get(slug=slug)
+    param_info = get_param_info_by_slug(slug)
 
     form_type = param_info.form_type
     param_name = param_info.param_name()
@@ -185,6 +200,7 @@ def getWidget(request, **kwargs):
 
     if form_type in settings.RANGE_FIELDS:
         auto_id = False
+
         slug_no_num = stripNumericSuffix(slug)
         param_name_no_num = stripNumericSuffix(param_name)
 
@@ -299,7 +315,8 @@ def getWidget(request, **kwargs):
             form_vals = {slug:selections[param_name]}
         form = SearchForm(form_vals, auto_id=auto_id).as_ul()
 
-    param_info  = ParamInfo.objects.get(slug=slug)
+    param_info = get_param_info_by_slug(slug)
+
     label = param_info.label
 
     if fmt == 'raw':
@@ -377,7 +394,7 @@ def getDetailQuick(request, **kwargs):
     slugs = request.GET.get('cols',False)
     ring_obs_id = kwargs['ring_obs_id']
 
-    param_info  = ParamInfo.objects
+    param_info = get_param_info_by_slug(slug)
 
     data = {}
     if slugs:

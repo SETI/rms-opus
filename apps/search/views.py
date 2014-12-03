@@ -159,6 +159,8 @@ def constructQueryString(selections, extras):
             sql += " ".join([" and (%s) " % long_query[0] for long_query in long_querys])
             params += [long_query[1] for long_query in long_querys]
 
+        print sql % params
+
         return sql, params
 
     except EmptyResultSet:
@@ -215,7 +217,6 @@ def getUserQueryTable(selections,extras={}):
         # add the key **** this, and perhaps the create statement too, can be spawned to a backend process ****
         cursor.execute("alter table " + connection.ops.quote_name(ptbl) + " add unique key(id)  ")
 
-        # print 'execute ok'
         cache.set(cache_key,ptbl,0)
         return ptbl
 
@@ -413,8 +414,6 @@ def range_query_object(selections, param_name, qtypes):
     param_name_no_num = stripNumericSuffix(param_name)
     param_name_min = param_name_no_num + '1'
     param_name_max = param_name_no_num + '2'
-
-    print param_name_min, param_name_max
 
     # grab min and max values from query selections object
     values_min = selections[param_name_min] if param_name_min in selections else []
