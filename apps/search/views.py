@@ -313,8 +313,13 @@ def urlToSearchParams(request_get):
         log.debug(request_get)
         log.debug(selections)
         log.debug(results)
+        return results
+
 
     else:
+        log.debug("-------- urlToSearchParams -------- ")
+        log.debug("no selections found ")
+        log.debug(request_get)
         return False
 
 
@@ -610,4 +615,3 @@ from metadata.views import *
 from search.forms import *
 """
 from metadata.views import getUserSearchTableName
-
