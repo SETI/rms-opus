@@ -30,6 +30,13 @@ DATABASES = {
         'OPTIONS':{ 'init_command': 'SET storage_engine=MYISAM;'},
         # 'TEST_NAME': 'test_opus',
         # 'OPTIONS':{ 'unix_socket': '/private/var/mysql/mysql.sock'}
+    },
+    'dictionary': {
+        'NAME': 'dictionary',
+        'ENGINE': 'django.db.backends.mysql',
+        'USER': DB_USER,
+        'PASSWORD': DB_PASS,
+        'OPTIONS':{ 'init_command': 'SET storage_engine=MYISAM;'},
     }
 }
 
@@ -144,6 +151,7 @@ INSTALLED_APPS = (
     'ui',
     'user_collections',
     'tools',
+    'dictionary',
 )
 
 STATICFILES_DIRS = (os.path.join(PROJECT_ROOT, 'static_media'),)

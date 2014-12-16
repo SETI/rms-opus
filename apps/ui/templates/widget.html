@@ -7,6 +7,11 @@
         <div class="widget-box widget-color-blue2">
             <div class="widget-header">
                 <h5 class="widget-title">{{ label }} </h5>
+                {% if dictionary %}
+                    <a class = "dict_link" href = "{{ dictionary.more_info }}" target = "_blank">
+                        <i style = "color:white" class = "ace-icon fa fa-info-circle"></i>
+                    </a>
+                {% endif %}
                 <span class = "spinner">&nbsp;</span>
                 <div class="widget-toolbar">
 
@@ -23,6 +28,9 @@
 
             <div class="widget__{{ slug }} widget-body">
                 <div class="widget-main">
+                    <div class = "dictionary">
+                        {{ dictionary.def|striptags }} <a href = "{{ dictionary.more_info }}" target = "_blank">More info.</a>
+                    </div>
                     <div id = "hint__{{ slug }}" class = "range_hints"></div>
                     <ul>
                         {{ form|safe }}

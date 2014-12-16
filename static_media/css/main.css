@@ -1,6 +1,9 @@
 /* column chooser things */
 
 
+.dictionary {
+    display:none;
+}
 .fadey {
     color:#b0b0b0;
 }

@@ -23,8 +23,8 @@ from search.forms import SearchForm
 from metadata.views import *
 from paraminfo.models import *
 from results.views import *
+from dictionary.views import get_dictionary_info
 from django.views.generic import TemplateView
-
 
 # guide only
 import json
@@ -184,6 +184,8 @@ def getWidget(request, **kwargs):
 
     form_type = param_info.form_type
     param_name = param_info.param_name()
+
+    dictionary = get_dictionary_info(slug)
 
     form_vals = {slug:None}
     auto_id = True

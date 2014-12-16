@@ -20,6 +20,12 @@ var o_widgets = {
         });
         */
 
+        // click the dictionary icon, the definition slides open
+        $('#search').on('click', 'a.dict_link', function() {
+            $(this).parent().parent().find('.dictionary').slideToggle();
+            return false;
+        });
+
         // open/close mult groupings in widgetts
         $('#search').on('click', '.mult_group_label_container', function () {
             $(this).find('.indicator').toggleClass('fa-plus');
