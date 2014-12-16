@@ -1,13 +1,6 @@
 # from django.shortcuts import render
 from dictionary.models import *
-from search.views import get_param_info_by_slug
 
-def get_dictionary_info(slug):
-    param_info = get_param_info_by_slug(slug)
-    definition = {}
-    definition['def'] = get_def(param_info.dict_name, param_info.dict_context)
-    definition['more_info'] = get_more_info_url(param_info.dict_more_info_name, param_info.dict_more_info_context)
-    return definition
 
 def get_def(term, context):
 

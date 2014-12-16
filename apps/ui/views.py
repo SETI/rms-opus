@@ -23,7 +23,6 @@ from search.forms import SearchForm
 from metadata.views import *
 from paraminfo.models import *
 from results.views import *
-from dictionary.views import get_dictionary_info
 from django.views.generic import TemplateView
 
 # guide only
@@ -134,7 +133,7 @@ def getMenuLabels(request, labels_view):
         if sub_headings[s] == [None]:
             sub_headings[s] = None
 
-    # build a nice data struct form the mu&*!#$@!ing template
+    # build a nice data struct for the mu&*!#$@!ing template
     menu_data = {}
     for d in divs:
         menu_data.setdefault(d.table_name, {})
@@ -142,7 +141,7 @@ def getMenuLabels(request, labels_view):
         if d.table_name in sub_headings and sub_headings[d.table_name]:
             # this div is divided into sub headings
             menu_data[d.table_name]['has_sub_heading'] = True
-            # menu_data[d.table_name]['data'] = {'hello':[5,4,3,2,1],'goodbye':[1,2,3,4,5]} # todo
+
             menu_data[d.table_name].setdefault('data', {})
             for sub_head in sub_headings[d.table_name]:
 
@@ -160,13 +159,12 @@ def getMenuLabels(request, labels_view):
 
             if labels_view == 'search':
                 for p in ParamInfo.objects.filter(display=1, category_name=d.table_name):
-
-
                     menu_data[d.table_name].setdefault('data', []).append(p)
             else:
                 for p in ParamInfo.objects.filter(display_results=1, category_name=d.table_name):
 
                     menu_data[d.table_name].setdefault('data', []).append(p)
+
 
     # div_labels = {d.table_name:d.label for d in TableName.objects.filter(display='Y', table_name__in=triggered_tables)}
 
@@ -185,7 +183,7 @@ def getWidget(request, **kwargs):
     form_type = param_info.form_type
     param_name = param_info.param_name()
 
-    dictionary = get_dictionary_info(slug)
+    dictionary = param_info.get_dictionary_info()
 
     form_vals = {slug:None}
     auto_id = True

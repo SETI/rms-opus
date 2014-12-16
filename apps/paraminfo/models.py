@@ -1,9 +1,7 @@
 from django.db import models
 from django.contrib.contenttypes.models import ContentType
 from django.core.urlresolvers import reverse
-
-
-
+from dictionary.views import get_def, get_more_info_url
 
 RANK_CHOICES = (('0','Advanced'),('1','Basic'))
 
@@ -76,6 +74,13 @@ class ParamInfo(models.Model):
 
     def param_name(self):
         return self.category_name + '.' + self.name
+
+    def get_dictionary_info(self):
+        definition = {}
+        definition['def'] = get_def(self.dict_name, self.dict_context)
+        definition['more_info'] = get_more_info_url(self.dict_more_info_name, self.dict_more_info_context)
+        return definition
+
 
     # http://djangosnippets.org/snippets/2057/
     def save(self, *args, **kwargs):
