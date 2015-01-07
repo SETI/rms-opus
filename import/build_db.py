@@ -15,9 +15,8 @@ from django.db.models import get_model
 from django.db.utils import DatabaseError
 from django.utils.datastructures import SortedDict
 from settings import DATABASES, MULT_FIELDS  # DATABASES creds only
+from settings_local import opus1, opus2  # names of the databases
 
-opus1 = 'Observations2' # from here
-opus2 = 'opus'   # to here
 
 
 #----  shell argvs --------#
@@ -271,6 +270,8 @@ cursor.execute("create view %s.grouping_target_name as select * from %s.mult_obs
 print "building param_info from param_info_table.sql "
 system("mysql %s < param_info_table.sql -u%s -p%s" % (opus2, DATABASES['default']['USER'], DATABASES['default']['PASSWORD']))
 
+"""
+only need this part if recalculating param_info_table,
 # and import the data
 q = "insert into %s.param_info select * from %s.forms where (display = 'Y' or display_results = 'Y')" % (opus2, opus1)
 for x in exclude:
@@ -278,6 +279,7 @@ for x in exclude:
 cursor.execute(q, exclude)
 q = "insert into %s.param_info select * from %s.forms where table_name = 'obs_general' and name in ('time1','time2')" % (opus2, opus1)
 cursor.execute(q)
+"""
 
 # some fiddly updates to the param_info_table
 cursor.execute("update %s.param_info as params, %s.forms as forms set params.display = true where forms.display = 'Y' and params.id = forms.no" % (opus2, opus1))

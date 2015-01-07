@@ -3,6 +3,7 @@ logfile
 logfile.*
 search/models.py  # this file is generated dynamically during import procedures
 import/import.sql
+import/import_local.py
 import/search.sql
 downloads/test_runs
 search/models.py
