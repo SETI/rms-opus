@@ -5,6 +5,11 @@
 
 $(document).ready(function() {
 
+    $( document ).tooltip({
+        show: {
+            delay: 300
+        }
+    });
 
     o_hash.initFromHash(); // just returns null if no hash
 

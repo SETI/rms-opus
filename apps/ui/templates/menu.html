@@ -4,7 +4,7 @@
 {% for div in menu.divs %}
 
 	<li>
-        <a href="#" title = "{{ div.table_name }}" class="dropdown-toggle {{ div.table_name }}" data-cat = "{{ div.table_name }}">
+        <a href="#" class="dropdown-toggle {{ div.table_name }}" data-cat = "{{ div.table_name }}">
             <i class = "fa fa-check"></i>
             <i class = "icon-desktop"></i>
             <span class="menu-text"> {{ div.label }} </span>
@@ -27,7 +27,7 @@
                         {% if p.cat_name == sub_head.slugify %}
                         <li>
                             <i class = "fa fa-check"></i>
-                            <a class="dropdown-toggle {{ sub_head|slugify }}" data-group = "{{ sub_head|slugify }}" title = "{{ p.label }}" href = "">
+                            <a class="dropdown-toggle {{ sub_head|slugify }}" data-group = "{{ sub_head|slugify }}" href = "">
                                 <i class = "fa fa-check"></i>
                                 <i class="fa fa-angle-double-right"></i>
                                 {{ sub_head }}
@@ -38,10 +38,17 @@
                             {% for p in params %}
                                 {% if p.cat_name == sub_head.slugify %}
                                 <li>
-                                    <a data-slug = "{{ p.slug }}" class = "{{ p.slug }}" title = "{{ p.label }}" href = "">
+                                    <a data-label = "{{ p.label }}" data-slug = "{{ p.slug }}" class = "{{ p.slug }}" href = "">
                                         <i class = "fa fa-check"></i>
                                         <i class="fa fa-plus"></i>
                                         {{ p.label }}
+                                        <i class = "fa fa-info-circle" title = "
+                                            {% if p.get_dictionary_info %}
+                                                {{ p.get_dictionary_info.def|striptags }}
+                                            {% else  %}
+                                                {{ p.label }}
+                                            {% endif %}
+                                        "></i>
                                     </a>
                                 </li>
                                 {% endif %}
@@ -58,13 +65,19 @@
                     {#  this div does not have sub_headings, list the params  #}
                     {% for p in info.data %}
                         <li>
-                            <a data-slug = "{{ p.slug }}" class = "{{ p.slug }}" title = "{{ p.label }}" href = "">
+                            <a data-label = "{{ p.label }}" data-slug = "{{ p.slug }}" class = "{{ p.slug }}" href = "">
                                 <i class = "fa fa-check"></i>
                                 <i class="fa fa-plus"></i>
                                 {{ p.label }}
+                                <i class = "fa fa-info-circle" title = "
+                                    {% if p.get_dictionary_info %}
+                                        {{ p.get_dictionary_info.def|striptags }}
+                                    {% else  %}
+                                        {{ p.label }}
+                                    {% endif %}
+                                "></i>
                             </a>
                         </li>
-
                     {% endfor %}
                 {% endif %}
 

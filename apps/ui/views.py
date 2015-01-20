@@ -412,11 +412,11 @@ def getDetailQuick(request, **kwargs):
     return render_to_response(template,locals(), context_instance=RequestContext(request))
 
 #
-def getColumnLabels(slugs):
-    labels = {}
+def getColumnInfo(slugs):
+    info = {}
     for slug in slugs:
-        labels[slug] = ParamInfo.objects.get(slug=slug).label_results
-    return labels
+        info[slug] = param_info = get_param_info_by_slug(slug)
+    return info
 
 
 def getColumnChooser(request, **kwargs):
@@ -424,9 +424,10 @@ def getColumnChooser(request, **kwargs):
     slugs = filter(None, slugs) # sometimes 'cols' is in url but is blank, fails above
     if not slugs:
         slugs = settings.DEFAULT_COLUMNS.split(',')
-    labels = getColumnLabels(slugs)
+    info = getColumnInfo(slugs)
     namespace = 'column_chooser_input'
     menu = getMenuLabels(request, 'results')['menu']
+
     return render_to_response("choose_columns.html",locals(), context_instance=RequestContext(request))
 
 

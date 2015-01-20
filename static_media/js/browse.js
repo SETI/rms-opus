@@ -368,7 +368,8 @@ var o_browse = {
                 return true;  // just a 2nd level menu click, move along
             }
 
-            label = $(this).attr("title");
+            label = $(this).data('label');
+            def = $(this).find('i.fa-info-circle').attr("title");
             cols = opus.prefs['cols'];
             checkmark = $(this).find('i').first();
 
@@ -378,7 +379,7 @@ var o_browse = {
 
                 if (jQuery.inArray(slug,cols) < 0) {
                     // this slug was previously unselected, add to cols
-                    $('<li id = "cchoose__' + slug + '">' + label + '<span class = "chosen_column_close">X</span></li>').hide().appendTo('.chosen_columns>ul').fadeIn();
+                    $('<li id = "cchoose__' + slug + '">' + label + '<i class = "fa fa-info-circle" title = "' + def + '"></i><span class = "chosen_column_close">X</span></li>').hide().appendTo('.chosen_columns>ul').fadeIn();
                     cols.push(slug);
                 }
 
@@ -506,7 +507,11 @@ var o_browse = {
 
          }); // /group header checkbox
         */
-    },
+
+
+
+
+    },  // /addColumnChooserBehaviors
 
 
     // handles checking of a range of boxes in each view (table/gallery)
@@ -1088,6 +1093,9 @@ var o_browse = {
                 if (!$('.column_chooser').is(":visible")) {
                     // wtf drawn but not visible?
                     $('.column_chooser').dialog({
+                            open: function( event, ui ) {
+                                $('.ui-dialog-titlebar-close').removeAttr('title');
+                            },
                             height: 600,
                             width: 900,
                             modal: true,
@@ -1101,12 +1109,15 @@ var o_browse = {
             // column_chooser has not been drawn, fetch it from the server and apply its behaviors:
             $('.column_chooser').html(opus.spinner);
             $('.column_chooser').dialog({
+                    open: function( event, ui ) {
+                        $('.ui-dialog-titlebar-close').removeAttr('title');
+                    },
                     height: 600,
                     width: 900,
                     modal: true,
                     draggable:true,
                     dialogClass: 'no-close success-dialog fixed-dialog'
-                });
+            });
 
 
             url = '/opus/forms/column_chooser.html?' + o_hash.getHash();
@@ -1124,6 +1135,7 @@ var o_browse = {
 
                // we keep these all open in the column chooser, they are all closed by default
                /* todo */
+
 
                // dragging to reorder the chosen
                $( ".chosen_columns>ul").sortable({

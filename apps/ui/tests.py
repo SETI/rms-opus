@@ -86,9 +86,6 @@ class UITests(TestCase):
 
 
     """
-    def test__getColumnLabels(self):
-        self.assertEqual(True, False)
-
 
     def test__getDetailQuick(self):
         self.assertEqual(True, False)

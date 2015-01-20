@@ -12,8 +12,18 @@
 
 <div class = "widget-box chosen_columns col-md-6">
 	<ul>
-		{% for slug,label in labels.items %}
-			<li id="cchoose__{{ slug }}">{{ label }}
+		{% for slug,param_info in info.items %}
+			<li id="cchoose__{{ slug }}">
+
+                    {{ param_info.label_results }}
+
+                    <i class = "fa fa-info-circle" title = "
+                        {% if param_info.get_dictionary_info %}
+                            {{ param_info.get_dictionary_info.def|striptags }}
+                        {% else  %}
+                            {{ param_info.label }}
+                        {% endif %}
+                    "></i>
 					<span class = "chosen_column_close">X</span>
 			</li>
 		{% endfor %}

@@ -4,6 +4,16 @@
 .dictionary {
     display:none;
 }
+.ui-tooltip {
+    max-width:40em;
+    padding:10px;
+    margin:0 30px;
+    font-size:130%;
+    z-index:9999;
+}
+
+
+
 .fadey {
     color:#b0b0b0;
 }
