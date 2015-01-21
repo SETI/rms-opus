@@ -379,7 +379,7 @@ var o_browse = {
 
                 if (jQuery.inArray(slug,cols) < 0) {
                     // this slug was previously unselected, add to cols
-                    $('<li id = "cchoose__' + slug + '">' + label + '<i class = "fa fa-info-circle" title = "' + def + '"></i><span class = "chosen_column_close">X</span></li>').hide().appendTo('.chosen_columns>ul').fadeIn();
+                    $('<li id = "cchoose__' + slug + '">' + label + ' <i class = "fa fa-info-circle" title = "' + def + '"></i><span class = "chosen_column_close">X</span></li>').hide().appendTo('.chosen_columns>ul').fadeIn();
                     cols.push(slug);
                 }
 
@@ -1109,7 +1109,7 @@ var o_browse = {
             // column_chooser has not been drawn, fetch it from the server and apply its behaviors:
             $('.column_chooser').html(opus.spinner);
             $('.column_chooser').dialog({
-                    open: function( event, ui ) {
+                    create: function( event, ui ) {
                         $('.ui-dialog-titlebar-close').removeAttr('title');
                     },
                     height: 600,
