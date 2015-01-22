@@ -373,7 +373,7 @@ def getDetailPage(request, **kwargs):
 
 
     # get the data for this obs
-    data = getDetail(request,ring_obs_id=ring_obs_id,fmt='raw')
+    data, all_info = getDetail(request, ring_obs_id=ring_obs_id, fmt="raw")
 
     #files = getFiles(ring_obs_id=ring_obs_id,fmt='raw')['data'][ring_obs_id]
     files = getFiles(ring_obs_id,fmt='raw')[ring_obs_id]

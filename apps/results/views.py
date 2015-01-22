@@ -46,63 +46,49 @@ def getData(request,fmt):
 
     return responseFormats(data,fmt,template='data.html', labels=labels,checkboxes=checkboxes, collection=collection, order=order)
 
-def getDetail(request,ring_obs_id,fmt):
+def getDetail(request, ring_obs_id, fmt):
     """
     results for a single observation
     all the data, in categories
 
     """
-    if not fmt: fmt = 'json'
     if not ring_obs_id: return Http404
-
 
     if fmt == 'html':
         from ui.views import getDetailPage
-        return getDetailPage(request, ring_obs_id=ring_obs_id, fmt=fmt)
+        return getDetailPage(request, ring_obs_id=ring_obs_id)
 
-    try:
-        col_slugs = request.GET.get('cols', False)
-    except AttributeError:
-        col_slugs = ''
-        pass  # no request, prolly me a the shell
-
-    if col_slugs:
-        col_slugs = col_slugs.split(',')
-
-    data = SortedDict({})
+    data = SortedDict({})  # will hold data struct to be returned
+    all_info = {}  # holds all the param info objects
 
     # find all the tables (categories) this observation belongs to,
     all_tables = TableName.objects.filter(display='Y')
 
     # now find all params and their values in each of these tables:
     for table in all_tables:
-        label = table.label
+        table_label = table.label
         table_name = table.table_name
         model_name = ''.join(table_name.title().split('_'))
         table_model = get_model('search', model_name)
 
-        if not col_slugs:
-            all_params = [param.name for param in ParamInfo.objects.filter(category_name=table_name, display_results=1)]
-        else:
-            all_params = []
-            for slug in col_slugs:
-                param_name = ParamInfo.objects.get(slug=slug).param_name()
-
-                if table_name == param_name.split('.')[0]:
-                    all_params.append(param_name.split('.')[1])
+        all_slugs = [param.slug for param in ParamInfo.objects.filter(category_name=table_name, display_results=1)]
+        all_params = [param.name for param in ParamInfo.objects.filter(category_name=table_name, display_results=1)]
+        for k, slug in enumerate(all_slugs):
+            param_info = get_param_info_by_slug(slug)
+            name = param_info.name
+            all_info[name] = param_info
 
         if all_params:
             try:
                 results = table_model.objects.filter(ring_obs_id=ring_obs_id).values(*all_params)[0]
-                data[label] = results
+                data[table_label] = results
             except AttributeError: pass  # no results found in this table, move along
             except IndexError: pass  # no results found in this table, move along
-
 
     if fmt == 'json':
         return HttpResponse(json.dumps(data), content_type="application/json")
     if fmt == 'raw':
-        return data
+        return data, all_info  # includes definitions for opus interface
 
 
 def get_triggered_tables(selections, extras = {}):
