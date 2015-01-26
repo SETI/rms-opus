@@ -104,9 +104,10 @@ def get_metadata(request, ring_obs_id, fmt):
     """
     if not ring_obs_id: return Http404
 
-    slugs = request.GET.get('cols', False)
-    if slugs:
-        return get_metadata_by_slugs(request, ring_obs_id, slugs.split(','), fmt)
+    if 'GET' in request:
+        slugs = request.GET.get('cols', False)
+        if slugs:
+            return get_metadata_by_slugs(request, ring_obs_id, slugs.split(','), fmt)
 
     data = SortedDict({})  # will hold data struct to be returned
     all_info = {}  # holds all the param info objects
