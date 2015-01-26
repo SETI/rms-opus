@@ -22,7 +22,7 @@ var o_detail = {
             // - send separate ajax call all at once for each table
             //   (yay apache will give us multithreading!)
             url ="/opus/api/metadata/" + ring_obs_id + ".html";
-            $("#all_metadata")
+            $("#all_metadata_" + ring_obs_id)
                 .load(url, function() {
                     $(this).hide().fadeIn("fast");
                 }

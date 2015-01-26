@@ -51,10 +51,8 @@
 
     <div class = "col-md-12 well well-lg">
         <h3>All Metadata for this Observation:</h3>
-        Grab all metadata <a href = "/opus/api/metadata/{{ img.ring_obs_id }}.json" target = "_blank">as json</a>
-        <br><br>
-        <div id = "all_metadata">
-            <span class = "spinner">&nbsp;</span>
+        <div id = "all_metadata_{{ img.ring_obs_id }}">
+            Loading <span class = "spinner">&nbsp;</span>
         </div>
     </div>
 
