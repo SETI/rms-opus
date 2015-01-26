@@ -43,38 +43,19 @@
         	   <li><a target = "_blank" href = "{{ path }}{{ img.small }}">Small</a></li>
                <li><a target = "_blank" href = "{{ path }}{{ img.thumb }}">Thumb</a></li>
 
-        <ul class = "list-inline">
-            Metadata:
-            <li><a href = "api/detail/{{ img.ring_obs_id }}.json" target = "_blank">json</a></li>
-        </ul>
     </div>
 
-    <div class = "col-md-12 well well-lg ">
-        <h3>Metadata for this Observation:</h3>
+    <div id = "cols_metadata" class = "col-md-12 well well-lg">
+        <span class = "spinner">&nbsp;</span>
+    </div>
 
-        <ul id = "detail_data" class = "">
-            {% for cat,d in data.items %}
-            <li>{{ cat }}:
-                <ul class = "">
-                {% for param,val  in d.items %}
-                    <li>
-                    {{ param }}: {{val}}
-
-                    {% for name, param_info in all_info.items %}
-                        {% if name == param %}
-                            {% if param_info.get_dictionary_info %}
-                                <i class = "fa fa-info-circle" title = "
-                                    {{ param_info.get_dictionary_info.def|striptags }}
-                                "></i>
-                            {% endif %}
-                        {% endif %}
-                    {% endfor %}
-                    </li>
-
-                {% endfor %}
-                </ul>
-            {% endfor %}
-        </ul>
+    <div class = "col-md-12 well well-lg">
+        <h3>All Metadata for this Observation:</h3>
+        Grab all metadata <a href = "api/metadata/{{ img.ring_obs_id }}.json" target = "_blank">as json</a>
+        <br><br>
+        <div id = "all_metadata">
+            <span class = "spinner">&nbsp;</span>
+        </div>
     </div>
 
 </div><!-- /data col -->

@@ -23,11 +23,11 @@ from django.views.generic import TemplateView
 
 base_urlpatterns = patterns( 'results.views',
     (r'^api/data.(json|zip|html|csv)$', 'getData'),
-    (r'^api/detail/(?P<ring_obs_id>[0-9a-zA-Z\-_]+).(?P<fmt>[json|zip|html]+)$', 'getDetail'),
     (r'^api/images/(thumb|small|med|full).(json|zip|html|csv)$','getImages'),
     (r'^api/image/(?P<size>[thumb|small|med|full]+)/(?P<ring_obs_id>\w+).(?P<fmt>[json|zip|html|csv]+)$', 'getImage'),
     (r'^api/files/(?P<ring_obs_id>\w+).(?P<fmt>[json|zip|html|csv]+)$','getFiles'),
     (r'^api/files.(?P<fmt>[json|zip|html|csv]+)$', 'getFiles'),
+    (r'^api/metadata/(?P<ring_obs_id>\w+).(?P<fmt>[json|html]+)$','get_metadata'),
 )
 
 
@@ -62,7 +62,7 @@ base_urlpatterns += patterns('ui.views',
     (r'^quick.html$', 'getQuickPage'),
     (r'^forms/widget/(?P<slug>[-\sa-zA-Z0-9]+).(?P<fmt>[json|zip|html|csv]+)$', 'getWidget'),
     (r'^forms/column_chooser.html$', 'getColumnChooser'),
-    # (r'^api/detailquick/(?P<ring_obs_id>\w+).(?P<fmt>[json|zip|html|csv]+)$', 'getDetailQuick'),
+    (r'^api/detail/(?P<ring_obs_id>[0-9a-zA-Z\-_]+).(?P<fmt>[json|zip|html]+)$', 'init_detail_page'),
 )
 
 

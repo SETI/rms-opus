@@ -352,11 +352,22 @@ def getQuickPage(request,template='demo.html'):
     return render_to_response(template,locals(), context_instance=RequestContext(request))
 
 
-def getDetailPage(request, **kwargs):
+def init_detail_page(request, **kwargs):
+    """
+    this loads the initial parts of the detail tab on first loads
+    these are the things that are fast to compute while other parts of the page
+    are handled with ajax calls because they are slower
+
+    the detail page calls other views via ajax:
+    results.get_metadata_by_slugs
+    results.get_metadata
+
+    """
     template="detail.html"
     slugs = request.GET.get('cols',False)
     ring_obs_id = kwargs['ring_obs_id']
 
+    # get the preview image and some general info
     img = get_object_or_404(Image, ring_obs_id=ring_obs_id)
     base_vol_path = get_base_path_previews(ring_obs_id)
     path = settings.IMAGE_HTTP_PATH + base_vol_path
@@ -371,11 +382,7 @@ def getDetailPage(request, **kwargs):
     if instrument_id == 'COVIMS':
         preview_guide_url = 'http://pds-rings.seti.org/cassini/vims/COVIMS_previews.txt'
 
-
-    # get the data for this obs
-    data, all_info = getDetail(request, ring_obs_id=ring_obs_id, fmt="raw")
-
-    #files = getFiles(ring_obs_id=ring_obs_id,fmt='raw')['data'][ring_obs_id]
+    # get the list of files for this observation
     files = getFiles(ring_obs_id,fmt='raw')[ring_obs_id]
     file_list = {}
     for product_type in files:
@@ -387,31 +394,6 @@ def getDetailPage(request, **kwargs):
 
     return render_to_response(template,locals(), context_instance=RequestContext(request))
 
-
-# I can't explain, other than it's named badly
-def getDetailQuick(request, **kwargs):
-    template="detail_quick.html"
-    slugs = request.GET.get('cols',False)
-    ring_obs_id = kwargs['ring_obs_id']
-
-    param_info = get_param_info_by_slug(slug)
-
-    data = {}
-    if slugs:
-        fields = []
-        slugs = slugs.split(',')
-        for slug in slugs:
-            fields += [param_info.get(slug=slug)]
-    else:
-        fields = param_info.objects.filter(display_results='Y')
-
-    for field in fields:
-        try:
-            data[str(field.name)] = str(Observations.objects.filter(ring_obs_id=ring_obs_id).values(str(field.name))[0][field.name])
-        except:pass
-    return render_to_response(template,locals(), context_instance=RequestContext(request))
-
-#
 def getColumnInfo(slugs):
     info = {}
     for slug in slugs:

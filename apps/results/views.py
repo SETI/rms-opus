@@ -46,7 +46,57 @@ def getData(request,fmt):
 
     return responseFormats(data,fmt,template='data.html', labels=labels,checkboxes=checkboxes, collection=collection, order=order)
 
-def getDetail(request, ring_obs_id, fmt):
+def get_slug_categories(request, slugs):
+    slugs = request.GET.get('cols', False)
+
+    if not slugs:
+        return Http404
+
+    all_cats = {}
+
+    for slug in slugs:
+        param_info = get_param_info_by_slug(slug)
+        all_cats.append(param_info.category_name)
+        params_by_table.setdefault(table_name, []).append(param_info.param_name())
+        all_info[slug] = param_info  # to get things like dictionary entries for interface
+
+def get_metadata_by_slugs(request, ring_obs_id, slugs, fmt):
+    """
+    returns results for specified slugs
+    """
+    params_by_table = {}  # params by table_name
+    data = []
+    all_info = {}
+
+    for slug in slugs:
+        param_info = get_param_info_by_slug(slug)
+        if not param_info:
+            continue
+        table_name = param_info.category_name
+        params_by_table.setdefault(table_name, []).append(param_info.param_name().split('.')[1])
+        all_info[slug] = param_info  # to get things like dictionary entries for interface
+
+    if slugs and not all_info:
+        # none of the slugs were valid slugs
+        # can't ignore them and return all metadata because can lead to infinite recursion here
+        return Http404
+
+    for table_name, param_list in params_by_table.items():
+        model_name = ''.join(table_name.title().split('_'))
+        table_model = get_model('search', model_name)
+        results = table_model.objects.filter(ring_obs_id=ring_obs_id).values(*param_list)[0]
+        for param,value in results.items():
+            data.append({param: value})
+
+    if fmt == 'html':
+        return render_to_response('detail_metadata_slugs.html',locals(), context_instance=RequestContext(request))
+    if fmt == 'json':
+        return HttpResponse(json.dumps(data), content_type="application/json")
+    if fmt == 'raw':
+        return data, all_info  # includes definitions for opus interface
+
+
+def get_metadata(request, ring_obs_id, fmt):
     """
     results for a single observation
     all the data, in categories
@@ -54,9 +104,9 @@ def getDetail(request, ring_obs_id, fmt):
     """
     if not ring_obs_id: return Http404
 
-    if fmt == 'html':
-        from ui.views import getDetailPage
-        return getDetailPage(request, ring_obs_id=ring_obs_id)
+    slugs = request.GET.get('cols', False)
+    if slugs:
+        return get_metadata_by_slugs(request, ring_obs_id, slugs.split(','), fmt)
 
     data = SortedDict({})  # will hold data struct to be returned
     all_info = {}  # holds all the param info objects
@@ -85,11 +135,12 @@ def getDetail(request, ring_obs_id, fmt):
             except AttributeError: pass  # no results found in this table, move along
             except IndexError: pass  # no results found in this table, move along
 
+    if fmt == 'html':
+        return render_to_response('detail_metadata.html',locals(), context_instance=RequestContext(request))
     if fmt == 'json':
         return HttpResponse(json.dumps(data), content_type="application/json")
     if fmt == 'raw':
         return data, all_info  # includes definitions for opus interface
-
 
 def get_triggered_tables(selections, extras = {}):
     """

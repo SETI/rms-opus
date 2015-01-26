@@ -1,0 +1,23 @@
+<ul id = "detail_data" class = "">
+    {% for cat,d in data.items %}
+    <li>{{ cat }}:
+        <ul class = "">
+        {% for param,val  in d.items %}
+            <li>
+            {{ param }}: {{val}}
+
+            {% for name, param_info in all_info.items %}
+                {% if name == param %}
+                    {% if param_info.get_dictionary_info %}
+                        <i class = "fa fa-info-circle" title = "
+                            {{ param_info.get_dictionary_info.def|striptags }}
+                        "></i>
+                    {% endif %} `
+                {% endif %}
+            {% endfor %}
+            </li>
+
+        {% endfor %}
+        </ul>
+    {% endfor %}
+</ul>
