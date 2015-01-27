@@ -10,6 +10,7 @@ DEBUG = False
 TEMPLATE_DEBUG = DEBUG
 
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True
+SESSION_SAVE_EVERY_REQUEST = True
 
 ADMINS = (
     ('Lisa Ballard', 'lballard@seti.org'),
@@ -152,10 +153,11 @@ INSTALLED_APPS = (
     'user_collections',
     'tools',
     'dictionary',
+    'metrics',
 )
 
 STATICFILES_DIRS = (os.path.join(PROJECT_ROOT, 'static_media'),)
-STATICFILES_STORAGE = 'storages.backends.s3boto.S3BotoStorage'
+# STATICFILES_STORAGE = 'storages.backends.s3boto.S3BotoStorage'
 
 # https://github.com/edavis/django-infinite-memcached/tree/
 CACHES = {

@@ -100,24 +100,39 @@ if settings.DEBUG:
     base_urlpatterns += patterns('django.views.static',
                             (r'^static_media/(?P<path>.*)$', 'serve', {'document_root': '/Users/lballard/projects/opus/static_media/', 'show_indexes': True}))
 
-# ------------- this is a stupid test ------------------------------------------------------------------------
+
+
+
+
 
 from django.http import HttpResponse
-
-
-def test2(request):
-    return HttpResponse('dogs')
-
-
-def testy(request):
-    return test2(request)
-
-
-base_urlpatterns += patterns('', (r'^test$', testy))  # api help pages
 
 
 urlpatterns = patterns('',
     ('^', include(base_urlpatterns)), # iff you wish to maintain the un-prefixed URL's too
     ('^%s/' % settings.BASE_PATH,  include(base_urlpatterns)),
 )
-# ------ end test --------
+
+#########################################
+"""
+# session test
+
+from django import http
+
+def session_test_1(request):
+    request.session['test'] = 'Session Vars Worked!'
+    return http.HttpResponseRedirect('done/?session=%s' % request.session.session_key)
+
+def session_test_2(request):
+    return http.HttpResponse('<br>'.join([
+        request.session.session_key,
+        request.GET.get('session'),
+        request.session.get('test', 'Session is Borked :(')
+         ]))
+
+urlpatterns += patterns('',
+        (r'^session-test/$', session_test_1),
+        (r'^session-test/done/$', session_test_2),
+)
+"""
+

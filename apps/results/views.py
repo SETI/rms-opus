@@ -50,7 +50,7 @@ def get_slug_categories(request, slugs):
     slugs = request.GET.get('cols', False)
 
     if not slugs:
-        return Http404
+        raise Http404
 
     all_cats = {}
 
@@ -79,7 +79,7 @@ def get_metadata_by_slugs(request, ring_obs_id, slugs, fmt):
     if slugs and not all_info:
         # none of the slugs were valid slugs
         # can't ignore them and return all metadata because can lead to infinite recursion here
-        return Http404
+        raise Http404
 
     for table_name, param_list in params_by_table.items():
         model_name = ''.join(table_name.title().split('_'))
@@ -102,7 +102,7 @@ def get_metadata(request, ring_obs_id, fmt):
     all the data, in categories
 
     """
-    if not ring_obs_id: return Http404
+    if not ring_obs_id: raise Http404
 
     try:
         slugs = request.GET.get('cols', False)
@@ -231,7 +231,7 @@ def getImages(request,size,fmt):
     try:
         [page_no, limit, page, page_ids, order] = getPage(request)
     except TypeError:  # getPage returns False
-        return Http404
+        raise Http404
 
     log.debug('got page of length ' + str(len(page_ids)))
     log.debug(page_ids)
