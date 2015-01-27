@@ -153,7 +153,6 @@ INSTALLED_APPS = (
     'user_collections',
     'tools',
     'dictionary',
-    'metrics',
 )
 
 STATICFILES_DIRS = (os.path.join(PROJECT_ROOT, 'static_media'),)
