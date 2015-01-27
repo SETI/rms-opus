@@ -33,7 +33,7 @@ class UserSearches(models.Model):
     units_hash = models.CharField(max_length=32,null=True, blank=True)
     qtypes = models.TextField(null=True, blank=True)
     qtypes_hash = models.CharField(max_length=32,null=True, blank=True)
-    timestamp = models.DateTimeField(null=True, blank=True)
+    timestamp = models.DateTimeField(auto_now=True)
 
     class Meta:
         db_table = u'user_searches'
