@@ -38,6 +38,13 @@ DATABASES = {
         'USER': DB_USER,
         'PASSWORD': DB_PASS,
         'OPTIONS':{ 'init_command': 'SET storage_engine=MYISAM;'},
+    },
+    'metrics': {
+        'NAME': 'opus_metrics',
+        'ENGINE': 'django.db.backends.mysql',
+        'USER': DB_USER,
+        'PASSWORD': DB_PASS,
+        'OPTIONS':{ 'unix_socket': '/private/var/mysql/mysql.sock'},
     }
 }
 
@@ -153,6 +160,7 @@ INSTALLED_APPS = (
     'user_collections',
     'tools',
     'dictionary',
+    'metrics'
 )
 
 STATICFILES_DIRS = (os.path.join(PROJECT_ROOT, 'static_media'),)

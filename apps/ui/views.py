@@ -24,6 +24,7 @@ from metadata.views import *
 from paraminfo.models import *
 from results.views import *
 from django.views.generic import TemplateView
+from metrics.views import update_metrics
 
 # guide only
 import json
@@ -47,10 +48,12 @@ class main_site(TemplateView):
 
 
 def get_browse_headers(request,template='browse_headers.html'):
+    update_metrics(request)
     return render_to_response(template,locals(), context_instance=RequestContext(request))
 
 
 def get_table_headers(request,template='table_headers.html'):
+    update_metrics(request)
     slugs = request.GET.get('cols', settings.DEFAULT_COLUMNS)
     order = request.GET.get('order', None)
     if order:
@@ -81,6 +84,7 @@ def getMenu(request):
     """ hack, need to get menu sometimes without rendering,
         ie from another view.. so this is for column chooser
         couldn't get template include/block.super to heed GET vars """
+    update_metrics(request)
     return getMenuLabels(request,'search')
 
 def normalize_single_colun_range_slug(param_info):
@@ -363,6 +367,8 @@ def init_detail_page(request, **kwargs):
     results.get_metadata
 
     """
+    update_metrics(request)
+
     template="detail.html"
     slugs = request.GET.get('cols',False)
     ring_obs_id = kwargs['ring_obs_id']
@@ -402,6 +408,8 @@ def getColumnInfo(slugs):
 
 
 def getColumnChooser(request, **kwargs):
+    update_metrics(request)
+
     slugs = request.GET.get('cols', settings.DEFAULT_COLUMNS).split(',')
     slugs = filter(None, slugs) # sometimes 'cols' is in url but is blank, fails above
     if not slugs:

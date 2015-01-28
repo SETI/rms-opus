@@ -11,6 +11,7 @@ from results.views import *
 from tools.app_utils import *
 from user_collections.views import *
 from hurry.filesize import size as nice_file_size
+from metrics.views import update_metrics
 import settings
 import logging
 
@@ -78,6 +79,8 @@ def get_download_size(files, product_types, previews):
 
 # http://pds-rings.seti.org/volumes/
 def get_download_info(request, collection=""):
+    update_metrics(request)
+
     if not collection:
         from user_collections.views import * # circumvent the circular dependency.. James Bennett says it's ok!
         collection = get_collection(request)
@@ -117,6 +120,7 @@ def get_cum_downlaod_size(request, download_size):
     return cum_downlaod_size
 
 def create_download(request, collection_name='', ring_obs_ids=None, fmt="raw"):
+    update_metrics(request)
 
     try:
         fmt = request.GET.get('fmt', None)

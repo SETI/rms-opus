@@ -16,6 +16,7 @@ from paraminfo.models import *
 from metadata.views import *
 from user_collections.views import *
 from tools.app_utils import *
+from metrics.views import update_metrics
 from django.views.decorators.cache import never_cache
 
 import logging
@@ -25,6 +26,8 @@ def getData(request,fmt):
     """
     a page of results for a given search
     """
+    update_metrics(request)
+
     [page_no, limit, page, page_ids, order] = getPage(request)
 
     checkboxes = True if (request.is_ajax()) else False
@@ -64,6 +67,8 @@ def get_metadata_by_slugs(request, ring_obs_id, slugs, fmt):
     """
     returns results for specified slugs
     """
+    update_metrics(request)
+
     params_by_table = {}  # params by table_name
     data = []
     all_info = {}
@@ -102,6 +107,8 @@ def get_metadata(request, ring_obs_id, fmt):
     all the data, in categories
 
     """
+    update_metrics(request)
+
     if not ring_obs_id: raise Http404
 
     try:
@@ -225,6 +232,8 @@ def getImages(request,size,fmt):
     if a row doesn't have an image you get nothing. you lose. good day sir. #fixme #todo
 
     """
+    update_metrics(request)
+
     alt_size = request.GET.get('alt_size','')
     columns = request.GET.get('cols',settings.DEFAULT_COLUMNS)
 
@@ -311,6 +320,8 @@ def getImage(request,size='med', ring_obs_id='',fmt='mouse'):      # mouse?
 
     return HttpResponse(img + "<br>" + ring_obs_id + ' ' + size +' '+ fmt)
     """
+    update_metrics(request)
+
     img = Image.objects.filter(ring_obs_id=ring_obs_id).values(size)[0][size]
     path = settings.IMAGE_HTTP_PATH + get_base_path_previews(ring_obs_id)
     return responseFormats({'data':[{'img':img, 'path':path}]}, fmt, size=size, path=path, template='image_list.html')
@@ -328,6 +339,8 @@ def file_name_cleanup(base_file):
 
 # loc_type = path or url
 def getFilesAPI(request,ring_obs_id='',fmt='raw', loc_type="url"):
+
+    update_metrics(request)
 
     product_types = request.GET.get('types',[])
     images = request.GET.get('previews',[])
@@ -480,6 +493,8 @@ def getPage(request):
     """
     the gets the metadata to build a page of results
     """
+    update_metrics(request)
+
     # get some stuff from the url or fall back to defaults
     collection_page = (request.GET.get('colls',False))
     limit = request.GET.get('limit',100)

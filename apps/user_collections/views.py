@@ -11,12 +11,14 @@ from django.template import RequestContext
 from tools.app_utils import *
 from results.views import *
 from downloads.views import *
+from metrics.views import update_metrics
 from django.views.decorators.cache import never_cache
 
 import logging
 log = logging.getLogger(__name__)
 
 def set_collection(request,collection_name='default'):
+    update_metrics(request)
     try:
         s = UserCollections.objects.get(selections_hash=selections_hash,qtypes_hash=qtypes_hash,units_hash=units_hash,string_selects_hash=string_selects_hash)
     except UserSearches.DoesNotExist:
@@ -27,6 +29,8 @@ def get_collection(request, collection_name='default'):
     """
     returns list of ring_obs_ids in the current session user's collection
     """
+    update_metrics(request)
+
     collection_name = 'collection__' + collection_name;
     collection = [] # collection is a list of ring_obs_ids
     if request.session.get(collection_name):
@@ -37,7 +41,10 @@ def get_collection(request, collection_name='default'):
 @never_cache
 def view_collection(request, collection_name, template="collections.html"):
     # return getData(request,'html', True)
+    update_metrics(request)
+
     session_key = request.session.session_key
+
 
     # nav stuff - page | limit | order | columns | offset
     page_no = int(request.GET.get('page',1))
@@ -116,6 +123,8 @@ def view_collection(request, collection_name, template="collections.html"):
 
 @never_cache
 def collection_status(request, **kwargs):
+    update_metrics(request)
+
     collection_name = 'collection__' + kwargs['collection']
     collection = []
     if request.session.get(collection_name):
@@ -189,6 +198,8 @@ def edit_collection(request, **kwargs):
     """
     return reset_sess(request);
     """
+    update_metrics(request)
+
     checkArgs = check_collection_args(request, **kwargs)
     if type(checkArgs).__name__ == 'list':
         (action, collection_name, ring_obs_id, request_no, expected_request_no) = checkArgs
@@ -266,6 +277,7 @@ def edit_collection(request, **kwargs):
 
 
 def edit_collection_range(request, **kwargs):
+    update_metrics(request)
 
     (action, collection_name, ring_obs_id, request_no, expected_request_no) = check_collection_args(request, **kwargs)
 
@@ -320,6 +332,8 @@ def edit_collection_range(request, **kwargs):
 
 def add_to_queue(request, request_no, collection_name, action, ring_obs_id):
     # just adding one request to the queue if its not already there
+    update_metrics(request)
+
     queue = {}
     if request.session.get("queue"):
         queue = request.session.get("queue")
@@ -330,6 +344,8 @@ def add_to_queue(request, request_no, collection_name, action, ring_obs_id):
 
 
 def remove_from_queue(request, request_no):
+    update_metrics(request)
+
     if request_no in request.session["queue"]:
         del request.session["queue"][request_no]
     return True
@@ -340,6 +356,7 @@ def get_queued(request, request_no):
     if get_queued(request, expected_request_no):
         (collection_name,action,ring_obs_id) = get_queued(request, expected_request_no)
     """
+    update_metrics(request)
     queue = {}
     if request.session.get("queue"):
         queue = request.session.get("queue")

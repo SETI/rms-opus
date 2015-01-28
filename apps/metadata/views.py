@@ -11,6 +11,7 @@ from django.db.models import Avg, Max, Min, Count, get_model
 from django.db import connection
 from paraminfo.models import ParamInfo
 import search.views
+from metrics.views import update_metrics
 
 from search.models import *
 
@@ -38,6 +39,7 @@ def getResultCount(request,fmt='json'):
     result count for a search
 
     """
+    update_metrics(request)
 
     if request.GET is None:
         return HttpResponse(json.dumps({'result_count':'0'}),  mimetype='application/json')
@@ -90,6 +92,7 @@ def getValidMults(request,slug,fmt='json'):
     field_format = 'ids' or 'labels' depending on how you want your data back
     (OPUS UI will use ids but they aren't very readable for everyone else)
     """
+    update_metrics(request)
     try:
         (selections,extras) = search.views.urlToSearchParams(request.GET)
     except:
@@ -165,6 +168,7 @@ def getRangeEndpoints(request,slug,fmt='json'):
     # want results for param as they would be without itself constrained
 
     #    extras['qtypes']['']
+    update_metrics(request)
 
     param_info = search.views.get_param_info_by_slug(slug)
 
