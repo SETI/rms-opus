@@ -21,6 +21,7 @@ from metadata.views import *
 from search.models import *
 from tools.app_utils import stripNumericSuffix, sortDict
 from paraminfo.models import ParamInfo
+import metadata.views
 
 import logging
 log = logging.getLogger(__name__)
@@ -186,7 +187,7 @@ def getUserQueryTable(selections,extras={}):
 
     # do we have a cache key
     no     = setUserSearchNo(selections,extras)
-    ptbl   = getUserSearchTableName(no)
+    ptbl   = metadata.views.getUserSearchTableName(no)
 
     # is this key set in memcached
     cache_key = 'cache_table:' + str(no)
@@ -617,4 +618,3 @@ def findInvalidTimes(value_list):
 from metadata.views import *
 from search.forms import *
 """
-from metadata.views import getUserSearchTableName

@@ -45,11 +45,6 @@ class UITests(TestCase):
             print q
             cursor.execute(q)
 
-    def test__mainSite(self):
-        response = self.c.get('/opus/')
-        self.assertEqual(response.status_code, 200)
-        self.assertGreater(len(response.content), 40000)
-
     #
     def test__getDataTable(self):
         response = self.c.get('/opus/table_headers.html')

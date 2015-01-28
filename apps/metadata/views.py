@@ -10,7 +10,7 @@ from django.http import HttpResponse
 from django.db.models import Avg, Max, Min, Count, get_model
 from django.db import connection
 from paraminfo.models import ParamInfo
-from search.views import get_param_info_by_slug
+import search.views
 
 from search.models import *
 
@@ -43,7 +43,7 @@ def getResultCount(request,fmt='json'):
         return HttpResponse(json.dumps({'result_count':'0'}),  mimetype='application/json')
 
     try:
-        (selections,extras) = urlToSearchParams(request.GET)
+        (selections,extras) = search.views.urlToSearchParams(request.GET)
     except TypeError:
         log.error("could not find selections for request")
         log.error(request.GET)
@@ -56,7 +56,7 @@ def getResultCount(request,fmt='json'):
         return HttpResponse(json.dumps({'result_count':count}),  mimetype='application/json')
 
 
-    table = getUserQueryTable(selections,extras)
+    table = search.views.getUserQueryTable(selections,extras)
 
     if table is False:
         count = 0;
@@ -91,11 +91,11 @@ def getValidMults(request,slug,fmt='json'):
     (OPUS UI will use ids but they aren't very readable for everyone else)
     """
     try:
-        (selections,extras) = urlToSearchParams(request.GET)
+        (selections,extras) = search.views.urlToSearchParams(request.GET)
     except:
         selections = {}
 
-    param_info = get_param_info_by_slug(slug)
+    param_info = search.views.get_param_info_by_slug(slug)
 
     table_name = param_info.category_name
     param_name = param_info.param_name()
@@ -108,7 +108,7 @@ def getValidMults(request,slug,fmt='json'):
     has_selections = True
     if len(selections.keys()) < 1: has_selections = False
 
-    cache_key  = "mults" + param_name + str(setUserSearchNo(selections))
+    cache_key  = "mults" + param_name + str(search.views.setUserSearchNo(selections))
 
     if (cache.get(cache_key) is not None):
 
@@ -125,18 +125,22 @@ def getValidMults(request,slug,fmt='json'):
 
         if has_selections:
             # selections are constrained so join in the user_table
-            user_table = getUserQueryTable(selections,extras)
+            user_table = search.views.getUserQueryTable(selections,extras)
             if table_name == 'obs_general':
                 where   = table_name + ".id = " + user_table + ".id"
             else:
                 where   = table_name + ".obs_general_id = " + user_table + ".id"
             results = results.extra(where=[where],tables=[user_table])
+            print results.query
 
         for row in results:
             mult_id = row[mult_name]
             try:
-                try:    mult = mult_model.objects.get(id=mult_id).label
-                except: mult = mult_id  # fall back to id if there is no label
+                try:
+                    mult = mult_model.objects.get(id=mult_id).label
+                except:
+                    print 'hello fallback==========='
+                    mult = mult_id  # fall back to id if there is no label
 
                 mults[mult] = row[mult_name + '__count']
             except: pass # a none object may be found in the data but if it doesn't have a table row we don't handle it
@@ -162,7 +166,7 @@ def getRangeEndpoints(request,slug,fmt='json'):
 
     #    extras['qtypes']['']
 
-    param_info = get_param_info_by_slug(slug)
+    param_info = search.views.get_param_info_by_slug(slug)
 
     param_name = param_info.param_name()
     form_type = param_info.form_type
@@ -176,8 +180,8 @@ def getRangeEndpoints(request,slug,fmt='json'):
         param_name1 = param_name2 = param_name_no_num
 
     try:
-        (selections,extras) = urlToSearchParams(request.GET)
-        user_table = getUserQueryTable(selections,extras)
+        (selections,extras) = search.views.urlToSearchParams(request.GET)
+        user_table = search.views.getUserQueryTable(selections,extras)
         has_selections = True
 
     except TypeError:
@@ -194,7 +198,7 @@ def getRangeEndpoints(request,slug,fmt='json'):
 
     # cached already?
     cache_key  = "rangeep" + param_name_no_num
-    if user_table: cache_key += str(setUserSearchNo(selections,extras))
+    if user_table: cache_key += str(search.views.setUserSearchNo(selections,extras))
 
     if cache.get(cache_key) is not None:
         range_endpoints = cache.get(cache_key)
@@ -281,5 +285,4 @@ def getCats(request, **kwargs):
 
     return responseFormats(fields,fmt,template='detail.html')
 
-from search.views import urlToSearchParams, setUserSearchNo, getUserQueryTable
 
