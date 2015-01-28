@@ -178,6 +178,8 @@ def getMenuLabels(request, labels_view):
 def getWidget(request, **kwargs):
 
     """ search form widget as string, http response"""
+    update_metrics(request)
+
     slug = kwargs['slug']
     fmt = kwargs['fmt']
     form = ''
