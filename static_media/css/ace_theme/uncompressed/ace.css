@@ -3858,7 +3858,8 @@ body.mob-safari .sidebar.sidebar-fixed {
     margin-top: 40px;
   }
   .main-container .menu-toggler {
-    display: block;
+    /* display: block; */
+    display: none;
     position: absolute;
     z-index: 1026;
     width: 52px;
