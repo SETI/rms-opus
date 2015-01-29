@@ -625,7 +625,3 @@ def getPage(request):
 
     return [page_no, limit, list(results), page_ids, order]
 
-
-
-# avoiding a circular dependency, even James Bennett does this! http://is.gd/TGblFO
-# well ok I moved to the end of module because it's needed in 2 methods here :0
