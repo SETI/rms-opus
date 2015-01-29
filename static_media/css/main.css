@@ -1,5 +1,10 @@
 /* column chooser things */
 
+@media only screen and (max-width: 992px) {
+  #cboxOverlay .gallery_data_viewer {
+    /* position:absolute; top:0; left:-50px; */
+  }
+}
 
 .dictionary {
     display:none;
@@ -50,8 +55,8 @@
 }
 .gallery_data_viewer {
     position: fixed;
-    top:28px;
-    right:10px;
+    top:30px;
+    right:20px;
     width:280px;
     height:80%;
     padding:20px;
