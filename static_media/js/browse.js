@@ -837,7 +837,7 @@ var o_browse = {
             rel: 'colorbox',
             className:"gallery_overlay_bg",
             top:'17px',
-            left:'3%',
+            left:'20px',
             reposition:true,
             scrolling:true,
             previous: '<i class="ace-icon fa fa-arrow-left"></i>',
