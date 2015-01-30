@@ -5,10 +5,42 @@
 
 $(document).ready(function() {
 
-    $( document ).tooltip({
-        show: {
-            delay: 300
+
+    $(window).resize(function() {
+        // see if the metadata box is off screen, if so redraw it.
+        // find left border of metadata box is > screen width.
+        // if so then move it inside
+        /*
+        $(window).width()
+        $('#cboxOverlay .gallery_data_viewer').width();
+        $('#cboxOverlay .gallery_data_viewer').offset().left;
+        */
+        o_browse.initColorbox();
+        if ($('#cboxOverlay .gallery_data_viewer').is(':visible')) {
+            // user is resizing browser with gallery viewer open
+            // make sure they don't lose the metadata box off to the right
+            // this happens only if they've previously put it there
+            // alert('visible');
+
+            /*
+            window_width = $(window).width();
+            left_margin = '15%';
+            if (window_width < 900) {
+                left_margin = '2%';
+            }
+            console.log(left_margin);
+            $('#cboxContent').animate({
+                left:left_margin
+            }, 'fast');
+            */
+
+            o_browse.adjust_gallery_data_viewer();
         }
+
+    });
+
+    $( document ).tooltip({
+        show: { delay: 300 }
     });
 
     o_hash.initFromHash(); // just returns null if no hash
@@ -66,7 +98,6 @@ $(document).ready(function() {
         window.location.href = "/opus";
         return false;
     }),
-
 
     opus.addAllBehaviors();
 

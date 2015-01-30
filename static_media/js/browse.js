@@ -831,13 +831,19 @@ var o_browse = {
 
     // colorbox  is the gallery large image viewer thing
     initColorbox: function() {
+        window_width = $(window).width();
+        left_margin = '5px';
+        if (window_width > 1050) {
+            left_margin = '15%';
+        }
+
         // setup colorbox
         var $overflow = '';
         var colorbox_params = {
             rel: 'colorbox',
             className:"gallery_overlay_bg",
             top:'17px',
-            left:'20px',
+            left:left_margin,
             reposition:true,
             scrolling:true,
             previous: '<i class="ace-icon fa fa-arrow-left"></i>',
@@ -858,10 +864,19 @@ var o_browse = {
 
                     ring_obs_id = $.colorbox.element().parent().attr("id").split('__')[1];
 
+                    // get pixel loc of right border of colorbox
+
                     // draw the viewer if not already..
-                    if (!$('#cboxOverlay .gallery_data_viewer').is(':visible')) {
+                    if (!$('#cboxOverlay .gallery_data_viewer').is(':visible')) { // :visible being used here to see if element exists
+                        // .gallery_data_viewer does not exist
+                        var right_border_colorbox = $('#colorbox').width() + $('#colorbox').position().left;
+                        $('#cboxOverlay .gallery_data_viewer').css({
+                            left: right_border_colorbox + 5 + 'px'
+                        });
                         $('#cboxOverlay').append('<div class = "gallery_data_viewer"><div>');
-                        $('.gallery_data_viewer').draggable();
+
+                        o_browse.adjust_gallery_data_viewer();
+
                     }
 
                     // append the data to the data view container
@@ -885,6 +900,8 @@ var o_browse = {
             },
             onComplete:function(){
 
+                o_browse.adjust_gallery_data_viewer();
+
                 if (!opus.prefs.gallery_data_viewer) {
 
                     // add the "show data" button to the colorbox controls
@@ -898,7 +915,7 @@ var o_browse = {
                     ring_obs_id = $.colorbox.element().parent().attr("id").split('__')[1];
 
                 }
-                $.colorbox.resize(); // i dunno why
+                // $.colorbox.resize(); // i dunno why
                 $('#colorbox-extra-info').width($('#colorbox').width()/2.3);
             }
         };
@@ -923,6 +940,16 @@ var o_browse = {
         }});
 
     },
+
+    adjust_gallery_data_viewer: function() {
+        var right_border_colorbox = $('#colorbox').width() + $('#colorbox').position().left;
+        // move metadatabox to be near colorbox
+        $('#cboxOverlay .gallery_data_viewer').animate({
+            left: right_border_colorbox - 10 +  'px'
+        }, 'fast');
+
+    },
+
 
     updateColorboxDataViewer: function(ring_obs_id) {
 
