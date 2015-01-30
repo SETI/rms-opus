@@ -55,8 +55,8 @@
 }
 .gallery_data_viewer {
     position: fixed;
-    top:30px;
-    right:20px;
+    top:40px;
+    right:50px;
     width:280px;
     height:80%;
     padding:20px;
