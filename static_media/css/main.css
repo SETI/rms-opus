@@ -6,6 +6,13 @@
   }
 }
 
+body {
+  background-color:#303030;
+}
+#cboxContent, #cboxContent, #cboxLoadedContent, img.cboxPhoto {
+  background-color:#303030;
+}
+
 .dictionary {
     display:none;
 }
@@ -40,18 +47,6 @@
     font-size:130%;
     padding:5px 0px;
     color: #3399ff;
-}
-#colorbox-extra-info {
-    position: absolute;
-    bottom: -5px;
-    left: 180px;
-    padding: 10px;
-
-}
-#colorbox-extra-info>div{
-}
-#colorbox-extra-info button{
-    float:right;
 }
 .gallery_data_viewer {
     position: fixed;

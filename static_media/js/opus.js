@@ -6,7 +6,7 @@
 $(document).ready(function() {
 
 
-    $(window).resize(function() {
+    $(window).smartresize(function(){
         // see if the metadata box is off screen, if so redraw it.
         // find left border of metadata box is > screen width.
         // if so then move it inside
@@ -15,7 +15,6 @@ $(document).ready(function() {
         $('#cboxOverlay .gallery_data_viewer').width();
         $('#cboxOverlay .gallery_data_viewer').offset().left;
         */
-        o_browse.initColorbox();
         if ($('#cboxOverlay .gallery_data_viewer').is(':visible')) {
             // user is resizing browser with gallery viewer open
             // make sure they don't lose the metadata box off to the right
@@ -33,8 +32,12 @@ $(document).ready(function() {
                 left:left_margin
             }, 'fast');
             */
-
-            o_browse.adjust_gallery_data_viewer();
+            if ($('#cboxOverlay .gallery_data_viewer').is(':visible')) { // :visible being used here to see if element exists)
+                // colorbox is showing, lets reload it so it shows
+                // the orientation it will show when they next page
+                // first get the ring_obs_id
+                setTimeout(o_browse.reset_colorbox(), 1500);
+            }
         }
 
     });
@@ -399,4 +402,36 @@ var opus = {
     }
 
 }; // end opus namespace
+
+
+// Paul Irish's smartresize: http://www.paulirish.com/2009/throttled-smartresize-jquery-event-handler/
+(function($,sr){
+
+  // debouncing function from John Hann
+  // http://unscriptable.com/index.php/2009/03/20/debouncing-javascript-methods/
+  var debounce = function (func, threshold, execAsap) {
+      var timeout;
+
+      return function debounced () {
+          var obj = this, args = arguments;
+          function delayed () {
+              if (!execAsap)
+                  func.apply(obj, args);
+              timeout = null;
+          };
+
+          if (timeout)
+              clearTimeout(timeout);
+          else if (execAsap)
+              func.apply(obj, args);
+
+          timeout = setTimeout(delayed, threshold || 100);
+      };
+  }
+  // smartresize
+  jQuery.fn[sr] = function(fn){  return fn ? this.bind('resize', debounce(fn)) : this.trigger(sr); };
+
+})(jQuery,'smartresize');
+
+
 

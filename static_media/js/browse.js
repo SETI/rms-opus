@@ -831,11 +831,8 @@ var o_browse = {
 
     // colorbox  is the gallery large image viewer thing
     initColorbox: function() {
-        window_width = $(window).width();
-        left_margin = '5px';
-        if (window_width > 1050) {
-            left_margin = '15%';
-        }
+
+        left_margin = o_browse.colorbox_left_margin();
 
         // setup colorbox
         var $overflow = '';
@@ -844,7 +841,8 @@ var o_browse = {
             className:"gallery_overlay_bg",
             top:'17px',
             left:left_margin,
-            reposition:true,
+            reposition:false,
+            /* retinaImage:true, // maybe? */
             scrolling:true,
             previous: '<i class="ace-icon fa fa-arrow-left"></i>',
             next: '<i class="ace-icon fa fa-arrow-right"></i>',
@@ -854,6 +852,7 @@ var o_browse = {
             maxHeight:'90%',
             loop:false,
             fastIframe: false,
+
             onOpen:function(){
                 // prevent scrolling for duration that colorbox is visible
                 $overflow = document.body.style.overflow;
@@ -874,9 +873,6 @@ var o_browse = {
                             left: right_border_colorbox + 5 + 'px'
                         });
                         $('#cboxOverlay').append('<div class = "gallery_data_viewer"><div>');
-
-                        o_browse.adjust_gallery_data_viewer();
-
                     }
 
                     // append the data to the data view container
@@ -899,46 +895,31 @@ var o_browse = {
 
             },
             onComplete:function(){
-
                 o_browse.adjust_gallery_data_viewer();
 
-                if (!opus.prefs.gallery_data_viewer) {
-
-                    // add the "show data" button to the colorbox controls
-                    $('#cboxLoadedContent').append('<div id="colorbox-extra-info">' + ring_obs_id + '<button class = "colorbox_data_button" type="button">show data</div>');
-
-                } else {
-
-                    // add the "hide data" button and the ring_obs_idto the colorbox controls
-                    $('#cboxLoadedContent').append('<div id="colorbox-extra-info">' + ring_obs_id + '<button class = "colorbox_data_button" style="display: block;" type="button">hide data</button>');
-                    // $('#cboxLoadedContent').append();
-                    ring_obs_id = $.colorbox.element().parent().attr("id").split('__')[1];
-
-                }
-                // $.colorbox.resize(); // i dunno why
-                $('#colorbox-extra-info').width($('#colorbox').width()/2.3);
             }
         };
 
         $('.ace-thumbnails [data-rel="colorbox"]').colorbox(colorbox_params);
 
-        // add colorbox hide/show data button behaviors
-        $("#colorbox").on("click",'.colorbox_data_button', function() {
-            button_text = $(this).text();
+    },
 
-            if (button_text == "hide data") {
-                $(this).text("show data");
-                opus.prefs.gallery_data_viewer = false;
-                $('.gallery_data_viewer').hide();
-            } else {
-                $(this).text("hide data");
-                ring_obs_id = $.colorbox.element().parent().attr("id").split('__')[1];
-                opus.prefs.gallery_data_viewer = true;
-                $('.gallery_data_viewer').html("<h2>" + ring_obs_id + "</h2>").fadeIn();
-                o_browse.updateColorboxDataViewer(ring_obs_id);
+    colorbox_left_margin: function() {
+        window_width = $(window).width();
+        left_margin = '5px';
+        if (window_width > 1050) {
+            left_margin = '15%';
+        }
+        return left_margin;
+    },
 
-        }});
-
+    reset_colorbox: function() {
+        // this is mainly used after a window resize
+        // basically the library will do it for you but have to trigger that click
+        // otherwise it won't do it on page resize but will do it on next/prev
+        ring_obs_id = $.colorbox.element().parent().attr("id").split('__')[1];
+        $('li#gallery__' + ring_obs_id + ' a.activeThumbnail').trigger("click");
+        o_browse.adjust_gallery_data_viewer();
     },
 
     adjust_gallery_data_viewer: function() {
