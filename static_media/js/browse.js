@@ -126,7 +126,7 @@ var o_browse = {
 
             }
 
-            // click to view colorbox
+            // click a thumbnail to view colorbox
             if ($(this).find('i').hasClass('fa-search-plus')) {
                 // trigger colorbox, same as clicking anywhere on the thumbnail
                 $('#gallery__' + ring_obs_id + "> a").trigger("click");
@@ -249,7 +249,12 @@ var o_browse = {
         });
 
         // close/open column chooser, aka "choose columns"
-        $('#browse').on("click", '.get_column_chooser', function() {
+        $('#browse, #cboxOverlay').on("click", '.get_column_chooser', function() {
+                if ($(this).hasClass('close_overlay')) {
+                    // close the colorbox because it never wants
+                    // to be under the column_chooser
+                    $.colorbox.close();
+                }
                 o_browse.getColumnChooser();
                 return false;
         });
@@ -859,29 +864,27 @@ var o_browse = {
                 document.body.style.overflow = 'hidden';
             },
             onLoad:function() {
-                if (opus.prefs.gallery_data_viewer) {
 
-                    ring_obs_id = $.colorbox.element().parent().attr("id").split('__')[1];
+                ring_obs_id = $.colorbox.element().parent().attr("id").split('__')[1];
 
-                    // get pixel loc of right border of colorbox
+                // get pixel loc of right border of colorbox
 
-                    // draw the viewer if not already..
-                    if (!$('#cboxOverlay .gallery_data_viewer').is(':visible')) { // :visible being used here to see if element exists
-                        // .gallery_data_viewer does not exist
-                        var right_border_colorbox = $('#colorbox').width() + $('#colorbox').position().left;
-                        $('#cboxOverlay .gallery_data_viewer').css({
-                            left: right_border_colorbox + 5 + 'px'
-                        });
-                        $('#cboxOverlay').append('<div class = "gallery_data_viewer"><div>');
-                    }
-
-                    // append the data to the data view container
-                    $('.gallery_data_viewer').html("<h2>" + ring_obs_id + "</h2>");
-
-                    // update the view data
-                    o_browse.updateColorboxDataViewer(ring_obs_id);
-
+                // draw the viewer if not already..
+                if (!$('#cboxOverlay .gallery_data_viewer').is(':visible')) { // :visible being used here to see if element exists
+                    // .gallery_data_viewer does not exist
+                    var right_border_colorbox = $('#colorbox').width() + $('#colorbox').position().left;
+                    $('#cboxOverlay .gallery_data_viewer').css({
+                        left: right_border_colorbox + 5 + 'px'
+                    });
+                    $('#cboxOverlay').append('<div class = "gallery_data_viewer"><div>');
                 }
+
+                // append the data to the data view container
+                $('.gallery_data_viewer').html("<h2>" + ring_obs_id + "</h2>");
+
+                // update the view data
+                o_browse.updateColorboxDataViewer(ring_obs_id);
+
 
             },
             onClosed:function(){
@@ -945,6 +948,8 @@ var o_browse = {
         // add a link to detail page
         html += '<p><a href = "/opus/detail/' + ring_obs_id + '.html" class = "gallery_data_link" data-ringobsid="' + ring_obs_id + '">View Detail</a></p>';
 
+        // add link to gallery data viewer metadatabox
+        html += '<p><a href="" class="get_column_chooser close_overlay">choose columns</a></p>';
         $('.gallery_data_viewer').html(html);
 
         // add data viewer behaviors
