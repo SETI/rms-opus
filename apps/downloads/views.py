@@ -109,7 +109,6 @@ def get_download_info(request, collection=""):
         return {'size':download_size, 'count':count}
 
 
-@never_cache
 def get_cum_downlaod_size(request, download_size):
     cum_downlaod_size = int(download_size) if download_size else 0
     if request.session.get('cum_downlaod_size'):
