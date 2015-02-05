@@ -150,7 +150,6 @@ def constructQueryString(selections, extras):
     # construct our query, we'll be breaking into raw sql, but for that
     # we'll be using the sql django generates through its model interface
     try:
-        # print ObsGeneral.objects.filter(*q_objects)
 
         sql, params = ObsGeneral.objects.filter(*q_objects).values('pk').query.sql_with_params()
 
@@ -159,8 +158,6 @@ def constructQueryString(selections, extras):
             # q += " ".join([" and (%s) " % long_query for long_query in long_querys])
             sql += " ".join([" and (%s) " % long_query[0] for long_query in long_querys])
             params += [long_query[1] for long_query in long_querys]
-
-        print sql % params
 
         return sql, params
 

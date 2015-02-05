@@ -134,7 +134,6 @@ def getValidMults(request,slug,fmt='json'):
             else:
                 where   = table_name + ".obs_general_id = " + user_table + ".id"
             results = results.extra(where=[where],tables=[user_table])
-            print results.query
 
         for row in results:
             mult_id = row[mult_name]
@@ -142,7 +141,6 @@ def getValidMults(request,slug,fmt='json'):
                 try:
                     mult = mult_model.objects.get(id=mult_id).label
                 except:
-                    print 'hello fallback==========='
                     mult = mult_id  # fall back to id if there is no label
 
                 mults[mult] = row[mult_name + '__count']

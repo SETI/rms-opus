@@ -34,7 +34,6 @@ def md5(filename):
         d.update(open(filename).read())
     except Exception,e:
         pass
-        # print e
     else:
         return d.hexdigest()
 
@@ -72,7 +71,6 @@ def get_download_size(files, product_types, previews):
     try:
         for f in FileSizes.objects.filter(name__in=file_names).values('name','size').distinct():
             total_size += f['size']
-            print f['name'] + ' ' + str(f['size'])
 
     except TypeError:
         pass    # no file found, move along to browse images
@@ -106,7 +104,7 @@ def get_download_info(request, collection=""):
 
     download_size = get_download_size(files, product_types.split(','), previews.split(',') )
 
-    download_size = nice_file_size(download_size)  # pretty print it
+    download_size = nice_file_size(download_size)  # prettyp it
 
     if fmt == 'json':
         return HttpResponse(json.dumps({'size':download_size, 'count':count}), mimetype='application/json')

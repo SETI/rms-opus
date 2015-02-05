@@ -250,7 +250,7 @@ def getImages(request,size,fmt):
         log.error('no image found for:')
         log.error(page_ids[:50])
 
-    # print page_ids
+    # page_ids
     if alt_size:
         image_links = image_links.values('ring_obs_id',size,alt_size)
     else:
@@ -293,7 +293,7 @@ def getImages(request,size,fmt):
         template = 'gallery.html'
     else: template = 'image_list.html'
 
-    # print image_links
+    # image_links
     return responseFormats({'data':[i for i in image_links]},fmt, size=size, path=path, alt_size=alt_size, columns_str=columns.split(','), all_collections=all_collections, template=template, order=order)
 
 
@@ -612,16 +612,13 @@ def getPage(request):
     results = results.values_list(*column_values)[offset:offset+int(limit)]
     log.debug(str(results.query))
 
-    # print results
+    # results
     # this whole page_ids thing is just rediculous, the caller can get it from the result set
     # especially if we are saying that the id is always at index 0
     page_ids = [o[0] for o in results]
 
     if not len(page_ids):
         return False
-    # print page_ids
-    # print results.query
-    # print list(results)
 
     return [page_no, limit, list(results), page_ids, order]
 
