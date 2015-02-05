@@ -12,11 +12,13 @@ from tools.app_utils import *
 from user_collections.views import *
 from hurry.filesize import size as nice_file_size
 from metrics.views import update_metrics
+from django.views.decorators.cache import never_cache
 import settings
 import logging
 
 log = logging.getLogger(__name__)
 
+@never_cache
 def create_zip_filename(ring_obs_id=None):
     if not ring_obs_id:
         letters = random.choice(string.ascii_letters) + random.choice(string.ascii_letters) + random.choice(string.ascii_letters)
@@ -36,7 +38,7 @@ def md5(filename):
     else:
         return d.hexdigest()
 
-
+@never_cache
 def get_download_size(files, product_types, previews):
     # takes file_names as returned by getFiles()
     # returns size in bytes as int
@@ -78,6 +80,7 @@ def get_download_size(files, product_types, previews):
     return total_size  # bytes!
 
 # http://pds-rings.seti.org/volumes/
+@never_cache
 def get_download_info(request, collection=""):
     update_metrics(request)
 
@@ -111,7 +114,7 @@ def get_download_info(request, collection=""):
         return {'size':download_size, 'count':count}
 
 
-
+@never_cache
 def get_cum_downlaod_size(request, download_size):
     cum_downlaod_size = int(download_size) if download_size else 0
     if request.session.get('cum_downlaod_size'):
@@ -119,6 +122,7 @@ def get_cum_downlaod_size(request, download_size):
     request.session['cum_downlaod_size'] = cum_downlaod_size
     return cum_downlaod_size
 
+@never_cache
 def create_download(request, collection_name='', ring_obs_ids=None, fmt="raw"):
     update_metrics(request)
 
@@ -140,7 +144,7 @@ def create_download(request, collection_name='', ring_obs_ids=None, fmt="raw"):
 
     if type(ring_obs_ids) is unicode or type(ring_obs_ids).__name__ == 'str':
         # a single ring_obs_id
-        zip_file_name = create_zip_filename(ring_obs_ids);
+        zip_file_name = create_zip_filename(ring_obs_ids);  # passing a string here
         ring_obs_ids = [ring_obs_ids]
     else:
         zip_file_name = create_zip_filename();
