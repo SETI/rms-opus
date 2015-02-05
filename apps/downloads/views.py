@@ -76,7 +76,6 @@ def get_download_size(files, product_types, previews):
     return total_size  # bytes!
 
 # http://pds-rings.seti.org/volumes/
-@never_cache
 def get_download_info(request, collection=""):
     update_metrics(request)
 
