@@ -18,7 +18,6 @@ import logging
 
 log = logging.getLogger(__name__)
 
-@never_cache
 def create_zip_filename(ring_obs_id=None):
     if not ring_obs_id:
         letters = random.choice(string.ascii_letters) + random.choice(string.ascii_letters) + random.choice(string.ascii_letters)
@@ -37,7 +36,6 @@ def md5(filename):
     else:
         return d.hexdigest()
 
-@never_cache
 def get_download_size(files, product_types, previews):
     # takes file_names as returned by getFiles()
     # returns size in bytes as int
