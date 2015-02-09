@@ -249,7 +249,7 @@ var o_browse = {
         });
 
         // close/open column chooser, aka "choose columns"
-        $('#browse, #cboxOverlay').on("click", '.get_column_chooser', function() {
+        $('#browse, #colorbox').on("click", '.get_column_chooser', function() {
                 if ($(this).hasClass('close_overlay')) {
                     // close the colorbox because it never wants
                     // to be under the column_chooser
@@ -870,13 +870,13 @@ var o_browse = {
                 // get pixel loc of right border of colorbox
 
                 // draw the viewer if not already..
-                if (!$('#cboxOverlay .gallery_data_viewer').is(':visible')) { // :visible being used here to see if element exists
+                if (!$('#colorbox .gallery_data_viewer').is(':visible')) { // :visible being used here to see if element exists
                     // .gallery_data_viewer does not exist
                     var right_border_colorbox = $('#colorbox').width() + $('#colorbox').position().left;
-                    $('#cboxOverlay .gallery_data_viewer').css({
+                    $('#colorbox .gallery_data_viewer').css({
                         left: right_border_colorbox + 5 + 'px'
                     });
-                    $('#cboxOverlay').append('<div class = "gallery_data_viewer"><div>');
+                    $('#colorbox').append('<div class = "gallery_data_viewer"><div>');
                 }
 
                 // append the data to the data view container
@@ -928,7 +928,7 @@ var o_browse = {
     adjust_gallery_data_viewer: function() {
         var right_border_colorbox = $('#colorbox').width() + $('#colorbox').position().left;
         // move metadatabox to be near colorbox
-        $('#cboxOverlay .gallery_data_viewer').animate({
+        $('#colorbox .gallery_data_viewer').animate({
             left: right_border_colorbox - 10 +  'px'
         }, 'fast');
 
@@ -937,7 +937,7 @@ var o_browse = {
 
     updateColorboxDataViewer: function(ring_obs_id) {
 
-        html = '';
+        html = '<dl>';
         for (var i in opus.prefs['cols']) {
             column = opus.prefs['cols'][i];
             value = opus.gallery_data[ring_obs_id][i];
