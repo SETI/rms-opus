@@ -338,7 +338,14 @@ def file_name_cleanup(base_file):
 
 
 # loc_type = path or url
-def getFilesAPI(request,ring_obs_id='',fmt='raw', loc_type="url"):
+def getFilesAPI(request, ring_obs_id=None, fmt=None, loc_type=None):
+
+    if not ring_obs_id:
+        ring_obs_id = ''
+    if not fmt:
+        fmt = 'raw'
+    if not loc_type:
+        loc_type = 'url'
 
     update_metrics(request)
 
