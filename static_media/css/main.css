@@ -1,11 +1,5 @@
 /* column chooser things */
 
-@media only screen and (max-width: 992px) {
-  #cboxOverlay .gallery_data_viewer {
-    /* position:absolute; top:0; left:-50px; */
-  }
-}
-
 body {
   background-color:#303030;
 }
@@ -61,6 +55,7 @@ body {
     background:#101010;
     opacity: 0.9;
     color:white;
+    z-index:9999 !important;
 }
 .gallery_data_viewer h2 { /* ring_obs_it at top of data viewer */
     font-size:95%;
