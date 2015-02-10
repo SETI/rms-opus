@@ -387,7 +387,7 @@ def getFiles(ring_obs_id, fmt=None, loc_type=None, product_types=None, previews=
         else:
             ring_obs_ids = ring_obs_id
     else:
-        log.error('404: no files found for ' + str(ring_obs_id))
+        log.error('404: no files found for ' + str(ring_obs_ids))
         return False
 
     file_names = {}

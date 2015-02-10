@@ -76,7 +76,7 @@ def get_download_size(files, product_types, previews):
     return total_size  # bytes!
 
 # http://pds-rings.seti.org/volumes/
-def get_download_info(request, collection=""):
+def get_download_info(request, collection=None):
     update_metrics(request)
 
     if not collection:
@@ -117,13 +117,19 @@ def get_cum_downlaod_size(request, download_size):
     return cum_downlaod_size
 
 @never_cache
-def create_download(request, collection_name='', ring_obs_ids=None, fmt="raw"):
+def create_download(request, collection_name=None, ring_obs_ids=None, fmt=None):
     update_metrics(request)
+
+    if not collection_name or collection_name == 'default':
+        collection_name = 'coll_default'
 
     try:
         fmt = request.GET.get('fmt', None)
     except:
         pass  # just wanna test this
+
+    if not fmt:
+        fmt = "raw"
 
     product_types = request.GET.get('types', '')
     previews = request.GET.get('previews', '')

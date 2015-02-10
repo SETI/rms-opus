@@ -17,24 +17,28 @@ from django.views.decorators.cache import never_cache
 import logging
 log = logging.getLogger(__name__)
 
-def set_collection(request,collection_name='default'):
+"""
+def set_collection(request,collection_name=None):
+    if not collection_name or collection_name == 'default':
+        collection_name = 'colls_default'
+
     update_metrics(request)
     try:
         s = UserCollections.objects.get(selections_hash=selections_hash,qtypes_hash=qtypes_hash,units_hash=units_hash,string_selects_hash=string_selects_hash)
     except UserSearches.DoesNotExist:
         s = UserSearches(selections_hash=selections_hash, selections_json=selections_json, qtypes=qtypes_json,qtypes_hash=qtypes_hash,units=units_json,units_hash=units_hash, string_selects=string_selects_json,string_selects_hash=string_selects_hash )
         s.save()
+"""
 
 def get_collection(request, collection_name=None):
     """
     returns list of ring_obs_ids in the current session user's collection
     """
-    if not collection_name:
-        collection_name = 'default'
+    if not collection_name or collection_name == 'default':
+        collection_name = 'coll_default'
 
     update_metrics(request)
 
-    collection_name = 'collection__' + collection_name;
     collection = [] # collection is a list of ring_obs_ids
     if request.session.get(collection_name):
         collection = request.session.get(collection_name)
@@ -46,6 +50,10 @@ def get_collection(request, collection_name=None):
 @never_cache
 def view_collection(request, collection_name, template="collections.html"):
     # return getData(request,'html', True)
+
+    if collection_name == 'default':
+        collection_name = 'coll_default'
+
     update_metrics(request)
 
     session_key = request.session.session_key
@@ -130,7 +138,11 @@ def view_collection(request, collection_name, template="collections.html"):
 def collection_status(request, **kwargs):
     update_metrics(request)
 
-    collection_name = 'collection__' + kwargs['collection']
+    collection_name = 'coll_' + kwargs['collection']
+
+    if not collection_name or collection_name == 'default':
+        collection_name = 'coll_default'
+
     collection = []
     if request.session.get(collection_name):
         collection = request.session.get(collection_name)
@@ -157,7 +169,7 @@ def check_collection_args(request,**kwargs):
     # collection and action are part of the url conf so you won't get in without one
     try:
         action = kwargs['action']
-        collection_name = 'collection__' + kwargs['collection']
+        collection_name = 'coll_' + kwargs['collection']
     except KeyError:
         return 'Page not found'
 

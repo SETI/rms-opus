@@ -58,6 +58,7 @@ var o_collections = {
 
                     },
                     error: function(e) {
+                        $('.spinner', "#collections_summary").fadeOut();
                         $('<li>No Files Found</li>').hide().prependTo('ul.zipped_files', "#collections_summary").slideDown('fast');
                         opus.download_in_process = false;
                     }
