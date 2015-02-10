@@ -134,6 +134,7 @@ var opus = {
     lastRequestNo: 0,          // holds request numbers for main result count loop,
     lastCartRequestNo: 0,
 
+    download_in_process: false,
 
     // client side prefs, changes to these *do not trigger results to refresh*
     prefs:{ 'view':'', // search, browse, collection, detail
