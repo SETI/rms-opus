@@ -379,6 +379,8 @@ def getFiles(ring_obs_id, fmt=None, loc_type=None, product_types=None, previews=
     if not previews:
         previews = []
 
+    # ring_obs_id may be passed in as a string or a list,
+    # if it's a string make it a list
     if ring_obs_id:
         if type(ring_obs_id) is unicode or type(ring_obs_id).__name__ == 'str':
             ring_obs_ids = [ring_obs_id]

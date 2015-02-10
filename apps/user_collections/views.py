@@ -25,10 +25,13 @@ def set_collection(request,collection_name='default'):
         s = UserSearches(selections_hash=selections_hash, selections_json=selections_json, qtypes=qtypes_json,qtypes_hash=qtypes_hash,units=units_json,units_hash=units_hash, string_selects=string_selects_json,string_selects_hash=string_selects_hash )
         s.save()
 
-def get_collection(request, collection_name='default'):
+def get_collection(request, collection_name=None):
     """
     returns list of ring_obs_ids in the current session user's collection
     """
+    if not collection_name:
+        collection_name = 'default'
+
     update_metrics(request)
 
     collection_name = 'collection__' + collection_name;
@@ -36,7 +39,9 @@ def get_collection(request, collection_name='default'):
     if request.session.get(collection_name):
         collection = request.session.get(collection_name)
         return collection
-    return False
+    else:
+        log.error('no collection found in session for request ' + collection_name)
+        return False
 
 @never_cache
 def view_collection(request, collection_name, template="collections.html"):
@@ -246,8 +251,10 @@ def edit_collection(request, **kwargs):
         if ring_obs_id in collection: # if it's already there, remove it and add it again, user may be futzing with order
             collection.remove(ring_obs_id)
         collection.append(ring_obs_id)
+
     elif (action == 'remove') & (ring_obs_id in collection):
         collection.remove(ring_obs_id)
+
     elif (action in ['addrange','removerange']):
         collection = edit_collection_range(request, **kwargs)
         # return collection
@@ -258,6 +265,8 @@ def edit_collection(request, **kwargs):
     remove_from_queue(request, expected_request_no) # we are handling this one now
     request.session['expected_request_no'] = next_request_no
     request.session[collection_name] = collection
+    log.debug('setting collection ' + collection_name + ' in session =------>')
+    log.debug(collection)
     # request.session['all_collections'] = all_collections
 
     # so we did the next expected, is there another subsequent to that?

@@ -81,7 +81,7 @@ def get_download_info(request, collection=""):
 
     if not collection:
         from user_collections.views import * # circumvent the circular dependency.. James Bennett says it's ok!
-        collection = get_collection(request)
+        collection = get_collection(request)  # collection is list of ring_obs_ids
 
     fmt = request.GET.get('fmt', None)
     product_types = request.GET.get('types', '')
