@@ -369,7 +369,11 @@ def getFilesAPI(request, ring_obs_id=None, fmt=None, loc_type=None):
 
 # loc_type = path or url
 def getFiles(ring_obs_id, fmt=None, loc_type=None, product_types=None, previews=None):
+    """
+    returns list of all files by ring_obs_id
+    ring_obs_id can be string or list
 
+    """
     if not fmt:
         fmt = 'raw'
     if not loc_type:
@@ -387,7 +391,7 @@ def getFiles(ring_obs_id, fmt=None, loc_type=None, product_types=None, previews=
         else:
             ring_obs_ids = ring_obs_id
     else:
-        log.error('404: no files found for ' + str(ring_obs_ids))
+        log.error('404: no files found')
         return False
 
     file_names = {}

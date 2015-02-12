@@ -58,7 +58,6 @@ def view_collection(request, collection_name, template="collections.html"):
 
     session_key = request.session.session_key
 
-
     # nav stuff - page | limit | order | columns | offset
     page_no = int(request.GET.get('page',1))
     limit = int(request.GET.get('limit',100))
