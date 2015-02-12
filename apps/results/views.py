@@ -242,8 +242,6 @@ def getImages(request,size,fmt):
     except TypeError:  # getPage returns False
         raise Http404
 
-    log.debug('got page of length ' + str(len(page_ids)))
-    log.debug(page_ids)
     image_links = Image.objects.filter(ring_obs_id__in=page_ids)
 
     if not image_links:
@@ -338,6 +336,7 @@ def file_name_cleanup(base_file):
 
 
 # loc_type = path or url
+# you broke this see http://127.0.0.1:8000/opus/api/files.json?&target=pan
 def getFilesAPI(request, ring_obs_id=None, fmt=None, loc_type=None):
 
     if not ring_obs_id:
@@ -359,11 +358,9 @@ def getFilesAPI(request, ring_obs_id=None, fmt=None, loc_type=None):
         page  = getData(request,'raw')['page']
         if not len(page):
             return False
-        ring_obs_id = []
-        for p in page:
-            ring_obs_id.append(p[0])
+        ring_obs_ids = [p[0] for p in page]
 
-    return getFiles(ring_obs_id, fmt=fmt, loc_type=loc_type, product_types=product_types, previews=images)
+        return getFiles(ring_obs_ids, fmt=fmt, loc_type=loc_type, product_types=product_types, previews=images)
 
 
 
@@ -513,6 +510,7 @@ def getPage(request):
     if not slugs:
         slugs = settings.DEFAULT_COLUMNS  # i dunno why the above doesn't suffice
 
+
     columns = []
     for slug in slugs.split(','):
         try:
@@ -528,7 +526,7 @@ def getPage(request):
         pass  # obs_general isn't in there
 
     if not collection_page:
-        # this is a data table page
+        # this is for a search query
 
         order = request.GET.get('order',False)
 
@@ -557,7 +555,8 @@ def getPage(request):
         results = ObsGeneral.objects.extra(where=[where], tables=triggered_tables)
 
     else:
-        # this is for a collection
+        # this is for a collection of selections
+
         order = request.GET.get('colls_order', False)
         if order:
             try:
@@ -619,13 +618,14 @@ def getPage(request):
     base_limit = 100  # see above
     offset = (page_no-1)*base_limit # we don't use Django's pagination because of that count(*) that it does.
 
+    # look at line 559 you are essentially doing this query twice in the same method and peforming the query each time cuz it has changed!
     results = results.values_list(*column_values)[offset:offset+int(limit)]
-    log.debug(str(results.query))
 
     # results
     # this whole page_ids thing is just rediculous, the caller can get it from the result set
     # especially if we are saying that the id is always at index 0
     page_ids = [o[0] for o in results]
+
 
     if not len(page_ids):
         return False
