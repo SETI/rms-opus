@@ -401,82 +401,79 @@ def getFiles(ring_obs_id, fmt=None, loc_type=None, product_types=None, previews=
     else:
         path = settings.FILE_PATH
 
-    for ring_obs_id in ring_obs_ids:
+    files_table_rows = Files.objects.filter(ring_obs_id__in=ring_obs_ids)
 
+    for f in files_table_rows:
+
+        ring_obs_id = f.ring_obs_id
         file_names[ring_obs_id] = {}
 
-        files_table_rows = Files.objects.filter(ring_obs_id=ring_obs_id)
+        file_extensions = []
+        try:
+            volume_loc = ObsGeneral.objects.filter(ring_obs_id=ring_obs_id)[0].volume_id
+        except IndexError:
+            volume_loc = f.volume_id
 
-        for f in files_table_rows:
+        # hack for LORRI strangeness
+        if f.instrument_id == "LORRI":
+            volume_loc = f.volume_id
 
-            file_extensions = []
-            try:
-                volume_loc = ObsGeneral.objects.filter(ring_obs_id=ring_obs_id)[0].volume_id
-            except IndexError:
-                volume_loc = f.volume_id
+        file_names[ring_obs_id].setdefault(f.product_type, [])
 
-            # hack for LORRI strangeness
-            if f.instrument_id == "LORRI":
-                volume_loc = f.volume_id
+        extra_files = []
+        if f.extra_files:
+            extra_files = f.extra_files.split(',')
 
-            if f.product_type not in file_names[ring_obs_id]:
-                file_names[ring_obs_id][f.product_type] = []
+        ext = ''.join(f.file_specification_name.split('.')[-1:])
+        base_file = '.'.join(f.file_specification_name.split('.')[:-1])
 
-            extra_files = []
-            if f.extra_files:
-                extra_files = f.extra_files.split(',')
+        # // sometimes in GO the volume_id is appended already
+        if base_file.find(f.volume_id + ":")>-1:
+            base_file = ''.join(base_file.split(':')[1:len(base_file.split(':'))])
 
-            ext = ''.join(f.file_specification_name.split('.')[-1:])
-            base_file = '.'.join(f.file_specification_name.split('.')[:-1])
+        # // strange punctuation in the base file name is really a directory division
+        base_file = file_name_cleanup(base_file).strip('/')
 
-            # // sometimes in GO the volume_id is appended already
-            if base_file.find(f.volume_id + ":")>-1:
-                base_file = ''.join(base_file.split(':')[1:len(base_file.split(':'))])
+        if f.label_type.upper() == 'DETACHED':
+            if f.product_type not in ['TIFF_PREVIEW_IMAGE','JPEG_PREVIEW_IMAGE']:  # HST hack
+                file_extensions += ['LBL']
 
-            # // strange punctuation in the base file name is really a directory division
-            base_file = file_name_cleanup(base_file).strip('/')
+        if f.ascii_ext: file_extensions += [f.ascii_ext]
+        if f.lsb_ext: file_extensions += [f.lsb_ext]
+        if f.msb_ext: file_extensions += [f.msb_ext]
+        if f.detached_label_ext: file_extensions += [f.detached_label_ext]
 
-            if f.label_type.upper() == 'DETACHED':
-                if f.product_type not in ['TIFF_PREVIEW_IMAGE','JPEG_PREVIEW_IMAGE']:  # HST hack
-                    file_extensions += ['LBL']
+        file_extensions = list(set(file_extensions))
 
-            if f.ascii_ext: file_extensions += [f.ascii_ext]
-            if f.lsb_ext: file_extensions += [f.lsb_ext]
-            if f.msb_ext: file_extensions += [f.msb_ext]
-            if f.detached_label_ext: file_extensions += [f.detached_label_ext]
+        # extras are never found in the derived directory, so get those first
+        for extra in extra_files:
+            file_names[ring_obs_id][f.product_type] += [path + volume_loc + '/' + extra]
 
-            file_extensions = list(set(file_extensions))
-
-            # extras are never found in the derived directory, so get those first
-            for extra in extra_files:
-                file_names[ring_obs_id][f.product_type]  += [path + volume_loc + '/' + extra]
-
-            # now adjust the path whether this is on the derived directory or not
-            if (f.product_type) == 'CALIBRATED':
-                if loc_type != 'url':
-                    path = settings.DERIVED_PATH
-                else:
-                    path = settings.DERIVED_HTTP_PATH
+        # now adjust the path whether this is on the derived directory or not
+        if (f.product_type) == 'CALIBRATED':
+            if loc_type != 'url':
+                path = settings.DERIVED_PATH
             else:
-                if loc_type == 'path':
-                    path = settings.FILE_PATH
-                else:
-                    path = settings.FILE_HTTP_PATH
+                path = settings.DERIVED_HTTP_PATH
+        else:
+            if loc_type == 'path':
+                path = settings.FILE_PATH
+            else:
+                path = settings.FILE_HTTP_PATH
 
-            path = path + f.base_path.split('/')[-2] + '/'  # base path like xxx
+        path = path + f.base_path.split('/')[-2] + '/'  # base path like xxx
 
-            for extension in file_extensions:
-                file_names[ring_obs_id][f.product_type]  += [path + volume_loc + '/' + base_file + '.' + extension]
-            # // add the original file
-            file_names[ring_obs_id][f.product_type]  += [path + '/' + volume_loc + '/' + base_file + '.' + ext]
+        for extension in file_extensions:
+            file_names[ring_obs_id][f.product_type]  += [path + volume_loc + '/' + base_file + '.' + extension]
+        # // add the original file
+        file_names[ring_obs_id][f.product_type]  += [path + '/' + volume_loc + '/' + base_file + '.' + ext]
 
-            file_names[ring_obs_id][f.product_type] = list(set(file_names[ring_obs_id][f.product_type])) #  makes unique
-            file_names[ring_obs_id][f.product_type].sort()
-            file_names[ring_obs_id][f.product_type].reverse()
+        file_names[ring_obs_id][f.product_type] = list(set(file_names[ring_obs_id][f.product_type])) #  makes unique
+        file_names[ring_obs_id][f.product_type].sort()
+        file_names[ring_obs_id][f.product_type].reverse()
 
-    # add some preview images?
-    if len(previews):
-        for ring_obs_id in file_names:
+        # add some preview images?
+        if len(previews):
             file_names[ring_obs_id]['preview_image'] = []
             for size in previews.split(','):
                 url_info = getImage(False,size.lower(), ring_obs_id,'raw')
