@@ -37,8 +37,6 @@ var o_collections = {
 
          });
 
-
-
          // Download Zipped Archive button - click create download zip file link on collections page
          $('#collection').on("click", '#collections_summary a#create_zip_file button', function() {
                 $('.spinner', "#collections_summary").fadeIn();
@@ -66,7 +64,6 @@ var o_collections = {
                 });
                 return false;
          });
-
 
          // click create zip file link on detail page
          $("#detail").on("click", '#create_zip_file', function() {
@@ -137,28 +134,31 @@ var o_collections = {
         clearInterval(opus.scroll_watch_interval); // hold on cowgirl only 1 page at a time
 
         if (opus.collection_change) {
+
+            $('.collection_details', '#collection').html(opus.spinner);
+
             // reset page no
             opus.last_page_drawn['colls_gallery'] = 0;
             opus.last_page_drawn['colls_data'] = 0;
             zipped_files_html = $('.zipped_files', '#collection').html();
+
             $('.gallery', '#collection').empty();
             $('.data', '#collection').empty();
-            // collection has changed since tab was last drwan, fetch anew
-            $('.collection_details', '#collection').html(opus.spinner);
-            $.ajax({ url: "/opus/collections/default/view.html",
-                   success: function(html){
-                        $('.collection_details', '#collection').hide().html(html).fadeIn();
-                        opus.collection_change = false;
-                        if (opus.download_in_process) {
-                            $('.spinner', "#collections_summary").fadeIn();
-                        }
 
-                        o_browse.getBrowseTab();
-                        $('#colls_pages').html(opus.colls_pages);
-                        if (zipped_files_html) {
-                            $('.zipped_files', '#collection').html(zipped_files_html);
-                        }
-                   }});
+            $.ajax({ url: "/opus/collections/default/view.html",
+                success: function(html){
+                    $('.collection_details', '#collection').hide().html(html).fadeIn();
+                    opus.collection_change = false;
+                    if (opus.download_in_process) {
+                        $('.spinner', "#collections_summary").fadeIn();
+                    }
+
+                    o_browse.getBrowseTab();
+                    $('#colls_pages').html(opus.colls_pages);
+                    if (zipped_files_html) {
+                        $('.zipped_files', '#collection').html(zipped_files_html);
+                    }
+                }});
         }
     },
 

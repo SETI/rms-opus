@@ -44,8 +44,8 @@
 
     	<h4>Preview Images (jpeg/png)</h4>
     	<ul id = "image_types" class = "list-inline">
-    	 {% for i in image_types %}
-    		    <li><input type = "checkbox" value = "{{ i }}"> {{ i }} <span class = "hints">{{ image_count }}</span></li>
+    	 {% for k,v in image_types.items %}
+    		    <li><input type = "checkbox" value = "{{ k }}"> {{ v }} <span class = "hints">{{ image_count }}</span></li>
     	 {% endfor %}
     	</ul>
 

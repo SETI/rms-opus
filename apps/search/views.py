@@ -307,20 +307,9 @@ def urlToSearchParams(request_get):
         results.append(selections)
         results.append(extras)
 
-        """
-        log.debug("-------- urlToSearchParams -------- ")
-        log.debug(request_get)
-        log.debug(selections)
-        log.debug(results)
-        """
-
         return results
 
-
     else:
-        log.debug("-------- urlToSearchParams -------- ")
-        log.debug("no selections found ")
-        log.debug(request_get)
         return False
 
 

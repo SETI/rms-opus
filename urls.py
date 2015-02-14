@@ -75,11 +75,11 @@ base_urlpatterns += patterns('guide.views',
 
 # user_collections - all your carts are belong to us
 base_urlpatterns += patterns('user_collections.views',
-    (r'^collections/(?P<collection>[default]+)/(?P<action>[add|remove|addrange|removerange]+).json$', 'edit_collection'),
+    (r'^collections/(?P<collection_name>[default]+)/(?P<action>[add|remove|addrange|removerange]+).json$', 'edit_collection'),
     (r'^collections/(?P<collection_name>[default]+)/view.html$','view_collection'),
-    (r'^collections/(?P<collection>[default]+)/status.json$','collection_status'),
+    (r'^collections/(?P<collection_name>[default]+)/status.json$','collection_status'),
     (r'^collections/reset.html$', 'reset_sess'),
-    (r'^collections/(?P<collection>[default]+)/(?P<action>[addrange|removerange]+)/test.html$', 'edit_collection_range'),
+    (r'^collections/(?P<collection_name>[default]+)/(?P<action>[addrange|removerange]+)/test.html$', 'edit_collection_range'),
 )
 
 

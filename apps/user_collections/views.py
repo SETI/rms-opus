@@ -5,7 +5,6 @@
 ################################################import settings
 import settings
 import json
-from collections import OrderedDict
 from django.http import HttpResponse, Http404
 from django.template import RequestContext
 from tools.app_utils import *
@@ -13,55 +12,194 @@ from results.views import *
 from downloads.views import *
 from metrics.views import update_metrics
 from django.views.decorators.cache import never_cache
+from django.db import connection, DatabaseError
 
 import logging
 log = logging.getLogger(__name__)
 
-"""
-def set_collection(request,collection_name=None):
-    if not collection_name or collection_name == 'default':
-        collection_name = 'colls_default'
-
-    update_metrics(request)
-    try:
-        s = UserCollections.objects.get(selections_hash=selections_hash,qtypes_hash=qtypes_hash,units_hash=units_hash,string_selects_hash=string_selects_hash)
-    except UserSearches.DoesNotExist:
-        s = UserSearches(selections_hash=selections_hash, selections_json=selections_json, qtypes=qtypes_json,qtypes_hash=qtypes_hash,units=units_json,units_hash=units_hash, string_selects=string_selects_json,string_selects_hash=string_selects_hash )
-        s.save()
-"""
-
-def get_collection(request, collection_name=None):
+def get_collection_table(session_id):
     """
-    returns list of ring_obs_ids in the current session user's collection
+    returns collection table name and if one doesn't exist create a new one
     """
-    if not collection_name or collection_name == 'default':
-        collection_name = 'coll_default'
-
-    update_metrics(request)
-
-    collection = [] # collection is a list of ring_obs_ids
-    if request.session.get(collection_name):
-        collection = request.session.get(collection_name)
-        return collection
-    else:
-        log.error('no collection found in session for request ' + collection_name)
+    if not session_id:
+        print "no session id = no collections table to be found"
         return False
+
+    cursor = connection.cursor()
+    coll_table_name = 'colls_' + session_id
+    try:
+        sql = 'select ring_obs_id from ' + connection.ops.quote_name(coll_table_name) + ' limit 1'
+        cursor.execute(sql)
+    except DatabaseError:
+        sql = 'create table ' + connection.ops.quote_name(coll_table_name) + ' like user_collections_template';
+        cursor.execute(sql)
+
+    return coll_table_name
+
+def bulk_add_to_collection(ring_obs_id_list, session_id):
+    cursor = connection.cursor()
+    coll_table_name = get_collection_table(session_id)
+    placeholders = ['(%s)' for i in range(len(ring_obs_id_list))]
+    values_str = ','.join(placeholders)
+    sql = 'replace into ' + connection.ops.quote_name(coll_table_name) + ' (ring_obs_id) values %s' % values_str
+    cursor.execute(sql, tuple(ring_obs_id_list))
+
+def add_to_collection(ring_obs_id, session_id):
+    coll_table_name = get_collection_table(session_id)
+    cursor = connection.cursor()
+    # first remove
+    remove_from_collection(ring_obs_id, session_id)
+    sql = 'replace into ' + connection.ops.quote_name(coll_table_name) + ' (ring_obs_id) values (%s)'
+    cursor.execute(sql, ring_obs_id)
+
+
+def remove_from_collection(ring_obs_id, session_id):
+    cursor = connection.cursor()
+    coll_table_name = get_collection_table(session_id)
+    sql = 'delete from ' + connection.ops.quote_name(coll_table_name) + ' where ring_obs_id = %s'
+    cursor.execute(sql, ring_obs_id)
+
+def get_collection_in_page(page, session_id):
+    """ returns obs_general_ids in page that are also in user collection """
+    cursor = connection.cursor()
+    coll_table_name = get_collection_table(session_id)
+    collection_in_page = []
+    for p in page:
+        ring_obs_id = p[0]
+        sql = 'select ring_obs_id from ' + connection.ops.quote_name(coll_table_name) + ' where ring_obs_id = %s'
+        cursor.execute(sql, ring_obs_id)
+        row = cursor.fetchone()
+        if row is not None:
+            collection_in_page.append(ring_obs_id)
+    return collection_in_page
+
+def get_collection_count(session_id):
+    cursor = connection.cursor()
+    coll_table_name = get_collection_table(session_id)
+    sql = 'select count(*) from ' + connection.ops.quote_name(coll_table_name)
+    cursor.execute(sql)
+    c = cursor.fetchone()[0]
+    return c
+
+def edit_collection(request, **kwargs):
+    update_metrics(request)
+    """
+    edits a single ring_obs_id in a user collection (user "selections")
+    """
+    session_id = request.session.session_key
+
+    checkArgs = check_collection_args(request, **kwargs)
+    if type(checkArgs).__name__ == 'list' and checkArgs:
+        (action, ring_obs_id, request_no, expected_request_no) = checkArgs
+    else:
+        return HttpResponse(json.dumps({"err":checkArgs}))
+
+    # just add this request to the queue, every request gets queued
+    add_to_queue(request, request_no, action, ring_obs_id)
+
+    """
+    turning this off for now, we will get the queue of whatever request_no is passed
+    to us, without checking against what is expected_request_no
+    by turning this off we are at risk of ajax race conditions
+    but it's breaking something and no time fo dat right now
+    Issue is here:
+    https://bitbucket.org/ringsnode/opus2/issue/75/collections-downloads-majorly-broken
+    # todo:
+    # now look for the next expected request in the queue
+    if get_queued(request, expected_request_no):
+        # found the next expected request in the queue
+        (request,action,ring_obs_id) = get_queued(request, expected_request_no)
+    else:
+        # the expected request has not yet arrived, do nothing
+        return HttpResponse(json.dumps({"err":"waiting"}))
+    """
+    # instead of the above we are doing this:
+    (action, ring_obs_id) = get_queued(request, request_no)
+
+    # redux: these will be not so simple saddly, they will insert or delete from
+    # the colleciton table..
+    if action == 'add':
+        add_to_collection(ring_obs_id, session_id)
+
+    elif (action == 'remove'):
+        remove_from_collection(ring_obs_id, session_id)
+
+    elif (action in ['addrange','removerange']):
+        collection_count = edit_collection_range(request, **kwargs)
+
+    remove_from_queue(request, request_no)
+
+    """
+    try:
+        json = {"msg":"yay!","count":len(collection), "collection": ', '.join(collection)}
+    except:
+        json = collection
+    """
+    collection_count = get_collection_count(session_id)
+
+    json_data = {"err":False, "count":collection_count, "request_no":request_no}
+
+    return HttpResponse(json.dumps(json_data))
+
+
+def edit_collection_range(request, **kwargs):
+    update_metrics(request)
+    """
+    the request will come in not as a single ring_obs_id
+    but as min and max ring_obs_ids + a search query
+
+    """
+    session_id = request.session.session_key
+    colls_table_name = get_collection_table(session_id)
+
+    (action, ring_obs_id, request_no, expected_request_no) = check_collection_args(request, **kwargs)
+
+    id_range = request.GET.get('addrange',False)
+    if not id_range:
+        return False; # "invalid ringobsid pair"
+
+    (min_id, max_id) = id_range.split(',')
+    (selections,extras) = urlToSearchParams(request.GET)
+
+    from results.views import *
+    data = getData(request,"raw")
+    selected_range = []
+    in_range = False  # loop has reached the range selected
+
+    # return HttpResponse(json.dumps(data['page']));
+    for row in data['page']:
+
+        ring_obs_id = row[0]
+
+        if ring_obs_id == min_id:
+            in_range = True;
+
+        if in_range:
+            selected_range.append(ring_obs_id)
+
+        if in_range & (ring_obs_id == max_id):
+
+            # this is the last one, update the collection
+            if action == 'addrange':
+                bulk_add_to_collection([rid for rid in selected_range], session_id)
+
+    if not selected_range:
+        log.error("edit_collection_range failed to find range " + id_range)
+        log.error(selections)
+
+    return get_collection_count(session_id)
+
 
 @never_cache
 def view_collection(request, collection_name, template="collections.html"):
-    # return getData(request,'html', True)
-
-    if collection_name == 'default':
-        collection_name = 'coll_default'
-
     update_metrics(request)
+    """ the collection tab http endpoint """
+    session_id = request.session.session_key
+    colls_table_name = get_collection_table(session_id)
 
-    session_key = request.session.session_key
-
-    # nav stuff - page | limit | order | columns | offset
+    # nav stuff - page | limit | columns | offset
     page_no = int(request.GET.get('page',1))
     limit = int(request.GET.get('limit',100))
-    order = int(request.GET.get('order',150))
     column_slugs = request.GET.get('cols',settings.DEFAULT_COLUMNS)
 
     from results.views import *  # circulosity
@@ -73,20 +211,23 @@ def view_collection(request, collection_name, template="collections.html"):
     offset = (page_no-1)*limit
 
     # collection
-    collection = get_collection(request, collection_name)
-    files = getFiles(collection, fmt="raw")
+    colls_table_name = get_collection_table(session_id)
+    files = getFiles(fmt="raw", collection=True, session_id=session_id)
     product_types = Files.objects.all().values('product_type').distinct()
 
     # downlaod_info
     from downloads.views import *
-    download = get_download_info(request,collection)
+    download = get_download_info(request)
 
     download_size = download['size']
     download_count = download['count']
 
-    # images
-    images = Image.objects.filter(ring_obs_id__in=collection)
-    image_types = OrderedDict([(i,0) for i in settings.IMAGE_TYPES])   # dict with image_types as keys and all values set to zero
+    # images and join with the collections table
+    where   = "images.ring_obs_id = " + connection.ops.quote_name(colls_table_name) + ".ring_obs_id"
+    images = Image.objects
+    images = images.extra(where=[where], tables=[colls_table_name])
+
+    image_types = settings.IMAGE_TYPES
     image_count = len(images)
 
     # product files
@@ -95,17 +236,6 @@ def view_collection(request, collection_name, template="collections.html"):
         for ptype in files[ring_obs_id]:
             product_counts[ptype] = product_counts[ptype] + 1
 
-    # return HttpResponse(str(simplejson.dumps(product_types)))
-    # return HttpResponse(files['data']['S_IMG_CO_ISS_1633303611_W'])
-
-    # a page of results for the frontend
-    """
-    HOUSTON WE HAVE A PROBLEM
-    """
-    # ok now that we have everything from the url et stuff from db
-
-    # this is the thing you pass to django model via values()
-    # so we have the table names a bit to get what django wants:
     column_values = []
     for param_name in columns:
         table_name = param_name.split('.')[0]
@@ -121,12 +251,13 @@ def view_collection(request, collection_name, template="collections.html"):
     except ValueError:
         pass  # obs_general table wasn't in there for whatever reason
 
+    # set up the where clause to join with the rest of the tables
+    where   = "obs_general.ring_obs_id = " + connection.ops.quote_name(colls_table_name) + ".ring_obs_id"
+    triggered_tables.append(colls_table_name)
 
     # bring in the  triggered_tables
-    results = ObsGeneral.objects.extra(tables=triggered_tables)
-
-    # and apply the filtering
-    results = results.filter(ring_obs_id__in=collection).values(*column_values)[offset:offset+limit]
+    results = ObsGeneral.objects.extra(where=[where], tables=triggered_tables)
+    results = results.values(*column_values)[offset:offset+limit]
 
     page_ids = [o['ring_obs_id'] for o in results]
 
@@ -137,21 +268,15 @@ def view_collection(request, collection_name, template="collections.html"):
 def collection_status(request, **kwargs):
     update_metrics(request)
 
-    collection_name = 'coll_' + kwargs['collection']
-
-    if not collection_name or collection_name == 'default':
-        collection_name = 'coll_default'
-
-    collection = []
-    if request.session.get(collection_name):
-        collection = request.session.get(collection_name)
+    session_id = request.session.session_key
+    count = get_collection_count(session_id)
 
     try:
         expected_request_no =  request.session['expected_request_no']
     except KeyError:
         expected_request_no = 1
 
-    return HttpResponse(json.dumps({"count":len(collection), "expected_request_no": expected_request_no }))
+    return HttpResponse(json.dumps({"count":count, "expected_request_no": expected_request_no }))
 
 
 def check_collection_args(request,**kwargs):
@@ -162,15 +287,15 @@ def check_collection_args(request,**kwargs):
     if type(checkArgs) == 'string':
         return HttpResponse(checkArgs)
     else:
-        (action, collection_name, ring_obs_id, request_no, expected_request_no) = check_collection_args(request, **kwargs)
+        (action, ring_obs_id, request_no, expected_request_no) = check_collection_args(request, **kwargs)
     """
 
     # collection and action are part of the url conf so you won't get in without one
     try:
         action = kwargs['action']
-        collection_name = 'coll_' + kwargs['collection']
     except KeyError:
-        return 'Page not found'
+        msg = 'Page not found'
+        return msg
 
     ring_obs_id = request.GET.get('ringobsid', False)
     request_no = request.GET.get('request', False)
@@ -183,13 +308,15 @@ def check_collection_args(request,**kwargs):
             if addrange:
                 ring_obs_id = addrange
             else:
-                return "No Observations specified"
+                msg = "No Observations specified"
+                return msg
 
     if not request_no:
         try:
             request_no = kwargs['request_no']
         except KeyError:
-            return 'no request number received'
+            msg = 'no request number received'
+            return msg
 
     request_no = int(request_no)
 
@@ -197,7 +324,7 @@ def check_collection_args(request,**kwargs):
     if request.session.get('expected_request_no'):
         expected_request_no =  request.session['expected_request_no']
 
-    return [action, collection_name, ring_obs_id, request_no, expected_request_no]
+    return [action, ring_obs_id, request_no, expected_request_no]
 
 
 def is_odd(num):
@@ -205,182 +332,39 @@ def is_odd(num):
 
 @never_cache
 def reset_sess(request):
+    """ utility endpoint, load this in a browser to reset the session """
 
     request.session.flush()
     # return HttpResponse(str(request.session.session_key))
     return HttpResponse("session reset")
 
-def edit_collection(request, **kwargs):
-    """
-    return reset_sess(request);
-    """
-    update_metrics(request)
 
-    checkArgs = check_collection_args(request, **kwargs)
-    if type(checkArgs).__name__ == 'list':
-        (action, collection_name, ring_obs_id, request_no, expected_request_no) = checkArgs
-    else:
-        return HttpResponse(json.dumps({"err":checkArgs}))
-
-    # just add this request to the queue, every request gets queued
-    add_to_queue(request, request_no, collection_name, action, ring_obs_id)
-
-    """
-    turning this off for now, we will get the queue of whatever request_no is passed
-    to us, without checking against what is expected_request_no
-    by turning this off we are at risk of ajax race conditions
-    but it's breaking something and no time fo dat right now
-    Issue is here:
-    https://bitbucket.org/ringsnode/opus2/issue/75/collections-downloads-majorly-broken
-    # todo:
-    # now look for the mext expected request in the queue
-    if get_queued(request, expected_request_no):
-        # found the next expected request in the queue
-        (collection_name,action,ring_obs_id) = get_queued(request, expected_request_no)
-    else:
-        # the expected request has not yet arrived, do nothing
-        return HttpResponse(json.dumps({"err":"waiting"}))
-    """
-    # instead of the above we are doing this:
-    (collection_name,action,ring_obs_id) = get_queued(request, request_no)
-
-
-    collection = []
-    if request.session.get(collection_name):
-        collection = request.session.get(collection_name)
-
-    """
-    turning this off for now
-    all_collections = []
-    if request.session.get("all_collections"):
-        all_collections = request.session.get("all_collections")
-    if collection_name not in all_collections:
-        all_collections.append(collection_name)
-    """
-
-    if action == 'add':
-        if ring_obs_id in collection: # if it's already there, remove it and add it again, user may be futzing with order
-            collection.remove(ring_obs_id)
-        collection.append(ring_obs_id)
-
-    elif (action == 'remove') & (ring_obs_id in collection):
-        collection.remove(ring_obs_id)
-
-    elif (action in ['addrange','removerange']):
-        collection = edit_collection_range(request, **kwargs)
-        # return collection
-        if not collection:
-            return HttpResponse("failfail<br>")
-
-    next_request_no = int(expected_request_no) + 1
-    remove_from_queue(request, expected_request_no) # we are handling this one now
-    request.session['expected_request_no'] = next_request_no
-    request.session[collection_name] = collection
-    log.debug('setting collection ' + collection_name + ' in session =------>')
-    log.debug(collection)
-    # request.session['all_collections'] = all_collections
-
-    # so we did the next expected, is there another subsequent to that?
-    if get_queued(request, next_request_no):
-        (collection_name,action,ring_obs_id) = get_queued(request, next_request_no)
-        next = {"collection":kwargs['collection'], "action":action, "ring_obs_id": ring_obs_id, "request_no":next_request_no}
-        return edit_collection(request, **next)
-
-    """
-    try:
-        json = {"msg":"yay!","count":len(collection), "collection": ', '.join(collection)}
-    except:
-        json = collection
-    """
-    json_data = {"err":False, "count":len(collection), "request_no":expected_request_no}
-    return HttpResponse(json.dumps(json_data))
-
-
-def edit_collection_range(request, **kwargs):
-    update_metrics(request)
-
-    (action, collection_name, ring_obs_id, request_no, expected_request_no) = check_collection_args(request, **kwargs)
-
-    collection = []
-    if request.session.get(collection_name):
-        collection = request.session.get(collection_name)
-
-    id_range = request.GET.get('addrange',False)
-    if not id_range:
-        return False; # "invalid ringobsid pair"
-
-    (min_id, max_id) = id_range.split(',')
-    (selections,extras) = urlToSearchParams(request.GET)
-
-    from results.views import *
-    data = getData(request,"raw")
-    selected_range = []
-    in_range = False  # loop has reached the range selected
-
-
-    # return HttpResponse(json.dumps(data['page']));
-    for row in data['page']:
-
-        ring_obs_id = row[0]
-
-        if ring_obs_id == min_id:
-            in_range = True;
-        if in_range:
-            selected_range.append(ring_obs_id)
-        if in_range & (ring_obs_id == max_id):
-            # this is the last one, update the collection
-            if action == 'addrange':
-                for ring_obs_id in selected_range:
-                    if ring_obs_id in collection:
-                        collection.remove(ring_obs_id) # if it's already there, remove it and add it again, user may be futzing with order
-                collection += selected_range
-            if action == 'removerange':
-                for ring_obs_id in selected_range:
-                    collection.remove(ring_obs_id)
-
-    if not selected_range:
-        log.error("edit_collection_range failed to find range " + id_range)
-        log.error(selections)
-
-
-    if len(collection):
-        return collection
-
-    return False
-
-
-
-def add_to_queue(request, request_no, collection_name, action, ring_obs_id):
+def add_to_queue(request, request_no, action, ring_obs_id):
     # just adding one request to the queue if its not already there
-    update_metrics(request)
 
     queue = {}
-    if request.session.get("queue"):
-        queue = request.session.get("queue")
+    queue = request.session.get("queue", {})
     if request_no not in queue:
-        queue[request_no] = [collection_name, action, ring_obs_id]
+        queue[request_no] = [action, ring_obs_id]
+
     request.session["queue"] = queue
     return True
 
 
 def remove_from_queue(request, request_no):
-    update_metrics(request)
-
+    """ delete from queue, does not return item
+        for when a queued request is finished being processed """
     if request_no in request.session["queue"]:
         del request.session["queue"][request_no]
     return True
 
 
 def get_queued(request, request_no):
-    """
-    if get_queued(request, expected_request_no):
+    """ get the next request in queue
+        if get_queued(request, expected_request_no):
         (collection_name,action,ring_obs_id) = get_queued(request, expected_request_no)
     """
-    update_metrics(request)
-    queue = {}
-    if request.session.get("queue"):
-        queue = request.session.get("queue")
-
+    queue = request.session.get("queue", {})
     try:
         return queue[request_no]
     except KeyError:

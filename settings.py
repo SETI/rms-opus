@@ -1,6 +1,8 @@
 # Django settings for opus project.
 import os
 import sys
+from collections import OrderedDict
+
 PROJECT_ROOT = os.path.dirname(__file__)
 sys.path.insert(0, PROJECT_ROOT)
 sys.path.insert(0, os.path.join(PROJECT_ROOT, 'apps'))
@@ -193,7 +195,9 @@ MULT_FIELDS	= ['GROUP','TARGETS']
 DEFAULT_LIMIT = 100
 MULT_FORM_TYPES = ('GROUP','TARGETS');
 ERROR_LOG_PATH = PROJECT_ROOT + "logs/opus_log.txt"
-IMAGE_TYPES = ['Full Res','Medium','Small','Thumb']
+image_sizes = (('full','Full Res'),('med','Medium'),('small','Small'),('thumb','Thumb')) # key is value and value is label
+IMAGE_TYPES = OrderedDict(image_sizes)
+
 THUMBNAIL_NOT_FOUND = 'http://pds-rings.seti.org/search/app/images/thumbnail_not_found.png'
 
 FILE_HTTP_PATH  = 'http://pds-rings.seti.org/volumes/'

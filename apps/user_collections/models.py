@@ -9,7 +9,8 @@ class UserCollectionsTemplate(models.Model):
 
 class UserCollectionsMeta(models.Model):
     session_id =  models.CharField(max_length=32, blank=True, null=True)
-    permalink = models.CharField(max_length=23, blank=True, null=True)
     product_types = models.TextField(blank=True,null=True)
-    extra_products = models.TextField(blank=True,null=True) # like jpgs
+    extra_products = models.TextField(blank=True,null=True) # like browse images
+    timestamp = models.DateTimeField(auto_now=True)
+
     # last_save = DateField.auto_now_add

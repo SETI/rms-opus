@@ -8,6 +8,7 @@ import json
 from django.http import Http404
 from django.shortcuts import render_to_response
 from django.utils.datastructures import SortedDict
+from django.db import connection, DatabaseError
 from django.db.models import get_model
 from search.views import *
 from search.models import *
@@ -23,31 +24,35 @@ import logging
 log = logging.getLogger(__name__)
 
 def getData(request,fmt):
+    update_metrics(request)
     """
     a page of results for a given search
     """
-    update_metrics(request)
+    session_id = request.session.session_key
 
     [page_no, limit, page, page_ids, order] = getPage(request)
 
     checkboxes = True if (request.is_ajax()) else False
 
     slugs = request.GET.get('cols',settings.DEFAULT_COLUMNS)
-    if not slugs: slugs = settings.DEFAULT_COLUMNS  # i dunno why this is necessary
+    if not slugs: slugs = settings.DEFAULT_COLUMNS
 
     labels = []
     for slug in slugs.split(','):
         labels += [ParamInfo.objects.get(slug=slug).label_results]
     labels = labels.insert(0, "add") if (request.is_ajax()) else labels  # adds a column for checkbox add-to-collections
 
-
-    from user_collections.views import *
-
-    collection = get_collection(request, "default")
+    collection = ''
+    if request.is_ajax():
+        # find the members of user collection in this page
+        collection = get_collection_in_page(page, session_id)
 
     data = {'page_no':page_no, 'limit':limit, 'page':page, 'count':len(page)}
 
-    return responseFormats(data,fmt,template='data.html', labels=labels,checkboxes=checkboxes, collection=collection, order=order)
+    if fmt == 'raw':
+        return data
+    else:
+        return responseFormats(data,fmt,template='data.html', labels=labels,checkboxes=checkboxes, collection=collection, order=order)
 
 def get_slug_categories(request, slugs):
     slugs = request.GET.get('cols', False)
@@ -226,13 +231,14 @@ def get_triggered_tables(selections, extras = {}):
 
 @never_cache
 def getImages(request,size,fmt):
+    update_metrics(request)
     """
     this returns rows from images table that correspond to request
     some rows will not have images, this function doesn't return 'image_not_found' information
     if a row doesn't have an image you get nothing. you lose. good day sir. #fixme #todo
 
     """
-    update_metrics(request)
+    session_id = request.session.session_key
 
     alt_size = request.GET.get('alt_size','')
     columns = request.GET.get('cols',settings.DEFAULT_COLUMNS)
@@ -275,14 +281,14 @@ def getImages(request,size,fmt):
 
     image_links = ordered_image_links
 
-    all_collections = get_collection(request, "default")
+    collection_members = get_collection_in_page(page, session_id)
 
     # find which are in collections, mark unfound images 'not found'
     for image in image_links:
         image['img'] = image[size] if image[size] else 'not found'
-        if all_collections:
+        if collection_members:
             from user_collections.views import *
-            if image['ring_obs_id'] in all_collections:
+            if image['ring_obs_id'] in collection_members:
                 image['in_collection'] = True
 
     path = settings.IMAGE_HTTP_PATH
@@ -292,7 +298,7 @@ def getImages(request,size,fmt):
     else: template = 'image_list.html'
 
     # image_links
-    return responseFormats({'data':[i for i in image_links]},fmt, size=size, path=path, alt_size=alt_size, columns_str=columns.split(','), all_collections=all_collections, template=template, order=order)
+    return responseFormats({'data':[i for i in image_links]},fmt, size=size, path=path, alt_size=alt_size, columns_str=columns.split(','), template=template, order=order)
 
 
 def get_base_path_previews(ring_obs_id):
@@ -360,17 +366,21 @@ def getFilesAPI(request, ring_obs_id=None, fmt=None, loc_type=None):
             return False
         ring_obs_ids = [p[0] for p in page]
 
-        return getFiles(ring_obs_ids, fmt=fmt, loc_type=loc_type, product_types=product_types, previews=images)
+    return getFiles(ring_obs_id=ring_obs_ids, fmt=fmt, loc_type=loc_type, product_types=product_types, previews=images)
 
 
 
 # loc_type = path or url
-def getFiles(ring_obs_id, fmt=None, loc_type=None, product_types=None, previews=None):
+def getFiles(ring_obs_id=None, fmt=None, loc_type=None, product_types=None, previews=None, collection=None, session_id=None):
     """
     returns list of all files by ring_obs_id
     ring_obs_id can be string or list
 
     """
+    if collection and not session_id:
+        log.error("needs session_id in kwargs to access collection")
+        return False
+
     if not fmt:
         fmt = 'raw'
     if not loc_type:
@@ -379,6 +389,8 @@ def getFiles(ring_obs_id, fmt=None, loc_type=None, product_types=None, previews=
         product_types = []
     if not previews:
         previews = []
+    if not collection:
+        collection = False
 
     # ring_obs_id may be passed in as a string or a list,
     # if it's a string make it a list
@@ -387,23 +399,34 @@ def getFiles(ring_obs_id, fmt=None, loc_type=None, product_types=None, previews=
             ring_obs_ids = [ring_obs_id]
         else:
             ring_obs_ids = ring_obs_id
-    else:
-        log.error('404: no files found')
-        return False
 
-    file_names = {}
+    else:
+        if collection:
+            # this is for a collection
+            colls_table_name = get_collection_table(session_id)
+            where   = "files.ring_obs_id = " + connection.ops.quote_name(colls_table_name) + ".ring_obs_id"
+
+        else:
+            log.error('no ring_obs_ids or collection specified')
+            return False
 
     if loc_type == 'url':
         path = settings.FILE_HTTP_PATH
     else:
         path = settings.FILE_PATH
 
-    files_table_rows = Files.objects.filter(ring_obs_id__in=ring_obs_ids)
+    files_table_rows = Files.objects
 
+    if collection:
+        files_table_rows = files_table_rows.extra(where=[where], tables=[colls_table_name])
+    else:
+        files_table_rows = files_table_rows.filter(ring_obs_id__in=ring_obs_ids)
+
+    file_names = {}
     for f in files_table_rows:
 
         ring_obs_id = f.ring_obs_id
-        file_names[ring_obs_id] = {}
+        file_names.setdefault(ring_obs_id, {})
 
         file_extensions = []
         try:
@@ -416,7 +439,6 @@ def getFiles(ring_obs_id, fmt=None, loc_type=None, product_types=None, previews=
             volume_loc = f.volume_id
 
         file_names[ring_obs_id].setdefault(f.product_type, [])
-
         extra_files = []
         if f.extra_files:
             extra_files = f.extra_files.split(',')
@@ -464,7 +486,6 @@ def getFiles(ring_obs_id, fmt=None, loc_type=None, product_types=None, previews=
             file_names[ring_obs_id][f.product_type]  += [path + volume_loc + '/' + base_file + '.' + extension]
         # // add the original file
         file_names[ring_obs_id][f.product_type]  += [path + '/' + volume_loc + '/' + base_file + '.' + ext]
-
         file_names[ring_obs_id][f.product_type] = list(set(file_names[ring_obs_id][f.product_type])) #  makes unique
         file_names[ring_obs_id][f.product_type].sort()
         file_names[ring_obs_id][f.product_type].reverse()
@@ -473,7 +494,7 @@ def getFiles(ring_obs_id, fmt=None, loc_type=None, product_types=None, previews=
         if len(previews):
             file_names[ring_obs_id]['preview_image'] = []
             for size in previews.split(','):
-                url_info = getImage(False,size.lower(), ring_obs_id,'raw')
+                url_info = getImage(False, size.lower(), ring_obs_id,'raw')
                 url = url_info['data'][0]['img']
                 base_path = url_info['data'][0]['path']
                 if url:
@@ -494,22 +515,20 @@ def getFiles(ring_obs_id, fmt=None, loc_type=None, product_types=None, previews=
         return render_to_response("list.html",locals())
 
 
-
-
 def getPage(request):
-    """
-    the gets the metadata to build a page of results
-    """
     update_metrics(request)
+    """
+    the gets the metadata and images to build a page of results
+    """
 
     # get some stuff from the url or fall back to defaults
+    session_id = request.session.session_key
     collection_page = (request.GET.get('colls',False))
     limit = request.GET.get('limit',100)
     limit = int(limit)
     slugs = request.GET.get('cols', settings.DEFAULT_COLUMNS)
     if not slugs:
         slugs = settings.DEFAULT_COLUMNS  # i dunno why the above doesn't suffice
-
 
     columns = []
     for slug in slugs.split(','):
@@ -555,9 +574,14 @@ def getPage(request):
         results = ObsGeneral.objects.extra(where=[where], tables=triggered_tables)
 
     else:
-        # this is for a collection of selections
+        # this is for a collection
 
+        # find the ordering
         order = request.GET.get('colls_order', False)
+        if not order:
+            # get regular order if collections doesn't have a special order
+            order = request.GET.get('order',False)
+
         if order:
             try:
                 order_param = order.strip('-')  # strip off any minus sign to look up param name
@@ -568,14 +592,8 @@ def getPage(request):
             except DoesNotExist:
                 order = False
 
-
         page_no = request.GET.get('colls_page',1)
         page_no = int(page_no)
-
-        from user_collections.views import *  # circular import problem
-        collection = get_collection(request)
-        if not collection:
-            raise Http404
 
         # figure out what tables do we need to join in and build query
         triggered_tables = list(set([t.split('.')[0] for t in columns]))
@@ -584,11 +602,11 @@ def getPage(request):
         except ValueError:
             pass  # obs_general table wasn't in there for whatever reason
 
-        # bring in the  triggered_tables
-        results = ObsGeneral.objects.extra(tables=triggered_tables)
-
-        # and do the filtering
-        results = results.filter(ring_obs_id__in=collection)
+        # join in the collections table
+        colls_table_name = get_collection_table(session_id)
+        triggered_tables.append(colls_table_name)
+        where   = "obs_general.ring_obs_id = " + connection.ops.quote_name(colls_table_name) + ".ring_obs_id"
+        results = ObsGeneral.objects.extra(where=[where], tables=triggered_tables)
 
     # now we have results object (either search or collections)
     if order:
@@ -615,17 +633,16 @@ def getPage(request):
     so the way of computing starting offset here should always use the base_limit of 100
     using the passed limit will result inthe wront offset because of way offset is computed here
     """
-    base_limit = 100  # see above
+    base_limit = 100  # explainer of sorts is above
     offset = (page_no-1)*base_limit # we don't use Django's pagination because of that count(*) that it does.
 
-    # look at line 559 you are essentially doing this query twice in the same method and peforming the query each time cuz it has changed!
+    # redux: look at line 559 you are essentially doing this query twice? in the same method and peforming the query each time cuz it has changed!
     results = results.values_list(*column_values)[offset:offset+int(limit)]
 
     # results
     # this whole page_ids thing is just rediculous, the caller can get it from the result set
     # especially if we are saying that the id is always at index 0
     page_ids = [o[0] for o in results]
-
 
     if not len(page_ids):
         return False

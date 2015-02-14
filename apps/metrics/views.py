@@ -2,13 +2,13 @@ from metrics.models import Metrics
 
 def update_metrics(request):
     try:
-        session_key = request.session.session_key
+        session_id = request.session.session_key
     except AttributeError:
         # no session attribute, this is probably a test running
         return
 
     ip_address = get_client_ip(request)
-    m,v = Metrics.objects.using('metrics').get_or_create(session_id=session_key, ip_address=ip_address)
+    m,v = Metrics.objects.using('metrics').get_or_create(session_id=session_id, ip_address=ip_address)
     m.save()
 
 def get_client_ip(request):

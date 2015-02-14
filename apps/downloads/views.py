@@ -76,12 +76,10 @@ def get_download_size(files, product_types, previews):
     return total_size  # bytes!
 
 # http://pds-rings.seti.org/volumes/
-def get_download_info(request, collection=None):
+def get_download_info(request):
     update_metrics(request)
 
-    if not collection:
-        from user_collections.views import * # circumvent the circular dependency.. James Bennett says it's ok!
-        collection = get_collection(request)  # collection is list of ring_obs_ids
+    session_id = request.session.session_key
 
     fmt = request.GET.get('fmt', None)
     product_types = request.GET.get('types', '')
@@ -90,7 +88,7 @@ def get_download_info(request, collection=None):
     # make a flat list of file_names
     urls = []
     from results.views import *
-    files = getFiles(collection, fmt="raw", loc_type="url", product_types=product_types, previews=previews)
+    files = getFiles(collection=True, session_id=session_id, fmt="raw", loc_type="url", product_types=product_types, previews=previews)
 
     for ring_obs_id in files:
         for ptype in files[ring_obs_id]:
