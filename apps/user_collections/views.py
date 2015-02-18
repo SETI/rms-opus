@@ -22,7 +22,7 @@ def get_collection_table(session_id):
     returns collection table name and if one doesn't exist create a new one
     """
     if not session_id:
-        print "no session id = no collections table to be found"
+        log.debug("no session id = no collections table to be found")
         return False
 
     cursor = connection.cursor()
@@ -45,13 +45,12 @@ def bulk_add_to_collection(ring_obs_id_list, session_id):
     cursor.execute(sql, tuple(ring_obs_id_list))
 
 def add_to_collection(ring_obs_id, session_id):
-    coll_table_name = get_collection_table(session_id)
     cursor = connection.cursor()
+    coll_table_name = get_collection_table(session_id)
     # first remove
     remove_from_collection(ring_obs_id, session_id)
     sql = 'replace into ' + connection.ops.quote_name(coll_table_name) + ' (ring_obs_id) values (%s)'
     cursor.execute(sql, ring_obs_id)
-
 
 def remove_from_collection(ring_obs_id, session_id):
     cursor = connection.cursor()
@@ -60,7 +59,9 @@ def remove_from_collection(ring_obs_id, session_id):
     cursor.execute(sql, ring_obs_id)
 
 def get_collection_in_page(page, session_id):
-    """ returns obs_general_ids in page that are also in user collection """
+    """ returns obs_general_ids in page that are also in user collection
+        this is for views in results where you have to display the gallery
+        and indicate which thumbnails are in cart"""
     cursor = connection.cursor()
     coll_table_name = get_collection_table(session_id)
     collection_in_page = []

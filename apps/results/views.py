@@ -246,7 +246,7 @@ def getImages(request,size,fmt):
     try:
         [page_no, limit, page, page_ids, order] = getPage(request)
     except TypeError:  # getPage returns False
-        raise Http404
+        raise Http404('could not find page')
 
     image_links = Image.objects.filter(ring_obs_id__in=page_ids)
 
@@ -325,7 +325,6 @@ def getImage(request,size='med', ring_obs_id='',fmt='mouse'):      # mouse?
     return HttpResponse(img + "<br>" + ring_obs_id + ' ' + size +' '+ fmt)
     """
     update_metrics(request)
-
     img = Image.objects.filter(ring_obs_id=ring_obs_id).values(size)[0][size]
     path = settings.IMAGE_HTTP_PATH + get_base_path_previews(ring_obs_id)
     return responseFormats({'data':[{'img':img, 'path':path}]}, fmt, size=size, path=path, template='image_list.html')
