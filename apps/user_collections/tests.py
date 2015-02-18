@@ -46,11 +46,6 @@ class user_CollectionsTests(TestCase):
         table_name = 'colls_' + test_session.session_key
         cursor.execute('delete from ' + connection.ops.quote_name(table_name))
 
-    def teardown(self):
-        cursor = connection.cursor()
-        table_name = 'colls_' + test_session.session_key
-        cursor.execute('drop table ' + connection.ops.quote_name(table_name))
-
     def test__edit_collection_add_one(self):
         action = 'add'
         request = self.factory.get('/opus/collections/default/add.json?request=1&ringobsid=S_IMG_CO_ISS_1680806160_N', HTTP_X_REQUESTED_WITH='XMLHttpRequest')
@@ -209,9 +204,6 @@ class user_CollectionsTests(TestCase):
         self.assertEqual(expected, received)
 
         self.emptycollection()
-
-
-        self.teardown()
 
 
 
