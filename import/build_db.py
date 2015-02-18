@@ -266,6 +266,10 @@ cursor.execute("create view %s.grouping_target_name as select * from %s.mult_obs
 # first, fetch the tables:
 # system("mysql %s < import/backup_util_tables.sql -u%s -p%s" % (opus2, DATABASES['default']['USER'], DATABASES['default']['PASSWORD'])))
 
+# build the little user_collections template table
+print "building param_info from user_collections_template.sql "
+system("mysql %s < user_collections_template.sql -u%s -p%s" % (opus2, DATABASES['default']['USER'], DATABASES['default']['PASSWORD']))
+
 # first, build the empty param_info table in the new db - the table schema lives in a dump file in the repo
 print "building param_info from param_info_table.sql "
 system("mysql %s < param_info_table.sql -u%s -p%s" % (opus2, DATABASES['default']['USER'], DATABASES['default']['PASSWORD']))
