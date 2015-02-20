@@ -42,7 +42,8 @@ def push():
         # local('python opus/deploy/deploy.py')
         # rsync that code to dev directory on production
         local('rsync -r -vc -e ssh --exclude .git --exclude static_media %s lballard@pds-rings-tools.seti.org:~/.' % prod_deploy_dir)
-        local('rsync -r -vc -e ssh %s/static_media lballard@pds-rings.seti.org:~/sites/django_opus/.' % prod_deploy_dir)
+        # local('rsync -r -vc -e ssh %s/static_media lballard@pds-rings.seti.org:~/sites/django_opus/.' % prod_deploy_dir)
+        local('rsync -r -vc -e ssh %s/static_media befoream@www.beforeamillionuniverses.com:~/www/django_opus/.' % prod_deploy_dir)
 
 def deploy():
     """
