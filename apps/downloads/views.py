@@ -135,7 +135,7 @@ def create_download(request, collection_name=None, ring_obs_ids=None, fmt=None):
     if not ring_obs_ids:
         ring_obs_ids = []
         from user_collections.views import *
-        ring_obs_ids = get_collection(request, collection_name);
+        ring_obs_ids = get_all_in_collection(request)
 
     # get product info about this product
     # [optimize] [cleanup] this should use from db rather than string of text https://docs.djangoproject.com/en/1.3/ref/models/querysets/

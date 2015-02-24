@@ -17,6 +17,15 @@ from django.db import connection, DatabaseError
 import logging
 log = logging.getLogger(__name__)
 
+def get_all_in_collection(request):
+    cursor = connection.cursor()
+    session_id = request.session.session_key
+    coll_table_name = get_collection_table(session_id)
+    sql = 'select ring_obs_id from ' + connection.ops.quote_name(coll_table_name)
+    cursor.execute(sql)
+    return [n[0] for n in cursor.fetchall()]
+
+
 def get_collection_table(session_id):
     """
     returns collection table name and if one doesn't exist create a new one
