@@ -112,7 +112,10 @@ def getMenuLabels(request, labels_view):
     labels_view = 'results' if labels_view == 'results' else 'search'
 
     if request and request.GET:
-        (selections,extras) = urlToSearchParams(request.GET)
+        try:
+            (selections,extras) = urlToSearchParams(request.GET)
+        except TypeError:
+            selections = None
     else:
         selections = None
 
