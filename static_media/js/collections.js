@@ -24,7 +24,6 @@ var o_collections = {
              return false;
          });
 
-
          // check an input on selected products and images updates file_info
          $('#collection').on("click",'#downlaod_options input', function() {
              add_to_url = o_collections.getDownloadFiltersChecked();
@@ -56,6 +55,7 @@ var o_collections = {
 
                     },
                     error: function(e) {
+
                         $('.spinner', "#collections_summary").fadeOut();
                         $('<li>No Files Found</li>').hide().prependTo('ul.zipped_files', "#collections_summary").slideDown('fast');
                         opus.download_in_process = false;
@@ -135,29 +135,57 @@ var o_collections = {
 
         if (opus.collection_change) {
 
+            zipped_files_html = $('.zipped_files', '#collection').html();
+
             $('.collection_details', '#collection').html(opus.spinner);
 
             // reset page no
             opus.last_page_drawn['colls_gallery'] = 0;
             opus.last_page_drawn['colls_data'] = 0;
-            zipped_files_html = $('.zipped_files', '#collection').html();
 
+            // redux: speed this up by splitting into 2 ajax calls
+
+            // redux: draw the template immediately after this or only empty individual elements
             $('.gallery', '#collection').empty();
             $('.data', '#collection').empty();
 
+            /*
+            // redux: first get the product counts
+            $.ajax({ url: "/opus/collections/default/product_counts.html",
+                   success: function(html){
+
+                        // then get a page of images + metadata
+                        $.ajax({ url: "/opus/collections/default/thumbnails.html",
+                               success: function(html){},
+                               error: function(html){}
+                           });
+
+                   },
+                   error: function(html){}
+               });
+            */
+
+
+            // redux: and nix this big thing:
             $.ajax({ url: "/opus/collections/default/view.html",
                 success: function(html){
+
+                    // this div lives in the in the nav menu template
                     $('.collection_details', '#collection').hide().html(html).fadeIn();
+
                     opus.collection_change = false;
                     if (opus.download_in_process) {
                         $('.spinner', "#collections_summary").fadeIn();
                     }
 
                     o_browse.getBrowseTab();
+
                     $('#colls_pages').html(opus.colls_pages);
+
                     if (zipped_files_html) {
                         $('.zipped_files', '#collection').html(zipped_files_html);
                     }
+
                 }});
         }
     },

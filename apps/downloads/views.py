@@ -118,9 +118,6 @@ def get_cum_downlaod_size(request, download_size):
 def create_download(request, collection_name=None, ring_obs_ids=None, fmt=None):
     update_metrics(request)
 
-    if not collection_name or collection_name == 'default':
-        collection_name = 'coll_default'
-
     try:
         fmt = request.GET.get('fmt', None)
     except:
