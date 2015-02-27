@@ -57,6 +57,10 @@ $(document).ready(function() {
     // see triggerNavbarClick
     $('#navbar').on("click", '.navbar-nav li', function() {
 
+        if ($(this).find('a').hasClass('old_opus')) {
+            return;
+        }
+
         // remove the active class on whatever other tab it is on
         $('.navbar-nav li', '#navbar').each(function(index, value) {
             if ($(this).hasClass("active")) {
