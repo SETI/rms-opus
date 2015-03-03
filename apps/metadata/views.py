@@ -129,6 +129,13 @@ def getValidMults(request,slug,fmt='json'):
         if has_selections:
             # selections are constrained so join in the user_table
             user_table = search.views.getUserQueryTable(selections,extras)
+
+            if not user_table:
+                log.error('getValidMults has_selections = true but no user_table found:')
+                log.error(selections)
+                log.error(extras)
+                raise Http404
+
             if table_name == 'obs_general':
                 where   = table_name + ".id = " + user_table + ".id"
             else:
