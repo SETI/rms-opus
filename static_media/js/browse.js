@@ -1023,12 +1023,12 @@ var o_browse = {
         resetQuery: function() {
             /*
             when the user changes the query and all this stuff is already drawn
-            need to reset all of it
+            need to reset all of it (todo: replace with framework!)
             */
             $('.data').empty();  // yes all namespaces
             $('.gallery').empty();
             opus.gallery_data = [];
-            opus.pages_drawn = {"colls_gallery":[], "gallery":[]},
+            opus.pages_drawn = {"colls_gallery":[], "gallery":[]};
             opus.browse_footer_clicks = {"gallery":0, "data":0, "colls_gallery":0, "colls_data":0 };
             opus.last_page_drawn = {"gallery":0, "data":0, "colls_gallery":0, "colls_data":0 };
             opus.collection_change = true;  // forces redraw of collections tab because reset_last_page_drawn
