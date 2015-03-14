@@ -266,10 +266,10 @@ LOGGING = {
             'propagate': True,
             'level':'WARN',
         },
-        'django.db.backends': {
-            'handlers': ['console'],
+        'django.db.backends': {  # shows sql queries in console when debug = True
+            # 'handlers': ['console', 'logfile'],
             'level': 'DEBUG',
-            'propagate': False,
+            'propagate': True,
         },
         'results': {
             'handlers': ['console', 'logfile'],
