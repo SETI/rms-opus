@@ -485,28 +485,41 @@ class searchTests(TestCase):
         self.assertEqual("".join(q.split()),"".join(expected.split()))  # strips all whitespace b4 compare
 
     ## longitude query tests
-    def test__longitudeQuery_single(self):
+    def test__longitudeQuery_single_obs_general(self):
         #single longitude set
         selections = {}
         selections['obs_general.declination1'] = [58]
         selections['obs_general.declination2'] = [61]
         sql, params = longitudeQuery(selections,'obs_general.declination1')
+        sql, params = constructQueryString(selections, {})
         q = sql % params
-        print selections
         print q
-        expect = '(abs(abs(mod(59.5 - obs_general.declination + 180., 360.)) - 180.) <= 1.5 + obs_general.d_declination)'
-        self.assertEqual(q,expect)
+        expect = 'SELECT `obs_general`.`id` FROM `obs_general` where obs_general.id in  (select obs_general.id from obs_general where (abs(abs(mod(59.5 - obs_general.declination + 180., 360.)) - 180.) <= 1.5 + obs_general.d_declination))'
+        self.assertEqual(''.join(q.split()),''.join(expect.split()))
 
     def test__longitudeQuery_double(self):
         # double
         selections = {}
-        selections['obs_general.declination1'] = [58,75]
-        selections['obs_general.declination2'] = [61,83]
-        sql, params = longitudeQuery(selections,'obs_general.declination1')
+        selections['obs_general.declination1'] = [5]
+        selections['obs_general.declination2'] = [61]
+        selections['obs_ring_geometry.J2000_longitude1'] = [5]
+        selections['obs_ring_geometry.J2000_longitude2'] = [255]
+        sql, params = constructQueryString(selections, {})
         q = sql % params
         print q
-        expect = "(abs(abs(mod(59.5 - obs_general.declination + 180., 360.)) - 180.) <= 1.5 + obs_general.d_declination) OR (abs(abs(mod(79.0 - obs_general.declination + 180., 360.)) - 180.) <= 4.0 + obs_general.d_declination)"
-        self.assertEqual(q,expect)
+        expect = "SELECT `obs_general`.`id` FROM `obs_general` where obs_general.id in  (select obs_general.id from obs_general where (abs(abs(mod(130.0 - obs_general.declination + 180., 360.)) - 180.) <= 125.0 + obs_general.d_declination))  AND obs_general.id in  (select obs_general_id from obs_ring_geometry where (abs(abs(mod(130.0 - obs_ring_geometry.J2000_longitude + 180., 360.)) - 180.) <= 125.0 + obs_ring_geometry.d_J2000_longitude))"
+        self.assertEqual(''.join(q.split()),''.join(expect.split()))
+
+    def test__longitudeQuery_ring_geo(self):
+        # double
+        selections = {}
+        selections['obs_ring_geometry.J2000_longitude1'] = [5]
+        selections['obs_ring_geometry.J2000_longitude2'] = [255]
+        sql, params = constructQueryString(selections, {})
+        q = sql % params
+        print q
+        expect = "SELECT `obs_general`.`id` FROM `obs_general` where obs_general.id in  (select obs_general_id from obs_ring_geometry where (abs(abs(mod(130.0 - obs_ring_geometry.J2000_longitude + 180., 360.)) - 180.) <= 125.0 + obs_ring_geometry.d_J2000_longitude))"
+        self.assertEqual(''.join(q.split()),''.join(expect.split()))
 
     def test__longitudeQuery_one_side(self):
         # missing value raises exception

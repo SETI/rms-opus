@@ -76,7 +76,7 @@ def constructQueryString(selections, extras):
 
     all_qtypes = extras['qtypes'] if 'qtypes' in extras else []
     # keeping track of some things
-    long_querys = []  # special longitudinal queries are pure sql
+    long_queries = []  # special longitudinal queries are pure sql
     string_queries = []  # special handling for string queries ugh!
     q_objects = []  # for building up the query object
     finished_ranges = []  # ranges are done for both sides at once.. so track which are finished to avoid duplicates
@@ -90,7 +90,6 @@ def constructQueryString(selections, extras):
         cat_name = param_name.split('.')[0]
         cat_model_name = ''.join(cat_name.lower().split('_'))
         name = param_name.split('.')[1]
-
         param_info = get_param_info_by_param(param_name)
         if not param_info:
             return False
@@ -116,6 +115,15 @@ def constructQueryString(selections, extras):
 
         # RANGE
         if form_type in settings.RANGE_FIELDS:
+
+            # this prevents range queries from getting through twice
+            # if one range side has been processed can skip the 2nd, it gets done when the 1st is
+            if param_name_no_num in finished_ranges:
+                # this range has already been done, skip to next param in the loop
+                continue
+
+            finished_ranges += [param_name_no_num]
+
             # longitude queries
             if special_query == 'long':
                 # this parameter requires a longitudinal query
@@ -125,21 +133,17 @@ def constructQueryString(selections, extras):
                 # both sides of range must be defined by user for this to work
                 if selections[param_name_no_num + '1'] and selections[param_name_no_num + '2']:
                     lq, lq_params = longitudeQuery(selections,param_name)
-                    long_querys.append((lq, lq_params))
+                    long_queries.append((lq, lq_params))
+
                 else:
                     raise ValidationError
 
-            # this prevents range queries from getting through twice
-            # if one range side has been processed can skip the 2nd, it gets done when the 1st is
-            if param_name_no_num in finished_ranges:
-                # this range has already been done, skip to next param in the loop
-                continue
-            else: finished_ranges += [param_name_no_num]
 
-            # get the range query object and append it to the query
-            q_obj = range_query_object(selections, param_name, qtypes)
+            else:
+                # get the range query object and append it to the query
+                q_obj = range_query_object(selections, param_name, qtypes)
 
-            q_objects.append(q_obj)
+                q_objects.append(q_obj)
 
 
         # STRING
@@ -154,10 +158,22 @@ def constructQueryString(selections, extras):
         sql, params = ObsGeneral.objects.filter(*q_objects).values('pk').query.sql_with_params()
 
         # append any longitudinal queries to the query string
-        if long_querys:
-            # q += " ".join([" and (%s) " % long_query for long_query in long_querys])
-            sql += " ".join([" and (%s) " % long_query[0] for long_query in long_querys])
-            params += [long_query[1] for long_query in long_querys]
+        if long_queries:
+
+            params = list(params)
+
+            # q += " ".join([" and (%s) " % long_query for long_query in long_queries])
+            if 'where' in sql.lower():
+                sql = sql + ' AND obs_general.id in '
+            else:
+                sql = sql + ' where obs_general.id in '
+
+
+            sql = sql + ' AND obs_general.id in '.join([" (%s) " % long_query[0] for long_query in long_queries])
+            for long_q in long_queries:
+                params += list(long_query[1])
+
+            params = tuple(params)
 
         return sql, params
 
@@ -166,7 +182,7 @@ def constructQueryString(selections, extras):
 
 
 
-def getUserQueryTable(selections,extras={}):
+def getUserQueryTable(selections,extras=None):
     """
     This is THE main data query place.  Performs a data search and creates
     a table of Ids that match the result rows.
@@ -177,10 +193,12 @@ def getUserQueryTable(selections,extras={}):
     """
     cursor = connection.cursor()
 
+    if not extras:
+        extras={}
+
     # housekeeping
     if not selections:
         return False
-
 
     # do we have a cache key
     no     = setUserSearchNo(selections,extras)
@@ -204,14 +222,16 @@ def getUserQueryTable(selections,extras={}):
     try:
         sql, params = constructQueryString(selections, extras)
     except TypeError:
+        log.error('TypeError, constructQueryString returned False')
         return False
 
     if not sql:
+        log.error('getUserQueryTable - query string was empty ')
         return False
 
     try:
         # with this we can create a table that contains the single row
-        cursor.execute("create table " + ptbl + " " + sql, params)
+        cursor.execute("create table " + connection.ops.quote_name(ptbl) + ' ' + sql, tuple(params))
         # add the key **** this, and perhaps the create statement too, can be spawned to a backend process ****
         cursor.execute("alter table " + connection.ops.quote_name(ptbl) + " add unique key(id)  ")
 
@@ -219,8 +239,8 @@ def getUserQueryTable(selections,extras={}):
         return ptbl
 
     except DatabaseError:
-        log.error('query execute failed: create/alter table ' + ptbl + " " + sql)
-        log.error(params)
+        log.error('query execute failed: create/alter table ')
+
         import sys
         log.error(sys.exc_info()[1])
         log.error(sys.exc_info()[1])
@@ -559,12 +579,20 @@ def longitudeQuery(selections,param_name):
         if (longit >= 360): longit = longit - 360.
 
         if d_long:
-            clauses += ["(abs(abs(mod(%s - %s + 180., 360.)) - 180.) <= %s + %s)"];
-            params  += [longit,param_name_no_num,d_long,col_d_long]
+            clauses += ["(abs(abs(mod(%s - " + param_name_no_num + " + 180., 360.)) - 180.) <= %s + " + col_d_long + ")"];
+            params  += [longit,d_long]
 
         i+=1
 
-    return ' OR '.join(clauses), tuple(params)
+    clause = ' OR '.join(clauses)
+
+    table_name = param_name_no_num.split('.')[0]
+
+    key_field = 'obs_general_id' if cat_name != 'obs_general' else 'obs_general.id'
+
+    query = "select " + key_field + " from " + table_name + " where " + clause
+
+    return query, tuple(params)
 
 
 def convertTimes(value_list,conversion_script='time_to_seconds'):
