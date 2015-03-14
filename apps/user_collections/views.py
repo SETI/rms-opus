@@ -23,7 +23,8 @@ def get_all_in_collection(request):
     coll_table_name = get_collection_table(session_id)
     sql = 'select ring_obs_id from ' + connection.ops.quote_name(coll_table_name)
     cursor.execute(sql)
-    return [n[0] for n in cursor.fetchall()]
+    ring_obs_ids = [n[0] for n in cursor.fetchall()]
+    return ring_obs_ids
 
 
 def get_collection_table(session_id):
@@ -31,7 +32,6 @@ def get_collection_table(session_id):
     returns collection table name and if one doesn't exist create a new one
     """
     if not session_id:
-        log.debug("no session id = no collections table to be found")
         return False
 
     cursor = connection.cursor()
