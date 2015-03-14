@@ -8,6 +8,20 @@ var o_hash = {
     // updates the hash according to user selections
     updateHash: function(){
 
+      // this first directive is a clunky patch
+      // it keeps a long hash from being appended to the tool
+      // on first page load, when there is no hash
+      // in reality we don't want to do this because
+      // then it could effect display preferences
+      // really we want to have a way to know if the
+      // below result is equal to all the defaults, and if so
+      // no need for having anything in the hash
+      if (!window.location.hash & jQuery.isEmptyObject(opus.selections)) {
+        return;
+      }
+
+
+
       hash = [];
       for (var param in opus.selections) {
           if (opus.selections[param].length){
