@@ -39,7 +39,7 @@ for f in manifest_files:
 
     for file_info in all_downloaded_files:
         rid, file_name = file_info
-	
+
 	inst = ''
 
         if rid.find('CO_ISS') > -1:
@@ -76,10 +76,16 @@ for f in manifest_files:
                     size = cursor.fetchone()[0]
                     inst_sizes[inst] += int(size)
             except TypeError:
-                print "--- type error above, no size added yo ------"
+                print "--- type error above, no size added yo ------ \n " + q_size
+                print "found in " + base_path_manifests + f
+                """
+                I'm putting in a pass here becuase of issue # 128
+                but really we should have it stop and investigate what is happening
+                (import sys; sys.exit())
                 import sys
                 sys.exit()
-
+                """
+                pass
 
 cursor.close()
 
