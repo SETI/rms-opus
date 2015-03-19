@@ -59,13 +59,13 @@ def add_to_collection(ring_obs_id, session_id):
     # first remove
     remove_from_collection(ring_obs_id, session_id)
     sql = 'replace into ' + connection.ops.quote_name(coll_table_name) + ' (ring_obs_id) values (%s)'
-    cursor.execute(sql, ring_obs_id)
+    cursor.execute(sql, (ring_obs_id,))
 
 def remove_from_collection(ring_obs_id, session_id):
     cursor = connection.cursor()
     coll_table_name = get_collection_table(session_id)
     sql = 'delete from ' + connection.ops.quote_name(coll_table_name) + ' where ring_obs_id = %s'
-    cursor.execute(sql, ring_obs_id)
+    cursor.execute(sql, (ring_obs_id,))
 
 def get_collection_in_page(page, session_id):
     """ returns obs_general_ids in page that are also in user collection
@@ -77,7 +77,7 @@ def get_collection_in_page(page, session_id):
     for p in page:
         ring_obs_id = p[0]
         sql = 'select ring_obs_id from ' + connection.ops.quote_name(coll_table_name) + ' where ring_obs_id = %s'
-        cursor.execute(sql, ring_obs_id)
+        cursor.execute(sql, (ring_obs_id,))
         row = cursor.fetchone()
         if row is not None:
             collection_in_page.append(ring_obs_id)

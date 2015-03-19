@@ -3,6 +3,7 @@
 #   search.views
 #
 ################################################
+import sys
 import hashlib
 from operator import __or__ as OR
 import julian
@@ -239,10 +240,10 @@ def getUserQueryTable(selections,extras=None):
         return ptbl
 
     except DatabaseError:
+        e = ys.exc_info()[1]
+        if 'exists' in e.lower():
+            return ptbl
         log.error('query execute failed: create/alter table ')
-
-        import sys
-        log.error(sys.exc_info()[1])
         log.error(sys.exc_info()[1])
         return False
 
