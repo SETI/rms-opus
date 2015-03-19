@@ -46,7 +46,7 @@ DATABASES = {
         'ENGINE': 'django.db.backends.mysql',
         'USER': DB_USER,
         'PASSWORD': DB_PASS,
-        'OPTIONS':{ 'unix_socket': '/private/var/mysql/mysql.sock'},
+        # 'OPTIONS':{ 'unix_socket': '/private/var/mysql/mysql.sock'},
     }
 }
 
@@ -266,10 +266,10 @@ LOGGING = {
             'propagate': True,
             'level':'WARN',
         },
-        'django.db.backends': {  # shows sql queries in console when debug = True
-            # 'handlers': ['console', 'logfile'],
+        'django.db.backends': {
+            'handlers': ['console'],
             'level': 'DEBUG',
-            'propagate': True,
+            'propagate': False,
         },
         'results': {
             'handlers': ['console', 'logfile'],
