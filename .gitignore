@@ -19,7 +19,6 @@ secrets.py
 sqlall.txt
 temp*.*
 *.json
-libs
 .DS_Store
 ._*
 *.*~
