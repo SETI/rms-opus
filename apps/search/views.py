@@ -98,6 +98,9 @@ def constructQueryString(selections, extras):
         form_type = param_info.form_type
         special_query = param_info.special_query
 
+        print param_name
+        print form_type
+
         # define any qtypes for this param_name from query
         qtypes = all_qtypes[param_name_no_num] if param_name_no_num in all_qtypes else []
 
@@ -155,6 +158,7 @@ def constructQueryString(selections, extras):
     # construct our query, we'll be breaking into raw sql, but for that
     # we'll be using the sql django generates through its model interface
     try:
+        print ObsGeneral.objects.filter(*q_objects).values('pk').query
 
         sql, params = ObsGeneral.objects.filter(*q_objects).values('pk').query.sql_with_params()
 
@@ -179,6 +183,7 @@ def constructQueryString(selections, extras):
         return sql, params
 
     except EmptyResultSet:
+        print 'empty result set! '
         return False
 
 
@@ -223,11 +228,11 @@ def getUserQueryTable(selections,extras=None):
     try:
         sql, params = constructQueryString(selections, extras)
     except TypeError:
-        log.error('TypeError, constructQueryString returned False')
+        log.debug('TypeError, constructQueryString returned False')
         return False
 
     if not sql:
-        log.error('getUserQueryTable - query string was empty ')
+        log.debug('getUserQueryTable - query string was empty ')
         return False
 
     try:

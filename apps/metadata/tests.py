@@ -3,7 +3,8 @@
 
 """
 import json
-from django.test import TestCase
+# from django.test import TestCase  removed because it deletes test table data after every test
+from unittest import TestCase
 from django.test.client import Client
 from django.db import connection
 
@@ -18,7 +19,19 @@ class metadataTests(TestCase):
     selections = {}
     selections[param_name] = ['Saturn']
 
+    def teardown(self):
+        cursor = connection.cursor()
+        cursor.execute("delete from user_searches")
+        cursor.execute("ALTER TABLE user_searches AUTO_INCREMENT = 1")
+        cursor.execute("show tables like %s " , ["cache%"])
+        print "running teardown"
+        for row in cursor:
+            q = 'drop table ' + row[0]
+            print q
+            cursor.execute(q)
+
     def test__getRangeEndpoints_times(self):
+        self.teardown()
         url = '/opus/api/meta/range/endpoints/timesec1.json?planet=Saturn&view=search&browse=gallery&colls_browse=gallery&page=1&limit=100&order=&cols=ringobsid,planet,target,phase1&widgets=planet,target,timesec1&widgets2=&detail=&reqno=1'
         print url
         response = self.c.get(url)
@@ -40,7 +53,7 @@ class metadataTests(TestCase):
         self.assertGreater(result_count, 11000)
 
     def test_getResultCount_string_no_qtype(self):
-        response = self.c.get('/opus/api/meta/result_count.json?primaryfilespec=C11399XX')
+        response = self.c.get('/opus/api/meta/result_count.json?primaryfilespec=C11399XX&qtype-primaryfilespec=matches')
         self.assertEqual(response.status_code, 200)
         jdata = json.loads(response.content)
         result_count = int(jdata['data'][0]['result_count'])

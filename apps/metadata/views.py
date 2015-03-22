@@ -59,6 +59,7 @@ def getResultCount(request,fmt='json'):
 
 
     table = search.views.getUserQueryTable(selections,extras)
+    
 
     if table is False:
         count = 0;

@@ -5,7 +5,8 @@ when you run "manage.py test".
 Replace this with more appropriate tests for your application.
 """
 
-from django.test import TestCase
+# from django.test import TestCase  removed because it deletes test table data after every test
+from unittest import TestCase
 
 
 class SimpleTest(TestCase):

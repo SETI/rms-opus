@@ -2,7 +2,9 @@
 #  user_collections
 
 """
-from django.test import TestCase, RequestFactory
+from django.test import RequestFactory
+# from django.test import TestCase  # removed because it deletes test table data after every test
+from unittest import TestCase
 from django.test.client import Client
 from django.db.models import get_model
 from django.contrib.auth.models import AnonymousUser, User
@@ -44,9 +46,13 @@ class user_CollectionsTests(TestCase):
     def emptycollection(self):
         cursor = connection.cursor()
         table_name = 'colls_' + test_session.session_key
+        print 'hello'
+        print table_name;
         cursor.execute('delete from ' + connection.ops.quote_name(table_name))
 
+
     def test__edit_collection_add_one(self):
+        self.emptycollection()
         action = 'add'
         request = self.factory.get('/opus/collections/default/add.json?request=1&ringobsid=S_IMG_CO_ISS_1680806160_N', HTTP_X_REQUESTED_WITH='XMLHttpRequest')
         request.user = AnonymousUser()
@@ -58,6 +64,7 @@ class user_CollectionsTests(TestCase):
         self.assertEqual(expected, response.content)
 
     def test__edit_collection_remove_one(self):
+        self.emptycollection()
         action = 'remove'
         request = self.factory.get('/opus/collections/default/add.json?request=1&ringobsid=S_IMG_CO_ISS_1680806160_N', HTTP_X_REQUESTED_WITH='XMLHttpRequest')
         request.user = AnonymousUser()
@@ -70,6 +77,7 @@ class user_CollectionsTests(TestCase):
 
     def test__edit_collection_add_range(self):
         """ """
+        self.emptycollection()
         action = 'addrange'
         ring_obs_id_min = 'S_IMG_CO_ISS_1692987504_N'
         ring_obs_id_max = 'S_IMG_CO_ISS_1692987684_N'
@@ -84,31 +92,32 @@ class user_CollectionsTests(TestCase):
         self.assertEqual(response.status_code, 200)
         expected = '{"count": 4, "request_no": 1, "err": false}'
         self.assertEqual(expected, response.content)
-        self.emptycollection()
 
     def test__edit_collection_remove_range(self):
         # lol just kidding
         pass
 
     def test__get_collection_table(self):
+        self.emptycollection()
         session_id = test_session().session_key
         table_name = get_collection_table(session_id)
         self.assertEqual('colls_test_key', table_name)
 
     def test__bulk_add_to_collection(self):
+        self.emptycollection()
         session_id = test_session().session_key
         ring_obs_id_list = ['S_IMG_CO_ISS_1692988072_N','S_IMG_CO_ISS_1692988234_N','S_IMG_CO_ISS_1692988460_N','S_IMG_CO_ISS_1692988500_N']
         bulk_add_to_collection(ring_obs_id_list, session_id)
         expected = len(ring_obs_id_list)
         received = get_collection_count(session_id)
         self.assertEqual(expected, received)
-        self.emptycollection()
 
     def test_get_collection_in_page(self):
         """ this is awfully round about and should perhaps be
             part of results.views test suite """
 
         # first add some to collection
+        self.emptycollection()
         session_id = test_session().session_key
         ring_obs_id_list = ['S_IMG_CO_ISS_1692988072_N','S_IMG_CO_ISS_1692988234_N','S_IMG_CO_ISS_1692988460_N','S_IMG_CO_ISS_1692988500_N']
         bulk_add_to_collection(ring_obs_id_list, session_id)
@@ -123,9 +132,9 @@ class user_CollectionsTests(TestCase):
         # then hand that page to the method we are trying to test
         cip = get_collection_in_page(page, session_id)
         self.assertEqual(cip, ring_obs_id_list)  # we get back what we put in
-        self.emptycollection()
 
     def test_get_collection_count(self):
+        self.emptycollection()
         session_id = test_session().session_key
         count = get_collection_count(session_id)
         self.assertEqual(count, 0)  # nothing here yet
@@ -135,10 +144,10 @@ class user_CollectionsTests(TestCase):
         bulk_add_to_collection(ring_obs_id_list, session_id)
         count = get_collection_count(session_id)
         self.assertEqual(count, 4)  # nothing here yet
-        self.emptycollection()
 
 
     def test_view_collection(self):
+        self.emptycollection()
         # first add some to collection
         session_id = test_session().session_key
         ring_obs_id_list = ['S_IMG_CO_ISS_1692988072_N','S_IMG_CO_ISS_1692988234_N','S_IMG_CO_ISS_1692988460_N','S_IMG_CO_ISS_1692988500_N']
@@ -153,10 +162,9 @@ class user_CollectionsTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertGreater(len(response.content), 10000)
 
-        self.emptycollection()
-
 
     def test_collection_status(self):
+        self.emptycollection()
         # first add some to collection
         session_id = test_session().session_key
         ring_obs_id_list = ['S_IMG_CO_ISS_1692988072_N','S_IMG_CO_ISS_1692988234_N','S_IMG_CO_ISS_1692988460_N','S_IMG_CO_ISS_1692988500_N']
@@ -172,10 +180,9 @@ class user_CollectionsTests(TestCase):
         expected = '{"count": 4, "expected_request_no": 1}'
         self.assertEqual(expected, response.content)
 
-        self.emptycollection()
-
 
     def test_check_collection_args(self):
+        self.emptycollection()
         # first add some to collection
         session_id = test_session().session_key
         ring_obs_id_list = ['S_IMG_CO_ISS_1692988072_N','S_IMG_CO_ISS_1692988234_N','S_IMG_CO_ISS_1692988460_N','S_IMG_CO_ISS_1692988500_N']
@@ -202,7 +209,6 @@ class user_CollectionsTests(TestCase):
         received = check_collection_args(request,**kwargs)
         expected = 'No Observations specified'
         self.assertEqual(expected, received)
-
         self.emptycollection()
 
 

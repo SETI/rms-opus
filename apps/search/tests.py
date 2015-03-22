@@ -11,7 +11,8 @@ analyze table user_searches;
 
 *****************************
 """
-from django.test import TestCase
+# from django.test import TestCase  removed because it deletes test table data after every test
+from unittest import TestCase
 from django.test.client import Client
 from django.db.models import get_model
 
