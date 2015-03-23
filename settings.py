@@ -88,12 +88,6 @@ MEDIA_ROOT = ''
 MEDIA_URL = 'http://pds-rings.seti.org/search/opus2/static_media/'
 STATIC_URL = MEDIA_URL
 
-# URL prefix for admin media -- CSS, JavaScript and images. Make sure to use a
-# trailing slash.
-# Examples: "http://foo.com/media/", "/media/".
-ADMIN_MEDIA_PREFIX = '/static/admin/'
-ADMIN_MEDIA_PREFIX = 'https://s3.amazonaws.com/%s/admin/' % AWS_STORAGE_BUCKET_NAME
-
 # List of callables that know how to import templates from various sources.
 TEMPLATE_LOADERS = (
     'django.template.loaders.filesystem.Loader',
@@ -147,7 +141,6 @@ INSTALLED_APPS = (
     'django_memcached',
     # 'debug_toolbar',
     # 'django.contrib.messages',
-    # Uncomment the next line to enable the admin:
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.admindocs',
