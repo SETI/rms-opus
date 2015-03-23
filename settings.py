@@ -102,6 +102,8 @@ TEMPLATE_CONTEXT_PROCESSORS = (
     'django.core.context_processors.static',
     )
 
+ADMIN_MEDIA_PREFIX = ''
+
 
 
 MIDDLEWARE_CLASSES = (
