@@ -71,6 +71,9 @@ def get_collection_in_page(page, session_id):
     """ returns obs_general_ids in page that are also in user collection
         this is for views in results where you have to display the gallery
         and indicate which thumbnails are in cart"""
+    if not session_id:
+        return
+        
     cursor = connection.cursor()
     coll_table_name = get_collection_table(session_id)
     collection_in_page = []
