@@ -254,7 +254,7 @@ def getRangeEndpoints(request,slug,fmt='json'):
 
 
 def getFields(request,**kwargs):
-    field=category=False
+    field = category = ''
     fmt = kwargs['fmt']
     if 'field' in kwargs:
         field = kwargs['field']
@@ -264,6 +264,7 @@ def getFields(request,**kwargs):
     cache_key = 'getFields:field:' + field + ':category:' + category
     if (cache.get(cache_key)):
         fields = cache.get(cache_key)
+
     else:
         if field:
             fields = ParamInfo.objects.filter(slug=field)
@@ -271,9 +272,17 @@ def getFields(request,**kwargs):
             fields = ParamInfo.objects.filter(category_name=field)
         else:
             fields = ParamInfo.objects.all()
-        cache.set(cache_key,fields,0)
+        
+        return_obj = {}
+        for f in fields:
+            return_obj[f.slug] = {
+                'label': f.label, 
+                'more_info': f.get_dictionary_info(),
+                }
+        cache.set(cache_key,return_obj,0)
 
-    return responseFormats(fields,fmt,template='detail.html')
+        return HttpResponse(json.dumps(return_obj), mimetype='application/json')
+
 
 
 def getCats(request, **kwargs):
@@ -293,6 +302,5 @@ def getCats(request, **kwargs):
             fields = Category.objects.all()
         cache.set(cache_key,fields,0)
 
-    return responseFormats(fields,fmt,template='detail.html')
 
 
