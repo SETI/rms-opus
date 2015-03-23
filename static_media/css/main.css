@@ -352,10 +352,12 @@ ul.ace-thumbnails {
     font-size:95%;
 }
 
+#sidebar .nav-list {
+    padding-left:20px;
+}
 
 #sidebar {
     padding-right:10px;
-    padding-left:15px;
     height:800px;
     margin-left:15px;
     width:310px;
