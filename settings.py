@@ -85,7 +85,7 @@ MEDIA_ROOT = ''
 # MEDIA_URL = 'https://s3.amazonaws.com/%s/' % AWS_STORAGE_BUCKET_NAME
 # MEDIA_URL = 'http://s3.amazonaws.com/%s/' % AWS_STORAGE_BUCKET_NAME
 # MEDIA_URL = 'http://pds-rings.seti.org:/~lballard/django_opus/static_media/'
-MEDIA_URL = 'http://pds-rings.seti.org/search/opus2/static_media/'
+MEDIA_URL = 'http://pds-rings.seti.org/opus2_resources/static_media/'
 STATIC_URL = MEDIA_URL
 
 # List of callables that know how to import templates from various sources.

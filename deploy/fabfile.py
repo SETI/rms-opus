@@ -45,6 +45,10 @@ def push():
         # local('rsync -r -vc -e ssh %s/static_media lballard@pds-rings.seti.org:~/sites/django_opus/.' % prod_deploy_dir)
         local('rsync -r -vc -e ssh %s/static_media lballard@pds-rings.seti.org:~/.' % prod_deploy_dir)
 
+    # now go to pds-rings and move static_media into the right place
+    with settings(host_string='pds-rings.seti.org'):
+        run("sudo cp -r /Users/lballard/static_media /library/webserver/documents/opus2_resources/.")
+
 def deploy():
     """
     take a backup of the currently deployed source on the server
