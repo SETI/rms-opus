@@ -363,9 +363,9 @@ def getFilesAPI(request, ring_obs_id=None, fmt=None, loc_type=None):
         page  = getData(request,'raw')['page']
         if not len(page):
             return False
-        ring_obs_ids = [p[0] for p in page]
+        ring_obs_id = [p[0] for p in page]
 
-    return getFiles(ring_obs_id=ring_obs_ids, fmt=fmt, loc_type=loc_type, product_types=product_types, previews=images)
+    return getFiles(ring_obs_id=ring_obs_id, fmt=fmt, loc_type=loc_type, product_types=product_types, previews=images)
 
 
 
