@@ -511,7 +511,7 @@ var o_widgets = {
             o_widgets.updateWidgetCookies();
             // these sometimes get drawn on page load by placeWidgetContainers, but not this time:
             var html = '<li id = "' + widget + '" class = "widget"></li>';
-            $(html).hide().appendTo(formscolumn).show("slow");
+            $(html).hide().prependTo(formscolumn).show("slow");
             opus.widget_elements_drawn.push(slug);
         }
         $.ajax({ url: "/opus/forms/widget/" + slug + '.html?' + o_hash.getHash(),
@@ -630,6 +630,7 @@ var o_widgets = {
      scrollToWidget: function(widget) {
         // scrolls window to a widget and highlights the widge
         // widget is like: "widget__" + slug
+        /*
         if ($('#' + widget).offset().top > $(window).height() - 50
             |
             $(window).height() > 2 * $(window).height()
@@ -638,9 +639,10 @@ var o_widgets = {
                     scrollTop: $('#' + widget).offset().top + 50
                 }, 2000);
         }
+        */
         setTimeout(function(){
             $('.' + widget + ' .widget-main').effect("highlight", "slow");
-        }, 1000);
+        }, 500);
 
      },
 
