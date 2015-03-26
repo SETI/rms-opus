@@ -7,6 +7,12 @@ $(document).ready(function() {
 
 
     $(window).smartresize(function(){
+
+        container_height = $(window).height() - 100;
+        $(".widget_column").height(container_height);
+        $(".sidebar_wrapper").height(container_height);
+
+            
         // see if the metadata box is off screen, if so redraw it.
         // find left border of metadata box is > screen width.
         // if so then move it inside
@@ -15,6 +21,7 @@ $(document).ready(function() {
         $('#cboxOverlay .gallery_data_viewer').width();
         $('#cboxOverlay .gallery_data_viewer').offset().left;
         */
+
         if ($('#cboxOverlay .gallery_data_viewer').is(':visible')) {
             // user is resizing browser with gallery viewer open
             // make sure they don't lose the metadata box off to the right

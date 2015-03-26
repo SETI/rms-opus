@@ -5,12 +5,18 @@
         <div id="search" class="in active row">
 
             <!-- params menu -->
-            <div class="sidebar" id="sidebar">
-                {% include "menu.html" %}
+            <div class="col-md-4">
+                <div class = "sidebar_wrapper mCustomScrollbar">
+                    <div class = "sidebar" id = "sidebar">
+                        {% include "menu.html" %}
+                    </div>
+                </div>
             </div>
 
-            <div class="col-md-7">
-                <ul id = "search_widgets1"></ul>
+            <div class="col-md-8 ">
+                <div class = "widget_column mCustomScrollbar">
+                    <ul id = "search_widgets1" class = ""></ul>
+                </div>
             </div>
 
         </div><!-- /search -->

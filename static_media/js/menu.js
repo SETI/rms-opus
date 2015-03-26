@@ -10,7 +10,7 @@ var o_menu = {
          // search menu behaviors
 
          // click param in menu get new widget
-         $('.sidebar').on("click", '.submenu li a', function() {
+         $('#sidebar').on("click", '.submenu li a', function() {
              slug = $(this).data('slug');
              if (!slug) { return; }
              if (jQuery.inArray(slug, opus.widgets_drawn)>-1){

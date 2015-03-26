@@ -20,6 +20,17 @@ var o_widgets = {
         });
         */
 
+        $(".widget_column").mCustomScrollbar({
+            theme:"rounded-dark", 
+            scrollInertia:300,
+        });        
+        $(".sidebar_wrapper").mCustomScrollbar({
+            theme:"rounded-dark", 
+            scrollInertia:300,
+        });        
+    
+        // first set sidebar height dynamically
+
         // click the dictionary icon, the definition slides open
         $('#search').on('click', 'a.dict_link', function() {
             $(this).parent().parent().find('.dictionary').slideToggle();
@@ -176,9 +187,8 @@ var o_widgets = {
     widgetDrop: function(ui) {
             // if widget as moved to a different formscolumn,
             // redefine the opus.prefs.widgets and opus.prefs.widgets2 (preserves order)
-            widgets = $('#formscolumn1').sortable('toArray');
-            widgets2 = $('#formscolumn2').sortable('toArray');
-
+            widgets = $('#search_widgets1').sortable('toArray');
+            
             $.each(widgets, function(index,value) {
                 widgets[index]=value.split('__')[1];
             });
@@ -238,8 +248,8 @@ var o_widgets = {
 
     // adjusts the widths of the widgets in the main column so they fit users screen size
     adjustWidgetWidth: function(widget) {
-            $(widget).animate({width:$('.formscolumn').width() - 2*20 + 'px'},'fast');  // 20px is the side margin of .widget
-            $('.widget_scroll_wrapper',widget).width($('.formscolumn').width() - 2*20 + 'px'); // 20px is the side margin of .widget
+            $(widget).animate({width:$('#search_widgets1').width() - 2*20 + 'px'},'fast');  // 20px is the side margin of .widget
+            // $('.widget_scroll_wrapper',widget).width($('.formscolumn').width() - 2*20 + 'px'); // 20px is the side margin of .widget
     },
 
     resetWidgetScrolls: function() {
@@ -294,8 +304,6 @@ var o_widgets = {
                         .height(height)
                         .animate({scrollTop:scrolltop}, 500);
 
-
-                    o_widgets.widgetScrollAdjust('#widget__' + slug);
 
             // }
         //////////////////// //////////////////// ////////////////////
@@ -436,14 +444,6 @@ var o_widgets = {
          return simple
      },
 
-     widgetScrollAdjust: function(widget) {
-         $('.widget_scroll_wrapper',widget).css({
-             'overflow-y':'auto',
-             'height':function(){return $(widget).height();},
-             'width':  function(){return $(widget).width();},
-         });
-     },
-
      updateWidgetCookies: function() {
          $.cookie("widgets", opus.prefs.widgets.join(','), { expires: 21});
          $.cookie("widgets2", opus.prefs.widgets2.join(','), { expires: 21});
@@ -475,7 +475,7 @@ var o_widgets = {
          }
      },
 
-          // adds a widget and its behaviors, adjusts the opus.prefs variable to include this widget, will not update the hash
+     // adds a widget and its behaviors, adjusts the opus.prefs variable to include this widget, will not update the hash
      getWidget: function(slug, formscolumn){
 
          if (!slug) return;
@@ -513,6 +513,7 @@ var o_widgets = {
             var html = '<li id = "' + widget + '" class = "widget"></li>';
             $(html).hide().prependTo(formscolumn).show("slow");
             opus.widget_elements_drawn.push(slug);
+
         }
         $.ajax({ url: "/opus/forms/widget/" + slug + '.html?' + o_hash.getHash(),
              success: function(widget_str){
@@ -523,26 +524,25 @@ var o_widgets = {
                          handles: 's',
                       });
 
-                o_widgets.scrollToWidget(widget);
-
                 // $('.minimize_widget', '#' + widget).toggleClass('opened_triangle');
                 // $('.minimize_widget', '#' + widget).toggleClass('closed_triangle');
 
                 o_widgets.pauseWidgetControlVisibility(opus.selections);
 
             }}).done(function() {
-                if (formscolumn == '#formscolumn1') {
-                    // o_widgets.adjustWidgetWidth('#' + widget);
-                }
+
+                container_height = $(window).height() - 100;
+                $(".widget_column").height(container_height);
+                $(".sidebar_wrapper").height(container_height);
+
 
                 // adjust the navbar height after bringing in new widget
-                var sidebar_height = $('.main-container-inner').height() > 800 ? $('.main-container-inner').height() : 800;
-                $('#sidebar').height(sidebar_height);
+               // var sidebar_height = $('.main-container-inner').height() > 800 ? $('.main-container-inner').height() : 800;
+                //$('#sidebar').height(sidebar_height);
 
                 // bind the resize behavior\
                 // if you don't bind it this way the 'trigger' won't work later
                 $('#' + widget).bind( "resizestop",function(event) {
-                         o_widgets.widgetScrollAdjust('#' + widget);   // make the inner content wrapper match the size of the outer widget div
                          $('.widget_scroll_wrapper','#' + widget)
                              .bind('scrollstop',function(e) {
                                  // when they resize we then bind the scroll stop behavior
@@ -555,31 +555,9 @@ var o_widgets = {
                              // add new widget size to hash
                              opus.prefs.widget_size[slug] = Math.floor($('#' + widget).height());
                              o_hash.updateHash();
+
+
                });
-
-
-                 /** default_resize bug this doesn't properly resize in Safari, chrome, turning off for now
-                 if (slug in opus.prefs.widget_size) {
-
-                         // there is a custom widget size, look for a scrollstop
-                         opus.prefs.widget_scroll[slug] ? scrolltop = opus.prefs.widget_scroll[slug] : scrolltop = 0;
-                         // resize and scroll the widget
-
-
-                          $('#widget__' + slug).height(opus.prefs.widget_size[slug]);
-                          $('#widget__' + slug).trigger("resizestop");
-
-                         $('.widget_scroll_wrapper','#widget__' + slug)
-                             .height(opus.prefs.widget_size[slug])
-                             .animate({scrollTop:scrolltop}, 500);
-                          o_widgets.widgetScrollAdjust('#widget__' + slug);
-
-
-                 }
-                 **/
-
-
-             // form_type = $('#widget__' + slug + ' .widget_inner').attr("class").split(' ')[1];
 
              // if we are drawing a range widget we need to check if the qtype dropdown is
              // already defined by the url:
@@ -618,7 +596,10 @@ var o_widgets = {
 
              opus.widgets_drawn.push(slug);
 
+
              o_widgets.customWidgetBehaviors(slug);
+
+             o_widgets.scrollToWidget(widget);
 
 
              o_search.getHinting(slug);
@@ -640,9 +621,16 @@ var o_widgets = {
                 }, 2000);
         }
         */
-        setTimeout(function(){
-            $('.' + widget + ' .widget-main').effect("highlight", "slow");
-        }, 500);
+        //  scroll the widget panel to top
+
+            $(".widget_column").mCustomScrollbar("scrollTo","top",
+                {
+                    timeout:1000,
+                });
+
+            setTimeout(function() {
+                $('.' + widget + ' .widget-main').effect("highlight", "slow");
+            }, 1800)
 
      },
 
