@@ -344,8 +344,8 @@ ul.ace-thumbnails {
     display:inline;
     list-style-type:none;
 }
-#search_widgets1 {
-    padding-bottom: 300px;
+#search_widgets1 {  /* this fixes problem scrolling when widget column is short */
+    padding-bottom: 600px;
 }
 
 #search .widget_pause {
@@ -401,17 +401,36 @@ ul.ace-thumbnails {
     margin-top:10px;
 }
 
-.widget_column {  /* lisa rename this! */
+.widget_column {  
     overflow: auto;
     position: relative;
     padding 0 20px;
     margin: 0 10px;
+    margin-left:-20px;
     margin-top:10px;
     width: 740px;
     max-width: 97%;
     height: 500px;  /* matches .sidebar_wrapper */
     -webkit-box-sizing: border-box; -moz-box-sizing: border-box; box-sizing: border-box;
 }
+.widget-header {
+    margin:0; padding:0; 
+    min-height: 20px; /* overwrites ace style */
+    height: 20px;
+    padding-left: 5px;
+
+}
+.widget-header > .widget-title {
+    line-height:20px;
+
+}
+.widget-toolbar {
+    margin:0; padding:0;
+    line-height:15px;
+    margin-top:-2px;
+    padding: 0px 5px;
+}
+
 
 .spinner {
     background-image: url('http://pds-rings.seti.org/search/opus2/static_media/images/spinner.gif');
