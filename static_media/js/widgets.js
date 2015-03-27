@@ -531,10 +531,7 @@ var o_widgets = {
 
             }}).done(function() {
 
-                container_height = $(window).height() - 100;
-                $(".widget_column").height(container_height);
-                $(".sidebar_wrapper").height(container_height);
-
+                o_search.adjustSearchHeight();
 
                 // adjust the navbar height after bringing in new widget
                // var sidebar_height = $('.main-container-inner').height() > 800 ? $('.main-container-inner').height() : 800;

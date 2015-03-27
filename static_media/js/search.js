@@ -189,6 +189,14 @@ var o_search = {
             });
     },
 
+    adjustSearchHeight: function() {
+
+        container_height = $(window).height() - 100;
+        $(".widget_column").height(container_height);
+        $(".sidebar_wrapper").height(container_height);
+
+    },
+
     getSearchTab: function() {
 
         if (opus.search_tab_drawn) { return; }
@@ -234,6 +242,8 @@ var o_search = {
             }
         }
         opus.search_tab_drawn = true;
+
+        o_search.adjustSearchHeight();
 
     },
 

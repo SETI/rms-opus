@@ -83,6 +83,7 @@ var o_menu = {
      getMenu: function() {
         $('.menu_spinner').fadeIn("fast");
         hash = o_hash.getHash();
+        
         $( "#sidebar").load( "/opus/menu.html?" + hash, function() {
 
             // open menu items that were open before
@@ -113,6 +114,8 @@ var o_menu = {
                 // and add it to open cats list
                 opus.menu_state['cats'].push(geo_cat);
             }
+
+            o_search.adjustSearchHeight();
 
             $('.menu_spinner').fadeOut("fast");
 

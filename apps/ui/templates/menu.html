@@ -6,7 +6,6 @@
 	<li>
         <a href="#" class="dropdown-toggle {{ div.table_name }}" data-cat = "{{ div.table_name }}">
             <i class = "fa fa-check"></i>
-            <i class = "icon-desktop"></i>
             <span class="menu-text"> {{ div.label }} </span>
             {% if div == menu.divs.0 %}
                 <i class = "spinner menu_spinner">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</i>
@@ -40,7 +39,6 @@
                                 <li>
                                     <a data-label = "{{ p.label }}" data-slug = "{{ p.slug }}" class = "{{ p.slug }}" href = "">
                                         <i class = "fa fa-check"></i>
-                                        <i class="fa fa-plus"></i>
                                         {{ p.label }}
                                         <i class = "fa fa-info-circle" title = "
                                             {% if p.get_dictionary_info %}
@@ -67,7 +65,6 @@
                         <li>
                             <a data-label = "{{ p.label }}" data-slug = "{{ p.slug }}" class = "{{ p.slug }}" href = "">
                                 <i class = "fa fa-check"></i>
-                                <i class="fa fa-plus"></i>
                                 {{ p.label }}
                                 <i class = "fa fa-info-circle" title = "
                                     {% if p.get_dictionary_info %}

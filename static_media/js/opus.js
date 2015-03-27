@@ -8,11 +8,8 @@ $(document).ready(function() {
 
     $(window).smartresize(function(){
 
-        container_height = $(window).height() - 100;
-        $(".widget_column").height(container_height);
-        $(".sidebar_wrapper").height(container_height);
+        o_search.adjustSearchHeight();
 
-            
         // see if the metadata box is off screen, if so redraw it.
         // find left border of metadata box is > screen width.
         // if so then move it inside
@@ -196,7 +193,7 @@ var opus = {
     widget_full_sizes:{}, // when a widget is minimized and doesn't have a custom size defined we keep track of what the full size was so we can restore it when they unminimize/maximize widget
     menu_list_indicators: {'slug':[], 'cat':[], 'group':[] },
     menu_state: {'cats':['obs_general'], 'groups':[]},  // keep track of menu items that are open
-
+    
     // browse tab
     last_page_drawn: reset_last_page_drawn, // defined in header.html,
     pages:0, // total number of pages this result
