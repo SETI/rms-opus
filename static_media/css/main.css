@@ -2,6 +2,8 @@
 
 body {
   background-color:#303030;
+    font-family: Verdana, Arial, Helvetica, sans-serif;
+
 }
 #cboxContent, #cboxContent, #cboxLoadedContent, img.cboxPhoto {
   background-color:#303030;
