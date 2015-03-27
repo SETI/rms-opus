@@ -274,7 +274,7 @@ a i.fa-search-plus:hover {
 
 
 body {
-  padding-top: 42px;
+  padding-top: 40px;
 
 }
 .data_table  {
@@ -344,6 +344,9 @@ ul.ace-thumbnails {
     display:inline;
     list-style-type:none;
 }
+#search_widgets1 {
+    padding-bottom: 300px;
+}
 
 #search .widget_pause {
     margin:0px 5px 10px 7px;
@@ -389,17 +392,21 @@ ul.ace-thumbnails {
 }
 .sidebar_wrapper {
     margin:0; padding:0;
+    margin-top:5px;
     position: relative;
     height:500px; /* matches .widget_column */
     -webkit-box-sizing: border-box; -moz-box-sizing: border-box; box-sizing: border-box;
 }
-
+.sidebar_wrapper.mCustomScrollbar {
+    margin-top:10px;
+}
 
 .widget_column {  /* lisa rename this! */
     overflow: auto;
     position: relative;
-    padding: 20px;
-    margin: 10px;
+    padding 0 20px;
+    margin: 0 10px;
+    margin-top:10px;
     width: 740px;
     max-width: 97%;
     height: 500px;  /* matches .sidebar_wrapper */
