@@ -83,26 +83,43 @@ var o_menu = {
      getMenu: function() {
         $('.menu_spinner').fadeIn("fast");
         hash = o_hash.getHash();
-        
+
         $( "#sidebar").load( "/opus/menu.html?" + hash, function() {
 
-            // open menu items that were open before
-            for (var key in opus.menu_state['cats']) {
-                cat_name = opus.menu_state['cats'][key];
-                link = $("a." + cat_name, ".sidebar");
-                sub = link.next().get(0);
-                $(sub).toggle().parent().toggleClass('open');
+            // first load, open all categories 
+            if (opus.menu_state['cats'] == 'all') {
+                opus.menu_state['cats'] = [];
+                $('#sidebar .nav-list li>a').each(function() {
+                    if ($(this).data("cat")) {
+                        cat_name = $(this).data("cat");
+                        opus.menu_state['cats'].push(cat_name);
+                        link = $("a." + cat_name, ".sidebar");
+                        sub = link.next().get(0);
+                        $(sub).toggle().parent().toggleClass('open');
+                    }
+                });
+            } else {
+                
+                console.log('else');
+                console.log(opus.menu_state['cats']);
 
-                // $("." + cat_name, ".sidebar").trigger(ace.click_event);
-            }
-            for (var key in opus.menu_state['groups']) {
-                group_name = opus.menu_state['groups'][key];
-                link = $("a." + group_name, ".sidebar");
-                sub = link.next().get(0);
-                $(sub).toggle().parent().toggleClass('open');
-                // $("." + group_name, ".sidebar").trigger(ace.click_event);
-            }
+                // open menu items that were open before
+                for (var key in opus.menu_state['cats']) {
+                    cat_name = opus.menu_state['cats'][key];
+                    link = $("a." + cat_name, ".sidebar");
+                    sub = link.next().get(0);
+                    $(sub).toggle().parent().toggleClass('open');
 
+                    // $("." + cat_name, ".sidebar").trigger(ace.click_event);
+                }
+                for (var key in opus.menu_state['groups']) {
+                    group_name = opus.menu_state['groups'][key];
+                    link = $("a." + group_name, ".sidebar");
+                    sub = link.next().get(0);
+                    $(sub).toggle().parent().toggleClass('open');
+                    // $("." + group_name, ".sidebar").trigger(ace.click_event);
+                }
+            }
             // open any newly arrived surface geo tables
             // todo: this could be problematic if user wants to close it and keep it closed..
             geo_cat = $('a[title^="obs_surface_geometry__"]', '.sidebar').attr("title");
@@ -116,7 +133,6 @@ var o_menu = {
             }
 
             o_search.adjustSearchHeight();
-
             $('.menu_spinner').fadeOut("fast");
 
         });

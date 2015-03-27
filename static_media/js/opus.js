@@ -192,8 +192,9 @@ var opus = {
     search_form_cols:1, // the number of search form cols, 1 or 2
     widget_full_sizes:{}, // when a widget is minimized and doesn't have a custom size defined we keep track of what the full size was so we can restore it when they unminimize/maximize widget
     menu_list_indicators: {'slug':[], 'cat':[], 'group':[] },
-    menu_state: {'cats':['obs_general'], 'groups':[]},  // keep track of menu items that are open
-    
+    // menu_state: {'cats':['obs_general'], 'groups':[]},  // keep track of menu items that are open
+    menu_state: {'cats':'all', 'groups':[]},
+
     // browse tab
     last_page_drawn: reset_last_page_drawn, // defined in header.html,
     pages:0, // total number of pages this result
