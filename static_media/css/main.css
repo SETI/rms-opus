@@ -55,12 +55,13 @@ body {
     padding:20px;
     margin:10px;
     border:1px solid white;
-    overflow-y: scroll;
+    /* overflow: scroll;   this is needed but breaks content for small displays in chrome */
     background:#101010;
     opacity: 0.9;
     color:white;
     z-index:9999 !important;
 }
+
 .gallery_data_viewer h2 { /* ring_obs_it at top of data viewer */
     font-size:95%;
 }
