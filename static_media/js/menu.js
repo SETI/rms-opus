@@ -100,9 +100,6 @@ var o_menu = {
                 });
             } else {
                 
-                console.log('else');
-                console.log(opus.menu_state['cats']);
-
                 // open menu items that were open before
                 for (var key in opus.menu_state['cats']) {
                     cat_name = opus.menu_state['cats'][key];
