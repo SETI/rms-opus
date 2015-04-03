@@ -4,8 +4,8 @@
 
 best to create the test database manually:
 
-    mysqldump opus3 --opt > opus3.sql
-    mysql test_opus3 < opus3.sql
+    mysqldump opus_small --opt > opus_small.sql
+    mysql test_opus_small < opus_small.sql
 
 
 
