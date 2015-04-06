@@ -808,6 +808,7 @@ var o_browse = {
             values = o_hash.getHash().split('&')[i].split('=')[1].split(',');
 
             // make sure ring_obs_id is in columns
+            columns = opus.prefs.cols;
             if (param == 'cols') {
                 if (jQuery.inArray('ringobsid', values) < 0) {
                     values.push('ringobsid');
@@ -821,6 +822,7 @@ var o_browse = {
             // join them all together again
             new_hash.push(param + '=' + values.join(','));
         }
+
         new_hash = new_hash.join('&');
 
         $.getJSON(base_url + new_hash, function(json) {
