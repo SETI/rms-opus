@@ -114,6 +114,13 @@ var o_browse = {
             ring_obs_id = $(this).parent().parent().attr("id").substring(9);
             $(this).parent().show();
 
+
+            // click embedded data viewer icon 
+            if ($(this).hasClass('embedded_data_viewer_toggle')) {
+                o_browse.updateColorboxDataViewer(ring_obs_id);
+            }
+            
+
             // click to view detail page
             if ($(this).find('i').hasClass('fa-list-alt')) {
                 // leave a highlight on the clicked thumbnail
@@ -883,6 +890,7 @@ var o_browse = {
 
                 // append the data to the data view container
                 $('.gallery_data_viewer').html("<h2>" + ring_obs_id + "</h2>");
+                $('.embedded_data_viewer').html("<h2>" + ring_obs_id + "</h2>");
 
                 // update the view data
                 o_browse.updateColorboxDataViewer(ring_obs_id);
@@ -953,6 +961,20 @@ var o_browse = {
         // add link to gallery data viewer metadatabox
         html += '<p><a href="" class="get_column_chooser close_overlay">choose columns</a></p>';
         $('.gallery_data_viewer').html(html);
+        
+        var scroll_top = $('html').scrollTop();
+        
+        if (!$('.embedded_data_viewer_wrapper').is(":visible")) {
+            // embedded data viewer isn't visible, show it! 
+            o_browse.embedded_data_viewer_toggle();
+        }
+
+        // and update the data viewer
+        $('.embedded_data_viewer')
+                .hide()
+                .css({ 'top': scroll_top + "px"})
+                .html(html)
+                .fadeIn("fast");
 
         // add data viewer behaviors
         $('.gallery_data_viewer').on("click", '.gallery_data_link', function() {
@@ -970,6 +992,11 @@ var o_browse = {
     },
 
 
+    embedded_data_viewer_toggle: function() {
+
+        $('.gallery').toggleClass('col-lg-9').toggleClass('col-sm-8').toggleClass('col-lg-12');
+        $('.embedded_data_viewer_wrapper').toggle();
+    },
 
     // we watch the paging input fields to wait for pauses before we trigger page change. UX!
     // this funciton starts that monitor based on what view is currently up

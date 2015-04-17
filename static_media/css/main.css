@@ -67,32 +67,58 @@ body {
     right:50px;
     width:280px;
     height:80%;
-    padding:20px;
-    margin:10px;
     border:1px solid white;
-    /* overflow: scroll;   this is needed but breaks content for small displays in chrome */
-    background:#101010;
-    opacity: 0.9;
-    color:white;
+    margin:10px;
     z-index:9999 !important;
+    opacity: 0.9;
 }
 
-.gallery_data_viewer h2 { /* ring_obs_it at top of data viewer */
+/* gallery embedded_data_viewer */ 
+
+.gallery_data_viewer, .embedded_data_viewer {
+    /* overflow: scroll;   this is needed but breaks content for small displays in chrome */
+    background:#383838;
+    color:white;
+}
+
+.embedded_data_viewer_wrapper { 
+    margin:0; padding:0;
+    height:100%;
+    display:none;
+}
+
+.embedded_data_viewer {
+    display:block;
+    position: relative;
+    top:40px;
+    left:0;
+    height:100%;
+    padding:20px;
+}
+
+.embedded_data_viewer, .embedded_data_viewer_wrapper {
+    background-color: #383838; 
+}
+
+.gallery_data_viewer h2,  .embedded_data_viewer h2 { /* ring_obs_it at top of data viewer */
     font-size:95%;
 }
-.gallery_data_viewer h3 { /* table name header - */
+.gallery_data_viewer h3,  .embedded_data_viewer h3 { /* table name header - */
     margin:0; padding:0;
     margin-top:15px;
     margin-bottom:5px;
     font-size:100%;
     color:#D0D0D0;
 }
-.gallery_data_viewer dt {
+.gallery_data_viewer dt,  .embedded_data_viewer dt {
     color:#3399ff;
 }
-.gallery_data_viewer dd {
+.gallery_data_viewer dd,  .embedded_data_viewer dd {
     margin-bottom:5px;
 }
+
+
+
 
 .main-container-inner, .main-container {
     height: 100%;
@@ -331,7 +357,12 @@ ul.ace-thumbnails {
 }
 
 #browse {
+    background-color: #303030; /* #383838; */
 }
+#browse .data {
+    background-color: white;
+}
+
 #browse .gallery {
     margin:0; padding:0;
     margin-top:-20px;
