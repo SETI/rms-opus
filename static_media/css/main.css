@@ -71,10 +71,15 @@ body {
     margin:10px;
     z-index:9999 !important;
     opacity: 0.9;
+    padding: 20px;
 }
 
 /* gallery embedded_data_viewer */ 
 
+.embedded_data_viewer_image {
+    height:300px;
+    overflow: hidden
+}
 .gallery_data_viewer, .embedded_data_viewer {
     /* overflow: scroll;   this is needed but breaks content for small displays in chrome */
     background:#383838;

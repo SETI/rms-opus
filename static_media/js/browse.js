@@ -114,10 +114,9 @@ var o_browse = {
             ring_obs_id = $(this).parent().parent().attr("id").substring(9);
             $(this).parent().show();
 
-
             // click embedded data viewer icon 
             if ($(this).hasClass('embedded_data_viewer_toggle')) {
-                o_browse.updateColorboxDataViewer(ring_obs_id);
+                o_browse.updateEmbeddedMetadataBox(ring_obs_id);
             }
             
 
@@ -944,9 +943,9 @@ var o_browse = {
 
     },
 
+    metadataboxHtml: function(ring_obs_id) {
 
-    updateColorboxDataViewer: function(ring_obs_id) {
-
+        // list columns + values
         html = '<dl>';
         for (var i in opus.prefs['cols']) {
             column = opus.prefs['cols'][i];
@@ -958,24 +957,44 @@ var o_browse = {
         // add a link to detail page
         html += '<p><a href = "/opus/detail/' + ring_obs_id + '.html" class = "gallery_data_link" data-ringobsid="' + ring_obs_id + '">View Detail</a></p>';
 
-        // add link to gallery data viewer metadatabox
+        // add link to choose columns
         html += '<p><a href="" class="get_column_chooser close_overlay">choose columns</a></p>';
         $('.gallery_data_viewer').html(html);
-        
-        var scroll_top = $('html').scrollTop();
-        
-        if (!$('.embedded_data_viewer_wrapper').is(":visible")) {
-            // embedded data viewer isn't visible, show it! 
-            o_browse.embedded_data_viewer_toggle();
-        }
 
-        // and update the data viewer
-        $('.embedded_data_viewer')
-                .hide()
-                .css({ 'top': scroll_top + "px"})
-                .html(html)
-                .fadeIn("fast");
+        return html
+    }, 
 
+    updateEmbeddedMetadataBox: function(ring_obs_id) {
+
+        var url = 'http://127.0.0.1:8000/opus/api/image/med/' + ring_obs_id + '.json';
+        $.getJSON(url, function(json) {
+
+            var img = json['data'][0]['path'] + json['data'][0]['img'];
+
+            html = '<div class = "embedded_data_viewer_image"><img height = "300px" src = "' + img + '"></div>';
+            html += o_browse.metadataboxHtml(ring_obs_id);        
+
+            if (!$('.embedded_data_viewer_wrapper').is(":visible")) {
+                // embedded data viewer isn't visible, show it! 
+                o_browse.embedded_data_viewer_toggle();
+            }
+
+            // and update the data viewer
+            var scroll_top = $('html').scrollTop();
+            $('.embedded_data_viewer')
+                    .hide()
+                    .css({ 'top': scroll_top + "px"})
+                    .html(html)
+                    .fadeIn("fast");
+
+        }); // /getJSON
+
+    }, 
+
+    updateColorboxDataViewer: function(ring_obs_id) {
+
+        html = o_browse.metadataboxHtml(ring_obs_id);
+        
         // add data viewer behaviors
         $('.gallery_data_viewer').on("click", '.gallery_data_link', function() {
             ring_obs_id = $(this).data('ringobsid');
