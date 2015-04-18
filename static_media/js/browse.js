@@ -12,6 +12,11 @@ var o_browse = {
 
     browseBehaviors: function() {
 
+        // close the embedded metadata box
+        $('#browse').on("click", ".embedded_data_viewer .fa-times ", function() {
+            o_browse.embedded_data_viewer_toggle();
+        });
+
         // mouse over a thumbnail
         $('#browse').on("mouseenter", "ul.ace-thumbnails li",  // , ul.ace-thumbnails li>.tools
             function() {
@@ -971,7 +976,10 @@ var o_browse = {
 
             var img = json['data'][0]['path'] + json['data'][0]['img'];
 
-            html = '<div class = "embedded_data_viewer_image"><img height = "300px" src = "' + img + '"></div>';
+            html = '<i class = "fa fa-times"></i> \
+                    <div class = "embedded_data_viewer_image"> \
+                    <img src = "' + img + '"> \
+                    </div>';
             html += o_browse.metadataboxHtml(ring_obs_id);        
 
             if (!$('.embedded_data_viewer_wrapper').is(":visible")) {
