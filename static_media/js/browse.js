@@ -25,7 +25,7 @@ var o_browse = {
                 })
             .on('mouseleave', 'ul.ace-thumbnails li', function() {
                 // check and see if it should not be removed because it's being displayed in colorbox/embedded viewer
-                if (!$(this).find('.thumb_overlay').hasClass('embedded_image_selected')) {
+                if (!$(this).find('.thumb_overlay').hasClass('browse_image_selected')) {
                     $(this).find('.thumb_overlay').removeClass("gallery_image_focus");     
                 }
             });
@@ -131,11 +131,9 @@ var o_browse = {
             if ($(this).find('i').hasClass('fa-list-alt')) {
                 // leave a highlight on the clicked thumbnail
                 o_browse.openDetailTab(ring_obs_id);
-                setTimeout(function() {
-                    // i don't know why it needs this timeout but it does o_o
-                    $(' .thumb_overlay').removeClass("gallery_image_focus");  // remove any old
-                    $('#gallery__' + ring_obs_id + ' .thumb_overlay').addClass("gallery_image_focus");
-                }, 200);
+
+                $(' .thumb_overlay').removeClass("gallery_image_focus").removeClass("browse_image_selected");  // remove any old
+                $('#gallery__' + ring_obs_id + ' .thumb_overlay').addClass("gallery_image_focus browse_image_selected");
 
             }
 
@@ -909,8 +907,8 @@ var o_browse = {
 
                 // add indicator around the thumb corresponding to the closed image
                 ring_obs_id = $.colorbox.element().parent().attr("id").split('__')[1];
-                $(' .thumb_overlay').removeClass("gallery_image_focus");  // remove any old
-                $('#gallery__' + ring_obs_id + ' .thumb_overlay').addClass("gallery_image_focus");
+                $(' .thumb_overlay').removeClass("gallery_image_focus").removeClass('browse_image_selected');  // remove any old
+                $('#gallery__' + ring_obs_id + ' .thumb_overlay').addClass("gallery_image_focus").addClass('browse_image_selected');
 
             },
             onComplete:function(){
@@ -973,8 +971,8 @@ var o_browse = {
 
     updateEmbeddedMetadataBox: function(ring_obs_id) {
 
-        $(' .thumb_overlay').removeClass("gallery_image_focus").removeClass('embedded_image_selected');  // remove any old
-        $('#gallery__' + ring_obs_id + ' .thumb_overlay').addClass("gallery_image_focus embedded_image_selected");
+        $(' .thumb_overlay').removeClass("gallery_image_focus").removeClass('browse_image_selected');  // remove any old
+        $('#gallery__' + ring_obs_id + ' .thumb_overlay').addClass("gallery_image_focus browse_image_selected");
 
         var url = '/opus/api/image/med/' + ring_obs_id + '.json';
         $.getJSON(url, function(json) {
