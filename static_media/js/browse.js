@@ -18,16 +18,18 @@ var o_browse = {
         });
 
         // mouse over a thumbnail
-        $('#browse').on("mouseenter", "ul.ace-thumbnails li",  // , ul.ace-thumbnails li>.tools
-            function() {
-                // element = ".gallery_image_focus > a.activeThumbnail.cboxElement > img";
-                // $(element).removeClass("gallery_image_focus");
-                $(this).find('.thumb_overlay').addClass("gallery_image_focus");
-                // $(this).parent().find('.thumb_overlay').addClass("gallery_image_focus");
-                // $('#gallery__' + ring_obs_id + ' ' + icon_a_element)
-            }).on('mouseleave', 'ul.ace-thumbnails li', function() {
-                $(this).find('.thumb_overlay').removeClass("gallery_image_focus");
+        $('#browse')
+            .on("mouseenter", "ul.ace-thumbnails li",  // , ul.ace-thumbnails li>.tools
+                function() {
+                    $(this).find('.thumb_overlay').addClass("gallery_image_focus");
+                })
+            .on('mouseleave', 'ul.ace-thumbnails li', function() {
+                // check and see if it should not be removed because it's being displayed in colorbox/embedded viewer
+                if (!$(this).find('.thumb_overlay').hasClass('embedded_image_selected')) {
+                    $(this).find('.thumb_overlay').removeClass("gallery_image_focus");     
+                }
             });
+                
 
         // browse nav menu - the gallery/table toggle
         $('#browse').on("click", '.browse_view', function() {
@@ -971,13 +973,16 @@ var o_browse = {
 
     updateEmbeddedMetadataBox: function(ring_obs_id) {
 
-        var url = 'http://127.0.0.1:8000/opus/api/image/med/' + ring_obs_id + '.json';
+        $(' .thumb_overlay').removeClass("gallery_image_focus").removeClass('embedded_image_selected');  // remove any old
+        $('#gallery__' + ring_obs_id + ' .thumb_overlay').addClass("gallery_image_focus embedded_image_selected");
+
+        var url = '/opus/api/image/med/' + ring_obs_id + '.json';
         $.getJSON(url, function(json) {
 
             var img = json['data'][0]['path'] + json['data'][0]['img'];
 
             html = '<i class = "fa fa-times"></i> \
-                    <div class = "embedded_data_viewer_image"> \
+                    <div class = "embedded_data_viewer_image edv_' + ring_obs_id + '"> \
                     <img src = "' + img + '"> \
                     </div>';
             html += o_browse.metadataboxHtml(ring_obs_id);        
@@ -1019,10 +1024,11 @@ var o_browse = {
     },
 
 
-    embedded_data_viewer_toggle: function() {
+    embedded_data_viewer_toggle: function(ring_obs_id) {
 
         $('.gallery').toggleClass('col-lg-12').toggleClass('col-sm-7').toggleClass('col-md-9').toggleClass('col-lg-9');
         $('.embedded_data_viewer_wrapper').toggle();
+
     },
 
     // we watch the paging input fields to wait for pauses before we trigger page change. UX!

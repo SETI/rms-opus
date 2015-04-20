@@ -77,8 +77,9 @@ body {
 /* gallery embedded_data_viewer */ 
 
 .embedded_data_viewer_image img  {
-    margin:5px 0 20px 0;
-    width: 100%;
+    margin:5px 0 15px 0;
+    width: 105%;
+    clear:all;
 }
 /*
 @media (max-width: 700px) {
@@ -102,12 +103,14 @@ body {
     margin-top:50px;
 }
 .embedded_data_viewer .fa-times { /* the close button */
-    margin:0; padding:0;
     float:right;
+    margin:0; padding:0;
+    margin:-20px -25px -20px 10px;
     color:gray;
-    margin:-20px -15px -20px 10px;
     font-size:1.9em;
     font-weight: 200;
+    overflow: visible !important;
+    z-index: 9999 !important;
 }
 .embedded_data_viewer .fa-times:hover {
     color: white;
