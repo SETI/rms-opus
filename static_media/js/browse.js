@@ -1021,7 +1021,7 @@ var o_browse = {
 
     embedded_data_viewer_toggle: function() {
 
-        $('.gallery').toggleClass('col-lg-9').toggleClass('col-sm-8').toggleClass('col-lg-12');
+        $('.gallery').toggleClass('col-lg-12').toggleClass('col-sm-7').toggleClass('col-md-9').toggleClass('col-lg-9');
         $('.embedded_data_viewer_wrapper').toggle();
     },
 

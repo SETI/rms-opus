@@ -335,8 +335,8 @@ var opus = {
 
             case 'browse':
                 if (opus.prefs.browse == 'data') {
-                    $('.data_container','#browse').show();
                     $('.gallery','#browse').hide();
+                    $('.data','#browse').hide();
                 }
                 $('#browse').fadeIn();
                 o_browse.getBrowseTab();

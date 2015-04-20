@@ -396,7 +396,13 @@ ul.ace-thumbnails {
     background-color: #303030; /* #383838; */
     padding-left:20px;
     padding-top:60px;
-    min-height:500px;
+    min-height:700px;
+}
+div.gallery {
+    margin:0; padding:0; 
+    position: relative;
+    overflow-x:hidden;
+    margin-right:-80px;
 }
 .navbar-nav li.active:hover {
     background: white !important;
