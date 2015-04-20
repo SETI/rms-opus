@@ -15,6 +15,8 @@ var o_browse = {
         // close the embedded metadata box
         $('#browse').on("click", ".embedded_data_viewer .fa-times ", function() {
             o_browse.embedded_data_viewer_toggle();
+            $(' .thumb_overlay').removeClass("browse_image_selected");  // remove any old
+
         });
 
         // mouse over a thumbnail
@@ -54,8 +56,22 @@ var o_browse = {
 
             // change the text on the link in the browse nav
             if (opus.prefs.browse == 'gallery') {
+                // show the gallery's data viewer if something is selected: 
+                if ($('.browse_image_selected').length) {
+                    o_browse.embedded_data_viewer_toggle();
+                }
+
+                // change the menu text
                 $('.browse_view', namespace).text('view table');
-            } else {
+
+            } else { // if not gallery
+
+                // hide the gallery's embedded data viewer
+                if ($('.embedded_data_viewer_wrapper').is(':visible')) {
+                    o_browse.embedded_data_viewer_toggle();
+                }
+
+                // change the menu text
                 $('.browse_view', namespace).text('view gallery');
             }
 
@@ -722,8 +738,11 @@ var o_browse = {
             if (view_var == 'gallery') {
                 $(indicator_row).appendTo('.gallery', namespace).show();
             } else {
+                // this is the data table view! 
+                // do something: 
                 $(".data_table tr:last", namespace).after(indicator_row);
                 $(".data_table tr:last", namespace).show();  // i dunno why couldn't chain these 2
+
             }
         }
 
