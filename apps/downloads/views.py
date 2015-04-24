@@ -126,7 +126,7 @@ def create_download(request, collection_name=None, ring_obs_ids=None, fmt=None):
     if not fmt:
         fmt = "raw"
 
-    product_types = request.GET.get('types', '')
+    product_types = request.GET.get('types', [])
     previews = request.GET.get('previews', '')
 
     if not ring_obs_ids:
@@ -147,11 +147,12 @@ def create_download(request, collection_name=None, ring_obs_ids=None, fmt=None):
     chksum_file_name = settings.TAR_FILE_PATH + "checksum_" + zip_file_name.split(".")[0] + ".txt"
     manifest_file_name = settings.TAR_FILE_PATH + "manifest_" + zip_file_name.split(".")[0] + ".txt"
 
-
-    # lisa
-    from results.views import *
-    files = getFiles(ring_obs_ids,fmt="raw", loc_type="path", product_types=product_types, previews=previews)
+    import results
+    files = results.views.getFiles(ring_obs_ids,fmt="raw", loc_type="path", product_types=product_types, previews=previews)
     # return HttpResponse(json.dumps(files), mimetype="application/json")
+
+    if not files: 
+        log.error("no files found from results.views.getFiles in downloads.create_download")
 
     tar = tarfile.open(settings.TAR_FILE_PATH + zip_file_name, "w:gz")
     chksum = open(chksum_file_name,"w")
@@ -165,6 +166,8 @@ def create_download(request, collection_name=None, ring_obs_ids=None, fmt=None):
 
     errors = []
     added = False
+
+    # omg what is this it doesn't work and what in the what
     for ring_obs_id,products in files.items():
         for product_type,file_list in products.items():
             for name in file_list:

@@ -39,11 +39,11 @@ class resultsTests(TestCase):
         ring_obs_id = 'S_IMG_CO_ISS_1688230146_N'
         product_types = ['CALIBRATED','RAW_IMAGE']
         files = getFiles(ring_obs_id, fmt='raw', loc_type="path", product_types=product_types)
-        print files
+        print files[ring_obs_id]
         expected = {'S_IMG_CO_ISS_1688230146_N': {u'RAW_IMAGE': [u'/volumes/TINY/pdsdata/volumes/COISS_2xxx/COISS_2069/data/1688230146_1688906749/N1688230146_1.LBL', u'/volumes/TINY/pdsdata/volumes/COISS_2xxx/COISS_2069/data/1688230146_1688906749/N1688230146_1.IMG', u'/volumes/TINY/pdsdata/volumes/COISS_2xxx/COISS_2069/LABEL/TLMTAB.FMT', u'/volumes/TINY/pdsdata/volumes/COISS_2xxx/COISS_2069/LABEL/PREFIX3.FMT'], u'CALIBRATED': [u'/volumes/TINY/pdsdata/volumes/derived/COISS_2xxx/COISS_2069/data/1688230146_1688906749/N1688230146_1_CALIB.LBL', u'/volumes/TINY/pdsdata/volumes/derived/COISS_2xxx/COISS_2069/data/1688230146_1688906749/N1688230146_1_CALIB.IMG', u'/volumes/TINY/pdsdata/volumes/COISS_2xxx/COISS_2xxx/COISS_2069/LABEL/TLMTAB.FMT', u'/volumes/TINY/pdsdata/volumes/COISS_2xxx/COISS_2xxx/COISS_2069/LABEL/PREFIX3.FMT']}}
         print 'expected:'
-        print expected
-        self.assertEqual(len(files), len(expected))
+        print expected[ring_obs_id]
+        self.assertEqual(len(files[ring_obs_id]['CALIBRATED']), len(expected[ring_obs_id]['CALIBRATED']))
 
     def test__get_triggered_tables(self):
         q = QueryDict("planet=Saturn")
