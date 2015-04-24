@@ -23,25 +23,24 @@
 
             {% if i.in_collection %} in {% endif %} ">
 
-            <a href="#">
-                <i class="gallery_icons ace-icon fa fa-check
+            <a href="#"><!-- detail page link -->
+                <i class="glyphicon glyphicon-info-sign"></i>
+            </a>
 
-                {% if i.in_collection %}
-                   thumb_selected_icon
-                {% endif %}
 
+            <a href="#"><!-- checkmark - add to cart -->
+                <i class="glyphicon glyphicon-ok 
+                    {% if i.in_collection %}
+                       thumb_selected_icon
+                    {% endif %}
                 "></i>
             </a>
 
-            <!-- a href="#">
-                <i class="gallery_icons ace-icon fa fa-search-plus"></i>
-            </a -->
-
-            <a class = "embedded_data_viewer_toggle">e</a>
-
-            <a href="#">
-                <i class="gallery_icons ace-icon fa fa-list-alt"></i>
+            <a href="#" class = "colorbox"><!-- colorbox -->
+                <i class="glyphicon glyphicon-search"></i>
             </a>
+
+
 
         </div>
 

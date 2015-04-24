@@ -31,8 +31,7 @@ var o_browse = {
                     $(this).find('.thumb_overlay').removeClass("gallery_image_focus");     
                 }
             });
-                
-
+               
         // browse nav menu - the gallery/table toggle
         $('#browse').on("click", '.browse_view', function() {
 
@@ -131,20 +130,44 @@ var o_browse = {
 
         });
 
+
+        // click embedded_data_viewer_image opens colorbox
+        $('#browse').on("click", '.embedded_data_viewer_image a', function() {
+            ring_obs_id = $(this).data("ring_obs_id");
+            $('#gallery__' + ring_obs_id + "> a").trigger("click");
+            return false;
+        });
+
+
+        // click thumbnail opens embedded data viewer
+        $('.gallery').on("click", ".activeThumbnail", function(e) {
+            // e.preventDefault();
+
+            ring_obs_id = $(this).parent().attr("id").substring(9);
+
+            // if the user clicked on actual thumbnail, update the metadata box
+            // if the user clicked on the metadata box image, show the colorbox 
+            if (!e.isTrigger) {
+                // they clicked a thumbnail, open the embedded data viewer
+                o_browse.updateEmbeddedMetadataBox(ring_obs_id);
+                return false;
+            } 
+            
+        });
+
         // thumbnail overlay tools
         $('.gallery').on("click", ".tools-bottom a", function() {
 
             ring_obs_id = $(this).parent().parent().attr("id").substring(9);
             $(this).parent().show();
 
-            // click embedded data viewer icon 
-            if ($(this).hasClass('embedded_data_viewer_toggle')) {
-                o_browse.updateEmbeddedMetadataBox(ring_obs_id);
+            // clicking thumbnail opens embedded data viewer
+            if ($(this).hasClass('colorbox')) {
+                $('#gallery__' + ring_obs_id + "> a").trigger("click");
             }
-            
 
             // click to view detail page
-            if ($(this).find('i').hasClass('fa-list-alt')) {
+            if ($(this).find('i').hasClass('glyphicon-info-sign')) {
                 // leave a highlight on the clicked thumbnail
                 o_browse.openDetailTab(ring_obs_id);
 
@@ -153,14 +176,14 @@ var o_browse = {
 
             }
 
-            // click a thumbnail to view colorbox
-            if ($(this).find('i').hasClass('fa-search-plus')) {
+            // click spyglass thingy to view colorbox
+            if ($(this).find('i').hasClass('glyphicon-search')) {
                 // trigger colorbox, same as clicking anywhere on the thumbnail
                 $('#gallery__' + ring_obs_id + "> a").trigger("click");
             }
 
             // click to add/remove from  cart
-            if ($(this).find('i').hasClass('fa-check')) {
+            if ($(this).find('i').hasClass('glyphicon-ok')) {
 
                 // user has checked a checkbox or clicked the checkmark on a thumbnail
 
@@ -861,6 +884,11 @@ var o_browse = {
                 ring_obs_id = json.page[i][columns.indexOf('ringobsid')];
                 opus.gallery_data[ring_obs_id] = json.page[i];
             }
+
+            console.log('updated gallery data');
+            console.log(opus.gallery_data);
+            console.log(JSON.stringify(opus.gallery_data).length);
+
         });
 
     },
@@ -898,7 +926,6 @@ var o_browse = {
             onLoad:function() {
 
                 ring_obs_id = $.colorbox.element().parent().attr("id").split('__')[1];
-
                 // get pixel loc of right border of colorbox
 
                 // draw the viewer if not already..
@@ -929,10 +956,16 @@ var o_browse = {
                 $(' .thumb_overlay').removeClass("gallery_image_focus").removeClass('browse_image_selected');  // remove any old
                 $('#gallery__' + ring_obs_id + ' .thumb_overlay').addClass("gallery_image_focus").addClass('browse_image_selected');
 
+
+                if ($('.embedded_data_viewer_wrapper').is(":visible")) {
+                    // embedded data viewer box is open, update it with current 
+                    o_browse.updateEmbeddedMetadataBox(ring_obs_id);
+                }
+
+
             },
             onComplete:function(){
                 o_browse.adjust_gallery_data_viewer();
-
             }
         };
 
@@ -990,6 +1023,7 @@ var o_browse = {
 
     updateEmbeddedMetadataBox: function(ring_obs_id) {
 
+        // handle which thumbnail has focus indicator outline
         $(' .thumb_overlay').removeClass("gallery_image_focus").removeClass('browse_image_selected');  // remove any old
         $('#gallery__' + ring_obs_id + ' .thumb_overlay').addClass("gallery_image_focus browse_image_selected");
 
@@ -997,9 +1031,11 @@ var o_browse = {
         $.getJSON(url, function(json) {
 
             var img = json['data'][0]['path'] + json['data'][0]['img'];
+            var full = img.replace("_med", "_full");
 
             html = '<i class = "fa fa-times"></i> \
                     <div class = "embedded_data_viewer_image edv_' + ring_obs_id + '"> \
+                    <a href = "' + full + '" data-ring_obs_id="' + ring_obs_id + '"> \
                     <img src = "' + img + '"> \
                     </div>';
             html += o_browse.metadataboxHtml(ring_obs_id);        
@@ -1010,7 +1046,9 @@ var o_browse = {
             }
 
             // and update the data viewer
-            var scroll_top = $('html').scrollTop();
+            scroll_top = $('body').scrollTop();
+            if (!scroll_top) { scroll_top = $('html').scrollTop(); }  // oh, browsers
+            console.log(scroll_top);
             $('.embedded_data_viewer')
                     .hide()
                     .css({ 'top': scroll_top + "px"})
@@ -1042,7 +1080,6 @@ var o_browse = {
 
 
     embedded_data_viewer_toggle: function(ring_obs_id) {
-
         $('.gallery').toggleClass('col-lg-12').toggleClass('col-sm-7').toggleClass('col-md-9').toggleClass('col-lg-9');
         $('.embedded_data_viewer_wrapper').toggle();
 

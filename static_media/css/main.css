@@ -326,7 +326,6 @@ li.infinite_scroll_page  {
 }
 .thumb_selected_icon {
     color:#00FFFF;
-    font-size:130%;
 }
 
 a i.fa-search-plus:hover {
@@ -335,7 +334,19 @@ a i.fa-search-plus:hover {
 }
 
 .ace-thumbnails > li > .tools.tools-bottom a{
-    float:right;
+    margin:0; padding:0;
+    display:inline-block;
+    position:relative;
+    left:0;
+}
+
+.ace-thumbnails > li > .tools.tools-bottom a:nth-child(2n) {
+    margin-right:1.3em;    
+    margin-left:1.3em;    
+}
+.ace-thumbnails > li > .tools.tools-bottom a:nth-child(3n) {
+    position:relative;
+    right:0;
 }
 
 
