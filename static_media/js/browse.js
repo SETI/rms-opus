@@ -1036,7 +1036,7 @@ var o_browse = {
             html = '<i class = "fa fa-times"></i> \
                     <div class = "embedded_data_viewer_image edv_' + ring_obs_id + '"> \
                     <a href = "' + full + '" data-ring_obs_id="' + ring_obs_id + '"> \
-                    <img src = "' + img + '"> \
+                    <img src = "' + img + '"></a> \
                     </div>';
             html += o_browse.metadataboxHtml(ring_obs_id);        
 
