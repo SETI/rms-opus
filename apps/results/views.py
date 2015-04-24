@@ -380,6 +380,7 @@ def getFiles(ring_obs_id=None, fmt=None, loc_type=None, product_types=None, prev
         log.error("needs session_id in kwargs to access collection")
         return False
 
+    # handle passed params
     if not fmt:
         fmt = 'raw'
     if not loc_type:
@@ -391,29 +392,37 @@ def getFiles(ring_obs_id=None, fmt=None, loc_type=None, product_types=None, prev
     if not collection:
         collection = False
 
-    # ring_obs_id may be passed in as a string or a list,
-    # if it's a string make it a list
+    # apparently you can also pass in a string if you are so inclined *sigh*
+    if type(product_types).__name__ != 'list':
+        product_types = product_types.split(',')
+
+    # this is either for a collection or some ring_obs_id:
     if ring_obs_id:
+        # ring_obs_id may be passed in as a string or a list,
+        # if it's a string make it a list
         if type(ring_obs_id) is unicode or type(ring_obs_id).__name__ == 'str':
             ring_obs_ids = [ring_obs_id]
         else:
             ring_obs_ids = ring_obs_id
 
-    else:
-        if collection:
-            # this is for a collection
+    elif collection:
+
+            # no ring_obs_id, this must be for a colletion
             colls_table_name = get_collection_table(session_id)
+
             where   = "files.ring_obs_id = " + connection.ops.quote_name(colls_table_name) + ".ring_obs_id"
+    else:
+        log.error('no ring_obs_ids or collection specified in results.getFiles')
+        return False
 
-        else:
-            log.error('no ring_obs_ids or collection specified')
-            return False
 
+    # you can ask this function for url paths or disk paths
     if loc_type == 'url':
         path = settings.FILE_HTTP_PATH
     else:
         path = settings.FILE_PATH
 
+    # start building up the query of the Files model
     files_table_rows = Files.objects
 
     if collection:
@@ -421,12 +430,20 @@ def getFiles(ring_obs_id=None, fmt=None, loc_type=None, product_types=None, prev
     else:
         files_table_rows = files_table_rows.filter(ring_obs_id__in=ring_obs_ids)
 
+    if product_types: 
+        files_table_rows = files_table_rows.filter(product_type__in=product_types)
+
+    if not files_table_rows: 
+        log.error('no rows returned in file table')
+
     file_names = {}
     for f in files_table_rows:
 
+        # file_names are grouped first by ring_obs_id then by product_type
         ring_obs_id = f.ring_obs_id
         file_names.setdefault(ring_obs_id, {})
 
+        # get this file's volume location
         file_extensions = []
         try:
             volume_loc = ObsGeneral.objects.filter(ring_obs_id=ring_obs_id)[0].volume_id
@@ -437,6 +454,7 @@ def getFiles(ring_obs_id=None, fmt=None, loc_type=None, product_types=None, prev
         if f.instrument_id == "LORRI":
             volume_loc = f.volume_id
 
+        # file_names are grouped first by ring_obs_id then by product_type
         file_names[ring_obs_id].setdefault(f.product_type, [])
         extra_files = []
         if f.extra_files:
@@ -484,7 +502,7 @@ def getFiles(ring_obs_id=None, fmt=None, loc_type=None, product_types=None, prev
         for extension in file_extensions:
             file_names[ring_obs_id][f.product_type]  += [path + volume_loc + '/' + base_file + '.' + extension]
         # // add the original file
-        file_names[ring_obs_id][f.product_type]  += [path + '/' + volume_loc + '/' + base_file + '.' + ext]
+        file_names[ring_obs_id][f.product_type]  += [path + volume_loc + '/' + base_file + '.' + ext]
         file_names[ring_obs_id][f.product_type] = list(set(file_names[ring_obs_id][f.product_type])) #  makes unique
         file_names[ring_obs_id][f.product_type].sort()
         file_names[ring_obs_id][f.product_type].reverse()
