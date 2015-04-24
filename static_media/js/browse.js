@@ -885,10 +885,6 @@ var o_browse = {
                 opus.gallery_data[ring_obs_id] = json.page[i];
             }
 
-            console.log('updated gallery data');
-            console.log(opus.gallery_data);
-            console.log(JSON.stringify(opus.gallery_data).length);
-
         });
 
     },
@@ -1048,7 +1044,6 @@ var o_browse = {
             // and update the data viewer
             scroll_top = $('body').scrollTop();
             if (!scroll_top) { scroll_top = $('html').scrollTop(); }  // oh, browsers
-            console.log(scroll_top);
             $('.embedded_data_viewer')
                     .hide()
                     .css({ 'top': scroll_top + "px"})
