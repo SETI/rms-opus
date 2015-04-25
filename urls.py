@@ -24,7 +24,7 @@ from django.views.generic import TemplateView
 base_urlpatterns = patterns( 'results.views',
     (r'^api/data.(json|zip|html|csv)$', 'getData'),
     (r'^api/images/(thumb|small|med|full).(json|zip|html|csv)$','getImages'),
-    (r'^api/image/(?P<size>[thumb|small|med|full]+)/(?P<ring_obs_id>\w+).(?P<fmt>[json|zip|html|csv]+)$', 'getImage'),
+    (r'^api/image/(?P<size>[thumb|small|med|full]+)/(?P<ring_obs_id>[0-9a-zA-Z\-_]+).(?P<fmt>[json|zip|html|csv]+)$', 'getImage'),
     (r'^api/files/(?P<ring_obs_id>\w+).(?P<fmt>[json|zip|html|csv]+)$','getFilesAPI'),
     (r'^api/files.(?P<fmt>[json|zip|html|csv]+)$', 'getFilesAPI'),
     (r'^api/metadata/(?P<ring_obs_id>\w+).(?P<fmt>[json|html]+)$','get_metadata'),
