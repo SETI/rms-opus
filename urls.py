@@ -25,9 +25,9 @@ base_urlpatterns = patterns( 'results.views',
     (r'^api/data.(json|zip|html|csv)$', 'getData'),
     (r'^api/images/(thumb|small|med|full).(json|zip|html|csv)$','getImages'),
     (r'^api/image/(?P<size>[thumb|small|med|full]+)/(?P<ring_obs_id>[0-9a-zA-Z\-_]+).(?P<fmt>[json|zip|html|csv]+)$', 'getImage'),
-    (r'^api/files/(?P<ring_obs_id>\w+).(?P<fmt>[json|zip|html|csv]+)$','getFilesAPI'),
+    (r'^api/files/(?P<ring_obs_id>[0-9a-zA-Z\-_]+).(?P<fmt>[json|zip|html|csv]+)$','getFilesAPI'),
     (r'^api/files.(?P<fmt>[json|zip|html|csv]+)$', 'getFilesAPI'),
-    (r'^api/metadata/(?P<ring_obs_id>\w+).(?P<fmt>[json|html]+)$','get_metadata'),
+    (r'^api/metadata/(?P<ring_obs_id>[0-9a-zA-Z\-_]+).(?P<fmt>[json|html]+)$','get_metadata'),
 )
 
 
@@ -46,7 +46,7 @@ base_urlpatterns += patterns('metadata.views',
 
 # making downloads
 base_urlpatterns += patterns('downloads.views',
-    (r'^zip/(?P<ring_obs_ids>\w+).(?P<fmt>[json]+)$', 'create_download'),
+    (r'^zip/(?P<ring_obs_id>[0-9a-zA-Z\-_]+).(?P<fmt>[json]+)$', 'create_download'),
     (r'^collections/download/(?P<collection_name>[default]+).zip$', 'create_download'),
     (r'^collections/download/info/$','get_download_info'))
 
@@ -87,8 +87,8 @@ base_urlpatterns += patterns('user_collections.views',
 base_urlpatterns += patterns('mobile.views',
     (r'^mobile.html$', 'menus'),
     (r'^mobile/gallery/(?P<volume_id>\w+)/(?P<page>\w+).json$', 'gallery'),
-    (r'^mobile/image/(?P<ring_obs_id>\w+).html$', 'image'),
-    (r'^mobile/detail/(?P<ring_obs_id>\w+).html$', 'detail'))  # api help pages
+    (r'^mobile/image/(?P<ring_obs_id>[0-9a-zA-Z\-_]+).html$', 'image'),
+    (r'^mobile/detail/(?P<ring_obs_id>[0-9a-zA-Z\-_]+).html$', 'detail'))  # api help pages
 
 
 # django admin
