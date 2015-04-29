@@ -396,6 +396,9 @@ ul.ace-thumbnails {
     margin-top:10px;
     font-size: 1.2em;
 }
+#detail h1 {
+    white-space: nowrap;
+}
 
 #browse {
     background-color: #303030; /* #383838; */

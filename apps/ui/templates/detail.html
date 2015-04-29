@@ -1,13 +1,33 @@
+<div id = "" class = "col-md-6 pull-right">
+    <div>
+
+        <a class = "shadowbox" href = "{{ path }}{{ img.full }}" rel="shadowbox" target = "_blank">
+            <img  id = "detail__{{ img.ring_obs_id }}" src = "{{ path }}{{ img.med }}">
+        </a>
+
+        <div>
+            <p>
+                {% if preview_guide_url %}
+
+                    Read about <a href = "{{ preview_guide_url }}" target = "_blank">how to interpret {{ instrument_id }} preview images</a>
+
+                {% endif %}
+            </p>
+
+        </div>
+    </div>
+</div>
+
 <div class = "col-md-6"><!-- data col -->
 
-    <div class = "well well-lg col-md-12">
+    <div>
 
-        <h1>Ring Observation Detail </h1>
+        <h1 class = "">Ring Observation Detail </h1>
         <p><b>Ring Observation ID: </b>{{ img.ring_obs_id}}</p>
 
         <h3> PDS Products: </h3>
 
-        <div class = "col-md-8">
+        <div class = "">
 
                 {% for product_type, files in file_list.items %}
                     <ul class = "list-inline">
@@ -32,7 +52,7 @@
 
     </div>
 
-    <div class = "col-md-12 well well-lg">
+    <div class = "">
 
         <h2>Rings Node Supplemental Products:</h2>
 
@@ -45,11 +65,11 @@
 
     </div>
 
-    <div id = "cols_metadata" class = "col-md-12 well well-lg">
+    <div id = "cols_metadata" class = "">
         <span class = "spinner">&nbsp;</span>
     </div>
 
-    <div class = "col-md-12 well well-lg">
+    <div class = "">
         <h3>All Metadata for this Observation:</h3>
         <div id = "all_metadata_{{ img.ring_obs_id }}">
             Loading <span class = "spinner">&nbsp;</span>
@@ -58,19 +78,4 @@
 
 </div><!-- /data col -->
 
-<div id = "detail_image" class = "col-md-6">
-    <a class = "shadowbox" href = "{{ path }}{{ img.full }}" rel="shadowbox" target = "_blank">
-        <img  id = "detail__{{ img.ring_obs_id }}" src = "{{ path }}{{ img.med }}">
-    </a>
 
-    <div>
-        <p>
-            {% if preview_guide_url %}
-
-                Read about <a href = "{{ preview_guide_url }}" target = "_blank">how to interpret {{ instrument_id }} preview images</a>
-
-            {% endif %}
-        </p>
-
-    </div>
-</div>
