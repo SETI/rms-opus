@@ -91,7 +91,7 @@ def normalize_single_colun_range_slug(param_info):
     # hack for single column range queries:
     # want the slug to be 'slug1' in menu not just 'slug'
     # param_info is param_info object for a single slug
-    if param_info.form_type == 'RANGE' and '1' not in param_info.slug:
+    if param_info.form_type == 'RANGE' and '1' not in param_info.slug and '2' not in param_info.slug:
         param_info.slug = param_info.slug + '1'
         return param_info.slug
     else:
@@ -172,9 +172,7 @@ def getMenuLabels(request, labels_view):
 
                     menu_data[d.table_name].setdefault('data', []).append(p)
 
-
     # div_labels = {d.table_name:d.label for d in TableName.objects.filter(display='Y', table_name__in=triggered_tables)}
-
     return {'menu': {'data': menu_data, 'divs': divs}}
 
 
@@ -416,6 +414,7 @@ def getColumnChooser(request, **kwargs):
     update_metrics(request)
 
     slugs = request.GET.get('cols', settings.DEFAULT_COLUMNS).split(',')
+
     slugs = filter(None, slugs) # sometimes 'cols' is in url but is blank, fails above
     if not slugs:
         slugs = settings.DEFAULT_COLUMNS.split(',')

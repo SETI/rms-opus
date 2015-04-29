@@ -39,7 +39,11 @@ def getData(request,fmt):
 
     labels = []
     for slug in slugs.split(','):
-        labels += [ParamInfo.objects.get(slug=slug).label_results]
+        try:
+            labels += [ParamInfo.objects.get(slug=slug).label_results]
+        except ParamInfo.DoesNotExist:
+            # this slug doens't match anything in param info, nix it
+            continue
     labels = labels.insert(0, "add") if (request.is_ajax()) else labels  # adds a column for checkbox add-to-collections
 
     collection = ''
