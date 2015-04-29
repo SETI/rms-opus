@@ -656,10 +656,9 @@ def getPage(request):
     # redux: look at line 559 you are essentially doing this query twice? in the same method and peforming the query each time cuz it has changed!
     results = results.values_list(*column_values)[offset:offset+int(limit)]
 
-    # results
-    # this whole page_ids thing is just rediculous, the caller can get it from the result set
-    # especially if we are saying that the id is always at index 0
-    page_ids = [o[0] for o in results]
+    # return a simple list of ring_obs_ids
+    ring_obs_id_index = column_values.index('ring_obs_id')
+    page_ids = [o[ring_obs_id_index] for o in results]
 
     if not len(page_ids):
         return False
