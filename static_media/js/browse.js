@@ -177,7 +177,7 @@ var o_browse = {
             }
 
             // click spyglass thingy to view colorbox
-            if ($(this).find('i').hasClass('glyphicon-search')) {
+            if ($(this).find('i').hasClass('glyphicon-resize-full')) {
                 // trigger colorbox, same as clicking anywhere on the thumbnail
                 $('#gallery__' + ring_obs_id + "> a").trigger("click");
             }
