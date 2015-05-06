@@ -146,7 +146,7 @@ var o_collections = {
             // redux: speed this up by splitting into 2 ajax calls
 
             // redux: draw the template immediately after this or only empty individual elements
-            $('.gallery', '#collection').empty();
+            $('.gallery .ace-thumbnails', '#collection').empty();
             $('.data', '#collection').empty();
 
             /*

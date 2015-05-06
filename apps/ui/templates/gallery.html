@@ -1,4 +1,5 @@
-<ul class="ace-thumbnails">{% for i in data  %}
+{% for i in data  %}
+    
     <li id = "gallery__{{i.ring_obs_id}}">
     	<a class = "activeThumbnail" href = "{{ path }}{{ i.full }}" data-rel="colorbox">
             <img width = "125px" alt="{{ i.ring_obs_id }}" title = ""
@@ -50,4 +51,5 @@
 
         ">&nbsp;</div>
 
-    </li>{% endfor %}</ul>
+    </li>
+    {% endfor %}

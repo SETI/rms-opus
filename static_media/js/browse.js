@@ -347,10 +347,15 @@ var o_browse = {
             elem = '#infinite_scroll_' + prefix + opus.prefs.browse + '__' + page;
             if ($(elem).length) {
                 elem_scroll = $(elem, namespace).offset().top;
-                if (Math.abs(elem_scroll  -  $('.top_navbar', namespace).offset().top ) < $(window).height()/2) {
-                    // the first one that's greater than the window is the page
-                    $('#' + prefix + 'page', namespace).val(page);
-                    return;
+                try {
+                    if (Math.abs(elem_scroll  -  $('.top_navbar', namespace).offset().top ) < $(window).height()/2) {
+                        // the first one that's greater than the window is the page
+                        $('#' + prefix + 'page', namespace).val(page);
+                        return;
+                    }
+                } catch(e) {
+                    // offset of top is undefined 
+                    return
                 }
 
             } else {
@@ -379,20 +384,23 @@ var o_browse = {
             $('.addrange','#browse').text("select range end");
             index = $('#' + opus.prefs.browse + '__' + ring_obs_id).index();
             opus.addrange_min = { "index":index, "ring_obs_id":ring_obs_id };
+            return;
 
         } else {
+            ring_obs_id_min = opus.addrange_min['ring_obs_id'];
+
             // we have both sides of range
             $('.addrange','#browse').text("add range");
 
-            index = $('#' + opus.prefs.browse + '__' + ring_obs_id).index();
+            index = $('li#' + opus.prefs.browse + '__' + ring_obs_id).index();
 
             if (index > opus.addrange_min['index']) {
-                range = opus.addrange_min['ring_obs_id'] + "," + ring_obs_id;
-                o_browse.checkRangeBoxes(opus.addrange_min['ring_obs_id'], ring_obs_id);
+                range = ring_obs_id_min + "," + ring_obs_id;
+                o_browse.checkRangeBoxes(ring_obs_id_min, ring_obs_id);
             } else {
                 // user clicked later box first, reverse them for server..
-                range = ring_obs_id + "," + opus.addrange_min['ring_obs_id'];
-                o_browse.checkRangeBoxes(ring_obs_id, opus.addrange_min['ring_obs_id']);
+                range = ring_obs_id + "," + ring_obs_id_min;
+                o_browse.checkRangeBoxes(ring_obs_id, ring_obs_id_min);
             }  // i don't like this
 
             o_collections.editCollection(range,'addrange');
@@ -582,10 +590,13 @@ var o_browse = {
                 // we know that the endpoints are already checked, so start with the next li element
                 next_element = $(element + current_id, '#browse').next();
 
+                // right here you need to start keeping track of the page number
+                // becuase it matters for keeping track of the index of the selected
+                // thumbnail in the list
                 if (next_element.hasClass("infinite_scroll_page")) {
                     // this is the infinite scroll indicator, continue to next
                     next_element = $(element + current_id, '#browse').next().next();
-                }
+                } 
 
                 // check the boxes:
                 if (element == '#gallery__') {
@@ -593,7 +604,8 @@ var o_browse = {
                         try {
                             ring_obs_id = next_element.attr("id").split('__')[1];
                             o_browse.toggleBrowseInCollectionStyle(ring_obs_id);
-                        } catch(e) {}
+                        } catch(e) { 
+                        }
                     }
                 } else {
                     if (!next_element.find('.data_checkbox').hasClass('fa-check-square-o')) {
@@ -638,6 +650,9 @@ var o_browse = {
 
         id = 'infinite_scroll_' + browse_prefix + opus.prefs.browse + '__' + page;
 
+        if ($(id).length) {
+            return;  // this is a hack because it sometimes draws it multiple times
+        }
         /*jshint multistr: true */
         data = '<tr class = "infinite_scroll_page">\
                     <td colspan = "' + (opus.prefs['cols'].length +1) + '">\
@@ -759,7 +774,7 @@ var o_browse = {
         if (page > 1) {
             indicator_row = o_browse.infiniteScrollPageIndicatorRow(page);
             if (view_var == 'gallery') {
-                $(indicator_row).appendTo('.gallery', namespace).show();
+                $(indicator_row).appendTo('.gallery .ace-thumbnails', namespace).show();
             } else {
                 // this is the data table view! 
                 // do something: 
@@ -791,7 +806,6 @@ var o_browse = {
 
                function appendBrowsePage(page, prefix, view_var) { // for chaining effects
 
-
                     // hide the views that aren't supposed to be showing
                     for (var v in opus.all_browse_views) {
                         var bv = opus.all_browse_views[v];
@@ -801,10 +815,10 @@ var o_browse = {
                     }
                     // append the new html
                     if (view_var == 'data') {
-                        $(html).appendTo($('.' + view_var + ' tbody', namespace)).fadeIn();
+                        $(html).appendTo($('.data tbody', namespace)).fadeIn();
                     } else {
                         opus.gallery_begun = true;
-                        $(html).appendTo($('.' + view_var, namespace)).fadeIn();
+                        $(html).appendTo($('.gallery .ace-thumbnails', namespace)).fadeIn();
                     }
 
                     // fade out the spinner
@@ -1137,7 +1151,7 @@ var o_browse = {
             need to reset all of it (todo: replace with framework!)
             */
             $('.data').empty();  // yes all namespaces
-            $('.gallery').empty();
+            $('.gallery ace-thumbnails').empty();
             opus.gallery_data = [];
             opus.pages_drawn = {"colls_gallery":[], "gallery":[]};
             opus.browse_footer_clicks = {"gallery":0, "data":0, "colls_gallery":0, "colls_data":0 };
