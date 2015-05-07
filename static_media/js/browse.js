@@ -854,11 +854,13 @@ var o_browse = {
                 o_browse.pageInViewIndicator();
 
 
+                o_browse.initColorbox();
+
+            }, 
+            complete: function() {
                 // turn the scroll watch timer back on
                 clearInterval(opus.scroll_watch_interval);  // always shut off just before, just in case
                 opus.scroll_watch_interval = setInterval(o_browse.browseScrollWatch, 1000);
-
-                o_browse.initColorbox();
 
             }
 

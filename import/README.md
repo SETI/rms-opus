@@ -1,7 +1,12 @@
 # hold up, this is all changed, currently working on:
 
 run in this order:
-build_db.py
+change the settings_local.py at the top "import settings" which databases to read from and build, then: 
+
+edit the top of import/build_db.py 
+
+ sudo python build_db.py all
+ 
 build_models.py
 
 to build the NEW schema
