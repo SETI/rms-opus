@@ -576,7 +576,6 @@ var o_browse = {
 
     },  // /addColumnChooserBehaviors
 
-
     // handles checking of a range of boxes in each view (table/gallery)
     checkRangeBoxes: function(ring_obs_id1, ring_obs_id2) {
 
@@ -665,7 +664,7 @@ var o_browse = {
 
         gallery = '<li class = "infinite_scroll_page navbar-inverse">\
                        <span class = "back_to_top"><a href = "#top">back to top</a></span>\
-                       <span class = "infinite_scroll_page_container" id = "' + id + '">Page ' + page + '</span>\
+                       <span class = "infinite_scroll_page_container page_' + page + '" id = "' + id + '">Page ' + page + '</span>\
                        <span class = "infinite_scroll_spinner">' + opus.spinner + '</span>\
                    </li>';
 
@@ -773,14 +772,16 @@ var o_browse = {
         // draw indicator bar if needed
         if (page > 1) {
             indicator_row = o_browse.infiniteScrollPageIndicatorRow(page);
-            if (view_var == 'gallery') {
-                $(indicator_row).appendTo('.gallery .ace-thumbnails', namespace).show();
-            } else {
-                // this is the data table view! 
-                // do something: 
-                $(".data_table tr:last", namespace).after(indicator_row);
-                $(".data_table tr:last", namespace).show();  // i dunno why couldn't chain these 2
 
+            if (!$('.page_' + page).length) {
+                if (view_var == 'gallery') {
+                    $(indicator_row).appendTo('.gallery .ace-thumbnails', namespace).show();
+                } else {
+                    // this is the data table view! 
+                    // do something: 
+                    $(".data_table tr:last", namespace).after(indicator_row);
+                    $(".data_table tr:last", namespace).show();  // i dunno why couldn't chain these 2
+                }
             }
         }
 
