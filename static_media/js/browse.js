@@ -1152,7 +1152,7 @@ var o_browse = {
             need to reset all of it (todo: replace with framework!)
             */
             $('.data').empty();  // yes all namespaces
-            $('.gallery ace-thumbnails').empty();
+            $('.gallery .ace-thumbnails').empty();
             opus.gallery_data = [];
             opus.pages_drawn = {"colls_gallery":[], "gallery":[]};
             opus.browse_footer_clicks = {"gallery":0, "data":0, "colls_gallery":0, "colls_data":0 };
