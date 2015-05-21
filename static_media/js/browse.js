@@ -1067,6 +1067,14 @@ var o_browse = {
                     .html(html)
                     .fadeIn("fast");
 
+            // add the 'get detail' behavior
+            $('.embedded_data_viewer').on("click", '.gallery_data_link', function() {
+                ring_obs_id = $(this).data('ringobsid');
+                o_browse.openDetailTab(ring_obs_id);
+                return false;
+            });
+
+
         }); // /getJSON
 
     }, 
