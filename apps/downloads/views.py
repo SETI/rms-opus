@@ -47,7 +47,12 @@ def get_download_size(files, product_types, previews):
         # get the preview image sizes
 
         for size_str in filter(None, [p.lower() for p in previews]):
-            img = Image.objects.filter(ring_obs_id=ring_obs_id).values(size_str)[0][size_str]
+
+            try:
+                img = Image.objects.filter(ring_obs_id=ring_obs_id).values(size_str)[0][size_str]
+            except IndexError:
+                log.error('could not find browse image for ' + ring_obs_id);
+                continue  # no browse image products found 
 
             from results.views import get_base_path_previews
             try:

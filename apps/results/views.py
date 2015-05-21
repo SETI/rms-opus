@@ -329,7 +329,11 @@ def getImage(request,size='med', ring_obs_id='',fmt='mouse'):      # mouse?
     return HttpResponse(img + "<br>" + ring_obs_id + ' ' + size +' '+ fmt)
     """
     update_metrics(request)
-    img = Image.objects.filter(ring_obs_id=ring_obs_id).values(size)[0][size]
+    try: 
+        img = Image.objects.filter(ring_obs_id=ring_obs_id).values(size)[0][size]
+    except IndexError:
+        return 
+
     path = settings.IMAGE_HTTP_PATH + get_base_path_previews(ring_obs_id)
     return responseFormats({'data':[{'img':img, 'path':path}]}, fmt, size=size, path=path, template='image_list.html')
 
@@ -378,6 +382,7 @@ def getFiles(ring_obs_id=None, fmt=None, loc_type=None, product_types=None, prev
     """
     returns list of all files by ring_obs_id
     ring_obs_id can be string or list
+    can also return preview files too
 
     """
     if collection and not session_id:
@@ -516,6 +521,8 @@ def getFiles(ring_obs_id=None, fmt=None, loc_type=None, product_types=None, prev
             file_names[ring_obs_id]['preview_image'] = []
             for size in previews.split(','):
                 url_info = getImage(False, size.lower(), ring_obs_id,'raw')
+                if not url_info:
+                    continue  # no image found for this observation so let's skip it
                 url = url_info['data'][0]['img']
                 base_path = url_info['data'][0]['path']
                 if url:
