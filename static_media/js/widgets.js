@@ -47,6 +47,7 @@ var o_widgets = {
         // close a widget
         $('#search').on('click', '.close_widget', function() {
             slug = $(this).data('slug');
+            slug_no_num = slug.match(/(.*)[1|2]/)[1];
             opus.prefs.widgets.splice(opus.prefs.widgets.indexOf(slug));
             opus.prefs.widgets2.splice(opus.prefs.widgets2.indexOf(slug));
             opus.widgets_drawn.splice(opus.widgets_drawn.indexOf(slug));
@@ -54,6 +55,14 @@ var o_widgets = {
             if (slug in opus.selections) {
                 delete opus.selections[slug];
             }
+            // handle for range queries
+            if (slug_no_num + '1' in opus.selections) {
+                delete opus.selections[slug_no_num + '1'];
+            }
+            if (slug_no_num + '2' in opus.selections) {
+                delete opus.selections[slug_no_num + '2'];
+            }
+
             o_hash.updateHash();
             o_widgets.updateWidgetCookies();
         });
