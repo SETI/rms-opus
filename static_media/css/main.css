@@ -488,7 +488,9 @@ div.gallery {
 #sidebar .submenu {  /* labels in 3rd submenu need schootch over a bit */
     margin-left:15px;
 }
-
+#sidebar .sidenav_spacer {
+    display:block; height:500px; 
+}
 
 #sidebar {
     width:100%;
