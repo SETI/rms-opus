@@ -85,19 +85,17 @@ var o_menu = {
         hash = o_hash.getHash();
 
         $( "#sidebar").load( "/opus/menu.html?" + hash, function() {
-
-            // first load, open all categories 
             if (opus.menu_state['cats'] == 'all') {
+
+                // first load, open general constraints
                 opus.menu_state['cats'] = [];
-                $('#sidebar .nav-list li>a').each(function() {
-                    if ($(this).data("cat")) {
-                        cat_name = $(this).data("cat");
-                        opus.menu_state['cats'].push(cat_name);
-                        link = $("a." + cat_name, ".sidebar");
-                        sub = link.next().get(0);
-                        $(sub).toggle().parent().toggleClass('open');
-                    }
-                });
+                cat_name = 'obs_general';
+                opus.menu_state['cats'].push(cat_name);
+                link = $("a." + cat_name, ".sidebar");
+                sub = link.next().get(0);
+                $(sub).toggle().parent().toggleClass('open');
+
+
             } else {
                 
                 // open menu items that were open before
