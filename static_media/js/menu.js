@@ -9,6 +9,12 @@ var o_menu = {
      menuBehaviors: function() {
          // search menu behaviors
 
+         // click cat header in menu toggles arrow style 
+         $('#sidebar').on("click", 'a', function() {
+            $(this).find('b.arrow').toggleClass('fa-angle-right').toggleClass('fa-angle-down');
+
+         });
+
          // click param in menu get new widget
          $('#sidebar').on("click", '.submenu li a', function() {
              slug = $(this).data('slug');
@@ -94,6 +100,7 @@ var o_menu = {
                 link = $("a." + cat_name, ".sidebar");
                 sub = link.next().get(0);
                 $(sub).toggle().parent().toggleClass('open');
+                link.parent().find('b.arrow').toggleClass('fa-angle-right').toggleClass('fa-angle-down');
 
 
             } else {
@@ -104,14 +111,16 @@ var o_menu = {
                     link = $("a." + cat_name, ".sidebar");
                     sub = link.next().get(0);
                     $(sub).toggle().parent().toggleClass('open');
+                    link.find('b.arrow').toggleClass('fa-angle-right').toggleClass('fa-angle-down');
 
                     // $("." + cat_name, ".sidebar").trigger(ace.click_event);
                 }
                 for (var key in opus.menu_state['groups']) {
                     group_name = opus.menu_state['groups'][key];
                     link = $("a." + group_name, ".sidebar");
-                    sub = link.next().get(0);
+                    sub = link.next().get(0); 
                     $(sub).toggle().parent().toggleClass('open');
+                    link.find('b.arrow').toggleClass('fa-angle-right').toggleClass('fa-angle-down');
                     // $("." + group_name, ".sidebar").trigger(ace.click_event);
                 }
             }
