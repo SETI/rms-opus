@@ -462,8 +462,22 @@ div.gallery {
 
 #sidebar ul.nav-list, #sidebar ul.nav-list li {
     margin:0; padding:0;
-
 }
+#sidebar .nav-list > li .submenu > li > a {
+    padding-top:2px;
+    padding-bottom:2px;
+}
+.nav > li > a {
+    padding-top:3px;
+    padding-left:20px;
+    height: 27px;
+}
+.nav-list > li a > .arrow {
+    position: absolute;
+    right: 10px;
+    top: 5px;
+}
+
 #sidebar ul.nav-list {
     margin-left:0px;
 }
@@ -474,6 +488,7 @@ div.gallery {
 #sidebar .submenu {  /* labels in 3rd submenu need schootch over a bit */
     margin-left:15px;
 }
+
 
 #sidebar {
     width:100%;
