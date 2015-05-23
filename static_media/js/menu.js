@@ -126,7 +126,7 @@ var o_menu = {
             }
             // open any newly arrived surface geo tables
             // todo: this could be problematic if user wants to close it and keep it closed..
-            geo_cat = $('a[title^="obs_surface_geometry__"]', '.sidebar').attr("title");
+            geo_cat = $('a[data-cat^="obs_surface_geometry__"]', '.sidebar').data('cat');
             if (geo_cat && jQuery.inArray(geo_cat, opus.menu_state['cats']) < 0) {
                 // open it
                 link = $("a." + geo_cat, ".sidebar");
