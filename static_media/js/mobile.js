@@ -13,7 +13,6 @@ $(document).ready(function() {
 
     // user clicks menu link to gallery page
     $('.gallery_link').live("click",function() {
-         console.log('gallery_link clicked');
          $("#gallery li").remove();
          mopus.volume_id = $(this).attr("id").split('__')[1];
          mopus.page=1
@@ -28,11 +27,9 @@ $(document).ready(function() {
 
     // turn off the interval timer when gallery page is not showing, turn it back on when returning
     $('#gallery_page').live('pageshow',function(event,ui) {
-        console.log('page show');
         mopus.gallery_watch_return_interval = setInterval(mopus.galleryScrollWatch, mopus.scroll_interval);
     });
     $('#gallery_page').live('pagehide',function(event,ui) {
-        console.log('page HIDE');
         // mopus.gallery_watch_interval = clearInterval(mopus.gallery_watch_interval);
     });
 
@@ -69,7 +66,6 @@ var mopus = {
         }
 
         page = mopus.page++;
-        console.log('going for page ' + page)
 
         $('#gallery_footer1').html('<p class = "spinner">&nbsp;</p>');
 
@@ -122,10 +118,8 @@ var mopus = {
             /** debuggy stuff
             if ((elemBottom >= docViewTop) && (elemTop <= docViewBottom)
               && (elemBottom <= docViewBottom) &&  (elemTop >= docViewTop) ) {
-                  console.log(true);
                   id = $('#gallery li').last().attr('id');
-                  console.log('for ' + id);
-              } else console.log(false);
+              } 
             **/
 
             return ((elemBottom >= docViewTop) && (elemTop <= docViewBottom)

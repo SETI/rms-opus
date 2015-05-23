@@ -31,7 +31,6 @@ $(document).ready(function() {
             if (window_width < 900) {
                 left_margin = '2%';
             }
-            console.log(left_margin);
             $('#cboxContent').animate({
                 left:left_margin
             }, 'fast');
