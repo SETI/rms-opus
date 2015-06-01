@@ -443,14 +443,39 @@ def getFiles(ring_obs_id=None, fmt=None, loc_type=None, product_types=None, prev
         files_table_rows = files_table_rows.filter(product_type__in=product_types)
 
     if not files_table_rows: 
+        log.debug(files_table_rows.query)
         log.error('no rows returned in file table')
 
     file_names = {}
     for f in files_table_rows:
+        """
+        todo:
+        This loop is looping over the entire result set to do a text transoformation (into json)
+        STOP THE MADNESS
+
+        """
 
         # file_names are grouped first by ring_obs_id then by product_type
         ring_obs_id = f.ring_obs_id
         file_names.setdefault(ring_obs_id, {})
+
+        # add some preview images?
+        if len(previews):
+            file_names[ring_obs_id]['preview_image'] = []
+            for size in previews:
+                url_info = getImage(False, size.lower(), ring_obs_id,'raw')
+                if not url_info:
+                    continue  # no image found for this observation so let's skip it
+                url = url_info['data'][0]['img']
+                base_path = url_info['data'][0]['path']
+                if url:
+                    if loc_type == 'path':
+                        url = settings.IMAGE_PATH + get_base_path_previews(ring_obs_id) + url
+                    else:
+                        url = base_path + url
+
+                    file_names[ring_obs_id]['preview_image'].append(url) 
+
 
         # get this file's volume location
         file_extensions = []
@@ -516,22 +541,6 @@ def getFiles(ring_obs_id=None, fmt=None, loc_type=None, product_types=None, prev
         file_names[ring_obs_id][f.product_type].sort()
         file_names[ring_obs_id][f.product_type].reverse()
 
-        # add some preview images?
-        if len(previews):
-            file_names[ring_obs_id]['preview_image'] = []
-            for size in previews.split(','):
-                url_info = getImage(False, size.lower(), ring_obs_id,'raw')
-                if not url_info:
-                    continue  # no image found for this observation so let's skip it
-                url = url_info['data'][0]['img']
-                base_path = url_info['data'][0]['path']
-                if url:
-                    if loc_type == 'path':
-                        url = settings.IMAGE_PATH + get_base_path_previews(ring_obs_id) + url
-                    else:
-                        url = base_path + url
-
-                    file_names[ring_obs_id]['preview_image'].append(url) # ugh! this is cuz it goes through that stoopit utils too
 
     if fmt == 'raw':
         return file_names
