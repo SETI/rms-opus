@@ -45,7 +45,6 @@ def get_download_size(files, product_types, previews):
     for ring_obs_id in files:
 
         # get the preview image sizes
-
         for size_str in filter(None, [p.lower() for p in previews]):
 
             try:
@@ -132,7 +131,12 @@ def create_download(request, collection_name=None, ring_obs_ids=None, fmt=None):
         fmt = "raw"
 
     product_types = request.GET.get('types', [])
+    if product_types:
+        product_types = product_types.split(',')
+
     previews = request.GET.get('previews', '')
+    if previews:
+        previews = previews.split(',')
 
     if not ring_obs_ids:
         ring_obs_ids = []
@@ -162,7 +166,7 @@ def create_download(request, collection_name=None, ring_obs_ids=None, fmt=None):
     tar = tarfile.open(settings.TAR_FILE_PATH + zip_file_name, "w:gz")
     chksum = open(chksum_file_name,"w")
     manifest = open(manifest_file_name,"w")
-    size = get_download_size(files, product_types.split(','), previews.split(','))
+    size = get_download_size(files, product_types, previews)
 
     cum_downlaod_size = get_cum_downlaod_size(request,size)
     if cum_downlaod_size > settings.MAX_CUM_DOWNLAOD_SIZE:
