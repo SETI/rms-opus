@@ -12,11 +12,6 @@ def get_def(term, context):
          definition = Definition.objects.using('dictionary').get(context__name=context,term__term=term).definition
          return html_decode(definition)
     except Definition.DoesNotExist:
-        if not term:
-            term = ''
-        if not context: 
-            context = ''
-        log.debug("could not find dictionary def for %s in %s" % (term, context))
         return False
 
 def get_more_info_url(term, context):
