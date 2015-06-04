@@ -20,9 +20,9 @@ log = logging.getLogger(__name__)
 
 def create_zip_filename(ring_obs_id=None):
     if not ring_obs_id:
-        letters = random.choice(string.ascii_letters) + random.choice(string.ascii_letters) + random.choice(string.ascii_letters)
+        random_ascii = random.choice(string.ascii_letters) 
         timestamp = "T".join(str(datetime.datetime.now()).split(' '))
-        return 'pdsdata_' + letters + '_' + timestamp + '.tgz'
+        return 'pdsdata_' + random_ascii + '_' + timestamp + '.tgz'
     else:
         return "pdsdata_uni_" + ring_obs_id + '.tgz'
 
