@@ -439,9 +439,19 @@ div.gallery {
 #search .widget_pause {
     margin:0px 5px 10px 7px;
 }
-.widget-main ul li ul li {
+.widget-main, .widget-main ul, .widget{
+  padding:0 10px;
+  margin:0;
+}
+.widget-main ul li ul li {  /* mult labels */
    white-space:nowrap;
-
+ }
+ .widget-main > ul { 
+    margin-bottom:5px;
+    padding-bottom:0;
+ }
+ .widget-main > ul > li ul {
+    padding-bottom:0;
  }
 .widget-main ul li {
     margin-right: 5px;
