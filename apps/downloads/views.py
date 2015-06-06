@@ -43,13 +43,13 @@ def get_download_info(files):
     """
     calculate the sum download size of every file found in files. 
     returns a tuple of ints: (<total size in bytes>, <total file count>)
-    accepts files as structure like that returnd by getfiles: 
+    accepts only structure like that returnd by getfiles: 
     files = {
         '<ring_obs_id>': {
             '<product_type'>: [<file_name1>, <file_name2>]
         }
     }
-    product type can be a valid PDS product type or 'preview_image'
+    product type can be a valid PDS product type or 'preview_image' (todo: marry these 2)
     """
     file_paths = []  # the files we need to check
     file_count = 0  # count of each file in files 
@@ -61,12 +61,13 @@ def get_download_info(files):
 
                 if product_type != 'preview_image':
                     # this is a pds file not a browse product
-                    # collect the urls.. we process these at the end
+                    # collect the urls.. we will process these at the end
                     file_paths += [f for f in files[ring_obs_id][product_type]] # list of all urls
 
                 elif product_type == 'preview_image':
-                    # the file size of preview images on disc is checked here
-                    # todo: get the file sizes into database instead = remove this whole section
+                    # the file size of each preview images on disc is checked here
+                    # todo: OMG WHY WHAT
+                    # todo: get the file sizes into database instead = process like pds files and remove this whole section!
 
                     # filenames in f can be full url paths or full local paths
                     if 'http' in f:
@@ -84,29 +85,29 @@ def get_download_info(files):
                     except OSError:
                         log.error('could not find file: ' + img_path + f);
 
+    # now we have all pds file_names, put all file names in a list and get their count
     if file_paths:
         # filenames in f can be full url paths or full local paths
         split = 5 if 'http' in file_paths[0] else 6  # remove domain and append to local path
         file_names = list(set([('/').join(u.split('/')[split:len(u)]) for u in file_paths])) 
         file_count += len(file_names) 
 
-        # get Sum of size field for all these files from database:
+        # query database for the sum of all file_names size fields
         try:
             file_sizes = FileSizes.objects.filter(name__in=file_names).values('name','size','volume_id').distinct()
-            total_size += sum([f['size'] for f in file_sizes])
+            total_size += sum([f['size'] for f in file_sizes])  # todo: this is here b/c django was not happy mixing aggregate+distinct
 
         except TypeError:
+            # I don't hink this is still a TypeError
             pass    
 
-
-    return total_size, file_count  # bytes!
+    return total_size, file_count  # bytes
 
 def get_download_info_API(request):
     """
     this serves get_download_info as an api endpoint
     but takes a request object as input
-    and inspects the request for product type / preview image preferences
-
+    and inspects the request for product type / preview image filters
     """
     update_metrics(request)
     session_id = request.session.session_key
@@ -117,8 +118,10 @@ def get_download_info_API(request):
     previews = request.GET.get('previews', 'none')
     previews = previews.split(',')
 
+    # since we are assuming this is coming from user interaction 
+    # if no filters exist then none of this product type is wanted
     if product_types == ['none'] and previews == ['none']:
-        # this happens when all product types are unchecked in the interface
+        # ie this happens when all product types are unchecked in the interface
         return HttpResponse(json.dumps({'size':'0', 'count':'0'}), mimetype='application/json')        
 
     if previews == ['all']:
@@ -128,32 +131,29 @@ def get_download_info_API(request):
     urls = []
     from results.views import *
     files = getFiles(collection=True, session_id=session_id, fmt="raw", loc_type="url", product_types=product_types, previews=previews)
-
     download_size, count = get_download_info(files)
-    download_size = nice_file_size(download_size)  # make pretty size string
+
+    # make pretty size string
+    download_size = nice_file_size(download_size)  
 
     return HttpResponse(json.dumps({'size':download_size, 'count':count}), mimetype='application/json')
 
 
 @never_cache
 def create_download(request, collection_name=None, ring_obs_ids=None, fmt=None):
+    """
+    feeds request to getFiles and zips up all files it finds into tar file
+    and adds a manifest file and md5 checksums
+
+    """
     update_metrics(request)
 
     fmt = request.GET.get('fmt', "raw")
+    product_types = request.GET.get('types', 'none')
+    product_types = product_types.split(',')
 
-    product_types = request.GET.get('types', [])
-    if product_types:
-        product_types = product_types.split(',')
-    # the cart will always send the product types it wants
-    # if none appear here then it doesn't want any PDS products
-    if not product_types:
-        product_types = ['none']
-
-    previews = request.GET.get('previews', [])
-    # if none appear here then it doesn't want any preview images
-    # todo: this should really just be handled as a product type
-    if not previews:
-        previews = ['none']
+    previews = request.GET.get('previews', 'none')
+    previews = previews.split(',')
 
     if not ring_obs_ids:
         ring_obs_ids = []
@@ -192,7 +192,7 @@ def create_download(request, collection_name=None, ring_obs_ids=None, fmt=None):
         return HttpResponse("Sorry, Max cumulative download size reached " + str(cum_downlaod_size) + ' > ' + str(settings.MAX_CUM_DOWNLAOD_SIZE))
     else:
         cum_downlaod_size = cum_downlaod_size + size
-        request.session['cum_downlaod_size'] =  + int(cum_downlaod_size)
+        request.session['cum_downlaod_size'] = int(cum_downlaod_size)
 
     errors = []
     added = []
