@@ -205,8 +205,11 @@ def edit_collection_range(request, **kwargs):
 
 @never_cache
 def view_collection(request, collection_name, template="collections.html"):
+    """ the collection tab http endpoint 
+        the information it returns about product types and files does not 
+        relect user filters such as  product types and preview images
+    """
     update_metrics(request)
-    """ the collection tab http endpoint """
     session_id = request.session.session_key
     colls_table_name = get_collection_table(session_id)
 
@@ -226,14 +229,13 @@ def view_collection(request, collection_name, template="collections.html"):
     # collection
     colls_table_name = get_collection_table(session_id)
     files = getFiles(fmt="raw", collection=True, session_id=session_id)
-    product_types = Files.objects.all().values('product_type').distinct()
+    all_product_types = Files.objects.all().values('product_type').distinct()
 
     # downlaod_info
-    from downloads.views import *
-    download = get_download_info(request)
-
-    download_size = download['size']
-    download_count = download['count']
+    from downloads.views import get_download_info
+    download_size, download_count = get_download_info(files)
+    
+    download_size = nice_file_size(download_size)  # pretty print it
 
     # images and join with the collections table
     where   = "images.ring_obs_id = " + connection.ops.quote_name(colls_table_name) + ".ring_obs_id"
@@ -244,10 +246,15 @@ def view_collection(request, collection_name, template="collections.html"):
     image_count = len(images)
 
     # product files
-    product_counts = dict([(i,0) for i in [p['product_type'] for p in product_types]]) # a dictionary with product_Type names as keys and all values set to zero
-    for ring_obs_id in files:
-        for ptype in files[ring_obs_id]:
-            product_counts[ptype] = product_counts[ptype] + 1
+    # for this we want the list of all possible product types for this dataset
+    # todo: this is really inefficient, another place that large carts are going to be unhappy
+    product_counts = dict([(i,0) for i in [p['product_type'] for p in all_product_types]]) # a dictionary with product_Type names as keys and all values set to zero
+    ring_obs_ids = [f for f in files]
+    product_counts_query = Files.objects.filter(ring_obs_id__in=ring_obs_ids).values('product_type').annotate(Count('product_type'))
+    product_counts_nonzero = {i['product_type']: i['product_type__count'] for i in product_counts_query}
+    # update the product_count array with the non-zero counts
+    for product_type, pcount in product_counts_nonzero.items():
+        product_counts[product_type] = pcount
 
     column_values = []
     for param_name in columns:

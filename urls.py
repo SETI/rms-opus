@@ -48,7 +48,7 @@ base_urlpatterns += patterns('metadata.views',
 base_urlpatterns += patterns('downloads.views',
     (r'^zip/(?P<ring_obs_id>[0-9a-zA-Z\-_]+).(?P<fmt>[json]+)$', 'create_download'),
     (r'^collections/download/(?P<collection_name>[default]+).zip$', 'create_download'),
-    (r'^collections/download/info/$','get_download_info'))
+    (r'^collections/download/info/$','get_download_info_API'))
 
 
 # UI resources - the homepage

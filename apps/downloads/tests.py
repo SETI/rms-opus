@@ -21,43 +21,74 @@ class downloadsTests(TestCase):
 
     c = Client()
 
-    def test__get_download_size_browse_images_being_counted(self):
+    def test__get_download_info_browse_images_being_counted(self):
         ring_obs_ids = 'S_IMG_CO_ISS_1680806066_N'
-        files = getFiles(ring_obs_ids,"raw", "path")
         product_types=['CALIBRATED']
-        size1 = get_download_size(files, product_types, ['Full'])
-        size2 = get_download_size(files, product_types, ['Med'])
+        files = getFiles(ring_obs_id=ring_obs_ids,fmt="raw", loc_type="path", product_types=product_types)
+        product_types2=['RAW_IMAGE']
+        files2 = getFiles(ring_obs_id=ring_obs_ids,fmt="raw", loc_type="path", product_types=product_types2)
+        size1, file_count1 = get_download_info(files)
+        size2, file_count2 = get_download_info(files2)
         self.assertNotEqual(size1, size2)
 
-    # get_download_size(
-    def test__get_download_size_COISS(self):
+    # get_download_info(
+    def test__get_download_info_COISS_CALIBRATED(self):
         ring_obs_ids = 'S_IMG_CO_ISS_1680806066_N'
-        files = getFiles(ring_obs_id=ring_obs_ids,fmt="raw",loc_type="path")
-        size = get_download_size(files, 'CALIBRATED', ['Full'])
-        self.assertGreater(size, 0)
+        product_types = ['CALIBRATED']
+        previews = 'none'
+        files = getFiles(ring_obs_id=ring_obs_ids,fmt="raw",loc_type="path", product_types=product_types, previews=previews)
+        size, file_count = get_download_info(files)
+        print size, file_count
+        self.assertEqual(size, 4226341)
 
-    def test__get_download_size_COCIRS(self):
-        ring_obs_ids = 'S_SPEC_CO_CIRS_1630456943_FP1'
-        files = getFiles(ring_obs_id=ring_obs_ids,fmt="raw",loc_type="path")
+    def test__get_download_info_COISS_RAW_IMAGE(self):
+        ring_obs_ids = 'S_IMG_CO_ISS_1680806066_N'
+        product_types = ['RAW_IMAGE']
+        previews = 'none'
+        files = getFiles(ring_obs_id=ring_obs_ids,fmt="raw",loc_type="path", product_types=product_types, previews=previews)
+        size, file_count = get_download_info(files)
+        print size, file_count
+        self.assertEqual(size, 2156009)
+
+    def test__get_download_info_COISS_both_products(self):
+        ring_obs_ids = 'S_IMG_CO_ISS_1680806066_N'
+        product_types = ['RAW_IMAGE','CALIBRATED']
+        previews = 'none'
+        files = getFiles(ring_obs_id=ring_obs_ids,fmt="raw",loc_type="path", product_types=product_types, previews=previews)
+        size, file_count = get_download_info(files)
         print files
-        size = get_download_size(files, 'CALIBRATED_SPECTRUM', [])
+        print size, file_count
+        self.assertEqual(size, 6357972)
+
+    def test__get_download_info_COCIRS(self):
+        ring_obs_ids = 'S_SPEC_CO_CIRS_1630456943_FP1'
+        product_types = 'CALIBRATED_SPECTRUM'
+        files = getFiles(ring_obs_id=ring_obs_ids,product_types=product_types,fmt="raw",loc_type="path")
+        print files
+        size, file_count = get_download_info(files)
         self.assertGreater(size, 0)
 
-    def test__get_download_size_COVIMS(self):
+    def test__get_download_info_COVIMS(self):
         ring_obs_ids = 'S_CUBE_CO_VIMS_1638723713_VIS'
-        files = getFiles(ring_obs_id=ring_obs_ids,fmt="raw",loc_type="path")
-        size = get_download_size(files, 'RAW_SPECTRAL_IMAGE_CUBE', ['med'])
+        product_types = ['RAW_SPECTRAL_IMAGE_CUBE']
+        previews = ['med']
+        files = getFiles(ring_obs_id=ring_obs_ids,fmt="raw",loc_type="path", product_types=product_types, previews=previews)
+        size, file_count = get_download_info(files)
         self.assertGreater(size, 0)
 
-    def test__get_download_size_VGISS(self):
+    def test__get_download_info_VGISS(self):
         ring_obs_ids = 'N_IMG_VG2_ISS_1120000_W'
-        files = getFiles(ring_obs_id=ring_obs_ids,fmt="raw",loc_type="path")
-        size = get_download_size(files, 'CALIBRATED_IMAGE', ['small'])
+        product_types = ['CALIBRATED_IMAGE']
+        previews = ['small']
+        files = getFiles(ring_obs_id=ring_obs_ids,fmt="raw",loc_type="path", product_types=product_types, previews=previews)
+        size, file_count = get_download_info(files)
         self.assertGreater(size, 0)
 
-    def test__get_download_size_empty_product_types(self):
+    def test__get_download_info_empty_product_types(self):
         ring_obs_ids = 'S_IMG_CO_ISS_1680806066_N'
-        files = getFiles(ring_obs_id=ring_obs_ids,fmt="raw",loc_type="path")
-        size = get_download_size(files, '', [])
+        product_types = ['none']
+        previews = ['Full']
+        files = getFiles(ring_obs_id=ring_obs_ids,fmt="raw",loc_type="path", product_types=product_types, previews=previews)
+        size, file_count = get_download_info(files)
         self.assertLess(size, 2250000)  # about 2 MB
 

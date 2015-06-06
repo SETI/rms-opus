@@ -159,8 +159,9 @@ class user_CollectionsTests(TestCase):
         request.user = AnonymousUser()
         request.session = test_session()
         response = view_collection(request, 'default', template="collections.html")
+        print response.content
         self.assertEqual(response.status_code, 200)
-        self.assertGreater(len(response.content), 10000)
+        self.assertGreater(len(response.content), 5000)
 
 
     def test_collection_status(self):

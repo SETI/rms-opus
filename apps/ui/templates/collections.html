@@ -22,25 +22,33 @@
 
         <h4>Product Types:</h4>
     	<ul id = "product_types" class = "list-inline">
-    	 {% for ptype in product_types %}
-            <li><span> <input type = "checkbox" value = "{{ ptype.product_type }}"
-            		{% for k,v in product_counts.items %} {# loop through product count list #}
-            		  	{% if k == ptype.product_type %} {# if this product_type matches outer loop ptype, draw.. #}
-                {% if v > 0 %}    {# this has a number, check the input adn display number #}
-            					  	 checked>
-            							 <span>{{ ptype.product_type }}</span>
-            							 <span class = "product_count hints"> {{ v }}</span>
-            						{% else %}{% if v == 0 %} {# this doesn't have number, display with fadey class #}
-            							><span class = "fadey">{{ ptype.product_type }}</span>
-            						{% endif %}{% endif %}
 
-            			  {% endif %}
-            		{% endfor %}
-            		</span>
-            </li>
+            {% for product_type, count in product_counts.items %}
 
-    	 {% endfor %}
+                <li>
+                <input type = "checkbox" value = "{{ product_type }}" 
+                {% if count > 0 %}    
+                    checked
+                {% endif %}
+                >
+
+                    <span
+                        {% if count == 0 %}
+                        class = "fadey"
+                        {% endif %}
+                        >
+                        {{ product_type }}
+                        </span>
+
+                    {% if count > 0 %}    
+                        <span class = "product_count hints">{{ count }}</span>
+    				{% endif %}
+
+                </span></li>
+
+      		{% endfor %}
     	</ul>
+
 
     	<h4>Preview Images (jpeg/png)</h4>
     	<ul id = "image_types" class = "list-inline">

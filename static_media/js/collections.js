@@ -27,7 +27,7 @@ var o_collections = {
          // check an input on selected products and images updates file_info
          $('#collection').on("click",'#downlaod_options input', function() {
              add_to_url = o_collections.getDownloadFiltersChecked();
-             url = "/opus/collections/download/info?" + add_to_url;
+             url = "/opus/collections/download/info/?" + add_to_url;
              $.ajax({ url: url + '&fmt=json',
                 success: function(json){
                     $('#total_files').fadeOut().html(json['count']).fadeIn();

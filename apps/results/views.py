@@ -355,14 +355,28 @@ def getFilesAPI(request, ring_obs_id=None, fmt=None, loc_type=None):
     if not ring_obs_id:
         ring_obs_id = ''
     if not fmt:
-        fmt = 'raw'
+        fmt = 'raw'  # the format this function returns
     if not loc_type:
         loc_type = 'url'
 
     update_metrics(request)
 
     product_types = request.GET.get('types',[])
-    images = request.GET.get('previews',[])
+    previews = request.GET.get('previews',[])
+
+    if product_types:
+        product_types = product_types.split(',')
+    if previews:
+        previews = previews.split(',')
+
+    # we want the api to return all possible files unless otherwise described
+    if not product_types:
+        product_types = 'all'
+
+    if not previews:
+        previews = 'all'
+    if previews == ['none']:
+        previews = []
 
     if request and request.GET and not ring_obs_id:
 
@@ -373,8 +387,7 @@ def getFilesAPI(request, ring_obs_id=None, fmt=None, loc_type=None):
             return False
         ring_obs_id = [p[0] for p in page]
 
-    return getFiles(ring_obs_id=ring_obs_id, fmt=fmt, loc_type=loc_type, product_types=product_types, previews=images)
-
+    return getFiles(ring_obs_id=ring_obs_id, fmt=fmt, loc_type=loc_type, product_types=product_types, previews=previews)
 
 
 # loc_type = path or url
@@ -395,15 +408,22 @@ def getFiles(ring_obs_id=None, fmt=None, loc_type=None, product_types=None, prev
     if not loc_type:
         loc_type = 'url'
     if not product_types:
-        product_types = []
+        product_types = ['all']  # if types or previews aren't filtered then return them alls
     if not previews:
-        previews = []
+        previews = ['all']
     if not collection:
         collection = False
 
     # apparently you can also pass in a string if you are so inclined *sigh*
     if type(product_types).__name__ != 'list':
         product_types = product_types.split(',')
+    if type(previews).__name__ != 'list':
+        previews = previews.split(',')
+
+    if previews == ['all']:
+        previews = [i[0] for i in settings.image_sizes]
+    if previews == ['none']:
+        previews = []
 
     # this is either for a collection or some ring_obs_id:
     if ring_obs_id:
@@ -415,15 +435,13 @@ def getFiles(ring_obs_id=None, fmt=None, loc_type=None, product_types=None, prev
             ring_obs_ids = ring_obs_id
 
     elif collection:
+        # no ring_obs_id, this must be for a colletion
+        colls_table_name = get_collection_table(session_id)
 
-            # no ring_obs_id, this must be for a colletion
-            colls_table_name = get_collection_table(session_id)
-
-            where   = "files.ring_obs_id = " + connection.ops.quote_name(colls_table_name) + ".ring_obs_id"
+        where   = "files.ring_obs_id = " + connection.ops.quote_name(colls_table_name) + ".ring_obs_id"
     else:
         log.error('no ring_obs_ids or collection specified in results.getFiles')
         return False
-
 
     # you can ask this function for url paths or disk paths
     if loc_type == 'url':
@@ -439,20 +457,17 @@ def getFiles(ring_obs_id=None, fmt=None, loc_type=None, product_types=None, prev
     else:
         files_table_rows = files_table_rows.filter(ring_obs_id__in=ring_obs_ids)
 
-    if product_types: 
+    if product_types != ['all'] and product_types != ['none']:
         files_table_rows = files_table_rows.filter(product_type__in=product_types)
 
     if not files_table_rows: 
-        log.debug(files_table_rows.query)
         log.error('no rows returned in file table')
 
     file_names = {}
     for f in files_table_rows:
         """
-        todo:
         This loop is looping over the entire result set to do a text transoformation (into json)
-        STOP THE MADNESS
-
+        todo: STOP THE MADNESS
         """
 
         # file_names are grouped first by ring_obs_id then by product_type
@@ -476,7 +491,10 @@ def getFiles(ring_obs_id=None, fmt=None, loc_type=None, product_types=None, prev
 
                     file_names[ring_obs_id]['preview_image'].append(url) 
 
+        if product_types == ['none']:
+            continue
 
+        # get PDS products 
         # get this file's volume location
         file_extensions = []
         try:
@@ -515,10 +533,6 @@ def getFiles(ring_obs_id=None, fmt=None, loc_type=None, product_types=None, prev
 
         file_extensions = list(set(file_extensions))
 
-        # extras are never found in the derived directory, so get those first
-        for extra in extra_files:
-            file_names[ring_obs_id][f.product_type] += [path + volume_loc + '/' + extra]
-
         # now adjust the path whether this is on the derived directory or not
         if (f.product_type) == 'CALIBRATED':
             if loc_type != 'url':
@@ -532,6 +546,10 @@ def getFiles(ring_obs_id=None, fmt=None, loc_type=None, product_types=None, prev
                 path = settings.FILE_HTTP_PATH
 
         path = path + f.base_path.split('/')[-2] + '/'  # base path like xxx
+
+        # add the extra_files
+        for extra in extra_files:
+            file_names[ring_obs_id][f.product_type] += [path + volume_loc + '/' + extra]
 
         for extension in file_extensions:
             file_names[ring_obs_id][f.product_type]  += [path + volume_loc + '/' + base_file + '.' + extension]
