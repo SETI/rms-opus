@@ -468,6 +468,9 @@ def getFiles(ring_obs_id=None, fmt=None, loc_type=None, product_types=None, prev
         """
         This loop is looping over the entire result set to do a text transoformation (into json)
         todo: STOP THE MADNESS
+        move most of this to database layer
+        put all of the below into the file sizes table
+        then just grab direct from file sizes table by product_type and ring_obs_id
         """
 
         # file_names are grouped first by ring_obs_id then by product_type
