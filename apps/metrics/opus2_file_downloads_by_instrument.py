@@ -1,17 +1,24 @@
-import MySQLdb
+# Set up the Django Enviroment for running as shell script
 import sys
+sys.path.append('/home/django/djcode/opus')  #srvr
+# sys.path.append('/users/lballard/projects/opus/')
+# from opus import settings
+from django.conf import settings
+from settings import CACHES, DATABASES  # DATABASES creds only
+settings.configure(CACHES=CACHES, DATABASES=DATABASES) # include any other settings you might need
+
+# script imports
+from os import system
+from django.db import connection
 sys.path.append("/home/django/djcode/opus/")
 
 if len(sys.argv) < 2:
     print "please pass database name as first arg"
     sys.exit()
 
-from secrets import DB_USER, DB_PASS
-
 database_name = sys.argv[1]
 
-db = MySQLdb.connect(host="localhost", port=3306, user=DB_USER, passwd=DB_PASS, db=database_name)
-cursor = db.cursor()
+cursor = connection.cursor()
 
 manifest_file_list = "/home/lballard/metrics/manifest_list.txt"
 base_path_manifests = "/usr/share/nginx/www/opus/"
