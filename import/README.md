@@ -5,9 +5,9 @@ change the settings_local.py at the top "import settings" which databases to rea
 
 edit the top of import/build_db.py 
 
-nohup sudo python build_db.py all > ~/log.txt &
+nohup sudo python import/build_db.py all > ~/import.log.txt &
 
-then when it's done do a deploy so caches get refreshed. 
+then when it's done, change the DATABASES NAME in settings_local.py and do a deploy so caches get refreshed. 
  
 to build the NEW schema: 
 
