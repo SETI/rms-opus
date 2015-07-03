@@ -5,14 +5,16 @@ change the settings_local.py at the top "import settings" which databases to rea
 
 edit the top of import/build_db.py 
 
- sudo python build_db.py all
+nohup sudo python build_db.py all > ~/log.txt &
+
+then when it's done do a deploy so caches get refreshed. 
  
-build_models.py
+to build the NEW schema: 
 
-to build the NEW schema
+	build_models.py
 
-takes care of django files too
-so just run build_db.py and that's your db
+	takes care of django files too
+	so just run build_db.py and that's your db
 
 
 /// old stuff: ** don't use the fab file **
