@@ -4,8 +4,6 @@ base.html - no layout, headers and libs
 
 base_opus.html - banner, tabs, footer
 
-base_search.html - search tab opens this, the advanced/full search interface
-
 gallery.html - the thumbnail gallery
 
                                                     
