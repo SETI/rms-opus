@@ -435,7 +435,8 @@ div.gallery {
 .navbar-nav li.active a:hover {
     color: #383838 !important;
 }
-.tab_display {
+/* prevents wrap on small screens */
+.tab_display, .browse-container li {
     display:table-cell !important
 }
 .navbar-header {
@@ -448,6 +449,20 @@ div.gallery {
     .navbar-header {
         display:none;
     }
+     .browse-container li {
+        border: 1px solid #383838;
+        padding:0;
+        text-align:center;
+     }
+     .browse-container li input {
+        height:1.6em;
+        width:3em;
+     }
+     .browse-container {
+        width:100%;
+        margin:0;
+
+     }
 }
 
 
@@ -500,18 +515,13 @@ div.gallery {
     padding-top:2px;
     padding-bottom:2px;
 }
-.nav > li > a {
-    padding-top:3px;
-    padding-left:20px;
-    height: 27px;
-}
 .nav-list > li a > .arrow {
     position: absolute;
     right: 10px;
     top: 5px;
 }
 
-#sidebar ul.nav-list {
+#sidebar ul.nav-lst {
     margin-left:0px;
 }
 #sidebar .nav-list .fa-info-circle {
