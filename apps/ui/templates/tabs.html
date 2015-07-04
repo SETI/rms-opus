@@ -1,11 +1,21 @@
 <div class="row">
 
-    <div class="col-md-12">
+    <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12 col-xs-12">
 
-        <div id="search" class="in active row">
+        <div id="search" class="">
+
+            <div class="col-xl-9 col-xl-push-3 col-lg-9 col-lg-push-3
+                        col-md-8 col-md-push-4 col-sm-8 col-sm-push-4
+                        col-xs-8 col-xs-push-4">
+                <div class = "widget_column mCustomScrollbar">
+                    <ul id = "search_widgets1" class = ""></ul>
+                </div>
+            </div>
 
             <!-- params menu -->
-            <div class="col-lg-4 col-md-4 col-sm-4">
+            <div class="col-xl-3 col-xl-pull-3 col-lg-3 col-lg-pull-9
+                        col-md-4 col-md-pull-8 col-sm-4 col-sm-pull-8
+                        col-xs-4 col-xs-pull-8">
                 <div class = "sidebar_wrapper mCustomScrollbar">
                     <div class = "sidebar" id = "sidebar">
                         {% include "menu.html" %}
@@ -13,11 +23,6 @@
                 </div>
             </div>
 
-            <div class="col-lg-8 col-md-8 col-sm-8">
-                <div class = "widget_column mCustomScrollbar">
-                    <ul id = "search_widgets1" class = ""></ul>
-                </div>
-            </div>
 
         </div><!-- /search -->
 

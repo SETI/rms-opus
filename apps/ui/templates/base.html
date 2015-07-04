@@ -7,38 +7,48 @@
 
     <nav class="navbar navbar-default navbar-fixed-top">
       <div class="container">
-        <div class="navbar-header">
-
-            <a href="/opus" class="navbar-brand restart">
-            OPUS
-            </a><!-- /.brand -->
-
-        </div><!-- /.navbar-header -->
 
         <div class="navbar" id="navbar">
 
+            <div class="navbar-header hidden-xs">
+                <a href="/opus" class="navbar-brand restart">
+                OPUS
+                </a><!-- /.brand -->
+            </div><!-- /.navbar-header -->
+
             <ul class="nav navbar-nav main_site_tabs">
-                <li class="active"><a href="#search">Search</a></li>
-                <li><a href="#browse">Browse Results &nbsp;&nbsp; <span id = "result_count" class="badge badge-primary badge-xlg badge-success">0</span></a></li>
-                <li><a href="#collection">Selections &nbsp;&nbsp; <span id = "collection_count" class="badge badge-primary badge-xlg badge-success">0</span></a></li>
-                <li><a href="#detail">Detail</a></li>
 
-                <!-- li class="dropdown">
-                    <a href="#" class="dropdown-toggle" data-toggle="dropdown">Detail <b class="caret"></b></a>
-                    <ul class="dropdown-menu">
-                      <li><a href="#detail">S/IMG/CO/ISS/1444749756/W</a></li>
-                      <li><a href="#detail">S/IMG/CO/ISS/1444749812/W </a></li>
-                      <li><a href="#detail">S/IMG/CO/ISS/1444750028/W</a></li>
-                    </ul>
-                </li -->
-            </ul>
+                <li class="active tab_display"><a href="#search">Search</a></li>
 
-            <ul class="nav navbar-nav navbar-right">
-                <li style = "white-space:nowrap; color:white;" class = "hidden-xs">
-                    <a class = "old_opus hidden-xm hidden-sm" style = "color:yellow" href="http://pds-rings.seti.org/opus1/">Looking for original OPUS?</a>
+                <li>
+                    <a href="#browse">
+                        <span class = "text-nowrap">
+                            Browse Results <span id = "result_count" class="badge badge-primary badge-xlg badge-success">0</span>
+                        </span>
+                    </a>
                 </li>
 
-                <li><a class = "restart" href="./">Start Over</a></li>
+                <li>
+                    <a href="#collection"> 
+                        <span class = "text-nowrap">
+                            Selections <span id = "collection_count" class="badge badge-primary badge-xlg badge-success">0</span>
+                        </span>
+                    </a>
+                </li>
+                <li><a href="#detail">Detail</a></li>
+
+                <li class = "visible-xs text-nowrap tab_display">
+                    <a class = "restart visible-xs" href="./">Start Over</a>
+                </li>
+
+            </ul>
+
+            <ul class="nav navbar-nav navbar-right hidden-xs">
+                <li style = "white-space:nowrap; color:white;" class = "hidden-xs">
+                    <a class = "old_opus hidden-xs hidden-sm" style = "color:yellow" href="http://pds-rings.seti.org/opus1/">Looking for original OPUS?</a>
+                </li>
+
+                <li class = "pull-right"><a class = "restart" href="./">Start Over</a></li>
             </ul>
         </div><!-- navbar-collapse -->
 

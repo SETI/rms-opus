@@ -371,7 +371,7 @@ var opus = {
     },
 
     mainTabDisplay: function(tabname) {
-        // progressive disclosing of main site tabs
+        // disclosing of main site tabs
         // tab labels at the top of the site are not displayed all at once
         // they appear as they are triggered, for example result tab appears when there
         // become some results, etc
@@ -391,7 +391,7 @@ var opus = {
         }
 
         if (!$('ul.main_site_tabs li:nth-child(' + child + ')').is(":visible")) {
-            $('ul.main_site_tabs li:nth-child(' + child + ')').fadeIn();
+            $('ul.main_site_tabs li:nth-child(' + child + ')').addClass('tab_display');
         }
 
     },
