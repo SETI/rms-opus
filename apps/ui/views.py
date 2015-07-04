@@ -46,6 +46,18 @@ class main_site(TemplateView):
         context['menu'] = menu['menu']
         return context
 
+def about(request, template = 'about.html'):
+    all_volumes = {
+                    'COISS':['COISS_2090','COISS_2091'],
+                    'COVIMS':['COVIMS_0067','COVIMS_0068']
+    }
+
+    all_volumes = {}
+    for d in ObsGeneral.objects.values('instrument_id','volume_id').distinct():
+        all_volumes.setdefault(d['instrument_id'], []).append(d['volume_id'])
+
+    return render_to_response(template,locals(), context_instance=RequestContext(request))
+
 
 def get_browse_headers(request,template='browse_headers.html'):
     update_metrics(request)

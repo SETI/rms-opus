@@ -47,6 +47,9 @@
 
 <div class="main-container" id="main-container">
 
+    {% block content %}
+
+
     <div class="main-container-inner">
 
         <a class="menu-toggler" id="menu-toggler" href="#">
@@ -62,21 +65,13 @@
         <i class="icon-double-angle-up icon-only bigger-110"></i>
     </a>
 
+    {% endblock %}
+
+
 </div><!--/.main-container-->
 
 
 {% include "footer.html" %}
-
-<div class = "end_of_page"><p>&nbsp;</p></div>
-
-
-<footer class="footer">
-    <div class="container">
-        <p class="text-muted">OPUS is a project of the <a href = "/">Planetary Rings Node</a>. An <a href = "http://pds-rings-tools.seti.org/opus/api/">API is also available</a>. 
-            We welcome <a href = "http://pds-rings.seti.org/cgi-bin/comment-form.pl?">feedback.</p>
-    </div>
-</footer>
-
 
 
 </body>

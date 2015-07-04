@@ -597,3 +597,20 @@ div.gallery {
   text-align:right;
   background-color: #f5f5f5;
 }
+
+/* about page */
+.about ul {
+    padding-left:30px;
+    max-width: 900px;
+}
+.about ul li {
+    display:inline;
+}
+.about li:after
+{
+  content: ', ';
+}
+.about li:last-child:after
+{
+  content: '';
+}

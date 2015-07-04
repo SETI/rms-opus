@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class = "container about">
+
+	<h1>About OPUS</h1>
+
+	<p>
+		OPUS is a project of the <a href = "/">Planetary Rings Node</a>. 
+		See our blog for <a href = "http://ringsnodesearchtool.blogspot.com/">latest OPUS updates</a>. 
+		<br>
+		An <a href = "http://pds-rings-tools.seti.org/opus/api/">API is also available</a>. We welcome <a href = "http://pds-rings.seti.org/cgi-bin/comment-form.pl?">feedback</a>.
+	</p>
+
+	<h2>Datasets Available for Searching with OPUS</h2>
+
+	<p>All instruments and volumes currently found in OPUS:</p>
+
+	{% for instrument_id, instrument_volumes in all_volumes.items %}
+		<ul>
+			<h3>{{ instrument_id }}</h3>
+
+			<ul>
+			{% for volume_id in instrument_volumes %}
+					<li>{{ volume_id }}</li>
+			{% endfor %}
+			</ul>
+
+		</ul>
+	{% endfor %}
+
+</html>
+{% endblock %}
