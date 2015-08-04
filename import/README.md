@@ -3,9 +3,9 @@
 run in this order:
 change the settings_local.py at the top "import settings" which databases to read from and build, then: 
 
-edit the top of import/build_db.py 
-
 nohup sudo python import/build_db.py all > ~/import.log.txt &
+
+sudo python import/build_db.py all 
 
 then when it's done, change the DATABASES NAME in settings_local.py and do a deploy so caches get refreshed. 
  
