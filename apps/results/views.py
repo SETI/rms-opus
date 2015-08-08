@@ -422,7 +422,7 @@ def getFiles(ring_obs_id=None, fmt=None, loc_type=None, product_types=None, prev
 
     if previews == ['all']:
         previews = [i[0] for i in settings.image_sizes]
-    if previews == ['none']:
+    if previews == ['none'] or previews == 'none':
         previews = []
 
     # this is either for a collection or some ring_obs_id:

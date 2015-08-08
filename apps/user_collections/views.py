@@ -228,7 +228,7 @@ def view_collection(request, collection_name, template="collections.html"):
 
     # collection
     colls_table_name = get_collection_table(session_id)
-    files = getFiles(fmt="raw", collection=True, session_id=session_id)
+    files = getFiles(fmt="raw", collection=True, previews='none', session_id=session_id)
     all_product_types = Files.objects.all().values('product_type').distinct()
 
     # downlaod_info
