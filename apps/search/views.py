@@ -391,7 +391,13 @@ def setUserSearchNo(selections,extras=None):
 
 
 def string_query_object(param_name, value_list, qtypes):
-    param_model_name = param_name.split('.')[1]
+
+    model_name = param_name.split('.')[0].lower().replace('_','')
+
+    if model_name == 'obsgeneral':
+        param_model_name = param_name.split('.')[1]
+    else: 
+        param_model_name = model_name + '__' + param_name.split('.')[1]
 
     for key,value in enumerate(value_list):
 

@@ -72,6 +72,17 @@ class searchTests(TestCase):
         expected = "SELECT `obs_general`.`id` FROM `obs_general` WHERE `obs_general`.`primary_file_spec` LIKE %C11399XX%"
         self.assertEqual("".join(q.split()),"".join(expected.split()))  # strips all whitespace b4 compare
 
+    def test__constructQueryString_string_with_joined_table(self):
+        selections = {'obs_general.instrument_id': ['COISS']}
+        selections['obs_mission_cassini.obs_name'] = ['RDCOLSCNM']
+        extras = {'qtypes': {'obs_mission_cassini.obs_name': ['contains']}}
+        sql, params = constructQueryString(selections, extras)
+        q = sql % params
+
+        print q
+        expected = "SELECT `obs_general`.`id` FROM `obs_general` INNER JOIN `obs_mission_cassini` ON ( `obs_general`.`id` = `obs_mission_cassini`.`obs_general_id` ) WHERE (`obs_mission_cassini`.`obs_name` LIKE %RDCOLSCNM%  AND `obs_general`.`mult_obs_general_instrument_id` IN (2))"
+        self.assertEqual("".join(q.split()),"".join(expected.split()))  # strips all whitespace b4 compare
+
 
     ## constructQueryString
     def test__constructQueryString_mults_planet(self):
