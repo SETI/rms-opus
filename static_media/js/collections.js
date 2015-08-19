@@ -36,6 +36,15 @@ var o_collections = {
 
          });
 
+
+
+
+
+         // Download Zipped Archive button - click create download zip file link on collections page
+         $('#collection').on("click", '#download_csv', function() {
+            $(this).attr("href", '/opus/collections/data.csv?'+ o_hash.getHash());
+         });
+
          // Download Zipped Archive button - click create download zip file link on collections page
          $('#collection').on("click", '#collections_summary a#create_zip_file button', function() {
                 $('.spinner', "#collections_summary").fadeIn();
