@@ -5,6 +5,7 @@ import datetime
 import hashlib
 import tarfile
 import json
+import csv
 from django.http import HttpResponse, Http404
 from django.db.models import Sum
 from results.views import *
@@ -17,6 +18,15 @@ import settings
 import logging
 
 log = logging.getLogger(__name__)
+
+def create_csv_file(request, csv_file_name):
+    from results.views import get_csv
+    slug_list, all_data = get_csv(request, fmt="raw")
+    csv_file = open(csv_file_name,'a')
+    wr = csv.writer(csv_file)
+    wr.writerow(slug_list)
+    wr.writerows(all_data)
+
 
 def create_zip_filename(ring_obs_id=None):
     """ create a unique filename for a user's cart
@@ -170,6 +180,9 @@ def create_download(request, collection_name=None, ring_obs_ids=None, fmt=None):
     zip_file_name = create_zip_filename();
     chksum_file_name = settings.TAR_FILE_PATH + "checksum_" + zip_file_name.split(".")[0] + ".txt"
     manifest_file_name = settings.TAR_FILE_PATH + "manifest_" + zip_file_name.split(".")[0] + ".txt"
+    csv_file_name = settings.TAR_FILE_PATH + "csv_" + zip_file_name.split(".")[0] + ".txt"
+
+    create_csv_file(request, csv_file_name)
 
     # fetch the full file paths we'll be zipping up
     import results
@@ -236,6 +249,7 @@ def create_download(request, collection_name=None, ring_obs_ids=None, fmt=None):
     chksum.close()
     tar.add(chksum_file_name, arcname="checksum.txt")
     tar.add(manifest_file_name, arcname="manifest.txt")
+    tar.add(csv_file_name, arcname="data.csv")
     tar.close()
 
     zip_url = settings.TAR_FILE_URI_PATH + zip_file_name

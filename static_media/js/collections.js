@@ -27,7 +27,7 @@ var o_collections = {
          // check an input on selected products and images updates file_info
          $('#collection').on("click",'#downlaod_options input', function() {
              add_to_url = o_collections.getDownloadFiltersChecked();
-             url = "/opus/collections/download/info/?" + add_to_url;
+             url = "/opus/collections/download/info/?" + add_to_url
              $.ajax({ url: url + '&fmt=json',
                 success: function(json){
                     $('#total_files').fadeOut().html(json['count']).fadeIn();
@@ -42,7 +42,7 @@ var o_collections = {
                 opus.download_in_process = true;
                 add_to_url = '';
                 add_to_url = o_collections.getDownloadFiltersChecked();
-                url = '/opus/collections/download/default.zip?' + add_to_url;
+                url = '/opus/collections/download/default.zip?' + add_to_url + "&" + o_hash.getHash();
                 $.ajax({ url: url,
                     success: function(filename){
                         opus.download_in_process = false;
@@ -221,7 +221,7 @@ var o_collections = {
             opus.collection_q_intrvl = setInterval("o_collections.processCollectionQueue()", 500); // resends any stray requests not recvd back from server
         }
 
-        url = "/opus/collections/default/" + action + ".json?request=" + request_no;
+        url = "/opus/collections/default/" + action + ".json?request=" + request_no
         if (action == 'addrange') {
             url += "&addrange=" + ringobsid;
             // need to send to server what page this range lands and what limit of that page is

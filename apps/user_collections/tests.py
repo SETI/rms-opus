@@ -133,6 +133,22 @@ class user_CollectionsTests(TestCase):
         cip = get_collection_in_page(page, session_id)
         self.assertEqual(cip, ring_obs_id_list)  # we get back what we put in
 
+    def test_collection_get_csv(self):
+        self.emptycollection()
+        session_id = test_session().session_key
+        ring_obs_id_list = ['S_IMG_CO_ISS_1692988072_N','S_IMG_CO_ISS_1692988234_N','S_IMG_CO_ISS_1692988460_N','S_IMG_CO_ISS_1692988500_N']
+        bulk_add_to_collection(ring_obs_id_list, session_id)
+        
+        url = '/opus/collections/data.csv?planet=Saturn&target=HYPERION&view=browse&browse=gallery&colls_browse=gallery&page=1&gallery_data_viewer=true&limit=100&order=timesec1&cols=ringobsid,planet,target,phase1,phase2,time1,time2,ringradius1,ringradius2,J2000longitude1,J2000longitude2'
+        request = self.factory.get(url)
+        request.user = AnonymousUser()
+        request.session = test_session()
+        response = get_csv(request)
+        print response.content
+        self.assertEqual(response.status_code, 200)
+        self.assertGreater(len(response.content), 466)
+
+
     def test_get_collection_count(self):
         self.emptycollection()
         session_id = test_session().session_key

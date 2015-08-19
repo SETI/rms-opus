@@ -5,6 +5,8 @@
 ################################################
 import settings
 import json
+import csv
+from django.template import loader, Context
 from django.http import Http404
 from django.shortcuts import render_to_response
 from django.utils.datastructures import SortedDict
@@ -22,6 +24,26 @@ from django.views.decorators.cache import never_cache
 
 import logging
 log = logging.getLogger(__name__)
+
+def get_csv(request, fmt=None):
+    """
+        creates csv 
+        only works right now for a collection
+        defaults to response object
+        or as first line and all data tuple object for fmt=raw
+    """
+    slugs = request.GET.get('cols')
+    all_data = getPage(request, colls=True, colls_page='all')  
+
+    if fmt == 'raw':
+        return slugs.split(","), all_data[2]
+    else:
+        response = HttpResponse(content_type='text/csv')
+        response['Content-Disposition'] = 'attachment; filename="data.csv"'
+        wr = csv.writer(response)
+        wr.writerow(slugs.split(","))
+        wr.writerows(all_data[2])
+        return response
 
 def getData(request,fmt):
     update_metrics(request)
@@ -49,6 +71,7 @@ def getData(request,fmt):
     collection = ''
     if request.is_ajax():
         # find the members of user collection in this page
+        # for pre-filling checkboxes
         collection = get_collection_in_page(page, session_id)
 
     data = {'page_no':page_no, 'limit':limit, 'page':page, 'count':len(page)}
@@ -573,15 +596,19 @@ def getFiles(ring_obs_id=None, fmt=None, loc_type=None, product_types=None, prev
         return render_to_response("list.html",locals())
 
 
-def getPage(request):
+def getPage(request, colls=None, colls_page=None, page=None):
     update_metrics(request)
     """
     the gets the metadata and images to build a page of results
     """
-
     # get some stuff from the url or fall back to defaults
     session_id = request.session.session_key
-    collection_page = (request.GET.get('colls',False))
+
+    if not colls:
+        collection_page = (request.GET.get('colls',False))
+    else: 
+        collection_page = colls
+
     limit = request.GET.get('limit',100)
     limit = int(limit)
     slugs = request.GET.get('cols', settings.DEFAULT_COLUMNS)
@@ -619,8 +646,12 @@ def getPage(request):
                 order = False
 
         # figure out page we are asking for
-        page_no = request.GET.get('page',1)
-        page_no = int(page_no)
+        if not page:
+            page_no = request.GET.get('page',1)
+            if page_no != 'all':
+                page_no = int(page_no)
+        else:
+            page_no == page
 
         # ok now that we have everything from the url get stuff from db
         (selections,extras) = urlToSearchParams(request.GET)
@@ -650,8 +681,12 @@ def getPage(request):
             except DoesNotExist:
                 order = False
 
-        page_no = request.GET.get('colls_page',1)
-        page_no = int(page_no)
+        if not colls_page:
+            page_no = request.GET.get('colls_page',1)
+            if page_no != 'all':
+                page_no = int(page_no)
+        else:
+            page_no = colls_page
 
         # figure out what tables do we need to join in and build query
         triggered_tables = list(set([t.split('.')[0] for t in columns]))
@@ -680,22 +715,24 @@ def getPage(request):
         else:
             column_values.append(param_name.split('.')[0].lower().replace('_','') + '__' + param_name.split('.')[1])
 
-
     """
-    this may be an aweful hack.
     the limit is pretty much always 100, the user cannot change it in the interface
     but as an aide to finding the right chunk of a result set to search for
-    in an 'add range' situation, the front end may send a large limit, like say
+    for the 'add range' click functinality, the front end may send a large limit, like say
     page_no = 42 and limit = 400
     that means start the page at 42 and go 4 pages, and somewhere in there is our range
+    this is how 'add range' works accross multiple pages
     so the way of computing starting offset here should always use the base_limit of 100
     using the passed limit will result inthe wront offset because of way offset is computed here
+    this may be an aweful hack.
     """
-    base_limit = 100  # explainer of sorts is above
-    offset = (page_no-1)*base_limit # we don't use Django's pagination because of that count(*) that it does.
-
-    # redux: look at line 559 you are essentially doing this query twice? in the same method and peforming the query each time cuz it has changed!
-    results = results.values_list(*column_values)[offset:offset+int(limit)]
+    # todo: redux: look at line 559 you are essentially doing this query twice? in the same method and peforming the query each time cuz it has changed!
+    if page_no != 'all':
+        base_limit = 100  # explainer of sorts is above
+        offset = (page_no-1)*base_limit # we don't use Django's pagination because of that count(*) that it does.
+        results = results.values_list(*column_values)[offset:offset+int(limit)]
+    else: 
+        results = results.values_list(*column_values)
 
     # return a simple list of ring_obs_ids
     ring_obs_id_index = column_values.index('ring_obs_id')

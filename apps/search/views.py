@@ -336,6 +336,7 @@ def urlToSearchParams(request_get):
         return results
 
     else:
+        log.debug('len(selections.keys not greater than zero')
         return False
 
 

@@ -28,6 +28,7 @@ base_urlpatterns = patterns( 'results.views',
     (r'^api/files/(?P<ring_obs_id>[0-9a-zA-Z\-_]+).(?P<fmt>[json|zip|html|csv]+)$','getFilesAPI'),
     (r'^api/files.(?P<fmt>[json|zip|html|csv]+)$', 'getFilesAPI'),
     (r'^api/metadata/(?P<ring_obs_id>[0-9a-zA-Z\-_]+).(?P<fmt>[json|html]+)$','get_metadata'),
+    (r'^collections/data.csv$','get_csv'),
 )
 
 
