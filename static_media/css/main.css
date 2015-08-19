@@ -580,9 +580,8 @@ div.gallery {
     padding: 0px 5px;
 }
 
-
 .spinner {
-    background-image: url('http://pds-rings.seti.org/search/opus2/static_media/images/spinner.gif');
+    background-image: url('http://pds-rings.seti.org/opus2_resources/static_media/images/spinner.gif');
     width:30px;
     display:inline-block;
     background-repeat: no-repeat;
