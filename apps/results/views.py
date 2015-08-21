@@ -605,7 +605,7 @@ def getPage(request, colls=None, colls_page=None, page=None):
     session_id = request.session.session_key
 
     if not colls:
-        collection_page = (request.GET.get('colls',False))
+        collection_page = request.GET.get('colls',False)
     else: 
         collection_page = colls
 
