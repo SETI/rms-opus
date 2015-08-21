@@ -10,10 +10,16 @@
 
 </div>
 
+
 <div class = "widget-box chosen_columns col-md-6">
 	<ul>
 		{% for slug,param_info in info.items %}
-			<li id="cchoose__{{ slug }}">
+			<li id="cchoose__{{ slug }}" 
+
+                    {% if slug == 'ringobsid' %}
+                        class = "unsortable" 
+                    {% endif %}
+                    >
 
                     {{ param_info.label_results }}
 
@@ -24,7 +30,13 @@
                             {{ param_info.label }}
                         {% endif %}
                     "></i>
-					<span class = "chosen_column_close">X</span>
+					<span class = "chosen_column_close
+
+                    {% if slug == 'ringobsid' %}
+                        hidden
+                    {% endif %}
+
+                    ">X</span>
 			</li>
 		{% endfor %}
 	</ul>

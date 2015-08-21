@@ -182,7 +182,8 @@ def edit_collection_range(request, **kwargs):
     # return HttpResponse(json.dumps(data['page']));
     for row in data['page']:
 
-        ring_obs_id = row[0]
+        ring_obs_id = row[0]  # nooooo this only works b/c opus interface prevents user from doing so
+                              # todo make me more flexible
 
         if ring_obs_id == min_id:
             in_range = True;

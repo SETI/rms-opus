@@ -1290,7 +1290,8 @@ var o_browse = {
 
                // dragging to reorder the chosen
                $( ".chosen_columns>ul").sortable({
-                   cursor: 'crosshair',
+                   items: "li:not(.unsortable)",
+                   cursor: 'move',
                    stop: function(event, ui) { o_browse.columnsDragged(this); }
                });
             });
@@ -1300,11 +1301,11 @@ var o_browse = {
         // columns can be reordered wrt each other in 'column chooser' by dragging them
         columnsDragged: function(element) {
             var cols = $(element).sortable('toArray');
+            cols.unshift('cchoose__ringobsid');  // manually add ringobsid to this list
             $.each(cols, function(key, value)  {
                 cols[key] = value.split('__')[1];
             });
             opus.prefs['cols'] = cols;
-
             // if we are in gallery - just change the data-struct that gallery draws from
             // if we are in table -
             // $('.gallery', '#browse').html(opus.spinner);

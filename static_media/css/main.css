@@ -176,6 +176,9 @@ body {
     display:none;
 }
 
+.column_chooser .unsortable {
+    cursor: not-allowed !important;
+}
 .column_chooser .all_columns .fa-plus {
     display:none;
 }
@@ -225,8 +228,8 @@ body {
     margin-top:15px;
     margin-bottom:-5px;
 }
-.chosen_columns ul li:hover{ cursor:crosshair; }
-.chosen_columns ul li .chosen_column_close:hover{ cursor:pointer; }
+.chosen_columns ul li:hover{ cursor:move; }
+.chosen_columns ul li .chosen_column_close:hover{ cursor:move; }
 
 .chosen_column_close {
     float:right;

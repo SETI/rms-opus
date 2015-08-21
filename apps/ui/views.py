@@ -412,9 +412,9 @@ def init_detail_page(request, **kwargs):
     return render_to_response(template,locals(), context_instance=RequestContext(request))
 
 def getColumnInfo(slugs):
-    info = {}
+    info = OrderedDict()
     for slug in slugs:
-        info[slug] = param_info = get_param_info_by_slug(slug)
+        info[slug] = get_param_info_by_slug(slug)
     return info
 
 
@@ -423,7 +423,7 @@ def getColumnChooser(request, **kwargs):
 
     slugs = request.GET.get('cols', settings.DEFAULT_COLUMNS).split(',')
 
-    slugs = filter(None, slugs) # sometimes 'cols' is in url but is blank, fails above
+    slugs = filter(None, slugs) # sometimes 'cols' is in url but is blank, so fails above
     if not slugs:
         slugs = settings.DEFAULT_COLUMNS.split(',')
     info = getColumnInfo(slugs)
