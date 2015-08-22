@@ -112,7 +112,7 @@ def responseFormats(data, fmt, **kwargs):
                 if type(data[d][0]).__name__ in ['dict', 'SortedDict']:
                     return dictToCSV(data[d])
                 else:
-                    return listToCSV(data[d],['filename'])
+                    return listToCSV(data[d],kwargs['labels'])
 
     raise Http404
 
@@ -139,12 +139,7 @@ def listToCSV(data,field_names):
     response['Content-Disposition'] = 'attachment; filename=' + filename + '.csv'
     writer = csv.writer(response)
     writer.writerow([label for label in field_names])   # first row
-    for obs in data:
-        if type(obs).__name__ == 'list':
-            writer.writerow([v for v in obs])
-        else:
-            writer.writerow([obs])
-
+    writer.writerows(data)
     return response
 
 
