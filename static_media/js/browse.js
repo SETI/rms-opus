@@ -124,7 +124,6 @@ var o_browse = {
                 o_collections.editCollection(ring_obs_id,action);
 
             } else {
-
                 o_browse.addRangeHandler(ring_obs_id);
             }
 
@@ -392,8 +391,7 @@ var o_browse = {
             // we have both sides of range
             $('.addrange','#browse').text("add range");
 
-            index = $('li#' + opus.prefs.browse + '__' + ring_obs_id).index();
-
+            index = $('#' + opus.prefs.browse + '__' + ring_obs_id).index();
             if (index > opus.addrange_min['index']) {
                 range = ring_obs_id_min + "," + ring_obs_id;
                 o_browse.checkRangeBoxes(ring_obs_id_min, ring_obs_id);
@@ -586,11 +584,9 @@ var o_browse = {
             current_id = ring_obs_id1;
             while (current_id != ring_obs_id2) {
 
-                // we know that the endpoints are already checked, so start with the next li element
+                // we know that the endpoints are already checked, so start with the next li/td element
                 next_element = $(element + current_id, '#browse').next();
 
-                // right here you need to start keeping track of the page number
-                // becuase it matters for keeping track of the index of the selected
                 // thumbnail in the list
                 if (next_element.hasClass("infinite_scroll_page")) {
                     // this is the infinite scroll indicator, continue to next
@@ -599,6 +595,7 @@ var o_browse = {
 
                 // check the boxes:
                 if (element == '#gallery__') {
+                    /* gallery view */
                     if (!next_element.find('.tools').hasClass("in")) {  // if not already checked
                         try {
                             ring_obs_id = next_element.attr("id").split('__')[1];
@@ -607,9 +604,10 @@ var o_browse = {
                         }
                     }
                 } else {
-                    if (!next_element.find('.data_checkbox').hasClass('fa-check-square-o')) {
+                    /* this is table view */
+                    if (!next_element.find('.data_checkbox').hasClass('fa-check-square-o')) {  // if not already checked
                         // box is not checked so checkity check it
-                        next_element.find('.data_checkbox').toggleClass('fa-check-square-o').toggleClass('fa-square-o');
+                        $(next_element).find(".data_checkbox").addClass('fa-check-square-o').removeClass('fa-square-o');
                     }
 
                 }
