@@ -179,11 +179,14 @@ def edit_collection_range(request, **kwargs):
     selected_range = []
     in_range = False  # loop has reached the range selected
 
+    column_slugs = request.GET.get('cols',settings.DEFAULT_COLUMNS)
+
+    ring_obs_id_key = column_slugs.split(',').index('ringobsid')
+
     # return HttpResponse(json.dumps(data['page']));
     for row in data['page']:
 
-        ring_obs_id = row[0]  # nooooo this only works b/c opus interface prevents user from doing so
-                              # todo make me more flexible
+        ring_obs_id = row[ring_obs_id_key]  
 
         if ring_obs_id == min_id:
             in_range = True;

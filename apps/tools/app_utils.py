@@ -45,6 +45,8 @@ def responseFormats(data, fmt, **kwargs):
             data['path'] = kwargs['path']
         if 'order' in kwargs:
             data['order'] = kwargs['order']
+        if 'labels' in kwargs:
+            data['columns'] = kwargs['labels']
 
         try:
             return HttpResponse(json.dumps(data), mimetype='application/json')
@@ -78,6 +80,9 @@ def responseFormats(data, fmt, **kwargs):
                     returndata['checkboxes'] = kwargs['checkboxes']
                 if 'collection' in kwargs:
                     returndata['collection'] = kwargs['collection']
+                if 'id_index' in kwargs:
+                    returndata['id_index'] = kwargs['id_index']
+
 
                 return render_to_response(kwargs['template'],returndata)
 

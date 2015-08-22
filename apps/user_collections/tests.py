@@ -75,6 +75,26 @@ class user_CollectionsTests(TestCase):
         expected = '{"count": 0, "request_no": 1, "err": false}'
         self.assertEqual(expected, response.content)
 
+
+    def test__edit_collection_add_range_reordered_columns(self):
+        """ """
+        self.emptycollection()
+        action = 'addrange'
+        ring_obs_id_min = 'S_IMG_CO_ISS_1692987504_N'
+        ring_obs_id_max = 'S_IMG_CO_ISS_1692987684_N'
+
+        url = '/opus/collections/default/addrange.json?request=1&addrange=%s,%s&planet=Saturn&target=HYPERION&view=browse&browse=gallery&colls_browse=gallery&order=timesec1&cols=primaryfilespec,time1,time2,ringobsid,observationduration,ringradius1,ringradius2,J2000longitude1,J2000longitude2,phase1,phase2,incidence1,incidence2,emission1,emission2'
+        request = self.factory.get(url % (ring_obs_id_min, ring_obs_id_max), HTTP_X_REQUESTED_WITH='XMLHttpRequest')
+        request.user = AnonymousUser()
+        request.session = test_session()
+        response = edit_collection(request, addrange = '%s,%s' % (ring_obs_id_min,ring_obs_id_max), action = action)
+
+        print response.content
+        self.assertEqual(response.status_code, 200)
+        expected = '{"count": 4, "request_no": 1, "err": false}'
+        self.assertEqual(expected, response.content)
+
+
     def test__edit_collection_add_range(self):
         """ """
         self.emptycollection()

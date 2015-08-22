@@ -60,7 +60,10 @@ def getData(request,fmt):
     if not slugs: slugs = settings.DEFAULT_COLUMNS
 
     labels = []
+    id_index = 0
     for slug in slugs.split(','):
+        if slug == 'ringobsid':
+            id_index = slugs.split(',').index(slug)
         try:
             labels += [ParamInfo.objects.get(slug=slug).label_results]
         except ParamInfo.DoesNotExist:
@@ -79,7 +82,7 @@ def getData(request,fmt):
     if fmt == 'raw':
         return data
     else:
-        return responseFormats(data,fmt,template='data.html', labels=labels,checkboxes=checkboxes, collection=collection, order=order)
+        return responseFormats(data,fmt,template='data.html', id_index=id_index, labels=labels,checkboxes=checkboxes, collection=collection, order=order)
 
 def get_slug_categories(request, slugs):
     slugs = request.GET.get('cols', False)

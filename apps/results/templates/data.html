@@ -1,3 +1,5 @@
+{% load index %}
+
 {% if table_headers  %}
 	<tr>
 		{% for label in labels %}
@@ -8,11 +10,12 @@
 {% endif %}
 
 {% for row in data  %}
-	<tr id = "data__{{ row.0 }}">
+
+	<tr id = "data__{{ row|index:id_index }}">
 		{% if checkboxes %}
    		<td class = "center">
     			<span class = "data_checkbox fa
-	        {% if row.0 in collection %}
+	        {% if row|index:id_index in collection %}
 	           fa-check-square-o
           {% else %}
             fa-square-o
