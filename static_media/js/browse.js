@@ -729,7 +729,6 @@ var o_browse = {
         namespace = view_info['namespace']; // either '#collection' or '#browse'
         prefix = view_info['prefix'];       // either 'colls_' or ''
         add_to_url = view_info['add_to_url'];  // adds colls=true if in collections view
-
         view_var = opus.prefs[prefix + 'browse'];  // either 'gallery' or 'data'
 
         var base_url = "/opus/api/images/small.html?alt_size=full&";
@@ -740,7 +739,6 @@ var o_browse = {
             if (!opus.table_headers_drawn) {
                 window.scroll(0,0);  // sometimes you have scrolled down in the search tab
                 o_browse.startDataTable(namespace);
-
                 return; // startDataTable() starts data table and then calls getBrowseTab again
             }
         }
@@ -787,7 +785,15 @@ var o_browse = {
 
         // wait! is this page already drawn?
         if (opus.last_page_drawn[prefix + view_var] == page) {
+            // this page is already drawn, just make sure it's showing and 
+            // start the scroll watch interval 
             opus.scroll_watch_interval = setInterval(o_browse.browseScrollWatch, 1000);
+
+            if (view_var == 'data') {
+                $('.data tbody', namespace).fadeIn("fast");
+            } else {
+                $('.gallery .ace-thumbnails', namespace).fadeIn("fast");
+            }
             return; // chill chill chill
         }
 
@@ -806,12 +812,15 @@ var o_browse = {
                function appendBrowsePage(page, prefix, view_var) { // for chaining effects
 
                     // hide the views that aren't supposed to be showing
+                    /*
                     for (var v in opus.all_browse_views) {
                         var bv = opus.all_browse_views[v];
-                        if ($('.' + bv, namespace).is(":visible") && bv != opus.prefs.browse) {
+                        if ($('.' + bv, namespace).is(":visible") && bv != opus.prefs[prefix + 'browse']) {
+                            console.log('hiding ' + '.' + bv + ' ' + namespace)
                             $('.' + bv, namespace).hide();
                         }
                     }
+                    */
                     // append the new html
                     if (view_var == 'data') {
                         $(html).appendTo($('.data tbody', namespace)).fadeIn();
