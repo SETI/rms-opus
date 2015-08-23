@@ -5,7 +5,6 @@
 
 $(document).ready(function() {
 
-
     $(window).smartresize(function(){
 
         o_search.adjustSearchHeight();
@@ -63,7 +62,9 @@ $(document).ready(function() {
         if ($(this).find('a').hasClass('old_opus')) {
             return;
         }
-
+        if ($(this).find('a').hasClass('restart')) {
+            return;
+        }
         // remove the active class on whatever other tab it is on
         $('.navbar-nav li', '#navbar').each(function(index, value) {
             if ($(this).hasClass("active")) {
@@ -94,25 +95,37 @@ $(document).ready(function() {
     // restart button behavior - start over button
     $('#navbar').on("click", ".restart", function() {
 
-        // this removes all from collection on every restart, a stop-gap until we fix issue
-        // $.ajax({ url: "/opus/collections/reset.html"});
+        clearInterval(opus.main_timer);
 
-        // this might be temporary, reset widgets on restart
-        opus.prefs.widgets = [];
-        opus.prefs.widgets2 = [];
+        opus.selections = {};
+        o_browse.resetQuery();
+
+        opus.prefs.view = 'search';
+
+        opus.changeTab();
+
+
+        // redraw all widgets
         opus.widgets_drawn = [];
         o_widgets.updateWidgetCookies();
-        // end widgets part
+        $('.widget-container-span').empty();
+        for (key in opus.prefs.widgets) {
+            slug = opus.prefs.widgets[key];
+            console.log('redrawing ' + slug); 
+            o_widgets.getWidget(slug,'#formscolumn1');
+        }
 
-        window.location.hash = '';
-        window.location.href = "/opus";
-        return false;
+        window.location.hash = '/cols=' + opus.prefs.cols.join(',');
+        opus.main_timer = setInterval(opus.load, opus.main_timer_interval);
+        
+        return false; 
+
     }),
 
     opus.addAllBehaviors();
 
     // watch the url for changes, this runs continuously
-    setInterval(opus.load, 1000);
+    opus.main_timer = setInterval(opus.load, opus.main_timer_interval);
 
     o_collections.initCollection();
 
@@ -218,6 +231,8 @@ var opus = {
     addrange_min:false,
     collection_q_intrvl: false,
     colls_options_viz:false,
+    main_timer:false,
+    main_timer_interval:false,
 
     //------------------------------------------------------------------------------------//
 
