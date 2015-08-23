@@ -90,6 +90,20 @@ var o_browse = {
             return false;
         });
 
+        // browse nav menu - add range - begins add range interaction
+        $('#browse').on("click", '.download_csv', function() {
+            col_str = opus.prefs.cols.join(',');
+            hash = [];
+            for (var param in opus.selections) {
+                if (opus.selections[param].length){
+                    hash[hash.length] = param + '=' + opus.selections[param].join(',').replace(/ /g,'+');
+                }
+            }
+            q_str = hash.join('&');
+            csv_link = "/opus/api/data.csv?" + q_str + '&cols=' + col_str + '&limit=' + opus.result_count.toString();
+            $(this).attr("href", csv_link);
+        });
+
 
         // browse nav menu - add range - begins add range interaction
         $('#browse').on("click", '.addrange', function() {
@@ -483,7 +497,7 @@ var o_browse = {
 
         // removes chosen column with X
         $('.column_chooser').on("click",'.chosen_column_close', function() {
-            slug = $(this).parent().attr('id').split('__')[1];
+            slug = $(this).parent().attr("id").split('__')[1];
             checkmark = $('.all_columns .' + slug).find('i').first();
 
             checkmark.hide();
@@ -816,7 +830,6 @@ var o_browse = {
                     for (var v in opus.all_browse_views) {
                         var bv = opus.all_browse_views[v];
                         if ($('.' + bv, namespace).is(":visible") && bv != opus.prefs[prefix + 'browse']) {
-                            console.log('hiding ' + '.' + bv + ' ' + namespace)
                             $('.' + bv, namespace).hide();
                         }
                     }
@@ -1252,7 +1265,7 @@ var o_browse = {
                     // wtf drawn but not visible?
                     $('.column_chooser').dialog({
                             open: function( event, ui ) {
-                                $('.ui-dialog-titlebar-close').removeAttr('title');
+                                $('.ui-dialog-titlebar-close').removeAttr("title");
                             },
                             height: 600,
                             width: 900,
@@ -1268,7 +1281,7 @@ var o_browse = {
             $('.column_chooser').html(opus.spinner);
             $('.column_chooser').dialog({
                     create: function( event, ui ) {
-                        $('.ui-dialog-titlebar-close').removeAttr('title');
+                        $('.ui-dialog-titlebar-close').removeAttr("title");
                     },
                     height: 600,
                     width: 900,
