@@ -436,6 +436,10 @@ var o_browse = {
     addColumnChooserBehaviors: function() {
 
         // a column is checked/unchecked
+        $('.column_chooser').off("click", '.submenu li a');
+        $('.column_chooser').off("click",'.chosen_column_close');
+
+
         $('.column_chooser').on("click", '.submenu li a', function() {
             slug = $(this).data('slug');
 
@@ -447,6 +451,7 @@ var o_browse = {
             def = $(this).find('i.fa-info-circle').attr("title");
             cols = opus.prefs['cols'];
             checkmark = $(this).find('i').first();
+
 
             if (!checkmark.is(":visible")) {
 
@@ -490,7 +495,6 @@ var o_browse = {
                 }
 
             }
-
             return false;
         });
 
@@ -1191,6 +1195,7 @@ var o_browse = {
             browse_view_scrolls = reset_browse_view_scrolls;
             opus.table_headers_drawn = false;
             opus.gallery_begun = false;
+            opus.column_chooser_drawn = false;
             o_hash.updateHash();
 
         },
@@ -1300,7 +1305,6 @@ var o_browse = {
                 for (var key in opus.prefs['cols']) {
                     $('.column_chooser .' + opus.prefs['cols'][key]).find('i').first().show();
                 }
-
 
                o_browse.addColumnChooserBehaviors();
 
