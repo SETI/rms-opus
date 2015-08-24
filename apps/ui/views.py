@@ -426,7 +426,7 @@ def getColumnChooser(request, **kwargs):
     slugs = filter(None, slugs) # sometimes 'cols' is in url but is blank, so fails above
     if not slugs:
         slugs = settings.DEFAULT_COLUMNS.split(',')
-    info = getColumnInfo(slugs)
+    all_slugs_info = getColumnInfo(slugs)
     namespace = 'column_chooser_input'
     menu = getMenuLabels(request, 'results')['menu']
 

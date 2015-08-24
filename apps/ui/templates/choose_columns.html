@@ -13,7 +13,7 @@
 
 <div class = "widget-box chosen_columns col-md-6">
 	<ul>
-		{% for slug,param_info in info.items %}
+		{% for slug,param_info in all_slugs_info.items %}
 			<li id="cchoose__{{ slug }}" 
 
                     {% if slug == 'ringobsid' %}
@@ -30,11 +30,13 @@
                             {{ param_info.label }}
                         {% endif %}
                     "></i>
+
+                    <!-- "remove this column" x button -->
 					<span class = "chosen_column_close
 
-                    {% if slug == 'ringobsid' %}
-                        hidden
-                    {% endif %}
+                        {% if slug == 'ringobsid' %}
+                            hidden
+                        {% endif %}
 
                     ">X</span>
 			</li>
