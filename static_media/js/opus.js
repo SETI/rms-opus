@@ -111,7 +111,6 @@ $(document).ready(function() {
         $('.widget-container-span').empty();
         for (key in opus.prefs.widgets) {
             slug = opus.prefs.widgets[key];
-            console.log('redrawing ' + slug); 
             o_widgets.getWidget(slug,'#formscolumn1');
         }
 
@@ -246,10 +245,10 @@ var opus = {
               $('.hints').html("");  // remove all hints
               opus.updateResultCount('0');
             }
-            if (opus.last_selections) {
+            if (!jQuery.isEmptyObject(opus.last_selections)) {
                   opus.last_selections = {};
+                  o_browse.resetQuery();
             }
-            o_browse.resetQuery();
 
             return;
         }
