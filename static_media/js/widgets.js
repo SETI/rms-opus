@@ -47,7 +47,12 @@ var o_widgets = {
         // close a widget
         $('#search').on('click', '.close_widget', function() {
             slug = $(this).data('slug');
-            slug_no_num = slug.match(/(.*)[1|2]/)[1];
+            try {
+                slug_no_num = slug.match(/(.*)[1|2]/)[1];
+
+            } catch (e) {
+                slug_no_num = slug;
+            }
             opus.prefs.widgets.splice(opus.prefs.widgets.indexOf(slug));
             opus.prefs.widgets2.splice(opus.prefs.widgets2.indexOf(slug));
             opus.widgets_drawn.splice(opus.widgets_drawn.indexOf(slug));
