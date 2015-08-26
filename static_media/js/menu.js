@@ -28,7 +28,8 @@ var o_menu = {
                 } catch(e) {
                     return false;
                 }
-                 return false;
+                return false;
+                
              } else {
                  o_widgets.getWidget(slug,'#search_widgets1');
              }

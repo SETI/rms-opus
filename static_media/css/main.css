@@ -508,6 +508,9 @@ div.gallery {
 
 /* Overwrite the default to keep the scrollbar always visible */
 
+.sidebar_buttons {
+    padding-left:5px;
+}
 .sidebar_wrapper i.fa-check {
     display:none;
 }

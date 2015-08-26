@@ -29,20 +29,20 @@ var o_search = {
                 if (opus.search_form_cols==2) o_widgets.resetWidgetScrolls(); // reset all scroll positions
                 // first move the widgets to the first column
                 opus.search_form_cols = 1;
-                $('#formscolumn1').width('70%');
-                $('#formscolumn2 .widget').each(function() {
-                    $(this).appendTo('#formscolumn1');
+                $('#search_widgets1').width('70%');
+                $('#search_widgets2 .widget').each(function() {
+                    $(this).appendTo('#search_widgets1');
                     slug = $(this).attr('id').split('__')[1];
                     opus.prefs.widgets.push(slug);
                     opus.prefs.widgets2.splice(jQuery.inArray(slug,opus.prefs.widgets2),1);
                     o_hash.updateHash();
                 });
 
-                $('#formscolumn1 .widget').each(function() {
+                $('#search_widgets1 .widget').each(function() {
                     o_widgets.adjustWidgetWidth(this);
                 });
                 // remove the 2nd column, widen the first column
-                $('#formscolumn2').remove();
+                $('#search_widgets2').remove();
             }
 
 
@@ -218,8 +218,8 @@ var o_search = {
             // no widgets defined, get the default widgets
             opus.prefs.widgets = ['planet','target'];
             o_widgets.placeWidgetContainers();
-            o_widgets.getWidget('planet','#formscolumn1');
-            o_widgets.getWidget('target','#formscolumn1');
+            o_widgets.getWidget('planet','#search_widgets1');
+            o_widgets.getWidget('target','#search_widgets1');
         } else {
             if (!opus.widget_elements_drawn.length) {
                 o_widgets.placeWidgetContainers();
@@ -231,14 +231,14 @@ var o_search = {
         for (key in opus.prefs.widgets) {  // fetch each widget
             slug = opus.prefs.widgets[key];
             if (jQuery.inArray(slug, opus.widgets_drawn) < 0) {  // only draw if not already drawn
-                o_widgets.getWidget(slug,'#formscolumn1');
+                o_widgets.getWidget(slug,'#search_widgets1');
             }
         }
 
         for (key in jQuery.unique(opus.prefs.widgets2)) {  // fetch each widget
             slug = opus.prefs.widgets2[key];
             if (jQuery.inArray(slug, opus.widgets_drawn) < 0) {  // only draw if not already drawn
-                o_widgets.getWidget(slug,'#formscolumn2');
+                o_widgets.getWidget(slug,'#search_widgets2');
             }
         }
         opus.search_tab_drawn = true;
@@ -250,12 +250,12 @@ var o_search = {
 
     addSecondFormsCol: function() {
         var width = '35%';
-        if (!$('#formscolumn2').length) {
+        if (!$('#search_widgets2').length) {
             $('.formscolumn').width(width);
 
-            $('#formscolumn1').after('<ul  id = "formscolumn2" style = "width:' + width + '" class="formscolumn"></ul>')
+            $('#search_widgets1').after('<ul  id = "search_widgets2" style = "width:' + width + '" class="formscolumn"></ul>')
                               .animate({width:width},'fast');
-            $('#formscolumn1, #formscolumn2').sortable({
+            $('#search_widgets1, #search_widgets2').sortable({
                     connectWith: '.formscolumn',
                     handle:'.widget_draghandle',
                     cursor: 'crosshair',
@@ -264,7 +264,7 @@ var o_search = {
                     }
             });
 
-            $('#formscolumn1 .widget').each(function() {
+            $('#search_widgets1 .widget').each(function() {
                 o_widgets.adjustWidgetWidth(this);
             });
 

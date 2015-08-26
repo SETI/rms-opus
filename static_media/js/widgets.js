@@ -11,7 +11,7 @@ var o_widgets = {
 
         // widgets are draggable
         /*
-        $('#formscolumn1, #formscolumn2', '#search').sortable({
+        $('#search_widgets1, #search_widgets2', '#search').sortable({
                 handle:'.widget_draghandle',
                 cursor: 'crosshair',
                 stop: function(event,ui) {
@@ -47,30 +47,36 @@ var o_widgets = {
         // close a widget
         $('#search').on('click', '.close_widget', function() {
             slug = $(this).data('slug');
-            try {
-                slug_no_num = slug.match(/(.*)[1|2]/)[1];
-
-            } catch (e) {
-                slug_no_num = slug;
-            }
-            opus.prefs.widgets.splice(opus.prefs.widgets.indexOf(slug));
-            opus.prefs.widgets2.splice(opus.prefs.widgets2.indexOf(slug));
-            opus.widgets_drawn.splice(opus.widgets_drawn.indexOf(slug));
-            opus.widget_elements_drawn.splice(opus.widget_elements_drawn.indexOf(slug));
-            if (slug in opus.selections) {
-                delete opus.selections[slug];
-            }
-            // handle for range queries
-            if (slug_no_num + '1' in opus.selections) {
-                delete opus.selections[slug_no_num + '1'];
-            }
-            if (slug_no_num + '2' in opus.selections) {
-                delete opus.selections[slug_no_num + '2'];
-            }
-
-            o_hash.updateHash();
-            o_widgets.updateWidgetCookies();
+            o_widgets.closeWidget(slug);
         });
+
+        // restore default widgets
+        $('#search').on("click", '.restore_widgets', function() {
+
+            var default_widgets = ['target','planet'];
+
+            for (slug in opus.selections) {
+                if (jQuery.inArray(slug, default_widgets) < 0) {
+                    o_widgets.closeWidget(slug);
+                }
+            }
+
+            
+            opus.prefs.widgets2 = [];
+            opus.prefs.widgets = [];
+            opus.widgets_drawn = [];
+            opus.widget_elements_drawn = [];
+            $('.widget-container-span').empty();
+
+
+            for (k in default_widgets) {
+                slug = default_widgets[k]; 
+                o_widgets.getWidget(slug,'#search_widgets1');
+            }
+
+           return false;
+        });
+
         // mult widget behaviors - user clicks a multi-select checkbox
 
         /***********************************************************/
@@ -104,6 +110,35 @@ var o_widgets = {
            }
            o_hash.updateHash();
         }); // end live
+    },
+
+
+    closeWidget: function(slug) {
+
+        try {
+            slug_no_num = slug.match(/(.*)[1|2]/)[1];
+
+        } catch (e) {
+            slug_no_num = slug;
+        }
+        opus.prefs.widgets.splice(opus.prefs.widgets.indexOf(slug));
+        opus.prefs.widgets2.splice(opus.prefs.widgets2.indexOf(slug));
+        opus.widgets_drawn.splice(opus.widgets_drawn.indexOf(slug));
+        opus.widget_elements_drawn.splice(opus.widget_elements_drawn.indexOf(slug));
+        if (slug in opus.selections) {
+            delete opus.selections[slug];
+        }
+        // handle for range queries
+        if (slug_no_num + '1' in opus.selections) {
+            delete opus.selections[slug_no_num + '1'];
+        }
+        if (slug_no_num + '2' in opus.selections) {
+            delete opus.selections[slug_no_num + '2'];
+        }
+
+        o_hash.updateHash();
+        o_widgets.updateWidgetCookies();
+
     },
 
     // removing, pausing, or minimizing widgets
@@ -459,8 +494,8 @@ var o_widgets = {
      },
 
      updateWidgetCookies: function() {
-         $.cookie("widgets", opus.prefs.widgets.join(','), { expires: 21});
-         $.cookie("widgets2", opus.prefs.widgets2.join(','), { expires: 21});
+         $.cookie("widgets", opus.prefs.widgets.join(','), { expires: 28});  // days
+         $.cookie("widgets2", opus.prefs.widgets2.join(','), { expires: 28});
      },
 
      placeWidgetContainers: function() {
@@ -507,13 +542,13 @@ var o_widgets = {
 
          /**
          // add the new slug to the url hash and the opus.prefs vars
-         if (formscolumn == '#formscolumn1') {
+         if (formscolumn == '#search_widgets1') {
              if (jQuery.inArray(slug,opus.prefs.widgets) < 0) {
-                 opus.prefs.widgets.push(slug);
+                 opus.prefs.widgets.unshift(slug);
              }
          } else {
              if (jQuery.inArray(slug,opus.prefs.widgets2) < 0) {
-                 opus.prefs.widgets2.push(slug);
+                 opus.prefs.widgets2.unshift(slug);
             }
          }
          */
@@ -521,12 +556,13 @@ var o_widgets = {
         // add the div that will hold the widget
         if (jQuery.inArray(slug,opus.widget_elements_drawn) < 0) {
 
-            opus.prefs.widgets.push(slug);
+            opus.prefs.widgets.unshift(slug);
+
             o_widgets.updateWidgetCookies();
             // these sometimes get drawn on page load by placeWidgetContainers, but not this time:
             var html = '<li id = "' + widget + '" class = "widget"></li>';
             $(html).hide().prependTo(formscolumn).show("slow");
-            opus.widget_elements_drawn.push(slug);
+            opus.widget_elements_drawn.unshift(slug);
 
         }
         $.ajax({ url: "/opus/forms/widget/" + slug + '.html?' + o_hash.getHash(),
@@ -605,7 +641,7 @@ var o_widgets = {
                 o_search.getHinting(slug);
             }
 
-             opus.widgets_drawn.push(slug);
+             opus.widgets_drawn.unshift(slug);
 
 
              o_widgets.customWidgetBehaviors(slug);

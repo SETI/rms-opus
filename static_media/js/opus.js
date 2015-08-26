@@ -5,6 +5,9 @@
 
 $(document).ready(function() {
 
+    opus.prefs.widgets = []
+    o_widgets.updateWidgetCookies();
+
     $(window).smartresize(function(){
 
         o_search.adjustSearchHeight();
@@ -93,7 +96,7 @@ $(document).ready(function() {
 
 
     // restart button behavior - start over button
-    $('#navbar').on("click", ".restart", function() {
+    $('#search').on("click", ".restart", function() {
 
         clearInterval(opus.main_timer);
 
@@ -104,14 +107,12 @@ $(document).ready(function() {
 
         opus.changeTab();
 
-
         // redraw all widgets
         opus.widgets_drawn = [];
-        o_widgets.updateWidgetCookies();
-        $('.widget-container-span').empty();
+         $('.widget-container-span').empty();
         for (key in opus.prefs.widgets) {
             slug = opus.prefs.widgets[key];
-            o_widgets.getWidget(slug,'#formscolumn1');
+            o_widgets.getWidget(slug,'#search_widgets1');
         }
 
         window.location.hash = '/cols=' + opus.prefs.cols.join(',');
