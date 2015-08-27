@@ -169,7 +169,7 @@ var o_browse = {
         });
 
         // thumbnail overlay tools
-        $('.gallery').on("click", ".tools-bottom a", function() {
+        $('.gallery').on("click", ".tools-bottom a", function(e) {
 
             ring_obs_id = $(this).parent().parent().attr("id").substring(9);
             $(this).parent().show();
@@ -181,12 +181,19 @@ var o_browse = {
 
             // click to view detail page
             if ($(this).find('i').hasClass('glyphicon-info-sign')) {
+                if (e.shiftKey || e.ctrlKey || e.metaKey) {
+                    // handles command click to open in new tab
+                    link = "/opus/#/" + o_hash.getHash();
+                    link = link.replace("view=browse", "view=detail");
+                    window.open(link, '_blank');
+                } else {
+                    o_browse.openDetailTab(ring_obs_id);
+                }
                 // leave a highlight on the clicked thumbnail
-                o_browse.openDetailTab(ring_obs_id);
-
                 $(' .thumb_overlay').removeClass("gallery_image_focus").removeClass("browse_image_selected");  // remove any old
                 $('#gallery__' + ring_obs_id + ' .thumb_overlay').addClass("gallery_image_focus browse_image_selected");
 
+                return false;
             }
 
             // click spyglass thingy to view colorbox
@@ -1092,10 +1099,18 @@ var o_browse = {
                     .html(html)
                     .fadeIn("fast");
 
+
             // add the 'get detail' behavior
-            $('.embedded_data_viewer').on("click", '.gallery_data_link', function() {
-                ring_obs_id = $(this).data('ringobsid');
-                o_browse.openDetailTab(ring_obs_id);
+            $('.embedded_data_viewer').on("click", '.gallery_data_link', function(e) {
+                if (e.shiftKey || e.ctrlKey || e.metaKey) {
+                    // handles command click to open in new tab
+                    link = "/opus/#/" + o_hash.getHash();
+                    link = link.replace("view=browse", "view=detail");
+                    window.open(link, '_blank');
+                } else {
+                    ring_obs_id = $(this).data('ringobsid');
+                    o_browse.openDetailTab(ring_obs_id);
+                }
                 return false;
             });
 
