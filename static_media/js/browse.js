@@ -15,6 +15,7 @@ var o_browse = {
         // close the embedded metadata box
         $('#browse').on("click", ".embedded_data_viewer .fa-times ", function() {
             o_browse.embedded_data_viewer_toggle();
+            opus.current_metadatabox = false;
             $(' .thumb_overlay').removeClass("browse_image_selected");  // remove any old
 
         });
@@ -446,7 +447,6 @@ var o_browse = {
         $('.column_chooser').off("click", '.submenu li a');
         $('.column_chooser').off("click",'.chosen_column_close');
 
-
         $('.column_chooser').on("click", '.submenu li a', function() {
             slug = $(this).data('slug');
 
@@ -494,6 +494,7 @@ var o_browse = {
             } else {
                 o_hash.updateHash();
 
+                // refetch the browse data since that data has changed
                 view_info = o_browse.getViewInfo();
                 prefix = view_info['prefix'];       // either 'colls_' or ''
                 pages = opus.pages_drawn[prefix + 'gallery'];
@@ -502,6 +503,7 @@ var o_browse = {
                 }
 
             }
+
             return false;
         });
 
@@ -929,9 +931,17 @@ var o_browse = {
 
         $.getJSON(base_url + new_hash, function(json) {
             // assign to data object
+            var updated_ids = [];
             for (var i in json.page) {
                 ring_obs_id = json.page[i][columns.indexOf('ringobsid')];
+                updated_ids.push(ring_obs_id);
                 opus.gallery_data[ring_obs_id] = json.page[i];
+            }
+
+            // update any currently rendered metadata box
+            if (opus.current_metadatabox && 
+                updated_ids.indexOf(opus.current_metadatabox) > -1) {
+                o_browse.updateEmbeddedMetadataBox(opus.current_metadatabox);
             }
 
         });
@@ -1067,6 +1077,8 @@ var o_browse = {
     }, 
 
     updateEmbeddedMetadataBox: function(ring_obs_id) {
+
+        opus.current_metadatabox = ring_obs_id;
 
         // handle which thumbnail has focus indicator outline
         $(' .thumb_overlay').removeClass("gallery_image_focus").removeClass('browse_image_selected');  // remove any old
