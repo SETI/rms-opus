@@ -3,7 +3,7 @@ import random
 import string
 import datetime
 import hashlib
-import tarfile
+import zipfile
 import json
 import csv
 from django.http import HttpResponse, Http404
@@ -34,9 +34,9 @@ def create_zip_filename(ring_obs_id=None):
     if not ring_obs_id:
         random_ascii = random.choice(string.ascii_letters).lower()
         timestamp = "T".join(str(datetime.datetime.now()).split(' '))
-        return 'pdsrings-data-' + random_ascii + '-' + timestamp + '.tgz'
+        return 'pdsrings-data-' + random_ascii + '-' + timestamp + '.zip'
     else:
-        return 'pdsrings-data-' + ring_obs_id + '.tgz'
+        return 'pdsrings-data-' + ring_obs_id + '.zip'
 
 def md5(filename):
     """ accepts full path file name and returns its md5
@@ -152,7 +152,7 @@ def get_download_info_API(request):
 @never_cache
 def create_download(request, collection_name=None, ring_obs_ids=None, fmt=None):
     """
-    feeds request to getFiles and zips up all files it finds into tar file
+    feeds request to getFiles and zips up all files it finds into zip file
     and adds a manifest file and md5 checksums
 
     """
@@ -193,7 +193,7 @@ def create_download(request, collection_name=None, ring_obs_ids=None, fmt=None):
         raise Http404
 
     # zip each file into tarball and create a manifest too
-    tar = tarfile.open(settings.TAR_FILE_PATH + zip_file_name, "w:gz")
+    zip_file = zipfile.ZipFile(settings.TAR_FILE_PATH + zip_file_name, mode='w')
     chksum = open(chksum_file_name,"w")
     manifest = open(manifest_file_name,"w")
     size, download_count = get_download_info(files)
@@ -230,7 +230,7 @@ def create_download(request, collection_name=None, ring_obs_ids=None, fmt=None):
                     chksum.write(digest+"\n")
                     manifest.write(mdigest+"\n")
                     try:
-                        tar.add(f, arcname=f.split("/")[-1]) # arcname = fielname only, not full path
+                        zip_file.write(f, arcname=f.split("/")[-1]) # arcname = fielname only, not full path
                         added.append(pretty_name)
 
                     except Exception,e:
@@ -247,10 +247,10 @@ def create_download(request, collection_name=None, ring_obs_ids=None, fmt=None):
     # add manifests and checksum files to tarball and close everything up
     manifest.close()
     chksum.close()
-    tar.add(chksum_file_name, arcname="checksum.txt")
-    tar.add(manifest_file_name, arcname="manifest.txt")
-    tar.add(csv_file_name, arcname="data.csv")
-    tar.close()
+    zip_file.write(chksum_file_name, arcname="checksum.txt")
+    zip_file.write(manifest_file_name, arcname="manifest.txt")
+    zip_file.write(csv_file_name, arcname="data.csv")
+    zip_file.close()
 
     zip_url = settings.TAR_FILE_URI_PATH + zip_file_name
 
