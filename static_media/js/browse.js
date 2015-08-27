@@ -743,6 +743,8 @@ var o_browse = {
 
     getBrowseTab: function() {
 
+        clearInterval(opus.scroll_watch_interval);  // always shut off just before, just in case
+
         view_info = o_browse.getViewInfo();
         namespace = view_info['namespace']; // either '#collection' or '#browse'
         prefix = view_info['prefix'];       // either 'colls_' or ''
@@ -805,13 +807,12 @@ var o_browse = {
         if (opus.last_page_drawn[prefix + view_var] == page) {
             // this page is already drawn, just make sure it's showing and 
             // start the scroll watch interval 
-            opus.scroll_watch_interval = setInterval(o_browse.browseScrollWatch, 1000);
-
             if (view_var == 'data') {
                 $('.data tbody', namespace).fadeIn("fast");
             } else {
                 $('.gallery .ace-thumbnails', namespace).fadeIn("fast");
             }
+            opus.scroll_watch_interval = setInterval(o_browse.browseScrollWatch, 1000);
             return; // chill chill chill
         }
 
@@ -1231,7 +1232,6 @@ var o_browse = {
         // this is on a setInterval
         browseScrollWatch: function() {
 
-
             view_info = o_browse.getViewInfo();
             prefix = view_info['prefix']; // none or colls_
             view_var = opus.prefs[prefix + 'browse'];  // data or gallery
@@ -1251,7 +1251,9 @@ var o_browse = {
                 // scroll is in view, up the "footer clicks" for this view
                 opus.browse_footer_clicks[prefix + view_var] = opus.browse_footer_clicks[prefix + view_var] + 1;
 
+                
                 o_browse.getBrowseTab();
+
             }
         },
 
