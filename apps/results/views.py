@@ -635,7 +635,7 @@ def getPage(request, colls=None, colls_page=None, page=None):
     if not collection_page:
         # this is for a search query
 
-        order = request.GET.get('order',False)
+        order = request.GET.get('order','time1')
 
         # figure out column order in table
         if order:

@@ -161,12 +161,6 @@ body {
         left:0;
     }
 }
-.main_site_tabs li {
-    display:none;
-}
-.main_site_tabs li:first-child {
-    display:block;
-}
 
 #search .add_input {
     display:none;

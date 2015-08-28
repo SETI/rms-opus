@@ -1,8 +1,22 @@
 var o_detail = {
 
     getDetail: function (ring_obs_id) {
+
         opus.prefs['detail'] = ring_obs_id;
         $('#detail_tab').fadeIn();
+
+        if (!ring_obs_id) {
+            // helpful 
+            html = ' \
+                <div style = "margin:20px"><h2>No Observation Selected</h2>   \
+                <p>To view details about an observation, click on the Browse Results tab<br>  \
+                at the top of the page. Click on a thumbnail and then "View Detail".</p>   \
+                </div>'
+
+            $(html).appendTo($('#detail')).fadeIn();
+            return;
+        }
+
         $('#detail').html(opus.spinner);
         $('#detail_extra').html(ring_obs_id);
 

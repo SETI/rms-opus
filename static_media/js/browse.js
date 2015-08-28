@@ -760,6 +760,22 @@ var o_browse = {
         add_to_url = view_info['add_to_url'];  // adds colls=true if in collections view
         view_var = opus.prefs[prefix + 'browse'];  // either 'gallery' or 'data'
 
+        if (namespace == '#collection' & opus.colls_pages == 0) {
+            // clicked on collections tab with nothing in collections, 
+            // give some helpful hint
+            html = ' \
+                <div style = "margin:20px"><h2>Your Collection is Empty</h2>   \
+                <p>To add observations to your Collection, click on the Browse Results tab<br> \
+                at the top of the page, mouse over the thumbnail gallery images to reveal the tools,<br> \
+                then click the checkbox below a thumbnail.  </p>   \
+                </div>'
+
+            $(html).appendTo($('.gallery .ace-thumbnails', namespace)).fadeIn();
+            return;
+
+        }
+
+
         var base_url = "/opus/api/images/small.html?alt_size=full&";
         if (opus.prefs[prefix + 'browse'] == 'data') {
             base_url = '/opus/api/data.html?';
@@ -890,6 +906,8 @@ var o_browse = {
 
                 o_browse.initColorbox();
 
+                o_hash.updateHash();
+
             }, 
             complete: function() {
                 // turn the scroll watch timer back on
@@ -908,8 +926,14 @@ var o_browse = {
         // we have to do a little hacking of the hash, we want page as we want it and ring_obs_id too
         new_hash = [];
         for (var i in o_hash.getHash().split('&')) {
-            param = o_hash.getHash().split('&')[i].split('=')[0];
-            values = o_hash.getHash().split('&')[i].split('=')[1].split(',');
+
+            if (o_hash.getHash()) {
+                param = o_hash.getHash().split('&')[i].split('=')[0];
+                values = o_hash.getHash().split('&')[i].split('=')[1].split(',');
+            } else {
+                param = values = [];
+            }
+
 
             // make sure ring_obs_id is in columns
             columns = opus.prefs.cols;
@@ -928,6 +952,8 @@ var o_browse = {
         }
 
         new_hash = new_hash.join('&');
+
+
 
         $.getJSON(base_url + new_hash, function(json) {
             // assign to data object

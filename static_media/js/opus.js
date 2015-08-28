@@ -192,7 +192,7 @@ var opus = {
                                    // like {"gallery":1, "data":1, "colls_gallery":1, "colls_data":1 };
             'gallery_data_viewer': true, // true if you want to view data in the box rather than img
             'limit': 100, // results per page
-            'order':'timesec1',  // result table ordering
+            'order':'time1',  // result table ordering
             'cols': default_columns.split(','),  // default result table columns by slug
             'widgets':[], // search tab widget columns
             'widgets2':[],
@@ -272,16 +272,10 @@ var opus = {
 
         if (!selections) {
 
-            if (opus.result_count != '0') {
-              $('.hints').html("");  // remove all hints
-              opus.updateResultCount('0');
-            }
             if (!jQuery.isEmptyObject(opus.last_selections)) {
                   opus.last_selections = {};
                   o_browse.resetQuery();
             }
-
-            return;
         }
 
         // if selections different from last_selections
@@ -302,14 +296,6 @@ var opus = {
         }
 
 
-        if (!Object.keys(opus.selections).length) {
-            opus.last_selections = {};
-            if (opus.result_count!='0') {
-                $('.hints').html("");  // remove all hinting
-                opus.updateResultCount('0');
-            }
-            return;
-        }
         // start the result count spinner and do the yellow flasj
         $('#result_count').html(opus.spinner).parent().effect("highlight", {}, 500);
           // query string has changed
@@ -389,6 +375,7 @@ var opus = {
 
             case 'detail':
                 $('#detail').fadeIn();
+                
                 o_detail.getDetail(opus.prefs.detail);
 
                 opus.collection_q_intrvl = setInterval("o_collections.processCollectionQueue()", 1000); // resends any stray requests not recvd back from server
@@ -418,7 +405,6 @@ var opus = {
     mainTabDisplay: function(tabname) {
         // disclosing of main site tabs
         // tab labels at the top of the site are not displayed all at once
-        // they appear as they are triggered, for example result tab appears when there
         // become some results, etc
 
         switch (tabname) {
