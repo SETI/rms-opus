@@ -188,7 +188,7 @@ def constructQueryString(selections, extras):
 
 
 
-def getUserQueryTable(selections,extras=None):
+def getUserQueryTable(selections=None,extras=None):
     """
     This is THE main data query place.  Performs a data search and creates
     a table of Ids that match the result rows.
@@ -200,11 +200,9 @@ def getUserQueryTable(selections,extras=None):
     cursor = connection.cursor()
 
     if not extras:
-        extras={}
-
-    # housekeeping
+        extras = {}
     if not selections:
-        return False
+        selections = {}
 
     # do we have a cache key
     no     = setUserSearchNo(selections,extras)
@@ -336,11 +334,10 @@ def urlToSearchParams(request_get):
         return results
 
     else:
-        log.debug('len(selections.keys not greater than zero')
-        return False
+        return [{}, {}]
 
 
-def setUserSearchNo(selections,extras=None):
+def setUserSearchNo(selections=None,extras=None):
     """
     creates a new row in userSearches model for every search request
     [cleanup,optimize]
@@ -348,8 +345,9 @@ def setUserSearchNo(selections,extras=None):
     this method looks in user_searches table for current selections
     if none exist creates it, returns id key
     """
-    if not extras:
-        extras = {}
+    if not extras: extras = {}
+
+    if not selections: selections = {}
 
     qtypes_json = qtypes_hash = None
     if 'qtypes' in extras:
@@ -371,6 +369,7 @@ def setUserSearchNo(selections,extras=None):
     if 'string_selects' in extras:
         string_selects_json = str(json.dumps(sortDict(extras['string_selects'])))
         string_selects_hash = hashlib.md5(string_selects_json).hexdigest()
+
 
     selections_json = str(json.dumps(selections))
     selections_hash = hashlib.md5(selections_json).hexdigest()

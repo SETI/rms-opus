@@ -3,10 +3,16 @@
 
 """
 import json
+from django.test import RequestFactory
+
 # from django.test import TestCase  removed because it deletes test table data after every test
 from unittest import TestCase
 from django.test.client import Client
 from django.http import QueryDict
+from django.contrib.auth.models import AnonymousUser, User
+
+SESSION_ENGINE = 'django.contrib.sessions.backends.cache'
+SESSION_COOKIE_NAME = 'opus-test-cookie'
 
 
 from search.views import *
@@ -17,12 +23,35 @@ settings.CACHE_BACKEND = 'dummy:///'
 
 cursor = connection.cursor()
 
+class test_session(dict):
+    """
+    extends a dict object and adds a session_key attribute for use in this test suite
+
+    because in django tests:
+
+    session and authentication attributes must be supplied by the test itself if required for the view to function properly.
+    ( via http://stackoverflow.com/questions/14714585/using-session-object-in-django-unit-test )
+
+    in most cases a request.session = {} in the test itself would suffice
+    but in user_collections views we also want to receive a string from request.session.session_key
+    because that's how user collections tables are named
+
+    extends the dict because that is how real sessions are interacted with
+
+    """
+    session_key = 'test_key'
+
+
 class resultsTests(TestCase):
 
     c = Client()
     param_name = 'obs_general.planet_id'
     selections = {}
     selections[param_name] = ['Jupiter']
+
+    def setUp(self):
+        self.client = Client()
+        self.factory = RequestFactory()
 
     def teardown(self):
         cursor = connection.cursor()
@@ -34,6 +63,23 @@ class resultsTests(TestCase):
             q = 'drop table ' + row[0]
             print q
             cursor.execute(q)
+
+    def test__getPage_no_selections(self):
+        request = self.factory.get('some_request?', HTTP_X_REQUESTED_WITH='XMLHttpRequest')
+        request.user = AnonymousUser()
+        request.session = test_session()
+        response = getPage(request)
+        result_count = len(response[2])
+        self.assertGreater(result_count, 99)
+
+    def test__getPage_no_selections_big_limit(self):
+        request = self.factory.get('some_request?limit=6000', HTTP_X_REQUESTED_WITH='XMLHttpRequest')
+        request.user = AnonymousUser()
+        request.session = test_session()
+        response = getPage(request)
+        result_count = len(response[2])
+        self.assertGreater(result_count, 5999)
+
 
     def test__getFiles(self):
         ring_obs_id = 'S_IMG_CO_ISS_1688230146_N'
