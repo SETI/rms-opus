@@ -62,6 +62,9 @@ $(document).ready(function() {
     // see triggerNavbarClick
     $('#navbar').on("click", '.navbar-nav li', function() {
 
+        if ($(this).find('a').hasClass('restore_widgets')) {
+            return;
+        }
         if ($(this).find('a').hasClass('old_opus')) {
             return;
         }
@@ -96,7 +99,7 @@ $(document).ready(function() {
 
 
     // restart button behavior - start over button
-    $('#search').on("click", ".restart", function() {
+    $('.start_over_controls').on("click", ".restart", function() {
 
         clearInterval(opus.main_timer);
 
@@ -131,6 +134,31 @@ $(document).ready(function() {
 
     return;
 
+});
+
+// restore default widgets
+$('.start_over_controls').on("click", '.restore_widgets', function() {
+
+    for (slug in opus.selections) {
+        if (jQuery.inArray(slug, opus.default_widgets) < 0) {
+            o_widgets.closeWidget(slug);
+        }
+    }
+
+    
+    opus.prefs.widgets2 = [];
+    opus.prefs.widgets = [];
+    opus.widgets_drawn = [];
+    opus.widget_elements_drawn = [];
+    $('.widget-container-span').empty();
+
+
+    for (k in opus.default_widgets) {
+        slug = opus.default_widgets[k]; 
+        o_widgets.getWidget(slug,'#search_widgets1');
+    }
+
+   return false;
 });
 
 var opus = {
@@ -206,6 +234,7 @@ var opus = {
     menu_list_indicators: {'slug':[], 'cat':[], 'group':[] },
     // menu_state: {'cats':['obs_general'], 'groups':[]},  // keep track of menu items that are open
     menu_state: {'cats':'all', 'groups':[]},
+    default_widgets: ['target','planet'],
 
     // browse tab
     last_page_drawn: reset_last_page_drawn, // defined in header.html,

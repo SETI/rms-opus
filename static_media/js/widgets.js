@@ -50,32 +50,6 @@ var o_widgets = {
             o_widgets.closeWidget(slug);
         });
 
-        // restore default widgets
-        $('#search').on("click", '.restore_widgets', function() {
-
-            var default_widgets = ['target','planet'];
-
-            for (slug in opus.selections) {
-                if (jQuery.inArray(slug, default_widgets) < 0) {
-                    o_widgets.closeWidget(slug);
-                }
-            }
-
-            
-            opus.prefs.widgets2 = [];
-            opus.prefs.widgets = [];
-            opus.widgets_drawn = [];
-            opus.widget_elements_drawn = [];
-            $('.widget-container-span').empty();
-
-
-            for (k in default_widgets) {
-                slug = default_widgets[k]; 
-                o_widgets.getWidget(slug,'#search_widgets1');
-            }
-
-           return false;
-        });
 
         // mult widget behaviors - user clicks a multi-select checkbox
 

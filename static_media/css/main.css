@@ -506,11 +506,15 @@ div.gallery {
 
 
 
+.start_over_controls {
+    margin-top:5px;
+}
+.start_over_controls .btn:nth-child(2) {
+    margin-left:-5px;
+}
+
 /* Overwrite the default to keep the scrollbar always visible */
 
-.sidebar_buttons {
-    padding-left:5px;
-}
 .sidebar_wrapper i.fa-check {
     display:none;
 }

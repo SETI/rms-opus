@@ -40,9 +40,18 @@
 
             </ul>
 
-            <ul class="nav navbar-nav navbar-right hidden-xs">
-                <li style = "white-space:nowrap; color:white;" class = "hidden-xs">
-                    <a class = "old_opus hidden-xs hidden-sm" style = "color:yellow" href="http://pds-rings.seti.org/opus1/">Looking for original OPUS?</a>
+            <ul class="nav navbar-nav navbar-right">
+                <li class = "start_over_controls">
+                  <button type="button" class="btn btn-sm btn-success restart">
+                      Start Over
+                  </button>
+                  <button type="button" class="btn btn-sm btn-success dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                      <span class="caret"></span>
+                      <span class="sr-only">Toggle Dropdown</span>
+                    </button>
+                    <ul class="dropdown-menu">
+                      <li class="restore_widgets" ><a class = "restore_widgets" href="/opus/">Start Over and Restore Defaults</a></li>
+                    </ul>
                 </li>
 
             </ul>
