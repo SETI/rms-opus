@@ -6,9 +6,6 @@ DEBUG = True
 
 BASE_PATH = 'opus'
 
-TIME_LIB_PATH          = ""  # path for julain lib
-sys.path.append(TIME_LIB_PATH)
-
 DATABASES = {
     'default': {
         'NAME': '',  # local database name

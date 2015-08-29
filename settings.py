@@ -6,6 +6,7 @@ from collections import OrderedDict
 PROJECT_ROOT = os.path.dirname(__file__)
 sys.path.insert(0, PROJECT_ROOT)
 sys.path.insert(0, os.path.join(PROJECT_ROOT, 'apps'))
+sys.path.insert(0, os.path.join(PROJECT_ROOT, 'pds-tools'))
 from secrets import *
 
 DEBUG = False
