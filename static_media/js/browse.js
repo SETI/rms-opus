@@ -994,8 +994,8 @@ var o_browse = {
             next: '<i class="ace-icon fa fa-arrow-right"></i>',
             close:'&times;',
             current:'{current} of {total}',
-            maxWidth:'90%',
-            maxHeight:'90%',
+            height:'90%',
+            initialHeight:'90%',
             loop:false,
             fastIframe: false,
 
