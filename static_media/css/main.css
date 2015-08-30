@@ -15,10 +15,10 @@ body {
     font-family: Verdana, Arial, Helvetica, sans-serif;
 
 }
-#cboxContent, #cboxContent, #cboxLoadedContent, img.cboxPhoto {
-  background-color:#303030;
+#cboxContent, #cboxContent, #cboxLoadedContent, img.cboxPhoto, #cboxLoadedGaphic, #cboxLoadingGraphic  {
+  background-color:#303030 !important;
+  background:#303030 !important;
 }
-
 
 
 .dictionary {
