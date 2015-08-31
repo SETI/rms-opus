@@ -195,7 +195,7 @@ ERROR_LOG_PATH = PROJECT_ROOT + "logs/opus_log.txt"
 image_sizes = (('full','Full Res'),('med','Medium'),('small','Small'),('thumb','Thumb')) # key is value and value is label
 IMAGE_TYPES = OrderedDict(image_sizes)
 
-THUMBNAIL_NOT_FOUND = 'http://pds-rings.seti.org/search/app/images/thumbnail_not_found.png'
+THUMBNAIL_NOT_FOUND = 'http://pds-rings.seti.org/opus2_resources/static_media/img/thumbnail_not_found.png'
 
 FILE_HTTP_PATH  = 'http://pds-rings.seti.org/volumes/'
 DERIVED_HTTP_PATH  = 'http://pds-rings.seti.org/derived/'
