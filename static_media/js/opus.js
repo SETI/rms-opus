@@ -286,13 +286,9 @@ var opus = {
             }
             opus.force_load = false;
 
-        } else if (!jQuery.isEmptyObject(opus.last_selections)) {
-
-            // selections have changed (and last_selections is not empty)
-            // if there was a last selections, clear results containers
-            // and reset any browse tab things
-            opus.prefs.page = default_pages;
-            o_browse.resetQuery();
+        } else {
+                opus.prefs.page = {"gallery":1, "data":1, "colls_gallery":1, "colls_data":1 };
+                o_browse.resetQuery();
         }
 
 
