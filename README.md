@@ -8,7 +8,6 @@ best to create the test database manually:
     mysql test_opus_small < opus_small.sql
 
 
-
 ## Dependencies
 
 see requirements.txt
