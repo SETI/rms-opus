@@ -200,7 +200,7 @@ THUMBNAIL_NOT_FOUND = 'http://pds-rings.seti.org/opus2_resources/static_media/im
 FILE_HTTP_PATH  = 'http://pds-rings.seti.org/volumes/'
 DERIVED_HTTP_PATH  = 'http://pds-rings.seti.org/derived/'
 IMAGE_HTTP_PATH = 'http://pds-rings.seti.org/browse/'
-MAX_CUM_DOWNLAOD_SIZE = 5*1024*1024*1024 # 5 gigs max cum downloads
+MAX_CUM_DOWNLOAD_SIZE = 5*1024*1024*1024 # 5 gigs max cum downloads
 
 
 
