@@ -199,13 +199,13 @@ def create_download(request, collection_name=None, ring_obs_ids=None, fmt=None):
     size, download_count = get_download_info(files)
 
     # don't keep creating downloads after user has reached their size limit
-    cum_downlaod_size = request.session.get('cum_downlaod_size', 0)
-    if cum_downlaod_size > settings.MAX_CUM_DOWNLAOD_SIZE:
-        # user is trying to download > MAX_CUM_DOWNLAOD_SIZE
-        return HttpResponse("Sorry, Max cumulative download size reached " + str(cum_downlaod_size) + ' > ' + str(settings.MAX_CUM_DOWNLAOD_SIZE))
+    cum_download_size = request.session.get('cum_download_size', 0)
+    if cum_download_size > settings.MAX_CUM_DOWNLOAD_SIZE:
+        # user is trying to download > MAX_CUM_DOWNLOAD_SIZE
+        return HttpResponse("Sorry, Max cumulative download size reached " + str(cum_download_size) + ' > ' + str(settings.MAX_CUM_DOWNLOAD_SIZE))
     else:
-        cum_downlaod_size = cum_downlaod_size + size
-        request.session['cum_downlaod_size'] = int(cum_downlaod_size)
+        cum_download_size = cum_download_size + size
+        request.session['cum_download_size'] = int(cum_download_size)
 
     errors = []
     added = []

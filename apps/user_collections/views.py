@@ -235,7 +235,7 @@ def view_collection(request, collection_name, template="collections.html"):
     files = getFiles(fmt="raw", collection=True, previews='none', session_id=session_id)
     all_product_types = Files.objects.all().values('product_type').distinct()
 
-    # downlaod_info
+    # download_info
     from downloads.views import get_download_info
     download_size, download_count = get_download_info(files)
     

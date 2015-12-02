@@ -997,7 +997,6 @@ var o_browse = {
             height:'90%',
             initialHeight:'90%',
             loop:false,
-            fastIframe: false,
 
             onOpen:function(){
                 // prevent scrolling for duration that colorbox is visible
