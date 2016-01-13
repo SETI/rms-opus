@@ -17,7 +17,7 @@ def get_def(term, context):
 def get_more_info_url(term, context):
 
     if get_def(term, context):
-        return "http://pds-rings.seti.org/dictionary/index.html?term=%s&context=%s" % (term, context)
+        return "http://pds-rings.seti.org/dictionary/index.php?term=%s&context=%s" % (term, context)
     else:
         return False
 
