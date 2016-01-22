@@ -243,10 +243,17 @@ def getRangeEndpoints(request,slug,fmt='json'):
         range_endpoints['max'] = ObsGeneral.objects.filter(**{param_name1:range_endpoints['max']})[0].time1
         pass  # ObsGeneral.objects.filter(param_name1=)
     else:
-        if abs(range_endpoints['min']) > 999000:
-            range_endpoints['min'] = format(1.0*range_endpoints['min'],'.3');
-        if abs(range_endpoints['max']) > 999000:
-            range_endpoints['max'] = format(1.0*range_endpoints['max'],'.3');
+        try:
+            if abs(range_endpoints['min']) > 999000:
+                range_endpoints['min'] = format(1.0*range_endpoints['min'],'.3');
+        except TypeError:
+            pass
+
+        try:
+            if abs(range_endpoints['max']) > 999000:
+                range_endpoints['max'] = format(1.0*range_endpoints['max'],'.3');
+        except TypeError:
+            pass
 
     cache.set(cache_key,range_endpoints,0)
 
