@@ -26,7 +26,7 @@ from django.utils.datastructures import SortedDict
 from settings import DATABASES, MULT_FIELDS
 
 opus1 = 'Observations' # from here
-opus2 = 'opus'   # to here
+opus2 = 'opus_small'   # to here
 
 #----  shell argvs --------#
 import sys
@@ -106,7 +106,8 @@ exclude = ['%movies%',"%mvf_c%",'file_sizes']
 
 obs_exclude = ['obs_rg_COISS_2075', 'obs_surface_geometry_raw'] # obs-like tables to exclude
 cursor.execute("use %s" % opus1)
-cursor.execute("show tables like %s", 'obs%')
+q = "show tables like '%s'" % ('obs%')
+cursor.execute(q)
 obs_tables = [row[0] for row in cursor.fetchall() if row[0] not in obs_exclude]
 
 
