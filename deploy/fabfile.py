@@ -10,6 +10,7 @@ git_branch = 'master'
 memcached_port = '11211'
 # memcached_port = '11212'
 
+
 def tests_local():
     """
     runs all unit tests locally
@@ -68,10 +69,11 @@ def deploy():
 def cache_reboot():
         with cd('/home/lballard/'):
             # reset memcache
-            """
-            run('/usr/bin/memcached -l 127.0.0.1 -p %s restart' % memcached_port)
-            run('/usr/bin/memcached -d -m 64 -l 127.0.0.1 -p %s -l -d' % memcached_port)
-            """
+            try:
+                run('sudo killall memcached')
+            except: 
+                pass  # sometimes it's already killed
+            run('/usr/bin/memcached -d -l 127.0.0.1 -m 1024 -p %s' % memcached_port)
             # reset django cache
             run('sudo python /home/django/djcode/' + prod_deploy_dir + '/deploy/cache_clear.py')
 

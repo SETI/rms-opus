@@ -1,7 +1,7 @@
 # Set up the Django Enviroment for running as shell script
 import sys
-sys.path.append('/home/django/djcode/opus')  #srvr
-# sys.path.append('/users/lballard/projects/opus/')
+# sys.path.append('/home/django/djcode/opus')  #srvr
+sys.path.append('/users/lballard/projects/opus/')
 # from opus import settings
 from django.conf import settings
 from settings import CACHES, DATABASES  # DATABASES creds only
@@ -31,7 +31,7 @@ if len(sys.argv) < 2:
 
     Like so:
 
-    python build_db.py COCIRS_5909,COISS_2068,COISS_2069,COVIMS_0040,VGISS_8207
+    python build_db.py COCIRS_5909,COISS_1007,COISS_2068,COISS_2069,COVIMS_0040,VGISS_8207
 
     make sure there are no spaces in your volume list!
 
@@ -98,13 +98,64 @@ exclude = ['%movies%',"%mvf_c%",'file_sizes']
 # ------------ we will copy all the Obs_ tables from Observations to opus ------------#
 obs_exclude = ['obs_rg_COISS_2075', 'obs_surface_geometry_raw'] # obs-like tables to exclude
 cursor.execute("use %s" % opus1)
-cursor.execute("show tables like %s", 'obs%')
+q = "show tables like '%s'" % 'obs%'
+cursor.execute(q)
 obs_tables = [row[0] for row in cursor.fetchall() if row[0] not in obs_exclude]
 
+print "begin"
 
 # ------------------------ begin the beguine -----------------------------------#
+
+# ------------ copy over the 'forms' table into the new 'param_info' table  ------------#
+
+# first, fetch the tables:
+# system("mysql %s < import/backup_util_tables.sql -u%s -p%s" % (opus2, DATABASES['default']['USER'], DATABASES['default']['PASSWORD'])))
+
+# build the little user_collections template table
+print "building param_info from user_collections_template.sql "
+system("mysql %s < import/user_collections_template.sql -u%s -p%s" % (opus2, DATABASES['default']['USER'], DATABASES['default']['PASSWORD']))
+
+# first, build the empty param_info table in the new db - the table schema lives in a dump file in the repo
+print "building param_info from param_info_table.sql "
+system("mysql %s < import/param_info_table.sql -u%s -p%s" % (opus2, DATABASES['default']['USER'], DATABASES['default']['PASSWORD']))
+
+
+# only need this part if recalculating param_info_table,
+"""
+q = "replace into %s.param_info select * from %s.forms where (display = 'Y' or display_results = 'Y')" % (opus2, opus1)
+for x in exclude:
+    q = q + " and table_name not like %s "
+cursor.execute(q, exclude)
+q = "replace into %s.param_info select * from %s.forms where table_name = 'obs_general' and name in ('time1','time2')" % (opus2, opus1)
+cursor.execute(q)
+"""
+
+# some fiddly updates to the param_info_table
+cursor.execute("update %s.param_info as params, %s.forms as forms set params.display = true where forms.display = 'Y' and params.id = forms.no" % (opus2, opus1))
+cursor.execute("update %s.param_info as params, %s.forms as forms set params.display_results = true where forms.display_results = 'Y' and params.id = forms.no" % (opus2, opus1))
+cursor.execute("update " + opus2 + ".param_info set form_type = 'RANGE' where form_type = 'None' and name like %s or name like %s" , ('%1', '%2'))
+cursor.execute("update %s.param_info set slug = 'target' where name = 'target_name'" % opus2)
+cursor.execute("update %s.param_info set display = NULL where display = 'N'" % opus2)
+cursor.execute("update %s.param_info set slug = 'planet' where name = 'planet_id'" % opus2)
+cursor.execute("update %s.param_info set slug = 'surfacetarget' where slug = 'target' and category_name = 'obs_surface_geometry'" % opus2)
+cursor.execute("update %s.param_info set form_type = 'TIME' where slug = 'timesec2'" % opus2)
+q = "delete from %s.param_info where slug = 'target'  and category_name like '%s'" % (opus2, 'obs_surface%')
+cursor.execute(q)
+cursor.execute("update %s.param_info set display = 1 where name = 'primary_file_spec'" % opus2)
+# update param_info set display_results = 1 where slug = 'time1' or slug = 'time2';
+cursor.execute("update %s.param_info set display_results = 1 where slug = 'time1' or slug = 'time2'" % opus2)
+# update param_info set display_results = 1 where slug = 'timesec1' or slug = 'timesec2';
+cursor.execute("update %s.param_info set display_results = 1 where slug = 'timesec1' or slug = 'timesec2';" % opus2)
+cursor.execute("update %s.param_info set form_type = 'STRING' where name = 'primary_file_spec'" % opus2)
+cursor.execute("update %s.param_info  set label = label_results, form_type = NULL where category_name = 'obs_general' and name in ('time1','time2');" % opus2)
+
+
+
+
+
 # loop thru all obs tables in the old opus database
 # and copy these tables to the new opus database
+print "obs table loop"
 for tbl in obs_tables:
 
     # create the new table
@@ -224,7 +275,8 @@ transaction.commit_unless_managed()
 
 # first get the names of all the tables we'll be copying
 cursor.execute("use %s" % opus1)
-cursor.execute("show tables like %s", 'mult%')
+q = "show tables like '%s'" % 'mult%'
+cursor.execute(q)
 mult_tables = [row[0] for row in cursor.fetchall() if row[0]]
 
 # now copy all these tables to the new opus database
@@ -253,56 +305,12 @@ for tbl in mult_tables:
 
     # copy over the data from old mult table to new
     q_insert = "insert into %s.%s select %s.* from %s.%s"
-    q_params = [opus2, tbl, tbl, opus1, tbl]
+    q_params = [opus2, tbl, tbl, opus1, tbl]  # tbl is the mult table
     cursor.execute(q_insert % tuple(q_params))
-
-
 
 cursor.execute("create view %s.grouping_target_name as select * from %s.mult_obs_general_planet_id" % (opus2, opus2))
 
 
-# ------------ copy over the 'forms' table into the new 'param_info' table  ------------#
-
-# first, fetch the tables:
-# system("mysql %s < import/backup_util_tables.sql -u%s -p%s" % (opus2, DATABASES['default']['USER'], DATABASES['default']['PASSWORD'])))
-
-# build the little user_collections template table
-print "building param_info from user_collections_template.sql "
-system("mysql %s < import/user_collections_template.sql -u%s -p%s" % (opus2, DATABASES['default']['USER'], DATABASES['default']['PASSWORD']))
-
-# first, build the empty param_info table in the new db - the table schema lives in a dump file in the repo
-print "building param_info from param_info_table.sql "
-system("mysql %s < import/param_info_table.sql -u%s -p%s" % (opus2, DATABASES['default']['USER'], DATABASES['default']['PASSWORD']))
-
-"""
-only need this part if recalculating param_info_table,
-# and import the data
-q = "insert into %s.param_info select * from %s.forms where (display = 'Y' or display_results = 'Y')" % (opus2, opus1)
-for x in exclude:
-    q = q + " and table_name not like %s "
-cursor.execute(q, exclude)
-q = "insert into %s.param_info select * from %s.forms where table_name = 'obs_general' and name in ('time1','time2')" % (opus2, opus1)
-cursor.execute(q)
-"""
-
-# some fiddly updates to the param_info_table
-cursor.execute("update %s.param_info as params, %s.forms as forms set params.display = true where forms.display = 'Y' and params.id = forms.no" % (opus2, opus1))
-cursor.execute("update %s.param_info as params, %s.forms as forms set params.display_results = true where forms.display_results = 'Y' and params.id = forms.no" % (opus2, opus1))
-cursor.execute("update " + opus2 + ".param_info set form_type = 'RANGE' where form_type = 'None' and name like %s or name like %s" , ('%1', '%2'))
-cursor.execute("update %s.param_info set slug = 'target' where name = 'target_name'" % opus2)
-cursor.execute("update %s.param_info set display = NULL where display = 'N'" % opus2)
-cursor.execute("update %s.param_info set slug = 'planet' where name = 'planet_id'" % opus2)
-cursor.execute("update %s.param_info set slug = 'surfacetarget' where slug = 'target' and category_name = 'obs_surface_geometry'" % opus2)
-cursor.execute("update %s.param_info set form_type = 'TIME' where slug = 'timesec2'" % opus2)
-q = "delete from %s.param_info where slug = 'target'" % opus2
-cursor.execute(q + " and category_name like %s" , 'obs_surface%')
-cursor.execute("update %s.param_info set display = 1 where name = 'primary_file_spec'" % opus2)
-# update param_info set display_results = 1 where slug = 'time1' or slug = 'time2';
-cursor.execute("update %s.param_info set display_results = 1 where slug = 'time1' or slug = 'time2'" % opus2)
-# update param_info set display_results = 1 where slug = 'timesec1' or slug = 'timesec2';
-cursor.execute("update %s.param_info set display_results = 1 where slug = 'timesec1' or slug = 'timesec2';" % opus2)
-cursor.execute("update %s.param_info set form_type = 'STRING' where name = 'primary_file_spec'" % opus2)
-cursor.execute("update %s.param_info  set label = label_results, form_type = NULL where category_name = 'obs_general' and name in ('time1','time2');" % opus2)
 
 # ----------- creating the grouping, category, and guide tables --------------#
 queries = """
