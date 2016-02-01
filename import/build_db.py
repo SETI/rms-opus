@@ -1,7 +1,7 @@
 # Set up the Django Enviroment for running as shell script
 import sys
-# sys.path.append('/home/django/djcode/opus')  #srvr
-sys.path.append('/users/lballard/projects/opus/')
+sys.path.append('/home/django/djcode/opus')  #srvr
+# sys.path.append('~/projects/opus/')
 # from opus import settings
 from django.conf import settings
 from settings import CACHES, DATABASES  # DATABASES creds only
