@@ -112,7 +112,7 @@ print "begin"
 # system("mysql %s < import/backup_util_tables.sql -u%s -p%s" % (opus2, DATABASES['default']['USER'], DATABASES['default']['PASSWORD'])))
 
 # build the little user_collections template table
-print "building param_info from user_collections_template.sql "
+print "building user_collections_template from user_collections_template.sql "
 system("mysql %s < import/user_collections_template.sql -u%s -p%s" % (opus2, DATABASES['default']['USER'], DATABASES['default']['PASSWORD']))
 
 # first, build the empty param_info table in the new db - the table schema lives in a dump file in the repo
