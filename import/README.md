@@ -1,14 +1,24 @@
-# hold up, this is all changed, currently working on:
+## Import from OPUS 1: 
 
-run in this order:
-change the settings_local.py at the top "import settings" which databases to read from and build, then: 
+1. Change the settings_local.py at the top "import settings" which databases to read from and build, then: 
 
-nohup sudo python import/build_db.py all > ~/import.log.txt &
+	sudo python import/build_db.py all > ~/import.log.txt 
 
-sudo python import/build_db.py all 
+or a smaller version: 
 
-then when it's done, change the DATABASES NAME in settings_local.py and do a deploy so caches get refreshed. 
+    python import/build_db.py COCIRS_5909,COVIMS_0040,VGISS_8207,COISS_1002,COISS_2068,COISS_2069
+
+
+2. Dump the database to save it: 
+		
+	cd ~/dumps/dump_and_sms/
+	fab  dump_and_sms	
+	
+
+3. Change the DATABASES NAME in settings_local.py and do a deploy so caches get refreshed. 
  
+
+---------------------------------------------
 to build the NEW schema: 
 
 	build_models.py
