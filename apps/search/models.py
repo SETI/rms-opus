@@ -1021,6 +1021,7 @@ class MultObsSurfaceGeometryTargetName(models.Model):
     disp_order = models.IntegerField(null=True, blank=True)
     display = models.CharField(max_length=9)
     default_fade = models.CharField(max_length=9)
+    grouping = models.CharField(max_length=7)
 
     def __unicode__(self):
         return self.label
