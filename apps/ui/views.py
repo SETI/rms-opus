@@ -213,6 +213,16 @@ def getWidget(request, **kwargs):
     remove_str = '<a class = "remove_input" href = "">-</a>'
     add_str = '<a class = "add_input" href = "">add</a> '
 
+    append_to_label = ''  # text to append to a widget label
+    search_form = param_info.search_form
+    if 'obs_surface_geometry__' in search_form:
+        # append the target name to surface geo widget labels
+        try:
+            append_to_label = " - %s" % search_form.split('__')[1].title()
+        except KeyError:
+            pass
+
+
     if form_type in settings.RANGE_FIELDS:
         auto_id = False
 
