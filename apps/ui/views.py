@@ -114,7 +114,6 @@ def getMenuLabels(request, labels_view):
     labels_view speaks to whether we fetch the label for 'label' or 'label_results'
     from the param_info model
 
-    todo: change name of  field 'category_name' in param_info table to 'div_title'
     """
 
     labels_view = 'results' if labels_view == 'results' else 'search'
@@ -152,6 +151,9 @@ def getMenuLabels(request, labels_view):
     menu_data = {}
     for d in divs:
         menu_data.setdefault(d.table_name, {})
+
+        if d.table_name == 'obs_surface_geometry':
+            menu_data[d.table_name]['menu_help'] = "Select a target name to reveal more options"
 
         if d.table_name in sub_headings and sub_headings[d.table_name]:
             # this div is divided into sub headings

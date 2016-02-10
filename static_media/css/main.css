@@ -546,6 +546,13 @@ div.gallery {
 #sidebar {
     width:100%;
 }
+#sidebar .menu_help {
+    color:blue;
+    margin:5px 0;
+}
+
+
+
 .sidebar_wrapper {
     margin:0; padding:0;
     margin-top:5px;

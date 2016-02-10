@@ -61,10 +61,16 @@
 
                 {% else %}
                     {#  this div does not have sub_headings, list the params  #}
+
                     {% for p in info.data %}
                         <li>
                             <a data-label = "{{ p.label }}" data-slug = "{{ p.slug }}" class = "{{ p.slug }}" href = "">
                                 <i class = "fa fa-check"></i>
+
+                                {% if info.menu_help %}
+                                    <div class = "menu_help">{{ info.menu_help }}</div>
+                                {% endif %}
+
                                 {{ p.label }}
                                 <i class = "fa fa-info-circle" title = "
                                     {% if p.get_dictionary_info %}
