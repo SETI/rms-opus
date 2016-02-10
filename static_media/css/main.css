@@ -500,8 +500,10 @@ div.gallery {
 .widget-main label {
     font-size:95%;
 }
-
-
+.widget-main .intro {
+    color:blue;
+    margin:0 0 5px 0;
+}
 
 .start_over_controls {
     margin-top:5px;

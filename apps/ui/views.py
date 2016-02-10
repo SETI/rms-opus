@@ -345,6 +345,7 @@ def getWidget(request, **kwargs):
     param_info = get_param_info_by_slug(slug)
 
     label = param_info.label
+    intro = param_info.intro
 
     if fmt == 'raw':
         return str(form)
