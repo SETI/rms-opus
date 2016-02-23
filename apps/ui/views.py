@@ -95,16 +95,6 @@ def getMenu(request):
     update_metrics(request)
     return getMenuLabels(request,'search')
 
-def normalize_single_colun_range_slug(param_info):
-    # hack for single column range queries:
-    # want the slug to be 'slug1' in menu not just 'slug'
-    # param_info is param_info object for a single slug
-    if param_info.form_type == 'RANGE' and '1' not in param_info.slug and '2' not in param_info.slug:
-        param_info.slug = param_info.slug + '1'
-        return param_info.slug
-    else:
-        return param_info.slug
-
 
 def getMenuLabels(request, labels_view):
     """
@@ -167,8 +157,6 @@ def getMenuLabels(request, labels_view):
                 else:  # lables for results or search view
                     menu_data[d.table_name]['data'][sub_head] = ParamInfo.objects.filter(display_results=1, category_name = d.table_name, sub_heading = sub_head)
 
-                for p in menu_data[d.table_name]['data'][sub_head]:
-                    p.slug = normalize_single_colun_range_slug(p)
 
         else:
             # this div has no sub headings

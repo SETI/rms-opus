@@ -61,6 +61,7 @@ def getData(request,fmt):
 
     labels = []
     id_index = 0
+    
     for slug in slugs.split(','):
         if slug == 'ringobsid':
             id_index = slugs.split(',').index(slug)
@@ -68,6 +69,7 @@ def getData(request,fmt):
             labels += [ParamInfo.objects.get(slug=slug).label_results]
         except ParamInfo.DoesNotExist:
             # this slug doens't match anything in param info, nix it
+            log.error('could not find param_info for ' + slug)
             continue
     labels = labels.insert(0, "add") if (request.is_ajax()) else labels  # adds a column for checkbox add-to-collections
 
