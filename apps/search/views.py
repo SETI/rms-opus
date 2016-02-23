@@ -621,26 +621,3 @@ def convertTimes(value_list,conversion_script='time_to_seconds'):
     return converted
 
 
-def findInvalidTimes(value_list):
-    """
-    this function tells you which times are invalid in the value_list
-    we know that value_list contains None values before passing it to this
-    """
-    converted_value_list = convertTimes(value_list)
-    try:
-        index = converted_value_list.index(None) # invalid times were submitted
-        invalids = []
-        i = -1
-        try:     # find which times were invalid
-            while 1:
-                i = converted_value_list.index(None, i+1)
-                invalids += [value_list[i]]
-        except ValueError: pass
-        return invalids
-    except ValueError: pass
-
-"""
-# circular import issues
-from metadata.views import *
-from search.forms import *
-"""
