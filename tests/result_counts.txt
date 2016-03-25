@@ -1,15 +1,34 @@
-http://pds-rings-tools.seti.org/opus#/insthostid=Cassini,1121414
-http://pds-rings-tools.seti.org/opus#/insthostid=Galileo,3846
-http://pds-rings-tools.seti.org/opus#/insthostid=Hubble,9791
-http://pds-rings-tools.seti.org/opus#/insthostid=New+Horizons,1114
-"http://pds-rings-tools.seti.org/opus#/insthostid=Voyager+1,Voyager+2",76669
-http://pds-rings-tools.seti.org/opus#/instrumentid=Cassini+CIRS,22833
-http://pds-rings-tools.seti.org/opus#/instrumentid=Cassini+ISS,369000
-http://pds-rings-tools.seti.org/opus#/instrumentid=Cassini+UVIS,170227
-http://pds-rings-tools.seti.org/opus#/instrumentid=Cassini+VIMS,559354
-http://pds-rings-tools.seti.org/opus#/instrumentid=Galileo+SSI,3846
-http://pds-rings-tools.seti.org/opus#/instrumentid=Hubble+ACS,3557
-http://pds-rings-tools.seti.org/opus#/instrumentid=Hubble+WFC3,1117
-http://pds-rings-tools.seti.org/opus#/instrumentid=Hubble+WFPC2,5117
-http://pds-rings-tools.seti.org/opus#/instrumentid=New+Horizons+LORRI,1114
-http://pds-rings-tools.seti.org/opus#/instrumentid=Voyager+ISS,76669
+http://pds-rings-tools.seti.org/opus#/insthostid=Cassini,1121414,
+http://pds-rings-tools.seti.org/opus#/insthostid=Galileo,3846,
+http://pds-rings-tools.seti.org/opus#/insthostid=Hubble,9791,
+http://pds-rings-tools.seti.org/opus#/insthostid=New+Horizons,1114,
+"http://pds-rings-tools.seti.org/opus#/insthostid=Voyager+1,Voyager+2",76669,
+http://pds-rings-tools.seti.org/opus#/instrumentid=Cassini+CIRS,22833,
+http://pds-rings-tools.seti.org/opus#/instrumentid=Cassini+ISS,369000,
+http://pds-rings-tools.seti.org/opus#/instrumentid=Cassini+UVIS,170227,
+http://pds-rings-tools.seti.org/opus#/instrumentid=Cassini+VIMS,559354,
+http://pds-rings-tools.seti.org/opus#/instrumentid=Galileo+SSI,3846,
+http://pds-rings-tools.seti.org/opus#/instrumentid=Hubble+ACS,3557,
+http://pds-rings-tools.seti.org/opus#/instrumentid=Hubble+WFC3,1117,
+http://pds-rings-tools.seti.org/opus#/instrumentid=Hubble+WFPC2,5117,
+http://pds-rings-tools.seti.org/opus#/instrumentid=New+Horizons+LORRI,1114,
+http://pds-rings-tools.seti.org/opus#/instrumentid=Voyager+ISS,76669,
+http://pds-rings-tools.seti.org/opus#/target=ENCELADUS&instrumentid=Cassini+ISS&phase1=160&phase2=,1037,COISS images of Enceladus at high phase angle
+http://pds-rings-tools.seti.org/opus#/target=ENCELADUS&instrumentid=Cassini+ISS&emission1=160&emission2=,241,COISS images of Enceladus at high emission angle
+http://pds-rings-tools.seti.org/opus#/target=ENCELADUS&instrumentid=Cassini+ISS&northbasedemission1=160&northbasedemission2=,44,COISS images of Enceladus at high north-based emission angle
+http://pds-rings-tools.seti.org/opus#/instrumentid=Cassini+ISS&target=ENCELADUS&northbasedemission1=160&northbasedemission2=&phase1=160&phase2=,0,COISS images of Enceladus at high phase angle and high north-based emission angle. This should give null result because the former requires looking down on the pole and the latter requires being near the equator.
+http://pds-rings-tools.seti.org/opus#/instrumentid=Cassini+ISS&obsname=046RI_RDHRESSCN,54,COISS images with Observation Name containing 046RI_RDHRESSCN. This number should always stay the same.
+http://pds-rings-tools.seti.org/opus#/instrumentid=Cassini+ISS&obsname=046RI_RDHRESSCN&projectedradialresolution1=&projectedradialresolution2=2,48,Most of the 046RI_RDHRESSCN images are better than this resolution
+http://pds-rings-tools.seti.org/opus#/instrumentid=Cassini+ISS&obsname=046RI_RDHRESSCN&primaryfilespec=N,48,"Not coincidentally, that same number are NAC images"
+http://pds-rings-tools.seti.org/opus#/instrumentid=Cassini+ISS&obsname=046RI_RDHRESSCN&primaryfilespec=W,6,The rest are WAC images
+http://pds-rings-tools.seti.org/opus#/instrumentid=Cassini+ISS&obsname=046RI_RDHRESSCN&projectedradialresolution1=2&projectedradialresolution2=,6,"Completing the set, the same number have poor resolution"
+http://tools.pds-rings.seti.org/opus#/instrumentid=Cassini+ISS&obsname=046RI_RDHRESSCN&camera=Narrow+Angle,48,"Hey, I found the non-kluge way to specify NAC"
+http://tools.pds-rings.seti.org/opus#/instrumentid=Cassini+ISS&obsname=046RI_RDHRESSCN&camera=Wide+Angle,6,…and to specify WAC
+http://tools.pds-rings.seti.org/opus#/instrumentid=Cassini+ISS&obsname=046RI_RDHRESSCN&camera=Wide+Angle&primaryfilespec=N,0,Verify that the two methods are orthogonal
+http://tools.pds-rings.seti.org/opus#/instrumentid=Cassini+ISS&obsname=046RI_RDHRESSCN&camera=Narrow+Angle&primaryfilespec=N,48,Verify that the two methods are orthogonal
+http://pds-rings-tools.seti.org/opus#/instrumentid=Cassini+ISS&obsname=046RI_RDHRESSCN&projectedradialresolution1=&projectedradialresolution2=1,21,"More stringent resolution standard, only some of the NAC images meet it"
+http://pds-rings-tools.seti.org/opus#/instrumentid=Cassini+ISS&obsname=046RI_RDHRESSCN&phase1=30&phase2=50,54,All the 046RI_RDHRESSCN images have phase angles within this range
+http://pds-rings-tools.seti.org/opus#/instrumentid=Cassini+ISS&phase1=160&phase2=&obsname=046RI_RDHRESSCN,0,None of the 046RI_RDHRESSCN images have phase angles within this range
+http://pds-rings-tools.seti.org/opus#/instrumentid=Cassini+ISS&obsname=007RI_LPHRLFMOV,249,Daphnis discovery movie
+http://pds-rings-tools.seti.org/opus#/instrumentid=Cassini+ISS&surfacetarget=SATURN&SATURNsubobserverplanetographiclatitude1=50&SATURNsubobserverplanetographiclatitude2=&SATURNcenterresolution1=5&SATURNcenterresolution2=10&target=SATURN,141,"Should be images of the polar hexagon, but somehow some pics of the rings got in here."
+http://tools.pds-rings.seti.org/opus#/instrumentid=Cassini+ISS&obsname=RDCOLSCNM,285,"This was Jeff’s search. Results from revs 204, 206, 209, and 210. Name could be used again, adding more results."

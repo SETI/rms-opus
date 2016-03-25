@@ -7,13 +7,12 @@ import csv
 api_endpoint = "http://tools.pds-rings.seti.org/opus/api/meta/result_count.json?"
 filename = 'result_counts.txt'
 
-
 with open(filename, 'rb') as csvfile:
 
     filereader = csv.reader(csvfile)
     for row in filereader:
 
-        q_str, expected = row
+        q_str, expected, info = row
 
         url_hash = q_str.split('#/')[1].strip()
         api_url = api_endpoint + url_hash
@@ -29,3 +28,4 @@ with open(filename, 'rb') as csvfile:
         assert dict_from_json['data'][0]['result_count'] >= int(expected)
         driver.close()
 
+print "OK!"
