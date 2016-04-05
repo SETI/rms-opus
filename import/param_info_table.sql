@@ -52,7 +52,8 @@ CREATE TABLE `param_info` (
   `mission` varchar(15) DEFAULT NULL,
   `instrument` varchar(15) DEFAULT NULL,
   `sub_heading` varchar(150) DEFAULT NULL,
-  PRIMARY KEY (`category_name`,`name`)
+  PRIMARY KEY (`category_name`,`name`),
+  UNIQUE KEY `slug` (`slug`)
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -75,4 +76,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2016-04-04 15:31:26
+-- Dump completed on 2016-04-05 13:36:18
