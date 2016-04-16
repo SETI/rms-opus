@@ -79,6 +79,8 @@ def cache_reboot():
 
 
 def tests_prod():
+    print("tests_prod is deprecated and possibly does not desireable things to the cache")
+    return
     # run all tests on production
     with cd('/home/django/djcode/%s/' % prod_deploy_dir):
         # this only runs a few app's test suites because the others have problems
