@@ -15,8 +15,19 @@ or a smaller version:
 	fab  dump_and_sms	
 	
 
-3. Change the DATABASES NAME in settings_local.py and do a deploy so caches get refreshed. 
- 
+3. Change the DATABASES NAME in settings_local.py and do a [deploy](../deploy/README.md) so caches get refreshed. 
+
+
+4. Once the database is public, run the selenium tests: 
+
+    In the local repo: 
+
+        cd tests
+        source venv/bin/activate
+        python api_tests.py 
+
+
+
 
 ---------------------------------------------
 to build the NEW schema: 
