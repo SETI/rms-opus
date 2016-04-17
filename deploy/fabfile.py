@@ -58,22 +58,27 @@ def deploy():
         # first take a backup:
         run('sudo rsync -r -vc --exclude logs /home/django/djcode/' + prod_deploy_dir + ' backups/.')
 
-        # go
+        # copy the new code to production directory
         run('sudo rsync -r -vc --exclude logs ' + prod_deploy_dir + ' /home/django/djcode/.')
-        run('sudo touch /home/django/djcode/' + prod_deploy_dir + '/*.wsgi')
-        run('sudo touch /home/django/djcode/' + prod_deploy_dir + '/apache/*.wsgi')
-
-        run('sudo python /home/django/djcode/opus/apps/tools/reset_deploy_datetime.py')
 
 
 def cache_reboot():
         with cd('/home/lballard/'):
+
+            # refresh the *.wsgi files (not sure which ones are actually doing job)
+            run('sudo touch /home/django/djcode/' + prod_deploy_dir + '/*.wsgi')
+            run('sudo touch /home/django/djcode/' + prod_deploy_dir + '/apache/*.wsgi')
+
+            # tells browsers something has changed
+            run('sudo python /home/django/djcode/opus/apps/tools/reset_deploy_datetime.py')
+
             # reset memcache
             try:
                 run('sudo killall memcached')
             except: 
                 pass  # sometimes it's already killed
             run('/usr/bin/memcached -d -l 127.0.0.1 -m 1024 -p %s' % memcached_port)
+
             # reset django cache
             run('sudo python /home/django/djcode/' + prod_deploy_dir + '/deploy/cache_clear.py')
 
