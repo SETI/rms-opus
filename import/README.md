@@ -2,7 +2,7 @@
 
 1. Change the settings_local.py at the top "import settings" which databases to read from and build, then: 
 
-	sudo python import/build_db.py all > ~/import.log.txt 
+	sudo -b nohup python import/build_db.py all > ~/import.log.txt 
 
 or a smaller version: 
 
