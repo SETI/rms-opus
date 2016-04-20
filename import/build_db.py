@@ -1,7 +1,7 @@
 # Set up the Django Enviroment for running as shell script
 import sys
+# sys.path.append('/Users/lballard/projects/opus/')
 sys.path.append('/home/django/djcode/opus')  #srvr
-# sys.path.append('~/projects/opus/')
 # from opus import settings
 from django.conf import settings
 from settings import CACHES, DATABASES  # DATABASES creds only
@@ -134,7 +134,7 @@ cursor.execute(q)
 cursor.execute("update %s.param_info as params, %s.forms as forms set params.display = true where forms.display = 'Y' and params.id = forms.no" % (opus2, opus1))
 cursor.execute("update %s.param_info as params, %s.forms as forms set params.display_results = true where forms.display_results = 'Y' and params.id = forms.no" % (opus2, opus1))
 cursor.execute("update " + opus2 + ".param_info set form_type = 'RANGE' where form_type = 'None' and name like %s or name like %s" , ('%1', '%2'))
-cursor.execute("update %s.param_info set slug = 'target' where name = 'target_name'" % opus2)
+cursor.execute("update %s.param_info set slug = 'target' where name = 'target_name' and category_name = 'obs_general'" % opus2)
 cursor.execute("update %s.param_info set display = NULL where display = 'N'" % opus2)
 cursor.execute("update %s.param_info set slug = 'planet' where name = 'planet_id'" % opus2)
 cursor.execute("update %s.param_info set slug = 'surfacetarget' where slug = 'target' and category_name = 'obs_surface_geometry'" % opus2)
@@ -148,8 +148,6 @@ cursor.execute("update %s.param_info set display_results = 1 where slug = 'time1
 cursor.execute("update %s.param_info set display_results = 1 where slug = 'timesec1' or slug = 'timesec2';" % opus2)
 cursor.execute("update %s.param_info set form_type = 'STRING' where name = 'primary_file_spec'" % opus2)
 cursor.execute("update %s.param_info  set label = label_results, form_type = NULL where category_name = 'obs_general' and name in ('time1','time2');" % opus2)
-
-
 
 
 
