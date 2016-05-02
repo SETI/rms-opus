@@ -382,6 +382,8 @@ def setUserSearchNo(selections=None,extras=None):
     # no cache, let's keep going..
     try:
         s = UserSearches.objects.get(selections_hash=selections_hash,qtypes_hash=qtypes_hash,units_hash=units_hash,string_selects_hash=string_selects_hash)
+    except UserSearches.MultipleObjectsReturned:
+        s = UserSearches.objects.filter(selections_hash=selections_hash,qtypes_hash=qtypes_hash,units_hash=units_hash,string_selects_hash=string_selects_hash)[0]
     except UserSearches.DoesNotExist:
         s = UserSearches(selections_hash=selections_hash, selections_json=selections_json, qtypes=qtypes_json,qtypes_hash=qtypes_hash,units=units_json,units_hash=units_hash, string_selects=string_selects_json,string_selects_hash=string_selects_hash )
         s.save()
