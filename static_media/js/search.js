@@ -58,7 +58,6 @@ var o_search = {
             slug = $(this).attr("name");
             css_class = $(this).attr("class").split(' ')[0]; // class will be STRING, min or max
 
-
             // get values of all inputs
             var values = [];
             if (css_class == 'STRING') {
@@ -72,15 +71,28 @@ var o_search = {
                 // range query
                 var slug_no_num = slug.match(/(.*)[1|2]/)[1];
                 // min
+                values = [];
                 $('#widget__' + slug_no_num + '1 input.min', '#search').each(function() {
                     values[values.length] = $(this).val();
                 });
+                if (values.length == 0) {
+                    $('#widget__' + slug_no_num + ' input.min', '#search').each(function() {
+                        values[values.length] = $(this).val();
+                    });
+                }
+
                 opus.selections[slug_no_num + '1'] = values;
                 // max
                 values = [];
                 $('#widget__' + slug_no_num + '1 input.max', '#search').each(function() {
                     values[values.length] = $(this).val();
                 });
+                if (values.length == 0) {
+                    $('#widget__' + slug_no_num + ' input.max', '#search').each(function() {
+                        values[values.length] = $(this).val();
+                    });
+                }
+
                 opus.selections[slug_no_num + '2'] = values;
             }
             o_hash.updateHash();
