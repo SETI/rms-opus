@@ -109,8 +109,7 @@ def getValidMults(request,slug,fmt='json'):
     if param_name in selections:
         del selections[param_name]
 
-    has_selections = True
-    if len(selections.keys()) < 1: has_selections = False
+    has_selections = False if len(selections.keys()) < 1 else True
 
     cache_key  = "mults" + param_name + str(search.views.setUserSearchNo(selections))
 
@@ -120,35 +119,38 @@ def getValidMults(request,slug,fmt='json'):
 
     else:
 
-        mult_name  = getMultName(param_name) # the name of the field to query
+        mult_name  = getMultName(param_name)  # the name of the field to query
         mult_model = get_model('search',mult_name.title().replace('_',''))
         table_model = get_model('search', table_name.title().replace('_',''))
 
         mults = {}  # info to return
         results    = table_model.objects.values(mult_name).annotate(Count(mult_name))  # this is a count(*), group_by query!
 
-        if has_selections:
+        user_table = search.views.getUserQueryTable(selections,extras)
+
+        if has_selections and not user_table:
             # selections are constrained so join in the user_table
-            user_table = search.views.getUserQueryTable(selections,extras)
+            log.error('getValidMults has_selections = true but no user_table found:')
+            log.error(selections)
+            log.error(extras)
+            raise Http404
 
-            if not user_table:
-                log.error('getValidMults has_selections = true but no user_table found:')
-                log.error(selections)
-                log.error(extras)
-                raise Http404
-
-            if table_name == 'obs_general':
-                where   = table_name + ".id = " + user_table + ".id"
-            else:
-                where   = table_name + ".obs_general_id = " + user_table + ".id"
-            results = results.extra(where=[where],tables=[user_table])
+        if table_name == 'obs_general':
+            where   = table_name + ".id = " + user_table + ".id"
+        else:
+            where   = table_name + ".obs_general_id = " + user_table + ".id"
+        results = results.extra(where=[where],tables=[user_table])
 
         for row in results:
             mult_id = row[mult_name]
+    
             try:
                 try:
                     mult = mult_model.objects.get(id=mult_id).label
                 except:
+                    log.debug('could not find mult label for ')
+                    log.debug('id: ' + str(mult_id))
+                    log.debug(mult_model)
                     mult = mult_id  # fall back to id if there is no label
 
                 mults[mult] = row[mult_name + '__count']
