@@ -1,3 +1,5 @@
+# DEPRECATED #
+
 ### Database Schema and Caching Strategies
 
 There is a big flat table in the OPUS 2 database (minus all the surface geometry fields) but it is not used for search queries. It's used as a tool for displaying the data as an html table. It is a way to return data quickly, not to search it. It provides a big easy target for fetching rows we already know we want.

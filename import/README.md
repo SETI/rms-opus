@@ -15,10 +15,17 @@ or a smaller version:
 	fab  dump_and_sms	
 	
 
-3. Change the DATABASES NAME in settings_local.py and do a [deploy](../deploy/README.md) so caches get refreshed. 
+3. Change the DATABASES NAME in settings_local.py and refresh the caches as you would in a [deploy](../deploy/README.md) 
+
+    cd deploy
+    fab cache_reboot
 
 
-4. Once the database is public, run the selenium tests: 
+4. The release is now public! (Yes we have no development server) Manually make sure your most recent blog post links are still working.. (todo: script this!)
+
+    open http://ringsnodesearchtool.blogspot.com/
+
+5. Run the selenium tests: 
 
     In the local repo: 
 
