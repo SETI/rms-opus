@@ -665,3 +665,10 @@ div.gallery {
 {
   content: '';
 }
+
+.restart_button {
+    text-align: center;
+}
+.restart_button button {
+    margin: 10px 0;
+}

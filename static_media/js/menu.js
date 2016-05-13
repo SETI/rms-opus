@@ -137,6 +137,12 @@ var o_menu = {
                 opus.menu_state['cats'].push(geo_cat);
             }
 
+            // add the 'start over' button
+            button_html = '<li class = "restart_button"><button type="button" class="btn btn-sm btn-danger restart">Start Over</button></li>';
+            $('#sidebar ul.nav-list').append(button_html);
+
+
+
             o_search.adjustSearchHeight();
             $('.menu_spinner').fadeOut("fast");
 

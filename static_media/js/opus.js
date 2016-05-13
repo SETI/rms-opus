@@ -58,9 +58,10 @@ $(document).ready(function() {
     }
     opus.changeTab();
 
+
     // add the navbar clicking behaviors, selecting which tab to view:
     // see triggerNavbarClick
-    $('#navbar').on("click", '.navbar-nav li', function() {
+    $('#navbar').on("click", 'ul.main_site_tabs li', function() {
 
         if ($(this).find('a').hasClass('restore_widgets')) {
             return;
@@ -99,29 +100,17 @@ $(document).ready(function() {
 
 
     // restart button behavior - start over button
-    $('.start_over_controls').on("click", ".restart", function() {
+    $('#sidebar').on("click", ".restart", function() {
+        // 'start over' button
+        // resets query completely, resets widgets completely
+        if (!jQuery.isEmptyObject(opus.selections)) {
 
-        clearInterval(opus.main_timer);
-
-        opus.selections = {};
-        o_browse.resetQuery();
-
-        opus.prefs.view = 'search';
-
-        opus.changeTab();
-
-        // redraw all widgets
-        opus.widgets_drawn = [];
-         $('.widget-container-span').empty();
-        for (key in opus.prefs.widgets) {
-            slug = opus.prefs.widgets[key];
-            o_widgets.getWidget(slug,'#search_widgets1');
+            if (confirm("Are you sure you want to restart? Your current search will be lost.")) { 
+                opus.startOver();       
+            }
+        } else {
+            opus.startOver();  
         }
-
-        window.location.hash = '/cols=' + opus.prefs.cols.join(',');
-        opus.main_timer = setInterval(opus.load, opus.main_timer_interval);
-        
-        return false; 
 
     }),
 
@@ -136,30 +125,7 @@ $(document).ready(function() {
 
 });
 
-// restore default widgets
-$('.start_over_controls').on("click", '.restore_widgets', function() {
 
-    for (slug in opus.selections) {
-        if (jQuery.inArray(slug, opus.default_widgets) < 0) {
-            o_widgets.closeWidget(slug);
-        }
-    }
-
-    
-    opus.prefs.widgets2 = [];
-    opus.prefs.widgets = [];
-    opus.widgets_drawn = [];
-    opus.widget_elements_drawn = [];
-    $('.widget-container-span').empty();
-
-
-    for (k in opus.default_widgets) {
-        slug = opus.default_widgets[k]; 
-        o_widgets.getWidget(slug,'#search_widgets1');
-    }
-
-   return false;
-});
 
 var opus = {
 
@@ -422,6 +388,55 @@ var opus = {
         }
 
     },
+
+
+    startOver: function() {
+        // handles the 'start over' buttons which has 2 selections
+        // if keep_set_widgets is true it will leave the current selected widgets alone  
+        // and just redraw them with no selections in them
+        // if keep_set_widgets is false it will remove all widgets and restore 
+        // the application default widgets
+
+        clearInterval(opus.main_timer);  // hold the phone for a sec
+        $('.widget-container-span').empty(); // remove all widgets on the screen
+
+        // reset the search query 
+        opus.selections = {};
+        o_browse.resetQuery();
+        opus.prefs.view = 'search';
+        opus.changeTab();
+
+        keep_set_widgets = false  // use as argument for the 2 tiered start over button, currently disabled
+        if (keep_set_widgets) {
+            // redraw all widgets that user had open before
+            // this is the 'start over' behavior 
+            opus.widgets_drawn = [];
+            for (key in opus.prefs.widgets) {
+                slug = opus.prefs.widgets[key];
+                o_widgets.getWidget(slug,'#search_widgets1');
+            }
+            window.location.hash = '/cols=' + opus.prefs.cols.join(',');
+
+        } else {
+            // resets widgets drawn back to system default
+            // in the 2 tier button this was the 'start over and restore defaults' behavior
+            // note: this is the current deployed behavior for the single 'start over' button
+            opus.prefs.widgets2 = [];
+            opus.prefs.widgets = [];
+            opus.widgets_drawn = [];
+            opus.widget_elements_drawn = [];
+            for (k in opus.default_widgets) {
+                slug = opus.default_widgets[k]; 
+                o_widgets.getWidget(slug,'#search_widgets1');
+            }
+        }
+
+        // start the main timer again 
+        opus.main_timer = setInterval(opus.load, opus.main_timer_interval);
+        
+        return false; 
+
+    },     
 
     addAllBehaviors: function() {
         o_widgets.addWidgetBehaviors();
