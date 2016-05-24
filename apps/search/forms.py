@@ -6,6 +6,10 @@ from paraminfo.models import *
 from tools.app_utils import *
 import settings
 
+import logging
+log = logging.getLogger(__name__)
+
+
 class MultiStringField(forms.Field):
 
     def validate(self, value):
@@ -26,7 +30,10 @@ class MultiFloatField(forms.Field):
         # Use the parent's handling of required fields, etc.
         super(MultiFloatField, self).validate(value)
 
-        if not value: return
+        if not value: return    
+
+        if type(value).__name__ != 'str':
+            value = [value]
 
         for num in value:
             try:    float(num)
@@ -67,7 +74,6 @@ class SearchForm(forms.Form):
 
         # this makes getMultName() below not choke, circular import issue? not sure..but this fixes
         from metadata.views import getMultName
-
 
         for slug,values in args[0].items():
 

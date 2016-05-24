@@ -226,12 +226,12 @@ def getWidget(request, **kwargs):
 
         form_vals = { slug1:None, slug2:None }
 
+        # find length of longest list of selections for either param1 or param2,
+        # tells us how many times to go through loop below
         try: len1 = len(selections[param1])
         except: len1 = 0
-
         try: len2 = len(selections[param2])
         except: len2 = 0
-
         lngth = len1 if len1 > len2 else len2
 
         if not lngth: # param is not constrained
@@ -246,11 +246,11 @@ def getWidget(request, **kwargs):
             while key<lngth:
                 try:
                   form_vals[slug1] = selections[param1][key]
-                except IndexError:
+                except (IndexError, KeyError) as e:
                     form_vals[slug1] = None
                 try:
                   form_vals[slug2] = selections[param2][key]
-                except IndexError:
+                except (IndexError, KeyError) as e:
                     form_vals[slug2] = None
 
                 qtypes = request.GET.get('qtype-' + slug, False)
@@ -260,6 +260,7 @@ def getWidget(request, **kwargs):
                     except KeyError:
                         form_vals['qtype-'+slug] = False
                 form = form + str(SearchForm(form_vals, auto_id=auto_id).as_ul())
+
                 if key > 0:
                     form = '<ul>' + form + '<li>'+remove_str+'</li></ul>' # remove input is last list item in form
                 else:
@@ -432,8 +433,3 @@ def getColumnChooser(request, **kwargs):
     menu = getMenuLabels(request, 'results')['menu']
 
     return render_to_response("choose_columns.html",locals(), context_instance=RequestContext(request))
-
-
-
-
-
