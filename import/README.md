@@ -1,43 +1,45 @@
-## Import from OPUS 1: 
+## Import from OPUS 1:
 
-1. Change the settings_local.py at the top "import settings" which databases to read from and build, then: 
+1. Change the settings_local.py at the top "import settings" which databases to read from and build, then:
 
-	sudo -b nohup python import/build_db.py all > ~/import.log.txt 
+	sudo -b nohup python import/build_db.py all > ~/import.log.txt
 
-or a smaller version: 
+or a smaller version:
 
     python import/build_db.py COCIRS_5909,COVIMS_0040,VGISS_8207,COISS_1002,COISS_2068,COISS_2069
 
 
-2. Dump the database to save it: 
-		
-	cd ~/dumps/dump_and_sms/
-	fab  dump_and_sms	
-	
+2. Dump the database to save it:
 
-3. Change the DATABASES NAME in settings_local.py and refresh the caches as you would in a [deploy](../deploy/README.md) 
+	cd ~/dumps/dump_and_sms/
+	fab  dump_and_sms
+
+
+3. Change the DATABASES NAME in settings_local.py 
+
+4. Refresh the caches as you would in a [deploy](../deploy/README.md)
 
     cd deploy
     fab cache_reboot
 
 
-4. The release is now public! (Yes we have no development server) Manually make sure your most recent blog post links are still working.. (todo: script this!)
+5. The release is now public! (Yes we have no development server) Manually make sure your most recent blog post links are still working.. (todo: script this!)
 
     open http://ringsnodesearchtool.blogspot.com/
 
-5. Run the selenium tests: 
+6. Run the selenium tests:
 
-    In the local repo: 
+    In the local repo:
 
         cd tests
         source venv/bin/activate
-        python api_tests.py 
+        python api_tests.py
 
 
 
 
 ---------------------------------------------
-to build the NEW schema: 
+to build the NEW schema:
 
 	build_models.py
 
@@ -123,4 +125,3 @@ BEGIN
 END //
 DELIMITER ;
 ```
-
