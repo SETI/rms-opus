@@ -137,4 +137,3 @@ urlpatterns += patterns('',
         (r'^session-test/done/$', session_test_2),
 )
 """
-

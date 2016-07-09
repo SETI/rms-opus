@@ -27,13 +27,13 @@ log = logging.getLogger(__name__)
 
 def get_csv(request, fmt=None):
     """
-        creates csv 
+        creates csv
         only works right now for a collection
         defaults to response object
         or as first line and all data tuple object for fmt=raw
     """
     slugs = request.GET.get('cols')
-    all_data = getPage(request, colls=True, colls_page='all')  
+    all_data = getPage(request, colls=True, colls_page='all')
 
     if fmt == 'raw':
         return slugs.split(","), all_data[2]
@@ -61,7 +61,7 @@ def getData(request,fmt):
 
     labels = []
     id_index = 0
-    
+
     for slug in slugs.split(','):
         if slug == 'ringobsid':
             id_index = slugs.split(',').index(slug)
@@ -357,10 +357,10 @@ def getImage(request,size='med', ring_obs_id='',fmt='mouse'):      # mouse?
     return HttpResponse(img + "<br>" + ring_obs_id + ' ' + size +' '+ fmt)
     """
     update_metrics(request)
-    try: 
+    try:
         img = Image.objects.filter(ring_obs_id=ring_obs_id).values(size)[0][size]
     except IndexError:
-        return 
+        return
 
     path = settings.IMAGE_HTTP_PATH + get_base_path_previews(ring_obs_id)
     return responseFormats({'data':[{'img':img, 'path':path}]}, fmt, size=size, path=path, template='image_list.html')
@@ -488,7 +488,7 @@ def getFiles(ring_obs_id=None, fmt=None, loc_type=None, product_types=None, prev
     if product_types != ['all'] and product_types != ['none']:
         files_table_rows = files_table_rows.filter(product_type__in=product_types)
 
-    if not files_table_rows: 
+    if not files_table_rows:
         log.error('no rows returned in file table')
 
     file_names = {}
@@ -520,12 +520,12 @@ def getFiles(ring_obs_id=None, fmt=None, loc_type=None, product_types=None, prev
                     else:
                         url = base_path + url
 
-                    file_names[ring_obs_id]['preview_image'].append(url) 
+                    file_names[ring_obs_id]['preview_image'].append(url)
 
         if product_types == ['none']:
             continue
 
-        # get PDS products 
+        # get PDS products
         # get this file's volume location
         file_extensions = []
         try:
@@ -611,7 +611,7 @@ def getPage(request, colls=None, colls_page=None, page=None):
 
     if not colls:
         collection_page = request.GET.get('colls',False)
-    else: 
+    else:
         collection_page = colls
 
     limit = request.GET.get('limit',100)
@@ -736,7 +736,7 @@ def getPage(request, colls=None, colls_page=None, page=None):
         base_limit = 100  # explainer of sorts is above
         offset = (page_no-1)*base_limit # we don't use Django's pagination because of that count(*) that it does.
         results = results.values_list(*column_values)[offset:offset+int(limit)]
-    else: 
+    else:
         results = results.values_list(*column_values)
 
     # return a simple list of ring_obs_ids
@@ -747,4 +747,3 @@ def getPage(request, colls=None, colls_page=None, page=None):
         return False
 
     return [page_no, limit, list(results), page_ids, order]
-

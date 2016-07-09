@@ -398,7 +398,7 @@ def string_query_object(param_name, value_list, qtypes):
 
     if model_name == 'obsgeneral':
         param_model_name = param_name.split('.')[1]
-    else: 
+    else:
         param_model_name = model_name + '__' + param_name.split('.')[1]
 
     for key,value in enumerate(value_list):
@@ -621,5 +621,3 @@ def convertTimes(value_list,conversion_script='time_to_seconds'):
             logging.debug("could not convert time " + time)
             converted += [None]
     return converted
-
-

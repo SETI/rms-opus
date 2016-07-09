@@ -15,7 +15,7 @@ or a smaller version:
 	fab  dump_and_sms
 
 
-3. Change the DATABASES NAME in settings_local.py 
+3. Change the DATABASES NAME in settings_local.py
 
 4. Refresh the caches as you would in a [deploy](../deploy/README.md)
 
@@ -27,7 +27,11 @@ or a smaller version:
 
     open http://ringsnodesearchtool.blogspot.com/
 
-6. Run the selenium tests:
+6. Run the in-browser selenium tests
+
+	they are in Firefox->tools
+
+7. Run the selenium tests:
 
     In the local repo:
 
@@ -35,6 +39,9 @@ or a smaller version:
         source venv/bin/activate
         python api_tests.py
 
+8. Do a blog post!
+
+	open http://ringsnodesearchtool.blogspot.com/
 
 
 
