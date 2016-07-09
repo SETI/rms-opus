@@ -27,6 +27,11 @@ from django.http import QueryDict
 
 cursor = connection.cursor()
 
+SESSION_ENGINE = 'django.contrib.sessions.backends.cache'
+SESSION_COOKIE_NAME = 'opus-test-cookie'
+settings.CACHE_BACKEND = 'dummy:///'
+
+
 class UITests(TestCase):
 
     # setup
@@ -35,7 +40,7 @@ class UITests(TestCase):
     selections = {}
     selections[param_name] = ['Jupiter']
 
-    def teardown(self):
+    def tearDown(self):
         cursor = connection.cursor()
         cursor.execute("delete from user_searches")
         cursor.execute("ALTER TABLE user_searches AUTO_INCREMENT = 1")
@@ -93,6 +98,3 @@ class UITests(TestCase):
         self.assertEqual(True, False)
 
     """
-
-
-

@@ -16,10 +16,25 @@ cursor = connection.cursor()
 # downloads things
 from downloads.views import *
 
+SESSION_ENGINE = 'django.contrib.sessions.backends.cache'
+SESSION_COOKIE_NAME = 'opus-test-cookie'
+settings.CACHE_BACKEND = 'dummy:///'
+
 
 class downloadsTests(TestCase):
 
     c = Client()
+
+    def tearDown(self):
+        cursor = connection.cursor()
+        cursor.execute("delete from user_searches")
+        cursor.execute("ALTER TABLE user_searches AUTO_INCREMENT = 1")
+        cursor.execute("show tables like %s " , ["cache%"])
+        print "running teardown"
+        for row in cursor:
+            q = 'drop table ' + row[0]
+            print q
+            cursor.execute(q)
 
     def test__get_download_info_browse_images_being_counted(self):
         ring_obs_ids = 'S_IMG_CO_ISS_1680806066_N'
@@ -91,4 +106,3 @@ class downloadsTests(TestCase):
         files = getFiles(ring_obs_id=ring_obs_ids,fmt="raw",loc_type="path", product_types=product_types, previews=previews)
         size, file_count = get_download_info(files)
         self.assertLess(size, 2250000)  # about 2 MB
-

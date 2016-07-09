@@ -18,6 +18,10 @@ SESSION_COOKIE_NAME = 'opus-test-cookie'
 
 cursor = connection.cursor()
 
+SESSION_ENGINE = 'django.contrib.sessions.backends.cache'
+SESSION_COOKIE_NAME = 'opus-test-cookie'
+settings.CACHE_BACKEND = 'dummy:///'
+
 class test_session(dict):
     """
     extends a dict object and adds a session_key attribute for use in this test suite
@@ -42,6 +46,17 @@ class user_CollectionsTests(TestCase):
     def setUp(self):
         self.client = Client()
         self.factory = RequestFactory()
+
+    def tearDown(self):
+        cursor = connection.cursor()
+        cursor.execute("delete from user_searches")
+        cursor.execute("ALTER TABLE user_searches AUTO_INCREMENT = 1")
+        cursor.execute("show tables like %s " , ["cache%"])
+        print "running teardown"
+        for row in cursor:
+            q = 'drop table ' + row[0]
+            print q
+            cursor.execute(q)
 
     def emptycollection(self):
         cursor = connection.cursor()
@@ -158,7 +173,7 @@ class user_CollectionsTests(TestCase):
         session_id = test_session().session_key
         ring_obs_id_list = ['S_IMG_CO_ISS_1692988072_N','S_IMG_CO_ISS_1692988234_N','S_IMG_CO_ISS_1692988460_N','S_IMG_CO_ISS_1692988500_N']
         bulk_add_to_collection(ring_obs_id_list, session_id)
-        
+
         url = '/opus/collections/data.csv?planet=Saturn&target=HYPERION&view=browse&browse=gallery&colls_browse=gallery&page=1&gallery_data_viewer=true&limit=100&order=timesec1&cols=ringobsid,planet,target,phase1,phase2,time1,time2,ringradius1,ringradius2,J2000longitude1,J2000longitude2'
         request = self.factory.get(url)
         request.user = AnonymousUser()
@@ -247,6 +262,3 @@ class user_CollectionsTests(TestCase):
         expected = 'No Observations specified'
         self.assertEqual(expected, received)
         self.emptycollection()
-
-
-

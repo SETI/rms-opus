@@ -34,7 +34,7 @@ class searchTests(TestCase):
     selections[param_name] = ['Saturn']
     extras = {}
 
-    def teardown(self):
+    def tearDown(self):
         cursor = connection.cursor()
         cursor.execute("delete from user_searches")
         cursor.execute("ALTER TABLE user_searches AUTO_INCREMENT = 1")
@@ -158,7 +158,6 @@ class searchTests(TestCase):
     ## getUserQueryTable
 
     def test__getUserQueryTable(self):
-        self.teardown()
         # simple base join types only
         table = getUserQueryTable(self.selections)
         print "table = " + str(table) + "\n" + str(self.selections)
@@ -292,12 +291,8 @@ class searchTests(TestCase):
         print no
         # breaking this, this test needs to see if there are any rows in the table
         self.assertGreater(no, 0)
-        self.teardown()
-
 
     ##  Range Query tests
-
-
     def test_range_query_single_col_range_all(self):
         selections = {u'obs_ring_geometry.ring_center_phase1': [20.0], u'obs_ring_geometry.ring_center_phase2': [180.0]}
         q = str(range_query_object(selections,'obs_ring_geometry.ring_center_phase1',['all']))
@@ -552,6 +547,3 @@ class searchTests(TestCase):
             sql, params = longitudeQuery(selections,'obs_general.declination1')
         except KeyError, IndexError:
             pass
-
-
-

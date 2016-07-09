@@ -1,0 +1,56 @@
+to Allison
+this bug was causing a part of web UI to be broken too, so double thanks for reporting it! 
+
+Some scientist on deadline in an alternate timeline where we didn't fix this bug thanks you as well.. 
+
+Would love to hear any suggestions/feedback you have about OPUS or its API and documentation. 
+
+cheers!
+
+---
+
+this bug was causing a part of web UI to be broken too, it wouldn't load the 'all metadata' section of the detail tabs (which is already painfully slow when it does work!) 
+
+this came about after adding some errant metadata to the 'all_params' table during the Jupiter import. Now we have a test to catch this!
+
+It's great to have hobbyists and others use our tools, they find bugs and report them before scientists on deadlines crash into them!
+
+
+
+
+
+
+
+
+WRITE THIS TEST::::::
+
+
+
+/Users/lballard/projects/opus/apps/results/views.py in get_metadata
+
+            for k, slug in enumerate(all_slugs):
+
+                param_info = get_param_info_by_slug(slug)
+
+                name = param_info.name
+
+                all_info[name] = param_info
+
+            if all_params:
+
+                try:
+
+                    results = table_model.objects.filter(ring_obs_id=ring_obs_id).values(*all_params)[0]
+
+     ...
+
+                    data[table_label] = results
+
+                except AttributeError: pass  # no results found in this table, move along
+
+                except IndexError: pass  # no results found in this table, move along
+
+        if fmt == 'html':
+
+            return render_to_response('detail_metadata.html',locals(), context_instance=RequestContext(request))
+

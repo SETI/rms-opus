@@ -20,6 +20,7 @@ analyze table user_searches;
 from unittest import TestCase
 from django.test.client import Client
 from django.db.models import get_model
+from django.test import RequestFactory
 
 from search.views import *
 from results.views import *
@@ -27,13 +28,32 @@ from django.http import QueryDict
 
 cursor = connection.cursor()
 
+SESSION_ENGINE = 'django.contrib.sessions.backends.cache'
+SESSION_COOKIE_NAME = 'opus-test-cookie'
+settings.CACHE_BACKEND = 'dummy:///'
+
 class ParamInfoTests(TestCase):
 
     # setup
-    c = Client()
     param_name = 'obs_general.planet_id'
     selections = {}
     selections[param_name] = ['Jupiter']
+
+    def setUp(self):
+        self.client = Client()
+        self.factory = RequestFactory()
+
+    def tearDown(self):
+        cursor = connection.cursor()
+        cursor.execute("delete from user_searches")
+        cursor.execute("ALTER TABLE user_searches AUTO_INCREMENT = 1")
+        cursor.execute("show tables like %s " , ["cache%"])
+        print "running teardown"
+        for row in cursor:
+            q = 'drop table ' + row[0]
+            print q
+            cursor.execute(q)
+
 
     def test__primary_file_spec_has_form_type(self):
         form_type = ParamInfo.objects.get(name='primary_file_spec').form_type
@@ -53,7 +73,3 @@ class ParamInfoTests(TestCase):
     def test_obs_general_time_fields_have_correct_form_type(self):
         count = len(ParamInfo.objects.filter(form_type='TIME', category_name='obs_general'))
         self.assertEqual(count, 2)
-
-
-
-

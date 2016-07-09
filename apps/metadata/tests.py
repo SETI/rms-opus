@@ -12,6 +12,10 @@ from metadata.views import *
 
 cursor = connection.cursor()
 
+SESSION_ENGINE = 'django.contrib.sessions.backends.cache'
+SESSION_COOKIE_NAME = 'opus-test-cookie'
+settings.CACHE_BACKEND = 'dummy:///'
+
 class metadataTests(TestCase):
 
     c = Client()
@@ -19,7 +23,7 @@ class metadataTests(TestCase):
     selections = {}
     selections[param_name] = ['Saturn']
 
-    def teardown(self):
+    def tearDown(self):
         cursor = connection.cursor()
         cursor.execute("delete from user_searches")
         cursor.execute("ALTER TABLE user_searches AUTO_INCREMENT = 1")
@@ -31,7 +35,6 @@ class metadataTests(TestCase):
             cursor.execute(q)
 
     def test__getRangeEndpoints_times(self):
-        self.teardown()
         url = '/opus/api/meta/range/endpoints/timesec1.json?planet=Saturn&view=search&browse=gallery&colls_browse=gallery&page=1&limit=100&order=&cols=ringobsid,planet,target,phase1&widgets=planet,target,timesec1&widgets2=&detail=&reqno=1'
         print url
         response = self.c.get(url)
@@ -124,12 +127,12 @@ class metadataTests(TestCase):
         self.assertGreater(result_count, 1400)
 
     def test_result_count_ring_rad_range_qtype_all(self):
-        response = self.c.get('/opus/api/meta/result_count.json?ringradius1=60000&ringradius2=80000&qtype-ringradius=all')
+        response = self.c.get('/opus/api/meta/result_count.json?ringradius1=80000&ringradius2=120000&qtype-ringradius=all')
         print response.content
         jdata = json.loads(response.content)
         result_count = int(jdata['data'][0]['result_count'])
         print result_count
-        self.assertGreater(result_count, 1100)
+        self.assertGreater(result_count, 3000)
 
     def test_result_count_ring_rad_range_qtype_only(self):
         # qtype only
