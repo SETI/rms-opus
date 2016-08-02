@@ -341,12 +341,14 @@ def get_base_path_previews(ring_obs_id):
     except IndexError:
         return
 
-    if volume_id == 'NHJULO_1001':
-        volume_id = 'NHJULO_2001'  # NHJULO needs some help
-
     file_path = Files.objects.filter(ring_obs_id=ring_obs_id, volume_id=volume_id)[0].base_path
 
-    return '/'.join(file_path.split('/')[-2:])
+    base_path = '/'.join(file_path.split('/')[-2:])
+
+    if 'NH' in volume_id:
+        base_path = 'NHxxLO_xxxx_lien_resolution/' + base_path  # NHJULO needs some help
+
+    return base_path
 
 
 def getImage(request,size='med', ring_obs_id='',fmt='mouse'):      # mouse?

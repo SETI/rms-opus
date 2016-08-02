@@ -78,6 +78,11 @@ class resultsTests(TestCase):
             print q
             cursor.execute(q)
 
+    def test__get_base_path_previews(self):
+        ring_obs_id = 'S_SPEC_CO_CIRS_1633035651_FP4'
+        preview = get_base_path_previews(ring_obs_id)
+        self.assertEqual(preview, 'COCIRS_5xxx/')
+
     def test__getPage_no_selections(self):
         request = self.factory.get('some_request?', HTTP_X_REQUESTED_WITH='XMLHttpRequest')
         request.user = AnonymousUser()
