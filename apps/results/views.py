@@ -346,6 +346,7 @@ def get_base_path_previews(ring_obs_id):
     base_path = '/'.join(file_path.split('/')[-2:])
 
     if 'NH' in volume_id:
+        base_path = '/'.join(file_path.split('/')[-1:])
         base_path = 'NHxxLO_xxxx_lien_resolution/' + base_path  # NHJULO needs some help
 
     return base_path
