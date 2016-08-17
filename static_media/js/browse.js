@@ -29,10 +29,10 @@ var o_browse = {
             .on('mouseleave', 'ul.ace-thumbnails li', function() {
                 // check and see if it should not be removed because it's being displayed in colorbox/embedded viewer
                 if (!$(this).find('.thumb_overlay').hasClass('browse_image_selected')) {
-                    $(this).find('.thumb_overlay').removeClass("gallery_image_focus");     
+                    $(this).find('.thumb_overlay').removeClass("gallery_image_focus");
                 }
             });
-               
+
         // browse nav menu - the gallery/table toggle
         $('#browse').on("click", '.browse_view', function() {
 
@@ -56,7 +56,7 @@ var o_browse = {
 
             // change the text on the link in the browse nav
             if (opus.prefs.browse == 'gallery') {
-                // show the gallery's data viewer if something is selected: 
+                // show the gallery's data viewer if something is selected:
                 if ($('.browse_image_selected').length) {
                     o_browse.embedded_data_viewer_toggle();
                 }
@@ -91,7 +91,7 @@ var o_browse = {
             return false;
         });
 
-        // browse nav menu - add range - begins add range interaction
+        // browse nav menu - download csv
         $('#browse').on("click", '.download_csv', function() {
             col_str = opus.prefs.cols.join(',');
             hash = [];
@@ -109,11 +109,12 @@ var o_browse = {
         // browse nav menu - add range - begins add range interaction
         $('#browse').on("click", '.addrange', function() {
 
-            if ($('.addrange', '#browse').text() == "add range") {
+            if ($('.addrange', '#browse').html() == "add range") {
+                // user has clicked "add range'"
                 opus.addrange_clicked = true;
-                $('.addrange','#browse').text("select range start");
-                return false;
+                $('.addrange','#browse').html("select range start");
             }
+            return false;
         });
 
         // data_table - clicking a table row adds to cart
@@ -160,13 +161,13 @@ var o_browse = {
             ring_obs_id = $(this).parent().attr("id").substring(9);
 
             // if the user clicked on actual thumbnail, update the metadata box
-            // if the user clicked on the metadata box image, show the colorbox 
+            // if the user clicked on the metadata box image, show the colorbox
             if (!e.isTrigger) {
                 // they clicked a thumbnail, open the embedded data viewer
                 o_browse.updateEmbeddedMetadataBox(ring_obs_id);
                 return false;
-            } 
-            
+            }
+
         });
 
         // thumbnail overlay tools
@@ -375,7 +376,7 @@ var o_browse = {
                         return;
                     }
                 } catch(e) {
-                    // offset of top is undefined 
+                    // offset of top is undefined
                     return
                 }
 
@@ -618,7 +619,7 @@ var o_browse = {
                 if (next_element.hasClass("infinite_scroll_page")) {
                     // this is the infinite scroll indicator, continue to next
                     next_element = $(element + current_id, '#browse').next().next();
-                } 
+                }
 
                 // check the boxes:
                 if (element == '#gallery__') {
@@ -627,7 +628,7 @@ var o_browse = {
                         try {
                             ring_obs_id = next_element.attr("id").split('__')[1];
                             o_browse.toggleBrowseInCollectionStyle(ring_obs_id);
-                        } catch(e) { 
+                        } catch(e) {
                         }
                     }
                 } else {
@@ -761,7 +762,7 @@ var o_browse = {
         view_var = opus.prefs[prefix + 'browse'];  // either 'gallery' or 'data'
 
         if (namespace == '#collection' & opus.colls_pages == 0) {
-            // clicked on collections tab with nothing in collections, 
+            // clicked on collections tab with nothing in collections,
             // give some helpful hint
             html = ' \
                 <div style = "margin:20px"><h2>Your Collection is Empty</h2>   \
@@ -818,8 +819,8 @@ var o_browse = {
                 if (view_var == 'gallery') {
                     $(indicator_row).appendTo('.gallery .ace-thumbnails', namespace).show();
                 } else {
-                    // this is the data table view! 
-                    // do something: 
+                    // this is the data table view!
+                    // do something:
                     $(".data_table tr:last", namespace).after(indicator_row);
                     $(".data_table tr:last", namespace).show();  // i dunno why couldn't chain these 2
                 }
@@ -830,8 +831,8 @@ var o_browse = {
 
         // wait! is this page already drawn?
         if (opus.last_page_drawn[prefix + view_var] == page) {
-            // this page is already drawn, just make sure it's showing and 
-            // start the scroll watch interval 
+            // this page is already drawn, just make sure it's showing and
+            // start the scroll watch interval
             if (view_var == 'data') {
                 $('.data tbody', namespace).fadeIn("fast");
             } else {
@@ -908,7 +909,7 @@ var o_browse = {
 
                 o_hash.updateHash();
 
-            }, 
+            },
             complete: function() {
                 // turn the scroll watch timer back on
                 clearInterval(opus.scroll_watch_interval);  // always shut off just before, just in case
@@ -965,7 +966,7 @@ var o_browse = {
             }
 
             // update any currently rendered metadata box
-            if (opus.current_metadatabox && 
+            if (opus.current_metadatabox &&
                 updated_ids.indexOf(opus.current_metadatabox) > -1) {
                 o_browse.updateEmbeddedMetadataBox(opus.current_metadatabox);
             }
@@ -1038,7 +1039,7 @@ var o_browse = {
 
 
                 if ($('.embedded_data_viewer_wrapper').is(":visible")) {
-                    // embedded data viewer box is open, update it with current 
+                    // embedded data viewer box is open, update it with current
                     o_browse.updateEmbeddedMetadataBox(ring_obs_id);
                 }
 
@@ -1099,7 +1100,7 @@ var o_browse = {
         $('.gallery_data_viewer').html(html);
 
         return html
-    }, 
+    },
 
     updateEmbeddedMetadataBox: function(ring_obs_id) {
 
@@ -1120,10 +1121,10 @@ var o_browse = {
                     <a href = "' + full + '" data-ring_obs_id="' + ring_obs_id + '"> \
                     <img src = "' + img + '"></a> \
                     </div>';
-            html += o_browse.metadataboxHtml(ring_obs_id);        
+            html += o_browse.metadataboxHtml(ring_obs_id);
 
             if (!$('.embedded_data_viewer_wrapper').is(":visible")) {
-                // embedded data viewer isn't visible, show it! 
+                // embedded data viewer isn't visible, show it!
                 o_browse.embedded_data_viewer_toggle();
             }
 
@@ -1154,12 +1155,12 @@ var o_browse = {
 
         }); // /getJSON
 
-    }, 
+    },
 
     updateColorboxDataViewer: function(ring_obs_id) {
 
         html = o_browse.metadataboxHtml(ring_obs_id);
-        
+
         // add data viewer behaviors
         $('.gallery_data_viewer').on("click", '.gallery_data_link', function() {
             ring_obs_id = $(this).data('ringobsid');
@@ -1303,7 +1304,7 @@ var o_browse = {
                 // scroll is in view, up the "footer clicks" for this view
                 opus.browse_footer_clicks[prefix + view_var] = opus.browse_footer_clicks[prefix + view_var] + 1;
 
-                
+
                 o_browse.getBrowseTab();
 
             }
