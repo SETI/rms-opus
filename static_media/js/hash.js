@@ -160,6 +160,13 @@ var o_hash = {
             }
         }
 
+        // despite what the url says, make sure every widget that is constrained is actually visible
+        for (slug in opus.selections) {
+          if (jQuery.inArray(opus.prefs['widgets']) < 0) {
+            opus.prefs['widgets'].push(slug);
+          }
+        }
+
         if (!jQuery.isEmptyObject(opus.last_selections)) {
             opus.load();
         }
