@@ -30,7 +30,7 @@ var o_hash = {
 
           if (key in ['widgets','widgets2','cols']) {
 
-              hash[hash.length] = key + '=' + opus.prefs.widgets.join(',');
+              hash[hash.length] = key + '=' + opus.prefs.widgets.join(',').replace(/\s+/g, '');
 
           } else if (key == 'page') {
 
@@ -132,7 +132,7 @@ var o_hash = {
 
                 if (slug == 'widgets' || slug == 'widgets2') {
                     if (value) {
-                        opus.prefs[slug] = value.split(',');
+                        opus.prefs[slug] = value.replace(/\s+/g, '').split(',');
                     }
                 } else if (slug == 'page') {
                     if (value) {
