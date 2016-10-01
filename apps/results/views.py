@@ -345,14 +345,6 @@ def get_base_path_previews(ring_obs_id):
 
     base_path = '/'.join(file_path.split('/')[-2:])
 
-    # hack for New Horizons LORRI MVIC
-    if 'NH' in volume_id:
-        base_path = '/'.join(file_path.split('/')[-1:])
-        if 'MV' in volume_id:
-            base_path = 'NHxxMV_xxxx_lien_resolution/' + base_path  # NHLORRI needs some help
-        if 'LO' in volume_id:
-            base_path = 'NHxxLO_xxxx_lien_resolution/' + base_path  # MVIC needs some help
-
     return base_path
 
 
