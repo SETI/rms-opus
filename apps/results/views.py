@@ -345,9 +345,13 @@ def get_base_path_previews(ring_obs_id):
 
     base_path = '/'.join(file_path.split('/')[-2:])
 
+    # hack for New Horizons LORRI MVIC
     if 'NH' in volume_id:
         base_path = '/'.join(file_path.split('/')[-1:])
-        base_path = 'NHxxLO_xxxx_lien_resolution/' + base_path  # NHJULO needs some help
+        if 'MV' in volume_id:
+            base_path = 'NHxxMV_xxxx_lien_resolution/' + base_path  # NHLORRI needs some help
+        if 'LO' in volume_id:
+            base_path = 'NHxxLO_xxxx_lien_resolution/' + base_path  # MVIC needs some help
 
     return base_path
 
@@ -537,7 +541,7 @@ def getFiles(ring_obs_id=None, fmt=None, loc_type=None, product_types=None, prev
             volume_loc = f.volume_id
 
         # hack for LORRI strangeness
-        if f.instrument_id == "LORRI":
+        if f.instrument_id in ['LORRI','MVIC']:
             volume_loc = f.volume_id
 
         # file_names are grouped first by ring_obs_id then by product_type
