@@ -345,20 +345,6 @@ def getWidget(request, **kwargs):
     # return responseFormats(form, fmt)
 
 
-
-"""
-move this to metadata or results ??
-def detailPage(request,ring_obs_id, template='detail.html'):
-    ring_obs_id = ('/').join(ring_obs_id.split('-'))
-    path = settings.IMAGE_HTTP_PATH
-    img_med = path + getImage(ring_obs_id, "med")
-    img_full = path + getImage(ring_obs_id, "full")
-    data = getDetail(request,ring_obs_id=ring_obs_id)
-    return render_to_response(template,locals(), context_instance=RequestContext(request))
-"""
-
-
-
 def getQuickPage(request,template='demo.html'):
     widgets = {}
     images = Image.objects.all()[0:100]
