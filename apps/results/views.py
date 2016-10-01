@@ -532,10 +532,6 @@ def getFiles(ring_obs_id=None, fmt=None, loc_type=None, product_types=None, prev
         except IndexError:
             volume_loc = f.volume_id
 
-        # hack for LORRI strangeness
-        if f.instrument_id in ['LORRI','MVIC']:
-            volume_loc = f.volume_id
-
         # file_names are grouped first by ring_obs_id then by product_type
         file_names[ring_obs_id].setdefault(f.product_type, [])
         extra_files = []
