@@ -1400,17 +1400,41 @@ class ObsInstrumentGossi(models.Model):
     def __unicode__(self):
         return self.ring_obs_id
 
-class ObsInstrumentLorri(models.Model):
-    obs_general = models.ForeignKey(ObsGeneral, db_column="obs_general_id", null=True, blank=True)
-    BINNING_MODE = models.CharField(max_length=9, blank=True, null=True, choices = OBS_INSTRUMENT_LORRI_BINNING_MODE_CHOICES)
-    mult_obs_instrument_LORRI_BINNING_MODE = models.ForeignKey(MultObsInstrumentLorriBinningMode, db_column="mult_obs_instrument_LORRI_BINNING_MODE", db_index=False, null=True, blank=True)
-    INSTRUMENT_COMPRESSION_TYPE = models.CharField(max_length=30, blank=True, null=True, choices = OBS_INSTRUMENT_LORRI_INSTRUMENT_COMPRESSION_TYPE_CHOICES)
-    mult_obs_instrument_LORRI_INSTRUMENT_COMPRESSION_TYPE = models.ForeignKey(MultObsInstrumentLorriInstrumentCompressionType, db_column="mult_obs_instrument_LORRI_INSTRUMENT_COMPRESSION_TYPE", db_index=False, null=True, blank=True)
-    nominal_target_ceneter_res = models.FloatField(null=True, blank=True)
-    PHASE_ANGLE = models.FloatField(null=True, blank=True)
-    TARGET_CENTER_DISTANCE = models.FloatField(null=True, blank=True)
-    ring_obs_id = models.CharField(max_length=40, blank=True, null=True)
 
+class MultObsInstrumentMvicInstrumentCompressionType(models.Model):
+    id = models.IntegerField(primary_key=True)
+    value = models.CharField(unique=True, max_length=100, blank=True)
+    label = models.CharField(unique=True, max_length=30, blank=True)
+    disp_order = models.IntegerField(blank=True, null=True)
+    display = models.CharField(max_length=1, blank=True)
+    default_fade = models.CharField(max_length=1, blank=True)
+    class Meta:
+        db_table = 'mult_obs_instrument_MVIC_INSTRUMENT_COMPRESSION_TYPE'
+
+class ObsInstrumentMvic(models.Model):
+    obs_general_id = models.IntegerField(unique=True)
+    ring_obs_id = models.CharField(unique=True, max_length=40)
+    instrument_compression_type = models.CharField(db_column='INSTRUMENT_COMPRESSION_TYPE', max_length=10, blank=True) # Field name made lowercase.
+    target_center_distance = models.FloatField(db_column='TARGET_CENTER_DISTANCE', blank=True, null=True) # Field name made lowercase.
+    phase_angle = models.FloatField(db_column='PHASE_ANGLE', blank=True, null=True) # Field name made lowercase.
+    mult_obs_instrument_mvic_instrument_compression_type = models.IntegerField(db_column='mult_obs_instrument_MVIC_INSTRUMENT_COMPRESSION_TYPE', blank=True, null=True) # Field name made lowercase.
+    id = models.IntegerField(primary_key=True)
+    class Meta:
+        db_table = 'obs_instrument_MVIC'
+
+
+
+class ObsInstrumentLorri(models.Model):
+    obs_general_id = models.IntegerField(unique=True)
+    ring_obs_id = models.CharField(unique=True, max_length=40)
+    instrument_compression_type = models.CharField(db_column='INSTRUMENT_COMPRESSION_TYPE', max_length=10, blank=True) # Field name made lowercase.
+    binning_mode = models.CharField(db_column='BINNING_MODE', max_length=3, blank=True) # Field name made lowercase.
+    target_center_distance = models.FloatField(db_column='TARGET_CENTER_DISTANCE', blank=True, null=True) # Field name made lowercase.
+    phase_angle = models.FloatField(db_column='PHASE_ANGLE', blank=True, null=True) # Field name made lowercase.
+    nominal_target_ceneter_res = models.FloatField(blank=True, null=True)
+    mult_obs_instrument_lorri_binning_mode = models.IntegerField(db_column='mult_obs_instrument_LORRI_BINNING_MODE', blank=True, null=True) # Field name made lowercase.
+    mult_obs_instrument_lorri_instrument_compression_type = models.IntegerField(db_column='mult_obs_instrument_LORRI_INSTRUMENT_COMPRESSION_TYPE', blank=True, null=True) # Field name made lowercase.
+    id = models.IntegerField(primary_key=True)
     class Meta:
         db_table = 'obs_instrument_LORRI'
 
@@ -1439,6 +1463,28 @@ class ObsInstrumentVgiss(models.Model):
 
     class Meta:
         db_table = 'obs_instrument_VGISS'
+
+    def __unicode__(self):
+        return self.ring_obs_id
+
+
+class ObsMissionNewHorizons(models.Model):
+    obs_general_id = models.IntegerField(unique=True)
+    ring_obs_id = models.CharField(unique=True, max_length=40)
+    volume_id = models.CharField(max_length=11, blank=True)
+    instrument_id = models.CharField(max_length=6, blank=True)
+    time_stamp = models.DateTimeField()
+    spacecraft_clock_count1 = models.FloatField(blank=True, null=True)
+    spacecraft_clock_count2 = models.FloatField(blank=True, null=True)
+    mission_phase = models.CharField(max_length=100, blank=True)
+    observation_name = models.CharField(max_length=100, blank=True)
+    telemetry_application_id = models.CharField(max_length=20, blank=True)
+    mult_obs_mission_new_horizons_mission_phase = models.IntegerField(blank=True, null=True)
+    mult_obs_mission_new_horizons_telemetry_application_id = models.IntegerField(blank=True, null=True)
+    id = models.IntegerField(primary_key=True)
+
+    class Meta:
+        db_table = 'obs_mission_new_horizons'
 
     def __unicode__(self):
         return self.ring_obs_id
