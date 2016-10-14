@@ -59,7 +59,7 @@ def getResultCount(request,fmt='json'):
 
 
     table = search.views.getUserQueryTable(selections,extras)
-    
+
 
     if table is False:
         count = 0;
@@ -143,7 +143,7 @@ def getValidMults(request,slug,fmt='json'):
 
         for row in results:
             mult_id = row[mult_name]
-    
+
             try:
                 try:
                     mult = mult_model.objects.get(id=mult_id).label
@@ -216,7 +216,13 @@ def getRangeEndpoints(request,slug,fmt='json'):
         range_endpoints = cache.get(cache_key)
         return responseFormats(range_endpoints,fmt,template='mults.html')
 
-    results    = table_model.objects # this is a count(*), group_by query!
+    try:
+        results    = table_model.objects # this is a count(*), group_by query
+    except AttributeError, e:
+        log.error(e)
+        log.error("could not find table model for table_name: %s" % table_name)
+        raise Http404("Does Not Exist")
+
     if table_name == 'obs_general':
         where = "%s.id = %s.id" % (table_name, user_table)
     else:
@@ -244,7 +250,9 @@ def getRangeEndpoints(request,slug,fmt='json'):
         range_endpoints['min'] = ObsGeneral.objects.filter(**{param_name1:range_endpoints['min']})[0].time1
         range_endpoints['max'] = ObsGeneral.objects.filter(**{param_name1:range_endpoints['max']})[0].time1
         pass  # ObsGeneral.objects.filter(param_name1=)
+
     else:
+        # form type is not TIME..
         try:
             if abs(range_endpoints['min']) > 999000:
                 range_endpoints['min'] = format(1.0*range_endpoints['min'],'.3');
@@ -281,11 +289,11 @@ def getFields(request,**kwargs):
             fields = ParamInfo.objects.filter(category_name=field)
         else:
             fields = ParamInfo.objects.all()
-        
+
         return_obj = {}
         for f in fields:
             return_obj[f.slug] = {
-                'label': f.label, 
+                'label': f.label,
                 'more_info': f.get_dictionary_info(),
                 }
         cache.set(cache_key,return_obj,0)
@@ -310,6 +318,3 @@ def getCats(request, **kwargs):
         else:
             fields = Category.objects.all()
         cache.set(cache_key,fields,0)
-
-
-
