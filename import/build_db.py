@@ -115,12 +115,13 @@ print "begin"
 print "building user_collections_template from user_collections_template.sql "
 system("mysql %s < import/user_collections_template.sql -u%s -p%s" % (opus2, DATABASES['default']['USER'], DATABASES['default']['PASSWORD']))
 
-# first, build the empty param_info table in the new db - the table schema lives in a dump file in the repo
+# first, build the  param_info table in the new db - the table  lives in a dump file in the repo
 print "building param_info from param_info_table.sql "
 system("mysql %s < import/param_info_table.sql -u%s -p%s" % (opus2, DATABASES['default']['USER'], DATABASES['default']['PASSWORD']))
 
 
-# only need this part if recalculating param_info_table,
+# only need this part if regenerating param_info_table from Observations dabase
+# also just don't
 """
 q = "replace into %s.param_info select * from %s.forms where (display = 'Y' or display_results = 'Y')" % (opus2, opus1)
 for x in exclude:
