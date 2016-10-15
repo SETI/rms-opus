@@ -1414,23 +1414,21 @@ class MultObsInstrumentMvicInstrumentCompressionType(models.Model):
 class ObsInstrumentMvic(models.Model):
     obs_general_id = models.IntegerField(unique=True)
     ring_obs_id = models.CharField(unique=True, max_length=40)
-    instrument_compression_type = models.CharField(db_column='INSTRUMENT_COMPRESSION_TYPE', max_length=10, blank=True) # Field name made lowercase.
-    target_center_distance = models.FloatField(db_column='TARGET_CENTER_DISTANCE', blank=True, null=True) # Field name made lowercase.
-    phase_angle = models.FloatField(db_column='PHASE_ANGLE', blank=True, null=True) # Field name made lowercase.
+    INSTRUMENT_COMPRESSION_TYPE = models.CharField(db_column='INSTRUMENT_COMPRESSION_TYPE', max_length=10, blank=True) # Field name made lowercase.
+    TARGET_CENTER_DISTANCE = models.FloatField(db_column='TARGET_CENTER_DISTANCE', blank=True, null=True) # Field name made lowercase.
+    PHASE_ANGLE = models.FloatField(db_column='PHASE_ANGLE', blank=True, null=True) # Field name made lowercase.
     mult_obs_instrument_mvic_instrument_compression_type = models.IntegerField(db_column='mult_obs_instrument_MVIC_INSTRUMENT_COMPRESSION_TYPE', blank=True, null=True) # Field name made lowercase.
     id = models.IntegerField(primary_key=True)
     class Meta:
         db_table = 'obs_instrument_MVIC'
 
-
-
 class ObsInstrumentLorri(models.Model):
     obs_general_id = models.IntegerField(unique=True)
     ring_obs_id = models.CharField(unique=True, max_length=40)
-    instrument_compression_type = models.CharField(db_column='INSTRUMENT_COMPRESSION_TYPE', max_length=10, blank=True) # Field name made lowercase.
-    binning_mode = models.CharField(db_column='BINNING_MODE', max_length=3, blank=True) # Field name made lowercase.
-    target_center_distance = models.FloatField(db_column='TARGET_CENTER_DISTANCE', blank=True, null=True) # Field name made lowercase.
-    phase_angle = models.FloatField(db_column='PHASE_ANGLE', blank=True, null=True) # Field name made lowercase.
+    INSTRUMENT_COMPRESSION_TYPE = models.CharField(db_column='INSTRUMENT_COMPRESSION_TYPE', max_length=10, blank=True) # Field name made lowercase.
+    BINNING_MODE = models.CharField(db_column='BINNING_MODE', max_length=3, blank=True) # Field name made lowercase.
+    TARGET_CENTER_DISTANCE = models.FloatField(db_column='TARGET_CENTER_DISTANCE', blank=True, null=True) # Field name made lowercase.
+    PHASE_ANGLE = models.FloatField(db_column='PHASE_ANGLE', blank=True, null=True) # Field name made lowercase.
     nominal_target_ceneter_res = models.FloatField(blank=True, null=True)
     mult_obs_instrument_lorri_binning_mode = models.IntegerField(db_column='mult_obs_instrument_LORRI_BINNING_MODE', blank=True, null=True) # Field name made lowercase.
     mult_obs_instrument_lorri_instrument_compression_type = models.IntegerField(db_column='mult_obs_instrument_LORRI_INSTRUMENT_COMPRESSION_TYPE', blank=True, null=True) # Field name made lowercase.
