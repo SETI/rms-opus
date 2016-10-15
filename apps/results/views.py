@@ -12,6 +12,7 @@ from django.shortcuts import render_to_response
 from django.utils.datastructures import SortedDict
 from django.db import connection, DatabaseError
 from django.db.models import get_model
+from django.core.exceptions import FieldError
 from search.views import *
 from search.models import *
 from results.models import *
@@ -181,6 +182,9 @@ def get_metadata(request, ring_obs_id, fmt):
                 data[table_label] = results
             except AttributeError: pass  # no results found in this table, move along
             except IndexError: pass  # no results found in this table, move along
+            except FieldError:
+                log.error("detail view could not find %s in table %s model %s" % (ring_obs_id, table_name, model_name))
+                pass  # no results found in this table, move along
 
     if fmt == 'html':
         return render_to_response('detail_metadata.html',locals(), context_instance=RequestContext(request))
