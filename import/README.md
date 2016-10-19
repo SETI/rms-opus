@@ -4,6 +4,10 @@
 
 	sudo -b nohup python import/build_db.py all > ~/import.log.txt
 
+	# follow it:
+
+		tail -f ~/import.log.txt
+
 or a smaller version:
 
     python import/build_db.py COCIRS_5909,COVIMS_0040,VGISS_8207,COISS_1002,COISS_2068,COISS_2069

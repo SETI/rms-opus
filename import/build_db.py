@@ -122,6 +122,7 @@ system("mysql %s < import/param_info_table.sql -u%s -p%s" % (opus2, DATABASES['d
 
 # only need this part if regenerating param_info_table from Observations dabase
 # also just don't
+# see also update_forms_with_opu2_param_info.sql
 """
 q = "replace into %s.param_info select * from %s.forms where (display = 'Y' or display_results = 'Y')" % (opus2, opus1)
 for x in exclude:
@@ -148,7 +149,8 @@ cursor.execute("update %s.param_info set display_results = 1 where slug = 'time1
 # update param_info set display_results = 1 where slug = 'timesec1' or slug = 'timesec2';
 cursor.execute("update %s.param_info set display_results = 1 where slug = 'timesec1' or slug = 'timesec2';" % opus2)
 cursor.execute("update %s.param_info set form_type = 'STRING' where name = 'primary_file_spec'" % opus2)
-cursor.execute("update %s.param_info  set label = label_results, form_type = NULL where category_name = 'obs_general' and name in ('time1','time2');" % opus2)
+cursor.execute("update %s.param_info set label = label_results, form_type = NULL where category_name = 'obs_general' and name in ('time1','time2');" % opus2)
+cursor.execute("update %s.param_info set category_name = 'obs_general' where name = 'volume_id' " % opus2)
 
 
 
