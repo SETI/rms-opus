@@ -230,7 +230,7 @@ def getRangeEndpoints(request,slug,fmt='json'):
 
     if has_selections:
         # has selections, tie query to user_table
-        range_endpoints = results.extra(where = [where], tables = [user_table]).aggregate(min = Min(param_name1), max = Max(param_name1))
+        range_endpoints = results.extra(where = [where], tables = [user_table]).aggregate(min = Min(param_name1), max = Max(param_name2))
 
         # get count of nulls
         where = where + " and " + param_name1 + " is null and " + param_name2 + " is null "
@@ -248,7 +248,7 @@ def getRangeEndpoints(request,slug,fmt='json'):
     # convert time_sec to human readable
     if form_type == "TIME":
         range_endpoints['min'] = ObsGeneral.objects.filter(**{param_name1:range_endpoints['min']})[0].time1
-        range_endpoints['max'] = ObsGeneral.objects.filter(**{param_name1:range_endpoints['max']})[0].time1
+        range_endpoints['max'] = ObsGeneral.objects.filter(**{param_name2:range_endpoints['max']})[0].time2
         pass  # ObsGeneral.objects.filter(param_name1=)
 
     else:

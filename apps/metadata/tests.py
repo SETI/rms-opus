@@ -40,7 +40,7 @@ class metadataTests(TestCase):
         response = self.c.get(url)
         print 'got:'
         print response.content
-        expected = '{"max": "2011-269T19:59:13.124", "nulls": 0, "min": "2009-09-01T00:00:01"}'
+        expected = '{"max": "2011-269T19:59:51.124", "nulls": 0, "min": "2009-09-01T00:00:01"}'
         print 'expected:'
         print expected
         self.assertEqual(response.status_code, 200)
