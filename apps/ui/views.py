@@ -143,7 +143,10 @@ def getMenuLabels(request, labels_view):
         menu_data.setdefault(d.table_name, {})
 
         if d.table_name == 'obs_surface_geometry':
-            menu_data[d.table_name]['menu_help'] = "Select a target name to reveal more options"
+            menu_data[d.table_name]['menu_help'] = "Select a target name to reveal more options. Supported Instruments: COISS, COUVIS, COVIMS, NHLORRI"
+
+        if d.table_name == 'obs_ring_geometry':
+            menu_data[d.table_name]['menu_help'] = "Supported Instruments: COISS, COUVIS, COVIMS, NHLORRI"
 
         if d.table_name in sub_headings and sub_headings[d.table_name]:
             # this div is divided into sub headings

@@ -14,10 +14,14 @@
         </a>
 
         <ul class="submenu"><!-- all div labels have level 2 submenu to list params-->
-
         {# loop through all params then check if this param belongs to this div.table_name, because templates #}
         {% for name, info in menu.data.items %}
             {% if name == div.table_name %}  {# this param_name IS contained in this div #}
+
+							{% if info.menu_help %}
+									<li><div class = "menu_help">{{ info.menu_help }}</div></li>
+							{% endif %}
+
 
                 {% if info.has_sub_heading %}
 
@@ -66,10 +70,6 @@
                         <li>
                             <a data-label = "{{ p.label }}" data-slug = "{{ p.slug }}" class = "{{ p.slug }}" href = "">
                                 <i class = "fa fa-check"></i>
-
-                                {% if info.menu_help %}
-                                    <div class = "menu_help">{{ info.menu_help }}</div>
-                                {% endif %}
 
                                 {{ p.label }}
                                 <i class = "fa fa-info-circle" title = "
