@@ -161,7 +161,14 @@ for row in param_info_rows:
         mult_model = "class " + mult_model_name + "(models.Model):" + mult_model_core
         mult_model += "class Meta:\n"
         mult_model += "        db_table = u'" + mult_table + "'\n"
-        mult_model += "        ordering = ['disp_order']\n"
+
+        if mult_table in ['mult_obs_surface_geometry_target_name','mult_obs_general_target_name']:
+            # some mult tables are always ordered alphabetically
+            mult_model += "        ordering = ['label']\n"
+        else:
+            # others follow disp_order field in db table
+            mult_model += "        ordering = ['disp_order']\n"
+
         mult_models += [mult_model]
         fkey_field_def = "    " + mult_table + ' = models.ForeignKey(' + mult_model_name + ', db_column="' + mult_table + '", db_index=False, null=True, blank=True)'
 

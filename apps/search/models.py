@@ -172,7 +172,7 @@ class MultObsGeneralTargetName(models.Model):
 
     class Meta:
         db_table = u'mult_obs_general_target_name'
-        ordering = ['disp_order']
+        ordering = ['label']
 
 
 class MultObsGeneralTypeId(models.Model):
@@ -1056,7 +1056,7 @@ class MultObsSurfaceGeometryTargetName(models.Model):
 
     class Meta:
         db_table = u'mult_obs_surface_geometry_target_name'
-        ordering = ['disp_order']
+        ordering = ['label']
 
 
 class MultObsTypeImageImageTypeId(models.Model):
