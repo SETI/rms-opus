@@ -45,12 +45,17 @@ class searchTests(TestCase):
             print q
             cursor.execute(q)
 
+    def test__planets_properly_ordered(self):
+        the_planets = [planet['label'] for planet in MultObsGeneralPlanetId.objects.filter(display='Y').values('label')]
+        expect = ['Venus','Earth', 'Mars', 'Jupiter', 'Saturn', 'Uranus', 'Neptune', 'Pluto']
+        self.assertEqual(expect, the_planets)
+
     def test__surface_geometry_table_label_is_correct(self):
         label = TableName.objects.get(table_name='obs_surface_geometry').label
         self.assertEqual(label, "Surface Geometry")
 
     def test__there_exist_a_number_of_tables_in_table_names_table(self):
-        count = TableName.objects.get(display='Y').count()
+        count = TableName.objects.filter(display='Y').count()
         self.assertGreater(count, 90)
 
     def test__constructQueryString_string(self):
