@@ -21,14 +21,14 @@ var o_widgets = {
         */
 
         $(".widget_column").mCustomScrollbar({
-            theme:"rounded-dark", 
+            theme:"rounded-dark",
             scrollInertia:300,
-        });        
+        });
         $(".sidebar_wrapper").mCustomScrollbar({
-            theme:"rounded-dark", 
+            theme:"rounded-dark",
             scrollInertia:300,
-        });        
-    
+        });
+
         // first set sidebar height dynamically
 
         // click the dictionary icon, the definition slides open
@@ -211,7 +211,7 @@ var o_widgets = {
             // if widget as moved to a different formscolumn,
             // redefine the opus.prefs.widgets and opus.prefs.widgets2 (preserves order)
             widgets = $('#search_widgets1').sortable('toArray');
-            
+
             $.each(widgets, function(index,value) {
                 widgets[index]=value.split('__')[1];
             });
@@ -264,6 +264,19 @@ var o_widgets = {
                 });
                 break;
 
+          case 'surfacegeometrytargetname':
+               // when target widget is drawn, look for any checked planets:
+               // usually for when a planet checkbox is checked on page load
+               $('#widget__planet input:checkbox:checked', '#search').each(function() {
+                   if ($(this).attr('id') && $(this).attr('id').split('_')[0] == 'planet') { // confine to param/vals - not other input controls
+                       mult_id = '#mult_group_' + $(this).attr('value');
+                       mult_id = '#mult_group_' + $(this).attr('value');
+                       $(mult_id).find('.indicator').addClass('fa-plus');
+                       $(mult_id).find('.indicator').removeClass('fa-minus');
+                       $(mult_id).next().slideDown("fast");
+                   }
+               });
+               break;
            //
 
         }
