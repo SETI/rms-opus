@@ -1,31 +1,42 @@
-from selenium import webdriver
-from selenium.webdriver.common.keys import Keys
 from bs4 import BeautifulSoup
+import unittest
 import json
+import requests
 import csv
 
 api_endpoint = "http://tools.pds-rings.seti.org/opus/api/meta/result_count.json?"
 filename = 'result_counts.txt'
 
-with open(filename, 'rb') as csvfile:
+class APIEndpointTests(unittest.TestCase):
 
-    filereader = csv.reader(csvfile)
-    for row in filereader:
+    def test_all_the_things_in_loop(self):
 
-        q_str, expected, info = row
+        count = 0
+        with open(filename, 'rb') as csvfile:
 
-        url_hash = q_str.split('#/')[1].strip()
-        api_url = api_endpoint + url_hash
+            filereader = csv.reader(csvfile)
+            for row in filereader:
 
-        driver = webdriver.Firefox()
-        driver.get(api_url)
-        soup = BeautifulSoup(driver.page_source)
-        dict_from_json = json.loads(soup.find("body").text)
+                q_str, expected, info = row
 
-        print "checking.. " + api_url
-        print "expecting " + expected
-        print dict_from_json['data'][0]['result_count']
-        assert dict_from_json['data'][0]['result_count'] >= int(expected)
-        driver.close()
+                url_hash = q_str.split('#/')[1].strip()
+                api_url = api_endpoint + url_hash
 
-print "OK!"
+                data = json.loads(requests.get(api_url).text)
+
+                result_count = data['data'][0]['result_count']
+
+                msg = "\n\n checking url: %s \n expected >= %s \n got: %s" % (api_url, expected, result_count)
+                # print msg
+
+                try:
+                    assert result_count >= int(expected)
+                except AssertionError:
+                    raise AssertionError(msg)
+
+                count = count+1
+
+        print "\n ALL TESTS PASS WOOT! \n Actual Number of Tests Run: %s " % str(count)
+
+if __name__ == '__main__':
+    unittest.main()
