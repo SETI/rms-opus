@@ -609,7 +609,7 @@ var o_widgets = {
                  $('#' + widget + ' ul label').after( function () {
                      var value = $(this).find('input').attr("value");
                      try {
-                         span_id = 'hint__' + slug + '_' + value.split(' ').join('_').replace(',','-').replace('+','-');  // commas not allowed in id element
+                         span_id = 'hint__' + slug + '_' + value.replace(' ','-').replace(/[^\w\s]/gi, '')  // special chars not allowed in id element
                          return '<span class = "hints" id = "' + span_id + '"></span>';
                      } catch(e) {
                          return '<span class = "hints" id = "' + span_id + '"></span>';
