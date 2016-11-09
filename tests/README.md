@@ -8,7 +8,7 @@ Run the Tests:
     python api_tests.py
 
 
-- initial setup: install requirements and create a conda environment, and activate it:
+Initial setup: install requirements and create a conda environment, and activate it:
 
     conda create -n opus_tests --file requirements.txt   
     source activate opus_tests
