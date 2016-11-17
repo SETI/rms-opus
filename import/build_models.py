@@ -162,7 +162,8 @@ for row in param_info_rows:
         mult_model += "class Meta:\n"
         mult_model += "        db_table = u'" + mult_table + "'\n"
 
-        if mult_table in ['mult_obs_surface_geometry_target_name','mult_obs_general_target_name']:
+        if (mult_table in ['mult_obs_surface_geometry_target_name','mult_obs_general_target_name']) or \
+            ('FILTER' in mult_table and 'FILTER_NUMBER' not in mult_table):  # order FILTER fields by label
             # some mult tables are always ordered alphabetically
             mult_model += "        ordering = ['label']\n"
         else:
