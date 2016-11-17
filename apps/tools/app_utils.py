@@ -40,6 +40,8 @@ def responseFormats(data, fmt, **kwargs):
     # these are passed kwargs that may be lists but are metadata, not data (ugh)
     ignore = ['labels','columns']
 
+    log.debug(data)
+
     if fmt == 'json':
         if 'path' in kwargs:
             data['path'] = kwargs['path']
@@ -48,11 +50,7 @@ def responseFormats(data, fmt, **kwargs):
         if 'labels' in kwargs:
             data['columns'] = kwargs['labels']
 
-        try:
-            return HttpResponse(json.dumps(data), mimetype='application/json')
-        except TypeError:
-            # data is not serializable via json (what?) so try this other way (huh?)
-            return HttpResponse(json.dumps(data), mimetype='application/json')
+        return HttpResponse(json.dumps(data), mimetype='application/json')
 
     elif fmt == 'html':
 

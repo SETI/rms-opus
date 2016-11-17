@@ -30,7 +30,7 @@ class MultiFloatField(forms.Field):
         # Use the parent's handling of required fields, etc.
         super(MultiFloatField, self).validate(value)
 
-        if not value: return    
+        if not value: return
 
         if type(value).__name__ != 'str':
             value = [value]
@@ -55,10 +55,6 @@ class MultiTimeField(forms.Field):
 
 class SearchForm(forms.Form):
     """
-    problem:
-    this only uses default form type, we want to pass in user defined form types,
-    qtypes gets played here!
-
     >>>> from search.forms import *
     >>>> auto_id = False
     >>>> slug1 = 'planet'
