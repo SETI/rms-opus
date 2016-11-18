@@ -219,14 +219,13 @@ def get_triggered_tables(selections, extras = {}):
 
     # instruments with no surface geo metadata:
     fields_to_check = ['obs_general.instrument_id','obs_general.inst_host_id','obs_general.mission_id']
+    no_metadata = ['Hubble','CIRS','Galileo','Voyager']
     for field in fields_to_check:
         if field not in selections:
             continue
         for inst in selections[field]:
-            if 'Hubble' in inst or \
-                'CIRS' in inst or \
-                'Galileo' in inst or \
-                'Voyager' in inst:
+            for search_string in no_metadata:
+                if search_string in inst:
                     triggered_tables.remove('obs_surface_geometry')
 
     # now see if any more tables are triggered from query
