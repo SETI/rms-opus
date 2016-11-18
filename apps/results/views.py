@@ -209,9 +209,28 @@ def get_triggered_tables(selections, extras = {}):
 
     # first add the base tables
     triggered_tables = [t for t in settings.BASE_TABLES]
-    query_result_table = getUserQueryTable(selections,extras)
+
+    # this is a hack to do something special for the usability of the Surface Geometry section
+    # surface geometry is always triggered and showing by default,
+    # but for some instruments there is actually no data there.
+    # if one of those instruments is constrained directly - that is,
+    # one of these instruments is selected in the Instrument Name widget
+    # remove the geometry tab from the triggered tables
+
+    # instruments with no surface geo metadata:
+    fields_to_check = ['obs_general.instrument_id','obs_general.inst_host_id','obs_general.mission_id']
+    for field in fields_to_check:
+        if field not in selections:
+            continue
+        for inst in selections[field]:
+            if 'Hubble' in inst or \
+                'CIRS' in inst or \
+                'Galileo' in inst or \
+                'Voyager' in inst:
+                    triggered_tables.remove('obs_surface_geometry')
 
     # now see if any more tables are triggered from query
+    query_result_table = getUserQueryTable(selections,extras)
     queries = {}  # keep track of queries
     for partable in Partable.objects.all():
         # we are joining the results of a user's query - the single column table of ids
@@ -252,6 +271,7 @@ def get_triggered_tables(selections, extras = {}):
             if trigger_tab == 'obs_surface_geometry' and trigger_val == selections['obs_surface_geometry.target_name'][0]:
                 if trigger_val in [r['target_name'] for r in results]:
                     triggered_tables.append(partable)
+
 
     # now hack in the proper ordering of tables
     final_table_list = []
