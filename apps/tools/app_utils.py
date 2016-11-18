@@ -40,8 +40,6 @@ def responseFormats(data, fmt, **kwargs):
     # these are passed kwargs that may be lists but are metadata, not data (ugh)
     ignore = ['labels','columns']
 
-    log.debug(data)
-
     if fmt == 'json':
         if 'path' in kwargs:
             data['path'] = kwargs['path']
