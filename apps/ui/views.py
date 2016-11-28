@@ -139,6 +139,7 @@ def getMenuLabels(request, labels_view):
 
     # build a nice data struct for the mu&*!#$@!ing template
     menu_data = {}
+    menu_data['labels_view'] = labels_view
     for d in divs:
         menu_data.setdefault(d.table_name, {})
 

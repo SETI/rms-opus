@@ -2,7 +2,6 @@
 <ul class="nav nav-list"> <!-- was groups -->
 <!-- i class = "menu_spinner spinner"></i -->
 {% for div in menu.divs %}
-
 	<li>
         <a href="#" class="dropdown-toggle {{ div.table_name }}" data-cat = "{{ div.table_name }}">
             <i class = "fa fa-check"></i>
@@ -41,14 +40,34 @@
                             {% for p in params %}
                                 {% if p.cat_name == sub_head.slugify %}
                                 <li>
-                                    <a data-label = "{{ p.label }}" data-slug = "{{ p.slug }}" class = "{{ p.slug }}" href = "">
+                                    <a data-label = "
+
+																		{% if menu.data.labels_view == 'results' %}
+																			{{ p.label_results}}
+																		{% else %}
+																			{{ p.label }}
+																		{% endif %}
+
+																			" data-slug = "{{ p.slug }}" class = "{{ p.slug }}" href = "">
                                         <i class = "fa fa-check"></i>
-                                        {{ p.label }}
+
+																				{% if menu.data.labels_view == 'results' %}
+																					{{ p.label_results}}
+																				{% else %}
+																					{{ p.label }}
+																				{% endif %}
+
                                         <i class = "fa fa-info-circle" title = "
                                             {% if p.get_dictionary_info %}
                                                 {{ p.get_dictionary_info.def|striptags }}
                                             {% else  %}
-                                                {{ p.label }}
+
+																							{% if menu.data.labels_view == 'results' %}
+																								{{ p.label_results}}
+																							{% else %}
+																								{{ p.label }}
+																							{% endif %}
+
                                             {% endif %}
                                         "></i>
                                     </a>
@@ -68,10 +87,21 @@
 
                     {% for p in info.data %}
                         <li>
-                            <a data-label = "{{ p.label }}" data-slug = "{{ p.slug }}" class = "{{ p.slug }}" href = "">
+                            <a data-label = "
+															{% if menu.data.labels_view == 'results' %}
+																{{ p.label_results}}
+															{% else %}
+																{{ p.label }}
+															{% endif %}
+														" data-slug = "{{ p.slug }}" class = "{{ p.slug }}" href = "">
                                 <i class = "fa fa-check"></i>
 
-                                {{ p.label }}
+																{% if menu.data.labels_view == 'results' %}
+																	{{ p.label_results}}
+																{% else %}
+																	{{ p.label }}
+																{% endif %}
+
                                 <i class = "fa fa-info-circle" title = "
                                     {% if p.get_dictionary_info %}
                                         {{ p.get_dictionary_info.def|striptags }}
