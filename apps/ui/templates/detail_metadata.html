@@ -10,7 +10,7 @@ Grab all metadata <a href = "/opus/api/metadata/{{ ring_obs_id }}.json" target =
 
             {% for name, param_info in all_info.items %}
                 {% if name == param %}
-                    {% if param_info.get_dictionary_info %}
+                    {% if param_info.get_dictionary_info.def %}
                         <i class = "fa fa-info-circle" title = "
                             {{ param_info.get_dictionary_info.def|striptags }}
                         "></i>
