@@ -95,10 +95,12 @@ var o_widgets = {
         } catch (e) {
             slug_no_num = slug;
         }
-        opus.prefs.widgets.splice(opus.prefs.widgets.indexOf(slug));
-        opus.prefs.widgets2.splice(opus.prefs.widgets2.indexOf(slug));
-        opus.widgets_drawn.splice(opus.widgets_drawn.indexOf(slug));
-        opus.widget_elements_drawn.splice(opus.widget_elements_drawn.indexOf(slug));
+
+        opus.prefs.widgets.splice(opus.prefs.widgets.indexOf(slug), 1);
+        opus.prefs.widgets2.splice(opus.prefs.widgets2.indexOf(slug), 1);
+        opus.widgets_drawn.splice(opus.widgets_drawn.indexOf(slug), 1);
+        opus.widget_elements_drawn.splice(opus.widget_elements_drawn.indexOf(slug), 1);
+
         if (slug in opus.selections) {
             delete opus.selections[slug];
         }
@@ -135,16 +137,16 @@ var o_widgets = {
                delete opus.selections[slug];
            }
            if (jQuery.inArray(slug,opus.prefs.widgets) > -1) {
-               opus.prefs.widgets.splice(opus.prefs.widgets.indexOf(slug)); }
+               opus.prefs.widgets.splice(opus.prefs.widgets.indexOf(slug), 1); }
 
            if (jQuery.inArray(slug,opus.prefs.widgets2) > -1) {
-               opus.prefs.widgets2.splice(opus.prefs.widgets2.indexOf(slug)); }
+               opus.prefs.widgets2.splice(opus.prefs.widgets2.indexOf(slug), 1); }
 
            if (jQuery.inArray(slug,opus.widgets_drawn) > -1) {
-               opus.widgets_drawn.splice(opus.widgets_drawn.indexOf(slug)); }
+               opus.widgets_drawn.splice(opus.widgets_drawn.indexOf(slug), 1); }
 
            if (jQuery.inArray(slug, opus.widget_elements_drawn) > -1) {
-               opus.widget_elements_drawn.splice(opus.widget_elements_drawn.indexOf(slug)); }
+               opus.widget_elements_drawn.splice(opus.widget_elements_drawn.indexOf(slug), 1); }
 
            delete opus.extras['qtype-'+slug];
            delete opus.extras['z-'+slug];
@@ -595,12 +597,19 @@ var o_widgets = {
 
              // if we are drawing a range widget we need to check if the qtype dropdown is
              // already defined by the url:
-             if (slug.match(/.*(1|2)/)) {    // this is a range widget
+             if (slug.match(/.*(1|2)/)) {
+               // this is a range widget
                  var id = slug.match(/(.*)[1|2]/)[1];
+
+                // is the qtype constrained in the url?
                  if (jQuery.inArray('qtype-' + id,opus.extras) > -1 && opus.extras['qtype-'+id]) {
                      // this widgets dropdown is defined in the url, update the html select dropdown to match
                      $('#' + widget + ' select').attr("value",opus.extras['qtype-'+id]);
                  }
+
+                // add the helper icon to range widgets. This is terrible and I am terrible.
+                helper_text = $("#range_query_widget_helper_text").html()
+                $('.' + widget + ' .range-widget > ul > ul').append('<li><i class="fa fa-info-circle range-qtype-helper" title="' + helper_text + '"></i></li>');
              }
              o_widgets.widgetControlBehaviors(slug);
 
@@ -619,7 +628,7 @@ var o_widgets = {
 
 
              if (jQuery.inArray(slug,opus.widgets_fetching) > -1) {
-                 opus.widgets_fetching.splice(opus.widgets_fetching.indexOf(slug));
+                 opus.widgets_fetching.splice(opus.widgets_fetching.indexOf(slug), 1);
              }
 
             if (jQuery.isEmptyObject(opus.selections)) {

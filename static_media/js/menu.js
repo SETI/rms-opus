@@ -9,7 +9,7 @@ var o_menu = {
      menuBehaviors: function() {
          // search menu behaviors
 
-         // click cat header in menu toggles arrow style 
+         // click cat header in menu toggles arrow style
          $('#sidebar').on("click", 'a', function() {
             $(this).find('b.arrow').toggleClass('fa-angle-right').toggleClass('fa-angle-down');
 
@@ -29,7 +29,7 @@ var o_menu = {
                     return false;
                 }
                 return false;
-                
+
              } else {
                  o_widgets.getWidget(slug,'#search_widgets1');
              }
@@ -54,7 +54,7 @@ var o_menu = {
                         opus.menu_state['cats'].push(cat_name);
                     }
                 } else {
-                    opus.menu_state['cats'].splice(opus.menu_state['cats'].indexOf(cat_name));
+                    opus.menu_state['cats'].splice(opus.menu_state['cats'].indexOf(cat_name), 1);
                 }
             }
             // menu groups
@@ -65,7 +65,7 @@ var o_menu = {
                         opus.menu_state['groups'].push(group_name);
                     }
                 } else {
-                    opus.menu_state['groups'].splice(opus.menu_state['groups'].indexOf(group_name));
+                    opus.menu_state['groups'].splice(opus.menu_state['groups'].indexOf(group_name), 1);
                 }
             }
 
@@ -105,7 +105,7 @@ var o_menu = {
 
 
             } else {
-                
+
                 // open menu items that were open before
                 for (var key in opus.menu_state['cats']) {
                     cat_name = opus.menu_state['cats'][key];
@@ -119,7 +119,7 @@ var o_menu = {
                 for (var key in opus.menu_state['groups']) {
                     group_name = opus.menu_state['groups'][key];
                     link = $("a." + group_name, ".sidebar");
-                    sub = link.next().get(0); 
+                    sub = link.next().get(0);
                     $(sub).toggle().parent().toggleClass('open');
                     link.find('b.arrow').toggleClass('fa-angle-right').toggleClass('fa-angle-down');
                     // $("." + group_name, ".sidebar").trigger(ace.click_event);
