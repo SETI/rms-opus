@@ -354,7 +354,7 @@ var o_search = {
                 mults = multdata['mults'];
                 $('#' + widget + ' input').each( function() {
                     value = $(this).attr('value');
-                    id = '#hint__' + slug + "_" + value.replace(' ','-').replace(/[^\w\s]/gi, '');  // id of hinting span, defined in widgets.js getWidget
+                    id = '#hint__' + slug + "_" + value.replace(/ /g,'-').replace(/[^\w\s]/gi, '');  // id of hinting span, defined in widgets.js getWidget
 
                     if (mults[value]){
                           $(id).html('<span>' + mults[value] + '</span>');
