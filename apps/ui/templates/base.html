@@ -29,7 +29,7 @@
                 </li>
 
                 <li>
-                    <a href="#collection"> 
+                    <a href="#collection">
                         <span class = "text-nowrap">
                             Selections <span id = "collection_count" class="badge badge-primary badge-xlg badge-success">0</span>
                         </span>
@@ -73,6 +73,15 @@
 
 
 {% include "footer.html" %}
+<div id = "range_query_widget_helper_html">
+<p><strong>Any</strong> = The image contains at least a portion of the region bounded by the given min and max.</p>
+
+<p><strong>All</strong> = The image contains the entire requested range from min to max.</p>
+
+<p><strong>Only</strong> = Everything within the image is in the requested range.</p>
+
+<!-- img width = "100%" src = "https://cloud.githubusercontent.com/assets/98707/20112139/fe07e65e-a59f-11e6-8181-9932da277130.png" -->
+</div>
 
 
 </body>

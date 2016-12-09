@@ -24,20 +24,27 @@
                 </div><!-- /widget-toolbar -->
             </div><!-- /widget-header -->
 
-            <div class="widget__{{ slug }} widget-body">
+            <div class="widget__{{ slug }} widget-body
+							{% if form_type == 'RANGE' %}
+								 range-widget
+							{% endif %}
+						">
                 <div class="widget-main">
                     <div class = "dictionary">
                         {{ dictionary.def|striptags }} <!-- a href = "{{ dictionary.more_info }}" target = "_blank">More info.</a -->
                     </div>
                     <div id = "hint__{{ slug }}" class = "range_hints"></div>
                     <ul>
+
                         {% if intro %}
                             <div class = "intro">
                                 {{ intro }}
+
                             </div>
                         {% endif %}
 
-                        {{ form|safe }}
+                        	{{ form|safe }}
+
                     </ul>
                 </div><!-- /widget-main -->
             </div><!-- /widget-body -->

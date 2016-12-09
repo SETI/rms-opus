@@ -482,6 +482,15 @@ div.gallery {
   padding:0 10px;
   margin:0;
 }
+
+.widget-main .range-qtype-helper {
+  font-size: 130%;
+  color:gray;
+}
+#range_query_widget_helper_html {
+  display:none;
+  width:500px;
+}
 .widget-main ul li ul li {  /* mult labels */
    white-space:nowrap;
  }

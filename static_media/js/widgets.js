@@ -608,8 +608,23 @@ var o_widgets = {
                  }
 
                 // add the helper icon to range widgets. This is terrible and I am terrible.
-                helper_text = $("#range_query_widget_helper_text").html()
-                $('.' + widget + ' .range-widget > ul > ul').append('<li><i class="fa fa-info-circle range-qtype-helper" title="' + helper_text + '"></i></li>');
+                // add the helper text for range widgets
+                if ($('.' + widget).hasClass('range-widget')) {
+
+                    var help_icon = '<a href = "#" data-toggle="popover" data-placement="left">\
+                                    <i class="fa fa-info-circle"></i></a>';
+
+                    $('.' + widget + ' .widget-main>ul>ul').append('<li class = "range-qtype-helper">' + help_icon + '</li>');
+
+                    $('.' + widget + ' .widget-main .range-qtype-helper a').popover({
+                      html:true,
+                      trigger:"focus",
+                      content: function() {
+                        return $('#range_query_widget_helper_html').html();
+                      }
+                    });
+                }
+
              }
              o_widgets.widgetControlBehaviors(slug);
 
