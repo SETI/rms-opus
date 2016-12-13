@@ -147,7 +147,7 @@ class resultsTests(TestCase):
         selections, extras = {}, {}
         selections['obs_general.target_name'] = ["NEPTUNE"]
         partables = get_triggered_tables(selections, extras)
-        expected = sorted([u'obs_general', u'obs_inst_host_VG2', u'obs_instrument_VGISS', u'obs_mission_voyager', u'obs_ring_geometry', u'obs_surface_geometry', u'obs_wavelength'])
+        expected = sorted([u'obs_general', u'obs_ring_geometry', u'obs_surface_geometry', u'obs_type_image', u'obs_wavelength'])
         print 'partables:'
         print partables
         print 'expected:'
