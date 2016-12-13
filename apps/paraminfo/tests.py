@@ -54,6 +54,10 @@ class ParamInfoTests(TestCase):
             print q
             cursor.execute(q)
 
+    def test__surface_geo_results_label_not_null(self):
+        count = ParamInfo.objects.filter(category_name__contains="surface_geo", label_results='').count()
+        print "you may need to \n update param_info set label_results = label where category_name like '%surface_geo%';"
+        self.assertEqual(0, count)
 
     def test__primary_file_spec_has_form_type(self):
         form_type = ParamInfo.objects.get(name='primary_file_spec').form_type
