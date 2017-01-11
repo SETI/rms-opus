@@ -148,7 +148,6 @@ INSTALLED_APPS = (
     'django.contrib.auth',
     'django.contrib.admindocs',
     'django.contrib.staticfiles',
-    # 'south',
     'storages',
     'search',
     'paraminfo',
@@ -205,7 +204,6 @@ MAX_CUM_DOWNLOAD_SIZE = 5*1024*1024*1024 # 5 gigs max cum downloads
 
 
 TEST_RUNNER = 'django_nose.NoseTestSuiteRunner'
-SOUTH_TESTS_MIGRATE = False
 
 #CACHE_BACKEND = 'dummy://'  # turns off caching
 #CACHE_BACKEND = "memcached://127.0.0.1:11211/?timeout=0"
@@ -328,4 +326,3 @@ try:
     from settings_local import *
 except ImportError:
     pass
-
