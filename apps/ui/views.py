@@ -10,7 +10,7 @@ from collections import OrderedDict
 # django things
 from django.template import RequestContext
 from django.shortcuts import render_to_response, get_object_or_404
-from django.db.models import get_model
+from django.apps import apps
 from django.http import HttpResponse
 from django.core.exceptions import FieldError
 
@@ -307,12 +307,12 @@ def getWidget(request, **kwargs):
 
         # determine if this mult param has a grouping field (see doc/group_widgets.md for howto on grouping fields)
         mult_param = getMultName(param_name)
-        model      = get_model('search',mult_param.title().replace('_',''))
+        model      = apps.get_model('search',mult_param.title().replace('_',''))
 
         try:
             grouping = model.objects.distinct().values('grouping')
             grouping_table = 'grouping_' + param_name.split('.')[1]
-            grouping_model = get_model('metadata',grouping_table.title().replace('_',''))
+            grouping_model = apps.get_model('metadata',grouping_table.title().replace('_',''))
             for group_info in grouping_model.objects.order_by('disp_order'):
                 gvalue = group_info.value
                 glabel = group_info.label if group_info.label else 'Other'

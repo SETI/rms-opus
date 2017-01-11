@@ -9,9 +9,9 @@ import csv
 from django.template import loader, Context
 from django.http import Http404
 from django.shortcuts import render_to_response
-from django.utils.datastructures import SortedDict
+from collections import OrderedDict as SortedDict
 from django.db import connection, DatabaseError
-from django.db.models import get_model
+from django.apps import apps
 from django.core.exceptions import FieldError
 from search.views import *
 from search.models import *
@@ -126,7 +126,7 @@ def get_metadata_by_slugs(request, ring_obs_id, slugs, fmt):
 
     for table_name, param_list in params_by_table.items():
         model_name = ''.join(table_name.title().split('_'))
-        table_model = get_model('search', model_name)
+        table_model = apps.get_model('search', model_name)
         results = table_model.objects.filter(ring_obs_id=ring_obs_id).values(*param_list)[0]
         for param,value in results.items():
             data.append({param: value})
@@ -167,7 +167,7 @@ def get_metadata(request, ring_obs_id, fmt):
         table_label = table.label
         table_name = table.table_name
         model_name = ''.join(table_name.title().split('_'))
-        table_model = get_model('search', model_name)
+        table_model = apps.get_model('search', model_name)
 
         all_slugs = [param.slug for param in ParamInfo.objects.filter(category_name=table_name, display_results=1)]
         all_params = [param.name for param in ParamInfo.objects.filter(category_name=table_name, display_results=1)]
@@ -249,7 +249,7 @@ def get_triggered_tables(selections, extras = {}):
         if trigger_tab + trigger_col in queries:
             results = queries[trigger_tab + trigger_col]
         else:
-            trigger_model = get_model('search', ''.join(trigger_tab.title().split('_')))
+            trigger_model = apps.get_model('search', ''.join(trigger_tab.title().split('_')))
             results = trigger_model.objects
             if query_result_table:
                 if trigger_tab == 'obs_general':

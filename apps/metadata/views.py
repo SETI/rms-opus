@@ -7,7 +7,8 @@ import json
 from django.core.cache import cache
 from django.http import Http404
 from django.http import HttpResponse
-from django.db.models import Avg, Max, Min, Count, get_model
+from django.db.models import Avg, Max, Min, Count
+from django.apps import apps
 from django.db import connection
 from paraminfo.models import ParamInfo
 import search.views
@@ -120,8 +121,8 @@ def getValidMults(request,slug,fmt='json'):
     else:
 
         mult_name  = getMultName(param_name)  # the name of the field to query
-        mult_model = get_model('search',mult_name.title().replace('_',''))
-        table_model = get_model('search', table_name.title().replace('_',''))
+        mult_model = apps.get_model('search',mult_name.title().replace('_',''))
+        table_model = apps.get_model('search', table_name.title().replace('_',''))
 
         mults = {}  # info to return
         results    = table_model.objects.values(mult_name).annotate(Count(mult_name))  # this is a count(*), group_by query!
@@ -186,7 +187,7 @@ def getRangeEndpoints(request,slug,fmt='json'):
     param_name1 = stripNumericSuffix(param_name.split('.')[1]) + '1'
     param_name2 = stripNumericSuffix(param_name.split('.')[1]) + '2'
     param_name_no_num = stripNumericSuffix(param_name1)
-    table_model = get_model('search', table_name.title().replace('_',''))
+    table_model = apps.get_model('search', table_name.title().replace('_',''))
 
     if form_type == 'RANGE' and '1' not in param_info.slug:
         param_name1 = param_name2 = param_name_no_num

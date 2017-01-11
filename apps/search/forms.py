@@ -1,7 +1,7 @@
 from django import forms
 from metadata.views import *
 from search.views import get_param_info_by_slug
-from django.db.models import get_model
+from django.apps import apps
 from paraminfo.models import *
 from tools.app_utils import *
 import settings
@@ -125,7 +125,7 @@ class SearchForm(forms.Form):
                 #self.fields[slug]= MultiStringField(forms.Field)
                 param_name = ParamInfo.objects.get(slug=slug).param_name()
                 mult_param = getMultName(param_name)
-                model      = get_model('search',mult_param.title().replace('_',''))
+                model      = apps.get_model('search',mult_param.title().replace('_',''))
 
                 #grouped mult fields:
                 if grouped:

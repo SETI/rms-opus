@@ -6,9 +6,8 @@ from django.test import RequestFactory
 # from django.test import TestCase  # removed because it deletes test table data after every test
 from unittest import TestCase
 from django.test.client import Client
-from django.db.models import get_model
 from django.contrib.auth.models import AnonymousUser, User
-from django.utils.importlib import import_module
+from importlib import import_module
 from search.views import *
 from results.views import *
 from django.http import QueryDict
