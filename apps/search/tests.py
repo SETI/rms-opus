@@ -325,10 +325,17 @@ class searchTests(TestCase):
         selections = {u'obs_general.planet_id': [u'Saturn'], u'obs_general.time_sec2': [u'2000-024'], u'obs_general.time_sec1': [u'2000-023']}
         q = str(range_query_object(selections,'obs_general.time_sec1',['any']))
         print q
-        expected = "(AND: ('time_sec1__lte', 1987232.0), ('time_sec2__gte', 1900832.0))"
-        print expected
-        self.assertEqual("".join(q.split()),"".join(expected.split()))  # strips all whitespace b4 compare
 
+        try:
+            # julian module behaves a bit differently on the production server
+            # so try both possible results before failing this test
+            expected = "(AND: ('time_sec1__lte', 1987232), ('time_sec2__gte', 1900832))"
+            print expected
+            self.assertEqual("".join(q.split()),"".join(expected.split()))  # strips all whitespace b4 compare
+        except AssertionError:
+            expected = "(AND: ('time_sec1__lte', 1987232.0), ('time_sec2__gte', 1900832.0))"
+            print expected
+            self.assertEqual("".join(q.split()),"".join(expected.split()))  # strips all whitespace b4 compare
 
     def test__range_query_any(self):
         # range query: 'any'
@@ -484,10 +491,18 @@ class searchTests(TestCase):
         q = str(range_query_object(selections,'obs_general.time_sec1',['any']))
         print q
         # time_sec1 <= -649993324.720000 AND time_sec2 >= -649877836.000000
-        expected = "(AND: ('time_sec1__lte', -649834636.0), ('time_sec2__gte', -649950124.72000003))"
-        print 'expected:'
-        print expected
-        self.assertEqual("".join(q.split()),"".join(expected.split()))  # strips all whitespace b4 compare
+        try:
+            # julian module behaves a bit differently on the production server
+            # so try both possible results before failing this test
+            expected = "(AND: ('time_sec1__lte', -649834636), ('time_sec2__gte', -649950124.72000003))"
+            print 'expected:'
+            print expected
+            self.assertEqual("".join(q.split()),"".join(expected.split()))  # strips all whitespace b4 compare
+        except AssertionError:
+            expected = "(AND: ('time_sec1__lte', -649834636.0), ('time_sec2__gte', -649950124.72000003))"
+            print 'expected:'
+            print expected
+            self.assertEqual("".join(q.split()),"".join(expected.split()))  # strips all whitespace b4 compare
 
 
     def test__range_query_time_any_single_time(self):
