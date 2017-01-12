@@ -8,9 +8,9 @@ from metadata.views import (
 )
 # metadata - getting information about a data
 urlpatterns = [
-    url(r'^api/meta/result_count.url(?P<fmt>[json|zip|html|csv]+)$', getResultCount),
-    url(r'^api/meta/mults/url(?P<slug>[-\sa-zA-Z]+).url(?P<fmt>[json|zip|html|csv]+)$', getValidMults),
-    url(r'^api/meta/range/endpoints/url(?P<slug>[-\sa-zA-Z0-9]+).url(?P<fmt>[json|zip|html|csv]+)$', getRangeEndpoints),
-    url(r'^api/fields/url(?P<field>\w+).url(?P<fmt>[json|zip|html|csv]+)$', getFields),
-    url(r'^api/fields.url(?P<fmt>[json|zip|html|csv]+)$', getFields),
+    url(r'^api/meta/result_count.(?P<fmt>[json|zip|html|csv]+)$', getResultCount),
+    url(r'^api/meta/mults/(?P<slug>[-\sa-zA-Z]+).(?P<fmt>[json|zip|html|csv]+)$', getValidMults),
+    url(r'^api/meta/range/endpoints/(?P<slug>[-\sa-zA-Z0-9]+).(?P<fmt>[json|zip|html|csv]+)$', getRangeEndpoints),
+    url(r'^api/fields/(?P<field>\w+).(?P<fmt>[json|zip|html|csv]+)$', getFields),
+    url(r'^api/fields.(?P<fmt>[json|zip|html|csv]+)$', getFields),
 ]
