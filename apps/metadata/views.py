@@ -43,7 +43,7 @@ def getResultCount(request,fmt='json'):
     update_metrics(request)
 
     if request.GET is None:
-        return HttpResponse(json.dumps({'result_count':'0'}),  mimetype='application/json')
+        return HttpResponse(json.dumps({'result_count':'0'}),  content_type='application/json')
 
     try:
         (selections,extras) = search.views.urlToSearchParams(request.GET)
@@ -56,7 +56,7 @@ def getResultCount(request,fmt='json'):
 
     if selections is False:
         count = 'not found'
-        return HttpResponse(json.dumps({'result_count':count}),  mimetype='application/json')
+        return HttpResponse(json.dumps({'result_count':count}),  content_type='application/json')
 
 
     table = search.views.getUserQueryTable(selections,extras)
@@ -299,7 +299,7 @@ def getFields(request,**kwargs):
                 }
         cache.set(cache_key,return_obj,0)
 
-        return HttpResponse(json.dumps(return_obj), mimetype='application/json')
+        return HttpResponse(json.dumps(return_obj), content_type='application/json')
 
 
 

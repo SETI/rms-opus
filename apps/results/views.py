@@ -613,7 +613,7 @@ def getFiles(ring_obs_id=None, fmt=None, loc_type=None, product_types=None, prev
         return file_names
 
     if fmt == 'json':
-        return HttpResponse(json.dumps({'data':file_names}), mimetype='application/json')
+        return HttpResponse(json.dumps({'data':file_names}), content_type='application/json')
 
     if fmt == 'html':
         return render(request, "list.html",locals())

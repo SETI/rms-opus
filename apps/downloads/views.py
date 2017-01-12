@@ -51,9 +51,9 @@ def md5(filename):
 
 def get_download_info(files):
     """
-    calculate the sum download size of every file found in files. 
+    calculate the sum download size of every file found in files.
     returns a tuple of ints: (<total size in bytes>, <total file count>)
-    accepts only structure like that returnd by getfiles: 
+    accepts only structure like that returnd by getfiles:
     files = {
         '<ring_obs_id>': {
             '<product_type'>: [<file_name1>, <file_name2>]
@@ -62,9 +62,9 @@ def get_download_info(files):
     product type can be a valid PDS product type or 'preview_image' (todo: marry these 2)
     """
     file_paths = []  # the files we need to check
-    file_count = 0  # count of each file in files 
+    file_count = 0  # count of each file in files
     total_size = 0
- 
+
     for ring_obs_id in files:
         for product_type in files[ring_obs_id]:
             for f in files[ring_obs_id][product_type]:
@@ -99,8 +99,8 @@ def get_download_info(files):
     if file_paths:
         # filenames in f can be full url paths or full local paths
         split = 5 if 'http' in file_paths[0] else 6  # remove domain and append to local path
-        file_names = list(set([('/').join(u.split('/')[split:len(u)]) for u in file_paths])) 
-        file_count += len(file_names) 
+        file_names = list(set([('/').join(u.split('/')[split:len(u)]) for u in file_paths]))
+        file_count += len(file_names)
 
         # query database for the sum of all file_names size fields
         try:
@@ -109,7 +109,7 @@ def get_download_info(files):
 
         except TypeError:
             # I don't hink this is still a TypeError
-            pass    
+            pass
 
     return total_size, file_count  # bytes
 
@@ -128,11 +128,11 @@ def get_download_info_API(request):
     previews = request.GET.get('previews', 'none')
     previews = previews.split(',')
 
-    # since we are assuming this is coming from user interaction 
+    # since we are assuming this is coming from user interaction
     # if no filters exist then none of this product type is wanted
     if product_types == ['none'] and previews == ['none']:
         # ie this happens when all product types are unchecked in the interface
-        return HttpResponse(json.dumps({'size':'0', 'count':'0'}), mimetype='application/json')        
+        return HttpResponse(json.dumps({'size':'0', 'count':'0'}), content_type='application/json')
 
     if previews == ['all']:
         previews = [i[0] for i in settings.image_sizes]
@@ -144,9 +144,9 @@ def get_download_info_API(request):
     download_size, count = get_download_info(files)
 
     # make pretty size string
-    download_size = nice_file_size(download_size)  
+    download_size = nice_file_size(download_size)
 
-    return HttpResponse(json.dumps({'size':download_size, 'count':count}), mimetype='application/json')
+    return HttpResponse(json.dumps({'size':download_size, 'count':count}), content_type='application/json')
 
 
 @never_cache
@@ -188,7 +188,7 @@ def create_download(request, collection_name=None, ring_obs_ids=None, fmt=None):
     import results
     files = results.views.getFiles(ring_obs_ids,fmt="raw", loc_type="path", product_types=product_types, previews=previews)
 
-    if not files: 
+    if not files:
         log.error("no files found from results.views.getFiles in downloads.create_download")
         raise Http404
 
@@ -259,8 +259,6 @@ def create_download(request, collection_name=None, ring_obs_ids=None, fmt=None):
         raise Http404
 
     if fmt == 'json':
-        return HttpResponse(json.dumps(zip_url), mimetype='application/json')
+        return HttpResponse(json.dumps(zip_url), content_type='application/json')
 
     return HttpResponse(zip_url)
-
-

@@ -48,7 +48,7 @@ def responseFormats(data, fmt, **kwargs):
         if 'labels' in kwargs:
             data['columns'] = kwargs['labels']
 
-        return HttpResponse(json.dumps(data), mimetype='application/json')
+        return HttpResponse(json.dumps(data), content_type='application/json')
 
     elif fmt == 'html':
 
@@ -119,7 +119,7 @@ def responseFormats(data, fmt, **kwargs):
 # each row is one dictionary
 def dictToCSV(data):
     filename = downloadFileName()
-    response = HttpResponse(mimetype='text/csv')
+    response = HttpResponse(content_type='text/csv')
     response['Content-Disposition'] = 'attachment; filename=' + filename + '.csv'
     writer = csv.writer(response)
     writer.writerow([k for k,v in data[0].items()])   # first row
@@ -131,7 +131,7 @@ def dictToCSV(data):
 # field names = list, data = list of lists or for a single column csv a list of non-list values
 def listToCSV(data,field_names):
     filename = downloadFileName()
-    response = HttpResponse(mimetype='text/csv')
+    response = HttpResponse(content_type='text/csv')
     response['Content-Disposition'] = 'attachment; filename=' + filename + '.csv'
     writer = csv.writer(response)
     writer.writerow([label for label in field_names])   # first row
@@ -157,7 +157,7 @@ def zipped(data):
 
     zip.close()
 
-    response = HttpResponse(mimetype="application/zip")
+    response = HttpResponse(content_type="application/zip")
     response["Content-Disposition"] = "attachment; filename=" + filename + ".zip"
 
     in_memory.seek(0)
