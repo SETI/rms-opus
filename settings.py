@@ -83,7 +83,7 @@ TEMPLATES = [
             PROJECT_ROOT + '/apps/results/templates/',
             PROJECT_ROOT + '/apps/metadata/templates/',
             PROJECT_ROOT + '/apps/quide/templates/',
-            PROJECT_ROOT + '/apps/mobile/templates/',
+            PROJECT_ROOT + '/apps/search/templates/',
         ],
         'OPTIONS': {
             'context_processors': [
