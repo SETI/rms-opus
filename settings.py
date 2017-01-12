@@ -9,7 +9,7 @@ sys.path.insert(0, PROJECT_ROOT)
 sys.path.insert(0, os.path.join(PROJECT_ROOT, 'apps'))
 sys.path.insert(0, os.path.join(PROJECT_ROOT, 'pds-tools'))
 
-DEBUG = False
+DEBUG = True
 
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True
 SESSION_SAVE_EVERY_REQUEST = True
@@ -46,14 +46,15 @@ USE_I18N = True
 # calendars according to the current locale
 USE_L10N = True
 
-# Absolute path to the directory that holds media.
-# Example: "/home/media/media.lawrence.com/"
-MEDIA_ROOT = ''
-
 # URL that handles the media served from MEDIA_ROOT. Make sure to use a
 # trailing slash if there is a path component (optional in other cases).
-MEDIA_URL = 'http://pds-rings.seti.org/opus2_resources/static_media/'
-STATIC_URL = MEDIA_URL
+# STATIC_URL = 'http://pds-rings.seti.org/opus2_resources/static_media/'
+STATIC_URL = '/static_media/'
+
+STATICFILES_DIRS = [
+    (os.path.join(PROJECT_ROOT, 'static_media/')),
+    'static_media/',
+]
 
 ADMIN_MEDIA_PREFIX = ''
 
@@ -103,14 +104,11 @@ TEMPLATES = [
 ]
 
 INSTALLED_APPS = (
-    # prod remove
     'django_nose',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.sites',
     'django_memcached',
-    # 'debug_toolbar',
-    # 'django.contrib.messages',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.admindocs',
@@ -128,8 +126,6 @@ INSTALLED_APPS = (
     'metrics'
 )
 
-STATICFILES_DIRS = (os.path.join(PROJECT_ROOT, 'static_media'),)
-# STATICFILES_STORAGE = 'storages.backends.s3boto.S3BotoStorage'
 
 # https://github.com/edavis/django-infinite-memcached/tree/
 CACHES = {

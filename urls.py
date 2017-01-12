@@ -10,18 +10,18 @@ admin.autodiscover()
 from ui.views import main_site
 
 # UI resources - the homepage - ui.views
-urlpatterns = [
+base_urlpatterns = [
     url(r'^$', main_site.as_view()),
     url(r'^opus/$', main_site.as_view()),
-
     url(r'^', include('ui.urls')),
     url(r'^', include('results.urls')),
     url(r'^', include('metadata.urls')),
     url(r'^', include('downloads.urls')),
     url(r'^', include('guide.urls')),
     url(r'^', include('user_collections.urls')),
-
 ]
+
+urlpatterns = [url('^opus/', include(base_urlpatterns))]
 
 # django admin
 """
