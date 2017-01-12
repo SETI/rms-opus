@@ -2,15 +2,14 @@
 import os
 import sys
 from collections import OrderedDict
+from secrets import *
 
 PROJECT_ROOT = os.path.dirname(__file__)
 sys.path.insert(0, PROJECT_ROOT)
 sys.path.insert(0, os.path.join(PROJECT_ROOT, 'apps'))
 sys.path.insert(0, os.path.join(PROJECT_ROOT, 'pds-tools'))
-from secrets import *
 
 DEBUG = False
-TEMPLATE_DEBUG = DEBUG
 
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True
 SESSION_SAVE_EVERY_REQUEST = True
@@ -23,34 +22,6 @@ def custom_show_toolbar(request):
     return True # Always show toolbar, for example purposes only.
 
 MANAGERS = ADMINS
-
-DATABASES = {
-    'default': {
-        'NAME': 'opus',
-        'ENGINE': 'django.db.backends.mysql',
-        'USER': DB_USER,
-        'PASSWORD': DB_PASS,
-        # 'STORAGE_ENGINE': 'MYISAM',
-        'OPTIONS':{ 'init_command': 'SET storage_engine=MYISAM;'},
-        # 'TEST_NAME': 'test_opus',
-        # 'OPTIONS':{ 'unix_socket': '/private/var/mysql/mysql.sock'}
-    },
-    'dictionary': {
-        'NAME': 'dictionary',
-        'ENGINE': 'django.db.backends.mysql',
-        'USER': DB_USER,
-        'PASSWORD': DB_PASS,
-        'OPTIONS':{ 'init_command': 'SET storage_engine=MYISAM;'},
-    },
-    'metrics': {
-        'NAME': 'opus_metrics',
-        'ENGINE': 'django.db.backends.mysql',
-        'USER': DB_USER,
-        'PASSWORD': DB_PASS,
-        # 'OPTIONS':{ 'unix_socket': '/private/var/mysql/mysql.sock'},
-    }
-}
-
 
 # Local time zone for this installation. Choices can be found here:
 # http://en.wikipedia.org/wiki/List_of_tz_zones_by_name
@@ -81,31 +52,10 @@ MEDIA_ROOT = ''
 
 # URL that handles the media served from MEDIA_ROOT. Make sure to use a
 # trailing slash if there is a path component (optional in other cases).
-# Examples: "http://media.lawrence.com", "http://example.com/media/"
-# MEDIA_URL = 'http://pds-rings.seti.org:/~lballard/django_opus/static_media/'
-# MEDIA_URL = 'https://s3.amazonaws.com/%s/' % AWS_STORAGE_BUCKET_NAME
-# MEDIA_URL = 'http://s3.amazonaws.com/%s/' % AWS_STORAGE_BUCKET_NAME
-# MEDIA_URL = 'http://pds-rings.seti.org:/~lballard/django_opus/static_media/'
 MEDIA_URL = 'http://pds-rings.seti.org/opus2_resources/static_media/'
 STATIC_URL = MEDIA_URL
 
-# List of callables that know how to import templates from various sources.
-TEMPLATE_LOADERS = (
-    'django.template.loaders.filesystem.Loader',
-    'django.template.loaders.app_directories.Loader',
-    #'django.template.loaders.eggs.Loader',
-)
-
-TEMPLATE_CONTEXT_PROCESSORS = (
-    'django.contrib.messages.context_processors.messages',
-    "django.contrib.auth.context_processors.auth",
-    "ui.context_processors.admin_media",
-    'django.core.context_processors.static',
-    )
-
 ADMIN_MEDIA_PREFIX = ''
-
-
 
 MIDDLEWARE_CLASSES = (
     'django.middleware.gzip.GZipMiddleware',
@@ -123,17 +73,34 @@ MIDDLEWARE_CLASSES = (
 
 ROOT_URLCONF = 'urls'
 
-TEMPLATE_DIRS = (
-    # Put strings here, like "/home/html/django_templates" or "C:/www/django/templates".
-    # Always use forward slashes, even on Windows.
-    # Don't forget to use absolute paths, not relative paths.
-    PROJECT_ROOT + '/apps/',
-    PROJECT_ROOT + '/apps/ui/templates/',
-    PROJECT_ROOT + '/apps/results/templates/',
-    PROJECT_ROOT + '/apps/metadata/templates/',
-    PROJECT_ROOT + '/apps/quide/templates/',
-    PROJECT_ROOT + '/apps/mobile/templates/',
-)
+TEMPLATES = [
+    {
+        'BACKEND': 'django.template.backends.django.DjangoTemplates',
+        'DIRS': [
+            PROJECT_ROOT + '/apps/',
+            PROJECT_ROOT + '/apps/ui/templates/',
+            PROJECT_ROOT + '/apps/results/templates/',
+            PROJECT_ROOT + '/apps/metadata/templates/',
+            PROJECT_ROOT + '/apps/quide/templates/',
+            PROJECT_ROOT + '/apps/mobile/templates/',
+        ],
+        'OPTIONS': {
+            'context_processors': [
+                'django.contrib.auth.context_processors.auth',
+                'django.template.context_processors.debug',
+                'django.template.context_processors.i18n',
+                'django.template.context_processors.media',
+                'django.template.context_processors.static',
+                'django.template.context_processors.tz',
+                'django.contrib.messages.context_processors.messages',
+            ],
+            'loaders': [
+                'django.template.loaders.filesystem.Loader',
+                'django.template.loaders.app_directories.Loader',
+            ]
+        },
+    },
+]
 
 INSTALLED_APPS = (
     # prod remove
@@ -322,7 +289,4 @@ LOGGING = {
 
 
 BASE_PATH = ''  # production base path is handled by apache, local is not.
-try:
-    from settings_local import *
-except ImportError:
-    pass
+from settings_local import *
