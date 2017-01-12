@@ -9,7 +9,7 @@ from collections import OrderedDict
 
 # django things
 from django.template import RequestContext
-from django.shortcuts import render_to_response, get_object_or_404
+from django.shortcuts import render, get_object_or_404
 from django.apps import apps
 from django.http import HttpResponse
 from django.core.exceptions import FieldError
@@ -52,12 +52,12 @@ def about(request, template = 'about.html'):
     for d in ObsGeneral.objects.values('instrument_id','volume_id').order_by('instrument_id','volume_id').distinct():
         all_volumes.setdefault(d['instrument_id'], []).append(d['volume_id'])
 
-    return render_to_response(template,locals(), context_instance=RequestContext(request))
+    return render(request, template, locals())
 
 
 def get_browse_headers(request,template='browse_headers.html'):
     update_metrics(request)
-    return render_to_response(template,locals(), context_instance=RequestContext(request))
+    return render(request, template, locals())
 
 
 def get_table_headers(request,template='table_headers.html'):
@@ -84,7 +84,7 @@ def get_table_headers(request,template='table_headers.html'):
                 columns.append([slug, param_info.get(slug=slug).label_results])
             except ParamInfo.DoesNotExist:
                 pass
-    return render_to_response(template,locals(), context_instance=RequestContext(request))
+    return render(request, template,locals())
 
 
 @render_to('menu.html')
@@ -345,7 +345,7 @@ def getWidget(request, **kwargs):
     else:
 
         template = "widget.html"
-        return render_to_response(template,locals(), context_instance=RequestContext(request))
+        return render(request, template,locals())
     # return responseFormats(form, fmt)
 
 
@@ -356,7 +356,7 @@ def getQuickPage(request,template='demo.html'):
     for param in ParamInfo.objects.filter(rank=1):
         # widgets[param.label] = str(getWidget(request,param.slug))
         widgets[param.label] = getWidget(request,param=param,slug=param.slug,fmt='raw')
-    return render_to_response(template,locals(), context_instance=RequestContext(request))
+    return render(request, template,locals())
 
 
 def init_detail_page(request, **kwargs):
@@ -401,7 +401,7 @@ def init_detail_page(request, **kwargs):
             ext = f.split('.').pop()
             file_list[product_type].append({'ext':ext,'link':f})
 
-    return render_to_response(template,locals(), context_instance=RequestContext(request))
+    return render(request, template,locals())
 
 def getColumnInfo(slugs):
     info = OrderedDict()
@@ -422,4 +422,4 @@ def getColumnChooser(request, **kwargs):
     namespace = 'column_chooser_input'
     menu = getMenuLabels(request, 'results')['menu']
 
-    return render_to_response("choose_columns.html",locals(), context_instance=RequestContext(request))
+    return render(request, "choose_columns.html",locals())

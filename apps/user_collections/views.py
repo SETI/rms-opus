@@ -13,6 +13,7 @@ from downloads.views import *
 from metrics.views import update_metrics
 from django.views.decorators.cache import never_cache
 from django.db import connection, DatabaseError
+from django.shortcuts import render
 
 import logging
 log = logging.getLogger(__name__)
@@ -73,7 +74,7 @@ def get_collection_in_page(page, session_id):
         and indicate which thumbnails are in cart"""
     if not session_id:
         return
-        
+
     cursor = connection.cursor()
     coll_table_name = get_collection_table(session_id)
     collection_in_page = []
@@ -186,7 +187,7 @@ def edit_collection_range(request, **kwargs):
     # return HttpResponse(json.dumps(data['page']));
     for row in data['page']:
 
-        ring_obs_id = row[ring_obs_id_key]  
+        ring_obs_id = row[ring_obs_id_key]
 
         if ring_obs_id == min_id:
             in_range = True;
@@ -209,8 +210,8 @@ def edit_collection_range(request, **kwargs):
 
 @never_cache
 def view_collection(request, collection_name, template="collections.html"):
-    """ the collection tab http endpoint 
-        the information it returns about product types and files does not 
+    """ the collection tab http endpoint
+        the information it returns about product types and files does not
         relect user filters such as  product types and preview images
     """
     update_metrics(request)
@@ -238,7 +239,7 @@ def view_collection(request, collection_name, template="collections.html"):
     # download_info
     from downloads.views import get_download_info
     download_size, download_count = get_download_info(files)
-    
+
     download_size = nice_file_size(download_size)  # pretty print it
 
     # images and join with the collections table
@@ -285,7 +286,7 @@ def view_collection(request, collection_name, template="collections.html"):
 
     page_ids = [o['ring_obs_id'] for o in results]
 
-    return render_to_response(template,locals(), context_instance=RequestContext(request))
+    return render(request, template,locals())
 
 
 @never_cache

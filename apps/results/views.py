@@ -8,7 +8,7 @@ import json
 import csv
 from django.template import loader, Context
 from django.http import Http404
-from django.shortcuts import render_to_response
+from django.shortcuts import render
 from collections import OrderedDict as SortedDict
 from django.db import connection, DatabaseError
 from django.apps import apps
@@ -132,7 +132,7 @@ def get_metadata_by_slugs(request, ring_obs_id, slugs, fmt):
             data.append({param: value})
 
     if fmt == 'html':
-        return render_to_response('detail_metadata_slugs.html',locals(), context_instance=RequestContext(request))
+        return render(request, 'detail_metadata_slugs.html',locals())
     if fmt == 'json':
         return HttpResponse(json.dumps(data), content_type="application/json")
     if fmt == 'raw':
@@ -187,7 +187,7 @@ def get_metadata(request, ring_obs_id, fmt):
                 pass  # no results found in this table, move along
 
     if fmt == 'html':
-        return render_to_response('detail_metadata.html',locals(), context_instance=RequestContext(request))
+        return render(request, 'detail_metadata.html',locals())
     if fmt == 'json':
         return HttpResponse(json.dumps(data), content_type="application/json")
     if fmt == 'raw':
@@ -616,7 +616,7 @@ def getFiles(ring_obs_id=None, fmt=None, loc_type=None, product_types=None, prev
         return HttpResponse(json.dumps({'data':file_names}), mimetype='application/json')
 
     if fmt == 'html':
-        return render_to_response("list.html",locals())
+        return render(request, "list.html",locals())
 
 
 def getPage(request, colls=None, colls_page=None, page=None):
