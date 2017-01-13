@@ -1,8 +1,11 @@
 from metrics.models import Metrics
 
 def update_metrics(request):
+    if not request:
+        return  # this is a test running
 
     if not request.session.get('has_session'):
+        # this user has barely touched the homepage #todo test this better
         return
 
     session_id = request.session.session_key

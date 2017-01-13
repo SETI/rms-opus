@@ -42,17 +42,6 @@ class ParamInfoTests(TestCase):
         self.client = Client()
         self.factory = RequestFactory()
 
-    def tearDown(self):
-        cursor = connection.cursor()
-        cursor.execute("delete from user_searches")
-        cursor.execute("ALTER TABLE user_searches AUTO_INCREMENT = 1")
-        cursor.execute("show tables like %s " , ["cache%"])
-        print "running teardown"
-        for row in cursor:
-            q = 'drop table ' + row[0]
-            print q
-            cursor.execute(q)
-
     def test__surface_geo_results_label_not_null(self):
         count = ParamInfo.objects.filter(category_name__contains="surface_geo", label_results='').count()
         print "you may need to \n update param_info set label_results = label where category_name like '%surface_geo%';"

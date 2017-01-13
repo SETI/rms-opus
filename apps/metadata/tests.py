@@ -23,17 +23,6 @@ class metadataTests(TestCase):
     selections = {}
     selections[param_name] = ['Saturn']
 
-    def tearDown(self):
-        cursor = connection.cursor()
-        cursor.execute("delete from user_searches")
-        cursor.execute("ALTER TABLE user_searches AUTO_INCREMENT = 1")
-        cursor.execute("show tables like %s " , ["cache%"])
-        print "running teardown"
-        for row in cursor:
-            q = 'drop table ' + row[0]
-            print q
-            cursor.execute(q)
-
     def test__getRangeEndpoints_times(self):
         url = '/opus/api/meta/range/endpoints/timesec1.json?planet=Saturn&view=search&browse=gallery&colls_browse=gallery&page=1&limit=100&order=&cols=ringobsid,planet,target,phase1&widgets=planet,target,timesec1&widgets2=&detail=&reqno=1'
         print url

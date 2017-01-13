@@ -118,6 +118,7 @@ def edit_collection(request, **kwargs):
     add_to_queue(request, request_no, action, ring_obs_id)
 
     """
+    # todo
     turning this off for now, we will get the queue of whatever request_no is passed
     to us, without checking against what is expected_request_no
     by turning this off we are at risk of ajax race conditions
@@ -300,7 +301,10 @@ def view_collection(request, collection_name, template="collections.html"):
 
 
 @never_cache
-def collection_status(request, **kwargs):
+def collection_status(request):
+    """
+    #todo this method needs tests
+    """
     update_metrics(request)
 
     expected_request_no = 1

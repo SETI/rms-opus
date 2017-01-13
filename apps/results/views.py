@@ -170,7 +170,12 @@ def get_metadata(request, ring_obs_id, fmt):
         table_label = table.label
         table_name = table.table_name
         model_name = ''.join(table_name.title().split('_'))
-        table_model = apps.get_model('search', model_name)
+
+        try:
+            table_model = apps.get_model('search', model_name)
+        except LookupError:
+            log.error("could not find data model for category %s " % model_name)
+            continue
 
         all_slugs = [param.slug for param in ParamInfo.objects.filter(category_name=table_name, display_results=1)]
         all_params = [param.name for param in ParamInfo.objects.filter(category_name=table_name, display_results=1)]

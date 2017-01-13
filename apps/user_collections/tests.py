@@ -38,6 +38,7 @@ class test_session(dict):
 
     """
     session_key = 'test_key'
+    has_session = True
 
 
 class user_CollectionsTests(TestCase):
@@ -46,24 +47,12 @@ class user_CollectionsTests(TestCase):
         self.client = Client()
         self.factory = RequestFactory()
 
-    def tearDown(self):
-        cursor = connection.cursor()
-        cursor.execute("delete from user_searches")
-        cursor.execute("ALTER TABLE user_searches AUTO_INCREMENT = 1")
-        cursor.execute("show tables like %s " , ["cache%"])
-        print "running teardown"
-        for row in cursor:
-            q = 'drop table ' + row[0]
-            print q
-            cursor.execute(q)
-
     def emptycollection(self):
         cursor = connection.cursor()
-        table_name = 'colls_' + test_session.session_key
-        print 'hello'
-        print table_name;
-        cursor.execute('delete from ' + connection.ops.quote_name(table_name))
-
+        table_name = 'colls_' + test_session().session_key
+        query = 'delete from ' + connection.ops.quote_name(table_name)
+        print query
+        cursor.execute(query)
 
     def test__edit_collection_add_one(self):
         self.emptycollection()
@@ -195,7 +184,6 @@ class user_CollectionsTests(TestCase):
         count = get_collection_count(session_id)
         self.assertEqual(count, 4)  # nothing here yet
 
-
     def test_view_collection(self):
         self.emptycollection()
         # first add some to collection
@@ -204,7 +192,7 @@ class user_CollectionsTests(TestCase):
         bulk_add_to_collection(ring_obs_id_list, session_id)
 
         # then request to view it
-        url = 'http://127.0.0.1:8000/opus/collections/default/view.html'
+        url = '/opus/collections/default/view.html'
         request = self.factory.get(url)
         request.user = AnonymousUser()
         request.session = test_session()
@@ -212,25 +200,6 @@ class user_CollectionsTests(TestCase):
         print response.content
         self.assertEqual(response.status_code, 200)
         self.assertGreater(len(response.content), 5000)
-
-
-    def test_collection_status(self):
-        self.emptycollection()
-        # first add some to collection
-        session_id = test_session().session_key
-        ring_obs_id_list = ['S_IMG_CO_ISS_1692988072_N','S_IMG_CO_ISS_1692988234_N','S_IMG_CO_ISS_1692988460_N','S_IMG_CO_ISS_1692988500_N']
-        bulk_add_to_collection(ring_obs_id_list, session_id)
-
-        # then request to view it
-        url = 'http://127.0.0.1:8000/opus/collections/default/view.html'
-        request = self.factory.get(url)
-        request.user = AnonymousUser()
-        request.session = test_session()
-        response = collection_status(request)
-        self.assertEqual(response.status_code, 200)
-        expected = '{"count": 4, "expected_request_no": 1}'
-        self.assertEqual(expected, response.content)
-
 
     def test_check_collection_args(self):
         self.emptycollection()
@@ -240,7 +209,7 @@ class user_CollectionsTests(TestCase):
         bulk_add_to_collection(ring_obs_id_list, session_id)
 
         # then request to view it
-        url = 'http://127.0.0.1:8000/opus/collections/default/view.html'
+        url = '/opus/collections/default/view.html'
         request = self.factory.get(url)
         request.user = AnonymousUser()
         request.session = test_session()

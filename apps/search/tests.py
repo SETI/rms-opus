@@ -33,17 +33,6 @@ class searchTests(TestCase):
     selections[param_name] = ['Saturn']
     extras = {}
 
-    def tearDown(self):
-        cursor = connection.cursor()
-        cursor.execute("delete from user_searches")
-        cursor.execute("ALTER TABLE user_searches AUTO_INCREMENT = 1")
-        cursor.execute("show tables like %s " , ["cache%"])
-        print "running teardown"
-        for row in cursor:
-            q = 'drop table ' + row[0]
-            print q
-            cursor.execute(q)
-
     def test__is_image_is_correct(self):
         non_imaging_instruments = [thing['instrument_id'] for thing in ObsGeneral.objects.filter(is_image=0).values('instrument_id').distinct()]
         imaging_instruments = ['COISS','VGISS', 'GOSSI','HSTWFPC2','HSTACS','HSTWFC3','LORRI','MVIC']
@@ -169,7 +158,7 @@ class searchTests(TestCase):
         expected = "SELECT `obs_general`.`id` FROM `obs_general` INNER JOIN `obs_mission_cassini` ON ( `obs_general`.`id` = `obs_mission_cassini`.`obs_general_id` ) INNER JOIN `obs_instrument_COISS` ON ( `obs_general`.`id` = `obs_instrument_COISS`.`obs_general_id` ) WHERE (`obs_general`.`mult_obs_general_target_name` IN (42) AND `obs_general`.`mult_obs_general_planet_id` IN (7) AND `obs_mission_cassini`.`mult_obs_mission_cassini_rev_no` IN (289, 290) AND `obs_instrument_COISS`.`mult_obs_instrument_COISS_camera` IN (2))"
         print 'expected:'
         print expected
-        self.assertEqual(q,expected)
+        self.assertEqual(q.replace(' ',''),expected.replace(' ',''))
 
 
 

@@ -24,17 +24,6 @@ class downloadsTests(TestCase):
 
     c = Client()
 
-    def tearDown(self):
-        cursor = connection.cursor()
-        cursor.execute("delete from user_searches")
-        cursor.execute("ALTER TABLE user_searches AUTO_INCREMENT = 1")
-        cursor.execute("show tables like %s " , ["cache%"])
-        print "running teardown"
-        for row in cursor:
-            q = 'drop table ' + row[0]
-            print q
-            cursor.execute(q)
-
     def test__get_download_info_browse_images_being_counted(self):
         ring_obs_ids = 'S_IMG_CO_ISS_1680806066_N'
         product_types=['CALIBRATED']
