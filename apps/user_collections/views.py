@@ -19,13 +19,16 @@ import logging
 log = logging.getLogger(__name__)
 
 def get_all_in_collection(request):
-    cursor = connection.cursor()
-    session_id = request.session.session_key
-    coll_table_name = get_collection_table(session_id)
-    sql = 'select ring_obs_id from ' + connection.ops.quote_name(coll_table_name)
-    cursor.execute(sql)
-    ring_obs_ids = [n[0] for n in cursor.fetchall()]
-    return ring_obs_ids
+    if not request.session.get('has_session'):
+        return []
+    else:
+        cursor = connection.cursor()
+        session_id = request.session.session_key
+        coll_table_name = get_collection_table(session_id)
+        sql = 'select ring_obs_id from ' + connection.ops.quote_name(coll_table_name)
+        cursor.execute(sql)
+        ring_obs_ids = [n[0] for n in cursor.fetchall()]
+        return ring_obs_ids
 
 
 def get_collection_table(session_id):
@@ -100,6 +103,9 @@ def edit_collection(request, **kwargs):
     """
     edits a single ring_obs_id in a user collection (user "selections")
     """
+    if not request.session.get('has_session'):
+        request.session['has_session'] = True
+
     session_id = request.session.session_key
 
     checkArgs = check_collection_args(request, **kwargs)
@@ -163,6 +169,9 @@ def edit_collection_range(request, **kwargs):
     but as min and max ring_obs_ids + a search query
 
     """
+    if not request.session.get('has_session'):
+        request.session['has_session'] = True
+
     session_id = request.session.session_key
     colls_table_name = get_collection_table(session_id)
 
@@ -215,8 +224,6 @@ def view_collection(request, collection_name, template="collections.html"):
         relect user filters such as  product types and preview images
     """
     update_metrics(request)
-    session_id = request.session.session_key
-    colls_table_name = get_collection_table(session_id)
 
     # nav stuff - page | limit | columns | offset
     page_no = int(request.GET.get('page',1))
@@ -232,6 +239,9 @@ def view_collection(request, collection_name, template="collections.html"):
     offset = (page_no-1)*limit
 
     # collection
+    if not request.session.get('has_session'):
+        request.session['has_session'] = True
+    session_id = request.session.session_key
     colls_table_name = get_collection_table(session_id)
     files = getFiles(fmt="raw", collection=True, previews='none', session_id=session_id)
     all_product_types = Files.objects.all().values('product_type').distinct()
@@ -293,13 +303,17 @@ def view_collection(request, collection_name, template="collections.html"):
 def collection_status(request, **kwargs):
     update_metrics(request)
 
-    session_id = request.session.session_key
-    count = get_collection_count(session_id)
+    expected_request_no = 1
+    if not request.session.get('has_session'):
+        count = 0
+    else:
+        session_id = request.session.session_key
+        count = get_collection_count(session_id)
 
     try:
         expected_request_no =  request.session['expected_request_no']
     except KeyError:
-        expected_request_no = 1
+        pass  # leave xpected_request_no = 1
 
     return HttpResponse(json.dumps({"count":count, "expected_request_no": expected_request_no }))
 
@@ -358,9 +372,7 @@ def is_odd(num):
 @never_cache
 def reset_sess(request):
     """ utility endpoint, load this in a browser to reset the session """
-
     request.session.flush()
-    # return HttpResponse(str(request.session.session_key))
     return HttpResponse("session reset")
 
 

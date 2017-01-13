@@ -1,11 +1,11 @@
 from metrics.models import Metrics
 
 def update_metrics(request):
-    try:
-        session_id = request.session.session_key
-    except AttributeError:
-        # no session attribute, this is probably a test running
+
+    if not request.session.get('has_session'):
         return
+
+    session_id = request.session.session_key
 
     ip_address = get_client_ip(request)
     m,v = Metrics.objects.using('metrics').get_or_create(session_id=session_id, ip_address=ip_address)

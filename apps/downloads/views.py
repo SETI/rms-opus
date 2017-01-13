@@ -120,6 +120,10 @@ def get_download_info_API(request):
     and inspects the request for product type / preview image filters
     """
     update_metrics(request)
+
+    if not request.session.get('has_session'):
+        request.session['has_session'] = True
+
     session_id = request.session.session_key
 
     product_types = request.GET.get('types', 'none')

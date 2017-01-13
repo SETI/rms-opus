@@ -51,6 +51,9 @@ def getData(request,fmt):
     """
     a page of results for a given search
     """
+    if not request.session.get('has_session'):
+        request.session['has_session'] = True
+
     session_id = request.session.session_key
 
     [page_no, limit, page, page_ids, order] = getPage(request)
@@ -293,6 +296,9 @@ def getImages(request,size,fmt):
     if a row doesn't have an image you get nothing. you lose. good day sir. #fixme #todo
 
     """
+    if not request.session.get('has_session'):
+        request.session['has_session'] = True
+
     session_id = request.session.session_key
 
     alt_size = request.GET.get('alt_size','')
@@ -625,6 +631,9 @@ def getPage(request, colls=None, colls_page=None, page=None):
     the gets the metadata and images to build a page of results
     """
     # get some stuff from the url or fall back to defaults
+    if not request.session.get('has_session'):
+        request.session['has_session'] = True
+
     session_id = request.session.session_key
 
     if not colls:
