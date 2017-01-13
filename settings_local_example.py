@@ -4,37 +4,45 @@ import sys
 
 DEBUG = True
 
-BASE_PATH = 'opus'
+sys.path.append('<full path to django project dir')
+ALLOWED_HOSTS = ['127.0.0.1', 'localhost','pds-rings-tools.seti.org','tools.pds-rings.seti.org']
+TIME_LIB_PATH          = "<path to timeconvert dir"
+sys.path.append(TIME_LIB_PATH)
+
+# import settings
+opus1 = 'Observations'
+opus2 = 'opus2'  # test suite will run against this
+
+os.environ['REUSE_DB'] = "1"  # for test runner
 
 DATABASES = {
     'default': {
-        'NAME': '',  # local database name
+        'NAME': 'opus_small',  # local database name
         'ENGINE': 'django.db.backends.mysql',
         'USER': DB_USER,
         'PASSWORD': DB_PASS,
-        'OPTIONS':{ 'unix_socket': '/private/tmp/mysql.sock'}
+        # 'OPTIONS':{ 'unix_socket': '/private/tmp/mysql.sock'}
+        'TEST': {
+                    'NAME': opus2,  # use same database for test as prod YES
+                },
+    },
+    'dictionary': {
+        'NAME': 'dictionary',
+        'ENGINE': 'django.db.backends.mysql',
+        'USER': DB_USER,
+        'PASSWORD': DB_PASS,
+        'OPTIONS':{ 'init_command': 'SET storage_engine=MYISAM;'},
+    },
+    'metrics': {
+        'NAME': 'opus_metrics',
+        'ENGINE': 'django.db.backends.mysql',
+        'USER': DB_USER,
+        'PASSWORD': DB_PASS,
+        # 'OPTIONS':{ 'unix_socket': '/private/var/mysql/mysql.sock'},
     }
 }
 
-# for local laptop dev, remove all below for production
-MEDIA_ROOT = os.path.join( '', 'static_media' )  # first arg is local media path
-MEDIA_URL = '/static_media/'
-
-ADMIN_MEDIA_PREFIX = 'http://pds-rings.seti.org:/~lballard/django_opus/static_media/admin/'
-
-TEMPLATE_DIRS = (
-    # Put strings here, like "/home/html/django_templates" or "C:/www/django/templates".
-    # Always use forward slashes, even on Windows.
-    # Don't forget to use absolute paths, not relative paths.
-    '/users/lballard/projects/opus/apps/',
-    '/users/lballard/projects/opus/apps/ui/templates/',
-    '/users/lballard/projects/opus/apps/results/templates/',
-    '/users/lballard/projects/opus/apps/metadata/templates/',
-    '/users/lballard/projects/opus/apps/quide/templates/',
-    '/users/lballard/projects/opus/apps/mobile/templates/',
-)
-
-# pip install django-infinite-memcached
+# django-infinite-memcached
 """
 CACHES = {
     "default": {
@@ -43,11 +51,10 @@ CACHES = {
     },
 }
 """
+"""
 CACHES = {
     'default': {
         'BACKEND': 'django.core.cache.backends.dummy.DummyCache',
    }
 }
-
-
-
+"""
