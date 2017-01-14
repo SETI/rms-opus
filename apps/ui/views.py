@@ -29,7 +29,6 @@ from metrics.views import update_metrics
 
 # guide only
 import json
-from pprint import pprint
 
 import logging
 log = logging.getLogger(__name__)

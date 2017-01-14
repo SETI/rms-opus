@@ -251,7 +251,7 @@ def view_collection(request, collection_name, template="collections.html"):
     from downloads.views import get_download_info
     download_size, download_count = get_download_info(files)
 
-    download_size = nice_file_size(download_size)  # pretty print it
+    download_size = nice_file_size(download_size)  # pretty display it
 
     # images and join with the collections table
     where   = "images.ring_obs_id = " + connection.ops.quote_name(colls_table_name) + ".ring_obs_id"
