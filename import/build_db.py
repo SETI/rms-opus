@@ -416,6 +416,9 @@ cursor.execute("alter table %s.images add key (ring_obs_id)" % (opus2))
 cursor.execute("update %s.images t,%s.obs_general o set t.ring_obs_id = o.ring_obs_id where t.ring_obs_id = o.opus1_ring_obs_id" % (opus2, opus2))
 
 
+# ----------- restore colls_test_key -------------#
+cursor.execute("create table %s.colls_test_key like opus_hack.colls_test_key;" % (opus2))
+
 
 # ------------ cleanup ------------ #
 transaction.commit_unless_managed()  # flushes any waiting queries
