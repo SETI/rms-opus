@@ -463,13 +463,13 @@ def range_query_object(selections, param_name, qtypes):
 
     # if these are times convert values from time string to seconds
     if form_type == 'TIME':
-        values_min = convertTimes(values_min,conversion_script='time_to_seconds')
+        values_min = convertTimes(values_min)
 
         try:
             index = values_min.index(None)
             raise Exception("InvalidTimes")
         except: pass
-        values_max = convertTimes(values_max,conversion_script='time_to_seconds')
+        values_max = convertTimes(values_max)
         try:
             index = values_max.index(None)
             raise Exception("InvalidTimes")
@@ -604,7 +604,7 @@ def longitudeQuery(selections,param_name):
     return query, tuple(params)
 
 
-def convertTimes(value_list,conversion_script='time_to_seconds'):
+def convertTimes(value_list):
     """ other conversion scripts are 'seconds_to_time','seconds_to_et' """
     converted = []
     for time in value_list:
