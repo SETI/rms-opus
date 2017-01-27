@@ -21,27 +21,6 @@ base_urlpatterns = [
     url(r'^', include('user_collections.urls')),
 ]
 
-urlpatterns = [url('^opus/', include(base_urlpatterns))]
-
-# django admin
-"""
-urlpatterns += patterns('',
-    (r'^admin/doc/',
-                        include('django.contrib.admindocs.urls')),
-                        (r'^admin/', include(admin.site.urls)))
-"""
-
-"""
-if settings.DEBUG:
-    urlpatterns += [
-        (r'^static_media/(?P<path>.*)$', 'serve', {'document_root': '/Users/lballard/projects/opus/static_media/', 'show_indexes': True})
+urlpatterns = [
+    url('^', include(base_urlpatterns))
     ]
-
-"""
-
-"""
-urlpatterns = patterns('',
-    ('^', include(base_urlpatterns)), # iff you wish to maintain the un-prefixed URL's too
-    ('^%s/' % settings.BASE_PATH,  include(base_urlpatterns)),
-)
-"""
