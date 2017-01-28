@@ -48,9 +48,6 @@ USE_L10N = True
 
 # URL that handles the media served from MEDIA_ROOT. Make sure to use a
 # trailing slash if there is a path component (optional in other cases).
-# STATIC_URL = 'http://pds-rings.seti.org/opus2_resources/static_media/'
-STATIC_URL = '/static_media/'
-
 STATICFILES_DIRS = [
     (os.path.join(PROJECT_ROOT, 'static_media/')),
     'static_media/',
