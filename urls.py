@@ -22,5 +22,6 @@ base_urlpatterns = [
 ]
 
 urlpatterns = [
-    url('^', include(base_urlpatterns))
+    url('^', include(base_urlpatterns)),
+    url('^%s/' % settings.BASE_PATH,  include(base_urlpatterns))  # dev
     ]
