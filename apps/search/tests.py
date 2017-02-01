@@ -482,12 +482,12 @@ class searchTests(TestCase):
         try:
             # julian module behaves a bit differently on the production server
             # so try both possible results before failing this test
-            expected = "(AND: ('time_sec1__lte', -649834636), ('time_sec2__gte', -649950124.72000003))"
+            expected = "(AND: ('time_sec1__lte', -649834636.0), ('time_sec2__gte', -649950124.72000003))"
             print 'expected:'
             print expected
             self.assertEqual("".join(q.split()),"".join(expected.split()))  # strips all whitespace b4 compare
         except AssertionError:
-            expected = "(AND: ('time_sec1__lte', -649834636.0), ('time_sec2__gte', -649950124.72000003))"
+            expected = "(AND: ('time_sec1__lte', -649834636.0), ('time_sec2__gte', -649950124.72))"
             print 'expected:'
             print expected
             self.assertEqual("".join(q.split()),"".join(expected.split()))  # strips all whitespace b4 compare
@@ -500,8 +500,18 @@ class searchTests(TestCase):
         q = str(range_query_object(selections,'obs_general.time_sec1',['any']))
         print str(q)
         # time_sec2 >= -649993324.720000
-        expected = "(AND: ('time_sec2__gte', -649950124.72000003))"
-        self.assertEqual("".join(q.split()),"".join(expected.split()))  # strips all whitespace b4 compare
+        try:
+            # julian module behaves a bit differently on the production server
+            # so try both possible results before failing this test
+            expected = "(AND: ('time_sec2__gte', -649950124.72000003))"
+            print 'expected:'
+            print expected
+            self.assertEqual("".join(q.split()),"".join(expected.split()))  # strips all whitespace b4 compare
+        except AssertionError:
+            expected = "(AND: ('time_sec2__gte', -649950124.72))"
+            print 'expected:'
+            print expected
+            self.assertEqual("".join(q.split()),"".join(expected.split()))  # strips all whitespace b4 compare
 
     ## longitude query tests
     def test__longitudeQuery_single_obs_general(self):
