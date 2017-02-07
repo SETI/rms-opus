@@ -97,8 +97,11 @@ class downloadsTests(TestCase):
         self.assertLess(size, 2250000)  # about 2 MB
 
     def test__get_file_path(self):
-        f = settings.base_volumes_path + 'coiss_2xxx/coiss_2069/img.jpg'
+        f = settings.FILE_PATH + 'coiss_2xxx/coiss_2069/img.jpg'
+        print 'FILE_PATH = %s ' % settings.FILE_PATH
+        print 'sent %s' % f
         got = get_file_path(f)
+        print 'got %s' % got
         self.assertEqual(got, 'coiss_2069/img.jpg')
 
     def test__get_file_path_url(self):
