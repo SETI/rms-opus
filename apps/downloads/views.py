@@ -6,6 +6,7 @@ import hashlib
 import zipfile
 import json
 import csv
+from urlparse import urlparse
 from django.http import HttpResponse, Http404
 from django.db.models import Sum
 from results.views import *
@@ -49,6 +50,25 @@ def md5(filename):
     else:
         return d.hexdigest()
 
+def get_file_path(filename):
+    """
+    takes an url or pull system path for images and returns path alone
+    stripping domain and/or images_base_path + xxx directory
+    """
+    if 'http' in filename:
+        parsed_uri = urlparse(filename)
+        f = '/' + parsed_uri.path[1:]
+    else:
+        filename = ('/' + filename) if filename[0] != '/' else filename  # make sure starts with /
+        # split local img path from path
+        f = filename.replace(settings.FILE_PATH, '/')
+        f = f.replace(settings.IMAGE_PATH, '/')
+        f = f.replace(settings.DERIVED_PATH, '/')
+
+    f = '/'.join(f.split('/')[2:])  # split the xxx dir, remove the leading /
+
+    return f
+
 def get_download_info(files):
     """
     calculate the sum download size of every file found in files.
@@ -65,9 +85,12 @@ def get_download_info(files):
     file_count = 0  # count of each file in files
     total_size = 0
 
+    all_product_types = []
     for ring_obs_id in files:
         for product_type in files[ring_obs_id]:
             for f in files[ring_obs_id][product_type]:
+
+                all_product_types.append(product_type)
 
                 if product_type != 'preview_image':
                     # this is a pds file not a browse product
@@ -79,37 +102,24 @@ def get_download_info(files):
                     # todo: OMG WHY WHAT
                     # todo: get the file sizes into database instead = process like pds files and remove this whole section!
 
-                    # filenames in f can be full url paths or full local paths
-                    if 'http' in f:
-                        f = ('/').join(f.split('/')[5:len(f)])
-                    else:
-                        f = ('/').join(f.split('/')[6:len(f)])
-
                     from results.views import get_base_path_previews
                     try:
-                        img_path = settings.IMAGE_PATH + get_base_path_previews(ring_obs_id)
-                        size = getsize(img_path + f)
+                        size = getsize(f)
                         total_size += size
                         file_count = file_count + 1
-
                     except OSError:
-                        log.error('could not find file: ' + img_path + f);
+                        log.error('could not find file: ' + f)
 
+    all_product_types = list(set(all_product_types))  # make unique
     # now we have all pds file_names, put all file names in a list and get their count
     if file_paths:
-        # filenames in f can be full url paths or full local paths
-        split = 5 if 'http' in file_paths[0] else 6  # remove domain and append to local path
-        file_names = list(set([('/').join(u.split('/')[split:len(u)]) for u in file_paths]))
+
+        file_names = list(set([ get_file_path(u) for u in file_paths]))
         file_count += len(file_names)
 
         # query database for the sum of all file_names size fields
-        try:
-            file_sizes = FileSizes.objects.filter(name__in=file_names).values('name','size','volume_id').distinct()
-            total_size += sum([f['size'] for f in file_sizes])  # todo: this is here b/c django was not happy mixing aggregate+distinct
-
-        except TypeError:
-            # I don't hink this is still a TypeError
-            pass
+        file_sizes = FileSizes.objects.filter(name__in=file_names, PRODUCT_TYPE__in=all_product_types).values('name','size','volume_id').distinct()
+        total_size += sum([f['size'] for f in file_sizes])  # todo: this is here b/c django was not happy mixing aggregate+distinct
 
     return total_size, file_count  # bytes
 
