@@ -5,10 +5,9 @@
 # from django.test import TestCase  removed because it deletes test table data after every test
 from unittest import TestCase
 from django.test.client import Client
-
+from django.http import QueryDict
 from search.views import *
 from results.views import *
-from django.http import QueryDict
 
 cursor = connection.cursor()
 
@@ -40,6 +39,7 @@ class downloadsTests(TestCase):
         product_types = ['CALIBRATED']
         previews = 'none'
         files = getFiles(ring_obs_id=ring_obs_ids,fmt="raw",loc_type="path", product_types=product_types, previews=previews)
+        print files
         size, file_count = get_download_info(files)
         print size, file_count
         self.assertEqual(size, 4226341)
@@ -51,7 +51,7 @@ class downloadsTests(TestCase):
         files = getFiles(ring_obs_id=ring_obs_ids,fmt="raw",loc_type="path", product_types=product_types, previews=previews)
         size, file_count = get_download_info(files)
         print size, file_count
-        self.assertEqual(size, 2156009)
+        self.assertEqual(size, 2131631)
 
     def test__get_download_info_COISS_both_products(self):
         ring_obs_ids = 'S_IMG_CO_ISS_1680806066_N'
@@ -69,7 +69,6 @@ class downloadsTests(TestCase):
         files = getFiles(ring_obs_id=ring_obs_ids,product_types=product_types,fmt="raw",loc_type="path")
         print files
         size, file_count = get_download_info(files)
-        self.assertGreater(size, 0)
 
     def test__get_download_info_COVIMS(self):
         ring_obs_ids = 'S_CUBE_CO_VIMS_1638723713_VIS'
@@ -92,5 +91,17 @@ class downloadsTests(TestCase):
         product_types = ['none']
         previews = ['Full']
         files = getFiles(ring_obs_id=ring_obs_ids,fmt="raw",loc_type="path", product_types=product_types, previews=previews)
+        print 'got from getFiles: '
+        print files
         size, file_count = get_download_info(files)
         self.assertLess(size, 2250000)  # about 2 MB
+
+    def test__get_file_path(self):
+        f = settings.base_volumes_path + 'coiss_2xxx/coiss_2069/img.jpg'
+        got = get_file_path(f)
+        self.assertEqual(got, 'coiss_2069/img.jpg')
+
+    def test__get_file_path_url(self):
+        f = 'http://pds-rings.seti.org/coiss_2xxx/coiss_2069/img.jpg'
+        got = get_file_path(f)
+        self.assertEqual(got, 'coiss_2069/img.jpg')
