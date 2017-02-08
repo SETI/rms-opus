@@ -75,7 +75,7 @@ def cache_reboot():
             # reset memcache
             try:
                 run('sudo killall memcached')
-            except: 
+            except:
                 pass  # sometimes it's already killed
             run('/usr/bin/memcached -d -l 127.0.0.1 -m 1024 -p %s' % memcached_port)
 
@@ -84,15 +84,10 @@ def cache_reboot():
 
 
 def tests_prod():
-    print("tests_prod is deprecated and possibly does not desireable things to the cache")
-    return
     # run all tests on production
     with cd('/home/django/djcode/%s/' % prod_deploy_dir):
         # this only runs a few app's test suites because the others have problems
         # where every Client() request.get returns a 404, unless you load it in a browser
         # first, then it runs ok, so something is awry in production testing.. todo
-        run('sudo REUSE_DB=1 python manage.py test apps')
+        run('sudo python manage.py test apps')
         # run('sudo REUSE_DB=1 python manage.py test search downloads paraminfo')
-
-
-
