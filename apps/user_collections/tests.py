@@ -48,9 +48,10 @@ class user_CollectionsTests(TestCase):
         self.factory = RequestFactory()
 
     def emptycollection(self):
+        test_db = settings.DATABASES['default']['TEST']['NAME']
         cursor = connection.cursor()
         table_name = 'colls_' + test_session().session_key
-        query = 'delete from ' + connection.ops.quote_name(table_name)
+        query = 'delete from %s.%s' % (test_db, table_name)
         print query
         cursor.execute(query)
 
@@ -83,10 +84,10 @@ class user_CollectionsTests(TestCase):
         """ """
         self.emptycollection()
         action = 'addrange'
-        ring_obs_id_min = 'S_IMG_CO_ISS_1692987504_N'
-        ring_obs_id_max = 'S_IMG_CO_ISS_1692987684_N'
+        ring_obs_id_min = 'S_IMG_CO_ISS_1688230251_N'
+        ring_obs_id_max = 'S_IMG_CO_ISS_1688230566_N'
 
-        url = '/opus/collections/default/addrange.json?request=1&addrange=%s,%s&planet=Saturn&target=HYPERION&view=browse&browse=gallery&colls_browse=gallery&order=timesec1&cols=primaryfilespec,time1,time2,ringobsid,observationduration,ringradius1,ringradius2,J2000longitude1,J2000longitude2,phase1,phase2,incidence1,incidence2,emission1,emission2'
+        url = '/opus/collections/default/addrange.json?request=1&addrange=%s,%s&volumeid=COISS_2069&view=browse&browse=gallery&colls_browse=gallery&order=timesec1&cols=primaryfilespec,time1,time2,ringobsid,observationduration,ringradius1,ringradius2,J2000longitude1,J2000longitude2,phase1,phase2,incidence1,incidence2,emission1,emission2'
         request = self.factory.get(url % (ring_obs_id_min, ring_obs_id_max), HTTP_X_REQUESTED_WITH='XMLHttpRequest')
         request.user = AnonymousUser()
         request.session = test_session()
@@ -97,15 +98,14 @@ class user_CollectionsTests(TestCase):
         expected = '{"count": 4, "request_no": 1, "err": false}'
         self.assertEqual(expected, response.content)
 
-
     def test__edit_collection_add_range(self):
         """ """
         self.emptycollection()
         action = 'addrange'
-        ring_obs_id_min = 'S_IMG_CO_ISS_1692987504_N'
-        ring_obs_id_max = 'S_IMG_CO_ISS_1692987684_N'
+        ring_obs_id_min = 'S_IMG_CO_ISS_1688230251_N'
+        ring_obs_id_max = 'S_IMG_CO_ISS_1688230566_N'
 
-        url = '/opus/collections/default/addrange.json?request=1&addrange=%s,%s&planet=Saturn&target=HYPERION&view=browse&browse=gallery&colls_browse=gallery&&order=timesec1'
+        url = '/opus/collections/default/addrange.json?request=1&addrange=%s,%s&volumeid=COISS_2069&view=browse&browse=gallery&colls_browse=gallery&&order=timesec1'
         request = self.factory.get(url % (ring_obs_id_min, ring_obs_id_max), HTTP_X_REQUESTED_WITH='XMLHttpRequest')
         request.user = AnonymousUser()
         request.session = test_session()
@@ -135,18 +135,17 @@ class user_CollectionsTests(TestCase):
         received = get_collection_count(session_id)
         self.assertEqual(expected, received)
 
-    def test_get_collection_in_page(self):
-        """ this is awfully round about and should perhaps be
-            part of results.views test suite """
+    def test__get_collection_in_page(self):
+        # this is awfully round about and should perhaps be part of results.views test suite
 
         # first add some to collection
         self.emptycollection()
         session_id = test_session().session_key
-        ring_obs_id_list = ['S_IMG_CO_ISS_1692988072_N','S_IMG_CO_ISS_1692988234_N','S_IMG_CO_ISS_1692988460_N','S_IMG_CO_ISS_1692988500_N']
+        ring_obs_id_list = ['S_IMG_CO_ISS_1688233102_N','S_IMG_CO_ISS_1688235606_N','S_IMG_CO_ISS_1688244278_N','S_IMG_CO_ISS_1688393550_N']
         bulk_add_to_collection(ring_obs_id_list, session_id)
 
         # then do a request to get a page of results
-        url = '/opus/api/data.json?planet=Saturn&target=HYPERION&view=browse&browse=gallery&colls_browse=gallery&page=1&gallery_data_viewer=true&limit=100&order=timesec1&cols=ringobsid,planet,target,phase1,time1,time2&widgets=planet,target&widgets2=&detail='
+        url = '/opus/api/data.json?volumeid=COISS_2069&view=browse&browse=gallery&colls_browse=gallery&page=1&gallery_data_viewer=true&limit=100&order=timesec1&cols=ringobsid,planet,target,phase1,time1,time2&widgets=planet,target&widgets2=&detail='
         request = self.factory.get(url)
         request.user = AnonymousUser()
         request.session = test_session()
@@ -156,13 +155,13 @@ class user_CollectionsTests(TestCase):
         cip = get_collection_in_page(page, session_id)
         self.assertEqual(cip, ring_obs_id_list)  # we get back what we put in
 
-    def test_collection_get_csv(self):
+    def test__collection_get_csv(self):
         self.emptycollection()
         session_id = test_session().session_key
-        ring_obs_id_list = ['S_IMG_CO_ISS_1692988072_N','S_IMG_CO_ISS_1692988234_N','S_IMG_CO_ISS_1692988460_N','S_IMG_CO_ISS_1692988500_N']
+        ring_obs_id_list = ['S_IMG_CO_ISS_1688233102_N','S_IMG_CO_ISS_1688235606_N','S_IMG_CO_ISS_1688244278_N','S_IMG_CO_ISS_1688393550_N']
         bulk_add_to_collection(ring_obs_id_list, session_id)
 
-        url = '/opus/collections/data.csv?planet=Saturn&target=HYPERION&view=browse&browse=gallery&colls_browse=gallery&page=1&gallery_data_viewer=true&limit=100&order=timesec1&cols=ringobsid,planet,target,phase1,phase2,time1,time2,ringradius1,ringradius2,J2000longitude1,J2000longitude2'
+        url = '/opus/collections/data.csv?volumeid=COISS_2069&view=browse&browse=gallery&colls_browse=gallery&page=1&gallery_data_viewer=true&limit=100&order=timesec1&cols=ringobsid,planet,target,phase1,phase2,time1,time2,ringradius1,ringradius2,J2000longitude1,J2000longitude2'
         request = self.factory.get(url)
         request.user = AnonymousUser()
         request.session = test_session()
@@ -172,19 +171,19 @@ class user_CollectionsTests(TestCase):
         self.assertGreater(len(response.content), 466)
 
 
-    def test_get_collection_count(self):
+    def test__get_collection_count(self):
         self.emptycollection()
         session_id = test_session().session_key
         count = get_collection_count(session_id)
         self.assertEqual(count, 0)  # nothing here yet
 
         # let's add some stuff
-        ring_obs_id_list = ['S_IMG_CO_ISS_1692988072_N','S_IMG_CO_ISS_1692988234_N','S_IMG_CO_ISS_1692988460_N','S_IMG_CO_ISS_1692988500_N']
+        ring_obs_id_list = ['S_IMG_CO_ISS_1688233102_N','S_IMG_CO_ISS_1688235606_N','S_IMG_CO_ISS_1688244278_N','S_IMG_CO_ISS_1688393550_N']
         bulk_add_to_collection(ring_obs_id_list, session_id)
         count = get_collection_count(session_id)
         self.assertEqual(count, 4)  # nothing here yet
 
-    def test_view_collection(self):
+    def test__view_collection(self):
         self.emptycollection()
         # first add some to collection
         session_id = test_session().session_key
@@ -201,7 +200,7 @@ class user_CollectionsTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertGreater(len(response.content), 5000)
 
-    def test_check_collection_args(self):
+    def test__check_collection_args(self):
         self.emptycollection()
         # first add some to collection
         session_id = test_session().session_key
