@@ -160,6 +160,13 @@ var o_browse = {
 
             ring_obs_id = $(this).parent().attr("id").substring(9);
 
+            if (opus.addrange_clicked) {
+               // well actually they are selecting a range endpoint 'add range'
+               // so they don't want data viewer they want 'add to cart''
+               o_browse.cart_click_handler(ring_obs_id, 'add');
+               return false;
+            }
+
             // if the user clicked on actual thumbnail, update the metadata box
             // if the user clicked on the metadata box image, show the colorbox
             if (!e.isTrigger) {
@@ -173,8 +180,9 @@ var o_browse = {
         // thumbnail overlay tools
         $('.gallery').on("click", ".tools-bottom a", function(e) {
 
+            $(this).parent().show();  // whu?
+
             ring_obs_id = $(this).parent().parent().attr("id").substring(9);
-            $(this).parent().show();
 
             // clicking thumbnail opens embedded data viewer
             if ($(this).hasClass('colorbox')) {
@@ -207,38 +215,16 @@ var o_browse = {
             // click to add/remove from  cart
             if ($(this).find('i').hasClass('glyphicon-ok')) {
 
-                // user has checked a checkbox or clicked the checkmark on a thumbnail
-
-                // toggle thumbnail indicator state
-                o_browse.toggleBrowseInCollectionStyle(ring_obs_id);
-
                 // is this checked? or unchecked..
                 action = 'remove';
                 if ($(this).parent().hasClass("in")) {
                     action = 'add';  // this ring_obs_id is being added to cart
                 }
 
-
-                // make sure the checkbox for this observation in the other view (either data or gallery)
-                // is also checked/unchecked - if that view is drawn
-                try {
-                    $('#data__' + ring_obs_id).find('.data_checkbox').toggleClass('fa-check-square-o').toggleClass('fa-square-o');
-                } catch(e) { } // view not drawn yet so no worries
-
-                // check if we are clicking as part of an 'add range' interaction
-                if (!opus.addrange_clicked) {
-
-                    // no add range, just add this obs to collection
-                    o_collections.editCollection(ring_obs_id,action);
-
-                } else {
-                    // addrange clicked
-                    o_browse.addRangeHandler(ring_obs_id);
-                }
+                o_browse.cart_click_handler(ring_obs_id, action)
             }
 
             return false;
-
         }); // end click a browse tools icon
 
 
@@ -332,6 +318,32 @@ var o_browse = {
         });
 
     }, // end browse behaviors
+
+    cart_click_handler: function(ring_obs_id, action) {
+        // behaviors for the click to add/remove from cart
+        // whether that's from checkbox being clicked
+        // or thumbnail clicked while 'add range' is happening
+
+        // toggle thumbnail indicator state
+        o_browse.toggleBrowseInCollectionStyle(ring_obs_id);
+
+        // make sure the checkbox for this observation in the other view (either data or gallery)
+        // is also checked/unchecked - if that view is drawn
+        try {
+            $('#data__' + ring_obs_id).find('.data_checkbox').toggleClass('fa-check-square-o').toggleClass('fa-square-o');
+        } catch(e) { } // view not drawn yet so no worries
+
+        // check if we are clicking as part of an 'add range' interaction
+        if (!opus.addrange_clicked) {
+
+            // no add range, just add this obs to collection
+            o_collections.editCollection(ring_obs_id,action);
+
+        } else {
+            // addrange clicked
+            o_browse.addRangeHandler(ring_obs_id);
+        }
+    },
 
     openDetailTab: function(ring_obs_id) {
         opus.mainTabDisplay('detail');  // make sure the main site tab label is displayed
