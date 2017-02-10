@@ -113,9 +113,18 @@ var o_browse = {
                 // user has clicked "add range'"
                 opus.addrange_clicked = true;
                 $('.addrange','#browse').html("select range start");
+
+            } else {
+              // they have clicked this field in the middle of
+              // add range, perhaps in need of a help popover here
+              // but for now just change it back to default and stop
+              // addrange interaction
+              opus.addrange_clicked = false;
+              $('.addrange','#browse').html("add range");
             }
             return false;
         });
+
 
         // data_table - clicking a table row adds to cart
         $('#browse').on("click", ".data_table tr", function() {
