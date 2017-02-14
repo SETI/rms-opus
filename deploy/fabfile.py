@@ -7,6 +7,7 @@ env.hosts = ['pds-rings-tools.seti.org']
 prod_deploy_dir = 'opus'
 # prod_deploy_dir = 'opus_dev'
 git_branch = 'master'
+git_revision = ''
 memcached_port = '11211'
 # memcached_port = '11212'
 """
@@ -29,8 +30,8 @@ def push():
     """
 
     # then checkout code from repo in another directory, and transfer that copy to server
-    with lcd('/Users/lballard/'):
-        # checks out git repo into local dir /users/lballard/opus
+    with lcd(root_path):
+        # checks out git repo into local dir root_path/opus
         # then rsyncs that copy to production
 
         # clean up old deploys
@@ -38,12 +39,17 @@ def push():
 
         # grab the local repo (this is all because couldn't grab remote from server)
         # local('git clone -b ' + git_branch + ' git@bitbucket.org:ringsnode/opus2.git')  # does not
-        local('git clone -b ' + git_branch + ' file:////Users/lballard/projects/opus')
+        local('git clone -b %s file:///%sprojects/opus' % (git_branch, root_path))
 
         if prod_deploy_dir != 'opus':
             local('rm -rf %s' % prod_deploy_dir)
             local('mv opus %s' % prod_deploy_dir) # rename it down here before rsyncing it
 
+    with lcd('%sopus/' % root_path):
+        if git_revision:
+            local('git checkout %s' % git_revision)
+
+    with lcd(root_path):
         # zip the javascript files, dunno why it commented out, broken?
         # local('python opus/deploy/deploy.py')
         # rsync that code to dev directory on production
@@ -53,7 +59,7 @@ def push():
 
     # now go to pds-rings and move static_media into the right place
     with settings(host_string='pds-rings.seti.org'):
-        run("sudo cp -r /Users/lballard/static_media /library/webserver/documents/opus2_resources/.")
+        run("sudo cp -r %sstatic_media /library/webserver/documents/opus2_resources/." % root_path)
 
 def deploy():
     """
