@@ -9,7 +9,12 @@ prod_deploy_dir = 'opus'
 git_branch = 'master'
 memcached_port = '11211'
 # memcached_port = '11212'
+"""
+this is generally run like:
 
+    fab tests_local push deploy cache_reboot tests_prod
+
+"""
 
 def tests_local():
     """
