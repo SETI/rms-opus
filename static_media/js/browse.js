@@ -105,24 +105,35 @@ var o_browse = {
             $(this).attr("href", csv_link);
         });
 
-
         // browse nav menu - add range - begins add range interaction
         $('#browse').on("click", '.addrange', function() {
-
-            if ($('.addrange', '#browse').html() == "add range") {
-                // user has clicked "add range'"
-                opus.addrange_clicked = true;
-                $('.addrange','#browse').html("select range start");
-
-            } else {
-              // they have clicked this field in the middle of
-              // add range, perhaps in need of a help popover here
-              // but for now just change it back to default and stop
-              // addrange interaction
-              opus.addrange_clicked = false;
-              $('.addrange','#browse').html("add range");
+            // if someone clicks 'add range' this method
+            // sets the addrange_clicked to true
+            // then if they click a thumbnail next it is considered
+            // part of the range
+            container =  $('.cart_control', '#browse');
+            link = $('.addrange', '#browse');
+            button_text = link.html();
+            element_name = 'thumbnail';
+            if (opus.prefs.browse == 'data') {
+              element_name = 'row';
             }
-            return false;
+            start_hint = "click on a " + element_name + " to define a range of selections";
+
+            if (button_text = "add range") {
+                // clicked the 'add range' button
+                opus.addrange_clicked = true;
+                link.html("select range start");
+                link.popover('destroy');
+                container.popover({
+                  content: start_hint,
+                  trigger:"click",
+                  placement: "bottom",
+                });
+            }
+
+          return false;
+
         });
 
 
@@ -424,7 +435,19 @@ var o_browse = {
 
         if (!opus.addrange_min) {
             // this is only the min side of the range
+            end_hint = "select another thumbnail to make a range.";
+            element_name = 'thumbnail';
+            if (opus.prefs.browse == 'data') {
+              element_name = 'row';
+            }
             $('.addrange','#browse').text("select range end");
+            $('.cart_control','#browse').popover("destroy");
+            $('.cart_control','#browse').popover({
+              content: "click another " + element_name + " to complete the range",
+              trigger:"click",
+              placement: "bottom",
+            });
+
             index = $('#' + opus.prefs.browse + '__' + ring_obs_id).index();
             opus.addrange_min = { "index":index, "ring_obs_id":ring_obs_id };
             return;
@@ -434,6 +457,7 @@ var o_browse = {
 
             // we have both sides of range
             $('.addrange','#browse').text("add range");
+            $('.cart_control','#browse').popover('destroy');
 
             index = $('#' + opus.prefs.browse + '__' + ring_obs_id).index();
             if (index > opus.addrange_min['index']) {
