@@ -43,6 +43,7 @@ class searchTests(TestCase):
 
     def test__planets_properly_ordered(self):
         the_planets = [planet['label'] for planet in MultObsGeneralPlanetId.objects.filter(display='Y').values('label')]
+        print MultObsGeneralPlanetId.objects.filter(display='Y').values('label').query
         expect = ['Venus','Earth', 'Mars', 'Jupiter', 'Saturn', 'Uranus', 'Neptune', 'Pluto']
         self.assertEqual(expect, the_planets)
 
