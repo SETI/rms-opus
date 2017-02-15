@@ -898,12 +898,10 @@ var o_browse = {
 
         clearInterval(opus.scroll_watch_interval); // hold on cowgirl only 1 page at a time
 
-
         // NOTE if you change alt_size=full here you must also change it in gallery.html template
         $.ajax({ url: base_url + url,
             success: function(html){
                // bring in the new page
-
                function appendBrowsePage(page, prefix, view_var) { // for chaining effects
 
                     // hide the views that aren't supposed to be showing
@@ -920,7 +918,7 @@ var o_browse = {
                         $(html).appendTo($('.data tbody', namespace)).fadeIn();
                     } else {
                         opus.gallery_begun = true;
-                        $(html).appendTo($('.gallery .ace-thumbnails', namespace)).fadeIn();
+                        $(html).appendTo($('.gallery ul.ace-thumbnails', namespace)).fadeIn();
                     }
 
                     // fade out the spinner
@@ -954,17 +952,14 @@ var o_browse = {
 
                 o_browse.pageInViewIndicator();
 
-
                 o_browse.initColorbox();
 
                 o_hash.updateHash();
-
             },
             complete: function() {
                 // turn the scroll watch timer back on
                 clearInterval(opus.scroll_watch_interval);  // always shut off just before, just in case
                 opus.scroll_watch_interval = setInterval(o_browse.browseScrollWatch, 1000);
-
             }
 
         });

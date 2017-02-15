@@ -5,7 +5,7 @@
 
 $(document).ready(function() {
 
-    opus.prefs.widgets = []
+    opus.prefs.widgets = [];
     o_widgets.updateWidgetCookies();
 
     $(window).smartresize(function(){
@@ -105,11 +105,11 @@ $(document).ready(function() {
         // resets query completely, resets widgets completely
         if (!jQuery.isEmptyObject(opus.selections)) {
 
-            if (confirm("Are you sure you want to restart? Your current search will be lost.")) { 
-                opus.startOver();       
+            if (confirm("Are you sure you want to restart? Your current search will be lost.")) {
+                opus.startOver();
             }
         } else {
-            opus.startOver();  
+            opus.startOver();
         }
 
     }),
@@ -337,7 +337,7 @@ var opus = {
 
             case 'detail':
                 $('#detail').fadeIn();
-                
+
                 o_detail.getDetail(opus.prefs.detail);
 
                 opus.collection_q_intrvl = setInterval("o_collections.processCollectionQueue()", 1000); // resends any stray requests not recvd back from server
@@ -392,15 +392,15 @@ var opus = {
 
     startOver: function() {
         // handles the 'start over' buttons which has 2 selections
-        // if keep_set_widgets is true it will leave the current selected widgets alone  
+        // if keep_set_widgets is true it will leave the current selected widgets alone
         // and just redraw them with no selections in them
-        // if keep_set_widgets is false it will remove all widgets and restore 
+        // if keep_set_widgets is false it will remove all widgets and restore
         // the application default widgets
 
         clearInterval(opus.main_timer);  // hold the phone for a sec
         $('.widget-container-span').empty(); // remove all widgets on the screen
 
-        // reset the search query 
+        // reset the search query
         opus.selections = {};
         o_browse.resetQuery();
         opus.prefs.view = 'search';
@@ -409,7 +409,7 @@ var opus = {
         keep_set_widgets = false  // use as argument for the 2 tiered start over button, currently disabled
         if (keep_set_widgets) {
             // redraw all widgets that user had open before
-            // this is the 'start over' behavior 
+            // this is the 'start over' behavior
             opus.widgets_drawn = [];
             for (key in opus.prefs.widgets) {
                 slug = opus.prefs.widgets[key];
@@ -426,17 +426,17 @@ var opus = {
             opus.widgets_drawn = [];
             opus.widget_elements_drawn = [];
             for (k in opus.default_widgets) {
-                slug = opus.default_widgets[k]; 
+                slug = opus.default_widgets[k];
                 o_widgets.getWidget(slug,'#search_widgets1');
             }
         }
 
-        // start the main timer again 
+        // start the main timer again
         opus.main_timer = setInterval(opus.load, opus.main_timer_interval);
-        
-        return false; 
 
-    },     
+        return false;
+
+    },
 
     addAllBehaviors: function() {
         o_widgets.addWidgetBehaviors();
@@ -483,6 +483,3 @@ var opus = {
   jQuery.fn[sr] = function(fn){  return fn ? this.bind('resize', debounce(fn)) : this.trigger(sr); };
 
 })(jQuery,'smartresize');
-
-
-
