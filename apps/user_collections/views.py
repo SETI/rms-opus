@@ -302,7 +302,7 @@ def view_collection(request, collection_name, template="collections.html"):
 
 
 @never_cache
-def collection_status(request):
+def collection_status(request, collection_name='default'):
     """
     #todo this method needs tests
     """
