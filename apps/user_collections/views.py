@@ -2,7 +2,7 @@
 #
 #   user_collections.views
 #
-################################################import settings
+################################################ import settings
 import settings
 import json
 from django.http import HttpResponse, Http404
@@ -74,7 +74,7 @@ def remove_from_collection(ring_obs_id, session_id):
 def get_collection_in_page(page, session_id):
     """ returns obs_general_ids in page that are also in user collection
         this is for views in results where you have to display the gallery
-        and indicate which thumbnails are in cart"""
+        and indicate which thumbnails are in cart """
     if not session_id:
         return
 
@@ -102,6 +102,7 @@ def edit_collection(request, **kwargs):
     update_metrics(request)
     """
     edits a single ring_obs_id in a user collection (user "selections")
+    # edits?
     """
     if not request.session.get('has_session'):
         request.session['has_session'] = True
@@ -167,7 +168,7 @@ def edit_collection_range(request, **kwargs):
     update_metrics(request)
     """
     the request will come in not as a single ring_obs_id
-    but as min and max ring_obs_ids + a search query
+    but as min and max ring_obs_ids + a range in a search query
 
     """
     if not request.session.get('has_session'):
@@ -375,8 +376,9 @@ def is_odd(num):
 
 @never_cache
 def reset_sess(request):
-    """ utility endpoint, load this in a browser to reset the session """
+    """ this is hit when user clicks 'empty collection' """
     request.session.flush()
+    request.session['has_session'] = True
     return HttpResponse("session reset")
 
 
