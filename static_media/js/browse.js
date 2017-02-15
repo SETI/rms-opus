@@ -121,7 +121,7 @@ var o_browse = {
             start_hint = "click on a " + element_name + " to define a range of selections";
 
             if (button_text = "add range") {
-                // clicked the 'add range' button
+                // the first click of 'add range' begins the add-range interaction
                 opus.addrange_clicked = true;
                 link.html("select range start");
                 link.popover('destroy');
@@ -139,6 +139,7 @@ var o_browse = {
 
         // data_table - clicking a table row adds to cart
         $('#browse').on("click", ".data_table tr", function() {
+
             ring_obs_id = $(this).attr("id").substring(6);
             $(this).find('.data_checkbox').toggleClass('fa-check-square-o').toggleClass('fa-square-o');
             action = 'remove';
@@ -183,6 +184,7 @@ var o_browse = {
             if (opus.addrange_clicked) {
                // well actually they are selecting a range endpoint 'add range'
                // so they don't want data viewer they want 'add to cart''
+               o_browse.toggleBrowseInCollectionStyle(ring_obs_id);
                o_browse.cart_click_handler(ring_obs_id, 'add');
                return false;
             }
@@ -199,7 +201,6 @@ var o_browse = {
 
         // thumbnail overlay tools
         $('.gallery').on("click", ".tools-bottom a", function(e) {
-
             $(this).parent().show();  // whu?
 
             ring_obs_id = $(this).parent().parent().attr("id").substring(9);
@@ -233,14 +234,17 @@ var o_browse = {
             }
 
             // click to add/remove from  cart
+            // gallery thumbnail cart checkmark thing
             if ($(this).find('i').hasClass('glyphicon-ok')) {
+                // toggle thumbnail indicator state
+                o_browse.toggleBrowseInCollectionStyle(ring_obs_id);
 
+                icon_a_element = $('#gallery__' + ring_obs_id + ' .tools-bottom a').parent();
                 // is this checked? or unchecked..
                 action = 'remove';
-                if ($(this).parent().hasClass("in")) {
+                if (icon_a_element.hasClass("in")) {
                     action = 'add';  // this ring_obs_id is being added to cart
                 }
-
                 o_browse.cart_click_handler(ring_obs_id, action)
             }
 
@@ -344,9 +348,6 @@ var o_browse = {
         // whether that's from checkbox being clicked
         // or thumbnail clicked while 'add range' is happening
 
-        // toggle thumbnail indicator state
-        o_browse.toggleBrowseInCollectionStyle(ring_obs_id);
-
         // make sure the checkbox for this observation in the other view (either data or gallery)
         // is also checked/unchecked - if that view is drawn
         try {
@@ -355,7 +356,6 @@ var o_browse = {
 
         // check if we are clicking as part of an 'add range' interaction
         if (!opus.addrange_clicked) {
-
             // no add range, just add this obs to collection
             o_collections.editCollection(ring_obs_id,action);
 
@@ -483,8 +483,13 @@ var o_browse = {
         $('#gallery__' + ring_obs_id + ' ' + icon_a_element).parent().toggleClass("in"); // this class keeps parent visible when mouseout
         $('#gallery__' + ring_obs_id + ' ' + icon_a_element).find('i').toggleClass('thumb_selected_icon');
         $('#gallery__' + ring_obs_id + ' .thumb_overlay').toggleClass('thumb_selected');
-    },
 
+        icon_a_element = ".tools-bottom a";
+        if ($('#gallery__' + ring_obs_id + ' ' + icon_a_element).parent().hasClass("in")) {
+        } else {
+        }
+
+    },
 
     // column chooser behaviors
     addColumnChooserBehaviors: function() {
