@@ -210,7 +210,7 @@ var o_collections = {
         }
     },
 
-    // action = add/remove/addrange/removerange
+    // action = add/remove/addrange/removerange/addall
     sendCollectionRequest: function(action,ringobsid,request_no) {
         // this sends the ajax call to edit the cart on the server
         // but this should really be a private method
@@ -263,12 +263,16 @@ var o_collections = {
             url = url_split.join('&');
             url = url + "&limit=" + limit + "&page=" + first_page;
 
+        } else if (action = 'addall') {
+            url += '&' + o_hash.getHash();
+
         } else {
             url += "&ringobsid=" + ringobsid;
         }
 
         $.ajax({ url: url,
               dataType:"json", success: function(json){
+
                    if (!json) {
                         // alert('no json kay bai')
                        return;
@@ -297,8 +301,8 @@ var o_collections = {
         // remove all
         o_collections.resetCollectionQueue();
         opus.lastCartRequestNo = 0;
-        // change indicator to zero and let the server know:
 
+        // change indicator to zero and let the server know:
         $.ajax({ url: "/opus/collections/reset.html",
             success: function(html){
                 $('#collection_count').html('0');
@@ -320,7 +324,6 @@ var o_collections = {
         $('.tools-bottom', '.gallery').removeClass("in"); // this class keeps parent visible when mouseout
         $( ".tools-bottom a", '.gallery').find('i').removeClass('thumb_selected_icon');
         $('.thumb_overlay', '.gallery').removeClass('thumb_selected');
-
     },
 
     resetCollectionQueue: function() {

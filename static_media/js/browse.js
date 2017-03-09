@@ -105,6 +105,12 @@ var o_browse = {
             $(this).attr("href", csv_link);
         });
 
+        $('#browse').on("click", '.addall', function() {
+          o_collections.editCollection('','addall');
+          o_browse.checkAllRenderedElements();
+          return false;
+        });
+
         // browse nav menu - add range - begins add range interaction
         $('#browse').on("click", '.addrange', function() {
             // if someone clicks 'add range' this method
@@ -652,6 +658,27 @@ var o_browse = {
 
     },  // /addColumnChooserBehaviors
 
+    checkAllRenderedElements: function() {
+      // returns first and last ring_obs_id that is rendered on the page
+
+      // find the id of the first and last element showing on this page
+      if (opus.prefs.browse == 'gallery') {
+        el = $('.gallery li');
+        first = el.first().attr('id');
+        last = el.last().attr('id');
+      } else {
+        first = $('.data_table tbody tr:first').attr('id');
+        last = $('.data_table tbody tr:last').attr('id');
+      }
+      console.log(first);
+      console.log(last);
+
+      ring_obs_id1 = first.split('__')[1];
+      ring_obs_id2 = last.split('__')[1];
+
+      o_browse.checkRangeBoxes(ring_obs_id1, ring_obs_id2);
+    },
+
     // handles checking of a range of boxes in each view (table/gallery)
     checkRangeBoxes: function(ring_obs_id1, ring_obs_id2) {
 
@@ -660,10 +687,8 @@ var o_browse = {
         for (var key in elements) {
             element = elements[key];
             current_id = ring_obs_id1;
+            next_element = $(element + current_id, '#browse');
             while (current_id != ring_obs_id2) {
-
-                // we know that the endpoints are already checked, so start with the next li/td element
-                next_element = $(element + current_id, '#browse').next();
 
                 // thumbnail in the list
                 if (next_element.hasClass("infinite_scroll_page")) {
@@ -696,7 +721,10 @@ var o_browse = {
                 } catch(e) {
                     break;  // no next_id means the view isn't drawn, so we don't need to worry about it
                 }
-            }
+
+                next_element = $(element + current_id, '#browse').next();
+
+            } // /while
         }
     },
 

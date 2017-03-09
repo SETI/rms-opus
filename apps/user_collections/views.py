@@ -138,13 +138,16 @@ def edit_collection(request, **kwargs):
     # instead of the above we are doing this:
     (action, ring_obs_id) = get_queued(request, request_no)
 
-    # redux: these will be not so simple saddly, they will insert or delete from
+    # redux: these will be not so simple sadly, they will insert or delete from
     # the colleciton table..
     if action == 'add':
         add_to_collection(ring_obs_id, session_id)
 
     elif (action == 'remove'):
         remove_from_collection(ring_obs_id, session_id)
+
+    elif (action == 'addall'):
+        collection_count = edit_collection_addall(request, **kwargs)
 
     elif (action in ['addrange','removerange']):
         collection_count = edit_collection_range(request, **kwargs)
@@ -163,6 +166,25 @@ def edit_collection(request, **kwargs):
 
     return HttpResponse(json.dumps(json_data))
 
+def edit_collection_addall(request, **kwargs):
+    update_metrics(request)
+    """
+    add the entire result set to the collection cart
+    """
+    session_id = request.session.session_key
+    colls_table_name = get_collection_table(session_id)
+
+    (selections,extras) = urlToSearchParams(request.GET)
+    query_table_name = getUserQueryTable(selections,extras)
+
+    cursor = connection.cursor()
+    coll_table_name = get_collection_table(session_id)
+    sql = "replace into " + connection.ops.quote_name(coll_table_name) + \
+          " (id, ring_obs_id) select o.id, o.ring_obs_id from obs_general o, " + connection.ops.quote_name(query_table_name) + \
+          " s where o.id = s.id"
+    cursor.execute(sql)
+    return get_collection_count(session_id)
+
 
 def edit_collection_range(request, **kwargs):
     update_metrics(request)
@@ -176,7 +198,6 @@ def edit_collection_range(request, **kwargs):
 
     session_id = request.session.session_key
     colls_table_name = get_collection_table(session_id)
-
     (action, ring_obs_id, request_no, expected_request_no) = check_collection_args(request, **kwargs)
 
     id_range = request.GET.get('addrange',False)
@@ -345,7 +366,7 @@ def check_collection_args(request,**kwargs):
     request_no = request.GET.get('request', False)
     addrange = request.GET.get('addrange',False)
 
-    if not ring_obs_id:
+    if not ring_obs_id and action != 'addall':
         try:
             ring_obs_id = kwargs['ring_obs_id']
         except KeyError:
