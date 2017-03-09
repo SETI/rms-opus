@@ -324,6 +324,7 @@ var o_collections = {
         $('.tools-bottom', '.gallery').removeClass("in"); // this class keeps parent visible when mouseout
         $( ".tools-bottom a", '.gallery').find('i').removeClass('thumb_selected_icon');
         $('.thumb_overlay', '.gallery').removeClass('thumb_selected');
+        $('.data_checkbox', '.data_table').removeClass('fa-check-square-o').addClass('fa-square-o');
     },
 
     resetCollectionQueue: function() {
