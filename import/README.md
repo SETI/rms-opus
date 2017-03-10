@@ -13,29 +13,38 @@ or a smaller version:
     python import/build_db.py COCIRS_5909,COVIMS_0040,VGISS_8207,COISS_1002,COISS_2068,COISS_2069
 
 
-2. Dump the database to save it:
+2. Update the Image sizes
+
+	sudo python import/update_image_sizes.py > ~/img.log
+
+
+3. Look at the preview image errors
+
+	grep 'Error' ~/img.log | wc -l
+
+
+4. Dump the database to save it:
 
 	cd ~/dumps/dump_and_sms/
 	fab  dump_and_sms
 
+5. Change the DATABASES NAME in settings_local.py
 
-3. Change the DATABASES NAME in settings_local.py
-
-4. Refresh the caches as you would in a [deploy](../deploy/README.md)
+6. Refresh the caches as you would in a [deploy](../deploy/README.md)
 
     cd deploy
     fab cache_reboot
 
 
-5. The release is now public! (Yes we have no development server) Manually make sure your most recent blog post links are still working.. (todo: script this!)
+7. The release is now public! (Yes we have no development server) Manually make sure your most recent blog post links are still working.. (todo: script this!)
 
     open http://ringsnodesearchtool.blogspot.com/
 
-6. Run the in-browser selenium tests
+8. Run the in-browser selenium tests
 
 	they are in Firefox->tools
 
-7. Run the selenium tests:
+9. Run the selenium tests:
 
     In the local repo:
 
@@ -43,9 +52,11 @@ or a smaller version:
         source venv/bin/activate
         python api_tests.py
 
-8. Do a blog post!
+10. Do a blog post!
 
 	open http://ringsnodesearchtool.blogspot.com/
+
+
 
 
 
