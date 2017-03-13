@@ -221,11 +221,11 @@ def getUserQueryTable(selections=None,extras=None):
     try:
         sql, params = constructQueryString(selections, extras)
     except TypeError:
-        log.debug('TypeError, constructQueryString returned False')
+        log.error('TypeError, constructQueryString returned False')
         return False
 
     if not sql:
-        log.debug('getUserQueryTable - query string was empty ')
+        log.error('getUserQueryTable - query string was empty ')
         return False
 
     try:
