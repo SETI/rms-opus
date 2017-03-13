@@ -1,23 +1,21 @@
 <div id = "collections_summary" class = "well well-lg">
 
-    <h1>Your Selections</h1>
+  <h1>Your Selections</h1>
 
     <p>Total Files: <span id = "total_files">{{ download_count }}</span></p>
-	<p>Total Size (before zip): <span id = "download_size">{{ download_size }}</span>
+    <p>Total Size (before zip): <span id = "download_size">{{ download_size }}</span></p>
 
     <p><a id = "download_csv" target = "_blank" href = "">Download CSV</a></p>
 
-    </p>
-
     <div>
-        <a id = "create_zip_file" href = "">
-            <button type="button" class="btn btn-sm btn-success">
-                Download Zipped Archive
-                <span class = "spinner">&nbsp;&nbsp;&nbsp;&nbsp;</span>
-            </button>
-        </a>
-
+      <a id = "create_zip_file" href = "">
+        <button type="button" class="btn btn-sm btn-success">
+          Download Zipped Archive
+          <span class = "spinner">&nbsp;&nbsp;&nbsp;&nbsp;</span>
+        </button>
+      </a>
     </div>
+
     <ul class = "zipped_files"></ul>
 
 	<div id = "download_options">
@@ -30,8 +28,8 @@
             {% for product_type, count in product_counts.items %}
 
                 <li>
-                <input type = "checkbox" value = "{{ product_type }}" 
-                {% if count > 0 %}    
+                <input type = "checkbox" value = "{{ product_type }}"
+                {% if count > 0 %}
                     checked
                 {% endif %}
                 >
@@ -44,7 +42,7 @@
                         {{ product_type }}
                         </span>
 
-                    {% if count > 0 %}    
+                    {% if count > 0 %}
                         <span class = "product_count hints">{{ count }}</span>
     				{% endif %}
 
@@ -73,7 +71,3 @@
     </h3>
 
 </div><!-- /collections_summary  -->
-
-
-
-
