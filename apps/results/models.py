@@ -9,6 +9,10 @@ class Image(models.Model):
     small = models.CharField(max_length=255, blank=True)
     med = models.CharField(max_length=255, blank=True)
     full = models.CharField(max_length=255, blank=True)
+    size_thumb = models.IntegerField()
+    size_small = models.IntegerField()
+    size_med = models.IntegerField()
+    size_full = models.IntegerField()
     # opus1_ring_obs_id = models.CharField(max_length=40)
 
     class Meta:
