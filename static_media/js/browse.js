@@ -670,8 +670,6 @@ var o_browse = {
         first = $('.data_table tbody tr:first').attr('id');
         last = $('.data_table tbody tr:last').attr('id');
       }
-      console.log(first);
-      console.log(last);
 
       ring_obs_id1 = first.split('__')[1];
       ring_obs_id2 = last.split('__')[1];
