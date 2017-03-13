@@ -51,6 +51,8 @@ def get_collection_table(session_id):
 
 def bulk_add_to_collection(ring_obs_id_list, session_id):
     cursor = connection.cursor()
+    if type(ring_obs_id_list).__name__ == 'str':
+        ring_obs_id_list = [ring_obs_id_list]
     coll_table_name = get_collection_table(session_id)
     placeholders = ['(%s)' for i in range(len(ring_obs_id_list))]
     values_str = ','.join(placeholders)
@@ -242,9 +244,13 @@ def edit_collection_range(request, **kwargs):
 
 @never_cache
 def view_collection(request, collection_name, template="collections.html"):
-    """ the collection tab http endpoint
+    """ the collection tab http endpoint!
+        returns render(request, template,locals())
+        template="collections.html"
         the information it returns about product types and files does not
         relect user filters such as  product types and preview images
+        it returns all product types and all preview images in order to draw the page
+        the highlighting of user selected preview and product type selections are handled client side
     """
     update_metrics(request)
 
@@ -252,6 +258,11 @@ def view_collection(request, collection_name, template="collections.html"):
     page_no = int(request.GET.get('page',1))
     limit = int(request.GET.get('limit',100))
     column_slugs = request.GET.get('cols',settings.DEFAULT_COLUMNS)
+    previews_str = request.GET.get('previews', None)
+
+    previews = []
+    if previews_str:
+        previews = previews_str.split(',')
 
     from results.views import *  # circulosity
 
@@ -266,14 +277,6 @@ def view_collection(request, collection_name, template="collections.html"):
         request.session['has_session'] = True
     session_id = request.session.session_key
     colls_table_name = get_collection_table(session_id)
-    files = getFiles(fmt="raw", collection=True, previews='none', session_id=session_id)
-    all_product_types = Files.objects.all().values('product_type').distinct()
-
-    # download_info
-    from downloads.views import get_download_info
-    download_size, download_count = get_download_info(files)
-
-    download_size = nice_file_size(download_size)  # pretty display it
 
     # images and join with the collections table
     where   = "images.ring_obs_id = " + connection.ops.quote_name(colls_table_name) + ".ring_obs_id"
@@ -281,18 +284,29 @@ def view_collection(request, collection_name, template="collections.html"):
     images = images.extra(where=[where], tables=[colls_table_name])
 
     image_types = settings.IMAGE_TYPES
-    image_count = len(images)
+    image_count = len(images)  # todo: huh.
 
+    # all product types
+    all_product_types = Files.objects.all().values('product_type').distinct()
     # product files
-    # for this we want the list of all possible product types for this dataset
+    # for this we want the list of all possible product types relevant for this dataset
     # todo: this is really inefficient, another place that large carts are going to be unhappy
-    product_counts = dict([(i,0) for i in [p['product_type'] for p in all_product_types]]) # a dictionary with product_Type names as keys and all values set to zero
-    ring_obs_ids = [f for f in files]
-    product_counts_query = Files.objects.filter(ring_obs_id__in=ring_obs_ids).values('product_type').annotate(Count('product_type'))
+    product_counts = dict([(i,0) for i in [p['product_type'] for p in all_product_types]]) # a dict with product_type names as keys
+                                                                                           # and all values set to zero
+                                                                                           # for holding a count of each product type
+    # get count of each product type
+    where = "files.ring_obs_id = " + connection.ops.quote_name(colls_table_name) + ".ring_obs_id"
+    product_counts_query = Files.objects.extra(where=[where], tables=[colls_table_name]).values("product_type").annotate(Count("product_type"))
     product_counts_nonzero = {i['product_type']: i['product_type__count'] for i in product_counts_query}
-    # update the product_count array with the non-zero counts
+    # update a product_count array with the non-zero counts
     for product_type, pcount in product_counts_nonzero.items():
         product_counts[product_type] = pcount
+
+    # download_info, count and total size before zip
+    from downloads.views import get_download_info
+    product_types = [ptype for ptype, count in product_counts.items()]
+    download_size, download_count =  get_download_info(product_types, previews, colls_table_name)
+    download_size = nice_file_size(download_size)  # pretty display it
 
     column_values = []
     for param_name in columns:
@@ -310,7 +324,7 @@ def view_collection(request, collection_name, template="collections.html"):
         pass  # obs_general table wasn't in there for whatever reason
 
     # set up the where clause to join with the rest of the tables
-    where   = "obs_general.ring_obs_id = " + connection.ops.quote_name(colls_table_name) + ".ring_obs_id"
+    where = "obs_general.ring_obs_id = " + connection.ops.quote_name(colls_table_name) + ".ring_obs_id"
     triggered_tables.append(colls_table_name)
 
     # bring in the  triggered_tables

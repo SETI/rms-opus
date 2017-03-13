@@ -8,6 +8,7 @@ import json
 import csv
 from urlparse import urlparse
 from django.http import HttpResponse, Http404
+from django.db import connection
 from django.db.models import Sum
 from results.views import *
 from tools.app_utils import *
@@ -69,58 +70,52 @@ def get_file_path(filename):
 
     return f
 
-def get_download_info(files):
+def get_download_info(product_types, previews, colls_table_name):
     """
-    calculate the sum download size of every file found in files.
-    returns a tuple of ints: (<total size in bytes>, <total file count>)
-    accepts only structure like that returnd by getfiles:
-    files = {
-        '<ring_obs_id>': {
-            '<product_type'>: [<file_name1>, <file_name2>]
-        }
-    }
-    product type can be a valid PDS product type or 'preview_image' (todo: marry these 2)
+        return some info about the current session's download
+        return total_size, file_count  # bytes
     """
+    if previews == 'none' or previews == '' or previews == []:
+        previews = None  # :-(
+
+    if product_types and type(product_types).__name__ == 'str':
+        product_types = [product_types]
+
     file_paths = []  # the files we need to check
     file_count = 0  # count of each file in files
     total_size = 0
 
-    all_product_types = []
-    for ring_obs_id in files:
-        for product_type in files[ring_obs_id]:
-            for f in files[ring_obs_id][product_type]:
+    print colls_table_name
+    # find the total size of all the pds products in product_types
+    total_size_products = 0
+    file_count_products = 0
+    if product_types:
+        where   = "file_sizes.ring_obs_id = " + connection.ops.quote_name(colls_table_name) + ".ring_obs_id"
+        file_sizes = FileSizes.objects.filter(PRODUCT_TYPE__in=product_types)
+        total_size_info = file_sizes.extra(where=[where], tables=[colls_table_name])
+        total_size_products = total_size_info.values('size').aggregate(Sum('size'))['size__sum']
+        file_count_products = total_size_info.count()
+        if not total_size_products:
+            total_size_products = 0
 
-                all_product_types.append(product_type)
+    # now find total size of browse images on disc
+    total_size_images = 0
+    file_count_images = 0
+    if previews:
+        previews = [p.lower() for p in previews]
+        images = Image.objects
+        where   = "images.ring_obs_id = " + connection.ops.quote_name(colls_table_name) + ".ring_obs_id"
 
-                if product_type != 'preview_image':
-                    # this is a pds file not a browse product
-                    # collect the urls.. we will process these at the end
-                    file_paths += [f for f in files[ring_obs_id][product_type]] # list of all urls
+        for sz in previews:
+            total_size_info = images.extra(where=[where], tables=[colls_table_name]).values('size_' + sz)
+            total_size_images += total_size_info.aggregate(Sum('size_' + sz))['size_' + sz + '__sum']
+            file_count_images += total_size_info.count()
+            if not total_size_images:
+                total_size_images = 0
 
-                elif product_type == 'preview_image':
-                    # the file size of each preview images on disc is checked here
-                    # todo: OMG WHY WHAT
-                    # todo: get the file sizes into database instead = process like pds files and remove this whole section!
-
-                    from results.views import get_base_path_previews
-                    try:
-                        size = getsize(f)
-                        total_size += size
-                        file_count = file_count + 1
-                    except OSError:
-                        log.error('could not find file: ' + f)
-
-    all_product_types = list(set(all_product_types))  # make unique
-    # now we have all pds file_names, put all file names in a list and get their count
-    if file_paths:
-
-        file_names = list(set([ get_file_path(u) for u in file_paths]))
-        file_count += len(file_names)
-
-        # query database for the sum of all file_names size fields
-        file_sizes = FileSizes.objects.filter(name__in=file_names, PRODUCT_TYPE__in=all_product_types).values('name','size','volume_id').distinct()
-        total_size += sum([f['size'] for f in file_sizes])  # todo: this is here b/c django was not happy mixing aggregate+distinct
-
+    print total_size_products, total_size_images
+    total_size = total_size_products + total_size_images
+    file_count = file_count_products + file_count_images
     return total_size, file_count  # bytes
 
 def get_download_info_API(request):
@@ -131,13 +126,19 @@ def get_download_info_API(request):
     """
     update_metrics(request)
 
+    from user_collections.views import get_collection_table  # circulosity
     session_id = request.session.session_key
+    colls_table_name = get_collection_table(session_id)
 
-    product_types = request.GET.get('types', 'none')
-    product_types = product_types.split(',')
+    product_types = []
+    product_types_str = request.GET.get('types', None)
+    if product_types_str:
+        product_types = product_types_str.split(',')
 
-    previews = request.GET.get('previews', 'none')
-    previews = previews.split(',')
+    previews = []
+    previews_str = request.GET.get('previews', None)
+    if previews_str:
+        previews = previews_str.split(',')
 
     # since we are assuming this is coming from user interaction
     # if no filters exist then none of this product type is wanted
@@ -151,8 +152,7 @@ def get_download_info_API(request):
     # now get the files and download size / count for this cart
     urls = []
     from results.views import *
-    files = getFiles(collection=True, session_id=session_id, fmt="raw", loc_type="url", product_types=product_types, previews=previews)
-    download_size, count = get_download_info(files)
+    download_size, count = get_download_info(product_types, previews, colls_table_name)
 
     # make pretty size string
     download_size = nice_file_size(download_size)
@@ -169,6 +169,10 @@ def create_download(request, collection_name=None, ring_obs_ids=None, fmt=None):
     """
     update_metrics(request)
 
+    # from user_collections.views import get_collection_table  # circulosity
+    session_id = request.session.session_key
+    colls_table_name = get_collection_table(session_id)
+
     fmt = request.GET.get('fmt', "raw")
     product_types = request.GET.get('types', 'none')
     product_types = product_types.split(',')
@@ -178,7 +182,7 @@ def create_download(request, collection_name=None, ring_obs_ids=None, fmt=None):
 
     if not ring_obs_ids:
         ring_obs_ids = []
-        from user_collections.views import *
+        from user_collections.views import get_collection_table
         ring_obs_ids = get_all_in_collection(request)
 
     if type(ring_obs_ids) is unicode or type(ring_obs_ids).__name__ == 'str':
@@ -207,7 +211,7 @@ def create_download(request, collection_name=None, ring_obs_ids=None, fmt=None):
     zip_file = zipfile.ZipFile(settings.TAR_FILE_PATH + zip_file_name, mode='w')
     chksum = open(chksum_file_name,"w")
     manifest = open(manifest_file_name,"w")
-    size, download_count = get_download_info(files)
+    size, download_count = get_download_info(product_types, previews, colls_table_name)
 
     # don't keep creating downloads after user has reached their size limit
     cum_download_size = request.session.get('cum_download_size', 0)
