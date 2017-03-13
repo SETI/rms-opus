@@ -263,7 +263,7 @@ var o_collections = {
             url = url_split.join('&');
             url = url + "&limit=" + limit + "&page=" + first_page;
 
-        } else if (action = 'addall') {
+        } else if (action == 'addall') {
             url += '&' + o_hash.getHash();
 
         } else {
