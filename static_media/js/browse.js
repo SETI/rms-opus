@@ -105,6 +105,7 @@ var o_browse = {
             $(this).attr("href", csv_link);
         });
 
+        // browse nav menu - add all to collection
         $('#browse').on("click", '.addall', function() {
           o_collections.editCollection('','addall');
           o_browse.checkAllRenderedElements();
@@ -141,7 +142,6 @@ var o_browse = {
           return false;
 
         });
-
 
         // data_table - clicking a table row adds to cart
         $('#browse').on("click", ".data_table tr", function() {
