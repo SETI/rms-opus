@@ -85,7 +85,6 @@ def get_download_info(product_types, previews, colls_table_name):
     file_count = 0  # count of each file in files
     total_size = 0
 
-    print colls_table_name
     # find the total size of all the pds products in product_types
     total_size_products = 0
     file_count_products = 0
@@ -169,7 +168,7 @@ def create_download(request, collection_name=None, ring_obs_ids=None, fmt=None):
     """
     update_metrics(request)
 
-    # from user_collections.views import get_collection_table  # circulosity
+    from user_collections.views import get_collection_table, get_all_in_collection  # circulosity
     session_id = request.session.session_key
     colls_table_name = get_collection_table(session_id)
 
@@ -177,8 +176,9 @@ def create_download(request, collection_name=None, ring_obs_ids=None, fmt=None):
     product_types = request.GET.get('types', 'none')
     product_types = product_types.split(',')
 
-    previews = request.GET.get('previews', 'none')
-    previews = previews.split(',')
+    previews = request.GET.get('previews', None)
+    if previews:
+        previews = previews.split(',')
 
     if not ring_obs_ids:
         ring_obs_ids = []
