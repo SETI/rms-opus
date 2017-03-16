@@ -16,9 +16,7 @@ django.setup()
 from os import system
 from django.db import transaction, connection
 from django.core.management import  call_command
-from django.db.models import get_model
 from django.db.utils import DatabaseError
-from django.utils.datastructures import SortedDict
 from settings import DATABASES, MULT_FIELDS  # DATABASES creds only
 from settings_local import opus1, opus2  # names of the databases
 
