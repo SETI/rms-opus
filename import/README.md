@@ -12,10 +12,9 @@ or a smaller version:
 
     python import/build_db.py COCIRS_5909,COVIMS_0040,VGISS_8207,COISS_1002,COISS_2068,COISS_2069
 
-
 2. Update the Image sizes
 
-	sudo python import/update_image_sizes.py > ~/img.log
+	sudo -b nohup python import/update_image_sizes.py > ~/img.log
 
 
 3. Look at the preview image errors
