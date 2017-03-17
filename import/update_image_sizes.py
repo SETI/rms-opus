@@ -4,18 +4,20 @@ import django
 from os.path import getsize
 from django.conf import settings
 from django.db import connection
-from secrets import DEPLOYMENT_PARENT_DIR
 
 nulls_only = True
 
 # sys.path.append('/Users/lballard/projects/')
-sys.path.append(DEPLOYMENT_PARENT_DIR)
+sys.path.append('/home/django/djcode/')
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "opus.settings")
 django.setup()
 from secrets import IMAGE_PATH
 from results.views import get_base_path_previews
+from settings import opus_to_deploy
 
 cursor = connection.cursor()
+
+cursor.execute("use %s;" % opus_to_deploy)
 
 sql = "select ring_obs_id, thumb, small, med, full from images"
 if nulls_only:
