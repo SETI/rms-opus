@@ -14,7 +14,7 @@ django.setup()
 
 # script imports
 from os import system
-from django.db import transaction, connection
+from django.db import transaction, connection, reset_queries
 from django.core.management import  call_command
 from django.db.utils import DatabaseError
 from settings import DATABASES, MULT_FIELDS  # DATABASES creds only
@@ -271,7 +271,8 @@ for tbl in obs_tables:
         cursor.execute(q_up)
 
 # flush commit all of the above
-transaction.commit_unless_managed()
+# why was I doing this and now it breaks do we really need..
+reset_queries()
 
 
 
@@ -424,7 +425,7 @@ cursor.execute("create table %s.colls_test_key like opus_hack.colls_test_key;" %
 
 
 # ------------ cleanup ------------ #
-transaction.commit_unless_managed()  # flushes any waiting queries
+reset_queries() # flushes any waiting queries
 cursor.execute("SET foreign_key_checks = 1")
 
 print("build of %s 2 database is complete. Bye!" % opus2);
