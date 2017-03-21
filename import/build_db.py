@@ -18,7 +18,7 @@ from django.db import transaction, connection, reset_queries
 from django.core.management import  call_command
 from django.db.utils import DatabaseError
 from settings import DATABASES, MULT_FIELDS  # DATABASES creds only
-from settings_local import opus1, opus2  # names of the databases
+from settings_local import opus1, opus_to_deploy  # names of the databases
 
 
 
@@ -28,7 +28,7 @@ import sys
 if len(sys.argv) < 2:
     print """
 
-    Welcome to the OPUS 2 importer! This script transfers data from OPUS1 to OPUS2.
+    Welcome to the OPUS 2 importer! This script transfers data from OPUS1 to opus_to_deploy.
 
     1st arg is a list of volumes, with no spaces
 
@@ -112,48 +112,48 @@ print "begin"
 # ------------ copy over the 'forms' table into the new 'param_info' table  ------------#
 
 # first, fetch the tables:
-# system("mysql %s < import/backup_util_tables.sql -u%s -p%s" % (opus2, DATABASES['default']['USER'], DATABASES['default']['PASSWORD'])))
+# system("mysql %s < import/backup_util_tables.sql -u%s -p%s" % (opus_to_deploy, DATABASES['default']['USER'], DATABASES['default']['PASSWORD'])))
 
 # build the little user_collections template table
 print "building user_collections_template from user_collections_template.sql "
-system("mysql %s < import/user_collections_template.sql -u%s -p%s" % (opus2, DATABASES['default']['USER'], DATABASES['default']['PASSWORD']))
+system("mysql %s < import/user_collections_template.sql -u%s -p%s" % (opus_to_deploy, DATABASES['default']['USER'], DATABASES['default']['PASSWORD']))
 
 # first, build the  param_info table in the new db - the table  lives in a dump file in the repo
 print "building param_info from param_info_table.sql "
-system("mysql %s < import/param_info_table.sql -u%s -p%s" % (opus2, DATABASES['default']['USER'], DATABASES['default']['PASSWORD']))
+system("mysql %s < import/param_info_table.sql -u%s -p%s" % (opus_to_deploy, DATABASES['default']['USER'], DATABASES['default']['PASSWORD']))
 
 
 # only need this part if regenerating param_info_table from Observations dabase
 # also just don't
 # see also update_forms_with_opu2_param_info.sql
 """
-q = "replace into %s.param_info select * from %s.forms where (display = 'Y' or display_results = 'Y')" % (opus2, opus1)
+q = "replace into %s.param_info select * from %s.forms where (display = 'Y' or display_results = 'Y')" % (opus_to_deploy, opus1)
 for x in exclude:
     q = q + " and table_name not like %s "
 cursor.execute(q, exclude)
-q = "replace into %s.param_info select * from %s.forms where table_name = 'obs_general' and name in ('time1','time2')" % (opus2, opus1)
+q = "replace into %s.param_info select * from %s.forms where table_name = 'obs_general' and name in ('time1','time2')" % (opus_to_deploy, opus1)
 cursor.execute(q)
 """
 
 # some fiddly updates to the param_info_table
-cursor.execute("update %s.param_info as params, %s.forms as forms set params.display = true where forms.display = 'Y' and params.id = forms.no" % (opus2, opus1))
-cursor.execute("update %s.param_info as params, %s.forms as forms set params.display_results = true where forms.display_results = 'Y' and params.id = forms.no" % (opus2, opus1))
-cursor.execute("update " + opus2 + ".param_info set form_type = 'RANGE' where form_type = 'None' and name like %s or name like %s" , ('%1', '%2'))
-cursor.execute("update %s.param_info set slug = 'target' where name = 'target_name' and category_name = 'obs_general'" % opus2)
-cursor.execute("update %s.param_info set display = NULL where display = 'N'" % opus2)
-cursor.execute("update %s.param_info set slug = 'planet' where name = 'planet_id'" % opus2)
-cursor.execute("update %s.param_info set slug = 'surfacetarget' where slug = 'target' and category_name = 'obs_surface_geometry'" % opus2)
-cursor.execute("update %s.param_info set form_type = 'TIME' where slug = 'timesec2'" % opus2)
-q = "delete from %s.param_info where slug = 'target'  and category_name like '%s'" % (opus2, 'obs_surface%')
+cursor.execute("update %s.param_info as params, %s.forms as forms set params.display = true where forms.display = 'Y' and params.id = forms.no" % (opus_to_deploy, opus1))
+cursor.execute("update %s.param_info as params, %s.forms as forms set params.display_results = true where forms.display_results = 'Y' and params.id = forms.no" % (opus_to_deploy, opus1))
+cursor.execute("update " + opus_to_deploy + ".param_info set form_type = 'RANGE' where form_type = 'None' and name like %s or name like %s" , ('%1', '%2'))
+cursor.execute("update %s.param_info set slug = 'target' where name = 'target_name' and category_name = 'obs_general'" % opus_to_deploy)
+cursor.execute("update %s.param_info set display = NULL where display = 'N'" % opus_to_deploy)
+cursor.execute("update %s.param_info set slug = 'planet' where name = 'planet_id'" % opus_to_deploy)
+cursor.execute("update %s.param_info set slug = 'surfacetarget' where slug = 'target' and category_name = 'obs_surface_geometry'" % opus_to_deploy)
+cursor.execute("update %s.param_info set form_type = 'TIME' where slug = 'timesec2'" % opus_to_deploy)
+q = "delete from %s.param_info where slug = 'target'  and category_name like '%s'" % (opus_to_deploy, 'obs_surface%')
 cursor.execute(q)
-cursor.execute("update %s.param_info set display = 1 where name = 'primary_file_spec'" % opus2)
+cursor.execute("update %s.param_info set display = 1 where name = 'primary_file_spec'" % opus_to_deploy)
 # update param_info set display_results = 1 where slug = 'time1' or slug = 'time2';
-cursor.execute("update %s.param_info set display_results = 1 where slug = 'time1' or slug = 'time2'" % opus2)
+cursor.execute("update %s.param_info set display_results = 1 where slug = 'time1' or slug = 'time2'" % opus_to_deploy)
 # update param_info set display_results = 1 where slug = 'timesec1' or slug = 'timesec2';
-cursor.execute("update %s.param_info set display_results = 1 where slug = 'timesec1' or slug = 'timesec2';" % opus2)
-cursor.execute("update %s.param_info set form_type = 'STRING' where name = 'primary_file_spec'" % opus2)
-cursor.execute("update %s.param_info set label = label_results, form_type = NULL where category_name = 'obs_general' and name in ('time1','time2');" % opus2)
-cursor.execute("update %s.param_info set category_name = 'obs_general' where name = 'volume_id' " % opus2)
+cursor.execute("update %s.param_info set display_results = 1 where slug = 'timesec1' or slug = 'timesec2';" % opus_to_deploy)
+cursor.execute("update %s.param_info set form_type = 'STRING' where name = 'primary_file_spec'" % opus_to_deploy)
+cursor.execute("update %s.param_info set label = label_results, form_type = NULL where category_name = 'obs_general' and name in ('time1','time2');" % opus_to_deploy)
+cursor.execute("update %s.param_info set category_name = 'obs_general' where name = 'volume_id' " % opus_to_deploy)
 
 
 
@@ -164,7 +164,7 @@ for tbl in obs_tables:
 
     # create the new table
     q_create = "create table %s.%s like %s.%s"
-    q_params = [opus2, tbl, opus1, tbl]
+    q_params = [opus_to_deploy, tbl, opus1, tbl]
     q = q_create % tuple(q_params)  # using % instead of comma here because we are substituting a table name and don't want Django to be adding quotes
     print q
     try:
@@ -178,13 +178,13 @@ for tbl in obs_tables:
 
                     drop database %s;
                     create database %s;
-                """ % (opus2, opus2)
+                """ % (opus_to_deploy, opus_to_deploy)
         sys.exit()
 
 
     # copy the data over from the old table to the new
     q_insert = "insert into %s.%s select %s.* from %s.%s"
-    q_params = [opus2, tbl, tbl, opus1, tbl]
+    q_params = [opus_to_deploy, tbl, tbl, opus1, tbl]
 
     # some tables don't have the volume_id field, so we will join all tables with obs_general to get the volume_id
     if tbl != 'obs_general':
@@ -211,9 +211,9 @@ for tbl in obs_tables:
         field_name = 'id'
 
     # obs_general_no is the PK or Foreign Key for all tables, change its name to field_name
-    alter_query = "alter table %s.%s change obs_general_no %s mediumint(8) unsigned not null" % (opus2, tbl, field_name)
+    alter_query = "alter table %s.%s change obs_general_no %s mediumint(8) unsigned not null" % (opus_to_deploy, tbl, field_name)
     if tbl == 'obs_general':
-        alter_query = "alter table %s.%s change obs_general_no %s mediumint(8) unsigned not null auto_increment " % (opus2, tbl, field_name)
+        alter_query = "alter table %s.%s change obs_general_no %s mediumint(8) unsigned not null auto_increment " % (opus_to_deploy, tbl, field_name)
     try:
         print alter_query
         cursor.execute(alter_query)
@@ -228,7 +228,7 @@ for tbl in obs_tables:
         unique = True
     """
     try:
-        cursor.execute("drop index `PRIMARY` on %s.%s" % (opus2, tbl))  # drop the primary index so we can change this field
+        cursor.execute("drop index `PRIMARY` on %s.%s" % (opus_to_deploy, tbl))  # drop the primary index so we can change this field
     except DatabaseError:
         pass  # some tables don't have this index
 
@@ -237,36 +237,36 @@ for tbl in obs_tables:
     #    if tbl not in ['obs_movies'] and tbl.find('obs_surface') == -1:
     #        # something..
     if tbl != 'obs_general':
-        alter_query = "alter table %s.%s add column id mediumint(8) unsigned not null auto_increment primary key" % (opus2, tbl)
+        alter_query = "alter table %s.%s add column id mediumint(8) unsigned not null auto_increment primary key" % (opus_to_deploy, tbl)
         print alter_query
         cursor.execute(alter_query)
 
     # and add the key for obs_general_no field
     if tbl != 'obs_general':
         if tbl not in ['obs_movies'] and tbl.find('obs_surface') == -1:
-            alter_query = "alter table %s.%s add unique key (obs_general_id)" % (opus2, tbl)
+            alter_query = "alter table %s.%s add unique key (obs_general_id)" % (opus_to_deploy, tbl)
             print alter_query
             cursor.execute(alter_query)
 
 # done looping through obs tables
 
 # ------------ Now update all the rings_obs_ids in all the created tables ------------#
-# opus2 has a different style of ring_obs_ids than opus1 - underscores replace slashes
+# opus_to_deploy has a different style of ring_obs_ids than opus1 - underscores replace slashes
 
 # first add the column to obs_general to preserve an association with the old opus ring_obs_id
-cursor.execute("alter table %s.obs_general add column opus1_ring_obs_id char(40);" % opus2)
-cursor.execute("update %s.obs_general set opus1_ring_obs_id = ring_obs_id" % opus2)
+cursor.execute("alter table %s.obs_general add column opus1_ring_obs_id char(40);" % opus_to_deploy)
+cursor.execute("update %s.obs_general set opus1_ring_obs_id = ring_obs_id" % opus_to_deploy)
 
 # and do the ring_obs_id converting
 for tbl in obs_tables:
     print tbl
-    cursor.execute("select ring_obs_id from %s.%s" % (opus2, tbl))
+    cursor.execute("select ring_obs_id from %s.%s" % (opus_to_deploy, tbl))
     all_rows = cursor.fetchall()
     for row in all_rows:
         ring_obs_id = row[0]
         new_ring_obs_id = '_'.join(ring_obs_id.strip().split('/'))
         new_ring_obs_id = ''.join(new_ring_obs_id.split('.'))
-        q_up = "update %s.%s set ring_obs_id = '%s' where ring_obs_id = '%s'" % (opus2, tbl, new_ring_obs_id, ring_obs_id)
+        q_up = "update %s.%s set ring_obs_id = '%s' where ring_obs_id = '%s'" % (opus_to_deploy, tbl, new_ring_obs_id, ring_obs_id)
         print q_up
         cursor.execute(q_up)
 
@@ -289,31 +289,31 @@ for tbl in mult_tables:
 
     # create the mult table
     q_create = "create table %s.%s like %s.%s"
-    q_params = [opus2, tbl, opus1, tbl]
+    q_params = [opus_to_deploy, tbl, opus1, tbl]
     cursor.execute(q_create % tuple(q_params))  # using % over comma here because we are substituting a table name and don't want Django to be adding quotes
 
     # handle the changing of the key and field from 'no' to 'id' for Django happyness
 
     try:
-        cursor.execute("alter table %s.%s add unique index(no)" % (opus2, tbl))  # placeholder index, with auto_increment won't let you drop primary, must have some unique key
+        cursor.execute("alter table %s.%s add unique index(no)" % (opus_to_deploy, tbl))  # placeholder index, with auto_increment won't let you drop primary, must have some unique key
     except Warning:
         pass  # upgrade probs, query executed ok
 
-    cursor.execute("drop index `PRIMARY` on %s.%s" % (opus2, tbl))  # drop the primary index so we can cange this field
+    cursor.execute("drop index `PRIMARY` on %s.%s" % (opus_to_deploy, tbl))  # drop the primary index so we can cange this field
 
     try:
-        cursor.execute("alter table %s.%s change no id int(3) unsigned not null auto_increment primary key;" % (opus2, tbl))  # change the field, adding the primary key
+        cursor.execute("alter table %s.%s change no id int(3) unsigned not null auto_increment primary key;" % (opus_to_deploy, tbl))  # change the field, adding the primary key
     except Warning:
         pass  # upgrade probs, query executed ok
 
-    cursor.execute("drop index no on %s.%s" % (opus2, tbl))  # drop the placeholder index
+    cursor.execute("drop index no on %s.%s" % (opus_to_deploy, tbl))  # drop the placeholder index
 
     # copy over the data from old mult table to new
     q_insert = "insert into %s.%s select %s.* from %s.%s"
-    q_params = [opus2, tbl, tbl, opus1, tbl]  # tbl is the mult table
+    q_params = [opus_to_deploy, tbl, tbl, opus1, tbl]  # tbl is the mult table
     cursor.execute(q_insert % tuple(q_params))
 
-cursor.execute("create view %s.grouping_target_name as select * from %s.mult_obs_general_planet_id" % (opus2, opus2))
+cursor.execute("create view %s.grouping_target_name as select * from %s.mult_obs_general_planet_id" % (opus_to_deploy, opus_to_deploy))
 
 
 
@@ -351,81 +351,81 @@ insert into %s.django_site select * from opus_hack.django_site;
 
 for q in queries.strip().split(';'):
     if not q.strip(): continue  # skip blank lines
-    print q % opus2
-    cursor.execute(q % opus2)
+    print q % opus_to_deploy
+    cursor.execute(q % opus_to_deploy)
 
 print "OK"
 
 # ----------- restore the files table -------------#
-cursor.execute("create table %s.files like %s.files" % (opus2, opus1))
-q = "insert into %s.files select * from %s.files " % (opus2, opus1)
+cursor.execute("create table %s.files like %s.files" % (opus_to_deploy, opus1))
+q = "insert into %s.files select * from %s.files " % (opus_to_deploy, opus1)
 if volumes:
     q += "where %s.files.volume_id in (%s)" % (opus1, volumes_str)
 cursor.execute(q)
-cursor.execute("alter table %s.files change column no id int(7) not null" % (opus2))
+cursor.execute("alter table %s.files change column no id int(7) not null" % (opus_to_deploy))
 # and take care of the ring_obs_id transform
-cursor.execute("update %s.files t,%s.obs_general o set t.ring_obs_id = o.ring_obs_id where t.ring_obs_id = o.opus1_ring_obs_id" % (opus2, opus2))
+cursor.execute("update %s.files t,%s.obs_general o set t.ring_obs_id = o.ring_obs_id where t.ring_obs_id = o.opus1_ring_obs_id" % (opus_to_deploy, opus_to_deploy))
 
-cursor.execute("alter table %s.files add column mission_id char(2) not null" % (opus2))
-cursor.execute("select distinct instrument_id from %s.files" % opus2)
+cursor.execute("alter table %s.files add column mission_id char(2) not null" % (opus_to_deploy))
+cursor.execute("select distinct instrument_id from %s.files" % opus_to_deploy)
 all_inst_ids = [row[0] for row in cursor.fetchall() if row[0]]
 for instrument_id in all_inst_ids:
     mission_id = 'NH' if instrument_id.strip() == 'LORRI' else instrument_id[0:2]
-    cursor.execute("update %s.files set mission_id = '%s' where instrument_id = '%s'" % (opus2, mission_id, instrument_id))
+    cursor.execute("update %s.files set mission_id = '%s' where instrument_id = '%s'" % (opus_to_deploy, mission_id, instrument_id))
 
 
 
 # ----------- restore table_names  -------------#
-cursor.execute("create table %s.table_names like %s.table_names" % (opus2, opus1))
-cursor.execute("insert into %s.table_names select * from %s.table_names" % (opus2, opus1))
-cursor.execute("alter table %s.table_names change column no id int(9) not null auto_increment" % (opus2))
-cursor.execute("alter table %s.table_names change column rings display char(1) default 'Y'" % (opus2))
-cursor.execute("alter table %s.table_names change column div_title label char(60)" % (opus2))
-cursor.execute("alter table %s.table_names add column mission_id char(2)" % opus2)
-cursor.execute("update %s.table_names set mission_id = 'CO' where table_name = 'obs_mission_cassini'" % opus2)
-cursor.execute("update %s.table_names set mission_id = 'GO' where table_name = 'obs_mission_galileo'" % opus2)
-cursor.execute("update %s.table_names set mission_id = 'NH' where table_name = 'obs_mission_new_horizons'" % opus2)
-cursor.execute("update %s.table_names set mission_id = 'VG' where table_name = 'obs_mission_voyager'" % opus2)
+cursor.execute("create table %s.table_names like %s.table_names" % (opus_to_deploy, opus1))
+cursor.execute("insert into %s.table_names select * from %s.table_names" % (opus_to_deploy, opus1))
+cursor.execute("alter table %s.table_names change column no id int(9) not null auto_increment" % (opus_to_deploy))
+cursor.execute("alter table %s.table_names change column rings display char(1) default 'Y'" % (opus_to_deploy))
+cursor.execute("alter table %s.table_names change column div_title label char(60)" % (opus_to_deploy))
+cursor.execute("alter table %s.table_names add column mission_id char(2)" % opus_to_deploy)
+cursor.execute("update %s.table_names set mission_id = 'CO' where table_name = 'obs_mission_cassini'" % opus_to_deploy)
+cursor.execute("update %s.table_names set mission_id = 'GO' where table_name = 'obs_mission_galileo'" % opus_to_deploy)
+cursor.execute("update %s.table_names set mission_id = 'NH' where table_name = 'obs_mission_new_horizons'" % opus_to_deploy)
+cursor.execute("update %s.table_names set mission_id = 'VG' where table_name = 'obs_mission_voyager'" % opus_to_deploy)
 
 # ----------- restore file_sizes  -------------#
-cursor.execute("create table %s.file_sizes like %s.file_sizes" % (opus2, opus1))
-q = "replace into %s.file_sizes select * from %s.file_sizes " % (opus2, opus1)
+cursor.execute("create table %s.file_sizes like %s.file_sizes" % (opus_to_deploy, opus1))
+q = "replace into %s.file_sizes select * from %s.file_sizes " % (opus_to_deploy, opus1)
 if volumes_str:
     q = q + " where %s.file_sizes.volume_id IN (%s)" % (opus1, volumes_str)
 cursor.execute(q)
-cursor.execute("alter table %s.file_sizes add column id int(9) not null auto_increment primary key" % (opus2))
-cursor.execute("update %s.file_sizes t,%s.obs_general o set t.ring_obs_id = o.ring_obs_id where t.ring_obs_id = o.opus1_ring_obs_id" % (opus2, opus2))
+cursor.execute("alter table %s.file_sizes add column id int(9) not null auto_increment primary key" % (opus_to_deploy))
+cursor.execute("update %s.file_sizes t,%s.obs_general o set t.ring_obs_id = o.ring_obs_id where t.ring_obs_id = o.opus1_ring_obs_id" % (opus_to_deploy, opus_to_deploy))
 
 # ----------- restore files_not_found -------------#
-q = "create table %s.files_not_found select * from %s.files_not_found" % (opus2, opus1)
+q = "create table %s.files_not_found select * from %s.files_not_found" % (opus_to_deploy, opus1)
 if volumes_str:
     q = q + " where %s.files_not_found.volume_id IN (%s)" % (opus1, volumes_str)
 cursor.execute(q)
-cursor.execute("alter table %s.files_not_found add column id int(8) not null auto_increment primary key" % (opus2))
-cursor.execute("alter table %s.files_not_found add unique key (name)" % (opus2))
-cursor.execute("alter table %s.files_not_found add key (ring_obs_id)" % (opus2))
-cursor.execute("update %s.files_not_found t,%s.obs_general o set t.ring_obs_id = o.ring_obs_id where t.ring_obs_id = o.opus1_ring_obs_id" % (opus2, opus2))
+cursor.execute("alter table %s.files_not_found add column id int(8) not null auto_increment primary key" % (opus_to_deploy))
+cursor.execute("alter table %s.files_not_found add unique key (name)" % (opus_to_deploy))
+cursor.execute("alter table %s.files_not_found add key (ring_obs_id)" % (opus_to_deploy))
+cursor.execute("update %s.files_not_found t,%s.obs_general o set t.ring_obs_id = o.ring_obs_id where t.ring_obs_id = o.opus1_ring_obs_id" % (opus_to_deploy, opus_to_deploy))
 
 
 # ----------- restore images -------------#
 # first make sure that old db has volume_id in images table
 cursor.execute("update %s.images as i, %s.obs_general as g set i.volume_id = g.volume_id where i.ring_obs_id = g.ring_obs_id" % (opus1, opus1))
-q = "create table %s.images select * from %s.images" % (opus2, opus1)
+q = "create table %s.images select * from %s.images" % (opus_to_deploy, opus1)
 if volumes:
     q = q + " where %s.images.volume_id in (%s)" % (opus1, volumes_str)
 cursor.execute(q)
-cursor.execute("alter table %s.images add column id bigint not null auto_increment primary key" % (opus2))
-cursor.execute("alter table %s.images add unique key (ring_obs_id)" % (opus2))
-cursor.execute("alter table %s.images add key (ring_obs_id)" % (opus2))
-cursor.execute("update %s.images t,%s.obs_general o set t.ring_obs_id = o.ring_obs_id where t.ring_obs_id = o.opus1_ring_obs_id" % (opus2, opus2))
+cursor.execute("alter table %s.images add column id bigint not null auto_increment primary key" % (opus_to_deploy))
+cursor.execute("alter table %s.images add unique key (ring_obs_id)" % (opus_to_deploy))
+cursor.execute("alter table %s.images add key (ring_obs_id)" % (opus_to_deploy))
+cursor.execute("update %s.images t,%s.obs_general o set t.ring_obs_id = o.ring_obs_id where t.ring_obs_id = o.opus1_ring_obs_id" % (opus_to_deploy, opus_to_deploy))
 
 
 # ----------- restore colls_test_key -------------#
-cursor.execute("create table %s.colls_test_key like opus_hack.colls_test_key;" % (opus2))
+cursor.execute("create table %s.colls_test_key like opus_hack.colls_test_key;" % (opus_to_deploy))
 
 
 # ------------ cleanup ------------ #
 reset_queries() # flushes any waiting queries
 cursor.execute("SET foreign_key_checks = 1")
 
-print("build of %s 2 database is complete. Bye!" % opus2);
+print("build of %s 2 database is complete. Bye!" % opus_to_deploy);
