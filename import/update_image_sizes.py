@@ -33,20 +33,26 @@ for row in cursor.fetchall():
     all_img_sizes = {'size_thumb': 0, 'size_small': 0, 'size_med': 0, 'size_full': 0}
 
     for size_name, img_path in all_img_paths.items():
-        full_path = IMAGE_PATH + get_base_path_previews(ring_obs_id) + img_path
+
+        try:
+            full_path = IMAGE_PATH + get_base_path_previews(ring_obs_id) + img_path
+        except TypeError:
+            print("Error: get_base_path previews returned None for %s" % ring_obs_id)
+            continue
 
         try:
             size = getsize(full_path)
 
         except OSError:
             print("Error: Could not find file %s" % full_path)
+            continue
 
         all_img_sizes['size_' + size_name] = size
 
     # now we have all the sizes for this row, update the database
     sql_snippet = ', '.join(["%s = %i" % (size_name, img_size) for size_name, img_size in all_img_sizes.items()])
-    sql_up = "update_images set %s where ring_obs_id = '%s' " % (sql_snippet, ring_obs_id)
+    sql_up = "update images set %s where ring_obs_id = '%s' " % (sql_snippet, ring_obs_id)
     print(sql_up)
-    # cursor.execute(sql_up)
+    cursor.execute(sql_up)
 
 print("OK BYE! ")
