@@ -163,7 +163,7 @@ def get_metadata(request, ring_obs_id, fmt):
     all_info = {}  # holds all the param info objects
 
     # find all the tables (categories) this observation belongs to,
-    all_tables = TableName.objects.filter(display='Y')
+    all_tables = TableName.objects.filter(display='Y').order_by('disp_order')
 
     # now find all params and their values in each of these tables:
     for table in all_tables:
@@ -177,8 +177,9 @@ def get_metadata(request, ring_obs_id, fmt):
             log.error("could not find data model for category %s " % model_name)
             continue
 
-        all_slugs = [param.slug for param in ParamInfo.objects.filter(category_name=table_name, display_results=1)]
-        all_params = [param.name for param in ParamInfo.objects.filter(category_name=table_name, display_results=1)]
+        all_slugs = [param.slug for param in ParamInfo.objects.filter(category_name=table_name, display_results=1).order_by('disp_order')]
+        all_params = [param.name for param in ParamInfo.objects.filter(category_name=table_name, display_results=1).order_by('disp_order')]
+
         for k, slug in enumerate(all_slugs):
             param_info = get_param_info_by_slug(slug)
             name = param_info.name
@@ -187,7 +188,14 @@ def get_metadata(request, ring_obs_id, fmt):
         if all_params:
             try:
                 results = table_model.objects.filter(ring_obs_id=ring_obs_id).values(*all_params)[0]
-                data[table_label] = results
+
+                # results is an ordinary dict so here to make sure we have the correct ordering:
+                ordered_results = SortedDict({})
+                for param in all_params:
+                    ordered_results[param] = results[param]
+
+                data[table_label] = ordered_results
+
             except AttributeError: pass  # no results found in this table, move along
             except IndexError: pass  # no results found in this table, move along
             except FieldError:
