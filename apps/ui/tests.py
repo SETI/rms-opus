@@ -58,6 +58,26 @@ class UITests(TestCase):
         self.assertGreater(len(response.content), 2000)
         self.assertEqual(str(response.content).strip().find('<div class="row'), 0 )
 
+    def test__pluto_has_grouping_in_general_target_name(self):
+        fields = [f.value for f in MultObsGeneralTargetName.objects.filter(grouping='OTHER')]
+        print """
+            if this fails you need to:
+
+                update mult_obs_general_target_name set planet_group = 'PLU' where value = 'PLUTO';
+
+            """
+        self.assertNotIn('PLUTO', fields)
+
+    def test__pluto_has_grouping_in_surface_target_name(self):
+        fields = [f.value for f in MultObsSurfaceGeometryTargetName.objects.filter(grouping='OTHER')]
+        print """
+            if this fails you need to:
+
+                update mult_obs_surface_geometry_target_name set grouping = 'PLU' where value = 'PLUTO';
+
+            """
+        self.assertNotIn('PLUTO', fields)
+
     """
     def test__getMenu(self):
         self.assertEqual(True, False)
