@@ -17,6 +17,10 @@ or a smaller version:
 
 	sudo -b nohup python import/update_image_sizes.py > ~/img.log
 
+	# you may need:
+
+	select count(*) from images where size_thumb is null or size_thumb = 0 or size_small is null or size_small = 0 or size_med is null or size_med = 0 or size_full is null or size_full = 0 ;
+
 
 3. Look at the preview image errors
 
