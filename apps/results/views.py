@@ -130,6 +130,7 @@ def get_metadata_by_slugs(request, ring_obs_id, slugs, fmt):
     for table_name, param_list in params_by_table.items():
         model_name = ''.join(table_name.title().split('_'))
         table_model = apps.get_model('search', model_name)
+        # are not ring_obs_id unique in all obs tables so why is this not a .get query
         results = table_model.objects.filter(ring_obs_id=ring_obs_id).values(*param_list)[0]
         for param,value in results.items():
             data.append({param: value})
@@ -147,6 +148,24 @@ def get_metadata(request, ring_obs_id, fmt):
     results for a single observation
     all the data, in categories
 
+    pass cols to narrow by particular fields
+    pass cat to list value of all fields in named category(s)
+
+    accepts 'cols' as a GET var which is a list of columns by slug
+    however the response does not return field names as slugs but as field name
+    so this is strange
+    TODO:
+        make it return cols by slug as field name if cols are slugs (no underscores)
+        if cols does has underscores make it return field names as column name
+        (this is a fix for backward compatablility )
+
+        and om make 'field' an alias for 'cols' plz omg what is 'cols' even
+
+        if cat is passed returns all in the named category(s) and ignores cols
+
+        you will have to add a column to table_names "slug" to get a
+        url-worthy representation of the category name
+        
     """
     update_metrics(request)
 
@@ -176,6 +195,7 @@ def get_metadata(request, ring_obs_id, fmt):
         except LookupError:
             log.error("could not find data model for category %s " % model_name)
             continue
+
 
         all_slugs = [param.slug for param in ParamInfo.objects.filter(category_name=table_name, display_results=1).order_by('disp_order')]
         all_params = [param.name for param in ParamInfo.objects.filter(category_name=table_name, display_results=1).order_by('disp_order')]
