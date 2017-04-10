@@ -64,6 +64,7 @@ class UITests(TestCase):
             if this fails you need to:
 
                 update mult_obs_general_target_name set planet_group = 'PLU' where value = 'PLUTO';
+                update mult_obs_surface_geometry_target_name set grouping = 'PLU' where value = 'PLUTO';
 
             """
         self.assertNotIn('PLUTO', fields)
@@ -73,6 +74,7 @@ class UITests(TestCase):
         print """
             if this fails you need to:
 
+                update mult_obs_general_target_name set planet_group = 'PLU' where value = 'PLUTO';
                 update mult_obs_surface_geometry_target_name set grouping = 'PLU' where value = 'PLUTO';
 
             """
