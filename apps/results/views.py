@@ -165,7 +165,7 @@ def get_metadata(request, ring_obs_id, fmt):
 
         you will have to add a column to table_names "slug" to get a
         url-worthy representation of the category name
-        
+
     """
     update_metrics(request)
 
@@ -254,8 +254,9 @@ def get_triggered_tables(selections, extras = {}):
     # remove the geometry tab from the triggered tables
 
     # instruments with no surface geo metadata:
+    # partables
     fields_to_check = ['obs_general.instrument_id','obs_general.inst_host_id','obs_general.mission_id']
-    no_metadata = ['Hubble','CIRS','Galileo','Voyager']
+    no_metadata = ['Hubble','CIRS','Galileo']
     for field in fields_to_check:
         if field not in selections:
             continue
