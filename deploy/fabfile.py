@@ -102,4 +102,3 @@ def tests_prod():
         # where every Client() request.get returns a 404, unless you load it in a browser
         # first, then it runs ok, so something is awry in production testing.. todo
         run('sudo python manage.py test apps -x')
-        # run('sudo REUSE_DB=1 python manage.py test search downloads paraminfo')
