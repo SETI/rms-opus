@@ -66,6 +66,31 @@ class resultsTests(TestCase):
             print q
             cursor.execute(q)
 
+    def test__images_has_all_volumes(self):
+        img_vols = Image.objects.all().values_list('volume_id', flat=True)
+        all_vols = ObsGeneral.objects.all().values_list('volume_id',flat=True)
+        print """if this fails there are volumes in obs_general
+               that do not appear in images
+
+               select distinct volume_id from obs_general
+               where volume_id not in (select distinct volume_id from images);
+
+               """
+        self.assertEqual(set([]), set(all_vols) - set(img_vols))
+
+    def test__files_has_all_volumes(self):
+        file_vols = Files.objects.all().values_list('volume_id', flat=True)
+        all_vols = ObsGeneral.objects.all().values_list('volume_id',flat=True)
+        print """if this fails there are volumes in obs_general
+               that do not appear in files
+
+               select distinct volume_id from obs_general
+               where volume_id not in (select distinct volume_id from files);
+
+
+               """
+        self.assertEqual(set([]), set(all_vols) - set(file_vols))
+
     def test__get_base_path_previews(self):
         ring_obs_id = 'S_SPEC_CO_CIRS_1633035651_FP4'
         preview = get_base_path_previews(ring_obs_id)
