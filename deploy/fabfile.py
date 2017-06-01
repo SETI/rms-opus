@@ -6,6 +6,7 @@ env.hosts = ['pds-rings-tools.seti.org']
 
 prod_deploy_dir = 'opus'
 # prod_deploy_dir = 'opus_dev'
+# git_branch = 'bulk_add'
 git_branch = 'master'
 git_revision = ''
 memcached_port = '11211'
@@ -22,7 +23,7 @@ def tests_local():
     runs all unit tests locally
     """
     with lcd(root_path + '/projects/opus/'):
-        local("REUSE_DB=1 python manage.py test apps")
+        local("REUSE_DB=1 python manage.py test apps -x")
 
 def push():
     """
@@ -100,5 +101,4 @@ def tests_prod():
         # this only runs a few app's test suites because the others have problems
         # where every Client() request.get returns a 404, unless you load it in a browser
         # first, then it runs ok, so something is awry in production testing.. todo
-        run('sudo python manage.py test apps')
-        # run('sudo REUSE_DB=1 python manage.py test search downloads paraminfo')
+        run('sudo python manage.py test apps -x')

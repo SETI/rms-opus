@@ -2,7 +2,7 @@
 
 1. Change the settings_local.py at the top "import settings" which databases to read from and build, then:
 
-	sudo -b nohup python import/build_db.py all > ~/import.log.txt
+		sudo -b nohup python import/build_db.py all > ~/import.log.txt
 
 	# follow it:
 
@@ -15,7 +15,11 @@ or a smaller version:
 
 2. Update the Image sizes
 
-	sudo python import/update_image_sizes.py > ~/img.log
+	sudo -b nohup python import/update_image_sizes.py > ~/img.log
+
+	# you may need:
+
+	select count(*) from images where size_thumb is null or size_thumb = 0 or size_small is null or size_small = 0 or size_med is null or size_med = 0 or size_full is null or size_full = 0 ;
 
 
 3. Look at the preview image errors
@@ -23,28 +27,38 @@ or a smaller version:
 	grep 'Error' ~/img.log | wc -l
 
 
+5. run the tests on production
+
+	 cd deploy
+	 fab tests_prod
+
+
 4. Dump the database to save it:
 
 	cd ~/dumps/dump_and_sms/
 	fab  dump_and_sms
 
-5. Change the DATABASES NAME in settings_local.py
 
-6. Refresh the caches as you would in a [deploy](../deploy/README.md)
+6. Change the DATABASES NAME in settings_local.py
+
+
+7. Refresh the caches as you would in a [deploy](../deploy/README.md)
 
     cd deploy
     fab cache_reboot
 
 
-7. The release is now public! (Yes we have no development server) Manually make sure your most recent blog post links are still working.. (todo: script this!)
+8. The release is now public! (Yes we have no development server) Manually make sure your most recent blog post links are still working.. (todo: script this!)
 
     open http://ringsnodesearchtool.blogspot.com/
 
-8. Run the in-browser selenium tests
+
+9. Run the in-browser selenium tests
 
 	they are in Firefox->tools
 
-9. Run the selenium tests:
+
+10. Run the selenium tests:
 
     In the local repo:
 
@@ -52,7 +66,8 @@ or a smaller version:
         source venv/bin/activate
         python api_tests.py
 
-10. Do a blog post!
+
+11. Do a blog post!
 
 	open http://ringsnodesearchtool.blogspot.com/
 

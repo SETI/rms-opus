@@ -1,10 +1,11 @@
+import settings
+from collections import OrderedDict
+from django.apps import apps
 from django import forms
 from metadata.views import *
 from search.views import get_param_info_by_slug
-from django.apps import apps
 from paraminfo.models import *
 from tools.app_utils import *
-import settings
 
 import logging
 log = logging.getLogger(__name__)
@@ -139,6 +140,15 @@ class SearchForm(forms.Form):
                         choices = choices,
                         widget = forms.CheckboxSelectMultiple(attrs={'class':'multichoice'}),
                         required=False)
+
+        # hack to get range fields into the right orde since after Django 1.7 this is deprecated:
+        # self.fields.keyOrder = [slug_no_num+'1', slug_no_num+'2', 'qtype-'+slug_no_num]  # makes sure min is first! boo ya!
+        if form_type in settings.RANGE_FIELDS:
+            my_fields = self.fields
+            self.fields = OrderedDict()
+            self.fields[slug_no_num+'1'] = my_fields[slug_no_num+'1']
+            self.fields[slug_no_num+'2'] = my_fields[slug_no_num+'2']
+            self.fields['qtype-'+slug_no_num] = my_fields['qtype-'+slug_no_num]
 
 
 """

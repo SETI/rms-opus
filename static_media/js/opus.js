@@ -142,7 +142,7 @@ var opus = {
     // Vars
     // default vars are found in the menu.html template
     // and declared in ui.views.defaults
-    spinner: '<img border = "0" src = "' + static_url + 'images/spinner_12px.gif">',
+    spinner: '<img border = "0" src = "' + static_url + 'img/spinner_12px.gif">',
 
     // avoiding race conditions in ajax calls
     lastRequestNo: 0,          // holds request numbers for main result count loop,
