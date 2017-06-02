@@ -46,6 +46,31 @@ def get_csv(request, fmt=None):
         wr.writerows(all_data[2])
         return response
 
+
+def get_categories(request):
+    """ returns list of categories (table_names) and labels in display order """
+    if request and request.GET:
+        try:
+            (selections,extras) = urlToSearchParams(request.GET)
+        except TypeError:
+            selections = None
+    else:
+        selections = None
+
+    if not selections:
+        triggered_tables = settings.BASE_TABLES
+    else:
+        triggered_tables = get_triggered_tables(selections, extras)
+
+    # the main geometry table, obs_surface_geometry, is not table that holds results data
+    # it is only there for selecting targets, which then trigger the other geometry tables.
+    # so in the context of returning list of categories it gets removed..
+    triggered_tables.remove('obs_surface_geometry')
+
+    labels = TableName.objects.filter(table_name__in=triggered_tables).values('table_name','label').order_by('disp_order')
+    return HttpResponse(json.dumps([ob for ob in labels]), content_type="application/json")
+
+
 def getData(request,fmt):
     update_metrics(request)
     """
@@ -182,11 +207,20 @@ def get_metadata(request, ring_obs_id, fmt):
     except AttributeError:
         pass  # no request was sent
 
+    try:
+        cats = request.GET.get('cats',False)
+    except AttributeError:
+        cats = False  # no request was send, legacy requirement?
+
     data = SortedDict({})  # will hold data struct to be returned
     all_info = {}  # holds all the param info objects
 
     # find all the tables (categories) this observation belongs to,
-    all_tables = TableName.objects.filter(display='Y').order_by('disp_order')
+    if not cats:
+        all_tables = TableName.objects.filter(display='Y').order_by('disp_order')
+    else:
+        # restrict table to those found in cats
+        all_tables = TableName.objects.filter(table_name__in=cats.split(','), display='Y').order_by('disp_order')
 
     # now find all params and their values in each of these tables:
     for table in all_tables:
@@ -199,7 +233,6 @@ def get_metadata(request, ring_obs_id, fmt):
         except LookupError:
             log.error("could not find data model for category %s " % model_name)
             continue
-
 
         all_slugs = [param.slug for param in ParamInfo.objects.filter(category_name=table_name, display_results=1).order_by('disp_order')]
         all_params = [param.name for param in ParamInfo.objects.filter(category_name=table_name, display_results=1).order_by('disp_order')]
