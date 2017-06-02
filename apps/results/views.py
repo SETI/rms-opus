@@ -63,6 +63,8 @@ def getData(request,fmt):
     slugs = request.GET.get('cols',settings.DEFAULT_COLUMNS)
     if not slugs: slugs = settings.DEFAULT_COLUMNS
 
+    is_column_chooser = request.GET.get('col_chooser', False)
+
     labels = []
     id_index = 0
 
@@ -75,7 +77,9 @@ def getData(request,fmt):
             # this slug doens't match anything in param info, nix it
             log.error('could not find param_info for ' + slug)
             continue
-    labels = labels.insert(0, "add") if (request.is_ajax()) else labels  # adds a column for checkbox add-to-collections
+
+    if is_column_chooser:
+        labels.insert(0, "add")   # adds a column for checkbox add-to-collections
 
     collection = ''
     if request.is_ajax():
@@ -83,7 +87,7 @@ def getData(request,fmt):
         # for pre-filling checkboxes
         collection = get_collection_in_page(page, session_id)
 
-    data = {'page_no':page_no, 'limit':limit, 'page':page, 'count':len(page)}
+    data = {'page_no':page_no, 'limit':limit, 'page':page, 'count':len(page), 'labels': labels}
 
     if fmt == 'raw':
         return data

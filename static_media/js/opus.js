@@ -151,6 +151,7 @@ var opus = {
     download_in_process: false,
 
     // client side prefs, changes to these *do not trigger results to refresh*
+    // prefs gets added verbatim to the url, so don't add anything weird into here!
     prefs:{ 'view':'', // search, browse, collection, detail
             'browse':'gallery', //either 'gallery' or 'data', see all_browse_views below
             'colls_browse':'gallery',  // which view is showing on the collections page, gallery or data
@@ -167,6 +168,10 @@ var opus = {
             'detail':'', // ring_obs_id of detail page content
 
      }, // pref changes do not trigger load()
+
+    col_labels: [],  // may be empty, contains labels that match prefs.cols
+                      // it's outside of prefs becuase those are things loaded into urls
+                      // this is not
 
     gallery_data: {},  // holds gallery column data
     all_browse_views: ['gallery','data'],
@@ -232,29 +237,34 @@ var opus = {
 
     //------------------------------------------------------------------------------------//
 
-
     load: function () {
         selections = o_hash.getSelectionsFromHash();
 
         if (!selections) {
-
+            // there are no selections found in the url hash
             if (!jQuery.isEmptyObject(opus.last_selections)) {
-                  opus.last_selections = {};
-                  o_browse.resetQuery();
+                // last selections is also empty
+                opus.last_selections = {};
+                o_browse.resetQuery();
             }
         }
 
-        // if selections different from last_selections
         if (o_utils.areObjectsEqual(selections, opus.last_selections))  {
-            // selections have not changed
+            // selections have not changed from opus.last_selections
             if (!opus.force_load) { // so we do only non-reloading pref changes
                 return;
             }
             opus.force_load = false;
 
         } else {
-                opus.prefs.page = {"gallery":1, "data":1, "colls_gallery":1, "colls_data":1 };
+            // selections in the url hash is different from opus.last_selections
+              // reset the pages:
+              opus.prefs.page = {"gallery":1, "data":1, "colls_gallery":1, "colls_data":1 };
+
+              // if last_selections exists then also reset the query:
+              if (!jQuery.isEmptyObject(opus.last_selections)) {
                 o_browse.resetQuery();
+              }
         }
 
 

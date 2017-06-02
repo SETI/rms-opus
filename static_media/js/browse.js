@@ -499,6 +499,7 @@ var o_browse = {
         $('.column_chooser').off("click",'.chosen_column_close');
 
         $('.column_chooser').on("click", '.submenu li a', function() {
+
             slug = $(this).data('slug');
 
             if (!slug) {
@@ -509,7 +510,6 @@ var o_browse = {
             def = $(this).find('i.fa-info-circle').attr("title");
             cols = opus.prefs['cols'];
             checkmark = $(this).find('i').first();
-
 
             if (!checkmark.is(":visible")) {
 
@@ -544,7 +544,6 @@ var o_browse = {
                 o_browse.updatePage();
             } else {
                 o_hash.updateHash();
-
                 // refetch the browse data since that data has changed
                 view_info = o_browse.getViewInfo();
                 prefix = view_info['prefix'];       // either 'colls_' or ''
@@ -552,9 +551,7 @@ var o_browse = {
                 for (var i in pages) {
                     o_browse.getBrowseData(pages[i]);
                 }
-
             }
-
             return false;
         });
 
@@ -826,7 +823,6 @@ var o_browse = {
 
         }
 
-
         var base_url = "/opus/api/images/small.html?alt_size=full&";
         if (opus.prefs[prefix + 'browse'] == 'data') {
             base_url = '/opus/api/data.html?';
@@ -960,6 +956,7 @@ var o_browse = {
                 // turn the scroll watch timer back on
                 clearInterval(opus.scroll_watch_interval);  // always shut off just before, just in case
                 opus.scroll_watch_interval = setInterval(o_browse.browseScrollWatch, 1000);
+
             }
 
         });
@@ -998,16 +995,20 @@ var o_browse = {
         }
 
         new_hash = new_hash.join('&');
-
-
-
         $.getJSON(base_url + new_hash, function(json) {
             // assign to data object
             var updated_ids = [];
+
             for (var i in json.page) {
                 ring_obs_id = json.page[i][columns.indexOf('ringobsid')];
                 updated_ids.push(ring_obs_id);
                 opus.gallery_data[ring_obs_id] = json.page[i];
+            }
+
+            // this endpoint also returns column labels:
+            opus.col_labels = [];
+            for (var i in json['columns']) {
+              opus.col_labels.push(json['columns'][i]);
             }
 
             // update any currently rendered metadata box
@@ -1131,9 +1132,10 @@ var o_browse = {
         // list columns + values
         html = '<dl>';
         for (var i in opus.prefs['cols']) {
-            column = opus.prefs['cols'][i];
+            column = opus.col_labels[i];  // use the label not the column title
             value = opus.gallery_data[ring_obs_id][i];
             html += '<dt>' + column + ':</dt><dd>' + value + '</dd>';
+
         }
         html += '</dl>';
 
@@ -1396,21 +1398,18 @@ var o_browse = {
             });
 
 
-            url = '/opus/forms/column_chooser.html?' + o_hash.getHash();
+            url = '/opus/forms/column_chooser.html?' + o_hash.getHash() + '&col_chooser=1';
             $('.column_chooser').load( url, function(response, status, xhr)  {
 
-               opus.column_chooser_drawn=true;  // this gets saved not redrawn
+               opus.column_chooser_drawn=true;  // bc this gets saved not redrawn
 
+               // we keep these all open in the column chooser, they are all closed by default
                // disply check next to any default columns
                 for (var key in opus.prefs['cols']) {
                     $('.column_chooser .' + opus.prefs['cols'][key]).find('i').first().show();
                 }
 
-               o_browse.addColumnChooserBehaviors();
-
-               // we keep these all open in the column chooser, they are all closed by default
-               /* todo */
-
+                o_browse.addColumnChooserBehaviors();
 
                // dragging to reorder the chosen
                $( ".chosen_columns>ul").sortable({
