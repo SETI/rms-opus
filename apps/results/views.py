@@ -46,6 +46,32 @@ def get_csv(request, fmt=None):
         wr.writerows(all_data[2])
         return response
 
+def get_all_categories(request, ring_obs_id):
+    """ returns list of all cateories this ring_obs_id apepars in """
+    all_categories = []
+    table_info = TableName.objects.all().values('table_name', 'label').order_by('disp_order')
+    for tbl in table_info:  # all tables
+        table_name = tbl['table_name']
+        if table_name == 'obs_surface_geometry':
+            # obs_surface_geometry is not a data table
+            # it's only used to select targets, not to hold data, so remove it
+            continue
+
+        label = tbl['label']
+        model_name = ''.join(table_name.title().split('_'))
+
+        try:
+            table_model = apps.get_model('search', model_name)
+        except LookupError:
+            continue  # oops some models don't actually exist
+
+        # are not ring_obs_id unique in all obs tables so why is this not a .get query
+        results = table_model.objects.filter(ring_obs_id=ring_obs_id).values('ring_obs_id')
+        if results:
+            cat = {'table_name': table_name, 'label': label}
+            all_categories.append(cat)
+    return HttpResponse(json.dumps(all_categories), content_type="application/json")
+
 
 def get_categories(request):
     """ returns list of categories (table_names) and labels in display order """

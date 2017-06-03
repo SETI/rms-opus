@@ -8,6 +8,7 @@ from results.views import (
     get_metadata,
     get_csv,
     get_categories,
+    get_all_categories,
 )
 # results - getting data
 urlpatterns = [
@@ -18,5 +19,6 @@ urlpatterns = [
     url(r'^api/files.(?P<fmt>[json|zip|html|csv]+)$', getFilesAPI),
     url(r'^api/metadata/(?P<ring_obs_id>[0-9a-zA-Z\-_]+).(?P<fmt>[json|html]+)$', get_metadata),
     url(r'^api/categories.json$', get_categories),
+    url(r'^api/categories/(?P<ring_obs_id>[0-9a-zA-Z\-_]+).json$', get_all_categories),
     url(r'^collections/data.csv$',get_csv),
 ]
