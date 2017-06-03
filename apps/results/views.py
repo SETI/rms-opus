@@ -65,7 +65,10 @@ def get_categories(request):
     # the main geometry table, obs_surface_geometry, is not table that holds results data
     # it is only there for selecting targets, which then trigger the other geometry tables.
     # so in the context of returning list of categories it gets removed..
-    triggered_tables.remove('obs_surface_geometry')
+    try:
+        triggered_tables.remove('obs_surface_geometry')
+    except ValueError:
+        pass  # it wasn't in there so no worries
 
     labels = TableName.objects.filter(table_name__in=triggered_tables).values('table_name','label').order_by('disp_order')
     return HttpResponse(json.dumps([ob for ob in labels]), content_type="application/json")
