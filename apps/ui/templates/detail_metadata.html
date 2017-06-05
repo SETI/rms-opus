@@ -1,7 +1,5 @@
-<ul id = "detail_data" class = "">
-    {% for cat,d in data.items %}
-    <li>{{ cat }}:
-        <ul class = "">
+{% for cat,d in data.items %}
+  <ul id = "detail__data_{{ cat.lower.split|join:"_" }}" class = "">
         {% for param,val  in d.items %}
             <li>
             {{ param }}: {{val}}
@@ -18,6 +16,5 @@
             </li>
 
         {% endfor %}
-        </ul>
     {% endfor %}
 </ul>
