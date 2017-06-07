@@ -41,6 +41,11 @@ class searchTests(TestCase):
             print non_imaging_instruments
             self.assertTrue(instrument_id not in non_imaging_instruments)
 
+    def test__partables_has_all_surface_geo_tables(self):
+        count_partables = Partable.objects.filter(partable__contains="surface_geometry__").values('partable').distinct().count()
+        count_surface_geo = ObsSurfaceGeometry.objects.all().values('target_name').distinct().count()
+        self.assertGreaterEqual(count_partables, count_surface_geo)
+
     def test__planets_properly_ordered(self):
         the_planets = [planet['label'] for planet in MultObsGeneralPlanetId.objects.filter(display='Y').values('label')]
         print "SELECT label FROM mult_obs_general_planet_id WHERE display = 'Y' ORDER BY disp_order;"
