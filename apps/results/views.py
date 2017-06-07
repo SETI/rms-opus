@@ -284,9 +284,7 @@ def get_metadata(request, ring_obs_id, fmt):
 
             except AttributeError: pass  # no results found in this table, move along
             except IndexError: pass  # no results found in this table, move along
-            except FieldError:
-                log.error("detail view could not find %s in table %s model %s" % (ring_obs_id, table_name, model_name))
-                pass  # no results found in this table, move along
+            except FieldError: pass  # this ring_obs_id not found in this table
 
     if fmt == 'html':
         return render(request, 'detail_metadata.html',locals())
