@@ -11,8 +11,7 @@
 """
 # Set up the Django Enviroment for running as shell script
 import sys
-# sys.path.append('/home/django/djcode/opus')  #srvr
-sys.path.append('/users/lballard/projects/opus/')
+sys.path.append('/home/django/djcode/opus/')  #srvr
 # from opus import settings
 from django.conf import settings
 from settings import CACHES, DATABASES
@@ -21,8 +20,7 @@ settings.configure(CACHES=CACHES, DATABASES=DATABASES) # include any other setti
 # script imports
 from django.db import transaction, connection
 from django.core.management import  call_command
-from django.db.models import get_model
-from django.utils.datastructures import SortedDict
+from collections import OrderedDict
 from settings import DATABASES, MULT_FIELDS
 
 opus1 = 'Observations' # from here
@@ -128,7 +126,7 @@ cursor.execute("select search_form,name,type,length,form_type from " + opus1 + "
 param_info_rows = cursor.fetchall()
 
 # now build our list of field definitions
-all_field_defs = SortedDict() # field definitions for django models
+all_field_defs = OrderedDict() # field definitions for django models
 last_table_name = ""
 for row in param_info_rows:
 
@@ -201,7 +199,7 @@ for row in param_info_rows:
 
 
 # ------------ cleanup ------------ #
-transaction.commit_unless_managed()  # flushes any waiting queries
+# transaction.commit_unless_managed()  # flushes any waiting queries
 cursor.execute("SET foreign_key_checks = 1")
 
 
