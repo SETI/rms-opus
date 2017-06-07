@@ -1108,73 +1108,89 @@ class MultObsWavelengthSpecFlag(models.Model):
 OBS_INSTRUMENT_COVIMS_SPECTRAL_EDITING_CHOICES = ((1L, u'OFF'), (2L, u'ON'))
 OBS_INSTRUMENT_COISS_GAIN_MODE_ID_CHOICES = ((1L, u'12 ELECTRONS PER DN'), (2L, u'215 ELECTRONS PER DN'), (3L, u'29 ELECTRONS PER DN'), (4L, u'95 ELECTRONS PER DN'))
 OBS_INSTRUMENT_VGISS_FILTER_NAME_CHOICES = ((1L, u'BLUE'), (2L, u'CH4_JS'), (3L, u'CH4_U'), (4L, u'CLEAR'), (5L, u'GREEN'), (8L, u'ORANGE'), (9L, u'SODIUM'), (10L, u'UV'), (11L, u'VIOLET'))
+OBS_MISSION_HUBBLE_DETECTOR_ID_CHOICES = ((2L, u'HRC'), (4L, u'SBC'), (6L, u'WFC'), (3L, u'IR'), (5L, u'UVIS'), (7L, u'WFPC2'))
 OBS_INSTRUMENT_COCIRS_INSTRUMENT_MODE_PAIRS_FLAG_CHOICES = ((2L, u'1'), (1L, u'0'))
 OBS_INSTRUMENT_COUVIS_OCCULTATION_PORT_STATE_CHOICES = ((1L, u'CLOSED'), (2L, u'N/A'), (3L, u'NULL'), (4L, u'OPEN'))
-OBS_GENERAL_MISSION_ID_CHOICES = ((1L, u'CO'), (2L, u'GO'), (108L, u'HST'), (107L, u'EAR'), (4L, u'VG'), (3L, u'NH'), (109L, u'PIO'))
-OBS_WAVELENGTH_SPEC_FLAG_CHOICES = ((1L, None), (2L, u'Y'), (3L, u'N'))
+OBS_MISSION_NEW_HORIZONS_TELEMETRY_APPLICATION_ID_CHOICES = ()
+OBS_GENERAL_MISSION_ID_CHOICES = ((1L, u'CO'), (2L, u'GO'), (3L, u'HST'), (4L, u'NH'), (5L, u'VG'), (28L, u'EAR'), (29L, u'PIO'))
+OBS_MISSION_HUBBLE_PC1_FLAG_CHOICES = ((2L, u'0'), (3L, u'1'))
+OBS_MISSION_NEW_HORIZONS_MISSION_PHASE_CHOICES = ()
 OBS_INSTRUMENT_COCIRS_INSTRUMENT_MODE_ODD_FLAG_CHOICES = ((2L, u'1'), (1L, u'0'))
+OBS_MISSION_HUBBLE_APERTURE_TYPE_CHOICES = ((1L, u'HRC'), (2L, u'HRC-ACQ'), (3L, u'HRC-CORON3.0'), (4L, u'HRC-FIX'), (5L, u'IRSUB256'), (6L, u'IRSUB512'), (7L, u'SBC'), (8L, u'SBC-FIX'), (9L, u'UF160BN15'), (10L, u'UFQCH4N15'), (11L, u'UFQCH4N33'), (12L, u'UFQCH4P15'), (13L, u'UPC1'), (14L, u'UPC1FIX'), (15L, u'UVIS-QUAD-SUB'), (16L, u'UVIS1-2K2A-SUB'), (17L, u'UVIS1-2K4-SUB'), (18L, u'UVIS1-C512B-SUB'), (19L, u'UVIS2-2K2C-SUB'), (20L, u'UVIS2-C512C-SUB'), (21L, u'UVIS2-M512C-SUB'), (22L, u'UWF2CH4'), (23L, u'UWF2FIX'), (24L, u'UWF2FIXS'), (25L, u'UWF3'), (26L, u'UWF3CH4'), (27L, u'UWF3FIX'), (28L, u'UWF3FIXS'), (29L, u'UWF4'), (30L, u'UWF4CH4'), (31L, u'UWF4FIX'), (32L, u'UWF4FIXS'), (33L, u'UWFALLFIX'), (34L, u'WFC1-FIX'), (35L, u'WFC2'), (36L, u'WFC2-2K'), (37L, u'WFC2-FIX'), (38L, u'WFC2-ORAMPQ'), (39L, u'WFCENTER'), (40L, u'GRISM512'), (41L, u'UVIS1-FIX'), (42L, u'UVIS2'), (43L, u'UVIS2-C1K1C-SUB'))
 OBS_MISSION_GALILEO_REV_NO_CHOICES = ((1L, u'0'), (2L, u'1'), (3L, u'2'), (4L, u'3'), (5L, u'4'), (6L, u'6'), (7L, u'7'), (8L, u'8'), (9L, u'9'), (10L, u'10'), (11L, u'11'), (12L, u'12'), (13L, u'14'), (14L, u'15'), (15L, u'17'), (16L, u'18'), (17L, u'19'), (18L, u'20'), (19L, u'21'), (20L, u'22'), (21L, u'24'), (22L, u'25'), (23L, u'26'), (24L, u'27'), (25L, u'28'), (26L, u'29'), (27L, u'30'), (28L, u'31'), (29L, u'32'), (30L, u'33'))
 OBS_INSTRUMENT_COUVIS_OBSERVATION_TYPE_CHOICES = ((2L, u'CALIB'), (4L, u'UCSTAR'), (5L, u'UFPSCAN'), (6L, u'UHDAC'), (7L, u'UHIGHSN'), (8L, u'UMAP'), (9L, u'USCAN'), (10L, u'USTARE'), (11L, u'NULL'))
-OBS_MISSION_CASSINI_CASSINI_TARGET_NAME_CHOICES = ((4L, u'Calypso'), (6L, u'Dione'), (8L, u'Enceladus'), (5L, u'co-rotation'), (9L, u'Epimetheus'), (12L, u'Helene'), (13L, u'Hyperion'), (14L, u'Iapetus'), (15L, u'instrument calibration'), (17L, u'Janus'), (18L, u'Jupiter'), (19L, u'Mimas'), (23L, u'Pandora'), (24L, u'Phoebe'), (26L, u'Rhea'), (27L, u'Ring A'), (28L, u'Ring B'), (29L, u'Ring C'), (30L, u'Ring E'), (31L, u'Ring F'), (32L, u'Ring G'), (33L, u'rings (general)'), (34L, u'Saturn'), (39L, u'star'), (41L, u'Telesto'), (42L, u'Tethys'), (43L, u'Titan'), (2L, u'Atlas'), (3L, u'Callisto'), (7L, u'Earth'), (10L, u'Europa'), (11L, u'Ganymede'), (16L, u'Io'), (20L, u'other'), (21L, u'Pallene'), (35L, u'Skeleton request  \n\t\t\t\tSR Spacecraft RAM direction'), (22L, u'Pan'), (37L, u'Solar Wind'), (25L, u'Prometheus'), (36L, u'Skeleton request'), (38L, u'spacecraft activity'), (40L, u'Sun'), (44L, u'Dust RAM direction'), (45L, u'Ring D'), (46L, u'Methone'))
+OBS_INSTRUMENT_MVIC_INSTRUMENT_COMPRESSION_TYPE_CHOICES = ((3L, u'0.390'), (4L, u'0.395'), (5L, u'0.400'), (6L, u'0.500'), (7L, u'0.588'), (8L, u'0.589'), (9L, u'0.590'), (10L, u'0.591'), (11L, u'0.592'), (12L, u'0.593'), (13L, u'0.594'), (14L, u'0.595'), (15L, u'0.596'), (16L, u'0.597'), (17L, u'0.599'), (18L, u'0.600'), (19L, u'0.605'), (20L, u'0.618'), (21L, u'0.632'), (22L, u'0.633'), (23L, u'0.640'), (24L, u'0.868'), (25L, u'1.000'), (26L, u'1.500'), (27L, u'1.679'), (28L, u'1.702'), (29L, u'1.868'), (30L, u'2.762'), (31L, u'2.766'), (32L, u'2.802'), (33L, u'2.811'), (34L, u'2.828'), (35L, u'2.842'), (36L, u'2.845'), (37L, u'2.850'), (38L, u'2.853'), (39L, u'2.862'), (40L, u'2.863'), (41L, u'2.868'), (42L, u'2.880'), (43L, u'2.891'), (44L, u'2.901'), (45L, u'2.902'), (46L, u'2.919'), (47L, u'3.868'), (48L, u'4.244'), (49L, u'4.256'), (50L, u'4.868'), (51L, u'5.185'), (52L, u'5.334'), (53L, u'5.868'), (54L, u'6.153'), (55L, u'6.868'), (56L, u'7.056'), (57L, u'7.806'), (58L, u'8.000'), (59L, u'9.306'), (60L, u'9.868'), (61L, u'10.000'), (62L, u'10.459'), (63L, u'10.806'), (64L, u'10.868'), (65L, u'11.868'), (66L, u'12.868'), (67L, u'13.459'), (68L, u'13.868'), (69L, u'15.868'), (70L, u'16.868'), (71L, u'19.868'), (72L, u'20.868'), (73L, u'21.868'), (74L, u'25.459'), (75L, u'25.868'), (76L, u'26.071'), (77L, u'26.868'), (78L, u'27.474'), (79L, u'27.868'), (80L, u'29.724'), (81L, u'34.224'), (82L, u'37.683'), (83L, u'45.868'), (84L, u'49.459'), (85L, u'52.683'), (86L, u'68.310'), (87L, u'68.868'), (88L, u'70.683'), (89L, u'86.868'), (90L, u'88.868'), (91L, u'89.868'), (92L, u'164.868'))
+OBS_MISSION_CASSINI_CASSINI_TARGET_NAME_CHOICES = ((4L, u'Calypso'), (6L, u'Dione'), (8L, u'Enceladus'), (9L, u'Epimetheus'), (5L, u'co-rotation'), (12L, u'Helene'), (13L, u'Hyperion'), (14L, u'Iapetus'), (15L, u'instrument calibration'), (17L, u'Janus'), (18L, u'Jupiter'), (19L, u'Mimas'), (23L, u'Pandora'), (24L, u'Phoebe'), (26L, u'Rhea'), (27L, u'Ring A'), (28L, u'Ring B'), (29L, u'Ring C'), (30L, u'Ring E'), (31L, u'Ring F'), (32L, u'Ring G'), (33L, u'rings (general)'), (34L, u'Saturn'), (39L, u'star'), (41L, u'Telesto'), (42L, u'Tethys'), (43L, u'Titan'), (2L, u'Atlas'), (3L, u'Callisto'), (7L, u'Earth'), (10L, u'Europa'), (11L, u'Ganymede'), (16L, u'Io'), (20L, u'other'), (35L, u'Skeleton request  \n\t\t\t\tSR Spacecraft RAM direction'), (21L, u'Pallene'), (22L, u'Pan'), (25L, u'Prometheus'), (37L, u'Solar Wind'), (36L, u'Skeleton request'), (38L, u'spacecraft activity'), (40L, u'Sun'), (44L, u'Dust RAM direction'), (45L, u'Ring D'), (46L, u'Methone'), (47L, u'Polydeuces'), (48L, u'Daphnis'))
+OBS_WAVELENGTH_SPEC_FLAG_CHOICES = ((1L, None), (2L, u'Y'), (3L, u'N'))
 OBS_INSTRUMENT_COCIRS_INSTRUMENT_MODE_CENTERS_FLAG_CHOICES = ((2L, u'1'), (1L, u'0'))
-OBS_WAVELENGTH_POLARIZATION_TYPE_CHOICES = ((74L, u'LINEAR'), (86L, u'CIRCULAR'), (76L, u'NONE'))
-OBS_SURFACE_GEOMETRY_TARGET_NAME_CHOICES = ((50L, u'SATURN'), (20L, u'AEGAEON'), (21L, u'ALBIORIX'), (4L, u'ANTHE'), (5L, u'ATLAS'), (22L, u'BEBHIONN'), (23L, u'BERGELMIR'), (24L, u'BESTLA'), (25L, u'CALYPSO'), (1L, u'DAPHNIS'), (9L, u'DIONE'), (10L, u'ENCELADUS'), (6L, u'EPIMETHEUS'), (26L, u'ERRIAPUS'), (11L, u'HELENE'), (12L, u'HYPERION'), (27L, u'HYROKKIN'), (28L, u'IAPETUS'), (29L, u'IJIRAQ'), (30L, u'JANUS'), (31L, u'JUPITER'), (32L, u'KARI'), (33L, u'KIVIUQ'), (34L, u'LOGE'), (13L, u'METHONE'), (2L, u'MIMAS'), (35L, u'MUNDILFARI'), (36L, u'PAALIAQ'), (14L, u'PALLENE'), (15L, u'PAN'), (16L, u'PANDORA'), (37L, u'PHOEBE'), (38L, u'POLYDEUCES'), (7L, u'PROMETHEUS'), (17L, u'RHEA'), (39L, u'S12_2004'), (40L, u'S13_2004'), (41L, u'SIARNAQ'), (42L, u'SKATHI'), (43L, u'SKOLL'), (54L, u'SUN'), (45L, u'SUTTUNGR'), (46L, u'TARQEQ'), (47L, u'TARVOS'), (48L, u'TELESTO'), (18L, u'TETHYS'), (19L, u'TITAN'), (49L, u'YMIR'), (51L, u'JARNSAXA'), (52L, u'THRYMR'), (53L, None), (55L, u'SURTUR'))
+OBS_MISSION_HUBBLE_GAIN_MODE_ID_CHOICES = ((1L, u'A2D15'), (2L, u'A2D7'), (3L, u'N/A'))
+OBS_WAVELENGTH_POLARIZATION_TYPE_CHOICES = ((74L, u'LINEAR'), (76L, u'NONE'), (98L, u'CIRCULAR'))
+OBS_SURFACE_GEOMETRY_TARGET_NAME_CHOICES = ((984L, u'ADRASTEA'), (1001L, u'PLUTO'), (992L, u'ELARA'), (991L, u'CALLIRRHOE'), (990L, u'GREIP'), (262L, None), (337L, None), (412L, None), (486L, None), (560L, None), (634L, None), (708L, None), (998L, u'NEPTUNE'), (997L, u'URANUS'), (996L, u'STYX'), (985L, u'METIS'), (983L, u'THEBE'), (986L, u'IO'), (987L, u'EUROPA'), (988L, u'GANYMEDE'), (981L, u'CALLISTO'), (989L, u'HIMALIA'), (1002L, u'CHARON'), (993L, u'NIX'), (994L, u'HYDRA'), (995L, u'KERBEROS'), (853L, None), (928L, None), (1003L, u'ARIEL'), (1018L, u'PERDITA'), (1019L, u'MAB'), (1020L, u'CUPID'), (1021L, u'TRITON'), (1022L, u'NAIAD'), (1023L, u'THALASSA'), (1024L, u'DESPINA'), (1025L, u'GALATEA'), (1026L, u'LARISSA'), (1027L, u'PROTEUS'), (1028L, u'NEREID'), (1017L, u'PUCK'), (1016L, u'BELINDA'), (1015L, u'ROSALIND'), (1004L, u'UMBRIEL'), (1005L, u'TITANIA'), (1006L, u'OBERON'), (1007L, u'MIRANDA'), (1008L, u'CORDELIA'), (1009L, u'OPHELIA'), (1010L, u'BIANCA'), (1011L, u'CRESSIDA'), (1012L, u'DESDEMONA'), (1013L, u'JULIET'), (1014L, u'PORTIA'), (1029L, None), (982L, u'AMALTHEA'), (947L, u'DAPHNIS'), (937L, u'TETHYS'), (932L, u'TITAN'), (949L, u'AEGAEON'), (961L, u'ALBIORIX'), (967L, u'BEBHIONN'), (969L, u'BERGELMIR'), (964L, u'BESTLA'), (940L, u'CALYPSO'), (966L, u'ERRIAPUS'), (968L, u'HYROKKIN'), (934L, u'IAPETUS'), (929L, u'RHEA'), (943L, u'PANDORA'), (944L, u'PAN'), (935L, u'MIMAS'), (948L, u'ANTHE'), (941L, u'ATLAS'), (939L, u'EPIMETHEUS'), (942L, u'PROMETHEUS'), (950L, u'DIONE'), (936L, u'ENCELADUS'), (930L, u'HELENE'), (933L, u'HYPERION'), (945L, u'METHONE'), (946L, u'PALLENE'), (955L, u'IJIRAQ'), (938L, u'JANUS'), (999L, u'JUPITER'), (973L, u'TARQEQ'), (959L, u'TARVOS'), (931L, u'TELESTO'), (960L, u'YMIR'), (1000L, u'SATURN'), (975L, u'JARNSAXA'), (974L, u'THRYMR'), (976L, u'SURTUR'), (977L, u'HATI'), (978L, u'NARVI'), (979L, u'EARTH'), (971L, u'SUTTUNGR'), (963L, u'SKOLL'), (965L, u'KARI'), (954L, u'KIVIUQ'), (962L, u'LOGE'), (953L, u'MUNDILFARI'), (957L, u'PAALIAQ'), (952L, u'PHOEBE'), (951L, u'POLYDEUCES'), (972L, u'S12_2004'), (958L, u'S13_2004'), (956L, u'SIARNAQ'), (970L, u'SKATHI'), (980L, u'FORNJOT'), (53L, None))
 OBS_INSTRUMENT_COUVIS_COMPRESSION_TYPE_CHOICES = ((1L, u'8_BIT'), (2L, u'NONE'), (3L, u'SQRT_8'), (4L, u'SQRT_9'))
 OBS_GENERAL_QUANTITY_CHOICES = ((2L, u'REFLECT'), (3L, u'THERMAL'), (53L, u'OPTICAL'), (54L, u'EMISSION'))
+OBS_MISSION_HUBBLE_FILTER_NAME_CHOICES = ((1L, u'CLEAR'), (2L, u'F1042M'), (3L, u'F105W'), (4L, u'F115LP'), (5L, u'F122M'), (6L, u'F125LP'), (7L, u'F125W'), (8L, u'F130LP+F160BN15'), (9L, u'F130LP+F160BW'), (10L, u'F140LP'), (11L, u'F150LP'), (12L, u'F160BN15'), (13L, u'F160BN15+F130LP'), (14L, u'F160BN15+F165LP'), (15L, u'F160BW'), (16L, u'F160BW+F165LP'), (17L, u'F160W'), (18L, u'F165LP'), (19L, u'F170W'), (20L, u'F218W'), (21L, u'F220W'), (22L, u'F220W+POL0UV'), (23L, u'F220W+POL120UV'), (24L, u'F220W+POL60UV'), (25L, u'F225W'), (26L, u'F250W'), (27L, u'F250W+POL0UV'), (28L, u'F250W+POL120UV'), (29L, u'F250W+POL60UV'), (30L, u'F255W'), (31L, u'F275W'), (32L, u'F300W'), (33L, u'F300W+F336W'), (34L, u'F330W'), (35L, u'F330W+POL0UV'), (36L, u'F330W+POL120UV'), (37L, u'F330W+POL60UV'), (38L, u'F336W'), (39L, u'F343N'), (40L, u'F344N'), (41L, u'F350LP'), (42L, u'F375N'), (43L, u'F380W'), (44L, u'F390N'), (45L, u'F395N'), (46L, u'F410M'), (47L, u'F435W'), (48L, u'F435W+POL0UV'), (49L, u'F435W+POL120UV'), (50L, u'F435W+POL60UV'), (51L, u'F437N'), (52L, u'F438W'), (53L, u'F439W'), (54L, u'F450W'), (55L, u'F467M'), (56L, u'F475W'), (57L, u'F502N'), (58L, u'F547M'), (59L, u'F550M'), (60L, u'F555W'), (61L, u'F569W'), (62L, u'F588N'), (63L, u'F606W'), (64L, u'F621M'), (65L, u'F625W'), (66L, u'F625W+POL0V'), (67L, u'F625W+POL120V'), (68L, u'F625W+POL60V'), (69L, u'F631N'), (70L, u'F656N'), (71L, u'F658N'), (72L, u'F658N+POL0V'), (73L, u'F658N+POL120V'), (74L, u'F658N+POL60V'), (75L, u'F660N'), (76L, u'F673N'), (77L, u'F675W'), (78L, u'F702W'), (79L, u'F763M'), (80L, u'F775W'), (81L, u'F775W+POL0V'), (82L, u'F775W+POL120V'), (83L, u'F775W+POL60V'), (84L, u'F785LP'), (85L, u'F791W'), (86L, u'F814W'), (87L, u'F845M'), (88L, u'F850LP'), (89L, u'F892N'), (90L, u'F953N'), (91L, u'FQ378N'), (92L, u'FQ437N'), (93L, u'FQ508N'), (94L, u'FQ575N'), (95L, u'FQ619N'), (96L, u'FQ634N'), (97L, u'FQ727N'), (98L, u'FQ750N'), (99L, u'FQ889N'), (100L, u'FQ906N'), (101L, u'FQ924N'), (102L, u'FQ937N'), (103L, u'FQCH4N'), (104L, u'FQCH4N15'), (105L, u'FQCH4N33'), (106L, u'FQCH4P15'), (107L, u'FR601N'), (108L, u'FR656N'), (109L, u'FR680N'), (110L, u'FR680N18'), (111L, u'FR680N33'), (112L, u'FR782N'), (113L, u'FR868N'), (114L, u'FR868N18'), (115L, u'FR914M'), (116L, u'FR931N'), (117L, u'PR130L'), (118L, u'F110W'), (119L, u'F127M'), (120L, u'F139M'), (121L, u'F153M'), (122L, u'F300X'), (123L, u'F390M'), (124L, u'F469N'), (125L, u'F475X'), (126L, u'F657N'), (127L, u'F665N'), (128L, u'F689M'), (129L, u'G141'))
 OBS_INSTRUMENT_GOSSI_FILTER_NUMBER_CHOICES = ((1L, u'0'), (2L, u'1'), (3L, u'2'), (4L, u'3'), (5L, u'4'), (6L, u'5'), (7L, u'6'), (8L, u'7'))
-OBS_INSTRUMENT_GOSSI_DATA_SET_ID_CHOICES = ((1L, u'GO-J/JSA-SSI-2-REDR-V1.0'),)
 OBS_INSTRUMENT_LORRI_BINNING_MODE_CHOICES = ((1L, u'1x1'), (2L, u'4x4'))
-OBS_INSTRUMENT_LORRI_INSTRUMENT_COMPRESSION_TYPE_CHOICES = ((1L, u'LOSSLESS'), (2L, u'LOSSY'))
+OBS_INSTRUMENT_GOSSI_DATA_SET_ID_CHOICES = ((1L, u'GO-J/JSA-SSI-2-REDR-V1.0'),)
 OBS_INSTRUMENT_COISS_DATA_CONVERSION_TYPE_CHOICES = ((1L, u'12BIT'), (2L, u'8LSB'), (3L, u'TABLE'))
 OBS_INSTRUMENT_COISS_INST_CMPRS_PARAM_MALGO_CHOICES = ((1L, u'-2147483648'), (2L, u'1'), (3L, u'41'), (4L, u'101'), (5L, u'255'))
-OBS_GENERAL_TARGET_CLASS_CHOICES = ((2L, u'RING'), (1L, u'PLANET'), (16L, u'I'), (3L, u'MOON'), (4L, u'SKY'), (5L, u'CALIBRATION'), (6L, u'OTHER'))
+OBS_GENERAL_TARGET_CLASS_CHOICES = ((2L, u'RING'), (1L, u'PLANET'), (3L, u'MOON'), (4L, u'SKY'), (5L, u'CALIBRATION'), (6L, u'OTHER'), (29L, u'I'), (24L, None))
 OBS_INSTRUMENT_GOSSI_COMPRESSION_TYPE_CHOICES = ((1L, u'BARC RATE CONTROL'), (2L, u'HUFFMAN'), (3L, u'INTEGER COSINE TRANSFORM'), (4L, u'NONE'))
 OBS_INSTRUMENT_COVIMS_CHANNEL_CHOICES = ((1L, u'IR'), (2L, u'VIS'))
 OBS_INSTRUMENT_COISS_INST_CMPRS_TYPE_CHOICES = ((1L, u'LOSSLESS'), (2L, u'LOSSY'), (3L, u'NOTCOMP'))
 OBS_INSTRUMENT_GOSSI_FILTER_NAME_CHOICES = ((1L, u'CLEAR'), (2L, u'GREEN'), (3L, u'IR-7270'), (4L, u'IR-7560'), (5L, u'IR-8890'), (6L, u'IR-9680'), (7L, u'RED'), (8L, u'VIOLET'))
 OBS_INSTRUMENT_COCIRS_SPECTRUM_SAMPLES_CHOICES = ((1L, u'95'), (2L, u'112'), (3L, u'139'), (4L, u'189'), (5L, u'223'), (6L, u'277'), (7L, u'471'), (8L, u'556'), (9L, u'691'), (10L, u'1881'), (11L, u'2221'), (12L, u'2761'))
 OBS_INSTRUMENT_COISS_CAMERA_CHOICES = ((2L, u'N'), (1L, u'W'))
-OBS_MISSION_CASSINI_REV_NO_CHOICES = ((127L, u'C22'), (128L, u'C23'), (129L, u'C24'), (130L, u'C25'), (131L, u'C26'), (132L, u'C27'), (133L, u'C28'), (134L, u'C29'), (135L, u'C32'), (136L, u'C33'), (137L, u'C34'), (138L, u'C35'), (139L, u'C36'), (2L, u'000'), (140L, u'C37'), (141L, u'C39'), (142L, u'C40'), (143L, u'C42'), (144L, u'C43'), (145L, u'C44'), (10L, u'00A'), (11L, u'00B'), (12L, u'00C'), (3L, u'003'), (4L, u'004'), (5L, u'005'), (6L, u'006'), (7L, u'007'), (8L, u'008'), (9L, u'009'), (13L, u'010'), (14L, u'011'), (15L, u'012'), (16L, u'013'), (17L, u'014'), (18L, u'015'), (19L, u'016'), (20L, u'017'), (21L, u'018'), (22L, u'019'), (23L, u'020'), (24L, u'021'), (25L, u'022'), (26L, u'023'), (27L, u'024'), (28L, u'025'), (29L, u'026'), (30L, u'027'), (31L, u'028'), (32L, u'029'), (33L, u'030'), (34L, u'031'), (35L, u'032'), (36L, u'033'), (37L, u'034'), (38L, u'035'), (39L, u'036'), (40L, u'037'), (41L, u'038'), (42L, u'039'), (43L, u'040'), (44L, u'041'), (45L, u'042'), (46L, u'043'), (47L, u'044'), (48L, u'045'), (49L, u'046'), (50L, u'047'), (51L, u'048'), (52L, u'049'), (53L, u'050'), (54L, u'051'), (55L, u'052'), (56L, u'053'), (57L, u'054'), (58L, u'055'), (59L, u'056'), (60L, u'057'), (61L, u'058'), (62L, u'059'), (63L, u'060'), (64L, u'061'), (65L, u'062'), (66L, u'063'), (67L, u'064'), (68L, u'065'), (69L, u'066'), (70L, u'067'), (71L, u'068'), (72L, u'069'), (73L, u'070'), (74L, u'071'), (75L, u'072'), (76L, u'073'), (77L, u'074'), (78L, u'075'), (79L, u'076'), (80L, u'077'), (81L, u'078'), (82L, u'079'), (83L, u'080'), (84L, u'081'), (85L, u'082'), (86L, u'083'), (87L, u'084'), (88L, u'085'), (89L, u'086'), (90L, u'087'), (91L, u'088'), (92L, u'089'), (93L, u'090'), (94L, u'091'), (95L, u'092'), (96L, u'093'), (97L, u'094'), (98L, u'095'), (99L, u'096'), (100L, u'097'), (101L, u'098'), (102L, u'099'), (103L, u'100'), (104L, u'101'), (105L, u'102'), (106L, u'103'), (107L, u'104'), (108L, u'105'), (109L, u'106'), (110L, u'107'), (111L, u'108'), (112L, u'109'), (113L, u'110'), (114L, u'111'), (115L, u'112'), (116L, u'113'), (117L, u'114'), (118L, u'115'), (119L, u'116'), (120L, u'117'), (121L, u'118'), (122L, u'119'), (123L, u'120'), (124L, u'121'), (125L, u'122'), (126L, u'123'), (146L, u'124'), (147L, u'125'), (148L, u'126'), (149L, u'127'), (150L, u'128'), (151L, u'129'), (152L, u'130'), (153L, u'131'), (154L, u'132'), (155L, u'133'), (156L, u'134'), (157L, u'C30'), (159L, u'135'), (160L, u'136'), (158L, u'C31'), (161L, u'137'), (162L, u'138'), (163L, u'139'), (164L, u'140'), (165L, u'141'), (166L, u'142'), (167L, u'143'), (168L, u'144'), (169L, u'145'), (170L, u'146'), (171L, u'147'), (172L, u'148'), (173L, u'149'), (174L, u'150'), (175L, u'151'), (176L, u'152'), (177L, u'153'), (178L, u'154'), (284L, u'155'), (179L, u'10'), (180L, u'11'), (285L, u'156'), (181L, u'12'), (286L, u'157'), (182L, u'13'), (287L, u'158'), (279L, u'159'), (183L, u'14'), (184L, u'15'), (280L, u'160'), (185L, u'16'), (186L, u'17'), (187L, u'18'), (188L, u'19'), (189L, u'20'), (190L, u'21'), (191L, u'22'), (192L, u'23'), (193L, u'24'), (194L, u'25'), (195L, u'26'), (196L, u'27'), (197L, u'28'), (198L, u'29'), (199L, u'3'), (200L, u'30'), (201L, u'31'), (202L, u'32'), (203L, u'33'), (204L, u'34'), (205L, u'35'), (206L, u'36'), (207L, u'37'), (208L, u'38'), (209L, u'39'), (210L, u'4'), (211L, u'40'), (212L, u'41'), (213L, u'42'), (214L, u'43'), (215L, u'44'), (216L, u'45'), (217L, u'46'), (218L, u'47'), (219L, u'48'), (220L, u'49'), (221L, u'5'), (222L, u'50'), (223L, u'51'), (224L, u'52'), (225L, u'53'), (226L, u'54'), (227L, u'55'), (228L, u'56'), (229L, u'57'), (230L, u'58'), (231L, u'59'), (232L, u'6'), (233L, u'60'), (234L, u'61'), (235L, u'62'), (236L, u'63'), (237L, u'64'), (238L, u'65'), (239L, u'66'), (240L, u'67'), (241L, u'68'), (242L, u'69'), (243L, u'7'), (244L, u'70'), (245L, u'71'), (246L, u'72'), (247L, u'73'), (248L, u'74'), (249L, u'75'), (250L, u'76'), (251L, u'77'), (252L, u'78'), (253L, u'79'), (254L, u'8'), (255L, u'80'), (256L, u'81'), (257L, u'82'), (258L, u'83'), (259L, u'84'), (260L, u'85'), (261L, u'86'), (262L, u'87'), (263L, u'88'), (264L, u'89'), (265L, u'9'), (266L, u'90'), (267L, u'91'), (268L, u'92'), (269L, u'93'), (270L, u'94'), (271L, u'95'), (272L, u'96'), (273L, u'97'), (274L, u'98'), (275L, u'99'), (276L, u'A'), (277L, u'B'), (278L, u'C'), (281L, u'161'), (282L, u'162'), (283L, u'163'), (288L, u'164'), (289L, u'165'), (290L, u'166'), (291L, u'167'), (292L, u'168'), (293L, u'169'), (294L, u'170'), (295L, u'171'), (296L, u'172'), (297L, u'173'), (298L, u'174'), (299L, u'175'), (300L, u'176'), (301L, u'177'), (302L, u'178'))
+OBS_MISSION_CASSINI_REV_NO_CHOICES = ((127L, u'C22'), (128L, u'C23'), (129L, u'C24'), (130L, u'C25'), (131L, u'C26'), (132L, u'C27'), (133L, u'C28'), (134L, u'C29'), (135L, u'C32'), (136L, u'C33'), (137L, u'C34'), (138L, u'C35'), (139L, u'C36'), (2L, u'000'), (140L, u'C37'), (141L, u'C39'), (142L, u'C40'), (143L, u'C42'), (144L, u'C43'), (145L, u'C44'), (10L, u'00A'), (11L, u'00B'), (12L, u'00C'), (3L, u'003'), (4L, u'004'), (5L, u'005'), (6L, u'006'), (7L, u'007'), (8L, u'008'), (9L, u'009'), (13L, u'010'), (14L, u'011'), (15L, u'012'), (16L, u'013'), (17L, u'014'), (18L, u'015'), (19L, u'016'), (20L, u'017'), (21L, u'018'), (22L, u'019'), (23L, u'020'), (24L, u'021'), (25L, u'022'), (26L, u'023'), (27L, u'024'), (28L, u'025'), (29L, u'026'), (30L, u'027'), (31L, u'028'), (32L, u'029'), (33L, u'030'), (34L, u'031'), (35L, u'032'), (36L, u'033'), (37L, u'034'), (38L, u'035'), (39L, u'036'), (40L, u'037'), (41L, u'038'), (42L, u'039'), (43L, u'040'), (44L, u'041'), (45L, u'042'), (46L, u'043'), (47L, u'044'), (48L, u'045'), (49L, u'046'), (50L, u'047'), (51L, u'048'), (52L, u'049'), (53L, u'050'), (54L, u'051'), (55L, u'052'), (56L, u'053'), (57L, u'054'), (58L, u'055'), (59L, u'056'), (60L, u'057'), (61L, u'058'), (62L, u'059'), (63L, u'060'), (64L, u'061'), (65L, u'062'), (66L, u'063'), (67L, u'064'), (68L, u'065'), (69L, u'066'), (70L, u'067'), (71L, u'068'), (72L, u'069'), (73L, u'070'), (74L, u'071'), (75L, u'072'), (76L, u'073'), (77L, u'074'), (78L, u'075'), (79L, u'076'), (80L, u'077'), (81L, u'078'), (82L, u'079'), (83L, u'080'), (84L, u'081'), (85L, u'082'), (86L, u'083'), (87L, u'084'), (88L, u'085'), (89L, u'086'), (90L, u'087'), (91L, u'088'), (92L, u'089'), (93L, u'090'), (94L, u'091'), (95L, u'092'), (96L, u'093'), (97L, u'094'), (98L, u'095'), (99L, u'096'), (100L, u'097'), (101L, u'098'), (102L, u'099'), (103L, u'100'), (104L, u'101'), (105L, u'102'), (106L, u'103'), (107L, u'104'), (108L, u'105'), (109L, u'106'), (110L, u'107'), (111L, u'108'), (112L, u'109'), (113L, u'110'), (114L, u'111'), (115L, u'112'), (116L, u'113'), (117L, u'114'), (118L, u'115'), (119L, u'116'), (120L, u'117'), (121L, u'118'), (122L, u'119'), (123L, u'120'), (124L, u'121'), (125L, u'122'), (126L, u'123'), (146L, u'124'), (147L, u'125'), (148L, u'126'), (149L, u'127'), (150L, u'128'), (151L, u'129'), (152L, u'130'), (153L, u'131'), (154L, u'132'), (155L, u'133'), (156L, u'134'), (159L, u'135'), (157L, u'C30'), (158L, u'C31'), (160L, u'136'), (161L, u'137'), (162L, u'138'), (163L, u'139'), (164L, u'140'), (165L, u'141'), (166L, u'142'), (167L, u'143'), (168L, u'144'), (169L, u'145'), (170L, u'146'), (171L, u'147'), (172L, u'148'), (173L, u'149'), (174L, u'150'), (175L, u'151'), (176L, u'152'), (177L, u'153'), (178L, u'154'), (179L, u'10'), (284L, u'155'), (180L, u'11'), (285L, u'156'), (181L, u'12'), (286L, u'157'), (287L, u'158'), (182L, u'13'), (279L, u'159'), (183L, u'14'), (280L, u'160'), (184L, u'15'), (185L, u'16'), (186L, u'17'), (187L, u'18'), (188L, u'19'), (189L, u'20'), (190L, u'21'), (191L, u'22'), (192L, u'23'), (193L, u'24'), (194L, u'25'), (195L, u'26'), (196L, u'27'), (197L, u'28'), (198L, u'29'), (199L, u'3'), (200L, u'30'), (201L, u'31'), (202L, u'32'), (203L, u'33'), (204L, u'34'), (205L, u'35'), (206L, u'36'), (207L, u'37'), (208L, u'38'), (209L, u'39'), (210L, u'4'), (211L, u'40'), (212L, u'41'), (213L, u'42'), (214L, u'43'), (215L, u'44'), (216L, u'45'), (217L, u'46'), (218L, u'47'), (219L, u'48'), (220L, u'49'), (221L, u'5'), (222L, u'50'), (223L, u'51'), (224L, u'52'), (225L, u'53'), (226L, u'54'), (227L, u'55'), (228L, u'56'), (229L, u'57'), (230L, u'58'), (231L, u'59'), (232L, u'6'), (233L, u'60'), (234L, u'61'), (235L, u'62'), (236L, u'63'), (237L, u'64'), (238L, u'65'), (239L, u'66'), (240L, u'67'), (241L, u'68'), (242L, u'69'), (243L, u'7'), (244L, u'70'), (245L, u'71'), (246L, u'72'), (247L, u'73'), (248L, u'74'), (249L, u'75'), (250L, u'76'), (251L, u'77'), (252L, u'78'), (253L, u'79'), (254L, u'8'), (255L, u'80'), (256L, u'81'), (257L, u'82'), (258L, u'83'), (259L, u'84'), (260L, u'85'), (261L, u'86'), (262L, u'87'), (263L, u'88'), (264L, u'89'), (265L, u'9'), (266L, u'90'), (267L, u'91'), (268L, u'92'), (269L, u'93'), (270L, u'94'), (271L, u'95'), (272L, u'96'), (273L, u'97'), (274L, u'98'), (275L, u'99'), (276L, u'A'), (277L, u'B'), (278L, u'C'), (281L, u'161'), (282L, u'162'), (283L, u'163'), (288L, u'164'), (289L, u'165'), (290L, u'166'), (291L, u'167'), (292L, u'168'), (293L, u'169'), (294L, u'170'), (295L, u'171'), (296L, u'172'), (297L, u'173'), (298L, u'174'), (299L, u'175'), (300L, u'176'), (301L, u'177'), (302L, u'178'), (303L, u'179'), (304L, u'180'), (305L, u'181'), (306L, u'182'), (307L, u'183'), (308L, u'184'), (309L, u'185'), (310L, u'186'), (311L, u'187'), (312L, u'188'), (313L, u'189'), (314L, u'190'), (315L, u'191'), (316L, u'192'), (317L, u'193'), (318L, u'194'), (319L, u'195'), (320L, u'196'), (321L, u'197'), (322L, u'198'), (323L, u'199'), (324L, u'200'), (325L, u'201'), (326L, u'202'), (327L, u'203'), (328L, u'204'), (329L, u'205'), (330L, u'206'), (331L, u'207'), (332L, u'208'), (333L, u'209'), (334L, u'210'), (335L, u'211'), (336L, u'212'), (337L, u'213'), (338L, u'214'), (339L, u'215'), (340L, u'216'), (341L, u'217'), (342L, u'218'), (343L, u'219'), (344L, u'220'), (345L, u'221'), (346L, u'222'), (347L, u'223'), (348L, u'224'), (349L, u'225'), (350L, u'226'), (351L, u'227'), (352L, u'228'), (353L, u'229'), (354L, u'230'), (355L, u'231'), (356L, u'232'), (357L, u'233'), (358L, u'234'), (359L, u'235'), (360L, u'236'), (361L, u'237'))
 OBS_INSTRUMENT_VGISS_CAMERA_CHOICES = ((2L, u'N'), (3L, u'W'))
+OBS_MISSION_HUBBLE_FINE_GUIDANCE_SYSTEM_LOCK_TYPE_CHOICES = ((1L, u'FINE'), (2L, u'FINE/GYRO'), (3L, u'GYROS'))
 OBS_INSTRUMENT_GOSSI_OBSTRUCTION_ID_CHOICES = ((1L, u'NOT POSSIBLE'), (2L, u'POSSIBLE'), (3L, u'PRESENCE VERIFIED'))
 OBS_MISSION_CASSINI_PRIME_CHOICES = ((3L, u'Y'), (2L, u'N'))
 OBS_INSTRUMENT_COUVIS_TEST_PULSE_STATE_CHOICES = ((1L, u'NULL'), (2L, u'OFF'), (3L, u'ON'))
 OBS_INSTRUMENT_VGISS_FILTER_NUMBER_CHOICES = ((1L, u'0'), (2L, u'1'), (3L, u'2'), (4L, u'3'), (5L, u'4'), (6L, u'5'), (7L, u'6'), (8L, u'7'))
 OBS_INSTRUMENT_GOSSI_ORBIT_NUMBER_CHOICES = ((1L, u'0'), (2L, u'1'), (3L, u'2'), (4L, u'3'), (5L, u'4'), (6L, u'6'), (7L, u'7'), (8L, u'8'), (9L, u'9'), (10L, u'10'), (11L, u'11'), (12L, u'12'), (13L, u'14'), (14L, u'15'), (15L, u'17'), (16L, u'18'), (17L, u'19'), (18L, u'20'), (19L, u'21'), (20L, u'22'), (21L, u'24'), (22L, u'25'), (23L, u'26'), (24L, u'27'), (25L, u'28'), (26L, u'29'), (27L, u'30'), (28L, u'31'), (29L, u'32'), (30L, u'33'))
+OBS_MISSION_HUBBLE_WF2_FLAG_CHOICES = ((2L, u'0'), (3L, u'1'))
 OBS_INSTRUMENT_COVIMS_VIS_SAMPLING_MODE_ID_CHOICES = ((1L, u'HI-RES'), (2L, u'N/A'), (3L, u'NORMAL'), (4L, u'UNK'))
 OBS_INSTRUMENT_COISS_FILTER_CHOICES = ((1L, u'BL1'), (2L, u'BL1+GRN'), (5L, u'BL2'), (6L, u'BL2+POL'), (7L, u'CB1'), (10L, u'CB2'), (11L, u'CB2+IRPOL'), (12L, u'CB3'), (13L, u'CB3+IRPOL'), (14L, u'CLEAR'), (15L, u'GRN'), (17L, u'GRN+POL'), (18L, u'GRN+RED'), (19L, u'HAL'), (21L, u'IR1'), (23L, u'IR1+IR2'), (16L, u'GRN+IRPOL'), (24L, u'IR2'), (25L, u'IR2+IR3'), (27L, u'IR3'), (28L, u'IR3+IR4'), (30L, u'IR4'), (31L, u'IR4+IRPOL'), (32L, u'IR5'), (34L, u'IRPOL'), (35L, u'IRPOL+CB2'), (36L, u'IRPOL+CB3'), (39L, u'IRPOL+MT3'), (40L, u'MT1'), (42L, u'MT2'), (44L, u'MT2+IRPOL'), (45L, u'MT3'), (46L, u'MT3+IRPOL'), (47L, u'POL'), (48L, u'POL+CB1'), (49L, u'POL+CB2'), (52L, u'POL+MT1'), (53L, u'POL+MT2'), (55L, u'RED'), (56L, u'RED+IR1'), (59L, u'UV1'), (67L, u'UV2'), (75L, u'UV2+UV3'), (76L, u'UV3'), (81L, u'UV3+POL'), (83L, u'VIO'), (3L, u'BL1+IR3'), (4L, u'BL1+MT3'), (8L, u'CB1+HAL'), (9L, u'CB1+IRPOL'), (20L, u'HAL+CB3'), (22L, u'IR1+CB2'), (26L, u'IR2+IRPOL'), (29L, u'IR3+IRPOL'), (33L, u'IR5+IRPOL'), (37L, u'IRPOL+IR1'), (38L, u'IRPOL+IR3'), (41L, u'MT1+IRPOL'), (43L, u'MT2+IR1'), (50L, u'POL+IR1'), (51L, u'POL+IR3'), (60L, u'UV1+BL2'), (54L, u'POL+MT3'), (61L, u'UV1+CB1'), (57L, u'RED+IR3'), (62L, u'UV1+CB2'), (63L, u'UV1+GRN'), (58L, u'RED+MT2'), (74L, u'UV2+MT1'), (64L, u'UV1+IR1'), (65L, u'UV1+IR3'), (66L, u'UV1+UV3'), (68L, u'UV2+BL2'), (69L, u'UV2+CB1'), (70L, u'UV2+CB2'), (71L, u'UV2+GRN'), (72L, u'UV2+IR1'), (73L, u'UV2+IR3'), (77L, u'UV3+BL1'), (78L, u'UV3+HAL'), (79L, u'UV3+IR2'), (80L, u'UV3+IR4'), (82L, u'UV3+RED'), (84L, u'VIO+CB3'))
 OBS_INSTRUMENT_COISS_SHUTTER_MODE_ID_CHOICES = ((1L, u'BOTSIM'), (2L, u'NACONLY'), (3L, u'WACONLY'))
+OBS_INSTRUMENT_LORRI_INSTRUMENT_COMPRESSION_TYPE_CHOICES = ((1L, u'LOSSLESS'), (2L, u'LOSSY'))
 OBS_INSTRUMENT_COISS_SHUTTER_STATE_ID_CHOICES = ((1L, u'DISABLED'), (2L, u'ENABLED'))
-OBS_INSTRUMENT_VGISS_SHUTTER_MODE_CHOICES = ((1L, u'BODARK'), (2L, u'BOTALT'), (3L, u'BOTSIM'), (4L, u'BSIMAN'), (5L, u'NAONLY'), (6L, u'NOSHUT'), (7L, u'WAONLY'))
 OBS_INSTRUMENT_VGISS_SCAN_MODE_CHOICES = ((1L, u'10:1'), (2L, u'1:1'), (3L, u'2:1'), (4L, u'3:1'), (5L, u'5:1'))
-OBS_GENERAL_CLASS_ID_CHOICES = ((1L, u'R'),)
+OBS_INSTRUMENT_VGISS_SHUTTER_MODE_CHOICES = ((1L, u'BODARK'), (2L, u'BOTALT'), (3L, u'BOTSIM'), (4L, u'BSIMAN'), (5L, u'NAONLY'), (6L, u'NOSHUT'), (7L, u'WAONLY'))
 OBS_INSTRUMENT_COVIMS_IR_SAMPLING_MODE_ID_CHOICES = ((1L, u'HI-RES'), (2L, u'NORMAL'), (3L, u'UNDER'))
 OBS_INSTRUMENT_COISS_TELEMETRY_FORMAT_ID_CHOICES = ((2L, u'S_N_ER_2'), (3L, u'S_N_ER_3'), (4L, u'S_N_ER_5'), (5L, u'S_N_ER_5A'), (7L, u'UNK'), (1L, u'S_N_ER_1'), (6L, u'S_N_ER_6'))
 OBS_INSTRUMENT_COISS_INST_CMPRS_PARAM_GOB_CHOICES = ((1L, u'-2147483648'), (2L, u'0'), (3L, u'1'), (4L, u'2'), (5L, u'3'), (6L, u'4'), (7L, u'5'), (8L, u'6'), (9L, u'7'), (10L, u'8'), (11L, u'9'), (12L, u'10'), (13L, u'11'), (14L, u'15'))
 OBS_INSTRUMENT_COVIMS_SPECTRAL_SUMMING_CHOICES = ((1L, u'OFF'), (2L, u'ON'))
+OBS_MISSION_HUBBLE_WF3_FLAG_CHOICES = ((2L, u'0'), (3L, u'1'))
 OBS_INSTRUMENT_COUVIS_DWELL_TIME_CHOICES = ((1L, u'0'), (2L, u'1'), (3L, u'2'), (4L, u'3'), (5L, u'8'), (6L, u'9'), (7L, u'16'), (8L, u'32'), (9L, u'64'), (10L, u'72'))
 OBS_INSTRUMENT_COUVIS_SLIT_STATE_CHOICES = ((1L, u'HIGH_RESOLUTION'), (2L, u'LOW_RESOLUTION'), (3L, u'NULL'), (4L, u'OCCULTATION'))
-OBS_TYPE_IMAGE_IMAGE_TYPE_ID_CHOICES = ((2L, u'FRAM'), (3L, u'PUSH'), (4L, u'RAST'), (5L, u'CUBE'))
+OBS_MISSION_VOYAGER_SPACECRAFT_NAME_CHOICES = ((1L, u'VG1'), (2L, u'VG2'))
+OBS_TYPE_IMAGE_IMAGE_TYPE_ID_CHOICES = ((2L, u'FRAM'), (3L, u'PUSH'), (4L, u'RAST'), (5L, u'CUBE'), (6L, u'IMG'))
 OBS_MISSION_CASSINI_PRIME_INST_ID_CHOICES = ((2L, u'COCIRS'), (3L, u'COISS'), (4L, u'COUVIS'), (5L, u'COVIMS'))
 OBS_INSTRUMENT_COCIRS_INSTRUMENT_MODE_ALL_FLAG_CHOICES = ((1L, u'0'), (2L, u'1'))
+OBS_MISSION_HUBBLE_WF4_FLAG_CHOICES = ((2L, u'0'), (3L, u'1'))
 OBS_INSTRUMENT_COCIRS_INSTRUMENT_MODE_BLINKING_FLAG_CHOICES = ((2L, u'1'), (1L, u'0'))
-OBS_INSTRUMENT_COUVIS_CHANNEL_CHOICES = ((1L, u'EUV'), (2L, u'FUV'), (3L, u'HDAC'), (4L, u'HSP'))
-OBS_GENERAL_INSTRUMENT_ID_CHOICES = ((2L, u'COISS'), (1L, u'COCIRS'), (3L, u'COVIMS'), (127L, u'COUVIS'), (4L, u'GOSSI'), (168L, u'HSTACS'), (169L, u'HSTWFPC2'), (6L, u'VGISS'), (5L, u'LORRI'), (171L, u'VGIRIS'), (170L, u'HSTNICMOS'))
+OBS_MISSION_HUBBLE_INSTRUMENT_MODE_ID_CHOICES = ((1L, u'ACCUM'), (2L, u'ACQ'), (3L, u'AREA'), (4L, u'FULL'), (5L, u'MULTIACCUM'))
+OBS_INSTRUMENT_COUVIS_CHANNEL_CHOICES = ((1L, u'EUV'), (2L, u'FUV'), (3L, u'HDAC'), (6L, u'HSP'))
+OBS_GENERAL_INSTRUMENT_ID_CHOICES = ((1L, u'COCIRS'), (2L, u'COISS'), (3L, u'COUVIS'), (4L, u'COVIMS'), (5L, u'GOSSI'), (10L, u'VGISS'), (6L, u'HSTACS'), (7L, u'HSTWFC3'), (8L, u'HSTWFPC2'), (9L, u'LORRI'), (39L, u'HSTNICMOS'), (40L, u'VGIRIS'), (29L, u'MVIC'))
 OBS_INSTRUMENT_COISS_IMAGE_OBSERVATION_TYPE_CHOICES = ((1L, u'CALIBRATION'), (3L, u'OPNAV'), (6L, u'SCIENCE'), (8L, u'SCIENCE,OPNAV'), (5L, u'OPNAV,SUPPORT'), (9L, u'SCIENCE,SUPPORT'), (10L, u'SUPPORT'), (2L, u'ENGINEERING'), (4L, u'OPNAV,SCIENCE'), (7L, u'SCIENCE,CALIBRATION'), (11L, u'SUPPORT,OPNAV'), (12L, u'UNK'))
 OBS_INSTRUMENT_GOSSI_GAIN_MODE_ID_CHOICES = ((1L, u'100K'), (2L, u'10K'), (3L, u'400K'), (4L, u'40K'))
 OBS_INSTRUMENT_VGISS_EDIT_MODE_CHOICES = ((1L, u'1:1'), (2L, u'1:2'), (3L, u'1:3'), (4L, u'1:32'), (5L, u'1;1'), (6L, u'1;32'), (7L, u'2:3'), (8L, u'3:4'), (9L, u'3:5'))
-OBS_GENERAL_INST_HOST_ID_CHOICES = ((1L, u'CO'), (2L, u'GO'), (4L, u'VG1'), (5L, u'VG2'), (3L, u'NH'), (40L, u'Hubble'))
+OBS_GENERAL_INST_HOST_ID_CHOICES = ((1L, u'CO'), (2L, u'GO'), (3L, u'HST'), (4L, u'NH'), (5L, u'VG1'), (6L, u'VG2'))
 OBS_INSTRUMENT_COCIRS_DETECTOR_ID_CHOICES = ((1L, u'FP1'), (2L, u'FP3'), (3L, u'FP4'))
 OBS_INSTRUMENT_COVIMS_INSTRUMENT_MODE_ID_CHOICES = ((1L, u'CAL_BACKGROUND'), (2L, u'CAL_SOLAR'), (3L, u'CAL_SPECTRAL'), (4L, u'IMAGE'), (5L, u'LINE'), (6L, u'OCCULTATION'), (7L, u'POINT'))
 OBS_INSTRUMENT_COISS_INST_CMPRS_PARAM_QF_CHOICES = ((1L, u'-2147483648'), (2L, u'0'), (3L, u'1'))
-OBS_GENERAL_TARGET_NAME_CHOICES = ((5L, u'ADRASTEA'), (94L, u'AEGAEON'), (95L, u'ALBIORIX'), (6L, u'AMALTHEA'), (96L, u'ANTHE'), (7L, u'ARIEL'), (8L, u'ATLAS'), (97L, u'BEBHIONN'), (98L, u'BERGELMIR'), (99L, u'BESTLA'), (9L, u'BETACMA'), (10L, u'CALLISTO'), (11L, u'CALYPSO'), (12L, u'DAPHNIS'), (13L, u'DIONE'), (14L, u'EARTH'), (15L, u'ELARA'), (16L, u'ENCELADUS'), (17L, u'EPIMETHEUS'), (100L, u'ERRIAPUS'), (18L, u'EUROPA'), (19L, u'FOMALHAUT'), (20L, u'GANYMEDE'), (101L, u'GREIP'), (21L, u'HELENE'), (22L, u'HIMALIA'), (23L, u'HYPERION'), (102L, u'HYROKKIN'), (24L, u'IAPETUS'), (25L, u'IO'), (26L, u'J RINGS'), (27L, u'JANUS'), (28L, u'JUPITER'), (104L, u'KARI'), (105L, u'LOGE'), (29L, u'MASURSKY'), (30L, u'METHONE'), (31L, u'METIS'), (32L, u'MIMAS'), (33L, u'MIRANDA'), (34L, u'MOON'), (35L, u'N RINGS'), (36L, u'NEPTUNE'), (37L, u'NEREID'), (38L, u'NONE'), (1L, None), (39L, u'OBERON'), (40L, u'ORION'), (41L, u'PALLENE'), (42L, u'PAN'), (43L, u'PANDORA'), (44L, u'PHOEBE'), (45L, u'PLAQUE'), (46L, u'PLEIADES'), (47L, u'POLYDEUCES'), (48L, u'PROMETHEUS'), (49L, u'RHEA'), (50L, u'S RINGS'), (107L, u'S12_2004'), (51L, u'SATURN'), (52L, u'SCORPIUS'), (109L, u'SKATHI'), (110L, u'SKOLL'), (54L, u'SKY'), (55L, u'SPICA'), (56L, u'SUN'), (111L, u'SUTTUNGR'), (57L, u'SYSTEM'), (112L, u'TARQEQ'), (58L, u'TELESTO'), (59L, u'TETHYS'), (60L, u'THEBE'), (61L, u'TITAN'), (62L, u'TITANIA'), (63L, u'TRITON'), (64L, u'U RINGS'), (65L, u'UMBRIEL'), (103L, u'IJIRAQ'), (66L, u'UNKNOWN'), (67L, u'URANUS'), (68L, u'VEGA'), (69L, u'VENUS'), (106L, u'PAALIAQ'), (2L, u'1985U1'), (3L, u'1989N1'), (108L, u'SIARNAQ'), (4L, u'1989N2'), (113L, u'TARVOS'), (115L, u'MUNDILFARI'), (116L, u'PLUTO'), (117L, u'YMIR'), (118L, u'CALLAMP'), (119L, u'SIGMASG'), (120L, u'THRYMR'), (121L, u'KIVIUQ'), (122L, u'OTHER'), (123L, u'PDS_target_name'), (124L, u'SURTUR'))
-OBS_GENERAL_PLANET_ID_CHOICES = ((3L, u'JUP'), (5L, u'SAT'), (6L, u'URA'), (4L, u'NEP'), (7L, u'VEN'), (2L, u'EAR'))
+OBS_GENERAL_TARGET_NAME_CHOICES = ((5L, u'ADRASTEA'), (94L, u'AEGAEON'), (95L, u'ALBIORIX'), (6L, u'AMALTHEA'), (96L, u'ANTHE'), (7L, u'ARIEL'), (8L, u'ATLAS'), (97L, u'BEBHIONN'), (98L, u'BERGELMIR'), (99L, u'BESTLA'), (9L, u'BETACMA'), (10L, u'CALLISTO'), (11L, u'CALYPSO'), (12L, u'DAPHNIS'), (13L, u'DIONE'), (14L, u'EARTH'), (15L, u'ELARA'), (16L, u'ENCELADUS'), (17L, u'EPIMETHEUS'), (100L, u'ERRIAPUS'), (18L, u'EUROPA'), (19L, u'FOMALHAUT'), (20L, u'GANYMEDE'), (101L, u'GREIP'), (21L, u'HELENE'), (22L, u'HIMALIA'), (23L, u'HYPERION'), (102L, u'HYROKKIN'), (24L, u'IAPETUS'), (25L, u'IO'), (26L, u'J RINGS'), (27L, u'JANUS'), (28L, u'JUPITER'), (104L, u'KARI'), (105L, u'LOGE'), (29L, u'MASURSKY'), (30L, u'METHONE'), (31L, u'METIS'), (32L, u'MIMAS'), (33L, u'MIRANDA'), (34L, u'MOON'), (35L, u'N RINGS'), (36L, u'NEPTUNE'), (37L, u'NEREID'), (38L, u'NONE'), (39L, u'OBERON'), (40L, u'ORION'), (41L, u'PALLENE'), (42L, u'PAN'), (43L, u'PANDORA'), (44L, u'PHOEBE'), (45L, u'PLAQUE'), (46L, u'PLEIADES'), (47L, u'POLYDEUCES'), (48L, u'PROMETHEUS'), (49L, u'RHEA'), (50L, u'S RINGS'), (107L, u'S12_2004'), (51L, u'SATURN'), (52L, u'SCORPIUS'), (109L, u'SKATHI'), (110L, u'SKOLL'), (54L, u'SKY'), (55L, u'SPICA'), (56L, u'SUN'), (111L, u'SUTTUNGR'), (57L, u'SYSTEM'), (112L, u'TARQEQ'), (58L, u'TELESTO'), (59L, u'TETHYS'), (60L, u'THEBE'), (61L, u'TITAN'), (62L, u'TITANIA'), (63L, u'TRITON'), (64L, u'U RINGS'), (65L, u'UMBRIEL'), (66L, u'UNKNOWN'), (103L, u'IJIRAQ'), (67L, u'URANUS'), (68L, u'VEGA'), (106L, u'PAALIAQ'), (69L, u'VENUS'), (108L, u'SIARNAQ'), (113L, u'TARVOS'), (115L, u'MUNDILFARI'), (116L, u'PLUTO'), (117L, u'YMIR'), (118L, u'CALLAMP'), (119L, u'SIGMASG'), (120L, u'THRYMR'), (121L, u'KIVIUQ'), (122L, u'OTHER'), (124L, u'SURTUR'), (125L, u'CUPID'), (126L, u'MAB'), (127L, u'MARS'), (128L, u'NAIAD'), (129L, u'SHOEMAKER LEVY 9'), (130L, u'THALASSA'), (131L, u'FORNJOT'), (134L, u'PO'), (135L, u'10199 CHARIKLO'), (136L, u'132524 APL'), (137L, u'136108 HAUMEA'), (138L, u'136472 MAKEMAKE'), (139L, u'ARCTURUS'), (140L, u'CALLIRRHOE'), (141L, u'CHARON'), (142L, u'DUST'), (143L, u'HATI'), (144L, u'KERBEROS'), (145L, u'MESSIER 7'), (146L, u'NGC 3532'), (147L, u'NIX'), (148L, u'STYX'), (149L, u'118378'), (150L, u'119070'), (151L, u'174567-Varda'), (152L, u'1999-RT214'), (153L, u'1999HG12'), (154L, u'2000-CQ114'), (155L, u'2000-FC8'), (156L, u'2000-OB51'), (157L, u'2000-PM30'), (158L, u'2000-PN30'), (159L, u'2000QN251'), (160L, u'2001-FL185'), (161L, u'2002VV130'), (162L, u'2004VE131'), (163L, u'2005EF298'), (164L, u'2005SE278'), (165L, u'2005SF278'), (166L, u'2011-JX31'), (167L, u'2014MU69'), (168L, u'2014PN70'), (169L, u'60458-2000-CM114'), (170L, u'CHARIKLO RING'), (171L, u'DA'), (172L, u'ERIS'), (173L, u'HAUMEA'), (174L, u'HYDRA'), (175L, u'IPH'), (176L, u'KBO-G1'), (177L, u'LARISSA'), (178L, u'MAKEMAKE'), (179L, u'NARVI'), (180L, u'NECKLACE-NEBULA'), (181L, u'PROTEUS'), (182L, u'PUCK'), (183L, u'SOLAR WIND'), (184L, u'STAR'), (185L, u'UNK'))
+OBS_GENERAL_PLANET_ID_CHOICES = ((9L, u'VEN'), (2L, u'EAR'), (4L, u'MAR'), (3L, u'JUP'), (7L, u'SAT'), (8L, u'URA'), (5L, u'NEP'), (6L, u'PLU'))
 OBS_INSTRUMENT_COCIRS_INSTRUMENT_MODE_EVEN_FLAG_CHOICES = ((2L, u'1'), (1L, u'0'))
-OBS_GENERAL_TYPE_ID_CHOICES = ((1L, u'CUBE'), (2L, u'IMG'), (3L, u'LINE'), (5L, u'POINT'), (4L, u'MOV'), (6L, u'PROFILE'))
+OBS_GENERAL_TYPE_ID_CHOICES = ((1L, u'CUBE'), (2L, u'IMG'), (3L, u'LINE'), (5L, u'POINT'), (7L, u'MOV'), (6L, u'PROFILE'))
 OBS_INSTRUMENT_COISS_INST_CMPRS_PARAM_TB_CHOICES = ((1L, u'-2147483648'), (2L, u'0'), (3L, u'1'))
-OBS_MISSION_VOYAGER_SPACECRAFT_NAME_CHOICES = ((1L, u'VG1'), (2L, u'VG2'))
+OBS_MISSION_HUBBLE_EXPOSURE_TYPE_CHOICES = ((1L, u'EXCESSIVE DOWNTIME'), (2L, u'INTERRUPTED'), (3L, u'NORMAL'), (4L, u'TDF-DOWN AT EXPSTART'), (5L, u'INDETERMINATE'))
+OBS_MISSION_HUBBLE_TARGETED_DETECTOR_ID_CHOICES = ((2L, u'PC1'), (3L, u'WF2'), (4L, u'WF3'), (5L, u'WF4'))
 OBS_INSTRUMENT_VGISS_GAIN_MODE_CHOICES = ((1L, u'LOW'),)
 OBS_INSTRUMENT_COUVIS_HI_VOLTAGE_POWER_SUPPLY_STATE_CHOICES = ((1L, u'OFF'), (2L, u'ON'))
+OBS_GENERAL_CLASS_ID_CHOICES = ((1L, u'R'),)
+
 
 # Data Models:
 class ObsGeneral(models.Model):
@@ -1850,6 +1866,18 @@ class ObsSurfaceGeometryAnthe(models.Model):
         return self.ring_obs_id
 
 
+class ObsSurfaceGeometryAriel(models.Model):
+    obs_general = models.ForeignKey(ObsGeneral, db_column="obs_general_id", null=True, blank=True)
+    sub_solar_planetographic_latitude = models.FloatField(null=True, blank=True)
+    ring_obs_id = models.CharField(max_length=40, blank=True, null=True)
+
+    class Meta:
+        db_table = 'obs_surface_geometry__ARIEL'
+
+    def __unicode__(self):
+        return self.ring_obs_id
+
+
 class ObsSurfaceGeometryAtlas(models.Model):
     obs_general = models.ForeignKey(ObsGeneral, db_column="obs_general_id", null=True, blank=True)
     center_distance = models.FloatField(null=True, blank=True)
@@ -1941,6 +1969,18 @@ class ObsSurfaceGeometryBebhionn(models.Model):
 
     class Meta:
         db_table = 'obs_surface_geometry__BEBHIONN'
+
+    def __unicode__(self):
+        return self.ring_obs_id
+
+
+class ObsSurfaceGeometryBelinda(models.Model):
+    obs_general = models.ForeignKey(ObsGeneral, db_column="obs_general_id", null=True, blank=True)
+    sub_solar_planetographic_latitude = models.FloatField(null=True, blank=True)
+    ring_obs_id = models.CharField(max_length=40, blank=True, null=True)
+
+    class Meta:
+        db_table = 'obs_surface_geometry__BELINDA'
 
     def __unicode__(self):
         return self.ring_obs_id
@@ -2042,6 +2082,66 @@ class ObsSurfaceGeometryBestla(models.Model):
         return self.ring_obs_id
 
 
+class ObsSurfaceGeometryBianca(models.Model):
+    obs_general = models.ForeignKey(ObsGeneral, db_column="obs_general_id", null=True, blank=True)
+    sub_solar_planetographic_latitude = models.FloatField(null=True, blank=True)
+    ring_obs_id = models.CharField(max_length=40, blank=True, null=True)
+
+    class Meta:
+        db_table = 'obs_surface_geometry__BIANCA'
+
+    def __unicode__(self):
+        return self.ring_obs_id
+
+
+class ObsSurfaceGeometryCallirrhoe(models.Model):
+    obs_general = models.ForeignKey(ObsGeneral, db_column="obs_general_id", null=True, blank=True)
+    center_distance = models.FloatField(null=True, blank=True)
+    center_phase_angle = models.FloatField(null=True, blank=True)
+    center_resolution = models.FloatField(null=True, blank=True)
+    coarsest_resolution1 = models.FloatField(null=True, blank=True)
+    coarsest_resolution2 = models.FloatField(null=True, blank=True)
+    d_IAU_west_longitude = models.FloatField(null=True, blank=True)
+    d_Observer_longitude = models.FloatField(null=True, blank=True)
+    d_solar_hour_angle = models.FloatField(null=True, blank=True)
+    emission1 = models.FloatField(null=True, blank=True)
+    emission2 = models.FloatField(null=True, blank=True)
+    finest_resolution1 = models.FloatField(null=True, blank=True)
+    finest_resolution2 = models.FloatField(null=True, blank=True)
+    IAU_west_longitude = models.FloatField(null=True, blank=True)
+    IAU_west_longitude1 = models.FloatField(null=True, blank=True)
+    IAU_west_longitude2 = models.FloatField(null=True, blank=True)
+    incidence1 = models.FloatField(null=True, blank=True)
+    incidence2 = models.FloatField(null=True, blank=True)
+    Observer_longitude = models.FloatField(null=True, blank=True)
+    Observer_longitude1 = models.FloatField(null=True, blank=True)
+    Observer_longitude2 = models.FloatField(null=True, blank=True)
+    phase1 = models.FloatField(null=True, blank=True)
+    phase2 = models.FloatField(null=True, blank=True)
+    planetocentric_latitude1 = models.FloatField(null=True, blank=True)
+    planetocentric_latitude2 = models.FloatField(null=True, blank=True)
+    planetographic_latitude1 = models.FloatField(null=True, blank=True)
+    planetographic_latitude2 = models.FloatField(null=True, blank=True)
+    range_to_body1 = models.FloatField(null=True, blank=True)
+    range_to_body2 = models.FloatField(null=True, blank=True)
+    solar_hour_angle = models.FloatField(null=True, blank=True)
+    solar_hour_angle1 = models.FloatField(null=True, blank=True)
+    solar_hour_angle2 = models.FloatField(null=True, blank=True)
+    sub_observer_IAU_longitude = models.FloatField(null=True, blank=True)
+    sub_observer_planetocentric_latitude = models.FloatField(null=True, blank=True)
+    sub_observer_planetographic_latitude = models.FloatField(null=True, blank=True)
+    sub_solar_IAU_longitude = models.FloatField(null=True, blank=True)
+    sub_solar_planetocentric_latitude = models.FloatField(null=True, blank=True)
+    sub_solar_planetographic_latitude = models.FloatField(null=True, blank=True)
+    ring_obs_id = models.CharField(max_length=40, blank=True, null=True)
+
+    class Meta:
+        db_table = 'obs_surface_geometry__CALLIRRHOE'
+
+    def __unicode__(self):
+        return self.ring_obs_id
+
+
 class ObsSurfaceGeometryCallisto(models.Model):
     obs_general = models.ForeignKey(ObsGeneral, db_column="obs_general_id", null=True, blank=True)
     center_distance = models.FloatField(null=True, blank=True)
@@ -2132,6 +2232,90 @@ class ObsSurfaceGeometryCalypso(models.Model):
         return self.ring_obs_id
 
 
+class ObsSurfaceGeometryCharon(models.Model):
+    obs_general = models.ForeignKey(ObsGeneral, db_column="obs_general_id", null=True, blank=True)
+    center_distance = models.FloatField(null=True, blank=True)
+    center_phase_angle = models.FloatField(null=True, blank=True)
+    center_resolution = models.FloatField(null=True, blank=True)
+    coarsest_resolution1 = models.FloatField(null=True, blank=True)
+    coarsest_resolution2 = models.FloatField(null=True, blank=True)
+    d_IAU_west_longitude = models.FloatField(null=True, blank=True)
+    d_Observer_longitude = models.FloatField(null=True, blank=True)
+    d_solar_hour_angle = models.FloatField(null=True, blank=True)
+    emission1 = models.FloatField(null=True, blank=True)
+    emission2 = models.FloatField(null=True, blank=True)
+    finest_resolution1 = models.FloatField(null=True, blank=True)
+    finest_resolution2 = models.FloatField(null=True, blank=True)
+    IAU_west_longitude = models.FloatField(null=True, blank=True)
+    IAU_west_longitude1 = models.FloatField(null=True, blank=True)
+    IAU_west_longitude2 = models.FloatField(null=True, blank=True)
+    incidence1 = models.FloatField(null=True, blank=True)
+    incidence2 = models.FloatField(null=True, blank=True)
+    Observer_longitude = models.FloatField(null=True, blank=True)
+    Observer_longitude1 = models.FloatField(null=True, blank=True)
+    Observer_longitude2 = models.FloatField(null=True, blank=True)
+    phase1 = models.FloatField(null=True, blank=True)
+    phase2 = models.FloatField(null=True, blank=True)
+    planetocentric_latitude1 = models.FloatField(null=True, blank=True)
+    planetocentric_latitude2 = models.FloatField(null=True, blank=True)
+    planetographic_latitude1 = models.FloatField(null=True, blank=True)
+    planetographic_latitude2 = models.FloatField(null=True, blank=True)
+    range_to_body1 = models.FloatField(null=True, blank=True)
+    range_to_body2 = models.FloatField(null=True, blank=True)
+    solar_hour_angle = models.FloatField(null=True, blank=True)
+    solar_hour_angle1 = models.FloatField(null=True, blank=True)
+    solar_hour_angle2 = models.FloatField(null=True, blank=True)
+    sub_observer_IAU_longitude = models.FloatField(null=True, blank=True)
+    sub_observer_planetocentric_latitude = models.FloatField(null=True, blank=True)
+    sub_observer_planetographic_latitude = models.FloatField(null=True, blank=True)
+    sub_solar_IAU_longitude = models.FloatField(null=True, blank=True)
+    sub_solar_planetocentric_latitude = models.FloatField(null=True, blank=True)
+    sub_solar_planetographic_latitude = models.FloatField(null=True, blank=True)
+    ring_obs_id = models.CharField(max_length=40, blank=True, null=True)
+
+    class Meta:
+        db_table = 'obs_surface_geometry__CHARON'
+
+    def __unicode__(self):
+        return self.ring_obs_id
+
+
+class ObsSurfaceGeometryCordelia(models.Model):
+    obs_general = models.ForeignKey(ObsGeneral, db_column="obs_general_id", null=True, blank=True)
+    sub_solar_planetographic_latitude = models.FloatField(null=True, blank=True)
+    ring_obs_id = models.CharField(max_length=40, blank=True, null=True)
+
+    class Meta:
+        db_table = 'obs_surface_geometry__CORDELIA'
+
+    def __unicode__(self):
+        return self.ring_obs_id
+
+
+class ObsSurfaceGeometryCressida(models.Model):
+    obs_general = models.ForeignKey(ObsGeneral, db_column="obs_general_id", null=True, blank=True)
+    sub_solar_planetographic_latitude = models.FloatField(null=True, blank=True)
+    ring_obs_id = models.CharField(max_length=40, blank=True, null=True)
+
+    class Meta:
+        db_table = 'obs_surface_geometry__CRESSIDA'
+
+    def __unicode__(self):
+        return self.ring_obs_id
+
+
+class ObsSurfaceGeometryCupid(models.Model):
+    obs_general = models.ForeignKey(ObsGeneral, db_column="obs_general_id", null=True, blank=True)
+    sub_solar_planetographic_latitude = models.FloatField(null=True, blank=True)
+    ring_obs_id = models.CharField(max_length=40, blank=True, null=True)
+
+    class Meta:
+        db_table = 'obs_surface_geometry__CUPID'
+
+    def __unicode__(self):
+        return self.ring_obs_id
+
+
 class ObsSurfaceGeometryDaphnis(models.Model):
     obs_general = models.ForeignKey(ObsGeneral, db_column="obs_general_id", null=True, blank=True)
     center_distance = models.FloatField(null=True, blank=True)
@@ -2175,6 +2359,30 @@ class ObsSurfaceGeometryDaphnis(models.Model):
 
     class Meta:
         db_table = 'obs_surface_geometry__DAPHNIS'
+
+    def __unicode__(self):
+        return self.ring_obs_id
+
+
+class ObsSurfaceGeometryDesdemona(models.Model):
+    obs_general = models.ForeignKey(ObsGeneral, db_column="obs_general_id", null=True, blank=True)
+    sub_solar_planetographic_latitude = models.FloatField(null=True, blank=True)
+    ring_obs_id = models.CharField(max_length=40, blank=True, null=True)
+
+    class Meta:
+        db_table = 'obs_surface_geometry__DESDEMONA'
+
+    def __unicode__(self):
+        return self.ring_obs_id
+
+
+class ObsSurfaceGeometryDespina(models.Model):
+    obs_general = models.ForeignKey(ObsGeneral, db_column="obs_general_id", null=True, blank=True)
+    sub_solar_planetographic_latitude = models.FloatField(null=True, blank=True)
+    ring_obs_id = models.CharField(max_length=40, blank=True, null=True)
+
+    class Meta:
+        db_table = 'obs_surface_geometry__DESPINA'
 
     def __unicode__(self):
         return self.ring_obs_id
@@ -2265,6 +2473,54 @@ class ObsSurfaceGeometryEarth(models.Model):
 
     class Meta:
         db_table = 'obs_surface_geometry__EARTH'
+
+    def __unicode__(self):
+        return self.ring_obs_id
+
+
+class ObsSurfaceGeometryElara(models.Model):
+    obs_general = models.ForeignKey(ObsGeneral, db_column="obs_general_id", null=True, blank=True)
+    center_distance = models.FloatField(null=True, blank=True)
+    center_phase_angle = models.FloatField(null=True, blank=True)
+    center_resolution = models.FloatField(null=True, blank=True)
+    coarsest_resolution1 = models.FloatField(null=True, blank=True)
+    coarsest_resolution2 = models.FloatField(null=True, blank=True)
+    d_IAU_west_longitude = models.FloatField(null=True, blank=True)
+    d_Observer_longitude = models.FloatField(null=True, blank=True)
+    d_solar_hour_angle = models.FloatField(null=True, blank=True)
+    emission1 = models.FloatField(null=True, blank=True)
+    emission2 = models.FloatField(null=True, blank=True)
+    finest_resolution1 = models.FloatField(null=True, blank=True)
+    finest_resolution2 = models.FloatField(null=True, blank=True)
+    IAU_west_longitude = models.FloatField(null=True, blank=True)
+    IAU_west_longitude1 = models.FloatField(null=True, blank=True)
+    IAU_west_longitude2 = models.FloatField(null=True, blank=True)
+    incidence1 = models.FloatField(null=True, blank=True)
+    incidence2 = models.FloatField(null=True, blank=True)
+    Observer_longitude = models.FloatField(null=True, blank=True)
+    Observer_longitude1 = models.FloatField(null=True, blank=True)
+    Observer_longitude2 = models.FloatField(null=True, blank=True)
+    phase1 = models.FloatField(null=True, blank=True)
+    phase2 = models.FloatField(null=True, blank=True)
+    planetocentric_latitude1 = models.FloatField(null=True, blank=True)
+    planetocentric_latitude2 = models.FloatField(null=True, blank=True)
+    planetographic_latitude1 = models.FloatField(null=True, blank=True)
+    planetographic_latitude2 = models.FloatField(null=True, blank=True)
+    range_to_body1 = models.FloatField(null=True, blank=True)
+    range_to_body2 = models.FloatField(null=True, blank=True)
+    solar_hour_angle = models.FloatField(null=True, blank=True)
+    solar_hour_angle1 = models.FloatField(null=True, blank=True)
+    solar_hour_angle2 = models.FloatField(null=True, blank=True)
+    sub_observer_IAU_longitude = models.FloatField(null=True, blank=True)
+    sub_observer_planetocentric_latitude = models.FloatField(null=True, blank=True)
+    sub_observer_planetographic_latitude = models.FloatField(null=True, blank=True)
+    sub_solar_IAU_longitude = models.FloatField(null=True, blank=True)
+    sub_solar_planetocentric_latitude = models.FloatField(null=True, blank=True)
+    sub_solar_planetographic_latitude = models.FloatField(null=True, blank=True)
+    ring_obs_id = models.CharField(max_length=40, blank=True, null=True)
+
+    class Meta:
+        db_table = 'obs_surface_geometry__ELARA'
 
     def __unicode__(self):
         return self.ring_obs_id
@@ -2498,6 +2754,18 @@ class ObsSurfaceGeometryFornjot(models.Model):
         return self.ring_obs_id
 
 
+class ObsSurfaceGeometryGalatea(models.Model):
+    obs_general = models.ForeignKey(ObsGeneral, db_column="obs_general_id", null=True, blank=True)
+    sub_solar_planetographic_latitude = models.FloatField(null=True, blank=True)
+    ring_obs_id = models.CharField(max_length=40, blank=True, null=True)
+
+    class Meta:
+        db_table = 'obs_surface_geometry__GALATEA'
+
+    def __unicode__(self):
+        return self.ring_obs_id
+
+
 class ObsSurfaceGeometryGanymede(models.Model):
     obs_general = models.ForeignKey(ObsGeneral, db_column="obs_general_id", null=True, blank=True)
     center_distance = models.FloatField(null=True, blank=True)
@@ -2535,6 +2803,54 @@ class ObsSurfaceGeometryGanymede(models.Model):
 
     class Meta:
         db_table = 'obs_surface_geometry__GANYMEDE'
+
+    def __unicode__(self):
+        return self.ring_obs_id
+
+
+class ObsSurfaceGeometryGreip(models.Model):
+    obs_general = models.ForeignKey(ObsGeneral, db_column="obs_general_id", null=True, blank=True)
+    center_distance = models.FloatField(null=True, blank=True)
+    center_phase_angle = models.FloatField(null=True, blank=True)
+    center_resolution = models.FloatField(null=True, blank=True)
+    coarsest_resolution1 = models.FloatField(null=True, blank=True)
+    coarsest_resolution2 = models.FloatField(null=True, blank=True)
+    d_IAU_west_longitude = models.FloatField(null=True, blank=True)
+    d_Observer_longitude = models.FloatField(null=True, blank=True)
+    d_solar_hour_angle = models.FloatField(null=True, blank=True)
+    emission1 = models.FloatField(null=True, blank=True)
+    emission2 = models.FloatField(null=True, blank=True)
+    finest_resolution1 = models.FloatField(null=True, blank=True)
+    finest_resolution2 = models.FloatField(null=True, blank=True)
+    IAU_west_longitude = models.FloatField(null=True, blank=True)
+    IAU_west_longitude1 = models.FloatField(null=True, blank=True)
+    IAU_west_longitude2 = models.FloatField(null=True, blank=True)
+    incidence1 = models.FloatField(null=True, blank=True)
+    incidence2 = models.FloatField(null=True, blank=True)
+    Observer_longitude = models.FloatField(null=True, blank=True)
+    Observer_longitude1 = models.FloatField(null=True, blank=True)
+    Observer_longitude2 = models.FloatField(null=True, blank=True)
+    phase1 = models.FloatField(null=True, blank=True)
+    phase2 = models.FloatField(null=True, blank=True)
+    planetocentric_latitude1 = models.FloatField(null=True, blank=True)
+    planetocentric_latitude2 = models.FloatField(null=True, blank=True)
+    planetographic_latitude1 = models.FloatField(null=True, blank=True)
+    planetographic_latitude2 = models.FloatField(null=True, blank=True)
+    range_to_body1 = models.FloatField(null=True, blank=True)
+    range_to_body2 = models.FloatField(null=True, blank=True)
+    solar_hour_angle = models.FloatField(null=True, blank=True)
+    solar_hour_angle1 = models.FloatField(null=True, blank=True)
+    solar_hour_angle2 = models.FloatField(null=True, blank=True)
+    sub_observer_IAU_longitude = models.FloatField(null=True, blank=True)
+    sub_observer_planetocentric_latitude = models.FloatField(null=True, blank=True)
+    sub_observer_planetographic_latitude = models.FloatField(null=True, blank=True)
+    sub_solar_IAU_longitude = models.FloatField(null=True, blank=True)
+    sub_solar_planetocentric_latitude = models.FloatField(null=True, blank=True)
+    sub_solar_planetographic_latitude = models.FloatField(null=True, blank=True)
+    ring_obs_id = models.CharField(max_length=40, blank=True, null=True)
+
+    class Meta:
+        db_table = 'obs_surface_geometry__GREIP'
 
     def __unicode__(self):
         return self.ring_obs_id
@@ -2673,6 +2989,54 @@ class ObsSurfaceGeometryHimalia(models.Model):
 
     class Meta:
         db_table = 'obs_surface_geometry__HIMALIA'
+
+    def __unicode__(self):
+        return self.ring_obs_id
+
+
+class ObsSurfaceGeometryHydra(models.Model):
+    obs_general = models.ForeignKey(ObsGeneral, db_column="obs_general_id", null=True, blank=True)
+    center_distance = models.FloatField(null=True, blank=True)
+    center_phase_angle = models.FloatField(null=True, blank=True)
+    center_resolution = models.FloatField(null=True, blank=True)
+    coarsest_resolution1 = models.FloatField(null=True, blank=True)
+    coarsest_resolution2 = models.FloatField(null=True, blank=True)
+    d_IAU_west_longitude = models.FloatField(null=True, blank=True)
+    d_Observer_longitude = models.FloatField(null=True, blank=True)
+    d_solar_hour_angle = models.FloatField(null=True, blank=True)
+    emission1 = models.FloatField(null=True, blank=True)
+    emission2 = models.FloatField(null=True, blank=True)
+    finest_resolution1 = models.FloatField(null=True, blank=True)
+    finest_resolution2 = models.FloatField(null=True, blank=True)
+    IAU_west_longitude = models.FloatField(null=True, blank=True)
+    IAU_west_longitude1 = models.FloatField(null=True, blank=True)
+    IAU_west_longitude2 = models.FloatField(null=True, blank=True)
+    incidence1 = models.FloatField(null=True, blank=True)
+    incidence2 = models.FloatField(null=True, blank=True)
+    Observer_longitude = models.FloatField(null=True, blank=True)
+    Observer_longitude1 = models.FloatField(null=True, blank=True)
+    Observer_longitude2 = models.FloatField(null=True, blank=True)
+    phase1 = models.FloatField(null=True, blank=True)
+    phase2 = models.FloatField(null=True, blank=True)
+    planetocentric_latitude1 = models.FloatField(null=True, blank=True)
+    planetocentric_latitude2 = models.FloatField(null=True, blank=True)
+    planetographic_latitude1 = models.FloatField(null=True, blank=True)
+    planetographic_latitude2 = models.FloatField(null=True, blank=True)
+    range_to_body1 = models.FloatField(null=True, blank=True)
+    range_to_body2 = models.FloatField(null=True, blank=True)
+    solar_hour_angle = models.FloatField(null=True, blank=True)
+    solar_hour_angle1 = models.FloatField(null=True, blank=True)
+    solar_hour_angle2 = models.FloatField(null=True, blank=True)
+    sub_observer_IAU_longitude = models.FloatField(null=True, blank=True)
+    sub_observer_planetocentric_latitude = models.FloatField(null=True, blank=True)
+    sub_observer_planetographic_latitude = models.FloatField(null=True, blank=True)
+    sub_solar_IAU_longitude = models.FloatField(null=True, blank=True)
+    sub_solar_planetocentric_latitude = models.FloatField(null=True, blank=True)
+    sub_solar_planetographic_latitude = models.FloatField(null=True, blank=True)
+    ring_obs_id = models.CharField(max_length=40, blank=True, null=True)
+
+    class Meta:
+        db_table = 'obs_surface_geometry__HYDRA'
 
     def __unicode__(self):
         return self.ring_obs_id
@@ -3008,6 +3372,18 @@ class ObsSurfaceGeometryJarnsaxa(models.Model):
         return self.ring_obs_id
 
 
+class ObsSurfaceGeometryJuliet(models.Model):
+    obs_general = models.ForeignKey(ObsGeneral, db_column="obs_general_id", null=True, blank=True)
+    sub_solar_planetographic_latitude = models.FloatField(null=True, blank=True)
+    ring_obs_id = models.CharField(max_length=40, blank=True, null=True)
+
+    class Meta:
+        db_table = 'obs_surface_geometry__JULIET'
+
+    def __unicode__(self):
+        return self.ring_obs_id
+
+
 class ObsSurfaceGeometryJupiter(models.Model):
     obs_general = models.ForeignKey(ObsGeneral, db_column="obs_general_id", null=True, blank=True)
     center_distance = models.FloatField(null=True, blank=True)
@@ -3104,6 +3480,54 @@ class ObsSurfaceGeometryKari(models.Model):
         return self.ring_obs_id
 
 
+class ObsSurfaceGeometryKerberos(models.Model):
+    obs_general = models.ForeignKey(ObsGeneral, db_column="obs_general_id", null=True, blank=True)
+    center_distance = models.FloatField(null=True, blank=True)
+    center_phase_angle = models.FloatField(null=True, blank=True)
+    center_resolution = models.FloatField(null=True, blank=True)
+    coarsest_resolution1 = models.FloatField(null=True, blank=True)
+    coarsest_resolution2 = models.FloatField(null=True, blank=True)
+    d_IAU_west_longitude = models.FloatField(null=True, blank=True)
+    d_Observer_longitude = models.FloatField(null=True, blank=True)
+    d_solar_hour_angle = models.FloatField(null=True, blank=True)
+    emission1 = models.FloatField(null=True, blank=True)
+    emission2 = models.FloatField(null=True, blank=True)
+    finest_resolution1 = models.FloatField(null=True, blank=True)
+    finest_resolution2 = models.FloatField(null=True, blank=True)
+    IAU_west_longitude = models.FloatField(null=True, blank=True)
+    IAU_west_longitude1 = models.FloatField(null=True, blank=True)
+    IAU_west_longitude2 = models.FloatField(null=True, blank=True)
+    incidence1 = models.FloatField(null=True, blank=True)
+    incidence2 = models.FloatField(null=True, blank=True)
+    Observer_longitude = models.FloatField(null=True, blank=True)
+    Observer_longitude1 = models.FloatField(null=True, blank=True)
+    Observer_longitude2 = models.FloatField(null=True, blank=True)
+    phase1 = models.FloatField(null=True, blank=True)
+    phase2 = models.FloatField(null=True, blank=True)
+    planetocentric_latitude1 = models.FloatField(null=True, blank=True)
+    planetocentric_latitude2 = models.FloatField(null=True, blank=True)
+    planetographic_latitude1 = models.FloatField(null=True, blank=True)
+    planetographic_latitude2 = models.FloatField(null=True, blank=True)
+    range_to_body1 = models.FloatField(null=True, blank=True)
+    range_to_body2 = models.FloatField(null=True, blank=True)
+    solar_hour_angle = models.FloatField(null=True, blank=True)
+    solar_hour_angle1 = models.FloatField(null=True, blank=True)
+    solar_hour_angle2 = models.FloatField(null=True, blank=True)
+    sub_observer_IAU_longitude = models.FloatField(null=True, blank=True)
+    sub_observer_planetocentric_latitude = models.FloatField(null=True, blank=True)
+    sub_observer_planetographic_latitude = models.FloatField(null=True, blank=True)
+    sub_solar_IAU_longitude = models.FloatField(null=True, blank=True)
+    sub_solar_planetocentric_latitude = models.FloatField(null=True, blank=True)
+    sub_solar_planetographic_latitude = models.FloatField(null=True, blank=True)
+    ring_obs_id = models.CharField(max_length=40, blank=True, null=True)
+
+    class Meta:
+        db_table = 'obs_surface_geometry__KERBEROS'
+
+    def __unicode__(self):
+        return self.ring_obs_id
+
+
 class ObsSurfaceGeometryKiviuq(models.Model):
     obs_general = models.ForeignKey(ObsGeneral, db_column="obs_general_id", null=True, blank=True)
     center_distance = models.FloatField(null=True, blank=True)
@@ -3152,6 +3576,18 @@ class ObsSurfaceGeometryKiviuq(models.Model):
         return self.ring_obs_id
 
 
+class ObsSurfaceGeometryLarissa(models.Model):
+    obs_general = models.ForeignKey(ObsGeneral, db_column="obs_general_id", null=True, blank=True)
+    sub_solar_planetographic_latitude = models.FloatField(null=True, blank=True)
+    ring_obs_id = models.CharField(max_length=40, blank=True, null=True)
+
+    class Meta:
+        db_table = 'obs_surface_geometry__LARISSA'
+
+    def __unicode__(self):
+        return self.ring_obs_id
+
+
 class ObsSurfaceGeometryLoge(models.Model):
     obs_general = models.ForeignKey(ObsGeneral, db_column="obs_general_id", null=True, blank=True)
     center_distance = models.FloatField(null=True, blank=True)
@@ -3195,6 +3631,18 @@ class ObsSurfaceGeometryLoge(models.Model):
 
     class Meta:
         db_table = 'obs_surface_geometry__LOGE'
+
+    def __unicode__(self):
+        return self.ring_obs_id
+
+
+class ObsSurfaceGeometryMab(models.Model):
+    obs_general = models.ForeignKey(ObsGeneral, db_column="obs_general_id", null=True, blank=True)
+    sub_solar_planetographic_latitude = models.FloatField(null=True, blank=True)
+    ring_obs_id = models.CharField(max_length=40, blank=True, null=True)
+
+    class Meta:
+        db_table = 'obs_surface_geometry__MAB'
 
     def __unicode__(self):
         return self.ring_obs_id
@@ -3338,6 +3786,18 @@ class ObsSurfaceGeometryMimas(models.Model):
         return self.ring_obs_id
 
 
+class ObsSurfaceGeometryMiranda(models.Model):
+    obs_general = models.ForeignKey(ObsGeneral, db_column="obs_general_id", null=True, blank=True)
+    sub_solar_planetographic_latitude = models.FloatField(null=True, blank=True)
+    ring_obs_id = models.CharField(max_length=40, blank=True, null=True)
+
+    class Meta:
+        db_table = 'obs_surface_geometry__MIRANDA'
+
+    def __unicode__(self):
+        return self.ring_obs_id
+
+
 class ObsSurfaceGeometryMundilfari(models.Model):
     obs_general = models.ForeignKey(ObsGeneral, db_column="obs_general_id", null=True, blank=True)
     center_distance = models.FloatField(null=True, blank=True)
@@ -3386,6 +3846,18 @@ class ObsSurfaceGeometryMundilfari(models.Model):
         return self.ring_obs_id
 
 
+class ObsSurfaceGeometryNaiad(models.Model):
+    obs_general = models.ForeignKey(ObsGeneral, db_column="obs_general_id", null=True, blank=True)
+    sub_solar_planetographic_latitude = models.FloatField(null=True, blank=True)
+    ring_obs_id = models.CharField(max_length=40, blank=True, null=True)
+
+    class Meta:
+        db_table = 'obs_surface_geometry__NAIAD'
+
+    def __unicode__(self):
+        return self.ring_obs_id
+
+
 class ObsSurfaceGeometryNarvi(models.Model):
     obs_general = models.ForeignKey(ObsGeneral, db_column="obs_general_id", null=True, blank=True)
     center_distance = models.FloatField(null=True, blank=True)
@@ -3429,6 +3901,138 @@ class ObsSurfaceGeometryNarvi(models.Model):
 
     class Meta:
         db_table = 'obs_surface_geometry__NARVI'
+
+    def __unicode__(self):
+        return self.ring_obs_id
+
+
+class ObsSurfaceGeometryNeptune(models.Model):
+    obs_general = models.ForeignKey(ObsGeneral, db_column="obs_general_id", null=True, blank=True)
+    center_distance = models.FloatField(null=True, blank=True)
+    center_phase_angle = models.FloatField(null=True, blank=True)
+    center_resolution = models.FloatField(null=True, blank=True)
+    coarsest_resolution1 = models.FloatField(null=True, blank=True)
+    coarsest_resolution2 = models.FloatField(null=True, blank=True)
+    d_IAU_west_longitude = models.FloatField(null=True, blank=True)
+    d_Observer_longitude = models.FloatField(null=True, blank=True)
+    d_solar_hour_angle = models.FloatField(null=True, blank=True)
+    emission1 = models.FloatField(null=True, blank=True)
+    emission2 = models.FloatField(null=True, blank=True)
+    finest_resolution1 = models.FloatField(null=True, blank=True)
+    finest_resolution2 = models.FloatField(null=True, blank=True)
+    IAU_west_longitude = models.FloatField(null=True, blank=True)
+    IAU_west_longitude1 = models.FloatField(null=True, blank=True)
+    IAU_west_longitude2 = models.FloatField(null=True, blank=True)
+    incidence1 = models.FloatField(null=True, blank=True)
+    incidence2 = models.FloatField(null=True, blank=True)
+    Observer_longitude = models.FloatField(null=True, blank=True)
+    Observer_longitude1 = models.FloatField(null=True, blank=True)
+    Observer_longitude2 = models.FloatField(null=True, blank=True)
+    phase1 = models.FloatField(null=True, blank=True)
+    phase2 = models.FloatField(null=True, blank=True)
+    planetocentric_latitude1 = models.FloatField(null=True, blank=True)
+    planetocentric_latitude2 = models.FloatField(null=True, blank=True)
+    planetographic_latitude1 = models.FloatField(null=True, blank=True)
+    planetographic_latitude2 = models.FloatField(null=True, blank=True)
+    range_to_body1 = models.FloatField(null=True, blank=True)
+    range_to_body2 = models.FloatField(null=True, blank=True)
+    solar_hour_angle = models.FloatField(null=True, blank=True)
+    solar_hour_angle1 = models.FloatField(null=True, blank=True)
+    solar_hour_angle2 = models.FloatField(null=True, blank=True)
+    sub_observer_IAU_longitude = models.FloatField(null=True, blank=True)
+    sub_observer_planetocentric_latitude = models.FloatField(null=True, blank=True)
+    sub_observer_planetographic_latitude = models.FloatField(null=True, blank=True)
+    sub_solar_IAU_longitude = models.FloatField(null=True, blank=True)
+    sub_solar_planetocentric_latitude = models.FloatField(null=True, blank=True)
+    sub_solar_planetographic_latitude = models.FloatField(null=True, blank=True)
+    ring_obs_id = models.CharField(max_length=40, blank=True, null=True)
+
+    class Meta:
+        db_table = 'obs_surface_geometry__NEPTUNE'
+
+    def __unicode__(self):
+        return self.ring_obs_id
+
+
+class ObsSurfaceGeometryNereid(models.Model):
+    obs_general = models.ForeignKey(ObsGeneral, db_column="obs_general_id", null=True, blank=True)
+    sub_solar_planetographic_latitude = models.FloatField(null=True, blank=True)
+    ring_obs_id = models.CharField(max_length=40, blank=True, null=True)
+
+    class Meta:
+        db_table = 'obs_surface_geometry__NEREID'
+
+    def __unicode__(self):
+        return self.ring_obs_id
+
+
+class ObsSurfaceGeometryNix(models.Model):
+    obs_general = models.ForeignKey(ObsGeneral, db_column="obs_general_id", null=True, blank=True)
+    center_distance = models.FloatField(null=True, blank=True)
+    center_phase_angle = models.FloatField(null=True, blank=True)
+    center_resolution = models.FloatField(null=True, blank=True)
+    coarsest_resolution1 = models.FloatField(null=True, blank=True)
+    coarsest_resolution2 = models.FloatField(null=True, blank=True)
+    d_IAU_west_longitude = models.FloatField(null=True, blank=True)
+    d_Observer_longitude = models.FloatField(null=True, blank=True)
+    d_solar_hour_angle = models.FloatField(null=True, blank=True)
+    emission1 = models.FloatField(null=True, blank=True)
+    emission2 = models.FloatField(null=True, blank=True)
+    finest_resolution1 = models.FloatField(null=True, blank=True)
+    finest_resolution2 = models.FloatField(null=True, blank=True)
+    IAU_west_longitude = models.FloatField(null=True, blank=True)
+    IAU_west_longitude1 = models.FloatField(null=True, blank=True)
+    IAU_west_longitude2 = models.FloatField(null=True, blank=True)
+    incidence1 = models.FloatField(null=True, blank=True)
+    incidence2 = models.FloatField(null=True, blank=True)
+    Observer_longitude = models.FloatField(null=True, blank=True)
+    Observer_longitude1 = models.FloatField(null=True, blank=True)
+    Observer_longitude2 = models.FloatField(null=True, blank=True)
+    phase1 = models.FloatField(null=True, blank=True)
+    phase2 = models.FloatField(null=True, blank=True)
+    planetocentric_latitude1 = models.FloatField(null=True, blank=True)
+    planetocentric_latitude2 = models.FloatField(null=True, blank=True)
+    planetographic_latitude1 = models.FloatField(null=True, blank=True)
+    planetographic_latitude2 = models.FloatField(null=True, blank=True)
+    range_to_body1 = models.FloatField(null=True, blank=True)
+    range_to_body2 = models.FloatField(null=True, blank=True)
+    solar_hour_angle = models.FloatField(null=True, blank=True)
+    solar_hour_angle1 = models.FloatField(null=True, blank=True)
+    solar_hour_angle2 = models.FloatField(null=True, blank=True)
+    sub_observer_IAU_longitude = models.FloatField(null=True, blank=True)
+    sub_observer_planetocentric_latitude = models.FloatField(null=True, blank=True)
+    sub_observer_planetographic_latitude = models.FloatField(null=True, blank=True)
+    sub_solar_IAU_longitude = models.FloatField(null=True, blank=True)
+    sub_solar_planetocentric_latitude = models.FloatField(null=True, blank=True)
+    sub_solar_planetographic_latitude = models.FloatField(null=True, blank=True)
+    ring_obs_id = models.CharField(max_length=40, blank=True, null=True)
+
+    class Meta:
+        db_table = 'obs_surface_geometry__NIX'
+
+    def __unicode__(self):
+        return self.ring_obs_id
+
+
+class ObsSurfaceGeometryOberon(models.Model):
+    obs_general = models.ForeignKey(ObsGeneral, db_column="obs_general_id", null=True, blank=True)
+    sub_solar_planetographic_latitude = models.FloatField(null=True, blank=True)
+    ring_obs_id = models.CharField(max_length=40, blank=True, null=True)
+
+    class Meta:
+        db_table = 'obs_surface_geometry__OBERON'
+
+    def __unicode__(self):
+        return self.ring_obs_id
+
+
+class ObsSurfaceGeometryOphelia(models.Model):
+    obs_general = models.ForeignKey(ObsGeneral, db_column="obs_general_id", null=True, blank=True)
+    sub_solar_planetographic_latitude = models.FloatField(null=True, blank=True)
+    ring_obs_id = models.CharField(max_length=40, blank=True, null=True)
+
+    class Meta:
+        db_table = 'obs_surface_geometry__OPHELIA'
 
     def __unicode__(self):
         return self.ring_obs_id
@@ -3577,525 +4181,6 @@ class ObsSurfaceGeometryPan(models.Model):
     def __unicode__(self):
         return self.ring_obs_id
 
-class ObsSurfaceGeometryCharon(models.Model):
-    obs_general = models.ForeignKey(ObsGeneral, db_column="obs_general_id", null=True, blank=True)
-    center_distance = models.FloatField(null=True, blank=True)
-    center_phase_angle = models.FloatField(null=True, blank=True)
-    center_resolution = models.FloatField(null=True, blank=True)
-    coarsest_resolution1 = models.FloatField(null=True, blank=True)
-    coarsest_resolution2 = models.FloatField(null=True, blank=True)
-    d_IAU_west_longitude = models.FloatField(null=True, blank=True)
-    d_Observer_longitude = models.FloatField(null=True, blank=True)
-    d_solar_hour_angle = models.FloatField(null=True, blank=True)
-    emission1 = models.FloatField(null=True, blank=True)
-    emission2 = models.FloatField(null=True, blank=True)
-    finest_resolution1 = models.FloatField(null=True, blank=True)
-    finest_resolution2 = models.FloatField(null=True, blank=True)
-    IAU_west_longitude = models.FloatField(null=True, blank=True)
-    IAU_west_longitude1 = models.FloatField(null=True, blank=True)
-    IAU_west_longitude2 = models.FloatField(null=True, blank=True)
-    incidence1 = models.FloatField(null=True, blank=True)
-    incidence2 = models.FloatField(null=True, blank=True)
-    Observer_longitude = models.FloatField(null=True, blank=True)
-    Observer_longitude1 = models.FloatField(null=True, blank=True)
-    Observer_longitude2 = models.FloatField(null=True, blank=True)
-    phase1 = models.FloatField(null=True, blank=True)
-    phase2 = models.FloatField(null=True, blank=True)
-    planetocentric_latitude1 = models.FloatField(null=True, blank=True)
-    planetocentric_latitude2 = models.FloatField(null=True, blank=True)
-    planetographic_latitude1 = models.FloatField(null=True, blank=True)
-    planetographic_latitude2 = models.FloatField(null=True, blank=True)
-    range_to_body1 = models.FloatField(null=True, blank=True)
-    range_to_body2 = models.FloatField(null=True, blank=True)
-    solar_hour_angle = models.FloatField(null=True, blank=True)
-    solar_hour_angle1 = models.FloatField(null=True, blank=True)
-    solar_hour_angle2 = models.FloatField(null=True, blank=True)
-    sub_observer_IAU_longitude = models.FloatField(null=True, blank=True)
-    sub_observer_planetocentric_latitude = models.FloatField(null=True, blank=True)
-    sub_observer_planetographic_latitude = models.FloatField(null=True, blank=True)
-    sub_solar_IAU_longitude = models.FloatField(null=True, blank=True)
-    sub_solar_planetocentric_latitude = models.FloatField(null=True, blank=True)
-    sub_solar_planetographic_latitude = models.FloatField(null=True, blank=True)
-    ring_obs_id = models.CharField(max_length=40, blank=True, null=True)
-
-    class Meta:
-        db_table = 'obs_surface_geometry__CHARON'
-
-    def __unicode__(self):
-        return self.ring_obs_id
-
-class ObsSurfaceGeometryElara(models.Model):
-    obs_general = models.ForeignKey(ObsGeneral, db_column="obs_general_id", null=True, blank=True)
-    center_distance = models.FloatField(null=True, blank=True)
-    center_phase_angle = models.FloatField(null=True, blank=True)
-    center_resolution = models.FloatField(null=True, blank=True)
-    coarsest_resolution1 = models.FloatField(null=True, blank=True)
-    coarsest_resolution2 = models.FloatField(null=True, blank=True)
-    d_IAU_west_longitude = models.FloatField(null=True, blank=True)
-    d_Observer_longitude = models.FloatField(null=True, blank=True)
-    d_solar_hour_angle = models.FloatField(null=True, blank=True)
-    emission1 = models.FloatField(null=True, blank=True)
-    emission2 = models.FloatField(null=True, blank=True)
-    finest_resolution1 = models.FloatField(null=True, blank=True)
-    finest_resolution2 = models.FloatField(null=True, blank=True)
-    IAU_west_longitude = models.FloatField(null=True, blank=True)
-    IAU_west_longitude1 = models.FloatField(null=True, blank=True)
-    IAU_west_longitude2 = models.FloatField(null=True, blank=True)
-    incidence1 = models.FloatField(null=True, blank=True)
-    incidence2 = models.FloatField(null=True, blank=True)
-    Observer_longitude = models.FloatField(null=True, blank=True)
-    Observer_longitude1 = models.FloatField(null=True, blank=True)
-    Observer_longitude2 = models.FloatField(null=True, blank=True)
-    phase1 = models.FloatField(null=True, blank=True)
-    phase2 = models.FloatField(null=True, blank=True)
-    planetocentric_latitude1 = models.FloatField(null=True, blank=True)
-    planetocentric_latitude2 = models.FloatField(null=True, blank=True)
-    planetographic_latitude1 = models.FloatField(null=True, blank=True)
-    planetographic_latitude2 = models.FloatField(null=True, blank=True)
-    range_to_body1 = models.FloatField(null=True, blank=True)
-    range_to_body2 = models.FloatField(null=True, blank=True)
-    solar_hour_angle = models.FloatField(null=True, blank=True)
-    solar_hour_angle1 = models.FloatField(null=True, blank=True)
-    solar_hour_angle2 = models.FloatField(null=True, blank=True)
-    sub_observer_IAU_longitude = models.FloatField(null=True, blank=True)
-    sub_observer_planetocentric_latitude = models.FloatField(null=True, blank=True)
-    sub_observer_planetographic_latitude = models.FloatField(null=True, blank=True)
-    sub_solar_IAU_longitude = models.FloatField(null=True, blank=True)
-    sub_solar_planetocentric_latitude = models.FloatField(null=True, blank=True)
-    sub_solar_planetographic_latitude = models.FloatField(null=True, blank=True)
-    ring_obs_id = models.CharField(max_length=40, blank=True, null=True)
-
-    class Meta:
-        db_table = 'obs_surface_geometry__ELARA'
-
-    def __unicode__(self):
-        return self.ring_obs_id
-
-class ObsSurfaceGeometryGreip(models.Model):
-    obs_general = models.ForeignKey(ObsGeneral, db_column="obs_general_id", null=True, blank=True)
-    center_distance = models.FloatField(null=True, blank=True)
-    center_phase_angle = models.FloatField(null=True, blank=True)
-    center_resolution = models.FloatField(null=True, blank=True)
-    coarsest_resolution1 = models.FloatField(null=True, blank=True)
-    coarsest_resolution2 = models.FloatField(null=True, blank=True)
-    d_IAU_west_longitude = models.FloatField(null=True, blank=True)
-    d_Observer_longitude = models.FloatField(null=True, blank=True)
-    d_solar_hour_angle = models.FloatField(null=True, blank=True)
-    emission1 = models.FloatField(null=True, blank=True)
-    emission2 = models.FloatField(null=True, blank=True)
-    finest_resolution1 = models.FloatField(null=True, blank=True)
-    finest_resolution2 = models.FloatField(null=True, blank=True)
-    IAU_west_longitude = models.FloatField(null=True, blank=True)
-    IAU_west_longitude1 = models.FloatField(null=True, blank=True)
-    IAU_west_longitude2 = models.FloatField(null=True, blank=True)
-    incidence1 = models.FloatField(null=True, blank=True)
-    incidence2 = models.FloatField(null=True, blank=True)
-    Observer_longitude = models.FloatField(null=True, blank=True)
-    Observer_longitude1 = models.FloatField(null=True, blank=True)
-    Observer_longitude2 = models.FloatField(null=True, blank=True)
-    phase1 = models.FloatField(null=True, blank=True)
-    phase2 = models.FloatField(null=True, blank=True)
-    planetocentric_latitude1 = models.FloatField(null=True, blank=True)
-    planetocentric_latitude2 = models.FloatField(null=True, blank=True)
-    planetographic_latitude1 = models.FloatField(null=True, blank=True)
-    planetographic_latitude2 = models.FloatField(null=True, blank=True)
-    range_to_body1 = models.FloatField(null=True, blank=True)
-    range_to_body2 = models.FloatField(null=True, blank=True)
-    solar_hour_angle = models.FloatField(null=True, blank=True)
-    solar_hour_angle1 = models.FloatField(null=True, blank=True)
-    solar_hour_angle2 = models.FloatField(null=True, blank=True)
-    sub_observer_IAU_longitude = models.FloatField(null=True, blank=True)
-    sub_observer_planetocentric_latitude = models.FloatField(null=True, blank=True)
-    sub_observer_planetographic_latitude = models.FloatField(null=True, blank=True)
-    sub_solar_IAU_longitude = models.FloatField(null=True, blank=True)
-    sub_solar_planetocentric_latitude = models.FloatField(null=True, blank=True)
-    sub_solar_planetographic_latitude = models.FloatField(null=True, blank=True)
-    ring_obs_id = models.CharField(max_length=40, blank=True, null=True)
-
-    class Meta:
-        db_table = 'obs_surface_geometry__GREIP'
-
-    def __unicode__(self):
-        return self.ring_obs_id
-
-class ObsSurfaceGeometryHydra(models.Model):
-    obs_general = models.ForeignKey(ObsGeneral, db_column="obs_general_id", null=True, blank=True)
-    center_distance = models.FloatField(null=True, blank=True)
-    center_phase_angle = models.FloatField(null=True, blank=True)
-    center_resolution = models.FloatField(null=True, blank=True)
-    coarsest_resolution1 = models.FloatField(null=True, blank=True)
-    coarsest_resolution2 = models.FloatField(null=True, blank=True)
-    d_IAU_west_longitude = models.FloatField(null=True, blank=True)
-    d_Observer_longitude = models.FloatField(null=True, blank=True)
-    d_solar_hour_angle = models.FloatField(null=True, blank=True)
-    emission1 = models.FloatField(null=True, blank=True)
-    emission2 = models.FloatField(null=True, blank=True)
-    finest_resolution1 = models.FloatField(null=True, blank=True)
-    finest_resolution2 = models.FloatField(null=True, blank=True)
-    IAU_west_longitude = models.FloatField(null=True, blank=True)
-    IAU_west_longitude1 = models.FloatField(null=True, blank=True)
-    IAU_west_longitude2 = models.FloatField(null=True, blank=True)
-    incidence1 = models.FloatField(null=True, blank=True)
-    incidence2 = models.FloatField(null=True, blank=True)
-    Observer_longitude = models.FloatField(null=True, blank=True)
-    Observer_longitude1 = models.FloatField(null=True, blank=True)
-    Observer_longitude2 = models.FloatField(null=True, blank=True)
-    phase1 = models.FloatField(null=True, blank=True)
-    phase2 = models.FloatField(null=True, blank=True)
-    planetocentric_latitude1 = models.FloatField(null=True, blank=True)
-    planetocentric_latitude2 = models.FloatField(null=True, blank=True)
-    planetographic_latitude1 = models.FloatField(null=True, blank=True)
-    planetographic_latitude2 = models.FloatField(null=True, blank=True)
-    range_to_body1 = models.FloatField(null=True, blank=True)
-    range_to_body2 = models.FloatField(null=True, blank=True)
-    solar_hour_angle = models.FloatField(null=True, blank=True)
-    solar_hour_angle1 = models.FloatField(null=True, blank=True)
-    solar_hour_angle2 = models.FloatField(null=True, blank=True)
-    sub_observer_IAU_longitude = models.FloatField(null=True, blank=True)
-    sub_observer_planetocentric_latitude = models.FloatField(null=True, blank=True)
-    sub_observer_planetographic_latitude = models.FloatField(null=True, blank=True)
-    sub_solar_IAU_longitude = models.FloatField(null=True, blank=True)
-    sub_solar_planetocentric_latitude = models.FloatField(null=True, blank=True)
-    sub_solar_planetographic_latitude = models.FloatField(null=True, blank=True)
-    ring_obs_id = models.CharField(max_length=40, blank=True, null=True)
-
-    class Meta:
-        db_table = 'obs_surface_geometry__HYDRA'
-
-    def __unicode__(self):
-        return self.ring_obs_id
-
-class ObsSurfaceGeometryKerberos(models.Model):
-    obs_general = models.ForeignKey(ObsGeneral, db_column="obs_general_id", null=True, blank=True)
-    center_distance = models.FloatField(null=True, blank=True)
-    center_phase_angle = models.FloatField(null=True, blank=True)
-    center_resolution = models.FloatField(null=True, blank=True)
-    coarsest_resolution1 = models.FloatField(null=True, blank=True)
-    coarsest_resolution2 = models.FloatField(null=True, blank=True)
-    d_IAU_west_longitude = models.FloatField(null=True, blank=True)
-    d_Observer_longitude = models.FloatField(null=True, blank=True)
-    d_solar_hour_angle = models.FloatField(null=True, blank=True)
-    emission1 = models.FloatField(null=True, blank=True)
-    emission2 = models.FloatField(null=True, blank=True)
-    finest_resolution1 = models.FloatField(null=True, blank=True)
-    finest_resolution2 = models.FloatField(null=True, blank=True)
-    IAU_west_longitude = models.FloatField(null=True, blank=True)
-    IAU_west_longitude1 = models.FloatField(null=True, blank=True)
-    IAU_west_longitude2 = models.FloatField(null=True, blank=True)
-    incidence1 = models.FloatField(null=True, blank=True)
-    incidence2 = models.FloatField(null=True, blank=True)
-    Observer_longitude = models.FloatField(null=True, blank=True)
-    Observer_longitude1 = models.FloatField(null=True, blank=True)
-    Observer_longitude2 = models.FloatField(null=True, blank=True)
-    phase1 = models.FloatField(null=True, blank=True)
-    phase2 = models.FloatField(null=True, blank=True)
-    planetocentric_latitude1 = models.FloatField(null=True, blank=True)
-    planetocentric_latitude2 = models.FloatField(null=True, blank=True)
-    planetographic_latitude1 = models.FloatField(null=True, blank=True)
-    planetographic_latitude2 = models.FloatField(null=True, blank=True)
-    range_to_body1 = models.FloatField(null=True, blank=True)
-    range_to_body2 = models.FloatField(null=True, blank=True)
-    solar_hour_angle = models.FloatField(null=True, blank=True)
-    solar_hour_angle1 = models.FloatField(null=True, blank=True)
-    solar_hour_angle2 = models.FloatField(null=True, blank=True)
-    sub_observer_IAU_longitude = models.FloatField(null=True, blank=True)
-    sub_observer_planetocentric_latitude = models.FloatField(null=True, blank=True)
-    sub_observer_planetographic_latitude = models.FloatField(null=True, blank=True)
-    sub_solar_IAU_longitude = models.FloatField(null=True, blank=True)
-    sub_solar_planetocentric_latitude = models.FloatField(null=True, blank=True)
-    sub_solar_planetographic_latitude = models.FloatField(null=True, blank=True)
-    ring_obs_id = models.CharField(max_length=40, blank=True, null=True)
-
-    class Meta:
-        db_table = 'obs_surface_geometry__KERBEROS'
-
-    def __unicode__(self):
-        return self.ring_obs_id
-
-class ObsSurfaceGeometryNeptune(models.Model):
-    obs_general = models.ForeignKey(ObsGeneral, db_column="obs_general_id", null=True, blank=True)
-    center_distance = models.FloatField(null=True, blank=True)
-    center_phase_angle = models.FloatField(null=True, blank=True)
-    center_resolution = models.FloatField(null=True, blank=True)
-    coarsest_resolution1 = models.FloatField(null=True, blank=True)
-    coarsest_resolution2 = models.FloatField(null=True, blank=True)
-    d_IAU_west_longitude = models.FloatField(null=True, blank=True)
-    d_Observer_longitude = models.FloatField(null=True, blank=True)
-    d_solar_hour_angle = models.FloatField(null=True, blank=True)
-    emission1 = models.FloatField(null=True, blank=True)
-    emission2 = models.FloatField(null=True, blank=True)
-    finest_resolution1 = models.FloatField(null=True, blank=True)
-    finest_resolution2 = models.FloatField(null=True, blank=True)
-    IAU_west_longitude = models.FloatField(null=True, blank=True)
-    IAU_west_longitude1 = models.FloatField(null=True, blank=True)
-    IAU_west_longitude2 = models.FloatField(null=True, blank=True)
-    incidence1 = models.FloatField(null=True, blank=True)
-    incidence2 = models.FloatField(null=True, blank=True)
-    Observer_longitude = models.FloatField(null=True, blank=True)
-    Observer_longitude1 = models.FloatField(null=True, blank=True)
-    Observer_longitude2 = models.FloatField(null=True, blank=True)
-    phase1 = models.FloatField(null=True, blank=True)
-    phase2 = models.FloatField(null=True, blank=True)
-    planetocentric_latitude1 = models.FloatField(null=True, blank=True)
-    planetocentric_latitude2 = models.FloatField(null=True, blank=True)
-    planetographic_latitude1 = models.FloatField(null=True, blank=True)
-    planetographic_latitude2 = models.FloatField(null=True, blank=True)
-    range_to_body1 = models.FloatField(null=True, blank=True)
-    range_to_body2 = models.FloatField(null=True, blank=True)
-    solar_hour_angle = models.FloatField(null=True, blank=True)
-    solar_hour_angle1 = models.FloatField(null=True, blank=True)
-    solar_hour_angle2 = models.FloatField(null=True, blank=True)
-    sub_observer_IAU_longitude = models.FloatField(null=True, blank=True)
-    sub_observer_planetocentric_latitude = models.FloatField(null=True, blank=True)
-    sub_observer_planetographic_latitude = models.FloatField(null=True, blank=True)
-    sub_solar_IAU_longitude = models.FloatField(null=True, blank=True)
-    sub_solar_planetocentric_latitude = models.FloatField(null=True, blank=True)
-    sub_solar_planetographic_latitude = models.FloatField(null=True, blank=True)
-    ring_obs_id = models.CharField(max_length=40, blank=True, null=True)
-
-    class Meta:
-        db_table = 'obs_surface_geometry__NEPTUNE'
-
-    def __unicode__(self):
-        return self.ring_obs_id
-
-class ObsSurfaceGeometryNix(models.Model):
-    obs_general = models.ForeignKey(ObsGeneral, db_column="obs_general_id", null=True, blank=True)
-    center_distance = models.FloatField(null=True, blank=True)
-    center_phase_angle = models.FloatField(null=True, blank=True)
-    center_resolution = models.FloatField(null=True, blank=True)
-    coarsest_resolution1 = models.FloatField(null=True, blank=True)
-    coarsest_resolution2 = models.FloatField(null=True, blank=True)
-    d_IAU_west_longitude = models.FloatField(null=True, blank=True)
-    d_Observer_longitude = models.FloatField(null=True, blank=True)
-    d_solar_hour_angle = models.FloatField(null=True, blank=True)
-    emission1 = models.FloatField(null=True, blank=True)
-    emission2 = models.FloatField(null=True, blank=True)
-    finest_resolution1 = models.FloatField(null=True, blank=True)
-    finest_resolution2 = models.FloatField(null=True, blank=True)
-    IAU_west_longitude = models.FloatField(null=True, blank=True)
-    IAU_west_longitude1 = models.FloatField(null=True, blank=True)
-    IAU_west_longitude2 = models.FloatField(null=True, blank=True)
-    incidence1 = models.FloatField(null=True, blank=True)
-    incidence2 = models.FloatField(null=True, blank=True)
-    Observer_longitude = models.FloatField(null=True, blank=True)
-    Observer_longitude1 = models.FloatField(null=True, blank=True)
-    Observer_longitude2 = models.FloatField(null=True, blank=True)
-    phase1 = models.FloatField(null=True, blank=True)
-    phase2 = models.FloatField(null=True, blank=True)
-    planetocentric_latitude1 = models.FloatField(null=True, blank=True)
-    planetocentric_latitude2 = models.FloatField(null=True, blank=True)
-    planetographic_latitude1 = models.FloatField(null=True, blank=True)
-    planetographic_latitude2 = models.FloatField(null=True, blank=True)
-    range_to_body1 = models.FloatField(null=True, blank=True)
-    range_to_body2 = models.FloatField(null=True, blank=True)
-    solar_hour_angle = models.FloatField(null=True, blank=True)
-    solar_hour_angle1 = models.FloatField(null=True, blank=True)
-    solar_hour_angle2 = models.FloatField(null=True, blank=True)
-    sub_observer_IAU_longitude = models.FloatField(null=True, blank=True)
-    sub_observer_planetocentric_latitude = models.FloatField(null=True, blank=True)
-    sub_observer_planetographic_latitude = models.FloatField(null=True, blank=True)
-    sub_solar_IAU_longitude = models.FloatField(null=True, blank=True)
-    sub_solar_planetocentric_latitude = models.FloatField(null=True, blank=True)
-    sub_solar_planetographic_latitude = models.FloatField(null=True, blank=True)
-    ring_obs_id = models.CharField(max_length=40, blank=True, null=True)
-
-    class Meta:
-        db_table = 'obs_surface_geometry__NIX'
-
-    def __unicode__(self):
-        return self.ring_obs_id
-
-
-class ObsSurfaceGeometryPluto(models.Model):
-    obs_general = models.ForeignKey(ObsGeneral, db_column="obs_general_id", null=True, blank=True)
-    center_distance = models.FloatField(null=True, blank=True)
-    center_phase_angle = models.FloatField(null=True, blank=True)
-    center_resolution = models.FloatField(null=True, blank=True)
-    coarsest_resolution1 = models.FloatField(null=True, blank=True)
-    coarsest_resolution2 = models.FloatField(null=True, blank=True)
-    d_IAU_west_longitude = models.FloatField(null=True, blank=True)
-    d_Observer_longitude = models.FloatField(null=True, blank=True)
-    d_solar_hour_angle = models.FloatField(null=True, blank=True)
-    emission1 = models.FloatField(null=True, blank=True)
-    emission2 = models.FloatField(null=True, blank=True)
-    finest_resolution1 = models.FloatField(null=True, blank=True)
-    finest_resolution2 = models.FloatField(null=True, blank=True)
-    IAU_west_longitude = models.FloatField(null=True, blank=True)
-    IAU_west_longitude1 = models.FloatField(null=True, blank=True)
-    IAU_west_longitude2 = models.FloatField(null=True, blank=True)
-    incidence1 = models.FloatField(null=True, blank=True)
-    incidence2 = models.FloatField(null=True, blank=True)
-    Observer_longitude = models.FloatField(null=True, blank=True)
-    Observer_longitude1 = models.FloatField(null=True, blank=True)
-    Observer_longitude2 = models.FloatField(null=True, blank=True)
-    phase1 = models.FloatField(null=True, blank=True)
-    phase2 = models.FloatField(null=True, blank=True)
-    planetocentric_latitude1 = models.FloatField(null=True, blank=True)
-    planetocentric_latitude2 = models.FloatField(null=True, blank=True)
-    planetographic_latitude1 = models.FloatField(null=True, blank=True)
-    planetographic_latitude2 = models.FloatField(null=True, blank=True)
-    range_to_body1 = models.FloatField(null=True, blank=True)
-    range_to_body2 = models.FloatField(null=True, blank=True)
-    solar_hour_angle = models.FloatField(null=True, blank=True)
-    solar_hour_angle1 = models.FloatField(null=True, blank=True)
-    solar_hour_angle2 = models.FloatField(null=True, blank=True)
-    sub_observer_IAU_longitude = models.FloatField(null=True, blank=True)
-    sub_observer_planetocentric_latitude = models.FloatField(null=True, blank=True)
-    sub_observer_planetographic_latitude = models.FloatField(null=True, blank=True)
-    sub_solar_IAU_longitude = models.FloatField(null=True, blank=True)
-    sub_solar_planetocentric_latitude = models.FloatField(null=True, blank=True)
-    sub_solar_planetographic_latitude = models.FloatField(null=True, blank=True)
-    ring_obs_id = models.CharField(max_length=40, blank=True, null=True)
-
-    class Meta:
-        db_table = 'obs_surface_geometry__PLUTO'
-
-    def __unicode__(self):
-        return self.ring_obs_id
-
-class ObsSurfaceGeometryStyx(models.Model):
-    obs_general = models.ForeignKey(ObsGeneral, db_column="obs_general_id", null=True, blank=True)
-    center_distance = models.FloatField(null=True, blank=True)
-    center_phase_angle = models.FloatField(null=True, blank=True)
-    center_resolution = models.FloatField(null=True, blank=True)
-    coarsest_resolution1 = models.FloatField(null=True, blank=True)
-    coarsest_resolution2 = models.FloatField(null=True, blank=True)
-    d_IAU_west_longitude = models.FloatField(null=True, blank=True)
-    d_Observer_longitude = models.FloatField(null=True, blank=True)
-    d_solar_hour_angle = models.FloatField(null=True, blank=True)
-    emission1 = models.FloatField(null=True, blank=True)
-    emission2 = models.FloatField(null=True, blank=True)
-    finest_resolution1 = models.FloatField(null=True, blank=True)
-    finest_resolution2 = models.FloatField(null=True, blank=True)
-    IAU_west_longitude = models.FloatField(null=True, blank=True)
-    IAU_west_longitude1 = models.FloatField(null=True, blank=True)
-    IAU_west_longitude2 = models.FloatField(null=True, blank=True)
-    incidence1 = models.FloatField(null=True, blank=True)
-    incidence2 = models.FloatField(null=True, blank=True)
-    Observer_longitude = models.FloatField(null=True, blank=True)
-    Observer_longitude1 = models.FloatField(null=True, blank=True)
-    Observer_longitude2 = models.FloatField(null=True, blank=True)
-    phase1 = models.FloatField(null=True, blank=True)
-    phase2 = models.FloatField(null=True, blank=True)
-    planetocentric_latitude1 = models.FloatField(null=True, blank=True)
-    planetocentric_latitude2 = models.FloatField(null=True, blank=True)
-    planetographic_latitude1 = models.FloatField(null=True, blank=True)
-    planetographic_latitude2 = models.FloatField(null=True, blank=True)
-    range_to_body1 = models.FloatField(null=True, blank=True)
-    range_to_body2 = models.FloatField(null=True, blank=True)
-    solar_hour_angle = models.FloatField(null=True, blank=True)
-    solar_hour_angle1 = models.FloatField(null=True, blank=True)
-    solar_hour_angle2 = models.FloatField(null=True, blank=True)
-    sub_observer_IAU_longitude = models.FloatField(null=True, blank=True)
-    sub_observer_planetocentric_latitude = models.FloatField(null=True, blank=True)
-    sub_observer_planetographic_latitude = models.FloatField(null=True, blank=True)
-    sub_solar_IAU_longitude = models.FloatField(null=True, blank=True)
-    sub_solar_planetocentric_latitude = models.FloatField(null=True, blank=True)
-    sub_solar_planetographic_latitude = models.FloatField(null=True, blank=True)
-    ring_obs_id = models.CharField(max_length=40, blank=True, null=True)
-
-    class Meta:
-        db_table = 'obs_surface_geometry__STYX'
-
-    def __unicode__(self):
-        return self.ring_obs_id
-
-class ObsSurfaceGeometryUranus(models.Model):
-    obs_general = models.ForeignKey(ObsGeneral, db_column="obs_general_id", null=True, blank=True)
-    center_distance = models.FloatField(null=True, blank=True)
-    center_phase_angle = models.FloatField(null=True, blank=True)
-    center_resolution = models.FloatField(null=True, blank=True)
-    coarsest_resolution1 = models.FloatField(null=True, blank=True)
-    coarsest_resolution2 = models.FloatField(null=True, blank=True)
-    d_IAU_west_longitude = models.FloatField(null=True, blank=True)
-    d_Observer_longitude = models.FloatField(null=True, blank=True)
-    d_solar_hour_angle = models.FloatField(null=True, blank=True)
-    emission1 = models.FloatField(null=True, blank=True)
-    emission2 = models.FloatField(null=True, blank=True)
-    finest_resolution1 = models.FloatField(null=True, blank=True)
-    finest_resolution2 = models.FloatField(null=True, blank=True)
-    IAU_west_longitude = models.FloatField(null=True, blank=True)
-    IAU_west_longitude1 = models.FloatField(null=True, blank=True)
-    IAU_west_longitude2 = models.FloatField(null=True, blank=True)
-    incidence1 = models.FloatField(null=True, blank=True)
-    incidence2 = models.FloatField(null=True, blank=True)
-    Observer_longitude = models.FloatField(null=True, blank=True)
-    Observer_longitude1 = models.FloatField(null=True, blank=True)
-    Observer_longitude2 = models.FloatField(null=True, blank=True)
-    phase1 = models.FloatField(null=True, blank=True)
-    phase2 = models.FloatField(null=True, blank=True)
-    planetocentric_latitude1 = models.FloatField(null=True, blank=True)
-    planetocentric_latitude2 = models.FloatField(null=True, blank=True)
-    planetographic_latitude1 = models.FloatField(null=True, blank=True)
-    planetographic_latitude2 = models.FloatField(null=True, blank=True)
-    range_to_body1 = models.FloatField(null=True, blank=True)
-    range_to_body2 = models.FloatField(null=True, blank=True)
-    solar_hour_angle = models.FloatField(null=True, blank=True)
-    solar_hour_angle1 = models.FloatField(null=True, blank=True)
-    solar_hour_angle2 = models.FloatField(null=True, blank=True)
-    sub_observer_IAU_longitude = models.FloatField(null=True, blank=True)
-    sub_observer_planetocentric_latitude = models.FloatField(null=True, blank=True)
-    sub_observer_planetographic_latitude = models.FloatField(null=True, blank=True)
-    sub_solar_IAU_longitude = models.FloatField(null=True, blank=True)
-    sub_solar_planetocentric_latitude = models.FloatField(null=True, blank=True)
-    sub_solar_planetographic_latitude = models.FloatField(null=True, blank=True)
-    ring_obs_id = models.CharField(max_length=40, blank=True, null=True)
-
-    class Meta:
-        db_table = 'obs_surface_geometry__URANUS'
-
-    def __unicode__(self):
-        return self.ring_obs_id
-
-class ObsSurfaceGeometryCallirrhoe(models.Model):
-    obs_general = models.ForeignKey(ObsGeneral, db_column="obs_general_id", null=True, blank=True)
-    center_distance = models.FloatField(null=True, blank=True)
-    center_phase_angle = models.FloatField(null=True, blank=True)
-    center_resolution = models.FloatField(null=True, blank=True)
-    coarsest_resolution1 = models.FloatField(null=True, blank=True)
-    coarsest_resolution2 = models.FloatField(null=True, blank=True)
-    d_IAU_west_longitude = models.FloatField(null=True, blank=True)
-    d_Observer_longitude = models.FloatField(null=True, blank=True)
-    d_solar_hour_angle = models.FloatField(null=True, blank=True)
-    emission1 = models.FloatField(null=True, blank=True)
-    emission2 = models.FloatField(null=True, blank=True)
-    finest_resolution1 = models.FloatField(null=True, blank=True)
-    finest_resolution2 = models.FloatField(null=True, blank=True)
-    IAU_west_longitude = models.FloatField(null=True, blank=True)
-    IAU_west_longitude1 = models.FloatField(null=True, blank=True)
-    IAU_west_longitude2 = models.FloatField(null=True, blank=True)
-    incidence1 = models.FloatField(null=True, blank=True)
-    incidence2 = models.FloatField(null=True, blank=True)
-    Observer_longitude = models.FloatField(null=True, blank=True)
-    Observer_longitude1 = models.FloatField(null=True, blank=True)
-    Observer_longitude2 = models.FloatField(null=True, blank=True)
-    phase1 = models.FloatField(null=True, blank=True)
-    phase2 = models.FloatField(null=True, blank=True)
-    planetocentric_latitude1 = models.FloatField(null=True, blank=True)
-    planetocentric_latitude2 = models.FloatField(null=True, blank=True)
-    planetographic_latitude1 = models.FloatField(null=True, blank=True)
-    planetographic_latitude2 = models.FloatField(null=True, blank=True)
-    range_to_body1 = models.FloatField(null=True, blank=True)
-    range_to_body2 = models.FloatField(null=True, blank=True)
-    solar_hour_angle = models.FloatField(null=True, blank=True)
-    solar_hour_angle1 = models.FloatField(null=True, blank=True)
-    solar_hour_angle2 = models.FloatField(null=True, blank=True)
-    sub_observer_IAU_longitude = models.FloatField(null=True, blank=True)
-    sub_observer_planetocentric_latitude = models.FloatField(null=True, blank=True)
-    sub_observer_planetographic_latitude = models.FloatField(null=True, blank=True)
-    sub_solar_IAU_longitude = models.FloatField(null=True, blank=True)
-    sub_solar_planetocentric_latitude = models.FloatField(null=True, blank=True)
-    sub_solar_planetographic_latitude = models.FloatField(null=True, blank=True)
-    ring_obs_id = models.CharField(max_length=40, blank=True, null=True)
-
-    class Meta:
-        db_table = 'obs_surface_geometry__CALLIRRHOE'
-
-    def __unicode__(self):
-        return self.ring_obs_id
-
-
 
 class ObsSurfaceGeometryPandora(models.Model):
     obs_general = models.ForeignKey(ObsGeneral, db_column="obs_general_id", null=True, blank=True)
@@ -4140,6 +4225,18 @@ class ObsSurfaceGeometryPandora(models.Model):
 
     class Meta:
         db_table = 'obs_surface_geometry__PANDORA'
+
+    def __unicode__(self):
+        return self.ring_obs_id
+
+
+class ObsSurfaceGeometryPerdita(models.Model):
+    obs_general = models.ForeignKey(ObsGeneral, db_column="obs_general_id", null=True, blank=True)
+    sub_solar_planetographic_latitude = models.FloatField(null=True, blank=True)
+    ring_obs_id = models.CharField(max_length=40, blank=True, null=True)
+
+    class Meta:
+        db_table = 'obs_surface_geometry__PERDITA'
 
     def __unicode__(self):
         return self.ring_obs_id
@@ -4193,6 +4290,54 @@ class ObsSurfaceGeometryPhoebe(models.Model):
         return self.ring_obs_id
 
 
+class ObsSurfaceGeometryPluto(models.Model):
+    obs_general = models.ForeignKey(ObsGeneral, db_column="obs_general_id", null=True, blank=True)
+    center_distance = models.FloatField(null=True, blank=True)
+    center_phase_angle = models.FloatField(null=True, blank=True)
+    center_resolution = models.FloatField(null=True, blank=True)
+    coarsest_resolution1 = models.FloatField(null=True, blank=True)
+    coarsest_resolution2 = models.FloatField(null=True, blank=True)
+    d_IAU_west_longitude = models.FloatField(null=True, blank=True)
+    d_Observer_longitude = models.FloatField(null=True, blank=True)
+    d_solar_hour_angle = models.FloatField(null=True, blank=True)
+    emission1 = models.FloatField(null=True, blank=True)
+    emission2 = models.FloatField(null=True, blank=True)
+    finest_resolution1 = models.FloatField(null=True, blank=True)
+    finest_resolution2 = models.FloatField(null=True, blank=True)
+    IAU_west_longitude = models.FloatField(null=True, blank=True)
+    IAU_west_longitude1 = models.FloatField(null=True, blank=True)
+    IAU_west_longitude2 = models.FloatField(null=True, blank=True)
+    incidence1 = models.FloatField(null=True, blank=True)
+    incidence2 = models.FloatField(null=True, blank=True)
+    Observer_longitude = models.FloatField(null=True, blank=True)
+    Observer_longitude1 = models.FloatField(null=True, blank=True)
+    Observer_longitude2 = models.FloatField(null=True, blank=True)
+    phase1 = models.FloatField(null=True, blank=True)
+    phase2 = models.FloatField(null=True, blank=True)
+    planetocentric_latitude1 = models.FloatField(null=True, blank=True)
+    planetocentric_latitude2 = models.FloatField(null=True, blank=True)
+    planetographic_latitude1 = models.FloatField(null=True, blank=True)
+    planetographic_latitude2 = models.FloatField(null=True, blank=True)
+    range_to_body1 = models.FloatField(null=True, blank=True)
+    range_to_body2 = models.FloatField(null=True, blank=True)
+    solar_hour_angle = models.FloatField(null=True, blank=True)
+    solar_hour_angle1 = models.FloatField(null=True, blank=True)
+    solar_hour_angle2 = models.FloatField(null=True, blank=True)
+    sub_observer_IAU_longitude = models.FloatField(null=True, blank=True)
+    sub_observer_planetocentric_latitude = models.FloatField(null=True, blank=True)
+    sub_observer_planetographic_latitude = models.FloatField(null=True, blank=True)
+    sub_solar_IAU_longitude = models.FloatField(null=True, blank=True)
+    sub_solar_planetocentric_latitude = models.FloatField(null=True, blank=True)
+    sub_solar_planetographic_latitude = models.FloatField(null=True, blank=True)
+    ring_obs_id = models.CharField(max_length=40, blank=True, null=True)
+
+    class Meta:
+        db_table = 'obs_surface_geometry__PLUTO'
+
+    def __unicode__(self):
+        return self.ring_obs_id
+
+
 class ObsSurfaceGeometryPolydeuces(models.Model):
     obs_general = models.ForeignKey(ObsGeneral, db_column="obs_general_id", null=True, blank=True)
     center_distance = models.FloatField(null=True, blank=True)
@@ -4236,6 +4381,18 @@ class ObsSurfaceGeometryPolydeuces(models.Model):
 
     class Meta:
         db_table = 'obs_surface_geometry__POLYDEUCES'
+
+    def __unicode__(self):
+        return self.ring_obs_id
+
+
+class ObsSurfaceGeometryPortia(models.Model):
+    obs_general = models.ForeignKey(ObsGeneral, db_column="obs_general_id", null=True, blank=True)
+    sub_solar_planetographic_latitude = models.FloatField(null=True, blank=True)
+    ring_obs_id = models.CharField(max_length=40, blank=True, null=True)
+
+    class Meta:
+        db_table = 'obs_surface_geometry__PORTIA'
 
     def __unicode__(self):
         return self.ring_obs_id
@@ -4289,6 +4446,30 @@ class ObsSurfaceGeometryPrometheus(models.Model):
         return self.ring_obs_id
 
 
+class ObsSurfaceGeometryProteus(models.Model):
+    obs_general = models.ForeignKey(ObsGeneral, db_column="obs_general_id", null=True, blank=True)
+    sub_solar_planetographic_latitude = models.FloatField(null=True, blank=True)
+    ring_obs_id = models.CharField(max_length=40, blank=True, null=True)
+
+    class Meta:
+        db_table = 'obs_surface_geometry__PROTEUS'
+
+    def __unicode__(self):
+        return self.ring_obs_id
+
+
+class ObsSurfaceGeometryPuck(models.Model):
+    obs_general = models.ForeignKey(ObsGeneral, db_column="obs_general_id", null=True, blank=True)
+    sub_solar_planetographic_latitude = models.FloatField(null=True, blank=True)
+    ring_obs_id = models.CharField(max_length=40, blank=True, null=True)
+
+    class Meta:
+        db_table = 'obs_surface_geometry__PUCK'
+
+    def __unicode__(self):
+        return self.ring_obs_id
+
+
 class ObsSurfaceGeometryRhea(models.Model):
     obs_general = models.ForeignKey(ObsGeneral, db_column="obs_general_id", null=True, blank=True)
     center_distance = models.FloatField(null=True, blank=True)
@@ -4332,6 +4513,18 @@ class ObsSurfaceGeometryRhea(models.Model):
 
     class Meta:
         db_table = 'obs_surface_geometry__RHEA'
+
+    def __unicode__(self):
+        return self.ring_obs_id
+
+
+class ObsSurfaceGeometryRosalind(models.Model):
+    obs_general = models.ForeignKey(ObsGeneral, db_column="obs_general_id", null=True, blank=True)
+    sub_solar_planetographic_latitude = models.FloatField(null=True, blank=True)
+    ring_obs_id = models.CharField(max_length=40, blank=True, null=True)
+
+    class Meta:
+        db_table = 'obs_surface_geometry__ROSALIND'
 
     def __unicode__(self):
         return self.ring_obs_id
@@ -4620,6 +4813,54 @@ class ObsSurfaceGeometrySkoll(models.Model):
 
     class Meta:
         db_table = 'obs_surface_geometry__SKOLL'
+
+    def __unicode__(self):
+        return self.ring_obs_id
+
+
+class ObsSurfaceGeometryStyx(models.Model):
+    obs_general = models.ForeignKey(ObsGeneral, db_column="obs_general_id", null=True, blank=True)
+    center_distance = models.FloatField(null=True, blank=True)
+    center_phase_angle = models.FloatField(null=True, blank=True)
+    center_resolution = models.FloatField(null=True, blank=True)
+    coarsest_resolution1 = models.FloatField(null=True, blank=True)
+    coarsest_resolution2 = models.FloatField(null=True, blank=True)
+    d_IAU_west_longitude = models.FloatField(null=True, blank=True)
+    d_Observer_longitude = models.FloatField(null=True, blank=True)
+    d_solar_hour_angle = models.FloatField(null=True, blank=True)
+    emission1 = models.FloatField(null=True, blank=True)
+    emission2 = models.FloatField(null=True, blank=True)
+    finest_resolution1 = models.FloatField(null=True, blank=True)
+    finest_resolution2 = models.FloatField(null=True, blank=True)
+    IAU_west_longitude = models.FloatField(null=True, blank=True)
+    IAU_west_longitude1 = models.FloatField(null=True, blank=True)
+    IAU_west_longitude2 = models.FloatField(null=True, blank=True)
+    incidence1 = models.FloatField(null=True, blank=True)
+    incidence2 = models.FloatField(null=True, blank=True)
+    Observer_longitude = models.FloatField(null=True, blank=True)
+    Observer_longitude1 = models.FloatField(null=True, blank=True)
+    Observer_longitude2 = models.FloatField(null=True, blank=True)
+    phase1 = models.FloatField(null=True, blank=True)
+    phase2 = models.FloatField(null=True, blank=True)
+    planetocentric_latitude1 = models.FloatField(null=True, blank=True)
+    planetocentric_latitude2 = models.FloatField(null=True, blank=True)
+    planetographic_latitude1 = models.FloatField(null=True, blank=True)
+    planetographic_latitude2 = models.FloatField(null=True, blank=True)
+    range_to_body1 = models.FloatField(null=True, blank=True)
+    range_to_body2 = models.FloatField(null=True, blank=True)
+    solar_hour_angle = models.FloatField(null=True, blank=True)
+    solar_hour_angle1 = models.FloatField(null=True, blank=True)
+    solar_hour_angle2 = models.FloatField(null=True, blank=True)
+    sub_observer_IAU_longitude = models.FloatField(null=True, blank=True)
+    sub_observer_planetocentric_latitude = models.FloatField(null=True, blank=True)
+    sub_observer_planetographic_latitude = models.FloatField(null=True, blank=True)
+    sub_solar_IAU_longitude = models.FloatField(null=True, blank=True)
+    sub_solar_planetocentric_latitude = models.FloatField(null=True, blank=True)
+    sub_solar_planetographic_latitude = models.FloatField(null=True, blank=True)
+    ring_obs_id = models.CharField(max_length=40, blank=True, null=True)
+
+    class Meta:
+        db_table = 'obs_surface_geometry__STYX'
 
     def __unicode__(self):
         return self.ring_obs_id
@@ -4961,6 +5202,18 @@ class ObsSurfaceGeometryTethys(models.Model):
         return self.ring_obs_id
 
 
+class ObsSurfaceGeometryThalassa(models.Model):
+    obs_general = models.ForeignKey(ObsGeneral, db_column="obs_general_id", null=True, blank=True)
+    sub_solar_planetographic_latitude = models.FloatField(null=True, blank=True)
+    ring_obs_id = models.CharField(max_length=40, blank=True, null=True)
+
+    class Meta:
+        db_table = 'obs_surface_geometry__THALASSA'
+
+    def __unicode__(self):
+        return self.ring_obs_id
+
+
 class ObsSurfaceGeometryThebe(models.Model):
     obs_general = models.ForeignKey(ObsGeneral, db_column="obs_general_id", null=True, blank=True)
     center_distance = models.FloatField(null=True, blank=True)
@@ -5094,6 +5347,90 @@ class ObsSurfaceGeometryTitan(models.Model):
 
     class Meta:
         db_table = 'obs_surface_geometry__TITAN'
+
+    def __unicode__(self):
+        return self.ring_obs_id
+
+
+class ObsSurfaceGeometryTitania(models.Model):
+    obs_general = models.ForeignKey(ObsGeneral, db_column="obs_general_id", null=True, blank=True)
+    sub_solar_planetographic_latitude = models.FloatField(null=True, blank=True)
+    ring_obs_id = models.CharField(max_length=40, blank=True, null=True)
+
+    class Meta:
+        db_table = 'obs_surface_geometry__TITANIA'
+
+    def __unicode__(self):
+        return self.ring_obs_id
+
+
+class ObsSurfaceGeometryTriton(models.Model):
+    obs_general = models.ForeignKey(ObsGeneral, db_column="obs_general_id", null=True, blank=True)
+    sub_solar_planetographic_latitude = models.FloatField(null=True, blank=True)
+    ring_obs_id = models.CharField(max_length=40, blank=True, null=True)
+
+    class Meta:
+        db_table = 'obs_surface_geometry__TRITON'
+
+    def __unicode__(self):
+        return self.ring_obs_id
+
+
+class ObsSurfaceGeometryUmbriel(models.Model):
+    obs_general = models.ForeignKey(ObsGeneral, db_column="obs_general_id", null=True, blank=True)
+    sub_solar_planetographic_latitude = models.FloatField(null=True, blank=True)
+    ring_obs_id = models.CharField(max_length=40, blank=True, null=True)
+
+    class Meta:
+        db_table = 'obs_surface_geometry__UMBRIEL'
+
+    def __unicode__(self):
+        return self.ring_obs_id
+
+
+class ObsSurfaceGeometryUranus(models.Model):
+    obs_general = models.ForeignKey(ObsGeneral, db_column="obs_general_id", null=True, blank=True)
+    center_distance = models.FloatField(null=True, blank=True)
+    center_phase_angle = models.FloatField(null=True, blank=True)
+    center_resolution = models.FloatField(null=True, blank=True)
+    coarsest_resolution1 = models.FloatField(null=True, blank=True)
+    coarsest_resolution2 = models.FloatField(null=True, blank=True)
+    d_IAU_west_longitude = models.FloatField(null=True, blank=True)
+    d_Observer_longitude = models.FloatField(null=True, blank=True)
+    d_solar_hour_angle = models.FloatField(null=True, blank=True)
+    emission1 = models.FloatField(null=True, blank=True)
+    emission2 = models.FloatField(null=True, blank=True)
+    finest_resolution1 = models.FloatField(null=True, blank=True)
+    finest_resolution2 = models.FloatField(null=True, blank=True)
+    IAU_west_longitude = models.FloatField(null=True, blank=True)
+    IAU_west_longitude1 = models.FloatField(null=True, blank=True)
+    IAU_west_longitude2 = models.FloatField(null=True, blank=True)
+    incidence1 = models.FloatField(null=True, blank=True)
+    incidence2 = models.FloatField(null=True, blank=True)
+    Observer_longitude = models.FloatField(null=True, blank=True)
+    Observer_longitude1 = models.FloatField(null=True, blank=True)
+    Observer_longitude2 = models.FloatField(null=True, blank=True)
+    phase1 = models.FloatField(null=True, blank=True)
+    phase2 = models.FloatField(null=True, blank=True)
+    planetocentric_latitude1 = models.FloatField(null=True, blank=True)
+    planetocentric_latitude2 = models.FloatField(null=True, blank=True)
+    planetographic_latitude1 = models.FloatField(null=True, blank=True)
+    planetographic_latitude2 = models.FloatField(null=True, blank=True)
+    range_to_body1 = models.FloatField(null=True, blank=True)
+    range_to_body2 = models.FloatField(null=True, blank=True)
+    solar_hour_angle = models.FloatField(null=True, blank=True)
+    solar_hour_angle1 = models.FloatField(null=True, blank=True)
+    solar_hour_angle2 = models.FloatField(null=True, blank=True)
+    sub_observer_IAU_longitude = models.FloatField(null=True, blank=True)
+    sub_observer_planetocentric_latitude = models.FloatField(null=True, blank=True)
+    sub_observer_planetographic_latitude = models.FloatField(null=True, blank=True)
+    sub_solar_IAU_longitude = models.FloatField(null=True, blank=True)
+    sub_solar_planetocentric_latitude = models.FloatField(null=True, blank=True)
+    sub_solar_planetographic_latitude = models.FloatField(null=True, blank=True)
+    ring_obs_id = models.CharField(max_length=40, blank=True, null=True)
+
+    class Meta:
+        db_table = 'obs_surface_geometry__URANUS'
 
     def __unicode__(self):
         return self.ring_obs_id
