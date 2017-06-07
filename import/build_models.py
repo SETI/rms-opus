@@ -24,7 +24,7 @@ from collections import OrderedDict
 from settings import DATABASES, MULT_FIELDS
 
 opus1 = 'Observations' # from here
-opus2 = 'opus_small'   # to here
+opus2 = 'opus'   # to here
 
 #----  shell argvs --------#
 import sys
@@ -118,11 +118,11 @@ for tbl in obs_tables:
 
 # ------------ build model defs  ------------#
 
-# get all the fields in the database from the old opus database Observations.forms
-where_clause = " where (display = 'Y' or display_results = 'Y') "
-where_clause += ' '.join(["and table_name not like %s" for t in exclude])
-where_clause += " order by table_name,name "
-cursor.execute("select search_form,name,type,length,form_type from " + opus1 + ".forms " + where_clause, exclude)
+# get all the fields in the database from the new opus database opus.param_info
+where_clause = " where (display = 1 or display_results = 1) "
+where_clause += ' '.join(["and category_name not like %s" for t in exclude])
+where_clause += " order by category_name,name "
+cursor.execute("select search_form,name,type,length,form_type from " + opus2 + ".param_info " + where_clause, exclude)
 param_info_rows = cursor.fetchall()
 
 # now build our list of field definitions
