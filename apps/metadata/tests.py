@@ -31,22 +31,22 @@ class metadataTests(TestCase):
         response = self.c.get(url)
         print 'got:'
         print response.content
+        got = json.loads(response.content)
         self.assertEqual(response.status_code, 200)
 
         try:
             expected = {"max": "2011-269T19:59:51.124", "nulls": 0, "min": "2009-09-01T00:00:01"}
             print 'expected:'
             print expected
-            got = json.loads(response.content)
             self.assertEqual(expected['max'], got['max'])
             self.assertEqual(expected['min'], got['min'])
 
         except AssertionError:
-            expected = '{"max": "2016-04-01T00:00:22.404", "nulls": 0, "min": "1980-08-23T12:02:10"}'
+            expected = {"max": "2016-183T00:59:04.130", "nulls": 0, "min": "1979-04-07T19:12:41"}
             print 'expected:'
             print expected
-            self.assertEqual(got['min'], "2009-09-01T00:00:01")
-            self.assertGreater(got['max'], "2016-04-00T00:00:22.404")
+            self.assertEqual(expected['max'], got['max'])
+            self.assertEqual(expected['min'], got['min'])
 
     def test_getResultCount(self):
         response = self.c.get('/opus/api/meta/result_count.json?planet=Saturn')
