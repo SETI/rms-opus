@@ -7,15 +7,11 @@ RANK_CHOICES = (('0','Advanced'),('1','Basic'))
 
 class ParamInfo(models.Model):
     """
-
-    ** DEPRECATED **
-    This model describes every searchable param in the database (aka fields in the Observations model)
+    This model describes every searchable param in the database
     each has attributes like display, display order, query type, slug, etc..
 
-    A word about the mission and instrument fields: these are very important fields because
-    they describe parameters are grouped in the data query string.
-
-    We allow for searching accross different missions and instrument (ie: show me all
+    pretty sure this is deprecated: 
+    We provide searching accross different missions and instrument (ie: show me all
     Observations of the A ring where Voyager ISS was using the red filter and Cassini ISS
     was using a violet filter). This wouldn't work in a traditional relational database
     (you can't have an Observation that is *both* taken using the Cassini ISS and Voyager ISS)
@@ -61,8 +57,6 @@ class ParamInfo(models.Model):
     sub_heading = models.CharField(max_length=150, blank=True, null = True)
     # related_table_name = models.CharField(max_length=42, blank=True, null = True)
     # related_table_field_name = models.CharField(max_length=25, blank=True, null = True)
-
-
 #    group = models.ForeignKey("Groups", blank=True, null = True)
 
     class Meta:
@@ -81,7 +75,6 @@ class ParamInfo(models.Model):
         definition['more_info'] = get_more_info_url(self.dict_more_info_name, self.dict_more_info_context)
         return definition
 
-
     # http://djangosnippets.org/snippets/2057/
     def save(self, *args, **kwargs):
         model = self.__class__
@@ -97,5 +90,3 @@ class ParamInfo(models.Model):
                 self.disp_order = 0
 
         return super(ParamInfo, self).save(*args, **kwargs)
-
-
