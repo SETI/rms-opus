@@ -7,8 +7,10 @@ import json
 from unittest import TestCase
 from django.test.client import Client
 from django.db import connection
-
 from metadata.views import *
+
+import logging
+log = logging.getLogger(__name__)
 
 cursor = connection.cursor()
 
@@ -34,9 +36,11 @@ class metadataTests(TestCase):
         try:
             expected = {"max": "2011-269T19:59:51.124", "nulls": 0, "min": "2009-09-01T00:00:01"}
             print 'expected:'
-            got = json.loads(response.content)
             print expected
-            self.assertEqual(sorted(got), sorted(expected))
+            got = json.loads(response.content)
+            self.assertEqual(expected['max'], got['max'])
+            self.assertEqual(expected['min'], got['min'])
+
         except AssertionError:
             expected = '{"max": "2016-04-01T00:00:22.404", "nulls": 0, "min": "1980-08-23T12:02:10"}'
             print 'expected:'
