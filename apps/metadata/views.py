@@ -189,7 +189,7 @@ def getRangeEndpoints(request,slug,fmt='json'):
     param_name_no_num = stripNumericSuffix(param_name1)
     table_model = apps.get_model('search', table_name.title().replace('_',''))
 
-    if form_type == 'RANGE' and '1' not in param_info.slug:
+    if form_type == 'RANGE' and '1' not in param_info.slug and '2' not in param_info.slug:
         param_name1 = param_name2 = param_name_no_num
 
     try:
