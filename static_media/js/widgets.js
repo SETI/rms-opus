@@ -59,6 +59,7 @@ var o_widgets = {
         /***********************************************************/
 
         $('#search').on('change', 'input.multichoice', function() {
+           // mult widget gets changed
            id = $(this).attr("id").split('_')[0];
            value = $(this).attr("value");
 
@@ -607,10 +608,11 @@ var o_widgets = {
                      $('#' + widget + ' select').attr("value",opus.extras['qtype-'+id]);
                  }
 
-                // add the helper icon to range widgets. This is terrible and I am terrible.
+                 // add the helper icon to range widgets.
                 // add the helper text for range widgets
-                if ($('.' + widget).hasClass('range-widget')) {
-
+                if ($('.' + widget).hasClass('range-widget') && $('.' + widget).find('select').length) {
+                    // this is a range widget and also the any/all/only dropdown is included
+                    // (the server knows not to include it when this is a longitude type query)
                     var help_icon = '<a href = "#" data-toggle="popover" data-placement="left">\
                                     <i class="fa fa-info-circle"></i></a>';
 
