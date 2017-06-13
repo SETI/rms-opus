@@ -4,7 +4,7 @@ import requests
 import csv
 
 api_endpoint = "http://tools.pds-rings.seti.org/opus/api/meta/result_count.json?"
-filename = 'result_counts.txt'
+filename = 'result_counts.csv'
 
 class APIEndpointTests(unittest.TestCase):
 
