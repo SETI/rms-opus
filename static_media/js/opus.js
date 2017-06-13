@@ -268,7 +268,7 @@ var opus = {
         }
 
 
-        // start the result count spinner and do the yellow flasj
+        // start the result count spinner and do the yellow flash
         $('#result_count').html(opus.spinner).parent().effect("highlight", {}, 500);
           // query string has changed
           opus.last_selections = selections;

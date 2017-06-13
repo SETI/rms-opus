@@ -550,8 +550,8 @@ def range_query_object(selections, param_name, qtypes):
 
 def longitudeQuery(selections,param_name):
     # raises 'KeyError' or IndexError if min or max value is blank
-    # or ranges are lopsided, all ranges for LONG query must have both sides defined
-    # returns string sql
+    # or ranges are lopsided, all ranges for LONG query must have both sides
+    # defined returns string sql
 
     clauses = []  # we may have a number of clauses to piece together
     params  = []  # we are building a sql string
