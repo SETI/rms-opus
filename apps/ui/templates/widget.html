@@ -27,7 +27,7 @@
             </div><!-- /widget-header -->
 
             <div class="widget__{{ slug }} widget-body
-							{% if form_type == 'RANGE' %}
+							{% if form_type in range_fields %}
 								 range-widget
 							{% endif %}
 						">

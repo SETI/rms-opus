@@ -104,7 +104,6 @@ def getMenuLabels(request, labels_view):
     from the param_info model
 
     """
-
     labels_view = 'results' if labels_view == 'results' else 'search'
 
     if request and request.GET:
@@ -156,10 +155,18 @@ def getMenuLabels(request, labels_view):
             for sub_head in sub_headings[d.table_name]:
 
                 if labels_view == 'search':
-                    menu_data[d.table_name]['data'][sub_head] = ParamInfo.objects.filter(display=1, category_name = d.table_name, sub_heading = sub_head)
+                    all_param_info = ParamInfo.objects.filter(display=1, category_name = d.table_name, sub_heading = sub_head)
                 else:  # lables for results or search view
-                    menu_data[d.table_name]['data'][sub_head] = ParamInfo.objects.filter(display_results=1, category_name = d.table_name, sub_heading = sub_head)
+                    all_param_info = ParamInfo.objects.filter(display_results=1, category_name = d.table_name, sub_heading = sub_head)
 
+                # before adding this to data structure, correct a problem with
+                # the naming of single column range slugs for menus like this
+                all_param_info = list(all_param_info)
+                for k,param_info in enumerate(all_param_info):
+                    param_info.slug = adjust_slug_name_single_col_ranges(param_info)
+                    all_param_info[k] = param_info
+
+                menu_data[d.table_name]['data'][sub_head] = all_param_info
 
         else:
             # this div has no sub headings
@@ -167,14 +174,25 @@ def getMenuLabels(request, labels_view):
 
             if labels_view == 'search':
                 for p in ParamInfo.objects.filter(display=1, category_name=d.table_name):
+                    old_slug = p.slug
+                    new_slug = adjust_slug_name_single_col_ranges(p)
+                    p.slug = adjust_slug_name_single_col_ranges(p)
                     menu_data[d.table_name].setdefault('data', []).append(p)
             else:
                 for p in ParamInfo.objects.filter(display_results=1, category_name=d.table_name):
-
+                    p.slug = adjust_slug_name_single_col_ranges(p)
                     menu_data[d.table_name].setdefault('data', []).append(p)
 
     # div_labels = {d.table_name:d.label for d in TableName.objects.filter(display='Y', table_name__in=triggered_tables)}
     return {'menu': {'data': menu_data, 'divs': divs}}
+
+
+def adjust_slug_name_single_col_ranges(param_info):
+    slug = param_info.slug
+    form_type = param_info.form_type
+    if form_type == 'RANGE' and '1' not in slug and '2' not in slug:
+        slug = slug + '1'
+    return slug
 
 
 def getWidget(request, **kwargs):
@@ -338,6 +356,8 @@ def getWidget(request, **kwargs):
 
     label = param_info.label
     intro = param_info.intro
+
+    range_fields = settings.RANGE_FIELDS
 
     if fmt == 'raw':
         return str(form)

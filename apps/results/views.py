@@ -129,8 +129,16 @@ def getData(request,fmt):
             labels += [ParamInfo.objects.get(slug=slug).label_results]
         except ParamInfo.DoesNotExist:
             # this slug doens't match anything in param info, nix it
-            log.error('could not find param_info for ' + slug)
-            continue
+            if '1' in slug:
+                # single column range slugs will not have the index, but
+                # will come in with it because of how ui is designed, so
+                # look for the slug without the index
+                temp_slug = slug[:-1]
+                try:
+                    labels += [ParamInfo.objects.get(slug=temp_slug).label_results]
+                except ParamInfo.DoesNotExist:
+                    log.error('could not find param_info for ' + slug)
+                    continue
 
     if is_column_chooser:
         labels.insert(0, "add")   # adds a column for checkbox add-to-collections
@@ -750,7 +758,15 @@ def getPage(request, colls=None, colls_page=None, page=None):
         try:
             columns += [ParamInfo.objects.get(slug=slug).param_name()]
         except ParamInfo.DoesNotExist:
-            pass
+            if '1' in slug:
+                # single column range slugs will not have the index, but
+                # will come in with it because of how ui is designed, so
+                # look for the slug without the index
+                temp_slug = slug[:-1]
+                try:
+                    columns += [ParamInfo.objects.get(slug=temp_slug).param_name()]
+                except ParamInfo.DoesNotExist:
+                    continue
 
     triggered_tables = list(set([param_name.split('.')[0] for param_name in columns]))
     try:
