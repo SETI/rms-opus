@@ -18,6 +18,7 @@ from django.test.client import Client
 from search.views import *
 from results.views import *
 from django.http import QueryDict
+from django.apps import apps
 
 from django.conf import settings
 settings.CACHE_BACKEND = 'dummy:///'
@@ -40,6 +41,21 @@ class searchTests(TestCase):
             print "found an imaging instrument with is_image = 0 \n here is what opus thinks are non imaging instruments, \n something is awry here:"
             print non_imaging_instruments
             self.assertTrue(instrument_id not in non_imaging_instruments)
+
+    def test__all_geo_models_should_have_same_fields_as_each_other(self):
+        """ find all geo models by inspecting param_info_table and check that
+            they each have the same parameters defined in django models """
+        # as in the import scripts, Mimas sets the standard template:
+        expected_fields = sorted([n for n in ObsSurfaceGeometryMimas.__dict__])
+        param_info = ParamInfo.objects.filter(category_name__contains="surface_geometry__")
+        all_category_names = sorted(list(set([p.category_name for p in param_info])))
+        for cat_name in all_category_names:
+            model_name = cat_name.title().replace('_','')
+            print "working on {0}".format(model_name)
+            model = apps.get_model('search',model_name)
+            fields = sorted([n for n in model.__dict__])
+            print "found {0} fields expected {1}".format(len(fields), len(expected_fields))
+            self.assertEqual(expected_fields, fields)
 
     def test__partables_has_all_surface_geo_tables(self):
         count_partables = Partable.objects.filter(partable__contains="surface_geometry__").values('partable').distinct().count()
