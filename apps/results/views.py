@@ -290,9 +290,19 @@ def get_metadata(request, ring_obs_id, fmt):
 
                 data[table_label] = ordered_results
 
-            except AttributeError: pass  # no results found in this table, move along
-            except IndexError: pass  # no results found in this table, move along
-            except FieldError: pass  # this ring_obs_id not found in this table
+            except IndexError:
+                # this is pretty normal, it will check every table for a ring obs id
+                # a lot of observations do not appear in a lot of tables..
+                # for example something on jupiter won't appear in a saturn table..
+                # log.error('IndexError: no results found for {0} in table {1}'.format(ring_obs_id, table_name) )
+                pass  # no results found in this table, move along
+            except AttributeError:
+                log.error('AttributeError: no results found for {0} in table {1}'.format(ring_obs_id, table_name) )
+                pass  # no results found in this table, move along
+            except FieldError:
+                log.error('FieldError: no results found for {0} in table {1}'.format(ring_obs_id, table_name) )
+                pass  # no results found in this table, move along
+
 
     if fmt == 'html':
         return render(request, 'detail_metadata.html',locals())
