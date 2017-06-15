@@ -172,45 +172,50 @@ def getValidMults(request,slug,fmt='json'):
 def getRangeEndpoints(request,slug,fmt='json'):
     """
     returns valid range endpoints for field given selections and extras
+
     """
     # if this param is in selections we want to remove it,
     # want results for param as they would be without itself constrained
-
     #    extras['qtypes']['']
     update_metrics(request)
 
     param_info = search.views.get_param_info_by_slug(slug)
-
     param_name = param_info.param_name()
     form_type = param_info.form_type
     table_name = param_info.category_name
-    param_name1 = stripNumericSuffix(param_name.split('.')[1]) + '1'
-    param_name2 = stripNumericSuffix(param_name.split('.')[1]) + '2'
-    param_name_no_num = stripNumericSuffix(param_name1)
+
+    # "param" is the field name, the param_name with the table_name stripped
+    param1 = stripNumericSuffix(param_name.split('.')[1]) + '1'
+    param2 = stripNumericSuffix(param_name.split('.')[1]) + '2'
+    param_no_num = stripNumericSuffix(param1)
     table_model = apps.get_model('search', table_name.title().replace('_',''))
 
     if form_type == 'RANGE' and '1' not in param_info.slug and '2' not in param_info.slug:
-        param_name1 = param_name2 = param_name_no_num
+        param1 = param2 = param_no_num  # single column range query
 
     try:
         (selections,extras) = search.views.urlToSearchParams(request.GET)
         user_table = search.views.getUserQueryTable(selections,extras)
         has_selections = True
-
     except TypeError:
         selections = {}
         has_selections = False
         user_table = False
 
-    # we remove this param from the user's query if it's there, because
-    # otherwise it will just return it's own values
-    if param_name1 in selections:
-        del selections[param_name1]
-    if param_name2 in selections:
-        del selections[param_name2]
+    # remove this param from the user's query if it is constrained
+    # this keeps the green hinting numbers from reacting
+    # to changes to its own field
+    param_name_no_num = stripNumericSuffix(param_name)
+    to_remove = [param_name_no_num, param_name_no_num + '1', param_name_no_num + '2']
+    for p in to_remove:
+        if p in selections:
+            del selections[p]
+    if not bool(selections):
+        has_selections = False
+        user_table = False
 
     # cached already?
-    cache_key  = "rangeep" + param_name_no_num
+    cache_key  = "rangeep" + param_no_num
     if user_table: cache_key += str(search.views.setUserSearchNo(selections,extras))
 
     if cache.get(cache_key) is not None:
@@ -231,26 +236,26 @@ def getRangeEndpoints(request,slug,fmt='json'):
 
     if has_selections:
         # has selections, tie query to user_table
-        range_endpoints = results.extra(where = [where], tables = [user_table]).aggregate(min = Min(param_name1), max = Max(param_name2))
+        range_endpoints = results.extra(where = [where], tables = [user_table]).aggregate(min=Min(param1), max=Max(param2))
 
         # get count of nulls
-        where = where + " and " + param_name1 + " is null and " + param_name2 + " is null "
+        where = where + " and " + param1 + " is null and " + param2 + " is null "
         range_endpoints['nulls'] = results.extra(where=[where],tables=[user_table]).count()
 
     else:
         # no user query table, just hit the whole table
 
-        range_endpoints  = results.all().aggregate(min = Min(param_name1),max = Max(param_name2))
+        range_endpoints  = results.all().aggregate(min = Min(param1),max = Max(param2))
 
         # count of nulls
-        where = param_name1 + " is null and " + param_name2 + " is null "
+        where = param1 + " is null and " + param2 + " is null "
         range_endpoints['nulls'] = results.all().extra(where=[where]).count()
 
     # convert time_sec to human readable
     if form_type == "TIME":
-        range_endpoints['min'] = ObsGeneral.objects.filter(**{param_name1:range_endpoints['min']})[0].time1
-        range_endpoints['max'] = ObsGeneral.objects.filter(**{param_name2:range_endpoints['max']})[0].time2
-        pass  # ObsGeneral.objects.filter(param_name1=)
+        range_endpoints['min'] = ObsGeneral.objects.filter(**{param1:range_endpoints['min']})[0].time1
+        range_endpoints['max'] = ObsGeneral.objects.filter(**{param2:range_endpoints['max']})[0].time2
+        pass  # ObsGeneral.objects.filter(param1=)
 
     else:
         # form type is not TIME..
