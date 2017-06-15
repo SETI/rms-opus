@@ -50,6 +50,7 @@ def get_all_categories(request, ring_obs_id):
     """ returns list of all cateories this ring_obs_id apepars in """
     all_categories = []
     table_info = TableName.objects.all().values('table_name', 'label').order_by('disp_order')
+
     for tbl in table_info:  # all tables
         table_name = tbl['table_name']
         if table_name == 'obs_surface_geometry':
@@ -73,8 +74,10 @@ def get_all_categories(request, ring_obs_id):
     return HttpResponse(json.dumps(all_categories), content_type="application/json")
 
 
-def get_categories(request):
-    """ returns list of categories (table_names) and labels in display order """
+def category_list_http_endpoint(request):
+    """ returns a list of triggered categories (table_names) and labels
+        as json response
+        for use as part of public http api """
     if request and request.GET:
         try:
             (selections,extras) = urlToSearchParams(request.GET)
@@ -183,7 +186,7 @@ def get_metadata_by_slugs(request, ring_obs_id, slugs, fmt):
     for slug in slugs:
         param_info = get_param_info_by_slug(slug)
         if not param_info:
-            continue
+            continue  # todo this should raise end user error
         table_name = param_info.category_name
         params_by_table.setdefault(table_name, []).append(param_info.param_name().split('.')[1])
         all_info[slug] = param_info  # to get things like dictionary entries for interface
@@ -196,9 +199,15 @@ def get_metadata_by_slugs(request, ring_obs_id, slugs, fmt):
     for table_name, param_list in params_by_table.items():
         model_name = ''.join(table_name.title().split('_'))
         table_model = apps.get_model('search', model_name)
-        # are not ring_obs_id unique in all obs tables so why is this not a .get query
-        results = table_model.objects.filter(ring_obs_id=ring_obs_id).values(*param_list)[0]
-        for param,value in results.items():
+
+        results = table_model.objects.filter(ring_obs_id=ring_obs_id).values(*param_list)
+                  # are not ring_obs_id unique in all obs tables so why is this not a .get query
+
+        if not results:
+            # this ring_obs_id doesn't exist in this table, log this..
+            log.error('could not find {0} in table {1} '.format(ring_obs_id,table_name))
+
+        for param,value in results.items[0]():
             data.append({param: value})
 
     if fmt == 'html':
@@ -271,6 +280,7 @@ def get_metadata(request, ring_obs_id, fmt):
             log.error("could not find data model for category %s " % model_name)
             continue
 
+        # make a list of all slugs and another of all param_names in this table
         all_slugs = [param.slug for param in ParamInfo.objects.filter(category_name=table_name, display_results=1).order_by('disp_order')]
         all_params = [param.name for param in ParamInfo.objects.filter(category_name=table_name, display_results=1).order_by('disp_order')]
 
