@@ -207,7 +207,7 @@ def get_metadata_by_slugs(request, ring_obs_id, slugs, fmt):
             # this ring_obs_id doesn't exist in this table, log this..
             log.error('could not find {0} in table {1} '.format(ring_obs_id,table_name))
 
-        for param,value in results.items[0]():
+        for param,value in results[0].items():
             data.append({param: value})
 
     if fmt == 'html':
@@ -282,20 +282,20 @@ def get_metadata(request, ring_obs_id, fmt):
 
         # make a list of all slugs and another of all param_names in this table
         all_slugs = [param.slug for param in ParamInfo.objects.filter(category_name=table_name, display_results=1).order_by('disp_order')]
-        all_params = [param.name for param in ParamInfo.objects.filter(category_name=table_name, display_results=1).order_by('disp_order')]
+        all_param_names = [param.name for param in ParamInfo.objects.filter(category_name=table_name, display_results=1).order_by('disp_order')]
 
         for k, slug in enumerate(all_slugs):
             param_info = get_param_info_by_slug(slug)
             name = param_info.name
             all_info[name] = param_info
 
-        if all_params:
+        if all_param_names:
             try:
-                results = table_model.objects.filter(ring_obs_id=ring_obs_id).values(*all_params)[0]
+                results = table_model.objects.filter(ring_obs_id=ring_obs_id).values(*all_param_names)[0]
 
                 # results is an ordinary dict so here to make sure we have the correct ordering:
                 ordered_results = SortedDict({})
-                for param in all_params:
+                for param in all_param_names:
                     ordered_results[param] = results[param]
 
                 data[table_label] = ordered_results
@@ -315,6 +315,8 @@ def get_metadata(request, ring_obs_id, fmt):
 
 
     if fmt == 'html':
+        # hack becuase we want to display labels instead of param names
+        # on our html Detail page
         return render(request, 'detail_metadata.html',locals())
     if fmt == 'json':
         return HttpResponse(json.dumps(data), content_type="application/json")
