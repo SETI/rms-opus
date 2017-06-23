@@ -1428,7 +1428,7 @@ class MultObsInstrumentMvicInstrumentCompressionType(models.Model):
         db_table = 'mult_obs_instrument_MVIC_INSTRUMENT_COMPRESSION_TYPE'
 
 class ObsInstrumentMvic(models.Model):
-    obs_general_id = models.IntegerField(unique=True)
+    obs_general = models.ForeignKey(ObsGeneral, db_column="obs_general_id", null=True, blank=True)
     ring_obs_id = models.CharField(unique=True, max_length=40)
     INSTRUMENT_COMPRESSION_TYPE = models.CharField(db_column='INSTRUMENT_COMPRESSION_TYPE', max_length=10, blank=True) # Field name made lowercase.
     TARGET_CENTER_DISTANCE = models.FloatField(db_column='TARGET_CENTER_DISTANCE', blank=True, null=True) # Field name made lowercase.
@@ -1439,7 +1439,7 @@ class ObsInstrumentMvic(models.Model):
         db_table = 'obs_instrument_MVIC'
 
 class ObsInstrumentLorri(models.Model):
-    obs_general_id = models.IntegerField(unique=True)
+    obs_general = models.ForeignKey(ObsGeneral, db_column="obs_general_id", null=True, blank=True)
     ring_obs_id = models.CharField(unique=True, max_length=40)
     INSTRUMENT_COMPRESSION_TYPE = models.CharField(db_column='INSTRUMENT_COMPRESSION_TYPE', max_length=10, blank=True) # Field name made lowercase.
     BINNING_MODE = models.CharField(db_column='BINNING_MODE', max_length=3, blank=True) # Field name made lowercase.
@@ -1483,7 +1483,7 @@ class ObsInstrumentVgiss(models.Model):
 
 
 class ObsMissionNewHorizons(models.Model):
-    obs_general_id = models.IntegerField(unique=True)
+    obs_general = models.ForeignKey(ObsGeneral, db_column="obs_general_id", null=True, blank=True)
     ring_obs_id = models.CharField(unique=True, max_length=40)
     volume_id = models.CharField(max_length=11, blank=True)
     instrument_id = models.CharField(max_length=6, blank=True)
