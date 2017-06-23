@@ -328,7 +328,7 @@ def get_triggered_tables(selections, extras = {}):
     this looks at user request and returns triggered tables
     always returns the settings.BASE_TABLES
     """
-    if not selections:
+    if not bool(selections):
         return sorted(settings.BASE_TABLES)
 
     # look for cache:
@@ -750,7 +750,7 @@ def getFiles(ring_obs_id=None, fmt=None, loc_type=None, product_types=None, prev
         return HttpResponse(json.dumps({'data':file_names}), content_type='application/json')
 
     if fmt == 'html':
-        return render(request, "list.html",locals())
+        return render("list.html",locals())
 
 
 def getPage(request, colls=None, colls_page=None, page=None):
