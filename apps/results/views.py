@@ -357,7 +357,14 @@ def get_triggered_tables(selections, extras = {}):
         for inst in selections[field]:
             for search_string in no_metadata:
                 if search_string in inst:
-                    triggered_tables.remove('obs_surface_geometry')
+                    try:
+                        triggered_tables.remove('obs_surface_geometry')
+                    except Exception as e:
+                        log.error(e)
+                        log.error(selections)
+                        log.error(field)
+                        log.error(inst)
+
 
     # now see if any more tables are triggered from query
     query_result_table = getUserQueryTable(selections,extras)
@@ -580,7 +587,6 @@ def getFiles(ring_obs_id=None, fmt=None, loc_type=None, product_types=None, prev
     returns list of all files by ring_obs_id
     ring_obs_id can be string or list
     can also return preview files too
-
     """
     if collection and not session_id:
         log.error("needs session_id in kwargs to access collection")
