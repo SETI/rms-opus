@@ -93,6 +93,11 @@ def getValidMults(request,slug,fmt='json'):
     based on current search defined in request
     field_format = 'ids' or 'labels' depending on how you want your data back
     (OPUS UI will use ids but they aren't very readable for everyone else)
+    returns a dictionary named mults as names and counts for each as values
+    wrapped in a dictionary that includes its slug name
+
+        { 'field':slug,'mults':mults }
+
     """
     update_metrics(request)
     try:
@@ -110,7 +115,9 @@ def getValidMults(request,slug,fmt='json'):
     if param_name in selections:
         del selections[param_name]
 
-    has_selections = False if len(selections.keys()) < 1 else True
+    has_selections = False
+    if bool(selections):
+        has_selections = True
 
     cache_key  = "mults" + param_name + str(search.views.setUserSearchNo(selections))
 
@@ -121,8 +128,18 @@ def getValidMults(request,slug,fmt='json'):
     else:
 
         mult_name  = getMultName(param_name)  # the name of the field to query
-        mult_model = apps.get_model('search',mult_name.title().replace('_',''))
-        table_model = apps.get_model('search', table_name.title().replace('_',''))
+
+        try:
+            mult_model = apps.get_model('search',mult_name.title().replace('_',''))
+        except LookupError:
+            log.debug('could not get_model for {0}'.format(mult_name.title().replace('_','')))
+            raise Http404
+
+        try:
+            table_model = apps.get_model('search', table_name.title().replace('_',''))
+        except LookupError:
+            log.debug('could not get_model for {0}'.format(table_name.title().replace('_','')))
+            raise Http404
 
         mults = {}  # info to return
         results    = table_model.objects.values(mult_name).annotate(Count(mult_name))  # this is a count(*), group_by query!
