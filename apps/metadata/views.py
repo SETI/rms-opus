@@ -61,7 +61,6 @@ def getResultCount(request,fmt='json'):
 
     table = search.views.getUserQueryTable(selections,extras)
 
-
     if table is False:
         count = 0;
     else:
@@ -77,7 +76,9 @@ def getResultCount(request,fmt='json'):
             except:
                 count = 0
 
-        cache.set(cache_key,count,0)
+            # set this result in cache
+            cache.set(cache_key,count)
+
 
     data = {'result_count':count}
 
@@ -174,13 +175,13 @@ def getValidMults(request,slug,fmt='json'):
                 mults[mult] = row[mult_name + '__count']
             except: pass # a none object may be found in the data but if it doesn't have a table row we don't handle it
 
-        cache.set(cache_key,mults,0)
+        cache.set(cache_key,mults)
 
     multdata = { 'field':slug,'mults':mults }
 
     if (request.is_ajax()):
         reqno = request.GET.get('reqno','')
-        multdata['reqno']= reqno
+        multdata['reqno'] = reqno
 
     return responseFormats(multdata,fmt,template='mults.html')
 
@@ -233,12 +234,14 @@ def getRangeEndpoints(request,slug,fmt='json'):
 
     # cached already?
     cache_key  = "rangeep" + param_no_num
-    if user_table: cache_key += str(search.views.setUserSearchNo(selections,extras))
+    if user_table:
+        cache_key += str(search.views.setUserSearchNo(selections,extras))
 
     if cache.get(cache_key) is not None:
         range_endpoints = cache.get(cache_key)
         return responseFormats(range_endpoints,fmt,template='mults.html')
 
+    # no cache found, calculating..
     try:
         results    = table_model.objects # this is a count(*), group_by query
     except AttributeError, e:
@@ -288,7 +291,8 @@ def getRangeEndpoints(request,slug,fmt='json'):
         except TypeError:
             pass
 
-    cache.set(cache_key,range_endpoints,0)
+    # save this in cache
+    cache.set(cache_key,range_endpoints)
 
     return responseFormats(range_endpoints,fmt,template='mults.html')
 
@@ -302,9 +306,8 @@ def getFields(request,**kwargs):
         category = kwargs['category']
 
     cache_key = 'getFields:field:' + field + ':category:' + category
-    if (cache.get(cache_key)):
+    if cache.get(cache_key):
         fields = cache.get(cache_key)
-
     else:
         if field:
             fields = ParamInfo.objects.filter(slug=field)
@@ -313,31 +316,14 @@ def getFields(request,**kwargs):
         else:
             fields = ParamInfo.objects.all()
 
-        return_obj = {}
-        for f in fields:
-            return_obj[f.slug] = {
-                'label': f.label,
-                'more_info': f.get_dictionary_info(),
-                }
-        cache.set(cache_key,return_obj,0)
+    return_obj = {}
+    for f in fields:
+        return_obj[f.slug] = {
+            'label': f.label,
+            'more_info': f.get_dictionary_info(),
+            }
 
-        return HttpResponse(json.dumps(return_obj), content_type='application/json')
+    if not cache.get(cache_key):
+        cache.set(cache_key,return_obj)
 
-
-
-def getCats(request, **kwargs):
-
-    field=category=False
-    fmt = kwargs['fmt']
-    if 'category' in kwargs:
-        category = ' '.join(kwargs['category'].split('_'));
-
-    cache_key='getCats:field:' + field + ':cat:' + category
-    if (cache.get(cache_key)):
-        fields = cache.get(cache_key)
-    else:
-        if category:
-            fields = Category.objects.filter(name=category)
-        else:
-            fields = Category.objects.all()
-        cache.set(cache_key,fields,0)
+    return HttpResponse(json.dumps(return_obj), content_type='application/json')

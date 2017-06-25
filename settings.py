@@ -127,8 +127,9 @@ INSTALLED_APPS = (
 # https://github.com/edavis/django-infinite-memcached/tree/
 CACHES = {
     "default": {
-        "BACKEND": "infinite_memcached.cache.MemcachedCache",
+	"BACKEND":"django.core.cache.backends.memcached.MemcachedCache",
         "LOCATION": "127.0.0.1:11211",
+	"TIMEOUT": None,
     },
 }
 

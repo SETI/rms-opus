@@ -183,7 +183,7 @@ def constructQueryString(selections, extras):
 
 
 
-def getUserQueryTable(selections=None,extras=None):
+def getUserQueryTable(selections=None, extras=None):
     """
     This is THE main data query place.  Performs a data search and creates
     a table of Ids that match the result rows.
@@ -212,8 +212,9 @@ def getUserQueryTable(selections=None,extras=None):
     # it could still exist in database
     try:
         cursor.execute("desc cache_%s" % str(no))
-        cache.set(cache_key,ptbl,0)
+        cache.set(cache_key,ptbl)
         return 'cache_%s' % str(no)
+
     except DatabaseError:
         pass  # no table is there, we go on to build it below
 
@@ -234,7 +235,7 @@ def getUserQueryTable(selections=None,extras=None):
         # add the key **** this, and perhaps the create statement too, can be spawned to a backend process ****
         cursor.execute("alter table " + connection.ops.quote_name(ptbl) + " add unique key(id)  ")
 
-        cache.set(cache_key,ptbl,0)
+        cache.set(cache_key,ptbl)
         return ptbl
 
     except DatabaseError:
@@ -383,7 +384,8 @@ def setUserSearchNo(selections=None,extras=None):
         s = UserSearches(selections_hash=selections_hash, selections_json=selections_json, qtypes=qtypes_json,qtypes_hash=qtypes_hash,units=units_json,units_hash=units_hash, string_selects=string_selects_json,string_selects_hash=string_selects_hash )
         s.save()
 
-    cache.set(cache_key,s.id,0)
+    cache.set(cache_key,s.id)
+
     return s.id
 
 

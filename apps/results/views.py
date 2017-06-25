@@ -71,6 +71,7 @@ def get_all_categories(request, ring_obs_id):
         if results:
             cat = {'table_name': table_name, 'label': label}
             all_categories.append(cat)
+
     return HttpResponse(json.dumps(all_categories), content_type="application/json")
 
 
@@ -100,6 +101,7 @@ def category_list_http_endpoint(request):
         pass  # it wasn't in there so no worries
 
     labels = TableName.objects.filter(table_name__in=triggered_tables).values('table_name','label').order_by('disp_order')
+
     return HttpResponse(json.dumps([ob for ob in labels]), content_type="application/json")
 
 
@@ -323,9 +325,10 @@ def get_metadata(request, ring_obs_id, fmt):
     if fmt == 'raw':
         return data, all_info  # includes definitions for opus interface
 
-def get_triggered_tables(selections, extras = {}):
+
+def get_triggered_tables(selections, extras=None):
     """
-    this looks at user request and returns triggered tables
+    this looks at user request and returns triggered tables as list
     always returns the settings.BASE_TABLES
     """
     if not bool(selections):
@@ -415,7 +418,7 @@ def get_triggered_tables(selections, extras = {}):
     for table in TableName.objects.filter(table_name__in=triggered_tables).values('table_name'):
         final_table_list.append(table['table_name'])
 
-    cache.set(cache_key, final_table_list, 0)
+    cache.set(cache_key, final_table_list)
 
     return sorted(final_table_list)
 
@@ -756,7 +759,9 @@ def getFiles(ring_obs_id=None, fmt=None, loc_type=None, product_types=None, prev
         return HttpResponse(json.dumps({'data':file_names}), content_type='application/json')
 
     if fmt == 'html':
-        return render("list.html",locals())
+        raise Http404
+        data = file_names
+        return render("list.html", data)
 
 
 def getPage(request, colls=None, colls_page=None, page=None):

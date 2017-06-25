@@ -9,8 +9,8 @@ env.hosts = ['pds-rings-tools.seti.org']
 
 prod_deploy_dir = 'opus'
 # prod_deploy_dir = 'opus_dev'
-# git_branch = 'bulk_add'
-git_branch = 'master'
+git_branch = 'menu_bug'
+# git_branch = 'master'
 git_revision = ''
 memcached_port = '11211'
 # memcached_port = '11212'
@@ -121,4 +121,4 @@ def tests_prod():
         # first, then it runs ok, so something is awry in production testing.. todo
         run('sudo python manage.py test apps -x')
 
-    slack_notify()
+    # slack_notify()
