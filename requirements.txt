@@ -2,7 +2,6 @@ Django==1.10.5
 django-annoying==0.10.3
 django-appconf==1.0.1
 django-cors-headers==1.0.0
-django-infinite-memcached==0.1
 git+https://github.com/basilleaf/django-last-modified.git
 django-memcached==0.1.2
 django-nose==1.4.4
