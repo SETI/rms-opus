@@ -87,7 +87,7 @@ def category_list_http_endpoint(request):
     else:
         selections = None
 
-    if not selections:
+    if not bool(selections):
         triggered_tables = settings.BASE_TABLES
     else:
         triggered_tables = get_triggered_tables(selections, extras)

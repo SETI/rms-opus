@@ -194,9 +194,9 @@ def getUserQueryTable(selections=None, extras=None):
     """
     cursor = connection.cursor()
 
-    if not extras:
+    if not bool(extras):
         extras = {}
-    if not selections:
+    if not bool(selections):
         selections = {}
 
     # do we have a cache key
@@ -341,9 +341,9 @@ def setUserSearchNo(selections=None,extras=None):
     this method looks in user_searches table for current selections
     if none exist creates it, returns id key
     """
-    if not extras: extras = {}
+    if not bool(extras): extras = {}
 
-    if not selections: selections = {}
+    if not bool(selections): selections = {}
 
     qtypes_json = qtypes_hash = None
     if 'qtypes' in extras:
