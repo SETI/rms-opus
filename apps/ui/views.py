@@ -114,8 +114,8 @@ def getMenuLabels(request, labels_view):
     else:
         selections = None
 
-    if not selections:
-        triggered_tables = settings.BASE_TABLES
+    if not bool(selections):
+        triggered_tables = settings.BASE_TABLES[:]  # makes a copy of settings.BASE_TABLES
     else:
         triggered_tables = get_triggered_tables(selections, extras)
 

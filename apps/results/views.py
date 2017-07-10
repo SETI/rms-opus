@@ -88,7 +88,7 @@ def category_list_http_endpoint(request):
         selections = None
 
     if not selections:
-        triggered_tables = settings.BASE_TABLES
+        triggered_tables = settings.BASE_TABLES[:]  # makes a copy of settings.BASE_TABLES
     else:
         triggered_tables = get_triggered_tables(selections, extras)
 
@@ -341,7 +341,7 @@ def get_triggered_tables(selections, extras=None):
         return sorted(cache.get(cache_key))
 
     # first add the base tables
-    triggered_tables = [t for t in settings.BASE_TABLES]
+    triggered_tables = settings.BASE_TABLES[:]  # makes a copy of settings.BASE_TABLES
 
     # this is a hack to do something special for the usability of the Surface Geometry section
     # surface geometry is always triggered and showing by default,
@@ -783,7 +783,7 @@ def getPage(request, colls=None, colls_page=None, page=None):
     limit = request.GET.get('limit',100)
     limit = int(limit)
     slugs = request.GET.get('cols', settings.DEFAULT_COLUMNS)
-    if not slugs:
+    if not bool(slugs):
         slugs = settings.DEFAULT_COLUMNS  # i dunno why the above doesn't suffice
 
     columns = []
