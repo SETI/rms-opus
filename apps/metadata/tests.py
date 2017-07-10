@@ -42,11 +42,11 @@ class metadataTests(TestCase):
             self.assertEqual(expected['min'], got['min'])
 
         except AssertionError:
-            expected = {"max": "2016-183T00:59:04.130", "nulls": 0, "min": "1979-04-07T19:12:41"}
+            expected = {"max": "2016-09-30T23:34:23.778", "nulls": 0, "min": "1979-04-07T19:12:41"}
             print 'expected:'
             print expected
-            self.assertEqual(expected['max'], got['max'])
-            self.assertEqual(expected['min'], got['min'])
+            self.assertGreaterEqual(got['max'], expected['max'])
+            self.assertEqual(got['min'], expected['min'])
 
     def test_getResultCount(self):
         response = self.c.get('/opus/api/meta/result_count.json?planet=Saturn')
@@ -161,15 +161,6 @@ class metadataTests(TestCase):
         result_count = int(jdata['data'][0]['result_count'])
         print result_count
         self.assertGreater(result_count, 1300)
-
-    def test_result_count_empty_result_set(self):
-        # mission and general only
-        response = self.c.get('/opus/api/meta/result_count.json?planet=Saturn&missionid=VGISS')
-        jdata = json.loads(response.content)
-        result_count = int(jdata['data'][0]['result_count'])
-        print result_count
-        self.assertEqual(result_count, 0)
-
 
     def test_getValidMults_planet_SAT_for_target(self):
         response = self.c.get('/opus/api/meta/mults/target.json?planet=Saturn')
