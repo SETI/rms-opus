@@ -34,6 +34,13 @@ class searchTests(TestCase):
     selections[param_name] = ['Saturn']
     extras = {}
 
+    def test__get_param_info_by_slug(self):
+        # this should return an object but failed once for unknown
+        # reasons having to do with a mistake in the param_info table
+        # duration2 is the 2nd side of a single column range field
+        slug = 'duration2'
+        self.assertTrue(get_param_info_by_slug(slug))
+
     def test__is_image_is_correct(self):
         non_imaging_instruments = [thing['instrument_id'] for thing in ObsGeneral.objects.filter(is_image=0).values('instrument_id').distinct()]
         imaging_instruments = ['COISS','VGISS', 'GOSSI','HSTWFPC2','HSTACS','HSTWFC3','LORRI','MVIC']
