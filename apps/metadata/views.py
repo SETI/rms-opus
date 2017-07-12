@@ -61,7 +61,6 @@ def getResultCount(request,fmt='json'):
 
     table = search.views.getUserQueryTable(selections,extras)
 
-
     if table is False:
         count = 0;
     else:
@@ -77,7 +76,9 @@ def getResultCount(request,fmt='json'):
             except:
                 count = 0
 
-        cache.set(cache_key,count,0)
+            # set this result in cache
+            cache.set(cache_key,count)
+
 
     data = {'result_count':count}
 
@@ -93,6 +94,11 @@ def getValidMults(request,slug,fmt='json'):
     based on current search defined in request
     field_format = 'ids' or 'labels' depending on how you want your data back
     (OPUS UI will use ids but they aren't very readable for everyone else)
+    returns a dictionary named mults as names and counts for each as values
+    wrapped in a dictionary that includes its slug name
+
+        { 'field':slug,'mults':mults }
+
     """
     update_metrics(request)
     try:
@@ -110,7 +116,9 @@ def getValidMults(request,slug,fmt='json'):
     if param_name in selections:
         del selections[param_name]
 
-    has_selections = False if len(selections.keys()) < 1 else True
+    has_selections = False
+    if bool(selections):
+        has_selections = True
 
     cache_key  = "mults" + param_name + str(search.views.setUserSearchNo(selections))
 
@@ -121,8 +129,18 @@ def getValidMults(request,slug,fmt='json'):
     else:
 
         mult_name  = getMultName(param_name)  # the name of the field to query
-        mult_model = apps.get_model('search',mult_name.title().replace('_',''))
-        table_model = apps.get_model('search', table_name.title().replace('_',''))
+
+        try:
+            mult_model = apps.get_model('search',mult_name.title().replace('_',''))
+        except LookupError:
+            log.debug('could not get_model for {0}'.format(mult_name.title().replace('_','')))
+            raise Http404
+
+        try:
+            table_model = apps.get_model('search', table_name.title().replace('_',''))
+        except LookupError:
+            log.debug('could not get_model for {0}'.format(table_name.title().replace('_','')))
+            raise Http404
 
         mults = {}  # info to return
         results    = table_model.objects.values(mult_name).annotate(Count(mult_name))  # this is a count(*), group_by query!
@@ -157,13 +175,13 @@ def getValidMults(request,slug,fmt='json'):
                 mults[mult] = row[mult_name + '__count']
             except: pass # a none object may be found in the data but if it doesn't have a table row we don't handle it
 
-        cache.set(cache_key,mults,0)
+        cache.set(cache_key,mults)
 
     multdata = { 'field':slug,'mults':mults }
 
     if (request.is_ajax()):
         reqno = request.GET.get('reqno','')
-        multdata['reqno']= reqno
+        multdata['reqno'] = reqno
 
     return responseFormats(multdata,fmt,template='mults.html')
 
@@ -172,51 +190,58 @@ def getValidMults(request,slug,fmt='json'):
 def getRangeEndpoints(request,slug,fmt='json'):
     """
     returns valid range endpoints for field given selections and extras
+
     """
     # if this param is in selections we want to remove it,
     # want results for param as they would be without itself constrained
-
     #    extras['qtypes']['']
     update_metrics(request)
 
     param_info = search.views.get_param_info_by_slug(slug)
-
     param_name = param_info.param_name()
     form_type = param_info.form_type
     table_name = param_info.category_name
-    param_name1 = stripNumericSuffix(param_name.split('.')[1]) + '1'
-    param_name2 = stripNumericSuffix(param_name.split('.')[1]) + '2'
-    param_name_no_num = stripNumericSuffix(param_name1)
+
+    # "param" is the field name, the param_name with the table_name stripped
+    param1 = stripNumericSuffix(param_name.split('.')[1]) + '1'
+    param2 = stripNumericSuffix(param_name.split('.')[1]) + '2'
+    param_no_num = stripNumericSuffix(param1)
     table_model = apps.get_model('search', table_name.title().replace('_',''))
 
-    if form_type == 'RANGE' and '1' not in param_info.slug:
-        param_name1 = param_name2 = param_name_no_num
+    if form_type == 'RANGE' and '1' not in param_info.slug and '2' not in param_info.slug:
+        param1 = param2 = param_no_num  # single column range query
 
     try:
         (selections,extras) = search.views.urlToSearchParams(request.GET)
         user_table = search.views.getUserQueryTable(selections,extras)
         has_selections = True
-
     except TypeError:
         selections = {}
         has_selections = False
         user_table = False
 
-    # we remove this param from the user's query if it's there, because
-    # otherwise it will just return it's own values
-    if param_name1 in selections:
-        del selections[param_name1]
-    if param_name2 in selections:
-        del selections[param_name2]
+    # remove this param from the user's query if it is constrained
+    # this keeps the green hinting numbers from reacting
+    # to changes to its own field
+    param_name_no_num = stripNumericSuffix(param_name)
+    to_remove = [param_name_no_num, param_name_no_num + '1', param_name_no_num + '2']
+    for p in to_remove:
+        if p in selections:
+            del selections[p]
+    if not bool(selections):
+        has_selections = False
+        user_table = False
 
     # cached already?
-    cache_key  = "rangeep" + param_name_no_num
-    if user_table: cache_key += str(search.views.setUserSearchNo(selections,extras))
+    cache_key  = "rangeep" + param_no_num
+    if user_table:
+        cache_key += str(search.views.setUserSearchNo(selections,extras))
 
     if cache.get(cache_key) is not None:
         range_endpoints = cache.get(cache_key)
         return responseFormats(range_endpoints,fmt,template='mults.html')
 
+    # no cache found, calculating..
     try:
         results    = table_model.objects # this is a count(*), group_by query
     except AttributeError, e:
@@ -231,26 +256,26 @@ def getRangeEndpoints(request,slug,fmt='json'):
 
     if has_selections:
         # has selections, tie query to user_table
-        range_endpoints = results.extra(where = [where], tables = [user_table]).aggregate(min = Min(param_name1), max = Max(param_name2))
+        range_endpoints = results.extra(where = [where], tables = [user_table]).aggregate(min=Min(param1), max=Max(param2))
 
         # get count of nulls
-        where = where + " and " + param_name1 + " is null and " + param_name2 + " is null "
+        where = where + " and " + param1 + " is null and " + param2 + " is null "
         range_endpoints['nulls'] = results.extra(where=[where],tables=[user_table]).count()
 
     else:
         # no user query table, just hit the whole table
 
-        range_endpoints  = results.all().aggregate(min = Min(param_name1),max = Max(param_name2))
+        range_endpoints  = results.all().aggregate(min = Min(param1),max = Max(param2))
 
         # count of nulls
-        where = param_name1 + " is null and " + param_name2 + " is null "
+        where = param1 + " is null and " + param2 + " is null "
         range_endpoints['nulls'] = results.all().extra(where=[where]).count()
 
     # convert time_sec to human readable
     if form_type == "TIME":
-        range_endpoints['min'] = ObsGeneral.objects.filter(**{param_name1:range_endpoints['min']})[0].time1
-        range_endpoints['max'] = ObsGeneral.objects.filter(**{param_name2:range_endpoints['max']})[0].time2
-        pass  # ObsGeneral.objects.filter(param_name1=)
+        range_endpoints['min'] = ObsGeneral.objects.filter(**{param1:range_endpoints['min']})[0].time1
+        range_endpoints['max'] = ObsGeneral.objects.filter(**{param2:range_endpoints['max']})[0].time2
+        pass  # ObsGeneral.objects.filter(param1=)
 
     else:
         # form type is not TIME..
@@ -266,7 +291,8 @@ def getRangeEndpoints(request,slug,fmt='json'):
         except TypeError:
             pass
 
-    cache.set(cache_key,range_endpoints,0)
+    # save this in cache
+    cache.set(cache_key,range_endpoints)
 
     return responseFormats(range_endpoints,fmt,template='mults.html')
 
@@ -280,9 +306,8 @@ def getFields(request,**kwargs):
         category = kwargs['category']
 
     cache_key = 'getFields:field:' + field + ':category:' + category
-    if (cache.get(cache_key)):
+    if cache.get(cache_key):
         fields = cache.get(cache_key)
-
     else:
         if field:
             fields = ParamInfo.objects.filter(slug=field)
@@ -291,31 +316,14 @@ def getFields(request,**kwargs):
         else:
             fields = ParamInfo.objects.all()
 
-        return_obj = {}
-        for f in fields:
-            return_obj[f.slug] = {
-                'label': f.label,
-                'more_info': f.get_dictionary_info(),
-                }
-        cache.set(cache_key,return_obj,0)
+    return_obj = {}
+    for f in fields:
+        return_obj[f.slug] = {
+            'label': f.label,
+            'more_info': f.get_dictionary_info(),
+            }
 
-        return HttpResponse(json.dumps(return_obj), content_type='application/json')
+    if not cache.get(cache_key):
+        cache.set(cache_key,return_obj)
 
-
-
-def getCats(request, **kwargs):
-
-    field=category=False
-    fmt = kwargs['fmt']
-    if 'category' in kwargs:
-        category = ' '.join(kwargs['category'].split('_'));
-
-    cache_key='getCats:field:' + field + ':cat:' + category
-    if (cache.get(cache_key)):
-        fields = cache.get(cache_key)
-    else:
-        if category:
-            fields = Category.objects.filter(name=category)
-        else:
-            fields = Category.objects.all()
-        cache.set(cache_key,fields,0)
+    return HttpResponse(json.dumps(return_obj), content_type='application/json')

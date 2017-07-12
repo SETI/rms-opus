@@ -59,14 +59,14 @@ def get_file_path(filename):
     if 'http' in filename:
         parsed_uri = urlparse(filename)
         f = '/' + parsed_uri.path[1:]
+        f = '/'.join(f.split('/')[3:])  # split the xxx dir, remove the leading /
     else:
         filename = ('/' + filename) if filename[0] != '/' else filename  # make sure starts with /
         # split local img path from path
         f = filename.replace(settings.FILE_PATH, '/')
         f = f.replace(settings.IMAGE_PATH, '/')
         f = f.replace(settings.DERIVED_PATH, '/')
-
-    f = '/'.join(f.split('/')[2:])  # split the xxx dir, remove the leading /
+        f = '/'.join(f.split('/')[2:])  # split the xxx dir, remove the leading /
 
     return f
 

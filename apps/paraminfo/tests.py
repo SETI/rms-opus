@@ -24,6 +24,7 @@ from django.test import RequestFactory
 from search.views import *
 from results.views import *
 from django.http import QueryDict
+from django.db.models import Count
 
 cursor = connection.cursor()
 
@@ -46,6 +47,21 @@ class ParamInfoTests(TestCase):
         count = ParamInfo.objects.filter(category_name__contains="surface_geo", label_results='').count()
         print "you may need to \n update param_info set label_results = label where category_name like '%surface_geo%';"
         self.assertEqual(0, count)
+
+    def test__surface_geo_all_exist(self):
+        count_param_info = ParamInfo.objects.filter(category_name__contains="surface_geometry__").values('category_name').distinct().count()
+        count_surface_geo = ObsSurfaceGeometry.objects.all().values('target_name').distinct().count()
+        self.assertGreaterEqual(count_param_info, count_surface_geo)
+
+    def test__surface_geo_all_tables_have_min_number_of_fields(self):
+        expected_number_fields = 37  # there should be 38 fields in every geo table
+        all_geo_categories =  list(set([i['category_name'] for i in ParamInfo.objects.filter(category_name__contains="surface_geometry__").values('category_name')]))
+                              # i dunno why it impossible to do a distinct on this
+        for cat in all_geo_categories:
+            all_names_count = ParamInfo.objects.filter(category_name=cat).values_list('name', flat=True).count()
+            print cat
+            print all_names_count
+            self.assertEqual(expected_number_fields, all_names_count)
 
     def test__primary_file_spec_has_form_type(self):
         form_type = ParamInfo.objects.get(name='primary_file_spec').form_type

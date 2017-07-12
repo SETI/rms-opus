@@ -285,7 +285,7 @@ var o_search = {
 
     getHinting: function(slug) {
 
-        if ($('.widget__' + slug + ' select').hasClass('RANGE')) {
+        if ($('.widget__' + slug).hasClass('range-widget')) {
             // this is a range field
             o_search.getRangeEndpoints(slug);
 

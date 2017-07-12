@@ -3,17 +3,19 @@
 {% for pair in data %}
     <li>
         {% for param, value in pair.items %}
-            {{ param }}: {{ value }}
-        {% endfor %}
+          {% for name, param_info in all_info.items %}
+              {% if param == param_info.name %}
 
-        {% for name, param_info in all_info.items %}
-            {% if param == param_info.name %}
-                {% if param_info.get_dictionary_info %}
-                    <i class = "fa fa-info-circle" title = "
-                        {{ param_info.get_dictionary_info.def|striptags }}
-                    "></i>
-                {% endif %}
-            {% endif %}
+                  {{ param_info.label }}: {{ value }}
+
+                  {% if param_info.get_dictionary_info %}
+                      <i class = "fa fa-info-circle" title = "
+                          {{ param_info.get_dictionary_info.def|striptags }}
+                      "></i>
+                  {% endif %}
+              {% endif %}
+          {% endfor %}
+
         {% endfor %}
 
     </li>

@@ -18,6 +18,7 @@ from django.test.client import Client
 from search.views import *
 from results.views import *
 from django.http import QueryDict
+from django.apps import apps
 
 from django.conf import settings
 settings.CACHE_BACKEND = 'dummy:///'
@@ -33,6 +34,13 @@ class searchTests(TestCase):
     selections[param_name] = ['Saturn']
     extras = {}
 
+    def test__get_param_info_by_slug(self):
+        # this should return an object but failed once for unknown
+        # reasons having to do with a mistake in the param_info table
+        # duration2 is the 2nd side of a single column range field
+        slug = 'duration2'
+        self.assertTrue(get_param_info_by_slug(slug))
+
     def test__is_image_is_correct(self):
         non_imaging_instruments = [thing['instrument_id'] for thing in ObsGeneral.objects.filter(is_image=0).values('instrument_id').distinct()]
         imaging_instruments = ['COISS','VGISS', 'GOSSI','HSTWFPC2','HSTACS','HSTWFC3','LORRI','MVIC']
@@ -40,6 +48,26 @@ class searchTests(TestCase):
             print "found an imaging instrument with is_image = 0 \n here is what opus thinks are non imaging instruments, \n something is awry here:"
             print non_imaging_instruments
             self.assertTrue(instrument_id not in non_imaging_instruments)
+
+    def test__all_geo_models_should_have_same_fields_as_each_other(self):
+        """ find all geo models by inspecting param_info_table and check that
+            they each have the same parameters defined in django models """
+        # as in the import scripts, Mimas sets the standard template:
+        expected_fields = sorted([n for n in ObsSurfaceGeometryMimas.__dict__])
+        param_info = ParamInfo.objects.filter(category_name__contains="surface_geometry__")
+        all_category_names = sorted(list(set([p.category_name for p in param_info])))
+        for cat_name in all_category_names:
+            model_name = cat_name.title().replace('_','')
+            print "working on {0}".format(model_name)
+            model = apps.get_model('search',model_name)
+            fields = sorted([n for n in model.__dict__])
+            print "found {0} fields expected {1}".format(len(fields), len(expected_fields))
+            self.assertEqual(expected_fields, fields)
+
+    def test__partables_has_all_surface_geo_tables(self):
+        count_partables = Partable.objects.filter(partable__contains="surface_geometry__").values('partable').distinct().count()
+        count_surface_geo = ObsSurfaceGeometry.objects.all().values('target_name').distinct().count()
+        self.assertGreaterEqual(count_partables, count_surface_geo)
 
     def test__planets_properly_ordered(self):
         the_planets = [planet['label'] for planet in MultObsGeneralPlanetId.objects.filter(display='Y').values('label')]

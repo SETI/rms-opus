@@ -1,1 +1,1 @@
-This app provides the shopping card download functionality.
+This app handles the shopping cart / download functionality.

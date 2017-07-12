@@ -46,9 +46,39 @@ def get_csv(request, fmt=None):
         wr.writerows(all_data[2])
         return response
 
+def get_all_categories(request, ring_obs_id):
+    """ returns list of all cateories this ring_obs_id apepars in """
+    all_categories = []
+    table_info = TableName.objects.all().values('table_name', 'label').order_by('disp_order')
 
-def get_categories(request):
-    """ returns list of categories (table_names) and labels in display order """
+    for tbl in table_info:  # all tables
+        table_name = tbl['table_name']
+        if table_name == 'obs_surface_geometry':
+            # obs_surface_geometry is not a data table
+            # it's only used to select targets, not to hold data, so remove it
+            continue
+
+        label = tbl['label']
+        model_name = ''.join(table_name.title().split('_'))
+
+        try:
+            table_model = apps.get_model('search', model_name)
+        except LookupError:
+            continue  # oops some models don't actually exist
+
+        # are not ring_obs_id unique in all obs tables so why is this not a .get query
+        results = table_model.objects.filter(ring_obs_id=ring_obs_id).values('ring_obs_id')
+        if results:
+            cat = {'table_name': table_name, 'label': label}
+            all_categories.append(cat)
+
+    return HttpResponse(json.dumps(all_categories), content_type="application/json")
+
+
+def category_list_http_endpoint(request):
+    """ returns a list of triggered categories (table_names) and labels
+        as json response
+        for use as part of public http api """
     if request and request.GET:
         try:
             (selections,extras) = urlToSearchParams(request.GET)
@@ -58,16 +88,20 @@ def get_categories(request):
         selections = None
 
     if not selections:
-        triggered_tables = settings.BASE_TABLES
+        triggered_tables = settings.BASE_TABLES[:]  # makes a copy of settings.BASE_TABLES
     else:
         triggered_tables = get_triggered_tables(selections, extras)
 
     # the main geometry table, obs_surface_geometry, is not table that holds results data
     # it is only there for selecting targets, which then trigger the other geometry tables.
     # so in the context of returning list of categories it gets removed..
-    triggered_tables.remove('obs_surface_geometry')
+    try:
+        triggered_tables.remove('obs_surface_geometry')
+    except ValueError:
+        pass  # it wasn't in there so no worries
 
     labels = TableName.objects.filter(table_name__in=triggered_tables).values('table_name','label').order_by('disp_order')
+
     return HttpResponse(json.dumps([ob for ob in labels]), content_type="application/json")
 
 
@@ -100,8 +134,16 @@ def getData(request,fmt):
             labels += [ParamInfo.objects.get(slug=slug).label_results]
         except ParamInfo.DoesNotExist:
             # this slug doens't match anything in param info, nix it
-            log.error('could not find param_info for ' + slug)
-            continue
+            if '1' in slug:
+                # single column range slugs will not have the index, but
+                # will come in with it because of how ui is designed, so
+                # look for the slug without the index
+                temp_slug = slug[:-1]
+                try:
+                    labels += [ParamInfo.objects.get(slug=temp_slug).label_results]
+                except ParamInfo.DoesNotExist:
+                    log.error('could not find param_info for ' + slug)
+                    continue
 
     if is_column_chooser:
         labels.insert(0, "add")   # adds a column for checkbox add-to-collections
@@ -146,7 +188,7 @@ def get_metadata_by_slugs(request, ring_obs_id, slugs, fmt):
     for slug in slugs:
         param_info = get_param_info_by_slug(slug)
         if not param_info:
-            continue
+            continue  # todo this should raise end user error
         table_name = param_info.category_name
         params_by_table.setdefault(table_name, []).append(param_info.param_name().split('.')[1])
         all_info[slug] = param_info  # to get things like dictionary entries for interface
@@ -159,9 +201,15 @@ def get_metadata_by_slugs(request, ring_obs_id, slugs, fmt):
     for table_name, param_list in params_by_table.items():
         model_name = ''.join(table_name.title().split('_'))
         table_model = apps.get_model('search', model_name)
-        # are not ring_obs_id unique in all obs tables so why is this not a .get query
-        results = table_model.objects.filter(ring_obs_id=ring_obs_id).values(*param_list)[0]
-        for param,value in results.items():
+
+        results = table_model.objects.filter(ring_obs_id=ring_obs_id).values(*param_list)
+                  # are not ring_obs_id unique in all obs tables so why is this not a .get query
+
+        if not results:
+            # this ring_obs_id doesn't exist in this table, log this..
+            log.error('could not find {0} in table {1} '.format(ring_obs_id,table_name))
+
+        for param,value in results[0].items():
             data.append({param: value})
 
     if fmt == 'html':
@@ -234,44 +282,56 @@ def get_metadata(request, ring_obs_id, fmt):
             log.error("could not find data model for category %s " % model_name)
             continue
 
+        # make a list of all slugs and another of all param_names in this table
         all_slugs = [param.slug for param in ParamInfo.objects.filter(category_name=table_name, display_results=1).order_by('disp_order')]
-        all_params = [param.name for param in ParamInfo.objects.filter(category_name=table_name, display_results=1).order_by('disp_order')]
+        all_param_names = [param.name for param in ParamInfo.objects.filter(category_name=table_name, display_results=1).order_by('disp_order')]
 
         for k, slug in enumerate(all_slugs):
             param_info = get_param_info_by_slug(slug)
             name = param_info.name
             all_info[name] = param_info
 
-        if all_params:
+        if all_param_names:
             try:
-                results = table_model.objects.filter(ring_obs_id=ring_obs_id).values(*all_params)[0]
+                results = table_model.objects.filter(ring_obs_id=ring_obs_id).values(*all_param_names)[0]
 
                 # results is an ordinary dict so here to make sure we have the correct ordering:
                 ordered_results = SortedDict({})
-                for param in all_params:
+                for param in all_param_names:
                     ordered_results[param] = results[param]
 
                 data[table_label] = ordered_results
 
-            except AttributeError: pass  # no results found in this table, move along
-            except IndexError: pass  # no results found in this table, move along
+            except IndexError:
+                # this is pretty normal, it will check every table for a ring obs id
+                # a lot of observations do not appear in a lot of tables..
+                # for example something on jupiter won't appear in a saturn table..
+                # log.error('IndexError: no results found for {0} in table {1}'.format(ring_obs_id, table_name) )
+                pass  # no results found in this table, move along
+            except AttributeError:
+                log.error('AttributeError: no results found for {0} in table {1}'.format(ring_obs_id, table_name) )
+                pass  # no results found in this table, move along
             except FieldError:
-                log.error("detail view could not find %s in table %s model %s" % (ring_obs_id, table_name, model_name))
+                log.error('FieldError: no results found for {0} in table {1}'.format(ring_obs_id, table_name) )
                 pass  # no results found in this table, move along
 
+
     if fmt == 'html':
+        # hack becuase we want to display labels instead of param names
+        # on our html Detail page
         return render(request, 'detail_metadata.html',locals())
     if fmt == 'json':
         return HttpResponse(json.dumps(data), content_type="application/json")
     if fmt == 'raw':
         return data, all_info  # includes definitions for opus interface
 
-def get_triggered_tables(selections, extras = {}):
+
+def get_triggered_tables(selections, extras=None):
     """
-    this looks at user request and returns triggered tables
+    this looks at user request and returns triggered tables as list
     always returns the settings.BASE_TABLES
     """
-    if not selections:
+    if not bool(selections):
         return sorted(settings.BASE_TABLES)
 
     # look for cache:
@@ -281,7 +341,7 @@ def get_triggered_tables(selections, extras = {}):
         return sorted(cache.get(cache_key))
 
     # first add the base tables
-    triggered_tables = [t for t in settings.BASE_TABLES]
+    triggered_tables = settings.BASE_TABLES[:]  # makes a copy of settings.BASE_TABLES
 
     # this is a hack to do something special for the usability of the Surface Geometry section
     # surface geometry is always triggered and showing by default,
@@ -300,7 +360,14 @@ def get_triggered_tables(selections, extras = {}):
         for inst in selections[field]:
             for search_string in no_metadata:
                 if search_string in inst:
-                    triggered_tables.remove('obs_surface_geometry')
+                    try:
+                        triggered_tables.remove('obs_surface_geometry')
+                    except Exception as e:
+                        log.error(e)
+                        log.error(selections)
+                        log.error(field)
+                        log.error(inst)
+
 
     # now see if any more tables are triggered from query
     query_result_table = getUserQueryTable(selections,extras)
@@ -351,7 +418,7 @@ def get_triggered_tables(selections, extras = {}):
     for table in TableName.objects.filter(table_name__in=triggered_tables).values('table_name'):
         final_table_list.append(table['table_name'])
 
-    cache.set(cache_key, final_table_list, 0)
+    cache.set(cache_key, final_table_list)
 
     return sorted(final_table_list)
 
@@ -523,7 +590,6 @@ def getFiles(ring_obs_id=None, fmt=None, loc_type=None, product_types=None, prev
     returns list of all files by ring_obs_id
     ring_obs_id can be string or list
     can also return preview files too
-
     """
     if collection and not session_id:
         log.error("needs session_id in kwargs to access collection")
@@ -693,7 +759,9 @@ def getFiles(ring_obs_id=None, fmt=None, loc_type=None, product_types=None, prev
         return HttpResponse(json.dumps({'data':file_names}), content_type='application/json')
 
     if fmt == 'html':
-        return render(request, "list.html",locals())
+        raise Http404
+        data = file_names
+        return render("list.html", data)
 
 
 def getPage(request, colls=None, colls_page=None, page=None):
@@ -715,7 +783,7 @@ def getPage(request, colls=None, colls_page=None, page=None):
     limit = request.GET.get('limit',100)
     limit = int(limit)
     slugs = request.GET.get('cols', settings.DEFAULT_COLUMNS)
-    if not slugs:
+    if not bool(slugs):
         slugs = settings.DEFAULT_COLUMNS  # i dunno why the above doesn't suffice
 
     columns = []
@@ -723,7 +791,15 @@ def getPage(request, colls=None, colls_page=None, page=None):
         try:
             columns += [ParamInfo.objects.get(slug=slug).param_name()]
         except ParamInfo.DoesNotExist:
-            pass
+            if '1' in slug:
+                # single column range slugs will not have the index, but
+                # will come in with it because of how ui is designed, so
+                # look for the slug without the index
+                temp_slug = slug[:-1]
+                try:
+                    columns += [ParamInfo.objects.get(slug=temp_slug).param_name()]
+                except ParamInfo.DoesNotExist:
+                    continue
 
     triggered_tables = list(set([param_name.split('.')[0] for param_name in columns]))
     try:

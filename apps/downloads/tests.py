@@ -162,6 +162,6 @@ class downloadsTests(TestCase):
         self.assertEqual(got, 'coiss_2069/img.jpg')
 
     def test__get_file_path_url(self):
-        f = 'http://pds-rings.seti.org/coiss_2xxx/coiss_2069/img.jpg'
+        f = 'http://pds-rings.seti.org/volumes/coiss_2xxx/coiss_2069/img.jpg'
         got = get_file_path(f)
         self.assertEqual(got, 'coiss_2069/img.jpg')

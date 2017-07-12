@@ -20,6 +20,6 @@ lots of this will all be moved to fabric files.
 
      In the local repo:
 
-         cd tests
+         cd ../tests
          source venv/bin/activate
          python api_tests.py

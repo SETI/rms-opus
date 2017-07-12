@@ -31,7 +31,7 @@ var o_detail = {
             );
 
             // get categories and then send for data for each category separately:
-            url = "/opus/api/categories.json?" + o_hash.getHash();
+            url = "/opus/api/categories/" + ring_obs_id + ".json?" + o_hash.getHash();
             $.getJSON(url, function(json) {
                 for (var index in json) {
                   name = json[index]['table_name'];
