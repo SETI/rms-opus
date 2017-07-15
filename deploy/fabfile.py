@@ -21,17 +21,6 @@ this is generally run like:
 
 """
 
-def slack_notify():
-
-    slack_msg = "OPUS has deployed to production. 💃🚀"
-    slack_client = SlackClient(SLACK_TOKEN)
-    slack_client.api_call(
-        "chat.postMessage",
-        channel=SLACK_CHANNEL,
-        text=slack_msg
-    )
-    print slack_msg
-
 
 def tests_local():
     """
@@ -43,7 +32,9 @@ def tests_local():
 
 def push():
     """
-    pushes code to repo and pushes repo to staging
+    clones local repo into a temporary local directory,
+    then pushes static assets to static server
+    and code to app server staging area
     """
 
     # then checkout code from repo in another directory, and transfer that copy to server
@@ -70,18 +61,19 @@ def push():
         # zip the javascript files, dunno why it commented out, broken?
         # local('python opus/deploy/deploy.py')
         # rsync that code to dev directory on production
-        local('rsync -r -vc -e ssh --exclude .git %s lballard@pds-rings-tools.seti.org:~/.' % prod_deploy_dir)
-        # local('rsync -r -vc -e ssh %s/static_media lballard@pds-rings.seti.org:~/sites/django_opus/.' % prod_deploy_dir)
+        local('rsync -r -vc -e ssh --exclude .git %s lballard@%s:~/.' % (prod_deploy_dir, env.hosts[0])
+
+        # static assets go on the web server
         local('rsync -r -vc -e ssh %s/static_media lballard@pds-rings.seti.org:~/.' % prod_deploy_dir)
 
     # now go to pds-rings and move static_media into the right place
     with settings(host_string='pds-rings.seti.org'):
         run("sudo cp -r %sstatic_media /library/webserver/documents/opus2_resources/." % root_path)
 
-
 def deploy():
     """
     take a backup of the currently deployed source on the server
+    then move staged copy to production location
     """
     with cd('/home/lballard/'):
         # first take a backup:
@@ -89,7 +81,6 @@ def deploy():
 
         # copy the new code to production directory
         run('sudo rsync -r -vc --exclude logs ' + prod_deploy_dir + ' /home/django/djcode/.')
-
 
 def cache_reboot():
     with cd('/home/lballard/'):
@@ -122,3 +113,15 @@ def tests_prod():
         run('sudo python manage.py test apps -x')
 
     slack_notify()
+
+
+def slack_notify():
+
+    slack_msg = "OPUS has deployed to production. 💃🚀"
+    slack_client = SlackClient(SLACK_TOKEN)
+    slack_client.api_call(
+        "chat.postMessage",
+        channel=SLACK_CHANNEL,
+        text=slack_msg
+    )
+    print slack_msg
