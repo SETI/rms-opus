@@ -21,7 +21,6 @@ this is generally run like:
 
 """
 
-
 def tests_local():
     """
     runs all unit tests locally
@@ -70,6 +69,7 @@ def push():
     with settings(host_string='pds-rings.seti.org'):
         run("sudo cp -r %sstatic_media /library/webserver/documents/opus2_resources/." % root_path)
 
+
 def deploy():
     """
     take a backup of the currently deployed source on the server
@@ -82,7 +82,11 @@ def deploy():
         # copy the new code to production directory
         run('sudo rsync -r -vc --exclude logs ' + prod_deploy_dir + ' /home/django/djcode/.')
 
+
 def cache_reboot():
+    """
+    refreshes python code wsgi, django caches, browser last modified, and memcached.
+    """
     with cd('/home/lballard/'):
 
         # refresh the *.wsgi files (not sure which ones are actually doing job)
@@ -104,6 +108,7 @@ def cache_reboot():
 
 
 def tests_prod():
+    """ runs full unit tests on production """
     # run all tests on production and
     # if that flies notifies slack channel that opus has been deployed
     with cd('/home/django/djcode/%s/' % prod_deploy_dir):
@@ -116,7 +121,7 @@ def tests_prod():
 
 
 def slack_notify():
-
+    """ writes to opus slack that opus has been deployed """
     slack_msg = "OPUS has deployed to production. 💃🚀"
     slack_client = SlackClient(SLACK_TOKEN)
     slack_client.api_call(
