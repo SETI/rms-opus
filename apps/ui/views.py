@@ -398,7 +398,11 @@ def init_detail_page(request, **kwargs):
     # get the preview image and some general info
     img = get_object_or_404(Image, ring_obs_id=ring_obs_id)
     base_vol_path = get_base_path_previews(ring_obs_id)
+
     path = settings.IMAGE_HTTP_PATH + base_vol_path
+    if 'CIRS' in base_vol_path:
+        path = path.replace('previews','diagrams')
+
     instrument_id = ObsGeneral.objects.filter(ring_obs_id=ring_obs_id).values('instrument_id')[0]['instrument_id']
 
     # get the preview guide url

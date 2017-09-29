@@ -1,7 +1,7 @@
 {% for i in data  %}
-    
+
     <li id = "gallery__{{i.ring_obs_id}}">
-    	<a class = "activeThumbnail" href = "{{ path }}{{ i.full }}" data-rel="colorbox">
+    	<a class = "activeThumbnail" href = "{{ i.path }}{{ i.full }}" data-rel="colorbox">
             <img width = "133px" alt="{{ i.ring_obs_id }}" title = ""
 
             {% if 'http' in i.img %}
@@ -10,7 +10,7 @@
 
             {% else %}
 
-                src = "{{ path }}{{ i.img }}">
+                src = "{{ i.path }}{{ i.img }}">
 
             {% endif %}
 
@@ -30,7 +30,7 @@
 
 
             <a href="#"><!-- checkmark - add to cart -->
-                <i class="glyphicon glyphicon-ok 
+                <i class="glyphicon glyphicon-ok
                     {% if i.in_collection %}
                        thumb_selected_icon
                     {% endif %}
