@@ -144,7 +144,7 @@ INTERNAL_IPS = ("127.0.0.1",)
 
 BASE_TABLES = ['obs_general', 'obs_ring_geometry','obs_surface_geometry','obs_wavelength']  # tables in which every observation in the database appears:
 TAR_FILE_URI_PATH = 'http://pds-rings-downloads.seti.org/opus/'
-IMAGE_HTTP_PATH = 'https://pds-rings.seti.org/browse/'
+IMAGE_HTTP_PATH = 'https://pds-rings.seti.org/holdings/previews/'
 DEFAULT_COLUMNS = 'ringobsid,planet,target,phase1,phase2,time1,time2'
 IMAGE_COLUMNS   = ['thumb.jpg','small.jpg','med.jpg','full.jpg']
 RANGE_FIELDS    = ['TIME','LONG','RANGE']
@@ -159,7 +159,7 @@ THUMBNAIL_NOT_FOUND = 'https://pds-rings.seti.org/opus2_resources/static_media/i
 
 FILE_HTTP_PATH  = 'https://pds-rings.seti.org/volumes/'
 DERIVED_HTTP_PATH  = 'https://pds-rings.seti.org/derived/'
-IMAGE_HTTP_PATH = 'https://pds-rings.seti.org/browse/'
+IMAGE_HTTP_PATH = 'https://pds-rings.seti.org/holdings/previews/'
 MAX_CUM_DOWNLOAD_SIZE = 5*1024*1024*1024 # 5 gigs max cum downloads
 
 
