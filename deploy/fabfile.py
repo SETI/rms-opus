@@ -63,10 +63,10 @@ def push():
         local('rsync -r -vc -e ssh --exclude .git %s lballard@%s:~/.' % (prod_deploy_dir, env.hosts[0]))
 
         # static assets go on the web server
-        local('rsync -r -vc -e ssh %s/static_media lballard@pds-rings.seti.org:~/.' % prod_deploy_dir)
+        local('rsync -r -vc -e ssh %s/static_media lballard@server2.pds-rings.seti.org:~/.' % prod_deploy_dir)
 
     # now go to pds-rings and move static_media into the right place
-    with settings(host_string='pds-rings.seti.org'):
+    with settings(host_string='server2.pds-rings.seti.org'):
         run("sudo cp -r %sstatic_media /library/webserver/documents/opus2_resources/." % root_path)
 
 
