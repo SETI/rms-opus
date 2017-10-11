@@ -52,7 +52,7 @@ def md5(filename):
 
 def get_file_path(filename):
     """
-    takes an url or pull system path for images and returns path alone
+    takes an url or full system path for images and returns path alone
     stripping domain and/or images_base_path + xxx directory
     """
     if 'http' in filename:
