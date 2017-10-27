@@ -530,6 +530,7 @@ def getImage(request,size='med', ring_obs_id='',fmt='mouse'):      # mouse?
     try:
         img = Image.objects.filter(ring_obs_id=ring_obs_id).values(size)[0][size]
     except IndexError:
+        log.error('index error could not find ring_obs_id {}'.format(ring_obs_id))
         return
 
     path = settings.IMAGE_HTTP_PATH + get_base_path_previews(ring_obs_id)
