@@ -3,9 +3,28 @@ from fabric.api import run, settings, env, cd, lcd, prompt, local
 from fabric.contrib.console import confirm
 from slackclient import SlackClient
 from secrets import SLACK_CHANNEL, SLACK_TOKEN
+from fabric.network import ssh
 
-root_path = '/Users/lballard/'
-env.hosts = ['pds-rings-tools.seti.org']
+"""
+this is generally run like:
+
+    fab tests_local push deploy cache_reboot tests
+
+"""
+
+ssh.util.log_to_file("paramiko.log", 10)
+
+local_root_path = '/Users/lballard/'
+env.use_ssh_config = True
+
+host = prompt("production or dev server?")
+
+if 'prod' in host:
+    env.hosts = ['tools.pds-rings.seti.org']
+elif 'dev' in host:
+    env.hosts = ['dev.pds-rings.seti.org']
+else:
+    sys.exit('please supply a host "prod" or "dev"')
 
 prod_deploy_dir = 'opus'
 # prod_deploy_dir = 'opus_dev'
@@ -14,18 +33,12 @@ git_branch = 'master'
 git_revision = ''
 memcached_port = '11211'
 # memcached_port = '11212'
-"""
-this is generally run like:
-
-    fab tests_local push deploy cache_reboot tests_prod
-
-"""
 
 def tests_local():
     """
     runs all unit tests locally
     """
-    with lcd(root_path + '/projects/opus/'):
+    with lcd(local_root_path + '/projects/opus/'):
         local("REUSE_DB=1 python manage.py test apps -x")
 
 
@@ -37,8 +50,8 @@ def push():
     """
 
     # then checkout code from repo in another directory, and transfer that copy to server
-    with lcd(root_path):
-        # checks out git repo into local dir root_path/opus
+    with lcd(local_root_path):
+        # checks out git repo into local dir local_root_path/opus
         # then rsyncs that copy to production
 
         # clean up old deploys
@@ -46,17 +59,17 @@ def push():
 
         # grab the local repo (this is all because couldn't grab remote from server)
         # local('git clone -b ' + git_branch + ' git@bitbucket.org:ringsnode/opus2.git')  # does not
-        local('git clone -b %s file:///%sprojects/opus' % (git_branch, root_path))
+        local('git clone -b %s file:///%sprojects/opus' % (git_branch, local_root_path))
 
         if prod_deploy_dir != 'opus':
             local('rm -rf %s' % prod_deploy_dir)
             local('mv opus %s' % prod_deploy_dir) # rename it down here before rsyncing it
 
-    with lcd('%sopus/' % root_path):
+    with lcd('%sopus/' % local_root_path):
         if git_revision:
             local('git checkout %s' % git_revision)
 
-    with lcd(root_path):
+    with lcd(local_root_path):
         # zip the javascript files, dunno why it commented out, broken?
         # local('python opus/deploy/deploy.py')
         # rsync that code to dev directory on production
@@ -67,7 +80,7 @@ def push():
 
     # now go to pds-rings and move static_media into the right place
     with settings(host_string='server2.pds-rings.seti.org'):
-        run("sudo cp -r %sstatic_media /library/webserver/documents/opus2_resources/." % root_path)
+        run("sudo cp -r %sstatic_media /library/webserver/documents/opus2_resources/." % local_root_path)
 
 
 def deploy():
@@ -107,7 +120,7 @@ def cache_reboot():
         run('sudo python /home/django/djcode/' + prod_deploy_dir + '/deploy/cache_clear.py')
 
 
-def tests_prod():
+def tests():
     """ runs full unit tests on production """
     # run all tests on production and
     # if that flies notifies slack channel that opus has been deployed
@@ -117,7 +130,8 @@ def tests_prod():
         # first, then it runs ok, so something is awry in production testing.. todo
         run('sudo python manage.py test apps -x')
 
-    slack_notify()
+    if 'prod' in host:
+        slack_notify()  # opus has deployed to production
 
 
 def slack_notify():

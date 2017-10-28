@@ -32,10 +32,10 @@ for row in cursor.fetchall():
     all_img_paths = {'thumb': thumb, 'small': small, 'med': med, 'full': full}
     all_img_sizes = {'size_thumb': 0, 'size_small': 0, 'size_med': 0, 'size_full': 0}
 
-    for size_name, img_path in all_img_paths.items():
+    for size_name, this_img_path in all_img_paths.items():
 
         try:
-            full_path = IMAGE_PATH + get_base_path_previews(ring_obs_id) + img_path
+            full_path = IMAGE_PATH + get_base_path_previews(ring_obs_id) + this_img_path
         except TypeError:
             print("Error: get_base_path previews returned None for %s" % ring_obs_id)
             continue
