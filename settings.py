@@ -4,6 +4,8 @@ import sys
 from collections import OrderedDict
 from secrets import *
 
+ALLOWED_HOSTS = 'dev.pds-rings.seti.org'
+
 PROJECT_ROOT = os.path.dirname(__file__)
 sys.path.insert(0, PROJECT_ROOT)
 sys.path.insert(0, os.path.join(PROJECT_ROOT, 'apps'))
@@ -157,8 +159,8 @@ IMAGE_TYPES = OrderedDict(image_sizes)
 
 THUMBNAIL_NOT_FOUND = 'https://pds-rings.seti.org/opus2_resources/static_media/img/thumbnail_not_found.png'
 
-FILE_HTTP_PATH  = 'https://pds-rings.seti.org/volumes/'
-DERIVED_HTTP_PATH  = 'https://pds-rings.seti.org/derived/'
+FILE_HTTP_PATH  = 'https://pds-rings.seti.org/holdings/volumes/'
+DERIVED_HTTP_PATH  = 'https://pds-rings.seti.org/holdings/calibrated/'
 IMAGE_HTTP_PATH = 'https://pds-rings.seti.org/holdings/previews/'
 MAX_CUM_DOWNLOAD_SIZE = 5*1024*1024*1024 # 5 gigs max cum downloads
 
