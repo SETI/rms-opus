@@ -1,9 +1,23 @@
+"""
+    This script populates a database named opus_new_import
+    that is a smaller version of the opus database that contains
+    only the volumes passed at the command line, like so:
+
+        sudo python build_db.py COISS_2069,COISS_2070,COISS_2071
+
+    It was once used to create the entire opus database and to create
+    smaller versions (ie opus_small) for laptop development
+    and can still be used that way, but now it's still part of the
+    deploy pipeline but is only used to build the small database version
+    (you can no longer pass "all" volumes at the command line)
+
+"""
+
 # Set up the Django Enviroment for running as shell script
 import sys
 import os
 import django
 from django.conf import settings
-
 # sys.path.append('/Users/lballard/projects/opus/')
 sys.path.append('/home/django/djcode/')  #srvr
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "opus.settings")
@@ -11,22 +25,29 @@ os.environ.setdefault("DJANGO_SETTINGS_MODULE", "opus.settings")
 # settings.configure(CACHES=settings.CACHES, DATABASES=settings.DATABASES) # include any other settings you might need
 django.setup()
 
-
 # script imports
 from os import system
 from django.db import transaction, connection, reset_queries
 from django.core.management import  call_command
 from django.db.utils import DatabaseError
-from settings import DATABASES, MULT_FIELDS  # DATABASES creds only
-from settings_local import opus1, opus_to_deploy  # names of the databases
+from settings import MULT_FIELDS  # DATABASES creds only
+from secrets import DB_ADMIN, DB_ADMIN_PASS
 
+# forget about it
+# from settings_local import opus1, opus_to_deploy  # names of the databases
 
+opus1 = 'Observations'
+opus_to_deploy = 'opus_new_import'  # the name of the database we'll create
 
 #----  shell argvs --------#
 import sys
 
 if len(sys.argv) < 2:
     print """
+
+    use this to only build the new volumes, opus_small becomes opus_new_import
+    use another script to update the local clone of production database, test
+    apply it to production using same script
 
     Welcome to the OPUS 2 importer! This script transfers data from OPUS1 to opus_to_deploy.
 
@@ -36,11 +57,17 @@ if len(sys.argv) < 2:
 
     python build_db.py COCIRS_5909,COISS_1007,COISS_2068,COISS_2069,COVIMS_0040,VGISS_8207
 
+    this will build all volumes and no others. used for making smaller test/laptop version
+    haven't tested it in a while.
+
     make sure there are no spaces in your volume list!
 
     you can also do all volumes:
 
     python build_db.py all
+
+    this is what is usually done during a deploy to production, but it's long!
+    it rebuilds the entire database, even if you're only importing a few new volumes
 
     this script assumes we are connecting an old database named Observations
     to a new one named opus. These names can be changed at the top of the script
@@ -58,7 +85,6 @@ volumes_str = '"' + ('","').join(volumes) + '"'
 if volumes == ['all']:
     volumes = []  # nothing to add to the query
     volumes_str = ''
-
 
 
 # ------------ some initial defining of things ------------#
@@ -99,7 +125,7 @@ exclude = ['%movies%',"%mvf_c%",'file_sizes']
 
 
 # ------------ we will copy all the Obs_ tables from Observations to opus ------------#
-obs_exclude = ['obs_rg_COISS_2075', 'obs_surface_geometry_raw'] # obs-like tables to exclude
+obs_exclude = ['obs_rg_COISS_2075', 'obs_surface_geometry_raw','obs_surface_geometry_non_unique'] # obs-like tables to exclude
 cursor.execute("use %s" % opus1)
 q = "show tables like '%s'" % 'obs%'
 cursor.execute(q)
@@ -108,19 +134,15 @@ obs_tables = [row[0] for row in cursor.fetchall() if row[0] not in obs_exclude]
 print "begin"
 
 # ------------------------ begin the beguine -----------------------------------#
-
 # ------------ copy over the 'forms' table into the new 'param_info' table  ------------#
-
-# first, fetch the tables:
-# system("mysql %s < import/backup_util_tables.sql -u%s -p%s" % (opus_to_deploy, DATABASES['default']['USER'], DATABASES['default']['PASSWORD'])))
 
 # build the little user_collections template table
 print "building user_collections_template from user_collections_template.sql "
-system("mysql %s < import/user_collections_template.sql -u%s -p%s" % (opus_to_deploy, DATABASES['default']['USER'], DATABASES['default']['PASSWORD']))
+system("mysql %s < import/user_collections_template.sql -u%s -p%s" % (opus_to_deploy, DB_ADMIN, DB_ADMIN_PASS))
 
-# first, build the  param_info table in the new db - the table  lives in a dump file in the repo
+# build the  param_info table in the new db - the table  lives in a dump file in the repo
 print "building param_info from param_info_table.sql "
-system("mysql %s < import/param_info_table.sql -u%s -p%s" % (opus_to_deploy, DATABASES['default']['USER'], DATABASES['default']['PASSWORD']))
+system("mysql %s < import/param_info_table.sql -u%s -p%s" % (opus_to_deploy, DB_ADMIN, DB_ADMIN_PASS))
 
 
 # only need this part if regenerating param_info_table from Observations dabase
@@ -135,7 +157,7 @@ q = "replace into %s.param_info select * from %s.forms where table_name = 'obs_g
 cursor.execute(q)
 """
 
-# some fiddly updates to the param_info_table
+# some fiddly updates to the param_info_table #why!
 cursor.execute("update %s.param_info as params, %s.forms as forms set params.display = true where forms.display = 'Y' and params.id = forms.no" % (opus_to_deploy, opus1))
 cursor.execute("update %s.param_info as params, %s.forms as forms set params.display_results = true where forms.display_results = 'Y' and params.id = forms.no" % (opus_to_deploy, opus1))
 cursor.execute("update " + opus_to_deploy + ".param_info set form_type = 'RANGE' where form_type = 'None' and name like %s or name like %s" , ('%1', '%2'))
