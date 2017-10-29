@@ -88,3 +88,7 @@ use this procedure to import the new volumes into OPUS production:
 - Do a blog post!
 
 	open http://ringsnodesearchtool.blogspot.com/
+
+- Take a backup of opus on dev
+
+		mysqldump opus --opt > opus.deploy.date.sql -p
