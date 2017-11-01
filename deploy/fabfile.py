@@ -61,6 +61,8 @@ def push():
         # local('git clone -b ' + git_branch + ' git@bitbucket.org:ringsnode/opus2.git')  # does not
         local('git clone -b %s file:///%sprojects/opus' % (git_branch, local_root_path))
 
+        # the repo gets named opus when you clone it, but you can name
+        # that directory something else if you want, this handles that:
         if prod_deploy_dir != 'opus':
             local('rm -rf %s' % prod_deploy_dir)
             local('mv opus %s' % prod_deploy_dir) # rename it down here before rsyncing it
@@ -93,7 +95,9 @@ def deploy():
         run('sudo rsync -r -vc --exclude logs /home/django/djcode/' + prod_deploy_dir + ' backups/.')
 
         # copy the new code to production directory
-        run('sudo rsync -r -vc --exclude logs ' + prod_deploy_dir + ' /home/django/djcode/.')
+        # exclude certain directories from deploying to production website
+        exclude_str = "--exclude logs --exclude .git  --exclude import --exclude deploy"
+        run('sudo rsync -r -vc %s %s /home/django/djcode/.'.format(exclude_str, prod_deploy_dir))
 
 
 def cache_reboot():
