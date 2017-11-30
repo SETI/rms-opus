@@ -6,10 +6,14 @@ use this procedure to import the new volumes into OPUS production:
 
 ## On dev:
 
+
 1. Run build_db.py for the volumes you wish to deploy. This will build an
 	 opus-structured database named opus_new_import but with only the volumes listed
 
- 			sudo -b nohup python import/build_db.py COISS_2069,COISS_2070,COISS_2071 > ~/import.log.txt
+	 for new geo import, go ahead and re-import the volumes, it will do a
+	 replace into
+
+ 			sudo -b nohup python import/build_db.py COUVIS_0057,COISS_2108,COISS_2109,COVIMS_0084,COVIMS_0085,COVIMS_0086 > ~/import.log.txt
 
 	Check it out:
 
@@ -19,7 +23,7 @@ use this procedure to import the new volumes into OPUS production:
 
 	this will update image file sizes in the new volumes db only
 
-		sudo -b nohup python import/update_image_sizes.py > ~/img.log
+		sudo -b nohup python update_image_sizes.py > ~/img.log
 
  	If you need to look at the preview image errors
 
