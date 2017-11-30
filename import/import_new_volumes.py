@@ -74,7 +74,7 @@ for tbl in all_tables:
 
     field_str = ','.join(field_names)
     q = """
-        insert into {}.{} ({}) select {} from {}.{}
+        replace into {}.{} ({}) select {} from {}.{}
         """.format(db_opus, tbl, field_str, field_str, db_new_volumes, tbl)
     try:
         cursor.execute(q)
@@ -84,3 +84,5 @@ for tbl in all_tables:
 
     cursor.close()
     cursor = connection.cursor()
+
+print("ok BYE!")
