@@ -10,7 +10,7 @@ from fabric.api import run, settings, env, cd, lcd, prompt, local
 from fabric.contrib.console import confirm
 from fabric.network import ssh
 from secrets import DB_USER, DB_PASS, OPUS_PROD_DB_PW
-from secrets import OPUS_CODE_STAGED_PRODUCTION as deploy_path
+from secrets import OPUS_CODE_STAGED_PRODUCTION as staged_deploy_path
 from config import DB_NEW_IMPORT as db_new_import
 from config import DB_OPUS_PRODUCTION_NAME as db_opus
 
@@ -35,10 +35,10 @@ def build():
         run("mysql {} < {}.sql -p{}".format(db_new_import, db_new_import, OPUS_PROD_DB_PW))
 
 def import_new_volumes():
-    with cd(deploy_path + '/import/'):
+    with cd(staged_deploy_path + '/import/'):
         run('sudo python import_new_volumes.py')
 
 def drop_all_cache_tables():
     """ drops all opus cache tables in production db" """
-    with cd(deploy_path + '/import/'):
+    with cd(staged_deploy_path + '/import/'):
         run('sudo python drop_cache_tables.py')

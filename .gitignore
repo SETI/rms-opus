@@ -1,3 +1,5 @@
+*.bash
+mysqldb_login.py
 logs
 migrations/
 logfile

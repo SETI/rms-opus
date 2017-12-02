@@ -74,7 +74,7 @@ def push():
     with lcd(local_root_path):
         # zip the javascript files, dunno why it commented out, broken?
         # local('python opus/deploy/deploy.py')
-        # rsync that code to dev directory on production
+        # rsync that code to staging directory on production
         local('rsync -r -vc -e ssh --exclude .git %s lballard@%s:~/.' % (prod_deploy_dir, env.hosts[0]))
 
         # static assets go on the web server

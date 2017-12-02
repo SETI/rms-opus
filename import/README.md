@@ -40,37 +40,54 @@ use this procedure to import the new volumes into OPUS production:
 			call vols('opus.images');
 
 - Drop all the cache tables in opus db locally
+	..running this script directly operates on the local database:
+	..later it is run in a fab file and that acts on the remote database
 
-		python drop_cache_tables.py
+		sudo python drop_cache_tables.py
 
 - run the tests
+	NOTE: this is run on local machine for now, pds-dev not happy
 
-		 cd deploy
+		 cd ../deploy
 		 fab cache_reboot tests
 
 
 ## 	If tests all pass on dev, the next steps describe how to deploy to production
 
-1. Transfer the new data to production
+1. Transfer the new data database to production
+	 ..this is run on pds-dev, it only operates one way, from pds-dev to pds-tools
 
 		cd import
 		fab dump transfer build import_new_volumes
 
-- drop all cache tables production
+- maybe take a look here at opus in pds-tools database:
+
+	use opus;
+	call vols('obs_general');
+	call vols('images');
+
+	you should see the new volumes there.
+
+- look good? time to deploy:
+	maybe make sure nobody is using opus at the moment (apache access logs)
+	and then:
+
+	drop all cache tables production
+	..this is run on pds-dev, it only operates one direction, from pds-dev to pds-tools
+	  so this will drop all cache tables on pds-tools
 
 		fab drop_all_cache_tables
 
 
 - Refresh the caches as you would in a [deploy](../deploy/README.md)
 
-	Locally:
+	Locally (laptop):
 
 		cd deploy
 		fab cache_reboot tests
 
 
-
-- The release is now public! (Yes we have no development server) Manually make sure your most recent blog post links are still working.. (todo: script this!)
+- The release is now public! Manually make sure your most recent blog post links are still working.. (todo: script this!)
 
     open http://ringsnodesearchtool.blogspot.com/
 
