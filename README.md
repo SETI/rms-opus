@@ -5,12 +5,16 @@
 
 ## Install
 
-• create a virtualenv, activate it, and install the dependencies
+• clone the repo
 
+    git clone https://github.com/<GITHUB_USER_NAME>/opus.git
+
+• create a virtualenv and install the dependencies
+
+    cd opus
     virtualenv --python=/usr/local/bin/python2.7 venv --distribute
     source venv/bin/activate
   	pip install -r requirements.txt
-
 
 • create the mysql databases
 
@@ -22,7 +26,7 @@
 
 • build the databases
 
-    mysql opus_small < opus_small.sql -p  # ask Rings Node
+    mysql opus_small < opus_small.sql -p  # ask Rings Node for dump files
     mysql dictionary < dictionary.sql -p
     mysql opus_metrics < opus_metrics.sql -p
 
