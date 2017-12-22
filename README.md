@@ -9,12 +9,17 @@
 
     git clone https://github.com/<GITHUB_USER_NAME>/opus.git
 
-• create a virtualenv and install the dependencies
+• update the pds-tools submodule
 
     cd opus
+    git submodule init
+    git submodule update
+
+• create a virtualenv and install the dependencies
+
     virtualenv --python=/usr/local/bin/python2.7 venv --distribute
     source venv/bin/activate
-  	pip install -r requirements.txt
+    pip install -r requirements.txt
 
 • create the mysql databases
 
@@ -32,7 +37,7 @@
 
 • edit the config files
 
-  - edit both settings_local.py and secrets.py
+  - edit creds, db names in both settings_local.py and secrets.py
 
 • Run the tests
 
