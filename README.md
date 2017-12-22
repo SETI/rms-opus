@@ -1,33 +1,41 @@
 ## run all the tests
 
-    REUSE_DB=1 python manage.py test apps
+    REUSE_DB=1 python manage.py test apps -x
 
 
 ## Install
 
-• install the dependencies
+• create a virtualenv, activate it, and install the dependencies
 
+    virtualenv --python=/usr/local/bin/python2.7 venv --distribute
+    source venv/bin/activate
   	pip install -r requirements.txt
 
 
-• build the databases (which are not in this repo)
+• create the mysql databases
 
-  opus requires its 3 databases:
+  	 # opus requires 3 databases which are not included in this repo.
 
-   opus (or opus_small)
+     create database opus_small;  
+     create database dictionary;
+     create database opus_metrics;
 
-   dictionary
+• build the databases
 
-   opus_metrics
+    mysql opus_small < opus_small.sql -p  # ask Rings Node
+    mysql dictionary < dictionary.sql -p
+    mysql opus_metrics < opus_metrics.sql -p
 
+• edit the config files
+
+  - edit both settings_local.py and secrets.py
 
 • Run the tests
 
 	 REUSE_DB=1 python manage.py test apps
 
-  The tests run against the same database as the production app.
-  To run the tests for the first time after installing,
-  you will need to run migrate:
+  Note the tests run against the same database as the app.
+  To run the tests for the first time you will need to run migrate:
 
   	python manage.py migrate
 
