@@ -18,7 +18,7 @@
 
 • create the mysql databases
 
-  	 # opus requires 3 databases which are not included in this repo.
+  	 # opus requires 3 databases:
 
      create database opus_small;  
      create database dictionary;
