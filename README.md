@@ -49,6 +49,7 @@
   	python manage.py migrate
 
 If you are starting with a dump of an opus database, you might need to drop the following tables for the migrate to work:
+(#todo remove this step, add starter dump to repo)
 
 	  drop table django_admin_log;
 	  drop table django_content_type;
