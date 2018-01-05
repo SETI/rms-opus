@@ -97,7 +97,7 @@ def deploy():
         # copy the new code to production directory
         # exclude certain directories from deploying to production website
         exclude_str = "--exclude logs --exclude .git  --exclude import --exclude deploy"
-        run('sudo rsync -r -vc %s %s /home/django/djcode/.'.format(exclude_str, prod_deploy_dir))
+        run('sudo rsync -r -vc {} {} /home/django/djcode/.'.format(exclude_str, prod_deploy_dir))
 
 
 def cache_reboot():
