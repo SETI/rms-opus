@@ -56,6 +56,10 @@ If you are starting with a dump of an opus database, you might need to drop the 
 	  drop table django_session;
 	  drop table django_site;
 
+• Run the webserver
+
+	python manage.py runserver
+
 
 ## Dependencies
 
