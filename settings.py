@@ -4,7 +4,7 @@ import sys
 from collections import OrderedDict
 from secrets import *
 
-ALLOWED_HOSTS = 'dev.pds-rings.seti.org'
+ALLOWED_HOSTS = ('dev.pds-rings.seti.org','127.0.0.1')
 
 PROJECT_ROOT = os.path.dirname(__file__)
 sys.path.insert(0, PROJECT_ROOT)
