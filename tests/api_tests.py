@@ -2,8 +2,8 @@ import unittest
 import json
 import requests
 import csv
+from config import API_ENDPOINT
 
-api_endpoint = "http://tools.pds-rings.seti.org/opus/api/meta/result_count.json?"
 filename = 'result_counts.csv'
 
 class APIEndpointTests(unittest.TestCase):
@@ -19,7 +19,7 @@ class APIEndpointTests(unittest.TestCase):
                 q_str, expected, info = row
 
                 url_hash = q_str.split('#/')[1].strip()
-                api_url = api_endpoint + url_hash
+                api_url = API_ENDPOINT + url_hash
 
                 data = json.loads(requests.get(api_url).text)
 
