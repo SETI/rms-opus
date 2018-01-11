@@ -6,6 +6,10 @@ from config import API_ENDPOINT
 
 filename = 'result_counts.csv'
 
+verify = True
+if 'dev' in API_ENDPOINT:
+    verify = False  # ignore SSL errors when contacting dev server  ¯\_(ツ)_/¯
+
 class APIEndpointTests(unittest.TestCase):
 
     def test_all_the_things_in_loop(self):
@@ -21,7 +25,7 @@ class APIEndpointTests(unittest.TestCase):
                 url_hash = q_str.split('#/')[1].strip()
                 api_url = API_ENDPOINT + url_hash
 
-                data = json.loads(requests.get(api_url).text)
+                data = json.loads(requests.get(api_url, verify=verify).text)
 
                 result_count = data['data'][0]['result_count']
 
