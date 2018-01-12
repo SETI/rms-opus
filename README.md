@@ -23,8 +23,7 @@
 
 • create the mysql databases
 
-  	 # opus requires 3 databases:
-
+     # mysql commands to create the 3 opus databases:  
      create database opus_small;  
      create database dictionary;
      create database opus_metrics;
