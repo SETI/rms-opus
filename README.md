@@ -56,6 +56,11 @@ If you are starting with a dump of an opus database, you might need to drop the 
 	  drop table django_session;
 	  drop table django_site;
 
+• edit the settings_local.py and secrets.py with your database creds, filepaths etc
+
+	  cp settings_local.template.py settings_local.py
+	  cp secrets.template.py secrets.py
+
 • Run the webserver
 
 	python manage.py runserver
