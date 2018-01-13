@@ -1,7 +1,7 @@
 ## Import from OPUS 1:
 
 Once you've imported the new PDS volumes into the Observations database
-using the legacy system (see https://github.com/basilleaf/opus_imports_doc)
+using the legacy system (see https://github.com/basilleaf/opus_admin)
 use this procedure to import the new volumes into OPUS production:
 
 ## On dev:

@@ -23,8 +23,7 @@
 
 • create the mysql databases
 
-  	 # opus requires 3 databases:
-
+     # mysql commands to create the 3 opus databases:  
      create database opus_small;  
      create database dictionary;
      create database opus_metrics;
@@ -55,6 +54,11 @@ If you are starting with a dump of an opus database, you might need to drop the 
 	  drop table django_content_type;
 	  drop table django_session;
 	  drop table django_site;
+
+• edit the settings_local.py and secrets.py with your database creds, filepaths etc
+
+	  cp settings_local.template.py settings_local.py
+	  cp secrets.template.py secrets.py
 
 • Run the webserver
 
