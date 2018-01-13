@@ -261,10 +261,8 @@ var opus = {
               // reset the pages:
               opus.prefs.page = {"gallery":1, "data":1, "colls_gallery":1, "colls_data":1 };
 
-              // if last_selections exists then also reset the query:
-              if (!jQuery.isEmptyObject(opus.last_selections)) {
-                o_browse.resetQuery();
-              }
+              // and reset the query:
+              o_browse.resetQuery();
         }
 
 
