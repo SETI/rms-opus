@@ -5,6 +5,7 @@ import sys
 DEBUG = True
 
 STATIC_URL = '/static_media/'
+BASE_PATH = 'opus'
 
 sys.path.append('<full path to django project dir')
 ALLOWED_HOSTS = ['127.0.0.1', 'localhost','pds-rings-tools.seti.org','tools.pds-rings.seti.org']
