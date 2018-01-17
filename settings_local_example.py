@@ -14,7 +14,7 @@ sys.path.append(TIME_LIB_PATH)
 
 # import settings
 opus1 = 'Observations'
-opus2 = 'opus2'  # test suite will run against this
+opus_production = 'opus_small'  # test suite will run against this
 
 os.environ['REUSE_DB'] = "1"  # for test runner
 
@@ -26,7 +26,7 @@ DATABASES = {
         'PASSWORD': DB_PASS,
         # 'OPTIONS':{ 'unix_socket': '/private/tmp/mysql.sock'}
         'TEST': {
-                    'NAME': opus2,  # use same database for test as prod YES
+                    'NAME': opus_production,  # use same database for test as prod YES
                 },
     },
     'dictionary': {
