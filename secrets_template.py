@@ -1,15 +1,12 @@
-DB_USER = ''
-DB_PASS = ''
-AWS_ACCESS_KEY_ID=''
-AWS_SECRET_ACCESS_KEY=''
-AWS_STORAGE_BUCKET_NAME = ''
-DEPLOYMENT_PARENT_DIR = ''
-# Make this unique, and don't share it with anybody.
-SECRET_KEY = ''
+# -*- coding: utf-8 -*-
+# ⚠️ leaving any of these blank is catastrophic 🙅🏻
+DB_USER = '<DB_USER>'
+DB_PASS = '<DB_PASS>'
+SECRET_KEY = '<SECRET_KEY>'  # Make unique, don't share
+                             # can be generated https://www.google.com/search?q=django+secret+generator
 
-TAR_FILE_PATH =  ''
-base_volumes_path = '';
-FILE_PATH  = base_volumes_path
-
-DERIVED_PATH  = base_volumes_path + 'derived/'
-IMAGE_PATH = ''
+# these all need trailing slashes
+TAR_FILE_PATH =  '<TAR_FILE_PATH>'  # opus puts zipped cart files here for downloading
+FILE_PATH  = '<FILE_PATH>'  # path pds data drive, typically named volumes/
+DERIVED_PATH  = FILE_PATH + 'derived/'  # path to calibrated datasets
+IMAGE_PATH = FILE_PATH + 'browse/'  # path to prevew images
