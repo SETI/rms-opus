@@ -34,7 +34,7 @@ DATABASES = {
         'ENGINE': 'django.db.backends.mysql',
         'USER': DB_USER,
         'PASSWORD': DB_PASS,
-        'OPTIONS':{ 'init_command': 'SET storage_engine=MYISAM;'},
+        # 'OPTIONS':{ 'init_command': 'SET storage_engine=MYISAM;'},
     },
     'metrics': {
         'NAME': 'opus_metrics',
