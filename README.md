@@ -39,8 +39,8 @@
 • initialize the databases from dump files (ask Rings Node for these files)
 
     mysql opus_small < opus_small.sql -p
-    mysql dictionary < dictionary.sql -p
-    mysql opus_metrics < opus_metrics.sql -p
+    mysql dictionary < dictionary.empty.sql -p
+    mysql opus_metrics < opus_metrics.empty.sql -p
 
 • edit the secrets.py file
 
