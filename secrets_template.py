@@ -3,7 +3,7 @@
 DB_USER = '<DB_USER>'
 DB_PASS = '<DB_PASS>'
 SECRET_KEY = '<SECRET_KEY>'  # Make unique, don't share
-                             # can be generated https://www.google.com/search?q=django+secret+generator
+                             # there are generator tools https://www.google.com/search?q=django+secret+generator
 
 # these all need trailing slashes
 TAR_FILE_PATH =  '<TAR_FILE_PATH>'  # opus puts zipped cart files here for downloading
