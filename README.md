@@ -21,8 +21,8 @@
 
     NOTE: On Ubuntu, mysql requires that the following packages be installed first:
         apt-get install mysql-server
-	apt-get install mysql-client
-	apt-get install libmysqlclient-dev
+        apt-get install mysql-client
+        apt-get install libmysqlclient-dev
 
     # Run the mysql command line:
     mysql
@@ -51,9 +51,9 @@
     - Change IMAGE_PATH to the location of the Cassini browse images
 
     For example:
-    	FILE_PATH  = '/seti/external/cassini/volumes/COISS_2xxx/'
-	DERIVED_PATH  = '/seti/external/cassini/derived/COISS_2xxx/'
-	IMAGE_PATH = '/seti/external/cassini/browse/COISS_2xxx/'
+        FILE_PATH  = '/seti/external/cassini/volumes/COISS_2xxx/'
+        DERIVED_PATH  = '/seti/external/cassini/derived/COISS_2xxx/'
+        IMAGE_PATH = '/seti/external/cassini/browse/COISS_2xxx/'
 	
 • edit the settings_local.py file
 
