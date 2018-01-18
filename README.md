@@ -11,21 +11,25 @@
     git submodule init
     git submodule update
 
+• install mysql if necessary (Ubuntu)
+
+    apt-get install mysql-server
+    apt-get install mysql-client
+    apt-get install libmysqlclient-dev
+	
 • create a virtualenv and install the dependencies
 
+    NOTE: Ubuntu requires that the following package be installed first:
+        apt-get install libncurses-dev
+	
     virtualenv --python=<YOUR PYTHON 2.7 EXECUTABLE> venv --distribute
     source venv/bin/activate
     pip install -r requirements.txt
 
 • create the mysql databases
 
-    NOTE: On Ubuntu, mysql requires that the following packages be installed first:
-        apt-get install mysql-server
-        apt-get install mysql-client
-        apt-get install libmysqlclient-dev
-
     # Run the mysql command line:
-    mysql
+    mysql -p
     
     # From within mysql, commands to create the 3 opus databases:  
     create database opus_small;  
