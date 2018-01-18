@@ -1,12 +1,8 @@
-## run all the tests
-
-    REUSE_DB=1 python manage.py test apps -x
-
-
 ## Install
 
 • clone the repo
 
+    cd <GIT root directory>
     git clone https://github.com/<GITHUB_USER_NAME>/opus.git
 
 • update the pds-tools submodule
@@ -17,52 +13,81 @@
 
 • create a virtualenv and install the dependencies
 
-    virtualenv --python=/usr/local/bin/python2.7 venv --distribute
+    virtualenv --python=<YOUR PYTHON 2.7 EXECUTABLE> venv --distribute
     source venv/bin/activate
     pip install -r requirements.txt
 
 • create the mysql databases
 
-     # mysql commands to create the 3 opus databases:  
-     create database opus_small;  
-     create database dictionary;
-     create database opus_metrics;
+    NOTE: On Ubuntu, mysql requires that the following packages be installed first:
+        apt-get install mysql-server
+	apt-get install mysql-client
+	apt-get install libmysqlclient-dev
 
-• build the databases
+    # Run the mysql command line:
+    mysql
+    
+    # From within mysql, commands to create the 3 opus databases:  
+    create database opus_small;  
+    create database dictionary;
+    create database opus_metrics;
 
-    mysql opus_small < opus_small.sql -p  # ask Rings Node for dump files
+• initialize the databases from dump files (ask Rings Node for these files)
+
+    mysql opus_small < opus_small.sql -p
     mysql dictionary < dictionary.sql -p
     mysql opus_metrics < opus_metrics.sql -p
 
-• edit the config files
+• edit the secrets.py file
 
-  - edit creds, db names in both settings_local.py and secrets.py
+    cp secrets_template.py secrets.py
+    
+    - Change DB_USER to your mysql user
+    - Change DB_PASS to your mysql password
+    - Change SECRET_KEY to a unique key (generators are available on the web)
+    - Change TAR_FILE_PATH to a directory where "shopping cart" tar files can be stored
+    - Change FILE_PATH to the location of the Cassini data volumes
+    - Change DERIVED_PATH to the location of the Cassini calibrated data volumes
+    - Change IMAGE_PATH to the location of the Cassini browse images
 
-• Run the tests
+    For example:
+    	FILE_PATH  = '/seti/external/cassini/volumes/COISS_2xxx/'
+	DERIVED_PATH  = '/seti/external/cassini/derived/COISS_2xxx/'
+	IMAGE_PATH = '/seti/external/cassini/browse/COISS_2xxx/'
+	
+• edit the settings_local.py file
 
-	 REUSE_DB=1 python manage.py test apps
+    cp settings_local_example.py settings_local.py
+    
+    - Provide the full path to the OPUS Django directory
 
-  Note the tests run against the same database as the app.
-  To run the tests for the first time you will need to run migrate:
+• Make the logs directory
 
-  	python manage.py migrate
+    mkdir logs
 
-If you are starting with a dump of an opus database, you might need to drop the following tables for the migrate to work:
-(#todo remove this step, add starter dump to repo)
+• To run the tests or server for the first time you may need to run migrate (try them first and see):
 
+	If you are starting with a dump of an opus database, drop the following tables for the migrate to work:
+
+	  mysql commands:
+	  
 	  drop table django_admin_log;
 	  drop table django_content_type;
 	  drop table django_session;
 	  drop table django_site;
 
-• edit the settings_local.py and secrets.py with your database creds, filepaths etc
+    python manage.py migrate
 
-	  cp settings_local.template.py settings_local.py
-	  cp secrets.template.py secrets.py
+• Run the tests
+
+    python manage.py test apps
+
+  Note the tests run against the same database as the app. Ignore errors about missing files, ObsMovies, or ObsMissionHubble
 
 • Run the webserver
 
 	python manage.py runserver
+
 
 
 ## Dependencies
