@@ -10,8 +10,8 @@ use this procedure to import the new volumes into OPUS production:
 1. Run build_db.py for the volumes you wish to deploy. This will build an
 	 opus-structured database named opus_new_import but with only the volumes listed
 
-	 for new geo import, go ahead and re-import the volumes, it will do a
-	 replace into
+	 for new geo import, go ahead and re-import all impacted volumes,
+	 (this uses 'replace into')
 
  			sudo -b nohup python import/build_db.py COUVIS_0057,COISS_2108,COISS_2109,COVIMS_0084,COVIMS_0085,COVIMS_0086 > ~/import.log.txt
 
@@ -51,11 +51,18 @@ use this procedure to import the new volumes into OPUS production:
 		 cd ../deploy
 		 fab cache_reboot tests
 
+- run the api endpoint tests
+
+		cd ../tests
+		python api_tests.py
+
 
 ## 	If tests all pass on dev, the next steps describe how to deploy to production
 
 1. Transfer the new data database to production
 	 ..this is run on pds-dev, it only operates one way, from pds-dev to pds-tools
+
+	 Note: if you get paramiko errors here, activate the virtualenv in opus_admmin/import
 
 		cd import
 		fab dump transfer build import_new_volumes
@@ -92,14 +99,9 @@ use this procedure to import the new volumes into OPUS production:
     open http://ringsnodesearchtool.blogspot.com/
 
 
-- Run the in-browser selenium tests
+- Run the API endpoint tests:
 
-	they are in Firefox->tools
-
-
-- Run the selenium tests:
-
-    In the local repo:
+    In the local repo or anywhere:
 
         cd tests
         source venv/bin/activate
