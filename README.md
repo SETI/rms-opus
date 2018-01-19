@@ -13,9 +13,9 @@
 
 • install mysql if necessary (Ubuntu)
 
-    apt-get install mysql-server
-    apt-get install mysql-client
-    apt-get install libmysqlclient-dev
+    sudo apt-get install mysql-server
+    sudo apt-get install mysql-client
+    sudo apt-get install libmysqlclient-dev
 	
 • create a virtualenv and install the dependencies
 
@@ -26,6 +26,10 @@
     source venv/bin/activate
     pip install -r requirements.txt
 
+    NOTE: In some brand new installations, numpy is not installed and is also
+    not included in the requirements.txt list, so you have to do:
+        pip install numpy
+
 • create the mysql databases
 
     # Run the mysql command line:
@@ -35,6 +39,9 @@
     create database opus_small;  
     create database dictionary;
     create database opus_metrics;
+
+    # And create the opus_web_app user:
+    create user 'opus_web_app'@'localhost';
 
 • initialize the databases from dump files (ask Rings Node for these files)
 
@@ -75,6 +82,7 @@
 
 	  mysql commands:
 	  
+	  use opus_small;
 	  drop table django_admin_log;
 	  drop table django_content_type;
 	  drop table django_session;
