@@ -1,0 +1,2 @@
+SLACK_TOKEN = ''
+SLACK_CHANNEL = ''
