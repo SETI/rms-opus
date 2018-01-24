@@ -430,6 +430,7 @@ def range_query_object(selections, param_name, qtypes):
     builds query for numeric ranges where 2 data columns represent min and max values
     any all only
     any / all / only
+    any/all/only
 
     """
     # grab some info about this param

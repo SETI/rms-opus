@@ -5,6 +5,9 @@
 
         sudo python build_db.py COISS_2069,COISS_2070,COISS_2071
 
+    NOTE: some tables are copied from opus_hack, and others are built
+    from a dump file on disk. See below! 
+
     It was once used to create the entire opus database and to create
     smaller versions (ie opus_small) for laptop development
     and can still be used that way, but now it's still part of the
