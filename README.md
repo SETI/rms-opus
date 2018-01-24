@@ -109,5 +109,3 @@ see requirements.txt
 memcached daemon must be running on production server OR if it's not then comment out the cache_backend line in settings.py
 
 see also apps/README.md (probably deprecated)
-
-some possibly useful tidbits are also in the /doc directory )
