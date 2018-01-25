@@ -17,7 +17,7 @@ ssh.util.log_to_file("paramiko.log", 10)
 local_root_path = '/Users/lballard/'
 env.use_ssh_config = True
 
-host = prompt("production or dev server?")
+host = prompt("production or dev server?", default='dev')
 
 if 'prod' in host:
     env.hosts = ['tools.pds-rings.seti.org']
@@ -25,6 +25,7 @@ elif 'dev' in host:
     env.hosts = ['dev.pds-rings.seti.org']
 else:
     sys.exit('please supply a host "prod" or "dev"')
+
 
 prod_deploy_dir = 'opus'
 # prod_deploy_dir = 'opus_dev'
