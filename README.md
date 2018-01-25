@@ -40,8 +40,8 @@
     create database dictionary;
     create database opus_metrics;
 
-    # And create the opus_web_app user:
-    create user 'opus_web_app'@'localhost';
+    # And create the opus web user:
+    create user 'USERNAME'@'localhost';  # see secrets.template.py 
 
 • initialize the databases from dump files (ask Rings Node for these files)
 
