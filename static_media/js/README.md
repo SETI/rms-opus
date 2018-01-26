@@ -4,6 +4,8 @@ OPUS is a single page app written in vanilla javascript with jQuery. There is no
 
 The scripts are divided into subject areas, or areas of the interface. The areas are Search, Browse (which includes Gallery and Table) and Detail. Each script defines a namespace for methods in that script. Each of the namespace objects begin with a method that define all behaviors for the components in that namespace, followed by methods that perform actions.
 
+#Todo This needs tests! Also a redux that incorporates a framework (such as REACT) would provide easier testing and for a lot of this custom code to be thrown away. 
+
 ## opus.js
 
 This script contains the "opus" object and all the document.ready() init functions go here. The opus object contains all variables that need to be tracked globally for the entire application, as well as the main load() loop.
