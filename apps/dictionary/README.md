@@ -1,4 +1,4 @@
-# Dictionary App
+# Dictionary
 
 This feeds content to the 'read more' and 'more info' links that appear throughout the tool. 
 
