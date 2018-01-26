@@ -2,27 +2,27 @@
 
 ### search
 
-this is the api (rename me!) it manages the different types of queries and performs all the queries.
+This is the search api, it performs all user data queries, and handles the different types of queries (range, multi-choice, longitude, etc).
 
 ### metadata
 
-handles the metadata for the feedabck the user sees in the interface, things that change wrt the query being performed: range endpoints, nulls, total result counts..
+handles the metadata for the feedabck hinting the user sees in the interface, things that change wrt the query being performed: range endpoints and mult hinting (green numbers), nulls counts, total result counts. 
 
 ### paraminfo
 
-static information about every searchable parameter (data type, label default widget, how to query etc..)
+Static information about every searchable parameter (data type, label, default widget, query type, etc..)
 
 ### results
 
-handles returning result sets
+handles returning result sets, like data tables/csv, or gallery data. 
 
 ### ui
 
-views that drive the OPUS user interface
+Views that drive the OPUS user interface, this is where html is created for a lot of interface components, such as widgets, menus, gallery templates and the like. Most templates for the application are in ui/templates.
 
 ### guide
 
-a guide for using the API for querying opus from script or command line
+An API guide, for people using the API for querying opus from script or command line
 
 
 
