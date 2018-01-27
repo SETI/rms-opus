@@ -68,8 +68,10 @@ class resultsTests(TestCase):
 
     def test__no_images_are_without_size(self):
         where = " size_thumb is null  or size_small is null  or size_med is null  or size_full is null"
-        where += " or size_thumb = 0 or size_small = 0 or size_med = 0 or size_full = 0"
-        count = Image.objects.extra(where=[where]).count()
+        # where += " or size_thumb = 0 or size_small = 0 or size_med = 0 or size_full = 0"
+        query = Image.objects.extra(where=[where])
+        print query.query
+        count = query.count()
         self.assertEqual(count, 0)
 
     def test__images_has_all_volumes(self):
