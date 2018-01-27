@@ -19,6 +19,7 @@ import logging
 log = logging.getLogger(__name__)
 
 def get_all_in_collection(request):
+    """ returns list of ring_obs_ids """
     if not request.session.get('has_session'):
         return []
     else:
@@ -30,11 +31,28 @@ def get_all_in_collection(request):
         ring_obs_ids = [n[0] for n in cursor.fetchall()]
         return ring_obs_ids
 
+def get_collection_csv(request, fmt=None):
+    """
+        creates csv based on user query and selection columns
+        defaults to response object
+        or as first line and all data tuple object for fmt=raw
+    """
+    slugs = request.GET.get('cols')
+    from results.views import getPage
+    all_data = getPage(request, colls=True, colls_page='all')
+
+    if fmt == 'raw':
+        return slugs.split(","), all_data[2]
+    else:
+        response = HttpResponse(content_type='text/csv')
+        response['Content-Disposition'] = 'attachment; filename="data.csv"'
+        wr = csv.writer(response)
+        wr.writerow(slugs.split(","))
+        wr.writerows(all_data[2])
+        return response
 
 def get_collection_table(session_id):
-    """
-    returns collection table name and if one doesn't exist create a new one
-    """
+    """ returns collection table name and if one doesn't exist creates a new one """
     if not session_id:
         return False
 

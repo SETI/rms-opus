@@ -22,8 +22,11 @@ import logging
 log = logging.getLogger(__name__)
 
 def create_csv_file(request, csv_file_name):
-    from results.views import get_csv
-    slug_list, all_data = get_csv(request, fmt="raw")
+    """ for the given request and file name,
+        writes a csv file on disk!
+    """
+    from user_collections.views import get_csv
+    slug_list, all_data = get_collection_csv(request, fmt="raw")
     csv_file = open(csv_file_name,'a')
     wr = csv.writer(csv_file)
     wr.writerow(slug_list)
@@ -72,8 +75,9 @@ def get_file_path(filename):
 
 def get_download_info(product_types, previews, colls_table_name):
     """
-        return some info about the current session's download
-        return total_size, file_count  # bytes
+        returns total_size, file_count in bytes
+        product_types list, previews bool, and colls_table_name string
+        return
     """
     if previews == 'none' or previews == '' or previews == []:
         previews = None  # :-(

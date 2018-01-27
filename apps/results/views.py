@@ -26,28 +26,10 @@ from django.views.decorators.cache import never_cache
 import logging
 log = logging.getLogger(__name__)
 
-def get_csv(request, fmt=None):
-    """
-        creates csv
-        only works right now for a collection
-        defaults to response object
-        or as first line and all data tuple object for fmt=raw
-    """
-    slugs = request.GET.get('cols')
-    all_data = getPage(request, colls=True, colls_page='all')
-
-    if fmt == 'raw':
-        return slugs.split(","), all_data[2]
-    else:
-        response = HttpResponse(content_type='text/csv')
-        response['Content-Disposition'] = 'attachment; filename="data.csv"'
-        wr = csv.writer(response)
-        wr.writerow(slugs.split(","))
-        wr.writerows(all_data[2])
-        return response
 
 def get_all_categories(request, ring_obs_id):
-    """ returns list of all cateories this ring_obs_id apepars in """
+    """ returns list of all cateories - aka tables - this ring_obs_id apepars in
+        as json response """
     all_categories = []
     table_info = TableName.objects.all().values('table_name', 'label').order_by('disp_order')
 
@@ -73,7 +55,6 @@ def get_all_categories(request, ring_obs_id):
             all_categories.append(cat)
 
     return HttpResponse(json.dumps(all_categories), content_type="application/json")
-
 
 def category_list_http_endpoint(request):
     """ returns a list of triggered categories (table_names) and labels
@@ -108,7 +89,18 @@ def category_list_http_endpoint(request):
 def getData(request,fmt):
     update_metrics(request)
     """
-    a page of results for a given search
+    return sa page of data for a given search and page_no like so:
+
+        data = {
+                'page_no':page_no,
+                'limit':limit,
+                'page':page,         # tabular page data
+                'count':len(page),
+                'labels': labels
+                }
+
+    can return raw or http response
+
     """
     if not request.session.get('has_session'):
         request.session['has_session'] = True

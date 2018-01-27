@@ -25,21 +25,17 @@ import logging
 log = logging.getLogger(__name__)
 
 def getMultName(param_name):
-
-    """ mult foreign key tables are named like so """
+    """ pass param_name, returns mult widget foreign key table name
+        the tables themselves are in the search/models.py """
     return "mult_" + '_'.join(param_name.split('.'))
 
 def getUserSearchTableName(no):
-    """ a bit of text manipulation, user search tables are stored like so: """
+    """ pass cache_no, returns user search table name"""
     return 'cache_' + str(no);
 
-
 def getResultCount(request,fmt='json'):
-
-    """
-    result count for a search
-
-    """
+    """ pass request and response format,
+        returns result count for a search """
     update_metrics(request)
 
     if request.GET is None:
@@ -90,12 +86,14 @@ def getResultCount(request,fmt='json'):
 
 def getValidMults(request,slug,fmt='json'):
     """
-    returns list of valid mult ids or labels for field in GET param "field"
+    fetch mult widget hinting data for widget defined by slug
     based on current search defined in request
-    field_format = 'ids' or 'labels' depending on how you want your data back
-    (OPUS UI will use ids but they aren't very readable for everyone else)
-    returns a dictionary named mults as names and counts for each as values
-    wrapped in a dictionary that includes its slug name
+
+    this is the widget hinting numbers that appear next to each
+    possible checkbox value in a mult/group widget (green numbers)
+
+    pass request, slug, and response format
+    returns valid mults for a given field (slug) like so:
 
         { 'field':slug,'mults':mults }
 
@@ -189,7 +187,15 @@ def getValidMults(request,slug,fmt='json'):
 # todo: why is this camel case?
 def getRangeEndpoints(request,slug,fmt='json'):
     """
-    returns valid range endpoints for field given selections and extras
+    fetch range widget hinting data for widget defined by slug
+    based on current search defined in request
+
+    this is the valid range endpoints that appear in
+    range widgets (green numbers)
+
+    returns a dictionary like:
+
+        { min: 63.592, max: 88.637, nulls: 2365}
 
     """
     # if this param is in selections we want to remove it,
@@ -298,6 +304,24 @@ def getRangeEndpoints(request,slug,fmt='json'):
 
 
 def getFields(request,**kwargs):
+    """
+        this is helper method for people using the public API
+        it's a list of all slugs in the database and helpful info
+        about each one like label, dict/more_info links:
+
+            surfacegeometryJUPITERsolarhourangle: {
+                more_info: {
+                    def: false,
+                    more_info: false
+                },
+                label: "Solar Hour Angle"
+            }
+
+        if 'field' is in kwargs, it will return this for just that field (#todo this broken?)
+        otherwise returns full list of fields in db, as seen here:
+        https://tools.pds-rings.seti.org/opus/api/fields.json
+
+    """
     field = category = ''
     fmt = kwargs['fmt']
     if 'field' in kwargs:
@@ -316,6 +340,7 @@ def getFields(request,**kwargs):
         else:
             fields = ParamInfo.objects.all()
 
+    # build return objects
     return_obj = {}
     for f in fields:
         return_obj[f.slug] = {
