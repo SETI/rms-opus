@@ -606,7 +606,7 @@ div.gallery {
 }
 
 .spinner {
-    background-image: url('https://pds-rings.seti.org/opus2_resources/static_media/img/spinner.gif');
+    background-image: url('https://tools.pds-rings.seti.org/assets/static_media/img/spinner.gif');
     width:30px;
     display:inline-block;
     background-repeat: no-repeat;

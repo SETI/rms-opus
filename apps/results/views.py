@@ -485,19 +485,23 @@ def getImages(request,size,fmt):
     # find which are in collections, mark unfound images 'not found'
     for image in image_links:
         image['img'] = image[size] if image[size] else 'not found'
+
+        # hack for the new reclassification of some previews as "diagrams"
+        image['path'] = settings.IMAGE_HTTP_PATH
+        if 'CIRS' in image['ring_obs_id']:
+            image['path'] = image['path'].replace('previews','diagrams')
+
         if collection_members:
             from user_collections.views import *
             if image['ring_obs_id'] in collection_members:
                 image['in_collection'] = True
-
-    path = settings.IMAGE_HTTP_PATH
 
     if (request.is_ajax()):
         template = 'gallery.html'
     else: template = 'image_list.html'
 
     # image_links
-    return responseFormats({'data':[i for i in image_links]},fmt, size=size, path=path, alt_size=alt_size, columns_str=columns.split(','), template=template, order=order)
+    return responseFormats({'data':[i for i in image_links]},fmt, size=size, alt_size=alt_size, columns_str=columns.split(','), template=template, order=order)
 
 
 def get_base_path_previews(ring_obs_id):
@@ -526,9 +530,13 @@ def getImage(request,size='med', ring_obs_id='',fmt='mouse'):      # mouse?
     try:
         img = Image.objects.filter(ring_obs_id=ring_obs_id).values(size)[0][size]
     except IndexError:
+        log.error('index error could not find ring_obs_id {}'.format(ring_obs_id))
         return
 
     path = settings.IMAGE_HTTP_PATH + get_base_path_previews(ring_obs_id)
+    if 'CIRS' in ring_obs_id:
+        path = path.replace('previews','diagrams')
+
     return responseFormats({'data':[{'img':img, 'path':path}]}, fmt, size=size, path=path, template='image_list.html')
 
 def file_name_cleanup(base_file):

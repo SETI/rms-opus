@@ -1,10 +1,15 @@
+# -*- coding: utf-8 -*-
 import unittest
 import json
 import requests
 import csv
+from config import API_ENDPOINT
 
-api_endpoint = "http://tools.pds-rings.seti.org/opus/api/meta/result_count.json?"
 filename = 'result_counts.csv'
+
+verify = True
+if 'dev' in API_ENDPOINT:
+    verify = False  # ignore SSL errors when contacting dev server  ¯\_(ツ)_/¯
 
 class APIEndpointTests(unittest.TestCase):
 
@@ -19,9 +24,9 @@ class APIEndpointTests(unittest.TestCase):
                 q_str, expected, info = row
 
                 url_hash = q_str.split('#/')[1].strip()
-                api_url = api_endpoint + url_hash
+                api_url = API_ENDPOINT + url_hash
 
-                data = json.loads(requests.get(api_url).text)
+                data = json.loads(requests.get(api_url, verify=verify).text)
 
                 result_count = data['data'][0]['result_count']
 

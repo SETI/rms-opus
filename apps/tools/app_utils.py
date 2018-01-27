@@ -102,13 +102,7 @@ def responseFormats(data, fmt, **kwargs):
     # like: [{ring_obs_id=something1, planet=SAt, target = Pan}, {ring_obs_id=something21, planet=Sat, target = Pan}]
     # each row is one dictionary
     elif fmt == 'csv':   # must pass a list of dicts
-
-        for d in data:
-            if type(data[d]).__name__ == 'list':
-                if type(data[d][0]).__name__ in ['dict', 'SortedDict']:
-                    return dictToCSV(data[d])
-                else:
-                    return listToCSV(data[d],kwargs['labels'])
+        return listToCSV(data['page'],kwargs['labels'])
 
     raise Http404
 

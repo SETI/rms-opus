@@ -238,6 +238,13 @@ var opus = {
     //------------------------------------------------------------------------------------//
 
     load: function () {
+        /* When user makes any change to the interface, such as changing a query,
+        the load() will send an ajax request to the server to get information it
+        needs to update any hinting (green numbers), result counts, browse results
+        tab etc. Load watches for changes to the hash to know
+        whether to fire an ajax call.
+        */
+
         selections = o_hash.getSelectionsFromHash();
 
         if (!selections) {
@@ -261,10 +268,8 @@ var opus = {
               // reset the pages:
               opus.prefs.page = {"gallery":1, "data":1, "colls_gallery":1, "colls_data":1 };
 
-              // if last_selections exists then also reset the query:
-              if (!jQuery.isEmptyObject(opus.last_selections)) {
-                o_browse.resetQuery();
-              }
+              // and reset the query:
+              o_browse.resetQuery();
         }
 
 
