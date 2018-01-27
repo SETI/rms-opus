@@ -2,7 +2,7 @@
 from fabric.api import run, settings, env, cd, lcd, prompt, local
 from fabric.contrib.console import confirm
 from slackclient import SlackClient
-from secrets import SLACK_CHANNEL, SLACK_TOKEN
+from secrets import SLACK_CHANNEL, SLACK_TOKEN, REMOTE_USERNAME
 from fabric.network import ssh
 
 """
@@ -12,9 +12,11 @@ this is generally run like:
 
 """
 
-ssh.util.log_to_file("paramiko.log", 10)
-
 local_root_path = '/Users/lballard/'
+remote_root_path = '/home/lballard/'
+
+# ssh.util.log_to_file("paramiko.log", 10)
+
 env.use_ssh_config = True
 
 host = prompt("production or dev server?", default='dev')
@@ -28,10 +30,10 @@ else:
 
 
 prod_deploy_dir = 'opus'
-# prod_deploy_dir = 'opus_dev'
+static_assets_path = remote_root_path + 'rdsk/www/assets/' # static_media goes here
 # git_branch = 'menu_bug'
 git_branch = 'master'
-git_revision = ''
+git_revision = ''  # use this to roll back to a specific commit
 memcached_port = '11211'
 # memcached_port = '11212'
 
@@ -73,17 +75,14 @@ def push():
             local('git checkout %s' % git_revision)
 
     with lcd(local_root_path):
-        # zip the javascript files, dunno why it commented out, broken?
+        # zip the javascript files,  why it commented out, broken?
         # local('python opus/deploy/deploy.py')
         # rsync that code to staging directory on production
-        local('rsync -r -vc -e ssh --exclude .git %s lballard@%s:~/.' % (prod_deploy_dir, env.hosts[0]))
+        local('rsync -r -vc -e ssh --exclude .git %s %s@%s:~/.' % (prod_deploy_dir, REMOTE_USERNAME, env.hosts[0]))
 
-        # static assets go on the web server
-        local('rsync -r -vc -e ssh %s/static_media lballard@server2.pds-rings.seti.org:~/.' % prod_deploy_dir)
-
-    # now go to pds-rings and move static_media into the right place
-    with settings(host_string='server2.pds-rings.seti.org'):
-        run("sudo cp -r %sstatic_media /library/webserver/documents/opus2_resources/." % local_root_path)
+    # move static_media into the right place
+    with cd(remote_root_path):
+        run("sudo cp -r %s/static_media %s." % (prod_deploy_dir, static_assets_path))
 
 
 def deploy():
@@ -91,7 +90,7 @@ def deploy():
     take a backup of the currently deployed source on the server
     then move staged copy to production location
     """
-    with cd('/home/lballard/'):
+    with cd(remote_root_path):
         # first take a backup:
         run('sudo rsync -r -vc --exclude logs /home/django/djcode/' + prod_deploy_dir + ' backups/.')
 
@@ -105,7 +104,7 @@ def cache_reboot():
     """
     refreshes python code wsgi, django caches, browser last modified, and memcached.
     """
-    with cd('/home/lballard/'):
+    with cd(remote_root_path):
 
         # refresh the *.wsgi files (not sure which ones are actually doing job)
         run('sudo touch /home/django/djcode/' + prod_deploy_dir + '/*.wsgi')
