@@ -125,7 +125,7 @@ def edit_collection(request, **kwargs):
     turning this off for now, we will get the queue of whatever request_no is passed
     to us, without checking against what is expected_request_no
     by turning this off we are at risk of ajax race conditions
-    but it's breaking something and no time fo dat right now
+    but it's breaking something and no time for it right now
     Issue is here:
     https://bitbucket.org/ringsnode/opus2/issue/75/collections-downloads-majorly-broken
     # todo:
@@ -169,10 +169,40 @@ def edit_collection(request, **kwargs):
     return HttpResponse(json.dumps(json_data))
 
 def edit_collection_addall(request, **kwargs):
-    update_metrics(request)
     """
     add the entire result set to the collection cart
+
+    This may be turned off. The way to turn this off is:
+
+    - comment out html link in apps/ui/templates/browse_headers.html
+    - add these lines below:
+
+            # turn off this functionality
+            log.debug("edit_collection_addall is currently turned off. see apps/user_collections.edit_collection_addall")
+            return  # this thing is turned off for now
+
+
+    The reason is it needs more testing, but this branch makes a big
+    efficiency improvements to the way downloads are handled, and fixes
+    some things, so I wanted to merge it into master
+
+    Things that needs further exploration:
+    This functionality provides no checks on how large a cart can be.
+    There needs to be some limit.
+    It doesn't hide the menu link when the result count is too high.
+    And what happens when it bumps against the MAX_CUM_DOWNLOAD_SIZE.
+    The functionality is there but these are questions!
+
+    To bring this functionality back for testing do the folloing:
+        - uncomment the "add all to cart" link in apps/ui/templates/browse_headers.html
+        - comment out the 2 lines below in this function
+
     """
+    # turn off this functionality
+    log.error("edit_collection_addall is currently unavailable. see user_collections.edit_collection_addall()")
+    return  # this thing is turned off for now
+
+    update_metrics(request)
     session_id = request.session.session_key
     colls_table_name = get_collection_table(session_id)
 
