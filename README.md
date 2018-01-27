@@ -1,5 +1,9 @@
 OPUS is an outer planets data search tool for the NASA Planetary Data System.
 
+Run the tests like: 
+
+	python manage.py test apps
+
 For the opus web import pipeline go to https://github.com/basilleaf/opus_admin
 
 ## Install OPUS Locally
