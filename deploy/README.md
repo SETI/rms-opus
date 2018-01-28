@@ -4,15 +4,15 @@ if you are instead looking to update the OPUS database with new data, see http:/
 
 1  run tests locally, push to server, deploy to web root, run tests remotely 
 
-    fab tests_local push deploy cache_reboot tests
+        fab tests_local push deploy cache_reboot tests
 
 2. Run the API Endpoint tests 
 
-     cd ../tests
-     source venv/bin/activate
-     python api_tests.py2  Open some recent blog posts in a browser:  
+        cd ../tests
+        source venv/bin/activate
+        python api_tests.py2  Open some recent blog posts in a browser:  
 
 3. Open some recent blog post pages, or other queries you want to be fast for others, in a browser: 
 
-    open http://ringsnodesearchtool.blogspot.com/
+        open http://ringsnodesearchtool.blogspot.com/
 
