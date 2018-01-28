@@ -1,4 +1,4 @@
-# Deploying OPUS code to remote servers
+# Deploying OPUS code 
 
 These steps are for deploy code changes to remote web servers. For updating OPUS database with new data, see http://github.com/basilleaf/opus_admin
 
