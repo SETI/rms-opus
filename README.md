@@ -4,21 +4,29 @@ OPUS is an outer planets data search tool for the NASA Planetary Data System., b
 
 ## Technology Stack
 
-		Python 2.7
-		Django > 1.10
-		MySQL 5.6
-		Twitter Bootstrap 3
-		jQuery 2
+	Python 2.7
+	Django > 1.10
+	MySQL 5.6
+	Twitter Bootstrap 3
+	jQuery 2
 
 ## Installation Guide
 
-- Here is our [detailed installation guide](install.md)
+- We have a [detailed installation guide](install.md) for installing locally
 
-- Our import pipeline is in this [separate repo ](https://github.com/basilleaf/opus_admin)
+- Our custom import pipeline for the Rings Node is in this [separate repo](https://github.com/basilleaf/opus_admin)
+
+## Project Layout
+
+The client side javascript web application is defined in static_media/js/ and [described here](static_media/js/README.md)
+
+The server side python scripts are found in apps/ and [described here](apps/README.md)
 
 ## Run the Tests
 
 	python manage.py test apps
+
+
 
 [0]: https://www.python.org/
 [1]: https://www.djangoproject.com/
