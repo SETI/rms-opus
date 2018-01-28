@@ -1,6 +1,6 @@
 # OPUS
 
-OPUS is an outer planets data search tool for the NASA Planetary Data System., built with [Python][0] using the [Django Web Framework][1].
+OPUS is an outer planets data search tool for the Ring-Moon Systems Node, built with [Python][0] using the [Django Web Framework][1].
 
 ## Technology Stack
 
