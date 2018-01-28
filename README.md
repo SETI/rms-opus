@@ -12,9 +12,9 @@ OPUS is an outer planets data search tool for the Ring-Moon Systems Node, built 
 
 ## Installation Guide
 
-- We have a [detailed installation guide](install.md) for installing locally
+-  For installing locally see the [detailed installation guide](install.md)
 
-- Our custom import pipeline for the Rings Node is in this [separate repo](https://github.com/basilleaf/opus_admin)
+-  A custom pipeline for the Rings Node data is in [a separate repo](https://github.com/basilleaf/opus_admin)
 
 ## Project Layout
 
