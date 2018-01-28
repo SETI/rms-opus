@@ -13,7 +13,7 @@ These steps are for deploy code changes to remote web servers. For updating OPUS
         source venv/bin/activate
         python api_tests.py  
 
-3. Open some recent blog post pages, or other queries you want to be fast for others, in a browser: 
+3. Open some recent blog post pages in a browser, or other queries you want to be fast for other users.
 
         open http://ringsnodesearchtool.blogspot.com/
 
