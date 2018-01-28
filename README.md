@@ -2,6 +2,9 @@
 
 OPUS is an outer planets data search tool for the Ring-Moon Systems Node, built with [Python][0] using the [Django Web Framework][1].
 
+[0]: https://www.python.org/
+[1]: https://www.djangoproject.com/
+
 ## Technology Stack
 
 	Python 2.7
@@ -12,9 +15,9 @@ OPUS is an outer planets data search tool for the Ring-Moon Systems Node, built 
 
 ## Installation Guide
 
--  For installing locally see the [detailed installation guide](install.md)
+For installing locally see the [detailed installation guide](install.md)
 
--  A custom pipeline for the Rings Node data is in [a separate repo](https://github.com/basilleaf/opus_admin)
+Rings Node custom data import pipeline is in [a separate repo](https://github.com/basilleaf/opus_admin)
 
 ## Project Layout
 
@@ -22,10 +25,10 @@ The client side javascript web application is defined in [static_media/js/](stat
 
 The server side python scripts are found in [apps/](apps/) and [described here](apps/README.md)
 
-## Run the Django Tests
+## Deployments
+
+For deploying code updates to a remote webserver [see deploy/README.md](deploy/README.md)
+
+## Running the Django Tests
 
 	python manage.py test apps
-
-
-[0]: https://www.python.org/
-[1]: https://www.djangoproject.com/
