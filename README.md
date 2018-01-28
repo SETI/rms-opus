@@ -18,14 +18,13 @@ OPUS is an outer planets data search tool for the NASA Planetary Data System., b
 
 ## Project Layout
 
-The client side javascript web application is defined in static_media/js/ and [described here](static_media/js/README.md)
+The client side javascript web application is defined in [static_media/js/](static_media/js/) and [described here](static_media/js/README.md)
 
-The server side python scripts are found in apps/ and [described here](apps/README.md)
+The server side python scripts are found in [apps/](apps/) and [described here](apps/README.md)
 
 ## Run the Tests
 
 	python manage.py test apps
-
 
 
 [0]: https://www.python.org/
