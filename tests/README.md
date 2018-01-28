@@ -1,20 +1,19 @@
-# These are actually API Tests
+# Tests that Run against Remote API Tests
 
-If you are looking for the Django tests, the are in apps/ and described
-in deploy/README.md
+If you are looking for the Django tests, the are in apps/ and described in deploy/README.md
 
-These tests send http requests to a public opus API, identified at base url set in config.py
+These tests send http requests to a public opus API, identified at base url set in api_tests.py
 
 The list of opus urls to check are in result_counts.txt (although it doesn't use the base_urls found in that text file)
 
 Run these Tests:
 
-    python api_tests.py
+    python api_tests.py 
 
 
 This layer of testing is a way to test the public deployed API is behaving normally,
 and it is also data integrity tests. The urls found in result_counts.txt are
-manually added by doing opus searches. 
+manually added by doing opus searches.
 
 Initial setup: install requirements and create a conda environment, and activate it:
 
