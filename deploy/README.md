@@ -1,6 +1,7 @@
-## Deploying OPUS code to remote servers
+# Deploying OPUS code to remote servers
 
-if you are instead looking to update the OPUS database with new data, see http://github.com/basilleaf/opus_admin
+These steps are for deploy code changes to remote web servers. For updating OPUS database with new data, see http://github.com/basilleaf/opus_admin
+
 
 1. Run tests locally, push to server, move files to web root, refresh caches, run tests remotely 
 
@@ -15,4 +16,5 @@ if you are instead looking to update the OPUS database with new data, see http:/
 3. Open some recent blog post pages, or other queries you want to be fast for others, in a browser: 
 
         open http://ringsnodesearchtool.blogspot.com/
+
 
