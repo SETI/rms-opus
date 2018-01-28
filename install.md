@@ -15,9 +15,9 @@
       sudo apt-get install mysql-client
       sudo apt-get install libmysqlclient-dev
 
-* Some Ubuntu dependencies
+* Ubuntu dependencies
 
-- Ubuntu also requires the following package be installed.
+  Ubuntu also requires the following package be installed.
 
       apt-get install libncurses-dev
 
@@ -53,8 +53,8 @@
 
 * edit the secrets.py file
 
-  Copy the template: 
-  
+  Copy the template:
+
       cp secrets_template.py secrets.py
 
 - Change DB_USER to your mysql user
