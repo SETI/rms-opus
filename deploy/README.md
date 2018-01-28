@@ -2,7 +2,7 @@
 
 if you are instead looking to update the OPUS database with new data, see http://github.com/basilleaf/opus_admin
 
-1. Run tests locally, push to server, move files to web root, run tests remotely 
+1. Run tests locally, push to server, move files to web root, refresh caches, run tests remotely 
 
         fab tests_local push deploy cache_reboot tests
 
