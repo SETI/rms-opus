@@ -22,7 +22,7 @@ The client side javascript web application is defined in [static_media/js/](stat
 
 The server side python scripts are found in [apps/](apps/) and [described here](apps/README.md)
 
-## Run the Tests
+## Run the Django Tests
 
 	python manage.py test apps
 
