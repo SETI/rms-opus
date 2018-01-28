@@ -86,22 +86,22 @@
 
     - If you are starting with a dump of an opus database, drop the following tables for the migrate to work:
 
-        # in mysql command line:  
-        use opus_small;
-        drop table django_admin_log;
-        drop table django_content_type;
-        drop table django_session;
-        drop table django_site;
+          # in mysql command line:  
+          use opus_small;
+          drop table django_admin_log;
+          drop table django_content_type;
+          drop table django_session;
+          drop table django_site;
 
     - then run the migrate command:
 
-        python manage.py migrate
+          python manage.py migrate
 
 * Run the tests
 
     - the tests run against the same database as the app. Ignore errors about missing files, ObsMovies, or ObsMissionHubble
 
-        python manage.py test apps
+          python manage.py test apps
 
 * Run the webserver
 
