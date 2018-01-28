@@ -1,23 +1,18 @@
-## The procedure is for deploy OPUS code base to production
+## Deploying OPUS code to remote servers
 
 if you are instead looking to update the OPUS database with new data, see http://github.com/basilleaf/opus_admin
 
+1  run tests locally, push to server, deploy to web root, run tests remotely 
+
     fab tests_local push deploy cache_reboot tests
 
-    **NOTE: this assumes the latest stable of search/models.py lives at ~/opus on the server, it will fetch the model from there and deploy it to production!!!
+2. Run the API Endpoint tests 
 
-2. The release is now public! (Yes we have no development server) Manually make sure your most recent blog post links are still working.. (todo: script this!)
+     cd ../tests
+     source venv/bin/activate
+     python api_tests.py2  Open some recent blog posts in a browser:  
 
-     open http://ringsnodesearchtool.blogspot.com/
+3. Open some recent blog post pages, or other queries you want to be fast for others, in a browser: 
 
-3. Run the in-browser selenium tests
+    open http://ringsnodesearchtool.blogspot.com/
 
- 	they are in Firefox->tools
-
-4. Run the selenium tests:
-
-     In the local repo:
-
-         cd ../tests
-         source venv/bin/activate
-         python api_tests.py
