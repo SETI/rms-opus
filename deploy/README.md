@@ -11,7 +11,7 @@ These steps are for deploy code changes to remote web servers. For updating OPUS
 
         cd ../tests
         source venv/bin/activate
-        python api_tests.py2  Open some recent blog posts in a browser:  
+        python api_tests.py  
 
 3. Open some recent blog post pages, or other queries you want to be fast for others, in a browser: 
 
