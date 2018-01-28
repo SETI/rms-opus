@@ -1,10 +1,8 @@
 # from django.shortcuts import render
 from dictionary.models import *
 
-
 import logging
 log = logging.getLogger(__name__)
-
 
 def get_def(term, context):
     """ get a dictionary definition
