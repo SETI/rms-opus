@@ -1,6 +1,6 @@
 # Deploying OPUS code
 
-These steps are for deploying code changes to remote OPUS installations. For updating OPUS database with new data, see http://github.com/basilleaf/opus_admin
+These steps are for deploying code changes to remote OPUS installations. For import new data into the OPUS database, see http://github.com/basilleaf/opus_admin
 
 
 1. Run tests locally, push to server, move files to web root, refresh caches, run tests remotely
