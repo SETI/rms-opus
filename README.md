@@ -32,3 +32,4 @@ For deploying code updates to a remote webserver [see deploy/README.md](deploy/R
 ## Running the Django Tests
 
 	python manage.py test apps
+
