@@ -50,20 +50,19 @@
       mysql dictionary < dictionary.empty.sql -p
       mysql opus_metrics < opus_metrics.empty.sql -p
 
-
 * edit the secrets.py file
 
   Copy the template:
 
       cp secrets_template.py secrets.py
 
-- Change DB_USER to your mysql user
-- Change DB_PASS to your mysql password
-- Change SECRET_KEY to a unique key (generators are available on the web)
-- Change TAR_FILE_PATH to a directory where "shopping cart" tar files can be stored
-- Change FILE_PATH to the location of the Cassini data volumes
-- Change DERIVED_PATH to the location of the Cassini calibrated data volumes
-- Change IMAGE_PATH to the location of the Cassini browse images
+  - Change DB_USER to your mysql user
+  - Change DB_PASS to your mysql password
+  - Change SECRET_KEY to a unique key (generators are available on the web)
+  - Change TAR_FILE_PATH to a directory where "shopping cart" tar files can be stored
+  - Change FILE_PATH to the location of the Cassini data volumes
+  - Change DERIVED_PATH to the location of the Cassini calibrated data volumes
+  - Change IMAGE_PATH to the location of the Cassini browse images
 
     For example:
 
