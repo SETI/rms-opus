@@ -56,7 +56,7 @@ elif 'dev' in host:
 else:
     sys.exit('please supply a host "prod" or "dev"')
 
-static_assets_path = REMOTE_USER_ROOT_PATH + 'rdsk/www/assets/' # static_media goes here
+static_assets_path = '/rdsk/www/assets/' # static_media goes here
 # git_branch = 'menu_bug'
 git_branch = 'master'
 git_revision = ''  # use this to roll back to a specific commit
@@ -90,7 +90,7 @@ def push():
         # local('git clone -b ' + git_branch + ' git@bitbucket.org:ringsnode/opus2.git')  # does not
         local('git clone -b {} file:///{}'.format(git_branch, LOCAL_OPUS_PATH))
 
-    with lcd('%sopus/' % LOCAL_GIT_CLONE_PATH):
+    with lcd('{}opus/'.format(LOCAL_GIT_CLONE_PATH)):
         if git_revision:
             local('git checkout %s' % git_revision)
 
@@ -99,7 +99,7 @@ def push():
         # local('python opus/deploy/deploy.py')
 
         # rsync that code to staging directory on production
-        local('rsync -r -vc -e ssh --exclude .git %s %s@%s:~/.' % (prod_deploy_dir_name, REMOTE_USERNAME, env.hosts[0]))
+        local('rsync -r -vc -e ssh --exclude .git {} {}@{}:{}/.'.format(prod_deploy_dir_name, REMOTE_USERNAME, env.hosts[0], REMOTE_USER_ROOT_PATH))
 
     # move static_media into the right place
     with cd(REMOTE_USER_ROOT_PATH):
@@ -118,7 +118,7 @@ def deploy():
         # copy the new code to production directory
         # exclude certain directories from deploying to production website
         exclude_str = "--exclude logs --exclude .git  --exclude import --exclude deploy"
-        run('sudo rsync -r -vc {} {} /home/django/djcode/.'.format(exclude_str, prod_deploy_dir_name))
+        run('sudo rsync -r -vc {} {} {}.'.format(exclude_str, prod_deploy_dir_name,REMOTE_WEB_ROOT_PATH))
 
 
 def cache_reboot():
@@ -129,10 +129,10 @@ def cache_reboot():
 
         # refresh the *.wsgi files (not sure which ones are actually doing job)
         run('sudo touch {}{}/*.wsgi'.format(REMOTE_WEB_ROOT_PATH,prod_deploy_dir_name))
-        run('sudo touch /home/django/djcode/{}{}/apache/*.wsgi'.format(REMOTE_WEB_ROOT_PATH,prod_deploy_dir_name))
+        run('sudo touch {}{}/apache/*.wsgi'.format(REMOTE_WEB_ROOT_PATH,prod_deploy_dir_name))
 
         # tells browsers something has changed
-        run('sudo python /home/django/djcode/opus/apps/tools/reset_deploy_datetime.py')
+        run('sudo python {}opus/apps/tools/reset_deploy_datetime.py'.format(REMOTE_WEB_ROOT_PATH))
 
         # reset memcache
         try:
@@ -142,7 +142,7 @@ def cache_reboot():
         run('/usr/bin/memcached -d -l 127.0.0.1 -m 1024 -p %s' % memcached_port)
 
         # reset django cache
-        run('sudo python /home/django/djcode/{}{}/deploy/cache_clear.py'.format(REMOTE_WEB_ROOT_PATH, prod_deploy_dir_name))
+        run('sudo python {}{}/deploy/cache_clear.py'.format(REMOTE_WEB_ROOT_PATH, prod_deploy_dir_name))
 
 
 def tests():
