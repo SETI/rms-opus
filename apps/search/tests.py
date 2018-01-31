@@ -34,6 +34,16 @@ class searchTests(TestCase):
     selections[param_name] = ['Saturn']
     extras = {}
 
+    def test__surface_geo_volumes_match_obs_general(self):
+        count_obs = ObsGeneral.objects.all().values('volume_id').distinct().count()
+        count_geo = ObsSurfaceGeometry.objects.all().values('volume_id').distinct().count()
+        self.assertEqual(count_obs, count_geo)
+
+    def test__ring_geo_volumes_match_obs_general(self):
+        count_obs = ObsGeneral.objects.all().values('volume_id').distinct().count()
+        count_geo = ObsRingGeometry.objects.all().values('volume_id').distinct().count()
+        self.assertEqual(count_obs, count_geo)
+
     def test__get_param_info_by_slug(self):
         # this should return an object but failed once for unknown
         # reasons having to do with a mistake in the param_info table
