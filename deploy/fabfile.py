@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import sys
 from fabric.api import run, settings, env, cd, lcd, prompt, local
 from fabric.contrib.console import confirm
 from fabric.network import ssh
