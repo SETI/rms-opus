@@ -7,6 +7,7 @@ from slackclient import SlackClient
 from secrets import REMOTE_USERNAME, REMOTE_USER_ROOT_PATH, REMOTE_WEB_ROOT_PATH, \
                     LOCAL_OPUS_PATH, LOCAL_GIT_CLONE_PATH, \
                     SLACK_CHANNEL, SLACK_TOKEN
+from config import PROD_URL, DEV_URL
 
 """
     # This is generally run like:
@@ -16,7 +17,7 @@ from secrets import REMOTE_USERNAME, REMOTE_USER_ROOT_PATH, REMOTE_WEB_ROOT_PATH
     # Background
 
     This script is for deploying to remote installs of opus.
-    It will prompt you to specify prod/dev server.
+    It will prompt you to specify prod/dev server set in config
 
     The push directive will clone the repo from your *local* git repo of opus
     and clone it into a separate directory (to avoid pushing any untracked content)
@@ -51,9 +52,9 @@ env.use_ssh_config = True  # untrue only on dev if no ssl cert
 host = prompt("production or dev server?", default='dev')
 
 if 'prod' in host:
-    env.hosts = ['tools.pds-rings.seti.org']
+    env.hosts = [PROD_URL]
 elif 'dev' in host:
-    env.hosts = ['dev.pds-rings.seti.org']
+    env.hosts = [DEV_URL]
 else:
     sys.exit('please supply a host "prod" or "dev"')
 
