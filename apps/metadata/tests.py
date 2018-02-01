@@ -48,6 +48,26 @@ class metadataTests(TestCase):
             self.assertGreaterEqual(got['max'], expected['max'])
             self.assertEqual(got['min'], expected['min'])
 
+    def test__getRangeEndpoints_COISS_greaterpixelsize1(self):
+        response = self.c.get("/opus/api/meta/range/endpoints/greaterpixelsize1.json?instrumentid=Cassini+ISS")
+        self.assertEqual(response.status_code, 200)
+        jdata = json.loads(response.content)
+        expected = {"max": 1024.0, "nulls": 0, "min": 256.0}
+        print('got: \n {} \n expected: \n {}').format(str(jdata), str(expected))
+        self.assertEqual(expected['max'], jdata['max'])
+        self.assertEqual(expected['min'], jdata['min'])
+        self.assertEqual(expected['nulls'], jdata['nulls'])
+
+    def test__getRangeEndpoints_COISS_lesserpixelsize1(self):
+        response = self.c.get("/opus/api/meta/range/endpoints/lesserpixelsize1.json?instrumentid=Cassini+ISS")
+        self.assertEqual(response.status_code, 200)
+        jdata = json.loads(response.content)
+        expected = {"max": 1024.0, "nulls": 0, "min": 256.0}
+        print('got: \n {} \n expected: \n {}').format(str(jdata), str(expected))
+        self.assertEqual(expected['max'], jdata['max'])
+        self.assertEqual(expected['min'], jdata['min'])
+        self.assertEqual(expected['nulls'], jdata['nulls'])
+
     def test_getResultCount(self):
         response = self.c.get('/opus/api/meta/result_count.json?planet=Saturn')
         self.assertEqual(response.status_code, 200)
