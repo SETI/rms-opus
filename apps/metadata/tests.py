@@ -50,7 +50,6 @@ class metadataTests(TestCase):
 
     def test__getRangeEndpoints_COISS_greaterpixelsize1(self):
         response = self.c.get("/opus/api/meta/range/endpoints/greaterpixelsize1.json?instrumentid=Cassini+ISS")
-        self.assertEqual(response.status_code, 200)
         jdata = json.loads(response.content)
         expected = {"max": 1024.0, "nulls": 0, "min": 256.0}
         print('got: \n {} \n expected: \n {}').format(str(jdata), str(expected))
@@ -60,7 +59,6 @@ class metadataTests(TestCase):
 
     def test__getRangeEndpoints_COISS_lesserpixelsize1(self):
         response = self.c.get("/opus/api/meta/range/endpoints/lesserpixelsize1.json?instrumentid=Cassini+ISS")
-        self.assertEqual(response.status_code, 200)
         jdata = json.loads(response.content)
         expected = {"max": 1024.0, "nulls": 0, "min": 256.0}
         print('got: \n {} \n expected: \n {}').format(str(jdata), str(expected))
