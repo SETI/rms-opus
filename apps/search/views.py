@@ -430,6 +430,8 @@ def range_query_object(selections, param_name, qtypes):
     """
     builds query for numeric ranges where 2 data columns represent min and max values
     oh and also single column ranges
+
+    # just some text for searching this file
     any all only
     any / all / only
     any/all/only
@@ -468,22 +470,28 @@ def range_query_object(selections, param_name, qtypes):
 
     # if these are times convert values from time string to seconds
     if form_type == 'TIME':
-        values_min = convertTimes(values_min)
 
+        values_min = convertTimes(values_min)
         try:
             index = values_min.index(None)
             raise Exception("InvalidTimes")
         except: pass
+
         values_max = convertTimes(values_max)
         try:
             index = values_max.index(None)
             raise Exception("InvalidTimes")
-        except: pass
+        except:
+            pass
 
     # we need to know how many times to go through this loop
     count = max(len(values_min), len(values_max))  # sometimes you can have queries
                                                    # that define multiple ranges for same widget
                                                    # (not currently implemented in UI)
+
+    if count < len(qtypes):
+        log.error('passed qtypes is shorter in length than longest range values list, defaulting to "any"')
+
     # now collect the query expressions
     all_query_expressions = []  # these will be joined by OR
     i=0
@@ -491,11 +499,15 @@ def range_query_object(selections, param_name, qtypes):
 
         # define some things
         value_min, value_max = None, None
-        try: value_min = values_min[i]
-        except IndexError: pass
+        try:
+            value_min = values_min[i]
+        except IndexError:
+            pass
 
-        try: value_max = values_max[i]
-        except IndexError: pass
+        try:
+            value_max = values_max[i]
+        except IndexError:
+            pass
 
         try:
             qtype = qtypes[i]
@@ -507,7 +519,8 @@ def range_query_object(selections, param_name, qtypes):
             (value_min,value_max) = sorted([value_min,value_max])
 
         # we should end up with 2 query expressions
-        q_exp, q_exp1, q_exp2 = None, None, None
+        q_exp, q_exp1, q_exp2 = None, None, None  # q_exp will hold the concat
+                                                  # of q_exp1 and q_exp2
 
         if qtype == 'all':
 

@@ -269,10 +269,10 @@ class searchTests(TestCase):
         self.assertEqual(result,[{u'obs_general.note': [u'Incomplete']}, {'qtypes': {}}])
 
     def test__urlToSearchParams_range_single_qtype(self):
-        q = QueryDict("ringradius1=60000&ringradius2=80000,120000&qtype-ringradius=all")
+        q = QueryDict("ringradius1=60000&ringradius2=80000,120000&qtype-ringradius=all,all")
         result = urlToSearchParams(q)
         print result
-        expected = [{u'obs_ring_geometry.ring_radius2': [80000.0, 120000.0], u'obs_ring_geometry.ring_radius1': [60000.0]}, {'qtypes': {u'obs_ring_geometry.ring_radius': [u'all']}}]
+        expected = [{u'obs_ring_geometry.ring_radius2': [80000.0, 120000.0], u'obs_ring_geometry.ring_radius1': [60000.0]}, {'qtypes': {u'obs_ring_geometry.ring_radius': [u'all','all']}}]
         self.assertEqual(result,expected)
 
 
