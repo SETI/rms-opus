@@ -9,7 +9,7 @@ These steps are for deploying code changes to remote OPUS installations. For imp
 
 2. Run the API Endpoint tests
 
-        cd ../tests
+        cd ../api_tests
         source venv/bin/activate
         python api_tests.py  
 
