@@ -140,7 +140,7 @@ class searchTests(TestCase):
         self.assertEqual("".join(q.split()),"".join(expected.split()))  # strips all whitespace b4 compare
 
     def test__constructQueryString_range_single_qtype(self):
-        q = QueryDict("ringradius1=60000&ringradius2=80000,120000&qtype-ringradius=all")
+        q = QueryDict("ringradius1=60000&ringradius2=80000,120000&qtype-ringradius=all,all")
         selections, extras = urlToSearchParams(q)
         sql, params = constructQueryString(selections, extras)
         q = sql % params
@@ -396,7 +396,7 @@ class searchTests(TestCase):
         selections = {}
         selections['obs_ring_geometry.ring_radius1'] = [10000,60000]
         selections['obs_ring_geometry.ring_radius2'] = [40000,80000]
-        q = range_query_object(selections,'obs_ring_geometry.ring_radius1',['all'])
+        q = range_query_object(selections,'obs_ring_geometry.ring_radius1',['all','all'])
         print str(q)
         self.assertEqual(str(q), "(OR: (AND: (u'obsringgeometry__ring_radius1__lte', 10000), (u'obsringgeometry__ring_radius2__gte', 40000)), (AND: (u'obsringgeometry__ring_radius1__lte', 60000), (u'obsringgeometry__ring_radius2__gte', 80000)))")
 
@@ -405,7 +405,7 @@ class searchTests(TestCase):
         selections = {}
         selections['obs_ring_geometry.ring_radius1'] = [40000,60000]
         selections['obs_ring_geometry.ring_radius2'] = [10000,80000]
-        q = range_query_object(selections,'obs_ring_geometry.ring_radius1',['all'])
+        q = range_query_object(selections,'obs_ring_geometry.ring_radius1',['all','all'])
         print str(q)
         self.assertEqual(str(q), "(OR: (AND: (u'obsringgeometry__ring_radius1__lte', 10000), (u'obsringgeometry__ring_radius2__gte', 40000)), (AND: (u'obsringgeometry__ring_radius1__lte', 60000), (u'obsringgeometry__ring_radius2__gte', 80000)))")
 

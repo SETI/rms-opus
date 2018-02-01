@@ -186,7 +186,7 @@ def constructQueryString(selections, extras):
 def getUserQueryTable(selections=None, extras=None):
     """
     This is THE main data query place.  Performs a data search and creates
-    a table of Ids that match the result rows.
+    a table of IDs (obs_general_id) that match the result rows.
 
     (the function urlToSearchParams take the user http request object and
     creates the data objects that are passed to this function)
@@ -230,7 +230,8 @@ def getUserQueryTable(selections=None, extras=None):
         return False
 
     try:
-        # with this we can create a table that contains the single row
+        sql += ' ENGINE=MYISAM'
+        # with this we can create a table that contains the single column
         cursor.execute("create table " + connection.ops.quote_name(ptbl) + ' ' + sql, tuple(params))
         # add the key **** this, and perhaps the create statement too, can be spawned to a backend process ****
         cursor.execute("alter table " + connection.ops.quote_name(ptbl) + " add unique key(id)  ")
@@ -267,7 +268,7 @@ def urlToSearchParams(request_get):
     >>>> q = QueryDict("planet=Saturn")
     >>>> (selections,extras) = urlToSearchParams(q)
     >>>> selections
-    {'planet_id': [u'Jupiter']}
+    {'planet_id': [u'Saturn']}
     >>>> extras
     {'qtypes': {}}
 
@@ -428,6 +429,7 @@ def string_query_object(param_name, value_list, qtypes):
 def range_query_object(selections, param_name, qtypes):
     """
     builds query for numeric ranges where 2 data columns represent min and max values
+    oh and also single column ranges
     any all only
     any / all / only
     any/all/only
@@ -478,26 +480,27 @@ def range_query_object(selections, param_name, qtypes):
             raise Exception("InvalidTimes")
         except: pass
 
-    qtype = qtypes[0] if qtypes else ['any']
-
     # we need to know how many times to go through this loop
-    count = len(values_max) if len(values_max) > len(values_min) else len(values_min) # how many times to go thru this loop:
-
+    count = max(len(values_min), len(values_max))  # sometimes you can have queries
+                                                   # that define multiple ranges for same widget
+                                                   # (not currently implemented in UI)
     # now collect the query expressions
     all_query_expressions = []  # these will be joined by OR
     i=0
     while i < count:
 
         # define some things
-        value_min, value_max, q_type = None, None, qtype
+        value_min, value_max = None, None
         try: value_min = values_min[i]
         except IndexError: pass
 
         try: value_max = values_max[i]
         except IndexError: pass
 
-        try: qtype = qtypes[i]
-        except IndexError: pass
+        try:
+            qtype = qtypes[i]
+        except IndexError:
+            qtype = ['any']
 
         # reverse value_min and value_max if value_min < value_max
         if value_min is not None and value_max is not None:
