@@ -25,7 +25,7 @@ def create_csv_file(request, csv_file_name):
     """ for the given request and file name,
         writes a csv file on disk!
     """
-    from user_collections.views import get_csv
+    from user_collections.views import get_collection_csv
     slug_list, all_data = get_collection_csv(request, fmt="raw")
     csv_file = open(csv_file_name,'a')
     wr = csv.writer(csv_file)
