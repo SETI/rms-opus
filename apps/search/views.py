@@ -230,7 +230,7 @@ def getUserQueryTable(selections=None, extras=None):
         return False
 
     try:
-        sql += ' ENGINE=MYISAM'
+#        sql += ' ENGINE=MYISAM'
         # with this we can create a table that contains the single column
         cursor.execute("create table " + connection.ops.quote_name(ptbl) + ' ' + sql, tuple(params))
         # add the key **** this, and perhaps the create statement too, can be spawned to a backend process ****
