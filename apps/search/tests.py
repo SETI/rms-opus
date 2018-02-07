@@ -14,6 +14,7 @@ analyze table user_searches;
 # from django.test import TestCase  removed because it deletes test table data after every test
 from unittest import TestCase
 from django.test.client import Client
+from django.db import connection
 
 from search.views import *
 from results.views import *
@@ -22,8 +23,6 @@ from django.apps import apps
 
 from django.conf import settings
 settings.CACHE_BACKEND = 'dummy:///'
-
-cursor = connection.cursor()
 
 class searchTests(TestCase):
 
@@ -43,6 +42,15 @@ class searchTests(TestCase):
         count_obs = ObsGeneral.objects.all().values('volume_id').distinct().count()
         count_geo = ObsRingGeometry.objects.all().values('volume_id').distinct().count()
         self.assertEqual(count_obs, count_geo)
+
+    def test__mult_field_matches_id_fields_in_mult_tables(self):
+        cursor = connection.cursor()
+        q = """select count(*) from obs_general
+               where mult_obs_general_target_name not in (select id from mult_obs_general_target_name)"""
+        cursor.execute(q)
+        result = cursor.fetchone()
+        cursor.close()
+        self.assertEqual(result[0], 0)
 
     def test__get_param_info_by_slug(self):
         # this should return an object but failed once for unknown
