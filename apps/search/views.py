@@ -230,7 +230,7 @@ def getUserQueryTable(selections=None, extras=None):
         return False
 
     try:
-#        sql += ' ENGINE=MYISAM'
+        # sql += ' ENGINE=MYISAM'
         # with this we can create a table that contains the single column
         cursor.execute("create table " + connection.ops.quote_name(ptbl) + ' ' + sql, tuple(params))
         # add the key **** this, and perhaps the create statement too, can be spawned to a backend process ****
@@ -239,12 +239,13 @@ def getUserQueryTable(selections=None, extras=None):
         cache.set(cache_key,ptbl)
         return ptbl
 
-    except DatabaseError:
-        e = sys.exc_info()[1]
-        if type(e) == str and 'exists' in e.lower():
+    except DatabaseError,e:
+        log.error(e.args[1])
+        print(e.args[1])
+
+        if 'exists' in e.args[1].lower():
             return ptbl
         log.error('query execute failed: create/alter table ')
-        log.error(str(sys.exc_info()[1]))
         return False
 
 
