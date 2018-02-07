@@ -83,6 +83,18 @@ class searchTests(TestCase):
         the_planets = [planet['label'] for planet in MultObsGeneralPlanetId.objects.filter(display='Y').values('label')]
         print "SELECT label FROM mult_obs_general_planet_id WHERE display = 'Y' ORDER BY disp_order;"
         expect = ['Venus','Earth', 'Mars', 'Jupiter', 'Saturn', 'Uranus', 'Neptune', 'Pluto']
+        print(""" you might need to:
+
+            update mult_obs_general_planet_id set disp_order =  1 where value = 'VEN';
+            update mult_obs_general_planet_id set disp_order =  2 where value = 'EAR';
+            update mult_obs_general_planet_id set disp_order =  3 where value = 'MAR';
+            update mult_obs_general_planet_id set disp_order =  4 where value = 'JUP';
+            update mult_obs_general_planet_id set disp_order =  5 where value = 'SAT';
+            update mult_obs_general_planet_id set disp_order =  6 where value = 'URA';
+            update mult_obs_general_planet_id set disp_order =  7 where value = 'NEP';
+            update mult_obs_general_planet_id set disp_order =  8 where value = 'PLU';
+
+        """)
         self.assertEqual(expect, the_planets)
 
     def test__surface_geometry_table_label_is_correct(self):
@@ -169,7 +181,7 @@ class searchTests(TestCase):
         sql, params = constructQueryString(selections, {})
         q = sql % params
         print q
-        expected = "SELECT `obs_general`.`id` FROM `obs_general` WHERE (`obs_general`.`mult_obs_general_target_name` IN (42) AND `obs_general`.`mult_obs_general_planet_id` IN (7))"
+        expected = "SELECT `obs_general`.`id` FROM `obs_general` WHERE (`obs_general`.`mult_obs_general_target_name` IN (106) AND `obs_general`.`mult_obs_general_planet_id` IN (7))"
         self.assertEqual("".join(q.split()),"".join(expected.split()))  # strips all whitespace b4 compare
 
     def test__constructQueryString_mults_with_join(self):
@@ -179,7 +191,7 @@ class searchTests(TestCase):
         sql, params = constructQueryString(selections, {})
         q = sql % params
         print q
-        expected = "SELECT `obs_general`.`id` FROM `obs_general` INNER JOIN `obs_instrument_COISS` ON (`obs_general`.`id` = `obs_instrument_COISS`.`obs_general_id`) WHERE (`obs_general`.`mult_obs_general_planet_id` IN (7) AND `obs_instrument_COISS`.`mult_obs_instrument_COISS_camera` IN (1))"
+        expected = "SELECT `obs_general`.`id` FROM `obs_general` INNER JOIN `obs_instrument_COISS` ON (`obs_general`.`id` = `obs_instrument_COISS`.`obs_general_id`) WHERE (`obs_general`.`mult_obs_general_planet_id` IN (7) AND `obs_instrument_COISS`.`mult_obs_instrument_COISS_camera` IN (3))"
         print q
         print 'expected:'
         print expected
@@ -194,7 +206,7 @@ class searchTests(TestCase):
         sql, params = constructQueryString(selections, {})
         q = sql % params
         print q
-        expected = "SELECT `obs_general`.`id` FROM `obs_general` INNER JOIN `obs_mission_cassini` ON ( `obs_general`.`id` = `obs_mission_cassini`.`obs_general_id` ) INNER JOIN `obs_instrument_COISS` ON ( `obs_general`.`id` = `obs_instrument_COISS`.`obs_general_id` ) WHERE (`obs_general`.`mult_obs_general_target_name` IN (42) AND `obs_general`.`mult_obs_general_planet_id` IN (7) AND `obs_mission_cassini`.`mult_obs_mission_cassini_rev_no` IN (289, 290) AND `obs_instrument_COISS`.`mult_obs_instrument_COISS_camera` IN (2))"
+        expected = "SELECT `obs_general`.`id` FROM `obs_general` INNER JOIN `obs_mission_cassini` ON ( `obs_general`.`id` = `obs_mission_cassini`.`obs_general_id` ) INNER JOIN `obs_instrument_COISS` ON ( `obs_general`.`id` = `obs_instrument_COISS`.`obs_general_id` ) WHERE (`obs_general`.`mult_obs_general_target_name` IN (106) AND `obs_general`.`mult_obs_general_planet_id` IN (7) AND `obs_mission_cassini`.`mult_obs_mission_cassini_rev_no` IN (176, 175) AND `obs_instrument_COISS`.`mult_obs_instrument_COISS_camera` IN (2))"
         print 'expected:'
         print expected
         self.assertEqual(q.replace(' ',''),expected.replace(' ',''))
