@@ -243,6 +243,7 @@ def getUserQueryTable(selections=None, extras=None):
         if 'exists' in e.args[1].lower():
             return ptbl
         log.error('query execute failed: create/alter table ')
+        log.error(e.args[1].lower())
         return False
 
 
