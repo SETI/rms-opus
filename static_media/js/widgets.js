@@ -61,7 +61,7 @@ var o_widgets = {
         $('#search').on('change', 'input.multichoice', function() {
            // mult widget gets changed
            id = $(this).attr("id").split('_')[0];
-           value = $(this).attr("value");
+           value = $(this).attr("value").replace(/\+/g, '%2B');
 
            if ($(this).is(':checked')) {
 
