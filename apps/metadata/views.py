@@ -44,8 +44,7 @@ def getResultCount(request,fmt='json'):
     try:
         (selections,extras) = search.views.urlToSearchParams(request.GET)
     except TypeError:
-        log.error("could not find selections for request")
-        log.error(request.GET)
+        log.error("Could not find selections for request %s", str(request.GET))
         raise Http404
 
     reqno = request.GET.get('reqno','')
@@ -131,13 +130,13 @@ def getValidMults(request,slug,fmt='json'):
         try:
             mult_model = apps.get_model('search',mult_name.title().replace('_',''))
         except LookupError:
-            log.debug('could not get_model for {0}'.format(mult_name.title().replace('_','')))
+            log.error('Could not get_model for %s', mult_name.title().replace('_',''))
             raise Http404
 
         try:
             table_model = apps.get_model('search', table_name.title().replace('_',''))
         except LookupError:
-            log.debug('could not get_model for {0}'.format(table_name.title().replace('_','')))
+            log.error('Could not get_model for %s', table_name.title().replace('_',''))
             raise Http404
 
         mults = {}  # info to return
@@ -148,8 +147,8 @@ def getValidMults(request,slug,fmt='json'):
         if has_selections and not user_table:
             # selections are constrained so join in the user_table
             log.error('getValidMults has_selections = true but no user_table found:')
-            log.error(selections)
-            log.error(extras)
+            log.error(".. Selections: %s", str(selections))
+            log.error(".. Extras: %s", str(extras))
             raise Http404
 
         if table_name == 'obs_general':
@@ -165,9 +164,7 @@ def getValidMults(request,slug,fmt='json'):
                 try:
                     mult = mult_model.objects.get(id=mult_id).label
                 except:
-                    log.debug('could not find mult label for ')
-                    log.debug('id: ' + str(mult_id))
-                    log.debug(mult_model)
+                    log.error('Could not find mult label for id %s mult_model %s', str(mult_id), str(mult_model))
                     mult = mult_id  # fall back to id if there is no label
 
                 mults[mult] = row[mult_name + '__count']
@@ -251,8 +248,8 @@ def getRangeEndpoints(request,slug,fmt='json'):
     try:
         results    = table_model.objects # this is a count(*), group_by query
     except AttributeError, e:
-        log.error(e)
-        log.error("could not find table model for table_name: %s" % table_name)
+        log.error("getRangeEndpoints threw: %s", str(e))
+        log.error("Could not find table model for table_name: %s", table_name)
         raise Http404("Does Not Exist")
 
     if table_name == 'obs_general':

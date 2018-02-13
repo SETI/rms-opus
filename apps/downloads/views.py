@@ -208,7 +208,10 @@ def create_download(request, collection_name=None, ring_obs_ids=None, fmt=None):
     files = results.views.getFiles(ring_obs_ids,fmt="raw", loc_type="path", product_types=product_types, previews=previews)
 
     if not files:
-        log.error("no files found from results.views.getFiles in downloads.create_download")
+        log.error("No files found from results.views.getFiles in downloads.create_download")
+        log.error(".. First 5 RING_OBS_IDs: %s", str(ring_obs_ids[:5]))
+        log.error(".. First 5 PRODUCT TYPES: %s", str(product_types[:5]))
+        log.error(".. First 5 PREVIEWS: %s", str(previews[:5]))
         raise Http404
 
     # zip each file into tarball and create a manifest too
@@ -253,8 +256,8 @@ def create_download(request, collection_name=None, ring_obs_ids=None, fmt=None):
                         added.append(pretty_name)
 
                     except Exception,e:
-                        log.error(e);
-                        errors.append("could not find: " + pretty_name)
+                        log.error("downloads.create_download threw exception while zipping files (%s): %s", str(pretty_name), str(e))
+                        errors.append("Could not find: " + pretty_name)
                     # "could not find " + name
 
     # write errors to manifest file
@@ -274,7 +277,7 @@ def create_download(request, collection_name=None, ring_obs_ids=None, fmt=None):
     zip_url = settings.TAR_FILE_URI_PATH + zip_file_name
 
     if not added:
-        log.error('no files found for download cart ' + manifest_file_name);
+        log.error('No files found for download cart %s', manifest_file_name)
         raise Http404
 
     if fmt == 'json':
