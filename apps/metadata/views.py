@@ -100,7 +100,9 @@ def getValidMults(request,slug,fmt='json'):
     update_metrics(request)
     try:
         (selections,extras) = search.views.urlToSearchParams(request.GET)
-    except:
+    except Exception,e:
+        log.error('Failed to get selections for slug %s, URL %s', str(slug), request.GET)
+        log.error('.. %s', str(e))
         selections = {}
 
     param_info = search.views.get_param_info_by_slug(slug)
@@ -165,6 +167,11 @@ def getValidMults(request,slug,fmt='json'):
                     mult = mult_model.objects.get(id=mult_id).label
                 except:
                     log.error('Could not find mult label for id %s mult_model %s', str(mult_id), str(mult_model))
+                    log.error('. URL: %s', request.GET)
+                    log.error('.. Slug: %s', slug)
+                    log.error('.. Selections: %s', str(selections))
+                    log.error('.. Extras: %s', str(extras))
+                    log.error('.. Results: %s', str(results))
                     mult = mult_id  # fall back to id if there is no label
 
                 mults[mult] = row[mult_name + '__count']

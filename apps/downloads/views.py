@@ -256,7 +256,9 @@ def create_download(request, collection_name=None, ring_obs_ids=None, fmt=None):
                         added.append(pretty_name)
 
                     except Exception,e:
-                        log.error("downloads.create_download threw exception while zipping files (%s): %s", str(pretty_name), str(e))
+                        log.error('create_download threw exception for ring_obs_id %s, product_type %s, file %s, pretty_name %s',
+                                  ring_obs_id, product_type, f, pretty_name)
+                        log.error('.. %s', str(e))
                         errors.append("Could not find: " + pretty_name)
                     # "could not find " + name
 
