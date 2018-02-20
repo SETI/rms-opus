@@ -1,18 +1,39 @@
-# remote server settings
-REMOTE_USERNAME = ''  # your remote user login name
-REMOTE_WEB_ROOT_PATH = ''  # all _PATH vars require trailling slash
+#  *** ALL PATH VARIABLES MUST END IN / ***
 
-REMOTE_USER_ROOT_PATH = ''  # This is your home directory on remote server
-                            # You will end up with a clone copy of opus here.
+### Remote server settings ###
 
-# local settings
-LOCAL_OPUS_PATH = ''  # your local clone of the opus repo, your working project root
-LOCAL_GIT_CLONE_PATH = ''  # a clone of the opus repo will be created here
-                           # make sure it's not the same directory as your
-                           # project working directory, because this
-                           # directory gets added/deleted by this script (see push())
+# Your remote user login name
+REMOTE_USERNAME = ''
 
-SLACK_TOKEN = ''   # Empty is OK:
-SLACK_CHANNEL = '' # this is for a final step in the deploy, a  slack bot that
-                   # posts a msg to Rings Node slack channel
-                   # If this fails it does not effect the deploy
+# The staging directory on the remote server; a cloned copy of opus will be put here
+REMOTE_USER_ROOT_PATH = ''
+
+# The directory of the real web site
+REMOTE_WEB_ROOT_PATH = ''
+
+# The name of the opus directory to be placed inside REMOTE_WEB_ROOT_PATH
+REMOTE_OPUS_DIR_NAME = ''
+
+# static_media goes here on server
+STATIC_ASSETS_PATH = ''
+
+### Local settings ###
+
+# The name of the GIT repo
+GIT_REPO_NAME = ''
+
+# Your local working project root
+LOCAL_OPUS_PATH = '' + GIT_REPO_NAME + '/'
+
+# A clone of the opus repo will be created here
+# Make sure it's not the same directory as your
+# project working directory, because this
+# directory gets added/deleted by this script (see push())
+LOCAL_GIT_CLONE_PATH = ''
+
+### Slack ###
+
+# These are used for announcing deployment; empty is OK
+SLACK_TOKEN = ''
+SLACK_CHANNEL = ''
+

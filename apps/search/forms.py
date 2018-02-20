@@ -65,7 +65,7 @@ class SearchForm(forms.Form):
 
     """
     def __init__(self, *args, **kwargs):
-        grouped = True if 'grouping' in kwargs else False # for the grouping of mult widgets
+        grouped = 'grouping' in kwargs # for the grouping of mult widgets
         grouping = kwargs.pop('grouping', None) # this is how you pass kwargs to the form class, yay!
         super(SearchForm, self).__init__(*args, **kwargs)
 

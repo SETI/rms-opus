@@ -222,11 +222,15 @@ def getUserQueryTable(selections=None, extras=None):
     try:
         sql, params = constructQueryString(selections, extras)
     except TypeError:
-        log.error('TypeError, constructQueryString returned False')
+        log.error('getUserQueryTable: TypeError during constructQueryString')
+        log.error('.. Selections: %s', str(selections))
+        log.error('.. Extras: %s', str(extras))
         return False
 
     if not sql:
-        log.error('getUserQueryTable - query string was empty ')
+        log.error('getUserQueryTable: Query string is empty')
+        log.error('.. Selections: %s', str(selections))
+        log.error('.. Extras: %s', str(extras))
         return False
 
     try:
@@ -489,7 +493,10 @@ def range_query_object(selections, param_name, qtypes):
                                                    # (not currently implemented in UI)
 
     if count < len(qtypes):
-        log.error('passed qtypes is shorter in length than longest range values list, defaulting to "any"')
+        log.error('Passed qtypes is shorter in length than longest range values list, defaulting to "any"')
+        log.error('.. values_min: %s', str(values_min))
+        log.error('.. values_max: %s', str(values_max))
+        log.error('.. qtypes: %s', str(qtypes))
 
     # now collect the query expressions
     all_query_expressions = []  # these will be joined by OR
@@ -631,6 +638,6 @@ def convertTimes(value_list):
             time_sec = julian.tai_from_day(day) + sec
             converted += [time_sec]
         except ParseException:
-            logging.debug("could not convert time " + time)
+            log.error("Could not convert time: %s", time)
             converted += [None]
     return converted
