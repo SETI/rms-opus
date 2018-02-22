@@ -171,6 +171,7 @@ def getValidMults(request,slug,fmt='json'):
                     log.error('.. Slug: %s', slug)
                     log.error('.. Selections: %s', str(selections))
                     log.error('.. Extras: %s', str(extras))
+                    log.error('.. Query: %s', str(where))
                     log.error('.. Row: %s', str(row))
                     mult = mult_id  # fall back to id if there is no label
 
