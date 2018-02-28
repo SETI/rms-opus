@@ -79,6 +79,7 @@ TEMPLATES = [
         'DIRS': [
             PROJECT_ROOT + '/apps/',
             PROJECT_ROOT + '/apps/ui/templates/',
+            PROJECT_ROOT + '/apps/dictionary/templates/',
             PROJECT_ROOT + '/apps/results/templates/',
             PROJECT_ROOT + '/apps/metadata/templates/',
             PROJECT_ROOT + '/apps/quide/templates/',
@@ -102,16 +103,19 @@ TEMPLATES = [
     },
 ]
 
+#DATABASE_ROUTERS = ['dictionary.router.DictionaryRouter']
+
 INSTALLED_APPS = (
-    'django_nose',
-    'django.contrib.contenttypes',
-    'django.contrib.sessions',
-    'django.contrib.sites',
-    'django_memcached',
     'django.contrib.admin',
     'django.contrib.auth',
-    'django.contrib.admindocs',
+    'django.contrib.sites',
+    'django.contrib.contenttypes',
+    'django.contrib.sessions',
+    'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django_nose',
+    'django_memcached',
+    'django.contrib.admindocs',
     'storages',
     'search',
     'paraminfo',

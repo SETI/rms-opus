@@ -1,0 +1,27 @@
+{% extends 'dictionary/base.html' %}
+{% block title %}Dictionary of OPUS terms{% endblock %}
+
+{% load index %}
+{% block content %}
+<div class='cd-main-content scrollable'>
+  <div id="accordion" data-url='/dictionary/list.html/'>
+    {% for key in alphabetlist %}
+      <h3 class="accordion-toggle" id='{{key}}'>{{key}}</h3>
+      <div id="accordion-{{key}}" style='display: none;'>Loading... please wait.</div>
+    {% endfor %}
+  </div>
+</div>
+<div class="cd-panel from-right">
+	<header class="cd-panel-header">
+		<h1 id='searchTitle'></h1>
+		<a class="cd-panel-close">Close</a>
+	</header>
+
+	<div class="cd-panel-container">
+		<div class="cd-panel-content">
+			<!-- your side content here -->
+      Loading... please wait.
+		</div> <!-- cd-panel-content -->
+	</div> <!-- cd-panel-container -->
+</div> <!-- cd-panel -->
+{% endblock %}

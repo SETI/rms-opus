@@ -23,6 +23,7 @@ from search.views import *
 from search.forms import SearchForm
 from metadata.views import *
 from paraminfo.models import *
+from dictionary.models import *
 from results.views import *
 from django.views.generic import TemplateView
 from metrics.views import update_metrics
@@ -52,6 +53,23 @@ def about(request, template = 'about.html'):
         all_volumes.setdefault(d['instrument_id'], []).append(d['volume_id'])
 
     return render(request, template, locals())
+
+def definitions(request, retrieveChar='A'):
+    defList = Definition.objects.using('dictionary').select_related().order_by('term__term')
+    definitionList = dict()
+    retrieveAlpha = ord(retrieveChar.upper());
+    if retrieveAlpha < 65 or retrieveAlpha > 90:
+        retrieveAlpha = 65
+
+    for index in range(retrieveAlpha,retrieveAlpha+26):
+        alpha = str(unichr(index))
+        definitionList[alpha] = list(defList.filter(term__term__istartswith=alpha).values('definition', 'term__term_nice', 'term__import_date', 'context__description').order_by('term__term_nice'))
+
+    return render(request, 'definitions.html', {'definitionList':sorted(definitionList.iteritems())})
+
+
+def home(request):
+    return render(request, "index.html")
 
 
 def get_browse_headers(request,template='browse_headers.html'):
