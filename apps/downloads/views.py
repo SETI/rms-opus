@@ -22,8 +22,11 @@ import logging
 log = logging.getLogger(__name__)
 
 def create_csv_file(request, csv_file_name):
-    from results.views import get_csv
-    slug_list, all_data = get_csv(request, fmt="raw")
+    """ for the given request and file name,
+        writes a csv file on disk!
+    """
+    from user_collections.views import get_collection_csv
+    slug_list, all_data = get_collection_csv(request, fmt="raw")
     csv_file = open(csv_file_name,'a')
     wr = csv.writer(csv_file)
     wr.writerow(slug_list)
@@ -72,8 +75,9 @@ def get_file_path(filename):
 
 def get_download_info(product_types, previews, colls_table_name):
     """
-        return some info about the current session's download
-        return total_size, file_count  # bytes
+        returns total_size, file_count in bytes
+        product_types list, previews bool, and colls_table_name string
+        return
     """
     if previews == 'none' or previews == '' or previews == []:
         previews = None  # :-(
@@ -204,7 +208,10 @@ def create_download(request, collection_name=None, ring_obs_ids=None, fmt=None):
     files = results.views.getFiles(ring_obs_ids,fmt="raw", loc_type="path", product_types=product_types, previews=previews)
 
     if not files:
-        log.error("no files found from results.views.getFiles in downloads.create_download")
+        log.error("No files found from results.views.getFiles in downloads.create_download")
+        log.error(".. First 5 RING_OBS_IDs: %s", str(ring_obs_ids[:5]))
+        log.error(".. First 5 PRODUCT TYPES: %s", str(product_types[:5]))
+        log.error(".. First 5 PREVIEWS: %s", str(previews[:5]))
         raise Http404
 
     # zip each file into tarball and create a manifest too
@@ -249,8 +256,10 @@ def create_download(request, collection_name=None, ring_obs_ids=None, fmt=None):
                         added.append(pretty_name)
 
                     except Exception,e:
-                        log.error(e);
-                        errors.append("could not find: " + pretty_name)
+                        log.error('create_download threw exception for ring_obs_id %s, product_type %s, file %s, pretty_name %s',
+                                  ring_obs_id, product_type, f, pretty_name)
+                        log.error('.. %s', str(e))
+                        errors.append("Could not find: " + pretty_name)
                     # "could not find " + name
 
     # write errors to manifest file
@@ -270,7 +279,7 @@ def create_download(request, collection_name=None, ring_obs_ids=None, fmt=None):
     zip_url = settings.TAR_FILE_URI_PATH + zip_file_name
 
     if not added:
-        log.error('no files found for download cart ' + manifest_file_name);
+        log.error('No files found for download cart %s', manifest_file_name)
         raise Http404
 
     if fmt == 'json':

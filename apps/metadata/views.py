@@ -25,21 +25,17 @@ import logging
 log = logging.getLogger(__name__)
 
 def getMultName(param_name):
-
-    """ mult foreign key tables are named like so """
+    """ pass param_name, returns mult widget foreign key table name
+        the tables themselves are in the search/models.py """
     return "mult_" + '_'.join(param_name.split('.'))
 
 def getUserSearchTableName(no):
-    """ a bit of text manipulation, user search tables are stored like so: """
+    """ pass cache_no, returns user search table name"""
     return 'cache_' + str(no);
 
-
 def getResultCount(request,fmt='json'):
-
-    """
-    result count for a search
-
-    """
+    """ pass request and response format,
+        returns result count for a search """
     update_metrics(request)
 
     if request.GET is None:
@@ -48,8 +44,7 @@ def getResultCount(request,fmt='json'):
     try:
         (selections,extras) = search.views.urlToSearchParams(request.GET)
     except TypeError:
-        log.error("could not find selections for request")
-        log.error(request.GET)
+        log.error("Could not find selections for request %s", str(request.GET))
         raise Http404
 
     reqno = request.GET.get('reqno','')
@@ -90,12 +85,14 @@ def getResultCount(request,fmt='json'):
 
 def getValidMults(request,slug,fmt='json'):
     """
-    returns list of valid mult ids or labels for field in GET param "field"
+    fetch mult widget hinting data for widget defined by slug
     based on current search defined in request
-    field_format = 'ids' or 'labels' depending on how you want your data back
-    (OPUS UI will use ids but they aren't very readable for everyone else)
-    returns a dictionary named mults as names and counts for each as values
-    wrapped in a dictionary that includes its slug name
+
+    this is the widget hinting numbers that appear next to each
+    possible checkbox value in a mult/group widget (green numbers)
+
+    pass request, slug, and response format
+    returns valid mults for a given field (slug) like so:
 
         { 'field':slug,'mults':mults }
 
@@ -103,7 +100,9 @@ def getValidMults(request,slug,fmt='json'):
     update_metrics(request)
     try:
         (selections,extras) = search.views.urlToSearchParams(request.GET)
-    except:
+    except Exception,e:
+        log.error('Failed to get selections for slug %s, URL %s', str(slug), request.GET)
+        log.error('.. %s', str(e))
         selections = {}
 
     param_info = search.views.get_param_info_by_slug(slug)
@@ -133,13 +132,13 @@ def getValidMults(request,slug,fmt='json'):
         try:
             mult_model = apps.get_model('search',mult_name.title().replace('_',''))
         except LookupError:
-            log.debug('could not get_model for {0}'.format(mult_name.title().replace('_','')))
+            log.error('Could not get_model for %s', mult_name.title().replace('_',''))
             raise Http404
 
         try:
             table_model = apps.get_model('search', table_name.title().replace('_',''))
         except LookupError:
-            log.debug('could not get_model for {0}'.format(table_name.title().replace('_','')))
+            log.error('Could not get_model for %s', table_name.title().replace('_',''))
             raise Http404
 
         mults = {}  # info to return
@@ -150,8 +149,8 @@ def getValidMults(request,slug,fmt='json'):
         if has_selections and not user_table:
             # selections are constrained so join in the user_table
             log.error('getValidMults has_selections = true but no user_table found:')
-            log.error(selections)
-            log.error(extras)
+            log.error(".. Selections: %s", str(selections))
+            log.error(".. Extras: %s", str(extras))
             raise Http404
 
         if table_name == 'obs_general':
@@ -167,9 +166,13 @@ def getValidMults(request,slug,fmt='json'):
                 try:
                     mult = mult_model.objects.get(id=mult_id).label
                 except:
-                    log.debug('could not find mult label for ')
-                    log.debug('id: ' + str(mult_id))
-                    log.debug(mult_model)
+                    log.error('Could not find mult label for id %s mult_model %s', str(mult_id), str(mult_model))
+                    log.error('.. URL: %s', request.GET)
+                    log.error('.. Slug: %s', slug)
+                    log.error('.. Selections: %s', str(selections))
+                    log.error('.. Extras: %s', str(extras))
+                    log.error('.. Query: %s', str(where))
+                    log.error('.. Row: %s', str(row))
                     mult = mult_id  # fall back to id if there is no label
 
                 mults[mult] = row[mult_name + '__count']
@@ -189,7 +192,15 @@ def getValidMults(request,slug,fmt='json'):
 # todo: why is this camel case?
 def getRangeEndpoints(request,slug,fmt='json'):
     """
-    returns valid range endpoints for field given selections and extras
+    fetch range widget hinting data for widget defined by slug
+    based on current search defined in request
+
+    this is the valid range endpoints that appear in
+    range widgets (green numbers)
+
+    returns a dictionary like:
+
+        { min: 63.592, max: 88.637, nulls: 2365}
 
     """
     # if this param is in selections we want to remove it,
@@ -245,8 +256,8 @@ def getRangeEndpoints(request,slug,fmt='json'):
     try:
         results    = table_model.objects # this is a count(*), group_by query
     except AttributeError, e:
-        log.error(e)
-        log.error("could not find table model for table_name: %s" % table_name)
+        log.error("getRangeEndpoints threw: %s", str(e))
+        log.error("Could not find table model for table_name: %s", table_name)
         raise Http404("Does Not Exist")
 
     if table_name == 'obs_general':
@@ -298,6 +309,24 @@ def getRangeEndpoints(request,slug,fmt='json'):
 
 
 def getFields(request,**kwargs):
+    """
+        this is helper method for people using the public API
+        it's a list of all slugs in the database and helpful info
+        about each one like label, dict/more_info links:
+
+            surfacegeometryJUPITERsolarhourangle: {
+                more_info: {
+                    def: false,
+                    more_info: false
+                },
+                label: "Solar Hour Angle"
+            }
+
+        if 'field' is in kwargs, it will return this for just that field (#todo this broken?)
+        otherwise returns full list of fields in db, as seen here:
+        https://tools.pds-rings.seti.org/opus/api/fields.json
+
+    """
     field = category = ''
     fmt = kwargs['fmt']
     if 'field' in kwargs:
@@ -316,6 +345,7 @@ def getFields(request,**kwargs):
         else:
             fields = ParamInfo.objects.all()
 
+    # build return objects
     return_obj = {}
     for f in fields:
         return_obj[f.slug] = {

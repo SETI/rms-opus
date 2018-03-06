@@ -403,7 +403,6 @@ def init_detail_page(request, **kwargs):
     are handled with ajax calls because they are slower
 
     the detail page calls other views via ajax:
-    results.get_metadata_by_slugs
     results.get_metadata
 
     """

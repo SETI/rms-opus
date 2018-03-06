@@ -6,7 +6,7 @@ from results.views import (
     getImage,
     getFilesAPI,
     get_metadata,
-    get_csv,
+    get_collection_csv,
     get_all_categories,
     category_list_http_endpoint,
 )
@@ -20,5 +20,5 @@ urlpatterns = [
     url(r'^api/metadata/(?P<ring_obs_id>[0-9a-zA-Z\-_]+).(?P<fmt>[json|html]+)$', get_metadata),
     url(r'^api/categories.json$', category_list_http_endpoint),
     url(r'^api/categories/(?P<ring_obs_id>[0-9a-zA-Z\-_]+).json$', get_all_categories),
-    url(r'^collections/data.csv$',get_csv),
+    url(r'^collections/data.csv$',get_collection_csv),
 ]

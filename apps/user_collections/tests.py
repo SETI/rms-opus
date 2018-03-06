@@ -155,6 +155,22 @@ class user_CollectionsTests(TestCase):
         cip = get_collection_in_page(page, session_id)
         self.assertEqual(cip, ring_obs_id_list)  # we get back what we put in
 
+    def test__bulk_get_collection_csv_data(self):
+        self.emptycollection()
+        session_id = test_session().session_key
+        ring_obs_id_list = ['S_IMG_CO_ISS_1688233102_N','S_IMG_CO_ISS_1688235606_N','S_IMG_CO_ISS_1688244278_N','S_IMG_CO_ISS_1688393550_N']
+        bulk_add_to_collection(ring_obs_id_list, session_id)
+
+        url = '/opus/collections/data.csv?volumeid=COISS_2069&view=browse&browse=gallery&colls_browse=gallery&page=1&gallery_data_viewer=true&limit=100&order=timesec1&cols=ringobsid,planet,target,phase1,phase2,time1,time2,ringradius1,ringradius2,J2000longitude1,J2000longitude2'
+        request = self.factory.get(url)
+        request.user = AnonymousUser()
+        request.session = test_session()
+        slugs, data = get_collection_csv(request, fmt="raw")
+        print(slugs, data)
+        self.assertGreater(len(slugs), 5)
+        self.assertGreater(len(data), 3)
+
+
     def test__collection_get_csv(self):
         self.emptycollection()
         session_id = test_session().session_key
@@ -165,11 +181,10 @@ class user_CollectionsTests(TestCase):
         request = self.factory.get(url)
         request.user = AnonymousUser()
         request.session = test_session()
-        response = get_csv(request)
+        response = get_collection_csv(request)  # raw format
         print response.content
         self.assertEqual(response.status_code, 200)
         self.assertGreater(len(response.content), 466)
-
 
     def test__get_collection_count(self):
         self.emptycollection()

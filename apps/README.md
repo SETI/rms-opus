@@ -1,47 +1,33 @@
-## How the Apps are Organized:
+# Apps
 
-### search
+The server side python code is organized into subject area "apps" as follows: 
 
-This is the search api, where the querying of mission data happens. Methods in here perform all user data queries, and handle the different types of queries (range, multi-choice, longitude, etc). Includes creating/editing of user cache tables (cache_\*) which are representations of query results. 
+## search
+Everything about performing queries against the mission data itself, based on user selections in the search tab interface, or GET vars passed directly to API endpoints. 
 
-### metadata
+## results
+everything about returning results sets, wether its fetching tabular data or thumbnail galleries. Used for rendering the results tab table and downloadable CSV files.
 
-handles the metadata for the feedabck hinting in the user interface, these are things that change wrt the query being performed: range endpoints and mult hinting (green numbers), null counts, total result counts. 
+## metadata
+Endpoints and methods that provide metadata about the user defined result set: the result count, mult widget value counts, range endpoints.
 
-### paraminfo
+## ui
+html ui components are generated here. The menu, tabs, widget columns, browse headers, gallery html, anything you visually see that gets populated with data can be found in here. This is where most all the templates in the project live. 
 
-Static information about every searchable parameter, such as data type, label, default widget, query type, etc..
+## guide
+a simple app to render and maintain our public API guide page. 
 
-### results
+## dictionary
+connects a database named dictionary that is an extendable version of the PDS Data Dictionary, provides content for 'info' icons and 'get more info' links
 
-handles the returning of result sets, whether it's tablular data returned to display the results or gallery tab, or json/csv data returned by API calls. 
+## user_collections
+Everything to do with users creating "collections" aka the shopping cart. Initiating a collection, adding/editing the cart. Displaying the contents.   
 
-### ui
+## downloads
+Creating downloadable zip files, fetching and zipping and making manifest files.
 
-Views that drive the OPUS user interface, this is where html is created for interface components, such as widgets, menus, gallery templates etc. Most templates for the entire ui are in ui/templates.
+## metrics
+counting unique users and query activity for metrics reporting 
 
-### guide
-
-An API guide, a guide to the underlying http endpoints that are publicly available. This is for people using the API for querying opus from script or command line. 
-
-### dictionary 
-
-This app feeds content to the 'read more' and 'more info' links that appear throughout the tool.
-
-### user_collections
-
-User collections aka the shopping cart methods, methods that edit and create the cart. 
-
-### downloads
-
-These methods handle the preparing of zip files and download links at the point where a user moves to download their cart. It collects files found in the cart, creates manifest files, and creates zipped files for users to download. See the user_collections app for methods related to editing cart contents. 
-
-### metrics
-
-User metrics data model, and the method that edit/update data in that model. 
-
-### tools
-
-A few utilities or helpers that are used throughout the project. 
-
-
+## tools
+A small number of utilities or helpers that are used throughout the project.

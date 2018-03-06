@@ -1,7 +1,7 @@
 from metrics.models import Metrics
 
 def update_metrics(request):
-
+    """ updates the metrics database """
     if not request:
         return  # this is a test running
 
@@ -17,6 +17,7 @@ def update_metrics(request):
     m.save()
 
 def get_client_ip(request):
+    """ gets client ip address from browser """
     x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
     if x_forwarded_for:
         ip = x_forwarded_for.split(',')[0]

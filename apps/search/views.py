@@ -186,7 +186,7 @@ def constructQueryString(selections, extras):
 def getUserQueryTable(selections=None, extras=None):
     """
     This is THE main data query place.  Performs a data search and creates
-    a table of Ids that match the result rows.
+    a table of IDs (obs_general_id) that match the result rows.
 
     (the function urlToSearchParams take the user http request object and
     creates the data objects that are passed to this function)
@@ -222,15 +222,20 @@ def getUserQueryTable(selections=None, extras=None):
     try:
         sql, params = constructQueryString(selections, extras)
     except TypeError:
-        log.error('TypeError, constructQueryString returned False')
+        log.error('getUserQueryTable: TypeError during constructQueryString')
+        log.error('.. Selections: %s', str(selections))
+        log.error('.. Extras: %s', str(extras))
         return False
 
     if not sql:
-        log.error('getUserQueryTable - query string was empty ')
+        log.error('getUserQueryTable: Query string is empty')
+        log.error('.. Selections: %s', str(selections))
+        log.error('.. Extras: %s', str(extras))
         return False
 
     try:
-        # with this we can create a table that contains the single row
+        # sql += ' ENGINE=MYISAM'
+        # with this we can create a table that contains the single column
         cursor.execute("create table " + connection.ops.quote_name(ptbl) + ' ' + sql, tuple(params))
         # add the key **** this, and perhaps the create statement too, can be spawned to a backend process ****
         cursor.execute("alter table " + connection.ops.quote_name(ptbl) + " add unique key(id)  ")
@@ -238,12 +243,11 @@ def getUserQueryTable(selections=None, extras=None):
         cache.set(cache_key,ptbl)
         return ptbl
 
-    except DatabaseError:
-        e = sys.exc_info()[1]
-        if 'exists' in e.lower():
+    except DatabaseError,e:
+        if 'exists' in e.args[1].lower():
             return ptbl
         log.error('query execute failed: create/alter table ')
-        log.error(sys.exc_info()[1])
+        log.error(e.args[1].lower())
         return False
 
 
@@ -267,7 +271,7 @@ def urlToSearchParams(request_get):
     >>>> q = QueryDict("planet=Saturn")
     >>>> (selections,extras) = urlToSearchParams(q)
     >>>> selections
-    {'planet_id': [u'Jupiter']}
+    {'planet_id': [u'Saturn']}
     >>>> extras
     {'qtypes': {}}
 
@@ -428,6 +432,9 @@ def string_query_object(param_name, value_list, qtypes):
 def range_query_object(selections, param_name, qtypes):
     """
     builds query for numeric ranges where 2 data columns represent min and max values
+    oh and also single column ranges
+
+    # just some text for searching this file
     any all only
     any / all / only
     any/all/only
@@ -466,22 +473,30 @@ def range_query_object(selections, param_name, qtypes):
 
     # if these are times convert values from time string to seconds
     if form_type == 'TIME':
-        values_min = convertTimes(values_min)
 
+        values_min = convertTimes(values_min)
         try:
             index = values_min.index(None)
             raise Exception("InvalidTimes")
         except: pass
+
         values_max = convertTimes(values_max)
         try:
             index = values_max.index(None)
             raise Exception("InvalidTimes")
-        except: pass
-
-    qtype = qtypes[0] if qtypes else ['any']
+        except:
+            pass
 
     # we need to know how many times to go through this loop
-    count = len(values_max) if len(values_max) > len(values_min) else len(values_min) # how many times to go thru this loop:
+    count = max(len(values_min), len(values_max))  # sometimes you can have queries
+                                                   # that define multiple ranges for same widget
+                                                   # (not currently implemented in UI)
+
+    if count < len(qtypes):
+        log.error('Passed qtypes is shorter in length than longest range values list, defaulting to "any"')
+        log.error('.. values_min: %s', str(values_min))
+        log.error('.. values_max: %s', str(values_max))
+        log.error('.. qtypes: %s', str(qtypes))
 
     # now collect the query expressions
     all_query_expressions = []  # these will be joined by OR
@@ -489,22 +504,29 @@ def range_query_object(selections, param_name, qtypes):
     while i < count:
 
         # define some things
-        value_min, value_max, q_type = None, None, qtype
-        try: value_min = values_min[i]
-        except IndexError: pass
+        value_min, value_max = None, None
+        try:
+            value_min = values_min[i]
+        except IndexError:
+            pass
 
-        try: value_max = values_max[i]
-        except IndexError: pass
+        try:
+            value_max = values_max[i]
+        except IndexError:
+            pass
 
-        try: qtype = qtypes[i]
-        except IndexError: pass
+        try:
+            qtype = qtypes[i]
+        except IndexError:
+            qtype = ['any']
 
         # reverse value_min and value_max if value_min < value_max
         if value_min is not None and value_max is not None:
             (value_min,value_max) = sorted([value_min,value_max])
 
         # we should end up with 2 query expressions
-        q_exp, q_exp1, q_exp2 = None, None, None
+        q_exp, q_exp1, q_exp2 = None, None, None  # q_exp will hold the concat
+                                                  # of q_exp1 and q_exp2
 
         if qtype == 'all':
 
@@ -616,6 +638,6 @@ def convertTimes(value_list):
             time_sec = julian.tai_from_day(day) + sec
             converted += [time_sec]
         except ParseException:
-            logging.debug("could not convert time " + time)
+            log.error("Could not convert time: %s", time)
             converted += [None]
     return converted

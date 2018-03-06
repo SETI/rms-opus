@@ -1564,6 +1564,7 @@ class ObsMissionVoyager(models.Model):
 
 
 class ObsRingGeometry(models.Model):
+    volume_id = models.CharField(max_length=30, blank=True, null=True)
     obs_general = models.ForeignKey(ObsGeneral, db_column="obs_general_id", null=True, blank=True)
     edge_on_altitude1 = models.FloatField(null=True, blank=True)
     edge_on_altitude2 = models.FloatField(null=True, blank=True)
@@ -1631,6 +1632,7 @@ class ObsSurfaceGeometry(models.Model):
     target_name = models.CharField(max_length=75, blank=True, null=True, choices = OBS_SURFACE_GEOMETRY_TARGET_NAME_CHOICES)
     mult_obs_surface_geometry_target_name = models.ForeignKey(MultObsSurfaceGeometryTargetName, db_column="mult_obs_surface_geometry_target_name", db_index=False, null=True, blank=True)
     ring_obs_id = models.CharField(max_length=40, blank=True, null=True)
+    volume_id = models.CharField(max_length=30, blank=True, null=True)
 
     class Meta:
         db_table = 'obs_surface_geometry'
