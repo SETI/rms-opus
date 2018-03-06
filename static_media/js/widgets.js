@@ -45,9 +45,15 @@ var o_widgets = {
         });
 
         // close a widget
-        $('#search').on('click', '.close_widget', function() {
-            slug = $(this).data('slug');
+        $('#search').on('click', '.close_widget', function(myevent) {
+            var slug = $(this).data('slug');
             o_widgets.closeWidget(slug);
+            try {
+              var id = "#widget__"+slug;
+              $(id).remove();
+            } catch (e) {
+              console.log("error on close widget, id="+id);
+            }
         });
 
 
@@ -60,16 +66,15 @@ var o_widgets = {
 
         $('#search').on('change', 'input.multichoice', function() {
            // mult widget gets changed
-           id = $(this).attr("id").split('_')[0];
-           value = $(this).attr("value").replace(/\+/g, '%2B');
+           var id = $(this).attr("id").split('_')[0];
+           var value = $(this).attr("value");
 
            if ($(this).is(':checked')) {
-
+               var values = [];
                if (opus.selections[id]) {
-                   values = opus.selections[id]; // this param already has been constrained
-               }else {
-                   values = [];                  // first time constraining this param
+                   var values = opus.selections[id]; // this param already has been constrained
                }
+
                values[values.length] = value;    // add the new value to the array of values
                opus.selections[id] = values;     // add the array of values to selections
 
@@ -80,7 +85,7 @@ var o_widgets = {
                }
 
            } else {
-               remove = opus.selections[id].indexOf(value); // find index of value to remove
+               var remove = opus.selections[id].indexOf(value); // find index of value to remove
                opus.selections[id].splice(remove,1);        // remove value from array
            }
            o_hash.updateHash();
@@ -91,10 +96,10 @@ var o_widgets = {
     closeWidget: function(slug) {
 
         try {
-            slug_no_num = slug.match(/(.*)[1|2]/)[1];
+            var slug_no_num = slug.match(/(.*)[1|2]/)[1];
 
         } catch (e) {
-            slug_no_num = slug;
+            var slug_no_num = slug;
         }
 
         opus.prefs.widgets.splice(opus.prefs.widgets.indexOf(slug), 1);
@@ -213,7 +218,7 @@ var o_widgets = {
     widgetDrop: function(ui) {
             // if widget as moved to a different formscolumn,
             // redefine the opus.prefs.widgets and opus.prefs.widgets2 (preserves order)
-            widgets = $('#search_widgets1').sortable('toArray');
+            var widgets = $('#search_widgets1').sortable('toArray');
 
             $.each(widgets, function(index,value) {
                 widgets[index]=value.split('__')[1];
@@ -229,7 +234,7 @@ var o_widgets = {
 
             // for some reason if the widget is scrolled it loses scroll position after sorting, bring it back:
             if (opus.prefs.widget_scroll[slug]) {
-                scrolltop = opus.prefs.widget_scroll[slug];
+                var scrolltop = opus.prefs.widget_scroll[slug];
                 $('.widget_scroll_wrapper','#widget__'+slug).scrollTop(scrolltop);
             }
             o_widgets.updateWidgetCookies();
@@ -237,6 +242,7 @@ var o_widgets = {
 
     // this is called after a widge is drawn
     customWidgetBehaviors: function(slug) {
+    var mult_id = '#mult_group_' + $(this).attr('value');
 
         switch(slug) {
 
@@ -246,7 +252,6 @@ var o_widgets = {
                 // adding a behavior: checking a planet box opens the corresponding targets
                 $('#search').on('change', '#widget__planet input:checkbox:checked', function() {
                     // a planet is .chosen_columns, and its corresponding target is not already open
-                    mult_id = '#mult_group_' + $(this).attr('value');
                     $(mult_id).find('.indicator').addClass('fa-plus');
                     $(mult_id).find('.indicator').removeClass('fa-minus');
                     $(mult_id).next().slideDown("fast");
@@ -258,8 +263,6 @@ var o_widgets = {
                 // usually for when a planet checkbox is checked on page load
                 $('#widget__planet input:checkbox:checked', '#search').each(function() {
                     if ($(this).attr('id') && $(this).attr('id').split('_')[0] == 'planet') { // confine to param/vals - not other input controls
-                        mult_id = '#mult_group_' + $(this).attr('value');
-                        mult_id = '#mult_group_' + $(this).attr('value');
                         $(mult_id).find('.indicator').addClass('fa-plus');
                         $(mult_id).find('.indicator').removeClass('fa-minus');
                         $(mult_id).next().slideDown("fast");
@@ -272,8 +275,6 @@ var o_widgets = {
                // usually for when a planet checkbox is checked on page load
                $('#widget__planet input:checkbox:checked', '#search').each(function() {
                    if ($(this).attr('id') && $(this).attr('id').split('_')[0] == 'planet') { // confine to param/vals - not other input controls
-                       mult_id = '#mult_group_' + $(this).attr('value');
-                       mult_id = '#mult_group_' + $(this).attr('value');
                        $(mult_id).find('.indicator').addClass('fa-plus');
                        $(mult_id).find('.indicator').removeClass('fa-minus');
                        $(mult_id).next().slideDown("fast");
@@ -292,7 +293,7 @@ var o_widgets = {
     },
 
     resetWidgetScrolls: function() {
-        for (slug in opus.prefs.widget_scroll) {
+        for (var slug in opus.prefs.widget_scroll) {
             $('#widget__' + slug).scrollTop(0);
             delete opus.prefs.widget_scroll[slug];
         }
@@ -300,8 +301,8 @@ var o_widgets = {
     },
 
     pauseWidgetControlVisibility: function(selections) {
-        for (key in opus.widgets_drawn) {
-            slug = opus.widgets_drawn[key];
+        for (var key in opus.widgets_drawn) {
+            var slug = opus.widgets_drawn[key];
             if (typeof(selections[slug]) != 'undefined' && selections[slug].length) {
                 $('.pause_widget','#widget__'+slug).show();
             } else {
@@ -366,7 +367,7 @@ var o_widgets = {
         $('#widget_control_' + slug + ' .remove_widget').hide();
         $('#widget_control_' + slug + ' .divider').hide();
 
-        simple = o_widgets.minimizeWidgetLabel(slug);
+        var simple = o_widgets.minimizeWidgetLabel(slug);
         function doit() {
             $('#' + widget + ' .widget_inner').hide();
 
@@ -388,9 +389,9 @@ var o_widgets = {
     minimizeWidgetLabel: function(slug) {
 
          try {
-             label = $('#widget__' + slug + ' h2.widget_label').html();
+             var label = $('#widget__' + slug + ' h2.widget_label').html();
          } catch(e) {
-             label = slug;
+             var label = slug;
          }
 
          var min = false;
@@ -402,7 +403,7 @@ var o_widgets = {
 
          if (opus.selections[slug]) {
 
-             form_type = $('#widget__' + slug + ' .widget_inner').attr("class").split(' ')[1];
+             var form_type = $('#widget__' + slug + ' .widget_inner').attr("class").split(' ')[1];
 
              if (form_type == 'RANGE') {
 
@@ -413,18 +414,18 @@ var o_widgets = {
                      var qtypes = [opus.qtype_default];
                  }
 
-                 (opus.selections[min].length > opus.selections[max].length) ? lngth = opus.selections[min].length : lngth = opus.selections[max].length;
+                 var length = (opus.selections[min].length > opus.selections[max].length) ? opus.selections[min].length : opus.selections[max].length;
 
-                 simple = [];
-                 for (var i=0;i<lngth;i++) {
+                 var simple = [];
+                 for (var i=0;i<length;i++) {
                      // ouch:
                      try{
-                         qtype = qtypes[i];
+                         var qtype = qtypes[i];
                      } catch(e) {
                          try {
-                             qtype = qtypes[0];
+                             var qtype = qtypes[0];
                          } catch(e) {
-                             qtype = opus.qtype_default;
+                             var qtype = opus.qtype_default;
                          }
                      }
 
@@ -447,17 +448,17 @@ var o_widgets = {
                       break;  // we have decided to only show the first range in the minimized display
                   }
                   simple = label + simple.join(' and ');
-                  if (lngth > 1) simple = simple + ' and more..';
+                  if (length > 1) simple = simple + ' and more..';
 
              } else if (form_type == 'STRING') {
-                 s_arr = [];
-                 last_qtype = '';
-                 for (key in opus.selections[slug]) {
-                     value = opus.selections[slug][key];
+                 var s_arr = [];
+                 var last_qtype = '';
+                 for (var key in opus.selections[slug]) {
+                     var value = opus.selections[slug][key];
                      try {
-                         qtype = opus.extras['qtype-'+slug][key];
+                         var qtype = opus.extras['qtype-'+slug][key];
                      } catch(err) {
-                         qtype = 'contains';
+                         var qtype = 'contains';
                      }
                      if (key==0) {
                          s_arr[s_arr.length] = label + " " + qtype + ": " + value;
@@ -497,8 +498,8 @@ var o_widgets = {
  	     }
 
          for (var k in opus.prefs.widgets) {
-             slug = opus.prefs.widgets[k];
-             widget = 'widget__' + slug;
+             var slug = opus.prefs.widgets[k];
+             var widget = 'widget__' + slug;
              var html = '<li id = "' + widget + '" class = "widget"></li>';
              $(html).appendTo('#search_widgets1 ');
              // $(html).hide().appendTo('#search_widgets1').show("blind",{direction: "vertical" },200);
@@ -506,9 +507,9 @@ var o_widgets = {
          }
 
          for (k in opus.prefs.widgets2) {
-             slug = opus.prefs.widgets2[k];
-             widget = 'widget__' + opus.prefs.widgets2[k];
-             html = '<li id = "' + widget + '" class = "widget"></li>';
+             var slug = opus.prefs.widgets2[k];
+             var widget = 'widget__' + opus.prefs.widgets2[k];
+             var html = '<li id = "' + widget + '" class = "widget"></li>';
              $(html).hide().appendTo('#search_widgets2').show("blind",{direction: "vertical" },200);
              opus.widget_elements_drawn.push(slug);
          }
@@ -633,8 +634,8 @@ var o_widgets = {
              // add the spans that hold the hinting
              try {
                  $('#' + widget + ' ul label').after( function () {
-                     var value = $(this).find('input').attr("value");
-                     try {
+                    var span_id = 'hint__' + slug
+                    try {
                          span_id = 'hint__' + slug + '_' + value.replace(/ /g,'-').replace(/[^\w\s]/gi, '')  // special chars not allowed in id element
                          return '<span class = "hints" id = "' + span_id + '"></span>';
                      } catch(e) {
