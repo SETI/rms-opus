@@ -67,7 +67,7 @@ var o_widgets = {
         $('#search').on('change', 'input.multichoice', function() {
            // mult widget gets changed
            var id = $(this).attr("id").split('_')[0];
-           var value = $(this).attr("value");
+           var value = $(this).attr("value").replace(/\+/g, '%2B');
 
            if ($(this).is(':checked')) {
                var values = [];
@@ -95,11 +95,12 @@ var o_widgets = {
 
     closeWidget: function(slug) {
 
+        var slug_no_num;
         try {
-            var slug_no_num = slug.match(/(.*)[1|2]/)[1];
+            slug_no_num = slug.match(/(.*)[1|2]/)[1];
 
         } catch (e) {
-            var slug_no_num = slug;
+            slug_no_num = slug;
         }
 
         opus.prefs.widgets.splice(opus.prefs.widgets.indexOf(slug), 1);
@@ -242,7 +243,7 @@ var o_widgets = {
 
     // this is called after a widge is drawn
     customWidgetBehaviors: function(slug) {
-    var mult_id = '#mult_group_' + $(this).attr('value');
+        var mult_id = '#mult_group_' + $(this).attr('value');
 
         switch(slug) {
 
@@ -387,11 +388,11 @@ var o_widgets = {
 
     // the string that shows when a widget is minimized
     minimizeWidgetLabel: function(slug) {
-
+        var label;
          try {
-             var label = $('#widget__' + slug + ' h2.widget_label').html();
+             label = $('#widget__' + slug + ' h2.widget_label').html();
          } catch(e) {
-             var label = slug;
+             label = slug;
          }
 
          var min = false;
@@ -408,10 +409,11 @@ var o_widgets = {
              if (form_type == 'RANGE') {
 
                  // this is a range widget
+                 var qtypes;
                  try {
-                     var qtypes = opus.extras['qtype-' + slug_no_num];
+                     qtypes = opus.extras['qtype-' + slug_no_num];
                  } catch(e) {
-                     var qtypes = [opus.qtype_default];
+                     qtypes = [opus.qtype_default];
                  }
 
                  var length = (opus.selections[min].length > opus.selections[max].length) ? opus.selections[min].length : opus.selections[max].length;
@@ -419,13 +421,14 @@ var o_widgets = {
                  var simple = [];
                  for (var i=0;i<length;i++) {
                      // ouch:
+                     var qtype;
                      try{
-                         var qtype = qtypes[i];
+                         qtype = qtypes[i];
                      } catch(e) {
                          try {
-                             var qtype = qtypes[0];
+                             qtype = qtypes[0];
                          } catch(e) {
-                             var qtype = opus.qtype_default;
+                             qtype = opus.qtype_default;
                          }
                      }
 
@@ -455,10 +458,11 @@ var o_widgets = {
                  var last_qtype = '';
                  for (var key in opus.selections[slug]) {
                      var value = opus.selections[slug][key];
+                     var qtype;
                      try {
-                         var qtype = opus.extras['qtype-'+slug][key];
+                         qtype = opus.extras['qtype-'+slug][key];
                      } catch(err) {
-                         var qtype = 'contains';
+                         qtype = 'contains';
                      }
                      if (key==0) {
                          s_arr[s_arr.length] = label + " " + qtype + ": " + value;
@@ -634,7 +638,7 @@ var o_widgets = {
              // add the spans that hold the hinting
              try {
                  $('#' + widget + ' ul label').after( function () {
-                    var span_id = 'hint__' + slug
+                    var value = $(this).find('input').attr("value");
                     try {
                          span_id = 'hint__' + slug + '_' + value.replace(/ /g,'-').replace(/[^\w\s]/gi, '')  // special chars not allowed in id element
                          return '<span class = "hints" id = "' + span_id + '"></span>';
