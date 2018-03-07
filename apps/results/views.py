@@ -265,7 +265,7 @@ def get_metadata(request, ring_obs_id, fmt):
         all_param_names = [param.name for param in ParamInfo.objects.filter(category_name=table_name, display_results=1).order_by('disp_order')]
 
         for k, slug in enumerate(all_slugs):
-            param_info = get_param_info_by_slug(slug)
+            param_info = ParamInfo.objects.get(slug=slug)
             name = param_info.name
             all_info[name] = param_info
 
