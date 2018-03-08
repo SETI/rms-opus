@@ -94,6 +94,9 @@ def constructQueryString(selections, extras):
         name = param_name.split('.')[1]
         param_info = get_param_info_by_param(param_name)
         if not param_info:
+            log.error('constructQueryString: No param_info for %s', param_name)
+            log.error('.. Selections: %s', str(selections))
+            log.error('.. Extras: %s', str(extras))
             return False
 
         form_type = param_info.form_type
@@ -402,30 +405,25 @@ def string_query_object(param_name, value_list, qtypes):
     else:
         param_model_name = model_name + '__' + param_name.split('.')[1]
 
-    for key,value in enumerate(value_list):
+    if len(value_list) > 1:
+        log.error('string_query_object: value_list for param %s contains >1 item %s qtypes %s', param_name, str(value_list), str(qtypes))
 
-        qtype = qtypes[key] if key in qtypes else 'contains'
-
+    # This can apparently handle multiple string values, but it's not really implemented fully
+    # Maybe it should return a list of q_exp?
+    for val_no,value in enumerate(value_list):
+        qtype = qtypes[val_no] if len(qtypes) > val_no else 'contains'
         if qtype == 'contains':
-
             q_exp = Q(**{"%s__icontains" % param_model_name: value })
-            pass
-
-        if qtype == 'begins':
+        elif qtype == 'begins':
             q_exp = Q(**{"%s__startswith" % param_model_name: value })
-            pass
-
-        if qtype == 'ends':
+        elif qtype == 'ends':
             q_exp = Q(**{"%s__endswith" % param_model_name: value })
-            pass
-
-        if qtype == 'matches':
+        elif qtype == 'matches':
             q_exp = Q(**{"%s" % param_model_name: value })
-            pass
-
-        if qtype == 'excludes':
+        elif qtype == 'excludes':
             q_exp = ~Q(**{"%s__icontains" % param_model_name: value })
-            pass
+        else:
+            log.error('string_query_object: Unknown qtype %s for param_name %s', qtype, param_name)
 
     return q_exp
 
