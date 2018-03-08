@@ -639,14 +639,10 @@ var o_widgets = {
              try {
                  $('#' + widget + ' ul label').after( function () {
                     var value = $(this).find('input').attr("value");
-                    try {
-                         span_id = 'hint__' + slug + '_' + value.replace(/ /g,'-').replace(/[^\w\s]/gi, '')  // special chars not allowed in id element
-                         return '<span class = "hints" id = "' + span_id + '"></span>';
-                     } catch(e) {
-                         return '<span class = "hints" id = "' + span_id + '"></span>';
-                     }
+                    var span_id = 'hint__' + slug + '_' + value.replace(/ /g,'-').replace(/[^\w\s]/gi, '')  // special chars not allowed in id element
+                    return '<span class = "hints" id = "' + span_id + '"></span>';
                  });
-                 } catch(e) { } // these only apply to mult widgets
+             } catch(e) { } // these only apply to mult widgets
 
 
              if (jQuery.inArray(slug,opus.widgets_fetching) > -1) {
