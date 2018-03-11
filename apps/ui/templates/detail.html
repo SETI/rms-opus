@@ -25,7 +25,7 @@
         <h1 class = "">Ring Observation Detail </h1>
         <p><b>Ring Observation ID: </b>{{ img.ring_obs_id}}</p>
 
-        <h3> PDS Products: </h3>
+        <h2> PDS Products </h2>
 
         <div class = "">
 
@@ -54,7 +54,7 @@
 
     <div class = "">
 
-        <h2>Rings Node Supplemental Products:</h2>
+        <h2>Ring-Moon Systems Node Supplemental Products</h2>
 
             <ul class = "list-inline">
                 Preview Images (jpeg/png):
@@ -65,12 +65,14 @@
 
     </div>
 
+    <h2>Metadata for Current Columns</h2>
+
     <div id = "cols_metadata" class = "">
         <span class = "spinner">&nbsp;</span>
     </div>
 
     <div class = "">
-        <h3>All Metadata for this Observation:</h3>
+        <h2>All Metadata for this Observation</h2>
         <p>Grab all metadata <a href = "/opus/api/metadata/{{ ring_obs_id }}.json" target = "_blank">as json</a></p>
         <div id = "all_metadata_{{ img.ring_obs_id }}"></div>
     </div>
