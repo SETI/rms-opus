@@ -14,6 +14,7 @@ analyze table user_searches;
 # from django.test import TestCase  removed because it deletes test table data after every test
 from unittest import TestCase
 from django.test.client import Client
+from django.db import connection
 
 from search.views import *
 from results.views import *
@@ -22,8 +23,6 @@ from django.apps import apps
 
 from django.conf import settings
 settings.CACHE_BACKEND = 'dummy:///'
-
-cursor = connection.cursor()
 
 class searchTests(TestCase):
 
@@ -43,6 +42,15 @@ class searchTests(TestCase):
         count_obs = ObsGeneral.objects.all().values('volume_id').distinct().count()
         count_geo = ObsRingGeometry.objects.all().values('volume_id').distinct().count()
         self.assertEqual(count_obs, count_geo)
+
+    def test__mult_field_matches_id_fields_in_mult_tables(self):
+        cursor = connection.cursor()
+        q = """select count(*) from obs_general
+               where mult_obs_general_target_name not in (select id from mult_obs_general_target_name)"""
+        cursor.execute(q)
+        result = cursor.fetchone()
+        cursor.close()
+        self.assertEqual(result[0], 0)
 
     def test__get_param_info_by_slug(self):
         # this should return an object but failed once for unknown
@@ -83,6 +91,18 @@ class searchTests(TestCase):
         the_planets = [planet['label'] for planet in MultObsGeneralPlanetId.objects.filter(display='Y').values('label')]
         print "SELECT label FROM mult_obs_general_planet_id WHERE display = 'Y' ORDER BY disp_order;"
         expect = ['Venus','Earth', 'Mars', 'Jupiter', 'Saturn', 'Uranus', 'Neptune', 'Pluto']
+        print(""" you might need to:
+
+            update mult_obs_general_planet_id set disp_order =  1 where value = 'VEN';
+            update mult_obs_general_planet_id set disp_order =  2 where value = 'EAR';
+            update mult_obs_general_planet_id set disp_order =  3 where value = 'MAR';
+            update mult_obs_general_planet_id set disp_order =  4 where value = 'JUP';
+            update mult_obs_general_planet_id set disp_order =  5 where value = 'SAT';
+            update mult_obs_general_planet_id set disp_order =  6 where value = 'URA';
+            update mult_obs_general_planet_id set disp_order =  7 where value = 'NEP';
+            update mult_obs_general_planet_id set disp_order =  8 where value = 'PLU';
+
+        """)
         self.assertEqual(expect, the_planets)
 
     def test__surface_geometry_table_label_is_correct(self):
@@ -148,8 +168,8 @@ class searchTests(TestCase):
         print q
         expected = "SELECT `obs_general`.`id` FROM `obs_general` INNER JOIN `obs_ring_geometry` ON (`obs_general`.`id` = `obs_ring_geometry`.`obs_general_id`) \
                     WHERE ((`obs_ring_geometry`.`ring_radius1` <= 60000.0  AND `obs_ring_geometry`.`ring_radius2` >= 80000.0 ) OR `obs_ring_geometry`.`ring_radius2` >= 120000.0 )"
-        print 'expected:'
-        print expected
+        print('expected:')
+        print (expected)
         self.assertEqual("".join(q.split()),"".join(expected.split()))  # strips all whitespace b4 compare
 
     def test__constructQueryString_mults_planet_instrumentCOISS(self):
@@ -158,8 +178,10 @@ class searchTests(TestCase):
         selections['obs_general.instrument_id'] = ['COISS']
         sql, params = constructQueryString(selections, {})
         q = sql % params
-        print q
+        print(q)
         expected = "SELECT `obs_general`.`id` FROM `obs_general` WHERE (`obs_general`.`mult_obs_general_planet_id` IN (7) AND `obs_general`.`mult_obs_general_instrument_id` IN (2))"
+        print('expected:')
+        print (expected)
         self.assertEqual("".join(q.split()),"".join(expected.split()))  # strips all whitespace b4 compare
 
     def test__constructQueryString_mults_with_target(self):
@@ -168,8 +190,10 @@ class searchTests(TestCase):
         selections['obs_general.target_name'] = ["PAN"]
         sql, params = constructQueryString(selections, {})
         q = sql % params
-        print q
+        print(q)
         expected = "SELECT `obs_general`.`id` FROM `obs_general` WHERE (`obs_general`.`mult_obs_general_target_name` IN (42) AND `obs_general`.`mult_obs_general_planet_id` IN (7))"
+        print('expected:')
+        print (expected)
         self.assertEqual("".join(q.split()),"".join(expected.split()))  # strips all whitespace b4 compare
 
     def test__constructQueryString_mults_with_join(self):
@@ -178,11 +202,10 @@ class searchTests(TestCase):
         selections['obs_instrument_COISS.camera'] = ["Wide Angle"]
         sql, params = constructQueryString(selections, {})
         q = sql % params
-        print q
+        print(q)
         expected = "SELECT `obs_general`.`id` FROM `obs_general` INNER JOIN `obs_instrument_COISS` ON (`obs_general`.`id` = `obs_instrument_COISS`.`obs_general_id`) WHERE (`obs_general`.`mult_obs_general_planet_id` IN (7) AND `obs_instrument_COISS`.`mult_obs_instrument_COISS_camera` IN (1))"
-        print q
-        print 'expected:'
-        print expected
+        print('expected:')
+        print (expected)
         self.assertEqual("".join(q.split()),"".join(expected.split()))  # strips all whitespace b4 compare
 
     def test__constructQueryString_mults_with_3_table_join(self):
@@ -198,7 +221,6 @@ class searchTests(TestCase):
         print 'expected:'
         print expected
         self.assertEqual(q.replace(' ',''),expected.replace(' ',''))
-
 
 
 

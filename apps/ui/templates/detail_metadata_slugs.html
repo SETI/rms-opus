@@ -6,7 +6,7 @@
           {% for name, param_info in all_info.items %}
               {% if param == param_info.name %}
 
-                  {{ param_info.label }}: {{ value }}
+                  {{ param_info.label_results }}: {{ value }}
 
                   {% if param_info.get_dictionary_info %}
                       <i class = "fa fa-info-circle" title = "

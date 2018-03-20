@@ -109,7 +109,7 @@ def getData(request,fmt):
 
     [page_no, limit, page, page_ids, order] = getPage(request)
 
-    checkboxes = True if (request.is_ajax()) else False
+    checkboxes = request.is_ajax()
 
     slugs = request.GET.get('cols',settings.DEFAULT_COLUMNS)
     if not slugs: slugs = settings.DEFAULT_COLUMNS
@@ -134,7 +134,7 @@ def getData(request,fmt):
                 try:
                     labels += [ParamInfo.objects.get(slug=temp_slug).label_results]
                 except ParamInfo.DoesNotExist:
-                    log.error('could not find param_info for ' + slug)
+                    log.error('Could not find param_info for %s', slug)
                     continue
 
     if is_column_chooser:
@@ -152,6 +152,50 @@ def getData(request,fmt):
         return data
     else:
         return responseFormats(data,fmt,template='data.html', id_index=id_index, labels=labels,checkboxes=checkboxes, collection=collection, order=order)
+
+def get_metadata_by_slugs(request, ring_obs_id, slugs, fmt):
+    """
+    returns results for specified slugs
+    """
+    update_metrics(request)
+
+    params_by_table = {}  # params by table_name
+    data = []
+    all_info = {}
+
+    for slug in slugs:
+        param_info = get_param_info_by_slug(slug)
+        if not param_info:
+            continue  # todo this should raise end user error
+        table_name = param_info.category_name
+        params_by_table.setdefault(table_name, []).append(param_info.param_name().split('.')[1])
+        all_info[slug] = param_info  # to get things like dictionary entries for interface
+
+    if slugs and not all_info:
+        # none of the slugs were valid slugs
+        # can't ignore them and return all metadata because can lead to infinite recursion here
+        raise Http404
+
+    for table_name, param_list in params_by_table.items():
+        model_name = ''.join(table_name.title().split('_'))
+        table_model = apps.get_model('search', model_name)
+
+        results = table_model.objects.filter(ring_obs_id=ring_obs_id).values(*param_list)
+                  # are not ring_obs_id unique in all obs tables so why is this not a .get query
+
+        if not results:
+            # this ring_obs_id doesn't exist in this table, log this..
+            log.error('Could not find ring_obs_id %s in table %s', ring_obs_id, table_name)
+
+        for param,value in results[0].items():
+            data.append({param: value})
+
+    if fmt == 'html':
+        return render(request, 'detail_metadata_slugs.html',locals())
+    if fmt == 'json':
+        return HttpResponse(json.dumps(data), content_type="application/json")
+    if fmt == 'raw':
+        return data, all_info  # includes definitions for opus interface
 
 
 def get_metadata(request, ring_obs_id, fmt):
@@ -213,7 +257,7 @@ def get_metadata(request, ring_obs_id, fmt):
         try:
             table_model = apps.get_model('search', model_name)
         except LookupError:
-            log.error("could not find data model for category %s " % model_name)
+            log.error("Could not find data model for category %s", model_name)
             continue
 
         # make a list of all slugs and another of all param_names in this table
@@ -221,7 +265,7 @@ def get_metadata(request, ring_obs_id, fmt):
         all_param_names = [param.name for param in ParamInfo.objects.filter(category_name=table_name, display_results=1).order_by('disp_order')]
 
         for k, slug in enumerate(all_slugs):
-            param_info = get_param_info_by_slug(slug)
+            param_info = ParamInfo.objects.get(slug=slug)
             name = param_info.name
             all_info[name] = param_info
 
@@ -243,10 +287,10 @@ def get_metadata(request, ring_obs_id, fmt):
                 # log.error('IndexError: no results found for {0} in table {1}'.format(ring_obs_id, table_name) )
                 pass  # no results found in this table, move along
             except AttributeError:
-                log.error('AttributeError: no results found for {0} in table {1}'.format(ring_obs_id, table_name) )
+                log.error('AttributeError: No results found for ring_obs_id %s in table %s', ring_obs_id, table_name)
                 pass  # no results found in this table, move along
             except FieldError:
-                log.error('FieldError: no results found for {0} in table {1}'.format(ring_obs_id, table_name) )
+                log.error('FieldError: No results found for ring_obs_id %s in table %s', ring_obs_id, table_name)
                 pass  # no results found in this table, move along
 
 
@@ -297,10 +341,10 @@ def get_triggered_tables(selections, extras=None):
                     try:
                         triggered_tables.remove('obs_surface_geometry')
                     except Exception as e:
-                        log.error(e)
-                        log.error(selections)
-                        log.error(field)
-                        log.error(inst)
+                        log.error("get_triggered_tables threw: %s", str(e))
+                        log.error(".. Selections: %s", str(selections))
+                        log.error(".. Field: %s", str(field))
+                        log.error(".. Inst: %s", str(inst))
 
 
     # now see if any more tables are triggered from query
@@ -384,8 +428,7 @@ def getImages(request,size,fmt):
     image_links = Image.objects.filter(ring_obs_id__in=page_ids)
 
     if not image_links:
-        log.error('no image found for:')
-        log.error(page_ids[:50])
+        log.error('GetImage: No image found for: %s', str(page_ids[:50]))
 
     # page_ids
     if alt_size:
@@ -464,7 +507,7 @@ def getImage(request,size='med', ring_obs_id='',fmt='mouse'):      # mouse?
     try:
         img = Image.objects.filter(ring_obs_id=ring_obs_id).values(size)[0][size]
     except IndexError:
-        log.error('index error could not find ring_obs_id {}'.format(ring_obs_id))
+        log.error('getImage: IndexError - Could not find ring_obs_id %s, size %s', str(ring_obs_id), str(size))
         return
 
     path = settings.IMAGE_HTTP_PATH + get_base_path_previews(ring_obs_id)
@@ -534,7 +577,7 @@ def getFiles(ring_obs_id=None, fmt=None, loc_type=None, product_types=None, prev
     can also return preview files too
     """
     if collection and not session_id:
-        log.error("needs session_id in kwargs to access collection")
+        log.error("getFiles: Needs session_id in kwargs to access collection")
         return False
 
     # handle passed params
@@ -575,7 +618,7 @@ def getFiles(ring_obs_id=None, fmt=None, loc_type=None, product_types=None, prev
 
         where   = "files.ring_obs_id = " + connection.ops.quote_name(colls_table_name) + ".ring_obs_id"
     else:
-        log.error('no ring_obs_ids or collection specified in results.getFiles')
+        log.error('getFiles: No ring_obs_ids or collection specified')
         return False
 
     # you can ask this function for url paths or disk paths
@@ -596,7 +639,9 @@ def getFiles(ring_obs_id=None, fmt=None, loc_type=None, product_types=None, prev
         files_table_rows = files_table_rows.filter(product_type__in=product_types)
 
     if not files_table_rows:
-        log.error('no rows returned in file table')
+        log.error('getFiles: No rows returned in file table')
+        log.error('.. WHERE: %s', str(where))
+        log.error('.. First 5 RING_OBS_ID: %s', str(ring_obs_id[:5]))
 
     file_names = {}
     for f in files_table_rows:

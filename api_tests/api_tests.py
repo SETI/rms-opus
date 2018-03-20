@@ -14,7 +14,7 @@ class APIEndpointTests(unittest.TestCase):
 
         # which endpoint to test, dev or tools
         self.API_ENDPOINT = endpoint_url.format('dev')
-        if 'tools' in server_name:
+        if 'tools' in server_name or 'prod' in server_name:
             self.API_ENDPOINT = endpoint_url.format('tools')
 
         # ignore SSL errors when contacting dev server  ¯\_(ツ)_/¯
@@ -55,6 +55,6 @@ class APIEndpointTests(unittest.TestCase):
         print "\n ALL TESTS PASS WOOT! \n Actual Number of Tests Run: %s " % str(count)
 
 if __name__ == '__main__':
-    server_name = raw_input("dev or prod server?")
+    server_name = raw_input("dev or prod server? ")
     my_tests = APIEndpointTests(server_name)
     my_tests.test_all_the_things_in_loop()
