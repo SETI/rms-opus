@@ -292,24 +292,27 @@ var o_browse = {
 
             clearInterval(opus.scroll_watch_interval);  // turn this off while manually paging
 
-            view_info = o_browse.getViewInfo();
-            namespace = view_info['namespace']; // either '#collection' or '#browse'
-            prefix = view_info['prefix'];       // either 'colls_' or ''
+            var view_info = o_browse.getViewInfo();
+            var namespace = view_info['namespace']; // either '#collection' or '#browse'
+            var prefix = view_info['prefix'];       // either 'colls_' or ''
 
-            page_no_elem = $(this).parent().parent().find('input#page');
-            this_page = page_no_elem.val();
+            var page_no_elem = $('input#page');
+            var this_page = page_no_elem.val();
             if (!this_page) {
                 this_page = opus.prefs[prefix + 'page'];
             }
 
+            var page = parseInt(this_page, 10);
             if ( $(this).hasClass("next")) {
-                page = parseInt(this_page, 10) + 1;
+                page++;
             } else if ($(this).hasClass("prev")) {
-                 page = parseInt(this_page, 10) - 1;
+                page--;
             }
-            page_no_elem.css('color', 'red');
-            page_no_elem.val(page);
-            o_browse.textInputMonitor();
+            if (page >=1 && page <= opus.pages) {
+              page_no_elem.css('color', 'red');
+              page_no_elem.val(page);
+              o_browse.textInputMonitor();
+            }
             return false;
         });
 
@@ -1282,7 +1285,7 @@ var o_browse = {
 
                 if (field_monitor[field_monitor.length-1] == value){
 					// the user has not moved in ms
-                    page_no_elem.css('color', 'black'); // change indicator color back to black
+                    $('input#page').css('color', 'black'); // change indicator color back to black
                     // change both views to the new page
                     opus.prefs.page[prefix + 'data'] = parseInt(value, 10);
                     opus.prefs.page[prefix + 'gallery'] = parseInt(value, 10);
