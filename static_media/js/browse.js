@@ -732,7 +732,7 @@ var o_browse = {
         $.ajax({ url: url,
             success: function(html) {
                 $('.data', namespace).append(html);
-                $(".data .data_table", namespace).stickyTableHeaders({ fixedOffset: 85 });
+                $(".data .data_table", namespace).stickyTableHeaders({ fixedOffset: 94 });
                 opus.table_headers_drawn = true;
                 o_browse.getBrowseTab();
             }
