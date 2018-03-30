@@ -24,8 +24,9 @@ function postContents(response, searchText) {
 
 function buildDefinitionListHTML(response, searchText) {
   var length = response.length;
+  var html = "<div class='definitionList'>";
   if (length > 0) {
-    var html = "<ul>";
+    html += "<ul>";
     for (var index = 0; index < length; index++) {
       var next =index + 1;
       html += "<li>";
@@ -43,9 +44,10 @@ function buildDefinitionListHTML(response, searchText) {
     }
     html += "</ul>";
   } else {
-    var html = "No results found."
+    html += "No results found.";
   }
-  return html
+  html += "</div>";
+  return html;
 }
 
 function searchDictionary(searchText, thepanel) {
@@ -56,29 +58,25 @@ function searchDictionary(searchText, thepanel) {
   });
 }
 
-function retrieveDefinition(alpha, thepanel) {
-  var url = "/dictionary/list.json/" + alpha + "/";
-  $.getJSON(url, function(response) {
-    var html = buildDefinitionListHTML(response)
-    thepanel.html(html);
-  });
-}
-
 $( function() {
-  $( "#accordion" ).accordion({
-    heightStyle: "content",
-    header: "h3",
-    collapsible: true,
-    active: false,
-    animate: 200,
-    activate: function( event, ui ) {
-      var id = ui.newHeader.attr("id");
-      var panel = ui.newPanel;
-      if (id !== undefined && ui.newHeader.attr("stuffed") == undefined) {
-        retrieveDefinition(id, panel);
-        ui.newHeader.attr("stuffed", true);
+  var currentElement = "";
+  $( ".alphabetlist").click(function( event ){
+    var targetElement = 'def-'+event.currentTarget.id;
+    if (currentElement != targetElement) {
+      if (currentElement != "") {
+        $("#"+currentElement).hide();
       }
+      currentElement = targetElement;
     }
+    if ($("#"+targetElement).length == 0) {
+      $("#dictionaryContainer").append("<div id='"+targetElement+"' class='dictionaryContent'>Loading... please wait.</div>")
+      var url = "/dictionary/list.json/" + event.currentTarget.id + "/";
+      $.getJSON(url, function(response) {
+        var html = buildDefinitionListHTML(response)
+        $("#"+targetElement).html(html);
+      });
+    }
+    $("#"+targetElement).show();
   });
   $( "#searchbox" ).submit(function( event ) {
     //val searchText = $("input[name=q]").val();

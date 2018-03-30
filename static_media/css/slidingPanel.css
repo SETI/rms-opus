@@ -44,6 +44,7 @@ a {
   -webkit-transition: visibility 0s 0.6s;
   -moz-transition: visibility 0s 0.6s;
   transition: visibility 0s 0.6s;
+  z-index: 99999;
 }
 .cd-panel::after {
   /* overlay layer */
@@ -197,7 +198,7 @@ a {
   /* image replacement */
   display: inline-block;
   overflow: hidden;
-  text-indent: 100%;
+  //text-indent: 100%;
   white-space: nowrap;
 }
 .cd-panel-close::before, .cd-panel-close::after {

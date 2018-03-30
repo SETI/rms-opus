@@ -17,17 +17,24 @@ body {
   color: #404040;
   margin: 0;
   height: 100%;
-  overflow-x: hidden;
+  overflow: hidden;
 }
 
-*, *::after, *::before {
-  -webkit-box-sizing: border-box;
-  -moz-box-sizing: border-box;
-  box-sizing: border-box;
+container {
+  display: flex;
+  flex-direction: column;
+  height: 100%
 }
 
-*::after, *::before {
-  content: '';
+article {
+  display: flex;
+  flex: 1;
+  min-height: 0px; /* IMPORTANT: you need this for non-chrome browsers */
+  margin-bottom: -50px;
+}
+
+.from-left {
+  margin-left: 15px;
 }
 
 .hidden {  /* a11y way to present only to screen readers */
@@ -44,20 +51,7 @@ body {
     margin:0;  /* hiding it for now, hard to layout this thing in phone-size screens */
   }
 }
-.container {
-  background-color: white;
-  width:100%;
-  padding:0 30px 0 0;
-}
 
-/* searchbox */
-.searchbox {
-  width:320px;
-  position: absolute;
-  right:10px;
-  top:90px;
-
-}
 @media only screen and (max-width: 768px) {
   .searchbox {
     display:none;  /* hiding it for now, hard to layout this thing in phone-size screens */
@@ -71,64 +65,6 @@ body {
     top:90px;
   }
 }
-
-
-/* content containers */
-.content {
-  margin:0; padding:0;
-  margin-top:20px;
-}
-
-.content > p > img, .content > img, .content > a > img, .content > p > a > img {
-  float:right;
-  margin:0 0 20px 20px;
-}
-
-@media (min-width: 1200px) {
-  .content p {
-    max-width: 60em;
-  }
-  .content li {
-    max-width: 50em;
-  }
-}
-.content p.superwide {
-  max-width: none;
-  width: 100%;
-  overflow: visible;
-}
-
-
-
-/* .content container customizations for pages */
-p.superwide > a > img {
-  overflow:visible;
-  float:left;
-  margin:0;
-  width: 100%;
-}
-
-@media only screen and (max-width: 768px) {
-  div.row {
-    padding:0;
-  }
-  .homebox {
-    margin:0; padding:0;
-    margin-bottom:10px;
-  }
-  .content, .container, .row {
-    padding:0; margin:0;
-    width:100%;
-  }
-  div.col-xm-12 {
-    margin:0; padding:0;
-  }
-  .mission_statement {
-    padding:10px 10px 10px 20px;
-    font-size:1.2em;
-  }
-}
-
 
 /* site header / banner */
 .banner {
@@ -190,108 +126,6 @@ p.superwide > a > img {
   }
 }
 
-
-
-/* nav - the left main nav menu */
-nav {
-    background-color: #efefef;
-}
-.nav-container nav ul {
-	margin: 0; padding: 0;
-	list-style-type: none;
-}
-
-.nav-container nav ul li:last-child {
-	padding-bottom: 6px;
-}
-
-.nav-container nav ul:last-child {
-	padding-bottom: 12px;
-}
-
-.nav-container .subheading > a, .nav-container .subheading > p {  /* nav menu section headings */
-	display:block;
-	width:100%;
-	font: 1.1em 'Open Sans', sans-serif;
-  color: #435ca4;
-	font-weight: 600;
-	line-height: 1.2em;
-	border-top: 1px solid #cccccc;
-	border-bottom: 1px solid #cccccc;
-	background-color: #e9e9e9;
-	padding: 12px 15px;
-}
-.nav-container .subheading > p {
-  color:black;
-}
-
-.nav-container .subheading > a:visited {
-	color: #4e4a92;
-}
-
-.nav-container .subheading > a:hover {
-	color: #5a72b7;
-}
-
-.nav-container .subheading > a:active {
-	color: #31488d;
-}
-
-.nav-container .submenu li a {
-	font: 0.9em 'Open Sans', sans-serif;
-	display:block;
-	width:100%;
-	color: #435ca4;
-	padding: 5px 5px 5px 15px;
-	line-height: 1.2em;
-	margin-bottom: 2px;
-}
-.nav-container .submenu li a:visited {
-	color: #4e4a92;
-}
-.nav-container .submenu li a:hover {
-	color: #5a72b7;
-}
-.nav-container a:active { /* for the key press */
-  background-color: #ffffff;
-  border-left: 5px solid #fffa93;
-  padding-left: -15px;
-}
-.nav-container .submenu li.active { /* nav hinting */
-  background-color: #ffffff;
-  border-left: 5px solid #fffa93;
-  padding-left: -15px;
-}
-@media only screen and (max-width: 480px) {
-
-  .nav-container nav ul {
-    text-align: center;
-  }
-  .nav-container .subheading > a {  /* nav menu section headings */
-    display:block;
-    margin:0 auto;
-  }
-
-  .nav-container .submenu li {
-    margin:0; padding:10px ;
-  }
-
-  .nav-container .submenu li > a {
-    display:inline;
-    margin:0 auto;
-    white-space: nowrap;
-    text-align: center;
-    font: 1.3em 'Open Sans', sans-serif;
-    padding:5px;
-    overflow: visible;
-
-  }
-}
-
-
-.mobile {
-  display:none;
-}
 @media only screen and (max-width: 768px) {
   .mobile {
     display:block;
@@ -319,6 +153,38 @@ nav {
   }
 }
 
+/* searchbox */
+.searchbox {
+  width:320px;
+  position: absolute;
+  right:10px;
+  top:90px;
+
+}
+
+ul#tableOfContents {
+  list-style-type: none;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  background-color: #333333;
+}
+
+ul#tableOfContents li {
+  float: left;
+}
+
+ul#tableOfContents  li a {
+  display: block;
+  color: white;
+  padding: 16px;
+  text-decoration: none;
+}
+
+ul#tableOfContents  li a:hover {
+    background-color: #111111;
+}
+
 /* breadcrumbs */
 ol.breadcrumb {
   background-color: white;
@@ -326,35 +192,45 @@ ol.breadcrumb {
 }
 
 
-/* data tables */
-table {
-  border-collapse: separate;
-  background-color: white;
+/* the container for our overflowed content */
+.overflow-container {
+  flex: 1 1 auto;
+  overflow-y: scroll;
+  height: 70vh;
 }
-/* Zebra striping */
-/*
-tr:nth-of-type(odd) {
-  background: #efefef;
+
+/* the overflow content itself */
+.overflow-content {
+  min-height: 0px; /* IMPORTANT: you need this for non-chrome browsers */
+  padding: 20px;
 }
-*/
-th {
-  padding: 3px 15px;
-  background: #fdfabe;
-  color: #222222;
-  font-weight: bold;
+
+#dictionaryContainer {
+  position:relative;
+  display: block;
+  margin: 15px;
 }
-td, th {
-  padding: 3px 15px;
-  border: 1px solid #ccc;
-  text-align:center;
+
+.definitionList {
+  display: block;
 }
-th.colgroup-seperator, td.colgroup-seperator {
-  background: #efefef;
-  border: 1px solid #ccc;
+
+.dictionaryContent {
+  margin-top: 15px;
 }
-td.colgroup-seperator {
-  font-weight: bold;
+
+.term {
+  font-weight: bold; !important
 }
+.context {
+  font-style: italic;
+}
+.description {
+}
+.importDate {
+  font-size: 80%;
+}
+
 
 /* footer */
 .navbar-nav.nav-justified > li{
@@ -365,6 +241,14 @@ td.colgroup-seperator {
   margin:0; padding:0;
   background-color: #2c2c2c;
   font-size: 0.9em;
+  position: fixed;
+  bottom: 0;
+  flex: none;
+}
+.container {
+  background-color: white;
+  width:100%;
+  padding:0 30px 0 0;
 }
 .navbar-default .navbar-nav>li>a,
 .navbar-default .navbar-nav>li>a:visited,
@@ -380,38 +264,4 @@ td.colgroup-seperator {
   color:white;
   padding:30px;
   padding-bottom: 60px;
-}
-
-
-.table-responsive {
-  min-width: 768px;
-  overflow: scroll;
-}
-
-#accordion {
-  margin: 15px;
-}
-
-.ui-state-active .ui-icon, .ui-button:active .ui-icon, .ui-icon {
-  background-image: none; !important
-}
-.accordion-toggle {
-  cursor: pointer;
-}
-.accordion-content {
-  display: none;
-}
-.accordion-content.default {
-  display: block;
-}
-.term {
-  font-weight: bold; !important
-}
-.context {
-  font-style: italic;
-}
-.description {
-}
-.importDate {
-  font-size: 80%;
 }
