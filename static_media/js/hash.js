@@ -28,32 +28,29 @@ var o_hash = {
       }
       for (key in opus.prefs) {
 
-          if (key in ['widgets','widgets2','cols']) {
+          switch (key) {
+            case 'page':
+              // page is stored like {"gallery":1, "data":1, "colls_gallery":1, "colls_data":1 }
+              // so the curent page depends on the view being shown
+              // opus.prefs.view = search, browse, collection, or detail
+              // opus.prefs.browse =  'gallery' or 'data',
+              page = o_browse.getCurrentPage();
 
-              hash[hash.length] = key + '=' + opus.prefs.widgets.join(',').replace(/\s+/g, '');
+              hash[hash.length] = 'page=' + page;
+              break;
 
-          } else if (key == 'page') {
-
-            // page is stored like {"gallery":1, "data":1, "colls_gallery":1, "colls_data":1 }
-            // so the curent page depends on the view being shown
-            // opus.prefs.view = search, browse, collection, or detail
-            // opus.prefs.browse =  'gallery' or 'data',
-            page = o_browse.getCurrentPage();
-
-            hash[hash.length] = 'page=' + page;
-
-
-          } else if (key == 'widget_size' || key == 'widget_scroll') {
-              // these are prefs having to do with widget resize and scrolled
-              if (key == 'widget_scroll') { continue; } // there's no scroll without size, so we handle scroll when size comes thru
-
+            case 'widget_size':
               for (slug in opus.prefs[key]) {
                   hash[hash.length] = o_widgets.constructWidgetSizeHash(slug);
               }
+              break;
 
-          } else {
-
-            hash[hash.length] = key + '=' + opus.prefs[key];
+            case 'widget_scroll':
+              // these are prefs having to do with widget resize and scrolled
+              break; // there's no scroll without size, so we handle scroll when size comes thru
+              
+            default:
+              hash[hash.length] = key + '=' + opus.prefs[key];
           }
       }
       window.location.hash = '/' + hash.join('&');
