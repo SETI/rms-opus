@@ -5,7 +5,6 @@ from ui.views import (
     get_table_headers,
     get_browse_headers,
     getMenu,
-    getQuickPage,
     getWidget,
     getColumnChooser,
     init_detail_page
