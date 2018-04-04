@@ -368,16 +368,6 @@ def getWidget(request, **kwargs):
     # return responseFormats(form, fmt)
 
 
-def getQuickPage(request,template='demo.html'):
-    widgets = {}
-    images = Image.objects.all()[0:100]
-
-    for param in ParamInfo.objects.filter(rank=1):
-        # widgets[param.label] = str(getWidget(request,param.slug))
-        widgets[param.label] = getWidget(request,param=param,slug=param.slug,fmt='raw')
-    return render(request, template,locals())
-
-
 def init_detail_page(request, **kwargs):
     """
     this loads the initial parts of the detail tab on first loads
