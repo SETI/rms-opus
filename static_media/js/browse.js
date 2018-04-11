@@ -146,7 +146,7 @@ var o_browse = {
         // data_table - clicking a table row adds to cart
         $('#browse').on("click", ".data_table tr", function() {
 
-            ring_obs_id = $(this).attr("id").substring(6);
+            rms_obs_id = $(this).attr("id").substring(6);
             $(this).find('.data_checkbox').toggleClass('fa-check-square-o').toggleClass('fa-square-o');
             action = 'remove';
             if ($(this).find('.data_checkbox').hasClass('fa-check-square-o')) {
@@ -157,17 +157,17 @@ var o_browse = {
             // make sure the checkbox for this observation in the other view (either data or gallery)
             // is also checked/unchecked - if that view is drawn
             try {
-                o_browse.toggleBrowseInCollectionStyle(ring_obs_id);
+                o_browse.toggleBrowseInCollectionStyle(rms_obs_id);
             } catch(e) { } // view not drawn yet so no worries
 
             // check if we are clicking as part of an 'add range' interaction
             if (!opus.addrange_clicked) {
 
                 // no add range, just add this obs to collection
-                o_collections.editCollection(ring_obs_id,action);
+                o_collections.editCollection(rms_obs_id,action);
 
             } else {
-                o_browse.addRangeHandler(ring_obs_id);
+                o_browse.addRangeHandler(rms_obs_id);
             }
 
         });
@@ -175,8 +175,8 @@ var o_browse = {
 
         // click embedded_data_viewer_image opens colorbox
         $('#browse').on("click", '.embedded_data_viewer_image a', function() {
-            ring_obs_id = $(this).data("ring_obs_id");
-            $('#gallery__' + ring_obs_id + "> a").trigger("click");
+            rms_obs_id = $(this).data("rms_obs_id");
+            $('#gallery__' + rms_obs_id + "> a").trigger("click");
             return false;
         });
 
@@ -185,13 +185,13 @@ var o_browse = {
         $('.gallery').on("click", ".activeThumbnail", function(e) {
             // e.preventDefault();
 
-            ring_obs_id = $(this).parent().attr("id").substring(9);
+            rms_obs_id = $(this).parent().attr("id").substring(9);
 
             if (opus.addrange_clicked) {
                // well actually they are selecting a range endpoint 'add range'
                // so they don't want data viewer they want 'add to cart''
-               o_browse.toggleBrowseInCollectionStyle(ring_obs_id);
-               o_browse.cart_click_handler(ring_obs_id, 'add');
+               o_browse.toggleBrowseInCollectionStyle(rms_obs_id);
+               o_browse.cart_click_handler(rms_obs_id, 'add');
                return false;
             }
 
@@ -199,7 +199,7 @@ var o_browse = {
             // if the user clicked on the metadata box image, show the colorbox
             if (!e.isTrigger) {
                 // they clicked a thumbnail, open the embedded data viewer
-                o_browse.updateEmbeddedMetadataBox(ring_obs_id);
+                o_browse.updateEmbeddedMetadataBox(rms_obs_id);
                 return false;
             }
 
@@ -209,11 +209,11 @@ var o_browse = {
         $('.gallery').on("click", ".tools-bottom a", function(e) {
             $(this).parent().show();  // whu?
 
-            ring_obs_id = $(this).parent().parent().attr("id").substring(9);
+            rms_obs_id = $(this).parent().parent().attr("id").substring(9);
 
             // clicking thumbnail opens embedded data viewer
             if ($(this).hasClass('colorbox')) {
-                $('#gallery__' + ring_obs_id + "> a").trigger("click");
+                $('#gallery__' + rms_obs_id + "> a").trigger("click");
             }
 
             // click to view detail page
@@ -224,11 +224,11 @@ var o_browse = {
                     link = link.replace("view=browse", "view=detail");
                     window.open(link, '_blank');
                 } else {
-                    o_browse.openDetailTab(ring_obs_id);
+                    o_browse.openDetailTab(rms_obs_id);
                 }
                 // leave a highlight on the clicked thumbnail
                 $(' .thumb_overlay').removeClass("gallery_image_focus").removeClass("browse_image_selected");  // remove any old
-                $('#gallery__' + ring_obs_id + ' .thumb_overlay').addClass("gallery_image_focus browse_image_selected");
+                $('#gallery__' + rms_obs_id + ' .thumb_overlay').addClass("gallery_image_focus browse_image_selected");
 
                 return false;
             }
@@ -236,22 +236,22 @@ var o_browse = {
             // click spyglass thingy to view colorbox
             if ($(this).find('i').hasClass('glyphicon-resize-full')) {
                 // trigger colorbox, same as clicking anywhere on the thumbnail
-                $('#gallery__' + ring_obs_id + "> a").trigger("click");
+                $('#gallery__' + rms_obs_id + "> a").trigger("click");
             }
 
             // click to add/remove from  cart
             // gallery thumbnail cart checkmark thing
             if ($(this).find('i').hasClass('glyphicon-ok')) {
                 // toggle thumbnail indicator state
-                o_browse.toggleBrowseInCollectionStyle(ring_obs_id);
+                o_browse.toggleBrowseInCollectionStyle(rms_obs_id);
 
-                icon_a_element = $('#gallery__' + ring_obs_id + ' .tools-bottom a').parent();
+                icon_a_element = $('#gallery__' + rms_obs_id + ' .tools-bottom a').parent();
                 // is this checked? or unchecked..
                 action = 'remove';
                 if (icon_a_element.hasClass("in")) {
-                    action = 'add';  // this ring_obs_id is being added to cart
+                    action = 'add';  // this rms_obs_id is being added to cart
                 }
-                o_browse.cart_click_handler(ring_obs_id, action)
+                o_browse.cart_click_handler(rms_obs_id, action)
             }
 
             return false;
@@ -352,7 +352,7 @@ var o_browse = {
 
     }, // end browse behaviors
 
-    cart_click_handler: function(ring_obs_id, action) {
+    cart_click_handler: function(rms_obs_id, action) {
         // behaviors for the click to add/remove from cart
         // whether that's from checkbox being clicked
         // or thumbnail clicked while 'add range' is happening
@@ -360,24 +360,24 @@ var o_browse = {
         // make sure the checkbox for this observation in the other view (either data or gallery)
         // is also checked/unchecked - if that view is drawn
         try {
-            $('#data__' + ring_obs_id).find('.data_checkbox').toggleClass('fa-check-square-o').toggleClass('fa-square-o');
+            $('#data__' + rms_obs_id).find('.data_checkbox').toggleClass('fa-check-square-o').toggleClass('fa-square-o');
         } catch(e) { } // view not drawn yet so no worries
 
         // check if we are clicking as part of an 'add range' interaction
         if (!opus.addrange_clicked) {
             // no add range, just add this obs to collection
-            o_collections.editCollection(ring_obs_id,action);
+            o_collections.editCollection(rms_obs_id,action);
 
         } else {
             // addrange clicked
-            o_browse.addRangeHandler(ring_obs_id);
+            o_browse.addRangeHandler(rms_obs_id);
         }
     },
 
-    openDetailTab: function(ring_obs_id) {
+    openDetailTab: function(rms_obs_id) {
         opus.mainTabDisplay('detail');  // make sure the main site tab label is displayed
         opus.prefs.view = 'detail';
-        opus.prefs.detail = ring_obs_id;
+        opus.prefs.detail = rms_obs_id;
         opus.triggerNavbarClick();
     },
 
@@ -435,7 +435,7 @@ var o_browse = {
     },
 
     // user is adding range with the 'add range' button in the top menu
-    addRangeHandler: function(ring_obs_id) {
+    addRangeHandler: function(rms_obs_id) {
 
         element = "li";  // elements to loop thru
         if (opus.prefs.browse == 'data') {
@@ -457,25 +457,25 @@ var o_browse = {
               placement: "bottom",
             });
 
-            index = $('#' + opus.prefs.browse + '__' + ring_obs_id).index();
-            opus.addrange_min = { "index":index, "ring_obs_id":ring_obs_id };
+            index = $('#' + opus.prefs.browse + '__' + rms_obs_id).index();
+            opus.addrange_min = { "index":index, "rms_obs_id":rms_obs_id };
             return;
 
         } else {
-            ring_obs_id_min = opus.addrange_min['ring_obs_id'];
+            rms_obs_id_min = opus.addrange_min['rms_obs_id'];
 
             // we have both sides of range
             $('.addrange','#browse').text("add range");
             $('.cart_control','#browse').popover('destroy');
 
-            index = $('#' + opus.prefs.browse + '__' + ring_obs_id).index();
+            index = $('#' + opus.prefs.browse + '__' + rms_obs_id).index();
             if (index > opus.addrange_min['index']) {
-                range = ring_obs_id_min + "," + ring_obs_id;
-                o_browse.checkRangeBoxes(ring_obs_id_min, ring_obs_id);
+                range = rms_obs_id_min + "," + rms_obs_id;
+                o_browse.checkRangeBoxes(rms_obs_id_min, rms_obs_id);
             } else {
                 // user clicked later box first, reverse them for server..
-                range = ring_obs_id + "," + ring_obs_id_min;
-                o_browse.checkRangeBoxes(ring_obs_id, ring_obs_id_min);
+                range = rms_obs_id + "," + rms_obs_id_min;
+                o_browse.checkRangeBoxes(rms_obs_id, rms_obs_id_min);
             }  // i don't like this
 
             o_collections.editCollection(range,'addrange');
@@ -487,14 +487,14 @@ var o_browse = {
 
     },
 
-    toggleBrowseInCollectionStyle: function(ring_obs_id) {
+    toggleBrowseInCollectionStyle: function(rms_obs_id) {
         icon_a_element = ".tools-bottom a";
-        $('#gallery__' + ring_obs_id + ' ' + icon_a_element).parent().toggleClass("in"); // this class keeps parent visible when mouseout
-        $('#gallery__' + ring_obs_id + ' ' + icon_a_element).find('i').toggleClass('thumb_selected_icon');
-        $('#gallery__' + ring_obs_id + ' .thumb_overlay').toggleClass('thumb_selected');
+        $('#gallery__' + rms_obs_id + ' ' + icon_a_element).parent().toggleClass("in"); // this class keeps parent visible when mouseout
+        $('#gallery__' + rms_obs_id + ' ' + icon_a_element).find('i').toggleClass('thumb_selected_icon');
+        $('#gallery__' + rms_obs_id + ' .thumb_overlay').toggleClass('thumb_selected');
 
         icon_a_element = ".tools-bottom a";
-        if ($('#gallery__' + ring_obs_id + ' ' + icon_a_element).parent().hasClass("in")) {
+        if ($('#gallery__' + rms_obs_id + ' ' + icon_a_element).parent().hasClass("in")) {
         } else {
         }
 
@@ -659,7 +659,7 @@ var o_browse = {
     },  // /addColumnChooserBehaviors
 
     checkAllRenderedElements: function() {
-      // returns first and last ring_obs_id that is rendered on the page
+      // returns first and last rms_obs_id that is rendered on the page
 
       // find the id of the first and last element showing on this page
       if (opus.prefs.browse == 'gallery') {
@@ -671,22 +671,22 @@ var o_browse = {
         last = $('.data_table tbody tr:last').attr('id');
       }
 
-      ring_obs_id1 = first.split('__')[1];
-      ring_obs_id2 = last.split('__')[1];
+      rms_obs_id1 = first.split('__')[1];
+      rms_obs_id2 = last.split('__')[1];
 
-      o_browse.checkRangeBoxes(ring_obs_id1, ring_obs_id2);
+      o_browse.checkRangeBoxes(rms_obs_id1, rms_obs_id2);
     },
 
     // handles checking of a range of boxes in each view (table/gallery)
-    checkRangeBoxes: function(ring_obs_id1, ring_obs_id2) {
+    checkRangeBoxes: function(rms_obs_id1, rms_obs_id2) {
 
         // make all list/td elements bt r1 and r2 be added to cart
         elements = ['#gallery__','#data__'];
         for (var key in elements) {
             element = elements[key];
-            current_id = ring_obs_id1;
+            current_id = rms_obs_id1;
             next_element = $(element + current_id, '#browse');
-            while (current_id != ring_obs_id2) {
+            while (current_id != rms_obs_id2) {
 
                 // thumbnail in the list
                 if (next_element.hasClass("infinite_scroll_page")) {
@@ -699,8 +699,8 @@ var o_browse = {
                     /* gallery view */
                     if (!next_element.find('.tools').hasClass("in")) {  // if not already checked
                         try {
-                            ring_obs_id = next_element.attr("id").split('__')[1];
-                            o_browse.toggleBrowseInCollectionStyle(ring_obs_id);
+                            rms_obs_id = next_element.attr("id").split('__')[1];
+                            o_browse.toggleBrowseInCollectionStyle(rms_obs_id);
                         } catch(e) {
                         }
                     }
@@ -995,7 +995,7 @@ var o_browse = {
 
         base_url = '/opus/api/data.json?';
 
-        // we have to do a little hacking of the hash, we want page as we want it and ring_obs_id too
+        // we have to do a little hacking of the hash, we want page as we want it and rms_obs_id too
         new_hash = [];
         for (var i in o_hash.getHash().split('&')) {
 
@@ -1007,7 +1007,7 @@ var o_browse = {
             }
 
 
-            // make sure ring_obs_id is in columns
+            // make sure rms_obs_id is in columns
             columns = opus.prefs.cols;
             if (param == 'cols') {
                 if (jQuery.inArray('ringobsid', values) < 0) {
@@ -1029,9 +1029,9 @@ var o_browse = {
             var updated_ids = [];
 
             for (var i in json.page) {
-                ring_obs_id = json.page[i][columns.indexOf('ringobsid')];
-                updated_ids.push(ring_obs_id);
-                opus.gallery_data[ring_obs_id] = json.page[i];
+                rms_obs_id = json.page[i][columns.indexOf('ringobsid')];
+                updated_ids.push(rms_obs_id);
+                opus.gallery_data[rms_obs_id] = json.page[i];
             }
 
             // this endpoint also returns column labels:
@@ -1081,7 +1081,7 @@ var o_browse = {
             },
             onLoad:function() {
 
-                ring_obs_id = $.colorbox.element().parent().attr("id").split('__')[1];
+                rms_obs_id = $.colorbox.element().parent().attr("id").split('__')[1];
                 // get pixel loc of right border of colorbox
 
                 // draw the viewer if not already..
@@ -1095,11 +1095,11 @@ var o_browse = {
                 }
 
                 // append the data to the data view container
-                $('.gallery_data_viewer').html("<h2>" + ring_obs_id + "</h2>");
-                $('.embedded_data_viewer').html("<h2>" + ring_obs_id + "</h2>");
+                $('.gallery_data_viewer').html("<h2>" + rms_obs_id + "</h2>");
+                $('.embedded_data_viewer').html("<h2>" + rms_obs_id + "</h2>");
 
                 // update the view data
-                o_browse.updateColorboxDataViewer(ring_obs_id);
+                o_browse.updateColorboxDataViewer(rms_obs_id);
 
 
             },
@@ -1108,14 +1108,14 @@ var o_browse = {
                 document.body.style.overflow = $overflow;  // return overflow to default.
 
                 // add indicator around the thumb corresponding to the closed image
-                ring_obs_id = $.colorbox.element().parent().attr("id").split('__')[1];
+                rms_obs_id = $.colorbox.element().parent().attr("id").split('__')[1];
                 $(' .thumb_overlay').removeClass("gallery_image_focus").removeClass('browse_image_selected');  // remove any old
-                $('#gallery__' + ring_obs_id + ' .thumb_overlay').addClass("gallery_image_focus").addClass('browse_image_selected');
+                $('#gallery__' + rms_obs_id + ' .thumb_overlay').addClass("gallery_image_focus").addClass('browse_image_selected');
 
 
                 if ($('.embedded_data_viewer_wrapper').is(":visible")) {
                     // embedded data viewer box is open, update it with current
-                    o_browse.updateEmbeddedMetadataBox(ring_obs_id);
+                    o_browse.updateEmbeddedMetadataBox(rms_obs_id);
                 }
 
 
@@ -1142,8 +1142,8 @@ var o_browse = {
         // this is mainly used after a window resize
         // basically the library will do it for you but have to trigger that click
         // otherwise it won't do it on page resize but will do it on next/prev
-        ring_obs_id = $.colorbox.element().parent().attr("id").split('__')[1];
-        $('li#gallery__' + ring_obs_id + ' a.activeThumbnail').trigger("click");
+        rms_obs_id = $.colorbox.element().parent().attr("id").split('__')[1];
+        $('li#gallery__' + rms_obs_id + ' a.activeThumbnail').trigger("click");
         o_browse.adjust_gallery_data_viewer();
     },
 
@@ -1156,20 +1156,20 @@ var o_browse = {
 
     },
 
-    metadataboxHtml: function(ring_obs_id) {
+    metadataboxHtml: function(rms_obs_id) {
 
         // list columns + values
         html = '<dl>';
         for (var i in opus.prefs['cols']) {
             column = opus.col_labels[i];  // use the label not the column title
-            value = opus.gallery_data[ring_obs_id][i];
+            value = opus.gallery_data[rms_obs_id][i];
             html += '<dt>' + column + ':</dt><dd>' + value + '</dd>';
 
         }
         html += '</dl>';
 
         // add a link to detail page
-        html += '<p><a href = "/opus/detail/' + ring_obs_id + '.html" class = "gallery_data_link" data-ringobsid="' + ring_obs_id + '">View Detail</a></p>';
+        html += '<p><a href = "/opus/detail/' + rms_obs_id + '.html" class = "gallery_data_link" data-ringobsid="' + rms_obs_id + '">View Detail</a></p>';
 
         // add link to choose columns
         html += '<p><a href="" class="get_column_chooser close_overlay">choose columns</a></p>';
@@ -1178,26 +1178,26 @@ var o_browse = {
         return html
     },
 
-    updateEmbeddedMetadataBox: function(ring_obs_id) {
+    updateEmbeddedMetadataBox: function(rms_obs_id) {
 
-        opus.current_metadatabox = ring_obs_id;
+        opus.current_metadatabox = rms_obs_id;
 
         // handle which thumbnail has focus indicator outline
         $(' .thumb_overlay').removeClass("gallery_image_focus").removeClass('browse_image_selected');  // remove any old
-        $('#gallery__' + ring_obs_id + ' .thumb_overlay').addClass("gallery_image_focus browse_image_selected");
+        $('#gallery__' + rms_obs_id + ' .thumb_overlay').addClass("gallery_image_focus browse_image_selected");
 
-        var url = '/opus/api/image/med/' + ring_obs_id + '.json';
+        var url = '/opus/api/image/med/' + rms_obs_id + '.json';
         $.getJSON(url, function(json) {
 
             var img = json['data'][0]['path'] + json['data'][0]['img'];
             var full = img.replace("_med", "_full");
 
             html = '<i class = "fa fa-times"></i> \
-                    <div class = "embedded_data_viewer_image edv_' + ring_obs_id + '"> \
-                    <a href = "' + full + '" data-ring_obs_id="' + ring_obs_id + '"> \
+                    <div class = "embedded_data_viewer_image edv_' + rms_obs_id + '"> \
+                    <a href = "' + full + '" data-rms_obs_id="' + rms_obs_id + '"> \
                     <img src = "' + img + '"></a> \
                     </div>';
-            html += o_browse.metadataboxHtml(ring_obs_id);
+            html += o_browse.metadataboxHtml(rms_obs_id);
 
             if (!$('.embedded_data_viewer_wrapper').is(":visible")) {
                 // embedded data viewer isn't visible, show it!
@@ -1222,8 +1222,8 @@ var o_browse = {
                     link = link.replace("view=browse", "view=detail");
                     window.open(link, '_blank');
                 } else {
-                    ring_obs_id = $(this).data('ringobsid');
-                    o_browse.openDetailTab(ring_obs_id);
+                    rms_obs_id = $(this).data('ringobsid');
+                    o_browse.openDetailTab(rms_obs_id);
                 }
                 return false;
             });
@@ -1233,14 +1233,14 @@ var o_browse = {
 
     },
 
-    updateColorboxDataViewer: function(ring_obs_id) {
+    updateColorboxDataViewer: function(rms_obs_id) {
 
-        html = o_browse.metadataboxHtml(ring_obs_id);
+        html = o_browse.metadataboxHtml(rms_obs_id);
 
         // add data viewer behaviors
         $('.gallery_data_viewer').on("click", '.gallery_data_link', function() {
-            ring_obs_id = $(this).data('ringobsid');
-            o_browse.openDetailTab(ring_obs_id);
+            rms_obs_id = $(this).data('ringobsid');
+            o_browse.openDetailTab(rms_obs_id);
             $.colorbox.close();
             return false;
         });
@@ -1253,7 +1253,7 @@ var o_browse = {
     },
 
 
-    embedded_data_viewer_toggle: function(ring_obs_id) {
+    embedded_data_viewer_toggle: function(rms_obs_id) {
         $('.gallery').toggleClass('col-lg-12').toggleClass('col-sm-7').toggleClass('col-md-9').toggleClass('col-lg-9');
         $('.embedded_data_viewer_wrapper').toggle();
 

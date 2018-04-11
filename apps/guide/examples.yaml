@@ -12,10 +12,10 @@ sections:
                 - desc: target Pan in json,
                   url: https://tools.pds-rings.seti.org/opus/api/data.json?planet=Saturn&target=pan
 
-          - title: api/metadata/[ring_obs_id].[fmt]
+          - title: api/metadata/[rms_obs_id].[fmt]
             desc: get detail for a single observation
             info:
-                ring_obs_id: valid ring_obs_id
+                rms_obs_id: valid rms_obs_id
                 fmt: json,html,zip,csv
             examples:
                 - desc: single Cassini ISS Saturn Observations
@@ -31,19 +31,19 @@ sections:
                 - desc: planet = Jupiter, medium images, in html
                   url: https://tools.pds-rings.seti.org/opus/api/images/med.html?planet=Jupiter
 
-          - title: api/image/[size]/[ring_obs_id]
+          - title: api/image/[size]/[rms_obs_id]
             desc: get images for a single observation
             info:
                 size: thumb,small,med,full
-                ring_obs_id: valid ring_obs_id
+                rms_obs_id: valid rms_obs_id
             examples:
                 - desc: jupiter observation, full size, in html
                   url: https://tools.pds-rings.seti.org/opus/api/image/full/J_IMG_GO_SSI_0520821213.html
 
-          - title: api/files/[ring_obs_id].[fmt]
+          - title: api/files/[rms_obs_id].[fmt]
             desc: get files for a single observation
             info:
-                ring_obs_id: valid ring_obs_id
+                rms_obs_id: valid rms_obs_id
                 fmt: json,html,zip,csv
             examples:
                 - desc: a Cassini ISS observation, json format

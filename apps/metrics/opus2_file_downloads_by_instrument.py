@@ -78,7 +78,7 @@ for f in manifest_files:
 
             try:
                 if file_name.lower().find('jpg') == -1 and file_name.lower().find('png') == -1:
-                    q_size = "select size from file_sizes where ring_obs_id = '%s' and file_name = '%s'" % file_info
+                    q_size = "select size from file_sizes where rms_obs_id = '%s' and file_name = '%s'" % file_info
                     cursor.execute(q_size)
                     size = cursor.fetchone()[0]
                     inst_sizes[inst] += int(size)
@@ -105,5 +105,3 @@ for inst,count in inst_counts.items():
     print "\n" + inst + ":"
     print "    Files Downloaded: " + str(count)
     print "    Total Size: " + sizeof_fmt(inst_sizes[inst])
-
-

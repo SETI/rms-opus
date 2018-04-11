@@ -33,15 +33,15 @@ def create_csv_file(request, csv_file_name):
     wr.writerows(all_data)
 
 
-def create_zip_filename(ring_obs_id=None):
+def create_zip_filename(rms_obs_id=None):
     """ create a unique filename for a user's cart
     """
-    if not ring_obs_id:
+    if not rms_obs_id:
         random_ascii = random.choice(string.ascii_letters).lower()
         timestamp = "T".join(str(datetime.datetime.now()).split(' '))
         return 'pdsrings-data-' + random_ascii + '-' + timestamp + '.zip'
     else:
-        return 'pdsrings-data-' + ring_obs_id + '.zip'
+        return 'pdsrings-data-' + rms_obs_id + '.zip'
 
 def md5(filename):
     """ accepts full path file name and returns its md5
@@ -93,7 +93,7 @@ def get_download_info(product_types, previews, colls_table_name):
     total_size_products = 0
     file_count_products = 0
     if product_types:
-        where   = "file_sizes.ring_obs_id = " + connection.ops.quote_name(colls_table_name) + ".ring_obs_id"
+        where   = "file_sizes.rms_obs_id = " + connection.ops.quote_name(colls_table_name) + ".rms_obs_id"
         file_sizes = FileSizes.objects.filter(PRODUCT_TYPE__in=product_types)
         total_size_info = file_sizes.extra(where=[where], tables=[colls_table_name])
         total_size_products = total_size_info.values('size').aggregate(Sum('size'))['size__sum']
@@ -107,7 +107,7 @@ def get_download_info(product_types, previews, colls_table_name):
     if previews:
         previews = [p.lower() for p in previews]
         images = Image.objects
-        where   = "images.ring_obs_id = " + connection.ops.quote_name(colls_table_name) + ".ring_obs_id"
+        where   = "images.rms_obs_id = " + connection.ops.quote_name(colls_table_name) + ".rms_obs_id"
 
         for sz in previews:
             total_size_info = images.extra(where=[where], tables=[colls_table_name]).values('size_' + sz)
@@ -164,7 +164,7 @@ def get_download_info_API(request):
 
 
 @never_cache
-def create_download(request, collection_name=None, ring_obs_ids=None, fmt=None):
+def create_download(request, collection_name=None, rms_obs_ids=None, fmt=None):
     """
     feeds request to getFiles and zips up all files it finds into zip file
     and adds a manifest file and md5 checksums
@@ -184,15 +184,15 @@ def create_download(request, collection_name=None, ring_obs_ids=None, fmt=None):
     if previews:
         previews = previews.split(',')
 
-    if not ring_obs_ids:
-        ring_obs_ids = []
+    if not rms_obs_ids:
+        rms_obs_ids = []
         from user_collections.views import get_collection_table
-        ring_obs_ids = get_all_in_collection(request)
+        rms_obs_ids = get_all_in_collection(request)
 
-    if type(ring_obs_ids) is unicode or type(ring_obs_ids).__name__ == 'str':
-        ring_obs_ids = [ring_obs_id]
+    if type(rms_obs_ids) is unicode or type(rms_obs_ids).__name__ == 'str':
+        rms_obs_ids = [rms_obs_id]
 
-    if not ring_obs_ids:
+    if not rms_obs_ids:
         raise Http404
 
     # create some file names
@@ -205,11 +205,11 @@ def create_download(request, collection_name=None, ring_obs_ids=None, fmt=None):
 
     # fetch the full file paths we'll be zipping up
     import results
-    files = results.views.getFiles(ring_obs_ids,fmt="raw", loc_type="path", product_types=product_types, previews=previews)
+    files = results.views.getFiles(rms_obs_ids,fmt="raw", loc_type="path", product_types=product_types, previews=previews)
 
     if not files:
         log.error("No files found from results.views.getFiles in downloads.create_download")
-        log.error(".. First 5 RING_OBS_IDs: %s", str(ring_obs_ids[:5]))
+        log.error(".. First 5 rms_obs_ids: %s", str(rms_obs_ids[:5]))
         log.error(".. First 5 PRODUCT TYPES: %s", str(product_types[:5]))
         log.error(".. First 5 PREVIEWS: %s", str(previews[:5]))
         raise Http404
@@ -231,21 +231,21 @@ def create_download(request, collection_name=None, ring_obs_ids=None, fmt=None):
 
     errors = []
     added = []
-    for ring_obs_id in files:
-        for product_type in files[ring_obs_id]:
-            for f in files[ring_obs_id][product_type]:
+    for rms_obs_id in files:
+        for product_type in files[rms_obs_id]:
+            for f in files[rms_obs_id][product_type]:
 
                 if 'FMT' in f or 'fmt' in f:
                     pretty_name = '/'.join(f.split("/")[-3:]).upper()
                     digest = "%s:%s" % (pretty_name, md5(f))
-                    mdigest = "%s:%s" % (ring_obs_id, pretty_name)
+                    mdigest = "%s:%s" % (rms_obs_id, pretty_name)
                 else:
                     pretty_name = f.split("/")[-1]
                     if product_type != 'preview_image':
                         pretty_name = pretty_name.upper()
 
                     digest = "%s:%s" % (pretty_name, md5(f))
-                    mdigest = "%s:%s" % (ring_obs_id, pretty_name)
+                    mdigest = "%s:%s" % (rms_obs_id, pretty_name)
 
                 if pretty_name not in added:
 
@@ -256,8 +256,8 @@ def create_download(request, collection_name=None, ring_obs_ids=None, fmt=None):
                         added.append(pretty_name)
 
                     except Exception,e:
-                        log.error('create_download threw exception for ring_obs_id %s, product_type %s, file %s, pretty_name %s',
-                                  ring_obs_id, product_type, f, pretty_name)
+                        log.error('create_download threw exception for rms_obs_id %s, product_type %s, file %s, pretty_name %s',
+                                  rms_obs_id, product_type, f, pretty_name)
                         log.error('.. %s', str(e))
                         errors.append("Could not find: " + pretty_name)
                     # "could not find " + name

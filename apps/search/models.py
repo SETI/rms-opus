@@ -14,13 +14,10 @@ class Partable(models.Model):
     trigger_col = models.CharField(max_length=200)
     trigger_val = models.CharField(max_length=60)
     partable = models.CharField(max_length=200)
-    display = models.CharField(max_length=1)
-    disp_order = models.IntegerField(null=True, blank=True)
 
     class Meta:
         db_table = u'partables'
         unique_together = ('trigger_col', 'trigger_val','trigger_tab')
-        ordering = ['disp_order']
 
 
 class UserSearches(models.Model):
@@ -44,8 +41,6 @@ class TableName(models.Model):
     label = models.CharField(max_length=60)
     display = models.CharField(max_length=1)
     disp_order = models.IntegerField(null=True, blank=True)
-    mission_id = models.CharField(max_length=2)
-    alert = models.TextField()
 
     def __unicode__(self):
         return self.label
@@ -54,27 +49,11 @@ class TableName(models.Model):
         db_table = u'table_names'
         ordering = ['disp_order']
 
-class MultObsGeneralClassId(models.Model):
-    value = models.CharField(unique=True, max_length=50, blank=True, null = True)
-    label = models.CharField(unique=True, max_length=50, blank=True, null = True)
-    disp_order = models.IntegerField(null=True, blank=True)
-    display = models.CharField(max_length=9)
-    default_fade = models.CharField(max_length=9)
-
-    def __unicode__(self):
-        return self.label
-
-    class Meta:
-        db_table = u'mult_obs_general_class_id'
-        ordering = ['disp_order']
-
-
 class MultObsGeneralInstrumentId(models.Model):
     value = models.CharField(unique=True, max_length=50, blank=True, null = True)
     label = models.CharField(unique=True, max_length=50, blank=True, null = True)
     disp_order = models.IntegerField(null=True, blank=True)
     display = models.CharField(max_length=9)
-    default_fade = models.CharField(max_length=9)
 
     def __unicode__(self):
         return self.label
@@ -89,7 +68,6 @@ class MultObsGeneralInstHostId(models.Model):
     label = models.CharField(unique=True, max_length=50, blank=True, null = True)
     disp_order = models.IntegerField(null=True, blank=True)
     display = models.CharField(max_length=9)
-    default_fade = models.CharField(max_length=9)
 
     def __unicode__(self):
         return self.label
@@ -104,7 +82,6 @@ class MultObsGeneralMissionId(models.Model):
     label = models.CharField(unique=True, max_length=50, blank=True, null = True)
     disp_order = models.IntegerField(null=True, blank=True)
     display = models.CharField(max_length=9)
-    default_fade = models.CharField(max_length=9)
 
     def __unicode__(self):
         return self.label
@@ -119,7 +96,6 @@ class MultObsGeneralPlanetId(models.Model):
     label = models.CharField(unique=True, max_length=50, blank=True, null = True)
     disp_order = models.IntegerField(null=True, blank=True)
     display = models.CharField(max_length=9)
-    default_fade = models.CharField(max_length=9)
 
     def __unicode__(self):
         return self.label
@@ -134,7 +110,6 @@ class MultObsGeneralQuantity(models.Model):
     label = models.CharField(unique=True, max_length=50, blank=True, null = True)
     disp_order = models.IntegerField(null=True, blank=True)
     display = models.CharField(max_length=9)
-    default_fade = models.CharField(max_length=9)
 
     def __unicode__(self):
         return self.label
@@ -149,7 +124,6 @@ class MultObsGeneralTargetClass(models.Model):
     label = models.CharField(unique=True, max_length=50, blank=True, null = True)
     disp_order = models.IntegerField(null=True, blank=True)
     display = models.CharField(max_length=9)
-    default_fade = models.CharField(max_length=9)
 
     def __unicode__(self):
         return self.label
@@ -164,8 +138,7 @@ class MultObsGeneralTargetName(models.Model):
     label = models.CharField(unique=True, max_length=50, blank=True, null = True)
     disp_order = models.IntegerField(null=True, blank=True)
     display = models.CharField(max_length=9)
-    default_fade = models.CharField(max_length=9)
-    grouping = models.CharField(max_length=7, db_column='planet_group')
+    grouping = models.CharField(max_length=7, db_column='grouping')
 
     def __unicode__(self):
         return self.label
@@ -180,7 +153,6 @@ class MultObsGeneralTypeId(models.Model):
     label = models.CharField(unique=True, max_length=50, blank=True, null = True)
     disp_order = models.IntegerField(null=True, blank=True)
     display = models.CharField(max_length=9)
-    default_fade = models.CharField(max_length=9)
 
     def __unicode__(self):
         return self.label
@@ -195,7 +167,6 @@ class MultObsInstrumentCocirsDetectorId(models.Model):
     label = models.CharField(unique=True, max_length=50, blank=True, null = True)
     disp_order = models.IntegerField(null=True, blank=True)
     display = models.CharField(max_length=9)
-    default_fade = models.CharField(max_length=9)
 
     def __unicode__(self):
         return self.label
@@ -210,7 +181,6 @@ class MultObsInstrumentCocirsInstrumentModeAllFlag(models.Model):
     label = models.CharField(unique=True, max_length=50, blank=True, null = True)
     disp_order = models.IntegerField(null=True, blank=True)
     display = models.CharField(max_length=9)
-    default_fade = models.CharField(max_length=9)
 
     def __unicode__(self):
         return self.label
@@ -225,7 +195,6 @@ class MultObsInstrumentCocirsInstrumentModeBlinkingFlag(models.Model):
     label = models.CharField(unique=True, max_length=50, blank=True, null = True)
     disp_order = models.IntegerField(null=True, blank=True)
     display = models.CharField(max_length=9)
-    default_fade = models.CharField(max_length=9)
 
     def __unicode__(self):
         return self.label
@@ -240,7 +209,6 @@ class MultObsInstrumentCocirsInstrumentModeCentersFlag(models.Model):
     label = models.CharField(unique=True, max_length=50, blank=True, null = True)
     disp_order = models.IntegerField(null=True, blank=True)
     display = models.CharField(max_length=9)
-    default_fade = models.CharField(max_length=9)
 
     def __unicode__(self):
         return self.label
@@ -255,7 +223,6 @@ class MultObsInstrumentCocirsInstrumentModeEvenFlag(models.Model):
     label = models.CharField(unique=True, max_length=50, blank=True, null = True)
     disp_order = models.IntegerField(null=True, blank=True)
     display = models.CharField(max_length=9)
-    default_fade = models.CharField(max_length=9)
 
     def __unicode__(self):
         return self.label
@@ -270,7 +237,6 @@ class MultObsInstrumentCocirsInstrumentModeOddFlag(models.Model):
     label = models.CharField(unique=True, max_length=50, blank=True, null = True)
     disp_order = models.IntegerField(null=True, blank=True)
     display = models.CharField(max_length=9)
-    default_fade = models.CharField(max_length=9)
 
     def __unicode__(self):
         return self.label
@@ -285,7 +251,6 @@ class MultObsInstrumentCocirsInstrumentModePairsFlag(models.Model):
     label = models.CharField(unique=True, max_length=50, blank=True, null = True)
     disp_order = models.IntegerField(null=True, blank=True)
     display = models.CharField(max_length=9)
-    default_fade = models.CharField(max_length=9)
 
     def __unicode__(self):
         return self.label
@@ -300,7 +265,6 @@ class MultObsInstrumentCocirsSpectrumSamples(models.Model):
     label = models.CharField(unique=True, max_length=50, blank=True, null = True)
     disp_order = models.IntegerField(null=True, blank=True)
     display = models.CharField(max_length=9)
-    default_fade = models.CharField(max_length=9)
 
     def __unicode__(self):
         return self.label
@@ -315,7 +279,6 @@ class MultObsInstrumentCoissCamera(models.Model):
     label = models.CharField(unique=True, max_length=50, blank=True, null = True)
     disp_order = models.IntegerField(null=True, blank=True)
     display = models.CharField(max_length=9)
-    default_fade = models.CharField(max_length=9)
 
     def __unicode__(self):
         return self.label
@@ -330,7 +293,6 @@ class MultObsInstrumentCoissDataConversionType(models.Model):
     label = models.CharField(unique=True, max_length=50, blank=True, null = True)
     disp_order = models.IntegerField(null=True, blank=True)
     display = models.CharField(max_length=9)
-    default_fade = models.CharField(max_length=9)
 
     def __unicode__(self):
         return self.label
@@ -340,18 +302,17 @@ class MultObsInstrumentCoissDataConversionType(models.Model):
         ordering = ['disp_order']
 
 
-class MultObsInstrumentCoissFilter(models.Model):
+class MultObsInstrumentCoissCombinedFilter(models.Model):
     value = models.CharField(unique=True, max_length=50, blank=True, null = True)
     label = models.CharField(unique=True, max_length=50, blank=True, null = True)
     disp_order = models.IntegerField(null=True, blank=True)
     display = models.CharField(max_length=9)
-    default_fade = models.CharField(max_length=9)
 
     def __unicode__(self):
         return self.label
 
     class Meta:
-        db_table = u'mult_obs_instrument_COISS_FILTER'
+        db_table = u'mult_obs_instrument_COISS_combined_filter'
         ordering = ['label']
 
 
@@ -360,7 +321,6 @@ class MultObsInstrumentCoissGainModeId(models.Model):
     label = models.CharField(unique=True, max_length=50, blank=True, null = True)
     disp_order = models.IntegerField(null=True, blank=True)
     display = models.CharField(max_length=9)
-    default_fade = models.CharField(max_length=9)
 
     def __unicode__(self):
         return self.label
@@ -375,7 +335,6 @@ class MultObsInstrumentCoissImageObservationType(models.Model):
     label = models.CharField(unique=True, max_length=50, blank=True, null = True)
     disp_order = models.IntegerField(null=True, blank=True)
     display = models.CharField(max_length=9)
-    default_fade = models.CharField(max_length=9)
 
     def __unicode__(self):
         return self.label
@@ -390,7 +349,6 @@ class MultObsInstrumentCoissInstCmprsParamGob(models.Model):
     label = models.CharField(unique=True, max_length=50, blank=True, null = True)
     disp_order = models.IntegerField(null=True, blank=True)
     display = models.CharField(max_length=9)
-    default_fade = models.CharField(max_length=9)
 
     def __unicode__(self):
         return self.label
@@ -405,7 +363,6 @@ class MultObsInstrumentCoissInstCmprsParamMalgo(models.Model):
     label = models.CharField(unique=True, max_length=50, blank=True, null = True)
     disp_order = models.IntegerField(null=True, blank=True)
     display = models.CharField(max_length=9)
-    default_fade = models.CharField(max_length=9)
 
     def __unicode__(self):
         return self.label
@@ -420,7 +377,6 @@ class MultObsInstrumentCoissInstCmprsParamQf(models.Model):
     label = models.CharField(unique=True, max_length=50, blank=True, null = True)
     disp_order = models.IntegerField(null=True, blank=True)
     display = models.CharField(max_length=9)
-    default_fade = models.CharField(max_length=9)
 
     def __unicode__(self):
         return self.label
@@ -435,7 +391,6 @@ class MultObsInstrumentCoissInstCmprsParamTb(models.Model):
     label = models.CharField(unique=True, max_length=50, blank=True, null = True)
     disp_order = models.IntegerField(null=True, blank=True)
     display = models.CharField(max_length=9)
-    default_fade = models.CharField(max_length=9)
 
     def __unicode__(self):
         return self.label
@@ -450,7 +405,6 @@ class MultObsInstrumentCoissInstCmprsType(models.Model):
     label = models.CharField(unique=True, max_length=50, blank=True, null = True)
     disp_order = models.IntegerField(null=True, blank=True)
     display = models.CharField(max_length=9)
-    default_fade = models.CharField(max_length=9)
 
     def __unicode__(self):
         return self.label
@@ -465,7 +419,6 @@ class MultObsInstrumentCoissShutterModeId(models.Model):
     label = models.CharField(unique=True, max_length=50, blank=True, null = True)
     disp_order = models.IntegerField(null=True, blank=True)
     display = models.CharField(max_length=9)
-    default_fade = models.CharField(max_length=9)
 
     def __unicode__(self):
         return self.label
@@ -480,7 +433,6 @@ class MultObsInstrumentCoissShutterStateId(models.Model):
     label = models.CharField(unique=True, max_length=50, blank=True, null = True)
     disp_order = models.IntegerField(null=True, blank=True)
     display = models.CharField(max_length=9)
-    default_fade = models.CharField(max_length=9)
 
     def __unicode__(self):
         return self.label
@@ -495,7 +447,6 @@ class MultObsInstrumentCoissTelemetryFormatId(models.Model):
     label = models.CharField(unique=True, max_length=50, blank=True, null = True)
     disp_order = models.IntegerField(null=True, blank=True)
     display = models.CharField(max_length=9)
-    default_fade = models.CharField(max_length=9)
 
     def __unicode__(self):
         return self.label
@@ -510,13 +461,12 @@ class MultObsInstrumentCouvisChannel(models.Model):
     label = models.CharField(unique=True, max_length=50, blank=True, null = True)
     disp_order = models.IntegerField(null=True, blank=True)
     display = models.CharField(max_length=9)
-    default_fade = models.CharField(max_length=9)
 
     def __unicode__(self):
         return self.label
 
     class Meta:
-        db_table = u'mult_obs_instrument_COUVIS_Channel'
+        db_table = u'mult_obs_instrument_COUVIS_channel'
         ordering = ['disp_order']
 
 
@@ -525,7 +475,6 @@ class MultObsInstrumentCouvisCompressionType(models.Model):
     label = models.CharField(unique=True, max_length=50, blank=True, null = True)
     disp_order = models.IntegerField(null=True, blank=True)
     display = models.CharField(max_length=9)
-    default_fade = models.CharField(max_length=9)
 
     def __unicode__(self):
         return self.label
@@ -540,7 +489,6 @@ class MultObsInstrumentCouvisDwellTime(models.Model):
     label = models.CharField(unique=True, max_length=50, blank=True, null = True)
     disp_order = models.IntegerField(null=True, blank=True)
     display = models.CharField(max_length=9)
-    default_fade = models.CharField(max_length=9)
 
     def __unicode__(self):
         return self.label
@@ -555,7 +503,6 @@ class MultObsInstrumentCouvisHiVoltagePowerSupplyState(models.Model):
     label = models.CharField(unique=True, max_length=50, blank=True, null = True)
     disp_order = models.IntegerField(null=True, blank=True)
     display = models.CharField(max_length=9)
-    default_fade = models.CharField(max_length=9)
 
     def __unicode__(self):
         return self.label
@@ -570,7 +517,6 @@ class MultObsInstrumentCouvisObservationType(models.Model):
     label = models.CharField(unique=True, max_length=50, blank=True, null = True)
     disp_order = models.IntegerField(null=True, blank=True)
     display = models.CharField(max_length=9)
-    default_fade = models.CharField(max_length=9)
 
     def __unicode__(self):
         return self.label
@@ -585,7 +531,6 @@ class MultObsInstrumentCouvisOccultationPortState(models.Model):
     label = models.CharField(unique=True, max_length=50, blank=True, null = True)
     disp_order = models.IntegerField(null=True, blank=True)
     display = models.CharField(max_length=9)
-    default_fade = models.CharField(max_length=9)
 
     def __unicode__(self):
         return self.label
@@ -600,7 +545,6 @@ class MultObsInstrumentCouvisSlitState(models.Model):
     label = models.CharField(unique=True, max_length=50, blank=True, null = True)
     disp_order = models.IntegerField(null=True, blank=True)
     display = models.CharField(max_length=9)
-    default_fade = models.CharField(max_length=9)
 
     def __unicode__(self):
         return self.label
@@ -615,7 +559,6 @@ class MultObsInstrumentCouvisTestPulseState(models.Model):
     label = models.CharField(unique=True, max_length=50, blank=True, null = True)
     disp_order = models.IntegerField(null=True, blank=True)
     display = models.CharField(max_length=9)
-    default_fade = models.CharField(max_length=9)
 
     def __unicode__(self):
         return self.label
@@ -630,7 +573,6 @@ class MultObsInstrumentCovimsChannel(models.Model):
     label = models.CharField(unique=True, max_length=50, blank=True, null = True)
     disp_order = models.IntegerField(null=True, blank=True)
     display = models.CharField(max_length=9)
-    default_fade = models.CharField(max_length=9)
 
     def __unicode__(self):
         return self.label
@@ -645,7 +587,6 @@ class MultObsInstrumentCovimsInstrumentModeId(models.Model):
     label = models.CharField(unique=True, max_length=50, blank=True, null = True)
     disp_order = models.IntegerField(null=True, blank=True)
     display = models.CharField(max_length=9)
-    default_fade = models.CharField(max_length=9)
 
     def __unicode__(self):
         return self.label
@@ -660,7 +601,6 @@ class MultObsInstrumentCovimsIrSamplingModeId(models.Model):
     label = models.CharField(unique=True, max_length=50, blank=True, null = True)
     disp_order = models.IntegerField(null=True, blank=True)
     display = models.CharField(max_length=9)
-    default_fade = models.CharField(max_length=9)
 
     def __unicode__(self):
         return self.label
@@ -675,7 +615,6 @@ class MultObsInstrumentCovimsSpectralEditing(models.Model):
     label = models.CharField(unique=True, max_length=50, blank=True, null = True)
     disp_order = models.IntegerField(null=True, blank=True)
     display = models.CharField(max_length=9)
-    default_fade = models.CharField(max_length=9)
 
     def __unicode__(self):
         return self.label
@@ -690,7 +629,6 @@ class MultObsInstrumentCovimsSpectralSumming(models.Model):
     label = models.CharField(unique=True, max_length=50, blank=True, null = True)
     disp_order = models.IntegerField(null=True, blank=True)
     display = models.CharField(max_length=9)
-    default_fade = models.CharField(max_length=9)
 
     def __unicode__(self):
         return self.label
@@ -705,7 +643,6 @@ class MultObsInstrumentCovimsVisSamplingModeId(models.Model):
     label = models.CharField(unique=True, max_length=50, blank=True, null = True)
     disp_order = models.IntegerField(null=True, blank=True)
     display = models.CharField(max_length=9)
-    default_fade = models.CharField(max_length=9)
 
     def __unicode__(self):
         return self.label
@@ -720,7 +657,6 @@ class MultObsInstrumentGossiCompressionType(models.Model):
     label = models.CharField(unique=True, max_length=50, blank=True, null = True)
     disp_order = models.IntegerField(null=True, blank=True)
     display = models.CharField(max_length=9)
-    default_fade = models.CharField(max_length=9)
 
     def __unicode__(self):
         return self.label
@@ -735,7 +671,6 @@ class MultObsInstrumentGossiDataSetId(models.Model):
     label = models.CharField(unique=True, max_length=50, blank=True, null = True)
     disp_order = models.IntegerField(null=True, blank=True)
     display = models.CharField(max_length=9)
-    default_fade = models.CharField(max_length=9)
 
     def __unicode__(self):
         return self.label
@@ -750,7 +685,6 @@ class MultObsInstrumentGossiFilterName(models.Model):
     label = models.CharField(unique=True, max_length=50, blank=True, null = True)
     disp_order = models.IntegerField(null=True, blank=True)
     display = models.CharField(max_length=9)
-    default_fade = models.CharField(max_length=9)
 
     def __unicode__(self):
         return self.label
@@ -765,7 +699,6 @@ class MultObsInstrumentGossiFilterNumber(models.Model):
     label = models.CharField(unique=True, max_length=50, blank=True, null = True)
     disp_order = models.IntegerField(null=True, blank=True)
     display = models.CharField(max_length=9)
-    default_fade = models.CharField(max_length=9)
 
     def __unicode__(self):
         return self.label
@@ -780,7 +713,6 @@ class MultObsInstrumentGossiGainModeId(models.Model):
     label = models.CharField(unique=True, max_length=50, blank=True, null = True)
     disp_order = models.IntegerField(null=True, blank=True)
     display = models.CharField(max_length=9)
-    default_fade = models.CharField(max_length=9)
 
     def __unicode__(self):
         return self.label
@@ -795,7 +727,6 @@ class MultObsInstrumentGossiObstructionId(models.Model):
     label = models.CharField(unique=True, max_length=50, blank=True, null = True)
     disp_order = models.IntegerField(null=True, blank=True)
     display = models.CharField(max_length=9)
-    default_fade = models.CharField(max_length=9)
 
     def __unicode__(self):
         return self.label
@@ -810,7 +741,6 @@ class MultObsInstrumentGossiOrbitNumber(models.Model):
     label = models.CharField(unique=True, max_length=50, blank=True, null = True)
     disp_order = models.IntegerField(null=True, blank=True)
     display = models.CharField(max_length=9)
-    default_fade = models.CharField(max_length=9)
 
     def __unicode__(self):
         return self.label
@@ -824,7 +754,6 @@ class MultObsInstrumentLorriBinningMode(models.Model):
     label = models.CharField(unique=True, max_length=50, blank=True, null = True)
     disp_order = models.IntegerField(null=True, blank=True)
     display = models.CharField(max_length=9)
-    default_fade = models.CharField(max_length=9)
 
     def __unicode__(self):
         return self.label
@@ -839,7 +768,6 @@ class MultObsInstrumentLorriInstrumentCompressionType(models.Model):
     label = models.CharField(unique=True, max_length=50, blank=True, null = True)
     disp_order = models.IntegerField(null=True, blank=True)
     display = models.CharField(max_length=9)
-    default_fade = models.CharField(max_length=9)
 
     def __unicode__(self):
         return self.label
@@ -853,7 +781,6 @@ class MultObsInstrumentVgissCamera(models.Model):
     label = models.CharField(unique=True, max_length=50, blank=True, null = True)
     disp_order = models.IntegerField(null=True, blank=True)
     display = models.CharField(max_length=9)
-    default_fade = models.CharField(max_length=9)
 
     def __unicode__(self):
         return self.label
@@ -868,7 +795,6 @@ class MultObsInstrumentVgissEditMode(models.Model):
     label = models.CharField(unique=True, max_length=50, blank=True, null = True)
     disp_order = models.IntegerField(null=True, blank=True)
     display = models.CharField(max_length=9)
-    default_fade = models.CharField(max_length=9)
 
     def __unicode__(self):
         return self.label
@@ -883,7 +809,6 @@ class MultObsInstrumentVgissFilterName(models.Model):
     label = models.CharField(unique=True, max_length=50, blank=True, null = True)
     disp_order = models.IntegerField(null=True, blank=True)
     display = models.CharField(max_length=9)
-    default_fade = models.CharField(max_length=9)
 
     def __unicode__(self):
         return self.label
@@ -898,7 +823,6 @@ class MultObsInstrumentVgissFilterNumber(models.Model):
     label = models.CharField(unique=True, max_length=50, blank=True, null = True)
     disp_order = models.IntegerField(null=True, blank=True)
     display = models.CharField(max_length=9)
-    default_fade = models.CharField(max_length=9)
 
     def __unicode__(self):
         return self.label
@@ -913,7 +837,6 @@ class MultObsInstrumentVgissGainMode(models.Model):
     label = models.CharField(unique=True, max_length=50, blank=True, null = True)
     disp_order = models.IntegerField(null=True, blank=True)
     display = models.CharField(max_length=9)
-    default_fade = models.CharField(max_length=9)
 
     def __unicode__(self):
         return self.label
@@ -928,7 +851,6 @@ class MultObsInstrumentVgissScanMode(models.Model):
     label = models.CharField(unique=True, max_length=50, blank=True, null = True)
     disp_order = models.IntegerField(null=True, blank=True)
     display = models.CharField(max_length=9)
-    default_fade = models.CharField(max_length=9)
 
     def __unicode__(self):
         return self.label
@@ -943,7 +865,6 @@ class MultObsInstrumentVgissShutterMode(models.Model):
     label = models.CharField(unique=True, max_length=50, blank=True, null = True)
     disp_order = models.IntegerField(null=True, blank=True)
     display = models.CharField(max_length=9)
-    default_fade = models.CharField(max_length=9)
 
     def __unicode__(self):
         return self.label
@@ -958,7 +879,6 @@ class MultObsMissionCassiniCassiniTargetName(models.Model):
     label = models.CharField(unique=True, max_length=50, blank=True, null = True)
     disp_order = models.IntegerField(null=True, blank=True)
     display = models.CharField(max_length=9)
-    default_fade = models.CharField(max_length=9)
 
     def __unicode__(self):
         return self.label
@@ -973,7 +893,6 @@ class MultObsMissionCassiniPrime(models.Model):
     label = models.CharField(unique=True, max_length=50, blank=True, null = True)
     disp_order = models.IntegerField(null=True, blank=True)
     display = models.CharField(max_length=9)
-    default_fade = models.CharField(max_length=9)
 
     def __unicode__(self):
         return self.label
@@ -988,7 +907,6 @@ class MultObsMissionCassiniPrimeInstId(models.Model):
     label = models.CharField(unique=True, max_length=50, blank=True, null = True)
     disp_order = models.IntegerField(null=True, blank=True)
     display = models.CharField(max_length=9)
-    default_fade = models.CharField(max_length=9)
 
     def __unicode__(self):
         return self.label
@@ -1003,7 +921,6 @@ class MultObsMissionCassiniRevNo(models.Model):
     label = models.CharField(unique=True, max_length=50, blank=True, null = True)
     disp_order = models.IntegerField(null=True, blank=True)
     display = models.CharField(max_length=9)
-    default_fade = models.CharField(max_length=9)
 
     def __unicode__(self):
         return self.label
@@ -1018,7 +935,6 @@ class MultObsMissionGalileoRevNo(models.Model):
     label = models.CharField(unique=True, max_length=50, blank=True, null = True)
     disp_order = models.IntegerField(null=True, blank=True)
     display = models.CharField(max_length=9)
-    default_fade = models.CharField(max_length=9)
 
     def __unicode__(self):
         return self.label
@@ -1033,7 +949,6 @@ class MultObsMissionVoyagerSpacecraftName(models.Model):
     label = models.CharField(unique=True, max_length=50, blank=True, null = True)
     disp_order = models.IntegerField(null=True, blank=True)
     display = models.CharField(max_length=9)
-    default_fade = models.CharField(max_length=9)
 
     def __unicode__(self):
         return self.label
@@ -1048,7 +963,6 @@ class MultObsSurfaceGeometryTargetName(models.Model):
     label = models.CharField(unique=True, max_length=50, blank=True, null = True)
     disp_order = models.IntegerField(null=True, blank=True)
     display = models.CharField(max_length=9)
-    default_fade = models.CharField(max_length=9)
     grouping = models.CharField(max_length=7)
 
     def __unicode__(self):
@@ -1064,7 +978,6 @@ class MultObsTypeImageImageTypeId(models.Model):
     label = models.CharField(unique=True, max_length=50, blank=True, null = True)
     disp_order = models.IntegerField(null=True, blank=True)
     display = models.CharField(max_length=9)
-    default_fade = models.CharField(max_length=9)
 
     def __unicode__(self):
         return self.label
@@ -1074,12 +987,39 @@ class MultObsTypeImageImageTypeId(models.Model):
         ordering = ['disp_order']
 
 
+class MultObsTypeImageGreaterPixelSize(models.Model):
+    value = models.CharField(unique=True, max_length=50, blank=True, null = True)
+    label = models.CharField(unique=True, max_length=50, blank=True, null = True)
+    disp_order = models.IntegerField(null=True, blank=True)
+    display = models.CharField(max_length=9)
+
+    def __unicode__(self):
+        return self.label
+
+    class Meta:
+        db_table = u'mult_obs_type_image_greater_pixel_size'
+        ordering = ['disp_order']
+
+
+class MultObsTypeImageLesserPixelSize(models.Model):
+    value = models.CharField(unique=True, max_length=50, blank=True, null = True)
+    label = models.CharField(unique=True, max_length=50, blank=True, null = True)
+    disp_order = models.IntegerField(null=True, blank=True)
+    display = models.CharField(max_length=9)
+
+    def __unicode__(self):
+        return self.label
+
+    class Meta:
+        db_table = u'mult_obs_type_image_lesser_pixel_size'
+        ordering = ['disp_order']
+
+
 class MultObsWavelengthPolarizationType(models.Model):
     value = models.CharField(unique=True, max_length=50, blank=True, null = True)
     label = models.CharField(unique=True, max_length=50, blank=True, null = True)
     disp_order = models.IntegerField(null=True, blank=True)
     display = models.CharField(max_length=9)
-    default_fade = models.CharField(max_length=9)
 
     def __unicode__(self):
         return self.label
@@ -1094,7 +1034,6 @@ class MultObsWavelengthSpecFlag(models.Model):
     label = models.CharField(unique=True, max_length=50, blank=True, null = True)
     disp_order = models.IntegerField(null=True, blank=True)
     display = models.CharField(max_length=9)
-    default_fade = models.CharField(max_length=9)
 
     def __unicode__(self):
         return self.label
@@ -1189,14 +1128,11 @@ OBS_MISSION_HUBBLE_EXPOSURE_TYPE_CHOICES = ((1L, u'EXCESSIVE DOWNTIME'), (2L, u'
 OBS_MISSION_HUBBLE_TARGETED_DETECTOR_ID_CHOICES = ((2L, u'PC1'), (3L, u'WF2'), (4L, u'WF3'), (5L, u'WF4'))
 OBS_INSTRUMENT_VGISS_GAIN_MODE_CHOICES = ((1L, u'LOW'),)
 OBS_INSTRUMENT_COUVIS_HI_VOLTAGE_POWER_SUPPLY_STATE_CHOICES = ((1L, u'OFF'), (2L, u'ON'))
-OBS_GENERAL_CLASS_ID_CHOICES = ((1L, u'R'),)
 
 
 # Data Models:
 class ObsGeneral(models.Model):
     volume_id = models.CharField(max_length=30, blank=True, null=True)
-    class_id = models.CharField(max_length=1, blank=True, null=True, choices = OBS_GENERAL_CLASS_ID_CHOICES)
-    mult_obs_general_class_id = models.ForeignKey(MultObsGeneralClassId, db_column="mult_obs_general_class_id", db_index=False, null=True, blank=True)
     declination1 = models.FloatField(null=True, blank=True)
     declination2 = models.FloatField(null=True, blank=True)
     instrument_id = models.CharField(max_length=6, blank=True, null=True, choices = OBS_GENERAL_INSTRUMENT_ID_CHOICES)
@@ -1215,7 +1151,7 @@ class ObsGeneral(models.Model):
     mult_obs_general_quantity = models.ForeignKey(MultObsGeneralQuantity, db_column="mult_obs_general_quantity", db_index=False, null=True, blank=True)
     right_asc1 = models.FloatField(null=True, blank=True)
     right_asc2 = models.FloatField(null=True, blank=True)
-    ring_obs_id = models.CharField(max_length=40, blank=True, null=True)
+    rms_obs_id = models.CharField(max_length=40, blank=True, null=True)
     target_class = models.CharField(max_length=11, blank=True, null=True, choices = OBS_GENERAL_TARGET_CLASS_CHOICES)
     mult_obs_general_target_class = models.ForeignKey(MultObsGeneralTargetClass, db_column="mult_obs_general_target_class", db_index=False, null=True, blank=True)
     target_name = models.CharField(max_length=15, blank=True, null=True, choices = OBS_GENERAL_TARGET_NAME_CHOICES)
@@ -1227,13 +1163,13 @@ class ObsGeneral(models.Model):
     type_id = models.CharField(max_length=7, blank=True, null=True, choices = OBS_GENERAL_TYPE_ID_CHOICES)
     mult_obs_general_type_id = models.ForeignKey(MultObsGeneralTypeId, db_column="mult_obs_general_type_id", db_index=False, null=True, blank=True)
     volume_id_list = models.CharField(max_length=200, blank=True, null=True)
-    ring_obs_id = models.CharField(max_length=40, blank=True, null=True)
+    rms_obs_id = models.CharField(max_length=40, blank=True, null=True)
 
     class Meta:
         db_table = 'obs_general'
 
     def __unicode__(self):
-        return self.ring_obs_id
+        return self.rms_obs_id
 
 
 class ObsInstrumentCocirs(models.Model):
@@ -1257,13 +1193,13 @@ class ObsInstrumentCocirs(models.Model):
     SPECTRUM_SAMPLES = models.CharField(max_length=11, blank=True, null=True, choices = OBS_INSTRUMENT_COCIRS_SPECTRUM_SAMPLES_CHOICES)
     mult_obs_instrument_COCIRS_SPECTRUM_SAMPLES = models.ForeignKey(MultObsInstrumentCocirsSpectrumSamples, db_column="mult_obs_instrument_COCIRS_SPECTRUM_SAMPLES", db_index=False, null=True, blank=True)
     targets_detected_list = models.CharField(max_length=250, blank=True, null=True)
-    ring_obs_id = models.CharField(max_length=40, blank=True, null=True)
+    rms_obs_id = models.CharField(max_length=40, blank=True, null=True)
 
     class Meta:
         db_table = 'obs_instrument_COCIRS'
 
     def __unicode__(self):
-        return self.ring_obs_id
+        return self.rms_obs_id
 
 
 class ObsInstrumentCoiss(models.Model):
@@ -1277,8 +1213,8 @@ class ObsInstrumentCoiss(models.Model):
     DELAYED_READOUT_FLAG = models.CharField(max_length=4, blank=True, null=True)
     EXPECTED_MAXIMUM_full_well_DN = models.FloatField(null=True, blank=True)
     EXPECTED_MAXIMUM_max_DN = models.FloatField(null=True, blank=True)
-    FILTER = models.CharField(max_length=30, blank=True, null=True, choices = OBS_INSTRUMENT_COISS_FILTER_CHOICES)
-    mult_obs_instrument_COISS_FILTER = models.ForeignKey(MultObsInstrumentCoissFilter, db_column="mult_obs_instrument_COISS_FILTER", db_index=False, null=True, blank=True)
+    combined_filter = models.CharField(max_length=30, blank=True, null=True, choices = OBS_INSTRUMENT_COISS_FILTER_CHOICES)
+    mult_obs_instrument_COISS_combined_filter = models.ForeignKey(MultObsInstrumentCoissCombinedFilter, db_column="mult_obs_instrument_COISS_combined_filter", db_index=False, null=True, blank=True)
     FILTER_NAME = models.CharField(max_length=13, blank=True, null=True)
     FILTER_TEMPERATURE = models.FloatField(null=True, blank=True)
     GAIN_MODE_ID = models.CharField(max_length=20, blank=True, null=True, choices = OBS_INSTRUMENT_COISS_GAIN_MODE_ID_CHOICES)
@@ -1311,13 +1247,13 @@ class ObsInstrumentCoiss(models.Model):
     mult_obs_instrument_COISS_TELEMETRY_FORMAT_ID = models.ForeignKey(MultObsInstrumentCoissTelemetryFormatId, db_column="mult_obs_instrument_COISS_TELEMETRY_FORMAT_ID", db_index=False, null=True, blank=True)
     VALID_MAXIMUM_maximum_DN_saturation_level = models.CharField(max_length=11, blank=True, null=True)
     VALID_MAXIMUM_minimum_full_well_saturation_level = models.CharField(max_length=11, blank=True, null=True)
-    ring_obs_id = models.CharField(max_length=40, blank=True, null=True)
+    rms_obs_id = models.CharField(max_length=40, blank=True, null=True)
 
     class Meta:
         db_table = 'obs_instrument_COISS'
 
     def __unicode__(self):
-        return self.ring_obs_id
+        return self.rms_obs_id
 
 
 class ObsInstrumentCouvis(models.Model):
@@ -1325,8 +1261,8 @@ class ObsInstrumentCouvis(models.Model):
     BAND1 = models.FloatField(null=True, blank=True)
     BAND2 = models.FloatField(null=True, blank=True)
     BAND_BIN = models.FloatField(null=True, blank=True)
-    Channel = models.CharField(max_length=5, blank=True, null=True, choices = OBS_INSTRUMENT_COUVIS_CHANNEL_CHOICES)
-    mult_obs_instrument_COUVIS_Channel = models.ForeignKey(MultObsInstrumentCouvisChannel, db_column="mult_obs_instrument_COUVIS_Channel", db_index=False, null=True, blank=True)
+    channel = models.CharField(max_length=5, blank=True, null=True, choices = OBS_INSTRUMENT_COUVIS_CHANNEL_CHOICES)
+    mult_obs_instrument_COUVIS_channel = models.ForeignKey(MultObsInstrumentCouvisChannel, db_column="mult_obs_instrument_COUVIS_channel", db_index=False, null=True, blank=True)
     COMPRESSION_TYPE = models.CharField(max_length=8, blank=True, null=True, choices = OBS_INSTRUMENT_COUVIS_COMPRESSION_TYPE_CHOICES)
     mult_obs_instrument_COUVIS_COMPRESSION_TYPE = models.ForeignKey(MultObsInstrumentCouvisCompressionType, db_column="mult_obs_instrument_COUVIS_COMPRESSION_TYPE", db_index=False, null=True, blank=True)
     DWELL_TIME = models.CharField(max_length=11, blank=True, null=True, choices = OBS_INSTRUMENT_COUVIS_DWELL_TIME_CHOICES)
@@ -1347,13 +1283,13 @@ class ObsInstrumentCouvis(models.Model):
     mult_obs_instrument_COUVIS_SLIT_STATE = models.ForeignKey(MultObsInstrumentCouvisSlitState, db_column="mult_obs_instrument_COUVIS_SLIT_STATE", db_index=False, null=True, blank=True)
     TEST_PULSE_STATE = models.CharField(max_length=8, blank=True, null=True, choices = OBS_INSTRUMENT_COUVIS_TEST_PULSE_STATE_CHOICES)
     mult_obs_instrument_COUVIS_TEST_PULSE_STATE = models.ForeignKey(MultObsInstrumentCouvisTestPulseState, db_column="mult_obs_instrument_COUVIS_TEST_PULSE_STATE", db_index=False, null=True, blank=True)
-    ring_obs_id = models.CharField(max_length=40, blank=True, null=True)
+    rms_obs_id = models.CharField(max_length=40, blank=True, null=True)
 
     class Meta:
         db_table = 'obs_instrument_COUVIS'
 
     def __unicode__(self):
-        return self.ring_obs_id
+        return self.rms_obs_id
 
 
 class ObsInstrumentCovims(models.Model):
@@ -1372,13 +1308,13 @@ class ObsInstrumentCovims(models.Model):
     VIS_EXPOSURE = models.FloatField(null=True, blank=True)
     VIS_SAMPLING_MODE_ID = models.CharField(max_length=8, blank=True, null=True, choices = OBS_INSTRUMENT_COVIMS_VIS_SAMPLING_MODE_ID_CHOICES)
     mult_obs_instrument_COVIMS_VIS_SAMPLING_MODE_ID = models.ForeignKey(MultObsInstrumentCovimsVisSamplingModeId, db_column="mult_obs_instrument_COVIMS_VIS_SAMPLING_MODE_ID", db_index=False, null=True, blank=True)
-    ring_obs_id = models.CharField(max_length=40, blank=True, null=True)
+    rms_obs_id = models.CharField(max_length=40, blank=True, null=True)
 
     class Meta:
         db_table = 'obs_instrument_COVIMS'
 
     def __unicode__(self):
-        return self.ring_obs_id
+        return self.rms_obs_id
 
 
 class ObsInstrumentGossi(models.Model):
@@ -1408,13 +1344,13 @@ class ObsInstrumentGossi(models.Model):
     PROCESSING_HISTORY_TEXT = models.CharField(max_length=75, blank=True, null=True)
     RADIANCE_SCALING_FACTOR = models.FloatField(null=True, blank=True)
     REFLECTANCE_SCALING_FACTOR = models.FloatField(null=True, blank=True)
-    ring_obs_id = models.CharField(max_length=40, blank=True, null=True)
+    rms_obs_id = models.CharField(max_length=40, blank=True, null=True)
 
     class Meta:
         db_table = 'obs_instrument_GOSSI'
 
     def __unicode__(self):
-        return self.ring_obs_id
+        return self.rms_obs_id
 
 
 class MultObsInstrumentMvicInstrumentCompressionType(models.Model):
@@ -1423,13 +1359,12 @@ class MultObsInstrumentMvicInstrumentCompressionType(models.Model):
     label = models.CharField(unique=True, max_length=30, blank=True)
     disp_order = models.IntegerField(blank=True, null=True)
     display = models.CharField(max_length=1, blank=True)
-    default_fade = models.CharField(max_length=1, blank=True)
     class Meta:
         db_table = 'mult_obs_instrument_MVIC_INSTRUMENT_COMPRESSION_TYPE'
 
 class ObsInstrumentMvic(models.Model):
     obs_general = models.ForeignKey(ObsGeneral, db_column="obs_general_id", null=True, blank=True)
-    ring_obs_id = models.CharField(unique=True, max_length=40)
+    rms_obs_id = models.CharField(unique=True, max_length=40)
     INSTRUMENT_COMPRESSION_TYPE = models.CharField(db_column='INSTRUMENT_COMPRESSION_TYPE', max_length=10, blank=True) # Field name made lowercase.
     TARGET_CENTER_DISTANCE = models.FloatField(db_column='TARGET_CENTER_DISTANCE', blank=True, null=True) # Field name made lowercase.
     PHASE_ANGLE = models.FloatField(db_column='PHASE_ANGLE', blank=True, null=True) # Field name made lowercase.
@@ -1440,7 +1375,7 @@ class ObsInstrumentMvic(models.Model):
 
 class ObsInstrumentLorri(models.Model):
     obs_general = models.ForeignKey(ObsGeneral, db_column="obs_general_id", null=True, blank=True)
-    ring_obs_id = models.CharField(unique=True, max_length=40)
+    rms_obs_id = models.CharField(unique=True, max_length=40)
     INSTRUMENT_COMPRESSION_TYPE = models.CharField(db_column='INSTRUMENT_COMPRESSION_TYPE', max_length=10, blank=True) # Field name made lowercase.
     BINNING_MODE = models.CharField(db_column='BINNING_MODE', max_length=3, blank=True) # Field name made lowercase.
     TARGET_CENTER_DISTANCE = models.FloatField(db_column='TARGET_CENTER_DISTANCE', blank=True, null=True) # Field name made lowercase.
@@ -1453,7 +1388,7 @@ class ObsInstrumentLorri(models.Model):
         db_table = 'obs_instrument_LORRI'
 
     def __unicode__(self):
-        return self.ring_obs_id
+        return self.rms_obs_id
 
 
 class ObsInstrumentVgiss(models.Model):
@@ -1473,18 +1408,18 @@ class ObsInstrumentVgiss(models.Model):
     mult_obs_instrument_VGISS_SCAN_MODE = models.ForeignKey(MultObsInstrumentVgissScanMode, db_column="mult_obs_instrument_VGISS_SCAN_MODE", db_index=False, null=True, blank=True)
     SHUTTER_MODE = models.CharField(max_length=7, blank=True, null=True, choices = OBS_INSTRUMENT_VGISS_SHUTTER_MODE_CHOICES)
     mult_obs_instrument_VGISS_SHUTTER_MODE = models.ForeignKey(MultObsInstrumentVgissShutterMode, db_column="mult_obs_instrument_VGISS_SHUTTER_MODE", db_index=False, null=True, blank=True)
-    ring_obs_id = models.CharField(max_length=40, blank=True, null=True)
+    rms_obs_id = models.CharField(max_length=40, blank=True, null=True)
 
     class Meta:
         db_table = 'obs_instrument_VGISS'
 
     def __unicode__(self):
-        return self.ring_obs_id
+        return self.rms_obs_id
 
 
 class ObsMissionNewHorizons(models.Model):
     obs_general = models.ForeignKey(ObsGeneral, db_column="obs_general_id", null=True, blank=True)
-    ring_obs_id = models.CharField(unique=True, max_length=40)
+    rms_obs_id = models.CharField(unique=True, max_length=40)
     volume_id = models.CharField(max_length=11, blank=True)
     instrument_id = models.CharField(max_length=6, blank=True)
     time_stamp = models.DateTimeField()
@@ -1501,7 +1436,7 @@ class ObsMissionNewHorizons(models.Model):
         db_table = 'obs_mission_new_horizons'
 
     def __unicode__(self):
-        return self.ring_obs_id
+        return self.rms_obs_id
 
 
 class ObsMissionCassini(models.Model):
@@ -1509,8 +1444,10 @@ class ObsMissionCassini(models.Model):
     activity_name = models.CharField(max_length=9, blank=True, null=True)
     cassini_target_name = models.CharField(max_length=50, blank=True, null=True, choices = OBS_MISSION_CASSINI_CASSINI_TARGET_NAME_CHOICES)
     mult_obs_mission_cassini_cassini_target_name = models.ForeignKey(MultObsMissionCassiniCassiniTargetName, db_column="mult_obs_mission_cassini_cassini_target_name", db_index=False, null=True, blank=True)
-    ert_sec1 = models.CharField(max_length=50, blank=True, null=True, choices = OBS_MISSION_CASSINI_CASSINI_TARGET_NAME_CHOICES)
-    ert_sec2 = models.CharField(max_length=50, blank=True, null=True, choices = OBS_MISSION_CASSINI_CASSINI_TARGET_NAME_CHOICES)
+    ert_sec1 = models.FloatField(blank=True, null=True)
+    ert_sec2 = models.FloatField(blank=True, null=True)
+    ert1 = models.CharField(max_length=25, blank=True, null=True, choices = OBS_GENERAL_TARGET_NAME_CHOICES)
+    ert2 = models.CharField(max_length=25, blank=True, null=True, choices = OBS_GENERAL_TARGET_NAME_CHOICES)
     obs_name = models.CharField(max_length=30, blank=True, null=True)
     prime = models.CharField(max_length=1, blank=True, null=True, choices = OBS_MISSION_CASSINI_PRIME_CHOICES)
     mult_obs_mission_cassini_prime = models.ForeignKey(MultObsMissionCassiniPrime, db_column="mult_obs_mission_cassini_prime", db_index=False, null=True, blank=True)
@@ -1520,47 +1457,47 @@ class ObsMissionCassini(models.Model):
     mult_obs_mission_cassini_rev_no = models.ForeignKey(MultObsMissionCassiniRevNo, db_column="mult_obs_mission_cassini_rev_no", db_index=False, null=True, blank=True)
     spacecraft_clock_count1 = models.FloatField(null=True, blank=True)
     spacecraft_clock_count2 = models.FloatField(null=True, blank=True)
-    ring_obs_id = models.CharField(max_length=40, blank=True, null=True)
+    rms_obs_id = models.CharField(max_length=40, blank=True, null=True)
 
     class Meta:
         db_table = 'obs_mission_cassini'
 
     def __unicode__(self):
-        return self.ring_obs_id
+        return self.rms_obs_id
 
 
 class ObsMissionGalileo(models.Model):
     obs_general = models.ForeignKey(ObsGeneral, db_column="obs_general_id", null=True, blank=True)
     rev_no = models.CharField(max_length=6, blank=True, null=True, choices = OBS_MISSION_GALILEO_REV_NO_CHOICES)
     mult_obs_mission_galileo_rev_no = models.ForeignKey(MultObsMissionGalileoRevNo, db_column="mult_obs_mission_galileo_rev_no", db_index=False, null=True, blank=True)
-    spacecraft_clock_count1 = models.CharField(max_length=6, blank=True, null=True, choices = OBS_MISSION_GALILEO_REV_NO_CHOICES)
-    spacecraft_clock_count2 = models.CharField(max_length=6, blank=True, null=True, choices = OBS_MISSION_GALILEO_REV_NO_CHOICES)
-    ring_obs_id = models.CharField(max_length=40, blank=True, null=True)
+    spacecraft_clock_count1 = models.FloatField(blank=True, null=True, choices = OBS_MISSION_GALILEO_REV_NO_CHOICES)
+    spacecraft_clock_count2 = models.FloatField(blank=True, null=True, choices = OBS_MISSION_GALILEO_REV_NO_CHOICES)
+    rms_obs_id = models.CharField(max_length=40, blank=True, null=True)
 
     class Meta:
         db_table = 'obs_mission_galileo'
 
     def __unicode__(self):
-        return self.ring_obs_id
+        return self.rms_obs_id
 
 
 class ObsMissionVoyager(models.Model):
     obs_general = models.ForeignKey(ObsGeneral, db_column="obs_general_id", null=True, blank=True)
-    ert_sec1 = models.CharField(max_length=6, blank=True, null=True, choices = OBS_MISSION_GALILEO_REV_NO_CHOICES)
-    ert_sec2 = models.CharField(max_length=6, blank=True, null=True, choices = OBS_MISSION_GALILEO_REV_NO_CHOICES)
+    # ert_sec1 = models.CharField(max_length=6, blank=True, null=True, choices = OBS_MISSION_GALILEO_REV_NO_CHOICES)
+    # ert_sec2 = models.CharField(max_length=6, blank=True, null=True, choices = OBS_MISSION_GALILEO_REV_NO_CHOICES)
     spacecraft_clock_count1 = models.CharField(max_length=12, blank=True, null=True)
     spacecraft_clock_count2 = models.CharField(max_length=12, blank=True, null=True)
     spacecraft_clock_count_int1 = models.FloatField(null=True, blank=True)
     spacecraft_clock_count_int2 = models.FloatField(null=True, blank=True)
     spacecraft_name = models.CharField(max_length=3, blank=True, null=True, choices = OBS_MISSION_VOYAGER_SPACECRAFT_NAME_CHOICES)
     mult_obs_mission_voyager_spacecraft_name = models.ForeignKey(MultObsMissionVoyagerSpacecraftName, db_column="mult_obs_mission_voyager_spacecraft_name", db_index=False, null=True, blank=True)
-    ring_obs_id = models.CharField(max_length=40, blank=True, null=True)
+    rms_obs_id = models.CharField(max_length=40, blank=True, null=True)
 
     class Meta:
         db_table = 'obs_mission_voyager'
 
     def __unicode__(self):
-        return self.ring_obs_id
+        return self.rms_obs_id
 
 
 class ObsRingGeometry(models.Model):
@@ -1618,27 +1555,27 @@ class ObsRingGeometry(models.Model):
     solar_ring_opening_angle = models.FloatField(null=True, blank=True)
     sub_observer_ring_long = models.FloatField(null=True, blank=True)
     sub_solar_ring_long = models.FloatField(null=True, blank=True)
-    ring_obs_id = models.CharField(max_length=40, blank=True, null=True)
+    rms_obs_id = models.CharField(max_length=40, blank=True, null=True)
 
     class Meta:
         db_table = 'obs_ring_geometry'
 
     def __unicode__(self):
-        return self.ring_obs_id
+        return self.rms_obs_id
 
 
 class ObsSurfaceGeometry(models.Model):
     obs_general = models.ForeignKey(ObsGeneral, db_column="obs_general_id", null=True, blank=True)
     target_name = models.CharField(max_length=75, blank=True, null=True, choices = OBS_SURFACE_GEOMETRY_TARGET_NAME_CHOICES)
     mult_obs_surface_geometry_target_name = models.ForeignKey(MultObsSurfaceGeometryTargetName, db_column="mult_obs_surface_geometry_target_name", db_index=False, null=True, blank=True)
-    ring_obs_id = models.CharField(max_length=40, blank=True, null=True)
+    rms_obs_id = models.CharField(max_length=40, blank=True, null=True)
     volume_id = models.CharField(max_length=30, blank=True, null=True)
 
     class Meta:
         db_table = 'obs_surface_geometry'
 
     def __unicode__(self):
-        return self.ring_obs_id
+        return self.rms_obs_id
 
 
 class ObsSurfaceGeometryAdrastea(models.Model):
@@ -1680,13 +1617,13 @@ class ObsSurfaceGeometryAdrastea(models.Model):
     sub_solar_IAU_longitude = models.FloatField(null=True, blank=True)
     sub_solar_planetocentric_latitude = models.FloatField(null=True, blank=True)
     sub_solar_planetographic_latitude = models.FloatField(null=True, blank=True)
-    ring_obs_id = models.CharField(max_length=40, blank=True, null=True)
+    rms_obs_id = models.CharField(max_length=40, blank=True, null=True)
 
     class Meta:
         db_table = 'obs_surface_geometry__ADRASTEA'
 
     def __unicode__(self):
-        return self.ring_obs_id
+        return self.rms_obs_id
 
 
 class ObsSurfaceGeometryAegaeon(models.Model):
@@ -1728,13 +1665,13 @@ class ObsSurfaceGeometryAegaeon(models.Model):
     sub_solar_IAU_longitude = models.FloatField(null=True, blank=True)
     sub_solar_planetocentric_latitude = models.FloatField(null=True, blank=True)
     sub_solar_planetographic_latitude = models.FloatField(null=True, blank=True)
-    ring_obs_id = models.CharField(max_length=40, blank=True, null=True)
+    rms_obs_id = models.CharField(max_length=40, blank=True, null=True)
 
     class Meta:
         db_table = 'obs_surface_geometry__AEGAEON'
 
     def __unicode__(self):
-        return self.ring_obs_id
+        return self.rms_obs_id
 
 
 class ObsSurfaceGeometryAlbiorix(models.Model):
@@ -1776,13 +1713,13 @@ class ObsSurfaceGeometryAlbiorix(models.Model):
     sub_solar_IAU_longitude = models.FloatField(null=True, blank=True)
     sub_solar_planetocentric_latitude = models.FloatField(null=True, blank=True)
     sub_solar_planetographic_latitude = models.FloatField(null=True, blank=True)
-    ring_obs_id = models.CharField(max_length=40, blank=True, null=True)
+    rms_obs_id = models.CharField(max_length=40, blank=True, null=True)
 
     class Meta:
         db_table = 'obs_surface_geometry__ALBIORIX'
 
     def __unicode__(self):
-        return self.ring_obs_id
+        return self.rms_obs_id
 
 
 class ObsSurfaceGeometryAmalthea(models.Model):
@@ -1824,13 +1761,13 @@ class ObsSurfaceGeometryAmalthea(models.Model):
     sub_solar_IAU_longitude = models.FloatField(null=True, blank=True)
     sub_solar_planetocentric_latitude = models.FloatField(null=True, blank=True)
     sub_solar_planetographic_latitude = models.FloatField(null=True, blank=True)
-    ring_obs_id = models.CharField(max_length=40, blank=True, null=True)
+    rms_obs_id = models.CharField(max_length=40, blank=True, null=True)
 
     class Meta:
         db_table = 'obs_surface_geometry__AMALTHEA'
 
     def __unicode__(self):
-        return self.ring_obs_id
+        return self.rms_obs_id
 
 
 class ObsSurfaceGeometryAnthe(models.Model):
@@ -1872,13 +1809,13 @@ class ObsSurfaceGeometryAnthe(models.Model):
     sub_solar_IAU_longitude = models.FloatField(null=True, blank=True)
     sub_solar_planetocentric_latitude = models.FloatField(null=True, blank=True)
     sub_solar_planetographic_latitude = models.FloatField(null=True, blank=True)
-    ring_obs_id = models.CharField(max_length=40, blank=True, null=True)
+    rms_obs_id = models.CharField(max_length=40, blank=True, null=True)
 
     class Meta:
         db_table = 'obs_surface_geometry__ANTHE'
 
     def __unicode__(self):
-        return self.ring_obs_id
+        return self.rms_obs_id
 
 
 class ObsSurfaceGeometryAriel(models.Model):
@@ -1920,13 +1857,13 @@ class ObsSurfaceGeometryAriel(models.Model):
     sub_solar_IAU_longitude = models.FloatField(null=True, blank=True)
     sub_solar_planetocentric_latitude = models.FloatField(null=True, blank=True)
     sub_solar_planetographic_latitude = models.FloatField(null=True, blank=True)
-    ring_obs_id = models.CharField(max_length=40, blank=True, null=True)
+    rms_obs_id = models.CharField(max_length=40, blank=True, null=True)
 
     class Meta:
         db_table = 'obs_surface_geometry__ARIEL'
 
     def __unicode__(self):
-        return self.ring_obs_id
+        return self.rms_obs_id
 
 
 class ObsSurfaceGeometryAtlas(models.Model):
@@ -1968,13 +1905,13 @@ class ObsSurfaceGeometryAtlas(models.Model):
     sub_solar_IAU_longitude = models.FloatField(null=True, blank=True)
     sub_solar_planetocentric_latitude = models.FloatField(null=True, blank=True)
     sub_solar_planetographic_latitude = models.FloatField(null=True, blank=True)
-    ring_obs_id = models.CharField(max_length=40, blank=True, null=True)
+    rms_obs_id = models.CharField(max_length=40, blank=True, null=True)
 
     class Meta:
         db_table = 'obs_surface_geometry__ATLAS'
 
     def __unicode__(self):
-        return self.ring_obs_id
+        return self.rms_obs_id
 
 
 class ObsSurfaceGeometryBebhionn(models.Model):
@@ -2016,13 +1953,13 @@ class ObsSurfaceGeometryBebhionn(models.Model):
     sub_solar_IAU_longitude = models.FloatField(null=True, blank=True)
     sub_solar_planetocentric_latitude = models.FloatField(null=True, blank=True)
     sub_solar_planetographic_latitude = models.FloatField(null=True, blank=True)
-    ring_obs_id = models.CharField(max_length=40, blank=True, null=True)
+    rms_obs_id = models.CharField(max_length=40, blank=True, null=True)
 
     class Meta:
         db_table = 'obs_surface_geometry__BEBHIONN'
 
     def __unicode__(self):
-        return self.ring_obs_id
+        return self.rms_obs_id
 
 
 class ObsSurfaceGeometryBelinda(models.Model):
@@ -2064,13 +2001,13 @@ class ObsSurfaceGeometryBelinda(models.Model):
     sub_solar_IAU_longitude = models.FloatField(null=True, blank=True)
     sub_solar_planetocentric_latitude = models.FloatField(null=True, blank=True)
     sub_solar_planetographic_latitude = models.FloatField(null=True, blank=True)
-    ring_obs_id = models.CharField(max_length=40, blank=True, null=True)
+    rms_obs_id = models.CharField(max_length=40, blank=True, null=True)
 
     class Meta:
         db_table = 'obs_surface_geometry__BELINDA'
 
     def __unicode__(self):
-        return self.ring_obs_id
+        return self.rms_obs_id
 
 
 class ObsSurfaceGeometryBergelmir(models.Model):
@@ -2112,13 +2049,13 @@ class ObsSurfaceGeometryBergelmir(models.Model):
     sub_solar_IAU_longitude = models.FloatField(null=True, blank=True)
     sub_solar_planetocentric_latitude = models.FloatField(null=True, blank=True)
     sub_solar_planetographic_latitude = models.FloatField(null=True, blank=True)
-    ring_obs_id = models.CharField(max_length=40, blank=True, null=True)
+    rms_obs_id = models.CharField(max_length=40, blank=True, null=True)
 
     class Meta:
         db_table = 'obs_surface_geometry__BERGELMIR'
 
     def __unicode__(self):
-        return self.ring_obs_id
+        return self.rms_obs_id
 
 
 class ObsSurfaceGeometryBestla(models.Model):
@@ -2160,13 +2097,13 @@ class ObsSurfaceGeometryBestla(models.Model):
     sub_solar_IAU_longitude = models.FloatField(null=True, blank=True)
     sub_solar_planetocentric_latitude = models.FloatField(null=True, blank=True)
     sub_solar_planetographic_latitude = models.FloatField(null=True, blank=True)
-    ring_obs_id = models.CharField(max_length=40, blank=True, null=True)
+    rms_obs_id = models.CharField(max_length=40, blank=True, null=True)
 
     class Meta:
         db_table = 'obs_surface_geometry__BESTLA'
 
     def __unicode__(self):
-        return self.ring_obs_id
+        return self.rms_obs_id
 
 
 class ObsSurfaceGeometryBianca(models.Model):
@@ -2208,13 +2145,13 @@ class ObsSurfaceGeometryBianca(models.Model):
     sub_solar_IAU_longitude = models.FloatField(null=True, blank=True)
     sub_solar_planetocentric_latitude = models.FloatField(null=True, blank=True)
     sub_solar_planetographic_latitude = models.FloatField(null=True, blank=True)
-    ring_obs_id = models.CharField(max_length=40, blank=True, null=True)
+    rms_obs_id = models.CharField(max_length=40, blank=True, null=True)
 
     class Meta:
         db_table = 'obs_surface_geometry__BIANCA'
 
     def __unicode__(self):
-        return self.ring_obs_id
+        return self.rms_obs_id
 
 
 class ObsSurfaceGeometryCallirrhoe(models.Model):
@@ -2256,13 +2193,13 @@ class ObsSurfaceGeometryCallirrhoe(models.Model):
     sub_solar_IAU_longitude = models.FloatField(null=True, blank=True)
     sub_solar_planetocentric_latitude = models.FloatField(null=True, blank=True)
     sub_solar_planetographic_latitude = models.FloatField(null=True, blank=True)
-    ring_obs_id = models.CharField(max_length=40, blank=True, null=True)
+    rms_obs_id = models.CharField(max_length=40, blank=True, null=True)
 
     class Meta:
         db_table = 'obs_surface_geometry__CALLIRRHOE'
 
     def __unicode__(self):
-        return self.ring_obs_id
+        return self.rms_obs_id
 
 
 class ObsSurfaceGeometryCallisto(models.Model):
@@ -2304,13 +2241,13 @@ class ObsSurfaceGeometryCallisto(models.Model):
     sub_solar_IAU_longitude = models.FloatField(null=True, blank=True)
     sub_solar_planetocentric_latitude = models.FloatField(null=True, blank=True)
     sub_solar_planetographic_latitude = models.FloatField(null=True, blank=True)
-    ring_obs_id = models.CharField(max_length=40, blank=True, null=True)
+    rms_obs_id = models.CharField(max_length=40, blank=True, null=True)
 
     class Meta:
         db_table = 'obs_surface_geometry__CALLISTO'
 
     def __unicode__(self):
-        return self.ring_obs_id
+        return self.rms_obs_id
 
 
 class ObsSurfaceGeometryCalypso(models.Model):
@@ -2352,13 +2289,13 @@ class ObsSurfaceGeometryCalypso(models.Model):
     sub_solar_IAU_longitude = models.FloatField(null=True, blank=True)
     sub_solar_planetocentric_latitude = models.FloatField(null=True, blank=True)
     sub_solar_planetographic_latitude = models.FloatField(null=True, blank=True)
-    ring_obs_id = models.CharField(max_length=40, blank=True, null=True)
+    rms_obs_id = models.CharField(max_length=40, blank=True, null=True)
 
     class Meta:
         db_table = 'obs_surface_geometry__CALYPSO'
 
     def __unicode__(self):
-        return self.ring_obs_id
+        return self.rms_obs_id
 
 
 class ObsSurfaceGeometryCharon(models.Model):
@@ -2400,13 +2337,13 @@ class ObsSurfaceGeometryCharon(models.Model):
     sub_solar_IAU_longitude = models.FloatField(null=True, blank=True)
     sub_solar_planetocentric_latitude = models.FloatField(null=True, blank=True)
     sub_solar_planetographic_latitude = models.FloatField(null=True, blank=True)
-    ring_obs_id = models.CharField(max_length=40, blank=True, null=True)
+    rms_obs_id = models.CharField(max_length=40, blank=True, null=True)
 
     class Meta:
         db_table = 'obs_surface_geometry__CHARON'
 
     def __unicode__(self):
-        return self.ring_obs_id
+        return self.rms_obs_id
 
 
 class ObsSurfaceGeometryCordelia(models.Model):
@@ -2448,13 +2385,13 @@ class ObsSurfaceGeometryCordelia(models.Model):
     sub_solar_IAU_longitude = models.FloatField(null=True, blank=True)
     sub_solar_planetocentric_latitude = models.FloatField(null=True, blank=True)
     sub_solar_planetographic_latitude = models.FloatField(null=True, blank=True)
-    ring_obs_id = models.CharField(max_length=40, blank=True, null=True)
+    rms_obs_id = models.CharField(max_length=40, blank=True, null=True)
 
     class Meta:
         db_table = 'obs_surface_geometry__CORDELIA'
 
     def __unicode__(self):
-        return self.ring_obs_id
+        return self.rms_obs_id
 
 
 class ObsSurfaceGeometryCressida(models.Model):
@@ -2496,13 +2433,13 @@ class ObsSurfaceGeometryCressida(models.Model):
     sub_solar_IAU_longitude = models.FloatField(null=True, blank=True)
     sub_solar_planetocentric_latitude = models.FloatField(null=True, blank=True)
     sub_solar_planetographic_latitude = models.FloatField(null=True, blank=True)
-    ring_obs_id = models.CharField(max_length=40, blank=True, null=True)
+    rms_obs_id = models.CharField(max_length=40, blank=True, null=True)
 
     class Meta:
         db_table = 'obs_surface_geometry__CRESSIDA'
 
     def __unicode__(self):
-        return self.ring_obs_id
+        return self.rms_obs_id
 
 
 class ObsSurfaceGeometryCupid(models.Model):
@@ -2544,13 +2481,13 @@ class ObsSurfaceGeometryCupid(models.Model):
     sub_solar_IAU_longitude = models.FloatField(null=True, blank=True)
     sub_solar_planetocentric_latitude = models.FloatField(null=True, blank=True)
     sub_solar_planetographic_latitude = models.FloatField(null=True, blank=True)
-    ring_obs_id = models.CharField(max_length=40, blank=True, null=True)
+    rms_obs_id = models.CharField(max_length=40, blank=True, null=True)
 
     class Meta:
         db_table = 'obs_surface_geometry__CUPID'
 
     def __unicode__(self):
-        return self.ring_obs_id
+        return self.rms_obs_id
 
 
 class ObsSurfaceGeometryDaphnis(models.Model):
@@ -2592,13 +2529,13 @@ class ObsSurfaceGeometryDaphnis(models.Model):
     sub_solar_IAU_longitude = models.FloatField(null=True, blank=True)
     sub_solar_planetocentric_latitude = models.FloatField(null=True, blank=True)
     sub_solar_planetographic_latitude = models.FloatField(null=True, blank=True)
-    ring_obs_id = models.CharField(max_length=40, blank=True, null=True)
+    rms_obs_id = models.CharField(max_length=40, blank=True, null=True)
 
     class Meta:
         db_table = 'obs_surface_geometry__DAPHNIS'
 
     def __unicode__(self):
-        return self.ring_obs_id
+        return self.rms_obs_id
 
 
 class ObsSurfaceGeometryDesdemona(models.Model):
@@ -2640,13 +2577,13 @@ class ObsSurfaceGeometryDesdemona(models.Model):
     sub_solar_IAU_longitude = models.FloatField(null=True, blank=True)
     sub_solar_planetocentric_latitude = models.FloatField(null=True, blank=True)
     sub_solar_planetographic_latitude = models.FloatField(null=True, blank=True)
-    ring_obs_id = models.CharField(max_length=40, blank=True, null=True)
+    rms_obs_id = models.CharField(max_length=40, blank=True, null=True)
 
     class Meta:
         db_table = 'obs_surface_geometry__DESDEMONA'
 
     def __unicode__(self):
-        return self.ring_obs_id
+        return self.rms_obs_id
 
 
 class ObsSurfaceGeometryDespina(models.Model):
@@ -2688,13 +2625,13 @@ class ObsSurfaceGeometryDespina(models.Model):
     sub_solar_IAU_longitude = models.FloatField(null=True, blank=True)
     sub_solar_planetocentric_latitude = models.FloatField(null=True, blank=True)
     sub_solar_planetographic_latitude = models.FloatField(null=True, blank=True)
-    ring_obs_id = models.CharField(max_length=40, blank=True, null=True)
+    rms_obs_id = models.CharField(max_length=40, blank=True, null=True)
 
     class Meta:
         db_table = 'obs_surface_geometry__DESPINA'
 
     def __unicode__(self):
-        return self.ring_obs_id
+        return self.rms_obs_id
 
 
 class ObsSurfaceGeometryDione(models.Model):
@@ -2736,13 +2673,13 @@ class ObsSurfaceGeometryDione(models.Model):
     sub_solar_IAU_longitude = models.FloatField(null=True, blank=True)
     sub_solar_planetocentric_latitude = models.FloatField(null=True, blank=True)
     sub_solar_planetographic_latitude = models.FloatField(null=True, blank=True)
-    ring_obs_id = models.CharField(max_length=40, blank=True, null=True)
+    rms_obs_id = models.CharField(max_length=40, blank=True, null=True)
 
     class Meta:
         db_table = 'obs_surface_geometry__DIONE'
 
     def __unicode__(self):
-        return self.ring_obs_id
+        return self.rms_obs_id
 
 
 class ObsSurfaceGeometryEarth(models.Model):
@@ -2784,13 +2721,13 @@ class ObsSurfaceGeometryEarth(models.Model):
     sub_solar_IAU_longitude = models.FloatField(null=True, blank=True)
     sub_solar_planetocentric_latitude = models.FloatField(null=True, blank=True)
     sub_solar_planetographic_latitude = models.FloatField(null=True, blank=True)
-    ring_obs_id = models.CharField(max_length=40, blank=True, null=True)
+    rms_obs_id = models.CharField(max_length=40, blank=True, null=True)
 
     class Meta:
         db_table = 'obs_surface_geometry__EARTH'
 
     def __unicode__(self):
-        return self.ring_obs_id
+        return self.rms_obs_id
 
 
 class ObsSurfaceGeometryElara(models.Model):
@@ -2832,13 +2769,13 @@ class ObsSurfaceGeometryElara(models.Model):
     sub_solar_IAU_longitude = models.FloatField(null=True, blank=True)
     sub_solar_planetocentric_latitude = models.FloatField(null=True, blank=True)
     sub_solar_planetographic_latitude = models.FloatField(null=True, blank=True)
-    ring_obs_id = models.CharField(max_length=40, blank=True, null=True)
+    rms_obs_id = models.CharField(max_length=40, blank=True, null=True)
 
     class Meta:
         db_table = 'obs_surface_geometry__ELARA'
 
     def __unicode__(self):
-        return self.ring_obs_id
+        return self.rms_obs_id
 
 
 class ObsSurfaceGeometryEnceladus(models.Model):
@@ -2880,13 +2817,13 @@ class ObsSurfaceGeometryEnceladus(models.Model):
     sub_solar_IAU_longitude = models.FloatField(null=True, blank=True)
     sub_solar_planetocentric_latitude = models.FloatField(null=True, blank=True)
     sub_solar_planetographic_latitude = models.FloatField(null=True, blank=True)
-    ring_obs_id = models.CharField(max_length=40, blank=True, null=True)
+    rms_obs_id = models.CharField(max_length=40, blank=True, null=True)
 
     class Meta:
         db_table = 'obs_surface_geometry__ENCELADUS'
 
     def __unicode__(self):
-        return self.ring_obs_id
+        return self.rms_obs_id
 
 
 class ObsSurfaceGeometryEpimetheus(models.Model):
@@ -2928,13 +2865,13 @@ class ObsSurfaceGeometryEpimetheus(models.Model):
     sub_solar_IAU_longitude = models.FloatField(null=True, blank=True)
     sub_solar_planetocentric_latitude = models.FloatField(null=True, blank=True)
     sub_solar_planetographic_latitude = models.FloatField(null=True, blank=True)
-    ring_obs_id = models.CharField(max_length=40, blank=True, null=True)
+    rms_obs_id = models.CharField(max_length=40, blank=True, null=True)
 
     class Meta:
         db_table = 'obs_surface_geometry__EPIMETHEUS'
 
     def __unicode__(self):
-        return self.ring_obs_id
+        return self.rms_obs_id
 
 
 class ObsSurfaceGeometryErriapus(models.Model):
@@ -2976,13 +2913,13 @@ class ObsSurfaceGeometryErriapus(models.Model):
     sub_solar_IAU_longitude = models.FloatField(null=True, blank=True)
     sub_solar_planetocentric_latitude = models.FloatField(null=True, blank=True)
     sub_solar_planetographic_latitude = models.FloatField(null=True, blank=True)
-    ring_obs_id = models.CharField(max_length=40, blank=True, null=True)
+    rms_obs_id = models.CharField(max_length=40, blank=True, null=True)
 
     class Meta:
         db_table = 'obs_surface_geometry__ERRIAPUS'
 
     def __unicode__(self):
-        return self.ring_obs_id
+        return self.rms_obs_id
 
 
 class ObsSurfaceGeometryEuropa(models.Model):
@@ -3024,13 +2961,13 @@ class ObsSurfaceGeometryEuropa(models.Model):
     sub_solar_IAU_longitude = models.FloatField(null=True, blank=True)
     sub_solar_planetocentric_latitude = models.FloatField(null=True, blank=True)
     sub_solar_planetographic_latitude = models.FloatField(null=True, blank=True)
-    ring_obs_id = models.CharField(max_length=40, blank=True, null=True)
+    rms_obs_id = models.CharField(max_length=40, blank=True, null=True)
 
     class Meta:
         db_table = 'obs_surface_geometry__EUROPA'
 
     def __unicode__(self):
-        return self.ring_obs_id
+        return self.rms_obs_id
 
 
 class ObsSurfaceGeometryFornjot(models.Model):
@@ -3072,12 +3009,12 @@ class ObsSurfaceGeometryFornjot(models.Model):
     sub_solar_IAU_longitude = models.FloatField(null=True, blank=True)
     sub_solar_planetocentric_latitude = models.FloatField(null=True, blank=True)
     sub_solar_planetographic_latitude = models.FloatField(null=True, blank=True)
-    ring_obs_id = models.CharField(max_length=40, blank=True, null=True)
+    rms_obs_id = models.CharField(max_length=40, blank=True, null=True)
     class Meta:
         db_table = 'obs_surface_geometry__FORNJOT'
 
     def __unicode__(self):
-        return self.ring_obs_id
+        return self.rms_obs_id
 
 
 class ObsSurfaceGeometryGalatea(models.Model):
@@ -3119,13 +3056,13 @@ class ObsSurfaceGeometryGalatea(models.Model):
     sub_solar_IAU_longitude = models.FloatField(null=True, blank=True)
     sub_solar_planetocentric_latitude = models.FloatField(null=True, blank=True)
     sub_solar_planetographic_latitude = models.FloatField(null=True, blank=True)
-    ring_obs_id = models.CharField(max_length=40, blank=True, null=True)
+    rms_obs_id = models.CharField(max_length=40, blank=True, null=True)
 
     class Meta:
         db_table = 'obs_surface_geometry__GALATEA'
 
     def __unicode__(self):
-        return self.ring_obs_id
+        return self.rms_obs_id
 
 
 class ObsSurfaceGeometryGanymede(models.Model):
@@ -3167,13 +3104,13 @@ class ObsSurfaceGeometryGanymede(models.Model):
     sub_solar_IAU_longitude = models.FloatField(null=True, blank=True)
     sub_solar_planetocentric_latitude = models.FloatField(null=True, blank=True)
     sub_solar_planetographic_latitude = models.FloatField(null=True, blank=True)
-    ring_obs_id = models.CharField(max_length=40, blank=True, null=True)
+    rms_obs_id = models.CharField(max_length=40, blank=True, null=True)
 
     class Meta:
         db_table = 'obs_surface_geometry__GANYMEDE'
 
     def __unicode__(self):
-        return self.ring_obs_id
+        return self.rms_obs_id
 
 
 class ObsSurfaceGeometryGreip(models.Model):
@@ -3215,13 +3152,13 @@ class ObsSurfaceGeometryGreip(models.Model):
     sub_solar_IAU_longitude = models.FloatField(null=True, blank=True)
     sub_solar_planetocentric_latitude = models.FloatField(null=True, blank=True)
     sub_solar_planetographic_latitude = models.FloatField(null=True, blank=True)
-    ring_obs_id = models.CharField(max_length=40, blank=True, null=True)
+    rms_obs_id = models.CharField(max_length=40, blank=True, null=True)
 
     class Meta:
         db_table = 'obs_surface_geometry__GREIP'
 
     def __unicode__(self):
-        return self.ring_obs_id
+        return self.rms_obs_id
 
 
 class ObsSurfaceGeometryHati(models.Model):
@@ -3263,13 +3200,13 @@ class ObsSurfaceGeometryHati(models.Model):
     sub_solar_IAU_longitude = models.FloatField(null=True, blank=True)
     sub_solar_planetocentric_latitude = models.FloatField(null=True, blank=True)
     sub_solar_planetographic_latitude = models.FloatField(null=True, blank=True)
-    ring_obs_id = models.CharField(max_length=40, blank=True, null=True)
+    rms_obs_id = models.CharField(max_length=40, blank=True, null=True)
 
     class Meta:
         db_table = 'obs_surface_geometry__HATI'
 
     def __unicode__(self):
-        return self.ring_obs_id
+        return self.rms_obs_id
 
 
 class ObsSurfaceGeometryHelene(models.Model):
@@ -3311,13 +3248,13 @@ class ObsSurfaceGeometryHelene(models.Model):
     sub_solar_IAU_longitude = models.FloatField(null=True, blank=True)
     sub_solar_planetocentric_latitude = models.FloatField(null=True, blank=True)
     sub_solar_planetographic_latitude = models.FloatField(null=True, blank=True)
-    ring_obs_id = models.CharField(max_length=40, blank=True, null=True)
+    rms_obs_id = models.CharField(max_length=40, blank=True, null=True)
 
     class Meta:
         db_table = 'obs_surface_geometry__HELENE'
 
     def __unicode__(self):
-        return self.ring_obs_id
+        return self.rms_obs_id
 
 
 class ObsSurfaceGeometryHimalia(models.Model):
@@ -3359,13 +3296,13 @@ class ObsSurfaceGeometryHimalia(models.Model):
     sub_solar_IAU_longitude = models.FloatField(null=True, blank=True)
     sub_solar_planetocentric_latitude = models.FloatField(null=True, blank=True)
     sub_solar_planetographic_latitude = models.FloatField(null=True, blank=True)
-    ring_obs_id = models.CharField(max_length=40, blank=True, null=True)
+    rms_obs_id = models.CharField(max_length=40, blank=True, null=True)
 
     class Meta:
         db_table = 'obs_surface_geometry__HIMALIA'
 
     def __unicode__(self):
-        return self.ring_obs_id
+        return self.rms_obs_id
 
 
 class ObsSurfaceGeometryHydra(models.Model):
@@ -3407,13 +3344,13 @@ class ObsSurfaceGeometryHydra(models.Model):
     sub_solar_IAU_longitude = models.FloatField(null=True, blank=True)
     sub_solar_planetocentric_latitude = models.FloatField(null=True, blank=True)
     sub_solar_planetographic_latitude = models.FloatField(null=True, blank=True)
-    ring_obs_id = models.CharField(max_length=40, blank=True, null=True)
+    rms_obs_id = models.CharField(max_length=40, blank=True, null=True)
 
     class Meta:
         db_table = 'obs_surface_geometry__HYDRA'
 
     def __unicode__(self):
-        return self.ring_obs_id
+        return self.rms_obs_id
 
 
 class ObsSurfaceGeometryHyperion(models.Model):
@@ -3455,13 +3392,13 @@ class ObsSurfaceGeometryHyperion(models.Model):
     sub_solar_IAU_longitude = models.FloatField(null=True, blank=True)
     sub_solar_planetocentric_latitude = models.FloatField(null=True, blank=True)
     sub_solar_planetographic_latitude = models.FloatField(null=True, blank=True)
-    ring_obs_id = models.CharField(max_length=40, blank=True, null=True)
+    rms_obs_id = models.CharField(max_length=40, blank=True, null=True)
 
     class Meta:
         db_table = 'obs_surface_geometry__HYPERION'
 
     def __unicode__(self):
-        return self.ring_obs_id
+        return self.rms_obs_id
 
 
 class ObsSurfaceGeometryHyrokkin(models.Model):
@@ -3503,13 +3440,13 @@ class ObsSurfaceGeometryHyrokkin(models.Model):
     sub_solar_IAU_longitude = models.FloatField(null=True, blank=True)
     sub_solar_planetocentric_latitude = models.FloatField(null=True, blank=True)
     sub_solar_planetographic_latitude = models.FloatField(null=True, blank=True)
-    ring_obs_id = models.CharField(max_length=40, blank=True, null=True)
+    rms_obs_id = models.CharField(max_length=40, blank=True, null=True)
 
     class Meta:
         db_table = 'obs_surface_geometry__HYROKKIN'
 
     def __unicode__(self):
-        return self.ring_obs_id
+        return self.rms_obs_id
 
 
 class ObsSurfaceGeometryIapetus(models.Model):
@@ -3551,13 +3488,13 @@ class ObsSurfaceGeometryIapetus(models.Model):
     sub_solar_IAU_longitude = models.FloatField(null=True, blank=True)
     sub_solar_planetocentric_latitude = models.FloatField(null=True, blank=True)
     sub_solar_planetographic_latitude = models.FloatField(null=True, blank=True)
-    ring_obs_id = models.CharField(max_length=40, blank=True, null=True)
+    rms_obs_id = models.CharField(max_length=40, blank=True, null=True)
 
     class Meta:
         db_table = 'obs_surface_geometry__IAPETUS'
 
     def __unicode__(self):
-        return self.ring_obs_id
+        return self.rms_obs_id
 
 
 class ObsSurfaceGeometryIjiraq(models.Model):
@@ -3599,13 +3536,13 @@ class ObsSurfaceGeometryIjiraq(models.Model):
     sub_solar_IAU_longitude = models.FloatField(null=True, blank=True)
     sub_solar_planetocentric_latitude = models.FloatField(null=True, blank=True)
     sub_solar_planetographic_latitude = models.FloatField(null=True, blank=True)
-    ring_obs_id = models.CharField(max_length=40, blank=True, null=True)
+    rms_obs_id = models.CharField(max_length=40, blank=True, null=True)
 
     class Meta:
         db_table = 'obs_surface_geometry__IJIRAQ'
 
     def __unicode__(self):
-        return self.ring_obs_id
+        return self.rms_obs_id
 
 
 class ObsSurfaceGeometryIo(models.Model):
@@ -3647,13 +3584,13 @@ class ObsSurfaceGeometryIo(models.Model):
     sub_solar_IAU_longitude = models.FloatField(null=True, blank=True)
     sub_solar_planetocentric_latitude = models.FloatField(null=True, blank=True)
     sub_solar_planetographic_latitude = models.FloatField(null=True, blank=True)
-    ring_obs_id = models.CharField(max_length=40, blank=True, null=True)
+    rms_obs_id = models.CharField(max_length=40, blank=True, null=True)
 
     class Meta:
         db_table = 'obs_surface_geometry__IO'
 
     def __unicode__(self):
-        return self.ring_obs_id
+        return self.rms_obs_id
 
 
 class ObsSurfaceGeometryJanus(models.Model):
@@ -3695,13 +3632,13 @@ class ObsSurfaceGeometryJanus(models.Model):
     sub_solar_IAU_longitude = models.FloatField(null=True, blank=True)
     sub_solar_planetocentric_latitude = models.FloatField(null=True, blank=True)
     sub_solar_planetographic_latitude = models.FloatField(null=True, blank=True)
-    ring_obs_id = models.CharField(max_length=40, blank=True, null=True)
+    rms_obs_id = models.CharField(max_length=40, blank=True, null=True)
 
     class Meta:
         db_table = 'obs_surface_geometry__JANUS'
 
     def __unicode__(self):
-        return self.ring_obs_id
+        return self.rms_obs_id
 
 
 class ObsSurfaceGeometryJarnsaxa(models.Model):
@@ -3743,13 +3680,13 @@ class ObsSurfaceGeometryJarnsaxa(models.Model):
     sub_solar_IAU_longitude = models.FloatField(null=True, blank=True)
     sub_solar_planetocentric_latitude = models.FloatField(null=True, blank=True)
     sub_solar_planetographic_latitude = models.FloatField(null=True, blank=True)
-    ring_obs_id = models.CharField(max_length=40, blank=True, null=True)
+    rms_obs_id = models.CharField(max_length=40, blank=True, null=True)
 
     class Meta:
         db_table = 'obs_surface_geometry__JARNSAXA'
 
     def __unicode__(self):
-        return self.ring_obs_id
+        return self.rms_obs_id
 
 
 class ObsSurfaceGeometryJuliet(models.Model):
@@ -3791,13 +3728,13 @@ class ObsSurfaceGeometryJuliet(models.Model):
     sub_solar_IAU_longitude = models.FloatField(null=True, blank=True)
     sub_solar_planetocentric_latitude = models.FloatField(null=True, blank=True)
     sub_solar_planetographic_latitude = models.FloatField(null=True, blank=True)
-    ring_obs_id = models.CharField(max_length=40, blank=True, null=True)
+    rms_obs_id = models.CharField(max_length=40, blank=True, null=True)
 
     class Meta:
         db_table = 'obs_surface_geometry__JULIET'
 
     def __unicode__(self):
-        return self.ring_obs_id
+        return self.rms_obs_id
 
 
 class ObsSurfaceGeometryJupiter(models.Model):
@@ -3839,13 +3776,13 @@ class ObsSurfaceGeometryJupiter(models.Model):
     sub_solar_IAU_longitude = models.FloatField(null=True, blank=True)
     sub_solar_planetocentric_latitude = models.FloatField(null=True, blank=True)
     sub_solar_planetographic_latitude = models.FloatField(null=True, blank=True)
-    ring_obs_id = models.CharField(max_length=40, blank=True, null=True)
+    rms_obs_id = models.CharField(max_length=40, blank=True, null=True)
 
     class Meta:
         db_table = 'obs_surface_geometry__JUPITER'
 
     def __unicode__(self):
-        return self.ring_obs_id
+        return self.rms_obs_id
 
 
 class ObsSurfaceGeometryKari(models.Model):
@@ -3887,13 +3824,13 @@ class ObsSurfaceGeometryKari(models.Model):
     sub_solar_IAU_longitude = models.FloatField(null=True, blank=True)
     sub_solar_planetocentric_latitude = models.FloatField(null=True, blank=True)
     sub_solar_planetographic_latitude = models.FloatField(null=True, blank=True)
-    ring_obs_id = models.CharField(max_length=40, blank=True, null=True)
+    rms_obs_id = models.CharField(max_length=40, blank=True, null=True)
 
     class Meta:
         db_table = 'obs_surface_geometry__KARI'
 
     def __unicode__(self):
-        return self.ring_obs_id
+        return self.rms_obs_id
 
 
 class ObsSurfaceGeometryKerberos(models.Model):
@@ -3935,13 +3872,13 @@ class ObsSurfaceGeometryKerberos(models.Model):
     sub_solar_IAU_longitude = models.FloatField(null=True, blank=True)
     sub_solar_planetocentric_latitude = models.FloatField(null=True, blank=True)
     sub_solar_planetographic_latitude = models.FloatField(null=True, blank=True)
-    ring_obs_id = models.CharField(max_length=40, blank=True, null=True)
+    rms_obs_id = models.CharField(max_length=40, blank=True, null=True)
 
     class Meta:
         db_table = 'obs_surface_geometry__KERBEROS'
 
     def __unicode__(self):
-        return self.ring_obs_id
+        return self.rms_obs_id
 
 
 class ObsSurfaceGeometryKiviuq(models.Model):
@@ -3983,13 +3920,13 @@ class ObsSurfaceGeometryKiviuq(models.Model):
     sub_solar_IAU_longitude = models.FloatField(null=True, blank=True)
     sub_solar_planetocentric_latitude = models.FloatField(null=True, blank=True)
     sub_solar_planetographic_latitude = models.FloatField(null=True, blank=True)
-    ring_obs_id = models.CharField(max_length=40, blank=True, null=True)
+    rms_obs_id = models.CharField(max_length=40, blank=True, null=True)
 
     class Meta:
         db_table = 'obs_surface_geometry__KIVIUQ'
 
     def __unicode__(self):
-        return self.ring_obs_id
+        return self.rms_obs_id
 
 
 class ObsSurfaceGeometryLarissa(models.Model):
@@ -4031,13 +3968,13 @@ class ObsSurfaceGeometryLarissa(models.Model):
     sub_solar_IAU_longitude = models.FloatField(null=True, blank=True)
     sub_solar_planetocentric_latitude = models.FloatField(null=True, blank=True)
     sub_solar_planetographic_latitude = models.FloatField(null=True, blank=True)
-    ring_obs_id = models.CharField(max_length=40, blank=True, null=True)
+    rms_obs_id = models.CharField(max_length=40, blank=True, null=True)
 
     class Meta:
         db_table = 'obs_surface_geometry__LARISSA'
 
     def __unicode__(self):
-        return self.ring_obs_id
+        return self.rms_obs_id
 
 
 class ObsSurfaceGeometryLoge(models.Model):
@@ -4079,13 +4016,13 @@ class ObsSurfaceGeometryLoge(models.Model):
     sub_solar_IAU_longitude = models.FloatField(null=True, blank=True)
     sub_solar_planetocentric_latitude = models.FloatField(null=True, blank=True)
     sub_solar_planetographic_latitude = models.FloatField(null=True, blank=True)
-    ring_obs_id = models.CharField(max_length=40, blank=True, null=True)
+    rms_obs_id = models.CharField(max_length=40, blank=True, null=True)
 
     class Meta:
         db_table = 'obs_surface_geometry__LOGE'
 
     def __unicode__(self):
-        return self.ring_obs_id
+        return self.rms_obs_id
 
 
 class ObsSurfaceGeometryMab(models.Model):
@@ -4127,13 +4064,13 @@ class ObsSurfaceGeometryMab(models.Model):
     sub_solar_IAU_longitude = models.FloatField(null=True, blank=True)
     sub_solar_planetocentric_latitude = models.FloatField(null=True, blank=True)
     sub_solar_planetographic_latitude = models.FloatField(null=True, blank=True)
-    ring_obs_id = models.CharField(max_length=40, blank=True, null=True)
+    rms_obs_id = models.CharField(max_length=40, blank=True, null=True)
 
     class Meta:
         db_table = 'obs_surface_geometry__MAB'
 
     def __unicode__(self):
-        return self.ring_obs_id
+        return self.rms_obs_id
 
 
 class ObsSurfaceGeometryMethone(models.Model):
@@ -4175,13 +4112,13 @@ class ObsSurfaceGeometryMethone(models.Model):
     sub_solar_IAU_longitude = models.FloatField(null=True, blank=True)
     sub_solar_planetocentric_latitude = models.FloatField(null=True, blank=True)
     sub_solar_planetographic_latitude = models.FloatField(null=True, blank=True)
-    ring_obs_id = models.CharField(max_length=40, blank=True, null=True)
+    rms_obs_id = models.CharField(max_length=40, blank=True, null=True)
 
     class Meta:
         db_table = 'obs_surface_geometry__METHONE'
 
     def __unicode__(self):
-        return self.ring_obs_id
+        return self.rms_obs_id
 
 
 class ObsSurfaceGeometryMetis(models.Model):
@@ -4223,13 +4160,13 @@ class ObsSurfaceGeometryMetis(models.Model):
     sub_solar_IAU_longitude = models.FloatField(null=True, blank=True)
     sub_solar_planetocentric_latitude = models.FloatField(null=True, blank=True)
     sub_solar_planetographic_latitude = models.FloatField(null=True, blank=True)
-    ring_obs_id = models.CharField(max_length=40, blank=True, null=True)
+    rms_obs_id = models.CharField(max_length=40, blank=True, null=True)
 
     class Meta:
         db_table = 'obs_surface_geometry__METIS'
 
     def __unicode__(self):
-        return self.ring_obs_id
+        return self.rms_obs_id
 
 
 class ObsSurfaceGeometryMimas(models.Model):
@@ -4271,13 +4208,13 @@ class ObsSurfaceGeometryMimas(models.Model):
     sub_solar_IAU_longitude = models.FloatField(null=True, blank=True)
     sub_solar_planetocentric_latitude = models.FloatField(null=True, blank=True)
     sub_solar_planetographic_latitude = models.FloatField(null=True, blank=True)
-    ring_obs_id = models.CharField(max_length=40, blank=True, null=True)
+    rms_obs_id = models.CharField(max_length=40, blank=True, null=True)
 
     class Meta:
         db_table = 'obs_surface_geometry__MIMAS'
 
     def __unicode__(self):
-        return self.ring_obs_id
+        return self.rms_obs_id
 
 
 class ObsSurfaceGeometryMiranda(models.Model):
@@ -4319,13 +4256,13 @@ class ObsSurfaceGeometryMiranda(models.Model):
     sub_solar_IAU_longitude = models.FloatField(null=True, blank=True)
     sub_solar_planetocentric_latitude = models.FloatField(null=True, blank=True)
     sub_solar_planetographic_latitude = models.FloatField(null=True, blank=True)
-    ring_obs_id = models.CharField(max_length=40, blank=True, null=True)
+    rms_obs_id = models.CharField(max_length=40, blank=True, null=True)
 
     class Meta:
         db_table = 'obs_surface_geometry__MIRANDA'
 
     def __unicode__(self):
-        return self.ring_obs_id
+        return self.rms_obs_id
 
 
 class ObsSurfaceGeometryMundilfari(models.Model):
@@ -4367,13 +4304,13 @@ class ObsSurfaceGeometryMundilfari(models.Model):
     sub_solar_IAU_longitude = models.FloatField(null=True, blank=True)
     sub_solar_planetocentric_latitude = models.FloatField(null=True, blank=True)
     sub_solar_planetographic_latitude = models.FloatField(null=True, blank=True)
-    ring_obs_id = models.CharField(max_length=40, blank=True, null=True)
+    rms_obs_id = models.CharField(max_length=40, blank=True, null=True)
 
     class Meta:
         db_table = 'obs_surface_geometry__MUNDILFARI'
 
     def __unicode__(self):
-        return self.ring_obs_id
+        return self.rms_obs_id
 
 
 class ObsSurfaceGeometryNaiad(models.Model):
@@ -4415,13 +4352,13 @@ class ObsSurfaceGeometryNaiad(models.Model):
     sub_solar_IAU_longitude = models.FloatField(null=True, blank=True)
     sub_solar_planetocentric_latitude = models.FloatField(null=True, blank=True)
     sub_solar_planetographic_latitude = models.FloatField(null=True, blank=True)
-    ring_obs_id = models.CharField(max_length=40, blank=True, null=True)
+    rms_obs_id = models.CharField(max_length=40, blank=True, null=True)
 
     class Meta:
         db_table = 'obs_surface_geometry__NAIAD'
 
     def __unicode__(self):
-        return self.ring_obs_id
+        return self.rms_obs_id
 
 
 class ObsSurfaceGeometryNarvi(models.Model):
@@ -4463,13 +4400,13 @@ class ObsSurfaceGeometryNarvi(models.Model):
     sub_solar_IAU_longitude = models.FloatField(null=True, blank=True)
     sub_solar_planetocentric_latitude = models.FloatField(null=True, blank=True)
     sub_solar_planetographic_latitude = models.FloatField(null=True, blank=True)
-    ring_obs_id = models.CharField(max_length=40, blank=True, null=True)
+    rms_obs_id = models.CharField(max_length=40, blank=True, null=True)
 
     class Meta:
         db_table = 'obs_surface_geometry__NARVI'
 
     def __unicode__(self):
-        return self.ring_obs_id
+        return self.rms_obs_id
 
 
 class ObsSurfaceGeometryNeptune(models.Model):
@@ -4511,13 +4448,13 @@ class ObsSurfaceGeometryNeptune(models.Model):
     sub_solar_IAU_longitude = models.FloatField(null=True, blank=True)
     sub_solar_planetocentric_latitude = models.FloatField(null=True, blank=True)
     sub_solar_planetographic_latitude = models.FloatField(null=True, blank=True)
-    ring_obs_id = models.CharField(max_length=40, blank=True, null=True)
+    rms_obs_id = models.CharField(max_length=40, blank=True, null=True)
 
     class Meta:
         db_table = 'obs_surface_geometry__NEPTUNE'
 
     def __unicode__(self):
-        return self.ring_obs_id
+        return self.rms_obs_id
 
 
 class ObsSurfaceGeometryNereid(models.Model):
@@ -4559,13 +4496,13 @@ class ObsSurfaceGeometryNereid(models.Model):
     sub_solar_IAU_longitude = models.FloatField(null=True, blank=True)
     sub_solar_planetocentric_latitude = models.FloatField(null=True, blank=True)
     sub_solar_planetographic_latitude = models.FloatField(null=True, blank=True)
-    ring_obs_id = models.CharField(max_length=40, blank=True, null=True)
+    rms_obs_id = models.CharField(max_length=40, blank=True, null=True)
 
     class Meta:
         db_table = 'obs_surface_geometry__NEREID'
 
     def __unicode__(self):
-        return self.ring_obs_id
+        return self.rms_obs_id
 
 
 class ObsSurfaceGeometryNix(models.Model):
@@ -4607,13 +4544,13 @@ class ObsSurfaceGeometryNix(models.Model):
     sub_solar_IAU_longitude = models.FloatField(null=True, blank=True)
     sub_solar_planetocentric_latitude = models.FloatField(null=True, blank=True)
     sub_solar_planetographic_latitude = models.FloatField(null=True, blank=True)
-    ring_obs_id = models.CharField(max_length=40, blank=True, null=True)
+    rms_obs_id = models.CharField(max_length=40, blank=True, null=True)
 
     class Meta:
         db_table = 'obs_surface_geometry__NIX'
 
     def __unicode__(self):
-        return self.ring_obs_id
+        return self.rms_obs_id
 
 
 class ObsSurfaceGeometryOberon(models.Model):
@@ -4655,13 +4592,13 @@ class ObsSurfaceGeometryOberon(models.Model):
     sub_solar_IAU_longitude = models.FloatField(null=True, blank=True)
     sub_solar_planetocentric_latitude = models.FloatField(null=True, blank=True)
     sub_solar_planetographic_latitude = models.FloatField(null=True, blank=True)
-    ring_obs_id = models.CharField(max_length=40, blank=True, null=True)
+    rms_obs_id = models.CharField(max_length=40, blank=True, null=True)
 
     class Meta:
         db_table = 'obs_surface_geometry__OBERON'
 
     def __unicode__(self):
-        return self.ring_obs_id
+        return self.rms_obs_id
 
 
 class ObsSurfaceGeometryOphelia(models.Model):
@@ -4703,13 +4640,13 @@ class ObsSurfaceGeometryOphelia(models.Model):
     sub_solar_IAU_longitude = models.FloatField(null=True, blank=True)
     sub_solar_planetocentric_latitude = models.FloatField(null=True, blank=True)
     sub_solar_planetographic_latitude = models.FloatField(null=True, blank=True)
-    ring_obs_id = models.CharField(max_length=40, blank=True, null=True)
+    rms_obs_id = models.CharField(max_length=40, blank=True, null=True)
 
     class Meta:
         db_table = 'obs_surface_geometry__OPHELIA'
 
     def __unicode__(self):
-        return self.ring_obs_id
+        return self.rms_obs_id
 
 
 class ObsSurfaceGeometryPaaliaq(models.Model):
@@ -4751,13 +4688,13 @@ class ObsSurfaceGeometryPaaliaq(models.Model):
     sub_solar_IAU_longitude = models.FloatField(null=True, blank=True)
     sub_solar_planetocentric_latitude = models.FloatField(null=True, blank=True)
     sub_solar_planetographic_latitude = models.FloatField(null=True, blank=True)
-    ring_obs_id = models.CharField(max_length=40, blank=True, null=True)
+    rms_obs_id = models.CharField(max_length=40, blank=True, null=True)
 
     class Meta:
         db_table = 'obs_surface_geometry__PAALIAQ'
 
     def __unicode__(self):
-        return self.ring_obs_id
+        return self.rms_obs_id
 
 
 class ObsSurfaceGeometryPallene(models.Model):
@@ -4799,13 +4736,13 @@ class ObsSurfaceGeometryPallene(models.Model):
     sub_solar_IAU_longitude = models.FloatField(null=True, blank=True)
     sub_solar_planetocentric_latitude = models.FloatField(null=True, blank=True)
     sub_solar_planetographic_latitude = models.FloatField(null=True, blank=True)
-    ring_obs_id = models.CharField(max_length=40, blank=True, null=True)
+    rms_obs_id = models.CharField(max_length=40, blank=True, null=True)
 
     class Meta:
         db_table = 'obs_surface_geometry__PALLENE'
 
     def __unicode__(self):
-        return self.ring_obs_id
+        return self.rms_obs_id
 
 
 class ObsSurfaceGeometryPan(models.Model):
@@ -4847,13 +4784,13 @@ class ObsSurfaceGeometryPan(models.Model):
     sub_solar_IAU_longitude = models.FloatField(null=True, blank=True)
     sub_solar_planetocentric_latitude = models.FloatField(null=True, blank=True)
     sub_solar_planetographic_latitude = models.FloatField(null=True, blank=True)
-    ring_obs_id = models.CharField(max_length=40, blank=True, null=True)
+    rms_obs_id = models.CharField(max_length=40, blank=True, null=True)
 
     class Meta:
         db_table = 'obs_surface_geometry__PAN'
 
     def __unicode__(self):
-        return self.ring_obs_id
+        return self.rms_obs_id
 
 
 class ObsSurfaceGeometryPandora(models.Model):
@@ -4895,13 +4832,13 @@ class ObsSurfaceGeometryPandora(models.Model):
     sub_solar_IAU_longitude = models.FloatField(null=True, blank=True)
     sub_solar_planetocentric_latitude = models.FloatField(null=True, blank=True)
     sub_solar_planetographic_latitude = models.FloatField(null=True, blank=True)
-    ring_obs_id = models.CharField(max_length=40, blank=True, null=True)
+    rms_obs_id = models.CharField(max_length=40, blank=True, null=True)
 
     class Meta:
         db_table = 'obs_surface_geometry__PANDORA'
 
     def __unicode__(self):
-        return self.ring_obs_id
+        return self.rms_obs_id
 
 
 class ObsSurfaceGeometryPerdita(models.Model):
@@ -4943,13 +4880,13 @@ class ObsSurfaceGeometryPerdita(models.Model):
     sub_solar_IAU_longitude = models.FloatField(null=True, blank=True)
     sub_solar_planetocentric_latitude = models.FloatField(null=True, blank=True)
     sub_solar_planetographic_latitude = models.FloatField(null=True, blank=True)
-    ring_obs_id = models.CharField(max_length=40, blank=True, null=True)
+    rms_obs_id = models.CharField(max_length=40, blank=True, null=True)
 
     class Meta:
         db_table = 'obs_surface_geometry__PERDITA'
 
     def __unicode__(self):
-        return self.ring_obs_id
+        return self.rms_obs_id
 
 
 class ObsSurfaceGeometryPhoebe(models.Model):
@@ -4991,13 +4928,13 @@ class ObsSurfaceGeometryPhoebe(models.Model):
     sub_solar_IAU_longitude = models.FloatField(null=True, blank=True)
     sub_solar_planetocentric_latitude = models.FloatField(null=True, blank=True)
     sub_solar_planetographic_latitude = models.FloatField(null=True, blank=True)
-    ring_obs_id = models.CharField(max_length=40, blank=True, null=True)
+    rms_obs_id = models.CharField(max_length=40, blank=True, null=True)
 
     class Meta:
         db_table = 'obs_surface_geometry__PHOEBE'
 
     def __unicode__(self):
-        return self.ring_obs_id
+        return self.rms_obs_id
 
 
 class ObsSurfaceGeometryPluto(models.Model):
@@ -5039,13 +4976,13 @@ class ObsSurfaceGeometryPluto(models.Model):
     sub_solar_IAU_longitude = models.FloatField(null=True, blank=True)
     sub_solar_planetocentric_latitude = models.FloatField(null=True, blank=True)
     sub_solar_planetographic_latitude = models.FloatField(null=True, blank=True)
-    ring_obs_id = models.CharField(max_length=40, blank=True, null=True)
+    rms_obs_id = models.CharField(max_length=40, blank=True, null=True)
 
     class Meta:
         db_table = 'obs_surface_geometry__PLUTO'
 
     def __unicode__(self):
-        return self.ring_obs_id
+        return self.rms_obs_id
 
 
 class ObsSurfaceGeometryPolydeuces(models.Model):
@@ -5087,13 +5024,13 @@ class ObsSurfaceGeometryPolydeuces(models.Model):
     sub_solar_IAU_longitude = models.FloatField(null=True, blank=True)
     sub_solar_planetocentric_latitude = models.FloatField(null=True, blank=True)
     sub_solar_planetographic_latitude = models.FloatField(null=True, blank=True)
-    ring_obs_id = models.CharField(max_length=40, blank=True, null=True)
+    rms_obs_id = models.CharField(max_length=40, blank=True, null=True)
 
     class Meta:
         db_table = 'obs_surface_geometry__POLYDEUCES'
 
     def __unicode__(self):
-        return self.ring_obs_id
+        return self.rms_obs_id
 
 
 class ObsSurfaceGeometryPortia(models.Model):
@@ -5135,13 +5072,13 @@ class ObsSurfaceGeometryPortia(models.Model):
     sub_solar_IAU_longitude = models.FloatField(null=True, blank=True)
     sub_solar_planetocentric_latitude = models.FloatField(null=True, blank=True)
     sub_solar_planetographic_latitude = models.FloatField(null=True, blank=True)
-    ring_obs_id = models.CharField(max_length=40, blank=True, null=True)
+    rms_obs_id = models.CharField(max_length=40, blank=True, null=True)
 
     class Meta:
         db_table = 'obs_surface_geometry__PORTIA'
 
     def __unicode__(self):
-        return self.ring_obs_id
+        return self.rms_obs_id
 
 
 class ObsSurfaceGeometryPrometheus(models.Model):
@@ -5183,13 +5120,13 @@ class ObsSurfaceGeometryPrometheus(models.Model):
     sub_solar_IAU_longitude = models.FloatField(null=True, blank=True)
     sub_solar_planetocentric_latitude = models.FloatField(null=True, blank=True)
     sub_solar_planetographic_latitude = models.FloatField(null=True, blank=True)
-    ring_obs_id = models.CharField(max_length=40, blank=True, null=True)
+    rms_obs_id = models.CharField(max_length=40, blank=True, null=True)
 
     class Meta:
         db_table = 'obs_surface_geometry__PROMETHEUS'
 
     def __unicode__(self):
-        return self.ring_obs_id
+        return self.rms_obs_id
 
 
 class ObsSurfaceGeometryProteus(models.Model):
@@ -5231,13 +5168,13 @@ class ObsSurfaceGeometryProteus(models.Model):
     sub_solar_IAU_longitude = models.FloatField(null=True, blank=True)
     sub_solar_planetocentric_latitude = models.FloatField(null=True, blank=True)
     sub_solar_planetographic_latitude = models.FloatField(null=True, blank=True)
-    ring_obs_id = models.CharField(max_length=40, blank=True, null=True)
+    rms_obs_id = models.CharField(max_length=40, blank=True, null=True)
 
     class Meta:
         db_table = 'obs_surface_geometry__PROTEUS'
 
     def __unicode__(self):
-        return self.ring_obs_id
+        return self.rms_obs_id
 
 
 class ObsSurfaceGeometryPuck(models.Model):
@@ -5279,13 +5216,13 @@ class ObsSurfaceGeometryPuck(models.Model):
     sub_solar_IAU_longitude = models.FloatField(null=True, blank=True)
     sub_solar_planetocentric_latitude = models.FloatField(null=True, blank=True)
     sub_solar_planetographic_latitude = models.FloatField(null=True, blank=True)
-    ring_obs_id = models.CharField(max_length=40, blank=True, null=True)
+    rms_obs_id = models.CharField(max_length=40, blank=True, null=True)
 
     class Meta:
         db_table = 'obs_surface_geometry__PUCK'
 
     def __unicode__(self):
-        return self.ring_obs_id
+        return self.rms_obs_id
 
 
 class ObsSurfaceGeometryRhea(models.Model):
@@ -5327,13 +5264,13 @@ class ObsSurfaceGeometryRhea(models.Model):
     sub_solar_IAU_longitude = models.FloatField(null=True, blank=True)
     sub_solar_planetocentric_latitude = models.FloatField(null=True, blank=True)
     sub_solar_planetographic_latitude = models.FloatField(null=True, blank=True)
-    ring_obs_id = models.CharField(max_length=40, blank=True, null=True)
+    rms_obs_id = models.CharField(max_length=40, blank=True, null=True)
 
     class Meta:
         db_table = 'obs_surface_geometry__RHEA'
 
     def __unicode__(self):
-        return self.ring_obs_id
+        return self.rms_obs_id
 
 
 class ObsSurfaceGeometryRosalind(models.Model):
@@ -5375,13 +5312,13 @@ class ObsSurfaceGeometryRosalind(models.Model):
     sub_solar_IAU_longitude = models.FloatField(null=True, blank=True)
     sub_solar_planetocentric_latitude = models.FloatField(null=True, blank=True)
     sub_solar_planetographic_latitude = models.FloatField(null=True, blank=True)
-    ring_obs_id = models.CharField(max_length=40, blank=True, null=True)
+    rms_obs_id = models.CharField(max_length=40, blank=True, null=True)
 
     class Meta:
         db_table = 'obs_surface_geometry__ROSALIND'
 
     def __unicode__(self):
-        return self.ring_obs_id
+        return self.rms_obs_id
 
 
 class ObsSurfaceGeometryS122004(models.Model):
@@ -5423,13 +5360,13 @@ class ObsSurfaceGeometryS122004(models.Model):
     sub_solar_IAU_longitude = models.FloatField(null=True, blank=True)
     sub_solar_planetocentric_latitude = models.FloatField(null=True, blank=True)
     sub_solar_planetographic_latitude = models.FloatField(null=True, blank=True)
-    ring_obs_id = models.CharField(max_length=40, blank=True, null=True)
+    rms_obs_id = models.CharField(max_length=40, blank=True, null=True)
 
     class Meta:
         db_table = 'obs_surface_geometry__S12_2004'
 
     def __unicode__(self):
-        return self.ring_obs_id
+        return self.rms_obs_id
 
 
 class ObsSurfaceGeometryS132004(models.Model):
@@ -5471,13 +5408,13 @@ class ObsSurfaceGeometryS132004(models.Model):
     sub_solar_IAU_longitude = models.FloatField(null=True, blank=True)
     sub_solar_planetocentric_latitude = models.FloatField(null=True, blank=True)
     sub_solar_planetographic_latitude = models.FloatField(null=True, blank=True)
-    ring_obs_id = models.CharField(max_length=40, blank=True, null=True)
+    rms_obs_id = models.CharField(max_length=40, blank=True, null=True)
 
     class Meta:
         db_table = 'obs_surface_geometry__S13_2004'
 
     def __unicode__(self):
-        return self.ring_obs_id
+        return self.rms_obs_id
 
 
 class ObsSurfaceGeometrySaturn(models.Model):
@@ -5519,13 +5456,13 @@ class ObsSurfaceGeometrySaturn(models.Model):
     sub_solar_IAU_longitude = models.FloatField(null=True, blank=True)
     sub_solar_planetocentric_latitude = models.FloatField(null=True, blank=True)
     sub_solar_planetographic_latitude = models.FloatField(null=True, blank=True)
-    ring_obs_id = models.CharField(max_length=40, blank=True, null=True)
+    rms_obs_id = models.CharField(max_length=40, blank=True, null=True)
 
     class Meta:
         db_table = 'obs_surface_geometry__SATURN'
 
     def __unicode__(self):
-        return self.ring_obs_id
+        return self.rms_obs_id
 
 
 class ObsSurfaceGeometrySiarnaq(models.Model):
@@ -5567,13 +5504,13 @@ class ObsSurfaceGeometrySiarnaq(models.Model):
     sub_solar_IAU_longitude = models.FloatField(null=True, blank=True)
     sub_solar_planetocentric_latitude = models.FloatField(null=True, blank=True)
     sub_solar_planetographic_latitude = models.FloatField(null=True, blank=True)
-    ring_obs_id = models.CharField(max_length=40, blank=True, null=True)
+    rms_obs_id = models.CharField(max_length=40, blank=True, null=True)
 
     class Meta:
         db_table = 'obs_surface_geometry__SIARNAQ'
 
     def __unicode__(self):
-        return self.ring_obs_id
+        return self.rms_obs_id
 
 
 class ObsSurfaceGeometrySkathi(models.Model):
@@ -5615,13 +5552,13 @@ class ObsSurfaceGeometrySkathi(models.Model):
     sub_solar_IAU_longitude = models.FloatField(null=True, blank=True)
     sub_solar_planetocentric_latitude = models.FloatField(null=True, blank=True)
     sub_solar_planetographic_latitude = models.FloatField(null=True, blank=True)
-    ring_obs_id = models.CharField(max_length=40, blank=True, null=True)
+    rms_obs_id = models.CharField(max_length=40, blank=True, null=True)
 
     class Meta:
         db_table = 'obs_surface_geometry__SKATHI'
 
     def __unicode__(self):
-        return self.ring_obs_id
+        return self.rms_obs_id
 
 
 class ObsSurfaceGeometrySkoll(models.Model):
@@ -5663,13 +5600,13 @@ class ObsSurfaceGeometrySkoll(models.Model):
     sub_solar_IAU_longitude = models.FloatField(null=True, blank=True)
     sub_solar_planetocentric_latitude = models.FloatField(null=True, blank=True)
     sub_solar_planetographic_latitude = models.FloatField(null=True, blank=True)
-    ring_obs_id = models.CharField(max_length=40, blank=True, null=True)
+    rms_obs_id = models.CharField(max_length=40, blank=True, null=True)
 
     class Meta:
         db_table = 'obs_surface_geometry__SKOLL'
 
     def __unicode__(self):
-        return self.ring_obs_id
+        return self.rms_obs_id
 
 
 class ObsSurfaceGeometryStyx(models.Model):
@@ -5711,13 +5648,13 @@ class ObsSurfaceGeometryStyx(models.Model):
     sub_solar_IAU_longitude = models.FloatField(null=True, blank=True)
     sub_solar_planetocentric_latitude = models.FloatField(null=True, blank=True)
     sub_solar_planetographic_latitude = models.FloatField(null=True, blank=True)
-    ring_obs_id = models.CharField(max_length=40, blank=True, null=True)
+    rms_obs_id = models.CharField(max_length=40, blank=True, null=True)
 
     class Meta:
         db_table = 'obs_surface_geometry__STYX'
 
     def __unicode__(self):
-        return self.ring_obs_id
+        return self.rms_obs_id
 
 
 class ObsSurfaceGeometrySun(models.Model):
@@ -5759,13 +5696,13 @@ class ObsSurfaceGeometrySun(models.Model):
     sub_solar_IAU_longitude = models.FloatField(null=True, blank=True)
     sub_solar_planetocentric_latitude = models.FloatField(null=True, blank=True)
     sub_solar_planetographic_latitude = models.FloatField(null=True, blank=True)
-    ring_obs_id = models.CharField(max_length=40, blank=True, null=True)
+    rms_obs_id = models.CharField(max_length=40, blank=True, null=True)
 
     class Meta:
         db_table = 'obs_surface_geometry__SUN'
 
     def __unicode__(self):
-        return self.ring_obs_id
+        return self.rms_obs_id
 
 
 class ObsSurfaceGeometrySurtur(models.Model):
@@ -5807,13 +5744,13 @@ class ObsSurfaceGeometrySurtur(models.Model):
     sub_solar_IAU_longitude = models.FloatField(null=True, blank=True)
     sub_solar_planetocentric_latitude = models.FloatField(null=True, blank=True)
     sub_solar_planetographic_latitude = models.FloatField(null=True, blank=True)
-    ring_obs_id = models.CharField(max_length=40, blank=True, null=True)
+    rms_obs_id = models.CharField(max_length=40, blank=True, null=True)
 
     class Meta:
         db_table = 'obs_surface_geometry__SURTUR'
 
     def __unicode__(self):
-        return self.ring_obs_id
+        return self.rms_obs_id
 
 
 class ObsSurfaceGeometrySuttungr(models.Model):
@@ -5855,13 +5792,13 @@ class ObsSurfaceGeometrySuttungr(models.Model):
     sub_solar_IAU_longitude = models.FloatField(null=True, blank=True)
     sub_solar_planetocentric_latitude = models.FloatField(null=True, blank=True)
     sub_solar_planetographic_latitude = models.FloatField(null=True, blank=True)
-    ring_obs_id = models.CharField(max_length=40, blank=True, null=True)
+    rms_obs_id = models.CharField(max_length=40, blank=True, null=True)
 
     class Meta:
         db_table = 'obs_surface_geometry__SUTTUNGR'
 
     def __unicode__(self):
-        return self.ring_obs_id
+        return self.rms_obs_id
 
 
 class ObsSurfaceGeometryTarqeq(models.Model):
@@ -5903,13 +5840,13 @@ class ObsSurfaceGeometryTarqeq(models.Model):
     sub_solar_IAU_longitude = models.FloatField(null=True, blank=True)
     sub_solar_planetocentric_latitude = models.FloatField(null=True, blank=True)
     sub_solar_planetographic_latitude = models.FloatField(null=True, blank=True)
-    ring_obs_id = models.CharField(max_length=40, blank=True, null=True)
+    rms_obs_id = models.CharField(max_length=40, blank=True, null=True)
 
     class Meta:
         db_table = 'obs_surface_geometry__TARQEQ'
 
     def __unicode__(self):
-        return self.ring_obs_id
+        return self.rms_obs_id
 
 
 class ObsSurfaceGeometryTarvos(models.Model):
@@ -5951,13 +5888,13 @@ class ObsSurfaceGeometryTarvos(models.Model):
     sub_solar_IAU_longitude = models.FloatField(null=True, blank=True)
     sub_solar_planetocentric_latitude = models.FloatField(null=True, blank=True)
     sub_solar_planetographic_latitude = models.FloatField(null=True, blank=True)
-    ring_obs_id = models.CharField(max_length=40, blank=True, null=True)
+    rms_obs_id = models.CharField(max_length=40, blank=True, null=True)
 
     class Meta:
         db_table = 'obs_surface_geometry__TARVOS'
 
     def __unicode__(self):
-        return self.ring_obs_id
+        return self.rms_obs_id
 
 
 class ObsSurfaceGeometryTelesto(models.Model):
@@ -5999,13 +5936,13 @@ class ObsSurfaceGeometryTelesto(models.Model):
     sub_solar_IAU_longitude = models.FloatField(null=True, blank=True)
     sub_solar_planetocentric_latitude = models.FloatField(null=True, blank=True)
     sub_solar_planetographic_latitude = models.FloatField(null=True, blank=True)
-    ring_obs_id = models.CharField(max_length=40, blank=True, null=True)
+    rms_obs_id = models.CharField(max_length=40, blank=True, null=True)
 
     class Meta:
         db_table = 'obs_surface_geometry__TELESTO'
 
     def __unicode__(self):
-        return self.ring_obs_id
+        return self.rms_obs_id
 
 
 class ObsSurfaceGeometryTethys(models.Model):
@@ -6047,13 +5984,13 @@ class ObsSurfaceGeometryTethys(models.Model):
     sub_solar_IAU_longitude = models.FloatField(null=True, blank=True)
     sub_solar_planetocentric_latitude = models.FloatField(null=True, blank=True)
     sub_solar_planetographic_latitude = models.FloatField(null=True, blank=True)
-    ring_obs_id = models.CharField(max_length=40, blank=True, null=True)
+    rms_obs_id = models.CharField(max_length=40, blank=True, null=True)
 
     class Meta:
         db_table = 'obs_surface_geometry__TETHYS'
 
     def __unicode__(self):
-        return self.ring_obs_id
+        return self.rms_obs_id
 
 
 class ObsSurfaceGeometryThalassa(models.Model):
@@ -6095,13 +6032,13 @@ class ObsSurfaceGeometryThalassa(models.Model):
     sub_solar_IAU_longitude = models.FloatField(null=True, blank=True)
     sub_solar_planetocentric_latitude = models.FloatField(null=True, blank=True)
     sub_solar_planetographic_latitude = models.FloatField(null=True, blank=True)
-    ring_obs_id = models.CharField(max_length=40, blank=True, null=True)
+    rms_obs_id = models.CharField(max_length=40, blank=True, null=True)
 
     class Meta:
         db_table = 'obs_surface_geometry__THALASSA'
 
     def __unicode__(self):
-        return self.ring_obs_id
+        return self.rms_obs_id
 
 
 class ObsSurfaceGeometryThebe(models.Model):
@@ -6143,13 +6080,13 @@ class ObsSurfaceGeometryThebe(models.Model):
     sub_solar_IAU_longitude = models.FloatField(null=True, blank=True)
     sub_solar_planetocentric_latitude = models.FloatField(null=True, blank=True)
     sub_solar_planetographic_latitude = models.FloatField(null=True, blank=True)
-    ring_obs_id = models.CharField(max_length=40, blank=True, null=True)
+    rms_obs_id = models.CharField(max_length=40, blank=True, null=True)
 
     class Meta:
         db_table = 'obs_surface_geometry__THEBE'
 
     def __unicode__(self):
-        return self.ring_obs_id
+        return self.rms_obs_id
 
 
 class ObsSurfaceGeometryThrymr(models.Model):
@@ -6191,13 +6128,13 @@ class ObsSurfaceGeometryThrymr(models.Model):
     sub_solar_IAU_longitude = models.FloatField(null=True, blank=True)
     sub_solar_planetocentric_latitude = models.FloatField(null=True, blank=True)
     sub_solar_planetographic_latitude = models.FloatField(null=True, blank=True)
-    ring_obs_id = models.CharField(max_length=40, blank=True, null=True)
+    rms_obs_id = models.CharField(max_length=40, blank=True, null=True)
 
     class Meta:
         db_table = 'obs_surface_geometry__THRYMR'
 
     def __unicode__(self):
-        return self.ring_obs_id
+        return self.rms_obs_id
 
 
 class ObsSurfaceGeometryTitan(models.Model):
@@ -6239,13 +6176,13 @@ class ObsSurfaceGeometryTitan(models.Model):
     sub_solar_IAU_longitude = models.FloatField(null=True, blank=True)
     sub_solar_planetocentric_latitude = models.FloatField(null=True, blank=True)
     sub_solar_planetographic_latitude = models.FloatField(null=True, blank=True)
-    ring_obs_id = models.CharField(max_length=40, blank=True, null=True)
+    rms_obs_id = models.CharField(max_length=40, blank=True, null=True)
 
     class Meta:
         db_table = 'obs_surface_geometry__TITAN'
 
     def __unicode__(self):
-        return self.ring_obs_id
+        return self.rms_obs_id
 
 
 class ObsSurfaceGeometryTitania(models.Model):
@@ -6287,13 +6224,13 @@ class ObsSurfaceGeometryTitania(models.Model):
     sub_solar_IAU_longitude = models.FloatField(null=True, blank=True)
     sub_solar_planetocentric_latitude = models.FloatField(null=True, blank=True)
     sub_solar_planetographic_latitude = models.FloatField(null=True, blank=True)
-    ring_obs_id = models.CharField(max_length=40, blank=True, null=True)
+    rms_obs_id = models.CharField(max_length=40, blank=True, null=True)
 
     class Meta:
         db_table = 'obs_surface_geometry__TITANIA'
 
     def __unicode__(self):
-        return self.ring_obs_id
+        return self.rms_obs_id
 
 
 class ObsSurfaceGeometryTriton(models.Model):
@@ -6335,13 +6272,13 @@ class ObsSurfaceGeometryTriton(models.Model):
     sub_solar_IAU_longitude = models.FloatField(null=True, blank=True)
     sub_solar_planetocentric_latitude = models.FloatField(null=True, blank=True)
     sub_solar_planetographic_latitude = models.FloatField(null=True, blank=True)
-    ring_obs_id = models.CharField(max_length=40, blank=True, null=True)
+    rms_obs_id = models.CharField(max_length=40, blank=True, null=True)
 
     class Meta:
         db_table = 'obs_surface_geometry__TRITON'
 
     def __unicode__(self):
-        return self.ring_obs_id
+        return self.rms_obs_id
 
 
 class ObsSurfaceGeometryUmbriel(models.Model):
@@ -6383,13 +6320,13 @@ class ObsSurfaceGeometryUmbriel(models.Model):
     sub_solar_IAU_longitude = models.FloatField(null=True, blank=True)
     sub_solar_planetocentric_latitude = models.FloatField(null=True, blank=True)
     sub_solar_planetographic_latitude = models.FloatField(null=True, blank=True)
-    ring_obs_id = models.CharField(max_length=40, blank=True, null=True)
+    rms_obs_id = models.CharField(max_length=40, blank=True, null=True)
 
     class Meta:
         db_table = 'obs_surface_geometry__UMBRIEL'
 
     def __unicode__(self):
-        return self.ring_obs_id
+        return self.rms_obs_id
 
 
 class ObsSurfaceGeometryUranus(models.Model):
@@ -6431,13 +6368,13 @@ class ObsSurfaceGeometryUranus(models.Model):
     sub_solar_IAU_longitude = models.FloatField(null=True, blank=True)
     sub_solar_planetocentric_latitude = models.FloatField(null=True, blank=True)
     sub_solar_planetographic_latitude = models.FloatField(null=True, blank=True)
-    ring_obs_id = models.CharField(max_length=40, blank=True, null=True)
+    rms_obs_id = models.CharField(max_length=40, blank=True, null=True)
 
     class Meta:
         db_table = 'obs_surface_geometry__URANUS'
 
     def __unicode__(self):
-        return self.ring_obs_id
+        return self.rms_obs_id
 
 
 class ObsSurfaceGeometryYmir(models.Model):
@@ -6479,31 +6416,33 @@ class ObsSurfaceGeometryYmir(models.Model):
     sub_solar_IAU_longitude = models.FloatField(null=True, blank=True)
     sub_solar_planetocentric_latitude = models.FloatField(null=True, blank=True)
     sub_solar_planetographic_latitude = models.FloatField(null=True, blank=True)
-    ring_obs_id = models.CharField(max_length=40, blank=True, null=True)
+    rms_obs_id = models.CharField(max_length=40, blank=True, null=True)
 
     class Meta:
         db_table = 'obs_surface_geometry__YMIR'
 
     def __unicode__(self):
-        return self.ring_obs_id
+        return self.rms_obs_id
 
 
 
 class ObsTypeImage(models.Model):
     obs_general = models.ForeignKey(ObsGeneral, db_column="obs_general_id", null=True, blank=True)
     duration = models.FloatField(null=True, blank=True)
-    greater_pixel_size = models.FloatField(null=True, blank=True)
+    greater_pixel_size = models.IntegerField(null=True, blank=True)
     image_type_id = models.CharField(max_length=4, blank=True, null=True, choices = OBS_TYPE_IMAGE_IMAGE_TYPE_ID_CHOICES)
     mult_obs_type_image_image_type_id = models.ForeignKey(MultObsTypeImageImageTypeId, db_column="mult_obs_type_image_image_type_id", db_index=False, null=True, blank=True)
-    lesser_pixel_size = models.FloatField(null=True, blank=True)
+    mult_obs_type_image_greater_pixel_size = models.ForeignKey(MultObsTypeImageGreaterPixelSize, db_column="mult_obs_type_image_greater_pixel_size", db_index=False, null=True, blank=True)
+    mult_obs_type_image_lesser_pixel_size = models.ForeignKey(MultObsTypeImageLesserPixelSize, db_column="mult_obs_type_image_lesser_pixel_size", db_index=False, null=True, blank=True)
+    lesser_pixel_size = models.IntegerField(null=True, blank=True)
     levels = models.FloatField(null=True, blank=True)
-    ring_obs_id = models.CharField(max_length=40, blank=True, null=True)
+    rms_obs_id = models.CharField(max_length=40, blank=True, null=True)
 
     class Meta:
         db_table = 'obs_type_image'
 
     def __unicode__(self):
-        return self.ring_obs_id
+        return self.rms_obs_id
 
 
 class ObsWavelength(models.Model):
@@ -6521,10 +6460,10 @@ class ObsWavelength(models.Model):
     wave_no_res2 = models.FloatField(null=True, blank=True)
     wave_res1 = models.FloatField(null=True, blank=True)
     wave_res2 = models.FloatField(null=True, blank=True)
-    ring_obs_id = models.CharField(max_length=40, blank=True, null=True)
+    rms_obs_id = models.CharField(max_length=40, blank=True, null=True)
 
     class Meta:
         db_table = 'obs_wavelength'
 
     def __unicode__(self):
-        return self.ring_obs_id
+        return self.rms_obs_id

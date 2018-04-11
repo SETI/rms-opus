@@ -17,5 +17,5 @@ urlpatterns = [
     url(r'^menu.html$', getMenu),
     url(r'^forms/widget/(?P<slug>[-\sa-zA-Z0-9]+).(?P<fmt>[json|zip|html|csv]+)$', getWidget),
     url(r'^forms/column_chooser.html$', getColumnChooser),
-    url(r'^api/detail/(?P<ring_obs_id>[0-9a-zA-Z\-_]+).(?P<fmt>[json|zip|html]+)$', init_detail_page),
+    url(r'^api/detail/(?P<rms_obs_id>[0-9a-zA-Z\-_]+).(?P<fmt>[json|zip|html]+)$', init_detail_page),
 ]

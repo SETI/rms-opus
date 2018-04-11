@@ -1,8 +1,8 @@
 {% for i in data  %}
 
-    <li id = "gallery__{{i.ring_obs_id}}">
+    <li id = "gallery__{{i.rms_obs_id}}">
     	<a class = "activeThumbnail" href = "{{ i.path }}{{ i.full }}" data-rel="colorbox">
-            <img width = "133px" alt="{{ i.ring_obs_id }}" title = ""
+            <img width = "133px" alt="{{ i.rms_obs_id }}" title = ""
 
             {% if 'http' in i.img %}
 
@@ -15,7 +15,7 @@
             {% endif %}
 
              <!-- div class="text">
-                <div class="inner">{{ i.ring_obs_id }}</div>
+                <div class="inner">{{ i.rms_obs_id }}</div>
              </div -->
 
         </a>

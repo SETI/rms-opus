@@ -14,11 +14,11 @@ from results.views import (
 urlpatterns = [
     url(r'^api/data.(json|zip|html|csv)$', getData),
     url(r'^api/images/(thumb|small|med|full).(json|zip|html|csv)$',getImages),
-    url(r'^api/image/(?P<size>[thumb|small|med|full]+)/(?P<ring_obs_id>[0-9a-zA-Z\-_]+).(?P<fmt>[json|zip|html|csv]+)$', getImage),
-    url(r'^api/files/(?P<ring_obs_id>[0-9a-zA-Z\-_]+).(?P<fmt>[json|zip|html|csv]+)$',getFilesAPI),
+    url(r'^api/image/(?P<size>[thumb|small|med|full]+)/(?P<rms_obs_id>[0-9a-zA-Z\-_]+).(?P<fmt>[json|zip|html|csv]+)$', getImage),
+    url(r'^api/files/(?P<rms_obs_id>[0-9a-zA-Z\-_]+).(?P<fmt>[json|zip|html|csv]+)$',getFilesAPI),
     url(r'^api/files.(?P<fmt>[json|zip|html|csv]+)$', getFilesAPI),
-    url(r'^api/metadata/(?P<ring_obs_id>[0-9a-zA-Z\-_]+).(?P<fmt>[json|html]+)$', get_metadata),
+    url(r'^api/metadata/(?P<rms_obs_id>[0-9a-zA-Z\-_]+).(?P<fmt>[json|html]+)$', get_metadata),
     url(r'^api/categories.json$', category_list_http_endpoint),
-    url(r'^api/categories/(?P<ring_obs_id>[0-9a-zA-Z\-_]+).json$', get_all_categories),
+    url(r'^api/categories/(?P<rms_obs_id>[0-9a-zA-Z\-_]+).json$', get_all_categories),
     url(r'^collections/data.csv$',get_collection_csv),
 ]
