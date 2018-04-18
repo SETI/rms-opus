@@ -307,7 +307,6 @@ def getRangeEndpoints(request,slug,fmt='json'):
             if range_endpoints['min'] is not None:
                 range_endpoints['min'] = ObsGeneral.objects.filter(**{param1:range_endpoints['min']})[0].time1
             if range_endpoints['max'] is not None:
-                print '***', ObsGeneral.objects.filter(**{param2:range_endpoints['max']})
                 range_endpoints['max'] = ObsGeneral.objects.filter(**{param2:range_endpoints['max']})[0].time2
 
     else:

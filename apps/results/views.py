@@ -226,7 +226,6 @@ def get_metadata(request, rms_obs_id, fmt):
 
     """
     update_metrics(request)
-    print "HERE"
     if not rms_obs_id: raise Http404
 
     try:

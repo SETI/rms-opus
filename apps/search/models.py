@@ -148,7 +148,7 @@ class MultObsGeneralTargetName(models.Model):
         ordering = ['label']
 
 
-class MultObsGeneralTypeId(models.Model):
+class MultObsGeneralDataType(models.Model):
     value = models.CharField(unique=True, max_length=50, blank=True, null = True)
     label = models.CharField(unique=True, max_length=50, blank=True, null = True)
     disp_order = models.IntegerField(null=True, blank=True)
@@ -158,7 +158,7 @@ class MultObsGeneralTypeId(models.Model):
         return self.label
 
     class Meta:
-        db_table = u'mult_obs_general_type_id'
+        db_table = u'mult_obs_general_data_type'
         ordering = ['disp_order']
 
 
@@ -874,7 +874,7 @@ class MultObsInstrumentVgissShutterMode(models.Model):
         ordering = ['disp_order']
 
 
-class MultObsMissionCassiniCassiniTargetName(models.Model):
+class MultObsMissionCassiniCassiniTargetCode(models.Model):
     value = models.CharField(unique=True, max_length=50, blank=True, null = True)
     label = models.CharField(unique=True, max_length=50, blank=True, null = True)
     disp_order = models.IntegerField(null=True, blank=True)
@@ -884,11 +884,11 @@ class MultObsMissionCassiniCassiniTargetName(models.Model):
         return self.label
 
     class Meta:
-        db_table = u'mult_obs_mission_cassini_cassini_target_name'
+        db_table = u'mult_obs_mission_cassini_cassini_target_code'
         ordering = ['disp_order']
 
 
-class MultObsMissionCassiniPrime(models.Model):
+class MultObsMissionCassiniIsPrime(models.Model):
     value = models.CharField(unique=True, max_length=50, blank=True, null = True)
     label = models.CharField(unique=True, max_length=50, blank=True, null = True)
     disp_order = models.IntegerField(null=True, blank=True)
@@ -898,7 +898,7 @@ class MultObsMissionCassiniPrime(models.Model):
         return self.label
 
     class Meta:
-        db_table = u'mult_obs_mission_cassini_prime'
+        db_table = u'mult_obs_mission_cassini_is_prime'
         ordering = ['disp_order']
 
 
@@ -1139,7 +1139,6 @@ class ObsGeneral(models.Model):
     mult_obs_general_instrument_id = models.ForeignKey(MultObsGeneralInstrumentId, db_column="mult_obs_general_instrument_id", db_index=False, null=True, blank=True)
     inst_host_id = models.CharField(max_length=3, blank=True, null=True, choices = OBS_GENERAL_INST_HOST_ID_CHOICES)
     mult_obs_general_inst_host_id = models.ForeignKey(MultObsGeneralInstHostId, db_column="mult_obs_general_inst_host_id", db_index=False, null=True, blank=True)
-    is_image = models.CharField(max_length=1, blank=True, null=True)
     mission_id = models.CharField(max_length=2, blank=True, null=True, choices = OBS_GENERAL_MISSION_ID_CHOICES)
     mult_obs_general_mission_id = models.ForeignKey(MultObsGeneralMissionId, db_column="mult_obs_general_mission_id", db_index=False, null=True, blank=True)
     note = models.CharField(max_length=255, blank=True, null=True)
@@ -1160,9 +1159,8 @@ class ObsGeneral(models.Model):
     time_sec2 = models.FloatField(blank=True, null=True, choices = OBS_GENERAL_TARGET_NAME_CHOICES)
     time1 = models.CharField(max_length=25, blank=True, null=True, choices = OBS_GENERAL_TARGET_NAME_CHOICES)
     time2 = models.CharField(max_length=25, blank=True, null=True, choices = OBS_GENERAL_TARGET_NAME_CHOICES)
-    type_id = models.CharField(max_length=7, blank=True, null=True, choices = OBS_GENERAL_TYPE_ID_CHOICES)
-    mult_obs_general_type_id = models.ForeignKey(MultObsGeneralTypeId, db_column="mult_obs_general_type_id", db_index=False, null=True, blank=True)
-    volume_id_list = models.CharField(max_length=200, blank=True, null=True)
+    data_type = models.CharField(max_length=7, blank=True, null=True, choices = OBS_GENERAL_TYPE_ID_CHOICES)
+    mult_obs_general_data_type = models.ForeignKey(MultObsGeneralDataType, db_column="mult_obs_general_data_type", db_index=False, null=True, blank=True)
     rms_obs_id = models.CharField(max_length=40, blank=True, null=True)
 
     class Meta:
@@ -1442,15 +1440,15 @@ class ObsMissionNewHorizons(models.Model):
 class ObsMissionCassini(models.Model):
     obs_general = models.ForeignKey(ObsGeneral, db_column="obs_general_id", null=True, blank=True)
     activity_name = models.CharField(max_length=9, blank=True, null=True)
-    cassini_target_name = models.CharField(max_length=50, blank=True, null=True, choices = OBS_MISSION_CASSINI_CASSINI_TARGET_NAME_CHOICES)
-    mult_obs_mission_cassini_cassini_target_name = models.ForeignKey(MultObsMissionCassiniCassiniTargetName, db_column="mult_obs_mission_cassini_cassini_target_name", db_index=False, null=True, blank=True)
+    cassini_target_code = models.CharField(max_length=50, blank=True, null=True, choices = OBS_MISSION_CASSINI_CASSINI_TARGET_NAME_CHOICES)
+    mult_obs_mission_cassini_cassini_target_code = models.ForeignKey(MultObsMissionCassiniCassiniTargetCode, db_column="mult_obs_mission_cassini_cassini_target_code", db_index=False, null=True, blank=True)
     ert_sec1 = models.FloatField(blank=True, null=True)
     ert_sec2 = models.FloatField(blank=True, null=True)
     ert1 = models.CharField(max_length=25, blank=True, null=True, choices = OBS_GENERAL_TARGET_NAME_CHOICES)
     ert2 = models.CharField(max_length=25, blank=True, null=True, choices = OBS_GENERAL_TARGET_NAME_CHOICES)
     obs_name = models.CharField(max_length=30, blank=True, null=True)
-    prime = models.CharField(max_length=1, blank=True, null=True, choices = OBS_MISSION_CASSINI_PRIME_CHOICES)
-    mult_obs_mission_cassini_prime = models.ForeignKey(MultObsMissionCassiniPrime, db_column="mult_obs_mission_cassini_prime", db_index=False, null=True, blank=True)
+    is_prime = models.CharField(max_length=1, blank=True, null=True, choices = OBS_MISSION_CASSINI_PRIME_CHOICES)
+    mult_obs_mission_cassini_is_prime = models.ForeignKey(MultObsMissionCassiniIsPrime, db_column="mult_obs_mission_cassini_is_prime", db_index=False, null=True, blank=True)
     prime_inst_id = models.CharField(max_length=6, blank=True, null=True, choices = OBS_MISSION_CASSINI_PRIME_INST_ID_CHOICES)
     mult_obs_mission_cassini_prime_inst_id = models.ForeignKey(MultObsMissionCassiniPrimeInstId, db_column="mult_obs_mission_cassini_prime_inst_id", db_index=False, null=True, blank=True)
     rev_no = models.CharField(max_length=3, blank=True, null=True, choices = OBS_MISSION_CASSINI_REV_NO_CHOICES)

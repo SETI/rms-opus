@@ -116,7 +116,6 @@ def get_download_info(product_types, previews, colls_table_name):
             if not total_size_images:
                 total_size_images = 0
 
-    print total_size_products, total_size_images
     total_size = total_size_products + total_size_images
     file_count = file_count_products + file_count_images
     return total_size, file_count  # bytes
