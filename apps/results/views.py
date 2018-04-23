@@ -387,8 +387,8 @@ def get_triggered_tables(selections, extras=None):
         # surface geometry have multiple targets per observation
         # so we just want to know if our val is in the result (not the only result)
         if 'obs_surface_geometry.target_name' in selections:
-            if trigger_tab == 'obs_surface_geometry' and trigger_val == selections['obs_surface_geometry.target_name'][0]:
-                if trigger_val in [r['target_name'] for r in results]:
+            if trigger_tab == 'obs_surface_geometry' and trigger_val.upper() == selections['obs_surface_geometry.target_name'][0].upper():
+                if trigger_val.upper() in [r['target_name'].upper() for r in results]:
                     triggered_tables.append(partable)
 
 
