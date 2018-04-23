@@ -52,7 +52,7 @@
         "pi_units": null
     },
     {
-        "field_name": "OBSERVATION_TYPE",
+        "field_name": "observation_type",
         "field_type": "char8",
         "field_notnull": true,
         "data_source": [
@@ -75,7 +75,7 @@
         "pi_units": null
     },
     {
-        "field_name": "INTEGRATION_DURATION",
+        "field_name": "integration_duration",
         "field_type": "real8",
         "field_defalut": null,
         "data_source": [
@@ -101,7 +101,7 @@
         "pi_units": null
     },
     {
-        "field_name": "COMPRESSION_TYPE",
+        "field_name": "compression_type",
         "field_type": "char8",
         "field_notnull": true,
         "data_source": [
@@ -124,7 +124,7 @@
         "pi_units": null
     },
     {
-        "field_name": "HI_VOLTAGE_POWER_SUPPLY_STATE",
+        "field_name": "hi_voltage_power_supply_state",
         "field_type": "char6",
         "field_notnull": true,
         "data_source": [
@@ -147,7 +147,7 @@
         "pi_units": null
     },
     {
-        "field_name": "OCCULTATION_PORT_STATE",
+        "field_name": "occultation_port_state",
         "field_type": "char16",
         "field_notnull": true,
         "data_source": [
@@ -170,7 +170,7 @@
         "pi_units": null
     },
     {
-        "field_name": "SLIT_STATE",
+        "field_name": "slit_state",
         "field_type": "char16",
         "field_notnull": true,
         "data_source": [
@@ -193,7 +193,7 @@
         "pi_units": null
     },
     {
-        "field_name": "TEST_PULSE_STATE",
+        "field_name": "test_pulse_state",
         "field_type": "char8",
         "field_notnull": true,
         "data_source": [
@@ -216,7 +216,7 @@
         "pi_units": null
     },
     {
-        "field_name": "ODC_ID",
+        "field_name": "odc_id",
         "field_type": "int4",
         "field_notnull": true,
         "data_source": [
@@ -241,7 +241,7 @@
         "pi_units": null
     },
     {
-        "field_name": "DWELL_TIME",
+        "field_name": "dwell_time",
         "field_type": "int4",
         "field_default": null,
         "data_source": [
@@ -267,7 +267,7 @@
         "pi_units": null
     },
     {
-        "field_name": "H_LEVEL",
+        "field_name": "h_level",
         "field_type": "char128",
         "field_notnull": true,
         "data_source": [
@@ -276,7 +276,7 @@
         ]
     },
     {
-        "field_name": "D_LEVEL",
+        "field_name": "d_level",
         "field_type": "char128",
         "field_notnull": true,
         "data_source": [
@@ -307,7 +307,7 @@
         "pi_units": null
     },
     {
-        "field_name": "BAND1",
+        "field_name": "band1",
         "field_type": "int4",
         "field_default": null,
         "data_source": [
@@ -332,7 +332,7 @@
         "pi_units": null
     },
     {
-        "field_name": "BAND2",
+        "field_name": "band2",
         "field_type": "int4",
         "field_default": null,
         "field_default": null,
@@ -358,7 +358,7 @@
         "pi_units": null
     },
     {
-        "field_name": "BAND_BIN",
+        "field_name": "band_bin",
         "field_type": "int4",
         "field_default": null,
         "data_source": [
@@ -383,7 +383,7 @@
         "pi_units": null
     },
     {
-        "field_name": "LINE1",
+        "field_name": "line1",
         "field_type": "int4",
         "field_default": null,
         "data_source": [
@@ -408,7 +408,7 @@
         "pi_units": null
     },
     {
-        "field_name": "LINE2",
+        "field_name": "line2",
         "field_type": "int4",
         "field_default": null,
         "data_source": [
@@ -433,7 +433,7 @@
         "pi_units": null
     },
     {
-        "field_name": "LINE_BIN",
+        "field_name": "line_bin",
         "field_type": "int4",
         "field_default": null,
         "data_source": [
@@ -458,7 +458,7 @@
         "pi_units": null
     },
     {
-        "field_name": "SAMPLES",
+        "field_name": "samples",
         "field_type": "int4",
         "field_default": null,
         "data_source": [
@@ -483,7 +483,7 @@
         "pi_units": null
     },
     {
-        "field_name": "mult_obs_instrument_COUVIS_OBSERVATION_TYPE",
+        "field_name": "mult_obs_instrument_couvis_observation_type",
         "field_type": "uint4",
         "field_key": "foreign",
         "field_key_foreign": [
@@ -493,7 +493,7 @@
         "field_notnull": true
     },
     {
-        "field_name": "mult_obs_instrument_COUVIS_COMPRESSION_TYPE",
+        "field_name": "mult_obs_instrument_couvis_compression_type",
         "field_type": "uint4",
         "field_key": "foreign",
         "field_key_foreign": [
@@ -503,7 +503,7 @@
         "field_notnull": true
     },
     {
-        "field_name": "mult_obs_instrument_COUVIS_HI_VOLTAGE_POWER_SUPPLY_STATE",
+        "field_name": "mult_obs_instrument_couvis_hi_voltage_POWER_SUPPLY_STATE",
         "field_type": "uint4",
         "field_key": "foreign",
         "field_key_foreign": [
@@ -513,7 +513,7 @@
         "field_notnull": true
     },
     {
-        "field_name": "mult_obs_instrument_COUVIS_OCCULTATION_PORT_STATE",
+        "field_name": "mult_obs_instrument_couvis_occultation_port_STATE",
         "field_type": "uint4",
         "field_key": "foreign",
         "field_key_foreign": [
@@ -523,7 +523,7 @@
         "field_notnull": true
     },
     {
-        "field_name": "mult_obs_instrument_COUVIS_SLIT_STATE",
+        "field_name": "mult_obs_instrument_couvis_slit_state",
         "field_type": "uint4",
         "field_key": "foreign",
         "field_key_foreign": [
@@ -533,7 +533,7 @@
         "field_notnull": true
     },
     {
-        "field_name": "mult_obs_instrument_COUVIS_TEST_PULSE_STATE",
+        "field_name": "mult_obs_instrument_couvis_test_pulse_STATE",
         "field_type": "uint4",
         "field_key": "foreign",
         "field_key_foreign": [
@@ -543,7 +543,7 @@
         "field_notnull": true
     },
     {
-        "field_name": "mult_obs_instrument_COUVIS_DWELL_TIME",
+        "field_name": "mult_obs_instrument_couvis_dwell_time",
         "field_type": "uint4",
         "field_key": "foreign",
         "field_key_foreign": [
@@ -553,7 +553,7 @@
         "field_notnull": true
     },
     {
-        "field_name": "mult_obs_instrument_COUVIS_channel",
+        "field_name": "mult_obs_instrument_couvis_channel",
         "field_type": "uint4",
         "field_key": "foreign",
         "field_key_foreign": [

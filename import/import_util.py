@@ -115,14 +115,15 @@ def safe_pdstable_read(filename):
 
 def table_name_obs_mission(mission_name):
     assert mission_name in MISSION_ABBREV_TO_MISSION_TABLE_SFX
-    return 'obs_mission_'+MISSION_ABBREV_TO_MISSION_TABLE_SFX[mission_name]
+    return ('obs_mission_'+
+            MISSION_ABBREV_TO_MISSION_TABLE_SFX[mission_name].lower())
 
 def table_name_obs_instrument(inst_name):
     assert inst_name in INSTRUMENT_ABBREV_TO_MISSION_ABBREV
-    return 'obs_instrument_'+inst_name
+    return 'obs_instrument_'+inst_name.lower()
 
 def table_name_mult(table_name, field_name):
-    return 'mult_'+table_name+'_'+field_name
+    return 'mult_'+table_name.lower()+'_'+field_name.lower()
 
 def table_name_param_info(namespace):
     return impglobals.DATABASES.convert_raw_to_namespace(namespace,
@@ -132,7 +133,7 @@ def table_name_partables(namespace):
     return impglobals.DATABASES.convert_raw_to_namespace(namespace, 'partables')
 
 def read_schema_for_table(table_name, replace=None):
-    table_name = table_name.replace(IMPORT_TABLE_TEMP_PREFIX, '')
+    table_name = table_name.replace(IMPORT_TABLE_TEMP_PREFIX, '').lower()
     if table_name.startswith('obs_surface_geometry__'):
         assert replace is None
         target_name = table_name.replace('obs_surface_geometry__', '')

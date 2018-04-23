@@ -604,7 +604,7 @@
         "pi_units": null
     },
     {
-        "field_name": "DATA_SET_ID",
+        "field_name": "data_set_id",
         "field_type": "char40",
         "field_notnull": true,
         "data_source": [

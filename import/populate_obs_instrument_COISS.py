@@ -332,7 +332,7 @@ def populate_obs_wavelength_COISS_spec_size(**kwargs):
 
 def populate_obs_wavelength_COISS_polarization_type(**kwargs):
     metadata = kwargs['metadata']
-    index_row = metadata['obs_instrument_COISS_row']
+    index_row = metadata['obs_instrument_coiss_row']
     the_filter = index_row['combined_filter']
     if the_filter.find('POL') != -1:
         return 'LINEAR'

@@ -69,7 +69,7 @@ class ImportDBSuper:
             sim_str = ''
             if self.read_only and mutates:
                 sim_str = '[SIM] '
-            self.logger.log('debug', '{sim_str} SQL COMMAND:'+
+            self.logger.log('debug', f'{sim_str} SQL COMMAND:'+
                                      pretty_cmd[:self._log_sql_char_limit])
         self._cmds_executed.append(cmd)
         if not self.read_only or not mutates:

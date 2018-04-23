@@ -52,7 +52,7 @@
         "comment": "The instrument_id is included here for ease of database manipulation only."
     },
     {
-        "field_name": "OBSERVATION_ID",
+        "field_name": "observation_id",
         "field_type": "char20",
         "field_notnull": true,
         "data_source": [
@@ -78,7 +78,7 @@
         "comment": "Definition is from GOSSI label."
     },
     {
-        "field_name": "ORBIT_NUMBER",
+        "field_name": "orbit_number",
         "field_type": "int4",
         "field_default": null,
         "field_notnull": true,

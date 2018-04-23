@@ -41,7 +41,7 @@
         "comment": "The volume_id is included here for ease of database manipulation only."
     },
     {
-        "field_name": "ANTIBLOOMING_STATE_FLAG",
+        "field_name": "antiblooming_state_flag",
         "field_type": "flag",
         "field_notnull": true,
         "data_source": [
@@ -66,7 +66,7 @@
         "comment": "Definition is from COISS label"
     },
     {
-        "field_name": "BIAS_STRIP_MEAN",
+        "field_name": "bias_strip_mean",
         "field_type": "real8",
         "field_default": null,
         "data_source": [
@@ -93,7 +93,7 @@
         "comment": "Definition is from COISS label"
     },
     {
-        "field_name": "CALIBRATION_LAMP_STATE_FLAG",
+        "field_name": "calibration_lamp_state_flag",
         "field_type": "flag",
         "field_default": null,
         "data_source": [
@@ -118,7 +118,7 @@
         "comment": "Definition is from COISS label"
     },
     {
-        "field_name": "COMMAND_SEQUENCE_NUMBER",
+        "field_name": "command_sequence_number",
         "field_type": "uint2",
         "field_default": null,
         "data_source": [
@@ -145,7 +145,7 @@
         "comment": "Definition is from COISS label"
     },
     {
-        "field_name": "DARK_STRIP_MEAN",
+        "field_name": "dark_strip_mean",
         "field_type": "real8",
         "field_default": null,
         "data_source": [
@@ -172,7 +172,7 @@
         "comment": "Definition is from COISS label"
     },
     {
-        "field_name": "DATA_CONVERSION_TYPE",
+        "field_name": "data_conversion_type",
         "field_type": "char5",
         "field_default": null,
         "field_key": true,
@@ -199,7 +199,7 @@
         "comment": "Definition is from COISS label"
     },
     {
-        "field_name": "DELAYED_READOUT_FLAG",
+        "field_name": "delayed_readout_flag",
         "field_type": "flag",
         "field_notnull": true,
         "data_source": [
@@ -224,7 +224,7 @@
         "comment": "Definition is from COISS label"
     },
     {
-        "field_name": "DETECTOR_TEMPERATURE",
+        "field_name": "detector_temperature",
         "field_type": "real8",
         "field_default": null,
         "data_source": [
@@ -252,7 +252,7 @@
         "comment": "Definition is from COISS label"
     },
     {
-        "field_name": "ELECTRONICS_BIAS",
+        "field_name": "electronics_bias",
         "field_type": "uint2",
         "field_default": null,
         "data_source": [
@@ -279,7 +279,7 @@
         "comment": "Definition is from COISS label"
     },
     {
-        "field_name": "EXPECTED_PACKETS",
+        "field_name": "expected_packets",
         "field_type": "uint2",
         "field_default": null,
         "data_source": [
@@ -306,7 +306,7 @@
         "comment": "Definition is from COISS label"
     },
     {
-        "field_name": "FILTER_NAME",
+        "field_name": "filter_name",
         "field_type": "char13",
         "field_default": null,
         "data_source": [
@@ -332,7 +332,7 @@
         "comment": "Definition is from COISS label"
     },
     {
-        "field_name": "FILTER_TEMPERATURE",
+        "field_name": "filter_temperature",
         "field_type": "real8",
         "field_default": null,
         "data_source": [
@@ -360,7 +360,7 @@
         "comment": "Definition is from COISS label"
     },
     {
-        "field_name": "FLIGHT_SOFTWARE_VERSION_ID",
+        "field_name": "flight_software_version_id",
         "field_type": "char4",
         "field_default": null,
         "data_source": [
@@ -385,7 +385,7 @@
         "comment": "Definition is from COISS label"
     },
     {
-        "field_name": "GAIN_MODE_ID",
+        "field_name": "gain_mode_id",
         "field_type": "char20",
         "field_default": null,
         "field_key": true,
@@ -412,7 +412,7 @@
         "comment": "Definition is from COISS label"
     },
     {
-        "field_name": "IMAGE_OBSERVATION_TYPE",
+        "field_name": "image_observation_type",
         "field_type": "char48",
         "field_default": null,
         "field_key": true,
@@ -439,7 +439,7 @@
         "comment": "Definition is from COISS label"
     },
     {
-        "field_name": "INSTRUMENT_DATA_RATE",
+        "field_name": "instrument_data_rate",
         "field_type": "real8",
         "field_default": null,
         "data_source": [
@@ -467,7 +467,7 @@
         "comment": "Definition is from COISS label"
     },
     {
-        "field_name": "INST_CMPRS_RATE_expected_average",
+        "field_name": "inst_cmprs_rate_expected_average",
         "field_type": "real8",
         "field_default": null,
         "data_source": [
@@ -495,7 +495,7 @@
         "comment": "Definition is from COISS label"
     },
     {
-        "field_name": "INST_CMPRS_RATE_actual_average",
+        "field_name": "inst_cmprs_rate_actual_average",
         "field_type": "real8",
         "field_default": null,
         "data_source": [
@@ -523,7 +523,7 @@
         "comment": "Definition is from COISS label"
     },
     {
-        "field_name": "LIGHT_FLOOD_STATE_FLAG",
+        "field_name": "light_flood_state_flag",
         "field_type": "flag",
         "field_notnull": true,
         "data_source": [
@@ -548,7 +548,7 @@
         "comment": "Definition is from COISS label"
     },
     {
-        "field_name": "METHOD_DESC",
+        "field_name": "method_desc",
         "field_type": "char75",
         "field_default": null,
         "data_source": [
@@ -573,7 +573,7 @@
         "comment": "Definition is from COISS label"
     },
     {
-        "field_name": "MISSING_LINES",
+        "field_name": "missing_lines",
         "field_type": "int2",
         "field_default": null,
         "field_key": true,
@@ -603,7 +603,7 @@
         "comment": "Definition is from COISS label"
     },
     {
-        "field_name": "MISSING_PACKET_FLAG",
+        "field_name": "missing_packet_flag",
         "field_type": "flag",
         "field_default": null,
         "data_source": [
@@ -628,7 +628,7 @@
         "comment": "Definition is from COISS label"
     },
     {
-        "field_name": "OPTICS_TEMPERATURE_front",
+        "field_name": "optics_temperature_front",
         "field_type": "real8",
         "field_default": null,
         "data_source": [
@@ -656,7 +656,7 @@
         "comment": "Definition is from COISS label"
     },
     {
-        "field_name": "OPTICS_TEMPERATURE_rear",
+        "field_name": "optics_temperature_rear",
         "field_type": "real8",
         "field_default": null,
         "data_source": [
@@ -684,7 +684,7 @@
         "comment": "Definition is from COISS label"
     },
     {
-        "field_name": "ORDER_NUMBER",
+        "field_name": "order_number",
         "field_type": "uint2",
         "field_default": null,
         "data_source": [
@@ -711,7 +711,7 @@
         "comment": "Definition is from COISS label"
     },
     {
-        "field_name": "PARALLEL_CLOCK_VOLTAGE_INDEX",
+        "field_name": "parallel_clock_voltage_index",
         "field_type": "uint2",
         "field_default": null,
         "data_source": [
@@ -738,7 +738,7 @@
         "comment": "Definition is from COISS label"
     },
     {
-        "field_name": "PREPARE_CYCLE_INDEX",
+        "field_name": "prepare_cycle_index",
         "field_type": "int1",
         "field_default": null,
         "data_source": [
@@ -765,7 +765,7 @@
         "comment": "Definition is from COISS label"
     },
     {
-        "field_name": "PRODUCT_VERSION_TYPE",
+        "field_name": "product_version_type",
         "field_type": "char11",
         "field_default": null,
         "data_source": [
@@ -790,7 +790,7 @@
         "comment": "Definition is from COISS label"
     },
     {
-        "field_name": "READOUT_CYCLE_INDEX",
+        "field_name": "readout_cycle_index",
         "field_type": "int1",
         "field_default": null,
         "data_source": [
@@ -817,7 +817,7 @@
         "comment": "Definition is from COISS label"
     },
     {
-        "field_name": "RECEIVED_PACKETS",
+        "field_name": "received_packets",
         "field_type": "uint2",
         "field_default": null,
         "data_source": [
@@ -844,7 +844,7 @@
         "comment": "Definition is from COISS label"
     },
     {
-        "field_name": "SENSOR_HEAD_ELEC_TEMPERATURE",
+        "field_name": "sensor_head_elec_temperature",
         "field_type": "real8",
         "field_default": null,
         "data_source": [
@@ -872,7 +872,7 @@
         "comment": "Definition is from COISS label"
     },
     {
-        "field_name": "SEQUENCE_NUMBER",
+        "field_name": "sequence_number",
         "field_type": "uint2",
         "field_default": null,
         "data_source": [
@@ -899,7 +899,7 @@
         "comment": "Definition is from COISS label"
     },
     {
-        "field_name": "SEQUENCE_TITLE",
+        "field_name": "sequence_title",
         "field_type": "char60",
         "field_default": null,
         "data_source": [
@@ -924,7 +924,7 @@
         "comment": "Definition is from COISS label"
     },
     {
-        "field_name": "SHUTTER_MODE_ID",
+        "field_name": "shutter_mode_id",
         "field_type": "char7",
         "field_default": null,
         "field_key": true,
@@ -951,7 +951,7 @@
         "comment": "Definition is from COISS label"
     },
     {
-        "field_name": "SHUTTER_STATE_ID",
+        "field_name": "shutter_state_id",
         "field_type": "char8",
         "field_default": null,
         "field_key": true,
@@ -978,7 +978,7 @@
         "comment": "Definition is from COISS label"
     },
     {
-        "field_name": "SOFTWARE_VERSION_ID",
+        "field_name": "software_version_id",
         "field_type": "char20",
         "field_default": null,
         "data_source": [
@@ -1003,7 +1003,7 @@
         "comment": "Definition is from COISS label"
     },
     {
-        "field_name": "TELEMETRY_FORMAT_ID",
+        "field_name": "telemetry_format_id",
         "field_type": "char16",
         "field_default": null,
         "field_key": true,
@@ -1030,7 +1030,7 @@
         "comment": "Definition is from COISS label"
     },
     {
-        "field_name": "VALID_MAXIMUM_minimum_full_well_saturation_level",
+        "field_name": "valid_maximum_minimum_full_well_saturation_level",
         "field_type": "uint2",
         "field_default": null,
         "data_source": [
@@ -1057,7 +1057,7 @@
         "comment": "Definition is from COISS label"
     },
     {
-        "field_name": "VALID_MAXIMUM_maximum_DN_saturation_level",
+        "field_name": "valid_maximum_maximum_dn_saturation_level",
         "field_type": "uint2",
         "field_default": null,
         "data_source": [
@@ -1084,7 +1084,7 @@
         "comment": "Definition is from COISS label"
     },
     {
-        "field_name": "PRODUCT_TYPE",
+        "field_name": "product_type",
         "field_type": "char4",
         "field_default": null,
         "data_source": [
@@ -1109,7 +1109,7 @@
         "comment": "Definition is from COISS label"
     },
     {
-        "field_name": "STANDARD_DATA_PRODUCT_ID",
+        "field_name": "standard_data_product_id",
         "field_type": "char7",
         "field_default": null,
         "data_source": [
@@ -1134,7 +1134,7 @@
         "comment": "Definition is from COISS label"
     },
     {
-        "field_name": "IMAGE_NUMBER",
+        "field_name": "image_number",
         "field_type": "int4",
         "field_notnull": true,
         "field_key": true,
@@ -1160,7 +1160,7 @@
         "comment": "Definition is from COISS label"
     },
     {
-        "field_name": "INSTRUMENT_MODE_ID",
+        "field_name": "instrument_mode_id",
         "field_type": "char4",
         "field_notnull": true,
         "field_key": true,
@@ -1186,7 +1186,7 @@
         "comment": "Definition is from COISS label"
     },
     {
-        "field_name": "TARGET_DESC",
+        "field_name": "target_desc",
         "field_type": "char75",
         "field_notnull": true,
         "field_key": true,
@@ -1212,7 +1212,7 @@
         "comment": "Definition is from COISS label"
     },
     {
-        "field_name": "IMAGE_MID_TIME",
+        "field_name": "image_mid_time",
         "field_type": "char22",
         "field_notnull": true,
         "data_source": [
@@ -1237,7 +1237,7 @@
         "comment": "Definition is from COISS label"
     },
     {
-        "field_name": "IMAGE_TIME",
+        "field_name": "image_time",
         "field_type": "char22",
         "field_notnull": true,
         "data_source": [
@@ -1262,7 +1262,7 @@
         "comment": "Definition is from COISS label"
     },
     {
-        "field_name": "PRODUCT_CREATION_TIME",
+        "field_name": "product_creation_time",
         "field_type": "char22",
         "field_notnull": true,
         "data_source": [
@@ -1287,7 +1287,7 @@
         "comment": "Definition is from COISS label"
     },
     {
-        "field_name": "PRODUCT_ID",
+        "field_name": "product_id",
         "field_type": "char18",
         "field_notnull": true,
         "data_source": [
@@ -1312,7 +1312,7 @@
         "comment": "Definition is from COISS label"
     },
     {
-        "field_name": "SEQUENCE_ID",
+        "field_name": "sequence_id",
         "field_type": "char4",
         "field_notnull": true,
         "data_source": [

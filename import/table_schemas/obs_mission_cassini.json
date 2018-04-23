@@ -372,7 +372,7 @@
         "pi_units": ""
     },
     {
-        "field_name": "MISSION_PHASE_NAME",
+        "field_name": "mission_phase_name",
         "field_type": "char32",
         "field_notnull": true,
         "field_key": true,

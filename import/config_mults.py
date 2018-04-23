@@ -99,24 +99,24 @@ PREPROGRAMMED_MULT_TABLE_CONTENTS = {
 
     ### OBS_INSTRUMENT_COISS ###
 
-    'mult_obs_instrument_COISS_camera': [
+    'mult_obs_instrument_coiss_camera': [
         (   0, 'N', 'Narrow Angle Camera',   10, 'Y'),
         (   1, 'W',   'Wide Angle Camera',   20, 'Y'),
     ],
 
-    'mult_obs_instrument_COISS_SHUTTER_MODE_ID': [
+    'mult_obs_instrument_coiss_shutter_mode_id': [
         (   0, 'NACONLY', 'Narrow Angle Camera Only',   10, 'Y'),
         (   1, 'WACONLY',   'Wide Angle Camera Only',   20, 'Y'),
         (   2,  'BOTSIM',      'Both Simultaneously',   30, 'Y'),
     ],
 
-    'mult_obs_instrument_COISS_DATA_CONVERSION_TYPE': [
+    'mult_obs_instrument_coiss_data_conversion_type': [
         (   0, '12BIT',                 'No conversion',   10, 'Y'),
         (   1,  '8LSB', 'Keep 8 Least Significant Bits',   20, 'Y'),
         (   2, 'TABLE',      'Table Lookup',               30, 'Y'),
     ],
 
-    'mult_obs_instrument_COISS_GAIN_MODE_ID': [
+    'mult_obs_instrument_coiss_gain_mode_id': [
         (   0,  '12 ELECTRONS PER DN',  '12 Electrons per DN',   10, 'Y'),
         (   1,  '29 ELECTRONS PER DN',  '29 Electrons per DN',   20, 'Y'),
         (   2,  '95 ELECTRONS PER DN',  '95 Electrons per DN',   30, 'Y'),
@@ -133,14 +133,14 @@ PREPROGRAMMED_MULT_TABLE_CONTENTS = {
 
     ### OBS_INSTRUMENT_VGISS ###
 
-    'mult_obs_instrument_VGISS_camera': [
+    'mult_obs_instrument_vgiss_camera': [
         (   0, 'N', 'Narrow Angle',   10, 'Y'),
         (   1, 'W',   'Wide Angle',   20, 'Y'),
     ],
 
     ### OBS_MISSION_HUBBLE ###
 
-    'mult_obs_mission_hubble_DETECTOR_ID': [
+    'mult_obs_mission_hubble_detector_id': [
         (   0,   'HRC',   'ACS-HRC',   10, 'Y'),
         (   1,   'SBC',   'ACS-SBC',   20, 'Y'),
         (   2,   'WFC',  'ACS-WFC3',   30, 'Y'),
@@ -151,7 +151,7 @@ PREPROGRAMMED_MULT_TABLE_CONTENTS = {
 
     ### OBS_TYPE_IMAGE ###
 
-    'mult_obs_type_image_image_data_type': [
+    'mult_obs_type_image_image_type_id': [
         (   0, 'FRAM',       'Frame',   10, 'Y'),
         (   1, 'PUSH',   'Pushbroom',   20, 'Y'),
         (   2, 'RAST', 'Raster Scan',   30, 'Y'),

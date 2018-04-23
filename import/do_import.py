@@ -96,8 +96,8 @@ def create_tables_for_import(volume_id, namespace):
     table_schemas = {}
     table_names_in_order = []
     for table_name in TABLES_TO_POPULATE:
-        table_name = table_name.replace('<INST>', instrument_name)
-        table_name = table_name.replace('<MISSION>', mission_name)
+        table_name = table_name.replace('<INST>', instrument_name.lower())
+        table_name = table_name.replace('<MISSION>', mission_name.lower())
         table_names_in_order.append(table_name)
 
         if table_name.startswith('obs_surface_geometry__'):
@@ -169,7 +169,8 @@ def copy_volume_from_import_to_permanent(volume_id):
         if not impglobals.DATABASE.table_exists('perm', table_name):
             table_schema = import_util.read_schema_for_table(
                                             'obs_surface_geometry_target',
-                                            replace=('<TARGET>', target_name))
+                                            replace=('<TARGET>',
+                                                     target_name.lower()))
             impglobals.DATABASE.create_table('perm', table_name, table_schema)
         impglobals.LOGGER.log('debug', f'Copying table "{table_name}"')
         where = f'volume_id="{volume_id}"'
@@ -644,7 +645,8 @@ def import_one_volume(volume_id):
                     # obs_surface_geometry. This is fine because we want the
                     # generalized obs_surface_geometry to include all the
                     # targets.
-                    new_table_name = table_name.replace('<TARGET>', target_name)
+                    new_table_name = table_name.replace('<TARGET>',
+                                                        target_name.lower())
                     metadata['body_surface_geo_row'] = target_dict[target_name]
 
                     row = import_observation_table(volume_id,
@@ -673,12 +675,14 @@ def import_one_volume(volume_id):
                                             table_rows[table_name])
         else:
             for target_name in sorted(used_targets):
-                new_table_name = table_name.replace('<TARGET>', target_name)
+                new_table_name = table_name.replace('<TARGET>',
+                                                    target_name.lower())
                 impglobals.LOGGER.log('debug',
                     f'Inserting into obs table "{new_table_name}"')
                 surface_geo_schema = import_util.read_schema_for_table(
                                             'obs_surface_geometry_target',
-                                            replace=('<TARGET>', target_name))
+                                            replace=('<TARGET>',
+                                                     target_name.lower()))
                 # We can finally get around to creating the
                 # obs_surface_geometry_<T> tables now that we know what targets
                 # we have
