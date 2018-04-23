@@ -1,0 +1,346 @@
+[
+    {
+        "field_name": "obs_general_id",
+        "field_type": "uint4",
+        "field_key": "foreign",
+        "field_key_foreign": [
+            "obs_general",
+            "id"
+        ],
+        "field_notnull": true,
+        "data_source": [
+            "TAB:obs_general",
+            "id"
+        ],
+        "comment": "This is the primary (surrograte) key linking the record to obs_general."
+    },
+    {
+        "field_name": "rms_obs_id",
+        "field_type": "char40",
+        "field_key": "foreign",
+        "field_key_foreign": [
+            "obs_general",
+            "rms_obs_id"
+        ],
+        "field_notnull": true,
+        "data_source": [
+            "TAB:obs_general",
+            "rms_obs_id"
+        ],
+        "comment": "This is the secondary key linking the record to obs_general."
+    },
+    {
+        "field_name": "volume_id",
+        "field_type": "char11",
+        "field_key": true,
+        "field_notnull": true,
+        "data_source": [
+            "TAB:obs_general",
+            "volume_id"
+        ],
+        "comment": "The volume_id is included here for ease of database manipulation only."
+    },
+    {
+        "field_name": "IMAGE_ID",
+        "field_type": "char7",
+        "field_notnull": true,
+        "data_source": [
+            "TAB:index",
+            "IMAGE_ID"
+        ],
+        "definition": "Image id which takes the form of XXYZZZZ.  XX is the orbit (A1, A2 etc is approach; C1, C2 is cruise). Y is the target body (J=Jupiter, A=Amalthea, I=Io, E=Europa, G=Ganymede, C=Callisto, S=Minor Satellites, R=ring, H=star, L=Moon, W=Earth, V=Venus, U=Ida, P=Gaspra). ZZZZ is the picture count which is generated in the sequence generation process and which is incremented separately for each target body in each orbit.",
+        "pi_category_name": "obs_instrument_GOSSI",
+        "pi_dict_context": "GOSSI",
+        "pi_dict_name": "IMAGE_ID",
+        "pi_disp_order": 3,
+        "pi_display": 1,
+        "pi_display_results": 1,
+        "pi_form_type": "STRING",
+        "pi_intro": null,
+        "pi_label": "Image ID",
+        "pi_label_results": "Image ID",
+        "pi_old_slug": "instrumentGOSSIIMAGEID",
+        "pi_slug": "GOSSIimageid",
+        "pi_sub_heading": null,
+        "pi_tooltip": "",
+        "pi_units": "",
+        "comment": "Definition is from GOSSI label."
+    },
+    {
+        "field_name": "FILTER_NAME",
+        "field_type": "char7",
+        "field_notnull": true,
+        "data_source": [
+            "TAB:index",
+            "FILTER_NAME"
+        ],
+        "definition": "Optical filter used for the image. Valid filters include: CLEAR, GREEN, RED, VIOLET, IR-7560, IR-9680, IR-7270, IR-8890.",
+        "pi_category_name": "obs_instrument_GOSSI",
+        "pi_dict_context": "GOSSI",
+        "pi_dict_name": "FILTER_NAME",
+        "pi_disp_order": 6,
+        "pi_display": 1,
+        "pi_display_results": 1,
+        "pi_form_type": "GROUP",
+        "pi_intro": null,
+        "pi_label": "Filter Name",
+        "pi_label_results": "Filter Name",
+        "pi_old_slug": "instrumentGOSSIFILTERNAME",
+        "pi_slug": "GOSSIfiltername",
+        "pi_sub_heading": null,
+        "pi_tooltip": "",
+        "pi_units": "",
+        "comment": "Definition is from GOSSI label."
+    },
+    {
+        "field_name": "FILTER_NUMBER",
+        "field_type": "int1",
+        "field_notnull": true,
+        "data_source": [
+            "TAB:index",
+            "FILTER_NUMBER"
+        ],
+        "definition": "Optical filter number, containing the unique number associated with the optical filter for the image. Valid 0-7.",
+        "pi_category_name": "obs_instrument_GOSSI",
+        "pi_dict_context": "GOSSI",
+        "pi_dict_name": "FILTER_NUMBER",
+        "pi_disp_order": 7,
+        "pi_display": 1,
+        "pi_display_results": 1,
+        "pi_form_type": "GROUP",
+        "pi_intro": null,
+        "pi_label": "Filter Number",
+        "pi_label_results": "Filter Number",
+        "pi_old_slug": "instrumentGOSSIFILTERNUMBER",
+        "pi_slug": "GOSSIfilternumber",
+        "pi_sub_heading": null,
+        "pi_tooltip": "",
+        "pi_units": "",
+        "comment": "Definition is from GOSSI label."
+    },
+    {
+        "field_name": "GAIN_MODE_ID",
+        "field_type": "enum",
+        "field_enum_options": "'400K','100K','40K','10K'",
+        "field_notnull": true,
+        "data_source": [
+            "TAB:index",
+            "GAIN_MODE_ID"
+        ],
+        "definition": "Gain mode of the camera. Valid 400K, 100K, 40K, 10K.",
+        "pi_category_name": "obs_instrument_GOSSI",
+        "pi_dict_context": "GOSSI",
+        "pi_dict_name": "GAIN_MODE_ID",
+        "pi_disp_order": 15,
+        "pi_display": 1,
+        "pi_display_results": 1,
+        "pi_form_type": "GROUP",
+        "pi_intro": null,
+        "pi_label": "Gain Mode ID",
+        "pi_label_results": "Gain Mode ID",
+        "pi_old_slug": "instrumentGOSSIGAINMODEID",
+        "pi_slug": "GOSSIgainmodeid",
+        "pi_sub_heading": null,
+        "pi_tooltip": "",
+        "pi_units": "",
+        "comment": "Definition is from GOSSI label."
+    },
+    {
+        "field_name": "FRAME_DURATION",
+        "field_type": "real8",
+        "field_notnull": true,
+        "data_source": [
+            "TAB:index",
+            "FRAME_DURATION"
+        ],
+        "definition": "Scan rate of the camera read out in seconds. Valid 2.333, 8.667, 30.333 60.667",
+        "pi_category_name": "obs_instrument_GOSSI",
+        "pi_dict_context": "GOSSI",
+        "pi_dict_name": "FRAME_DURATION",
+        "pi_disp_order": 14,
+        "pi_display": 1,
+        "pi_display_results": 1,
+        "pi_form_type": "RANGE",
+        "pi_intro": null,
+        "pi_label": "Frame Duration",
+        "pi_label_results": "Frame Duration",
+        "pi_old_slug": "FRAMEDURATION",
+        "pi_slug": "GOSSIframeduration",
+        "pi_sub_heading": null,
+        "pi_tooltip": "",
+        "pi_units": "seconds",
+        "comment": "Definition is from GOSSI label."
+    },
+    {
+        "field_name": "OBSTRUCTION_ID",
+        "field_type": "enum",
+        "field_enum_options": "'POSSIBLE','NOT POSSIBLE','PRESENCE VERIFIED'",
+        "field_notnull": true,
+        "data_source": [
+            "TAB:index",
+            "OBSTRUCTION_ID"
+        ],
+        "definition": "Identifies if a boom or other type of obstruction were obscuring the view of the camera during the exposure. Valid values include: POSSIBLE, NOT POSSIBLE, OR PRESENCE VERIFIED.",
+        "pi_category_name": "obs_instrument_GOSSI",
+        "pi_dict_context": "GOSSI",
+        "pi_dict_name": "OBSTRUCTION_ID",
+        "pi_disp_order": 13,
+        "pi_display": 1,
+        "pi_display_results": 1,
+        "pi_form_type": "GROUP",
+        "pi_intro": null,
+        "pi_label": "Obstruction ID",
+        "pi_label_results": "Obstruction ID",
+        "pi_old_slug": "OBSTRUCTIONID",
+        "pi_slug": "GOSSIobstructionid",
+        "pi_sub_heading": null,
+        "pi_tooltip": "",
+        "pi_units": "",
+        "comment": "Definition is from GOSSI label."
+    },
+    {
+        "field_name": "COMPRESSION_TYPE",
+        "field_type": "char27",
+        "field_notnull": true,
+        "data_source": [
+            "TAB:index",
+            "COMPRESSION_TYPE"
+        ],
+        "pi_category_name": "obs_instrument_GOSSI",
+        "pi_dict_context": "PSDD",
+        "pi_dict_name": "COMPRESSION_TYPE",
+        "pi_disp_order": 10,
+        "pi_display": 1,
+        "pi_display_results": 1,
+        "pi_form_type": "GROUP",
+        "pi_intro": null,
+        "pi_label": "Compression Type",
+        "pi_label_results": "Compression Type",
+        "pi_old_slug": "COMPRESSIONTYPE",
+        "pi_slug": "GOSSIcompressiontype",
+        "pi_sub_heading": null,
+        "pi_tooltip": "",
+        "pi_units": "",
+        "comment": "The definition for COMPRESSION_TYPE in the GOSSI label says nothing useful so we use the PSDD one."
+    },
+    {
+        "field_name": "ENCODING_MIN_COMPRESSION_RATIO",
+        "field_type": "real8",
+        "field_notnull": true,
+        "data_source": [
+            "TAB:index",
+            "ENCODING_MIN_COMPRESSION_RATIO"
+        ],
+        "pi_category_name": "obs_instrument_GOSSI",
+        "pi_dict_context": "GOSSI",
+        "pi_dict_name": "ENCODING_MIN_COMPRESSION_RATIO",
+        "pi_disp_order": 0,
+        "pi_display": 0,
+        "pi_display_results": 1,
+        "pi_form_type": null,
+        "pi_intro": null,
+        "pi_label": "Encoding Min Compression Ratio",
+        "pi_label_results": "Encoding Min Compression Ratio",
+        "pi_old_slug": "instrumentGOSSIENCODINGMINCOMPRESSIONRATIO",
+        "pi_slug": "GOSSIencodingmincompressionratio",
+        "pi_sub_heading": null,
+        "pi_tooltip": null,
+        "pi_units": null,
+        "comment": "Definition is from GOSSI label."
+    },
+    {
+        "field_name": "ENCODING_MAX_COMPRESSION_RATIO",
+        "field_type": "real8",
+        "field_notnull": true,
+        "data_source": [
+            "TAB:index",
+            "ENCODING_MAX_COMPRESSION_RATIO"
+        ],
+        "definition": "ICT or lossless maximum compression ratio.",
+        "pi_category_name": "obs_instrument_GOSSI",
+        "pi_dict_context": "GOSSI",
+        "pi_dict_name": "ENCODING_MAX_COMPRESSION_RATIO",
+        "pi_disp_order": 0,
+        "pi_display": 0,
+        "pi_display_results": 1,
+        "pi_form_type": null,
+        "pi_intro": null,
+        "pi_labelg": "Encoding Max Compression Ratio",
+        "pi_label_results": "Encoding Max Compression Ratio",
+        "pi_old_slug": "instrumentGOSSIENCODINGMAXCOMPRESSIONRATIO",
+        "pi_slug": "GOSSIencodingmaxcompressionratio",
+        "pi_sub_heading": null,
+        "pi_tooltip": null,
+        "pi_units": null,
+        "comment": "Definition is from GOSSI label."
+    },
+    {
+        "field_name": "ENCODING_COMPRESSION_RATIO",
+        "field_type": "real8",
+        "field_notnull": true,
+        "data_source": [
+            "TAB:index",
+            "ENCODING_COMPRESSION_RATIO"
+        ],
+        "definition": "ICT or lossless mean compression ratio",
+        "pi_category_name": "obs_instrument_GOSSI",
+        "pi_dict_context": "GOSSI",
+        "pi_dict_name": "ENCODING_COMPRESSION_RATIO",
+        "pi_disp_order": 9,
+        "pi_display": 1,
+        "pi_display_results": 1,
+        "pi_form_type": "RANGE",
+        "pi_intro": null,
+        "pi_label": "Encoding Mean Compression Ratio",
+        "pi_label_results": "Encoding Mean Compression Ratio",
+        "pi_old_slug": "ENCODINGCOMPRESSIONRATIO",
+        "pi_slug": "GOSSIencodingcompressionratio",
+        "pi_sub_heading": null,
+        "pi_tooltip": "",
+        "pi_units": "",
+        "comment": "Definition is from GOSSI label."
+    },
+    {
+        "field_name": "PROCESSING_HISTORY_TEXT",
+        "field_type": "char75",
+        "field_notnull": true,
+        "data_source": [
+            "TAB:index",
+            "PROCESSING_HISTORY_TEXT"
+        ],
+        "definition": "Processing history text.  List of all program names used to process image.",
+        "pi_category_name": "obs_instrument_GOSSI",
+        "pi_dict_context": "GOSSI",
+        "pi_dict_name": "PROCESSING_HISTORY_TEXT",
+        "pi_disp_order": 16,
+        "pi_display": 1,
+        "pi_display_results": 1,
+        "pi_form_type": "STRING",
+        "pi_intro": null,
+        "pi_label": "Processing History Text",
+        "pi_label_results": "Processing History Text",
+        "pi_old_slug": "PROCESSINGHISTORYTEXT",
+        "pi_slug": "GOSSIprocessinghistorytext",
+        "pi_sub_heading": null,
+        "pi_tooltip": "",
+        "pi_units": "",
+        "comment": "Definition is from GOSSI label."
+    },
+    {
+        "put_mults_here": true
+    },
+    {
+        "field_name": "id",
+        "field_type": "uint4",
+        "field_key": "primary",
+        "field_notnull": true,
+        "data_source": [
+            "MAX_ID",
+            null
+        ]
+    },
+    {
+        "field_name": "timestamp",
+        "field_type": "timestamp"
+    }
+]

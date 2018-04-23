@@ -1,0 +1,351 @@
+[
+    {
+        "field_name": "obs_general_id",
+        "field_type": "uint4",
+        "field_key": "foreign",
+        "field_key_foreign": [
+            "obs_general",
+            "id"
+        ],
+        "field_notnull": true,
+        "data_source": [
+            "TAB:obs_general",
+            "id"
+        ],
+        "comment": "This is the primary (surrograte) key linking the record to obs_general."
+    },
+    {
+        "field_name": "rms_obs_id",
+        "field_type": "char40",
+        "field_key": "foreign",
+        "field_key_foreign": [
+            "obs_general",
+            "rms_obs_id"
+        ],
+        "field_notnull": true,
+        "data_source": [
+            "TAB:obs_general",
+            "rms_obs_id"
+        ],
+        "comment": "This is the secondary key linking the record to obs_general."
+    },
+    {
+        "field_name": "volume_id",
+        "field_type": "char11",
+        "field_key": true,
+        "field_notnull": true,
+        "data_source": [
+            "TAB:obs_general",
+            "volume_id"
+        ],
+        "comment": "The volume_id is included here for ease of database manipulation only."
+    },
+    {
+        "field_name": "instrument_id",
+        "field_type": "char9",
+        "field_key": true,
+        "field_notnull": true,
+        "data_source": [
+            "TAB:obs_general",
+            "instrument_id"
+        ],
+        "comment": "The instrument_id is included here for ease of database manipulation only."
+    },
+    {
+        "field_name": "wavelength1",
+        "field_type": "real4",
+        "field_key": true,
+        "field_default": null,
+        "data_source": [
+            "FUNCTION",
+            "obs_wavelength_<INST>_wavelength1"
+        ],
+        "pi_category_name": "obs_wavelength",
+        "pi_dict_context": "PSDD",
+        "pi_dict_name": "WAVELENGTH",
+        "pi_disp_order": 3,
+        "pi_display": 1,
+        "pi_display_results": 1,
+        "pi_form_type": "RANGE",
+        "pi_intro": null,
+        "pi_label": "Wavelength",
+        "pi_label_results": "Wavelength (Min)",
+        "pi_slug": "wavelength1",
+        "pi_sub_heading": null,
+        "pi_tooltip": "",
+        "pi_units": "",
+        "comment": "XXX This should be updated for the real OPUS interpreation of wavelength"
+    },
+    {
+        "field_name": "wavelength2",
+        "field_type": "real4",
+        "field_key": true,
+        "field_default": null,
+        "data_source": [
+            "FUNCTION",
+            "obs_wavelength_<INST>_wavelength2"
+        ],
+        "pi_category_name": "obs_wavelength",
+        "pi_dict_context": "",
+        "pi_dict_name": "WAVELENGTH",
+        "pi_disp_order": 4,
+        "pi_display": 0,
+        "pi_display_results": 1,
+        "pi_form_type": "RANGE",
+        "pi_intro": null,
+        "pi_label": "Wavelength 2",
+        "pi_label_results": "Wavelength (Max)",
+        "pi_slug": "wavelength2",
+        "pi_sub_heading": null,
+        "pi_tooltip": "",
+        "pi_units": "",
+        "comment": "XXX This should be updated for the real OPUS interpreation of wavelength"
+    },
+    {
+        "field_name": "wave_res1",
+        "field_type": "real8",
+        "field_default": null,
+        "field_key": true,
+        "data_source": [
+            "FUNCTION",
+            "obs_wavelength_<INST>_wave_res1"
+        ],
+        "definition": "The wavelength_resolution indicates the smallest width of spectral lines that can be reliably detected in a data product.",
+        "pi_category_name": "obs_wavelength",
+        "pi_dict_context": "OPUS_WAVELENGTH",
+        "pi_dict_name": "WAVELENGTH_RESOLUTION",
+        "pi_disp_order": 7,
+        "pi_display": 1,
+        "pi_display_results": 1,
+        "pi_form_type": "RANGE",
+        "pi_intro": null,
+        "pi_label": "Wavelength Resolution",
+        "pi_label_results": "Wavelength Resolution (Min)",
+        "pi_slug": "waveres1",
+        "pi_sub_heading": null,
+        "pi_tooltip": "",
+        "pi_units": "micron",
+        "comment": "Definition is from old OPUS dictionary."
+    },
+    {
+        "field_name": "wave_res2",
+        "field_type": "real8",
+        "field_default": null,
+        "field_key": true,
+        "data_source": [
+            "FUNCTION",
+            "obs_wavelength_<INST>_wave_res2"
+        ],
+        "pi_category_name": "obs_wavelength",
+        "pi_dict_context": "OPUS_WAVELENGTH",
+        "pi_dict_name": "WAVELENGTH_RESOLUTION",
+        "pi_disp_order": 8,
+        "pi_display": 0,
+        "pi_display_results": 1,
+        "pi_form_type": "RANGE",
+        "pi_intro": null,
+        "pi_label": "Wavelength Resolution 2",
+        "pi_label_results": "Wavelength Resolution (Max)",
+        "pi_slug": "waveres2",
+        "pi_sub_heading": null,
+        "pi_tooltip": "",
+        "pi_units": "",
+        "comment": "Definition is from old OPUS dictionary."
+    },
+    {
+        "field_name": "wave_no1",
+        "field_type": "real8",
+        "field_default": null,
+        "field_key": true,
+        "data_source": [
+            "FUNCTION",
+            "obs_wavelength_<INST>_wave_no1"
+        ],
+        "data_source_order": 10,
+        "definition": "The wavenumber indicates the reciprocal of the wavelength, i.e., the number of waves per unit of length. It is typically measured in units of inverse centimeters. This quantity is defined to support certain instruments that measure spectra in uniformly-spaced steps of wavenumber rather than wavelength. See also wavelength.",
+        "pi_category_name": "obs_wavelength",
+        "pi_dict_context": "OPUS_WAVELENGTH",
+        "pi_dict_name": "WAVENUMBER",
+        "pi_disp_order": 9,
+        "pi_display": 1,
+        "pi_display_results": 1,
+        "pi_form_type": "RANGE",
+        "pi_intro": null,
+        "pi_label": "Wavenumber",
+        "pi_label_results": "Wavenumber (Min)",
+        "pi_slug": "waveno1",
+        "pi_sub_heading": null,
+        "pi_tooltip": "",
+        "pi_units": "cm-1",
+        "comment": "Definition is from old OPUS dictionary."
+    },
+    {
+        "field_name": "wave_no2",
+        "field_type": "real8",
+        "field_default": null,
+        "field_key": true,
+        "data_source": [
+            "FUNCTION",
+            "obs_wavelength_<INST>_wave_no2"
+        ],
+        "data_source_order": 10,
+        "pi_category_name": "obs_wavelength",
+        "pi_dict_context": "OPUS_WAVELENGTH",
+        "pi_dict_name": "WAVENUMBER",
+        "pi_disp_order": 10,
+        "pi_display": 0,
+        "pi_display_results": 1,
+        "pi_form_type": "RANGE",
+        "pi_intro": null,
+        "pi_label": "Wavenumber 2",
+        "pi_label_results": "Wavenumber (Max)",
+        "pi_slug": "waveno2",
+        "pi_sub_heading": null,
+        "pi_tooltip": "",
+        "pi_units": "cm-1",
+        "comment": "Definition is from old OPUS dictionary."
+    },
+    {
+        "field_name": "wave_no_res1",
+        "field_type": "real8",
+        "field_default": null,
+        "field_key": true,
+        "data_source": [
+            "FUNCTION",
+            "obs_wavelength_<INST>_wave_no_res1"
+        ],
+        "data_source_order": 20,
+        "definition": "The wavenumber_resolution indicates the smallest width of spectral lines that can be reliably detected in a data product. See also wavenumber and wavelength_resolution.",
+        "pi_category_name": "obs_wavelength",
+        "pi_dict_context": "OPUS_WAVELENGTH",
+        "pi_dict_name": "WAVENUMBER_RESOLUTION",
+        "pi_disp_order": 11,
+        "pi_display": 1,
+        "pi_display_results": 1,
+        "pi_form_type": "RANGE",
+        "pi_intro": null,
+        "pi_label": "Wavenumber Resolution",
+        "pi_label_results": "Wavenumber Resolution (Min)",
+        "pi_slug": "wavenores1",
+        "pi_sub_heading": null,
+        "pi_tooltip": "",
+        "pi_units": "cm-1",
+        "comment": "Definition is from old OPUS dictionary."
+    },
+    {
+        "field_name": "wave_no_res2",
+        "field_type": "real8",
+        "field_default": null,
+        "field_key": true,
+        "data_source": [
+            "FUNCTION",
+            "obs_wavelength_<INST>_wave_no_res2"
+        ],
+        "data_source_order": 20,
+        "pi_category_name": "obs_wavelength",
+        "pi_dict_context": "OPUS_WAVELENGTH",
+        "pi_dict_name": "WAVENUMBER_RESOLUTION",
+        "pi_disp_order": 12,
+        "pi_display": 0,
+        "pi_display_results": 1,
+        "pi_form_type": "RANGE",
+        "pi_intro": null,
+        "pi_label": "Wavenumber Resolution 2",
+        "pi_label_results": "Wavenumber Resolution (Max)",
+        "pi_slug": "wavenores2",
+        "pi_sub_heading": null,
+        "pi_tooltip": "",
+        "pi_units": "cm-1",
+        "comment": "Definition is from old OPUS dictionary."
+    },
+    {
+        "field_name": "spec_flag",
+        "field_type": "flag",
+        "field_notnull": true,
+        "data_source": [
+            "FUNCTION",
+            "obs_wavelength_<INST>_spec_flag"
+        ],
+        "definition": "The spectral_information_flag indicates whether a given remote-sensing data product contains information about multiple wavelengths or a single wavelength or electromagnetic radiation. A value of yes indicates that multiple wavelengths are included.",
+        "pi_category_name": "obs_wavelength",
+        "pi_dict_context": "OPUS_WAVELENGTH",
+        "pi_dict_name": "SPECTRAL_INFORMATION_FLAG",
+        "pi_disp_order": 6,
+        "pi_display": 1,
+        "pi_display_results": 1,
+        "pi_form_type": "GROUP",
+        "pi_intro": null,
+        "pi_label": "Spectral Information",
+        "pi_label_results": "Spectral Information",
+        "pi_slug": "specflag",
+        "pi_sub_heading": null,
+        "pi_tooltip": "",
+        "pi_units": "",
+        "comment": "Definition is from old OPUS dictionary."
+    },
+    {
+        "field_name": "spec_size",
+        "field_type": "uint4",
+        "field_default": null,
+        "data_source": [
+            "FUNCTION",
+            "obs_wavelength_<INST>_spec_size"
+        ],
+        "pi_category_name": "obs_wavelength",
+        "pi_dict_context": "OPUS_WAVELENGTH",
+        "pi_dict_name": "SPECTRUM_SIZE",
+        "pi_disp_order": 13,
+        "pi_display": 1,
+        "pi_display_results": 1,
+        "pi_form_type": "RANGE",
+        "pi_intro": null,
+        "pi_label": "Spectrum Size",
+        "pi_label_results": "Spectrum Size",
+        "pi_slug": "specsize",
+        "pi_sub_heading": null,
+        "pi_tooltip": "",
+        "pi_units": "",
+        "comment": "XXX Needs definition"
+    },
+    {
+        "field_name": "polarization_type",
+        "field_type": "enum",
+        "field_enum_options": "'LINEAR','CIRCULAR','NONE'",
+        "field_notnull": true,
+        "data_source": [
+            "FUNCTION",
+            "obs_wavelength_<INST>_polarization_type"
+        ],
+        "pi_category_name": "obs_wavelength",
+        "pi_dict_context": "PSDD",
+        "pi_dict_name": "RECEIVED_POLARIZATION_TYPE",
+        "pi_disp_order": 14,
+        "pi_display": 1,
+        "pi_display_results": 1,
+        "pi_form_type": "GROUP",
+        "pi_intro": null,
+        "pi_label": "Polarization Type",
+        "pi_label_results": "Polarization Type",
+        "pi_slug": "polarizationtype",
+        "pi_sub_heading": null,
+        "pi_tooltip": "",
+        "pi_units": ""
+    },
+    {
+        "put_mults_here": true
+    },
+    {
+        "field_name": "id",
+        "field_type": "uint4",
+        "field_key": "primary",
+        "field_notnull": true,
+        "data_source": [
+            "MAX_ID",
+            null
+        ]
+    },
+    {
+        "field_name": "timestamp",
+        "field_type": "timestamp"
+    }
+]
