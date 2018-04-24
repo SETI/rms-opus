@@ -2050,6 +2050,7 @@ class ObsWavelength(models.Model):
     rms_obs_id = models.ForeignKey(ObsGeneral, models.DO_NOTHING, related_name='%(class)s_rms_obs_id')
     volume_id = models.CharField(max_length=11)
     instrument_id = models.CharField(max_length=9)
+    effective_wavelength = models.FloatField(blank=True, null=True)
     wavelength1 = models.FloatField(blank=True, null=True)
     wavelength2 = models.FloatField(blank=True, null=True)
     wave_res1 = models.FloatField(blank=True, null=True)

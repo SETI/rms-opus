@@ -135,9 +135,9 @@ class SearchForm(forms.Form):
 
                 #grouped mult fields:
                 if grouped:
-                    choices = [(mult.label, mult.label) for mult in model.objects.filter(grouping=grouping, display='Y')]
+                    choices = [(mult.label, mult.label) for mult in model.objects.filter(grouping=grouping, display='Y').order_by('disp_order')]
                 else:
-                    choices = [(mult.label, mult.label) for mult in model.objects.filter(display='Y')]
+                    choices = [(mult.label, mult.label) for mult in model.objects.filter(display='Y').order_by('disp_order')]
 
                 self.fields[slug] = forms.MultipleChoiceField(
                         # label = ParamInfo.objects.get(slug=slug).label,
