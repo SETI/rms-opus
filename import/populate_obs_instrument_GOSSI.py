@@ -18,16 +18,18 @@ from populate_obs_mission_galileo import *
 #   Journal: Space Science Reviews (ISSN 0038-6308), vol. 60, no. 1-4, May 1992,
 #            p. 413-455.
 #   Bibliographic Code: 1992SSRv...60..413B
+# WL MIN/MAX are taken by eye-balling Fig. 3 of the above paper
 
+# (WL MIN, WL MAX, EFFECTIVE WL)
 _GOSSI_FILTER_WAVELENGTHS = {
-    'CLEAR':   611,
-    'VIOLET':  404,
-    'GREEN':   559,
-    'RED':     671,
-    'IR-7270': 734,
-    'IR-7560': 756,
-    'IR-8890': 887,
-    'IR-9680': 986
+    'CLEAR':   (360, 1050, 611),
+    'VIOLET':  (360, 440, 404),
+    'GREEN':   (510, 610, 559),
+    'RED':     (620, 730, 671),
+    'IR-7270': (725, 750, 734),
+    'IR-7560': (750, 790, 756),
+    'IR-8890': (870, 900, 887),
+    'IR-9680': (940, 1050, 986),
 }
 
 
@@ -149,11 +151,14 @@ def _wavelength_helper(**kwargs):
 
     return _GOSSI_FILTER_WAVELENGTHS[filter_name]
 
+def populate_obs_wavelength_GOSSI_effective_wavelength(**kwargs):
+    return _wavelength_helper(**kwargs)[2]
+
 def populate_obs_wavelength_GOSSI_wavelength1(**kwargs):
-    return _wavelength_helper(**kwargs)
+    return _wavelength_helper(**kwargs)[0]
 
 def populate_obs_wavelength_GOSSI_wavelength2(**kwargs):
-    return _wavelength_helper(**kwargs)
+    return _wavelength_helper(**kwargs)[1]
 
 def populate_obs_wavelength_GOSSI_wave_res1(**kwargs):
     return None

@@ -17,8 +17,6 @@ TODO:
 - Audit label files and make sure everything is available in database for
   Details page
 
-- Generate Django search models automatically
-
 - Option to regenerate mult tables from production tables
 
 - ring_geometry longitude_WRT_observer[12] should have max 180 instead of 360,
@@ -34,11 +32,9 @@ TODO:
   - Verify dictionary context and name
   - Verify slug names
 
-- Support volume_id_list in obs_general
+- Add val_min/val_max to UVIS
 
-- Add val_min/val_max to Galileo and UVIS
-
-- Update COISS filters with wavelengths from Table A.2 of the Data User's Guide
+- Convert GROUP fields to ENUM if they are constant
 
 - Don't create indexes on import tables
 
@@ -82,8 +78,6 @@ THE BIG QUESTIONS:
   - When will the surface geo tables include Venus, Earth, etc?
 
   - Do we include Jupiter rev_no? Should we rename "Saturn Orbit Number"?
-
-  - Warning: No good filter data for Px and IRPx so we pretend they're clear
 
   - "VALID_MAXIMUM_maximum_DN_saturation_level",
     - "Indicates the maximum DN saturation level for the signal returned by the
@@ -133,41 +127,7 @@ THE BIG QUESTIONS:
   *** SEND EXAMPLES TO MARK
 
 - GALILEO:
-  - The import programs are missing!
-
   - Volumes overlap, and occasionally duplicate rms_obs_id
-
 
   - planet_id:
     - Currently it is NONE if there is no target_name
-
-  - rev_no:
-    - ORBIT_NUMBER: "Identifies Jupiter Orbit
-          number.  Applicable only during Jupiter Orbital
-          Operations.  Prior to Jupiter Orbital Operations,
-          UNK has been placed in the label "
-      BUT - Do we even need rev_no? There's already Orbit Number under GOSSI
-            with identical contents
-
-  - lesser/greater_pixel_size:
-    - SSI paper says camera is 800x800 but current OPUS says 256x256
-
-    - Should any of these move from GOSSI to GO?
-      - Image ID: OPN0116
-      - Data Set ID: GO-J/JSA-SSI-2-REDR-V1.0
-      - Observation ID: J0GSOPNAV116
-      - Orbit Number: 0
-
-    - DATA_SET_ID:
-      - Always a single constant - do we need it? It's searchable!
-
-    - There is no spacecraft_stop_count, just start_count. Do we set them to the
-      same value?
-
-- Combine OPUS and OPUS-ADMIN repos?
-
-- RING AND SURFACE GEO:
-
-  - Once automatic generation of Django models is done, change names of
-    ring_geo fields to be proper all-caps since we're just copying
-    directly from the supp table.

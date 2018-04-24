@@ -86,67 +86,15 @@ PREPROGRAMMED_MULT_TABLE_CONTENTS = {
         (   4,       None,             'None',   50, 'Y'),
     ],
     'mult_obs_general_target_class': [
-        (   0,        'RING',        'Ring',   10, 'Y'),
-        (   1,      'PLANET',      'Planet',   20, 'Y'),
-        (   2,        'MOON',        'Moon',   30, 'Y'),
+        (   0,      'PLANET',      'Planet',   10, 'Y'),
+        (   1,        'MOON',        'Moon',   20, 'Y'),
+        (   2,        'RING',        'Ring',   30, 'Y'),
         (   3,    'ASTEROID',    'Asteroid',   40, 'Y'),
         (   4,         'SUN',         'Sun',   50, 'Y'),
         (   5,        'STAR',        'Star',   60, 'Y'),
         (   6,         'SKY',         'Sky',   70, 'Y'),
         (   7, 'CALIBRATION', 'Calibration',   80, 'Y'),
         (   8,       'OTHER',       'Other',   90, 'Y'),
-    ],
-
-    ### OBS_INSTRUMENT_COISS ###
-
-    'mult_obs_instrument_coiss_camera': [
-        (   0, 'N', 'Narrow Angle Camera',   10, 'Y'),
-        (   1, 'W',   'Wide Angle Camera',   20, 'Y'),
-    ],
-
-    'mult_obs_instrument_coiss_shutter_mode_id': [
-        (   0, 'NACONLY', 'Narrow Angle Camera Only',   10, 'Y'),
-        (   1, 'WACONLY',   'Wide Angle Camera Only',   20, 'Y'),
-        (   2,  'BOTSIM',      'Both Simultaneously',   30, 'Y'),
-    ],
-
-    'mult_obs_instrument_coiss_data_conversion_type': [
-        (   0, '12BIT',                 'No conversion',   10, 'Y'),
-        (   1,  '8LSB', 'Keep 8 Least Significant Bits',   20, 'Y'),
-        (   2, 'TABLE',      'Table Lookup',               30, 'Y'),
-    ],
-
-    'mult_obs_instrument_coiss_gain_mode_id': [
-        (   0,  '12 ELECTRONS PER DN',  '12 Electrons per DN',   10, 'Y'),
-        (   1,  '29 ELECTRONS PER DN',  '29 Electrons per DN',   20, 'Y'),
-        (   2,  '95 ELECTRONS PER DN',  '95 Electrons per DN',   30, 'Y'),
-        (   3, '215 ELECTRONS PER DN', '215 Electrons per DN',   40, 'Y'),
-    ],
-
-
-    ### OBS_MISSION_VOYAGER ###
-
-    'mult_obs_mission_voyager_spacecraft_name': [
-        (   0, 'VG1', 'Voyager 1',   10, 'Y'),
-        (   1, 'VG2', 'Voyager 2',   20, 'Y'),
-    ],
-
-    ### OBS_INSTRUMENT_VGISS ###
-
-    'mult_obs_instrument_vgiss_camera': [
-        (   0, 'N', 'Narrow Angle',   10, 'Y'),
-        (   1, 'W',   'Wide Angle',   20, 'Y'),
-    ],
-
-    ### OBS_MISSION_HUBBLE ###
-
-    'mult_obs_mission_hubble_detector_id': [
-        (   0,   'HRC',   'ACS-HRC',   10, 'Y'),
-        (   1,   'SBC',   'ACS-SBC',   20, 'Y'),
-        (   2,   'WFC',  'ACS-WFC3',   30, 'Y'),
-        (   3,    'IR',   'WFC3-IR',   40, 'Y'),
-        (   4,  'UVIS', 'WFC3-UVIS',   50, 'Y'),
-        (   5, 'WFPC2',     'WFPC2',   60, 'Y'),
     ],
 
     ### OBS_TYPE_IMAGE ###
@@ -164,5 +112,77 @@ PREPROGRAMMED_MULT_TABLE_CONTENTS = {
     'mult_obs_wavelength_polarization_type': [
         (   0,   'LINEAR',   'Linear',   10, 'Y'),
         (   1,     'NONE',     'None',   20, 'Y'),
+    ],
+
+    ### OBS_INSTRUMENT_COISS ###
+
+    'mult_obs_instrument_coiss_camera': [
+        (   0, 'N', 'Narrow Angle Camera',   10, 'Y'),
+        (   1, 'W',   'Wide Angle Camera',   20, 'Y'),
+    ],
+    'mult_obs_instrument_coiss_shutter_mode_id': [
+        (   0, 'NACONLY', 'Narrow Angle Camera Only',   10, 'Y'),
+        (   1, 'WACONLY',   'Wide Angle Camera Only',   20, 'Y'),
+        (   2,  'BOTSIM',      'Both Simultaneously',   30, 'Y'),
+    ],
+    'mult_obs_instrument_coiss_data_conversion_type': [
+        (   0, '12BIT',                 'No conversion',   10, 'Y'),
+        (   1,  '8LSB', 'Keep 8 Least Significant Bits',   20, 'Y'),
+        (   2, 'TABLE',      'Table Lookup',               30, 'Y'),
+    ],
+    'mult_obs_instrument_coiss_gain_mode_id': [
+        (   0,  '12 ELECTRONS PER DN',  '12 Electrons per DN',   10, 'Y'),
+        (   1,  '29 ELECTRONS PER DN',  '29 Electrons per DN',   20, 'Y'),
+        (   2,  '95 ELECTRONS PER DN',  '95 Electrons per DN',   30, 'Y'),
+        (   3, '215 ELECTRONS PER DN', '215 Electrons per DN',   40, 'Y'),
+    ],
+
+    ### OBS_INSTRUMENT_GOSSI ###
+
+    'mult_obs_instrument_gossi_filter_name': [
+        (   0,    'CLEAR',           'Clear',   10, 'Y'),
+        (   1,   'VIOLET',          'Violet',   20, 'Y'),
+        (   2,    'GREEN',           'Green',   30, 'Y'),
+        (   3,      'RED',             'Red',   40, 'Y'),
+        (   4,   'IR-7270', 'Methane (7270)',   50, 'Y'),
+        (   5,   'IR-7560',      'Continuum',   60, 'Y'),
+        (   6,   'IR-8890', 'Methane (8890)',   70, 'Y'),
+        (   7,   'IR-9680',       'Infrared',   80, 'Y'),
+    ],
+    'mult_obs_instrument_gossi_gain_mode_id': [
+        (   0,  '10K',  '10K',   10, 'Y'),
+        (   1,  '40K',  '40K',   20, 'Y'),
+        (   2, '100K', '100K',   30, 'Y'),
+        (   3, '400K', '400K',   40, 'Y'),
+    ],
+    'mult_obs_instrument_gossi_compression_type': [
+        (   0,        'BARC RATE CONTROL',        'BARC Rate Control', 10, 'Y'),
+        (   1,                  'HUFFMAN',                  'Huffman', 20, 'Y'),
+        (   2, 'INTEGER COSINE TRANSFORM', 'Integer Cosine Transform', 30, 'Y'),
+    ],
+
+    ### OBS_MISSION_HUBBLE ###
+
+    'mult_obs_mission_hubble_detector_id': [
+        (   0,   'HRC',   'ACS-HRC',   10, 'Y'),
+        (   1,   'SBC',   'ACS-SBC',   20, 'Y'),
+        (   2,   'WFC',  'ACS-WFC3',   30, 'Y'),
+        (   3,    'IR',   'WFC3-IR',   40, 'Y'),
+        (   4,  'UVIS', 'WFC3-UVIS',   50, 'Y'),
+        (   5, 'WFPC2',     'WFPC2',   60, 'Y'),
+    ],
+
+    ### OBS_MISSION_VOYAGER ###
+
+    'mult_obs_mission_voyager_spacecraft_name': [
+        (   0, 'VG1', 'Voyager 1',   10, 'Y'),
+        (   1, 'VG2', 'Voyager 2',   20, 'Y'),
+    ],
+
+    ### OBS_INSTRUMENT_VGISS ###
+
+    'mult_obs_instrument_vgiss_camera': [
+        (   0, 'N', 'Narrow Angle',   10, 'Y'),
+        (   1, 'W',   'Wide Angle',   20, 'Y'),
     ],
 }

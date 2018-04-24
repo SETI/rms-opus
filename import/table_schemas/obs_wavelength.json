@@ -52,6 +52,32 @@
         "comment": "The instrument_id is included here for ease of database manipulation only."
     },
     {
+        "field_name": "effective_wavelength",
+        "field_type": "real4",
+        "field_key": true,
+        "field_default": null,
+        "data_source": [
+            "FUNCTION",
+            "obs_wavelength_<INST>_effective_wavelength"
+        ],
+        "definition": "The center wavelength of the instrument and filter combination taking into account the solar spectrum.",
+        "pi_category_name": "obs_wavelength",
+        "pi_dict_context": "OPUS_WAVELENGTH",
+        "pi_dict_name": "EFFECTIVE_WAVELENGTH",
+        "pi_disp_order": 3,
+        "pi_display": 1,
+        "pi_display_results": 1,
+        "pi_form_type": "RANGE",
+        "pi_intro": null,
+        "pi_label": "Effective Wavelength",
+        "pi_label_results": "Effective Wavelength",
+        "pi_slug": "effectivewavelength",
+        "pi_sub_heading": null,
+        "pi_tooltip": "",
+        "pi_units": "",
+        "comment": "Definition written by RF"
+    },
+    {
         "field_name": "wavelength1",
         "field_type": "real4",
         "field_key": true,
@@ -60,8 +86,9 @@
             "FUNCTION",
             "obs_wavelength_<INST>_wavelength1"
         ],
+        "definition": "The range of wavelengths at which an observation was made. For spectrographic instruments, this is the actual range avilable. For imaging instruments, this is the FWHM range around the center wavelength.",
         "pi_category_name": "obs_wavelength",
-        "pi_dict_context": "PSDD",
+        "pi_dict_context": "OPUS_WAVELENGTH",
         "pi_dict_name": "WAVELENGTH",
         "pi_disp_order": 3,
         "pi_display": 1,
@@ -74,7 +101,7 @@
         "pi_sub_heading": null,
         "pi_tooltip": "",
         "pi_units": "",
-        "comment": "XXX This should be updated for the real OPUS interpreation of wavelength"
+        "comment": "Definition derived from the PSDD and modified for our purposes."
     },
     {
         "field_name": "wavelength2",
@@ -86,7 +113,7 @@
             "obs_wavelength_<INST>_wavelength2"
         ],
         "pi_category_name": "obs_wavelength",
-        "pi_dict_context": "",
+        "pi_dict_context": "OPUS_WAVELENGTH",
         "pi_dict_name": "WAVELENGTH",
         "pi_disp_order": 4,
         "pi_display": 0,
@@ -98,8 +125,7 @@
         "pi_slug": "wavelength2",
         "pi_sub_heading": null,
         "pi_tooltip": "",
-        "pi_units": "",
-        "comment": "XXX This should be updated for the real OPUS interpreation of wavelength"
+        "pi_units": ""
     },
     {
         "field_name": "wave_res1",
