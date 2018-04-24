@@ -31,7 +31,7 @@ def get_all_categories(request, rms_obs_id):
     """ returns list of all cateories - aka tables - this rms_obs_id apepars in
         as json response """
     all_categories = []
-    table_info = TableName.objects.all().values('table_name', 'label').order_by('disp_order')
+    table_info = TableNames.objects.all().values('table_name', 'label').order_by('disp_order')
 
     for tbl in table_info:  # all tables
         table_name = tbl['table_name']
@@ -81,7 +81,7 @@ def category_list_http_endpoint(request):
     except ValueError:
         pass  # it wasn't in there so no worries
 
-    labels = TableName.objects.filter(table_name__in=triggered_tables).values('table_name','label').order_by('disp_order')
+    labels = TableNames.objects.filter(table_name__in=triggered_tables).values('table_name','label').order_by('disp_order')
 
     return HttpResponse(json.dumps([ob for ob in labels]), content_type="application/json")
 
@@ -245,10 +245,10 @@ def get_metadata(request, rms_obs_id, fmt):
 
     # find all the tables (categories) this observation belongs to,
     if not cats:
-        all_tables = TableName.objects.filter(display='Y').order_by('disp_order')
+        all_tables = TableNames.objects.filter(display='Y').order_by('disp_order')
     else:
         # restrict table to those found in cats
-        all_tables = TableName.objects.filter(table_name__in=cats.split(','), display='Y').order_by('disp_order')
+        all_tables = TableNames.objects.filter(table_name__in=cats.split(','), display='Y').order_by('disp_order')
 
     # now find all params and their values in each of these tables:
     for table in all_tables:
@@ -351,7 +351,7 @@ def get_triggered_tables(selections, extras=None):
     # now see if any more tables are triggered from query
     query_result_table = getUserQueryTable(selections,extras)
     queries = {}  # keep track of queries
-    for partable in Partable.objects.all():
+    for partable in Partables.objects.all():
         # we are joining the results of a user's query - the single column table of ids
         # with the trigger_tab listed in the partable,
         trigger_tab = partable.trigger_tab
@@ -394,7 +394,7 @@ def get_triggered_tables(selections, extras=None):
 
     # now hack in the proper ordering of tables
     final_table_list = []
-    for table in TableName.objects.filter(table_name__in=triggered_tables).values('table_name'):
+    for table in TableNames.objects.filter(table_name__in=triggered_tables).values('table_name'):
         final_table_list.append(table['table_name'])
 
     cache.set(cache_key, final_table_list)

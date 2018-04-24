@@ -119,7 +119,7 @@ def getMenuLabels(request, labels_view):
     else:
         triggered_tables = get_triggered_tables(selections, extras)
 
-    divs = TableName.objects.filter(display='Y', table_name__in=triggered_tables)
+    divs = TableNames.objects.filter(display='Y', table_name__in=triggered_tables)
 
     if labels_view == 'search':
         params = ParamInfo.objects.filter(display=1, category_name__in=triggered_tables)
@@ -183,7 +183,7 @@ def getMenuLabels(request, labels_view):
                     p.slug = adjust_slug_name_single_col_ranges(p)
                     menu_data[d.table_name].setdefault('data', []).append(p)
 
-    # div_labels = {d.table_name:d.label for d in TableName.objects.filter(display='Y', table_name__in=triggered_tables)}
+    # div_labels = {d.table_name:d.label for d in TableNames.objects.filter(display='Y', table_name__in=triggered_tables)}
     return {'menu': {'data': menu_data, 'divs': divs}}
 
 
