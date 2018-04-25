@@ -42,7 +42,7 @@ def create_import_partables_table():
         rows.append(entry)
 
     for instrument_id in sorted(INSTRUMENT_ABBREV_TO_MISSION_ABBREV.keys()):
-        partable = 'obs_instrument_'+instrument_id
+        partable = 'obs_instrument_'+instrument_id.lower()
         if instrument_id[:3] == 'HST':
             # This is a hack because we don't actually have HST instrument
             # tables, but instead put everything in the mission tables

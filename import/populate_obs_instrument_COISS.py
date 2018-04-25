@@ -19,6 +19,7 @@ from populate_obs_mission_cassini import *
 # When missing from there it is from the CISSCAL files na_effwl.tab
 # and wa_effwl.tab
 # (Camera, Filter1, Filter2): (Central wavelength, FWHM, Effective wavelength)
+# Values are in nm and must be converted to microns!
 _COISS_FILTER_WAVELENGTHS = {
     ('N', 'CL1', 'CL2'): (610.675, 340.056, 651.057),
     ('N', 'CL1', 'GRN'): (568.134, 113.019, 569.236),
@@ -128,6 +129,48 @@ _COISS_FILTER_WAVELENGTHS = {
     ('W', 'IR2', 'IRP0'): (853.320, 54.8765, 852.510),
     ('W', 'IR2', 'IR1'): (826.348, 26.0795, 826.255),
 }
+# The following filter combinations are found in the data but aren't in the
+# above table:
+# N/HAL/UV3
+# N/IR2/UV3
+# N/IR4/UV3
+# N/IRP0/CB1
+# N/IRP0/CB2
+# N/IRP0/CB3
+# N/IRP0/CL2
+# N/IRP0/GRN
+# N/IRP0/IR1
+# N/IRP0/IR3
+# N/IRP0/MT1
+# N/IRP0/MT2
+# N/IRP0/MT3
+# N/P0/CL2
+# N/P0/IR1
+# N/P0/IR3
+# N/P120/CL2
+# N/P120/IR1
+# N/P60/CL2
+# N/P60/IR1
+# N/RED/UV3
+# N/UV1/BL2
+# N/UV1/CB1
+# N/UV1/CB2
+# N/UV1/GRN
+# N/UV1/IR1
+# N/UV1/IR3
+# N/UV2/BL2
+# N/UV2/CB1
+# N/UV2/CB2
+# N/UV2/GRN
+# N/UV2/IR1
+# N/UV2/IR3
+# N/UV2/MT1
+# W/CB3/HAL
+# W/CB3/VIO
+# W/CL1/IRP0
+# W/CL1/IRP90
+# W/IR3/BL1
+# W/MT3/BL1
 
 ################################################################################
 # THESE NEED TO BE IMPLEMENTED FOR EVERY INSTRUMENT
@@ -171,6 +214,10 @@ def populate_obs_general_COISS_time_sec1(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     start_time = index_row['START_TIME']
+    if start_time == 'UNK':
+        import_util.announce_nonrepeating_error(
+            'Found "UNK" in START_TIME field')
+        return 0.
     return julian.tai_from_iso(start_time)
 
 def populate_obs_general_COISS_time_sec2(**kwargs):
@@ -179,14 +226,20 @@ def populate_obs_general_COISS_time_sec2(**kwargs):
     stop_time = index_row['STOP_TIME']
     obs_general_row = metadata['obs_general_row']
 
+    if stop_time == 'UNK':
+        import_util.announce_nonrepeating_error(
+            'Found "UNK" in STOP_TIME field')
+        return 0.
+
     time2 = julian.tai_from_iso(stop_time)
 
     if time2 < obs_general_row['time_sec1']:
         start_time = index_row['START_TIME']
-        index_row_num = metadata['index_row_num']
-        impglobals.LOGGER.log('error',
-            f'time_sec1 ({start_time}) and time_sec2 ({stop_time}) are '+
-            f'in the wrong order [line {index_row_num}]')
+        if start_time != 'UNK':
+            index_row_num = metadata['index_row_num']
+            impglobals.LOGGER.log('error',
+                f'time_sec1 ({start_time}) and time_sec2 ({stop_time}) are '+
+                f'in the wrong order [line {index_row_num}]')
         impglobals.IMPORT_HAS_BAD_DATA = True
 
     return time2
@@ -244,7 +297,42 @@ def populate_obs_general_COISS_primary_file_spec(**kwargs):
 def populate_obs_general_COISS_data_set_id(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
-    return index_row['DATA_SET_ID']
+    dsi = index_row['DATA_SET_ID']
+    return (dsi, dsi)
+
+def populate_obs_general_COISS_right_asc1(**kwargs):
+    metadata = kwargs['metadata']
+    ring_geo_row = metadata.get('ring_geo_row', None)
+    if ring_geo_row is None:
+        return None
+    return ring_geo_row['MINIMUM_RIGHT_ASCENSION']
+
+def populate_obs_general_COISS_right_asc2(**kwargs):
+    metadata = kwargs['metadata']
+    ring_geo_row = metadata.get('ring_geo_row', None)
+    if ring_geo_row is None:
+        return None
+    return ring_geo_row['MAXIMUM_RIGHT_ASCENSION']
+
+def populate_obs_general_COISS_declination1(**kwargs):
+    metadata = kwargs['metadata']
+    ring_geo_row = metadata.get('ring_geo_row', None)
+    if ring_geo_row is None:
+        return None
+    return ring_geo_row['MINIMUM_DECLINATION']
+
+def populate_obs_general_COISS_declination2(**kwargs):
+    metadata = kwargs['metadata']
+    ring_geo_row = metadata.get('ring_geo_row', None)
+    if ring_geo_row is None:
+        return None
+    return ring_geo_row['MAXIMUM_DECLINATION']
+
+def populate_obs_mission_cassini_COISS_mission_phase_name(**kwargs):
+    metadata = kwargs['metadata']
+    index_row = metadata['index_row']
+    mp = index_row['MISSION_PHASE_NAME']
+    return mp
 
 
 ### OBS_TYPE_IMAGE TABLE ###
@@ -290,7 +378,15 @@ def _COISS_wavelength_helper(inst, filter1, filter2):
     if key in _COISS_FILTER_WAVELENGTHS:
         return _COISS_FILTER_WAVELENGTHS[key]
 
-    key2 = (inst, filter1, filter2)
+    import_util.announce_nonrepeating_warning(
+        'Making up wavelength info for unknown COISS filter combination '+
+        f'{key[0]}/{key[1]}/{key[2]}')
+
+    # If we don't have the exact key combination, try to set polarization equal
+    # to clear for lack of anything better to do.
+    nfilter1 = filter1 if filter1.find('P') == -1 else 'CL1'
+    nfilter2 = filter2 if filter2.find('P') == -1 else 'CL2'
+    key2 = (inst, nfilter1, nfilter2)
     if key2 in _COISS_FILTER_WAVELENGTHS:
         return _COISS_FILTER_WAVELENGTHS[key2]
 
@@ -304,10 +400,6 @@ def _COISS_wavelength_helper(inst, filter1, filter2):
             f'Unknown COISS filter {key[0]}/{key[1]}/{key[2]}')
         impglobals.IMPORT_HAS_BAD_DATA = True
         return 0,0,0
-
-    import_util.announce_nonrepeating_warning(
-        'Making up wavelength info for unknown COISS filter combination '+
-        f'{key[0]}/{key[1]}/{key[2]}')
 
     lc1, fw1, le1 = _COISS_FILTER_WAVELENGTHS[key1]
     lc2, fw2, le2 = _COISS_FILTER_WAVELENGTHS[key2]
@@ -336,7 +428,7 @@ def populate_obs_wavelength_COISS_effective_wavelength(**kwargs):
 
     central_wl, fwhm, effective_wl = _COISS_wavelength_helper(
             instrument_id, filter1, filter2)
-    return effective_wl
+    return effective_wl / 1000 # microns
 
 # These are the center wavelength +/- FWHM/2
 def populate_obs_wavelength_COISS_wavelength1(**kwargs):
@@ -347,7 +439,7 @@ def populate_obs_wavelength_COISS_wavelength1(**kwargs):
 
     central_wl, fwhm, effective_wl = _COISS_wavelength_helper(
             instrument_id, filter1, filter2)
-    return central_wl - fwhm/2
+    return (central_wl - fwhm/2) / 1000 # microns
 
 def populate_obs_wavelength_COISS_wavelength2(**kwargs):
     metadata = kwargs['metadata']
@@ -357,7 +449,7 @@ def populate_obs_wavelength_COISS_wavelength2(**kwargs):
 
     central_wl, fwhm, effective_wl = _COISS_wavelength_helper(
             instrument_id, filter1, filter2)
-    return central_wl + fwhm/2
+    return (central_wl + fwhm/2) / 1000 # microns
 
 def populate_obs_wavelength_COISS_wave_res1(**kwargs):
     return None
@@ -366,10 +458,14 @@ def populate_obs_wavelength_COISS_wave_res2(**kwargs):
     return None
 
 def populate_obs_wavelength_COISS_wave_no1(**kwargs):
-    return None
+    metadata = kwargs['metadata']
+    wavelength_row = metadata['obs_wavelength_row']
+    return 10000 / wavelength_row['wavelength2']
 
 def populate_obs_wavelength_COISS_wave_no2(**kwargs):
-    return None
+    metadata = kwargs['metadata']
+    wavelength_row = metadata['obs_wavelength_row']
+    return 10000 / wavelength_row['wavelength1']
 
 def populate_obs_wavelength_COISS_wave_no_res1(**kwargs):
     return None

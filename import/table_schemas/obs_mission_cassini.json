@@ -374,11 +374,11 @@
     {
         "field_name": "mission_phase_name",
         "field_type": "char32",
-        "field_notnull": true,
+        "field_default": null,
         "field_key": true,
         "data_source": [
-            "TAB:index",
-            "MISSION_PHASE_NAME"
+            "FUNCTION",
+            "obs_mission_cassini_<INST>_mission_phase_name"
         ],
         "definition": "Mission phase of which this image is a part.",
         "pi_category_name": "obs_mission_cassini",

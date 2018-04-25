@@ -93,6 +93,8 @@ def helper_cassini_obs_name(**kwargs):
         supp_index_row = metadata.get('supp_index_row', None) # COUVIS
         if supp_index_row is not None:
             obs_id = supp_index_row.get('OBSERVATION_ID', None)
+    if obs_id is None:
+        obs_id = 'MISSING' # XXX
 
     return obs_id
 
@@ -134,6 +136,9 @@ def helper_cassini_valid_obs_name(obs_name):
           'RIDER', 'SP', 'TRIGGER'
     """
 
+    if obs_name is None:
+        return False
+
     return re.fullmatch(
 '([A-Z]{2,5}|22NAV)_([0-2]\d\d|00[A-C]|C\d\d)[A-Z]{2}_[0-9A-Z]+\d\d\d_[A-Z]{2,7}',
         obs_name) is not None
@@ -147,11 +152,12 @@ def helper_cassini_planet_id(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     obs_general_row = metadata['obs_general_row']
+    index_row_num = metadata['index_row_num']
     target_name = index_row['TARGET_NAME'].upper()
     if target_name in TARGET_NAME_MAPPING:
         target_name = TARGET_NAME_MAPPING[target_name]
     if target_name not in TARGET_NAME_INFO:
-        import_util.announce_unknown_target_name(target_name, obs_general_row)
+        import_util.announce_unknown_target_name(target_name, index_row_num)
         pl = None
     else:
         pl, _ = TARGET_NAME_INFO[target_name]

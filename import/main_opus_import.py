@@ -110,6 +110,14 @@ parser.add_argument(
     '--import-report-missing-ring-geo', action='store_true', default=False,
     help='Report observations that should have ring_geo data but don\'t'
 )
+parser.add_argument(
+    '--import-force-metadata-index', action='store_true', default=False,
+    help='Force the use of metadata index files and fail if none available'
+)
+parser.add_argument(
+    '--import-check-duplicate-id', action='store_true', default=False,
+    help='Check for duplicate rms_obs_id; needed for GOSSI'
+)
 
 parser.add_argument(
     '--delete-permanent-import-volumes', action='store_true', default=False,
@@ -187,13 +195,26 @@ parser.add_argument(
 
 # Arguments about logging
 parser.add_argument(
-    '--pdsfile-logging', action='store_true', default=False,
+    '--log-pdsfile', action='store_true', default=False,
     help='Also log output of pdsfile actions'
 )
 parser.add_argument(
-    '--sql-logging', action='store_true', default=False,
+    '--log-sql', action='store_true', default=False,
     help='Also log all SQL commands'
 )
+parser.add_argument(
+    '--log-debug-limit', type=int, default=-1,
+    help='Limit the number of debug messages'
+)
+parser.add_argument(
+    '--log-info-limit', type=int, default=-1,
+    help='Limit the number of info messages'
+)
+parser.add_argument(
+    '--log-suppress-traceback', action='store_true', default=False,
+    help='Omit tracebacks from exception reports'
+)
+
 
 impglobals.ARGUMENTS = parser.parse_args(command_list)
 
@@ -226,7 +247,9 @@ if impglobals.ARGUMENTS.cleanup_aux_tables:
 
 LOGNAME = 'opus_import.main'
 
-impglobals.LOGGER = pdslogger.PdsLogger(LOGNAME, limits={'info': -1, 'debug': -1})
+impglobals.LOGGER = pdslogger.PdsLogger(LOGNAME,
+            limits={'info': impglobals.ARGUMENTS.log_info_limit,
+                    'debug': impglobals.ARGUMENTS.log_debug_limit})
 
 info_logfile = os.path.abspath(LOG_FILE)
 debug_logfile = os.path.abspath(DEBUG_LOG_FILE)
@@ -246,7 +269,7 @@ impglobals.LOGGER.add_handler(handler)
 handler = pdslogger.error_handler(LOGFILE_DIR, rotation='none')
 impglobals.LOGGER.add_handler(handler)
 
-if impglobals.ARGUMENTS.pdsfile_logging:
+if impglobals.ARGUMENTS.log_pdsfile:
     import_util.pdsfile.set_logger(impglobals.LOGGER, True)
 
 impglobals.PYTHON_WARNING_LIST = []
@@ -273,7 +296,8 @@ try: # Top-level exception handling so we always log what's going on
 
     impglobals.LOGGER.open(
             f'Performing all requested import functions',
-            limits={'info': -1, 'debug': -1})
+            limits={'info': impglobals.ARGUMENTS.log_info_limit,
+                    'debug': impglobals.ARGUMENTS.log_debug_limit})
 
     pdsfile.preload(PDS_DATA_DIR, VOLUME_INFO_PATH)
 
@@ -290,7 +314,7 @@ try: # Top-level exception handling so we always log what's going on
     except importdb.ImportDBException:
         sys.exit(-1)
 
-    impglobals.DATABASE.log_sql = impglobals.ARGUMENTS.sql_logging
+    impglobals.DATABASE.log_sql = impglobals.ARGUMENTS.log_sql
 
     do_import.do_import_steps()
 
@@ -302,7 +326,9 @@ try: # Top-level exception handling so we always log what's going on
         impglobals.ARGUMENTS.create_table_names or
         impglobals.ARGUMENTS.create_grouping_target_name):
         impglobals.LOGGER.open(
-                f'Creating auxiliary tables', limits={'info': -1, 'debug': -1})
+                f'Creating auxiliary tables',
+                limits={'info': impglobals.ARGUMENTS.log_info_limit,
+                        'debug': impglobals.ARGUMENTS.log_debug_limit})
 
         if impglobals.ARGUMENTS.create_param_info:
             do_param_info.do_param_info()
@@ -319,7 +345,9 @@ try: # Top-level exception handling so we always log what's going on
         impglobals.ARGUMENTS.drop_collections_tables or
         impglobals.ARGUMENTS.create_django_session_table):
         impglobals.LOGGER.open(
-            f'Cleaning up OPUS/Django tables', limits={'info': -1, 'debug': -1})
+            f'Cleaning up OPUS/Django tables',
+            limits={'info': impglobals.ARGUMENTS.log_info_limit,
+                    'debug': impglobals.ARGUMENTS.log_debug_limit})
 
         if impglobals.ARGUMENTS.drop_cache_tables:
             do_django.drop_cache_tables()
@@ -336,6 +364,8 @@ try: # Top-level exception handling so we always log what's going on
     impglobals.LOGGER.close()
 
 except:
-    impglobals.LOGGER.log('fatal', 'Import failed with exception:')
-    impglobals.LOGGER.log('fatal', traceback.format_exc())
+    msg = 'Import failed with exception'
+    if not impglobals.ARGUMENTS.log_suppress_traceback:
+        msg += ':\n' + traceback.format_exc()
+    impglobals.LOGGER.log('fatal', msg)
     sys.exit(-1)

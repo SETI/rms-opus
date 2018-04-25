@@ -487,8 +487,9 @@
             "MINIMUM_COARSEST_SURFACE_RESOLUTION"
         ],
         "val_min": 0,
-        "val_max": 1e18,
+        "val_max": 1e6,
         "val_sentinel": -999,
+        "val_set_invalid_to_null": true,
         "definition": "Coarsest surface resolution is the longer dimension of a pixel as projected onto the surface at the intercept point. At any given intercept point, the coarsest surface resolution is typically larger than the finest resolution by a factor of 1/cos(emission angle). In practice, this defines the approximate size of a linear feature that can be resolved if that feature has its worst possible orientation on the surface.\nThe surface has been modeled as an ellipsoid. Surface intercept points that are obscured by the planet or another moon within the observed field of view are ignored. For observations capturing reflected sunlight (i.e., with wavelengths in the visual or near-infrared), the night side of the target body is also ignored.\nThis column tabulates the minimum value of coarsest surface resolution within the field of view of the observation. In other words, this is the size of the smallest feature that could be be resolved somewhere within the field of view, even if its orientation on the surface is the worst it can be.",
         "pi_category_name": "obs_surface_geometry__<TARGET>",
         "pi_dict_context": "SURFACE_GEO",
@@ -504,7 +505,7 @@
         "pi_sub_heading": "Resolution",
         "pi_tooltip": "",
         "pi_units": "",
-        "comments": "Definition is from SURFACE_GEO label file."
+        "comments": "Definition is from SURFACE_GEO label file. Val_max is set to be ~7 times the diameter of Jupiter for sanity."
     },
     {
         "field_name": "coarsest_resolution2",
@@ -516,8 +517,9 @@
             "MAXIMUM_COARSEST_SURFACE_RESOLUTION"
         ],
         "val_min": 0,
-        "val_max": 1e18,
+        "val_max": 1e6,
         "val_sentinel": -999,
+        "val_set_invalid_to_null": true,
         "definition": "Coarsest surface resolution is the longer dimension of a pixel as projected onto the surface at the intercept point. At any given intercept point, the coarsest surface resolution is typically larger than the finest resolution by a factor of 1/cos(emission angle). In practice, this defines the approximate size of a linear feature that can be resolved if that feature has its worst possible orientation on the surface.\nThe surface has been modeled as an ellipsoid. Surface intercept points that are obscured by the planet or another moon within the observed field of view are ignored. For observations capturing reflected sunlight (i.e., with wavelengths in the visual or near-infrared), the night side of the target body is also ignored.\nThis column tabulates the maximum value of coarsest surface resolution within the field of view of the observation. In other words, this is the size of the smallest feature that could be be resolved anywhere in the field of view and regardless of its orientation on the surface.",
         "pi_category_name": "obs_surface_geometry__<TARGET>",
         "pi_dict_context": "SURFACE_GEO",
@@ -533,7 +535,7 @@
         "pi_sub_heading": "Resolution",
         "pi_tooltip": "",
         "pi_units": "",
-        "comments": "Definition is from SURFACE_GEO label file."
+        "comments": "Definition is from SURFACE_GEO label file.  Val_max is set to be ~7 times the diameter of Jupiter for sanity."
     },
     {
         "field_name": "range_to_body1",

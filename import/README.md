@@ -79,12 +79,6 @@ THE BIG QUESTIONS:
 
   - Do we include Jupiter rev_no? Should we rename "Saturn Orbit Number"?
 
-  - "VALID_MAXIMUM_maximum_DN_saturation_level",
-    - "Indicates the maximum DN saturation level for the signal returned by the
-       A/D converter. Valid values are 255 and 4095. See Appendix B tables",
-    - Should values > 4095 be kept or marked as NULL?
-    ** YES
-
 - COUVIS:
   - H_LEVEL, D_LEVEL
     - Keep?
@@ -120,6 +114,11 @@ THE BIG QUESTIONS:
 
         return wave_res1 * 100. / (wl1*wl1)
 
+  - Right Asc and Declination from index.lbl when ring_geo not available
+    Set both min and max to same value?
+
+  - Spacecraft STOP clock count is always unknown - set to same as START?
+  
 - SURFACE GEO:
   - incidence[12] is >90 (hacked JSON for now, should be val_max=90)
 

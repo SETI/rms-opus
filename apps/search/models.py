@@ -42,6 +42,19 @@ class GroupingTargetName(models.Model):
         db_table = 'grouping_target_name'
 
 
+class MultObsGeneralDataSetId(models.Model):
+    id = models.IntegerField(primary_key=True)
+    value = models.CharField(max_length=100, blank=True, null=True)
+    label = models.CharField(max_length=60)
+    disp_order = models.IntegerField()
+    display = models.CharField(max_length=1)
+    timestamp = models.DateTimeField()
+
+    class Meta:
+        managed = False
+        db_table = 'mult_obs_general_data_set_id'
+
+
 class MultObsGeneralDataType(models.Model):
     id = models.IntegerField(primary_key=True)
     value = models.CharField(max_length=100, blank=True, null=True)
@@ -264,6 +277,110 @@ class MultObsInstrumentCoissTelemetryFormatId(models.Model):
         db_table = 'mult_obs_instrument_coiss_telemetry_format_id'
 
 
+class MultObsInstrumentCouvisChannel(models.Model):
+    id = models.IntegerField(primary_key=True)
+    value = models.CharField(max_length=100, blank=True, null=True)
+    label = models.CharField(max_length=60)
+    disp_order = models.IntegerField()
+    display = models.CharField(max_length=1)
+    timestamp = models.DateTimeField()
+
+    class Meta:
+        managed = False
+        db_table = 'mult_obs_instrument_couvis_channel'
+
+
+class MultObsInstrumentCouvisCompressionType(models.Model):
+    id = models.IntegerField(primary_key=True)
+    value = models.CharField(max_length=100, blank=True, null=True)
+    label = models.CharField(max_length=60)
+    disp_order = models.IntegerField()
+    display = models.CharField(max_length=1)
+    timestamp = models.DateTimeField()
+
+    class Meta:
+        managed = False
+        db_table = 'mult_obs_instrument_couvis_compression_type'
+
+
+class MultObsInstrumentCouvisDwellTime(models.Model):
+    id = models.IntegerField(primary_key=True)
+    value = models.CharField(max_length=100, blank=True, null=True)
+    label = models.CharField(max_length=60)
+    disp_order = models.IntegerField()
+    display = models.CharField(max_length=1)
+    timestamp = models.DateTimeField()
+
+    class Meta:
+        managed = False
+        db_table = 'mult_obs_instrument_couvis_dwell_time'
+
+
+class MultObsInstrumentCouvisHiVoltagePowerSupplyState(models.Model):
+    id = models.IntegerField(primary_key=True)
+    value = models.CharField(max_length=100, blank=True, null=True)
+    label = models.CharField(max_length=60)
+    disp_order = models.IntegerField()
+    display = models.CharField(max_length=1)
+    timestamp = models.DateTimeField()
+
+    class Meta:
+        managed = False
+        db_table = 'mult_obs_instrument_couvis_hi_voltage_power_supply_state'
+
+
+class MultObsInstrumentCouvisObservationType(models.Model):
+    id = models.IntegerField(primary_key=True)
+    value = models.CharField(max_length=100, blank=True, null=True)
+    label = models.CharField(max_length=60)
+    disp_order = models.IntegerField()
+    display = models.CharField(max_length=1)
+    timestamp = models.DateTimeField()
+
+    class Meta:
+        managed = False
+        db_table = 'mult_obs_instrument_couvis_observation_type'
+
+
+class MultObsInstrumentCouvisOccultationPortState(models.Model):
+    id = models.IntegerField(primary_key=True)
+    value = models.CharField(max_length=100, blank=True, null=True)
+    label = models.CharField(max_length=60)
+    disp_order = models.IntegerField()
+    display = models.CharField(max_length=1)
+    timestamp = models.DateTimeField()
+
+    class Meta:
+        managed = False
+        db_table = 'mult_obs_instrument_couvis_occultation_port_state'
+
+
+class MultObsInstrumentCouvisSlitState(models.Model):
+    id = models.IntegerField(primary_key=True)
+    value = models.CharField(max_length=100, blank=True, null=True)
+    label = models.CharField(max_length=60)
+    disp_order = models.IntegerField()
+    display = models.CharField(max_length=1)
+    timestamp = models.DateTimeField()
+
+    class Meta:
+        managed = False
+        db_table = 'mult_obs_instrument_couvis_slit_state'
+
+
+class MultObsInstrumentCouvisTestPulseState(models.Model):
+    id = models.IntegerField(primary_key=True)
+    value = models.CharField(max_length=100, blank=True, null=True)
+    label = models.CharField(max_length=60)
+    disp_order = models.IntegerField()
+    display = models.CharField(max_length=1)
+    timestamp = models.DateTimeField()
+
+    class Meta:
+        managed = False
+        db_table = 'mult_obs_instrument_couvis_test_pulse_state'
+
+
 class MultObsInstrumentGossiCompressionType(models.Model):
     id = models.IntegerField(primary_key=True)
     value = models.CharField(max_length=100, blank=True, null=True)
@@ -301,6 +418,19 @@ class MultObsInstrumentGossiFilterNumber(models.Model):
     class Meta:
         managed = False
         db_table = 'mult_obs_instrument_gossi_filter_number'
+
+
+class MultObsInstrumentGossiFrameDuration(models.Model):
+    id = models.IntegerField(primary_key=True)
+    value = models.CharField(max_length=100, blank=True, null=True)
+    label = models.CharField(max_length=60)
+    disp_order = models.IntegerField()
+    display = models.CharField(max_length=1)
+    timestamp = models.DateTimeField()
+
+    class Meta:
+        managed = False
+        db_table = 'mult_obs_instrument_gossi_frame_duration'
 
 
 class MultObsInstrumentGossiGainModeId(models.Model):
@@ -353,6 +483,19 @@ class MultObsMissionCassiniIsPrime(models.Model):
     class Meta:
         managed = False
         db_table = 'mult_obs_mission_cassini_is_prime'
+
+
+class MultObsMissionCassiniMissionPhaseName(models.Model):
+    id = models.IntegerField(primary_key=True)
+    value = models.CharField(max_length=100, blank=True, null=True)
+    label = models.CharField(max_length=60)
+    disp_order = models.IntegerField()
+    display = models.CharField(max_length=1)
+    timestamp = models.DateTimeField()
+
+    class Meta:
+        managed = False
+        db_table = 'mult_obs_mission_cassini_mission_phase_name'
 
 
 class MultObsMissionCassiniPrimeInstId(models.Model):
@@ -456,7 +599,7 @@ class ObsGeneral(models.Model):
     inst_host_id = models.CharField(max_length=3)
     data_type = models.CharField(max_length=7)
     planet_id = models.CharField(max_length=3, blank=True, null=True)
-    target_name = models.CharField(max_length=17, blank=True, null=True)
+    target_name = models.CharField(max_length=20, blank=True, null=True)
     target_class = models.CharField(max_length=11)
     time1 = models.CharField(max_length=23)
     time2 = models.CharField(max_length=23)
@@ -483,6 +626,7 @@ class ObsGeneral(models.Model):
     mult_obs_general_target_name = models.ForeignKey(MultObsGeneralTargetName, models.DO_NOTHING, db_column='mult_obs_general_target_name')
     mult_obs_general_target_class = models.ForeignKey(MultObsGeneralTargetClass, models.DO_NOTHING, db_column='mult_obs_general_target_class')
     mult_obs_general_quantity = models.ForeignKey(MultObsGeneralQuantity, models.DO_NOTHING, db_column='mult_obs_general_quantity')
+    mult_obs_general_data_set = models.ForeignKey(MultObsGeneralDataSetId, models.DO_NOTHING)
     timestamp = models.DateTimeField()
 
     class Meta:
@@ -562,6 +706,45 @@ class ObsInstrumentCoiss(models.Model):
         db_table = 'obs_instrument_coiss'
 
 
+class ObsInstrumentCouvis(models.Model):
+    obs_general = models.ForeignKey(ObsGeneral, models.DO_NOTHING)
+    rms_obs_id = models.ForeignKey(ObsGeneral, models.DO_NOTHING, related_name='%(class)s_rms_obs_id')
+    volume_id = models.CharField(max_length=11)
+    observation_type = models.CharField(max_length=8)
+    integration_duration = models.FloatField(blank=True, null=True)
+    compression_type = models.CharField(max_length=8)
+    hi_voltage_power_supply_state = models.CharField(max_length=3)
+    occultation_port_state = models.CharField(max_length=16)
+    slit_state = models.CharField(max_length=16)
+    test_pulse_state = models.CharField(max_length=3, blank=True, null=True)
+    odc_id = models.IntegerField()
+    dwell_time = models.IntegerField(blank=True, null=True)
+    h_level = models.CharField(max_length=128)
+    d_level = models.CharField(max_length=128)
+    channel = models.CharField(max_length=5)
+    band1 = models.IntegerField(blank=True, null=True)
+    band2 = models.IntegerField(blank=True, null=True)
+    band_bin = models.IntegerField(blank=True, null=True)
+    line1 = models.IntegerField(blank=True, null=True)
+    line2 = models.IntegerField(blank=True, null=True)
+    line_bin = models.IntegerField(blank=True, null=True)
+    samples = models.IntegerField(blank=True, null=True)
+    mult_obs_instrument_couvis_observation_type = models.ForeignKey(MultObsInstrumentCouvisObservationType, models.DO_NOTHING, db_column='mult_obs_instrument_couvis_observation_type')
+    mult_obs_instrument_couvis_compression_type = models.ForeignKey(MultObsInstrumentCouvisCompressionType, models.DO_NOTHING, db_column='mult_obs_instrument_couvis_compression_type')
+    mult_obs_instrument_couvis_hi_voltage_power_supply_state = models.ForeignKey(MultObsInstrumentCouvisHiVoltagePowerSupplyState, models.DO_NOTHING, db_column='mult_obs_instrument_couvis_hi_voltage_power_supply_state')
+    mult_obs_instrument_couvis_occultation_port_state = models.ForeignKey(MultObsInstrumentCouvisOccultationPortState, models.DO_NOTHING, db_column='mult_obs_instrument_couvis_occultation_port_state')
+    mult_obs_instrument_couvis_slit_state = models.ForeignKey(MultObsInstrumentCouvisSlitState, models.DO_NOTHING, db_column='mult_obs_instrument_couvis_slit_state')
+    mult_obs_instrument_couvis_test_pulse_state = models.ForeignKey(MultObsInstrumentCouvisTestPulseState, models.DO_NOTHING, db_column='mult_obs_instrument_couvis_test_pulse_state')
+    mult_obs_instrument_couvis_dwell_time = models.ForeignKey(MultObsInstrumentCouvisDwellTime, models.DO_NOTHING, db_column='mult_obs_instrument_couvis_dwell_time')
+    mult_obs_instrument_couvis_channel = models.ForeignKey(MultObsInstrumentCouvisChannel, models.DO_NOTHING, db_column='mult_obs_instrument_couvis_channel')
+    id = models.IntegerField(primary_key=True)
+    timestamp = models.DateTimeField()
+
+    class Meta:
+        managed = False
+        db_table = 'obs_instrument_couvis'
+
+
 class ObsInstrumentGossi(models.Model):
     obs_general = models.ForeignKey(ObsGeneral, models.DO_NOTHING)
     rms_obs_id = models.ForeignKey(ObsGeneral, models.DO_NOTHING, related_name='%(class)s_rms_obs_id')
@@ -580,6 +763,7 @@ class ObsInstrumentGossi(models.Model):
     mult_obs_instrument_gossi_filter_name = models.ForeignKey(MultObsInstrumentGossiFilterName, models.DO_NOTHING, db_column='mult_obs_instrument_gossi_filter_name')
     mult_obs_instrument_gossi_filter_number = models.ForeignKey(MultObsInstrumentGossiFilterNumber, models.DO_NOTHING, db_column='mult_obs_instrument_gossi_filter_number')
     mult_obs_instrument_gossi_gain_mode = models.ForeignKey(MultObsInstrumentGossiGainModeId, models.DO_NOTHING)
+    mult_obs_instrument_gossi_frame_duration = models.ForeignKey(MultObsInstrumentGossiFrameDuration, models.DO_NOTHING, db_column='mult_obs_instrument_gossi_frame_duration')
     mult_obs_instrument_gossi_obstruction = models.ForeignKey(MultObsInstrumentGossiObstructionId, models.DO_NOTHING)
     mult_obs_instrument_gossi_compression_type = models.ForeignKey(MultObsInstrumentGossiCompressionType, models.DO_NOTHING, db_column='mult_obs_instrument_gossi_compression_type')
     id = models.IntegerField(primary_key=True)
@@ -607,11 +791,12 @@ class ObsMissionCassini(models.Model):
     ert_sec2 = models.FloatField(blank=True, null=True)
     cassini_target_code = models.CharField(max_length=50, blank=True, null=True)
     activity_name = models.CharField(max_length=9, blank=True, null=True)
-    mission_phase_name = models.CharField(max_length=32)
+    mission_phase_name = models.CharField(max_length=32, blank=True, null=True)
     mult_obs_mission_cassini_rev_no = models.ForeignKey(MultObsMissionCassiniRevNo, models.DO_NOTHING, db_column='mult_obs_mission_cassini_rev_no')
     mult_obs_mission_cassini_is_prime = models.ForeignKey(MultObsMissionCassiniIsPrime, models.DO_NOTHING, db_column='mult_obs_mission_cassini_is_prime')
     mult_obs_mission_cassini_prime_inst = models.ForeignKey(MultObsMissionCassiniPrimeInstId, models.DO_NOTHING)
     mult_obs_mission_cassini_cassini_target_code = models.ForeignKey(MultObsMissionCassiniCassiniTargetCode, models.DO_NOTHING, db_column='mult_obs_mission_cassini_cassini_target_code')
+    mult_obs_mission_cassini_mission_phase_name = models.ForeignKey(MultObsMissionCassiniMissionPhaseName, models.DO_NOTHING, db_column='mult_obs_mission_cassini_mission_phase_name')
     id = models.IntegerField(primary_key=True)
     timestamp = models.DateTimeField()
 
@@ -629,6 +814,8 @@ class ObsMissionGalileo(models.Model):
     orbit_number = models.IntegerField()
     spacecraft_clock_count1 = models.FloatField()
     spacecraft_clock_count2 = models.FloatField()
+    ntv_time = models.CharField(max_length=14)
+    ntv_sat_time = models.CharField(max_length=14)
     mult_obs_mission_galileo_orbit_number = models.ForeignKey(MultObsMissionGalileoOrbitNumber, models.DO_NOTHING, db_column='mult_obs_mission_galileo_orbit_number')
     id = models.IntegerField(primary_key=True)
     timestamp = models.DateTimeField()

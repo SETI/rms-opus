@@ -161,6 +161,56 @@
         "pi_units": ""
     },
     {
+        "field_name": "ntv_time",
+        "field_type": "char14",
+        "field_notnull": true,
+        "data_source": [
+            "TAB:index",
+            "NTV_TIME_FROM_CLOSEST_APPROACH"
+        ],
+        "definition": "Time from closest approach to central body in the form -dddThh:mm:ssZ. If the value is missing or is the default, UNK has been placed in the label.",
+        "pi_category_name": "obs_mission_galileo",
+        "pi_dict_context": "GALILEO",
+        "pi_dict_name": "NTV_TIME_FROM_CLOSEST_APPROACH",
+        "pi_disp_order": 5,
+        "pi_display": 0,
+        "pi_display_results": 1,
+        "pi_form_type": "STRING",
+        "pi_intro": null,
+        "pi_label": "NTV Time from Closest Approach",
+        "pi_label_results": "NTV Time from Closest Approach",
+        "pi_slug": "GALILEOntvtimefromclosestapproach",
+        "pi_sub_heading": null,
+        "pi_tooltip": "",
+        "pi_units": "",
+        "comment": "Definition is from GOSSI label."
+    },
+    {
+        "field_name": "ntv_sat_time",
+        "field_type": "char14",
+        "field_notnull": true,
+        "data_source": [
+            "TAB:index",
+            "NTV_SAT_TIME_FROM_CLOSEST_APR"
+        ],
+        "definition": "Time from closest approach to the nearest satellite in the form -dddThh:mm:ssZ.  If the value is missing or is the default, UNK has been placed in the label.",
+        "pi_category_name": "obs_mission_galileo",
+        "pi_dict_context": "GALILEO",
+        "pi_dict_name": "NTV_SAT_TIME_FROM_CLOSEST_APPROACH",
+        "pi_disp_order": 5,
+        "pi_display": 0,
+        "pi_display_results": 1,
+        "pi_form_type": "STRING",
+        "pi_intro": null,
+        "pi_label": "NTV Satellite Time from Closest Approach",
+        "pi_label_results": "NTV Satellite Time from Closest Approach",
+        "pi_slug": "GALILEOntvsattimefromclosestapproach",
+        "pi_sub_heading": null,
+        "pi_tooltip": "",
+        "pi_units": "",
+        "comment": "Definition is from GOSSI label."
+    },
+    {
         "put_mults_here": true
     },
     {

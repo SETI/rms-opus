@@ -111,31 +111,3 @@ def populate_obs_general_target_class(**kwargs):
         return None
     _, target_class = TARGET_NAME_INFO[target_name]
     return target_class
-
-def populate_obs_general_right_asc1(**kwargs):
-    metadata = kwargs['metadata']
-    ring_geo_row = metadata.get('ring_geo_row', None)
-    if ring_geo_row is None:
-        return None
-    return ring_geo_row['MINIMUM_RIGHT_ASCENSION']
-
-def populate_obs_general_right_asc2(**kwargs):
-    metadata = kwargs['metadata']
-    ring_geo_row = metadata.get('ring_geo_row', None)
-    if ring_geo_row is None:
-        return None
-    return ring_geo_row['MAXIMUM_RIGHT_ASCENSION']
-
-def populate_obs_general_declination1(**kwargs):
-    metadata = kwargs['metadata']
-    ring_geo_row = metadata.get('ring_geo_row', None)
-    if ring_geo_row is None:
-        return None
-    return ring_geo_row['MINIMUM_DECLINATION']
-
-def populate_obs_general_declination2(**kwargs):
-    metadata = kwargs['metadata']
-    ring_geo_row = metadata.get('ring_geo_row', None)
-    if ring_geo_row is None:
-        return None
-    return ring_geo_row['MAXIMUM_DECLINATION']

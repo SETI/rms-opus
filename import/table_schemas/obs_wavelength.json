@@ -86,6 +86,7 @@
             "FUNCTION",
             "obs_wavelength_<INST>_wavelength1"
         ],
+        "data_source_order": 0,
         "definition": "The range of wavelengths at which an observation was made. For spectrographic instruments, this is the actual range avilable. For imaging instruments, this is the FWHM range around the center wavelength.",
         "pi_category_name": "obs_wavelength",
         "pi_dict_context": "OPUS_WAVELENGTH",
@@ -112,6 +113,7 @@
             "FUNCTION",
             "obs_wavelength_<INST>_wavelength2"
         ],
+        "data_source_order": 1,
         "pi_category_name": "obs_wavelength",
         "pi_dict_context": "OPUS_WAVELENGTH",
         "pi_dict_name": "WAVELENGTH",
@@ -136,6 +138,7 @@
             "FUNCTION",
             "obs_wavelength_<INST>_wave_res1"
         ],
+        "data_source_order": 2,
         "definition": "The wavelength_resolution indicates the smallest width of spectral lines that can be reliably detected in a data product.",
         "pi_category_name": "obs_wavelength",
         "pi_dict_context": "OPUS_WAVELENGTH",
@@ -162,6 +165,7 @@
             "FUNCTION",
             "obs_wavelength_<INST>_wave_res2"
         ],
+        "data_source_order": 3,
         "pi_category_name": "obs_wavelength",
         "pi_dict_context": "OPUS_WAVELENGTH",
         "pi_dict_name": "WAVELENGTH_RESOLUTION",

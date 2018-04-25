@@ -74,18 +74,18 @@ def log_accumulated_warnings(title):
 def safe_pdstable_read(filename):
     preprocess_label_func = None
     preprocess_table_func = None
-    for (set_search, set_preprocess_label,
-         set_preprocess_table) in instruments.PDSTABLE_PREPROCESS:
-        if re.fullmatch(set_search, filename.upper()):
-            preprocess_label_func = set_preprocess_label
-            preprocess_table_func = set_preprocess_table
+    # for (set_search, set_preprocess_label,
+    #      set_preprocess_table) in instruments.PDSTABLE_PREPROCESS:
+    #     if re.fullmatch(set_search, filename.upper()):
+    #         preprocess_label_func = set_preprocess_label
+    #         preprocess_table_func = set_preprocess_table
 
     replacements = {}
     for set_search, set_replacements in instruments.PDSTABLE_REPLACEMENTS:
         if re.fullmatch(set_search, filename.upper()):
             replacements = set_replacements
             break
-
+    print(replacements)
     try:
         if preprocess_label_func is None:
             table = pdstable.PdsTable(filename, replacements=replacements,
@@ -99,9 +99,13 @@ def safe_pdstable_read(filename):
                                       table_callback=
                                             preprocess_table_func)
 
+    except KeyboardInterrupt:
+        raise
     except:
-        impglobals.LOGGER.log('error',
-    f'Exception during reading of "{filename}":\n'+traceback.format_exc())
+        msg = f'Exception during reading of "{filename}"'
+        if not impglobals.ARGUMENTS.log_suppress_traceback:
+            msg += ':\n' + traceback.format_exc()
+        impglobals.LOGGER.log('error', msg)
         return None
 
     if log_accumulated_warnings(f'table import of {filename}'):

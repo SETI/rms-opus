@@ -75,6 +75,58 @@ def delete_volume_from_obs_tables(volume_id, namespace):
         impglobals.DATABASE.delete_rows(namespace, 'obs_general', where)
 
 
+def find_duplicate_rms_obs_ids():
+    """Find rms_obs_ids that exist in both import and permanent tables.
+       This can only happen in real life if the same rms_obs_id appears in
+       two different volumes, since normally we delete and entire volume
+       before getting here. Sadly this really happens with GOSSI."""
+
+    if (not impglobals.DATABASE.table_exists('import', 'obs_general') or
+        not impglobals.DATABASE.table_exists('perm', 'obs_general')):
+        return []
+
+    imp_obs_general_table_name = impglobals.DATABASE.convert_raw_to_namespace(
+            'import', 'obs_general')
+    perm_obs_general_table_name = impglobals.DATABASE.convert_raw_to_namespace(
+            'perm', 'obs_general')
+
+    cmd = f"""
+og.rms_obs_id FROM
+    {perm_obs_general_table_name} og,
+    {imp_obs_general_table_name} iog WHERE
+    og.rms_obs_id = iog.rms_obs_id"""
+    res = impglobals.DATABASE.general_select(cmd)
+    return [x[0] for x in res]
+
+
+def delete_rms_obs_id_from_obs_tables(rms_obs_id, namespace):
+    "Delete a single rms_obs_id from all import or permanent obs tables."
+
+    impglobals.LOGGER.log('info',
+        f'Deleting rms_obs_id "{rms_obs_id}" from {namespace} tables')
+
+    table_names = impglobals.DATABASE.table_names(namespace,
+                                                  prefix=['obs_', 'mult_'])
+    where = f'rms_obs_id="{rms_obs_id}"'
+
+    # This has to happen in two phases to handle foreign key contraints:
+    # 1. All tables except obs_general
+    for table_name in table_names:
+        if (table_name.startswith('obs_') and
+            table_name != 'obs_general'):
+            impglobals.DATABASE.delete_rows(namespace, table_name, where)
+
+    # 2. obs_general
+    if 'obs_general' in table_names:
+        impglobals.DATABASE.delete_rows(namespace, 'obs_general', where)
+
+
+def delete_duplicate_rms_obs_id_from_perm_tables():
+    rms_obs_ids = find_duplicate_rms_obs_ids()
+    for rms_obs_id in rms_obs_ids:
+        delete_rms_obs_id_from_obs_tables(rms_obs_id, 'perm')
+
+
 def create_tables_for_import(volume_id, namespace):
     """Create the import or permanent obs_ tables and all the mult tables they
        reference. This does NOT create the target-specific obs_surface_geometry
@@ -129,6 +181,7 @@ def create_tables_for_import(volume_id, namespace):
                 else:
                     schema = mult_table_schema
                 impglobals.DATABASE.create_table(namespace, mult_name, schema)
+                _CREATED_IMP_MULT_TABLES.add(mult_name)
 
         impglobals.DATABASE.create_table(namespace, table_name,
                                          table_schema)
@@ -197,8 +250,9 @@ def read_existing_import_rms_obs_id():
 
 # We cache the contents of mult_ tables we've touched so we don't have to keep
 # reading them from the database.
-MULT_TABLE_CACHE = {}
-MODIFIED_MULT_TABLES = set()
+_MULT_TABLE_CACHE = None
+_CREATED_IMP_MULT_TABLES = None
+_MODIFIED_MULT_TABLES = None
 
 def _mult_table_column_names(table_name):
     """Return a list of the columns found in a mult tables. This isn't
@@ -233,8 +287,8 @@ def read_or_create_mult_table(mult_table_name):
     """Given a mult table name, either read the table from the database or
        return the cached version if we previously read it."""
 
-    if mult_table_name in MULT_TABLE_CACHE:
-        return MULT_TABLE_CACHE[mult_table_name]
+    if mult_table_name in _MULT_TABLE_CACHE:
+        return _MULT_TABLE_CACHE[mult_table_name]
 
     use_mult_table_name = None
 
@@ -245,23 +299,31 @@ def read_or_create_mult_table(mult_table_name):
         mult_rows = _convert_sql_response_to_mult_table(
                             mult_table_name,
                             PREPROGRAMMED_MULT_TABLE_CONTENTS[mult_table_name])
-        MULT_TABLE_CACHE[mult_table_name] = mult_rows
-        MODIFIED_MULT_TABLES.add(mult_table_name)
+        _MULT_TABLE_CACHE[mult_table_name] = mult_rows
+        _MODIFIED_MULT_TABLES.add(mult_table_name)
         return mult_rows
 
     # If there is already an import version of the table, it means this is a
     # second run of the import pipeline without copying over to the new
-    # database, so read the contents of the import version.
+    # database, so read the contents of the import version. But it's also
+    # possible we just created the mult table during the initalization phase
+    # and it's empty. In that case ignore the import one.
     # Otherwise, if there is already a non-import version, read that one.
     # And if there's no table to be found anyway, create a new one.
     use_namespace = None
-    if impglobals.DATABASE.table_exists('import', mult_table_name):
+    if (mult_table_name not in _CREATED_IMP_MULT_TABLES and
+        impglobals.DATABASE.table_exists('import', mult_table_name)):
         use_namespace = 'import'
         # If we have tables left over from the previous run, we have to assume
         # they were modified
-        MODIFIED_MULT_TABLES.add(mult_table_name)
+        _MODIFIED_MULT_TABLES.add(mult_table_name)
     elif impglobals.DATABASE.table_exists('perm', mult_table_name):
         use_namespace = 'perm'
+        # If we just created an import version but are reading the permanent
+        # version, we have to write out the import version before doing
+        # anything else too
+        if mult_table_name in _CREATED_IMP_MULT_TABLES:
+            _MODIFIED_MULT_TABLES.add(mult_table_name)
 
     if use_namespace is not None:
         ns_mult_table_name = (
@@ -276,12 +338,13 @@ def read_or_create_mult_table(mult_table_name):
                     _mult_table_column_names(mult_table_name))
         mult_rows = _convert_sql_response_to_mult_table(mult_table_name,
                                                         rows)
-        MULT_TABLE_CACHE[mult_table_name] = mult_rows
+        _MULT_TABLE_CACHE[mult_table_name] = mult_rows
         return mult_rows
 
     rows = []
-    MULT_TABLE_CACHE[mult_table_name] = rows
+    _MULT_TABLE_CACHE[mult_table_name] = rows
     return rows
+
 
 def update_mult_table(table_name, field_name, val, label):
     """Update a single value in the cached version of a mult table.
@@ -325,7 +388,7 @@ def update_mult_table(table_name, field_name, val, label):
         new_entry['grouping'] = planet_id
     mult_table.append(new_entry)
 
-    MODIFIED_MULT_TABLES.add(mult_table_name)
+    _MODIFIED_MULT_TABLES.add(mult_table_name)
     if not impglobals.ARGUMENTS.import_suppress_mult_messages:
         impglobals.LOGGER.log('info',
             f'Added new value "{val}" ("{label}") to mult table '+
@@ -333,11 +396,12 @@ def update_mult_table(table_name, field_name, val, label):
 
     return next_id
 
+
 def dump_import_mult_tables():
     """Dump all of the cached import mult tables into the database."""
 
-    for mult_table_name in sorted(MODIFIED_MULT_TABLES):
-        rows = MULT_TABLE_CACHE[mult_table_name]
+    for mult_table_name in sorted(_MODIFIED_MULT_TABLES):
+        rows = _MULT_TABLE_CACHE[mult_table_name]
         # Update the display_order
         if mult_table_name not in PREPROGRAMMED_MULT_TABLE_CONTENTS:
             all_numeric = True
@@ -375,6 +439,7 @@ def dump_import_mult_tables():
             f'Writing mult table "{imp_mult_table_name}"')
         impglobals.DATABASE.upsert_rows('import', mult_table_name, 'id', rows)
 
+
 def copy_mult_from_import_to_permanent():
     """Copy ALL mult tables from import to permament. We have to do all tables,
        not just the ones that have changed, because tables might have changed
@@ -405,7 +470,19 @@ def import_one_volume(volume_id):
     """Read the PDS data and perform all import functions for one volume.
        The results are left in the import namespace."""
     impglobals.LOGGER.open(
-            f'Importing {volume_id}', limits={'info': -1, 'debug': -1})
+            f'Importing {volume_id}',
+            limits={'info': impglobals.ARGUMENTS.log_info_limit,
+                    'debug': impglobals.ARGUMENTS.log_debug_limit})
+
+    # Start fresh
+    global _MULT_TABLE_CACHE, _CREATED_IMP_MULT_TABLES, _MODIFIED_MULT_TABLES
+    _MULT_TABLE_CACHE = {}
+    _CREATED_IMP_MULT_TABLES = set()
+    _MODIFIED_MULT_TABLES = set()
+    impglobals.ANNOUNCED_IMPORT_WARNINGS = []
+    impglobals.ANNOUNCED_IMPORT_ERRORS = []
+    impglobals.IMPORT_HAS_BAD_DATA = False
+    impglobals.MAX_TABLE_ID_CACHE = {}
 
     volume_pdsfile = pdsfile.PdsFile.from_path(volume_id)
     if not volume_pdsfile.is_volume():
@@ -417,14 +494,48 @@ def import_one_volume(volume_id):
     instrument_name = VOLUME_ID_PREFIX_TO_INSTRUMENT_NAME[volume_id_prefix]
     mission_abbrev = INSTRUMENT_ABBREV_TO_MISSION_ABBREV[instrument_name]
 
-    volume_label_path = os.path.join(volume_pdsfile.abspath,
-                                     'index', 'index.lbl')
-    if not os.path.exists(volume_label_path):
+    # First we if we have a brand new label and index tab in the metadata
+    # directory. If so, ignore the one in volumes because it's probably
+    # broken.
+    paths = volume_pdsfile.associated_logical_paths('metadata', exists=True)
+    volume_label_path = None
+    if paths:
+        for path in paths:
+            assoc_pdsfile = pdsfile.PdsFile.from_logical_path(path)
+            basenames = assoc_pdsfile.childnames
+            for basename in basenames:
+                if (basename.upper().endswith('_INDEX.LBL') and
+                    not basename.upper().endswith('SUPPLEMENTAL_INDEX.LBL')):
+                    volume_label_path = os.path.join(assoc_pdsfile.abspath,
+                                                     basename)
+                    impglobals.LOGGER.log('debug',
+                f'Using metadata version of main index: "{volume_label_path}"')
+                    break
+
+    if (volume_label_path is None and
+        not impglobals.ARGUMENTS.import_force_metadata_index):
         volume_label_path = os.path.join(volume_pdsfile.abspath,
-                                         'INDEX', 'INDEX.LBL')
+                                         'index', 'index.lbl')
+        if not os.path.exists(volume_label_path):
+            volume_label_path = os.path.join(volume_pdsfile.abspath,
+                                             'INDEX', 'INDEX.LBL')
+        if not os.path.exists(volume_label_path):
+            volume_label_path = os.path.join(volume_pdsfile.abspath,
+                                             'INDEX', 'index.lbl')
+        if not os.path.exists(volume_label_path):
+            volume_label_path = os.path.join(volume_pdsfile.abspath,
+                                             'INDEX', 'IMGINDEX.LBL')
+    if volume_label_path is None:
+        impglobals.LOGGER.log('error',
+            f'No appropriate label file found: "{volume_id}"')
+        impglobals.LOGGER.close()
+        return False
+
     if not os.path.exists(volume_label_path):
-        volume_label_path = os.path.join(volume_pdsfile.abspath,
-                                         'INDEX', 'IMGINDEX.LBL')
+        impglobals.LOGGER.log('error',
+            f'Label file does not exist: "{volume_label_path}"')
+        impglobals.LOGGER.close()
+        return False
 
     obs_rows = import_util.safe_pdstable_read(volume_label_path)
     if not obs_rows:
@@ -445,7 +556,6 @@ def import_one_volume(volume_id):
     #   <vol>_<planet>_summary.lbl
     #   <vol>_supplemental_index.lbl
 
-    paths = volume_pdsfile.associated_logical_paths('metadata', exists=True)
     if paths:
         for path in paths:
             assoc_pdsfile = pdsfile.PdsFile.from_logical_path(path)
@@ -529,8 +639,8 @@ def import_one_volume(volume_id):
                             key = f'/{key1}/{key2}'
                             assoc_dict[key] = row
                     else:
-                        # Something else uses a supplement index that we haven't
-                        # prepared for!
+                        # Something else uses a supplemental index that we
+                        # haven't prepared for!
                         assert False
                 metadata[assoc_type] = assoc_dict
 
@@ -562,13 +672,13 @@ def import_one_volume(volume_id):
 
     # Keep track of rms_obs_id and check for duplicates. This happens, e.g.
     # in GOSSI every now and then. Yuck.
-    # Also, if the database is read only, don't do this, because any earlier
-    # attempt to clean up the tables would not have actually been done so
-    # we probably have nothing but duplicate ids.
-    if impglobals.ARGUMENTS.read_only:
-        used_rms_obs_id = set()
+    used_rms_obs_id_this_vol = set()
+
+    # Also look for duplicates in the existing import tables
+    if impglobals.ARGUMENTS.import_check_duplicate_id:
+        used_rms_obs_id_prev_vol = read_existing_import_rms_obs_id()
     else:
-        used_rms_obs_id = set(read_existing_import_rms_obs_id())
+        used_rms_obs_id_prev_vol = set()
 
     used_targets = set()
 
@@ -576,7 +686,7 @@ def import_one_volume(volume_id):
 
     for index_row_num, index_row in enumerate(obs_rows):
         metadata['index_row'] = index_row
-        metadata['index_row_num'] = index_row_num
+        metadata['index_row_num'] = index_row_num+1
         obs_general_row = None
 
         if 'supp_index' in metadata and instrument_name == 'COUVIS':
@@ -586,11 +696,12 @@ def import_one_volume(volume_id):
             if couvis_filename in supp_index:
                 metadata['supp_index_row'] = supp_index[couvis_filename]
             else:
+                import_util.announce_nonrepeating_warning(
+                    f'File "{couvis_filename}" is missing supplemental data'+
+                    f' [line {index_row_num}]')
                 metadata['supp_index_row'] = None
 
         # Handle everything except surface_geo
-
-        ok_to_continue = True
 
         for table_num, table_name in enumerate(table_names_in_order):
             if table_name.startswith('obs_surface_geometry'):
@@ -603,25 +714,25 @@ def import_one_volume(volume_id):
                                            table_schemas[table_name],
                                            metadata)
             if table_name == 'obs_general':
-                # obs_general HAS to be the first table we do - otherwise
-                # we would've already added rows to other tables and we
-                # couldn't cleanly ignore this observation
                 obs_general_row = row
                 rms_obs_id = row['rms_obs_id']
-                if rms_obs_id in used_rms_obs_id:
+                if rms_obs_id in used_rms_obs_id_this_vol:
                     # Some of the GO_xxxx volumes have duplicate observations
-                    impglobals.LOGGER.log('warning',
-                        f'Duplicate rms_obs_id {rms_obs_id} - ignored')
-                    ok_to_continue = False
-                    break # Don't do the rest of the main tables
-                used_rms_obs_id.add(rms_obs_id)
+                    # within a single volume. In these cases we have to use the
+                    # NEW one and delete the old one.
+                    impglobals.LOGGER.log('info',
+                            f'Duplicate rms_obs_id "{rms_obs_id}" within '+
+                             'volume - removing previous one')
+                    remove_rms_obs_id_from_tables(table_rows,
+                                                  rms_obs_id)
+                used_rms_obs_id_this_vol.add(rms_obs_id)
+                if rms_obs_id in used_rms_obs_id_prev_vol:
+                    # Some of the GO_xxxx volumes have duplicate observations
+                    # across volumes. In these cases we have to use the
+                    # NEW one and delete the old one from the database itself.
+                    delete_rms_obs_id_from_obs_tables(rms_obs_id, 'import')
             table_rows[table_name].append(row)
             metadata[table_name+'_row'] = row
-
-        # If there was a duplicate rms_obs_id, don't do anything else for this
-        # observation
-        if not ok_to_continue:
-            continue # HA HA
 
         assert obs_general_row is not None
 
@@ -693,6 +804,7 @@ def import_one_volume(volume_id):
 
     impglobals.LOGGER.close()
     return True # SUCCESS!
+
 
 def import_observation_table(volume_id,
                              instrument_name,
@@ -854,7 +966,7 @@ def import_observation_table(volume_id,
                 elif column_val in [1, 'y', 'Y', 'yes', 'Yes', 'YES', 'on',
                                     'ON']:
                     column_val = 'Yes'
-                elif column_val in ['N/A', 'UNK']:
+                elif column_val in ['N/A', 'UNK', 'NULL']:
                     column_val = None
                 else:
                     import_util.announce_nonrepeating_error(
@@ -910,19 +1022,37 @@ def import_observation_table(volume_id,
                 if column_val is not None and the_val is not None:
                     val_min = table_column.get('val_min', None)
                     val_max = table_column.get('val_max', None)
+                    val_use_null = table_column.get('val_set_invalid_to_null',
+                                                    False)
                     if val_min is not None and the_val < val_min:
-                        import_util.announce_nonrepeating_error(
-                            f'Column "{field_name}" in table '+
-                            f'"{table_name}" has minimum value {val_min}'+
-                            f' but {column_val} is too small '+
-                            f'[line {index_row_num}]')
+                        if val_use_null:
+                            msg = (f'Column "{field_name}" in table '+
+                                   f'"{table_name}" has minimum value {val_min}'+
+                                   f' but {column_val} is too small - '+
+                                   f'substituting NULL '+
+                                   f'[line {index_row_num}]')
+                            impglobals.LOGGER.log('debug', msg)
+                        else:
+                            msg = (f'Column "{field_name}" in table '+
+                                   f'"{table_name}" has minimum value {val_min}'+
+                                   f' but {column_val} is too small '+
+                                   f'[line {index_row_num}]')
+                            import_util.announce_nonrepeating_error(msg)
                         column_val = None
                     if val_max is not None and the_val > val_max:
-                        import_util.announce_nonrepeating_error(
-                            f'Column "{field_name}" in table '+
-                            f'"{table_name}" has maximum value {val_max}'+
-                            f' but {column_val} is too large '+
-                            f'[line {index_row_num}]')
+                        if val_use_null:
+                            msg = (f'Column "{field_name}" in table '+
+                                   f'"{table_name}" has maximum value {val_max}'+
+                                   f' but {column_val} is too large - '+
+                                   f'substituting NULL '+
+                                   f'[line {index_row_num}]')
+                            impglobals.LOGGER.log('debug', msg)
+                        else:
+                            msg = (f'Column "{field_name}" in table '+
+                                   f'"{table_name}" has maximum value {val_max}'+
+                                   f' but {column_val} is too large '+
+                                   f'[line {index_row_num}]')
+                            import_util.announce_nonrepeating_error(msg)
                         column_val = None
 
         new_row[field_name] = column_val
@@ -980,6 +1110,18 @@ def import_run_field_function(func_name_suffix, volume_id,
                 table_name=table_name, table_schema=table_schema,
                 metadata=metadata)
 
+def remove_rms_obs_id_from_tables(table_rows, rms_obs_id):
+    for table_name in table_rows:
+        rows = table_rows[table_name]
+        for i in range(len(rows)):
+            if ('rms_obs_id' in rows[i] and
+                rows[i]['rms_obs_id'] == rms_obs_id):
+                impglobals.LOGGER.log('debug',
+                    f'Removing "{rms_obs_id}" from "{table_name}"')
+                del rows[i]
+                break
+
+
 ################################################################################
 # THE MAIN IMPORT LOOP
 ################################################################################
@@ -1005,6 +1147,17 @@ def do_import_steps():
         delete_all_obs_mult_tables('import')
         old_imp_tables_dropped = True
 
+    # If --drop-permanent-tables AND --scorched-earth is given, delete
+    # the permanent tables entirely. We have to do this before starting the
+    # real import so that there are no vestigial mult tables and the ids
+    # can be reset to 0.
+    old_perm_tables_dropped = False
+    if (impglobals.ARGUMENTS.drop_permanent_tables and
+        impglobals.ARGUMENTS.scorched_earth):
+        impglobals.LOGGER.log('warning', '** DELETING ALL PERMANENT TABLES **')
+        delete_all_obs_mult_tables('perm')
+        old_perm_tables_dropped = True
+
     # If --import is given, first delete the volumes from the import tables,
     # then do the new import
     if (impglobals.ARGUMENTS.do_import or
@@ -1028,15 +1181,6 @@ def do_import_steps():
             impglobals.LOGGER.log('fatal',
                                   'ERRORs found during import - aborting early')
             return False
-
-    # If --drop-permanent-tables AND --scorched-earth is given, delete
-    # the permanent tables entirely for the given volumes.
-    old_perm_tables_dropped = False
-    if (impglobals.ARGUMENTS.drop_permanent_tables and
-        impglobals.ARGUMENTS.scorched_earth):
-        impglobals.LOGGER.log('warning', '** DELETING ALL PERMANENT TABLES **')
-        delete_all_obs_mult_tables('perm')
-        old_perm_tables_dropped = True
 
     # If --copy-import-to-permanent-tables or --delete-permanent-import-volumes
     # are given, delete all volumes that exist in the import tables from the
@@ -1068,6 +1212,9 @@ def do_import_steps():
     if impglobals.ARGUMENTS.copy_import_to_permanent_tables:
         for volume_id in import_volume_ids:
             create_tables_for_import(volume_id, 'perm')
+
+        impglobals.LOGGER.log('info', 'Deleting duplicate rms_obs_ids')
+        delete_duplicate_rms_obs_id_from_perm_tables()
 
         impglobals.LOGGER.log('info', 'Copying import mult tables to permanent')
         copy_mult_from_import_to_permanent()

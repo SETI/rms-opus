@@ -137,6 +137,21 @@ PREPROGRAMMED_MULT_TABLE_CONTENTS = {
         (   3, '215 ELECTRONS PER DN', '215 Electrons per DN',   40, 'Y'),
     ],
 
+    ### OBS_INSTRUMENT_COUVIS ###
+
+    'mult_obs_instrument_couvis_compression_type': [
+        (   0,  '8_BIT', 'Lowest 8 Bits',   10, 'Y'),
+        (   1, 'SQRT_8',  '8 Bits w/SQRT',   20, 'Y'),
+        (   2, 'SQRT_9',  '9 Bits w/SQRT',   30, 'Y'),
+        (   3,   'NONE',          'None',   40, 'Y'),
+    ],
+    'mult_obs_instrument_couvis_slit_state': [
+        (   0, 'HIGH_RESOLUTION', 'High Resolution',   10, 'Y'),
+        (   1,  'LOW_RESOLUTION',  'Low Resolution',   20, 'Y'),
+        (   2,     'OCCULTATION',     'Occultation',   30, 'Y'),
+        (   3,            'NULL',            'Null',   40, 'Y'),
+    ],
+
     ### OBS_INSTRUMENT_GOSSI ###
 
     'mult_obs_instrument_gossi_filter_name': [
@@ -159,6 +174,7 @@ PREPROGRAMMED_MULT_TABLE_CONTENTS = {
         (   0,        'BARC RATE CONTROL',        'BARC Rate Control', 10, 'Y'),
         (   1,                  'HUFFMAN',                  'Huffman', 20, 'Y'),
         (   2, 'INTEGER COSINE TRANSFORM', 'Integer Cosine Transform', 30, 'Y'),
+        (   3,                     'NONE',                     'None', 40, 'Y'),
     ],
 
     ### OBS_MISSION_HUBBLE ###

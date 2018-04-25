@@ -188,7 +188,7 @@
     },
     {
         "field_name": "target_name",
-        "field_type": "char17",
+        "field_type": "char20",
         "field_default": null,
         "field_key": true,
         "data_source": [
@@ -400,11 +400,12 @@
         "field_key": true,
         "data_source": [
             "FUNCTION",
-            "obs_general_right_asc1"
+            "obs_general_<INST>_right_asc1"
         ],
         "data_source_order": 100,
         "val_min": 0,
         "val_max": 360,
+        "val_sentinel": -999,
         "pi_category_name": "obs_general",
         "pi_dict_context": "PSDD",
         "pi_dict_name": "RIGHT_ASCENSION",
@@ -427,11 +428,12 @@
         "field_key": true,
         "data_source": [
             "FUNCTION",
-            "obs_general_right_asc2"
+            "obs_general_<INST>_right_asc2"
         ],
         "data_source_order": 100,
         "val_min": 0,
         "val_max": 360,
+        "val_sentinel": -999,
         "pi_category_name": "obs_general",
         "pi_dict_context": "PSDD",
         "pi_dict_name": "RIGHT_ASCENSION",
@@ -480,11 +482,12 @@
         "field_key": true,
         "data_source": [
             "FUNCTION",
-            "obs_general_declination1"
+            "obs_general_<INST>_declination1"
         ],
         "data_source_order": 100,
         "val_min": -90,
         "val_max": 90,
+        "val_sentinel": -999,
         "pi_category_name": "obs_general",
         "pi_dict_context": "PSDD",
         "pi_dict_name": "DECLINATION",
@@ -507,11 +510,12 @@
         "field_key": true,
         "data_source": [
             "FUNCTION",
-            "obs_general_declination2"
+            "obs_general_<INST>_declination2"
         ],
         "data_source_order": 100,
         "val_min": -90,
         "val_max": 90,
+        "val_sentinel": -999,
         "pi_category_name": "obs_general",
         "pi_dict_context": "PSDD",
         "pi_dict_name": "DECLINATION",
@@ -618,7 +622,7 @@
         "pi_disp_order": 0,
         "pi_display": 1,
         "pi_display_results": 1,
-        "pi_form_type": "STRING",
+        "pi_form_type": "GROUP",
         "pi_intro": null,
         "pi_label": "Data Set ID",
         "pi_label_results": "Data Set ID",

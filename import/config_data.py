@@ -83,7 +83,7 @@ INSTRUMENT_ABBREV_TO_MISSION_ABBREV = {
     # 'COCIRS':   'CO',
     'COISS':    'CO',
     'COUVIS':   'CO',
-    # 'COVIMS':   'CO',
+    'COVIMS':   'CO',
     'GOSSI':    'GO',
     # 'HSTACS':   'HST',
     # 'HSTWFC3':  'HST',
@@ -98,7 +98,7 @@ INSTRUMENT_ABBREV_TO_INSTRUMENT_NAME = {
     # 'COCIRS':   'Cassini CIRS',
     'COISS':    'Cassini ISS',
     'COUVIS':   'Cassini UVIS',
-    # 'COVIMS':   'Cassini VIMS',
+    'COVIMS':   'Cassini VIMS',
     'GOSSI':    'Galileo SSI',
     # 'HSTACS':   'Hubble ACS',
     # 'HSTWFC3':  'Hubble WFC3',
@@ -127,6 +127,7 @@ VOLUME_ID_PREFIX_TO_INSTRUMENT_NAME = {
 # Some instruments (I'm looking at you, Cassini) don't use the official IAU
 # names for targets, but we want to in OPUS.
 TARGET_NAME_MAPPING = {
+    # These are found in COISS
     'ERRIAPO':  'ERRIAPUS',
     'HYROKKIN': 'HYRROKKIN',
     'K07S4':    'ANTHE',
@@ -146,6 +147,15 @@ TARGET_NAME_MAPPING = {
     'S2_2007':  'S/2007 S 2',
     'S3_2007':  'S/2007 S 3',
 
+    # These are found in COUVIS
+    'ATLAS:':   'ATLAS',
+    'AG':       'AEGAEON',
+    'DA':       'DAPHNIS',
+    'ME':       'METHONE',
+    'PL':       'PALLENE',
+    'PO':       'POLYDEUCES',
+    'IPH':      'INTERSTELLAR MEDIUM', # Interstellar H/He survey
+
     'CALIB':    'CALIBRATION',
     'UNK':      'UNKNOWN',
 }
@@ -164,6 +174,7 @@ TARGET_NAME_INFO = {
     'DARK SKY':      (None,  'SKY'),
     'SUN':           (None,  'SUN'),
     'SOLAR WIND':    (None,  'OTHER'),
+    'INTERSTELLAR MEDIUM': (None, 'OTHER'),
     'VENUS':         ('VEN', 'PLANET'),
     'EARTH':         ('EAR', 'PLANET'),
       'MOON':        ('EAR', 'MOON'),

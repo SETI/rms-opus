@@ -1,8 +1,8 @@
 ################################################################################
-# populate_obs_instrument_COUVIS.py
+# populate_obs_instrument_COVIMS.py
 #
-# Routines to populate fields specific to COUVIS. It may change fields in
-# obs_general, obs_mission_cassini, or obs_instrument_COUVIS.
+# Routines to populate fields specific to COVIMS. It may change fields in
+# obs_general, obs_mission_cassini, or obs_instrument_COVIMS.
 ################################################################################
 
 # Ordering:
@@ -23,7 +23,7 @@ from populate_obs_mission_cassini import *
 
 ### OBS_GENERAL TABLE ###
 
-def _COUVIS_channel_time_helper(**kwargs):
+def _COVIMS_channel_time_helper(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     file_name = index_row['FILE_NAME']
@@ -39,7 +39,7 @@ def _COUVIS_channel_time_helper(**kwargs):
 
     return channel, image_time
 
-def populate_obs_general_COUVIS_rms_obs_id(**kwargs):
+def populate_obs_general_COVIMS_rms_obs_id(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     planet_id = helper_cassini_planet_id(**kwargs)
@@ -48,7 +48,7 @@ def populate_obs_general_COUVIS_rms_obs_id(**kwargs):
     if planet_id is not None:
         planet_ltr = planet_id[0]
 
-    channel, image_time = _COUVIS_channel_time_helper(**kwargs)
+    channel, image_time = _COVIMS_channel_time_helper(**kwargs)
 
     time_split = image_time.split('_')
     image_time = (f'{time_split[0]}-{time_split[1]}T{time_split[2]}-'+
@@ -60,12 +60,12 @@ def populate_obs_general_COUVIS_rms_obs_id(**kwargs):
 
     return rms_obs_id
 
-def populate_obs_general_COUVIS_inst_host_id(**kwargs):
+def populate_obs_general_COVIMS_inst_host_id(**kwargs):
     return 'CO'
 
 # XXX
-def populate_obs_general_COUVIS_data_type(**kwargs):
-    channel, image_time = _COUVIS_channel_time_helper(**kwargs)
+def populate_obs_general_COVIMS_data_type(**kwargs):
+    channel, image_time = _COVIMS_channel_time_helper(**kwargs)
 
     if channel == 'HSP':
         return ('PROFILE', 'Profile')
@@ -87,13 +87,13 @@ def populate_obs_general_COUVIS_data_type(**kwargs):
 
     if channel != 'EUV' and channel != 'FUV':
         import_util.announce_nonrepeating_error(
-            f'COUVIS_data_type has unknown channel type {channel} '+
+            f'COVIMS_data_type has unknown channel type {channel} '+
             f'[line {index_row_num}]')
         return None
 
     if object_type is None:
         import_util.announce_nonrepeating_error(
-            f'COUVIS_data_type has channel EUV or FUV but no '+
+            f'COVIMS_data_type has channel EUV or FUV but no '+
             f'DATA_OBJECT_TYPE available [line {index_row_num}]')
         return ('CUBE', 'Cube') # XXX
 
@@ -102,25 +102,25 @@ def populate_obs_general_COUVIS_data_type(**kwargs):
 
     return ('CUBE', 'Cube')
 
-def populate_obs_general_COUVIS_time1(**kwargs):
+def populate_obs_general_COVIMS_time1(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     start_time = index_row['START_TIME']
     return start_time
 
-def populate_obs_general_COUVIS_time2(**kwargs):
+def populate_obs_general_COVIMS_time2(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     stop_time = index_row['STOP_TIME']
     return stop_time
 
-def populate_obs_general_COUVIS_time_sec1(**kwargs):
+def populate_obs_general_COVIMS_time_sec1(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     start_time = index_row['START_TIME']
     return julian.tai_from_iso(start_time)
 
-def populate_obs_general_COUVIS_time_sec2(**kwargs):
+def populate_obs_general_COVIMS_time_sec2(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     stop_time = index_row['STOP_TIME']
@@ -140,7 +140,7 @@ def populate_obs_general_COUVIS_time_sec2(**kwargs):
     return time2
 
 # XXX
-def populate_obs_general_COUVIS_target_name(**kwargs):
+def populate_obs_general_COVIMS_target_name(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     target_name = index_row['TARGET_NAME'].upper()
@@ -149,7 +149,7 @@ def populate_obs_general_COUVIS_target_name(**kwargs):
 
     return target_name
 
-def populate_obs_general_COUVIS_observation_duration(**kwargs):
+def populate_obs_general_COVIMS_observation_duration(**kwargs):
     metadata = kwargs['metadata']
     obs_general_row = metadata['obs_general_row']
     time_sec1 = obs_general_row['time_sec1']
@@ -157,14 +157,14 @@ def populate_obs_general_COUVIS_observation_duration(**kwargs):
     return time_sec2 - time_sec1
 
 # XXX
-def populate_obs_general_COUVIS_quantity(**kwargs):
-    channel, image_time = _COUVIS_channel_time_helper(**kwargs)
+def populate_obs_general_COVIMS_quantity(**kwargs):
+    channel, image_time = _COVIMS_channel_time_helper(**kwargs)
 
     if channel == 'HSP':
         return 'OPTICAL'
     return 'EMISSION'
 
-def populate_obs_general_COUVIS_note(**kwargs):
+def populate_obs_general_COVIMS_note(**kwargs):
     metadata = kwargs['metadata']
     supp_index_row = metadata['supp_index_row']
     if supp_index_row is None:
@@ -174,20 +174,20 @@ def populate_obs_general_COUVIS_note(**kwargs):
                                       '')
     return description
 
-def populate_obs_general_COUVIS_primary_file_spec(**kwargs):
+def populate_obs_general_COVIMS_primary_file_spec(**kwargs):
     metadata = kwargs['metadata']
     supp_index_row = metadata.get('supp_index_row', None)
     if supp_index_row is None:
         return None
     return supp_index_row['FILE_SPECIFICATION_NAME']
 
-def populate_obs_general_COUVIS_data_set_id(**kwargs):
+def populate_obs_general_COVIMS_data_set_id(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     dsi = index_row['DATA_SET_ID']
     return (dsi, dsi)
 
-def populate_obs_general_COUVIS_right_asc1(**kwargs):
+def populate_obs_general_COVIMS_right_asc1(**kwargs):
     metadata = kwargs['metadata']
     ring_geo_row = metadata.get('ring_geo_row', None)
     if ring_geo_row is not None:
@@ -195,11 +195,9 @@ def populate_obs_general_COUVIS_right_asc1(**kwargs):
 
     index_row = metadata['index_row']
     ra = index_row['RIGHT_ASCENSION']
-    if ra == 'NULL':
-        ra = None
     return ra
 
-def populate_obs_general_COUVIS_right_asc2(**kwargs):
+def populate_obs_general_COVIMS_right_asc2(**kwargs):
     metadata = kwargs['metadata']
     ring_geo_row = metadata.get('ring_geo_row', None)
     if ring_geo_row is not None:
@@ -207,11 +205,9 @@ def populate_obs_general_COUVIS_right_asc2(**kwargs):
 
     index_row = metadata['index_row']
     ra = index_row['RIGHT_ASCENSION']
-    if ra == 'NULL':
-        ra = None
     return ra
 
-def populate_obs_general_COUVIS_declination1(**kwargs):
+def populate_obs_general_COVIMS_declination1(**kwargs):
     metadata = kwargs['metadata']
     ring_geo_row = metadata.get('ring_geo_row', None)
     if ring_geo_row is not None:
@@ -219,11 +215,9 @@ def populate_obs_general_COUVIS_declination1(**kwargs):
 
     index_row = metadata['index_row']
     dec = index_row['DECLINATION']
-    if dec == 'NULL':
-        dec = None
     return dec
 
-def populate_obs_general_COUVIS_declination2(**kwargs):
+def populate_obs_general_COVIMS_declination2(**kwargs):
     metadata = kwargs['metadata']
     ring_geo_row = metadata.get('ring_geo_row', None)
     if ring_geo_row is not None:
@@ -231,16 +225,14 @@ def populate_obs_general_COUVIS_declination2(**kwargs):
 
     index_row = metadata['index_row']
     dec = index_row['DECLINATION']
-    if dec == 'NULL':
-        dec = None
     return dec
 
-def populate_obs_mission_cassini_COUVIS_mission_phase_name(**kwargs):
+def populate_obs_mission_cassini_COVIMS_mission_phase_name(**kwargs):
     return None
 
 ### OBS_TYPE_IMAGE TABLE ###
 
-def populate_obs_type_image_COUVIS_image_type_id(**kwargs):
+def populate_obs_type_image_COVIMS_image_type_id(**kwargs):
     metadata = kwargs['metadata']
     obs_general_row = metadata['obs_general_row']
     type_id = obs_general_row['data_type']
@@ -248,17 +240,17 @@ def populate_obs_type_image_COUVIS_image_type_id(**kwargs):
         return 'PUSH'
     return 'CUBE'
 
-def populate_obs_type_image_COUVIS_duration(**kwargs):
+def populate_obs_type_image_COVIMS_duration(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     integration_duration = index_row['INTEGRATION_DURATION']
 
     return integration_duration
 
-def populate_obs_type_image_COUVIS_levels(**kwargs):
+def populate_obs_type_image_COVIMS_levels(**kwargs):
     return 65535
 
-def populate_obs_type_image_COUVIS_lesser_pixel_size(**kwargs):
+def populate_obs_type_image_COVIMS_lesser_pixel_size(**kwargs):
     metadata = kwargs['metadata']
     supp_index_row = metadata.get('supp_index_row', None)
     if supp_index_row is None:
@@ -272,7 +264,7 @@ def populate_obs_type_image_COUVIS_lesser_pixel_size(**kwargs):
         return None
     return pixels
 
-def populate_obs_type_image_COUVIS_greater_pixel_size(**kwargs):
+def populate_obs_type_image_COVIMS_greater_pixel_size(**kwargs):
     metadata = kwargs['metadata']
     supp_index_row = metadata.get('supp_index_row', None)
     if supp_index_row is None:
@@ -291,11 +283,11 @@ def populate_obs_type_image_COUVIS_greater_pixel_size(**kwargs):
 
 # This is the effective wavelength (convolved with the solar spectrum)
 # XXX
-def populate_obs_wavelength_COUVIS_effective_wavelength(**kwargs):
+def populate_obs_wavelength_COVIMS_effective_wavelength(**kwargs):
     return 0
 
-def populate_obs_wavelength_COUVIS_wavelength1(**kwargs):
-    channel, image_time = _COUVIS_channel_time_helper(**kwargs)
+def populate_obs_wavelength_COVIMS_wavelength1(**kwargs):
+    channel, image_time = _COVIMS_channel_time_helper(**kwargs)
     if channel == 'HSP':
         return 0.11
     if channel == 'HDAC':
@@ -316,13 +308,13 @@ def populate_obs_wavelength_COUVIS_wavelength1(**kwargs):
         return 0.11 + band1 * 0.000078125
 
     import_util.announce_nonrepeating_error(
-        f'obs_wavelength_COUVIS_wavelength1 has unknown channel type '+
+        f'obs_wavelength_COVIMS_wavelength1 has unknown channel type '+
         f' {channel} [line {index_row_num}]')
     return None
 
 
-def populate_obs_wavelength_COUVIS_wavelength2(**kwargs):
-    channel, image_time = _COUVIS_channel_time_helper(**kwargs)
+def populate_obs_wavelength_COVIMS_wavelength2(**kwargs):
+    channel, image_time = _COVIMS_channel_time_helper(**kwargs)
     if channel == 'HSP':
         return 0.19
     if channel == 'HDAC':
@@ -343,16 +335,16 @@ def populate_obs_wavelength_COUVIS_wavelength2(**kwargs):
         return 0.11 + (band2 + 1) * 0.000078125
 
     import_util.announce_nonrepeating_error(
-        f'obs_wavelength_COUVIS_wavelength1 has unknown channel type '+
+        f'obs_wavelength_COVIMS_wavelength1 has unknown channel type '+
         f' {channel} [line {index_row_num}]')
     return None
 
-def _COUVIS_wave_res_helper(**kwargs):
+def _COVIMS_wave_res_helper(**kwargs):
     metadata = kwargs['metadata']
     supp_index_row = metadata.get('supp_index_row', None)
     if supp_index_row is None:
         return None
-    channel, image_time = _COUVIS_channel_time_helper(**kwargs)
+    channel, image_time = _COVIMS_channel_time_helper(**kwargs)
     band_bin = supp_index_row['BAND_BINNING_FACTOR']
 
     if channel == 'EUV':
@@ -361,13 +353,13 @@ def _COUVIS_wave_res_helper(**kwargs):
         return band_bin * 0.000078125
     return None
 
-def populate_obs_wavelength_COUVIS_wave_res1(**kwargs):
-    return _COUVIS_wave_res_helper(**kwargs)
+def populate_obs_wavelength_COVIMS_wave_res1(**kwargs):
+    return _COVIMS_wave_res_helper(**kwargs)
 
-def populate_obs_wavelength_COUVIS_wave_res2(**kwargs):
-    return _COUVIS_wave_res_helper(**kwargs)
+def populate_obs_wavelength_COVIMS_wave_res2(**kwargs):
+    return _COVIMS_wave_res_helper(**kwargs)
 
-def populate_obs_wavelength_COUVIS_wave_no1(**kwargs):
+def populate_obs_wavelength_COVIMS_wave_no1(**kwargs):
     metadata = kwargs['metadata']
     wl_row = metadata['obs_wavelength_row']
     wl2 = wl_row['wavelength2']
@@ -377,7 +369,7 @@ def populate_obs_wavelength_COUVIS_wave_no1(**kwargs):
 
     return 100. / wl2
 
-def populate_obs_wavelength_COUVIS_wave_no2(**kwargs):
+def populate_obs_wavelength_COVIMS_wave_no2(**kwargs):
     metadata = kwargs['metadata']
     wl_row = metadata['obs_wavelength_row']
     wl1 = wl_row['wavelength2']
@@ -387,7 +379,7 @@ def populate_obs_wavelength_COUVIS_wave_no2(**kwargs):
 
     return 100. / wl1
 
-def populate_obs_wavelength_COUVIS_wave_no_res1(**kwargs):
+def populate_obs_wavelength_COVIMS_wave_no_res1(**kwargs):
     metadata = kwargs['metadata']
     wl_row = metadata['obs_wavelength_row']
     wave_res1 = wl_row['wave_res1']
@@ -398,7 +390,7 @@ def populate_obs_wavelength_COUVIS_wave_no_res1(**kwargs):
 
     return wave_res1 * 100. / (wl2*wl2)
 
-def populate_obs_wavelength_COUVIS_wave_no_res2(**kwargs):
+def populate_obs_wavelength_COVIMS_wave_no_res2(**kwargs):
     metadata = kwargs['metadata']
     wl_row = metadata['obs_wavelength_row']
     wave_res1 = wl_row['wave_res1'] # XXX?
@@ -409,19 +401,19 @@ def populate_obs_wavelength_COUVIS_wave_no_res2(**kwargs):
 
     return wave_res1 * 100. / (wl1*wl1)
 
-def populate_obs_wavelength_COUVIS_spec_flag(**kwargs):
-    channel, image_time = _COUVIS_channel_time_helper(**kwargs)
+def populate_obs_wavelength_COVIMS_spec_flag(**kwargs):
+    channel, image_time = _COVIMS_channel_time_helper(**kwargs)
 
     if channel == 'HDAC' or channel == 'HSP':
         return 'N'
     return 'Y'
 
-def populate_obs_wavelength_COUVIS_spec_size(**kwargs):
+def populate_obs_wavelength_COVIMS_spec_size(**kwargs):
     metadata = kwargs['metadata']
     supp_index_row = metadata.get('supp_index_row', None)
     if supp_index_row is None:
         return None
-    channel, image_time = _COUVIS_channel_time_helper(**kwargs)
+    channel, image_time = _COVIMS_channel_time_helper(**kwargs)
     band1 = supp_index_row['MINIMUM_BAND_NUMBER']
     band2 = supp_index_row['MAXIMUM_BAND_NUMBER']
     band_bin = supp_index_row['BAND_BINNING_FACTOR']
@@ -433,7 +425,7 @@ def populate_obs_wavelength_COUVIS_spec_size(**kwargs):
 
     return None
 
-def populate_obs_wavelength_COUVIS_polarization_type(**kwargs):
+def populate_obs_wavelength_COVIMS_polarization_type(**kwargs):
     return 'NONE'
 
 
@@ -441,30 +433,25 @@ def populate_obs_wavelength_COUVIS_polarization_type(**kwargs):
 # THESE NEED TO BE IMPLEMENTED FOR EVERY CASSINI INSTRUMENT
 ################################################################################
 
-def populate_obs_mission_cassini_COUVIS_ert1(**kwargs):
+def populate_obs_mission_cassini_COVIMS_ert1(**kwargs):
     return None
 
-def populate_obs_mission_cassini_COUVIS_ert2(**kwargs):
+def populate_obs_mission_cassini_COVIMS_ert2(**kwargs):
     return None
 
-def populate_obs_mission_cassini_COUVIS_spacecraft_clock_count1(**kwargs):
+def populate_obs_mission_cassini_COVIMS_spacecraft_clock_count1(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
-    count = index_row['SPACECRAFT_CLOCK_START_COUNT']
-    if not count.startswith('1/'):
-        return None
-    return float(count[2:])
+    count = index_row['SPACE_CLOCK_START_COUNT']
+    return count
 
-# NOTE: STOP COUNT is always unknown for UVIS
-def populate_obs_mission_cassini_COUVIS_spacecraft_clock_count2(**kwargs):
+def populate_obs_mission_cassini_COVIMS_spacecraft_clock_count2(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
-    count = index_row['SPACECRAFT_CLOCK_START_COUNT']
-    if not count.startswith('1/'):
-        return None
-    return float(count[2:])
+    count = index_row['SPACE_CLOCK_STOP_COUNT']
+    return count
 
-def populate_obs_mission_cassini_COUVIS_rev_no(**kwargs):
+def populate_obs_mission_cassini_COVIMS_rev_no(**kwargs):
     obs_name = helper_cassini_obs_name(**kwargs)
     if not helper_cassini_valid_obs_name(obs_name):
         return None
@@ -476,17 +463,9 @@ def populate_obs_mission_cassini_COUVIS_rev_no(**kwargs):
 
 
 ################################################################################
-# THESE ARE SPECIFIC TO OBS_INSTRUMENT_COUVIS
+# THESE ARE SPECIFIC TO OBS_INSTRUMENT_COVIMS
 ################################################################################
 
-def populate_obs_instrument_COUVIS_channel(**kwargs):
-    channel, image_time = _COUVIS_channel_time_helper(**kwargs)
+def populate_obs_instrument_COVIMS_channel(**kwargs):
+    channel, image_time = _COVIMS_channel_time_helper(**kwargs)
     return (channel, channel)
-
-def populate_obs_instrument_COUVIS_observation_type(**kwargs):
-    metadata = kwargs['metadata']
-    index_row = metadata['index_row']
-    obstype = index_row['OBSERVATION_TYPE']
-    if obstype == '':
-        obstype == 'UNKNOWN'
-    return (obstype.upper(), obstype.upper())
