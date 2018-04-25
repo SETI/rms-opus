@@ -16,7 +16,6 @@ class GroupingTargetName(models.Model):
     label = models.CharField(unique=True, max_length=50, blank=True, null = True)
     disp_order = models.IntegerField(null=True, blank=True)
     display = models.CharField(max_length=9)
-    default_fade = models.CharField(max_length=9)
 
     def __unicode__(self):
         return self.label

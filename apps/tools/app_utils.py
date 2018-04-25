@@ -99,7 +99,7 @@ def responseFormats(data, fmt, **kwargs):
         return data
 
     # data is a list of dictionaries
-    # like: [{ring_obs_id=something1, planet=SAt, target = Pan}, {ring_obs_id=something21, planet=Sat, target = Pan}]
+    # like: [{rms_obs_id=something1, planet=SAt, target = Pan}, {rms_obs_id=something21, planet=Sat, target = Pan}]
     # each row is one dictionary
     elif fmt == 'csv':   # must pass a list of dicts
         return listToCSV(data['page'],kwargs['labels'])
@@ -109,7 +109,7 @@ def responseFormats(data, fmt, **kwargs):
 
 
 # data is a list of dictionaries
-# like: [{ring_obs_id=something1, planet=SAt, target = Pan}, {ring_obs_id=something21, planet=Sat, target = Pan}]
+# like: [{rms_obs_id=something1, planet=SAt, target = Pan}, {rms_obs_id=something21, planet=Sat, target = Pan}]
 # each row is one dictionary
 def dictToCSV(data):
     filename = downloadFileName()

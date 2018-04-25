@@ -106,6 +106,12 @@ def getValidMults(request,slug,fmt='json'):
         selections = {}
 
     param_info = search.views.get_param_info_by_slug(slug)
+    if not param_info:
+        log.error("getValidMults: Could not find param_info entry for slug %s",
+                  str(slug))
+        log.error(".. Selections: %s", str(selections))
+        log.error(".. Extras: %s", str(extras))
+        raise Http404
 
     table_name = param_info.category_name
     param_name = param_info.param_name()
@@ -209,6 +215,12 @@ def getRangeEndpoints(request,slug,fmt='json'):
     update_metrics(request)
 
     param_info = search.views.get_param_info_by_slug(slug)
+    if not param_info:
+        log.error(
+    "getRangeEndpoints: Could not find param_info entry for slug %s",
+    str(slug))
+        raise Http404
+
     param_name = param_info.param_name()
     form_type = param_info.form_type
     table_name = param_info.category_name
@@ -283,10 +295,19 @@ def getRangeEndpoints(request,slug,fmt='json'):
         range_endpoints['nulls'] = results.all().extra(where=[where]).count()
 
     # convert time_sec to human readable
+    # XXX THIS IS A HORRIBLE HACK. FIX THIS!
+    # ALSO FIX this whole thing where it looks up time1 or time2 separately from
+    # time_sec1 or time_sec2 because it has trouble with floating point imprecision
+    # and sometimes doesn't find the associated time1/time2 field!
     if form_type == "TIME":
-        range_endpoints['min'] = ObsGeneral.objects.filter(**{param1:range_endpoints['min']})[0].time1
-        range_endpoints['max'] = ObsGeneral.objects.filter(**{param2:range_endpoints['max']})[0].time2
-        pass  # ObsGeneral.objects.filter(param1=)
+        if slug.startswith('ert'):
+            range_endpoints['min'] = ObsMissionCassini.objects.filter(**{param1:range_endpoints['min']})[0].ert1
+            range_endpoints['max'] = ObsMissionCassini.objects.filter(**{param2:range_endpoints['max']})[0].ert2
+        else:
+            if range_endpoints['min'] is not None:
+                range_endpoints['min'] = ObsGeneral.objects.filter(**{param1:range_endpoints['min']})[0].time1
+            if range_endpoints['max'] is not None:
+                range_endpoints['max'] = ObsGeneral.objects.filter(**{param2:range_endpoints['max']})[0].time2
 
     else:
         # form type is not TIME..

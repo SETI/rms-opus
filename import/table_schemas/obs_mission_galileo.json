@@ -1,0 +1,230 @@
+[
+    {
+        "field_name": "obs_general_id",
+        "field_type": "uint4",
+        "field_key": "foreign",
+        "field_key_foreign": [
+            "obs_general",
+            "id"
+        ],
+        "field_notnull": true,
+        "data_source": [
+            "TAB:obs_general",
+            "id"
+        ],
+        "comment": "This is the primary (surrograte) key linking the record to obs_general."
+    },
+    {
+        "field_name": "rms_obs_id",
+        "field_type": "char40",
+        "field_key": "foreign",
+        "field_key_foreign": [
+            "obs_general",
+            "rms_obs_id"
+        ],
+        "field_notnull": true,
+        "data_source": [
+            "TAB:obs_general",
+            "rms_obs_id"
+        ],
+        "comment": "This is the secondary key linking the record to obs_general."
+    },
+    {
+        "field_name": "volume_id",
+        "field_type": "char11",
+        "field_key": true,
+        "field_notnull": true,
+        "data_source": [
+            "TAB:obs_general",
+            "volume_id"
+        ],
+        "comment": "The volume_id is included here for ease of database manipulation only."
+    },
+    {
+        "field_name": "instrument_id",
+        "field_type": "char9",
+        "field_key": true,
+        "field_notnull": true,
+        "data_source": [
+            "TAB:obs_general",
+            "instrument_id"
+        ],
+        "comment": "The instrument_id is included here for ease of database manipulation only."
+    },
+    {
+        "field_name": "observation_id",
+        "field_type": "char20",
+        "field_notnull": true,
+        "data_source": [
+            "TAB:index",
+            "OBSERVATION_ID"
+        ],
+        "definition": "This is the Galileo activity id of each image which is in the form NNTIOOOOOOMM#SSSXXXX. NN is the Orbit number. T is the scan platform target body initial (if applicable). I is the instrument. OOOOOO is the orbit planning guide objective mnemonic. MM is the sequential OAPEL number for each value of NNTIOOOOOO. # is the multiple observation flag symbol (- or *). SSS is the PA set number. XXXX is the MIPL Processing Code.",
+        "pi_category_name": "obs_mission_galileo",
+        "pi_dict_context": "GALILEO",
+        "pi_dict_name": "OBSERVATION_ID",
+        "pi_disp_order": 5,
+        "pi_display": 1,
+        "pi_display_results": 1,
+        "pi_form_type": "STRING",
+        "pi_intro": null,
+        "pi_label": "Observation ID",
+        "pi_label_results": "Observation ID",
+        "pi_old_slug": "OBSERVATIONID",
+        "pi_slug": "GALILEOobservationid",
+        "pi_sub_heading": null,
+        "pi_tooltip": "",
+        "pi_units": "",
+        "comment": "Definition is from GOSSI label."
+    },
+    {
+        "field_name": "orbit_number",
+        "field_type": "int4",
+        "field_default": null,
+        "field_notnull": true,
+        "data_source": [
+            "TAB:index",
+            "ORBIT_NUMBER"
+        ],
+        "val_min": 0,
+        "val_max": 33,
+        "definition": "Identifies Jupiter Orbit number. Applicable only during Jupiter Orbital Operations. Prior to Jupiter Orbital Operations, UNK has been placed in the label.",
+        "pi_category_name": "obs_mission_galileo",
+        "pi_dict_context": "GALILEO",
+        "pi_dict_name": "ORBIT_NUMBER",
+        "pi_disp_order": 8,
+        "pi_display": 1,
+        "pi_display_results": 1,
+        "pi_form_type": "GROUP",
+        "pi_intro": null,
+        "pi_label": "Orbit Number",
+        "pi_label_results": "Orbit Number",
+        "pi_old_slug": "ORBITNUMBER",
+        "pi_slug": "GALILEOorbitnumber",
+        "pi_sub_heading": null,
+        "pi_tooltip": "",
+        "pi_units": "",
+        "comment": "Definition is from GOSSI label."
+    },
+    {
+        "field_name": "spacecraft_clock_count1",
+        "field_type": "real8",
+        "field_notnull": true,
+        "data_source": [
+            "TAB:index",
+            "SPACECRAFT_CLOCK_START_COUNT"
+        ],
+        "val_min": 3e6,
+        "val_max": 7e6,
+        "definition": "The spacecraft clock at time of image acquisition. The SCLK is formatted as follows: RIM.MOD91",
+        "pi_category_name": "obs_mission_galileo",
+        "pi_dict_context": "GALILEO",
+        "pi_dict_name": "SPACECRAFT_CLOCK_START_COUNT",
+        "pi_disp_order": 4,
+        "pi_display": 1,
+        "pi_display_results": 1,
+        "pi_form_type": "RANGE",
+        "pi_intro": null,
+        "pi_label": "Spacecraft Clock Count",
+        "pi_label_results": "Spacecraft Clock Start Count",
+        "pi_old_slug": "missiongalileospacecraftclockcount1",
+        "pi_slug": "GALILEOspacecraftclockcount1",
+        "pi_sub_heading": null,
+        "pi_tooltip": "",
+        "pi_units": "",
+        "comment": "Definition is from GOSSI label"
+    },
+    {
+        "field_name": "spacecraft_clock_count2",
+        "field_type": "real8",
+        "field_notnull": true,
+        "data_source": [
+            "TAB:index",
+            "SPACECRAFT_CLOCK_START_COUNT"
+        ],
+        "val_min": 3e6,
+        "val_max": 7e6,
+        "pi_category_name": "obs_mission_galileo",
+        "pi_dict_context": "GALILEO",
+        "pi_dict_name": "SPACECRAFT_CLOCK_START_COUNT",
+        "pi_disp_order": 5,
+        "pi_display": 0,
+        "pi_display_results": 1,
+        "pi_form_type": "RANGE",
+        "pi_intro": null,
+        "pi_label": "Spacecraft Clock Count 2",
+        "pi_label_results": "Spacecraft Clock Stop Count",
+        "pi_old_slug": "missiongalileospacecraftclockcount2",
+        "pi_slug": "GALILEOspacecraftclockcount2",
+        "pi_sub_heading": null,
+        "pi_tooltip": "",
+        "pi_units": ""
+    },
+    {
+        "field_name": "ntv_time",
+        "field_type": "char14",
+        "field_notnull": true,
+        "data_source": [
+            "TAB:index",
+            "NTV_TIME_FROM_CLOSEST_APPROACH"
+        ],
+        "definition": "Time from closest approach to central body in the form -dddThh:mm:ssZ. If the value is missing or is the default, UNK has been placed in the label.",
+        "pi_category_name": "obs_mission_galileo",
+        "pi_dict_context": "GALILEO",
+        "pi_dict_name": "NTV_TIME_FROM_CLOSEST_APPROACH",
+        "pi_disp_order": 5,
+        "pi_display": 0,
+        "pi_display_results": 1,
+        "pi_form_type": "STRING",
+        "pi_intro": null,
+        "pi_label": "NTV Time from Closest Approach",
+        "pi_label_results": "NTV Time from Closest Approach",
+        "pi_slug": "GALILEOntvtimefromclosestapproach",
+        "pi_sub_heading": null,
+        "pi_tooltip": "",
+        "pi_units": "",
+        "comment": "Definition is from GOSSI label."
+    },
+    {
+        "field_name": "ntv_sat_time",
+        "field_type": "char14",
+        "field_notnull": true,
+        "data_source": [
+            "TAB:index",
+            "NTV_SAT_TIME_FROM_CLOSEST_APR"
+        ],
+        "definition": "Time from closest approach to the nearest satellite in the form -dddThh:mm:ssZ.  If the value is missing or is the default, UNK has been placed in the label.",
+        "pi_category_name": "obs_mission_galileo",
+        "pi_dict_context": "GALILEO",
+        "pi_dict_name": "NTV_SAT_TIME_FROM_CLOSEST_APPROACH",
+        "pi_disp_order": 5,
+        "pi_display": 0,
+        "pi_display_results": 1,
+        "pi_form_type": "STRING",
+        "pi_intro": null,
+        "pi_label": "NTV Satellite Time from Closest Approach",
+        "pi_label_results": "NTV Satellite Time from Closest Approach",
+        "pi_slug": "GALILEOntvsattimefromclosestapproach",
+        "pi_sub_heading": null,
+        "pi_tooltip": "",
+        "pi_units": "",
+        "comment": "Definition is from GOSSI label."
+    },
+    {
+        "put_mults_here": true
+    },
+    {
+        "field_name": "id",
+        "field_type": "uint4",
+        "field_key": "primary",
+        "field_notnull": true,
+        "data_source": [
+            "MAX_ID",
+            null
+        ]
+    },
+    {
+        "field_name": "timestamp",
+        "field_type": "timestamp"
+    }
+]

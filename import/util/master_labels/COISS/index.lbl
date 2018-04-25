@@ -1,0 +1,1395 @@
+PDS_VERSION_ID         = PDS3
+RECORD_TYPE            = FIXED_LENGTH
+RECORD_BYTES           = 3069
+FILE_RECORDS           = 3667
+^IMAGE_INDEX_TABLE     = "index.tab"
+
+OBJECT                   = IMAGE_INDEX_TABLE
+  INDEX_TYPE             = SINGLE
+  INTERCHANGE_FORMAT     = ASCII
+  ROWS                   = 3667
+  ROW_BYTES              = 3069
+  COLUMNS                = 119
+
+  OBJECT         = COLUMN
+    NAME         = FILE_NAME
+    DATA_TYPE    = CHARACTER
+    START_BYTE   = 2
+    BYTES        = 22
+    FORMAT       = A22
+    DESCRIPTION  = "The name of the image file as stored on the archive
+                    media."
+  END_OBJECT     = COLUMN
+
+  OBJECT         = COLUMN
+    NAME         = FILE_SPECIFICATION_NAME
+    DATA_TYPE    = CHARACTER
+    START_BYTE   = 27
+    BYTES        = 48
+    FORMAT       = A48
+    DESCRIPTION  = "Path name locating images in DATA directory on
+                    data set volumes."
+  END_OBJECT     = COLUMN
+
+  OBJECT         = COLUMN
+    NAME         = VOLUME_ID
+    DATA_TYPE    = CHARACTER
+    START_BYTE   = 78
+    BYTES        = 11
+    FORMAT       = A11
+    DESCRIPTION  = "The volume on which the product is stored."
+  END_OBJECT     = COLUMN
+
+  OBJECT         = COLUMN
+    NAME         = ANTIBLOOMING_STATE_FLAG
+    DATA_TYPE    = CHARACTER
+    START_BYTE   = 92
+    BYTES        = 4
+    FORMAT       = A4
+    DESCRIPTION  = "Indicator of whether antiblooming was used for
+                    this image."
+  END_OBJECT     = COLUMN
+
+  OBJECT         = COLUMN
+    NAME         = BIAS_STRIP_MEAN
+    DATA_TYPE    = ASCII_REAL
+    START_BYTE   = 98
+    BYTES        = 11
+    FORMAT       = "F11.6"
+    DESCRIPTION  = "Mean value of the overclocked pixel values from
+                    all lines except the first and last. Not affected
+                    by light or dark current."
+  END_OBJECT     = COLUMN
+
+  OBJECT         = COLUMN
+    NAME         = CALIBRATION_LAMP_STATE_FLAG
+    DATA_TYPE    = CHARACTER
+    START_BYTE   = 111
+    BYTES        = 4
+    FORMAT       = A4
+    DESCRIPTION  = "Indicates whether calibration lamp was used for
+                    this image. (ISSNA has none, so it's always 'N/A')"
+  END_OBJECT     = COLUMN
+
+  OBJECT         = COLUMN
+    NAME         = COMMAND_FILE_NAME
+    DATA_TYPE    = CHARACTER
+    START_BYTE   = 118
+    BYTES        = 64
+    FORMAT       = A64
+    DESCRIPTION  = "The name of the IOI file containing the observation
+                    description for this product - sent from the ISS
+                    Team Lead to IO."
+  END_OBJECT     = COLUMN
+
+  OBJECT         = COLUMN
+    NAME         = COMMAND_SEQUENCE_NUMBER
+    DATA_TYPE    = INTEGER
+    START_BYTE   = 184
+    BYTES        = 11
+    FORMAT       = I11
+    DESCRIPTION  = "Numeric identifier for a sequence of commands
+                    sent to the spacecraft. Also known as 'trigger
+                    number'. (Comes from the TRIGGER_NUMBER keyword
+                    in the IOI file.) Note that 1-12 are reserved
+                    for IO use and 8 is reserved for OpNav."
+  END_OBJECT     = COLUMN
+
+  OBJECT         = COLUMN
+    NAME         = DARK_STRIP_MEAN
+    DATA_TYPE    = ASCII_REAL
+    START_BYTE   = 196
+    BYTES        = 11
+    FORMAT       = "F11.6"
+    DESCRIPTION  = "Mean value of the extended pixel values from
+                    all lines except the first and last. Not affected
+                    by light, but by dark current and Dark Band problem."
+  END_OBJECT     = COLUMN
+
+  OBJECT         = COLUMN
+    NAME         = DATA_CONVERSION_TYPE
+    DATA_TYPE    = CHARACTER
+    START_BYTE   = 209
+    BYTES        = 5
+    FORMAT       = A5
+    DESCRIPTION  = "The method of conversion used to convert image
+                    from 12 to 8 bits selected for this image. '12BIT'
+                    = no conversion 'TABLE' = conversion by look-up
+                    table '8LSB' = keep only the 8 least significant
+                    bits"
+  END_OBJECT     = COLUMN
+
+  OBJECT         = COLUMN
+    NAME         = DATA_SET_ID
+    DATA_TYPE    = CHARACTER
+    START_BYTE   = 217
+    BYTES        = 40
+    FORMAT       = A40
+    DESCRIPTION  = "PDS/Cassini-supplied name for this data set."
+  END_OBJECT     = COLUMN
+
+  OBJECT         = COLUMN
+    NAME         = DELAYED_READOUT_FLAG
+    DATA_TYPE    = CHARACTER
+    START_BYTE   = 260
+    BYTES        = 4
+    FORMAT       = A4
+    DESCRIPTION  = "Indicator of whether the image may have waited
+                    on the CCD while the other camera was performing
+                    a readout."
+  END_OBJECT     = COLUMN
+
+  OBJECT         = COLUMN
+    NAME         = DESCRIPTION
+    DATA_TYPE    = CHARACTER
+    START_BYTE   = 267
+    BYTES        = 255
+    FORMAT       = A255
+    DESCRIPTION  = "Descriptive comment up to 255 characters. Populated
+                    by IO telemetry processing, validation and reconciliation
+                    software to describe known limitations of this
+                    product."
+  END_OBJECT     = COLUMN
+
+  OBJECT         = COLUMN
+    NAME         = DETECTOR_TEMPERATURE
+    DATA_TYPE    = ASCII_REAL
+    START_BYTE   = 524
+    BYTES        = 11
+    FORMAT       = "F11.6"
+    UNIT        = "CELSIUS DEGREE"
+    DESCRIPTION  = "Temperature of CCD in Celsius degrees."
+  END_OBJECT     = COLUMN
+
+  OBJECT         = COLUMN
+    NAME         = EARTH_RECEIVED_START_TIME
+    DATA_TYPE    = TIME
+    START_BYTE   = 536
+    BYTES        = 22
+    FORMAT       = A22
+    DESCRIPTION  = "Earth Received time of the earliest record containing
+                    valid data for this image (UTC)."
+  END_OBJECT     = COLUMN
+
+  OBJECT         = COLUMN
+    NAME         = EARTH_RECEIVED_STOP_TIME
+    DATA_TYPE    = TIME
+    START_BYTE   = 559
+    BYTES        = 22
+    FORMAT       = A22
+    DESCRIPTION  = "Earth Received time of the latest record containing
+                    valid data for this image (UTC)."
+  END_OBJECT     = COLUMN
+
+  OBJECT         = COLUMN
+    NAME         = ELECTRONICS_BIAS
+    DATA_TYPE    = INTEGER
+    START_BYTE   = 582
+    BYTES        = 11
+    FORMAT       = I11
+    DESCRIPTION  = "Commanded electronics bias to ensure that all
+                    DN values are greater than zero. (Comes from the
+                    VIDEO_OFFSET keyword in the IOI file.)"
+  END_OBJECT     = COLUMN
+
+  OBJECT         = COLUMN
+    NAME         = EXPECTED_MAXIMUM
+    DATA_TYPE    = ASCII_REAL
+    START_BYTE   = 594
+    BYTES        = 23
+    ITEMS        = 2
+    ITEM_BYTES   = 11
+    ITEM_OFFSET  = 12
+    DESCRIPTION  = "2-valued array. First, represents the ratio of
+                    the expected maximum DN in the image to the VALID_MAXIMUM
+                    (full well DN). Second, represents the ratio of
+                    the expected maximum DN in the image to the VALID_MAXIMUM
+                    (maxDN)."
+  END_OBJECT     = COLUMN
+
+  OBJECT         = COLUMN
+    NAME         = EXPECTED_PACKETS
+    DATA_TYPE    = INTEGER
+    START_BYTE   = 618
+    BYTES        = 11
+    FORMAT       = I11
+    DESCRIPTION  = "This keyword provides the total number of packets
+                    expected to be stored on the SSR for this image.
+                    To convert to volume in bits, multiply this value
+                    by 7616 bits/packet. (Comes from the EXPECTED_PACKETS
+                    keyword in the IOI file.)"
+  END_OBJECT     = COLUMN
+
+  OBJECT         = COLUMN
+    NAME         = EXPOSURE_DURATION
+    DATA_TYPE    = ASCII_REAL
+    START_BYTE   = 630
+    BYTES        = 11
+    FORMAT       = "F11.1"
+    UNIT        = "MILLISECOND"
+    DESCRIPTION  = "Exposure duration for the image in milliseconds.
+                    63 distinct values from 0 to 1200000. (See table
+                    in AppendixA.) -999.0 if extended header is unavailable"
+  END_OBJECT     = COLUMN
+
+  OBJECT         = COLUMN
+    NAME         = FILTER_NAME
+    DATA_TYPE    = CHARACTER
+    START_BYTE   = 643
+    BYTES        = 13
+    ITEMS        = 2
+    ITEM_BYTES   = 5
+    ITEM_OFFSET  = 8
+    DESCRIPTION  = "2-valued array. First, filters used on filter
+                    wheel 1. Second, filters used on filter wheel
+                    2."
+  END_OBJECT     = COLUMN
+
+  OBJECT         = COLUMN
+    NAME         = FILTER_TEMPERATURE
+    DATA_TYPE    = ASCII_REAL
+    START_BYTE   = 658
+    BYTES        = 11
+    FORMAT       = "F11.6"
+    UNIT        = "CELSIUS DEGREE"
+    DESCRIPTION  = "Temperature of the filter wheels."
+  END_OBJECT     = COLUMN
+
+  OBJECT         = COLUMN
+    NAME         = FLIGHT_SOFTWARE_VERSION_ID
+    DATA_TYPE    = CHARACTER
+    START_BYTE   = 671
+    BYTES        = 4
+    FORMAT       = A4
+    DESCRIPTION  = "Indicates version of instrument flight software
+                    used to acquire image."
+  END_OBJECT     = COLUMN
+
+  OBJECT         = COLUMN
+    NAME         = GAIN_MODE_ID
+    DATA_TYPE    = CHARACTER
+    START_BYTE   = 678
+    BYTES        = 20
+    FORMAT       = A20
+    DESCRIPTION  = "The electronics gain setting selected for this
+                    image, given in units of electrons per DN. (This
+                    is an approximate value so both cameras can use
+                    the same set of values.)"
+  END_OBJECT     = COLUMN
+
+  OBJECT         = COLUMN
+    NAME         = IMAGE_MID_TIME
+    DATA_TYPE    = TIME
+    START_BYTE   = 700
+    BYTES        = 22
+    FORMAT       = A22
+    DESCRIPTION  = "Exposure mid-time calculated from spacecraft
+                    clock using both the coarse (seconds) and fine
+                    (subRTI) counters (UTC). (A subRTI is approximately
+                    4 msec (1/256 second)). This value is calculated
+                    from the SPACECRAFT_CLOCK_STOP_COUNT - (EXPOSURE_DURATION/
+                    2) then converted to UTC. When the shutter was
+                    inhibited (ie SHUTTER_STATE_ID='DISABLED'), the
+                    IMAGE_MID_TIME = START_TIME = STOP_TIME, and all
+                    three represent the start of the exposure window
+                    during the prepare cycle of the image."
+  END_OBJECT     = COLUMN
+
+  OBJECT         = COLUMN
+    NAME         = IMAGE_NUMBER
+    DATA_TYPE    = CHARACTER
+    START_BYTE   = 724
+    BYTES        = 10
+    FORMAT       = A10
+    UNIT        = "SECOND"
+    DESCRIPTION  = "The seconds portion of the spacecraft clock at
+                    shutter close."
+  END_OBJECT     = COLUMN
+
+  OBJECT         = COLUMN
+    NAME         = IMAGE_OBSERVATION_TYPE
+    DATA_TYPE    = CHARACTER
+    START_BYTE   = 737
+    BYTES        = 48
+    FORMAT       = A48
+    DESCRIPTION  = "A multi-valued list describing the purpose(s)
+                    of this image, for example, OPNAV, science, calibration,
+                    engineering and/or support imaging. (Comes from
+                    the IMAGE_OBSERVATION_TYPE_* keywords in the IOI
+                    file parameter set description.) This list can
+                    contain up to five values where the purposes of
+                    the image are identified. More than one value
+                    may be specified."
+  END_OBJECT     = COLUMN
+
+  OBJECT         = COLUMN
+    NAME         = IMAGE_TIME
+    DATA_TYPE    = TIME
+    START_BYTE   = 787
+    BYTES        = 22
+    FORMAT       = A22
+    DESCRIPTION  = "Time of shutter close calculated from spacecraft
+                    clock using both the coarse (seconds) and fine
+                    (subRTI) counters (UTC). (A subRTI is approximately
+                    4 msec (1/256 second)). When the shutter was inhibited
+                    (ie SHUTTER_STATE_ID='DISABLED'), the IMAGE_TIME
+                    = START_TIME = STOP_TIME, and all three represent
+                    the start of the exposure window during the prepare
+                    cycle of the image."
+  END_OBJECT     = COLUMN
+
+  OBJECT         = COLUMN
+    NAME         = INSTRUMENT_DATA_RATE
+    DATA_TYPE    = ASCII_REAL
+    START_BYTE   = 810
+    BYTES        = 11
+    FORMAT       = "F11.6"
+    UNIT        = "KILOBITS/SECOND"
+    DESCRIPTION  = "The rate at which data was transferred out of
+                    instrument. -999.0 if channelized data and extended
+                    header are unavailable."
+  END_OBJECT     = COLUMN
+
+  OBJECT         = COLUMN
+    NAME         = INSTRUMENT_HOST_NAME
+    DATA_TYPE    = CHARACTER
+    START_BYTE   = 823
+    BYTES        = 15
+    FORMAT       = A15
+    DESCRIPTION  = "Name of the spacecraft upon which this instrument
+                    resides."
+  END_OBJECT     = COLUMN
+
+  OBJECT         = COLUMN
+    NAME         = INSTRUMENT_ID
+    DATA_TYPE    = CHARACTER
+    START_BYTE   = 841
+    BYTES        = 5
+    FORMAT       = A5
+    DESCRIPTION  = "Indicator of which camera took this image."
+  END_OBJECT     = COLUMN
+
+  OBJECT         = COLUMN
+    NAME         = INSTRUMENT_MODE_ID
+    DATA_TYPE    = CHARACTER
+    START_BYTE   = 849
+    BYTES        = 4
+    FORMAT       = A4
+    DESCRIPTION  = "The summation mode used for this image."
+  END_OBJECT     = COLUMN
+
+  OBJECT         = COLUMN
+    NAME         = INSTRUMENT_NAME
+    DATA_TYPE    = CHARACTER
+    START_BYTE   = 856
+    BYTES        = 38
+    FORMAT       = A38
+    DESCRIPTION  = "Name of the CASSINI Instrument which acquired
+                    the image data."
+  END_OBJECT     = COLUMN
+
+  OBJECT         = COLUMN
+    NAME         = INST_CMPRS_PARAM
+    DATA_TYPE    = INTEGER
+    START_BYTE   = 896
+    BYTES        = 47
+    ITEMS        = 4
+    ITEM_BYTES   = 11
+    ITEM_OFFSET  = 12
+    DESCRIPTION  = "4-valued array. First, the lossy compression
+                    MALGO (algorithm) parameter. MALGO. Second, the
+                    lossy compression TB (block type) parameter. TB.
+                    Third, the lossy compression group-of-blocks (number
+                    of blocks per group) parameter. GOB. Fouth, the
+                    lossy compression the compression rate parameter
+                    (quantization factor). QF. "
+  END_OBJECT     = COLUMN
+
+  OBJECT         = COLUMN
+    NAME         = INST_CMPRS_RATE
+    DATA_TYPE    = ASCII_REAL
+    START_BYTE   = 944
+    BYTES        = 23
+    ITEMS        = 2
+    ITEM_BYTES   = 11
+    ITEM_OFFSET  = 12
+    UNIT        = "BITS/PIXEL"
+    DESCRIPTION  = "2-valued array. First, the expected average number
+                    of bits and comes from the BITS_PER_PIXEL keyword
+                    in the IOI file. Second, the actual average number
+                    of bits and is calculated during telemetry processing."
+  END_OBJECT     = COLUMN
+
+  OBJECT         = COLUMN
+    NAME         = INST_CMPRS_RATIO
+    DATA_TYPE    = ASCII_REAL
+    START_BYTE   = 968
+    BYTES        = 9
+    FORMAT       = "F9.6"
+    DESCRIPTION  = "Ratio of expected image size to size of image
+                    received. (Calculation of this value does not
+                    include data outages due to truncated readouts
+                    or data lost in transmission.)"
+  END_OBJECT     = COLUMN
+
+  OBJECT         = COLUMN
+    NAME         = INST_CMPRS_TYPE
+    DATA_TYPE    = CHARACTER
+    START_BYTE   = 979
+    BYTES        = 8
+    FORMAT       = A8
+    DESCRIPTION  = "Compression type used for the image."
+  END_OBJECT     = COLUMN
+
+  OBJECT         = COLUMN
+    NAME         = LIGHT_FLOOD_STATE_FLAG
+    DATA_TYPE    = CHARACTER
+    START_BYTE   = 990
+    BYTES        = 4
+    FORMAT       = A4
+    DESCRIPTION  = "Indicator of whether Light Flood was used just
+                    prior to taking this image."
+  END_OBJECT     = COLUMN
+
+  OBJECT         = COLUMN
+    NAME         = METHOD_DESC
+    DATA_TYPE    = CHARACTER
+    START_BYTE   = 997
+    BYTES        = 75
+    FORMAT       = A75
+    DESCRIPTION  = "This keyword describes the information and/or
+                    algorithm used to calculate the I/F value used
+                    by the ISS team to determine the EXPOSURE_DURATION.
+                    (Limited to char(75)). (Comes from the METHOD_DESC
+                    keyword in the IOI file.)"
+  END_OBJECT     = COLUMN
+
+  OBJECT         = COLUMN
+    NAME         = MISSING_LINES
+    DATA_TYPE    = INTEGER
+    START_BYTE   = 1074
+    BYTES        = 11
+    FORMAT       = I11
+    DESCRIPTION  = "For non-lossy compressed data only, number of
+                    missing or incomplete image lines. For all data,
+                    including lossy compressed images, when data is
+                    missing, the missing pixel values are replaced
+                    by 0. 'N/A' for lossy compressed data."
+  END_OBJECT     = COLUMN
+
+  OBJECT         = COLUMN
+    NAME         = MISSING_PACKET_FLAG
+    DATA_TYPE    = CHARACTER
+    START_BYTE   = 1087
+    BYTES        = 4
+    FORMAT       = A4
+    DESCRIPTION  = "Indicator of whether consecutive packets were
+                    received. If set to 'YES', this flag indicates
+                    that packets needed to construct a complete image
+                    were missing. If set to 'NO', all consecutive
+                    packets were received. However, data may be missing
+                    at the beginning or end of the image. In this
+                    case, missing data would be reflected in the MISSING_LINES
+                     keyword for non-lossy data, and through visual
+                    inspection for lossy compressed data. "
+  END_OBJECT     = COLUMN
+
+  OBJECT         = COLUMN
+    NAME         = MISSION_NAME
+    DATA_TYPE    = CHARACTER
+    START_BYTE   = 1094
+    BYTES        = 15
+    FORMAT       = A15
+    DESCRIPTION  = "Mission name associated with this image."
+  END_OBJECT     = COLUMN
+
+  OBJECT         = COLUMN
+    NAME         = MISSION_PHASE_NAME
+    DATA_TYPE    = CHARACTER
+    START_BYTE   = 1112
+    BYTES        = 32
+    FORMAT       = A32
+    DESCRIPTION  = "Mission phase of which this image is a part."
+  END_OBJECT     = COLUMN
+
+  OBJECT         = COLUMN
+    NAME         = OBSERVATION_ID
+    DATA_TYPE    = CHARACTER
+    START_BYTE   = 1147
+    BYTES        = 32
+    FORMAT       = A32
+    DESCRIPTION  = "Name of observation of which this image is a
+                    part."
+  END_OBJECT     = COLUMN
+
+  OBJECT         = COLUMN
+    NAME         = OPTICS_TEMPERATURE
+    DATA_TYPE    = ASCII_REAL
+    START_BYTE   = 1181
+    BYTES        = 23
+    ITEMS        = 2
+    ITEM_BYTES   = 11
+    ITEM_OFFSET  = 12
+    UNIT        = "CELSIUS DEGREE"
+    DESCRIPTION  = "2-valued array. First, temperature of front optics
+                    in Celsius degrees. Note that there is no rear
+                    optics temperature for the WAC camera, so when
+                    INSTRUMENT_ID = ISSWA, the second element of the
+                    array will always be -999.0. (-999.0, -999.0)
+                    if the extended header is unavailable. Second,
+                    temperature of rear optics in Celsius degrees.
+                    Note that there is no rear optics temperature
+                    for the WAC camera, so when INSTRUMENT_ID = ISSWA,
+                    the second element of the array will always be
+                    -999.0. (-999.0, -999.0) if the extended header
+                    is unavailable."
+  END_OBJECT     = COLUMN
+
+  OBJECT         = COLUMN
+    NAME         = ORDER_NUMBER
+    DATA_TYPE    = INTEGER
+    START_BYTE   = 1205
+    BYTES        = 11
+    FORMAT       = I11
+    DESCRIPTION  = "Identifier provided by Team Lead for this image
+                    which is unique within the IOI file. This value
+                    will not be unique for parameter sets described
+                    in the IOI file with ITERATION_COUNT > 1 or with
+                    LOOP_COUNT > 1 "
+  END_OBJECT     = COLUMN
+
+  OBJECT         = COLUMN
+    NAME         = PARALLEL_CLOCK_VOLTAGE_INDEX
+    DATA_TYPE    = INTEGER
+    START_BYTE   = 1217
+    BYTES        = 11
+    FORMAT       = I11
+    DESCRIPTION  = "Commanded parallel clock voltage index. Controls
+                    clocking frequency. (Comes from the PC_VOLTAGE
+                    keyword in the IOI file.)"
+  END_OBJECT     = COLUMN
+
+  OBJECT         = COLUMN
+    NAME         = PREPARE_CYCLE_INDEX
+    DATA_TYPE    = INTEGER
+    START_BYTE   = 1229
+    BYTES        = 11
+    FORMAT       = I11
+    DESCRIPTION  = "The element number within the Prepare Cycle table
+                    selected for this image. (see Appendix B tables)"
+  END_OBJECT     = COLUMN
+
+  OBJECT         = COLUMN
+    NAME         = PRODUCT_CREATION_TIME
+    DATA_TYPE    = TIME
+    START_BYTE   = 1241
+    BYTES        = 22
+    FORMAT       = A22
+    DESCRIPTION  = "Time of creation of this image on the ground
+                    (Pacific local time)."
+  END_OBJECT     = COLUMN
+
+  OBJECT         = COLUMN
+    NAME         = PRODUCT_ID
+    DATA_TYPE    = CHARACTER
+    START_BYTE   = 1265
+    BYTES        = 18
+    FORMAT       = A18
+    DESCRIPTION  = "Unique identifier for each image commanded. Required
+                    by PDS/Cassini. The PRODUCT_ID will be constructed:
+                    SPACECRAFT_CLOCK_CNT_PARTITION'_'ISPACECRAFT_CLOCK_STOP_CO
+                    UNT, where I is 'N' if the INSTRUMENT_ID is 'ISSNA',
+                    and I is 'W' if the INSTRUMENT_ID is 'ISSWA'.
+                    "
+  END_OBJECT     = COLUMN
+
+  OBJECT         = COLUMN
+    NAME         = PRODUCT_VERSION_TYPE
+    DATA_TYPE    = CHARACTER
+    START_BYTE   = 1286
+    BYTES        = 11
+    FORMAT       = A11
+    DESCRIPTION  = "Identifies the version of an individual data
+                    product. Always 'FINAL' for products archived
+                    with PDS/Cassini. 'PRELIMINARY' indicates additional
+                    processing is underway at IO/MIPL, for instance,
+                    to recover additional telemetry if possible. "
+  END_OBJECT     = COLUMN
+
+  OBJECT         = COLUMN
+    NAME         = READOUT_CYCLE_INDEX
+    DATA_TYPE    = INTEGER
+    START_BYTE   = 1299
+    BYTES        = 11
+    FORMAT       = I11
+    DESCRIPTION  = "The element number within the Readout Cycle table
+                    selected for this image. (see Appendix B tables)"
+  END_OBJECT     = COLUMN
+
+  OBJECT         = COLUMN
+    NAME         = RECEIVED_PACKETS
+    DATA_TYPE    = INTEGER
+    START_BYTE   = 1311
+    BYTES        = 11
+    FORMAT       = I11
+    DESCRIPTION  = "This keyword provides the actual number of packets
+                    received from the SSR for this image. To convert
+                    to volume in bits, multiply this value by 7616
+                    bits/packet. This value reflects data received.
+                    In the event the image is incomplete due to an
+                    outage in the transmission, this field will not
+                    be an accurate indicator of actual volume on the
+                    SSR. "
+  END_OBJECT     = COLUMN
+
+  OBJECT         = COLUMN
+    NAME         = SENSOR_HEAD_ELEC_TEMPERATURE
+    DATA_TYPE    = ASCII_REAL
+    START_BYTE   = 1323
+    BYTES        = 11
+    FORMAT       = "F11.6"
+    DESCRIPTION  = "Temperature of the sensor head electronics."
+  END_OBJECT     = COLUMN
+
+  OBJECT         = COLUMN
+    NAME         = SEQUENCE_ID
+    DATA_TYPE    = CHARACTER
+    START_BYTE   = 1336
+    BYTES        = 4
+    FORMAT       = A4
+    DESCRIPTION  = "Identifies the segment associated with this image.
+                    Note that this keyword does not come from the
+                    IOI file. Ex: 'C22', 'S19'"
+  END_OBJECT     = COLUMN
+
+  OBJECT         = COLUMN
+    NAME         = SEQUENCE_NUMBER
+    DATA_TYPE    = INTEGER
+    START_BYTE   = 1342
+    BYTES        = 11
+    FORMAT       = I11
+    DESCRIPTION  = "Indicates the order in which this image was expected
+                    to be taken within the given observation (OBSERVATION_ID).
+                    "
+  END_OBJECT     = COLUMN
+
+  OBJECT         = COLUMN
+    NAME         = SEQUENCE_TITLE
+    DATA_TYPE    = CHARACTER
+    START_BYTE   = 1355
+    BYTES        = 60
+    FORMAT       = A60
+    DESCRIPTION  = "The name assigned by the Team Lead for the activity
+                    of which this image is a part. Comes from the
+                    SEQUENCE_TITLE keyword in the IOI file. Limited
+                    to 30 characters. Example = ???."
+  END_OBJECT     = COLUMN
+
+  OBJECT         = COLUMN
+    NAME         = SHUTTER_MODE_ID
+    DATA_TYPE    = CHARACTER
+    START_BYTE   = 1418
+    BYTES        = 7
+    FORMAT       = A7
+    DESCRIPTION  = "Indicator of whether this exposure was part of
+                    a joint observation with the other ISS camera."
+  END_OBJECT     = COLUMN
+
+  OBJECT         = COLUMN
+    NAME         = SHUTTER_STATE_ID
+    DATA_TYPE    = CHARACTER
+    START_BYTE   = 1428
+    BYTES        = 8
+    FORMAT       = A8
+    DESCRIPTION  = "Indicator of whether the shutter was enabled
+                    during the exposure."
+  END_OBJECT     = COLUMN
+
+  OBJECT         = COLUMN
+    NAME         = SOFTWARE_VERSION_ID
+    DATA_TYPE    = CHARACTER
+    START_BYTE   = 1439
+    BYTES        = 20
+    FORMAT       = A20
+    DESCRIPTION  = "Ground software version used to generate this
+                    image."
+  END_OBJECT     = COLUMN
+
+  OBJECT         = COLUMN
+    NAME         = SPACECRAFT_CLOCK_CNT_PARTITION
+    DATA_TYPE    = INTEGER
+    START_BYTE   = 1461
+    BYTES        = 4
+    FORMAT       = I4
+    DESCRIPTION  = "Indicates the clock partition active for the
+                    SPACECRAFT_CLOCK_START_COUNT and SPACECRAFT_CLOCK_STOP_COU
+                    NT elements. Remains at '1' unless the spacecraft
+                    clock rolls over or is reset."
+  END_OBJECT     = COLUMN
+
+  OBJECT         = COLUMN
+    NAME         = SPACECRAFT_CLOCK_START_COUNT
+    DATA_TYPE    = CHARACTER
+    START_BYTE   = 1467
+    BYTES        = 16
+    FORMAT       = A16
+    DESCRIPTION  = "The seconds and subRTI portions of the spacecraft
+                    clock at shutter open. Calculated from spacecraft
+                    clock of shutter close less the exposure duration.
+                    When the shutter was inhibited (ie SHUTTER_STATE_ID='DISAB
+                    LED'), the SPACECRAFT_CLOCK_START_COUNT = SPACECRAFT_CLOCK
+                    _STOP_COUNT, and both represent the start of the
+                    exposure window during the prepare cycle of the
+                    image. EX: '832898283.123'"
+  END_OBJECT     = COLUMN
+
+  OBJECT         = COLUMN
+    NAME         = SPACECRAFT_CLOCK_STOP_COUNT
+    DATA_TYPE    = CHARACTER
+    START_BYTE   = 1486
+    BYTES        = 16
+    FORMAT       = A16
+    DESCRIPTION  = "The seconds and subRTI portions of the spacecraft
+                    clock at shutter close. (A subRTI is approximately
+                    4 msec (1/256 second)). When the shutter was inhibited
+                    (ie SHUTTER_STATE_ID='DISABLED'), the SPACECRAFT_CLOCK_STA
+                    RT_COUNT = SPACECRAFT_CLOCK_STOP_COUNT, and both
+                    represent the start of the exposure window during
+                    the prepare cycle of the image. EX: '832898284.456'"
+  END_OBJECT     = COLUMN
+
+  OBJECT         = COLUMN
+    NAME         = START_TIME
+    DATA_TYPE    = TIME
+    START_BYTE   = 1504
+    BYTES        = 22
+    FORMAT       = A22
+    DESCRIPTION  = "Time of shutter open. Calculated from spacecraft
+                    clock of shutter close less the exposure duration.
+                    Expressed in UTC format, and includes subRTI resolution.
+                    (A subRTI is approximately 4 msec (1/256 second)).
+                    When the shutter was inhibited (ie SHUTTER_STATE_ID='DISAB
+                    LED'), the START_TIME = STOP_TIME, and both represent
+                    the start of the exposure window during the prepare
+                    cycle of the image. EX: 1996-158T05:53:34.000Z"
+  END_OBJECT     = COLUMN
+
+  OBJECT         = COLUMN
+    NAME         = STOP_TIME
+    DATA_TYPE    = TIME
+    START_BYTE   = 1527
+    BYTES        = 22
+    FORMAT       = A22
+    DESCRIPTION  = "Time of shutter close from spacecraft clock (UTC).
+                    Identical to IMAGE_TIME. Includes subRTI resolution.
+                    (A subRTI is approximately 4 msec (1/256 second)).
+                    When the shutter was inhibited (ie SHUTTER_STATE_ID='DISAB
+                    LED'), the START_TIME = STOP_TIME, and both represent
+                    the start of the exposure window during the prepare
+                    cycle of the image. EX: 1996-158T05:53:34.000Z
+                    "
+  END_OBJECT     = COLUMN
+
+  OBJECT         = COLUMN
+    NAME         = TARGET_DESC
+    DATA_TYPE    = CHARACTER
+    START_BYTE   = 1551
+    BYTES        = 75
+    FORMAT       = A75
+    DESCRIPTION  = "The name of the intended target for which the
+                    exposure was calculated/selected in the given
+                    image. May include calibration type information.
+                    Limited to 75 characters. (Comes from the TARGET_DESC
+                    keyword in the IOI file.)"
+  END_OBJECT     = COLUMN
+
+  OBJECT         = COLUMN
+    NAME         = TARGET_NAME
+    DATA_TYPE    = CHARACTER
+    START_BYTE   = 1629
+    BYTES        = 24
+    FORMAT       = A24
+    DESCRIPTION  = "Identifies a target. The target may be a planet,
+                    satellite, ring, region, feature, asteroid or
+                    comet."
+  END_OBJECT     = COLUMN
+
+  OBJECT         = COLUMN
+    NAME         = TELEMETRY_FORMAT_ID
+    DATA_TYPE    = CHARACTER
+    START_BYTE   = 1656
+    BYTES        = 16
+    FORMAT       = A16
+    DESCRIPTION  = "The telemetry mode in effect when sending data
+                    from the instrument to the spacecraft computer."
+  END_OBJECT     = COLUMN
+
+  OBJECT         = COLUMN
+    NAME         = VALID_MAXIMUM
+    DATA_TYPE    = INTEGER
+    START_BYTE   = 1674
+    BYTES        = 23
+    ITEMS        = 2
+    ITEM_BYTES   = 11
+    ITEM_OFFSET  = 12
+    DESCRIPTION  = "2-valued array. First, indicates the minimum
+                    full well saturation level of the instrument,
+                    which is a function of INSTRUMENT_MODE_ID, INSTRUMENT_ID,
+                    and GAIN_MODE_ID, expressed as a DN value. This
+                    may exceed 4095. Second, indicates the maximum
+                    DN saturation level for the signal returned by
+                    the A/D converter. Valid values are 255 and 4095.
+                    See Appendix B tables"
+  END_OBJECT     = COLUMN
+
+  OBJECT         = COLUMN
+    NAME         = CENTRAL_BODY_DISTANCE
+    DATA_TYPE    = ASCII_REAL
+    START_BYTE   = 1698
+    BYTES        = 14
+    FORMAT       = E14
+    UNIT        = "KM"
+    DESCRIPTION  = "Distance from spacecraft to center of primary
+                    body."
+  END_OBJECT     = COLUMN
+
+  OBJECT         = COLUMN
+    NAME         = COORDINATE_SYSTEM_NAME
+    DATA_TYPE    = CHARACTER
+    START_BYTE   = 1714
+    BYTES        = 32
+    FORMAT       = A32
+    DESCRIPTION  = "The full name of the coordinate system to which
+                    the state vectors are referenced."
+  END_OBJECT     = COLUMN
+
+  OBJECT         = COLUMN
+    NAME         = DECLINATION
+    DATA_TYPE    = ASCII_REAL
+    START_BYTE   = 1748
+    BYTES        = 11
+    FORMAT       = "F11.6"
+    UNIT        = "DEGREES"
+    DESCRIPTION  = "Declination of camera optic axis."
+  END_OBJECT     = COLUMN
+
+  OBJECT         = COLUMN
+    NAME         = EMISSION_ANGLE
+    DATA_TYPE    = ASCII_REAL
+    START_BYTE   = 1760
+    BYTES        = 11
+    FORMAT       = "F11.6"
+    UNIT        = "DEGREES"
+    DESCRIPTION  = "Emission angle at aimpoint on target."
+  END_OBJECT     = COLUMN
+
+  OBJECT         = COLUMN
+    NAME         = INCIDENCE_ANGLE
+    DATA_TYPE    = ASCII_REAL
+    START_BYTE   = 1772
+    BYTES        = 11
+    FORMAT       = "F11.6"
+    UNIT        = "DEGREES"
+    DESCRIPTION  = "Incidence angle at aimpoint on target."
+  END_OBJECT     = COLUMN
+
+  OBJECT         = COLUMN
+    NAME         = LOWER_LEFT_LATITUDE
+    DATA_TYPE    = ASCII_REAL
+    START_BYTE   = 1784
+    BYTES        = 11
+    FORMAT       = "F11.6"
+    UNIT        = "DEGREES"
+    DESCRIPTION  = "Planetocentric latitude of lower-left pixel."
+  END_OBJECT     = COLUMN
+
+  OBJECT         = COLUMN
+    NAME         = LOWER_LEFT_LONGITUDE
+    DATA_TYPE    = ASCII_REAL
+    START_BYTE   = 1796
+    BYTES        = 11
+    FORMAT       = "F11.6"
+    UNIT        = "DEGREES"
+    DESCRIPTION  = "West longitude of lower-left pixel."
+  END_OBJECT     = COLUMN
+
+  OBJECT         = COLUMN
+    NAME         = LOWER_RIGHT_LATITUDE
+    DATA_TYPE    = ASCII_REAL
+    START_BYTE   = 1808
+    BYTES        = 11
+    FORMAT       = "F11.6"
+    UNIT        = "DEGREES"
+    DESCRIPTION  = "Planetocentric latitude of lower-right pixel."
+  END_OBJECT     = COLUMN
+
+  OBJECT         = COLUMN
+    NAME         = LOWER_RIGHT_LONGITUDE
+    DATA_TYPE    = ASCII_REAL
+    START_BYTE   = 1820
+    BYTES        = 11
+    FORMAT       = "F11.6"
+    UNIT        = "DEGREES"
+    DESCRIPTION  = "West longitude of lower-right pixel."
+  END_OBJECT     = COLUMN
+
+  OBJECT         = COLUMN
+    NAME         = MAXIMUM_RING_RADIUS
+    DATA_TYPE    = ASCII_REAL
+    START_BYTE   = 1832
+    BYTES        = 14
+    FORMAT       = E14
+    UNIT        = "KM"
+    DESCRIPTION  = "Maximum ringplane radius in image."
+  END_OBJECT     = COLUMN
+
+  OBJECT         = COLUMN
+    NAME         = MINIMUM_RING_RADIUS
+    DATA_TYPE    = ASCII_REAL
+    START_BYTE   = 1847
+    BYTES        = 14
+    FORMAT       = E14
+    UNIT        = "KM"
+    DESCRIPTION  = "Minimum ringplane radius in image."
+  END_OBJECT     = COLUMN
+
+  OBJECT         = COLUMN
+    NAME         = NORTH_AZIMUTH_CLOCK_ANGLE
+    DATA_TYPE    = ASCII_REAL
+    START_BYTE   = 1862
+    BYTES        = 11
+    FORMAT       = "F11.6"
+    UNIT        = "DEGREES"
+    DESCRIPTION  = "Direction of the northward-pointing azimuth at
+                    the aimpoint on the target body, measured clock-
+                    wise."
+  END_OBJECT     = COLUMN
+
+  OBJECT         = COLUMN
+    NAME         = TARGET_NORTH_CLOCK_ANGLE
+    DATA_TYPE    = ASCII_REAL
+    START_BYTE   = 1874
+    BYTES        = 11
+    FORMAT       = "F11.6"
+    UNIT        = "DEGREES"
+    DESCRIPTION  = "Angle, about optic axis, between 'up' image direction
+                    and target pole projected onto image plane, measured
+                    clockwise."
+  END_OBJECT     = COLUMN
+
+  OBJECT         = COLUMN
+    NAME         = PHASE_ANGLE
+    DATA_TYPE    = ASCII_REAL
+    START_BYTE   = 1886
+    BYTES        = 11
+    FORMAT       = "F11.6"
+    UNIT        = "DEGREES"
+    DESCRIPTION  = "Phase angle at subspacecraft point on target."
+  END_OBJECT     = COLUMN
+
+  OBJECT         = COLUMN
+    NAME         = PIXEL_SCALE
+    DATA_TYPE    = ASCII_REAL
+    START_BYTE   = 1898
+    BYTES        = 11
+    FORMAT       = "F11.6"
+    UNIT        = "KM/PIXEL"
+    DESCRIPTION  = "Size of one pixel at subspacecraft point on target
+                    body."
+  END_OBJECT     = COLUMN
+
+  OBJECT         = COLUMN
+    NAME         = PLANET_CENTER
+    DATA_TYPE    = ASCII_REAL
+    START_BYTE   = 1910
+    BYTES        = 23
+    ITEMS        = 2
+    ITEM_BYTES   = 11
+    ITEM_OFFSET  = 12
+    DESCRIPTION  = "2-valued array. First, Line of target body center.
+                    Second, Sample of target body center."
+  END_OBJECT     = COLUMN
+
+  OBJECT         = COLUMN
+    NAME         = RIGHT_ASCENSION
+    DATA_TYPE    = ASCII_REAL
+    START_BYTE   = 1934
+    BYTES        = 11
+    FORMAT       = "F11.6"
+    UNIT        = "DEGREES"
+    DESCRIPTION  = "Right ascension of camera optic axis."
+  END_OBJECT     = COLUMN
+
+  OBJECT         = COLUMN
+    NAME         = RING_CENTER_LATITUDE
+    DATA_TYPE    = ASCII_REAL
+    START_BYTE   = 1946
+    BYTES        = 11
+    FORMAT       = "F11.6"
+    UNIT        = "DEGREES"
+    DESCRIPTION  = "Planetocentric latitude at aimpoint on ring"
+  END_OBJECT     = COLUMN
+
+  OBJECT         = COLUMN
+    NAME         = RING_CENTER_LONGITUDE
+    DATA_TYPE    = ASCII_REAL
+    START_BYTE   = 1958
+    BYTES        = 11
+    FORMAT       = "F11.6"
+    UNIT        = "DEGREES"
+    DESCRIPTION  = "West longitude at aimpoint on ring"
+  END_OBJECT     = COLUMN
+
+  OBJECT         = COLUMN
+    NAME         = RING_EMISSION_ANGLE
+    DATA_TYPE    = ASCII_REAL
+    START_BYTE   = 1970
+    BYTES        = 11
+    FORMAT       = "F11.6"
+    UNIT        = "DEGREES"
+    DESCRIPTION  = "Emission angle relative to target ring northward-
+                    pointing normal at aimpoint."
+  END_OBJECT     = COLUMN
+
+  OBJECT         = COLUMN
+    NAME         = RING_INCIDENCE_ANGLE
+    DATA_TYPE    = ASCII_REAL
+    START_BYTE   = 1982
+    BYTES        = 11
+    FORMAT       = "F11.6"
+    UNIT        = "DEGREES"
+    DESCRIPTION  = "Incidence angle relative to target ring northward-
+                    pointing normal at aimpoint."
+  END_OBJECT     = COLUMN
+
+  OBJECT         = COLUMN
+    NAME         = RINGS_FLAG
+    DATA_TYPE    = CHARACTER
+    START_BYTE   = 1995
+    BYTES        = 4
+    FORMAT       = A4
+    DESCRIPTION  = "If any part of the A, B, C, D, E, F, or G ring
+                    is visible in the image, this quantity is 'YES';
+                    'NO' otherwise."
+  END_OBJECT     = COLUMN
+
+  OBJECT         = COLUMN
+    NAME         = SC_PLANET_POSITION_VECTOR
+    DATA_TYPE    = ASCII_REAL
+    START_BYTE   = 2001
+    BYTES        = 44
+    ITEMS        = 3
+    ITEM_BYTES   = 14
+    ITEM_OFFSET  = 15
+    UNIT        = "KM"
+    DESCRIPTION  = "3-valued array. X, Y, Z components of the position
+                    vector from spacecraft to primary planet center,
+                    corrected for light-travel time and stellar aberration."
+  END_OBJECT     = COLUMN
+
+  OBJECT         = COLUMN
+    NAME         = SC_PLANET_VELOCITY_VECTOR
+    DATA_TYPE    = ASCII_REAL
+    START_BYTE   = 2046
+    BYTES        = 44
+    ITEMS        = 3
+    ITEM_BYTES   = 14
+    ITEM_OFFSET  = 15
+    UNIT        = "KM/SECOND"
+    DESCRIPTION  = "3-valued array. X, Y, Z components of the velocity
+                    vector of primary planet relative to spacecraft,
+                    corrected for light-travel time."
+  END_OBJECT     = COLUMN
+
+  OBJECT         = COLUMN
+    NAME         = SC_SUN_POSITION_VECTOR
+    DATA_TYPE    = ASCII_REAL
+    START_BYTE   = 2091
+    BYTES        = 44
+    ITEMS        = 3
+    ITEM_BYTES   = 14
+    ITEM_OFFSET  = 15
+    UNIT        = "KM"
+    DESCRIPTION  = "3-valued array. X, Y, Z components of the position
+                    vector from spacecraft to sun center, corrected
+                    for light-travel time and stellar aberration."
+  END_OBJECT     = COLUMN
+
+  OBJECT         = COLUMN
+    NAME         = SC_SUN_VELOCITY_VECTOR
+    DATA_TYPE    = ASCII_REAL
+    START_BYTE   = 2136
+    BYTES        = 44
+    ITEMS        = 3
+    ITEM_BYTES   = 14
+    ITEM_OFFSET  = 15
+    UNIT        = "KM/SECOND"
+    DESCRIPTION  = "3-valued array. X, Y, Z components of the velocity
+                    vector of sun relative to spacecraft, corrected
+                    for light-travel time."
+  END_OBJECT     = COLUMN
+
+  OBJECT         = COLUMN
+    NAME         = SC_TARGET_POSITION_VECTOR
+    DATA_TYPE    = ASCII_REAL
+    START_BYTE   = 2181
+    BYTES        = 44
+    ITEMS        = 3
+    ITEM_BYTES   = 14
+    ITEM_OFFSET  = 15
+    UNIT        = "KM"
+    DESCRIPTION  = "3-valued array. X, Y, Z components of the position
+                    vector from spacecraft to target center, corrected
+                    for light-travel time and stellar aberration."
+  END_OBJECT     = COLUMN
+
+  OBJECT         = COLUMN
+    NAME         = SC_TARGET_VELOCITY_VECTOR
+    DATA_TYPE    = ASCII_REAL
+    START_BYTE   = 2226
+    BYTES        = 44
+    ITEMS        = 3
+    ITEM_BYTES   = 14
+    ITEM_OFFSET  = 15
+    UNIT        = "KM/SECOND"
+    DESCRIPTION  = "3-valued array. X, Y, Z components of the velocity
+                    vector of the target relative to spacecraft, corrected
+                    for light-travel time."
+  END_OBJECT     = COLUMN
+
+  OBJECT         = COLUMN
+    NAME         = SPICE_PRODUCT_ID
+    DATA_TYPE    = CHARACTER
+    START_BYTE   = 2272
+    BYTES        = 255
+    FORMAT       = A255
+    DESCRIPTION  = "The names of the SPICE files used in processing
+                    the data."
+  END_OBJECT     = COLUMN
+
+  OBJECT         = COLUMN
+    NAME         = SUB_SOLAR_LATITUDE
+    DATA_TYPE    = ASCII_REAL
+    START_BYTE   = 2529
+    BYTES        = 11
+    FORMAT       = "F11.6"
+    UNIT        = "DEGREES"
+    DESCRIPTION  = "Planetocentric latitude of subsolar point on
+                    target; Ring_Subsolar_Latitude if target is a
+                    ring."
+  END_OBJECT     = COLUMN
+
+  OBJECT         = COLUMN
+    NAME         = SUB_SOLAR_LONGITUDE
+    DATA_TYPE    = ASCII_REAL
+    START_BYTE   = 2541
+    BYTES        = 11
+    FORMAT       = "F11.6"
+    UNIT        = "DEGREES"
+    DESCRIPTION  = "West longitude of subsolar point on target; Ring_Subsolar
+                    _Longitude if target is a ring."
+  END_OBJECT     = COLUMN
+
+  OBJECT         = COLUMN
+    NAME         = SUB_SPACECRAFT_LATITUDE
+    DATA_TYPE    = ASCII_REAL
+    START_BYTE   = 2553
+    BYTES        = 11
+    FORMAT       = "F11.6"
+    UNIT        = "DEGREES"
+    DESCRIPTION  = "Planetocentric latitude of subspacecraft point
+                    on target; Ring_Subspacecraft_Latitude if target
+                    is a ring."
+  END_OBJECT     = COLUMN
+
+  OBJECT         = COLUMN
+    NAME         = SUB_SPACECRAFT_LONGITUDE
+    DATA_TYPE    = ASCII_REAL
+    START_BYTE   = 2565
+    BYTES        = 11
+    FORMAT       = "F11.6"
+    UNIT        = "DEGREES"
+    DESCRIPTION  = "West longitude of subspacecraft point on target;
+                    Ring_Subspacecraft_Longitude if target is a ring."
+  END_OBJECT     = COLUMN
+
+  OBJECT         = COLUMN
+    NAME         = CENTER_LATITUDE
+    DATA_TYPE    = ASCII_REAL
+    START_BYTE   = 2577
+    BYTES        = 11
+    FORMAT       = "F11.6"
+    UNIT        = "DEGREES"
+    DESCRIPTION  = "Planetocentric latitude at aimpoint on target
+                    (or Ring_Aimpoint_Latitude if target is a ring)."
+  END_OBJECT     = COLUMN
+
+  OBJECT         = COLUMN
+    NAME         = CENTER_LONGITUDE
+    DATA_TYPE    = ASCII_REAL
+    START_BYTE   = 2589
+    BYTES        = 11
+    FORMAT       = "F11.6"
+    UNIT        = "DEGREES"
+    DESCRIPTION  = "West longitude at aimpoint on target (or Ring_Aimpoint_Lo
+                    ngitude if target is a ring)."
+  END_OBJECT     = COLUMN
+
+  OBJECT         = COLUMN
+    NAME         = TARGET_DISTANCE
+    DATA_TYPE    = ASCII_REAL
+    START_BYTE   = 2601
+    BYTES        = 14
+    FORMAT       = E14
+    UNIT        = "KM"
+    DESCRIPTION  = "Distance from the spacecraft to the center of
+                    the target."
+  END_OBJECT     = COLUMN
+
+  OBJECT         = COLUMN
+    NAME         = TARGET_EASTERNMOST_LONGITUDE
+    DATA_TYPE    = ASCII_REAL
+    START_BYTE   = 2616
+    BYTES        = 11
+    FORMAT       = "F11.6"
+    UNIT        = "DEGREES"
+    DESCRIPTION  = "Easternmost longitude visible on target body."
+  END_OBJECT     = COLUMN
+
+  OBJECT         = COLUMN
+    NAME         = TARGET_NORTHERNMOST_LATITUDE
+    DATA_TYPE    = ASCII_REAL
+    START_BYTE   = 2628
+    BYTES        = 11
+    FORMAT       = "F11.6"
+    UNIT        = "DEGREES"
+    DESCRIPTION  = "Northernmost latitude visible on target body."
+  END_OBJECT     = COLUMN
+
+  OBJECT         = COLUMN
+    NAME         = TARGET_SOUTHERNMOST_LATITUDE
+    DATA_TYPE    = ASCII_REAL
+    START_BYTE   = 2640
+    BYTES        = 11
+    FORMAT       = "F11.6"
+    UNIT        = "DEGREES"
+    DESCRIPTION  = "Southernmost latitude visible on target body."
+  END_OBJECT     = COLUMN
+
+  OBJECT         = COLUMN
+    NAME         = TARGET_WESTERNMOST_LONGITUDE
+    DATA_TYPE    = ASCII_REAL
+    START_BYTE   = 2652
+    BYTES        = 11
+    FORMAT       = "F11.6"
+    UNIT        = "DEGREES"
+    DESCRIPTION  = "Westernmost longitude visible on target body."
+  END_OBJECT     = COLUMN
+
+  OBJECT         = COLUMN
+    NAME         = TWIST_ANGLE
+    DATA_TYPE    = ASCII_REAL
+    START_BYTE   = 2664
+    BYTES        = 11
+    FORMAT       = "F11.6"
+    UNIT        = "DEGREES"
+    DESCRIPTION  = "Twist angle of optic axis."
+  END_OBJECT     = COLUMN
+
+  OBJECT         = COLUMN
+    NAME         = TARGET_LIST
+    DATA_TYPE    = CHARACTER
+    START_BYTE   = 2677
+    BYTES        = 255
+    FORMAT       = A255
+    DESCRIPTION  = "Name of each body visible in the image. A body
+                    is included if any part of its limb is not hidden
+                    by another body. Bodies may be obscured by rings."
+  END_OBJECT     = COLUMN
+
+  OBJECT         = COLUMN
+    NAME         = UPPER_LEFT_LATITUDE
+    DATA_TYPE    = ASCII_REAL
+    START_BYTE   = 2934
+    BYTES        = 11
+    FORMAT       = "F11.6"
+    UNIT        = "DEGREES"
+    DESCRIPTION  = "Planetocentric latitude of upper-left pixel."
+  END_OBJECT     = COLUMN
+
+  OBJECT         = COLUMN
+    NAME         = UPPER_LEFT_LONGITUDE
+    DATA_TYPE    = ASCII_REAL
+    START_BYTE   = 2946
+    BYTES        = 11
+    FORMAT       = "F11.6"
+    UNIT        = "DEGREES"
+    DESCRIPTION  = "West longitude of upper-left pixel."
+  END_OBJECT     = COLUMN
+
+  OBJECT         = COLUMN
+    NAME         = UPPER_RIGHT_LATITUDE
+    DATA_TYPE    = ASCII_REAL
+    START_BYTE   = 2958
+    BYTES        = 11
+    FORMAT       = "F11.6"
+    UNIT        = "DEGREES"
+    DESCRIPTION  = "Planetocentric latitude of upper-right pixel."
+  END_OBJECT     = COLUMN
+
+  OBJECT         = COLUMN
+    NAME         = UPPER_RIGHT_LONGITUDE
+    DATA_TYPE    = ASCII_REAL
+    START_BYTE   = 2970
+    BYTES        = 11
+    FORMAT       = "F11.6"
+    UNIT        = "DEGREES"
+    DESCRIPTION  = "West longitude of upper-right pixel."
+  END_OBJECT     = COLUMN
+
+  OBJECT         = COLUMN
+    NAME         = DATA_SET_NAME
+    DATA_TYPE    = CHARACTER
+    START_BYTE   = 2983
+    BYTES        = 60
+    FORMAT       = A60
+    DESCRIPTION  = "The name given to the Cassini ISS EDR image data
+                    set."
+  END_OBJECT     = COLUMN
+
+  OBJECT         = COLUMN
+    NAME         = INSTRUMENT_HOST_ID
+    DATA_TYPE    = CHARACTER
+    START_BYTE   = 3046
+    BYTES        = 4
+    FORMAT       = A4
+    DESCRIPTION  = "Unique identifier for the host where the instrument
+                    is located."
+  END_OBJECT     = COLUMN
+
+  OBJECT         = COLUMN
+    NAME         = PRODUCT_TYPE
+    DATA_TYPE    = CHARACTER
+    START_BYTE   = 3053
+    BYTES        = 4
+    FORMAT       = A4
+    DESCRIPTION  = "Identifies the type of a data product within
+                    the data set."
+  END_OBJECT     = COLUMN
+
+  OBJECT         = COLUMN
+    NAME         = STANDARD_DATA_PRODUCT_ID
+    DATA_TYPE    = CHARACTER
+    START_BYTE   = 3060
+    BYTES        = 7
+    FORMAT       = A7
+    DESCRIPTION  = "Used to link a data product (file) to a standard
+                    data product (collection of similar files) described
+                    within software interface specification document
+                    for a particular data set. "
+  END_OBJECT     = COLUMN
+
+
+END_OBJECT               = IMAGE_INDEX_TABLE
+
+END

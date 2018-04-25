@@ -1,0 +1,199 @@
+[
+    {
+        "field_name": "obs_general_id",
+        "field_type": "uint4",
+        "field_key": "foreign",
+        "field_key_foreign": [
+            "obs_general",
+            "id"
+        ],
+        "field_notnull": true,
+        "data_source": [
+            "TAB:obs_general",
+            "id"
+        ],
+        "comment": "This is the primary (surrograte) key linking the record to obs_general."
+    },
+    {
+        "field_name": "rms_obs_id",
+        "field_type": "char40",
+        "field_key": "foreign",
+        "field_key_foreign": [
+            "obs_general",
+            "rms_obs_id"
+        ],
+        "field_notnull": true,
+        "data_source": [
+            "TAB:obs_general",
+            "rms_obs_id"
+        ],
+        "comment": "This is the secondary key linking the record to obs_general."
+    },
+    {
+        "field_name": "volume_id",
+        "field_type": "char11",
+        "field_key": true,
+        "field_notnull": true,
+        "data_source": [
+            "TAB:obs_general",
+            "volume_id"
+        ],
+        "comment": "The volume_id is included here for ease of database manipulation only."
+    },
+    {
+        "field_name": "instrument_id",
+        "field_type": "char9",
+        "field_key": true,
+        "field_notnull": true,
+        "data_source": [
+            "TAB:obs_general",
+            "instrument_id"
+        ],
+        "comment": "The instrument_id is included here for ease of database manipulation only."
+    },
+    {
+        "field_name": "image_type_id",
+        "field_type": "char4",
+        "field_notnull": true,
+        "data_source": [
+            "FUNCTION",
+            "obs_type_image_<INST>_image_type_id"
+        ],
+        "definition": "The IMAGE_TYPE element describes the type of image acquired. This may be used to describe characteristics that differentiate one group of images from another such as the nature of the data in the image file, the purpose for which the image was acquired, or the way in which it was acquired. Within OPUS, it is used to define the type of camera used. In a framing camera, all pixels are exposed simultaneously. In a pushbroom camera, the image is obtained by sweeping a single line of pixels across the target. In a raster-scan camera, the image is constructed by repeatedly sweeping a single pixel across a field of view.",
+        "pi_category_name": "obs_type_image",
+        "pi_dict_context": "OPUS_TYPE_IMAGE",
+        "pi_dict_name": "IMAGE_TYPE",
+        "pi_disp_order": 4,
+        "pi_display": 1,
+        "pi_display_results": 1,
+        "pi_form_type": "GROUP",
+        "pi_intro": null,
+        "pi_label": "Image Type",
+        "pi_label_results": "Image Type",
+        "pi_slug": "imagetypeid",
+        "pi_sub_heading": null,
+        "pi_tooltip": "",
+        "pi_units": "",
+        "comment": "Definition is from old OPUS dictionary."
+    },
+    {
+        "field_name": "duration",
+        "field_type": "real8",
+        "field_default": null,
+        "field_key": true,
+        "data_source": [
+            "FUNCTION",
+            "obs_type_image_<INST>_duration"
+        ],
+        "pi_category_name": "obs_type_image",
+        "pi_dict_context": "PSDD",
+        "pi_dict_name": "EXPOSURE_DURATION",
+        "pi_disp_order": 3,
+        "pi_display": 1,
+        "pi_display_results": 1,
+        "pi_form_type": "RANGE",
+        "pi_intro": null,
+        "pi_label": "Exposure Duration",
+        "pi_label_results": "Exposure Duration",
+        "pi_slug": "duration",
+        "pi_sub_heading": null,
+        "pi_tooltip": "",
+        "pi_units": "seconds"
+    },
+    {
+        "field_name": "levels",
+        "field_type": "uint4",
+        "field_default": null,
+        "data_source": [
+            "FUNCTION",
+            "obs_type_image_<INST>_levels"
+        ],
+        "definition": "Intensity levels indicates the number of shades of gray to which an image is sensitive. This is typically a property of the camera and not necessarily the number of gray levels that appear inside the data product.",
+        "pi_category_name": "obs_type_image",
+        "pi_dict_context": "OPUS_TYPE_IMAGE",
+        "pi_dict_name": "INTENSITY_LEVELS",
+        "pi_disp_order": 7,
+        "pi_display": 1,
+        "pi_display_results": 1,
+        "pi_form_type": "RANGE",
+        "pi_intro": null,
+        "pi_label": "Intensity Levels",
+        "pi_label_results": "Intensity Levels",
+        "pi_slug": "levels",
+        "pi_sub_heading": null,
+        "pi_tooltip": "",
+        "pi_units": "",
+        "comment": "Definition is from old OPUS dictionary."
+    },
+    {
+        "field_name": "greater_pixel_size",
+        "field_type": "uint4",
+        "field_default": null,
+        "data_source": [
+            "FUNCTION",
+            "obs_type_image_<INST>_greater_pixel_size"
+        ],
+        "val_min": 0,
+        "val_max": 1e8,
+        "definition": "Greater size in pixels defines the number of pixels along the longer axis of an image array.",
+        "pi_category_name": "obs_type_image",
+        "pi_dict_context": "OPUS_TYPE_IMAGE",
+        "pi_dict_name": "GREATER_PIXEL_SIZE",
+        "pi_disp_order": 5,
+        "pi_display": 1,
+        "pi_display_results": 1,
+        "pi_form_type": "RANGE",
+        "pi_intro": null,
+        "pi_label": "Greater Size in Pixels",
+        "pi_label_results": "Greater Size in Pixels",
+        "pi_slug": "greaterpixelsize",
+        "pi_sub_heading": null,
+        "pi_tooltip": "",
+        "pi_units": "",
+        "comment": "Definition is from old OPUS dictionary."
+    },
+    {
+        "field_name": "lesser_pixel_size",
+        "field_type": "uint4",
+        "field_default": null,
+        "data_source": [
+            "FUNCTION",
+            "obs_type_image_<INST>_lesser_pixel_size"
+        ],
+        "val_min": 0,
+        "val_max": 1e8,
+        "definition": "Lesser size in pixels defines the number of pixels along the shorter axis of an image array.",
+        "pi_category_name": "obs_type_image",
+        "pi_dict_context": "OPUS_TYPE_IMAGE",
+        "pi_dict_name": "LESSER_PIXEL_SIZE",
+        "pi_disp_order": 6,
+        "pi_display": 1,
+        "pi_display_results": 1,
+        "pi_form_type": "RANGE",
+        "pi_intro": null,
+        "pi_label": "Lesser Size in Pixels",
+        "pi_label_results": "Lesser Size in Pixels",
+        "pi_slug": "lesserpixelsize",
+        "pi_sub_heading": null,
+        "pi_tooltip": "",
+        "pi_units": "",
+        "comment": "Definition is from old OPUS dictionary."
+    },
+    {
+        "put_mults_here": true
+    },
+    {
+        "field_name": "id",
+        "field_type": "uint4",
+        "field_key": "primary",
+        "field_notnull": true,
+        "data_source": [
+            "MAX_ID",
+            null
+        ]
+    },
+    {
+        "field_name": "timestamp",
+        "field_type": "timestamp"
+    }
+]
