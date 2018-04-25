@@ -16,9 +16,11 @@ function postContents(response, searchText) {
   if (searchText != undefined) {
     definition = definition.replacei(searchText, "<mark class='search'>"+searchText+"</mark>")
   }
-  html += "<div class='context'>" + response.context__description + "</div></br>";
+  var context = (response.context__description == undefined ? response.context: response.context__description);
+  html += "<div class='context'>" + context + "</div></br>";
   html += "<div class='description'>" + definition + "</div></br>";
-  html += "<div class='importDate'>" + response.term__import_date + "</div></br>";
+  var import_date = (response.term__import_date == undefined ? response.import_date: response.term__import_date);
+  html += "<div class='importDate'>" + import_date + "</div></br>";
   return html;
 }
 
@@ -29,10 +31,13 @@ function buildDefinitionListHTML(response, searchText) {
     html += "<ul>";
     for (var index = 0; index < length; index++) {
       var next =index + 1;
+      var term = (response[index].term__term_nice === undefined ? response[index].term : response[index].term__term_nice);
+      var term_next = (next < length && (response[next].term__term_nice === undefined ? response[next].term : response[next].term__term_nice));
+
       html += "<li>";
-      html += "<div class='term'>" + response[index].term__term_nice + "</div></br>";
-      // this should actually be a while loop...
-      if (next < length && (response[index].term__term_nice == response[next].term__term_nice)) {
+      html += "<div class='term'>" + term.replace(/:/g, ": ").replace(/_/g, " ").toTitleCase(); + "</div></br>";
+      // this should actually be a while loop...term.replace(/_/g, ". ").
+      if (next < length && (term == term_next)) {
         html += "<ul>";
         html += "<li>"+postContents(response[index], searchText) + "</li>";
         index++;

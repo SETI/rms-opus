@@ -46,9 +46,13 @@ def display_definitions(request):
 
 def search_definitions(request, slug):
     try:
-        definitionList = Definition.objects.using('dictionary').select_related().filter(definition__icontains=slug).values('definition', 'term__term_nice', 'term__import_date', 'context__description', 'context__name').order_by('term__term')
+        log.error(slug)
+        #definitionList = Definition.objects.using('dictionary').select_related().filter(definition__icontains=slug).values('definition', 'term__term_nice', 'term__import_date', 'context__description', 'context__name').order_by('term__term')
+        definitionList = Definitionsnew.objects.using('dictionary').select_related().filter(definition__icontains=slug).values('definition', 'term', 'import_date', 'context').order_by('term')
+        log.info(definitionList.query)
         return JsonResponse(list(definitionList), safe=False)
     except Definition.DoesNotExist:
+        log.info(definitionList.query)
         return JsonResponse({"error":"Search string '"+slug+"' not found"})
 
 def html_decode(s):

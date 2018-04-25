@@ -16,6 +16,7 @@ body {
   font-family: 'Open Sans', sans-serif;
   color: #404040;
   margin: 0;
+  margin-bottom: 35px;
   height: 100%;
   overflow: hidden;
 }
