@@ -7,6 +7,8 @@ sudo apt-get install python-dev libmysqlclient-dev # Debian / Ubuntu
 
 TODO:
 
+- Clean up data_type mult (make preprogrammed)
+
 - Update table_schema README file
 
 - SLUGs should really search on DB value ("N") not UI pretty string
@@ -118,7 +120,7 @@ THE BIG QUESTIONS:
     Set both min and max to same value?
 
   - Spacecraft STOP clock count is always unknown - set to same as START?
-  
+
 - SURFACE GEO:
   - incidence[12] is >90 (hacked JSON for now, should be val_max=90)
 
@@ -130,3 +132,48 @@ THE BIG QUESTIONS:
 
   - planet_id:
     - Currently it is NONE if there is no target_name
+
+COVIMS:
+
+  - target_name uses RA,RB etc?
+
+  - wave_no_res?
+      $wave_res2 = $this->obs_wavelength__wave_res2($obs);
+      $wavelength2 = $this->obs_wavelength__wavelength2($obs);
+      $wave_no_res = 100 * $wave_res2/($wavelength2*$wavelength2);
+      return $wave_no_res;
+
+  - is_image is always FALSE!
+
+  - image_type_id:
+      if phase_name == 'IR' and inst_mod == 'IMAGE':
+          return 'RAST'
+      if phase_name == "VIS":
+          return 'PUSH'
+      return 'FIX'
+
+  - Levels? 4096
+
+  - def populate_obs_general_COVIMS_data_type():
+      metadata = kwargs['metadata']
+      index_row = metadata['index_row']
+      inst_mod = index_row['INSTRUMENT_MODE_ID']
+
+      if inst_mod == 'IMAGE':
+          return ('IMG', 'Image')
+      if inst_mod == 'LINE':
+          return ('LINE', 'Line')
+      if inst_mod == 'POINT' or inst_mod == 'OCCULTATION':
+          return ('POINT', 'Point')
+
+      index_row_num = metadata['index_row_num']
+      import_util.announce_nonrepeating_error(
+          f'Unknown INSTRUMENT_MODE_ID "{inst_mod}"', index_row_num)
+      return ('IMG', 'Image') # XXX
+
+  - RA/DEC without ring_geo?
+
+  - OBS ID "VIMS_015SA_1X6MOVIEA003" - Valid?
+
+  - No MISSION_PHASE_NAME
+  

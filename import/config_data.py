@@ -175,6 +175,7 @@ TARGET_NAME_INFO = {
     'SUN':           (None,  'SUN'),
     'SOLAR WIND':    (None,  'OTHER'),
     'INTERSTELLAR MEDIUM': (None, 'OTHER'),
+    'DUST':          (None,  'OTHER'),
     'VENUS':         ('VEN', 'PLANET'),
     'EARTH':         ('EAR', 'PLANET'),
       'MOON':        ('EAR', 'MOON'),

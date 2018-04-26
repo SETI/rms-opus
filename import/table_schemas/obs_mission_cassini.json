@@ -83,7 +83,7 @@
         "field_key": true,
         "data_source": [
             "FUNCTION",
-            "obs_mission_cassini_<INST>_rev_no"
+            "obs_mission_cassini_rev_no"
         ],
         "definition": "Orbit number identifies the number of the orbital revolution of Cassini about Saturn. Orbit numbers change each time the spacecraft goes through its apocenter. For historical reasons, the Cassini orbits are designated A, B, C, 2, 3, 4, ...",
         "pi_category_name": "obs_mission_cassini",

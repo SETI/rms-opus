@@ -231,10 +231,14 @@ def populate_obs_wavelength_GOSSI_wave_res2(**kwargs):
     return None
 
 def populate_obs_wavelength_GOSSI_wave_no1(**kwargs):
-    return None
+    metadata = kwargs['metadata']
+    wavelength_row = metadata['obs_wavelength_row']
+    return 10000 / wavelength_row['wavelength2'] # cm^-1
 
 def populate_obs_wavelength_GOSSI_wave_no2(**kwargs):
-    return None
+    metadata = kwargs['metadata']
+    wavelength_row = metadata['obs_wavelength_row']
+    return 10000 / wavelength_row['wavelength1'] # cm^-1
 
 def populate_obs_wavelength_GOSSI_wave_no_res1(**kwargs):
     return None

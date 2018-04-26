@@ -106,12 +106,12 @@ def safe_pdstable_read(filename):
         if not impglobals.ARGUMENTS.log_suppress_traceback:
             msg += ':\n' + traceback.format_exc()
         impglobals.LOGGER.log('error', msg)
-        return None
+        return None, None
 
     if log_accumulated_warnings(f'table import of {filename}'):
-        return None
+        return None, None
 
-    return table.dicts_by_row()
+    return table.dicts_by_row(), table.info.label.as_dict()
 
 ################################################################################
 # TABLE MANIPULATION
@@ -178,7 +178,9 @@ def find_max_table_id(table_name):
 # ANNOUNCE ERRORS BUT LET IMPORT CONTINUE
 ################################################################################
 
-def announce_nonrepeating_error(msg):
+def announce_nonrepeating_error(msg, index_row_num=None):
+    if index_row_num is not None:
+        msg += f' [line {index_row_num}]'
     short_msg = msg
     if msg.find(' [line') != -1:
         short_msg = short_msg[:msg.find(' [line')]
@@ -187,7 +189,9 @@ def announce_nonrepeating_error(msg):
         impglobals.LOGGER.log('error', msg)
         impglobals.IMPORT_HAS_BAD_DATA = True
 
-def announce_nonrepeating_warning(msg):
+def announce_nonrepeating_warning(msg, index_row_num=None):
+    if index_row_num is not None:
+        msg += f' [line {index_row_num}]'
     short_msg = msg
     if msg.find(' [line') != -1:
         short_msg = short_msg[:msg.find(' [line')]

@@ -257,6 +257,16 @@ def populate_obs_mission_cassini_activity_name(**kwargs):
     obs_parts = obs_name.split('_')
     return obs_parts[2][:-3]
 
+def populate_obs_mission_cassini_rev_no(**kwargs):
+    obs_name = helper_cassini_obs_name(**kwargs)
+    if not helper_cassini_valid_obs_name(obs_name):
+        return None
+    obs_parts = obs_name.split('_')
+    rev_no = obs_parts[1][:3]
+    if rev_no[0] == 'C':
+        return (rev_no, None)
+    return (rev_no, rev_no)
+
 def populate_obs_mission_cassini_ert_sec1(**kwargs):
     metadata = kwargs['metadata']
     index_row_num = metadata['index_row_num']

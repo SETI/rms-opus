@@ -19,6 +19,7 @@ from populate_obs_general import *
 from populate_obs_mission_cassini import *
 from populate_obs_instrument_COISS import *
 from populate_obs_instrument_COUVIS import *
+from populate_obs_instrument_COVIMS import *
 
 from populate_obs_mission_galileo import *
 from populate_obs_instrument_GOSSI import *
@@ -537,7 +538,7 @@ def import_one_volume(volume_id):
         impglobals.LOGGER.close()
         return False
 
-    obs_rows = import_util.safe_pdstable_read(volume_label_path)
+    obs_rows, obs_label_dict = import_util.safe_pdstable_read(volume_label_path)
     if not obs_rows:
         impglobals.LOGGER.log('error', f'Read failed: "{volume_label_path}"')
         impglobals.LOGGER.close()
@@ -548,6 +549,7 @@ def import_one_volume(volume_id):
 
     metadata = {}
     metadata['index'] = obs_rows
+    metadata['index_label'] = obs_label_dict
 
     # Look for all the "associated" metadata files and read them in
     # Metadata filenames include:
@@ -569,7 +571,8 @@ def import_one_volume(volume_id):
                     continue
                 assoc_label_path = os.path.join(assoc_pdsfile.abspath,
                                                 basename)
-                assoc_rows = import_util.safe_pdstable_read(assoc_label_path)
+                assoc_rows, assoc_label_dict = import_util.safe_pdstable_read(
+                                                            assoc_label_path)
                 if not assoc_rows:
                     # No need to report an error here because safe_pdstable_read
                     # will have already done so
@@ -643,6 +646,7 @@ def import_one_volume(volume_id):
                         # haven't prepared for!
                         assert False
                 metadata[assoc_type] = assoc_dict
+                metadata[assoc_type+'_label'] = assoc_label_dict
 
     # Check to see if we have ring or surface geo when the instrument
     # supports it - but it isn't a fatal error if we don't because sometimes
@@ -682,7 +686,9 @@ def import_one_volume(volume_id):
 
     used_targets = set()
 
+    ####################################
     ### MASTER LOOP - IMPORT ONE ROW ###
+    ####################################
 
     for index_row_num, index_row in enumerate(obs_rows):
         metadata['index_row'] = index_row
@@ -697,80 +703,104 @@ def import_one_volume(volume_id):
                 metadata['supp_index_row'] = supp_index[couvis_filename]
             else:
                 import_util.announce_nonrepeating_warning(
-                    f'File "{couvis_filename}" is missing supplemental data'+
-                    f' [line {index_row_num}]')
+                    f'File "{couvis_filename}" is missing supplemental data',
+                    index_row_num)
                 metadata['supp_index_row'] = None
 
-        # Handle everything except surface_geo
+        # Sometimes a single row in the index turns into multiple rms_obs_id
+        # in the database. This happens with COVIMS because each observation
+        # might include both VIS and IR entries. Build up a list of such entries
+        # here and then process the row as many times as necessary.
 
-        for table_num, table_name in enumerate(table_names_in_order):
-            if table_name.startswith('obs_surface_geometry'):
-                # Deal with surface geometry a little later
-                continue
-            row = import_observation_table(volume_id,
-                                           instrument_name,
-                                           mission_abbrev,
-                                           table_name,
-                                           table_schemas[table_name],
-                                           metadata)
-            if table_name == 'obs_general':
-                obs_general_row = row
-                rms_obs_id = row['rms_obs_id']
-                if rms_obs_id in used_rms_obs_id_this_vol:
-                    # Some of the GO_xxxx volumes have duplicate observations
-                    # within a single volume. In these cases we have to use the
-                    # NEW one and delete the old one.
-                    impglobals.LOGGER.log('info',
-                            f'Duplicate rms_obs_id "{rms_obs_id}" within '+
-                             'volume - removing previous one')
-                    remove_rms_obs_id_from_tables(table_rows,
-                                                  rms_obs_id)
-                used_rms_obs_id_this_vol.add(rms_obs_id)
-                if rms_obs_id in used_rms_obs_id_prev_vol:
-                    # Some of the GO_xxxx volumes have duplicate observations
-                    # across volumes. In these cases we have to use the
-                    # NEW one and delete the old one from the database itself.
-                    delete_rms_obs_id_from_obs_tables(rms_obs_id, 'import')
-            table_rows[table_name].append(row)
-            metadata[table_name+'_row'] = row
+        if instrument_name == 'COVIMS':
+            phase_names = []
+            if index_row['VIS_SAMPLING_MODE_ID'] != 'N/A':
+                phase_names.append('VIS')
+            if index_row['IR_SAMPLING_MODE_ID'] != 'N/A':
+                phase_names.append('IR')
+        else:
+            phase_names = ['NORMAL']
 
-        assert obs_general_row is not None
+        for phase_name in phase_names:
+            metadata['phase_name'] = phase_name
 
-        # Handle surface_geo
+            # Handle everything except surface_geo
 
-        if 'body_surface_geo' in metadata:
-            surface_geo_dict = metadata['body_surface_geo']
-            for table_name in table_names_in_order:
-                if not table_name.startswith('obs_surface_geometry'):
-                    # Deal with surface geometry only
+            for table_num, table_name in enumerate(table_names_in_order):
+                if table_name.startswith('obs_surface_geometry'):
+                    # Deal with surface geometry a little later
                     continue
-                # Retrieve the rms_obs_id from obs_general to find the
-                # surface_geo
-                rms_obs_id = obs_general_row['rms_obs_id']
-                rms_obs_id = rms_obs_id.replace('_', '/')
-                target_dict = surface_geo_dict.get(rms_obs_id, {})
-                for target_name in sorted(target_dict.keys()):
-                    used_targets.add(target_name)
-                    # Note the following only affects
-                    # obs_surface_geometry__<T> not the generalized
-                    # obs_surface_geometry. This is fine because we want the
-                    # generalized obs_surface_geometry to include all the
-                    # targets.
-                    new_table_name = table_name.replace('<TARGET>',
-                                                        target_name.lower())
-                    metadata['body_surface_geo_row'] = target_dict[target_name]
+                row = import_observation_table(volume_id,
+                                               instrument_name,
+                                               mission_abbrev,
+                                               table_name,
+                                               table_schemas[table_name],
+                                               metadata)
+                if table_name == 'obs_general':
+                    obs_general_row = row
+                    rms_obs_id = row['rms_obs_id']
+                    if rms_obs_id in used_rms_obs_id_this_vol:
+                        # Some of the GO_xxxx volumes have duplicate
+                        # observations within a single volume. In these cases
+                        # we have to use the NEW one and delete the old one.
+                        impglobals.LOGGER.log('info',
+                                f'Duplicate rms_obs_id "{rms_obs_id}" within '+
+                                 'volume - removing previous one')
+                        remove_rms_obs_id_from_tables(table_rows,
+                                                      rms_obs_id)
+                    used_rms_obs_id_this_vol.add(rms_obs_id)
+                    if rms_obs_id in used_rms_obs_id_prev_vol:
+                        # Some of the GO_xxxx and COUVIS_xxxx volumes have
+                        # duplicate observations across volumes. In these cases
+                        # we have to use the NEW one and delete the old one
+                        # from the database itself. Note this will only be
+                        # triggered if we have already loaded the previous
+                        # volume into the import tables but not clear them out.
+                        # In the case where we copied them to the perm tables
+                        # and cleared them out, a future check during the copy
+                        # process will catch the duplicates.
+                        delete_rms_obs_id_from_obs_tables(rms_obs_id, 'import')
+                table_rows[table_name].append(row)
+                metadata[table_name+'_row'] = row
 
-                    row = import_observation_table(volume_id,
+            assert obs_general_row is not None
+
+            # Handle surface_geo
+
+            if 'body_surface_geo' in metadata:
+                surface_geo_dict = metadata['body_surface_geo']
+                for table_name in table_names_in_order:
+                    if not table_name.startswith('obs_surface_geometry'):
+                        # Deal with surface geometry only
+                        continue
+                    # Retrieve the rms_obs_id from obs_general to find the
+                    # surface_geo
+                    rms_obs_id = obs_general_row['rms_obs_id']
+                    rms_obs_id = rms_obs_id.replace('_', '/')
+                    target_dict = surface_geo_dict.get(rms_obs_id, {})
+                    for target_name in sorted(target_dict.keys()):
+                        used_targets.add(target_name)
+                        # Note the following only affects
+                        # obs_surface_geometry__<T> not the generalized
+                        # obs_surface_geometry. This is fine because we want the
+                        # generalized obs_surface_geometry to include all the
+                        # targets.
+                        new_table_name = table_name.replace('<TARGET>',
+                                                            target_name.lower())
+                        metadata['body_surface_geo_row'] = target_dict[
+                                                                    target_name]
+
+                        row = import_observation_table(volume_id,
                                                    instrument_name,
                                                    mission_abbrev,
                                                    new_table_name,
                                                    table_schemas[table_name],
                                                    metadata)
-                    if new_table_name not in table_rows:
-                        table_rows[new_table_name] = []
-                        impglobals.LOGGER.log('debug',
-                f'Creating surface geo for new target {target_name}')
-                    table_rows[new_table_name].append(row)
+                        if new_table_name not in table_rows:
+                            table_rows[new_table_name] = []
+                            impglobals.LOGGER.log('debug',
+                    f'Creating surface geo for new target {target_name}')
+                        table_rows[new_table_name].append(row)
 
     # Now that we have all the values, we have to dump out the mult tables
     # because they are referenced as foreign keys
@@ -958,7 +988,7 @@ def import_observation_table(volume_id,
             if notnull:
                 import_util.announce_nonrepeating_error(
                     f'Column "{field_name}" in table "{table_name}" '+
-                    f'has NULL value but NOT NULL is set [line {index_row_num}]')
+                    f'has NULL value but NOT NULL is set', index_row_num)
         else:
             if field_type == 'flag':
                 if column_val in [0, 'n', 'N', 'no', 'No', 'NO', 'off', 'OFF']:
@@ -972,7 +1002,7 @@ def import_observation_table(volume_id,
                     import_util.announce_nonrepeating_error(
                         f'Column "{field_name}" in table "{table_name}" '+
                         f'has FLAG type but value "{column_val}" is not '+
-                        f'a valid flag value [line {index_row_num}]')
+                        f'a valid flag value', index_row_num)
                     column_val = None
             if field_type.startswith('char'):
                 field_size = int(field_type[4:])
@@ -980,13 +1010,13 @@ def import_observation_table(volume_id,
                     import_util.announce_nonrepeating_error(
                         f'Column "{field_name}" in table "{table_name}" '+
                         f'has CHAR type but value "{column_val}" is of '+
-                        f'type "{type(column_val)}" [line {index_row_num}]')
+                        f'type "{type(column_val)}"', index_row_num)
                     column_val = ''
                 elif len(column_val) > field_size:
                     import_util.announce_nonrepeating_error(
                         f'Column "{field_name}" in table "{table_name}" '+
                         f'has CHAR size {field_size} but value '+
-                        f'"{column_val}" is too long [line {index_row_num}]')
+                        f'"{column_val}" is too long', index_row_num)
                     column_val = column_val[:field_size]
             elif (field_type.startswith('real') or
                   field_type.startswith('int') or
@@ -999,8 +1029,7 @@ def import_observation_table(volume_id,
                         import_util.announce_nonrepeating_error(
                             f'Column "{field_name}" in table '+
                             f'"{table_name}" has REAL type but '+
-                            f'"{column_val}" is not a float '+
-                            f'[line {index_row_num}]')
+                            f'"{column_val}" is not a float ', index_row_num)
                         column_val = None
                 else:
                     try:
@@ -1009,8 +1038,7 @@ def import_observation_table(volume_id,
                         import_util.announce_nonrepeating_error(
                             f'Column "{field_name}" in table '+
                             f'"{table_name}" has INT type but '+
-                            f'"{column_val}" is not an int '+
-                            f'[line {index_row_num}]')
+                            f'"{column_val}" is not an int', index_row_num)
                         column_val = None
                 if column_val is not None and the_val is not None:
                     val_sentinel = table_column.get('val_sentinel', None)
@@ -1027,32 +1055,30 @@ def import_observation_table(volume_id,
                     if val_min is not None and the_val < val_min:
                         if val_use_null:
                             msg = (f'Column "{field_name}" in table '+
-                                   f'"{table_name}" has minimum value {val_min}'+
-                                   f' but {column_val} is too small - '+
-                                   f'substituting NULL '+
-                                   f'[line {index_row_num}]')
-                            impglobals.LOGGER.log('debug', msg)
+                                   f'"{table_name}" has minimum value '+
+                                   f'{val_min} but {column_val} is too small -'+
+                                   f' substituting NULL')
+                            impglobals.LOGGER.log('debug', msg, index_row_num)
                         else:
                             msg = (f'Column "{field_name}" in table '+
-                                   f'"{table_name}" has minimum value {val_min}'+
-                                   f' but {column_val} is too small '+
-                                   f'[line {index_row_num}]')
-                            import_util.announce_nonrepeating_error(msg)
+                                   f'"{table_name}" has minimum value '+
+                                   f'{val_min} but {column_val} is too small')
+                            import_util.announce_nonrepeating_error(msg,
+                                                                index_row_num)
                         column_val = None
                     if val_max is not None and the_val > val_max:
                         if val_use_null:
                             msg = (f'Column "{field_name}" in table '+
                                    f'"{table_name}" has maximum value {val_max}'+
                                    f' but {column_val} is too large - '+
-                                   f'substituting NULL '+
-                                   f'[line {index_row_num}]')
+                                   f'substituting NULL')
                             impglobals.LOGGER.log('debug', msg)
                         else:
                             msg = (f'Column "{field_name}" in table '+
-                                   f'"{table_name}" has maximum value {val_max}'+
-                                   f' but {column_val} is too large '+
-                                   f'[line {index_row_num}]')
-                            import_util.announce_nonrepeating_error(msg)
+                                   f'"{table_name}" has maximum value '+
+                                   f'{val_max} but {column_val} is too large')
+                            import_util.announce_nonrepeating_error(msg,
+                                                                index_row_num)
                         column_val = None
 
         new_row[field_name] = column_val
