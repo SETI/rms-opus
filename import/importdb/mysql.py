@@ -438,36 +438,45 @@ TABLE_NAME='{table_name}' ORDER BY ORDINAL_POSITION"""
 
         table_name = self.convert_raw_to_namespace(namespace, raw_table_name)
 
-        sorted_column_names = sorted(rows[0].keys())
-        cmd = f'INSERT INTO {table_name} ('
-        cmd += ','.join(sorted(sorted_column_names))
+        packet_size = 1000 # Limit number of rows at a time - MySQL barfs
 
-        cmd += ') VALUES'
+        num_packets = ((len(rows)-1) // packet_size) + 1
 
-        first_row = True
-        for row in rows:
-            val_list = []
-            assert sorted_column_names == sorted(row.keys())
-            for column_name in sorted_column_names:
-                val = row[column_name]
-                if val is None:
-                    val_list.append('NULL')
-                elif isinstance(val, str):
-                    val_list.append('"' + str(val) + '"')
-                else:
-                    val_list.append(str(val))
-            if not first_row:
-                cmd += ','
-            first_row = False
-            cmd += '(' + ','.join(val_list) + ')'
+        for packet_num in range(num_packets):
+            start_row = packet_size * packet_num
+            end_row = min(len(rows),
+                          packet_size * (packet_num+1))
 
-        try:
-            self._execute(cmd, mutates=True)
-        except MySQLdb.Error as e:
-            if self.logger:
-                self.logger.log('fatal',
-                        f'Failed to insert row into "{table_name}": {e.args[1]}')
-            raise ImportDBException(e)
+            sorted_column_names = sorted(rows[0].keys())
+            cmd = f'INSERT INTO {table_name} ('
+            cmd += ','.join(sorted(sorted_column_names))
+
+            cmd += ') VALUES'
+
+            first_row = True
+            for row in rows[start_row:end_row]:
+                val_list = []
+                assert sorted_column_names == sorted(row.keys())
+                for column_name in sorted_column_names:
+                    val = row[column_name]
+                    if val is None:
+                        val_list.append('NULL')
+                    elif isinstance(val, str):
+                        val_list.append('"' + str(val) + '"')
+                    else:
+                        val_list.append(str(val))
+                if not first_row:
+                    cmd += ','
+                first_row = False
+                cmd += '(' + ','.join(val_list) + ')'
+
+            try:
+                self._execute(cmd, mutates=True)
+            except MySQLdb.Error as e:
+                if self.logger:
+                    self.logger.log('fatal',
+                    f'Failed to insert row into "{table_name}": {e.args[1]}')
+                raise ImportDBException(e)
 
         super(ImportDBMySQL, self)._exit()
 

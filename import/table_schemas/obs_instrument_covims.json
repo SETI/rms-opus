@@ -165,7 +165,7 @@
         "pi_sub_heading": null,
         "pi_tooltip": "",
         "pi_units": "",
-        "comment": "Definition from COVIMS label"
+        "comment": "Definition from COVIMS label. XXX Needs val_min/max"
     },
     {
         "field_name": "swath_length",
@@ -190,16 +190,19 @@
         "pi_sub_heading": null,
         "pi_tooltip": "",
         "pi_units": "",
-        "comment": "Definition from COVIMS label"
+        "comment": "Definition from COVIMS label. XXX Needs val_min/max"
     },
     {
         "field_name": "ir_exposure",
         "field_type": "real8",
-        "field_notnull": true,
+        "field_default": null,
         "data_source": [
             "TAB:index",
             "IR_EXPOSURE"
         ],
+        "val_min": 0,
+        "val_max": 1e5,
+        "val_sentinel": -999,
         "definition": "The IR exposure time for each pixel, in milliseconds.",
         "pi_category_name": "obs_instrument_covims",
         "pi_dict_context": "COVIMS",
@@ -247,13 +250,16 @@
     {
         "field_name": "vis_exposure",
         "field_type": "real8",
-        "field_notnull": true,
+        "field_default": null,
         "data_source": [
             "TAB:index",
             "VIS_EXPOSURE"
         ],
+        "val_min": 0,
+        "val_max": 1e5,
+        "val_sentinel": -999,
         "definition": "The VIS exposure time for each line, in milliseconds.",
-        "pi_category_name": "obs_instrument_COVIMS",
+        "pi_category_name": "obs_instrument_covims",
         "pi_dict_context": "COVIMS",
         "pi_dict_name": "VIS_EXPOSURE",
         "pi_disp_order": 5,
@@ -276,7 +282,7 @@
         "field_notnull": true,
         "data_source": [
             "TAB:index",
-            "VIS_EXPOSURE"
+            "VIS_SAMPLING_MODE_ID"
         ],
         "definition": "The spatial resolution mode of the VIS channel. Either NORMAL for 0.5 mrad x 0.5 mrad pixels, or HI-RES sampling (0.167 x 0.167 mrad), or N/A if the VIS channel is OFF.",
         "pi_category_name": "obs_instrument_covims",
@@ -298,7 +304,8 @@
     },
     {
         "field_name": "channel",
-        "field_type": "char3",
+        "field_type": "enum",
+        "field_enum_options": "'IR','VIS'",
         "field_notnull": true,
         "data_source": [
             "FUNCTION",

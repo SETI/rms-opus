@@ -215,8 +215,9 @@ def populate_obs_general_COISS_time_sec1(**kwargs):
     index_row = metadata['index_row']
     start_time = index_row['START_TIME']
     if start_time == 'UNK':
+        index_row_num = metadata['index_row_num']
         import_util.announce_nonrepeating_error(
-            'Found "UNK" in START_TIME field')
+            'Found "UNK" in START_TIME field', index_row_num)
         return 0.
     return julian.tai_from_iso(start_time)
 
@@ -227,8 +228,9 @@ def populate_obs_general_COISS_time_sec2(**kwargs):
     obs_general_row = metadata['obs_general_row']
 
     if stop_time == 'UNK':
+        index_row_num = metadata['index_row_num']
         import_util.announce_nonrepeating_error(
-            'Found "UNK" in STOP_TIME field')
+            'Found "UNK" in STOP_TIME field', index_row_num)
         return 0.
 
     time2 = julian.tai_from_iso(stop_time)
@@ -361,7 +363,7 @@ def _pixel_size_helper(**kwargs):
         return 256
     index_row_num = metadata['index_row_num']
     import_util.announce_nonrepeating_error(
-        f'Unknown INSTRUMENT_MODE_ID "{exposure}" [line {index_row_num}]')
+        f'Unknown INSTRUMENT_MODE_ID "{exposure}"', index_row_num)
     return None
 
 def populate_obs_type_image_COISS_lesser_pixel_size(**kwargs):
@@ -460,12 +462,12 @@ def populate_obs_wavelength_COISS_wave_res2(**kwargs):
 def populate_obs_wavelength_COISS_wave_no1(**kwargs):
     metadata = kwargs['metadata']
     wavelength_row = metadata['obs_wavelength_row']
-    return 10000 / wavelength_row['wavelength2']
+    return 10000 / wavelength_row['wavelength2'] # cm^-1
 
 def populate_obs_wavelength_COISS_wave_no2(**kwargs):
     metadata = kwargs['metadata']
     wavelength_row = metadata['obs_wavelength_row']
-    return 10000 / wavelength_row['wavelength1']
+    return 10000 / wavelength_row['wavelength1'] # cm^-1
 
 def populate_obs_wavelength_COISS_wave_no_res1(**kwargs):
     return None
@@ -516,15 +518,6 @@ def populate_obs_mission_cassini_COISS_spacecraft_clock_count2(**kwargs):
     count = index_row['SPACECRAFT_CLOCK_STOP_COUNT']
     return float(count)
 
-def populate_obs_mission_cassini_COISS_rev_no(**kwargs):
-    obs_name = helper_cassini_obs_name(**kwargs)
-    if not helper_cassini_valid_obs_name(obs_name):
-        return None
-    obs_parts = obs_name.split('_')
-    rev_no = obs_parts[1][:3]
-    if rev_no[0] == 'C':
-        return (rev_no, None)
-    return (rev_no, rev_no)
 
 ################################################################################
 # THESE ARE SPECIFIC TO OBS_INSTRUMENT_COISS

@@ -87,14 +87,14 @@ def populate_obs_general_COUVIS_data_type(**kwargs):
 
     if channel != 'EUV' and channel != 'FUV':
         import_util.announce_nonrepeating_error(
-            f'COUVIS_data_type has unknown channel type {channel} '+
-            f'[line {index_row_num}]')
+            f'COUVIS_data_type has unknown channel type {channel}',
+            index_row_num)
         return None
 
     if object_type is None:
         import_util.announce_nonrepeating_error(
             f'COUVIS_data_type has channel EUV or FUV but no '+
-            f'DATA_OBJECT_TYPE available [line {index_row_num}]')
+            f'DATA_OBJECT_TYPE available', index_row_num)
         return ('CUBE', 'Cube') # XXX
 
     if object_type == 'SPECTRUM':
@@ -317,7 +317,7 @@ def populate_obs_wavelength_COUVIS_wavelength1(**kwargs):
 
     import_util.announce_nonrepeating_error(
         f'obs_wavelength_COUVIS_wavelength1 has unknown channel type '+
-        f' {channel} [line {index_row_num}]')
+        f' {channel}', index_row_num)
     return None
 
 
@@ -344,7 +344,7 @@ def populate_obs_wavelength_COUVIS_wavelength2(**kwargs):
 
     import_util.announce_nonrepeating_error(
         f'obs_wavelength_COUVIS_wavelength1 has unknown channel type '+
-        f' {channel} [line {index_row_num}]')
+        f' {channel}', index_row_num)
     return None
 
 def _COUVIS_wave_res_helper(**kwargs):
@@ -375,7 +375,7 @@ def populate_obs_wavelength_COUVIS_wave_no1(**kwargs):
     if wl2 is None:
         return None
 
-    return 100. / wl2
+    return 10000. / wl2
 
 def populate_obs_wavelength_COUVIS_wave_no2(**kwargs):
     metadata = kwargs['metadata']
@@ -385,7 +385,7 @@ def populate_obs_wavelength_COUVIS_wave_no2(**kwargs):
     if wl1 is None:
         return None
 
-    return 100. / wl1
+    return 10000. / wl1
 
 def populate_obs_wavelength_COUVIS_wave_no_res1(**kwargs):
     metadata = kwargs['metadata']
@@ -452,6 +452,10 @@ def populate_obs_mission_cassini_COUVIS_spacecraft_clock_count1(**kwargs):
     index_row = metadata['index_row']
     count = index_row['SPACECRAFT_CLOCK_START_COUNT']
     if not count.startswith('1/'):
+        index_row_num = metadata['index_row_num']
+        import_util.announce_nonrepeating_error(
+            f'Badly formatted SPACE_CLOCK_START_COUNT "{count}"',
+            index_row_num)
         return None
     return float(count[2:])
 
@@ -461,18 +465,12 @@ def populate_obs_mission_cassini_COUVIS_spacecraft_clock_count2(**kwargs):
     index_row = metadata['index_row']
     count = index_row['SPACECRAFT_CLOCK_START_COUNT']
     if not count.startswith('1/'):
+        index_row_num = metadata['index_row_num']
+        import_util.announce_nonrepeating_error(
+            f'Badly formatted SPACE_CLOCK_START_COUNT "{count}"',
+            index_row_num)
         return None
     return float(count[2:])
-
-def populate_obs_mission_cassini_COUVIS_rev_no(**kwargs):
-    obs_name = helper_cassini_obs_name(**kwargs)
-    if not helper_cassini_valid_obs_name(obs_name):
-        return None
-    obs_parts = obs_name.split('_')
-    rev_no = obs_parts[1][:3]
-    if rev_no[0] == 'C':
-        return (rev_no, None)
-    return (rev_no, rev_no)
 
 
 ################################################################################

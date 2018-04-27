@@ -1,17 +1,20 @@
-import os, sys
+import os, sys, glob
 sys.path.append('c:/seti/opus/pds-tools')
 from datetime import datetime
 
-import mysql.connector
+import MySQLdb
 import json
 import pdsparser
 
+ERR_UNKNOWN_DATABASE = 1049
+ERR_UNKNOWN_TABLE = 1051
 
 class ImportDictionaryData(object):
     """Import utilities for the dictionary DB."""
+    db_table = "definitionsnew"
     tables = {}
-    tables['definitionsnew'] = (
-        "CREATE TABLE `definitionsnew` ("
+    tables[db_table] = (
+        f"CREATE TABLE IF NOT EXISTS `{db_table}` ("
         "   `term` char(255) NOT NULL,"
         "   `context` char(25) NOT NULL,"
         "   `def` text NOT NULL,"
@@ -23,44 +26,63 @@ class ImportDictionaryData(object):
         "  PRIMARY KEY (`term`,`context`)"
         ") ENGINE=InnoDB DEFAULT CHARSET=utf8")
 
-    def __init__(self, *args):
-        print "connection established"
-        self.cnx = mysql.connector.connect(user='debby', password='debby', host='127.0.0.1', database='dictionary')
+    schema_path = "C:/seti/opus/import/table_schemas/obs*.json"
+    insert_query = (f"INSERT INTO `{db_table}` "
+                        "(term, context, def, modified, import_date) "
+                        "VALUES (%s, %s, %s, %s, %s)")
+
+    def __init__(self, db_hostname, db_schema, db_user, db_password):
+        self.db_hostname = db_hostname
+        self.db_schema = db_schema
+        self.db_user = db_user
+        self.db_password = db_password
+
         self.definitions = []
-        self.insert_query = ("INSERT INTO `definitionsnew` "
-                             "(term, context, def, modified, import_date) "
-                             "VALUES (%s, %s, %s, %s, %s)")
+
+        try:
+            self.conn = MySQLdb.connect(host=self.db_hostname,
+                                        user=self.db_user,
+                                        passwd=self.db_password,
+                                        db=self.db_schema)
+        except MySQLdb.Error as e:
+            print(f'Unable to connect to MySQL server: {e.args[1]}')
+
+        else:
+            print("Connection established")
 
     def __del__(self):
-        self.cnx.close()
-        print "connection closed"
+        self.conn.close()
+        print("Connection closed")
 
     def create_dictionary(self, **kwargs):
         pds_file = "c:/seti/opus_dbs/pdsdd.full"
-        json_list = {'obs_general.json',
-                     'obs_instrument_COISS.json',
-                     'obs_mission_cassini.json',
-                    }
-        cursor = self.cnx.cursor()
-        for name, ddl in self.tables.iteritems():
+        json_list = glob.glob(self.schema_path)
+        cursor = self.conn.cursor()
+        if 'drop' in kwargs:
+            print("Dropping table...")
             try:
-                if 'drop' in kwargs:
-                    cursor.execute("DROP TABLE `"+name+"`")
-                    cursor.execute(ddl)
-                    
-            except mysql.connector.Error as err:
-                if err.errno == errorcode.ER_TABLE_EXISTS_ERROR:
-                    print err.msg
+                cursor.execute(f"DROP TABLE `{self.db_table}`")
+            except MySQLdb.Error as e:
+                if e.args[0] != ERR_UNKNOWN_TABLE:
+                    print(f"Error in dropping table {self.db_table} - {e.args[0]}: {e.args[1]}")
+        # create table if not exists; faster than checking to see if table exists first...
+        try:
+            cursor.execute(self.tables[self.db_table])
+        except MySQLdb.Error as e:
+            print(f"Error in creating table {self.db_table} - {e.args[0]}: {e.args[1]}")
+            return
 
         if 'PDS' in kwargs:
             pds_file = kwargs['PDS']
 
+        print(f"Importing {pds_file}")
         self.import_PDS(pds_file)
 
         if 'JSON' in kwargs: # If args is not empty.
             json_list = kwargs['JSON']
 
         for file_name in json_list:
+            print(f"Importing {file_name}")
             self.import_JSON(file_name)
 
         cursor.close()
@@ -71,24 +93,24 @@ class ImportDictionaryData(object):
             in that row with the new terms.
             If the term+context does not exist, update_dictionary will insert a new row.
         """
-        cursor = self.cnx.cursor(dictionary=True)
-        query = ("SELECT * from definitionsnew "
+        cursor = self.conn.cursor()
+        query = (f"SELECT * from {self.db_table} "
                  "WHERE term like %s AND context like %s")
 
         cursor.execute(query, (term, context))
         row = cursor.fetchone()
         if row is not None:
             if row['modified'] is not 0:
-                query = ("UPDATE definitionsnew "
+                query = (f"UPDATE {self.db_table} "
                      "SET def=%s"
                      "WHERE term like %s AND context like %s")
                 cursor.execute(query, (definition, term, context))
-                self.cnx.commit()
+                self.conn.commit()
         else:
             now = datetime.now().strftime('%Y-%m-%d')
             self.definitions.append((term, context, definition, 0, now))
             #self.cursor.execute(query, (term, context, def, 0))
-            #self.cnx.commit()
+            #self.conn.commit()
         cursor.close()
 
     def import_PDS(self, file_name):
@@ -102,19 +124,19 @@ class ImportDictionaryData(object):
                     definition = ' '.join(label[item]['DESCRIPTION'].__str__().split())
                     self.update_dictionary(term, context, definition)
                 except:
-                    print ' '+'item: '+ str(item)
-                    print sys.exc_info()
+                    print(F" item: {str(item)}")
+                    print(sys.exc_info())
             if len(self.definitions):
-                cursor = self.cnx.cursor()
+                cursor = self.conn.cursor()
                 cursor.executemany(self.insert_query, self.definitions)
-                self.cnx.commit()
+                self.conn.commit()
 
         except IOError as e:
-            print "I/O error "+(e.errno)+": "+str(e.strerror)
+            print("I/O error  {e.errno}:  {str(e.strerror)}")
 
         except:
-            print term
-            print sys.exc_info()
+            print(term)
+            print(sys.exc_info())
 
     def import_JSON(self, file_name):
         self.definitions = []
@@ -130,25 +152,26 @@ class ImportDictionaryData(object):
                         term = label['pi_dict_name']
                     else:
                         term = "UNKNOWN"
-                        warning = "WARNING: missing term for " + definition
+                        warning = f"WARNING: missing term for {definition}"
 
                     if "pi_dict_context" in label:
                         context = label['pi_dict_context']
                     else:
-                        warning += "WARNING: missing context for " + term + " " + definition
+                        warning = f"WARNING: missing context for {term}: {definition}"
+
                     if not warning:
                         self.update_dictionary(term, context, definition)
                     else:
-                        print warning
+                        print(warning)
 
             if len(self.definitions):
-                cursor = self.cnx.cursor()
+                cursor = self.conn.cursor()
                 cursor.executemany(self.insert_query, self.definitions)
-                self.cnx.commit()
+                self.conn.commit()
 
         except IOError as e:
-            print "I/O error "+(e.errno)+": "+e.strerror
+            print(f"I/O error  {e.errno}:  {str(e.strerror)}")
 
         except:
-            print label
-            print sys.exc_info()
+            print(label)
+            print(sys.exc_info())
