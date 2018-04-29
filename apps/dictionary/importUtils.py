@@ -11,7 +11,7 @@ ERR_UNKNOWN_TABLE = 1051
 
 class ImportDictionaryData(object):
     """Import utilities for the dictionary DB."""
-    db_table = "definitionsnew"
+    db_table = "definitions"
     tables = {}
     tables[db_table] = (
         f"CREATE TABLE IF NOT EXISTS `{db_table}` ("
@@ -21,6 +21,7 @@ class ImportDictionaryData(object):
         "   `expanded` text COMMENT 'expanded definition; text will work w/the imageURL to create a more expanded definition of term',"
         "   `image_URL` char(255) DEFAULT NULL COMMENT 'URL of image to be used with the expanded definition',"
         "   `more_info_URL` char(255) DEFAULT NULL COMMENT 'URL of pdf or image to be used to create a full page fully expanded definition',"
+        "   `more_info_label` varchar(150) DEFAULT NULL COMMENT 'Required only if more_info_url is not blank.  Label for the page.',"
         "   `modified` tinyint(3) unsigned zerofill NOT NULL COMMENT 'set if row has been edited',"
         "   `import_date` date DEFAULT NULL,"
         "  PRIMARY KEY (`term`,`context`)"
@@ -175,3 +176,19 @@ class ImportDictionaryData(object):
         except:
             print(label)
             print(sys.exc_info())
+
+class ImportContextTable(object):
+    """Import context DB for the dictionary."""
+    """just here for safekeeping at the moment, don't really think we'll need this"""
+    db_table = "context"
+    tables = {}
+    tables[db_table] = (
+        f"CREATE TABLE IF NOT EXISTS `{db_table}` ("
+        "   SELECT * FROM dictionary.contexts;CREATE TABLE `contexts` ("
+        "       `name` char(25) NOT NULL,"
+        "       `description` char(100) DEFAULT NULL,"
+        "       `parent` char(25) DEFAULT NULL,"
+        "       PRIMARY KEY (`name`),"
+        "       UNIQUE KEY `contexts_name` (`name`),"
+        "       UNIQUE KEY `name` (`description`)"
+        ") ENGINE=InnoDB DEFAULT CHARSET=utf8")

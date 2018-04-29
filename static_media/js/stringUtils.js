@@ -15,7 +15,7 @@ String.prototype.toTitleCase = function() {
       });
 
   // Certain words such as initialisms or acronyms should be left uppercase
-  uppers = ['Ad', 'Adc', 'Add', 'Aex', 'Af', 'Alg', 'Aprh', 'Atmo', 'Att', 'Az', 'Bacb', 'Baud', 'Bin', 'Bl', 'Cal', 'Cam', 'Ccam', 'Ccd', 'Co', 'Cmd', 'Cemis',
+  uppers = ['Ad', 'Adc', 'Add', 'Aex', 'Af', 'Alg', 'Aprh', 'Atmo', 'Att', 'Az', 'Bacb', 'Baud', 'Bin', 'Bl', 'Cal', 'Cam', 'Ccam', 'Ccd', 'Ccsds', 'Co', 'Cmd', 'Cemis',
             'Ch1', 'Ch2', 'Ch3', 'Ch4', 'Ch5', 'Ch6', 'Ch7', 'Ch8', 'Ch9', 'Clat', 'Clk', 'Clon', 'Cmprs', 'Cpmm',
             'Convertuv', 'Convertvis', 'Convertvnir',
             'Critopnv', 'Dd', 'Dem', 'Det', 'Dll', 'Dlre', 'Dn', 'Dlnkprio', 'Dpu', 'Dsn',
