@@ -9,18 +9,13 @@ import logging
 log = logging.getLogger(__name__)
 
 def get_def(term, context):
-    """ get a dictionary definition
-        the dictionary is a database that is more or less a database normalization
-        of the PDS Data Dictionary, a datad one. The django app that ran its
-        admin broke, but could be revived. you can kindof get an idea of how
-        it worked by looking at its schema
-
-            desc dicitonary;  # mysql
+    """ get a dictionary definition for tool tips
 
         """
     try:
-         definition = Definition.objects.using('dictionary').get(context__name=context,term__term=term).definition
-         return html_decode(definition)
+        definition = Definition.objects.using('dictionary').select_related().filter(context=context,term=term).values('definition', 'term', 'context__description').order_by('term')
+        #definition = Definition.objects.using('dictionary').get(context=context,term=term).values('definition', 'term', 'import_date', 'context__description')
+        return definition
     except Definition.DoesNotExist:
         return False
 
@@ -37,7 +32,10 @@ def get_more_info_url(term, context):
         return False
 
 def get_definition_list(request, alpha):
-    definitionList = Definition.objects.using('dictionary').select_related().filter(term__term__istartswith=alpha).values('definition', 'term__term_nice', 'term__import_date', 'context__description', 'context__name').order_by('term__term')
+    """
+        Produce an alphabetical list of definitions on click of menu/alpha char
+    """
+    definitionList = Definition.objects.using('dictionary').select_related().filter(term__istartswith=alpha).values('definition', 'term', 'import_date', 'context__description').order_by('term')
     return JsonResponse(list(definitionList), safe=False)
 
 def display_definitions(request):
@@ -45,15 +43,23 @@ def display_definitions(request):
     return render(request, 'dictionary/dictionary.html', {'alphabetlist':alphabetlist})
 
 def search_definitions(request, slug):
+    """
+        User can search the definition database for words w/in the definitions.
+        Not currently enabled to search on term
+    """
     try:
         log.error(slug)
         #definitionList = Definition.objects.using('dictionary').select_related().filter(definition__icontains=slug).values('definition', 'term__term_nice', 'term__import_date', 'context__description', 'context__name').order_by('term__term')
-        definitionList = Definitionsnew.objects.using('dictionary').select_related().filter(definition__icontains=slug).values('definition', 'term', 'import_date', 'context').order_by('term')
+        definitionList = Definition.objects.using('dictionary').select_related("context").filter(definition__icontains=slug).values('definition', 'term', 'import_date', 'context__description').order_by('term')
         log.info(definitionList.query)
         return JsonResponse(list(definitionList), safe=False)
     except Definition.DoesNotExist:
         log.info(definitionList.query)
         return JsonResponse({"error":"Search string '"+slug+"' not found"})
+
+def test_get_def(request, term, context):
+    definition = get_def(term, context)
+    return JsonResponse(list(definition), safe=False)
 
 def html_decode(s):
     """

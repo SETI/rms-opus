@@ -12,23 +12,8 @@ from django.db import models
 from django.contrib import admin
 
 
-class Alias(models.Model):
-    no = models.AutoField(primary_key=True)
-    term_no = models.ForeignKey("Term")
-    alias = models.CharField(max_length=180)
-    alias_nice = models.CharField(max_length=225)
-    note = models.CharField(max_length=225, blank=True)
-    context_no = models.ForeignKey("Context")
-
-    class Meta:
-        managed = False
-        db_table = u'aliases'
-        app_label = 'dictionary'
-
-
 class Context(models.Model):
-    no = models.AutoField(primary_key=True)
-    name = models.CharField(unique=True, max_length=75, blank=True)
+    name = models.CharField(primary_key=True, unique=True, max_length=75, blank=True)
     description = models.CharField(unique=True, max_length=255, blank=True)
     parent = models.CharField(max_length=75, blank=True)
 
@@ -41,47 +26,32 @@ class Context(models.Model):
         return self.name
 
 
-class ContextsTerms(models.Model):
-    context_no = models.IntegerField(blank=True, null=True)
-    term_no = models.IntegerField(blank=True, null=True)
-
-    class Meta:
-        managed = False
-        db_table = u'contexts_terms'
-        app_label = 'dictionary'
-        unique_together = (('context_no', 'term_no'),)
-
-
 class Definition(models.Model):
-    no = models.IntegerField(primary_key=True)
-    term = models.ForeignKey("Term", db_column='term_no')
-    definition = models.TextField(db_column='def') # Field renamed because it was a Python reserved word.
-    source = models.ForeignKey("Source", db_column='source_no')
-    context = models.ForeignKey("Context", db_column='context_no')
-
-    class Meta:
-        db_table = u'definitions'
-        app_label = 'dictionary'
-
-    def __unicode__(self):
-        return "definition for " + self.term.term
-
-class Definitionsnew(models.Model):
-    term = models.CharField(max_length=255)
-    #context = models.CharField(max_length=25)
+    term = models.CharField(primary_key=True, max_length=255)
     context = models.ForeignKey("Context", on_delete=models.CASCADE, db_column='context')
-    definition = models.TextField(db_column='def')  # Field renamed because it was a Python reserved word.
-    expanded = models.TextField(blank=True, null=True)
-    image_url = models.CharField(db_column='image_URL', max_length=255, blank=True, null=True)  # Field name made lowercase.
-    more_info_url = models.CharField(db_column='more_info_URL', max_length=255, blank=True, null=True)  # Field name made lowercase.
-    modified = models.IntegerField(default=0,)
+    definition = models.TextField(db_column='def', help_text="Term definition")  # Field renamed because it was a Python reserved word.
+    expanded = models.TextField(blank=True, null=True, help_text="Expanded definition")
+    image_url = models.CharField(db_column='image_URL', max_length=255, blank=True, null=True, help_text='Image URL for the expanded definition')  # Field name made lowercase.
+    more_info_url = models.CharField(db_column='more_info_URL', max_length=255, blank=True, null=True, help_text='More info URL <full definition, url to a picture or pdf>')  # Field name made lowercase.
+    more_info_label = models.CharField(db_column='more_info_label', max_length=150, blank=True, null=True, help_text='Label for the more info URL page')  # Field name made lowercase.
+    modified = models.IntegerField(default=0)
     import_date = models.DateField(blank=True, null=True)
 
     class Meta:
         managed = False
-        db_table = u'definitionsnew'
+        ordering = ["term", "context"]
+        db_table = u'definitions'
         app_label = 'dictionary'
-        #unique_together = (('term', 'context'),)
+        unique_together = (('term', 'context'),)
+
+    def __str__(self):
+        return self.term
+
+    def get_absolute_url(self):
+        """
+        Returns the url to access a detail record for this definition.
+        """
+        return reverse('definition-detail', args=[str(self.id)])
 
 class LogAccess(models.Model):
     no = models.AutoField(primary_key=True)
@@ -186,29 +156,3 @@ class Term(models.Model):
     def save(self):
         self.term = '_'.join(self.term_nice.split(' '))
         super(Term, self).save()
-
-class MultiDBModelAdmin(admin.ModelAdmin):
-    # A handy constant for the name of the alternate database.
-    using = 'other'
-
-    def save_model(self, request, obj, form, change):
-        # Tell Django to save objects to the 'other' database.
-        obj.save(using=self.using)
-
-    def delete_model(self, request, obj):
-        # Tell Django to delete objects from the 'other' database
-        obj.delete(using=self.using)
-
-    def get_queryset(self, request):
-        # Tell Django to look for objects on the 'other' database.
-        return super(MultiDBModelAdmin, self).get_queryset(request).using(self.using)
-
-    def formfield_for_foreignkey(self, db_field, request, **kwargs):
-        # Tell Django to populate ForeignKey widgets using a query
-        # on the 'other' database.
-        return super(MultiDBModelAdmin, self).formfield_for_foreignkey(db_field, request, using=self.using, **kwargs)
-
-    def formfield_for_manytomany(self, db_field, request, **kwargs):
-        # Tell Django to populate ManyToMany widgets using a query
-        # on the 'other' database.
-        return super(MultiDBModelAdmin, self).formfield_for_manytomany(db_field, request, using=self.using, **kwargs)
