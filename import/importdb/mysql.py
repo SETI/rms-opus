@@ -11,7 +11,8 @@ ERR_UNKNOWN_DATABASE = 1049
 class ImportDBMySQL(ImportDBSuper):
     # Note that for MySQL, we ignore the db_name and only use the schema_name
     def __init__(self, *args, **kwargs):
-        "Open the connection to a MySQL server."
+        """Open the connection to a MySQL server. Note this will also
+           create the database if it doesn't already exist."""
         super(ImportDBMySQL, self).__init__(*args, **kwargs)
         super(ImportDBMySQL, self)._enter('__init__')
 
@@ -22,27 +23,61 @@ class ImportDBMySQL(ImportDBSuper):
         try:
             self.conn = MySQLdb.connect(host=self.db_hostname,
                                         user=self.db_user,
-                                        passwd=self.db_password,
-                                        db=self.db_schema)
+                                        passwd=self.db_password)
         except MySQLdb.Error as e:
             if self.logger:
                 self.logger.log('fatal',
                         f'Unable to connect to MySQL server: {e.args[1]}')
-            err_code = e.args[0]
-
-            if err_code == ERR_UNKNOWN_DATABASE:
-                self.logger.log('fatal', 'Create a new database with:')
-                self.logger.log('fatal',
-                    f'  CREATE DATABASE {self.db_schema}')
             raise ImportDBException(e)
 
         if self.logger:
             self.logger.log('info',
-      f'Connected to MySQL server DB "{self.db_schema}" as "{self.db_user}"')
+                            f'Connected to MySQL server as "{self.db_user}"')
+
+        try:
+            cmd = 'USE '+self.db_schema
+            self._execute(cmd)
+        except MySQLdb.Error as e:
+            err_code = e.args[0]
+            if err_code == ERR_UNKNOWN_DATABASE:
+                try:
+                    cmd = 'CREATE DATABASE '+self.db_schema
+                    self._execute(cmd)
+                except MySQLdb.Error as e:
+                    if self.logger:
+                        self.logger.log('fatal',
+                            f'Unable to create new database "{self.db_schema}"'+
+                            f': {e.args[1]}')
+                    raise ImportDBException(e)
+                if self.logger:
+                    self.logger.log('warning',
+                                f'  Created new database "{self.db_schema}"')
+
+                try:
+                    cmd = 'USE '+self.db_schema
+                    self._execute(cmd)
+                except MySQLdb.Error as e:
+                    if self.logger:
+                        self.logger.log('fatal',
+                            f'Unable to use new database "{self.db_schema}": '+
+                            f'{e.args[1]}')
+                    raise ImportDBException(e)
+            else:
+                if self.logger:
+                    self.logger.log('fatal',
+                        f'Unable to use existing database "{self.db_schema}": '+
+                        f'{e.args[1]}')
+                raise ImportDBException(e)
+
+        if self.logger:
+            self.logger.log('info',
+                            f'  Using database "{self.db_schema}"')
 
         # We keep a cached list of table names so we don't have to keep doing
-        # SQL queries
+        # SQL queries - go ahead and populate it now
         self._table_names = None
+        self.table_names('all')
+        assert self._table_names is not None
 
         # A list of all the tables we've created so we know which ones we have
         # to do post-processing on
@@ -60,7 +95,7 @@ class ImportDBMySQL(ImportDBSuper):
         if self.logger:
             cmd = 'SELECT VERSION()'
             res = self._execute_and_fetchall(cmd, '__init__')
-            self.logger.log('info', f'MySQL version: {res[0][0]}')
+            self.logger.log('info', f'  MySQL version: {res[0][0]}')
 
         super(ImportDBMySQL, self)._exit()
 
@@ -227,12 +262,14 @@ TABLE_NAME='{table_name}' ORDER BY ORDINAL_POSITION"""
 
     def create_table(self, namespace, raw_table_name, schema,
                      ignore_if_exists=True, auto_create_mults=True):
-        "Create a new table from the given schema."
+        """Create a new table from the given schema. Returns True if
+           table successfully created; False if table already existed
+           and ignore_if_exists==True."""
         super(ImportDBMySQL, self)._enter('create_table')
 
         if ignore_if_exists and self.table_exists(namespace, raw_table_name):
             super(ImportDBMySQL, self)._exit()
-            return
+            return False
 
         table_name = self.convert_raw_to_namespace(namespace, raw_table_name)
 
@@ -394,6 +431,7 @@ TABLE_NAME='{table_name}' ORDER BY ORDINAL_POSITION"""
         self.table_info.cache_clear()
 
         super(ImportDBMySQL, self)._exit()
+        return True
 
     def insert_row(self, namespace, raw_table_name, row,
                    add_import_prefix=True):

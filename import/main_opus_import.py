@@ -46,6 +46,16 @@ command_list = sys.argv[1:]
 parser = argparse.ArgumentParser(
     description='OPUS Import Pipeline')
 
+# Database arguments
+parser.add_argument(
+    '--read-only', action='store_true', default=False,
+    help='Don\'t modify or create any SQL table'
+)
+parser.add_argument(
+    '--override-db-schema', type=str, default=None,
+    help='Override the db_schema specified in secrets.py'
+)
+
 # What to actually do
 parser.add_argument(
     '--do-it-all', action='store_true', default=False,
@@ -60,11 +70,6 @@ parser.add_argument(
             --drop-cache-tables
             --drop-collections-tables
          """
-)
-
-parser.add_argument(
-    '--read-only', action='store_true', default=False,
-    help='Don\'t modify or create any SQL table'
 )
 
 parser.add_argument(
@@ -292,6 +297,10 @@ if (impglobals.ARGUMENTS.drop_permanent_tables !=
         '--drop-permanent-tables and --scorched-earth must be used together')
     sys.exit(-1)
 
+our_schema_name = OPUS_SCHEMA_NAME
+if impglobals.ARGUMENTS.override_db_schema:
+    our_schema_name = impglobals.ARGUMENTS.override_db_schema
+
 try: # Top-level exception handling so we always log what's going on
 
     impglobals.LOGGER.open(
@@ -304,7 +313,7 @@ try: # Top-level exception handling so we always log what's going on
     try:
         impglobals.DATABASE = importdb.get_db(
                                    DB_BRAND, OPUS_HOST_NAME,
-                                   OPUS_DATABASE_NAME, OPUS_SCHEMA_NAME,
+                                   OPUS_DATABASE_NAME, our_schema_name,
                                    DB_USER, DB_PASSWORD,
                                    mult_form_types=GROUP_FORM_TYPES,
                                    logger=impglobals.LOGGER,

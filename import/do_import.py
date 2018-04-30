@@ -181,8 +181,9 @@ def create_tables_for_import(volume_id, namespace):
                     schema = mult_target_name_table_schema
                 else:
                     schema = mult_table_schema
-                impglobals.DATABASE.create_table(namespace, mult_name, schema)
-                _CREATED_IMP_MULT_TABLES.add(mult_name)
+                if impglobals.DATABASE.create_table(namespace, mult_name,
+                                                    schema):
+                    _CREATED_IMP_MULT_TABLES.add(mult_name)
 
         impglobals.DATABASE.create_table(namespace, table_name,
                                          table_schema)
@@ -312,12 +313,12 @@ def read_or_create_mult_table(mult_table_name):
     # Otherwise, if there is already a non-import version, read that one.
     # And if there's no table to be found anyway, create a new one.
     use_namespace = None
+
     if (mult_table_name not in _CREATED_IMP_MULT_TABLES and
         impglobals.DATABASE.table_exists('import', mult_table_name)):
+        # Previous import table available
         use_namespace = 'import'
-        # If we have tables left over from the previous run, we have to assume
-        # they were modified
-        _MODIFIED_MULT_TABLES.add(mult_table_name)
+
     elif impglobals.DATABASE.table_exists('perm', mult_table_name):
         use_namespace = 'perm'
         # If we just created an import version but are reading the permanent
