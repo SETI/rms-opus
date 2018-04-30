@@ -34,8 +34,6 @@ TODO:
   - Verify dictionary context and name
   - Verify slug names
 
-- Add val_min/val_max to UVIS
-
 - Convert GROUP fields to ENUM if they are constant
 
 - Don't create indexes on import tables
@@ -82,12 +80,6 @@ THE BIG QUESTIONS:
   - Do we include Jupiter rev_no? Should we rename "Saturn Orbit Number"?
 
 - COUVIS:
-  - H_LEVEL, D_LEVEL
-    - Keep?
-      ** ASK MARK
-  - BAND1, BAND2, BAND_BINNING, LINE1, LINE2, LINE_BINNING
-    - Have -1 values - are these valid or NULL? ** ASK MARK
-  - Lots of observations are missing supplemental index entries
   - image_type_id
     - Computed backwards?
            if ($this->obs_general__type_id($row) == "CUBE") {
@@ -176,4 +168,3 @@ COVIMS:
   - OBS ID "VIMS_015SA_1X6MOVIEA003" - Valid?
 
   - No MISSION_PHASE_NAME
-  
