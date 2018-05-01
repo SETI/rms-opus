@@ -12,7 +12,7 @@
             "TAB:obs_general",
             "id"
         ],
-        "comment": "This is the primary (surrograte) key linking the record to obs_general."
+        "comment": "This is the primary (surrogate) key linking the record to obs_general."
     },
     {
         "field_name": "rms_obs_id",
@@ -153,7 +153,15 @@
         "pi_sub_heading": null,
         "pi_tooltip": "",
         "pi_units": "",
-        "comment": "XXX The definition was cut off in old dictionary."
+        "comment": "XXX The definition was cut off in old dictionary.",
+        "mult_options": [
+              [   0,  "CIRS",  "CIRS",   10, "Y", null],
+              [   1,   "ISS",   "ISS",   20, "Y", null],
+              [   2,  "UVIS",  "UVIS",   30, "Y", null],
+              [   3,  "VIMS",  "VIMS",   40, "Y", null],
+              [   4, "OTHER", "Other",   50, "Y", null],
+              [   5,    null,  "Null",   60, "Y", null]
+          ]
     },
     {
         "field_name": "spacecraft_clock_count1",

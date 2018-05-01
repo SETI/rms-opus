@@ -12,7 +12,7 @@
             "TAB:obs_general",
             "id"
         ],
-        "comment": "This is the primary (surrograte) key linking the record to obs_general."
+        "comment": "This is the primary (surrogate) key linking the record to obs_general."
     },
     {
         "field_name": "rms_obs_id",

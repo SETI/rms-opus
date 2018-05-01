@@ -12,7 +12,7 @@
             "TAB:obs_general",
             "id"
         ],
-        "comment": "This is the primary (surrograte) key linking the record to obs_general."
+        "comment": "This is the primary (surrogate) key linking the record to obs_general."
     },
     {
         "field_name": "rms_obs_id",
@@ -197,7 +197,12 @@
         "pi_sub_heading": null,
         "pi_tooltip": "",
         "pi_units": "",
-        "comment": "Definition is from COISS label"
+        "comment": "Definition is from COISS label",
+        "mult_options": [
+              [   0, "12BIT", "12BIT",  10, "Y", null],
+              [   1,  "8LSB",  "8LSB",  20, "Y", null],
+              [   2, "TABLE", "TABLE",  30, "Y", null]
+          ]
     },
     {
         "field_name": "delayed_readout_flag",
@@ -411,7 +416,13 @@
         "pi_sub_heading": null,
         "pi_tooltip": "",
         "pi_units": "",
-        "comment": "Definition is from COISS label"
+        "comment": "Definition is from COISS label",
+        "mult_options": [
+              [   0,  "12 ELECTRONS PER DN",  "12 Electrons per DN",   10, "Y", null],
+              [   1,  "29 ELECTRONS PER DN",  "29 Electrons per DN",   20, "Y", null],
+              [   2,  "95 ELECTRONS PER DN",  "95 Electrons per DN",   30, "Y", null],
+              [   3, "215 ELECTRONS PER DN", "215 Electrons per DN",   40, "Y", null]
+          ]
     },
     {
         "field_name": "image_observation_type",
@@ -438,7 +449,18 @@
         "pi_sub_heading": null,
         "pi_tooltip": "",
         "pi_units": "",
-        "comment": "Definition is from COISS label"
+        "comment": "Definition is from COISS label",
+        "mult_options": [
+              [   0, "SCIENCE",             "Science",             10, "Y", null],
+              [   1, "SCIENCE,OPNAV",       "Science,OpNav",       20, "Y", null],
+              [   2, "SCIENCE,CALIBRATION", "Science,Calibration", 30, "Y", null],
+              [   3, "SCIENCE,SUPPORT",     "Science,Support",     40, "Y", null],
+              [   4, "OPNAV",               "OpNav",               50, "Y", null],
+              [   5, "OPNAV,SUPPORT",       "Opnav,Support",       60, "Y", null],
+              [   6, "CALIBRATION",         "Calibration",         70, "Y", null],
+              [   7, "SUPPORT",             "Support",             80, "Y", null],
+              [   8, "UNKNOWN",             "Unknown",             90, "Y", null]
+          ]
     },
     {
         "field_name": "instrument_data_rate",
@@ -952,7 +974,12 @@
         "pi_sub_heading": null,
         "pi_tooltip": "",
         "pi_units": "",
-        "comment": "Definition is from COISS label"
+        "comment": "Definition is from COISS label",
+        "mult_options": [
+              [   0, "NACONLY", "NACONLY",   10, "Y", null],
+              [   1, "WACONLY", "WACONLY",   20, "Y", null],
+              [   2,  "BOTSIM",  "BOTSIM",   30, "Y", null]
+          ]
     },
     {
         "field_name": "shutter_state_id",
@@ -980,7 +1007,11 @@
         "pi_sub_heading": null,
         "pi_tooltip": "",
         "pi_units": "",
-        "comment": "Definition is from COISS label"
+        "comment": "Definition is from COISS label",
+        "mult_options": [
+              [   0, "DISABLED", "Disabled",  10, "Y", null],
+              [   1, "ENABLED",  "Enabled",   20, "Y", null]
+          ]
     },
     {
         "field_name": "software_version_id",
@@ -1190,7 +1221,12 @@
         "pi_sub_heading": null,
         "pi_tooltip": null,
         "pi_units": null,
-        "comment": "Definition is from COISS label"
+        "comment": "Definition is from COISS label",
+        "mult_options": [
+              [   0, "FULL", "FULL",  10, "Y", null],
+              [   1, "SUM2", "SUM2",  20, "Y", null],
+              [   2, "SUM4", "SUM4",  30, "Y", null]
+          ]
     },
     {
         "field_name": "target_desc",
@@ -1395,7 +1431,11 @@
         "pi_sub_heading": null,
         "pi_tooltip": "",
         "pi_units": "",
-        "comment": "XXX Definition needs to be reviewed"
+        "comment": "XXX Definition needs to be reviewed",
+        "mult_options": [
+              [   0, "N", "Narrow Angle",   10, "Y", null],
+              [   1, "W",   "Wide Angle",   20, "Y", null]
+          ]
     },
     {
         "put_mults_here": true

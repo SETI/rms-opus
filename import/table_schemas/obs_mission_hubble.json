@@ -12,7 +12,7 @@
             "TAB:obs_general",
             "id"
         ],
-        "comment": "This is the primary (surrograte) key linking the record to obs_general."
+        "comment": "This is the primary (surrogate) key linking the record to obs_general."
     },
     {
         "field_name": "rms_obs_id",
@@ -125,11 +125,11 @@
     },
     {
         "field_name": "detector_id",
-        "field_type": "char6",
-        "field_notnull": true,
+        "field_type": "char8",
+        "field_default": null,
         "data_source": [
-            "TAB:index",
-            "DETECTOR_ID"
+            "FUNCTION",
+            "obs_mission_hubble_detector_id"
         ],
         "definition": "An abbreviated name or acronym which identifies the instrument's detector used for this observation. This field is not applicable to WFPC2 observations and is left blank. WFPC2 generally uses all four of its detectors simultaneously, whereas other HST instruments can use only one detector at a time. In this index, columns PC1_FLAG, WF2_FLAG, WF3_FLAG and WF4_FLAG indicate which of WFPC2's four detectors were used in an observation.",
         "pi_category_name": "obs_mission_hubble",
@@ -145,7 +145,18 @@
         "pi_slug": "HSTdetectorid",
         "pi_sub_heading": null,
         "pi_tooltip": null,
-        "pi_units": null
+        "pi_units": null,
+        "mult_options": [
+              [   0,      "HRC",        "ACS-HRC",   10, "Y", null],
+              [   1,      "SBC",        "ACS-SBC",   20, "Y", null],
+              [   2,      "WFC",       "ACS-WFC3",   30, "Y", null],
+              [   3,       "IR",        "WFC3-IR",   40, "Y", null],
+              [   4,     "UVIS",      "WFC3-UVIS",   50, "Y", null],
+              [   5,    "WFPC2",          "WFPC2",   60, "Y", null],
+              [   6,      "CCD",       "STIS-CCD",   60, "Y", null],
+              [   7, "FUV-MAMA",  "STIS-FUV-MAMA",   60, "Y", null],
+              [   8,    null,      "NULL",   70, "Y", null]
+          ]
     },
     {
         "field_name": "publication_date",
@@ -197,7 +208,8 @@
     },
     {
         "field_name": "fine_guidance_system_lock_type",
-        "field_type": "char9",
+        "field_type": "enum",
+        "field_enum_options": "'FINE','COARSE','GYROS','FINE/GYRO','UNKNOWN'",
         "field_notnull": true,
         "data_source": [
             "TAB:index",
@@ -217,15 +229,22 @@
         "pi_slug": "HSTfineguidancesystemlocktype",
         "pi_sub_heading": null,
         "pi_tooltip": null,
-        "pi_units": null
+        "pi_units": null,
+        "mult_options": [
+              [   0,      "FINE",      "Fine",  10, "Y", null],
+              [   1,    "COARSE",    "Coarse",  20, "Y", null],
+              [   2,     "GYROS",     "Gyros",  30, "Y", null],
+              [   3, "FINE/GYRO", "Fine/Gyro",  40, "Y", null],
+              [   4,   "UNKNOWN",   "Unknown",  50, "Y", null]
+          ]
     },
     {
         "field_name": "filter_name",
-        "field_type": "char18",
+        "field_type": "char23",
         "field_notnull": true,
         "data_source": [
-            "TAB:index",
-            "FILTER_NAME"
+            "FUNCTION",
+            "obs_mission_hubble_filter_name"
         ],
         "definition": "The name of the filter(s) used for the observation. If two overlapping filters, or a filter and polarizer are used, then both names are given, separated by a plus sign '+'.",
         "pi_category_name": "obs_mission_hubble",
@@ -245,11 +264,11 @@
     },
     {
         "field_name": "aperture_type",
-        "field_type": "char18",
+        "field_type": "char22",
         "field_notnull": true,
         "data_source": [
-            "TAB:index",
-            "APERTURE_TYPE"
+            "FUNCTION",
+            "obs_mission_hubble_aperture_type"
         ],
         "definition": "The name of the aperture used for the observation.",
         "pi_category_name": "obs_mission_hubble",
@@ -293,7 +312,8 @@
     },
     {
         "field_name": "gain_mode_id",
-        "field_type": "char5",
+        "field_type": "enum",
+        "field_enum_options": "'A2D0.','A2D7','A2D15','N/A'",
         "field_notnull": true,
         "data_source": [
             "TAB:index",
@@ -313,11 +333,18 @@
         "pi_slug": "HSTgainmodeid",
         "pi_sub_heading": null,
         "pi_tooltip": null,
-        "pi_units": null
+        "pi_units": null,
+        "mult_options": [
+              [   0, "A2D0.",  "A2D0",  10, "Y", null],
+              [   1,  "A2D7",  "A2D7",  20, "Y", null],
+              [   2, "A2D15", "A2D15",  30, "Y", null],
+              [   3,   "N/A",   "N/A",  40, "Y", null]
+          ]
     },
     {
         "field_name": "instrument_mode_id",
-        "field_type": "char10",
+        "field_type": "enum",
+        "field_enum_options": "'ACCUM','ACQ','FULL','AREA','TIME-TAG'",
         "field_notnull": true,
         "data_source": [
             "TAB:index",
@@ -337,7 +364,14 @@
         "pi_slug": "HSTinstrumentmodeid",
         "pi_sub_heading": null,
         "pi_tooltip": null,
-        "pi_units": null
+        "pi_units": null,
+        "mult_options": [
+              [   0,    "ACCUM",    "ACCUM",  10, "Y", null],
+              [   1,      "ACQ",      "ACQ",  20, "Y", null],
+              [   2,     "FULL",     "FULL",  30, "Y", null],
+              [   3,     "AREA",     "AREA",  40, "Y", null],
+              [   4, "TIME-TAG", "TIME-TAG",  50, "Y", null]
+          ]
     },
     {
         "field_name": "pc1_flag",
@@ -345,7 +379,7 @@
         "field_default": null,
         "data_source": [
             "FUNCTION",
-            "mission_hubble_pc1_flag"
+            "obs_mission_hubble_<INST>_pc1_flag"
         ],
         "definition": "For WFPC2, a numeric flag (1 if yes, 0 if no) indicating whether the Planetary Camera (PC1) was used in the observation.",
         "pi_category_name": "obs_mission_hubble",
@@ -369,7 +403,7 @@
         "field_default": null,
         "data_source": [
             "FUNCTION",
-            "mission_hubble_wf2_flag"
+            "obs_mission_hubble_<INST>_wf2_flag"
         ],
         "definition": "For WFPC2, a numeric flag (1 if yes, 0 if no) indicating whether Wide Field #2 (WF2) was used in the observation.",
         "pi_category_name": "obs_mission_hubble",
@@ -393,7 +427,7 @@
         "field_default": null,
         "data_source": [
             "FUNCTION",
-            "mission_hubble_wf3_flag"
+            "obs_mission_hubble_<INST>_wf3_flag"
         ],
         "definition": "For WFPC2, a numeric flag (1 if yes, 0 if no) indicating whether Wide Field #3 (WF3) was used in the observation.",
         "pi_category_name": "obs_mission_hubble",
@@ -417,7 +451,7 @@
         "field_default": null,
         "data_source": [
             "FUNCTION",
-            "mission_hubble_wf4_flag"
+            "obs_mission_hubble_<INST>_wf4_flag"
         ],
         "definition": "For WFPC2, a numeric flag (1 if yes, 0 if no) indicating whether Wide Field #4 (WF4) was used in the observation.",
         "pi_category_name": "obs_mission_hubble",
@@ -437,11 +471,12 @@
     },
     {
         "field_name": "targeted_detector_id",
-        "field_type": "char3",
+        "field_type": "enum",
+        "field_enum_options": "'PC1','WF2','WF3','WF4'",
         "field_default": null,
         "data_source": [
             "FUNCTION",
-            "mission_hubble_targeted_detector_id"
+            "obs_mission_hubble_<INST>_targeted_detector_id"
         ],
         "definition": "Identifies which of the four CCDs of WFPC2 was pointed at the target. Possible values are 'PC1', 'WF2', 'WF3', and 'WF4'.",
         "pi_category_name": "obs_mission_hubble",
@@ -457,7 +492,15 @@
         "pi_slug": "HSTtargeteddetectorid",
         "pi_sub_heading": null,
         "pi_tooltip": null,
-        "pi_units": null
+        "pi_units": null,
+        "mult_options": [
+              [   0,  "PC1",  "PC1",  10, "Y", null],
+              [   1,  "WF2",  "WF2",  20, "Y", null],
+              [   2,  "WF3",  "WF3",  30, "Y", null],
+              [   3,  "WF4",  "WF4",  40, "Y", null],
+              [   4, "NONE", "None",  50, "Y", null],
+              [   5,   null, "NULL",  60, "Y", null]
+          ]
     },
     {
         "put_mults_here": true

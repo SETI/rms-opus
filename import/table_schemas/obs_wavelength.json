@@ -12,7 +12,7 @@
             "TAB:obs_general",
             "id"
         ],
-        "comment": "This is the primary (surrograte) key linking the record to obs_general."
+        "comment": "This is the primary (surrogate) key linking the record to obs_general."
     },
     {
         "field_name": "rms_obs_id",
@@ -359,7 +359,11 @@
         "pi_slug": "polarizationtype",
         "pi_sub_heading": null,
         "pi_tooltip": "",
-        "pi_units": ""
+        "pi_units": "",
+        "mult_options": [
+              [   0,   "LINEAR",   "Linear",   10, "Y", null],
+              [   1,     "NONE",     "None",   20, "Y", null]
+          ]
     },
     {
         "put_mults_here": true

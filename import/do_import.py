@@ -290,7 +290,7 @@ def _convert_sql_response_to_mult_table(mult_table_name, rows):
         mult_rows.append(row_dict)
     return mult_rows
 
-def read_or_create_mult_table(mult_table_name):
+def read_or_create_mult_table(mult_table_name, table_column):
     """Given a mult table name, either read the table from the database or
        return the cached version if we previously read it."""
 
@@ -299,15 +299,15 @@ def read_or_create_mult_table(mult_table_name):
 
     use_mult_table_name = None
 
-    if mult_table_name in PREPROGRAMMED_MULT_TABLE_CONTENTS:
+    if 'mult_options' in table_column:
         if not impglobals.ARGUMENTS.import_suppress_mult_messages:
             impglobals.LOGGER.log('debug',
                       f'Using preprogrammed mult table "{mult_table_name}"')
         mult_rows = _convert_sql_response_to_mult_table(
                             mult_table_name,
-                            PREPROGRAMMED_MULT_TABLE_CONTENTS[mult_table_name])
+                            table_column['mult_options'])
         _MULT_TABLE_CACHE[mult_table_name] = mult_rows
-        _MODIFIED_MULT_TABLES.add(mult_table_name)
+        _MODIFIED_MULT_TABLES[mult_table_name] = table_column
         return mult_rows
 
     # If there is already an import version of the table, it means this is a
@@ -330,7 +330,7 @@ def read_or_create_mult_table(mult_table_name):
         # version, we have to write out the import version before doing
         # anything else too
         if mult_table_name in _CREATED_IMP_MULT_TABLES:
-            _MODIFIED_MULT_TABLES.add(mult_table_name)
+            _MODIFIED_MULT_TABLES[mult_table_name] = table_column
 
     if use_namespace is not None:
         ns_mult_table_name = (
@@ -353,12 +353,12 @@ def read_or_create_mult_table(mult_table_name):
     return rows
 
 
-def update_mult_table(table_name, field_name, val, label):
+def update_mult_table(table_name, field_name, table_column, val, label):
     """Update a single value in the cached version of a mult table.
     If label is None the mult is marked as not-displayed."""
 
     mult_table_name = import_util.table_name_mult(table_name, field_name)
-    mult_table = read_or_create_mult_table(mult_table_name)
+    mult_table = read_or_create_mult_table(mult_table_name, table_column)
     if val is not None:
         val = str(val)
     for entry in mult_table:
@@ -366,7 +366,7 @@ def update_mult_table(table_name, field_name, val, label):
             # The value is already in the mult table, so we're done here
             return entry['id']
 
-    if mult_table_name in PREPROGRAMMED_MULT_TABLE_CONTENTS:
+    if 'mult_options' in table_column:
         import_util.announce_nonrepeating_error(
             f'Attempting to add value "{val}" to preprogrammed mult table '+
             f'"{mult_table_name}"')
@@ -378,12 +378,14 @@ def update_mult_table(table_name, field_name, val, label):
     else:
         next_id = max([x['id'] for x in mult_table])+1
         next_disp_order = max([x['disp_order'] for x in mult_table])+10
+    if label is None:
+        label = 'NULL'
     new_entry = {
         'id': next_id,
         'value': val,
         'label': str(label),
         'disp_order': 0,
-        'display': 'Y' if label is not None else 'N'
+        'display': 'Y' # if label is not None else 'N'
     }
     if mult_table_name in MULT_TABLES_WITH_TARGET_GROUPING:
         if val not in TARGET_NAME_INFO:
@@ -395,7 +397,7 @@ def update_mult_table(table_name, field_name, val, label):
         new_entry['grouping'] = planet_id
     mult_table.append(new_entry)
 
-    _MODIFIED_MULT_TABLES.add(mult_table_name)
+    _MODIFIED_MULT_TABLES[mult_table_name] = table_column
     if not impglobals.ARGUMENTS.import_suppress_mult_messages:
         impglobals.LOGGER.log('info',
             f'Added new value "{val}" ("{label}") to mult table '+
@@ -408,9 +410,10 @@ def dump_import_mult_tables():
     """Dump all of the cached import mult tables into the database."""
 
     for mult_table_name in sorted(_MODIFIED_MULT_TABLES):
+        table_column = _MODIFIED_MULT_TABLES[mult_table_name]
         rows = _MULT_TABLE_CACHE[mult_table_name]
         # Update the display_order
-        if mult_table_name not in PREPROGRAMMED_MULT_TABLE_CONTENTS:
+        if 'mult_options' not in table_column:
             all_numeric = True
             for row in rows:
                 if (row['label'] is None or
@@ -485,7 +488,7 @@ def import_one_volume(volume_id):
     global _MULT_TABLE_CACHE, _CREATED_IMP_MULT_TABLES, _MODIFIED_MULT_TABLES
     _MULT_TABLE_CACHE = {}
     _CREATED_IMP_MULT_TABLES = set()
-    _MODIFIED_MULT_TABLES = set()
+    _MODIFIED_MULT_TABLES = {}
     impglobals.ANNOUNCED_IMPORT_WARNINGS = []
     impglobals.ANNOUNCED_IMPORT_ERRORS = []
     impglobals.IMPORT_HAS_BAD_DATA = False
@@ -1105,8 +1108,11 @@ def import_observation_table(volume_id,
             mult_column_name = import_util.table_name_mult(table_name,
                                                            field_name)
             if not mult_label_set:
-                mult_label = str(column_val).title()
-            id_num = update_mult_table(table_name, field_name,
+                if column_val is None:
+                    mult_label = 'NULL'
+                else:
+                    mult_label = str(column_val).title()
+            id_num = update_mult_table(table_name, field_name, table_column,
                                        column_val, mult_label)
             new_row[mult_column_name] = id_num
 

@@ -203,7 +203,7 @@ def announce_nonrepeating_warning(msg, index_row_num=None):
         impglobals.LOGGER.log('warning', msg)
 
 def announce_unknown_target_name(target_name, index_row_num=None):
-    msg = f'Unknown TARGET_NAME "{target_name}" - edit data_config.py'
+    msg = f'Unknown TARGET_NAME "{target_name}" - edit config_data.py'
     if index_row_num is not None:
         msg += f' [line {index_row_num}]'
     announce_nonrepeating_error(msg)
