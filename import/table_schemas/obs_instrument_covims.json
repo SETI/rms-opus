@@ -42,7 +42,8 @@
     },
     {
         "field_name": "instrument_mode_id",
-        "field_type": "char20",
+        "field_type": "enum",
+        "field_enum_options": "'CAL_BACKGROUND','CAL_SOLAR','CAL_SPECTRAL','IMAGE','LINE','OCCULTATION','POINT'",
         "field_notnull": true,
         "data_source": [
             "TAB:index",
@@ -68,7 +69,7 @@
     },
     {
         "field_name": "spectral_editing",
-        "field_type": "flag",
+        "field_type": "flag_yesno",
         "field_notnull": true,
         "data_source": [
             "TAB:index",
@@ -94,7 +95,7 @@
     },
     {
         "field_name": "spectral_summing",
-        "field_type": "flag",
+        "field_type": "flag_yesno",
         "field_notnull": true,
         "data_source": [
             "TAB:index",
@@ -119,7 +120,7 @@
     },
     {
         "field_name": "star_tracking",
-        "field_type": "flag",
+        "field_type": "flag_onoff",
         "field_notnull": true,
         "data_source": [
             "TAB:index",
@@ -223,7 +224,8 @@
     },
     {
         "field_name": "ir_sampling_mode_id",
-        "field_type": "char8",
+        "field_type": "enum",
+        "field_enum_options": "'HI-RES','NORMAL','UNDER'",
         "field_notnull": true,
         "data_source": [
             "TAB:index",
@@ -278,7 +280,8 @@
     },
     {
         "field_name": "vis_sampling_mode_id",
-        "field_type": "char8",
+        "field_type": "enum",
+        "field_enum_options": "'HI-RES','N/A','NORMAL','UNK'",
         "field_notnull": true,
         "data_source": [
             "TAB:index",

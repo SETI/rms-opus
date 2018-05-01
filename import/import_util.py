@@ -143,7 +143,10 @@ def read_schema_for_table(table_name, replace=None):
         target_name = table_name.replace('obs_surface_geometry__', '')
         table_name = 'obs_surface_geometry_target'
         replace = ('<TARGET>', target_name)
-    with open(os.path.join('table_schemas', table_name+'.json'), 'r') as fp:
+    schema_filename = os.path.join('table_schemas', table_name+'.json')
+    if not os.path.exists(schema_filename):
+        return None
+    with open(schema_filename, 'r') as fp:
         try:
             if replace is None:
                 return json.load(fp)

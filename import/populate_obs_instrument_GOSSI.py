@@ -46,17 +46,16 @@ def populate_obs_general_GOSSI_rms_obs_id(**kwargs):
     index_row = metadata['index_row']
     spacecraft_clock_count = index_row['SPACECRAFT_CLOCK_START_COUNT']
     planet_id = helper_galileo_planet_id(**kwargs)
+    ret = 'X'
     if planet_id is not None:
         ret = planet_id[0]
-    else:
-        ret = ''
     return ret+'_IMG_GO_SSI_'+spacecraft_clock_count.replace('.','')
 
 def populate_obs_general_GOSSI_inst_host_id(**kwargs):
     return 'GO'
 
 def populate_obs_general_GOSSI_data_type(**kwargs):
-    return ('IMG', 'Image')
+    return 'IMG'
 
 # We actually have no idea what IMAGE_TIME represents - start, mid, stop?
 # We assume it means stop time like it does for Voyager, and because Mark
@@ -119,7 +118,7 @@ def populate_obs_general_GOSSI_data_set_id(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     dsi = index_row['DATA_SET_ID']
-    return (dsi, dsi)
+    return dsi
 
 # GOSSI is 10.16 microRad / pixel and 800x800
 _GOSSI_FOV_RAD = 10.16e-6 * 800
@@ -200,6 +199,9 @@ def populate_obs_type_image_GOSSI_greater_pixel_size(**kwargs):
 
 
 ### OBS_WAVELENGTH TABLE ###
+
+# For GOSSI, effective wavelengths are taken from the published table.
+# Other wavelengths are taken by eyeballing the filter graphs.
 
 def _wavelength_helper(**kwargs):
     metadata = kwargs['metadata']

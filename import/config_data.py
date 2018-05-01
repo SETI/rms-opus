@@ -44,7 +44,7 @@ INSTRUMENTS_WITH_SURFACE_GEO = ['COCIRS',
 MISSION_ABBREV_TO_MISSION_TABLE_SFX = {
     'CO':  'cassini',
     'GO':  'galileo',
-    # 'HST': 'hubble',
+    'HST': 'hubble',
     # 'NH':  'new_horizons',
     # 'VG':  'voyager'
 }
@@ -53,7 +53,7 @@ MISSION_ABBREV_TO_MISSION_TABLE_SFX = {
 MISSION_ABBREV_TO_MISSION_NAME = {
     'CO':  'Cassini',
     'GO':  'Galileo',
-    # 'HST': 'Hubble',
+    'HST': 'Hubble',
     # 'NH':  'New Horizons',
     # 'VG':  'Voyager'
 }
@@ -62,7 +62,7 @@ MISSION_ABBREV_TO_MISSION_NAME = {
 INST_HOST_ABBREV_TO_MISSION_ABBREV = {
     'CO':  'CO',
     'GO':  'GO',
-    # 'HST': 'HST',
+    'HST': 'HST',
     # 'NH':  'NH',
     # 'VG1': 'VG',
     # 'VG2': 'VG'
@@ -72,7 +72,7 @@ INST_HOST_ABBREV_TO_MISSION_ABBREV = {
 INST_HOST_ABBREV_TO_INST_HOST = {
     'CO':  'Cassini',
     'GO':  'Galileo',
-    # 'HST': 'Hubble',
+    'HST': 'Hubble',
     # 'NH':  'New Horizons',
     # 'VG1': 'Voyager 1',
     # 'VG2': 'Voyager 2'
@@ -85,9 +85,10 @@ INSTRUMENT_ABBREV_TO_MISSION_ABBREV = {
     'COUVIS':   'CO',
     'COVIMS':   'CO',
     'GOSSI':    'GO',
-    # 'HSTACS':   'HST',
-    # 'HSTWFC3':  'HST',
-    # 'HSTWFPC2': 'HST',
+    'HSTACS':   'HST',
+    'HSTSTIS':  'HST',
+    'HSTWFC3':  'HST',
+    'HSTWFPC2': 'HST',
     # 'NHLORRI':  'NH',
     # 'NHMVIC':   'NH',
     # 'VGISS':    'VG'
@@ -100,9 +101,10 @@ INSTRUMENT_ABBREV_TO_INSTRUMENT_NAME = {
     'COUVIS':   'Cassini UVIS',
     'COVIMS':   'Cassini VIMS',
     'GOSSI':    'Galileo SSI',
-    # 'HSTACS':   'Hubble ACS',
-    # 'HSTWFC3':  'Hubble WFC3',
-    # 'HSTWFPC2': 'Hubble WFPC2',
+    'HSTACS':   'Hubble ACS',
+    'HSTSTIS':  'Hubble STIS',
+    'HSTWFC3':  'Hubble WFC3',
+    'HSTWFPC2': 'Hubble WFPC2',
     # 'NHLORRI':  'New Horizons LORRI',
     # 'NHMVIC':   'New Horizons MVIC',
     # 'VGISS':    'Voyager ISS'
@@ -116,7 +118,8 @@ VOLUME_ID_PREFIX_TO_INSTRUMENT_NAME = {
     'COVIMS': 'COVIMS',
     'GO':     'GOSSI',
     'HSTIx':  'HSTWFC3',
-    'HSTJx':  'HSTACS',
+    'HSTJ0':  'HSTACS',
+    'HSTJ1':  'HSTACS',
     'HSTOx':  'HSTSTIS',
     'HSTUx':  'HSTWFPC2',
     'NHxxLO': 'NHLORRI',

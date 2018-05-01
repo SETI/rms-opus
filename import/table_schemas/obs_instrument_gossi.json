@@ -68,7 +68,8 @@
     },
     {
         "field_name": "filter_name",
-        "field_type": "char7",
+        "field_type": "enum",
+        "field_enum_options": "'CLEAR','GREEN','IR-7270','IR-7560','IR-8890','IR-9680','RED','VIOLET'",
         "field_notnull": true,
         "data_source": [
             "TAB:index",
@@ -204,7 +205,8 @@
     },
     {
         "field_name": "compression_type",
-        "field_type": "char27",
+        "field_type": "enum",
+        "field_enum_options": "'BARC RATE CONTROL','HUFFMAN','INTEGER COSINE TRANSFORM','NONE'",
         "field_notnull": true,
         "data_source": [
             "TAB:index",

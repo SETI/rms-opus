@@ -178,7 +178,10 @@ def helper_cassini_planet_id(**kwargs):
 ################################################################################
 
 def populate_obs_general_CO_planet_id(**kwargs):
-    return helper_cassini_planet_id(**kwargs)
+    planet_id = helper_cassini_planet_id(**kwargs)
+    if planet_id is None:
+        return 'OTH'
+    return planet_id
 
 
 ################################################################################
@@ -218,9 +221,9 @@ def populate_obs_mission_cassini_prime_inst_id(**kwargs):
             prime_inst_id = last
 
     if prime_inst_id not in ['CIRS', 'ISS', 'UVIS', 'VIMS']:
-        prime_inst_id = 'Other'
+        prime_inst_id = 'OTHER'
 
-    return (prime_inst_id, prime_inst_id)
+    return prime_inst_id
 
 def populate_obs_mission_cassini_is_prime(**kwargs):
     metadata = kwargs['metadata']

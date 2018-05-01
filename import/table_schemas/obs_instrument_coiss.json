@@ -42,7 +42,7 @@
     },
     {
         "field_name": "antiblooming_state_flag",
-        "field_type": "flag",
+        "field_type": "flag_yesno",
         "field_notnull": true,
         "data_source": [
             "TAB:index",
@@ -94,7 +94,7 @@
     },
     {
         "field_name": "calibration_lamp_state_flag",
-        "field_type": "flag",
+        "field_type": "flag_yesno",
         "field_default": null,
         "data_source": [
             "TAB:index",
@@ -173,7 +173,8 @@
     },
     {
         "field_name": "data_conversion_type",
-        "field_type": "char5",
+        "field_type": "enum",
+        "field_enum_options": "'12BIT','8LSB','TABLE'",
         "field_default": null,
         "field_key": true,
         "data_source": [
@@ -200,7 +201,7 @@
     },
     {
         "field_name": "delayed_readout_flag",
-        "field_type": "flag",
+        "field_type": "flag_yesno",
         "field_notnull": true,
         "data_source": [
             "TAB:index",
@@ -386,7 +387,8 @@
     },
     {
         "field_name": "gain_mode_id",
-        "field_type": "char20",
+        "field_type": "enum",
+        "field_enum_options": "'12 ELECTRONS PER DN','29 ELECTRONS PER DN','95 ELECTRONS PER DN','215 ELECTRONS PER DN'",
         "field_default": null,
         "field_key": true,
         "data_source": [
@@ -524,7 +526,7 @@
     },
     {
         "field_name": "light_flood_state_flag",
-        "field_type": "flag",
+        "field_type": "flag_yesno",
         "field_notnull": true,
         "data_source": [
             "TAB:index",
@@ -604,7 +606,7 @@
     },
     {
         "field_name": "missing_packet_flag",
-        "field_type": "flag",
+        "field_type": "flag_yesno",
         "field_default": null,
         "data_source": [
             "TAB:index",
@@ -926,7 +928,8 @@
     },
     {
         "field_name": "shutter_mode_id",
-        "field_type": "char7",
+        "field_type": "enum",
+        "field_enum_options": "'NACONLY','WACONLY','BOTSIM'",
         "field_default": null,
         "field_key": true,
         "data_source": [
@@ -953,7 +956,8 @@
     },
     {
         "field_name": "shutter_state_id",
-        "field_type": "char8",
+        "field_type": "enum",
+        "field_enum_options": "'DISABLED','ENABLED'",
         "field_default": null,
         "field_key": true,
         "data_source": [
@@ -1019,7 +1023,7 @@
         "pi_disp_order": 21,
         "pi_display": 0,
         "pi_display_results": 1,
-        "pi_form_type": "GROUP",
+        "pi_form_type": "STRING",
         "pi_intro": null,
         "pi_label": "Telemetry Format",
         "pi_label_results": "Telemetry Format",
@@ -1163,7 +1167,8 @@
     },
     {
         "field_name": "instrument_mode_id",
-        "field_type": "char4",
+        "field_type": "enum",
+        "field_enum_options": "'FULL','SUM2','SUM4'",
         "field_notnull": true,
         "field_key": true,
         "data_source": [

@@ -349,8 +349,10 @@ TABLE_NAME='{table_name}' ORDER BY ORDINAL_POSITION"""
                 enum_str = column.get('field_enum_options', None)
                 assert enum_str, (raw_table_name, column)
                 cmd += f'enum({enum_str})'
-            elif field_type == 'flag':
+            elif field_type == 'flag_yesno':
                 cmd += "enum('Yes','No')"
+            elif field_type == 'flag_onoff':
+                cmd += "enum('On','Off')"
             elif field_type == 'timestamp':
                 cmd += 'timestamp'
             elif field_type == 'datetime':

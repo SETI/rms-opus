@@ -7,7 +7,23 @@ sudo apt-get install python-dev libmysqlclient-dev # Debian / Ubuntu
 
 TODO:
 
-- Clean up data_type mult (make preprogrammed)
+- Routine to validate JSON files
+  - param_info display order
+  - Definitions present when needed
+  - val_min/max on int and real types
+
+- Instrument-specific definitions of effective wavelength and min/max wavelength
+   - Also START_TIME and STOP_TIME
+
+- Clean up mults
+  - data_type
+  - Cassini rev_no (sort 00A/B/C properly)
+  - Cassini primary instrument (put Other last)
+  - COUVIS observation type has ""
+  - COVIMS VIS sampling mode "Unk"
+  - Cassini Image Observation Type has some "" entries
+
+  Cassini image number should be written out in decimal not exp notation
 
 - Update table_schema README file
 
@@ -15,9 +31,6 @@ TODO:
   ("Narrow Angle Camera") so we can change the pretty versions in the future.
 
 - Finish commenting files other than do_import
-
-- Audit label files and make sure everything is available in database for
-  Details page
 
 - Option to regenerate mult tables from production tables
 
@@ -53,11 +66,6 @@ TODO:
 - There's really no reason to have an ID for mult tables. Why not just key on the value itself?
 
 THE BIG QUESTIONS:
-
-- GENERIC:
-
-  - Do we really want to exclude "None" from being displayed in group selections? ** PUT BACK IN
-
 
 - OBS_GENERAL:
 

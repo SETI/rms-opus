@@ -24,6 +24,8 @@ from populate_obs_instrument_COVIMS import *
 from populate_obs_mission_galileo import *
 from populate_obs_instrument_GOSSI import *
 
+from populate_obs_mission_hubble import *
+
 from populate_obs_surface_geo import *
 
 
@@ -151,7 +153,6 @@ def create_tables_for_import(volume_id, namespace):
     for table_name in TABLES_TO_POPULATE:
         table_name = table_name.replace('<INST>', instrument_name.lower())
         table_name = table_name.replace('<MISSION>', mission_name.lower())
-        table_names_in_order.append(table_name)
 
         if table_name.startswith('obs_surface_geometry__'):
             # Note that we aren't replacing <TARGET> here because we don't know
@@ -163,7 +164,11 @@ def create_tables_for_import(volume_id, namespace):
                                                 'obs_surface_geometry_target')
         else:
             table_schema = import_util.read_schema_for_table(table_name)
+        if table_schema is None:
+            continue
+
         table_schemas[table_name] = table_schema
+        table_names_in_order.append(table_name)
 
         if table_name.startswith('obs_surface_geometry__'):
             # Skip surface geo tables until they are needed
@@ -731,6 +736,9 @@ def import_one_volume(volume_id):
                 if table_name.startswith('obs_surface_geometry'):
                     # Deal with surface geometry a little later
                     continue
+                if table_name not in table_schemas:
+                    # Table not relevant for this product
+                    continue
                 row = import_observation_table(volume_id,
                                                instrument_name,
                                                mission_abbrev,
@@ -792,11 +800,11 @@ def import_one_volume(volume_id):
                                                                     target_name]
 
                         row = import_observation_table(volume_id,
-                                                   instrument_name,
-                                                   mission_abbrev,
-                                                   new_table_name,
-                                                   table_schemas[table_name],
-                                                   metadata)
+                                                       instrument_name,
+                                                       mission_abbrev,
+                                                       new_table_name,
+                                                      table_schemas[table_name],
+                                                       metadata)
                         if new_table_name not in table_rows:
                             table_rows[new_table_name] = []
                             impglobals.LOGGER.log('debug',
@@ -991,12 +999,18 @@ def import_observation_table(volume_id,
                     f'Column "{field_name}" in table "{table_name}" '+
                     f'has NULL value but NOT NULL is set', index_row_num)
         else:
-            if field_type == 'flag':
+            if field_type.startswith('flag'):
                 if column_val in [0, 'n', 'N', 'no', 'No', 'NO', 'off', 'OFF']:
-                    column_val = 'No'
+                    if field_type == 'flag_onoff':
+                        column_val = 'Off'
+                    else:
+                        column_val = 'No'
                 elif column_val in [1, 'y', 'Y', 'yes', 'Yes', 'YES', 'on',
                                     'ON']:
-                    column_val = 'Yes'
+                    if field_type == 'flag_onoff':
+                        column_val = 'On'
+                    else:
+                        column_val = 'Yes'
                 elif column_val in ['N/A', 'UNK', 'NULL']:
                     column_val = None
                 else:

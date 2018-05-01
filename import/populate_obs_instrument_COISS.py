@@ -186,17 +186,16 @@ def populate_obs_general_COISS_rms_obs_id(**kwargs):
     planet_id = helper_cassini_planet_id(**kwargs)
     assert instrument_id[3] in ('N', 'W')
     assert len(image_number) == 10
+    ret = 'X'
     if planet_id is not None:
         ret = planet_id[0]
-    else:
-        ret = ''
     return ret+'_IMG_CO_ISS_'+image_number+'_'+instrument_id[3]
 
 def populate_obs_general_COISS_inst_host_id(**kwargs):
     return 'CO'
 
 def populate_obs_general_COISS_data_type(**kwargs):
-    return ('IMG', 'Image')
+    return 'IMG'
 
 def populate_obs_general_COISS_time1(**kwargs):
     metadata = kwargs['metadata']
@@ -334,7 +333,7 @@ def populate_obs_mission_cassini_COISS_mission_phase_name(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     mp = index_row['MISSION_PHASE_NAME']
-    return mp
+    return mp.replace('_', ' ')
 
 
 ### OBS_TYPE_IMAGE TABLE ###
@@ -375,6 +374,12 @@ def populate_obs_type_image_COISS_greater_pixel_size(**kwargs):
 
 ### OBS_WAVELENGTH TABLE ###
 
+# For COISS, effective wavelength is the center wavelength of the filter
+# combination when convolved with the solar spectrum. Where possible, this
+# is taken from the pre-computed CISSCAL values. When that isn't available,
+# the filters are treated like boxcars with the FWHM of the non-convolved
+# filter! If that doesn't overlap, then the average is used.
+
 def _COISS_wavelength_helper(inst, filter1, filter2):
     key = (inst, filter1, filter2)
     if key in _COISS_FILTER_WAVELENGTHS:
@@ -385,41 +390,14 @@ def _COISS_wavelength_helper(inst, filter1, filter2):
         f'{key[0]}/{key[1]}/{key[2]}')
 
     # If we don't have the exact key combination, try to set polarization equal
-    # to clear for lack of anything better to do.
+    # to CLEAR for lack of anything better to do.
     nfilter1 = filter1 if filter1.find('P') == -1 else 'CL1'
     nfilter2 = filter2 if filter2.find('P') == -1 else 'CL2'
     key2 = (inst, nfilter1, nfilter2)
     if key2 in _COISS_FILTER_WAVELENGTHS:
         return _COISS_FILTER_WAVELENGTHS[key2]
 
-    # If we don't have the exact key combination, try to make one up by using
-    # overlapping regions.
-    key1 = (inst, filter1, 'CL2')
-    key2 = (inst, 'CL1', filter2)
-    if (key1 not in _COISS_FILTER_WAVELENGTHS or
-        key2 not in _COISS_FILTER_WAVELENGTHS):
-        import_util.announce_nonrepeating_error(
-            f'Unknown COISS filter {key[0]}/{key[1]}/{key[2]}')
-        impglobals.IMPORT_HAS_BAD_DATA = True
-        return 0,0,0
-
-    lc1, fw1, le1 = _COISS_FILTER_WAVELENGTHS[key1]
-    lc2, fw2, le2 = _COISS_FILTER_WAVELENGTHS[key2]
-
-    if le1 > le2:
-        lc1, fw1, le1, lc2, fw2, le2 = lc2, fw2, le2, lc1, fw1, le1
-    l1 = le1-fw1/2
-    r1 = le1+fw1/2
-    l2 = le2-fw2/2
-    r2 = le2+fw2/2
-
-    if r1 < l2:
-        # No overlap at all! No idea why anyone would ever do this, but we
-        # have to make something up...
-        return (lc1+lc2)/2, 0, (le1+le2)/2
-
-    # New region is l2 to r1
-    return (lc2-fw2/2 + lc1+fw1/2)/2, (r1-l2)/2, (r1+l2)/2
+    return None, None, None
 
 # This is the effective wavelength (convolved with the solar spectrum)
 def populate_obs_wavelength_COISS_effective_wavelength(**kwargs):
@@ -430,6 +408,8 @@ def populate_obs_wavelength_COISS_effective_wavelength(**kwargs):
 
     central_wl, fwhm, effective_wl = _COISS_wavelength_helper(
             instrument_id, filter1, filter2)
+    if effective_wl is None:
+        return None
     return effective_wl / 1000 # microns
 
 # These are the center wavelength +/- FWHM/2
@@ -441,6 +421,8 @@ def populate_obs_wavelength_COISS_wavelength1(**kwargs):
 
     central_wl, fwhm, effective_wl = _COISS_wavelength_helper(
             instrument_id, filter1, filter2)
+    if central_wl is None or fwhm is None:
+        return None
     return (central_wl - fwhm/2) / 1000 # microns
 
 def populate_obs_wavelength_COISS_wavelength2(**kwargs):
@@ -451,6 +433,8 @@ def populate_obs_wavelength_COISS_wavelength2(**kwargs):
 
     central_wl, fwhm, effective_wl = _COISS_wavelength_helper(
             instrument_id, filter1, filter2)
+    if central_wl is None or fwhm is None:
+        return None
     return (central_wl + fwhm/2) / 1000 # microns
 
 def populate_obs_wavelength_COISS_wave_res1(**kwargs):
@@ -462,12 +446,18 @@ def populate_obs_wavelength_COISS_wave_res2(**kwargs):
 def populate_obs_wavelength_COISS_wave_no1(**kwargs):
     metadata = kwargs['metadata']
     wavelength_row = metadata['obs_wavelength_row']
-    return 10000 / wavelength_row['wavelength2'] # cm^-1
+    wl2 = wavelength_row['wavelength2']
+    if wl2 is None:
+        return None
+    return 10000 / wl2 # cm^-1
 
 def populate_obs_wavelength_COISS_wave_no2(**kwargs):
     metadata = kwargs['metadata']
     wavelength_row = metadata['obs_wavelength_row']
-    return 10000 / wavelength_row['wavelength1'] # cm^-1
+    wl1 = wavelength_row['wavelength1']
+    if wl1 is None:
+        return None
+    return 10000 / wl1 # cm^-1
 
 def populate_obs_wavelength_COISS_wave_no_res1(**kwargs):
     return None
@@ -572,7 +562,9 @@ def populate_obs_instrument_COISS_combined_filter(**kwargs):
         elif filter2.find('POL') != -1:
             new_filter = filter1 + '+' + filter2
         else:
-            if wl1 > wl2 or (wl1 == wl2 and filter1 > filter2):
+            if (((wl1 is None or wl2 is None or wl1 == wl2) and
+                 filter1 > filter2) or
+                wl1 > wl2):
                 # Place filters in wavelength order
                 # If wavelengths are the same, make it name order
                 filter1, filter2 = filter2, filter1

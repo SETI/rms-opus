@@ -97,7 +97,8 @@
     },
     {
         "field_name": "compression_type",
-        "field_type": "char8",
+        "field_type": "enum",
+        "field_enum_options": "'8_BIT','SQRT_8','SQRT_9','NONE'",
         "field_notnull": true,
         "data_source": [
             "TAB:index",
@@ -123,7 +124,7 @@
     },
     {
         "field_name": "hi_voltage_power_supply_state",
-        "field_type": "flag",
+        "field_type": "flag_onoff",
         "field_notnull": true,
         "data_source": [
             "TAB:index",
@@ -149,11 +150,12 @@
     },
     {
         "field_name": "occultation_port_state",
-        "field_type": "char16",
+        "field_type": "enum",
+        "field_enum_options": "'OPEN','CLOSED','N/A'",
         "field_notnull": true,
         "data_source": [
-            "TAB:index",
-            "OCCULTATION_PORT_STATE"
+            "FUNCTION",
+            "obs_instrument_COUVIS_occultation_port_state"
         ],
         "definition": "OPEN or CLOSED, indicating the state of the port.",
         "pi_category_name": "obs_instrument_couvis",
@@ -175,7 +177,8 @@
     },
     {
         "field_name": "slit_state",
-        "field_type": "char16",
+        "field_type": "enum",
+        "field_enum_options": "'HIGH_RESOLUTION','LOW_RESOLUTION','OCCULTATION','NULL'",
         "field_notnull": true,
         "data_source": [
             "TAB:index",
@@ -201,7 +204,7 @@
     },
     {
         "field_name": "test_pulse_state",
-        "field_type": "flag",
+        "field_type": "flag_onoff",
         "field_default": null,
         "data_source": [
             "TAB:index",
@@ -334,7 +337,8 @@
     },
     {
         "field_name": "channel",
-        "field_type": "char5",
+        "field_type": "enum",
+        "field_enum_options": "'EUV','FUV','HDAC','HSP'",
         "field_notnull": true,
         "data_source": [
             "FUNCTION",

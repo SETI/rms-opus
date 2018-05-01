@@ -105,7 +105,7 @@
     },
     {
         "field_name": "is_prime",
-        "field_type": "flag",
+        "field_type": "flag_yesno",
         "field_notnull": true,
         "data_source": [
             "FUNCTION",

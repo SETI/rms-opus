@@ -163,7 +163,7 @@
     {
         "field_name": "planet_id",
         "field_type": "char3",
-        "field_default": null,
+        "field_notnull": true,
         "field_key": true,
         "data_source": [
             "FUNCTION",
@@ -213,9 +213,8 @@
     },
     {
         "field_name": "target_class",
-        "field_type": "enum",
+        "field_type": "char12",
         "field_notnull": true,
-        "field_enum_options": "'RING','PLANET','MOON','ASTEROID','SUN','STAR','SKY','CALIBRATION','OTHER'",
         "field_key": true,
         "data_source": [
             "FUNCTION",
