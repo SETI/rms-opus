@@ -15,6 +15,7 @@ def get_def(term, context):
     try:
         definition = Definition.objects.using('dictionary').select_related().filter(context=context,term=term).values('definition', 'term', 'context__description').order_by('term')
         #definition = Definition.objects.using('dictionary').get(context=context,term=term).values('definition', 'term', 'import_date', 'context__description')
+        log.info(definition.query)
         return definition
     except Definition.DoesNotExist:
         return False
@@ -48,10 +49,8 @@ def search_definitions(request, slug):
         Not currently enabled to search on term
     """
     try:
-        log.error(slug)
-        #definitionList = Definition.objects.using('dictionary').select_related().filter(definition__icontains=slug).values('definition', 'term__term_nice', 'term__import_date', 'context__description', 'context__name').order_by('term__term')
         definitionList = Definition.objects.using('dictionary').select_related("context").filter(definition__icontains=slug).values('definition', 'term', 'import_date', 'context__description').order_by('term')
-        log.info(definitionList.query)
+        #log.info(definitionList.query)
         return JsonResponse(list(definitionList), safe=False)
     except Definition.DoesNotExist:
         log.info(definitionList.query)

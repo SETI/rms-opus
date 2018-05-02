@@ -22,6 +22,7 @@ class ImportDictionaryData(object):
         "   `image_URL` char(255) DEFAULT NULL COMMENT 'URL of image to be used with the expanded definition',"
         "   `more_info_URL` char(255) DEFAULT NULL COMMENT 'URL of pdf or image to be used to create a full page fully expanded definition',"
         "   `more_info_label` varchar(150) DEFAULT NULL COMMENT 'Required only if more_info_url is not blank.  Label for the page.',"
+        "   `subterm` varchar(255) DEFAULT NULL COMMENT 'This is used to associate the hover text with the definition for a particular widget.  Default is null',",
         "   `modified` tinyint(3) unsigned zerofill NOT NULL COMMENT 'set if row has been edited',"
         "   `import_date` date DEFAULT NULL,"
         "  PRIMARY KEY (`term`,`context`)"

@@ -3,6 +3,9 @@ from django.contrib.contenttypes.models import ContentType
 from django.core.urlresolvers import reverse
 from dictionary.views import get_def, get_more_info_url
 
+import logging
+log = logging.getLogger(__name__)
+
 RANK_CHOICES = (('0','Advanced'),('1','Basic'))
 
 class ParamInfo(models.Model):
@@ -56,8 +59,9 @@ class ParamInfo(models.Model):
         return self.category_name + '.' + self.name
 
     def get_dictionary_info(self):
-        definition = {}
-        definition['def'] = get_def(self.dict_name, self.dict_context)
+        #definition = {}
+        definition = get_def(self.dict_name, self.dict_context)
+        log.info(definition.query)
         return definition
 
     # http://djangosnippets.org/snippets/2057/

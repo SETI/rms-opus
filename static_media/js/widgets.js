@@ -33,6 +33,7 @@ var o_widgets = {
 
         // click the dictionary icon, the definition slides open
         $('#search').on('click', 'a.dict_link', function() {
+            var temp = $(this).parent().parent().find('.dictionary');
             $(this).parent().parent().find('.dictionary').slideToggle();
             return false;
         });

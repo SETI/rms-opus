@@ -52,7 +52,7 @@ def about(request, template = 'about.html'):
     for d in ObsGeneral.objects.values('instrument_id','volume_id').order_by('instrument_id','volume_id').distinct():
         all_volumes.setdefault(d['instrument_id'], []).append(d['volume_id'])
 
-    return render(request, template, locals())
+    return render(request, template, {'all_volumes':all_volumes})
 
 def definitions(request, retrieveChar='A'):
     defList = Definition.objects.using('dictionary').select_related().order_by('term__term')
@@ -74,7 +74,7 @@ def home(request):
 
 def get_browse_headers(request,template='browse_headers.html'):
     update_metrics(request)
-    return render(request, template, locals())
+    return render(request, template)
 
 
 def get_table_headers(request,template='table_headers.html'):
@@ -101,7 +101,7 @@ def get_table_headers(request,template='table_headers.html'):
                 columns.append([slug, param_info.get(slug=slug).label_results])
             except ParamInfo.DoesNotExist:
                 pass
-    return render(request, template,locals())
+    return render(request, template,{"columns":columns})
 
 
 @render_to('menu.html')
@@ -182,7 +182,7 @@ def getMenuLabels(request, labels_view):
                 all_param_info = list(all_param_info)
                 for k,param_info in enumerate(all_param_info):
                     param_info.slug = adjust_slug_name_single_col_ranges(param_info)
-                    all_param_info[k] = param_info
+                    all_param_info[k] = vars(param_info)
 
                 menu_data[d.table_name]['data'][sub_head] = all_param_info
 
@@ -195,7 +195,9 @@ def getMenuLabels(request, labels_view):
                     old_slug = p.slug
                     new_slug = adjust_slug_name_single_col_ranges(p)
                     p.slug = adjust_slug_name_single_col_ranges(p)
-                    menu_data[d.table_name].setdefault('data', []).append(p)
+                    log.error(vars(p))
+                    menu_data[d.table_name].setdefault('data', []).append(vars(p))
+                    #log.error(menu_data[d.table_name])
             else:
                 for p in ParamInfo.objects.filter(display_results=1, category_name=d.table_name):
                     p.slug = adjust_slug_name_single_col_ranges(p)
@@ -233,7 +235,6 @@ def getWidget(request, **kwargs):
     param_name = param_info.param_name()
 
     dictionary = param_info.get_dictionary_info()
-
     form_vals = {slug:None}
     auto_id = True
     selections = {}
@@ -392,7 +393,8 @@ def getWidget(request, **kwargs):
     else:
 
         template = "widget.html"
-        return render(request, template,locals())
+        render_vars = {"slug":slug, "label": label, "append_to_label":append_to_label, "dictionary":dictionary, "intro": intro, "form":form, "range_fields":range_fields}
+        return render(request, template, render_vars)
     # return responseFormats(form, fmt)
 
 
@@ -445,8 +447,8 @@ def init_detail_page(request, **kwargs):
     #     for f in files[product_type]:
     #         ext = f.split('.').pop()
     #         file_list[product_type].append({'ext':ext,'link':f})
-
-    return render(request, template, locals())
+    render_vars = {"path": path, "img": img, "preview_guide_url": preview_guide_url, "file_list": file_list, "rms_obs_id": rms_obs_id}
+    return render(request, template, render_vars)
 
 def getColumnInfo(slugs):
     info = OrderedDict()
@@ -467,4 +469,5 @@ def getColumnChooser(request, **kwargs):
     namespace = 'column_chooser_input'
     menu = getMenuLabels(request, 'results')['menu']
 
-    return render(request, "choose_columns.html",locals())
+    render_vars = {"all_slugs_info": all_slugs_info, "namespace": namespace, "menu": menu}
+    return render(request, "choose_columns.html", render_vars)

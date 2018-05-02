@@ -1,3 +1,5 @@
+<textarea onclick="this.focus();this.select()" style="width: 100%; height: 400px;"> {% filter force_escape %} {% debug %} {% endfilter %}</textarea>
+
 {% block menu %}
 <ul class="nav nav-list"> <!-- was groups -->
 <!-- i class = "menu_spinner spinner"></i -->
@@ -57,9 +59,9 @@
 																					{{ p.label }}
 																				{% endif %}
 
-                                        <i class = "fa fa-info-circle" title = "
+                                        <i data-stuff= "sanity_check" class = "fa fa-info-circle" title = "
                                             {% if p.get_dictionary_info %}
-                                                {{ p.get_dictionary_info.def|striptags }}
+                                                {{ p.get_dictionary_info.definition }}
                                             {% else  %}
 
 																							{% if menu.data.labels_view == 'results' %}
@@ -89,9 +91,9 @@
                         <li>
                             <a data-label = "
 															{% if menu.data.labels_view == 'results' %}
-																{{ p.label_results}}
+																{{ p.label_results}}label_results
 															{% else %}
-																{{ p.label }}
+																{{ p.label }}label
 															{% endif %}
 														" data-slug = "{{ p.slug }}" class = "{{ p.slug }}" href = "">
                                 <i class = "fa fa-check"></i>
@@ -102,9 +104,9 @@
 																	{{ p.label }}
 																{% endif %}
 
-                                <i class = "fa fa-info-circle" title = "
+                                <i class = "fa fa-info-circle" data-stuff="insane" title = "
                                     {% if p.get_dictionary_info %}
-                                        {{ p.get_dictionary_info.def|striptags }}
+                                        {{ p.get_dictionary_info.definition }}
                                     {% else  %}
                                         {{ p.label }}
                                     {% endif %}
