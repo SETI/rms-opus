@@ -57,18 +57,8 @@
 																					{{ p.label }}
 																				{% endif %}
 
-                                        <i data-stuff= "sanity_check" class = "fa fa-info-circle" title = "
-                                            {% if p.get_dictionary_info %}
-                                                {{ p.get_dictionary_info.definition }}
-                                            {% else  %}
-
-																							{% if menu.data.labels_view == 'results' %}
-																								{{ p.label_results}}
-																							{% else %}
-																								{{ p.label }}
-																							{% endif %}
-
-                                            {% endif %}
+                                        <i class = "fa fa-info-circle" title = "
+                                             {{ p.tooltip.definition }}
                                         "></i>
                                     </a>
                                 </li>
@@ -103,7 +93,7 @@
 																{% endif %}
 
                                 <i class = "fa fa-info-circle" title = "
-																	 {{ p.tooltip.definition }} 
+																	 {{ p.tooltip.definition }}
                                 "></i>
                             </a>
                         </li>

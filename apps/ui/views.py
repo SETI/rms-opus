@@ -178,6 +178,7 @@ def getMenuLabels(request, labels_view):
                 all_param_info = list(all_param_info)
                 for k,param_info in enumerate(all_param_info):
                     param_info.slug = adjust_slug_name_single_col_ranges(param_info)
+                    param_info.tooltip = param_info.get_dictionary_info()
                     all_param_info[k] = vars(param_info)
 
                 menu_data[d.table_name]['data'][sub_head] = all_param_info

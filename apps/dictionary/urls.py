@@ -5,6 +5,8 @@ from dictionary import views
 
 from django.conf.urls.static import static
 from django.conf import settings
+from django.contrib.staticfiles.storage import staticfiles_storage
+from django.views.generic.base import RedirectView
 
 from views import (
     display_definitions,
@@ -19,4 +21,11 @@ urlpatterns = [
     url(r'^test.json/(?P<term>[0-9a-zA-Z\-_]+).(?P<context>[0-9a-zA-Z\-_]+)$', test_get_def, name='test'),
     url(r'^$', display_definitions),
     url(r'^(?P<slug>[-\sa-zA-Z0-9]+)$', display_definitions, name='dictionary'),
+    url(
+        r'^favicon.ico$',
+        RedirectView.as_view(
+            url=staticfiles_storage.url('favicon.ico'),
+            permanent=False),
+        name="favicon"
+    ),
 ]
