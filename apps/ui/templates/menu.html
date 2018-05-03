@@ -1,5 +1,3 @@
-<textarea onclick="this.focus();this.select()" style="width: 100%; height: 400px;"> {% filter force_escape %} {% debug %} {% endfilter %}</textarea>
-
 {% block menu %}
 <ul class="nav nav-list"> <!-- was groups -->
 <!-- i class = "menu_spinner spinner"></i -->
@@ -104,12 +102,8 @@
 																	{{ p.label }}
 																{% endif %}
 
-                                <i class = "fa fa-info-circle" data-stuff="insane" title = "
-                                    {% if p.get_dictionary_info %}
-                                        {{ p.get_dictionary_info.definition }}
-                                    {% else  %}
-                                        {{ p.label }}
-                                    {% endif %}
+                                <i class = "fa fa-info-circle" title = "
+																	 {{ p.tooltip.definition }} 
                                 "></i>
                             </a>
                         </li>

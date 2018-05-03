@@ -13,9 +13,8 @@ def get_def(term, context):
 
         """
     try:
-        definition = Definition.objects.using('dictionary').select_related().filter(context=context,term=term).values('definition', 'term', 'context__description').order_by('term')
+        definition = Definition.objects.using('dictionary').select_related().filter(context=context,term=term).values('definition', 'term', 'context__description').first()
         #definition = Definition.objects.using('dictionary').get(context=context,term=term).values('definition', 'term', 'import_date', 'context__description')
-        log.info(definition.query)
         return definition
     except Definition.DoesNotExist:
         return False

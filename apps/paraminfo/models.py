@@ -59,10 +59,9 @@ class ParamInfo(models.Model):
         return self.category_name + '.' + self.name
 
     def get_dictionary_info(self):
-        #definition = {}
         definition = get_def(self.dict_name, self.dict_context)
-        log.info(definition.query)
         return definition
+
 
     # http://djangosnippets.org/snippets/2057/
     def save(self, *args, **kwargs):

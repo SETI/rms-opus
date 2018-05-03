@@ -123,6 +123,10 @@ def getMenuLabels(request, labels_view):
 
     """
     labels_view = 'results' if labels_view == 'results' else 'search'
+    if labels_view == 'search':
+        filter = "display"
+    else:
+        filter="display_results"
 
     if request and request.GET:
         try:
@@ -138,11 +142,7 @@ def getMenuLabels(request, labels_view):
         triggered_tables = get_triggered_tables(selections, extras)
 
     divs = TableNames.objects.filter(display='Y', table_name__in=triggered_tables)
-
-    if labels_view == 'search':
-        params = ParamInfo.objects.filter(display=1, category_name__in=triggered_tables)
-    else:
-        params = ParamInfo.objects.filter(display_results=1, category_name__in=triggered_tables)
+    params = ParamInfo.objects.filter(**{filter:1, "category_name__in":triggered_tables})
 
     # build a struct that relates sub_headings to div_titles
     sub_headings = {}
@@ -171,11 +171,7 @@ def getMenuLabels(request, labels_view):
 
             menu_data[d.table_name].setdefault('data', {})
             for sub_head in sub_headings[d.table_name]:
-
-                if labels_view == 'search':
-                    all_param_info = ParamInfo.objects.filter(display=1, category_name = d.table_name, sub_heading = sub_head)
-                else:  # lables for results or search view
-                    all_param_info = ParamInfo.objects.filter(display_results=1, category_name = d.table_name, sub_heading = sub_head)
+                all_param_info = ParamInfo.objects.filter(**{filter:1, "category_name":d.table_name, "sub_heading": sub_head})
 
                 # before adding this to data structure, correct a problem with
                 # the naming of single column range slugs for menus like this
@@ -189,19 +185,10 @@ def getMenuLabels(request, labels_view):
         else:
             # this div has no sub headings
             menu_data[d.table_name]['has_sub_heading'] = False
-
-            if labels_view == 'search':
-                for p in ParamInfo.objects.filter(display=1, category_name=d.table_name):
-                    old_slug = p.slug
-                    new_slug = adjust_slug_name_single_col_ranges(p)
-                    p.slug = adjust_slug_name_single_col_ranges(p)
-                    log.error(vars(p))
-                    menu_data[d.table_name].setdefault('data', []).append(vars(p))
-                    #log.error(menu_data[d.table_name])
-            else:
-                for p in ParamInfo.objects.filter(display_results=1, category_name=d.table_name):
-                    p.slug = adjust_slug_name_single_col_ranges(p)
-                    menu_data[d.table_name].setdefault('data', []).append(p)
+            for p in ParamInfo.objects.filter(**{filter:1, "category_name":d.table_name}):
+                p.slug = adjust_slug_name_single_col_ranges(p)
+                p.tooltip = p.get_dictionary_info()
+                menu_data[d.table_name].setdefault('data', []).append(vars(p))
 
     # div_labels = {d.table_name:d.label for d in TableNames.objects.filter(display='Y', table_name__in=triggered_tables)}
     return {'menu': {'data': menu_data, 'divs': divs}}
@@ -277,9 +264,9 @@ def getWidget(request, **kwargs):
         except: len1 = 0
         try: len2 = len(selections[param2])
         except: len2 = 0
-        lngth = len1 if len1 > len2 else len2
+        length = len1 if len1 > len2 else len2
 
-        if not lngth: # param is not constrained
+        if not length: # param is not constrained
             form = str(SearchForm(form_vals, auto_id=auto_id).as_ul());
             if addlink == 'false':
                 form = '<ul>' + form + '<li>'+remove_str+'</li></ul>' # remove input is last list item in form
@@ -288,7 +275,7 @@ def getWidget(request, **kwargs):
 
         else: # param is constrained
             key=0
-            while key<lngth:
+            while key<length:
                 try:
                   form_vals[slug1] = selections[param1][key]
                 except (IndexError, KeyError) as e:
@@ -310,7 +297,7 @@ def getWidget(request, **kwargs):
                     form = '<ul>' + form + '<li>'+remove_str+'</li></ul>' # remove input is last list item in form
                 else:
                     form = '<span>'+add_str+'</span><ul>' + form + '</ul>'  # add input link comes before form
-                if lngth > 1:
+                if length > 1:
                     form = form + '</span><div style = "clear: both;"></div></section><section><span class="widget_form">'
                 key = key+1
 
@@ -391,10 +378,17 @@ def getWidget(request, **kwargs):
     if fmt == 'raw':
         return str(form)
     else:
-
         template = "widget.html"
-        render_vars = {"slug":slug, "label": label, "append_to_label":append_to_label, "dictionary":dictionary, "intro": intro, "form":form, "range_fields":range_fields}
-        return render(request, template, render_vars)
+        context = {
+            "slug":slug,
+            "label": label,
+            "append_to_label":append_to_label,
+            "dictionary":dictionary,
+            "intro": intro,
+            "form": form,
+            "range_fields": range_fields
+        }
+        return render(request, template, context)
     # return responseFormats(form, fmt)
 
 
@@ -447,8 +441,14 @@ def init_detail_page(request, **kwargs):
     #     for f in files[product_type]:
     #         ext = f.split('.').pop()
     #         file_list[product_type].append({'ext':ext,'link':f})
-    render_vars = {"path": path, "img": img, "preview_guide_url": preview_guide_url, "file_list": file_list, "rms_obs_id": rms_obs_id}
-    return render(request, template, render_vars)
+    context = {
+        "path": path,
+        "img": img,
+        "preview_guide_url": preview_guide_url,
+        "file_list": file_list,
+        "rms_obs_id": rms_obs_id
+    }
+    return render(request, template, context)
 
 def getColumnInfo(slugs):
     info = OrderedDict()
@@ -469,5 +469,9 @@ def getColumnChooser(request, **kwargs):
     namespace = 'column_chooser_input'
     menu = getMenuLabels(request, 'results')['menu']
 
-    render_vars = {"all_slugs_info": all_slugs_info, "namespace": namespace, "menu": menu}
-    return render(request, "choose_columns.html", render_vars)
+    context = {
+        "all_slugs_info": all_slugs_info,
+        "namespace": namespace,
+        "menu": menu
+    }
+    return render(request, "choose_columns.html", context)
