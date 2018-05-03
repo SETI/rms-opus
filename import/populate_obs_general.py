@@ -108,6 +108,8 @@ def populate_obs_general_target_class(**kwargs):
         target_name = TARGET_NAME_MAPPING[target_name]
     if target_name not in TARGET_NAME_INFO:
         import_util.announce_unknown_target_name(target_name, index_row_num)
+        if impglobals.ARGUMENTS.import_ignore_errors:
+            return 'OTHER'
         return None
     _, target_class = TARGET_NAME_INFO[target_name]
     return target_class

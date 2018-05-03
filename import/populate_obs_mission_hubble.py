@@ -525,19 +525,37 @@ def populate_obs_wavelength_HSTWFPC2_polarization_type(**kwargs):
 
 def populate_obs_mission_hubble_detector_id(**kwargs):
     metadata = kwargs['metadata']
+    instrument = kwargs['instrument_name']
     index_row = metadata['index_row']
     detector_id = index_row['DETECTOR_ID']
     if detector_id == '':
         return None
-    return detector_id
+    ret = instrument[3:] + '-' + detector_id
+    return (ret, ret)
+
+def populate_obs_mission_hubble_instrument_mode_id(**kwargs):
+    metadata = kwargs['metadata']
+    instrument = kwargs['instrument_name']
+    index_row = metadata['index_row']
+    instrument_mode_id = index_row['INSTRUMENT_MODE_ID']
+    ret = instrument[3:] + '-' + instrument_mode_id
+    return (ret, ret)
 
 def populate_obs_mission_hubble_filter_name(**kwargs):
     metadata = kwargs['metadata']
     instrument = kwargs['instrument_name']
     index_row = metadata['index_row']
     filter_name = index_row['FILTER_NAME']
+    filter_name = filter_name.replace('_', ' ')
     ret = instrument[3:] + '-' + filter_name
     return (ret, ret)
+
+def populate_obs_mission_hubble_filter_width(**kwargs):
+    metadata = kwargs['metadata']
+    instrument = kwargs['instrument_name']
+    index_row = metadata['index_row']
+    filter_name = index_row['FILTER_NAME']
+    return ('XXX', 'XXX')
 
 def populate_obs_mission_hubble_aperture_type(**kwargs):
     metadata = kwargs['metadata']

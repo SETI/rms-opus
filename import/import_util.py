@@ -111,8 +111,20 @@ def safe_pdstable_read(filename):
     if log_accumulated_warnings(f'table import of {filename}'):
         return None, None
 
-    return table.dicts_by_row(), table.info.label.as_dict()
+    rows = table.dicts_by_row()
+    label = table.info.label.as_dict()
 
+    # Go through the rows and look for values that are masked and change the
+    # actual value to None in those cases
+    for row in rows:
+        for column_name in row:
+            if column_name.endswith('_mask'):
+                continue
+            if row.get(column_name+'_mask', False):
+                row[column_name] = None
+
+    return rows, label
+    
 ################################################################################
 # TABLE MANIPULATION
 ################################################################################

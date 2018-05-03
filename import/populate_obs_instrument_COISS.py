@@ -575,6 +575,7 @@ def populate_obs_instrument_COISS_combined_filter(**kwargs):
 def populate_obs_instrument_COISS_image_observation_type(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
+    index_row_num = metadata['index_row_num']
     obs_type = index_row['IMAGE_OBSERVATION_TYPE']
 
     has_science = obs_type.find('SCIENCE') != -1
@@ -582,17 +583,25 @@ def populate_obs_instrument_COISS_image_observation_type(**kwargs):
     has_calib = obs_type.find('CALIBRATION') != -1
     has_support = obs_type.find('SUPPORT') != -1
     has_unk = obs_type.find('UNK') != -1
+    has_eng = obs_type.find('ENGINEERING') != -1
 
     ret_list = []
     if has_science:
-        ret_list.append('Science')
+        ret_list.append('SCIENCE')
     if has_opnav:
-        ret_list.append('OpNav')
+        ret_list.append('OPNAV')
     if has_calib:
-        ret_list.append('Calibration')
+        ret_list.append('CALIBRATION')
+    if has_eng:
+        ret_list.append('ENGINEERING')
     if has_support:
-        ret_list.append('Support')
+        ret_list.append('SUPPORT')
     if has_unk:
-        ret_list.append('Unknown')
+        ret_list.append('UNKNOWN')
+
+    if len(ret_list) == 0:
+        import_util.announce_nonrepeating_error(
+            f'Unknown format for COISS image_observation_type: "{obs_type}"',
+            index_row_num)
 
     return ','.join(ret_list)

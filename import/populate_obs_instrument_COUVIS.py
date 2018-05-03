@@ -195,8 +195,6 @@ def populate_obs_general_COUVIS_right_asc1(**kwargs):
 
     index_row = metadata['index_row']
     ra = index_row['RIGHT_ASCENSION']
-    if ra == 'NULL': # XXX
-        ra = None
     return ra
 
 def populate_obs_general_COUVIS_right_asc2(**kwargs):
@@ -207,8 +205,6 @@ def populate_obs_general_COUVIS_right_asc2(**kwargs):
 
     index_row = metadata['index_row']
     ra = index_row['RIGHT_ASCENSION']
-    if ra == 'NULL': # XXX
-        ra = None
     return ra
 
 def populate_obs_general_COUVIS_declination1(**kwargs):
@@ -268,6 +264,8 @@ def populate_obs_type_image_COUVIS_lesser_pixel_size(**kwargs):
     line2 = supp_index_row['WINDOW_MAXIMUM_LINE_NUMBER']
     line_bin = supp_index_row['LINE_BINNING_FACTOR']
     samples = supp_index_row['LINE_SAMPLES']
+    if line1 is None or line2 is None or line_bin is None or samples is None:
+        return None
     pixels = min(samples, (line2-line1+1)//line_bin)
     if pixels < 0:
         return None
@@ -282,6 +280,8 @@ def populate_obs_type_image_COUVIS_greater_pixel_size(**kwargs):
     line2 = supp_index_row['WINDOW_MAXIMUM_LINE_NUMBER']
     line_bin = supp_index_row['LINE_BINNING_FACTOR']
     samples = supp_index_row['LINE_SAMPLES']
+    if line1 is None or line2 is None or line_bin is None or samples is None:
+        return None
     pixels = max(samples, (line2-line1+1)//line_bin)
     if pixels < 0:
         return None

@@ -135,6 +135,9 @@ def create_tables_for_import(volume_id, namespace):
        reference. This does NOT create the target-specific obs_surface_geometry
        tables because we don't yet know what target names we have."""
 
+    global _CREATED_IMP_MULT_TABLES
+    _CREATED_IMP_MULT_TABLES = set()
+
     volume_id_prefix = volume_id[:volume_id.find('_')]
     instrument_name = VOLUME_ID_PREFIX_TO_INSTRUMENT_NAME[volume_id_prefix]
     mission_abbrev = INSTRUMENT_ABBREV_TO_MISSION_ABBREV[instrument_name]
@@ -485,9 +488,8 @@ def import_one_volume(volume_id):
                     'debug': impglobals.ARGUMENTS.log_debug_limit})
 
     # Start fresh
-    global _MULT_TABLE_CACHE, _CREATED_IMP_MULT_TABLES, _MODIFIED_MULT_TABLES
+    global _MULT_TABLE_CACHE, _MODIFIED_MULT_TABLES
     _MULT_TABLE_CACHE = {}
-    _CREATED_IMP_MULT_TABLES = set()
     _MODIFIED_MULT_TABLES = {}
     impglobals.ANNOUNCED_IMPORT_WARNINGS = []
     impglobals.ANNOUNCED_IMPORT_ERRORS = []
@@ -935,7 +937,6 @@ def import_observation_table(volume_id,
                             f'table "{table_name}"')
                         continue
                     column_val = ref_index_row[data_source_val]
-
             elif data_source_cmd_prefix == 'ARRAY':
                 ref_index_name, array_index = data_source_cmd_param.split('.')
                 array_index = int(array_index)
@@ -962,8 +963,7 @@ def import_observation_table(volume_id,
                         f'Bad array index "{array_index}" for column '+
                         f'"{field_name}" in table "{table_name}"')
                     continue
-                array_val = ref_index_row[data_source_val][array_index]
-                column_val = array_val
+                column_val = ref_index_row[data_source_val][array_index]
 
             elif data_source_cmd_prefix == 'FUNCTION':
                 ret = import_run_field_function(data_source_val,
@@ -1060,6 +1060,7 @@ def import_observation_table(volume_id,
                         column_val = None
                 if column_val is not None and the_val is not None:
                     val_sentinel = table_column.get('val_sentinel', None)
+                    val_sentinel = None # XXX
                     if type(val_sentinel) == list:
                         if the_val in val_sentinel:
                             column_val = None
@@ -1076,7 +1077,7 @@ def import_observation_table(volume_id,
                                    f'"{table_name}" has minimum value '+
                                    f'{val_min} but {column_val} is too small -'+
                                    f' substituting NULL')
-                            impglobals.LOGGER.log('debug', msg, index_row_num)
+                            impglobals.LOGGER.log('debug', msg)
                         else:
                             msg = (f'Column "{field_name}" in table '+
                                    f'"{table_name}" has minimum value '+
@@ -1086,11 +1087,12 @@ def import_observation_table(volume_id,
                         column_val = None
                     if val_max is not None and the_val > val_max:
                         if val_use_null:
-                            msg = (f'Column "{field_name}" in table '+
-                                   f'"{table_name}" has maximum value {val_max}'+
-                                   f' but {column_val} is too large - '+
-                                   f'substituting NULL')
-                            impglobals.LOGGER.log('debug', msg)
+                            # msg = (f'Column "{field_name}" in table '+
+                            #        f'"{table_name}" has maximum value {val_max}'+
+                            #        f' but {column_val} is too large - '+
+                            #        f'substituting NULL')
+                            # impglobals.LOGGER.log('debug', msg)
+                            pass # XXX
                         else:
                             msg = (f'Column "{field_name}" in table '+
                                    f'"{table_name}" has maximum value '+

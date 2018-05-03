@@ -345,7 +345,7 @@
             "MINIMUM_LONGITUDE_WRT_OBSERVER"
         ],
         "val_min": -180,
-        "val_max": 360,
+        "val_max": 180,
         "val_sentinel": -999,
         "definition": "This alternative definition of longitude is measured relative to the direction toward the observer. Values increase westward. Unlike other longitudes, this quantity ranges from -180 to 180 degrees instead of 0 to 360 degrees.\nThe surface has been modeled as an ellipsoid. Surface intercept points that are obscured by the planet or another moon within the observed field of view are ignored. For observations capturing reflected sunlight (i.e., with wavelengths in the visual or near-infrared), the night side of the target body is also ignored.\nThis column tabulates the minimum value of this longitude within the field of view of the observation.",
         "pi_category_name": "obs_surface_geometry__<TARGET>",
@@ -374,7 +374,7 @@
             "MAXIMUM_LONGITUDE_WRT_OBSERVER"
         ],
         "val_min": -180,
-        "val_max": 360,
+        "val_max": 180,
         "val_sentinel": -999,
         "definition": "This alternative definition of longitude is measured relative to the direction toward the observer. Values increase westward. Unlike other longitudes, this quantity ranges from -180 to 180 degrees instead of 0 to 360 degrees.\nThe surface has been modeled as an ellipsoid. Surface intercept points that are obscured by the planet or another moon within the observed field of view are ignored. For observations capturing reflected sunlight (i.e., with wavelengths in the visual or near-infrared), the night side of the target body is also ignored.\nThis column tabulates the maximum value of this longitude within the field of view of the observation.",
         "pi_category_name": "obs_surface_geometry__<TARGET>",
