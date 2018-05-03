@@ -15,9 +15,9 @@ PDSTABLE_PREPROCESS = [
 ]
 
 PDSTABLE_REPLACEMENTS = [
-    ('.*COUVIS_0\d\d\d_INDEX.LBL', {
-        'DWELL_TIME':           {'    NULL': '    -999'},
-        'INTEGRATION_DURATION': {'            NULL': '           -1e32'},
-        'TARGET_NAME':          {'N/A             ': 'NONE            '},
-    }),
+    # ('.*COUVIS_0\d\d\d_INDEX.LBL', {
+    #     'DWELL_TIME':           {'    NULL': '    -999'},
+    #     'INTEGRATION_DURATION': {'            NULL': '           -1e32'},
+    #     'TARGET_NAME':          {'N/A             ': 'NONE            '},
+    # }),
 ]

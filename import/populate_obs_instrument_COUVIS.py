@@ -44,7 +44,7 @@ def populate_obs_general_COUVIS_rms_obs_id(**kwargs):
     index_row = metadata['index_row']
     planet_id = helper_cassini_planet_id(**kwargs)
 
-    planet_ltr = ''
+    planet_ltr = 'X'
     if planet_id is not None:
         planet_ltr = planet_id[0]
 
@@ -68,9 +68,9 @@ def populate_obs_general_COUVIS_data_type(**kwargs):
     channel, image_time = _COUVIS_channel_time_helper(**kwargs)
 
     if channel == 'HSP':
-        return ('PROFILE', 'Profile')
+        return 'PROFILE'
     if channel == 'HDAC':
-        return ('POINT', 'Point')
+        return 'POINT'
 
     metadata = kwargs['metadata']
     index_row_num = metadata['index_row_num']
@@ -78,7 +78,7 @@ def populate_obs_general_COUVIS_data_type(**kwargs):
     slit_state = index_row['SLIT_STATE'];
 
     if channel == 'EUV' and slit_state == 'OCCULTATION':
-        return ('PROFILE', 'Profile')
+        return 'PROFILE'
 
     supp_index_row = metadata['supp_index_row']
     object_type = None
@@ -95,12 +95,12 @@ def populate_obs_general_COUVIS_data_type(**kwargs):
         import_util.announce_nonrepeating_error(
             f'COUVIS_data_type has channel EUV or FUV but no '+
             f'DATA_OBJECT_TYPE available', index_row_num)
-        return ('CUBE', 'Cube') # XXX
+        return None
 
     if object_type == 'SPECTRUM':
-        return ('PROFILE', 'Profile')
+        return 'PROFILE'
 
-    return ('CUBE', 'Cube')
+    return 'CUBE'
 
 def populate_obs_general_COUVIS_time1(**kwargs):
     metadata = kwargs['metadata']
@@ -195,8 +195,6 @@ def populate_obs_general_COUVIS_right_asc1(**kwargs):
 
     index_row = metadata['index_row']
     ra = index_row['RIGHT_ASCENSION']
-    if ra == 'NULL':
-        ra = None
     return ra
 
 def populate_obs_general_COUVIS_right_asc2(**kwargs):
@@ -207,8 +205,6 @@ def populate_obs_general_COUVIS_right_asc2(**kwargs):
 
     index_row = metadata['index_row']
     ra = index_row['RIGHT_ASCENSION']
-    if ra == 'NULL':
-        ra = None
     return ra
 
 def populate_obs_general_COUVIS_declination1(**kwargs):
@@ -219,7 +215,7 @@ def populate_obs_general_COUVIS_declination1(**kwargs):
 
     index_row = metadata['index_row']
     dec = index_row['DECLINATION']
-    if dec == 'NULL':
+    if dec == 'NULL': # XXX
         dec = None
     return dec
 
@@ -231,12 +227,13 @@ def populate_obs_general_COUVIS_declination2(**kwargs):
 
     index_row = metadata['index_row']
     dec = index_row['DECLINATION']
-    if dec == 'NULL':
+    if dec == 'NULL': # XXX
         dec = None
     return dec
 
 def populate_obs_mission_cassini_COUVIS_mission_phase_name(**kwargs):
     return None
+
 
 ### OBS_TYPE_IMAGE TABLE ###
 
@@ -267,6 +264,8 @@ def populate_obs_type_image_COUVIS_lesser_pixel_size(**kwargs):
     line2 = supp_index_row['WINDOW_MAXIMUM_LINE_NUMBER']
     line_bin = supp_index_row['LINE_BINNING_FACTOR']
     samples = supp_index_row['LINE_SAMPLES']
+    if line1 is None or line2 is None or line_bin is None or samples is None:
+        return None
     pixels = min(samples, (line2-line1+1)//line_bin)
     if pixels < 0:
         return None
@@ -281,6 +280,8 @@ def populate_obs_type_image_COUVIS_greater_pixel_size(**kwargs):
     line2 = supp_index_row['WINDOW_MAXIMUM_LINE_NUMBER']
     line_bin = supp_index_row['LINE_BINNING_FACTOR']
     samples = supp_index_row['LINE_SAMPLES']
+    if line1 is None or line2 is None or line_bin is None or samples is None:
+        return None
     pixels = max(samples, (line2-line1+1)//line_bin)
     if pixels < 0:
         return None
@@ -290,9 +291,9 @@ def populate_obs_type_image_COUVIS_greater_pixel_size(**kwargs):
 ### OBS_WAVELENGTH TABLE ###
 
 # This is the effective wavelength (convolved with the solar spectrum)
-# XXX
+# Meaningless for a spectrometer
 def populate_obs_wavelength_COUVIS_effective_wavelength(**kwargs):
-    return 0
+    return None
 
 def populate_obs_wavelength_COUVIS_wavelength1(**kwargs):
     channel, image_time = _COUVIS_channel_time_helper(**kwargs)
@@ -485,6 +486,14 @@ def populate_obs_instrument_COUVIS_observation_type(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     obstype = index_row['OBSERVATION_TYPE']
-    if obstype == '':
-        obstype == 'UNKNOWN'
-    return (obstype.upper(), obstype.upper())
+    if obstype == '' or obstype == 'NULL':
+        obstype = 'NONE'
+    return obstype.upper()
+
+def populate_obs_instrument_COUVIS_occultation_port_state(**kwargs):
+    metadata = kwargs['metadata']
+    index_row = metadata['index_row']
+    occ_state = index_row['OCCULTATION_PORT_STATE']
+    if occ_state == 'NULL':
+        occ_state = 'N/A'
+    return occ_state.upper()

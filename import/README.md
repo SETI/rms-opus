@@ -7,7 +7,23 @@ sudo apt-get install python-dev libmysqlclient-dev # Debian / Ubuntu
 
 TODO:
 
-- Clean up data_type mult (make preprogrammed)
+- Routine to validate JSON files
+  - param_info display order
+  - Definitions present when needed
+  - val_min/max on int and real types
+
+- Instrument-specific definitions of effective wavelength and min/max wavelength
+   - Also START_TIME and STOP_TIME
+
+- Clean up mults
+  - data_type
+  - Cassini rev_no (sort 00A/B/C properly)
+  - Cassini primary instrument (put Other last)
+  - COUVIS observation type has ""
+  - COVIMS VIS sampling mode "Unk"
+  - Cassini Image Observation Type has some "" entries
+
+  Cassini image number should be written out in decimal not exp notation
 
 - Update table_schema README file
 
@@ -15,9 +31,6 @@ TODO:
   ("Narrow Angle Camera") so we can change the pretty versions in the future.
 
 - Finish commenting files other than do_import
-
-- Audit label files and make sure everything is available in database for
-  Details page
 
 - Option to regenerate mult tables from production tables
 
@@ -33,8 +46,6 @@ TODO:
   - Verify description
   - Verify dictionary context and name
   - Verify slug names
-
-- Add val_min/val_max to UVIS
 
 - Convert GROUP fields to ENUM if they are constant
 
@@ -55,11 +66,6 @@ TODO:
 - There's really no reason to have an ID for mult tables. Why not just key on the value itself?
 
 THE BIG QUESTIONS:
-
-- GENERIC:
-
-  - Do we really want to exclude "None" from being displayed in group selections? ** PUT BACK IN
-
 
 - OBS_GENERAL:
 
@@ -82,12 +88,6 @@ THE BIG QUESTIONS:
   - Do we include Jupiter rev_no? Should we rename "Saturn Orbit Number"?
 
 - COUVIS:
-  - H_LEVEL, D_LEVEL
-    - Keep?
-      ** ASK MARK
-  - BAND1, BAND2, BAND_BINNING, LINE1, LINE2, LINE_BINNING
-    - Have -1 values - are these valid or NULL? ** ASK MARK
-  - Lots of observations are missing supplemental index entries
   - image_type_id
     - Computed backwards?
            if ($this->obs_general__type_id($row) == "CUBE") {
@@ -176,4 +176,59 @@ COVIMS:
   - OBS ID "VIMS_015SA_1X6MOVIEA003" - Valid?
 
   - No MISSION_PHASE_NAME
-  
+
+
+
+IMPORT PROBLEMS WITH LABELS: (as of 5/2/18)
+
+COISS
+
+- Times are sometimes in the wrong order. Our index files differ
+  from those at JPL:
+
+  (From COISS_1001)
+  ERROR | time_sec1 (1999-009T08:21:37.692) and time_sec2 (1999-009T08:20:15.568) are in the wrong order [line 7]
+
+- COISS_xxxx_ring_summary.tab has values from 0 to 360 for
+  MINIMUM_LONGITUDE_WRT_OBSERVER and MAXIMUM_LONGITUDE_WRT_OBSERVER
+  even though the label file says valid values at -180 to 180.
+  This is true for all volumes, both 1xxx and 2xxx.
+
+  (From COISS_1001)
+  ERROR | Column "longitude_wrt_observer2" in table "obs_ring_geometry" has maximum value 180 but 360.0 is too large [line 1281]
+
+- COISS_1001_moon_summary.tab has the wrong field size for TARGET_NAME
+
+  (From COISS_1001)
+  ERROR | Unknown TARGET_NAME "ADRASTEA"," - edit config_data.py [line 1281]
+
+- MISSING_LINES needs to have NULL_CONSTANT   = -2147483648
+  This has already been done in 1001-1009, but appears to be missing
+  from all 2xxx volumes.
+
+  However, there are some volumes that use 2147483647 instead.
+
+- FILTER_TEMPERATURE needs to have NULL_CONSTANT = -999
+  All Volumes
+
+- SENSOR_HEAD_ELEC_TEMPERATURE needs to have NULL_CONSTANT = -999
+  All Volumes
+
+- DETECTOR_TEMPERATURE needs to have NULL_CONSTANT = -999
+  All Volumes
+
+- INSTRUMENT_DATA_RATE needs to have NULL_CONSTANT = -999
+  All Volumes
+
+- OPTICS_TEMPERATURE currently says (in 1xxx):
+    NOT_APPLICABLE_CONSTANT = 1.e32
+  and in 2xxx:
+    NULL_CONSTANT = -999
+  The 2xxx version is correct.
+  There are several two cases that have values of 26193824841
+
+- INST_CMPRS_RATE needs to have NULL_CONSTANT = 1e32
+  All Volumes
+  ALSO needs to have -999 too
+
+COUVIS:

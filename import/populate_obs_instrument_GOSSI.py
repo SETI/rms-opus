@@ -67,6 +67,9 @@ def populate_obs_general_GOSSI_time1(**kwargs):
     stop_time = index_row['IMAGE_TIME']
     exposure = index_row['EXPOSURE_DURATION']
 
+    if stop_time is None or exposure is None:
+        return None
+
     return julian.iso_from_tai(julian.tai_from_iso(stop_time)-exposure/1000,
                                digits=3)
 
@@ -74,6 +77,9 @@ def populate_obs_general_GOSSI_time2(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     stop_time = index_row['IMAGE_TIME']
+
+    if stop_time is None:
+        return None
 
     return julian.iso_from_tai(julian.tai_from_iso(stop_time), digits=3)
 
@@ -83,12 +89,18 @@ def populate_obs_general_GOSSI_time_sec1(**kwargs):
     stop_time = index_row['IMAGE_TIME']
     exposure = index_row['EXPOSURE_DURATION']
 
+    if stop_time is None or exposure is None:
+        return None
+
     return julian.tai_from_iso(stop_time)-exposure/1000
 
 def populate_obs_general_GOSSI_time_sec2(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     stop_time = index_row['IMAGE_TIME']
+
+    if stop_time is None:
+        return None
 
     return julian.tai_from_iso(stop_time)
 
@@ -102,6 +114,10 @@ def populate_obs_general_GOSSI_observation_duration(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     exposure = index_row['EXPOSURE_DURATION']
+
+    if exposure is None:
+        return None
+
     return exposure / 1000
 
 def populate_obs_general_GOSSI_quantity(**kwargs):
@@ -136,7 +152,7 @@ def _GOSSI_ra_helper(**kwargs):
     index_row = metadata['index_row']
     ra = index_row['RIGHT_ASCENSION']
     dec = index_row['DECLINATION']
-    if not isinstance(ra, float) or not isinstance(dec, float):
+    if ra is None or dec is None:
         return None, None
     delta = np.rad2deg(_GOSSI_FOV_RAD_DIAG/2 / np.cos(np.deg2rad(dec)))
     ra1 = (ra-delta) % 360
@@ -161,7 +177,7 @@ def populate_obs_general_GOSSI_declination1(**kwargs):
 
     index_row = metadata['index_row']
     dec = index_row['DECLINATION']
-    if not isinstance(dec, float):
+    if dec is None:
         return None
     return dec - np.rad2deg(_GOSSI_FOV_RAD_DIAG/2)
 
@@ -173,7 +189,7 @@ def populate_obs_general_GOSSI_declination2(**kwargs):
 
     index_row = metadata['index_row']
     dec = index_row['DECLINATION']
-    if not isinstance(dec, float):
+    if dec is None:
         return None
     return dec + np.rad2deg(_GOSSI_FOV_RAD_DIAG/2)
 
@@ -187,6 +203,10 @@ def populate_obs_type_image_GOSSI_duration(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     exposure = index_row['EXPOSURE_DURATION']
+
+    if exposure is None:
+        return None
+        
     return exposure / 1000
 
 def populate_obs_type_image_GOSSI_levels(**kwargs):

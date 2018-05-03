@@ -59,6 +59,8 @@
             "TAB:ring_geo",
             "MINIMUM_RING_RADIUS"
         ],
+        "val_min": 0,
+        "val_max": 1e32,
         "val_sentinel": -999,
         "definition": "Ring radius is the distance from the center of the planet to the point where a line of sight intercepts the ring plane.\nRing intercept points that are obscured by the planet or a moon within the observed field of view are ignored. For observations capturing reflected sunlight (i.e., with wavelengths in the visual or near-infrared), ring intercept points that are shadowed by the planet are also ignored.\nThis column tabulates the minimum value of ring radius within the field of view of the observation.",
         "pi_category_name": "obs_ring_geometry",
@@ -85,6 +87,8 @@
             "TAB:ring_geo",
             "MAXIMUM_RING_RADIUS"
         ],
+        "val_min": 0,
+        "val_max": 1e32,
         "val_sentinel": -999,
         "definition": "Ring radius is the distance from the center of the planet to the point where a line of sight intercepts the ring plane.\nRing intercept points that are obscured by the planet or a moon within the observed field of view are ignored. For observations capturing reflected sunlight (i.e., with wavelengths in the visual or near-infrared), ring intercept points that are shadowed by the planet are also ignored.\nThis column tabulates the maximum value of ring radius within the field of view of the observation.",
         "pi_category_name": "obs_ring_geometry",
@@ -111,6 +115,7 @@
             "TAB:ring_geo",
             "FINEST_RING_INTERCEPT_RESOLUTION"
         ],
+        "val_min": 0,
         "val_sentinel": -999,
         "definition": "Ring intercept resolution is the size of one edge of a pixel at the distance of the ring intercept point. If the pixel shape is not square, it is defined by the smaller of the two edges. Unlike the quantity 'radial resolution', these values are not projected into the ring plane.\nRing intercept points that are obscured by the planet or a moon within the observed field of view are ignored. For observations capturing reflected sunlight (i.e., with wavelengths in the visual or near-infrared), ring intercept points that are shadowed by the planet are also ignored.\nThis column tabulates the minimum (finest) value of ring intercept resolution within the field of view of the observation.",
         "pi_category_name": "obs_ring_geometry",
@@ -137,6 +142,7 @@
             "TAB:ring_geo",
             "COARSEST_RING_INTERCEPT_RESOLUTION"
         ],
+        "val_min": 0,
         "val_sentinel": -999,
         "definition": "Ring intercept resolution is the size of one edge of a pixel at the distance of the ring intercept point. If the pixel shape is not square, it is defined by the larger of the two edges. Unlike the quantity 'radial resolution', these values are not projected into the ring plane.\nRing intercept points that are obscured by the planet or a moon within the observed field of view are ignored. For observations capturing reflected sunlight (i.e., with wavelengths in the visual or near-infrared), ring intercept points that are shadowed by the planet are also ignored.\nThis column tabulates the maximum (coarsest) value of ring intercept resolution within the field of view of the observation.",
         "pi_category_name": "obs_ring_geometry",
@@ -163,6 +169,7 @@
             "TAB:ring_geo",
             "FINEST_RADIAL_RESOLUTION"
         ],
+        "val_min": 0,
         "val_sentinel": -999,
         "definition": "Radial resolution is related to the gradient of the ring intercept radius. It is equal to the largest change in the radius resulting from a one-pixel shift of the line of sight. In practice, it defines the approximate size of the narrowest ring feature that can be resolved.\nRing intercept points that are obscured by the planet or a moon within the observed field of view are ignored. For observations capturing reflected sunlight (i.e., with wavelengths in the visual or near-infrared), ring intercept points that are shadowed by the planet are also ignored.\nThis column tabulates the minimum (finest) value of radial resolution within the field of view of the observation.",
         "pi_category_name": "obs_ring_geometry",
@@ -189,6 +196,7 @@
             "TAB:ring_geo",
             "COARSEST_RADIAL_RESOLUTION"
         ],
+        "val_min": 0,
         "val_sentinel": -999,
         "definition": "Radial resolution is the gradient of the gradient of the ring intercept radius. It is equal to the largest change in the radius resulting from a one-pixel shift of the line of sight. In practice, it defines the approximate size of the narrowest ring feature that can be resolved.\nRing intercept points that are obscured by the planet or a moon within the observed field of view are ignored. For observations capturing reflected sunlight (i.e., with wavelengths in the visual or near-infrared), ring intercept points that are shadowed by the planet are also ignored.\nThis column tabulates the maximum (coarsest) value of radial resolution within the field of view of the observation.",
         "pi_category_name": "obs_ring_geometry",
@@ -215,6 +223,8 @@
             "TAB:ring_geo",
             "MINIMUM_RING_DISTANCE"
         ],
+        "val_min": 0,
+        "val_max": 1e32,
         "val_sentinel": -999,
         "definition": "Ring distance equals the separation between the observer and the point where a line of sight intercepts the ring plane.\nRing intercept points that are obscured by the planet or a moon are ignored. For observations capturing reflected sunlight (i.e., with wavelengths in the visual or near-infrared), ring intercept points that are shadowed by the planet are also ignored.\nThis column tabulates the minimum value of ring distance within the field of view of the observation.",
         "pi_category_name": "obs_ring_geometry",
@@ -241,6 +251,8 @@
             "TAB:ring_geo",
             "MAXIMUM_RING_DISTANCE"
         ],
+        "val_min": 0,
+        "val_max": 1e32,
         "val_sentinel": -999,
         "definition": "Ring distance equals the separation between the observer and the point where a line of sight intercepts the ring plane.\nRing intercept points that are obscured by the planet or a moon within the observed field of view are ignored. For observations capturing reflected sunlight (i.e., with wavelengths in the visual or near-infrared), ring intercept points that are shadowed by the planet are also ignored.\nThis column tabulates the maximum value of ring distance within the field of view of the observation.",
         "pi_category_name": "obs_ring_geometry",
@@ -267,6 +279,8 @@
             "TAB:ring_geo",
             "RING_CENTER_DISTANCE"
         ],
+        "val_min": 0,
+        "val_max": 1e32,
         "val_sentinel": -999,
         "definition": "Distance from the observer to the center of the ring system.\nThis value is defined by the instantaneous geometry at the time of the observation; it is independent of the field of view.",
         "pi_category_name": "obs_ring_geometry",
@@ -1209,6 +1223,8 @@
             "TAB:ring_geo",
             "MINIMUM_EDGE_ON_RING_RADIUS"
         ],
+        "val_min": 0,
+        "val_max": 1e32,
         "val_sentinel": -999,
         "definition": "Edge-on ring radius is the distance from the planet's rotation pole to the edge-on intercept point.\nEdge-on intercept geometry is optimized for describing observations of planetary rings obtained from viewpoints close to the ring plane. It employs cylindrical coordinates (radius, altitude, longitude), where radius values are measured from the ring rotation pole and altitude is normal to the ring plane. The intercept is defined as the point along a line of sight where that line is tangent to a cylinder with a particular radius.\nEdge-on intercept points that are obscured by the planet or a moon within the observed field of view are ignored. For observations capturing reflected sunlight (i.e., with wavelengths in the visual or near-infrared), intercept points that are shadowed by the planet are also ignored.\nThis column tabulates the minimum value of the edge-on ring radius within the field of view of the observation.",
         "pi_category_name": "obs_ring_geometry",
@@ -1235,6 +1251,8 @@
             "TAB:ring_geo",
             "MAXIMUM_EDGE_ON_RING_RADIUS"
         ],
+        "val_min": 0,
+        "val_max": 1e32,
         "val_sentinel": -999,
         "definition": "Edge-on ring radius is the distance from the planet's rotation pole to the edge-on intercept point.\nEdge-on intercept geometry is optimized for describing observations of planetary rings obtained from viewpoints close to the ring plane. It employs cylindrical coordinates (radius, altitude, longitude), where radius values are measured from the ring rotation pole and altitude is normal to the ring plane. The intercept is defined as the point along a line of sight where that line is tangent to a cylinder with a particular radius.\nEdge-on intercept points that are obscured by the planet or a moon within the observed field of view are ignored. For observations capturing reflected sunlight (i.e., with wavelengths in the visual or near-infrared), intercept points that are shadowed by the planet are also ignored.\nThis column tabulates the maximum value of the edge-on ring radius within the field of view of the observation.",
         "pi_category_name": "obs_ring_geometry",
@@ -1261,6 +1279,8 @@
             "TAB:ring_geo",
             "MINIMUM_EDGE_ON_RING_ALTITUDE"
         ],
+        "val_min": -1e32,
+        "val_max": 1e32,
         "val_sentinel": -9.99e+09,
         "definition": "Edge-on ring altitude is the distance from the ring plane to the edge-on intercept point. The value is positive on the side of the ring plane defined by prograde rotation; note that this is the north side of the ring plane for Jupiter, Saturn and Neptune, but the IAU-defined south side for Uranus.\nEdge-on intercept geometry is optimized for describing observations of planetary rings obtained from viewpoints close to the ring plane. It employs cylindrical coordinates (radius, altitude, longitude), where radius values are measured from the ring rotation pole and altitude is normal to the ring plane. The intercept is defined as the point along a line of sight where that line is tangent to a cylinder with a particular radius.\nEdge-on intercept points that are obscured by the planet or a moon within the observed field of view are ignored. For observations capturing reflected sunlight (i.e., with wavelengths in the visual or near-infrared), intercept points that are shadowed by the planet are also ignored.\nThis column tabulates the minimum value of the edge-on ring altitude within the field of view of the observation.",
         "pi_category_name": "obs_ring_geometry",
@@ -1287,6 +1307,8 @@
             "TAB:ring_geo",
             "MAXIMUM_EDGE_ON_RING_ALTITUDE"
         ],
+        "val_min": -1e32,
+        "val_max": 1e32,
         "val_sentinel": -9.99e+09,
         "definition": "Edge-on ring altitude is the distance from the ring plane to the edge-on intercept point. The value is positive on the side of the ring plane defined by prograde rotation; note that this is the north side of the ring plane for Jupiter, Saturn and Neptune, but the IAU-defined south side for Uranus.\nEdge-on intercept geometry is optimized for describing observations of planetary rings obtained from viewpoints close to the ring plane. It employs cylindrical coordinates (radius, altitude, longitude), where radius values are measured from the ring rotation pole and altitude is normal to the ring plane. The intercept is defined as the point along a line of sight where that line is tangent to a cylinder with a particular radius.\nEdge-on intercept points that are obscured by the planet or a moon within the observed field of view are ignored. For observations capturing reflected sunlight (i.e., with wavelengths in the visual or near-infrared), intercept points that are shadowed by the planet are also ignored.\nThis column tabulates the maximum value of the edge-on ring altitude within the field of view of the observation.",
         "pi_category_name": "obs_ring_geometry",
@@ -1313,6 +1335,7 @@
             "TAB:ring_geo",
             "FINEST_EDGE_ON_RADIAL_RESOLUTION"
         ],
+        "val_min": 0,
         "val_sentinel": -999,
         "definition": "Edge-on radial resolution is the gradient of the edge-on ring radius. It is equal to the largest change in the radius resulting from a one-pixel shift of the line of sight. In practice, it defines the approximate size of the narrowest ring feature that can be resolved.\nEdge-on intercept geometry is optimized for describing observations of planetary rings obtained from viewpoints close to the ring plane. It employs cylindrical coordinates (radius, altitude, longitude), where radius values are measured from the ring rotation pole and altitude is normal to the ring plane. The intercept is defined as the point along a line of sight where that line is tangent to a cylinder with a particular radius.\nEdge-on intercept points that are obscured by the planet or a moon within the observed field of view are ignored. For observations capturing reflected sunlight (i.e., with wavelengths in the visual or near-infrared), intercept points that are shadowed by the planet are also ignored.\nThis column tabulates the minimum value of the edge-on radial resolution within the field of view of the observation.",
         "pi_category_name": "obs_ring_geometry",
@@ -1339,6 +1362,7 @@
             "TAB:ring_geo",
             "COARSEST_EDGE_ON_RADIAL_RESOLUTION"
         ],
+        "val_min": 0,
         "val_sentinel": -999,
         "definition": "Edge-on radial resolution is the gradient of the edge-on ring radius. It is equal to the largest change in the radius resulting from a one-pixel shift of the line of sight. In practice, it defines the approximate size of the narrowest ring feature that can be resolved.\nEdge-on intercept geometry is optimized for describing observations of planetary rings obtained from viewpoints close to the ring plane. It employs cylindrical coordinates (radius, altitude, longitude), where radius values are measured from the ring rotation pole and altitude is normal to the ring plane. The intercept is defined as the point along a line of sight where that line is tangent to a cylinder with a particular radius.\nEdge-on intercept points that are obscured by the planet or a moon within the observed field of view are ignored. For observations capturing reflected sunlight (i.e., with wavelengths in the visual or near-infrared), intercept points that are shadowed by the planet are also ignored.\nThis column tabulates the maximum value of the edge-on radial resolution within the field of view of the observation.",
         "pi_category_name": "obs_ring_geometry",
@@ -1365,6 +1389,8 @@
             "TAB:ring_geo",
             "MINIMUM_EDGE_ON_INTERCEPT_DISTANCE"
         ],
+        "val_min": 0,
+        "val_max": 1e32,
         "val_sentinel": -999,
         "definition": "Edge-on intercept distance is distance from the observer to the edge-on intercept point.\nEdge-on intercept geometry is optimized for describing observations of planetary rings obtained from viewpoints close to the ring plane. It employs cylindrical coordinates (radius, altitude, longitude), where radius values are measured from the ring rotation pole and altitude is normal to the ring plane. The intercept is defined as the point along a line of sight where that line is tangent to a cylinder with a particular radius.\nEdge-on intercept points that are obscured by the planet or a moon within the observed field of view are ignored. For observations capturing reflected sunlight (i.e., with wavelengths in the visual or near-infrared), intercept points that are shadowed by the planet are also ignored.\nThis column tabulates the minimum value of the edge-on intercept distance within the field of view of the observation.",
         "pi_category_name": "obs_ring_geometry",
@@ -1391,6 +1417,8 @@
             "TAB:ring_geo",
             "MAXIMUM_EDGE_ON_INTERCEPT_DISTANCE"
         ],
+        "val_min": 0,
+        "val_max": 1e32,
         "val_sentinel": -999,
         "definition": "Edge-on intercept distance is distance from the observer to the edge-on intercept point.\nEdge-on intercept geometry is optimized for describing observations of planetary rings obtained from viewpoints close to the ring plane. It employs cylindrical coordinates (radius, altitude, longitude), where radius values are measured from the ring rotation pole and altitude is normal to the ring plane. The intercept is defined as the point along a line of sight where that line is tangent to a cylinder with a particular radius.\nEdge-on intercept points that are obscured by the planet or a moon within the observed field of view are ignored. For observations capturing reflected sunlight (i.e., with wavelengths in the visual or near-infrared), intercept points that are shadowed by the planet are also ignored.\nThis column tabulates the maximum value of the edge-on intercept distance within the field of view of the observation.",
         "pi_category_name": "obs_ring_geometry",

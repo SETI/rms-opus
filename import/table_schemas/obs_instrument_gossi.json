@@ -230,7 +230,7 @@
     {
         "field_name": "encoding_min_compression_ratio",
         "field_type": "real8",
-        "field_notnull": true,
+        "field_default": null,
         "data_source": [
             "TAB:index",
             "ENCODING_MIN_COMPRESSION_RATIO"
@@ -257,7 +257,7 @@
     {
         "field_name": "encoding_max_compression_ratio",
         "field_type": "real8",
-        "field_notnull": true,
+        "field_default": null,
         "data_source": [
             "TAB:index",
             "ENCODING_MAX_COMPRESSION_RATIO"
@@ -285,7 +285,7 @@
     {
         "field_name": "encoding_compression_ratio",
         "field_type": "real8",
-        "field_notnull": true,
+        "field_default": null,
         "data_source": [
             "TAB:index",
             "ENCODING_COMPRESSION_RATIO"

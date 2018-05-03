@@ -329,13 +329,13 @@ def populate_obs_mission_cassini_COVIMS_ert2(**kwargs):
 def populate_obs_mission_cassini_COVIMS_spacecraft_clock_count1(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
-    count = index_row['SPACE_CLOCK_START_COUNT']
+    count = index_row['SPACECRAFT_CLOCK_START_COUNT']
     return count
 
 def populate_obs_mission_cassini_COVIMS_spacecraft_clock_count2(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
-    count = index_row['SPACE_CLOCK_STOP_COUNT']
+    count = index_row['SPACECRAFT_CLOCK_STOP_COUNT']
     return count
 
 

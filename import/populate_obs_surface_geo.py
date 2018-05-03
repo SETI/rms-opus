@@ -6,6 +6,8 @@
 
 from config_data import *
 
+import import_util
+
 def populate_obs_surface_geo_target_name(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']

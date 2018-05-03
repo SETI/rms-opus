@@ -24,6 +24,8 @@ from populate_obs_instrument_COVIMS import *
 from populate_obs_mission_galileo import *
 from populate_obs_instrument_GOSSI import *
 
+from populate_obs_mission_hubble import *
+
 from populate_obs_surface_geo import *
 
 
@@ -133,6 +135,9 @@ def create_tables_for_import(volume_id, namespace):
        reference. This does NOT create the target-specific obs_surface_geometry
        tables because we don't yet know what target names we have."""
 
+    global _CREATED_IMP_MULT_TABLES
+    _CREATED_IMP_MULT_TABLES = set()
+
     volume_id_prefix = volume_id[:volume_id.find('_')]
     instrument_name = VOLUME_ID_PREFIX_TO_INSTRUMENT_NAME[volume_id_prefix]
     mission_abbrev = INSTRUMENT_ABBREV_TO_MISSION_ABBREV[instrument_name]
@@ -151,7 +156,6 @@ def create_tables_for_import(volume_id, namespace):
     for table_name in TABLES_TO_POPULATE:
         table_name = table_name.replace('<INST>', instrument_name.lower())
         table_name = table_name.replace('<MISSION>', mission_name.lower())
-        table_names_in_order.append(table_name)
 
         if table_name.startswith('obs_surface_geometry__'):
             # Note that we aren't replacing <TARGET> here because we don't know
@@ -163,7 +167,11 @@ def create_tables_for_import(volume_id, namespace):
                                                 'obs_surface_geometry_target')
         else:
             table_schema = import_util.read_schema_for_table(table_name)
+        if table_schema is None:
+            continue
+
         table_schemas[table_name] = table_schema
+        table_names_in_order.append(table_name)
 
         if table_name.startswith('obs_surface_geometry__'):
             # Skip surface geo tables until they are needed
@@ -181,8 +189,9 @@ def create_tables_for_import(volume_id, namespace):
                     schema = mult_target_name_table_schema
                 else:
                     schema = mult_table_schema
-                impglobals.DATABASE.create_table(namespace, mult_name, schema)
-                _CREATED_IMP_MULT_TABLES.add(mult_name)
+                if impglobals.DATABASE.create_table(namespace, mult_name,
+                                                    schema):
+                    _CREATED_IMP_MULT_TABLES.add(mult_name)
 
         impglobals.DATABASE.create_table(namespace, table_name,
                                          table_schema)
@@ -284,7 +293,7 @@ def _convert_sql_response_to_mult_table(mult_table_name, rows):
         mult_rows.append(row_dict)
     return mult_rows
 
-def read_or_create_mult_table(mult_table_name):
+def read_or_create_mult_table(mult_table_name, table_column):
     """Given a mult table name, either read the table from the database or
        return the cached version if we previously read it."""
 
@@ -293,15 +302,15 @@ def read_or_create_mult_table(mult_table_name):
 
     use_mult_table_name = None
 
-    if mult_table_name in PREPROGRAMMED_MULT_TABLE_CONTENTS:
+    if 'mult_options' in table_column:
         if not impglobals.ARGUMENTS.import_suppress_mult_messages:
             impglobals.LOGGER.log('debug',
                       f'Using preprogrammed mult table "{mult_table_name}"')
         mult_rows = _convert_sql_response_to_mult_table(
                             mult_table_name,
-                            PREPROGRAMMED_MULT_TABLE_CONTENTS[mult_table_name])
+                            table_column['mult_options'])
         _MULT_TABLE_CACHE[mult_table_name] = mult_rows
-        _MODIFIED_MULT_TABLES.add(mult_table_name)
+        _MODIFIED_MULT_TABLES[mult_table_name] = table_column
         return mult_rows
 
     # If there is already an import version of the table, it means this is a
@@ -312,19 +321,19 @@ def read_or_create_mult_table(mult_table_name):
     # Otherwise, if there is already a non-import version, read that one.
     # And if there's no table to be found anyway, create a new one.
     use_namespace = None
+
     if (mult_table_name not in _CREATED_IMP_MULT_TABLES and
         impglobals.DATABASE.table_exists('import', mult_table_name)):
+        # Previous import table available
         use_namespace = 'import'
-        # If we have tables left over from the previous run, we have to assume
-        # they were modified
-        _MODIFIED_MULT_TABLES.add(mult_table_name)
+
     elif impglobals.DATABASE.table_exists('perm', mult_table_name):
         use_namespace = 'perm'
         # If we just created an import version but are reading the permanent
         # version, we have to write out the import version before doing
         # anything else too
         if mult_table_name in _CREATED_IMP_MULT_TABLES:
-            _MODIFIED_MULT_TABLES.add(mult_table_name)
+            _MODIFIED_MULT_TABLES[mult_table_name] = table_column
 
     if use_namespace is not None:
         ns_mult_table_name = (
@@ -347,12 +356,12 @@ def read_or_create_mult_table(mult_table_name):
     return rows
 
 
-def update_mult_table(table_name, field_name, val, label):
+def update_mult_table(table_name, field_name, table_column, val, label):
     """Update a single value in the cached version of a mult table.
     If label is None the mult is marked as not-displayed."""
 
     mult_table_name = import_util.table_name_mult(table_name, field_name)
-    mult_table = read_or_create_mult_table(mult_table_name)
+    mult_table = read_or_create_mult_table(mult_table_name, table_column)
     if val is not None:
         val = str(val)
     for entry in mult_table:
@@ -360,7 +369,7 @@ def update_mult_table(table_name, field_name, val, label):
             # The value is already in the mult table, so we're done here
             return entry['id']
 
-    if mult_table_name in PREPROGRAMMED_MULT_TABLE_CONTENTS:
+    if 'mult_options' in table_column:
         import_util.announce_nonrepeating_error(
             f'Attempting to add value "{val}" to preprogrammed mult table '+
             f'"{mult_table_name}"')
@@ -372,12 +381,14 @@ def update_mult_table(table_name, field_name, val, label):
     else:
         next_id = max([x['id'] for x in mult_table])+1
         next_disp_order = max([x['disp_order'] for x in mult_table])+10
+    if label is None:
+        label = 'NULL'
     new_entry = {
         'id': next_id,
         'value': val,
         'label': str(label),
         'disp_order': 0,
-        'display': 'Y' if label is not None else 'N'
+        'display': 'Y' # if label is not None else 'N'
     }
     if mult_table_name in MULT_TABLES_WITH_TARGET_GROUPING:
         if val not in TARGET_NAME_INFO:
@@ -389,7 +400,7 @@ def update_mult_table(table_name, field_name, val, label):
         new_entry['grouping'] = planet_id
     mult_table.append(new_entry)
 
-    _MODIFIED_MULT_TABLES.add(mult_table_name)
+    _MODIFIED_MULT_TABLES[mult_table_name] = table_column
     if not impglobals.ARGUMENTS.import_suppress_mult_messages:
         impglobals.LOGGER.log('info',
             f'Added new value "{val}" ("{label}") to mult table '+
@@ -402,9 +413,10 @@ def dump_import_mult_tables():
     """Dump all of the cached import mult tables into the database."""
 
     for mult_table_name in sorted(_MODIFIED_MULT_TABLES):
+        table_column = _MODIFIED_MULT_TABLES[mult_table_name]
         rows = _MULT_TABLE_CACHE[mult_table_name]
         # Update the display_order
-        if mult_table_name not in PREPROGRAMMED_MULT_TABLE_CONTENTS:
+        if 'mult_options' not in table_column:
             all_numeric = True
             for row in rows:
                 if (row['label'] is None or
@@ -476,10 +488,9 @@ def import_one_volume(volume_id):
                     'debug': impglobals.ARGUMENTS.log_debug_limit})
 
     # Start fresh
-    global _MULT_TABLE_CACHE, _CREATED_IMP_MULT_TABLES, _MODIFIED_MULT_TABLES
+    global _MULT_TABLE_CACHE, _MODIFIED_MULT_TABLES
     _MULT_TABLE_CACHE = {}
-    _CREATED_IMP_MULT_TABLES = set()
-    _MODIFIED_MULT_TABLES = set()
+    _MODIFIED_MULT_TABLES = {}
     impglobals.ANNOUNCED_IMPORT_WARNINGS = []
     impglobals.ANNOUNCED_IMPORT_ERRORS = []
     impglobals.IMPORT_HAS_BAD_DATA = False
@@ -730,6 +741,9 @@ def import_one_volume(volume_id):
                 if table_name.startswith('obs_surface_geometry'):
                     # Deal with surface geometry a little later
                     continue
+                if table_name not in table_schemas:
+                    # Table not relevant for this product
+                    continue
                 row = import_observation_table(volume_id,
                                                instrument_name,
                                                mission_abbrev,
@@ -791,11 +805,11 @@ def import_one_volume(volume_id):
                                                                     target_name]
 
                         row = import_observation_table(volume_id,
-                                                   instrument_name,
-                                                   mission_abbrev,
-                                                   new_table_name,
-                                                   table_schemas[table_name],
-                                                   metadata)
+                                                       instrument_name,
+                                                       mission_abbrev,
+                                                       new_table_name,
+                                                      table_schemas[table_name],
+                                                       metadata)
                         if new_table_name not in table_rows:
                             table_rows[new_table_name] = []
                             impglobals.LOGGER.log('debug',
@@ -923,7 +937,6 @@ def import_observation_table(volume_id,
                             f'table "{table_name}"')
                         continue
                     column_val = ref_index_row[data_source_val]
-
             elif data_source_cmd_prefix == 'ARRAY':
                 ref_index_name, array_index = data_source_cmd_param.split('.')
                 array_index = int(array_index)
@@ -950,8 +963,7 @@ def import_observation_table(volume_id,
                         f'Bad array index "{array_index}" for column '+
                         f'"{field_name}" in table "{table_name}"')
                     continue
-                array_val = ref_index_row[data_source_val][array_index]
-                column_val = array_val
+                column_val = ref_index_row[data_source_val][array_index]
 
             elif data_source_cmd_prefix == 'FUNCTION':
                 ret = import_run_field_function(data_source_val,
@@ -990,12 +1002,18 @@ def import_observation_table(volume_id,
                     f'Column "{field_name}" in table "{table_name}" '+
                     f'has NULL value but NOT NULL is set', index_row_num)
         else:
-            if field_type == 'flag':
+            if field_type.startswith('flag'):
                 if column_val in [0, 'n', 'N', 'no', 'No', 'NO', 'off', 'OFF']:
-                    column_val = 'No'
+                    if field_type == 'flag_onoff':
+                        column_val = 'Off'
+                    else:
+                        column_val = 'No'
                 elif column_val in [1, 'y', 'Y', 'yes', 'Yes', 'YES', 'on',
                                     'ON']:
-                    column_val = 'Yes'
+                    if field_type == 'flag_onoff':
+                        column_val = 'On'
+                    else:
+                        column_val = 'Yes'
                 elif column_val in ['N/A', 'UNK', 'NULL']:
                     column_val = None
                 else:
@@ -1042,6 +1060,7 @@ def import_observation_table(volume_id,
                         column_val = None
                 if column_val is not None and the_val is not None:
                     val_sentinel = table_column.get('val_sentinel', None)
+                    val_sentinel = None # XXX
                     if type(val_sentinel) == list:
                         if the_val in val_sentinel:
                             column_val = None
@@ -1058,7 +1077,7 @@ def import_observation_table(volume_id,
                                    f'"{table_name}" has minimum value '+
                                    f'{val_min} but {column_val} is too small -'+
                                    f' substituting NULL')
-                            impglobals.LOGGER.log('debug', msg, index_row_num)
+                            impglobals.LOGGER.log('debug', msg)
                         else:
                             msg = (f'Column "{field_name}" in table '+
                                    f'"{table_name}" has minimum value '+
@@ -1068,11 +1087,12 @@ def import_observation_table(volume_id,
                         column_val = None
                     if val_max is not None and the_val > val_max:
                         if val_use_null:
-                            msg = (f'Column "{field_name}" in table '+
-                                   f'"{table_name}" has maximum value {val_max}'+
-                                   f' but {column_val} is too large - '+
-                                   f'substituting NULL')
-                            impglobals.LOGGER.log('debug', msg)
+                            # msg = (f'Column "{field_name}" in table '+
+                            #        f'"{table_name}" has maximum value {val_max}'+
+                            #        f' but {column_val} is too large - '+
+                            #        f'substituting NULL')
+                            # impglobals.LOGGER.log('debug', msg)
+                            pass # XXX
                         else:
                             msg = (f'Column "{field_name}" in table '+
                                    f'"{table_name}" has maximum value '+
@@ -1090,8 +1110,11 @@ def import_observation_table(volume_id,
             mult_column_name = import_util.table_name_mult(table_name,
                                                            field_name)
             if not mult_label_set:
-                mult_label = str(column_val).title()
-            id_num = update_mult_table(table_name, field_name,
+                if column_val is None:
+                    mult_label = 'NULL'
+                else:
+                    mult_label = str(column_val).title()
+            id_num = update_mult_table(table_name, field_name, table_column,
                                        column_val, mult_label)
             new_row[mult_column_name] = id_num
 
