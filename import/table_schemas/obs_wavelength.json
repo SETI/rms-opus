@@ -16,7 +16,7 @@
     },
     {
         "field_name": "rms_obs_id",
-        "field_type": "char40",
+        "field_type": "char42",
         "field_key": "foreign",
         "field_key_foreign": [
             "obs_general",
@@ -50,32 +50,6 @@
             "instrument_id"
         ],
         "comment": "The instrument_id is included here for ease of database manipulation only."
-    },
-    {
-        "field_name": "effective_wavelength",
-        "field_type": "real4",
-        "field_key": true,
-        "field_default": null,
-        "data_source": [
-            "FUNCTION",
-            "obs_wavelength_<INST>_effective_wavelength"
-        ],
-        "definition": "The center wavelength of the instrument and filter combination taking into account the solar spectrum.",
-        "pi_category_name": "obs_wavelength",
-        "pi_dict_context": "OPUS_WAVELENGTH",
-        "pi_dict_name": "EFFECTIVE_WAVELENGTH",
-        "pi_disp_order": 3,
-        "pi_display": 1,
-        "pi_display_results": 1,
-        "pi_form_type": "RANGE",
-        "pi_intro": null,
-        "pi_label": "Effective Wavelength",
-        "pi_label_results": "Effective Wavelength",
-        "pi_slug": "effectivewavelength",
-        "pi_sub_heading": null,
-        "pi_tooltip": "",
-        "pi_units": "",
-        "comment": "Definition written by RF"
     },
     {
         "field_name": "wavelength1",

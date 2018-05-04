@@ -13,6 +13,7 @@ import os
 
 from config_data import *
 import impglobals
+import import_util
 
 from populate_obs_mission_cassini import *
 
@@ -105,32 +106,32 @@ def populate_obs_general_COUVIS_data_type(**kwargs):
 def populate_obs_general_COUVIS_time1(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
-    start_time = index_row['START_TIME']
+    start_time = import_util.safe_column(index_row, 'START_TIME')
     return start_time
 
 def populate_obs_general_COUVIS_time2(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
-    stop_time = index_row['STOP_TIME']
+    stop_time = import_util.safe_column(index_row, 'STOP_TIME')
     return stop_time
 
 def populate_obs_general_COUVIS_time_sec1(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
-    start_time = index_row['START_TIME']
+    start_time = import_util.safe_column(index_row, 'START_TIME')
     return julian.tai_from_iso(start_time)
 
 def populate_obs_general_COUVIS_time_sec2(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
-    stop_time = index_row['STOP_TIME']
+    stop_time = import_util.safe_column(index_row, 'STOP_TIME')
     obs_general_row = metadata['obs_general_row']
 
     time2 = julian.tai_from_iso(stop_time)
 
     time1 = obs_general_row['time_sec1']
     if time2 < time1:
-        start_time = index_row['START_TIME']
+        start_time = import_util.safe_column(index_row, 'START_TIME')
         index_row_num = metadata['index_row_num']
         impglobals.LOGGER.log('warning',
             f'time_sec1 ({start_time}) and time_sec2 ({stop_time}) are '+
@@ -191,44 +192,44 @@ def populate_obs_general_COUVIS_right_asc1(**kwargs):
     metadata = kwargs['metadata']
     ring_geo_row = metadata.get('ring_geo_row', None)
     if ring_geo_row is not None:
-        return ring_geo_row['MINIMUM_RIGHT_ASCENSION']
+        return import_util.safe_column(ring_geo_row, 'MINIMUM_RIGHT_ASCENSION')
 
     index_row = metadata['index_row']
-    ra = index_row['RIGHT_ASCENSION']
+    ra = import_util.safe_column(index_row, 'RIGHT_ASCENSION')
     return ra
 
 def populate_obs_general_COUVIS_right_asc2(**kwargs):
     metadata = kwargs['metadata']
     ring_geo_row = metadata.get('ring_geo_row', None)
     if ring_geo_row is not None:
-        return ring_geo_row['MAXIMUM_RIGHT_ASCENSION']
+        return import_util.safe_column(ring_geo_row, 'MAXIMUM_RIGHT_ASCENSION')
 
     index_row = metadata['index_row']
-    ra = index_row['RIGHT_ASCENSION']
+    ra = import_util.safe_column(index_row, 'RIGHT_ASCENSION')
     return ra
 
 def populate_obs_general_COUVIS_declination1(**kwargs):
     metadata = kwargs['metadata']
     ring_geo_row = metadata.get('ring_geo_row', None)
     if ring_geo_row is not None:
-        return ring_geo_row['MINIMUM_DECLINATION']
+        return import_util.safe_column(ring_geo_row, 'MINIMUM_DECLINATION')
 
     index_row = metadata['index_row']
-    dec = index_row['DECLINATION']
-    if dec == 'NULL': # XXX
-        dec = None
+    dec = import_util.safe_column(index_row, 'DECLINATION')
+    # if dec == 'NULL': # XXX
+    #     dec = None
     return dec
 
 def populate_obs_general_COUVIS_declination2(**kwargs):
     metadata = kwargs['metadata']
     ring_geo_row = metadata.get('ring_geo_row', None)
     if ring_geo_row is not None:
-        return ring_geo_row['MAXIMUM_DECLINATION']
+        return import_util.safe_column(ring_geo_row, 'MAXIMUM_DECLINATION')
 
     index_row = metadata['index_row']
-    dec = index_row['DECLINATION']
-    if dec == 'NULL': # XXX
-        dec = None
+    dec = import_util.safe_column(index_row, 'DECLINATION')
+    # if dec == 'NULL': # XXX
+    #     dec = None
     return dec
 
 def populate_obs_mission_cassini_COUVIS_mission_phase_name(**kwargs):
@@ -248,7 +249,7 @@ def populate_obs_type_image_COUVIS_image_type_id(**kwargs):
 def populate_obs_type_image_COUVIS_duration(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
-    integration_duration = index_row['INTEGRATION_DURATION']
+    integration_duration = import_util.safe_column(index_row, 'INTEGRATION_DURATION')
 
     return integration_duration
 
@@ -260,10 +261,13 @@ def populate_obs_type_image_COUVIS_lesser_pixel_size(**kwargs):
     supp_index_row = metadata.get('supp_index_row', None)
     if supp_index_row is None:
         return None
-    line1 = supp_index_row['WINDOW_MINIMUM_LINE_NUMBER']
-    line2 = supp_index_row['WINDOW_MAXIMUM_LINE_NUMBER']
-    line_bin = supp_index_row['LINE_BINNING_FACTOR']
-    samples = supp_index_row['LINE_SAMPLES']
+    line1 = import_util.safe_column(supp_index_row,
+                                    'WINDOW_MINIMUM_LINE_NUMBER')
+    line2 = import_util.safe_column(supp_index_row,
+                                    'WINDOW_MAXIMUM_LINE_NUMBER')
+    line_bin = import_util.safe_column(supp_index_row,
+                                       'LINE_BINNING_FACTOR')
+    samples = import_util.safe_column(supp_index_row, 'LINE_SAMPLES')
     if line1 is None or line2 is None or line_bin is None or samples is None:
         return None
     pixels = min(samples, (line2-line1+1)//line_bin)
@@ -276,10 +280,13 @@ def populate_obs_type_image_COUVIS_greater_pixel_size(**kwargs):
     supp_index_row = metadata.get('supp_index_row', None)
     if supp_index_row is None:
         return None
-    line1 = supp_index_row['WINDOW_MINIMUM_LINE_NUMBER']
-    line2 = supp_index_row['WINDOW_MAXIMUM_LINE_NUMBER']
-    line_bin = supp_index_row['LINE_BINNING_FACTOR']
-    samples = supp_index_row['LINE_SAMPLES']
+    line1 = import_util.safe_column(supp_index_row,
+                                    'WINDOW_MINIMUM_LINE_NUMBER')
+    line2 = import_util.safe_column(supp_index_row,
+                                    'WINDOW_MAXIMUM_LINE_NUMBER')
+    line_bin = import_util.safe_column(supp_index_row,
+                                       'LINE_BINNING_FACTOR')
+    samples = import_util.safe_column(supp_index_row, 'LINE_SAMPLES')
     if line1 is None or line2 is None or line_bin is None or samples is None:
         return None
     pixels = max(samples, (line2-line1+1)//line_bin)
@@ -289,11 +296,6 @@ def populate_obs_type_image_COUVIS_greater_pixel_size(**kwargs):
 
 
 ### OBS_WAVELENGTH TABLE ###
-
-# This is the effective wavelength (convolved with the solar spectrum)
-# Meaningless for a spectrometer
-def populate_obs_wavelength_COUVIS_effective_wavelength(**kwargs):
-    return None
 
 def populate_obs_wavelength_COUVIS_wavelength1(**kwargs):
     channel, image_time = _COUVIS_channel_time_helper(**kwargs)
@@ -307,7 +309,7 @@ def populate_obs_wavelength_COUVIS_wavelength1(**kwargs):
     supp_index_row = metadata.get('supp_index_row', None)
     if supp_index_row is None:
         return None
-    band1 = supp_index_row['MINIMUM_BAND_NUMBER']
+    band1 = import_util.safe_column(supp_index_row, 'MINIMUM_BAND_NUMBER')
     if band1 is None:
         return None
 
@@ -334,7 +336,7 @@ def populate_obs_wavelength_COUVIS_wavelength2(**kwargs):
     supp_index_row = metadata.get('supp_index_row', None)
     if supp_index_row is None:
         return None
-    band2 = supp_index_row['MINIMUM_BAND_NUMBER']
+    band2 = import_util.safe_column(supp_index_row, 'MINIMUM_BAND_NUMBER')
     if band2 is None:
         return None
 
@@ -354,7 +356,7 @@ def _COUVIS_wave_res_helper(**kwargs):
     if supp_index_row is None:
         return None
     channel, image_time = _COUVIS_channel_time_helper(**kwargs)
-    band_bin = supp_index_row['BAND_BINNING_FACTOR']
+    band_bin = import_util.safe_column(supp_index_row, 'BAND_BINNING_FACTOR')
 
     if channel == 'EUV':
         return band_bin * 0.0000607422
@@ -391,24 +393,24 @@ def populate_obs_wavelength_COUVIS_wave_no2(**kwargs):
 def populate_obs_wavelength_COUVIS_wave_no_res1(**kwargs):
     metadata = kwargs['metadata']
     wl_row = metadata['obs_wavelength_row']
-    wave_res1 = wl_row['wave_res1']
+    wave_res2 = wl_row['wave_res2']
     wl2 = wl_row['wavelength2']
 
-    if wave_res1 is None or wl2 is None:
+    if wave_res2 is None or wl2 is None:
         return None
 
-    return wave_res1 * 100. / (wl2*wl2)
+    return wave_res2 * 10000. / (wl2*wl2)
 
 def populate_obs_wavelength_COUVIS_wave_no_res2(**kwargs):
     metadata = kwargs['metadata']
     wl_row = metadata['obs_wavelength_row']
-    wave_res1 = wl_row['wave_res1'] # XXX?
+    wave_res1 = wl_row['wave_res1']
     wl1 = wl_row['wavelength1']
 
     if wave_res1 is None or wl1 is None:
         return None
 
-    return wave_res1 * 100. / (wl1*wl1)
+    return wave_res1 * 10000. / (wl1*wl1)
 
 def populate_obs_wavelength_COUVIS_spec_flag(**kwargs):
     channel, image_time = _COUVIS_channel_time_helper(**kwargs)
@@ -423,9 +425,9 @@ def populate_obs_wavelength_COUVIS_spec_size(**kwargs):
     if supp_index_row is None:
         return None
     channel, image_time = _COUVIS_channel_time_helper(**kwargs)
-    band1 = supp_index_row['MINIMUM_BAND_NUMBER']
-    band2 = supp_index_row['MAXIMUM_BAND_NUMBER']
-    band_bin = supp_index_row['BAND_BINNING_FACTOR']
+    band1 = import_util.safe_column(supp_index_row, 'MINIMUM_BAND_NUMBER')
+    band2 = import_util.safe_column(supp_index_row, 'MAXIMUM_BAND_NUMBER')
+    band_bin = import_util.safe_column(supp_index_row, 'BAND_BINNING_FACTOR')
     if band1 is None or band2 is None or band_bin is None:
         return None
 

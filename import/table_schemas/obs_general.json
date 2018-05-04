@@ -11,7 +11,7 @@
     },
     {
         "field_name": "rms_obs_id",
-        "field_type": "char40",
+        "field_type": "char42",
         "field_notnull": true,
         "field_key": "unique",
         "data_source": [
@@ -400,7 +400,7 @@
     {
         "field_name": "observation_duration",
         "field_type": "real8",
-        "field_notnull": true,
+        "field_default": null,
         "field_key": true,
         "data_source": [
             "FUNCTION",

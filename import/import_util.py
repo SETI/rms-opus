@@ -114,16 +114,24 @@ def safe_pdstable_read(filename):
     rows = table.dicts_by_row()
     label = table.info.label.as_dict()
 
-    # Go through the rows and look for values that are masked and change the
-    # actual value to None in those cases
-    for row in rows:
-        for column_name in row:
-            if column_name.endswith('_mask'):
-                continue
-            if row.get(column_name+'_mask', False):
-                row[column_name] = None
-
     return rows, label
+
+def safe_column(row, column_name, idx=None):
+    "Read a value from a pdstable column accounting for the mask."
+
+    if column_name+'_mask' not in row:
+        if idx is None:
+            return row[column_name]
+        return row[column_name][idx]
+
+    if idx is None:
+        if row[column_name+'_mask']:
+            return None
+        return row[column_name]
+
+    if row[column_name+'_mask'][idx]:
+        return None
+    return row[column_name][idx]
     
 ################################################################################
 # TABLE MANIPULATION

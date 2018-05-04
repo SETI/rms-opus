@@ -16,7 +16,7 @@
     },
     {
         "field_name": "rms_obs_id",
-        "field_type": "char40",
+        "field_type": "char42",
         "field_key": "foreign",
         "field_key_foreign": [
             "obs_general",

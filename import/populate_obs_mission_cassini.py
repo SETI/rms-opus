@@ -267,7 +267,7 @@ def populate_obs_mission_cassini_rev_no(**kwargs):
     obs_parts = obs_name.split('_')
     rev_no = obs_parts[1][:3]
     if rev_no[0] == 'C':
-        return (rev_no, None)
+        return None
     return (rev_no, rev_no)
 
 def populate_obs_mission_cassini_ert_sec1(**kwargs):

@@ -13,6 +13,7 @@ import os
 
 from config_data import *
 import impglobals
+import import_util
 
 from populate_obs_mission_cassini import *
 
@@ -72,26 +73,26 @@ def populate_obs_general_COVIMS_time1(**kwargs):
 def populate_obs_general_COVIMS_time2(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
-    stop_time = index_row['STOP_TIME']
+    stop_time = import_util.safe_column(index_row, 'STOP_TIME')
     return stop_time
 
 def populate_obs_general_COVIMS_time_sec1(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
-    start_time = index_row['START_TIME']
+    start_time = import_util.safe_column(index_row, 'START_TIME')
     return julian.tai_from_iso(start_time)
 
 def populate_obs_general_COVIMS_time_sec2(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
-    stop_time = index_row['STOP_TIME']
+    stop_time = import_util.safe_column(index_row, 'STOP_TIME')
     obs_general_row = metadata['obs_general_row']
 
     time2 = julian.tai_from_iso(stop_time)
 
     time1 = obs_general_row['time_sec1']
     if time2 < time1:
-        start_time = index_row['START_TIME']
+        start_time = import_util.safe_column(index_row, 'START_TIME')
         index_row_num = metadata['index_row_num']
         impglobals.LOGGER.log('warning',
             f'time_sec1 ({start_time}) and time_sec2 ({stop_time}) are '+
@@ -146,40 +147,40 @@ def populate_obs_general_COVIMS_right_asc1(**kwargs):
     metadata = kwargs['metadata']
     ring_geo_row = metadata.get('ring_geo_row', None)
     if ring_geo_row is not None:
-        return ring_geo_row['MINIMUM_RIGHT_ASCENSION']
+        return import_util.safe_column(ring_geo_row, 'MINIMUM_RIGHT_ASCENSION')
 
     index_row = metadata['index_row']
-    ra = index_row['RIGHT_ASCENSION']
+    ra = import_util.safe_column(index_row, 'RIGHT_ASCENSION')
     return ra
 
 def populate_obs_general_COVIMS_right_asc2(**kwargs):
     metadata = kwargs['metadata']
     ring_geo_row = metadata.get('ring_geo_row', None)
     if ring_geo_row is not None:
-        return ring_geo_row['MAXIMUM_RIGHT_ASCENSION']
+        return import_util.safe_column(ring_geo_row, 'MAXIMUM_RIGHT_ASCENSION')
 
     index_row = metadata['index_row']
-    ra = index_row['RIGHT_ASCENSION']
+    ra = import_util.safe_column(index_row, 'RIGHT_ASCENSION')
     return ra
 
 def populate_obs_general_COVIMS_declination1(**kwargs):
     metadata = kwargs['metadata']
     ring_geo_row = metadata.get('ring_geo_row', None)
     if ring_geo_row is not None:
-        return ring_geo_row['MINIMUM_DECLINATION']
+        return import_util.safe_column(ring_geo_row, 'MINIMUM_DECLINATION')
 
     index_row = metadata['index_row']
-    dec = index_row['DECLINATION']
+    dec = import_util.safe_column(index_row, 'DECLINATION')
     return dec
 
 def populate_obs_general_COVIMS_declination2(**kwargs):
     metadata = kwargs['metadata']
     ring_geo_row = metadata.get('ring_geo_row', None)
     if ring_geo_row is not None:
-        return ring_geo_row['MAXIMUM_DECLINATION']
+        return import_util.safe_column(ring_geo_row, 'MAXIMUM_DECLINATION')
 
     index_row = metadata['index_row']
-    dec = index_row['DECLINATION']
+    dec = import_util.safe_column(index_row, 'DECLINATION')
     return dec
 
 def populate_obs_mission_cassini_COVIMS_mission_phase_name(**kwargs):
@@ -204,14 +205,14 @@ def populate_obs_type_image_COVIMS_duration(**kwargs):
     metadata = kwargs['metadata']
     phase_name = metadata['phase_name']
     index_row = metadata['index_row']
-    ir_exp = index_row['IR_EXPOSURE']
-    vis_exp = index_row['VIS_EXPOSURE']
+    ir_exp = import_util.safe_column(index_row, 'IR_EXPOSURE')
+    vis_exp = import_util.safe_column(index_row, 'VIS_EXPOSURE')
 
     if phase_name == 'IR':
-        if ir_exp == -999:
+        if ir_exp is None:
             return None
         return ir_exp/1000
-    if vis_exp == -999:
+    if vis_exp is None:
         return None
     return vis_exp/1000
 
@@ -221,26 +222,21 @@ def populate_obs_type_image_COVIMS_levels(**kwargs):
 def populate_obs_type_image_COVIMS_lesser_pixel_size(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
-    width = index_row['SWATH_WIDTH']
-    length = index_row['SWATH_LENGTH']
+    width = import_util.safe_column(index_row, 'SWATH_WIDTH')
+    length = import_util.safe_column(index_row, 'SWATH_LENGTH')
 
     return min(width, length)
 
 def populate_obs_type_image_COVIMS_greater_pixel_size(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
-    width = index_row['SWATH_WIDTH']
-    length = index_row['SWATH_LENGTH']
+    width = import_util.safe_column(index_row, 'SWATH_WIDTH')
+    length = import_util.safe_column(index_row, 'SWATH_LENGTH')
 
     return max(width, length)
 
 
 ### OBS_WAVELENGTH TABLE ###
-
-# This is the effective wavelength (convolved with the solar spectrum)
-# XXX
-def populate_obs_wavelength_COVIMS_effective_wavelength(**kwargs):
-    return 0
 
 def populate_obs_wavelength_COVIMS_wavelength1(**kwargs):
     metadata = kwargs['metadata']
@@ -284,26 +280,31 @@ def populate_obs_wavelength_COVIMS_wave_no2(**kwargs):
     wavelength_row = metadata['obs_wavelength_row']
     return 10000 / wavelength_row['wavelength1'] # cm^-1
 
-# XXX
 def populate_obs_wavelength_COVIMS_wave_no_res1(**kwargs):
-        # $wave_res2 = $this->obs_wavelength__wave_res2($obs);
-        # $wavelength2 = $this->obs_wavelength__wavelength2($obs);
-        # $wave_no_res = 100 * $wave_res2/($wavelength2*$wavelength2);
-        # return $wave_no_res;
-    return 0
+    metadata = kwargs['metadata']
+    wl_row = metadata['obs_wavelength_row']
+    wave_res2 = wl_row['wave_res2']
+    wl2 = wl_row['wavelength2']
 
-# XXX
+    if wave_res2 is None or wl2 is None:
+        return None
+
+    return wave_res2 * 10000. / (wl2*wl2)
+
 def populate_obs_wavelength_COVIMS_wave_no_res2(**kwargs):
-        # $wave_res1 = $this->obs_wavelength__wave_res1($obs);
-        # $wavelength1 = $this->obs_wavelength__wavelength1($obs);
-        # $wave_no_res = 100 * $wave_res1/($wavelength1*$wavelength1);
-        # return $wave_no_res;
-    return 0
+    metadata = kwargs['metadata']
+    wl_row = metadata['obs_wavelength_row']
+    wave_res1 = wl_row['wave_res1']
+    wl1 = wl_row['wavelength1']
+
+    if wave_res1 is None or wl1 is None:
+        return None
+
+    return wave_res1 * 10000. / (wl1*wl1)
 
 def populate_obs_wavelength_COVIMS_spec_flag(**kwargs):
     return 'Y'
 
-# XXX
 def populate_obs_wavelength_COVIMS_spec_size(**kwargs):
     metadata = kwargs['metadata']
     phase_name = metadata['phase_name']
@@ -329,13 +330,13 @@ def populate_obs_mission_cassini_COVIMS_ert2(**kwargs):
 def populate_obs_mission_cassini_COVIMS_spacecraft_clock_count1(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
-    count = index_row['SPACECRAFT_CLOCK_START_COUNT']
+    count = import_util.safe_column(index_row, 'SPACECRAFT_CLOCK_START_COUNT')
     return count
 
 def populate_obs_mission_cassini_COVIMS_spacecraft_clock_count2(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
-    count = index_row['SPACECRAFT_CLOCK_STOP_COUNT']
+    count = import_util.safe_column(index_row, 'SPACECRAFT_CLOCK_STOP_COUNT')
     return count
 
 

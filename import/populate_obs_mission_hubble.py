@@ -25,10 +25,9 @@ def _helper_hubble_planet_id(**kwargs):
     if planet_name == 'N/A':
         return None
 
-    if planet_name not in ['EARTH', 'MARS', 'JUPITER', 'SATURN', 'URANUS',
-                           'NEPTUNE', 'PLUTO']:
-        import_util.announce_nonrepeating_error(
-            f'Unknown PLANET_NAME "{planet_name}"', index_row_num)
+    if planet_name not in ['VENUS', 'EARTH', 'MARS', 'JUPITER', 'SATURN',
+                           'URANUS', 'NEPTUNE', 'PLUTO']:
+        return None
     return planet_name[:3]
 
 def populate_obs_general_HST_planet_id(**kwargs):
@@ -54,7 +53,7 @@ def populate_obs_general_HST_rms_obs_id(**kwargs):
     metadata = kwargs['metadata']
     instrument = kwargs['instrument_name']
     index_row = metadata['index_row']
-    start_time = index_row['START_TIME']
+    start_time = import_util.safe_column(index_row, 'START_TIME')
     product_id = index_row['PRODUCT_ID']
     planet_id = _helper_hubble_planet_id(**kwargs)
     ret = 'X'
@@ -89,7 +88,7 @@ populate_obs_general_HSTWFPC2_data_type = populate_obs_general_HST_data_type
 def populate_obs_general_HST_time1(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
-    start_time = index_row['START_TIME']
+    start_time = import_util.safe_column(index_row, 'START_TIME')
     return start_time
 
 populate_obs_general_HSTACS_time1 = populate_obs_general_HST_time1
@@ -101,7 +100,7 @@ populate_obs_general_HSTWFPC2_time1 = populate_obs_general_HST_time1
 def populate_obs_general_HST_time2(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
-    stop_time = index_row['STOP_TIME']
+    stop_time = import_util.safe_column(index_row, 'STOP_TIME')
     return stop_time
 
 populate_obs_general_HSTACS_time2 = populate_obs_general_HST_time2
@@ -113,7 +112,7 @@ populate_obs_general_HSTWFPC2_time2 = populate_obs_general_HST_time2
 def populate_obs_general_HST_time_sec1(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
-    start_time = index_row['START_TIME']
+    start_time = import_util.safe_column(index_row, 'START_TIME')
     return julian.tai_from_iso(start_time)
 
 populate_obs_general_HSTACS_time_sec1 = populate_obs_general_HST_time_sec1
@@ -125,13 +124,13 @@ populate_obs_general_HSTWFPC2_time_sec1 = populate_obs_general_HST_time_sec1
 def populate_obs_general_HST_time_sec2(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
-    stop_time = index_row['STOP_TIME']
+    stop_time = import_util.safe_column(index_row, 'STOP_TIME')
     obs_general_row = metadata['obs_general_row']
 
     time2 = julian.tai_from_iso(stop_time)
 
     if time2 < obs_general_row['time_sec1']:
-        start_time = index_row['START_TIME']
+        start_time = import_util.safe_column(index_row, 'START_TIME')
         index_row_num = metadata['index_row_num']
         impglobals.LOGGER.log('error',
             f'time_sec1 ({start_time}) and time_sec2 ({stop_time}) are '+
@@ -165,7 +164,11 @@ populate_obs_general_HSTWFPC2_target_name = populate_obs_general_HST_target_name
 def populate_obs_general_HST_observation_duration(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
-    exposure = index_row['EXPOSURE_DURATION']
+    exposure = import_util.safe_column(index_row, 'EXPOSURE_DURATION')
+
+    if exposure is None:
+        return None
+
     return exposure / 1000
 
 populate_obs_general_HSTACS_observation_duration = populate_obs_general_HST_observation_duration
@@ -278,7 +281,6 @@ def populate_obs_type_image_HSTACS_levels(**kwargs):
     return None # XXX
 
 def populate_obs_type_image_HSTNICMOS_levels(**kwargs):
-    assert False
     return None
 
 def populate_obs_type_image_HSTSTIS_levels(**kwargs):
@@ -294,7 +296,6 @@ def populate_obs_type_image_HSTACS_lesser_pixel_size(**kwargs):
     return None # XXX
 
 def populate_obs_type_image_HSTNICMOS_lesser_pixel_size(**kwargs):
-    assert False
     return None
 
 def populate_obs_type_image_HSTSTIS_lesser_pixel_size(**kwargs):
@@ -310,7 +311,6 @@ def populate_obs_type_image_HSTACS_greater_pixel_size(**kwargs):
     return None # XXX
 
 def populate_obs_type_image_HSTNICMOS_greater_pixel_size(**kwargs):
-    assert False
     return None
 
 def populate_obs_type_image_HSTSTIS_greater_pixel_size(**kwargs):
@@ -330,7 +330,6 @@ def populate_obs_wavelength_HSTACS_effective_wavelength(**kwargs):
     return None # XXX
 
 def populate_obs_wavelength_HSTNICMOS_effective_wavelength(**kwargs):
-    assert False
     return None
 
 def populate_obs_wavelength_HSTSTIS_effective_wavelength(**kwargs):
@@ -346,7 +345,6 @@ def populate_obs_wavelength_HSTACS_wavelength1(**kwargs):
     return None # XXX
 
 def populate_obs_wavelength_HSTNICMOS_wavelength1(**kwargs):
-    assert False
     return None
 
 def populate_obs_wavelength_HSTSTIS_wavelength1(**kwargs):
@@ -362,7 +360,6 @@ def populate_obs_wavelength_HSTACS_wavelength2(**kwargs):
     return None # XXX
 
 def populate_obs_wavelength_HSTNICMOS_wavelength2(**kwargs):
-    assert False
     return None
 
 def populate_obs_wavelength_HSTSTIS_wavelength2(**kwargs):
@@ -378,7 +375,6 @@ def populate_obs_wavelength_HSTACS_wave_res1(**kwargs):
     return None # XXX
 
 def populate_obs_wavelength_HSTNICMOS_wave_res1(**kwargs):
-    assert False
     return None
 
 def populate_obs_wavelength_HSTSTIS_wave_res1(**kwargs):
@@ -394,7 +390,6 @@ def populate_obs_wavelength_HSTACS_wave_res2(**kwargs):
     return None # XXX
 
 def populate_obs_wavelength_HSTNICMOS_wave_res2(**kwargs):
-    assert False
     return None
 
 def populate_obs_wavelength_HSTSTIS_wave_res2(**kwargs):
@@ -410,7 +405,6 @@ def populate_obs_wavelength_HSTACS_wave_no1(**kwargs):
     return None # XXX
 
 def populate_obs_wavelength_HSTNICMOS_wave_no1(**kwargs):
-    assert False
     return None
 
 def populate_obs_wavelength_HSTSTIS_wave_no1(**kwargs):
@@ -426,7 +420,6 @@ def populate_obs_wavelength_HSTACS_wave_no2(**kwargs):
     return None # XXX
 
 def populate_obs_wavelength_HSTNICMOS_wave_no2(**kwargs):
-    assert False
     return None
 
 def populate_obs_wavelength_HSTSTIS_wave_no2(**kwargs):
@@ -442,7 +435,6 @@ def populate_obs_wavelength_HSTACS_wave_no_res1(**kwargs):
     return None # XXX
 
 def populate_obs_wavelength_HSTNICMOS_wave_no_res1(**kwargs):
-    assert False
     return None
 
 def populate_obs_wavelength_HSTSTIS_wave_no_res1(**kwargs):
@@ -458,7 +450,6 @@ def populate_obs_wavelength_HSTACS_wave_no_res2(**kwargs):
     return None # XXX
 
 def populate_obs_wavelength_HSTNICMOS_wave_no_res2(**kwargs):
-    assert False
     return None
 
 def populate_obs_wavelength_HSTSTIS_wave_no_res2(**kwargs):
@@ -474,7 +465,6 @@ def populate_obs_wavelength_HSTACS_spec_flag(**kwargs):
     return 'N' # XXX
 
 def populate_obs_wavelength_HSTNICMOS_spec_flag(**kwargs):
-    assert False
     return 'N'
 
 def populate_obs_wavelength_HSTSTIS_spec_flag(**kwargs):
@@ -490,7 +480,6 @@ def populate_obs_wavelength_HSTACS_spec_size(**kwargs):
     return None # XXX
 
 def populate_obs_wavelength_HSTNICMOS_spec_size(**kwargs):
-    assert False
     return None
 
 def populate_obs_wavelength_HSTSTIS_spec_size(**kwargs):
@@ -506,7 +495,6 @@ def populate_obs_wavelength_HSTACS_polarization_type(**kwargs):
     return 'NONE' # XXX
 
 def populate_obs_wavelength_HSTNICMOS_polarization_type(**kwargs):
-    assert False
     return 'NONE'
 
 def populate_obs_wavelength_HSTSTIS_polarization_type(**kwargs):

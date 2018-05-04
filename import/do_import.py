@@ -517,7 +517,8 @@ def import_one_volume(volume_id):
             basenames = assoc_pdsfile.childnames
             for basename in basenames:
                 if (basename.upper().endswith('_INDEX.LBL') and
-                    not basename.upper().endswith('SUPPLEMENTAL_INDEX.LBL')):
+                    not basename.upper().endswith('SUPPLEMENTAL_INDEX.LBL') and
+                    basename.find('999') == -1):
                     volume_label_path = os.path.join(assoc_pdsfile.abspath,
                                                      basename)
                     impglobals.LOGGER.log('debug',
@@ -936,7 +937,8 @@ def import_observation_table(volume_id,
                             f'while processing column "{field_name}" in '+
                             f'table "{table_name}"')
                         continue
-                    column_val = ref_index_row[data_source_val]
+                    column_val = import_util.safe_column(ref_index_row,
+                                                         data_source_val)
             elif data_source_cmd_prefix == 'ARRAY':
                 ref_index_name, array_index = data_source_cmd_param.split('.')
                 array_index = int(array_index)
@@ -963,7 +965,9 @@ def import_observation_table(volume_id,
                         f'Bad array index "{array_index}" for column '+
                         f'"{field_name}" in table "{table_name}"')
                     continue
-                column_val = ref_index_row[data_source_val][array_index]
+                column_val = import_util.safe_column(ref_index_row,
+                                                     data_source_val,
+                                                     array_index)
 
             elif data_source_cmd_prefix == 'FUNCTION':
                 ret = import_run_field_function(data_source_val,
