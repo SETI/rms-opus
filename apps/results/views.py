@@ -394,7 +394,7 @@ def get_triggered_tables(selections, extras=None):
 
     # now hack in the proper ordering of tables
     final_table_list = []
-    for table in TableNames.objects.filter(table_name__in=triggered_tables).values('table_name'):
+    for table in TableNames.objects.filter(table_name__in=triggered_tables).values('table_name').order_by('disp_order'):
         final_table_list.append(table['table_name'])
 
     cache.set(cache_key, final_table_list)

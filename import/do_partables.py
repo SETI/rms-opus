@@ -67,13 +67,15 @@ def create_import_partables_table():
         }
         rows.append(entry)
 
-    entry = {
-        'trigger_tab': 'obs_general',
-        'trigger_col': 'data_type',
-        'trigger_val': 'IMG',
-        'partable':    'obs_type_image'
-    }
-    rows.append(entry)
+    # We don't need this anymore because Image Constraints are now permanently
+    # displayed
+    # entry = {
+    #     'trigger_tab': 'obs_general',
+    #     'trigger_col': 'data_type',
+    #     'trigger_val': 'IMG',
+    #     'partable':    'obs_type_image'
+    # }
+    # rows.append(entry)
 
     surface_geo_table_names = impglobals.DATABASE.table_names(
                                             'perm',

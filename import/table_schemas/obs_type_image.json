@@ -16,7 +16,7 @@
     },
     {
         "field_name": "rms_obs_id",
-        "field_type": "char42",
+        "field_type": "char40",
         "field_key": "foreign",
         "field_key_foreign": [
             "obs_general",
@@ -77,10 +77,9 @@
         "comment": "Definition is from old OPUS dictionary.",
         "mult_options": [
               [   0, "CUBE",        "Cube",   10, "Y", null],
-              [   1,  "IMG",       "Image",   20, "Y", null],
-              [   2, "FRAM",       "Frame",   30, "Y", null],
-              [   3, "RAST", "Raster Scan",   40, "Y", null],
-              [   4, "PUSH",   "Pushbroom",   50, "Y", null]
+              [   1, "FRAM",       "Frame",   20, "Y", null],
+              [   2, "RAST", "Raster Scan",   30, "Y", null],
+              [   3, "PUSH",   "Pushbroom",   40, "Y", null]
           ]
     },
     {

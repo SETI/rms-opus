@@ -119,7 +119,7 @@ def getMenuLabels(request, labels_view):
     else:
         triggered_tables = get_triggered_tables(selections, extras)
 
-    divs = TableNames.objects.filter(display='Y', table_name__in=triggered_tables)
+    divs = TableNames.objects.filter(display='Y', table_name__in=triggered_tables).order_by('disp_order')
 
     if labels_view == 'search':
         params = ParamInfo.objects.filter(display=1, category_name__in=triggered_tables)

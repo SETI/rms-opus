@@ -69,23 +69,10 @@ THE BIG QUESTIONS:
 
 - OBS_GENERAL:
 
-  - Ring OBS ID (now RMS Obs ID)
-    - All products except OPUS use "/" as a separator but that screws up in URLs
-    - OPUS uses _ but then we have a disagreement
-    - Should we stick with _ or switch to / and munge the URL with % fields?
-    - ** STICK WITH _
-
-  - is_image is 0/1 while cassini.is_prime is Y or N. Hubble flags are 0/1.
-    Do we want to be consistent? Always have a flag suffix?  *** Yes/No
-
+  - PRODUCT_CREATION_TIME
+  
 - COISS:
-**** SURFACE GEO IS BROKEN ****
-
-  - When will the Jupiter surface geo tables be readable?
-
   - When will the surface geo tables include Venus, Earth, etc?
-
-  - Do we include Jupiter rev_no? Should we rename "Saturn Orbit Number"?
 
 - COUVIS:
   - image_type_id

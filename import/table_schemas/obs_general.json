@@ -11,7 +11,7 @@
     },
     {
         "field_name": "rms_obs_id",
-        "field_type": "char42",
+        "field_type": "char40",
         "field_notnull": true,
         "field_key": "unique",
         "data_source": [

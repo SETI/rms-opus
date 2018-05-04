@@ -242,15 +242,15 @@ def populate_obs_type_image_COUVIS_image_type_id(**kwargs):
     metadata = kwargs['metadata']
     obs_general_row = metadata['obs_general_row']
     type_id = obs_general_row['data_type']
-    if type_id != 'CUBE':
-        return 'PUSH'
-    return 'CUBE'
+    if type_id == 'CUBE':
+        return 'CUBE'
+    return 'PUSH'
 
 def populate_obs_type_image_COUVIS_duration(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
-    integration_duration = import_util.safe_column(index_row, 'INTEGRATION_DURATION')
-
+    integration_duration = import_util.safe_column(index_row,
+                                                   'INTEGRATION_DURATION')
     return integration_duration
 
 def populate_obs_type_image_COUVIS_levels(**kwargs):
