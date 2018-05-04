@@ -287,12 +287,13 @@
               [   0,      "PLANET",      "Planet",   10, "Y", null],
               [   1,        "MOON",        "Moon",   20, "Y", null],
               [   2,        "RING",        "Ring",   30, "Y", null],
-              [   3,    "ASTEROID",    "Asteroid",   40, "Y", null],
-              [   4,         "SUN",         "Sun",   50, "Y", null],
-              [   5,        "STAR",        "Star",   60, "Y", null],
-              [   6,         "SKY",         "Sky",   70, "Y", null],
-              [   7, "CALIBRATION", "Calibration",   80, "Y", null],
-              [   8,       "OTHER",       "Other",   90, "Y", null]
+              [  10,    "ASTEROID",    "Asteroid",   40, "Y", null],
+              [  12,         "TNO",         "TNO",   50, "Y", null],
+              [  20,         "SUN",         "Sun",   70, "Y", null],
+              [  22,        "STAR",        "Star",   80, "Y", null],
+              [  30,         "SKY",         "Sky",   90, "Y", null],
+              [  40, "CALIBRATION", "Calibration",  100, "Y", null],
+              [  50,       "OTHER",       "Other",  110, "Y", null]
           ]
     },
     {

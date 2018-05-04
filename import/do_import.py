@@ -1117,7 +1117,12 @@ def import_observation_table(volume_id,
                 if column_val is None:
                     mult_label = 'NULL'
                 else:
-                    mult_label = str(column_val).title()
+                    mult_label = str(column_val)
+                    if (not mult_label[0].isdigit() or
+                        not mult_label[-1].isdigit()):
+                        # This catches things like 2014 MU69 and leaves them
+                        # in all caps
+                        mult_label = mult_label.title()
             id_num = update_mult_table(table_name, field_name, table_column,
                                        column_val, mult_label)
             new_row[mult_column_name] = id_num
