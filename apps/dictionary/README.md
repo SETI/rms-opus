@@ -23,3 +23,5 @@ The dictionary import uses the 'value' field in the 'subterm' field to signify t
 The index for the dictionary table is unique on the three fields: term + context + subterm.  Note that where there is no subterm, the default value is ""  <not null, as a null field cannot be used as part of an index>.
 
 To import data into the dictionary, copy secrets_template.py into config.py and update the parameters for the DB login, username, etc. and set up the paths, as required.  Python 3.6 compliant.
+
+python importUtils.py

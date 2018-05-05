@@ -6,6 +6,9 @@ import MySQLdb
 import json
 import pdsparser
 
+sys.path.append(PDS_TOOLS_PATH)
+#sys.path.append(f'{OPUS_ROOT_PATH}/apps/dictionary')
+
 ERR_UNKNOWN_DATABASE = 1049
 ERR_UNKNOWN_TABLE = 1051
 
@@ -208,6 +211,11 @@ class ImportDictionaryData(object):
         except:
             print(sys.exc_info())
 
+obj = ImportDictionaryData()
+obj.create_dictionary(drop="")
+
+
+# This is just a placeholder for the context table; not currently used for anything
 class ImportContextTable(object):
     """Import context DB for the dictionary."""
     """just here for safekeeping at the moment, don't really think we'll need this"""
