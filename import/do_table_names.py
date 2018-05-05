@@ -41,6 +41,57 @@ def create_import_table_names_table():
     disp_order += 1
     rows.append(entry)
 
+    # Then various random tables
+    entry = {
+        'table_name': 'obs_type_image',
+        'label':      'Image Constraints',
+        'display':    'Y',
+        'disp_order': disp_order
+    }
+    disp_order += 1
+    rows.append(entry)
+
+    entry = {
+        'table_name': 'obs_wavelength',
+        'label':      'Wavelength Constraints',
+        'display':    'Y',
+        'disp_order': disp_order
+    }
+    disp_order += 1
+    rows.append(entry)
+
+    entry = {
+        'table_name': 'obs_surface_geometry',
+        'label':      'Surface Geometry Constraints',
+        'display':    'Y',
+        'disp_order': disp_order
+    }
+    disp_order += 1
+    rows.append(entry)
+
+    surface_geo_table_names = impglobals.DATABASE.table_names(
+                                            'perm',
+                                            prefix='obs_surface_geometry__')
+    for table_name in sorted(surface_geo_table_names):
+        target_name = table_name.replace('obs_surface_geometry__', '').title()
+        entry = {
+            'table_name': table_name,
+            'label':      target_name + ' Surface Geometry Constraints',
+            'display':    'Y',
+            'disp_order': disp_order
+        }
+        disp_order += 1
+        rows.append(entry)
+
+    entry = {
+        'table_name': 'obs_ring_geometry',
+        'label':      'Ring Geometry Constraints',
+        'display':    'Y',
+        'disp_order': disp_order
+    }
+    disp_order += 1
+    rows.append(entry)
+
     # Then missions
     for mission_abbrev in sorted(MISSION_ABBREV_TO_MISSION_TABLE_SFX.keys()):
         entry = {
@@ -67,57 +118,6 @@ def create_import_table_names_table():
             'label':      (INSTRUMENT_ABBREV_TO_INSTRUMENT_NAME[instrument_id]+
                            ' Constraints'),
             'display':    display,
-            'disp_order': disp_order
-        }
-        disp_order += 1
-        rows.append(entry)
-
-    # Then various random tables
-    entry = {
-        'table_name': 'obs_wavelength',
-        'label':      'Wavelength Constraints',
-        'display':    'Y',
-        'disp_order': disp_order
-    }
-    disp_order += 1
-    rows.append(entry)
-
-    entry = {
-        'table_name': 'obs_type_image',
-        'label':      'Image Constraints',
-        'display':    'Y',
-        'disp_order': disp_order
-    }
-    disp_order += 1
-    rows.append(entry)
-
-    entry = {
-        'table_name': 'obs_ring_geometry',
-        'label':      'Ring Geometry Constraints',
-        'display':    'Y',
-        'disp_order': disp_order
-    }
-    disp_order += 1
-    rows.append(entry)
-
-    entry = {
-        'table_name': 'obs_surface_geometry',
-        'label':      'Surface Geometry Constraints',
-        'display':    'Y',
-        'disp_order': disp_order
-    }
-    disp_order += 1
-    rows.append(entry)
-
-    surface_geo_table_names = impglobals.DATABASE.table_names(
-                                            'perm',
-                                            prefix='obs_surface_geometry__')
-    for table_name in sorted(surface_geo_table_names):
-        target_name = table_name.replace('obs_surface_geometry__', '').title()
-        entry = {
-            'table_name': table_name,
-            'label':      target_name + ' Surface Geometry Constraints',
-            'display':    'Y',
             'disp_order': disp_order
         }
         disp_order += 1

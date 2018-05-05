@@ -141,7 +141,7 @@ def getMenuLabels(request, labels_view):
     else:
         triggered_tables = get_triggered_tables(selections, extras)
 
-    divs = TableNames.objects.filter(display='Y', table_name__in=triggered_tables)
+    divs = TableNames.objects.filter(display='Y', table_name__in=triggered_tables).order_by('disp_order')
     params = ParamInfo.objects.filter(**{filter:1, "category_name__in":triggered_tables})
 
     # build a struct that relates sub_headings to div_titles

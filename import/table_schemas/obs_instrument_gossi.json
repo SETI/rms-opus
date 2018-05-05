@@ -12,7 +12,7 @@
             "TAB:obs_general",
             "id"
         ],
-        "comment": "This is the primary (surrograte) key linking the record to obs_general."
+        "comment": "This is the primary (surrogate) key linking the record to obs_general."
     },
     {
         "field_name": "rms_obs_id",
@@ -68,7 +68,8 @@
     },
     {
         "field_name": "filter_name",
-        "field_type": "char7",
+        "field_type": "enum",
+        "field_enum_options": "'CLEAR','GREEN','IR-7270','IR-7560','IR-8890','IR-9680','RED','VIOLET'",
         "field_notnull": true,
         "data_source": [
             "TAB:index",
@@ -90,7 +91,17 @@
         "pi_sub_heading": null,
         "pi_tooltip": "",
         "pi_units": "",
-        "comment": "Definition is from GOSSI label."
+        "comment": "Definition is from GOSSI label.",
+        "mult_options": [
+              [   0,    "CLEAR",           "Clear",   10, "Y", null],
+              [   1,   "VIOLET",          "Violet",   20, "Y", null],
+              [   2,    "GREEN",           "Green",   30, "Y", null],
+              [   3,      "RED",             "Red",   40, "Y", null],
+              [   4,   "IR-7270", "Methane [7270]",   50, "Y", null],
+              [   5,   "IR-7560",      "Continuum",   60, "Y", null],
+              [   6,   "IR-8890", "Methane [8890]",   70, "Y", null],
+              [   7,   "IR-9680",       "Infrared",   80, "Y", null]
+          ]
     },
     {
         "field_name": "filter_number",
@@ -145,7 +156,13 @@
         "pi_sub_heading": null,
         "pi_tooltip": "",
         "pi_units": "",
-        "comment": "Definition is from GOSSI label."
+        "comment": "Definition is from GOSSI label.",
+        "mult_options": [
+              [   0,  "10K",  "10K",   10, "Y", null],
+              [   1,  "40K",  "40K",   20, "Y", null],
+              [   2, "100K", "100K",   30, "Y", null],
+              [   3, "400K", "400K",   40, "Y", null]
+          ]
     },
     {
         "field_name": "frame_duration",
@@ -200,11 +217,17 @@
         "pi_sub_heading": null,
         "pi_tooltip": "",
         "pi_units": "",
-        "comment": "Definition is from GOSSI label."
+        "comment": "Definition is from GOSSI label.",
+        "mult_options": [
+              [   0,          "POSSIBLE",          "Possible",  10, "Y", null],
+              [   1,      "NOT POSSIBLE",      "Not Possible",  20, "Y", null],
+              [   2, "PRESENCE VERIFIED", "Presence Verified",  30, "Y", null]
+          ]
     },
     {
         "field_name": "compression_type",
-        "field_type": "char27",
+        "field_type": "enum",
+        "field_enum_options": "'BARC RATE CONTROL','HUFFMAN','INTEGER COSINE TRANSFORM','NONE'",
         "field_notnull": true,
         "data_source": [
             "TAB:index",
@@ -225,7 +248,13 @@
         "pi_sub_heading": null,
         "pi_tooltip": "",
         "pi_units": "",
-        "comment": "The definition for COMPRESSION_TYPE in the GOSSI label says nothing useful so we use the PSDD one."
+        "comment": "The definition for COMPRESSION_TYPE in the GOSSI label says nothing useful so we use the PSDD one.",
+        "mult_options": [
+              [   0,        "BARC RATE CONTROL",        "BARC Rate Control", 10, "Y", null],
+              [   1,                  "HUFFMAN",                  "Huffman", 20, "Y", null],
+              [   2, "INTEGER COSINE TRANSFORM", "Integer Cosine Transform", 30, "Y", null],
+              [   3,                     "NONE",                     "None", 40, "Y", null]
+          ]
     },
     {
         "field_name": "encoding_min_compression_ratio",

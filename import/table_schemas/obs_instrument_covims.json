@@ -12,7 +12,7 @@
             "TAB:obs_general",
             "id"
         ],
-        "comment": "This is the primary (surrograte) key linking the record to obs_general."
+        "comment": "This is the primary (surrogate) key linking the record to obs_general."
     },
     {
         "field_name": "rms_obs_id",
@@ -42,7 +42,8 @@
     },
     {
         "field_name": "instrument_mode_id",
-        "field_type": "char20",
+        "field_type": "enum",
+        "field_enum_options": "'CAL_BACKGROUND','CAL_SOLAR','CAL_SPECTRAL','IMAGE','LINE','OCCULTATION','POINT'",
         "field_notnull": true,
         "data_source": [
             "TAB:index",
@@ -64,11 +65,20 @@
         "pi_sub_heading": null,
         "pi_tooltip": "",
         "pi_units": "",
-        "comment": "Definition from COVIMS label"
+        "comment": "Definition from COVIMS label",
+        "mult_options": [
+              [   0,          "IMAGE",          "IMAGE",  10, "Y", null],
+              [   1,           "LINE",           "LINE",  20, "Y", null],
+              [   2,    "OCCULTATION",    "OCCULTATION",  30, "Y", null],
+              [   3,          "POINT",          "POINT",  40, "Y", null],
+              [   4, "CAL_BACKGROUND", "CAL_BACKGROUND",  50, "Y", null],
+              [   5,      "CAL_SOLAR",      "CAL_SOLAR",  60, "Y", null],
+              [   6,   "CAL_SPECTRAL",   "CAL_SPECTRAL",  70, "Y", null]
+          ]
     },
     {
         "field_name": "spectral_editing",
-        "field_type": "flag",
+        "field_type": "flag_yesno",
         "field_notnull": true,
         "data_source": [
             "TAB:index",
@@ -94,7 +104,7 @@
     },
     {
         "field_name": "spectral_summing",
-        "field_type": "flag",
+        "field_type": "flag_yesno",
         "field_notnull": true,
         "data_source": [
             "TAB:index",
@@ -119,7 +129,7 @@
     },
     {
         "field_name": "star_tracking",
-        "field_type": "flag",
+        "field_type": "flag_onoff",
         "field_notnull": true,
         "data_source": [
             "TAB:index",
@@ -223,7 +233,8 @@
     },
     {
         "field_name": "ir_sampling_mode_id",
-        "field_type": "char8",
+        "field_type": "enum",
+        "field_enum_options": "'HI-RES','NORMAL','UNDER'",
         "field_notnull": true,
         "data_source": [
             "TAB:index",
@@ -245,7 +256,12 @@
         "pi_sub_heading": null,
         "pi_tooltip": "",
         "pi_units": "",
-        "comment": "Definition from COVIMS label"
+        "comment": "Definition from COVIMS label",
+        "mult_options": [
+              [   0, "HI-RES", "Hi-Res",  10, "Y", null],
+              [   1, "NORMAL", "Normal",  20, "Y", null],
+              [   2,  "UNDER",  "Under",  30, "Y", null]
+          ]
     },
     {
         "field_name": "vis_exposure",
@@ -278,7 +294,8 @@
     },
     {
         "field_name": "vis_sampling_mode_id",
-        "field_type": "char8",
+        "field_type": "enum",
+        "field_enum_options": "'HI-RES','N/A','NORMAL','UNK'",
         "field_notnull": true,
         "data_source": [
             "TAB:index",
@@ -300,7 +317,13 @@
         "pi_sub_heading": null,
         "pi_tooltip": "",
         "pi_units": "",
-        "comment": "Definition from COVIMS label"
+        "comment": "Definition from COVIMS label",
+        "mult_options": [
+              [   0, "HI-RES",  "Hi-Res",  10, "Y", null],
+              [   1, "NORMAL",  "Normal",  20, "Y", null],
+              [   2,    "N/A",     "N/A",  30, "Y", null],
+              [   3,    "UNK", "Unknown",  40, "Y", null]
+          ]
     },
     {
         "field_name": "channel",
@@ -326,7 +349,11 @@
         "pi_sub_heading": null,
         "pi_tooltip": null,
         "pi_units": null,
-        "comment": "XXX Needs definition"
+        "comment": "XXX Needs definition",
+        "mult_options": [
+              [   0,  "IR",  "IR",  10, "Y", null],
+              [   1, "VIS", "VIS",  20, "Y", null]
+          ]
     },
     {
         "put_mults_here": true

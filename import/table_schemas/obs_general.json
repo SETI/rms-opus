@@ -83,7 +83,22 @@
         "pi_slug": "instrumentid",
         "pi_sub_heading": null,
         "pi_tooltip": "",
-        "pi_units": ""
+        "pi_units": "",
+        "mult_options": [
+              [   0,    "COCIRS",       "Cassini CIRS",   10, "Y", null],
+              [   1,     "COISS",        "Cassini ISS",   20, "Y", null],
+              [   2,    "COUVIS",       "Cassini UVIS",   30, "Y", null],
+              [   3,    "COVIMS",       "Cassini VIMS",   40, "Y", null],
+              [   4,     "GOSSI",        "Galileo SSI",   50, "Y", null],
+              [   5,     "VGISS",        "Voyager ISS",   60, "Y", null],
+              [   6,    "HSTACS",         "Hubble ACS",   70, "Y", null],
+              [   7, "HSTNICMOS",      "Hubble NICMOS",   80, "Y", null],
+              [   8,   "HSTSTIS",        "Hubble STIS",   90, "Y", null],
+              [   9,   "HSTWFC3",        "Hubble WFC3",  100, "Y", null],
+              [  10,  "HSTWFPC2",       "Hubble WFPC2",  110, "Y", null],
+              [  11,     "LORRI", "New Horizons LORRI",  120, "Y", null],
+              [  12,      "MVIC",  "New Horizons MVIC",  130, "Y", null]
+          ]
     },
     {
         "field_name": "mission_id",
@@ -108,7 +123,14 @@
         "pi_slug": "missionid",
         "pi_sub_heading": null,
         "pi_tooltip": "",
-        "pi_units": ""
+        "pi_units": "",
+        "mult_options": [
+              [   0,  "CO",      "Cassini",   10, "Y", null],
+              [   1,  "GO",      "Galileo",   20, "Y", null],
+              [   2, "HST",       "Hubble",   30, "Y", null],
+              [   3,  "NH", "New Horizons",   40, "Y", null],
+              [   4,  "VG",      "Voyager",   50, "Y", null]
+          ]
     },
     {
         "field_name": "inst_host_id",
@@ -133,7 +155,15 @@
         "pi_slug": "insthostid",
         "pi_sub_heading": null,
         "pi_tooltip": "",
-        "pi_units": ""
+        "pi_units": "",
+        "mult_options": [
+              [   0,  "CO",      "Cassini",   10, "Y", null],
+              [   1,  "GO",      "Galileo",   20, "Y", null],
+              [   2, "HST",       "Hubble",   30, "Y", null],
+              [   3,  "NH", "New Horizons",   40, "Y", null],
+              [   4, "VG1",    "Voyager 1",   50, "Y", null],
+              [   5, "VG2",    "Voyager 2",   60, "Y", null]
+          ]
     },
     {
         "field_name": "data_type",
@@ -158,12 +188,19 @@
         "pi_slug": "typeid",
         "pi_sub_heading": null,
         "pi_tooltip": "",
-        "pi_units": ""
+        "pi_units": "",
+        "mult_options": [
+              [   0,    "CUBE",    "Cube",   10, "Y", null],
+              [   1,     "IMG",   "Image",   20, "Y", null],
+              [   2,    "LINE",    "Line",   30, "Y", null],
+              [   3, "PROFILE", "Profile",   40, "Y", null],
+              [   4,   "POINT",   "Point",   50, "Y", null]
+          ]
     },
     {
         "field_name": "planet_id",
         "field_type": "char3",
-        "field_default": null,
+        "field_notnull": true,
         "field_key": true,
         "data_source": [
             "FUNCTION",
@@ -184,7 +221,18 @@
         "pi_slug": "planet",
         "pi_sub_heading": null,
         "pi_tooltip": "",
-        "pi_units": ""
+        "pi_units": "",
+        "mult_options": [
+              [   0, "VEN",   "Venus",   10, "Y", null],
+              [   1, "EAR",   "Earth",   20, "Y", null],
+              [   2, "MAR",    "Mars",   30, "Y", null],
+              [   3, "JUP", "Jupiter",   40, "Y", null],
+              [   4, "SAT",  "Saturn",   50, "Y", null],
+              [   5, "URA",  "Uranus",   60, "Y", null],
+              [   6, "NEP", "Neptune",   70, "Y", null],
+              [   7, "PLU",   "Pluto",   80, "Y", null],
+              [   8, "OTH",   "Other",   90, "Y", null]
+          ]
     },
     {
         "field_name": "target_name",
@@ -213,9 +261,8 @@
     },
     {
         "field_name": "target_class",
-        "field_type": "enum",
+        "field_type": "char12",
         "field_notnull": true,
-        "field_enum_options": "'RING','PLANET','MOON','ASTEROID','SUN','STAR','SKY','CALIBRATION','OTHER'",
         "field_key": true,
         "data_source": [
             "FUNCTION",
@@ -235,7 +282,19 @@
         "pi_slug": "targetclass",
         "pi_sub_heading": null,
         "pi_tooltip": "",
-        "pi_units": ""
+        "pi_units": "",
+        "mult_options": [
+              [   0,      "PLANET",      "Planet",   10, "Y", null],
+              [   1,        "MOON",        "Moon",   20, "Y", null],
+              [   2,        "RING",        "Ring",   30, "Y", null],
+              [  10,    "ASTEROID",    "Asteroid",   40, "Y", null],
+              [  12,         "TNO",         "TNO",   50, "Y", null],
+              [  20,         "SUN",         "Sun",   70, "Y", null],
+              [  22,        "STAR",        "Star",   80, "Y", null],
+              [  30,         "SKY",         "Sky",   90, "Y", null],
+              [  40, "CALIBRATION", "Calibration",  100, "Y", null],
+              [  50,       "OTHER",       "Other",  110, "Y", null]
+          ]
     },
     {
         "field_name": "time1",
@@ -342,7 +401,7 @@
     {
         "field_name": "observation_duration",
         "field_type": "real8",
-        "field_notnull": true,
+        "field_default": null,
         "field_key": true,
         "data_source": [
             "FUNCTION",
@@ -391,7 +450,13 @@
         "pi_slug": "quantity",
         "pi_sub_heading": null,
         "pi_tooltip": "",
-        "pi_units": ""
+        "pi_units": "",
+        "mult_options": [
+              [   0,  "REFLECT",     "Reflectivity",   10, "Y", null],
+              [   1,  "THERMAL", "Thermal Emission",   20, "Y", null],
+              [   2,  "OPTICAL",    "Optical Depth",   30, "Y", null],
+              [   3, "EMISSION",         "Emission",   40, "Y", null]
+          ]
     },
     {
         "field_name": "right_asc1",

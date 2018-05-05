@@ -114,16 +114,24 @@ def safe_pdstable_read(filename):
     rows = table.dicts_by_row()
     label = table.info.label.as_dict()
 
-    # Go through the rows and look for values that are masked and change the
-    # actual value to None in those cases
-    for row in rows:
-        for column_name in row:
-            if column_name.endswith('_mask'):
-                continue
-            if row.get(column_name+'_mask', False):
-                row[column_name] = None
-
     return rows, label
+
+def safe_column(row, column_name, idx=None):
+    "Read a value from a pdstable column accounting for the mask."
+
+    if column_name+'_mask' not in row:
+        if idx is None:
+            return row[column_name]
+        return row[column_name][idx]
+
+    if idx is None:
+        if row[column_name+'_mask']:
+            return None
+        return row[column_name]
+
+    if row[column_name+'_mask'][idx]:
+        return None
+    return row[column_name][idx]
     
 ################################################################################
 # TABLE MANIPULATION
@@ -155,7 +163,10 @@ def read_schema_for_table(table_name, replace=None):
         target_name = table_name.replace('obs_surface_geometry__', '')
         table_name = 'obs_surface_geometry_target'
         replace = ('<TARGET>', target_name)
-    with open(os.path.join('table_schemas', table_name+'.json'), 'r') as fp:
+    schema_filename = os.path.join('table_schemas', table_name+'.json')
+    if not os.path.exists(schema_filename):
+        return None
+    with open(schema_filename, 'r') as fp:
         try:
             if replace is None:
                 return json.load(fp)
@@ -212,7 +223,7 @@ def announce_nonrepeating_warning(msg, index_row_num=None):
         impglobals.LOGGER.log('warning', msg)
 
 def announce_unknown_target_name(target_name, index_row_num=None):
-    msg = f'Unknown TARGET_NAME "{target_name}" - edit data_config.py'
+    msg = f'Unknown TARGET_NAME "{target_name}" - edit config_data.py'
     if index_row_num is not None:
         msg += f' [line {index_row_num}]'
     announce_nonrepeating_error(msg)

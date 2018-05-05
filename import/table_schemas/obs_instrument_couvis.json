@@ -12,7 +12,7 @@
             "TAB:obs_general",
             "id"
         ],
-        "comment": "This is the primary (surrograte) key linking the record to obs_general."
+        "comment": "This is the primary (surrogate) key linking the record to obs_general."
     },
     {
         "field_name": "rms_obs_id",
@@ -64,7 +64,18 @@
         "pi_sub_heading": null,
         "pi_tooltip": null,
         "pi_units": null,
-        "comment": "Definition is from COUVIS label"
+        "comment": "Definition is from COUVIS label",
+        "mult_options": [
+              [   0,   "CALIB",   "CALIB",  10, "Y", null],
+              [   1,  "UCSTAR",  "UCSTAR",  20, "Y", null],
+              [   2, "UFPSCAN", "UFPSCAN",  30, "Y", null],
+              [   3,   "UHDAC",   "UHDAC",  40, "Y", null],
+              [   4, "UHIGHSN", "UHIGHSN",  50, "Y", null],
+              [   5,    "UMAP",    "UMAP",  60, "Y", null],
+              [   6,   "USCAN",   "USCAN",  70, "Y", null],
+              [   7,  "USTARE",  "USTARE",  80, "Y", null],
+              [   8,    "NONE",    "None",  90, "Y", null]
+          ]
     },
     {
         "field_name": "integration_duration",
@@ -97,7 +108,8 @@
     },
     {
         "field_name": "compression_type",
-        "field_type": "char8",
+        "field_type": "enum",
+        "field_enum_options": "'8_BIT','SQRT_8','SQRT_9','NONE'",
         "field_notnull": true,
         "data_source": [
             "TAB:index",
@@ -119,11 +131,17 @@
         "pi_sub_heading": null,
         "pi_tooltip": null,
         "pi_units": null,
-        "comment": "Definition is from COUVIS label"
+        "comment": "Definition is from COUVIS label",
+        "mult_options": [
+              [   0,  "8_BIT",  "8_BIT",   10, "Y", null],
+              [   1, "SQRT_8", "SQRT_8",   20, "Y", null],
+              [   2, "SQRT_9", "SQRT_9",   30, "Y", null],
+              [   3,   "NONE",   "None",   40, "Y", null]
+          ]
     },
     {
         "field_name": "hi_voltage_power_supply_state",
-        "field_type": "flag",
+        "field_type": "flag_onoff",
         "field_notnull": true,
         "data_source": [
             "TAB:index",
@@ -149,11 +167,12 @@
     },
     {
         "field_name": "occultation_port_state",
-        "field_type": "char16",
+        "field_type": "enum",
+        "field_enum_options": "'OPEN','CLOSED','N/A'",
         "field_notnull": true,
         "data_source": [
-            "TAB:index",
-            "OCCULTATION_PORT_STATE"
+            "FUNCTION",
+            "obs_instrument_COUVIS_occultation_port_state"
         ],
         "definition": "OPEN or CLOSED, indicating the state of the port.",
         "pi_category_name": "obs_instrument_couvis",
@@ -171,11 +190,17 @@
         "pi_sub_heading": null,
         "pi_tooltip": null,
         "pi_units": null,
-        "comment": "Definition is from COUVIS label"
+        "comment": "Definition is from COUVIS label",
+        "mult_options": [
+              [   0,   "OPEN",   "Open",   10, "Y", null],
+              [   1, "CLOSED", "Closed",   20, "Y", null],
+              [   2,    "N/A",    "N/A",   30, "Y", null]
+          ]
     },
     {
         "field_name": "slit_state",
-        "field_type": "char16",
+        "field_type": "enum",
+        "field_enum_options": "'HIGH_RESOLUTION','LOW_RESOLUTION','OCCULTATION','NULL'",
         "field_notnull": true,
         "data_source": [
             "TAB:index",
@@ -197,11 +222,17 @@
         "pi_sub_heading": null,
         "pi_tooltip": null,
         "pi_units": null,
-        "comment": "Definition is from COUVIS label"
+        "comment": "Definition is from COUVIS label",
+        "mult_options": [
+              [   0, "HIGH_RESOLUTION", "High Resolution",   10, "Y", null],
+              [   1,  "LOW_RESOLUTION",  "Low Resolution",   20, "Y", null],
+              [   2,     "OCCULTATION",     "Occultation",   30, "Y", null],
+              [   3,            "NULL",             "N/A",   40, "Y", null]
+          ]
     },
     {
         "field_name": "test_pulse_state",
-        "field_type": "flag",
+        "field_type": "flag_onoff",
         "field_default": null,
         "data_source": [
             "TAB:index",
@@ -334,7 +365,8 @@
     },
     {
         "field_name": "channel",
-        "field_type": "char5",
+        "field_type": "enum",
+        "field_enum_options": "'EUV','FUV','HDAC','HSP'",
         "field_notnull": true,
         "data_source": [
             "FUNCTION",
@@ -355,7 +387,13 @@
         "pi_sub_heading": null,
         "pi_tooltip": null,
         "pi_units": null,
-        "comment": "XXX Needs definition"
+        "comment": "XXX Needs definition",
+        "mult_options": [
+              [   0, "EUV",   "EUV",   10, "Y", null],
+              [   1, "FUV",   "FUV",   20, "Y", null],
+              [   2, "HDAC", "HDAC",   30, "Y", null],
+              [   3, "HSP",   "HSP",   40, "Y", null]
+          ]
     },
     {
         "field_name": "band1",

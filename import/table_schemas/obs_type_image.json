@@ -12,7 +12,7 @@
             "TAB:obs_general",
             "id"
         ],
-        "comment": "This is the primary (surrograte) key linking the record to obs_general."
+        "comment": "This is the primary (surrogate) key linking the record to obs_general."
     },
     {
         "field_name": "rms_obs_id",
@@ -74,7 +74,13 @@
         "pi_sub_heading": null,
         "pi_tooltip": "",
         "pi_units": "",
-        "comment": "Definition is from old OPUS dictionary."
+        "comment": "Definition is from old OPUS dictionary.",
+        "mult_options": [
+              [   0, "CUBE",        "Cube",   10, "Y", null],
+              [   1, "FRAM",       "Frame",   20, "Y", null],
+              [   2, "RAST", "Raster Scan",   30, "Y", null],
+              [   3, "PUSH",   "Pushbroom",   40, "Y", null]
+          ]
     },
     {
         "field_name": "duration",
