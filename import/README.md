@@ -69,23 +69,10 @@ THE BIG QUESTIONS:
 
 - OBS_GENERAL:
 
-  - Ring OBS ID (now RMS Obs ID)
-    - All products except OPUS use "/" as a separator but that screws up in URLs
-    - OPUS uses _ but then we have a disagreement
-    - Should we stick with _ or switch to / and munge the URL with % fields?
-    - ** STICK WITH _
-
-  - is_image is 0/1 while cassini.is_prime is Y or N. Hubble flags are 0/1.
-    Do we want to be consistent? Always have a flag suffix?  *** Yes/No
+  - PRODUCT_CREATION_TIME
 
 - COISS:
-**** SURFACE GEO IS BROKEN ****
-
-  - When will the Jupiter surface geo tables be readable?
-
   - When will the surface geo tables include Venus, Earth, etc?
-
-  - Do we include Jupiter rev_no? Should we rename "Saturn Orbit Number"?
 
 - COUVIS:
   - image_type_id
@@ -133,6 +120,10 @@ THE BIG QUESTIONS:
   - planet_id:
     - Currently it is NONE if there is no target_name
 
+COUVIS:
+
+  - wave_res and waveno_res for HSP and HDAC?
+
 COVIMS:
 
   - target_name uses RA,RB etc?
@@ -177,58 +168,18 @@ COVIMS:
 
   - No MISSION_PHASE_NAME
 
+HUBBLE:
 
+  - Publication date needs to be searchable as a date/time
 
 IMPORT PROBLEMS WITH LABELS: (as of 5/2/18)
 
 COISS
 
-- Times are sometimes in the wrong order. Our index files differ
-  from those at JPL:
+  As I mentioned earlier, "inst_cmprs_rate" has the misfortune of needing TWO different illegal values: 1.e32, which is currently in the LBL file, and -999, which isn't. Can you support two?
 
-  (From COISS_1001)
-  ERROR | time_sec1 (1999-009T08:21:37.692) and time_sec2 (1999-009T08:20:15.568) are in the wrong order [line 7]
+  "optics_temperature" occasionally has a value of 26193824841.0, which must be illegal.
 
-- COISS_xxxx_ring_summary.tab has values from 0 to 360 for
-  MINIMUM_LONGITUDE_WRT_OBSERVER and MAXIMUM_LONGITUDE_WRT_OBSERVER
-  even though the label file says valid values at -180 to 180.
-  This is true for all volumes, both 1xxx and 2xxx.
-
-  (From COISS_1001)
-  ERROR | Column "longitude_wrt_observer2" in table "obs_ring_geometry" has maximum value 180 but 360.0 is too large [line 1281]
-
-- COISS_1001_moon_summary.tab has the wrong field size for TARGET_NAME
-
-  (From COISS_1001)
-  ERROR | Unknown TARGET_NAME "ADRASTEA"," - edit config_data.py [line 1281]
-
-- MISSING_LINES needs to have NULL_CONSTANT   = -2147483648
-  This has already been done in 1001-1009, but appears to be missing
-  from all 2xxx volumes.
-
-  However, there are some volumes that use 2147483647 instead.
-
-- FILTER_TEMPERATURE needs to have NULL_CONSTANT = -999
-  All Volumes
-
-- SENSOR_HEAD_ELEC_TEMPERATURE needs to have NULL_CONSTANT = -999
-  All Volumes
-
-- DETECTOR_TEMPERATURE needs to have NULL_CONSTANT = -999
-  All Volumes
-
-- INSTRUMENT_DATA_RATE needs to have NULL_CONSTANT = -999
-  All Volumes
-
-- OPTICS_TEMPERATURE currently says (in 1xxx):
-    NOT_APPLICABLE_CONSTANT = 1.e32
-  and in 2xxx:
-    NULL_CONSTANT = -999
-  The 2xxx version is correct.
-  There are several two cases that have values of 26193824841
-
-- INST_CMPRS_RATE needs to have NULL_CONSTANT = 1e32
-  All Volumes
-  ALSO needs to have -999 too
+  COISS_1008 and 1009 don't have ring or surface geometry files. I assume this is intentional.
 
 COUVIS:

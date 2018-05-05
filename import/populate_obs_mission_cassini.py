@@ -85,7 +85,7 @@ _CASSINI_TARGET_CODE_MAPPING = {
 ################################################################################
 
 def helper_cassini_obs_name(**kwargs):
-    "Look up the obs_name in the main or supplemental index."
+    "Look up the obs_id in the main or supplemental index."
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     obs_id = index_row.get('OBSERVATION_ID', None)
@@ -94,7 +94,9 @@ def helper_cassini_obs_name(**kwargs):
         if supp_index_row is not None:
             obs_id = supp_index_row.get('OBSERVATION_ID', None)
     if obs_id is None:
-        obs_id = 'MISSING' # XXX
+        index_row_num = metadata['index_row_num']
+        import_util.announce_nonrepeating_error(
+            'No OBSERVATION_ID found', index_row_num)
 
     return obs_id
 
@@ -103,6 +105,10 @@ def helper_cassini_valid_obs_name(obs_name):
     name will have four parts separated by _:
 
     <PRIME> _ <REVNO> <TARGETCODE> _ <ACTIVITYNAME> <ACTIVITYNUMBER> _ <INST>
+
+    or, in the case of VIMS (sometimes):
+
+    <PRIME> _ <REVNO> <TARGETCODE> _ <ACTIVITYNAME> <ACTIVITYNUMBER>
 
     <PRIME> can be: ([A-Z]{2,5}|22NAV)
         - '18ISS', '22NAV', 'CIRS', 'IOSIC', 'IOSIU', 'IOSIV', 'ISS',
@@ -134,14 +140,26 @@ def helper_cassini_valid_obs_name(obs_name):
           'IOPS',
           'MP' (mission planning),
           'RIDER', 'SP', 'TRIGGER'
+
+    If <INST> is missing but everything else is OK, we assume it's PRIME
     """
 
     if obs_name is None:
         return False
 
-    return re.fullmatch(
+    ret = re.fullmatch(
 '([A-Z]{2,5}|22NAV)_([0-2]\d\d|00[A-C]|C\d\d)[A-Z]{2}_[0-9A-Z]+\d\d\d_[A-Z]{2,7}',
-        obs_name) is not None
+        obs_name)
+    if ret:
+        return True
+
+    # Try without _INST
+    ret = re.fullmatch(
+'([A-Z]{2,5}|22NAV)_([0-2]\d\d|00[A-C]|C\d\d)[A-Z]{2}_[0-9A-Z]+\d\d\d',
+        obs_name)
+    if ret:
+        return True
+    return False
 
 def helper_cassini_planet_id(**kwargs):
     """Find the planet associated with an observation. This is usually based on
@@ -173,6 +191,43 @@ def helper_cassini_planet_id(**kwargs):
         return 'SAT'
     return None
 
+def helper_cassini_target_name(**kwargs):
+    metadata = kwargs['metadata']
+    index_row = metadata['index_row']
+
+    target_name = index_row['TARGET_NAME'].upper()
+    if target_name in TARGET_NAME_MAPPING:
+        target_name = TARGET_NAME_MAPPING[target_name]
+
+    target_desc = None
+    if 'TARGET_DESC' in index_row:
+        # Only for COISS
+        target_desc = index_row['TARGET_DESC'].upper()
+        if target_desc in TARGET_NAME_MAPPING:
+            target_desc = TARGET_NAME_MAPPING[target_desc]
+
+    target_code = None
+    obs_name = helper_cassini_obs_name(**kwargs)
+    if helper_cassini_valid_obs_name(obs_name):
+        obs_parts = obs_name.split('_')
+        target_code = obs_parts[1][-2:]
+
+    # Examine targets that are Saturn or Sky - are they really rings?
+    if ((target_name == 'SATURN' or target_name == 'SKY') and
+        target_code in ('RA','RB','RC','RD','RE','RF','RG','RI')):
+        return ('S RINGS', 'S Rings')
+    if target_desc is not None:
+        # Examine targets that are SKY - are they really rings?
+        if target_name == 'SKY' and target_code == 'SK':
+            if target_desc.find('RING') != -1:
+                return ('S RINGS', 'S Rings')
+            # Let TARGET_DESC override TARGET_NAME for Sky
+            if target_desc in TARGET_NAME_INFO:
+                return (target_desc.upper(), target_desc.title())
+
+    return (target_name, target_name.title())
+
+
 ################################################################################
 # THESE NEED TO BE IMPLEMENTED FOR EVERY MISSION
 ################################################################################
@@ -198,7 +253,11 @@ def populate_obs_mission_cassini_prime_inst_id(**kwargs):
 
     obs_parts = obs_name.split('_')
     first = obs_parts[0]
-    last = obs_parts[-1]
+    if len(obs_parts) == 3:
+        # This happens for some VIMS observations
+        last = 'PRIME'
+    else:
+        last = obs_parts[-1]
 
     # If the last part is PRIME, the prime_inst is the first part. Otherwise
     # it's the last part.
@@ -267,15 +326,41 @@ def populate_obs_mission_cassini_rev_no(**kwargs):
         return (rev_no, None)
     return (rev_no, rev_no)
 
-def populate_obs_mission_cassini_ert_sec1(**kwargs):
+def populate_obs_mission_cassini_ert1(**kwargs):
     metadata = kwargs['metadata']
-    index_row_num = metadata['index_row_num']
     index_row = metadata['index_row']
 
     # START_TIME isn't available for COUVIS
     start_time = index_row.get('EARTH_RECEIVED_START_TIME', None)
-    if start_time == 'UNK' or start_time is None:
+    if start_time == 'UNK':
+        # This is left over from an old version of the index files
+        # Shouldn't be needed anymore
+        start_time = None
+
+    return start_time
+
+def populate_obs_mission_cassini_ert2(**kwargs):
+    metadata = kwargs['metadata']
+    index_row = metadata['index_row']
+
+    # STOP_TIME isn't available for COUVIS
+    stop_time = index_row.get('EARTH_RECEIVED_STOP_TIME', None)
+    if stop_time == 'UNK':
+        # This is left over from an old version of the index files
+        # Shouldn't be needed anymore
+        stop_time = None
+
+    return stop_time
+
+def populate_obs_mission_cassini_ert_sec1(**kwargs):
+    metadata = kwargs['metadata']
+    index_row_num = metadata['index_row_num']
+    cassini_row = metadata['obs_mission_cassini_row']
+    start_time = cassini_row['ert1']
+
+    if start_time is None:
         return None
+
     try:
         ert = julian.tai_from_iso(start_time)
     except ValueError:
@@ -288,12 +373,12 @@ def populate_obs_mission_cassini_ert_sec1(**kwargs):
 def populate_obs_mission_cassini_ert_sec2(**kwargs):
     metadata = kwargs['metadata']
     index_row_num = metadata['index_row_num']
-    index_row = metadata['index_row']
+    cassini_row = metadata['obs_mission_cassini_row']
+    stop_time = cassini_row['ert2']
 
-    # STOP_TIME isn't available for COUVIS
-    stop_time = index_row.get('EARTH_RECEIVED_STOP_TIME', None)
-    if stop_time == 'UNK' or stop_time is None:
+    if stop_time is None:
         return None
+
     try:
         ert = julian.tai_from_iso(stop_time)
     except ValueError:

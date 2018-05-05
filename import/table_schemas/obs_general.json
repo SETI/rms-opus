@@ -292,7 +292,7 @@
         "field_key": true,
         "data_source": [
             "FUNCTION",
-            "obs_general_<INST>_time_sec1"
+            "obs_general_time_sec1"
         ],
         "data_source_order": 10,
         "val_min": -664500620.0,
@@ -319,7 +319,7 @@
         "field_key": true,
         "data_source": [
             "FUNCTION",
-            "obs_general_<INST>_time_sec2"
+            "obs_general_time_sec2"
         ],
         "data_source_order": 11,
         "val_min": -664500620.0,
@@ -354,7 +354,7 @@
         "definition": "Observation duration is the time interval during which an observation is performed, equal to the difference between the START_TIME and the STOP_TIME.",
         "pi_category_name": "obs_general",
         "pi_dict_context": "OPUS_GENERAL",
-        "pi_dict_name": "EXPOSURE_DURATION",
+        "pi_dict_name": "OBSERVATION_DURATION",
         "pi_disp_order": 37,
         "pi_display": 1,
         "pi_display_results": 1,
@@ -631,6 +631,31 @@
         "pi_tooltip": null,
         "pi_units": null,
         "comment": "Definition is from COISS and GOSSI labels."
+    },
+    {
+        "field_name": "product_id",
+        "field_type": "char30",
+        "field_notnull": true,
+        "data_source": [
+            "FUNCTION",
+            "obs_general_<INST>_product_id"
+        ],
+        "definition": "A permanent, unique identifier assigned to a data product.",
+        "pi_category_name": "obs_general",
+        "pi_dict_context": "OPUS_GENERAL",
+        "pi_dict_name": "PRODUCT_ID",
+        "pi_disp_order": 0,
+        "pi_display": 1,
+        "pi_display_results": 1,
+        "pi_form_type": "STRING",
+        "pi_intro": null,
+        "pi_label": "Product ID",
+        "pi_label_results": "Product ID",
+        "pi_slug": "productid",
+        "pi_sub_heading": null,
+        "pi_tooltip": null,
+        "pi_units": null,
+        "comment": "Definition is from HSTACS label."
     },
     {
         "put_mults_here": true
