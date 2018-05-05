@@ -57,14 +57,14 @@ def populate_obs_general_COUVIS_rms_obs_id(**kwargs):
     if len(time_split) > 4:
         image_time += '-' + time_split[4]
 
-    rms_obs_id = f'{planet_ltr}/CO/UVIS/{image_time}/{channel}'
+    rms_obs_id = f'{planet_ltr}_CO_UVIS_{image_time}_{channel}'
 
     return rms_obs_id
 
 def populate_obs_general_COUVIS_inst_host_id(**kwargs):
     return 'CO'
 
-# XXX
+# XXX THIS IS ALL WRONG ###
 def populate_obs_general_COUVIS_data_type(**kwargs):
     channel, image_time = _COUVIS_channel_time_helper(**kwargs)
 
@@ -72,6 +72,12 @@ def populate_obs_general_COUVIS_data_type(**kwargs):
         return 'PROFILE'
     if channel == 'HDAC':
         return 'POINT'
+
+    if channel != 'EUV' and channel != 'FUV':
+        import_util.announce_nonrepeating_error(
+            f'COUVIS_data_type has unknown channel type {channel}',
+            index_row_num)
+        return None
 
     metadata = kwargs['metadata']
     index_row_num = metadata['index_row_num']
@@ -85,12 +91,6 @@ def populate_obs_general_COUVIS_data_type(**kwargs):
     object_type = None
     if supp_index_row is not None:
         object_type = supp_index_row['DATA_OBJECT_TYPE']
-
-    if channel != 'EUV' and channel != 'FUV':
-        import_util.announce_nonrepeating_error(
-            f'COUVIS_data_type has unknown channel type {channel}',
-            index_row_num)
-        return None
 
     if object_type is None:
         import_util.announce_nonrepeating_error(
@@ -115,40 +115,8 @@ def populate_obs_general_COUVIS_time2(**kwargs):
     stop_time = import_util.safe_column(index_row, 'STOP_TIME')
     return stop_time
 
-def populate_obs_general_COUVIS_time_sec1(**kwargs):
-    metadata = kwargs['metadata']
-    index_row = metadata['index_row']
-    start_time = import_util.safe_column(index_row, 'START_TIME')
-    return julian.tai_from_iso(start_time)
-
-def populate_obs_general_COUVIS_time_sec2(**kwargs):
-    metadata = kwargs['metadata']
-    index_row = metadata['index_row']
-    stop_time = import_util.safe_column(index_row, 'STOP_TIME')
-    obs_general_row = metadata['obs_general_row']
-
-    time2 = julian.tai_from_iso(stop_time)
-
-    time1 = obs_general_row['time_sec1']
-    if time2 < time1:
-        start_time = import_util.safe_column(index_row, 'START_TIME')
-        index_row_num = metadata['index_row_num']
-        impglobals.LOGGER.log('warning',
-            f'time_sec1 ({start_time}) and time_sec2 ({stop_time}) are '+
-            f'in the wrong order - setting equal [line {index_row_num}]')
-        time2 = time1
-
-    return time2
-
-# XXX
 def populate_obs_general_COUVIS_target_name(**kwargs):
-    metadata = kwargs['metadata']
-    index_row = metadata['index_row']
-    target_name = index_row['TARGET_NAME'].upper()
-    if target_name in TARGET_NAME_MAPPING:
-        target_name = TARGET_NAME_MAPPING[target_name]
-
-    return target_name
+    return helper_cassini_target_name(**kwargs)
 
 def populate_obs_general_COUVIS_observation_duration(**kwargs):
     metadata = kwargs['metadata']
@@ -163,7 +131,7 @@ def populate_obs_general_COUVIS_quantity(**kwargs):
 
     if channel == 'HSP':
         return 'OPTICAL'
-    return 'EMISSION'
+    return 'REFLECT'
 
 def populate_obs_general_COUVIS_note(**kwargs):
     metadata = kwargs['metadata']
@@ -175,6 +143,7 @@ def populate_obs_general_COUVIS_note(**kwargs):
                                       '')
     return description
 
+# Format: "/COUVIS_0050/DATA/D2015_001/EUV2015_001_17_57.LBL"
 def populate_obs_general_COUVIS_primary_file_spec(**kwargs):
     metadata = kwargs['metadata']
     supp_index_row = metadata.get('supp_index_row', None)
@@ -182,12 +151,25 @@ def populate_obs_general_COUVIS_primary_file_spec(**kwargs):
         return None
     return supp_index_row['FILE_SPECIFICATION_NAME']
 
+# Format: "CO-S-UVIS-2-SSB-V1.4"
 def populate_obs_general_COUVIS_data_set_id(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     dsi = index_row['DATA_SET_ID']
+
     return (dsi, dsi)
 
+# Format: "EUV2015_001_17_57"
+def populate_obs_general_COUVIS_product_id(**kwargs):
+    metadata = kwargs['metadata']
+    index_row = metadata['index_row']
+    product_id = index_row['PRODUCT_ID']
+
+    return product_id
+
+# We occasionally don't bother to generate ring_geo data for COUVIS, like during
+# cruise, so just use the given RA/DEC from the label if needed. We don't make
+# any effort to figure out the min/max values.
 def populate_obs_general_COUVIS_right_asc1(**kwargs):
     metadata = kwargs['metadata']
     ring_geo_row = metadata.get('ring_geo_row', None)
@@ -216,8 +198,6 @@ def populate_obs_general_COUVIS_declination1(**kwargs):
 
     index_row = metadata['index_row']
     dec = import_util.safe_column(index_row, 'DECLINATION')
-    # if dec == 'NULL': # XXX
-    #     dec = None
     return dec
 
 def populate_obs_general_COUVIS_declination2(**kwargs):
@@ -228,8 +208,6 @@ def populate_obs_general_COUVIS_declination2(**kwargs):
 
     index_row = metadata['index_row']
     dec = import_util.safe_column(index_row, 'DECLINATION')
-    # if dec == 'NULL': # XXX
-    #     dec = None
     return dec
 
 def populate_obs_mission_cassini_COUVIS_mission_phase_name(**kwargs):
@@ -238,6 +216,7 @@ def populate_obs_mission_cassini_COUVIS_mission_phase_name(**kwargs):
 
 ### OBS_TYPE_IMAGE TABLE ###
 
+# XXX
 def populate_obs_type_image_COUVIS_image_type_id(**kwargs):
     metadata = kwargs['metadata']
     obs_general_row = metadata['obs_general_row']
@@ -248,16 +227,31 @@ def populate_obs_type_image_COUVIS_image_type_id(**kwargs):
 
 def populate_obs_type_image_COUVIS_duration(**kwargs):
     metadata = kwargs['metadata']
+    obs_general_row = metadata['obs_general_row']
+    type_id = obs_general_row['data_type']
+    if type_id != 'CUBE':
+        return None
+
     index_row = metadata['index_row']
     integration_duration = import_util.safe_column(index_row,
                                                    'INTEGRATION_DURATION')
     return integration_duration
 
 def populate_obs_type_image_COUVIS_levels(**kwargs):
+    metadata = kwargs['metadata']
+    obs_general_row = metadata['obs_general_row']
+    type_id = obs_general_row['data_type']
+    if type_id != 'CUBE':
+        return None
     return 65535
 
+# XXX
 def populate_obs_type_image_COUVIS_lesser_pixel_size(**kwargs):
     metadata = kwargs['metadata']
+    obs_general_row = metadata['obs_general_row']
+    type_id = obs_general_row['data_type']
+    if type_id != 'CUBE':
+        return None
     supp_index_row = metadata.get('supp_index_row', None)
     if supp_index_row is None:
         return None
@@ -277,6 +271,10 @@ def populate_obs_type_image_COUVIS_lesser_pixel_size(**kwargs):
 
 def populate_obs_type_image_COUVIS_greater_pixel_size(**kwargs):
     metadata = kwargs['metadata']
+    obs_general_row = metadata['obs_general_row']
+    type_id = obs_general_row['data_type']
+    if type_id != 'CUBE':
+        return None
     supp_index_row = metadata.get('supp_index_row', None)
     if supp_index_row is None:
         return None
@@ -323,7 +321,6 @@ def populate_obs_wavelength_COUVIS_wavelength1(**kwargs):
         f' {channel}', index_row_num)
     return None
 
-
 def populate_obs_wavelength_COUVIS_wavelength2(**kwargs):
     channel, image_time = _COUVIS_channel_time_helper(**kwargs)
     if channel == 'HSP':
@@ -362,7 +359,13 @@ def _COUVIS_wave_res_helper(**kwargs):
         return band_bin * 0.0000607422
     if channel == 'FUV':
         return band_bin * 0.000078125
-    return None
+
+    wl_row = metadata['obs_wavelength_row']
+    wl1 = wl_row['wavelength1']
+    wl2 = wl_row['wavelength2']
+    if wl1 is None or wl2 is None:
+        return None
+    return wl2 - wl1
 
 def populate_obs_wavelength_COUVIS_wave_res1(**kwargs):
     return _COUVIS_wave_res_helper(**kwargs)
@@ -391,8 +394,17 @@ def populate_obs_wavelength_COUVIS_wave_no2(**kwargs):
     return 10000. / wl1
 
 def populate_obs_wavelength_COUVIS_wave_no_res1(**kwargs):
+    channel, image_time = _COUVIS_channel_time_helper(**kwargs)
     metadata = kwargs['metadata']
     wl_row = metadata['obs_wavelength_row']
+
+    if channel == 'HSP' or channel == 'HDAC':
+        wno1 = wl_row['wave_no1']
+        wno2 = wl_row['wave_no2']
+        if wno1 is None or wno2 is None:
+            return None
+        return wno2 - wno1
+
     wave_res2 = wl_row['wave_res2']
     wl2 = wl_row['wavelength2']
 
@@ -404,6 +416,14 @@ def populate_obs_wavelength_COUVIS_wave_no_res1(**kwargs):
 def populate_obs_wavelength_COUVIS_wave_no_res2(**kwargs):
     metadata = kwargs['metadata']
     wl_row = metadata['obs_wavelength_row']
+
+    if channel == 'HSP' or channel == 'HDAC':
+        wno1 = wl_row['wave_no1']
+        wno2 = wl_row['wave_no2']
+        if wno1 is None or wno2 is None:
+            return None
+        return wno2 - wno1
+
     wave_res1 = wl_row['wave_res1']
     wl1 = wl_row['wavelength1']
 

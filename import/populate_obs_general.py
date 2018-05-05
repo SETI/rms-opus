@@ -78,11 +78,6 @@ def populate_helper_d_longitude_field(**kwargs):
 # THESE ARE SPECIFIC TO OBS_GENERAL
 ################################################################################
 
-def populate_obs_general_id(**kwargs):
-    next_id = impglobals.NEXT_OBS_GENERAL_ID
-    impglobals.NEXT_OBS_GENERAL_ID += 1
-    return next_id
-
 def populate_obs_general_instrument_id(**kwargs):
     volume_id = kwargs['volume_id']
     volume_id_prefix = volume_id[:volume_id.find('_')]
@@ -113,3 +108,33 @@ def populate_obs_general_target_class(**kwargs):
         return None
     _, target_class = TARGET_NAME_INFO[target_name]
     return target_class
+
+def populate_obs_general_time_sec1(**kwargs):
+    metadata = kwargs['metadata']
+    general_row = metadata['obs_general_row']
+    time1 = general_row['time1']
+
+    if time1 is None:
+        return None
+
+    return julian.tai_from_iso(time1)
+
+def populate_obs_general_time_sec2(**kwargs):
+    metadata = kwargs['metadata']
+    general_row = metadata['obs_general_row']
+    time2 = general_row['time1']
+
+    if time2 is None:
+        return None
+
+    time_sec2 = julian.tai_from_iso(time2)
+
+    if time_sec2 < general_row['time_sec1']:
+        time1 = general_row['time1']
+        index_row_num = metadata['index_row_num']
+        impglobals.LOGGER.log('error',
+            f'time1 ({time1}) and time2 ({time2}) are '+
+            f'in the wrong order [line {index_row_num}]')
+        impglobals.IMPORT_HAS_BAD_DATA = True
+
+    return time_sec2

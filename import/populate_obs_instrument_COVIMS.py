@@ -76,40 +76,8 @@ def populate_obs_general_COVIMS_time2(**kwargs):
     stop_time = import_util.safe_column(index_row, 'STOP_TIME')
     return stop_time
 
-def populate_obs_general_COVIMS_time_sec1(**kwargs):
-    metadata = kwargs['metadata']
-    index_row = metadata['index_row']
-    start_time = import_util.safe_column(index_row, 'START_TIME')
-    return julian.tai_from_iso(start_time)
-
-def populate_obs_general_COVIMS_time_sec2(**kwargs):
-    metadata = kwargs['metadata']
-    index_row = metadata['index_row']
-    stop_time = import_util.safe_column(index_row, 'STOP_TIME')
-    obs_general_row = metadata['obs_general_row']
-
-    time2 = julian.tai_from_iso(stop_time)
-
-    time1 = obs_general_row['time_sec1']
-    if time2 < time1:
-        start_time = import_util.safe_column(index_row, 'START_TIME')
-        index_row_num = metadata['index_row_num']
-        impglobals.LOGGER.log('warning',
-            f'time_sec1 ({start_time}) and time_sec2 ({stop_time}) are '+
-            f'in the wrong order - setting equal [line {index_row_num}]')
-        time2 = time1
-
-    return time2
-
-# XXX
 def populate_obs_general_COVIMS_target_name(**kwargs):
-    metadata = kwargs['metadata']
-    index_row = metadata['index_row']
-    target_name = index_row['TARGET_NAME'].upper()
-    if target_name in TARGET_NAME_MAPPING:
-        target_name = TARGET_NAME_MAPPING[target_name]
-
-    return target_name
+    return helper_cassini_target_name(**kwargs)
 
 def populate_obs_general_COVIMS_observation_duration(**kwargs):
     metadata = kwargs['metadata']
@@ -142,6 +110,13 @@ def populate_obs_general_COVIMS_data_set_id(**kwargs):
     index_label = metadata['index_label']
     dsi = index_label['DATA_SET_ID']
     return (dsi, dsi)
+
+def populate_obs_general_COVIMS_product_id(**kwargs):
+    metadata = kwargs['metadata']
+    index_row = metadata['index_row']
+    product_id = index_row['PRODUCT_ID']
+
+    return product_id
 
 def populate_obs_general_COVIMS_right_asc1(**kwargs):
     metadata = kwargs['metadata']

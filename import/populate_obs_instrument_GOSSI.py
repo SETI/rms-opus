@@ -21,7 +21,7 @@ from populate_obs_mission_galileo import *
 #            p. 413-455.
 #   Bibliographic Code: 1992SSRv...60..413B
 # WL MIN/MAX are taken by eye-balling Fig. 3 of the above paper
-
+# Note that min/max are the FULL bandwidth, not just the FWHM
 # (WL MIN, WL MAX, EFFECTIVE WL)
 _GOSSI_FILTER_WAVELENGTHS = {
     'CLEAR':   (360, 1050, 611),
@@ -61,6 +61,9 @@ def populate_obs_general_GOSSI_data_type(**kwargs):
 # We actually have no idea what IMAGE_TIME represents - start, mid, stop?
 # We assume it means stop time like it does for Voyager, and because Mark
 # has done some ring analysis with this assumption and it seemed to work OK.
+# So we compute start time by taking IMAGE_TIME and subtracting exposure.
+# If we don't have exposure, we just set them equal so we can still search
+# cleanly.
 def populate_obs_general_GOSSI_time1(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
@@ -82,27 +85,6 @@ def populate_obs_general_GOSSI_time2(**kwargs):
         return None
 
     return julian.iso_from_tai(julian.tai_from_iso(stop_time), digits=3)
-
-def populate_obs_general_GOSSI_time_sec1(**kwargs):
-    metadata = kwargs['metadata']
-    index_row = metadata['index_row']
-    stop_time = import_util.safe_column(index_row, 'IMAGE_TIME')
-    exposure = import_util.safe_column(index_row, 'EXPOSURE_DURATION')
-
-    if exposure is None:
-        exposure = 0
-
-    return julian.tai_from_iso(stop_time)-exposure/1000
-
-def populate_obs_general_GOSSI_time_sec2(**kwargs):
-    metadata = kwargs['metadata']
-    index_row = metadata['index_row']
-    stop_time = import_util.safe_column(index_row, 'IMAGE_TIME')
-
-    if stop_time is None:
-        return None
-
-    return julian.tai_from_iso(stop_time)
 
 def populate_obs_general_GOSSI_target_name(**kwargs):
     target_name = helper_galileo_target_name(**kwargs)
@@ -136,6 +118,20 @@ def populate_obs_general_GOSSI_data_set_id(**kwargs):
     index_row = metadata['index_row']
     dsi = index_row['DATA_SET_ID']
     return dsi
+
+def populate_obs_general_GOSSI_product_id(**kwargs):
+    metadata = kwargs['metadata']
+    index_row = metadata['index_row']
+    file_spec = index_row['FILE_SPECIFICATION_NAME']
+
+    # The file_spec looks like GO_0017:[J0.OPNAV.C034640]5900R.IMG
+    # We want to extract C0346405900R
+    idx = file_spec.find('.')
+    file_spec = file_spec[idx+1:]
+    idx = file_spec.find('.')
+    file_spec = file_spec[idx+1:].replace(']', '').replace('.IMG', '')
+
+    return file_spec
 
 # GOSSI is 10.16 microRad / pixel and 800x800
 _GOSSI_FOV_RAD = 10.16e-6 * 800
@@ -240,10 +236,22 @@ def populate_obs_wavelength_GOSSI_wavelength2(**kwargs):
     return _wavelength_helper(**kwargs)[1] / 1000 # microns
 
 def populate_obs_wavelength_GOSSI_wave_res1(**kwargs):
-    return None
+    metadata = kwargs['metadata']
+    wl_row = metadata['obs_wavelength_row']
+    wl1 = wl_row['wavelength1']
+    wl2 = wl_row['wavelength2']
+    if wl1 is None or wl2 is None:
+        return None
+    return wl2 - wl1
 
 def populate_obs_wavelength_GOSSI_wave_res2(**kwargs):
-    return None
+    metadata = kwargs['metadata']
+    wl_row = metadata['obs_wavelength_row']
+    wl1 = wl_row['wavelength1']
+    wl2 = wl_row['wavelength2']
+    if wl1 is None or wl2 is None:
+        return None
+    return wl2 - wl1
 
 def populate_obs_wavelength_GOSSI_wave_no1(**kwargs):
     metadata = kwargs['metadata']
@@ -256,10 +264,22 @@ def populate_obs_wavelength_GOSSI_wave_no2(**kwargs):
     return 10000 / wavelength_row['wavelength1'] # cm^-1
 
 def populate_obs_wavelength_GOSSI_wave_no_res1(**kwargs):
-    return None
+    metadata = kwargs['metadata']
+    wl_row = metadata['obs_wavelength_row']
+    wno1 = wl_row['wave_no1']
+    wno2 = wl_row['wave_no2']
+    if wno1 is None or wno2 is None:
+        return None
+    return wno2 - wno1
 
 def populate_obs_wavelength_GOSSI_wave_no_res2(**kwargs):
-    return None
+    metadata = kwargs['metadata']
+    wl_row = metadata['obs_wavelength_row']
+    wno1 = wl_row['wave_no1']
+    wno2 = wl_row['wave_no2']
+    if wno1 is None or wno2 is None:
+        return None
+    return wno2 - wno1
 
 def populate_obs_wavelength_GOSSI_spec_flag(**kwargs):
     return 'N'
