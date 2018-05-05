@@ -2,10 +2,11 @@ from django import template
 from dictionary.views import html_decode
 register = template.Library()
 
-@register.filter
-def index(List, i):
-    return List[int(i)]
+import logging
+log = logging.getLogger(__name__)
+
 
 @register.filter(name='removeTags')
 def removeTags(str):
+    log.info("in filter = str %s", str)
     return html_decode(str)

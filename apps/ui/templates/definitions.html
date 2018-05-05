@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+
+{% block title %}Dictionary of OPUS terms{% endblock %}
+
+{% block content %}
+{% load index %}
+<div>
+  <h5 style="text-align: center;">OPUS Dictionary of terms</h5>
+  <div class = "orderedList">
+    {% for key, def in definitionList %}
+    <h3>{{key}}</h3>
+    <div>
+      <ul>
+        {% for definition in def %}
+        <li class='definition'>
+          <h5>{{definition.term__term_nice}} - {{definition.context__description}}</h5>
+          {% autoescape on %}
+          {{definition.definition|removeTags|striptags}}<br/>
+          {% endautoescape %}
+          <small>Import date: {{definition.term__import_date}}</small><br/>
+        </li>
+        {% endfor %}
+      </ul>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+
+{% endblock %}
