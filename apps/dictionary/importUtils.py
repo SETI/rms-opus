@@ -14,7 +14,7 @@ class ImportDictionaryData(object):
     db_table = "definitions"
     tables = {}
     tables[db_table] = (
-        f"CREATE TABLE IF NOT EXISTS `{db_table}` ("
+        f"CREATE TABLE IF NOT EXISTS `{db_table}` (",
         "   `term` char(255) NOT NULL,"
         "   `context` char(25) NOT NULL,"
         "   `def` text NOT NULL,"
@@ -22,16 +22,16 @@ class ImportDictionaryData(object):
         "   `image_URL` char(255) DEFAULT NULL COMMENT 'URL of image to be used with the expanded definition',"
         "   `more_info_URL` char(255) DEFAULT NULL COMMENT 'URL of pdf or image to be used to create a full page fully expanded definition',"
         "   `more_info_label` varchar(150) DEFAULT NULL COMMENT 'Required only if more_info_url is not blank.  Label for the page.',"
-        "   `subterm` varchar(255) DEFAULT NULL COMMENT 'This is used to associate the hover text with the definition for a particular widget.  Default is null',",
+        "   `subterm` varchar(255) DEFAULT '' COMMENT 'This is used to associate the hover text with the definition for a particular widget.  Default is null',",
         "   `modified` tinyint(3) unsigned zerofill NOT NULL COMMENT 'set if row has been edited',"
         "   `import_date` date DEFAULT NULL,"
-        "  PRIMARY KEY (`term`,`context`)"
+        "  PRIMARY KEY (`term`,`context`, `subterm`)"
         ") ENGINE=InnoDB DEFAULT CHARSET=utf8")
 
     schema_path = "C:/seti/opus/import/table_schemas/obs*.json"
     insert_query = (f"INSERT INTO `{db_table}` "
-                        "(term, context, def, modified, import_date) "
-                        "VALUES (%s, %s, %s, %s, %s)")
+                        "(term, context, def, subterm, modified, import_date) "
+                        "VALUES (%s, %s, %s, %s, %s, %s)")
 
     def __init__(self, db_hostname, db_schema, db_user, db_password):
         self.db_hostname = db_hostname
@@ -69,7 +69,7 @@ class ImportDictionaryData(object):
                     print(f"Error in dropping table {self.db_table} - {e.args[0]}: {e.args[1]}")
         # create table if not exists; faster than checking to see if table exists first...
         try:
-            cursor.execute(self.tables[self.db_table])
+            cursor.execute(''.join(self.tables[self.db_table]))
         except MySQLdb.Error as e:
             print(f"Error in creating table {self.db_table} - {e.args[0]}: {e.args[1]}")
             return
@@ -89,30 +89,34 @@ class ImportDictionaryData(object):
 
         cursor.close()
 
-    def update_dictionary(self, term, context, definition):
+    def update_dictionary(self, term, context, definition, subterm=""):
         """ update_dictionary fetches a row from the dictionary database; if it exists,
             checks to see if the data has been modified.  If not, overwrites the data
             in that row with the new terms.
             If the term+context does not exist, update_dictionary will insert a new row.
         """
         cursor = self.conn.cursor()
-        query = (f"SELECT * from {self.db_table} "
-                 "WHERE term like %s AND context like %s")
 
-        cursor.execute(query, (term, context))
-        row = cursor.fetchone()
-        if row is not None:
-            if row['modified'] is not 0:
-                query = (f"UPDATE {self.db_table} "
-                     "SET def=%s"
-                     "WHERE term like %s AND context like %s")
-                cursor.execute(query, (definition, term, context))
-                self.conn.commit()
-        else:
-            now = datetime.now().strftime('%Y-%m-%d')
-            self.definitions.append((term, context, definition, 0, now))
-            #self.cursor.execute(query, (term, context, def, 0))
-            #self.conn.commit()
+        where = f"WHERE term like '{term}' AND context like '{context}' AND subterm like '{subterm}'"
+        query = f"SELECT * from {self.db_table} {where}"
+        try:
+            cursor.execute(query)
+            row = cursor.fetchone()
+            if row is not None:
+                # using terrible back index until i make use of MySQLDict...
+                #if row['modified'] is not 0:
+                if row[-2] is not 0:
+                    query = f"UPDATE {self.db_table} SET def={definition} {where}"
+                    cursor.execute(query)
+                    self.conn.commit()
+            else:
+                now = datetime.now().strftime('%Y-%m-%d')
+                self.definitions.append((term, context, definition, subterm, 0, now))
+                #self.cursor.execute(query, (term, context, def, 0))
+                #self.conn.commit()
+        except Exception as e:
+            print('Error on line {}'.format(sys.exc_info()[-1].tb_lineno), type(e).__name__, e)
+
         cursor.close()
 
     def import_PDS(self, file_name):
@@ -141,6 +145,8 @@ class ImportDictionaryData(object):
             print(sys.exc_info())
 
     def import_JSON(self, file_name):
+        SUBTERM = 1
+        HOVER_TEXT = 5
         self.definitions = []
         try:
             with open(file_name, 'r') as fp:
@@ -161,8 +167,30 @@ class ImportDictionaryData(object):
                     else:
                         warning = f"WARNING: missing context for {term}: {definition}"
 
+                    # subterm (hover text) is that last item in the mult_options list.  Thare are, in order:
+                    #   Unique ID
+                    #   Value in database
+                    #   Label to show to user
+                    #   Display order
+                    #   Display or not
+                    #   Hover text (subterm text)
                     if not warning:
-                        self.update_dictionary(term, context, definition)
+                        try:
+                            # this is for the main definition...
+                            self.update_dictionary(term, context, definition)
+                            # this is for the subterms...
+                            if "mult_options" in label:
+                                mult_options = label['mult_options']
+                                for options in mult_options:
+                                    subterm = options[SUBTERM]
+                                    definition = options[HOVER_TEXT]
+                                    if definition is not None:
+                                        #print(f"term: {term}, context: {context}, definition: {definition}, subterm: {subterm}")
+                                        self.update_dictionary(term, context, definition, subterm)
+                        except:
+                            print("WARNING: bad or missing mult_options array for {term}: {context}")
+                            print(sys.exc_info())
+
                     else:
                         print(warning)
 

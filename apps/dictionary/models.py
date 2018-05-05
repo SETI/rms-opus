@@ -34,6 +34,7 @@ class Definition(models.Model):
     image_url = models.CharField(db_column='image_URL', max_length=255, blank=True, null=True, help_text='Image URL for the expanded definition')  # Field name made lowercase.
     more_info_url = models.CharField(db_column='more_info_URL', max_length=255, blank=True, null=True, help_text='More info URL <full definition, url to a picture or pdf>')  # Field name made lowercase.
     more_info_label = models.CharField(db_column='more_info_label', max_length=150, blank=True, null=True, help_text='Label for the more info URL page')  # Field name made lowercase.
+    subterm = models.CharField(db_column='subterm', max_length=255, blank=True, null=True, help_text='Text for the subterm hover text')
     modified = models.IntegerField(default=0)
     import_date = models.DateField(blank=True, null=True)
 
@@ -42,7 +43,7 @@ class Definition(models.Model):
         ordering = ["term", "context"]
         db_table = u'definitions'
         app_label = 'dictionary'
-        unique_together = (('term', 'context'),)
+        unique_together = (('term', 'context', 'subterm'),)
 
     def __str__(self):
         return self.term

@@ -8,13 +8,12 @@ import string
 import logging
 log = logging.getLogger(__name__)
 
-def get_def(term, context):
+def get_def(term, context, subterm=""):
     """ get a dictionary definition for tool tips
 
         """
     try:
-        definition = Definition.objects.using('dictionary').select_related().filter(context=context,term=term).values('definition', 'term', 'context__description').first()
-        #definition = Definition.objects.using('dictionary').get(context=context,term=term).values('definition', 'term', 'import_date', 'context__description')
+        definition = Definition.objects.using('dictionary').select_related().filter(context=context,term=term,subterm=subterm).values('definition', 'term', 'context__description').first()
         return definition
     except Definition.DoesNotExist:
         return False
