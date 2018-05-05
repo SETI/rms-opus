@@ -1,5 +1,5 @@
-import os, sys, glob
-sys.path.append('c:/seti/opus/pds-tools')
+from config import *
+import sys, glob
 from datetime import datetime
 
 import MySQLdb
@@ -28,12 +28,12 @@ class ImportDictionaryData(object):
         "  PRIMARY KEY (`term`,`context`, `subterm`)"
         ") ENGINE=InnoDB DEFAULT CHARSET=utf8")
 
-    schema_path = "C:/seti/opus/import/table_schemas/obs*.json"
+    json_schema_path = f"{JSON_SCHEMA_PATH}/obs*.json"
     insert_query = (f"INSERT INTO `{db_table}` "
                         "(term, context, def, subterm, modified, import_date) "
                         "VALUES (%s, %s, %s, %s, %s, %s)")
 
-    def __init__(self, db_hostname, db_schema, db_user, db_password):
+    def __init__(self, db_hostname=OPUS_HOST_NAME, db_schema=OPUS_SCHEMA_NAME, db_user=DB_USER, db_password=DB_PASSWORD):
         self.db_hostname = db_hostname
         self.db_schema = db_schema
         self.db_user = db_user
@@ -57,8 +57,8 @@ class ImportDictionaryData(object):
         print("Connection closed")
 
     def create_dictionary(self, **kwargs):
-        pds_file = "c:/seti/opus_dbs/pdsdd.full"
-        json_list = glob.glob(self.schema_path)
+        pds_file = PDSDD_FILE
+        json_list = glob.glob(self.json_schema_path)
         cursor = self.conn.cursor()
         if 'drop' in kwargs:
             print("Dropping table...")
@@ -202,8 +202,10 @@ class ImportDictionaryData(object):
         except IOError as e:
             print(f"I/O error  {e.errno}:  {str(e.strerror)}")
 
+        except json.JSONDecodeError as err:
+            print(err)
+
         except:
-            print(label)
             print(sys.exc_info())
 
 class ImportContextTable(object):
