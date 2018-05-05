@@ -58,17 +58,7 @@
 																				{% endif %}
 
                                         <i class = "fa fa-info-circle" title = "
-                                            {% if p.get_dictionary_info %}
-                                                {{ p.get_dictionary_info.def|striptags }}
-                                            {% else  %}
-
-																							{% if menu.data.labels_view == 'results' %}
-																								{{ p.label_results}}
-																							{% else %}
-																								{{ p.label }}
-																							{% endif %}
-
-                                            {% endif %}
+                                             {{ p.tooltip.definition }}
                                         "></i>
                                     </a>
                                 </li>
@@ -89,9 +79,9 @@
                         <li>
                             <a data-label = "
 															{% if menu.data.labels_view == 'results' %}
-																{{ p.label_results}}
+																{{ p.label_results}}label_results
 															{% else %}
-																{{ p.label }}
+																{{ p.label }}label
 															{% endif %}
 														" data-slug = "{{ p.slug }}" class = "{{ p.slug }}" href = "">
                                 <i class = "fa fa-check"></i>
@@ -103,11 +93,7 @@
 																{% endif %}
 
                                 <i class = "fa fa-info-circle" title = "
-                                    {% if p.get_dictionary_info %}
-                                        {{ p.get_dictionary_info.def|striptags }}
-                                    {% else  %}
-                                        {{ p.label }}
-                                    {% endif %}
+																	 {{ p.tooltip.definition }}
                                 "></i>
                             </a>
                         </li>
