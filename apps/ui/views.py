@@ -381,12 +381,13 @@ def getWidget(request, **kwargs):
     else:
         template = "widget.html"
         context = {
-            "slug":slug,
+            "slug": slug,
             "label": label,
-            "append_to_label":append_to_label,
-            "dictionary":dictionary,
+            "append_to_label": append_to_label,
+            "dictionary": dictionary,
             "intro": intro,
             "form": form,
+            "form_type": form_type,
             "range_fields": range_fields
         }
         return render(request, template, context)

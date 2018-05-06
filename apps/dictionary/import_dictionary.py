@@ -1,10 +1,14 @@
-from config import *
-import sys, glob
 from datetime import datetime
+import glob
+import sys
 
-import MySQLdb
 import json
+import MySQLdb
 import pdsparser
+
+from secrets import *
+
+sys.path.append(PDS_TOOLS_PATH)
 
 ERR_UNKNOWN_DATABASE = 1049
 ERR_UNKNOWN_TABLE = 1051
@@ -33,7 +37,7 @@ class ImportDictionaryData(object):
                         "(term, context, def, subterm, modified, import_date) "
                         "VALUES (%s, %s, %s, %s, %s, %s)")
 
-    def __init__(self, db_hostname=OPUS_HOST_NAME, db_schema=OPUS_SCHEMA_NAME, db_user=DB_USER, db_password=DB_PASSWORD):
+    def __init__(self, db_hostname=DICTIONARY_HOST_NAME, db_schema=DICTIONARY_SCHEMA_NAME, db_user=DB_USER, db_password=DB_PASSWORD):
         self.db_hostname = db_hostname
         self.db_schema = db_schema
         self.db_user = db_user
@@ -223,3 +227,6 @@ class ImportContextTable(object):
         "       UNIQUE KEY `contexts_name` (`name`),"
         "       UNIQUE KEY `name` (`description`)"
         ") ENGINE=InnoDB DEFAULT CHARSET=utf8")
+
+obj = ImportDictionaryData()
+obj.create_dictionary(drop="")

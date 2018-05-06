@@ -17,7 +17,7 @@ SESSION_EXPIRE_AT_BROWSER_CLOSE = True
 SESSION_SAVE_EVERY_REQUEST = True
 
 ADMINS = (
-    ('Lisa Ballard', 'lballard@seti.org'),
+    ('Robert French', 'rfrench@seti.org'),
 )
 
 def custom_show_toolbar(request):
@@ -151,7 +151,7 @@ INTERNAL_IPS = ("127.0.0.1",)
 BASE_TABLES = ['obs_general', 'obs_ring_geometry','obs_surface_geometry','obs_wavelength','obs_type_image']  # tables in which every observation in the database appears:
 TAR_FILE_URI_PATH = 'http://pds-rings-downloads.seti.org/opus/'
 IMAGE_HTTP_PATH = 'https://pds-rings.seti.org/holdings/previews/'
-DEFAULT_COLUMNS = 'ringobsid,planet,target,phase1,phase2,time1,time2'
+DEFAULT_COLUMNS = 'rmsobsid,planet,target,phase1,phase2,time1,time2'
 IMAGE_COLUMNS   = ['thumb.jpg','small.jpg','med.jpg','full.jpg']
 RANGE_FIELDS    = ['TIME','LONG','RANGE']
 MULT_FIELDS	= ['GROUP','TARGETS']
