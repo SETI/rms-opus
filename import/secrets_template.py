@@ -1,15 +1,11 @@
 ################################################################################
-# config.py
+# secrets_template.py
 #
 # These configuration parameters are specific to a particular installation
 # of the import pipeline.
 ################################################################################
 
 import os
-
-################################################################################
-# THINGS THAT YOU LIKELY WANT TO CHANGE
-################################################################################
 
 # The brand of the back-end SQL database.
 # Valid values are: MySQL, PostgreSQL
@@ -57,7 +53,3 @@ PDS_WEBSERVER_PYTHON_PATH = os.path.join(PDS_WEBSERVER_PATH, 'python')
 
 # The directory where the pds-tools repo lives.
 PDS_TOOLS_PATH = 'XXX'
-
-# The location of the VOLUME_INFO.py file, which describes all of the available
-# volumes.
-VOLUME_INFO_PATH = os.path.join(PDS_WEBSERVER_PATH, 'data', 'VOLUME_INFO.py')

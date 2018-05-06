@@ -680,7 +680,7 @@
             "FUNCTION",
             "obs_general_<INST>_data_set_id"
         ],
-        "definition": "PDS-supplied name for this data set.\n\nFor GOSSI, valid id is GO-A/E-SSI-2-REDR-V1.0 where GO is Galileo Orbiter, A/E identifies the target of the dataset, SSI is the instrument which acquired the data, 2 is CODMAC level, REDR is the product that was created and V1.0 is the version of the data.",
+        "definition": "PDS-supplied name for this data set.",
         "pi_category_name": "obs_general",
         "pi_dict_context": "OPUS_GENERAL",
         "pi_dict_name": "DATA_SET_ID",

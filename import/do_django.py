@@ -29,9 +29,3 @@ def drop_collections_tables():
                                                   prefix='colls_')
     for table_name in table_names:
         impglobals.DATABASE.drop_table('all', table_name)
-
-def create_django_session_table():
-    impglobals.LOGGER.log('info', 'Creating django_session table if necessary')
-    django_session_schema = import_util.read_schema_for_table('django_session')
-    impglobals.DATABASE.create_table('all', 'django_session',
-                                     django_session_schema)

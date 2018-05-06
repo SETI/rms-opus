@@ -33,36 +33,37 @@ def populate_obs_general_COVIMS_rms_obs_id(**kwargs):
     assert phase_name in ('VIS', 'IR')
 
     planet_id = helper_cassini_planet_id(**kwargs)
-    planet_ltr = ''
+    planet_ltr = 'X'
     if planet_id is not None:
         planet_ltr = planet_id[0]
 
     assert count[:2] == '1/'
     image_time = count[2:]
 
-    rms_obs_id = f'{planet_ltr}/CUBE/CO/VIMS/{image_time}/{phase_name}'
+    rms_obs_id = f'{planet_ltr}_CUBE_CO_VIMS_{image_time}_{phase_name}'
 
     return rms_obs_id
 
 def populate_obs_general_COVIMS_inst_host_id(**kwargs):
     return 'CO'
 
+# XXX
 def populate_obs_general_COVIMS_data_type(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     inst_mod = index_row['INSTRUMENT_MODE_ID']
 
     if inst_mod == 'IMAGE':
-        return ('IMG', 'Image')
+        return 'IMG'
     if inst_mod == 'LINE':
-        return ('LINE', 'Line')
+        return 'LINE'
     if inst_mod == 'POINT' or inst_mod == 'OCCULTATION':
-        return ('POINT', 'Point')
+        return 'POINT'
 
     index_row_num = metadata['index_row_num']
     import_util.announce_nonrepeating_error(
         f'Unknown INSTRUMENT_MODE_ID "{inst_mod}"', index_row_num)
-    return ('IMG', 'Image') # XXX
+    return None
 
 def populate_obs_general_COVIMS_time1(**kwargs):
     metadata = kwargs['metadata']
@@ -98,11 +99,13 @@ def populate_obs_general_COVIMS_quantity(**kwargs):
 def populate_obs_general_COVIMS_note(**kwargs):
     None
 
+# Format: "/data/1999010T054026_1999010T060958"
 def populate_obs_general_COVIMS_primary_file_spec(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     return index_row['PATH_NAME']
 
+# Format: "CO-E/V/J/S-VIMS-2-QUBE-V1.0"
 def populate_obs_general_COVIMS_data_set_id(**kwargs):
     # For VIMS the DATA_SET_ID is provided in the volume label file,
     # not the individual observation rows
@@ -111,6 +114,7 @@ def populate_obs_general_COVIMS_data_set_id(**kwargs):
     dsi = index_label['DATA_SET_ID']
     return (dsi, dsi)
 
+# Format: "1/1294638283_1"
 def populate_obs_general_COVIMS_product_id(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
@@ -161,6 +165,7 @@ def populate_obs_general_COVIMS_declination2(**kwargs):
 def populate_obs_mission_cassini_COVIMS_mission_phase_name(**kwargs):
     return None
 
+
 ### OBS_TYPE_IMAGE TABLE ###
 
 # XXX
@@ -191,6 +196,7 @@ def populate_obs_type_image_COVIMS_duration(**kwargs):
         return None
     return vis_exp/1000
 
+# XXX
 def populate_obs_type_image_COVIMS_levels(**kwargs):
     return 4096
 
@@ -285,8 +291,8 @@ def populate_obs_wavelength_COVIMS_spec_size(**kwargs):
     phase_name = metadata['phase_name']
 
     if phase_name == 'IR':
-        return 96
-    return 256
+        return 256
+    return 96
 
 def populate_obs_wavelength_COVIMS_polarization_type(**kwargs):
     return 'NONE'

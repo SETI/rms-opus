@@ -110,6 +110,7 @@
             "TAB:index",
             "SPECTRAL_SUMMING"
         ],
+        "definition": "Indicates whether this cube has had some bands summed to reduce the SSR data volume. See BAND_BIN_ORIGINAL_BAND to determine which bands have been summed.",
         "pi_category_name": "obs_instrument_covims",
         "pi_dict_context": "COVIMS",
         "pi_dict_name": "SPECTRAL_SUMMING",

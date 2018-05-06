@@ -162,8 +162,10 @@ def populate_obs_general_COUVIS_data_set_id(**kwargs):
 # Format: "EUV2015_001_17_57"
 def populate_obs_general_COUVIS_product_id(**kwargs):
     metadata = kwargs['metadata']
-    index_row = metadata['index_row']
-    product_id = index_row['PRODUCT_ID']
+    supp_index_row = metadata.get('supp_index_row', None)
+    if supp_index_row is None:
+        return None
+    product_id = supp_index_row['PRODUCT_ID']
 
     return product_id
 
@@ -414,6 +416,7 @@ def populate_obs_wavelength_COUVIS_wave_no_res1(**kwargs):
     return wave_res2 * 10000. / (wl2*wl2)
 
 def populate_obs_wavelength_COUVIS_wave_no_res2(**kwargs):
+    channel, image_time = _COUVIS_channel_time_helper(**kwargs)
     metadata = kwargs['metadata']
     wl_row = metadata['obs_wavelength_row']
 

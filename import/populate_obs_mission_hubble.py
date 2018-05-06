@@ -12,6 +12,17 @@ import impglobals
 import import_util
 
 
+
+def _decode_filters(**kwargs):
+    metadata = kwargs['metadata']
+    index_row = metadata['index_row']
+    filter_name = index_row['FILTER_NAME']
+
+    if filter_name.find('+') == -1:
+        return filter_name, None
+    return filter_name.split('+')
+
+
 ################################################################################
 # THESE NEED TO BE IMPLEMENTED FOR EVERY MISSION
 ################################################################################
@@ -21,9 +32,6 @@ def _helper_hubble_planet_id(**kwargs):
     index_row_num = metadata['index_row_num']
     index_row = metadata['index_row']
     planet_name = index_row['PLANET_NAME']
-
-    if planet_name == 'N/A':
-        return None
 
     if planet_name not in ['VENUS', 'EARTH', 'MARS', 'JUPITER', 'SATURN',
                            'URANUS', 'NEPTUNE', 'PLUTO']:
@@ -53,7 +61,7 @@ def populate_obs_general_HSTx_rms_obs_id(**kwargs):
     ret = 'X'
     if planet_id is not None:
         ret = planet_id[0]
-    return ret+'_IMG_HSTx_'+instrument[3:]+'_'+start_time[:10]+'_'+product_id
+    return ret+'_IMG_HST_'+instrument[3:]+'_'+start_time[:10]+'_'+product_id
 
 populate_obs_general_HSTACS_rms_obs_id = populate_obs_general_HSTx_rms_obs_id
 populate_obs_general_HSTNICMOS_rms_obs_id = populate_obs_general_HSTx_rms_obs_id
@@ -103,42 +111,6 @@ populate_obs_general_HSTSTIS_time2 = populate_obs_general_HSTx_time2
 populate_obs_general_HSTWFC3_time2 = populate_obs_general_HSTx_time2
 populate_obs_general_HSTWFPC2_time2 = populate_obs_general_HSTx_time2
 
-def populate_obs_general_HSTx_time_sec1(**kwargs):
-    metadata = kwargs['metadata']
-    index_row = metadata['index_row']
-    start_time = import_util.safe_column(index_row, 'START_TIME')
-    return julian.tai_from_iso(start_time)
-
-populate_obs_general_HSTACS_time_sec1 = populate_obs_general_HSTx_time_sec1
-populate_obs_general_HSTNICMOS_time_sec1 = populate_obs_general_HSTx_time_sec1
-populate_obs_general_HSTSTIS_time_sec1 = populate_obs_general_HSTx_time_sec1
-populate_obs_general_HSTWFC3_time_sec1 = populate_obs_general_HSTx_time_sec1
-populate_obs_general_HSTWFPC2_time_sec1 = populate_obs_general_HSTx_time_sec1
-
-def populate_obs_general_HSTx_time_sec2(**kwargs):
-    metadata = kwargs['metadata']
-    index_row = metadata['index_row']
-    stop_time = import_util.safe_column(index_row, 'STOP_TIME')
-    obs_general_row = metadata['obs_general_row']
-
-    time2 = julian.tai_from_iso(stop_time)
-
-    if time2 < obs_general_row['time_sec1']:
-        start_time = import_util.safe_column(index_row, 'START_TIME')
-        index_row_num = metadata['index_row_num']
-        impglobals.LOGGER.log('error',
-            f'time_sec1 ({start_time}) and time_sec2 ({stop_time}) are '+
-            f'in the wrong order [line {index_row_num}]')
-        impglobals.IMPORT_HAS_BAD_DATA = True
-
-    return time2
-
-populate_obs_general_HSTACS_time_sec2 = populate_obs_general_HSTx_time_sec2
-populate_obs_general_HSTNICMOS_time_sec2 = populate_obs_general_HSTx_time_sec2
-populate_obs_general_HSTSTIS_time_sec2 = populate_obs_general_HSTx_time_sec2
-populate_obs_general_HSTWFC3_time_sec2 = populate_obs_general_HSTx_time_sec2
-populate_obs_general_HSTWFPC2_time_sec2 = populate_obs_general_HSTx_time_sec2
-
 def populate_obs_general_HSTx_target_name(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
@@ -171,6 +143,7 @@ populate_obs_general_HSTSTIS_observation_duration = populate_obs_general_HSTx_ob
 populate_obs_general_HSTWFC3_observation_duration = populate_obs_general_HSTx_observation_duration
 populate_obs_general_HSTWFPC2_observation_duration = populate_obs_general_HSTx_observation_duration
 
+# XXX
 def populate_obs_general_HSTx_quantity(**kwargs):
     return 'REFLECT'
 
@@ -264,6 +237,7 @@ populate_obs_general_HSTWFPC2_declination2 = populate_obs_general_HSTx_declinati
 
 ### OBS_TYPE_IMAGE TABLE ###
 
+# XXX
 def populate_obs_type_image_HSTx_image_type_id(**kwargs):
     return 'FRAM'
 
@@ -285,19 +259,19 @@ populate_obs_type_image_HSTWFC3_duration = populate_obs_type_image_HSTx_duration
 populate_obs_type_image_HSTWFPC2_duration = populate_obs_type_image_HSTx_duration
 
 def populate_obs_type_image_HSTACS_levels(**kwargs):
-    return None # XXX
+    return 65536 # ACS Inst Handbook 25, Sec 3.4.3
 
 def populate_obs_type_image_HSTNICMOS_levels(**kwargs):
-    return None
+    return 65536 # NICMOS Inst Handbook, Sec 7.2.1
 
 def populate_obs_type_image_HSTSTIS_levels(**kwargs):
-    return None # XXX
+    return 65536 # STIS Inst Handbook, Sec 7.5.1
 
 def populate_obs_type_image_HSTWFC3_levels(**kwargs):
-    return None # XXX
+    return 65536 # WFC3 Inst Handbook, Sec 2.2.3
 
 def populate_obs_type_image_HSTWFPC2_levels(**kwargs):
-    return None # XXX
+    return 4096 # WFPC2 Inst Handbook, Sec 2.8
 
 def populate_obs_type_image_HSTx_lesser_pixel_size(**kwargs):
     metadata = kwargs['metadata']
@@ -348,7 +322,7 @@ populate_obs_wavelength_HSTWFPC2_wavelength1 = populate_obs_wavelength_HSTx_wave
 def populate_obs_wavelength_HSTx_wavelength2(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
-    wl2 = import_util.safe_column(index_row, 'MINIMUM_WAVELENGTH')
+    wl2 = import_util.safe_column(index_row, 'MAXIMUM_WAVELENGTH')
 
     return wl2
 
@@ -474,36 +448,116 @@ def populate_obs_wavelength_HSTSTIS_wave_no_res2(**kwargs):
 
     return wave_res1 * 10000. / (wl1*wl1)
 
-def populate_obs_wavelength_HSTx_spec_flag(**kwargs):
+
+### ACS ###
+
+def populate_obs_wavelength_HSTACS_spec_flag(**kwargs):
+    filter1, filter2 = _decode_filters(**kwargs)
+    if filter1.startswith('G') or filter1.startswith('PR'):
+        return 'Y'
     return 'N'
 
-populate_obs_wavelength_HSTACS_spec_flag = populate_obs_wavelength_HSTx_spec_flag
-populate_obs_wavelength_HSTNICMOS_spec_flag = populate_obs_wavelength_HSTx_spec_flag
-populate_obs_wavelength_HSTWFC3_spec_flag = populate_obs_wavelength_HSTx_spec_flag
-populate_obs_wavelength_HSTWFPC2_spec_flag = populate_obs_wavelength_HSTx_spec_flag
+def populate_obs_wavelength_HSTACS_spec_size(**kwargs):
+    filter1, filter2 = _decode_filters(**kwargs)
+    if not filter1.startswith('G') and not filter1.startswith('PR'):
+        return None
 
-def populate_obs_wavelength_HSTSTIS_spec_flag(**kwargs):
-    return 'N' # XXX
+    # We can't use WAVELENGTH_RESOLUTION because it's too aggressive.
+    # Instead we use the Resolving Power (lambda / d-lambda) from ACS Inst
+    # Handbook Table 3.5
 
-def populate_obs_wavelength_HSTx_spec_size(**kwargs):
-    return None
+    if filter1 == 'G800L':
+        # G800L's resolving power depends on the channel and order, which we
+        # don't know
+        import_util.announce_nonrepeating_warning(
+            'G800L filter used, but not enough information available to '+
+            'compute spec_size')
+        wr = 8000. / 120 * .0001 # Average 100 and 140
+        bw = (10500-5500) * .0001
+    elif filter1 == 'PR200L':
+        wr = 2500. / 59 * .0001
+        bw = (3900-1700) * .0001
+    elif filter1 == 'PR110L':
+        wr = 1500. / 79 * .0001
+        bw = (1800-1150) * .0001
+    elif filter1 == 'PR130L':
+        wr = 1500. / 96 * .0001
+        bw = (1800-1250) * .0001
+    else:
+        assert False, filter1
 
-populate_obs_wavelength_HSTACS_spec_size = populate_obs_wavelength_HSTx_spec_size
-populate_obs_wavelength_HSTNICMOS_spec_size = populate_obs_wavelength_HSTx_spec_size
-populate_obs_wavelength_HSTWFC3_spec_size = populate_obs_wavelength_HSTx_spec_size
-populate_obs_wavelength_HSTWFPC2_spec_size = populate_obs_wavelength_HSTx_spec_size
-
-def populate_obs_wavelength_HSTSTIS_spec_size(**kwargs):
-    return None
+    return bw // wr
 
 def populate_obs_wavelength_HSTACS_polarization_type(**kwargs):
-    metadata = kwargs['metadata']
-    index_row = metadata['index_row']
-    filter_name = index_row['FILTER_NAME']
+    filter1, filter2 = _decode_filters(**kwargs)
+    if filter2 is not None and filter2.startswith('POL'):
+        return 'LINEAR'
+    return 'NONE'
 
-    if filter_name.find('POL') == -1:
-        return 'NONE'
-    return 'LINEAR'
+def populate_obs_mission_hubble_HSTACS_filter_type(**kwargs):
+    filter1, filter2 = _decode_filters(**kwargs)
+    # We only care about filter1 since the second is always a polarizer
+    assert filter2 is None or filter2.startswith('POL')
+
+    # From ACS Inst handbook Table 3.3
+    if filter1 in ['F475W', 'F625W', 'F775W', 'F850LP', 'F435W', 'F555W',
+                   'F550M', 'F606W', 'F814W', 'F220W', 'F250W', 'F330W',
+                   'CLEAR']:
+        return 'W'
+
+    if filter1 in ['F658N', 'F502N', 'F660N', 'F344N', 'F892N']:
+        return 'N'
+
+    if filter1.startswith('FR'):
+        return 'FR'
+
+    if filter1 in ['G800L', 'PR200L', 'PR110L', 'PR130L']:
+        return 'SP'
+
+    if filter1 in ['F122M']:
+        return 'M'
+
+    if filter1 in ['F115LP', 'F125LP', 'F140LP', 'F150LP', 'F165LP']:
+        return 'LP'
+
+    # ACS doesn't have any CH4 filters
+
+    import_util.announce_nonrepeating_error(
+        f'Unknown filter {filter1} while determining filter type')
+    return None
+
+
+### NICMOS ###
+
+def populate_obs_wavelength_HSTNICMOS_spec_flag(**kwargs):
+    filter1, filter2 = _decode_filters(**kwargs)
+    if filter1.startswith('G'):
+        return 'Y'
+    return 'N'
+
+def populate_obs_wavelength_HSTNICMOS_spec_size(**kwargs):
+    filter1, filter2 = _decode_filters(**kwargs)
+    assert filter2 is None
+    if not filter1.startswith('G'):
+        return None
+
+    # We can't use WAVELENGTH_RESOLUTION because it's too aggressive.
+    # Instead we use the Resolving Power (lambda / d-lambda) from NICMOS Inst
+    # Handbook Tables 5.3 and 5.5
+
+    if filter1 == 'G096':
+        wr = 0.00536
+        bw = 1.2-0.8
+    elif filter1 == 'G141':
+        wr = 0.007992
+        bw = 1.9-1.1
+    elif filter1 == 'G206':
+        wr = 0.01152
+        bw = 2.5-1.4
+    else:
+        assert False, filter1
+
+    return bw // wr
 
 def populate_obs_wavelength_HSTNICMOS_polarization_type(**kwargs):
     metadata = kwargs['metadata']
@@ -514,11 +568,128 @@ def populate_obs_wavelength_HSTNICMOS_polarization_type(**kwargs):
         return 'NONE'
     return 'LINEAR'
 
+def populate_obs_mission_hubble_HSTNICMOS_filter_type(**kwargs):
+    filter1, filter2 = _decode_filters(**kwargs)
+
+    # NICMOS doesn't do filter stacking
+    assert filter2 is None
+
+    if filter1.startswith('G'):
+        return 'SP'
+    if filter1.endswith('N'):
+        return 'N'
+    if filter1.endswith('M'):
+        return 'M'
+    if filter1.endswith('W'):
+        return 'W'
+
+    if filter1.startswith('POL'):
+        if filter1.endswith('S'):
+            return 'W' # POLxS is 0.8-1.3, about the same as wide filters
+        elif filter1.endswith('L'):
+            return 'M' # POLxL is 1.89-2.1, about the same as medium filters
+
+    if filter1 == 'BLANK': # Opaque
+        return 'OT'
+
+    import_util.announce_nonrepeating_error(f'Unknown filter "{filter1}"')
+    return None
+
+
+### STIS ###
+
+def populate_obs_wavelength_HSTSTIS_spec_flag(**kwargs):
+    return 'N'
+
+def populate_obs_wavelength_HSTSTIS_spec_size(**kwargs):
+    return None
+
 def populate_obs_wavelength_HSTSTIS_polarization_type(**kwargs):
     return 'NONE'
 
+def populate_obs_mission_hubble_HSTSTIS_filter_type(**kwargs):
+    filter1, filter2 = _decode_filters(**kwargs)
+    assert filter2 is None
+
+    if filter1 in ['CLEAR', 'CRYSTAL QUARTZ', 'LONG_PASS', 'STRONTIUM_FLUORIDE']:
+        return 'LP'
+    if filter1 == 'LYMAN_ALPHA':
+        return 'N'
+
+    import_util.announce_nonrepeating_error(f'Unknown filter "{filter1}"')
+    return None
+
+
+### WFC3 ###
+
+def populate_obs_wavelength_HSTWFC3_spec_flag(**kwargs):
+    filter1, filter2 = _decode_filters(**kwargs)
+    assert filter2 is None
+    if filter1.startswith('G'):
+        return 'Y'
+    return 'N'
+
+def populate_obs_wavelength_HSTWFC3_spec_size(**kwargs):
+    filter1, filter2 = _decode_filters(**kwargs)
+    assert filter2 is None
+    if not filter1.startswith('G'):
+        return None
+
+    # We can't use WAVELENGTH_RESOLUTION because it's too aggressive.
+    # Instead we use the Resolving Power (lambda / d-lambda) from WFC3 Inst
+    # Handbook Table 8.1
+
+    if filter1 == 'G280':
+        wr = 300. / 70 * .001
+        bw = (450-190) * .001
+    elif filter1 == 'G102':
+        wr = 1000. / 210 * .001
+        bw = (1150-800) * .001
+    elif filter1 == 'G141':
+        wr = 1400. / 130 * .001
+        bw = (1700-1075) * .001
+    else:
+        assert False, filter1
+
+    return bw // wr
+
 def populate_obs_wavelength_HSTWFC3_polarization_type(**kwargs):
     return 'NONE'
+
+def populate_obs_mission_hubble_HSTWFC3_filter_type(**kwargs):
+    filter1, filter2 = _decode_filters(**kwargs)
+
+    # WFC3 doesn't do filter stacking
+    assert filter2 is None
+
+    if filter1.startswith('FR'):
+        return 'FR'
+    if filter1.startswith('G'):
+        return 'SP'
+    if filter1.endswith('N'):
+        return 'N'
+    if filter1.endswith('M'):
+        return 'M'
+    if filter1.endswith('W'):
+        return 'W'
+    if filter1.endswith('LP'):
+        return 'LP'
+    if filter1.endswith('X'):
+        return 'X'
+
+    import_util.announce_nonrepeating_error(f'Unknown filter "{filter1}"')
+    return None
+
+
+### WFPC2 ###
+
+def populate_obs_wavelength_HSTWFPC2_spec_flag(**kwargs):
+    # No prism or grism filters
+    return 'N'
+
+def populate_obs_wavelength_HSTWFPC2_spec_size(**kwargs):
+    # No prism or grism filters
+    return None
 
 def populate_obs_wavelength_HSTWFPC2_polarization_type(**kwargs):
     metadata = kwargs['metadata']
@@ -528,6 +699,35 @@ def populate_obs_wavelength_HSTWFPC2_polarization_type(**kwargs):
     if filter_name.find('POL') == -1:
         return 'NONE'
     return 'LINEAR'
+
+def populate_obs_mission_hubble_HSTWFPC2_filter_type(**kwargs):
+    filter1, filter2 = _decode_filters(**kwargs)
+
+    if filter2 is None:
+        filter2 = ''
+
+    if filter1.startswith('FR') or filter2.startswith('FR'):
+        return 'FR' # Ramp overrides everything
+
+    if filter1.startswith('FQ') or filter1 == 'F160BN15':
+        filter1 = 'N'
+    if filter2.startswith('FQ') or filter2 == 'F160BN15':
+        filter2 = 'N'
+
+    # Start from narrowest band - paired filters take the type of the smallest
+    # bandpass
+    if filter1.endswith('N') or filter2.endswith('N'):
+        return 'N'
+    if filter1.endswith('M') or filter2.endswith('M'):
+        return 'M'
+    if filter1.endswith('W') or filter2.endswith('W'):
+        return 'W'
+    if filter1.endswith('LP') or filter2.endswith('LP'):
+        return 'LP'
+
+    import_util.announce_nonrepeating_error(
+        f'Unknown filter combination "{filter1}+{filter2}"')
+    return None
 
 
 ################################################################################
@@ -560,13 +760,6 @@ def populate_obs_mission_hubble_filter_name(**kwargs):
     filter_name = filter_name.replace('_', ' ')
     ret = instrument[3:] + '-' + filter_name
     return (ret, ret)
-
-def populate_obs_mission_hubble_filter_width(**kwargs):
-    metadata = kwargs['metadata']
-    instrument = kwargs['instrument_name']
-    index_row = metadata['index_row']
-    filter_name = index_row['FILTER_NAME']
-    return ('XXX', 'XXX')
 
 def populate_obs_mission_hubble_aperture_type(**kwargs):
     metadata = kwargs['metadata']

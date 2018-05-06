@@ -180,10 +180,6 @@ parser.add_argument(
     '--drop-collections-tables', action='store_true', default=False,
     help='Drop the collections tables used by OPUS'
 )
-parser.add_argument(
-    '--create-django-session-table', action='store_true', default=False,
-    help='Create the django_session table used by OPUS if not already present'
-)
 
 parser.add_argument(
     '--validate-perm', action='store_true', default=False,
@@ -234,7 +230,6 @@ if impglobals.ARGUMENTS.do_it_all:
     impglobals.ARGUMENTS.create_grouping_target_name = True
     impglobals.ARGUMENTS.drop_cache_tables = True
     impglobals.ARGUMENTS.drop_collections_tables = True
-    impglobals.ARGUMENTS.create_django_session_table = True
 
 if impglobals.ARGUMENTS.cleanup_aux_tables:
     impglobals.ARGUMENTS.create_param_info = True
@@ -243,7 +238,6 @@ if impglobals.ARGUMENTS.cleanup_aux_tables:
     impglobals.ARGUMENTS.create_grouping_target_name = True
     impglobals.ARGUMENTS.drop_cache_tables = True
     impglobals.ARGUMENTS.drop_collections_tables = True
-    impglobals.ARGUMENTS.create_django_session_table = True
 
 
 ################################################################################
@@ -308,7 +302,7 @@ try: # Top-level exception handling so we always log what's going on
             limits={'info': impglobals.ARGUMENTS.log_info_limit,
                     'debug': impglobals.ARGUMENTS.log_debug_limit})
 
-    pdsfile.preload(PDS_DATA_DIR, VOLUME_INFO_PATH)
+    pdsfile.preload(PDS_DATA_DIR)
 
     try:
         impglobals.DATABASE = importdb.get_db(
@@ -351,8 +345,7 @@ try: # Top-level exception handling so we always log what's going on
         impglobals.LOGGER.close()
 
     if (impglobals.ARGUMENTS.drop_cache_tables or
-        impglobals.ARGUMENTS.drop_collections_tables or
-        impglobals.ARGUMENTS.create_django_session_table):
+        impglobals.ARGUMENTS.drop_collections_tables):
         impglobals.LOGGER.open(
             f'Cleaning up OPUS/Django tables',
             limits={'info': impglobals.ARGUMENTS.log_info_limit,
@@ -362,8 +355,6 @@ try: # Top-level exception handling so we always log what's going on
             do_django.drop_cache_tables()
         if impglobals.ARGUMENTS.drop_collections_tables:
             do_django.drop_collections_tables()
-        if impglobals.ARGUMENTS.create_django_session_table:
-            do_django.create_django_session_table()
 
         impglobals.LOGGER.close()
 

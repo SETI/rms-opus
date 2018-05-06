@@ -430,14 +430,15 @@ def dump_import_mult_tables():
                     break
             for row in rows:
                 # None always comes last. Yes comes before No.
+                # On comes before Off.
                 if row['label'] in [None, 'NONE', 'None', 'NULL', 'Null']:
                     row['sort_label'] = 'ZZZ' + str(row['label'])
                 elif all_numeric:
                     row['sort_label'] = ('%20.9f' % float(row['label']))
-                elif row['label'] == 'Yes':
+                elif row['label'] == 'Yes' or row['label'] == 'On':
                     row['sort_label'] = 'ZZAYes'
-                elif row['label'] == 'No':
-                    row['sort_label'] = 'ZZZNo'
+                elif row['label'] == 'No' or row['label'] == 'Off':
+                    row['sort_label'] = 'ZZBNo'
                 else:
                     row['sort_label'] = str(row['label'])
             rows.sort(key=lambda x: x['sort_label'])

@@ -295,6 +295,7 @@
             "FUNCTION",
             "obs_wavelength_<INST>_spec_size"
         ],
+        "definition": "The number of distinct wavelengths or wavelength bins that can be detected.",
         "pi_category_name": "obs_wavelength",
         "pi_dict_context": "OPUS_WAVELENGTH",
         "pi_dict_name": "SPECTRUM_SIZE",
@@ -309,7 +310,7 @@
         "pi_sub_heading": null,
         "pi_tooltip": "",
         "pi_units": "",
-        "comment": "XXX Needs definition"
+        "comment": "Definition was made up by RF"
     },
     {
         "field_name": "polarization_type",

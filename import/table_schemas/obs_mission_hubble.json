@@ -230,9 +230,9 @@
         "pi_sub_heading": null,
         "pi_tooltip": null,
         "pi_units": null,
-        "xxxmult_options": [
-              [   0,      "FINE",      "Fine",  10, "Y", null],
-              [   1,    "COARSE",    "Coarse",  20, "Y", null],
+        "mult_options": [
+              [   0,    "COARSE",    "Coarse",  10, "Y", null],
+              [   1,      "FINE",      "Fine",  20, "Y", null],
               [   2,     "GYROS",     "Gyros",  30, "Y", null],
               [   3, "FINE/GYRO", "Fine/Gyro",  40, "Y", null],
               [   4,       "UNK",   "Unknown",  50, "Y", null]
@@ -263,28 +263,38 @@
         "pi_units": null
     },
     {
-        "field_name": "filter_width",
+        "field_name": "filter_type",
         "field_type": "char3",
         "field_notnull": true,
         "data_source": [
             "FUNCTION",
-            "obs_mission_hubble_filter_width"
+            "obs_mission_hubble_<INST>_filter_type"
         ],
-        "definition": "The overall bandwidth size (Narrow, Medium, Wide, etc.) of the filter combination.",
+        "definition": "The type of the filter (Narrow, Medium, Wide, etc.).",
         "pi_category_name": "obs_mission_hubble",
         "pi_dict_context": "HST",
-        "pi_dict_name": "FILTER_WIDTH",
+        "pi_dict_name": "FILTER_TYPE",
         "pi_disp_order": 3,
         "pi_display": 1,
         "pi_display_results": 1,
         "pi_form_type": "GROUP",
         "pi_intro": null,
-        "pi_label": "Filter Width",
-        "pi_label_results": "Filter Width",
-        "pi_slug": "HSTfilterwidth",
+        "pi_label": "Filter Type",
+        "pi_label_results": "Filter Type",
+        "pi_slug": "HSTfiltertype",
         "pi_sub_heading": null,
         "pi_tooltip": null,
-        "pi_units": null
+        "pi_units": null,
+        "mult_options": [
+              [   0, "LP",      "Long Pass",  10, "Y", null],
+              [   1,  "X", "Extremely Wide",  20, "Y", null],
+              [   2,  "W",      "Broadband",  30, "Y", null],
+              [   3,  "M",    "Medium Band",  40, "Y", null],
+              [   4,  "N",     "Narrowband",  50, "Y", null],
+              [   5, "FR",           "Ramp",  60, "Y", null],
+              [   6, "SP",  "Spectroscopic",  70, "Y", null],
+              [   7, "OT",          "Other",  80, "Y", null]
+          ]
     },
     {
         "field_name": "aperture_type",
@@ -332,12 +342,18 @@
         "pi_slug": "HSTexposuretype",
         "pi_sub_heading": null,
         "pi_tooltip": null,
-        "pi_units": null
+        "pi_units": null,
+        "mult_options": [
+              [   0,    "EXCESSIVE DOWNTIME",    "Excessive Downtime",  10, "Y", null],
+              [   1,         "INDETERMINATE",         "Indeterminate",  20, "Y", null],
+              [   2,           "INTERRUPTED",           "Interrupted",  30, "Y", null],
+              [   3,                "NORMAL",                "Normal",  40, "Y", null],
+              [   4,  "TDF-DOWN AT EXPSTART",  "TDF-Down At Expstart",  50, "Y", null]
+          ]
     },
     {
         "field_name": "gain_mode_id",
-        "field_type": "char10",
-        "field_enum_options": "'A2D0.','A2D7','A2D15','N/A'",
+        "field_type": "char5",
         "field_notnull": true,
         "data_source": [
             "TAB:index",
@@ -358,11 +374,13 @@
         "pi_sub_heading": null,
         "pi_tooltip": null,
         "pi_units": null,
-        "xxxmult_options": [
+        "mult_options": [
               [   0, "A2D0.",  "A2D0",  10, "Y", null],
-              [   1,  "A2D7",  "A2D7",  20, "Y", null],
-              [   2, "A2D15", "A2D15",  30, "Y", null],
-              [   3,   "N/A",   "N/A",  40, "Y", null]
+              [   1, "A2D1.",  "A2D1",  20, "Y", null],
+              [   2, "A2D4.",  "A2D4",  30, "Y", null],
+              [   3,  "A2D7",  "A2D7",  40, "Y", null],
+              [   4, "A2D15", "A2D15",  50, "Y", null],
+              [   5,   "N/A",   "N/A",  60, "Y", null]
           ]
     },
     {
@@ -389,12 +407,15 @@
         "pi_sub_heading": null,
         "pi_tooltip": null,
         "pi_units": null,
-        "xxxmult_options": [
-              [   0,    "ACCUM",    "ACCUM",  10, "Y", null],
-              [   1,      "ACQ",      "ACQ",  20, "Y", null],
-              [   2,     "FULL",     "FULL",  30, "Y", null],
-              [   3,     "AREA",     "AREA",  40, "Y", null],
-              [   4, "TIME-TAG", "TIME-TAG",  50, "Y", null]
+        "mult_options": [
+              [   0,      "ACCUM",      "ACCUM",  10, "Y", null],
+              [   1, "MULTIACCUM", "MULTIACCUM",  20, "Y", null],
+              [   2,        "ACQ",        "ACQ",  30, "Y", null],
+              [   3,   "ACQ/PEAK",   "ACQ/PEAK",  40, "Y", null],
+              [   4,       "FULL",       "FULL",  50, "Y", null],
+              [   5,       "AREA",       "AREA",  60, "Y", null],
+              [   6,       "CCUM",       "CCUM",  70, "Y", null],
+              [   7,   "TIME-TAG",   "TIME-TAG",  80, "Y", null]
           ]
     },
     {
