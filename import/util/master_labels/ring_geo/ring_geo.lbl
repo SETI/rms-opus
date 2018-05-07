@@ -1,11 +1,11 @@
 PDS_VERSION_ID                  = PDS3
 RECORD_TYPE                     = FIXED_LENGTH
-FILE_RECORDS                    = 3657
+FILE_RECORDS                    = 3727
 RECORD_BYTES                    = 658
-^RING_GEOMETRY_TABLE            = "COISS_2111_ring_summary.tab"
+^RING_GEOMETRY_TABLE            = "COISS_2001_ring_summary.tab"
 
-VOLUME_ID                       = "COISS_2111"
-PRODUCT_CREATION_TIME           = 2018-01-07T15:00:00
+VOLUME_ID                       = "COISS_2001"
+PRODUCT_CREATION_TIME           = 2015-02-01T02:00:00
 
 INSTRUMENT_HOST_NAME            = "CASSINI ORBITER"
 INSTRUMENT_HOST_ID              = CO
@@ -14,7 +14,7 @@ INSTRUMENT_ID                   = "ISS"
 
 OBJECT                          = RING_GEOMETRY_TABLE
   INTERCHANGE_FORMAT            = ASCII
-  ROWS                          = 3657
+  ROWS                          = 3727
   ROW_BYTES                     = 658
   COLUMNS                       = 59
 

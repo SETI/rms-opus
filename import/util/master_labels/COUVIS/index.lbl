@@ -1,15 +1,27 @@
 PDS_VERSION_ID       = PDS3
-RECORD_TYPE          = STREAM
-DESCRIPTION          = "INDEX.TAB contains PDS object label data
+RECORD_TYPE          = FIXED_LENGTH
+RECORD_BYTES         = 771
+DESCRIPTION          = "COUVIS_0001_index.tab contains PDS object label data
                          in a tabular format."
-^TABLE               = "INDEX.TAB"
+^INDEX_TABLE          = "COUVIS_0001_index.tab"
+
+PRODUCT_CREATION_TIME = 2018-04-29T16:00:00
+
 OBJECT               = INDEX_TABLE
   INTERCHANGE_FORMAT = ASCII
-  ROW_BYTES          = 772
-  ROWS               = 3010
+  ROW_BYTES          = 771
+  ROWS               = 2930
   COLUMNS            = 28
   INDEX_TYPE         = SINGLE
-  VOLUME_ID          = 0058
+  VOLUME_ID          = COUVIS_0001
+
+  DESCRIPTION   = "This version of the UVIS index file has been edited by the
+Ring-Moon Systems Node for improved PDS3 compliance and simplified use. All
+occurrences of 'NULL' within numeric columns have been replaced by -999, an
+impossible value. Within this label, -999 has been defined as the
+NULL_CONSTANT, meaning that values of -999 found within this column represent
+unavailable information."
+
   OBJECT        = COLUMN
     NAME        = FILE_NAME
     DESCRIPTION = "The name of the file containing the label."
@@ -17,6 +29,7 @@ OBJECT               = INDEX_TABLE
     START_BYTE  = 2
     BYTES       = 64
   END_OBJECT    = COLUMN
+
   OBJECT        = COLUMN
     NAME        = OBSERVATION_TYPE
     DESCRIPTION = "The type of observation as described in CUBEDS.CAT"
@@ -24,6 +37,7 @@ OBJECT               = INDEX_TABLE
     START_BYTE  = 70
     BYTES       = 8
   END_OBJECT    = COLUMN
+
   OBJECT        = COLUMN
     NAME        = START_TIME
     DESCRIPTION = "The start time of the data."
@@ -31,6 +45,7 @@ OBJECT               = INDEX_TABLE
     START_BYTE  = 81
     BYTES       = 24
   END_OBJECT    = COLUMN
+
   OBJECT        = COLUMN
     NAME        = STOP_TIME
     DESCRIPTION = "The stop time of the data."
@@ -38,6 +53,7 @@ OBJECT               = INDEX_TABLE
     START_BYTE  = 107
     BYTES       = 24
   END_OBJECT    = COLUMN
+
   OBJECT        = COLUMN
     NAME        = TARGET_NAME
     DESCRIPTION = "The target being observed."
@@ -45,6 +61,7 @@ OBJECT               = INDEX_TABLE
     START_BYTE  = 134
     BYTES       = 16
   END_OBJECT    = COLUMN
+
   OBJECT        = COLUMN
     NAME        = DATA_SET_ID
     DESCRIPTION = "The PDS ID for this data."
@@ -52,6 +69,7 @@ OBJECT               = INDEX_TABLE
     START_BYTE  = 154
     BYTES       = 24
   END_OBJECT    = COLUMN
+
   OBJECT        = COLUMN
     NAME        = SPACECRAFT_CLOCK_START_COUNT
     DESCRIPTION = "The clock count at the start of the observation."
@@ -59,6 +77,7 @@ OBJECT               = INDEX_TABLE
     START_BYTE  = 182
     BYTES       = 16
   END_OBJECT    = COLUMN
+
   OBJECT        = COLUMN
     NAME        = SPACECRAFT_CLOCK_STOP_COUNT
     DESCRIPTION = "The clock count at the end of the observation (UNKNOWN)."
@@ -66,13 +85,16 @@ OBJECT               = INDEX_TABLE
     START_BYTE  = 202
     BYTES       = 3
   END_OBJECT    = COLUMN
+
   OBJECT        = COLUMN
     NAME        = INTEGRATION_DURATION
     DESCRIPTION = "The length of time during which counts were accumulated."
     DATA_TYPE   = ASCII_REAL
     START_BYTE  = 208
     BYTES       = 16
+    NULL_CONSTANT = -999.
   END_OBJECT    = COLUMN
+
   OBJECT        = COLUMN
     NAME        = COMPRESSION_TYPE
     DESCRIPTION = "The algorithm used by the instrument to compress data."
@@ -80,6 +102,7 @@ OBJECT               = INDEX_TABLE
     START_BYTE  = 227
     BYTES       = 8
   END_OBJECT    = COLUMN
+
   OBJECT        = COLUMN
     NAME        = HI_VOLTAGE_POWER_SUPPLY_STATE
     DESCRIPTION = "ON or OFF, indicating the condition of the HVPS."
@@ -87,6 +110,7 @@ OBJECT               = INDEX_TABLE
     START_BYTE  = 239
     BYTES       = 6
   END_OBJECT    = COLUMN
+
   OBJECT        = COLUMN
     NAME        = OCCULTATION_PORT_STATE
     DESCRIPTION = "OPEN or CLOSED, indicating the state of the port."
@@ -94,6 +118,7 @@ OBJECT               = INDEX_TABLE
     START_BYTE  = 249
     BYTES       = 16
   END_OBJECT    = COLUMN
+
   OBJECT        = COLUMN
     NAME        = SLIT_STATE
     DESCRIPTION = "The width of the slit."
@@ -101,6 +126,7 @@ OBJECT               = INDEX_TABLE
     START_BYTE  = 269
     BYTES       = 16
   END_OBJECT    = COLUMN
+
   OBJECT        = COLUMN
     NAME        = TEST_PULSE_STATE
     DESCRIPTION = "Indicates whether data was taken from a test pulse."
@@ -108,6 +134,7 @@ OBJECT               = INDEX_TABLE
     START_BYTE  = 289
     BYTES       = 8
   END_OBJECT    = COLUMN
+
   OBJECT        = COLUMN
     NAME        = ODC_ID
     DESCRIPTION = "An index into planning data."
@@ -115,83 +142,106 @@ OBJECT               = INDEX_TABLE
     START_BYTE  = 300
     BYTES       = 16
   END_OBJECT    = COLUMN
+
   OBJECT        = COLUMN
     NAME        = RIGHT_ASCENSION
     DESCRIPTION = "Coordinate of the pointing direction."
     DATA_TYPE   = ASCII_REAL
     START_BYTE  = 318
     BYTES       = 16
+    NULL_CONSTANT = -999.
   END_OBJECT    = COLUMN
+
   OBJECT        = COLUMN
     NAME        = DECLINATION
     DESCRIPTION = "Coordinate of the pointing direction."
     DATA_TYPE   = ASCII_REAL
     START_BYTE  = 336
     BYTES       = 16
+    NULL_CONSTANT = -999.
   END_OBJECT    = COLUMN
+
   OBJECT        = COLUMN
     NAME        = SUB_SOLAR_LATITUDE
     DESCRIPTION = "See SPICE or PDS documentation."
     DATA_TYPE   = ASCII_REAL
     START_BYTE  = 354
     BYTES       = 16
+    NULL_CONSTANT = -999.
   END_OBJECT    = COLUMN
+
   OBJECT        = COLUMN
     NAME        = SUB_SOLAR_LONGITUDE
     DESCRIPTION = "See SPICE or PDS documentation."
     DATA_TYPE   = ASCII_REAL
     START_BYTE  = 372
     BYTES       = 16
+    NULL_CONSTANT = -999.
   END_OBJECT    = COLUMN
+
   OBJECT        = COLUMN
     NAME        = SUB_SPACECRAFT_LATITUDE
     DESCRIPTION = "See SPICE or PDS documentation."
     DATA_TYPE   = ASCII_REAL
     START_BYTE  = 390
     BYTES       = 16
+    NULL_CONSTANT = -999.
   END_OBJECT    = COLUMN
+
   OBJECT        = COLUMN
     NAME        = SUB_SPACECRAFT_LONGITUDE
     DESCRIPTION = "See SPICE or PDS documentation."
     DATA_TYPE   = ASCII_REAL
     START_BYTE  = 408
     BYTES       = 16
+    NULL_CONSTANT = -999.
   END_OBJECT    = COLUMN
+
   OBJECT        = COLUMN
     NAME        = PHASE_ANGLE
     DESCRIPTION = "See SPICE or PDS documentation."
     DATA_TYPE   = ASCII_REAL
     START_BYTE  = 426
     BYTES       = 16
+    NULL_CONSTANT = -999.
   END_OBJECT    = COLUMN
+
   OBJECT        = COLUMN
     NAME        = EMISSION_ANGLE
     DESCRIPTION = "See SPICE or PDS documentation."
     DATA_TYPE   = ASCII_REAL
     START_BYTE  = 444
     BYTES       = 16
+    NULL_CONSTANT = -999.
   END_OBJECT    = COLUMN
+
   OBJECT        = COLUMN
     NAME        = SOLAR_INCIDENCE_ANGLE
     DESCRIPTION = "See SPICE or PDS documentation."
     DATA_TYPE   = ASCII_REAL
     START_BYTE  = 462
     BYTES       = 16
+    NULL_CONSTANT = -999.
   END_OBJECT    = COLUMN
+
   OBJECT        = COLUMN
     NAME        = CENTRAL_BODY_DISTANCE
     DESCRIPTION = "See SPICE or PDS documentation."
     DATA_TYPE   = ASCII_REAL
     START_BYTE  = 480
     BYTES       = 16
+    NULL_CONSTANT = -999.
   END_OBJECT    = COLUMN
+
   OBJECT        = COLUMN
     NAME        = DWELL_TIME
     DESCRIPTION = "HDAC number of integrations a filament level."
     DATA_TYPE   = ASCII_INTEGER
     START_BYTE  = 498
     BYTES       = 8
+    NULL_CONSTANT = -999
   END_OBJECT    = COLUMN
+
   OBJECT        = COLUMN
     NAME        = H_LEVEL
     DESCRIPTION = "HDAC H filament sequence of power levels."
@@ -199,6 +249,7 @@ OBJECT               = INDEX_TABLE
     START_BYTE  = 509
     BYTES       = 128
   END_OBJECT    = COLUMN
+
   OBJECT        = COLUMN
     NAME        = D_LEVEL
     DESCRIPTION = "HDAC D filament sequence of power levels."
@@ -206,5 +257,6 @@ OBJECT               = INDEX_TABLE
     START_BYTE  = 641
     BYTES       = 128
   END_OBJECT    = COLUMN
-END_OBJECT = INDEX_TABLE
+
+END_OBJECT      = INDEX_TABLE
 END

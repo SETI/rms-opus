@@ -1,15 +1,25 @@
-CCSD3ZF0000100000001NJPL3IF0PDS200000001 = SFDU_LABEL
 RECORD_TYPE                    = FIXED_LENGTH
-RECORD_BYTES                   = 743
-FILE_RECORDS                   = 481
-^IMAGE_INDEX_TABLE             = "IMGINDEX.TAB"
+RECORD_BYTES                   = 742
+FILE_RECORDS                   = 491
+^IMAGE_INDEX_TABLE             = "GO_0017_index.tab"
+
+PRODUCT_CREATION_TIME          = 2018-04-30T16:00:00
+VOLUME_ID                      = GO_0017
 
 OBJECT                           = IMAGE_INDEX_TABLE
   INDEX_TYPE                     = SINGLE
   INTERCHANGE_FORMAT             = ASCII
-  ROWS                           = 481
-  ROW_BYTES                      = 743
+  ROWS                           = 491
+  ROW_BYTES                      = 742
   COLUMNS                        = 56
+
+  DESCRIPTION                    = "This index file and its label have been
+edited by the PDS Ring Moon Systems Node for PDS3 compliance and to ensure
+that all numeric columns contain numeric values. Values of 'UNK' have been
+replaced by -999, which is indicated in this label to be the NULL_CONSTANT
+associated with each numeric column. A value of NULL_CONSTANT, where it
+appears in a column, indicates that the associated value is unknown or not
+applicable."
 
   OBJECT                           = COLUMN
     NAME                           = SPACECRAFT_CLOCK_START_COUNT
@@ -37,8 +47,8 @@ OBJECT                           = IMAGE_INDEX_TABLE
     START_BYTE                     = 26
     BYTES                          = 3
     FORMAT                         = A3
-    DESCRIPTION                    = "ID of the Galileo Instrument 
-        which acquired the image data.  Valid name is SSI (Solid 
+    DESCRIPTION                    = "ID of the Galileo Instrument
+        which acquired the image data.  Valid name is SSI (Solid
         State Imaging subsystem)."
   END_OBJECT                       = COLUMN
 
@@ -48,11 +58,11 @@ OBJECT                           = IMAGE_INDEX_TABLE
     START_BYTE                     = 32
     BYTES                          = 28
     FORMAT                         = A28
-    DESCRIPTION                    = "Name that PDS has attached to 
-        this dataset. Valid id is GO-A/E-SSI-2-REDR-V1.0 where GO  
-        is Galileo Orbiter, A/E identifies the target of the dataset, 
-        SSI is the instrument which acquired the data, 2 is CODMAC 
-        level, REDR is the product that was created and V1.0 is the 
+    DESCRIPTION                    = "Name that PDS has attached to
+        this dataset. Valid id is GO-A/E-SSI-2-REDR-V1.0 where GO
+        is Galileo Orbiter, A/E identifies the target of the dataset,
+        SSI is the instrument which acquired the data, 2 is CODMAC
+        level, REDR is the product that was created and V1.0 is the
         version of the data."
   END_OBJECT                       = COLUMN
 
@@ -62,13 +72,13 @@ OBJECT                           = IMAGE_INDEX_TABLE
     START_BYTE                     = 63
     BYTES                          = 7
     FORMAT                         = A7
-    DESCRIPTION                    = "Image id which takes the form 
+    DESCRIPTION                    = "Image id which takes the form
         of XXYZZZZ.  XX is the orbit (A1, A2 etc is approach; C1,
-        C2 is cruise). Y is the target body (J=Jupiter, A=Amalthea, 
-        I=Io, E=Europa, G=Ganymede, C=Callisto, S=Minor Satellites, 
-        R=ring, H=star, L=Moon, W=Earth, V=Venus, U=Ida, P=Gaspra). 
-        ZZZZ is the picture count which is generated in the sequence 
-        generation process and which is incremented separately for 
+        C2 is cruise). Y is the target body (J=Jupiter, A=Amalthea,
+        I=Io, E=Europa, G=Ganymede, C=Callisto, S=Minor Satellites,
+        R=ring, H=star, L=Moon, W=Earth, V=Venus, U=Ida, P=Gaspra).
+        ZZZZ is the picture count which is generated in the sequence
+        generation process and which is incremented separately for
         each target body in each orbit."
   END_OBJECT                       = COLUMN
 
@@ -79,12 +89,12 @@ OBJECT                           = IMAGE_INDEX_TABLE
     BYTES                          = 20
     FORMAT                         = A20
     DESCRIPTION                    = "This is the Galileo activity id
-        of each image which is in the form NNTIOOOOOOMM#SSSXXXX.  NN 
-        is the Orbit number. T is the scan platform target body 
-        initial (if applicable). I is the instrument. OOOOOO is the 
-        orbit planning guide objective mnemonic.  MM is the 
-        sequential OAPEL number for each value of NNTIOOOOOO. # is 
-        the multiple observation flag symbol (- or *). SSS is the PA 
+        of each image which is in the form NNTIOOOOOOMM#SSSXXXX.  NN
+        is the Orbit number. T is the scan platform target body
+        initial (if applicable). I is the instrument. OOOOOO is the
+        orbit planning guide objective mnemonic.  MM is the
+        sequential OAPEL number for each value of NNTIOOOOOO. # is
+        the multiple observation flag symbol (- or *). SSS is the PA
         set number.  XXXX is the MIPL Processing Code."
   END_OBJECT                       = COLUMN
 
@@ -94,8 +104,8 @@ OBJECT                           = IMAGE_INDEX_TABLE
     START_BYTE                     = 96
     BYTES                          = 4
     FORMAT                         = A4
-    DESCRIPTION                    = "Type of product.  Valid REDR 
-        (Raw Experiment Data Record) or EDR (Experiment Data 
+    DESCRIPTION                    = "Type of product.  Valid REDR
+        (Raw Experiment Data Record) or EDR (Experiment Data
         Record)."
   END_OBJECT                       = COLUMN
 
@@ -105,7 +115,7 @@ OBJECT                           = IMAGE_INDEX_TABLE
     START_BYTE                     = 103
     BYTES                          = 10
     FORMAT                         = A10
-    DESCRIPTION                    = "Observational target of the 
+    DESCRIPTION                    = "Observational target of the
         image."
   END_OBJECT                       = COLUMN
 
@@ -115,10 +125,10 @@ OBJECT                           = IMAGE_INDEX_TABLE
     START_BYTE                     = 116
     BYTES                          = 24
     FORMAT                         = A24
-    DESCRIPTION                    = "Time at which image data was 
-        acquired, in the format YYYY-MM-DDTHH:MM:SS:MMMZ.  The time 
+    DESCRIPTION                    = "Time at which image data was
+        acquired, in the format YYYY-MM-DDTHH:MM:SS:MMMZ.  The time
         system is Universl Time (UTC). 'YYYY' is year,' MM' is month,
-        'DD'is day of month, 'HH' is hour, 'MM' is minute, 'SS' is 
+        'DD'is day of month, 'HH' is hour, 'MM' is minute, 'SS' is
         second, 'MMM' is millisecond."
   END_OBJECT                       = COLUMN
 
@@ -128,29 +138,30 @@ OBJECT                           = IMAGE_INDEX_TABLE
     START_BYTE                     = 143
     BYTES                          = 7
     FORMAT                         = A7
-    DESCRIPTION                    = "Optical filter used for the 
-        image. Valid filters include: CLEAR, GREEN, RED, VIOLET, 
+    DESCRIPTION                    = "Optical filter used for the
+        image. Valid filters include: CLEAR, GREEN, RED, VIOLET,
         IR-7560, IR-9680, IR-7270, IR-8890."
   END_OBJECT                       = COLUMN
 
   OBJECT                           = COLUMN
     NAME                           = FILTER_NUMBER
-    DATA_TYPE                      = INTEGER
+    DATA_TYPE                      = ASCII_INTEGER
     START_BYTE                     = 152
     BYTES                          = 5
     FORMAT                         = I5
-    DESCRIPTION                    = "Optical filter number, 
-        containing the unique number associated with the optical 
+    DESCRIPTION                    = "Optical filter number,
+        containing the unique number associated with the optical
         filter for the image. Valid 0-7."
   END_OBJECT                       = COLUMN
 
   OBJECT                           = COLUMN
     NAME                           = EXPOSURE_DURATION
-    DATA_TYPE                      = REAL
+    DATA_TYPE                      = ASCII_REAL
     START_BYTE                     = 158
     BYTES                          = 8
     FORMAT                         = "F8.2"
-    DESCRIPTION                    = "Exposure duration for the 
+    NULL_CONSTANT                  = 0.
+    DESCRIPTION                    = "Exposure duration for the
         image, in milliseconds."
   END_OBJECT                       = COLUMN
 
@@ -166,11 +177,12 @@ OBJECT                           = IMAGE_INDEX_TABLE
 
   OBJECT                           = COLUMN
     NAME                           = FRAME_DURATION
-    DATA_TYPE                      = REAL
+    DATA_TYPE                      = ASCII_REAL
     START_BYTE                     = 174
     BYTES                          = 8
     FORMAT                         = "F8.3"
-    DESCRIPTION                    = "Scan rate of the camera read 
+    NULL_CONSTANT                  = -999.
+    DESCRIPTION                    = "Scan rate of the camera read
         out in seconds.  Valid 2.333, 8.667, 30.333 60.667"
   END_OBJECT                       = COLUMN
 
@@ -180,20 +192,20 @@ OBJECT                           = IMAGE_INDEX_TABLE
     START_BYTE                     = 184
     BYTES                          = 17
     FORMAT                         = A17
-    DESCRIPTION                    = "Identifies if a boom or other 
-        type of obstruction were obscuring the view of the camera 
-        during the exposure.  Valid values include: POSSIBLE, NOT 
+    DESCRIPTION                    = "Identifies if a boom or other
+        type of obstruction were obscuring the view of the camera
+        during the exposure.  Valid values include: POSSIBLE, NOT
         POSSIBLE, OR PRESENCE VERIFIED."
   END_OBJECT                       = COLUMN
 
   OBJECT                           = COLUMN
     NAME                           = ORBIT_NUMBER
-    DATA_TYPE                      = INTEGER
+    DATA_TYPE                      = ASCII_INTEGER
     START_BYTE                     = 204
     BYTES                          = 3
     FORMAT                         = I3
-    DESCRIPTION                    = "Identifies Jupiter Orbit 
-        number.  Applicable only during Jupiter Orbital 
+    DESCRIPTION                    = "Identifies Jupiter Orbit
+        number.  Applicable only during Jupiter Orbital
         Operations.  Prior to Jupiter Orbital Operations,
         UNK has been placed in the label "
   END_OBJECT                       = COLUMN
@@ -205,7 +217,7 @@ OBJECT                           = IMAGE_INDEX_TABLE
     BYTES                          = 14
     FORMAT                         = A14
     DESCRIPTION                    = "Time from closest approach to
-        central body in the form -dddThh:mm:ssZ.  If the value is 
+        central body in the form -dddThh:mm:ssZ.  If the value is
         missing or is the default, UNK has been placed in the label."
   END_OBJECT                       = COLUMN
 
@@ -216,7 +228,7 @@ OBJECT                           = IMAGE_INDEX_TABLE
     BYTES                          = 14
     FORMAT                         = A14
     DESCRIPTION                    = "Time from closest approach to
-        the nearest satellite in the form -dddThh:mm:ssZ.  If the 
+        the nearest satellite in the form -dddThh:mm:ssZ.  If the
         value is missing or is the default, UNK has been placed in
         the label."
 
@@ -224,299 +236,330 @@ OBJECT                           = IMAGE_INDEX_TABLE
 
   OBJECT                           = COLUMN
     NAME                           = PHASE_ANGLE
-    DATA_TYPE                      = REAL
+    DATA_TYPE                      = ASCII_REAL
     START_BYTE                     = 243
     BYTES                          = 8
     FORMAT                         = "F8.3"
+    NULL_CONSTANT                  = -999.
     DESCRIPTION                    = "Phase angle in degrees"
   END_OBJECT                       = COLUMN
 
   OBJECT                           = COLUMN
     NAME                           = EMISSION_ANGLE
-    DATA_TYPE                      = REAL
+    DATA_TYPE                      = ASCII_REAL
     START_BYTE                     = 252
     BYTES                          = 8
     FORMAT                         = "F8.3"
+    NULL_CONSTANT                  = -999.
     DESCRIPTION                    = "Emission angle in degrees"
   END_OBJECT                       = COLUMN
 
   OBJECT                           = COLUMN
     NAME                           = INCIDENCE_ANGLE
-    DATA_TYPE                      = REAL
+    DATA_TYPE                      = ASCII_REAL
     START_BYTE                     = 261
     BYTES                          = 8
     FORMAT                         = "F8.3"
+    NULL_CONSTANT                  = -999.
     DESCRIPTION                    = "Incidence angle in degrees"
   END_OBJECT                       = COLUMN
 
   OBJECT                           = COLUMN
     NAME                           = LOCAL_HOUR_ANGLE
-    DATA_TYPE                      = REAL
+    DATA_TYPE                      = ASCII_REAL
     START_BYTE                     = 270
     BYTES                          = 8
     FORMAT                         = "F8.3"
+    NULL_CONSTANT                  = -999.
     DESCRIPTION                    = "Local hour angle in degrees"
   END_OBJECT                       = COLUMN
 
   OBJECT                           = COLUMN
     NAME                           = TWIST_ANGLE
-    DATA_TYPE                      = REAL
+    DATA_TYPE                      = ASCII_REAL
     START_BYTE                     = 279
     BYTES                          = 8
     FORMAT                         = "F8.3"
+    NULL_CONSTANT                  = -999.
     DESCRIPTION                    = "Twist angle in degrees"
   END_OBJECT                       = COLUMN
 
   OBJECT                           = COLUMN
     NAME                           = CONE_ANGLE
-    DATA_TYPE                      = REAL
+    DATA_TYPE                      = ASCII_REAL
     START_BYTE                     = 288
     BYTES                          = 8
     FORMAT                         = "F8.3"
+    NULL_CONSTANT                  = -999.
     DESCRIPTION                    = "Cone angle in degrees"
   END_OBJECT                       = COLUMN
 
   OBJECT                           = COLUMN
     NAME                           = RIGHT_ASCENSION
-    DATA_TYPE                      = REAL
+    DATA_TYPE                      = ASCII_REAL
     START_BYTE                     = 297
     BYTES                          = 8
     FORMAT                         = "F8.3"
+    NULL_CONSTANT                  = -999.
     DESCRIPTION                    = "Right Ascension in degrees"
   END_OBJECT                       = COLUMN
 
   OBJECT                           = COLUMN
     NAME                           = DECLINATION
-    DATA_TYPE                      = REAL
+    DATA_TYPE                      = ASCII_REAL
     START_BYTE                     = 306
     BYTES                          = 8
     FORMAT                         = "F8.3"
+    NULL_CONSTANT                  = -999.
     DESCRIPTION                    = "Declination in degrees"
   END_OBJECT                       = COLUMN
 
   OBJECT                           = COLUMN
     NAME                           = NORTH_AZIMUTH
-    DATA_TYPE                      = REAL
+    DATA_TYPE                      = ASCII_REAL
     START_BYTE                     = 315
     BYTES                          = 8
     FORMAT                         = "F8.3"
+    NULL_CONSTANT                  = -999.
     DESCRIPTION                    = "North Azimuth in degrees"
   END_OBJECT                       = COLUMN
 
   OBJECT                           = COLUMN
     NAME                           = SMEAR_AZIMUTH
-    DATA_TYPE                      = REAL
+    DATA_TYPE                      = ASCII_REAL
     START_BYTE                     = 324
     BYTES                          = 8
     FORMAT                         = "F8.3"
+    NULL_CONSTANT                  = -999.
     DESCRIPTION                    = "Smear Azimuth in degrees"
   END_OBJECT                       = COLUMN
 
   OBJECT                           = COLUMN
     NAME                           = SMEAR_MAGNITUDE
-    DATA_TYPE                      = REAL
+    DATA_TYPE                      = ASCII_REAL
     START_BYTE                     = 333
     BYTES                          = 8
     FORMAT                         = "F8.3"
+    NULL_CONSTANT                  = -999.
     DESCRIPTION                    = "Smear magnitude in pixels."
   END_OBJECT                       = COLUMN
 
   OBJECT                           = COLUMN
     NAME                           = HORIZONTAL_PIXEL_SCALE
-    DATA_TYPE                      = REAL
+    DATA_TYPE                      = ASCII_REAL
     START_BYTE                     = 342
     BYTES                          = 12
     FORMAT                         = "E12"
-    DESCRIPTION                    = "Horizontal pixel scale in 
+    NULL_CONSTANT                  = -999.
+    DESCRIPTION                    = "Horizontal pixel scale in
         meters/pixel."
   END_OBJECT                       = COLUMN
 
   OBJECT                           = COLUMN
     NAME                           = VERTICAL_PIXEL_SCALE
-    DATA_TYPE                      = REAL
+    DATA_TYPE                      = ASCII_REAL
     START_BYTE                     = 355
     BYTES                          = 12
     FORMAT                         = "E12"
-    DESCRIPTION                    = "Vertical pixel scale in 
+    NULL_CONSTANT                  = -999.
+    DESCRIPTION                    = "Vertical pixel scale in
         meters/pixel."
   END_OBJECT                       = COLUMN
 
   OBJECT                           = COLUMN
     NAME                           = SLANT_DISTANCE
-    DATA_TYPE                      = REAL
+    DATA_TYPE                      = ASCII_REAL
     START_BYTE                     = 368
     BYTES                          = 12
     FORMAT                         = "E12"
-    DESCRIPTION                    = "Spacecraft to target slant 
+    NULL_CONSTANT                  = -999.
+    DESCRIPTION                    = "Spacecraft to target slant
         range in km."
   END_OBJECT                       = COLUMN
 
   OBJECT                           = COLUMN
-    NAME                           = INTERCEPT_POINT_LATITUDE
-    DATA_TYPE                      = REAL
+    NAME                           = LIGHT_SOURCE_LATITUDE
+    DATA_TYPE                      = ASCII_REAL
     START_BYTE                     = 381
     BYTES                          = 8
     FORMAT                         = "F8.3"
-    DESCRIPTION                    = "Latitude of center of frame in 
+    NULL_CONSTANT                  = -999.
+    DESCRIPTION                    = "Latitude of center of frame in
         degrees."
   END_OBJECT                       = COLUMN
 
   OBJECT                           = COLUMN
-    NAME                           = INTERCEPT_POINT_LONGITUDE
-    DATA_TYPE                      = REAL
+    NAME                           = LIGHT_SOURCE_LONGITUDE
+    DATA_TYPE                      = ASCII_REAL
     START_BYTE                     = 390
     BYTES                          = 8
     FORMAT                         = "F8.3"
+    NULL_CONSTANT                  = -999.
     DESCRIPTION                    = "Longitude of center of frame in
         degrees."
   END_OBJECT                       = COLUMN
 
   OBJECT                           = COLUMN
     NAME                           = TARGET_CENTER_DISTANCE
-    DATA_TYPE                      = REAL
+    DATA_TYPE                      = ASCII_REAL
     START_BYTE                     = 399
     BYTES                          = 12
     FORMAT                         = "E12"
+    NULL_CONSTANT                  = -999.
     DESCRIPTION                    = "Range from spacecraft to target
         center in km."
   END_OBJECT                       = COLUMN
 
   OBJECT                           = COLUMN
     NAME                           = CENTRAL_BODY_DISTANCE
-    DATA_TYPE                      = REAL
+    DATA_TYPE                      = ASCII_REAL
     START_BYTE                     = 412
     BYTES                          = 12
     FORMAT                         = "E12"
-    DESCRIPTION                    = "Distance from spacecraft to 
+    NULL_CONSTANT                  = -999.
+    DESCRIPTION                    = "Distance from spacecraft to
         planet in km."
   END_OBJECT                       = COLUMN
 
   OBJECT                           = COLUMN
     NAME                           = SUB_SPACECRAFT_LATITUDE
-    DATA_TYPE                      = REAL
+    DATA_TYPE                      = ASCII_REAL
     START_BYTE                     = 425
     BYTES                          = 8
     FORMAT                         = "F8.3"
+    NULL_CONSTANT                  = -999.
     DESCRIPTION                    = "Planetocentric sub-spacecraft
         latitude of spacecraft position vector in degrees."
   END_OBJECT                       = COLUMN
 
   OBJECT                           = COLUMN
     NAME                           = SUB_SPACECRAFT_LONGITUDE
-    DATA_TYPE                      = REAL
+    DATA_TYPE                      = ASCII_REAL
     START_BYTE                     = 434
     BYTES                          = 8
     FORMAT                         = "F8.3"
+    NULL_CONSTANT                  = -999.
     DESCRIPTION                    = "West longitude of spacecraft
         position vector in degrees."
   END_OBJECT                       = COLUMN
 
   OBJECT                           = COLUMN
     NAME                           = SUB_SOLAR_AZIMUTH
-    DATA_TYPE                      = REAL
+    DATA_TYPE                      = ASCII_REAL
     START_BYTE                     = 443
     BYTES                          = 8
     FORMAT                         = "F8.3"
+    NULL_CONSTANT                  = -999.
     DESCRIPTION                    = "Sub-solar azimuth in degrees."
   END_OBJECT                       = COLUMN
 
   OBJECT                           = COLUMN
     NAME                           = SUB_SOLAR_LATITUDE
-    DATA_TYPE                      = REAL
+    DATA_TYPE                      = ASCII_REAL
     START_BYTE                     = 452
     BYTES                          = 8
     FORMAT                         = "F8.3"
+    NULL_CONSTANT                  = -999.
     DESCRIPTION                    = "Planetocentric sub-solar latitude
         in degrees."
   END_OBJECT                       = COLUMN
 
   OBJECT                           = COLUMN
     NAME                           = SUB_SOLAR_LONGITUDE
-    DATA_TYPE                      = REAL
+    DATA_TYPE                      = ASCII_REAL
     START_BYTE                     = 461
     BYTES                          = 8
     FORMAT                         = "F8.3"
+    NULL_CONSTANT                  = -999.
     DESCRIPTION                    = "Sub-solar west longitude in degrees"
   END_OBJECT                       = COLUMN
 
   OBJECT                           = COLUMN
     NAME                           = SOLAR_DISTANCE
-    DATA_TYPE                      = REAL
+    DATA_TYPE                      = ASCII_REAL
     START_BYTE                     = 470
     BYTES                          = 12
     FORMAT                         = "E12"
-    DESCRIPTION                    = "Distance from sun to target 
+    NULL_CONSTANT                  = -999.
+    DESCRIPTION                    = "Distance from sun to target
         body in km."
   END_OBJECT                       = COLUMN
 
   OBJECT                           = COLUMN
     NAME                           = SUB_SPACECRAFT_LINE
-    DATA_TYPE                      = INTEGER
+    DATA_TYPE                      = ASCII_REAL
     START_BYTE                     = 483
     BYTES                          = 8
     FORMAT                         = "F8.3"
-    DESCRIPTION                    = "Line coordinate of sub-spacecraft 
+    NULL_CONSTANT                  = -999.
+    DESCRIPTION                    = "Line coordinate of sub-spacecraft
         point."
   END_OBJECT                       = COLUMN
 
   OBJECT                           = COLUMN
     NAME                           = SUB_SPACECRAFT_LINE_SAMPLE
-    DATA_TYPE                      = INTEGER
+    DATA_TYPE                      = ASCII_REAL
     START_BYTE                     = 492
     BYTES                          = 8
     FORMAT                         = "F8.3"
-    DESCRIPTION                    = "Sample coordinate of sub-spacecraft 
+    NULL_CONSTANT                  = -999.
+    DESCRIPTION                    = "Sample coordinate of sub-spacecraft
         point."
   END_OBJECT                       = COLUMN
 
   OBJECT                           = COLUMN
     NAME                           = CENTER_RING_RADIUS
-    DATA_TYPE                      = REAL
+    DATA_TYPE                      = ASCII_REAL
     START_BYTE                     = 501
     BYTES                          = 12
     FORMAT                         = "E12"
-    DESCRIPTION                    = "Ring radius at center of frame 
-        in km. Not applicable until Jupiter Orbital Operations. For 
+    NULL_CONSTANT                  = -999.
+    DESCRIPTION                    = "Ring radius at center of frame
+        in km. Not applicable until Jupiter Orbital Operations. For
         this delivery, a 0 has been placed in the label."
   END_OBJECT                       = COLUMN
 
   OBJECT                           = COLUMN
     NAME                           = MEAN_RADIANCE
-    DATA_TYPE                      = REAL
+    DATA_TYPE                      = ASCII_REAL
     START_BYTE                     = 514
     BYTES                          = 8
     FORMAT                         = "F8.3"
-    DESCRIPTION                    = " Not applicable for REDR 
+    NULL_CONSTANT                  = -999.
+    DESCRIPTION                    = " Not applicable for REDR
         data. For this delivery N/A has been placed in the label."
   END_OBJECT                       = COLUMN
 
   OBJECT                           = COLUMN
     NAME                           = MEAN_REFLECTANCE
-    DATA_TYPE                      = REAL
+    DATA_TYPE                      = ASCII_REAL
     START_BYTE                     = 523
     BYTES                          = 8
     FORMAT                         = "F8.3"
-    DESCRIPTION                    = "Not applicable for REDR 
+    NULL_CONSTANT                  = -999.
+    DESCRIPTION                    = "Not applicable for REDR
         data. For this delivery N/A has been placed in the label."
   END_OBJECT                       = COLUMN
 
   OBJECT                           = COLUMN
     NAME                           = RADIANCE_SCALING_FACTOR
-    DATA_TYPE                      = REAL
+    DATA_TYPE                      = ASCII_REAL
     START_BYTE                     = 532
     BYTES                          = 8
     FORMAT                         = "F8.3"
-    DESCRIPTION                    = "Not applicable for REDR 
+    NULL_CONSTANT                  = -999.
+    DESCRIPTION                    = "Not applicable for REDR
         data. For this delivery N/A has been placed in the label. "
   END_OBJECT                       = COLUMN
 
   OBJECT                           = COLUMN
     NAME                           = REFLECTANCE_SCALING_FACTOR
-    DATA_TYPE                      = REAL
+    DATA_TYPE                      = ASCII_REAL
     START_BYTE                     = 541
     BYTES                          = 8
     FORMAT                         = "F8.3"
-    DESCRIPTION                    = "Not applicable for REDR 
+    NULL_CONSTANT                  = -999.
+    DESCRIPTION                    = "Not applicable for REDR
         data. For this delivery N/A has been placed in the label."
   END_OBJECT                       = COLUMN
 
@@ -526,7 +569,7 @@ OBJECT                           = IMAGE_INDEX_TABLE
     START_BYTE                     = 551
     BYTES                          = 7
     FORMAT                         = A7
-    DESCRIPTION                    = "CD-ROM volume on which the 
+    DESCRIPTION                    = "CD-ROM volume on which the
         image file is recorded (e.g GO_0002)"
   END_OBJECT                       = COLUMN
 
@@ -535,50 +578,53 @@ OBJECT                           = IMAGE_INDEX_TABLE
     DATA_TYPE                      = CHARACTER
     START_BYTE                     = 561
     BYTES                          = 43
-    FORMAT                         = A43
-    DESCRIPTION                    = "File name for image file on 
-        CD-ROM.  Recorded in VAX directory format, with brackets 
+    FORMAT                         = A33
+    DESCRIPTION                    = "File name for image file on
+        CD-ROM.  Recorded in VAX directory format, with brackets
         indicating the directory hierarchy."
   END_OBJECT                       = COLUMN
 
   OBJECT                           = COLUMN
     NAME                           = COMPRESSION_TYPE
     DATA_TYPE                      = CHARACTER
-    START_BYTE                     = 607 
+    START_BYTE                     = 607
     BYTES                          = 27
     FORMAT                         = A27
     DESCRIPTION                    = " Compression type"
   END_OBJECT                       = COLUMN
 
   OBJECT                           = COLUMN
-    NAME                           = ENCODING_COMPRESSION_RATIO
-    DATA_TYPE                      = REAL
+    NAME                           = ENCODING_MIN_COMPRESSION_RATIO
+    DATA_TYPE                      = ASCII_REAL
     START_BYTE                     = 636
     BYTES                          = 8
     FORMAT                         = "F8.3"
-    DESCRIPTION                    = "ICT or lossless mean compression
+    NULL_CONSTANT                  = 0.
+    DESCRIPTION                    = "ICT or lossless minimum compression
                                       ratio"
   END_OBJECT                       = COLUMN
 
   OBJECT                           = COLUMN
-    NAME                           = ENCODING_MIN_COMPRESSION_RATIO
-    DATA_TYPE                      = REAL
+    NAME                           = ENCODING_MAX_COMPRESSION_RATIO
+    DATA_TYPE                      = ASCII_REAL
     START_BYTE                     = 645
     BYTES                          = 8
-    FORMAT                         = "F8.3"   
-    DESCRIPTION                    = "ICT or lossless minimum compression
-                                      ratio"
-  END_OBJECT                       = COLUMN 
-
-  OBJECT                           = COLUMN
-    NAME                           = ENCODING_MAX_COMPRESSION_RATIO
-    DATA_TYPE                      = REAL
-    START_BYTE                     = 654
-    BYTES                          = 8         
-    FORMAT                         = "F8.3"   
+    FORMAT                         = "F8.3"
+    NULL_CONSTANT                  = 0.
     DESCRIPTION                    = "ICT or lossless maximum compression
                                       ratio"
-  END_OBJECT                       = COLUMN 
+  END_OBJECT                       = COLUMN
+
+  OBJECT                           = COLUMN
+    NAME                           = ENCODING_COMPRESSION_RATIO
+    DATA_TYPE                      = ASCII_REAL
+    START_BYTE                     = 654
+    BYTES                          = 8
+    FORMAT                         = "F8.3"
+    NULL_CONSTANT                  = 0.
+    DESCRIPTION                    = "ICT or lossless mean compression
+                                      ratio"
+  END_OBJECT                       = COLUMN
 
   OBJECT                           = COLUMN
     NAME                           = PROCESSING_HISTORY_TEXT
@@ -590,7 +636,5 @@ OBJECT                           = IMAGE_INDEX_TABLE
                               all program names used to process image"
   END_OBJECT                       = COLUMN
 
-
 END_OBJECT                       = IMAGE_INDEX_TABLE
-
 END

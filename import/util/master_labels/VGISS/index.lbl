@@ -1,16 +1,16 @@
 PDS_VERSION_ID                  = PDS3
 RECORD_TYPE                     = FIXED_LENGTH
 RECORD_BYTES                    = 393
-FILE_RECORDS                    = 7962
-^INDEX_TABLE                    = "INDEX.TAB"
+FILE_RECORDS                    = 3666
+^INDEX_TABLE                    = "VGISS_5101_index.tab"
 
-DATA_SET_ID                     = "VG2-N-ISS-2/3/4/6-PROCESSED-V1.0"
-VOLUME_ID                       = VGISS_8210
-PRODUCT_CREATION_TIME           = 2013-10-23T16:00:00
+DATA_SET_ID                     = "VG1/VG2-J-ISS-2/3/4/6-PROCESSED-V1.0"
+VOLUME_ID                       = VGISS_5101
+PRODUCT_CREATION_TIME           = 2012-06-04T12:00:00
 
 OBJECT                          = INDEX_TABLE
    INTERCHANGE_FORMAT           = ASCII
-   ROWS                         = 7962
+   ROWS                         = 3666
    COLUMNS                      = 22
    ROW_BYTES                    = 393
    INDEX_TYPE                   = SINGLE
@@ -95,11 +95,11 @@ ENCOUNTER."
      START_BYTE                 = 139
      BYTES                      = 10
      FORMAT                     = "A10"
-     DESCRIPTION                = "The nominal or intended primary target
-of the observation. The values in this column are occasionally incorrect
-and frequently are not comprehensive. The values given are based on
-information in the original data file label. In some cases the nominal
-target was misidentified. Further, while only one target is listed, many
+     DESCRIPTION                = "The nominal or intended primary target 
+of the observation. The values in this column are occasionally incorrect 
+and frequently are not comprehensive. The values given are based on 
+information in the original data file label. In some cases the nominal 
+target was misidentified. Further, while only one target is listed, many 
 images contain multiple targets within the field of view."
    END_OBJECT                   = COLUMN
 
@@ -267,9 +267,9 @@ seconds."
      START_BYTE                 = 291
      BYTES                      = 80
      FORMAT                     = "A80"
-     DESCRIPTION                = "A brief comment about the image.
-The information in this field was transferred from the original data
-files. We were unable to verify the validity of the information
+     DESCRIPTION                = "A brief comment about the image. 
+The information in this field was transferred from the original data 
+files. We were unable to verify the validity of the information 
 although we do know that in some cases it is incorrect."
    END_OBJECT                   = COLUMN
 

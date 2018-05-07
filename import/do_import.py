@@ -40,7 +40,7 @@ def delete_all_obs_mult_tables(namespace):
     table_names = impglobals.DATABASE.table_names(namespace,
                                                   prefix=['obs_', 'mult_'])
     # This has to happen in three phases to handle foreign key contraints:
-    # 1. All obs_ tables except obs_general and mult_XXX
+    # 1. All obs_ tables except obs_general and mult_YYY
     for table_name in table_names:
         if (table_name.startswith('obs_') and
             table_name != 'obs_general'):
@@ -50,7 +50,7 @@ def delete_all_obs_mult_tables(namespace):
     if 'obs_general' in table_names:
         impglobals.DATABASE.drop_table(namespace, 'obs_general')
 
-    # 3. All mult_XXX tables
+    # 3. All mult_YYY tables
     for table_name in table_names:
         if table_name.startswith('mult_'):
             impglobals.DATABASE.drop_table(namespace, table_name)
@@ -1065,12 +1065,14 @@ def import_observation_table(volume_id,
                         column_val = None
                 if column_val is not None and the_val is not None:
                     val_sentinel = table_column.get('val_sentinel', None)
-                    val_sentinel = None # XXX
-                    if type(val_sentinel) == list:
-                        if the_val in val_sentinel:
-                            column_val = None
-                    elif the_val == val_sentinel:
+                    if type(val_sentinel) != list:
+                        val_sentinel = [val_sentinel]
+                    if the_val in val_sentinel:
                         column_val = None
+                        import_util.announce_nonrepeating_error(
+                            f'Caught sentinel value {the_val} for column '+
+                            f'"{field_name}" that was missed'+
+                            f' by the PDS label!')
                 if column_val is not None and the_val is not None:
                     val_min = table_column.get('val_min', None)
                     val_max = table_column.get('val_max', None)
@@ -1092,12 +1094,11 @@ def import_observation_table(volume_id,
                         column_val = None
                     if val_max is not None and the_val > val_max:
                         if val_use_null:
-                            # msg = (f'Column "{field_name}" in table '+
-                            #        f'"{table_name}" has maximum value {val_max}'+
-                            #        f' but {column_val} is too large - '+
-                            #        f'substituting NULL')
-                            # impglobals.LOGGER.log('debug', msg)
-                            pass # XXX
+                            msg = (f'Column "{field_name}" in table '+
+                                   f'"{table_name}" has maximum value {val_max}'+
+                                   f' but {column_val} is too large - '+
+                                   f'substituting NULL')
+                            impglobals.LOGGER.log('debug', msg)
                         else:
                             msg = (f'Column "{field_name}" in table '+
                                    f'"{table_name}" has maximum value '+

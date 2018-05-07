@@ -687,7 +687,7 @@
         "pi_disp_order": 0,
         "pi_display": 1,
         "pi_display_results": 1,
-        "pi_form_type": "GROUP",
+        "pi_form_type": "STRING",
         "pi_intro": null,
         "pi_label": "Data Set ID",
         "pi_label_results": "Data Set ID",

@@ -1,12 +1,12 @@
 PDS_VERSION_ID                  = PDS3
 RECORD_TYPE                     = FIXED_LENGTH
-FILE_RECORDS                    = 8
-RECORD_BYTES                    = 508
-^INDEX_TABLE                    = "INDEX.TAB"
+FILE_RECORDS                    = 11
+RECORD_BYTES                    = 494
+^INDEX_TABLE                    = "HSTJ0_9296_index.tab"
 
-DATA_SET_ID                     = "HST-U-ACS-5-ID13012-V1.0"
-VOLUME_ID                       = HSTJ1_3012
-PRODUCT_CREATION_TIME           = 2017-01-11
+DATA_SET_ID                     = "HST-J-ACS-5-ID9296-V1.0"
+VOLUME_ID                       = HSTJ0_9296
+PRODUCT_CREATION_TIME           = 2013-06-17
 
 INSTRUMENT_HOST_NAME            = "HUBBLE SPACE TELESCOPE"
 INSTRUMENT_HOST_ID              = HST
@@ -15,8 +15,8 @@ INSTRUMENT_ID                   = ACS
 
 OBJECT                          = INDEX_TABLE
   INTERCHANGE_FORMAT            = ASCII
-  ROWS                          = 8
-  ROW_BYTES                     = 484
+  ROWS                          = 11
+  ROW_BYTES                     = 494
   COLUMNS                       = 33
   INDEX_TYPE                    = SINGLE
 

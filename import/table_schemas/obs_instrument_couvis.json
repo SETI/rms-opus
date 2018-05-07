@@ -403,7 +403,8 @@
             "TAB:supp_index",
             "MINIMUM_BAND_NUMBER"
         ],
-        "val_min": -1,
+        "val_sentinel": -1,
+        "val_min": 0,
         "val_max": 1023,
         "definition": "The number of the BAND with the lowest BAND_NUMBER used in this observation.",
         "pi_category_name": "obs_instrument_couvis",
@@ -431,7 +432,8 @@
             "TAB:supp_index",
             "MAXIMUM_BAND_NUMBER"
         ],
-        "val_min": -1,
+        "val_sentinel": -1,
+        "val_min": 0,
         "val_max": 1023,
         "definition": "The number of the BAND with the highest BAND_NUMBER used in this observation.",
         "pi_category_name": "obs_instrument_couvis",
@@ -459,7 +461,8 @@
             "TAB:supp_index",
             "BAND_BINNING_FACTOR"
         ],
-        "val_min": -1,
+        "val_sentinel": -1,
+        "val_min": 0,
         "val_max": 1024,
         "definition": "The number of spectral bands of the instrument that have been summed to produce a single spectral bin in the data file.",
         "pi_category_name": "obs_instrument_couvis",
@@ -487,7 +490,8 @@
             "TAB:supp_index",
             "WINDOW_MINIMUM_LINE_NUMBER"
         ],
-        "val_min": -1,
+        "val_sentinel": -1,
+        "val_min": 0,
         "val_max": 63,
         "definition": "The line number of the line with the lowest line number in the window.",
         "pi_category_name": "obs_instrument_couvis",
@@ -515,7 +519,8 @@
             "TAB:supp_index",
             "WINDOW_MAXIMUM_LINE_NUMBER"
         ],
-        "val_min": -1,
+        "val_sentinel": -1,
+        "val_min": 0,
         "val_max": 63,
         "definition": "The line number of the line with the highest line number in the window.",
         "pi_category_name": "obs_instrument_couvis",
@@ -543,7 +548,8 @@
             "TAB:supp_index",
             "LINE_BINNING_FACTOR"
         ],
-        "val_min": -1,
+        "val_sentinel": -1,
+        "val_min": 0,
         "val_max": 64,
         "definition": "The number of spatial bins of the instrument that have been summed to produce a single spatial element in one row of the data file.",
         "pi_category_name": "obs_instrument_couvis",
@@ -571,7 +577,8 @@
             "TAB:supp_index",
             "LINE_SAMPLES"
         ],
-        "val_min": 1,
+        "val_sentinel": -1,
+        "val_min": 0,
         "val_max": 1e8,
         "definition": "The total number of data instances along the horizontal axis (the number of samples in a line).",
         "pi_category_name": "obs_instrument_couvis",

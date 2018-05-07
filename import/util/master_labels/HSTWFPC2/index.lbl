@@ -1,12 +1,12 @@
 PDS_VERSION_ID                  = PDS3
 RECORD_TYPE                     = FIXED_LENGTH
-FILE_RECORDS                    = 155
+FILE_RECORDS                    = 4
 RECORD_BYTES                    = 508
-^INDEX_TABLE                    = "INDEX.TAB"
+^INDEX_TABLE                    = "HSTU0_5167_index.tab"
 
-DATA_SET_ID                     = "HST-S-WFPC2-5-ID11956-V1.0"
-VOLUME_ID                       = HSTU1_1956
-PRODUCT_CREATION_TIME           = 2010-08-16
+DATA_SET_ID                     = "HST-J-WFPC2-5-ID5167-V1.0"
+VOLUME_ID                       = HSTU0_5167
+PRODUCT_CREATION_TIME           = 2010-08-11
 
 INSTRUMENT_HOST_NAME            = "HUBBLE SPACE TELESCOPE"
 INSTRUMENT_HOST_ID              = HST
@@ -15,7 +15,7 @@ INSTRUMENT_ID                   = WFPC2
 
 OBJECT                          = INDEX_TABLE
   INTERCHANGE_FORMAT            = ASCII
-  ROWS                          = 155
+  ROWS                          = 4
   ROW_BYTES                     = 508
   COLUMNS                       = 38
   INDEX_TYPE                    = SINGLE

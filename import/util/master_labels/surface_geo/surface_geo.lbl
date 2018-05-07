@@ -1,30 +1,27 @@
 PDS_VERSION_ID                  = PDS3
 RECORD_TYPE                     = FIXED_LENGTH
-FILE_RECORDS                    = 1626
+FILE_RECORDS                    = 3727
 RECORD_BYTES                    = 404
-^MOON_GEOMETRY_TABLE            = "COISS_2111_moon_summary.tab"
+^PLANET_GEOMETRY_TABLE          = "COISS_2001_saturn_summary.tab"
 
-VOLUME_ID                       = "COISS_2111"
-PRODUCT_CREATION_TIME           = 2018-01-07T15:00:00
+VOLUME_ID                       = "COISS_2001"
+PRODUCT_CREATION_TIME           = 2015-02-01T02:00:00
 
 INSTRUMENT_HOST_NAME            = "CASSINI ORBITER"
 INSTRUMENT_HOST_ID              = CO
 INSTRUMENT_NAME                 = "IMAGING SCIENCE SUBSYSTEM"
 INSTRUMENT_ID                   = "ISS"
 
-OBJECT                          = MOON_GEOMETRY_TABLE
+OBJECT                          = PLANET_GEOMETRY_TABLE
   INTERCHANGE_FORMAT            = ASCII
-  ROWS                          = 1626
+  ROWS                          = 3727
   ROW_BYTES                     = 404
   COLUMNS                       = 35
 
-  DESCRIPTION                   = "This index describes the intercept geometry
-    for the regular satellites and other targeted bodies within the field of
-    view of Cassini ISS images. The table contains zero or more rows for each
-    image file found on the volume identified by the VOLUME_ID keyword above.
-    For each image, the file contains one row for each regular satellite
-    falling within the field of view, plus one row if the targeted body is not
-    a regular satellite (generally, an irregular satellite).
+  DESCRIPTION                   = "This index describes the Saturn intercept
+    geometry of the field of view of Cassini ISS images. The table contains
+    one row for each image file found on the volume identified by the
+    VOLUME_ID keyword above.
 
     Occasionally, SPICE pointing information is unavailable for the time at
     which an image was exposed. When this situation occurs, no row has been
@@ -40,13 +37,12 @@ OBJECT                          = MOON_GEOMETRY_TABLE
     calculated, and the minimum and maximum values of each quantity have been
     tabulated. Note that, for angular quantities that cycle from 360 degrees
     to zero, the tabulated minimum can be numerically greater than the
-    maximum.
+    maximum. If Saturn does not fall within the field of view, values of the
+    NULL_CONSTANT appear in the table.
 
-    Regions of a body that are obscured by Saturn or by a targeted moon are
-    excluded from the tabulation. The dark side of each body is also generally
-    excluded. If a body is too small to have been captured in an 8x8 sampling
-    of the image, then the associated NULL_CONSTANT will appear in each
-    column.
+    Regions of Saturn that are obscured by a targeted moon or by the main
+    rings are excluded from the tabulation. The dark side of the planet is
+    also generally excluded.
 
     Note that the last nine columns of the table contain quantities that are
     independent of the field of view. These quantities are tabulated as single
@@ -874,5 +870,5 @@ OBJECT                          = MOON_GEOMETRY_TABLE
       observation; it is independent of the field of view."
   END_OBJECT                    = COLUMN
 
-END_OBJECT                      = MOON_GEOMETRY_TABLE
+END_OBJECT                      = PLANET_GEOMETRY_TABLE
 END
