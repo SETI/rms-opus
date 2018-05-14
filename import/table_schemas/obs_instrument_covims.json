@@ -157,6 +157,7 @@
         "field_name": "swath_width",
         "field_type": "uint2",
         "field_notnull": true,
+        "field_key": true,
         "data_source": [
             "TAB:index",
             "SWATH_WIDTH"
@@ -182,6 +183,7 @@
         "field_name": "swath_length",
         "field_type": "uint2",
         "field_notnull": true,
+        "field_key": true,
         "data_source": [
             "TAB:index",
             "SWATH_LENGTH"
@@ -207,6 +209,7 @@
         "field_name": "ir_exposure",
         "field_type": "real8",
         "field_default": null,
+        "field_key": true,
         "data_source": [
             "TAB:index",
             "IR_EXPOSURE"
@@ -268,6 +271,7 @@
         "field_name": "vis_exposure",
         "field_type": "real8",
         "field_default": null,
+        "field_key": true,
         "data_source": [
             "TAB:index",
             "VIS_EXPOSURE"

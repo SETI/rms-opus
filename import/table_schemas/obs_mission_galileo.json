@@ -55,6 +55,7 @@
         "field_name": "observation_id",
         "field_type": "char20",
         "field_notnull": true,
+        "field_key": true,
         "data_source": [
             "TAB:index",
             "OBSERVATION_ID"
@@ -82,6 +83,7 @@
         "field_type": "int4",
         "field_default": null,
         "field_notnull": true,
+        "field_key": true,
         "data_source": [
             "TAB:index",
             "ORBIT_NUMBER"
@@ -110,6 +112,7 @@
         "field_name": "spacecraft_clock_count1",
         "field_type": "real8",
         "field_notnull": true,
+        "field_key": true,
         "data_source": [
             "TAB:index",
             "SPACECRAFT_CLOCK_START_COUNT"
@@ -138,6 +141,7 @@
         "field_name": "spacecraft_clock_count2",
         "field_type": "real8",
         "field_notnull": true,
+        "field_key": true,
         "data_source": [
             "TAB:index",
             "SPACECRAFT_CLOCK_START_COUNT"

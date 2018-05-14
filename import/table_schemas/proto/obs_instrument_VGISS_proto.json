@@ -7,17 +7,25 @@
             "obs_general",
             "id"
         ],
-        "@field_x_notnull": true
+        "@field_x_notnull": true,
+        "data_source": [
+            "TAB:obs_general",
+            "id"
+        ]
     },
     {
-        "@field_name": "ring_obs_id",
+        "@field_name": "rms_obs_id",
         "@field_type": "char40",
         "@field_x_key": "foreign",
         "@field_x_key_foreign": [
             "obs_general",
-            "ring_obs_id"
+            "rms_obs_id"
         ],
-        "@field_x_notnull": true
+        "@field_x_notnull": true,
+        "data_source": [
+            "TAB:obs_general",
+            "rms_obs_id"
+        ]
     },
     {
         "@field_name": "IMAGE_ID",
@@ -207,71 +215,71 @@
         "pi_units": ""
     },
     {
-        "@field_name": "mult_SCAN_MODE",
+        "@field_name": "mult_obs_instrument_VGISS_SCAN_MODE",
         "@field_type": "uint4",
         "@field_x_key": "foreign",
         "@field_x_key_foreign": [
-            "mult_SCAN_MODE",
+            "mult_obs_instrument_VGISS_SCAN_MODE",
             "id"
         ],
         "@field_x_notnull": true
     },
     {
-        "@field_name": "mult_SHUTTER_MODE",
+        "@field_name": "mult_obs_instrument_VGISS_SHUTTER_MODE",
         "@field_type": "uint4",
         "@field_x_key": "foreign",
         "@field_x_key_foreign": [
-            "mult_SHUTTER_MODE",
+            "mult_obs_instrument_VGISS_SHUTTER_MODE",
             "id"
         ],
         "@field_x_notnull": true
     },
     {
-        "@field_name": "mult_GAIN_MODE",
+        "@field_name": "mult_obs_instrument_VGISS_GAIN_MODE",
         "@field_type": "uint4",
         "@field_x_key": "foreign",
         "@field_x_key_foreign": [
-            "mult_GAIN_MODE",
+            "mult_obs_instrument_VGISS_GAIN_MODE",
             "id"
         ],
         "@field_x_notnull": true
     },
     {
-        "@field_name": "mult_EDIT_MODE",
+        "@field_name": "mult_obs_instrument_VGISS_EDIT_MODE",
         "@field_type": "uint4",
         "@field_x_key": "foreign",
         "@field_x_key_foreign": [
-            "mult_EDIT_MODE",
+            "mult_obs_instrument_VGISS_EDIT_MODE",
             "id"
         ],
         "@field_x_notnull": true
     },
     {
-        "@field_name": "mult_FILTER_NAME",
+        "@field_name": "mult_obs_instrument_VGISS_FILTER_NAME",
         "@field_type": "uint4",
         "@field_x_key": "foreign",
         "@field_x_key_foreign": [
-            "mult_FILTER_NAME",
+            "mult_obs_instrument_VGISS_FILTER_NAME",
             "id"
         ],
         "@field_x_notnull": true
     },
     {
-        "@field_name": "mult_FILTER_NUMBER",
+        "@field_name": "mult_obs_instrument_VGISS_FILTER_NUMBER",
         "@field_type": "uint4",
         "@field_x_key": "foreign",
         "@field_x_key_foreign": [
-            "mult_FILTER_NUMBER",
+            "mult_obs_instrument_VGISS_FILTER_NUMBER",
             "id"
         ],
         "@field_x_notnull": true
     },
     {
-        "@field_name": "mult_camera",
+        "@field_name": "mult_obs_instrument_VGISS_camera",
         "@field_type": "uint4",
         "@field_x_key": "foreign",
         "@field_x_key_foreign": [
-            "mult_camera",
+            "mult_obs_instrument_VGISS_camera",
             "id"
         ],
         "@field_x_notnull": true

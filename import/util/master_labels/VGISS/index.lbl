@@ -1,21 +1,21 @@
 PDS_VERSION_ID                  = PDS3
 RECORD_TYPE                     = FIXED_LENGTH
 RECORD_BYTES                    = 393
-FILE_RECORDS                    = 3666
-^INDEX_TABLE                    = "VGISS_5101_index.tab"
+FILE_RECORDS                    = 611
+^INDEX_TABLE                    = "VGISS_5101_raw_image_index.tab"
 
 DATA_SET_ID                     = "VG1/VG2-J-ISS-2/3/4/6-PROCESSED-V1.0"
 VOLUME_ID                       = VGISS_5101
-PRODUCT_CREATION_TIME           = 2012-06-04T12:00:00
+PRODUCT_CREATION_TIME           = 2017-04-27T12:00:00
 
 OBJECT                          = INDEX_TABLE
    INTERCHANGE_FORMAT           = ASCII
-   ROWS                         = 3666
+   ROWS                         = 611
    COLUMNS                      = 22
    ROW_BYTES                    = 393
    INDEX_TYPE                   = SINGLE
-   DESCRIPTION                  = "Index table describing all the data files
-on this volume, one row per label file."
+   DESCRIPTION                  = "Index table describing all the raw images
+on this volume, one row per image."
 
    OBJECT                       = COLUMN
      NAME                       = VOLUME_NAME
@@ -140,7 +140,7 @@ modulo 60 count)."
      BYTES                      = 19
      FORMAT                     = "A19"
      DESCRIPTION                = "Time at which image was acquired, in the
-format yyyy-mm-ddThh:mm:ss.  The time system is Universal Time (UTC).  'yyyy'
+format 611-mm-ddThh:mm:ss.  The time system is Universal Time (UTC).  'yyyy'
 for year, 'mm' for month, 'dd' for day of month, 'hh' for hour, 'mm' for
 minute, 'ss' for second."
    END_OBJECT                   = COLUMN
@@ -153,8 +153,8 @@ minute, 'ss' for second."
      BYTES                      = 19
      FORMAT                     = "A19"
      DESCRIPTION                = "Time at which image data was received on
-earth, in the format yyyy-mm-ddThh:mm:ss. The time system is Universal Time
-(UTC). 'yyyy' = year, 'mm' = month, 'dd' = day of month, 'hh' = hour, 'mm' =
+earth, in the format 611-mm-ddThh:mm:ss. The time system is Universal Time
+(UTC). '611' = year, 'mm' = month, 'dd' = day of month, 'hh' = hour, 'mm' =
 minute, 'ss' = second."
    END_OBJECT                   = COLUMN
 
@@ -231,8 +231,7 @@ indicates the amount of data read from the vidicon."
      BYTES                      = 6
      FORMAT                     = "A6"
      DESCRIPTION                = "The optical filter used for the image, one
-of CLEAR, CH4_U, CH4_JS, UV, VIOLET, BLUE, GREEN, ORANGE, and NAD
-(for sodium)."
+of CLEAR, CH4_U, CH4_JS, UV, VIOLET, BLUE, GREEN, ORANGE, and SODIUM."
    END_OBJECT                   = COLUMN
 
    OBJECT                       = COLUMN

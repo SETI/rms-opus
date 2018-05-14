@@ -7,17 +7,25 @@
             "obs_general",
             "id"
         ],
-        "@field_x_notnull": true
+        "@field_x_notnull": true,
+        "data_source": [
+            "TAB:obs_general",
+            "id"
+        ]
     },
     {
-        "@field_name": "ring_obs_id",
+        "@field_name": "rms_obs_id",
         "@field_type": "char40",
         "@field_x_key": "foreign",
         "@field_x_key_foreign": [
             "obs_general",
-            "ring_obs_id"
+            "rms_obs_id"
         ],
-        "@field_x_notnull": true
+        "@field_x_notnull": true,
+        "data_source": [
+            "TAB:obs_general",
+            "rms_obs_id"
+        ]
     },
     {
         "@field_name": "volume_id",
@@ -195,11 +203,11 @@
         "pi_units": null
     },
     {
-        "@field_name": "mult_spacecraft_name",
+        "@field_name": "mult_obs_mission_voyager_spacecraft_name",
         "@field_type": "uint4",
         "@field_x_key": "foreign",
         "@field_x_key_foreign": [
-            "mult_spacecraft_name",
+            "mult_obs_mission_voyager_spacecraft_name",
             "id"
         ],
         "@field_x_notnull": true

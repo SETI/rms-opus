@@ -43,6 +43,15 @@ def create_import_table_names_table():
 
     # Then various random tables
     entry = {
+        'table_name': 'obs_pds',
+        'label':      'PDS Constraints',
+        'display':    'Y',
+        'disp_order': disp_order
+    }
+    disp_order += 1
+    rows.append(entry)
+
+    entry = {
         'table_name': 'obs_type_image',
         'label':      'Image Constraints',
         'display':    'Y',

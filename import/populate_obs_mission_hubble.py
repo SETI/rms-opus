@@ -78,14 +78,57 @@ populate_obs_general_HSTSTIS_inst_host_id = populate_obs_general_HSTx_inst_host_
 populate_obs_general_HSTWFC3_inst_host_id = populate_obs_general_HSTx_inst_host_id
 populate_obs_general_HSTWFPC2_inst_host_id = populate_obs_general_HSTx_inst_host_id
 
-def populate_obs_general_HSTx_data_type(**kwargs):
-    return 'IMG'
+def populate_obs_general_HSTx_quantity(**kwargs):
+    metadata = kwargs['metadata']
+    index_row = metadata['index_row']
+    wl1 = import_util.safe_column(index_row, 'MINIMUM_WAVELENGTH')
+    wl2 = import_util.safe_column(index_row, 'MAXIMUM_WAVELENGTH')
 
-populate_obs_general_HSTACS_data_type = populate_obs_general_HSTx_data_type
-populate_obs_general_HSTNICMOS_data_type = populate_obs_general_HSTx_data_type
-populate_obs_general_HSTSTIS_data_type = populate_obs_general_HSTx_data_type
-populate_obs_general_HSTWFC3_data_type = populate_obs_general_HSTx_data_type
-populate_obs_general_HSTWFPC2_data_type = populate_obs_general_HSTx_data_type
+    if wl1 is None or wl2 is None:
+        return 'REFLECT'
+
+    # We call it "EMISSION" if at least 3/4 of the passband is below 350 nm
+    # and the high end of the passband is below 400 nm.
+    if wl2 < 0.4 and (3*wl1+wl2)/4 < 0.35:
+        return 'EMISSION'
+    return 'REFLECT'
+
+populate_obs_general_HSTACS_quantity = populate_obs_general_HSTx_quantity
+populate_obs_general_HSTNICMOS_quantity = populate_obs_general_HSTx_quantity
+populate_obs_general_HSTSTIS_quantity = populate_obs_general_HSTx_quantity
+populate_obs_general_HSTWFC3_quantity = populate_obs_general_HSTx_quantity
+populate_obs_general_HSTWFPC2_quantity = populate_obs_general_HSTx_quantity
+
+def populate_obs_general_HSTx_spatial_sampling(**kwargs):
+    return '2D'
+
+populate_obs_general_HSTACS_spatial_sampling = populate_obs_general_HSTx_spatial_sampling
+populate_obs_general_HSTNICMOS_spatial_sampling = populate_obs_general_HSTx_spatial_sampling
+populate_obs_general_HSTSTIS_spatial_sampling = populate_obs_general_HSTx_spatial_sampling
+populate_obs_general_HSTWFC3_spatial_sampling = populate_obs_general_HSTx_spatial_sampling
+populate_obs_general_HSTWFPC2_spatial_sampling = populate_obs_general_HSTx_spatial_sampling
+
+def populate_obs_general_HSTx_wavelength_sampling(**kwargs):
+    filter1, filter2 = _decode_filters(**kwargs)
+    if ((filter1 is not None and (filter1.startswith('G') or filter1.startswith('PR'))) or
+        (filter2 is not None and (filter2.startswith('G') or filter2.startswith('PR')))):
+        return 'Y'
+    return 'N'
+
+populate_obs_general_HSTACS_wavelength_sampling = populate_obs_general_HSTx_wavelength_sampling
+populate_obs_general_HSTNICMOS_wavelength_sampling = populate_obs_general_HSTx_wavelength_sampling
+populate_obs_general_HSTSTIS_wavelength_sampling = populate_obs_general_HSTx_wavelength_sampling
+populate_obs_general_HSTWFC3_wavelength_sampling = populate_obs_general_HSTx_wavelength_sampling
+populate_obs_general_HSTWFPC2_wavelength_sampling = populate_obs_general_HSTx_wavelength_sampling
+
+def populate_obs_general_HSTx_time_sampling(**kwargs):
+    return 'N'
+
+populate_obs_general_HSTACS_time_sampling = populate_obs_general_HSTx_time_sampling
+populate_obs_general_HSTNICMOS_time_sampling = populate_obs_general_HSTx_time_sampling
+populate_obs_general_HSTSTIS_time_sampling = populate_obs_general_HSTx_time_sampling
+populate_obs_general_HSTWFC3_time_sampling = populate_obs_general_HSTx_time_sampling
+populate_obs_general_HSTWFPC2_time_sampling = populate_obs_general_HSTx_time_sampling
 
 def populate_obs_general_HSTx_time1(**kwargs):
     metadata = kwargs['metadata']
@@ -143,16 +186,6 @@ populate_obs_general_HSTSTIS_observation_duration = populate_obs_general_HSTx_ob
 populate_obs_general_HSTWFC3_observation_duration = populate_obs_general_HSTx_observation_duration
 populate_obs_general_HSTWFPC2_observation_duration = populate_obs_general_HSTx_observation_duration
 
-# XXX
-def populate_obs_general_HSTx_quantity(**kwargs):
-    return 'REFLECT'
-
-populate_obs_general_HSTACS_quantity = populate_obs_general_HSTx_quantity
-populate_obs_general_HSTNICMOS_quantity = populate_obs_general_HSTx_quantity
-populate_obs_general_HSTSTIS_quantity = populate_obs_general_HSTx_quantity
-populate_obs_general_HSTWFC3_quantity = populate_obs_general_HSTx_quantity
-populate_obs_general_HSTWFPC2_quantity = populate_obs_general_HSTx_quantity
-
 def populate_obs_general_HSTx_note(**kwargs):
     return None
 
@@ -172,6 +205,18 @@ populate_obs_general_HSTNICMOS_primary_file_spec = populate_obs_general_HSTx_pri
 populate_obs_general_HSTSTIS_primary_file_spec = populate_obs_general_HSTx_primary_file_spec
 populate_obs_general_HSTWFC3_primary_file_spec = populate_obs_general_HSTx_primary_file_spec
 populate_obs_general_HSTWFPC2_primary_file_spec = populate_obs_general_HSTx_primary_file_spec
+
+def populate_obs_general_HSTx_product_creation_time(**kwargs):
+    metadata = kwargs['metadata']
+    index_label = metadata['index_label']
+    pct = index_label['PRODUCT_CREATION_TIME']
+    return pct
+
+populate_obs_general_HSTACS_product_creation_time = populate_obs_general_HSTx_product_creation_time
+populate_obs_general_HSTNICMOS_product_creation_time = populate_obs_general_HSTx_product_creation_time
+populate_obs_general_HSTSTIS_product_creation_time = populate_obs_general_HSTx_product_creation_time
+populate_obs_general_HSTWFC3_product_creation_time = populate_obs_general_HSTx_product_creation_time
+populate_obs_general_HSTWFPC2_product_creation_time = populate_obs_general_HSTx_product_creation_time
 
 def populate_obs_general_HSTx_data_set_id(**kwargs):
     metadata = kwargs['metadata']

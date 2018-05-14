@@ -201,9 +201,6 @@ def populate_obs_general_COISS_rms_obs_id(**kwargs):
 def populate_obs_general_COISS_inst_host_id(**kwargs):
     return 'CO'
 
-def populate_obs_general_COISS_data_type(**kwargs):
-    return 'IMG'
-
 def populate_obs_general_COISS_time1(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
@@ -226,7 +223,22 @@ def populate_obs_general_COISS_observation_duration(**kwargs):
     return exposure / 1000
 
 def populate_obs_general_COISS_quantity(**kwargs):
+    metadata = kwargs['metadata']
+    index_row = metadata['index_row']
+    filter1, filter2 = index_row['FILTER_NAME']
+
+    if filter1.startswith('UV') or filter2.startswith('UV'):
+        return 'EMISSION'
     return 'REFLECT'
+
+def populate_obs_general_COISS_spatial_sampling(**kwargs):
+    return '2D'
+
+def populate_obs_general_COISS_wavelength_sampling(**kwargs):
+    return 'N'
+
+def populate_obs_general_COISS_time_sampling(**kwargs):
+    return 'N'
 
 def populate_obs_general_COISS_note(**kwargs):
     metadata = kwargs['metadata']
@@ -238,6 +250,12 @@ def populate_obs_general_COISS_primary_file_spec(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     return index_row['FILE_SPECIFICATION_NAME']
+
+def populate_obs_general_COISS_product_creation_time(**kwargs):
+    metadata = kwargs['metadata']
+    index_row = metadata['index_row']
+    pct = index_row['PRODUCT_CREATION_TIME']
+    return pct
 
 # Format: "CO-E/V/J-ISSNA/ISSWA-2-EDR-V1.0"
 def populate_obs_general_COISS_data_set_id(**kwargs):
@@ -443,7 +461,9 @@ def populate_obs_wavelength_COISS_wave_no_res2(**kwargs):
     return _wave_no_res_helper(**kwargs)
 
 def populate_obs_wavelength_COISS_spec_flag(**kwargs):
-    return 'N'
+    metadata = kwargs['metadata']
+    index_row = metadata['obs_general_row']
+    return index_row['wavelength_sampling']
 
 def populate_obs_wavelength_COISS_spec_size(**kwargs):
     return None

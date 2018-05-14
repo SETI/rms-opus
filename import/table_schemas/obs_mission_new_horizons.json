@@ -1,0 +1,202 @@
+[
+    {
+        "field_name": "obs_general_id",
+        "field_type": "uint4",
+        "field_key": "foreign",
+        "field_key_foreign": [
+            "obs_general",
+            "id"
+        ],
+        "field_notnull": true,
+        "data_source": [
+            "TAB:obs_general",
+            "id"
+        ],
+        "comment": "This is the primary (surrogate) key linking the record to obs_general."
+    },
+    {
+        "field_name": "rms_obs_id",
+        "field_type": "char40",
+        "field_key": "foreign",
+        "field_key_foreign": [
+            "obs_general",
+            "rms_obs_id"
+        ],
+        "field_notnull": true,
+        "data_source": [
+            "TAB:obs_general",
+            "rms_obs_id"
+        ],
+        "comment": "This is the secondary key linking the record to obs_general."
+    },
+    {
+        "field_name": "volume_id",
+        "field_type": "char11",
+        "field_key": true,
+        "field_notnull": true,
+        "data_source": [
+            "TAB:obs_general",
+            "volume_id"
+        ],
+        "comment": "The volume_id is included here for ease of database manipulation only."
+    },
+    {
+        "field_name": "instrument_id",
+        "field_type": "char9",
+        "field_key": true,
+        "field_notnull": true,
+        "data_source": [
+            "TAB:obs_general",
+            "instrument_id"
+        ],
+        "comment": "The instrument_id is included here for ease of database manipulation only."
+    },
+    {
+        "field_name": "sequence_id",
+        "field_type": "char48",
+        "field_default": null,
+        "data_source": [
+            "TAB:supp_index",
+            "SEQUENCE_ID"
+        ],
+        "definition": "The spacecraft sequence associated with the observation. 'UNK' if unknown.",
+        "pi_category_name": "obs_mission_new_horizons",
+        "pi_dict_context": "NEW_HORIZONS",
+        "pi_dict_name": "SEQUENCE_ID",
+        "pi_disp_order": 0,
+        "pi_display": 0,
+        "pi_display_results": 1,
+        "pi_form_type": "STRING",
+        "pi_intro": null,
+        "pi_label": "Sequence ID",
+        "pi_label_results": "Sequence ID",
+        "pi_slug": "NEWHORIZONSsequenceid",
+        "pi_sub_heading": null,
+        "pi_tooltip": null,
+        "pi_units": null,
+        "comment": "Definition from NHLORRI supplemental index label"
+    },
+    {
+        "field_name": "spacecraft_clock_count1",
+        "field_type": "char19",
+        "field_default": null,
+        "field_key": true,
+        "data_source": [
+            "FUNCTION",
+            "obs_mission_new_horizons_spacecraft_clock_count1"
+        ],
+        "definition": "Time at which the shutter was opened given in Mission Event Time (MET). MET is measure using a 32-bit counter on the New Horizons spacecraft that increments continuously from the beginning of the mission. It runs at a rate of about one increment per second starting from a value of zero at January 19, 2006 18:08:02 UTC, or JD2453755.256337. Preceded by the SPACECRAFT_CLOCK_COUNT_PARTITION, which is the clock partition active at the time",
+        "pi_category_name": "obs_mission_new_horizons",
+        "pi_dict_context": "NEW_HORIZONS",
+        "pi_dict_name": "SPACECRAFT_CLOCK_START_COUNT",
+        "pi_disp_order": 0,
+        "pi_display": 1,
+        "pi_display_results": 1,
+        "pi_form_type": "STRING",
+        "pi_intro": null,
+        "pi_label": "Spacecraft Clock Start Count",
+        "pi_label_results": "Spacecraft Clock Start Count",
+        "pi_old_slug": "missionnewhorizonsspacecraftclockcount1",
+        "pi_slug": "NEWHORIZONSspacecraftclockcount1",
+        "pi_sub_heading": null,
+        "pi_tooltip": null,
+        "pi_units": null,
+        "comment": "Definition is from NHLORRI supplemental index label"
+    },
+    {
+        "field_name": "spacecraft_clock_count2",
+        "field_type": "char19",
+        "field_default": null,
+        "field_key": true,
+        "data_source": [
+            "FUNCTION",
+            "obs_mission_new_horizons_spacecraft_clock_count2"
+        ],
+        "definition": "Time at which the shutter was closed given in Mission Event Time (MET). MET is measure using a 32-bit counter on the New Horizons spacecraft that increments continuously from the beginning of the mission. It runs at a rate of about one increment per second starting from a value of zero at January 19, 2006 18:08:02 UTC, or JD2453755.256337. Preceded by the SPACECRAFT_CLOCK_COUNT_PARTITION, which is the clock partition active at the time",
+        "pi_category_name": "obs_mission_new_horizons",
+        "pi_dict_context": "NEW_HORIZONS",
+        "pi_dict_name": "SPACECRAFT_CLOCK_STOP_COUNT",
+        "pi_disp_order": 0,
+        "pi_display": 1,
+        "pi_display_results": 1,
+        "pi_form_type": "STRING",
+        "pi_intro": null,
+        "pi_label": "Spacecraft Clock Stop Count",
+        "pi_label_results": "Spacecraft Clock Stop Count",
+        "pi_old_slug": "missionnewhorizonsspacecraftclockcount2",
+        "pi_slug": "NEWHORIZONSspacecraftclockcount2",
+        "pi_sub_heading": null,
+        "pi_tooltip": null,
+        "pi_units": null,
+        "comment": "Definition is from NHLORRI supplemental index label"
+    },
+    {
+        "field_name": "mission_phase",
+        "field_type": "char22",
+        "field_default": null,
+        "field_key": true,
+        "data_source": [
+            "TAB:supp_index",
+            "MISSION_PHASE_NAME"
+        ],
+        "definition": "Mission phase name.",
+        "pi_category_name": "obs_mission_new_horizons",
+        "pi_dict_context": "NEW_HORIZONS",
+        "pi_dict_name": "MISSION_PHASE_NAME",
+        "pi_disp_order": 0,
+        "pi_display": 1,
+        "pi_display_results": 1,
+        "pi_form_type": "GROUP",
+        "pi_intro": null,
+        "pi_label": "Mission Phase",
+        "pi_label_results": "Mission Phase",
+        "pi_slug": "missionphase",
+        "pi_sub_heading": null,
+        "pi_tooltip": null,
+        "pi_units": null,
+        "comment": "Definition is from NHLORRI supplemental index label"
+    },
+    {
+        "field_name": "telemetry_application_id",
+        "field_type": "char5",
+        "field_notnull": true,
+        "data_source": [
+            "TAB:supp_index",
+            "TELEMETRY_APPLICATION_ID"
+        ],
+        "definition": "Application ID (ApID) of the telemetry data packet which contained the data.",
+        "pi_category_name": "obs_mission_new_horizons",
+        "pi_dict_context": "NEW_HORIZONS",
+        "pi_dict_name": "TELEMETRY_APPLICATION_ID",
+        "pi_disp_order": 0,
+        "pi_display": 1,
+        "pi_display_results": 1,
+        "pi_form_type": "GROUP",
+        "pi_intro": null,
+        "pi_label": "Telemetry Application ID",
+        "pi_label_results": "Telemetry Application ID",
+        "pi_old_slug": "telemetryapplicationid",
+        "pi_slug": "NEWHORIZONStelemetryapplicationid",
+        "pi_sub_heading": null,
+        "pi_tooltip": null,
+        "pi_units": null,
+        "comment": "Definition is from NHLORRI supplemental index label"
+    },
+    {
+        "put_mults_here": true
+    },
+    {
+        "field_name": "id",
+        "field_type": "uint4",
+        "field_key": "primary",
+        "field_notnull": true,
+        "data_source": [
+            "MAX_ID",
+            null
+        ]
+    },
+    {
+        "field_name": "timestamp",
+        "field_type": "timestamp"
+    }
+]

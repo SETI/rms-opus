@@ -64,44 +64,69 @@ def populate_obs_general_COUVIS_rms_obs_id(**kwargs):
 def populate_obs_general_COUVIS_inst_host_id(**kwargs):
     return 'CO'
 
-# XXX THIS IS ALL WRONG ###
-def populate_obs_general_COUVIS_data_type(**kwargs):
+def populate_obs_general_COUVIS_quantity(**kwargs):
     channel, image_time = _COUVIS_channel_time_helper(**kwargs)
+    metadata = kwargs['metadata']
+    index_row = metadata['index_row']
+    slit_state = index_row['SLIT_STATE']
 
     if channel == 'HSP':
-        return 'PROFILE'
-    if channel == 'HDAC':
-        return 'POINT'
+        return 'OPTICAL'
+    if (channel == 'EUV' or channel == 'FUV') and slit_state == 'OCCULTATION':
+        return 'OPTICAL'
+    # HDAC is measuring EMISSION, along with EUV/FUV normal slits
+    return 'EMISSION'
 
-    if channel != 'EUV' and channel != 'FUV':
-        import_util.announce_nonrepeating_error(
-            f'COUVIS_data_type has unknown channel type {channel}',
-            index_row_num)
-        return None
-
+def populate_obs_general_COUVIS_spatial_sampling(**kwargs):
+    channel, image_time = _COUVIS_channel_time_helper(**kwargs)
     metadata = kwargs['metadata']
-    index_row_num = metadata['index_row_num']
     index_row = metadata['index_row']
-    slit_state = index_row['SLIT_STATE'];
+    slit_state = index_row['SLIT_STATE']
 
-    if channel == 'EUV' and slit_state == 'OCCULTATION':
-        return 'PROFILE'
+    if channel == 'HSP' or channel == 'HDAC':
+        return 'POINT'
+    assert channel == 'EUV' or channel == 'FUV'
+    if slit_state == 'OCCULTATION':
+        return '1D'
 
     supp_index_row = metadata['supp_index_row']
-    object_type = None
-    if supp_index_row is not None:
-        object_type = supp_index_row['DATA_OBJECT_TYPE']
-
-    if object_type is None:
+    if supp_index_row is None:
         import_util.announce_nonrepeating_error(
-            f'COUVIS_data_type has channel EUV or FUV but no '+
+            f'COUVIS_spatial_sampling has channel EUV or FUV but no '+
             f'DATA_OBJECT_TYPE available', index_row_num)
         return None
 
+    object_type = supp_index_row['DATA_OBJECT_TYPE']
     if object_type == 'SPECTRUM':
-        return 'PROFILE'
+        return 'POINT'
 
-    return 'CUBE'
+    return '2D'
+
+def populate_obs_general_COUVIS_wavelength_sampling(**kwargs):
+    channel, image_time = _COUVIS_channel_time_helper(**kwargs)
+    metadata = kwargs['metadata']
+    index_row = metadata['index_row']
+    slit_state = index_row['SLIT_STATE']
+
+    if channel == 'HSP' or channel == 'HDAC':
+        return 'N'
+    assert channel == 'EUV' or channel == 'FUV'
+    if slit_state == 'OCCULTATION':
+        return 'N'
+    return 'Y'
+
+def populate_obs_general_COUVIS_time_sampling(**kwargs):
+    channel, image_time = _COUVIS_channel_time_helper(**kwargs)
+    metadata = kwargs['metadata']
+    index_row = metadata['index_row']
+    slit_state = index_row['SLIT_STATE']
+
+    if channel == 'HSP' or channel == 'HDAC':
+        return 'Y'
+    assert channel == 'EUV' or channel == 'FUV'
+    if slit_state == 'OCCULTATION':
+        return 'Y'
+    return 'N'
 
 def populate_obs_general_COUVIS_time1(**kwargs):
     metadata = kwargs['metadata']
@@ -125,14 +150,6 @@ def populate_obs_general_COUVIS_observation_duration(**kwargs):
     time_sec2 = obs_general_row['time_sec2']
     return time_sec2 - time_sec1
 
-# XXX
-def populate_obs_general_COUVIS_quantity(**kwargs):
-    channel, image_time = _COUVIS_channel_time_helper(**kwargs)
-
-    if channel == 'HSP':
-        return 'OPTICAL'
-    return 'REFLECT'
-
 def populate_obs_general_COUVIS_note(**kwargs):
     metadata = kwargs['metadata']
     supp_index_row = metadata['supp_index_row']
@@ -150,6 +167,12 @@ def populate_obs_general_COUVIS_primary_file_spec(**kwargs):
     if supp_index_row is None:
         return None
     return supp_index_row['FILE_SPECIFICATION_NAME']
+
+def populate_obs_general_COUVIS_product_creation_time(**kwargs):
+    metadata = kwargs['metadata']
+    index_label = metadata['index_label']
+    pct = index_label['PRODUCT_CREATION_TIME']
+    return pct
 
 # Format: "CO-S-UVIS-2-SSB-V1.4"
 def populate_obs_general_COUVIS_data_set_id(**kwargs):
@@ -218,20 +241,19 @@ def populate_obs_mission_cassini_COUVIS_mission_phase_name(**kwargs):
 
 ### OBS_TYPE_IMAGE TABLE ###
 
-# XXX
 def populate_obs_type_image_COUVIS_image_type_id(**kwargs):
     metadata = kwargs['metadata']
     obs_general_row = metadata['obs_general_row']
-    type_id = obs_general_row['data_type']
-    if type_id == 'CUBE':
-        return 'CUBE'
-    return 'PUSH'
+    spatial = obs_general_row['spatial_sampling']
+    if spatial == '2D':
+        return 'PUSH'
+    return None
 
 def populate_obs_type_image_COUVIS_duration(**kwargs):
     metadata = kwargs['metadata']
     obs_general_row = metadata['obs_general_row']
-    type_id = obs_general_row['data_type']
-    if type_id != 'CUBE':
+    spatial = obs_general_row['spatial_sampling']
+    if spatial != '2D':
         return None
 
     index_row = metadata['index_row']
@@ -242,17 +264,16 @@ def populate_obs_type_image_COUVIS_duration(**kwargs):
 def populate_obs_type_image_COUVIS_levels(**kwargs):
     metadata = kwargs['metadata']
     obs_general_row = metadata['obs_general_row']
-    type_id = obs_general_row['data_type']
-    if type_id != 'CUBE':
+    spatial = obs_general_row['spatial_sampling']
+    if spatial != '2D':
         return None
-    return 65535
+    return 65536
 
-# XXX
 def populate_obs_type_image_COUVIS_lesser_pixel_size(**kwargs):
     metadata = kwargs['metadata']
     obs_general_row = metadata['obs_general_row']
-    type_id = obs_general_row['data_type']
-    if type_id != 'CUBE':
+    spatial = obs_general_row['spatial_sampling']
+    if spatial != '2D':
         return None
     supp_index_row = metadata.get('supp_index_row', None)
     if supp_index_row is None:
@@ -274,8 +295,8 @@ def populate_obs_type_image_COUVIS_lesser_pixel_size(**kwargs):
 def populate_obs_type_image_COUVIS_greater_pixel_size(**kwargs):
     metadata = kwargs['metadata']
     obs_general_row = metadata['obs_general_row']
-    type_id = obs_general_row['data_type']
-    if type_id != 'CUBE':
+    spatial = obs_general_row['spatial_sampling']
+    if spatial != '2D':
         return None
     supp_index_row = metadata.get('supp_index_row', None)
     if supp_index_row is None:
@@ -437,27 +458,37 @@ def populate_obs_wavelength_COUVIS_wave_no_res2(**kwargs):
 
 def populate_obs_wavelength_COUVIS_spec_flag(**kwargs):
     channel, image_time = _COUVIS_channel_time_helper(**kwargs)
+    metadata = kwargs['metadata']
+    index_row = metadata['index_row']
+    slit_state = index_row['SLIT_STATE']
 
-    if channel == 'HDAC' or channel == 'HSP':
+    if channel == 'HSP' or channel == 'HDAC':
         return 'N'
+    assert channel == 'EUV' or channel == 'FUV'
+    if slit_state == 'OCCULTATION':
+        return 'N'
+
     return 'Y'
 
 def populate_obs_wavelength_COUVIS_spec_size(**kwargs):
+    channel, image_time = _COUVIS_channel_time_helper(**kwargs)
     metadata = kwargs['metadata']
+    index_row = metadata['index_row']
+    slit_state = index_row['SLIT_STATE']
+
+    if channel == 'HSP' or channel == 'HDAC':
+        return None
+
     supp_index_row = metadata.get('supp_index_row', None)
     if supp_index_row is None:
         return None
-    channel, image_time = _COUVIS_channel_time_helper(**kwargs)
     band1 = import_util.safe_column(supp_index_row, 'MINIMUM_BAND_NUMBER')
     band2 = import_util.safe_column(supp_index_row, 'MAXIMUM_BAND_NUMBER')
     band_bin = import_util.safe_column(supp_index_row, 'BAND_BINNING_FACTOR')
     if band1 is None or band2 is None or band_bin is None:
         return None
 
-    if channel == 'EUV' or channel == 'FUV':
-        return (band2 - band1 + 1) / band_bin
-
-    return None
+    return (band2 - band1 + 1) // band_bin
 
 def populate_obs_wavelength_COUVIS_polarization_type(**kwargs):
     return 'NONE'

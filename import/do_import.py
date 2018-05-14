@@ -26,6 +26,13 @@ from populate_obs_instrument_GOSSI import *
 
 from populate_obs_mission_hubble import *
 
+from populate_obs_mission_new_horizons import *
+from populate_obs_instrument_NHLORRI import *
+from populate_obs_instrument_NHMVIC import *
+
+from populate_obs_mission_voyager import *
+from populate_obs_instrument_VGISS import *
+
 from populate_obs_surface_geo import *
 
 
@@ -512,19 +519,37 @@ def import_one_volume(volume_id):
     # broken.
     paths = volume_pdsfile.associated_logical_paths('metadata', exists=True)
     volume_label_path = None
+
     if paths:
         for path in paths:
             assoc_pdsfile = pdsfile.PdsFile.from_logical_path(path)
             basenames = assoc_pdsfile.childnames
             for basename in basenames:
-                if (basename.upper().endswith('_INDEX.LBL') and
-                    not basename.upper().endswith('SUPPLEMENTAL_INDEX.LBL') and
+                if (basename.upper().endswith('_RAW_IMAGE_INDEX.LBL') and
                     basename.find('999') == -1):
                     volume_label_path = os.path.join(assoc_pdsfile.abspath,
                                                      basename)
                     impglobals.LOGGER.log('debug',
-                f'Using metadata version of main index: "{volume_label_path}"')
+                f'Using raw_image_index metadata version of main index: '+
+                f'"{volume_label_path}"')
                     break
+
+    if volume_label_path is None:
+        if paths:
+            for path in paths:
+                assoc_pdsfile = pdsfile.PdsFile.from_logical_path(path)
+                basenames = assoc_pdsfile.childnames
+                for basename in basenames:
+                    if (basename.upper().endswith('_INDEX.LBL') and
+                        not basename.upper().endswith(
+                                            'SUPPLEMENTAL_INDEX.LBL') and
+                        basename.find('999') == -1):
+                        volume_label_path = os.path.join(assoc_pdsfile.abspath,
+                                                         basename)
+                        impglobals.LOGGER.log('debug',
+                    f'Using metadata version of main index: '+
+                    f'"{volume_label_path}"')
+                        break
 
     if (volume_label_path is None and
         not impglobals.ARGUMENTS.import_force_metadata_index):
@@ -654,6 +679,39 @@ def import_one_volume(volume_id):
                                 break
                             key = f'/{key1}/{key2}'
                             assoc_dict[key] = row
+                    elif instrument_name == 'VGISS':
+                        # The VGISS supplemental index is keyed by
+                        # FILE_SPECIFICATION_NAME
+                        # (DATA/C13854XX/C1385455_RAW.LBL)
+                        # that maps to the FILE_SPECIFICATION_NAME field in the
+                        # main index.
+                        # It's too much of a pain to calculate the rms_obs_id
+                        # here to use that as a key, so we just stick with the
+                        # filename.
+                        for row in assoc_rows:
+                            key = row.get('FILE_SPECIFICATION_NAME', None)
+                            if key is None:
+                                import_util.announce_nonrepeating_error(
+                f'{assoc_label_path} is missing FILE_SPECIFICATION_NAME field')
+                                break
+                            assoc_dict[key] = row
+                    elif instrument_name in ['NHLORRI', 'NHMVIC']:
+                        # The NHLORRI/NHMVIC supplemental index is keyed by
+                        # FILE_SPECIFICATION_NAME
+                        # (data/20070108_003059/lor_0030598439_0x630_eng.lbl)
+                        # that maps to the PATH_NAME and FILE_NAME fields in the
+                        # main index.
+                        # It's too much of a pain to calculate the rms_obs_id
+                        # here to use that as a key, so we just stick with the
+                        # filename.
+                        for row in assoc_rows:
+                            key = row.get('FILE_SPECIFICATION_NAME', None)
+                            key = key.upper()
+                            if key is None:
+                                import_util.announce_nonrepeating_error(
+                f'{assoc_label_path} is missing FILE_SPECIFICATION_NAME field')
+                                break
+                            assoc_dict[key] = row
                     else:
                         # Something else uses a supplemental index that we
                         # haven't prepared for!
@@ -715,10 +773,39 @@ def import_one_volume(volume_id):
             if couvis_filename in supp_index:
                 metadata['supp_index_row'] = supp_index[couvis_filename]
             else:
-                import_util.announce_nonrepeating_warning(
+                import_util.announce_nonrepeating_error(
                     f'File "{couvis_filename}" is missing supplemental data',
                     index_row_num)
                 metadata['supp_index_row'] = None
+                continue # We don't process entries without supp_index
+        elif 'supp_index' in metadata and instrument_name == 'VGISS':
+            # Match up the FILENAME
+            filename = index_row['FILE_SPECIFICATION_NAME']
+            supp_index = metadata['supp_index']
+            if filename in supp_index:
+                metadata['supp_index_row'] = supp_index[filename]
+            else:
+                import_util.announce_nonrepeating_error(
+                    f'File "{filename}" is missing supplemental data',
+                    index_row_num)
+                metadata['supp_index_row'] = None
+                continue # We don't process entries without supp_index
+        elif ('supp_index' in metadata and
+              instrument_name in ['NHLORRI', 'NHMVIC']):
+            # Match up the PATH_NAME + FILE_NAME with FILE_SPECIFICATION_NAME
+            path_name = index_row['PATH_NAME']
+            file_name = index_row['FILE_NAME']
+            file_spec_name = path_name+file_name
+            file_spec_name = file_spec_name.upper()
+            supp_index = metadata['supp_index']
+            if file_spec_name in supp_index:
+                metadata['supp_index_row'] = supp_index[file_spec_name]
+            else:
+                import_util.announce_nonrepeating_error(
+                    f'File "{file_spec_name}" is missing supplemental data',
+                    index_row_num)
+                metadata['supp_index_row'] = None
+                continue # We don't process entries without supp_index
 
         # Sometimes a single row in the index turns into multiple rms_obs_id
         # in the database. This happens with COVIMS because each observation
@@ -826,16 +913,20 @@ def import_one_volume(volume_id):
     # is referenced by foreign keys.
     for table_name in table_names_in_order:
         if table_name.find('<TARGET>') == -1:
+            imp_name = impglobals.DATABASE.convert_raw_to_namespace(
+                                'import', table_name)
             impglobals.LOGGER.log('debug',
-                f'Inserting into obs table "{table_name}"')
+                f'Inserting into obs table "{imp_name}"')
             impglobals.DATABASE.insert_rows('import', table_name,
                                             table_rows[table_name])
         else:
             for target_name in sorted(used_targets):
                 new_table_name = table_name.replace('<TARGET>',
                                                     target_name.lower())
+                imp_name = impglobals.DATABASE.convert_raw_to_namespace(
+                                    'import', new_table_name)
                 impglobals.LOGGER.log('debug',
-                    f'Inserting into obs table "{new_table_name}"')
+                    f'Inserting into obs table "{imp_name}"')
                 surface_geo_schema = import_util.read_schema_for_table(
                                             'obs_surface_geometry_target',
                                             replace=('<TARGET>',
@@ -1173,13 +1264,16 @@ def import_run_field_function(func_name_suffix, volume_id,
 def remove_rms_obs_id_from_tables(table_rows, rms_obs_id):
     for table_name in table_rows:
         rows = table_rows[table_name]
-        for i in range(len(rows)):
+        i = 0
+        while i < len(rows):
             if ('rms_obs_id' in rows[i] and
                 rows[i]['rms_obs_id'] == rms_obs_id):
                 impglobals.LOGGER.log('debug',
-                    f'Removing "{rms_obs_id}" from "{table_name}"')
+                    f'Removing "{rms_obs_id}" from unwritten table '+
+                    f'"{table_name}"')
                 del rows[i]
-                break
+                continue # There might be more than one in obs_surface_geometry
+            i += 1
 
 
 ################################################################################

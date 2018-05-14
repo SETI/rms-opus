@@ -81,6 +81,7 @@
         "field_name": "integration_duration",
         "field_type": "real8",
         "field_defalut": null,
+        "field_key": true,
         "data_source": [
             "TAB:index",
             "INTEGRATION_DURATION"
@@ -399,6 +400,7 @@
         "field_name": "band1",
         "field_type": "int4",
         "field_default": null,
+        "field_key": true,
         "data_source": [
             "TAB:supp_index",
             "MINIMUM_BAND_NUMBER"
@@ -428,6 +430,7 @@
         "field_name": "band2",
         "field_type": "int4",
         "field_default": null,
+        "field_key": true,
         "data_source": [
             "TAB:supp_index",
             "MAXIMUM_BAND_NUMBER"
@@ -457,6 +460,7 @@
         "field_name": "band_bin",
         "field_type": "int4",
         "field_default": null,
+        "field_key": true,
         "data_source": [
             "TAB:supp_index",
             "BAND_BINNING_FACTOR"
@@ -486,6 +490,7 @@
         "field_name": "line1",
         "field_type": "int4",
         "field_default": null,
+        "field_key": true,
         "data_source": [
             "TAB:supp_index",
             "WINDOW_MINIMUM_LINE_NUMBER"
@@ -515,6 +520,7 @@
         "field_name": "line2",
         "field_type": "int4",
         "field_default": null,
+        "field_key": true,
         "data_source": [
             "TAB:supp_index",
             "WINDOW_MAXIMUM_LINE_NUMBER"
@@ -544,6 +550,7 @@
         "field_name": "line_bin",
         "field_type": "int4",
         "field_default": null,
+        "field_key": true,
         "data_source": [
             "TAB:supp_index",
             "LINE_BINNING_FACTOR"
@@ -573,6 +580,7 @@
         "field_name": "samples",
         "field_type": "int4",
         "field_default": null,
+        "field_key": true,
         "data_source": [
             "TAB:supp_index",
             "LINE_SAMPLES"

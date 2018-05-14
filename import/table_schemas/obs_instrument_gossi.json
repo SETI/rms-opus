@@ -71,6 +71,7 @@
         "field_type": "enum",
         "field_enum_options": "'CLEAR','GREEN','IR-7270','IR-7560','IR-8890','IR-9680','RED','VIOLET'",
         "field_notnull": true,
+        "field_key": true,
         "data_source": [
             "TAB:index",
             "FILTER_NAME"
@@ -107,6 +108,7 @@
         "field_name": "filter_number",
         "field_type": "int1",
         "field_notnull": true,
+        "field_key": true,
         "data_source": [
             "TAB:index",
             "FILTER_NUMBER"

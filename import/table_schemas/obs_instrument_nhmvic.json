@@ -41,41 +41,30 @@
         "comment": "The volume_id is included here for ease of database manipulation only."
     },
     {
-        "field_name": "instrument_id",
-        "field_type": "char9",
-        "field_key": true,
+        "field_name": "instrument_compression_type",
+        "field_type": "char10",
         "field_notnull": true,
         "data_source": [
-            "TAB:obs_general",
-            "instrument_id"
+            "TAB:supp_index",
+            "INSTRUMENT_COMPRESSION_TYPE"
         ],
-        "comment": "The instrument_id is included here for ease of database manipulation only."
-    },
-    {
-        "field_name": "target_name",
-        "field_type": "char75",
-        "field_notnull": true,
-        "field_key": true,
-        "data_source": [
-            "FUNCTION",
-            "obs_surface_geo_target_name"
-        ],
-        "definition": "The target name is the name of the body for which the surface geometry parameters in this row of the table are applicable.",
-        "pi_category_name": "obs_surface_geometry",
-        "pi_dict_context": "SURFACE_GEO",
-        "pi_dict_name": "TARGET_NAME",
-        "pi_disp_order": 99,
+        "definition": "Compression type. The options are LOSSLESS, LOSSY, or PACKETIZED. See the SOC_INST_ICD in the DOCUMENT subdirectory for more information.",
+        "pi_category_name": "obs_instrument_nhlorri",
+        "pi_dict_context": "NHMVIC",
+        "pi_dict_name": "INSTRUMENT_COMPRESSION_TYPE",
+        "pi_disp_order": 0,
         "pi_display": 1,
-        "pi_display_results": 0,
+        "pi_display_results": 1,
         "pi_form_type": "GROUP",
-        "pi_intro": "Select a target below and more search options for that target will appear in the left menu",
-        "pi_label": "Surface Geometry Target Name",
-        "pi_label_results": "Surface Geometry Target Name",
-        "pi_slug": "surfacegeometrytargetname",
+        "pi_intro": null,
+        "pi_label": "Instrument Compression Type",
+        "pi_label_results": "Instrument Compression Type",
+        "pi_old_slug": "INSTRUMENTCOMPRESSIONTYPE",
+        "pi_slug": "NHMVICinstrumentcompressiontype",
         "pi_sub_heading": null,
         "pi_tooltip": null,
-        "pi_units": "",
-        "comment": "Definition is from SURFACE_GEO label."
+        "pi_units": null,
+        "comment": "Definition is from NHLORRI supplemental index label"
     },
     {
         "put_mults_here": true

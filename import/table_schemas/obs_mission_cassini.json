@@ -133,6 +133,7 @@
     {
         "field_name": "prime_inst_id",
         "field_type": "char6",
+        "field_key": true,
         "data_source": [
             "FUNCTION",
             "obs_mission_cassini_prime_inst_id"
@@ -225,7 +226,6 @@
         "field_name": "ert1",
         "field_type": "char23",
         "field_default": null,
-        "field_key": true,
         "data_source": [
             "FUNCTION",
             "obs_mission_cassini_ert1"
@@ -253,7 +253,6 @@
         "field_name": "ert2",
         "field_type": "char23",
         "field_default": null,
-        "field_key": true,
         "data_source": [
             "FUNCTION",
             "obs_mission_cassini_ert2"
@@ -338,6 +337,7 @@
         "field_name": "cassini_target_code",
         "field_type": "char50",
         "field_default": null,
+        "field_key": true,
         "data_source": [
             "FUNCTION",
             "obs_mission_cassini_cassini_target_code"
@@ -362,6 +362,7 @@
     {
         "field_name": "activity_name",
         "field_type": "char9",
+        "field_key": true,
         "data_source": [
               "FUNCTION",
               "obs_mission_cassini_activity_name"

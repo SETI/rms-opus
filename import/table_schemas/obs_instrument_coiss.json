@@ -1202,7 +1202,6 @@
         "field_type": "enum",
         "field_enum_options": "'FULL','SUM2','SUM4'",
         "field_notnull": true,
-        "field_key": true,
         "data_source": [
             "TAB:index",
             "INSTRUMENT_MODE_ID"

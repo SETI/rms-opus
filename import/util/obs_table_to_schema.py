@@ -47,6 +47,7 @@
     # No param_info for column numeric_id - ignoring column
 
 import json
+import os
 import re
 import sys
 

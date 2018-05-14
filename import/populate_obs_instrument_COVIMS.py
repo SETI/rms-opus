@@ -47,23 +47,53 @@ def populate_obs_general_COVIMS_rms_obs_id(**kwargs):
 def populate_obs_general_COVIMS_inst_host_id(**kwargs):
     return 'CO'
 
-# XXX
-def populate_obs_general_COVIMS_data_type(**kwargs):
+def populate_obs_general_COVIMS_quantity(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     inst_mod = index_row['INSTRUMENT_MODE_ID']
 
-    if inst_mod == 'IMAGE':
-        return 'IMG'
-    if inst_mod == 'LINE':
-        return 'LINE'
+    if inst_mod == 'OCCULTATION':
+        return 'OPTICAL'
+    return 'REFLECT'
+    # XXX CAL?
+
+def populate_obs_general_COVIMS_spatial_sampling(**kwargs):
+    metadata = kwargs['metadata']
+    index_row = metadata['index_row']
+    inst_mod = index_row['INSTRUMENT_MODE_ID']
+
     if inst_mod == 'POINT' or inst_mod == 'OCCULTATION':
         return 'POINT'
+    if inst_mod == 'LINE':
+        return '1D'
+    if inst_mod == 'IMAGE':
+        return '2D'
+
+    if inst_mod.startswith('CAL'):
+        return 'POINT' # XXX
 
     index_row_num = metadata['index_row_num']
     import_util.announce_nonrepeating_error(
         f'Unknown INSTRUMENT_MODE_ID "{inst_mod}"', index_row_num)
     return None
+
+def populate_obs_general_COVIMS_wavelength_sampling(**kwargs):
+    metadata = kwargs['metadata']
+    index_row = metadata['index_row']
+    inst_mod = index_row['INSTRUMENT_MODE_ID']
+
+    if inst_mod == 'OCCULTATION':
+        return 'N'
+    return 'Y'
+
+def populate_obs_general_COVIMS_time_sampling(**kwargs):
+    metadata = kwargs['metadata']
+    index_row = metadata['index_row']
+    inst_mod = index_row['INSTRUMENT_MODE_ID']
+
+    if inst_mod == 'OCCULTATION':
+        return 'Y'
+    return 'N'
 
 def populate_obs_general_COVIMS_time1(**kwargs):
     metadata = kwargs['metadata']
@@ -87,15 +117,6 @@ def populate_obs_general_COVIMS_observation_duration(**kwargs):
     time_sec2 = obs_general_row['time_sec2']
     return time_sec2 - time_sec1
 
-def populate_obs_general_COVIMS_quantity(**kwargs):
-    metadata = kwargs['metadata']
-    index_row = metadata['index_row']
-    inst_mod = index_row['INSTRUMENT_MODE_ID']
-
-    if inst_mod == 'OCCULTATION':
-        return 'OPTICAL'
-    return 'REFLECT'
-
 def populate_obs_general_COVIMS_note(**kwargs):
     None
 
@@ -104,6 +125,12 @@ def populate_obs_general_COVIMS_primary_file_spec(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     return index_row['PATH_NAME']
+
+def populate_obs_general_COVIMS_product_creation_time(**kwargs):
+    metadata = kwargs['metadata']
+    index_label = metadata['index_label']
+    pct = index_label['PRODUCT_CREATION_TIME']
+    return pct
 
 # Format: "CO-E/V/J/S-VIMS-2-QUBE-V1.0"
 def populate_obs_general_COVIMS_data_set_id(**kwargs):
@@ -168,23 +195,27 @@ def populate_obs_mission_cassini_COVIMS_mission_phase_name(**kwargs):
 
 ### OBS_TYPE_IMAGE TABLE ###
 
-# XXX
 def populate_obs_type_image_COVIMS_image_type_id(**kwargs):
     metadata = kwargs['metadata']
     phase_name = metadata['phase_name']
     index_row = metadata['index_row']
     inst_mod = index_row['INSTRUMENT_MODE_ID']
 
-    if phase_name == 'IR' and inst_mod == 'IMAGE':
-        return 'RAST'
-    if phase_name == "VIS":
+    if inst_mod != 'IMAGE':
+        return None
+    if phase_name == 'VIS':
         return 'PUSH'
-    return 'RAST' # XXX
+    return 'RAST'
 
 def populate_obs_type_image_COVIMS_duration(**kwargs):
     metadata = kwargs['metadata']
-    phase_name = metadata['phase_name']
     index_row = metadata['index_row']
+    inst_mod = index_row['INSTRUMENT_MODE_ID']
+
+    if inst_mod != 'IMAGE':
+        return None
+
+    phase_name = metadata['phase_name']
     ir_exp = import_util.safe_column(index_row, 'IR_EXPOSURE')
     vis_exp = import_util.safe_column(index_row, 'VIS_EXPOSURE')
 
@@ -198,11 +229,23 @@ def populate_obs_type_image_COVIMS_duration(**kwargs):
 
 # XXX
 def populate_obs_type_image_COVIMS_levels(**kwargs):
+    metadata = kwargs['metadata']
+    index_row = metadata['index_row']
+    inst_mod = index_row['INSTRUMENT_MODE_ID']
+
+    if inst_mod != 'IMAGE':
+        return None
+
     return 4096
 
 def populate_obs_type_image_COVIMS_lesser_pixel_size(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
+    inst_mod = index_row['INSTRUMENT_MODE_ID']
+
+    if inst_mod != 'IMAGE':
+        return None
+
     width = import_util.safe_column(index_row, 'SWATH_WIDTH')
     length = import_util.safe_column(index_row, 'SWATH_LENGTH')
 
@@ -211,6 +254,11 @@ def populate_obs_type_image_COVIMS_lesser_pixel_size(**kwargs):
 def populate_obs_type_image_COVIMS_greater_pixel_size(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
+    inst_mod = index_row['INSTRUMENT_MODE_ID']
+
+    if inst_mod != 'IMAGE':
+        return None
+
     width = import_util.safe_column(index_row, 'SWATH_WIDTH')
     length = import_util.safe_column(index_row, 'SWATH_LENGTH')
 

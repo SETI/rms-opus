@@ -105,6 +105,15 @@ def populate_obs_general_GOSSI_observation_duration(**kwargs):
 def populate_obs_general_GOSSI_quantity(**kwargs):
     return 'REFLECT'
 
+def populate_obs_general_GOSSI_spatial_sampling(**kwargs):
+    return '2D'
+
+def populate_obs_general_GOSSI_wavelength_sampling(**kwargs):
+    return 'N'
+
+def populate_obs_general_GOSSI_time_sampling(**kwargs):
+    return 'N'
+
 def populate_obs_general_GOSSI_note(**kwargs):
     return None
 
@@ -112,6 +121,14 @@ def populate_obs_general_GOSSI_primary_file_spec(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     return index_row['FILE_SPECIFICATION_NAME']
+
+def populate_obs_general_GOSSI_product_creation_time(**kwargs):
+    # For GOSSI the PRODUCT_CREATION_TIME is provided in the volume label file,
+    # not the individual observation rows
+    metadata = kwargs['metadata']
+    index_label = metadata['index_label']
+    pct = index_label['PRODUCT_CREATION_TIME']
+    return pct
 
 def populate_obs_general_GOSSI_data_set_id(**kwargs):
     metadata = kwargs['metadata']
@@ -282,7 +299,9 @@ def populate_obs_wavelength_GOSSI_wave_no_res2(**kwargs):
     return wno2 - wno1
 
 def populate_obs_wavelength_GOSSI_spec_flag(**kwargs):
-    return 'N'
+    metadata = kwargs['metadata']
+    index_row = metadata['obs_general_row']
+    return index_row['wavelength_sampling']
 
 def populate_obs_wavelength_GOSSI_spec_size(**kwargs):
     return None

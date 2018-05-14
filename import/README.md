@@ -69,7 +69,7 @@ THE BIG QUESTIONS:
 
 - OBS_GENERAL:
 
-  - PRODUCT_CREATION_TIME
+  - PRODUCT_CREATION_TIME (Steal from COISS)
 
 - COISS:
   - When will the surface geo tables include Venus, Earth, etc?
@@ -183,3 +183,127 @@ COISS
   COISS_1008 and 1009 don't have ring or surface geometry files. I assume this is intentional.
 
 COUVIS:
+
+
+
+NH:
+
+  - What is target M7?
+
+  General/PDS Constraints (all search & display):
+  - VOLUME_ID
+  - INSTRUMENT_ID
+  - FILE_SPECIFICATION_NAME
+  - DATA_SET_ID
+  - PRODUCT_ID
+  - TARGET_NAME
+  - MISSION_PHASE_NAME
+  - PRODUCT_CREATION_TIME
+  - START_TIME
+  - STOP_TIME
+  - OBSERVATION_DESC (goes in NOTE)
+    - Should this go into some NH-specific "Observation Name" instead and make NOTE "NULL"?
+
+  Image Constraints (all search & display):
+  - EXPOSURE_DURATION
+
+  NHLORRI:
+  - Measurement Quantity: REFLECT
+  - Spatial Sampling: 2D
+  - Wavelength Sampling: N
+  - Time Sampling: N
+  - Image Type: Frame
+  - Image # Levels: 4096
+  - Image size: 1024x1024
+  NHMVIC:
+  - Measurement Quantity: REFLECT
+  - Spatial Sampling: 2D
+  - Wavelength Sampling: N
+  - Time Sampling: N
+  - Image Type: Pushbroom
+  - Image # Levels: 4096
+  - Image size: 5024 x 128
+
+  Wavelength Constraints (all search & display):
+  NHLORRI:
+  - Wavelength: 0.35 to 0.85
+  - Wavelength Resolution: 0.5
+  - Wave Number: 10000 / wavelength
+  - Wave Number Resolution: WN2 - WN1
+  - Spectral information flag: N
+  - Spectrum size: N/A
+  - Polarization: None
+  NHMVIC:
+  - Wavelength: 0.4 to 0.975
+  - Wavelength Resolution: 0.575
+  - Wave Number: 10000 / wavelength
+  - Wave Number Resolution: WN2 - WN1
+  - Spectral information flag: N
+  - Spectrum size: N/A
+  - Polarization: None
+
+  Mission New Horizons (all search & display):
+  - MISSION_PHASE_NAME
+  - SPACECRAFT_CLOCK_PARTITION_NUMBER / SPACECRAFT_CLOCK_START_COUNT
+  - SPACECRAFT_CLOCK_PARTITION_NUMBER / SPACECRAFT_CLOCK_STOP_COUNT
+    - Format is: "0030598438:48850" - do I leave this as a string or convert it to something?
+    - Right now I'm making it "1/0030598438:48850" as a string
+  - TELEMETRY_APPLICATION_ID
+
+  - Display only:
+    - SEQUENCE ID
+
+  NHLORRI (all search & display):
+  - BINNING_MODE
+  - INSTRUMENT_COMPRESSION_TYPE (should this be moved to Mission NH?)
+
+  NHMVIC (all search & display):
+  - INSTRUMENT_COMPRESSION_TYPE (should this be moved to Mission NH?)
+
+  - Skip entirely (we have ring and moon geometry for NH):
+    - REDUCTION_LEVEL
+    - PRODUCT_TYPE (EDR vs RDR)
+    - APPROX_TARGET_LINE
+    - APPROX_TARGET_SAMPLE
+    - PHASE_ANGLE
+    - SOLAR_ELONGATION
+    - SUB_SOLAR_LATITUDE
+    - SUB_SOLAR_LONGITUDE
+    - SUB_SPACECRAFT_LATITUDE
+    - SUB_SPACECRAFT_LONGITUDE
+    - RIGHT_ASCENSION
+    - DECLINATION
+    - CELESTIAL_NORTH_CLOCK_ANGLE
+    - BODY_POLE_CLOCK_ANGLE
+    - SC_TARGET_POSITION_VECTOR_X
+    - SC_TARGET_POSITION_VECTOR_Y
+    - SC_TARGET_POSITION_VECTOR_Z
+    - SC_TARGET_VELOCITY_VECTOR_X
+    - SC_TARGET_VELOCITY_VECTOR_Y
+    - SC_TARGET_VELOCITY_VECTOR_Z
+    - TARGET_CENTER_DISTANCE
+    - TARGET_SUN_POSITION_VECTOR_X
+    - TARGET_SUN_POSITION_VECTOR_Y
+    - TARGET_SUN_POSITION_VECTOR_Z
+    - TARGET_SUN_VELOCITY_VECTOR_X
+    - TARGET_SUN_VELOCITY_VECTOR_Y
+    - TARGET_SUN_VELOCITY_VECTOR_Z
+    - SOLAR_DISTANCE
+    - SC_SUN_POSITION_VECTOR_X
+    - SC_SUN_POSITION_VECTOR_Y
+    - SC_SUN_POSITION_VECTOR_Z
+    - SC_SUN_VELOCITY_VECTOR_X
+    - SC_SUN_VELOCITY_VECTOR_Y
+    - SC_SUN_VELOCITY_VECTOR_Z
+    - SPACECRAFT_SOLAR_DISTANCE
+    - SC_EARTH_POSITION_VECTOR_X
+    - SC_EARTH_POSITION_VECTOR_Y
+    - SC_EARTH_POSITION_VECTOR_Z
+    - SC_EARTH_VELOCITY_VECTOR_X
+    - SC_EARTH_VELOCITY_VECTOR_Y
+    - SC_EARTH_VELOCITY_VECTOR_Z
+    - SC_GEOCENTRIC_DISTANCE
+    - QUATERNIAN_1
+    - QUATERNIAN_2
+    - QUATERNIAN_3
+    - QUATERNIAN_4

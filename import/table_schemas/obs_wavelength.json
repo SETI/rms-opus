@@ -54,8 +54,8 @@
     {
         "field_name": "wavelength1",
         "field_type": "real4",
-        "field_key": true,
         "field_default": null,
+        "field_key": true,
         "data_source": [
             "FUNCTION",
             "obs_wavelength_<INST>_wavelength1"
@@ -81,8 +81,8 @@
     {
         "field_name": "wavelength2",
         "field_type": "real4",
-        "field_key": true,
         "field_default": null,
+        "field_key": true,
         "data_source": [
             "FUNCTION",
             "obs_wavelength_<INST>_wavelength2"
@@ -291,6 +291,7 @@
         "field_name": "spec_size",
         "field_type": "uint4",
         "field_default": null,
+        "field_key": true,
         "data_source": [
             "FUNCTION",
             "obs_wavelength_<INST>_spec_size"

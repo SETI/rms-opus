@@ -54,7 +54,8 @@
     {
         "field_name": "image_type_id",
         "field_type": "char4",
-        "field_notnull": true,
+        "field_default": null,
+        "field_key": true,
         "data_source": [
             "FUNCTION",
             "obs_type_image_<INST>_image_type_id"
@@ -79,7 +80,8 @@
               [   0, "CUBE",        "Cube",   10, "Y", null],
               [   1, "FRAM",       "Frame",   20, "Y", null],
               [   2, "RAST", "Raster Scan",   30, "Y", null],
-              [   3, "PUSH",   "Pushbroom",   40, "Y", null]
+              [   3, "PUSH",   "Pushbroom",   40, "Y", null],
+              [   4,   null,         "N/A",   50, "Y", null]
           ]
     },
     {
@@ -110,6 +112,7 @@
         "field_name": "levels",
         "field_type": "uint4",
         "field_default": null,
+        "field_key": true,
         "data_source": [
             "FUNCTION",
             "obs_type_image_<INST>_levels"
@@ -135,6 +138,7 @@
         "field_name": "greater_pixel_size",
         "field_type": "uint4",
         "field_default": null,
+        "field_key": true,
         "data_source": [
             "FUNCTION",
             "obs_type_image_<INST>_greater_pixel_size"
@@ -162,6 +166,7 @@
         "field_name": "lesser_pixel_size",
         "field_type": "uint4",
         "field_default": null,
+        "field_key": true,
         "data_source": [
             "FUNCTION",
             "obs_type_image_<INST>_lesser_pixel_size"

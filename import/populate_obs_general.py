@@ -138,3 +138,13 @@ def populate_obs_general_time_sec2(**kwargs):
         impglobals.IMPORT_HAS_BAD_DATA = True
 
     return time_sec2
+
+def populate_obs_general_product_creation_time_sec(**kwargs):
+    metadata = kwargs['metadata']
+    general_row = metadata['obs_pds_row']
+    product_time = general_row['product_creation_time']
+
+    if product_time is None:
+        return None
+
+    return julian.tai_from_iso(product_time)

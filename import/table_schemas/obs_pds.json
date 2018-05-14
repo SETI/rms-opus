@@ -1,0 +1,254 @@
+[
+    {
+        "field_name": "obs_general_id",
+        "field_type": "uint4",
+        "field_key": "foreign",
+        "field_key_foreign": [
+            "obs_general",
+            "id"
+        ],
+        "field_notnull": true,
+        "data_source": [
+            "TAB:obs_general",
+            "id"
+        ],
+        "comment": "This is the primary (surrogate) key linking the record to obs_general."
+    },
+    {
+        "field_name": "rms_obs_id",
+        "field_type": "char40",
+        "field_key": "foreign",
+        "field_key_foreign": [
+            "obs_general",
+            "rms_obs_id"
+        ],
+        "field_notnull": true,
+        "data_source": [
+            "TAB:obs_general",
+            "rms_obs_id"
+        ],
+        "definition": "A unique ID assigned to an observation by the Ring-Moon Systems Node of the PDS.",
+        "pi_category_name": "obs_pds",
+        "pi_dict_context": "OPUS_GENERAL",
+        "pi_dict_name": "RMS_OBS_ID",
+        "pi_disp_order": 10,
+        "pi_display": 1,
+        "pi_display_results": 1,
+        "pi_form_type": "STRING",
+        "pi_intro": null,
+        "pi_label": "RMS Observation ID",
+        "pi_label_results": "RMS Observation ID",
+        "pi_slug": "rmsobsid",
+        "pi_sub_heading": null,
+        "pi_tooltip": null,
+        "pi_units": null,
+        "comment": "This is the secondary key linking the record to obs_general."
+    },
+    {
+        "field_name": "volume_id",
+        "field_type": "char11",
+        "field_key": true,
+        "field_notnull": true,
+        "data_source": [
+            "TAB:obs_general",
+            "volume_id"
+        ],
+        "pi_category_name": "obs_pds",
+        "pi_dict_context": "PSDD",
+        "pi_dict_name": "VOLUME_ID",
+        "pi_disp_order": 20,
+        "pi_display": 1,
+        "pi_display_results": 1,
+        "pi_form_type": "STRING",
+        "pi_intro": null,
+        "pi_label": "Volume ID",
+        "pi_label_results": "Volume ID",
+        "pi_slug": "volumeid",
+        "pi_sub_heading": null,
+        "pi_tooltip": null,
+        "pi_units": null,
+        "comment": "The volume_id is included here for ease of database manipulation only."
+    },
+    {
+        "field_name": "instrument_id",
+        "field_type": "char9",
+        "field_key": true,
+        "field_notnull": true,
+        "data_source": [
+            "TAB:obs_general",
+            "instrument_id"
+        ],
+        "comment": "The instrument_id is included here for ease of database manipulation only."
+    },
+    {
+        "field_name": "data_set_id",
+        "field_type": "char40",
+        "field_notnull": true,
+        "field_key": true,
+        "data_source": [
+            "FUNCTION",
+            "obs_general_<INST>_data_set_id"
+        ],
+        "definition": "PDS-supplied name for this data set.",
+        "pi_category_name": "obs_pds",
+        "pi_dict_context": "OPUS_GENERAL",
+        "pi_dict_name": "DATA_SET_ID",
+        "pi_disp_order": 30,
+        "pi_display": 1,
+        "pi_display_results": 1,
+        "pi_form_type": "STRING",
+        "pi_intro": null,
+        "pi_label": "Data Set ID",
+        "pi_label_results": "Data Set ID",
+        "pi_slug": "datasetid",
+        "pi_sub_heading": null,
+        "pi_tooltip": null,
+        "pi_units": null,
+        "comment": "Definition is from COISS and GOSSI labels."
+    },
+    {
+        "field_name": "product_id",
+        "field_type": "char30",
+        "field_notnull": true,
+        "field_key": true,
+        "data_source": [
+            "FUNCTION",
+            "obs_general_<INST>_product_id"
+        ],
+        "definition": "A permanent, unique identifier assigned to a data product.",
+        "pi_category_name": "obs_pds",
+        "pi_dict_context": "OPUS_GENERAL",
+        "pi_dict_name": "PRODUCT_ID",
+        "pi_disp_order": 40,
+        "pi_display": 1,
+        "pi_display_results": 1,
+        "pi_form_type": "STRING",
+        "pi_intro": null,
+        "pi_label": "Product ID",
+        "pi_label_results": "Product ID",
+        "pi_slug": "productid",
+        "pi_sub_heading": null,
+        "pi_tooltip": null,
+        "pi_units": null,
+        "comment": "Definition is from HSTACS label."
+    },
+    {
+        "field_name": "product_creation_time",
+        "field_type": "char23",
+        "field_default": null,
+        "field_key": true,
+        "data_source": [
+            "FUNCTION",
+            "obs_general_<INST>_product_creation_time"
+        ],
+        "definition": "XXX",
+        "pi_category_name": "obs_pds",
+        "pi_dict_context": "OPUS_GENERAL",
+        "pi_dict_name": "PRODUCT_CREATION_TIME",
+        "pi_disp_order": 50,
+        "pi_display": 0,
+        "pi_display_results": 1,
+        "pi_form_type": null,
+        "pi_intro": null,
+        "pi_label": "Product Creation Time (UTC)",
+        "pi_label_results": "Product Creation Time (UTC)",
+        "pi_slug": "productcreationtime",
+        "pi_sub_heading": null,
+        "pi_tooltip": null,
+        "pi_units": null,
+        "comment": ""
+    },
+    {
+        "field_name": "product_creation_time_sec",
+        "field_type": "real8",
+        "field_default": null,
+        "field_key": true,
+        "data_source": [
+            "FUNCTION",
+            "obs_general_product_creation_time_sec"
+        ],
+        "definition": "XXX",
+        "pi_category_name": "obs_pds",
+        "pi_dict_context": "OPUS_GENERAL",
+        "pi_dict_name": "PRODUCT_CREATION_TIME",
+        "pi_disp_order": 51,
+        "pi_display": 1,
+        "pi_display_results": 1,
+        "pi_form_type": "TIME",
+        "pi_intro": null,
+        "pi_label": "Product Creation Time",
+        "pi_label_results": "Product Creation Time (seconds)",
+        "pi_slug": "productcreationtimesec",
+        "pi_sub_heading": null,
+        "pi_tooltip": null,
+        "pi_units": null,
+        "comment": ""
+    },
+    {
+        "field_name": "primary_file_spec",
+        "field_type": "char240",
+        "field_default": null,
+        "field_key": true,
+        "data_source": [
+            "FUNCTION",
+            "obs_general_<INST>_primary_file_spec"
+        ],
+        "data_source_order": 0,
+        "pi_category_name": "obs_pds",
+        "pi_dict_context": "PSDD",
+        "pi_dict_name": "FILE_SPECIFICATION_NAME",
+        "pi_disp_order": 60,
+        "pi_display": 1,
+        "pi_display_results": 1,
+        "pi_form_type": "STRING",
+        "pi_intro": null,
+        "pi_label": "Primary File Spec",
+        "pi_label_results": "Primary File Spec",
+        "pi_slug": "primaryfilespec",
+        "pi_sub_heading": null,
+        "pi_tooltip": null,
+        "pi_units": null
+    },
+    {
+        "field_name": "note",
+        "field_type": "char255",
+        "field_default": null,
+        "field_key": true,
+        "data_source": [
+            "FUNCTION",
+            "obs_general_<INST>_note"
+        ],
+        "data_source_order": 0,
+        "pi_category_name": "obs_pds",
+        "pi_dict_context": "PSDD",
+        "pi_dict_name": "NOTE",
+        "pi_disp_order": 70,
+        "pi_display": 1,
+        "pi_display_results": 1,
+        "pi_form_type": "STRING",
+        "pi_intro": null,
+        "pi_label": "Note",
+        "pi_label_results": "Note",
+        "pi_slug": "note",
+        "pi_sub_heading": null,
+        "pi_tooltip": "",
+        "pi_units": ""
+    },
+    {
+        "put_mults_here": true
+    },
+    {
+        "field_name": "id",
+        "field_type": "uint4",
+        "field_key": "primary",
+        "field_notnull": true,
+        "data_source": [
+            "MAX_ID",
+            null
+        ]
+    },
+    {
+        "field_name": "timestamp",
+        "field_type": "timestamp"
+    }
+]
