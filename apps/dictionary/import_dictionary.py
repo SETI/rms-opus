@@ -1,13 +1,14 @@
 from config import *
 import sys, glob
+import argparse
 from datetime import datetime
+
+sys.path.append(PDS_TOOLS_PATH)
+#sys.path.append(f'{OPUS_ROOT_PATH}/apps/dictionary')
 
 import MySQLdb
 import json
 import pdsparser
-
-sys.path.append(PDS_TOOLS_PATH)
-#sys.path.append(f'{OPUS_ROOT_PATH}/apps/dictionary')
 
 ERR_UNKNOWN_DATABASE = 1049
 ERR_UNKNOWN_TABLE = 1051
@@ -36,7 +37,7 @@ class ImportDictionaryData(object):
                         "(term, context, def, subterm, modified, import_date) "
                         "VALUES (%s, %s, %s, %s, %s, %s)")
 
-    def __init__(self, db_hostname=OPUS_HOST_NAME, db_schema=OPUS_SCHEMA_NAME, db_user=DB_USER, db_password=DB_PASSWORD):
+    def __init__(self, db_hostname=DICTIONARY_HOST_NAME, db_schema=DICTIONARY_SCHEMA_NAME, db_user=DB_USER, db_password=DB_PASSWORD):
         self.db_hostname = db_hostname
         self.db_schema = db_schema
         self.db_user = db_user
@@ -141,7 +142,7 @@ class ImportDictionaryData(object):
                 self.conn.commit()
 
         except IOError as e:
-            print("I/O error  {e.errno}:  {str(e.strerror)}")
+            print(f"I/O error  {e.errno}:  {str(e.strerror)}")
 
         except:
             print(term)
@@ -211,23 +212,24 @@ class ImportDictionaryData(object):
         except:
             print(sys.exc_info())
 
+#################################################################
+# This is where all the action happens..
+def import_PDS():
+    obj = ImportDictionaryData
+    obj.import_PDS()
+
+def import_JSON(file_name):
+    obj = ImportDictionaryData
+    obj.import_JSON(file_name)
+    i
+# allow command line options in the future...
+parser = argparse.ArgumentParser(description='Import Dictionary Data')
+parser.add_argument('--nodrop',
+                   help='Import into existing DB with out dropping the current tables')
+#parser.add_argument('--pdss', action='import_PDS',
+#                   help='Import a new PSDD definition file')
+#parser.add_argument('-json', action='import_JSON',
+#                   help='Import a new JSON definition file')
+
 obj = ImportDictionaryData()
 obj.create_dictionary(drop="")
-
-
-# This is just a placeholder for the context table; not currently used for anything
-class ImportContextTable(object):
-    """Import context DB for the dictionary."""
-    """just here for safekeeping at the moment, don't really think we'll need this"""
-    db_table = "context"
-    tables = {}
-    tables[db_table] = (
-        f"CREATE TABLE IF NOT EXISTS `{db_table}` ("
-        "   SELECT * FROM dictionary.contexts;CREATE TABLE `contexts` ("
-        "       `name` char(25) NOT NULL,"
-        "       `description` char(100) DEFAULT NULL,"
-        "       `parent` char(25) DEFAULT NULL,"
-        "       PRIMARY KEY (`name`),"
-        "       UNIQUE KEY `contexts_name` (`name`),"
-        "       UNIQUE KEY `name` (`description`)"
-        ") ENGINE=InnoDB DEFAULT CHARSET=utf8")
