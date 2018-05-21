@@ -238,6 +238,9 @@ def populate_obs_general_COUVIS_declination2(**kwargs):
 def populate_obs_mission_cassini_COUVIS_mission_phase_name(**kwargs):
     return None
 
+def populate_obs_mission_cassini_COVIMS_sequence_id(**kwargs):
+    return None
+
 
 ### OBS_TYPE_IMAGE TABLE ###
 

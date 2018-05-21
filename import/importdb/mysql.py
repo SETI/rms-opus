@@ -435,8 +435,7 @@ TABLE_NAME='{table_name}' ORDER BY ORDINAL_POSITION"""
         super(ImportDBMySQL, self)._exit()
         return True
 
-    def insert_row(self, namespace, raw_table_name, row,
-                   add_import_prefix=True):
+    def insert_row(self, namespace, raw_table_name, row):
         super(ImportDBMySQL, self)._enter('insert_row')
 
         table_name = self.convert_raw_to_namespace(namespace, raw_table_name)
@@ -517,6 +516,38 @@ TABLE_NAME='{table_name}' ORDER BY ORDINAL_POSITION"""
                     self.logger.log('fatal',
                     f'Failed to insert row into "{table_name}": {e.args[1]}')
                 raise ImportDBException(e)
+
+        super(ImportDBMySQL, self)._exit()
+
+    def update_row(self, namespace, raw_table_name, row, where):
+        super(ImportDBMySQL, self)._enter('insert_row')
+
+        table_name = self.convert_raw_to_namespace(namespace, raw_table_name)
+
+        sorted_column_names = sorted(row.keys())
+        cmd = f'UPDATE {table_name} SET '
+
+        set_cmds = []
+        for column_name in sorted_column_names:
+            set_cmd = column_name + '='
+            val = row[column_name]
+            if val is None:
+                set_cmd += 'NULL'
+            elif isinstance(val, str):
+                set_cmd += '"' + str(val) + '"'
+            else:
+                set_cmd += str(val)
+            set_cmds.append(set_cmd)
+        cmd += ','.join(set_cmds)
+        cmd += ' WHERE '+where
+
+        try:
+            self._execute(cmd, mutates=True)
+        except MySQLdb.Error as e:
+            if self.logger:
+                self.logger.log('fatal',
+                        f'Failed to update row in "{table_name}": {e.args[1]}')
+            raise ImportDBException(e)
 
         super(ImportDBMySQL, self)._exit()
 

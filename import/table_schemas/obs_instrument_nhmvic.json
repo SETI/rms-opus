@@ -49,7 +49,7 @@
             "INSTRUMENT_COMPRESSION_TYPE"
         ],
         "definition": "Compression type. The options are LOSSLESS, LOSSY, or PACKETIZED. See the SOC_INST_ICD in the DOCUMENT subdirectory for more information.",
-        "pi_category_name": "obs_instrument_nhlorri",
+        "pi_category_name": "obs_instrument_nhmvic",
         "pi_dict_context": "NHMVIC",
         "pi_dict_name": "INSTRUMENT_COMPRESSION_TYPE",
         "pi_disp_order": 0,
@@ -64,7 +64,12 @@
         "pi_sub_heading": null,
         "pi_tooltip": null,
         "pi_units": null,
-        "comment": "Definition is from NHLORRI supplemental index label"
+        "comment": "Definition is from NHLORRI supplemental index label",
+        "mult_options": [
+              [   0,  "LOSSLESS",       "Lossless",   10, "Y", null],
+              [   1,     "LOSSY",          "Lossy",   20, "Y", null],
+              [   2,   "NOTCOMP", "Not Compressed",   30, "Y", null]
+          ]
     },
     {
         "put_mults_here": true

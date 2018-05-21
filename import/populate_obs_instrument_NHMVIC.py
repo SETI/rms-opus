@@ -7,8 +7,6 @@
 
 import numpy as np
 
-import julian
-
 import import_util
 
 from populate_obs_mission_new_horizons import *

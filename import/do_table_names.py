@@ -42,41 +42,45 @@ def create_import_table_names_table():
     rows.append(entry)
 
     # Then various random tables
-    entry = {
-        'table_name': 'obs_pds',
-        'label':      'PDS Constraints',
-        'display':    'Y',
-        'disp_order': disp_order
-    }
-    disp_order += 1
-    rows.append(entry)
+    if impglobals.DATABASE.table_exists('perm', 'obs_pds'):
+        entry = {
+            'table_name': 'obs_pds',
+            'label':      'PDS Constraints',
+            'display':    'Y',
+            'disp_order': disp_order
+        }
+        disp_order += 1
+        rows.append(entry)
 
-    entry = {
-        'table_name': 'obs_type_image',
-        'label':      'Image Constraints',
-        'display':    'Y',
-        'disp_order': disp_order
-    }
-    disp_order += 1
-    rows.append(entry)
+    if impglobals.DATABASE.table_exists('perm', 'obs_type_image'):
+        entry = {
+            'table_name': 'obs_type_image',
+            'label':      'Image Constraints',
+            'display':    'Y',
+            'disp_order': disp_order
+        }
+        disp_order += 1
+        rows.append(entry)
 
-    entry = {
-        'table_name': 'obs_wavelength',
-        'label':      'Wavelength Constraints',
-        'display':    'Y',
-        'disp_order': disp_order
-    }
-    disp_order += 1
-    rows.append(entry)
+    if impglobals.DATABASE.table_exists('perm', 'obs_wavelength'):
+        entry = {
+            'table_name': 'obs_wavelength',
+            'label':      'Wavelength Constraints',
+            'display':    'Y',
+            'disp_order': disp_order
+        }
+        disp_order += 1
+        rows.append(entry)
 
-    entry = {
-        'table_name': 'obs_surface_geometry',
-        'label':      'Surface Geometry Constraints',
-        'display':    'Y',
-        'disp_order': disp_order
-    }
-    disp_order += 1
-    rows.append(entry)
+    if impglobals.DATABASE.table_exists('perm', 'obs_surface_geometry'):
+        entry = {
+            'table_name': 'obs_surface_geometry',
+            'label':      'Surface Geometry Constraints',
+            'display':    'Y',
+            'disp_order': disp_order
+        }
+        disp_order += 1
+        rows.append(entry)
 
     surface_geo_table_names = impglobals.DATABASE.table_names(
                                             'perm',
@@ -92,28 +96,30 @@ def create_import_table_names_table():
         disp_order += 1
         rows.append(entry)
 
-    entry = {
-        'table_name': 'obs_ring_geometry',
-        'label':      'Ring Geometry Constraints',
-        'display':    'Y',
-        'disp_order': disp_order
-    }
-    disp_order += 1
-    rows.append(entry)
-
-    # Then missions
-    for mission_abbrev in sorted(MISSION_ABBREV_TO_MISSION_TABLE_SFX.keys()):
+    if impglobals.DATABASE.table_exists('perm', 'obs_ring_geometry'):
         entry = {
-            'table_name': ('obs_mission_'+
-                            MISSION_ABBREV_TO_MISSION_TABLE_SFX[
-                                                        mission_abbrev]),
-            'label':      (MISSION_ABBREV_TO_MISSION_NAME[mission_abbrev] +
-                           ' Mission Constraints'),
+            'table_name': 'obs_ring_geometry',
+            'label':      'Ring Geometry Constraints',
             'display':    'Y',
             'disp_order': disp_order
         }
         disp_order += 1
         rows.append(entry)
+
+    # Then missions
+    for mission_abbrev in sorted(MISSION_ABBREV_TO_MISSION_TABLE_SFX.keys()):
+        table_name = 'obs_mission_'+MISSION_ABBREV_TO_MISSION_TABLE_SFX[
+                                                            mission_abbrev]
+        if impglobals.DATABASE.table_exists('perm', table_name):
+            entry = {
+                'table_name': table_name,
+                'label':      (MISSION_ABBREV_TO_MISSION_NAME[mission_abbrev] +
+                               ' Mission Constraints'),
+                'display':    'Y',
+                'disp_order': disp_order
+            }
+            disp_order += 1
+            rows.append(entry)
 
     # Then instruments
     for instrument_id in sorted(INSTRUMENT_ABBREV_TO_MISSION_ABBREV.keys()):
@@ -122,15 +128,17 @@ def create_import_table_names_table():
             # This is a hack because we don't actually have HST instrument
             # tables, but instead put everything in the mission tables
             display = 'N'
-        entry = {
-            'table_name': 'obs_instrument_'+instrument_id,
-            'label':      (INSTRUMENT_ABBREV_TO_INSTRUMENT_NAME[instrument_id]+
-                           ' Constraints'),
-            'display':    display,
-            'disp_order': disp_order
-        }
-        disp_order += 1
-        rows.append(entry)
+        table_name = 'obs_instrument_'+instrument_id
+        if impglobals.DATABASE.table_exists('perm', table_name):
+            entry = {
+                'table_name': table_name,
+                'label':      (INSTRUMENT_ABBREV_TO_INSTRUMENT_NAME[instrument_id]+
+                               ' Constraints'),
+                'display':    display,
+                'disp_order': disp_order
+            }
+            disp_order += 1
+            rows.append(entry)
 
     db.insert_rows('import', 'table_names', rows)
 

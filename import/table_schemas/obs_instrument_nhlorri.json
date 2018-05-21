@@ -64,11 +64,17 @@
         "pi_sub_heading": null,
         "pi_tooltip": null,
         "pi_units": null,
-        "comment": "Definition is from NHLORRI supplemental index label"
+        "comment": "Definition is from NHLORRI supplemental index label",
+        "mult_options": [
+              [   0,  "LOSSLESS",       "Lossless",   10, "Y", null],
+              [   1,     "LOSSY",          "Lossy",   20, "Y", null],
+              [   2,   "NOTCOMP", "Not Compressed",   30, "Y", null]
+          ]
     },
     {
         "field_name": "binning_mode",
-        "field_type": "char3",
+        "field_type": "enum",
+        "field_enum_options": "'1x1','4x4'",
         "field_notnull": true,
         "data_source": [
             "TAB:supp_index",
@@ -90,7 +96,11 @@
         "pi_sub_heading": null,
         "pi_tooltip": null,
         "pi_units": null,
-        "comment": "Definition is from NHLORRI supplemental index label"
+        "comment": "Definition is from NHLORRI supplemental index label",
+        "mult_options": [
+              [   0, "1x1", "1x1",  10, "Y", null],
+              [   1, "4x4", "4x4",  20, "Y", null]
+          ]
     },
     {
         "put_mults_here": true

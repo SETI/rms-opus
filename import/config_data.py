@@ -492,5 +492,5 @@ TARGET_NAME_INFO = {
     'FLATFIELD':     (None,  'OTHER'),
     'ACQ-ECLPSE':    (None,  'OTHER'),
     'SYSTEM':        (None,  'OTHER'),
-    'M7':            (None,  'OTHER'), # XXX
+    'M7':            (None,  'OTHER'),
 }

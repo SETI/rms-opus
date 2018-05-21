@@ -167,7 +167,6 @@
             "FUNCTION",
             "obs_general_product_creation_time_sec"
         ],
-        "definition": "XXX",
         "pi_category_name": "obs_pds",
         "pi_dict_context": "OPUS_GENERAL",
         "pi_dict_name": "PRODUCT_CREATION_TIME",

@@ -2,30 +2,36 @@ This directory contains table schemas for each table in the OPUS database. The
 files are in JSON format and contain a list of dictionaries describing the table
 columns. Each dictionary can contain the following fields:
 
-'@field_name'           The raw name of the new column
+'field_name'            The raw name of the new column
 
-'@field_type'           One of:
+'field_type'            One of:
                           'int1', 'int2', 'int4', 'int8'
                           'uint1', 'uint2', 'uint4', 'uint8'
                           'real4', 'real8'
                           'charNNN' (fixed-length char field)
+                          'varcharNNN' (variable-length char field)
+                          'text' (arbitrary-length char field)
                           'enum'
+                          'flag_yesno' (Enum 'Yes','No')
+                          'flag_onoff' (Enum 'On','Off')
                           'timestamp' (implies ON UPDATE CURRENT_TIMESTAMP)
+                          'datetime'
 
-'@field_x_enum_options' If field_type == 'enum' this field must be included.
+'field_enum_options'    If field_type == 'enum' this field must be included.
                         It contains a comma-separated list of enum values.
 
-'@field_x_notnull'      If present and True, this field may not be NULL.
+'field_notnull'         If present and True, this field may not be NULL.
 
-'@field_x_default'      If present, this is the default for the column. A None
+'field_default'         If present, this is the default for the column. A None
                         value or 'NULL' means SQL NULL.
 
-'@field_x_key'          If present and not False, this can contain:
+'field_key'             If present and not False, this can contain:
+                        True: This is a normal index key
                         'unique': This is a unique key
                         'primary': This is the primary key
-                        'foreign': This is a foreign key; field_x_foreign_key
+                        'foreign': This is a foreign key; field_foreign_key
                                    must also be present
-'@field_x_foreign_key'  If present, this key is a foreign key. The value is a
+'field_key_foreign'     If present, this key is a foreign key. The value is a
                         tuple (foreign_table_name, foreign_column_name)
 
 For an obs_XXX table, param_info fields may be included:
@@ -40,24 +46,28 @@ For an obs_XXX table, param_info fields may be included:
   'pi_intro'
   'pi_tooltip'
   'pi_slug'
+
   'pi_dict_context'
   'pi_dict_name'
-
-For an obs_XXX table, columns that directly correspond to a PDS INDEX field
-may contain:
-
-'description'           The text description of the PDS
+  'definition'
 
 For an obs_XXX table, information about how to populate the field MUST be
 included:
 
-'data_source'           A tuple (source, data). Source can be one of:
-      'CONSTANT' in which case the data is the constant value.
-      '<PDS TABLE NAME>' in which case the data is the field name in the
-                        referenced PDS table, which must have already been
-                        read as part of loading the volume.
+'data_source'            A tuple (source, data). Source can be one of:
+      'IGNORE'
+      'TAB:<TABLE_NAME>' in which case the data is the field name in the
+                         referenced PDS or internal table, which must have
+                         already been read as part of loading the volume.
+      'ARRAY:<TABLE_NAME>' in which case the data is the field name in the
+                        referenced PDS or internal table, which must have
+                        already been read as part of loading the volume, then
+                        ':', then the number of the array element.
+      'FUNCTION'         in which case the data is the name of the function
+                         to execute. <INST> and <MISSION> are substituted.
 
 Optional fields include:
 
 'val_min'
 'val_max'
+'val_sentinel'

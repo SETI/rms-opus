@@ -649,6 +649,19 @@ class MultObsInstrumentGossiObstructionId(models.Model):
         db_table = 'mult_obs_instrument_gossi_obstruction_id'
 
 
+class MultObsInstrumentGossiOrbitNumber(models.Model):
+    id = models.IntegerField(primary_key=True)
+    value = models.CharField(max_length=100, blank=True, null=True)
+    label = models.CharField(max_length=60)
+    disp_order = models.IntegerField()
+    display = models.CharField(max_length=1)
+    timestamp = models.DateTimeField()
+
+    class Meta:
+        managed = False
+        db_table = 'mult_obs_instrument_gossi_orbit_number'
+
+
 class MultObsInstrumentNhlorriBinningMode(models.Model):
     id = models.IntegerField(primary_key=True)
     value = models.CharField(max_length=100, blank=True, null=True)
@@ -1293,6 +1306,12 @@ class ObsInstrumentGossi(models.Model):
     obs_general = models.ForeignKey(ObsGeneral, models.DO_NOTHING)
     rms_obs_id = models.ForeignKey(ObsGeneral, models.DO_NOTHING, related_name='%(class)s_rms_obs_id')
     volume_id = models.CharField(max_length=11)
+    observation_id = models.CharField(max_length=20)
+    orbit_number = models.IntegerField()
+    spacecraft_clock_count1 = models.FloatField()
+    spacecraft_clock_count2 = models.FloatField()
+    ntv_time = models.CharField(max_length=14)
+    ntv_sat_time = models.CharField(max_length=14)
     image_id = models.CharField(max_length=7)
     filter_name = models.CharField(max_length=7)
     filter_number = models.IntegerField()
@@ -1304,6 +1323,7 @@ class ObsInstrumentGossi(models.Model):
     encoding_max_compression_ratio = models.FloatField(blank=True, null=True)
     encoding_compression_ratio = models.FloatField(blank=True, null=True)
     processing_history_text = models.CharField(max_length=75)
+    mult_obs_instrument_gossi_orbit_number = models.ForeignKey(MultObsInstrumentGossiOrbitNumber, models.DO_NOTHING, db_column='mult_obs_instrument_gossi_orbit_number')
     mult_obs_instrument_gossi_filter_name = models.ForeignKey(MultObsInstrumentGossiFilterName, models.DO_NOTHING, db_column='mult_obs_instrument_gossi_filter_name')
     mult_obs_instrument_gossi_filter_number = models.ForeignKey(MultObsInstrumentGossiFilterNumber, models.DO_NOTHING, db_column='mult_obs_instrument_gossi_filter_number')
     mult_obs_instrument_gossi_gain_mode = models.ForeignKey(MultObsInstrumentGossiGainModeId, models.DO_NOTHING)
@@ -1360,6 +1380,8 @@ class ObsInstrumentVgiss(models.Model):
     filter_name = models.CharField(max_length=6)
     filter_number = models.IntegerField()
     camera = models.CharField(max_length=1)
+    ert = models.CharField(max_length=23, blank=True, null=True)
+    ert_sec = models.FloatField(blank=True, null=True)
     mult_obs_instrument_vgiss_scan_mode = models.ForeignKey(MultObsInstrumentVgissScanMode, models.DO_NOTHING, db_column='mult_obs_instrument_vgiss_scan_mode')
     mult_obs_instrument_vgiss_shutter_mode = models.ForeignKey(MultObsInstrumentVgissShutterMode, models.DO_NOTHING, db_column='mult_obs_instrument_vgiss_shutter_mode')
     mult_obs_instrument_vgiss_gain_mode = models.ForeignKey(MultObsInstrumentVgissGainMode, models.DO_NOTHING, db_column='mult_obs_instrument_vgiss_gain_mode')
@@ -1404,26 +1426,6 @@ class ObsMissionCassini(models.Model):
     class Meta:
         managed = False
         db_table = 'obs_mission_cassini'
-
-
-class ObsMissionGalileo(models.Model):
-    obs_general = models.ForeignKey(ObsGeneral, models.DO_NOTHING)
-    rms_obs_id = models.ForeignKey(ObsGeneral, models.DO_NOTHING, related_name='%(class)s_rms_obs_id')
-    volume_id = models.CharField(max_length=11)
-    instrument_id = models.CharField(max_length=9)
-    observation_id = models.CharField(max_length=20)
-    orbit_number = models.IntegerField()
-    spacecraft_clock_count1 = models.FloatField()
-    spacecraft_clock_count2 = models.FloatField()
-    ntv_time = models.CharField(max_length=14)
-    ntv_sat_time = models.CharField(max_length=14)
-    mult_obs_mission_galileo_orbit_number = models.ForeignKey(MultObsMissionGalileoOrbitNumber, models.DO_NOTHING, db_column='mult_obs_mission_galileo_orbit_number')
-    id = models.IntegerField(primary_key=True)
-    timestamp = models.DateTimeField()
-
-    class Meta:
-        managed = False
-        db_table = 'obs_mission_galileo'
 
 
 class ObsMissionHubble(models.Model):

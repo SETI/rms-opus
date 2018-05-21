@@ -62,15 +62,15 @@ def populate_obs_general_COVIMS_spatial_sampling(**kwargs):
     index_row = metadata['index_row']
     inst_mod = index_row['INSTRUMENT_MODE_ID']
 
+    if inst_mod.startswith('CAL'):
+        return None
+
     if inst_mod == 'POINT' or inst_mod == 'OCCULTATION':
         return 'POINT'
     if inst_mod == 'LINE':
         return '1D'
     if inst_mod == 'IMAGE':
         return '2D'
-
-    if inst_mod.startswith('CAL'):
-        return 'POINT' # XXX
 
     index_row_num = metadata['index_row_num']
     import_util.announce_nonrepeating_error(
@@ -91,6 +91,8 @@ def populate_obs_general_COVIMS_time_sampling(**kwargs):
     index_row = metadata['index_row']
     inst_mod = index_row['INSTRUMENT_MODE_ID']
 
+    if inst_mod.startswith('CAL'):
+        return None
     if inst_mod == 'OCCULTATION':
         return 'Y'
     return 'N'
@@ -192,6 +194,12 @@ def populate_obs_general_COVIMS_declination2(**kwargs):
 def populate_obs_mission_cassini_COVIMS_mission_phase_name(**kwargs):
     return None
 
+def populate_obs_mission_cassini_COVIMS_sequence_id(**kwargs):
+    metadata = kwargs['metadata']
+    index_row = metadata['index_row']
+    seqid = index_row['SEQ_ID']
+    return seqid
+
 
 ### OBS_TYPE_IMAGE TABLE ###
 
@@ -210,6 +218,7 @@ def populate_obs_type_image_COVIMS_image_type_id(**kwargs):
 def populate_obs_type_image_COVIMS_duration(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
+    index_row_num = metadata['index_row_num']
     inst_mod = index_row['INSTRUMENT_MODE_ID']
 
     if inst_mod != 'IMAGE':
@@ -222,8 +231,16 @@ def populate_obs_type_image_COVIMS_duration(**kwargs):
     if phase_name == 'IR':
         if ir_exp is None:
             return None
+        if ir_exp < 0:
+            import_util.announce_nonrepeating_warning(
+                f'IR Exposure {ir_exp} is < 0', index_row_num)
+            return None
         return ir_exp/1000
     if vis_exp is None:
+        return None
+    if vis_exp < 0:
+        import_util.announce_nonrepeating_warning(
+            f'VIS Exposure {vis_exp} is < 0', index_row_num)
         return None
     return vis_exp/1000
 

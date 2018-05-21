@@ -322,6 +322,12 @@ def populate_obs_mission_cassini_COISS_mission_phase_name(**kwargs):
     mp = index_row['MISSION_PHASE_NAME']
     return mp.replace('_', ' ')
 
+def populate_obs_mission_cassini_COISS_sequence_id(**kwargs):
+    metadata = kwargs['metadata']
+    index_row = metadata['index_row']
+    seqid = index_row['SEQUENCE_ID']
+    return seqid
+
 
 ### OBS_TYPE_IMAGE TABLE ###
 

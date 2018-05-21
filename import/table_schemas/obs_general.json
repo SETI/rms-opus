@@ -565,7 +565,7 @@
         "field_name": "spatial_sampling",
         "field_type": "enum",
         "field_enum_options": "'POINT','1D','2D'",
-        "field_notnull": true,
+        "field_default": null,
         "data_source": [
             "FUNCTION",
             "obs_general_<INST>_spatial_sampling"
@@ -586,12 +586,18 @@
         "pi_sub_heading": null,
         "pi_tooltip": null,
         "pi_units": null,
-        "comments": "XXX Definition needs review"
+        "comments": "XXX Definition needs review",
+        "mult_options": [
+              [   0, "POINT",  "Point",  10, "Y", null],
+              [   1,    "1D",    "1-D",  20, "Y", null],
+              [   2,    "2D",    "2-D",  30, "Y", null],
+              [   3,    null,   "NULL",  40, "Y", null]
+          ]
     },
     {
         "field_name": "wavelength_sampling",
         "field_type": "flag_yesno",
-        "field_notnull": true,
+        "field_default": null,
         "data_source": [
             "FUNCTION",
             "obs_general_<INST>_wavelength_sampling"
@@ -617,7 +623,7 @@
     {
         "field_name": "time_sampling",
         "field_type": "flag_yesno",
-        "field_notnull": true,
+        "field_default": null,
         "data_source": [
             "FUNCTION",
             "obs_general_<INST>_time_sampling"

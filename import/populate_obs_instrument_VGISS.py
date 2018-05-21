@@ -48,11 +48,12 @@ def populate_obs_general_VGISS_rms_obs_id(**kwargs):
 
     last_slash = file_spec.rindex('/')
     last_under = file_spec.rindex('_')
-    file_spec = file_spec[last_slash+1:last_under]
-
+    file_spec = file_spec[last_slash+2:last_under]
+    assert len(file_spec) == 7
     assert camera in ['NARROW ANGLE CAMERA', 'WIDE ANGLE CAMERA']
 
-    return ret+'_IMG_'+inst_host+'_ISS_'+file_spec+'_'+camera[0]
+    return (ret+'_IMG_'+inst_host+'_ISS_'+
+            file_spec[:5]+'.'+file_spec[5:7]+'_'+camera[0])
 
 # Format: "VOYAGER 1" or "VOYAGER 2"
 def populate_obs_general_VGISS_inst_host_id(**kwargs):
@@ -154,16 +155,37 @@ def populate_obs_general_VGISS_product_id(**kwargs):
     return product_id
 
 def populate_obs_general_VGISS_right_asc1(**kwargs):
+    metadata = kwargs['metadata']
+    ring_geo_row = metadata.get('ring_geo_row', None)
+    if ring_geo_row is not None:
+        return import_util.safe_column(ring_geo_row, 'MINIMUM_RIGHT_ASCENSION')
+
     return None
 
 def populate_obs_general_VGISS_right_asc2(**kwargs):
+    metadata = kwargs['metadata']
+    ring_geo_row = metadata.get('ring_geo_row', None)
+    if ring_geo_row is not None:
+        return import_util.safe_column(ring_geo_row, 'MAXIMUM_RIGHT_ASCENSION')
+
     return None
 
 def populate_obs_general_VGISS_declination1(**kwargs):
+    metadata = kwargs['metadata']
+    ring_geo_row = metadata.get('ring_geo_row', None)
+    if ring_geo_row is not None:
+        return import_util.safe_column(ring_geo_row, 'MINIMUM_DECLINATION')
+
     return None
 
 def populate_obs_general_VGISS_declination2(**kwargs):
+    metadata = kwargs['metadata']
+    ring_geo_row = metadata.get('ring_geo_row', None)
+    if ring_geo_row is not None:
+        return import_util.safe_column(ring_geo_row, 'MAXIMUM_DECLINATION')
+
     return None
+
 
 # Format: "JUPITER ENCOUNTER"
 def populate_obs_mission_voyager_VGISS_mission_phase_name(**kwargs):
@@ -333,3 +355,31 @@ def populate_obs_instrument_VGISS_camera(**kwargs):
     assert camera in ['NARROW ANGLE CAMERA', 'WIDE ANGLE CAMERA']
 
     return camera[0]
+
+def populate_obs_instrument_VGISS_ert(**kwargs):
+    metadata = kwargs['metadata']
+    index_row = metadata['index_row']
+    start_time = index_row['EARTH_RECEIVED_TIME']
+
+    if start_time.startswith('UNK'):
+        return None
+
+    return start_time
+
+def populate_obs_instrument_VGISS_ert_sec(**kwargs):
+    metadata = kwargs['metadata']
+    index_row_num = metadata['index_row_num']
+    index_row = metadata['index_row']
+    start_time = index_row['EARTH_RECEIVED_TIME']
+
+    if start_time.startswith('UNK'):
+        return None
+
+    try:
+        ert = julian.tai_from_iso(start_time)
+    except (ValueError,TypeError):
+        import_util.announce_nonrepeating_error(
+            f'"{start_time}" is not a valid date-time format in '+
+            f'instrument_VGISS_ert_sec [line {index_row_num}]')
+        ert = None
+    return ert
