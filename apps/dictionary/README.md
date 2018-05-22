@@ -24,4 +24,4 @@ The index for the dictionary table is unique on the three fields: term + context
 
 To import data into the dictionary, copy secrets_template.py into config.py and update the parameters for the DB login, username, etc. and set up the paths, as required.  Python 3.6 compliant.
 
-python importUtils.py
+python import_dictionary.py

@@ -1,13 +1,16 @@
-from config import *
-import sys, glob
 from datetime import datetime
+import glob
+import sys
 
-import MySQLdb
 import json
-import pdsparser
+import MySQLdb
+
+from secrets import *
 
 sys.path.append(PDS_TOOLS_PATH)
-#sys.path.append(f'{OPUS_ROOT_PATH}/apps/dictionary')
+
+import pdsparser
+
 
 ERR_UNKNOWN_DATABASE = 1049
 ERR_UNKNOWN_TABLE = 1051
@@ -36,7 +39,7 @@ class ImportDictionaryData(object):
                         "(term, context, def, subterm, modified, import_date) "
                         "VALUES (%s, %s, %s, %s, %s, %s)")
 
-    def __init__(self, db_hostname=OPUS_HOST_NAME, db_schema=OPUS_SCHEMA_NAME, db_user=DB_USER, db_password=DB_PASSWORD):
+    def __init__(self, db_hostname=DICTIONARY_HOST_NAME, db_schema=DICTIONARY_SCHEMA_NAME, db_user=DB_USER, db_password=DB_PASSWORD):
         self.db_hostname = db_hostname
         self.db_schema = db_schema
         self.db_user = db_user
@@ -211,11 +214,6 @@ class ImportDictionaryData(object):
         except:
             print(sys.exc_info())
 
-obj = ImportDictionaryData()
-obj.create_dictionary(drop="")
-
-
-# This is just a placeholder for the context table; not currently used for anything
 class ImportContextTable(object):
     """Import context DB for the dictionary."""
     """just here for safekeeping at the moment, don't really think we'll need this"""
@@ -231,3 +229,6 @@ class ImportContextTable(object):
         "       UNIQUE KEY `contexts_name` (`name`),"
         "       UNIQUE KEY `name` (`description`)"
         ") ENGINE=InnoDB DEFAULT CHARSET=utf8")
+
+obj = ImportDictionaryData()
+obj.create_dictionary(drop="")
