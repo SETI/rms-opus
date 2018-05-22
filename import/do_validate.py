@@ -9,7 +9,6 @@ import os
 import pdsfile
 
 from secrets import *
-from config_mults import *
 import impglobals
 import import_util
 

@@ -150,6 +150,9 @@ class ImportDBSuper:
     def insert_rows(self, namespace, raw_table_name, rows):
         assert False, 'ImportDBSuper::insert_rows must be overriden'
 
+    def update_row(self, namespace, raw_table_name, row, where):
+        assert False, 'ImportDBSuper::update_row must be overriden'
+
     def upsert_row(self, namespace, raw_table_name, key_name, row):
         assert False, 'ImportDBSuper::upsert_row must be overriden'
 

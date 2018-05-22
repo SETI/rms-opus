@@ -27,6 +27,10 @@ def create_import_param_info_table():
     rows = []
     for table_name in table_names:
         table_schema = import_util.read_schema_for_table(table_name)
+        if table_schema is None:
+            logger.log('error',
+                       f'Unable to read table schema for "{table_name}"')
+            return False
         for column in table_schema:
             category_name = column.get('pi_category_name', None)
             if category_name is None:
@@ -51,6 +55,8 @@ def create_import_param_info_table():
             rows.append(new_row)
     db.insert_rows('import', 'param_info', rows)
 
+    return True
+
 def copy_param_info_from_import_to_permanent():
     db = impglobals.DATABASE
     logger = impglobals.LOGGER
@@ -66,6 +72,6 @@ def copy_param_info_from_import_to_permanent():
 
 
 def do_param_info():
-    create_import_param_info_table()
-    copy_param_info_from_import_to_permanent()
+    if create_import_param_info_table():
+        copy_param_info_from_import_to_permanent()
     impglobals.DATABASE.drop_table('import', 'param_info')

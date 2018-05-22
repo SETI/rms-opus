@@ -33,36 +33,69 @@ def populate_obs_general_COVIMS_rms_obs_id(**kwargs):
     assert phase_name in ('VIS', 'IR')
 
     planet_id = helper_cassini_planet_id(**kwargs)
-    planet_ltr = ''
+    planet_ltr = 'X'
     if planet_id is not None:
         planet_ltr = planet_id[0]
 
     assert count[:2] == '1/'
     image_time = count[2:]
 
-    rms_obs_id = f'{planet_ltr}/CUBE/CO/VIMS/{image_time}/{phase_name}'
+    rms_obs_id = f'{planet_ltr}_CUBE_CO_VIMS_{image_time}_{phase_name}'
 
     return rms_obs_id
 
 def populate_obs_general_COVIMS_inst_host_id(**kwargs):
     return 'CO'
 
-def populate_obs_general_COVIMS_data_type(**kwargs):
+def populate_obs_general_COVIMS_quantity(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     inst_mod = index_row['INSTRUMENT_MODE_ID']
 
-    if inst_mod == 'IMAGE':
-        return ('IMG', 'Image')
-    if inst_mod == 'LINE':
-        return ('LINE', 'Line')
+    if inst_mod == 'OCCULTATION':
+        return 'OPTICAL'
+    return 'REFLECT'
+    # XXX CAL?
+
+def populate_obs_general_COVIMS_spatial_sampling(**kwargs):
+    metadata = kwargs['metadata']
+    index_row = metadata['index_row']
+    inst_mod = index_row['INSTRUMENT_MODE_ID']
+
+    if inst_mod.startswith('CAL'):
+        return None
+
     if inst_mod == 'POINT' or inst_mod == 'OCCULTATION':
-        return ('POINT', 'Point')
+        return 'POINT'
+    if inst_mod == 'LINE':
+        return '1D'
+    if inst_mod == 'IMAGE':
+        return '2D'
 
     index_row_num = metadata['index_row_num']
     import_util.announce_nonrepeating_error(
         f'Unknown INSTRUMENT_MODE_ID "{inst_mod}"', index_row_num)
-    return ('IMG', 'Image') # XXX
+    return None
+
+def populate_obs_general_COVIMS_wavelength_sampling(**kwargs):
+    metadata = kwargs['metadata']
+    index_row = metadata['index_row']
+    inst_mod = index_row['INSTRUMENT_MODE_ID']
+
+    if inst_mod == 'OCCULTATION':
+        return 'N'
+    return 'Y'
+
+def populate_obs_general_COVIMS_time_sampling(**kwargs):
+    metadata = kwargs['metadata']
+    index_row = metadata['index_row']
+    inst_mod = index_row['INSTRUMENT_MODE_ID']
+
+    if inst_mod.startswith('CAL'):
+        return None
+    if inst_mod == 'OCCULTATION':
+        return 'Y'
+    return 'N'
 
 def populate_obs_general_COVIMS_time1(**kwargs):
     metadata = kwargs['metadata']
@@ -86,23 +119,22 @@ def populate_obs_general_COVIMS_observation_duration(**kwargs):
     time_sec2 = obs_general_row['time_sec2']
     return time_sec2 - time_sec1
 
-def populate_obs_general_COVIMS_quantity(**kwargs):
-    metadata = kwargs['metadata']
-    index_row = metadata['index_row']
-    inst_mod = index_row['INSTRUMENT_MODE_ID']
-
-    if inst_mod == 'OCCULTATION':
-        return 'OPTICAL'
-    return 'REFLECT'
-
 def populate_obs_general_COVIMS_note(**kwargs):
     None
 
+# Format: "/data/1999010T054026_1999010T060958"
 def populate_obs_general_COVIMS_primary_file_spec(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     return index_row['PATH_NAME']
 
+def populate_obs_general_COVIMS_product_creation_time(**kwargs):
+    metadata = kwargs['metadata']
+    index_label = metadata['index_label']
+    pct = index_label['PRODUCT_CREATION_TIME']
+    return pct
+
+# Format: "CO-E/V/J/S-VIMS-2-QUBE-V1.0"
 def populate_obs_general_COVIMS_data_set_id(**kwargs):
     # For VIMS the DATA_SET_ID is provided in the volume label file,
     # not the individual observation rows
@@ -111,6 +143,7 @@ def populate_obs_general_COVIMS_data_set_id(**kwargs):
     dsi = index_label['DATA_SET_ID']
     return (dsi, dsi)
 
+# Format: "1/1294638283_1"
 def populate_obs_general_COVIMS_product_id(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
@@ -161,42 +194,75 @@ def populate_obs_general_COVIMS_declination2(**kwargs):
 def populate_obs_mission_cassini_COVIMS_mission_phase_name(**kwargs):
     return None
 
+def populate_obs_mission_cassini_COVIMS_sequence_id(**kwargs):
+    metadata = kwargs['metadata']
+    index_row = metadata['index_row']
+    seqid = index_row['SEQ_ID']
+    return seqid
+
+
 ### OBS_TYPE_IMAGE TABLE ###
 
-# XXX
 def populate_obs_type_image_COVIMS_image_type_id(**kwargs):
     metadata = kwargs['metadata']
     phase_name = metadata['phase_name']
     index_row = metadata['index_row']
     inst_mod = index_row['INSTRUMENT_MODE_ID']
 
-    if phase_name == 'IR' and inst_mod == 'IMAGE':
-        return 'RAST'
-    if phase_name == "VIS":
+    if inst_mod != 'IMAGE':
+        return None
+    if phase_name == 'VIS':
         return 'PUSH'
-    return 'RAST' # XXX
+    return 'RAST'
 
 def populate_obs_type_image_COVIMS_duration(**kwargs):
     metadata = kwargs['metadata']
-    phase_name = metadata['phase_name']
     index_row = metadata['index_row']
+    index_row_num = metadata['index_row_num']
+    inst_mod = index_row['INSTRUMENT_MODE_ID']
+
+    if inst_mod != 'IMAGE':
+        return None
+
+    phase_name = metadata['phase_name']
     ir_exp = import_util.safe_column(index_row, 'IR_EXPOSURE')
     vis_exp = import_util.safe_column(index_row, 'VIS_EXPOSURE')
 
     if phase_name == 'IR':
         if ir_exp is None:
             return None
+        if ir_exp < 0:
+            import_util.announce_nonrepeating_warning(
+                f'IR Exposure {ir_exp} is < 0', index_row_num)
+            return None
         return ir_exp/1000
     if vis_exp is None:
         return None
+    if vis_exp < 0:
+        import_util.announce_nonrepeating_warning(
+            f'VIS Exposure {vis_exp} is < 0', index_row_num)
+        return None
     return vis_exp/1000
 
+# XXX
 def populate_obs_type_image_COVIMS_levels(**kwargs):
+    metadata = kwargs['metadata']
+    index_row = metadata['index_row']
+    inst_mod = index_row['INSTRUMENT_MODE_ID']
+
+    if inst_mod != 'IMAGE':
+        return None
+
     return 4096
 
 def populate_obs_type_image_COVIMS_lesser_pixel_size(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
+    inst_mod = index_row['INSTRUMENT_MODE_ID']
+
+    if inst_mod != 'IMAGE':
+        return None
+
     width = import_util.safe_column(index_row, 'SWATH_WIDTH')
     length = import_util.safe_column(index_row, 'SWATH_LENGTH')
 
@@ -205,6 +271,11 @@ def populate_obs_type_image_COVIMS_lesser_pixel_size(**kwargs):
 def populate_obs_type_image_COVIMS_greater_pixel_size(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
+    inst_mod = index_row['INSTRUMENT_MODE_ID']
+
+    if inst_mod != 'IMAGE':
+        return None
+
     width = import_util.safe_column(index_row, 'SWATH_WIDTH')
     length = import_util.safe_column(index_row, 'SWATH_LENGTH')
 
@@ -285,8 +356,8 @@ def populate_obs_wavelength_COVIMS_spec_size(**kwargs):
     phase_name = metadata['phase_name']
 
     if phase_name == 'IR':
-        return 96
-    return 256
+        return 256
+    return 96
 
 def populate_obs_wavelength_COVIMS_polarization_type(**kwargs):
     return 'NONE'

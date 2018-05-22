@@ -10,7 +10,6 @@ import pdsfile
 
 from secrets import *
 from config_data import *
-from config_mults import *
 import impglobals
 import import_util
 
@@ -248,6 +247,12 @@ def read_existing_import_rms_obs_id():
 
     imp_obs_general_table_name = impglobals.DATABASE.convert_raw_to_namespace(
                                                         'import', 'obs_general')
+    if (not impglobals.DATABASE.table_exists('import', 'obs_general') and
+        impglobals.ARGUMENTS.read_only):
+        # It's OK if we don't have this table in read-only mode, because perhaps
+        # nobody ever created it before.
+        return []
+
     rows = impglobals.DATABASE.general_select(
         f'rms_obs_id FROM {imp_obs_general_table_name}')
 
@@ -624,6 +629,7 @@ def import_one_volume(volume_id):
                     for row in assoc_rows:
                         key1 = row.get('RING_OBSERVATION_ID', None)
                         key2 = row.get('TARGET_NAME', None)
+                        key1 = key1.replace('.', '') # VGISS XXX
                         if key1 is None or key2 is None:
                             import_util.announce_nonrepeating_error(
     f'{assoc_label_path} is missing RING_OBSERVATION_ID or TARGET_NAME fields')

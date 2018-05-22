@@ -1,0 +1,91 @@
+[
+    {
+        "field_name": "obs_general_id",
+        "field_type": "uint4",
+        "field_key": "foreign",
+        "field_key_foreign": [
+            "obs_general",
+            "id"
+        ],
+        "field_notnull": true,
+        "data_source": [
+            "TAB:obs_general",
+            "id"
+        ],
+        "comment": "This is the primary (surrogate) key linking the record to obs_general."
+    },
+    {
+        "field_name": "rms_obs_id",
+        "field_type": "char40",
+        "field_key": "foreign",
+        "field_key_foreign": [
+            "obs_general",
+            "rms_obs_id"
+        ],
+        "field_notnull": true,
+        "data_source": [
+            "TAB:obs_general",
+            "rms_obs_id"
+        ],
+        "comment": "This is the secondary key linking the record to obs_general."
+    },
+    {
+        "field_name": "volume_id",
+        "field_type": "char11",
+        "field_key": true,
+        "field_notnull": true,
+        "data_source": [
+            "TAB:obs_general",
+            "volume_id"
+        ],
+        "comment": "The volume_id is included here for ease of database manipulation only."
+    },
+    {
+        "field_name": "instrument_compression_type",
+        "field_type": "char10",
+        "field_notnull": true,
+        "data_source": [
+            "TAB:supp_index",
+            "INSTRUMENT_COMPRESSION_TYPE"
+        ],
+        "definition": "Compression type. The options are LOSSLESS, LOSSY, or PACKETIZED. See the SOC_INST_ICD in the DOCUMENT subdirectory for more information.",
+        "pi_category_name": "obs_instrument_nhmvic",
+        "pi_dict_context": "NHMVIC",
+        "pi_dict_name": "INSTRUMENT_COMPRESSION_TYPE",
+        "pi_disp_order": 0,
+        "pi_display": 1,
+        "pi_display_results": 1,
+        "pi_form_type": "GROUP",
+        "pi_intro": null,
+        "pi_label": "Instrument Compression Type",
+        "pi_label_results": "Instrument Compression Type",
+        "pi_old_slug": "INSTRUMENTCOMPRESSIONTYPE",
+        "pi_slug": "NHMVICinstrumentcompressiontype",
+        "pi_sub_heading": null,
+        "pi_tooltip": null,
+        "pi_units": null,
+        "comment": "Definition is from NHLORRI supplemental index label",
+        "mult_options": [
+              [   0,  "LOSSLESS",       "Lossless",   10, "Y", null],
+              [   1,     "LOSSY",          "Lossy",   20, "Y", null],
+              [   2,   "NOTCOMP", "Not Compressed",   30, "Y", null]
+          ]
+    },
+    {
+        "put_mults_here": true
+    },
+    {
+        "field_name": "id",
+        "field_type": "uint4",
+        "field_key": "primary",
+        "field_notnull": true,
+        "data_source": [
+            "MAX_ID",
+            null
+        ]
+    },
+    {
+        "field_name": "timestamp",
+        "field_type": "timestamp"
+    }
+]

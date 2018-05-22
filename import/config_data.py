@@ -11,6 +11,7 @@ GROUP_FORM_TYPES = ['GROUP', 'TARGETS']
 # A list of all tables we populate, in order, for each observation index row.
 # If you change something here, be sure to update do_table_names.py as well.
 TABLES_TO_POPULATE = ['obs_general',
+                      'obs_pds',
                       'obs_mission_<MISSION>',
                       'obs_instrument_<INST>',
                       'obs_type_image',
@@ -45,8 +46,8 @@ MISSION_ABBREV_TO_MISSION_TABLE_SFX = {
     'CO':  'cassini',
     'GO':  'galileo',
     'HST': 'hubble',
-    # 'NH':  'new_horizons',
-    # 'VG':  'voyager'
+    'NH':  'new_horizons',
+    'VG':  'voyager'
 }
 
 # Mapping from mission abbreviation (UC) to full mission name (displayable)
@@ -54,8 +55,8 @@ MISSION_ABBREV_TO_MISSION_NAME = {
     'CO':  'Cassini',
     'GO':  'Galileo',
     'HST': 'Hubble',
-    # 'NH':  'New Horizons',
-    # 'VG':  'Voyager'
+    'NH':  'New Horizons',
+    'VG':  'Voyager'
 }
 
 # Mapping from instrument host abbreviation to mission abbreviation
@@ -63,9 +64,9 @@ INST_HOST_ABBREV_TO_MISSION_ABBREV = {
     'CO':  'CO',
     'GO':  'GO',
     'HST': 'HST',
-    # 'NH':  'NH',
-    # 'VG1': 'VG',
-    # 'VG2': 'VG'
+    'NH':  'NH',
+    'VG1': 'VG',
+    'VG2': 'VG'
 }
 
 # Mapping from instrument host abbreviation to instrument host name
@@ -73,9 +74,9 @@ INST_HOST_ABBREV_TO_INST_HOST = {
     'CO':  'Cassini',
     'GO':  'Galileo',
     'HST': 'Hubble',
-    # 'NH':  'New Horizons',
-    # 'VG1': 'Voyager 1',
-    # 'VG2': 'Voyager 2'
+    'NH':  'New Horizons',
+    'VG1': 'Voyager 1',
+    'VG2': 'Voyager 2'
 }
 
 # Mapping from instrument abbreviation to mission abbreviation
@@ -90,9 +91,9 @@ INSTRUMENT_ABBREV_TO_MISSION_ABBREV = {
     'HSTSTIS':   'HST',
     'HSTWFC3':   'HST',
     'HSTWFPC2':  'HST',
-    # 'NHLORRI':  'NH',
-    # 'NHMVIC':   'NH',
-    # 'VGISS':    'VG'
+    'NHLORRI':  'NH',
+    'NHMVIC':   'NH',
+    'VGISS':    'VG'
 }
 
 # Mapping from instrument abbrev to instrument name
@@ -107,9 +108,9 @@ INSTRUMENT_ABBREV_TO_INSTRUMENT_NAME = {
     'HSTSTIS':   'Hubble STIS',
     'HSTWFC3':   'Hubble WFC3',
     'HSTWFPC2':  'Hubble WFPC2',
-    # 'NHLORRI':  'New Horizons LORRI',
-    # 'NHMVIC':   'New Horizons MVIC',
-    # 'VGISS':    'Voyager ISS'
+    'NHLORRI':  'New Horizons LORRI',
+    'NHMVIC':   'New Horizons MVIC',
+    'VGISS':    'Voyager ISS'
 }
 
 # Mapping from VOLUME ID prefix to instrument name
@@ -128,8 +129,14 @@ VOLUME_ID_PREFIX_TO_INSTRUMENT_NAME = {
     'HSTO1':  'HSTSTIS',
     'HSTU0':  'HSTWFPC2',
     'HSTU1':  'HSTWFPC2',
-    'NHxxLO': 'NHLORRI',
-    'NHxxMV': 'NHMVIC',
+    'NHJULO': 'NHLORRI',
+    'NHLALO': 'NHLORRI',
+    'NHPCLO': 'NHLORRI',
+    'NHPELO': 'NHLORRI',
+    'NHJUMV': 'NHMVIC',
+    'NHLAMV': 'NHMVIC',
+    'NHPCMV': 'NHMVIC',
+    'NHPEMV': 'NHMVIC',
     'VGISS':  'VGISS'
 }
 
@@ -165,6 +172,7 @@ TARGET_NAME_MAPPING = {
     'PO':           'POLYDEUCES',
     'IPH':          'INTERSTELLAR MEDIUM', # Interstellar H/He survey
 
+    # These are found in HST
     '174567-VARDA': 'VARDA',
     '1999HG12':     '1999 HG12',
     '118378':       '1999 HT11',
@@ -188,12 +196,23 @@ TARGET_NAME_MAPPING = {
     '2014PN70':     '2014 PN70',
     'KBO-G1':       '2014 PN70',
     'NECKLACE-NEBULA': 'NECKLACE NEBULA',
-
     'CHARIKLORING': 'CHARIKLO RING',
+
+    # These are found in NH
+    '136472 MAKEMAKE': 'MAKEMAKE',
+    '136108 HAUMEA': 'HAUMEA',
+    '10199 CHARIKLO': 'CHARIKLO',
+    '15810 ARAWN':  'ARAWN',
+    '50000 QUAOAR': 'QUAOAR',
+    '28978 IXION':  'IXION',
+    'ASTEROID 307261': '2002 MS4',
+    '2060 CHIRON':  'CHIRON',
+    '132524 APL':   '2002 JF56',
 
     'CALIB':    'CALIBRATION',
     'N/A':      'NONE',
     'UNK':      'UNKNOWN',
+    'UNK SAT':  'UNKNOWN',
 }
 
 # Map each possible target name to:
@@ -205,7 +224,10 @@ TARGET_NAME_MAPPING = {
 TARGET_NAME_INFO = {
     'NONE':          (None,  'OTHER'),
     'UNKNOWN':       (None,  'OTHER'),
+    'DARK':          (None,  'CALIBRATION'),
     'CALIBRATION':   (None,  'CALIBRATION'),
+    'CAL LAMPS':     (None,  'CALIBRATION'),
+    'PLAQUE':        (None,  'CALIBRATION'),
     'SKY':           (None,  'SKY'),
     'DARK SKY':      (None,  'SKY'),
     'SUN':           (None,  'SUN'),
@@ -224,7 +246,7 @@ TARGET_NAME_INFO = {
       'AOEDE':       ('JUP', 'MOON'),
       'ARCHE':       ('JUP', 'MOON'),
       'AUTONOE':     ('JUP', 'MOON'),
-      'CALLIRRHO':   ('JUP', 'MOON'),
+      'CALLIRRHOE':  ('JUP', 'MOON'),
       'CALLISTO':    ('JUP', 'MOON'),
       'CARME':       ('JUP', 'MOON'),
       'CARPO':       ('JUP', 'MOON'),
@@ -409,13 +431,18 @@ TARGET_NAME_INFO = {
       'KERBEROS':    ('PLU', 'MOON'),
       'NIX':         ('PLU', 'MOON'),
       'STYX':        ('PLU', 'MOON'),
-    'STAR':          (None,  'STAR'),
-      'FOMALHAUT':   (None,  'STAR'),
-      'SPICA':       (None,  'STAR'),
+
+    '2002 JF56':     (None,  'ASTEROID'),
     'MASURSKY':      (None,  'ASTEROID'),
+
+    'ARAWN':         (None,  'TNO'),
+    'CHARIKLO':      (None,  'TNO'),
+    'CHIRON':        (None,  'TNO'), # Actually it's a CENTAUR!
     'ERIS':          (None,  'TNO'),
     'HAUMEA':        (None,  'TNO'),
+    'IXION':         (None,  'TNO'),
     'MAKEMAKE':      (None,  'TNO'),
+    'QUAOAR':        (None,  'TNO'),
     'VARDA':         (None,  'TNO'),
     '1999 HG12':     (None,  'TNO'),
     '1999 HT11':     (None,  'TNO'),
@@ -429,16 +456,34 @@ TARGET_NAME_INFO = {
     '2000 QN251':    (None,  'TNO'),
     '2001 FL185':    (None,  'TNO'),
     '2001 KP77':     (None,  'TNO'),
+    '2002 MS4':      (None,  'TNO'),
     '2002 VV130':    (None,  'TNO'),
     '2004 VE131':    (None,  'TNO'),
     '2005 EF298':    (None,  'TNO'),
     '2005 SE278':    (None,  'TNO'),
     '2005 SF278':    (None,  'TNO'),
+    '2010 JJ124':    (None,  'TNO'),
     '2011 JX31':     (None,  'TNO'),
     '2014 MU69':     (None,  'TNO'),
     '2014 PN70':     (None,  'TNO'),
 
     'CHARIKLO RING': (None,  'RING'),
+
+    'STAR':          (None,  'STAR'),
+      'ARCTURUS':    (None,  'STAR'),
+      'BETA CMA':    (None,  'STAR'),
+      'FOMALHAUT':   (None,  'STAR'),
+      'HD 37962':    (None,  'STAR'),
+      'HD 205905':   (None,  'STAR'),
+      'NGC 3532':    (None,  'STAR'),
+      'ORION':       (None,  'STAR'),
+      'PLEIADES':    (None,  'STAR'),
+      'SCORPIUS':    (None,  'STAR'),
+      'SIGMA SGR':   (None,  'STAR'),
+      'SPICA':       (None,  'STAR'),
+      'TAURUS':      (None,  'STAR'),
+      'THETA CAR':   (None,  'STAR'),
+      'VEGA':        (None,  'STAR'),
 
     'SHOEMAKER LEVY 9': (None,  'OTHER'),
 
@@ -446,4 +491,6 @@ TARGET_NAME_INFO = {
 
     'FLATFIELD':     (None,  'OTHER'),
     'ACQ-ECLPSE':    (None,  'OTHER'),
+    'SYSTEM':        (None,  'OTHER'),
+    'M7':            (None,  'OTHER'),
 }

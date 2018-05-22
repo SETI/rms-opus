@@ -50,6 +50,9 @@ def populate_obs_general_GOSSI_rms_obs_id(**kwargs):
     ret = 'X'
     if planet_id is not None:
         ret = planet_id[0]
+    if ret != 'J':
+        import_util.announce_nonrepeating_warning(
+            'Galileo has a planet_id other than Jupiter and this is suspicious')
     return ret+'_IMG_GO_SSI_'+spacecraft_clock_count.replace('.','')
 
 def populate_obs_general_GOSSI_inst_host_id(**kwargs):

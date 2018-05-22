@@ -30,6 +30,7 @@ import do_import
 import do_param_info
 import do_partables
 import do_table_names
+import do_update_mult_info
 import do_validate
 import impglobals
 import import_util
@@ -56,7 +57,7 @@ parser.add_argument(
     help='Override the db_schema specified in secrets.py'
 )
 
-# What to actually do
+# What to actually do - main import
 parser.add_argument(
     '--do-it-all', action='store_true', default=False,
     help="""Perform all import functions. This implies, in order:
@@ -154,6 +155,8 @@ parser.add_argument(
     help='Drop the new import tables after copying to permanent (if selected)'
 )
 
+# Import-related auxiliary functions
+
 parser.add_argument(
     '--create-param-info', action='store_true', default=False,
     help='Create the param_info table; includes copying to permanent table'
@@ -171,6 +174,12 @@ parser.add_argument(
     help="""Create the grouping_target_name table;
             includes copying to permanent table"""
 )
+parser.add_argument(
+    '--update-mult-info', action='store_true', default=False,
+    help='Update the details of preprogrammed mult tables'
+)
+
+# Functions other than main import
 
 parser.add_argument(
     '--drop-cache-tables', action='store_true', default=False,
@@ -364,6 +373,16 @@ try: # Top-level exception handling so we always log what's going on
             do_django.drop_collections_tables()
         if impglobals.ARGUMENTS.create_django_session_table:
             do_django.create_django_session_table()
+
+        impglobals.LOGGER.close()
+
+    if impglobals.ARGUMENTS.update_mult_info:
+        impglobals.LOGGER.open(
+            f'Updating preprogrammed mult tables',
+            limits={'info': impglobals.ARGUMENTS.log_info_limit,
+                    'debug': impglobals.ARGUMENTS.log_debug_limit})
+
+        do_update_mult_info.update_mult_info()
 
         impglobals.LOGGER.close()
 
