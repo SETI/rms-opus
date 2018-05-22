@@ -17,9 +17,15 @@ DB_USER = 'XXX'
 DB_PASSWORD = 'XXX'
 
 # The hostname and database name in which the OPUS schema lives.
-DICTIONARY_HOST_NAME = 'XXX'
+# For MySQL, the database is IGNORED.
+# For PostgreSQL, this is the database to connect to.
+OPUS_HOST_NAME = 'XXX'
+OPUS_DATABASE_NAME = 'XXX'
+
+# The main namespace in which OPUS tables live.
 # For MySQL this is the database name.
-DICTIONARY_SCHEMA_NAME = 'XXX'
+# For PostgreSQL this is the schema name.
+OPUS_SCHEMA_NAME = 'XXX'
 
 # The directory where the pds-tools repo lives.
 PDS_TOOLS_PATH = 'XXX'
