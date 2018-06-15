@@ -357,31 +357,6 @@
         "comment": "Definition is from COISS label"
     },
     {
-        "field_name": "product_creation_time",
-        "field_type": "char22",
-        "field_notnull": true,
-        "data_source": [
-            "TAB:index",
-            "PRODUCT_CREATION_TIME"
-        ],
-        "definition": "Time of creation of this image on the ground (Pacific local time).",
-        "pi_category_name": "obs_instrument_coiss",
-        "pi_dict_context": "COISS",
-        "pi_dict_name": "PRODUCT_CREATION_TIME",
-        "pi_disp_order": 0,
-        "pi_display": 1,
-        "pi_display_results": 1,
-        "pi_form_type": "STRING",
-        "pi_intro": null,
-        "pi_label": "Product Creation Time",
-        "pi_label_results": "Product Creation Time",
-        "pi_slug": "COISSproductcreationtime",
-        "pi_sub_heading": null,
-        "pi_tooltip": null,
-        "pi_units": null,
-        "comment": "Definition is from COISS label"
-    },
-    {
         "field_name": "combined_filter",
         "field_type": "char30",
         "field_notnull": true,
