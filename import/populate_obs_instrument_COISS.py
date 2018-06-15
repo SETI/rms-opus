@@ -7,7 +7,9 @@
 
 # Ordering:
 #   time_sec1/2 must come before planet_id
-#   planet_id must come before rms_obs_id
+#   planet_id must come before opus_id
+
+import pdsfile
 
 from config_data import *
 import impglobals
@@ -185,18 +187,28 @@ _COISS_FILTER_WAVELENGTHS = {
 
 ### OBS_GENERAL TABLE ###
 
-def populate_obs_general_COISS_rms_obs_id(**kwargs):
+def _COISS_file_spec_helper(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
-    image_number = import_util.safe_column(index_row, 'IMAGE_NUMBER')
-    instrument_id = import_util.safe_column(index_row, 'INSTRUMENT_ID')
-    planet_id = helper_cassini_planet_id(**kwargs)
-    assert instrument_id[3] in ('N', 'W')
-    assert len(image_number) == 10
-    ret = 'X'
-    if planet_id is not None:
-        ret = planet_id[0]
-    return ret+'_IMG_CO_ISS_'+image_number+'_'+instrument_id[3]
+    # Format: "data/1294561143_1295221348/W1294561143_1.IMG"
+    file_spec = index_row['FILE_SPECIFICATION_NAME']
+    volume_id = kwargs['volume_id']
+    return volume_id + '/' + file_spec
+
+def populate_obs_general_COISS_opus_id(**kwargs):
+    file_spec = _COISS_file_spec_helper(**kwargs)
+    pds_file = pdsfile.PdsFile.from_filespec(file_spec)
+    try:
+        opus_id = pds_file.opus_id
+    except:
+        metadata = kwargs['metadata']
+        index_row = metadata['index_row']
+        index_row_num = metadata['index_row_num']
+        import_util.announce_nonrepeating_error(
+            f'Unable to create OPUS_ID for FILE_SPEC "{file_spec}"',
+            index_row_num)
+        return file_spec        
+    return opus_id
 
 def populate_obs_general_COISS_inst_host_id(**kwargs):
     return 'CO'
@@ -245,11 +257,8 @@ def populate_obs_general_COISS_note(**kwargs):
     index_row = metadata['index_row']
     return index_row['DESCRIPTION']
 
-# Format: "data/1294561143_1295221348/W1294561143_1.IMG"
 def populate_obs_general_COISS_primary_file_spec(**kwargs):
-    metadata = kwargs['metadata']
-    index_row = metadata['index_row']
-    return index_row['FILE_SPECIFICATION_NAME']
+    return _COISS_file_spec_helper(**kwargs)
 
 def populate_obs_general_COISS_product_creation_time(**kwargs):
     metadata = kwargs['metadata']

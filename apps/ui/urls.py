@@ -32,7 +32,7 @@ urlpatterns = [
     url(r'^forms/widget/(?P<slug>[-\sa-zA-Z0-9]+).(?P<fmt>[json|zip|html|csv]+)$', getWidget),
     url(r'^forms/column_chooser.html$', getColumnChooser),
     url(r'^dictionary/', include('dictionary.urls')),
-    url(r'^api/detail/(?P<rms_obs_id>[0-9a-zA-Z\-_]+).(?P<fmt>[json|zip|html]+)$', init_detail_page),
+    url(r'^api/detail/(?P<opus_id>[0-9a-zA-Z\-_]+).(?P<fmt>[json|zip|html]+)$', init_detail_page),
     url(
         r'^favicon.ico$',
         RedirectView.as_view(

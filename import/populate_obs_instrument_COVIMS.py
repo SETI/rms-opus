@@ -7,9 +7,11 @@
 
 # Ordering:
 #   time_sec1/2 must come before observation_duration
-#   planet_id must come before rms_obs_id
+#   planet_id must come before opus_id
 
 import os
+
+import pdsfile
 
 from config_data import *
 import impglobals
@@ -24,25 +26,34 @@ from populate_obs_mission_cassini import *
 
 ### OBS_GENERAL TABLE ###
 
-def populate_obs_general_COVIMS_rms_obs_id(**kwargs):
+def _COVIMS_file_spec_helper(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
+    # Format: "/data/1999010T054026_1999010T060958"
+    path_name = index_row['PATH_NAME']
+    # Format: "v1294638283_1.qub"
+    file_name = index_row['FILE_NAME']
+    volume_id = kwargs['volume_id']
+
+    return volume_id + path_name + '/' + file_name
+
+def populate_obs_general_COVIMS_opus_id(**kwargs):
+    metadata = kwargs['metadata']
+    file_spec = _COVIMS_file_spec_helper(**kwargs)
+    pds_file = pdsfile.PdsFile.from_filespec(file_spec)
+    try:
+        opus_id = pds_file.opus_id
+    except:
+        metadata = kwargs['metadata']
+        index_row = metadata['index_row']
+        index_row_num = metadata['index_row_num']
+        import_util.announce_nonrepeating_error(
+            f'Unable to create OPUS_ID for FILE_SPEC "{file_spec}"',
+            index_row_num)
+        return file_spec
     phase_name = metadata['phase_name']
-    count = index_row['PRODUCT_ID']
-
-    assert phase_name in ('VIS', 'IR')
-
-    planet_id = helper_cassini_planet_id(**kwargs)
-    planet_ltr = 'X'
-    if planet_id is not None:
-        planet_ltr = planet_id[0]
-
-    assert count[:2] == '1/'
-    image_time = count[2:]
-
-    rms_obs_id = f'{planet_ltr}_CUBE_CO_VIMS_{image_time}_{phase_name}'
-
-    return rms_obs_id
+    opus_id += '_' + phase_name
+    return opus_id
 
 def populate_obs_general_COVIMS_inst_host_id(**kwargs):
     return 'CO'
@@ -122,11 +133,8 @@ def populate_obs_general_COVIMS_observation_duration(**kwargs):
 def populate_obs_general_COVIMS_note(**kwargs):
     None
 
-# Format: "/data/1999010T054026_1999010T060958"
 def populate_obs_general_COVIMS_primary_file_spec(**kwargs):
-    metadata = kwargs['metadata']
-    index_row = metadata['index_row']
-    return index_row['PATH_NAME']
+    return _COVIMS_file_spec_helper(**kwargs)
 
 def populate_obs_general_COVIMS_product_creation_time(**kwargs):
     metadata = kwargs['metadata']

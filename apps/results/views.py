@@ -27,8 +27,8 @@ import logging
 log = logging.getLogger(__name__)
 
 
-def get_all_categories(request, rms_obs_id):
-    """ returns list of all cateories - aka tables - this rms_obs_id apepars in
+def get_all_categories(request, opus_id):
+    """ returns list of all cateories - aka tables - this opus_id apepars in
         as json response """
     all_categories = []
     table_info = TableNames.objects.all().values('table_name', 'label').order_by('disp_order')
@@ -48,8 +48,8 @@ def get_all_categories(request, rms_obs_id):
         except LookupError:
             continue  # oops some models don't actually exist
 
-        # are not rms_obs_id unique in all obs tables so why is this not a .get query
-        results = table_model.objects.filter(rms_obs_id=rms_obs_id).values('rms_obs_id')
+        # are not opus_id unique in all obs tables so why is this not a .get query
+        results = table_model.objects.filter(opus_id=opus_id).values('opus_id')
         if results:
             cat = {'table_name': table_name, 'label': label}
             all_categories.append(cat)
@@ -153,7 +153,7 @@ def getData(request,fmt):
     else:
         return responseFormats(data,fmt,template='data.html', id_index=id_index, labels=labels,checkboxes=checkboxes, collection=collection, order=order)
 
-def get_metadata_by_slugs(request, rms_obs_id, slugs, fmt):
+def get_metadata_by_slugs(request, opus_id, slugs, fmt):
     """
     returns results for specified slugs
     """
@@ -183,12 +183,12 @@ def get_metadata_by_slugs(request, rms_obs_id, slugs, fmt):
         model_name = ''.join(table_name.title().split('_'))
         table_model = apps.get_model('search', model_name)
 
-        results = table_model.objects.filter(rms_obs_id=rms_obs_id).values(*param_list)
-                  # are not rms_obs_id unique in all obs tables so why is this not a .get query
+        results = table_model.objects.filter(opus_id=opus_id).values(*param_list)
+                  # are not opus_id unique in all obs tables so why is this not a .get query
 
         if not results:
-            # this rms_obs_id doesn't exist in this table, log this..
-            log.error('Could not find rms_obs_id %s in table %s', rms_obs_id, table_name)
+            # this opus_id doesn't exist in this table, log this..
+            log.error('Could not find opus_id %s in table %s', opus_id, table_name)
 
         for param,value in results[0].items():
             data.append({param: value})
@@ -201,7 +201,7 @@ def get_metadata_by_slugs(request, rms_obs_id, slugs, fmt):
         return data, all_info  # includes definitions for opus interface
 
 
-def get_metadata(request, rms_obs_id, fmt):
+def get_metadata(request, opus_id, fmt):
     """
     results for a single observation
     all the data, in categories
@@ -226,12 +226,12 @@ def get_metadata(request, rms_obs_id, fmt):
 
     """
     update_metrics(request)
-    if not rms_obs_id: raise Http404
+    if not opus_id: raise Http404
 
     try:
         slugs = request.GET.get('cols', False)
         if slugs:
-            return get_metadata_by_slugs(request, rms_obs_id, slugs.split(','), fmt)
+            return get_metadata_by_slugs(request, opus_id, slugs.split(','), fmt)
     except AttributeError:
         pass  # no request was sent
 
@@ -273,7 +273,7 @@ def get_metadata(request, rms_obs_id, fmt):
 
         if all_param_names:
             try:
-                results = table_model.objects.filter(rms_obs_id=rms_obs_id).values(*all_param_names)[0]
+                results = table_model.objects.filter(opus_id=opus_id).values(*all_param_names)[0]
 
                 # results is an ordinary dict so here to make sure we have the correct ordering:
                 ordered_results = SortedDict({})
@@ -286,13 +286,13 @@ def get_metadata(request, rms_obs_id, fmt):
                 # this is pretty normal, it will check every table for a ring obs id
                 # a lot of observations do not appear in a lot of tables..
                 # for example something on jupiter won't appear in a saturn table..
-                # log.error('IndexError: no results found for {0} in table {1}'.format(rms_obs_id, table_name) )
+                # log.error('IndexError: no results found for {0} in table {1}'.format(opus_id, table_name) )
                 pass  # no results found in this table, move along
             except AttributeError:
-                log.error('AttributeError: No results found for rms_obs_id %s in table %s', rms_obs_id, table_name)
+                log.error('AttributeError: No results found for opus_id %s in table %s', opus_id, table_name)
                 pass  # no results found in this table, move along
             except FieldError:
-                log.error('FieldError: No results found for rms_obs_id %s in table %s', rms_obs_id, table_name)
+                log.error('FieldError: No results found for opus_id %s in table %s', opus_id, table_name)
                 pass  # no results found in this table, move along
 
     if fmt == 'html':
@@ -426,35 +426,35 @@ def getImages(request,size,fmt):
     except TypeError:  # getPage returns False
         raise Http404('could not find page')
 
-    image_links = Image.objects.filter(rms_obs_id__in=page_ids)
+    image_links = Image.objects.filter(opus_id__in=page_ids)
 
     if not image_links:
         log.error('GetImage: No image found for: %s', str(page_ids[:50]))
 
     # page_ids
     if alt_size:
-        image_links = image_links.values('rms_obs_id',size,alt_size)
+        image_links = image_links.values('opus_id',size,alt_size)
     else:
-        image_links = image_links.values('rms_obs_id',size)
+        image_links = image_links.values('opus_id',size)
 
     # add the base_path to each image
     all_sizes = ['small','thumb','med','full']
     for k, im in enumerate(image_links):
         for s in all_sizes:
             if s in im:
-                image_links[k][s] = get_base_path_previews(im['rms_obs_id']) + im[s]
+                image_links[k][s] = get_base_path_previews(im['opus_id']) + im[s]
 
     # to preserve the order of page_ids as lamely as possible :P
     ordered_image_links = []
-    for rms_obs_id in page_ids:
+    for opus_id in page_ids:
         found = False
         for link in image_links:
-            if rms_obs_id == link['rms_obs_id']:
+            if opus_id == link['opus_id']:
                 found = True
                 ordered_image_links.append(link)
         if not found:
             # return the thumbnail not found link
-            ordered_image_links.append({size:settings.THUMBNAIL_NOT_FOUND, 'rms_obs_id':rms_obs_id})
+            ordered_image_links.append({size:settings.THUMBNAIL_NOT_FOUND, 'opus_id':opus_id})
 
     image_links = ordered_image_links
 
@@ -466,12 +466,12 @@ def getImages(request,size,fmt):
 
         # hack for the new reclassification of some previews as "diagrams"
         image['path'] = settings.IMAGE_HTTP_PATH
-        if 'CIRS' in image['rms_obs_id']:
+        if 'CIRS' in image['opus_id']:
             image['path'] = image['path'].replace('previews','diagrams')
 
         if collection_members:
             from user_collections.views import *
-            if image['rms_obs_id'] in collection_members:
+            if image['opus_id'] in collection_members:
                 image['in_collection'] = True
 
     if (request.is_ajax()):
@@ -482,37 +482,37 @@ def getImages(request,size,fmt):
     return responseFormats({'data':[i for i in image_links]},fmt, size=size, alt_size=alt_size, columns_str=columns.split(','), template=template, order=order)
 
 
-def get_base_path_previews(rms_obs_id):
+def get_base_path_previews(opus_id):
     # find the proper volume_id to pass to the Files table before asking for file_path
     # (sometimes the Files table has extra entries for an observation with funky paths)
     try:
-        volume_id = ObsGeneral.objects.filter(rms_obs_id=rms_obs_id)[0].volume_id
+        volume_id = ObsGeneral.objects.filter(opus_id=opus_id)[0].volume_id
     except IndexError:
         return
 
-    file_path = Files.objects.filter(rms_obs_id=rms_obs_id, volume_id=volume_id)[0].base_path
+    file_path = Files.objects.filter(opus_id=opus_id, volume_id=volume_id)[0].base_path
 
     base_path = '/'.join(file_path.split('/')[-2:])
 
     return base_path
 
 
-def getImage(request,size='med', rms_obs_id='',fmt='mouse'):      # mouse?
+def getImage(request,size='med', opus_id='',fmt='mouse'):      # mouse?
     """
     size = thumb, small, med, full
-    return rms_obs_id + ' ' + size
+    return opus_id + ' ' + size
 
-    return HttpResponse(img + "<br>" + rms_obs_id + ' ' + size +' '+ fmt)
+    return HttpResponse(img + "<br>" + opus_id + ' ' + size +' '+ fmt)
     """
     update_metrics(request)
     try:
-        img = Image.objects.filter(rms_obs_id=rms_obs_id).values(size)[0][size]
+        img = Image.objects.filter(opus_id=opus_id).values(size)[0][size]
     except IndexError:
-        log.error('getImage: IndexError - Could not find rms_obs_id %s, size %s', str(rms_obs_id), str(size))
+        log.error('getImage: IndexError - Could not find opus_id %s, size %s', str(opus_id), str(size))
         return
 
-    path = settings.IMAGE_HTTP_PATH + get_base_path_previews(rms_obs_id)
-    if 'CIRS' in rms_obs_id:
+    path = settings.IMAGE_HTTP_PATH + get_base_path_previews(opus_id)
+    if 'CIRS' in opus_id:
         path = path.replace('previews','diagrams')
 
     return responseFormats({'data':[{'img':img, 'path':path}]}, fmt, size=size, path=path, template='image_list.html')
@@ -530,10 +530,10 @@ def file_name_cleanup(base_file):
 
 # loc_type = path or url
 # you broke this see http://127.0.0.1:8000/opus/api/files.json?&target=pan
-def getFilesAPI(request, rms_obs_id=None, fmt=None, loc_type=None):
+def getFilesAPI(request, opus_id=None, fmt=None, loc_type=None):
 
-    if not rms_obs_id:
-        rms_obs_id = ''
+    if not opus_id:
+        opus_id = ''
     if not fmt:
         fmt = 'raw'  # the format this function returns
     if not loc_type:
@@ -558,23 +558,23 @@ def getFilesAPI(request, rms_obs_id=None, fmt=None, loc_type=None):
     if previews == ['none']:
         previews = []
 
-    if request and request.GET and not rms_obs_id:
+    if request and request.GET and not opus_id:
 
-        # no rms_obs_id passed, get files from search results
+        # no opus_id passed, get files from search results
         (selections,extras) = urlToSearchParams(request.GET)
         page  = getData(request,'raw')['page']
         if not len(page):
             return False
-        rms_obs_id = [p[0] for p in page]
+        opus_id = [p[0] for p in page]
 
-    return getFiles(rms_obs_id=rms_obs_id, fmt=fmt, loc_type=loc_type, product_types=product_types, previews=previews)
+    return getFiles(opus_id=opus_id, fmt=fmt, loc_type=loc_type, product_types=product_types, previews=previews)
 
 
 # loc_type = path or url
-def getFiles(rms_obs_id=None, fmt=None, loc_type=None, product_types=None, previews=None, collection=None, session_id=None):
+def getFiles(opus_id=None, fmt=None, loc_type=None, product_types=None, previews=None, collection=None, session_id=None):
     """
-    returns list of all files by rms_obs_id
-    rms_obs_id can be string or list
+    returns list of all files by opus_id
+    opus_id can be string or list
     can also return preview files too
     """
     if collection and not session_id:
@@ -604,22 +604,22 @@ def getFiles(rms_obs_id=None, fmt=None, loc_type=None, product_types=None, previ
     if previews == ['none'] or previews == 'none':
         previews = []
 
-    # this is either for a collection or some rms_obs_id:
-    if rms_obs_id:
-        # rms_obs_id may be passed in as a string or a list,
+    # this is either for a collection or some opus_id:
+    if opus_id:
+        # opus_id may be passed in as a string or a list,
         # if it's a string make it a list
-        if type(rms_obs_id) is unicode or type(rms_obs_id).__name__ == 'str':
-            rms_obs_ids = [rms_obs_id]
+        if type(opus_id) is unicode or type(opus_id).__name__ == 'str':
+            opus_ids = [opus_id]
         else:
-            rms_obs_ids = rms_obs_id
+            opus_ids = opus_id
 
     elif collection:
-        # no rms_obs_id, this must be for a colletion
+        # no opus_id, this must be for a colletion
         colls_table_name = get_collection_table(session_id)
 
-        where   = "files.rms_obs_id = " + connection.ops.quote_name(colls_table_name) + ".rms_obs_id"
+        where   = "files.opus_id = " + connection.ops.quote_name(colls_table_name) + ".opus_id"
     else:
-        log.error('getFiles: No rms_obs_ids or collection specified')
+        log.error('getFiles: No opus_ids or collection specified')
         return False
 
     # you can ask this function for url paths or disk paths
@@ -634,7 +634,7 @@ def getFiles(rms_obs_id=None, fmt=None, loc_type=None, product_types=None, previ
     if collection:
         files_table_rows = files_table_rows.extra(where=[where], tables=[colls_table_name])
     else:
-        files_table_rows = files_table_rows.filter(rms_obs_id__in=rms_obs_ids)
+        files_table_rows = files_table_rows.filter(opus_id__in=opus_ids)
 
     if product_types != ['all'] and product_types != ['none']:
         files_table_rows = files_table_rows.filter(product_type__in=product_types)
@@ -642,7 +642,7 @@ def getFiles(rms_obs_id=None, fmt=None, loc_type=None, product_types=None, previ
     if not files_table_rows:
         log.error('getFiles: No rows returned in file table')
         log.error('.. WHERE: %s', str(where))
-        log.error('.. First 5 rms_obs_id: %s', str(rms_obs_id[:5]))
+        log.error('.. First 5 opus_id: %s', str(opus_id[:5]))
 
     file_names = {}
     for f in files_table_rows:
@@ -651,29 +651,29 @@ def getFiles(rms_obs_id=None, fmt=None, loc_type=None, product_types=None, previ
         todo: STOP THE MADNESS
         move most of this to database layer
         put all of the below into the file sizes table
-        then just grab direct from file sizes table by product_type and rms_obs_id
+        then just grab direct from file sizes table by product_type and opus_id
         """
 
-        # file_names are grouped first by rms_obs_id then by product_type
-        rms_obs_id = f.rms_obs_id
-        file_names.setdefault(rms_obs_id, {})
+        # file_names are grouped first by opus_id then by product_type
+        opus_id = f.opus_id
+        file_names.setdefault(opus_id, {})
 
         # add some preview images?
         if len(previews):
-            file_names[rms_obs_id]['preview_image'] = []
+            file_names[opus_id]['preview_image'] = []
             for size in previews:
-                url_info = getImage(False, size.lower(), rms_obs_id,'raw')
+                url_info = getImage(False, size.lower(), opus_id,'raw')
                 if not url_info:
                     continue  # no image found for this observation so let's skip it
                 url = url_info['data'][0]['img']
                 base_path = url_info['data'][0]['path']
                 if url:
                     if loc_type == 'path':
-                        url = settings.IMAGE_PATH + get_base_path_previews(rms_obs_id) + url
+                        url = settings.IMAGE_PATH + get_base_path_previews(opus_id) + url
                     else:
                         url = base_path + url
 
-                    file_names[rms_obs_id]['preview_image'].append(url)
+                    file_names[opus_id]['preview_image'].append(url)
 
         if product_types == ['none']:
             continue
@@ -682,12 +682,12 @@ def getFiles(rms_obs_id=None, fmt=None, loc_type=None, product_types=None, previ
         # get this file's volume location
         file_extensions = []
         try:
-            volume_loc = ObsGeneral.objects.filter(rms_obs_id=rms_obs_id)[0].volume_id
+            volume_loc = ObsGeneral.objects.filter(opus_id=opus_id)[0].volume_id
         except IndexError:
             volume_loc = f.volume_id
 
-        # file_names are grouped first by rms_obs_id then by product_type
-        file_names[rms_obs_id].setdefault(f.product_type, [])
+        # file_names are grouped first by opus_id then by product_type
+        file_names[opus_id].setdefault(f.product_type, [])
         extra_files = []
         if f.extra_files:
             extra_files = f.extra_files.split(',')
@@ -729,15 +729,15 @@ def getFiles(rms_obs_id=None, fmt=None, loc_type=None, product_types=None, previ
 
         # add the extra_files
         for extra in extra_files:
-            file_names[rms_obs_id][f.product_type] += [path + volume_loc + '/' + extra]
+            file_names[opus_id][f.product_type] += [path + volume_loc + '/' + extra]
 
         for extension in file_extensions:
-            file_names[rms_obs_id][f.product_type]  += [path + volume_loc + '/' + base_file + '.' + extension]
+            file_names[opus_id][f.product_type]  += [path + volume_loc + '/' + base_file + '.' + extension]
         # // add the original file
-        file_names[rms_obs_id][f.product_type]  += [path + volume_loc + '/' + base_file + '.' + ext]
-        file_names[rms_obs_id][f.product_type] = list(set(file_names[rms_obs_id][f.product_type])) #  makes unique
-        file_names[rms_obs_id][f.product_type].sort()
-        file_names[rms_obs_id][f.product_type].reverse()
+        file_names[opus_id][f.product_type]  += [path + volume_loc + '/' + base_file + '.' + ext]
+        file_names[opus_id][f.product_type] = list(set(file_names[opus_id][f.product_type])) #  makes unique
+        file_names[opus_id][f.product_type].sort()
+        file_names[opus_id][f.product_type].reverse()
 
 
     if fmt == 'raw':
@@ -865,7 +865,7 @@ def getPage(request, colls=None, colls_page=None, page=None):
         # join in the collections table
         colls_table_name = get_collection_table(session_id)
         triggered_tables.append(colls_table_name)
-        where   = "obs_general.rms_obs_id = " + connection.ops.quote_name(colls_table_name) + ".rms_obs_id"
+        where   = "obs_general.opus_id = " + connection.ops.quote_name(colls_table_name) + ".opus_id"
         results = ObsGeneral.objects.extra(where=[where], tables=triggered_tables)
 
     # now we have results object (either search or collections)
@@ -901,9 +901,9 @@ def getPage(request, colls=None, colls_page=None, page=None):
     else:
         results = results.values_list(*column_values)
 
-    # return a simple list of rms_obs_ids
-    rms_obs_id_index = column_values.index('rms_obs_id')
-    page_ids = [o[rms_obs_id_index] for o in results]
+    # return a simple list of opus_ids
+    opus_id_index = column_values.index('opus_id')
+    page_ids = [o[opus_id_index] for o in results]
 
     if not len(page_ids):
         return False

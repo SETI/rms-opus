@@ -122,7 +122,7 @@ parser.add_argument(
 )
 parser.add_argument(
     '--import-check-duplicate-id', action='store_true', default=False,
-    help='Check for duplicate rms_obs_id; needed for GOSSI'
+    help='Check for duplicate opus_id; needed for GOSSI'
 )
 
 parser.add_argument(

@@ -8,6 +8,7 @@
 import numpy as np
 
 import julian
+import pdsfile
 
 import import_util
 
@@ -34,26 +35,28 @@ _VGISS_FILTER_WAVELENGTHS = { # XXX
 
 ### OBS_GENERAL TABLE ###
 
-def populate_obs_general_VGISS_rms_obs_id(**kwargs):
+def _VGISS_file_spec_helper(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
-    obs_general_row = metadata['obs_general_row']
+    # Format: "DATA/C13854XX/C1385455_CALIB.LBL"
     file_spec = index_row['FILE_SPECIFICATION_NAME']
-    camera = index_row['INSTRUMENT_NAME']
-    inst_host = obs_general_row['inst_host_id']
-    planet_id = helper_voyager_planet_id(**kwargs)
-    ret = 'X'
-    if planet_id is not None:
-        ret = planet_id[0]
+    volume_id = kwargs['volume_id']
+    return volume_id + '/' + file_spec
 
-    last_slash = file_spec.rindex('/')
-    last_under = file_spec.rindex('_')
-    file_spec = file_spec[last_slash+2:last_under]
-    assert len(file_spec) == 7
-    assert camera in ['NARROW ANGLE CAMERA', 'WIDE ANGLE CAMERA']
-
-    return (ret+'_IMG_'+inst_host+'_ISS_'+
-            file_spec[:5]+'.'+file_spec[5:7]+'_'+camera[0])
+def populate_obs_general_VGISS_opus_id(**kwargs):
+    file_spec = _VGISS_file_spec_helper(**kwargs)
+    pds_file = pdsfile.PdsFile.from_filespec(file_spec)
+    try:
+        opus_id = pds_file.opus_id
+    except:
+        metadata = kwargs['metadata']
+        index_row = metadata['index_row']
+        index_row_num = metadata['index_row_num']
+        import_util.announce_nonrepeating_error(
+            f'Unable to create OPUS_ID for FILE_SPEC "{file_spec}"',
+            index_row_num)
+        return file_spec
+    return opus_id
 
 # Format: "VOYAGER 1" or "VOYAGER 2"
 def populate_obs_general_VGISS_inst_host_id(**kwargs):
@@ -123,11 +126,8 @@ def populate_obs_general_VGISS_note(**kwargs):
     index_row = metadata['index_row']
     return index_row['NOTE']
 
-# Format: "DATA/C13854XX/C1385455_CALIB.LBL"
 def populate_obs_general_VGISS_primary_file_spec(**kwargs):
-    metadata = kwargs['metadata']
-    index_row = metadata['index_row']
-    return index_row['FILE_SPECIFICATION_NAME']
+    return _VGISS_file_spec_helper(**kwargs)
 
 # Format: "VG1/VG2-J-ISS-2/3/4/6-PROCESSED-V1.0"
 def populate_obs_general_VGISS_data_set_id(**kwargs):
@@ -383,3 +383,23 @@ def populate_obs_instrument_VGISS_ert_sec(**kwargs):
             f'instrument_VGISS_ert_sec [line {index_row_num}]')
         ert = None
     return ert
+
+def populate_obs_instrument_VGISS_usable_lines(**kwargs):
+    metadata = kwargs['metadata']
+    supp_index_row = metadata['supp_index_row']
+    if supp_index_row is None:
+        return None
+    line1 = supp_index_row['FIRST_LINE']
+    line2 = supp_index_row['LAST_LINE']
+
+    return line2-line1+1
+
+def populate_obs_instrument_VGISS_usable_samples(**kwargs):
+    metadata = kwargs['metadata']
+    supp_index_row = metadata['supp_index_row']
+    if supp_index_row is None:
+        return None
+    sample1 = supp_index_row['FIRST_SAMPLE']
+    sample2 = supp_index_row['LAST_SAMPLE']
+
+    return sample2-sample1+1

@@ -6,6 +6,7 @@
 ################################################################################
 
 import julian
+import pdsfile
 
 from config_data import *
 import impglobals
@@ -51,23 +52,35 @@ def populate_obs_general_HST_planet_id(**kwargs):
 
 ### OBS_GENERAL TABLE ###
 
-def populate_obs_general_HSTx_rms_obs_id(**kwargs):
+def _HST_file_spec_helper(**kwargs):
     metadata = kwargs['metadata']
-    instrument = kwargs['instrument_name']
     index_row = metadata['index_row']
-    start_time = import_util.safe_column(index_row, 'START_TIME')
-    product_id = index_row['PRODUCT_ID']
-    planet_id = _helper_hubble_planet_id(**kwargs)
-    ret = 'X'
-    if planet_id is not None:
-        ret = planet_id[0]
-    return ret+'_IMG_HST_'+instrument[3:]+'_'+start_time[:10]+'_'+product_id
+    # Format: "data/1999010T054026_1999010T060958"
+    file_spec = index_row['FILE_SPECIFICATION_NAME']
+    volume_id = kwargs['volume_id']
 
-populate_obs_general_HSTACS_rms_obs_id = populate_obs_general_HSTx_rms_obs_id
-populate_obs_general_HSTNICMOS_rms_obs_id = populate_obs_general_HSTx_rms_obs_id
-populate_obs_general_HSTSTIS_rms_obs_id = populate_obs_general_HSTx_rms_obs_id
-populate_obs_general_HSTWFC3_rms_obs_id = populate_obs_general_HSTx_rms_obs_id
-populate_obs_general_HSTWFPC2_rms_obs_id = populate_obs_general_HSTx_rms_obs_id
+    return volume_id + '/' + file_spec
+
+def populate_obs_general_HSTx_opus_id(**kwargs):
+    file_spec = _HST_file_spec_helper(**kwargs)
+    pds_file = pdsfile.PdsFile.from_filespec(file_spec)
+    try:
+        opus_id = pds_file.opus_id
+    except:
+        metadata = kwargs['metadata']
+        index_row = metadata['index_row']
+        index_row_num = metadata['index_row_num']
+        import_util.announce_nonrepeating_error(
+            f'Unable to create OPUS_ID for FILE_SPEC "{file_spec}"',
+            index_row_num)
+        return file_spec
+    return opus_id
+
+populate_obs_general_HSTACS_opus_id = populate_obs_general_HSTx_opus_id
+populate_obs_general_HSTNICMOS_opus_id = populate_obs_general_HSTx_opus_id
+populate_obs_general_HSTSTIS_opus_id = populate_obs_general_HSTx_opus_id
+populate_obs_general_HSTWFC3_opus_id = populate_obs_general_HSTx_opus_id
+populate_obs_general_HSTWFPC2_opus_id = populate_obs_general_HSTx_opus_id
 
 def populate_obs_general_HSTx_inst_host_id(**kwargs):
     return 'HST'
@@ -196,9 +209,8 @@ populate_obs_general_HSTWFC3_note = populate_obs_general_HSTx_note
 populate_obs_general_HSTWFPC2_note = populate_obs_general_HSTx_note
 
 def populate_obs_general_HSTx_primary_file_spec(**kwargs):
-    metadata = kwargs['metadata']
-    index_row = metadata['index_row']
-    return index_row['FILE_SPECIFICATION_NAME']
+    file_spec = _HST_file_spec_helper(**kwargs)
+    return file_spec
 
 populate_obs_general_HSTACS_primary_file_spec = populate_obs_general_HSTx_primary_file_spec
 populate_obs_general_HSTNICMOS_primary_file_spec = populate_obs_general_HSTx_primary_file_spec

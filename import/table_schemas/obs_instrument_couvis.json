@@ -15,17 +15,17 @@
         "comment": "This is the primary (surrogate) key linking the record to obs_general."
     },
     {
-        "field_name": "rms_obs_id",
-        "field_type": "char40",
+        "field_name": "opus_id",
+        "field_type": "char80",
         "field_key": "foreign",
         "field_key_foreign": [
             "obs_general",
-            "rms_obs_id"
+            "opus_id"
         ],
         "field_notnull": true,
         "data_source": [
             "TAB:obs_general",
-            "rms_obs_id"
+            "opus_id"
         ],
         "comment": "This is the secondary key linking the record to obs_general."
     },
@@ -141,32 +141,6 @@
           ]
     },
     {
-        "field_name": "hi_voltage_power_supply_state",
-        "field_type": "flag_onoff",
-        "field_notnull": true,
-        "data_source": [
-            "TAB:index",
-            "HI_VOLTAGE_POWER_SUPPLY_STATE"
-        ],
-        "definition": "ON or OFF, indicating the condition of the HVPS.",
-        "pi_category_name": "obs_instrument_couvis",
-        "pi_dict_context": "COUVIS",
-        "pi_dict_name": "HI_VOLTAGE_POWER_SUPPLY_STATE",
-        "pi_disp_order": 11,
-        "pi_display": 0,
-        "pi_display_results": 1,
-        "pi_form_type": "GROUP",
-        "pi_intro": null,
-        "pi_label": "High Voltage Power Supply State",
-        "pi_label_results": "High Voltage Power Supply State",
-        "pi_old_slug": "HIVOLTAGEPOWERSUPPLYSTATE",
-        "pi_slug": "COUVIShighvoltagepowersupplystate",
-        "pi_sub_heading": null,
-        "pi_tooltip": null,
-        "pi_units": null,
-        "comment": "Definition is from COUVIS label"
-    },
-    {
         "field_name": "occultation_port_state",
         "field_type": "enum",
         "field_enum_options": "'OPEN','CLOSED','N/A'",
@@ -258,34 +232,6 @@
         "comment": "Definition is from COUVIS label"
     },
     {
-        "field_name": "odc_id",
-        "field_type": "int4",
-        "field_notnull": true,
-        "data_source": [
-            "TAB:index",
-            "ODC_ID"
-        ],
-        "val_min": -30000,
-        "val_max": 50000,
-        "definition": "An index into planning data.",
-        "pi_category_name": "obs_instrument_couvis",
-        "pi_dict_context": "COUVIS",
-        "pi_dict_name": "ODC_ID",
-        "pi_disp_order": 99,
-        "pi_display": 0,
-        "pi_display_results": 1,
-        "pi_form_type": "RANGE",
-        "pi_intro": null,
-        "pi_label": "ODC Id",
-        "pi_label_results": "ODC Id",
-        "pi_old_slug": "ODCID",
-        "pi_slug": "COUVISodcid",
-        "pi_sub_heading": null,
-        "pi_tooltip": null,
-        "pi_units": null,
-        "comment": "Definition is from COUVIS label"
-    },
-    {
         "field_name": "dwell_time",
         "field_type": "int4",
         "field_default": null,
@@ -309,56 +255,6 @@
         "pi_label_results": "Dwell Time",
         "pi_old_slug": "DWELLTIME",
         "pi_slug": "COUVISdwelltime",
-        "pi_sub_heading": null,
-        "pi_tooltip": null,
-        "pi_units": null,
-        "comment": "Definition is from COUVIS label"
-    },
-    {
-        "field_name": "h_level",
-        "field_type": "char128",
-        "field_notnull": true,
-        "data_source": [
-            "TAB:index",
-            "H_LEVEL"
-        ],
-        "definition": "HDAC H filament sequence of power levels.",
-        "pi_category_name": "obs_instrument_couvis",
-        "pi_dict_context": "COUVIS",
-        "pi_dict_name": "H_LEVEL",
-        "pi_disp_order": 99,
-        "pi_display": 0,
-        "pi_display_results": 1,
-        "pi_form_type": "STRING",
-        "pi_intro": null,
-        "pi_label": "H Level",
-        "pi_label_results": "H Level",
-        "pi_slug": "COUVIShlevel",
-        "pi_sub_heading": null,
-        "pi_tooltip": null,
-        "pi_units": null,
-        "comment": "Definition is from COUVIS label"
-    },
-    {
-        "field_name": "d_level",
-        "field_type": "char128",
-        "field_notnull": true,
-        "data_source": [
-            "TAB:index",
-            "D_LEVEL"
-        ],
-        "definition": "HDAC D filament sequence of power levels.",
-        "pi_category_name": "obs_instrument_couvis",
-        "pi_dict_context": "COUVIS",
-        "pi_dict_name": "D_LEVEL",
-        "pi_disp_order": 99,
-        "pi_display": 0,
-        "pi_display_results": 1,
-        "pi_form_type": "STRING",
-        "pi_intro": null,
-        "pi_label": "D Level",
-        "pi_label_results": "D Level",
-        "pi_slug": "COUVISdlevel",
         "pi_sub_heading": null,
         "pi_tooltip": null,
         "pi_units": null,

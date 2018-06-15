@@ -57,8 +57,8 @@ class downloadsTests(TestCase):
 
     def test__get_download_info_COVIMS(self):
         self.emptycollection()
-        rms_obs_id_list = 'S_CUBE_CO_VIMS_1638723713_VIS'
-        bulk_add_to_collection(rms_obs_id_list, self.session_id)
+        opus_id_list = 'S_CUBE_CO_VIMS_1638723713_VIS'
+        bulk_add_to_collection(opus_id_list, self.session_id)
 
         product_types = ['RAW_SPECTRAL_IMAGE_CUBE']
         previews = ['med']
@@ -69,8 +69,8 @@ class downloadsTests(TestCase):
 
     def test__get_download_info_VGISS(self):
         self.emptycollection()
-        rms_obs_id_list = 'N_IMG_VG2_ISS_1120000_W'
-        bulk_add_to_collection(rms_obs_id_list, self.session_id)
+        opus_id_list = 'N_IMG_VG2_ISS_1120000_W'
+        bulk_add_to_collection(opus_id_list, self.session_id)
         product_types = ['CALIBRATED_IMAGE']
         previews = ['small']
         size, file_count =  get_download_info(product_types, previews, self.colls_table_name)
@@ -80,8 +80,8 @@ class downloadsTests(TestCase):
 
     def test__get_download_info_empty_product_types(self):
         self.emptycollection()
-        rms_obs_id_list = 'S_IMG_CO_ISS_1680806066_N'
-        bulk_add_to_collection(rms_obs_id_list, self.session_id)
+        opus_id_list = 'S_IMG_CO_ISS_1680806066_N'
+        bulk_add_to_collection(opus_id_list, self.session_id)
         product_types = None
         previews = ['Full']
         size, file_count =  get_download_info(product_types, previews, self.colls_table_name)
@@ -91,8 +91,8 @@ class downloadsTests(TestCase):
 
     def test__get_download_info_COCIRS(self):
         self.emptycollection()
-        rms_obs_id_list = 'S_SPEC_CO_CIRS_1630456943_FP1'
-        bulk_add_to_collection(rms_obs_id_list, self.session_id)
+        opus_id_list = 'S_SPEC_CO_CIRS_1630456943_FP1'
+        bulk_add_to_collection(opus_id_list, self.session_id)
 
         product_types = 'CALIBRATED_SPECTRUM'
         previews = None
@@ -103,8 +103,8 @@ class downloadsTests(TestCase):
 
     def test__get_download_info_browse_images_being_counted(self):
         self.emptycollection()
-        rms_obs_id_list = ['S_IMG_CO_ISS_1692988072_N','S_IMG_CO_ISS_1692988234_N','S_IMG_CO_ISS_1692988460_N','S_IMG_CO_ISS_1692988500_N']
-        bulk_add_to_collection(rms_obs_id_list, self.session_id)
+        opus_id_list = ['S_IMG_CO_ISS_1692988072_N','S_IMG_CO_ISS_1692988234_N','S_IMG_CO_ISS_1692988460_N','S_IMG_CO_ISS_1692988500_N']
+        bulk_add_to_collection(opus_id_list, self.session_id)
         previews = None
         product_types=['CALIBRATED']
 
@@ -119,10 +119,10 @@ class downloadsTests(TestCase):
     # get_download_info(
     def test__get_download_info_COISS_CALIBRATED(self):
         self.emptycollection()
-        rms_obs_id_list = ['S_IMG_CO_ISS_1692988072_N','S_IMG_CO_ISS_1692988234_N','S_IMG_CO_ISS_1692988460_N','S_IMG_CO_ISS_1692988500_N']
-        bulk_add_to_collection(rms_obs_id_list, self.session_id)
+        opus_id_list = ['S_IMG_CO_ISS_1692988072_N','S_IMG_CO_ISS_1692988234_N','S_IMG_CO_ISS_1692988460_N','S_IMG_CO_ISS_1692988500_N']
+        bulk_add_to_collection(opus_id_list, self.session_id)
 
-        rms_obs_ids = 'S_IMG_CO_ISS_1680806066_N'
+        opus_ids = 'S_IMG_CO_ISS_1680806066_N'
         product_types = ['CALIBRATED']
         previews = None
         size, file_count =  get_download_info(product_types, previews, self.colls_table_name)
@@ -132,8 +132,8 @@ class downloadsTests(TestCase):
 
     def test__get_download_info_COISS_RAW_IMAGE(self):
         self.emptycollection()
-        rms_obs_id_list = 'S_IMG_CO_ISS_1680806066_N'
-        bulk_add_to_collection(rms_obs_id_list, self.session_id)
+        opus_id_list = 'S_IMG_CO_ISS_1680806066_N'
+        bulk_add_to_collection(opus_id_list, self.session_id)
 
         product_types = ['RAW_IMAGE']
         previews = None
@@ -143,8 +143,8 @@ class downloadsTests(TestCase):
 
     def test__get_download_info_COISS_both_products(self):
         self.emptycollection()
-        rms_obs_id_list = 'S_IMG_CO_ISS_1680806066_N'
-        bulk_add_to_collection(rms_obs_id_list, self.session_id)
+        opus_id_list = 'S_IMG_CO_ISS_1680806066_N'
+        bulk_add_to_collection(opus_id_list, self.session_id)
 
         product_types = ['RAW_IMAGE','CALIBRATED']
         previews = 'none'

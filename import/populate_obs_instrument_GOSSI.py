@@ -8,6 +8,7 @@
 import numpy as np
 
 import julian
+import pdsfile
 
 import import_util
 
@@ -41,19 +42,26 @@ _GOSSI_FILTER_WAVELENGTHS = {
 
 ### OBS_GENERAL TABLE ###
 
-def populate_obs_general_GOSSI_rms_obs_id(**kwargs):
+def populate_obs_general_GOSSI_opus_id(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
-    spacecraft_clock_count = import_util.safe_column(index_row,
-                                             'SPACECRAFT_CLOCK_START_COUNT')
-    planet_id = helper_galileo_planet_id(**kwargs)
-    ret = 'X'
-    if planet_id is not None:
-        ret = planet_id[0]
-    if ret != 'J':
-        import_util.announce_nonrepeating_warning(
-            'Galileo has a planet_id other than Jupiter and this is suspicious')
-    return ret+'_IMG_GO_SSI_'+spacecraft_clock_count.replace('.','')
+    # Format: GO_0017:[J0.OPNAV.C034640]5900R.IMG
+    file_spec = index_row['FILE_SPECIFICATION_NAME']
+    file_spec = file_spec.replace(':', '').replace('.', '/')
+    file_spec = file_spec.replace('[', '/').replace(']', '/')
+    file_spec = file_spec.replace('/IMG', '.IMG')
+    pds_file = pdsfile.PdsFile.from_filespec(file_spec)
+    try:
+        opus_id = pds_file.opus_id
+    except:
+        metadata = kwargs['metadata']
+        index_row = metadata['index_row']
+        index_row_num = metadata['index_row_num']
+        import_util.announce_nonrepeating_error(
+            f'Unable to create OPUS_ID for FILE_SPEC "{file_spec}"',
+            index_row_num)
+        return file_spec
+    return opus_id
 
 def populate_obs_general_GOSSI_inst_host_id(**kwargs):
     return 'GO'
@@ -123,6 +131,7 @@ def populate_obs_general_GOSSI_note(**kwargs):
 def populate_obs_general_GOSSI_primary_file_spec(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
+    # Format: GO_0017:[J0.OPNAV.C034640]5900R.IMG
     return index_row['FILE_SPECIFICATION_NAME']
 
 def populate_obs_general_GOSSI_product_creation_time(**kwargs):

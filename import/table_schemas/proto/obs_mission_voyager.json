@@ -15,17 +15,17 @@
         "comment": "This is the primary (surrogate) key linking the record to obs_general."
     },
     {
-        "field_name": "rms_obs_id",
+        "field_name": "opus_id",
         "field_type": "char40",
         "field_key": "foreign",
         "field_key_foreign": [
             "obs_general",
-            "rms_obs_id"
+            "opus_id"
         ],
         "field_notnull": true,
         "data_source": [
             "TAB:obs_general",
-            "rms_obs_id"
+            "opus_id"
         ],
         "comment": "This is the secondary key linking the record to obs_general."
     },

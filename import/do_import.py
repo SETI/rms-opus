@@ -84,9 +84,9 @@ def delete_volume_from_obs_tables(volume_id, namespace):
         impglobals.DATABASE.delete_rows(namespace, 'obs_general', where)
 
 
-def find_duplicate_rms_obs_ids():
-    """Find rms_obs_ids that exist in both import and permanent tables.
-       This can only happen in real life if the same rms_obs_id appears in
+def find_duplicate_opus_ids():
+    """Find opus_ids that exist in both import and permanent tables.
+       This can only happen in real life if the same opus_id appears in
        two different volumes, since normally we delete and entire volume
        before getting here. Sadly this really happens with GOSSI."""
 
@@ -100,23 +100,23 @@ def find_duplicate_rms_obs_ids():
             'perm', 'obs_general')
 
     cmd = f"""
-og.rms_obs_id FROM
+og.opus_id FROM
     {perm_obs_general_table_name} og,
     {imp_obs_general_table_name} iog WHERE
-    og.rms_obs_id = iog.rms_obs_id"""
+    og.opus_id = iog.opus_id"""
     res = impglobals.DATABASE.general_select(cmd)
     return [x[0] for x in res]
 
 
-def delete_rms_obs_id_from_obs_tables(rms_obs_id, namespace):
-    "Delete a single rms_obs_id from all import or permanent obs tables."
+def delete_opus_id_from_obs_tables(opus_id, namespace):
+    "Delete a single opus_id from all import or permanent obs tables."
 
     impglobals.LOGGER.log('info',
-        f'Deleting rms_obs_id "{rms_obs_id}" from {namespace} tables')
+        f'Deleting opus_id "{opus_id}" from {namespace} tables')
 
     table_names = impglobals.DATABASE.table_names(namespace,
                                                   prefix=['obs_', 'mult_'])
-    where = f'rms_obs_id="{rms_obs_id}"'
+    where = f'opus_id="{opus_id}"'
 
     # This has to happen in two phases to handle foreign key contraints:
     # 1. All tables except obs_general
@@ -130,10 +130,10 @@ def delete_rms_obs_id_from_obs_tables(rms_obs_id, namespace):
         impglobals.DATABASE.delete_rows(namespace, 'obs_general', where)
 
 
-def delete_duplicate_rms_obs_id_from_perm_tables():
-    rms_obs_ids = find_duplicate_rms_obs_ids()
-    for rms_obs_id in rms_obs_ids:
-        delete_rms_obs_id_from_obs_tables(rms_obs_id, 'perm')
+def delete_duplicate_opus_id_from_perm_tables():
+    opus_ids = find_duplicate_opus_ids()
+    for opus_id in opus_ids:
+        delete_opus_id_from_obs_tables(opus_id, 'perm')
 
 
 def create_tables_for_import(volume_id, namespace):
@@ -247,10 +247,10 @@ def copy_volume_from_import_to_permanent(volume_id):
                                                          table_name,
                                                          where=where)
 
-def read_existing_import_rms_obs_id():
-    """Return a list of all rms_obs_id used in the import tables. Used to check
+def read_existing_import_opus_id():
+    """Return a list of all opus_id used in the import tables. Used to check
        for duplicates during import."""
-    impglobals.LOGGER.log('debug', 'Collecting previous import rms_obs_ids')
+    impglobals.LOGGER.log('debug', 'Collecting previous import opus_ids')
 
     imp_obs_general_table_name = impglobals.DATABASE.convert_raw_to_namespace(
                                                         'import', 'obs_general')
@@ -261,7 +261,7 @@ def read_existing_import_rms_obs_id():
         return []
 
     rows = impglobals.DATABASE.general_select(
-        f'rms_obs_id FROM {imp_obs_general_table_name}')
+        f'opus_id FROM {imp_obs_general_table_name}')
 
     return [x[0] for x in rows]
 
@@ -522,7 +522,7 @@ def import_one_volume(volume_id):
     # First we if we have a brand new label and index tab in the metadata
     # directory. If so, ignore the one in volumes because it's probably
     # broken.
-    paths = volume_pdsfile.associated_logical_paths('metadata', exists=True)
+    paths = volume_pdsfile.associated_logical_paths('metadata', must_exist=True)
     volume_label_path = None
 
     if paths:
@@ -638,7 +638,7 @@ def import_one_volume(volume_id):
                 if assoc_type == 'ring_geo':
                     # RING_GEO is easy - there is at most a single entry
                     # per observation, so we just create a dictionary keyed
-                    # by ring_observation_id (for us that's rms_obs_id)
+                    # by ring_observation_id (for us that's opus_id)
                     for row in assoc_rows:
                         key = row.get('RING_OBSERVATION_ID', None)
                         if key is None:
@@ -649,7 +649,7 @@ def import_one_volume(volume_id):
                     # SURFACE_GEO is more complicated, because there can be
                     # more than one entry per observation, since there is one
                     # for each target. We create a dictionary keyed by
-                    # ring_observation_id (for us that's rms_obs_id) containing
+                    # ring_observation_id (for us that's opus_id) containing
                     # dictionary keyed by target name so we can collect all the
                     # target entries in one place.
                     for row in assoc_rows:
@@ -672,7 +672,7 @@ def import_one_volume(volume_id):
                         # (DATA/D2000_153/EUV2000_153_15_52.LBL)
                         # that maps to the FILE_NAME field in the main index
                         # (/COUVIS_0001/DATA/D2000_153/EUV2000_153_15_52.LBL).
-                        # It's too much of a pain to calculate the rms_obs_id
+                        # It's too much of a pain to calculate the opus_id
                         # here to use that as a key, so we just stick with the
                         # filename.
                         for row in assoc_rows:
@@ -691,7 +691,7 @@ def import_one_volume(volume_id):
                         # (DATA/C13854XX/C1385455_RAW.LBL)
                         # that maps to the FILE_SPECIFICATION_NAME field in the
                         # main index.
-                        # It's too much of a pain to calculate the rms_obs_id
+                        # It's too much of a pain to calculate the opus_id
                         # here to use that as a key, so we just stick with the
                         # filename.
                         for row in assoc_rows:
@@ -707,7 +707,7 @@ def import_one_volume(volume_id):
                         # (data/20070108_003059/lor_0030598439_0x630_eng.lbl)
                         # that maps to the PATH_NAME and FILE_NAME fields in the
                         # main index.
-                        # It's too much of a pain to calculate the rms_obs_id
+                        # It's too much of a pain to calculate the opus_id
                         # here to use that as a key, so we just stick with the
                         # filename.
                         for row in assoc_rows:
@@ -751,15 +751,15 @@ def import_one_volume(volume_id):
     for table_name in table_names_in_order:
         table_rows[table_name] = []
 
-    # Keep track of rms_obs_id and check for duplicates. This happens, e.g.
+    # Keep track of opus_id and check for duplicates. This happens, e.g.
     # in GOSSI every now and then. Yuck.
-    used_rms_obs_id_this_vol = set()
+    used_opus_id_this_vol = set()
 
     # Also look for duplicates in the existing import tables
     if impglobals.ARGUMENTS.import_check_duplicate_id:
-        used_rms_obs_id_prev_vol = read_existing_import_rms_obs_id()
+        used_opus_id_prev_vol = read_existing_import_opus_id()
     else:
-        used_rms_obs_id_prev_vol = set()
+        used_opus_id_prev_vol = set()
 
     used_targets = set()
 
@@ -813,7 +813,7 @@ def import_one_volume(volume_id):
                 metadata['supp_index_row'] = None
                 continue # We don't process entries without supp_index
 
-        # Sometimes a single row in the index turns into multiple rms_obs_id
+        # Sometimes a single row in the index turns into multiple opus_id
         # in the database. This happens with COVIMS because each observation
         # might include both VIS and IR entries. Build up a list of such entries
         # here and then process the row as many times as necessary.
@@ -847,18 +847,18 @@ def import_one_volume(volume_id):
                                                metadata)
                 if table_name == 'obs_general':
                     obs_general_row = row
-                    rms_obs_id = row['rms_obs_id']
-                    if rms_obs_id in used_rms_obs_id_this_vol:
+                    opus_id = row['opus_id']
+                    if opus_id in used_opus_id_this_vol:
                         # Some of the GO_xxxx volumes have duplicate
                         # observations within a single volume. In these cases
                         # we have to use the NEW one and delete the old one.
                         impglobals.LOGGER.log('info',
-                                f'Duplicate rms_obs_id "{rms_obs_id}" within '+
+                                f'Duplicate opus_id "{opus_id}" within '+
                                  'volume - removing previous one')
-                        remove_rms_obs_id_from_tables(table_rows,
-                                                      rms_obs_id)
-                    used_rms_obs_id_this_vol.add(rms_obs_id)
-                    if rms_obs_id in used_rms_obs_id_prev_vol:
+                        remove_opus_id_from_tables(table_rows,
+                                                      opus_id)
+                    used_opus_id_this_vol.add(opus_id)
+                    if opus_id in used_opus_id_prev_vol:
                         # Some of the GO_xxxx and COUVIS_xxxx volumes have
                         # duplicate observations across volumes. In these cases
                         # we have to use the NEW one and delete the old one
@@ -868,7 +868,7 @@ def import_one_volume(volume_id):
                         # In the case where we copied them to the perm tables
                         # and cleared them out, a future check during the copy
                         # process will catch the duplicates.
-                        delete_rms_obs_id_from_obs_tables(rms_obs_id, 'import')
+                        delete_opus_id_from_obs_tables(opus_id, 'import')
                 table_rows[table_name].append(row)
                 metadata[table_name+'_row'] = row
 
@@ -882,11 +882,11 @@ def import_one_volume(volume_id):
                     if not table_name.startswith('obs_surface_geometry'):
                         # Deal with surface geometry only
                         continue
-                    # Retrieve the rms_obs_id from obs_general to find the
+                    # Retrieve the opus_id from obs_general to find the
                     # surface_geo
-                    rms_obs_id = obs_general_row['rms_obs_id']
-                    rms_obs_id = rms_obs_id.replace('_', '/')
-                    target_dict = surface_geo_dict.get(rms_obs_id, {})
+                    opus_id = obs_general_row['opus_id']
+                    opus_id = opus_id.replace('_', '/')
+                    target_dict = surface_geo_dict.get(opus_id, {})
                     for target_name in sorted(target_dict.keys()):
                         used_targets.add(target_name)
                         # Note the following only affects
@@ -1227,22 +1227,22 @@ def import_observation_table(volume_id,
             new_row[mult_column_name] = id_num
 
         ### A BIT OF TRICKERY - WE CAN'T RETRIEVE THE RING OR SURFACE GEO
-        ### METADATA UNTIL WE KNOW THE RMS_OBS_ID, WHICH IS COMPUTED
+        ### METADATA UNTIL WE KNOW THE OPUS_ID, WHICH IS COMPUTED
         ### WHILE PROCESSING OBS_GENERAL
 
-        if table_name == 'obs_general' and field_name == 'rms_obs_id':
-            rms_obs_id = new_row[field_name]
-            rms_obs_id = rms_obs_id.replace('_', '/')
+        if table_name == 'obs_general' and field_name == 'opus_id':
+            opus_id = new_row[field_name]
+            opus_id = opus_id.replace('_', '/')
             if 'ring_geo' in metadata:
-                ring_geo = metadata['ring_geo'].get(rms_obs_id, None)
+                ring_geo = metadata['ring_geo'].get(opus_id, None)
                 metadata['ring_geo_row'] = ring_geo
                 if (ring_geo is None and
                     impglobals.ARGUMENTS.import_report_missing_ring_geo):
                     impglobals.LOGGER.log('warning',
                         f'RING GEO metadata available but missing for '+
-                        f'rms_obs_id "{rms_obs_id}"')
+                        f'opus_id "{opus_id}"')
             if 'body_surface_geo' in metadata:
-                body_geo = metadata['body_surface_geo'].get(rms_obs_id)
+                body_geo = metadata['body_surface_geo'].get(opus_id)
                 metadata['body_surface_geo_row'] = body_geo
 
     return new_row
@@ -1267,15 +1267,15 @@ def import_run_field_function(func_name_suffix, volume_id,
                 table_name=table_name, table_schema=table_schema,
                 metadata=metadata)
 
-def remove_rms_obs_id_from_tables(table_rows, rms_obs_id):
+def remove_opus_id_from_tables(table_rows, opus_id):
     for table_name in table_rows:
         rows = table_rows[table_name]
         i = 0
         while i < len(rows):
-            if ('rms_obs_id' in rows[i] and
-                rows[i]['rms_obs_id'] == rms_obs_id):
+            if ('opus_id' in rows[i] and
+                rows[i]['opus_id'] == opus_id):
                 impglobals.LOGGER.log('debug',
-                    f'Removing "{rms_obs_id}" from unwritten table '+
+                    f'Removing "{opus_id}" from unwritten table '+
                     f'"{table_name}"')
                 del rows[i]
                 continue # There might be more than one in obs_surface_geometry
@@ -1373,8 +1373,8 @@ def do_import_steps():
         for volume_id in import_volume_ids:
             create_tables_for_import(volume_id, 'perm')
 
-        impglobals.LOGGER.log('info', 'Deleting duplicate rms_obs_ids')
-        delete_duplicate_rms_obs_id_from_perm_tables()
+        impglobals.LOGGER.log('info', 'Deleting duplicate opus_ids')
+        delete_duplicate_opus_id_from_perm_tables()
 
         impglobals.LOGGER.log('info', 'Copying import mult tables to permanent')
         copy_mult_from_import_to_permanent()

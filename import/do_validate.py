@@ -36,7 +36,7 @@ def validate_param_info(namespace):
                 field_name == 'obs_general_id' or
                 field_name.startswith('d_') or
                 'd_'+field_name in field_names or
-                (field_name == 'rms_obs_id' and
+                (field_name == 'opus_id' and
                  obs_table_name != 'obs_general') or
                 (field_name.startswith('mult_'))):
                 continue

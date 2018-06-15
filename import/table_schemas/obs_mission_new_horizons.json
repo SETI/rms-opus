@@ -15,17 +15,17 @@
         "comment": "This is the primary (surrogate) key linking the record to obs_general."
     },
     {
-        "field_name": "rms_obs_id",
-        "field_type": "char40",
+        "field_name": "opus_id",
+        "field_type": "char80",
         "field_key": "foreign",
         "field_key_foreign": [
             "obs_general",
-            "rms_obs_id"
+            "opus_id"
         ],
         "field_notnull": true,
         "data_source": [
             "TAB:obs_general",
-            "rms_obs_id"
+            "opus_id"
         ],
         "comment": "This is the secondary key linking the record to obs_general."
     },
@@ -50,31 +50,6 @@
             "instrument_id"
         ],
         "comment": "The instrument_id is included here for ease of database manipulation only."
-    },
-    {
-        "field_name": "sequence_id",
-        "field_type": "char48",
-        "field_default": null,
-        "data_source": [
-            "TAB:supp_index",
-            "SEQUENCE_ID"
-        ],
-        "definition": "The spacecraft sequence associated with the observation. 'UNK' if unknown.",
-        "pi_category_name": "obs_mission_new_horizons",
-        "pi_dict_context": "NEW_HORIZONS",
-        "pi_dict_name": "SEQUENCE_ID",
-        "pi_disp_order": 0,
-        "pi_display": 0,
-        "pi_display_results": 1,
-        "pi_form_type": "STRING",
-        "pi_intro": null,
-        "pi_label": "Sequence ID",
-        "pi_label_results": "Sequence ID",
-        "pi_slug": "NEWHORIZONSsequenceid",
-        "pi_sub_heading": null,
-        "pi_tooltip": null,
-        "pi_units": null,
-        "comment": "Definition from NHLORRI supplemental index label"
     },
     {
         "field_name": "spacecraft_clock_count1",

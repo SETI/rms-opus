@@ -15,17 +15,17 @@
         "comment": "This is the primary (surrogate) key linking the record to obs_general."
     },
     {
-        "field_name": "rms_obs_id",
-        "field_type": "char40",
+        "field_name": "opus_id",
+        "field_type": "char80",
         "field_key": "foreign",
         "field_key_foreign": [
             "obs_general",
-            "rms_obs_id"
+            "opus_id"
         ],
         "field_notnull": true,
         "data_source": [
             "TAB:obs_general",
-            "rms_obs_id"
+            "opus_id"
         ],
         "comment": "This is the secondary key linking the record to obs_general."
     },
@@ -555,60 +555,6 @@
               [   4, "NONE", "None",  50, "Y", null],
               [   5,   null, "NULL",  60, "Y", null]
           ]
-    },
-    {
-        "field_name": "center_filter_wavelength",
-        "field_type": "real4",
-        "field_key": true,
-        "field_default": null,
-        "data_source": [
-            "TAB:index",
-            "CENTER_FILTER_WAVELENGTH"
-        ],
-        "data_source_order": 0,
-        "definition": "The approximate central wavelength of the filter bandpass, in microns. Zero if unknown.",
-        "pi_category_name": "obs_mission_hubble",
-        "pi_dict_context": "HST",
-        "pi_dict_name": "CENTER_FILTER_WAVELENGTH",
-        "pi_disp_order": 3,
-        "pi_display": 0,
-        "pi_display_results": 1,
-        "pi_form_type": "RANGE",
-        "pi_intro": null,
-        "pi_label": "Center Filter Wavelength",
-        "pi_label_results": "Center Filter Wavelength",
-        "pi_slug": "HSTcenterfilterwavelength",
-        "pi_sub_heading": null,
-        "pi_tooltip": "",
-        "pi_units": "",
-        "comment": "Definition from HSTACS label."
-    },
-    {
-        "field_name": "bandwidth",
-        "field_type": "real4",
-        "field_key": true,
-        "field_default": null,
-        "data_source": [
-            "TAB:index",
-            "BANDWIDTH"
-        ],
-        "data_source_order": 0,
-        "definition": "The full width of the spectral bandpass, in microns. Zero if unknown.",
-        "pi_category_name": "obs_mission_hubble",
-        "pi_dict_context": "HST",
-        "pi_dict_name": "BANDWIDTH",
-        "pi_disp_order": 3,
-        "pi_display": 0,
-        "pi_display_results": 1,
-        "pi_form_type": "RANGE",
-        "pi_intro": null,
-        "pi_label": "Bandwidth",
-        "pi_label_results": "Bandwidth",
-        "pi_slug": "HSTbandwidth",
-        "pi_sub_heading": null,
-        "pi_tooltip": "",
-        "pi_units": "",
-        "comment": "Definition from HSTACS label."
     },
     {
         "put_mults_here": true

@@ -200,7 +200,7 @@ var o_collections = {
                 // this request is waiting to be sent
                 action = opus.collection_queue[request_no]['action'];
                 ringobsid = opus.collection_queue[request_no]['ringobsid'];
-                // alert('calling sendCollectionRequest for ' + rms_obs_id);
+                // alert('calling sendCollectionRequest for ' + opus_id);
                 o_collections.sendCollectionRequest(action,ringobsid,request_no);
             }
         }
@@ -332,14 +332,14 @@ var o_collections = {
         opus.collection_queue = [];
     },
 
-    editCollection: function(rms_obs_id, action) {
+    editCollection: function(opus_id, action) {
         opus.mainTabDisplay('collection');  // make sure the main site tab label is displayed
 
         opus.collection_change = true;
         opus.lastCartRequestNo++;
         // $('.collections_extra').html(opus.spinner);
         // $('#collection_tab').fadeIn();
-        opus.collection_queue[opus.lastCartRequestNo] = {"action":action, "ringobsid":rms_obs_id, "sent":false};
+        opus.collection_queue[opus.lastCartRequestNo] = {"action":action, "ringobsid":opus_id, "sent":false};
 
         o_collections.processCollectionQueue();
     },

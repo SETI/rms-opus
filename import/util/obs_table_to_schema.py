@@ -126,20 +126,20 @@ elif table_name.startswith('obs_'):
 if table_name.startswith('obs_'):
     if table_name == 'obs_general':
         schema.append({
-            '@field_name': 'rms_obs_id',
+            '@field_name': 'opus_id',
             '@field_type': 'char40',
             '@field_x_notnull': True,
             '@field_x_key': 'foreign',
-            '@field_x_key_foreign': ('obs_general', 'rms_obs_id'),
+            '@field_x_key_foreign': ('obs_general', 'opus_id'),
         })
     else:
         schema.append({
-            '@field_name': 'rms_obs_id',
+            '@field_name': 'opus_id',
             '@field_type': 'char40',
             '@field_x_notnull': True,
             '@field_x_key': 'foreign',
-            '@field_x_key_foreign': ('obs_general', 'rms_obs_id'),
-            'data_source': ['TAB:obs_general', 'rms_obs_id'],
+            '@field_x_key_foreign': ('obs_general', 'opus_id'),
+            'data_source': ['TAB:obs_general', 'opus_id'],
         })
 
 mult_fields = []
@@ -149,7 +149,7 @@ for table_column in desc_rows:
      field_default, field_extra) = table_column
 
     if field_name in ('id', 'time_stamp', 'obs_general_id',
-                      'ring_obs_id', 'rms_obs_id'):
+                      'ring_obs_id', 'opus_id'):
         # Already handled
         continue
 

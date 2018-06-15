@@ -15,22 +15,22 @@
         "comment": "This is the primary (surrogate) key linking the record to obs_general."
     },
     {
-        "field_name": "rms_obs_id",
-        "field_type": "char40",
+        "field_name": "opus_id",
+        "field_type": "char80",
         "field_key": "foreign",
         "field_key_foreign": [
             "obs_general",
-            "rms_obs_id"
+            "opus_id"
         ],
         "field_notnull": true,
         "data_source": [
             "TAB:obs_general",
-            "rms_obs_id"
+            "opus_id"
         ],
         "definition": "A unique ID assigned to an observation by the Ring-Moon Systems Node of the PDS.",
         "pi_category_name": "obs_pds",
         "pi_dict_context": "OPUS_GENERAL",
-        "pi_dict_name": "RMS_OBS_ID",
+        "pi_dict_name": "OPUS_ID",
         "pi_disp_order": 10,
         "pi_display": 1,
         "pi_display_results": 1,

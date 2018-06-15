@@ -96,7 +96,7 @@ def get_table_headers(request,template='table_headers.html'):
 
     param_info  = ParamInfo.objects
     for slug in slugs:
-        if slug and slug != 'rms_obs_id':
+        if slug and slug != 'opus_id':
             try:
                 columns.append([slug, param_info.get(slug=slug).label_results])
             except ParamInfo.DoesNotExist:
@@ -408,22 +408,22 @@ def init_detail_page(request, **kwargs):
 
     template="detail.html"
     slugs = request.GET.get('cols',False)
-    rms_obs_id = kwargs['rms_obs_id']
+    opus_id = kwargs['opus_id']
 
     img = None # XXXXXXXXXXXXXXXXXXXXX
     base_vol_path = ''
     # # get the preview image and some general info
     # try:
-    #     img = Image.objects.get(rms_obs_id=rms_obs_id)
+    #     img = Image.objects.get(opus_id=opus_id)
     # except Image.DoesNotExist:
     #     img = None
-    # base_vol_path = get_base_path_previews(rms_obs_id)
+    # base_vol_path = get_base_path_previews(opus_id)
     #
     path = settings.IMAGE_HTTP_PATH + base_vol_path
     if 'CIRS' in base_vol_path:
         path = path.replace('previews','diagrams')
 
-    instrument_id = ObsGeneral.objects.filter(rms_obs_id=rms_obs_id).values('instrument_id')[0]['instrument_id']
+    instrument_id = ObsGeneral.objects.filter(opus_id=opus_id).values('instrument_id')[0]['instrument_id']
 
     # get the preview guide url
     preview_guide_url = ''
@@ -435,7 +435,7 @@ def init_detail_page(request, **kwargs):
         preview_guide_url = 'http://pds-rings.seti.org/cassini/vims/COVIMS_previews.txt'
 
     # get the list of files for this observation
-    # XXXXXXX files = getFiles(rms_obs_id,fmt='raw')[rms_obs_id]
+    # XXXXXXX files = getFiles(opus_id,fmt='raw')[opus_id]
     file_list = {}
     # for product_type in files:
     #     if product_type not in file_list:
@@ -448,7 +448,7 @@ def init_detail_page(request, **kwargs):
         "img": img,
         "preview_guide_url": preview_guide_url,
         "file_list": file_list,
-        "rms_obs_id": rms_obs_id
+        "opus_id": opus_id
     }
     return render(request, template, context)
 

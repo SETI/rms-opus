@@ -61,7 +61,7 @@ class user_CollectionsTests(TestCase):
         request = self.factory.get('/opus/collections/default/add.json?request=1&ringobsid=S_IMG_CO_ISS_1680806160_N', HTTP_X_REQUESTED_WITH='XMLHttpRequest')
         request.user = AnonymousUser()
         request.session = test_session()
-        response = edit_collection(request, rms_obs_id = 'S_IMG_CO_ISS_1680806160_N', action = action)
+        response = edit_collection(request, opus_id = 'S_IMG_CO_ISS_1680806160_N', action = action)
         print response.content
         self.assertEqual(response.status_code, 200)
         expected = '{"count": 1, "request_no": 1, "err": false}'
@@ -73,7 +73,7 @@ class user_CollectionsTests(TestCase):
         request = self.factory.get('/opus/collections/default/add.json?request=1&ringobsid=S_IMG_CO_ISS_1680806160_N', HTTP_X_REQUESTED_WITH='XMLHttpRequest')
         request.user = AnonymousUser()
         request.session = test_session()
-        response = edit_collection(request, rms_obs_id = 'S_IMG_CO_ISS_1680806160_N', action = action)
+        response = edit_collection(request, opus_id = 'S_IMG_CO_ISS_1680806160_N', action = action)
         print response.content
         self.assertEqual(response.status_code, 200)
         expected = '{"count": 0, "request_no": 1, "err": false}'
@@ -84,14 +84,14 @@ class user_CollectionsTests(TestCase):
         """ """
         self.emptycollection()
         action = 'addrange'
-        rms_obs_id_min = 'S_IMG_CO_ISS_1688230251_N'
-        rms_obs_id_max = 'S_IMG_CO_ISS_1688230566_N'
+        opus_id_min = 'S_IMG_CO_ISS_1688230251_N'
+        opus_id_max = 'S_IMG_CO_ISS_1688230566_N'
 
         url = '/opus/collections/default/addrange.json?request=1&addrange=%s,%s&volumeid=COISS_2069&view=browse&browse=gallery&colls_browse=gallery&order=timesec1&cols=primaryfilespec,time1,time2,ringobsid,observationduration,ringradius1,ringradius2,J2000longitude1,J2000longitude2,phase1,phase2,incidence1,incidence2,emission1,emission2'
-        request = self.factory.get(url % (rms_obs_id_min, rms_obs_id_max), HTTP_X_REQUESTED_WITH='XMLHttpRequest')
+        request = self.factory.get(url % (opus_id_min, opus_id_max), HTTP_X_REQUESTED_WITH='XMLHttpRequest')
         request.user = AnonymousUser()
         request.session = test_session()
-        response = edit_collection(request, addrange = '%s,%s' % (rms_obs_id_min,rms_obs_id_max), action = action)
+        response = edit_collection(request, addrange = '%s,%s' % (opus_id_min,opus_id_max), action = action)
 
         print response.content
         self.assertEqual(response.status_code, 200)
@@ -102,14 +102,14 @@ class user_CollectionsTests(TestCase):
         """ """
         self.emptycollection()
         action = 'addrange'
-        rms_obs_id_min = 'S_IMG_CO_ISS_1688230251_N'
-        rms_obs_id_max = 'S_IMG_CO_ISS_1688230566_N'
+        opus_id_min = 'S_IMG_CO_ISS_1688230251_N'
+        opus_id_max = 'S_IMG_CO_ISS_1688230566_N'
 
         url = '/opus/collections/default/addrange.json?request=1&addrange=%s,%s&volumeid=COISS_2069&view=browse&browse=gallery&colls_browse=gallery&&order=timesec1'
-        request = self.factory.get(url % (rms_obs_id_min, rms_obs_id_max), HTTP_X_REQUESTED_WITH='XMLHttpRequest')
+        request = self.factory.get(url % (opus_id_min, opus_id_max), HTTP_X_REQUESTED_WITH='XMLHttpRequest')
         request.user = AnonymousUser()
         request.session = test_session()
-        response = edit_collection(request, addrange = '%s,%s' % (rms_obs_id_min,rms_obs_id_max), action = action)
+        response = edit_collection(request, addrange = '%s,%s' % (opus_id_min,opus_id_max), action = action)
 
         print response.content
         self.assertEqual(response.status_code, 200)
@@ -129,9 +129,9 @@ class user_CollectionsTests(TestCase):
     def test__bulk_add_to_collection(self):
         self.emptycollection()
         session_id = test_session().session_key
-        rms_obs_id_list = ['S_IMG_CO_ISS_1692988072_N','S_IMG_CO_ISS_1692988234_N','S_IMG_CO_ISS_1692988460_N','S_IMG_CO_ISS_1692988500_N']
-        bulk_add_to_collection(rms_obs_id_list, session_id)
-        expected = len(rms_obs_id_list)
+        opus_id_list = ['S_IMG_CO_ISS_1692988072_N','S_IMG_CO_ISS_1692988234_N','S_IMG_CO_ISS_1692988460_N','S_IMG_CO_ISS_1692988500_N']
+        bulk_add_to_collection(opus_id_list, session_id)
+        expected = len(opus_id_list)
         received = get_collection_count(session_id)
         self.assertEqual(expected, received)
 
@@ -141,8 +141,8 @@ class user_CollectionsTests(TestCase):
         # first add some to collection
         self.emptycollection()
         session_id = test_session().session_key
-        rms_obs_id_list = ['S_IMG_CO_ISS_1688233102_N','S_IMG_CO_ISS_1688235606_N','S_IMG_CO_ISS_1688244278_N','S_IMG_CO_ISS_1688393550_N']
-        bulk_add_to_collection(rms_obs_id_list, session_id)
+        opus_id_list = ['S_IMG_CO_ISS_1688233102_N','S_IMG_CO_ISS_1688235606_N','S_IMG_CO_ISS_1688244278_N','S_IMG_CO_ISS_1688393550_N']
+        bulk_add_to_collection(opus_id_list, session_id)
 
         # then do a request to get a page of results
         url = '/opus/api/data.json?volumeid=COISS_2069&view=browse&browse=gallery&colls_browse=gallery&page=1&gallery_data_viewer=true&limit=100&order=timesec1&cols=ringobsid,planet,target,phase1,time1,time2&widgets=planet,target&widgets2=&detail='
@@ -153,13 +153,13 @@ class user_CollectionsTests(TestCase):
 
         # then hand that page to the method we are trying to test
         cip = get_collection_in_page(page, session_id)
-        self.assertEqual(cip, rms_obs_id_list)  # we get back what we put in
+        self.assertEqual(cip, opus_id_list)  # we get back what we put in
 
     def test__bulk_get_collection_csv_data(self):
         self.emptycollection()
         session_id = test_session().session_key
-        rms_obs_id_list = ['S_IMG_CO_ISS_1688233102_N','S_IMG_CO_ISS_1688235606_N','S_IMG_CO_ISS_1688244278_N','S_IMG_CO_ISS_1688393550_N']
-        bulk_add_to_collection(rms_obs_id_list, session_id)
+        opus_id_list = ['S_IMG_CO_ISS_1688233102_N','S_IMG_CO_ISS_1688235606_N','S_IMG_CO_ISS_1688244278_N','S_IMG_CO_ISS_1688393550_N']
+        bulk_add_to_collection(opus_id_list, session_id)
 
         url = '/opus/collections/data.csv?volumeid=COISS_2069&view=browse&browse=gallery&colls_browse=gallery&page=1&gallery_data_viewer=true&limit=100&order=timesec1&cols=ringobsid,planet,target,phase1,phase2,time1,time2,ringradius1,ringradius2,J2000longitude1,J2000longitude2'
         request = self.factory.get(url)
@@ -174,8 +174,8 @@ class user_CollectionsTests(TestCase):
     def test__collection_get_csv(self):
         self.emptycollection()
         session_id = test_session().session_key
-        rms_obs_id_list = ['S_IMG_CO_ISS_1688233102_N','S_IMG_CO_ISS_1688235606_N','S_IMG_CO_ISS_1688244278_N','S_IMG_CO_ISS_1688393550_N']
-        bulk_add_to_collection(rms_obs_id_list, session_id)
+        opus_id_list = ['S_IMG_CO_ISS_1688233102_N','S_IMG_CO_ISS_1688235606_N','S_IMG_CO_ISS_1688244278_N','S_IMG_CO_ISS_1688393550_N']
+        bulk_add_to_collection(opus_id_list, session_id)
 
         url = '/opus/collections/data.csv?volumeid=COISS_2069&view=browse&browse=gallery&colls_browse=gallery&page=1&gallery_data_viewer=true&limit=100&order=timesec1&cols=ringobsid,planet,target,phase1,phase2,time1,time2,ringradius1,ringradius2,J2000longitude1,J2000longitude2'
         request = self.factory.get(url)
@@ -193,8 +193,8 @@ class user_CollectionsTests(TestCase):
         self.assertEqual(count, 0)  # nothing here yet
 
         # let's add some stuff
-        rms_obs_id_list = ['S_IMG_CO_ISS_1688233102_N','S_IMG_CO_ISS_1688235606_N','S_IMG_CO_ISS_1688244278_N','S_IMG_CO_ISS_1688393550_N']
-        bulk_add_to_collection(rms_obs_id_list, session_id)
+        opus_id_list = ['S_IMG_CO_ISS_1688233102_N','S_IMG_CO_ISS_1688235606_N','S_IMG_CO_ISS_1688244278_N','S_IMG_CO_ISS_1688393550_N']
+        bulk_add_to_collection(opus_id_list, session_id)
         count = get_collection_count(session_id)
         self.assertEqual(count, 4)  # nothing here yet
 
@@ -202,8 +202,8 @@ class user_CollectionsTests(TestCase):
         self.emptycollection()
         # first add some to collection
         session_id = test_session().session_key
-        rms_obs_id_list = ['S_IMG_CO_ISS_1692988072_N','S_IMG_CO_ISS_1692988234_N','S_IMG_CO_ISS_1692988460_N','S_IMG_CO_ISS_1692988500_N']
-        bulk_add_to_collection(rms_obs_id_list, session_id)
+        opus_id_list = ['S_IMG_CO_ISS_1692988072_N','S_IMG_CO_ISS_1692988234_N','S_IMG_CO_ISS_1692988460_N','S_IMG_CO_ISS_1692988500_N']
+        bulk_add_to_collection(opus_id_list, session_id)
 
         # then request to view it
         url = '/opus/collections/default/view.html'
@@ -219,8 +219,8 @@ class user_CollectionsTests(TestCase):
         self.emptycollection()
         # first add some to collection
         session_id = test_session().session_key
-        rms_obs_id_list = ['S_IMG_CO_ISS_1692988072_N','S_IMG_CO_ISS_1692988234_N','S_IMG_CO_ISS_1692988460_N','S_IMG_CO_ISS_1692988500_N']
-        bulk_add_to_collection(rms_obs_id_list, session_id)
+        opus_id_list = ['S_IMG_CO_ISS_1692988072_N','S_IMG_CO_ISS_1692988234_N','S_IMG_CO_ISS_1692988460_N','S_IMG_CO_ISS_1692988500_N']
+        bulk_add_to_collection(opus_id_list, session_id)
 
         # then request to view it
         url = '/opus/collections/default/view.html'
@@ -230,7 +230,7 @@ class user_CollectionsTests(TestCase):
         kwargs = {
             'request_no':1,
             'action':'addrange',
-            'rms_obs_id':'catface',
+            'opus_id':'catface',
             }
         received = check_collection_args(request,**kwargs)
         expected = ['addrange', 'catface', 1, 1]

@@ -7,6 +7,8 @@ sudo apt-get install python-dev libmysqlclient-dev # Debian / Ubuntu
 
 TODO:
 
+- Collapse user_collections
+
 - Routine to validate JSON files
   - param_info display order
   - Definitions present when needed

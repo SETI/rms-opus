@@ -40,7 +40,7 @@ $(document).ready(function() {
             if ($('#cboxOverlay .gallery_data_viewer').is(':visible')) { // :visible being used here to see if element exists)
                 // colorbox is showing, lets reload it so it shows
                 // the orientation it will show when they next page
-                // first get the rms_obs_id
+                // first get the opus_id
                 setTimeout(o_browse.reset_colorbox(), 1500);
             }
         }
@@ -165,7 +165,7 @@ var opus = {
             'widgets2':[],
             'widget_size':{}, // search tab resized widgets
             'widget_scroll':{}, // search tab widget internal scroll saved
-            'detail':'', // rms_obs_id of detail page content
+            'detail':'', // opus_id of detail page content
 
      }, // pref changes do not trigger load()
 

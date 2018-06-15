@@ -15,17 +15,17 @@
         "comment": "This is the primary (surrogate) key linking the record to obs_general."
     },
     {
-        "field_name": "rms_obs_id",
-        "field_type": "char40",
+        "field_name": "opus_id",
+        "field_type": "char80",
         "field_key": "foreign",
         "field_key_foreign": [
             "obs_general",
-            "rms_obs_id"
+            "opus_id"
         ],
         "field_notnull": true,
         "data_source": [
             "TAB:obs_general",
-            "rms_obs_id"
+            "opus_id"
         ],
         "comment": "This is the secondary key linking the record to obs_general."
     },
@@ -354,6 +354,62 @@
         "pi_tooltip": "",
         "pi_units": "",
         "comment": "Definition is from VGISS label. XXX Should be improved to talk about seconds part."
+    },
+    {
+        "field_name": "usable_lines",
+        "field_type": "int2",
+        "field_default": null,
+        "field_key": true,
+        "data_source": [
+            "FUNCTION",
+            "obs_instrument_VGISS_usable_lines"
+        ],
+        "val_min": 0,
+        "val_max": 800,
+        "definition": "The number of usable lines in the image. This is LAST_LINE-FIRST_LINE+1.",
+        "pi_category_name": "obs_instrument_vgiss",
+        "pi_dict_context": "VGISS",
+        "pi_dict_name": "USABLE_LINES",
+        "pi_disp_order": 29,
+        "pi_display": 1,
+        "pi_display_results": 1,
+        "pi_form_type": "RANGE",
+        "pi_intro": null,
+        "pi_label": "Usable Lines",
+        "pi_label_results": "Usable Lines",
+        "pi_slug": "VGISSusablelines",
+        "pi_sub_heading": null,
+        "pi_tooltip": "",
+        "pi_units": "",
+        "comment": "Definition made up by RF"
+    },
+    {
+        "field_name": "usable_samples",
+        "field_type": "int2",
+        "field_default": null,
+        "field_key": true,
+        "data_source": [
+            "FUNCTION",
+            "obs_instrument_VGISS_usable_samples"
+        ],
+        "val_min": 0,
+        "val_max": 800,
+        "definition": "The number of usable samples in the image. This is LAST_SAMPLE-FIRST_SAMPLE+1.",
+        "pi_category_name": "obs_instrument_vgiss",
+        "pi_dict_context": "VGISS",
+        "pi_dict_name": "USABLE_SAMPLES",
+        "pi_disp_order": 29,
+        "pi_display": 1,
+        "pi_display_results": 1,
+        "pi_form_type": "RANGE",
+        "pi_intro": null,
+        "pi_label": "Usable Samples",
+        "pi_label_results": "Usable Samples",
+        "pi_slug": "VGISSusablesamples",
+        "pi_sub_heading": null,
+        "pi_tooltip": "",
+        "pi_units": "",
+        "comment": "Definition made up by RF"
     },
     {
         "put_mults_here": true

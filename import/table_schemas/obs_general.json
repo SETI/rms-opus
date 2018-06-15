@@ -10,13 +10,13 @@
         ]
     },
     {
-        "field_name": "rms_obs_id",
-        "field_type": "char40",
+        "field_name": "opus_id",
+        "field_type": "char80",
         "field_notnull": true,
         "field_key": "unique",
         "data_source": [
             "FUNCTION",
-            "obs_general_<INST>_rms_obs_id"
+            "obs_general_<INST>_opus_id"
         ],
         "data_source_order": 30
     },
@@ -223,16 +223,13 @@
         "pi_tooltip": "",
         "pi_units": "",
         "mult_options": [
-              [   0,      "PLANET",      "Planet",   10, "Y", null],
-              [   1,        "MOON",        "Moon",   20, "Y", null],
-              [   2,        "RING",        "Ring",   30, "Y", null],
-              [  10,    "ASTEROID",    "Asteroid",   40, "Y", null],
-              [  12,         "TNO",         "TNO",   50, "Y", null],
-              [  20,         "SUN",         "Sun",   70, "Y", null],
-              [  22,        "STAR",        "Star",   80, "Y", null],
-              [  30,         "SKY",         "Sky",   90, "Y", null],
-              [  40, "CALIBRATION", "Calibration",  100, "Y", null],
-              [  50,       "OTHER",       "Other",  110, "Y", null]
+              [   0,     "PLANET",               "Planet",  10, "Y", null],
+              [   1,     "REG_SAT",   "Regular Satellite",  20, "Y", null],
+              [   2,     "IRR_SAT", "Irregular Satellite",  30, "Y", null],
+              [   3,        "RING",                "Ring",  40, "Y", null],
+              [   4,         "SKY",                 "Sky",  50, "Y", null],
+              [   5, "CALIBRATION",         "Calibration",  60, "Y", null],
+              [   6,       "OTHER",               "Other",  70, "Y", null]
           ]
     },
     {

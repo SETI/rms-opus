@@ -2,7 +2,7 @@
     <div>
 
         <a class = "shadowbox" href = "{{ path }}{{ img.full }}" rel="shadowbox" target = "_blank">
-            <img  id = "detail__{{ img.rms_obs_id }}" src = "{{ path }}{{ img.med }}">
+            <img  id = "detail__{{ img.opus_id }}" src = "{{ path }}{{ img.med }}">
         </a>
 
         <div>
@@ -23,7 +23,7 @@
     <div>
 
         <h1 class = "">Ring Observation Detail </h1>
-        <p><b>RMS Node Observation ID: </b>{{ img.rms_obs_id}}</p>
+        <p><b>RMS Node Observation ID: </b>{{ img.opus_id}}</p>
 
         <h2> PDS Products </h2>
 
@@ -42,7 +42,7 @@
         </div>
 
         <!-- div class = "col-md-4 collection_download_button">
-            <a title = "download as tar archive" id = "create_zip_file" href = "zip/{{ img.rms_obs_id}}.json">
+            <a title = "download as tar archive" id = "create_zip_file" href = "zip/{{ img.opus_id}}.json">
                 <button type="button" class="btn btn-sm btn-success">
                     <b>Download All Products</b>
                 </button>
@@ -73,8 +73,8 @@
 
     <div class = "">
         <h2>All Metadata for this Observation</h2>
-        <p>Grab all metadata <a href = "/opus/api/metadata/{{ rms_obs_id }}.json" target = "_blank">as json</a></p>
-        <div id = "all_metadata_{{ img.rms_obs_id }}"></div>
+        <p>Grab all metadata <a href = "/opus/api/metadata/{{ opus_id }}.json" target = "_blank">as json</a></p>
+        <div id = "all_metadata_{{ img.opus_id }}"></div>
     </div>
 
 </div><!-- /data col -->

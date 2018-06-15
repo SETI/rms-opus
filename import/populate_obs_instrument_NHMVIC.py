@@ -7,6 +7,8 @@
 
 import numpy as np
 
+import pdsfile
+
 import import_util
 
 from populate_obs_mission_new_horizons import *
@@ -18,16 +20,28 @@ from populate_obs_mission_new_horizons import *
 
 ### OBS_GENERAL TABLE ###
 
-def populate_obs_general_NHMVIC_rms_obs_id(**kwargs):
+def _NHMVIC_file_spec_helper(**kwargs):
     metadata = kwargs['metadata']
     supp_index_row = metadata['supp_index_row']
-    product_id = supp_index_row['PRODUCT_ID']
-    planet_id = helper_new_horizons_planet_id(**kwargs)
-    ret = 'X'
-    if planet_id is not None:
-        ret = planet_id[0]
+    # Format: "data/20070108_003059/mc0_0030598439_0x630_eng_1.lbl"
+    file_spec = supp_index_row['FILE_SPECIFICATION_NAME']
+    volume_id = kwargs['volume_id']
+    return volume_id + '/' + file_spec
 
-    return ret+'_IMG_NH_MVIC_'+product_id[4:14]+'_'+product_id[:3].upper()
+def populate_obs_general_NHMVIC_opus_id(**kwargs):
+    file_spec = _NHMVIC_file_spec_helper(**kwargs)
+    pds_file = pdsfile.PdsFile.from_filespec(file_spec)
+    try:
+        opus_id = pds_file.opus_id
+    except:
+        metadata = kwargs['metadata']
+        index_row = metadata['index_row']
+        index_row_num = metadata['index_row_num']
+        import_util.announce_nonrepeating_error(
+            f'Unable to create OPUS_ID for FILE_SPEC "{file_spec}"',
+            index_row_num)
+        return file_spec
+    return opus_id
 
 def populate_obs_general_NHMVIC_inst_host_id(**kwargs):
     return 'NH'
@@ -77,11 +91,8 @@ def populate_obs_general_NHMVIC_note(**kwargs):
     supp_index_row = metadata['supp_index_row']
     return supp_index_row['OBSERVATION_DESC']
 
-# Format: "data/20070108_003059/lor_0030598439_0x630_eng.lbl"
 def populate_obs_general_NHMVIC_primary_file_spec(**kwargs):
-    metadata = kwargs['metadata']
-    supp_index_row = metadata['supp_index_row']
-    return supp_index_row['FILE_SPECIFICATION_NAME']
+    return _NHMVIC_file_spec_helper(**kwargs)
 
 def populate_obs_general_NHMVIC_product_creation_time(**kwargs):
     metadata = kwargs['metadata']

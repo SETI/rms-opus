@@ -14,8 +14,8 @@ import import_util
 #   target_name must come before target_class
 #   time_sec1 must come before time_sec2
 #   time_sec1/2 must come before planet_id
-#   planet_id must come before rms_obs_id
-#   rms_obs_id must come before right_asc[12] and declination[12]
+#   planet_id must come before opus_id
+#   opus_id must come before right_asc[12] and declination[12]
 #   right_asc[12] and declination[12] must come before right_asc/d_right_asc
 #       and declination/d_declination
 

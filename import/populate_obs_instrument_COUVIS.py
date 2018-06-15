@@ -7,9 +7,11 @@
 
 # Ordering:
 #   time_sec1/2 must come before observation_duration
-#   planet_id must come before rms_obs_id
+#   planet_id must come before opus_id
 
 import os
+
+import pdsfile
 
 from config_data import *
 import impglobals
@@ -23,6 +25,16 @@ from populate_obs_mission_cassini import *
 ################################################################################
 
 ### OBS_GENERAL TABLE ###
+
+def _COUVIS_file_spec_helper(**kwargs):
+    metadata = kwargs['metadata']
+    supp_index_row = metadata.get('supp_index_row', None)
+    if supp_index_row is None:
+        return None
+    # Format: "/DATA/D2015_001/EUV2015_001_17_57.LBL"
+    file_spec = supp_index_row['FILE_SPECIFICATION_NAME']
+    volume_id = kwargs['volume_id']
+    return volume_id + '/' + file_spec
 
 def _COUVIS_channel_time_helper(**kwargs):
     metadata = kwargs['metadata']
@@ -40,26 +52,20 @@ def _COUVIS_channel_time_helper(**kwargs):
 
     return channel, image_time
 
-def populate_obs_general_COUVIS_rms_obs_id(**kwargs):
-    metadata = kwargs['metadata']
-    index_row = metadata['index_row']
-    planet_id = helper_cassini_planet_id(**kwargs)
-
-    planet_ltr = 'X'
-    if planet_id is not None:
-        planet_ltr = planet_id[0]
-
-    channel, image_time = _COUVIS_channel_time_helper(**kwargs)
-
-    time_split = image_time.split('_')
-    image_time = (f'{time_split[0]}-{time_split[1]}T{time_split[2]}-'+
-                  f'{time_split[3]}')
-    if len(time_split) > 4:
-        image_time += '-' + time_split[4]
-
-    rms_obs_id = f'{planet_ltr}_CO_UVIS_{image_time}_{channel}'
-
-    return rms_obs_id
+def populate_obs_general_COUVIS_opus_id(**kwargs):
+    file_spec = _COUVIS_file_spec_helper(**kwargs)
+    pds_file = pdsfile.PdsFile.from_filespec(file_spec)
+    try:
+        opus_id = pds_file.opus_id
+    except:
+        metadata = kwargs['metadata']
+        index_row = metadata['index_row']
+        index_row_num = metadata['index_row_num']
+        import_util.announce_nonrepeating_error(
+            f'Unable to create OPUS_ID for FILE_SPEC "{file_spec}"',
+            index_row_num)
+        return file_spec
+    return opus_id
 
 def populate_obs_general_COUVIS_inst_host_id(**kwargs):
     return 'CO'
@@ -160,13 +166,8 @@ def populate_obs_general_COUVIS_note(**kwargs):
                                       '')
     return description
 
-# Format: "/COUVIS_0050/DATA/D2015_001/EUV2015_001_17_57.LBL"
 def populate_obs_general_COUVIS_primary_file_spec(**kwargs):
-    metadata = kwargs['metadata']
-    supp_index_row = metadata.get('supp_index_row', None)
-    if supp_index_row is None:
-        return None
-    return supp_index_row['FILE_SPECIFICATION_NAME']
+    return _COUVIS_file_spec_helper(**kwargs)
 
 def populate_obs_general_COUVIS_product_creation_time(**kwargs):
     metadata = kwargs['metadata']
@@ -238,7 +239,7 @@ def populate_obs_general_COUVIS_declination2(**kwargs):
 def populate_obs_mission_cassini_COUVIS_mission_phase_name(**kwargs):
     return None
 
-def populate_obs_mission_cassini_COVIMS_sequence_id(**kwargs):
+def populate_obs_mission_cassini_COUVIS_sequence_id(**kwargs):
     return None
 
 

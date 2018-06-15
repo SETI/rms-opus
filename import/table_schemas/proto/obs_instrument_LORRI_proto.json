@@ -14,17 +14,17 @@
         ]
     },
     {
-        "@field_name": "rms_obs_id",
+        "@field_name": "opus_id",
         "@field_type": "char40",
         "@field_x_key": "foreign",
         "@field_x_key_foreign": [
             "obs_general",
-            "rms_obs_id"
+            "opus_id"
         ],
         "@field_x_notnull": true,
         "data_source": [
             "TAB:obs_general",
-            "rms_obs_id"
+            "opus_id"
         ]
     },
     {

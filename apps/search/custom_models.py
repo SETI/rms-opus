@@ -11,7 +11,7 @@ def customModelName(request_get):
 
 def customRelatedFileSpecName(request_get):
 
-    rms_obs_id = models.ForeignKey("Observations", null=True, blank=True)
+    opus_id = models.ForeignKey("Observations", null=True, blank=True)
     name = models.ForeignKey("Observations", null=True, blank=True)
     value = models.CharField(max_length=200)
     units = models.CharField(max_length=20)
