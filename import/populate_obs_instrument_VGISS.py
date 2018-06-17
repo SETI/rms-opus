@@ -51,10 +51,8 @@ def populate_obs_general_VGISS_opus_id(**kwargs):
     except:
         metadata = kwargs['metadata']
         index_row = metadata['index_row']
-        index_row_num = metadata['index_row_num']
-        import_util.announce_nonrepeating_error(
-            f'Unable to create OPUS_ID for FILE_SPEC "{file_spec}"',
-            index_row_num)
+        import_util.log_nonrepeating_error(
+            f'Unable to create OPUS_ID for FILE_SPEC "{file_spec}"')
         return file_spec
     return opus_id
 
@@ -238,14 +236,13 @@ def populate_obs_type_image_VGISS_greater_pixel_size(**kwargs):
 
 def _wavelength_helper(**kwargs):
     metadata = kwargs['metadata']
-    index_row_num = metadata['index_row_num']
     index_row = metadata['index_row']
     instrument_id = index_row['INSTRUMENT_NAME'][0]
     filter_name = index_row['FILTER_NAME']
 
     if filter_name not in _VGISS_FILTER_WAVELENGTHS:
-        import_util.announce_nonrepeating_error(
-            f'Unknown VGISS filter name "{filter_name}" [line {index_row_num}]')
+        import_util.log_nonrepeating_error(
+            f'Unknown VGISS filter name "{filter_name}"')
         return 0
 
     return _VGISS_FILTER_WAVELENGTHS[filter_name]
@@ -368,7 +365,6 @@ def populate_obs_instrument_VGISS_ert(**kwargs):
 
 def populate_obs_instrument_VGISS_ert_sec(**kwargs):
     metadata = kwargs['metadata']
-    index_row_num = metadata['index_row_num']
     index_row = metadata['index_row']
     start_time = index_row['EARTH_RECEIVED_TIME']
 
@@ -378,9 +374,9 @@ def populate_obs_instrument_VGISS_ert_sec(**kwargs):
     try:
         ert = julian.tai_from_iso(start_time)
     except (ValueError,TypeError):
-        import_util.announce_nonrepeating_error(
+        import_util.log_nonrepeating_error(
             f'"{start_time}" is not a valid date-time format in '+
-            f'instrument_VGISS_ert_sec [line {index_row_num}]')
+            f'instrument_VGISS_ert_sec')
         ert = None
     return ert
 

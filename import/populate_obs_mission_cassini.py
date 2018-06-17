@@ -94,9 +94,7 @@ def helper_cassini_obs_name(**kwargs):
         if supp_index_row is not None:
             obs_id = supp_index_row.get('OBSERVATION_ID', None)
     if obs_id is None:
-        index_row_num = metadata['index_row_num']
-        import_util.announce_nonrepeating_error(
-            'No OBSERVATION_ID found', index_row_num)
+        import_util.log_nonrepeating_error('No OBSERVATION_ID found')
 
     return obs_id
 
@@ -170,12 +168,11 @@ def helper_cassini_planet_id(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     obs_general_row = metadata['obs_general_row']
-    index_row_num = metadata['index_row_num']
     target_name = index_row['TARGET_NAME'].upper()
     if target_name in TARGET_NAME_MAPPING:
         target_name = TARGET_NAME_MAPPING[target_name]
     if target_name not in TARGET_NAME_INFO:
-        import_util.announce_unknown_target_name(target_name, index_row_num)
+        import_util.announce_unknown_target_name(target_name)
         pl = None
     else:
         pl, _ = TARGET_NAME_INFO[target_name]
@@ -357,7 +354,6 @@ def populate_obs_mission_cassini_ert2(**kwargs):
 
 def populate_obs_mission_cassini_ert_sec1(**kwargs):
     metadata = kwargs['metadata']
-    index_row_num = metadata['index_row_num']
     cassini_row = metadata['obs_mission_cassini_row']
     start_time = cassini_row['ert1']
 
@@ -367,15 +363,14 @@ def populate_obs_mission_cassini_ert_sec1(**kwargs):
     try:
         ert = julian.tai_from_iso(start_time)
     except ValueError:
-        import_util.announce_nonrepeating_error(
+        import_util.log_nonrepeating_error(
             f'"{start_time}" is not a valid date-time format in '+
-            f'mission_cassini_ert_sec1 [line {index_row_num}]')
+            f'mission_cassini_ert_sec1')
         ert = None
     return ert
 
 def populate_obs_mission_cassini_ert_sec2(**kwargs):
     metadata = kwargs['metadata']
-    index_row_num = metadata['index_row_num']
     cassini_row = metadata['obs_mission_cassini_row']
     stop_time = cassini_row['ert2']
 
@@ -385,8 +380,8 @@ def populate_obs_mission_cassini_ert_sec2(**kwargs):
     try:
         ert = julian.tai_from_iso(stop_time)
     except ValueError:
-        import_util.announce_nonrepeating_error(
+        import_util.log_nonrepeating_error(
             f'"{stop_time}" is not a valid date-time format in '+
-            f'mission_cassini_ert_sec2 [line {index_row_num}]')
+            f'mission_cassini_ert_sec2')
         ert = None
     return ert

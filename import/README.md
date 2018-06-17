@@ -158,9 +158,8 @@ COVIMS:
       if inst_mod == 'POINT' or inst_mod == 'OCCULTATION':
           return ('POINT', 'Point')
 
-      index_row_num = metadata['index_row_num']
-      import_util.announce_nonrepeating_error(
-          f'Unknown INSTRUMENT_MODE_ID "{inst_mod}"', index_row_num)
+      import_util.log_nonrepeating_error(
+          f'Unknown INSTRUMENT_MODE_ID "{inst_mod}"')
       return ('IMG', 'Image') # XXX
 
   - RA/DEC without ring_geo?

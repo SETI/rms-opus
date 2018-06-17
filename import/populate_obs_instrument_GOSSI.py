@@ -56,10 +56,8 @@ def populate_obs_general_GOSSI_opus_id(**kwargs):
     except:
         metadata = kwargs['metadata']
         index_row = metadata['index_row']
-        index_row_num = metadata['index_row_num']
-        import_util.announce_nonrepeating_error(
-            f'Unable to create OPUS_ID for FILE_SPEC "{file_spec}"',
-            index_row_num)
+        import_util.log_nonrepeating_error(
+            f'Unable to create OPUS_ID for FILE_SPEC "{file_spec}"')
         return file_spec
     return opus_id
 
@@ -246,14 +244,13 @@ def populate_obs_type_image_GOSSI_greater_pixel_size(**kwargs):
 
 def _wavelength_helper(**kwargs):
     metadata = kwargs['metadata']
-    index_row_num = metadata['index_row_num']
     index_row = metadata['index_row']
     instrument_id = index_row['INSTRUMENT_ID']
     filter_name = index_row['FILTER_NAME']
 
     if filter_name not in _GOSSI_FILTER_WAVELENGTHS:
-        import_util.announce_nonrepeating_error(
-            f'Unknown GOSSI filter name "{filter_name}" [line {index_row_num}]')
+        import_util.log_nonrepeating_error(
+            f'Unknown GOSSI filter name "{filter_name}"')
         return 0
 
     return _GOSSI_FILTER_WAVELENGTHS[filter_name]

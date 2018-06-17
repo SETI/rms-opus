@@ -203,11 +203,9 @@ def populate_obs_general_COISS_opus_id(**kwargs):
     except:
         metadata = kwargs['metadata']
         index_row = metadata['index_row']
-        index_row_num = metadata['index_row_num']
-        import_util.announce_nonrepeating_error(
-            f'Unable to create OPUS_ID for FILE_SPEC "{file_spec}"',
-            index_row_num)
-        return file_spec        
+        import_util.log_nonrepeating_error(
+            f'Unable to create OPUS_ID for FILE_SPEC "{file_spec}"')
+        return file_spec
     return opus_id
 
 def populate_obs_general_COISS_inst_host_id(**kwargs):
@@ -364,9 +362,8 @@ def _pixel_size_helper(**kwargs):
         return 512
     if exposure == 'SUM4':
         return 256
-    index_row_num = metadata['index_row_num']
-    import_util.announce_nonrepeating_error(
-        f'Unknown INSTRUMENT_MODE_ID "{exposure}"', index_row_num)
+    import_util.log_nonrepeating_error(
+        f'Unknown INSTRUMENT_MODE_ID "{exposure}"')
     return None
 
 def populate_obs_type_image_COISS_lesser_pixel_size(**kwargs):
@@ -390,12 +387,12 @@ def _COISS_wavelength_helper(inst, filter1, filter2):
     nfilter2 = filter2 if filter2.find('P') == -1 else 'CL2'
     key2 = (inst, nfilter1, nfilter2)
     if key2 in _COISS_FILTER_WAVELENGTHS:
-        import_util.announce_nonrepeating_warning(
+        import_util.log_nonrepeating_warning(
             'Using CLEAR instead of polarized filter for unknown COISS '+
             f'filter combination {key[0]}/{key[1]}/{key[2]}')
         return _COISS_FILTER_WAVELENGTHS[key2]
 
-    import_util.announce_nonrepeating_warning(
+    import_util.log_nonrepeating_warning(
         'Ignoring unknown COISS filter combination '+
         f'{key[0]}/{key[1]}/{key[2]}')
 
@@ -576,7 +573,6 @@ def populate_obs_instrument_COISS_combined_filter(**kwargs):
 def populate_obs_instrument_COISS_image_observation_type(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
-    index_row_num = metadata['index_row_num']
     obs_type = index_row['IMAGE_OBSERVATION_TYPE']
 
     # Sometimes they have both SCIENCE,OPNAV and OPNAV,SCIENCE so normalize
@@ -607,9 +603,8 @@ def populate_obs_instrument_COISS_image_observation_type(**kwargs):
     # If the result isn't the same length as what we started with, we must've
     # encountered a new type we didn't know about
     if len(ret) != len(obs_type.replace('UNK','UNKNOWN')):
-        import_util.announce_nonrepeating_error(
-            f'Unknown format for COISS image_observation_type: "{obs_type}"',
-            index_row_num)
+        import_util.log_nonrepeating_error(
+            f'Unknown format for COISS image_observation_type: "{obs_type}"')
         return None
 
     return ret

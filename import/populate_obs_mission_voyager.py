@@ -21,12 +21,11 @@ def helper_voyager_planet_id(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     obs_general_row = metadata['obs_general_row']
-    index_row_num = metadata['index_row_num']
     target_name = index_row['TARGET_NAME'].upper()
     if target_name in TARGET_NAME_MAPPING:
         target_name = TARGET_NAME_MAPPING[target_name]
     if target_name not in TARGET_NAME_INFO:
-        import_util.announce_unknown_target_name(target_name, index_row_num)
+        import_util.announce_unknown_target_name(target_name)
         pl = None
     else:
         pl, _ = TARGET_NAME_INFO[target_name]
@@ -74,7 +73,6 @@ def populate_obs_mission_voyager_ert(**kwargs):
 
 def populate_obs_mission_voyager_ert_sec(**kwargs):
     metadata = kwargs['metadata']
-    index_row_num = metadata['index_row_num']
     voyager_row = metadata['obs_mission_voyager_row']
     ert_time = voyager_row['ert']
 
@@ -84,8 +82,8 @@ def populate_obs_mission_voyager_ert_sec(**kwargs):
     try:
         ert = julian.tai_from_iso(ert_time)
     except (ValueError,TypeError):
-        import_util.announce_nonrepeating_error(
+        import_util.log_nonrepeating_error(
             f'"{ert_time}" is not a valid date-time format in '+
-            f'mission_voyager_ert_sec [line {index_row_num}]')
+            f'mission_voyager_ert_sec')
         ert = None
     return ert

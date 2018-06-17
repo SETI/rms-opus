@@ -36,10 +36,8 @@ def populate_obs_general_NHMVIC_opus_id(**kwargs):
     except:
         metadata = kwargs['metadata']
         index_row = metadata['index_row']
-        index_row_num = metadata['index_row_num']
-        import_util.announce_nonrepeating_error(
-            f'Unable to create OPUS_ID for FILE_SPEC "{file_spec}"',
-            index_row_num)
+        import_util.log_nonrepeating_error(
+            f'Unable to create OPUS_ID for FILE_SPEC "{file_spec}"')
         return file_spec
     return opus_id
 

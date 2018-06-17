@@ -382,7 +382,7 @@ def update_mult_table(table_name, field_name, table_column, val, label):
             return entry['id']
 
     if 'mult_options' in table_column:
-        import_util.announce_nonrepeating_error(
+        import_util.log_nonrepeating_error(
             f'Attempting to add value "{val}" to preprogrammed mult table '+
             f'"{mult_table_name}"')
         return 0
@@ -508,11 +508,14 @@ def import_one_volume(volume_id):
     impglobals.ANNOUNCED_IMPORT_ERRORS = []
     impglobals.IMPORT_HAS_BAD_DATA = False
     impglobals.MAX_TABLE_ID_CACHE = {}
+    impglobals.CURRENT_VOLUME_ID = volume_id
+    impglobals.CURRENT_INDEX_ROW_NUMBER = None
 
     volume_pdsfile = pdsfile.PdsFile.from_path(volume_id)
     if not volume_pdsfile.is_volume():
         impglobals.LOGGER.log('error', f'{volume_id} is not a volume!')
         impglobals.LOGGER.close()
+        impglobals.CURRENT_VOLUME_ID = None
         return False
 
     volume_id_prefix = volume_id[:volume_id.find('_')]
@@ -573,18 +576,21 @@ def import_one_volume(volume_id):
         impglobals.LOGGER.log('error',
             f'No appropriate label file found: "{volume_id}"')
         impglobals.LOGGER.close()
+        impglobals.CURRENT_VOLUME_ID = None
         return False
 
     if not os.path.exists(volume_label_path):
         impglobals.LOGGER.log('error',
             f'Label file does not exist: "{volume_label_path}"')
         impglobals.LOGGER.close()
+        impglobals.CURRENT_VOLUME_ID = None
         return False
 
     obs_rows, obs_label_dict = import_util.safe_pdstable_read(volume_label_path)
     if not obs_rows:
         impglobals.LOGGER.log('error', f'Read failed: "{volume_label_path}"')
         impglobals.LOGGER.close()
+        impglobals.CURRENT_VOLUME_ID = None
         return False
 
     impglobals.LOGGER.log('info',
@@ -625,6 +631,7 @@ def import_one_volume(volume_id):
                         impglobals.IMPORT_HAS_BAD_DATA = True
                         continue
                     impglobals.LOGGER.close()
+                    impglobals.CURRENT_VOLUME_ID = None
                     return False
                 if 'RING_SUMMARY' in basename.upper():
                     assoc_type = 'ring_geo'
@@ -639,14 +646,19 @@ def import_one_volume(volume_id):
                     for row in assoc_rows:
                         key = None
                         geo_vol = row.get('VOLUME_ID', None)
+                        if geo_vol != volume_id:
+                            import_util.log_nonrepeating_error(
+        f'{assoc_label_path} VOLUME_ID "{geo_vol}" does not match current '+
+        f'import volume "{volume_id}"')
+                            geo_vol = volume_id # XXX FOR NOW BECAUSE OF NH
                         if geo_vol is None:
-                            import_util.announce_nonrepeating_error(
+                            import_util.log_nonrepeating_error(
                                f'{assoc_label_path} is missing VOLUME_ID field')
                             break
                         geo_file_spec = row.get('FILE_SPECIFICATION_NAME',
                                                 None)
                         if geo_file_spec is None:
-                            import_util.announce_nonrepeating_error(
+                            import_util.log_nonrepeating_error(
                 f'{assoc_label_path} is missing FILE_SPECIFICATION_NAME field')
                             break
                         geo_full_file_spec = geo_vol+'/'+geo_file_spec
@@ -656,7 +668,7 @@ def import_one_volume(volume_id):
                                                 geo_full_file_spec)
                         key = geo_pdsfile.opus_id
                         if key is None:
-                            import_util.announce_nonrepeating_error(
+                            import_util.log_nonrepeating_error(
             f'Failed to convert file_spec "{geo_full_file_spec}" to opus_id '+
             f'for {assoc_label_path}')
                             continue
@@ -671,7 +683,7 @@ def import_one_volume(volume_id):
                             ring_obs_id = row.get('RING_OBSERVATION_ID',
                                                   None)
                             if ring_obs_id is None:
-                                import_util.announce_nonrepeating_error(
+                                import_util.log_nonrepeating_error(
                 f'{assoc_label_path} is missing RING_OBSERVATION_ID field')
                                 break
                             if ring_obs_id.endswith('IR'):
@@ -679,7 +691,7 @@ def import_one_volume(volume_id):
                             elif ring_obs_id.endswith('VIS'):
                                 key += '_VIS'
                             else:
-                                import_util.announce_nonrepeating_error(
+                                import_util.log_nonrepeating_error(
                  f'{assoc_label_path} has bad RING_OBSERVATION_ID for '+
                  f'file_spec "{ring_full_file_spec}"')
                     if assoc_type == 'ring_geo':
@@ -695,7 +707,7 @@ def import_one_volume(volume_id):
                         # so we can collect all the target entries in one place.
                         key2 = row.get('TARGET_NAME', None)
                         if key2 is None:
-                            import_util.announce_nonrepeating_error(
+                            import_util.log_nonrepeating_error(
                     f'{assoc_label_path} is missing TARGET_NAME field')
                             break
                         if key not in assoc_dict:
@@ -717,7 +729,7 @@ def import_one_volume(volume_id):
                             key1 = row.get('VOLUME_ID', None)
                             key2 = row.get('FILE_SPECIFICATION_NAME', None)
                             if key1 is None or key2 is None:
-                                import_util.announce_nonrepeating_error(
+                                import_util.log_nonrepeating_error(
                         f'{assoc_label_path} is missing VOLUME_ID or '+
                          'FILE_SPECIFICATION_NAME fields')
                                 break
@@ -735,7 +747,7 @@ def import_one_volume(volume_id):
                         for row in assoc_rows:
                             key = row.get('FILE_SPECIFICATION_NAME', None)
                             if key is None:
-                                import_util.announce_nonrepeating_error(
+                                import_util.log_nonrepeating_error(
                 f'{assoc_label_path} is missing FILE_SPECIFICATION_NAME field')
                                 break
                             assoc_dict[key] = row
@@ -752,7 +764,7 @@ def import_one_volume(volume_id):
                             key = row.get('FILE_SPECIFICATION_NAME', None)
                             key = key.upper()
                             if key is None:
-                                import_util.announce_nonrepeating_error(
+                                import_util.log_nonrepeating_error(
                 f'{assoc_label_path} is missing FILE_SPECIFICATION_NAME field')
                                 break
                             assoc_dict[key] = row
@@ -809,6 +821,7 @@ def import_one_volume(volume_id):
         metadata['index_row'] = index_row
         metadata['index_row_num'] = index_row_num+1
         obs_general_row = None
+        impglobals.CURRENT_INDEX_ROW_NUMBER = index_row_num+1
 
         if 'supp_index' in metadata and instrument_name == 'COUVIS':
             # Match up the FILENAME with the key we generated earlier
@@ -817,9 +830,8 @@ def import_one_volume(volume_id):
             if couvis_filename in supp_index:
                 metadata['supp_index_row'] = supp_index[couvis_filename]
             else:
-                import_util.announce_nonrepeating_error(
-                    f'File "{couvis_filename}" is missing supplemental data',
-                    index_row_num)
+                import_util.log_nonrepeating_error(
+                    f'File "{couvis_filename}" is missing supplemental data')
                 metadata['supp_index_row'] = None
                 continue # We don't process entries without supp_index
         elif 'supp_index' in metadata and instrument_name == 'VGISS':
@@ -829,9 +841,8 @@ def import_one_volume(volume_id):
             if filename in supp_index:
                 metadata['supp_index_row'] = supp_index[filename]
             else:
-                import_util.announce_nonrepeating_error(
-                    f'File "{filename}" is missing supplemental data',
-                    index_row_num)
+                import_util.log_nonrepeating_error(
+                    f'File "{filename}" is missing supplemental data')
                 metadata['supp_index_row'] = None
                 continue # We don't process entries without supp_index
         elif ('supp_index' in metadata and
@@ -845,9 +856,8 @@ def import_one_volume(volume_id):
             if file_spec_name in supp_index:
                 metadata['supp_index_row'] = supp_index[file_spec_name]
             else:
-                import_util.announce_nonrepeating_error(
-                    f'File "{file_spec_name}" is missing supplemental data',
-                    index_row_num)
+                import_util.log_nonrepeating_error(
+                    f'File "{file_spec_name}" is missing supplemental data')
                 metadata['supp_index_row'] = None
                 continue # We don't process entries without supp_index
 
@@ -983,6 +993,8 @@ def import_one_volume(volume_id):
                     table_rows[new_table_name])
 
     impglobals.LOGGER.close()
+    impglobals.CURRENT_VOLUME_ID = None
+    impglobals.CURRENT_INDEX_ROW_NUMBER = None
     return True # SUCCESS!
 
 
@@ -994,7 +1006,6 @@ def import_observation_table(volume_id,
                              metadata):
     "Import the data from a row from a PDS file into a single table."
     index_row = metadata['index_row']
-    index_row_num = metadata['index_row_num']
     new_row = {}
 
     # So it can be accessed by populate_*
@@ -1030,7 +1041,7 @@ def import_observation_table(volume_id,
 
         data_source_tuple = table_column.get('data_source', None)
         if not data_source_tuple:
-            import_util.announce_nonrepeating_warning(
+            import_util.log_nonrepeating_warning(
                 f'No data source for column "{field_name}" in table '+
                 f'"{table_name}"')
             column_val = None
@@ -1058,7 +1069,7 @@ def import_observation_table(volume_id,
                     if data_source_cmd_param != 'ring_geo':
                         # If we don't have ring_geo for this volume, don't
                         # bitch about it because we already did earlier.
-                        import_util.announce_nonrepeating_error(
+                        import_util.log_nonrepeating_error(
                     f'Unknown internal metadata name "{data_source_cmd_param}"'+
                     f' while processing column "{field_name}" in '+
                     f'table "{table_name}"')
@@ -1067,7 +1078,7 @@ def import_observation_table(volume_id,
                     ref_index_row = metadata[data_source_cmd_param+'_row']
                 if ref_index_row is not None:
                     if data_source_val not in ref_index_row:
-                        import_util.announce_nonrepeating_error(
+                        import_util.log_nonrepeating_error(
                             f'Unknown referenced column "{data_source_val}" '+
                             f'while processing column "{field_name}" in '+
                             f'table "{table_name}"')
@@ -1082,7 +1093,7 @@ def import_observation_table(volume_id,
                     if data_source_cmd_param != 'ring_geo':
                         # If we don't have ring_geo for this volume, don't
                         # bitch about it because we already did earlier.
-                        import_util.announce_nonrepeating_error(
+                        import_util.log_nonrepeating_error(
                     f'Unknown internal metadata name "{ref_index_name}"'+
                     f' while processing column "{field_name}" in '+
                     f'table "{table_name}"')
@@ -1090,13 +1101,13 @@ def import_observation_table(volume_id,
                 else:
                     ref_index_row = metadata[ref_index_name+'_row']
                 if data_source_val not in ref_index_row:
-                    import_util.announce_nonrepeating_error(
+                    import_util.log_nonrepeating_error(
                         f'Unknown PDS column "{data_source_val}" while '+
                         f'processing table "{table_name}"')
                     continue
                 if (array_index < 0 or
                     array_index >= len(ref_index_row[data_source_val])):
-                    import_util.announce_nonrepeating_error(
+                    import_util.log_nonrepeating_error(
                         f'Bad array index "{array_index}" for column '+
                         f'"{field_name}" in table "{table_name}"')
                     continue
@@ -1127,7 +1138,7 @@ def import_observation_table(volume_id,
                 column_val = impglobals.MAX_TABLE_ID_CACHE[table_name]
 
             else:
-                import_util.announce_nonrepeating_error(
+                import_util.log_nonrepeating_error(
                     f'Unknown data_source type "{data_source_cmd}" for'+
                     f'"{field_name}" in table "{table_name}"')
                 continue
@@ -1137,9 +1148,9 @@ def import_observation_table(volume_id,
         if column_val is None:
             notnull = table_column.get('field_notnull', False)
             if notnull:
-                import_util.announce_nonrepeating_error(
+                import_util.log_nonrepeating_error(
                     f'Column "{field_name}" in table "{table_name}" '+
-                    f'has NULL value but NOT NULL is set', index_row_num)
+                    f'has NULL value but NOT NULL is set')
         else:
             if field_type.startswith('flag'):
                 if column_val in [0, 'n', 'N', 'no', 'No', 'NO', 'off', 'OFF']:
@@ -1156,24 +1167,24 @@ def import_observation_table(volume_id,
                 elif column_val in ['N/A', 'UNK', 'NULL']:
                     column_val = None
                 else:
-                    import_util.announce_nonrepeating_error(
+                    import_util.log_nonrepeating_error(
                         f'Column "{field_name}" in table "{table_name}" '+
                         f'has FLAG type but value "{column_val}" is not '+
-                        f'a valid flag value', index_row_num)
+                        f'a valid flag value')
                     column_val = None
             if field_type.startswith('char'):
                 field_size = int(field_type[4:])
                 if not isinstance(column_val, str):
-                    import_util.announce_nonrepeating_error(
+                    import_util.log_nonrepeating_error(
                         f'Column "{field_name}" in table "{table_name}" '+
                         f'has CHAR type but value "{column_val}" is of '+
-                        f'type "{type(column_val)}"', index_row_num)
+                        f'type "{type(column_val)}"')
                     column_val = ''
                 elif len(column_val) > field_size:
-                    import_util.announce_nonrepeating_error(
+                    import_util.log_nonrepeating_error(
                         f'Column "{field_name}" in table "{table_name}" '+
                         f'has CHAR size {field_size} but value '+
-                        f'"{column_val}" is too long', index_row_num)
+                        f'"{column_val}" is too long')
                     column_val = column_val[:field_size]
             elif (field_type.startswith('real') or
                   field_type.startswith('int') or
@@ -1183,19 +1194,19 @@ def import_observation_table(volume_id,
                     try:
                         the_val = float(column_val)
                     except ValueError:
-                        import_util.announce_nonrepeating_error(
+                        import_util.log_nonrepeating_error(
                             f'Column "{field_name}" in table '+
                             f'"{table_name}" has REAL type but '+
-                            f'"{column_val}" is not a float ', index_row_num)
+                            f'"{column_val}" is not a float')
                         column_val = None
                 else:
                     try:
                         the_val = int(column_val)
                     except ValueError:
-                        import_util.announce_nonrepeating_error(
+                        import_util.log_nonrepeating_error(
                             f'Column "{field_name}" in table '+
                             f'"{table_name}" has INT type but '+
-                            f'"{column_val}" is not an int', index_row_num)
+                            f'"{column_val}" is not an int')
                         column_val = None
                 if column_val is not None and the_val is not None:
                     val_sentinel = table_column.get('val_sentinel', None)
@@ -1203,7 +1214,7 @@ def import_observation_table(volume_id,
                         val_sentinel = [val_sentinel]
                     if the_val in val_sentinel:
                         column_val = None
-                        import_util.announce_nonrepeating_error(
+                        import_util.log_nonrepeating_error(
                             f'Caught sentinel value {the_val} for column '+
                             f'"{field_name}" that was missed'+
                             f' by the PDS label!')
@@ -1223,8 +1234,7 @@ def import_observation_table(volume_id,
                             msg = (f'Column "{field_name}" in table '+
                                    f'"{table_name}" has minimum value '+
                                    f'{val_min} but {column_val} is too small')
-                            import_util.announce_nonrepeating_error(msg,
-                                                                index_row_num)
+                            import_util.log_nonrepeating_error(msg)
                         column_val = None
                     if val_max is not None and the_val > val_max:
                         if val_use_null:
@@ -1237,8 +1247,7 @@ def import_observation_table(volume_id,
                             msg = (f'Column "{field_name}" in table '+
                                    f'"{table_name}" has maximum value '+
                                    f'{val_max} but {column_val} is too large')
-                            import_util.announce_nonrepeating_error(msg,
-                                                                index_row_num)
+                            import_util.log_nonrepeating_error(msg)
                         column_val = None
 
         new_row[field_name] = column_val
@@ -1293,7 +1302,7 @@ def import_run_field_function(func_name_suffix, volume_id,
     func_name = func_name.replace('<INST>', instrument_name)
     func_name = func_name.replace('<MISSION>', mission_abbrev)
     if func_name not in globals():
-        import_util.announce_nonrepeating_error(
+        import_util.log_nonrepeating_error(
             f'Unknown table populate function "{func_name}" for '+
             f'"{field_name}" in table "{table_name}"')
         return None

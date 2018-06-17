@@ -29,12 +29,11 @@ def helper_new_horizons_target_name(**kwargs):
 def helper_new_horizons_planet_id(**kwargs):
     metadata = kwargs['metadata']
     supp_index_row = metadata['supp_index_row']
-    index_row_num = metadata['index_row_num']
     target_name = supp_index_row['TARGET_NAME'].upper()
     if target_name in TARGET_NAME_MAPPING:
         target_name = TARGET_NAME_MAPPING[target_name]
     if target_name not in TARGET_NAME_INFO:
-        import_util.announce_unknown_target_name(target_name, index_row_num)
+        import_util.announce_unknown_target_name(target_name)
         pl = None
     else:
         pl, _ = TARGET_NAME_INFO[target_name]

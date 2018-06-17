@@ -85,7 +85,6 @@ def safe_pdstable_read(filename):
         if re.fullmatch(set_search, filename.upper()):
             replacements = set_replacements
             break
-    print(replacements)
     try:
         if preprocess_label_func is None:
             table = pdstable.PdsTable(filename, replacements=replacements,
@@ -132,7 +131,7 @@ def safe_column(row, column_name, idx=None):
     if row[column_name+'_mask'][idx]:
         return None
     return row[column_name][idx]
-    
+
 ################################################################################
 # TABLE MANIPULATION
 ################################################################################
@@ -201,32 +200,37 @@ def find_max_table_id(table_name):
 # ANNOUNCE ERRORS BUT LET IMPORT CONTINUE
 ################################################################################
 
-def announce_nonrepeating_error(msg, index_row_num=None):
-    if index_row_num is not None:
-        msg += f' [line {index_row_num}]'
-    short_msg = msg
-    if msg.find(' [line') != -1:
-        short_msg = short_msg[:msg.find(' [line')]
-    if short_msg not in impglobals.ANNOUNCED_IMPORT_ERRORS:
-        impglobals.ANNOUNCED_IMPORT_ERRORS.append(short_msg)
-        impglobals.LOGGER.log('error', msg)
+def _format_vol_line():
+    ret = ''
+    if impglobals.CURRENT_VOLUME_ID is not None:
+        ret = impglobals.CURRENT_VOLUME_ID
+        if impglobals.CURRENT_INDEX_ROW_NUMBER is not None:
+            ret += ' index row '+str(impglobals.CURRENT_INDEX_ROW_NUMBER)
+    if ret != '':
+        ret = '[' + ret + '] '
+    return ret
+
+def log_error(msg, *args):
+    impglobals.LOGGER.log('error', _format_vol_line()+msg, *args)
+    impglobals.IMPORT_HAS_BAD_DATA = True
+
+def log_warning(msg, *args):
+    impglobals.LOGGER.log('warning', _format_vol_line()+msg, *args)
+
+def log_debug(msg, *args):
+    impglobals.LOGGER.log('debug', _format_vol_line()+msg, *args)
+
+def log_nonrepeating_error(msg):
+    if msg not in impglobals.LOGGED_IMPORT_ERRORS:
+        impglobals.LOGGED_IMPORT_ERRORS.append(msg)
+        impglobals.LOGGER.log('error', _format_vol_line()+msg)
         impglobals.IMPORT_HAS_BAD_DATA = True
 
-def announce_nonrepeating_warning(msg, index_row_num=None):
-    if index_row_num is not None:
-        msg += f' [line {index_row_num}]'
-    short_msg = msg
-    if msg.find(' [line') != -1:
-        short_msg = short_msg[:msg.find(' [line')]
-    if short_msg not in impglobals.ANNOUNCED_IMPORT_WARNINGS:
-        impglobals.ANNOUNCED_IMPORT_WARNINGS.append(short_msg)
-        impglobals.LOGGER.log('warning', msg)
+def log_nonrepeating_warning(msg):
+    if msg not in impglobals.LOGGED_IMPORT_WARNINGS:
+        impglobals.LOGGED_IMPORT_WARNINGS.append(msg)
+        impglobals.LOGGER.log('warning', _format_vol_line()+msg)
 
-def announce_unknown_target_name(target_name, index_row_num=None):
+def announce_unknown_target_name(target_name):
     msg = f'Unknown TARGET_NAME "{target_name}" - edit config_data.py'
-    if index_row_num is not None:
-        msg += f' [line {index_row_num}]'
-    announce_nonrepeating_error(msg)
-
-def announce_no_data_source_for_column(table_name, column_name):
-    announce_nonrepeating_error(msg)
+    log_nonrepeating_error(_format_vol_line()+msg)
