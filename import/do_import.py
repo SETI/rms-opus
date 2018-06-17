@@ -635,42 +635,39 @@ def import_one_volume(volume_id):
                 impglobals.LOGGER.log('info',
         f'{assoc_type.upper()}: {len(assoc_rows)} in {assoc_label_path}')
                 assoc_dict = metadata.get(assoc_type, {})
-                if assoc_type == 'ring_geo':
-                    # RING_GEO is easy - there is at most a single entry
-                    # per observation, so we just create a dictionary keyed
-                    # by opus_id.
-                    # We have to manufacture the opus_id from scratch because
-                    # it isn't already stored in the ring geo table.
+                if assoc_type == 'ring_geo' or assoc_type == 'body_surface_geo':
                     for row in assoc_rows:
                         key = None
-                        ring_vol = row.get('VOLUME_ID', None)
-                        if ring_vol is None:
+                        geo_vol = row.get('VOLUME_ID', None)
+                        if geo_vol is None:
                             import_util.announce_nonrepeating_error(
                                f'{assoc_label_path} is missing VOLUME_ID field')
                             break
-                        ring_file_spec = row.get('FILE_SPECIFICATION_NAME',
-                                                 None)
-                        if ring_file_spec is None:
+                        geo_file_spec = row.get('FILE_SPECIFICATION_NAME',
+                                                None)
+                        if geo_file_spec is None:
                             import_util.announce_nonrepeating_error(
                 f'{assoc_label_path} is missing FILE_SPECIFICATION_NAME field')
                             break
-                        ring_full_file_spec = ring_vol+'/'+ring_file_spec
-                        ring_pdsfile = pdsfile.PdsFile.from_filespec(
-                                                ring_full_file_spec)
-                        key = ring_pdsfile.opus_id
+                        geo_full_file_spec = geo_vol+'/'+geo_file_spec
+                        if geo_vol.startswith('COUVIS'): # XXX COUVIS_0058/9
+                            geo_full_file_spec = geo_full_file_spec.upper()
+                        geo_pdsfile = pdsfile.PdsFile.from_filespec(
+                                                geo_full_file_spec)
+                        key = geo_pdsfile.opus_id
                         if key is None:
                             import_util.announce_nonrepeating_error(
-            f'Failed to convert file_spec "{ring_full_file_spec}" to opus_id '+
+            f'Failed to convert file_spec "{geo_full_file_spec}" to opus_id '+
             f'for {assoc_label_path}')
                             continue
-                        # WARNING: HACK FOR VIMS
-                        # The current VIMS ring_geo table has entries
+                        # WARNING: HACK FOR VIMS XXX
+                        # The current VIMS geo tables have entries
                         # for VIS and IR but the only way to distinguish
                         # between them is to look at the deprecated
                         # RING_OBSERVATION_ID. When Mark fixes this,
                         # there will be a sub-instrument column of some
                         # kind to use instead.
-                        if ring_vol.startswith('COVIMS'):
+                        if geo_vol.startswith('COVIMS'):
                             ring_obs_id = row.get('RING_OBSERVATION_ID',
                                                   None)
                             if ring_obs_id is None:
@@ -685,68 +682,25 @@ def import_one_volume(volume_id):
                                 import_util.announce_nonrepeating_error(
                  f'{assoc_label_path} has bad RING_OBSERVATION_ID for '+
                  f'file_spec "{ring_full_file_spec}"')
+                    if assoc_type == 'ring_geo':
+                        # RING_GEO is easy - there is at most a single entry
+                        # per observation, so we just create a dictionary
+                        # keyed by opus_id.
                         assoc_dict[key] = row
-                elif assoc_type == 'body_surface_geo':
-                    # SURFACE_GEO is more complicated, because there can be
-                    # more than one entry per observation, since there is one
-                    # for each target. We create a dictionary keyed by
-                    # opus_id containing a dictionary keyed by target name so
-                    # we can collect all the target entries in one place.
-                    # We have to manufacture the opus_id from scratch because
-                    # it isn't already stored in the surface geo table.
-                    for row in assoc_rows:
-                        key1 = None
-                        key2 = None
-                        sfc_vol = row.get('VOLUME_ID', None)
-                        if sfc_vol is None:
+                    elif assoc_type == 'body_surface_geo':
+                        # SURFACE_GEO is more complicated, because there can be
+                        # more than one entry per observation, since there is
+                        # one for each target. We create a dictionary keyed by
+                        # opus_id containing a dictionary keyed by target name
+                        # so we can collect all the target entries in one place.
+                        key2 = row.get('TARGET_NAME', None)
+                        if key2 is None:
                             import_util.announce_nonrepeating_error(
-                f'{assoc_label_path} is missing VOLUME_ID field')
+                    f'{assoc_label_path} is missing TARGET_NAME field')
                             break
-                        sfc_file_spec = row.get('FILE_SPECIFICATION_NAME',
-                                                None)
-                        if sfc_file_spec is None:
-                            import_util.announce_nonrepeating_error(
-                f'{assoc_label_path} is missing FILE_SPECIFICATION_NAME field')
-                            break
-                        sfc_full_file_spec = sfc_vol+'/'+sfc_file_spec
-                        sfc_pdsfile = pdsfile.PdsFile.from_filespec(
-                                                sfc_full_file_spec)
-                        key1 = sfc_pdsfile.opus_id
-                        if key1 is None:
-                            import_util.announce_nonrepeating_error(
-        f'Failed to convert file_spec "{sfc_full_file_spec}" to opus_id '+
-        f'for {assoc_label_path}')
-                            continue
-                        # WARNING: HACK FOR VIMS
-                        # The current VIMS moon_geo table has entries
-                        # for VIS and IR but the only way to distinguish
-                        # between them is to look at the deprecated
-                        # RING_OBSERVATION_ID. When Mark fixes this,
-                        # there will be a sub-instrument column of some
-                        # kind to use instead.
-                        if sfc_vol.startswith('COVIMS'):
-                            sfc_obs_id = row.get('RING_OBSERVATION_ID',
-                                                 None)
-                            if sfc_obs_id is None:
-                                import_util.announce_nonrepeating_error(
-                f'{assoc_label_path} is missing RING_OBSERVATION_ID field')
-                                break
-                            if sfc_obs_id.endswith('IR'):
-                                key += '_IR'
-                            elif sfc_obs_id.endswith('VIS'):
-                                key += '_VIS'
-                            else:
-                                import_util.announce_nonrepeating_error(
-                        f'{assoc_label_path} has bad RING_OBSERVATION_ID for '+
-                        f'file_spec "{sfc_full_file_spec}"')
-                    key2 = row.get('TARGET_NAME', None)
-                    if key2 is None:
-                        import_util.announce_nonrepeating_error(
-                    f'{assoc_label_path} is missing TARGET_NAME fields')
-                        break
-                    if key1 not in assoc_dict:
-                        assoc_dict[key1] = {}
-                    assoc_dict[key1][key2] = row
+                        if key not in assoc_dict:
+                            assoc_dict[key] = {}
+                        assoc_dict[key][key2] = row
                 else:
                     assert assoc_type == 'supp_index'
                     if instrument_name == 'COUVIS':
