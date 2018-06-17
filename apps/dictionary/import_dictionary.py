@@ -4,11 +4,12 @@ import sys
 
 import json
 import MySQLdb
-import pdsparser
 
 from secrets import *
 
 sys.path.append(PDS_TOOLS_PATH)
+
+import pdsparser
 
 ERR_UNKNOWN_DATABASE = 1049
 ERR_UNKNOWN_TABLE = 1051
