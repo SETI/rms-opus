@@ -24,9 +24,9 @@ from search.forms import SearchForm
 from metadata.views import *
 from paraminfo.models import *
 from dictionary.models import *
-from results.views import *
 from django.views.generic import TemplateView
 from metrics.views import update_metrics
+from results.views import get_triggered_tables
 
 # guide only
 import json

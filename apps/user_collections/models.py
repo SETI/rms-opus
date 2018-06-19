@@ -2,15 +2,14 @@
 
 from django.db import models
 
-# stores all user collection data?
-class UserCollectionsTemplate(models.Model):
-    opus_id = models.CharField(max_length=40)
-    collection_meta=models.ForeignKey("UserCollectionsMeta")
+class CollectionTable(models.Model):
+    opus_id = models.CharField(max_length=60)
+    session_id = models.CharField(primary_key=True, max_length=32)
 
-class UserCollectionsMeta(models.Model):
-    session_id =  models.CharField(max_length=32, blank=True, null=True)
-    product_types = models.TextField(blank=True,null=True)
-    extra_products = models.TextField(blank=True,null=True) # like browse images
-    timestamp = models.DateTimeField(auto_now=True)
+    class Meta:
+        managed = False
+        db_table = 'collection_table'
 
-    # last_save = DateField.auto_now_add
+    def save(self, *args, **kwargs):
+        #check if thing to be saved exists, replace into instead ... or something()
+        super(CollectionTable, self).save(*args, **kwargs) # Call the "real" save() method.

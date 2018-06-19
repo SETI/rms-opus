@@ -9,29 +9,6 @@ from __future__ import unicode_literals
 
 from django.db import models
 
-
-class ZZDjangoMigrations(models.Model):
-    app = models.CharField(max_length=255)
-    name = models.CharField(max_length=255)
-    applied = models.DateTimeField()
-
-    class Meta:
-        managed = False
-        db_table = 'django_migrations'
-
-
-class ZZGroupingTargetName(models.Model):
-    value = models.CharField(max_length=100, blank=True, null=True)
-    label = models.CharField(max_length=30, blank=True, null=True)
-    disp_order = models.IntegerField()
-    display = models.CharField(max_length=1)
-    timestamp = models.DateTimeField()
-
-    class Meta:
-        managed = False
-        db_table = 'grouping_target_name'
-
-
 class MultObsGeneralInstHostId(models.Model):
     id = models.IntegerField(primary_key=True)
     value = models.CharField(max_length=100, blank=True, null=True)

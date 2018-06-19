@@ -2,8 +2,11 @@
 #
 #   results.views
 #
+#    gallery and details pages
+#       page numbers, pictures, details, triggered tables, etc
+#
 ################################################
-import settings
+#import settings
 import json
 import csv
 from django.template import loader, Context
@@ -15,13 +18,15 @@ from django.apps import apps
 from django.core.exceptions import FieldError
 from search.views import *
 from search.models import *
-from results.models import *
 from paraminfo.models import *
 from metadata.views import *
 from user_collections.views import *
 from tools.app_utils import *
 from metrics.views import update_metrics
 from django.views.decorators.cache import never_cache
+
+from tools.pdsfilestubs import *   # temp!!
+import pdsfile
 
 import logging
 log = logging.getLogger(__name__)
@@ -86,7 +91,7 @@ def category_list_http_endpoint(request):
     return HttpResponse(json.dumps([ob for ob in labels]), content_type="application/json")
 
 
-def getData(request,fmt):
+def get_data(request,fmt):
     update_metrics(request)
     """
     return sa page of data for a given search and page_no like so:
@@ -405,7 +410,7 @@ def get_triggered_tables(selections, extras=None):
 # this should return an image for every row..
 
 @never_cache
-def getImages(request,size,fmt):
+def get_images(request,size,fmt):
     update_metrics(request)
     """
     this returns rows from images table that correspond to request
@@ -424,39 +429,14 @@ def getImages(request,size,fmt):
     try:
         [page_no, limit, page, page_ids, order] = getPage(request)
     except TypeError:  # getPage returns False
+        log.error("404 error")
         raise Http404('could not find page')
 
-    image_links = Image.objects.filter(opus_id__in=page_ids)
+    image_links = get_image_links(page_ids)
+    log.error(image_links[0])
 
     if not image_links:
-        log.error('GetImage: No image found for: %s', str(page_ids[:50]))
-
-    # page_ids
-    if alt_size:
-        image_links = image_links.values('opus_id',size,alt_size)
-    else:
-        image_links = image_links.values('opus_id',size)
-
-    # add the base_path to each image
-    all_sizes = ['small','thumb','med','full']
-    for k, im in enumerate(image_links):
-        for s in all_sizes:
-            if s in im:
-                image_links[k][s] = get_base_path_previews(im['opus_id']) + im[s]
-
-    # to preserve the order of page_ids as lamely as possible :P
-    ordered_image_links = []
-    for opus_id in page_ids:
-        found = False
-        for link in image_links:
-            if opus_id == link['opus_id']:
-                found = True
-                ordered_image_links.append(link)
-        if not found:
-            # return the thumbnail not found link
-            ordered_image_links.append({size:settings.THUMBNAIL_NOT_FOUND, 'opus_id':opus_id})
-
-    image_links = ordered_image_links
+        log.error('get_images: No image found for: %s', str(page_ids[:50]))
 
     collection_members = get_collection_in_page(page, session_id)
 
@@ -473,10 +453,10 @@ def getImages(request,size,fmt):
             from user_collections.views import *
             if image['opus_id'] in collection_members:
                 image['in_collection'] = True
-
     if (request.is_ajax()):
         template = 'gallery.html'
     else: template = 'image_list.html'
+    log.error("template: %s", template)
 
     # image_links
     return responseFormats({'data':[i for i in image_links]},fmt, size=size, alt_size=alt_size, columns_str=columns.split(','), template=template, order=order)
@@ -497,25 +477,27 @@ def get_base_path_previews(opus_id):
     return base_path
 
 
-def getImage(request,size='med', opus_id='',fmt='mouse'):      # mouse?
+def get_image(request, opus_id, size='med'):
     """
     size = thumb, small, med, full
     return opus_id + ' ' + size
 
-    return HttpResponse(img + "<br>" + opus_id + ' ' + size +' '+ fmt)
+    return HttpResponse(img + "<br>" + opus_id + ' ' + size )
     """
     update_metrics(request)
+
     try:
+        pdsf = pdsfile.PdsFile.from_opus_id(opus_id)
         img = Image.objects.filter(opus_id=opus_id).values(size)[0][size]
     except IndexError:
-        log.error('getImage: IndexError - Could not find opus_id %s, size %s', str(opus_id), str(size))
+        log.error('get_image: IndexError - Could not find opus_id %s, size %s', str(opus_id), str(size))
         return
 
     path = settings.IMAGE_HTTP_PATH + get_base_path_previews(opus_id)
     if 'CIRS' in opus_id:
         path = path.replace('previews','diagrams')
 
-    return responseFormats({'data':[{'img':img, 'path':path}]}, fmt, size=size, path=path, template='image_list.html')
+    return responseFormats({'data':[{'img':img, 'path':path}]}, size=size, path=path, template='image_list.html')
 
 def file_name_cleanup(base_file):
     base_file = base_file.replace('.','/')
@@ -530,14 +512,11 @@ def file_name_cleanup(base_file):
 
 # loc_type = path or url
 # you broke this see http://127.0.0.1:8000/opus/api/files.json?&target=pan
-def getFilesAPI(request, opus_id=None, fmt=None, loc_type=None):
+def get_files_API(request, opus_id=None, fmt='raw', loc_type='url', session_id=None):
 
     if not opus_id:
         opus_id = ''
-    if not fmt:
-        fmt = 'raw'  # the format this function returns
-    if not loc_type:
-        loc_type = 'url'
+        session_id = request.session.session_key
 
     update_metrics(request)
 
@@ -562,36 +541,25 @@ def getFilesAPI(request, opus_id=None, fmt=None, loc_type=None):
 
         # no opus_id passed, get files from search results
         (selections,extras) = urlToSearchParams(request.GET)
-        page  = getData(request,'raw')['page']
+        page  = get_data(request,'raw')['page']
         if not len(page):
             return False
         opus_id = [p[0] for p in page]
 
-    return getFiles(opus_id=opus_id, fmt=fmt, loc_type=loc_type, product_types=product_types, previews=previews)
+    return get_files(opus_id=opus_id, fmt=fmt, loc_type=loc_type, product_types=product_types, previews=previews, session_id=session_id)
 
 
 # loc_type = path or url
-def getFiles(opus_id=None, fmt=None, loc_type=None, product_types=None, previews=None, collection=None, session_id=None):
+def get_files(opus_id=None, fmt='raw', loc_type='url', product_types=['all'], previews=['all'], collection=False, session_id=None):
     """
     returns list of all files by opus_id
     opus_id can be string or list
     can also return preview files too
     """
-    if collection and not session_id:
-        log.error("getFiles: Needs session_id in kwargs to access collection")
-        return False
 
-    # handle passed params
-    if not fmt:
-        fmt = 'raw'
-    if not loc_type:
-        loc_type = 'url'
-    if not product_types:
-        product_types = ['all']  # if types or previews aren't filtered then return them alls
-    if not previews:
-        previews = ['all']
-    if not collection:
-        collection = False
+    if collection and not session_id:
+        log.error("get_files: Needs session_id in kwargs to access collection")
+        return False
 
     # apparently you can also pass in a string if you are so inclined *sigh*
     if type(product_types).__name__ != 'list':
@@ -615,11 +583,9 @@ def getFiles(opus_id=None, fmt=None, loc_type=None, product_types=None, previews
 
     elif collection:
         # no opus_id, this must be for a colletion
-        colls_table_name = get_collection_table(session_id)
-
-        where   = "files.opus_id = " + connection.ops.quote_name(colls_table_name) + ".opus_id"
+        opus_ids = CollectionTable.objects.filter(session_id__in=session_id)
     else:
-        log.error('getFiles: No opus_ids or collection specified')
+        log.error('get_files: No opus_ids or collection specified')
         return False
 
     # you can ask this function for url paths or disk paths
@@ -628,19 +594,13 @@ def getFiles(opus_id=None, fmt=None, loc_type=None, product_types=None, previews
     else:
         path = settings.FILE_PATH
 
-    # start building up the query of the Files model
-    files_table_rows = Files.objects
-
-    if collection:
-        files_table_rows = files_table_rows.extra(where=[where], tables=[colls_table_name])
-    else:
-        files_table_rows = files_table_rows.filter(opus_id__in=opus_ids)
+    #pdsf = pdsfile.PdsFile.from_opus_id(opus_ids)
 
     if product_types != ['all'] and product_types != ['none']:
         files_table_rows = files_table_rows.filter(product_type__in=product_types)
 
     if not files_table_rows:
-        log.error('getFiles: No rows returned in file table')
+        log.error('get_files: No rows returned in file table')
         log.error('.. WHERE: %s', str(where))
         log.error('.. First 5 opus_id: %s', str(opus_id[:5]))
 
@@ -662,7 +622,7 @@ def getFiles(opus_id=None, fmt=None, loc_type=None, product_types=None, previews
         if len(previews):
             file_names[opus_id]['preview_image'] = []
             for size in previews:
-                url_info = getImage(False, size.lower(), opus_id,'raw')
+                url_info = get_image(False, opus_id, size.lower(), 'raw')
                 if not url_info:
                     continue  # no image found for this observation so let's skip it
                 url = url_info['data'][0]['img']
@@ -816,7 +776,10 @@ def getPage(request, colls=None, colls_page=None, page=None):
         if not page:
             page_no = request.GET.get('page',1)
             if page_no != 'all':
-                page_no = int(page_no)
+                try:
+                    page_no = int(page_no)
+                except:
+                    page_no = 1
         else:
             page_no == page
 
@@ -877,7 +840,7 @@ def getPage(request, colls=None, colls_page=None, page=None):
     column_values = []
     for param_name in columns:
         table_name = param_name.split('.')[0]
-        if table_name == 'obs_general':
+        if table_name == 'obs_general' or table_name == 'obs_pds':
             column_values.append(param_name.split('.')[1])
         else:
             column_values.append(param_name.split('.')[0].lower().replace('_','') + '__' + param_name.split('.')[1])

@@ -1,34 +1,127 @@
 ################################################
 #
 #   user_collections.views
+#   django adds/removes opus_ids from the current collection
+#   note to self: add time added to collectionTable for timeout
 #
 ################################################ import settings
 import settings
 import json
 from django.http import HttpResponse, Http404
 from django.template import RequestContext
-from tools.app_utils import *
-from results.views import *
-from downloads.views import *
-from metrics.views import update_metrics
 from django.views.decorators.cache import never_cache
 from django.db import connection, DatabaseError
 from django.shortcuts import render
+from hurry.filesize import size as nice_file_size
+
+from tools.app_utils import *
+from user_collections.models import *
+from paraminfo.models import ParamInfo
+from search.models import ObsGeneral
+from metrics.views import update_metrics
+
+from tools.pdsfilestubs import *
+import pdsfile
 
 import logging
 log = logging.getLogger(__name__)
 
+#################
+def get_args(request,**kwargs):
+    """
+    # Parse out the args from the slug.
+        (action, opus_id, request_no, expected_request_no)
+
+    """
+
+    # collection and action are part of the url conf so you won't get in without one
+    try:
+        action = kwargs['action']
+    except KeyError:
+        msg = 'Page not found'
+        return msg
+
+    opus_id = request.GET.get('opus_id', False)
+    request_no = request.GET.get('request', False)
+    addrange = request.GET.get('addrange',False)
+
+    if not opus_id and action != 'addall':
+        try:
+            opus_id = kwargs['opus_id']
+        except KeyError:
+            if addrange:
+                opus_id = addrange
+            else:
+                msg = "No Observations specified"
+                return msg
+
+    if not request_no:
+        try:
+            request_no = kwargs['request_no']
+        except KeyError:
+            msg = 'no request number received'
+            return msg
+
+    request_no = int(request_no)
+
+    expected_request_no = 1
+    if request.session.get('expected_request_no'):
+        expected_request_no =  request.session['expected_request_no']
+
+    return [action, opus_id, request_no, expected_request_no]
+
+def get_product_types(opus_id_list):
+    """Return the list of all product types associated with the opus_id_list."""
+    product_types = {}
+    if isinstance(opus_id_list,type(basestring)):
+        opus_id_list = [opus_id_list]
+
+    for opus_id in opus_id_list:
+        pdsf = pdsfile.PdsFile.from_opus_id(opus_id)
+        products = pdsf.opus_products()
+
+        # Keep a running list of all products by type
+        for (opus_type, list_of_sublists) in products.items():
+            #flatten list_of_sublists FIRST
+            flat_list = iter_flatten(list_of_sublists)
+            product_types.setdefault(opus_type, []).extend(flat_list)
+            #grab abs path at same time; make sure that types are distinct
+
+    return product_types
+
+def get_product_counts(product_types):
+    # get count of each product type
+    size = 0;
+    count = 0;
+    no_products = {}
+    for product, sublist in product_types.iteritems():
+        no_products[product] = len(sublist)
+        for pdsf in sublist:
+            abspath = pdsf.abspath
+            size += pdsf.size_bytes
+            count +=1
+
+    # download_info, count and total size before zip
+    size = nice_file_size(size)  # pretty display it
+
+    return size, count, no_products
+
+
+def get_collection_count(session_id):
+    cursor = connection.cursor()
+    sql = 'select count(*) from `collection_table` where session_id = %s'
+    cursor.execute(sql, (session_id,))
+    c = cursor.fetchone()[0]
+    return c
+
 def get_all_in_collection(request):
     """ returns list of opus_ids """
+    # note this needs to move to downloads
     if not request.session.get('has_session'):
         return []
     else:
-        cursor = connection.cursor()
         session_id = request.session.session_key
-        coll_table_name = get_collection_table(session_id)
-        sql = 'select opus_id from ' + connection.ops.quote_name(coll_table_name)
-        cursor.execute(sql)
-        opus_ids = [n[0] for n in cursor.fetchall()]
+        opus_ids = CollectionTable.objects.filter(session_id__in=session_id)
         return opus_ids
 
 def get_collection_csv(request, fmt=None):
@@ -51,140 +144,69 @@ def get_collection_csv(request, fmt=None):
         wr.writerows(all_data[2])
         return response
 
-def get_collection_table(session_id):
-    """ returns collection table name and if one doesn't exist creates a new one """
-    if not session_id:
-        return False
-
+def add(opus_id_list, session_id):
     cursor = connection.cursor()
-    coll_table_name = 'colls_' + session_id
-    try:
-        sql = 'select opus_id from ' + connection.ops.quote_name(coll_table_name) + ' limit 1'
-        cursor.execute(sql)
-    except DatabaseError:
-        sql = 'create table ' + connection.ops.quote_name(coll_table_name) + ' like user_collections_template';
-        cursor.execute(sql)
-
-    return coll_table_name
-
-def bulk_add_to_collection(opus_id_list, session_id):
-    cursor = connection.cursor()
-    if type(opus_id_list).__name__ == 'str':
+    if isinstance(opus_id_list, str):
         opus_id_list = [opus_id_list]
-    coll_table_name = get_collection_table(session_id)
-    placeholders = ['(%s)' for i in range(len(opus_id_list))]
-    values_str = ','.join(placeholders)
-    sql = 'replace into ' + connection.ops.quote_name(coll_table_name) + ' (opus_id) values %s' % values_str
-    cursor.execute(sql, tuple(opus_id_list))
+    values = [(session_id, opus_id) for opus_id in opus_id_list]
+    sql = 'replace into `collection_table`' + ' (session_id, opus_id) values (%s, %s)'
+    cursor.executemany(sql, values)
 
-def add_to_collection(opus_id, session_id):
+def remove(opus_id, session_id):
     cursor = connection.cursor()
-    coll_table_name = get_collection_table(session_id)
-    # first remove
-    remove_from_collection(opus_id, session_id)
-    sql = 'replace into ' + connection.ops.quote_name(coll_table_name) + ' (opus_id) values (%s)'
+    sql = 'delete from `collection_table`' + ' where opus_id = %s'
     cursor.execute(sql, (opus_id,))
 
-def remove_from_collection(opus_id, session_id):
-    cursor = connection.cursor()
-    coll_table_name = get_collection_table(session_id)
-    sql = 'delete from ' + connection.ops.quote_name(coll_table_name) + ' where opus_id = %s'
-    cursor.execute(sql, (opus_id,))
-
-def get_collection_in_page(page, session_id):
-    """ returns obs_general_ids in page that are also in user collection
-        this is for views in results where you have to display the gallery
-        and indicate which thumbnails are in cart """
-    if not session_id:
-        return
-
-    cursor = connection.cursor()
-    coll_table_name = get_collection_table(session_id)
-    collection_in_page = []
-    for p in page:
-        opus_id = p[0]
-        sql = 'select opus_id from ' + connection.ops.quote_name(coll_table_name) + ' where opus_id = %s'
-        cursor.execute(sql, (opus_id,))
-        row = cursor.fetchone()
-        if row is not None:
-            collection_in_page.append(opus_id)
-    return collection_in_page
-
-def get_collection_count(session_id):
-    cursor = connection.cursor()
-    coll_table_name = get_collection_table(session_id)
-    sql = 'select count(*) from ' + connection.ops.quote_name(coll_table_name)
-    cursor.execute(sql)
-    c = cursor.fetchone()[0]
-    return c
-
-def edit_collection(request, **kwargs):
-    update_metrics(request)
+def edit_collection_range(request, session_id):
     """
-    edits a single opus_id in a user collection (user "selections")
-    # edits?
-    """
-    if not request.session.get('has_session'):
-        request.session['has_session'] = True
+    the request will come in not as a single opus_id
+    but as min and max opus_ids + a range in a search query
 
-    session_id = request.session.session_key
-
-    checkArgs = check_collection_args(request, **kwargs)
-    if type(checkArgs).__name__ == 'list' and checkArgs:
-        (action, opus_id, request_no, expected_request_no) = checkArgs
-    else:
-        return HttpResponse(json.dumps({"err":checkArgs}))
-
-    # just add this request to the queue, every request gets queued
-    add_to_queue(request, request_no, action, opus_id)
+    there are two ways to refer to an obersrvation:
+    opus_id - up to 80 char string, unique for any observations
+            every obs table has a column for the opus_id <so you can join tables together>
+    obs_general - `id` - integer (unique id) created during import process that is associated w/one opus_id
+        joins on all other tables to obs_general_id - this is much faster <making opus_id redundant in other tables>
 
     """
-    # todo
-    turning this off for now, we will get the queue of whatever request_no is passed
-    to us, without checking against what is expected_request_no
-    by turning this off we are at risk of ajax race conditions
-    but it's breaking something and no time for it right now
-    Issue is here:
-    https://bitbucket.org/ringsnode/opus2/issue/75/collections-downloads-majorly-broken
-    # todo:
-    # now look for the next expected request in the queue
-    if get_queued(request, expected_request_no):
-        # found the next expected request in the queue
-        (request,action,opus_id) = get_queued(request, expected_request_no)
-    else:
-        # the expected request has not yet arrived, do nothing
-        return HttpResponse(json.dumps({"err":"waiting"}))
-    """
-    # instead of the above we are doing this:
-    (action, opus_id) = get_queued(request, request_no)
+    id_range = request.GET.get('addrange',False)
+    if not id_range:
+        return False; # "invalid opus_id pair"
 
-    # redux: these will be not so simple sadly, they will insert or delete from
-    # the colleciton table..
-    if action == 'add':
-        add_to_collection(opus_id, session_id)
+    (min_id, max_id) = id_range.split(',')
 
-    elif (action == 'remove'):
-        remove_from_collection(opus_id, session_id)
+    from results.views import *
+    data = get_data(request,"raw")
 
-    elif (action == 'addall'):
-        collection_count = edit_collection_addall(request, **kwargs)
+    selected_range = []
+    in_range = False  # loop has reached the range selected
 
-    elif (action in ['addrange','removerange']):
-        collection_count = edit_collection_range(request, **kwargs)
+    column_slugs = request.GET.get('cols',settings.DEFAULT_COLUMNS)
 
-    remove_from_queue(request, request_no)
+    opus_id_key = column_slugs.split(',').index('opus_id')
 
-    """
-    try:
-        json = {"msg":"yay!","count":len(collection), "collection": ', '.join(collection)}
-    except:
-        json = collection
-    """
-    collection_count = get_collection_count(session_id)
+    # return HttpResponse(json.dumps(data['page']));
+    for row in data['page']:
 
-    json_data = {"err":False, "count":collection_count, "request_no":request_no}
+        opus_id = row[opus_id_key]
 
-    return HttpResponse(json.dumps(json_data))
+        if opus_id == min_id:
+            in_range = True;
+
+        if in_range:
+            selected_range.append(opus_id)
+
+        if in_range and (opus_id == max_id):
+
+            # this is the last one, update the collection
+            if action == 'addrange':
+                add([rid for rid in selected_range], session_id)
+
+    if not selected_range:
+        log.error("edit_collection_range failed to find range " + id_range)
+
+    return True
+
 
 def edit_collection_addall(request, **kwargs):
     """
@@ -222,7 +244,6 @@ def edit_collection_addall(request, **kwargs):
 
     update_metrics(request)
     session_id = request.session.session_key
-    colls_table_name = get_collection_table(session_id)
 
     (selections,extras) = urlToSearchParams(request.GET)
     query_table_name = getUserQueryTable(selections,extras)
@@ -236,59 +257,55 @@ def edit_collection_addall(request, **kwargs):
     return get_collection_count(session_id)
 
 
-def edit_collection_range(request, **kwargs):
-    update_metrics(request)
-    """
-    the request will come in not as a single opus_id
-    but as min and max opus_ids + a range in a search query
+def get_collection_in_page(page, session_id):
+    """ returns obs_general_ids in page that are also in user collection
+        this is for views in results where you have to display the gallery
+        and indicate which thumbnails are in cart """
+    if not session_id:
+        return
 
-    """
+    cursor = connection.cursor()
+    collection_in_page = []
+    for p in page:
+        opus_id = p[0]
+        sql = 'select DISTINCT opus_id from `collection_table` where session_id = %s'
+        cursor.execute(sql, (session_id,))
+        row = cursor.fetchone()
+        if row is not None:
+            collection_in_page.append(opus_id)
+    return collection_in_page
+
+############################
+def edit_collection(request, **kwargs):
+    update_metrics(request)
+
     if not request.session.get('has_session'):
         request.session['has_session'] = True
 
     session_id = request.session.session_key
-    colls_table_name = get_collection_table(session_id)
-    (action, opus_id, request_no, expected_request_no) = check_collection_args(request, **kwargs)
 
-    id_range = request.GET.get('addrange',False)
-    if not id_range:
-        return False; # "invalid ringobsid pair"
+    args = get_args(request, **kwargs)
+    if isinstance(args, list):
+        (action, opus_id, request_no, expected_request_no) = args
+    else:
+        return HttpResponse(json.dumps({"err":args}))
 
-    (min_id, max_id) = id_range.split(',')
-    (selections,extras) = urlToSearchParams(request.GET)
+    if action == 'add':
+        add(opus_id, session_id)
 
-    from results.views import *
-    data = getData(request,"raw")
-    selected_range = []
-    in_range = False  # loop has reached the range selected
+    elif (action == 'remove'):
+        remove(opus_id, session_id)
 
-    column_slugs = request.GET.get('cols',settings.DEFAULT_COLUMNS)
+    elif (action in ['addrange','removerange']):
+        edit_collection_range(request, session_id)
 
-    opus_id_key = column_slugs.split(',').index('ringobsid')
+    elif (action == 'addall'):
+        edit_collection_addall(request, **kwargs)
 
-    # return HttpResponse(json.dumps(data['page']));
-    for row in data['page']:
+    collection_count = get_collection_count(session_id)
 
-        opus_id = row[opus_id_key]
-
-        if opus_id == min_id:
-            in_range = True;
-
-        if in_range:
-            selected_range.append(opus_id)
-
-        if in_range & (opus_id == max_id):
-
-            # this is the last one, update the collection
-            if action == 'addrange':
-                bulk_add_to_collection([rid for rid in selected_range], session_id)
-
-    if not selected_range:
-        log.error("edit_collection_range failed to find range " + id_range)
-        log.error(selections)
-
-    return get_collection_count(session_id)
-
+    json_data = {"count":collection_count, "request_no":request_no,}
+    return HttpResponse(json.dumps(json_data))
 
 @never_cache
 def view_collection(request, collection_name, template="collections.html"):
@@ -312,8 +329,6 @@ def view_collection(request, collection_name, template="collections.html"):
     if previews_str:
         previews = previews_str.split(',')
 
-    from results.views import *  # circulosity
-
     column_slugs = column_slugs.split(',')
     columns = []
     for slug in column_slugs:
@@ -323,38 +338,23 @@ def view_collection(request, collection_name, template="collections.html"):
     # collection
     if not request.session.get('has_session'):
         request.session['has_session'] = True
+    if not request.session.session_key:
+        request.session.save()
     session_id = request.session.session_key
-    colls_table_name = get_collection_table(session_id)
 
-    # images and join with the collections table
-    where   = "images.opus_id = " + connection.ops.quote_name(colls_table_name) + ".opus_id"
-    images = Image.objects
-    images = images.extra(where=[where], tables=[colls_table_name])
-
-    image_types = settings.IMAGE_TYPES
-    image_count = len(images)  # todo: huh.
+    opus_ids = CollectionTable.objects.filter(session_id__in=session_id)
+    opus_id_list = list(opus_ids)
 
     # all product types
-    all_product_types = Files.objects.all().values('product_type').distinct()
-    # product files
-    # for this we want the list of all possible product types relevant for this dataset
-    # todo: this is really inefficient, another place that large carts are going to be unhappy
-    product_counts = dict([(i,0) for i in [p['product_type'] for p in all_product_types]]) # a dict with product_type names as keys
-                                                                                           # and all values set to zero
-                                                                                           # for holding a count of each product type
-    # get count of each product type
-    where = "files.opus_id = " + connection.ops.quote_name(colls_table_name) + ".opus_id"
-    product_counts_query = Files.objects.extra(where=[where], tables=[colls_table_name]).values("product_type").annotate(Count("product_type"))
-    product_counts_nonzero = {i['product_type']: i['product_type__count'] for i in product_counts_query}
-    # update a product_count array with the non-zero counts
-    for product_type, pcount in product_counts_nonzero.items():
-        product_counts[product_type] = pcount
+    all_product_types = get_product_types(opus_id_list)
+    download_size, download_count, product_counts = get_product_counts(all_product_types)
 
-    # download_info, count and total size before zip
-    from downloads.views import get_download_info
-    product_types = [ptype for ptype, count in product_counts.items()]
-    download_size, download_count =  get_download_info(product_types, previews, colls_table_name)
-    download_size = nice_file_size(download_size)  # pretty display it
+    # the image_links should come from the pdsf for each sublist, right now it's stubbed out
+    image_links = get_image_links(all_product_types)
+
+    # images and join with the collections table
+    image_types = settings.IMAGE_TYPES
+    image_count = len(image_links)
 
     column_values = []
     for param_name in columns:
@@ -372,16 +372,22 @@ def view_collection(request, collection_name, template="collections.html"):
         pass  # obs_general table wasn't in there for whatever reason
 
     # set up the where clause to join with the rest of the tables
-    where = "obs_general.opus_id = " + connection.ops.quote_name(colls_table_name) + ".opus_id"
-    triggered_tables.append(colls_table_name)
+    where = "obs_general.opus_id = collection_table.opus_id"
+    triggered_tables.append('collection_table')
 
     # bring in the  triggered_tables
     results = ObsGeneral.objects.extra(where=[where], tables=triggered_tables)
     results = results.values(*column_values)[offset:offset+limit]
 
-    page_ids = [o['opus_id'] for o in results]
+    context = {
+        "download_count": download_count,
+        "download_size": download_size,
+        "product_counts": product_counts,
+        "image_types": image_types,
+        "image_count": image_count,
+    }
 
-    return render(request, template,locals())
+    return render(request, template, context)
 
 
 @never_cache
@@ -405,60 +411,8 @@ def collection_status(request, collection_name='default'):
 
     return HttpResponse(json.dumps({"count":count, "expected_request_no": expected_request_no }))
 
-
-def check_collection_args(request,**kwargs):
-    """
-    # this just checks that we have all we need to process an edit_collection
-    # and if we don't it returns the error msg as string
-    checkArgs = check_collection_args(request, **kwargs)
-    if type(checkArgs) == 'string':
-        return HttpResponse(checkArgs)
-    else:
-        (action, opus_id, request_no, expected_request_no) = check_collection_args(request, **kwargs)
-    """
-
-    # collection and action are part of the url conf so you won't get in without one
-    try:
-        action = kwargs['action']
-    except KeyError:
-        msg = 'Page not found'
-        return msg
-
-    opus_id = request.GET.get('ringobsid', False)
-    request_no = request.GET.get('request', False)
-    addrange = request.GET.get('addrange',False)
-
-    if not opus_id and action != 'addall':
-        try:
-            opus_id = kwargs['opus_id']
-        except KeyError:
-            if addrange:
-                opus_id = addrange
-            else:
-                msg = "No Observations specified"
-                return msg
-
-    if not request_no:
-        try:
-            request_no = kwargs['request_no']
-        except KeyError:
-            msg = 'no request number received'
-            return msg
-
-    request_no = int(request_no)
-
-    expected_request_no = 1
-    if request.session.get('expected_request_no'):
-        expected_request_no =  request.session['expected_request_no']
-
-    return [action, opus_id, request_no, expected_request_no]
-
-
-def is_odd(num):
-        return num & 1 and True or False
-
 @never_cache
-def reset_sess(request):
+def reset_session(request):
     """ this is hit when user clicks 'empty collection' """
     request.session.flush()
     request.session['has_session'] = True
@@ -495,10 +449,3 @@ def get_queued(request, request_no):
         return queue[request_no]
     except KeyError:
         return False
-
-
-# avoiding a circular dependency, even James Bennett does this okayyyy! http://is.gd/TGblFO
-# well ok I moved to the end of module because it's needed in 2 methods here o_0
-from search.views import *
-from results.views import *
-from downloads.views import *

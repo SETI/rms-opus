@@ -9,7 +9,12 @@ ALLOWED_HOSTS = ('dev.pds-rings.seti.org','127.0.0.1')
 PROJECT_ROOT = os.path.dirname(__file__)
 sys.path.insert(0, PROJECT_ROOT)
 sys.path.insert(0, os.path.join(PROJECT_ROOT, 'apps'))
-sys.path.insert(0, os.path.join(PROJECT_ROOT, 'pds-tools'))
+sys.path.insert(0, os.path.join(PROJECT_ROOT, '..\pds-tools'))
+sys.path.insert(0, os.path.join(PROJECT_ROOT, '..\pds-webserver\python'))
+
+PDS_DATA_DIR =  'C:/seti/pdsdata/holdings'
+
+import pdsfile
 
 DEBUG = True
 
@@ -151,7 +156,7 @@ INTERNAL_IPS = ("127.0.0.1",)
 BASE_TABLES = ['obs_general', 'obs_pds', 'obs_ring_geometry','obs_surface_geometry','obs_wavelength','obs_type_image']  # tables in which every observation in the database appears:
 TAR_FILE_URI_PATH = 'http://pds-rings-downloads.seti.org/opus/'
 IMAGE_HTTP_PATH = 'https://pds-rings.seti.org/holdings/previews/'
-DEFAULT_COLUMNS = 'rmsobsid,planet,target,phase1,phase2,time1,time2'
+DEFAULT_COLUMNS = 'rmsobsid,planet,target,RINGGEOphase1,RINGGEOphase2,time1,time2'
 IMAGE_COLUMNS   = ['thumb.jpg','small.jpg','med.jpg','full.jpg']
 RANGE_FIELDS    = ['TIME','LONG','RANGE']
 MULT_FIELDS	= ['GROUP','TARGETS']
@@ -290,3 +295,5 @@ LOGGING = {
 
 BASE_PATH = ''  # production base path is handled by apache, local is not.
 from settings_local import *
+
+pdsfile.preload(PDS_DATA_DIR)

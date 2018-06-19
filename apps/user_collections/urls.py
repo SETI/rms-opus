@@ -4,7 +4,7 @@ from user_collections.views import (
     edit_collection,
     view_collection,
     collection_status,
-    reset_sess,
+    reset_session,
     edit_collection_range,
 )
 
@@ -13,6 +13,6 @@ urlpatterns = [
     url(r'^collections/(?P<collection_name>[default]+)/(?P<action>[add|remove|addrange|removerange|addall]+).json$', edit_collection),
     url(r'^collections/(?P<collection_name>[default]+)/view.html$', view_collection),
     url(r'^collections/(?P<collection_name>[default]+)/status.json$', collection_status),
-    url(r'^collections/reset.html$', reset_sess),
+    url(r'^collections/reset.html$', reset_session),
     url(r'^collections/(?P<collection_name>[default]+)/(?P<action>[addrange|removerange]+)/test.html$', edit_collection_range),
 ]

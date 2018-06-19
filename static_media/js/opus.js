@@ -125,8 +125,6 @@ $(document).ready(function() {
 
 });
 
-
-
 var opus = {
 
 
@@ -233,7 +231,7 @@ var opus = {
     collection_q_intrvl: false,
     colls_options_viz:false,
     main_timer:false,
-    main_timer_interval:false,
+    main_timer_interval:1000,
 
     //------------------------------------------------------------------------------------//
 
