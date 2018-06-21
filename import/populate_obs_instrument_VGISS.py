@@ -85,10 +85,7 @@ def populate_obs_general_VGISS_time2(**kwargs):
     return stop_time
 
 def populate_obs_general_VGISS_target_name(**kwargs):
-    target_name = helper_voyager_target_name(**kwargs)
-    if target_name is None:
-        target_name = 'NONE'
-    return target_name
+    return helper_voyager_target_name(**kwargs)
 
 def populate_obs_general_VGISS_observation_duration(**kwargs):
     metadata = kwargs['metadata']
@@ -183,14 +180,6 @@ def populate_obs_general_VGISS_declination2(**kwargs):
         return import_util.safe_column(ring_geo_row, 'MAXIMUM_DECLINATION')
 
     return None
-
-
-# Format: "JUPITER ENCOUNTER"
-def populate_obs_mission_voyager_VGISS_mission_phase_name(**kwargs):
-    metadata = kwargs['metadata']
-    index_row = metadata['index_row']
-    mp = index_row['MISSION_PHASE_NAME']
-    return mp.replace('_', ' ')
 
 
 ### OBS_TYPE_IMAGE TABLE ###
@@ -315,28 +304,7 @@ def populate_obs_wavelength_VGISS_polarization_type(**kwargs):
 # THESE NEED TO BE IMPLEMENTED FOR EVERY VOYAGER INSTRUMENT
 ################################################################################
 
-def populate_obs_mission_voyager_VGISS_spacecraft_clock_count1(**kwargs):
-    metadata = kwargs['metadata']
-    supp_index_row = metadata['supp_index_row']
-    if supp_index_row is None:
-        return None
-    partition = import_util.safe_column(supp_index_row,
-                                        'SPACECRAFT_CLOCK_PARTITION_NUMBER')
-    start_time = supp_index_row['SPACECRAFT_CLOCK_START_COUNT']
-
-    return str(partition) + '/' + start_time
-
-def populate_obs_mission_voyager_VGISS_spacecraft_clock_count2(**kwargs):
-    metadata = kwargs['metadata']
-    supp_index_row = metadata['supp_index_row']
-    if supp_index_row is None:
-        return None
-    partition = import_util.safe_column(supp_index_row,
-                                        'SPACECRAFT_CLOCK_PARTITION_NUMBER')
-    stop_time = supp_index_row['SPACECRAFT_CLOCK_STOP_COUNT']
-
-    return str(partition) + '/' + stop_time
-
+# There is nothing instrument-specific for Voyager.
 
 
 ################################################################################
@@ -352,33 +320,6 @@ def populate_obs_instrument_VGISS_camera(**kwargs):
     assert camera in ['NARROW ANGLE CAMERA', 'WIDE ANGLE CAMERA']
 
     return camera[0]
-
-def populate_obs_instrument_VGISS_ert(**kwargs):
-    metadata = kwargs['metadata']
-    index_row = metadata['index_row']
-    start_time = index_row['EARTH_RECEIVED_TIME']
-
-    if start_time.startswith('UNK'):
-        return None
-
-    return start_time
-
-def populate_obs_instrument_VGISS_ert_sec(**kwargs):
-    metadata = kwargs['metadata']
-    index_row = metadata['index_row']
-    start_time = index_row['EARTH_RECEIVED_TIME']
-
-    if start_time.startswith('UNK'):
-        return None
-
-    try:
-        ert = julian.tai_from_iso(start_time)
-    except (ValueError,TypeError):
-        import_util.log_nonrepeating_error(
-            f'"{start_time}" is not a valid date-time format in '+
-            f'instrument_VGISS_ert_sec')
-        ert = None
-    return ert
 
 def populate_obs_instrument_VGISS_usable_lines(**kwargs):
     metadata = kwargs['metadata']

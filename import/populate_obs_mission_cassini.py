@@ -9,6 +9,8 @@ import re
 
 import julian
 
+import opus_support
+
 from config_data import *
 import impglobals
 import import_util
@@ -385,3 +387,27 @@ def populate_obs_mission_cassini_ert_sec2(**kwargs):
             f'mission_cassini_ert_sec2')
         ert = None
     return ert
+
+def populate_obs_mission_cassini_spacecraft_clock_count_cvt1(**kwargs):
+    metadata = kwargs['metadata']
+    cassini_row = metadata['obs_mission_cassini_row']
+    sc = cassini_row['spacecraft_clock_count1']
+    try:
+        sc_cvt = opus_support.parse_cassini_sclk(sc)
+    except ValueError as e:
+        import_util.log_nonrepeating_error(
+            f'Unable to parse Cassini SCLK "{sc}": {e}')
+        return None
+    return sc_cvt
+
+def populate_obs_mission_cassini_spacecraft_clock_count_cvt2(**kwargs):
+    metadata = kwargs['metadata']
+    cassini_row = metadata['obs_mission_cassini_row']
+    sc = cassini_row['spacecraft_clock_count2']
+    try:
+        sc_cvt = opus_support.parse_cassini_sclk(sc)
+    except ValueError as e:
+        import_util.log_nonrepeating_error(
+            f'Unable to parse Cassini SCLK "{sc}": {e}')
+        return None
+    return sc_cvt

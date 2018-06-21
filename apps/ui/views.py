@@ -198,7 +198,7 @@ def getMenuLabels(request, labels_view):
 def adjust_slug_name_single_col_ranges(param_info):
     slug = param_info.slug
     form_type = param_info.form_type
-    if form_type == 'RANGE' and '1' not in slug and '2' not in slug:
+    if form_type.startswith('RANGE') and '1' not in slug and '2' not in slug:
         slug = slug + '1'
     return slug
 
@@ -220,6 +220,9 @@ def getWidget(request, **kwargs):
         raise Http404
 
     form_type = param_info.form_type
+    form_type_ext = None
+    if form_type.find(':') != -1:
+        form_type, form_type_ext = form_type.split(':')
     param_name = param_info.param_name()
 
     dictionary = param_info.get_dictionary_info()
@@ -249,8 +252,8 @@ def getWidget(request, **kwargs):
     if form_type in settings.RANGE_FIELDS:
         auto_id = False
 
-        slug_no_num = stripNumericSuffix(slug)
-        param_name_no_num = stripNumericSuffix(param_name)
+        slug_no_num = strip_numeric_suffix(slug)
+        param_name_no_num = strip_numeric_suffix(param_name)
 
         slug1 = slug_no_num+'1'
         slug2 = slug_no_num+'2'

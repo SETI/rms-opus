@@ -327,6 +327,8 @@ def populate_obs_mission_cassini_COISS_mission_phase_name(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     mp = index_row['MISSION_PHASE_NAME']
+    if mp.upper() == 'NULL':
+        return None
     return mp.replace('_', ' ')
 
 def populate_obs_mission_cassini_COISS_sequence_id(**kwargs):
@@ -496,14 +498,16 @@ def populate_obs_wavelength_COISS_polarization_type(**kwargs):
 def populate_obs_mission_cassini_COISS_spacecraft_clock_count1(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
-    count = import_util.safe_column(index_row, 'SPACECRAFT_CLOCK_START_COUNT')
-    return float(count)
+    partition = index_row['SPACECRAFT_CLOCK_CNT_PARTITION']
+    count = index_row['SPACECRAFT_CLOCK_START_COUNT']
+    return str(partition) + '/' + str(count)
 
 def populate_obs_mission_cassini_COISS_spacecraft_clock_count2(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
-    count = import_util.safe_column(index_row, 'SPACECRAFT_CLOCK_STOP_COUNT')
-    return float(count)
+    partition = index_row['SPACECRAFT_CLOCK_CNT_PARTITION']
+    count = index_row['SPACECRAFT_CLOCK_STOP_COUNT']
+    return str(partition) + '/' + str(count)
 
 
 ################################################################################

@@ -7,6 +7,8 @@
 
 import julian
 
+import opus_support
+
 from config_data import *
 import impglobals
 import import_util
@@ -85,3 +87,27 @@ def populate_obs_mission_galileo_rev_no(**kwargs):
     orbit_number = index_row['ORBIT_NUMBER']
 
     return orbit_number
+
+def populate_obs_mission_galileo_spacecraft_clock_count_cvt1(**kwargs):
+    metadata = kwargs['metadata']
+    galileo_row = metadata['obs_mission_galileo_row']
+    sc = galileo_row['spacecraft_clock_count1']
+    try:
+        sc_cvt = opus_support.parse_galileo_sclk(sc)
+    except ValueError as e:
+        import_util.log_nonrepeating_error(
+            f'Unable to parse Galileo SCLK "{sc}": {e}')
+        return None
+    return sc_cvt
+
+def populate_obs_mission_galileo_spacecraft_clock_count_cvt2(**kwargs):
+    metadata = kwargs['metadata']
+    galileo_row = metadata['obs_mission_galileo_row']
+    sc = galileo_row['spacecraft_clock_count2']
+    try:
+        sc_cvt = opus_support.parse_galileo_sclk(sc)
+    except ValueError as e:
+        import_util.log_nonrepeating_error(
+            f'Unable to parse Galileo SCLK "{sc}": {e}')
+        return None
+    return sc_cvt

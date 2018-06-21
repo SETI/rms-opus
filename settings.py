@@ -3,10 +3,11 @@ import os
 import sys
 from collections import OrderedDict
 from secrets import *
+import opus_support
 
 ALLOWED_HOSTS = ('dev.pds-rings.seti.org','127.0.0.1')
 
-PROJECT_ROOT = os.path.dirname(__file__)
+PROJECT_ROOT = os.path.dirname(os.path.realpath(__file__))
 sys.path.insert(0, PROJECT_ROOT)
 sys.path.insert(0, os.path.join(PROJECT_ROOT, 'apps'))
 sys.path.insert(0, os.path.join(PROJECT_ROOT, 'pds-tools'))
@@ -151,9 +152,20 @@ INTERNAL_IPS = ("127.0.0.1",)
 BASE_TABLES = ['obs_general', 'obs_pds', 'obs_ring_geometry','obs_surface_geometry','obs_wavelength','obs_type_image']  # tables in which every observation in the database appears:
 TAR_FILE_URI_PATH = 'http://pds-rings-downloads.seti.org/opus/'
 IMAGE_HTTP_PATH = 'https://pds-rings.seti.org/holdings/previews/'
-DEFAULT_COLUMNS = 'rmsobsid,planet,target,phase1,phase2,time1,time2'
+DEFAULT_COLUMNS = 'opusid,planet,target,time1,time2'
 IMAGE_COLUMNS   = ['thumb.jpg','small.jpg','med.jpg','full.jpg']
 RANGE_FIELDS    = ['TIME','LONG','RANGE']
+# Format is decode float->string, encode string->float
+RANGE_FUNCTIONS = {
+    'range_cassini_sclk': (opus_support.format_cassini_sclk,
+                           opus_support.parse_cassini_sclk),
+    'range_galileo_sclk': (opus_support.format_galileo_sclk,
+                           opus_support.parse_galileo_sclk),
+    'range_new_horizons_sclk': (opus_support.format_new_horizons_sclk,
+                                opus_support.parse_new_horizons_sclk),
+    'range_voyager_sclk': (opus_support.format_voyager_sclk,
+                           opus_support.parse_voyager_sclk)
+}
 MULT_FIELDS	= ['GROUP','TARGETS']
 DEFAULT_LIMIT = 100
 MULT_FORM_TYPES = ('GROUP','TARGETS');

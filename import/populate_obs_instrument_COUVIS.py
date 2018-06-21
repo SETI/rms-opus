@@ -510,9 +510,9 @@ def populate_obs_mission_cassini_COUVIS_spacecraft_clock_count1(**kwargs):
     count = index_row['SPACECRAFT_CLOCK_START_COUNT']
     if not count.startswith('1/'):
         import_util.log_nonrepeating_error(
-            f'Badly formatted SPACE_CLOCK_START_COUNT "{count}"')
+            f'Badly formatted SPACECRAFT_CLOCK_START_COUNT "{count}"')
         return None
-    return float(count[2:])
+    return count
 
 # NOTE: STOP COUNT is always unknown for UVIS
 def populate_obs_mission_cassini_COUVIS_spacecraft_clock_count2(**kwargs):
@@ -521,9 +521,9 @@ def populate_obs_mission_cassini_COUVIS_spacecraft_clock_count2(**kwargs):
     count = index_row['SPACECRAFT_CLOCK_START_COUNT']
     if not count.startswith('1/'):
         import_util.log_nonrepeating_error(
-            f'Badly formatted SPACE_CLOCK_START_COUNT "{count}"')
+            f'Badly formatted SPACECRAFT_CLOCK_START_COUNT "{count}"')
         return None
-    return float(count[2:])
+    return count
 
 
 ################################################################################

@@ -165,11 +165,11 @@ def downloadFileName():
 
 
 
-def stripNumericSuffix(name):
+def strip_numeric_suffix(name):
     try:    return re.match("(.*)[1|2]",name).group(1)
     except: return name
 
-def getNumericSuffix(name):
+def get_numeric_suffix(name):
     try:    return re.match(".*(1|2)",name).group(1)
     except: return
 
