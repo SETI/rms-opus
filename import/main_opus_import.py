@@ -19,9 +19,15 @@ import warnings
 sys.path.insert(0, PDS_WEBSERVER_PYTHON_PATH)
 sys.path.insert(0, PDS_TOOLS_PATH)
 
+IMPORT_ROOT = os.path.dirname(os.path.realpath(__file__))
+PROJECT_ROOT = os.path.dirname(IMPORT_ROOT)
+sys.path.insert(0, PROJECT_ROOT)
+
 import pdslogger
 pdslogger.TIME_FMT = '%Y-%m-%d %H:%M:%S'
 import pdsfile
+
+import opus_support
 
 from config_data import *
 import do_django

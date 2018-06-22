@@ -95,14 +95,13 @@ def populate_obs_general_mission_id(**kwargs):
 def populate_obs_general_target_class(**kwargs):
     metadata = kwargs['metadata']
     obs_general_row = metadata['obs_general_row']
-    index_row_num = metadata['index_row_num']
     # This target_name might have "S RINGS" in it; slightly different from the
     # PDS "TARGET_NAME"
     target_name = obs_general_row['target_name'].upper()
     if target_name in TARGET_NAME_MAPPING:
         target_name = TARGET_NAME_MAPPING[target_name]
     if target_name not in TARGET_NAME_INFO:
-        import_util.announce_unknown_target_name(target_name, index_row_num)
+        import_util.announce_unknown_target_name(target_name)
         if impglobals.ARGUMENTS.import_ignore_errors:
             return 'OTHER'
         return None
@@ -131,10 +130,8 @@ def populate_obs_general_time_sec2(**kwargs):
 
     if time_sec2 < general_row['time_sec1']:
         time1 = general_row['time1']
-        index_row_num = metadata['index_row_num']
-        impglobals.LOGGER.log('error',
-            f'time1 ({time1}) and time2 ({time2}) are '+
-            f'in the wrong order [line {index_row_num}]')
+        impglobals.log_error(f'time1 ({time1}) and time2 ({time2}) are '+
+                             f'in the wrong order')
         impglobals.IMPORT_HAS_BAD_DATA = True
 
     return time_sec2

@@ -60,10 +60,8 @@ def populate_obs_general_COUVIS_opus_id(**kwargs):
     except:
         metadata = kwargs['metadata']
         index_row = metadata['index_row']
-        index_row_num = metadata['index_row_num']
-        import_util.announce_nonrepeating_error(
-            f'Unable to create OPUS_ID for FILE_SPEC "{file_spec}"',
-            index_row_num)
+        import_util.log_nonrepeating_error(
+            f'Unable to create OPUS_ID for FILE_SPEC "{file_spec}"')
         return file_spec
     return opus_id
 
@@ -97,9 +95,9 @@ def populate_obs_general_COUVIS_spatial_sampling(**kwargs):
 
     supp_index_row = metadata['supp_index_row']
     if supp_index_row is None:
-        import_util.announce_nonrepeating_error(
+        import_util.log_nonrepeating_error(
             f'COUVIS_spatial_sampling has channel EUV or FUV but no '+
-            f'DATA_OBJECT_TYPE available', index_row_num)
+            f'DATA_OBJECT_TYPE available')
         return None
 
     object_type = supp_index_row['DATA_OBJECT_TYPE']
@@ -237,7 +235,7 @@ def populate_obs_general_COUVIS_declination2(**kwargs):
     return dec
 
 def populate_obs_mission_cassini_COUVIS_mission_phase_name(**kwargs):
-    return None
+    return helper_cassini_mission_phase_name(**kwargs)
 
 def populate_obs_mission_cassini_COUVIS_sequence_id(**kwargs):
     return None
@@ -330,7 +328,6 @@ def populate_obs_wavelength_COUVIS_wavelength1(**kwargs):
         return 0.115
 
     metadata = kwargs['metadata']
-    index_row_num = metadata['index_row_num']
     supp_index_row = metadata.get('supp_index_row', None)
     if supp_index_row is None:
         return None
@@ -343,9 +340,9 @@ def populate_obs_wavelength_COUVIS_wavelength1(**kwargs):
     if channel == 'FUV':
         return 0.11 + band1 * 0.000078125
 
-    import_util.announce_nonrepeating_error(
+    import_util.log_nonrepeating_error(
         f'obs_wavelength_COUVIS_wavelength1 has unknown channel type '+
-        f' {channel}', index_row_num)
+        f' {channel}')
     return None
 
 def populate_obs_wavelength_COUVIS_wavelength2(**kwargs):
@@ -356,7 +353,6 @@ def populate_obs_wavelength_COUVIS_wavelength2(**kwargs):
         return 0.180
 
     metadata = kwargs['metadata']
-    index_row_num = metadata['index_row_num']
     supp_index_row = metadata.get('supp_index_row', None)
     if supp_index_row is None:
         return None
@@ -369,9 +365,9 @@ def populate_obs_wavelength_COUVIS_wavelength2(**kwargs):
     if channel == 'FUV':
         return 0.11 + (band2 + 1) * 0.000078125
 
-    import_util.announce_nonrepeating_error(
+    import_util.log_nonrepeating_error(
         f'obs_wavelength_COUVIS_wavelength1 has unknown channel type '+
-        f' {channel}', index_row_num)
+        f' {channel}')
     return None
 
 def _COUVIS_wave_res_helper(**kwargs):
@@ -513,25 +509,28 @@ def populate_obs_mission_cassini_COUVIS_spacecraft_clock_count1(**kwargs):
     index_row = metadata['index_row']
     count = index_row['SPACECRAFT_CLOCK_START_COUNT']
     if not count.startswith('1/'):
-        index_row_num = metadata['index_row_num']
-        import_util.announce_nonrepeating_error(
-            f'Badly formatted SPACE_CLOCK_START_COUNT "{count}"',
-            index_row_num)
+        import_util.log_nonrepeating_error(
+            f'Badly formatted SPACECRAFT_CLOCK_START_COUNT "{count}"')
         return None
-    return float(count[2:])
+    # See pds-opus issue #336
+    count = count.replace('.320', '.032')
+    count = count.replace('.640', '.064')
+    count = count.replace('.960', '.096')
+    return count
 
-# NOTE: STOP COUNT is always unknown for UVIS
+# There is no SPACECRAFT_CLOCK_STOP_COUNT for COUVIS so we have to compute it.
+# This works because Cassini SCLK is in units of seconds.
 def populate_obs_mission_cassini_COUVIS_spacecraft_clock_count2(**kwargs):
     metadata = kwargs['metadata']
-    index_row = metadata['index_row']
-    count = index_row['SPACECRAFT_CLOCK_START_COUNT']
-    if not count.startswith('1/'):
-        index_row_num = metadata['index_row_num']
-        import_util.announce_nonrepeating_error(
-            f'Badly formatted SPACE_CLOCK_START_COUNT "{count}"',
-            index_row_num)
-        return None
-    return float(count[2:])
+    cassini_row = metadata['obs_mission_cassini_row']
+    general_row = metadata['obs_general_row']
+    count = cassini_row['spacecraft_clock_count1']
+    time1 = general_row['time_sec1']
+    time2 = general_row['time_sec2']
+    count_sec = opus_support.parse_cassini_sclk(count)
+    new_count_sec = count_sec + (time2-time1)
+    new_count = opus_support.format_cassini_sclk(new_count_sec)
+    return '1/' + new_count
 
 
 ################################################################################

@@ -46,10 +46,8 @@ def populate_obs_general_COVIMS_opus_id(**kwargs):
     except:
         metadata = kwargs['metadata']
         index_row = metadata['index_row']
-        index_row_num = metadata['index_row_num']
-        import_util.announce_nonrepeating_error(
-            f'Unable to create OPUS_ID for FILE_SPEC "{file_spec}"',
-            index_row_num)
+        import_util.log_nonrepeating_error(
+            f'Unable to create OPUS_ID for FILE_SPEC "{file_spec}"')
         return file_spec
     phase_name = metadata['phase_name']
     opus_id += '_' + phase_name
@@ -83,9 +81,8 @@ def populate_obs_general_COVIMS_spatial_sampling(**kwargs):
     if inst_mod == 'IMAGE':
         return '2D'
 
-    index_row_num = metadata['index_row_num']
-    import_util.announce_nonrepeating_error(
-        f'Unknown INSTRUMENT_MODE_ID "{inst_mod}"', index_row_num)
+    import_util.log_nonrepeating_error(
+        f'Unknown INSTRUMENT_MODE_ID "{inst_mod}"')
     return None
 
 def populate_obs_general_COVIMS_wavelength_sampling(**kwargs):
@@ -200,8 +197,8 @@ def populate_obs_general_COVIMS_declination2(**kwargs):
     return dec
 
 def populate_obs_mission_cassini_COVIMS_mission_phase_name(**kwargs):
-    return None
-
+    return helper_cassini_mission_phase_name(**kwargs)
+    
 def populate_obs_mission_cassini_COVIMS_sequence_id(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
@@ -226,7 +223,6 @@ def populate_obs_type_image_COVIMS_image_type_id(**kwargs):
 def populate_obs_type_image_COVIMS_duration(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
-    index_row_num = metadata['index_row_num']
     inst_mod = index_row['INSTRUMENT_MODE_ID']
 
     if inst_mod != 'IMAGE':
@@ -240,15 +236,13 @@ def populate_obs_type_image_COVIMS_duration(**kwargs):
         if ir_exp is None:
             return None
         if ir_exp < 0:
-            import_util.announce_nonrepeating_warning(
-                f'IR Exposure {ir_exp} is < 0', index_row_num)
+            import_util.log_nonrepeating_warning(f'IR Exposure {ir_exp} is < 0')
             return None
         return ir_exp/1000
     if vis_exp is None:
         return None
     if vis_exp < 0:
-        import_util.announce_nonrepeating_warning(
-            f'VIS Exposure {vis_exp} is < 0', index_row_num)
+        import_util.log_nonrepeating_warning(f'VIS Exposure {vis_exp} is < 0')
         return None
     return vis_exp/1000
 
@@ -384,14 +378,14 @@ def populate_obs_mission_cassini_COVIMS_ert2(**kwargs):
 def populate_obs_mission_cassini_COVIMS_spacecraft_clock_count1(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
-    count = import_util.safe_column(index_row, 'SPACECRAFT_CLOCK_START_COUNT')
-    return count
+    count = index_row['SPACECRAFT_CLOCK_START_COUNT']
+    return '1/' + count
 
 def populate_obs_mission_cassini_COVIMS_spacecraft_clock_count2(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
-    count = import_util.safe_column(index_row, 'SPACECRAFT_CLOCK_STOP_COUNT')
-    return count
+    count = index_row['SPACECRAFT_CLOCK_STOP_COUNT']
+    return '1/' + count
 
 
 ################################################################################

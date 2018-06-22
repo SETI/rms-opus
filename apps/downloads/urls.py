@@ -4,7 +4,7 @@ from downloads.views import create_download, get_download_info_API
 
 # making downloads
 urlpatterns = [
-    url(r'^zip/(?P<opus_id>[0-9a-zA-Z\-_]+).(?P<fmt>[json]+)$', create_download),
+    url(r'^zip/(?P<opus_id>[-\w]+).(?P<fmt>[json]+)$', create_download),
     url(r'^collections/download/(?P<collection_name>[default]+).zip$', create_download),
     url(r'^collections/download/info/$', get_download_info_API),
 ]

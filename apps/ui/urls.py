@@ -29,10 +29,10 @@ urlpatterns = [
     url(r'^table_headers.html$', get_table_headers),
     url(r'^browse_headers.html$', get_browse_headers),
     url(r'^menu.html$', getMenu),
-    url(r'^forms/widget/(?P<slug>[-\sa-zA-Z0-9]+).(?P<fmt>[json|zip|html|csv]+)$', getWidget),
+    url(r'^forms/widget/(?P<slug>[-\w]+).(?P<fmt>[json|zip|html|csv]+)$', getWidget),
     url(r'^forms/column_chooser.html$', getColumnChooser),
     url(r'^dictionary/', include('dictionary.urls')),
-    url(r'^api/detail/(?P<opus_id>[0-9a-zA-Z\-_]+).(?P<fmt>[json|zip|html]+)$', init_detail_page),
+    url(r'^api/detail/(?P<opus_id>[-\w]+).(?P<fmt>[json|zip|html]+)$', init_detail_page),
     url(
         r'^favicon.ico$',
         RedirectView.as_view(

@@ -125,7 +125,7 @@ def get_data(request,fmt):
     id_index = 0
 
     for slug in slugs.split(','):
-        if slug == 'rmsobsid':
+        if slug == 'opusid':
             id_index = slugs.split(',').index(slug)
         try:
             labels += [ParamInfo.objects.get(slug=slug).label_results]

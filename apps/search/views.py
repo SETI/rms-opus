@@ -15,13 +15,14 @@ from django.apps import apps
 from django.db.models.sql.datastructures import EmptyResultSet
 from django.db import connection, DatabaseError
 from django.core.cache import cache
+import settings
 
 """
 from tools.app_utils import *
 from metadata.views import *
 """
 from search.models import *
-from tools.app_utils import stripNumericSuffix, sortDict
+from tools.app_utils import strip_numeric_suffix, sortDict
 from paraminfo.models import ParamInfo
 import metadata.views
 
@@ -30,7 +31,7 @@ log = logging.getLogger(__name__)
 
 
 def get_param_info_by_slug(slug):
-    slug_no_num = stripNumericSuffix(slug)
+    slug_no_num = strip_numeric_suffix(slug)
 
     try:
         return ParamInfo.objects.get(slug=slug_no_num)
@@ -53,7 +54,7 @@ def get_param_info_by_param(param_name):
     except ParamInfo.DoesNotExist:
         # single column range queries will not have the numeric suffix
         try:
-            name_no_num = stripNumericSuffix(name)
+            name_no_num = strip_numeric_suffix(name)
             return ParamInfo.objects.get(category_name=cat_name, name=name_no_num)
         except ParamInfo.DoesNotExist:
             return False
@@ -68,7 +69,7 @@ def is_single_column_range(param_name):
     except ParamInfo.DoesNotExist:
         # single column range queries will not have the numeric suffix
         try:
-            name_no_num = stripNumericSuffix(name)
+            name_no_num = strip_numeric_suffix(name)
             return ParamInfo.objects.get(category_name=cat_name, name=name_no_num)
         except ParamInfo.DoesNotExist:
             return False
@@ -88,10 +89,9 @@ def constructQueryString(selections, extras):
     for param_name, value_list in selections.items():
 
         # lookup info about this param_name
-        param_name_no_num = stripNumericSuffix(param_name)  # this is used later for other things!
-        cat_name = param_name.split('.')[0]
+        param_name_no_num = strip_numeric_suffix(param_name)  # this is used later for other things!
+        cat_name, name = param_name.split('.')
         cat_model_name = ''.join(cat_name.lower().split('_'))
-        name = param_name.split('.')[1]
         param_info = get_param_info_by_param(param_name)
         if not param_info:
             log.error('constructQueryString: No param_info for %s', param_name)
@@ -100,6 +100,10 @@ def constructQueryString(selections, extras):
             return False
 
         form_type = param_info.form_type
+        form_type_ext = None
+        if form_type.find(':') != -1:
+            form_type, form_type_ext = form_type.split(':')
+
         special_query = param_info.special_query
 
         # define any qtypes for this param_name from query
@@ -221,7 +225,7 @@ def getUserQueryTable(selections=None, extras=None):
     except DatabaseError:
         pass  # no table is there, we go on to build it below
 
-    ## cache table dose not exist, we will make one by doing some data querying:
+    ## cache table does not exist, we will make one by doing some data querying:
     try:
         sql, params = constructQueryString(selections, extras)
     except TypeError:
@@ -285,14 +289,14 @@ def urlToSearchParams(request_get):
     for searchparam in request_get.items():
         # try:
         slug = searchparam[0]
-        slug_no_num = stripNumericSuffix(slug)
+        slug_no_num = strip_numeric_suffix(slug)
         values = searchparam[1].strip(',').split(',')
 
         qtype = False  # assume this is not a qtype statement
         if slug.find('qtype') == 0:
             qtype = True  # this is a statement of query type!
             slug = slug.split('-')[1]
-            slug_no_num = stripNumericSuffix(slug)
+            slug_no_num = strip_numeric_suffix(slug)
 
         param_info = get_param_info_by_slug(slug)
         if not param_info:
@@ -300,8 +304,11 @@ def urlToSearchParams(request_get):
 
         param_name = param_info.param_name()
         form_type = param_info.form_type
+        form_type_ext = None
+        if form_type.find(':') != -1:
+            form_type, form_type_ext = form_type.split(':')
 
-        param_name_no_num = stripNumericSuffix(param_name)
+        param_name_no_num = strip_numeric_suffix(param_name)
 
         if qtype:
             qtypes[param_name_no_num] = request_get.get('qtype-'+slug_no_num,False).strip(',').split(',')
@@ -315,13 +322,30 @@ def urlToSearchParams(request_get):
             # no other form types can be sorted since their ordering corresponds to qtype ordering
             if searchparam[1]:  # if it has a value
                 if form_type == "RANGE":
+                    if form_type_ext is None:
+                        func = float
+                    else:
+                        if form_type_ext in settings.RANGE_FUNCTIONS:
+                            func = settings.RANGE_FUNCTIONS[form_type_ext][1]
+                        else:
+                            log.error('Unknown RANGE function "%s"',
+                                      form_type_ext)
+                            func = float
                     if param_name == param_name_no_num:
                         # this is a single column range query
                         ext = slug[-1]
-                        selections[param_name + ext] = map(float, values)
+                        try:
+                            selections[param_name + ext] = map(func, values)
+                        except ValueError,e:
+                            log.error('Function "%s" threw ValueError(%s) for %s',
+                                      func, e, values)
                     else:
                         # normal 2-column range query
-                        selections[param_name] = map(float, values)
+                        try:
+                            selections[param_name] = map(func, values)
+                        except ValueError,e:
+                            log.error('Function "%s" threw ValueError(%s) for %s',
+                                      func, e, values)
                 else:
                     selections[param_name] = values
 
@@ -398,12 +422,19 @@ def setUserSearchNo(selections=None,extras=None):
 
 def string_query_object(param_name, value_list, qtypes):
 
-    model_name = param_name.split('.')[0].lower().replace('_','')
+    cat_name, param = param_name.split('.')
+    model_name = cat_name.lower().replace('_','')
 
-    if model_name == 'obsgeneral':
-        param_model_name = param_name.split('.')[1]
+    if param == 'opus_id':
+        # Special case, because opus_id is always a foreign key field, which
+        # is just an integer in Django. So we have to look through the foreign
+        # key into the destination table (always obs_general) to get the
+        # actual string.
+        param_model_name = 'opus_id'
+    elif model_name == 'obsgeneral':
+        param_model_name = param
     else:
-        param_model_name = model_name + '__' + param_name.split('.')[1]
+        param_model_name = model_name + '__' + param
 
     if len(value_list) > 1:
         log.error('string_query_object: value_list for param %s contains >1 item %s qtypes %s', param_name, str(value_list), str(qtypes))
@@ -447,7 +478,7 @@ def range_query_object(selections, param_name, qtypes):
     table_name = param_info.category_name
 
     # we will define both sides of the query, so define those param names
-    param_name_no_num = stripNumericSuffix(param_name)
+    param_name_no_num = strip_numeric_suffix(param_name)
     param_name_min = param_name_no_num + '1'
     param_name_max = param_name_no_num + '2'
 
@@ -581,8 +612,8 @@ def longitudeQuery(selections,param_name):
 
     cat_name = param_name.split('.')[0]
     name = param_name.split('.')[1]
-    name_no_num = stripNumericSuffix(name)
-    param_name_no_num = stripNumericSuffix(param_name)
+    name_no_num = strip_numeric_suffix(name)
+    param_name_no_num = strip_numeric_suffix(param_name)
     param_name_min = param_name_no_num + '1'
     param_name_max = param_name_no_num + '2'
     col_d_long = cat_name + '.d_' + name_no_num

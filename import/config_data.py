@@ -227,6 +227,7 @@ TARGET_NAME_MAPPING = {
 TARGET_NAME_INFO = {
     'NONE':          (None,  'OTHER'),
     'UNKNOWN':       (None,  'OTHER'),
+    'OTHER':         (None,  'OTHER'),
     'DARK':          (None,  'CALIBRATION'),
     'CALIBRATION':   (None,  'CALIBRATION'),
     'CAL LAMPS':     (None,  'CALIBRATION'),

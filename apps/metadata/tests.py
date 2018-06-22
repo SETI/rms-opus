@@ -25,7 +25,7 @@ class metadataTests(TestCase):
     selections = {}
     selections[param_name] = ['Saturn']
 
-    def test__getRangeEndpoints_times(self):
+    def test__get_range_endpoints_times(self):
         url = '/opus/api/meta/range/endpoints/timesec1.json?planet=Saturn&view=search&browse=gallery&colls_browse=gallery&page=1&limit=100&order=&cols=ringobsid,planet,target,phase1&widgets=planet,target,timesec1&widgets2=&detail=&reqno=1'
         print url
         response = self.c.get(url)
@@ -48,7 +48,7 @@ class metadataTests(TestCase):
             self.assertGreaterEqual(got['max'], expected['max'])
             self.assertEqual(got['min'], expected['min'])
 
-    def test__getRangeEndpoints_COISS_greaterpixelsize1(self):
+    def test__get_range_endpoints_COISS_greaterpixelsize1(self):
         response = self.c.get("/opus/api/meta/range/endpoints/greaterpixelsize1.json?instrumentid=Cassini+ISS")
         jdata = json.loads(response.content)
         expected = {"max": 1024.0, "nulls": 0, "min": 256.0}
@@ -57,7 +57,7 @@ class metadataTests(TestCase):
         self.assertEqual(expected['min'], jdata['min'])
         self.assertEqual(expected['nulls'], jdata['nulls'])
 
-    def test__getRangeEndpoints_COISS_lesserpixelsize1(self):
+    def test__get_range_endpoints_COISS_lesserpixelsize1(self):
         response = self.c.get("/opus/api/meta/range/endpoints/lesserpixelsize1.json?instrumentid=Cassini+ISS")
         jdata = json.loads(response.content)
         expected = {"max": 1024.0, "nulls": 0, "min": 256.0}

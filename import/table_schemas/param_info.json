@@ -13,7 +13,7 @@
     },
     {
         "field_name": "form_type",
-        "field_type": "varchar21",
+        "field_type": "varchar100",
         "field_default": null
     },
     {

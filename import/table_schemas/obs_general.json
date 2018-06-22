@@ -251,7 +251,8 @@
         "pi_intro": null,
         "pi_label": "Observation Time (UTC) 1",
         "pi_label_results": "Observation Start Time (UTC)",
-        "pi_slug": "time1",
+        "pi_oldslug": "time1",
+        "pi_slug": "rawtime1",
         "pi_sub_heading": null,
         "pi_tooltip": "",
         "pi_units": ""
@@ -275,7 +276,8 @@
         "pi_intro": null,
         "pi_label": "Observation Time (UTC) 2",
         "pi_label_results": "Observation Stop Time (UTC)",
-        "pi_slug": "time2",
+        "pi_oldslug": "time2",
+        "pi_slug": "rawtime2",
         "pi_sub_heading": null,
         "pi_tooltip": "",
         "pi_units": ""
@@ -302,7 +304,8 @@
         "pi_intro": null,
         "pi_label": "Observation Time",
         "pi_label_results": "Observation Start Time (seconds)",
-        "pi_slug": "timesec1",
+        "pi_oldslug": "timesec1",
+        "pi_slug": "time1",
         "pi_sub_heading": null,
         "pi_tooltip": "UTC Format (you may omit the T):<br>YYYY-MM-DD<strong>T</strong>HH:MM:SS.sss  <strong>or</strong>  YYY-DDD<strong>T</strong>HH:MM:SS.sss",
         "pi_units": ""
@@ -329,7 +332,8 @@
         "pi_intro": "",
         "pi_label": "Observation Time 2",
         "pi_label_results": "Observation Stop Time (seconds)",
-        "pi_slug": "timesec2",
+        "pi_oldslug": "timesec2",
+        "pi_slug": "time2",
         "pi_sub_heading": null,
         "pi_tooltip": "",
         "pi_units": ""

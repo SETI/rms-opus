@@ -17,9 +17,10 @@ from metrics.views import update_metrics
 from search.models import *
 
 # from paraminfo.models import *
-from tools.app_utils import responseFormats, stripNumericSuffix
+from tools.app_utils import responseFormats, strip_numeric_suffix
 import settings
 
+import opus_support
 
 import logging
 log = logging.getLogger(__name__)
@@ -195,103 +196,107 @@ def getValidMults(request,slug,fmt='json'):
     return responseFormats(multdata,fmt,template='mults.html')
 
 
-# todo: why is this camel case?
-def getRangeEndpoints(request,slug,fmt='json'):
-    """
-    fetch range widget hinting data for widget defined by slug
-    based on current search defined in request
+def get_range_endpoints(request, slug, fmt='json'):
+    """Compute and return range widget endpoints (min, max, nulls) for the
+    widget defined by [slug] based on current search defined in request.
 
-    this is the valid range endpoints that appear in
-    range widgets (green numbers)
+    This is the valid range endpoints that appear in range widgets
+    (green numbers).
 
-    returns a dictionary like:
+    Returns a dictionary like:
 
         { min: 63.592, max: 88.637, nulls: 2365}
 
+    Note that min and max can be strings, not just real numbers. This happens,
+    for example, with spacecraft clock counts, and may also happen with
+    floating point values when we want to force a particular display format
+    (such as full-length numbers instead of exponential notation).
     """
-    # if this param is in selections we want to remove it,
-    # want results for param as they would be without itself constrained
-    #    extras['qtypes']['']
     update_metrics(request)
 
     param_info = search.views.get_param_info_by_slug(slug)
     if not param_info:
-        log.error(
-    "getRangeEndpoints: Could not find param_info entry for slug %s",
-    str(slug))
+        log.error('get_range_endpoints: Could not find param_info entry for '+
+                  'slug %s', str(slug))
         raise Http404
 
-    param_name = param_info.param_name()
+    param_name = param_info.name # Just name
+    full_param_name = param_info.param_name() # category.name
     form_type = param_info.form_type
+    form_type_ext = None
+    if form_type.find(':') != -1:
+        form_type, form_type_ext = form_type.split(':')
     table_name = param_info.category_name
-
-    # "param" is the field name, the param_name with the table_name stripped
-    param1 = stripNumericSuffix(param_name.split('.')[1]) + '1'
-    param2 = stripNumericSuffix(param_name.split('.')[1]) + '2'
-    param_no_num = stripNumericSuffix(param1)
     table_model = apps.get_model('search', table_name.title().replace('_',''))
 
-    if form_type == 'RANGE' and '1' not in param_info.slug and '2' not in param_info.slug:
+    param_no_num = strip_numeric_suffix(param_name)
+    param1 = param_no_num + '1'
+    param2 = param_no_num + '2'
+
+    if form_type == 'RANGE' and param_info.slug[-1] not in '12':
         param1 = param2 = param_no_num  # single column range query
 
+    # XXX What can cause this TypeError? The enclosed functions should be more
+    # careful about what they do.
     try:
-        (selections,extras) = search.views.urlToSearchParams(request.GET)
-        user_table = search.views.getUserQueryTable(selections,extras)
-        has_selections = True
+        (selections, extras) = search.views.urlToSearchParams(request.GET)
     except TypeError:
         selections = {}
-        has_selections = False
         user_table = False
 
-    # remove this param from the user's query if it is constrained
-    # this keeps the green hinting numbers from reacting
-    # to changes to its own field
-    param_name_no_num = stripNumericSuffix(param_name)
-    to_remove = [param_name_no_num, param_name_no_num + '1', param_name_no_num + '2']
-    for p in to_remove:
-        if p in selections:
-            del selections[p]
-    if not bool(selections):
-        has_selections = False
+    # Remove this param from the user's query if it is constrained.
+    # This keeps the green hinting numbers from reacting to changes to its
+    # own field.
+    param_name_no_num = strip_numeric_suffix(full_param_name)
+    for to_remove in [param_name_no_num,
+                      param_name_no_num + '1',
+                      param_name_no_num + '2']:
+        if to_remove in selections:
+            del selections[to_remove]
+    if selections:
+        user_table = search.views.getUserQueryTable(selections, extras)
+    else:
         user_table = False
 
-    # cached already?
-    cache_key  = "rangeep" + param_no_num
+    # Is this result already cached?
+    cache_key  = "rangeep" + param_name_no_num
     if user_table:
-        cache_key += str(search.views.setUserSearchNo(selections,extras))
+        cache_key += str(search.views.setUserSearchNo(selections, extras))
 
     if cache.get(cache_key) is not None:
         range_endpoints = cache.get(cache_key)
-        return responseFormats(range_endpoints,fmt,template='mults.html')
+        return responseFormats(range_endpoints, fmt, template='mults.html')
 
-    # no cache found, calculating..
+    # We didn't find a cache entry, so calculate the endpoints
     try:
-        results    = table_model.objects # this is a count(*), group_by query
+        results = table_model.objects # this is a count(*), group_by query
     except AttributeError, e:
-        log.error("getRangeEndpoints threw: %s", str(e))
-        log.error("Could not find table model for table_name: %s", table_name)
-        raise Http404("Does Not Exist")
+        log.error('get_range_endpoints threw: %s', str(e))
+        log.error('Could not find table model for table_name: %s', table_name)
+        raise Http404('Does Not Exist')
 
-    if table_name == 'obs_general':
-        where = "%s.id = %s.id" % (table_name, user_table)
+    if selections:
+        # There are selections, so tie the query to user_table
+        if table_name == 'obs_general':
+            where = '%s.id = %s.id' % (table_name, user_table)
+        else:
+            where = '%s.obs_general_id = %s.id' % (table_name, user_table)
+
+        range_endpoints = (results.extra(where=[where], tables=[user_table]).
+                           aggregate(min=Min(param1), max=Max(param2)))
+
+        # Count of nulls
+        where = where+' and '+param1+' is null and '+param2+' is null'
+        range_endpoints['nulls'] = results.extra(where=[where],
+                                                 tables=[user_table]).count()
+
     else:
-        where = "%s.obs_general_id = %s.id" % (table_name, user_table)
+        # There are no selections, so hit the whole table
+        range_endpoints = results.all().aggregate(min = Min(param1),
+                                                  max = Max(param2))
 
-    if has_selections:
-        # has selections, tie query to user_table
-        range_endpoints = results.extra(where = [where], tables = [user_table]).aggregate(min=Min(param1), max=Max(param2))
-
-        # get count of nulls
-        where = where + " and " + param1 + " is null and " + param2 + " is null "
-        range_endpoints['nulls'] = results.extra(where=[where],tables=[user_table]).count()
-
-    else:
-        # no user query table, just hit the whole table
-
-        range_endpoints  = results.all().aggregate(min = Min(param1),max = Max(param2))
-
-        # count of nulls
-        where = param1 + " is null and " + param2 + " is null "
+        # Count of nulls
+        where = param1+' is null and '+param2+' is null '
         range_endpoints['nulls'] = results.all().extra(where=[where]).count()
 
     # convert time_sec to human readable
@@ -299,7 +304,7 @@ def getRangeEndpoints(request,slug,fmt='json'):
     # ALSO FIX this whole thing where it looks up time1 or time2 separately from
     # time_sec1 or time_sec2 because it has trouble with floating point imprecision
     # and sometimes doesn't find the associated time1/time2 field!
-    if form_type == "TIME":
+    if form_type == 'TIME':
         if slug.startswith('ert'):
             range_endpoints['min'] = ObsMissionCassini.objects.filter(**{param1:range_endpoints['min']})[0].ert1
             range_endpoints['max'] = ObsMissionCassini.objects.filter(**{param2:range_endpoints['max']})[0].ert2
@@ -311,6 +316,18 @@ def getRangeEndpoints(request,slug,fmt='json'):
 
     else:
         # form type is not TIME..
+        if form_type_ext is not None:
+            # We need to run some arbitrary function to convert from float to
+            # some kind of string. This happens for spacecraft clock count
+            # fields, among others.
+            if form_type_ext in settings.RANGE_FUNCTIONS:
+                func = settings.RANGE_FUNCTIONS[form_type_ext][0]
+                if range_endpoints['min'] is not None:
+                    range_endpoints['min'] = func(range_endpoints['min'])
+                if range_endpoints['max'] is not None:
+                    range_endpoints['max'] = func(range_endpoints['max'])
+            else:
+                log.error('Unknown RANGE function "%s"', form_type_ext)
         try:
             if abs(range_endpoints['min']) > 999000:
                 range_endpoints['min'] = format(1.0*range_endpoints['min'],'.3');

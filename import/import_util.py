@@ -26,7 +26,85 @@ import instruments
 
 def yield_import_volume_ids(arguments):
     if arguments.volumes:
-        volume_descs = arguments.volumes.split(',')
+        orig_volume_descs = arguments.volumes.split(',')
+        volume_descs = []
+        for desc in orig_volume_descs:
+            if desc.upper() == 'ALL':
+                volume_descs.append('COISS_1xxx')
+                volume_descs.append('COISS_2xxx')
+                volume_descs.append('COUVIS_0xxx')
+                volume_descs.append('COVIMS_0xxx')
+                volume_descs.append('COISS_1xxx')
+                volume_descs.append('COISS_2xxx')
+                volume_descs.append('COUVIS_0xxx')
+                volume_descs.append('COVIMS_0xxx')
+                volume_descs.append('VGISS_5xxx')
+                volume_descs.append('VGISS_6xxx')
+                volume_descs.append('VGISS_7xxx')
+                volume_descs.append('VGISS_8xxx')
+                volume_descs.append('GO_0xxx')
+                volume_descs.append('HSTIx_xxxx')
+                volume_descs.append('HSTJx_xxxx')
+                volume_descs.append('HSTNx_xxxx')
+                volume_descs.append('HSTOx_xxxx')
+                volume_descs.append('HSTUx_xxxx')
+                volume_descs.append('NHxxLO_xxxx')
+                volume_descs.append('NHxxMV_xxxx')
+            if desc.upper() == 'ALLBUTNH':
+                # This is useful because NH has duplicate opus_id that require
+                # checking while the others don't.
+                volume_descs.append('COISS_1xxx')
+                volume_descs.append('COISS_2xxx')
+                volume_descs.append('COUVIS_0xxx')
+                volume_descs.append('COVIMS_0xxx')
+                volume_descs.append('COISS_1xxx')
+                volume_descs.append('COISS_2xxx')
+                volume_descs.append('COUVIS_0xxx')
+                volume_descs.append('COVIMS_0xxx')
+                volume_descs.append('VGISS_5xxx')
+                volume_descs.append('VGISS_6xxx')
+                volume_descs.append('VGISS_7xxx')
+                volume_descs.append('VGISS_8xxx')
+                volume_descs.append('GO_0xxx')
+                volume_descs.append('HSTIx_xxxx')
+                volume_descs.append('HSTJx_xxxx')
+                volume_descs.append('HSTNx_xxxx')
+                volume_descs.append('HSTOx_xxxx')
+                volume_descs.append('HSTUx_xxxx')
+            elif desc.upper() == 'CASSINI':
+                volume_descs.append('COISS_1xxx')
+                volume_descs.append('COISS_2xxx')
+                volume_descs.append('COUVIS_0xxx')
+                volume_descs.append('COVIMS_0xxx')
+            elif desc.upper() == 'COISS':
+                volume_descs.append('COISS_1xxx')
+                volume_descs.append('COISS_2xxx')
+            elif desc.upper() == 'COUVIS':
+                volume_descs.append('COUVIS_0xxx')
+            elif desc.upper() == 'COVIMS':
+                volume_descs.append('COVIMS_0xxx')
+            elif desc.upper() == 'VOYAGER' or desc.upper() == 'VGISS':
+                volume_descs.append('VGISS_5xxx')
+                volume_descs.append('VGISS_6xxx')
+                volume_descs.append('VGISS_7xxx')
+                volume_descs.append('VGISS_8xxx')
+            elif desc.upper() == 'GALILEO' or desc.upper() == 'GOSSI':
+                volume_descs.append('GO_0xxx')
+            elif desc.upper() == 'HST' or desc.upper == 'HUBBLE':
+                volume_descs.append('HSTIx_xxxx')
+                volume_descs.append('HSTJx_xxxx')
+                volume_descs.append('HSTNx_xxxx')
+                volume_descs.append('HSTOx_xxxx')
+                volume_descs.append('HSTUx_xxxx')
+            elif desc.upper() == 'NH' or desc.upper == 'NEWHORIZONS':
+                volume_descs.append('NHxxLO_xxxx')
+                volume_descs.append('NHxxMV_xxxx')
+            elif desc.upper() == 'NHLORRI':
+                volume_descs.append('NHxxLO_xxxx')
+            elif desc.upper() == 'NHMVIC':
+                volume_descs.append('NHxxMV_xxxx')
+            else:
+                volume_descs.append(desc)
         # First make sure everything is valid
         any_invalid = False
         for volume_desc in volume_descs:
@@ -85,7 +163,6 @@ def safe_pdstable_read(filename):
         if re.fullmatch(set_search, filename.upper()):
             replacements = set_replacements
             break
-    print(replacements)
     try:
         if preprocess_label_func is None:
             table = pdstable.PdsTable(filename, replacements=replacements,
@@ -132,7 +209,7 @@ def safe_column(row, column_name, idx=None):
     if row[column_name+'_mask'][idx]:
         return None
     return row[column_name][idx]
-    
+
 ################################################################################
 # TABLE MANIPULATION
 ################################################################################
@@ -201,32 +278,37 @@ def find_max_table_id(table_name):
 # ANNOUNCE ERRORS BUT LET IMPORT CONTINUE
 ################################################################################
 
-def announce_nonrepeating_error(msg, index_row_num=None):
-    if index_row_num is not None:
-        msg += f' [line {index_row_num}]'
-    short_msg = msg
-    if msg.find(' [line') != -1:
-        short_msg = short_msg[:msg.find(' [line')]
-    if short_msg not in impglobals.ANNOUNCED_IMPORT_ERRORS:
-        impglobals.ANNOUNCED_IMPORT_ERRORS.append(short_msg)
-        impglobals.LOGGER.log('error', msg)
+def _format_vol_line():
+    ret = ''
+    if impglobals.CURRENT_VOLUME_ID is not None:
+        ret = impglobals.CURRENT_VOLUME_ID
+        if impglobals.CURRENT_INDEX_ROW_NUMBER is not None:
+            ret += ' index row '+str(impglobals.CURRENT_INDEX_ROW_NUMBER)
+    if ret != '':
+        ret = '[' + ret + '] '
+    return ret
+
+def log_error(msg, *args):
+    impglobals.LOGGER.log('error', _format_vol_line()+msg, *args)
+    impglobals.IMPORT_HAS_BAD_DATA = True
+
+def log_warning(msg, *args):
+    impglobals.LOGGER.log('warning', _format_vol_line()+msg, *args)
+
+def log_debug(msg, *args):
+    impglobals.LOGGER.log('debug', _format_vol_line()+msg, *args)
+
+def log_nonrepeating_error(msg):
+    if msg not in impglobals.LOGGED_IMPORT_ERRORS:
+        impglobals.LOGGED_IMPORT_ERRORS.append(msg)
+        impglobals.LOGGER.log('error', _format_vol_line()+msg)
         impglobals.IMPORT_HAS_BAD_DATA = True
 
-def announce_nonrepeating_warning(msg, index_row_num=None):
-    if index_row_num is not None:
-        msg += f' [line {index_row_num}]'
-    short_msg = msg
-    if msg.find(' [line') != -1:
-        short_msg = short_msg[:msg.find(' [line')]
-    if short_msg not in impglobals.ANNOUNCED_IMPORT_WARNINGS:
-        impglobals.ANNOUNCED_IMPORT_WARNINGS.append(short_msg)
-        impglobals.LOGGER.log('warning', msg)
+def log_nonrepeating_warning(msg):
+    if msg not in impglobals.LOGGED_IMPORT_WARNINGS:
+        impglobals.LOGGED_IMPORT_WARNINGS.append(msg)
+        impglobals.LOGGER.log('warning', _format_vol_line()+msg)
 
-def announce_unknown_target_name(target_name, index_row_num=None):
+def announce_unknown_target_name(target_name):
     msg = f'Unknown TARGET_NAME "{target_name}" - edit config_data.py'
-    if index_row_num is not None:
-        msg += f' [line {index_row_num}]'
-    announce_nonrepeating_error(msg)
-
-def announce_no_data_source_for_column(table_name, column_name):
-    announce_nonrepeating_error(msg)
+    log_nonrepeating_error(_format_vol_line()+msg)

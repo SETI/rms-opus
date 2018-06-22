@@ -36,9 +36,9 @@ class MultiFloatField(forms.Field):
         if type(value).__name__ != 'str':
             value = [value]
 
-        for num in value:
-            try:    float(num)
-            except: raise forms.ValidationError("value must be a number: " + num[0:20] + '...')
+        # for num in value:
+        #     try:    float(num)
+        #     except: raise forms.ValidationError("value must be a number: " + num[0:20] + '...')
 
 
 class MultiTimeField(forms.Field):
@@ -86,6 +86,10 @@ class SearchForm(forms.Form):
             except ParamInfo.DoesNotExist:
                 continue    # this is not a query param, probably a qtype, move along
 
+            form_type_ext = None
+            if form_type.find(':') != -1:
+                form_type, form_type_ext = form_type.split(':')
+
             if form_type == 'STRING':
                 choices =  (('contains','contains'),('begins','begins'),('ends','ends'),('matches','matches'),('excludes','excludes'))
                 self.fields[slug] = forms.CharField(
@@ -105,8 +109,8 @@ class SearchForm(forms.Form):
             if form_type in settings.RANGE_FIELDS:
 
                 choices =  (('any','any'),('all','all'),('only','only'))
-                slug_no_num = stripNumericSuffix(slug)
-                num = getNumericSuffix(slug)
+                slug_no_num = strip_numeric_suffix(slug)
+                num = get_numeric_suffix(slug)
                 if not num:
                     slug = slug + '1'
 
@@ -145,6 +149,9 @@ class SearchForm(forms.Form):
                         choices = choices,
                         widget = forms.CheckboxSelectMultiple(attrs={'class':'multichoice'}),
                         required=False)
+
+        # XXX RF - This is awful. It takes the last form_type from the above loop, but
+        # is it possible the loop went more than once??
 
         # hack to get range fields into the right orde since after Django 1.7 this is deprecated:
         # self.fields.keyOrder = [slug_no_num+'1', slug_no_num+'2', 'qtype-'+slug_no_num]  # makes sure min is first! boo ya!

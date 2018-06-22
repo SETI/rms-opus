@@ -30,7 +30,6 @@ def _decode_filters(**kwargs):
 
 def _helper_hubble_planet_id(**kwargs):
     metadata = kwargs['metadata']
-    index_row_num = metadata['index_row_num']
     index_row = metadata['index_row']
     planet_name = index_row['PLANET_NAME']
 
@@ -69,10 +68,8 @@ def populate_obs_general_HSTx_opus_id(**kwargs):
     except:
         metadata = kwargs['metadata']
         index_row = metadata['index_row']
-        index_row_num = metadata['index_row_num']
-        import_util.announce_nonrepeating_error(
-            f'Unable to create OPUS_ID for FILE_SPEC "{file_spec}"',
-            index_row_num)
+        import_util.log_nonrepeating_error(
+            f'Unable to create OPUS_ID for FILE_SPEC "{file_spec}"')
         return file_spec
     return opus_id
 
@@ -526,7 +523,7 @@ def populate_obs_wavelength_HSTACS_spec_size(**kwargs):
     if filter1 == 'G800L':
         # G800L's resolving power depends on the channel and order, which we
         # don't know
-        import_util.announce_nonrepeating_warning(
+        import_util.log_nonrepeating_warning(
             'G800L filter used, but not enough information available to '+
             'compute spec_size')
         wr = 8000. / 120 * .0001 # Average 100 and 140
@@ -579,7 +576,7 @@ def populate_obs_mission_hubble_HSTACS_filter_type(**kwargs):
 
     # ACS doesn't have any CH4 filters
 
-    import_util.announce_nonrepeating_error(
+    import_util.log_nonrepeating_error(
         f'Unknown filter {filter1} while determining filter type')
     return None
 
@@ -649,7 +646,7 @@ def populate_obs_mission_hubble_HSTNICMOS_filter_type(**kwargs):
     if filter1 == 'BLANK': # Opaque
         return 'OT'
 
-    import_util.announce_nonrepeating_error(f'Unknown filter "{filter1}"')
+    import_util.log_nonrepeating_error(f'Unknown filter "{filter1}"')
     return None
 
 
@@ -673,7 +670,7 @@ def populate_obs_mission_hubble_HSTSTIS_filter_type(**kwargs):
     if filter1 == 'LYMAN_ALPHA':
         return 'N'
 
-    import_util.announce_nonrepeating_error(f'Unknown filter "{filter1}"')
+    import_util.log_nonrepeating_error(f'Unknown filter "{filter1}"')
     return None
 
 
@@ -734,7 +731,7 @@ def populate_obs_mission_hubble_HSTWFC3_filter_type(**kwargs):
     if filter1.endswith('X'):
         return 'X'
 
-    import_util.announce_nonrepeating_error(f'Unknown filter "{filter1}"')
+    import_util.log_nonrepeating_error(f'Unknown filter "{filter1}"')
     return None
 
 
@@ -782,7 +779,7 @@ def populate_obs_mission_hubble_HSTWFPC2_filter_type(**kwargs):
     if filter1.endswith('LP') or filter2.endswith('LP'):
         return 'LP'
 
-    import_util.announce_nonrepeating_error(
+    import_util.log_nonrepeating_error(
         f'Unknown filter combination "{filter1}+{filter2}"')
     return None
 

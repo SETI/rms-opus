@@ -7,6 +7,8 @@
 
 import julian
 
+import opus_support
+
 from config_data import *
 import impglobals
 import import_util
@@ -29,12 +31,11 @@ def helper_new_horizons_target_name(**kwargs):
 def helper_new_horizons_planet_id(**kwargs):
     metadata = kwargs['metadata']
     supp_index_row = metadata['supp_index_row']
-    index_row_num = metadata['index_row_num']
     target_name = supp_index_row['TARGET_NAME'].upper()
     if target_name in TARGET_NAME_MAPPING:
         target_name = TARGET_NAME_MAPPING[target_name]
     if target_name not in TARGET_NAME_INFO:
-        import_util.announce_unknown_target_name(target_name, index_row_num)
+        import_util.announce_unknown_target_name(target_name)
         pl = None
     else:
         pl, _ = TARGET_NAME_INFO[target_name]
@@ -73,3 +74,27 @@ def populate_obs_mission_new_horizons_spacecraft_clock_count2(**kwargs):
     stop_time = supp_index_row['SPACECRAFT_CLOCK_STOP_COUNT']
 
     return str(partition) + '/' + stop_time
+
+def populate_obs_mission_new_horizons_spacecraft_clock_count_cvt1(**kwargs):
+    metadata = kwargs['metadata']
+    nh_row = metadata['obs_mission_new_horizons_row']
+    sc = nh_row['spacecraft_clock_count1']
+    try:
+        sc_cvt = opus_support.parse_new_horizons_sclk(sc)
+    except ValueError as e:
+        import_util.log_nonrepeating_error(
+            f'Unable to parse New Horizons SCLK "{sc}": {e}')
+        return None
+    return sc_cvt
+
+def populate_obs_mission_new_horizons_spacecraft_clock_count_cvt2(**kwargs):
+    metadata = kwargs['metadata']
+    nh_row = metadata['obs_mission_new_horizons_row']
+    sc = nh_row['spacecraft_clock_count2']
+    try:
+        sc_cvt = opus_support.parse_new_horizons_sclk(sc)
+    except ValueError as e:
+        import_util.log_nonrepeating_error(
+            f'Unable to parse New Horizons SCLK "{sc}": {e}')
+        return None
+    return sc_cvt
