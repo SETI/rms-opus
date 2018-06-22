@@ -91,20 +91,23 @@ def get_product_types(opus_id_list):
 
 def get_product_counts(product_types):
     # get count of each product type
-    size = 0;
-    count = 0;
+    size = 0
+    count = 0
     no_products = {}
+    image_count = 0     # not sure why we need this, leaving for now
     for product, sublist in product_types.iteritems():
         no_products[product] = len(sublist)
         for pdsf in sublist:
-            abspath = pdsf.abspath
             size += pdsf.size_bytes
-            count +=1
+            if psdf.opus_type.lower().find("image") >= 0:
+                image_count += 1
+            else:
+                count += 1
 
     # download_info, count and total size before zip
     size = nice_file_size(size)  # pretty display it
 
-    return size, count, no_products
+    return size, count, image_count, no_products
 
 
 def get_collection_count(session_id):
@@ -347,14 +350,9 @@ def view_collection(request, collection_name, template="collections.html"):
 
     # all product types
     all_product_types = get_product_types(opus_id_list)
-    download_size, download_count, product_counts = get_product_counts(all_product_types)
+    download_size, download_count, image_count, product_counts = get_product_counts(all_product_types)
 
-    # the image_links should come from the pdsf for each sublist, right now it's stubbed out
-    image_links = get_image_links(all_product_types)
-
-    # images and join with the collections table
     image_types = settings.IMAGE_TYPES
-    image_count = len(image_links)
 
     column_values = []
     for param_name in columns:

@@ -12,7 +12,7 @@ sys.path.insert(0, os.path.join(PROJECT_ROOT, 'apps'))
 sys.path.insert(0, os.path.join(PROJECT_ROOT, '..\pds-tools'))
 sys.path.insert(0, os.path.join(PROJECT_ROOT, '..\pds-webserver\python'))
 
-PDS_DATA_DIR =  'C:/seti/pdsdata/holdings'
+PDS_DATA_DIR = "C:\Users\Debby\Dropbox (SETI Institute)\pdsdata\holdings"
 
 import pdsfile
 
