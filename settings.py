@@ -1,16 +1,23 @@
-# Django settings for opus project.
 import os
 import sys
 from collections import OrderedDict
 from secrets import *
-import opus_support
-
-ALLOWED_HOSTS = ('dev.pds-rings.seti.org','127.0.0.1')
 
 PROJECT_ROOT = os.path.dirname(os.path.realpath(__file__))
+BASE_PATH = 'opus'  # production base path is handled by apache, local is not.
 sys.path.insert(0, PROJECT_ROOT)
 sys.path.insert(0, os.path.join(PROJECT_ROOT, 'apps'))
 sys.path.insert(0, os.path.join(PROJECT_ROOT, 'pds-tools'))
+
+import opus_support
+import julian
+
+ALLOWED_HOSTS = ('127.0.0.1',
+                 'localhost',
+                 'pds-rings-tools.seti.org',
+                 'tools.pds-rings.seti.org')
+
+OPUS_DB = 'opus_new'
 
 DEBUG = True
 
@@ -20,11 +27,9 @@ SESSION_SAVE_EVERY_REQUEST = True
 ADMINS = (
     ('Robert French', 'rfrench@seti.org'),
 )
-
-def custom_show_toolbar(request):
-    return True # Always show toolbar, for example purposes only.
-
 MANAGERS = ADMINS
+
+STATIC_URL = '/static_media/'
 
 # Local time zone for this installation. Choices can be found here:
 # http://en.wikipedia.org/wiki/List_of_tz_zones_by_name
@@ -147,40 +152,6 @@ CACHE_MAX_AGE = 3600 * 24 * 120  # the last number is the number of days
 
 INTERNAL_IPS = ("127.0.0.1",)
 
-## App constants
-
-BASE_TABLES = ['obs_general', 'obs_pds', 'obs_ring_geometry','obs_surface_geometry','obs_wavelength','obs_type_image']  # tables in which every observation in the database appears:
-TAR_FILE_URI_PATH = 'http://pds-rings-downloads.seti.org/opus/'
-IMAGE_HTTP_PATH = 'https://pds-rings.seti.org/holdings/previews/'
-DEFAULT_COLUMNS = 'opusid,planet,target,time1,time2'
-IMAGE_COLUMNS   = ['thumb.jpg','small.jpg','med.jpg','full.jpg']
-RANGE_FIELDS    = ['TIME','LONG','RANGE']
-# Format is decode float->string, encode string->float
-RANGE_FUNCTIONS = {
-    'range_cassini_sclk': (opus_support.format_cassini_sclk,
-                           opus_support.parse_cassini_sclk),
-    'range_galileo_sclk': (opus_support.format_galileo_sclk,
-                           opus_support.parse_galileo_sclk),
-    'range_new_horizons_sclk': (opus_support.format_new_horizons_sclk,
-                                opus_support.parse_new_horizons_sclk),
-    'range_voyager_sclk': (opus_support.format_voyager_sclk,
-                           opus_support.parse_voyager_sclk)
-}
-MULT_FIELDS	= ['GROUP','TARGETS']
-DEFAULT_LIMIT = 100
-MULT_FORM_TYPES = ('GROUP','TARGETS');
-ERROR_LOG_PATH = PROJECT_ROOT + "logs/opus_log.txt"
-image_sizes = (('full','Full Res'),('med','Medium'),('small','Small'),('thumb','Thumb')) # key is value and value is label
-IMAGE_TYPES = OrderedDict(image_sizes)
-
-THUMBNAIL_NOT_FOUND = 'https://tools.pds-rings.seti.org/assets/static_media/img/thumbnail_not_found.png'
-
-FILE_HTTP_PATH  = 'https://pds-rings.seti.org/holdings/volumes/'
-DERIVED_HTTP_PATH  = 'https://pds-rings.seti.org/holdings/calibrated/'
-IMAGE_HTTP_PATH = 'https://pds-rings.seti.org/holdings/previews/'
-MAX_CUM_DOWNLOAD_SIZE = 5*1024*1024*1024 # 5 gigs max cum downloads
-
-
 
 TEST_RUNNER = 'django_nose.NoseTestSuiteRunner'
 
@@ -191,6 +162,50 @@ TEST_RUNNER = 'django_nose.NoseTestSuiteRunner'
 
 #CACHE_MIDDLEWARE_SECONDS = 0
 
+## App constants
+
+BASE_TABLES = ['obs_general', 'obs_pds', 'obs_ring_geometry','obs_surface_geometry','obs_wavelength','obs_type_image']  # tables in which every observation in the database appears:
+TAR_FILE_URI_PATH = 'http://pds-rings-downloads.seti.org/opus/'
+IMAGE_HTTP_PATH = 'https://pds-rings.seti.org/holdings/previews/'
+DEFAULT_COLUMNS = 'opusid,planet,target,time1,time2'
+IMAGE_COLUMNS   = ['thumb.jpg','small.jpg','med.jpg','full.jpg']
+RANGE_FIELDS    = ['LONG','RANGE']
+# Format is decode float->string, encode string->float
+def _range_time_encode(tai):
+    return julian.iso_from_tai(tai, digits=3)
+def _range_time_decode(iso):
+    iso = str(iso)
+    return julian.tai_from_iso(iso)
+
+RANGE_FUNCTIONS = {
+    'range_time': (_range_time_encode, _range_time_decode),
+    'range_cassini_sclk': (opus_support.format_cassini_sclk,
+                           opus_support.parse_cassini_sclk),
+    'range_galileo_sclk': (opus_support.format_galileo_sclk,
+                           opus_support.parse_galileo_sclk),
+    'range_new_horizons_sclk': (opus_support.format_new_horizons_sclk,
+                                opus_support.parse_new_horizons_sclk),
+    'range_voyager_sclk': (opus_support.format_voyager_sclk,
+                           opus_support.parse_voyager_sclk),
+    'range_cassini_rev_no': (opus_support.format_cassini_orbit,
+                           opus_support.parse_cassini_orbit),
+}
+MULT_FIELDS	= ['GROUP','TARGETS']
+DEFAULT_LIMIT = 100
+MULT_FORM_TYPES = ('GROUP','TARGETS');
+ERROR_LOG_PATH = PROJECT_ROOT + "logs/opus_log.txt"
+image_sizes = (('full','Full Res'),('med','Medium'),('small','Small'),('thumb','Thumb')) # key is value and value is label
+IMAGE_TYPES = OrderedDict(image_sizes)
+SLUGS_NOT_IN_DB = ('reqno', 'view', 'browse', 'colls_browse', 'page',
+                   'gallery_data_viewer', 'limit', 'order', 'cols',
+                   'widgets', 'widgets2', 'detail')
+
+THUMBNAIL_NOT_FOUND = 'https://tools.pds-rings.seti.org/assets/static_media/img/thumbnail_not_found.png'
+
+FILE_HTTP_PATH  = 'https://pds-rings.seti.org/holdings/volumes/'
+DERIVED_HTTP_PATH  = 'https://pds-rings.seti.org/holdings/calibrated/'
+IMAGE_HTTP_PATH = 'https://pds-rings.seti.org/holdings/previews/'
+MAX_CUM_DOWNLOAD_SIZE = 5*1024*1024*1024 # 5 gigs max cum downloads
 
 DEBUG_TOOLBAR_CONFIG = { 'INTERCEPT_REDIRECTS': False }
 
@@ -300,5 +315,31 @@ LOGGING = {
 }
 
 
-BASE_PATH = ''  # production base path is handled by apache, local is not.
-from settings_local import *
+os.environ['REUSE_DB'] = "1"  # for test runner
+
+DATABASES = {
+    'default': {
+        'NAME': OPUS_DB,  # local database name
+        'ENGINE': 'django.db.backends.mysql',
+        'USER': DB_USER,
+        'PASSWORD': DB_PASS,
+        # 'OPTIONS':{ 'unix_socket': '/private/tmp/mysql.sock'}
+        'TEST': {
+                    'NAME': OPUS_DB,  # use same database for test as prod YES
+                },
+    },
+    'dictionary': {
+        'NAME': 'dictionary',
+        'ENGINE': 'django.db.backends.mysql',
+        'USER': DB_USER,
+        'PASSWORD': DB_PASS,
+        # 'OPTIONS':{ 'init_command': 'SET storage_engine=MYISAM;'},
+    },
+    'metrics': {
+        'NAME': 'opus_metrics',
+        'ENGINE': 'django.db.backends.mysql',
+        'USER': DB_USER,
+        'PASSWORD': DB_PASS,
+        # 'OPTIONS':{ 'unix_socket': '/private/var/mysql/mysql.sock'},
+    }
+}

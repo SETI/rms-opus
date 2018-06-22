@@ -34,10 +34,6 @@ def yield_import_volume_ids(arguments):
                 volume_descs.append('COISS_2xxx')
                 volume_descs.append('COUVIS_0xxx')
                 volume_descs.append('COVIMS_0xxx')
-                volume_descs.append('COISS_1xxx')
-                volume_descs.append('COISS_2xxx')
-                volume_descs.append('COUVIS_0xxx')
-                volume_descs.append('COVIMS_0xxx')
                 volume_descs.append('VGISS_5xxx')
                 volume_descs.append('VGISS_6xxx')
                 volume_descs.append('VGISS_7xxx')
@@ -50,13 +46,9 @@ def yield_import_volume_ids(arguments):
                 volume_descs.append('HSTUx_xxxx')
                 volume_descs.append('NHxxLO_xxxx')
                 volume_descs.append('NHxxMV_xxxx')
-            if desc.upper() == 'ALLBUTNH':
+            elif desc.upper() == 'ALLBUTNH':
                 # This is useful because NH has duplicate opus_id that require
                 # checking while the others don't.
-                volume_descs.append('COISS_1xxx')
-                volume_descs.append('COISS_2xxx')
-                volume_descs.append('COUVIS_0xxx')
-                volume_descs.append('COVIMS_0xxx')
                 volume_descs.append('COISS_1xxx')
                 volume_descs.append('COISS_2xxx')
                 volume_descs.append('COUVIS_0xxx')

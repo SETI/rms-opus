@@ -82,7 +82,7 @@
         "pi_disp_order": 11,
         "pi_display": 1,
         "pi_display_results": 1,
-        "pi_form_type": "TIME",
+        "pi_form_type": "RANGE:range_time",
         "pi_intro": null,
         "pi_label": "Earth Received Time",
         "pi_label_results": "Earth Received Time (seconds)",
@@ -101,6 +101,7 @@
               "FUNCTION",
               "obs_mission_voyager_spacecraft_clock_count1"
         ],
+        "data_source_order": 10,
         "definition": "The partition number for the Voyager spacecraft 'FDS' clock followed by the spacecraft clock value ('FDS' or 'Flight Data System' count) at the time the camera shutter opened. The partition number started at 1 at launch as was incremented each time the clock cycled through 65536 'FDS hours'. FDS counts are of the form 'hhhhh:mm:ddd', where 'hhhhh' is a five-digit 'FDS hour' (equal to 48 true minutes, numbered 0-65535), 'mm' is 2-digit 'FDS minute' (equal to 48 true seconds, numbered 0-59), and 'ddd' is a 3-digit 'FDS tick' which increments every 60 msec, numbered 1-800.",
         "pi_category_name": "obs_mission_voyager",
         "pi_dict_context": "VOYAGER",
@@ -128,6 +129,7 @@
               "FUNCTION",
               "obs_mission_voyager_spacecraft_clock_count2"
         ],
+        "data_source_order": 11,
         "definition": "The partition number for the Voyager spacecraft 'FDS' clock followed by the spacecraft clock value ('FDS' or 'Flight Data System' count) at the time the camera shutter closed. The partition number started at 1 at launch as was incremented each time the clock cycled through 65536 'FDS hours'. FDS counts are of the form 'hhhhh:mm:ddd', where 'hhhhh' is a five-digit 'FDS hour' (equal to 48 true minutes, numbered 0-65535), 'mm' is 2-digit 'FDS minute' (equal to 48 true seconds, numbered 0-59), and 'ddd' is a 3-digit 'FDS tick' which increments every 60 msec, numbered 1-800.",
         "pi_category_name": "obs_mission_voyager",
         "pi_dict_context": "VOYAGER",
@@ -155,6 +157,7 @@
               "FUNCTION",
               "obs_mission_voyager_spacecraft_clock_count_cvt1"
         ],
+        "data_source_order": 20,
         "definition": "The partition number for the Voyager spacecraft 'FDS' clock followed by the spacecraft clock value ('FDS' or 'Flight Data System' count) at the time the camera shutter closed. The partition number started at 1 at launch as was incremented each time the clock cycled through 65536 'FDS hours'. FDS counts are of the form 'hhhhh:mm:ddd', where 'hhhhh' is a five-digit 'FDS hour' (equal to 48 true minutes, numbered 0-65535), 'mm' is 2-digit 'FDS minute' (equal to 48 true seconds, numbered 0-59), and 'ddd' is a 3-digit 'FDS tick' which increments every 60 msec, numbered 1-800.",
         "pi_category_name": "obs_mission_voyager",
         "pi_dict_context": "VOYAGER",
@@ -181,6 +184,7 @@
               "FUNCTION",
               "obs_mission_voyager_spacecraft_clock_count_cvt2"
         ],
+        "data_source_order": 21,
         "definition": "The partition number for the Voyager spacecraft 'FDS' clock followed by the spacecraft clock value ('FDS' or 'Flight Data System' count) at the time the camera shutter closed. The partition number started at 1 at launch as was incremented each time the clock cycled through 65536 'FDS hours'. FDS counts are of the form 'hhhhh:mm:ddd', where 'hhhhh' is a five-digit 'FDS hour' (equal to 48 true minutes, numbered 0-65535), 'mm' is 2-digit 'FDS minute' (equal to 48 true seconds, numbered 0-59), and 'ddd' is a 3-digit 'FDS tick' which increments every 60 msec, numbered 1-800.",
         "pi_category_name": "obs_mission_voyager",
         "pi_dict_context": "VOYAGER",

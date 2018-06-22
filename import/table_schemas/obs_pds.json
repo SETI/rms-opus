@@ -141,6 +141,7 @@
             "FUNCTION",
             "obs_general_<INST>_product_creation_time"
         ],
+        "data_source_order": 10,
         "definition": "XXX",
         "pi_category_name": "obs_pds",
         "pi_dict_context": "OPUS_GENERAL",
@@ -167,13 +168,14 @@
             "FUNCTION",
             "obs_general_product_creation_time_sec"
         ],
+        "data_source_order": 20,
         "pi_category_name": "obs_pds",
         "pi_dict_context": "OPUS_GENERAL",
         "pi_dict_name": "PRODUCT_CREATION_TIME",
         "pi_disp_order": 51,
         "pi_display": 1,
         "pi_display_results": 1,
-        "pi_form_type": "TIME",
+        "pi_form_type": "RANGE:range_time",
         "pi_intro": null,
         "pi_label": "Product Creation Time",
         "pi_label_results": "Product Creation Time (seconds)",

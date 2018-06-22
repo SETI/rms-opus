@@ -278,15 +278,26 @@ def getWidget(request, **kwargs):
                 form = '<span>'+add_str+'</span><ul>' + form + '</ul>'  # add input link comes before form
 
         else: # param is constrained
+            if form_type_ext is None:
+                func = float
+            else:
+                if form_type_ext in settings.RANGE_FUNCTIONS:
+                    func = settings.RANGE_FUNCTIONS[form_type_ext][0]
+                else:
+                    log.error('Unknown RANGE function "%s"',
+                              form_type_ext)
+                    func = float
             key=0
             while key<length:
                 try:
-                  form_vals[slug1] = selections[param1][key]
-                except (IndexError, KeyError) as e:
+                  form_vals[slug1] = func(selections[param1][key])
+                except (IndexError, KeyError, ValueError) as e:
+                    log.error('getWidget threw %s', str(e))
                     form_vals[slug1] = None
                 try:
-                  form_vals[slug2] = selections[param2][key]
-                except (IndexError, KeyError) as e:
+                    form_vals[slug2] = func(selections[param2][key])
+                except (IndexError, KeyError, ValueError) as e:
+                    log.error('getWidget threw %s', str(e))
                     form_vals[slug2] = None
 
                 qtypes = request.GET.get('qtype-' + slug, False)

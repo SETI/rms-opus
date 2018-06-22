@@ -287,19 +287,26 @@ def urlToSearchParams(request_get):
     qtypes     = {}
 
     for searchparam in request_get.items():
-        # try:
         slug = searchparam[0]
+        if slug in settings.SLUGS_NOT_IN_DB:
+            continue
         slug_no_num = strip_numeric_suffix(slug)
         values = searchparam[1].strip(',').split(',')
 
         qtype = False  # assume this is not a qtype statement
-        if slug.find('qtype') == 0:
+        if slug.startswith('qtype'): # like qtype-time=ZZZ
             qtype = True  # this is a statement of query type!
             slug = slug.split('-')[1]
             slug_no_num = strip_numeric_suffix(slug)
+            if slug_no_num != slug:
+                log.error('search.views:urlToSearchParams qtype slug has '+
+                          'numeric suffix "%s", slug')
+                continue
 
         param_info = get_param_info_by_slug(slug)
         if not param_info:
+            log.error('search.views:urlToSearchParams unknown slug "%s"',
+                      slug)
             continue
 
         param_name = param_info.param_name()
@@ -311,15 +318,16 @@ def urlToSearchParams(request_get):
         param_name_no_num = strip_numeric_suffix(param_name)
 
         if qtype:
-            qtypes[param_name_no_num] = request_get.get('qtype-'+slug_no_num,False).strip(',').split(',')
+            qtypes[param_name_no_num] = values
             continue
 
         if form_type in settings.MULT_FORM_TYPES:
-            # mult form types can be sorted to save duplicate queries being built
-            selections[param_name] = sorted(searchparam[1].strip(',').split(','))
-
+            # mult form types can be sorted to save duplicate queries being
+            # built
+            selections[param_name] = sorted(values)
         else:
-            # no other form types can be sorted since their ordering corresponds to qtype ordering
+            # no other form types can be sorted since their ordering
+            # corresponds to qtype ordering
             if searchparam[1]:  # if it has a value
                 if form_type == "RANGE":
                     if form_type_ext is None:
@@ -337,28 +345,27 @@ def urlToSearchParams(request_get):
                         try:
                             selections[param_name + ext] = map(func, values)
                         except ValueError,e:
-                            log.error('Function "%s" threw ValueError(%s) for %s',
-                                      func, e, values)
+                            log.error(
+                                'Function "%s" threw ValueError(%s) for %s',
+                                func, e, values)
                     else:
                         # normal 2-column range query
                         try:
                             selections[param_name] = map(func, values)
                         except ValueError,e:
-                            log.error('Function "%s" threw ValueError(%s) for %s',
-                                      func, e, values)
+                            log.error(
+                                'Function "%s" threw ValueError(%s) for %s',
+                                func, e, values)
                 else:
                     selections[param_name] = values
 
         # except: pass # the param passed doesn't exist or is a USER PREF AAAAAACK
 
-    if len(selections.keys()) > 0:
+    if selections:
         extras  = {}
         extras['qtypes'] = qtypes
-        results = []
-        results.append(selections)
-        results.append(extras)
 
-        return results
+        return selections, extras
 
     else:
         return [{}, {}]
@@ -475,6 +482,9 @@ def range_query_object(selections, param_name, qtypes):
         return False
 
     form_type     = param_info.form_type
+    form_type_ext = None
+    if form_type.find(':') != -1:
+        form_type, form_type_ext = form_type.split(':')
     table_name = param_info.category_name
 
     # we will define both sides of the query, so define those param names
@@ -500,22 +510,6 @@ def range_query_object(selections, param_name, qtypes):
         param_model_name_min = table_name.lower().replace('_','') + '__' + param_name_min.split('.')[1]
         param_model_name_max = table_name.lower().replace('_','') + '__' + param_name_max.split('.')[1]
 
-    # if these are times convert values from time string to seconds
-    if form_type == 'TIME':
-
-        values_min = convertTimes(values_min)
-        try:
-            index = values_min.index(None)
-            raise Exception("InvalidTimes")
-        except: pass
-
-        values_max = convertTimes(values_max)
-        try:
-            index = values_max.index(None)
-            raise Exception("InvalidTimes")
-        except:
-            pass
-
     # we need to know how many times to go through this loop
     count = max(len(values_min), len(values_max))  # sometimes you can have queries
                                                    # that define multiple ranges for same widget
@@ -526,6 +520,9 @@ def range_query_object(selections, param_name, qtypes):
         log.error('.. values_min: %s', str(values_min))
         log.error('.. values_max: %s', str(values_max))
         log.error('.. qtypes: %s', str(qtypes))
+
+    # XXX This is really awful. What happens if there are a different number
+    # of qtypes and values?
 
     # now collect the query expressions
     all_query_expressions = []  # these will be joined by OR
@@ -559,30 +556,30 @@ def range_query_object(selections, param_name, qtypes):
 
         if qtype == 'all':
 
-            if value_min:
+            if value_min is not None:
                 # param_name_min <= value_min
                 q_exp1 = Q(**{"%s__lte" % param_model_name_min: value_min })
 
-            if value_max:
+            if value_max is not None:
                 # param_name_max >= value_max
                 q_exp2 = Q(**{"%s__gte" % param_model_name_max: value_max })
 
         elif qtype == 'only':
 
-            if value_min:
+            if value_min is not None:
                 # param_name_min >= value_min
                 q_exp1 = Q(**{"%s__gte" % param_model_name_min: value_min })
 
-            if value_max:
+            if value_max is not None:
                 # param_name_max <= value_max
                 q_exp2 = Q(**{"%s__lte" % param_model_name_max: value_max })
 
         else: # defaults to qtype = any
-            if value_max:
+            if value_max is not None:
                 # param_name_min <= value_max
                 q_exp1 = Q(**{"%s__lte" % param_model_name_min: value_max })
 
-            if value_min:
+            if value_min is not None:
                 # param_name_max >= value_min
                 q_exp2 = Q(**{"%s__gte" % param_model_name_max: value_min })
 

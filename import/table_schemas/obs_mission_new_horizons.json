@@ -60,6 +60,7 @@
             "FUNCTION",
             "obs_mission_new_horizons_spacecraft_clock_count1"
         ],
+        "data_source_order": 10,
         "definition": "Time at which the shutter was opened given in Mission Event Time (MET). MET is measure using a 32-bit counter on the New Horizons spacecraft that increments continuously from the beginning of the mission. It runs at a rate of about one increment per second starting from a value of zero at January 19, 2006 18:08:02 UTC, or JD2453755.256337. Preceded by the SPACECRAFT_CLOCK_COUNT_PARTITION, which is the clock partition active at the time",
         "pi_category_name": "obs_mission_new_horizons",
         "pi_dict_context": "NEW_HORIZONS",
@@ -87,6 +88,7 @@
             "FUNCTION",
             "obs_mission_new_horizons_spacecraft_clock_count2"
         ],
+        "data_source_order": 11,
         "definition": "Time at which the shutter was closed given in Mission Event Time (MET). MET is measure using a 32-bit counter on the New Horizons spacecraft that increments continuously from the beginning of the mission. It runs at a rate of about one increment per second starting from a value of zero at January 19, 2006 18:08:02 UTC, or JD2453755.256337. Preceded by the SPACECRAFT_CLOCK_COUNT_PARTITION, which is the clock partition active at the time",
         "pi_category_name": "obs_mission_new_horizons",
         "pi_dict_context": "NEW_HORIZONS",
@@ -114,6 +116,7 @@
             "FUNCTION",
             "obs_mission_new_horizons_spacecraft_clock_count_cvt1"
         ],
+        "data_source_order": 20,
         "definition": "Time at which the shutter was opened given in Mission Event Time (MET). MET is measure using a 32-bit counter on the New Horizons spacecraft that increments continuously from the beginning of the mission. It runs at a rate of about one increment per second starting from a value of zero at January 19, 2006 18:08:02 UTC, or JD2453755.256337. Preceded by the SPACECRAFT_CLOCK_COUNT_PARTITION, which is the clock partition active at the time",
         "pi_category_name": "obs_mission_new_horizons",
         "pi_dict_context": "NEW_HORIZONS",
@@ -141,6 +144,7 @@
             "FUNCTION",
             "obs_mission_new_horizons_spacecraft_clock_count_cvt2"
         ],
+        "data_source_order": 21,
         "definition": "Time at which the shutter was closed given in Mission Event Time (MET). MET is measure using a 32-bit counter on the New Horizons spacecraft that increments continuously from the beginning of the mission. It runs at a rate of about one increment per second starting from a value of zero at January 19, 2006 18:08:02 UTC, or JD2453755.256337. Preceded by the SPACECRAFT_CLOCK_COUNT_PARTITION, which is the clock partition active at the time",
         "pi_category_name": "obs_mission_new_horizons",
         "pi_dict_context": "NEW_HORIZONS",

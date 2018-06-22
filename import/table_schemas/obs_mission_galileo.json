@@ -107,7 +107,7 @@
             "TAB:index",
             "SPACECRAFT_CLOCK_START_COUNT"
         ],
-        "data_source_order": 10,
+        "data_source_order": 11,
         "val_min": 3e6,
         "val_max": 7e6,
         "pi_category_name": "obs_mission_galileo",
@@ -162,7 +162,7 @@
               "FUNCTION",
               "obs_mission_galileo_spacecraft_clock_count_cvt2"
         ],
-        "data_source_order": 10,
+        "data_source_order": 21,
         "definition": "The spacecraft clock at time of image acquisition. The SCLK is formatted as follows: RIM.MOD91",
         "pi_category_name": "obs_mission_galileo",
         "pi_dict_context": "GALILEO",

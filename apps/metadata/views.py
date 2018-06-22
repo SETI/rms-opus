@@ -299,46 +299,30 @@ def get_range_endpoints(request, slug, fmt='json'):
         where = param1+' is null and '+param2+' is null '
         range_endpoints['nulls'] = results.all().extra(where=[where]).count()
 
-    # convert time_sec to human readable
-    # XXX THIS IS A HORRIBLE HACK. FIX THIS!
-    # ALSO FIX this whole thing where it looks up time1 or time2 separately from
-    # time_sec1 or time_sec2 because it has trouble with floating point imprecision
-    # and sometimes doesn't find the associated time1/time2 field!
-    if form_type == 'TIME':
-        if slug.startswith('ert'):
-            range_endpoints['min'] = ObsMissionCassini.objects.filter(**{param1:range_endpoints['min']})[0].ert1
-            range_endpoints['max'] = ObsMissionCassini.objects.filter(**{param2:range_endpoints['max']})[0].ert2
-        else:
+    if form_type_ext is not None:
+        # We need to run some arbitrary function to convert from float to
+        # some kind of string. This happens for spacecraft clock count
+        # and time fields, among others.
+        if form_type_ext in settings.RANGE_FUNCTIONS:
+            func = settings.RANGE_FUNCTIONS[form_type_ext][0]
             if range_endpoints['min'] is not None:
-                range_endpoints['min'] = ObsGeneral.objects.filter(**{param1:range_endpoints['min']})[0].time1
+                range_endpoints['min'] = func(range_endpoints['min'])
             if range_endpoints['max'] is not None:
-                range_endpoints['max'] = ObsGeneral.objects.filter(**{param2:range_endpoints['max']})[0].time2
+                range_endpoints['max'] = func(range_endpoints['max'])
+        else:
+            log.error('Unknown RANGE function "%s"', form_type_ext)
 
-    else:
-        # form type is not TIME..
-        if form_type_ext is not None:
-            # We need to run some arbitrary function to convert from float to
-            # some kind of string. This happens for spacecraft clock count
-            # fields, among others.
-            if form_type_ext in settings.RANGE_FUNCTIONS:
-                func = settings.RANGE_FUNCTIONS[form_type_ext][0]
-                if range_endpoints['min'] is not None:
-                    range_endpoints['min'] = func(range_endpoints['min'])
-                if range_endpoints['max'] is not None:
-                    range_endpoints['max'] = func(range_endpoints['max'])
-            else:
-                log.error('Unknown RANGE function "%s"', form_type_ext)
-        try:
-            if abs(range_endpoints['min']) > 999000:
-                range_endpoints['min'] = format(1.0*range_endpoints['min'],'.3');
-        except TypeError:
-            pass
+    try:
+        if abs(range_endpoints['min']) > 999000:
+            range_endpoints['min'] = format(1.0*range_endpoints['min'],'.3');
+    except TypeError:
+        pass
 
-        try:
-            if abs(range_endpoints['max']) > 999000:
-                range_endpoints['max'] = format(1.0*range_endpoints['max'],'.3');
-        except TypeError:
-            pass
+    try:
+        if abs(range_endpoints['max']) > 999000:
+            range_endpoints['max'] = format(1.0*range_endpoints['max'],'.3');
+    except TypeError:
+        pass
 
     # save this in cache
     cache.set(cache_key,range_endpoints)

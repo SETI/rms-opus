@@ -14,9 +14,7 @@ log.txt
 
 venv
 p3venv
-settings_local.py
 secrets.py
-secrets.php
 
 migrations/
 search/models.py  # this file is generated dynamically during import procedures

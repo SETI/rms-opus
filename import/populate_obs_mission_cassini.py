@@ -452,3 +452,17 @@ def populate_obs_mission_cassini_spacecraft_clock_count_cvt2(**kwargs):
             f'Unable to parse Cassini SCLK "{sc}": {e}')
         return None
     return sc_cvt
+
+def populate_obs_mission_cassini_rev_no_cvt(**kwargs):
+    metadata = kwargs['metadata']
+    cassini_row = metadata['obs_mission_cassini_row']
+    rev_no = cassini_row['rev_no']
+    if rev_no is None:
+        return None
+    try:
+        rev_no_cvt = opus_support.parse_cassini_orbit(rev_no)
+    except (ValueError, TypeError) as e:
+        import_util.log_nonrepeating_error(
+            f'Unable to parse Cassini orbit "{rev_no}": {e}')
+        return None
+    return rev_no_cvt
