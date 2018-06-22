@@ -115,7 +115,7 @@ def parse_galileo_sclk(sclk):
 
     return _parse_two_field_sclk(sclk, '.', 91, 'Galileo')
 
-def format_galileo_sclk(value,):
+def format_galileo_sclk(value):
     """Convert a number into a valid Galileo clock string.
     """
 
@@ -129,15 +129,37 @@ def format_galileo_sclk(value,):
 #
 # The clock has two fields separated by a colon. The first field is a ten-digit
 # number with leading zeros if necessary. The second is a five-digit number
-# 0-50000. The partition is always 1.
+# 0-50000. The partition is 1 through 0139810086 and 3 starting at 0168423778.
+# No observations in between are archived at the RMS Node. Note that the clock
+# count does not roll over between partitions.
 ################################################################################
 
 def parse_new_horizons_sclk(sclk):
     """Convert a New Horizons clock string to a numeric value."""
 
-    return _parse_two_field_sclk(sclk, ':', 50000, 'New Horizons')
+    original_sclk = sclk
 
-def format_new_horizons_sclk(value,):
+    # Check for partition number
+    parts = sclk.partition('/')
+    if parts[1]:        # a slash if present, otherwise an empty string
+        if parts[0] not in ('1', '3'):
+            raise ValueError('New Horizons partition number must be 1 or 3: ' +
+                             sclk)
+        sclk = parts[2]
+
+    # Convert to numeric value
+    value = _parse_two_field_sclk(sclk, ':', 50000, 'New Horizons')
+
+    # Validate the partition number if any
+    if parts[1]:
+        if ((parts[0] == '3' and value < 150000000.) or
+            (parts[0] == '1' and value > 150000000.)):
+                raise ValueError('New Horizons partition number is invalid: ' +
+                                 original_sclk)
+
+    return value
+
+def format_new_horizons_sclk(value):
     """Convert a number into a valid New Horizons clock string.
     """
 
@@ -159,7 +181,7 @@ def parse_cassini_sclk(sclk):
 
     return _parse_two_field_sclk(sclk, '.', 256, 'Cassini')
 
-def format_cassini_sclk(value,):
+def format_cassini_sclk(value):
     """Convert a number into a valid Cassini clock string.
     """
 

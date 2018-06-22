@@ -197,8 +197,8 @@ def populate_obs_general_COVIMS_declination2(**kwargs):
     return dec
 
 def populate_obs_mission_cassini_COVIMS_mission_phase_name(**kwargs):
-    return None
-
+    return helper_cassini_mission_phase_name(**kwargs)
+    
 def populate_obs_mission_cassini_COVIMS_sequence_id(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']

@@ -235,7 +235,7 @@ def populate_obs_general_COUVIS_declination2(**kwargs):
     return dec
 
 def populate_obs_mission_cassini_COUVIS_mission_phase_name(**kwargs):
-    return None
+    return helper_cassini_mission_phase_name(**kwargs)
 
 def populate_obs_mission_cassini_COUVIS_sequence_id(**kwargs):
     return None
@@ -512,18 +512,25 @@ def populate_obs_mission_cassini_COUVIS_spacecraft_clock_count1(**kwargs):
         import_util.log_nonrepeating_error(
             f'Badly formatted SPACECRAFT_CLOCK_START_COUNT "{count}"')
         return None
+    # See pds-opus issue #336
+    count = count.replace('.320', '.032')
+    count = count.replace('.640', '.064')
+    count = count.replace('.960', '.096')
     return count
 
-# NOTE: STOP COUNT is always unknown for UVIS
+# There is no SPACECRAFT_CLOCK_STOP_COUNT for COUVIS so we have to compute it.
+# This works because Cassini SCLK is in units of seconds.
 def populate_obs_mission_cassini_COUVIS_spacecraft_clock_count2(**kwargs):
     metadata = kwargs['metadata']
-    index_row = metadata['index_row']
-    count = index_row['SPACECRAFT_CLOCK_START_COUNT']
-    if not count.startswith('1/'):
-        import_util.log_nonrepeating_error(
-            f'Badly formatted SPACECRAFT_CLOCK_START_COUNT "{count}"')
-        return None
-    return count
+    cassini_row = metadata['obs_mission_cassini_row']
+    general_row = metadata['obs_general_row']
+    count = cassini_row['spacecraft_clock_count1']
+    time1 = general_row['time_sec1']
+    time2 = general_row['time_sec2']
+    count_sec = opus_support.parse_cassini_sclk(count)
+    new_count_sec = count_sec + (time2-time1)
+    new_count = opus_support.format_cassini_sclk(new_count_sec)
+    return '1/' + new_count
 
 
 ################################################################################
