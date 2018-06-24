@@ -527,7 +527,12 @@ def populate_obs_mission_cassini_COUVIS_spacecraft_clock_count2(**kwargs):
     count = cassini_row['spacecraft_clock_count1']
     time1 = general_row['time_sec1']
     time2 = general_row['time_sec2']
-    count_sec = opus_support.parse_cassini_sclk(count)
+    try:
+        count_sec = opus_support.parse_cassini_sclk(count)
+    except Exception as e:
+        import_util.log_nonrepeating_error(
+            f'Unable to parse Cassini SCLK "{count}": {e}')
+        return None
     new_count_sec = count_sec + (time2-time1)
     new_count = opus_support.format_cassini_sclk(new_count_sec)
     return '1/' + new_count

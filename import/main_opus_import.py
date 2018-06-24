@@ -62,6 +62,10 @@ parser.add_argument(
     '--override-db-schema', type=str, default=None,
     help='Override the db_schema specified in secrets.py'
 )
+parser.add_argument(
+    '--override-pds-data-dir', type=str, default=None,
+    help='Override the PDS_DATA_DIR specified in secrets.py (.../holdings)'
+)
 
 # What to actually do - main import
 parser.add_argument(
@@ -317,7 +321,10 @@ try: # Top-level exception handling so we always log what's going on
             limits={'info': impglobals.ARGUMENTS.log_info_limit,
                     'debug': impglobals.ARGUMENTS.log_debug_limit})
 
-    pdsfile.preload(PDS_DATA_DIR)
+    if impglobals.ARGUMENTS.override_pds_data_dir:
+        pdsfile.preload(impglobals.ARGUMENTS.override_pds_data_dir)
+    else:
+        pdsfile.preload(PDS_DATA_DIR)
 
     try:
         impglobals.DATABASE = importdb.get_db(

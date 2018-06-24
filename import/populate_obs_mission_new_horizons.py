@@ -81,7 +81,7 @@ def populate_obs_mission_new_horizons_spacecraft_clock_count_cvt1(**kwargs):
     sc = nh_row['spacecraft_clock_count1']
     try:
         sc_cvt = opus_support.parse_new_horizons_sclk(sc)
-    except ValueError as e:
+    except Exception as e:
         import_util.log_nonrepeating_error(
             f'Unable to parse New Horizons SCLK "{sc}": {e}')
         return None
@@ -93,7 +93,7 @@ def populate_obs_mission_new_horizons_spacecraft_clock_count_cvt2(**kwargs):
     sc = nh_row['spacecraft_clock_count2']
     try:
         sc_cvt = opus_support.parse_new_horizons_sclk(sc)
-    except ValueError as e:
+    except Exception as e:
         import_util.log_nonrepeating_error(
             f'Unable to parse New Horizons SCLK "{sc}": {e}')
         return None
