@@ -125,7 +125,7 @@ def get_data(request,fmt):
     id_index = 0
 
     for slug in slugs.split(','):
-        if slug == 'opusid':
+        if slug == 'rmsobsid':
             id_index = slugs.split(',').index(slug)
         try:
             labels += [ParamInfo.objects.get(slug=slug).label_results]
@@ -760,7 +760,6 @@ def getPage(request, colls=None, colls_page=None, page=None):
         # this is for a search query
 
         order = request.GET.get('order','time1')
-
         # figure out column order in table
         if order:
             try:
@@ -826,6 +825,7 @@ def getPage(request, colls=None, colls_page=None, page=None):
             pass  # obs_general table wasn't in there for whatever reason
 
         # join in the collections table
+        #### FIX ME this went away!
         colls_table_name = get_collection_table(session_id)
         triggered_tables.append(colls_table_name)
         where   = "obs_general.opus_id = " + connection.ops.quote_name(colls_table_name) + ".opus_id"
@@ -864,6 +864,7 @@ def getPage(request, colls=None, colls_page=None, page=None):
     else:
         results = results.values_list(*column_values)
 
+    log.error(results.query)
     # return a simple list of opus_ids
     opus_id_index = column_values.index('opus_id')
     page_ids = [o[opus_id_index] for o in results]

@@ -362,6 +362,8 @@ def view_collection(request, collection_name, template="collections.html"):
         else:
             column_values.append(param_name.split('.')[0].lower().replace('_','') + '__' + param_name.split('.')[1])
 
+        column_values.append(param_name.split('.')[1])
+
     # figure out what tables do we need to join in and build query
     triggered_tables = list(set([t.split('.')[0] for t in columns]))
     try:
