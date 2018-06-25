@@ -22,10 +22,3 @@ def drop_cache_tables():
     impglobals.DATABASE.drop_table('perm', 'user_searches')
     impglobals.DATABASE.create_table('perm', 'user_searches',
                                      user_search_schema)
-
-def drop_collections_tables():
-    impglobals.LOGGER.log('info', 'Dropping collections tables')
-    table_names = impglobals.DATABASE.table_names('all',
-                                                  prefix='colls_')
-    for table_name in table_names:
-        impglobals.DATABASE.drop_table('all', table_name)
