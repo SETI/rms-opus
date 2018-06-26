@@ -45,6 +45,7 @@ def delete_all_obs_mult_tables(namespace):
 
     table_names = impglobals.DATABASE.table_names(namespace,
                                                   prefix=['obs_', 'mult_'])
+    table_names = sorted(table_names)
     # This has to happen in three phases to handle foreign key contraints:
     # 1. All obs_ tables except obs_general and mult_YYY
     for table_name in table_names:
@@ -70,6 +71,7 @@ def delete_volume_from_obs_tables(volume_id, namespace):
 
     table_names = impglobals.DATABASE.table_names(namespace,
                                                   prefix=['obs_', 'mult_'])
+    table_names = sorted(table_names)
     where = f'volume_id="{volume_id}"'
 
     # This has to happen in two phases to handle foreign key contraints:
@@ -116,6 +118,7 @@ def delete_opus_id_from_obs_tables(opus_id, namespace):
 
     table_names = impglobals.DATABASE.table_names(namespace,
                                                   prefix=['obs_', 'mult_'])
+    table_names = sorted(table_names)
     where = f'opus_id="{opus_id}"'
 
     # This has to happen in two phases to handle foreign key contraints:
@@ -264,6 +267,17 @@ def read_existing_import_opus_id():
         f'opus_id FROM {imp_obs_general_table_name}')
 
     return [x[0] for x in rows]
+
+
+def analyze_all_tables(namespace):
+    """Analyze ALL import or permanent (as specified by namespace)
+    obs_ and mult_ tables."""
+
+    table_names = impglobals.DATABASE.table_names(namespace,
+                                                  prefix=['obs_', 'mult_'])
+    table_names = sorted(table_names)
+    for table_name in table_names:
+        impglobals.DATABASE.analyze_table(namespace, table_name)
 
 
 ################################################################################
@@ -1448,3 +1462,8 @@ def do_import_steps():
     if impglobals.ARGUMENTS.drop_new_import_tables:
         impglobals.LOGGER.log('info', 'Deleting all new import tables')
         delete_all_obs_mult_tables('import')
+
+    # If --analyze-permanent-tables is given, analyze the permanent tables
+    if impglobals.ARGUMENTS.analyze_permanent_tables:
+        impglobals.LOGGER.log('info', 'Analyzing all permanent tables')
+        analyze_all_tables('perm')

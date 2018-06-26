@@ -131,6 +131,9 @@ class ImportDBSuper:
                      ignore_if_exists=True):
         assert False, 'ImportDBSuper::create_table must be overriden'
 
+    def analyze_table(self, namespace, raw_table_name):
+        assert False, 'ImportDBSuper::analyze_table must be overriden'
+
     def read_rows(self, namespace, raw_table_name, column_names, where=None):
         self._enter('read_rows')
 
