@@ -94,7 +94,7 @@ def populate_obs_mission_galileo_spacecraft_clock_count_cvt1(**kwargs):
     sc = galileo_row['spacecraft_clock_count1']
     try:
         sc_cvt = opus_support.parse_galileo_sclk(sc)
-    except ValueError as e:
+    except Exception as e:
         import_util.log_nonrepeating_error(
             f'Unable to parse Galileo SCLK "{sc}": {e}')
         return None
@@ -106,7 +106,7 @@ def populate_obs_mission_galileo_spacecraft_clock_count_cvt2(**kwargs):
     sc = galileo_row['spacecraft_clock_count2']
     try:
         sc_cvt = opus_support.parse_galileo_sclk(sc)
-    except ValueError as e:
+    except Exception as e:
         import_util.log_nonrepeating_error(
             f'Unable to parse Galileo SCLK "{sc}": {e}')
         return None

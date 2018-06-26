@@ -202,14 +202,14 @@ def format_cassini_sclk(value):
 ################################################################################
 
 CASSINI_ORBIT_NUMBER = {'A':0, 'B':1, 'C':2}
-CASSINI_ORBIT_NAME = {-1:'0', 0:'A', 1:'B', 2:'C'}
+CASSINI_ORBIT_NAME = {-1:'000', 0:'00A', 1:'00B', 2:'00C'}
 
 def parse_cassini_orbit(orbit):
     """Convert Cassini orbit name to an integer."""
 
     try:
         intval = int(orbit)
-        if intval > 3:
+        if intval >= 3:
             return intval
         if intval == 0:
             return -1
@@ -217,7 +217,7 @@ def parse_cassini_orbit(orbit):
     except ValueError:
         pass
 
-    orbit = orbit.upper().strip()
+    orbit = orbit.upper().strip('0')
     try:
         return CASSINI_ORBIT_NUMBER[orbit]
     except KeyError:
@@ -227,7 +227,7 @@ def format_cassini_orbit(value):
     """Convert an internal number for a Cassini orbit to its displayed value."""
 
     if value >= 3:
-        return value
+        return '%03d' % value
 
     try:
         return CASSINI_ORBIT_NAME[value]

@@ -405,10 +405,10 @@ def populate_obs_mission_cassini_ert_sec1(**kwargs):
 
     try:
         ert = julian.tai_from_iso(start_time)
-    except ValueError:
+    except Exception as e:
         import_util.log_nonrepeating_error(
             f'"{start_time}" is not a valid date-time format in '+
-            f'mission_cassini_ert_sec1')
+            f'mission_cassini_ert_sec1: {e}')
         ert = None
     return ert
 
@@ -422,10 +422,10 @@ def populate_obs_mission_cassini_ert_sec2(**kwargs):
 
     try:
         ert = julian.tai_from_iso(stop_time)
-    except ValueError:
+    except Exception as e:
         import_util.log_nonrepeating_error(
             f'"{stop_time}" is not a valid date-time format in '+
-            f'mission_cassini_ert_sec2')
+            f'mission_cassini_ert_sec2: {e}')
         ert = None
     return ert
 
@@ -433,9 +433,11 @@ def populate_obs_mission_cassini_spacecraft_clock_count_cvt1(**kwargs):
     metadata = kwargs['metadata']
     cassini_row = metadata['obs_mission_cassini_row']
     sc = cassini_row['spacecraft_clock_count1']
+    if sc is None:
+        return None
     try:
         sc_cvt = opus_support.parse_cassini_sclk(sc)
-    except ValueError as e:
+    except Exception as e:
         import_util.log_nonrepeating_error(
             f'Unable to parse Cassini SCLK "{sc}": {e}')
         return None
@@ -445,10 +447,26 @@ def populate_obs_mission_cassini_spacecraft_clock_count_cvt2(**kwargs):
     metadata = kwargs['metadata']
     cassini_row = metadata['obs_mission_cassini_row']
     sc = cassini_row['spacecraft_clock_count2']
+    if sc is None:
+        return None
     try:
         sc_cvt = opus_support.parse_cassini_sclk(sc)
-    except ValueError as e:
+    except Exception as e:
         import_util.log_nonrepeating_error(
             f'Unable to parse Cassini SCLK "{sc}": {e}')
         return None
     return sc_cvt
+
+def populate_obs_mission_cassini_rev_no_cvt(**kwargs):
+    metadata = kwargs['metadata']
+    cassini_row = metadata['obs_mission_cassini_row']
+    rev_no = cassini_row['rev_no']
+    if rev_no is None:
+        return None
+    try:
+        rev_no_cvt = opus_support.parse_cassini_orbit(rev_no)
+    except Exception as e:
+        import_util.log_nonrepeating_error(
+            f'Unable to parse Cassini orbit "{rev_no}": {e}')
+        return None
+    return rev_no_cvt

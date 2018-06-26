@@ -188,7 +188,7 @@
         "pi_disp_order": 11,
         "pi_display": 1,
         "pi_display_results": 1,
-        "pi_form_type": "TIME",
+        "pi_form_type": "RANGE:range_time",
         "pi_intro": null,
         "pi_label": "Earth Received Time",
         "pi_label_results": "Earth Received Time (Min)",

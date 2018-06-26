@@ -34,10 +34,6 @@ def yield_import_volume_ids(arguments):
                 volume_descs.append('COISS_2xxx')
                 volume_descs.append('COUVIS_0xxx')
                 volume_descs.append('COVIMS_0xxx')
-                volume_descs.append('COISS_1xxx')
-                volume_descs.append('COISS_2xxx')
-                volume_descs.append('COUVIS_0xxx')
-                volume_descs.append('COVIMS_0xxx')
                 volume_descs.append('VGISS_5xxx')
                 volume_descs.append('VGISS_6xxx')
                 volume_descs.append('VGISS_7xxx')
@@ -50,13 +46,9 @@ def yield_import_volume_ids(arguments):
                 volume_descs.append('HSTUx_xxxx')
                 volume_descs.append('NHxxLO_xxxx')
                 volume_descs.append('NHxxMV_xxxx')
-            if desc.upper() == 'ALLBUTNH':
+            elif desc.upper() == 'ALLBUTNH':
                 # This is useful because NH has duplicate opus_id that require
                 # checking while the others don't.
-                volume_descs.append('COISS_1xxx')
-                volume_descs.append('COISS_2xxx')
-                volume_descs.append('COUVIS_0xxx')
-                volume_descs.append('COVIMS_0xxx')
                 volume_descs.append('COISS_1xxx')
                 volume_descs.append('COISS_2xxx')
                 volume_descs.append('COUVIS_0xxx')
@@ -90,13 +82,13 @@ def yield_import_volume_ids(arguments):
                 volume_descs.append('VGISS_8xxx')
             elif desc.upper() == 'GALILEO' or desc.upper() == 'GOSSI':
                 volume_descs.append('GO_0xxx')
-            elif desc.upper() == 'HST' or desc.upper == 'HUBBLE':
+            elif desc.upper() == 'HST' or desc.upper() == 'HUBBLE':
                 volume_descs.append('HSTIx_xxxx')
                 volume_descs.append('HSTJx_xxxx')
                 volume_descs.append('HSTNx_xxxx')
                 volume_descs.append('HSTOx_xxxx')
                 volume_descs.append('HSTUx_xxxx')
-            elif desc.upper() == 'NH' or desc.upper == 'NEWHORIZONS':
+            elif desc.upper() == 'NH' or desc.upper() == 'NEWHORIZONS':
                 volume_descs.append('NHxxLO_xxxx')
                 volume_descs.append('NHxxMV_xxxx')
             elif desc.upper() == 'NHLORRI':
@@ -134,9 +126,10 @@ def yield_import_volume_ids(arguments):
                 new_voldescs += volume_pdsfile.childnames
             else:
                 new_voldescs.append(volume_desc)
-        new_voldescs.sort()
         # Now actually return the volume_ids
         for volume_id in new_voldescs:
+            if volume_id.find('.') != -1:
+                continue # Sometimes a bad tar file gets stuck in the dir
             yield volume_id
 
 def log_accumulated_warnings(title):

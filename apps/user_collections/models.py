@@ -2,14 +2,16 @@
 
 from django.db import models
 
-class CollectionTable(models.Model):
-    opus_id = models.CharField(max_length=60)
-    session_id = models.CharField(primary_key=True, max_length=32)
+class Collections(models.Model):
+    session_id = models.CharField(max_length=80)
+    obs_general_id = models.ForeignKey('ObsGeneral', models.DO_NOTHING)
+    opus_id = models.CharField(max_length=80)
+    timestamp = models.DateTimeField()
 
     class Meta:
         managed = False
-        db_table = 'collection_table'
+        db_table = 'collections'
 
     def save(self, *args, **kwargs):
         #check if thing to be saved exists, replace into instead ... or something()
-        super(CollectionTable, self).save(*args, **kwargs) # Call the "real" save() method.
+        super(Collections, self).save(*args, **kwargs) # Call the "real" save() method.

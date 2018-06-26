@@ -27,9 +27,12 @@ def get_image_links(opus_id_list):
     for opus_id in opus_id_list:
         pdsf = pdsfile.PdsFile.from_opus_id(opus_id)
         products = pdsf.opus_products()
-        for (opus_type, list_of_sublists) in products.items():
-            if opus_type.lower().find("image") >= 0:
-                log.error(sublists)
+        log.error(products)
+        #for (opus_type, list_of_sublists) in products.items
+            #log.error(opus_type)
+            #log.error(list_of_sublists)
+            #if opus_type.lower().find("image") >= 0:
+                #log.error(sublists)
 
     # just placeholder so it doesn't matter what is passed in at moment
     page_ids = [u'S_IMG_VG1_ISS_3250013_N', u'S_IMG_VG1_ISS_3250015_N', u'S_IMG_VG1_ISS_3250017_N']

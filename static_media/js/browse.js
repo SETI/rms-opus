@@ -854,7 +854,7 @@ var o_browse = {
 
         }
 
-        var base_url = "/opus/api/images/small.html?alt_size=full&";
+        var base_url = "/opus/api/images/small.html?";
         if (opus.prefs[prefix + 'browse'] == 'data') {
             base_url = '/opus/api/data.html?';
 

@@ -2,7 +2,7 @@
 #
 #   user_collections.views
 #   django adds/removes opus_ids from the current collection
-#   note to self: add time added to collectionTable for timeout
+#   note to self: add time added to Collections for timeout
 #
 ################################################ import settings
 import settings
@@ -124,7 +124,7 @@ def get_all_in_collection(request):
         return []
     else:
         session_id = request.session.session_key
-        opus_ids = CollectionTable.objects.filter(session_id__in=session_id)
+        opus_ids = Collections.objects.filter(session_id__in=session_id)
         return opus_ids
 
 def get_collection_csv(request, fmt=None):
@@ -345,7 +345,7 @@ def view_collection(request, collection_name, template="collections.html"):
         request.session.save()
     session_id = request.session.session_key
 
-    opus_ids = CollectionTable.objects.filter(session_id__in=session_id)
+    opus_ids = Collections.objects.filter(session_id__in=session_id)
     opus_id_list = list(opus_ids)
 
     # all product types

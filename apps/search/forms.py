@@ -162,21 +162,3 @@ class SearchForm(forms.Form):
             self.fields[slug_no_num+'2'] = my_fields[slug_no_num+'2']
             if not param_info.special_query:
                 self.fields['qtype-'+slug_no_num] = my_fields['qtype-'+slug_no_num]
-
-
-"""
-class SearchForm(forms.Form):
-    #planet_id = forms.CharField(required=False, validators=[MultiStringField])
-    #planet_id = forms.MultipleChoiceField(required=False, widget = forms.CheckboxSelectMultiple(choices = ((5,'Jupiter'),(6,'Saturn')) ), validators=[MultiStringField])
-    planet_id = MultiStringField(forms.Field)
-    planet_id = forms.MultipleChoiceField(
-                    label = 'planet',
-                    #queryset=MultPlanetId.objects.all(),
-                    choices = [('', '----------')] + [(mult.label, mult.label) for mult in MultPlanetId.objects.all()],
-                    widget = forms.CheckboxSelectMultiple(attrs={'class':'multichoice'}),
-                    required=False)
-
-    ring_radius1 = MultiFloatField(required=False)
-    ring_radius2 = MultiFloatField(required=False)
-
-"""

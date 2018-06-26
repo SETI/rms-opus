@@ -583,7 +583,7 @@ def get_files(opus_id=None, fmt='raw', loc_type='url', product_types=['all'], pr
 
     elif collection:
         # no opus_id, this must be for a colletion
-        opus_ids = CollectionTable.objects.filter(session_id__in=session_id)
+        opus_ids = Collections.objects.filter(session_id__in=session_id)
     else:
         log.error('get_files: No opus_ids or collection specified')
         return False
@@ -728,33 +728,21 @@ def getPage(request, colls=None, colls_page=None, page=None):
     else:
         collection_page = colls
 
-    limit = request.GET.get('limit',100)
-    limit = int(limit)
+    limit = int(request.GET.get('limit',100))
     slugs = request.GET.get('cols', settings.DEFAULT_COLUMNS)
-    if not bool(slugs):
-        slugs = settings.DEFAULT_COLUMNS  # i dunno why the above doesn't suffice
 
-    columns = []
+    column_values = set()
+    tables = set()
     for slug in slugs.split(','):
         try:
-            columns += [ParamInfo.objects.get(slug=slug).param_name()]
+            column = [ParamInfo.objects.get(slug=slug.strip("12")).param_name()]
+            column = "".join(column)
+            table = column.split('.')[0]
+            if table != "obs_general":  #this is already added by django apparently so don't add twice
+                tables.add(table)
+            column_values.add(column)
         except ParamInfo.DoesNotExist:
-            if '1' in slug:
-                # single column range slugs will not have the index, but
-                # will come in with it because of how ui is designed, so
-                # look for the slug without the index
-                temp_slug = slug[:-1]
-                try:
-                    columns += [ParamInfo.objects.get(slug=temp_slug).param_name()]
-                except ParamInfo.DoesNotExist:
-                    continue
-
-    triggered_tables = list(set([param_name.split('.')[0] for param_name in columns]))
-    try:
-        triggered_tables.remove('obs_general')  # we remove it because it is the primary
-                                                # model so don't need to add it to extra tables
-    except ValueError:
-        pass  # obs_general isn't in there
+            continue
 
     if not collection_page:
         # this is for a search query
@@ -787,9 +775,11 @@ def getPage(request, colls=None, colls_page=None, page=None):
         user_query_table = getUserQueryTable(selections,extras)
 
         # figure out what tables do we need to join in and build query
-        triggered_tables.append(user_query_table)
-        where   = "obs_general.id = " + connection.ops.quote_name(user_query_table) + ".id"
-        results = ObsGeneral.objects.extra(where=[where], tables=triggered_tables)
+        tables.add(user_query_table)
+        where = " AND ".join(["obs_general.id = " + connection.ops.quote_name(table) + ".id " for table in tables])
+        log.error(where)
+        results = ObsGeneral.objects.extra(where=[where], tables=tables)
+        log.error(results.query)
 
     else:
         # this is for a collection
@@ -817,13 +807,6 @@ def getPage(request, colls=None, colls_page=None, page=None):
         else:
             page_no = colls_page
 
-        # figure out what tables do we need to join in and build query
-        triggered_tables = list(set([t.split('.')[0] for t in columns]))
-        try:
-            triggered_tables.remove('obs_general')
-        except ValueError:
-            pass  # obs_general table wasn't in there for whatever reason
-
         # join in the collections table
         #### FIX ME this went away!
         colls_table_name = get_collection_table(session_id)
@@ -834,16 +817,6 @@ def getPage(request, colls=None, colls_page=None, page=None):
     # now we have results object (either search or collections)
     if order:
         results = results.order_by(order)
-
-    # this is the thing you pass to django model via values()
-    # so we have the table names a bit to get what django wants:
-    column_values = []
-    for param_name in columns:
-        table_name = param_name.split('.')[0]
-        if table_name == 'obs_general' or table_name == 'obs_pds':
-            column_values.append(param_name.split('.')[1])
-        else:
-            column_values.append(param_name.split('.')[0].lower().replace('_','') + '__' + param_name.split('.')[1])
 
     """
     the limit is pretty much always 100, the user cannot change it in the interface
@@ -864,6 +837,7 @@ def getPage(request, colls=None, colls_page=None, page=None):
     else:
         results = results.values_list(*column_values)
 
+    log.error(column_values)
     log.error(results.query)
     # return a simple list of opus_ids
     opus_id_index = column_values.index('opus_id')
