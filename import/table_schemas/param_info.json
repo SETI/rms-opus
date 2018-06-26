@@ -47,6 +47,11 @@
         "field_default": null
     },
     {
+        "field_name": "old_slug",
+        "field_type": "varchar255",
+        "field_default": null
+    },
+    {
         "field_name": "units",
         "field_type": "varchar75",
         "field_default": null

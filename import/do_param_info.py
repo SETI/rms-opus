@@ -48,6 +48,7 @@ def create_import_param_info_table():
                 'label_results': column['pi_label_results'],
                 'name': column['field_name'],
                 'slug': column['pi_slug'],
+                'old_slug': column.get('pi_old_slug', None),
                 'sub_heading': column['pi_sub_heading'],
                 'tooltip': column['pi_tooltip'],
                 'units': column['pi_units']
