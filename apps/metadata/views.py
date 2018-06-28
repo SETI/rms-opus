@@ -303,8 +303,8 @@ def get_range_endpoints(request, slug, fmt='json'):
         # We need to run some arbitrary function to convert from float to
         # some kind of string. This happens for spacecraft clock count
         # and time fields, among others.
-        if form_type_ext in settings.RANGE_FUNCTIONS:
-            func = settings.RANGE_FUNCTIONS[form_type_ext][0]
+        if form_type_ext in opus_support.RANGE_FUNCTIONS:
+            func = opus_support.RANGE_FUNCTIONS[form_type_ext][0]
             if range_endpoints['min'] is not None:
                 range_endpoints['min'] = func(range_endpoints['min'])
             if range_endpoints['max'] is not None:

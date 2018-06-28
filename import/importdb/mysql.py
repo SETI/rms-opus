@@ -282,6 +282,8 @@ TABLE_NAME='{table_name}' ORDER BY ORDINAL_POSITION"""
                 if column.get('put_mults_here', False):
                     continue
                 pi_form_type = column.get('pi_form_type', None)
+                if pi_form_type is not None and pi_form_type.find(':') != -1:
+                    pi_form_type = pi_form_type[:pi_form_type.find(':')]
                 if pi_form_type not in self._mult_form_types:
                     continue
                 field_name = column['field_name']

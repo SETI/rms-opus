@@ -31,6 +31,8 @@ from metrics.views import update_metrics
 # guide only
 import json
 
+import opus_support
+
 import logging
 log = logging.getLogger(__name__)
 
@@ -157,7 +159,7 @@ def getMenuLabels(request, labels_view):
         sub_headings.setdefault(p.category_name, [])
         if p.sub_heading not in sub_headings[p.category_name]:
             sub_headings[p.category_name].append(p.sub_heading)
-    
+
     # build a nice data struct for the mu&*!#$@!ing template
     menu_data = {}
     menu_data['labels_view'] = labels_view
@@ -287,8 +289,8 @@ def getWidget(request, **kwargs):
             if form_type_ext is None:
                 func = float
             else:
-                if form_type_ext in settings.RANGE_FUNCTIONS:
-                    func = settings.RANGE_FUNCTIONS[form_type_ext][0]
+                if form_type_ext in opus_support.RANGE_FUNCTIONS:
+                    func = opus_support.RANGE_FUNCTIONS[form_type_ext][0]
                 else:
                     log.error('Unknown RANGE function "%s"',
                               form_type_ext)

@@ -170,26 +170,7 @@ IMAGE_HTTP_PATH = 'https://pds-rings.seti.org/holdings/previews/'
 DEFAULT_COLUMNS = 'opusid,planet,target,time1,time2'
 IMAGE_COLUMNS   = ['thumb.jpg','small.jpg','med.jpg','full.jpg']
 RANGE_FIELDS    = ['LONG','RANGE']
-# Format is decode float->string, encode string->float
-def _range_time_encode(tai):
-    return julian.iso_from_tai(tai, digits=3)
-def _range_time_decode(iso):
-    iso = str(iso)
-    return julian.tai_from_iso(iso)
 
-RANGE_FUNCTIONS = {
-    'range_time': (_range_time_encode, _range_time_decode),
-    'range_cassini_sclk': (opus_support.format_cassini_sclk,
-                           opus_support.parse_cassini_sclk),
-    'range_galileo_sclk': (opus_support.format_galileo_sclk,
-                           opus_support.parse_galileo_sclk),
-    'range_new_horizons_sclk': (opus_support.format_new_horizons_sclk,
-                                opus_support.parse_new_horizons_sclk),
-    'range_voyager_sclk': (opus_support.format_voyager_sclk,
-                           opus_support.parse_voyager_sclk),
-    'range_cassini_rev_no': (opus_support.format_cassini_orbit,
-                           opus_support.parse_cassini_orbit),
-}
 MULT_FIELDS	= ['GROUP','TARGETS']
 DEFAULT_LIMIT = 100
 MULT_FORM_TYPES = ('GROUP','TARGETS');

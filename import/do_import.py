@@ -8,6 +8,8 @@ import os
 
 import pdsfile
 
+import opus_support
+
 from secrets import *
 from config_data import *
 import impglobals
@@ -192,6 +194,8 @@ def create_tables_for_import(volume_id, namespace):
                 continue
             field_name = table_column['field_name']
             pi_form_type = table_column.get('pi_form_type', None)
+            if pi_form_type is not None and pi_form_type.find(':') != -1:
+                pi_form_type = pi_form_type[:pi_form_type.find(':')]
             if pi_form_type in GROUP_FORM_TYPES:
                 mult_name = import_util.table_name_mult(table_name, field_name)
                 if mult_name in MULT_TABLES_WITH_TARGET_GROUPING:
@@ -442,6 +446,12 @@ def dump_import_mult_tables():
         table_column = _MODIFIED_MULT_TABLES[mult_table_name]
         rows = _MULT_TABLE_CACHE[mult_table_name]
         # Update the display_order
+        form_type = table_column['pi_form_type']
+        range_func = None
+        if form_type is not None and form_type.startswith('GROUP:'):
+            range_func_name = form_type.replace('GROUP:', '')
+            if range_func_name in opus_support.RANGE_FUNCTIONS:
+                range_func = opus_support.RANGE_FUNCTIONS[range_func_name][1]
         if 'mult_options' not in table_column:
             all_numeric = True
             for row in rows:
@@ -458,7 +468,18 @@ def dump_import_mult_tables():
                 # None always comes last. Yes comes before No.
                 # On comes before Off.
                 if row['label'] in [None, 'NONE', 'None', 'NULL', 'Null']:
-                    row['sort_label'] = 'ZZZ' + str(row['label'])
+                    if range_func is not None:
+                        row['sort_label'] = 1e38
+                    else:
+                        row['sort_label'] = 'ZZZ' + str(row['label'])
+                elif range_func:
+                    try:
+                        row['sort_label'] = range_func(str(row['value']))
+                    except Exception as e:
+                        label = str(row['label'])
+                        import_util.log_nonrepeating_error(
+    f'Unable to parse "{label}" for type "range_func_name": {e}')
+                        row['sort_label'] = str(row['label'])
                 elif all_numeric:
                     row['sort_label'] = ('%20.9f' % float(row['label']))
                 elif row['label'] == 'Yes' or row['label'] == 'On':
@@ -676,8 +697,6 @@ def import_one_volume(volume_id):
                 f'{assoc_label_path} is missing FILE_SPECIFICATION_NAME field')
                             break
                         geo_full_file_spec = geo_vol+'/'+geo_file_spec
-                        if geo_vol.startswith('COUVIS'): # XXX COUVIS_0058/9
-                            geo_full_file_spec = geo_full_file_spec.upper()
                         geo_pdsfile = pdsfile.PdsFile.from_filespec(
                                                 geo_full_file_spec)
                         key = geo_pdsfile.opus_id
@@ -1286,6 +1305,8 @@ def import_observation_table(volume_id,
         ### CHECK TO SEE IF THERE IS AN ASSOCIATED MULT_ TABLE ###
 
         form_type = table_column.get('pi_form_type', None)
+        if form_type is not None and form_type.find(':') != -1:
+            form_type = form_type[:form_type.find(':')]
         if form_type in GROUP_FORM_TYPES:
             mult_column_name = import_util.table_name_mult(table_name,
                                                            field_name)

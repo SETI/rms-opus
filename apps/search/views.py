@@ -16,6 +16,7 @@ from django.db.models.sql.datastructures import EmptyResultSet
 from django.db import connection, DatabaseError
 from django.core.cache import cache
 import settings
+import opus_support
 
 """
 from tools.app_utils import *
@@ -355,8 +356,8 @@ def urlToSearchParams(request_get):
                     if form_type_ext is None:
                         func = float
                     else:
-                        if form_type_ext in settings.RANGE_FUNCTIONS:
-                            func = settings.RANGE_FUNCTIONS[form_type_ext][1]
+                        if form_type_ext in opus_support.RANGE_FUNCTIONS:
+                            func = opus_support.RANGE_FUNCTIONS[form_type_ext][1]
                         else:
                             log.error('Unknown RANGE function "%s"',
                                       form_type_ext)
