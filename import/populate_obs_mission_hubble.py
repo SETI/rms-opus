@@ -914,3 +914,13 @@ def populate_obs_mission_hubble_HSTWFPC2_wf4_flag(**kwargs):
     index_row = metadata['index_row']
     wf4_flag = index_row['WF4_FLAG']
     return wf4_flag
+
+def populate_obs_mission_hubble_publication_date_sec(**kwargs):
+    metadata = kwargs['metadata']
+    index_row = metadata['index_row']
+    pub_date = index_row['PUBLICATION_DATE']
+
+    if pub_date is None:
+        return None
+
+    return julian.tai_from_iso(pub_date)

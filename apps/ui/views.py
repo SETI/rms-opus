@@ -24,12 +24,14 @@ from search.forms import SearchForm
 from metadata.views import *
 from paraminfo.models import *
 from dictionary.models import *
+from results.views import *
 from django.views.generic import TemplateView
 from metrics.views import update_metrics
-from results.views import get_triggered_tables
 
 # guide only
 import json
+
+import opus_support
 
 import logging
 log = logging.getLogger(__name__)
@@ -126,7 +128,7 @@ def getMenuLabels(request, labels_view):
     if labels_view == 'search':
         filter = "display"
     else:
-        filter="display_results"
+        filter = "display_results"
 
     if request and request.GET:
         try:
@@ -136,29 +138,35 @@ def getMenuLabels(request, labels_view):
     else:
         selections = None
 
-    if not bool(selections):
+    if not selections:
         triggered_tables = settings.BASE_TABLES[:]  # makes a copy of settings.BASE_TABLES
     else:
         triggered_tables = get_triggered_tables(selections, extras)
 
     divs = TableNames.objects.filter(display='Y', table_name__in=triggered_tables).order_by('disp_order')
-    params = ParamInfo.objects.filter(**{filter:1, "category_name__in":triggered_tables})
+    params = ParamInfo.objects.filter(**{filter:1, "category_name__in":triggered_tables}).order_by('disp_order')
 
     # build a struct that relates sub_headings to div_titles
-    sub_headings = {}
+    # Note this is a mess because params contains ALL the params for all the
+    # sub-menus!
+    # We have to be careful to maintain ordering of sub-headings because the
+    # original disp_order is the only way we know what the display order of
+    # the sub-headings is. Hence the use of OrderedDict.
+    sub_headings = OrderedDict()
     for p in params:
-        sub_headings.setdefault(p.category_name, []).append(p.sub_heading)
-    for s in sub_headings:
-        sub_headings[s] = list(set(sub_headings[s]))
-        if sub_headings[s] == [None]:
-            sub_headings[s] = None
+        if p.sub_heading is None:
+            continue
+        sub_headings.setdefault(p.category_name, [])
+        if p.sub_heading not in sub_headings[p.category_name]:
+            sub_headings[p.category_name].append(p.sub_heading)
 
     # build a nice data struct for the mu&*!#$@!ing template
     menu_data = {}
     menu_data['labels_view'] = labels_view
     for d in divs:
-        menu_data.setdefault(d.table_name, {})
+        menu_data.setdefault(d.table_name, OrderedDict())
 
+        # XXX This really shouldn't be here!!
         if d.table_name == 'obs_surface_geometry':
             menu_data[d.table_name]['menu_help'] = "Select a target name to reveal more options. Supported Instruments: VGISS, NHLORRI, COISS, COUVIS, COVIMS, and early COCIRS"
 
@@ -169,7 +177,7 @@ def getMenuLabels(request, labels_view):
             # this div is divided into sub headings
             menu_data[d.table_name]['has_sub_heading'] = True
 
-            menu_data[d.table_name].setdefault('data', {})
+            menu_data[d.table_name].setdefault('data', OrderedDict())
             for sub_head in sub_headings[d.table_name]:
                 all_param_info = ParamInfo.objects.filter(**{filter:1, "category_name":d.table_name, "sub_heading": sub_head})
 
@@ -278,15 +286,26 @@ def getWidget(request, **kwargs):
                 form = '<span>'+add_str+'</span><ul>' + form + '</ul>'  # add input link comes before form
 
         else: # param is constrained
+            if form_type_ext is None:
+                func = float
+            else:
+                if form_type_ext in opus_support.RANGE_FUNCTIONS:
+                    func = opus_support.RANGE_FUNCTIONS[form_type_ext][0]
+                else:
+                    log.error('Unknown RANGE function "%s"',
+                              form_type_ext)
+                    func = float
             key=0
             while key<length:
                 try:
-                  form_vals[slug1] = selections[param1][key]
-                except (IndexError, KeyError) as e:
+                  form_vals[slug1] = func(selections[param1][key])
+                except (IndexError, KeyError, ValueError) as e:
+                    log.error('getWidget threw %s', str(e))
                     form_vals[slug1] = None
                 try:
-                  form_vals[slug2] = selections[param2][key]
-                except (IndexError, KeyError) as e:
+                    form_vals[slug2] = func(selections[param2][key])
+                except (IndexError, KeyError, ValueError) as e:
+                    log.error('getWidget threw %s', str(e))
                     form_vals[slug2] = None
 
                 qtypes = request.GET.get('qtype-' + slug, False)

@@ -76,6 +76,7 @@ parser.add_argument(
             --import
             --copy-import-to-permanent-tables
             --drop-new-import-tables
+            --analyze-permanent-tables
             --create-param-info
             --create-partables
             --create-table-names
@@ -166,6 +167,11 @@ parser.add_argument(
     help='Drop the new import tables after copying to permanent (if selected)'
 )
 
+parser.add_argument(
+    '--analyze-permanent-tables', action='store_true', default=False,
+    help='Analyze (recompute key distribution) the permanent tables'
+)
+
 # Import-related auxiliary functions
 
 parser.add_argument(
@@ -244,6 +250,7 @@ if impglobals.ARGUMENTS.do_it_all:
     impglobals.ARGUMENTS.do_import = True
     impglobals.ARGUMENTS.copy_import_to_permanent_tables = True
     impglobals.ARGUMENTS.drop_new_import_tables = True
+    impglobals.ARGUMENTS.analyze_permanent_tables = True
     impglobals.ARGUMENTS.create_param_info = True
     impglobals.ARGUMENTS.create_partables = True
     impglobals.ARGUMENTS.create_table_names = True

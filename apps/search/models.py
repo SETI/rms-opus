@@ -10,6 +10,27 @@ from __future__ import unicode_literals
 from django.db import models
 
 
+class ZZCollections(models.Model):
+    session_id = models.CharField(max_length=80)
+    obs_general = models.ForeignKey('ObsGeneral', models.DO_NOTHING)
+    opus_id = models.CharField(max_length=80)
+    timestamp = models.DateTimeField()
+
+    class Meta:
+        managed = False
+        db_table = 'collections'
+
+
+class ZZDjangoMigrations(models.Model):
+    app = models.CharField(max_length=255)
+    name = models.CharField(max_length=255)
+    applied = models.DateTimeField()
+
+    class Meta:
+        managed = False
+        db_table = 'django_migrations'
+
+
 class ZZGroupingTargetName(models.Model):
     value = models.CharField(max_length=100, blank=True, null=True)
     label = models.CharField(max_length=30, blank=True, null=True)
@@ -1275,6 +1296,7 @@ class ObsMissionHubble(models.Model):
     hst_pi_name = models.CharField(max_length=24)
     detector_id = models.CharField(max_length=14, blank=True, null=True)
     publication_date = models.CharField(max_length=10)
+    publication_date_sec = models.FloatField()
     hst_target_name = models.CharField(max_length=31)
     fine_guidance_system_lock_type = models.CharField(max_length=10)
     filter_name = models.CharField(max_length=23)
@@ -6510,6 +6532,7 @@ class ZZParamInfo(models.Model):
     label = models.CharField(max_length=240, blank=True, null=True)
     label_results = models.CharField(max_length=240, blank=True, null=True)
     slug = models.CharField(max_length=255, blank=True, null=True)
+    old_slug = models.CharField(max_length=255, blank=True, null=True)
     units = models.CharField(max_length=75, blank=True, null=True)
     intro = models.CharField(max_length=150, blank=True, null=True)
     tooltip = models.CharField(max_length=255, blank=True, null=True)

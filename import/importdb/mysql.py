@@ -282,6 +282,8 @@ TABLE_NAME='{table_name}' ORDER BY ORDINAL_POSITION"""
                 if column.get('put_mults_here', False):
                     continue
                 pi_form_type = column.get('pi_form_type', None)
+                if pi_form_type is not None and pi_form_type.find(':') != -1:
+                    pi_form_type = pi_form_type[:pi_form_type.find(':')]
                 if pi_form_type not in self._mult_form_types:
                     continue
                 field_name = column['field_name']
@@ -434,6 +436,30 @@ TABLE_NAME='{table_name}' ORDER BY ORDINAL_POSITION"""
 
         super(ImportDBMySQL, self)._exit()
         return True
+
+    def analyze_table(self, namespace, raw_table_name):
+        """Analyze the given table. This recomputes key distribution."""
+        super(ImportDBMySQL, self)._enter('analyze_table')
+
+        table_name = self.convert_raw_to_namespace(namespace, raw_table_name)
+
+        cmd = f'ANALYZE TABLE `{table_name}`'
+
+        try:
+            self._execute(cmd, mutates=True)
+        except MySQLdb.Error as e:
+            if self.logger:
+                self.logger.log('fatal',
+                        f'Failed to analyze table "{table_name}": {e.args[1]}')
+            raise ImportDBException(e)
+
+        if self.logger:
+            if self.read_only:
+                self.logger.log('debug', f'[SIM] Analyzed table "{table_name}"')
+            else:
+                self.logger.log('debug', f'Analyzed table "{table_name}"')
+
+        super(ImportDBMySQL, self)._exit()
 
     def insert_row(self, namespace, raw_table_name, row):
         super(ImportDBMySQL, self)._enter('insert_row')

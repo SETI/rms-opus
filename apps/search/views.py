@@ -16,6 +16,7 @@ from django.db.models.sql.datastructures import EmptyResultSet
 from django.db import connection, DatabaseError
 from django.core.cache import cache
 import settings
+import opus_support
 
 """
 from tools.app_utils import *
@@ -33,17 +34,39 @@ log = logging.getLogger(__name__)
 def get_param_info_by_slug(slug):
     slug_no_num = strip_numeric_suffix(slug)
 
+    # Try the current slug names first
     try:
         return ParamInfo.objects.get(slug=slug_no_num)
     except ParamInfo.DoesNotExist:
-        try:
-            return ParamInfo.objects.get(slug=slug)  #  qtypes for ranges come through as the param_name_no num which doesn't exist in param_info, so grab the param_info for the lower side of hte ragne
-        except ParamInfo.DoesNotExist:
-            try:
-                return ParamInfo.objects.get(slug=slug + '1')  #  qtypes for ranges come through as the param_name_no num which doesn't exist in param_info, so grab the param_info for the lower side of hte ragne
-                # this is not a query param, ignore it
-            except ParamInfo.DoesNotExist:
-                return False
+        pass
+
+    try:
+        return ParamInfo.objects.get(slug=slug)  #  qtypes for ranges come through as the param_name_no num which doesn't exist in param_info, so grab the param_info for the lower side of hte ragne
+    except ParamInfo.DoesNotExist:
+        pass
+
+    try:
+        return ParamInfo.objects.get(slug=slug + '1')  #  qtypes for ranges come through as the param_name_no num which doesn't exist in param_info, so grab the param_info for the lower side of hte ragne
+        # this is not a query param, ignore it
+    except ParamInfo.DoesNotExist:
+        pass
+
+    # Now try the same thing but with the old slug names
+    try:
+        return ParamInfo.objects.get(old_slug=slug_no_num)
+    except ParamInfo.DoesNotExist:
+        pass
+
+    try:
+        return ParamInfo.objects.get(old_slug=slug)  #  qtypes for ranges come through as the param_name_no num which doesn't exist in param_info, so grab the param_info for the lower side of hte ragne
+    except ParamInfo.DoesNotExist:
+        pass
+
+    try:
+        return ParamInfo.objects.get(old_slug=slug + '1')  #  qtypes for ranges come through as the param_name_no num which doesn't exist in param_info, so grab the param_info for the lower side of hte ragne
+        # this is not a query param, ignore it
+    except ParamInfo.DoesNotExist:
+        pass
 
 def get_param_info_by_param(param_name):
     cat_name      = param_name.split('.')[0]
@@ -333,8 +356,8 @@ def urlToSearchParams(request_get):
                     if form_type_ext is None:
                         func = float
                     else:
-                        if form_type_ext in settings.RANGE_FUNCTIONS:
-                            func = settings.RANGE_FUNCTIONS[form_type_ext][1]
+                        if form_type_ext in opus_support.RANGE_FUNCTIONS:
+                            func = opus_support.RANGE_FUNCTIONS[form_type_ext][1]
                         else:
                             log.error('Unknown RANGE function "%s"',
                                       form_type_ext)

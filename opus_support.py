@@ -5,6 +5,7 @@
 #
 # MRS 6/5/18
 ################################################################################
+
 ################################################################################
 # General routines for handling a spacecraft clock where:
 #   - there are exactly two fields
@@ -393,3 +394,27 @@ def format_voyager_sclk(value, sep=':', fields=3):
     return sclk
 
 ################################################################################
+
+
+
+def _range_time_encode(tai):
+    return julian.iso_from_tai(tai, digits=3)
+def _range_time_decode(iso):
+    iso = str(iso)
+    return julian.tai_from_iso(iso)
+
+# Format is decode float->string, encode string->float
+
+RANGE_FUNCTIONS = {
+    'range_time': (_range_time_encode, _range_time_decode),
+    'range_cassini_sclk': (format_cassini_sclk,
+                           parse_cassini_sclk),
+    'range_galileo_sclk': (format_galileo_sclk,
+                           parse_galileo_sclk),
+    'range_new_horizons_sclk': (format_new_horizons_sclk,
+                                parse_new_horizons_sclk),
+    'range_voyager_sclk': (format_voyager_sclk,
+                           parse_voyager_sclk),
+    'range_cassini_rev_no': (format_cassini_orbit,
+                            parse_cassini_orbit),
+}
