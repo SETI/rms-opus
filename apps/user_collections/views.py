@@ -112,7 +112,7 @@ def get_product_counts(product_types):
 
 def get_collection_count(session_id):
     cursor = connection.cursor()
-    sql = 'select count(*) from `collection_table` where session_id = %s'
+    sql = 'select count(*) from `collections` where session_id = %s'
     cursor.execute(sql, (session_id,))
     c = cursor.fetchone()[0]
     return c
@@ -152,12 +152,12 @@ def add(opus_id_list, session_id):
     if isinstance(opus_id_list, str):
         opus_id_list = [opus_id_list]
     values = [(session_id, opus_id) for opus_id in opus_id_list]
-    sql = 'replace into `collection_table`' + ' (session_id, opus_id) values (%s, %s)'
+    sql = 'replace into `collections`' + ' (session_id, opus_id) values (%s, %s)'
     cursor.executemany(sql, values)
 
 def remove(opus_id, session_id):
     cursor = connection.cursor()
-    sql = 'delete from `collection_table`' + ' where opus_id = %s'
+    sql = 'delete from `collections`' + ' where opus_id = %s'
     cursor.execute(sql, (opus_id,))
 
 def edit_collection_range(request, session_id):
@@ -271,7 +271,7 @@ def get_collection_in_page(page, session_id):
     collection_in_page = []
     for p in page:
         opus_id = p[0]
-        sql = 'select DISTINCT opus_id from `collection_table` where session_id = %s'
+        sql = 'select DISTINCT opus_id from `collections` where session_id = %s'
         cursor.execute(sql, (session_id,))
         row = cursor.fetchone()
         if row is not None:
@@ -372,8 +372,8 @@ def view_collection(request, collection_name, template="collections.html"):
         pass  # obs_general table wasn't in there for whatever reason
 
     # set up the where clause to join with the rest of the tables
-    where = "obs_general.opus_id = collection_table.opus_id"
-    triggered_tables.append('collection_table')
+    where = "obs_general.opus_id = collections.opus_id"
+    triggered_tables.append('collections')
 
     # bring in the  triggered_tables
     results = ObsGeneral.objects.extra(where=[where], tables=triggered_tables)

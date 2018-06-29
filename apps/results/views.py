@@ -112,7 +112,7 @@ def get_data(request,fmt):
 
     session_id = request.session.session_key
 
-    [page_no, limit, page, page_ids, order] = getPage(request)
+    [page_no, limit, page, opus_ids, order] = getPage(request)
 
     checkboxes = request.is_ajax()
 
@@ -427,36 +427,17 @@ def get_images(request,size,fmt):
     columns = request.GET.get('cols',settings.DEFAULT_COLUMNS)
 
     try:
-        [page_no, limit, page, page_ids, order] = getPage(request)
+        [page_no, limit, page, opus_ids, order] = getPage(request)
     except TypeError:  # getPage returns False
         log.error("404 error")
         raise Http404('could not find page')
 
-    image_links = get_image_links(page_ids)
-    log.error(image_links[0])
+    image_links = get_image_links(opus_ids, size)
 
     if not image_links:
-        log.error('get_images: No image found for: %s', str(page_ids[:50]))
+        log.error('get_images: No image found for: %s', str(opus_ids[:50]))
 
-    collection_members = get_collection_in_page(page, session_id)
-
-    # find which are in collections, mark unfound images 'not found'
-    for image in image_links:
-        image['img'] = image[size] if image[size] else 'not found'
-
-        # hack for the new reclassification of some previews as "diagrams"
-        image['path'] = settings.IMAGE_HTTP_PATH
-        if 'CIRS' in image['opus_id']:
-            image['path'] = image['path'].replace('previews','diagrams')
-
-        if collection_members:
-            from user_collections.views import *
-            if image['opus_id'] in collection_members:
-                image['in_collection'] = True
-    if (request.is_ajax()):
-        template = 'gallery.html'
-    else: template = 'image_list.html'
-    log.error("template: %s", template)
+    template = 'gallery.html'
 
     # image_links
     return responseFormats({'data':[i for i in image_links]},fmt, size=size, alt_size=alt_size, columns_str=columns.split(','), template=template, order=order)
@@ -738,11 +719,14 @@ def getPage(request, colls=None, colls_page=None, page=None):
             column = [ParamInfo.objects.get(slug=slug.strip("12")).param_name()]
             column = "".join(column)
             table = column.split('.')[0]
+            field = column.split('.')[1]
             if table != "obs_general":  #this is already added by django apparently so don't add twice
                 tables.add(table)
-            column_values.add(column)
+            column_values.add(field)
         except ParamInfo.DoesNotExist:
             continue
+
+    column_values = list(column_values)
 
     if not collection_page:
         # this is for a search query
@@ -775,11 +759,11 @@ def getPage(request, colls=None, colls_page=None, page=None):
         user_query_table = getUserQueryTable(selections,extras)
 
         # figure out what tables do we need to join in and build query
+        where = " AND ".join(["obs_general.id = " + connection.ops.quote_name(table) + ".obs_general_id " for table in tables])
+        #special case for cache_NO table; perhaps TODO rename field from id to obs_general_id in cache tables
+        where += " AND obs_general.id = " + connection.ops.quote_name(user_query_table) + ".id"
         tables.add(user_query_table)
-        where = " AND ".join(["obs_general.id = " + connection.ops.quote_name(table) + ".id " for table in tables])
-        log.error(where)
         results = ObsGeneral.objects.extra(where=[where], tables=tables)
-        log.error(results.query)
 
     else:
         # this is for a collection
@@ -829,7 +813,6 @@ def getPage(request, colls=None, colls_page=None, page=None):
     using the passed limit will result inthe wront offset because of way offset is computed here
     this may be an aweful hack.
     """
-    # todo: redux: look at line 559 you are essentially doing this query twice? in the same method and peforming the query each time cuz it has changed!
     if page_no != 'all':
         base_limit = 100  # explainer of sorts is above
         offset = (page_no-1)*base_limit # we don't use Django's pagination because of that count(*) that it does.
@@ -837,13 +820,11 @@ def getPage(request, colls=None, colls_page=None, page=None):
     else:
         results = results.values_list(*column_values)
 
-    log.error(column_values)
-    log.error(results.query)
     # return a simple list of opus_ids
     opus_id_index = column_values.index('opus_id')
-    page_ids = [o[opus_id_index] for o in results]
+    opus_ids = [o[opus_id_index] for o in results]
 
-    if not len(page_ids):
+    if not len(opus_ids):
         return False
 
-    return [page_no, limit, list(results), page_ids, order]
+    return [page_no, limit, list(results), opus_ids, order]

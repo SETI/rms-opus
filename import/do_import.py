@@ -694,25 +694,25 @@ def import_one_volume(volume_id):
                                 import_util.log_nonrepeating_error(
                  f'{assoc_label_path} has bad RING_OBSERVATION_ID for '+
                  f'file_spec "{ring_full_file_spec}"')
-                    if assoc_type == 'ring_geo':
-                        # RING_GEO is easy - there is at most a single entry
-                        # per observation, so we just create a dictionary
-                        # keyed by opus_id.
-                        assoc_dict[key] = row
-                    elif assoc_type == 'body_surface_geo':
-                        # SURFACE_GEO is more complicated, because there can be
-                        # more than one entry per observation, since there is
-                        # one for each target. We create a dictionary keyed by
-                        # opus_id containing a dictionary keyed by target name
-                        # so we can collect all the target entries in one place.
-                        key2 = row.get('TARGET_NAME', None)
-                        if key2 is None:
-                            import_util.log_nonrepeating_error(
-                    f'{assoc_label_path} is missing TARGET_NAME field')
-                            break
-                        if key not in assoc_dict:
-                            assoc_dict[key] = {}
-                        assoc_dict[key][key2] = row
+                        if assoc_type == 'ring_geo':
+                            # RING_GEO is easy - there is at most a single entry
+                            # per observation, so we just create a dictionary
+                            # keyed by opus_id.
+                            assoc_dict[key] = row
+                        elif assoc_type == 'body_surface_geo':
+                            # SURFACE_GEO is more complicated, because there can be
+                            # more than one entry per observation, since there is
+                            # one for each target. We create a dictionary keyed by
+                            # opus_id containing a dictionary keyed by target name
+                            # so we can collect all the target entries in one place.
+                            key2 = row.get('TARGET_NAME', None)
+                            if key2 is None:
+                                import_util.log_nonrepeating_error(
+                        f'{assoc_label_path} is missing TARGET_NAME field')
+                                break
+                            if key not in assoc_dict:
+                                assoc_dict[key] = {}
+                            assoc_dict[key][key2] = row
                 else:
                     assert assoc_type == 'supp_index'
                     if instrument_name == 'COUVIS':
@@ -786,6 +786,23 @@ def import_one_volume(volume_id):
         instrument_name in INSTRUMENTS_WITH_SURFACE_GEO):
         impglobals.LOGGER.log('warning',
             f'Volume "{volume_id}" is missing body surface geometry files')
+
+    if 'ring_geo' in metadata:
+        li = len(metadata['index'])
+        lr = len(metadata['ring_geo'])
+        diff = li - lr
+        if diff:
+            impglobals.LOGGER.log('warning',
+                f'Volume "{volume_id}" is missing {diff} RING_GEO entries '+
+                f'({li} vs. {lr})')
+
+    if 'index' in metadata and 'supp_index' in metadata:
+        li = len(metadata['index'])
+        ls = len(metadata['supp_index'])
+        if li != ls:
+            impglobals.LOGGER.log('warning',
+                f'Volume "{volume_id}" has {li} index entries but '+
+                f'{ls} supplemental_index entries')
 
     table_schemas, table_names_in_order = create_tables_for_import(volume_id,
                                                                    'import')

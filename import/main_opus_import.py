@@ -30,6 +30,7 @@ import pdsfile
 import opus_support
 
 from config_data import *
+import do_collections
 import do_django
 import do_grouping_target_name
 import do_import
@@ -78,8 +79,8 @@ parser.add_argument(
             --create-param-info
             --create-partables
             --create-table-names
+            --create-collections
             --drop-cache-tables
-            --drop-collections-tables
          """
 )
 
@@ -89,8 +90,8 @@ parser.add_argument(
             --create-param-info
             --create-partables
             --create-table-names
+            --create-collections
             --drop-cache-tables
-            --drop-collections-tables
          """
 )
 
@@ -196,8 +197,8 @@ parser.add_argument(
     help='Drop the cache tables used by OPUS; also clears user_searches'
 )
 parser.add_argument(
-    '--drop-collections-tables', action='store_true', default=False,
-    help='Drop the collections tables used by OPUS'
+    '--create-collections', action='store_true', default=False,
+    help='Create the collections table used by OPUS'
 )
 
 parser.add_argument(
@@ -248,7 +249,7 @@ if impglobals.ARGUMENTS.do_it_all:
     impglobals.ARGUMENTS.create_table_names = True
     impglobals.ARGUMENTS.create_grouping_target_name = True
     impglobals.ARGUMENTS.drop_cache_tables = True
-    impglobals.ARGUMENTS.drop_collections_tables = True
+    impglobals.ARGUMENTS.create_collections = True
 
 if impglobals.ARGUMENTS.cleanup_aux_tables:
     impglobals.ARGUMENTS.create_param_info = True
@@ -256,7 +257,7 @@ if impglobals.ARGUMENTS.cleanup_aux_tables:
     impglobals.ARGUMENTS.create_table_names = True
     impglobals.ARGUMENTS.create_grouping_target_name = True
     impglobals.ARGUMENTS.drop_cache_tables = True
-    impglobals.ARGUMENTS.drop_collections_tables = True
+    impglobals.ARGUMENTS.create_collections = True
 
 
 ################################################################################
@@ -367,7 +368,7 @@ try: # Top-level exception handling so we always log what's going on
         impglobals.LOGGER.close()
 
     if (impglobals.ARGUMENTS.drop_cache_tables or
-        impglobals.ARGUMENTS.drop_collections_tables):
+        impglobals.ARGUMENTS.create_collections):
         impglobals.LOGGER.open(
             f'Cleaning up OPUS/Django tables',
             limits={'info': impglobals.ARGUMENTS.log_info_limit,
@@ -375,8 +376,8 @@ try: # Top-level exception handling so we always log what's going on
 
         if impglobals.ARGUMENTS.drop_cache_tables:
             do_django.drop_cache_tables()
-        if impglobals.ARGUMENTS.drop_collections_tables:
-            do_django.drop_collections_tables()
+        if impglobals.ARGUMENTS.create_collections:
+            do_collections.create_collections()
 
         impglobals.LOGGER.close()
 

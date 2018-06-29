@@ -1,22 +1,8 @@
 {% for i in data  %}
 
     <li id = "gallery__{{i.opus_id}}">
-    	<a class = "activeThumbnail" href = "{{ i.path }}{{ i.full }}" data-rel="colorbox">
-            <img width = "133px" alt="{{ i.opus_id }}" title = ""
-
-            {% if 'http' in i.img %}
-
-                src = "{{ i.img }}">
-
-            {% else %}
-
-                src = "{{ i.path }}{{ i.img }}">
-
-            {% endif %}
-
-             <!-- div class="text">
-                <div class="inner">{{ i.opus_id }}</div>
-             </div -->
+    	<a class = "activeThumbnail" href = "{i.url}" data-rel="colorbox">
+            <img width = "133px" alt="{{ i.alt_text }}" title = "{i.opus_id}".
 
         </a>
 
