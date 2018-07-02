@@ -204,10 +204,10 @@ def create_download(request, collection_name=None, opus_ids=None, fmt=None):
 
     # fetch the full file paths we'll be zipping up
     import results
-    files = results.views.getFiles(opus_ids,fmt="raw", loc_type="path", product_types=product_types, previews=previews)
+    files = results.views.get_files(opus_ids,fmt="raw", loc_type="path", product_types=product_types, previews=previews)
 
     if not files:
-        log.error("No files found from results.views.getFiles in downloads.create_download")
+        log.error("No files found from results.views.get_files in downloads.create_download")
         log.error(".. First 5 opus_ids: %s", str(opus_ids[:5]))
         log.error(".. First 5 PRODUCT TYPES: %s", str(product_types[:5]))
         log.error(".. First 5 PREVIEWS: %s", str(previews[:5]))

@@ -3,14 +3,18 @@ import sys
 from collections import OrderedDict
 from secrets import *
 
-PROJECT_ROOT = os.path.dirname(os.path.realpath(__file__))
 BASE_PATH = 'opus'  # production base path is handled by apache, local is not.
+PROJECT_ROOT = os.path.dirname(os.path.realpath(__file__))
 sys.path.insert(0, PROJECT_ROOT)
 sys.path.insert(0, os.path.join(PROJECT_ROOT, 'apps'))
-sys.path.insert(0, os.path.join(PROJECT_ROOT, 'pds-tools'))
+sys.path.insert(0, os.path.join(PROJECT_ROOT, '..\pds-tools'))
+sys.path.insert(0, os.path.join(PROJECT_ROOT, '..\pds-webserver\python'))
 
 import opus_support
 import julian
+
+PDS_DATA_DIR = "C:\Users\Debby\Dropbox (SETI Institute)\pdsdata\holdings"
+import pdsfile
 
 ALLOWED_HOSTS = ('127.0.0.1',
                  'localhost',
@@ -324,3 +328,7 @@ DATABASES = {
         # 'OPTIONS':{ 'unix_socket': '/private/var/mysql/mysql.sock'},
     }
 }
+
+from settings_local import *
+pdsfile.preload(PDS_DATA_DIR)
+pdsfile.use_pickles()

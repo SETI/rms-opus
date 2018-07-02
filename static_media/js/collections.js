@@ -26,8 +26,8 @@ var o_collections = {
 
          // check an input on selected products and images updates file_info
          $('#collection').on("click",'#download_options input', function() {
-             add_to_url = o_collections.getDownloadFiltersChecked();
-             url = "/opus/collections/download/info/?" + add_to_url
+             var add_to_url = o_collections.getDownloadFiltersChecked();
+             var url = "/opus/collections/download/info/?" + add_to_url
              $.ajax({ url: url + '&fmt=json',
                 success: function(json){
                     $('#total_files').fadeOut().html(json['count']).fadeIn();
@@ -45,9 +45,8 @@ var o_collections = {
          $('#collection').on("click", '#collections_summary a#create_zip_file button', function() {
                 $('.spinner', "#collections_summary").fadeIn();
                 opus.download_in_process = true;
-                add_to_url = '';
-                add_to_url = o_collections.getDownloadFiltersChecked();
-                url = '/opus/collections/download/default.zip?' + add_to_url + "&" + o_hash.getHash();
+                var add_to_url = o_collections.getDownloadFiltersChecked();
+                var url = '/opus/collections/download/default.zip?' + add_to_url + "&" + o_hash.getHash();
                 $.ajax({ url: url,
                     success: function(filename){
                         opus.download_in_process = false;
@@ -92,9 +91,9 @@ var o_collections = {
      // download filters
      getDownloadFiltersChecked: function() {
          // returned as url string
-         product_types = [];
-         image_types = [];
-         add_to_url = [];
+         var product_types = [];
+         var image_types = [];
+         var add_to_url = [];
          $('ul#product_types input:checkbox:checked').each(function(){
                product_types.push($(this).val());
              });
@@ -102,7 +101,7 @@ var o_collections = {
          $('ul#image_types input:checkbox:checked').each(function(){
                image_types.push($(this).val());
              });
-        checked_filters = {"types":product_types, "previews":image_types };
+        var checked_filters = {"types":product_types, "previews":image_types };
 
         for (var filter_name in checked_filters) {
           if (checked_filters[filter_name].length) {
@@ -117,18 +116,18 @@ var o_collections = {
         // returns any user collection saved in session
         $.ajax({ url: "/opus/collections/default/status.json",
             dataType:"json",
-            success: function(json){
-                   count = json['count'];
+            success: function(data){
+                   var count = data['count'];
                    if (parseInt(count, 10)) {
                        opus.collection_change = true;
 
-                        opus.mainTabDisplay('collection');  // make sure the main site tab label is displayed
+                       opus.mainTabDisplay('collection');  // make sure the main site tab label is displayed
 
                        $('#collection_tab').fadeIn();
                        opus.colls_pages = Math.ceil(count/opus.prefs.limit);
-                        $('#collection_count').html(count);
+                       $('#collection_count').html(count);
                    }
-                   opus.lastCartRequestNo = parseInt(json['expected_request_no']) - 1
+                   opus.lastCartRequestNo = parseInt(data['expected_request_no']) - 1
             }});
     },
 
@@ -137,7 +136,7 @@ var o_collections = {
         clearInterval(opus.scroll_watch_interval); // hold on cowgirl only 1 page at a time
 
         if (opus.collection_change) {
-            zipped_files_html = $('.zipped_files', '#collection').html();
+            var zipped_files_html = $('.zipped_files', '#collection').html();
 
             $('.collection_details', '#collection').html(opus.spinner);
 
@@ -193,15 +192,15 @@ var o_collections = {
     // when you add to a collection you are really adding to a queue, this processes that queue
     processCollectionQueue: function() {
         // start the lowest item in the queue, then trigger sendCollectionRequest again?
-        found = false;
-        for (request_no in opus.collection_queue) {
+        var found = false;
+        for (var request_no in opus.collection_queue) {
             if (!opus.collection_queue[request_no]['sent']) {
                 found = true;
                 // this request is waiting to be sent
-                action = opus.collection_queue[request_no]['action'];
-                ringobsid = opus.collection_queue[request_no]['ringobsid'];
+                var action = opus.collection_queue[request_no]['action'];
+                var opus_id = opus.collection_queue[request_no]['opus_id'];
                 // alert('calling sendCollectionRequest for ' + opus_id);
-                o_collections.sendCollectionRequest(action,ringobsid,request_no);
+                o_collections.sendCollectionRequest(action,opus_id,request_no);
             }
         }
         if (!found) {
@@ -211,7 +210,7 @@ var o_collections = {
     },
 
     // action = add/remove/addrange/removerange/addall
-    sendCollectionRequest: function(action,ringobsid,request_no) {
+    sendCollectionRequest: function(action,opus_id,request_no) {
         // this sends the ajax call to edit the cart on the server
         // but this should really be a private method
         // for adding/removing from cart see edit_collection()
@@ -220,81 +219,87 @@ var o_collections = {
             opus.collection_q_intrvl = setInterval("o_collections.processCollectionQueue()", 500); // resends any stray requests not recvd back from server
         }
 
-        url = "/opus/collections/default/" + action + ".json?request=" + request_no
-        if (action == 'addrange') {
-            url += "&addrange=" + ringobsid;
-            // need to send to server what page this range lands and what limit of that page is
-            // limit should include all observations showing on page
-            // must adjust limit + page to account for total number of results showing on page
+        var url = "/opus/collections/default/" + action + ".json?request=" + request_no
+        switch (action) {
+            case "add":
+            case "remove":
+            case "removerange":
+                url += "&opus_id=" + opus_id;
+                break;
 
-            // server uses offset = (page_no-1)*limit
-            // i.e. the offset of the 23rd page at 100 per page starts with the 2200st record:
+            case "addrange":
+                url += "&add_range=" + opus_id;
+                // need to send to server what page this range lands and what limit of that page is
+                // limit should include all observations showing on page
+                // must adjust limit + page to account for total number of results showing on page
 
-            // first find what does opus.prefs.page say we are looking at:
-            view_info = o_browse.getViewInfo();
-            namespace = view_info['namespace']; // either '#collection' or '#browse'
-            prefix = view_info['prefix'];       // either 'colls_' or ''
-            view_var = opus.prefs[prefix + 'browse'];  // either 'gallery' or 'data'
+                // server uses offset = (page_no-1)*limit
+                // i.e. the offset of the 23rd page at 100 per page starts with the 2200st record:
 
-            first_page = o_browse.getCurrentPage();
-            last_page = opus.last_page_drawn[prefix + view_var];
+                // first find what does opus.prefs.page say we are looking at:
+                var view_info = o_browse.getViewInfo();
+                var namespace = view_info['namespace']; // either '#collection' or '#browse'
+                var prefix = view_info['prefix'];       // either 'colls_' or ''
+                var view_var = opus.prefs[prefix + 'browse'];  // either 'gallery' or 'data'
 
-            // now find the number of results showing on the page, different from opus.prefs.limit:
-            // number of "pages" showing on screen at any time = limit * (1+footer_clicks)
-            // i.e., you've got 100 on screen, you click footer 4 times, now you've got 500 showing
-            // multiply that by 2 because our results may span no more than 2 "pages" at our new limit on the server
-            limit = opus.prefs.limit * (last_page - first_page + 1);
+                var first_page = o_browse.getCurrentPage();
+                var last_page = opus.last_page_drawn[prefix + view_var];
 
-            // server says offset = (page_no-1)*limit
-            // solve that equation for page our new page value:
-            url += '&' + o_hash.getHash();
+                // now find the number of results showing on the page, different from opus.prefs.limit:
+                // number of "pages" showing on screen at any time = limit * (1+footer_clicks)
+                // i.e., you've got 100 on screen, you click footer 4 times, now you've got 500 showing
+                // multiply that by 2 because our results may span no more than 2 "pages" at our new limit on the server
+                var limit = opus.prefs.limit * (last_page - first_page + 1);
 
-            // update the page and limit in url
-            url_split = url.split('&');
-            for (key in url_split) {
-                param = url_split[key].split('=')[0];
-                if (param == 'page') {
-                    delete url_split[key];
+                // server says offset = (page_no-1)*limit
+                // solve that equation for page our new page value:
+                url += '&' + o_hash.getHash();
+
+                // update the page and limit in url
+                var url_split = url.split('&');
+                for (var key in url_split) {
+                    var param = url_split[key].split('=')[0];
+                    if (param == 'page') {
+                        delete url_split[key];
+                    }
+                    if (param == 'limit') {
+                        delete url_split[key];
+                    }
                 }
-                if (param == 'limit') {
-                    delete url_split[key];
-                }
-            }
-            url = url_split.join('&');
-            url = url + "&limit=" + limit + "&page=" + first_page;
+                url = url_split.join('&');
+                url = url + "&limit=" + limit + "&page=" + first_page;
+                break;
 
-        } else if (action == 'addall') {
-            url += '&' + o_hash.getHash();
-
-        } else {
-            url += "&ringobsid=" + ringobsid;
+          case "addall":
+              // currently not implemented
+              url += '&' + o_hash.getHash();
+              break;
         }
 
-        $.ajax({ url: url,
-              dataType:"json", success: function(json){
-
-                   if (!json) {
-                        // alert('no json kay bai')
-                       return;
-                   }
-                   try {
-                       opus.collection_queue[request_no]['sent'] = true; // server has recvd this request
-                   } catch(e) {}
-                   if (json['err']) {
-                       // server still waiting for earlier request
-                       return;
-                   }
-                   server_latest_processed = json['request_no'];
-                   if (server_latest_processed == opus.lastCartRequestNo) {
+        $.ajax({
+            url: url,
+            dataType: "json",
+            success: function(data) {
+                if (data['err'] == undefined) {
+                    opus.collection_queue[request_no]['sent'] = true; // server has recvd this request
+                    var server_latest_processed = data['request_no'];
+                    if (server_latest_processed == opus.lastCartRequestNo) {
                         // server has process all collection requests, this count is valid
-                        count = json['count'];
+                        var count = data['count'];
                         $('#collection_count').html(count);
                         opus.colls_pages = Math.ceil(count/opus.prefs.limit);
                         o_collections.resetCollectionQueue();
-                   } else {
-                       // // alert('server last ' + server_latest_processed + ' client: ' + opus.lastCartRequestNo)
-                   }
-               }});
+                    } else {
+                           // // alert('server last ' + server_latest_processed + ' client: ' + opus.lastCartRequestNo)
+                    }
+                } else {
+                  // post error where...?
+                }
+            },
+            error: function() {
+                //$('#notification-bar').text('An error occurred');
+            }
+        });
     },
 
     emptyCollection: function() {
@@ -339,7 +344,7 @@ var o_collections = {
         opus.lastCartRequestNo++;
         // $('.collections_extra').html(opus.spinner);
         // $('#collection_tab').fadeIn();
-        opus.collection_queue[opus.lastCartRequestNo] = {"action":action, "ringobsid":opus_id, "sent":false};
+        opus.collection_queue[opus.lastCartRequestNo] = {"action":action, "opus_id":opus_id, "sent":false};
 
         o_collections.processCollectionQueue();
     },

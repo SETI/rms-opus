@@ -16,7 +16,7 @@
 		{% for slug,param_info in all_slugs_info.items %}
 			<li id="cchoose__{{ slug }}" 
 
-                    {% if slug == 'ringobsid' %}
+                    {% if slug == 'opusid' %}
                         class = "unsortable" 
                     {% endif %}
                     >
@@ -34,7 +34,7 @@
                     <!-- "remove this column" x button -->
 					<span class = "chosen_column_close
 
-                        {% if slug == 'ringobsid' %}
+                        {% if slug == 'opusid' %}
                             hidden
                         {% endif %}
 

@@ -13,6 +13,15 @@ import logging
 log = logging.getLogger(__name__)
 
 
+def iter_flatten(iterable):
+  it = iter(iterable)
+  for e in it:
+    if isinstance(e, (list, tuple)):
+      for f in iter_flatten(e):
+        yield f
+    else:
+      yield e
+
 def responseFormats(data, fmt, **kwargs):
     """
     this is REALLY AWEFUL.
