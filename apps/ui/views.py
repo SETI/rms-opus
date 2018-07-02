@@ -168,7 +168,7 @@ def getMenuLabels(request, labels_view):
 
         # XXX This really shouldn't be here!!
         if d.table_name == 'obs_surface_geometry':
-            menu_data[d.table_name]['menu_help'] = "Select a target name to reveal more options. Supported Instruments: VGISS, NHLORRI, COISS, COUVIS, COVIMS, and early COCIRS"
+            menu_data[d.table_name]['menu_help'] = "Select a target name to reveal more options. Supported Instruments: VGISS, NHLORRI, COISS, COUVIS, and COVIMS"
 
         if d.table_name == 'obs_ring_geometry':
             menu_data[d.table_name]['menu_help'] = "Supported Instruments: VGISS, NHLORRI, COISS, COUVIS, COVIMS, and early COCIRS"
