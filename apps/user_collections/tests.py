@@ -58,7 +58,7 @@ class user_CollectionsTests(TestCase):
     def test__edit_collection_add_one(self):
         self.emptycollection()
         action = 'add'
-        request = self.factory.get('/opus/collections/default/add.json?request=1&ringobsid=S_IMG_CO_ISS_1680806160_N', HTTP_X_REQUESTED_WITH='XMLHttpRequest')
+        request = self.factory.get('/opus/collections/default/add.json?request=1&opusid=S_IMG_CO_ISS_1680806160_N', HTTP_X_REQUESTED_WITH='XMLHttpRequest')
         request.user = AnonymousUser()
         request.session = test_session()
         response = edit_collection(request, opus_id = 'S_IMG_CO_ISS_1680806160_N', action = action)
@@ -70,7 +70,7 @@ class user_CollectionsTests(TestCase):
     def test__edit_collection_remove_one(self):
         self.emptycollection()
         action = 'remove'
-        request = self.factory.get('/opus/collections/default/add.json?request=1&ringobsid=S_IMG_CO_ISS_1680806160_N', HTTP_X_REQUESTED_WITH='XMLHttpRequest')
+        request = self.factory.get('/opus/collections/default/add.json?request=1&opusid=S_IMG_CO_ISS_1680806160_N', HTTP_X_REQUESTED_WITH='XMLHttpRequest')
         request.user = AnonymousUser()
         request.session = test_session()
         response = edit_collection(request, opus_id = 'S_IMG_CO_ISS_1680806160_N', action = action)
@@ -87,7 +87,7 @@ class user_CollectionsTests(TestCase):
         opus_id_min = 'S_IMG_CO_ISS_1688230251_N'
         opus_id_max = 'S_IMG_CO_ISS_1688230566_N'
 
-        url = '/opus/collections/default/addrange.json?request=1&addrange=%s,%s&volumeid=COISS_2069&view=browse&browse=gallery&colls_browse=gallery&order=timesec1&cols=primaryfilespec,time1,time2,ringobsid,observationduration,ringradius1,ringradius2,J2000longitude1,J2000longitude2,phase1,phase2,incidence1,incidence2,emission1,emission2'
+        url = '/opus/collections/default/addrange.json?request=1&addrange=%s,%s&volumeid=COISS_2069&view=browse&browse=gallery&colls_browse=gallery&order=timesec1&cols=primaryfilespec,time1,time2,opusid,observationduration,ringradius1,ringradius2,J2000longitude1,J2000longitude2,phase1,phase2,incidence1,incidence2,emission1,emission2'
         request = self.factory.get(url % (opus_id_min, opus_id_max), HTTP_X_REQUESTED_WITH='XMLHttpRequest')
         request.user = AnonymousUser()
         request.session = test_session()
@@ -145,7 +145,7 @@ class user_CollectionsTests(TestCase):
         bulk_add_to_collection(opus_id_list, session_id)
 
         # then do a request to get a page of results
-        url = '/opus/api/data.json?volumeid=COISS_2069&view=browse&browse=gallery&colls_browse=gallery&page=1&gallery_data_viewer=true&limit=100&order=timesec1&cols=ringobsid,planet,target,phase1,time1,time2&widgets=planet,target&widgets2=&detail='
+        url = '/opus/api/data.json?volumeid=COISS_2069&view=browse&browse=gallery&colls_browse=gallery&page=1&gallery_data_viewer=true&limit=100&order=timesec1&cols=opusid,planet,target,phase1,time1,time2&widgets=planet,target&widgets2=&detail='
         request = self.factory.get(url)
         request.user = AnonymousUser()
         request.session = test_session()
@@ -161,7 +161,7 @@ class user_CollectionsTests(TestCase):
         opus_id_list = ['S_IMG_CO_ISS_1688233102_N','S_IMG_CO_ISS_1688235606_N','S_IMG_CO_ISS_1688244278_N','S_IMG_CO_ISS_1688393550_N']
         bulk_add_to_collection(opus_id_list, session_id)
 
-        url = '/opus/collections/data.csv?volumeid=COISS_2069&view=browse&browse=gallery&colls_browse=gallery&page=1&gallery_data_viewer=true&limit=100&order=timesec1&cols=ringobsid,planet,target,phase1,phase2,time1,time2,ringradius1,ringradius2,J2000longitude1,J2000longitude2'
+        url = '/opus/collections/data.csv?volumeid=COISS_2069&view=browse&browse=gallery&colls_browse=gallery&page=1&gallery_data_viewer=true&limit=100&order=timesec1&cols=opusid,planet,target,phase1,phase2,time1,time2,ringradius1,ringradius2,J2000longitude1,J2000longitude2'
         request = self.factory.get(url)
         request.user = AnonymousUser()
         request.session = test_session()
@@ -177,7 +177,7 @@ class user_CollectionsTests(TestCase):
         opus_id_list = ['S_IMG_CO_ISS_1688233102_N','S_IMG_CO_ISS_1688235606_N','S_IMG_CO_ISS_1688244278_N','S_IMG_CO_ISS_1688393550_N']
         bulk_add_to_collection(opus_id_list, session_id)
 
-        url = '/opus/collections/data.csv?volumeid=COISS_2069&view=browse&browse=gallery&colls_browse=gallery&page=1&gallery_data_viewer=true&limit=100&order=timesec1&cols=ringobsid,planet,target,phase1,phase2,time1,time2,ringradius1,ringradius2,J2000longitude1,J2000longitude2'
+        url = '/opus/collections/data.csv?volumeid=COISS_2069&view=browse&browse=gallery&colls_browse=gallery&page=1&gallery_data_viewer=true&limit=100&order=timesec1&cols=opusid,planet,target,phase1,phase2,time1,time2,ringradius1,ringradius2,J2000longitude1,J2000longitude2'
         request = self.factory.get(url)
         request.user = AnonymousUser()
         request.session = test_session()

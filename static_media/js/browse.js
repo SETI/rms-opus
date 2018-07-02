@@ -755,26 +755,24 @@ var o_browse = {
         if ($(id).length) {
             return;  // this is a hack because it sometimes draws it multiple times
         }
-        /*jshint multistr: true */
-        var data = '<tr class = "infinite_scroll_page">\
-                    <td colspan = "' + (opus.prefs['cols'].length +1) + '">\
-                        <div class="navbar-inverse"> \
-                            <span class = "back_to_top"><a href = "#top">back to top</a></span> \
-                            <span class = "infinite_scroll_page_container" id = "' + id + '">Page ' + page + '</span><span class = "infinite_scroll_spinner">' + opus.spinner + '</span> \
-                        </div>\
-                </td>\
-                </tr>';
 
-        var gallery = '<li class = "infinite_scroll_page navbar-inverse">\
+        var data;
+        if (opus.prefs.browse == 'gallery') {
+            data = '<li class = "infinite_scroll_page navbar-inverse">\
                        <span class = "back_to_top"><a href = "#top">back to top</a></span>\
                        <span class = "infinite_scroll_page_container page_' + page + '" id = "' + id + '">Page ' + page + '</span>\
                        <span class = "infinite_scroll_spinner">' + opus.spinner + '</span>\
                    </li>';
-
-        // opus.page_bar_offsets['#'+id] = false; // we look up the page loc later - to be continued
-
-        if (opus.prefs.browse == 'gallery') {
-            return gallery;
+                   // opus.page_bar_offsets['#'+id] = false; // we look up the page loc later - to be continue            return gallery;
+        } else {
+            data = '<tr class = "infinite_scroll_page">\
+                      <td colspan = "' + (opus.prefs['cols'].length +1) + '">\
+                          <div class="navbar-inverse"> \
+                              <span class = "back_to_top"><a href = "#top">back to top</a></span> \
+                              <span class = "infinite_scroll_page_container" id = "' + id + '">Page ' + page + '</span><span class = "infinite_scroll_spinner">' + opus.spinner + '</span> \
+                          </div>\
+                  </td>\
+                  </tr>';
         }
         return data;
     },
@@ -1014,8 +1012,8 @@ var o_browse = {
             // make sure opus_id is in columns
             columns = opus.prefs.cols;
             if (param == 'cols') {
-                if (jQuery.inArray('ringobsid', values) < 0) {
-                    values.push('ringobsid');
+                if (jQuery.inArray('opusid', values) < 0) {
+                    values.push('opusid');
                 }
                 columns = values.join(',');  // we need this after the ajax call
             }
@@ -1033,7 +1031,7 @@ var o_browse = {
             var updated_ids = [];
 
             for (var i in json.page) {
-                opus_id = json.page[i][columns.indexOf('ringobsid')];
+                var opus_id = json.page[i][columns.indexOf('opusid')];
                 updated_ids.push(opus_id);
                 opus.gallery_data[opus_id] = json.page[i];
             }
@@ -1173,7 +1171,7 @@ var o_browse = {
         html += '</dl>';
 
         // add a link to detail page
-        html += '<p><a href = "/opus/detail/' + opus_id + '.html" class = "gallery_data_link" data-ringobsid="' + opus_id + '">View Detail</a></p>';
+        html += '<p><a href = "/opus/detail/' + opus_id + '.html" class = "gallery_data_link" data-opusid="' + opus_id + '">View Detail</a></p>';
 
         // add link to choose columns
         html += '<p><a href="" class="get_column_chooser close_overlay">choose columns</a></p>';
@@ -1226,7 +1224,7 @@ var o_browse = {
                     link = link.replace("view=browse", "view=detail");
                     window.open(link, '_blank');
                 } else {
-                    var opus_id = $(this).data('ringobsid');
+                    var opus_id = $(this).data('opusid');
                     o_browse.openDetailTab(opus_id);
                 }
                 return false;
@@ -1243,7 +1241,7 @@ var o_browse = {
 
         // add data viewer behaviors
         $('.gallery_data_viewer').on("click", '.gallery_data_link', function() {
-            var opus_id = $(this).data('ringobsid');
+            var opus_id = $(this).data('opusid');
             o_browse.openDetailTab(opus_id);
             $.colorbox.close();
             return false;
@@ -1457,7 +1455,7 @@ var o_browse = {
         // columns can be reordered wrt each other in 'column chooser' by dragging them
         columnsDragged: function(element) {
             var cols = $(element).sortable('toArray');
-            cols.unshift('cchoose__ringobsid');  // manually add ringobsid to this list
+            cols.unshift('cchoose__opusid');  // manually add opusid to this list
             $.each(cols, function(key, value)  {
                 cols[key] = value.split('__')[1];
             });

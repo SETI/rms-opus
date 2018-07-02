@@ -26,7 +26,7 @@ class metadataTests(TestCase):
     selections[param_name] = ['Saturn']
 
     def test__get_range_endpoints_times(self):
-        url = '/opus/api/meta/range/endpoints/timesec1.json?planet=Saturn&view=search&browse=gallery&colls_browse=gallery&page=1&limit=100&order=&cols=ringobsid,planet,target,phase1&widgets=planet,target,timesec1&widgets2=&detail=&reqno=1'
+        url = '/opus/api/meta/range/endpoints/timesec1.json?planet=Saturn&view=search&browse=gallery&colls_browse=gallery&page=1&limit=100&order=&cols=opusid,planet,target,phase1&widgets=planet,target,timesec1&widgets2=&detail=&reqno=1'
         print url
         response = self.c.get(url)
         print 'got:'
