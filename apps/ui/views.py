@@ -417,19 +417,18 @@ def getWidget(request, **kwargs):
 
 
 def init_detail_page(request, **kwargs):
-    """
-    this loads the initial parts of the detail tab on first loads
-    these are the things that are fast to compute while other parts of the page
-    are handled with ajax calls because they are slower
+    """Render the top part of the Details tab.
 
-    the detail page calls other views via ajax:
-    results.get_metadata
+    This loads the initial parts of the detail page. These are the things that
+    are fast to compute while other parts of the page are handled with AJAX
+    calls because they are slower.
 
+    The detail page calls other views via AJAX:
+        results.get_metadata()
     """
     update_metrics(request)
 
-    template="detail.html"
-    slugs = request.GET.get('cols',False)
+    slugs = request.GET.get('cols', False)
     opus_id = kwargs['opus_id']
 
     img = None # XXXXXXXXXXXXXXXXXXXXX
@@ -442,19 +441,17 @@ def init_detail_page(request, **kwargs):
     # base_vol_path = get_base_path_previews(opus_id)
     #
     path = settings.IMAGE_HTTP_PATH + base_vol_path
-    if 'CIRS' in base_vol_path:
-        path = path.replace('previews','diagrams')
 
     instrument_id = ObsGeneral.objects.filter(opus_id=opus_id).values('instrument_id')[0]['instrument_id']
 
     # get the preview guide url
     preview_guide_url = ''
     if instrument_id == 'COCIRS':
-        preview_guide_url = 'http://pds-rings.seti.org/cassini/cirs/COCIRS_previews.txt'
+        preview_guide_url = 'https://pds-rings.seti.org/cassini/cirs/COCIRS_previews.txt'
     if instrument_id == 'COUVIS':
-        preview_guide_url = 'http://pds-rings.seti.org/cassini/uvis/UVIS_previews.txt'
+        preview_guide_url = 'https://pds-rings.seti.org/cassini/uvis/UVIS_previews.txt'
     if instrument_id == 'COVIMS':
-        preview_guide_url = 'http://pds-rings.seti.org/cassini/vims/COVIMS_previews.txt'
+        preview_guide_url = 'https://pds-rings.seti.org/cassini/vims/COVIMS_previews.txt'
 
     # get the list of files for this observation
     # XXXXXXX files = getFiles(opus_id,fmt='raw')[opus_id]
@@ -472,7 +469,7 @@ def init_detail_page(request, **kwargs):
         "file_list": file_list,
         "opus_id": opus_id
     }
-    return render(request, template, context)
+    return render(request, 'detail.html', context)
 
 def getColumnInfo(slugs):
     info = OrderedDict()

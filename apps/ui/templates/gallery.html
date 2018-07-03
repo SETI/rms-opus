@@ -1,41 +1,27 @@
-{% for i in data  %}
+{% for i in data %}
+  <li id="gallery__{{i.opus_id}}">
+    <a class="activeThumbnail" href="{{ i.url }}" data-rel="colorbox">
+      <img alt="{{ i.alt_text }}" title="{{ i.opus_id }}" src="{{ i.url }}">
+    </a>
 
-    <li id = "gallery__{{i.opus_id}}">
-    	<a class = "activeThumbnail" href = "{i.url}" data-rel="colorbox">
-            <img width = "133px" alt="{{ i.alt_text }}" title = "{i.opus_id}".
+    <div class="tools tools-bottom">
+      <a href="#"> <!-- detail page link -->
+        <i class="glyphicon glyphicon-info-sign"></i>
+      </a>
+      <a href="#"> <!-- checkmark - add to cart -->
+          <i class="glyphicon glyphicon-ok
+            <!--  {% if i.in_collection %}
+                 thumb_selected_icon
+              {% endif %} -->
+          "></i>
+      </a>
+      <a href="#" class="colorbox"> <!-- colorbox -->
+        <i class="glyphicon glyphicon-resize-full"></i>
+      </a>
+    </div>
 
-        </a>
-
-        <div class="tools tools-bottom
-
-            {% if i.in_collection %} in {% endif %} ">
-
-            <a href="#"><!-- detail page link -->
-                <i class="glyphicon glyphicon-info-sign"></i>
-            </a>
-
-
-            <a href="#"><!-- checkmark - add to cart -->
-                <i class="glyphicon glyphicon-ok
-                    {% if i.in_collection %}
-                       thumb_selected_icon
-                    {% endif %}
-                "></i>
-            </a>
-
-            <a href="#" class = "colorbox"><!-- colorbox -->
-                <i class="glyphicon glyphicon-resize-full"></i>
-            </a>
-
-
-
-        </div>
-
-        <div class = "thumb_overlay
-
-            {% if i.in_collection %}  thumb_selected  {% endif %}
-
+    <div class="thumb_overlay
+          <!--  {% if i.in_collection %}  thumb_selected  {% endif %} -->
         ">&nbsp;</div>
-
-    </li>
-    {% endfor %}
+  </li>
+{% endfor %}

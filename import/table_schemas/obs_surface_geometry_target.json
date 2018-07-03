@@ -389,7 +389,7 @@
         "pi_category_name": "obs_surface_geometry__<TARGET>",
         "pi_dict_context": "SURFACE_GEO",
         "pi_dict_name": "MAXIMUM_LONGITUDE_WRT_OBSERVER",
-        "pi_disp_order": 17,
+        "pi_disp_order": 540,
         "pi_display": 0,
         "pi_display_results": 1,
         "pi_form_type": "LONG",

@@ -26,40 +26,193 @@ from metrics.views import update_metrics
 from django.views.decorators.cache import never_cache
 
 from tools.pdsfilestubs import *   # temp!!
+from tools.dbutils import *
+
 import pdsfile
 
 import logging
 log = logging.getLogger(__name__)
 
 
-def get_all_categories(request, opus_id):
-    """ returns list of all cateories - aka tables - this opus_id apepars in
-        as json response """
+def api_get_all_categories(request, opus_id):
+    """Return a JSON list of all cateories (tables) this opus_id appears in."""
     all_categories = []
     table_info = TableNames.objects.all().values('table_name', 'label').order_by('disp_order')
 
-    for tbl in table_info:  # all tables
+    for tbl in table_info:
         table_name = tbl['table_name']
         if table_name == 'obs_surface_geometry':
             # obs_surface_geometry is not a data table
             # it's only used to select targets, not to hold data, so remove it
             continue
 
-        label = tbl['label']
-        model_name = ''.join(table_name.title().split('_'))
-
         try:
-            table_model = apps.get_model('search', model_name)
+            results = query_table_for_opus_id(table_name, opus_id)
         except LookupError:
-            continue  # oops some models don't actually exist
-
-        # are not opus_id unique in all obs tables so why is this not a .get query
-        results = table_model.objects.filter(opus_id=opus_id).values('opus_id')
+            log.error("Didn't find table %s", table_name)
+            continue
+        results = results.values('opus_id')
         if results:
-            cat = {'table_name': table_name, 'label': label}
+            cat = {'table_name': table_name, 'label': tbl['label']}
             all_categories.append(cat)
 
-    return HttpResponse(json.dumps(all_categories), content_type="application/json")
+    return HttpResponse(json.dumps(all_categories),
+                        content_type="application/json")
+
+
+def api_get_metadata(request, opus_id, fmt):
+    """Return all metadata, sorted by category, for this opus_id.
+
+    The argument "cols" can be used to limit results to particular columns.
+    This is a list of slugs separated by commas. Note that the return will
+    be indexed by field name, but by slug name.
+
+    The argument "cats" can be used to limit results to particular categories.
+
+    TODO: XXX
+        make it return cols by slug as field name if cols are slugs (no underscores)
+        if cols does has underscores make it return field names as column name
+        (this is a fix for backward compatablility )
+
+        and om make 'field' an alias for 'cols' plz omg what is 'cols' even
+
+        if cat is passed returns all in the named category(s) and ignores cols
+
+        you will have to add a column to table_names "slug" to get a
+        url-worthy representation of the category name
+
+    """
+    update_metrics(request)
+
+    if not opus_id: raise Http404
+
+    slugs = None
+    try:
+        slugs = request.GET.get('cols', False)
+    except AttributeError:
+        pass  # No request was sent
+    if slugs:
+        return _get_metadata_by_slugs(request, opus_id, slugs.split(','),
+                                     fmt)
+
+    try:
+        cats = request.GET.get('cats', False)
+    except AttributeError:
+        cats = False  # No request was sent
+
+    data = SortedDict()     # holds data struct to be returned
+    all_info = SortedDict() # holds all the param info objects
+
+    # find all the tables (categories) this observation belongs to,
+    if not cats:
+        all_tables = TableNames.objects.filter(display='Y').order_by('disp_order')
+    else:
+        # restrict table to those found in cats
+        all_tables = TableNames.objects.filter(table_name__in=cats.split(','), display='Y').order_by('disp_order')
+
+    # now find all params and their values in each of these tables:
+    for table in all_tables:
+        table_label = table.label
+        table_name = table.table_name
+        model_name = ''.join(table_name.title().split('_'))
+
+        # make a list of all slugs and another of all param_names in this table
+        all_slugs = [param.slug for param in ParamInfo.objects.filter(category_name=table_name, display_results=1).order_by('disp_order')]
+        all_param_names = [param.name for param in ParamInfo.objects.filter(category_name=table_name, display_results=1).order_by('disp_order')]
+
+        for k, slug in enumerate(all_slugs):
+            param_info = ParamInfo.objects.get(slug=slug)
+            name = param_info.name
+            all_info[name] = param_info
+
+        if all_param_names:
+            try:
+                try:
+                    results = query_table_for_opus_id(table_name, opus_id)
+                except LookupError:
+                    log.error("Could not find data model for category %s", model_name)
+                    break
+                results = results.values(*all_param_names)[0]
+
+                # results is an ordinary dict so here to make sure we have the correct ordering:
+                ordered_results = SortedDict({})
+                for param in all_param_names:
+                    ordered_results[param] = results[param]
+
+                data[table_label] = ordered_results
+
+            except IndexError:
+                # this is pretty normal, it will check every table for a ring obs id
+                # a lot of observations do not appear in a lot of tables..
+                # for example something on jupiter won't appear in a saturn table..
+                # log.error('IndexError: no results found for {0} in table {1}'.format(opus_id, table_name) )
+                pass  # no results found in this table, move along
+            except AttributeError:
+                log.error('AttributeError: No results found for opus_id %s in table %s', opus_id, table_name)
+                pass  # no results found in this table, move along
+            except FieldError:
+                log.error('FieldError: No results found for opus_id %s in table %s', opus_id, table_name)
+                pass  # no results found in this table, move along
+
+    if fmt == 'html':
+        # hack because we want to display labels instead of param names
+        # on our html Detail page
+        return render(request, 'detail_metadata.html',locals())
+    if fmt == 'json':
+        return HttpResponse(json.dumps(data), content_type="application/json")
+    if fmt == 'raw':
+        return data, all_info  # includes definitions for opus interface
+
+def _get_metadata_by_slugs(request, opus_id, slugs, fmt):
+    """
+    returns results for specified slugs
+    """
+    update_metrics(request)
+
+    params_by_table = {}  # params by table_name
+    data = []
+    all_info = {}
+
+    for slug in slugs:
+        param_info = get_param_info_by_slug(slug)
+        if not param_info:
+            log.error(
+        "get_metadata_by_slugs: Could not find param_info entry for slug %s",
+        str(slug))
+            continue  # todo this should raise end user error
+        table_name = param_info.category_name
+        params_by_table.setdefault(table_name, []).append(param_info.param_name().split('.')[1])
+        all_info[slug] = param_info  # to get things like dictionary entries for interface
+
+    if slugs and not all_info:
+        # none of the slugs were valid slugs
+        # can't ignore them and return all metadata because can lead to infinite recursion here
+        raise Http404
+
+    for table_name, param_list in params_by_table.items():
+        try:
+            results = query_table_for_opus_id(table_name, opus_id)
+        except LookupError:
+            continue
+        results = results.values(*param_list)
+
+        if not results:
+            # this opus_id doesn't exist in this table, log this..
+            log.error('Could not find opus_id %s in table %s', opus_id, table_name)
+        else:
+            for param,value in results[0].items():
+                data.append({param: value})
+
+    if fmt == 'html':
+        return render(request, 'detail_metadata_slugs.html',locals())
+    if fmt == 'json':
+        return HttpResponse(json.dumps(data), content_type="application/json")
+    if fmt == 'raw':
+        return data, all_info  # includes definitions for opus interface
+
+
+
+
 
 def category_list_http_endpoint(request):
     """ returns a list of triggered categories (table_names) and labels
@@ -157,158 +310,6 @@ def get_data(request,fmt):
         return data
     else:
         return responseFormats(data,fmt,template='data.html', id_index=id_index, labels=labels,checkboxes=checkboxes, collection=collection, order=order)
-
-def get_metadata_by_slugs(request, opus_id, slugs, fmt):
-    """
-    returns results for specified slugs
-    """
-    update_metrics(request)
-
-    params_by_table = {}  # params by table_name
-    data = []
-    all_info = {}
-
-    for slug in slugs:
-        param_info = get_param_info_by_slug(slug)
-        if not param_info:
-            log.error(
-        "get_metadata_by_slugs: Could not find param_info entry for slug %s",
-        str(slug))
-            continue  # todo this should raise end user error
-        table_name = param_info.category_name
-        params_by_table.setdefault(table_name, []).append(param_info.param_name().split('.')[1])
-        all_info[slug] = param_info  # to get things like dictionary entries for interface
-
-    if slugs and not all_info:
-        # none of the slugs were valid slugs
-        # can't ignore them and return all metadata because can lead to infinite recursion here
-        raise Http404
-
-    for table_name, param_list in params_by_table.items():
-        model_name = ''.join(table_name.title().split('_'))
-        table_model = apps.get_model('search', model_name)
-
-        results = table_model.objects.filter(opus_id=opus_id).values(*param_list)
-                  # are not opus_id unique in all obs tables so why is this not a .get query
-
-        if not results:
-            # this opus_id doesn't exist in this table, log this..
-            log.error('Could not find opus_id %s in table %s', opus_id, table_name)
-
-        for param,value in results[0].items():
-            data.append({param: value})
-
-    if fmt == 'html':
-        return render(request, 'detail_metadata_slugs.html',locals())
-    if fmt == 'json':
-        return HttpResponse(json.dumps(data), content_type="application/json")
-    if fmt == 'raw':
-        return data, all_info  # includes definitions for opus interface
-
-
-def get_metadata(request, opus_id, fmt):
-    """
-    results for a single observation
-    all the data, in categories
-
-    pass cols to narrow by particular fields
-    pass cat to list value of all fields in named category(s)
-
-    accepts 'cols' as a GET var which is a list of columns by slug
-    however the response does not return field names as slugs but as field name
-    so this is strange
-    TODO:
-        make it return cols by slug as field name if cols are slugs (no underscores)
-        if cols does has underscores make it return field names as column name
-        (this is a fix for backward compatablility )
-
-        and om make 'field' an alias for 'cols' plz omg what is 'cols' even
-
-        if cat is passed returns all in the named category(s) and ignores cols
-
-        you will have to add a column to table_names "slug" to get a
-        url-worthy representation of the category name
-
-    """
-    update_metrics(request)
-    if not opus_id: raise Http404
-
-    try:
-        slugs = request.GET.get('cols', False)
-        if slugs:
-            return get_metadata_by_slugs(request, opus_id, slugs.split(','), fmt)
-    except AttributeError:
-        pass  # no request was sent
-
-    try:
-        cats = request.GET.get('cats',False)
-    except AttributeError:
-        cats = False  # no request was send, legacy requirement?
-
-    data = SortedDict({})  # will hold data struct to be returned
-    all_info = {}  # holds all the param info objects
-
-    # find all the tables (categories) this observation belongs to,
-    if not cats:
-        all_tables = TableNames.objects.filter(display='Y').order_by('disp_order')
-    else:
-        # restrict table to those found in cats
-        all_tables = TableNames.objects.filter(table_name__in=cats.split(','), display='Y').order_by('disp_order')
-
-    # now find all params and their values in each of these tables:
-    for table in all_tables:
-        table_label = table.label
-        table_name = table.table_name
-        model_name = ''.join(table_name.title().split('_'))
-
-        try:
-            table_model = apps.get_model('search', model_name)
-        except LookupError:
-            log.error("Could not find data model for category %s", model_name)
-            continue
-
-        # make a list of all slugs and another of all param_names in this table
-        all_slugs = [param.slug for param in ParamInfo.objects.filter(category_name=table_name, display_results=1).order_by('disp_order')]
-        all_param_names = [param.name for param in ParamInfo.objects.filter(category_name=table_name, display_results=1).order_by('disp_order')]
-
-        for k, slug in enumerate(all_slugs):
-            param_info = ParamInfo.objects.get(slug=slug)
-            name = param_info.name
-            all_info[name] = param_info
-
-        if all_param_names:
-            try:
-                results = table_model.objects.filter(opus_id=opus_id).values(*all_param_names)[0]
-
-                # results is an ordinary dict so here to make sure we have the correct ordering:
-                ordered_results = SortedDict({})
-                for param in all_param_names:
-                    ordered_results[param] = results[param]
-
-                data[table_label] = ordered_results
-
-            except IndexError:
-                # this is pretty normal, it will check every table for a ring obs id
-                # a lot of observations do not appear in a lot of tables..
-                # for example something on jupiter won't appear in a saturn table..
-                # log.error('IndexError: no results found for {0} in table {1}'.format(opus_id, table_name) )
-                pass  # no results found in this table, move along
-            except AttributeError:
-                log.error('AttributeError: No results found for opus_id %s in table %s', opus_id, table_name)
-                pass  # no results found in this table, move along
-            except FieldError:
-                log.error('FieldError: No results found for opus_id %s in table %s', opus_id, table_name)
-                pass  # no results found in this table, move along
-
-    if fmt == 'html':
-        # hack becuase we want to display labels instead of param names
-        # on our html Detail page
-        return render(request, 'detail_metadata.html',locals())
-    if fmt == 'json':
-        return HttpResponse(json.dumps(data), content_type="application/json")
-    if fmt == 'raw':
-        return data, all_info  # includes definitions for opus interface
-
 
 def get_triggered_tables(selections, extras=None):
     """
@@ -439,8 +440,9 @@ def get_images(request,size,fmt):
 
     template = 'gallery.html'
 
-    # image_links
-    return responseFormats({'data':[i for i in image_links]},fmt, size=size, alt_size=alt_size, columns_str=columns.split(','), template=template, order=order)
+    return responseFormats({'data': image_links}, fmt, size=size,
+                           alt_size=alt_size, columns_str=columns.split(','),
+                           template=template, order=order)
 
 
 def get_base_path_previews(opus_id):
@@ -538,6 +540,7 @@ def get_files(opus_id=None, fmt='raw', loc_type='url', product_types=['all'], pr
     can also return preview files too
     """
 
+    assert False
     if collection and not session_id:
         log.error("get_files: Needs session_id in kwargs to access collection")
         return False
@@ -588,7 +591,7 @@ def get_files(opus_id=None, fmt='raw', loc_type='url', product_types=['all'], pr
     file_names = {}
     for f in files_table_rows:
         """
-        This loop is looping over the entire result set to do a text transoformation (into json)
+        This loop is looping over the entire result set to do a text transformation (into json)
         todo: STOP THE MADNESS
         move most of this to database layer
         put all of the below into the file sizes table

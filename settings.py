@@ -7,13 +7,13 @@ BASE_PATH = 'opus'  # production base path is handled by apache, local is not.
 PROJECT_ROOT = os.path.dirname(os.path.realpath(__file__))
 sys.path.insert(0, PROJECT_ROOT)
 sys.path.insert(0, os.path.join(PROJECT_ROOT, 'apps'))
-sys.path.insert(0, os.path.join(PROJECT_ROOT, '..\pds-tools'))
-sys.path.insert(0, os.path.join(PROJECT_ROOT, '..\pds-webserver\python'))
+sys.path.insert(0, os.path.join(PROJECT_ROOT, '../pds-tools'))
+sys.path.insert(0, os.path.join(PROJECT_ROOT, '../pds-webserver/python'))
 
 import opus_support
 import julian
 
-PDS_DATA_DIR = "C:\Users\Debby\Dropbox (SETI Institute)\pdsdata\holdings"
+PDS_DATA_DIR = '/pdsdata/holdings'
 import pdsfile
 
 ALLOWED_HOSTS = ('127.0.0.1',
@@ -170,7 +170,7 @@ TEST_RUNNER = 'django_nose.NoseTestSuiteRunner'
 
 BASE_TABLES = ['obs_general', 'obs_pds', 'obs_ring_geometry','obs_surface_geometry','obs_wavelength','obs_type_image']  # tables in which every observation in the database appears:
 TAR_FILE_URI_PATH = 'http://pds-rings-downloads.seti.org/opus/'
-IMAGE_HTTP_PATH = 'https://pds-rings.seti.org/holdings/previews/'
+IMAGE_HTTP_PATH = 'https://pds-rings.seti.org/'
 DEFAULT_COLUMNS = 'opusid,planet,target,time1,time2'
 IMAGE_COLUMNS   = ['thumb.jpg','small.jpg','med.jpg','full.jpg']
 RANGE_FIELDS    = ['LONG','RANGE']
@@ -189,7 +189,7 @@ THUMBNAIL_NOT_FOUND = 'https://tools.pds-rings.seti.org/assets/static_media/img/
 
 FILE_HTTP_PATH  = 'https://pds-rings.seti.org/holdings/volumes/'
 DERIVED_HTTP_PATH  = 'https://pds-rings.seti.org/holdings/calibrated/'
-IMAGE_HTTP_PATH = 'https://pds-rings.seti.org/holdings/previews/'
+IMAGE_HTTP_PATH = 'https://pds-rings.seti.org/'
 MAX_CUM_DOWNLOAD_SIZE = 5*1024*1024*1024 # 5 gigs max cum downloads
 
 DEBUG_TOOLBAR_CONFIG = { 'INTERCEPT_REDIRECTS': False }
@@ -329,6 +329,5 @@ DATABASES = {
     }
 }
 
-from settings_local import *
 pdsfile.preload(PDS_DATA_DIR)
 pdsfile.use_pickles()
