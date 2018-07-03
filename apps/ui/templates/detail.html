@@ -1,7 +1,7 @@
 <div id="" class="col-md-6 pull-right">
   <div>
-    <a class="shadowbox" href="{{ path }}{{ img.full }}" rel="shadowbox" target="_blank">
-      <img id="detail__{{ img.opus_id }}" src="{{ path }}{{ img.med }}">
+    <a class="shadowbox" href="{{ preview_full_url }}" rel="shadowbox" target="_blank">
+      <img id="detail__{{ img.opus_id }}" src="{{ preview_med_url }}">
     </a>
     <div>
       <p>
@@ -16,10 +16,10 @@
 <div class="col-md-6">
   <div>
     <h1 class="">Ring Observation Detail</h1>
-    <p><b>RMS Node Observation ID: </b>{{ img.opus_id }}</p>
+    <p><b>OPUS ID: </b>{{ opus_id }}</p>
     <h2>PDS Products</h2>
     <div class="">
-      {% for product_type, files in file_list.items %}
+      {% for product_type, files in products.items %}
         <ul class="list-inline">
           {{ product_type }}:
   	      {% for f in files %}
@@ -28,17 +28,6 @@
         </ul>
       {% endfor %}
     </div>
-  </div>
-
-  <div class="">
-    <h2>Ring-Moon Systems Node Supplemental Products</h2>
-    <ul class="list-inline">
-      Preview Images (jpeg/png):
-    	<li><a target="_blank" href="{{ path }}{{ img.full }}">Full Resolution</a></li>
-  	  <li><a target="_blank" href="{{ path }}{{ img.med }}">Medium</a></li>
-  	  <li><a target="_blank" href="{{ path }}{{ img.small }}">Small</a></li>
-      <li><a target="_blank" href="{{ path }}{{ img.thumb }}">Thumb</a></li>
-    </ul>
   </div>
 
   <h2>Metadata for Current Columns</h2>

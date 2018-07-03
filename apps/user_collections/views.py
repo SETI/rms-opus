@@ -20,7 +20,7 @@ from paraminfo.models import ParamInfo
 from search.models import ObsGeneral
 from metrics.views import update_metrics
 
-from tools.pdsfilestubs import *
+from tools.file_utils import *
 import pdsfile
 
 import logging

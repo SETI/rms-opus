@@ -25,14 +25,50 @@ from tools.app_utils import *
 from metrics.views import update_metrics
 from django.views.decorators.cache import never_cache
 
-from tools.pdsfilestubs import *   # temp!!
-from tools.dbutils import *
-
-import pdsfile
+import tools.file_utils as file_utils
+import tools.db_utils as db_utils
 
 import logging
 log = logging.getLogger(__name__)
 
+
+def api_get_files(request, opus_id=None, fmt='raw'):
+    update_metrics(request)
+
+    product_types = request.GET.get('types', 'all')
+    loc_type = request.GET.get('loc_type', 'url')
+
+    if request and request.GET and not opus_id:
+        # no opus_id passed, get files from search results
+        # XXX NEED TO LOOK AT THIS AGAIN ###
+        (selections, extras) = urlToSearchParams(request.GET)
+        page = get_data(request,'raw')['page']
+        if not len(page):
+            return False
+        opus_id = [p[0] for p in page]
+
+    return file_utils.get_pds_products(opus_id=opus_id, fmt=fmt,
+                                       loc_type=loc_type,
+                                       product_types=product_types)
+
+def api_get_image(request, opus_id, size='med', fmt='raw'):
+    """Return info about a preview image for the given opus_id and size.
+
+    Valid sizes are: thumb, small, med, full
+
+    return HttpResponse(img + "<br>" + opus_id + ' ' + size )
+    """
+    update_metrics(request)
+
+    image_list = get_obs_preview_images(opus_id, size)
+    if len(image_list) != 1:
+        log.error('api_get_image: Could not find preview for opus_id "%s" size "%s"',
+                  str(opus_id), str(size))
+        return
+    data = {'data': image_list}
+    print data
+    return responseFormats(data, fmt, size=size,
+                           template='image_list.html')
 
 def api_get_all_categories(request, opus_id):
     """Return a JSON list of all cateories (tables) this opus_id appears in."""
@@ -47,7 +83,7 @@ def api_get_all_categories(request, opus_id):
             continue
 
         try:
-            results = query_table_for_opus_id(table_name, opus_id)
+            results = db_utils.query_table_for_opus_id(table_name, opus_id)
         except LookupError:
             log.error("Didn't find table %s", table_name)
             continue
@@ -128,7 +164,7 @@ def api_get_metadata(request, opus_id, fmt):
         if all_param_names:
             try:
                 try:
-                    results = query_table_for_opus_id(table_name, opus_id)
+                    results = db_utils.query_table_for_opus_id(table_name, opus_id)
                 except LookupError:
                     log.error("Could not find data model for category %s", model_name)
                     break
@@ -191,7 +227,7 @@ def _get_metadata_by_slugs(request, opus_id, slugs, fmt):
 
     for table_name, param_list in params_by_table.items():
         try:
-            results = query_table_for_opus_id(table_name, opus_id)
+            results = db_utils.query_table_for_opus_id(table_name, opus_id)
         except LookupError:
             continue
         results = results.values(*param_list)
@@ -433,16 +469,14 @@ def get_images(request,size,fmt):
         log.error("404 error")
         raise Http404('could not find page')
 
-    image_links = get_image_links(opus_ids, size)
+    thumb_list = get_obs_preview_images(opus_ids, 'thumb')
 
-    if not image_links:
+    if not thumb_list:
         log.error('get_images: No image found for: %s', str(opus_ids[:50]))
 
-    template = 'gallery.html'
-
-    return responseFormats({'data': image_links}, fmt, size=size,
+    return responseFormats({'data': thumb_list}, fmt, size=size,
                            alt_size=alt_size, columns_str=columns.split(','),
-                           template=template, order=order)
+                           template='gallery.html', order=order)
 
 
 def get_base_path_previews(opus_id):
@@ -460,28 +494,6 @@ def get_base_path_previews(opus_id):
     return base_path
 
 
-def get_image(request, opus_id, size='med'):
-    """
-    size = thumb, small, med, full
-    return opus_id + ' ' + size
-
-    return HttpResponse(img + "<br>" + opus_id + ' ' + size )
-    """
-    update_metrics(request)
-
-    try:
-        pdsf = pdsfile.PdsFile.from_opus_id(opus_id)
-        img = Image.objects.filter(opus_id=opus_id).values(size)[0][size]
-    except IndexError:
-        log.error('get_image: IndexError - Could not find opus_id %s, size %s', str(opus_id), str(size))
-        return
-
-    path = settings.IMAGE_HTTP_PATH + get_base_path_previews(opus_id)
-    if 'CIRS' in opus_id:
-        path = path.replace('previews','diagrams')
-
-    return responseFormats({'data':[{'img':img, 'path':path}]}, size=size, path=path, template='image_list.html')
-
 def file_name_cleanup(base_file):
     base_file = base_file.replace('.','/')
     base_file = base_file.replace(':','/')
@@ -491,209 +503,6 @@ def file_name_cleanup(base_file):
     base_file = base_file.replace('//','/')
     base_file = base_file.replace('///','/')
     return base_file
-
-
-# loc_type = path or url
-# you broke this see http://127.0.0.1:8000/opus/api/files.json?&target=pan
-def get_files_API(request, opus_id=None, fmt='raw', loc_type='url', session_id=None):
-
-    if not opus_id:
-        opus_id = ''
-        session_id = request.session.session_key
-
-    update_metrics(request)
-
-    product_types = request.GET.get('types',[])
-    previews = request.GET.get('previews',[])
-
-    if product_types:
-        product_types = product_types.split(',')
-    if previews:
-        previews = previews.split(',')
-
-    # we want the api to return all possible files unless otherwise described
-    if not product_types:
-        product_types = 'all'
-
-    if not previews:
-        previews = 'all'
-    if previews == ['none']:
-        previews = []
-
-    if request and request.GET and not opus_id:
-
-        # no opus_id passed, get files from search results
-        (selections,extras) = urlToSearchParams(request.GET)
-        page  = get_data(request,'raw')['page']
-        if not len(page):
-            return False
-        opus_id = [p[0] for p in page]
-
-    return get_files(opus_id=opus_id, fmt=fmt, loc_type=loc_type, product_types=product_types, previews=previews, session_id=session_id)
-
-
-# loc_type = path or url
-def get_files(opus_id=None, fmt='raw', loc_type='url', product_types=['all'], previews=['all'], collection=False, session_id=None):
-    """
-    returns list of all files by opus_id
-    opus_id can be string or list
-    can also return preview files too
-    """
-
-    assert False
-    if collection and not session_id:
-        log.error("get_files: Needs session_id in kwargs to access collection")
-        return False
-
-    # apparently you can also pass in a string if you are so inclined *sigh*
-    if type(product_types).__name__ != 'list':
-        product_types = product_types.split(',')
-    if type(previews).__name__ != 'list':
-        previews = previews.split(',')
-
-    if previews == ['all']:
-        previews = [i[0] for i in settings.image_sizes]
-    if previews == ['none'] or previews == 'none':
-        previews = []
-
-    # this is either for a collection or some opus_id:
-    if opus_id:
-        # opus_id may be passed in as a string or a list,
-        # if it's a string make it a list
-        if type(opus_id) is unicode or type(opus_id).__name__ == 'str':
-            opus_ids = [opus_id]
-        else:
-            opus_ids = opus_id
-
-    elif collection:
-        # no opus_id, this must be for a colletion
-        opus_ids = Collections.objects.filter(session_id__in=session_id)
-    else:
-        log.error('get_files: No opus_ids or collection specified')
-        return False
-
-    # you can ask this function for url paths or disk paths
-    if loc_type == 'url':
-        path = settings.FILE_HTTP_PATH
-    else:
-        path = settings.FILE_PATH
-
-    #pdsf = pdsfile.PdsFile.from_opus_id(opus_ids)
-
-    if product_types != ['all'] and product_types != ['none']:
-        files_table_rows = files_table_rows.filter(product_type__in=product_types)
-
-    if not files_table_rows:
-        log.error('get_files: No rows returned in file table')
-        log.error('.. WHERE: %s', str(where))
-        log.error('.. First 5 opus_id: %s', str(opus_id[:5]))
-
-    file_names = {}
-    for f in files_table_rows:
-        """
-        This loop is looping over the entire result set to do a text transformation (into json)
-        todo: STOP THE MADNESS
-        move most of this to database layer
-        put all of the below into the file sizes table
-        then just grab direct from file sizes table by product_type and opus_id
-        """
-
-        # file_names are grouped first by opus_id then by product_type
-        opus_id = f.opus_id
-        file_names.setdefault(opus_id, {})
-
-        # add some preview images?
-        if len(previews):
-            file_names[opus_id]['preview_image'] = []
-            for size in previews:
-                url_info = get_image(False, opus_id, size.lower(), 'raw')
-                if not url_info:
-                    continue  # no image found for this observation so let's skip it
-                url = url_info['data'][0]['img']
-                base_path = url_info['data'][0]['path']
-                if url:
-                    if loc_type == 'path':
-                        url = settings.IMAGE_PATH + get_base_path_previews(opus_id) + url
-                    else:
-                        url = base_path + url
-
-                    file_names[opus_id]['preview_image'].append(url)
-
-        if product_types == ['none']:
-            continue
-
-        # get PDS products
-        # get this file's volume location
-        file_extensions = []
-        try:
-            volume_loc = ObsGeneral.objects.filter(opus_id=opus_id)[0].volume_id
-        except IndexError:
-            volume_loc = f.volume_id
-
-        # file_names are grouped first by opus_id then by product_type
-        file_names[opus_id].setdefault(f.product_type, [])
-        extra_files = []
-        if f.extra_files:
-            extra_files = f.extra_files.split(',')
-
-        ext = ''.join(f.file_specification_name.split('.')[-1:])
-        base_file = '.'.join(f.file_specification_name.split('.')[:-1])
-
-        # // sometimes in GO the volume_id is appended already
-        if base_file.find(f.volume_id + ":")>-1:
-            base_file = ''.join(base_file.split(':')[1:len(base_file.split(':'))])
-
-        # // strange punctuation in the base file name is really a directory division
-        base_file = file_name_cleanup(base_file).strip('/')
-
-        if f.label_type.upper() == 'DETACHED':
-            if f.product_type not in ['TIFF_PREVIEW_IMAGE','JPEG_PREVIEW_IMAGE']:  # HST hack
-                file_extensions += ['LBL']
-
-        if f.ascii_ext: file_extensions += [f.ascii_ext]
-        if f.lsb_ext: file_extensions += [f.lsb_ext]
-        if f.msb_ext: file_extensions += [f.msb_ext]
-        if f.detached_label_ext: file_extensions += [f.detached_label_ext]
-
-        file_extensions = list(set(file_extensions))
-
-        # now adjust the path whether this is on the derived directory or not
-        if (f.product_type) == 'CALIBRATED':
-            if loc_type != 'url':
-                path = settings.DERIVED_PATH
-            else:
-                path = settings.DERIVED_HTTP_PATH
-        else:
-            if loc_type == 'path':
-                path = settings.FILE_PATH
-            else:
-                path = settings.FILE_HTTP_PATH
-
-        path = path + f.base_path.split('/')[-2] + '/'  # base path like xxx
-
-        # add the extra_files
-        for extra in extra_files:
-            file_names[opus_id][f.product_type] += [path + volume_loc + '/' + extra]
-
-        for extension in file_extensions:
-            file_names[opus_id][f.product_type]  += [path + volume_loc + '/' + base_file + '.' + extension]
-        # // add the original file
-        file_names[opus_id][f.product_type]  += [path + volume_loc + '/' + base_file + '.' + ext]
-        file_names[opus_id][f.product_type] = list(set(file_names[opus_id][f.product_type])) #  makes unique
-        file_names[opus_id][f.product_type].sort()
-        file_names[opus_id][f.product_type].reverse()
-
-
-    if fmt == 'raw':
-        return file_names
-
-    if fmt == 'json':
-        return HttpResponse(json.dumps({'data':file_names}), content_type='application/json')
-
-    if fmt == 'html':
-        raise Http404
-        data = file_names
-        return render("list.html", data)
 
 
 def getPage(request, colls=None, colls_page=None, page=None):

@@ -1,19 +1,7 @@
 <body>
-{% for i in data  %}
-
-	<li><img  id = "{{ size }}__{{ i.opus_id }}"
-
-        {% if 'http' in i.img %}
-
-            src = "{{ i.img }}">
-
-        {% else %}
-
-            src = "{{ path }}{{ i.img }}">
-
-        {% endif %}
-    </li>
-
+{% for i in data %}
+	<li>
+		<img id="{{ size }}__{{ i.opus_id }}" src="{{ i.url }}">
+  </li>
 {% endfor %}
-
 </body>

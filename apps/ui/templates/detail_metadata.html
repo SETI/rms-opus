@@ -1,6 +1,6 @@
 {% for cat, d in data.items %}
   <ul id="detail__data_{{ cat.lower.split|join:"_" }}" class="">
-    {% for param,val in d.items %}
+    {% for param, val in d.items %}
       <li>
         {% for name, param_info in all_info.items %}
           {% if name == param %}

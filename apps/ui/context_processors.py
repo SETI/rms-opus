@@ -9,5 +9,5 @@ def admin_media(context):
         'ADMIN_MEDIA_PREFIX':settings.ADMIN_MEDIA_PREFIX,
         'MEDIA_URL':settings.MEDIA_URL,
         'DEFAULT_LIMIT': settings.DEFAULT_LIMIT,
-        'IMAGE_HTTP_PATH':settings.IMAGE_HTTP_PATH
+        'PRODUCT_HTTP_PATH':settings.PRODUCT_HTTP_PATH
         }

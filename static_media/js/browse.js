@@ -1188,10 +1188,13 @@ var o_browse = {
         $(' .thumb_overlay').removeClass("gallery_image_focus").removeClass('browse_image_selected');  // remove any old
         $('#gallery__' + opus_id + ' .thumb_overlay').addClass("gallery_image_focus browse_image_selected");
 
+        // XXX This code should not be replacing _med with _full because there's
+        // no guarantee that's how the filenames will be laid out. It needs
+        // to do to URL queries, one for med and one for full.
         var url = '/opus/api/image/med/' + opus_id + '.json';
         $.getJSON(url, function(json) {
 
-            var img = json['data'][0]['path'] + json['data'][0]['img'];
+            var img = json['data'][0]['url'];
             var full = img.replace("_med", "_full");
 
             var html = '<i class = "fa fa-times"></i> \

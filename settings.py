@@ -13,9 +13,6 @@ sys.path.insert(0, os.path.join(PROJECT_ROOT, '../pds-webserver/python'))
 import opus_support
 import julian
 
-PDS_DATA_DIR = '/pdsdata/holdings'
-import pdsfile
-
 ALLOWED_HOSTS = ('127.0.0.1',
                  'localhost',
                  'pds-rings-tools.seti.org',
@@ -154,7 +151,7 @@ LAST_MODIFIED_FUNC = 'tools.last_mod.last_mod'
 CACHE_MAX_AGE = 3600 * 24 * 120  # the last number is the number of days
 
 
-INTERNAL_IPS = ("127.0.0.1",)
+INTERNAL_IPS = ('127.0.0.1',)
 
 
 TEST_RUNNER = 'django_nose.NoseTestSuiteRunner'
@@ -166,31 +163,6 @@ TEST_RUNNER = 'django_nose.NoseTestSuiteRunner'
 
 #CACHE_MIDDLEWARE_SECONDS = 0
 
-## App constants
-
-BASE_TABLES = ['obs_general', 'obs_pds', 'obs_ring_geometry','obs_surface_geometry','obs_wavelength','obs_type_image']  # tables in which every observation in the database appears:
-TAR_FILE_URI_PATH = 'http://pds-rings-downloads.seti.org/opus/'
-IMAGE_HTTP_PATH = 'https://pds-rings.seti.org/'
-DEFAULT_COLUMNS = 'opusid,planet,target,time1,time2'
-IMAGE_COLUMNS   = ['thumb.jpg','small.jpg','med.jpg','full.jpg']
-RANGE_FIELDS    = ['LONG','RANGE']
-
-MULT_FIELDS	= ['GROUP','TARGETS']
-DEFAULT_LIMIT = 100
-MULT_FORM_TYPES = ('GROUP','TARGETS');
-ERROR_LOG_PATH = PROJECT_ROOT + "logs/opus_log.txt"
-image_sizes = (('full','Full Res'),('med','Medium'),('small','Small'),('thumb','Thumb')) # key is value and value is label
-IMAGE_TYPES = OrderedDict(image_sizes)
-SLUGS_NOT_IN_DB = ('reqno', 'view', 'browse', 'colls_browse', 'page',
-                   'gallery_data_viewer', 'limit', 'order', 'cols',
-                   'widgets', 'widgets2', 'detail')
-
-THUMBNAIL_NOT_FOUND = 'https://tools.pds-rings.seti.org/assets/static_media/img/thumbnail_not_found.png'
-
-FILE_HTTP_PATH  = 'https://pds-rings.seti.org/holdings/volumes/'
-DERIVED_HTTP_PATH  = 'https://pds-rings.seti.org/holdings/calibrated/'
-IMAGE_HTTP_PATH = 'https://pds-rings.seti.org/'
-MAX_CUM_DOWNLOAD_SIZE = 5*1024*1024*1024 # 5 gigs max cum downloads
 
 DEBUG_TOOLBAR_CONFIG = { 'INTERCEPT_REDIRECTS': False }
 
@@ -329,5 +301,52 @@ DATABASES = {
     }
 }
 
+################################################################################
+# From here on, the configuration is for the OPUS apps, not Django itself.
+################################################################################
+
+import pdsfile
+
+PDS_DATA_DIR = '/pdsdata/holdings'
+
 pdsfile.preload(PDS_DATA_DIR)
 pdsfile.use_pickles()
+
+## App constants
+
+BASE_TABLES = ['obs_general', 'obs_pds', 'obs_ring_geometry','obs_surface_geometry','obs_wavelength','obs_type_image']  # tables in which every observation in the database appears:
+TAR_FILE_URI_PATH = 'http://pds-rings-downloads.seti.org/opus/'
+PRODUCT_HTTP_PATH = 'https://pds-rings.seti.org/'
+DEFAULT_COLUMNS = 'opusid,planet,target,time1,time2'
+IMAGE_COLUMNS   = ['thumb.jpg','small.jpg','med.jpg','full.jpg']
+RANGE_FIELDS    = ['LONG','RANGE']
+
+THUMBNAIL_IMAGE_SIZE = 100 # Pixels
+PREVIEW_SIZE_TO_PDS_TYPE = {
+    'thumb': 'Browse Image (thumbnail)',
+    'small': 'Browse Image (small)',
+    'med': 'Browse Image (medium)',
+    'full': 'Browse Image (full-size)'
+}
+
+PREVIEW_GUIDES = {
+    'COCIRS': 'https://pds-rings.seti.org/cassini/cirs/COCIRS_previews.txt',
+    'COUVIS': 'https://pds-rings.seti.org/cassini/uvis/UVIS_previews.txt',
+    'COVIMS': 'https://pds-rings.seti.org/cassini/vims/COVIMS_previews.txt'
+}
+
+MULT_FIELDS	= ['GROUP','TARGETS']
+DEFAULT_LIMIT = 100
+MULT_FORM_TYPES = ('GROUP','TARGETS');
+ERROR_LOG_PATH = PROJECT_ROOT + "logs/opus_log.txt"
+image_sizes = (('full','Full Res'),('med','Medium'),('small','Small'),('thumb','Thumb')) # key is value and value is label
+IMAGE_TYPES = OrderedDict(image_sizes)
+SLUGS_NOT_IN_DB = ('reqno', 'view', 'browse', 'colls_browse', 'page',
+                   'gallery_data_viewer', 'limit', 'order', 'cols',
+                   'widgets', 'widgets2', 'detail')
+
+THUMBNAIL_NOT_FOUND = 'https://tools.pds-rings.seti.org/assets/static_media/img/thumbnail_not_found.png'
+
+# FILE_HTTP_PATH  = 'https://pds-rings.seti.org/holdings/volumes/'
+# DERIVED_HTTP_PATH  = 'https://pds-rings.seti.org/holdings/calibrated/'
+MAX_CUM_DOWNLOAD_SIZE = 5*1024*1024*1024 # 5 gigs max cum downloads

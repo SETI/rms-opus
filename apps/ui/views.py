@@ -32,6 +32,8 @@ from metrics.views import update_metrics
 import json
 
 import opus_support
+import tools.db_utils as db_utils
+import tools.file_utils as file_utils
 
 import logging
 log = logging.getLogger(__name__)
@@ -49,29 +51,71 @@ class main_site(TemplateView):
         context['menu'] = menu['menu']
         return context
 
-def about(request, template = 'about.html'):
+def api_about(request, template = 'about.html'):
     all_volumes = OrderedDict()
     for d in ObsGeneral.objects.values('instrument_id','volume_id').order_by('instrument_id','volume_id').distinct():
         all_volumes.setdefault(d['instrument_id'], []).append(d['volume_id'])
 
     return render(request, template, {'all_volumes':all_volumes})
 
-def definitions(request, retrieveChar='A'):
-    defList = Definition.objects.using('dictionary').select_related().order_by('term__term')
-    definitionList = dict()
-    retrieveAlpha = ord(retrieveChar.upper());
-    if retrieveAlpha < 65 or retrieveAlpha > 90:
-        retrieveAlpha = 65
-
-    for index in range(retrieveAlpha,retrieveAlpha+26):
-        alpha = str(unichr(index))
-        definitionList[alpha] = list(defList.filter(term__term__istartswith=alpha).values('definition', 'term__term_nice', 'term__import_date', 'context__description').order_by('term__term_nice'))
-
-    return render(request, 'definitions.html', {'definitionList':sorted(definitionList.iteritems())})
-
-
+# XXX??
 def home(request):
     return render(request, "index.html")
+
+
+def api_init_detail_page(request, **kwargs):
+    """Render the top part of the Details tab.
+
+    This loads the initial parts of the detail page. These are the things that
+    are fast to compute while other parts of the page are handled with AJAX
+    calls because they are slower.
+
+    The detail page calls other views via AJAX:
+        results.get_metadata()
+    """
+    update_metrics(request)
+
+    slugs = request.GET.get('cols', False)
+    opus_id = kwargs['opus_id']
+
+    # The medium image is what's displayed on the Detail page
+    preview_med_list = get_obs_preview_images(opus_id, 'med')
+    if len(preview_med_list) != 1:
+        log.error('Failed to find single med size image for "%s"', opus_id)
+        preview_med_url = ''
+    else:
+        preview_med_url = preview_med_list[0]['url']
+
+    # The full-size image is provided in case the user clicks on the medium one
+    preview_full_list = get_obs_preview_images(opus_id, 'full')
+    if len(preview_full_list) != 1:
+        log.error('Failed to find single full size image for "%s"', opus_id)
+        preview_full_url = ''
+    else:
+        preview_full_url = preview_full_list[0]['url']
+
+    instrument_id = ObsGeneral.objects.filter(opus_id=opus_id).values('instrument_id')[0]['instrument_id']
+
+    preview_guide_url = ''
+    if instrument_id in settings.PREVIEW_GUIDES:
+        instrument_id = settings.PREVIEW_GUIDES[instrument_id]
+
+    products = file_utils.get_pds_products(opus_id, fmt='raw')[opus_id]
+    if not products:
+        products = {}
+    for product_type, file_list in products.items():
+        for i in range(len(file_list)):
+            ext = file_list[i].split('.')[-1]
+            file_list[i] = {'ext': ext,'link': file_list[i]}
+
+    context = {
+        "preview_full_url": preview_full_url,
+        "preview_med_url": preview_med_url,
+        "preview_guide_url": preview_guide_url,
+        "products": products,
+        "opus_id": opus_id
+    }
+    return render(request, 'detail.html', context)
 
 
 def get_browse_headers(request,template='browse_headers.html'):
@@ -206,7 +250,8 @@ def getMenuLabels(request, labels_view):
 def adjust_slug_name_single_col_ranges(param_info):
     slug = param_info.slug
     form_type = param_info.form_type
-    if form_type.startswith('RANGE') and '1' not in slug and '2' not in slug:
+    if (form_type is not None and form_type.startswith('RANGE') and
+        '1' not in slug and '2' not in slug):
         slug = slug + '1'
     return slug
 
@@ -416,60 +461,6 @@ def getWidget(request, **kwargs):
     # return responseFormats(form, fmt)
 
 
-def init_detail_page(request, **kwargs):
-    """Render the top part of the Details tab.
-
-    This loads the initial parts of the detail page. These are the things that
-    are fast to compute while other parts of the page are handled with AJAX
-    calls because they are slower.
-
-    The detail page calls other views via AJAX:
-        results.get_metadata()
-    """
-    update_metrics(request)
-
-    slugs = request.GET.get('cols', False)
-    opus_id = kwargs['opus_id']
-
-    img = None # XXXXXXXXXXXXXXXXXXXXX
-    base_vol_path = ''
-    # # get the preview image and some general info
-    # try:
-    #     img = Image.objects.get(opus_id=opus_id)
-    # except Image.DoesNotExist:
-    #     img = None
-    # base_vol_path = get_base_path_previews(opus_id)
-    #
-    path = settings.IMAGE_HTTP_PATH + base_vol_path
-
-    instrument_id = ObsGeneral.objects.filter(opus_id=opus_id).values('instrument_id')[0]['instrument_id']
-
-    # get the preview guide url
-    preview_guide_url = ''
-    if instrument_id == 'COCIRS':
-        preview_guide_url = 'https://pds-rings.seti.org/cassini/cirs/COCIRS_previews.txt'
-    if instrument_id == 'COUVIS':
-        preview_guide_url = 'https://pds-rings.seti.org/cassini/uvis/UVIS_previews.txt'
-    if instrument_id == 'COVIMS':
-        preview_guide_url = 'https://pds-rings.seti.org/cassini/vims/COVIMS_previews.txt'
-
-    # get the list of files for this observation
-    # XXXXXXX files = getFiles(opus_id,fmt='raw')[opus_id]
-    file_list = {}
-    # for product_type in files:
-    #     if product_type not in file_list:
-    #         file_list[product_type] = []
-    #     for f in files[product_type]:
-    #         ext = f.split('.').pop()
-    #         file_list[product_type].append({'ext':ext,'link':f})
-    context = {
-        "path": path,
-        "img": img,
-        "preview_guide_url": preview_guide_url,
-        "file_list": file_list,
-        "opus_id": opus_id
-    }
-    return render(request, 'detail.html', context)
 
 def getColumnInfo(slugs):
     info = OrderedDict()
