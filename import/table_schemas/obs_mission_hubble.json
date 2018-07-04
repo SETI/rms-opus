@@ -182,7 +182,7 @@
         "pi_intro": null,
         "pi_label": "Publication Date (UTC)",
         "pi_label_results": "Publication Date (UTC)",
-        "pi_slug": "HSTrawpublicationdate",
+        "pi_slug": "HSTpublicationdate",
         "pi_sub_heading": null,
         "pi_tooltip": null,
         "pi_units": null
@@ -207,7 +207,7 @@
         "pi_intro": null,
         "pi_label": "Publication Date",
         "pi_label_results": "Publication Date (seconds)",
-        "pi_slug": "HSTpublicationdate",
+        "pi_slug": "HSTpublicationdatesec",
         "pi_sub_heading": null,
         "pi_tooltip": null,
         "pi_units": null

@@ -261,14 +261,16 @@ var o_browse = {
         // click table column header to reorder by that column
         $('#browse').on("click", '.data_table th a',  function() {
             var order_by =  $(this).data('slug');
+            if (order_by == 'collection') {
+              // Don't do anything if clicked on the "Selected" column
+              return false;
+            }
             var order_indicator = $(this).find('.column_ordering');
-
             if (order_indicator.hasClass('fa-sort-asc')) {
                 // currently ascending, change to descending order
                 order_indicator.removeClass('fa-sort-asc');
                 order_indicator.addClass('fa-sort-desc');
                 order_by = '-' + order_by;
-
             } else if (order_indicator.hasClass('fa-sort-desc')) {
                 // change to not ordered
                 order_indicator.removeClass('fa-sort-desc');
@@ -504,7 +506,7 @@ var o_browse = {
 
         // a column is checked/unchecked
         $('.column_chooser').off("click", '.submenu li a');
-        $('.column_chooser').off("click",'.chosen_column_close');
+        $('.column_chooser').off("click", '.chosen_column_close');
 
         $('.column_chooser').on("click", '.submenu li a', function() {
 

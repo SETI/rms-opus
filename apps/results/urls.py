@@ -1,7 +1,7 @@
 # results/urls.py
 from django.conf.urls import url
 from results.views import (
-    get_data,
+    api_get_data,
     get_images,
     api_get_image,
     api_get_files,
@@ -12,7 +12,7 @@ from results.views import (
 )
 # results - getting data
 urlpatterns = [
-    url(r'^api/data.(json|zip|html|csv)$', get_data),
+    url(r'^api/data.(json|zip|html|csv)$', api_get_data),
     url(r'^api/images/(thumb|small|med|full).(json|zip|html|csv)$',get_images),
     url(r'^api/image/(?P<size>[thumb|small|med|full]+)/(?P<opus_id>[-\w]+).(?P<fmt>[json|zip|html|csv]+)$', api_get_image),
     url(r'^api/files/(?P<opus_id>[-\w]+).(?P<fmt>[json|zip|html|csv]+)$', api_get_files),

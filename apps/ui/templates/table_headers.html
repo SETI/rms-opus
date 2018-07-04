@@ -1,30 +1,25 @@
 {% comment %}
-    col.0 = slug
+  col.0 = slug
 	col.1 = label
 {% endcomment %}
-<table class = "data_table table table-striped table-bordered table-hover">
-
-	<thead>
-        <tr>
-        	{% for col in columns %}
-
-        	<th class = "center">
-        			<a href = "" data-slug = "{{ col.0 }}">{{ col.1 }}
-                    <span class = "column_ordering fa
-                    {% if order == col.0 %}
-                        {{ sort_icon }}
-                    {% else %}
-                        fa-sort
-                    {% endif %}
-                    "></span>
-                    </a>
-        		</div>
-
-
-        	</th>
-            {% endfor %}
-        </tr>
-    </thead>
+<table class="data_table table table-striped table-bordered table-hover">
+  <thead>
+    <tr>
+    	{% for col in columns %}
+        <th class="center">
+    			<a href="" data-slug="{{ col.0 }}">{{ col.1 }}
+            <span class = "column_ordering fa
+              {% if order == col.0 %}
+                {{ sort_icon }}
+              {% elif col.0 != "collection" %}
+                fa-sort
+              {% endif %}
+            "></span>
+          </a>
+        </th>
+      {% endfor %}
+    </tr>
+  </thead>
 
 	<tbody></tbody>
 

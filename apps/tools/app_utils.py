@@ -24,15 +24,15 @@ def iter_flatten(iterable):
 
 def responseFormats(data, fmt, **kwargs):
     """
-    this is REALLY AWEFUL.
+    this is REALLY AWFUL.
 
     returns data in response format fmt
 
     data is a dictionary,
 
-    data can contain dictionary objects or or strings vars
+    data can contain dictionary objects or strings vars
 
-    for fmt=csv or fmt = html it looks for the first it finds
+    for fmt=csv or fmt=html it looks for the first it finds
 
     if you *do not* want it to use a list - like that list is for something else besides data
     then define it in ignore (see fmt=html below)
@@ -65,8 +65,7 @@ def responseFormats(data, fmt, **kwargs):
         except: path = ''
 
         for d in data:
-
-            if type(data[d]).__name__ in ['list']:
+            if isinstance(data[d], list) or isinstance(data[d], tuple):
                 # it's a list and apparently we assume
                 # that it is the actual data not its metadata #forheadsmack#
 
@@ -88,15 +87,7 @@ def responseFormats(data, fmt, **kwargs):
                 if 'id_index' in kwargs:
                     returndata['id_index'] = kwargs['id_index']
 
-
                 return render_to_response(kwargs['template'],returndata)
-
-
-                # if type(data[d][0]).__name__ == 'dict':
-                #     return render_to_response(kwargs['template'],returndata)
-                # else:
-                #     return render_to_response(kwargs['template'],returndata)
-
 
         return render_to_response(kwargs['template'],{'data':data})
 

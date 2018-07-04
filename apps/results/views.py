@@ -32,6 +32,81 @@ import logging
 log = logging.getLogger(__name__)
 
 
+def api_get_data(request, fmt):
+    """Return a page of data for a given search and page_no.
+
+    Can return JSON, HTML, or RAW.
+
+    Returned JSON is of the format:
+        data = {
+                'page_no': page_no,
+                'limit':   limit,
+                'page':    page,         # tabular page data
+                'count':   len(page),
+                'labels':  labels
+                }
+    """
+    update_metrics(request)
+
+    if not request.session.get('has_session'):
+        request.session['has_session'] = True
+
+    session_id = request.session.session_key
+
+    (page_no, limit, page, opus_ids, order) = _get_page(request)
+
+    checkboxes = request.is_ajax()
+
+    slugs = request.GET.get('cols', settings.DEFAULT_COLUMNS)
+    if not slugs:
+        slugs = settings.DEFAULT_COLUMNS
+
+    is_column_chooser = request.GET.get('col_chooser', False)
+
+    labels = []
+    id_index = None
+
+    for slug_no, slug in enumerate(slugs.split(',')):
+        if slug == 'opusid':
+            id_index = slug_no
+        try:
+            labels += [ParamInfo.objects.get(slug=slug).label_results]
+        except ParamInfo.DoesNotExist:
+            # this slug doesn't match anything in param_info, nix it
+            if '1' in slug:
+                # single column range slugs will not have the index, but
+                # will come in with it because of how ui is designed, so
+                # look for the slug without the index
+                temp_slug = slug[:-1]
+                try:
+                    labels += [ParamInfo.objects.get(slug=temp_slug).label_results]
+                except ParamInfo.DoesNotExist:
+                    log.error('Could not find param_info for %s', slug)
+                    continue
+
+    if is_column_chooser:
+        labels.insert(0, "add")   # adds a column for checkbox add-to-collections
+
+    collection = ''
+    if request.is_ajax():
+        # find the members of user collection in this page
+        # for pre-filling checkboxes
+        collection = get_collection_in_page(page, session_id)
+
+    data = {'page_no': page_no,
+            'limit':   limit,
+            'page':    page,
+            'count':   len(page),
+            'labels':  labels
+           }
+
+    if fmt == 'raw':
+        return data
+    return responseFormats(data, fmt, template='data.html', id_index=id_index,
+                           labels=labels, checkboxes=checkboxes,
+                           collection=collection, order=order)
+
+
 def api_get_files(request, opus_id=None, fmt='raw'):
     update_metrics(request)
 
@@ -42,7 +117,7 @@ def api_get_files(request, opus_id=None, fmt='raw'):
         # no opus_id passed, get files from search results
         # XXX NEED TO LOOK AT THIS AGAIN ###
         (selections, extras) = urlToSearchParams(request.GET)
-        page = get_data(request,'raw')['page']
+        page = api_get_data(request,'raw')['page']
         if not len(page):
             return False
         opus_id = [p[0] for p in page]
@@ -64,9 +139,8 @@ def api_get_image(request, opus_id, size='med', fmt='raw'):
     if len(image_list) != 1:
         log.error('api_get_image: Could not find preview for opus_id "%s" size "%s"',
                   str(opus_id), str(size))
-        return
+        image_list = []
     data = {'data': image_list}
-    print data
     return responseFormats(data, fmt, size=size,
                            template='image_list.html')
 
@@ -199,6 +273,179 @@ def api_get_metadata(request, opus_id, fmt):
     if fmt == 'raw':
         return data, all_info  # includes definitions for opus interface
 
+
+def _get_page(request, colls=None, colls_page=None, page=None):
+    """Return a page of results."""
+    update_metrics(request)
+
+    # get some stuff from the url or fall back to defaults
+    if not request.session.get('has_session'):
+        request.session['has_session'] = True
+
+    session_id = request.session.session_key
+
+    if not colls:
+        collection_page = request.GET.get('colls', False)
+    else:
+        collection_page = colls
+
+    limit = int(request.GET.get('limit', settings.DEFAULT_PAGE_LIMIT))
+    slugs = request.GET.get('cols', settings.DEFAULT_COLUMNS)
+
+    column_names = []  # Format: obs_pds.product_id
+    tables = set()
+    for slug in slugs.split(','):
+        try:
+            # First try the full name, which might include a trailing 1 or 2
+            column = ParamInfo.objects.get(slug=slug).param_name()
+        except ParamInfo.DoesNotExist:
+            # Then try the name with the number "1" stripped because that's how
+            # the UI sends it when there is only a single column
+            column = ParamInfo.objects.get(slug=slug.strip('1')).param_name()
+        except ParamInfo.DoesNotExist:
+            log.error('_get_page: Slug "%s" not found', slug)
+            continue
+        table = column.split('.')[0]
+        if column.endswith('.opus_id'):
+            # opus_id can be displayed from anywhere, but for consistency force
+            # it to come from obs_general, since that's the master list.
+            # This isn't needed for correctness, just cleanliness.
+            table = 'obs_general'
+            column = 'obs_general.opus_id'
+        tables.add(table)
+        column_names.append(column)
+
+    added_extra_columns = 0
+    tables.add('obs_general') # We must have obs_general since it owns the ids
+    if 'obs_general.opus_id' not in column_names:
+        column_names.append('obs_general.opus_id')
+        added_extra_columns += 1 # So we know to strip it off later
+
+    # Figure out the sort order
+    order = None
+    if collection_page:
+        order = request.GET.get('colls_order', None)
+    if not order:
+        order = request.GET.get('order', settings.DEFAULT_SORT_ORDER)
+    order_param = None
+    if order:
+        descending = order[0] == '-'
+        order = order.strip('-')
+        try:
+            order_param = ParamInfo.objects.get(slug=order).param_name()
+        except ParamInfo.DoesNotExist:
+            log.error('_get_pad: Unable to resolve order slug "%s"', order)
+        else:
+            table = order_param.split('.')[0]
+            if order_param not in column_names:
+                tables.add(table)
+                column_names.append(order_param)
+                added_extra_columns += 1 # So we know to strip it off later
+
+    # Figure out what page we're asking for
+    if collection_page:
+        if colls_page:
+            page_no = colls_page
+        else:
+            page_no = request.GET.get('colls_page', 1)
+    else:
+        if page:
+            page_no = page
+        else:
+            page_no = request.GET.get('page', 1)
+    if page_no != 'all':
+        try:
+            page_no = int(page_no)
+        except:
+            log.error('_get_page: Unable to parse page "%s"',
+                      str(page_no))
+            page_no = 1
+
+    if not collection_page:
+        # This is for a search query
+
+        # Create the SQL query
+        # There MUST be some way to do this in Django, but I just can't figure
+        # it out. It's incredibly easy to do in raw SQL, so we just do that
+        # instead. -RF
+        (selections, extras) = urlToSearchParams(request.GET)
+        user_query_table = getUserQueryTable(selections, extras)
+
+        sql = 'SELECT '
+        sql += ','.join(column_names)
+        sql += ' FROM obs_general'
+
+        # All the column tables are LEFT JOINs because if the table doesn't
+        # have an entry for a given opus_id, we still want the row to show up,
+        # just full of NULLs.
+        for table in tables:
+            if table == 'obs_general':
+                continue
+            sql += ' LEFT JOIN '+connection.ops.quote_name(table)
+            sql += ' ON obs_general.id='+connection.ops.quote_name(table)
+            sql += '.obs_general_id'
+
+        # But the cache table is a RIGHT JOIN because we only want opus_ids that
+        # appear in the cache table to cause result rows
+        sql += ' RIGHT JOIN '+connection.ops.quote_name(user_query_table)
+        sql += ' ON obs_general.id='+connection.ops.quote_name(user_query_table)
+        sql += '.id'
+    else:
+        # this is for a collection
+        assert False
+
+        # join in the collections table
+        #### FIX ME this went away!
+        colls_table_name = get_collection_table(session_id)
+        triggered_tables.append(colls_table_name)
+        where   = "obs_general.opus_id = " + connection.ops.quote_name(colls_table_name) + ".opus_id"
+        results = ObsGeneral.objects.extra(where=[where], tables=triggered_tables)
+
+    # Add in the ordering
+    if order_param:
+        sql += ' ORDER BY '+order_param
+        if descending:
+            sql += ' DESC'
+
+    """
+    the limit is pretty much always 100, the user cannot change it in the interface
+    but as an aide to finding the right chunk of a result set to search for
+    for the 'add range' click functinality, the front end may send a large limit, like say
+    page_no = 42 and limit = 400
+    that means start the page at 42 and go 4 pages, and somewhere in there is our range
+    this is how 'add range' works accross multiple pages
+    so the way of computing starting offset here should always use the base_limit of 100
+    using the passed limit will result in the wrong offset because of way offset is computed here
+    this may be an awful hack.
+    """
+    if page_no != 'all':
+        base_limit = 100  # explainer of sorts is above
+        offset = (page_no-1)*base_limit
+        sql += ' LIMIT '+str(limit)
+        sql += ' OFFSET '+str(offset)
+
+    print '_get_page SQL', sql
+    cursor = connection.cursor()
+    cursor.execute(sql)
+    results = cursor.fetchall()
+
+    # Return a simple list of opus_ids
+    opus_id_index = column_names.index('obs_general.opus_id')
+    opus_ids = [o[opus_id_index] for o in results]
+    if not opus_ids:
+        return False
+
+    # Strip off the opus_id if the user didn't actually ask for it initially
+    if added_extra_columns:
+        results = [o[:-added_extra_columns] for o in results]
+
+    # There might be real None entries, which means the join returned null
+    # data. Replace these so they look prettier.
+    results = [[x if x is not None else 'N/A' for x in r] for r in results]
+
+    return (page_no, limit, results, opus_ids, order)
+
+
 def _get_metadata_by_slugs(request, opus_id, slugs, fmt):
     """
     returns results for specified slugs
@@ -279,73 +526,6 @@ def category_list_http_endpoint(request):
 
     return HttpResponse(json.dumps([ob for ob in labels]), content_type="application/json")
 
-
-def get_data(request,fmt):
-    update_metrics(request)
-    """
-    return sa page of data for a given search and page_no like so:
-
-        data = {
-                'page_no':page_no,
-                'limit':limit,
-                'page':page,         # tabular page data
-                'count':len(page),
-                'labels': labels
-                }
-
-    can return raw or http response
-
-    """
-    if not request.session.get('has_session'):
-        request.session['has_session'] = True
-
-    session_id = request.session.session_key
-
-    [page_no, limit, page, opus_ids, order] = getPage(request)
-
-    checkboxes = request.is_ajax()
-
-    slugs = request.GET.get('cols',settings.DEFAULT_COLUMNS)
-    if not slugs: slugs = settings.DEFAULT_COLUMNS
-
-    is_column_chooser = request.GET.get('col_chooser', False)
-
-    labels = []
-    id_index = 0
-
-    for slug in slugs.split(','):
-        if slug == 'rmsobsid':
-            id_index = slugs.split(',').index(slug)
-        try:
-            labels += [ParamInfo.objects.get(slug=slug).label_results]
-        except ParamInfo.DoesNotExist:
-            # this slug doens't match anything in param info, nix it
-            if '1' in slug:
-                # single column range slugs will not have the index, but
-                # will come in with it because of how ui is designed, so
-                # look for the slug without the index
-                temp_slug = slug[:-1]
-                try:
-                    labels += [ParamInfo.objects.get(slug=temp_slug).label_results]
-                except ParamInfo.DoesNotExist:
-                    log.error('Could not find param_info for %s', slug)
-                    continue
-
-    if is_column_chooser:
-        labels.insert(0, "add")   # adds a column for checkbox add-to-collections
-
-    collection = ''
-    if request.is_ajax():
-        # find the members of user collection in this page
-        # for pre-filling checkboxes
-        collection = get_collection_in_page(page, session_id)
-
-    data = {'page_no':page_no, 'limit':limit, 'page':page, 'count':len(page), 'labels': labels}
-
-    if fmt == 'raw':
-        return data
-    else:
-        return responseFormats(data,fmt,template='data.html', id_index=id_index, labels=labels,checkboxes=checkboxes, collection=collection, order=order)
 
 def get_triggered_tables(selections, extras=None):
     """
@@ -464,8 +644,8 @@ def get_images(request,size,fmt):
     columns = request.GET.get('cols',settings.DEFAULT_COLUMNS)
 
     try:
-        [page_no, limit, page, opus_ids, order] = getPage(request)
-    except TypeError:  # getPage returns False
+        [page_no, limit, page, opus_ids, order] = _get_page(request)
+    except TypeError:  # get_page returns False
         log.error("404 error")
         raise Http404('could not find page')
 
@@ -505,11 +685,12 @@ def file_name_cleanup(base_file):
     return base_file
 
 
-def getPage(request, colls=None, colls_page=None, page=None):
+
+
+def ____OLD_BROKEN__get_page(request, colls=None, colls_page=None, page=None):
+    """Return a page of results."""
     update_metrics(request)
-    """
-    the gets the metadata and images to build a page of results
-    """
+
     # get some stuff from the url or fall back to defaults
     if not request.session.get('has_session'):
         request.session['has_session'] = True
@@ -517,33 +698,43 @@ def getPage(request, colls=None, colls_page=None, page=None):
     session_id = request.session.session_key
 
     if not colls:
-        collection_page = request.GET.get('colls',False)
+        collection_page = request.GET.get('colls', False)
     else:
         collection_page = colls
 
-    limit = int(request.GET.get('limit',100))
+    limit = int(request.GET.get('limit', settings.DEFAULT_PAGE_LIMIT))
     slugs = request.GET.get('cols', settings.DEFAULT_COLUMNS)
 
     column_values = set()
+    column_values_ordered = []
     tables = set()
     for slug in slugs.split(','):
         try:
-            column = [ParamInfo.objects.get(slug=slug.strip("12")).param_name()]
-            column = "".join(column)
-            table = column.split('.')[0]
-            field = column.split('.')[1]
-            if table != "obs_general":  #this is already added by django apparently so don't add twice
-                tables.add(table)
-            column_values.add(field)
+            # First try the full name
+            column = [ParamInfo.objects.get(slug=slug).param_name()]
+        except ParamInfo.DoesNotExist:
+            # Then try the name with the number "1" stripped because that's how
+            # the UI sends it
+            column = [ParamInfo.objects.get(slug=slug.strip('1')).param_name()]
         except ParamInfo.DoesNotExist:
             continue
+        column = ''.join(column)
+        table = column.split('.')[0]
+        field = column.split('.')[1]
+        if table != 'obs_general' and field != 'opus_id':  #this is already added by django apparently so don't add twice
+            tables.add(table)
+            column_values.add(table+'__'+field)
+            column_values_ordered.append(table+'__'+field)
+        else:
+            column_values.add(field)
+            column_values_ordered.append(field)
 
     column_values = list(column_values)
 
     if not collection_page:
         # this is for a search query
 
-        order = request.GET.get('order','time1')
+        order = request.GET.get('order', 'time1')
         # figure out column order in table
         if order:
             try:
@@ -557,18 +748,18 @@ def getPage(request, colls=None, colls_page=None, page=None):
 
         # figure out page we are asking for
         if not page:
-            page_no = request.GET.get('page',1)
+            page_no = request.GET.get('page', 1)
             if page_no != 'all':
                 try:
                     page_no = int(page_no)
                 except:
                     page_no = 1
         else:
-            page_no == page
+            page_no = page
 
         # ok now that we have everything from the url get stuff from db
-        (selections,extras) = urlToSearchParams(request.GET)
-        user_query_table = getUserQueryTable(selections,extras)
+        (selections, extras) = urlToSearchParams(request.GET)
+        user_query_table = getUserQueryTable(selections, extras)
 
         # figure out what tables do we need to join in and build query
         where = " AND ".join(["obs_general.id = " + connection.ops.quote_name(table) + ".obs_general_id " for table in tables])
@@ -625,18 +816,19 @@ def getPage(request, colls=None, colls_page=None, page=None):
     using the passed limit will result inthe wront offset because of way offset is computed here
     this may be an aweful hack.
     """
+    return None
     if page_no != 'all':
         base_limit = 100  # explainer of sorts is above
         offset = (page_no-1)*base_limit # we don't use Django's pagination because of that count(*) that it does.
-        results = results.values_list(*column_values)[offset:offset+int(limit)]
+        results = results[offset:offset+int(limit)].values_list(*column_values_ordered)
     else:
-        results = results.values_list(*column_values)
+        results = results.values_list(*column_values_ordered)
 
     # return a simple list of opus_ids
     opus_id_index = column_values.index('opus_id')
     opus_ids = [o[opus_id_index] for o in results]
 
-    if not len(opus_ids):
+    if not opus_ids:
         return False
 
-    return [page_no, limit, list(results), opus_ids, order]
+    return (page_no, limit, list(results), opus_ids, order)

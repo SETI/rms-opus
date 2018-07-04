@@ -312,12 +312,22 @@ PDS_DATA_DIR = '/pdsdata/holdings'
 pdsfile.preload(PDS_DATA_DIR)
 pdsfile.use_pickles()
 
-## App constants
+# Tables in which every observation in the database appears.
+# These tables are ALWAYS shown to the user and are not triggered.
+BASE_TABLES = ['obs_general', 'obs_pds', 'obs_ring_geometry',
+               'obs_surface_geometry', 'obs_wavelength', 'obs_type_image']
 
-BASE_TABLES = ['obs_general', 'obs_pds', 'obs_ring_geometry','obs_surface_geometry','obs_wavelength','obs_type_image']  # tables in which every observation in the database appears:
+# These slugs may show up in the hash but are not actually database
+# queries and thus should be ignored when creating SQL
+SLUGS_NOT_IN_DB = ('browse', 'col_chooser', 'colls_browse', 'cols', 'detail',
+                   'gallery_data_viewer', 'limit', 'order', 'page',
+                   'reqno', 'view', 'widgets', 'widgets2')
+
+
 TAR_FILE_URI_PATH = 'http://pds-rings-downloads.seti.org/opus/'
 PRODUCT_HTTP_PATH = 'https://pds-rings.seti.org/'
 DEFAULT_COLUMNS = 'opusid,planet,target,time1,time2'
+DEFAULT_SORT_ORDER = 'time1' # This must be a slug
 IMAGE_COLUMNS   = ['thumb.jpg','small.jpg','med.jpg','full.jpg']
 RANGE_FIELDS    = ['LONG','RANGE']
 
@@ -336,14 +346,9 @@ PREVIEW_GUIDES = {
 }
 
 MULT_FIELDS	= ['GROUP','TARGETS']
-DEFAULT_LIMIT = 100
+DEFAULT_PAGE_LIMIT = 100
 MULT_FORM_TYPES = ('GROUP','TARGETS');
 ERROR_LOG_PATH = PROJECT_ROOT + "logs/opus_log.txt"
-image_sizes = (('full','Full Res'),('med','Medium'),('small','Small'),('thumb','Thumb')) # key is value and value is label
-IMAGE_TYPES = OrderedDict(image_sizes)
-SLUGS_NOT_IN_DB = ('reqno', 'view', 'browse', 'colls_browse', 'page',
-                   'gallery_data_viewer', 'limit', 'order', 'cols',
-                   'widgets', 'widgets2', 'detail')
 
 THUMBNAIL_NOT_FOUND = 'https://tools.pds-rings.seti.org/assets/static_media/img/thumbnail_not_found.png'
 

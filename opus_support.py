@@ -6,6 +6,8 @@
 # MRS 6/5/18
 ################################################################################
 
+import julian
+
 ################################################################################
 # General routines for handling a spacecraft clock where:
 #   - there are exactly two fields

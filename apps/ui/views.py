@@ -63,7 +63,7 @@ def home(request):
     return render(request, "index.html")
 
 
-def api_init_detail_page(request, **kwargs):
+def init_detail_page(request, **kwargs):
     """Render the top part of the Details tab.
 
     This loads the initial parts of the detail page. These are the things that
@@ -123,22 +123,25 @@ def get_browse_headers(request,template='browse_headers.html'):
     return render(request, template)
 
 
-def get_table_headers(request,template='table_headers.html'):
+def get_table_headers(request, template='table_headers.html'):
     update_metrics(request)
     slugs = request.GET.get('cols', settings.DEFAULT_COLUMNS)
     order = request.GET.get('order', None)
     if order:
         sort_icon = 'fa-sort-desc' if order[0] == '-' else 'fa-sort-asc'
-        order = order[1:] if order[0] == '-' else order
+        order = order.strip('-')
+    else:
+        sort_icon = ''
 
-    if not slugs: slugs = settings.DEFAULT_COLUMNS
+    if not slugs:
+        slugs = settings.DEFAULT_COLUMNS
     slugs = slugs.split(',')
     columns = []
 
     # if this is an ajax call it means it's from our app, so append the
     # checkbox column for adding to selections
     if (request.is_ajax()):
-        columns.append(["collection","Collect"])
+        columns.append(['collection', 'Selected'])
 
     param_info  = ParamInfo.objects
     for slug in slugs:
@@ -146,12 +149,18 @@ def get_table_headers(request,template='table_headers.html'):
             try:
                 columns.append([slug, param_info.get(slug=slug).label_results])
             except ParamInfo.DoesNotExist:
+                log.error('get_table_headers: Unable to find slug "%s"', slug)
                 pass
-    return render(request, template,{"columns":columns})
+    print order
+    print columns
+    return render(request, template,
+                  {'columns':   columns,
+                   'sort_icon': sort_icon,
+                   'order':     order})
 
 
 @render_to('menu.html')
-def getMenu(request):
+def get_menu(request):
     """ hack, need to get menu sometimes without rendering,
         ie from another view.. so this is for column chooser
         couldn't get template include/block.super to heed GET vars """
@@ -445,21 +454,19 @@ def getWidget(request, **kwargs):
 
     if fmt == 'raw':
         return str(form)
-    else:
-        template = "widget.html"
-        context = {
-            "slug": slug,
-            "label": label,
-            "append_to_label": append_to_label,
-            "dictionary": dictionary,
-            "intro": intro,
-            "form": form,
-            "form_type": form_type,
-            "range_fields": range_fields
-        }
-        return render(request, template, context)
-    # return responseFormats(form, fmt)
 
+    template = "widget.html"
+    context = {
+        "slug": slug,
+        "label": label,
+        "append_to_label": append_to_label,
+        "dictionary": dictionary,
+        "intro": intro,
+        "form": form,
+        "form_type": form_type,
+        "range_fields": range_fields
+    }
+    return render(request, template, context)
 
 
 def getColumnInfo(slugs):
@@ -469,7 +476,7 @@ def getColumnInfo(slugs):
     return info
 
 
-def getColumnChooser(request, **kwargs):
+def get_column_chooser(request, **kwargs):
     update_metrics(request)
 
     slugs = request.GET.get('cols', settings.DEFAULT_COLUMNS).split(',')

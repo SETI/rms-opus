@@ -8,6 +8,6 @@ def admin_media(context):
     return {
         'ADMIN_MEDIA_PREFIX':settings.ADMIN_MEDIA_PREFIX,
         'MEDIA_URL':settings.MEDIA_URL,
-        'DEFAULT_LIMIT': settings.DEFAULT_LIMIT,
+        'DEFAULT_PAGE_LIMIT': settings.DEFAULT_PAGE_LIMIT,
         'PRODUCT_HTTP_PATH':settings.PRODUCT_HTTP_PATH
         }

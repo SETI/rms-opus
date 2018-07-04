@@ -36,7 +36,8 @@ def get_pds_products(opus_id=None, fmt='raw', loc_type='url',
         'all' means return all product types.
 
     loc_type is 'url' to return full URLs or 'path' to return paths available on
-        the local disk.
+        the local disk. It can also be 'raw' to return the actual PdsFile
+        object.
 
     """
     if (not isinstance(product_types, list) and
@@ -77,6 +78,8 @@ def get_pds_products(opus_id=None, fmt='raw', loc_type='url',
                     res_list.append(file.abspath)
                 elif loc_type == 'url':
                     res_list.append(PRODUCT_HTTP_PATH + file.url)
+                elif loc_type == 'raw':
+                    res_list.append(file)
                 else:
                     log.error('get_pds_products: Unknown loc_type %s', str(loc_type))
                     return None
@@ -93,7 +96,7 @@ def get_pds_products(opus_id=None, fmt='raw', loc_type='url',
         return render('list.html', results)
 
 def get_obs_preview_images(opus_id_list, size):
-    """Given a list of opus_ids, return a list of image info for thumbnails."""
+    """Given a list of opus_ids, return a list of image info for a size."""
 
     opus_type = PREVIEW_SIZE_TO_PDS_TYPE[size]
 
@@ -101,21 +104,43 @@ def get_obs_preview_images(opus_id_list, size):
         not isinstance(opus_id_list, tuple)):
         opus_id_list = [opus_id_list]
 
-    thumb_list = []
+    image_list = []
     for opus_id in opus_id_list:
-        thumb = {'opus_id': opus_id,
-                 'size': size}
-
-        pdsf = pdsfile.PdsFile.from_opus_id(opus_id)
-        viewset = pdsf.viewset
-        for viewable in viewset.viewables:
-            if viewable.pdsf.opus_type == opus_type:
-                thumb['url'] = PRODUCT_HTTP_PATH + viewable.url
-                thumb['alt_text'] = viewable.alt
-                thumb_list.append(thumb)
-                break
-        else:
+        products = get_pds_products(opus_id, 'raw', 'raw',
+                                    product_types=[opus_type])
+        if len(products[opus_id][opus_type]) != 1:
             log.error('No preview image size "%s" found for opus_id "%s"',
                       size, opus_id)
+            size = 0
+            url = '' # XXX Should be some kind of not found image
+            alt_text = 'Not found'
+        else:
+            product = products[opus_id][opus_type][0]
+            url = PRODUCT_HTTP_PATH + product.url
+            alt_text = product.alt
+        data = {'opus_id':  opus_id,
+                'size':     size,
+                'url':      url,
+                'alt_text': alt_text
+               }
+        image_list.append(data)
+
+    return image_list
+
+    #
+    #     pdsf = pdsfile.PdsFile.from_opus_id(opus_id)
+    #     viewset = pdsf.viewset
+    #     print viewset
+    #     print viewset.viewables
+    #     for viewable in viewset.viewables:
+    #         print viewable.pdsf.opus_type, opus_type
+    #         if viewable.pdsf.opus_type == opus_type:
+    #             thumb['url'] = PRODUCT_HTTP_PATH + viewable.url
+    #             thumb['alt_text'] = viewable.alt
+    #             thumb_list.append(thumb)
+    #             break
+    #     else:
+    #         log.error('No preview image size "%s" found for opus_id "%s"',
+    #                   size, opus_id)
 
     return thumb_list

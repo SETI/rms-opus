@@ -20,7 +20,7 @@ var o_detail = {
         $('#detail').html(opus.spinner);
         $('#detail_extra').html(opus_id);
 
-        $("#detail").load("/opus/api/detail/" + opus_id + ".html", function(){
+        $("#detail").load("/opus/initdetail/" + opus_id + ".html", function(){
 
             // get the column metadata, this part is fast
             url = "/opus/api/metadata/" + opus_id + ".html?" + o_hash.getHash();

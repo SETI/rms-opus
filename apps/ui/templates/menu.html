@@ -1,112 +1,95 @@
 {% block menu %}
-<ul class="nav nav-list"> <!-- was groups -->
-<!-- i class = "menu_spinner spinner"></i -->
-{% for div in menu.divs %}
-	<li>
-        <a href="#" class="dropdown-toggle {{ div.table_name }}" data-cat = "{{ div.table_name }}">
-            <i class = "fa fa-check"></i>
-            <span class="menu-text"> {{ div.label }} </span>
-            {% if div == menu.divs.0 %}
-                <i class = "spinner menu_spinner">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</i>
-            {% endif %}
-            <b class="arrow fa fa-angle-right"></b>
-        </a>
+<ul class="nav nav-list">
+	{% for div in menu.divs %}
+		<li>
+	    <a href="#" class="dropdown-toggle {{ div.table_name }}" data-cat="{{ div.table_name }}">
+	      <i class = "fa fa-check"></i>
+	      <span class="menu-text">{{ div.label }}</span>
+	      {% if div == menu.divs.0 %}
+	        <i class = "spinner menu_spinner">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</i>
+	      {% endif %}
+	      <b class="arrow fa fa-angle-right"></b>
+	    </a>
 
-        <ul class="submenu"><!-- all div labels have level 2 submenu to list params-->
-        {# loop through all params then check if this param belongs to this div.table_name, because templates #}
-        {% for name, info in menu.data.items %}
-            {% if name == div.table_name %}  {# this param_name IS contained in this div #}
+	  	<ul class="submenu"><!-- all div labels have level 2 submenu to list params-->
+	    	{# loop through all params then check if this param belongs to this div.table_name, because templates #}
+	    	{% for name, info in menu.data.items %}
+	        {% if name == div.table_name %}  {# this param_name IS contained in this div #}
 
-							{% if info.menu_help %}
-									<li><div class = "menu_help">{{ info.menu_help }}</div></li>
-							{% endif %}
+						{% if info.menu_help %}
+							<li><div class = "menu_help">{{ info.menu_help }}</div></li>
+						{% endif %}
 
+	          {% if info.has_sub_heading %}
+	            {#  this div has sub_headings, level-3 menu sections.. start sub_heading loop  #}
+	            {% for sub_head,params in info.data.items %}
+	              {% if p.cat_name == sub_head.slugify %}
+	                <li>
+	                  <i class = "fa fa-check"></i>
+	                  <a class="dropdown-toggle {{ sub_head|slugify }}" data-group="{{ sub_head|slugify }}" href = "">
+	                    <i class = "fa fa-check"></i>
+	                    <i class="fa fa-angle-double-right"></i>
+	                    {{ sub_head }}
+	                    <b class="arrow fa fa-angle-right"></b>
+	                  </a>
 
-                {% if info.has_sub_heading %}
-
-                    {#  this div has sub_headings, level-3 menu sections.. start sub_heading loop  #}
-                    {% for sub_head,params in info.data.items %}
-                        {% if p.cat_name == sub_head.slugify %}
-                        <li>
-                            <i class = "fa fa-check"></i>
-                            <a class="dropdown-toggle {{ sub_head|slugify }}" data-group = "{{ sub_head|slugify }}" href = "">
-                                <i class = "fa fa-check"></i>
-                                <i class="fa fa-angle-double-right"></i>
-                                {{ sub_head }}
-                                <b class="arrow fa fa-angle-right"></b>
-                            </a>
-
-                            <ul class="submenu">
-                            {% for p in params %}
-                                {% if p.cat_name == sub_head.slugify %}
-                                <li>
-                                    <a data-label = "
-
-																		{% if menu.data.labels_view == 'results' %}
-																			{{ p.label_results}}
-																		{% else %}
-																			{{ p.label }}
-																		{% endif %}
-
-																			" data-slug = "{{ p.slug }}" class = "{{ p.slug }}" href = "">
-                                        <i class = "fa fa-check"></i>
-
-																				{% if menu.data.labels_view == 'results' %}
-																					{{ p.label_results}}
-																				{% else %}
-																					{{ p.label }}
-																				{% endif %}
-
-                                        <i class = "fa fa-info-circle" title = "
-                                             {{ p.tooltip.definition }}
-                                        "></i>
-                                    </a>
-                                </li>
-                                {% endif %}
-                            {% endfor %} {# p in params #}
-                            </ul>
-
-                        </li>
-
-                        {% endif %} {# if p.cat_name == sub_head.slugify #}
-
-                    {% endfor %} {# for sub_head, params in info.data.items #}
-
-                {% else %}
-                    {#  this div does not have sub_headings, list the params  #}
-
-                    {% for p in info.data %}
-                        <li>
-                            <a data-label = "
-															{% if menu.data.labels_view == 'results' %}
-																{{ p.label_results}}label_results
-															{% else %}
-																{{ p.label }}label
-															{% endif %}
-														" data-slug = "{{ p.slug }}" class = "{{ p.slug }}" href = "">
-                                <i class = "fa fa-check"></i>
-
+	                  <ul class="submenu">
+		                  {% for p in params %}
+		                    {% if p.cat_name == sub_head.slugify %}
+		                    	<li>
+		                        <a data-label="
 																{% if menu.data.labels_view == 'results' %}
-																	{{ p.label_results}}
+																	{{ p.label_results }}
 																{% else %}
 																	{{ p.label }}
 																{% endif %}
-
-                                <i class = "fa fa-info-circle" title = "
-																	 {{ p.tooltip.definition }}
-                                "></i>
-                            </a>
-                        </li>
-                    {% endfor %}
-                {% endif %}
-
-            {% endif %} {# nem == div.table_name #}
-        {% endfor %} {# for name, info in menu.data.items #}
-        </ul>
-
-    </li>
-
-{% endfor %} {# for div in menu.divs #}
+															" data-slug="{{ p.slug }}" class="{{ p.slug }}" href="">
+		                            <i class = "fa fa-check"></i>
+																{% if menu.data.labels_view == 'results' %}
+																	{{ p.label_results }}
+																{% else %}
+																	{{ p.label }}
+																{% endif %}
+		                            <i class="fa fa-info-circle" title="
+	                                 {{ p.tooltip.definition }}
+		                              "></i>
+		                        </a>
+		                      </li>
+	                      {% endif %}
+		                  {% endfor %} {# p in params #}
+	                  </ul>
+	                </li>
+	              {% endif %} {# if p.cat_name == sub_head.slugify #}
+	            {% endfor %} {# for sub_head, params in info.data.items #}
+	          {% else %}
+	            {# this div does not have sub_headings, list the params #}
+	            {% for p in info.data %}
+	              <li>
+	                <a data-label="
+											{% if menu.data.labels_view == 'results' %}
+												{{ p.label_results }}
+											{% else %}
+												{{ p.label }}
+											{% endif %}
+										" data-slug="{{ p.slug }}" class="{{ p.slug }}" href="">
+	                  <i class = "fa fa-check"></i>
+										{% if menu.data.labels_view == 'results' %}
+											{{ p.label_results}}
+										{% else %}
+											{{ p.label }}
+										{% endif %}
+	                  <i class="fa fa-info-circle" title="
+										 		{{ p.tooltip.definition }}
+	                  	"></i>
+	                </a>
+	              </li>
+	            {% endfor %}
+	          {% endif %}
+	        {% endif %} {# nem == div.table_name #}
+	    	{% endfor %} {# for name, info in menu.data.items #}
+	    </ul>
+	  </li>
+	{% endfor %} {# for div in menu.divs #}
 </ul>
 {% endblock %}
 <div class = "sidenav_spacer">&nbsp;</div>
