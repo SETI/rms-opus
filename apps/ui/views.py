@@ -84,7 +84,7 @@ def init_detail_page(request, **kwargs):
         log.error('Failed to find single med size image for "%s"', opus_id)
         preview_med_url = ''
     else:
-        preview_med_url = preview_med_list[0]['url']
+        preview_med_url = preview_med_list[0]['med_url']
 
     # The full-size image is provided in case the user clicks on the medium one
     preview_full_list = get_obs_preview_images(opus_id, 'full')
@@ -92,7 +92,7 @@ def init_detail_page(request, **kwargs):
         log.error('Failed to find single full size image for "%s"', opus_id)
         preview_full_url = ''
     else:
-        preview_full_url = preview_full_list[0]['url']
+        preview_full_url = preview_full_list[0]['full_url']
 
     instrument_id = ObsGeneral.objects.filter(opus_id=opus_id).values('instrument_id')[0]['instrument_id']
 

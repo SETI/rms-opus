@@ -140,6 +140,7 @@ def api_get_image(request, opus_id, size='med', fmt='raw'):
         log.error('api_get_image: Could not find preview for opus_id "%s" size "%s"',
                   str(opus_id), str(size))
         image_list = []
+    image_list[0]['url'] = image_list[0][size+'_url']
     data = {'data': image_list}
     return responseFormats(data, fmt, size=size,
                            template='image_list.html')
@@ -627,7 +628,7 @@ def get_triggered_tables(selections, extras=None):
 # this should return an image for every row..
 
 @never_cache
-def get_images(request,size,fmt):
+def api_get_images(request, fmt):
     update_metrics(request)
     """
     this returns rows from images table that correspond to request
@@ -649,12 +650,14 @@ def get_images(request,size,fmt):
         log.error("404 error")
         raise Http404('could not find page')
 
-    thumb_list = get_obs_preview_images(opus_ids, 'thumb')
+    # XXX This is horrid and needs to be fixed
+    image_list = get_obs_preview_images(opus_ids,
+                                        ['thumb', 'small', 'med', 'full'])
 
-    if not thumb_list:
+    if not image_list:
         log.error('get_images: No image found for: %s', str(opus_ids[:50]))
 
-    return responseFormats({'data': thumb_list}, fmt, size=size,
+    return responseFormats({'data': image_list}, fmt,
                            alt_size=alt_size, columns_str=columns.split(','),
                            template='gallery.html', order=order)
 

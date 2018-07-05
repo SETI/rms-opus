@@ -9,7 +9,7 @@ import json
 
 import pdsfile
 import tools.app_utils as app_utils
-from settings import PRODUCT_HTTP_PATH, PREVIEW_SIZE_TO_PDS_TYPE, PDS_DATA_DIR
+import settings
 
 import logging
 log = logging.getLogger(__name__)
@@ -55,15 +55,19 @@ def get_pds_products(opus_id=None, fmt='raw', loc_type='url',
 
     # you can ask this function for url paths or disk paths
     if loc_type == 'url':
-        path = PRODUCT_HTTP_PATH
+        path = settings.PRODUCT_HTTP_PATH
     elif loc_type == 'path':
-        path = PDS_DATA_DIR
+        path = settings.PDS_DATA_DIR
 
     results = OrderedDict() # Dict of opus_ids
 
     for opus_id in opus_ids:
         results[opus_id] = OrderedDict() # Dict of product types
-        pdsf = pdsfile.PdsFile.from_opus_id(opus_id)
+        try:
+            pdsf = pdsfile.PdsFile.from_opus_id(opus_id)
+        except ValueError:
+            log.error('Failed to convert opus_id "%s"', opus_id)
+            continue
         products = pdsf.opus_products()
 
         # Keep a running list of all products by type
@@ -77,11 +81,12 @@ def get_pds_products(opus_id=None, fmt='raw', loc_type='url',
                 if loc_type == 'path':
                     res_list.append(file.abspath)
                 elif loc_type == 'url':
-                    res_list.append(PRODUCT_HTTP_PATH + file.url)
+                    res_list.append(settings.PRODUCT_HTTP_PATH + file.url)
                 elif loc_type == 'raw':
                     res_list.append(file)
                 else:
-                    log.error('get_pds_products: Unknown loc_type %s', str(loc_type))
+                    log.error('get_pds_products: Unknown loc_type %s',
+                              str(loc_type))
                     return None
             results[opus_id][opus_type] = res_list
 
@@ -95,34 +100,48 @@ def get_pds_products(opus_id=None, fmt='raw', loc_type='url',
     if fmt == 'html':
         return render('list.html', results)
 
-def get_obs_preview_images(opus_id_list, size):
+def get_obs_preview_images(opus_id_list, sizes):
     """Given a list of opus_ids, return a list of image info for a size."""
-
-    opus_type = PREVIEW_SIZE_TO_PDS_TYPE[size]
 
     if (not isinstance(opus_id_list, list) and
         not isinstance(opus_id_list, tuple)):
         opus_id_list = [opus_id_list]
 
+    if (not isinstance(sizes, list) and
+        not isinstance(sizes, tuple)):
+        sizes = [sizes]
+
+    opus_types = []
+    for size in sizes:
+        opus_types.append(settings.PREVIEW_SIZE_TO_PDS_TYPE[size])
+
     image_list = []
     for opus_id in opus_id_list:
+        data = OrderedDict({'opus_id':  opus_id})
         products = get_pds_products(opus_id, 'raw', 'raw',
-                                    product_types=[opus_type])
-        if len(products[opus_id][opus_type]) != 1:
-            log.error('No preview image size "%s" found for opus_id "%s"',
-                      size, opus_id)
-            size = 0
-            url = '' # XXX Should be some kind of not found image
-            alt_text = 'Not found'
-        else:
-            product = products[opus_id][opus_type][0]
-            url = PRODUCT_HTTP_PATH + product.url
-            alt_text = product.alt
-        data = {'opus_id':  opus_id,
-                'size':     size,
-                'url':      url,
-                'alt_text': alt_text
-               }
+                                    product_types=opus_types)[opus_id]
+        for size, opus_type in zip(sizes, opus_types):
+            if (opus_type not in products or
+                len(products[opus_type]) != 1):
+                log.error('No preview image size "%s" found for opus_id "%s"',
+                          size, opus_id)
+                url = settings.THUMBNAIL_NOT_FOUND
+                alt_text = 'Not found'
+                byte_size = 0
+                width = 0
+                height = 0
+            else:
+                product = products[opus_type][0]
+                url = settings.PRODUCT_HTTP_PATH + product.url
+                alt_text = product.alt
+                byte_size = product.size_bytes
+                width = product.width
+                height = product.height
+            data[size+'_url'] = url
+            data[size+'_alt_text'] = alt_text
+            data[size+'_size_bytes'] = byte_size
+            data[size+'_width'] = width
+            data[size+'_height'] = height
         image_list.append(data)
 
     return image_list
