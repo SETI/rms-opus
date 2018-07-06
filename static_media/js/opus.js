@@ -56,7 +56,7 @@ $(document).ready(function() {
     if (!opus.prefs.view) {
         opus.prefs.view = 'search';
     }
-    opus.changeTab();
+    //opus.changeTab();
 
 
     // add the navbar clicking behaviors, selecting which tab to view:
@@ -120,6 +120,7 @@ $(document).ready(function() {
     opus.main_timer = setInterval(opus.load, opus.main_timer_interval);
 
     o_collections.initCollection();
+    opus.triggerNavbarClick();
 
     return;
 
