@@ -79,7 +79,7 @@ def init_detail_page(request, **kwargs):
     opus_id = kwargs['opus_id']
 
     # The medium image is what's displayed on the Detail page
-    preview_med_list = get_obs_preview_images(opus_id, 'med')
+    preview_med_list = get_pds_preview_images(opus_id, 'med')
     if len(preview_med_list) != 1:
         log.error('Failed to find single med size image for "%s"', opus_id)
         preview_med_url = ''
@@ -87,7 +87,7 @@ def init_detail_page(request, **kwargs):
         preview_med_url = preview_med_list[0]['med_url']
 
     # The full-size image is provided in case the user clicks on the medium one
-    preview_full_list = get_obs_preview_images(opus_id, 'full')
+    preview_full_list = get_pds_preview_images(opus_id, 'full')
     if len(preview_full_list) != 1:
         log.error('Failed to find single full size image for "%s"', opus_id)
         preview_full_url = ''
@@ -151,8 +151,6 @@ def get_table_headers(request, template='table_headers.html'):
             except ParamInfo.DoesNotExist:
                 log.error('get_table_headers: Unable to find slug "%s"', slug)
                 pass
-    print order
-    print columns
     return render(request, template,
                   {'columns':   columns,
                    'sort_icon': sort_icon,

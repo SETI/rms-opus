@@ -8,19 +8,11 @@ from django.shortcuts import render_to_response
 import datetime
 import random, string, csv, settings, re
 from django.core import serializers
+import time
 
 import logging
 log = logging.getLogger(__name__)
 
-
-def iter_flatten(iterable):
-  it = iter(iterable)
-  for e in it:
-    if isinstance(e, (list, tuple)):
-      for f in iter_flatten(e):
-        yield f
-    else:
-      yield e
 
 def responseFormats(data, fmt, **kwargs):
     """
@@ -178,3 +170,28 @@ def sortDict(mydict):
     for key in sorted(mydict.iterkeys()):
         newdict[key] = mydict[key]
     return newdict
+
+_API_CALL_NUMBER = 0
+_API_START_TIMES = {}
+
+def enter_api_call(name, request):
+    global _API_CALL_NUMBER
+    _API_CALL_NUMBER += 1
+    if settings.LOG_API_CALLS:
+        print 'API', _API_CALL_NUMBER,
+        print request.path, json.dumps(request.GET, sort_keys=True,
+                                       indent=4,
+                                       separators=(',', ': '))
+    _API_START_TIMES[_API_CALL_NUMBER] = time.time()
+    return _API_CALL_NUMBER
+
+def exit_api_call(api_code, ret):
+    end_time = time.time()
+    if settings.LOG_API_CALLS:
+        print 'API', api_code, 'EXIT',
+        if api_code in _API_START_TIMES:
+            print end_time-_API_START_TIMES[api_code]
+        else:
+            print
+    if api_code in _API_START_TIMES:
+        del _API_START_TIMES[api_code]

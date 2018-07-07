@@ -355,3 +355,5 @@ THUMBNAIL_NOT_FOUND = 'https://tools.pds-rings.seti.org/assets/static_media/img/
 # FILE_HTTP_PATH  = 'https://pds-rings.seti.org/holdings/volumes/'
 # DERIVED_HTTP_PATH  = 'https://pds-rings.seti.org/holdings/calibrated/'
 MAX_CUM_DOWNLOAD_SIZE = 5*1024*1024*1024 # 5 gigs max cum downloads
+
+LOG_API_CALLS = True

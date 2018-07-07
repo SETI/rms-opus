@@ -1,5 +1,7 @@
 choose_columns.html - Displays the column choose modal dialog. Used in ui/views.py::get_column_chooser
 
+collections.html - The left side of the Selections page. Used in user_collections/views.py::view_collection
+
 detail.html - The top of the detail tab (not including any actual metadata). Used in ui/views.py::init_detail_page
 
 detail_metadata.html - The rest of the detail tab (the metadata under each heading). Used in results/views.py::api_get_metadata and _get_metadata_by_slugs
@@ -8,7 +10,10 @@ gallery.html - A series of images with overlays for details, selection, and expa
 
 menu.html - The search page side menu including all sub-menus. This is also used for "choose columns". Used in ui/views.py::get_menu
 
-table_headers.html - The header for the "view table" browse mode. Used in 
+table_headers.html - The header for the "view table" browse mode. Used in
+
+
+
 
 
 main.html - pass javascript vars here

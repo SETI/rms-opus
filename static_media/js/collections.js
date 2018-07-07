@@ -30,8 +30,8 @@ var o_collections = {
              var url = "/opus/collections/download/info/?" + add_to_url
              $.ajax({ url: url + '&fmt=json',
                 success: function(json){
-                    $('#total_files').fadeOut().html(json['count']).fadeIn();
-                    $('#download_size').fadeOut().html(json['size']).fadeIn();
+                    $('#total_files').fadeOut().html(json['download_count']).fadeIn();
+                    $('#download_size').fadeOut().html(json['download_size']).fadeIn();
                 }});
 
          });

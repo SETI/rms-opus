@@ -1,73 +1,52 @@
-<div id = "collections_summary" class = "well well-lg">
-
+<div id="collections_summary" class="well well-lg">
   <h1>Your Selections</h1>
+  <p>Total Files: <span id="total_files">{{ download_count }}</span></p>
+  <p>Total Size (before zip): <span id="download_size">{{ download_size }}</span></p>
 
-    <p>Total Files: <span id = "total_files">{{ download_count }}</span></p>
-    <p>Total Size (before zip): <span id = "download_size">{{ download_size }}</span></p>
+  <p><a id="download_csv" target="_blank" href="">Download CSV</a></p>
 
-    <p><a id = "download_csv" target = "_blank" href = "">Download CSV</a></p>
+  <div>
+    <a id="create_zip_file" href="">
+      <button type="button" class="btn btn-sm btn-success">
+        Download Zipped Archive
+        <span class="spinner">&nbsp;&nbsp;&nbsp;&nbsp;</span>
+      </button>
+    </a>
+  </div>
 
-    <div>
-      <a id = "create_zip_file" href = "">
-        <button type="button" class="btn btn-sm btn-success">
-          Download Zipped Archive
-          <span class = "spinner">&nbsp;&nbsp;&nbsp;&nbsp;</span>
-        </button>
-      </a>
-    </div>
+  <ul class="zipped_files"></ul>
 
-    <ul class = "zipped_files"></ul>
+	<div id="download_options">
+    <h4>Product Types:</h4>
+  	<ul id="product_types" class="list-inline">
+      {% for product_type, count in product_counts.items %}
+        <li>
+          <input type="checkbox" value="{{ product_type }}"
+            {% if count > 0 %}
+                checked
+            {% endif %}
+          >
+          <span
+            {% if count == 0 %}
+            class="fadey"
+            {% endif %}
+          >
+            {{ product_type }}
+          </span>
+          {% if count > 0 %}
+            <span class="product_count hints">{{ count }}</span>
+			    {% endif %}
+        </li>
+  		{% endfor %}
+  	</ul>
+  </div>
 
-	<div id = "download_options">
-
-        <h2>Options:</h3>
-
-        <h4>Product Types:</h4>
-    	<ul id = "product_types" class = "list-inline">
-
-            {% for product_type, count in product_counts.items %}
-
-                <li>
-                <input type = "checkbox" value = "{{ product_type }}"
-                {% if count > 0 %}
-                    checked
-                {% endif %}
-                >
-
-                    <span
-                        {% if count == 0 %}
-                        class = "fadey"
-                        {% endif %}
-                        >
-                        {{ product_type }}
-                        </span>
-
-                    {% if count > 0 %}
-                        <span class = "product_count hints">{{ count }}</span>
-    				{% endif %}
-
-                </span></li>
-
-      		{% endfor %}
-    	</ul>
-
-
-    	<h4>Preview Images (jpeg/png)</h4>
-    	<ul id = "image_types" class = "list-inline">
-    	 {% for k,v in image_types.items %}
-    		    <li><input type = "checkbox" value = "{{ k }}"> {{ v }} <span class = "hints">{{ image_count }}</span></li>
-    	 {% endfor %}
-    	</ul>
-
-
-    </div><!-- /download_options -->
-
-    <h3>
-        <a href = "" id = "empty_collection">
-            <button type="button" class="btn btn-sm btn-danger">
-                remove all
-            </button>
-        </a>
-    </h3>
+  <h3>
+    <a href="" id="empty_collection">
+      <button type="button" class="btn btn-sm btn-danger">
+        Remove All Selections
+      </button>
+    </a>
+  </h3>
 
 </div><!-- /collections_summary  -->

@@ -14,23 +14,72 @@ import settings
 import logging
 log = logging.getLogger(__name__)
 
-def get_base_path(opus_id):
-    """Return the base path of the images for opus_id."""
 
-def get__details(opus_id, size='thumb'):
-    """Return the url, size of the requested image."""
-    # size = 'small', 'med', 'full', 'thumb'
-    #pdsf = pdsfile.PdsFile.from_opus_id(opus_id)
-    return 'VGISS_6101/DATA/C32500XX/C3250013_thumb.jpg', 1300
+def _iter_flatten(iterable):
+  it = iter(iterable)
+  for e in it:
+    if isinstance(e, (list, tuple)):
+      for f in _iter_flatten(e):
+        yield f
+    else:
+      yield e
 
-def get_pds_products(opus_id=None, fmt='raw', loc_type='url',
+
+def get_pds_products_by_type(opus_id_list, product_types=['all']):
+    """Return product types and their associated PdsFile objects for opus_ids.
+
+        opus_id_list can be a string or a list.
+    """
+    if opus_id_list:
+        if not isinstance(opus_id_list, (list, tuple)):
+            opus_id_list = [opus_id_list]
+    else:
+        opus_id_list = []
+
+    products_by_type = {}
+
+    for opus_id in opus_id_list:
+        try:
+            pdsf = pdsfile.PdsFile.from_opus_id(opus_id)
+        except ValueError:
+            log.error('Failed to convert opus_id "%s"', opus_id)
+            continue
+        products = pdsf.opus_products()
+
+        # Keep a running list of all products by type
+        for (product_type, list_of_sublists) in products.items():
+            if product_types == ['all'] or product_type in product_types:
+                flat_list = _iter_flatten(list_of_sublists)
+                products_by_type.setdefault(product_type, []).extend(flat_list)
+
+    ret = OrderedDict()
+    for product_type in sorted(products_by_type):
+        ret[product_type] = products_by_type[product_type]
+
+    return ret
+
+
+def get_product_counts(products_by_type):
+    size = 0
+    count = 0
+    num_products = OrderedDict()
+    for product_type, products in products_by_type.iteritems():
+        num_products[product_type] = len(products)
+        for pdsf in products:
+            size += pdsf.size_bytes
+            count += 1
+
+    return size, count, num_products
+
+
+def get_pds_products(opus_id_list=None, fmt='raw', loc_type='url',
                      product_types=['all']):
     """Return a list of all PDS products for a given opus_id(s).
 
     The returned list is sorted by opus_id and can be in raw, html, or json.
     The latter are used by the "files" API.
 
-    opus_id can be a string or a list.
+    opus_id_list can be a string or a list.
 
     product_types can be a simple string, a comma-separated string, or a list.
         'all' means return all product types.
@@ -40,18 +89,14 @@ def get_pds_products(opus_id=None, fmt='raw', loc_type='url',
         object.
 
     """
-    if (not isinstance(product_types, list) and
-        not isinstance(product_types, tuple)):
+    if not isinstance(product_types, (list, tuple)):
         product_types = product_types.split(',')
 
-    if opus_id:
-        if (not isinstance(opus_id, list) and
-            not isinstance(opus_id, tuple)):
-            opus_ids = [opus_id]
-        else:
-            opus_ids = opus_id
+    if opus_id_list:
+        if not isinstance(opus_id_list, (list, tuple)):
+            opus_id_list = [opus_id_list]
     else:
-        opus_ids = []
+        opus_id_list = []
 
     # you can ask this function for url paths or disk paths
     if loc_type == 'url':
@@ -61,7 +106,7 @@ def get_pds_products(opus_id=None, fmt='raw', loc_type='url',
 
     results = OrderedDict() # Dict of opus_ids
 
-    for opus_id in opus_ids:
+    for opus_id in opus_id_list:
         results[opus_id] = OrderedDict() # Dict of product types
         try:
             pdsf = pdsfile.PdsFile.from_opus_id(opus_id)
@@ -71,11 +116,11 @@ def get_pds_products(opus_id=None, fmt='raw', loc_type='url',
         products = pdsf.opus_products()
 
         # Keep a running list of all products by type
-        for opus_type in sorted(products.keys()):
-            list_of_sublists = products[opus_type]
-            if product_types != ['all'] and opus_type not in product_types:
+        for product_type in sorted(products.keys()):
+            list_of_sublists = products[product_type]
+            if product_types != ['all'] and product_type not in product_types:
                 continue
-            flat_list = app_utils.iter_flatten(list_of_sublists)
+            flat_list = _iter_flatten(list_of_sublists)
             res_list = []
             for file in flat_list:
                 if loc_type == 'path':
@@ -88,7 +133,7 @@ def get_pds_products(opus_id=None, fmt='raw', loc_type='url',
                     log.error('get_pds_products: Unknown loc_type %s',
                               str(loc_type))
                     return None
-            results[opus_id][opus_type] = res_list
+            results[opus_id][product_type] = res_list
 
     if fmt == 'raw':
         return results
@@ -100,29 +145,33 @@ def get_pds_products(opus_id=None, fmt='raw', loc_type='url',
     if fmt == 'html':
         return render('list.html', results)
 
-def get_obs_preview_images(opus_id_list, sizes):
-    """Given a list of opus_ids, return a list of image info for a size."""
 
-    if (not isinstance(opus_id_list, list) and
-        not isinstance(opus_id_list, tuple)):
-        opus_id_list = [opus_id_list]
+def get_pds_preview_images(opus_id_list, sizes):
+    """Given a list of opus_ids, return a list of image info for a size.
 
-    if (not isinstance(sizes, list) and
-        not isinstance(sizes, tuple)):
+        opus_id_list can be a string or a list.
+    """
+    if opus_id_list:
+        if not isinstance(opus_id_list, (list, tuple)):
+            opus_id_list = [opus_id_list]
+    else:
+        opus_id_list = []
+
+    if not isinstance(sizes, (list, tuple)):
         sizes = [sizes]
 
-    opus_types = []
+    product_types = []
     for size in sizes:
-        opus_types.append(settings.PREVIEW_SIZE_TO_PDS_TYPE[size])
+        product_types.append(settings.PREVIEW_SIZE_TO_PDS_TYPE[size])
 
     image_list = []
     for opus_id in opus_id_list:
         data = OrderedDict({'opus_id':  opus_id})
         products = get_pds_products(opus_id, 'raw', 'raw',
-                                    product_types=opus_types)[opus_id]
-        for size, opus_type in zip(sizes, opus_types):
-            if (opus_type not in products or
-                len(products[opus_type]) != 1):
+                                    product_types=product_types)[opus_id]
+        for size, product_type in zip(sizes, product_types):
+            if (product_type not in products or
+                len(products[product_type]) != 1):
                 log.error('No preview image size "%s" found for opus_id "%s"',
                           size, opus_id)
                 url = settings.THUMBNAIL_NOT_FOUND
@@ -131,7 +180,7 @@ def get_obs_preview_images(opus_id_list, sizes):
                 width = 0
                 height = 0
             else:
-                product = products[opus_type][0]
+                product = products[product_type][0]
                 url = settings.PRODUCT_HTTP_PATH + product.url
                 alt_text = product.alt
                 byte_size = product.size_bytes
@@ -145,21 +194,3 @@ def get_obs_preview_images(opus_id_list, sizes):
         image_list.append(data)
 
     return image_list
-
-    #
-    #     pdsf = pdsfile.PdsFile.from_opus_id(opus_id)
-    #     viewset = pdsf.viewset
-    #     print viewset
-    #     print viewset.viewables
-    #     for viewable in viewset.viewables:
-    #         print viewable.pdsf.opus_type, opus_type
-    #         if viewable.pdsf.opus_type == opus_type:
-    #             thumb['url'] = PRODUCT_HTTP_PATH + viewable.url
-    #             thumb['alt_text'] = viewable.alt
-    #             thumb_list.append(thumb)
-    #             break
-    #     else:
-    #         log.error('No preview image size "%s" found for opus_id "%s"',
-    #                   size, opus_id)
-
-    return thumb_list

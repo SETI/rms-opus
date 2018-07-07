@@ -251,6 +251,8 @@ def getUserQueryTable(selections=None, extras=None):
     ## cache table does not exist, we will make one by doing some data querying:
     try:
         sql, params = constructQueryString(selections, extras)
+        print sql
+        print params
     except TypeError:
         log.error('getUserQueryTable: TypeError during constructQueryString')
         log.error('.. Selections: %s', str(selections))
@@ -264,7 +266,6 @@ def getUserQueryTable(selections=None, extras=None):
         return False
 
     try:
-        # sql += ' ENGINE=MYISAM'
         # with this we can create a table that contains the single column
         cursor.execute("create table " + connection.ops.quote_name(ptbl) + ' ' + sql, tuple(params))
         # add the key **** this, and perhaps the create statement too, can be spawned to a backend process ****

@@ -6,7 +6,7 @@
 #       page numbers, pictures, details, triggered tables, etc
 #
 ################################################
-#import settings
+import settings
 import json
 import csv
 from django.template import loader, Context
@@ -47,6 +47,7 @@ def api_get_data(request, fmt):
                 }
     """
     update_metrics(request)
+    api_code = enter_api_call('api_get_data', request)
 
     if not request.session.get('has_session'):
         request.session['has_session'] = True
@@ -91,7 +92,7 @@ def api_get_data(request, fmt):
     if request.is_ajax():
         # find the members of user collection in this page
         # for pre-filling checkboxes
-        collection = get_collection_in_page(page, session_id)
+        collection = get_collection_in_page(opus_ids, session_id)
 
     data = {'page_no': page_no,
             'limit':   limit,
@@ -101,14 +102,17 @@ def api_get_data(request, fmt):
            }
 
     if fmt == 'raw':
-        return data
-    return responseFormats(data, fmt, template='data.html', id_index=id_index,
-                           labels=labels, checkboxes=checkboxes,
-                           collection=collection, order=order)
+        ret = data
+    ret = responseFormats(data, fmt, template='data.html', id_index=id_index,
+                          labels=labels, checkboxes=checkboxes,
+                          collection=collection, order=order)
+    exit_api_call(api_code, ret)
+    return ret
 
 
 def api_get_files(request, opus_id=None, fmt='raw'):
     update_metrics(request)
+    api_code = enter_api_call('api_get_files', request)
 
     product_types = request.GET.get('types', 'all')
     loc_type = request.GET.get('loc_type', 'url')
@@ -119,12 +123,16 @@ def api_get_files(request, opus_id=None, fmt='raw'):
         (selections, extras) = urlToSearchParams(request.GET)
         page = api_get_data(request,'raw')['page']
         if not len(page):
+            exit_api_call(api_code, False)
             return False
         opus_id = [p[0] for p in page]
 
-    return file_utils.get_pds_products(opus_id=opus_id, fmt=fmt,
-                                       loc_type=loc_type,
-                                       product_types=product_types)
+    ret = file_utils.get_pds_products(opus_id=opus_id, fmt=fmt,
+                                      loc_type=loc_type,
+                                      product_types=product_types)
+    exit_api_call(api_code, ret)
+    return ret
+
 
 def api_get_image(request, opus_id, size='med', fmt='raw'):
     """Return info about a preview image for the given opus_id and size.
@@ -134,19 +142,25 @@ def api_get_image(request, opus_id, size='med', fmt='raw'):
     return HttpResponse(img + "<br>" + opus_id + ' ' + size )
     """
     update_metrics(request)
+    api_code = enter_api_call('api_get_image', request)
 
-    image_list = get_obs_preview_images(opus_id, size)
+    image_list = get_pds_preview_images(opus_id, size)
     if len(image_list) != 1:
         log.error('api_get_image: Could not find preview for opus_id "%s" size "%s"',
                   str(opus_id), str(size))
         image_list = []
     image_list[0]['url'] = image_list[0][size+'_url']
     data = {'data': image_list}
-    return responseFormats(data, fmt, size=size,
-                           template='image_list.html')
+    ret = responseFormats(data, fmt, size=size,
+                          template='image_list.html')
+    exit_api_call(api_code, ret)
+    return ret
 
 def api_get_all_categories(request, opus_id):
     """Return a JSON list of all cateories (tables) this opus_id appears in."""
+    update_metrics(request)
+    api_code = enter_api_call('api_get_all_categories', request)
+
     all_categories = []
     table_info = TableNames.objects.all().values('table_name', 'label').order_by('disp_order')
 
@@ -167,8 +181,10 @@ def api_get_all_categories(request, opus_id):
             cat = {'table_name': table_name, 'label': tbl['label']}
             all_categories.append(cat)
 
-    return HttpResponse(json.dumps(all_categories),
-                        content_type="application/json")
+    ret = HttpResponse(json.dumps(all_categories),
+                     content_type="application/json")
+    exit_api_call(api_code, ret)
+    return ret
 
 
 def api_get_metadata(request, opus_id, fmt):
@@ -194,6 +210,7 @@ def api_get_metadata(request, opus_id, fmt):
 
     """
     update_metrics(request)
+    api_code = enter_api_call('api_get_metadata', request)
 
     if not opus_id: raise Http404
 
@@ -203,8 +220,10 @@ def api_get_metadata(request, opus_id, fmt):
     except AttributeError:
         pass  # No request was sent
     if slugs:
-        return _get_metadata_by_slugs(request, opus_id, slugs.split(','),
+        ret = _get_metadata_by_slugs(request, opus_id, slugs.split(','),
                                      fmt)
+        exit_api_call(api_code, ret)
+        return ret
 
     try:
         cats = request.GET.get('cats', False)
@@ -268,17 +287,18 @@ def api_get_metadata(request, opus_id, fmt):
     if fmt == 'html':
         # hack because we want to display labels instead of param names
         # on our html Detail page
-        return render(request, 'detail_metadata.html',locals())
+        ret = render(request, 'detail_metadata.html',locals())
     if fmt == 'json':
-        return HttpResponse(json.dumps(data), content_type="application/json")
+        ret = HttpResponse(json.dumps(data), content_type="application/json")
     if fmt == 'raw':
-        return data, all_info  # includes definitions for opus interface
+        ret = data, all_info  # includes definitions for opus interface
+
+    exit_api_call(api_code, ret)
+    return ret
 
 
 def _get_page(request, colls=None, colls_page=None, page=None):
     """Return a page of results."""
-    update_metrics(request)
-
     # get some stuff from the url or fall back to defaults
     if not request.session.get('has_session'):
         request.session['has_session'] = True
@@ -325,7 +345,7 @@ def _get_page(request, colls=None, colls_page=None, page=None):
     # Figure out the sort order
     order = None
     if collection_page:
-        order = request.GET.get('colls_order', None)
+        order = request.GET.get('colls_order', settings.DEFAULT_SORT_ORDER)
     if not order:
         order = request.GET.get('order', settings.DEFAULT_SORT_ORDER)
     order_param = None
@@ -388,19 +408,30 @@ def _get_page(request, colls=None, colls_page=None, page=None):
 
         # But the cache table is a RIGHT JOIN because we only want opus_ids that
         # appear in the cache table to cause result rows
-        sql += ' RIGHT JOIN '+connection.ops.quote_name(user_query_table)
+        sql += ' INNER JOIN '+connection.ops.quote_name(user_query_table)
         sql += ' ON obs_general.id='+connection.ops.quote_name(user_query_table)
         sql += '.id'
     else:
         # this is for a collection
-        assert False
+        sql = 'SELECT '
+        sql += ','.join(column_names)
+        sql += ' FROM obs_general'
 
-        # join in the collections table
-        #### FIX ME this went away!
-        colls_table_name = get_collection_table(session_id)
-        triggered_tables.append(colls_table_name)
-        where   = "obs_general.opus_id = " + connection.ops.quote_name(colls_table_name) + ".opus_id"
-        results = ObsGeneral.objects.extra(where=[where], tables=triggered_tables)
+        # All the column tables are LEFT JOINs because if the table doesn't
+        # have an entry for a given opus_id, we still want the row to show up,
+        # just full of NULLs.
+        for table in tables:
+            if table == 'obs_general':
+                continue
+            sql += ' LEFT JOIN '+connection.ops.quote_name(table)
+            sql += ' ON obs_general.id='+connection.ops.quote_name(table)
+            sql += '.obs_general_id'
+
+        # But the cache table is a RIGHT JOIN because we only want opus_ids that
+        # appear in the cache table to cause result rows
+        sql += ' INNER JOIN collections'
+        sql += ' ON obs_general.id=collections.obs_general_id AND '
+        sql += 'collections.session_id="'+session_id+'"'
 
     # Add in the ordering
     if order_param:
@@ -433,8 +464,6 @@ def _get_page(request, colls=None, colls_page=None, page=None):
     # Return a simple list of opus_ids
     opus_id_index = column_names.index('obs_general.opus_id')
     opus_ids = [o[opus_id_index] for o in results]
-    if not opus_ids:
-        return False
 
     # Strip off the opus_id if the user didn't actually ask for it initially
     if added_extra_columns:
@@ -451,8 +480,6 @@ def _get_metadata_by_slugs(request, opus_id, slugs, fmt):
     """
     returns results for specified slugs
     """
-    update_metrics(request)
-
     params_by_table = {}  # params by table_name
     data = []
     all_info = {}
@@ -629,20 +656,22 @@ def get_triggered_tables(selections, extras=None):
 
 @never_cache
 def api_get_images(request, fmt):
-    update_metrics(request)
     """
     this returns rows from images table that correspond to request
     some rows will not have images, this function doesn't return 'image_not_found' information
     if a row doesn't have an image you get nothing. you lose. good day sir. #fixme #todo
 
     """
+    update_metrics(request)
+    api_code = enter_api_call('api_get_images', request)
+
     if not request.session.get('has_session'):
         request.session['has_session'] = True
 
     session_id = request.session.session_key
 
-    alt_size = request.GET.get('alt_size','')
-    columns = request.GET.get('cols',settings.DEFAULT_COLUMNS)
+    alt_size = request.GET.get('alt_size', '')
+    columns = request.GET.get('cols', settings.DEFAULT_COLUMNS)
 
     try:
         [page_no, limit, page, opus_ids, order] = _get_page(request)
@@ -651,15 +680,21 @@ def api_get_images(request, fmt):
         raise Http404('could not find page')
 
     # XXX This is horrid and needs to be fixed
-    image_list = get_obs_preview_images(opus_ids,
+    image_list = get_pds_preview_images(opus_ids,
                                         ['thumb', 'small', 'med', 'full'])
 
     if not image_list:
         log.error('get_images: No image found for: %s', str(opus_ids[:50]))
 
-    return responseFormats({'data': image_list}, fmt,
-                           alt_size=alt_size, columns_str=columns.split(','),
-                           template='gallery.html', order=order)
+    collection_opus_ids = get_all_in_collection(request)
+    for image in image_list:
+        image['in_collection'] = image['opus_id'] in collection_opus_ids
+
+    ret = responseFormats({'data': image_list}, fmt,
+                          alt_size=alt_size, columns_str=columns.split(','),
+                          template='gallery.html', order=order)
+    exit_api_call(api_code, ret)
+    return ret
 
 
 def get_base_path_previews(opus_id):

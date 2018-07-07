@@ -1,5 +1,5 @@
 {% for i in data %}
-  <li id="gallery__{{i.opus_id}}">
+  <li id="gallery__{{ i.opus_id }}">
     <a class="activeThumbnail" href="{{ i.full_url }}" data-rel="colorbox">
       <img alt="{{ i.thumb_alt_text }}" title="{{ i.opus_id }}" src="{{ i.thumb_url }}">
     </a>
@@ -10,9 +10,9 @@
       </a>
       <a href="#"> <!-- checkmark - add to cart -->
           <i class="glyphicon glyphicon-ok
-            <!--  {% if i.in_collection %}
-                 thumb_selected_icon
-              {% endif %} -->
+            {% if i.in_collection %}
+              thumb_selected_icon
+            {% endif %}
           "></i>
       </a>
       <a href="#" class="colorbox"> <!-- colorbox -->
@@ -21,7 +21,9 @@
     </div>
 
     <div class="thumb_overlay
-          <!--  {% if i.in_collection %}  thumb_selected  {% endif %} -->
-        ">&nbsp;</div>
+      {% if i.in_collection %}
+        thumb_selected
+      {% endif %}
+    ">&nbsp;</div>
   </li>
 {% endfor %}

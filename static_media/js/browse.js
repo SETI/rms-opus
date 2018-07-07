@@ -843,15 +843,14 @@ var o_browse = {
             // clicked on collections tab with nothing in collections,
             // give some helpful hint
             var html = ' \
-                <div style = "margin:20px"><h2>Your Collection is Empty</h2>   \
-                <p>To add observations to your Collection, click on the Browse Results tab<br> \
-                at the top of the page, mouse over the thumbnail gallery images to reveal the tools,<br> \
-                then click the checkbox below a thumbnail.  </p>   \
+                <div style = "margin:20px"><h2>You Have No Selections</h2>   \
+                <p>To select observations, click on the Browse Results tab \
+                at the top of the page,<br> mouse over the thumbnail gallery images to reveal the tools, \
+                then click the <br>checkbox below a thumbnail.  </p>   \
                 </div>'
 
             $(html).appendTo($('.gallery .ace-thumbnails', namespace)).fadeIn();
             return;
-
         }
 
         var base_url = "/opus/api/images.html?";

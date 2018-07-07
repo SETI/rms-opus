@@ -73,103 +73,67 @@ def get_file_path(filename):
 
     return f
 
-def get_download_info(product_types, previews, colls_table_name):
+def get_download_info(product_types, session_id):
     """
         returns total_size, file_count in bytes
-        product_types list, previews bool, and colls_table_name string
-        return
+        product_types list
     """
-    if previews == 'none' or previews == '' or previews == []:
-        previews = None  # :-(
+    opus_ids = Collections.objects.filter(session_id__exact=session_id).values_list('opus_id')
+    opus_id_list = [x[0] for x in opus_ids]
 
-    if product_types and type(product_types).__name__ == 'str':
-        product_types = [product_types]
+    products_by_type = get_pds_products_by_type(opus_id_list,
+                                                product_types=product_types)
+    (download_size, download_count,
+     product_counts) = get_product_counts(products_by_type)
+    download_size = nice_file_size(download_size)
 
-    file_paths = []  # the files we need to check
-    file_count = 0  # count of each file in files
-    total_size = 0
+    ret = {
+        "download_count": download_count,
+        "download_size": download_size,
+        "product_counts": product_counts
+    }
 
-    # find the total size of all the pds products in product_types
-    total_size_products = 0
-    file_count_products = 0
-    if product_types:
-        where   = "file_sizes.opus_id = " + connection.ops.quote_name(colls_table_name) + ".opus_id"
-        file_sizes = FileSizes.objects.filter(PRODUCT_TYPE__in=product_types)
-        total_size_info = file_sizes.extra(where=[where], tables=[colls_table_name])
-        total_size_products = total_size_info.values('size').aggregate(Sum('size'))['size__sum']
-        file_count_products = total_size_info.count()
-        if not total_size_products:
-            total_size_products = 0
+    return ret
 
-    # now find total size of browse images on disc
-    total_size_images = 0
-    file_count_images = 0
-    if previews:
-        previews = [p.lower() for p in previews]
-        images = Image.objects
-        where   = "images.opus_id = " + connection.ops.quote_name(colls_table_name) + ".opus_id"
 
-        for sz in previews:
-            total_size_info = images.extra(where=[where], tables=[colls_table_name]).values('size_' + sz)
-            total_size_images += total_size_info.aggregate(Sum('size_' + sz))['size_' + sz + '__sum']
-            file_count_images += total_size_info.count()
-            if not total_size_images:
-                total_size_images = 0
-
-    total_size = total_size_products + total_size_images
-    file_count = file_count_products + file_count_images
-    return total_size, file_count  # bytes
-
-def get_download_info_API(request):
+def api_get_download_info(request):
     """
     this serves get_download_info as an api endpoint
     but takes a request object as input
     and inspects the request for product type / preview image filters
     """
     update_metrics(request)
+    api_code = enter_api_call('api_get_download_info', request)
 
-    from user_collections.views import get_collection_table  # circulosity
     session_id = request.session.session_key
-    colls_table_name = get_collection_table(session_id)
 
     product_types = []
     product_types_str = request.GET.get('types', None)
     if product_types_str:
         product_types = product_types_str.split(',')
 
-    previews = []
-    previews_str = request.GET.get('previews', None)
-    if previews_str:
-        previews = previews_str.split(',')
-
     # since we are assuming this is coming from user interaction
     # if no filters exist then none of this product type is wanted
-    if product_types == ['none'] and previews == ['none']:
-        # ie this happens when all product types are unchecked in the interface
-        return HttpResponse(json.dumps({'size':'0', 'count':'0'}), content_type='application/json')
-
-    if previews == ['all']:
-        previews = [i[0] for i in settings.image_sizes]
+    if product_types == ['none']:
+        product_types = []
 
     # now get the files and download size / count for this cart
-    urls = []
-    from results.views import *
-    download_size, count = get_download_info(product_types, previews, colls_table_name)
+    ret = get_download_info(product_types, session_id)
 
-    # make pretty size string
-    download_size = nice_file_size(download_size)
-
-    return HttpResponse(json.dumps({'size':download_size, 'count':count}), content_type='application/json')
+    ret = HttpResponse(json.dumps(ret), content_type='application/json')
+    exit_api_call(api_code, ret)
+    return ret
 
 
 @never_cache
-def create_download(request, collection_name=None, opus_ids=None, fmt=None):
+def api_create_download(request, session_id=None, opus_ids=None, fmt=None):
     """
     feeds request to getFiles and zips up all files it finds into zip file
     and adds a manifest file and md5 checksums
 
     """
     update_metrics(request)
+    api_code = enter_api_call('api_create_download', request)
 
     from user_collections.views import get_collection_table, get_all_in_collection  # circulosity
     session_id = request.session.session_key
@@ -185,7 +149,6 @@ def create_download(request, collection_name=None, opus_ids=None, fmt=None):
 
     if not opus_ids:
         opus_ids = []
-        from user_collections.views import get_collection_table
         opus_ids = get_all_in_collection(request)
 
     if type(opus_ids) is unicode or type(opus_ids).__name__ == 'str':
@@ -217,13 +180,15 @@ def create_download(request, collection_name=None, opus_ids=None, fmt=None):
     zip_file = zipfile.ZipFile(settings.TAR_FILE_PATH + zip_file_name, mode='w')
     chksum = open(chksum_file_name,"w")
     manifest = open(manifest_file_name,"w")
-    size, download_count = get_download_info(product_types, previews, colls_table_name)
+    size, download_count = get_download_info(product_types, previews, session_id)
 
     # don't keep creating downloads after user has reached their size limit
     cum_download_size = request.session.get('cum_download_size', 0)
     if cum_download_size > settings.MAX_CUM_DOWNLOAD_SIZE:
         # user is trying to download > MAX_CUM_DOWNLOAD_SIZE
-        return HttpResponse("Sorry, Max cumulative download size reached " + str(cum_download_size) + ' > ' + str(settings.MAX_CUM_DOWNLOAD_SIZE))
+        ret = HttpResponse("Sorry, Max cumulative download size reached " + str(cum_download_size) + ' > ' + str(settings.MAX_CUM_DOWNLOAD_SIZE))
+        exit_api_call(api_code, ret)
+        return ret
     else:
         cum_download_size = cum_download_size + size
         request.session['cum_download_size'] = int(cum_download_size)
@@ -282,6 +247,9 @@ def create_download(request, collection_name=None, opus_ids=None, fmt=None):
         raise Http404
 
     if fmt == 'json':
-        return HttpResponse(json.dumps(zip_url), content_type='application/json')
+        ret = HttpResponse(json.dumps(zip_url), content_type='application/json')
+    else:
+        ret = HttpResponse(zip_url)
 
-    return HttpResponse(zip_url)
+    exit_api_call(api_code, ret)
+    return ret
