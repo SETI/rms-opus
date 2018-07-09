@@ -16,7 +16,6 @@ base_urlpatterns = [
     url(r'^', include('ui.urls')),
     url(r'^', include('results.urls')),
     url(r'^', include('metadata.urls')),
-    url(r'^', include('downloads.urls')),
     url(r'^', include('guide.urls')),
     url(r'^', include('user_collections.urls')),
 ]

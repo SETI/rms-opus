@@ -6,7 +6,6 @@ from results.views import (
     api_get_image,
     api_get_files,
     api_get_metadata,
-    get_collection_csv,
     api_get_all_categories,
     category_list_http_endpoint,
 )
@@ -19,6 +18,5 @@ urlpatterns = [
     url(r'^api/files.(?P<fmt>[json|zip|html|csv]+)$', api_get_files),
     url(r'^api/metadata/(?P<opus_id>[-\w]+).(?P<fmt>[json|html]+)$', api_get_metadata),
     url(r'^api/categories.json$', category_list_http_endpoint),
-    url(r'^api/categories/(?P<opus_id>[-\w]+).json$', api_get_all_categories),
-    url(r'^collections/data.csv$', get_collection_csv),
+    url(r'^api/categories/(?P<opus_id>[-\w]+).json$', api_get_all_categories)
 ]

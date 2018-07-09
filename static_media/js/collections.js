@@ -31,12 +31,12 @@ var o_collections = {
              $.ajax({ url: url + '&fmt=json',
                 success: function(json){
                     $('#total_files').fadeOut().html(json['download_count']).fadeIn();
-                    $('#download_size').fadeOut().html(json['download_size']).fadeIn();
+                    $('#download_size').fadeOut().html(json['download_size_pretty']).fadeIn();
                 }});
 
          });
 
-         // Download Zipped Archive button - click create download zip file link on collections page
+         // Download CSV button - create CSV file with currently chosen columns
          $('#collection').on("click", '#download_csv', function() {
             $(this).attr("href", '/opus/collections/data.csv?'+ o_hash.getHash());
          });
@@ -101,7 +101,7 @@ var o_collections = {
          $('ul#image_types input:checkbox:checked').each(function(){
                image_types.push($(this).val());
              });
-        var checked_filters = {"types":product_types, "previews":image_types };
+        var checked_filters = {"types":product_types};
 
         for (var filter_name in checked_filters) {
           if (checked_filters[filter_name].length) {

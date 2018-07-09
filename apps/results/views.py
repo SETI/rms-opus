@@ -20,13 +20,13 @@ from search.views import *
 from search.models import *
 from paraminfo.models import *
 from metadata.views import *
-from user_collections.views import *
-from tools.app_utils import *
 from metrics.views import update_metrics
 from django.views.decorators.cache import never_cache
+from user_collections.models import Collections
 
-import tools.file_utils as file_utils
-import tools.db_utils as db_utils
+from tools.app_utils import *
+from tools.file_utils import *
+from tools.db_utils import *
 
 import logging
 log = logging.getLogger(__name__)
@@ -54,7 +54,7 @@ def api_get_data(request, fmt):
 
     session_id = request.session.session_key
 
-    (page_no, limit, page, opus_ids, order) = _get_page(request)
+    (page_no, limit, page, opus_ids, order) = get_page(request)
 
     checkboxes = request.is_ajax()
 
@@ -127,9 +127,9 @@ def api_get_files(request, opus_id=None, fmt='raw'):
             return False
         opus_id = [p[0] for p in page]
 
-    ret = file_utils.get_pds_products(opus_id=opus_id, fmt=fmt,
-                                      loc_type=loc_type,
-                                      product_types=product_types)
+    ret = get_pds_products(opus_id=opus_id, fmt=fmt,
+                           loc_type=loc_type,
+                           product_types=product_types)
     exit_api_call(api_code, ret)
     return ret
 
@@ -172,7 +172,7 @@ def api_get_all_categories(request, opus_id):
             continue
 
         try:
-            results = db_utils.query_table_for_opus_id(table_name, opus_id)
+            results = query_table_for_opus_id(table_name, opus_id)
         except LookupError:
             log.error("Didn't find table %s", table_name)
             continue
@@ -258,7 +258,7 @@ def api_get_metadata(request, opus_id, fmt):
         if all_param_names:
             try:
                 try:
-                    results = db_utils.query_table_for_opus_id(table_name, opus_id)
+                    results = query_table_for_opus_id(table_name, opus_id)
                 except LookupError:
                     log.error("Could not find data model for category %s", model_name)
                     break
@@ -297,7 +297,7 @@ def api_get_metadata(request, opus_id, fmt):
     return ret
 
 
-def _get_page(request, colls=None, colls_page=None, page=None):
+def get_page(request, colls=None, colls_page=None, page=None):
     """Return a page of results."""
     # get some stuff from the url or fall back to defaults
     if not request.session.get('has_session'):
@@ -324,7 +324,7 @@ def _get_page(request, colls=None, colls_page=None, page=None):
             # the UI sends it when there is only a single column
             column = ParamInfo.objects.get(slug=slug.strip('1')).param_name()
         except ParamInfo.DoesNotExist:
-            log.error('_get_page: Slug "%s" not found', slug)
+            log.error('get_page: Slug "%s" not found', slug)
             continue
         table = column.split('.')[0]
         if column.endswith('.opus_id'):
@@ -378,7 +378,7 @@ def _get_page(request, colls=None, colls_page=None, page=None):
         try:
             page_no = int(page_no)
         except:
-            log.error('_get_page: Unable to parse page "%s"',
+            log.error('get_page: Unable to parse page "%s"',
                       str(page_no))
             page_no = 1
 
@@ -456,7 +456,7 @@ def _get_page(request, colls=None, colls_page=None, page=None):
         sql += ' LIMIT '+str(limit)
         sql += ' OFFSET '+str(offset)
 
-    print '_get_page SQL', sql
+    print 'get_page SQL', sql
     cursor = connection.cursor()
     cursor.execute(sql)
     results = cursor.fetchall()
@@ -502,7 +502,7 @@ def _get_metadata_by_slugs(request, opus_id, slugs, fmt):
 
     for table_name, param_list in params_by_table.items():
         try:
-            results = db_utils.query_table_for_opus_id(table_name, opus_id)
+            results = query_table_for_opus_id(table_name, opus_id)
         except LookupError:
             continue
         results = results.values(*param_list)
@@ -674,7 +674,7 @@ def api_get_images(request, fmt):
     columns = request.GET.get('cols', settings.DEFAULT_COLUMNS)
 
     try:
-        [page_no, limit, page, opus_ids, order] = _get_page(request)
+        [page_no, limit, page, opus_ids, order] = get_page(request)
     except TypeError:  # get_page returns False
         log.error("404 error")
         raise Http404('could not find page')
@@ -725,7 +725,7 @@ def file_name_cleanup(base_file):
 
 
 
-def ____OLD_BROKEN__get_page(request, colls=None, colls_page=None, page=None):
+def ____OLD_BROKENget_page(request, colls=None, colls_page=None, page=None):
     """Return a page of results."""
     update_metrics(request)
 
@@ -870,3 +870,29 @@ def ____OLD_BROKEN__get_page(request, colls=None, colls_page=None, page=None):
         return False
 
     return (page_no, limit, list(results), opus_ids, order)
+
+
+def get_all_in_collection(request):
+    "Return a list of all OPUS IDs in the collection."
+    session_id = get_session_id(request)
+    res = (Collections.objects.filter(session_id__exact=session_id)
+           .values_list('opus_id'))
+    opus_ids = [x[0] for x in res]
+    return opus_ids
+
+def get_collection_in_page(opus_id_list, session_id):
+    """ returns obs_general_ids in page that are also in user collection
+        this is for views in results where you have to display the gallery
+        and indicate which thumbnails are in cart """
+    if not session_id:
+        return
+
+    cursor = connection.cursor()
+    collection_in_page = []
+    sql = 'SELECT DISTINCT opus_id FROM '+connection.ops.quote_name('collections')
+    sql += ' WHERE session_id=%s'
+    cursor.execute(sql, session_id)
+    rows = cursor.fetchall()
+    coll_ids = [r[0] for r in rows]
+    ret = [opus_id for opus_id in opus_id_list if opus_id in coll_ids]
+    return ret

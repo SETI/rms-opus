@@ -171,6 +171,15 @@ def sortDict(mydict):
         newdict[key] = mydict[key]
     return newdict
 
+def get_session_id(request):
+    if not request.session.get('has_session'):
+        request.session['has_session'] = True
+    if not request.session.session_key:
+        request.session.create()
+    session_id = request.session.session_key
+    return session_id
+
+
 _API_CALL_NUMBER = 0
 _API_START_TIMES = {}
 
