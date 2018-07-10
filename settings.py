@@ -18,8 +18,6 @@ ALLOWED_HOSTS = ('127.0.0.1',
                  'pds-rings-tools.seti.org',
                  'tools.pds-rings.seti.org')
 
-OPUS_DB = 'opus_new'
-
 DEBUG = True
 
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True
@@ -270,6 +268,8 @@ LOGGING = {
 
 os.environ['REUSE_DB'] = "1"  # for test runner
 
+# Note: OPUS_DB is from secrets.py
+
 DATABASES = {
     'default': {
         'NAME': OPUS_DB,  # local database name
@@ -303,7 +303,7 @@ DATABASES = {
 
 import pdsfile
 
-PDS_DATA_DIR = '/pdsdata/holdings'
+# Note: PDS_DATA_DIR is from secrets.py
 
 pdsfile.preload(PDS_DATA_DIR)
 pdsfile.use_pickles()
@@ -320,8 +320,9 @@ SLUGS_NOT_IN_DB = ('browse', 'col_chooser', 'colls_browse', 'cols', 'detail',
                    'reqno', 'request', 'view', 'widgets', 'widgets2')
 
 
-TAR_FILE_URI_PATH = 'http://pds-rings-downloads.seti.org/opus/'
+# The root URL used to retrieve product files from a web server
 PRODUCT_HTTP_PATH = 'https://pds-rings.seti.org/'
+
 DEFAULT_COLUMNS = 'opusid,planet,target,time1,time2'
 DEFAULT_SORT_ORDER = 'time1' # This must be a slug
 IMAGE_COLUMNS   = ['thumb.jpg','small.jpg','med.jpg','full.jpg']
