@@ -338,6 +338,10 @@ a i.fa-search-plus:hover {
     visibility: visible;
 }
 
+.glyphicon { 
+	font-size: 10px; 
+}
+
 .ace-thumbnails > li > .tools.tools-bottom a{
     margin:0; padding:0;
     display:inline-block;
