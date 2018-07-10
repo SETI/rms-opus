@@ -13,12 +13,15 @@ DB_PASS = '<DB_PASS>'
 #   https://www.google.com/search?q=django+secret+generator
 SECRET_KEY = '<SECRET_KEY>'
 
+# Where the real PDS data is mounted
 PDS_DATA_DIR = '<HOLDING_DIR>'
 
+# Where static files are served from in a production environment
+STATIC_ROOT = '<STATIC_DIR'>
 
 # Where to put zipped cart files for downloading
 # Needs a TRAILING SLASH
-TAR_FILE_PATH =  '<TAR_FILE_PATH>/'
+TAR_FILE_PATH = '<TAR_FILE_PATH>/'
 
 # The root URL used to retrieve zipped collections files
 # Needs a TRAILING SLASH
