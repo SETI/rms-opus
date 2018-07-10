@@ -13,7 +13,7 @@ var o_detail = {
                 at the top of the page. Click on a thumbnail and then "View Detail".</p>   \
                 </div>'
 
-            $(html).appendTo($('#detail')).fadeIn();
+            $('#detail').html(html).fadeIn();
             return;
         }
 
