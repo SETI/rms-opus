@@ -368,9 +368,9 @@ def api_create_download(request, session_id=None, opus_ids=None, fmt=None):
         for product_type in files[opus_id]:
             for f in files[opus_id][product_type]:
                 if 'FMT' in f or 'fmt' in f:
-                    pretty_name = '/'.join(f.split("/")[-3:]).upper()
+                    pretty_name = '/'.join(f.split('/')[-3:]).upper()
                 else:
-                    pretty_name = f.split("/")[-1]
+                    pretty_name = f.split('/')[-1]
                 digest = "%s:%s" % (pretty_name, md5(f))
                 mdigest = "%s:%s" % (opus_id, pretty_name)
 
