@@ -38,7 +38,7 @@ var o_widgets = {
             return false;
         });
 
-        // open/close mult groupings in widgetts
+        // open/close mult groupings in widgets
         $('#search').on('click', '.mult_group_label_container', function () {
             $(this).find('.indicator').toggleClass('fa-plus');
             $(this).find('.indicator').toggleClass('fa-minus');
@@ -242,7 +242,7 @@ var o_widgets = {
             o_widgets.updateWidgetCookies();
     },
 
-    // this is called after a widge is drawn
+    // this is called after a widget is drawn
     customWidgetBehaviors: function(slug) {
         switch(slug) {
 
