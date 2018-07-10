@@ -228,7 +228,7 @@ var o_collections = {
                 break;
 
             case "addrange":
-                url += "&add_range=" + opus_id;
+                url += "&range=" + opus_id;
                 // need to send to server what page this range lands and what limit of that page is
                 // limit should include all observations showing on page
                 // must adjust limit + page to account for total number of results showing on page

@@ -1,4 +1,4 @@
-################################################
+    ################################################
 #
 #   user_collections.views
 #   django adds/removes opus_ids from the current collection
@@ -13,7 +13,7 @@ from django.views.decorators.cache import never_cache
 from hurry.filesize import size as nice_file_size
 
 from metrics.views import update_metrics
-from results.views import get_page, get_all_in_collection
+from results.views import get_data, get_page, get_all_in_collection
 from search.models import ObsGeneral
 from user_collections.models import Collections
 
@@ -508,11 +508,9 @@ def _remove_from_collections_table(opus_id_list, session_id):
 
 def _edit_collection_range(request, session_id, action):
     "Add or remove a range of opus_ids based on the current sort order."
-    id_range = request.GET.get('removerange', False)
+    id_range = request.GET.get('range', False)
     if not id_range:
-        id_range = request.GET.get('addrange', False)
-    if not id_range:
-        log.error('Got to _edit_collection_range but not add or removerange')
+        log.error('Got to _edit_collection_range but no range given')
         log.error('... %s', str(request.GET))
         return False
 
@@ -527,7 +525,7 @@ def _edit_collection_range(request, session_id, action):
     in_range = False  # loop has reached the range selected
 
     column_slugs = request.GET.get('cols', settings.DEFAULT_COLUMNS)
-    opus_id_key = column_slugs.split(',').index('opus_id')
+    opus_id_key = column_slugs.split(',').index('opusid')
 
     for row in data['page']:
         opus_id = row[opus_id_key]
@@ -624,7 +622,7 @@ def _create_csv_file(request, csv_file_name):
         wr.writerows(all_data)
 
 
-# XXX SHOOT ME
+# XXX We need to get MD5 checksums from PdsFile instead of computing them here.
 def md5(filename):
     """ accepts full path file name and returns its md5
     """

@@ -49,63 +49,8 @@ def api_get_data(request, fmt):
     update_metrics(request)
     api_code = enter_api_call('api_get_data', request)
 
-    if not request.session.get('has_session'):
-        request.session['has_session'] = True
+    ret = get_data(request, fmt)
 
-    session_id = request.session.session_key
-
-    (page_no, limit, page, opus_ids, order) = get_page(request)
-
-    checkboxes = request.is_ajax()
-
-    slugs = request.GET.get('cols', settings.DEFAULT_COLUMNS)
-    if not slugs:
-        slugs = settings.DEFAULT_COLUMNS
-
-    is_column_chooser = request.GET.get('col_chooser', False)
-
-    labels = []
-    id_index = None
-
-    for slug_no, slug in enumerate(slugs.split(',')):
-        if slug == 'opusid':
-            id_index = slug_no
-        try:
-            labels += [ParamInfo.objects.get(slug=slug).label_results]
-        except ParamInfo.DoesNotExist:
-            # this slug doesn't match anything in param_info, nix it
-            if '1' in slug:
-                # single column range slugs will not have the index, but
-                # will come in with it because of how ui is designed, so
-                # look for the slug without the index
-                temp_slug = slug[:-1]
-                try:
-                    labels += [ParamInfo.objects.get(slug=temp_slug).label_results]
-                except ParamInfo.DoesNotExist:
-                    log.error('Could not find param_info for %s', slug)
-                    continue
-
-    if is_column_chooser:
-        labels.insert(0, "add")   # adds a column for checkbox add-to-collections
-
-    collection = ''
-    if request.is_ajax():
-        # find the members of user collection in this page
-        # for pre-filling checkboxes
-        collection = get_collection_in_page(opus_ids, session_id)
-
-    data = {'page_no': page_no,
-            'limit':   limit,
-            'page':    page,
-            'count':   len(page),
-            'labels':  labels
-           }
-
-    if fmt == 'raw':
-        ret = data
-    ret = responseFormats(data, fmt, template='data.html', id_index=id_index,
-                          labels=labels, checkboxes=checkboxes,
-                          collection=collection, order=order)
     exit_api_call(api_code, ret)
     return ret
 
@@ -297,13 +242,80 @@ def api_get_metadata(request, opus_id, fmt):
     return ret
 
 
+def get_data(request, fmt):
+    """Return a page of data for a given search and page_no.
+
+    Can return JSON, HTML, or RAW.
+
+    Returned JSON is of the format:
+        data = {
+                'page_no': page_no,
+                'limit':   limit,
+                'page':    page,         # tabular page data
+                'count':   len(page),
+                'labels':  labels
+                }
+    """
+    session_id = get_session_id(request)
+
+    (page_no, limit, page, opus_ids, order) = get_page(request)
+
+    checkboxes = request.is_ajax()
+
+    slugs = request.GET.get('cols', settings.DEFAULT_COLUMNS)
+    if not slugs:
+        slugs = settings.DEFAULT_COLUMNS
+
+    is_column_chooser = request.GET.get('col_chooser', False)
+
+    labels = []
+    id_index = None
+
+    for slug_no, slug in enumerate(slugs.split(',')):
+        if slug == 'opusid':
+            id_index = slug_no
+        try:
+            labels += [ParamInfo.objects.get(slug=slug).label_results]
+        except ParamInfo.DoesNotExist:
+            # this slug doesn't match anything in param_info, nix it
+            if '1' in slug:
+                # single column range slugs will not have the index, but
+                # will come in with it because of how ui is designed, so
+                # look for the slug without the index
+                temp_slug = slug[:-1]
+                try:
+                    labels += [ParamInfo.objects.get(slug=temp_slug).label_results]
+                except ParamInfo.DoesNotExist:
+                    log.error('Could not find param_info for %s', slug)
+                    continue
+
+    if is_column_chooser:
+        labels.insert(0, "add")   # adds a column for checkbox add-to-collections
+
+    collection = ''
+    if request.is_ajax():
+        # find the members of user collection in this page
+        # for pre-filling checkboxes
+        collection = get_collection_in_page(opus_ids, session_id)
+
+    data = {'page_no': page_no,
+            'limit':   limit,
+            'page':    page,
+            'count':   len(page),
+            'labels':  labels
+           }
+
+    if fmt == 'raw':
+        ret = data
+    ret = responseFormats(data, fmt, template='data.html', id_index=id_index,
+                          labels=labels, checkboxes=checkboxes,
+                          collection=collection, order=order)
+    return ret
+
 def get_page(request, colls=None, colls_page=None, page=None):
     """Return a page of results."""
     # get some stuff from the url or fall back to defaults
-    if not request.session.get('has_session'):
-        request.session['has_session'] = True
-
-    session_id = request.session.session_key
+    session_id = get_session_id(request)
 
     if not colls:
         collection_page = request.GET.get('colls', False)
@@ -665,10 +677,7 @@ def api_get_images(request, fmt):
     update_metrics(request)
     api_code = enter_api_call('api_get_images', request)
 
-    if not request.session.get('has_session'):
-        request.session['has_session'] = True
-
-    session_id = request.session.session_key
+    session_id = get_session_id(request)
 
     alt_size = request.GET.get('alt_size', '')
     columns = request.GET.get('cols', settings.DEFAULT_COLUMNS)
@@ -730,10 +739,7 @@ def ____OLD_BROKENget_page(request, colls=None, colls_page=None, page=None):
     update_metrics(request)
 
     # get some stuff from the url or fall back to defaults
-    if not request.session.get('has_session'):
-        request.session['has_session'] = True
-
-    session_id = request.session.session_key
+    session_id = get_session_id(request)
 
     if not colls:
         collection_page = request.GET.get('colls', False)

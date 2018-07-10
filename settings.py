@@ -316,8 +316,8 @@ BASE_TABLES = ['obs_general', 'obs_pds', 'obs_ring_geometry',
 # These slugs may show up in the hash but are not actually database
 # queries and thus should be ignored when creating SQL
 SLUGS_NOT_IN_DB = ('browse', 'col_chooser', 'colls_browse', 'cols', 'detail',
-                   'gallery_data_viewer', 'limit', 'order', 'page',
-                   'reqno', 'view', 'widgets', 'widgets2')
+                   'gallery_data_viewer', 'limit', 'order', 'page', 'range',
+                   'reqno', 'request', 'view', 'widgets', 'widgets2')
 
 
 TAR_FILE_URI_PATH = 'http://pds-rings-downloads.seti.org/opus/'
