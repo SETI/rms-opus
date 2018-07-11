@@ -405,7 +405,7 @@ def api_create_download(request, session_id=None, opus_ids=None, fmt=None):
     os.remove(manifest_file_name)
     os.remove(csv_file_name)
 
-    zip_url = settings.TAR_FILE_URL_PATH + zip_file_name
+    zip_url = settings.TAR_FILE_URL_PATH + zip_base_file_name
 
     if not added:
         log.error('No files found for download cart %s', manifest_file_name)
