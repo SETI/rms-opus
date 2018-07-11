@@ -51,7 +51,7 @@
     },
     {
         "field_name": "timestamp",
-        "field_type": "datetime",
+        "field_type": "timestamp",
         "field_default": null
     }
 ]
