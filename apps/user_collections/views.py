@@ -233,7 +233,6 @@ def api_reset_session(request):
     sql = 'DELETE FROM '+connection.ops.quote_name('collections')
     sql += ' WHERE session_id=%s'
     cursor = connection.cursor()
-    log.error(sql)
     cursor.execute(sql, [session_id])
 
     request.session.flush()
