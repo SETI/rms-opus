@@ -350,8 +350,8 @@ a i.fa-search-plus:hover {
 }
 
 .ace-thumbnails > li > .tools.tools-bottom a:nth-child(2n) {
-    margin-right:0.5em;
-    margin-left:0.5em;
+    margin-right:0.8em;
+    margin-left:0.8em;
 }
 .ace-thumbnails > li > .tools.tools-bottom a:nth-child(3n) {
     position:relative;
