@@ -853,6 +853,22 @@ var o_browse = {
             return;
         }
 
+        // only draw the navbar if we are in gallery mode... doesn't make sense in collection mode
+        if (namespace == "#browse") {
+          // get the browse nav header?
+          $('.browse_nav', namespace).load( "/opus/browse_headers.html", function() {
+            // change the link text
+            if (opus.prefs.browse == 'gallery') {
+                $('.browse_view', namespace).text('view table');
+            } else {
+                $('.browse_view', namespace).text('view gallery');
+            }
+            // total pages indicator
+            $('#' + prefix + 'pages', namespace).html(opus[prefix + 'pages']);
+            window.scroll(0,0);  // sometimes you have scrolled down the search tab
+          });
+        }
+
         var base_url = "/opus/api/images.html?";
         if (opus.prefs[prefix + 'browse'] == 'data') {
             base_url = '/opus/api/data.html?';
@@ -951,24 +967,6 @@ var o_browse = {
                     $('.infinite_scroll_spinner', namespace).fadeOut("fast");
 
                }
-
-                // get the browse nav header?
-                if (!opus.gallery_begun) {
-                    $.ajax({ url: "/opus/browse_headers.html",
-                        success: function(html){
-                            $('.browse_nav', namespace).html(html);
-                            // change the link text
-                            if (opus.prefs.browse == 'gallery') {
-                                $('.browse_view', namespace).text('view table');
-                            } else {
-                                $('.browse_view', namespace).text('view gallery');
-                            }
-                            // total pages indicator
-                            $('#' + prefix + 'pages', namespace).html(opus[prefix + 'pages']);
-                            window.scroll(0,0);  // sometimes you have scrolled down the search tab
-                    }});
-
-                }
 
                 o_browse.getBrowseData(page);
 

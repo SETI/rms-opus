@@ -338,6 +338,10 @@ a i.fa-search-plus:hover {
     visibility: visible;
 }
 
+.glyphicon {
+	font-size: 16px;
+}
+
 .ace-thumbnails > li > .tools.tools-bottom a{
     margin:0; padding:0;
     display:inline-block;
@@ -346,8 +350,8 @@ a i.fa-search-plus:hover {
 }
 
 .ace-thumbnails > li > .tools.tools-bottom a:nth-child(2n) {
-    margin-right:1.3em;
-    margin-left:1.3em;
+    margin-right:0.8em;
+    margin-left:0.8em;
 }
 .ace-thumbnails > li > .tools.tools-bottom a:nth-child(3n) {
     position:relative;
