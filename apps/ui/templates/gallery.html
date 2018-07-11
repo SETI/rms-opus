@@ -1,7 +1,7 @@
 {% for i in data %}
   <li id="gallery__{{ i.opus_id }}">
     <a class="activeThumbnail" href="{{ i.full_url }}" data-rel="colorbox">
-      <img alt="{{ i.thumb_alt_text }}" title="{{ i.opus_id }}" src="{{ i.thumb_url }}">
+      <img height=100px width=100px alt="{{ i.thumb_alt_text }}" title="{{ i.opus_id }}" src="{{ i.thumb_url }}">
     </a>
 
     <div class="tools tools-bottom">
