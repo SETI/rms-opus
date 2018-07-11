@@ -897,7 +897,7 @@ def get_collection_in_page(opus_id_list, session_id):
     collection_in_page = []
     sql = 'SELECT DISTINCT opus_id FROM '+connection.ops.quote_name('collections')
     sql += ' WHERE session_id=%s'
-    cursor.execute(sql, session_id)
+    cursor.execute(sql, [session_id])
     rows = cursor.fetchall()
     coll_ids = [r[0] for r in rows]
     ret = [opus_id for opus_id in opus_id_list if opus_id in coll_ids]
