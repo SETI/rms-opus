@@ -6,8 +6,6 @@
 #    python main_opus_import.py --help
 ################################################################################
 
-from secrets import *
-
 import argparse
 import json
 import logging
@@ -16,8 +14,15 @@ import sys
 import traceback
 import warnings
 
+PROJECT_ROOT = os.path.dirname(os.path.realpath(__file__))
+PDS_OPUS_ROOT = os.path.dirname(os.path.dirname(PROJECT_ROOT))
+sys.path.insert(0, PDS_OPUS_ROOT) # So we can import opus_secrets
+
+from opus_secrets import *
+
 sys.path.insert(0, PDS_WEBSERVER_PYTHON_PATH)
 sys.path.insert(0, PDS_TOOLS_PATH)
+sys.path.insert(0, PDS_OPUS_LIB_PATH)
 
 IMPORT_ROOT = os.path.dirname(os.path.realpath(__file__))
 PROJECT_ROOT = os.path.dirname(IMPORT_ROOT)
@@ -61,11 +66,11 @@ parser.add_argument(
 )
 parser.add_argument(
     '--override-db-schema', type=str, default=None,
-    help='Override the db_schema specified in secrets.py'
+    help='Override the db_schema specified in opus_secrets.py'
 )
 parser.add_argument(
     '--override-pds-data-dir', type=str, default=None,
-    help='Override the PDS_DATA_DIR specified in secrets.py (.../holdings)'
+    help='Override the PDS_DATA_DIR specified in opus_secrets.py (.../holdings)'
 )
 
 # What to actually do - main import
@@ -277,8 +282,8 @@ impglobals.LOGGER = pdslogger.PdsLogger(LOGNAME,
             limits={'info': impglobals.ARGUMENTS.log_info_limit,
                     'debug': impglobals.ARGUMENTS.log_debug_limit})
 
-info_logfile = os.path.abspath(LOG_FILE)
-debug_logfile = os.path.abspath(DEBUG_LOG_FILE)
+info_logfile = os.path.abspath(IMPORT_LOG_FILE)
+debug_logfile = os.path.abspath(IMPORT_DEBUG_LOG_FILE)
 
 info_handler = pdslogger.file_handler(info_logfile, level=logging.INFO,
                                       rotation='ymdhms')
@@ -289,10 +294,10 @@ impglobals.LOGGER.add_handler(info_handler)
 impglobals.LOGGER.add_handler(debug_handler)
 impglobals.LOGGER.add_handler(pdslogger.stdout_handler)
 
-handler = pdslogger.warning_handler(LOGFILE_DIR, rotation='none')
+handler = pdslogger.warning_handler(IMPORT_LOGFILE_DIR, rotation='none')
 impglobals.LOGGER.add_handler(handler)
 
-handler = pdslogger.error_handler(LOGFILE_DIR, rotation='none')
+handler = pdslogger.error_handler(IMPORT_LOGFILE_DIR, rotation='none')
 impglobals.LOGGER.add_handler(handler)
 
 if impglobals.ARGUMENTS.log_pdsfile:
@@ -336,8 +341,8 @@ try: # Top-level exception handling so we always log what's going on
 
     try:
         impglobals.DATABASE = importdb.get_db(
-                                   DB_BRAND, OPUS_HOST_NAME,
-                                   OPUS_DATABASE_NAME, our_schema_name,
+                                   DB_BRAND, DB_HOST_NAME,
+                                   DB_DATABASE_NAME, our_schema_name,
                                    DB_USER, DB_PASSWORD,
                                    mult_form_types=GROUP_FORM_TYPES,
                                    logger=impglobals.LOGGER,

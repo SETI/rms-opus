@@ -9,7 +9,6 @@
 
 import os
 
-from secrets import *
 from config_data import *
 import impglobals
 import import_util

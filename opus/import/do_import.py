@@ -10,7 +10,6 @@ import pdsfile
 
 import opus_support
 
-from secrets import *
 from config_data import *
 import impglobals
 import import_util

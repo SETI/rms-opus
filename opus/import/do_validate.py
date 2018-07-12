@@ -8,7 +8,6 @@ import os
 
 import pdsfile
 
-from secrets import *
 import impglobals
 import import_util
 

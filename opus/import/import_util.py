@@ -15,7 +15,7 @@ import pdslogger
 import pdsparser
 import pdstable
 
-from secrets import *
+from opus_secrets import *
 from config_data import *
 import impglobals
 import instruments

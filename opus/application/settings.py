@@ -1,14 +1,19 @@
 import os
 import sys
 from collections import OrderedDict
-from secrets import *
 
 BASE_PATH = 'opus'  # production base path is handled by apache, local is not.
 PROJECT_ROOT = os.path.dirname(os.path.realpath(__file__))
+PDS_OPUS_ROOT = os.path.dirname(os.path.dirname(PROJECT_ROOT))
 sys.path.insert(0, PROJECT_ROOT)
+sys.path.insert(0, PDS_OPUS_ROOT) # So we can import secrets
+
+from opus_secrets import *
+
 sys.path.insert(0, os.path.join(PROJECT_ROOT, 'apps'))
-sys.path.insert(0, os.path.join(PROJECT_ROOT, '../pds-tools'))
-sys.path.insert(0, os.path.join(PROJECT_ROOT, '../pds-webserver/python'))
+sys.path.insert(0, os.path.join(PROJECT_ROOT, PDS_TOOLS_PATH))
+sys.path.insert(0, os.path.join(PROJECT_ROOT, PDS_WEBSERVER_PYTHON_PATH))
+sys.path.insert(0, os.path.join(PROJECT_ROOT, PDS_OPUS_LIB_PATH))
 
 import opus_support
 import julian
@@ -273,27 +278,26 @@ os.environ['REUSE_DB'] = "1"  # for test runner
 
 DATABASES = {
     'default': {
-        'NAME': OPUS_DB,  # local database name
+        'NAME': OPUS_SCHEMA_NAME,  # local database name
         'ENGINE': 'django.db.backends.mysql',
         'USER': DB_USER,
-        'PASSWORD': DB_PASS,
+        'PASSWORD': DB_PASSWORD,
         # 'OPTIONS':{ 'unix_socket': '/private/tmp/mysql.sock'}
         'TEST': {
-                    'NAME': OPUS_DB,  # use same database for test as prod YES
+                    'NAME': OPUS_SCHEMA_NAME,  # use same database for test as prod YES
                 },
     },
     'dictionary': {
-        'NAME': DICTIONARY_DB, 
+        'NAME': DICTIONARY_SCHEMA_NAME,
         'ENGINE': 'django.db.backends.mysql',
         'USER': DB_USER,
-        'PASSWORD': DB_PASS,
-        # 'OPTIONS':{ 'init_command': 'SET storage_engine=MYISAM;'},
+        'PASSWORD': DB_PASSWORD,
     },
     'metrics': {
         'NAME': 'opus_metrics',
         'ENGINE': 'django.db.backends.mysql',
         'USER': DB_USER,
-        'PASSWORD': DB_PASS,
+        'PASSWORD': DB_PASSWORD,
         # 'OPTIONS':{ 'unix_socket': '/private/var/mysql/mysql.sock'},
     }
 }

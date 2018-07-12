@@ -1,13 +1,18 @@
 from datetime import datetime
 import glob
+import os
 import sys
 
 import json
 import MySQLdb
 
-from secrets import *
+PROJECT_ROOT = os.path.dirname(os.path.realpath(__file__))
+PDS_OPUS_ROOT = os.path.dirname(os.path.dirname(PROJECT_ROOT))
+sys.path.insert(0, PDS_OPUS_ROOT) # So we can import opus_secrets
 
-sys.path.append(PDS_TOOLS_PATH)
+from opus_secrets import *
+
+sys.path.insert(0, PDS_TOOLS_PATH)
 
 import pdsparser
 
@@ -33,12 +38,12 @@ class ImportDictionaryData(object):
         "  PRIMARY KEY (`term`,`context`, `subterm`)"
         ") ENGINE=InnoDB DEFAULT CHARSET=utf8")
 
-    json_schema_path = f"{JSON_SCHEMA_PATH}/obs*.json"
+    json_schema_path = f"{DICTIONARY_JSON_SCHEMA_PATH}/obs*.json"
     insert_query = (f"INSERT INTO `{db_table}` "
                         "(term, context, def, subterm, modified, import_date) "
                         "VALUES (%s, %s, %s, %s, %s, %s)")
 
-    def __init__(self, db_hostname=DICTIONARY_HOST_NAME, db_schema=DICTIONARY_SCHEMA_NAME, db_user=DB_USER, db_password=DB_PASSWORD):
+    def __init__(self, db_hostname=DB_HOST_NAME, db_schema=DICTIONARY_SCHEMA_NAME, db_user=DB_USER, db_password=DB_PASSWORD):
         self.db_hostname = db_hostname
         self.db_schema = db_schema
         self.db_user = db_user
@@ -62,7 +67,7 @@ class ImportDictionaryData(object):
         print("Connection closed")
 
     def create_dictionary(self, **kwargs):
-        pds_file = PDSDD_FILE
+        pds_file = DICTIONARY_PDSDD_FILE
         json_list = glob.glob(self.json_schema_path)
         cursor = self.conn.cursor()
         if 'drop' in kwargs:

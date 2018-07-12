@@ -6,7 +6,6 @@
 
 import os
 
-from secrets import *
 import impglobals
 import import_util
 
