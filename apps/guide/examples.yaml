@@ -28,8 +28,8 @@ sections:
                 fmt: json,html,zip,csv
                 GET params: search params, limit, page
             examples:
-                - desc: planet = Jupiter, medium images, in html
-                  url: https://tools.pds-rings.seti.org/opus/api/images/med.html?planet=Jupiter
+                - desc: planet = Jupiter, medium images, in json
+                  url: https://tools.pds-rings.seti.org/opus/api/images/med.json?planet=Jupiter
 
           - title: api/image/[size]/[opus_id]
             desc: get images for a single observation
@@ -37,8 +37,8 @@ sections:
                 size: thumb,small,med,full
                 opus_id: valid opus_id
             examples:
-                - desc: jupiter observation, full size, in html
-                  url: https://tools.pds-rings.seti.org/opus/api/image/full/J_IMG_GO_SSI_0520821213.html
+                - desc: jupiter observation, full size, in json
+                  url: https://tools.pds-rings.seti.org/opus/api/image/full/J_IMG_GO_SSI_0520821213.json
 
           - title: api/files/[opus_id].[fmt]
             desc: get files for a single observation
@@ -55,8 +55,8 @@ sections:
                 fmt: json,html,zip,csv
                 GET params: search params, limit, page
             examples:
-                - desc: target Pan, in html
-                  url: https://tools.pds-rings.seti.org/opus/api/files.html?&target=pan
+                - desc: target Pan, in json
+                  url: https://tools.pds-rings.seti.org/opus/api/files.json?&target=pan
 
     - title: Getting Information about Data
       endpoints:
@@ -90,14 +90,14 @@ sections:
                 - desc: get ring radius endpoints for target Saturn
                   url: https://tools.pds-rings.seti.org/opus/api/meta/range/endpoints/ringradius1.json?target=Saturn
 
-          - title: api/fields/[field].[fmt]
-            desc: get information about a particular field
-            info:
-                field: field name or no
-                fmt: json,html,zip
-            examples:
-                - desc: get information about the planet field
-                  url: https://tools.pds-rings.seti.org/opus/api/fields/planet.json
+          # - title: api/fields/[field].[fmt]
+          #   desc: get information about a particular field
+          #   info:
+          #       field: field name or no
+          #       fmt: json,html,zip
+          #   examples:
+          #       - desc: get information about the planet field
+          #         url: https://tools.pds-rings.seti.org/opus/api/fields/planet.json
 
           - title: api/fields.[fmt]
             desc: get list of all fields
@@ -107,13 +107,13 @@ sections:
                 - desc: list of all fields in json
                   url: https://tools.pds-rings.seti.org/opus/api/fields.json
 
-          - title: api/category/[cat_name]
-            desc: get all fields in a category
-            info:
-                cat_name: category name
-            examples:
-                - desc: field names in Hubble Mission in json
-                  url: https://tools.pds-rings.seti.org/opus/api/category/hubble_mission.json
+          # - title: api/category/[cat_name]
+          #   desc: get all fields in a category
+          #   info:
+          #       cat_name: category name
+          #   examples:
+          #       - desc: field names in Hubble Mission in json
+          #         url: https://tools.pds-rings.seti.org/opus/api/category/hubble_mission.json
 
           - title: api/categories.[fmt]
             desc: list category names
