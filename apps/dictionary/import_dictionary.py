@@ -143,7 +143,7 @@ class ImportDictionaryData(object):
                 self.conn.commit()
 
         except IOError as e:
-            print("I/O error  {e.errno}:  {str(e.strerror)}")
+            print(f"I/O error  {e.errno}:  {str(e.strerror)}")
 
         except:
             print(term)
