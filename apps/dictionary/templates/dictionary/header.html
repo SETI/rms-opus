@@ -1,0 +1,38 @@
+<head>
+    <meta charset="utf-8" />
+    <title>OPUS - Data Search for Outer Planets NASA Mission Data - NASA PDS Rings Node</title>
+    <meta name="description" content="OPUS - Outer Planets Data Search Tool - NASA PDS Rings Node" />
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" href="{{ STATIC_URL }}img/favicon.ico">
+
+    <!-- basic styles -->
+    <link rel="stylesheet" href="https://ajax.googleapis.com/ajax/libs/jqueryui/1.12.1/themes/smoothness/jquery-ui.min.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.0.3/css/font-awesome.min.css" media="all" rel="stylesheet" type="text/css">
+
+    <!-- ace styles -->
+    <link rel="stylesheet" href="{{ STATIC_URL }}css/ace_theme/uncompressed/ace-fonts.css" />
+    <link rel="stylesheet" href="{{ STATIC_URL }}css/ace_theme/uncompressed/ace.css" />
+
+    <!-- dictionary custom -->
+    <link rel="stylesheet" href="{{ STATIC_URL }}css/dictionary.css" />
+    <link rel="stylesheet" href="{{ STATIC_URL }}css/slidingPanel.css" />
+
+    <!--[if lte IE 8]>
+      <link rel="stylesheet" href="{{ STATIC_URL }}css/ace_theme/uncompressed/ace-ie.css" />
+    <![endif]-->
+
+    <!-- inline styles related to this page -->
+    {% block page_styles %} {% endblock %}
+
+    <!-- ace settings handler -->
+    <!-- script src="{{ STATIC_URL }}js/ace_theme/uncompressed/ace-extra.js"></script -->
+
+    <!-- HTML5 shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!--[if lt IE 9]>
+    <script src="{{ STATIC_URL }}js/ace_theme/uncompressed/html5shiv.js"></script>
+    <script src="{{ STATIC_URL }}js/ace_theme/uncompressed/respond.js"></script>
+    <![endif]-->
+
+    <!-- jquery plugins -->
+</head>

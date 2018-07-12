@@ -1,0 +1,375 @@
+[
+    {
+        "field_name": "obs_general_id",
+        "field_type": "uint4",
+        "field_key": "foreign",
+        "field_key_foreign": [
+            "obs_general",
+            "id"
+        ],
+        "field_notnull": true,
+        "data_source": [
+            "TAB:obs_general",
+            "id"
+        ],
+        "comment": "This is the primary (surrogate) key linking the record to obs_general."
+    },
+    {
+        "field_name": "rms_obs_id",
+        "field_type": "char40",
+        "field_key": "foreign",
+        "field_key_foreign": [
+            "obs_general",
+            "rms_obs_id"
+        ],
+        "field_notnull": true,
+        "data_source": [
+            "TAB:obs_general",
+            "rms_obs_id"
+        ],
+        "comment": "This is the secondary key linking the record to obs_general."
+    },
+    {
+        "field_name": "volume_id",
+        "field_type": "char11",
+        "field_notnull": true,
+        "field_key": true,
+        "data_source": [
+            "TAB:obs_general",
+            "volume_id"
+        ],
+        "comment": "The volume_id is included here for ease of database manipulation only."
+    },
+    {
+        "field_name": "instrument_mode_id",
+        "field_type": "enum",
+        "field_enum_options": "'CAL_BACKGROUND','CAL_SOLAR','CAL_SPECTRAL','IMAGE','LINE','OCCULTATION','POINT'",
+        "field_notnull": true,
+        "data_source": [
+            "TAB:index",
+            "INSTRUMENT_MODE_ID"
+        ],
+        "definition": "The mode in which the instrument is acquiring data, most commonly IMAGE but also LINE, POINT, OCCULTATION, CAL_SOLAR, CAL_SPECTRAL, CAL_BACKGROUND, or CAL_ELECTRIC.",
+        "pi_category_name": "obs_instrument_covims",
+        "pi_dict_context": "COVIMS",
+        "pi_dict_name": "INSTRUMENT_MODE_ID",
+        "pi_disp_order": 9,
+        "pi_display": 1,
+        "pi_display_results": 1,
+        "pi_form_type": "GROUP",
+        "pi_intro": null,
+        "pi_label": "Instrument Mode ID",
+        "pi_label_results": "Instrument Mode ID",
+        "pi_old_slug": "INSTRUMENTMODEID",
+        "pi_slug": "COVIMSinstrumentmodeid",
+        "pi_sub_heading": null,
+        "pi_tooltip": "",
+        "pi_units": "",
+        "comment": "Definition from COVIMS label",
+        "mult_options": [
+              [   0,          "IMAGE",          "IMAGE",  10, "Y", null],
+              [   1,           "LINE",           "LINE",  20, "Y", null],
+              [   2,    "OCCULTATION",    "OCCULTATION",  30, "Y", null],
+              [   3,          "POINT",          "POINT",  40, "Y", null],
+              [   4, "CAL_BACKGROUND", "CAL_BACKGROUND",  50, "Y", null],
+              [   5,      "CAL_SOLAR",      "CAL_SOLAR",  60, "Y", null],
+              [   6,   "CAL_SPECTRAL",   "CAL_SPECTRAL",  70, "Y", null]
+          ]
+    },
+    {
+        "field_name": "spectral_editing",
+        "field_type": "flag_yesno",
+        "field_notnull": true,
+        "data_source": [
+            "TAB:index",
+            "SPECTRAL_EDITING"
+        ],
+        "definition": "Indicates whether this cube has been reduced to a subset of the bands in the original cube.  If 'OFF', none of the original bands of the cube were intentionally omitted. See BAND_BIN_ORIGINAL_BAND to determine which bands are present.",
+        "pi_category_name": "obs_instrument_covims",
+        "pi_dict_context": "COVIMS",
+        "pi_dict_name": "SPECTRAL_EDITING",
+        "pi_disp_order": 8,
+        "pi_display": 1,
+        "pi_display_results": 1,
+        "pi_form_type": "GROUP",
+        "pi_intro": null,
+        "pi_label": "Spectral Editing",
+        "pi_label_results": "Spectral Editing",
+        "pi_old_slug": "SPECTRALEDITING",
+        "pi_slug": "COVIMSspectralediting",
+        "pi_sub_heading": null,
+        "pi_tooltip": "",
+        "pi_units": "",
+        "comment": "Definition from COVIMS label"
+    },
+    {
+        "field_name": "spectral_summing",
+        "field_type": "flag_yesno",
+        "field_notnull": true,
+        "data_source": [
+            "TAB:index",
+            "SPECTRAL_SUMMING"
+        ],
+        "pi_category_name": "obs_instrument_covims",
+        "pi_dict_context": "COVIMS",
+        "pi_dict_name": "SPECTRAL_SUMMING",
+        "pi_disp_order": 7,
+        "pi_display": 1,
+        "pi_display_results": 1,
+        "pi_form_type": "GROUP",
+        "pi_intro": null,
+        "pi_label": "Spectral Summing",
+        "pi_label_results": "Spectral Summing",
+        "pi_old_slug": "SPECTRALSUMMING",
+        "pi_slug": "COVIMSspectralsumming",
+        "pi_sub_heading": null,
+        "pi_tooltip": "",
+        "pi_units": "",
+        "comment": "Definition from COVIMS label"
+    },
+    {
+        "field_name": "star_tracking",
+        "field_type": "flag_onoff",
+        "field_notnull": true,
+        "data_source": [
+            "TAB:index",
+            "STAR_TRACKING"
+        ],
+        "definition": "Normally, the VIMS field of view is changed by altering the size (SWATH_WIDTH and SWATH_LENGTH) of the subset of the array and by changing the position of that subset (X_OFFSET and Z_OFFSET) within the array.  This is the default, when STAR_TRACKING is OFF.  When STAR_TRACKING is ON, the tracking is accomplished by causing the instrument to ignore the supplied X and Z offsets in the instrument setup, and instead track the brightest pixel in the array as it moves over time.  The brightest pixel is set in the instrument by running a previous instrument setup (of a minimal size), which will cause the X and Z position of the brightest pixel to be automatically set inside the instrument.  This position is then used as the initial brightest pixel, and it will be tracked over the life of this setup.",
+        "pi_category_name": "obs_instrument_covims",
+        "pi_dict_context": "COVIMS",
+        "pi_dict_name": "STAR_TRACKING",
+        "pi_disp_order": 7,
+        "pi_display": 1,
+        "pi_display_results": 1,
+        "pi_form_type": "GROUP",
+        "pi_intro": null,
+        "pi_label": "Star Tracking",
+        "pi_label_results": "Star Tracking",
+        "pi_slug": "COVIMSstartracking",
+        "pi_sub_heading": null,
+        "pi_tooltip": "",
+        "pi_units": "",
+        "comment": "Definition from COVIMS label"
+    },
+    {
+        "field_name": "swath_width",
+        "field_type": "uint2",
+        "field_notnull": true,
+        "data_source": [
+            "TAB:index",
+            "SWATH_WIDTH"
+        ],
+        "definition": "The number of pixels (in the X direction) collected during an observation.  This will differ from CORE_ITEMS (1) for Occultation Mode cubes. The angular size of these pixels is dependent upon the resolution mode selected.",
+        "pi_category_name": "obs_instrument_covims",
+        "pi_dict_context": "COVIMS",
+        "pi_dict_name": "SWATH_WIDTH",
+        "pi_disp_order": 7,
+        "pi_display": 1,
+        "pi_display_results": 1,
+        "pi_form_type": "RANGE",
+        "pi_intro": null,
+        "pi_label": "Swath Width",
+        "pi_label_results": "Swath Width",
+        "pi_slug": "COVIMSswathwidth",
+        "pi_sub_heading": null,
+        "pi_tooltip": "",
+        "pi_units": "",
+        "comment": "Definition from COVIMS label. XXX Needs val_min/max"
+    },
+    {
+        "field_name": "swath_length",
+        "field_type": "uint2",
+        "field_notnull": true,
+        "data_source": [
+            "TAB:index",
+            "SWATH_LENGTH"
+        ],
+        "definition": "The number of slices (in the Z direction) collected during an observation. This will differ from CORE_ITEMS (3) for all packed cubes and Occultation Mode cubes. The angular size of these lines is dependent upon the resolution mode selected.",
+        "pi_category_name": "obs_instrument_covims",
+        "pi_dict_context": "COVIMS",
+        "pi_dict_name": "SWATH_LENGTH",
+        "pi_disp_order": 7,
+        "pi_display": 1,
+        "pi_display_results": 1,
+        "pi_form_type": "RANGE",
+        "pi_intro": null,
+        "pi_label": "Swath Length",
+        "pi_label_results": "Swath Length",
+        "pi_slug": "COVIMSswathlength",
+        "pi_sub_heading": null,
+        "pi_tooltip": "",
+        "pi_units": "",
+        "comment": "Definition from COVIMS label. XXX Needs val_min/max"
+    },
+    {
+        "field_name": "ir_exposure",
+        "field_type": "real8",
+        "field_default": null,
+        "data_source": [
+            "TAB:index",
+            "IR_EXPOSURE"
+        ],
+        "val_min": 0,
+        "val_max": 1e5,
+        "val_sentinel": -999,
+        "definition": "The IR exposure time for each pixel, in milliseconds.",
+        "pi_category_name": "obs_instrument_covims",
+        "pi_dict_context": "COVIMS",
+        "pi_dict_name": "IR_EXPOSURE",
+        "pi_disp_order": 6,
+        "pi_display": 1,
+        "pi_display_results": 1,
+        "pi_form_type": "RANGE",
+        "pi_intro": null,
+        "pi_label": "IR Exposure",
+        "pi_label_results": "IR Exposure",
+        "pi_old_slug": "IREXPOSURE",
+        "pi_slug": "COVIMSirexposure",
+        "pi_sub_heading": null,
+        "pi_tooltip": "",
+        "pi_units": "seconds",
+        "comment": "Definition from COVIMS label"
+    },
+    {
+        "field_name": "ir_sampling_mode_id",
+        "field_type": "enum",
+        "field_enum_options": "'HI-RES','NORMAL','UNDER'",
+        "field_notnull": true,
+        "data_source": [
+            "TAB:index",
+            "IR_SAMPLING_MODE_ID"
+        ],
+        "definition": "The spatial resolution mode of the IR channel. Either NORMAL for 0.5 mrad x 0.5 mrad pixels, or UNDER for NYQUIST sampling (0.5 x 0.5 mrad), or HI-RES for 0.25 x 0.50 mrad sampling.",
+        "pi_category_name": "obs_instrument_covims",
+        "pi_dict_context": "COVIMS",
+        "pi_dict_name": "IR_SAMPLING_MODE_ID",
+        "pi_disp_order": 4,
+        "pi_display": 1,
+        "pi_display_results": 1,
+        "pi_form_type": "GROUP",
+        "pi_intro": null,
+        "pi_label": "IR Sampling Mode ID",
+        "pi_label_results": "IR Sampling Mode ID",
+        "pi_old_slug": "IRSAMPLINGMODEID",
+        "pi_slug": "COVIMSirsamplingmodeid",
+        "pi_sub_heading": null,
+        "pi_tooltip": "",
+        "pi_units": "",
+        "comment": "Definition from COVIMS label",
+        "mult_options": [
+              [   0, "HI-RES", "Hi-Res",  10, "Y", null],
+              [   1, "NORMAL", "Normal",  20, "Y", null],
+              [   2,  "UNDER",  "Under",  30, "Y", null]
+          ]
+    },
+    {
+        "field_name": "vis_exposure",
+        "field_type": "real8",
+        "field_default": null,
+        "data_source": [
+            "TAB:index",
+            "VIS_EXPOSURE"
+        ],
+        "val_min": 0,
+        "val_max": 1e5,
+        "val_sentinel": -999,
+        "definition": "The VIS exposure time for each line, in milliseconds.",
+        "pi_category_name": "obs_instrument_covims",
+        "pi_dict_context": "COVIMS",
+        "pi_dict_name": "VIS_EXPOSURE",
+        "pi_disp_order": 5,
+        "pi_display": 1,
+        "pi_display_results": 1,
+        "pi_form_type": "RANGE",
+        "pi_intro": null,
+        "pi_label": "VIS Exposure",
+        "pi_label_results": "VIS Exposure",
+        "pi_old_slug": "VISEXPOSURE",
+        "pi_slug": "COVIMSvisexposure",
+        "pi_sub_heading": null,
+        "pi_tooltip": "",
+        "pi_units": "seconds",
+        "comment": "Definition from COVIMS label"
+    },
+    {
+        "field_name": "vis_sampling_mode_id",
+        "field_type": "enum",
+        "field_enum_options": "'HI-RES','N/A','NORMAL','UNK'",
+        "field_notnull": true,
+        "data_source": [
+            "TAB:index",
+            "VIS_SAMPLING_MODE_ID"
+        ],
+        "definition": "The spatial resolution mode of the VIS channel. Either NORMAL for 0.5 mrad x 0.5 mrad pixels, or HI-RES sampling (0.167 x 0.167 mrad), or N/A if the VIS channel is OFF.",
+        "pi_category_name": "obs_instrument_covims",
+        "pi_dict_context": "COVIMS",
+        "pi_dict_name": "VIS_SAMPLING_MODE_ID",
+        "pi_disp_order": 3,
+        "pi_display": 1,
+        "pi_display_results": 1,
+        "pi_form_type": "GROUP",
+        "pi_intro": null,
+        "pi_label": "VIS Sampling Mode ID",
+        "pi_label_results": "VIS Sampling Mode ID",
+        "pi_old_slug": "VISSAMPLINGMODEID",
+        "pi_slug": "COVIMSvissamplingmodeid",
+        "pi_sub_heading": null,
+        "pi_tooltip": "",
+        "pi_units": "",
+        "comment": "Definition from COVIMS label",
+        "mult_options": [
+              [   0, "HI-RES",  "Hi-Res",  10, "Y", null],
+              [   1, "NORMAL",  "Normal",  20, "Y", null],
+              [   2,    "N/A",     "N/A",  30, "Y", null],
+              [   3,    "UNK", "Unknown",  40, "Y", null]
+          ]
+    },
+    {
+        "field_name": "channel",
+        "field_type": "enum",
+        "field_enum_options": "'IR','VIS'",
+        "field_notnull": true,
+        "data_source": [
+            "FUNCTION",
+            "obs_instrument_COVIMS_channel"
+        ],
+        "pi_category_name": "obs_instrument_covims",
+        "pi_dict_context": "COVIMS",
+        "pi_dict_name": "CHANNEL",
+        "pi_disp_order": 1,
+        "pi_display": 1,
+        "pi_display_results": 1,
+        "pi_form_type": "GROUP",
+        "pi_intro": null,
+        "pi_label": "Channel",
+        "pi_label_results": "Channel",
+        "pi_old_slug": "channel",
+        "pi_slug": "COVIMSchannel",
+        "pi_sub_heading": null,
+        "pi_tooltip": null,
+        "pi_units": null,
+        "comment": "XXX Needs definition",
+        "mult_options": [
+              [   0,  "IR",  "IR",  10, "Y", null],
+              [   1, "VIS", "VIS",  20, "Y", null]
+          ]
+    },
+    {
+        "put_mults_here": true
+    },
+    {
+        "field_name": "id",
+        "field_type": "uint4",
+        "field_key": "primary",
+        "field_notnull": true,
+        "data_source": [
+            "MAX_ID",
+            null
+        ]
+    },
+    {
+        "field_name": "timestamp",
+        "field_type": "timestamp"
+    }
+]

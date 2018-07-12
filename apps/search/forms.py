@@ -75,6 +75,11 @@ class SearchForm(forms.Form):
         for slug,values in args[0].items():
 
             param_info = get_param_info_by_slug(slug)
+            if not param_info:
+                log.error(
+            "SearchForm: Could not find param_info entry for slug %s",
+            str(slug))
+                continue  # todo this should raise end user error
 
             try:
                 form_type = param_info.form_type
@@ -130,9 +135,9 @@ class SearchForm(forms.Form):
 
                 #grouped mult fields:
                 if grouped:
-                    choices = [(mult.label, mult.label) for mult in model.objects.filter(grouping=grouping, display='Y')]
+                    choices = [(mult.label, mult.label) for mult in model.objects.filter(grouping=grouping, display='Y').order_by('disp_order')]
                 else:
-                    choices = [(mult.label, mult.label) for mult in model.objects.filter(display='Y')]
+                    choices = [(mult.label, mult.label) for mult in model.objects.filter(display='Y').order_by('disp_order')]
 
                 self.fields[slug] = forms.MultipleChoiceField(
                         # label = ParamInfo.objects.get(slug=slug).label,

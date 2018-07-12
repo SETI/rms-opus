@@ -1,0 +1,655 @@
+PDS_VERSION_ID                  = PDS3
+RECORD_TYPE                     = FIXED_LENGTH
+FILE_RECORDS                    = 1961
+RECORD_BYTES                    = 1027
+^SUPPLEMENTAL_INDEX_TABLE       = "COUVIS_0002_supplemental_index.tab"
+
+VOLUME_ID                       = "COUVIS_0002"
+PRODUCT_CREATION_TIME           = 2012-09-24T16:00:00
+
+INSTRUMENT_HOST_NAME            = "CASSINI ORBITER"
+INSTRUMENT_HOST_ID              = CO
+INSTRUMENT_NAME                 = "ULTRAVIOLET IMAGING SPECTROGRAPH"
+INSTRUMENT_ID                   = "UVIS"
+
+OBJECT                          = SUPPLEMENTAL_INDEX_TABLE
+  INTERCHANGE_FORMAT            = ASCII
+  ROWS                          = 1961
+  ROW_BYTES                     = 1027
+  COLUMNS                       = 47
+  INDEX_TYPE                    = SINGLE
+
+  DESCRIPTION                   = "This index supplements the file
+    INDEX/INDEX.TAB found on each Cassini UVIS archive volume in the PDS. It
+    contains a large set of useful parameter values that are not found in the
+    default index. Most have been collected from the PDS label files."
+
+  OBJECT                        = COLUMN
+    COLUMN_NUMBER               = 1
+    NAME                        = VOLUME_ID
+    DATA_TYPE                   = CHARACTER
+    START_BYTE                  = 2
+    BYTES                       = 11
+    FORMAT                      = "A11"
+    DESCRIPTION                 = "The volume ID provides a unique identifier
+        for a PDS data volume."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    COLUMN_NUMBER               = 2
+    NAME                        = FILE_SPECIFICATION_NAME
+    DATA_TYPE                   = CHARACTER
+    START_BYTE                  = 16
+    BYTES                       = 40
+    FORMAT                      = "A40"
+    DESCRIPTION                 = "The file specification name provides the
+        full name of a file, including a path name, relative to the root
+        directory of the PDS volume.
+
+        This indicates the label file for each UVIS data product. The label
+        file names end in '.LBL', whereas the associated data file names end
+        in '.DAT' instead."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    COLUMN_NUMBER               = 3
+    NAME                        = PRODUCT_ID
+    DATA_TYPE                   = CHARACTER
+    START_BYTE                  = 59
+    BYTES                       = 21
+    FORMAT                      = "A21"
+    DESCRIPTION                 = "The unique identifier assigned to the data
+        product. In this data set, it is equivalent to the file name (without
+        the directory path."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    COLUMN_NUMBER               = 4
+    NAME                        = OBSERVATION_ID
+    DATA_TYPE                   = CHARACTER
+    START_BYTE                  = 83
+    BYTES                       = 30
+    FORMAT                      = "A30"
+    DESCRIPTION                 = "Identifier used in Cassini observation
+        planning."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    COLUMN_NUMBER               = 5
+    NAME                        = DATA_OBJECT_TYPE
+    DATA_TYPE                   = CHARACTER
+    START_BYTE                  = 116
+    BYTES                       = 11
+    FORMAT                      = "A11"
+    DESCRIPTION                 = "The data object type of associated data
+        file, as described in the label. In this data set, possibilities are
+        QUBE, SPECTRUM and TIME_SERIES."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    COLUMN_NUMBER               = 6
+    NAME                        = RIGHT_ASCENSION
+    DATA_TYPE                   = ASCII_REAL
+    START_BYTE                  = 129
+    BYTES                       = 10
+    FORMAT                      = "F10.6"
+    UNIT                        = "DEGREES"
+    NULL_CONSTANT               = -99.
+    DESCRIPTION                 = "Right ascension of the instrument axis
+        on the celestial sphere.  Computed using CSPICE_PXFORM and
+        CSPICE_RECRAD."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    COLUMN_NUMBER               = 7
+    NAME                        = DECLINATION
+    DATA_TYPE                   = ASCII_REAL
+    START_BYTE                  = 140
+    BYTES                       = 10
+    FORMAT                      = "F10.6"
+    UNIT                        = "DEGREES"
+    NULL_CONSTANT               = -99.
+    DESCRIPTION                 = "Declination of the instrument axis
+        on the celestial sphere.  Computed using CSPICE_PXFORM and
+        CSPICE_RECRAD."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    COLUMN_NUMBER               = 8
+    NAME                        = SUB_SOLAR_LATITUDE
+    DATA_TYPE                   = ASCII_REAL
+    START_BYTE                  = 151
+    BYTES                       = 8
+    FORMAT                      = "F8.3"
+    UNIT                        = "DEGREES"
+    NULL_CONSTANT               = -99.
+    DESCRIPTION                 = "Latitude of sub-solar point (using
+        nearpoint method) (deg). Computed using CSPICE_SUBSOL and
+        CSPICE_RECLAT."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    COLUMN_NUMBER               = 9
+    NAME                        = SUB_SOLAR_LONGITUDE
+    DATA_TYPE                   = ASCII_REAL
+    START_BYTE                  = 160
+    BYTES                       = 8
+    FORMAT                      = "F8.3"
+    UNIT                        = "DEGREES"
+    NULL_CONSTANT               = -99.
+    DESCRIPTION                 = "Longitude of sub-solar point (using
+        nearpoint method) (deg). Computed using CSPICE_SUBSOL and
+        CSPICE_RECLAT."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    COLUMN_NUMBER               = 10
+    NAME                        = SUB_SPACECRAFT_LATITUDE
+    DATA_TYPE                   = ASCII_REAL
+    START_BYTE                  = 169
+    BYTES                       = 8
+    FORMAT                      = "F8.3"
+    UNIT                        = "DEGREES"
+    NULL_CONSTANT               = -99.
+    DESCRIPTION                 = "Latitude of sub-spacecraft point (using
+        nearpoint method) (deg). Computed using CSPICE_SUBSOL and
+        CSPICE_RECLAT."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    COLUMN_NUMBER               = 11
+    NAME                        = SUB_SPACECRAFT_LONGITUDE
+    DATA_TYPE                   = ASCII_REAL
+    START_BYTE                  = 178
+    BYTES                       = 8
+    FORMAT                      = "F8.3"
+    UNIT                        = "DEGREES"
+    NULL_CONSTANT               = -99.
+    DESCRIPTION                 = "Longitude of sub-spacecraft point (using
+        nearpoint method) (deg). Computed using CSPICE_SUBSOL and
+        CSPICE_RECLAT."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    COLUMN_NUMBER               = 12
+    NAME                        = PHASE_ANGLE
+    DATA_TYPE                   = ASCII_REAL
+    START_BYTE                  = 187
+    BYTES                       = 8
+    FORMAT                      = "F8.3"
+    UNIT                        = "DEGREES"
+    NULL_CONSTANT               = -99.
+    DESCRIPTION                 = "Phase angle on the specified target at the
+        specified time at the point intersected by the instrument boresight
+        (deg). Computed using CSPICE_ILLUM."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    COLUMN_NUMBER               = 13
+    NAME                        = INCIDENCE_ANGLE
+    DATA_TYPE                   = ASCII_REAL
+    START_BYTE                  = 196
+    BYTES                       = 8
+    FORMAT                      = "F8.3"
+    UNIT                        = "DEGREES"
+    NULL_CONSTANT               = -99.
+    DESCRIPTION                 = "Solar incidence angle, measured from the
+        local target surface. Computed using CSPICE_ILLUM."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    COLUMN_NUMBER               = 14
+    NAME                        = EMISSION_ANGLE
+    DATA_TYPE                   = ASCII_REAL
+    START_BYTE                  = 205
+    BYTES                       = 8
+    FORMAT                      = "F8.3"
+    UNIT                        = "DEGREES"
+    NULL_CONSTANT               = -99.
+    DESCRIPTION                 = "Emission angle on the specified target at
+        the specified time at the point intersected by the instrument
+        boresight (deg).  Computed using CSPICE_ILLUM."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    COLUMN_NUMBER               = 15
+    NAME                        = CENTRAL_BODY_DISTANCE
+    DATA_TYPE                   = ASCII_REAL
+    START_BYTE                  = 214
+    BYTES                       = 12
+    FORMAT                      = "F12.3"
+    UNIT                        = "KM"
+    NULL_CONSTANT               = -9.9e99
+    DESCRIPTION                 = "Distance above target surface (km).
+        Computed using CSPICE_SUBPT."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    COLUMN_NUMBER               = 16
+    NAME                        = SC_PLANET_POSITION_VECTOR_X
+    DATA_TYPE                   = ASCII_REAL
+    START_BYTE                  = 227
+    BYTES                       = 12
+    FORMAT                      = "F12.3"
+    UNIT                        = "KM"
+    NULL_CONSTANT               = -9.9e99
+    DESCRIPTION                 = "The X component of the position vector of
+        the spacecraft with respect to the planet. Computed using
+        CSPICE_SPKEZR."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    COLUMN_NUMBER               = 17
+    NAME                        = SC_PLANET_POSITION_VECTOR_Y
+    DATA_TYPE                   = ASCII_REAL
+    START_BYTE                  = 240
+    BYTES                       = 12
+    FORMAT                      = "F12.3"
+    UNIT                        = "KM"
+    NULL_CONSTANT               = -9.9e99
+    DESCRIPTION                 = "The Y component of the position vector of
+        the spacecraft with respect to the planet. Computed using
+        CSPICE_SPKEZR."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    COLUMN_NUMBER               = 18
+    NAME                        = SC_PLANET_POSITION_VECTOR_Z
+    DATA_TYPE                   = ASCII_REAL
+    START_BYTE                  = 253
+    BYTES                       = 12
+    FORMAT                      = "F12.3"
+    UNIT                        = "KM"
+    NULL_CONSTANT               = -9.9e99
+    DESCRIPTION                 = "The Z component of the position vector of
+        the spacecraft with respect to the planet. Computed using
+        CSPICE_SPKEZR."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    COLUMN_NUMBER               = 19
+    NAME                        = SC_PLANET_VELOCITY_VECTOR_X
+    DATA_TYPE                   = ASCII_REAL
+    START_BYTE                  = 266
+    BYTES                       = 8
+    FORMAT                      = "F8.3"
+    UNIT                        = "KM/S"
+    NULL_CONSTANT               = -9.9e99
+    DESCRIPTION                 = "The X component of the velocity vector of
+        the spacecraft with respect to the planet. Computed using
+        CSPICE_SPKEZR."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    COLUMN_NUMBER               = 20
+    NAME                        = SC_PLANET_VELOCITY_VECTOR_Y
+    DATA_TYPE                   = ASCII_REAL
+    START_BYTE                  = 275
+    BYTES                       = 8
+    FORMAT                      = "F8.3"
+    UNIT                        = "KM/S"
+    NULL_CONSTANT               = -9.9e99
+    DESCRIPTION                 = "The Y component of the velocity vector of
+        the spacecraft with respect to the planet. Computed using
+        CSPICE_SPKEZR."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    COLUMN_NUMBER               = 21
+    NAME                        = SC_PLANET_VELOCITY_VECTOR_Z
+    DATA_TYPE                   = ASCII_REAL
+    START_BYTE                  = 284
+    BYTES                       = 8
+    FORMAT                      = "F8.3"
+    UNIT                        = "KM/S"
+    NULL_CONSTANT               = -9.9e99
+    DESCRIPTION                 = "The Z component of the velocity vector of
+        the spacecraft with respect to the planet. Computed using
+        CSPICE_SPKEZR."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    COLUMN_NUMBER               = 22
+    NAME                        = SC_SUN_POSITION_VECTOR_X
+    DATA_TYPE                   = ASCII_REAL
+    START_BYTE                  = 293
+    BYTES                       = 12
+    FORMAT                      = "F12.9"
+    UNIT                        = "KM"
+    NULL_CONSTANT               = -9.9e99
+    DESCRIPTION                 = "The X component of the position vector of
+        the spacecraft with respect to the sun. Computed using CSPICE_SPKEZR."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    COLUMN_NUMBER               = 23
+    NAME                        = SC_SUN_POSITION_VECTOR_Y
+    DATA_TYPE                   = ASCII_REAL
+    START_BYTE                  = 306
+    BYTES                       = 12
+    FORMAT                      = "F12.9"
+    UNIT                        = "KM"
+    NULL_CONSTANT               = -9.9e99
+    DESCRIPTION                 = "The Y component of the position vector of
+        the spacecraft with respect to the sun. Computed using CSPICE_SPKEZR."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    COLUMN_NUMBER               = 24
+    NAME                        = SC_SUN_POSITION_VECTOR_Z
+    DATA_TYPE                   = ASCII_REAL
+    START_BYTE                  = 319
+    BYTES                       = 12
+    FORMAT                      = "F12.9"
+    UNIT                        = "KM"
+    NULL_CONSTANT               = -9.9e99
+    DESCRIPTION                 = "The Z component of the position vector of
+        the spacecraft with respect to the sun. Computed using CSPICE_SPKEZR."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    COLUMN_NUMBER               = 25
+    NAME                        = SC_SUN_VELOCITY_VECTOR_X
+    DATA_TYPE                   = ASCII_REAL
+    START_BYTE                  = 332
+    BYTES                       = 8
+    FORMAT                      = "F8.3"
+    UNIT                        = "KM/S"
+    NULL_CONSTANT               = -9.9e99
+    DESCRIPTION                 = "The X component of the velocity vector of
+        the spacecraft with respect to the sun. Computed using CSPICE_SPKEZR."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    COLUMN_NUMBER               = 26
+    NAME                        = SC_SUN_VELOCITY_VECTOR_Y
+    DATA_TYPE                   = ASCII_REAL
+    START_BYTE                  = 341
+    BYTES                       = 8
+    FORMAT                      = "F8.3"
+    UNIT                        = "KM/S"
+    NULL_CONSTANT               = -9.9e99
+    DESCRIPTION                 = "The Y component of the velocity vector of
+        the spacecraft with respect to the sun. Computed using CSPICE_SPKEZR."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    COLUMN_NUMBER               = 27
+    NAME                        = SC_SUN_VELOCITY_VECTOR_Z
+    DATA_TYPE                   = ASCII_REAL
+    START_BYTE                  = 350
+    BYTES                       = 8
+    FORMAT                      = "F8.3"
+    UNIT                        = "KM/S"
+    NULL_CONSTANT               = -9.9e99
+    DESCRIPTION                 = "The Z component of the velocity vector of
+        the spacecraft with respect to the sun. Computed using CSPICE_SPKEZR."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    COLUMN_NUMBER               = 28
+    NAME                        = SC_TARGET_POSITION_VECTOR_X
+    DATA_TYPE                   = ASCII_REAL
+    START_BYTE                  = 359
+    BYTES                       = 12
+    FORMAT                      = "F12.3"
+    UNIT                        = "KM"
+    NULL_CONSTANT               = -9.9e99
+    DESCRIPTION                 = "The X component of the position vector of
+        the spacecraft with respect to the specified target. Computed using
+        CSPICE_SPKEZR."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    COLUMN_NUMBER               = 29
+    NAME                        = SC_TARGET_POSITION_VECTOR_Y
+    DATA_TYPE                   = ASCII_REAL
+    START_BYTE                  = 372
+    BYTES                       = 12
+    FORMAT                      = "F12.3"
+    UNIT                        = "KM"
+    NULL_CONSTANT               = -9.9e99
+    DESCRIPTION                 = "The Y component of the position vector of
+        the spacecraft with respect to the specified target. Computed using
+        CSPICE_SPKEZR."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    COLUMN_NUMBER               = 30
+    NAME                        = SC_TARGET_POSITION_VECTOR_Z
+    DATA_TYPE                   = ASCII_REAL
+    START_BYTE                  = 385
+    BYTES                       = 12
+    FORMAT                      = "F12.3"
+    UNIT                        = "KM"
+    NULL_CONSTANT               = -9.9e99
+    DESCRIPTION                 = "The Z component of the position vector of
+        the spacecraft with respect to the specified target. Computed using
+        CSPICE_SPKEZR."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    COLUMN_NUMBER               = 31
+    NAME                        = SC_TARGET_VELOCITY_VECTOR_X
+    DATA_TYPE                   = ASCII_REAL
+    START_BYTE                  = 398
+    BYTES                       = 8
+    FORMAT                      = "F8.3"
+    UNIT                        = "KM/S"
+    NULL_CONSTANT               = -9.9e99
+    DESCRIPTION                 = "The X component of the velocity vector of
+        the spacecraft with respect to the specified target. Computed using
+        CSPICE_SPKEZR."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    COLUMN_NUMBER               = 32
+    NAME                        = SC_TARGET_VELOCITY_VECTOR_Y
+    DATA_TYPE                   = ASCII_REAL
+    START_BYTE                  = 407
+    BYTES                       = 8
+    FORMAT                      = "F8.3"
+    UNIT                        = "KM/S"
+    NULL_CONSTANT               = -9.9e99
+    DESCRIPTION                 = "The Y component of the velocity vector of
+        the spacecraft with respect to the specified target. Computed using
+        CSPICE_SPKEZR."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    COLUMN_NUMBER               = 33
+    NAME                        = SC_TARGET_VELOCITY_VECTOR_Z
+    DATA_TYPE                   = ASCII_REAL
+    START_BYTE                  = 416
+    BYTES                       = 8
+    FORMAT                      = "F8.3"
+    UNIT                        = "KM/S"
+    NULL_CONSTANT               = -9.9e99
+    DESCRIPTION                 = "The Z component of the velocity vector of
+        the spacecraft with respect to the specified target. Computed using
+        CSPICE_SPKEZR."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    COLUMN_NUMBER               = 34
+    NAME                        = PLANET_CENTER_POSITION_VECTOR_X
+    DATA_TYPE                   = ASCII_REAL
+    START_BYTE                  = 425
+    BYTES                       = 12
+    FORMAT                      = "F12.9"
+    UNIT                        = "KM"
+    NULL_CONSTANT               = -9.9e99
+    DESCRIPTION                 = "The X component of the position vector of
+        the planet with respect to the solar system barycenter. Computed
+        using CSPICE_SPKSSB."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    COLUMN_NUMBER               = 35
+    NAME                        = PLANET_CENTER_POSITION_VECTOR_Y
+    DATA_TYPE                   = ASCII_REAL
+    START_BYTE                  = 438
+    BYTES                       = 12
+    FORMAT                      = "F12.9"
+    UNIT                        = "KM"
+    NULL_CONSTANT               = -9.9e99
+    DESCRIPTION                 = "The Y component of the position vector of
+        the planet with respect to the solar system barycenter. Computed
+        using CSPICE_SPKSSB."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    COLUMN_NUMBER               = 36
+    NAME                        = PLANET_CENTER_POSITION_VECTOR_Z
+    DATA_TYPE                   = ASCII_REAL
+    START_BYTE                  = 451
+    BYTES                       = 12
+    FORMAT                      = "F12.9"
+    UNIT                        = "KM"
+    NULL_CONSTANT               = -9.9e99
+    DESCRIPTION                 = "The Z component of the position vector of
+        the planet with respect to the solar system barycenter. Computed
+        using CSPICE_SPKSSB."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    COLUMN_NUMBER               = 37
+    NAME                        = PLANET_CENTER_VELOCITY_VECTOR_X
+    DATA_TYPE                   = ASCII_REAL
+    START_BYTE                  = 464
+    BYTES                       = 8
+    FORMAT                      = "F8.3"
+    UNIT                        = "KM/S"
+    NULL_CONSTANT               = -9.9e99
+    DESCRIPTION                 = "The X component of the velocity vector of
+        the planet with respect to the solar system barycenter. Computed
+        using CSPICE_SPKSSB."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    COLUMN_NUMBER               = 38
+    NAME                        = PLANET_CENTER_VELOCITY_VECTOR_Y
+    DATA_TYPE                   = ASCII_REAL
+    START_BYTE                  = 473
+    BYTES                       = 8
+    FORMAT                      = "F8.3"
+    UNIT                        = "KM/S"
+    NULL_CONSTANT               = -9.9e99
+    DESCRIPTION                 = "The Y component of the velocity vector of
+        the planet with respect to the solar system barycenter. Computed
+        using CSPICE_SPKSSB."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    COLUMN_NUMBER               = 39
+    NAME                        = PLANET_CENTER_VELOCITY_VECTOR_Z
+    DATA_TYPE                   = ASCII_REAL
+    START_BYTE                  = 482
+    BYTES                       = 8
+    FORMAT                      = "F8.3"
+    UNIT                        = "KM/S"
+    NULL_CONSTANT               = -9.9e99
+    DESCRIPTION                 = "The Z component of the velocity vector of
+        the planet with respect to the solar system barycenter. Computed
+        using CSPICE_SPKSSB."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    COLUMN_NUMBER               = 40
+    NAME                        = MINIMUM_BAND_NUMBER
+    DATA_TYPE                   = ASCII_INTEGER
+    START_BYTE                  = 491
+    BYTES                       = 4
+    FORMAT                      = "F4.0"
+    UNIT                        = "N/A"
+    DESCRIPTION                 = "The number of the BAND with the lowest
+        BAND_NUMBER used in this observation."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    COLUMN_NUMBER               = 41
+    NAME                        = MAXIMUM_BAND_NUMBER
+    DATA_TYPE                   = ASCII_INTEGER
+    START_BYTE                  = 496
+    BYTES                       = 4
+    FORMAT                      = "F4.0"
+    UNIT                        = "N/A"
+    DESCRIPTION                 = "The number of the BAND with the highest
+        BAND_NUMBER used in this observation."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    COLUMN_NUMBER               = 42
+    NAME                        = BAND_BINNING_FACTOR
+    DATA_TYPE                   = ASCII_INTEGER
+    START_BYTE                  = 501
+    BYTES                       = 4
+    FORMAT                      = "F4.0"
+    UNIT                        = "N/A"
+    DESCRIPTION                 = "The number of spectral bands of the
+        instrument that have been summed to produce a single spectral bin in
+        the data file."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    COLUMN_NUMBER               = 43
+    NAME                        = WINDOW_MINIMUM_LINE_NUMBER
+    DATA_TYPE                   = ASCII_INTEGER
+    START_BYTE                  = 506
+    BYTES                       = 2
+    FORMAT                      = "F2.0"
+    UNIT                        = "N/A"
+    DESCRIPTION                 = "The line number of the line with the
+        lowest line number in the window."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    COLUMN_NUMBER               = 44
+    NAME                        = WINDOW_MAXIMUM_LINE_NUMBER
+    DATA_TYPE                   = ASCII_INTEGER
+    START_BYTE                  = 509
+    BYTES                       = 2
+    FORMAT                      = "F2.0"
+    UNIT                        = "N/A"
+    DESCRIPTION                 = "The line number of the line with the
+        highest line number in the window."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    COLUMN_NUMBER               = 45
+    NAME                        = LINE_BINNING_FACTOR
+    DATA_TYPE                   = ASCII_INTEGER
+    START_BYTE                  = 512
+    BYTES                       = 2
+    FORMAT                      = "F2.0"
+    UNIT                        = "N/A"
+    DESCRIPTION                 = "The number of spatial bins of the
+        instrument that have been summed to produce a single spatial element
+        in one row of the data file."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    COLUMN_NUMBER               = 46
+    NAME                        = LINE_SAMPLES
+    DATA_TYPE                   = ASCII_INTEGER
+    START_BYTE                  = 515
+    BYTES                       = 8
+    FORMAT                      = "F8.0"
+    UNIT                        = "N/A"
+    DESCRIPTION                 = "The total number of data instances along
+        the horizontal axis (the number of samples in a line)."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    COLUMN_NUMBER               = 47
+    NAME                        = DESCRIPTION
+    DATA_TYPE                   = CHARACTER
+    START_BYTE                  = 525
+    BYTES                       = 500
+    FORMAT                      = "A500"
+    DESCRIPTION                 = "A brief statement of the purpose of the
+        observation."
+  END_OBJECT                    = COLUMN
+
+END_OBJECT                      = SUPPLEMENTAL_INDEX_TABLE
+END

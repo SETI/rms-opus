@@ -59,13 +59,13 @@ class searchTests(TestCase):
         slug = 'duration2'
         self.assertTrue(get_param_info_by_slug(slug))
 
-    def test__is_image_is_correct(self):
-        non_imaging_instruments = [thing['instrument_id'] for thing in ObsGeneral.objects.filter(is_image=0).values('instrument_id').distinct()]
-        imaging_instruments = ['COISS','VGISS', 'GOSSI','HSTWFPC2','HSTACS','HSTWFC3','LORRI','MVIC']
-        for instrument_id in imaging_instruments:
-            print "found an imaging instrument with is_image = 0 \n here is what opus thinks are non imaging instruments, \n something is awry here:"
-            print non_imaging_instruments
-            self.assertTrue(instrument_id not in non_imaging_instruments)
+    # def test__is_image_is_correct(self):
+    #     non_imaging_instruments = [thing['instrument_id'] for thing in ObsGeneral.objects.filter(is_image=0).values('instrument_id').distinct()]
+    #     imaging_instruments = ['COISS','VGISS', 'GOSSI','HSTWFPC2','HSTACS','HSTWFC3','LORRI','MVIC']
+    #     for instrument_id in imaging_instruments:
+    #         print "found an imaging instrument with is_image = 0 \n here is what opus thinks are non imaging instruments, \n something is awry here:"
+    #         print non_imaging_instruments
+    #         self.assertTrue(instrument_id not in non_imaging_instruments)
 
     def test__all_geo_models_should_have_same_fields_as_each_other(self):
         """ find all geo models by inspecting param_info_table and check that

@@ -1,0 +1,57 @@
+[
+    {
+        "field_name": "id",
+        "field_type": "uint4",
+        "field_autoincrement": true,
+        "field_key": "primary",
+        "field_notnull": true
+    },
+    {
+        "field_name": "selections_json",
+        "field_type": "text",
+        "field_default": null,
+        "field_notnull": true
+    },
+    {
+        "field_name": "selections_hash",
+        "field_type": "varchar32",
+        "field_default": null,
+        "field_key": true,
+        "field_notnull": true
+    },
+    {
+        "field_name": "string_selects",
+        "field_type": "text",
+        "field_default": null
+    },
+    {
+        "field_name": "string_selects_hash",
+        "field_type": "varchar32",
+        "field_default": null
+    },
+    {
+        "field_name": "units",
+        "field_type": "text",
+        "field_default": null
+    },
+    {
+        "field_name": "units_hash",
+        "field_type": "varchar32",
+        "field_default": null
+    },
+    {
+        "field_name": "qtypes",
+        "field_type": "text",
+        "field_default": null
+    },
+    {
+        "field_name": "qtypes_hash",
+        "field_type": "varchar32",
+        "field_default": null
+    },
+    {
+        "field_name": "timestamp",
+        "field_type": "datetime",
+        "field_default": null
+    }
+]

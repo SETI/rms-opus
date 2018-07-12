@@ -2,7 +2,7 @@ from django.db import models
 from paraminfo.models import *
 
 class Image(models.Model):
-    ring_obs_id = models.CharField(max_length=40)
+    rms_obs_id = models.CharField(max_length=40)
     instrument_id = models.CharField(max_length=16, blank=True)
     volume_id = models.CharField(max_length=75, blank=True) # Field name made lo$
     thumb = models.CharField(max_length=255, blank=True)
@@ -13,18 +13,18 @@ class Image(models.Model):
     size_small = models.IntegerField()
     size_med = models.IntegerField()
     size_full = models.IntegerField()
-    # opus1_ring_obs_id = models.CharField(max_length=40)
+    # opus1_rms_obs_id = models.CharField(max_length=40)
 
     class Meta:
         db_table = u'images'
 
     def __unicode__(self):
-        return self.ring_obs_id
+        return self.rms_obs_id
 
 class FileSizes(models.Model):
     name = models.CharField(max_length=90)
     size = models.IntegerField()
-    ring_obs_id = models.CharField(max_length=40, blank=True)
+    rms_obs_id = models.CharField(max_length=40, blank=True)
     volume_id = models.CharField(max_length=75, db_column='VOLUME_ID', blank=True) # Field name made lo$
     file_type = models.CharField(max_length=25)
     obs_general_no = models.IntegerField(null=True,blank=True)
@@ -40,7 +40,7 @@ class FileSizes(models.Model):
         return self.name
 
 class Files(models.Model):
-    ring_obs_id = models.CharField(max_length=40, blank=True)
+    rms_obs_id = models.CharField(max_length=40, blank=True)
     file_specification_name = models.CharField(max_length=180, db_column='FILE_SPECIFICATION_NAME') # F$
     volume_id = models.CharField(max_length=75, db_column='VOLUME_ID', blank=True) # Field name made lo$
     product_type = models.CharField(max_length=90, db_column='PRODUCT_TYPE', blank=True) # Field name m$
@@ -64,4 +64,4 @@ class Files(models.Model):
         db_table = u'files'
 
     def __unicode__(self):
-        return self.ring_obs_id
+        return self.rms_obs_id

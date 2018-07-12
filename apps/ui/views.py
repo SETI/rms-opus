@@ -23,6 +23,7 @@ from search.views import *
 from search.forms import SearchForm
 from metadata.views import *
 from paraminfo.models import *
+from dictionary.models import *
 from results.views import *
 from django.views.generic import TemplateView
 from metrics.views import update_metrics
@@ -51,12 +52,29 @@ def about(request, template = 'about.html'):
     for d in ObsGeneral.objects.values('instrument_id','volume_id').order_by('instrument_id','volume_id').distinct():
         all_volumes.setdefault(d['instrument_id'], []).append(d['volume_id'])
 
-    return render(request, template, locals())
+    return render(request, template, {'all_volumes':all_volumes})
+
+def definitions(request, retrieveChar='A'):
+    defList = Definition.objects.using('dictionary').select_related().order_by('term__term')
+    definitionList = dict()
+    retrieveAlpha = ord(retrieveChar.upper());
+    if retrieveAlpha < 65 or retrieveAlpha > 90:
+        retrieveAlpha = 65
+
+    for index in range(retrieveAlpha,retrieveAlpha+26):
+        alpha = str(unichr(index))
+        definitionList[alpha] = list(defList.filter(term__term__istartswith=alpha).values('definition', 'term__term_nice', 'term__import_date', 'context__description').order_by('term__term_nice'))
+
+    return render(request, 'definitions.html', {'definitionList':sorted(definitionList.iteritems())})
+
+
+def home(request):
+    return render(request, "index.html")
 
 
 def get_browse_headers(request,template='browse_headers.html'):
     update_metrics(request)
-    return render(request, template, locals())
+    return render(request, template)
 
 
 def get_table_headers(request,template='table_headers.html'):
@@ -78,12 +96,12 @@ def get_table_headers(request,template='table_headers.html'):
 
     param_info  = ParamInfo.objects
     for slug in slugs:
-        if slug and slug != 'ring_obs_id':
+        if slug and slug != 'rms_obs_id':
             try:
                 columns.append([slug, param_info.get(slug=slug).label_results])
             except ParamInfo.DoesNotExist:
                 pass
-    return render(request, template,locals())
+    return render(request, template,{"columns":columns})
 
 
 @render_to('menu.html')
@@ -105,6 +123,10 @@ def getMenuLabels(request, labels_view):
 
     """
     labels_view = 'results' if labels_view == 'results' else 'search'
+    if labels_view == 'search':
+        filter = "display"
+    else:
+        filter="display_results"
 
     if request and request.GET:
         try:
@@ -119,12 +141,8 @@ def getMenuLabels(request, labels_view):
     else:
         triggered_tables = get_triggered_tables(selections, extras)
 
-    divs = TableName.objects.filter(display='Y', table_name__in=triggered_tables)
-
-    if labels_view == 'search':
-        params = ParamInfo.objects.filter(display=1, category_name__in=triggered_tables)
-    else:
-        params = ParamInfo.objects.filter(display_results=1, category_name__in=triggered_tables)
+    divs = TableNames.objects.filter(display='Y', table_name__in=triggered_tables).order_by('disp_order')
+    params = ParamInfo.objects.filter(**{filter:1, "category_name__in":triggered_tables})
 
     # build a struct that relates sub_headings to div_titles
     sub_headings = {}
@@ -153,37 +171,27 @@ def getMenuLabels(request, labels_view):
 
             menu_data[d.table_name].setdefault('data', {})
             for sub_head in sub_headings[d.table_name]:
-
-                if labels_view == 'search':
-                    all_param_info = ParamInfo.objects.filter(display=1, category_name = d.table_name, sub_heading = sub_head)
-                else:  # lables for results or search view
-                    all_param_info = ParamInfo.objects.filter(display_results=1, category_name = d.table_name, sub_heading = sub_head)
+                all_param_info = ParamInfo.objects.filter(**{filter:1, "category_name":d.table_name, "sub_heading": sub_head})
 
                 # before adding this to data structure, correct a problem with
                 # the naming of single column range slugs for menus like this
                 all_param_info = list(all_param_info)
                 for k,param_info in enumerate(all_param_info):
                     param_info.slug = adjust_slug_name_single_col_ranges(param_info)
-                    all_param_info[k] = param_info
+                    param_info.tooltip = param_info.get_dictionary_info()
+                    all_param_info[k] = vars(param_info)
 
                 menu_data[d.table_name]['data'][sub_head] = all_param_info
 
         else:
             # this div has no sub headings
             menu_data[d.table_name]['has_sub_heading'] = False
+            for p in ParamInfo.objects.filter(**{filter:1, "category_name":d.table_name}):
+                p.slug = adjust_slug_name_single_col_ranges(p)
+                p.tooltip = p.get_dictionary_info()
+                menu_data[d.table_name].setdefault('data', []).append(vars(p))
 
-            if labels_view == 'search':
-                for p in ParamInfo.objects.filter(display=1, category_name=d.table_name):
-                    old_slug = p.slug
-                    new_slug = adjust_slug_name_single_col_ranges(p)
-                    p.slug = adjust_slug_name_single_col_ranges(p)
-                    menu_data[d.table_name].setdefault('data', []).append(p)
-            else:
-                for p in ParamInfo.objects.filter(display_results=1, category_name=d.table_name):
-                    p.slug = adjust_slug_name_single_col_ranges(p)
-                    menu_data[d.table_name].setdefault('data', []).append(p)
-
-    # div_labels = {d.table_name:d.label for d in TableName.objects.filter(display='Y', table_name__in=triggered_tables)}
+    # div_labels = {d.table_name:d.label for d in TableNames.objects.filter(display='Y', table_name__in=triggered_tables)}
     return {'menu': {'data': menu_data, 'divs': divs}}
 
 
@@ -205,12 +213,16 @@ def getWidget(request, **kwargs):
     form = ''
 
     param_info = get_param_info_by_slug(slug)
+    if not param_info:
+        log.error(
+            "getWidget: Could not find param_info entry for slug %s",
+            str(slug))
+        raise Http404
 
     form_type = param_info.form_type
     param_name = param_info.param_name()
 
     dictionary = param_info.get_dictionary_info()
-
     form_vals = {slug:None}
     auto_id = True
     selections = {}
@@ -225,7 +237,7 @@ def getWidget(request, **kwargs):
     add_str = '<a class = "add_input" href = "">add</a> '
 
     append_to_label = ''  # text to append to a widget label
-    search_form = param_info.search_form
+    search_form = param_info.category_name
     if 'obs_surface_geometry__' in search_form:
         # append the target name to surface geo widget labels
         try:
@@ -253,9 +265,9 @@ def getWidget(request, **kwargs):
         except: len1 = 0
         try: len2 = len(selections[param2])
         except: len2 = 0
-        lngth = len1 if len1 > len2 else len2
+        length = len1 if len1 > len2 else len2
 
-        if not lngth: # param is not constrained
+        if not length: # param is not constrained
             form = str(SearchForm(form_vals, auto_id=auto_id).as_ul());
             if addlink == 'false':
                 form = '<ul>' + form + '<li>'+remove_str+'</li></ul>' # remove input is last list item in form
@@ -264,7 +276,7 @@ def getWidget(request, **kwargs):
 
         else: # param is constrained
             key=0
-            while key<lngth:
+            while key<length:
                 try:
                   form_vals[slug1] = selections[param1][key]
                 except (IndexError, KeyError) as e:
@@ -286,7 +298,7 @@ def getWidget(request, **kwargs):
                     form = '<ul>' + form + '<li>'+remove_str+'</li></ul>' # remove input is last list item in form
                 else:
                     form = '<span>'+add_str+'</span><ul>' + form + '</ul>'  # add input link comes before form
-                if lngth > 1:
+                if length > 1:
                     form = form + '</span><div style = "clear: both;"></div></section><section><span class="widget_form">'
                 key = key+1
 
@@ -353,6 +365,11 @@ def getWidget(request, **kwargs):
         form = SearchForm(form_vals, auto_id=auto_id).as_ul()
 
     param_info = get_param_info_by_slug(slug)
+    if not param_info:
+        log.error(
+            "getWidget: Could not find param_info entry for slug %s",
+            str(slug))
+        raise Http404
 
     label = param_info.label
     intro = param_info.intro
@@ -362,9 +379,17 @@ def getWidget(request, **kwargs):
     if fmt == 'raw':
         return str(form)
     else:
-
         template = "widget.html"
-        return render(request, template,locals())
+        context = {
+            "slug":slug,
+            "label": label,
+            "append_to_label":append_to_label,
+            "dictionary":dictionary,
+            "intro": intro,
+            "form": form,
+            "range_fields": range_fields
+        }
+        return render(request, template, context)
     # return responseFormats(form, fmt)
 
 
@@ -382,20 +407,22 @@ def init_detail_page(request, **kwargs):
 
     template="detail.html"
     slugs = request.GET.get('cols',False)
-    ring_obs_id = kwargs['ring_obs_id']
+    rms_obs_id = kwargs['rms_obs_id']
 
-    # get the preview image and some general info
-    try:
-        img = Image.objects.get(ring_obs_id=ring_obs_id)
-    except Image.DoesNotExist:
-        img = None
-    base_vol_path = get_base_path_previews(ring_obs_id)
-
+    img = None # XXXXXXXXXXXXXXXXXXXXX
+    base_vol_path = ''
+    # # get the preview image and some general info
+    # try:
+    #     img = Image.objects.get(rms_obs_id=rms_obs_id)
+    # except Image.DoesNotExist:
+    #     img = None
+    # base_vol_path = get_base_path_previews(rms_obs_id)
+    #
     path = settings.IMAGE_HTTP_PATH + base_vol_path
     if 'CIRS' in base_vol_path:
         path = path.replace('previews','diagrams')
 
-    instrument_id = ObsGeneral.objects.filter(ring_obs_id=ring_obs_id).values('instrument_id')[0]['instrument_id']
+    instrument_id = ObsGeneral.objects.filter(rms_obs_id=rms_obs_id).values('instrument_id')[0]['instrument_id']
 
     # get the preview guide url
     preview_guide_url = ''
@@ -407,16 +434,22 @@ def init_detail_page(request, **kwargs):
         preview_guide_url = 'http://pds-rings.seti.org/cassini/vims/COVIMS_previews.txt'
 
     # get the list of files for this observation
-    files = getFiles(ring_obs_id,fmt='raw')[ring_obs_id]
+    # XXXXXXX files = getFiles(rms_obs_id,fmt='raw')[rms_obs_id]
     file_list = {}
-    for product_type in files:
-        if product_type not in file_list:
-            file_list[product_type] = []
-        for f in files[product_type]:
-            ext = f.split('.').pop()
-            file_list[product_type].append({'ext':ext,'link':f})
-
-    return render(request, template, locals())
+    # for product_type in files:
+    #     if product_type not in file_list:
+    #         file_list[product_type] = []
+    #     for f in files[product_type]:
+    #         ext = f.split('.').pop()
+    #         file_list[product_type].append({'ext':ext,'link':f})
+    context = {
+        "path": path,
+        "img": img,
+        "preview_guide_url": preview_guide_url,
+        "file_list": file_list,
+        "rms_obs_id": rms_obs_id
+    }
+    return render(request, template, context)
 
 def getColumnInfo(slugs):
     info = OrderedDict()
@@ -437,4 +470,9 @@ def getColumnChooser(request, **kwargs):
     namespace = 'column_chooser_input'
     menu = getMenuLabels(request, 'results')['menu']
 
-    return render(request, "choose_columns.html",locals())
+    context = {
+        "all_slugs_info": all_slugs_info,
+        "namespace": namespace,
+        "menu": menu
+    }
+    return render(request, "choose_columns.html", context)

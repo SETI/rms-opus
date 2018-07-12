@@ -27,11 +27,11 @@ import logging
 log = logging.getLogger(__name__)
 
 
-def get_all_categories(request, ring_obs_id):
-    """ returns list of all cateories - aka tables - this ring_obs_id apepars in
+def get_all_categories(request, rms_obs_id):
+    """ returns list of all cateories - aka tables - this rms_obs_id apepars in
         as json response """
     all_categories = []
-    table_info = TableName.objects.all().values('table_name', 'label').order_by('disp_order')
+    table_info = TableNames.objects.all().values('table_name', 'label').order_by('disp_order')
 
     for tbl in table_info:  # all tables
         table_name = tbl['table_name']
@@ -48,8 +48,8 @@ def get_all_categories(request, ring_obs_id):
         except LookupError:
             continue  # oops some models don't actually exist
 
-        # are not ring_obs_id unique in all obs tables so why is this not a .get query
-        results = table_model.objects.filter(ring_obs_id=ring_obs_id).values('ring_obs_id')
+        # are not rms_obs_id unique in all obs tables so why is this not a .get query
+        results = table_model.objects.filter(rms_obs_id=rms_obs_id).values('rms_obs_id')
         if results:
             cat = {'table_name': table_name, 'label': label}
             all_categories.append(cat)
@@ -81,7 +81,7 @@ def category_list_http_endpoint(request):
     except ValueError:
         pass  # it wasn't in there so no worries
 
-    labels = TableName.objects.filter(table_name__in=triggered_tables).values('table_name','label').order_by('disp_order')
+    labels = TableNames.objects.filter(table_name__in=triggered_tables).values('table_name','label').order_by('disp_order')
 
     return HttpResponse(json.dumps([ob for ob in labels]), content_type="application/json")
 
@@ -120,7 +120,7 @@ def getData(request,fmt):
     id_index = 0
 
     for slug in slugs.split(','):
-        if slug == 'ringobsid':
+        if slug == 'rmsobsid':
             id_index = slugs.split(',').index(slug)
         try:
             labels += [ParamInfo.objects.get(slug=slug).label_results]
@@ -153,7 +153,7 @@ def getData(request,fmt):
     else:
         return responseFormats(data,fmt,template='data.html', id_index=id_index, labels=labels,checkboxes=checkboxes, collection=collection, order=order)
 
-def get_metadata_by_slugs(request, ring_obs_id, slugs, fmt):
+def get_metadata_by_slugs(request, rms_obs_id, slugs, fmt):
     """
     returns results for specified slugs
     """
@@ -166,6 +166,9 @@ def get_metadata_by_slugs(request, ring_obs_id, slugs, fmt):
     for slug in slugs:
         param_info = get_param_info_by_slug(slug)
         if not param_info:
+            log.error(
+        "get_metadata_by_slugs: Could not find param_info entry for slug %s",
+        str(slug))
             continue  # todo this should raise end user error
         table_name = param_info.category_name
         params_by_table.setdefault(table_name, []).append(param_info.param_name().split('.')[1])
@@ -180,12 +183,12 @@ def get_metadata_by_slugs(request, ring_obs_id, slugs, fmt):
         model_name = ''.join(table_name.title().split('_'))
         table_model = apps.get_model('search', model_name)
 
-        results = table_model.objects.filter(ring_obs_id=ring_obs_id).values(*param_list)
-                  # are not ring_obs_id unique in all obs tables so why is this not a .get query
+        results = table_model.objects.filter(rms_obs_id=rms_obs_id).values(*param_list)
+                  # are not rms_obs_id unique in all obs tables so why is this not a .get query
 
         if not results:
-            # this ring_obs_id doesn't exist in this table, log this..
-            log.error('Could not find ring_obs_id %s in table %s', ring_obs_id, table_name)
+            # this rms_obs_id doesn't exist in this table, log this..
+            log.error('Could not find rms_obs_id %s in table %s', rms_obs_id, table_name)
 
         for param,value in results[0].items():
             data.append({param: value})
@@ -198,7 +201,7 @@ def get_metadata_by_slugs(request, ring_obs_id, slugs, fmt):
         return data, all_info  # includes definitions for opus interface
 
 
-def get_metadata(request, ring_obs_id, fmt):
+def get_metadata(request, rms_obs_id, fmt):
     """
     results for a single observation
     all the data, in categories
@@ -223,13 +226,12 @@ def get_metadata(request, ring_obs_id, fmt):
 
     """
     update_metrics(request)
-
-    if not ring_obs_id: raise Http404
+    if not rms_obs_id: raise Http404
 
     try:
         slugs = request.GET.get('cols', False)
         if slugs:
-            return get_metadata_by_slugs(request, ring_obs_id, slugs.split(','), fmt)
+            return get_metadata_by_slugs(request, rms_obs_id, slugs.split(','), fmt)
     except AttributeError:
         pass  # no request was sent
 
@@ -243,10 +245,10 @@ def get_metadata(request, ring_obs_id, fmt):
 
     # find all the tables (categories) this observation belongs to,
     if not cats:
-        all_tables = TableName.objects.filter(display='Y').order_by('disp_order')
+        all_tables = TableNames.objects.filter(display='Y').order_by('disp_order')
     else:
         # restrict table to those found in cats
-        all_tables = TableName.objects.filter(table_name__in=cats.split(','), display='Y').order_by('disp_order')
+        all_tables = TableNames.objects.filter(table_name__in=cats.split(','), display='Y').order_by('disp_order')
 
     # now find all params and their values in each of these tables:
     for table in all_tables:
@@ -271,7 +273,7 @@ def get_metadata(request, ring_obs_id, fmt):
 
         if all_param_names:
             try:
-                results = table_model.objects.filter(ring_obs_id=ring_obs_id).values(*all_param_names)[0]
+                results = table_model.objects.filter(rms_obs_id=rms_obs_id).values(*all_param_names)[0]
 
                 # results is an ordinary dict so here to make sure we have the correct ordering:
                 ordered_results = SortedDict({})
@@ -284,15 +286,14 @@ def get_metadata(request, ring_obs_id, fmt):
                 # this is pretty normal, it will check every table for a ring obs id
                 # a lot of observations do not appear in a lot of tables..
                 # for example something on jupiter won't appear in a saturn table..
-                # log.error('IndexError: no results found for {0} in table {1}'.format(ring_obs_id, table_name) )
+                # log.error('IndexError: no results found for {0} in table {1}'.format(rms_obs_id, table_name) )
                 pass  # no results found in this table, move along
             except AttributeError:
-                log.error('AttributeError: No results found for ring_obs_id %s in table %s', ring_obs_id, table_name)
+                log.error('AttributeError: No results found for rms_obs_id %s in table %s', rms_obs_id, table_name)
                 pass  # no results found in this table, move along
             except FieldError:
-                log.error('FieldError: No results found for ring_obs_id %s in table %s', ring_obs_id, table_name)
+                log.error('FieldError: No results found for rms_obs_id %s in table %s', rms_obs_id, table_name)
                 pass  # no results found in this table, move along
-
 
     if fmt == 'html':
         # hack becuase we want to display labels instead of param names
@@ -350,7 +351,7 @@ def get_triggered_tables(selections, extras=None):
     # now see if any more tables are triggered from query
     query_result_table = getUserQueryTable(selections,extras)
     queries = {}  # keep track of queries
-    for partable in Partable.objects.all():
+    for partable in Partables.objects.all():
         # we are joining the results of a user's query - the single column table of ids
         # with the trigger_tab listed in the partable,
         trigger_tab = partable.trigger_tab
@@ -386,14 +387,14 @@ def get_triggered_tables(selections, extras=None):
         # surface geometry have multiple targets per observation
         # so we just want to know if our val is in the result (not the only result)
         if 'obs_surface_geometry.target_name' in selections:
-            if trigger_tab == 'obs_surface_geometry' and trigger_val == selections['obs_surface_geometry.target_name'][0]:
-                if trigger_val in [r['target_name'] for r in results]:
+            if trigger_tab == 'obs_surface_geometry' and trigger_val.upper() == selections['obs_surface_geometry.target_name'][0].upper():
+                if trigger_val.upper() in [r['target_name'].upper() for r in results]:
                     triggered_tables.append(partable)
 
 
     # now hack in the proper ordering of tables
     final_table_list = []
-    for table in TableName.objects.filter(table_name__in=triggered_tables).values('table_name'):
+    for table in TableNames.objects.filter(table_name__in=triggered_tables).values('table_name').order_by('disp_order'):
         final_table_list.append(table['table_name'])
 
     cache.set(cache_key, final_table_list)
@@ -425,35 +426,35 @@ def getImages(request,size,fmt):
     except TypeError:  # getPage returns False
         raise Http404('could not find page')
 
-    image_links = Image.objects.filter(ring_obs_id__in=page_ids)
+    image_links = Image.objects.filter(rms_obs_id__in=page_ids)
 
     if not image_links:
         log.error('GetImage: No image found for: %s', str(page_ids[:50]))
 
     # page_ids
     if alt_size:
-        image_links = image_links.values('ring_obs_id',size,alt_size)
+        image_links = image_links.values('rms_obs_id',size,alt_size)
     else:
-        image_links = image_links.values('ring_obs_id',size)
+        image_links = image_links.values('rms_obs_id',size)
 
     # add the base_path to each image
     all_sizes = ['small','thumb','med','full']
     for k, im in enumerate(image_links):
         for s in all_sizes:
             if s in im:
-                image_links[k][s] = get_base_path_previews(im['ring_obs_id']) + im[s]
+                image_links[k][s] = get_base_path_previews(im['rms_obs_id']) + im[s]
 
     # to preserve the order of page_ids as lamely as possible :P
     ordered_image_links = []
-    for ring_obs_id in page_ids:
+    for rms_obs_id in page_ids:
         found = False
         for link in image_links:
-            if ring_obs_id == link['ring_obs_id']:
+            if rms_obs_id == link['rms_obs_id']:
                 found = True
                 ordered_image_links.append(link)
         if not found:
             # return the thumbnail not found link
-            ordered_image_links.append({size:settings.THUMBNAIL_NOT_FOUND, 'ring_obs_id':ring_obs_id})
+            ordered_image_links.append({size:settings.THUMBNAIL_NOT_FOUND, 'rms_obs_id':rms_obs_id})
 
     image_links = ordered_image_links
 
@@ -465,12 +466,12 @@ def getImages(request,size,fmt):
 
         # hack for the new reclassification of some previews as "diagrams"
         image['path'] = settings.IMAGE_HTTP_PATH
-        if 'CIRS' in image['ring_obs_id']:
+        if 'CIRS' in image['rms_obs_id']:
             image['path'] = image['path'].replace('previews','diagrams')
 
         if collection_members:
             from user_collections.views import *
-            if image['ring_obs_id'] in collection_members:
+            if image['rms_obs_id'] in collection_members:
                 image['in_collection'] = True
 
     if (request.is_ajax()):
@@ -481,37 +482,37 @@ def getImages(request,size,fmt):
     return responseFormats({'data':[i for i in image_links]},fmt, size=size, alt_size=alt_size, columns_str=columns.split(','), template=template, order=order)
 
 
-def get_base_path_previews(ring_obs_id):
+def get_base_path_previews(rms_obs_id):
     # find the proper volume_id to pass to the Files table before asking for file_path
     # (sometimes the Files table has extra entries for an observation with funky paths)
     try:
-        volume_id = ObsGeneral.objects.filter(ring_obs_id=ring_obs_id)[0].volume_id
+        volume_id = ObsGeneral.objects.filter(rms_obs_id=rms_obs_id)[0].volume_id
     except IndexError:
         return
 
-    file_path = Files.objects.filter(ring_obs_id=ring_obs_id, volume_id=volume_id)[0].base_path
+    file_path = Files.objects.filter(rms_obs_id=rms_obs_id, volume_id=volume_id)[0].base_path
 
     base_path = '/'.join(file_path.split('/')[-2:])
 
     return base_path
 
 
-def getImage(request,size='med', ring_obs_id='',fmt='mouse'):      # mouse?
+def getImage(request,size='med', rms_obs_id='',fmt='mouse'):      # mouse?
     """
     size = thumb, small, med, full
-    return ring_obs_id + ' ' + size
+    return rms_obs_id + ' ' + size
 
-    return HttpResponse(img + "<br>" + ring_obs_id + ' ' + size +' '+ fmt)
+    return HttpResponse(img + "<br>" + rms_obs_id + ' ' + size +' '+ fmt)
     """
     update_metrics(request)
     try:
-        img = Image.objects.filter(ring_obs_id=ring_obs_id).values(size)[0][size]
+        img = Image.objects.filter(rms_obs_id=rms_obs_id).values(size)[0][size]
     except IndexError:
-        log.error('getImage: IndexError - Could not find ring_obs_id %s, size %s', str(ring_obs_id), str(size))
+        log.error('getImage: IndexError - Could not find rms_obs_id %s, size %s', str(rms_obs_id), str(size))
         return
 
-    path = settings.IMAGE_HTTP_PATH + get_base_path_previews(ring_obs_id)
-    if 'CIRS' in ring_obs_id:
+    path = settings.IMAGE_HTTP_PATH + get_base_path_previews(rms_obs_id)
+    if 'CIRS' in rms_obs_id:
         path = path.replace('previews','diagrams')
 
     return responseFormats({'data':[{'img':img, 'path':path}]}, fmt, size=size, path=path, template='image_list.html')
@@ -529,10 +530,10 @@ def file_name_cleanup(base_file):
 
 # loc_type = path or url
 # you broke this see http://127.0.0.1:8000/opus/api/files.json?&target=pan
-def getFilesAPI(request, ring_obs_id=None, fmt=None, loc_type=None):
+def getFilesAPI(request, rms_obs_id=None, fmt=None, loc_type=None):
 
-    if not ring_obs_id:
-        ring_obs_id = ''
+    if not rms_obs_id:
+        rms_obs_id = ''
     if not fmt:
         fmt = 'raw'  # the format this function returns
     if not loc_type:
@@ -557,23 +558,23 @@ def getFilesAPI(request, ring_obs_id=None, fmt=None, loc_type=None):
     if previews == ['none']:
         previews = []
 
-    if request and request.GET and not ring_obs_id:
+    if request and request.GET and not rms_obs_id:
 
-        # no ring_obs_id passed, get files from search results
+        # no rms_obs_id passed, get files from search results
         (selections,extras) = urlToSearchParams(request.GET)
         page  = getData(request,'raw')['page']
         if not len(page):
             return False
-        ring_obs_id = [p[0] for p in page]
+        rms_obs_id = [p[0] for p in page]
 
-    return getFiles(ring_obs_id=ring_obs_id, fmt=fmt, loc_type=loc_type, product_types=product_types, previews=previews)
+    return getFiles(rms_obs_id=rms_obs_id, fmt=fmt, loc_type=loc_type, product_types=product_types, previews=previews)
 
 
 # loc_type = path or url
-def getFiles(ring_obs_id=None, fmt=None, loc_type=None, product_types=None, previews=None, collection=None, session_id=None):
+def getFiles(rms_obs_id=None, fmt=None, loc_type=None, product_types=None, previews=None, collection=None, session_id=None):
     """
-    returns list of all files by ring_obs_id
-    ring_obs_id can be string or list
+    returns list of all files by rms_obs_id
+    rms_obs_id can be string or list
     can also return preview files too
     """
     if collection and not session_id:
@@ -603,22 +604,22 @@ def getFiles(ring_obs_id=None, fmt=None, loc_type=None, product_types=None, prev
     if previews == ['none'] or previews == 'none':
         previews = []
 
-    # this is either for a collection or some ring_obs_id:
-    if ring_obs_id:
-        # ring_obs_id may be passed in as a string or a list,
+    # this is either for a collection or some rms_obs_id:
+    if rms_obs_id:
+        # rms_obs_id may be passed in as a string or a list,
         # if it's a string make it a list
-        if type(ring_obs_id) is unicode or type(ring_obs_id).__name__ == 'str':
-            ring_obs_ids = [ring_obs_id]
+        if type(rms_obs_id) is unicode or type(rms_obs_id).__name__ == 'str':
+            rms_obs_ids = [rms_obs_id]
         else:
-            ring_obs_ids = ring_obs_id
+            rms_obs_ids = rms_obs_id
 
     elif collection:
-        # no ring_obs_id, this must be for a colletion
+        # no rms_obs_id, this must be for a colletion
         colls_table_name = get_collection_table(session_id)
 
-        where   = "files.ring_obs_id = " + connection.ops.quote_name(colls_table_name) + ".ring_obs_id"
+        where   = "files.rms_obs_id = " + connection.ops.quote_name(colls_table_name) + ".rms_obs_id"
     else:
-        log.error('getFiles: No ring_obs_ids or collection specified')
+        log.error('getFiles: No rms_obs_ids or collection specified')
         return False
 
     # you can ask this function for url paths or disk paths
@@ -633,7 +634,7 @@ def getFiles(ring_obs_id=None, fmt=None, loc_type=None, product_types=None, prev
     if collection:
         files_table_rows = files_table_rows.extra(where=[where], tables=[colls_table_name])
     else:
-        files_table_rows = files_table_rows.filter(ring_obs_id__in=ring_obs_ids)
+        files_table_rows = files_table_rows.filter(rms_obs_id__in=rms_obs_ids)
 
     if product_types != ['all'] and product_types != ['none']:
         files_table_rows = files_table_rows.filter(product_type__in=product_types)
@@ -641,7 +642,7 @@ def getFiles(ring_obs_id=None, fmt=None, loc_type=None, product_types=None, prev
     if not files_table_rows:
         log.error('getFiles: No rows returned in file table')
         log.error('.. WHERE: %s', str(where))
-        log.error('.. First 5 RING_OBS_ID: %s', str(ring_obs_id[:5]))
+        log.error('.. First 5 rms_obs_id: %s', str(rms_obs_id[:5]))
 
     file_names = {}
     for f in files_table_rows:
@@ -650,29 +651,29 @@ def getFiles(ring_obs_id=None, fmt=None, loc_type=None, product_types=None, prev
         todo: STOP THE MADNESS
         move most of this to database layer
         put all of the below into the file sizes table
-        then just grab direct from file sizes table by product_type and ring_obs_id
+        then just grab direct from file sizes table by product_type and rms_obs_id
         """
 
-        # file_names are grouped first by ring_obs_id then by product_type
-        ring_obs_id = f.ring_obs_id
-        file_names.setdefault(ring_obs_id, {})
+        # file_names are grouped first by rms_obs_id then by product_type
+        rms_obs_id = f.rms_obs_id
+        file_names.setdefault(rms_obs_id, {})
 
         # add some preview images?
         if len(previews):
-            file_names[ring_obs_id]['preview_image'] = []
+            file_names[rms_obs_id]['preview_image'] = []
             for size in previews:
-                url_info = getImage(False, size.lower(), ring_obs_id,'raw')
+                url_info = getImage(False, size.lower(), rms_obs_id,'raw')
                 if not url_info:
                     continue  # no image found for this observation so let's skip it
                 url = url_info['data'][0]['img']
                 base_path = url_info['data'][0]['path']
                 if url:
                     if loc_type == 'path':
-                        url = settings.IMAGE_PATH + get_base_path_previews(ring_obs_id) + url
+                        url = settings.IMAGE_PATH + get_base_path_previews(rms_obs_id) + url
                     else:
                         url = base_path + url
 
-                    file_names[ring_obs_id]['preview_image'].append(url)
+                    file_names[rms_obs_id]['preview_image'].append(url)
 
         if product_types == ['none']:
             continue
@@ -681,12 +682,12 @@ def getFiles(ring_obs_id=None, fmt=None, loc_type=None, product_types=None, prev
         # get this file's volume location
         file_extensions = []
         try:
-            volume_loc = ObsGeneral.objects.filter(ring_obs_id=ring_obs_id)[0].volume_id
+            volume_loc = ObsGeneral.objects.filter(rms_obs_id=rms_obs_id)[0].volume_id
         except IndexError:
             volume_loc = f.volume_id
 
-        # file_names are grouped first by ring_obs_id then by product_type
-        file_names[ring_obs_id].setdefault(f.product_type, [])
+        # file_names are grouped first by rms_obs_id then by product_type
+        file_names[rms_obs_id].setdefault(f.product_type, [])
         extra_files = []
         if f.extra_files:
             extra_files = f.extra_files.split(',')
@@ -728,15 +729,15 @@ def getFiles(ring_obs_id=None, fmt=None, loc_type=None, product_types=None, prev
 
         # add the extra_files
         for extra in extra_files:
-            file_names[ring_obs_id][f.product_type] += [path + volume_loc + '/' + extra]
+            file_names[rms_obs_id][f.product_type] += [path + volume_loc + '/' + extra]
 
         for extension in file_extensions:
-            file_names[ring_obs_id][f.product_type]  += [path + volume_loc + '/' + base_file + '.' + extension]
+            file_names[rms_obs_id][f.product_type]  += [path + volume_loc + '/' + base_file + '.' + extension]
         # // add the original file
-        file_names[ring_obs_id][f.product_type]  += [path + volume_loc + '/' + base_file + '.' + ext]
-        file_names[ring_obs_id][f.product_type] = list(set(file_names[ring_obs_id][f.product_type])) #  makes unique
-        file_names[ring_obs_id][f.product_type].sort()
-        file_names[ring_obs_id][f.product_type].reverse()
+        file_names[rms_obs_id][f.product_type]  += [path + volume_loc + '/' + base_file + '.' + ext]
+        file_names[rms_obs_id][f.product_type] = list(set(file_names[rms_obs_id][f.product_type])) #  makes unique
+        file_names[rms_obs_id][f.product_type].sort()
+        file_names[rms_obs_id][f.product_type].reverse()
 
 
     if fmt == 'raw':
@@ -864,7 +865,7 @@ def getPage(request, colls=None, colls_page=None, page=None):
         # join in the collections table
         colls_table_name = get_collection_table(session_id)
         triggered_tables.append(colls_table_name)
-        where   = "obs_general.ring_obs_id = " + connection.ops.quote_name(colls_table_name) + ".ring_obs_id"
+        where   = "obs_general.rms_obs_id = " + connection.ops.quote_name(colls_table_name) + ".rms_obs_id"
         results = ObsGeneral.objects.extra(where=[where], tables=triggered_tables)
 
     # now we have results object (either search or collections)
@@ -900,9 +901,9 @@ def getPage(request, colls=None, colls_page=None, page=None):
     else:
         results = results.values_list(*column_values)
 
-    # return a simple list of ring_obs_ids
-    ring_obs_id_index = column_values.index('ring_obs_id')
-    page_ids = [o[ring_obs_id_index] for o in results]
+    # return a simple list of rms_obs_ids
+    rms_obs_id_index = column_values.index('rms_obs_id')
+    page_ids = [o[rms_obs_id_index] for o in results]
 
     if not len(page_ids):
         return False

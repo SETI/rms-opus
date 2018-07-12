@@ -1,0 +1,600 @@
+[
+    {
+        "field_name": "obs_general_id",
+        "field_type": "uint4",
+        "field_key": "foreign",
+        "field_key_foreign": [
+            "obs_general",
+            "id"
+        ],
+        "field_notnull": true,
+        "data_source": [
+            "TAB:obs_general",
+            "id"
+        ],
+        "comment": "This is the primary (surrogate) key linking the record to obs_general."
+    },
+    {
+        "field_name": "rms_obs_id",
+        "field_type": "char40",
+        "field_key": "foreign",
+        "field_key_foreign": [
+            "obs_general",
+            "rms_obs_id"
+        ],
+        "field_notnull": true,
+        "data_source": [
+            "TAB:obs_general",
+            "rms_obs_id"
+        ],
+        "comment": "This is the secondary key linking the record to obs_general."
+    },
+    {
+        "field_name": "volume_id",
+        "field_type": "char11",
+        "field_key": true,
+        "field_notnull": true,
+        "data_source": [
+            "TAB:obs_general",
+            "volume_id"
+        ],
+        "comment": "The volume_id is included here for ease of database manipulation only."
+    },
+    {
+        "field_name": "instrument_id",
+        "field_type": "char9",
+        "field_key": true,
+        "field_notnull": true,
+        "data_source": [
+            "TAB:obs_general",
+            "instrument_id"
+        ],
+        "comment": "The instrument_id is included here for ease of database manipulation only."
+    },
+    {
+        "field_name": "stsci_group_id",
+        "field_type": "char9",
+        "field_notnull": true,
+        "data_source": [
+            "TAB:index",
+            "STSCI_GROUP_ID"
+        ],
+        "definition": "An identifier for a particular group of data files in the STScI archive. You can retrieve the associated files from STScI by entering this ID into the box found on this page: http://archive.stsci.edu/cgi-bin/dataset_lookup/ This is the value of USER_PRODUCT_ID found in the PDS label files.",
+        "pi_category_name": "obs_mission_hubble",
+        "pi_dict_context": "HST",
+        "pi_dict_name": "STSCI_GROUP_ID",
+        "pi_disp_order": 17,
+        "pi_display": 1,
+        "pi_display_results": 1,
+        "pi_form_type": "STRING",
+        "pi_intro": null,
+        "pi_label": "STScI File Name",
+        "pi_label_results": "STScI File Name",
+        "pi_slug": "HSTstscigroupid",
+        "pi_sub_heading": null,
+        "pi_tooltip": null,
+        "pi_units": null
+    },
+    {
+        "field_name": "hst_proposal_id",
+        "field_type": "int4",
+        "field_notnull": true,
+        "data_source": [
+            "TAB:index",
+            "HST_PROPOSAL_ID"
+        ],
+        "definition": "The numeric identifier of the proposal or observing program, as assigned by Space Telescope Science Institute.",
+        "pi_category_name": "obs_mission_hubble",
+        "pi_dict_context": "HST",
+        "pi_dict_name": "HST_PROPOSAL_ID",
+        "pi_disp_order": 15,
+        "pi_display": 1,
+        "pi_display_results": 1,
+        "pi_form_type": "RANGE",
+        "pi_intro": null,
+        "pi_label": "HST Proposal ID",
+        "pi_label_results": "HST Proposal ID",
+        "pi_slug": "HSThstproposalid",
+        "pi_sub_heading": null,
+        "pi_tooltip": null,
+        "pi_units": null
+    },
+    {
+        "field_name": "hst_pi_name",
+        "field_type": "char24",
+        "field_notnull": true,
+        "data_source": [
+            "TAB:index",
+            "HST_PI_NAME"
+        ],
+        "definition": "The name of the Principal Investigator for this HST program, in the form 'last, first, middle initial'.",
+        "pi_category_name": "obs_mission_hubble",
+        "pi_dict_context": "HST",
+        "pi_dict_name": "HST_PI_NAME",
+        "pi_disp_order": 11,
+        "pi_display": 1,
+        "pi_display_results": 1,
+        "pi_form_type": "STRING",
+        "pi_intro": null,
+        "pi_label": "PI Name",
+        "pi_label_results": "PI Name",
+        "pi_slug": "HSThstpiname",
+        "pi_sub_heading": null,
+        "pi_tooltip": null,
+        "pi_units": null
+    },
+    {
+        "field_name": "detector_id",
+        "field_type": "char14",
+        "field_default": null,
+        "data_source": [
+            "FUNCTION",
+            "obs_mission_hubble_detector_id"
+        ],
+        "definition": "An abbreviated name or acronym which identifies the instrument's detector used for this observation. This field is not applicable to WFPC2 observations and is left blank. WFPC2 generally uses all four of its detectors simultaneously, whereas other HST instruments can use only one detector at a time. In this index, columns PC1_FLAG, WF2_FLAG, WF3_FLAG and WF4_FLAG indicate which of WFPC2's four detectors were used in an observation.",
+        "pi_category_name": "obs_mission_hubble",
+        "pi_dict_context": "HST",
+        "pi_dict_name": "DETECTOR_ID",
+        "pi_disp_order": 1,
+        "pi_display": 1,
+        "pi_display_results": 1,
+        "pi_form_type": "GROUP",
+        "pi_intro": null,
+        "pi_label": "Detector ID",
+        "pi_label_results": "Detector ID",
+        "pi_slug": "HSTdetectorid",
+        "pi_sub_heading": null,
+        "pi_tooltip": null,
+        "pi_units": null,
+        "xxxmult_options": [
+              [   0,      "HRC",        "ACS-HRC",   10, "Y", null],
+              [   1,      "SBC",        "ACS-SBC",   20, "Y", null],
+              [   2,      "WFC",       "ACS-WFC3",   30, "Y", null],
+              [   3,       "IR",        "WFC3-IR",   40, "Y", null],
+              [   4,     "UVIS",      "WFC3-UVIS",   50, "Y", null],
+              [   5,    "WFPC2",          "WFPC2",   60, "Y", null],
+              [   6,      "CCD",       "STIS-CCD",   60, "Y", null],
+              [   7, "FUV-MAMA",  "STIS-FUV-MAMA",   60, "Y", null],
+              [   8,    null,      "NULL",   70, "Y", null]
+          ]
+    },
+    {
+        "field_name": "publication_date",
+        "field_type": "char10",
+        "field_notnull": true,
+        "data_source": [
+            "TAB:index",
+            "PUBLICATION_DATE"
+        ],
+        "definition": "The date when the data was last updated by Space Telescope Science Institute.",
+        "pi_category_name": "obs_mission_hubble",
+        "pi_dict_context": "HST",
+        "pi_dict_name": "PUBLICATION_DATE",
+        "pi_disp_order": 33,
+        "pi_display": 1,
+        "pi_display_results": 1,
+        "pi_form_type": "STRING",
+        "pi_intro": null,
+        "pi_label": "Publication Date",
+        "pi_label_results": "Publication Date",
+        "pi_slug": "HSTpublicationdate",
+        "pi_sub_heading": null,
+        "pi_tooltip": null,
+        "pi_units": null
+    },
+    {
+        "field_name": "hst_target_name",
+        "field_type": "char31",
+        "field_notnull": true,
+        "data_source": [
+            "TAB:index",
+            "HST_TARGET_NAME"
+        ],
+        "definition": "The target of the observation as defined by the Principal Investigator.",
+        "pi_category_name": "obs_mission_hubble",
+        "pi_dict_context": "HST",
+        "pi_dict_name": "HST_TARGET_NAME",
+        "pi_disp_order": 19,
+        "pi_display": 1,
+        "pi_display_results": 1,
+        "pi_form_type": "STRING",
+        "pi_intro": null,
+        "pi_label": "HST Target Name",
+        "pi_label_results": "HST Target Name",
+        "pi_slug": "HSThsttargetname",
+        "pi_sub_heading": null,
+        "pi_tooltip": null,
+        "pi_units": null
+    },
+    {
+        "field_name": "fine_guidance_system_lock_type",
+        "field_type": "char10",
+        "field_enum_options": "'FINE','COARSE','GYROS','FINE/GYRO','UNKNOWN'",
+        "field_notnull": true,
+        "data_source": [
+            "TAB:index",
+            "FINE_GUIDANCE_SYSTEM_LOCK_TYPE"
+        ],
+        "definition": "The state of the Fine Guidence Sensor on HST. Possible values are 'FINE', 'COARSE', 'GYROS', 'FINE/GYRO' and 'UNKNOWN'.",
+        "pi_category_name": "obs_mission_hubble",
+        "pi_dict_context": "HST",
+        "pi_dict_name": "FINE_GUIDANCE_SYSTEM_LOCK_TYPE",
+        "pi_disp_order": 21,
+        "pi_display": 1,
+        "pi_display_results": 1,
+        "pi_form_type": "GROUP",
+        "pi_intro": null,
+        "pi_label": "Fine Guidance System Lock",
+        "pi_label_results": "Fine Guidance System Lock",
+        "pi_slug": "HSTfineguidancesystemlocktype",
+        "pi_sub_heading": null,
+        "pi_tooltip": null,
+        "pi_units": null,
+        "xxxmult_options": [
+              [   0,      "FINE",      "Fine",  10, "Y", null],
+              [   1,    "COARSE",    "Coarse",  20, "Y", null],
+              [   2,     "GYROS",     "Gyros",  30, "Y", null],
+              [   3, "FINE/GYRO", "Fine/Gyro",  40, "Y", null],
+              [   4,       "UNK",   "Unknown",  50, "Y", null]
+          ]
+    },
+    {
+        "field_name": "filter_name",
+        "field_type": "char23",
+        "field_notnull": true,
+        "data_source": [
+            "FUNCTION",
+            "obs_mission_hubble_filter_name"
+        ],
+        "definition": "The name of the filter(s) used for the observation. If two overlapping filters, or a filter and polarizer are used, then both names are given, separated by a plus sign '+'.",
+        "pi_category_name": "obs_mission_hubble",
+        "pi_dict_context": "HST",
+        "pi_dict_name": "FILTER_NAME",
+        "pi_disp_order": 3,
+        "pi_display": 1,
+        "pi_display_results": 1,
+        "pi_form_type": "GROUP",
+        "pi_intro": null,
+        "pi_label": "Filter Name",
+        "pi_label_results": "Filter Name",
+        "pi_slug": "HSTfiltername",
+        "pi_sub_heading": null,
+        "pi_tooltip": null,
+        "pi_units": null
+    },
+    {
+        "field_name": "filter_width",
+        "field_type": "char3",
+        "field_notnull": true,
+        "data_source": [
+            "FUNCTION",
+            "obs_mission_hubble_filter_width"
+        ],
+        "definition": "The overall bandwidth size (Narrow, Medium, Wide, etc.) of the filter combination.",
+        "pi_category_name": "obs_mission_hubble",
+        "pi_dict_context": "HST",
+        "pi_dict_name": "FILTER_WIDTH",
+        "pi_disp_order": 3,
+        "pi_display": 1,
+        "pi_display_results": 1,
+        "pi_form_type": "GROUP",
+        "pi_intro": null,
+        "pi_label": "Filter Width",
+        "pi_label_results": "Filter Width",
+        "pi_slug": "HSTfilterwidth",
+        "pi_sub_heading": null,
+        "pi_tooltip": null,
+        "pi_units": null
+    },
+    {
+        "field_name": "aperture_type",
+        "field_type": "char22",
+        "field_notnull": true,
+        "data_source": [
+            "FUNCTION",
+            "obs_mission_hubble_aperture_type"
+        ],
+        "definition": "The name of the aperture used for the observation.",
+        "pi_category_name": "obs_mission_hubble",
+        "pi_dict_context": "HST",
+        "pi_dict_name": "APERTURE_TYPE",
+        "pi_disp_order": 7,
+        "pi_display": 1,
+        "pi_display_results": 1,
+        "pi_form_type": "GROUP",
+        "pi_intro": null,
+        "pi_label": "Aperture Type",
+        "pi_label_results": "Aperture Type",
+        "pi_slug": "HSTaperturetype",
+        "pi_sub_heading": null,
+        "pi_tooltip": null,
+        "pi_units": null
+    },
+    {
+        "field_name": "exposure_type",
+        "field_type": "char20",
+        "field_notnull": true,
+        "data_source": [
+            "TAB:index",
+            "EXPOSURE_TYPE"
+        ],
+        "definition": "The exposure setting used in the observation. For WFPC2, the possible values are 'NORMAL', 'INTERRUPTED', 'INCOMPLETE', 'EXTENDED', 'UNCERTAIN', 'INDETERMINATE', 'PREDICTED', or 'EXCESSIVE DOWNTIME'.",
+        "pi_category_name": "obs_mission_hubble",
+        "pi_dict_context": "HST",
+        "pi_dict_name": "EXPOSURE_TYPE",
+        "pi_disp_order": 25,
+        "pi_display": 1,
+        "pi_display_results": 1,
+        "pi_form_type": "GROUP",
+        "pi_intro": null,
+        "pi_label": "Exposure Type",
+        "pi_label_results": "Exposure Type",
+        "pi_slug": "HSTexposuretype",
+        "pi_sub_heading": null,
+        "pi_tooltip": null,
+        "pi_units": null
+    },
+    {
+        "field_name": "gain_mode_id",
+        "field_type": "char10",
+        "field_enum_options": "'A2D0.','A2D7','A2D15','N/A'",
+        "field_notnull": true,
+        "data_source": [
+            "TAB:index",
+            "GAIN_MODE_ID"
+        ],
+        "definition": "The gain state of the instrument. Always 'N/A', for 'not applicable', for ACS, STIS, and WFC3. For WFPC2, the possible values are 'A2D7' and 'A2D15', representing the two possible states of the analog-to-digital converter.",
+        "pi_category_name": "obs_mission_hubble",
+        "pi_dict_context": "HST",
+        "pi_dict_name": "GAIN_MODE_ID",
+        "pi_disp_order": 23,
+        "pi_display": 1,
+        "pi_display_results": 1,
+        "pi_form_type": "GROUP",
+        "pi_intro": null,
+        "pi_label": "Gain Mode ID",
+        "pi_label_results": "Gain Mode ID",
+        "pi_slug": "HSTgainmodeid",
+        "pi_sub_heading": null,
+        "pi_tooltip": null,
+        "pi_units": null,
+        "xxxmult_options": [
+              [   0, "A2D0.",  "A2D0",  10, "Y", null],
+              [   1,  "A2D7",  "A2D7",  20, "Y", null],
+              [   2, "A2D15", "A2D15",  30, "Y", null],
+              [   3,   "N/A",   "N/A",  40, "Y", null]
+          ]
+    },
+    {
+        "field_name": "instrument_mode_id",
+        "field_type": "char10",
+        "field_enum_options": "'ACCUM','ACQ','FULL','AREA','TIME-TAG','MULTI'",
+        "field_notnull": true,
+        "data_source": [
+            "TAB:index",
+            "INSTRUMENT_MODE_ID"
+        ],
+        "definition": "The operating mode of the instrument. Possible values are 'ACCUM' and 'ACQ' for ACS, STIS, and WFC3. For WFPC2, the posible values are 'FULL' and 'AREA'. FULL mode images are 800 x 800, whereas AREA mode images are 400 x 400.",
+        "pi_category_name": "obs_mission_hubble",
+        "pi_dict_context": "HST",
+        "pi_dict_name": "INSTRUMENT_MODE_ID",
+        "pi_disp_order": 5,
+        "pi_display": 1,
+        "pi_display_results": 1,
+        "pi_form_type": "GROUP",
+        "pi_intro": null,
+        "pi_label": "Instrument Mode ID",
+        "pi_label_results": "Instrument Mode ID",
+        "pi_slug": "HSTinstrumentmodeid",
+        "pi_sub_heading": null,
+        "pi_tooltip": null,
+        "pi_units": null,
+        "xxxmult_options": [
+              [   0,    "ACCUM",    "ACCUM",  10, "Y", null],
+              [   1,      "ACQ",      "ACQ",  20, "Y", null],
+              [   2,     "FULL",     "FULL",  30, "Y", null],
+              [   3,     "AREA",     "AREA",  40, "Y", null],
+              [   4, "TIME-TAG", "TIME-TAG",  50, "Y", null]
+          ]
+    },
+    {
+        "field_name": "pc1_flag",
+        "field_type": "flag_yesno",
+        "field_default": null,
+        "data_source": [
+            "FUNCTION",
+            "obs_mission_hubble_<INST>_pc1_flag"
+        ],
+        "definition": "For WFPC2, a numeric flag (1 if yes, 0 if no) indicating whether the Planetary Camera (PC1) was used in the observation.",
+        "pi_category_name": "obs_mission_hubble",
+        "pi_dict_context": "HST",
+        "pi_dict_name": "PC1_FLAG",
+        "pi_disp_order": 99,
+        "pi_display": 1,
+        "pi_display_results": 1,
+        "pi_form_type": "GROUP",
+        "pi_intro": null,
+        "pi_label": "WFPC2 PC1 Flag",
+        "pi_label_results": "WFPC2 PC1 Flag",
+        "pi_slug": "HSTpc1flag",
+        "pi_sub_heading": null,
+        "pi_tooltip": null,
+        "pi_units": null
+    },
+    {
+        "field_name": "wf2_flag",
+        "field_type": "flag_yesno",
+        "field_default": null,
+        "data_source": [
+            "FUNCTION",
+            "obs_mission_hubble_<INST>_wf2_flag"
+        ],
+        "definition": "For WFPC2, a numeric flag (1 if yes, 0 if no) indicating whether Wide Field #2 (WF2) was used in the observation.",
+        "pi_category_name": "obs_mission_hubble",
+        "pi_dict_context": "HST",
+        "pi_dict_name": "WF2_FLAG",
+        "pi_disp_order": 99,
+        "pi_display": 1,
+        "pi_display_results": 1,
+        "pi_form_type": "GROUP",
+        "pi_intro": null,
+        "pi_label": "WFPC2 WF2 Flag",
+        "pi_label_results": "WFPC2 WF2 Flag",
+        "pi_slug": "HSTwf2flag",
+        "pi_sub_heading": null,
+        "pi_tooltip": null,
+        "pi_units": null
+    },
+    {
+        "field_name": "wf3_flag",
+        "field_type": "flag_yesno",
+        "field_default": null,
+        "data_source": [
+            "FUNCTION",
+            "obs_mission_hubble_<INST>_wf3_flag"
+        ],
+        "definition": "For WFPC2, a numeric flag (1 if yes, 0 if no) indicating whether Wide Field #3 (WF3) was used in the observation.",
+        "pi_category_name": "obs_mission_hubble",
+        "pi_dict_context": "HST",
+        "pi_dict_name": "WF3_FLAG",
+        "pi_disp_order": 99,
+        "pi_display": 1,
+        "pi_display_results": 1,
+        "pi_form_type": "GROUP",
+        "pi_intro": null,
+        "pi_label": "WFPC2 WF3 Flag",
+        "pi_label_results": "WFPC2 WF3 Flag",
+        "pi_slug": "HSTwf3flag",
+        "pi_sub_heading": null,
+        "pi_tooltip": null,
+        "pi_units": null
+    },
+    {
+        "field_name": "wf4_flag",
+        "field_type": "flag_yesno",
+        "field_default": null,
+        "data_source": [
+            "FUNCTION",
+            "obs_mission_hubble_<INST>_wf4_flag"
+        ],
+        "definition": "For WFPC2, a numeric flag (1 if yes, 0 if no) indicating whether Wide Field #4 (WF4) was used in the observation.",
+        "pi_category_name": "obs_mission_hubble",
+        "pi_dict_context": "HST",
+        "pi_dict_name": "WF4_FLAG",
+        "pi_disp_order": 99,
+        "pi_display": 1,
+        "pi_display_results": 1,
+        "pi_form_type": "GROUP",
+        "pi_intro": null,
+        "pi_label": "WFPC2 WF4 Flag",
+        "pi_label_results": "WFPC2 WF4 Flag",
+        "pi_slug": "HSTwf4flag",
+        "pi_sub_heading": null,
+        "pi_tooltip": null,
+        "pi_units": null
+    },
+    {
+        "field_name": "targeted_detector_id",
+        "field_type": "enum",
+        "field_enum_options": "'PC1','WF2','WF3','WF4'",
+        "field_default": null,
+        "data_source": [
+            "FUNCTION",
+            "obs_mission_hubble_<INST>_targeted_detector_id"
+        ],
+        "definition": "Identifies which of the four CCDs of WFPC2 was pointed at the target. Possible values are 'PC1', 'WF2', 'WF3', and 'WF4'.",
+        "pi_category_name": "obs_mission_hubble",
+        "pi_dict_context": "HST",
+        "pi_dict_name": "TARGETED_DETECTOR_ID",
+        "pi_disp_order": 9,
+        "pi_display": 1,
+        "pi_display_results": 1,
+        "pi_form_type": "GROUP",
+        "pi_intro": null,
+        "pi_label": "WFPC2 Targeted Detector ID",
+        "pi_label_results": "WFPC2 Targeted Detector ID",
+        "pi_slug": "HSTtargeteddetectorid",
+        "pi_sub_heading": null,
+        "pi_tooltip": null,
+        "pi_units": null,
+        "mult_options": [
+              [   0,  "PC1",  "PC1",  10, "Y", null],
+              [   1,  "WF2",  "WF2",  20, "Y", null],
+              [   2,  "WF3",  "WF3",  30, "Y", null],
+              [   3,  "WF4",  "WF4",  40, "Y", null],
+              [   4, "NONE", "None",  50, "Y", null],
+              [   5,   null, "NULL",  60, "Y", null]
+          ]
+    },
+    {
+        "field_name": "center_filter_wavelength",
+        "field_type": "real4",
+        "field_key": true,
+        "field_default": null,
+        "data_source": [
+            "TAB:index",
+            "CENTER_FILTER_WAVELENGTH"
+        ],
+        "data_source_order": 0,
+        "definition": "The approximate central wavelength of the filter bandpass, in microns. Zero if unknown.",
+        "pi_category_name": "obs_mission_hubble",
+        "pi_dict_context": "HST",
+        "pi_dict_name": "CENTER_FILTER_WAVELENGTH",
+        "pi_disp_order": 3,
+        "pi_display": 0,
+        "pi_display_results": 1,
+        "pi_form_type": "RANGE",
+        "pi_intro": null,
+        "pi_label": "Center Filter Wavelength",
+        "pi_label_results": "Center Filter Wavelength",
+        "pi_slug": "HSTcenterfilterwavelength",
+        "pi_sub_heading": null,
+        "pi_tooltip": "",
+        "pi_units": "",
+        "comment": "Definition from HSTACS label."
+    },
+    {
+        "field_name": "bandwidth",
+        "field_type": "real4",
+        "field_key": true,
+        "field_default": null,
+        "data_source": [
+            "TAB:index",
+            "BANDWIDTH"
+        ],
+        "data_source_order": 0,
+        "definition": "The full width of the spectral bandpass, in microns. Zero if unknown.",
+        "pi_category_name": "obs_mission_hubble",
+        "pi_dict_context": "HST",
+        "pi_dict_name": "BANDWIDTH",
+        "pi_disp_order": 3,
+        "pi_display": 0,
+        "pi_display_results": 1,
+        "pi_form_type": "RANGE",
+        "pi_intro": null,
+        "pi_label": "Bandwidth",
+        "pi_label_results": "Bandwidth",
+        "pi_slug": "HSTbandwidth",
+        "pi_sub_heading": null,
+        "pi_tooltip": "",
+        "pi_units": "",
+        "comment": "Definition from HSTACS label."
+    },
+    {
+        "put_mults_here": true
+    },
+    {
+        "field_name": "id",
+        "field_type": "uint4",
+        "field_key": "primary",
+        "field_notnull": true,
+        "data_source": [
+            "MAX_ID",
+            null
+        ]
+    },
+    {
+        "field_name": "timestamp",
+        "field_type": "timestamp"
+    }
+]

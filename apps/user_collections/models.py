@@ -4,7 +4,7 @@ from django.db import models
 
 # stores all user collection data?
 class UserCollectionsTemplate(models.Model):
-    ring_obs_id = models.CharField(max_length=40)
+    rms_obs_id = models.CharField(max_length=40)
     collection_meta=models.ForeignKey("UserCollectionsMeta")
 
 class UserCollectionsMeta(models.Model):
