@@ -1,8 +1,11 @@
 # Settings that are local to the current installation and need to be
 # set separately for each server.
 
-# The name of the MySQL database to use
+# The name of the MySQL database to use for OPUS
 OPUS_DB = '<DB_NAME>'
+
+# The name of the MySQL database to use for the dictionary
+DICTIONARY_DB = '<DB_NAME>'
 
 # The MySQL user and password
 DB_USER = '<DB_USER>'

@@ -283,7 +283,7 @@ DATABASES = {
                 },
     },
     'dictionary': {
-        'NAME': 'dictionary',
+        'NAME': DICTIONARY_DB, 
         'ENGINE': 'django.db.backends.mysql',
         'USER': DB_USER,
         'PASSWORD': DB_PASS,
