@@ -252,7 +252,7 @@ var o_widgets = {
                 // adding a behavior: checking a planet box opens the corresponding targets
                 $('#search').on('change', '#widget__planet input:checkbox:checked', function() {
                     // a planet is .chosen_columns, and its corresponding target is not already open
-                    var mult_id = '#mult_group_' + $(this).attr('value');
+                    var mult_id = '.mult_group_' + $(this).attr('value');
                     $(mult_id).find('.indicator').addClass('fa-minus');
                     $(mult_id).find('.indicator').removeClass('fa-plus');
                     $(mult_id).next().slideDown("fast");
@@ -264,7 +264,7 @@ var o_widgets = {
                 // usually for when a planet checkbox is checked on page load
                 $('#widget__planet input:checkbox:checked', '#search').each(function() {
                     if ($(this).attr('id') && $(this).attr('id').split('_')[0] == 'planet') { // confine to param/vals - not other input controls
-                        var mult_id = '#mult_group_' + $(this).attr('value');
+                        var mult_id = '.mult_group_' + $(this).attr('value');
                         $(mult_id).find('.indicator').addClass('fa-minus');
                         $(mult_id).find('.indicator').removeClass('fa-plus');
                         $(mult_id).next().slideDown("fast");
@@ -277,7 +277,7 @@ var o_widgets = {
                // usually for when a planet checkbox is checked on page load
                $('#widget__planet input:checkbox:checked', '#search').each(function() {
                    if ($(this).attr('id') && $(this).attr('id').split('_')[0] == 'planet') { // confine to param/vals - not other input controls
-                       var mult_id = '#mult_group_' + $(this).attr('value');
+                       var mult_id = '.mult_group_' + $(this).attr('value');
                        $(mult_id).find('.indicator').addClass('fa-minus');
                        $(mult_id).find('.indicator').removeClass('fa-plus');
                        $(mult_id).next().slideDown("fast");

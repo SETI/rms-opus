@@ -1,6 +1,6 @@
 <div id="collections_summary" class="well well-lg">
   <h1>Your Selections</h1>
-  <p>Total Files: <span id="total_files">{{ download_count }}</span></p>
+  <!-- <p>Total Files: <span id="total_files">{{ download_count }}</span></p> -->
   <p>Total Size (before zip): <span id="download_size">{{ download_size_pretty }}</span></p>
 
   <p><a id="download_csv" target="_blank" href="">Download CSV of Chosen Columns</a></p>
@@ -23,19 +23,19 @@
         <li>
           <input type="checkbox" value="{{ product_type }}"
             {% if count > 0 %}
-                checked
+              checked
             {% endif %}
           >
           <span
             {% if count == 0 %}
-            class="fadey"
+              class="fadey"
             {% endif %}
           >
             {{ product_type }}
           </span>
-          {% if count > 0 %}
+          <!-- {% if count > 0 %}
             <span class="product_count hints">{{ count }}</span>
-			    {% endif %}
+			    {% endif %} -->
         </li>
   		{% endfor %}
   	</ul>

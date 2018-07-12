@@ -422,7 +422,7 @@ def getWidget(request, **kwargs):
                 if glabel == 'NULL': glabel = 'Other'
                 if model.objects.filter(grouping=gvalue)[0:1]:
                     form +=  "\n\n" + \
-                             '<div class = "mult_group_label_container" id = "mult_group_' + str(glabel) + '">' + \
+                             '<div class = "mult_group_label_container mult_group_' + str(glabel) + '">' + \
                              '<span class = "indicator fa fa-plus"></span>' + \
                              '<span class = "mult_group_label">' + str(glabel) + '</span></div>' + \
                              '<ul class = "mult_group">' +  \

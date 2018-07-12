@@ -48,7 +48,8 @@ log = logging.getLogger(__name__)
 ################################################################################
 
 @never_cache
-def api_view_collection(request, collection_name, template="collections.html"):
+def api_view_collection(request, collection_name,
+                        template='user_collections/collections.html'):
     """Return the HTML for the left side of the Selections page.
 
     This returns information about ALL files and product types, ignoring any
