@@ -9,7 +9,7 @@ from collections import OrderedDict
 
 # django things
 from django.template import RequestContext
-from django.shortcuts import render, get_object_or_404
+from django.shortcuts import render
 from django.apps import apps
 from django.http import HttpResponse
 from django.core.exceptions import FieldError
@@ -76,6 +76,7 @@ def init_detail_page(request, **kwargs):
     update_metrics(request)
 
     slugs = request.GET.get('cols', False)
+    slugs = slugs.replace('ringobsid', 'opusid')
     opus_id = kwargs['opus_id']
 
     # The medium image is what's displayed on the Detail page
@@ -128,6 +129,7 @@ def get_table_headers(request, template='table_headers.html'):
     slugs = request.GET.get('cols', settings.DEFAULT_COLUMNS)
     order = request.GET.get('order', None)
     if order:
+        order = order.replace('ringobsid', 'opusid')
         sort_icon = 'fa-sort-desc' if order[0] == '-' else 'fa-sort-asc'
         order = order.strip('-')
     else:
@@ -135,6 +137,7 @@ def get_table_headers(request, template='table_headers.html'):
 
     if not slugs:
         slugs = settings.DEFAULT_COLUMNS
+    slugs = slugs.replace('ringobsid', 'opusid')
     slugs = slugs.split(',')
     columns = []
 
@@ -147,10 +150,11 @@ def get_table_headers(request, template='table_headers.html'):
     for slug in slugs:
         if slug and slug != 'opus_id':
             try:
-                columns.append([slug, param_info.get(slug=slug).label_results])
+                pi = get_param_info_by_slug(slug, from_ui=True)
             except ParamInfo.DoesNotExist:
                 log.error('get_table_headers: Unable to find slug "%s"', slug)
                 pass
+            columns.append([slug, pi.label_results])
     return render(request, template,
                   {'columns':   columns,
                    'sort_icon': sort_icon,
@@ -237,7 +241,7 @@ def getMenuLabels(request, labels_view):
                 all_param_info = list(all_param_info)
                 for k,param_info in enumerate(all_param_info):
                     param_info.slug = adjust_slug_name_single_col_ranges(param_info)
-                    param_info.tooltip = param_info.get_dictionary_info()
+                    param_info.tooltip = param_info.get_tooltip()
                     all_param_info[k] = vars(param_info)
 
                 menu_data[d.table_name]['data'][sub_head] = all_param_info
@@ -247,7 +251,7 @@ def getMenuLabels(request, labels_view):
             menu_data[d.table_name]['has_sub_heading'] = False
             for p in ParamInfo.objects.filter(**{filter:1, "category_name":d.table_name}):
                 p.slug = adjust_slug_name_single_col_ranges(p)
-                p.tooltip = p.get_dictionary_info()
+                p.tooltip = p.get_tooltip()
                 menu_data[d.table_name].setdefault('data', []).append(vars(p))
 
     # div_labels = {d.table_name:d.label for d in TableNames.objects.filter(display='Y', table_name__in=triggered_tables)}
@@ -285,7 +289,7 @@ def getWidget(request, **kwargs):
         form_type, form_type_ext = form_type.split(':')
     param_name = param_info.param_name()
 
-    dictionary = param_info.get_dictionary_info()
+    dictionary = param_info.get_tooltip()
     form_vals = {slug:None}
     auto_id = True
     selections = {}
@@ -477,7 +481,9 @@ def getColumnInfo(slugs):
 def get_column_chooser(request, **kwargs):
     update_metrics(request)
 
-    slugs = request.GET.get('cols', settings.DEFAULT_COLUMNS).split(',')
+    slugs = request.GET.get('cols', settings.DEFAULT_COLUMNS)
+    slugs = slugs.replace('ringobsid', 'opusid')
+    slugs = slugs.split(',')
 
     slugs = filter(None, slugs) # sometimes 'cols' is in url but is blank, so fails above
     if not slugs:

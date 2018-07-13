@@ -50,9 +50,11 @@
 																{% else %}
 																	{{ p.label }}
 																{% endif %}
-		                            <i class="fa fa-info-circle" title="
-	                                 {{ p.tooltip.definition }}
-		                              "></i>
+																{% if p.tooltip %}
+			                            <i class="fa fa-info-circle" title="
+		                                 {{ p.tooltip.definition }}
+			                              "></i>
+																{% endif %}
 		                        </a>
 		                      </li>
 	                      {% endif %}

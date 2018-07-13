@@ -993,6 +993,7 @@ var o_browse = {
     getBrowseData: function(page) {
 
         var base_url = '/opus/api/data.json?';
+        var columns;
 
         // we have to do a little hacking of the hash, we want page as we want it and opus_id too
         var new_hash = [];
@@ -1011,6 +1012,9 @@ var o_browse = {
             // make sure opus_id is in columns
             columns = opus.prefs.cols;
             if (param == 'cols') {
+                values = values.map( function(item) {
+                  return item == 'ringobsid' ? 'opusid' : item;
+                })
                 if (jQuery.inArray('opusid', values) < 0) {
                     values.push('opusid');
                 }
@@ -1024,10 +1028,18 @@ var o_browse = {
             new_hash.push(param + '=' + values.join(','));
         }
 
+        // THIS MAKES NO SENSE XXX
+        // Above we set columns to a comma-separated string, but here
+        // it's magically a list again. WTF?
+        columns = columns.map( function(item) {
+          return item == 'ringobsid' ? 'opusid' : item;
+        })
         var new_hash = new_hash.join('&');
         $.getJSON(base_url + new_hash, function(json) {
             // assign to data object
             var updated_ids = [];
+
+            console.log(columns)
 
             for (var i in json.page) {
                 var opus_id = json.page[i][columns.indexOf('opusid')];

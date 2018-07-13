@@ -31,25 +31,38 @@ import logging
 log = logging.getLogger(__name__)
 
 
-def get_param_info_by_slug(slug):
-    slug_no_num = strip_numeric_suffix(slug)
+def get_param_info_by_slug(slug, from_ui=False):
+    # If from_ui is true, we try stripping the trailing '1' off a slug
+    # as well, because single-value slugs come in with this gratuitous
+    # '1' on the end
 
     # Try the current slug names first
+
+    slug_no_num = strip_numeric_suffix(slug)
+
     try:
         return ParamInfo.objects.get(slug=slug_no_num)
     except ParamInfo.DoesNotExist:
         pass
 
     try:
-        return ParamInfo.objects.get(slug=slug)  #  qtypes for ranges come through as the param_name_no num which doesn't exist in param_info, so grab the param_info for the lower side of hte ragne
+        return ParamInfo.objects.get(slug=slug)
     except ParamInfo.DoesNotExist:
         pass
 
     try:
-        return ParamInfo.objects.get(slug=slug + '1')  #  qtypes for ranges come through as the param_name_no num which doesn't exist in param_info, so grab the param_info for the lower side of hte ragne
-        # this is not a query param, ignore it
+        # qtypes for ranges come through as the param_name_no num
+        # which doesn't exist in param_info, so grab the param_info
+        # for the lower side of the range
+        return ParamInfo.objects.get(slug=slug + '1')
     except ParamInfo.DoesNotExist:
         pass
+
+    if from_ui:
+        try:
+            return ParamInfo.objects.get(slug=slug.strip('1'))
+        except ParamInfo.DoesNotExist:
+            pass
 
     # Now try the same thing but with the old slug names
     try:
@@ -58,15 +71,23 @@ def get_param_info_by_slug(slug):
         pass
 
     try:
-        return ParamInfo.objects.get(old_slug=slug)  #  qtypes for ranges come through as the param_name_no num which doesn't exist in param_info, so grab the param_info for the lower side of hte ragne
+        return ParamInfo.objects.get(old_slug=slug)
     except ParamInfo.DoesNotExist:
         pass
 
     try:
-        return ParamInfo.objects.get(old_slug=slug + '1')  #  qtypes for ranges come through as the param_name_no num which doesn't exist in param_info, so grab the param_info for the lower side of hte ragne
+        return ParamInfo.objects.get(old_slug=slug + '1')
         # this is not a query param, ignore it
     except ParamInfo.DoesNotExist:
         pass
+
+    if from_ui:
+        try:
+            return ParamInfo.objects.get(old_slug=slug.strip('1'))
+        except ParamInfo.DoesNotExist:
+            pass
+
+    raise ParamInfo.DoesNotExist
 
 def get_param_info_by_param(param_name):
     cat_name      = param_name.split('.')[0]
