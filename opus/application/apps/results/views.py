@@ -232,7 +232,7 @@ def api_get_metadata(request, opus_id, fmt):
     if fmt == 'html':
         # hack because we want to display labels instead of param names
         # on our html Detail page
-        ret = render(request, 'detail_metadata.html',locals())
+        ret = render(request, 'results/detail_metadata.html',locals())
     if fmt == 'json':
         ret = HttpResponse(json.dumps(data), content_type="application/json")
     if fmt == 'raw':
@@ -527,7 +527,7 @@ def _get_metadata_by_slugs(request, opus_id, slugs, fmt):
                 data.append({param: value})
 
     if fmt == 'html':
-        return render(request, 'detail_metadata_slugs.html',locals())
+        return render(request, 'results/detail_metadata_slugs.html',locals())
     if fmt == 'json':
         return HttpResponse(json.dumps(data), content_type="application/json")
     if fmt == 'raw':
@@ -701,7 +701,7 @@ def api_get_images(request, fmt):
 
     ret = responseFormats({'data': image_list}, fmt,
                           alt_size=alt_size, columns_str=columns.split(','),
-                          template='gallery.html', order=order)
+                          template='results/gallery.html', order=order)
     exit_api_call(api_code, ret)
     return ret
 
