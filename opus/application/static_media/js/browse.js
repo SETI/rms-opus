@@ -5,8 +5,8 @@ var o_browse = {
     *  all the things that happen on the browse tab
     *
     *  do not underestimate this most magical method:
-    • 
-    •  o_browse.updatePage(no)
+    •
+    •  o_browse.updatePage(no)
     *
     **/
 
@@ -236,11 +236,11 @@ var o_browse = {
                 var icon_a_element = $('#gallery__' + opus_id + ' .tools-bottom a').parent();
                 // is this checked? or unchecked..
                 var action = icon_a_element.hasClass("in") ? "add" : "remove";
-                
+
                 o_browse.cartHandler(opus_id, action);
                 break;
 
-              case "expand":
+              case "resize":
                 $('#gallery__' + opus_id + "> a").trigger("click");
                 break;
 
@@ -986,6 +986,7 @@ var o_browse = {
     getBrowseData: function(page) {
 
         var base_url = '/opus/api/data.json?';
+        var columns = opus.prefs.cols;
 
         // we have to do a little hacking of the hash, we want page as we want it and opus_id too
         var new_hash = [];
@@ -1002,12 +1003,14 @@ var o_browse = {
 
 
             // make sure opus_id is in columns
-            columns = opus.prefs.cols;
             if (param == 'cols') {
+                values = values.map( function(item) {
+                  return item == 'ringobsid' ? 'opusid' : item;
+                })
                 if (jQuery.inArray('opusid', values) < 0) {
                     values.push('opusid');
                 }
-                columns = values.join(',');  // we need this after the ajax call
+                columns = values;  // we need this after the ajax call
             }
             // make sure page is the page we were passed
             if (param == 'page') {

@@ -1,7 +1,7 @@
 from django.db import models
 from django.contrib.contenttypes.models import ContentType
 from django.core.urlresolvers import reverse
-from dictionary.views import get_def, get_more_info_url
+from dictionary.views import get_def_for_tooltip, get_more_info_url
 
 import logging
 log = logging.getLogger(__name__)
@@ -60,8 +60,8 @@ class ParamInfo(models.Model):
     def param_name(self):
         return self.category_name + '.' + self.name
 
-    def get_dictionary_info(self):
-        definition = get_def(self.dict_name, self.dict_context)
+    def get_tooltip(self):
+        definition = get_def_for_tooltip(self.dict_name, self.dict_context)
         return definition
 
 

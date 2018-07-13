@@ -20,7 +20,12 @@ base_urlpatterns = [
     url(r'^', include('user_collections.urls')),
 ]
 
+dictionary_urlpatterns = [
+    url(r'^', include('dictionary.urls'))
+]
+
 urlpatterns = [
     url('^', include(base_urlpatterns)),
-    url('^%s/' % settings.BASE_PATH,  include(base_urlpatterns))  # dev
+    url('^%s/' % settings.BASE_PATH, include(base_urlpatterns)),  # dev
+    url('^dictionary/', include(dictionary_urlpatterns)),
     ]

@@ -174,8 +174,8 @@ def api_edit_collection(request, **kwargs):
         try:
             opus_id = kwargs['opus_id'] # XXX WHY?
         except KeyError:
-                msg = 'No Observations specified'
-                ret = HttpResponse(msg)
+                json_data = {'err': 'No observations specified'}
+                ret = HttpResponse(json.dumps(json_data))
                 exit_api_call(api_code, ret)
                 return ret
 
@@ -183,8 +183,8 @@ def api_edit_collection(request, **kwargs):
         try:
             request_no = kwargs['request_no']
         except KeyError:
-            msg = 'No request number received'
-            ret = HttpResponse(msg)
+            json_data = {'err': 'No request number received'}
+            ret = HttpResponse(json.dumps(json_data))
             exit_api_call(api_code, ret)
             return ret
 
@@ -207,7 +207,9 @@ def api_edit_collection(request, **kwargs):
 
     collection_count = _get_collection_count(session_id)
 
-    json_data = {'count': collection_count, 'request_no': request_no}
+    json_data = {'err': False,
+                 'count': collection_count,
+                 'request_no': request_no}
     ret = HttpResponse(json.dumps(json_data))
     exit_api_call(api_code, ret)
     return ret

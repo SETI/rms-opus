@@ -7,10 +7,6 @@ from django.conf import settings
 from django.contrib.staticfiles.storage import staticfiles_storage
 from django.views.generic.base import RedirectView
 
-from ui import views
-import dictionary
-
-
 from ui.views import (
     api_about,
     get_table_headers,
@@ -29,7 +25,6 @@ urlpatterns = [
     url(r'^menu.html$', get_menu),
     url(r'^forms/widget/(?P<slug>[-\w]+).(?P<fmt>[json|zip|html|csv]+)$', getWidget),
     url(r'^forms/column_chooser.html$', get_column_chooser),
-    url(r'^dictionary/', include('dictionary.urls')),
     url(r'^initdetail/(?P<opus_id>[-\w]+).(?P<fmt>[json|zip|html]+)$',
         init_detail_page),
     url(r'^favicon.ico$',
