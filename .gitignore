@@ -13,9 +13,9 @@ logs
 log.txt
 
 venv
+p2venv
 p3venv
-secrets.py
+opus_secrets.py
 
 migrations/
 search/models.py  # this file is generated dynamically during import procedures
-downloads/test_runs

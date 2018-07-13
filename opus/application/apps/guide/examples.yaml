@@ -1,0 +1,164 @@
+sections:
+
+    - title: Getting Data
+      endpoints:
+
+          - title: api/data.[fmt]
+            desc: get data
+            info:
+                fmt: json,html,zip,csv
+                GET params: search params, limit, page
+            examples:
+                - desc: target Pan in json,
+                  url: https://tools.pds-rings.seti.org/opus/api/data.json?planet=Saturn&target=pan
+
+          - title: api/metadata/[opus_id].[fmt]
+            desc: get detail for a single observation
+            info:
+                opus_id: valid opus_id
+                fmt: json,html,zip,csv
+            examples:
+                - desc: single Cassini ISS Saturn Observations
+                  url: https://tools.pds-rings.seti.org/opus/api/metadata/S_IMG_CO_ISS_1459551972_N.json
+
+          - title: api/images/[size].[fmt]
+            desc: get image results for a search
+            info:
+                size: thumb,small,med,full
+                fmt: json,html,zip,csv
+                GET params: search params, limit, page
+            examples:
+                - desc: planet = Jupiter, medium images, in json
+                  url: https://tools.pds-rings.seti.org/opus/api/images/med.json?planet=Jupiter
+
+          - title: api/image/[size]/[opus_id]
+            desc: get images for a single observation
+            info:
+                size: thumb,small,med,full
+                opus_id: valid opus_id
+            examples:
+                - desc: jupiter observation, full size, in json
+                  url: https://tools.pds-rings.seti.org/opus/api/image/full/J_IMG_GO_SSI_0520821213.json
+
+          - title: api/files/[opus_id].[fmt]
+            desc: get files for a single observation
+            info:
+                opus_id: valid opus_id
+                fmt: json,html,zip,csv
+            examples:
+                - desc: a Cassini ISS observation, json format
+                  url: https://tools.pds-rings.seti.org/opus/api/files/S_IMG_CO_ISS_1622138715_W.json
+
+          - title: api/files.[fmt]
+            desc: get all files for a search
+            info:
+                fmt: json,html,zip,csv
+                GET params: search params, limit, page
+            examples:
+                - desc: target Pan, in json
+                  url: https://tools.pds-rings.seti.org/opus/api/files.json?&target=pan
+
+    - title: Getting Information about Data
+      endpoints:
+
+          - title: api/meta/result_count.[fmt]
+            desc: get result count for a search
+            info:
+                GET Params: search params, limit, page
+                fmt: json,html,zip
+            examples:
+                - desc: target Pan in json
+                  url: https://tools.pds-rings.seti.org/opus/api/meta/result_count.json?target=Pan
+
+          - title: api/meta/mults[param].[fmt]
+            desc: returns all possible values for a given multiple choice field, given a search, and the result count for each value
+            info:
+                param: param name
+                fmt : json,html,zip
+                GET params: search params, limit, offset
+            examples:
+                - desc: get all possible targets and counts for each when planet=Saturn
+                  url: https://tools.pds-rings.seti.org/opus/api/meta/mults/target.json?planet=Saturn
+
+          - title: api/meta/range/endpoints/[param].[fmt]
+            desc: get range endpoints for a field, given a search
+            info:
+                param: param name
+                fmt: json,html,zip
+                GET params: search params, limit, offset
+            examples:
+                - desc: get ring radius endpoints for target Saturn
+                  url: https://tools.pds-rings.seti.org/opus/api/meta/range/endpoints/ringradius1.json?target=Saturn
+
+          # - title: api/fields/[field].[fmt]
+          #   desc: get information about a particular field
+          #   info:
+          #       field: field name or no
+          #       fmt: json,html,zip
+          #   examples:
+          #       - desc: get information about the planet field
+          #         url: https://tools.pds-rings.seti.org/opus/api/fields/planet.json
+
+          - title: api/fields.[fmt]
+            desc: get list of all fields
+            info:
+                fmt: json, html, zip
+            examples:
+                - desc: list of all fields in json
+                  url: https://tools.pds-rings.seti.org/opus/api/fields.json
+
+          # - title: api/category/[cat_name]
+          #   desc: get all fields in a category
+          #   info:
+          #       cat_name: category name
+          #   examples:
+          #       - desc: field names in Hubble Mission in json
+          #         url: https://tools.pds-rings.seti.org/opus/api/category/hubble_mission.json
+
+          - title: api/categories.[fmt]
+            desc: list category names
+            info:
+                fmt: json
+            examples:
+                - desc: cat names in json
+                  url: https://tools.pds-rings.seti.org/opus/api/categories.json
+
+
+    - title: Extended Examples
+      endpoints:
+
+            - title: multiple instrument
+              desc: Search accross different result sets, can search accross any missions or instruments
+              examples:
+                  - desc: get result count at Saturn where COISS filter = BL1 or VGISS filter = BLUE
+                    url: https://tools.pds-rings.seti.org/opus/api/meta/result_count.json?planet=Saturn&COISS-filter=BL1&VGISS-filter=BLUE
+
+                  - desc: same search, fetching image metadata in json, page 44, 100 results per page
+                    url: https://tools.pds-rings.seti.org/opus/api/images/thumb.json?planet=Saturn&COISS-filter=BL1&VGISS-filter=BLUE&limit=100&page=44
+
+            - title: range query - type any (default)
+              desc: returns products that intersect at least some piece of the desired range.
+              info:
+                  qtype-[param]: any, all, only
+                  GET params: search params, limit, offset
+              examples:
+                  - desc: get count of any results for phase1 = 20 and phase2 = 40 at Saturn (aka phase1 <= 40 and phase2 >= 20)
+                    url: https://tools.pds-rings.seti.org/opus/api/meta/result_count.json?planet=Saturn&phase1=20&phase2=40
+
+            - title: range query - type 'all'
+              desc: product contains the entire desired range (and possibly more)
+              info:
+                  qtype-[param]: any, all, only
+                  GET params: search params, limit, offset
+              examples:
+                  - desc: get count of all results for phase1 = 20 and phase2 = 40 at Saturn (aka phase1 <= 20 and phase2 >= 40)
+                    url: https://tools.pds-rings.seti.org/opus/api/meta/result_count.json?planet=Saturn&phase1=20&phase2=40&qtype-phase=all
+
+            - title: range query - type 'only'
+              desc: No piece of the product's footprint lands outside the desired range
+              info:
+                  qtype-[param]: any, all, only
+                  GET params: search params, limit, offset
+              examples:
+                  - desc: get count of results only for phase1 = 20 and phase2 = 40 at Saturn (aka phase1 >= 20 and phase2 <= 40)
+                    url: https://tools.pds-rings.seti.org/opus/api/meta/result_count.json?planet=Saturn&phase1=20&phase2=40&qtype-phase=only
