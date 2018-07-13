@@ -191,7 +191,7 @@ var o_browse = {
                // well actually they are selecting a range endpoint 'add range'
                // so they don't want data viewer they want 'add to cart''
                o_browse.toggleBrowseInCollectionStyle(opus_id);
-               o_browse.cart_click_handler(opus_id, 'add');
+               o_browse.cartHandler(opus_id, 'add');
                return false;
             }
 
@@ -207,17 +207,16 @@ var o_browse = {
 
         // thumbnail overlay tools
         $('.gallery').on("click", ".tools-bottom a", function(e) {
-            $(this).parent().show();  // whu?
+            //$(this).parent().show();  // whu?
+          var opus_id = $(this).parent().parent().attr("id").substring(9);
 
-            var opus_id = $(this).parent().parent().attr("id").substring(9);
+          // clicking thumbnail opens embedded data viewer
+          if ($(this).hasClass("colorbox")) {
+            $("#gallery__" + opus_id + "> a").trigger("click");
+          }
 
-            // clicking thumbnail opens embedded data viewer
-            if ($(this).hasClass('colorbox')) {
-                $('#gallery__' + opus_id + "> a").trigger("click");
-            }
-
-            // click to view detail page
-            if ($(this).find('i').hasClass('glyphicon-info-sign')) {
+          switch ($(this).attr("data-icon")) {
+              case "info":
                 if (e.shiftKey || e.ctrlKey || e.metaKey) {
                     // handles command click to open in new tab
                     var link = "/opus/#/" + o_hash.getHash();
@@ -229,31 +228,25 @@ var o_browse = {
                 // leave a highlight on the clicked thumbnail
                 $(' .thumb_overlay').removeClass("gallery_image_focus").removeClass("browse_image_selected");  // remove any old
                 $('#gallery__' + opus_id + ' .thumb_overlay').addClass("gallery_image_focus browse_image_selected");
+                break;
 
-                return false;
-            }
-
-            // click spyglass thingy to view colorbox
-            if ($(this).find('i').hasClass('glyphicon-resize-full')) {
-                // trigger colorbox, same as clicking anywhere on the thumbnail
-                $('#gallery__' + opus_id + "> a").trigger("click");
-            }
-
-            // click to add/remove from  cart
-            // gallery thumbnail cart checkmark thing
-            if ($(this).find('i').hasClass('glyphicon-ok')) {
-                // toggle thumbnail indicator state
+              case "check":
                 o_browse.toggleBrowseInCollectionStyle(opus_id);
 
                 var icon_a_element = $('#gallery__' + opus_id + ' .tools-bottom a').parent();
                 // is this checked? or unchecked..
-                var action = 'remove';
-                if (icon_a_element.hasClass("in")) {
-                    action = 'add';  // this opus_id is being added to cart
-                }
-                o_browse.cart_click_handler(opus_id, action)
-            }
+                var action = icon_a_element.hasClass("in") ? "add" : "remove";
+                
+                o_browse.cartHandler(opus_id, action);
+                break;
 
+              case "expand":
+                $('#gallery__' + opus_id + "> a").trigger("click");
+                break;
+
+              default:
+                alert("Hmm... should not be here. error 710.");
+            }
             return false;
         }); // end click a browse tools icon
 
@@ -354,7 +347,7 @@ var o_browse = {
 
     }, // end browse behaviors
 
-    cart_click_handler: function(opus_id, action) {
+    cartHandler: function(opus_id, action) {
         // behaviors for the click to add/remove from cart
         // whether that's from checkbox being clicked
         // or thumbnail clicked while 'add range' is happening
