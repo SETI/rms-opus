@@ -76,7 +76,8 @@ def init_detail_page(request, **kwargs):
     update_metrics(request)
 
     slugs = request.GET.get('cols', False)
-    slugs = slugs.replace('ringobsid', 'opusid')
+    if slugs:
+        slugs = slugs.replace('ringobsid', 'opusid')
     opus_id = kwargs['opus_id']
 
     # The medium image is what's displayed on the Detail page

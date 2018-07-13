@@ -5,21 +5,21 @@
     </a>
 
     <div class="tools tools-bottom">
-      <a href="#"> <!-- detail page link -->
+      <a href="#" data-icon="info"> <!-- detail page link -->
         <i class="glyphicon glyphicon-info-sign
           {% if i.in_collection %}
             thumb_selected_icon
           {% endif %}
         "></i>
       </a>
-      <a href="#"> <!-- checkmark - add to cart -->
+      <a href="#" data-icon="check"> <!-- checkmark - add to cart -->
           <i class="glyphicon glyphicon-ok
             {% if i.in_collection %}
               thumb_selected_icon
             {% endif %}
           "></i>
       </a>
-      <a href="#" class="colorbox"> <!-- colorbox -->
+      <a href="#" class="colorbox" data-icon="resize"> <!-- colorbox -->
         <i class="glyphicon glyphicon-resize-full
           {% if i.in_collection %}
             thumb_selected_icon

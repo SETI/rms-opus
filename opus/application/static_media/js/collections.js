@@ -280,20 +280,11 @@ var o_collections = {
             url: url,
             dataType: "json",
             success: function(data) {
-                if (data['err'] == undefined) {
-                    opus.collection_queue[request_no]['sent'] = true; // server has recvd this request
-                    var server_latest_processed = data['request_no'];
-                    if (server_latest_processed == opus.lastCartRequestNo) {
-                        // server has process all collection requests, this count is valid
-                        var count = data['count'];
-                        $('#collection_count').html(count);
-                        opus.colls_pages = Math.ceil(count/opus.prefs.limit);
-                        o_collections.resetCollectionQueue();
-                    } else {
-                           // // alert('server last ' + server_latest_processed + ' client: ' + opus.lastCartRequestNo)
-                    }
-                } else {
-                  // post error where...?
+                var count = data['count'];
+                $('#collection_count').html(count);
+                opus.colls_pages = Math.ceil(count/opus.prefs.limit);
+                if (opus.collection_queue[data['request_no']] != undefined) {
+                  delete opus.collection_queue[data['request_no']];
                 }
             },
             error: function() {
