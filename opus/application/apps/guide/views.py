@@ -1,4 +1,5 @@
-import yaml, os
+import oyaml as yaml # Cool package that preserves key order
+import os
 from django.shortcuts import render
 from django.http import HttpResponse,Http404
 from metrics.views import update_metrics
@@ -12,7 +13,8 @@ def guide(request):
     with open(path + "/{}".format(guide_content_file), 'r') as stream:
         try:
             guide = yaml.load(stream)
-            return render(request, 'guide.html', locals())
+            return render(request, 'guide.html',
+                          {'guide': guide})
 
         except yaml.YAMLError as exc:
             print(exc)

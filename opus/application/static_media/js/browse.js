@@ -1033,8 +1033,8 @@ var o_browse = {
 
             // this endpoint also returns column labels:
             opus.col_labels = [];
-            for (var i in json['columns']) {
-              opus.col_labels.push(json['columns'][i]);
+            for (var i in json['labels']) {
+              opus.col_labels.push(json['labels'][i]);
             }
 
             // update any currently rendered metadata box

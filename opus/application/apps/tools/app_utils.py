@@ -46,8 +46,8 @@ def responseFormats(data, fmt, **kwargs):
             data['path'] = kwargs['path']
         if 'order' in kwargs:
             data['order'] = kwargs['order']
-        if 'labels' in kwargs:
-            data['columns'] = kwargs['labels']
+        # if 'labels' in kwargs:
+        #     data['columns'] = kwargs['labels']
 
         return HttpResponse(json.dumps(data), content_type='application/json')
 

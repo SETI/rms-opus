@@ -6,7 +6,7 @@ import requests
 import csv
 
 filename = 'result_counts.csv'
-endpoint_url = "https://{}.pds-rings.seti.org/opus/api/meta/result_count.json?"
+endpoint_url = "http://{}.pds-rings.seti.org:8000/opus/api/meta/result_count.json?"
 
 class APIEndpointTests(unittest.TestCase):
 
