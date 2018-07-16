@@ -303,6 +303,8 @@ var o_collections = {
             success: function(html){
                 $('#collection_count').html('0');
                 opus.colls_pages = 0;
+                opus.collection_change = true;
+                o_collections.getCollectionsTab();
             }, error: function(e) {
             }
         });
