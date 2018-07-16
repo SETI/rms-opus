@@ -12,7 +12,7 @@ import csv
 from django.template import loader, Context
 from django.http import Http404
 from django.shortcuts import render
-from collections import OrderedDict as SortedDict
+from collections import OrderedDict
 from django.db import connection, DatabaseError
 from django.apps import apps
 from django.core.exceptions import FieldError
@@ -31,6 +31,12 @@ from tools.db_utils import *
 import logging
 log = logging.getLogger(__name__)
 
+
+################################################################################
+#
+# API INTERFACES
+#
+################################################################################
 
 def api_get_data(request, fmt):
     """Return a page of data for a given search.
@@ -58,7 +64,7 @@ def api_get_data(request, fmt):
                 'count':   len(page),
                 'labels':  labels,
                 'page':    page         # tabular page data
-                }
+               }
     """
     update_metrics(request)
     api_code = enter_api_call('api_get_data', request)
@@ -111,8 +117,8 @@ def api_get_metadata(request, opus_id, fmt):
     except AttributeError:
         cats = None  # No request was sent
 
-    data = SortedDict()     # holds data struct to be returned
-    all_info = SortedDict() # holds all the param info objects
+    data = OrderedDict()     # holds data struct to be returned
+    all_info = OrderedDict() # holds all the param info objects
 
     # find all the tables (categories) this observation belongs to,
     if not cats:
@@ -150,7 +156,7 @@ def api_get_metadata(request, opus_id, fmt):
                 results = results.values(*all_param_names)[0]
 
                 # results is an ordinary dict so here to make sure we have the correct ordering:
-                ordered_results = SortedDict({})
+                ordered_results = OrderedDict({})
                 for param in all_param_names:
                     ordered_results[param] = results[param]
 
@@ -445,7 +451,11 @@ def api_get_categories_for_search(request):
     return ret
 
 
-###############################################################################
+################################################################################
+#
+# SUPPORT ROUTINES
+#
+################################################################################
 
 def get_data(request, fmt, cols=None):
     """Return a page of data for a given search and page_no.
@@ -514,6 +524,7 @@ def get_data(request, fmt, cols=None):
                           labels=labels, checkboxes=checkboxes,
                           collection=collection, order=order)
     return ret
+
 
 def get_page(request, colls=None, colls_page=None, page=None):
     """Return a page of results."""
@@ -842,6 +853,7 @@ def get_all_in_collection(request):
            .values_list('opus_id'))
     opus_ids = [x[0] for x in res]
     return opus_ids
+
 
 def get_collection_in_page(opus_id_list, session_id):
     """ returns obs_general_ids in page that are also in user collection

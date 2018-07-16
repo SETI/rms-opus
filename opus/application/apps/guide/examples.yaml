@@ -149,42 +149,54 @@ sections:
                 - desc: Category names in JSON for a search for Methone
                   url: https://tools.pds-rings.seti.org/opus/api/categories.json?surfacegeometrytargetname=Methone
 
+          - title: api/fields/[field].[fmt]
+            desc: Get information about a particular field
+            info:
+                field: field slug
+                fmt: json,html,zip
+                JSON response: "{'data': {slug: {'category': Pretty category name, 'label': Pretty field name, 'slug': slug, 'old_slug': previous slug (deprecated)}}}"
+            examples:
+                - desc: Get information about the "planet" field
+                  url: https://tools.pds-rings.seti.org/opus/api/fields/planet.json
+                - desc: Get information about the "Rhea body center phase angle" field
+                  url: https://tools.pds-rings.seti.org/opus/api/fields/SURFACEGEOrheacenterphaseangle.json
+
+          - title: api/fields.[fmt]
+            desc: Get information about all fields
+            info:
+                fmt: json,html,zip
+                JSON response: "{'data': {slug: {'category': Pretty category name, 'label': Pretty field name, 'slug': slug, 'old_slug': previous slug (deprecated)}}}"
+            examples:
+                - desc: Get information about all fields
+                  url: https://tools.pds-rings.seti.org/opus/api/fields.json
+
 
     - title: Extended Examples
       endpoints:
 
-            - title: multiple instrument
-              desc: Search accross different result sets, can search accross any missions or instruments
-              examples:
-                  - desc: get result count at Saturn where COISS filter = BL1 or VGISS filter = BLUE
-                    url: https://tools.pds-rings.seti.org/opus/api/meta/result_count.json?planet=Saturn&COISS-filter=BL1&VGISS-filter=BLUE
+          - title: range query - type any (default)
+            desc: returns products that intersect at least some piece of the desired range.
+            info:
+                qtype-[param]: any, all, only
+                GET params: search params, limit, offset
+            examples:
+                - desc: get count of any results for phase1 = 20 and phase2 = 40 at Saturn (aka phase1 <= 40 and phase2 >= 20)
+                  url: https://tools.pds-rings.seti.org/opus/api/meta/result_count.json?planet=Saturn&phase1=20&phase2=40
 
-                  - desc: same search, fetching image metadata in json, page 44, 100 results per page
-                    url: https://tools.pds-rings.seti.org/opus/api/images/thumb.json?planet=Saturn&COISS-filter=BL1&VGISS-filter=BLUE&limit=100&page=44
+          - title: range query - type 'all'
+            desc: product contains the entire desired range (and possibly more)
+            info:
+                qtype-[param]: any, all, only
+                GET params: search params, limit, offset
+            examples:
+                - desc: get count of all results for phase1 = 20 and phase2 = 40 at Saturn (aka phase1 <= 20 and phase2 >= 40)
+                  url: https://tools.pds-rings.seti.org/opus/api/meta/result_count.json?planet=Saturn&phase1=20&phase2=40&qtype-phase=all
 
-            - title: range query - type any (default)
-              desc: returns products that intersect at least some piece of the desired range.
-              info:
-                  qtype-[param]: any, all, only
-                  GET params: search params, limit, offset
-              examples:
-                  - desc: get count of any results for phase1 = 20 and phase2 = 40 at Saturn (aka phase1 <= 40 and phase2 >= 20)
-                    url: https://tools.pds-rings.seti.org/opus/api/meta/result_count.json?planet=Saturn&phase1=20&phase2=40
-
-            - title: range query - type 'all'
-              desc: product contains the entire desired range (and possibly more)
-              info:
-                  qtype-[param]: any, all, only
-                  GET params: search params, limit, offset
-              examples:
-                  - desc: get count of all results for phase1 = 20 and phase2 = 40 at Saturn (aka phase1 <= 20 and phase2 >= 40)
-                    url: https://tools.pds-rings.seti.org/opus/api/meta/result_count.json?planet=Saturn&phase1=20&phase2=40&qtype-phase=all
-
-            - title: range query - type 'only'
-              desc: No piece of the product's footprint lands outside the desired range
-              info:
-                  qtype-[param]: any, all, only
-                  GET params: search params, limit, offset
-              examples:
-                  - desc: get count of results only for phase1 = 20 and phase2 = 40 at Saturn (aka phase1 >= 20 and phase2 <= 40)
-                    url: https://tools.pds-rings.seti.org/opus/api/meta/result_count.json?planet=Saturn&phase1=20&phase2=40&qtype-phase=only
+          - title: range query - type 'only'
+            desc: No piece of the product's footprint lands outside the desired range
+            info:
+                qtype-[param]: any, all, only
+                GET params: search params, limit, offset
+            examples:
+                - desc: get count of results only for phase1 = 20 and phase2 = 40 at Saturn (aka phase1 >= 20 and phase2 <= 40)
+                  url: https://tools.pds-rings.seti.org/opus/api/meta/result_count.json?planet=Saturn&phase1=20&phase2=40&qtype-phase=only

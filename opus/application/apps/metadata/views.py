@@ -13,6 +13,7 @@ from django.db import connection
 from paraminfo.models import ParamInfo
 import search.views
 from metrics.views import update_metrics
+from collections import OrderedDict
 
 from search.models import *
 from tools.app_utils import *
@@ -25,6 +26,12 @@ import opus_support
 import logging
 log = logging.getLogger(__name__)
 
+
+################################################################################
+#
+# API INTERFACES
+#
+################################################################################
 
 def api_get_result_count(request, fmt='json'):
     """Return the result count for a given search.
@@ -355,6 +362,43 @@ def api_get_range_endpoints(request, slug, fmt='json'):
     return ret
 
 
+
+def api_get_fields(request, fmt='json', field='', category=''):
+    """Return information about fields in the database (slugs).
+
+    This is helper method for people using the public API.
+    It's provides a list of all slugs in the database and helpful info
+    about each one like label, dict/more_info links, etc.
+
+    Format: api/fields/(?P<field>\w+).(?P<fmt>[json|zip|html|csv]+)
+        or: api/fields.(?P<fmt>[json|zip|html|csv]+)
+
+    Can return JSON, ZIP, HTML, or CSV.
+
+    Returned JSON is of the format:
+            surfacegeometryJUPITERsolarhourangle: {
+                more_info: {
+                    def: false,
+                    more_info: false
+                },
+                label: "Solar Hour Angle"
+            }
+    """
+    update_metrics(request)
+    api_code = enter_api_call('api_get_fields', request)
+
+    ret = get_fields_info(fmt, field, category)
+
+    exit_api_call(api_code, ret)
+    return ret
+
+
+################################################################################
+#
+# SUPPORT ROUTINES
+#
+################################################################################
+
 def getMultName(param_name):
     """ pass param_name, returns mult widget foreign key table name
         the tables themselves are in the search/models.py """
@@ -364,53 +408,51 @@ def getUserSearchTableName(no):
     """ pass cache_no, returns user search table name"""
     return 'cache_' + str(no);
 
+def get_fields_info(fmt, field='', category='', collapse=False):
+    "Helper routine for api_get_fields."
+    cache_key = 'getFields:field:' + field + ':category:' + category
+    if cache.get(cache_key):
+        fields = cache.get(cache_key)
+    else:
+        if field:
+            fields = ParamInfo.objects.filter(slug=field)
+        elif category:
+            fields = ParamInfo.objects.filter(category_name=field)
+        else:
+            fields = ParamInfo.objects.all()
+        fields.order_by('category_name', 'slug')
 
-# def getFields(request,**kwargs):
-#     """
-#         this is helper method for people using the public API
-#         it's a list of all slugs in the database and helpful info
-#         about each one like label, dict/more_info links:
-#
-#             surfacegeometryJUPITERsolarhourangle: {
-#                 more_info: {
-#                     def: false,
-#                     more_info: false
-#                 },
-#                 label: "Solar Hour Angle"
-#             }
-#
-#         if 'field' is in kwargs, it will return this for just that field (#todo this broken?)
-#         otherwise returns full list of fields in db, as seen here:
-#         https://tools.pds-rings.seti.org/opus/api/fields.json
-#
-#     """
-#     field = category = ''
-#     fmt = kwargs['fmt']
-#     if 'field' in kwargs:
-#         field = kwargs['field']
-#     if 'category' in kwargs:
-#         category = kwargs['category']
-#
-#     cache_key = 'getFields:field:' + field + ':category:' + category
-#     if cache.get(cache_key):
-#         fields = cache.get(cache_key)
-#     else:
-#         if field:
-#             fields = ParamInfo.objects.filter(slug=field)
-#         elif category:
-#             fields = ParamInfo.objects.filter(category_name=field)
-#         else:
-#             fields = ParamInfo.objects.all()
-#
-#     # build return objects
-#     return_obj = {}
-#     for f in fields:
-#         return_obj[f.slug] = {
-#             'label': f.label,
-#             'more_info': f.get_dictionary_info(),
-#             }
-#
-#     if not cache.get(cache_key):
-#         cache.set(cache_key,return_obj)
-#
-#     return HttpResponse(json.dumps(return_obj), content_type='application/json')
+    # We cheat with the HTML return because we want to collapse all the
+    # surface geometry down to a single target version to save screen
+    # space. This is a horrible hack, but for right now we just assume
+    # there will always be surface geometry data for Saturn.
+    # build return objects
+    return_obj = OrderedDict()
+    for f in fields:
+        if (collapse and
+            f.slug.startswith('SURFACEGEO') and
+            not f.slug.startswith('SURFACEGEOsaturn')):
+            continue
+        entry = OrderedDict()
+        table_name = TableNames.objects.get(table_name=f.category_name)
+        entry['label'] = f.label_results
+        if collapse:
+            entry['category'] = table_name.label.replace('Saturn', '<TARGET>')
+            entry['slug'] = f.slug.replace('saturn', '<TARGET>')
+        else:
+            entry['category'] = table_name.label
+            entry['slug'] = f.slug
+        if f.old_slug and collapse:
+            entry['old_slug'] = f.old_slug.replace('saturn', '<TARGET>')
+        else:
+            entry['old_slug'] = f.old_slug
+        return_obj[f.slug] = entry
+
+    if not cache.get(cache_key):
+        cache.set(cache_key, return_obj)
+
+    if fmt == 'raw':
+        return return_obj
+
+    return responseFormats({'data': return_obj}, fmt=fmt,
+                           template='metadata/fields.html')

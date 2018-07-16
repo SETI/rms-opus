@@ -1,9 +1,8 @@
 # guide/urls.py
 from django.conf.urls import url
-from guide.views import guide
+from guide.views import api_guide
 
-# guide - app runs guide to  api
 urlpatterns = [
-    url(r'^api/$', guide),
-    url(r'^api/guide.html$', guide),  # api help pages
+    url(r'^api/$', api_guide),
+    url(r'^api/guide.html$', api_guide),  # api help pages
 ]
