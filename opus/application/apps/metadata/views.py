@@ -83,7 +83,11 @@ def api_get_result_count(request, fmt='json'):
             count = cache.get(cache_key)
         else:
             cursor = connection.cursor()
-            cursor.execute("select count(*) from " + connection.ops.quote_name(table))
+            sql = ('select count(*) from ' +
+                   connection.ops.quote_name(table))
+            time1 = time.time()
+            cursor.execute(sql)
+            log.debug('SQL %d secs: %s', time.time()-time1, sql)
             try:
                 count = cursor.fetchone()
                 count = count[0]
@@ -412,7 +416,7 @@ def get_fields_info(fmt, field='', category='', collapse=False):
     "Helper routine for api_get_fields."
     cache_key = 'getFields:field:' + field + ':category:' + category
     if cache.get(cache_key):
-        fields = cache.get(cache_key)
+        return_obj = cache.get(cache_key)
     else:
         if field:
             fields = ParamInfo.objects.filter(slug=field)
@@ -422,33 +426,32 @@ def get_fields_info(fmt, field='', category='', collapse=False):
             fields = ParamInfo.objects.all()
         fields.order_by('category_name', 'slug')
 
-    # We cheat with the HTML return because we want to collapse all the
-    # surface geometry down to a single target version to save screen
-    # space. This is a horrible hack, but for right now we just assume
-    # there will always be surface geometry data for Saturn.
-    # build return objects
-    return_obj = OrderedDict()
-    for f in fields:
-        if (collapse and
-            f.slug.startswith('SURFACEGEO') and
-            not f.slug.startswith('SURFACEGEOsaturn')):
-            continue
-        entry = OrderedDict()
-        table_name = TableNames.objects.get(table_name=f.category_name)
-        entry['label'] = f.label_results
-        if collapse:
-            entry['category'] = table_name.label.replace('Saturn', '<TARGET>')
-            entry['slug'] = f.slug.replace('saturn', '<TARGET>')
-        else:
-            entry['category'] = table_name.label
-            entry['slug'] = f.slug
-        if f.old_slug and collapse:
-            entry['old_slug'] = f.old_slug.replace('saturn', '<TARGET>')
-        else:
-            entry['old_slug'] = f.old_slug
-        return_obj[f.slug] = entry
+        # We cheat with the HTML return because we want to collapse all the
+        # surface geometry down to a single target version to save screen
+        # space. This is a horrible hack, but for right now we just assume
+        # there will always be surface geometry data for Saturn.
+        # build return objects
+        return_obj = OrderedDict()
+        for f in fields:
+            if (collapse and
+                f.slug.startswith('SURFACEGEO') and
+                not f.slug.startswith('SURFACEGEOsaturn')):
+                continue
+            entry = OrderedDict()
+            table_name = TableNames.objects.get(table_name=f.category_name)
+            entry['label'] = f.label_results
+            if collapse:
+                entry['category'] = table_name.label.replace('Saturn', '<TARGET>')
+                entry['slug'] = f.slug.replace('saturn', '<TARGET>')
+            else:
+                entry['category'] = table_name.label
+                entry['slug'] = f.slug
+            if f.old_slug and collapse:
+                entry['old_slug'] = f.old_slug.replace('saturn', '<TARGET>')
+            else:
+                entry['old_slug'] = f.old_slug
+            return_obj[f.slug] = entry
 
-    if not cache.get(cache_key):
         cache.set(cache_key, return_obj)
 
     if fmt == 'raw':
