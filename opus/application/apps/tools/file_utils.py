@@ -138,12 +138,14 @@ def get_pds_products(opus_id_list=None, fmt='raw', loc_type='url',
     if fmt == 'raw':
         return results
 
-    if fmt == 'json':
-        return HttpResponse(json.dumps({'data': results}),
-                                       content_type='application/json')
-
-    if fmt == 'html':
-        return render('list.html', results)
+    return app_utils.responseFormats({'data': results}, fmt,
+                                     template='list.html')
+    # if fmt == 'json':
+    #     return HttpResponse(json.dumps({'data': results}),
+    #                                    content_type='application/json')
+    #
+    # if fmt == 'html':
+    #     return render('list.html', results)
 
 
 def get_pds_preview_images(opus_id_list, sizes):

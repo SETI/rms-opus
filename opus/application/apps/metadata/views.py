@@ -13,11 +13,12 @@ from django.db import connection
 from paraminfo.models import ParamInfo
 import search.views
 from metrics.views import update_metrics
+from collections import OrderedDict
 
 from search.models import *
+from tools.app_utils import *
 
 # from paraminfo.models import *
-from tools.app_utils import responseFormats, strip_numeric_suffix
 import settings
 
 import opus_support
@@ -25,47 +26,68 @@ import opus_support
 import logging
 log = logging.getLogger(__name__)
 
-def getMultName(param_name):
-    """ pass param_name, returns mult widget foreign key table name
-        the tables themselves are in the search/models.py """
-    return "mult_" + '_'.join(param_name.split('.'))
 
-def getUserSearchTableName(no):
-    """ pass cache_no, returns user search table name"""
-    return 'cache_' + str(no);
+################################################################################
+#
+# API INTERFACES
+#
+################################################################################
 
-def getResultCount(request,fmt='json'):
-    """ pass request and response format,
-        returns result count for a search """
+def api_get_result_count(request, fmt='json'):
+    """Return the result count for a given search.
+
+    Format: api/meta/result_count.(?P<fmt>[json|zip|html|csv]+)
+    Arguments: Normal search and selected-column arguments
+
+    Can return JSON, ZIP, HTML, or CSV.
+
+    Returned JSON is of the format:
+        data = [
+                 {
+                   'result_count': result_count
+                 }
+               ]
+    """
     update_metrics(request)
+    api_code = enter_api_call('api_get_data', request)
 
     if request.GET is None:
-        return HttpResponse(json.dumps({'result_count':'0'}),  content_type='application/json')
+        ret = HttpResponse(json.dumps({'result_count': '0'}),
+                           content_type='application/json')
+        exit_api_call(api_code, ret)
+        return ret
 
     try:
         (selections,extras) = search.views.urlToSearchParams(request.GET)
     except TypeError:
         log.error("Could not find selections for request %s", str(request.GET))
+        exit_api_call(api_code, None)
         raise Http404
 
     reqno = request.GET.get('reqno','')
 
     if selections is False:
         count = 'not found'
-        return HttpResponse(json.dumps({'result_count':count}),  content_type='application/json')
-
+        ret = HttpResponse(json.dumps({'result_count': count}),
+                                      content_type='application/json')
+        exit_api_call(api_code, ret)
+        return ret
 
     table = search.views.getUserQueryTable(selections,extras)
 
-    if table is False:
-        count = 0;
+    if not table:
+        count = 0
     else:
-        cache_key    = "resultcount:" + table
+        cache_key = "resultcount:" + table
         if (cache.get(cache_key)):
             count = cache.get(cache_key)
         else:
             cursor = connection.cursor()
-            cursor.execute("select count(*) from " + connection.ops.quote_name(table))
+            sql = ('select count(*) from ' +
+                   connection.ops.quote_name(table))
+            time1 = time.time()
+            cursor.execute(sql)
+            log.debug('SQL %d secs: %s', time.time()-time1, sql)
             try:
                 count = cursor.fetchone()
                 count = count[0]
@@ -75,30 +97,31 @@ def getResultCount(request,fmt='json'):
             # set this result in cache
             cache.set(cache_key,count)
 
-
-    data = {'result_count':count}
+    data = {'result_count': count}
 
     if (request.is_ajax()):
         data['reqno'] = request.GET['reqno']
 
-    return responseFormats({'data':[data]},fmt,template='result_count.html')
+    ret = responseFormats({'data': [data]}, fmt, template='result_count.html')
+    exit_api_call(api_code, ret)
+    return ret
 
 
-def getValidMults(request,slug,fmt='json'):
-    """
-    fetch mult widget hinting data for widget defined by slug
-    based on current search defined in request
+def api_get_mult_counts(request, slug, fmt='json'):
+    """Return the mults for a given slug along with result counts.
 
-    this is the widget hinting numbers that appear next to each
-    possible checkbox value in a mult/group widget (green numbers)
+    Format: api/meta/result_count.(?P<fmt>[json|zip|html|csv]+)
+    Arguments: Normal search arguments
 
-    pass request, slug, and response format
-    returns valid mults for a given field (slug) like so:
+    Can return JSON, ZIP, HTML, or CSV.
 
-        { 'field':slug,'mults':mults }
-
+    Returned JSON is of the format:
+        { 'field': slug,
+          'mults':mults }
     """
     update_metrics(request)
+    api_code = enter_api_call('api_get_data', request)
+
     try:
         (selections,extras) = search.views.urlToSearchParams(request.GET)
     except Exception,e:
@@ -112,6 +135,7 @@ def getValidMults(request,slug,fmt='json'):
                   str(slug))
         log.error(".. Selections: %s", str(selections))
         log.error(".. Extras: %s", str(extras))
+        exit_api_call(api_code, None)
         raise Http404
 
     table_name = param_info.category_name
@@ -140,12 +164,14 @@ def getValidMults(request,slug,fmt='json'):
             mult_model = apps.get_model('search',mult_name.title().replace('_',''))
         except LookupError:
             log.error('Could not get_model for %s', mult_name.title().replace('_',''))
+            exit_api_call(api_code, None)
             raise Http404
 
         try:
             table_model = apps.get_model('search', table_name.title().replace('_',''))
         except LookupError:
             log.error('Could not get_model for %s', table_name.title().replace('_',''))
+            exit_api_call(api_code, None)
             raise Http404
 
         mults = {}  # info to return
@@ -161,9 +187,9 @@ def getValidMults(request,slug,fmt='json'):
             raise Http404
 
         if table_name == 'obs_general':
-            where   = table_name + ".id = " + user_table + ".id"
+            where = table_name + ".id = " + user_table + ".id"
         else:
-            where   = table_name + ".obs_general_id = " + user_table + ".id"
+            where = table_name + ".obs_general_id = " + user_table + ".id"
         results = results.extra(where=[where],tables=[user_table])
 
         for row in results:
@@ -187,24 +213,29 @@ def getValidMults(request,slug,fmt='json'):
 
         cache.set(cache_key,mults)
 
-    multdata = { 'field':slug,'mults':mults }
+    multdata = { 'field': slug,
+                 'mults': mults }
 
     if (request.is_ajax()):
         reqno = request.GET.get('reqno','')
         multdata['reqno'] = reqno
 
-    return responseFormats(multdata,fmt,template='mults.html')
+    return responseFormats(multdata, fmt, template='mults.html')
 
 
-def get_range_endpoints(request, slug, fmt='json'):
-    """Compute and return range widget endpoints (min, max, nulls) for the
+def api_get_range_endpoints(request, slug, fmt='json'):
+    """Compute and return range widget endpoints (min, max, nulls)
+
+    Compute and return range widget endpoints (min, max, nulls) for the
     widget defined by [slug] based on current search defined in request.
 
-    This is the valid range endpoints that appear in range widgets
-    (green numbers).
+    Format: api/meta/range/endpoints/(?P<slug>[-\w]+)
+            .(?P<fmt>[json|zip|html|csv]+)
+    Arguments: Normal search arguments
 
-    Returns a dictionary like:
+    Can return JSON, ZIP, HTML, or CSV.
 
+    Returned JSON is of the format:
         { min: 63.592, max: 88.637, nulls: 2365}
 
     Note that min and max can be strings, not just real numbers. This happens,
@@ -213,11 +244,13 @@ def get_range_endpoints(request, slug, fmt='json'):
     (such as full-length numbers instead of exponential notation).
     """
     update_metrics(request)
+    api_code = enter_api_call('api_get_range_endpoints', request)
 
     param_info = search.views.get_param_info_by_slug(slug)
     if not param_info:
         log.error('get_range_endpoints: Could not find param_info entry for '+
                   'slug %s', str(slug))
+        exit_api_call(api_code, None)
         raise Http404
 
     param_name = param_info.name # Just name
@@ -273,6 +306,7 @@ def get_range_endpoints(request, slug, fmt='json'):
     except AttributeError, e:
         log.error('get_range_endpoints threw: %s', str(e))
         log.error('Could not find table model for table_name: %s', table_name)
+        exit_api_call(api_code, None)
         raise Http404('Does Not Exist')
 
     if selections:
@@ -327,15 +361,25 @@ def get_range_endpoints(request, slug, fmt='json'):
     # save this in cache
     cache.set(cache_key,range_endpoints)
 
-    return responseFormats(range_endpoints,fmt,template='mults.html')
+    ret = responseFormats(range_endpoints, fmt, template='mults.html')
+    exit_api_call(api_code, ret)
+    return ret
 
 
-def getFields(request,**kwargs):
-    """
-        this is helper method for people using the public API
-        it's a list of all slugs in the database and helpful info
-        about each one like label, dict/more_info links:
 
+def api_get_fields(request, fmt='json', field='', category=''):
+    """Return information about fields in the database (slugs).
+
+    This is helper method for people using the public API.
+    It's provides a list of all slugs in the database and helpful info
+    about each one like label, dict/more_info links, etc.
+
+    Format: api/fields/(?P<field>\w+).(?P<fmt>[json|zip|html|csv]+)
+        or: api/fields.(?P<fmt>[json|zip|html|csv]+)
+
+    Can return JSON, ZIP, HTML, or CSV.
+
+    Returned JSON is of the format:
             surfacegeometryJUPITERsolarhourangle: {
                 more_info: {
                     def: false,
@@ -343,22 +387,36 @@ def getFields(request,**kwargs):
                 },
                 label: "Solar Hour Angle"
             }
-
-        if 'field' is in kwargs, it will return this for just that field (#todo this broken?)
-        otherwise returns full list of fields in db, as seen here:
-        https://tools.pds-rings.seti.org/opus/api/fields.json
-
     """
-    field = category = ''
-    fmt = kwargs['fmt']
-    if 'field' in kwargs:
-        field = kwargs['field']
-    if 'category' in kwargs:
-        category = kwargs['category']
+    update_metrics(request)
+    api_code = enter_api_call('api_get_fields', request)
 
+    ret = get_fields_info(fmt, field, category)
+
+    exit_api_call(api_code, ret)
+    return ret
+
+
+################################################################################
+#
+# SUPPORT ROUTINES
+#
+################################################################################
+
+def getMultName(param_name):
+    """ pass param_name, returns mult widget foreign key table name
+        the tables themselves are in the search/models.py """
+    return "mult_" + '_'.join(param_name.split('.'))
+
+def getUserSearchTableName(no):
+    """ pass cache_no, returns user search table name"""
+    return 'cache_' + str(no);
+
+def get_fields_info(fmt, field='', category='', collapse=False):
+    "Helper routine for api_get_fields."
     cache_key = 'getFields:field:' + field + ':category:' + category
     if cache.get(cache_key):
-        fields = cache.get(cache_key)
+        return_obj = cache.get(cache_key)
     else:
         if field:
             fields = ParamInfo.objects.filter(slug=field)
@@ -366,16 +424,38 @@ def getFields(request,**kwargs):
             fields = ParamInfo.objects.filter(category_name=field)
         else:
             fields = ParamInfo.objects.all()
+        fields.order_by('category_name', 'slug')
 
-    # build return objects
-    return_obj = {}
-    for f in fields:
-        return_obj[f.slug] = {
-            'label': f.label,
-            'more_info': f.get_dictionary_info(),
-            }
+        # We cheat with the HTML return because we want to collapse all the
+        # surface geometry down to a single target version to save screen
+        # space. This is a horrible hack, but for right now we just assume
+        # there will always be surface geometry data for Saturn.
+        # build return objects
+        return_obj = OrderedDict()
+        for f in fields:
+            if (collapse and
+                f.slug.startswith('SURFACEGEO') and
+                not f.slug.startswith('SURFACEGEOsaturn')):
+                continue
+            entry = OrderedDict()
+            table_name = TableNames.objects.get(table_name=f.category_name)
+            entry['label'] = f.label_results
+            if collapse:
+                entry['category'] = table_name.label.replace('Saturn', '<TARGET>')
+                entry['slug'] = f.slug.replace('saturn', '<TARGET>')
+            else:
+                entry['category'] = table_name.label
+                entry['slug'] = f.slug
+            if f.old_slug and collapse:
+                entry['old_slug'] = f.old_slug.replace('saturn', '<TARGET>')
+            else:
+                entry['old_slug'] = f.old_slug
+            return_obj[f.slug] = entry
 
-    if not cache.get(cache_key):
-        cache.set(cache_key,return_obj)
+        cache.set(cache_key, return_obj)
 
-    return HttpResponse(json.dumps(return_obj), content_type='application/json')
+    if fmt == 'raw':
+        return return_obj
+
+    return responseFormats({'data': return_obj}, fmt=fmt,
+                           template='metadata/fields.html')
