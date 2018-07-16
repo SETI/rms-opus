@@ -314,7 +314,10 @@ def get_page(request, colls=None, colls_page=None, page=None):
     session_id = get_session_id(request)
 
     if not colls:
-        collection_page = request.GET.get('colls', False)
+        if request.GET.get('view', 'browse') == 'collection':
+            collection_page = True
+        else:
+            collection_page = False
     else:
         collection_page = colls
 
