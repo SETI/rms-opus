@@ -133,7 +133,12 @@ class SearchForm(forms.Form):
 
             elif form_type in settings.MULT_FIELDS:
                 #self.fields[slug]= MultiStringField(forms.Field)
-                param_name = ParamInfo.objects.get(slug=slug).param_name()
+                try:
+                    param_name = ParamInfo.objects.get(slug=slug).param_name()
+                except ParamInfo.DoesNotExist:
+                    param_name = ParamInfo.objects.get(old_slug=slug).param_name()
+                except ParamInfo.DoesNotExist:
+                    continue # XXX
                 mult_param = getMultName(param_name)
                 model      = apps.get_model('search',mult_param.title().replace('_',''))
 

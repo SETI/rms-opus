@@ -183,14 +183,17 @@ def get_session_id(request):
 _API_CALL_NUMBER = 0
 _API_START_TIMES = {}
 
-def enter_api_call(name, request):
+def enter_api_call(name, request, kwargs=None):
     global _API_CALL_NUMBER
     _API_CALL_NUMBER += 1
     if settings.LOG_API_CALLS:
         print 'API', _API_CALL_NUMBER,
-        print request.path, json.dumps(request.GET, sort_keys=True,
-                                       indent=4,
-                                       separators=(',', ': '))
+        print request.path,
+        if kwargs:
+            print kwargs,
+        print json.dumps(request.GET, sort_keys=True,
+                         indent=4,
+                         separators=(',', ': '))
     _API_START_TIMES[_API_CALL_NUMBER] = time.time()
     return _API_CALL_NUMBER
 

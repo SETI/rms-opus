@@ -268,10 +268,11 @@ def adjust_slug_name_single_col_ranges(param_info):
     return slug
 
 
-def getWidget(request, **kwargs):
+def api_get_widget(request, **kwargs):
 
     """ search form widget as string, http response"""
     update_metrics(request)
+    api_code = enter_api_call('api_get_widget', request, kwargs)
 
     slug = kwargs['slug']
     fmt = kwargs['fmt']
@@ -282,6 +283,7 @@ def getWidget(request, **kwargs):
         log.error(
             "getWidget: Could not find param_info entry for slug %s",
             str(slug))
+        exit_api_call(api_code, None)
         raise Http404
 
     form_type = param_info.form_type
@@ -411,11 +413,22 @@ def getWidget(request, **kwargs):
     # MULT form types
     elif form_type in settings.MULT_FORM_TYPES:
         if param_name in selections:
-            form_vals = {slug:selections[param_name]}
-
+            form_vals = selections[param_name]
         # determine if this mult param has a grouping field (see doc/group_widgets.md for howto on grouping fields)
         mult_param = getMultName(param_name)
         model      = apps.get_model('search',mult_param.title().replace('_',''))
+
+        # Make form choices case-insensitive
+        choices = [mult.label for mult in model.objects.filter(display='Y')]
+        old_form_vals = form_vals
+        form_vals = []
+        for form_val in old_form_vals:
+            for choice in choices:
+                if form_val.upper() == choice.upper():
+                    form_val = choice
+                    break
+            form_vals.append(form_val)
+        form_vals = {slug: form_vals}
 
         try:
             grouping = model.objects.distinct().values('grouping')
@@ -469,7 +482,10 @@ def getWidget(request, **kwargs):
         "form_type": form_type,
         "range_fields": range_fields
     }
-    return render(request, template, context)
+    ret = render(request, template, context)
+    exit_api_call(api_code, ret)
+    return ret
+
 
 
 def getColumnInfo(slugs):
