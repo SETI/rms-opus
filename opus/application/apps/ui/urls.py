@@ -12,7 +12,7 @@ from ui.views import (
     get_table_headers,
     get_browse_headers,
     get_menu,
-    getWidget,
+    api_get_widget,
     get_column_chooser,
     init_detail_page
 )
@@ -23,7 +23,7 @@ urlpatterns = [
     url(r'^table_headers.html$', get_table_headers),
     url(r'^browse_headers.html$', get_browse_headers),
     url(r'^menu.html$', get_menu),
-    url(r'^forms/widget/(?P<slug>[-\w]+).(?P<fmt>[json|zip|html|csv]+)$', getWidget),
+    url(r'^forms/widget/(?P<slug>[-\w]+).(?P<fmt>[json|zip|html|csv]+)$', api_get_widget),
     url(r'^forms/column_chooser.html$', get_column_chooser),
     url(r'^initdetail/(?P<opus_id>[-\w]+).(?P<fmt>[json|zip|html]+)$',
         init_detail_page),
