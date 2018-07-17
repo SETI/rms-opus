@@ -412,23 +412,25 @@ def api_get_widget(request, **kwargs):
 
     # MULT form types
     elif form_type in settings.MULT_FORM_TYPES:
+        values = None
+        form_vals = {slug: None}
         if param_name in selections:
-            form_vals = selections[param_name]
+            values = selections[param_name]
         # determine if this mult param has a grouping field (see doc/group_widgets.md for howto on grouping fields)
         mult_param = getMultName(param_name)
         model      = apps.get_model('search',mult_param.title().replace('_',''))
 
-        # Make form choices case-insensitive
-        choices = [mult.label for mult in model.objects.filter(display='Y')]
-        old_form_vals = form_vals
-        form_vals = []
-        for form_val in old_form_vals:
-            for choice in choices:
-                if form_val.upper() == choice.upper():
-                    form_val = choice
-                    break
-            form_vals.append(form_val)
-        form_vals = {slug: form_vals}
+        if values is not None:
+            # Make form choices case-insensitive
+            choices = [mult.label for mult in model.objects.filter(display='Y')]
+            new_values = []
+            for val in values:
+                for choice in choices:
+                    if val.upper() == choice.upper():
+                        val = choice
+                        break
+                new_values.append(val)
+            form_vals = {slug: new_values}
 
         try:
             grouping = model.objects.distinct().values('grouping')
