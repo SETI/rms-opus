@@ -4,7 +4,9 @@
       <img height=100px width=100px alt="{{ i.thumb_alt_text }}" title="{{ i.opus_id }}" src="{{ i.thumb_url }}">
     </a>
 
-    <div class="tools tools-bottom">
+    <div class="tools tools-bottom
+      {% if i.in_collection %} in {% endif %} ">
+
       <a href="#" data-icon="info"> <!-- detail page link -->
         <i class="glyphicon glyphicon-info-sign
           {% if i.in_collection %}
