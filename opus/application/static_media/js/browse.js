@@ -211,9 +211,10 @@ var o_browse = {
           var opus_id = $(this).parent().parent().attr("id").substring(9);
 
           // clicking thumbnail opens embedded data viewer
-          if ($(this).hasClass("colorbox")) {
-            $("#gallery__" + opus_id + "> a").trigger("click");
-          }
+          // PRETTY SURE THIS IS DEAD CODE
+          //if ($(this).hasClass("colorbox")) {
+          //  $("#gallery__" + opus_id + "> a").trigger("click");
+          //}
 
           switch ($(this).attr("data-icon")) {
               case "info":
@@ -231,9 +232,9 @@ var o_browse = {
                 break;
 
               case "check":
+                var icon_a_element = $('#gallery__' + opus_id + ' .tools-bottom');
                 o_browse.toggleBrowseInCollectionStyle(opus_id);
 
-                var icon_a_element = $('#gallery__' + opus_id + ' .tools-bottom a').parent();
                 // is this checked? or unchecked..
                 var action = icon_a_element.hasClass("in") ? "add" : "remove";
 
@@ -483,15 +484,10 @@ var o_browse = {
     },
 
     toggleBrowseInCollectionStyle: function(opus_id) {
-        var icon_a_element = ".tools-bottom a";
-        $('#gallery__' + opus_id + ' ' + icon_a_element).parent().toggleClass("in"); // this class keeps parent visible when mouseout
-        $('#gallery__' + opus_id + ' ' + icon_a_element).find('i').toggleClass('thumb_selected_icon');
-        $('#gallery__' + opus_id + ' .thumb_overlay').toggleClass('thumb_selected');
-
-        if ($('#gallery__' + opus_id + ' ' + icon_a_element).parent().hasClass("in")) {
-        } else {
-        }
-
+        var elem = $('#gallery__' + opus_id + ' ' + ".tools-bottom");
+        elem.toggleClass("in"); // this class keeps parent visible when mouseout
+        elem.find('i').toggleClass('thumb_selected_icon');
+        elem.next().toggleClass('thumb_selected');
     },
 
     // column chooser behaviors
