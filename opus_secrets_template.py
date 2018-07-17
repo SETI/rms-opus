@@ -64,6 +64,16 @@ TAR_FILE_PATH = '<TAR_FILE_PATH>/'
 # Needs a TRAILING SLASH
 TAR_FILE_URL_PATH = '<URL>/'
 
+# The directory in which to place log files created by OPUS
+OPUS_LOGFILE_DIR = '<LOGFILE_DIR>'
+OPUS_LOG_FILE = os.path.join(OPUS_LOGFILE_DIR, 'opus_log.txt')
+
+# What level of message to log at each destination
+OPUS_LOG_FILE_LEVEL = 'INFO'
+OPUS_LOG_CONSOLE_LEVEL = 'INFO'
+OPUS_LOG_DJANGO_LEVEL = 'WARN'
+OPUS_LOG_API_CALLS = False
+
 
 ##############################
 ### NEEDED FOR OPUS IMPORT ###
@@ -73,7 +83,7 @@ TAR_FILE_URL_PATH = '<URL>/'
 IMPORT_TABLE_TEMP_PREFIX = 'imp_'
 
 # The directory in which to place log files created during the import process.
-IMPORT_LOGFILE_DIR = '<LOGFLIE_DIR>'
+IMPORT_LOGFILE_DIR = '<LOGFILE_DIR>'
 IMPORT_LOG_FILE = os.path.join(IMPORT_LOGFILE_DIR, 'opus_import.log')
 IMPORT_DEBUG_LOG_FILE = os.path.join(IMPORT_LOGFILE_DIR, 'opus_import_debug.log')
 

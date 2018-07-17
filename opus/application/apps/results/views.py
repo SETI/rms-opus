@@ -682,10 +682,13 @@ def get_page(request, colls=None, colls_page=None, page=None):
         sql += ' LIMIT '+str(limit)
         sql += ' OFFSET '+str(offset)
 
-    print 'get_page SQL', sql
+    time1 = time.time()
+
     cursor = connection.cursor()
     cursor.execute(sql)
     results = cursor.fetchall()
+
+    log.debug('get_page SQL (%.2f secs): %s', time.time()-time1, sql)
 
     # Return a simple list of opus_ids
     opus_id_index = column_names.index('obs_general.opus_id')

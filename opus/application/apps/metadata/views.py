@@ -87,7 +87,8 @@ def api_get_result_count(request, fmt='json'):
                    connection.ops.quote_name(table))
             time1 = time.time()
             cursor.execute(sql)
-            log.debug('SQL %d secs: %s', time.time()-time1, sql)
+            log.debug('result_count SQL (%.2f secs): %s',
+                      time.time()-time1, sql)
             try:
                 count = cursor.fetchone()
                 count = count[0]

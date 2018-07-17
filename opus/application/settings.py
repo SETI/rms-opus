@@ -196,28 +196,28 @@ LOGGING = {
             'class':'logging.NullHandler',
         },
         'logfile': {
-            'level':'DEBUG',
-            'class':'logging.handlers.RotatingFileHandler',
-            'filename': PROJECT_ROOT + "/logs/opus_log.txt",
+            'level': OPUS_LOG_FILE_LEVEL,
+            'class': 'logging.handlers.RotatingFileHandler',
+            'filename': OPUS_LOG_FILE,
             'maxBytes': 50000,
             'backupCount': 2,
             'formatter': 'standard',
         },
         'console':{
-            'level':'INFO',
-            'class':'logging.StreamHandler',
+            'level': OPUS_LOG_CONSOLE_LEVEL,
+            'class': 'logging.StreamHandler',
             'formatter': 'standard'
         },
     },
     'loggers': {
         'django': {
-            'handlers':['console'],
+            'handlers': ['console'],
             'propagate': True,
-            'level':'WARN',
+            'level': OPUS_LOG_DJANGO_LEVEL,
         },
         'django.db.backends': {
             'handlers': ['console'],
-            'level': 'DEBUG',
+            'level': OPUS_LOG_DJANGO_LEVEL,
             'propagate': False,
         },
         'results': {
@@ -241,10 +241,6 @@ LOGGING = {
             'level': 'DEBUG',
         },
         'ui': {
-            'handlers': ['console', 'logfile'],
-            'level': 'DEBUG',
-        },
-        'testbed': {
             'handlers': ['console', 'logfile'],
             'level': 'DEBUG',
         },
@@ -332,14 +328,13 @@ PRODUCT_HTTP_PATH = 'https://pds-rings.seti.org/'
 DEFAULT_COLUMNS = 'opusid,planet,target,time1,time2'
 DEFAULT_SORT_ORDER = 'time1' # This must be a slug
 IMAGE_COLUMNS   = ['thumb.jpg','small.jpg','med.jpg','full.jpg']
-RANGE_FIELDS    = ['LONG','RANGE']
 
 THUMBNAIL_IMAGE_SIZE = 100 # Pixels
 PREVIEW_SIZE_TO_PDS_TYPE = {
     'thumb': 'Browse Image (thumbnail)',
     'small': 'Browse Image (small)',
-    'med': 'Browse Image (medium)',
-    'full': 'Browse Image (full-size)'
+    'med':   'Browse Image (medium)',
+    'full':  'Browse Image (full-size)'
 }
 
 PREVIEW_GUIDES = {
@@ -348,15 +343,11 @@ PREVIEW_GUIDES = {
     'COVIMS': 'https://pds-rings.seti.org/cassini/vims/COVIMS_previews.txt'
 }
 
+RANGE_FIELDS    = ['LONG','RANGE']
 MULT_FIELDS	= ['GROUP','TARGETS']
+MULT_FORM_TYPES = ('GROUP','TARGETS')
 DEFAULT_PAGE_LIMIT = 100
-MULT_FORM_TYPES = ('GROUP','TARGETS');
-ERROR_LOG_PATH = PROJECT_ROOT + "logs/opus_log.txt"
 
 THUMBNAIL_NOT_FOUND = 'https://tools.pds-rings.seti.org/assets/static_media/img/thumbnail_not_found.png'
 
-# FILE_HTTP_PATH  = 'https://pds-rings.seti.org/holdings/volumes/'
-# DERIVED_HTTP_PATH  = 'https://pds-rings.seti.org/holdings/calibrated/'
 MAX_CUM_DOWNLOAD_SIZE = 5*1024*1024*1024 # 5 gigs max cum downloads
-
-LOG_API_CALLS = True

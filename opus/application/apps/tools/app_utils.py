@@ -13,7 +13,6 @@ import time
 import logging
 log = logging.getLogger(__name__)
 
-
 def responseFormats(data, fmt, **kwargs):
     """
     this is REALLY AWFUL.
@@ -186,24 +185,23 @@ _API_START_TIMES = {}
 def enter_api_call(name, request, kwargs=None):
     global _API_CALL_NUMBER
     _API_CALL_NUMBER += 1
-    if settings.LOG_API_CALLS:
-        print 'API', _API_CALL_NUMBER,
-        print request.path,
+    if settings.OPUS_LOG_API_CALLS:
+        s = 'API ' + str(_API_CALL_NUMBER) + request.path
         if kwargs:
-            print kwargs,
-        print json.dumps(request.GET, sort_keys=True,
-                         indent=4,
-                         separators=(',', ': '))
+            s += ' ' + str(kwargs)
+        s += ' ' + json.dumps(request.GET, sort_keys=True,
+                              indent=4,
+                              separators=(',', ': '))
+        log.debug(s)
     _API_START_TIMES[_API_CALL_NUMBER] = time.time()
     return _API_CALL_NUMBER
 
 def exit_api_call(api_code, ret):
     end_time = time.time()
-    if settings.LOG_API_CALLS:
-        print 'API', api_code, 'EXIT',
+    if settings.OPUS_LOG_API_CALLS:
+        s = 'API ' + str(api_code) + ' EXIT'
         if api_code in _API_START_TIMES:
-            print end_time-_API_START_TIMES[api_code]
-        else:
-            print
+            s += ' ' + str(end_time-_API_START_TIMES[api_code]) + ' secs'
+        log.debug(s)
     if api_code in _API_START_TIMES:
         del _API_START_TIMES[api_code]
