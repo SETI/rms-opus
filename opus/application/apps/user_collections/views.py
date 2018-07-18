@@ -205,11 +205,22 @@ def api_edit_collection(request, **kwargs):
     elif (action == 'addall'):
         _edit_collection_addall(request, **kwargs)
 
-    collection_count = _get_collection_count(session_id)
+    # minor performance check - if we don't need a total download size, don't bother
+    # Only the selection tab is interested in updated that count at this time.
+    product_types = request.GET.get('types', False)
+    if not product_types:
+        collection_count = _get_collection_count(session_id)
+        json_data = {'err': False,
+                     'count': collection_count,
+                     'request_no': request_no}
+    else:
+        (download_size, download_count,
+         product_counts) = _get_download_info(['all'], session_id)
+        json_data = {'err': False,
+                     'count': download_count,
+                     'download_size': nice_file_size(download_size),
+                     'request_no': request_no}
 
-    json_data = {'err': False,
-                 'count': collection_count,
-                 'request_no': request_no}
     ret = HttpResponse(json.dumps(json_data))
     exit_api_call(api_code, ret)
     return ret

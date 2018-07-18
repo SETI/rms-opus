@@ -27,7 +27,7 @@ var o_collections = {
          // check an input on selected products and images updates file_info
          $('#collection').on("click",'#download_options input', function() {
              var add_to_url = o_collections.getDownloadFiltersChecked();
-             var url = "/opus/collections/download/info/?" + add_to_url
+             var url = "/opus/collections/download/info?" + add_to_url
              $.ajax({ url: url + '&fmt=json',
                 success: function(json){
                     $('#total_files').fadeOut().html(json['download_count']).fadeIn();
@@ -219,6 +219,9 @@ var o_collections = {
             opus.collection_q_intrvl = setInterval("o_collections.processCollectionQueue()", 500); // resends any stray requests not recvd back from server
         }
 
+        var view_info = o_browse.getViewInfo();
+        var namespace = view_info['namespace']; // either '#collection' or '#browse'
+
         var url = "/opus/collections/default/" + action + ".json?request=" + request_no
         switch (action) {
             case "add":
@@ -237,8 +240,6 @@ var o_collections = {
                 // i.e. the offset of the 23rd page at 100 per page starts with the 2200st record:
 
                 // first find what does opus.prefs.page say we are looking at:
-                var view_info = o_browse.getViewInfo();
-                var namespace = view_info['namespace']; // either '#collection' or '#browse'
                 var prefix = view_info['prefix'];       // either 'colls_' or ''
                 var view_var = opus.prefs[prefix + 'browse'];  // either 'gallery' or 'data'
 
@@ -276,12 +277,18 @@ var o_collections = {
               break;
         }
 
+        var add_to_url = "";
+        if (namespace == "#collection") {
+            add_to_url = o_collections.getDownloadFiltersChecked();
+        }
+
         $.ajax({
-            url: url,
+            url: url  + '&' + add_to_url,
             dataType: "json",
             success: function(data) {
                 var count = data['count'];
                 $('#collection_count').html(count);
+                $('#download_size').html(data['download_size']);
                 opus.colls_pages = Math.ceil(count/opus.prefs.limit);
                 if (opus.collection_queue[data['request_no']] != undefined) {
                   delete opus.collection_queue[data['request_no']];
