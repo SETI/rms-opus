@@ -1,10 +1,11 @@
-    ################################################
+################################################
 #
 #   user_collections.views
 #   django adds/removes opus_ids from the current collection
 #   note to self: add time added to Collections for timeout
 #
-################################################ import settings
+################################################
+import settings
 from django.db import connection
 from django.http import HttpResponse, Http404
 from django.shortcuts import render
@@ -65,6 +66,7 @@ def api_view_collection(request, collection_name,
 
     context = {
         'download_count': download_count,
+        'download_size': download_size,
         'download_size_pretty':  nice_file_size(download_size),
         'product_counts': product_counts
     }
@@ -206,10 +208,24 @@ def api_edit_collection(request, **kwargs):
         _edit_collection_addall(request, **kwargs)
 
     collection_count = _get_collection_count(session_id)
-
     json_data = {'err': False,
                  'count': collection_count,
                  'request_no': request_no}
+
+    download = request.GET.get('download', False)
+    # Minor performance check - if we don't need a total download size, don't
+    # bother
+    # Only the selection tab is interested in updating that count at this time.
+    if download:
+        product_types_str = request.GET.get('types', 'all')
+        product_types = product_types_str.split(',')
+        (download_size, download_count,
+         product_counts) = _get_download_info(product_types, session_id)
+        json_data['download_count'] = download_count
+        json_data['download_size'] = download_size
+        json_data['download_size_pretty'] = nice_file_size(download_size)
+        json_data['product_counts'] = product_counts
+
     ret = HttpResponse(json.dumps(json_data))
     exit_api_call(api_code, ret)
     return ret

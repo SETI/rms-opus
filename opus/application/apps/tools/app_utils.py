@@ -186,7 +186,7 @@ def enter_api_call(name, request, kwargs=None):
     global _API_CALL_NUMBER
     _API_CALL_NUMBER += 1
     if settings.OPUS_LOG_API_CALLS:
-        s = 'API ' + str(_API_CALL_NUMBER) + request.path
+        s = 'API ' + str(_API_CALL_NUMBER) + ' ' + request.path
         if kwargs:
             s += ' ' + str(kwargs)
         s += ' ' + json.dumps(request.GET, sort_keys=True,

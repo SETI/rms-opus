@@ -17,7 +17,7 @@ urlpatterns = [
     url(r'^collections/data.csv$', api_get_collection_csv),
     url(r'^collections/(?P<collection_name>[default]+)/(?P<action>[add|remove|addrange|removerange|addall]+).json$', api_edit_collection),
     url(r'^collections/reset.html$', api_reset_session),
-    url(r'^collections/download/info/$', api_get_download_info),
+    url(r'^collections/download/info$', api_get_download_info),
     url(r'^collections/download/(?P<session_id>[default]+).zip$', api_create_download),
     url(r'^zip/(?P<opus_id>[-\w]+).(?P<fmt>[json]+)$', api_create_download),
 ]
