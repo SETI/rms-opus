@@ -1,0 +1,97 @@
+[
+    {
+        "field_name": "obs_general_id",
+        "field_type": "uint4",
+        "field_key": "foreign",
+        "field_key_foreign": [
+            "obs_general",
+            "id"
+        ],
+        "field_notnull": true,
+        "data_source": [
+            "TAB:obs_general",
+            "id"
+        ],
+        "comment": "This is the primary (surrogate) key linking the record to obs_general."
+    },
+    {
+        "field_name": "opus_id",
+        "field_type": "char80",
+        "field_key": "foreign",
+        "field_key_foreign": [
+            "obs_general",
+            "opus_id"
+        ],
+        "field_notnull": true,
+        "data_source": [
+            "TAB:obs_general",
+            "opus_id"
+        ],
+        "comment": "This is the secondary key linking the record to obs_general."
+    },
+    {
+        "field_name": "volume_id",
+        "field_type": "char11",
+        "field_key": true,
+        "field_notnull": true,
+        "data_source": [
+            "TAB:obs_general",
+            "volume_id"
+        ],
+        "comment": "The volume_id is included here for ease of database manipulation only."
+    },
+    {
+        "field_name": "instrument_id",
+        "field_type": "char9",
+        "field_key": true,
+        "field_notnull": true,
+        "data_source": [
+            "TAB:obs_general",
+            "instrument_id"
+        ],
+        "comment": "The instrument_id is included here for ease of database manipulation only."
+    },
+    {
+        "field_name": "target_name",
+        "field_type": "char75",
+        "field_notnull": true,
+        "field_key": true,
+        "data_source": [
+            "FUNCTION",
+            "obs_surface_geo_target_name"
+        ],
+        "definition": "The target name is the name of the body for which the surface geometry parameters in this row of the table are applicable.",
+        "pi_category_name": "obs_surface_geometry",
+        "pi_dict_context": "SURFACE_GEO",
+        "pi_dict_name": "TARGET_NAME",
+        "pi_disp_order": 10,
+        "pi_display": 1,
+        "pi_display_results": 0,
+        "pi_form_type": "GROUP",
+        "pi_intro": "Select a target below and more search options for that target will appear in the left menu",
+        "pi_label": "Surface Geometry Target Name",
+        "pi_label_results": "Surface Geometry Target Name",
+        "pi_slug": "surfacegeometrytargetname",
+        "pi_sub_heading": null,
+        "pi_tooltip": null,
+        "pi_units": "",
+        "comment": "Definition is from SURFACE_GEO label."
+    },
+    {
+        "put_mults_here": true
+    },
+    {
+        "field_name": "id",
+        "field_type": "uint4",
+        "field_key": "primary",
+        "field_notnull": true,
+        "data_source": [
+            "MAX_ID",
+            null
+        ]
+    },
+    {
+        "field_name": "timestamp",
+        "field_type": "timestamp"
+    }
+]

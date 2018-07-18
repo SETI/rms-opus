@@ -1,0 +1,21 @@
+[
+    {
+        "field_name": "session_key",
+        "field_type": "varchar40",
+        "field_default": null,
+        "field_notnull": true
+    },
+    {
+        "field_name": "session_data",
+        "field_type": "text",
+        "field_default": null,
+        "field_notnull": true
+    },
+    {
+        "field_name": "expire_date",
+        "field_type": "datetime",
+        "field_default": null,
+        "field_key": true,
+        "field_notnull": true
+    }
+]

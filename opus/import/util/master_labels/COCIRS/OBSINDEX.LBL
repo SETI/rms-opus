@@ -1,0 +1,1339 @@
+PDS_VERSION_ID                  = PDS3
+RECORD_TYPE                     = FIXED_LENGTH
+FILE_RECORDS                    = 337
+RECORD_BYTES                    = 1023
+^TABLE                          = "OBSINDEX.TAB"
+
+DATA_SET_ID                     = "CO-S-CIRS-2/3/4-REFORMATTED-V1.0"
+VOLUME_ID                       = COCIRS_6006
+PRODUCT_CREATION_TIME           = 2011-05-04
+
+INSTRUMENT_HOST_NAME            = "CASSINI ORBITER"
+INSTRUMENT_HOST_ID              = CO
+INSTRUMENT_NAME                 = "COMPOSITE INFRARED SPECTROMETER"
+INSTRUMENT_ID                   = CIRS
+
+DESCRIPTION                     = "This supplemental index describes the
+geometry and instrument parameters of each set of spectra archived as a
+distinct file on this volume. This table summarizes the contents of the
+associated metadata files DATA/*DATA/*.TAB."
+
+OBJECT                          = TABLE
+  INTERCHANGE_FORMAT            = ASCII
+  ROWS                          = 337
+  ROW_BYTES                     = 1023
+  COLUMNS                       = 105
+
+  OBJECT                        = COLUMN
+    NAME                        = VOLUME_ID
+    DATA_TYPE                   = CHARACTER
+    START_BYTE                  = 2
+    BYTES                       = 11
+    FORMAT                      = "A11"
+    DESCRIPTION                 = "A unique identifier for a data volume.
+Example: COCIRS_5407."
+  END_OBJECT                    = COLUMN
+
+/* General information about the spectrum and instrument parameters */
+
+  OBJECT                        = COLUMN
+    NAME                        = SPECTRUM_FILE_SPECIFICATION
+    DATA_TYPE                   = CHARACTER
+    START_BYTE                  = 16
+    BYTES                       = 36
+    FORMAT                      = "A36"
+    DESCRIPTION                 = "The full name of a file, including a path
+name, relative to a PDS volume."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = INSTRUMENT_PARAMETER_FILE_SPECIFICATION
+    DATA_TYPE                   = CHARACTER
+    START_BYTE                  = 55
+    BYTES                       = 36
+    FORMAT                      = "A36"
+    DESCRIPTION                 = "The full name of a file, including a path
+name, relative to a PDS volume."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = OBSERVATION_ID
+    DATA_TYPE                   = CHARACTER
+    START_BYTE                  = 94
+    BYTES                       = 29
+    FORMAT                      = "A29"
+    DESCRIPTION                 = "A unique identifier for a scientific
+observation within a data set. In this data set, it is the identifier found
+in the CIMS (Cassini Information Management System) database."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = DETECTOR_ID
+    DATA_TYPE                   = CHARACTER
+    START_BYTE                  = 126
+    BYTES                       = 3
+    FORMAT                      = "A3"
+    DESCRIPTION                 = "The CIRS focal plane used to obtain the
+data. Possible values are FP1, FP3 and FP4. 'N/A' indicates 'not
+applicable'; system geometry files GEO*.TAB are so designated because they
+are not associated with any focal plane in particular."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = TARGET_NAME
+    DATA_TYPE                   = CHARACTER
+    START_BYTE                  = 132
+    BYTES                       = 10
+    FORMAT                      = "A10"
+    DESCRIPTION                 = "The target body to which the observation
+or the data file refers. In this data set, the possible values are SATURN,
+S RINGS, MIMAS, ENCELADUS, TETHYS, DIONE, RHEA, TITAN, HYPERION, IAPETUS,
+PHOEBE, JANUS, EPIMETHEUS, HELENE, TELESTO, CALYPSO, ATLAS, PROMETHEUS,
+PANDORA, PAN, STAR, SKY, or UNK for unknown."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = START_TIME
+    DATA_TYPE                   = CHARACTER
+    START_BYTE                  = 145
+    BYTES                       = 19
+    FORMAT                      = "A19"
+    DESCRIPTION                 = "The UTC date and time of the beginning of
+the observation, in 'yyyy-mm-ddThh:mm:ss' format."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = STOP_TIME
+    DATA_TYPE                   = CHARACTER
+    START_BYTE                  = 167
+    BYTES                       = 19
+    FORMAT                      = "A19"
+    DESCRIPTION                 = "The UTC date and time of the end of the
+observation, in 'yyyy-mm-ddThh:mm:ss' format."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = SPACECRAFT_CLOCK_START_COUNT
+    DATA_TYPE                   = CHARACTER
+    START_BYTE                  = 189
+    BYTES                       = 12
+    FORMAT                      = "A12"
+    DESCRIPTION                 = "The value of the spacecraft clock at the
+beginning of the observation, in the form a partition count plus a ten-digit
+integer."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = SPACECRAFT_CLOCK_STOP_COUNT
+    DATA_TYPE                   = CHARACTER
+    START_BYTE                  = 204
+    BYTES                       = 12
+    FORMAT                      = "A12"
+    DESCRIPTION                 = "The value of the spacecraft clock at the
+end of the observation."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = MISSION_PHASE_NAME
+    DATA_TYPE                   = CHARACTER
+    START_BYTE                  = 219
+    BYTES                       = 16
+    FORMAT                      = "A16"
+    DESCRIPTION                 = "The commonly-used identifier of a mission
+phase. In this data set, possible values are SCIENCE CRUISE, TOUR
+PRE-HUYGENS, TOUR, and EQUINOX MISSION."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = INSTRUMENT_MODE_BLINKING_FLAG
+    DATA_TYPE                   = ASCII_INTEGER
+    START_BYTE                  = 237
+    BYTES                       = 1
+    FORMAT                      = "I1"
+    DESCRIPTION                 = "1 if any of the interferograms were
+obtained using 'blinking' mode; 0 otherwise. Blinking mode involves
+alternating between the odd- and even-numbered pixels in FP3 and FP4."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = INSTRUMENT_MODE_EVEN_FLAG
+    DATA_TYPE                   = ASCII_INTEGER
+    START_BYTE                  = 239
+    BYTES                       = 1
+    FORMAT                      = "I1"
+    DESCRIPTION                 = "1 if any of the interferograms were
+obtained using continuous 'even' mode; 0 otherwise. Even mode uses just the
+even-numbered pixels of FP3 and FP4."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = INSTRUMENT_MODE_ODD_FLAG
+    DATA_TYPE                   = ASCII_INTEGER
+    START_BYTE                  = 241
+    BYTES                       = 1
+    FORMAT                      = "I1"
+    DESCRIPTION                 = "1 if any of the interferograms were
+obtained using continuous 'odd' mode; 0 otherwise. Odd mode uses just the
+odd-numbered pixels of FP3 and FP4."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = INSTRUMENT_MODE_CENTERS_FLAG
+    DATA_TYPE                   = ASCII_INTEGER
+    START_BYTE                  = 243
+    BYTES                       = 1
+    FORMAT                      = "I1"
+    DESCRIPTION                 = "1 if any of the interferograms were
+obtained using 'centers' mode; 0 otherwise. Centers mode uses just the
+central pixels of FP3 and FP4."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = INSTRUMENT_MODE_PAIRS_FLAG
+    DATA_TYPE                   = ASCII_INTEGER
+    START_BYTE                  = 245
+    BYTES                       = 1
+    FORMAT                      = "I1"
+    DESCRIPTION                 = "1 if any of the interferograms were
+obtained using 'pairs' mode; 0 otherwise. Pairs mode combines the data from
+adjacent pairs of odd and even pixels in FP3 and FP4: 1+2, 3+4, etc."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = INSTRUMENT_MODE_ALL_FLAG
+    DATA_TYPE                   = ASCII_INTEGER
+    START_BYTE                  = 247
+    BYTES                       = 1
+    FORMAT                      = "I1"
+    DESCRIPTION                 = "1 if any of the interferograms were
+obtained using 'all' mode; 0 otherwise. This mode only refers to the data
+from FP1, which comprises just a single field of view."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = EXPOSURE_DURATION
+    DATA_TYPE                   = ASCII_REAL
+    START_BYTE                  = 249
+    BYTES                       = 6
+    FORMAT                      = "F6.3"
+    UNIT                        = "SECONDS"
+    DESCRIPTION                 = "The mean duration of the interferograms
+obtained."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = MINIMUM_EXPOSURE_DURATION
+    DATA_TYPE                   = ASCII_REAL
+    START_BYTE                  = 256
+    BYTES                       = 6
+    FORMAT                      = "F6.3"
+    UNIT                        = "SECONDS"
+    DESCRIPTION                 = "The shortest duration of any interferogram
+obtained."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = MAXIMUM_EXPOSURE_DURATION
+    DATA_TYPE                   = ASCII_REAL
+    START_BYTE                  = 263
+    BYTES                       = 6
+    FORMAT                      = "F6.3"
+    UNIT                        = "SECONDS"
+    DESCRIPTION                 = "The longest duration of any interferogram
+obtained."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = MINIMUM_WAVENUMBER
+    DATA_TYPE                   = ASCII_REAL
+    START_BYTE                  = 270
+    BYTES                       = 8
+    FORMAT                      = "F8.3"
+    UNIT                        = "CM**-1"
+    DESCRIPTION                 = "Wavenumber of first re-gridded spectral
+point (cm^-1)."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = MAXIMUM_WAVENUMBER
+    DATA_TYPE                   = ASCII_REAL
+    START_BYTE                  = 279
+    BYTES                       = 8
+    FORMAT                      = "F8.3"
+    UNIT                        = "CM**-1"
+    DESCRIPTION                 = "Wavenumber of last (highest) re-gridded
+spectral point (cm^-1)."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = WAVENUMBER_INTERVAL
+    DATA_TYPE                   = ASCII_REAL
+    START_BYTE                  = 288
+    BYTES                       = 6
+    FORMAT                      = "F6.3"
+    UNIT                        = "CM**-1"
+    DESCRIPTION                 = "Wavenumber step size of re-gridded data
+(cm^-1)."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = WAVENUMBER_RESOLUTION
+    DATA_TYPE                   = ASCII_REAL
+    START_BYTE                  = 295
+    BYTES                       = 6
+    FORMAT                      = "F6.3"
+    UNIT                        = "CM**-1"
+    DESCRIPTION                 = "The effective resolution of the data
+(cm^-1). Note that the specta are typically over-sampled so this value is
+typically larger than the WAVENUMBER_INTERVAL value."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = SPECTRUM_SAMPLES
+    DATA_TYPE                   = ASCII_INTEGER
+    START_BYTE                  = 302
+    BYTES                       = 4
+    FORMAT                      = "I4"
+    UNIT                        = "N/A"
+    DESCRIPTION                 = "The number of samples in the re-gridded
+spectra."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = TARGET_LIST_FILE_SPECIFICATION
+    DATA_TYPE                   = CHARACTER
+    START_BYTE                  = 308
+    BYTES                       = 34
+    FORMAT                      = "A34"
+    DESCRIPTION                 = "The full name of a file, including a path
+name, relative to a PDS volume."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = SATURN_DETECTED_FLAG
+    DATA_TYPE                   = ASCII_INTEGER
+    START_BYTE                  = 344
+    BYTES                       = 1
+    FORMAT                      = "I1"
+    DESCRIPTION                 = "1 if Saturn was detected; 0 otherwise."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = S_RINGS_DETECTED_FLAG
+    DATA_TYPE                   = ASCII_INTEGER
+    START_BYTE                  = 346
+    BYTES                       = 1
+    FORMAT                      = "I1"
+    DESCRIPTION                 = "1 if Saturn's rings were detected; 0
+otherwise."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = MIMAS_DETECTED_FLAG
+    DATA_TYPE                   = ASCII_INTEGER
+    START_BYTE                  = 348
+    BYTES                       = 1
+    FORMAT                      = "I1"
+    DESCRIPTION                 = "1 if Mimas was detected; 0 otherwise."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = ENCELADUS_DETECTED_FLAG
+    DATA_TYPE                   = ASCII_INTEGER
+    START_BYTE                  = 350
+    BYTES                       = 1
+    FORMAT                      = "I1"
+    DESCRIPTION                 = "1 if Enceladus was detected; 0 otherwise."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = TETHYS_DETECTED_FLAG
+    DATA_TYPE                   = ASCII_INTEGER
+    START_BYTE                  = 352
+    BYTES                       = 1
+    FORMAT                      = "I1"
+    DESCRIPTION                 = "1 if Tethys was detected; 0 otherwise."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = DIONE_DETECTED_FLAG
+    DATA_TYPE                   = ASCII_INTEGER
+    START_BYTE                  = 354
+    BYTES                       = 1
+    FORMAT                      = "I1"
+    DESCRIPTION                 = "1 if Dione was detected; 0 otherwise."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = RHEA_DETECTED_FLAG
+    DATA_TYPE                   = ASCII_INTEGER
+    START_BYTE                  = 356
+    BYTES                       = 1
+    FORMAT                      = "I1"
+    DESCRIPTION                 = "1 if Rhea was detected; 0 otherwise."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = TITAN_DETECTED_FLAG
+    DATA_TYPE                   = ASCII_INTEGER
+    START_BYTE                  = 358
+    BYTES                       = 1
+    FORMAT                      = "I1"
+    DESCRIPTION                 = "1 if Titan was detected; 0 otherwise."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = HYPERION_DETECTED_FLAG
+    DATA_TYPE                   = ASCII_INTEGER
+    START_BYTE                  = 360
+    BYTES                       = 1
+    FORMAT                      = "I1"
+    DESCRIPTION                 = "1 if Hyperion was detected; 0 otherwise."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = IAPETUS_DETECTED_FLAG
+    DATA_TYPE                   = ASCII_INTEGER
+    START_BYTE                  = 362
+    BYTES                       = 1
+    FORMAT                      = "I1"
+    DESCRIPTION                 = "1 if Iapetus was detected; 0 otherwise."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = PHOEBE_DETECTED_FLAG
+    DATA_TYPE                   = ASCII_INTEGER
+    START_BYTE                  = 364
+    BYTES                       = 1
+    FORMAT                      = "I1"
+    DESCRIPTION                 = "1 if Phoebe was detected; 0 otherwise."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = JANUS_DETECTED_FLAG
+    DATA_TYPE                   = ASCII_INTEGER
+    START_BYTE                  = 366
+    BYTES                       = 1
+    FORMAT                      = "I1"
+    DESCRIPTION                 = "1 if Janus was detected; 0 otherwise."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = EPIMETHEUS_DETECTED_FLAG
+    DATA_TYPE                   = ASCII_INTEGER
+    START_BYTE                  = 368
+    BYTES                       = 1
+    FORMAT                      = "I1"
+    DESCRIPTION                 = "1 if Epimetheus was detected; 0
+otherwise."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = HELENE_DETECTED_FLAG
+    DATA_TYPE                   = ASCII_INTEGER
+    START_BYTE                  = 370
+    BYTES                       = 1
+    FORMAT                      = "I1"
+    DESCRIPTION                 = "1 if Helene was detected; 0 otherwise."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = TELESTO_DETECTED_FLAG
+    DATA_TYPE                   = ASCII_INTEGER
+    START_BYTE                  = 372
+    BYTES                       = 1
+    FORMAT                      = "I1"
+    DESCRIPTION                 = "1 if Telesto was detected; 0 otherwise."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = CALYPSO_DETECTED_FLAG
+    DATA_TYPE                   = ASCII_INTEGER
+    START_BYTE                  = 374
+    BYTES                       = 1
+    FORMAT                      = "I1"
+    DESCRIPTION                 = "1 if Calypso was detected; 0 otherwise."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = ATLAS_DETECTED_FLAG
+    DATA_TYPE                   = ASCII_INTEGER
+    START_BYTE                  = 376
+    BYTES                       = 1
+    FORMAT                      = "I1"
+    DESCRIPTION                 = "1 if Atlas was detected; 0 otherwise."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = PROMETHEUS_DETECTED_FLAG
+    DATA_TYPE                   = ASCII_INTEGER
+    START_BYTE                  = 378
+    BYTES                       = 1
+    FORMAT                      = "I1"
+    DESCRIPTION                 = "1 if Prometheus was detected; 0
+otherwise."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = PANDORA_DETECTED_FLAG
+    DATA_TYPE                   = ASCII_INTEGER
+    START_BYTE                  = 380
+    BYTES                       = 1
+    FORMAT                      = "I1"
+    DESCRIPTION                 = "1 if Pandora was detected; 0 otherwise."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = PAN_DETECTED_FLAG
+    DATA_TYPE                   = ASCII_INTEGER
+    START_BYTE                  = 382
+    BYTES                       = 1
+    FORMAT                      = "I1"
+    DESCRIPTION                 = "1 if Pan was detected; 0 otherwise."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = SKY_DETECTED_FLAG
+    DATA_TYPE                   = ASCII_INTEGER
+    START_BYTE                  = 384
+    BYTES                       = 1
+    FORMAT                      = "I1"
+    DESCRIPTION                 = "1 if the dark sky was targeted; 0
+otherwise."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = STAR_DETECTED_FLAG
+    DATA_TYPE                   = ASCII_INTEGER
+    START_BYTE                  = 386
+    BYTES                       = 1
+    FORMAT                      = "I1"
+    DESCRIPTION                 = "1 if a star was targeted; 0 otherwise."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = DESCRIBED_TARGET_NAME
+    DATA_TYPE                   = CHARACTER
+    START_BYTE                  = 389
+    BYTES                       = 10
+    FORMAT                      = "A10"
+    DESCRIPTION                 = "The name of the body to which geometric
+parameters below refer. This is the target body if it is a planet or moon,
+otherwise Saturn. See the TARGET_NAME column."
+  END_OBJECT                    = COLUMN
+
+/* Surface footprint geometry parameters */
+
+  OBJECT                        = COLUMN
+    NAME                        = SURFACE_FOOTPRINT_FILE_SPECIFICATION
+    DATA_TYPE                   = CHARACTER
+    START_BYTE                  = 402
+    BYTES                       = 34
+    FORMAT                      = "A34"
+    DESCRIPTION                 = "The full name of a file, including a path
+name, relative to a PDS volume."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = MINIMUM_LATITUDE
+    DATA_TYPE                   = ASCII_REAL
+    START_BYTE                  = 438
+    BYTES                       = 8
+    FORMAT                      = "F8.3"
+    UNIT                        = "DEGREES"
+    DESCRIPTION                 = "Minimum value of the IAU-defined
+planetographic latitude observed on the target body. For Saturn it refers to
+the 1 bar level."
+    NOT_APPLICABLE_CONSTANT     = -200.
+    NULL_CONSTANT               = -300.
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = MAXIMUM_LATITUDE
+    DATA_TYPE                   = ASCII_REAL
+    START_BYTE                  = 447
+    BYTES                       = 8
+    FORMAT                      = "F8.3"
+    UNIT                        = "DEGREES"
+    DESCRIPTION                 = "Maximum value of the IAU-defined
+planetographic latitude observed on the target body. For Saturn it refers to
+the 1 bar level."
+    NOT_APPLICABLE_CONSTANT     = -200.
+    NULL_CONSTANT               = -300.
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = MINIMUM_LONGITUDE
+    DATA_TYPE                   = ASCII_REAL
+    START_BYTE                  = 456
+    BYTES                       = 8
+    FORMAT                      = "F8.3"
+    UNIT                        = "DEGREES"
+    DESCRIPTION                 = "Minimum (easternmost) longitude observed
+on the target body. Measurements are degrees west from the IAU-defined prime
+meridian. For Saturn it refers to the 1 bar level. If the observed region
+crosses the prime meridian, then the 'minimum' will be larger than the
+'maximum'."
+    NOT_APPLICABLE_CONSTANT     = -200.
+    NULL_CONSTANT               = -300.
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = MAXIMUM_LONGITUDE
+    DATA_TYPE                   = ASCII_REAL
+    START_BYTE                  = 465
+    BYTES                       = 8
+    FORMAT                      = "F8.3"
+    UNIT                        = "DEGREES"
+    DESCRIPTION                 = "Maximum (westernmost) longitude observed
+on the target body. Measurements are degrees west from the IAU-defined prime
+meridian. For Saturn it refers to the 1 bar level. If the observed region
+crosses the prime meridian, then the 'minimum' will be larger than the
+'maximum'."
+    NOT_APPLICABLE_CONSTANT     = -200.
+    NULL_CONSTANT               = -300.
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = MINIMUM_LOCAL_TIME
+    DATA_TYPE                   = ASCII_REAL
+    START_BYTE                  = 474
+    BYTES                       = 9
+    FORMAT                      = "F9.4"
+    UNIT                        = "HOURS = DEGREES/15"
+    DESCRIPTION                 = "Minimum local solar time observed on the
+target body. Measurements are in units of 'hours', equivalent to degrees/15.
+For Saturn it refers to the 1 bar level. If the observed region crosses the
+midnight meridian, then the 'minimum' will be larger than the 'maximum'."
+    NOT_APPLICABLE_CONSTANT     = -200.
+    NULL_CONSTANT               = -300.
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = MAXIMUM_LOCAL_TIME
+    DATA_TYPE                   = ASCII_REAL
+    START_BYTE                  = 484
+    BYTES                       = 9
+    FORMAT                      = "F9.4"
+    UNIT                        = "HOURS = DEGREES/15"
+    DESCRIPTION                 = "Maximum local solar time observed on the
+target body. Measurements are in units of 'hours', equivalent to degrees/15.
+For Saturn it refers to the 1 bar level. If the observed region crosses the
+midnight meridian, then the 'minimum' will be larger than the 'maximum'."
+    NOT_APPLICABLE_CONSTANT     = -200.
+    NULL_CONSTANT               = -300.
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = MINIMUM_INCIDENCE_ANGLE
+    DATA_TYPE                   = ASCII_REAL
+    START_BYTE                  = 494
+    BYTES                       = 8
+    FORMAT                      = "F8.3"
+    UNIT                        = "DEGREES"
+    DESCRIPTION                 = "Minimum value for the incidence angle
+within the surface region observed. This is the angle between the surface
+normal and the direction to the Sun. Note that for points on the unlit face
+of a body, incidence angle > 90 degrees."
+    NOT_APPLICABLE_CONSTANT     = -200.
+    NULL_CONSTANT               = -300.
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = MAXIMUM_INCIDENCE_ANGLE
+    DATA_TYPE                   = ASCII_REAL
+    START_BYTE                  = 503
+    BYTES                       = 8
+    FORMAT                      = "F8.3"
+    UNIT                        = "DEGREES"
+    DESCRIPTION                 = "Maximum value for the incidence angle
+within the surface region observed. This is the angle between the surface
+normal and the direction to the Sun. Note that for points on the unlit face
+of a body, incidence angle > 90 degrees."
+    NOT_APPLICABLE_CONSTANT     = -200.
+    NULL_CONSTANT               = -300.
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = MINIMUM_EMISSION_ANGLE
+    DATA_TYPE                   = ASCII_REAL
+    START_BYTE                  = 512
+    BYTES                       = 8
+    FORMAT                      = "F8.3"
+    UNIT                        = "DEGREES"
+    DESCRIPTION                 = "Minimum value for the emission angle
+within the surface region observed. This is the angle between the surface
+normal toward the Sun and the direction to the observer."
+    NOT_APPLICABLE_CONSTANT     = -200.
+    NULL_CONSTANT               = -300.
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = MAXIMUM_EMISSION_ANGLE
+    DATA_TYPE                   = ASCII_REAL
+    START_BYTE                  = 521
+    BYTES                       = 8
+    FORMAT                      = "F8.3"
+    UNIT                        = "DEGREES"
+    DESCRIPTION                 = "Maximum value for the emission angle
+within the surface region observed. This is the angle between the surface
+normal toward the Sun and the direction to the observer."
+    NOT_APPLICABLE_CONSTANT     = -200.
+    NULL_CONSTANT               = -300.
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = MINIMUM_PHASE_ANGLE
+    DATA_TYPE                   = ASCII_REAL
+    START_BYTE                  = 530
+    BYTES                       = 8
+    FORMAT                      = "F8.3"
+    UNIT                        = "DEGREES"
+    DESCRIPTION                 = "Minimum value for the phase angle
+within the surface region observed. This is the angle at the surface
+between the direction to the Sun and the direction to the observer."
+    NOT_APPLICABLE_CONSTANT     = -200.
+    NULL_CONSTANT               = -300.
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = MAXIMUM_PHASE_ANGLE
+    DATA_TYPE                   = ASCII_REAL
+    START_BYTE                  = 539
+    BYTES                       = 8
+    FORMAT                      = "F8.3"
+    UNIT                        = "DEGREES"
+    DESCRIPTION                 = "Maximum value for the phase angle
+within the surface region observed. This is the angle at the surface
+between the direction to the Sun and the direction to the observer."
+    NOT_APPLICABLE_CONSTANT     = -200.
+    NULL_CONSTANT               = -300.
+  END_OBJECT                    = COLUMN
+
+/* System geometry parameters for target body */
+
+  OBJECT                        = COLUMN
+    NAME                        = SYSTEM_GEOMETRY_FILE_SPECIFICATION
+    DATA_TYPE                   = CHARACTER
+    START_BYTE                  = 549
+    BYTES                       = 34
+    FORMAT                      = "A34"
+    DESCRIPTION                 = "The full name of a file, including a path
+name, relative to a PDS volume."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = TARGET_PHASE_ANGLE
+    DATA_TYPE                   = ASCII_REAL
+    START_BYTE                  = 585
+    BYTES                       = 8
+    FORMAT                      = "F8.3"
+    UNIT                        = "DEGREES"
+    DESCRIPTION                 = "The mean phase angle at the center of the
+target body during the observing period. This is the angle at the body
+between the direction to the Sun and the direction to the observer. Note that
+this value is unrelated to where the instrument was pointed."
+    NOT_APPLICABLE_CONSTANT     = -200.
+    NULL_CONSTANT               = -300.
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = MINIMUM_TARGET_PHASE_ANGLE
+    DATA_TYPE                   = ASCII_REAL
+    START_BYTE                  = 594
+    BYTES                       = 8
+    FORMAT                      = "F8.3"
+    UNIT                        = "DEGREES"
+    DESCRIPTION                 = "The minimum phase angle at the center of
+the target body during the observing period. This is the angle at the body
+between the direction to the Sun and the direction to the observer. Note that
+this value is unrelated to where the instrument was pointed."
+    NOT_APPLICABLE_CONSTANT     = -200.
+    NULL_CONSTANT               = -300.
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = MAXIMUM_TARGET_PHASE_ANGLE
+    DATA_TYPE                   = ASCII_REAL
+    START_BYTE                  = 603
+    BYTES                       = 8
+    FORMAT                      = "F8.3"
+    UNIT                        = "DEGREES"
+    DESCRIPTION                 = "The minimum phase angle at the center of
+the target body during the observing period. This is the angle at the body
+between the direction to the Sun and the direction to the observer. Note that
+this value is unrelated to where the instrument was pointed."
+    NOT_APPLICABLE_CONSTANT     = -200.
+    NULL_CONSTANT               = -300.
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = SUB_SPACECRAFT_LATITUDE
+    DATA_TYPE                   = ASCII_REAL
+    START_BYTE                  = 612
+    BYTES                       = 8
+    FORMAT                      = "F8.3"
+    UNIT                        = "DEGREES"
+    DESCRIPTION                 = "Mean planetographic sub-spacecraft
+latitude during the observing period."
+    NOT_APPLICABLE_CONSTANT     = -200.
+    NULL_CONSTANT               = -300.
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = MINIMUM_SUB_SPACECRAFT_LATITUDE
+    DATA_TYPE                   = ASCII_REAL
+    START_BYTE                  = 621
+    BYTES                       = 8
+    FORMAT                      = "F8.3"
+    UNIT                        = "DEGREES"
+    DESCRIPTION                 = "Minimum planetographic sub-spacecraft
+latitude during the observing period."
+    NOT_APPLICABLE_CONSTANT     = -200.
+    NULL_CONSTANT               = -300.
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = MAXIMUM_SUB_SPACECRAFT_LATITUDE
+    DATA_TYPE                   = ASCII_REAL
+    START_BYTE                  = 630
+    BYTES                       = 8
+    FORMAT                      = "F8.3"
+    UNIT                        = "DEGREES"
+    DESCRIPTION                 = "Maximum planetographic sub-spacecraft
+latitude during the observing period."
+    NOT_APPLICABLE_CONSTANT     = -200.
+    NULL_CONSTANT               = -300.
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = SUB_SPACECRAFT_LONGITUDE
+    DATA_TYPE                   = ASCII_REAL
+    START_BYTE                  = 639
+    BYTES                       = 8
+    FORMAT                      = "F8.3"
+    UNIT                        = "DEGREES"
+    DESCRIPTION                 = "Mean planetographic sub-spacecraft
+longitude during the observing period. Measured west in IAU-defined
+coordinates."
+    NOT_APPLICABLE_CONSTANT     = -200.
+    NULL_CONSTANT               = -300.
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = MINIMUM_SUB_SPACECRAFT_LONGITUDE
+    DATA_TYPE                   = ASCII_REAL
+    START_BYTE                  = 648
+    BYTES                       = 8
+    FORMAT                      = "F8.3"
+    UNIT                        = "DEGREES"
+    DESCRIPTION                 = "Minimum planetographic sub-spacecraft
+longitude during the observing period. Measured west in IAU-defined
+coordinates. If the longitude value crosses the prime meridian, then the
+'minimum' value will be greater than the 'maximum'."
+    NOT_APPLICABLE_CONSTANT     = -200.
+    NULL_CONSTANT               = -300.
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = MAXIMUM_SUB_SPACECRAFT_LONGITUDE
+    DATA_TYPE                   = ASCII_REAL
+    START_BYTE                  = 657
+    BYTES                       = 8
+    FORMAT                      = "F8.3"
+    UNIT                        = "DEGREES"
+    DESCRIPTION                 = "Maximum planetographic sub-spacecraft
+longitude during the observing period. Measured west in IAU-defined
+coordinates. If the longitude value crosses the prime meridian, then the
+'minimum' value will be greater than the 'maximum'."
+    NOT_APPLICABLE_CONSTANT     = -200.
+    NULL_CONSTANT               = -300.
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = SUB_SOLAR_LATITUDE
+    DATA_TYPE                   = ASCII_REAL
+    START_BYTE                  = 666
+    BYTES                       = 8
+    FORMAT                      = "F8.3"
+    UNIT                        = "DEGREES"
+    DESCRIPTION                 = "Mean planetographic sub-solar latitude
+during the observing period."
+    NOT_APPLICABLE_CONSTANT     = -200.
+    NULL_CONSTANT               = -300.
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = MINIMUM_SUB_SOLAR_LATITUDE
+    DATA_TYPE                   = ASCII_REAL
+    START_BYTE                  = 675
+    BYTES                       = 8
+    FORMAT                      = "F8.3"
+    UNIT                        = "DEGREES"
+    DESCRIPTION                 = "Minimum planetographic sub-solar latitude
+during the observing period."
+    NOT_APPLICABLE_CONSTANT     = -200.
+    NULL_CONSTANT               = -300.
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = MAXIMUM_SUB_SOLAR_LATITUDE
+    DATA_TYPE                   = ASCII_REAL
+    START_BYTE                  = 684
+    BYTES                       = 8
+    FORMAT                      = "F8.3"
+    UNIT                        = "DEGREES"
+    DESCRIPTION                 = "Maximum planetographic sub-solar latitude
+during the observing period."
+    NOT_APPLICABLE_CONSTANT     = -200.
+    NULL_CONSTANT               = -300.
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = SUB_SOLAR_LONGITUDE
+    DATA_TYPE                   = ASCII_REAL
+    START_BYTE                  = 693
+    BYTES                       = 8
+    FORMAT                      = "F8.3"
+    UNIT                        = "DEGREES"
+    DESCRIPTION                 = "Mean planetographic sub-solar longitude
+during the observing period. Measured west in IAU-defined coordinates."
+    NOT_APPLICABLE_CONSTANT     = -200.
+    NULL_CONSTANT               = -300.
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = MINIMUM_SUB_SOLAR_LONGITUDE
+    DATA_TYPE                   = ASCII_REAL
+    START_BYTE                  = 702
+    BYTES                       = 8
+    FORMAT                      = "F8.3"
+    UNIT                        = "DEGREES"
+    DESCRIPTION                 = "Minimum planetographic sub-solar longitude
+during the observing period. Measured west in IAU-defined coordinates. If the
+longitude value crosses the prime meridian, then the 'minimum' value will be
+greater than the 'maximum'."
+    NOT_APPLICABLE_CONSTANT     = -200.
+    NULL_CONSTANT               = -300.
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = MAXIMUM_SUB_SOLAR_LONGITUDE
+    DATA_TYPE                   = ASCII_REAL
+    START_BYTE                  = 711
+    BYTES                       = 8
+    FORMAT                      = "F8.3"
+    UNIT                        = "DEGREES"
+    DESCRIPTION                 = "Maximum planetographic sub-solar longitude
+during the observing period. Measured west in IAU-defined coordinates. If the
+longitude value crosses the prime meridian, then the 'minimum' value will be
+greater than the 'maximum'."
+    NOT_APPLICABLE_CONSTANT     = -200.
+    NULL_CONSTANT               = -300.
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = TARGET_DISTANCE
+    DATA_TYPE                   = ASCII_REAL
+    START_BYTE                  = 720
+    BYTES                       = 12
+    FORMAT                      = "F12.2"
+    UNIT                        = "KILOMETERS"
+    DESCRIPTION                 = "Mean distance from the target body to the
+spacecraft during the observing period."
+    NOT_APPLICABLE_CONSTANT     = -200.
+    NULL_CONSTANT               = -300.
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = MINIMUM_TARGET_DISTANCE
+    DATA_TYPE                   = ASCII_REAL
+    START_BYTE                  = 733
+    BYTES                       = 12
+    FORMAT                      = "F12.2"
+    UNIT                        = "KILOMETERS"
+    DESCRIPTION                 = "Minimum distance from the target body to
+the spacecraft during the observing period."
+    NOT_APPLICABLE_CONSTANT     = -200.
+    NULL_CONSTANT               = -300.
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = MAXIMUM_TARGET_DISTANCE
+    DATA_TYPE                   = ASCII_REAL
+    START_BYTE                  = 746
+    BYTES                       = 12
+    FORMAT                      = "F12.2"
+    UNIT                        = "KILOMETERS"
+    DESCRIPTION                 = "Maximum distance from the target body to
+the spacecraft during the observing period."
+    NOT_APPLICABLE_CONSTANT     = -200.
+    NULL_CONSTANT               = -300.
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = TARGET_ANGULAR_SEMIDIAMETER
+    DATA_TYPE                   = ASCII_REAL
+    START_BYTE                  = 759
+    BYTES                       = 10
+    FORMAT                      = "F10.5"
+    UNIT                        = "MILLIRADIANS"
+    DESCRIPTION                 = "Mean radius of the target projected onto
+the sky during the observing period, in milliradians."
+    NOT_APPLICABLE_CONSTANT     = -200.
+    NULL_CONSTANT               = -300.
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = MINIMUM_ANGULAR_SEMIDIAMETER
+    DATA_TYPE                   = ASCII_REAL
+    START_BYTE                  = 770
+    BYTES                       = 10
+    FORMAT                      = "F10.5"
+    UNIT                        = "MILLIRADIANS"
+    DESCRIPTION                 = "Minimum radius of the target projected
+onto the sky during the observing period, in milliradians."
+    NOT_APPLICABLE_CONSTANT     = -200.
+    NULL_CONSTANT               = -300.
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = MAXIMUM_ANGULAR_SEMIDIAMETER
+    DATA_TYPE                   = ASCII_REAL
+    START_BYTE                  = 781
+    BYTES                       = 10
+    FORMAT                      = "F10.5"
+    UNIT                        = "MILLIRADIANS"
+    DESCRIPTION                 = "Maximum radius of the target projected
+onto the sky during the observing period, in milliradians."
+    NOT_APPLICABLE_CONSTANT     = -200.
+    NULL_CONSTANT               = -300.
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = TARGET_ORBITAL_LONGITUDE
+    DATA_TYPE                   = ASCII_REAL
+    START_BYTE                  = 792
+    BYTES                       = 8
+    FORMAT                      = "F8.3"
+    UNIT                        = "DEGREES"
+    DESCRIPTION                 = "Mean orbital longitude of the target body,
+measured from the anti-solar longitude of Saturn, during the observing
+period. Not applicable when the target body is Saturn."
+    NOT_APPLICABLE_CONSTANT     = -200.
+    NULL_CONSTANT               = -300.
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = MINIMUM_ORBITAL_LONGITUDE
+    DATA_TYPE                   = ASCII_REAL
+    START_BYTE                  = 801
+    BYTES                       = 8
+    FORMAT                      = "F8.3"
+    UNIT                        = "DEGREES"
+    DESCRIPTION                 = "Minimum orbital longitude of the target
+body, measured from the anti-solar longitude of Saturn, during the observing
+period. Not applicable when the target body is Saturn. Note that, if the body
+crosses the antisolar longitude during the observing period, the 'minimum'
+will be greater than the 'maximum'."
+    NOT_APPLICABLE_CONSTANT     = -200.
+    NULL_CONSTANT               = -300.
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = MAXIMUM_ORBITAL_LONGITUDE
+    DATA_TYPE                   = ASCII_REAL
+    START_BYTE                  = 810
+    BYTES                       = 8
+    FORMAT                      = "F8.3"
+    UNIT                        = "DEGREES"
+    DESCRIPTION                 = "Maximum orbital longitude of the target
+body, measured from the anti-solar longitude of Saturn, during the observing
+period. Not applicable when the target body is Saturn. Note that, if the body
+crosses the antisolar longitude during the observing period, the 'minimum'
+will be greater than the 'maximum'."
+    NOT_APPLICABLE_CONSTANT     = -200.
+    NULL_CONSTANT               = -300.
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = TARGET_SYSTEM3_LONGITUDE
+    DATA_TYPE                   = ASCII_REAL
+    START_BYTE                  = 819
+    BYTES                       = 8
+    FORMAT                      = "F8.3"
+    UNIT                        = "DEGREES"
+    DESCRIPTION                 = "Mean orbital longitude of the target body
+measured from Saturn's System III prime meridian, during the observing
+period. Not applicable when the target body is Saturn."
+    NOT_APPLICABLE_CONSTANT     = -200.
+    NULL_CONSTANT               = -300.
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = MINIMUM_SYSTEM3_LONGITUDE
+    DATA_TYPE                   = ASCII_REAL
+    START_BYTE                  = 828
+    BYTES                       = 8
+    FORMAT                      = "F8.3"
+    UNIT                        = "DEGREES"
+    DESCRIPTION                 = "Minimum orbital longitude of the target
+body, measured from Saturn's System III prime meridian, during the observing
+period. Not applicable when the target body is Saturn. Note that, if the body
+crosses the prime meridian, or vice-versa, during the observing period, then
+the 'minimum' will be greater than the 'maximum'."
+    NOT_APPLICABLE_CONSTANT     = -200.
+    NULL_CONSTANT               = -300.
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = MAXIMUM_SYSTEM3_LONGITUDE
+    DATA_TYPE                   = ASCII_REAL
+    START_BYTE                  = 837
+    BYTES                       = 8
+    FORMAT                      = "F8.3"
+    UNIT                        = "DEGREES"
+    DESCRIPTION                 = "Maximum orbital longitude of the target
+body, measured from Saturn's System III prime meridian, during the observing
+period. Not applicable when the target body is Saturn. Note that, if the body
+crosses the prime meridian, or vice-versa, during the observing period, then
+the 'minimum' will be greater than the 'maximum'."
+    NOT_APPLICABLE_CONSTANT     = -200.
+    NULL_CONSTANT               = -300.
+  END_OBJECT                    = COLUMN
+
+/* Ring footprint geometry parameters */
+
+  OBJECT                        = COLUMN
+    NAME                        = RING_FOOTPRINT_FILE_SPECIFICATION
+    DATA_TYPE                   = CHARACTER
+    START_BYTE                  = 847
+    BYTES                       = 34
+    FORMAT                      = "A34"
+    DESCRIPTION                 = "The full name of a file, including a path
+name, relative to a PDS volume."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = MINIMUM_RING_RADIUS
+    DATA_TYPE                   = ASCII_REAL
+    START_BYTE                  = 883
+    BYTES                       = 12
+    FORMAT                      = "F12.2"
+    UNIT                        = "KILOMETERS"
+    DESCRIPTION                 = "The approximate minimum radius on the ring
+plane sampled by CIRS during the observing period. Excessively smeared ring
+footprints are ignored."
+    NOT_APPLICABLE_CONSTANT     = -200.
+    NULL_CONSTANT               = -300.
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = MAXIMUM_RING_RADIUS
+    DATA_TYPE                   = ASCII_REAL
+    START_BYTE                  = 896
+    BYTES                       = 12
+    FORMAT                      = "F12.2"
+    UNIT                        = "DEGREES"
+    DESCRIPTION                 = "The approximate maximum radius on the ring
+plane sampled by CIRS during the observing period. Excessively smeared ring
+footprints, and those falling beyond 300,000 km, are ignored."
+    NOT_APPLICABLE_CONSTANT     = -200.
+    NULL_CONSTANT               = -300.
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = MINIMUM_RADIAL_RESOLUTION
+    DATA_TYPE                   = ASCII_REAL
+    START_BYTE                  = 909
+    BYTES                       = 10
+    FORMAT                      = "F10.2"
+    UNIT                        = "KILOMETERS"
+    DESCRIPTION                 = "The approximate minimum radial resolution
+on the ring plane sampled by CIRS during the observing period. Resolution is
+defined as the difference between the minimum and maximum radius values among
+the Q points circumscribing the field of view. Excessively smeared ring
+footprints, and those falling beyond 300,000 km, are ignored."
+    NOT_APPLICABLE_CONSTANT     = -200.
+    NULL_CONSTANT               = -300.
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = MAXIMUM_RADIAL_RESOLUTION
+    DATA_TYPE                   = ASCII_REAL
+    START_BYTE                  = 920
+    BYTES                       = 10
+    FORMAT                      = "F10.2"
+    UNIT                        = "KILOMETERS"
+    DESCRIPTION                 = "The approximate maximum radial resolution
+on the ring plane sampled by CIRS during the observing period. Resolution is
+defined as the difference between the minimum and maximum radius values among
+the Q points circumscribing the field of view. Excessively smeared ring
+footprints, and those falling beyond 300,000 km, are ignored."
+    NOT_APPLICABLE_CONSTANT     = -200.
+    NULL_CONSTANT               = -300.
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = MINIMUM_RING_LONGITUDE
+    DATA_TYPE                   = ASCII_REAL
+    START_BYTE                  = 931
+    BYTES                       = 8
+    FORMAT                      = "F8.3"
+    UNIT                        = "DEGREES"
+    DESCRIPTION                 = "The minimum inertial orbital longitude
+sampled by CIRS during the observation. Measured from the ascending node of
+the ring plane on Earth's J2000 equator. Note that, if an observation spans
+longitude zero, then the 'minimum' will be greater than the 'maximum'.
+Excessively smeared ring footprints, and those falling beyond 300,000 km, are
+ignored."
+    NOT_APPLICABLE_CONSTANT     = -200.
+    NULL_CONSTANT               = -300.
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = MAXIMUM_RING_LONGITUDE
+    DATA_TYPE                   = ASCII_REAL
+    START_BYTE                  = 940
+    BYTES                       = 8
+    FORMAT                      = "F8.3"
+    UNIT                        = "DEGREES"
+    DESCRIPTION                 = "The maximum inertial orbital longitude
+sampled by CIRS during the observation. Measured from the ascending node of
+the ring plane on Earth's J2000 equator. Note that, if an observation spans
+longitude zero, then the 'minimum' will be greater than the 'maximum'.
+Excessively smeared ring footprints, and those falling beyond 300,000 km, are
+ignored."
+    NOT_APPLICABLE_CONSTANT     = -200.
+    NULL_CONSTANT               = -300.
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = MINIMUM_RING_LOCAL_TIME
+    DATA_TYPE                   = ASCII_REAL
+    START_BYTE                  = 949
+    BYTES                       = 9
+    FORMAT                      = "F9.4"
+    UNIT                        = "HOURS = DEGREES/15"
+    DESCRIPTION                 = "The minimum orbital hour angle sampled by
+CIRS during the observation. Measured from the antisolar direction projected
+onto the ring plane. Note that, if an observation spans the midnight
+longitude, then the 'minimum' will be greater than the 'maximum'. Excessively
+smeared ring footprints, and those falling beyond 300,000 km, are ignored."
+    NOT_APPLICABLE_CONSTANT     = -200.
+    NULL_CONSTANT               = -300.
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = MAXIMUM_RING_LOCAL_TIME
+    DATA_TYPE                   = ASCII_REAL
+    START_BYTE                  = 959
+    BYTES                       = 9
+    FORMAT                      = "F9.4"
+    UNIT                        = "HOURS = DEGREES/15"
+    DESCRIPTION                 = "The maximum orbital hour angle sampled by
+CIRS during the observation. Measured from the antisolar direction projected
+onto the ring plane. Note that, if an observation spans the midnight
+longitude, then the 'minimum' will be greater than the 'maximum'. Excessively
+smeared ring footprints, and those falling beyond 300,000 km, are ignored."
+    NOT_APPLICABLE_CONSTANT     = -200.
+    NULL_CONSTANT               = -300.
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = MINIMUM_RING_INCIDENCE_ANGLE
+    DATA_TYPE                   = ASCII_REAL
+    START_BYTE                  = 969
+    BYTES                       = 8
+    FORMAT                      = "F8.3"
+    UNIT                        = "DEGREES"
+    DESCRIPTION                 = "Minimum value for the incidence angle
+within the ring region observed. This is the angle between the ring normal on
+the sunlit side and the direction to the Sun. Excessively smeared ring
+footprints, and those falling beyond 300,000 km, are ignored."
+    NOT_APPLICABLE_CONSTANT     = -200.
+    NULL_CONSTANT               = -300.
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = MAXIMUM_RING_INCIDENCE_ANGLE
+    DATA_TYPE                   = ASCII_REAL
+    START_BYTE                  = 978
+    BYTES                       = 8
+    FORMAT                      = "F8.3"
+    UNIT                        = "DEGREES"
+    DESCRIPTION                 = "Maximum value for the incidence angle
+within the ring region observed. This is the angle between the ring normal on
+the sunlit side and the direction to the Sun. Excessively smeared ring
+footprints, and those falling beyond 300,000 km, are ignored."
+    NOT_APPLICABLE_CONSTANT     = -200.
+    NULL_CONSTANT               = -300.
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = MINIMUM_RING_EMISSION_ANGLE
+    DATA_TYPE                   = ASCII_REAL
+    START_BYTE                  = 987
+    BYTES                       = 8
+    FORMAT                      = "F8.3"
+    UNIT                        = "DEGREES"
+    DESCRIPTION                 = "Minimum value for the emission angle
+within the ring region observed. This is the angle between the ring normal on
+the sunlit side and the direction to the observer. Values are > 90 degrees
+when viewing the dark side of the rings. Excessively smeared ring footprints,
+and those falling beyond 300,000 km, are ignored."
+    NOT_APPLICABLE_CONSTANT     = -200.
+    NULL_CONSTANT               = -300.
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = MAXIMUM_RING_EMISSION_ANGLE
+    DATA_TYPE                   = ASCII_REAL
+    START_BYTE                  = 996
+    BYTES                       = 8
+    FORMAT                      = "F8.3"
+    UNIT                        = "DEGREES"
+    DESCRIPTION                 = "Maximum value for the emission angle
+within the ring region observed. This is the angle between the ring normal on
+the sunlit side and the direction to the observer. Values are > 90 degrees
+when viewing the dark side of the rings. Excessively smeared ring footprints,
+and those falling beyond 300,000 km, are ignored."
+    NOT_APPLICABLE_CONSTANT     = -200.
+    NULL_CONSTANT               = -300.
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = MINIMUM_RING_PHASE_ANGLE
+    DATA_TYPE                   = ASCII_REAL
+    START_BYTE                  = 1005
+    BYTES                       = 8
+    FORMAT                      = "F8.3"
+    UNIT                        = "DEGREES"
+    DESCRIPTION                 = "Minimum value for the phase angle within
+the ring region observed. This is the angle between the direction to the Sun
+and the direction to the observer as seen from a point on the rings.
+Excessively smeared ring footprints, and those falling beyond 300,000 km, are
+ignored."
+    NOT_APPLICABLE_CONSTANT     = -200.
+    NULL_CONSTANT               = -300.
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = MAXIMUM_RING_PHASE_ANGLE
+    DATA_TYPE                   = ASCII_REAL
+    START_BYTE                  = 1014
+    BYTES                       = 8
+    FORMAT                      = "F8.3"
+    UNIT                        = "DEGREES"
+    DESCRIPTION                 = "Maximum value for the phase angle within
+the ring region observed. This is the angle between the direction to the Sun
+and the direction to the observer as seen from a point on the rings.
+Excessively smeared ring footprints, and those falling beyond 300,000 km, are
+ignored."
+    NOT_APPLICABLE_CONSTANT     = -200.
+    NULL_CONSTANT               = -300.
+  END_OBJECT                    = COLUMN
+
+END_OBJECT                      = TABLE
+
+END

@@ -1,0 +1,460 @@
+PDS_VERSION_ID                  = PDS3
+RECORD_TYPE                     = FIXED_LENGTH
+FILE_RECORDS                    = 11
+RECORD_BYTES                    = 562
+^INDEX_TABLE                    = "HSTO0_6854_index.tab"
+
+DATA_SET_ID                     = "HST-S-STIS-5-ID6854-V1.0"
+VOLUME_ID                       = HSTO0_6854
+PRODUCT_CREATION_TIME           = 2017-07-18
+
+INSTRUMENT_HOST_NAME            = "HUBBLE SPACE TELESCOPE"
+INSTRUMENT_HOST_ID              = HST
+INSTRUMENT_NAME                 = "SPACE TELESCOPE IMAGING SPECTROGRAPH"
+INSTRUMENT_ID                   = STIS
+
+OBJECT                          = INDEX_TABLE
+  INTERCHANGE_FORMAT            = ASCII
+  ROWS                          = 11
+  ROW_BYTES                     = 562
+  COLUMNS                       = 36
+  INDEX_TYPE                    = SINGLE
+
+  DESCRIPTION                   = "This is a table of all the data files on
+this volume. Note that the data files take the form of PDS 'DOCUMENT' objects,
+each consisting of an ASCII text file and one or more JPEG images.
+These are all described by a single combined-detached PDS label file. Each
+such collection of files corresponds to a single row of the index."
+
+  OBJECT                        = COLUMN
+    NAME                        = VOLUME_ID
+    DATA_TYPE                   = CHARACTER
+    COLUMN_NUMBER               = 1
+    START_BYTE                  = 2
+    BYTES                       = 10
+    FORMAT                      = "A10"
+    DESCRIPTION                 = "A unique identifier for a data volume.
+Example: HSTU0_5167."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = FILE_SPECIFICATION_NAME
+    DATA_TYPE                   = CHARACTER
+    COLUMN_NUMBER               = 2
+    START_BYTE                  = 15
+    BYTES                       = 27
+    FORMAT                      = "A27"
+    DESCRIPTION                 = "Name and directory path to the PDS
+label file describing the particular document."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = PRODUCT_ID
+    DATA_TYPE                   = CHARACTER
+    COLUMN_NUMBER               = 3
+    START_BYTE                  = 45
+    BYTES                       = 9
+    FORMAT                      = "A9"
+    DESCRIPTION                 = "A permanent, unique identifier assigned to
+a data product. In this data set, the PRODUCT_ID matches the file name
+assigned by Space Telescope Science Institute."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = STSCI_GROUP_ID
+    DATA_TYPE                   = CHARACTER
+    COLUMN_NUMBER               = 4
+    START_BYTE                  = 57
+    BYTES                       = 9
+    FORMAT                      = "A9"
+    DESCRIPTION                 = "An identifier for a particular group of
+data files in the STScI archive. You can retrieve the associated files from
+STScI by entering this ID into the box found on this page:
+    http://archive.stsci.edu/cgi-bin/dataset_lookup/
+This is the value of USER_PRODUCT_ID found in the PDS label files."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = HST_PROPOSAL_ID
+    DATA_TYPE                   = ASCII_INTEGER
+    COLUMN_NUMBER               = 5
+    START_BYTE                  = 68
+    BYTES                       = 5
+    FORMAT                      = "I5"
+    DESCRIPTION                 = "The numeric identifier of the proposal or
+observing program, as assigned by Space Telescope Science Institute."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = HST_PI_NAME
+    DATA_TYPE                   = CHARACTER
+    COLUMN_NUMBER               = 6
+    START_BYTE                  = 75
+    BYTES                       = 24
+    FORMAT                      = "A44"
+    DESCRIPTION                 = "The name of the Principal Investigator for
+this HST program, in the form 'last, first, middle initial'."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = DATA_SET_ID
+    DATA_TYPE                   = CHARACTER
+    COLUMN_NUMBER               = 7
+    START_BYTE                  = 102
+    BYTES                       = 31
+    FORMAT                      = "A31"
+    DESCRIPTION                 = "The unique identifer of the data set as
+assigned by PDS. The format is 'HST-p-STIS-5-IDxxxxx-V1.0' where 'p'
+indicates the target planet (e.g., J=Jupiter, S=Saturn, U=Uranus, N=Neptune),
+and 'xxxxx' is the four- or five-digit proposal ID. The processing level '5'
+indicates that this data set contains derived products exclusively; for
+scientific analysis, always retrieve the latest data from from the Space
+Telescope archive."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = INSTRUMENT_ID
+    DATA_TYPE                   = CHARACTER
+    COLUMN_NUMBER               = 8
+    START_BYTE                  = 136
+    BYTES                       = 6
+    FORMAT                      = "A6"
+    DESCRIPTION                 = "An abbreviated name or acronym which
+identifies an instrument. In this data set, the value is always 'STIS'."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = DETECTOR_ID
+    DATA_TYPE                   = CHARACTER
+    COLUMN_NUMBER               = 9
+    START_BYTE                  = 145
+    BYTES                       = 8
+    FORMAT                      = "A8"
+    DESCRIPTION                 = "An abbreviated name or acronym which
+identifies the instrument's detector used for this observation."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = OBSERVATION_TYPE
+    DATA_TYPE                   = CHARACTER
+    COLUMN_NUMBER               = 10
+    START_BYTE                  = 156
+    BYTES                       = 14
+    FORMAT                      = "A14"
+    DESCRIPTION                 = "The type of the observation, e.g., IMAGE or
+SPECTRUM."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = PRODUCT_TYPE
+    DATA_TYPE                   = CHARACTER
+    COLUMN_NUMBER               = 11
+    START_BYTE                  = 173
+    BYTES                       = 20
+    FORMAT                      = "A20"
+    DESCRIPTION                 = "A brief description of the type of the data
+product. In this data set, every product is an 'HST_PREVIEW_DOCUMENT'."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = INTERCHANGE_FORMAT
+    DATA_TYPE                   = CHARACTER
+    COLUMN_NUMBER               = 12
+    START_BYTE                  = 196
+    BYTES                       = 6
+    FORMAT                      = "A6"
+    DESCRIPTION                 = "The way information is represented in the
+file, either BINARY or ASCII. In this data set, all documents are 'BINARY'."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = PUBLICATION_DATE
+    DATA_TYPE                   = CHARACTER
+    COLUMN_NUMBER               = 13
+    START_BYTE                  = 205
+    BYTES                       = 10
+    FORMAT                      = "A10"
+    DESCRIPTION                 = "The date when the data was last updated by
+Space Telescope Science Institute."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = PRODUCT_CREATION_TIME
+    DATA_TYPE                   = CHARACTER
+    COLUMN_NUMBER               = 14
+    START_BYTE                  = 218
+    BYTES                       = 19
+    FORMAT                      = "A19"
+    DESCRIPTION                 = "Approximate UTC date and time when the PDS
+data product was created. Often rounded to 12:00."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = START_TIME
+    DATA_TYPE                   = CHARACTER
+    COLUMN_NUMBER               = 15
+    START_BYTE                  = 240
+    BYTES                       = 19
+    FORMAT                      = "A19"
+    DESCRIPTION                 = "The UTC date and time of the start of the
+observation, in 'yyyy-mm-ddThh:mm:ss' format."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = STOP_TIME
+    DATA_TYPE                   = CHARACTER
+    COLUMN_NUMBER               = 16
+    START_BYTE                  = 262
+    BYTES                       = 19
+    FORMAT                      = "A19"
+    DESCRIPTION                 = "The UTC date and time of the end of the
+observation, in 'yyyy-mm-ddThh:mm:ss' format."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = EXPOSURE_DURATION
+    DATA_TYPE                   = ASCII_REAL
+    COLUMN_NUMBER               = 17
+    START_BYTE                  = 283
+    BYTES                       = 6
+    FORMAT                      = "F6.1"
+    UNIT                        = "SECOND"
+    UNKNOWN_CONSTANT            = 0.
+    DESCRIPTION                 = "Total duration of the observation, in
+seconds."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = PLANET_NAME
+    DATA_TYPE                   = CHARACTER
+    COLUMN_NUMBER               = 18
+    START_BYTE                  = 291
+    BYTES                       = 7
+    FORMAT                      = "A7"
+    DESCRIPTION                 = "The central planet for the target of the
+observation, e.g., JUPITER, SATURN, URANUS, or NEPTUNE."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = TARGET_NAME
+    DATA_TYPE                   = CHARACTER
+    COLUMN_NUMBER               = 19
+    START_BYTE                  = 301
+    BYTES                       = 16
+    FORMAT                      = "A16"
+    DESCRIPTION                 = "The target of the observation, e.g.,
+JUPITER, SATURN, URANUS, NEPTUNE, IO, EUROPA, GANYMEDE, etc."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = HST_TARGET_NAME
+    DATA_TYPE                   = CHARACTER
+    COLUMN_NUMBER               = 20
+    START_BYTE                  = 320
+    BYTES                       = 31
+    FORMAT                      = "A31"
+    DESCRIPTION                 = "The target of the observation as defined by
+the Principal Investigator."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = FILTER_NAME
+    DATA_TYPE                   = CHARACTER
+    COLUMN_NUMBER               = 21
+    START_BYTE                  = 354
+    BYTES                       = 18
+    FORMAT                      = "A18"
+    DESCRIPTION                 = "The name of the filter used for the
+observation."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = OPTICAL_ELEMENT_NAME
+    DATA_TYPE                   = CHARACTER
+    COLUMN_NUMBER               = 22
+    START_BYTE                  = 375
+    BYTES                       = 6
+    FORMAT                      = "A6"
+    DESCRIPTION                 = "The name of the optical element 
+(grating, mirror, or prism) for the observation."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = CENTER_FILTER_WAVELENGTH
+    DATA_TYPE                   = ASCII_REAL
+    COLUMN_NUMBER               = 23
+    START_BYTE                  = 383
+    BYTES                       = 10
+    FORMAT                      = "E10.4"
+    UNIT                        = "MICRON"
+    NULL_CONSTANT               = 0.
+    DESCRIPTION                 = "The approximate central wavelength of the
+filter bandpass, in microns. Zero if unknown."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = BANDWIDTH
+    DATA_TYPE                   = ASCII_REAL
+    COLUMN_NUMBER               = 24
+    START_BYTE                  = 395
+    BYTES                       = 10
+    FORMAT                      = "F10.4"
+    UNIT                        = "MICRON"
+    NULL_CONSTANT               = 0.
+    DESCRIPTION                 = "The full width of the spectral bandpass, in
+microns. Zero if unknown."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = MAXIMUM_WAVELENGTH_RESOLUTION
+    DATA_TYPE                   = ASCII_REAL
+    COLUMN_NUMBER               = 25
+    START_BYTE                  = 407
+    BYTES                       = 10
+    FORMAT                      = "E10.4"
+    UNIT                        = "MICRON"
+    NULL_CONSTANT               = 0.
+    DESCRIPTION                 = "The maximum spectral resolution 
+available from the image or spectrograph, in microns. For an image 
+the this is equal to the bandwidth when a simple filter is used."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = MINIMUM_WAVELENGTH_RESOLUTION
+    DATA_TYPE                   = ASCII_REAL
+    COLUMN_NUMBER               = 26
+    START_BYTE                  = 419
+    BYTES                       = 10
+    FORMAT                      = "E10.4"
+    UNIT                        = "MICRON"
+    NULL_CONSTANT               = 0.
+    DESCRIPTION                 = "The minimum spectral resolution 
+available from the image or spectrograph, in microns. For an image 
+the this is equal to the bandwidth when a simple filter is used."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = MAXIMUM_WAVELENGTH
+    DATA_TYPE                   = ASCII_REAL
+    COLUMN_NUMBER               = 27
+    START_BYTE                  = 431
+    BYTES                       = 10
+    FORMAT                      = "E10.4"
+    UNIT                        = "MICRON"
+    NULL_CONSTANT               = 0.
+    DESCRIPTION                 = "The approximate upper limit of the filter
+passband, in microns."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = MINIMUM_WAVELENGTH
+    DATA_TYPE                   = ASCII_REAL
+    COLUMN_NUMBER               = 28
+    START_BYTE                  = 443
+    BYTES                       = 10
+    FORMAT                      = "E10.4"
+    UNIT                        = "MICRON"
+    NULL_CONSTANT               = 0.
+    DESCRIPTION                 = "The approximate lower limit of the filter
+passband, in microns."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = APERTURE_TYPE
+    DATA_TYPE                   = CHARACTER
+    COLUMN_NUMBER               = 29
+    START_BYTE                  = 455
+    BYTES                       = 18
+    FORMAT                      = "A18"
+    DESCRIPTION                 = "The name of the aperture used for the
+observation."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = PROPOSED_APERTURE_TYPE
+    DATA_TYPE                   = CHARACTER
+    COLUMN_NUMBER               = 30
+    START_BYTE                  = 476
+    BYTES                       = 18
+    FORMAT                      = "A18"
+    DESCRIPTION                 = "The proposed name of the aperture 
+used for the observation. Only differs from APERTURE_TYPE when 
+'pseudo-aperture' positions are used."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = EXPOSURE_TYPE
+    DATA_TYPE                   = CHARACTER
+    COLUMN_NUMBER               = 31
+    START_BYTE                  = 497
+    BYTES                       = 20
+    FORMAT                      = "A20"
+    DESCRIPTION                 = "The exposure setting used in the
+observation. For WFPC2, the possible values are 'NORMAL', 'INTERRUPTED',
+'INCOMPLETE', 'EXTENDED', 'UNCERTAIN', 'INDETERMINATE', 'PREDICTED', or
+'EXCESSIVE DOWNTIME'."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = FINE_GUIDANCE_SYSTEM_LOCK_TYPE
+    DATA_TYPE                   = CHARACTER
+    COLUMN_NUMBER               = 32
+    START_BYTE                  = 520
+    BYTES                       = 9
+    FORMAT                      = "A9"
+    DESCRIPTION                 = "The state of the Fine Guidence Sensor on
+HST. Possible values are 'FINE', 'COARSE', 'GYROS', 'FINE/GYRO' and
+'UNKNOWN'."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = GAIN_MODE_ID
+    DATA_TYPE                   = CHARACTER
+    COLUMN_NUMBER               = 33
+    START_BYTE                  = 532
+    BYTES                       = 5
+    FORMAT                      = "A5"
+    DESCRIPTION                 = "The gain state of the instrument. Always
+'N/A', for 'not applicable', for ACS."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = INSTRUMENT_MODE_ID
+    DATA_TYPE                   = CHARACTER
+    COLUMN_NUMBER               = 34
+    START_BYTE                  = 540
+    BYTES                       = 10
+    FORMAT                      = "A10"
+    DESCRIPTION                 = "The operating mode of the instrument.
+Possible values are 'ACCUM' and 'ACQ'."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = LINES
+    DATA_TYPE                   = ASCII_INTEGER
+    COLUMN_NUMBER               = 35
+    START_BYTE                  = 552
+    BYTES                       = 4
+    FORMAT                      = "I4"
+    DESCRIPTION                 = "The number of lines in the image, i.e., the
+size of image along the vertical axis. This is based on the calibrated image
+and so generally excludes overscan pixels. Note that geometrically corrected
+or 'drizzled' images are typically somewhat larger."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = LINE_SAMPLES
+    DATA_TYPE                   = ASCII_INTEGER
+    COLUMN_NUMBER               = 36
+    START_BYTE                  = 557
+    BYTES                       = 4
+    FORMAT                      = "I4"
+    DESCRIPTION                 = "The number of samples in the image, i.e.,
+the size of image along the horizontal axis. This is based on the calibrated
+image and so generally excludes overscan pixels. Note that geometrically
+corrected or 'drizzled' images are typically somewhat larger."
+  END_OBJECT                    = COLUMN
+
+END_OBJECT                      = INDEX_TABLE
+
+END
