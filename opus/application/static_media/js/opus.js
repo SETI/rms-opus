@@ -72,6 +72,10 @@ $(document).ready(function() {
         if ($(this).find('a').hasClass('restart')) {
             return;
         }
+        if ($(this).hasClass('external-link')) {
+            // this is a link to an external site, so just go there...
+            return true;
+        }
         // remove the active class on whatever other tab it is on
         $('.navbar-nav li', '#navbar').each(function(index, value) {
             if ($(this).hasClass("active")) {
