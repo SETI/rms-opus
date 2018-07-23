@@ -842,6 +842,8 @@ var o_browse = {
             return;
         }
 
+        $("#main-container").append('<div class ="loader-container"><div class="loader"></div><p class="load_text">Loading...</p></div>');
+
         // only draw the navbar if we are in gallery mode... doesn't make sense in collection mode
         if (namespace == "#browse") {
           // get the browse nav header?
@@ -952,6 +954,8 @@ var o_browse = {
                         $(html).appendTo($('.gallery ul.ace-thumbnails', namespace)).fadeIn();
                     }
 
+                    $(".loader-container").remove();
+
                     // fade out the spinner
                     $('.infinite_scroll_spinner', namespace).fadeOut("fast");
 
@@ -1051,7 +1055,7 @@ var o_browse = {
 
         // setup colorbox
         var $overflow = '';
-        var colorbox_params = {
+        $('.ace-thumbnails [data-rel="colorbox"]').colorbox({
             rel: 'colorbox',
             className:"gallery_overlay_bg",
             top:'17px',
@@ -1074,6 +1078,7 @@ var o_browse = {
             },
             onLoad:function() {
 
+              var element = $.colorbox.element();
                 opus_id = $.colorbox.element().parent().attr("id").split('__')[1];
                 // get pixel loc of right border of colorbox
 
@@ -1116,10 +1121,7 @@ var o_browse = {
             onComplete:function(){
                 o_browse.adjust_gallery_data_viewer();
             }
-        };
-
-        $('.ace-thumbnails [data-rel="colorbox"]').colorbox(colorbox_params);
-
+        });
     },
 
     colorbox_left_margin: function() {
@@ -1231,7 +1233,7 @@ var o_browse = {
 
     updateColorboxDataViewer: function(opus_id) {
 
-        var html = o_browse.metadataboxHtml(opus_id);
+        o_browse.metadataboxHtml(opus_id);
 
         // add data viewer behaviors
         $('.gallery_data_viewer').on("click", '.gallery_data_link', function() {
