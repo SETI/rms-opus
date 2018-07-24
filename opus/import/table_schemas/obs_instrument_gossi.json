@@ -1,0 +1,305 @@
+[
+    {
+        "field_name": "obs_general_id",
+        "field_type": "uint4",
+        "field_key": "foreign",
+        "field_key_foreign": [
+            "obs_general",
+            "id"
+        ],
+        "field_notnull": true,
+        "data_source": [
+            "TAB:obs_general",
+            "id"
+        ],
+        "comment": "This is the primary (surrogate) key linking the record to obs_general."
+    },
+    {
+        "field_name": "opus_id",
+        "field_type": "char80",
+        "field_key": "foreign",
+        "field_key_foreign": [
+            "obs_general",
+            "opus_id"
+        ],
+        "field_notnull": true,
+        "data_source": [
+            "TAB:obs_general",
+            "opus_id"
+        ],
+        "comment": "This is the secondary key linking the record to obs_general."
+    },
+    {
+        "field_name": "volume_id",
+        "field_type": "char11",
+        "field_key": true,
+        "field_notnull": true,
+        "data_source": [
+            "TAB:obs_general",
+            "volume_id"
+        ],
+        "comment": "The volume_id is included here for ease of database manipulation only."
+    },
+    {
+        "field_name": "observation_id",
+        "field_type": "char20",
+        "field_notnull": true,
+        "field_key": true,
+        "data_source": [
+            "TAB:index",
+            "OBSERVATION_ID"
+        ],
+        "definition": "This is the Galileo activity id of each image which is in the form NNTIOOOOOOMM#SSSXXXX. NN is the Orbit number. T is the scan platform target body initial (if applicable). I is the instrument. OOOOOO is the orbit planning guide objective mnemonic. MM is the sequential OAPEL number for each value of NNTIOOOOOO. # is the multiple observation flag symbol (- or *). SSS is the PA set number. XXXX is the MIPL Processing Code.",
+        "pi_category_name": "obs_instrument_gossi",
+        "pi_dict_context": "GOSSI",
+        "pi_dict_name": "OBSERVATION_ID",
+        "pi_disp_order": 80,
+        "pi_display": 1,
+        "pi_display_results": 1,
+        "pi_form_type": "STRING",
+        "pi_intro": null,
+        "pi_label": "Observation ID",
+        "pi_label_results": "Observation ID",
+        "pi_old_slug": "OBSERVATIONID",
+        "pi_slug": "GOSSIobservationid",
+        "pi_sub_heading": null,
+        "pi_tooltip": "",
+        "pi_units": "",
+        "comment": "Definition is from GOSSI label."
+    },
+    {
+        "field_name": "image_id",
+        "field_type": "char7",
+        "field_notnull": true,
+        "data_source": [
+            "TAB:index",
+            "IMAGE_ID"
+        ],
+        "definition": "Image id which takes the form of XXYZZZZ.  XX is the orbit (A1, A2 etc is approach; C1, C2 is cruise). Y is the target body (J=Jupiter, A=Amalthea, I=Io, E=Europa, G=Ganymede, C=Callisto, S=Minor Satellites, R=ring, H=star, L=Moon, W=Earth, V=Venus, U=Ida, P=Gaspra). ZZZZ is the picture count which is generated in the sequence generation process and which is incremented separately for each target body in each orbit.",
+        "pi_category_name": "obs_instrument_gossi",
+        "pi_dict_context": "GOSSI",
+        "pi_dict_name": "IMAGE_ID",
+        "pi_disp_order": 70,
+        "pi_display": 1,
+        "pi_display_results": 1,
+        "pi_form_type": "STRING",
+        "pi_intro": null,
+        "pi_label": "Image ID",
+        "pi_label_results": "Image ID",
+        "pi_old_slug": "instrumentGOSSIIMAGEID",
+        "pi_slug": "GOSSIimageid",
+        "pi_sub_heading": null,
+        "pi_tooltip": "",
+        "pi_units": "",
+        "comment": "Definition is from GOSSI label."
+    },
+    {
+        "field_name": "filter_name",
+        "field_type": "enum",
+        "field_enum_options": "'CLEAR','GREEN','IR-7270','IR-7560','IR-8890','IR-9680','RED','VIOLET'",
+        "field_notnull": true,
+        "field_key": true,
+        "data_source": [
+            "TAB:index",
+            "FILTER_NAME"
+        ],
+        "definition": "Optical filter used for the image. Valid filters include: CLEAR, GREEN, RED, VIOLET, IR-7560, IR-9680, IR-7270, IR-8890.",
+        "pi_category_name": "obs_instrument_gossi",
+        "pi_dict_context": "GOSSI",
+        "pi_dict_name": "FILTER_NAME",
+        "pi_disp_order": 10,
+        "pi_display": 1,
+        "pi_display_results": 1,
+        "pi_form_type": "GROUP",
+        "pi_intro": null,
+        "pi_label": "Filter Name",
+        "pi_label_results": "Filter Name",
+        "pi_old_slug": "instrumentGOSSIFILTERNAME",
+        "pi_slug": "GOSSIfilter",
+        "pi_sub_heading": null,
+        "pi_tooltip": "",
+        "pi_units": "",
+        "comment": "Definition is from GOSSI label.",
+        "mult_options": [
+              [   0,    "CLEAR",           "Clear",   10, "Y", null],
+              [   1,   "VIOLET",          "Violet",   20, "Y", null],
+              [   2,    "GREEN",           "Green",   30, "Y", null],
+              [   3,      "RED",             "Red",   40, "Y", null],
+              [   4,   "IR-7270", "Methane [7270]",   50, "Y", null],
+              [   5,   "IR-7560",      "Continuum",   60, "Y", null],
+              [   6,   "IR-8890", "Methane [8890]",   70, "Y", null],
+              [   7,   "IR-9680",       "Infrared",   80, "Y", null]
+          ]
+    },
+    {
+        "field_name": "filter_number",
+        "field_type": "int1",
+        "field_notnull": true,
+        "field_key": true,
+        "data_source": [
+            "TAB:index",
+            "FILTER_NUMBER"
+        ],
+        "val_min": 0,
+        "val_max": 7,
+        "definition": "Optical filter number, containing the unique number associated with the optical filter for the image. Valid 0-7.",
+        "pi_category_name": "obs_instrument_gossi",
+        "pi_dict_context": "GOSSI",
+        "pi_dict_name": "FILTER_NUMBER",
+        "pi_disp_order": 20,
+        "pi_display": 1,
+        "pi_display_results": 1,
+        "pi_form_type": "GROUP",
+        "pi_intro": null,
+        "pi_label": "Filter Number",
+        "pi_label_results": "Filter Number",
+        "pi_old_slug": "instrumentGOSSIFILTERNUMBER",
+        "pi_slug": "GOSSIfilternumber",
+        "pi_sub_heading": null,
+        "pi_tooltip": "",
+        "pi_units": "",
+        "comment": "Definition is from GOSSI label."
+    },
+    {
+        "field_name": "gain_mode_id",
+        "field_type": "enum",
+        "field_enum_options": "'400K','100K','40K','10K'",
+        "field_notnull": true,
+        "data_source": [
+            "TAB:index",
+            "GAIN_MODE_ID"
+        ],
+        "definition": "Gain mode of the camera. Valid 400K, 100K, 40K, 10K.",
+        "pi_category_name": "obs_instrument_gossi",
+        "pi_dict_context": "GOSSI",
+        "pi_dict_name": "GAIN_MODE_ID",
+        "pi_disp_order": 40,
+        "pi_display": 1,
+        "pi_display_results": 1,
+        "pi_form_type": "GROUP",
+        "pi_intro": null,
+        "pi_label": "Gain Mode ID",
+        "pi_label_results": "Gain Mode ID",
+        "pi_old_slug": "instrumentGOSSIGAINMODEID",
+        "pi_slug": "GOSSIgainmode",
+        "pi_sub_heading": null,
+        "pi_tooltip": "",
+        "pi_units": "",
+        "comment": "Definition is from GOSSI label.",
+        "mult_options": [
+              [   0,  "10K",  "10K",   10, "Y", null],
+              [   1,  "40K",  "40K",   20, "Y", null],
+              [   2, "100K", "100K",   30, "Y", null],
+              [   3, "400K", "400K",   40, "Y", null]
+          ]
+    },
+    {
+        "field_name": "frame_duration",
+        "field_type": "real8",
+        "field_notnull": true,
+        "data_source": [
+            "TAB:index",
+            "FRAME_DURATION"
+        ],
+        "val_min": 2,
+        "val_max": 61,
+        "definition": "Scan rate of the camera read out in seconds. Valid 2.333, 8.667, 30.333 60.667",
+        "pi_category_name": "obs_instrument_gossi",
+        "pi_dict_context": "GOSSI",
+        "pi_dict_name": "FRAME_DURATION",
+        "pi_disp_order": 60,
+        "pi_display": 1,
+        "pi_display_results": 1,
+        "pi_form_type": "GROUP",
+        "pi_intro": null,
+        "pi_label": "Frame Duration",
+        "pi_label_results": "Frame Duration",
+        "pi_old_slug": "FRAMEDURATION",
+        "pi_slug": "GOSSIframeduration",
+        "pi_sub_heading": null,
+        "pi_tooltip": "",
+        "pi_units": "seconds",
+        "comment": "Definition is from GOSSI label."
+    },
+    {
+        "field_name": "obstruction_id",
+        "field_type": "enum",
+        "field_enum_options": "'POSSIBLE','NOT POSSIBLE','PRESENCE VERIFIED'",
+        "field_notnull": true,
+        "data_source": [
+            "TAB:index",
+            "OBSTRUCTION_ID"
+        ],
+        "definition": "Identifies if a boom or other type of obstruction were obscuring the view of the camera during the exposure. Valid values include: POSSIBLE, NOT POSSIBLE, OR PRESENCE VERIFIED.",
+        "pi_category_name": "obs_instrument_gossi",
+        "pi_dict_context": "GOSSI",
+        "pi_dict_name": "OBSTRUCTION_ID",
+        "pi_disp_order": 50,
+        "pi_display": 1,
+        "pi_display_results": 1,
+        "pi_form_type": "GROUP",
+        "pi_intro": null,
+        "pi_label": "Obstruction ID",
+        "pi_label_results": "Obstruction ID",
+        "pi_old_slug": "OBSTRUCTIONID",
+        "pi_slug": "GOSSIobstruction",
+        "pi_sub_heading": null,
+        "pi_tooltip": "",
+        "pi_units": "",
+        "comment": "Definition is from GOSSI label.",
+        "mult_options": [
+              [   0,          "POSSIBLE",          "Possible",  10, "Y", null],
+              [   1,      "NOT POSSIBLE",      "Not Possible",  20, "Y", null],
+              [   2, "PRESENCE VERIFIED", "Presence Verified",  30, "Y", null]
+          ]
+    },
+    {
+        "field_name": "compression_type",
+        "field_type": "enum",
+        "field_enum_options": "'BARC RATE CONTROL','HUFFMAN','INTEGER COSINE TRANSFORM','NONE'",
+        "field_notnull": true,
+        "data_source": [
+            "TAB:index",
+            "COMPRESSION_TYPE"
+        ],
+        "pi_category_name": "obs_instrument_gossi",
+        "pi_dict_context": "PSDD",
+        "pi_dict_name": "COMPRESSION_TYPE",
+        "pi_disp_order": 30,
+        "pi_display": 1,
+        "pi_display_results": 1,
+        "pi_form_type": "GROUP",
+        "pi_intro": null,
+        "pi_label": "Compression Type",
+        "pi_label_results": "Compression Type",
+        "pi_old_slug": "COMPRESSIONTYPE",
+        "pi_slug": "GOSSIcompressiontype",
+        "pi_sub_heading": null,
+        "pi_tooltip": "",
+        "pi_units": "",
+        "comment": "The definition for COMPRESSION_TYPE in the GOSSI label says nothing useful so we use the PSDD one.",
+        "mult_options": [
+              [   0,        "BARC RATE CONTROL",        "BARC Rate Control", 10, "Y", null],
+              [   1,                  "HUFFMAN",                  "Huffman", 20, "Y", null],
+              [   2, "INTEGER COSINE TRANSFORM", "Integer Cosine Transform", 30, "Y", null],
+              [   3,                     "NONE",                     "None", 40, "Y", null]
+          ]
+    },
+    {
+        "put_mults_here": true
+    },
+    {
+        "field_name": "id",
+        "field_type": "uint4",
+        "field_key": "primary",
+        "field_notnull": true,
+        "data_source": [
+            "MAX_ID",
+            null
+        ]
+    },
+    {
+        "field_name": "timestamp",
+        "field_type": "timestamp"
+    }
+]

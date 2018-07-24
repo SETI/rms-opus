@@ -1,0 +1,435 @@
+[
+    {
+        "field_name": "obs_general_id",
+        "field_type": "uint4",
+        "field_key": "foreign",
+        "field_key_foreign": [
+            "obs_general",
+            "id"
+        ],
+        "field_notnull": true,
+        "data_source": [
+            "TAB:obs_general",
+            "id"
+        ],
+        "comment": "This is the primary (surrogate) key linking the record to obs_general."
+    },
+    {
+        "field_name": "opus_id",
+        "field_type": "char80",
+        "field_key": "foreign",
+        "field_key_foreign": [
+            "obs_general",
+            "opus_id"
+        ],
+        "field_notnull": true,
+        "data_source": [
+            "TAB:obs_general",
+            "opus_id"
+        ],
+        "comment": "This is the secondary key linking the record to obs_general."
+    },
+    {
+        "field_name": "volume_id",
+        "field_type": "char11",
+        "field_notnull": true,
+        "field_key": true,
+        "data_source": [
+            "TAB:obs_general",
+            "volume_id"
+        ],
+        "comment": "The volume_id is included here for ease of database manipulation only."
+    },
+    {
+        "field_name": "data_conversion_type",
+        "field_type": "enum",
+        "field_enum_options": "'12BIT','8LSB','TABLE'",
+        "field_default": null,
+        "field_key": true,
+        "data_source": [
+            "TAB:index",
+            "DATA_CONVERSION_TYPE"
+        ],
+        "definition": "The method of conversion used to convert image from 12 to 8 bits selected for this image. '12BIT' = no conversion 'TABLE' = conversion by look-up table '8LSB' = keep only the 8 least significant bits",
+        "pi_category_name": "obs_instrument_coiss",
+        "pi_dict_context": "COISS",
+        "pi_dict_name": "DATA_CONVERSION_TYPE",
+        "pi_disp_order": 70,
+        "pi_display": 1,
+        "pi_display_results": 1,
+        "pi_form_type": "GROUP",
+        "pi_intro": null,
+        "pi_label": "Data Conversion Type",
+        "pi_label_results": "Data Conversion Type",
+        "pi_old_slug": "DATACONVERSIONTYPE",
+        "pi_slug": "COISSdataconversiontype",
+        "pi_sub_heading": null,
+        "pi_tooltip": "",
+        "pi_units": "",
+        "comment": "Definition is from COISS label",
+        "mult_options": [
+              [   0, "12BIT", "12BIT",  10, "Y", null],
+              [   1,  "8LSB",  "8LSB",  20, "Y", null],
+              [   2, "TABLE", "TABLE",  30, "Y", null]
+          ]
+    },
+    {
+        "field_name": "compression_type",
+        "field_type": "enum",
+        "field_enum_options": "'LOSSLESS','LOSSY','NOTCOMP'",
+        "field_default": null,
+        "field_key": true,
+        "data_source": [
+            "TAB:index",
+            "INST_CMPRS_TYPE"
+        ],
+        "definition": "Compression type used for the image.",
+        "pi_category_name": "obs_instrument_coiss",
+        "pi_dict_context": "COISS",
+        "pi_dict_name": "COMPRESSION_TYPE",
+        "pi_disp_order": 60,
+        "pi_display": 1,
+        "pi_display_results": 1,
+        "pi_form_type": "GROUP",
+        "pi_intro": null,
+        "pi_label": "Compression Type",
+        "pi_label_results": "Compression Type",
+        "pi_old_slug": "INSTCMPRSTYPE",
+        "pi_slug": "COISScompressiontype",
+        "pi_sub_heading": null,
+        "pi_tooltip": "",
+        "pi_units": "",
+        "comment": "Definition is from COISS label",
+        "mult_options": [
+              [   0, "LOSSLESS",       "Lossless",  10, "Y", null],
+              [   1,    "LOSSY",          "Lossy",  20, "Y", null],
+              [   2,  "NOTCOMP", "Not Compressed",  30, "Y", null]
+          ]
+    },
+    {
+        "field_name": "gain_mode_id",
+        "field_type": "enum",
+        "field_enum_options": "'12 ELECTRONS PER DN','29 ELECTRONS PER DN','95 ELECTRONS PER DN','215 ELECTRONS PER DN'",
+        "field_default": null,
+        "field_key": true,
+        "data_source": [
+            "TAB:index",
+            "GAIN_MODE_ID"
+        ],
+        "definition": "The electronics gain setting selected for this image, given in units of electrons per DN. (This is an approximate value so both cameras can use the same set of values.)",
+        "pi_category_name": "obs_instrument_coiss",
+        "pi_dict_context": "COISS",
+        "pi_dict_name": "GAIN_MODE_ID",
+        "pi_disp_order": 80,
+        "pi_display": 1,
+        "pi_display_results": 1,
+        "pi_form_type": "GROUP",
+        "pi_intro": null,
+        "pi_label": "Gain Mode",
+        "pi_label_results": "Gain Mode",
+        "pi_old_slug": "GAINMODEID",
+        "pi_slug": "COISSgainmode",
+        "pi_sub_heading": null,
+        "pi_tooltip": "",
+        "pi_units": "",
+        "comment": "Definition is from COISS label",
+        "mult_options": [
+              [   0,  "12 ELECTRONS PER DN",  "12 Electrons per DN",   10, "Y", null],
+              [   1,  "29 ELECTRONS PER DN",  "29 Electrons per DN",   20, "Y", null],
+              [   2,  "95 ELECTRONS PER DN",  "95 Electrons per DN",   30, "Y", null],
+              [   3, "215 ELECTRONS PER DN", "215 Electrons per DN",   40, "Y", null]
+          ]
+    },
+    {
+        "field_name": "image_observation_type",
+        "field_type": "char48",
+        "field_default": null,
+        "field_key": true,
+        "data_source": [
+            "FUNCTION",
+            "obs_instrument_COISS_image_observation_type"
+        ],
+        "definition": "A multi-valued list describing the purpose(s) of this image, for example, OPNAV, science, calibration, engineering and/or support imaging. (Comes from the IMAGE_OBSERVATION_TYPE_* keywords in the IOI file parameter set description.) This list can contain up to five values where the purposes of the image are identified. More than one value may be specified.",
+        "pi_category_name": "obs_instrument_coiss",
+        "pi_dict_context": "COISS",
+        "pi_dict_name": "IMAGE_OBSERVATION_TYPE",
+        "pi_disp_order": 130,
+        "pi_display": 1,
+        "pi_display_results": 1,
+        "pi_form_type": "GROUP",
+        "pi_intro": null,
+        "pi_label": "Image Observation Type",
+        "pi_label_results": "Image Observation Type",
+        "pi_old_slug": "IMAGEOBSERVATIONTYPE",
+        "pi_slug": "COISSimageobservationtype",
+        "pi_sub_heading": null,
+        "pi_tooltip": "",
+        "pi_units": "",
+        "comment": "Definition is from COISS label",
+        "mult_options": [
+              [   0, "SCIENCE",             "Science",             10, "Y", null],
+              [   1, "SCIENCE,OPNAV",       "Science,OpNav",       20, "Y", null],
+              [   2, "SCIENCE,CALIBRATION", "Science,Calibration", 30, "Y", null],
+              [   3, "SCIENCE,SUPPORT",     "Science,Support",     40, "Y", null],
+              [   4, "OPNAV",               "OpNav",               50, "Y", null],
+              [   5, "OPNAV,SUPPORT",       "Opnav,Support",       60, "Y", null],
+              [   6, "CALIBRATION",         "Calibration",         70, "Y", null],
+              [   7, "ENGINEERING",         "Engineering",         80, "Y", null],
+              [   8, "SUPPORT",             "Support",             90, "Y", null],
+              [   9, "UNKNOWN",             "Unknown",            100, "Y", null]
+          ]
+    },
+    {
+        "field_name": "missing_lines",
+        "field_type": "int2",
+        "field_default": null,
+        "field_key": true,
+        "data_source": [
+            "TAB:index",
+            "MISSING_LINES"
+        ],
+        "val_min": 0,
+        "val_max": 1024,
+        "val_sentinel": [ -2147483648, 2147483647, -1e32 ],
+        "definition": "For non-lossy compressed data only, number of missing or incomplete image lines. For all data, including lossy compressed images, when data is missing, the missing pixel values are replaced by 0. 'N/A' for lossy compressed data.",
+        "pi_category_name": "obs_instrument_coiss",
+        "pi_dict_context": "COISS",
+        "pi_dict_name": "MISSING_LINES",
+        "pi_disp_order": 100,
+        "pi_display": 1,
+        "pi_display_results": 1,
+        "pi_form_type": "RANGE",
+        "pi_intro": null,
+        "pi_label": "Missing Lines",
+        "pi_label_results": "Missing Lines",
+        "pi_old_slug": "MISSINGLINES",
+        "pi_slug": "COISSmissinglines",
+        "pi_sub_heading": null,
+        "pi_tooltip": "",
+        "pi_units": "",
+        "comment": "Definition is from COISS label"
+    },
+    {
+        "field_name": "shutter_mode_id",
+        "field_type": "enum",
+        "field_enum_options": "'NACONLY','WACONLY','BOTSIM'",
+        "field_default": null,
+        "field_key": true,
+        "data_source": [
+            "TAB:index",
+            "SHUTTER_MODE_ID"
+        ],
+        "definition": "Indicator of whether this exposure was part of a joint observation with the other ISS camera.",
+        "pi_category_name": "obs_instrument_coiss",
+        "pi_dict_context": "COISS",
+        "pi_dict_name": "SHUTTER_MODE_ID",
+        "pi_disp_order": 40,
+        "pi_display": 1,
+        "pi_display_results": 1,
+        "pi_form_type": "GROUP",
+        "pi_intro": null,
+        "pi_label": "Shutter Mode",
+        "pi_label_results": "Shutter Mode",
+        "pi_old_slug": "SHUTTERMODEID",
+        "pi_slug": "COISSshuttermode",
+        "pi_sub_heading": null,
+        "pi_tooltip": "",
+        "pi_units": "",
+        "comment": "Definition is from COISS label",
+        "mult_options": [
+              [   0, "NACONLY", "NACONLY",   10, "Y", null],
+              [   1, "WACONLY", "WACONLY",   20, "Y", null],
+              [   2,  "BOTSIM",  "BOTSIM",   30, "Y", null]
+          ]
+    },
+    {
+        "field_name": "shutter_state_id",
+        "field_type": "enum",
+        "field_enum_options": "'DISABLED','ENABLED'",
+        "field_default": null,
+        "field_key": true,
+        "data_source": [
+            "TAB:index",
+            "SHUTTER_STATE_ID"
+        ],
+        "definition": "Indicator of whether the shutter was enabled during the exposure.",
+        "pi_category_name": "obs_instrument_coiss",
+        "pi_dict_context": "COISS",
+        "pi_dict_name": "SHUTTER_STATE_ID",
+        "pi_disp_order": 50,
+        "pi_display": 1,
+        "pi_display_results": 1,
+        "pi_form_type": "GROUP",
+        "pi_intro": null,
+        "pi_label": "Shutter State",
+        "pi_label_results": "Shutter State",
+        "pi_old_slug": "SHUTTERSTATEID",
+        "pi_slug": "COISSshutterstate",
+        "pi_sub_heading": null,
+        "pi_tooltip": "",
+        "pi_units": "",
+        "comment": "Definition is from COISS label",
+        "mult_options": [
+              [   0, "DISABLED", "Disabled",  10, "Y", null],
+              [   1, "ENABLED",  "Enabled",   20, "Y", null]
+          ]
+    },
+    {
+        "field_name": "image_number",
+        "field_type": "int4",
+        "field_notnull": true,
+        "field_key": true,
+        "data_source": [
+            "TAB:index",
+            "IMAGE_NUMBER"
+        ],
+        "definition": "The seconds portion of the spacecraft clock at shutter close.",
+        "pi_category_name": "obs_instrument_coiss",
+        "pi_dict_context": "COISS",
+        "pi_dict_name": "IMAGE_NUMBER",
+        "pi_disp_order": 110,
+        "pi_display": 1,
+        "pi_display_results": 1,
+        "pi_form_type": "RANGE",
+        "pi_intro": null,
+        "pi_label": "Image Number",
+        "pi_label_results": "Image Number",
+        "pi_slug": "COISSimagenumber",
+        "pi_sub_heading": null,
+        "pi_tooltip": null,
+        "pi_units": null,
+        "comment": "Definition is from COISS label"
+    },
+    {
+        "field_name": "instrument_mode_id",
+        "field_type": "enum",
+        "field_enum_options": "'FULL','SUM2','SUM4'",
+        "field_notnull": true,
+        "data_source": [
+            "TAB:index",
+            "INSTRUMENT_MODE_ID"
+        ],
+        "definition": "The summation mode used for this image.",
+        "pi_category_name": "obs_instrument_coiss",
+        "pi_dict_context": "COISS",
+        "pi_dict_name": "INSTRUMENT_MODE_ID",
+        "pi_disp_order": 90,
+        "pi_display": 1,
+        "pi_display_results": 1,
+        "pi_form_type": "GROUP",
+        "pi_intro": null,
+        "pi_label": "Instrument Mode ID",
+        "pi_label_results": "Instrument Mode ID",
+        "pi_slug": "COISSinstrumentmode",
+        "pi_sub_heading": null,
+        "pi_tooltip": null,
+        "pi_units": null,
+        "comment": "Definition is from COISS label",
+        "mult_options": [
+              [   0, "FULL", "FULL",  10, "Y", null],
+              [   1, "SUM2", "SUM2",  20, "Y", null],
+              [   2, "SUM4", "SUM4",  30, "Y", null]
+          ]
+    },
+    {
+        "field_name": "target_desc",
+        "field_type": "char75",
+        "field_notnull": true,
+        "field_key": true,
+        "data_source": [
+            "TAB:index",
+            "TARGET_DESC"
+        ],
+        "definition": "The name of the intended target for which the exposure was calculated/selected in the given image. May include calibration type information. Limited to 75 characters. (Comes from the TARGET_DESC keyword in the IOI file.)",
+        "pi_category_name": "obs_instrument_coiss",
+        "pi_dict_context": "COISS",
+        "pi_dict_name": "TARGET_DESC",
+        "pi_disp_order": 120,
+        "pi_display": 1,
+        "pi_display_results": 1,
+        "pi_form_type": "STRING",
+        "pi_intro": null,
+        "pi_label": "Target Description",
+        "pi_label_results": "Target Description",
+        "pi_slug": "COISStargetdesc",
+        "pi_sub_heading": null,
+        "pi_tooltip": null,
+        "pi_units": null,
+        "comment": "Definition is from COISS label"
+    },
+    {
+        "field_name": "combined_filter",
+        "field_type": "char30",
+        "field_notnull": true,
+        "field_key": true,
+        "data_source": [
+            "FUNCTION",
+            "obs_instrument_COISS_combined_filter"
+        ],
+        "definition": "The normalized description of the filters used for the observation. Filter names are sorted in increasing wavelength with polarization filters on the right side.",
+        "pi_category_name": "obs_instrument_coiss",
+        "pi_dict_context": "COISS",
+        "pi_dict_name": "NORMALIZED_FILTER_NAME",
+        "pi_disp_order": 30,
+        "pi_display": 1,
+        "pi_display_results": 1,
+        "pi_form_type": "GROUP",
+        "pi_intro": null,
+        "pi_label": "Filter",
+        "pi_label_results": "Filter",
+        "pi_old_slug": "FILTER",
+        "pi_slug": "COISSfilter",
+        "pi_sub_heading": null,
+        "pi_tooltip": "",
+        "pi_units": "",
+        "comment": "XXX Definition needs to be reviewed"
+    },
+    {
+        "field_name": "camera",
+        "field_type": "enum",
+        "field_notnull": true,
+        "field_enum_options": "'W','N'",
+        "data_source": [
+            "FUNCTION",
+            "obs_instrument_COISS_camera"
+        ],
+        "definition": "The camera (NAC or WAC) used to take the observation.",
+        "pi_category_name": "obs_instrument_coiss",
+        "pi_dict_context": "COISS",
+        "pi_dict_name": "CAMERA",
+        "pi_disp_order": 20,
+        "pi_display": 1,
+        "pi_display_results": 1,
+        "pi_form_type": "GROUP",
+        "pi_intro": null,
+        "pi_label": "Camera",
+        "pi_label_results": "Camera",
+        "pi_old_slug": "camera",
+        "pi_slug": "COISScamera",
+        "pi_sub_heading": null,
+        "pi_tooltip": "",
+        "pi_units": "",
+        "comment": "XXX Definition needs to be reviewed",
+        "mult_options": [
+              [   0, "N", "Narrow Angle",   10, "Y", null],
+              [   1, "W",   "Wide Angle",   20, "Y", null]
+          ]
+    },
+    {
+        "put_mults_here": true
+    },
+    {
+        "field_name": "id",
+        "field_type": "uint4",
+        "field_key": "primary",
+        "field_notnull": true,
+        "data_source": [
+            "MAX_ID",
+            null
+        ]
+    },
+    {
+        "field_name": "timestamp",
+        "field_type": "timestamp"
+    }
+]

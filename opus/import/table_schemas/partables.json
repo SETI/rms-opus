@@ -1,0 +1,34 @@
+[
+    {
+        "field_name": "trigger_tab",
+        "field_type": "char200",
+        "field_default": null,
+        "field_key": true
+    },
+    {
+        "field_name": "trigger_col",
+        "field_type": "char200",
+        "field_default": null
+    },
+    {
+        "field_name": "trigger_val",
+        "field_type": "char60",
+        "field_default": null
+    },
+    {
+        "field_name": "partable",
+        "field_type": "char200",
+        "field_default": null
+    },
+    {
+        "field_name": "id",
+        "field_type": "uint4",
+        "field_autoincrement": true,
+        "field_key": "primary",
+        "field_notnull": true
+    },
+    {
+        "field_name": "timestamp",
+        "field_type": "timestamp"
+    }
+]

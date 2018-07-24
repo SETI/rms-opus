@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+
+{% include "dictionary/header.html" %}
+
+<body class="no-skin">
+  <container class="main-container" >
+    <header class="site-header">
+      <div class="banner">
+        <div class = "brandtext">
+          <a class="site-title" href="/">OPUS Dictionary of Terms</a>
+        </div>
+        <div class = "searchbox">
+          <form id = "searchbox" action="/search/" method="get">
+              <input type="text" name="q" placeholder="enter search term">
+              <input type="submit" value="Search">
+          </form>
+        </div>
+      </div>
+    </header>
+    <nav class="tableOfContents from-left">
+      <ul id="tableOfContents" >
+        {% for key in alphabetlist %}
+          <li><a id='{{key}}' class='alphabetlist'><h3}>{{key}}</h3></a></li>
+        {% endfor %}
+      </ul>
+    </nav>
+
+    <article class="content-wrapper">
+      <div class="overflow-container">
+        <div class="overflow-content">
+            {% load index %}
+            {% block content %}
+            <div id="dictionaryContainer" class='cd-main-content' data-url='/dictionary/list.html/'></div>
+            <div class="cd-panel from-right">
+            	<header class="cd-panel-header">
+            		<h1 id='searchTitle'></h1>
+            		<a href="#0" class="cd-panel-close">Close</a>
+            	</header>
+
+            	<div class="cd-panel-container">
+            		<div class="cd-panel-content">
+                  Loading... please wait.
+            		</div> <!-- cd-panel-content -->
+            	</div> <!-- cd-panel-container -->
+            </div> <!-- cd-panel -->
+            {% endblock %}
+          </div>
+        </div>
+    </article>
+{% include "dictionary/footer.html" %}
+</container>
+</body>
+</html>

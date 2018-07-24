@@ -1,0 +1,210 @@
+[
+    {
+        "field_name": "obs_general_id",
+        "field_type": "uint4",
+        "field_key": "foreign",
+        "field_key_foreign": [
+            "obs_general",
+            "id"
+        ],
+        "field_notnull": true,
+        "data_source": [
+            "TAB:obs_general",
+            "id"
+        ],
+        "comment": "This is the primary (surrogate) key linking the record to obs_general."
+    },
+    {
+        "field_name": "opus_id",
+        "field_type": "char80",
+        "field_key": "foreign",
+        "field_key_foreign": [
+            "obs_general",
+            "opus_id"
+        ],
+        "field_notnull": true,
+        "data_source": [
+            "TAB:obs_general",
+            "opus_id"
+        ],
+        "comment": "This is the secondary key linking the record to obs_general."
+    },
+    {
+        "field_name": "volume_id",
+        "field_type": "char11",
+        "field_key": true,
+        "field_notnull": true,
+        "data_source": [
+            "TAB:obs_general",
+            "volume_id"
+        ],
+        "comment": "The volume_id is included here for ease of database manipulation only."
+    },
+    {
+        "field_name": "instrument_id",
+        "field_type": "char9",
+        "field_key": true,
+        "field_notnull": true,
+        "data_source": [
+            "TAB:obs_general",
+            "instrument_id"
+        ],
+        "comment": "The instrument_id is included here for ease of database manipulation only."
+    },
+    {
+        "field_name": "spacecraft_clock_count1",
+        "field_type": "char19",
+        "field_default": null,
+        "field_key": true,
+        "data_source": [
+            "FUNCTION",
+            "obs_mission_new_horizons_spacecraft_clock_count1"
+        ],
+        "data_source_order": 10,
+        "definition": "Time at which the shutter was opened given in Mission Event Time (MET). MET is measure using a 32-bit counter on the New Horizons spacecraft that increments continuously from the beginning of the mission. It runs at a rate of about one increment per second starting from a value of zero at January 19, 2006 18:08:02 UTC, or JD2453755.256337. Preceded by the SPACECRAFT_CLOCK_COUNT_PARTITION, which is the clock partition active at the time",
+        "pi_category_name": "obs_mission_new_horizons",
+        "pi_dict_context": "NEW_HORIZONS",
+        "pi_dict_name": "SPACECRAFT_CLOCK_START_COUNT",
+        "pi_disp_order": 20,
+        "pi_display": 0,
+        "pi_display_results": 1,
+        "pi_form_type": null,
+        "pi_intro": null,
+        "pi_label": "Spacecraft Clock Start Count",
+        "pi_label_results": "Spacecraft Clock Start Count (Formatted)",
+        "pi_old_slug": "missionnewhorizonsspacecraftclockcount1",
+        "pi_slug": "NEWHORIZONSspacecraftclockcount1",
+        "pi_sub_heading": null,
+        "pi_tooltip": null,
+        "pi_units": null,
+        "comment": "Definition is from NHLORRI supplemental index label"
+    },
+    {
+        "field_name": "spacecraft_clock_count2",
+        "field_type": "char19",
+        "field_default": null,
+        "field_key": true,
+        "data_source": [
+            "FUNCTION",
+            "obs_mission_new_horizons_spacecraft_clock_count2"
+        ],
+        "data_source_order": 11,
+        "definition": "Time at which the shutter was closed given in Mission Event Time (MET). MET is measure using a 32-bit counter on the New Horizons spacecraft that increments continuously from the beginning of the mission. It runs at a rate of about one increment per second starting from a value of zero at January 19, 2006 18:08:02 UTC, or JD2453755.256337. Preceded by the SPACECRAFT_CLOCK_COUNT_PARTITION, which is the clock partition active at the time",
+        "pi_category_name": "obs_mission_new_horizons",
+        "pi_dict_context": "NEW_HORIZONS",
+        "pi_dict_name": "SPACECRAFT_CLOCK_STOP_COUNT",
+        "pi_disp_order": 21,
+        "pi_display": 0,
+        "pi_display_results": 1,
+        "pi_form_type": null,
+        "pi_intro": null,
+        "pi_label": "Spacecraft Clock Stop Count",
+        "pi_label_results": "Spacecraft Clock Stop Count (Formatted)",
+        "pi_old_slug": "missionnewhorizonsspacecraftclockcount2",
+        "pi_slug": "NEWHORIZONSspacecraftclockcount2",
+        "pi_sub_heading": null,
+        "pi_tooltip": null,
+        "pi_units": null,
+        "comment": "Definition is from NHLORRI supplemental index label"
+    },
+    {
+        "field_name": "spacecraft_clock_count_cvt1",
+        "field_type": "real8",
+        "field_default": null,
+        "field_key": true,
+        "data_source": [
+            "FUNCTION",
+            "obs_mission_new_horizons_spacecraft_clock_count_cvt1"
+        ],
+        "data_source_order": 20,
+        "definition": "Time at which the shutter was opened given in Mission Event Time (MET). MET is measure using a 32-bit counter on the New Horizons spacecraft that increments continuously from the beginning of the mission. It runs at a rate of about one increment per second starting from a value of zero at January 19, 2006 18:08:02 UTC, or JD2453755.256337. Preceded by the SPACECRAFT_CLOCK_COUNT_PARTITION, which is the clock partition active at the time",
+        "pi_category_name": "obs_mission_new_horizons",
+        "pi_dict_context": "NEW_HORIZONS",
+        "pi_dict_name": "SPACECRAFT_CLOCK_START_COUNT_CVT",
+        "pi_disp_order": 22,
+        "pi_display": 1,
+        "pi_display_results": 1,
+        "pi_form_type": "RANGE:range_newhorizons_sclk",
+        "pi_intro": null,
+        "pi_label": "Spacecraft Clock Start Count",
+        "pi_label_results": "Spacecraft Clock Start Count (Decimal)",
+        "pi_old_slug": "missionnewhorizonsspacecraftclockcount1",
+        "pi_slug": "NEWHORIZONSspacecraftclockcountdec1",
+        "pi_sub_heading": null,
+        "pi_tooltip": null,
+        "pi_units": null,
+        "comment": "Definition is from NHLORRI supplemental index label"
+    },
+    {
+        "field_name": "spacecraft_clock_count_cvt2",
+        "field_type": "real8",
+        "field_default": null,
+        "field_key": true,
+        "data_source": [
+            "FUNCTION",
+            "obs_mission_new_horizons_spacecraft_clock_count_cvt2"
+        ],
+        "data_source_order": 21,
+        "definition": "Time at which the shutter was closed given in Mission Event Time (MET). MET is measure using a 32-bit counter on the New Horizons spacecraft that increments continuously from the beginning of the mission. It runs at a rate of about one increment per second starting from a value of zero at January 19, 2006 18:08:02 UTC, or JD2453755.256337. Preceded by the SPACECRAFT_CLOCK_COUNT_PARTITION, which is the clock partition active at the time",
+        "pi_category_name": "obs_mission_new_horizons",
+        "pi_dict_context": "NEW_HORIZONS",
+        "pi_dict_name": "SPACECRAFT_CLOCK_STOP_COUNT_CVT",
+        "pi_disp_order": 23,
+        "pi_display": 1,
+        "pi_display_results": 1,
+        "pi_form_type": "RANGE:range_newhorizons_sclk",
+        "pi_intro": null,
+        "pi_label": "Spacecraft Clock Start Count",
+        "pi_label_results": "Spacecraft Clock Start Count (Decimal)",
+        "pi_old_slug": "missionnewhorizonsspacecraftclockcount2",
+        "pi_slug": "NEWHORIZONSspacecraftclockcountdec2",
+        "pi_sub_heading": null,
+        "pi_tooltip": null,
+        "pi_units": null,
+        "comment": "Definition is from NHLORRI supplemental index label"
+    },
+    {
+        "field_name": "mission_phase",
+        "field_type": "char22",
+        "field_default": null,
+        "field_key": true,
+        "data_source": [
+            "TAB:supp_index",
+            "MISSION_PHASE_NAME"
+        ],
+        "definition": "Mission phase name.",
+        "pi_category_name": "obs_mission_new_horizons",
+        "pi_dict_context": "NEW_HORIZONS",
+        "pi_dict_name": "MISSION_PHASE_NAME",
+        "pi_disp_order": 10,
+        "pi_display": 1,
+        "pi_display_results": 1,
+        "pi_form_type": "GROUP",
+        "pi_intro": null,
+        "pi_label": "Mission Phase",
+        "pi_label_results": "Mission Phase",
+        "pi_old_slug": "missionphase",
+        "pi_slug": "NEWHORIZONSmissionphase",
+        "pi_sub_heading": null,
+        "pi_tooltip": null,
+        "pi_units": null,
+        "comment": "Definition is from NHLORRI supplemental index label"
+    },
+    {
+        "put_mults_here": true
+    },
+    {
+        "field_name": "id",
+        "field_type": "uint4",
+        "field_key": "primary",
+        "field_notnull": true,
+        "data_source": [
+            "MAX_ID",
+            null
+        ]
+    },
+    {
+        "field_name": "timestamp",
+        "field_type": "timestamp"
+    }
+]

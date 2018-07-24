@@ -1,0 +1,787 @@
+PDS_VERSION_ID          = PDS3
+LABEL_REVISION_NOTE     = "2004-10-1, Initial; 2018-04-26, RMS Node update"
+RECORD_TYPE             = FIXED_LENGTH
+RECORD_BYTES            = 1089
+FILE_RECORDS            = 3089
+^INDEX_TABLE            = "COVIMS_0001_index.tab"
+VOLUME_ID               = COVIMS_0001
+DATA_SET_ID             = "CO-E/V/J/S-VIMS-2-QUBE-V1.0"
+PRODUCT_CREATION_TIME   = 2018-04-26T16:00:00
+SPACECRAFT_NAME         = "CASSINI ORBITER"
+INSTRUMENT_HOST_ID      = "CO"
+INSTRUMENT_NAME         = "VISUAL AND INFRARED MAPPING SPECTROMETER"
+INSTRUMENT_ID           = "VIMS"
+MINIMUM_WAVELENGTH      = 0.3
+MAXIMUM_WAVELENGTH      = 5.1
+
+/*For full definitions of index fields, please refer to Operator's Handbook.*/
+
+OBJECT                  = INDEX_TABLE
+  INTERCHANGE_FORMAT      = ASCII
+  ROWS                    = 3089
+  COLUMNS                 = 61
+  ROW_BYTES               = 1089
+  INDEX_TYPE              = SINGLE
+
+  DESCRIPTION             = "This version of the Cassini VIMS image index has
+been edited by the PDS Ring-Moon Systems Node for compliance with PDS3
+standards. Invalid rows have been edited so they obey the specified DATA_TYPE
+and can therefore be read more easily by software. For example, where a
+numeric column contained '*****', that value has been replaced by '-1.E32'
+and, in the label, a numeric value of -1.E32 has been identified as the
+NULL_CONSTANT or NOT_APPLICABLE_CONSTANT.
+
+In addition, PDS3 syntax errors have been corrected in this label.
+
+Note that NULL_CONSTANT identifies values that could be known but are not,
+whereas NOT_APPLICABLE_CONSTANT refers to values that are undefined. An
+example of the former would be a missing value of SC_SUN_POSITION_VECTOR; an
+example of the latter would be a value of LOWER_LEFT_LATITUDE in an image
+where the lower left corner does not intercept the target body."
+
+OBJECT                  = COLUMN
+  NAME                    = FILE_NAME
+  DATA_TYPE               = CHARACTER
+  START_BYTE              = 2
+  BYTES                   = 25
+  DESCRIPTION             = "Name of file in the directory"
+END_OBJECT              = COLUMN
+
+OBJECT                  = COLUMN
+  NAME                    = PATH_NAME
+  DATA_TYPE               = CHARACTER
+  START_BYTE              = 30
+  BYTES                   = 35
+  DESCRIPTION             = "POSIX-compliant full path to the PDS label
+    file."
+END_OBJECT              = COLUMN
+
+OBJECT                  = COLUMN
+  NAME                    = SEQ_ID
+  DATA_TYPE               = CHARACTER
+  START_BYTE              = 68
+  BYTES                   = 4
+  DESCRIPTION             = "Sequence id:
+    1st character is either C or S indicating Cruise or Tour, respectively.
+    2nd-4th characters indicate sequence number"
+END_OBJECT              = COLUMN
+
+OBJECT                  = COLUMN
+  NAME                    = START_TIME
+  DATA_TYPE               = TIME
+  START_BYTE              = 74
+  BYTES                   = 23
+  DESCRIPTION             = "Spacecraft Event Time (SCET) of the VIMS IR
+    shutter opening in the format YYYY-MM-DDThh:mm:ss.[fff], where
+    YYYY is the year, MM is the month, DD is the day,  hh is the
+    hour, mm is the minutes, and ss.[fff] are the seconds."
+END_OBJECT              = COLUMN
+
+OBJECT                  = COLUMN
+  NAME                    = STOP_TIME
+  DATA_TYPE               = TIME
+  START_BYTE              = 98
+  BYTES                   = 23
+  DESCRIPTION             = "Spacecraft Event Time (SCET) of the VIMS IR
+    shutter closing in the format YYYY-MM-DDThh:mm:ss.[fff], where
+    YYYY is the year, MM is the month, DD is the day,  hh is the
+    hour, mm is the minutes, and ss.[fff] are the seconds."
+END_OBJECT              = COLUMN
+
+OBJECT                  = COLUMN
+  NAME                    = SPACECRAFT_CLOCK_START_COUNT
+  DATA_TYPE               = CHARACTER
+  START_BYTE              = 123
+  BYTES                   = 20
+  DESCRIPTION             = "Spacecraft clock start count reading of the
+    VIMS IR shutter opening."
+END_OBJECT              = COLUMN
+
+OBJECT                  = COLUMN
+  NAME                    = SPACECRAFT_CLOCK_STOP_COUNT
+  DATA_TYPE               = CHARACTER
+  START_BYTE              = 146
+  BYTES                   = 20
+  DESCRIPTION             = "Spacecraft clock stop count reading of the
+    VIMS IR shutter closing."
+END_OBJECT              = COLUMN
+
+OBJECT                  = COLUMN
+  NAME                    = TARGET_NAME
+  DATA_TYPE               = CHARACTER
+  START_BYTE              = 169
+  BYTES                   = 30
+  DESCRIPTION             = "The target name identifies the primary
+    target of the observation."
+END_OBJECT              = COLUMN
+
+OBJECT                  = COLUMN
+  NAME                    = INSTRUMENT_MODE_ID
+  DATA_TYPE               = CHARACTER
+  START_BYTE              = 202
+  BYTES                   = 20
+  DESCRIPTION             = "The mode in which the instrument is
+    acquiring data, most commonly IMAGE but also LINE, POINT,
+    OCCULTATION, CAL_SOLAR, CAL_SPECTRAL, CAL_BACKGROUND, or
+    CAL_ELECTRIC."
+END_OBJECT              = COLUMN
+
+OBJECT                  = COLUMN
+  NAME                    = OBSERVATION_ID
+  DATA_TYPE               = CHARACTER
+  START_BYTE              = 225
+  BYTES                   = 30
+  DESCRIPTION             = "A string that consists of the
+    instrument, the orbit number, the target code, a description
+    of the observation, and instance number.  For example,
+    VIMS_000PH_PHOEBE031 is data of PHOEBE taken by VIMS during
+    orbit 000."
+END_OBJECT              = COLUMN
+
+OBJECT                  = COLUMN
+  NAME                    = SPECTRAL_EDITING
+  DATA_TYPE               = CHARACTER
+  START_BYTE              = 258
+  BYTES                   = 3
+  DESCRIPTION             = "Indicates whether this cube has been reduced
+  to a subset of the bands in the original cube.  If 'OFF', none of the
+  original bands of the cube were intentionally omitted. See
+  BAND_BIN_ORIGINAL_BAND to determine which bands are present."
+END_OBJECT              = COLUMN
+
+OBJECT                  = COLUMN
+  NAME                    = SPECTRAL_SUMMING
+  DATA_TYPE               = CHARACTER
+  START_BYTE              = 264
+  BYTES                   = 3
+  DESCRIPTION             = "Indicates whether this cube has had some
+  bands summed to reduce the SSR data volume.  See
+  BAND_BIN_ORIGINAL_BAND to determine which bands have been summed."
+END_OBJECT              = COLUMN
+
+OBJECT                  = COLUMN
+  NAME                    = STAR_TRACKING
+  DATA_TYPE               = CHARACTER
+  START_BYTE              = 270
+  BYTES                   = 3
+  DESCRIPTION             = "Normally, the VIMS field of view is changed
+  by altering the size (SWATH_WIDTH and SWATH_LENGTH) of the subset of
+  the array and by changing the position of that subset (X_OFFSET and
+  Z_OFFSET) within the array.  This is the default, when STAR_TRACKING
+  is OFF.  When STAR_TRACKING is ON, the tracking is accomplished by
+  causing the instrument to ignore the supplied X and Z offsets in the
+  instrument setup, and instead track the brightest pixel in the array
+  as it moves over time.  The brightest pixel is set in the instrument
+  by running a previous instrument setup (of a minimal size), which will
+  cause the X and Z position of the brightest pixel to be automatically
+  set inside the instrument.  This position is then used as the initial
+  brightest pixel, and it will be tracked over the life of this setup."
+END_OBJECT              = COLUMN
+
+OBJECT                  = COLUMN
+  NAME                    = SWATH_WIDTH
+  DATA_TYPE               = INTEGER
+  START_BYTE              = 275
+  BYTES                   = 2
+  DESCRIPTION             = "The number of pixels (in the X direction)
+  collected during an observation.  This will differ from
+  CORE_ITEMS (1) for Occultation Mode cubes.  The angular size of these
+  pixels is dependent upon the resolution mode selected."
+END_OBJECT              = COLUMN
+
+OBJECT                  = COLUMN
+  NAME                    = SWATH_LENGTH
+  DATA_TYPE               = INTEGER
+  START_BYTE              = 278
+  BYTES                   = 2
+  DESCRIPTION             = "The number of slices (in the Z direction)
+  collected during an observation.  This will differ from
+  CORE_ITEMS (3) for all packed cubes and Occultation Mode cubes.
+  The angular size of these lines is dependent upon the resolution
+  mode selected."
+END_OBJECT              = COLUMN
+
+OBJECT                  = COLUMN
+  NAME                    = IR_EXPOSURE
+  DATA_TYPE               = REAL
+  START_BYTE              = 281
+  BYTES                   = 10
+  DESCRIPTION             = "The IR exposure time for each pixel,
+    in milliseconds."
+END_OBJECT              = COLUMN
+
+OBJECT                  = COLUMN
+  NAME                    = IR_SAMPLING_MODE_ID
+  DATA_TYPE               = CHARACTER
+  START_BYTE              = 293
+  BYTES                   = 8
+  DESCRIPTION             = "The spatial resolution mode of the IR
+  channel.  Either NORMAL for 0.5 mrad x 0.5 mrad pixels, or UNDER
+  for NYQUIST sampling (0.5 x 0.5 mrad), or HI-RES for 0.25 x 0.50
+  mrad sampling."
+END_OBJECT              = COLUMN
+
+OBJECT                  = COLUMN
+  NAME                    = VIS_EXPOSURE
+  DATA_TYPE               = REAL
+  START_BYTE              = 303
+  BYTES                   = 10
+  DESCRIPTION             = "The VIS exposure time for each line,
+    in milliseconds."
+END_OBJECT              = COLUMN
+
+OBJECT                  = COLUMN
+  NAME                    = VIS_SAMPLING_MODE_ID
+  DATA_TYPE               = CHARACTER
+  START_BYTE              = 315
+  BYTES                   = 8
+  DESCRIPTION             = "The spatial resolution mode of the VIS
+  channel.  Either NORMAL for 0.5 mrad x 0.5 mrad pixels, or HI-RES
+  sampling (0.167 x 0.167 mrad), or N/A if the VIS channel is OFF."
+END_OBJECT              = COLUMN
+
+OBJECT                  = COLUMN
+  NAME                    = PRODUCT_ID
+  DATA_TYPE               = CHARACTER
+  START_BYTE              = 326
+  BYTES                   = 22
+  DESCRIPTION             = "A permanent, unique identifier assigned
+  to a data product by its producer.  The product id is the sclk
+  string that represents the spacecraft time at the moment that the
+  data was taken.  The SCLK string is a spacecraft timing partion
+  (usually 1) followed by a forward slash followed by the spacecraft
+  clock value (an integer representing the amount of time since the
+  spacecraft partition became active.  For example: 1/1356766628."
+END_OBJECT              = COLUMN
+
+OBJECT                  = COLUMN
+  NAME                    = VOLUME_ID
+  DATA_TYPE               = CHARACTER
+  START_BYTE              = 351
+  BYTES                   = 11
+  DESCRIPTION             = "Name of the volume id which the data cube
+    resides."
+END_OBJECT              = COLUMN
+
+OBJECT                  = COLUMN
+  NAME                    = CENTER_LATITUDE
+  DATA_TYPE               = ASCII_REAL
+  START_BYTE              = 364
+  BYTES                   = 11
+  FORMAT                  = "F11.6"
+  UNITS                   = "DEGREES"
+  NOT_APPLICABLE_CONSTANT = -1.E32
+  NULL_CONSTANT           =  1.E32
+  DESCRIPTION             = "Planetocentric latitude at aimpoint on target
+                            (or Ring_Aimpoint_Latitude if target is a ring)."
+END_OBJECT              = COLUMN
+
+OBJECT                  = COLUMN
+  NAME                    = CENTER_LONGITUDE
+  DATA_TYPE               = ASCII_REAL
+  START_BYTE              = 376
+  BYTES                   = 11
+  FORMAT                  = "F11.6"
+  UNITS                   = "DEGREES"
+  NOT_APPLICABLE_CONSTANT = -1.E32
+  NULL_CONSTANT           =  1.E32
+  DESCRIPTION             = "West longitude at aimpoint on target
+                            (or Ring_Aimpoint_Longitude if target is a ring)."
+END_OBJECT              = COLUMN
+
+OBJECT                  = COLUMN
+  NAME                    = CENTRAL_BODY_DISTANCE
+  DATA_TYPE               = ASCII_REAL
+  START_BYTE              = 388
+  BYTES                   = 14
+  FORMAT                  = E14
+  UNITS                   = "KM"
+  NOT_APPLICABLE_CONSTANT = -1.E32
+  NULL_CONSTANT           =  1.E32
+  DESCRIPTION             = "Distance from the spacecraft to the center of
+                             primary body."
+END_OBJECT              = COLUMN
+
+OBJECT                  = COLUMN
+  NAME                    = COORDINATE_SYSTEM_NAME
+  DATA_TYPE               = CHARACTER
+  START_BYTE              = 404
+  BYTES                   = 32
+  FORMAT                  = A32
+  DESCRIPTION             = "The full name of the coordinate system to which
+                            the state vectors are referenced."
+END_OBJECT              = COLUMN
+
+OBJECT                  = COLUMN
+  NAME                    = DECLINATION
+  DATA_TYPE               = ASCII_REAL
+  START_BYTE              = 438
+  BYTES                   = 11
+  FORMAT                  = "F11.6"
+  UNITS                   = "DEGREES"
+  NOT_APPLICABLE_CONSTANT = -1.E32
+  NULL_CONSTANT           =  1.E32
+  DESCRIPTION             = "Declination of camera optic axis."
+END_OBJECT              = COLUMN
+
+OBJECT                  = COLUMN
+  NAME                    = EMISSION_ANGLE
+  DATA_TYPE               = ASCII_REAL
+  START_BYTE              = 450
+  BYTES                   = 11
+  FORMAT                  = "F11.6"
+  UNITS                   = "DEGREES"
+  NOT_APPLICABLE_CONSTANT = -1.E32
+  NULL_CONSTANT           =  1.E32
+  DESCRIPTION             = "Emission angle at aimpoint on target."
+END_OBJECT              = COLUMN
+
+OBJECT                  = COLUMN
+  NAME                    = INCIDENCE_ANGLE
+  DATA_TYPE               = ASCII_REAL
+  START_BYTE              = 462
+  BYTES                   = 11
+  FORMAT                  = "F11.6"
+  UNITS                   = "DEGREES"
+  NOT_APPLICABLE_CONSTANT = -1.E32
+  NULL_CONSTANT           =  1.E32
+  DESCRIPTION             = "Incidence angle at aimpoint on target."
+END_OBJECT              = COLUMN
+
+OBJECT                  = COLUMN
+  NAME                    = LOWER_LEFT_LATITUDE
+  DATA_TYPE               = ASCII_REAL
+  START_BYTE              = 474
+  BYTES                   = 11
+  FORMAT                  = "F11.6"
+  UNITS                   = "DEGREES"
+  NOT_APPLICABLE_CONSTANT = -1.E32
+  NULL_CONSTANT           =  1.E32
+  DESCRIPTION             = "Planetocentric latitude of lower-left pixel."
+END_OBJECT              = COLUMN
+
+OBJECT                  = COLUMN
+  NAME                    = LOWER_LEFT_LONGITUDE
+  DATA_TYPE               = ASCII_REAL
+  START_BYTE              = 486
+  BYTES                   = 11
+  FORMAT                  = "F11.6"
+  UNITS                   = "DEGREES"
+  NOT_APPLICABLE_CONSTANT = -1.E32
+  NULL_CONSTANT           =  1.E32
+  DESCRIPTION             = "West longitude of lower-left pixel."
+END_OBJECT              = COLUMN
+
+OBJECT                  = COLUMN
+  NAME                    = LOWER_RIGHT_LATITUDE
+  DATA_TYPE               = ASCII_REAL
+  START_BYTE              = 498
+  BYTES                   = 11
+  FORMAT                  = "F11.6"
+  UNITS                   = "DEGREES"
+  NOT_APPLICABLE_CONSTANT = -1.E32
+  NULL_CONSTANT           =  1.E32
+  DESCRIPTION             = "Planetocentric latitude of lower-right pixel."
+END_OBJECT              = COLUMN
+
+OBJECT                  = COLUMN
+  NAME                    = LOWER_RIGHT_LONGITUDE
+  DATA_TYPE               = ASCII_REAL
+  START_BYTE              = 510
+  BYTES                   = 11
+  FORMAT                  = "F11.6"
+  UNITS                   = "DEGREES"
+  NOT_APPLICABLE_CONSTANT = -1.E32
+  NULL_CONSTANT           =  1.E32
+  DESCRIPTION             = "West longitude of lower-right pixel."
+END_OBJECT              = COLUMN
+
+OBJECT                  = COLUMN
+  NAME                    = MAXIMUM_RING_RADIUS
+  DATA_TYPE               = ASCII_REAL
+  START_BYTE              = 522
+  BYTES                   = 14
+  FORMAT                  = E14
+  UNITS                   = "KM"
+  NOT_APPLICABLE_CONSTANT = -1.E32
+  NULL_CONSTANT           =  1.E32
+  DESCRIPTION             = "Maximum ringplane radius in image."
+END_OBJECT              = COLUMN
+
+OBJECT                  = COLUMN
+  NAME                    = MINIMUM_RING_RADIUS
+  DATA_TYPE               = ASCII_REAL
+  START_BYTE              = 537
+  BYTES                   = 14
+  FORMAT                  = E14
+  UNITS                   = "KM"
+  NOT_APPLICABLE_CONSTANT = -1.E32
+  NULL_CONSTANT           =  1.E32
+  DESCRIPTION             = "Maximum ringplane radius in image."
+END_OBJECT              = COLUMN
+
+OBJECT                  = COLUMN
+  NAME                    = NORTH_AZIMUTH_CLOCK_ANGLE
+  DATA_TYPE               = ASCII_REAL
+  START_BYTE              = 552
+  BYTES                   = 11
+  FORMAT                  = "F11.6"
+  UNITS                   = "DEGREES"
+  NOT_APPLICABLE_CONSTANT = -1.E32
+  NULL_CONSTANT           =  1.E32
+  DESCRIPTION             = "Direction of the northward-pointing azimuth at
+                            at the aimpoint on the target body, measured
+                            clock-wise."
+END_OBJECT              = COLUMN
+
+OBJECT                  = COLUMN
+  NAME                    = PHASE_ANGLE
+  DATA_TYPE               = ASCII_REAL
+  START_BYTE              = 564
+  BYTES                   = 11
+  FORMAT                  = "F11.6"
+  UNITS                   = "DEGREES"
+  NOT_APPLICABLE_CONSTANT = -1.E32
+  NULL_CONSTANT           =  1.E32
+  DESCRIPTION             = "Phase angle at sub spacecraft point on target."
+END_OBJECT              = COLUMN
+
+OBJECT                  = COLUMN
+  NAME                    = PIXEL_SCALE
+  DATA_TYPE               = ASCII_REAL
+  START_BYTE              = 576
+  BYTES                   = 11
+  FORMAT                  = "F11.6"
+  UNITS                   = "KM/PIXEL"
+  NOT_APPLICABLE_CONSTANT = -1.E32
+  NULL_CONSTANT           =  1.E32
+  DESCRIPTION             = "Size of one pixel at sub spacecraft point on
+                            target body."
+END_OBJECT              = COLUMN
+
+OBJECT                  = COLUMN
+  NAME                    = PLANET_CENTER
+  DATA_TYPE               = ASCII_REAL
+  START_BYTE              = 588
+  BYTES                   = 23
+  ITEMS                   = 2
+  ITEM_BYTES              = 11
+  ITEM_OFFSET             = 12
+  NOT_APPLICABLE_CONSTANT = -1.E32
+  NULL_CONSTANT           =  1.E32
+  DESCRIPTION             = "2-valued array. First, Line of target body
+                            center. Second, Sample of target body center."
+END_OBJECT              = COLUMN
+
+OBJECT                  = COLUMN
+  NAME                    = RIGHT_ASCENSION
+  DATA_TYPE               = ASCII_REAL
+  START_BYTE              = 612
+  BYTES                   = 11
+  FORMAT                  = "F11.6"
+  UNITS                   = "DEGREES"
+  NOT_APPLICABLE_CONSTANT = -1.E32
+  NULL_CONSTANT           =  1.E32
+  DESCRIPTION             = "Right ascension of camera optic axis."
+END_OBJECT              = COLUMN
+
+OBJECT                  = COLUMN
+  NAME                    = RING_EMISSION_ANGLE
+  DATA_TYPE               = ASCII_REAL
+  START_BYTE              = 624
+  BYTES                   = 11
+  FORMAT                  = "F11.6"
+  UNITS                   = "DEGREES"
+  NOT_APPLICABLE_CONSTANT = -1.E32
+  NULL_CONSTANT           =  1.E32
+  DESCRIPTION             = "Emission angle relative to target ring northward-
+                            pointing normal at aimpoint."
+END_OBJECT              = COLUMN
+
+OBJECT                  = COLUMN
+  NAME                    = RING_INCIDENCE_ANGLE
+  DATA_TYPE               = ASCII_REAL
+  START_BYTE              = 636
+  BYTES                   = 11
+  FORMAT                  = "F11.6"
+  UNITS                   = "DEGREES"
+  NOT_APPLICABLE_CONSTANT = -1.E32
+  NULL_CONSTANT           =  1.E32
+  DESCRIPTION             = "Incidence angle relative to target ring
+                            northward-pointing normal at aimpoint."
+END_OBJECT              = COLUMN
+
+OBJECT                  = COLUMN
+  NAME                    = SC_PLANET_POSITION_VECTOR
+  DATA_TYPE               = ASCII_REAL
+  START_BYTE              = 648
+  BYTES                   = 44
+  ITEMS                   = 3
+  ITEM_BYTES              = 14
+  ITEM_OFFSET             = 15
+  UNITS                   = "KM"
+  NOT_APPLICABLE_CONSTANT = -1.E32
+  NULL_CONSTANT           =  1.E32
+  DESCRIPTION             = "3-valued array. X,Y,Z components of the position
+                            vector from spacecraft to primary planet center,
+                            corrected for light-travel time and stellar
+                            aberration."
+END_OBJECT              = COLUMN
+
+OBJECT                  = COLUMN
+  NAME                    = SC_PLANET_VELOCITY_VECTOR
+  DATA_TYPE               = ASCII_REAL
+  START_BYTE              = 693
+  BYTES                   = 44
+  ITEMS                   = 3
+  ITEM_BYTES              = 14
+  ITEM_OFFSET             = 15
+  UNITS                   = "KM/SECOND"
+  NOT_APPLICABLE_CONSTANT = -1.E32
+  NULL_CONSTANT           =  1.E32
+  DESCRIPTION             = "3-valued array. X,Y,Z components of the velocity
+                            vector of primary planet relative to spacecraft,
+                            corrected for light-travel time."
+END_OBJECT              = COLUMN
+
+OBJECT                  = COLUMN
+  NAME                    = SC_SUN_POSITION_VECTOR
+  DATA_TYPE               = ASCII_REAL
+  START_BYTE              = 738
+  BYTES                   = 44
+  ITEMS                   = 3
+  ITEM_BYTES              = 14
+  ITEM_OFFSET             = 15
+  UNITS                   = "KM"
+  NOT_APPLICABLE_CONSTANT = -1.E32
+  NULL_CONSTANT           =  1.E32
+  DESCRIPTION             = "3-valued array. X,Y,Z components of the position
+                            vector from spacecraft to sun center, corrected
+                            for light-travel time and stellar aberration."
+END_OBJECT              = COLUMN
+
+OBJECT                  = COLUMN
+  NAME                    = SC_SUN_VELOCITY_VECTOR
+  DATA_TYPE               = ASCII_REAL
+  START_BYTE              = 783
+  BYTES                   = 44
+  ITEMS                   = 3
+  ITEM_BYTES              = 14
+  ITEM_OFFSET             = 15
+  UNITS                   = "KM/SECOND"
+  NOT_APPLICABLE_CONSTANT = -1.E32
+  NULL_CONSTANT           =  1.E32
+  DESCRIPTION             = "3-valued array. X,Y,Z components of the velocity
+                            vector of sun relative to spacecraft, corrected
+                            for light-travel time."
+END_OBJECT              = COLUMN
+
+OBJECT                  = COLUMN
+  NAME                    = SC_TARGET_POSITION_VECTOR
+  DATA_TYPE               = ASCII_REAL
+  START_BYTE              = 828
+  BYTES                   = 44
+  ITEMS                   = 3
+  ITEM_BYTES              = 14
+  ITEM_OFFSET             = 15
+  UNITS                   = "KM"
+  NOT_APPLICABLE_CONSTANT = -1.E32
+  NULL_CONSTANT           =  1.E32
+  DESCRIPTION             = "3-valued array. X,Y,Z components of the position
+                            vector from spacecraft to target center, corrected
+                            for light-travel time and stellar aberration."
+END_OBJECT              = COLUMN
+
+OBJECT                  = COLUMN
+  NAME                    = SC_TARGET_VELOCITY_VECTOR
+  DATA_TYPE               = ASCII_REAL
+  START_BYTE              = 873
+  BYTES                   = 44
+  ITEMS                   = 3
+  ITEM_BYTES              = 14
+  ITEM_OFFSET             = 15
+  UNITS                   = "KM/SECOND"
+  NOT_APPLICABLE_CONSTANT = -1.E32
+  NULL_CONSTANT           =  1.E32
+  DESCRIPTION             = "3-valued array. X,Y,Z components of the velocity
+                            vector of the target relative to spacecraft,
+                            corrected for light-travel time."
+END_OBJECT              = COLUMN
+
+OBJECT                  = COLUMN
+  NAME                    = SUB_SOLAR_LATITUDE
+  DATA_TYPE               = ASCII_REAL
+  START_BYTE              = 918
+  BYTES                   = 11
+  FORMAT                  = "F11.6"
+  UNITS                   = "DEGREES"
+  NOT_APPLICABLE_CONSTANT = -1.E32
+  NULL_CONSTANT           =  1.E32
+  DESCRIPTION             = "Planetocentric latitude of sub solar point on
+                            target; Ring_Subsolar_Latitude if target is a
+                            ring."
+END_OBJECT              = COLUMN
+
+OBJECT                  = COLUMN
+  NAME                    = SUB_SOLAR_LONGITUDE
+  DATA_TYPE               = ASCII_REAL
+  START_BYTE              = 930
+  BYTES                   = 11
+  FORMAT                  = "F11.6"
+  UNITS                   = "DEGREES"
+  NOT_APPLICABLE_CONSTANT = -1.E32
+  NULL_CONSTANT           =  1.E32
+  DESCRIPTION             = "West longitude of sub solar point on target;
+                            Ring_Subsolar_Longitude if target is a ring."
+END_OBJECT              = COLUMN
+
+OBJECT                  = COLUMN
+  NAME                    = SUB_SPACECRAFT_LATITUDE
+  DATA_TYPE               = ASCII_REAL
+  START_BYTE              = 942
+  BYTES                   = 11
+  FORMAT                  = "F11.6"
+  UNITS                   = "DEGREES"
+  NOT_APPLICABLE_CONSTANT = -1.E32
+  NULL_CONSTANT           =  1.E32
+  DESCRIPTION             = "Planetocentric latitude of sub spacecraft point
+                            on target; Ring_Subspacecraft_Latitude if target
+                            is a ring."
+END_OBJECT              = COLUMN
+
+OBJECT                  = COLUMN
+  NAME                    = SUB_SPACECRAFT_LONGITUDE
+  DATA_TYPE               = ASCII_REAL
+  START_BYTE              = 954
+  BYTES                   = 11
+  FORMAT                  = "F11.6"
+  UNITS                   = "DEGREES"
+  NOT_APPLICABLE_CONSTANT = -1.E32
+  NULL_CONSTANT           =  1.E32
+  DESCRIPTION             = "West longitude of sub spacecraft point on target;
+                            Ring_Subsolar_Longitude if target is a ring."
+END_OBJECT              = COLUMN
+
+OBJECT                  = COLUMN
+  NAME                    = TARGET_DISTANCE
+  DATA_TYPE               = ASCII_REAL
+  START_BYTE              = 966
+  BYTES                   = 14
+  FORMAT                  = E14
+  UNITS                   = "KM"
+  NOT_APPLICABLE_CONSTANT = -1.E32
+  NULL_CONSTANT           =  1.E32
+  DESCRIPTION             = "Distance from the spacecraft to the center of
+                            the target."
+END_OBJECT              = COLUMN
+
+OBJECT                  = COLUMN
+  NAME                    = TARGET_EASTERNMOST_LONGITUDE
+  DATA_TYPE               = ASCII_REAL
+  START_BYTE              = 981
+  BYTES                   = 11
+  FORMAT                  = "F11.6"
+  UNITS                   = "DEGREES"
+  NOT_APPLICABLE_CONSTANT = -1.E32
+  NULL_CONSTANT           =  1.E32
+  DESCRIPTION             = "Easternmost longitude visible on target body."
+END_OBJECT              = COLUMN
+
+OBJECT                  = COLUMN
+  NAME                    = TARGET_NORTHERNMOST_LATITUDE
+  DATA_TYPE               = ASCII_REAL
+  START_BYTE              = 993
+  BYTES                   = 11
+  FORMAT                  = "F11.6"
+  UNITS                   = "DEGREES"
+  NOT_APPLICABLE_CONSTANT = -1.E32
+  NULL_CONSTANT           =  1.E32
+  DESCRIPTION             = "Northernmost latitude visible on target body."
+END_OBJECT              = COLUMN
+
+OBJECT                  = COLUMN
+  NAME                    = TARGET_SOUTHERNMOST_LATITUDE
+  DATA_TYPE               = ASCII_REAL
+  START_BYTE              = 1005
+  BYTES                   = 11
+  FORMAT                  = "F11.6"
+  UNITS                   = "DEGREES"
+  NOT_APPLICABLE_CONSTANT = -1.E32
+  NULL_CONSTANT           =  1.E32
+  DESCRIPTION             = "Southernmost latitude visible on target body."
+END_OBJECT              = COLUMN
+
+OBJECT                  = COLUMN
+  NAME                    = TARGET_WESTERNMOST_LONGITUDE
+  DATA_TYPE               = ASCII_REAL
+  START_BYTE              = 1017
+  BYTES                   = 11
+  FORMAT                  = "F11.6"
+  UNITS                   = "DEGREES"
+  NOT_APPLICABLE_CONSTANT = -1.E32
+  NULL_CONSTANT           =  1.E32
+  DESCRIPTION             = "Westernmost latitude visible on target body."
+END_OBJECT              = COLUMN
+
+OBJECT                  = COLUMN
+  NAME                    = TWIST_ANGLE
+  DATA_TYPE               = ASCII_REAL
+  START_BYTE              = 1029
+  BYTES                   = 11
+  FORMAT                  = "F11.6"
+  UNITS                   = "DEGREES"
+  NOT_APPLICABLE_CONSTANT = -1.E32
+  NULL_CONSTANT           =  1.E32
+  DESCRIPTION             = "Twist angle of optic axis."
+END_OBJECT              = COLUMN
+
+OBJECT                  = COLUMN
+  NAME                    = UPPER_LEFT_LATITUDE
+  DATA_TYPE               = ASCII_REAL
+  START_BYTE              = 1041
+  BYTES                   = 11
+  FORMAT                  = "F11.6"
+  UNITS                   = "DEGREES"
+  NOT_APPLICABLE_CONSTANT = -1.E32
+  NULL_CONSTANT           =  1.E32
+  DESCRIPTION             = "Planetocentric latitude of upper-left pixel."
+END_OBJECT              = COLUMN
+
+OBJECT                  = COLUMN
+  NAME                    = UPPER_LEFT_LONGITUDE
+  DATA_TYPE               = ASCII_REAL
+  START_BYTE              = 1053
+  BYTES                   = 11
+  FORMAT                  = "F11.6"
+  UNITS                   = "DEGREES"
+  NOT_APPLICABLE_CONSTANT = -1.E32
+  NULL_CONSTANT           =  1.E32
+  DESCRIPTION             = "West longitude of upper-left pixel."
+END_OBJECT              = COLUMN
+
+OBJECT                  = COLUMN
+  NAME                    = UPPER_RIGHT_LATITUDE
+  DATA_TYPE               = ASCII_REAL
+  START_BYTE              = 1065
+  BYTES                   = 11
+  FORMAT                  = "F11.6"
+  UNITS                   = "DEGREES"
+  NOT_APPLICABLE_CONSTANT = -1.E32
+  NULL_CONSTANT           =  1.E32
+  DESCRIPTION             = "Planetocentric latitude of upper-right pixel."
+END_OBJECT              = COLUMN
+
+OBJECT                  = COLUMN
+  NAME                    = UPPER_RIGHT_LONGITUDE
+  DATA_TYPE               = ASCII_REAL
+  START_BYTE              = 1077
+  BYTES                   = 11
+  FORMAT                  = "F11.6"
+  UNITS                   = "DEGREES"
+  NOT_APPLICABLE_CONSTANT = -1.E32
+  NULL_CONSTANT           =  1.E32
+  DESCRIPTION             = "West longitude of upper-right pixel."
+END_OBJECT              = COLUMN
+
+END_OBJECT              = INDEX_TABLE
+END

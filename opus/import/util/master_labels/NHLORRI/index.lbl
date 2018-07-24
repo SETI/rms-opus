@@ -1,0 +1,212 @@
+PDS_VERSION_ID        = PDS3
+
+RECORD_TYPE           = FIXED_LENGTH
+RECORD_BYTES          = 400
+FILE_RECORDS          = 1119
+
+^INDEX_TABLE          = "NHJULO_1001_index.tab"
+
+DATA_SET_ID           = "NH-J-LORRI-2-JUPITER-V3.0"
+VOLUME_ID             = NHJULO_1001
+PRODUCT_ID            = "NHJULO_1001_INDEX_TAB"
+INSTRUMENT_HOST_NAME  = "NEW HORIZONS"
+INSTRUMENT_ID         = "LORRI"
+TARGET_NAME           = "N/A"
+PRODUCT_CREATION_TIME = 2016-10-31T00:00:00
+START_TIME            = 2007-01-08T21:42:01.359
+STOP_TIME             = 2007-06-11T22:20:03.395
+
+OBJECT     = INDEX_TABLE
+  INTERCHANGE_FORMAT = ASCII
+  INDEX_TYPE         = "SINGLE"
+  ROWS               = 1119
+  ROW_BYTES          = 400
+  COLUMNS            = 16
+  DESCRIPTION        = "This index table provides an entry for each
+    data product on this volume."
+
+  OBJECT     = COLUMN
+    COLUMN_NUMBER = 1
+    NAME = VOLUME_ID
+    START_BYTE = 2
+    BYTES = 11
+    DATA_TYPE = CHARACTER
+    FORMAT = "A11"
+    DESCRIPTION = "This parameter identifies the archive volume."
+  END_OBJECT = COLUMN
+
+  OBJECT     = COLUMN
+    COLUMN_NUMBER = 2
+    NAME = PATH_NAME
+    START_BYTE = 16
+    BYTES = 21
+    DATA_TYPE = CHARACTER
+    FORMAT = "A21"
+    DESCRIPTION = "This parameter provides the directory path to the data
+product."
+  END_OBJECT = COLUMN
+
+  OBJECT     = COLUMN
+    COLUMN_NUMBER = 3
+    NAME = FILE_NAME
+    START_BYTE = 40
+    BYTES = 31
+    DATA_TYPE = CHARACTER
+    FORMAT = "A31"
+    DESCRIPTION = "This parameter provides the name of the label file for this
+data product."
+  END_OBJECT = COLUMN
+
+  OBJECT     = COLUMN
+    COLUMN_NUMBER = 4
+    NAME = DATA_SET_ID
+    START_BYTE = 74
+    BYTES = 43
+    DATA_TYPE = CHARACTER
+    FORMAT = "A43"
+    DESCRIPTION = "This parameter provides the PDS data set id."
+  END_OBJECT = COLUMN
+
+  OBJECT     = COLUMN
+    COLUMN_NUMBER = 5
+    NAME = PRODUCT_ID
+    START_BYTE = 120
+    BYTES = 27
+    DATA_TYPE = CHARACTER
+    FORMAT = "A27"
+    DESCRIPTION = "This parameter provides the PDS unique identifier assigned
+to the data product."
+  END_OBJECT = COLUMN
+
+  OBJECT     = COLUMN
+    COLUMN_NUMBER = 6
+    NAME = PRODUCT_CREATION_TIME
+    START_BYTE = 150
+    BYTES = 19
+    DATA_TYPE = CHARACTER
+    FORMAT = "A19"
+    DESCRIPTION = "This parameter provides the date the data label was
+created."
+  END_OBJECT = COLUMN
+
+  OBJECT     = COLUMN
+    COLUMN_NUMBER = 7
+    NAME = REDUCTION_LEVEL
+    START_BYTE = 172
+    BYTES = 10
+    DATA_TYPE = CHARACTER
+    FORMAT = "A10"
+    DESCRIPTION = "This parameter provides the level of data
+      reduction:
+
+        LEVEL1  = Uncleaned data in units of DN
+
+        LEVEL2  = Reduced data in engineering units
+                  appropriate for the instrument.
+      "
+  END_OBJECT = COLUMN
+
+  OBJECT     = COLUMN
+    COLUMN_NUMBER = 8
+    NAME = SPACECRAFT_CLOCK_START_COUNT
+    START_BYTE = 185
+    BYTES = 18
+    DATA_TYPE = CHARACTER
+    FORMAT = "A18"
+    DESCRIPTION = "This parameter provides the spacecraft clock value at the
+start of the observation, at the spacecraft for spacecraft data, or it is set
+to N/A for Deep Space Network Tracking and Navigation Files (DSN TNFs)."
+  END_OBJECT = COLUMN
+
+  OBJECT     = COLUMN
+    COLUMN_NUMBER = 9
+    NAME = SPACECRAFT_CLOCK_STOP_COUNT
+    START_BYTE = 206
+    BYTES = 18
+    DATA_TYPE = CHARACTER
+    FORMAT = "A18"
+    DESCRIPTION = "This parameter provides the spacecraft clock value at the
+end of the observation, at the spacecraft for spacecraft data, or it is set to
+N/A for Deep Space Network Tracking and Navigation Files (DSN TNFs)."
+  END_OBJECT = COLUMN
+
+  OBJECT     = COLUMN
+    COLUMN_NUMBER = 10
+    NAME = START_TIME
+    START_BYTE = 227
+    BYTES = 23
+    DATA_TYPE = CHARACTER
+    FORMAT = "A23"
+    DESCRIPTION = "This parameter provides the UTC value at the start of the
+observation at the spacecraft for spacecraft data, or on the earth for Deep
+Space Network Tracking and Navigation Files (DSN TNFs)."
+  END_OBJECT = COLUMN
+
+  OBJECT     = COLUMN
+    COLUMN_NUMBER = 11
+    NAME = STOP_TIME
+    START_BYTE = 253
+    BYTES = 23
+    DATA_TYPE = CHARACTER
+    FORMAT = "A23"
+    DESCRIPTION = "This parameter provides the UTC value at the end of the
+observation at the spacecraft for spacecraft data, or on the earth for Deep
+Space Network Tracking and Navigation Files (DSN TNFs)."
+  END_OBJECT = COLUMN
+
+  OBJECT     = COLUMN
+    COLUMN_NUMBER = 12
+    NAME = TARGET_NAME
+    START_BYTE = 279
+    BYTES = 21
+    DATA_TYPE = CHARACTER
+    FORMAT = "A21"
+    DESCRIPTION = "This parameter identifies target, defined as the active CB
+in the Guidance and Control System, at the time of the observation."
+  END_OBJECT = COLUMN
+
+  OBJECT     = COLUMN
+    COLUMN_NUMBER = 13
+    NAME = INSTRUMENT_HOST
+    START_BYTE = 303
+    BYTES = 12
+    DATA_TYPE = CHARACTER
+    FORMAT = "A12"
+    DESCRIPTION = "This parameter identifies the spacecraft."
+  END_OBJECT = COLUMN
+
+  OBJECT     = COLUMN
+    COLUMN_NUMBER = 14
+    NAME = INSTRUMENT_ID
+    START_BYTE = 318
+    BYTES = 6
+    DATA_TYPE = CHARACTER
+    FORMAT = "A6"
+    DESCRIPTION = "This parameter identifies the instrument."
+  END_OBJECT = COLUMN
+
+  OBJECT     = COLUMN
+    COLUMN_NUMBER = 15
+    NAME = INSTRUMENT_NAME
+    START_BYTE = 327
+    BYTES = 61
+    DATA_TYPE = CHARACTER
+    FORMAT = "A61"
+    DESCRIPTION = "This parameter identifies the instrument."
+  END_OBJECT = COLUMN
+
+  OBJECT     = COLUMN
+    COLUMN_NUMBER = 16
+    NAME = TELEMETRY_APPLICATION_ID
+    START_BYTE = 391
+    BYTES = 7
+    DATA_TYPE = CHARACTER
+    FORMAT = "A7"
+    DESCRIPTION = "This parameter identifies the application identifier (ApID)
+in the telemetry packets used to create the data product.  The ApID format
+uses here is 0xXXX, where XXX are hexadecimal digits"
+  END_OBJECT = COLUMN
+
+END_OBJECT = INDEX_TABLE
+
+END

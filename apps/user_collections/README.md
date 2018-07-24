@@ -1,1 +1,0 @@
-This app handles the creating and editing of user collections.

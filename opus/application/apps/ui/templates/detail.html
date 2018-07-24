@@ -1,0 +1,42 @@
+<div id="" class="col-md-6 pull-right">
+  <div>
+    <a class="shadowbox" href="{{ preview_full_url }}" rel="shadowbox" target="_blank">
+      <img id="detail__{{ img.opus_id }}" src="{{ preview_med_url }}">
+    </a>
+    <div>
+      <p>
+        {% if preview_guide_url %}
+          Read about <a href="{{ preview_guide_url }}" target="_blank">how to interpret {{ instrument_id }} preview images</a>
+        {% endif %}
+      </p>
+    </div>
+  </div>
+</div>
+
+<div class="col-md-6">
+  <div>
+    <h1 class="">Ring Observation Detail</h1>
+    <p><b>OPUS ID: </b>{{ opus_id }}</p>
+    <h2>PDS Products</h2>
+    <div class="">
+      {% for product_type, files in products.items %}
+        <ul class="list-inline">
+          {{ product_type }}:
+  	      {% for f in files %}
+  			     <li><a href="{{ f.link }}" target="_blank">{{ f.ext }}</a></li>
+	        {% endfor %}
+        </ul>
+      {% endfor %}
+    </div>
+  </div>
+
+  <h2>Metadata for Current Columns</h2>
+  <div id="cols_metadata" class="">
+      <span class="spinner">&nbsp;</span>
+  </div>
+  <div class="">
+    <h2>All Metadata for this Observation</h2>
+    <p>Grab all metadata <a href="/opus/api/metadata/{{ opus_id }}.json" target="_blank">as json</a></p>
+    <div id="all_metadata_{{ opus_id }}"></div>
+  </div>
+</div>

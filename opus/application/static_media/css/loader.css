@@ -1,0 +1,47 @@
+.loader-container {
+  position: absolute;
+  margin-left: auto;
+  margin-right: auto;
+
+  top: 40%;
+  left:45%;
+}
+
+.loader {
+  border: 30px solid #f3f3f3;
+  border-radius: 50%;
+  border-top: 5px dashed #0ac0fc;
+  border-right: 10px dotted  #0bafe5;
+  border-bottom: 15px double #1b98c1;
+  border-left: 20px solid #29a7d1;
+  border-width: 3px 6px 9px;
+  width: 50px;
+  height: 50px;
+  -webkit-animation: spin 2s linear infinite;
+  animation: spin 2s linear infinite;
+  vertical-align: middle;
+
+  align-items: center;
+  display: flex;
+  justify-content: center;
+}
+
+@-webkit-keyframes spin {
+  0% { -webkit-transform: rotate(0deg); }
+  100% { -webkit-transform: rotate(360deg); }
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+.load_text{
+	position: absolute;
+    margin-left: 5px;
+    font-size: 24px;
+    font-weight: bold;
+    text-shadow: 1px 1px #575b70;
+    display: inline;
+    vertical-align: super;
+
+}
