@@ -394,6 +394,8 @@ var o_browse = {
 
         var first_page = opus.prefs.page[prefix + view_var];
 
+        $('#' + prefix + 'page', namespace).removeClass("loading");
+
         if ($(window).scrollTop() === 0 || opus.browse_footer_clicks[prefix + view_var] === 0) {
             // there has been no scrolling, set it to first page
             $('#' + prefix + 'page', namespace).val(first_page);
@@ -1258,7 +1260,7 @@ var o_browse = {
     },
 
     // we watch the paging input fields to wait for pauses before we trigger page change. UX!
-    // this funciton starts that monitor based on what view is currently up
+    // this function starts that monitor based on what view is currently up
     // it also clears any old one.
     // so it records the current value of #page input and then checks again ms later
     // if they match, it triggers refresh, if not then the user is still typing so moves on
