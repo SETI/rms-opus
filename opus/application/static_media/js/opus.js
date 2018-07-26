@@ -330,6 +330,8 @@ var opus = {
         $('#search, #detail, #collection, #browse').hide();
         clearInterval(opus.scroll_watch_interval);
         clearInterval(opus.collection_q_intrvl);
+        // just in case, remove this... 
+        $(".loader-container").remove();
 
         switch(opus.prefs.view) {
 
