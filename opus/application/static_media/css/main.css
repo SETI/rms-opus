@@ -454,7 +454,7 @@ div.gallery {
 }
  .browse-container li input {
     height:1.6em;
-    width:3em;
+    width:4em;
     text-align: center;
  }
 @media (max-width: 700px) {
