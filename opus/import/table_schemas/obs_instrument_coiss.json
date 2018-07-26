@@ -290,7 +290,7 @@
         "pi_disp_order": 110,
         "pi_display": 1,
         "pi_display_results": 1,
-        "pi_form_type": "RANGE",
+        "pi_form_type": "RANGE%d",
         "pi_intro": null,
         "pi_label": "Image Number",
         "pi_label_results": "Image Number",

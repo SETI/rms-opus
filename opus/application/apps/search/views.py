@@ -18,12 +18,8 @@ from django.core.cache import cache
 import settings
 import opus_support
 
-"""
-from tools.app_utils import *
-from metadata.views import *
-"""
 from search.models import *
-from tools.app_utils import strip_numeric_suffix, sortDict
+from tools.app_utils import strip_numeric_suffix, sortDict, parse_form_type
 from paraminfo.models import ParamInfo
 import metadata.views
 
@@ -143,10 +139,8 @@ def constructQueryString(selections, extras):
             log.error('.. Extras: %s', str(extras))
             return False
 
-        form_type = param_info.form_type
-        form_type_ext = None
-        if form_type.find(':') != -1:
-            form_type, form_type_ext = form_type.split(':')
+        (form_type, form_type_func,
+         form_type_format) = parse_form_type(param_info.form_type)
 
         special_query = param_info.special_query
 
@@ -355,10 +349,8 @@ def urlToSearchParams(request_get):
             continue
 
         param_name = param_info.param_name()
-        form_type = param_info.form_type
-        form_type_ext = None
-        if form_type.find(':') != -1:
-            form_type, form_type_ext = form_type.split(':')
+        (form_type, form_type_func,
+         form_type_format) = parse_form_type(param_info.form_type)
 
         param_name_no_num = strip_numeric_suffix(param_name)
 
@@ -375,14 +367,14 @@ def urlToSearchParams(request_get):
             # corresponds to qtype ordering
             if searchparam[1]:  # if it has a value
                 if form_type == "RANGE":
-                    if form_type_ext is None:
+                    if form_type_func is None:
                         func = float
                     else:
-                        if form_type_ext in opus_support.RANGE_FUNCTIONS:
-                            func = opus_support.RANGE_FUNCTIONS[form_type_ext][1]
+                        if form_type_func in opus_support.RANGE_FUNCTIONS:
+                            func = opus_support.RANGE_FUNCTIONS[form_type_func][1]
                         else:
                             log.error('Unknown RANGE function "%s"',
-                                      form_type_ext)
+                                      form_type_func)
                             func = float
                     if param_name == param_name_no_num:
                         # this is a single column range query
@@ -526,10 +518,8 @@ def range_query_object(selections, param_name, qtypes):
     if not param_info:
         return False
 
-    form_type     = param_info.form_type
-    form_type_ext = None
-    if form_type.find(':') != -1:
-        form_type, form_type_ext = form_type.split(':')
+    (form_type, form_type_func,
+     form_type_format) = parse_form_type(param_info.form_type)
     table_name = param_info.category_name
 
     # we will define both sides of the query, so define those param names

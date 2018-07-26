@@ -86,9 +86,8 @@ class SearchForm(forms.Form):
             except ParamInfo.DoesNotExist:
                 continue    # this is not a query param, probably a qtype, move along
 
-            form_type_ext = None
-            if form_type.find(':') != -1:
-                form_type, form_type_ext = form_type.split(':')
+            (form_type, form_type_func,
+             form_type_format) = parse_form_type(param_info.form_type)
 
             if form_type == 'STRING':
                 choices =  (('contains','contains'),('begins','begins'),('ends','ends'),('matches','matches'),('excludes','excludes'))

@@ -305,10 +305,8 @@ def api_get_widget(request, **kwargs):
         exit_api_call(api_code, None)
         raise Http404
 
-    form_type = param_info.form_type
-    form_type_ext = None
-    if form_type.find(':') != -1:
-        form_type, form_type_ext = form_type.split(':')
+    (form_type, form_type_func,
+     form_type_format) = parse_form_type(param_info.form_type)
     param_name = param_info.param_name()
 
     dictionary = param_info.get_tooltip()
@@ -364,14 +362,14 @@ def api_get_widget(request, **kwargs):
                 form = '<span>'+add_str+'</span><ul>' + form + '</ul>'  # add input link comes before form
 
         else: # param is constrained
-            if form_type_ext is None:
+            if form_type_func is None:
                 func = float
             else:
-                if form_type_ext in opus_support.RANGE_FUNCTIONS:
-                    func = opus_support.RANGE_FUNCTIONS[form_type_ext][0]
+                if form_type_func in opus_support.RANGE_FUNCTIONS:
+                    func = opus_support.RANGE_FUNCTIONS[form_type_func][0]
                 else:
                     log.error('Unknown RANGE function "%s"',
-                              form_type_ext)
+                              form_type_func)
                     func = float
             key=0
             while key<length:
