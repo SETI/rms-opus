@@ -81,7 +81,7 @@ var o_collections = {
 
          // empty collection button
          $('#collection').on("click", '#empty_collection', function() {
-             if (confirm("are you sure you want to delete all observations in your collection?")) {
+             if (confirm("Are you sure you want to delete all observations in your collection?")) {
                  o_collections.emptyCollection();
                }
              return false;
