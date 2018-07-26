@@ -100,7 +100,7 @@ def init_detail_page(request, **kwargs):
 
     preview_guide_url = ''
     if instrument_id in settings.PREVIEW_GUIDES:
-        instrument_id = settings.PREVIEW_GUIDES[instrument_id]
+        preview_guide_url = settings.PREVIEW_GUIDES[instrument_id]
 
     products = file_utils.get_pds_products(opus_id, fmt='raw')[opus_id]
     if not products:
