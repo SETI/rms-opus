@@ -394,8 +394,6 @@ var o_browse = {
 
         var first_page = opus.prefs.page[prefix + view_var];
 
-        $('#' + prefix + 'page', namespace).removeClass("loading");
-
         if ($(window).scrollTop() === 0 || opus.browse_footer_clicks[prefix + view_var] === 0) {
             // there has been no scrolling, set it to first page
             $('#' + prefix + 'page', namespace).val(first_page);
@@ -844,8 +842,6 @@ var o_browse = {
             return;
         }
 
-        $("#main-container").append('<div class ="loader-container"><div class="loader"></div><p class="load_text">Loading...</p></div>');
-
         // only draw the navbar if we are in gallery mode... doesn't make sense in collection mode
         if (namespace == "#browse") {
           // get the browse nav header?
@@ -853,9 +849,12 @@ var o_browse = {
             // change the link text
             if (opus.prefs.browse == 'gallery') {
                 $('.browse_view', namespace).text('view table');
+                $('body').css('overflow', 'hidden');
             } else {
                 $('.browse_view', namespace).text('view gallery');
+                $('body').css('overflow', 'auto');
             }
+            $('#' + prefix + 'page', namespace).val(o_browse.getCurrentPage());
             // total pages indicator
             $('#' + prefix + 'pages', namespace).html(opus[prefix + 'pages']);
             window.scroll(0,0);  // sometimes you have scrolled down the search tab
@@ -926,6 +925,7 @@ var o_browse = {
             opus.scroll_watch_interval = setInterval(o_browse.browseScrollWatch, 1000);
             return; // chill chill chill
         }
+        $("#main-container").append('<div class ="loader-container"><div class="loader"></div><p class="load_text">Loading...</p></div>');
 
         if (view_var == 'gallery') {
             opus.pages_drawn[prefix + 'gallery'].push(page);
