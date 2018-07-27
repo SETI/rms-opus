@@ -11,13 +11,12 @@ html > body.no-skin > div#main-container.main-container > div.main-container-inn
       /* Margin bottom by footer height */
 }
 body {
-  background-color:#303030;
+    background-color:#303030;
     font-family: Verdana, Arial, Helvetica, sans-serif;
-
 }
 #cboxContent, #cboxContent, #cboxLoadedContent, img.cboxPhoto, #cboxLoadedGaphic, #cboxLoadingGraphic  {
-  background-color:#303030 !important;
-  background:#303030 !important;
+    background-color:#303030 !important;
+    background:#303030 !important;
 }
 
 
@@ -437,9 +436,15 @@ ul.ace-thumbnails {
 div.gallery {
     margin:0; padding:0;
     position: relative;
-    overflow-x:hidden;
+    overflow-x: scroll;
     margin-right:-80px;
+    flex: 1 1 auto;
+    overflow-y: scroll;
+    height: 70vh;
+    min-height: 0px; /* IMPORTANT: you need this for non-chrome browsers */
 }
+
+
 .navbar-nav li.active:hover {
     background: white !important;
 }
@@ -458,7 +463,7 @@ div.gallery {
 }
  .browse-container li input {
     height:1.6em;
-    width:3em;
+    width:4em;
     text-align: center;
  }
 @media (max-width: 700px) {
@@ -668,6 +673,9 @@ div.gallery {
 }
 .footer a {
     white-space: nowrap;
+}
+.footer {
+  margin-top: -50px;
 }
 /* about page */
 .about ul {

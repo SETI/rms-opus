@@ -849,9 +849,12 @@ var o_browse = {
             // change the link text
             if (opus.prefs.browse == 'gallery') {
                 $('.browse_view', namespace).text('view table');
+                $('body').css('overflow', 'hidden');
             } else {
                 $('.browse_view', namespace).text('view gallery');
+                $('body').css('overflow', 'auto');
             }
+            $('#' + prefix + 'page', namespace).val(o_browse.getCurrentPage());
             // total pages indicator
             $('#' + prefix + 'pages', namespace).html(opus[prefix + 'pages']);
             window.scroll(0,0);  // sometimes you have scrolled down the search tab
@@ -922,6 +925,7 @@ var o_browse = {
             opus.scroll_watch_interval = setInterval(o_browse.browseScrollWatch, 1000);
             return; // chill chill chill
         }
+        $("#main-container").append('<div class ="loader-container"><div class="loader"></div><p class="load_text">Loading...</p></div>');
 
         if (view_var == 'gallery') {
             opus.pages_drawn[prefix + 'gallery'].push(page);
@@ -951,6 +955,8 @@ var o_browse = {
                         opus.gallery_begun = true;
                         $(html).appendTo($('.gallery ul.ace-thumbnails', namespace)).fadeIn();
                     }
+
+                    $(".loader-container").remove();
 
                     // fade out the spinner
                     $('.infinite_scroll_spinner', namespace).fadeOut("fast");
@@ -1051,7 +1057,7 @@ var o_browse = {
 
         // setup colorbox
         var $overflow = '';
-        var colorbox_params = {
+        $('.ace-thumbnails [data-rel="colorbox"]').colorbox({
             rel: 'colorbox',
             className:"gallery_overlay_bg",
             top:'17px',
@@ -1074,6 +1080,7 @@ var o_browse = {
             },
             onLoad:function() {
 
+              var element = $.colorbox.element();
                 opus_id = $.colorbox.element().parent().attr("id").split('__')[1];
                 // get pixel loc of right border of colorbox
 
@@ -1116,10 +1123,7 @@ var o_browse = {
             onComplete:function(){
                 o_browse.adjust_gallery_data_viewer();
             }
-        };
-
-        $('.ace-thumbnails [data-rel="colorbox"]').colorbox(colorbox_params);
-
+        });
     },
 
     colorbox_left_margin: function() {
@@ -1231,7 +1235,7 @@ var o_browse = {
 
     updateColorboxDataViewer: function(opus_id) {
 
-        var html = o_browse.metadataboxHtml(opus_id);
+        o_browse.metadataboxHtml(opus_id);
 
         // add data viewer behaviors
         $('.gallery_data_viewer').on("click", '.gallery_data_link', function() {
@@ -1256,7 +1260,7 @@ var o_browse = {
     },
 
     // we watch the paging input fields to wait for pauses before we trigger page change. UX!
-    // this funciton starts that monitor based on what view is currently up
+    // this function starts that monitor based on what view is currently up
     // it also clears any old one.
     // so it records the current value of #page input and then checks again ms later
     // if they match, it triggers refresh, if not then the user is still typing so moves on
