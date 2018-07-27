@@ -121,7 +121,7 @@ def populate_obs_general_time_sec1(**kwargs):
 def populate_obs_general_time_sec2(**kwargs):
     metadata = kwargs['metadata']
     general_row = metadata['obs_general_row']
-    time2 = general_row['time1']
+    time2 = general_row['time2']
 
     if time2 is None:
         return None

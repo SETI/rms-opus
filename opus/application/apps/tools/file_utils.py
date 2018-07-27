@@ -24,6 +24,16 @@ def _iter_flatten(iterable):
     else:
       yield e
 
+def _pdsfile_iter_flatten(iterable):
+    "Flatten list and remove duplicate PdsFile objects"
+    pdsfiles = _iter_flatten(iterable)
+    abspaths = []
+    ret = []
+    for pdsfile in pdsfiles:
+        if pdsfile.abspath not in abspaths:
+            abspaths.append(pdsfile.abspath)
+            ret.append(pdsfile)
+    return ret
 
 def get_pds_products_by_type(opus_id_list, product_types=['all']):
     """Return product types and their associated PdsFile objects for opus_ids.
@@ -49,7 +59,7 @@ def get_pds_products_by_type(opus_id_list, product_types=['all']):
         # Keep a running list of all products by type
         for (product_type, list_of_sublists) in products.items():
             if product_types == ['all'] or product_type in product_types:
-                flat_list = _iter_flatten(list_of_sublists)
+                flat_list = _pdsfile_iter_flatten(list_of_sublists)
                 products_by_type.setdefault(product_type, []).extend(flat_list)
 
     ret = OrderedDict()
@@ -120,7 +130,7 @@ def get_pds_products(opus_id_list=None, fmt='raw', loc_type='url',
             list_of_sublists = products[product_type]
             if product_types != ['all'] and product_type not in product_types:
                 continue
-            flat_list = _iter_flatten(list_of_sublists)
+            flat_list = _pdsfile_iter_flatten(list_of_sublists)
             res_list = []
             for file in flat_list:
                 if loc_type == 'path':

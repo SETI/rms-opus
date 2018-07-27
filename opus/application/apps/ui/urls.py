@@ -14,7 +14,7 @@ from ui.views import (
     get_menu,
     api_get_widget,
     get_column_chooser,
-    init_detail_page
+    api_init_detail_page
 )
 
 urlpatterns = [
@@ -25,8 +25,7 @@ urlpatterns = [
     url(r'^menu.html$', get_menu),
     url(r'^forms/widget/(?P<slug>[-\w]+).(?P<fmt>[json|zip|html|csv]+)$', api_get_widget),
     url(r'^forms/column_chooser.html$', get_column_chooser),
-    url(r'^initdetail/(?P<opus_id>[-\w]+).(?P<fmt>[json|zip|html]+)$',
-        init_detail_page),
+    url(r'^initdetail/(?P<opus_id>[-\w]+).html$', api_init_detail_page),
     url(r'^favicon.ico$',
         RedirectView.as_view(
             url=staticfiles_storage.url('favicon.ico'),

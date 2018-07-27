@@ -202,6 +202,28 @@ def exit_api_call(api_code, ret):
         s = 'API ' + str(api_code) + ' EXIT'
         if api_code in _API_START_TIMES:
             s += ' ' + str(end_time-_API_START_TIMES[api_code]) + ' secs'
+        ret_str = str(ret)
+        ret_str = ' '.join(ret_str.split()) # Compress whitespace
+        s += ': ' + ret_str[:80]
         log.debug(s)
     if api_code in _API_START_TIMES:
         del _API_START_TIMES[api_code]
+
+
+def parse_form_type(s):
+    """Parse the ParamInfo FORM_TYPE with its subfields.
+
+    Subfields are:
+        TYPE:function
+        TYPE%format
+    """
+    form_type = s
+    form_type_func = None
+    form_type_format = None
+
+    if s.find(':') != -1:
+        form_type, form_type_func = s.split(':')
+    elif s.find('%') != -1:
+        form_type, form_type_format = s.split('%')
+
+    return form_type, form_type_func, form_type_format

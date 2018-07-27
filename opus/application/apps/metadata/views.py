@@ -256,10 +256,8 @@ def api_get_range_endpoints(request, slug, fmt='json'):
 
     param_name = param_info.name # Just name
     full_param_name = param_info.param_name() # category.name
-    form_type = param_info.form_type
-    form_type_ext = None
-    if form_type.find(':') != -1:
-        form_type, form_type_ext = form_type.split(':')
+    (form_type, form_type_func,
+     form_type_format) = parse_form_type(param_info.form_type)
     table_name = param_info.category_name
     table_model = apps.get_model('search', table_name.title().replace('_',''))
 
@@ -334,30 +332,42 @@ def api_get_range_endpoints(request, slug, fmt='json'):
         where = param1+' is null and '+param2+' is null '
         range_endpoints['nulls'] = results.all().extra(where=[where]).count()
 
-    if form_type_ext is not None:
+    if form_type_func is not None:
         # We need to run some arbitrary function to convert from float to
         # some kind of string. This happens for spacecraft clock count
         # and time fields, among others.
-        if form_type_ext in opus_support.RANGE_FUNCTIONS:
-            func = opus_support.RANGE_FUNCTIONS[form_type_ext][0]
+        if form_type_func in opus_support.RANGE_FUNCTIONS:
+            func = opus_support.RANGE_FUNCTIONS[form_type_func][0]
             if range_endpoints['min'] is not None:
                 range_endpoints['min'] = func(range_endpoints['min'])
             if range_endpoints['max'] is not None:
                 range_endpoints['max'] = func(range_endpoints['max'])
         else:
-            log.error('Unknown RANGE function "%s"', form_type_ext)
+            log.error('Unknown RANGE function "%s"', form_type_func)
 
-    try:
-        if abs(range_endpoints['min']) > 999000:
-            range_endpoints['min'] = format(1.0*range_endpoints['min'],'.3');
-    except TypeError:
-        pass
+    if form_type_format:
+        try:
+            range_endpoints['min'] = format(range_endpoints['min'],
+                                            form_type_format)
+        except TypeError:
+            pass
+        try:
+            range_endpoints['max'] = format(range_endpoints['max'],
+                                            form_type_format)
+        except TypeError:
+            pass
+    else:
+        try:
+            if abs(range_endpoints['min']) > 999000:
+                range_endpoints['min'] = format(1.0*range_endpoints['min'],'.3')
+        except TypeError:
+            pass
 
-    try:
-        if abs(range_endpoints['max']) > 999000:
-            range_endpoints['max'] = format(1.0*range_endpoints['max'],'.3');
-    except TypeError:
-        pass
+        try:
+            if abs(range_endpoints['max']) > 999000:
+                range_endpoints['max'] = format(1.0*range_endpoints['max'],'.3')
+        except TypeError:
+            pass
 
     # save this in cache
     cache.set(cache_key,range_endpoints)

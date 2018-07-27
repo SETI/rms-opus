@@ -165,6 +165,10 @@ body {
     display:none;
 }
 
+#product_types {
+  display: inline-grid;
+}
+
 .column_chooser .all_columns i.fa-check {
     display:none;
 }

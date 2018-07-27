@@ -12,7 +12,8 @@ from django.template import RequestContext
 from django.shortcuts import render
 from django.apps import apps
 from django.http import HttpResponse
-from django.core.exceptions import FieldError
+from django.core.exceptions import FieldError, ObjectDoesNotExist
+
 
 # lib things
 from annoying.decorators import render_to
@@ -63,10 +64,13 @@ def home(request):
     return render(request, "index.html")
 
 
-def init_detail_page(request, **kwargs):
+def api_init_detail_page(request, **kwargs):
     """Render the top part of the Details tab.
 
-    This loads the initial parts of the detail page. These are the things that
+    Format: initdetail/(?P<opus_id>[-\w]+).html
+    Arguments: Normal selected-column arguments
+
+    This returns the initial parts of the detail page. These are the things that
     are fast to compute while other parts of the page are handled with AJAX
     calls because they are slower.
 
@@ -74,13 +78,24 @@ def init_detail_page(request, **kwargs):
         results.get_metadata()
     """
     update_metrics(request)
+    api_code = enter_api_call('api_get_data', request)
 
     slugs = request.GET.get('cols', False)
     if slugs:
         slugs = slugs.replace('ringobsid', 'opusid')
+
     opus_id = kwargs['opus_id']
 
+    try:
+        obs_general = ObsGeneral.objects.get(opus_id=opus_id)
+    except ObjectDoesNotExist:
+        # This OPUS ID isn't even in the database!
+        exit_api_call(api_code, None)
+        raise Http404
+    instrument_id = obs_general.instrument_id
+
     # The medium image is what's displayed on the Detail page
+    # XXX This should be replaced with a viewset query and pixel size
     preview_med_list = get_pds_preview_images(opus_id, 'med')
     if len(preview_med_list) != 1:
         log.error('Failed to find single med size image for "%s"', opus_id)
@@ -96,19 +111,21 @@ def init_detail_page(request, **kwargs):
     else:
         preview_full_url = preview_full_list[0]['full_url']
 
-    instrument_id = ObsGeneral.objects.filter(opus_id=opus_id).values('instrument_id')[0]['instrument_id']
-
+    # Get the preview explanation link for UVIS, VIMS, etc.
     preview_guide_url = ''
     if instrument_id in settings.PREVIEW_GUIDES:
-        instrument_id = settings.PREVIEW_GUIDES[instrument_id]
+        preview_guide_url = settings.PREVIEW_GUIDES[instrument_id]
 
+    # On the details page, we display the list of available extensions after
+    # each product type
     products = file_utils.get_pds_products(opus_id, fmt='raw')[opus_id]
     if not products:
         products = {}
     for product_type, file_list in products.items():
         for i in range(len(file_list)):
             ext = file_list[i].split('.')[-1]
-            file_list[i] = {'ext': ext,'link': file_list[i]}
+            file_list[i] = {'ext': ext,
+                            'link': file_list[i]}
 
     context = {
         "preview_full_url": preview_full_url,
@@ -117,7 +134,9 @@ def init_detail_page(request, **kwargs):
         "products": products,
         "opus_id": opus_id
     }
-    return render(request, 'detail.html', context)
+    ret = render(request, 'detail.html', context)
+    exit_api_call(api_code, ret)
+    return ret
 
 
 def get_browse_headers(request,template='browse_headers.html'):
@@ -286,10 +305,8 @@ def api_get_widget(request, **kwargs):
         exit_api_call(api_code, None)
         raise Http404
 
-    form_type = param_info.form_type
-    form_type_ext = None
-    if form_type.find(':') != -1:
-        form_type, form_type_ext = form_type.split(':')
+    (form_type, form_type_func,
+     form_type_format) = parse_form_type(param_info.form_type)
     param_name = param_info.param_name()
 
     dictionary = param_info.get_tooltip()
@@ -345,14 +362,14 @@ def api_get_widget(request, **kwargs):
                 form = '<span>'+add_str+'</span><ul>' + form + '</ul>'  # add input link comes before form
 
         else: # param is constrained
-            if form_type_ext is None:
+            if form_type_func is None:
                 func = float
             else:
-                if form_type_ext in opus_support.RANGE_FUNCTIONS:
-                    func = opus_support.RANGE_FUNCTIONS[form_type_ext][0]
+                if form_type_func in opus_support.RANGE_FUNCTIONS:
+                    func = opus_support.RANGE_FUNCTIONS[form_type_func][0]
                 else:
                     log.error('Unknown RANGE function "%s"',
-                              form_type_ext)
+                              form_type_func)
                     func = float
             key=0
             while key<length:
