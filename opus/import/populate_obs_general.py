@@ -130,8 +130,8 @@ def populate_obs_general_time_sec2(**kwargs):
 
     if time_sec2 < general_row['time_sec1']:
         time1 = general_row['time1']
-        impglobals.log_error(f'time1 ({time1}) and time2 ({time2}) are '+
-                             f'in the wrong order')
+        import_util.log_error(f'time1 ({time1}) and time2 ({time2}) are '+
+                              f'in the wrong order')
         impglobals.IMPORT_HAS_BAD_DATA = True
 
     return time_sec2
