@@ -346,6 +346,20 @@ var o_browse = {
                 return false;
         });
 
+        // add the 'get detail' behavior
+        $('.embedded_data_viewer').on("click", '.gallery_data_link', function(e) {
+            if (e.shiftKey || e.ctrlKey || e.metaKey) {
+                // handles command click to open in new tab
+                var link = "/opus/#/" + o_hash.getHash();
+                link = link.replace("view=browse", "view=detail");
+                window.open(link, '_blank');
+            } else {
+                var opus_id = $(this).data('opusid');
+                o_browse.openDetailTab(opus_id);
+            }
+            return false;
+        });
+
     }, // end browse behaviors
 
     cartHandler: function(opus_id, action) {
@@ -1147,7 +1161,6 @@ var o_browse = {
     },
 
     metadataboxHtml: function(opus_id) {
-
         // list columns + values
         var html = '<dl>';
         for (var i in opus.prefs['cols']) {
@@ -1205,23 +1218,6 @@ var o_browse = {
                     .css({ 'top': scroll_top + "px"})
                     .html(html)
                     .fadeIn("fast");
-
-
-            // add the 'get detail' behavior
-            $('.embedded_data_viewer').on("click", '.gallery_data_link', function(e) {
-                if (e.shiftKey || e.ctrlKey || e.metaKey) {
-                    // handles command click to open in new tab
-                    var link = "/opus/#/" + o_hash.getHash();
-                    link = link.replace("view=browse", "view=detail");
-                    window.open(link, '_blank');
-                } else {
-                    var opus_id = $(this).data('opusid');
-                    o_browse.openDetailTab(opus_id);
-                }
-                return false;
-            });
-
-
         }); // /getJSON
 
     },
