@@ -1000,9 +1000,6 @@ var o_browse = {
 
             // make sure opus_id is in columns
             if (param == 'cols') {
-                values = values.map( function(item) {
-                  return item == 'ringobsid' ? 'opusid' : item;
-                })
                 if (jQuery.inArray('opusid', values) < 0) {
                     values.push('opusid');
                 }

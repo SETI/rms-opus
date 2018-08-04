@@ -8,6 +8,7 @@ import hashlib
 from operator import __or__ as OR
 import julian
 import json
+import traceback
 from pyparsing import ParseException
 from django.conf import settings
 from django.db.models import Q
@@ -137,7 +138,7 @@ def constructQueryString(selections, extras):
             log.error('constructQueryString: No param_info for %s', param_name)
             log.error('.. Selections: %s', str(selections))
             log.error('.. Extras: %s', str(extras))
-            return False
+            return None, None
 
         (form_type, form_type_func,
          form_type_format) = parse_form_type(param_info.form_type)
@@ -224,7 +225,7 @@ def constructQueryString(selections, extras):
         return sql, params
 
     except EmptyResultSet:
-        return False
+        return None, None
 
 
 
@@ -266,12 +267,11 @@ def getUserQueryTable(selections=None, extras=None):
     ## cache table does not exist, we will make one by doing some data querying:
     try:
         sql, params = constructQueryString(selections, extras)
-        print sql
-        print params
     except TypeError:
         log.error('getUserQueryTable: TypeError during constructQueryString')
         log.error('.. Selections: %s', str(selections))
         log.error('.. Extras: %s', str(extras))
+        log.error('%s', traceback.format_exc())
         return False
 
     if not sql:

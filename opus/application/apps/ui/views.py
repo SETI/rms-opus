@@ -81,11 +81,17 @@ def api_init_detail_page(request, **kwargs):
     api_code = enter_api_call('api_get_data', request)
 
     slugs = request.GET.get('cols', False)
-    if slugs:
-        slugs = slugs.replace('ringobsid', 'opusid')
 
     opus_id = kwargs['opus_id']
-
+    orig_opus_id = opus_id
+    opus_id = convert_ring_obs_id_to_opus_id(opus_id)
+    # We have to save the original opus_id in case it's a ring_obs_id, and then
+    # pass it to the detail.html template below, because the JS detail.js has
+    # no way of knowing that we mapped ring_obs_id -> opus_id and tries to
+    # reference HTML tags based on what it thinks of as the right name (the
+    # old ring_obs_id). Thus we go ahead and name the appropriate HTML tag using
+    # the user-provided name, whatever format it's in.
+    
     try:
         obs_general = ObsGeneral.objects.get(opus_id=opus_id)
     except ObjectDoesNotExist:
@@ -128,11 +134,13 @@ def api_init_detail_page(request, **kwargs):
                             'link': file_list[i]}
 
     context = {
-        "preview_full_url": preview_full_url,
-        "preview_med_url": preview_med_url,
-        "preview_guide_url": preview_guide_url,
-        "products": products,
-        "opus_id": opus_id
+        'preview_full_url': preview_full_url,
+        'preview_med_url': preview_med_url,
+        'preview_guide_url': preview_guide_url,
+        'products': products,
+        'opus_id': opus_id,
+        'opus_or_ringobs_id': orig_opus_id,
+        'instrument_id': instrument_id
     }
     ret = render(request, 'detail.html', context)
     exit_api_call(api_code, ret)
@@ -149,7 +157,6 @@ def get_table_headers(request, template='table_headers.html'):
     slugs = request.GET.get('cols', settings.DEFAULT_COLUMNS)
     order = request.GET.get('order', None)
     if order:
-        order = order.replace('ringobsid', 'opusid')
         sort_icon = 'fa-sort-desc' if order[0] == '-' else 'fa-sort-asc'
         order = order.strip('-')
     else:
@@ -157,7 +164,6 @@ def get_table_headers(request, template='table_headers.html'):
 
     if not slugs:
         slugs = settings.DEFAULT_COLUMNS
-    slugs = slugs.replace('ringobsid', 'opusid')
     slugs = slugs.split(',')
     columns = []
 
@@ -518,7 +524,6 @@ def get_column_chooser(request, **kwargs):
     update_metrics(request)
 
     slugs = request.GET.get('cols', settings.DEFAULT_COLUMNS)
-    slugs = slugs.replace('ringobsid', 'opusid')
     slugs = slugs.split(',')
 
     slugs = filter(None, slugs) # sometimes 'cols' is in url but is blank, so fails above

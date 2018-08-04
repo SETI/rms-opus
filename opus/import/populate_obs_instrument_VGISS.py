@@ -56,6 +56,22 @@ def populate_obs_general_VGISS_opus_id(**kwargs):
         return file_spec
     return opus_id
 
+def populate_obs_general_VGISS_ring_obs_id(**kwargs):
+    metadata = kwargs['metadata']
+    index_row = metadata['index_row']
+    filename = index_row['PRODUCT_ID']
+    image_num = filename[1:8]
+    inst_host_num = index_row['INSTRUMENT_HOST_NAME'][-1]
+    camera = index_row['INSTRUMENT_NAME'][0]
+    planet = helper_voyager_planet_id(**kwargs)
+    if planet is None:
+        pl_str = ''
+    else:
+        pl_str = planet[0]
+
+    return (pl_str + '_IMG_VG' + inst_host_num + '_ISS_' + image_num + '_'
+            + camera)
+
 # Format: "VOYAGER 1" or "VOYAGER 2"
 def populate_obs_general_VGISS_inst_host_id(**kwargs):
     metadata = kwargs['metadata']

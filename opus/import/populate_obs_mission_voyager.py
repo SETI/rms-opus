@@ -28,12 +28,7 @@ def helper_voyager_target_name(**kwargs):
 
     return (target_name, target_name.title())
 
-
-################################################################################
-# THESE NEED TO BE IMPLEMENTED FOR EVERY MISSION
-################################################################################
-
-def populate_obs_general_VG_planet_id(**kwargs):
+def helper_voyager_planet_id(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     # MISSION_PHASE_NAME exists for both VGISS and VGIRIS
@@ -43,6 +38,13 @@ def populate_obs_general_VG_planet_id(**kwargs):
     assert pl in ['JUP', 'SAT', 'URA', 'NEP']
 
     return pl
+
+################################################################################
+# THESE NEED TO BE IMPLEMENTED FOR EVERY MISSION
+################################################################################
+
+def populate_obs_general_VG_planet_id(**kwargs):
+    return helper_voyager_planet_id(**kwargs)
 
 
 ################################################################################

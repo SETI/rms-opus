@@ -100,13 +100,15 @@ def api_get_metadata(request, opus_id, fmt):
     if not opus_id:
         raise Http404
 
+    # Backwards compatibility
+    opus_id = convert_ring_obs_id_to_opus_id(opus_id)
+
     slugs = None
     try:
         slugs = request.GET.get('cols', False)
     except AttributeError:
         pass  # No request was sent
     if slugs:
-        slugs = slugs.replace('ringobsid', 'opusid')
         ret = _get_metadata_by_slugs(request, opus_id, slugs.split(','),
                                      fmt)
         exit_api_call(api_code, ret)
@@ -214,10 +216,10 @@ def api_get_images_by_size(request, size, fmt):
 
     alt_size = request.GET.get('alt_size', '')
     columns = request.GET.get('cols', settings.DEFAULT_COLUMNS)
-    columns = columns.replace('ringobsid', 'opusid')
 
     try:
-        [page_no, limit, page, opus_ids, order] = get_page(request)
+        [page_no, limit, page, opus_ids, ring_obs_ids,
+         order] = get_page(request)
     except TypeError:  # get_page returns False
         log.error("404 error")
         raise Http404('could not find page')
@@ -227,10 +229,13 @@ def api_get_images_by_size(request, size, fmt):
     if not image_list:
         log.error('get_images: No image found for: %s', str(opus_ids[:50]))
 
+    ring_obs_id_dict = {}
+    for i in range(len(opus_ids)):
+        ring_obs_id_dict[opus_ids[i]] = ring_obs_ids[i]
+
     collection_opus_ids = get_all_in_collection(request)
     for image in image_list:
-        image['in_collection'] = image['opus_id'] in collection_opus_ids
-        image['ring_obs_id'] = image['opus_id']
+        image['ring_obs_id'] = ring_obs_id_dict[image['opus_id']]
         if size+'_alt_text' in image:
             del image[size+'_alt_text']
         if size+'_size_bytes' in image:
@@ -246,6 +251,7 @@ def api_get_images_by_size(request, size, fmt):
             image['img'] = url
             image['path'] = path
             image[size] = url
+            del image[size+'_url']
 
     ret = responseFormats({'data': image_list}, fmt,
                           alt_size=alt_size, columns_str=columns.split(','),
@@ -276,13 +282,17 @@ def api_get_images(request, fmt):
 
     alt_size = request.GET.get('alt_size', '')
     columns = request.GET.get('cols', settings.DEFAULT_COLUMNS)
-    columns = columns.replace('ringobsid', 'opusid')
 
     try:
-        [page_no, limit, page, opus_ids, order] = get_page(request)
+        [page_no, limit, page, opus_ids, ring_obs_ids,
+         order] = get_page(request)
     except TypeError:  # get_page returns False
         log.error("404 error")
         raise Http404('could not find page')
+
+    ring_obs_id_dict = {}
+    for i in range(len(opus_ids)):
+        ring_obs_id_dict[opus_ids[i]] = ring_obs_ids[i]
 
     # XXX This is horrid and needs to be fixed
     image_list = get_pds_preview_images(opus_ids,
@@ -294,6 +304,7 @@ def api_get_images(request, fmt):
     collection_opus_ids = get_all_in_collection(request)
     for image in image_list:
         image['in_collection'] = image['opus_id'] in collection_opus_ids
+        image['ring_obs_id'] = ring_obs_id_dict[image['opus_id']]
 
     data = {'data': image_list,
             'page_no': page_no,
@@ -318,6 +329,9 @@ def api_get_image(request, opus_id, size='med', fmt='raw'):
     """
     update_metrics(request)
     api_code = enter_api_call('api_get_image', request)
+
+    # Backwards compatibility
+    opus_id = convert_ring_obs_id_to_opus_id(opus_id)
 
     image_list = get_pds_preview_images(opus_id, size)
     if len(image_list) != 1:
@@ -361,6 +375,8 @@ def api_get_files(request, opus_id=None, fmt='json'):
     opus_ids = []
     data = {}
     if opus_id:
+        # Backwards compatibility
+        opus_id = convert_ring_obs_id_to_opus_id(opus_id)
         opus_ids = [opus_id]
     else:
         # no opus_id passed, get files from search results
@@ -387,6 +403,10 @@ def api_get_categories_for_opus_id(request, opus_id):
     update_metrics(request)
     api_code = enter_api_call('api_get_categories_for_opus_id', request)
 
+    # Backwards compatibility
+    opus_id = convert_ring_obs_id_to_opus_id(opus_id)
+    print opus_id
+    
     all_categories = []
     table_info = TableNames.objects.all().values('table_name', 'label').order_by('disp_order')
 
@@ -474,7 +494,7 @@ def get_data(request, fmt, cols=None):
     """
     session_id = get_session_id(request)
 
-    (page_no, limit, page, opus_ids, order) = get_page(request)
+    (page_no, limit, page, opus_ids, ring_obs_ids, order) = get_page(request)
 
     checkboxes = request.is_ajax()
 
@@ -484,7 +504,6 @@ def get_data(request, fmt, cols=None):
         slugs = request.GET.get('cols', settings.DEFAULT_COLUMNS)
         if not slugs:
             slugs = settings.DEFAULT_COLUMNS
-        slugs = slugs.replace('ringobsid', 'opusid')
 
     is_column_chooser = request.GET.get('col_chooser', False)
 
@@ -515,7 +534,8 @@ def get_data(request, fmt, cols=None):
             'page':    page,
             'order':   order,
             'count':   len(page),
-            'labels':  labels
+            'labels':  labels,
+            'columns':  labels # Backwards compatibility with external apps
            }
 
     if fmt == 'raw':
@@ -541,9 +561,8 @@ def get_page(request, colls=None, colls_page=None, page=None):
 
     limit = int(request.GET.get('limit', settings.DEFAULT_PAGE_LIMIT))
     slugs = request.GET.get('cols', settings.DEFAULT_COLUMNS)
-    slugs = slugs.replace('ringobsid', 'opusid')
 
-    column_names = []  # Format: obs_pds.product_id
+    column_names = []
     tables = set()
     for slug in slugs.split(','):
         try:
@@ -568,6 +587,9 @@ def get_page(request, colls=None, colls_page=None, page=None):
     if 'obs_general.opus_id' not in column_names:
         column_names.append('obs_general.opus_id')
         added_extra_columns += 1 # So we know to strip it off later
+    if 'obs_general.ring_obs_id' not in column_names:
+        column_names.append('obs_general.ring_obs_id')
+        added_extra_columns += 1 # So we know to strip it off later
 
     # Figure out the sort order
     order = None
@@ -575,7 +597,6 @@ def get_page(request, colls=None, colls_page=None, page=None):
         order = request.GET.get('colls_order', settings.DEFAULT_SORT_ORDER)
     if not order:
         order = request.GET.get('order', settings.DEFAULT_SORT_ORDER)
-        order = order.replace('ringobsid', 'opusid')
     order_param = None
     if order:
         descending = order[0] == '-'
@@ -620,6 +641,9 @@ def get_page(request, colls=None, colls_page=None, page=None):
         # instead. -RF
         (selections, extras) = urlToSearchParams(request.GET)
         user_query_table = getUserQueryTable(selections, extras)
+        if not user_query_table:
+            log.error('get_page: getUserQueryTable returned False')
+            return (0, 0, [], [], [], '')
 
         sql = 'SELECT '
         sql += ','.join(column_names)
@@ -697,6 +721,10 @@ def get_page(request, colls=None, colls_page=None, page=None):
     opus_id_index = column_names.index('obs_general.opus_id')
     opus_ids = [o[opus_id_index] for o in results]
 
+    # And for backwards compatibility, ring_obs_ids
+    ring_obs_id_index = column_names.index('obs_general.ring_obs_id')
+    ring_obs_ids = [o[ring_obs_id_index] for o in results]
+
     # Strip off the opus_id if the user didn't actually ask for it initially
     if added_extra_columns:
         results = [o[:-added_extra_columns] for o in results]
@@ -705,7 +733,7 @@ def get_page(request, colls=None, colls_page=None, page=None):
     # data. Replace these so they look prettier.
     results = [[x if x is not None else 'N/A' for x in r] for r in results]
 
-    return (page_no, limit, results, opus_ids,
+    return (page_no, limit, results, opus_ids, ring_obs_ids,
             ('-' if descending else '') + order)
 
 
@@ -765,9 +793,10 @@ def get_triggered_tables(selections, extras=None):
 
     # look for cache:
     cache_no = getUserQueryTable(selections,extras)
-    cache_key = 'triggered_tables_' + str(cache_no)
-    if (cache.get(cache_key)):
-        return sorted(cache.get(cache_key))
+    if cache_no:
+        cache_key = 'triggered_tables_' + str(cache_no)
+        if (cache.get(cache_key)):
+            return sorted(cache.get(cache_key))
 
     # first add the base tables
     triggered_tables = settings.BASE_TABLES[:]  # makes a copy of settings.BASE_TABLES
@@ -808,7 +837,6 @@ def get_triggered_tables(selections, extras=None):
         trigger_col = partable.trigger_col
         trigger_val = partable.trigger_val
         partable = partable.partable
-
 
         if partable in triggered_tables:
             continue  # already triggered, no need to check

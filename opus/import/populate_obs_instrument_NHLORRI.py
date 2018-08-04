@@ -41,6 +41,21 @@ def populate_obs_general_NHLORRI_opus_id(**kwargs):
         return file_spec
     return opus_id
 
+def populate_obs_general_NHLORRI_ring_obs_id(**kwargs):
+    metadata = kwargs['metadata']
+    index_row = metadata['index_row']
+    image_num = index_row['FILE_NAME'][4:14]
+    start_time = index_row['START_TIME']
+    # This is really dumb, but it's what the old OPUS did so we do it for
+    # backwards compatability
+    start_time = index_row['START_TIME']
+    if start_time > '2007-09-01':
+        pl_str = 'P'
+    else:
+        pl_str = 'J'
+
+    return pl_str + '_IMG_NH_LORRI_' + image_num
+
 def populate_obs_general_NHLORRI_inst_host_id(**kwargs):
     return 'NH'
 

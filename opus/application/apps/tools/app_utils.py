@@ -9,6 +9,8 @@ import datetime
 import random, string, csv, settings, re
 from django.core import serializers
 import time
+from search.models import ObsGeneral
+from django.core.exceptions import ObjectDoesNotExist
 
 import logging
 log = logging.getLogger(__name__)
@@ -227,3 +229,17 @@ def parse_form_type(s):
         form_type, form_type_format = s.split('%')
 
     return form_type, form_type_func, form_type_format
+
+def is_old_format_ring_obs_id(s):
+    return len(s) > 2 and s[1] == '_'
+
+def convert_ring_obs_id_to_opus_id(ring_obs_id):
+    if not is_old_format_ring_obs_id(ring_obs_id):
+        return ring_obs_id
+    try:
+        return ObsGeneral.objects.get(ring_obs_id=ring_obs_id).opus_id
+    except ObjectDoesNotExist:
+        log.error('No matching RING_OBS_ID for "%s"', ring_obs_id)
+        return ring_obs_id
+
+    return ring_obs_id

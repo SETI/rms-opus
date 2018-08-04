@@ -79,6 +79,28 @@ populate_obs_general_HSTSTIS_opus_id = populate_obs_general_HSTx_opus_id
 populate_obs_general_HSTWFC3_opus_id = populate_obs_general_HSTx_opus_id
 populate_obs_general_HSTWFPC2_opus_id = populate_obs_general_HSTx_opus_id
 
+def populate_obs_general_HSTx_ring_obs_id(**kwargs):
+    metadata = kwargs['metadata']
+    index_row = metadata['index_row']
+    instrument_id = index_row['INSTRUMENT_ID']
+    image_date = index_row['START_TIME'][:10]
+    filename = index_row['PRODUCT_ID']
+    image_num = filename[1:11]
+    planet = _helper_hubble_planet_id(**kwargs)
+    if planet is None:
+        pl_str = ''
+    else:
+        pl_str = planet[0]
+
+    return (pl_str + '_IMG_HST_' + instrument_id + '_' + image_date + '_'
+            + filename)
+
+populate_obs_general_HSTACS_ring_obs_id = populate_obs_general_HSTx_ring_obs_id
+populate_obs_general_HSTNICMOS_ring_obs_id = populate_obs_general_HSTx_ring_obs_id
+populate_obs_general_HSTSTIS_ring_obs_id = populate_obs_general_HSTx_ring_obs_id
+populate_obs_general_HSTWFC3_ring_obs_id = populate_obs_general_HSTx_ring_obs_id
+populate_obs_general_HSTWFPC2_ring_obs_id = populate_obs_general_HSTx_ring_obs_id
+
 def populate_obs_general_HSTx_inst_host_id(**kwargs):
     return 'HST'
 

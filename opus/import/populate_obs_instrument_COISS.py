@@ -208,6 +208,22 @@ def populate_obs_general_COISS_opus_id(**kwargs):
         return file_spec
     return opus_id
 
+def populate_obs_general_COISS_ring_obs_id(**kwargs):
+    metadata = kwargs['metadata']
+    index_row = metadata['index_row']
+    instrument_id = index_row['INSTRUMENT_ID']
+    camera = instrument_id[3]
+    assert camera in ('N', 'W')
+    filename = index_row['FILE_NAME']
+    image_num = filename[1:11]
+    planet = helper_cassini_planet_id(**kwargs)
+    if planet is None:
+        pl_str = ''
+    else:
+        pl_str = planet[0]
+
+    return pl_str + '_IMG_CO_ISS_' + image_num + '_' + camera
+
 def populate_obs_general_COISS_inst_host_id(**kwargs):
     return 'CO'
 

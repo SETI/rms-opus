@@ -27,22 +27,6 @@
             "TAB:obs_general",
             "opus_id"
         ],
-        "definition": "A unique ID assigned to an observation by the Ring-Moon Systems Node of the PDS.",
-        "pi_category_name": "obs_pds",
-        "pi_dict_context": "OPUS_GENERAL",
-        "pi_dict_name": "OPUS_ID",
-        "pi_disp_order": 60,
-        "pi_display": 1,
-        "pi_display_results": 1,
-        "pi_form_type": "STRING",
-        "pi_intro": null,
-        "pi_label": "OPUS ID",
-        "pi_label_results": "OPUS ID",
-        "pi_old_slug": "ringobsid",
-        "pi_slug": "opusid",
-        "pi_sub_heading": null,
-        "pi_tooltip": null,
-        "pi_units": null,
         "comment": "This is the secondary key linking the record to obs_general."
     },
     {
@@ -167,7 +151,7 @@
         "field_key": true,
         "data_source": [
             "FUNCTION",
-            "obs_general_product_creation_time_sec"
+            "obs_pds_product_creation_time_sec"
         ],
         "data_source_order": 20,
         "pi_category_name": "obs_pds",

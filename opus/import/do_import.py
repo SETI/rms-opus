@@ -15,6 +15,7 @@ import impglobals
 import import_util
 
 from populate_obs_general import *
+from populate_obs_pds import *
 
 from populate_obs_mission_cassini import *
 from populate_obs_instrument_COISS import *

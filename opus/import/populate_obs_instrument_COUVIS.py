@@ -65,6 +65,26 @@ def populate_obs_general_COUVIS_opus_id(**kwargs):
         return file_spec
     return opus_id
 
+def populate_obs_general_COUVIS_ring_obs_id(**kwargs):
+    metadata = kwargs['metadata']
+    index_row = metadata['index_row']
+    filename = index_row['FILE_NAME'].split('/')[-1]
+    if filename.startswith('HDAC'):
+        image_camera = filename[:4]
+        image_time = filename[4:18]
+    else:
+        image_camera = filename[:3]
+        image_time = filename[3:17]
+    image_time_str = (image_time[:4] + '-' + image_time[5:8] + 'T' +
+                      image_time[9:11] + '-' + image_time[12:14])
+    planet = helper_cassini_planet_id(**kwargs)
+    if planet is None:
+        pl_str = ''
+    else:
+        pl_str = planet[0]
+
+    return pl_str + '_CO_UVIS_' + image_time_str + '_' + image_camera
+
 def populate_obs_general_COUVIS_inst_host_id(**kwargs):
     return 'CO'
 
@@ -152,7 +172,7 @@ def populate_obs_general_COUVIS_observation_duration(**kwargs):
     obs_general_row = metadata['obs_general_row']
     time_sec1 = obs_general_row['time_sec1']
     time_sec2 = obs_general_row['time_sec2']
-    return time_sec2 - time_sec1
+    return max(time_sec2 - time_sec1, 0)
 
 def populate_obs_general_COUVIS_note(**kwargs):
     metadata = kwargs['metadata']

@@ -128,20 +128,12 @@ def populate_obs_general_time_sec2(**kwargs):
 
     time_sec2 = julian.tai_from_iso(time2)
 
-    if time_sec2 < general_row['time_sec1']:
+    time_sec1 = general_row['time_sec1']
+    if time_sec2 < time_sec1:
         time1 = general_row['time1']
         import_util.log_error(f'time1 ({time1}) and time2 ({time2}) are '+
-                              f'in the wrong order')
+                              f'in the wrong order - setting equal')
         impglobals.IMPORT_HAS_BAD_DATA = True
+        time_sec2 = time_sec1
 
     return time_sec2
-
-def populate_obs_general_product_creation_time_sec(**kwargs):
-    metadata = kwargs['metadata']
-    general_row = metadata['obs_pds_row']
-    product_time = general_row['product_creation_time']
-
-    if product_time is None:
-        return None
-
-    return julian.tai_from_iso(product_time)

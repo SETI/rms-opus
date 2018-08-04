@@ -604,7 +604,7 @@ def _edit_collection_addall(request, **kwargs):
 
     (selections,extras) = urlToSearchParams(request.GET)
     query_table_name = getUserQueryTable(selections,extras)
-
+    assert query_table_name # This can be FALSE - Beware! XXX
     cursor = connection.cursor()
     coll_table_name = get_collection_table(session_id)
     sql = "replace into " + connection.ops.quote_name(coll_table_name) + \

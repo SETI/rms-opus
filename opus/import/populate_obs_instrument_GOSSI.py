@@ -61,6 +61,18 @@ def populate_obs_general_GOSSI_opus_id(**kwargs):
         return file_spec
     return opus_id
 
+def populate_obs_general_GOSSI_ring_obs_id(**kwargs):
+    metadata = kwargs['metadata']
+    index_row = metadata['index_row']
+    image_num = index_row['SPACECRAFT_CLOCK_START_COUNT'].replace('.', '')
+    planet = helper_galileo_planet_id(**kwargs)
+    if planet is None:
+        pl_str = ''
+    else:
+        pl_str = planet[0]
+
+    return pl_str + '_IMG_GO_SSI_' + image_num
+
 def populate_obs_general_GOSSI_inst_host_id(**kwargs):
     return 'GO'
 

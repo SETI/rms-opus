@@ -1009,7 +1009,7 @@ class MultObsWavelengthSpecFlag(models.Model):
 
 class ObsGeneral(models.Model):
     id = models.IntegerField(primary_key=True)
-    opus_id = models.CharField(unique=True, max_length=80, blank=True, null=True)
+    opus_id = models.CharField(unique=True, max_length=80)
     volume_id = models.CharField(max_length=11)
     instrument_id = models.CharField(max_length=9)
     mission_id = models.CharField(max_length=3)
@@ -1034,6 +1034,7 @@ class ObsGeneral(models.Model):
     spatial_sampling = models.CharField(max_length=5, blank=True, null=True)
     wavelength_sampling = models.CharField(max_length=3, blank=True, null=True)
     time_sampling = models.CharField(max_length=3, blank=True, null=True)
+    ring_obs_id = models.CharField(max_length=40, blank=True, null=True)
     mult_obs_general_instrument = models.ForeignKey(MultObsGeneralInstrumentId, models.DO_NOTHING)
     mult_obs_general_mission = models.ForeignKey(MultObsGeneralMissionId, models.DO_NOTHING)
     mult_obs_general_inst_host = models.ForeignKey(MultObsGeneralInstHostId, models.DO_NOTHING)

@@ -25,9 +25,7 @@ var o_detail = {
             if (status == 'error') {
               html = ' \
                   <div style = "margin:20px"><h2>Bad OPUS ID</h2>   \
-                  <p>The specified OPUS_ID was not found in the database. This is most likely due to \
-                  an old link that was created before the OPUS_ID (previously RINGOBSID) changed format. \
-                  You will have to redo your query to find the appropriate OPUS_ID to use and update the "detail=" field in your URL.</p>   \
+                  <p>The specified OPUS_ID (or old RING_OBS_ID) was not found in the database.</p>   \
                   </div>'
 
               $('#detail').html(html).fadeIn();

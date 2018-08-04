@@ -53,6 +53,20 @@ def populate_obs_general_COVIMS_opus_id(**kwargs):
     opus_id += '_' + phase_name
     return opus_id
 
+def populate_obs_general_COVIMS_ring_obs_id(**kwargs):
+    metadata = kwargs['metadata']
+    index_row = metadata['index_row']
+    filename = index_row['FILE_NAME']
+    image_num = filename[1:11]
+    phase_name = metadata['phase_name']
+    planet = helper_cassini_planet_id(**kwargs)
+    if planet is None:
+        pl_str = ''
+    else:
+        pl_str = planet[0]
+
+    return pl_str + '_CUBE_CO_VIMS_' + image_num + '_' + phase_name
+
 def populate_obs_general_COVIMS_inst_host_id(**kwargs):
     return 'CO'
 
@@ -125,7 +139,7 @@ def populate_obs_general_COVIMS_observation_duration(**kwargs):
     obs_general_row = metadata['obs_general_row']
     time_sec1 = obs_general_row['time_sec1']
     time_sec2 = obs_general_row['time_sec2']
-    return time_sec2 - time_sec1
+    return max(time_sec2 - time_sec1, 0)
 
 def populate_obs_general_COVIMS_note(**kwargs):
     None
@@ -198,7 +212,7 @@ def populate_obs_general_COVIMS_declination2(**kwargs):
 
 def populate_obs_mission_cassini_COVIMS_mission_phase_name(**kwargs):
     return helper_cassini_mission_phase_name(**kwargs)
-    
+
 def populate_obs_mission_cassini_COVIMS_sequence_id(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
