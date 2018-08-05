@@ -211,10 +211,10 @@ var o_browse = {
           var opus_id = $(this).parent().parent().attr("id").substring(9);
 
           // clicking thumbnail opens embedded data viewer
-          // PRETTY SURE THIS IS DEAD CODE
-          //if ($(this).hasClass("colorbox")) {
-          //  $("#gallery__" + opus_id + "> a").trigger("click");
-          //}
+          if ($(this).hasClass("colorbox")) {
+            $("#gallery__" + opus_id + "> a").trigger("click");
+            return false;
+          }
 
           switch ($(this).attr("data-icon")) {
               case "info":
@@ -1226,13 +1226,17 @@ var o_browse = {
 
         var html = o_browse.metadataboxHtml(opus_id);
 
-        // add data viewer behaviors
-        $('.gallery_data_viewer').on("click", '.gallery_data_link', function() {
-            var opus_id = $(this).data('opusid');
-            o_browse.openDetailTab(opus_id);
-            $.colorbox.close();
-            return false;
-        });
+        // add data viewer behaviors - but only if it has not yet been bound to
+        // avoid binding duplication
+        var _data =  $._data( $('.gallery_data_viewer')[0], 'events' );
+        if (_data == undefined) {
+          $('.gallery_data_viewer').on("click", '.gallery_data_link', function() {
+              var opus_id = $(this).data('opusid');
+              o_browse.openDetailTab(opus_id);
+              $.colorbox.close();
+              return false;
+          });
+        }
 
         // some alignment adjustments
         if ($(window).width() > 1500) {
