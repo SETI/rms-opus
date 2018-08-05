@@ -22,7 +22,8 @@ ALLOWED_HOSTS = ('127.0.0.1',
                  'localhost',
                  'dev.pds-rings.seti.org',
                  'pds-rings-tools.seti.org',
-                 'tools.pds-rings.seti.org')
+                 'tools.pds-rings.seti.org',
+                 '104.244.248.20')
 
 DEBUG = True
 
@@ -149,6 +150,11 @@ CACHES = {
 	"TIMEOUT": None,
     },
 }
+#CACHES = {
+#    'default': {
+#        'BACKEND': 'django.core.cache.backends.dummy.DummyCache',
+#   }
+#}
 
 # for last_modified middleware
 LAST_MODIFIED_FUNC = 'tools.last_mod.last_mod'
