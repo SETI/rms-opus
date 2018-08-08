@@ -84,7 +84,9 @@ def get_param_info_by_slug(slug, from_ui=False):
         except ParamInfo.DoesNotExist:
             pass
 
-    raise ParamInfo.DoesNotExist
+    log.error('get_param_info_by_slug: Slug "%s" not found', slug)
+
+    return None
 
 def get_param_info_by_param(param_name):
     cat_name      = param_name.split('.')[0]

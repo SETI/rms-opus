@@ -354,6 +354,6 @@ MULT_FIELDS	= ['GROUP','TARGETS']
 MULT_FORM_TYPES = ('GROUP','TARGETS')
 DEFAULT_PAGE_LIMIT = 100
 
-THUMBNAIL_NOT_FOUND = 'https://tools.pds-rings.seti.org/assets/static_media/img/thumbnail_not_found.png'
+THUMBNAIL_NOT_FOUND = 'https://tools.pds-rings.seti.org/static_media/img/thumbnail_not_found.png'
 
 MAX_CUM_DOWNLOAD_SIZE = 5*1024*1024*1024 # 5 gigs max cum downloads

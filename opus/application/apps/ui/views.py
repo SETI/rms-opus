@@ -175,11 +175,10 @@ def get_table_headers(request, template='table_headers.html'):
     param_info  = ParamInfo.objects
     for slug in slugs:
         if slug and slug != 'opus_id':
-            try:
-                pi = get_param_info_by_slug(slug, from_ui=True)
-            except ParamInfo.DoesNotExist:
+            pi = get_param_info_by_slug(slug, from_ui=True)
+            if not pi:
                 log.error('get_table_headers: Unable to find slug "%s"', slug)
-                pass
+                continue
             columns.append([slug, pi.label_results])
     return render(request, template,
                   {'columns':   columns,

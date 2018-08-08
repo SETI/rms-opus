@@ -405,7 +405,6 @@ def api_get_categories_for_opus_id(request, opus_id):
 
     # Backwards compatibility
     opus_id = convert_ring_obs_id_to_opus_id(opus_id)
-    print opus_id
     
     all_categories = []
     table_info = TableNames.objects.all().values('table_name', 'label').order_by('disp_order')
@@ -513,9 +512,8 @@ def get_data(request, fmt, cols=None):
     for slug_no, slug in enumerate(slugs.split(',')):
         if slug == 'opusid':
             id_index = slug_no
-        try:
-            pi = get_param_info_by_slug(slug, from_ui=True)
-        except ParamInfo.DoesNotExist:
+        pi = get_param_info_by_slug(slug, from_ui=True)
+	if not pi:            
             log.error('Could not find param_info for %s', slug)
             continue
         labels.append(pi.label_results)
@@ -565,10 +563,9 @@ def get_page(request, colls=None, colls_page=None, page=None):
     column_names = []
     tables = set()
     for slug in slugs.split(','):
-        try:
-            # First try the full name, which might include a trailing 1 or 2
-            pi = get_param_info_by_slug(slug, from_ui=True)
-        except ParamInfo.DoesNotExist:
+        # First try the full name, which might include a trailing 1 or 2
+        pi = get_param_info_by_slug(slug, from_ui=True)
+        if not pi:            
             log.error('get_page: Slug "%s" not found', slug)
             continue
         column = pi.param_name()
@@ -598,12 +595,12 @@ def get_page(request, colls=None, colls_page=None, page=None):
     if not order:
         order = request.GET.get('order', settings.DEFAULT_SORT_ORDER)
     order_param = None
+    descending = False
     if order:
         descending = order[0] == '-'
         order = order.strip('-')
-        try:
-            pi = get_param_info_by_slug(order, from_ui=True)
-        except ParamInfo.DoesNotExist:
+        pi = get_param_info_by_slug(order, from_ui=True)
+	if not pi:            
             log.error('_get_page: Unable to resolve order slug "%s"', order)
         else:
             order_param = pi.param_name()
@@ -793,6 +790,7 @@ def get_triggered_tables(selections, extras=None):
 
     # look for cache:
     cache_no = getUserQueryTable(selections,extras)
+    cache_key = None
     if cache_no:
         cache_key = 'triggered_tables_' + str(cache_no)
         if (cache.get(cache_key)):
@@ -875,7 +873,8 @@ def get_triggered_tables(selections, extras=None):
     for table in TableNames.objects.filter(table_name__in=triggered_tables).values('table_name').order_by('disp_order'):
         final_table_list.append(table['table_name'])
 
-    cache.set(cache_key, final_table_list)
+    if cache_key:
+        cache.set(cache_key, final_table_list)
 
     return sorted(final_table_list)
 
