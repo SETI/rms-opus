@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class = "container about">
+
+	<h1>About OPUS</h1>
+
+	<p>
+		OPUS is a data search tool for NASA outer planets missions, a project of the <a href = "https://pds-rings.seti.org">Planetary Ring-Moon Systems Node</a>.
+	</p>
+	<p>
+		Latest updates are announced on <a href = "https://ringsnodesearchtool.blogspot.com/">our blog</a> and <a href = "https://twitter.com/pdsopus">Twitter</a>.
+	</p>
+	<p>
+		An <a href = "/opus/api/">API is also available</a>. We welcome <a href = "https://pds-rings.seti.org/cgi-bin/comments/form.pl?">feedback</a>.
+	</p>
+
+	<h2>Datasets Available for Searching with OPUS</h2>
+
+	<p>All instruments and volumes currently found in OPUS:</p>
+
+	{% for instrument_id, instrument_volumes in all_volumes.items %}
+		<ul>
+			<h3>{{ instrument_id }}</h3>
+
+			<ul>
+			{% for volume_id in instrument_volumes %}
+					<li>{{ volume_id }}</li>
+			{% endfor %}
+			</ul>
+
+		</ul>
+	{% endfor %}
+
+{% endblock %}

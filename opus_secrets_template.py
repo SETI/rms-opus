@@ -1,0 +1,109 @@
+################################################################################
+# Settings that are local to the current installation and need to be
+# set separately for each installation and server.
+################################################################################
+
+import os
+
+### NEEDED FOR ALL APPLICATIONS ###
+
+# The brand of the back-end SQL database.
+# Valid values are: MySQL, PostgreSQL
+DB_BRAND = 'MySQL'
+
+# The hostname and database name in which the OPUS and dictionary schemas live.
+# In most cases, the hostname will be 'localhost'.
+# For MySQL, the database is IGNORED.
+# For PostgreSQL, this is the database to connect to.
+DB_HOST_NAME = '<HOST_NAME>'
+DB_DATABASE_NAME = '<DB_NAME>'
+
+# The database user and password. This user needs to have most privileges,
+# including table creation and deletion.
+DB_USER = '<DB_USER>'
+DB_PASSWORD = '<DB_PASSWORD>'
+
+# The root directory of all PDS holdings. Under this directory should be
+# volumes, calibrated, metadata, previews, and diagrams.
+PDS_DATA_DIR = '<HOLDING_DIR>'
+
+# The directory where the pds-opus library lives. This should normally be
+# .../pds-opus/lib
+PDS_OPUS_LIB_PATH = '<PATH>'
+
+# The directory where the pds-webserver Python routines live. This should
+# normally be .../pds-webserver/python
+PDS_WEBSERVER_PYTHON_PATH = '<PATH>'
+
+# The directory where the pds-tools repo lives.
+PDS_TOOLS_PATH = '<PATH>'
+
+
+############################################
+### NEEDED FOR THE MAIN OPUS APPLICATION ###
+############################################
+
+# The main namespace in which OPUS tables live.
+# For MySQL this is the database name.
+# For PostgreSQL this is the schema name.
+OPUS_SCHEMA_NAME = 'XXX'
+
+# The Django "secret key". This needs to be a unique, secret string.
+# Generator tools are available:
+#   https://www.google.com/search?q=django+secret+generator
+SECRET_KEY = '<SECRET_KEY>'
+
+# Where static files are served from in a production environment
+STATIC_ROOT = '<STATIC_DIR>'
+
+# Where to put zipped cart files for downloading
+# Needs a TRAILING SLASH
+TAR_FILE_PATH = '<TAR_FILE_PATH>/'
+
+# The root URL used to retrieve zipped collections files
+# Needs a TRAILING SLASH
+TAR_FILE_URL_PATH = '<URL>/'
+
+# The directory in which to place log files created by OPUS
+OPUS_LOGFILE_DIR = '<LOGFILE_DIR>'
+OPUS_LOG_FILE = os.path.join(OPUS_LOGFILE_DIR, 'opus_log.txt')
+
+# What level of message to log at each destination
+OPUS_LOG_FILE_LEVEL = 'INFO'
+OPUS_LOG_CONSOLE_LEVEL = 'INFO'
+OPUS_LOG_DJANGO_LEVEL = 'WARN'
+OPUS_LOG_API_CALLS = False
+
+
+##############################
+### NEEDED FOR OPUS IMPORT ###
+##############################
+
+# The prefix to use for temporary tables during import
+IMPORT_TABLE_TEMP_PREFIX = 'imp_'
+
+# The directory in which to place log files created during the import process.
+IMPORT_LOGFILE_DIR = '<LOGFILE_DIR>'
+IMPORT_LOG_FILE = os.path.join(IMPORT_LOGFILE_DIR, 'opus_import.log')
+IMPORT_DEBUG_LOG_FILE = os.path.join(IMPORT_LOGFILE_DIR, 'opus_import_debug.log')
+
+
+#############################################
+### NEEDED FOR THE DICTIONARY APPLICATION ###
+#############################################
+
+# The main namespace in which dictionary tables live.
+# For MySQL this is the database name.
+# For PostgreSQL this is the schema name.
+DICTIONARY_SCHEMA_NAME = 'XXX'
+
+
+####################################
+### NEEDED FOR DICTIONARY IMPORT ###
+####################################
+
+# The pdsdd.full file including path
+DICTIONARY_PDSDD_FILE = '<FILE>'
+
+# The location of the OPUS .json table_schema files
+DICTIONARY_JSON_SCHEMA_PATH = '<PATH>'

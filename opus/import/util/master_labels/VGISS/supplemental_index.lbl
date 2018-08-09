@@ -1,0 +1,174 @@
+PDS_VERSION_ID                  = PDS3
+RECORD_TYPE                     = FIXED_LENGTH
+RECORD_BYTES                    = 194
+FILE_RECORDS                    = 611
+^SUPPLEMENTAL_INDEX_TABLE       = "VGISS_5101_supplemental_index.tab"
+
+VOLUME_ID                       = VGISS_5101
+DATA_SET_ID                     = "VG1/VG2-J-ISS-2/3/4/6-PROCESSED-V1.0"
+PRODUCT_CREATION_TIME           = 2018-05-08T16:00:00
+
+OBJECT                          = SUPPLEMENTAL_INDEX_TABLE
+   INTERCHANGE_FORMAT           = ASCII
+   ROWS                         = 611
+   COLUMNS                      = 13
+   ROW_BYTES                    = 194
+   INDEX_TYPE                   = SINGLE
+   DESCRIPTION                  = "Index of supplemental information about the
+raw images. This index contains information found in the raw image file and
+its label but not recorded in the original index file."
+
+   OBJECT                       = COLUMN
+     NAME                       = VOLUME_NAME
+     DATA_TYPE                  = CHARACTER
+     COLUMN_NUMBER              = 1
+     START_BYTE                 = 2
+     BYTES                      = 10
+     FORMAT                     = "A10"
+     DESCRIPTION                = "The PDS identification for this volume."
+   END_OBJECT                   = COLUMN
+
+   OBJECT                       = COLUMN
+     NAME                       = FILE_SPECIFICATION_NAME
+     DATA_TYPE                  = CHARACTER
+     COLUMN_NUMBER              = 2
+     START_BYTE                 = 15
+     BYTES                      = 34
+     FORMAT                     = "A34"
+     DESCRIPTION                = "The name and directory path of the PDS
+label file describing this particular file or files."
+   END_OBJECT                   = COLUMN
+
+   OBJECT                       = COLUMN
+     NAME                       = PRODUCT_ID
+     DATA_TYPE                  = CHARACTER
+     COLUMN_NUMBER              = 3
+     START_BYTE                 = 52
+     BYTES                      = 20
+     FORMAT                     = "A20"
+     DESCRIPTION                = "The unique identifier assigned to the data
+product. In this data set, it is equivalent to the file name without the
+directory path. In cases where a combined-detached label describes two files,
+this is the name of the binary file (ending in '.DAT'); the corresponding
+ASCII text file (ending in '.TAB') is not listed in the index."
+   END_OBJECT                   = COLUMN
+
+   OBJECT                       = COLUMN
+     NAME                       = START_TIME
+     DATA_TYPE                  = CHARACTER
+     COLUMN_NUMBER              = 4
+     START_BYTE                 = 75
+     BYTES                      = 22
+     FORMAT                     = "A22"
+     DESCRIPTION                = "Start time of the observation."
+   END_OBJECT                   = COLUMN
+
+   OBJECT                       = COLUMN
+     NAME                       = STOP_TIME
+     DATA_TYPE                  = CHARACTER
+     COLUMN_NUMBER              = 5
+     START_BYTE                 = 100
+     BYTES                      = 22
+     FORMAT                     = "A22"
+     DESCRIPTION                = "Stop time of the observation."
+   END_OBJECT                   = COLUMN
+
+   OBJECT                       = COLUMN
+     NAME                       = SPACECRAFT_CLOCK_PARTITION_NUMBER
+     DATA_TYPE                  = ASCII_INTEGER
+     COLUMN_NUMBER              = 6
+     START_BYTE                 = 124
+     BYTES                      = 1
+     FORMAT                     = "I1"
+     DESCRIPTION                = "The partition number for the Voyager
+spacecraft 'FDS' clock. The value started at 1 at launch as was incremented
+each time the clock cycled through 65536 'FDS hours'."
+   END_OBJECT                   = COLUMN
+
+   OBJECT                       = COLUMN
+     NAME                       = SPACECRAFT_CLOCK_START_COUNT
+     DATA_TYPE                  = CHARACTER
+     COLUMN_NUMBER              = 7
+     START_BYTE                 = 127
+     BYTES                      = 12
+     FORMAT                     = "A12"
+     DESCRIPTION                = "The spacecraft clock value ('FDS' or
+'Flight Data System' count) at the time the camera shutter opened. FDS counts
+are of the form 'hhhhh:mm:ddd', where 'hhhhh' is a five-digit 'FDS hour'
+(equal to 48 true minutes, numbered 0-65535), 'mm' is 2-digit 'FDS minute'
+(equal to 48 true seconds, numbered 0-59), and 'ddd' is a 3-digit 'FDS tick'
+which increments every 60 msec, numbered 1-800."
+   END_OBJECT                   = COLUMN
+
+   OBJECT                       = COLUMN
+     NAME                       = SPACECRAFT_CLOCK_STOP_COUNT
+     DATA_TYPE                  = CHARACTER
+     COLUMN_NUMBER              = 8
+     START_BYTE                 = 142
+     BYTES                      = 12
+     FORMAT                     = "A12"
+     DESCRIPTION                = "The spacecraft clock value ('FDS' or
+'Flight Data System' count) at the time the camera shutter closed. FDS counts
+are of the form 'hhhhh:mm:ddd', where 'hhhhh' is a five-digit 'FDS hour'
+(equal to 48 true minutes, numbered 0-65535), 'mm' is 2-digit 'FDS minute'
+(equal to 48 true seconds, numbered 0-59), and 'ddd' is a 3-digit 'FDS tick'
+which increments every 60 msec, numbered 1-800."
+   END_OBJECT                   = COLUMN
+
+   OBJECT                       = COLUMN
+     NAME                       = PRODUCT_CREATION_TIME
+     DATA_TYPE                  = CHARACTER
+     COLUMN_NUMBER              = 9
+     START_BYTE                 = 157
+     BYTES                      = 19
+     FORMAT                     = "A19"
+     DESCRIPTION                = "The approximate time at which the 
+processing of this image was completed."
+   END_OBJECT                   = COLUMN
+
+   OBJECT                       = COLUMN
+     NAME                       = FIRST_LINE
+     DATA_TYPE                  = ASCII_INTEGER
+     COLUMN_NUMBER              = 10
+     START_BYTE                 = 178
+     BYTES                      = 3
+     FORMAT                     = "I3"
+     DESCRIPTION                = "The first non-empty line in the file.
+Lines are numbered from 1 to 800."
+   END_OBJECT                   = COLUMN
+
+   OBJECT                       = COLUMN
+     NAME                       = LAST_LINE
+     DATA_TYPE                  = ASCII_INTEGER
+     COLUMN_NUMBER              = 11
+     START_BYTE                 = 182
+     BYTES                      = 3
+     FORMAT                     = "I3"
+     DESCRIPTION                = "The last non-empty line in the file.
+Lines are numbered from 1 to 800."
+   END_OBJECT                   = COLUMN
+
+   OBJECT                       = COLUMN
+     NAME                       = FIRST_SAMPLE
+     DATA_TYPE                  = ASCII_INTEGER
+     COLUMN_NUMBER              = 12
+     START_BYTE                 = 186
+     BYTES                      = 3
+     FORMAT                     = "I3"
+     DESCRIPTION                = "The first non-empty column (sample) in the
+file. Columns are numbered from 1 to 800."
+   END_OBJECT                   = COLUMN
+
+   OBJECT                       = COLUMN
+     NAME                       = LAST_SAMPLE
+     DATA_TYPE                  = ASCII_INTEGER
+     COLUMN_NUMBER              = 13
+     START_BYTE                 = 190
+     BYTES                      = 3
+     FORMAT                     = "I3"
+     DESCRIPTION                = "The last non-empty column (sample) in the
+file. Columns are numbered from 1 to 800."
+   END_OBJECT                   = COLUMN
+
+END_OBJECT                      = SUPPLEMENTAL_INDEX_TABLE
+END
