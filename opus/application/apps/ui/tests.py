@@ -40,20 +40,20 @@ class UITests(TestCase):
     selections[param_name] = ['Jupiter']
 
     def test__getDataTable(self):
-        response = self.c.get('/opus/table_headers.html')
+        response = self.c.get('/opus/__table_headers.html')
         print response.content
         self.assertEqual(response.status_code, 200)
         self.assertGreater(len(response.content), 1400)
         self.assertEqual(str(response.content).strip().find('<table class = "data_table'), 0 )
 
     def test__getWidget_planet_json(self):
-        response = self.c.get('/opus/forms/widget/planet.html')
+        response = self.c.get('/opus/__forms/widget/planet.html')
         self.assertEqual(response.status_code, 200)
         self.assertGreater(len(response.content), 2000)
         self.assertEqual(str(response.content).strip().find('<div class="row'), 0 )
 
     def test__getWidget_target_json(self):
-        response = self.c.get('/opus/forms/widget/target.html')
+        response = self.c.get('/opus/__forms/widget/target.html')
         self.assertEqual(response.status_code, 200)
         self.assertGreater(len(response.content), 2000)
         self.assertEqual(str(response.content).strip().find('<div class="row'), 0 )

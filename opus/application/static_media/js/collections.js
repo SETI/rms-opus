@@ -27,7 +27,7 @@ var o_collections = {
          // check an input on selected products and images updates file_info
          $('#collection').on("click",'#download_options input', function() {
              var add_to_url = o_collections.getDownloadFiltersChecked();
-             var url = "/opus/collections/download/info?" + add_to_url
+             var url = "/opus/__collections/download/info?" + add_to_url
              $.ajax({ url: url + '&fmt=json',
                 success: function(json){
                     $('#total_files').fadeOut().html(json['download_count']).fadeIn();
@@ -38,7 +38,7 @@ var o_collections = {
 
          // Download CSV button - create CSV file with currently chosen columns
          $('#collection').on("click", '#download_csv', function() {
-            $(this).attr("href", '/opus/collections/data.csv?'+ o_hash.getHash());
+            $(this).attr("href", '/opus/__collections/data.csv?'+ o_hash.getHash());
          });
 
          // Download Zipped Archive button - click create download zip file link on collections page
@@ -46,7 +46,7 @@ var o_collections = {
                 $('.spinner', "#collections_summary").fadeIn();
                 opus.download_in_process = true;
                 var add_to_url = o_collections.getDownloadFiltersChecked();
-                var url = '/opus/collections/download/default.zip?' + add_to_url + "&" + o_hash.getHash();
+                var url = '/opus/__collections/download/default.zip?' + add_to_url + "&" + o_hash.getHash();
                 $.ajax({ url: url,
                     success: function(filename){
                         opus.download_in_process = false;
@@ -114,7 +114,7 @@ var o_collections = {
     // init an existing collection on page load
     initCollection: function() {
         // returns any user collection saved in session
-        $.ajax({ url: "/opus/collections/default/status.json",
+        $.ajax({ url: "/opus/__collections/default/status.json",
             dataType:"json",
             success: function(data){
                    var count = data['count'];
@@ -152,11 +152,11 @@ var o_collections = {
 
             /*
             // redux: first get the product counts
-            $.ajax({ url: "/opus/collections/default/product_counts.html",
+            $.ajax({ url: "/opus/__collections/default/product_counts.html",
                    success: function(html){
 
                         // then get a page of images + metadata
-                        $.ajax({ url: "/opus/collections/default/thumbnails.html",
+                        $.ajax({ url: "/opus/__collections/default/thumbnails.html",
                                success: function(html){},
                                error: function(html){}
                            });
@@ -167,7 +167,7 @@ var o_collections = {
             */
 
             // redux: and nix this big thing:
-            $.ajax({ url: "/opus/collections/default/view.html",
+            $.ajax({ url: "/opus/__collections/default/view.html",
                 success: function(html){
                     // this div lives in the in the nav menu template
                     $('.collection_details', '#collection').hide().html(html).fadeIn();
@@ -222,7 +222,7 @@ var o_collections = {
         var view_info = o_browse.getViewInfo();
         var namespace = view_info['namespace']; // either '#collection' or '#browse'
 
-        var url = "/opus/collections/default/" + action + ".json?request=" + request_no
+        var url = "/opus/__collections/default/" + action + ".json?request=" + request_no
         switch (action) {
             case "add":
             case "remove":
@@ -307,7 +307,7 @@ var o_collections = {
         opus.lastCartRequestNo = 0;
 
         // change indicator to zero and let the server know:
-        $.ajax({ url: "/opus/collections/reset.html",
+        $.ajax({ url: "/opus/__collections/reset.html",
             success: function(html){
                 $('#collection_count').html('0');
                 opus.colls_pages = 0;

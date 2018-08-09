@@ -28,4 +28,5 @@ urlpatterns = [
     url('^', include(base_urlpatterns)),
     url('^%s/' % settings.BASE_PATH, include(base_urlpatterns)),  # dev
     url('^dictionary/', include(dictionary_urlpatterns)),
-    ]
+    url('^__dictionary/', include(dictionary_urlpatterns)),
+]

@@ -284,7 +284,7 @@ var opus = {
           opus.lastRequestNo++;
 
       	  // get result count
-          $.ajax({ url: "/opus/api/meta/result_count.json?" + o_hash.getHash() + '&reqno=' + opus.lastRequestNo,
+          $.ajax({ url: "/opus/__api/meta/result_count.json?" + o_hash.getHash() + '&reqno=' + opus.lastRequestNo,
               dataType:"json",
               success: function(json){
 

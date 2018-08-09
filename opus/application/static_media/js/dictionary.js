@@ -56,7 +56,7 @@ function buildDefinitionListHTML(response, searchText) {
 }
 
 function searchDictionary(searchText, thepanel) {
-  var url = "/dictionary/search.json?term=" + searchText;
+  var url = "/__dictionary/search.json?term=" + searchText;
   $.getJSON(url, function(response) {
       var html = buildDefinitionListHTML(response, searchText)
       thepanel.html(html);
@@ -75,7 +75,7 @@ $( function() {
     }
     if ($("#"+targetElement).length == 0) {
       $("#dictionaryContainer").append("<div id='"+targetElement+"' class='dictionaryContent'>Loading... please wait.</div>")
-      var url = "/dictionary/list.json?alpha=" + event.currentTarget.id;
+      var url = "/__dictionary/list.json?alpha=" + event.currentTarget.id;
       $.getJSON(url, function(response) {
         var html = buildDefinitionListHTML(response)
         $("#"+targetElement).html(html);

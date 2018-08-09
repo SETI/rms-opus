@@ -23,7 +23,7 @@ def get_def_for_tooltip(term, context):
 def get_more_info_url(term, context):
     "Return the url of the page for this definition."
     if get_def_for_tooltip(term, context):
-        return "http://pds-rings.seti.org/dictionary/index.php?term=%s&context=%s" % (term, context)
+        return "http://pds-rings.seti.org/__dictionary/index.php?term=%s&context=%s" % (term, context)
     else:
         return None
 

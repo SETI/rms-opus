@@ -20,7 +20,7 @@ var o_detail = {
         $('#detail').html(opus.spinner);
         $('#detail_extra').html(opus_id);
 
-        $("#detail").load("/opus/initdetail/" + opus_id + ".html",
+        $("#detail").load("/opus/__initdetail/" + opus_id + ".html",
                           function(response, status, xhr){
             if (status == 'error') {
               html = ' \
@@ -32,7 +32,7 @@ var o_detail = {
               return;
             }
             // get the column metadata, this part is fast
-            url = "/opus/api/metadata/" + opus_id + ".html?" + o_hash.getHash();
+            url = "/opus/__api/metadata/" + opus_id + ".html?" + o_hash.getHash();
             $("#cols_metadata")
                 .load(url, function() {
                     $(this).hide().fadeIn("fast");
@@ -40,7 +40,7 @@ var o_detail = {
             );
 
             // get categories and then send for data for each category separately:
-            url = "/opus/api/categories/" + opus_id + ".json?" + o_hash.getHash();
+            url = "/opus/__api/categories/" + opus_id + ".json?" + o_hash.getHash();
             $.getJSON(url, function(json) {
                 for (var index in json) {
                   name = json[index]['table_name'];
@@ -49,7 +49,7 @@ var o_detail = {
                   $("#all_metadata_" + opus_id).append(html);
 
                   // now send for data
-                  url ="/opus/api/metadata/" + opus_id + ".html?cats=" + name;
+                  url ="/opus/__api/metadata/" + opus_id + ".html?cats=" + name;
                   $("#all_metadata_" + opus_id + ' .detail_' + name)
                       .load(url, function() {
                           $(this).hide().slideDown("fast");

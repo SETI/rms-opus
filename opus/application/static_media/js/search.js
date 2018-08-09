@@ -131,7 +131,7 @@ var o_search = {
 
             // no bring in another note form
             // we don't want
-            $.ajax({ url: "/opus/forms/widget/" + slug + '.html?addlink=false',
+            $.ajax({ url: "/opus/__forms/widget/" + slug + '.html?addlink=false',
                 success: function(widget_str){
                     // we don't want to insert the entire widget, only the span class = "widget_form" section
                     html = widget_str.match(/<section>([\s\S]*)<\/section>/)[0];
@@ -306,7 +306,7 @@ var o_search = {
 
         $('#widget__' + slug + ' .spinner').fadeIn();
 
-        var url = "/opus/api/meta/range/endpoints/" + slug + ".json?" + o_hash.getHash() +  '&reqno=' + opus.lastRequestNo;
+        var url = "/opus/__api/meta/range/endpoints/" + slug + ".json?" + o_hash.getHash() +  '&reqno=' + opus.lastRequestNo;
             $.ajax({url: url,
                 dataType:"json",
                 success: function(multdata){
@@ -339,7 +339,7 @@ var o_search = {
         // turn on spinner
         $('#widget__' + slug + ' .spinner').fadeIn();
 
-        var url = "/opus/api/meta/mults/" + slug + ".json?" + o_hash.getHash() +  '&reqno=' + opus.lastRequestNo;
+        var url = "/opus/__api/meta/mults/" + slug + ".json?" + o_hash.getHash() +  '&reqno=' + opus.lastRequestNo;
         $.ajax({url: url,
             dataType:"json",
             success: function(multdata){

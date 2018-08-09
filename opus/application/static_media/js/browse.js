@@ -101,7 +101,7 @@ var o_browse = {
                 }
             }
             var q_str = hash.join('&');
-            var csv_link = "/opus/api/data.csv?" + q_str + '&cols=' + col_str + '&limit=' + opus.result_count.toString();
+            var csv_link = "/opus/__api/data.csv?" + q_str + '&cols=' + col_str + '&limit=' + opus.result_count.toString();
             $(this).attr("href", csv_link);
         });
 
@@ -734,7 +734,7 @@ var o_browse = {
 
     // this is like the table headers
     startDataTable: function(namespace) {
-        var url = '/opus/table_headers.html?' + o_hash.getHash() + '&reqno=' + opus.lastRequestNo;
+        var url = '/opus/__table_headers.html?' + o_hash.getHash() + '&reqno=' + opus.lastRequestNo;
         if (namespace == '#collections') {
             url += '&colls=true';
         }
@@ -859,7 +859,7 @@ var o_browse = {
         // only draw the navbar if we are in gallery mode... doesn't make sense in collection mode
         if (namespace == "#browse") {
           // get the browse nav header?
-          $('.browse_nav', namespace).load( "/opus/browse_headers.html", function() {
+          $('.browse_nav', namespace).load( "/opus/__browse_headers.html", function() {
             // change the link text
             if (opus.prefs.browse == 'gallery') {
                 $('.browse_view', namespace).text('view table');
@@ -872,9 +872,9 @@ var o_browse = {
           });
         }
 
-        var base_url = "/opus/api/images.html?";
+        var base_url = "/opus/__api/images.html?";
         if (opus.prefs[prefix + 'browse'] == 'data') {
-            base_url = '/opus/api/data.html?';
+            base_url = '/opus/__api/data.html?';
 
             // get table headers for table view
             if (!opus.table_headers_drawn) {
@@ -995,7 +995,7 @@ var o_browse = {
 
     getBrowseData: function(page) {
 
-        var base_url = '/opus/api/data.json?';
+        var base_url = '/opus/__api/data.json?';
         var columns = opus.prefs.cols;
 
         // we have to do a little hacking of the hash, we want page as we want it and opus_id too
@@ -1192,7 +1192,7 @@ var o_browse = {
         // XXX This code should not be replacing _med with _full because there's
         // no guarantee that's how the filenames will be laid out. It needs
         // to do to URL queries, one for med and one for full.
-        var url = '/opus/api/image/med/' + opus_id + '.json';
+        var url = '/opus/__api/image/med/' + opus_id + '.json';
         $.getJSON(url, function(json) {
 
             var img = json['data'][0]['url'];
@@ -1420,7 +1420,7 @@ var o_browse = {
             });
 
 
-            var url = '/opus/forms/column_chooser.html?' + o_hash.getHash() + '&col_chooser=1';
+            var url = '/opus/__forms/column_chooser.html?' + o_hash.getHash() + '&col_chooser=1';
             $('.column_chooser').load( url, function(response, status, xhr)  {
 
                opus.column_chooser_drawn=true;  // bc this gets saved not redrawn

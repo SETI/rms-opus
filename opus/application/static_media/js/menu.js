@@ -91,7 +91,7 @@ var o_menu = {
         $('.menu_spinner').fadeIn("fast");
         hash = o_hash.getHash();
 
-        $( "#sidebar").load( "/opus/menu.html?" + hash, function() {
+        $( "#sidebar").load( "/opus/__menu.html?" + hash, function() {
             if (opus.menu_state['cats'] == 'all') {
 
                 // first load, open general constraints
