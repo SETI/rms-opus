@@ -46,23 +46,28 @@ def delete_all_obs_mult_tables(namespace):
     obs_ and mult_ tables."""
 
     table_names = impglobals.DATABASE.table_names(namespace,
-                                                  prefix=['obs_', 'mult_'])
+                                                  prefix=['obs_', 'mult_',
+                                                          'collections'])
     table_names = sorted(table_names)
-    # This has to happen in three phases to handle foreign key contraints:
-    # 1. All obs_ tables except obs_general and mult_YYY
+    # This has to happen in four phases to handle foreign key contraints:
+    # 1. All obs_ tables except obs_general
     for table_name in table_names:
         if (table_name.startswith('obs_') and
             table_name != 'obs_general'):
             impglobals.DATABASE.drop_table(namespace, table_name)
 
-    # 2. All mult_YYY tables
-    for table_name in table_names:
-        if table_name.startswith('mult_'):
-            impglobals.DATABASE.drop_table(namespace, table_name)
+    # 2. collections
+    if 'collections' in table_names:
+        impglobals.DATABASE.drop_table(namespace, 'collections')
 
     # 3. obs_general
     if 'obs_general' in table_names:
         impglobals.DATABASE.drop_table(namespace, 'obs_general')
+
+    # 4. All mult_YYY tables
+    for table_name in table_names:
+        if table_name.startswith('mult_'):
+            impglobals.DATABASE.drop_table(namespace, table_name)
 
 
 def delete_volume_from_obs_tables(volume_id, namespace):
