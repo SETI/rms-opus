@@ -55,14 +55,14 @@ def delete_all_obs_mult_tables(namespace):
             table_name != 'obs_general'):
             impglobals.DATABASE.drop_table(namespace, table_name)
 
-    # 2. obs_general
-    if 'obs_general' in table_names:
-        impglobals.DATABASE.drop_table(namespace, 'obs_general')
-
-    # 3. All mult_YYY tables
+    # 2. All mult_YYY tables
     for table_name in table_names:
         if table_name.startswith('mult_'):
             impglobals.DATABASE.drop_table(namespace, table_name)
+
+    # 3. obs_general
+    if 'obs_general' in table_names:
+        impglobals.DATABASE.drop_table(namespace, 'obs_general')
 
 
 def delete_volume_from_obs_tables(volume_id, namespace):
