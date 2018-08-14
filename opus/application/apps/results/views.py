@@ -350,7 +350,7 @@ def api_get_image(request, opus_id, size='med', fmt='raw'):
         image['url'] = image[size+'_url']
     data = {'path': path, 'data': image_list}
     ret = responseFormats(data, fmt, size=size,
-                          template='image_list.html')
+                          template='results/image_list.html')
     exit_api_call(api_code, ret)
     return ret
 
@@ -405,7 +405,7 @@ def api_get_categories_for_opus_id(request, opus_id):
 
     # Backwards compatibility
     opus_id = convert_ring_obs_id_to_opus_id(opus_id)
-    
+
     all_categories = []
     table_info = TableNames.objects.all().values('table_name', 'label').order_by('disp_order')
 
@@ -443,10 +443,7 @@ def api_get_categories_for_search(request):
     api_code = enter_api_call('api_get_categories_for_search', request)
 
     if request and request.GET:
-        try:
-            (selections,extras) = urlToSearchParams(request.GET)
-        except TypeError:
-            selections = None
+        (selections, extras) = url_to_search_params(request.GET)
     else:
         selections = None
 
@@ -513,7 +510,7 @@ def get_data(request, fmt, cols=None):
         if slug == 'opusid':
             id_index = slug_no
         pi = get_param_info_by_slug(slug, from_ui=True)
-	if not pi:            
+	if not pi:
             log.error('Could not find param_info for %s', slug)
             continue
         labels.append(pi.label_results)
@@ -538,7 +535,8 @@ def get_data(request, fmt, cols=None):
 
     if fmt == 'raw':
         ret = data
-    ret = responseFormats(data, fmt, template='data.html', id_index=id_index,
+    ret = responseFormats(data, fmt, template='results/data.html',
+                          id_index=id_index,
                           labels=labels, checkboxes=checkboxes,
                           collection=collection, order=order)
     return ret
@@ -565,7 +563,7 @@ def get_page(request, colls=None, colls_page=None, page=None):
     for slug in slugs.split(','):
         # First try the full name, which might include a trailing 1 or 2
         pi = get_param_info_by_slug(slug, from_ui=True)
-        if not pi:            
+        if not pi:
             log.error('get_page: Slug "%s" not found', slug)
             continue
         column = pi.param_name()
@@ -600,7 +598,7 @@ def get_page(request, colls=None, colls_page=None, page=None):
         descending = order[0] == '-'
         order = order.strip('-')
         pi = get_param_info_by_slug(order, from_ui=True)
-	if not pi:            
+	if not pi:
             log.error('_get_page: Unable to resolve order slug "%s"', order)
         else:
             order_param = pi.param_name()
@@ -636,10 +634,10 @@ def get_page(request, colls=None, colls_page=None, page=None):
         # There MUST be some way to do this in Django, but I just can't figure
         # it out. It's incredibly easy to do in raw SQL, so we just do that
         # instead. -RF
-        (selections, extras) = urlToSearchParams(request.GET)
-        user_query_table = getUserQueryTable(selections, extras)
+        (selections, extras) = url_to_search_params(request.GET)
+        user_query_table = get_user_query_table(selections, extras)
         if not user_query_table:
-            log.error('get_page: getUserQueryTable returned False')
+            log.error('get_page: get_user_query_table returned False')
             return (0, 0, [], [], [], '')
 
         sql = 'SELECT '
@@ -789,7 +787,7 @@ def get_triggered_tables(selections, extras=None):
         return sorted(settings.BASE_TABLES)
 
     # look for cache:
-    cache_no = getUserQueryTable(selections,extras)
+    cache_no = get_user_query_table(selections, extras)
     cache_key = None
     if cache_no:
         cache_key = 'triggered_tables_' + str(cache_no)
@@ -826,7 +824,7 @@ def get_triggered_tables(selections, extras=None):
 
 
     # now see if any more tables are triggered from query
-    query_result_table = getUserQueryTable(selections,extras)
+    query_result_table = get_user_query_table(selections, extras)
     queries = {}  # keep track of queries
     for partable in Partables.objects.all():
         # we are joining the results of a user's query - the single column table of ids

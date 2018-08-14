@@ -1,29 +1,24 @@
-###############################################
-#
-#   metadata.views
-#
-################################################
+# metadata/views.py
+from collections import OrderedDict
 import json
-from django.core.cache import cache
-from django.http import Http404
-from django.http import HttpResponse
-from django.db.models import Avg, Max, Min, Count
+import logging
+
 from django.apps import apps
 from django.db import connection
+from django.core.cache import cache
+from django.core.exceptions import ObjectDoesNotExist
+from django.db.models import Max, Min, Count
+from django.http import Http404, HttpResponse
+
 from paraminfo.models import ParamInfo
-import search.views
-from metrics.views import update_metrics
-from collections import OrderedDict
-
 from search.models import *
+from search.views import (get_param_info_by_slug,
+                          get_user_query_table,
+                          set_user_search_number,
+                          url_to_search_params)
 from tools.app_utils import *
-
-# from paraminfo.models import *
-import settings
-
 import opus_support
 
-import logging
 log = logging.getLogger(__name__)
 
 
@@ -48,62 +43,51 @@ def api_get_result_count(request, fmt='json'):
                  }
                ]
     """
-    update_metrics(request)
     api_code = enter_api_call('api_get_data', request)
 
-    if request.GET is None:
-        ret = HttpResponse(json.dumps({'result_count': '0'}),
-                           content_type='application/json')
+    if not request or request.GET is None:
+        ret = Http404('No request')
         exit_api_call(api_code, ret)
-        return ret
+        raise ret
 
-    try:
-        (selections,extras) = search.views.urlToSearchParams(request.GET)
-    except TypeError:
-        log.error("Could not find selections for request %s", str(request.GET))
-        exit_api_call(api_code, None)
-        raise Http404
-
-    reqno = request.GET.get('reqno','')
-
-    if selections is False:
-        count = 'not found'
-        ret = HttpResponse(json.dumps({'result_count': count}),
-                                      content_type='application/json')
+    (selections, extras) = url_to_search_params(request.GET)
+    if selections is None:
+        log.error('api_get_result_count: Could not find selections for '
+                  +'request %s', str(request.GET))
+        ret = Http404('Parsing of selections failed')
         exit_api_call(api_code, ret)
-        return ret
+        raise ret
 
-    table = search.views.getUserQueryTable(selections,extras)
+    table = get_user_query_table(selections, extras)
 
     if not table:
-        count = 0
-    else:
-        cache_key = "resultcount:" + table
-        if (cache.get(cache_key)):
-            count = cache.get(cache_key)
-        else:
-            cursor = connection.cursor()
-            sql = ('select count(*) from ' +
-                   connection.ops.quote_name(table))
-            time1 = time.time()
-            cursor.execute(sql)
-            log.debug('result_count SQL (%.2f secs): %s',
-                      time.time()-time1, sql)
-            try:
-                count = cursor.fetchone()
-                count = count[0]
-            except:
-                count = 0
+        log.error('api_get_result_count: Could not find query table for '
+                  +'request %s', str(request.GET))
+        ret = Http404('Parsing of selections failed')
+        exit_api_call(api_code, ret)
+        raise ret
 
-            # set this result in cache
-            cache.set(cache_key,count)
+    cache_key = 'resultcount:' + table
+    count = cache.get(cache_key)
+    if count is None:
+        cursor = connection.cursor()
+        sql = ('SELECT COUNT(*) FROM '
+               + connection.ops.quote_name(table))
+        cursor.execute(sql)
+        try:
+            count = cursor.fetchone()[0]
+        except:
+            count = 0
+
+        cache.set(cache_key, count)
 
     data = {'result_count': count}
 
     if (request.is_ajax()):
         data['reqno'] = request.GET['reqno']
 
-    ret = responseFormats({'data': [data]}, fmt, template='result_count.html')
+    ret = responseFormats({'data': [data]}, fmt,
+                          template='metadata/result_count.html')
     exit_api_call(api_code, ret)
     return ret
 
@@ -111,117 +95,135 @@ def api_get_result_count(request, fmt='json'):
 def api_get_mult_counts(request, slug, fmt='json'):
     """Return the mults for a given slug along with result counts.
 
-    Format: api/meta/result_count.(?P<fmt>[json|zip|html|csv]+)
+    Format: api/meta/mults/(?P<slug>[-\w]+).(?P<fmt>[json|zip|html|csv]+)
     Arguments: Normal search arguments
 
     Can return JSON, ZIP, HTML, or CSV.
 
     Returned JSON is of the format:
         { 'field': slug,
-          'mults':mults }
+          'mults': mults }
+    mult is a list of entries pairing mult name and result count.
     """
-    update_metrics(request)
     api_code = enter_api_call('api_get_data', request)
 
-    try:
-        (selections,extras) = search.views.urlToSearchParams(request.GET)
-    except Exception,e:
-        log.error('Failed to get selections for slug %s, URL %s', str(slug), request.GET)
-        log.error('.. %s', str(e))
-        selections = {}
+    if not request or request.GET is None:
+        ret = Http404('No request')
+        exit_api_call(api_code, ret)
+        raise ret
 
-    param_info = search.views.get_param_info_by_slug(slug)
+    (selections, extras) = url_to_search_params(request.GET)
+    if selections is None:
+        log.error('api_get_mult_counts: Failed to get selections for slug %s, '
+                  +'URL %s', str(slug), request.GET)
+        ret = Http404('Parsing of selections failed')
+        exit_api_call(api_code, ret)
+        raise ret
+
+    param_info = get_param_info_by_slug(slug)
     if not param_info:
-        log.error("getValidMults: Could not find param_info entry for slug %s",
-                  str(slug))
-        log.error(".. Selections: %s", str(selections))
-        log.error(".. Extras: %s", str(extras))
-        exit_api_call(api_code, None)
-        raise Http404
+        log.error('api_get_mult_counts: Could not find param_info entry for '
+                  +'slug %s *** Selections %s *** Extras %s', str(slug),
+                  str(selections), str(extras))
+        ret = Http404('Unknown slug')
+        exit_api_call(api_code, ret)
+        raise ret
 
     table_name = param_info.category_name
     param_name = param_info.param_name()
 
-    # if this param is in selections we want to remove it,
-    # want mults for a param as they would be without itself
+    # If this param is in selections already we want to remove it
+    # We want mults for a param as they would be without itself
     if param_name in selections:
         del selections[param_name]
 
     has_selections = False
-    if bool(selections):
+    if selections:
         has_selections = True
 
-    cache_key  = "mults" + param_name + str(search.views.setUserSearchNo(selections))
+    cache_key = ('mults_' + param_name + '_'
+                 + str(set_user_search_number(selections)))
 
-    if (cache.get(cache_key) is not None):
-
-        mults = cache.get(cache_key)
-
+    cached_val = cache.get(cache_key)
+    if cached_val is not None:
+        mults = cached_val
     else:
-
-        mult_name  = getMultName(param_name)  # the name of the field to query
-
+        mult_name = get_mult_name(param_name)
         try:
-            mult_model = apps.get_model('search',mult_name.title().replace('_',''))
+            mult_model = apps.get_model('search',
+                                        mult_name.title().replace('_',''))
         except LookupError:
-            log.error('Could not get_model for %s', mult_name.title().replace('_',''))
-            exit_api_call(api_code, None)
+            log.error('api_get_mult_counts: Could not get_model for %s',
+                      mult_name.title().replace('_',''))
+            exit_api_call(api_code, Http404)
             raise Http404
 
         try:
-            table_model = apps.get_model('search', table_name.title().replace('_',''))
+            table_model = apps.get_model('search',
+                                         table_name.title().replace('_',''))
         except LookupError:
-            log.error('Could not get_model for %s', table_name.title().replace('_',''))
-            exit_api_call(api_code, None)
+            log.error('api_get_mult_counts: Could not get_model for %s',
+                      table_name.title().replace('_',''))
+            exit_api_call(api_code, Http404)
             raise Http404
 
-        mults = {}  # info to return
-        results    = table_model.objects.values(mult_name).annotate(Count(mult_name))  # this is a count(*), group_by query!
+        results = (table_model.objects.values(mult_name)
+                   .annotate(Count(mult_name)))
 
-        user_table = search.views.getUserQueryTable(selections,extras)
+        user_table = get_user_query_table(selections, extras)
 
-        if has_selections and not user_table:
+        if selections and not user_table:
+            log.error('api_get_mult_counts: has selections but no user_table '
+                      +'found *** Selections %s *** Extras %s',
+                      str(selections), str(extras))
+            exit_api_call(api_code, Http404)
+            raise Http404
+
+        if selections:
             # selections are constrained so join in the user_table
-            log.error('getValidMults has_selections = true but no user_table found:')
-            log.error(".. Selections: %s", str(selections))
-            log.error(".. Extras: %s", str(extras))
-            raise Http404
+            if table_name == 'obs_general':
+                where = [connection.ops.quote_name(table_name) + '.id='
+                         + connection.ops.quote_name(user_table) + '.id']
+            else:
+                where = [connection.ops.quote_name(table_name)
+                         + '.obs_general_id='
+                         + connection.ops.quote_name(user_table) + '.id']
+            results = results.extra(where=where, tables=[user_table])
 
-        if table_name == 'obs_general':
-            where = table_name + ".id = " + user_table + ".id"
-        else:
-            where = table_name + ".obs_general_id = " + user_table + ".id"
-        results = results.extra(where=[where],tables=[user_table])
-
+        mult_result_list = []
         for row in results:
             mult_id = row[mult_name]
-
             try:
-                try:
-                    mult = mult_model.objects.get(id=mult_id).label
-                except:
-                    log.error('Could not find mult label for id %s mult_model %s', str(mult_id), str(mult_model))
-                    log.error('.. URL: %s', request.GET)
-                    log.error('.. Slug: %s', slug)
-                    log.error('.. Selections: %s', str(selections))
-                    log.error('.. Extras: %s', str(extras))
-                    log.error('.. Query: %s', str(where))
-                    log.error('.. Row: %s', str(row))
-                    mult = mult_id  # fall back to id if there is no label
+                mult = mult_model.objects.get(id=mult_id)
+                mult_disp_order = mult.disp_order
+                mult_label = mult.label
+            except ObjectDoesNotExist:
+                log.error('api_get_mult_counts: Could not find mult entry for '
+                          +'mult_model %s id %s', str(mult_model), str(mult_id))
+                mult_label = str(mult_id)
+                mult_disp_order = 0
 
-                mults[mult] = row[mult_name + '__count']
-            except: pass # a none object may be found in the data but if it doesn't have a table row we don't handle it
+            mult_result_list.append((mult_disp_order,
+                                     (mult_label,
+                                      row[mult_name + '__count'])))
+        mult_result_list.sort()
 
-        cache.set(cache_key,mults)
+        mults = OrderedDict()  # info to return
+        for _, mult_info in mult_result_list:
+            mults[mult_info[0]] = mult_info[1]
 
-    multdata = { 'field': slug,
-                 'mults': mults }
+        cache.set(cache_key, mults)
+
+    multdata = {'field': slug,
+                'mults': mults }
 
     if (request.is_ajax()):
-        reqno = request.GET.get('reqno','')
+        reqno = request.GET.get('reqno', '')
         multdata['reqno'] = reqno
 
-    return responseFormats(multdata, fmt, template='mults.html')
+    ret = responseFormats(multdata, fmt, template='metadata/mults.html')
+    exit_api_call(api_code, ret)
+    return ret
 
 
 def api_get_range_endpoints(request, slug, fmt='json'):
@@ -244,22 +246,34 @@ def api_get_range_endpoints(request, slug, fmt='json'):
     floating point values when we want to force a particular display format
     (such as full-length numbers instead of exponential notation).
     """
-    update_metrics(request)
     api_code = enter_api_call('api_get_range_endpoints', request)
 
-    param_info = search.views.get_param_info_by_slug(slug)
+    if not request or request.GET is None:
+        ret = Http404('No request')
+        exit_api_call(api_code, ret)
+        raise ret
+
+    param_info = get_param_info_by_slug(slug)
     if not param_info:
         log.error('get_range_endpoints: Could not find param_info entry for '+
                   'slug %s', str(slug))
-        exit_api_call(api_code, None)
-        raise Http404
+        ret = Http404('Unknown slug')
+        exit_api_call(api_code, ret)
+        raise ret
 
     param_name = param_info.name # Just name
     full_param_name = param_info.param_name() # category.name
     (form_type, form_type_func,
      form_type_format) = parse_form_type(param_info.form_type)
     table_name = param_info.category_name
-    table_model = apps.get_model('search', table_name.title().replace('_',''))
+    try:
+        table_model = apps.get_model('search',
+                                     table_name.title().replace('_',''))
+    except LookupError:
+        log.error('api_get_range_endpoints: Could not get_model for %s',
+                  table_name.title().replace('_',''))
+        exit_api_call(api_code, Http404)
+        raise Http404
 
     param_no_num = strip_numeric_suffix(param_name)
     param1 = param_no_num + '1'
@@ -268,13 +282,13 @@ def api_get_range_endpoints(request, slug, fmt='json'):
     if form_type == 'RANGE' and param_info.slug[-1] not in '12':
         param1 = param2 = param_no_num  # single column range query
 
-    # XXX What can cause this TypeError? The enclosed functions should be more
-    # careful about what they do.
-    try:
-        (selections, extras) = search.views.urlToSearchParams(request.GET)
-    except TypeError:
-        selections = {}
-        user_table = False
+    (selections, extras) = url_to_search_params(request.GET)
+    if selections is None:
+        log.error('api_get_range_endpoints: Could not find selections for '
+                  +'request %s', str(request.GET))
+        ret = Http404('Parsing of selections failed')
+        exit_api_call(api_code, ret)
+        raise ret
 
     # Remove this param from the user's query if it is constrained.
     # This keeps the green hinting numbers from reacting to changes to its
@@ -286,50 +300,51 @@ def api_get_range_endpoints(request, slug, fmt='json'):
         if to_remove in selections:
             del selections[to_remove]
     if selections:
-        user_table = search.views.getUserQueryTable(selections, extras)
+        user_table = get_user_query_table(selections, extras)
+        if user_table is None:
+            log.error('api_get_range_endpoints: Count not retrieve query table'
+                      +' for *** Selections %s *** Extras %s',
+                      str(selections), str(extras))
+            ret = Http404('Parsing of selections failed')
+            exit_api_call(api_code, ret)
+            raise ret
     else:
-        user_table = False
+        user_table = None
 
     # Is this result already cached?
-    cache_key  = "rangeep" + param_name_no_num
+    cache_key = 'rangeep:' + param_name_no_num
     if user_table:
-        cache_key += str(search.views.setUserSearchNo(selections, extras))
+        cache_key += str(set_user_search_number(selections, extras))
 
-    if cache.get(cache_key) is not None:
-        range_endpoints = cache.get(cache_key)
-        return responseFormats(range_endpoints, fmt, template='mults.html')
+    cached_val = cache.get(cache_key)
+    if cached_val is not None:
+        ret = responseFormats(cached_val, fmt, template='metadata/mults.html')
+        exit_api_call(api_code, ret)
+        return ret
 
     # We didn't find a cache entry, so calculate the endpoints
-    try:
-        results = table_model.objects # this is a count(*), group_by query
-    except AttributeError, e:
-        log.error('get_range_endpoints threw: %s', str(e))
-        log.error('Could not find table model for table_name: %s', table_name)
-        exit_api_call(api_code, None)
-        raise Http404('Does Not Exist')
+    results = table_model.objects
 
     if selections:
         # There are selections, so tie the query to user_table
         if table_name == 'obs_general':
-            where = '%s.id = %s.id' % (table_name, user_table)
+            where = (connection.ops.quote_name(table_name) + '.id='
+                     + connection.ops.quote_name(user_table) + '.id')
         else:
-            where = '%s.obs_general_id = %s.id' % (table_name, user_table)
-
+            where = (connection.ops.quote_name(table_name)
+                     + '.obs_general_id='
+                     + connection.ops.quote_name(user_table) + '.id')
         range_endpoints = (results.extra(where=[where], tables=[user_table]).
                            aggregate(min=Min(param1), max=Max(param2)))
 
-        # Count of nulls
-        where = where+' and '+param1+' is null and '+param2+' is null'
+        where += ' AND ' + param1 + ' IS NULL AND ' + param2 + ' IS NULL'
         range_endpoints['nulls'] = results.extra(where=[where],
                                                  tables=[user_table]).count()
-
     else:
         # There are no selections, so hit the whole table
-        range_endpoints = results.all().aggregate(min = Min(param1),
-                                                  max = Max(param2))
-
-        # Count of nulls
-        where = param1+' is null and '+param2+' is null '
+        range_endpoints = results.all().aggregate(min=Min(param1),
+                                                  max=Max(param2))
+        where = param1 + ' IS NULL AND ' + param2 + ' IS NULL'
         range_endpoints['nulls'] = results.all().extra(where=[where]).count()
 
     if form_type_func is not None:
@@ -369,16 +384,15 @@ def api_get_range_endpoints(request, slug, fmt='json'):
         except TypeError:
             pass
 
-    # save this in cache
-    cache.set(cache_key,range_endpoints)
+    cache.set(cache_key, range_endpoints)
 
-    ret = responseFormats(range_endpoints, fmt, template='mults.html')
+    ret = responseFormats(range_endpoints, fmt, template='metadata/mults.html')
     exit_api_call(api_code, ret)
     return ret
 
 
 
-def api_get_fields(request, fmt='json', field='', category=''):
+def api_get_fields(request, fmt='json', field=''):
     """Return information about fields in the database (slugs).
 
     This is helper method for people using the public API.
@@ -399,10 +413,14 @@ def api_get_fields(request, fmt='json', field='', category=''):
                 label: "Solar Hour Angle"
             }
     """
-    update_metrics(request)
     api_code = enter_api_call('api_get_fields', request)
 
-    ret = get_fields_info(fmt, field, category)
+    if not request or request.GET is None:
+        ret = Http404('No request')
+        exit_api_call(api_code, ret)
+        raise ret
+
+    ret = get_fields_info(fmt, field, collapse=True)
 
     exit_api_call(api_code, ret)
     return ret
@@ -414,25 +432,15 @@ def api_get_fields(request, fmt='json', field='', category=''):
 #
 ################################################################################
 
-def getMultName(param_name):
-    """ pass param_name, returns mult widget foreign key table name
-        the tables themselves are in the search/models.py """
-    return "mult_" + '_'.join(param_name.split('.'))
-
-def getUserSearchTableName(no):
-    """ pass cache_no, returns user search table name"""
-    return 'cache_' + str(no);
-
 def get_fields_info(fmt, field='', category='', collapse=False):
     "Helper routine for api_get_fields."
     cache_key = 'getFields:field:' + field + ':category:' + category
-    if cache.get(cache_key):
-        return_obj = cache.get(cache_key)
-    else:
+    return_obj = cache.get(cache_key)
+    if return_obj is None:
         if field:
             fields = ParamInfo.objects.filter(slug=field)
         elif category:
-            fields = ParamInfo.objects.filter(category_name=field)
+            fields = ParamInfo.objects.filter(category_name=category)
         else:
             fields = ParamInfo.objects.all()
         fields.order_by('category_name', 'slug')
@@ -441,7 +449,6 @@ def get_fields_info(fmt, field='', category='', collapse=False):
         # surface geometry down to a single target version to save screen
         # space. This is a horrible hack, but for right now we just assume
         # there will always be surface geometry data for Saturn.
-        # build return objects
         return_obj = OrderedDict()
         for f in fields:
             if (collapse and
@@ -451,9 +458,12 @@ def get_fields_info(fmt, field='', category='', collapse=False):
             entry = OrderedDict()
             table_name = TableNames.objects.get(table_name=f.category_name)
             entry['label'] = f.label_results
+            collapsed_slug = f.slug
             if collapse:
-                entry['category'] = table_name.label.replace('Saturn', '<TARGET>')
-                entry['slug'] = f.slug.replace('saturn', '<TARGET>')
+                entry['category'] = table_name.label.replace('Saturn',
+                                                             '<TARGET>')
+                collapsed_slug = entry['slug'] = f.slug.replace('saturn',
+                                                                '<TARGET>')
             else:
                 entry['category'] = table_name.label
                 entry['slug'] = f.slug
@@ -461,7 +471,7 @@ def get_fields_info(fmt, field='', category='', collapse=False):
                 entry['old_slug'] = f.old_slug.replace('saturn', '<TARGET>')
             else:
                 entry['old_slug'] = f.old_slug
-            return_obj[f.slug] = entry
+            return_obj[collapsed_slug] = entry
 
         cache.set(cache_key, return_obj)
 

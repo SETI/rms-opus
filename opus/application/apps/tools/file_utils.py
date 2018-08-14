@@ -149,7 +149,7 @@ def get_pds_products(opus_id_list=None, fmt='raw', loc_type='url',
         return results
 
     return app_utils.responseFormats({'data': results}, fmt,
-                                     template='list.html')
+                                     template='results/list.html')
     # if fmt == 'json':
     #     return HttpResponse(json.dumps({'data': results}),
     #                                    content_type='application/json')

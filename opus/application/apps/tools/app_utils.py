@@ -243,3 +243,8 @@ def convert_ring_obs_id_to_opus_id(ring_obs_id):
         return ring_obs_id
 
     return ring_obs_id
+
+def get_mult_name(param_name):
+    """ pass param_name, returns mult widget foreign key table name
+        the tables themselves are in the search/models.py """
+    return 'mult_' + '_'.join(param_name.split('.'))

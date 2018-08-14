@@ -91,7 +91,7 @@ def api_init_detail_page(request, **kwargs):
     # reference HTML tags based on what it thinks of as the right name (the
     # old ring_obs_id). Thus we go ahead and name the appropriate HTML tag using
     # the user-provided name, whatever format it's in.
-    
+
     try:
         obs_general = ObsGeneral.objects.get(opus_id=opus_id)
     except ObjectDoesNotExist:
@@ -212,7 +212,7 @@ def getMenuLabels(request, labels_view):
 
     if request and request.GET:
         try:
-            (selections,extras) = urlToSearchParams(request.GET)
+            (selections,extras) = url_to_search_params(request.GET)
         except TypeError:
             selections = None
     else:
@@ -321,7 +321,7 @@ def api_get_widget(request, **kwargs):
 
     if (request.GET):
         try:
-            (selections,extras) = urlToSearchParams(request.GET)
+            (selections,extras) = url_to_search_params(request.GET)
         except TypeError: pass
 
     addlink = request.GET.get('addlink',True) # suppresses the add_str link
@@ -439,7 +439,7 @@ def api_get_widget(request, **kwargs):
         if param_name in selections:
             values = selections[param_name]
         # determine if this mult param has a grouping field (see doc/group_widgets.md for howto on grouping fields)
-        mult_param = getMultName(param_name)
+        mult_param = get_mult_name(param_name)
         model      = apps.get_model('search',mult_param.title().replace('_',''))
 
         if values is not None:

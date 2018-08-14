@@ -1,5 +1,8 @@
 from django.apps import apps
 
+MYSQL_TABLE_NOT_EXISTS = 1146
+MYSQL_TABLE_ALREADY_EXISTS = 1050
+
 def table_model_from_name(table_name):
     "Given a table name (obs_pds) return the Django model class (ObsPds)"
     model_name = ''.join(table_name.title().split('_'))
