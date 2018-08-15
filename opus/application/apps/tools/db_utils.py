@@ -1,5 +1,10 @@
 from django.apps import apps
 
+import settings
+
+from app_utils import get_mult_name, parse_form_type
+
+
 MYSQL_TABLE_NOT_EXISTS = 1146
 MYSQL_TABLE_ALREADY_EXISTS = 1050
 
@@ -20,3 +25,22 @@ def query_table_for_opus_id(table_name, opus_id):
     if table_name == 'obs_general':
         return table_model.objects.filter(opus_id=opus_id)
     return table_model.objects.filter(obs_general__opus_id=opus_id)
+
+def lookup_pretty_value_for_mult(param_info, value):
+    if param_info.form_type is None:
+        return None
+
+    (form_type, form_type_func,
+     form_type_format) = parse_form_type(param_info.form_type)
+
+    if form_type not in settings.MULT_FIELDS:
+        return None
+
+    param_name = param_info.param_name()
+    mult_param = get_mult_name(param_name)
+    model      = apps.get_model('search', mult_param.title().replace('_',''))
+
+    results = model.objects.filter(id=value).values('label')
+    if not results:
+        return None
+    return results[0]['label']

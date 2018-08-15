@@ -219,6 +219,9 @@ def parse_form_type(s):
         TYPE:function
         TYPE%format
     """
+    if s is None:
+        return None, None, None
+        
     form_type = s
     form_type_func = None
     form_type_format = None

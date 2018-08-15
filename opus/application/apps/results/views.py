@@ -173,23 +173,16 @@ def _api_get_metadata(api_name, request, opus_id, fmt):
         model_name = ''.join(table_name.title().split('_'))
 
         # Make a list of all slugs and another of all param_names in this table
-        param_info_obj = (ParamInfo.objects.filter(category_name=table_name,
-                                                   display_results=1)
-                                           .order_by('disp_order'))
-        all_slugs = [param.slug for param in param_info_obj]
-        all_param_names = [param.name for param in param_info_obj]
+        param_info_list = list(ParamInfo.objects.filter(category_name=table_name,
+                                                        display_results=1)
+                                                .order_by('disp_order'))
+        if param_info_list:
+            for param_info in param_info_list:
+                if api_name == 'api_get_metadata':
+                    all_info[param_info.name] = param_info
+                else:
+                    all_info[param_info.slug] = param_info
 
-        for k, slug in enumerate(all_slugs):
-            # Don't need to look at old_slug here because WE generated the
-            # list of valid slugs above.
-            param_info = ParamInfo.objects.get(slug=slug)
-            param = param_info.name
-            if api_name == 'api_get_metadata':
-                all_info[param] = param_info
-            else:
-                all_info[slug] = param_info
-
-        if all_param_names:
             try:
                 results = query_table_for_opus_id(table_name, opus_id)
             except LookupError:
@@ -198,17 +191,31 @@ def _api_get_metadata(api_name, request, opus_id, fmt):
                 exit_api_call(api_code, Http404)
                 raise Http404
 
-            results = results.values(*all_param_names)
-            if len(results):
-                result = results[0]
-                ordered_results = OrderedDict()
-                for slug, param in zip(all_slugs, all_param_names):
-                    if api_name == 'api_get_metadata':
-                        ordered_results[param] = result[param]
-                    else:
-                        if slug is not None:
-                            ordered_results[slug] = result[param]
-                data[table_label] = ordered_results
+            all_param_names = [p.name for p in param_info_list]
+            result_vals = results.values(*all_param_names)
+            if not result_vals:
+                # This is normal - we're looking at ALL tables so many won't
+                # have this OPUS_ID in them.
+                continue
+            result_vals = result_vals[0]
+            ordered_results = OrderedDict()
+            for param_info in param_info_list:
+                (form_type, form_type_func,
+                 form_type_format) = parse_form_type(param_info.form_type)
+
+                if (form_type in settings.MULT_FIELDS and
+                    api_name == 'api_get_metadata_v2'):
+                    mult_name = get_mult_name(param_info.param_name())
+                    mult_val = results.values(mult_name)[0][mult_name]
+                    result = lookup_pretty_value_for_mult(param_info, mult_val)
+                else:
+                    result = result_vals[param_info.name]
+                if api_name == 'api_get_metadata':
+                    ordered_results[param_info.name] = result
+                else:
+                    if param_info.slug is not None:
+                        ordered_results[param_info.slug] = result
+            data[table_label] = ordered_results
 
     if fmt == 'html':
         # hack because we want to display labels instead of param names
@@ -822,7 +829,7 @@ def _get_metadata_by_slugs(request, opus_id, slugs, fmt, use_param_names):
                       +'for slug %s', str(slug))
             return None
         table_name = param_info.category_name
-        (params_by_table.setdefault(table_name, []).append(param_info.name))
+        params_by_table.setdefault(table_name, []).append((param_info, slug))
         # Note we are intentionally using "slug" here instead of
         # param_info.slug, which means we might get an old slug and index with
         # it. But at least that way the requested column and the given result
@@ -831,20 +838,30 @@ def _get_metadata_by_slugs(request, opus_id, slugs, fmt, use_param_names):
 
     data_dict = {}
 
-    for table_name, param_list in params_by_table.items():
+    for table_name, param_info_slug_list in params_by_table.items():
         try:
             results = query_table_for_opus_id(table_name, opus_id)
         except LookupError:
             continue
-        results = results.values(*param_list)
-
         if not results:
             # this opus_id doesn't exist in this table, log this..
             log.error('_get_metadata_by_slugs: Could not find opus_id %s in '
                       +'table %s', opus_id, table_name)
             return None
-        for param, value in results[0].items():
-            data_dict[param] = value
+        for param_info, slug in param_info_slug_list:
+            (form_type, form_type_func,
+             form_type_format) = parse_form_type(param_info.form_type)
+
+            if form_type in settings.MULT_FIELDS and not use_param_names:
+                mult_name = get_mult_name(param_info.param_name())
+                mult_val = results.values(mult_name)[0][mult_name]
+                result = lookup_pretty_value_for_mult(param_info, mult_val)
+            else:
+                result = results.values(param_info.name)[0][param_info.name]
+            if use_param_names:
+                data_dict[param_info.name] = result
+            else:
+                data_dict[slug] = result
 
     # Now put them in the right order
     data = []
@@ -853,7 +870,7 @@ def _get_metadata_by_slugs(request, opus_id, slugs, fmt, use_param_names):
         if use_param_names:
             data.append({param_name: data_dict[param_name]})
         else:
-            data.append({slug: data_dict[param_name]})
+            data.append({slug: data_dict[slug]})
 
     if fmt == 'html':
         if use_param_names:
