@@ -1,34 +1,30 @@
-################################################
-#
-#   results.views
-#
-#    gallery and details pages
-#       page numbers, pictures, details, triggered tables, etc
-#
-################################################
-import settings
-import json
+# results/view.py
+from collections import OrderedDict
 import csv
-from django.template import loader, Context
+import json
+import logging
+
+import settings
+
+from django.apps import apps
+from django.core.cache import cache
+from django.core.exceptions import FieldError
+from django.db import connection
 from django.http import Http404
 from django.shortcuts import render
-from collections import OrderedDict
-from django.db import connection, DatabaseError
-from django.apps import apps
-from django.core.exceptions import FieldError
-from search.views import *
-from search.models import *
-from paraminfo.models import *
-from metadata.views import *
-from metrics.views import update_metrics
 from django.views.decorators.cache import never_cache
+
+# from metadata.views import *
+from paraminfo.models import *
+from search.models import *
+from search.views import (get_param_info_by_slug,
+                          get_user_query_table,
+                          url_to_search_params)
 from user_collections.models import Collections
-
 from tools.app_utils import *
-from tools.file_utils import *
 from tools.db_utils import *
+from tools.file_utils import *
 
-import logging
 log = logging.getLogger(__name__)
 
 
@@ -66,10 +62,17 @@ def api_get_data(request, fmt):
                 'page':    page         # tabular page data
                }
     """
-    update_metrics(request)
     api_code = enter_api_call('api_get_data', request)
 
+    if not request or request.GET is None:
+        ret = Http404('No request')
+        exit_api_call(api_code, ret)
+        raise ret
+
     ret = get_data(request, fmt)
+    if ret is None:
+        exit_api_call(api_code, Http404)
+        raise Http404
 
     exit_api_call(api_code, ret)
     return ret
@@ -92,97 +95,132 @@ def api_get_metadata(request, opus_id, fmt):
 
     Can return JSON, ZIP, HTML, or CSV.
 
+    JSON is indexed by pretty category name, then by INTERNAL DATABASE COLUMN
+    NAME (EEK!).
+    """
+    return _api_get_metadata('api_get_metadata', request, opus_id, fmt)
+
+def api_get_metadata_v2(request, opus_id, fmt):
+    """Return all metadata, sorted by category, for this opus_id.
+
+    Format: api/metadata/(?P<opus_id>[-\w]+).(?P<fmt>[json|html]+
+
+    Arguments: cols=<columns>
+                    Limit results to particular columns.
+                    This is a list of slugs separated by commas. Note that the
+                    return will be indexed by field name, but by slug name.
+                    If cols is supplied, cats is ignored.
+               cats=<cats>
+                    Limit results to particular categories. Categories can be
+                    given as "pretty names" as displayed on the Details page,
+                    or can be given as table names.
+
+    Can return JSON, ZIP, HTML, or CSV.
+
     JSON is indexed by pretty category name, then by field slug.
     """
-    update_metrics(request)
-    api_code = enter_api_call('api_get_metadata', request)
+    return _api_get_metadata('api_get_metadata_v2', request, opus_id, fmt)
+
+def _api_get_metadata(api_name, request, opus_id, fmt):
+    api_code = enter_api_call(api_name, request)
+
+    if not request or request.GET is None:
+        ret = Http404('No request')
+        exit_api_call(api_code, ret)
+        raise ret
 
     if not opus_id:
-        raise Http404
+        ret = Http404('No OPUS ID')
+        exit_api_call(api_code, ret)
+        raise ret
 
     # Backwards compatibility
     opus_id = convert_ring_obs_id_to_opus_id(opus_id)
 
-    slugs = None
-    try:
-        slugs = request.GET.get('cols', False)
-    except AttributeError:
-        pass  # No request was sent
-    if slugs:
-        ret = _get_metadata_by_slugs(request, opus_id, slugs.split(','),
-                                     fmt)
+    cols = request.GET.get('cols', False)
+    if cols:
+        ret = _get_metadata_by_slugs(request, opus_id, cols.split(','),
+                                     fmt,
+                                     use_param_names=
+                                        (api_name=='api_get_metadata'))
+        if ret is None:
+            exit_api_call(api_code, Http404)
+            raise Http404
         exit_api_call(api_code, ret)
         return ret
 
-    try:
-        cats = request.GET.get('cats', False)
-    except AttributeError:
-        cats = None  # No request was sent
+    cats = request.GET.get('cats', False)
 
-    data = OrderedDict()     # holds data struct to be returned
-    all_info = OrderedDict() # holds all the param info objects
+    data = OrderedDict()     # Holds data struct to be returned
+    all_info = OrderedDict() # Holds all the param info objects
 
-    # find all the tables (categories) this observation belongs to,
     if not cats:
-        all_tables = TableNames.objects.filter(display='Y').order_by('disp_order')
+        # Find all the tables (categories) this observation belongs to
+        all_tables = (TableNames.objects.filter(display='Y')
+                      .order_by('disp_order'))
     else:
-        # restrict table to those found in cats
-        all_tables = ((TableNames.objects.filter(label__in=cats.split(','), display='Y') |
-                       TableNames.objects.filter(table_name__in=cats.split(','), display='Y'))
+        # Restrict tables to those found in cats
+        all_tables = ((TableNames.objects.filter(label__in=cats.split(','),
+                                                 display='Y') |
+                       TableNames.objects.filter(table_name__in=cats.split(','),
+                                                 display='Y'))
                       .order_by('disp_order'))
 
-    # now find all params and their values in each of these tables:
+    # Now find all params and their values in each of these tables
     for table in all_tables:
         table_label = table.label
         table_name = table.table_name
         model_name = ''.join(table_name.title().split('_'))
 
-        # make a list of all slugs and another of all param_names in this table
-        all_slugs = [param.slug for param in ParamInfo.objects.filter(category_name=table_name, display_results=1).order_by('disp_order')]
-        all_param_names = [param.name for param in ParamInfo.objects.filter(category_name=table_name, display_results=1).order_by('disp_order')]
+        # Make a list of all slugs and another of all param_names in this table
+        param_info_obj = (ParamInfo.objects.filter(category_name=table_name,
+                                                   display_results=1)
+                                           .order_by('disp_order'))
+        all_slugs = [param.slug for param in param_info_obj]
+        all_param_names = [param.name for param in param_info_obj]
 
         for k, slug in enumerate(all_slugs):
-            # Don't need to look for at old_slug here because WE generated the
+            # Don't need to look at old_slug here because WE generated the
             # list of valid slugs above.
             param_info = ParamInfo.objects.get(slug=slug)
-            name = param_info.name
-            all_info[name] = param_info
+            param = param_info.name
+            if api_name == 'api_get_metadata':
+                all_info[param] = param_info
+            else:
+                all_info[slug] = param_info
 
         if all_param_names:
             try:
-                try:
-                    results = query_table_for_opus_id(table_name, opus_id)
-                except LookupError:
-                    log.error("Could not find data model for category %s", model_name)
-                    break
-                results = results.values(*all_param_names)[0]
+                results = query_table_for_opus_id(table_name, opus_id)
+            except LookupError:
+                log.error('api_get_metadata: Could not find data model for '
+                          +'category %s', model_name)
+                exit_api_call(api_code, Http404)
+                raise Http404
 
-                # results is an ordinary dict so here to make sure we have the correct ordering:
-                ordered_results = OrderedDict({})
-                for param in all_param_names:
-                    ordered_results[param] = results[param]
-
+            results = results.values(*all_param_names)
+            if len(results):
+                result = results[0]
+                ordered_results = OrderedDict()
+                for slug, param in zip(all_slugs, all_param_names):
+                    if api_name == 'api_get_metadata':
+                        ordered_results[param] = result[param]
+                    else:
+                        if slug is not None:
+                            ordered_results[slug] = result[param]
                 data[table_label] = ordered_results
-
-            except IndexError:
-                # this is pretty normal, it will check every table for a ring obs id
-                # a lot of observations do not appear in a lot of tables..
-                # for example something on jupiter won't appear in a saturn table..
-                # log.error('IndexError: no results found for {0} in table {1}'.format(opus_id, table_name) )
-                pass  # no results found in this table, move along
-            except AttributeError:
-                log.error('AttributeError: No results found for opus_id %s in table %s', opus_id, table_name)
-                pass  # no results found in this table, move along
-            except FieldError:
-                log.error('FieldError: No results found for opus_id %s in table %s', opus_id, table_name)
-                pass  # no results found in this table, move along
 
     if fmt == 'html':
         # hack because we want to display labels instead of param names
-        # on our html Detail page
-        ret = render(request, 'results/detail_metadata.html',locals())
+        # on our HTML Detail page
+        context = {'data': data,
+                   'all_info': all_info}
+        if api_name == 'api_get_metadata':
+            ret = render(request, 'results/detail_metadata.html', context)
+        else:
+            ret = render(request, 'results/detail_metadata_v2.html', context)
     if fmt == 'json':
-        ret = HttpResponse(json.dumps(data), content_type="application/json")
+        ret = HttpResponse(json.dumps(data), content_type='application/json')
     if fmt == 'raw':
         ret = data, all_info  # includes definitions for opus interface
 
@@ -194,41 +232,38 @@ def api_get_metadata(request, opus_id, fmt):
 def api_get_images_by_size(request, size, fmt):
     """Return all images of a particular size for a given search.
 
-    NOTE: THIS IS ONLY PROVIDED FOR BACKWARDS COMPATIBILITY. NEW
-          APPLICATIONS SHOULD USE /api/images.json
-
     Format: api/images/(?P<size>[thumb|small|med|full]+).
             (?P<fmt>[json|zip|html|csv]+)
     Arguments: limit=<N>
                page=<N>
                order=<column>
-               Normal search and selected-column arguments
+               Normal search arguments
 
     Can return JSON, ZIP, HTML, or CSV.
-
-    XXX What is alt_size?
-    XXX Why do we have columns when just returning images?
     """
-    update_metrics(request)
     api_code = enter_api_call('api_get_images_by_size', request)
+
+    if not request or request.GET is None:
+        ret = Http404('No request')
+        exit_api_call(api_code, ret)
+        raise ret
 
     session_id = get_session_id(request)
 
-    alt_size = request.GET.get('alt_size', '')
-    columns = request.GET.get('cols', settings.DEFAULT_COLUMNS)
-
-    try:
-        [page_no, limit, page, opus_ids, ring_obs_ids,
-         order] = get_page(request)
-    except TypeError:  # get_page returns False
-        log.error("404 error")
-        raise Http404('could not find page')
+    (page_no, limit, page, opus_ids, ring_obs_ids,
+     order) = get_page(request)
+    if page is None:
+        ret = Http404('Could not find page')
+        exit_api_call(api_code, ret)
+        raise ret
 
     image_list = get_pds_preview_images(opus_ids, [size])
 
     if not image_list:
-        log.error('get_images: No image found for: %s', str(opus_ids[:50]))
+        log.error('api_get_images_by_size: No image found for: %s',
+                  str(opus_ids[:50]))
 
+    # Backwards compatibility
     ring_obs_id_dict = {}
     for i in range(len(opus_ids)):
         ring_obs_id_dict[opus_ids[i]] = ring_obs_ids[i]
@@ -254,7 +289,6 @@ def api_get_images_by_size(request, size, fmt):
             del image[size+'_url']
 
     ret = responseFormats({'data': image_list}, fmt,
-                          alt_size=alt_size, columns_str=columns.split(','),
                           template='results/gallery.html', order=order)
     exit_api_call(api_code, ret)
     return ret
@@ -268,38 +302,38 @@ def api_get_images(request, fmt):
     Arguments: limit=<N>
                page=<N>
                order=<column>
-               Normal search and selected-column arguments
+               Normal search arguments
 
     Can return JSON, ZIP, HTML, or CSV.
-
-    XXX What is alt_size?
-    XXX Why do we have columns when just returning images?
     """
-    update_metrics(request)
     api_code = enter_api_call('api_get_images', request)
+
+    if not request or request.GET is None:
+        ret = Http404('No request')
+        exit_api_call(api_code, ret)
+        raise ret
 
     session_id = get_session_id(request)
 
-    alt_size = request.GET.get('alt_size', '')
     columns = request.GET.get('cols', settings.DEFAULT_COLUMNS)
 
-    try:
-        [page_no, limit, page, opus_ids, ring_obs_ids,
-         order] = get_page(request)
-    except TypeError:  # get_page returns False
-        log.error("404 error")
-        raise Http404('could not find page')
+    (page_no, limit, page, opus_ids, ring_obs_ids,
+     order) = get_page(request)
+    if page is None:
+        ret = Http404('Could not find page')
+        exit_api_call(api_code, ret)
+        raise ret
 
+    # Backwards compatibility
     ring_obs_id_dict = {}
     for i in range(len(opus_ids)):
         ring_obs_id_dict[opus_ids[i]] = ring_obs_ids[i]
 
-    # XXX This is horrid and needs to be fixed
     image_list = get_pds_preview_images(opus_ids,
                                         ['thumb', 'small', 'med', 'full'])
 
     if not image_list:
-        log.error('get_images: No image found for: %s', str(opus_ids[:50]))
+        log.error('api_get_images: No image found for: %s', str(opus_ids[:50]))
 
     collection_opus_ids = get_all_in_collection(request)
     for image in image_list:
@@ -311,7 +345,6 @@ def api_get_images(request, fmt):
             'limit': limit,
             'count': len(image_list)}
     ret = responseFormats(data, fmt,
-                          alt_size=alt_size, columns_str=columns.split(','),
                           template='results/gallery.html', order=order)
     exit_api_call(api_code, ret)
     return ret
@@ -327,17 +360,24 @@ def api_get_image(request, opus_id, size='med', fmt='raw'):
 
     The fields 'path' and 'img' are provided for backwards compatibility only.
     """
-    update_metrics(request)
     api_code = enter_api_call('api_get_image', request)
+
+    if not request or request.GET is None:
+        ret = Http404('No request')
+        exit_api_call(api_code, ret)
+        raise ret
 
     # Backwards compatibility
     opus_id = convert_ring_obs_id_to_opus_id(opus_id)
 
     image_list = get_pds_preview_images(opus_id, size)
     if len(image_list) != 1:
-        log.error('api_get_image: Could not find preview for opus_id "%s" size "%s"',
-                  str(opus_id), str(size))
-        image_list = []
+        log.error('api_get_image: Could not find preview for opus_id "%s" '
+                  +'size "%s"', str(opus_id), str(size))
+        ret = Http404('No preview image')
+        exit_api_call(api_code, ret)
+        raise ret
+
     image = image_list[0]
     path = None
     if size+'_url' in image:
@@ -366,8 +406,12 @@ def api_get_files(request, opus_id=None, fmt='json'):
 
     Can return JSON, ZIP, HTML, or CSV.
     """
-    update_metrics(request)
     api_code = enter_api_call('api_get_files', request)
+
+    if not request or request.GET is None:
+        ret = Http404('No request')
+        exit_api_call(api_code, ret)
+        raise ret
 
     product_types = request.GET.get('types', 'all')
     loc_type = request.GET.get('loc_type', 'url')
@@ -379,10 +423,13 @@ def api_get_files(request, opus_id=None, fmt='json'):
         opus_id = convert_ring_obs_id_to_opus_id(opus_id)
         opus_ids = [opus_id]
     else:
-        # no opus_id passed, get files from search results
+        # No opus_id passed, get files from search results
         # Override cols because we don't care about anything except
         # opusid
         data = get_data(request, 'raw', cols='opusid')
+        if data is None:
+            exit_api_call(api_code, Http404)
+            raise Http404
         opus_ids = [p[0] for p in data['page']]
         del data['page']
         del data['labels']
@@ -400,26 +447,32 @@ def api_get_categories_for_opus_id(request, opus_id):
 
     Format: api/categories/(?P<opus_id>[-\w]+).json
     """
-    update_metrics(request)
     api_code = enter_api_call('api_get_categories_for_opus_id', request)
+
+    if not request or request.GET is None:
+        ret = Http404('No request')
+        exit_api_call(api_code, ret)
+        raise ret
 
     # Backwards compatibility
     opus_id = convert_ring_obs_id_to_opus_id(opus_id)
 
     all_categories = []
-    table_info = TableNames.objects.all().values('table_name', 'label').order_by('disp_order')
+    table_info = (TableNames.objects.all().values('table_name', 'label')
+                  .order_by('disp_order'))
 
     for tbl in table_info:
         table_name = tbl['table_name']
         if table_name == 'obs_surface_geometry':
             # obs_surface_geometry is not a data table
-            # it's only used to select targets, not to hold data, so remove it
+            # It's only used to select targets, not to hold data, so remove it
             continue
 
         try:
             results = query_table_for_opus_id(table_name, opus_id)
         except LookupError:
-            log.error("Didn't find table %s", table_name)
+            log.error('api_get_categories_for_opus_id: Unable to find table '
+                      +'%s', table_name)
             continue
         results = results.values('opus_id')
         if results:
@@ -427,7 +480,7 @@ def api_get_categories_for_opus_id(request, opus_id):
             all_categories.append(cat)
 
     ret = HttpResponse(json.dumps(all_categories),
-                     content_type="application/json")
+                       content_type="application/json")
     exit_api_call(api_code, ret)
     return ret
 
@@ -439,30 +492,38 @@ def api_get_categories_for_search(request):
 
     Arguments: Normal search arguments
     """
-    update_metrics(request)
     api_code = enter_api_call('api_get_categories_for_search', request)
 
-    if request and request.GET:
-        (selections, extras) = url_to_search_params(request.GET)
-    else:
-        selections = None
+    if not request or request.GET is None:
+        ret = Http404('No request')
+        exit_api_call(api_code, ret)
+        raise ret
+
+    (selections, extras) = url_to_search_params(request.GET)
+    if selections is None:
+        log.error('api_get_categories_for_search: Could not find selections for'
+                  +' request %s', str(request.GET))
+        ret = Http404('Parsing of selections failed')
+        exit_api_call(api_code, ret)
+        raise ret
 
     if not selections:
-        triggered_tables = settings.BASE_TABLES[:]  # makes a copy of settings.BASE_TABLES
+        triggered_tables = settings.BASE_TABLES[:]  # Copy
     else:
         triggered_tables = get_triggered_tables(selections, extras)
 
-    # the main geometry table, obs_surface_geometry, is not table that holds results data
-    # it is only there for selecting targets, which then trigger the other geometry tables.
-    # so in the context of returning list of categories it gets removed..
-    try:
+    # The main geometry table, obs_surface_geometry, is not table that holds
+    # results data. It is only there for selecting targets, which then trigger
+    # the other geometry tables. So in the context of returning list of
+    # categories it gets removed.
+    if 'obs_surface_geometry' in triggered_tables:
         triggered_tables.remove('obs_surface_geometry')
-    except ValueError:
-        pass  # it wasn't in there so no worries
 
-    labels = TableNames.objects.filter(table_name__in=triggered_tables).values('table_name','label').order_by('disp_order')
+    labels = (TableNames.objects.filter(table_name__in=triggered_tables)
+              .values('table_name','label').order_by('disp_order'))
 
-    ret = HttpResponse(json.dumps([ob for ob in labels]), content_type="application/json")
+    ret = HttpResponse(json.dumps([ob for ob in labels]),
+                       content_type="application/json")
     exit_api_call(api_code, ret)
     return ret
 
@@ -491,36 +552,34 @@ def get_data(request, fmt, cols=None):
     session_id = get_session_id(request)
 
     (page_no, limit, page, opus_ids, ring_obs_ids, order) = get_page(request)
+    if page is None:
+        return None
 
     checkboxes = request.is_ajax()
 
-    if cols is not None:
-        slugs = cols
-    else:
-        slugs = request.GET.get('cols', settings.DEFAULT_COLUMNS)
-        if not slugs:
-            slugs = settings.DEFAULT_COLUMNS
+    if cols is None:
+        cols = request.GET.get('cols', settings.DEFAULT_COLUMNS)
 
     is_column_chooser = request.GET.get('col_chooser', False)
 
     labels = []
     id_index = None
 
-    for slug_no, slug in enumerate(slugs.split(',')):
+    for slug_no, slug in enumerate(cols.split(',')):
         if slug == 'opusid':
             id_index = slug_no
         pi = get_param_info_by_slug(slug, from_ui=True)
-	if not pi:
-            log.error('Could not find param_info for %s', slug)
+        if not pi:
+            log.error('get_data: Could not find param_info for %s', slug)
             continue
         labels.append(pi.label_results)
 
     if is_column_chooser:
-        labels.insert(0, "add")   # adds a column for checkbox add-to-collections
+        labels.insert(0, 'add') # adds a column for checkbox add-to-collections
 
     collection = ''
     if request.is_ajax():
-        # find the members of user collection in this page
+        # Find the members of user collection in this page
         # for pre-filling checkboxes
         collection = get_collection_in_page(opus_ids, session_id)
 
@@ -544,7 +603,6 @@ def get_data(request, fmt, cols=None):
 
 def get_page(request, colls=None, colls_page=None, page=None):
     """Return a page of results."""
-    # get some stuff from the url or fall back to defaults
     session_id = get_session_id(request)
 
     if not colls:
@@ -556,16 +614,16 @@ def get_page(request, colls=None, colls_page=None, page=None):
         collection_page = colls
 
     limit = int(request.GET.get('limit', settings.DEFAULT_PAGE_LIMIT))
-    slugs = request.GET.get('cols', settings.DEFAULT_COLUMNS)
+    cols = request.GET.get('cols', settings.DEFAULT_COLUMNS)
 
     column_names = []
     tables = set()
-    for slug in slugs.split(','):
+    for slug in cols.split(','):
         # First try the full name, which might include a trailing 1 or 2
         pi = get_param_info_by_slug(slug, from_ui=True)
         if not pi:
             log.error('get_page: Slug "%s" not found', slug)
-            continue
+            return (None, None, None, None, None, None)
         column = pi.param_name()
         table = column.split('.')[0]
         if column.endswith('.opus_id'):
@@ -587,26 +645,30 @@ def get_page(request, colls=None, colls_page=None, page=None):
         added_extra_columns += 1 # So we know to strip it off later
 
     # Figure out the sort order
-    order = None
+    all_order = None
     if collection_page:
-        order = request.GET.get('colls_order', settings.DEFAULT_SORT_ORDER)
-    if not order:
-        order = request.GET.get('order', settings.DEFAULT_SORT_ORDER)
-    order_param = None
-    descending = False
-    if order:
-        descending = order[0] == '-'
-        order = order.strip('-')
-        pi = get_param_info_by_slug(order, from_ui=True)
-	if not pi:
-            log.error('_get_page: Unable to resolve order slug "%s"', order)
-        else:
+        all_order = request.GET.get('colls_order', settings.DEFAULT_SORT_ORDER)
+    if not all_order:
+        all_order = request.GET.get('order', settings.DEFAULT_SORT_ORDER)
+    order_params = []
+    descending_params = []
+    if all_order:
+        orders = all_order.split(',')
+        for order in orders:
+            descending = order[0] == '-'
+            order = order.strip('-')
+            pi = get_param_info_by_slug(order, from_ui=True)
+            if not pi:
+                log.error('get_page: Unable to resolve order slug "%s"', order)
+                return (None, None, None, None, None, None)
             order_param = pi.param_name()
             table = order_param.split('.')[0]
             if order_param not in column_names:
                 tables.add(table)
                 column_names.append(order_param)
                 added_extra_columns += 1 # So we know to strip it off later
+            order_params.append(order_param)
+            descending_params.append(descending)
 
     # Figure out what page we're asking for
     if collection_page:
@@ -625,7 +687,7 @@ def get_page(request, colls=None, colls_page=None, page=None):
         except:
             log.error('get_page: Unable to parse page "%s"',
                       str(page_no))
-            page_no = 1
+            return (None, None, None, None, None, None)
 
     if not collection_page:
         # This is for a search query
@@ -635,14 +697,21 @@ def get_page(request, colls=None, colls_page=None, page=None):
         # it out. It's incredibly easy to do in raw SQL, so we just do that
         # instead. -RF
         (selections, extras) = url_to_search_params(request.GET)
+        if selections is None:
+            log.error('get_page: Could not find selections for'
+                      +' request %s', str(request.GET))
+            return (None, None, None, None, None, None)
+
         user_query_table = get_user_query_table(selections, extras)
         if not user_query_table:
-            log.error('get_page: get_user_query_table returned False')
-            return (0, 0, [], [], [], '')
+            log.error('get_page: get_user_query_table failed '
+                      +'*** Selections %s *** Extras %s',
+                      str(selections), str(extras))
+            return (None, None, None, None, None, None)
 
         sql = 'SELECT '
         sql += ','.join(column_names)
-        sql += ' FROM obs_general'
+        sql += ' FROM '+connection.ops.quote_name('obs_general')
 
         # All the column tables are LEFT JOINs because if the table doesn't
         # have an entry for a given opus_id, we still want the row to show up,
@@ -651,19 +720,19 @@ def get_page(request, colls=None, colls_page=None, page=None):
             if table == 'obs_general':
                 continue
             sql += ' LEFT JOIN '+connection.ops.quote_name(table)
-            sql += ' ON obs_general.id='+connection.ops.quote_name(table)
-            sql += '.obs_general_id'
+            sql += ' ON '+connection.ops.quote_name('obs_general')+'.id='
+            sql += connection.ops.quote_name(table)+'.obs_general_id'
 
         # But the cache table is a RIGHT JOIN because we only want opus_ids that
         # appear in the cache table to cause result rows
         sql += ' INNER JOIN '+connection.ops.quote_name(user_query_table)
-        sql += ' ON obs_general.id='+connection.ops.quote_name(user_query_table)
-        sql += '.id'
+        sql += ' ON '+connection.ops.quote_name('obs_general')+'.id='
+        sql += connection.ops.quote_name(user_query_table)+'.id'
     else:
-        # this is for a collection
+        # This is for a collection
         sql = 'SELECT '
         sql += ','.join(column_names)
-        sql += ' FROM obs_general'
+        sql += ' FROM '+connection.ops.quote_name('obs_general')
 
         # All the column tables are LEFT JOINs because if the table doesn't
         # have an entry for a given opus_id, we still want the row to show up,
@@ -672,20 +741,29 @@ def get_page(request, colls=None, colls_page=None, page=None):
             if table == 'obs_general':
                 continue
             sql += ' LEFT JOIN '+connection.ops.quote_name(table)
-            sql += ' ON obs_general.id='+connection.ops.quote_name(table)
+            sql += ' ON '+connection.ops.quote_name('obs_general')+'.id='
             sql += '.obs_general_id'
 
-        # But the cache table is a RIGHT JOIN because we only want opus_ids that
-        # appear in the cache table to cause result rows
-        sql += ' INNER JOIN collections'
-        sql += ' ON obs_general.id=collections.obs_general_id AND '
-        sql += 'collections.session_id="'+session_id+'"'
+        # But the collections table is a RIGHT JOIN because we only want
+        # opus_ids that appear in the collections table to cause result rows
+        sql += ' INNER JOIN '+connection.ops.quote_name('collections')
+        sql += ' ON '+connection.ops.quote_name('obs_general')+'.id='
+        sql += connection.ops.quote_name('collections')+'.obs_general_id'
+        sql += ' AND '
+        sql += connection.ops.quote_name('collections')+'.session_id='
+        sql += '"'+session_id+'"'
 
     # Add in the ordering
-    if order_param:
-        sql += ' ORDER BY '+order_param
-        if descending:
-            sql += ' DESC'
+    if order_params:
+        order_str_list = []
+        for i in range(len(order_params)):
+            s = order_params[i]
+            if descending_params[i]:
+                s += ' DESC'
+            else:
+                s += ' ASC'
+            order_str_list.append(s)
+        sql += ' ORDER BY ' + ','.join(order_str_list)
 
     """
     the limit is pretty much always 100, the user cannot change it in the interface
@@ -729,32 +807,29 @@ def get_page(request, colls=None, colls_page=None, page=None):
     results = [[x if x is not None else 'N/A' for x in r] for r in results]
 
     return (page_no, limit, results, opus_ids, ring_obs_ids,
-            ('-' if descending else '') + order)
+            all_order)
 
 
-def _get_metadata_by_slugs(request, opus_id, slugs, fmt):
-    """
-    returns results for specified slugs
-    """
-    params_by_table = {}  # params by table_name
-    data = []
-    all_info = {}
+def _get_metadata_by_slugs(request, opus_id, slugs, fmt, use_param_names):
+    "Returns results for specified slugs."
+    params_by_table = OrderedDict()
+    all_info = OrderedDict()
 
     for slug in slugs:
         param_info = get_param_info_by_slug(slug, from_ui=True)
         if not param_info:
-            log.error(
-        "get_metadata_by_slugs: Could not find param_info entry for slug %s",
-        str(slug))
-            continue  # todo this should raise end user error
+            log.error('_get_metadata_by_slugs: Could not find param_info entry '
+                      +'for slug %s', str(slug))
+            return None
         table_name = param_info.category_name
-        params_by_table.setdefault(table_name, []).append(param_info.param_name().split('.')[1])
-        all_info[slug] = param_info  # to get things like dictionary entries for interface
+        (params_by_table.setdefault(table_name, []).append(param_info.name))
+        # Note we are intentionally using "slug" here instead of
+        # param_info.slug, which means we might get an old slug and index with
+        # it. But at least that way the requested column and the given result
+        # will match for the user.
+        all_info[slug] = param_info
 
-    if slugs and not all_info:
-        # none of the slugs were valid slugs
-        # can't ignore them and return all metadata because can lead to infinite recursion here
-        raise Http404
+    data_dict = {}
 
     for table_name, param_list in params_by_table.items():
         try:
@@ -765,116 +840,112 @@ def _get_metadata_by_slugs(request, opus_id, slugs, fmt):
 
         if not results:
             # this opus_id doesn't exist in this table, log this..
-            log.error('Could not find opus_id %s in table %s', opus_id, table_name)
+            log.error('_get_metadata_by_slugs: Could not find opus_id %s in '
+                      +'table %s', opus_id, table_name)
+            return None
+        for param, value in results[0].items():
+            data_dict[param] = value
+
+    # Now put them in the right order
+    data = []
+    for slug in slugs:
+        param_name = all_info[slug].name
+        if use_param_names:
+            data.append({param_name: data_dict[param_name]})
         else:
-            for param,value in results[0].items():
-                data.append({param: value})
+            data.append({slug: data_dict[param_name]})
 
     if fmt == 'html':
-        return render(request, 'results/detail_metadata_slugs.html',locals())
+        if use_param_names:
+            template = 'results/detail_metadata_slugs.html'
+        else:
+            template = 'results/detail_metadata_slugs_v2.html'
+        return render(request, template,
+                      {'data': data,
+                       'all_info': all_info})
     if fmt == 'json':
         return HttpResponse(json.dumps(data), content_type="application/json")
     if fmt == 'raw':
-        return data, all_info  # includes definitions for opus interface
+        return data, all_info  # includes definitions for OPUS interface
 
 
-def get_triggered_tables(selections, extras=None):
-    """
-    this looks at user request and returns triggered tables as list
-    always returns the settings.BASE_TABLES
-    """
-    if not bool(selections):
+def get_triggered_tables(selections, extras):
+    "Returns the tables triggered by the selections including the base tables."
+    if not selections:
         return sorted(settings.BASE_TABLES)
 
-    # look for cache:
-    cache_no = get_user_query_table(selections, extras)
+    user_query_table = get_user_query_table(selections, extras)
+    if not user_query_table:
+        log.error('get_triggered_tables: get_user_query_table failed '
+                  +'*** Selections %s *** Extras %s',
+                  str(selections), str(extras))
+        return None
+
     cache_key = None
-    if cache_no:
-        cache_key = 'triggered_tables_' + str(cache_no)
-        if (cache.get(cache_key)):
-            return sorted(cache.get(cache_key))
+    if user_query_table:
+        cache_key = 'triggered_tables:' + user_query_table
+        cached_val = cache.get(cache_key)
+        if cached_val is not None:
+            return cached_val
 
-    # first add the base tables
-    triggered_tables = settings.BASE_TABLES[:]  # makes a copy of settings.BASE_TABLES
+    triggered_tables = settings.BASE_TABLES[:]
 
-    # this is a hack to do something special for the usability of the Surface Geometry section
-    # surface geometry is always triggered and showing by default,
-    # but for some instruments there is actually no data there.
-    # if one of those instruments is constrained directly - that is,
-    # one of these instruments is selected in the Instrument Name widget
-    # remove the geometry tab from the triggered tables
-
-    # instruments with no surface geo metadata:
-    # partables
-    fields_to_check = ['obs_general.instrument_id','obs_general.inst_host_id','obs_general.mission_id']
-    no_metadata = ['Hubble','CIRS','Galileo']
-    for field in fields_to_check:
-        if field not in selections:
-            continue
-        for inst in selections[field]:
-            for search_string in no_metadata:
-                if search_string in inst:
-                    try:
-                        triggered_tables.remove('obs_surface_geometry')
-                    except Exception as e:
-                        log.error("get_triggered_tables threw: %s", str(e))
-                        log.error(".. Selections: %s", str(selections))
-                        log.error(".. Field: %s", str(field))
-                        log.error(".. Inst: %s", str(inst))
-
-
-    # now see if any more tables are triggered from query
-    query_result_table = get_user_query_table(selections, extras)
-    queries = {}  # keep track of queries
+    # Now see if any more tables are triggered from query
+    queries = {}
     for partable in Partables.objects.all():
-        # we are joining the results of a user's query - the single column table of ids
-        # with the trigger_tab listed in the partable,
+        # We are joining the results of a user's query - the single column
+        # table of ids - with the trigger_tab listed in the partable
         trigger_tab = partable.trigger_tab
         trigger_col = partable.trigger_col
         trigger_val = partable.trigger_val
         partable = partable.partable
 
         if partable in triggered_tables:
-            continue  # already triggered, no need to check
-
-        # get query
-        # did we already do this query?
+            continue  # Already triggered, no need to check
 
         if trigger_tab + trigger_col in queries:
             results = queries[trigger_tab + trigger_col]
         else:
-            trigger_model = apps.get_model('search', ''.join(trigger_tab.title().split('_')))
+            trigger_model = apps.get_model('search',
+                                           ''.join(trigger_tab.title()
+                                                   .split('_')))
             results = trigger_model.objects
-            if query_result_table:
+            if selections:
                 if trigger_tab == 'obs_general':
-                    where   = trigger_tab + ".id = " + query_result_table + ".id"
+                    where = connection.ops.quote_name(trigger_tab) + '.id='
+                    where += user_query_table + '.id'
                 else:
-                    where   = trigger_tab + ".obs_general_id = " + query_result_table + ".id"
-                results = results.extra(where=[where], tables=[query_result_table])
+                    where = connection.ops.quote_name(trigger_tab)
+                    where += '.obs_general_id='
+                    where += connection.ops.quote_name(user_query_table) + '.id'
+                results = results.extra(where=[where], tables=[user_query_table])
             results = results.distinct().values(trigger_col)
             queries.setdefault(trigger_tab + trigger_col, results)
 
-        if (len(results) == 1) and (unicode(results[0][trigger_col]) == trigger_val):
-            # we has a triggered table
+        if len(results) == 1 and results[0][trigger_col] == trigger_val:
             triggered_tables.append(partable)
 
-        # surface geometry have multiple targets per observation
-        # so we just want to know if our val is in the result (not the only result)
+        # Surface geometry has multiple targets per observation
+        # so we just want to know if our val is in the result
+        # (not the only result)
         if 'obs_surface_geometry.target_name' in selections:
-            if trigger_tab == 'obs_surface_geometry' and trigger_val.upper() == selections['obs_surface_geometry.target_name'][0].upper():
-                if trigger_val.upper() in [r['target_name'].upper() for r in results]:
+            if (trigger_tab == 'obs_surface_geometry' and
+                trigger_val.upper() ==
+                selections['obs_surface_geometry.target_name'][0].upper()):
+                if (trigger_val.upper() in
+                    [r['target_name'].upper() for r in results]):
                     triggered_tables.append(partable)
 
-
-    # now hack in the proper ordering of tables
+    # Now hack in the proper ordering of tables
     final_table_list = []
-    for table in TableNames.objects.filter(table_name__in=triggered_tables).values('table_name').order_by('disp_order'):
+    for table in (TableNames.objects.filter(table_name__in=triggered_tables)
+                  .values('table_name').order_by('disp_order')):
         final_table_list.append(table['table_name'])
 
     if cache_key:
         cache.set(cache_key, final_table_list)
 
-    return sorted(final_table_list)
+    return final_table_list
 
 
 def get_all_in_collection(request):
@@ -887,15 +958,18 @@ def get_all_in_collection(request):
 
 
 def get_collection_in_page(opus_id_list, session_id):
-    """ returns obs_general_ids in page that are also in user collection
-        this is for views in results where you have to display the gallery
-        and indicate which thumbnails are in cart """
+    """Returns obs_general_ids in page that are also in user collection.
+
+    This is for views in results where you have to display the gallery
+    and indicate which thumbnails are in cart.
+    """
     if not session_id:
         return
 
     cursor = connection.cursor()
     collection_in_page = []
-    sql = 'SELECT DISTINCT opus_id FROM '+connection.ops.quote_name('collections')
+    sql = 'SELECT DISTINCT opus_id FROM '
+    sql += connection.ops.quote_name('collections')
     sql += ' WHERE session_id=%s'
     cursor.execute(sql, [session_id])
     rows = cursor.fetchall()

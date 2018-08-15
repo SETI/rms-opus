@@ -9,7 +9,7 @@ sections:
                 fmt: json,html,zip,csv
                 GET param 1: search params (If not supplied, all results are returned)
                 GET param 2: column params (If not supplied, default columns are used)
-                GET param 3: order=column_slug (Column to sort on; if not supplied, default sort order is used)
+                GET param 3: order=column_slug,... (Column(s) to sort on; if not supplied, default sort order is used)
                 GET param 4: limit=N (The maximum number of observations to return; defaults to 100; can be more than 100)
                 GET param 5: page=N (The 100-observation page number to start with; defaults to 1)
                 JSON return: "{'page_no': given page number, 'limit': given limit, 'count': number of observations returned, 'order': sort order, 'labels': selected column headers, 'page': data}. Data is a list of lists in the requested sort order with one list entry per column."
@@ -19,12 +19,13 @@ sections:
                   url: https://tools.pds-rings.seti.org/opus/api/data.json?instrumentid=Cassini+ISS&SURFACEGEOenceladusplanetographiclatitude1=70&SURFACEGEOenceladuscenterphaseangle1=160&order=time1&cols=opusid,target,time1,SURFACEGEOenceladuscenterphaseangle1
 
           - title: api/metadata/[opus_id].[fmt]
-            desc: Get all available, or particular, metadata for a single observation.
+            desc: Get all available, or particular, metadata for a single observation. NOTE - USE OF THIS API IS DEPRECATED. THIS IS BECAUSE RATHER THAN RETURNING THE SAME SLUG NAMES USED TO PERFORM SEARCHES, IT ERRONEOUSLY RETURNS INTERNAL DATABASE NAMES THAT ARE NOT DOCUMENTED. THESE INTERNAL NAMES MAY NOT BE UNIQUE AND COULD CAUSE PROBLEMS. PLEASE USE THE V2 VERSION OF THIS API BELOW INSTEAD.
             info:
                 opus_id: valid opus_id (or old ring_obs_id)
                 fmt: json,html,zip,csv
                 GET param 1: cols=<column names> (If supplied, only returns data for these columns; cats is ignored)
                 GET param 2: cats=<category names> (If supplied, only returns data for these categories)
+                JSON return: "If cols is supplied, a list of pairs {database_column: value}. Otherwise a list of pairs {category: data} where data is a list of pairs {database_column: value}."
             examples:
                 - desc: Single Cassini ISS Saturn Observation (all metadata)
                   url: https://tools.pds-rings.seti.org/opus/api/metadata/COISS_2111-1866071296_1866225122-N1866071296_1.json
@@ -33,13 +34,29 @@ sections:
                 - desc: Single Cassini ISS Saturn Observation (PDS and Images constraints only)
                   url: https://tools.pds-rings.seti.org/opus/api/metadata/COISS_2111-1866071296_1866225122-N1866071296_1.json?cats=PDS+Constraints,Image+Constraints
 
+          - title: api/metadata_v2/[opus_id].[fmt]
+            desc: Get all available, or particular, metadata for a single observation. NOTE - THIS IS THE NEW VERSION OF THIS API AND SHOULD BE USED BY ALL APPLICATIONS.
+            info:
+                opus_id: valid opus_id (or old ring_obs_id)
+                fmt: json,html,zip,csv
+                GET param 1: cols=<column names> (If supplied, only returns data for these columns; cats is ignored)
+                GET param 2: cats=<category names> (If supplied, only returns data for these categories)
+                JSON return: "If cols is supplied, a list of pairs {slug: value}. Otherwise a list of pairs {category: data} where data is a list of pairs {slug: value}."
+            examples:
+                - desc: Single Cassini ISS Saturn Observation (all metadata)
+                  url: https://tools.pds-rings.seti.org/opus/api/metadata_v2/COISS_2111-1866071296_1866225122-N1866071296_1.json
+                - desc: Single Cassini ISS Saturn Observation (start and stop time only)
+                  url: https://tools.pds-rings.seti.org/opus/api/metadata_v2/COISS_2111-1866071296_1866225122-N1866071296_1.json?cols=time1,time2
+                - desc: Single Cassini ISS Saturn Observation (PDS and Images constraints only)
+                  url: https://tools.pds-rings.seti.org/opus/api/metadata_v2/COISS_2111-1866071296_1866225122-N1866071296_1.json?cats=PDS+Constraints,Image+Constraints
+
           - title: api/images/[size].[fmt]
             desc: Get image results of a given size for a search.
             info:
                 size: thumb,small,med,full
                 fmt: json,html,zip,csv
                 GET param 1: search params (If not supplied, all results are returned)
-                GET param 2: order=column_slug (Column to sort on; if not supplied, default sort order is used)
+                GET param 2: order=column_slug,... (Column(s) to sort on; if not supplied, default sort order is used)
                 GET param 3: limit=N (The maximum number of observations to return; defaults to 100)
                 GET param 4: page=N (The 100-observation page number to start with; defaults to 1)
             examples:
@@ -51,7 +68,7 @@ sections:
             info:
                 fmt: json,html,zip,csv
                 GET param 1: search params (If not supplied, all results are returned)
-                GET param 2: order=column_slug (Column to sort on; if not supplied, default sort order is used)
+                GET param 2: order=column_slug,... (Column(s) to sort on; if not supplied, default sort order is used)
                 GET param 3: limit=N (The maximum number of observations to return; defaults to 100)
                 GET param 4: page=N (The 100-observation page number to start with; defaults to 1)
                 JSON return: "{'page_no': given page number, 'limit': given limit, 'count': number of observations returned, 'order': sort order, 'data': List of: {'opus_id': opus_id, '<size>_url': full URL, '<size>_alt_text': alt text, '<size>_size_bytes': image size in bytes, '<size>_width': image width in pixels, '<size>_height': image height in pixels}"
@@ -89,7 +106,7 @@ sections:
             info:
                 fmt: json,html,zip,csv
                 GET param 1: search params (If not supplied, all results are returned)
-                GET param 2: order=column_slug (Column to sort on; if not supplied, default sort order is used)
+                GET param 2: order=column_slug,... (Column(s) to sort on; if not supplied, default sort order is used)
                 GET param 3: limit=N (The maximum number of observations to return; defaults to 100)
                 GET param 4: page=N (The 100-observation page number to start with; defaults to 1)
                 GET param 5: types=<types> (List of product types; if not supplied, all are returned)

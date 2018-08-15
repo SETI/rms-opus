@@ -391,7 +391,6 @@ def api_get_range_endpoints(request, slug, fmt='json'):
     return ret
 
 
-
 def api_get_fields(request, fmt='json', field=''):
     """Return information about fields in the database (slugs).
 
