@@ -103,7 +103,7 @@ def api_get_metadata(request, opus_id, fmt):
 def api_get_metadata_v2(request, opus_id, fmt):
     """Return all metadata, sorted by category, for this opus_id.
 
-    Format: api/metadata/(?P<opus_id>[-\w]+).(?P<fmt>[json|html]+
+    Format: api/metadata_v2/(?P<opus_id>[-\w]+).(?P<fmt>[json|html]+
 
     Arguments: cols=<columns>
                     Limit results to particular columns.
@@ -625,6 +625,7 @@ def get_page(request, colls=None, colls_page=None, page=None):
 
     column_names = []
     tables = set()
+    mult_tables = set()
     for slug in cols.split(','):
         # First try the full name, which might include a trailing 1 or 2
         pi = get_param_info_by_slug(slug, from_ui=True)
@@ -640,7 +641,16 @@ def get_page(request, colls=None, colls_page=None, page=None):
             table = 'obs_general'
             column = 'obs_general.opus_id'
         tables.add(table)
-        column_names.append(column)
+        (form_type, form_type_func,
+         form_type_format) = parse_form_type(pi.form_type)
+        if form_type in settings.MULT_FIELDS:
+            # For a mult field, we will have to join in the mult table
+            # and put the mult column here
+            mult_table = get_mult_name(pi.param_name())
+            mult_tables.add((mult_table, table))
+            column_names.append(mult_table+'.label')
+        else:
+            column_names.append(column)
 
     added_extra_columns = 0
     tables.add('obs_general') # We must have obs_general since it owns the ids
@@ -668,7 +678,13 @@ def get_page(request, colls=None, colls_page=None, page=None):
             if not pi:
                 log.error('get_page: Unable to resolve order slug "%s"', order)
                 return (None, None, None, None, None, None)
-            order_param = pi.param_name()
+            (form_type, form_type_func,
+             form_type_format) = parse_form_type(pi.form_type)
+            if form_type in settings.MULT_FIELDS:
+                mult_table = get_mult_name(pi.param_name())
+                order_param = mult_table + '.label'
+            else:
+                order_param = pi.param_name()
             table = order_param.split('.')[0]
             if order_param not in column_names:
                 tables.add(table)
@@ -730,8 +746,14 @@ def get_page(request, colls=None, colls_page=None, page=None):
             sql += ' ON '+connection.ops.quote_name('obs_general')+'.id='
             sql += connection.ops.quote_name(table)+'.obs_general_id'
 
-        # But the cache table is a RIGHT JOIN because we only want opus_ids that
-        # appear in the cache table to cause result rows
+        # Now JOIN in all the mult_ tables.
+        for (mult_table, table) in mult_tables:
+            sql += ' LEFT JOIN '+connection.ops.quote_name(mult_table)
+            sql += ' ON '+connection.ops.quote_name(table)+'.'+mult_table+'='
+            sql += connection.ops.quote_name(mult_table)+'.id'
+
+        # But the cache table is an INNER JOIN because we only want opus_ids
+        # that appear in the cache table to cause result rows
         sql += ' INNER JOIN '+connection.ops.quote_name(user_query_table)
         sql += ' ON '+connection.ops.quote_name('obs_general')+'.id='
         sql += connection.ops.quote_name(user_query_table)+'.id'
@@ -749,9 +771,15 @@ def get_page(request, colls=None, colls_page=None, page=None):
                 continue
             sql += ' LEFT JOIN '+connection.ops.quote_name(table)
             sql += ' ON '+connection.ops.quote_name('obs_general')+'.id='
-            sql += '.obs_general_id'
+            sql += connection.ops.quote_name(table)+'.obs_general_id'
 
-        # But the collections table is a RIGHT JOIN because we only want
+        # Now JOIN in all the mult_ tables.
+        for (mult_table, table) in mult_tables:
+            sql += ' LEFT JOIN '+connection.ops.quote_name(mult_table)
+            sql += ' ON '+connection.ops.quote_name(table)+'.'+mult_table+'='
+            sql += connection.ops.quote_name(mult_table)+'.id'
+
+        # But the collections table is an INNER JOIN because we only want
         # opus_ids that appear in the collections table to cause result rows
         sql += ' INNER JOIN '+connection.ops.quote_name('collections')
         sql += ' ON '+connection.ops.quote_name('obs_general')+'.id='
