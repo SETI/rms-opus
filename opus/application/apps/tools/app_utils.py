@@ -1,3 +1,4 @@
+from collections import OrderedDict
 import json
 from django.http import HttpResponse
 from django.http import Http404
@@ -166,11 +167,11 @@ def get_numeric_suffix(name):
     try:    return re.match(".*(1|2)",name).group(1)
     except: return
 
-def sortDict(mydict):
-    newdict={}
-    for key in sorted(mydict.iterkeys()):
-        newdict[key] = mydict[key]
-    return newdict
+def sort_dictionary(old_dict):
+    new_dict = OrderedDict()
+    for key in sorted(old_dict.keys()):
+        new_dict[key] = old_dict[key]
+    return new_dict
 
 def get_session_id(request):
     if not request.session.get('has_session'):
@@ -221,7 +222,7 @@ def parse_form_type(s):
     """
     if s is None:
         return None, None, None
-        
+
     form_type = s
     form_type_func = None
     form_type_format = None

@@ -1,4 +1,25 @@
-# results/view.py
+################################################################################
+#
+# results/views.py
+#
+# The API interface for retrieving results (actual data, actual metadata, or
+# lists of images or files):
+#
+#    Format: api/data.(json|zip|html|csv)
+#    Format: api/metadata/(?P<opus_id>[-\w]+).(?P<fmt>[json|html]+
+#    Format: api/metadata_v2/(?P<opus_id>[-\w]+).(?P<fmt>[json|html]+
+#    Format: api/images/(?P<size>[thumb|small|med|full]+).
+#            (?P<fmt>[json|zip|html|csv]+)
+#    Format: api/images.(json|zip|html|csv)
+#    Format: api/image/(?P<size>[thumb|small|med|full]+)/(?P<opus_id>[-\w]+)
+#            .(?P<fmt>[json|zip|html|csv]+)
+#    Format: api/files/(?P<opus_id>[-\w]+).(?P<fmt>[json|zip|html|csv]+)
+#        or: api/files.(?P<fmt>[json|zip|html|csv]+)
+#    Format: api/categories/(?P<opus_id>[-\w]+).json
+#    Format: api/categories.json
+#
+################################################################################
+
 from collections import OrderedDict
 import csv
 import json
@@ -14,7 +35,6 @@ from django.http import Http404
 from django.shortcuts import render
 from django.views.decorators.cache import never_cache
 
-# from metadata.views import *
 from paraminfo.models import *
 from search.models import *
 from search.views import (get_param_info_by_slug,
@@ -787,18 +807,6 @@ def get_page(request, colls=None, colls_page=None, page=None):
         sql += ' AND '
         sql += connection.ops.quote_name('collections')+'.session_id='
         sql += '"'+session_id+'"'
-
-    # Add in the ordering
-    if order_params:
-        order_str_list = []
-        for i in range(len(order_params)):
-            s = order_params[i]
-            if descending_params[i]:
-                s += ' DESC'
-            else:
-                s += ' ASC'
-            order_str_list.append(s)
-        sql += ' ORDER BY ' + ','.join(order_str_list)
 
     """
     the limit is pretty much always 100, the user cannot change it in the interface
