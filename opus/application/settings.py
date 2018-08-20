@@ -337,10 +337,10 @@ IMAGE_COLUMNS   = ['thumb.jpg','small.jpg','med.jpg','full.jpg']
 
 THUMBNAIL_IMAGE_SIZE = 100 # Pixels
 PREVIEW_SIZE_TO_PDS_TYPE = {
-    'thumb': 'Browse Image (thumbnail)',
-    'small': 'Browse Image (small)',
-    'med':   'Browse Image (medium)',
-    'full':  'Browse Image (full-size)'
+    'thumb': ('Browse Image (thumbnail)', 'Browse Diagram (thumbnail)'),
+    'small': ('Browse Image (small)',     'Browse Diagram (small)'),
+    'med':   ('Browse Image (medium)',    'Browse Diagram (medium)'),
+    'full':  ('Browse Image (full-size)', 'Browse Diagram (full-size)')
 }
 
 PREVIEW_GUIDES = {
