@@ -40,6 +40,9 @@ def _parse_two_field_sclk(sclk, sep, modval, scname):
 
     # Interpret the fields
     parts = sclk.split(sep)
+    if len(parts) == 1:
+        raise ValueError('Invalid %s clock format, ' % scname +
+                         'no field separator: ' + sclk)
 
     if len(parts) > 2:
         raise ValueError('More than two %s clock fields: ' % scname + sclk)
