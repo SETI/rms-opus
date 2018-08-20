@@ -12,7 +12,7 @@ from opus_secrets import *
 
 sys.path.insert(0, os.path.join(PROJECT_ROOT, 'apps'))
 sys.path.insert(0, os.path.join(PROJECT_ROOT, PDS_TOOLS_PATH))
-sys.path.insert(0, os.path.join(PROJECT_ROOT, PDS_WEBSERVER_PYTHON_PATH))
+sys.path.insert(0, os.path.join(PROJECT_ROOT, PDS_WEBTOOLS_PATH))
 sys.path.insert(0, os.path.join(PROJECT_ROOT, PDS_OPUS_LIB_PATH))
 
 import opus_support

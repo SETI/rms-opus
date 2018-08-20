@@ -31,11 +31,12 @@ PDS_DATA_DIR = '<HOLDING_DIR>'
 # .../pds-opus/lib
 PDS_OPUS_LIB_PATH = '<PATH>'
 
-# The directory where the pds-webserver Python routines live. This should
-# normally be .../pds-webserver/python
-PDS_WEBSERVER_PYTHON_PATH = '<PATH>'
+# The directory where the pds-webtools repo lives. This should
+# normally be .../pds-webtools
+PDS_WEBTOOLS_PATH = '<PATH>'
 
-# The directory where the pds-tools repo lives.
+# The directory where the pds-tools repo lives. This should
+# normally be .../pds-tools
 PDS_TOOLS_PATH = '<PATH>'
 
 
