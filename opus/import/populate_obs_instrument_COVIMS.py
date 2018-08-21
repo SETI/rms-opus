@@ -1,8 +1,7 @@
 ################################################################################
 # populate_obs_instrument_COVIMS.py
 #
-# Routines to populate fields specific to COVIMS. It may change fields in
-# obs_general, obs_mission_cassini, or obs_instrument_COVIMS.
+# Routines to populate fields specific to COVIMS.
 ################################################################################
 
 # Ordering:

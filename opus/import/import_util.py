@@ -32,6 +32,8 @@ def yield_import_volume_ids(arguments):
             if desc.upper() == 'ALL':
                 volume_descs.append('COISS_1xxx')
                 volume_descs.append('COISS_2xxx')
+                volume_descs.append('COCIRS_5xxx')
+                volume_descs.append('COCIRS_6xxx')
                 volume_descs.append('COUVIS_0xxx')
                 volume_descs.append('COVIMS_0xxx')
                 volume_descs.append('VGISS_5xxx')
@@ -51,6 +53,8 @@ def yield_import_volume_ids(arguments):
                 # checking while the others don't.
                 volume_descs.append('COISS_1xxx')
                 volume_descs.append('COISS_2xxx')
+                volume_descs.append('COCIRS_5xxx')
+                volume_descs.append('COCIRS_6xxx')
                 volume_descs.append('COUVIS_0xxx')
                 volume_descs.append('COVIMS_0xxx')
                 volume_descs.append('VGISS_5xxx')
@@ -66,11 +70,16 @@ def yield_import_volume_ids(arguments):
             elif desc.upper() == 'CASSINI':
                 volume_descs.append('COISS_1xxx')
                 volume_descs.append('COISS_2xxx')
+                volume_descs.append('COCIRS_5xxx')
+                volume_descs.append('COCIRS_6xxx')
                 volume_descs.append('COUVIS_0xxx')
                 volume_descs.append('COVIMS_0xxx')
             elif desc.upper() == 'COISS':
                 volume_descs.append('COISS_1xxx')
                 volume_descs.append('COISS_2xxx')
+            elif desc.upper() == 'COCIRS':
+                volume_descs.append('COCIRS_5xxx')
+                volume_descs.append('COCIRS_6xxx')
             elif desc.upper() == 'COUVIS':
                 volume_descs.append('COUVIS_0xxx')
             elif desc.upper() == 'COVIMS':

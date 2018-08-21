@@ -1,8 +1,7 @@
 ################################################################################
 # populate_obs_instrument_VGISS.py
 #
-# Routines to populate fields specific to VGISS. It may change fields in
-# obs_general, obs_mission_voyager, or obs_instrument_VGISS.
+# Routines to populate fields specific to VGISS.
 ################################################################################
 
 import numpy as np
