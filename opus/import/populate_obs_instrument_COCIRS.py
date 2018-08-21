@@ -123,9 +123,12 @@ def populate_obs_general_COCIRS_data_set_id(**kwargs):
     dsi = index_label['DATA_SET_ID']
     return (dsi, dsi)
 
-# Not available
 def populate_obs_general_COCIRS_product_id(**kwargs):
-    return None
+    metadata = kwargs['metadata']
+    index_row = metadata['index_row']
+    # Format: "DATA/APODSPEC/SPEC0802010000_FP1.DAT"
+    filename = index_row['SPECTRUM_FILE_SPECIFICATION'].split('/')[-1]
+    return filename
 
 # We don't have ring geometry or other such info for CIRS
 def populate_obs_general_COCIRS_right_asc1(**kwargs):
