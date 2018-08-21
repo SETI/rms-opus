@@ -195,8 +195,8 @@ def get_pds_preview_images(opus_id_list, sizes):
                     else:
                         product_type_entry = products[size_type]
             if (product_type_entry is None or
-                len(product_type_entry) != 1):
-                log.error('No (or multiple) preview image size "%s" found for '
+                len(product_type_entry) == 0):
+                log.error('No preview image size "%s" found for '
                           +'opus_id "%s"', size, opus_id)
                 url = settings.THUMBNAIL_NOT_FOUND
                 alt_text = 'Not found'
@@ -204,7 +204,17 @@ def get_pds_preview_images(opus_id_list, sizes):
                 width = 0
                 height = 0
             else:
-                product = product_type_entry[0]
+                if len(product_type_entry) > 1:
+                    # This can happen for CIRS, which has multiple browse
+                    # products. Take that one that starts with IMG if possible.
+                    for product in product_type_entry:
+                        filename = product.url.split('/')[-1]
+                        if filename.startswith('IMG'):
+                            break
+                    else:
+                        product = product_type_entry[0]
+                else:
+                    product = product_type_entry[0]
                 url = settings.PRODUCT_HTTP_PATH + product.url
                 alt_text = product.alt
                 byte_size = product.size_bytes
