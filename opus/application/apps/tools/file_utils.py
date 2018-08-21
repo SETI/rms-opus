@@ -174,25 +174,47 @@ def get_pds_preview_images(opus_id_list, sizes):
 
     product_types = []
     for size in sizes:
-        product_types.append(settings.PREVIEW_SIZE_TO_PDS_TYPE[size])
+        product_types += settings.PREVIEW_SIZE_TO_PDS_TYPE[size]
 
+    print product_types
     image_list = []
     for opus_id in opus_id_list:
         data = OrderedDict({'opus_id':  opus_id})
         products = get_pds_products(opus_id, 'raw', 'raw',
                                     product_types=product_types)[opus_id]
-        for size, product_type in zip(sizes, product_types):
-            if (product_type not in products or
-                len(products[product_type]) != 1):
-                log.error('No preview image size "%s" found for opus_id "%s"',
-                          size, opus_id)
+        for size in sizes:
+            product_type_entry = None
+            for size_type in settings.PREVIEW_SIZE_TO_PDS_TYPE[size]:
+                if size_type in products:
+                    if product_type_entry is not None:
+                        log.error('Multiple product types for image size "%s"'
+                                  +' found for opus_id "%s"',
+                                  size, opus_id)
+                        # We'll go ahead and fall through to return the first
+                        # one found just so there's something to display
+                    else:
+                        product_type_entry = products[size_type]
+            if (product_type_entry is None or
+                len(product_type_entry) == 0):
+                log.error('No preview image size "%s" found for '
+                          +'opus_id "%s"', size, opus_id)
                 url = settings.THUMBNAIL_NOT_FOUND
                 alt_text = 'Not found'
                 byte_size = 0
                 width = 0
                 height = 0
             else:
-                product = products[product_type][0]
+                if len(product_type_entry) > 1:
+                    # This can happen for CIRS, which has multiple browse
+                    # products. Take that one that starts with IMG if possible.
+                    for product in product_type_entry:
+                        filename = product.url.split('/')[-1]
+                        if filename.startswith('IMG'):
+                            break
+                    else:
+                        product = product_type_entry[0]
+                else:
+                    product = product_type_entry[0]
                 url = settings.PRODUCT_HTTP_PATH + product.url
                 alt_text = product.alt
                 byte_size = product.size_bytes

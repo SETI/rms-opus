@@ -1,8 +1,7 @@
 ################################################################################
 # populate_obs_instrument_NHLORRI.py
 #
-# Routines to populate fields specific to NHLORRI. It may change fields in
-# obs_general, obs_mission_new_horizons, or obs_instrument_NHLORRI.
+# Routines to populate fields specific to NHLORRI.
 ################################################################################
 
 import numpy as np

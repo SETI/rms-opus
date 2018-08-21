@@ -1,8 +1,7 @@
 ################################################################################
 # populate_obs_instrument_GOSSI.py
 #
-# Routines to populate fields specific to GOSSI. It may change fields in
-# obs_general, obs_mission_galileo, or obs_instrument_GOSSI.
+# Routines to populate fields specific to GOSSI.
 ################################################################################
 
 import numpy as np

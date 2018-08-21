@@ -12,7 +12,7 @@ from opus_secrets import *
 
 sys.path.insert(0, os.path.join(PROJECT_ROOT, 'apps'))
 sys.path.insert(0, os.path.join(PROJECT_ROOT, PDS_TOOLS_PATH))
-sys.path.insert(0, os.path.join(PROJECT_ROOT, PDS_WEBSERVER_PYTHON_PATH))
+sys.path.insert(0, os.path.join(PROJECT_ROOT, PDS_WEBTOOLS_PATH))
 sys.path.insert(0, os.path.join(PROJECT_ROOT, PDS_OPUS_LIB_PATH))
 
 import opus_support
@@ -337,10 +337,10 @@ IMAGE_COLUMNS   = ['thumb.jpg','small.jpg','med.jpg','full.jpg']
 
 THUMBNAIL_IMAGE_SIZE = 100 # Pixels
 PREVIEW_SIZE_TO_PDS_TYPE = {
-    'thumb': 'Browse Image (thumbnail)',
-    'small': 'Browse Image (small)',
-    'med':   'Browse Image (medium)',
-    'full':  'Browse Image (full-size)'
+    'thumb': ('Browse Image (thumbnail)', 'Browse Diagram (thumbnail)'),
+    'small': ('Browse Image (small)',     'Browse Diagram (small)'),
+    'med':   ('Browse Image (medium)',    'Browse Diagram (medium)'),
+    'full':  ('Browse Image (full-size)', 'Browse Diagram (full-size)')
 }
 
 PREVIEW_GUIDES = {

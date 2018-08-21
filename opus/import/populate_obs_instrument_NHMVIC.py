@@ -1,8 +1,7 @@
 ################################################################################
 # populate_obs_instrument_NHMVIC.py
 #
-# Routines to populate fields specific to NHMVIC. It may change fields in
-# obs_general, obs_mission_new_horizons, or obs_instrument_NHMVIC.
+# Routines to populate fields specific to NHMVIC.
 ################################################################################
 
 import numpy as np

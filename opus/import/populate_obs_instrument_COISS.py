@@ -1,8 +1,7 @@
 ################################################################################
 # populate_obs_instrument_COISS.py
 #
-# Routines to populate fields specific to COISS. It may change fields in
-# obs_general, obs_mission_cassini, or obs_instrument_COISS.
+# Routines to populate fields specific to COISS.
 ################################################################################
 
 # Ordering:
