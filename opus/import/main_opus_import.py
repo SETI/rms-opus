@@ -91,6 +91,20 @@ parser.add_argument(
 )
 
 parser.add_argument(
+    '--do-import-finalization', action='store_true', default=False,
+    help="""Perform all import functions related to permanent tables. This implies, in order:
+            --copy-import-to-permanent-tables
+            --drop-new-import-tables
+            --analyze-permanent-tables
+            --create-param-info
+            --create-partables
+            --create-table-names
+            --create-collections
+            --drop-cache-tables
+         """
+)
+
+parser.add_argument(
     '--cleanup-aux-tables', action='store_true', default=False,
     help="""Create or clean up auxiliary tables. This implies:
             --create-param-info
@@ -220,7 +234,7 @@ parser.add_argument(
 
 # Arguments about volume selection
 parser.add_argument(
-    '--volumes', type=str, default=None,
+    'volumes', type=str, default=None, nargs='*',
     metavar='VOL_DESC,VOL_DESC...',
     help="""Comma-separated list of volume descriptors (COISS_1xxx,COVIMS_0089)
             to import""")
@@ -260,16 +274,27 @@ if impglobals.ARGUMENTS.do_it_all:
     impglobals.ARGUMENTS.create_partables = True
     impglobals.ARGUMENTS.create_table_names = True
     impglobals.ARGUMENTS.create_grouping_target_name = True
-    impglobals.ARGUMENTS.drop_cache_tables = True
     impglobals.ARGUMENTS.create_collections = True
+    impglobals.ARGUMENTS.drop_cache_tables = True
+
+if impglobals.ARGUMENTS.do_import_finalization:
+    impglobals.ARGUMENTS.copy_import_to_permanent_tables = True
+    impglobals.ARGUMENTS.drop_new_import_tables = True
+    impglobals.ARGUMENTS.analyze_permanent_tables = True
+    impglobals.ARGUMENTS.create_param_info = True
+    impglobals.ARGUMENTS.create_partables = True
+    impglobals.ARGUMENTS.create_table_names = True
+    impglobals.ARGUMENTS.create_grouping_target_name = True
+    impglobals.ARGUMENTS.create_collections = True
+    impglobals.ARGUMENTS.drop_cache_tables = True
 
 if impglobals.ARGUMENTS.cleanup_aux_tables:
     impglobals.ARGUMENTS.create_param_info = True
     impglobals.ARGUMENTS.create_partables = True
     impglobals.ARGUMENTS.create_table_names = True
     impglobals.ARGUMENTS.create_grouping_target_name = True
-    impglobals.ARGUMENTS.drop_cache_tables = True
     impglobals.ARGUMENTS.create_collections = True
+    impglobals.ARGUMENTS.drop_cache_tables = True
 
 
 ################################################################################
@@ -386,10 +411,10 @@ try: # Top-level exception handling so we always log what's going on
             limits={'info': impglobals.ARGUMENTS.log_info_limit,
                     'debug': impglobals.ARGUMENTS.log_debug_limit})
 
-        if impglobals.ARGUMENTS.drop_cache_tables:
-            do_django.drop_cache_tables()
         if impglobals.ARGUMENTS.create_collections:
             do_collections.create_collections()
+        if impglobals.ARGUMENTS.drop_cache_tables:
+            do_django.drop_cache_tables()
 
         impglobals.LOGGER.close()
 

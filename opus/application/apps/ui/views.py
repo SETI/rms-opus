@@ -253,6 +253,9 @@ def getMenuLabels(request, labels_view):
         if d.table_name == 'obs_ring_geometry':
             menu_data[d.table_name]['menu_help'] = "Supported Instruments: VGISS, NHLORRI, COISS, COUVIS, COVIMS, and early COCIRS"
 
+        if d.table_name == 'obs_instrument_cocirs':
+            menu_data[d.table_name]['menu_help'] = "COCIRS data is only available through June 30, 2010"
+
         if d.table_name in sub_headings and sub_headings[d.table_name]:
             # this div is divided into sub headings
             menu_data[d.table_name]['has_sub_heading'] = True
