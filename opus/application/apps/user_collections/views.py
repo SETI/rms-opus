@@ -477,9 +477,9 @@ def _get_collection_count(session_id):
 def _get_collection_csv(request, fmt=None):
     "Create and return a CSV file based on user column and selection."
     slugs = request.GET.get('cols', '')
-    all_data = get_page(request, colls=True, colls_page='all')
+    all_data = get_page(request, use_collections=True, collections_page='all')
     # XXX Check all_data for None
-    
+
     if fmt == 'raw':
         return slugs.split(','), all_data[2]
 
@@ -539,15 +539,14 @@ def _edit_collection_range(request, session_id, action):
         return False
     (min_id, max_id) = ids
 
-    data = get_data(request, 'raw')
+    data = get_data(request, 'raw', cols=['opusid'])
     if data is None:
         return False
 
     selected_range = []
     in_range = False  # loop has reached the range selected
 
-    column_slugs = request.GET.get('cols', settings.DEFAULT_COLUMNS)
-    opus_id_key = column_slugs.split(',').index('opusid')
+    opus_id_key = 0
 
     for row in data['page']:
         opus_id = row[opus_id_key]

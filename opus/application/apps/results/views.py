@@ -278,7 +278,7 @@ def api_get_images_by_size(request, size, fmt):
     session_id = get_session_id(request)
 
     (page_no, limit, page, opus_ids, ring_obs_ids,
-     order) = get_page(request)
+     order) = get_page(request, cols=[])
     if page is None:
         ret = Http404('Could not find page')
         exit_api_call(api_code, ret)
@@ -345,7 +345,7 @@ def api_get_images(request, fmt):
     columns = request.GET.get('cols', settings.DEFAULT_COLUMNS)
 
     (page_no, limit, page, opus_ids, ring_obs_ids,
-     order) = get_page(request)
+     order) = get_page(request, cols=[])
     if page is None:
         ret = Http404('Could not find page')
         exit_api_call(api_code, ret)
@@ -578,14 +578,16 @@ def get_data(request, fmt, cols=None):
     """
     session_id = get_session_id(request)
 
-    (page_no, limit, page, opus_ids, ring_obs_ids, order) = get_page(request)
+    if cols is None:
+        cols = request.GET.get('cols', settings.DEFAULT_COLUMNS)
+
+    (page_no, limit, page, opus_ids,
+     ring_obs_ids, order) = get_page(request, cols=cols.split(','))
+                                                                        )
     if page is None:
         return None
 
     checkboxes = request.is_ajax()
-
-    if cols is None:
-        cols = request.GET.get('cols', settings.DEFAULT_COLUMNS)
 
     is_column_chooser = request.GET.get('col_chooser', False)
 
@@ -628,20 +630,20 @@ def get_data(request, fmt, cols=None):
     return ret
 
 
-def get_page(request, colls=None, colls_page=None, page=None):
+def get_page(request, use_collections=None, collections_page=None, page=None,
+             cols=None):
     """Return a page of results."""
     session_id = get_session_id(request)
 
-    if not colls:
+    if use_collections is None:
         if request.GET.get('view', 'browse') == 'collection':
-            collection_page = True
+            use_collections = True
         else:
-            collection_page = False
-    else:
-        collection_page = colls
+            use_collections = False
 
     limit = int(request.GET.get('limit', settings.DEFAULT_PAGE_LIMIT))
-    cols = request.GET.get('cols', settings.DEFAULT_COLUMNS)
+    if cols is None:
+        cols = request.GET.get('cols', settings.DEFAULT_COLUMNS)
 
     column_names = []
     tables = set()
@@ -683,7 +685,7 @@ def get_page(request, colls=None, colls_page=None, page=None):
 
     # Figure out the sort order
     all_order = None
-    if collection_page:
+    if use_collections:
         all_order = request.GET.get('colls_order', settings.DEFAULT_SORT_ORDER)
     if not all_order:
         all_order = request.GET.get('order', settings.DEFAULT_SORT_ORDER)
@@ -714,9 +716,9 @@ def get_page(request, colls=None, colls_page=None, page=None):
             descending_params.append(descending)
 
     # Figure out what page we're asking for
-    if collection_page:
-        if colls_page:
-            page_no = colls_page
+    if use_collections:
+        if collections_page:
+            page_no = collections_page
         else:
             page_no = request.GET.get('colls_page', 1)
     else:
@@ -732,7 +734,7 @@ def get_page(request, colls=None, colls_page=None, page=None):
                       str(page_no))
             return (None, None, None, None, None, None)
 
-    if not collection_page:
+    if not use_collections:
         # This is for a search query
 
         # Create the SQL query
