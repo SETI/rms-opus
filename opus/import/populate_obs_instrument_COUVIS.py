@@ -535,6 +535,9 @@ def populate_obs_mission_cassini_COUVIS_spacecraft_clock_count1(**kwargs):
     count = count.replace('.320', '.032')
     count = count.replace('.640', '.064')
     count = count.replace('.960', '.096')
+    count = count.replace('.32', '.032')
+    count = count.replace('.64', '.064')
+    count = count.replace('.96', '.096')
     return count
 
 # There is no SPACECRAFT_CLOCK_STOP_COUNT for COUVIS so we have to compute it.
