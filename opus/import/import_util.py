@@ -25,87 +25,88 @@ import instruments
 ################################################################################
 
 def yield_import_volume_ids(arguments):
+    volume_descs = []
     if arguments.volumes:
-        orig_volume_descs = arguments.volumes.split(',')
-        volume_descs = []
-        for desc in orig_volume_descs:
-            if desc.upper() == 'ALL':
-                volume_descs.append('COISS_1xxx')
-                volume_descs.append('COISS_2xxx')
-                volume_descs.append('COCIRS_5xxx')
-                volume_descs.append('COCIRS_6xxx')
-                volume_descs.append('COUVIS_0xxx')
-                volume_descs.append('COVIMS_0xxx')
-                volume_descs.append('VGISS_5xxx')
-                volume_descs.append('VGISS_6xxx')
-                volume_descs.append('VGISS_7xxx')
-                volume_descs.append('VGISS_8xxx')
-                volume_descs.append('GO_0xxx')
-                volume_descs.append('HSTIx_xxxx')
-                volume_descs.append('HSTJx_xxxx')
-                volume_descs.append('HSTNx_xxxx')
-                volume_descs.append('HSTOx_xxxx')
-                volume_descs.append('HSTUx_xxxx')
-                volume_descs.append('NHxxLO_xxxx')
-                volume_descs.append('NHxxMV_xxxx')
-            elif desc.upper() == 'ALLBUTNH':
-                # This is useful because NH has duplicate opus_id that require
-                # checking while the others don't.
-                volume_descs.append('COISS_1xxx')
-                volume_descs.append('COISS_2xxx')
-                volume_descs.append('COCIRS_5xxx')
-                volume_descs.append('COCIRS_6xxx')
-                volume_descs.append('COUVIS_0xxx')
-                volume_descs.append('COVIMS_0xxx')
-                volume_descs.append('VGISS_5xxx')
-                volume_descs.append('VGISS_6xxx')
-                volume_descs.append('VGISS_7xxx')
-                volume_descs.append('VGISS_8xxx')
-                volume_descs.append('GO_0xxx')
-                volume_descs.append('HSTIx_xxxx')
-                volume_descs.append('HSTJx_xxxx')
-                volume_descs.append('HSTNx_xxxx')
-                volume_descs.append('HSTOx_xxxx')
-                volume_descs.append('HSTUx_xxxx')
-            elif desc.upper() == 'CASSINI':
-                volume_descs.append('COISS_1xxx')
-                volume_descs.append('COISS_2xxx')
-                volume_descs.append('COCIRS_5xxx')
-                volume_descs.append('COCIRS_6xxx')
-                volume_descs.append('COUVIS_0xxx')
-                volume_descs.append('COVIMS_0xxx')
-            elif desc.upper() == 'COISS':
-                volume_descs.append('COISS_1xxx')
-                volume_descs.append('COISS_2xxx')
-            elif desc.upper() == 'COCIRS':
-                volume_descs.append('COCIRS_5xxx')
-                volume_descs.append('COCIRS_6xxx')
-            elif desc.upper() == 'COUVIS':
-                volume_descs.append('COUVIS_0xxx')
-            elif desc.upper() == 'COVIMS':
-                volume_descs.append('COVIMS_0xxx')
-            elif desc.upper() == 'VOYAGER' or desc.upper() == 'VGISS':
-                volume_descs.append('VGISS_5xxx')
-                volume_descs.append('VGISS_6xxx')
-                volume_descs.append('VGISS_7xxx')
-                volume_descs.append('VGISS_8xxx')
-            elif desc.upper() == 'GALILEO' or desc.upper() == 'GOSSI':
-                volume_descs.append('GO_0xxx')
-            elif desc.upper() == 'HST' or desc.upper() == 'HUBBLE':
-                volume_descs.append('HSTIx_xxxx')
-                volume_descs.append('HSTJx_xxxx')
-                volume_descs.append('HSTNx_xxxx')
-                volume_descs.append('HSTOx_xxxx')
-                volume_descs.append('HSTUx_xxxx')
-            elif desc.upper() == 'NH' or desc.upper() == 'NEWHORIZONS':
-                volume_descs.append('NHxxLO_xxxx')
-                volume_descs.append('NHxxMV_xxxx')
-            elif desc.upper() == 'NHLORRI':
-                volume_descs.append('NHxxLO_xxxx')
-            elif desc.upper() == 'NHMVIC':
-                volume_descs.append('NHxxMV_xxxx')
-            else:
-                volume_descs.append(desc)
+        for volumes in arguments.volumes:
+            orig_volume_descs = volumes.split(',')
+            for desc in orig_volume_descs:
+                if desc.upper() == 'ALL':
+                    volume_descs.append('COISS_1xxx')
+                    volume_descs.append('COISS_2xxx')
+                    volume_descs.append('COCIRS_5xxx')
+                    volume_descs.append('COCIRS_6xxx')
+                    volume_descs.append('COUVIS_0xxx')
+                    volume_descs.append('COVIMS_0xxx')
+                    volume_descs.append('VGISS_5xxx')
+                    volume_descs.append('VGISS_6xxx')
+                    volume_descs.append('VGISS_7xxx')
+                    volume_descs.append('VGISS_8xxx')
+                    volume_descs.append('GO_0xxx')
+                    volume_descs.append('HSTIx_xxxx')
+                    volume_descs.append('HSTJx_xxxx')
+                    volume_descs.append('HSTNx_xxxx')
+                    volume_descs.append('HSTOx_xxxx')
+                    volume_descs.append('HSTUx_xxxx')
+                    volume_descs.append('NHxxLO_xxxx')
+                    volume_descs.append('NHxxMV_xxxx')
+                elif desc.upper() == 'ALLBUTNH':
+                    # This is useful because NH has duplicate opus_id that require
+                    # checking while the others don't.
+                    volume_descs.append('COISS_1xxx')
+                    volume_descs.append('COISS_2xxx')
+                    volume_descs.append('COCIRS_5xxx')
+                    volume_descs.append('COCIRS_6xxx')
+                    volume_descs.append('COUVIS_0xxx')
+                    volume_descs.append('COVIMS_0xxx')
+                    volume_descs.append('VGISS_5xxx')
+                    volume_descs.append('VGISS_6xxx')
+                    volume_descs.append('VGISS_7xxx')
+                    volume_descs.append('VGISS_8xxx')
+                    volume_descs.append('GO_0xxx')
+                    volume_descs.append('HSTIx_xxxx')
+                    volume_descs.append('HSTJx_xxxx')
+                    volume_descs.append('HSTNx_xxxx')
+                    volume_descs.append('HSTOx_xxxx')
+                    volume_descs.append('HSTUx_xxxx')
+                elif desc.upper() == 'CASSINI':
+                    volume_descs.append('COISS_1xxx')
+                    volume_descs.append('COISS_2xxx')
+                    volume_descs.append('COCIRS_5xxx')
+                    volume_descs.append('COCIRS_6xxx')
+                    volume_descs.append('COUVIS_0xxx')
+                    volume_descs.append('COVIMS_0xxx')
+                elif desc.upper() == 'COISS':
+                    volume_descs.append('COISS_1xxx')
+                    volume_descs.append('COISS_2xxx')
+                elif desc.upper() == 'COCIRS':
+                    volume_descs.append('COCIRS_5xxx')
+                    volume_descs.append('COCIRS_6xxx')
+                elif desc.upper() == 'COUVIS':
+                    volume_descs.append('COUVIS_0xxx')
+                elif desc.upper() == 'COVIMS':
+                    volume_descs.append('COVIMS_0xxx')
+                elif desc.upper() == 'VOYAGER' or desc.upper() == 'VGISS':
+                    volume_descs.append('VGISS_5xxx')
+                    volume_descs.append('VGISS_6xxx')
+                    volume_descs.append('VGISS_7xxx')
+                    volume_descs.append('VGISS_8xxx')
+                elif desc.upper() == 'GALILEO' or desc.upper() == 'GOSSI':
+                    volume_descs.append('GO_0xxx')
+                elif desc.upper() == 'HST' or desc.upper() == 'HUBBLE':
+                    volume_descs.append('HSTIx_xxxx')
+                    volume_descs.append('HSTJx_xxxx')
+                    volume_descs.append('HSTNx_xxxx')
+                    volume_descs.append('HSTOx_xxxx')
+                    volume_descs.append('HSTUx_xxxx')
+                elif desc.upper() == 'NH' or desc.upper() == 'NEWHORIZONS':
+                    volume_descs.append('NHxxLO_xxxx')
+                    volume_descs.append('NHxxMV_xxxx')
+                elif desc.upper() == 'NHLORRI':
+                    volume_descs.append('NHxxLO_xxxx')
+                elif desc.upper() == 'NHMVIC':
+                    volume_descs.append('NHxxMV_xxxx')
+                else:
+                    volume_descs.append(desc)
         # First make sure everything is valid
         any_invalid = False
         for volume_desc in volume_descs:

@@ -62,13 +62,35 @@ def populate_obs_general_NHMVIC_time1(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     start_time = import_util.safe_column(index_row, 'START_TIME')
-    return start_time
+
+    if start_time is None:
+        return None
+
+    try:
+        start_time_sec = julian.tai_from_iso(start_time)
+    except:
+        import_util.log_nonrepeating_error(
+            f'Bad start time format "{start_time}"')
+        return None
+
+    return julian.iso_from_tai(start_time_sec, digits=3, ymd=True)
 
 def populate_obs_general_NHMVIC_time2(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     stop_time = import_util.safe_column(index_row, 'STOP_TIME')
-    return stop_time
+
+    if stop_time is None:
+        return None
+
+    try:
+        stop_time_sec = julian.tai_from_iso(stop_time)
+    except:
+        import_util.log_nonrepeating_error(
+            f'Bad stop time format "{stop_time}"')
+        return None
+
+    return julian.iso_from_tai(stop_time_sec, digits=3, ymd=True)
 
 def populate_obs_general_NHMVIC_target_name(**kwargs):
     target_name = helper_new_horizons_target_name(**kwargs)

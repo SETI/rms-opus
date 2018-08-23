@@ -176,7 +176,6 @@ def get_pds_preview_images(opus_id_list, sizes):
     for size in sizes:
         product_types += settings.PREVIEW_SIZE_TO_PDS_TYPE[size]
 
-    print product_types
     image_list = []
     for opus_id in opus_id_list:
         data = OrderedDict({'opus_id':  opus_id})

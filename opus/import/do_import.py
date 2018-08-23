@@ -773,7 +773,8 @@ def import_one_volume(volume_id):
                         # filename.
                         for row in assoc_rows:
                             key1 = row.get('VOLUME_ID', None)
-                            key2 = row.get('FILE_SPECIFICATION_NAME', None)
+                            key2 = row.get('FILE_SPECIFICATION_NAME',
+                                           None).upper()
                             if key1 is None or key2 is None:
                                 import_util.log_nonrepeating_error(
                         f'{assoc_label_path} is missing VOLUME_ID or '+
@@ -888,7 +889,7 @@ def import_one_volume(volume_id):
 
         if 'supp_index' in metadata and instrument_name == 'COUVIS':
             # Match up the FILENAME with the key we generated earlier
-            couvis_filename = index_row['FILE_NAME']
+            couvis_filename = index_row['FILE_NAME'].upper()
             supp_index = metadata['supp_index']
             if couvis_filename in supp_index:
                 metadata['supp_index_row'] = supp_index[couvis_filename]

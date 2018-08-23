@@ -11,6 +11,7 @@ temp*.*
 *.log
 logs
 log.txt
+nohup.out
 
 venv
 p2venv
@@ -18,4 +19,3 @@ p3venv
 opus_secrets.py
 
 migrations/
-search/models.py  # this file is generated dynamically during import procedures
