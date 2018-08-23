@@ -74,7 +74,7 @@
             "TAB:index",
             "SCAN_MODE"
         ],
-        "definitions": "The scan rate of vidicon readout. Values can be '1:1', '2:1', '3:1', '5:1', and '10:1'. The instrument scan rate affects the radiometric properties of the camera because of the dark current buildup on the vidicon.",
+        "definition": "The scan rate of vidicon readout. Values can be '1:1', '2:1', '3:1', '5:1', and '10:1'. The instrument scan rate affects the radiometric properties of the camera because of the dark current buildup on the vidicon.",
         "pi_category_name": "obs_instrument_vgiss",
         "pi_dict_context": "VGISS",
         "pi_dict_name": "SCAN_MODE_ID",
@@ -107,7 +107,7 @@
             "TAB:index",
             "SHUTTER_MODE"
         ],
-        "definitions": "The instrument shutter mode, one of: NAONLY - narrow angle camera shuttered only; WAONLY - wide angle camera shuttered only; BOTSIM - both cameras shuttered simultaneously; BOTALT - both cameras shuttered alternately; BSIMAN - BOTSIM mode followed by NAONLY; BODARK - shutter remained closed for entire exposure time. ",
+        "definition": "The instrument shutter mode, one of: NAONLY - narrow angle camera shuttered only; WAONLY - wide angle camera shuttered only; BOTSIM - both cameras shuttered simultaneously; BOTALT - both cameras shuttered alternately; BSIMAN - BOTSIM mode followed by NAONLY; BODARK - shutter remained closed for entire exposure time. ",
         "pi_category_name": "obs_instrument_vgiss",
         "pi_dict_context": "VGISS",
         "pi_dict_name": "SHUTTER_MODE_ID",
@@ -142,7 +142,7 @@
             "TAB:index",
             "GAIN_MODE"
         ],
-        "definitions": "The gain mode (LOW or HIGH, typically LOW) of the camera.",
+        "definition": "The gain mode (LOW or HIGH, typically LOW) of the camera.",
         "pi_category_name": "obs_instrument_vgiss",
         "pi_dict_context": "VGISS",
         "pi_dict_name": "GAIN_MODE_ID",
@@ -172,7 +172,7 @@
             "TAB:index",
             "EDIT_MODE"
         ],
-        "definitions": "The edit mode of the camera. Values are '1:1', which indicates the full resolution of the vidicon, and '3:4', '3:5', '1:2', '2:5', '1:3', '1:5', and '1:10' for partial resolution images. This indicates the amount of data read from the vidicon.",
+        "definition": "The edit mode of the camera. Values are '1:1', which indicates the full resolution of the vidicon, and '3:4', '3:5', '1:2', '2:5', '1:3', '1:5', and '1:10' for partial resolution images. This indicates the amount of data read from the vidicon.",
         "pi_category_name": "obs_instrument_vgiss",
         "pi_dict_context": "VGISS",
         "pi_dict_name": "EDIT_MODE_ID",
@@ -210,7 +210,7 @@
             "TAB:index",
             "FILTER_NAME"
         ],
-        "definitions": "The optical filter used for the image, one of CLEAR, CH4_U, CH4_JS, UV, VIOLET, BLUE, GREEN, ORANGE, and NAD (for sodium).",
+        "definition": "The optical filter used for the image, one of CLEAR, CH4_U, CH4_JS, UV, VIOLET, BLUE, GREEN, ORANGE, and NAD (for sodium).",
         "pi_category_name": "obs_instrument_vgiss",
         "pi_dict_context": "VGISS",
         "pi_dict_name": "FILTER_NAME",
@@ -246,7 +246,7 @@
             "TAB:index",
             "FILTER_NUMBER"
         ],
-        "definitions": "The optical filter number (0-7), which contains the unique number associated with the optical filter for the image. It is needed to differentiate between the two CLEAR and two GREEN filters on the Voyager narrow angle camera.",
+        "definition": "The optical filter number (0-7), which contains the unique number associated with the optical filter for the image. It is needed to differentiate between the two CLEAR and two GREEN filters on the Voyager narrow angle camera.",
         "pi_category_name": "obs_instrument_vgiss",
         "pi_dict_context": "VGISS",
         "pi_dict_name": "FILTER_NUMBER",

@@ -32,7 +32,7 @@ var o_detail = {
               return;
             }
             // get the column metadata, this part is fast
-            url = "/opus/__api/metadata/" + opus_id + ".html?" + o_hash.getHash();
+            url = "/opus/__api/metadata_v2/" + opus_id + ".html?" + o_hash.getHash();
             $("#cols_metadata")
                 .load(url, function() {
                     $(this).hide().fadeIn("fast");
@@ -49,7 +49,7 @@ var o_detail = {
                   $("#all_metadata_" + opus_id).append(html);
 
                   // now send for data
-                  url ="/opus/__api/metadata/" + opus_id + ".html?cats=" + name;
+                  url ="/opus/__api/metadata_v2/" + opus_id + ".html?cats=" + name;
                   $("#all_metadata_" + opus_id + ' .detail_' + name)
                       .load(url, function() {
                           $(this).hide().slideDown("fast");

@@ -8,7 +8,6 @@ import hashlib
 from operator import __or__ as OR
 import julian
 import json
-import traceback
 from pyparsing import ParseException
 from django.conf import settings
 from django.db.models import Q
@@ -20,9 +19,9 @@ import settings
 import opus_support
 
 from search.models import *
-from tools.app_utils import strip_numeric_suffix, sortDict, parse_form_type
+from tools.app_utils import *
+from tools.db_utils import *
 from paraminfo.models import ParamInfo
-import metadata.views
 
 import logging
 log = logging.getLogger(__name__)
@@ -118,7 +117,7 @@ def is_single_column_range(param_name):
             return False
 
 
-def constructQueryString(selections, extras):
+def construct_query_string(selections, extras):
 
     all_qtypes = extras['qtypes'] if 'qtypes' in extras else []
     # keeping track of some things
@@ -128,7 +127,6 @@ def constructQueryString(selections, extras):
     finished_ranges = []  # ranges are done for both sides at once.. so track which are finished to avoid duplicates
 
     # buld the django query
-    from metadata.views import getMultName  # avoids circular import issue
     for param_name, value_list in selections.items():
 
         # lookup info about this param_name
@@ -137,7 +135,7 @@ def constructQueryString(selections, extras):
         cat_model_name = ''.join(cat_name.lower().split('_'))
         param_info = get_param_info_by_param(param_name)
         if not param_info:
-            log.error('constructQueryString: No param_info for %s', param_name)
+            log.error('construct_query_string: No param_info for %s', param_name)
             log.error('.. Selections: %s', str(selections))
             log.error('.. Extras: %s', str(extras))
             return None, None
@@ -154,7 +152,7 @@ def constructQueryString(selections, extras):
 
         # MULTs
         if form_type in settings.MULT_FORM_TYPES:
-            mult_name = getMultName(param_name)
+            mult_name = get_mult_name(param_name)
             model_name = mult_name.title().replace('_','')
             model = apps.get_model('search',model_name)
             mult_values = [x['pk'] for x in list(model.objects.filter(Q(label__in=value_list) | Q(value__in=value_list) ).values('pk'))]
@@ -231,76 +229,90 @@ def constructQueryString(selections, extras):
 
 
 
-def getUserQueryTable(selections=None, extras=None):
-    """
-    This is THE main data query place.  Performs a data search and creates
+def get_user_query_table(selections=None, extras=None):
+    """Perform a data search and create a table of matching IDs.
+
+    This is THE main data query place. Performs a data search and creates
     a table of IDs (obs_general_id) that match the result rows.
 
-    (the function urlToSearchParams take the user http request object and
-    creates the data objects that are passed to this function)
-
+    Note: The function url_to_search_params take the user http request object
+          and creates the data objects that are passed to this function)
     """
     cursor = connection.cursor()
 
-    if not bool(extras):
+    if not extras:
         extras = {}
-    if not bool(selections):
+    if not selections:
         selections = {}
 
-    # do we have a cache key
-    no     = setUserSearchNo(selections,extras)
-    ptbl   = metadata.views.getUserSearchTableName(no)
+    # Create a cache key
+    cache_table_num  = set_user_search_number(selections,extras)
+    cache_table_name = get_user_search_table_name(cache_table_num)
 
-    # is this key set in memcached
-    cache_key = 'cache_table:' + str(no)
+    # Is this key set in the cache?
+    cache_key = 'cache_table:' + str(cache_table_num)
 
-    if (cache.get(cache_key)):
-        return cache.get(cache_key)
+    cached_val = cache.get(cache_key)
+    if cached_val:
+        return cached_val
 
-    # it could still exist in database
+    # Is this key set in the database?
     try:
-        cursor.execute("desc cache_%s" % str(no))
-        cache.set(cache_key,ptbl)
-        return 'cache_%s' % str(no)
+        desc_sql = 'desc ' + connection.ops.quote_name(cache_table_name)
+        cursor.execute(desc_sql)
+    except DatabaseError,e:
+        if e.args[0] != MYSQL_TABLE_NOT_EXISTS:
+            log.error('get_user_query_table: "%s" returned %s',
+                      desc_sql, str(e))
+            return None
+    else:
+        cache.set(cache_key, cache_table_name)
+        return cache_table_name
 
-    except DatabaseError:
-        pass  # no table is there, we go on to build it below
-
-    ## cache table does not exist, we will make one by doing some data querying:
-    try:
-        sql, params = constructQueryString(selections, extras)
-    except TypeError:
-        log.error('getUserQueryTable: TypeError during constructQueryString')
+    # Cache table does not exist
+    # We will make one by doing some data querying
+    sql, params = construct_query_string(selections, extras)
+    if sql is None:
+        log.error('get_user_query_table: construct_query_string failed')
         log.error('.. Selections: %s', str(selections))
         log.error('.. Extras: %s', str(extras))
-        log.error('%s', traceback.format_exc())
-        return False
+        return None
 
     if not sql:
-        log.error('getUserQueryTable: Query string is empty')
+        log.error('get_user_query_table: Query string is empty')
         log.error('.. Selections: %s', str(selections))
         log.error('.. Extras: %s', str(extras))
-        return False
+        return None
 
     try:
-        # with this we can create a table that contains the single column
-        cursor.execute("create table " + connection.ops.quote_name(ptbl) + ' ' + sql, tuple(params))
-        # add the key **** this, and perhaps the create statement too, can be spawned to a backend process ****
-        cursor.execute("alter table " + connection.ops.quote_name(ptbl) + " add unique key(id)  ")
-
-        cache.set(cache_key,ptbl)
-        return ptbl
-
+        # With this we can create a table that contains the single column
+        create_sql = ('CREATE TABLE '
+                      + connection.ops.quote_name(cache_table_name)
+                      + ' ' + sql)
+        cursor.execute(create_sql, tuple(params))
     except DatabaseError,e:
-        if 'exists' in e.args[1].lower():
-            return ptbl
-        log.error('query execute failed: create/alter table ')
-        log.error(e.args[1].lower())
-        return False
+        if e.args[0] == MYSQL_TABLE_ALREADY_EXISTS:
+            log.error('get_user_query_table: Table "%s" originally didn\'t '+
+                      'exist, but now it does!', cache_table_name)
+            return cache_table_name
+        else:
+            log.error('get_user_query_table: "%s" with params "%s" failed with '
+                      +'%s', create_sql, str(tuple(params)), str(e))
+    try:
+        alter_sql = ('ALTER TABLE '
+                     + connection.ops.quote_name(cache_table_name)
+                     + ' ADD UNIQUE KEY(id)')
+        cursor.execute(alter_sql)
+    except DatabaseError,e:
+        log.error('get_user_query_table: "%s" with params "%s" failed with %s',
+                  alter_sql, str(tuple(params)), str(e))
+        return None
+
+    cache.set(cache_key, cache_table_name)
+    return cache_table_name
 
 
-
-def urlToSearchParams(request_get):
+def url_to_search_params(request_get):
     """
     OPUS lets users put nice readable things in the URL, like "planet=Jupiter" rather than "planet_id=3"
     this function takes the url params and translates it into a list that contains 2 dictionaries
@@ -317,7 +329,7 @@ def urlToSearchParams(request_get):
     >>>> from search.views import *
     >>>> from django.http import QueryDict
     >>>> q = QueryDict("planet=Saturn")
-    >>>> (selections,extras) = urlToSearchParams(q)
+    >>>> (selections,extras) = url_to_search_params(q)
     >>>> selections
     {'planet_id': [u'Saturn']}
     >>>> extras
@@ -340,13 +352,13 @@ def urlToSearchParams(request_get):
             slug = slug.split('-')[1]
             slug_no_num = strip_numeric_suffix(slug)
             if slug_no_num != slug:
-                log.error('search.views:urlToSearchParams qtype slug has '+
+                log.error('search.views:url_to_search_params qtype slug has '+
                           'numeric suffix "%s", slug')
                 continue
 
         param_info = get_param_info_by_slug(slug)
         if not param_info:
-            log.error('search.views:urlToSearchParams unknown slug "%s"',
+            log.error('search.views:url_to_search_params unknown slug "%s"',
                       slug)
             continue
 
@@ -410,7 +422,7 @@ def urlToSearchParams(request_get):
         return [{}, {}]
 
 
-def setUserSearchNo(selections=None,extras=None):
+def set_user_search_number(selections=None,extras=None):
     """
     creates a new row in userSearches model for every search request
     [cleanup,optimize]
@@ -704,3 +716,8 @@ def convertTimes(value_list):
             log.error("Could not convert time: %s", time)
             converted += [None]
     return converted
+
+
+def get_user_search_table_name(num):
+    """ pass cache_no, returns user search table name"""
+    return 'cache_' + str(num);

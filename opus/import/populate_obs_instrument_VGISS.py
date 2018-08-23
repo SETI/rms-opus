@@ -1,8 +1,7 @@
 ################################################################################
 # populate_obs_instrument_VGISS.py
 #
-# Routines to populate fields specific to VGISS. It may change fields in
-# obs_general, obs_mission_voyager, or obs_instrument_VGISS.
+# Routines to populate fields specific to VGISS.
 ################################################################################
 
 import numpy as np
@@ -89,7 +88,17 @@ def populate_obs_general_VGISS_time1(**kwargs):
         return None
     start_time = import_util.safe_column(supp_index_row, 'START_TIME')
 
-    return start_time
+    if start_time is None:
+        return None
+
+    try:
+        start_time_sec = julian.tai_from_iso(start_time)
+    except:
+        import_util.log_nonrepeating_error(
+            f'Bad start time format "{start_time}"')
+        return None
+
+    return julian.iso_from_tai(start_time_sec, digits=3, ymd=True)
 
 def populate_obs_general_VGISS_time2(**kwargs):
     metadata = kwargs['metadata']
@@ -98,7 +107,17 @@ def populate_obs_general_VGISS_time2(**kwargs):
         return None
     stop_time = import_util.safe_column(supp_index_row, 'STOP_TIME')
 
-    return stop_time
+    if stop_time is None:
+        return None
+
+    try:
+        stop_time_sec = julian.tai_from_iso(stop_time)
+    except:
+        import_util.log_nonrepeating_error(
+            f'Bad stop time format "{stop_time}"')
+        return None
+
+    return julian.iso_from_tai(stop_time_sec, digits=3, ymd=True)
 
 def populate_obs_general_VGISS_target_name(**kwargs):
     return helper_voyager_target_name(**kwargs)

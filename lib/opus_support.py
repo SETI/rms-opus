@@ -40,15 +40,19 @@ def _parse_two_field_sclk(sclk, sep, modval, scname):
 
     # Interpret the fields
     parts = sclk.split(sep)
+    # if len(parts) == 1:
+    #     raise ValueError('Invalid %s clock format, ' % scname +
+    #                      'no field separator: ' + sclk)
 
     if len(parts) > 2:
         raise ValueError('More than two %s clock fields: ' % scname + sclk)
 
-    # The second field must have the required number of digits
-    ndigits2 = len(str(modval - 1))
+    if len(parts) != 1:
+        # The second field must have the required number of digits
+        ndigits2 = len(str(modval - 1))
 
-    while len(parts[1]) < ndigits2:
-        parts[1] = parts[1] + '0'
+        while len(parts[1]) < ndigits2:
+            parts[1] = parts[1] + '0'
 
     # Make sure both fields are integers
     ints = []

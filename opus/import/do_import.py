@@ -18,6 +18,7 @@ from populate_obs_general import *
 from populate_obs_pds import *
 
 from populate_obs_mission_cassini import *
+from populate_obs_instrument_COCIRS import *
 from populate_obs_instrument_COISS import *
 from populate_obs_instrument_COUVIS import *
 from populate_obs_instrument_COVIMS import *
@@ -562,7 +563,7 @@ def import_one_volume(volume_id):
     instrument_name = VOLUME_ID_PREFIX_TO_INSTRUMENT_NAME[volume_id_prefix]
     mission_abbrev = INSTRUMENT_ABBREV_TO_MISSION_ABBREV[instrument_name]
 
-    # First we if we have a brand new label and index tab in the metadata
+    # First see if we have a brand new label and index tab in the metadata
     # directory. If so, ignore the one in volumes because it's probably
     # broken.
     paths = volume_pdsfile.associated_logical_paths('metadata', must_exist=True)
@@ -599,19 +600,26 @@ def import_one_volume(volume_id):
                     f'"{volume_label_path}"')
                         break
 
+    # Now look for non-metadata versions if we haven't found an index yet.
     if (volume_label_path is None and
         not impglobals.ARGUMENTS.import_force_metadata_index):
+        # COCIRS - give preference to OBSINDEX over INDEX
         volume_label_path = os.path.join(volume_pdsfile.abspath,
-                                         'index', 'index.lbl')
+                                         'INDEX', 'OBSINDEX.LBL')
+        if not os.path.exists(volume_label_path):
+            # Voyager
+            volume_label_path = os.path.join(volume_pdsfile.abspath,
+                                             'INDEX', 'IMGINDEX.LBL')
+        # If not COCIRS or Voyager, try all the capitalizations
+        if not os.path.exists(volume_label_path):
+            volume_label_path = os.path.join(volume_pdsfile.abspath,
+                                             'index', 'index.lbl')
         if not os.path.exists(volume_label_path):
             volume_label_path = os.path.join(volume_pdsfile.abspath,
                                              'INDEX', 'INDEX.LBL')
         if not os.path.exists(volume_label_path):
             volume_label_path = os.path.join(volume_pdsfile.abspath,
                                              'INDEX', 'index.lbl')
-        if not os.path.exists(volume_label_path):
-            volume_label_path = os.path.join(volume_pdsfile.abspath,
-                                             'INDEX', 'IMGINDEX.LBL')
     if volume_label_path is None:
         impglobals.LOGGER.log('error',
             f'No appropriate label file found: "{volume_id}"')
@@ -765,7 +773,8 @@ def import_one_volume(volume_id):
                         # filename.
                         for row in assoc_rows:
                             key1 = row.get('VOLUME_ID', None)
-                            key2 = row.get('FILE_SPECIFICATION_NAME', None)
+                            key2 = row.get('FILE_SPECIFICATION_NAME',
+                                           None).upper()
                             if key1 is None or key2 is None:
                                 import_util.log_nonrepeating_error(
                         f'{assoc_label_path} is missing VOLUME_ID or '+
@@ -880,7 +889,7 @@ def import_one_volume(volume_id):
 
         if 'supp_index' in metadata and instrument_name == 'COUVIS':
             # Match up the FILENAME with the key we generated earlier
-            couvis_filename = index_row['FILE_NAME']
+            couvis_filename = index_row['FILE_NAME'].upper()
             supp_index = metadata['supp_index']
             if couvis_filename in supp_index:
                 metadata['supp_index_row'] = supp_index[couvis_filename]

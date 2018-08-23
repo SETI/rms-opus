@@ -1,0 +1,240 @@
+[
+    {
+        "field_name": "obs_general_id",
+        "field_type": "uint4",
+        "field_key": "foreign",
+        "field_key_foreign": [
+            "obs_general",
+            "id"
+        ],
+        "field_notnull": true,
+        "data_source": [
+            "TAB:obs_general",
+            "id"
+        ],
+        "comment": "This is the primary (surrogate) key linking the record to obs_general."
+    },
+    {
+        "field_name": "opus_id",
+        "field_type": "char80",
+        "field_key": "foreign",
+        "field_key_foreign": [
+            "obs_general",
+            "opus_id"
+        ],
+        "field_notnull": true,
+        "data_source": [
+            "TAB:obs_general",
+            "opus_id"
+        ],
+        "comment": "This is the secondary key linking the record to obs_general."
+    },
+    {
+        "field_name": "volume_id",
+        "field_type": "char11",
+        "field_notnull": true,
+        "field_key": true,
+        "data_source": [
+            "TAB:obs_general",
+            "volume_id"
+        ],
+        "comment": "The volume_id is included here for ease of database manipulation only."
+    },
+    {
+        "field_name": "detector_id",
+        "field_type": "char3",
+        "field_notnull": true,
+        "data_source": [
+            "TAB:index",
+            "DETECTOR_ID"
+        ],
+        "definition": "The CIRS focal plane used to obtain the data. Possible values are FP1, FP3 and FP4. 'N/A' indicates 'not applicable'; system geometry files GEO*.TAB are so designated because they are not associated with any focal plane in particular.",
+        "pi_category_name": "obs_instrument_cocirs",
+        "pi_dict_context": "COCIRS",
+        "pi_dict_name": "DETECTOR_ID",
+        "pi_disp_order": 1,
+        "pi_display": 1,
+        "pi_display_results": 1,
+        "pi_form_type": "GROUP",
+        "pi_intro": null,
+        "pi_label": "Detector ID",
+        "pi_label_results": "Detector ID",
+        "pi_old_slug": "DETECTORID",
+        "pi_slug": "COCIRSdetectorid",
+        "pi_sub_heading": null,
+        "pi_tooltip": "",
+        "pi_units": "",
+        "mult_options": [
+              [   0, "FP1", "FP1", 10, "Y", null],
+              [   1, "FP3", "FP3", 20, "Y", null],
+              [   2, "FP4", "FP4", 30, "Y", null]
+          ]
+    },
+    {
+        "field_name": "instrument_mode_blinking_flag",
+        "field_type": "flag_onoff",
+        "field_notnull": true,
+        "data_source": [
+            "TAB:index",
+            "INSTRUMENT_MODE_BLINKING_FLAG"
+        ],
+        "definition": "1 if any of the interferograms were obtained using 'blinking' mode; 0 otherwise. Blinking mode involves alternating between the odd- and even-numbered pixels in FP3 and FP4.",
+        "pi_category_name": "obs_instrument_cocirs",
+        "pi_dict_context": "COCIRS",
+        "pi_dict_name": "BLINKING_MODE",
+        "pi_disp_order": 4,
+        "pi_display": 1,
+        "pi_display_results": 1,
+        "pi_form_type": "GROUP",
+        "pi_intro": null,
+        "pi_label": "Blinking Mode",
+        "pi_label_results": "Blinking Mode",
+        "pi_old_slug": "INSTRUMENTMODEBLINKINGFLAG",
+        "pi_slug": "COCIRSinstrumentmodeblinkingflag",
+        "pi_sub_heading": null,
+        "pi_tooltip": null,
+        "pi_units": null
+    },
+    {
+        "field_name": "instrument_mode_even_flag",
+        "field_type": "flag_onoff",
+        "field_notnull": true,
+        "data_source": [
+            "TAB:index",
+            "INSTRUMENT_MODE_EVEN_FLAG"
+        ],
+        "definition": "1 if any of the interferograms were obtained using continuous 'even' mode; 0 otherwise. Even mode uses just the even-numbered pixels of FP3 and FP4.",
+        "pi_category_name": "obs_instrument_cocirs",
+        "pi_dict_context": "COCIRS",
+        "pi_dict_name": "EVEN_MODE",
+        "pi_disp_order": 4,
+        "pi_display": 1,
+        "pi_display_results": 1,
+        "pi_form_type": "GROUP",
+        "pi_intro": null,
+        "pi_label": "Even Mode",
+        "pi_label_results": "Even Mode",
+        "pi_old_slug": "INSTRUMENTMODEEVENFLAG",
+        "pi_slug": "COCIRSinstrumentmodeevenflag",
+        "pi_sub_heading": null,
+        "pi_tooltip": null,
+        "pi_units": null
+    },
+    {
+        "field_name": "instrument_mode_odd_flag",
+        "field_type": "flag_onoff",
+        "field_notnull": true,
+        "data_source": [
+            "TAB:index",
+            "INSTRUMENT_MODE_ODD_FLAG"
+        ],
+        "definition": "1 if any of the interferograms were obtained using continuous 'odd' mode; 0 otherwise. Odd mode uses just the odd-numbered pixels of FP3 and FP4.",
+        "pi_category_name": "obs_instrument_cocirs",
+        "pi_dict_context": "COCIRS",
+        "pi_dict_name": "ODD_MODE",
+        "pi_disp_order": 4,
+        "pi_display": 1,
+        "pi_display_results": 1,
+        "pi_form_type": "GROUP",
+        "pi_intro": null,
+        "pi_label": "Odd Mode",
+        "pi_label_results": "Odd Mode",
+        "pi_old_slug": "INSTRUMENTMODEODDFLAG",
+        "pi_slug": "COCIRSinstrumentmodeoddflag",
+        "pi_sub_heading": null,
+        "pi_tooltip": null,
+        "pi_units": null
+    },
+    {
+        "field_name": "instrument_mode_centers_flag",
+        "field_type": "flag_onoff",
+        "field_notnull": true,
+        "data_source": [
+            "TAB:index",
+            "INSTRUMENT_MODE_CENTERS_FLAG"
+        ],
+        "definition": "1 if any of the interferograms were obtained using 'centers' mode; 0 otherwise. Centers mode uses just the central pixels of FP3 and FP4.",
+        "pi_category_name": "obs_instrument_cocirs",
+        "pi_dict_context": "COCIRS",
+        "pi_dict_name": "CENTERS_MODE",
+        "pi_disp_order": 4,
+        "pi_display": 1,
+        "pi_display_results": 1,
+        "pi_form_type": "GROUP",
+        "pi_intro": null,
+        "pi_label": "Centers Mode",
+        "pi_label_results": "Centers Mode",
+        "pi_old_slug": "INSTRUMENTMODECENTERSFLAG",
+        "pi_slug": "COCIRSinstrumentmodecentersflag",
+        "pi_sub_heading": null,
+        "pi_tooltip": null,
+        "pi_units": null
+    },
+    {
+        "field_name": "instrument_mode_pairs_flag",
+        "field_type": "flag_onoff",
+        "field_notnull": true,
+        "data_source": [
+            "TAB:index",
+            "INSTRUMENT_MODE_PAIRS_FLAG"
+        ],
+        "definition": "1 if any of the interferograms were obtained using 'pairs' mode; 0 otherwise. Pairs mode combines the data from adjacent pairs of odd and even pixels in FP3 and FP4: 1+2, 3+4, etc.",
+        "pi_category_name": "obs_instrument_cocirs",
+        "pi_dict_context": "COCIRS",
+        "pi_dict_name": "PAIRS_MODE",
+        "pi_disp_order": 4,
+        "pi_display": 1,
+        "pi_display_results": 1,
+        "pi_form_type": "GROUP",
+        "pi_intro": null,
+        "pi_label": "Pairs Mode",
+        "pi_label_results": "Pairs Mode",
+        "pi_old_slug": "INSTRUMENTMODEPAIRSFLAG",
+        "pi_slug": "COCIRSinstrumentmodepairsflag",
+        "pi_sub_heading": null,
+        "pi_tooltip": null,
+        "pi_units": null
+    },
+    {
+        "field_name": "instrument_mode_all_flag",
+        "field_type": "flag_onoff",
+        "field_notnull": true,
+        "data_source": [
+            "TAB:index",
+            "INSTRUMENT_MODE_ALL_FLAG"
+        ],
+        "definition": "1 if any of the interferograms were obtained using 'all' mode; 0 otherwise. This mode only refers to the data from FP1, which comprises just a single field of view.",
+        "pi_category_name": "obs_instrument_cocirs",
+        "pi_dict_context": "COCIRS",
+        "pi_dict_name": "ALL_MODE",
+        "pi_disp_order": 4,
+        "pi_display": 1,
+        "pi_display_results": 1,
+        "pi_form_type": "GROUP",
+        "pi_intro": null,
+        "pi_label": "All Mode",
+        "pi_label_results": "All Mode",
+        "pi_old_slug": "INSTRUMENTMODEALLFLAG",
+        "pi_slug": "COCIRSinstrumentmodeallflag",
+        "pi_sub_heading": null,
+        "pi_tooltip": null,
+        "pi_units": null
+    },
+    {
+        "put_mults_here": true
+    },
+    {
+        "field_name": "id",
+        "field_type": "uint4",
+        "field_key": "primary",
+        "field_notnull": true,
+        "data_source": [
+            "MAX_ID",
+            null
+        ]
+    },
+    {
+        "field_name": "timestamp",
+        "field_type": "timestamp"
+    }
+]

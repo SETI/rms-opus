@@ -1,8 +1,10 @@
 # Metadata
 
-The metadata app is where you get all the metadata about a user's search. Metadata are things like:
+The metadata app is where you get all the metadata about a user's search.
+Metadata are things like:
 
-    result count
-    result counts for each valie mult-select widget value (green numbers)
-    valid range endpoints for a given param
-    list of volumes/instruments this query includes
+    - Result count
+    - Result counts for each valid mult-select widget (green numbers)
+    - Valid range endpoints for a given parameter
+    - List of searchable fields
+    

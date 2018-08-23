@@ -25,16 +25,14 @@ MULT_TABLES_WITH_TARGET_GROUPING = ['mult_obs_general_target_name',
                                     'mult_obs_surface_geometry_target_name']
 
 # These instruments have ring geo available (maybe)
-INSTRUMENTS_WITH_RING_GEO = ['COCIRS',
-                             'COISS',
+INSTRUMENTS_WITH_RING_GEO = ['COISS',
                              'COUVIS',
                              'COVIMS',
                              'NHLORRI',
                              'VGISS']
 
 # These instruments have surface geo available (maybe)
-INSTRUMENTS_WITH_SURFACE_GEO = ['COCIRS',
-                                'COISS',
+INSTRUMENTS_WITH_SURFACE_GEO = ['COISS',
                                 'COUVIS',
                                 'COVIMS',
                                 'NHLORRI',
@@ -81,7 +79,7 @@ INST_HOST_ABBREV_TO_INST_HOST = {
 
 # Mapping from instrument abbreviation to mission abbreviation
 INSTRUMENT_ABBREV_TO_MISSION_ABBREV = {
-    # 'COCIRS':   'CO',
+    'COCIRS':    'CO',
     'COISS':     'CO',
     'COUVIS':    'CO',
     'COVIMS':    'CO',
@@ -98,7 +96,7 @@ INSTRUMENT_ABBREV_TO_MISSION_ABBREV = {
 
 # Mapping from instrument abbrev to instrument name
 INSTRUMENT_ABBREV_TO_INSTRUMENT_NAME = {
-    # 'COCIRS':   'Cassini CIRS',
+    'COCIRS':    'Cassini CIRS',
     'COISS':     'Cassini ISS',
     'COUVIS':    'Cassini UVIS',
     'COVIMS':    'Cassini VIMS',

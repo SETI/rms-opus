@@ -219,6 +219,9 @@ def parse_form_type(s):
         TYPE:function
         TYPE%format
     """
+    if s is None:
+        return None, None, None
+        
     form_type = s
     form_type_func = None
     form_type_format = None
@@ -243,3 +246,8 @@ def convert_ring_obs_id_to_opus_id(ring_obs_id):
         return ring_obs_id
 
     return ring_obs_id
+
+def get_mult_name(param_name):
+    """ pass param_name, returns mult widget foreign key table name
+        the tables themselves are in the search/models.py """
+    return 'mult_' + '_'.join(param_name.split('.'))

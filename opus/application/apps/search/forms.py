@@ -69,9 +69,6 @@ class SearchForm(forms.Form):
         grouping = kwargs.pop('grouping', None) # this is how you pass kwargs to the form class, yay!
         super(SearchForm, self).__init__(*args, **kwargs)
 
-        # this makes getMultName() below not choke, circular import issue? not sure..but this fixes
-        from metadata.views import getMultName
-
         for slug,values in args[0].items():
 
             param_info = get_param_info_by_slug(slug)
@@ -138,7 +135,7 @@ class SearchForm(forms.Form):
                     param_name = ParamInfo.objects.get(old_slug=slug).param_name()
                 except ParamInfo.DoesNotExist:
                     continue # XXX
-                mult_param = getMultName(param_name)
+                mult_param = get_mult_name(param_name)
                 model      = apps.get_model('search',mult_param.title().replace('_',''))
 
                 #grouped mult fields:

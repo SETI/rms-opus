@@ -1,8 +1,7 @@
 ################################################################################
 # populate_obs_instrument_GOSSI.py
 #
-# Routines to populate fields specific to GOSSI. It may change fields in
-# obs_general, obs_mission_galileo, or obs_instrument_GOSSI.
+# Routines to populate fields specific to GOSSI.
 ################################################################################
 
 import numpy as np
@@ -91,11 +90,17 @@ def populate_obs_general_GOSSI_time1(**kwargs):
     stop_time = import_util.safe_column(index_row, 'IMAGE_TIME')
     exposure = import_util.safe_column(index_row, 'EXPOSURE_DURATION')
 
-    if exposure is None:
+    if exposure is None or stop_time is None:
         exposure = 0
 
-    return julian.iso_from_tai(julian.tai_from_iso(stop_time)-exposure/1000,
-                               digits=3)
+    try:
+        stop_time_sec = julian.tai_from_iso(stop_time)
+    except:
+        import_util.log_nonrepeating_error(
+            f'Bad image time format "{stop_time}"')
+        return None
+
+    return julian.iso_from_tai(stop_time_sec-exposure/1000, digits=3, ymd=True)
 
 def populate_obs_general_GOSSI_time2(**kwargs):
     metadata = kwargs['metadata']
@@ -105,7 +110,14 @@ def populate_obs_general_GOSSI_time2(**kwargs):
     if stop_time is None:
         return None
 
-    return julian.iso_from_tai(julian.tai_from_iso(stop_time), digits=3)
+    try:
+        stop_time_sec = julian.tai_from_iso(stop_time)
+    except:
+        import_util.log_nonrepeating_error(
+            f'Bad image time format "{stop_time}"')
+        return None
+
+    return julian.iso_from_tai(stop_time_sec, digits=3, ymd=True)
 
 def populate_obs_general_GOSSI_target_name(**kwargs):
     target_name = helper_galileo_target_name(**kwargs)

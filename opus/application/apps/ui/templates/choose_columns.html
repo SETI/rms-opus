@@ -20,8 +20,8 @@
         {{ param_info.label_results }}
 
         <i class="fa fa-info-circle" title = "
-          {% if param_info.get_dictionary_info %}
-            {{ param_info.get_dictionary_info.def|striptags }}
+          {% if param_info.get_tooltip.definition %}
+            {{ param_info.get_tooltip.definition|striptags }}
           {% else  %}
             {{ param_info.label }}
           {% endif %}

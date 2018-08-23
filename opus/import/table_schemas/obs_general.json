@@ -72,7 +72,7 @@
         "pi_tooltip": "",
         "pi_units": "",
         "mult_options": [
-              [   0,    "COCIRS",       "Cassini CIRS",   10, "N", null],
+              [   0,    "COCIRS",       "Cassini CIRS",   10, "Y", null],
               [   1,     "COISS",        "Cassini ISS",   20, "Y", null],
               [   2,    "COUVIS",       "Cassini UVIS",   30, "Y", null],
               [   3,    "COVIMS",       "Cassini VIMS",   40, "Y", null],

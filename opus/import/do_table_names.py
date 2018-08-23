@@ -127,7 +127,7 @@ def create_import_table_names_table():
             # This is a hack because we don't actually have HST instrument
             # tables, but instead put everything in the mission tables
             display = 'N'
-        table_name = 'obs_instrument_'+instrument_id
+        table_name = 'obs_instrument_'+instrument_id.lower()
         if impglobals.DATABASE.table_exists('perm', table_name):
             entry = {
                 'table_name': table_name,

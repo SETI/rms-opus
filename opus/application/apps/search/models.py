@@ -681,6 +681,97 @@ class MultObsInstrumentVgissShutterMode(models.Model):
         db_table = 'mult_obs_instrument_vgiss_shutter_mode'
 
 
+class MultObsInstrumentCocirsDetectorId(models.Model):
+    id = models.IntegerField(primary_key=True)
+    value = models.CharField(max_length=100, blank=True, null=True)
+    label = models.CharField(max_length=60)
+    disp_order = models.IntegerField()
+    display = models.CharField(max_length=1)
+    timestamp = models.DateTimeField()
+
+    class Meta:
+        managed = False
+        db_table = 'mult_obs_instrument_cocirs_detector_id'
+
+
+class MultObsInstrumentCocirsInstrumentModeAllFlag(models.Model):
+    id = models.IntegerField(primary_key=True)
+    value = models.CharField(max_length=100, blank=True, null=True)
+    label = models.CharField(max_length=60)
+    disp_order = models.IntegerField()
+    display = models.CharField(max_length=1)
+    timestamp = models.DateTimeField()
+
+    class Meta:
+        managed = False
+        db_table = 'mult_obs_instrument_cocirs_instrument_mode_all_flag'
+
+
+class MultObsInstrumentCocirsInstrumentModeBlinkingFlag(models.Model):
+    id = models.IntegerField(primary_key=True)
+    value = models.CharField(max_length=100, blank=True, null=True)
+    label = models.CharField(max_length=60)
+    disp_order = models.IntegerField()
+    display = models.CharField(max_length=1)
+    timestamp = models.DateTimeField()
+
+    class Meta:
+        managed = False
+        db_table = 'mult_obs_instrument_cocirs_instrument_mode_blinking_flag'
+
+
+class MultObsInstrumentCocirsInstrumentModeCentersFlag(models.Model):
+    id = models.IntegerField(primary_key=True)
+    value = models.CharField(max_length=100, blank=True, null=True)
+    label = models.CharField(max_length=60)
+    disp_order = models.IntegerField()
+    display = models.CharField(max_length=1)
+    timestamp = models.DateTimeField()
+
+    class Meta:
+        managed = False
+        db_table = 'mult_obs_instrument_cocirs_instrument_mode_centers_flag'
+
+
+class MultObsInstrumentCocirsInstrumentModeEvenFlag(models.Model):
+    id = models.IntegerField(primary_key=True)
+    value = models.CharField(max_length=100, blank=True, null=True)
+    label = models.CharField(max_length=60)
+    disp_order = models.IntegerField()
+    display = models.CharField(max_length=1)
+    timestamp = models.DateTimeField()
+
+    class Meta:
+        managed = False
+        db_table = 'mult_obs_instrument_cocirs_instrument_mode_even_flag'
+
+
+class MultObsInstrumentCocirsInstrumentModeOddFlag(models.Model):
+    id = models.IntegerField(primary_key=True)
+    value = models.CharField(max_length=100, blank=True, null=True)
+    label = models.CharField(max_length=60)
+    disp_order = models.IntegerField()
+    display = models.CharField(max_length=1)
+    timestamp = models.DateTimeField()
+
+    class Meta:
+        managed = False
+        db_table = 'mult_obs_instrument_cocirs_instrument_mode_odd_flag'
+
+
+class MultObsInstrumentCocirsInstrumentModePairsFlag(models.Model):
+    id = models.IntegerField(primary_key=True)
+    value = models.CharField(max_length=100, blank=True, null=True)
+    label = models.CharField(max_length=60)
+    disp_order = models.IntegerField()
+    display = models.CharField(max_length=1)
+    timestamp = models.DateTimeField()
+
+    class Meta:
+        managed = False
+        db_table = 'mult_obs_instrument_cocirs_instrument_mode_pairs_flag'
+
+
 class MultObsMissionCassiniCassiniTargetCode(models.Model):
     id = models.IntegerField(primary_key=True)
     value = models.CharField(max_length=100, blank=True, null=True)
@@ -1234,6 +1325,32 @@ class ObsInstrumentVgiss(models.Model):
         db_table = 'obs_instrument_vgiss'
 
 
+class ObsInstrumentCocirs(models.Model):
+    obs_general = models.ForeignKey(ObsGeneral, models.DO_NOTHING)
+    opus_id = models.ForeignKey(ObsGeneral, models.DO_NOTHING, related_name='%(class)s_opus_id', db_column='opus_id')
+    volume_id = models.CharField(max_length=11)
+    detector_id = models.CharField(max_length=3)
+    instrument_mode_blinking_flag = models.CharField(max_length=3)
+    instrument_mode_even_flag = models.CharField(max_length=3)
+    instrument_mode_odd_flag = models.CharField(max_length=3)
+    instrument_mode_centers_flag = models.CharField(max_length=3)
+    instrument_mode_pairs_flag = models.CharField(max_length=3)
+    instrument_mode_all_flag = models.CharField(max_length=3)
+    mult_obs_instrument_cocirs_detector = models.ForeignKey(MultObsInstrumentCocirsDetectorId, models.DO_NOTHING)
+    mult_obs_instrument_cocirs_instrument_mode_blinking_flag = models.ForeignKey(MultObsInstrumentCocirsInstrumentModeBlinkingFlag, models.DO_NOTHING, db_column='mult_obs_instrument_cocirs_instrument_mode_blinking_flag')
+    mult_obs_instrument_cocirs_instrument_mode_even_flag = models.ForeignKey(MultObsInstrumentCocirsInstrumentModeEvenFlag, models.DO_NOTHING, db_column='mult_obs_instrument_cocirs_instrument_mode_even_flag')
+    mult_obs_instrument_cocirs_instrument_mode_odd_flag = models.ForeignKey(MultObsInstrumentCocirsInstrumentModeOddFlag, models.DO_NOTHING, db_column='mult_obs_instrument_cocirs_instrument_mode_odd_flag')
+    mult_obs_instrument_cocirs_instrument_mode_centers_flag = models.ForeignKey(MultObsInstrumentCocirsInstrumentModeCentersFlag, models.DO_NOTHING, db_column='mult_obs_instrument_cocirs_instrument_mode_centers_flag')
+    mult_obs_instrument_cocirs_instrument_mode_pairs_flag = models.ForeignKey(MultObsInstrumentCocirsInstrumentModePairsFlag, models.DO_NOTHING, db_column='mult_obs_instrument_cocirs_instrument_mode_pairs_flag')
+    mult_obs_instrument_cocirs_instrument_mode_all_flag = models.ForeignKey(MultObsInstrumentCocirsInstrumentModeAllFlag, models.DO_NOTHING, db_column='mult_obs_instrument_cocirs_instrument_mode_all_flag')
+    id = models.IntegerField(primary_key=True)
+    timestamp = models.DateTimeField()
+
+    class Meta:
+        managed = False
+        db_table = 'obs_instrument_cocirs'
+
+
 class ObsMissionCassini(models.Model):
     obs_general = models.ForeignKey(ObsGeneral, models.DO_NOTHING)
     opus_id = models.ForeignKey(ObsGeneral, models.DO_NOTHING, related_name='%(class)s_opus_id', db_column='opus_id')
@@ -1377,7 +1494,7 @@ class ObsPds(models.Model):
     volume_id = models.CharField(max_length=11)
     instrument_id = models.CharField(max_length=9)
     data_set_id = models.CharField(max_length=40)
-    product_id = models.CharField(max_length=30)
+    product_id = models.CharField(max_length=30, blank=True, null=True)
     product_creation_time = models.CharField(max_length=23, blank=True, null=True)
     product_creation_time_sec = models.FloatField(blank=True, null=True)
     primary_file_spec = models.CharField(max_length=240, blank=True, null=True)

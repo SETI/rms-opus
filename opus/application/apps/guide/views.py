@@ -1,10 +1,16 @@
-import oyaml as yaml # Cool package that preserves key order
+import logging
 import os
+
+import oyaml as yaml # Cool package that preserves key order
+
 from django.shortcuts import render
-from django.http import HttpResponse,Http404
-from metrics.views import update_metrics
+from django.http import Http404, HttpResponse
+
 from metadata.views import get_fields_info
 from tools.app_utils import *
+
+log = logging.getLogger(__name__)
+
 
 ################################################################################
 #
@@ -24,14 +30,14 @@ def api_guide(request):
 
     path = os.path.dirname(os.path.abspath(__file__))
     guide_content_file = 'examples.yaml'
-    with open(path + "/{}".format(guide_content_file), 'r') as stream:
+    with open(os.path.join(path, guide_content_file), 'r') as stream:
         try:
             guide = yaml.load(stream)
 
         except yaml.YAMLError as exc:
-            print(exc)
+            log.error('api_guide error: %s', str(exc))
             exit_api_call(api_code, None)
-            return
+            raise Http404
 
     slugs = get_fields_info('raw', collapse=True)
 

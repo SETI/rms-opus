@@ -2,6 +2,13 @@ import os
 import sys
 from collections import OrderedDict
 
+_HAS_MEMCACHE = False
+try:
+    import memcache
+    _HAS_MEMCACHE = True
+except ImportError:
+    pass
+
 BASE_PATH = 'opus'  # production base path is handled by apache, local is not.
 PROJECT_ROOT = os.path.dirname(os.path.realpath(__file__))
 PDS_OPUS_ROOT = os.path.dirname(os.path.dirname(PROJECT_ROOT))
@@ -12,7 +19,7 @@ from opus_secrets import *
 
 sys.path.insert(0, os.path.join(PROJECT_ROOT, 'apps'))
 sys.path.insert(0, os.path.join(PROJECT_ROOT, PDS_TOOLS_PATH))
-sys.path.insert(0, os.path.join(PROJECT_ROOT, PDS_WEBSERVER_PYTHON_PATH))
+sys.path.insert(0, os.path.join(PROJECT_ROOT, PDS_WEBTOOLS_PATH))
 sys.path.insert(0, os.path.join(PROJECT_ROOT, PDS_OPUS_LIB_PATH))
 
 import opus_support
@@ -142,37 +149,29 @@ INSTALLED_APPS = (
 )
 
 
-# https://github.com/edavis/django-infinite-memcached/tree/
-CACHES = {
-    "default": {
-	"BACKEND":"django.core.cache.backends.memcached.MemcachedCache",
-        "LOCATION": "127.0.0.1:11211",
-	"TIMEOUT": None,
-    },
-}
-#CACHES = {
-#    'default': {
-#        'BACKEND': 'django.core.cache.backends.dummy.DummyCache',
-#   }
-#}
+if _HAS_MEMCACHE:
+    # https://github.com/edavis/django-infinite-memcached/tree/
+    CACHES = {
+        "default": {
+    	"BACKEND":"django.core.cache.backends.memcached.MemcachedCache",
+            "LOCATION": "127.0.0.1:11211",
+    	"TIMEOUT": None,
+        },
+    }
+else:
+    CACHES = {
+       'default': {
+           'BACKEND': 'django.core.cache.backends.dummy.DummyCache',
+      }
+    }
 
 # for last_modified middleware
 LAST_MODIFIED_FUNC = 'tools.last_mod.last_mod'
 CACHE_MAX_AGE = 3600 * 24 * 120  # the last number is the number of days
 
-
 INTERNAL_IPS = ('127.0.0.1',)
 
-
 TEST_RUNNER = 'django_nose.NoseTestSuiteRunner'
-
-#CACHE_BACKEND = 'dummy://'  # turns off caching
-#CACHE_BACKEND = "memcached://127.0.0.1:11211/?timeout=0"
-# CACHE_BACKEND = "memcached://127.0.0.1:11211"
-
-
-#CACHE_MIDDLEWARE_SECONDS = 0
-
 
 DEBUG_TOOLBAR_CONFIG = { 'INTERCEPT_REDIRECTS': False }
 
@@ -337,10 +336,10 @@ IMAGE_COLUMNS   = ['thumb.jpg','small.jpg','med.jpg','full.jpg']
 
 THUMBNAIL_IMAGE_SIZE = 100 # Pixels
 PREVIEW_SIZE_TO_PDS_TYPE = {
-    'thumb': 'Browse Image (thumbnail)',
-    'small': 'Browse Image (small)',
-    'med':   'Browse Image (medium)',
-    'full':  'Browse Image (full-size)'
+    'thumb': ('Browse Image (thumbnail)', 'Browse Diagram (thumbnail)'),
+    'small': ('Browse Image (small)',     'Browse Diagram (small)'),
+    'med':   ('Browse Image (medium)',    'Browse Diagram (medium)'),
+    'full':  ('Browse Image (full-size)', 'Browse Diagram (full-size)')
 }
 
 PREVIEW_GUIDES = {
