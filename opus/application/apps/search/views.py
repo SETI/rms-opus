@@ -86,12 +86,11 @@ def url_to_search_params(request_get):
         search_params.append(('order', settings.DEFAULT_SORT_ORDER))
     for search_param in search_params:
         slug = search_param[0]
-        if slug == 'order' and search_param[1]:
-            if 'order' in qtypes:
-                log.error('url_to_search_params: Duplicate slug for '
-                          +'"order": %s', request_get)
-                return None, None
-            all_order = search_param[1]
+        if slug == 'order':
+            if search_param[1]:
+                all_order = search_param[1]
+            else:
+                all_order = settings.DEFAULT_SORT_ORDER
             orders = all_order.split(',')
             for order in orders:
                 descending = order[0] == '-'

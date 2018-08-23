@@ -122,7 +122,7 @@ def api_collection_status(request, collection_name='default'):
 ################################################################################
 
 
-# This function should really be in user_collections, but it uses _get_page,
+# This function should really be in user_collections, but it uses get_page,
 # which is here, and there would be a circular import loop if we tried to
 # do it the right way.
 def api_get_collection_csv(request, fmt=None):
@@ -539,7 +539,7 @@ def _edit_collection_range(request, session_id, action):
         return False
     (min_id, max_id) = ids
 
-    data = get_data(request, 'raw', cols=['opusid'])
+    data = get_data(request, 'raw', cols='opusid')
     if data is None:
         return False
 

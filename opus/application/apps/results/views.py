@@ -278,7 +278,7 @@ def api_get_images_by_size(request, size, fmt):
     session_id = get_session_id(request)
 
     (page_no, limit, page, opus_ids, ring_obs_ids,
-     order) = get_page(request, cols=[])
+     order) = get_page(request, cols='opusid,ringobsid')
     if page is None:
         ret = Http404('Could not find page')
         exit_api_call(api_code, ret)
@@ -345,7 +345,7 @@ def api_get_images(request, fmt):
     columns = request.GET.get('cols', settings.DEFAULT_COLUMNS)
 
     (page_no, limit, page, opus_ids, ring_obs_ids,
-     order) = get_page(request, cols=[])
+     order) = get_page(request, cols='opusid,ringobsid')
     if page is None:
         ret = Http404('Could not find page')
         exit_api_call(api_code, ret)
@@ -566,6 +566,8 @@ def get_data(request, fmt, cols=None):
 
     Can return JSON, ZIP, HTML, CSV, or RAW.
 
+    cols is a comma-separated list.
+
     Returned JSON is of the format:
         data = {
                 'page_no': page_no,
@@ -582,8 +584,8 @@ def get_data(request, fmt, cols=None):
         cols = request.GET.get('cols', settings.DEFAULT_COLUMNS)
 
     (page_no, limit, page, opus_ids,
-     ring_obs_ids, order) = get_page(request, cols=cols.split(','))
-                                                                        )
+     ring_obs_ids, order) = get_page(request, cols=cols)
+
     if page is None:
         return None
 
@@ -831,7 +833,12 @@ def get_page(request, use_collections=None, collections_page=None, page=None,
 
     cursor = connection.cursor()
     cursor.execute(sql)
-    results = cursor.fetchall()
+    results = []
+    more = True
+    while more:
+        part_results = cursor.fetchall()
+        results += part_results
+        more = cursor.nextset()
 
     log.debug('get_page SQL (%.2f secs): %s', time.time()-time1, sql)
 
@@ -1027,7 +1034,12 @@ def get_collection_in_page(opus_id_list, session_id):
     sql += connection.ops.quote_name('collections')
     sql += ' WHERE session_id=%s'
     cursor.execute(sql, [session_id])
-    rows = cursor.fetchall()
+    rows = []
+    more = True
+    while more:
+        part_rows = cursor.fetchall()
+        rows += part_rows
+        more = cursor.nextset()
     coll_ids = [r[0] for r in rows]
     ret = [opus_id for opus_id in opus_id_list if opus_id in coll_ids]
     return ret
