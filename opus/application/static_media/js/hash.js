@@ -100,7 +100,7 @@ var o_hash = {
 
 
     initFromHash: function(){
-        hash = o_hash.getHash();
+        var hash = o_hash.getHash();
         if (!hash) { return; }
         // first are any custom widget sizes in the hash?
         // just updating prefs here..
@@ -152,7 +152,7 @@ var o_hash = {
             } else {
                 // these are search params/value!
                 if (value) {
-                    opus.selections[slug]= value.split(',');
+                    opus.selections[slug] = value.replace(/\+/g, " ").split(',');
                 }
             }
         }
