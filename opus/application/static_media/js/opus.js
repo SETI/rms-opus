@@ -420,6 +420,7 @@ var opus = {
 
         // reset the search query
         opus.selections = {};
+        opus.extras = {};
         o_browse.resetQuery();
         opus.prefs.view = 'search';
         opus.changeTab();
