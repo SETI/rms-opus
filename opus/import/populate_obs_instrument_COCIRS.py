@@ -291,8 +291,6 @@ def populate_obs_mission_cassini_COCIRS_spacecraft_clock_count1(**kwargs):
         import_util.log_nonrepeating_error(
             f'Badly formatted SPACECRAFT_CLOCK_START_COUNT "{count}"')
         return None
-    if count.find('.') == -1:
-        count += '.000'
     return count
 
 def populate_obs_mission_cassini_COCIRS_spacecraft_clock_count2(**kwargs):
@@ -303,8 +301,6 @@ def populate_obs_mission_cassini_COCIRS_spacecraft_clock_count2(**kwargs):
         import_util.log_nonrepeating_error(
             f'Badly formatted SPACECRAFT_CLOCK_STOP_COUNT "{count}"')
         return None
-    if count.find('.') == -1:
-        count += '.000'
     return count
 
 
