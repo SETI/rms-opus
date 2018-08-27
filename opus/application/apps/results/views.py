@@ -602,8 +602,15 @@ def get_data(request, fmt, cols=None):
         pi = get_param_info_by_slug(slug, from_ui=True)
         if not pi:
             log.error('get_data: Could not find param_info for %s', slug)
-            continue
+            return None
         labels.append(pi.label_results)
+
+    # For backwards compatibility. It would be a lot nicer if we didn't need
+    # to know this index at all. See data.html for why we do.
+    if id_index is None:
+        for slug_no, slug in enumerate(cols.split(',')):
+            if slug == 'ringobsid':
+                id_index = slug_no
 
     if is_column_chooser:
         labels.insert(0, 'add') # adds a column for checkbox add-to-collections
