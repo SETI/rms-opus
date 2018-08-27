@@ -104,10 +104,21 @@ var o_widgets = {
             slug_no_num = slug;
         }
 
-        opus.prefs.widgets.splice(opus.prefs.widgets.indexOf(slug), 1);
-        opus.prefs.widgets2.splice(opus.prefs.widgets2.indexOf(slug), 1);
-        opus.widgets_drawn.splice(opus.widgets_drawn.indexOf(slug), 1);
-        opus.widget_elements_drawn.splice(opus.widget_elements_drawn.indexOf(slug), 1);
+        if ($.inArray(slug,opus.prefs.widgets) > -1) {
+            opus.prefs.widgets.splice(opus.prefs.widgets.indexOf(slug), 1);
+        }
+
+        if ($.inArray(slug,opus.prefs.widgets2) > -1) {
+            opus.prefs.widgets2.splice(opus.prefs.widgets2.indexOf(slug), 1);
+        }
+
+        if ($.inArray(slug,opus.widgets_drawn) > -1) {
+            opus.widgets_drawn.splice(opus.widgets_drawn.indexOf(slug), 1);
+        }
+
+        if ($.inArray(slug, opus.widget_elements_drawn) > -1) {
+            opus.widget_elements_drawn.splice(opus.widget_elements_drawn.indexOf(slug), 1);
+        }
 
         if (slug in opus.selections) {
             delete opus.selections[slug];
@@ -120,101 +131,12 @@ var o_widgets = {
             delete opus.selections[slug_no_num + '2'];
         }
 
+        delete opus.extras['qtype-'+slug_no_num];
+        delete opus.extras['z-'+slug_no_num];
+
         o_hash.updateHash();
         o_widgets.updateWidgetCookies();
 
-    },
-
-    // removing, pausing, or minimizing widgets
-    widgetControlBehaviors: function(slug) {
-
-        var widget = 'widget__' + slug;
-
-        var min = false;
-        if (slug.match(/.*(1|2)/)) {
-            var min = slug.match(/(.*)[1|2]/)[1] + '1';
-            var max = slug.match(/(.*)[1|2]/)[1] + '2';
-        }
-
-        // "remove"
-        $('#widget_control_' + slug + ' .remove_widget').click(function() {
-           if (min) {
-               delete opus.selections[min];
-               delete opus.selections[max];
-           } else {
-               delete opus.selections[slug];
-           }
-           if (jQuery.inArray(slug,opus.prefs.widgets) > -1) {
-               opus.prefs.widgets.splice(opus.prefs.widgets.indexOf(slug), 1); }
-
-           if (jQuery.inArray(slug,opus.prefs.widgets2) > -1) {
-               opus.prefs.widgets2.splice(opus.prefs.widgets2.indexOf(slug), 1); }
-
-           if (jQuery.inArray(slug,opus.widgets_drawn) > -1) {
-               opus.widgets_drawn.splice(opus.widgets_drawn.indexOf(slug), 1); }
-
-           if (jQuery.inArray(slug, opus.widget_elements_drawn) > -1) {
-               opus.widget_elements_drawn.splice(opus.widget_elements_drawn.indexOf(slug), 1); }
-
-           delete opus.extras['qtype-'+slug];
-           delete opus.extras['z-'+slug];
-           o_hash.updateHash();
-           $('#' + widget).fadeOut("slow");
-           setTimeout("$('#" + widget + "').remove()",500); // wait for the fade before removing from dom, for some reason couldn't chain a .remove()
-           return false;
-        });
-
-        // "pause"
-        $('input.widget_pause', '#' + widget).change(function() {
-            // $(this).text('resume');
-            if (!$(this).is(':checked')) {
-                $(' .widget_form  li, .mult_group_label', '#' + widget).fadeTo('slow',0.6);
-                $('#' + widget).animate({borderColor:"#D8D8D8"},"slow");
-                $('#' + widget + ' .widget_form input').attr("disabled","disabled");
-                if (min) {
-                    opus.widgets_paused[min] = opus.selections[min];
-                    opus.widgets_paused[max] = opus.selections[max];
-                    delete opus.selections[min];
-                    delete opus.selections[max];
-                } else {
-                    opus.widgets_paused[slug] = opus.selections[slug];
-                    delete opus.selections[slug];
-                }
-                o_hash.updateHash();
-            }  else {
-                // this box is checked
-
-                $(' .widget_form  li, .mult_group_label', '#' + widget).fadeTo('slow',1.0);
-                $('#' + widget).animate({borderColor:"#C8C8C8"},"slow");
-                $('#' + widget + ' .widget_inner input').removeAttr("disabled");
-                if (min) {
-                    if (opus.widgets_paused[min]) opus.selections[min] = opus.widgets_paused[min];
-                    if (opus.widgets_paused[max]) opus.selections[max] = opus.widgets_paused[max];
-                    delete opus.widgets_paused[min];
-                    delete opus.widgets_paused[max];
-                } else {
-                    if (opus.widgets_paused[slug]) opus.selections[slug] = opus.widgets_paused[slug]; // if for when the field was unconstrained but they hit pause
-                    delete opus.widgets_paused[slug];
-                }
-                o_hash.updateHash();
-
-        }});
-
-        // "minimize"
-        $('.minimize_widget', '#' + widget ).toggle(function() {
-            o_widgets.minimizeWidget(slug, widget);
-        }, function() {
-            o_widgets.maximizeWidget(slug, widget);
-        });
-
-        /**
-        $('.widget_label', '#' + widget ).click(function() {
-            o_widgets.minimizeWidget(slug, widget);
-        });
-        $('.widget_minimized', '#' + widget ).click(function() {
-            o_widgets.maximizeWidget(slug, widget);
-        });
-        **/
     },
 
     widgetDrop: function(ui) {
@@ -526,10 +448,10 @@ var o_widgets = {
 
          if (!slug) return;
 
-         if (jQuery.inArray(slug, opus.widgets_drawn) > -1) {
+         if ($.inArray(slug, opus.widgets_drawn) > -1) {
              return; // widget already drawn
          }
-         if (jQuery.inArray(slug, opus.widgets_fetching) > -1) {
+         if ($.inArray(slug, opus.widgets_fetching) > -1) {
              return; // widget being fetched
          }
 
@@ -540,18 +462,18 @@ var o_widgets = {
          /**
          // add the new slug to the url hash and the opus.prefs vars
          if (formscolumn == '#search_widgets1') {
-             if (jQuery.inArray(slug,opus.prefs.widgets) < 0) {
+             if ($.inArray(slug,opus.prefs.widgets) < 0) {
                  opus.prefs.widgets.unshift(slug);
              }
          } else {
-             if (jQuery.inArray(slug,opus.prefs.widgets2) < 0) {
+             if ($.inArray(slug,opus.prefs.widgets2) < 0) {
                  opus.prefs.widgets2.unshift(slug);
             }
          }
          */
 
         // add the div that will hold the widget
-        if (jQuery.inArray(slug,opus.widget_elements_drawn) < 0) {
+        if ($.inArray(slug,opus.widget_elements_drawn) < 0) {
 
             opus.prefs.widgets.unshift(slug);
 
@@ -610,7 +532,7 @@ var o_widgets = {
                  var id = slug.match(/(.*)[1|2]/)[1];
 
                 // is the qtype constrained in the url?
-                 if (jQuery.inArray('qtype-' + id,opus.extras) > -1 && opus.extras['qtype-'+id]) {
+                 if ($.inArray('qtype-' + id,opus.extras) > -1 && opus.extras['qtype-'+id]) {
                      // this widgets dropdown is defined in the url, update the html select dropdown to match
                      $('#' + widget + ' select').attr("value",opus.extras['qtype-'+id]);
                  }
@@ -635,7 +557,6 @@ var o_widgets = {
                 }
 
              }
-             o_widgets.widgetControlBehaviors(slug);
 
              // add the spans that hold the hinting
              try {
@@ -647,11 +568,11 @@ var o_widgets = {
              } catch(e) { } // these only apply to mult widgets
 
 
-             if (jQuery.inArray(slug,opus.widgets_fetching) > -1) {
+             if ($.inArray(slug,opus.widgets_fetching) > -1) {
                  opus.widgets_fetching.splice(opus.widgets_fetching.indexOf(slug), 1);
              }
 
-            if (jQuery.isEmptyObject(opus.selections)) {
+            if ($.isEmptyObject(opus.selections)) {
                 $('#widget__' + slug + ' .spinner').fadeOut('');
             } else {
                 o_search.getHinting(slug);
