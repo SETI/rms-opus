@@ -602,8 +602,12 @@ def populate_obs_wavelength_HSTACS_polarization_type(**kwargs):
 
 def populate_obs_mission_hubble_HSTACS_filter_type(**kwargs):
     filter1, filter2 = _decode_filters(**kwargs)
-    # We only care about filter1 since the second is always a polarizer
-    assert filter2 is None or filter2.startswith('POL')
+    # We only care about filter1 since the second is (almost) always a 
+    # polarizer
+    if filter2 is not None and not filter2.startswith('POL'):
+        import_util.log_nonrepeating_warning(
+            f'Filter combination {filter1}+{filter2} does not have a'
+            +' polarizer as the second filter - filter_type may be wrong')
 
     # From ACS Inst handbook Table 3.3
     if filter1 in ['F475W', 'F625W', 'F775W', 'F850LP', 'F435W', 'F555W',
