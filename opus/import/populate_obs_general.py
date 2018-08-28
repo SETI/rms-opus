@@ -127,9 +127,9 @@ def populate_obs_general_time_sec2(**kwargs):
         return None
 
     time_sec2 = julian.tai_from_iso(time2)
-
     time_sec1 = general_row['time_sec1']
-    if time_sec2 < time_sec1:
+    
+    if time_sec1 is not None and time_sec2 < time_sec1:
         time1 = general_row['time1']
         import_util.log_error(f'time1 ({time1}) and time2 ({time2}) are '+
                               f'in the wrong order - setting equal')
