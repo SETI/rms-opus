@@ -140,13 +140,13 @@ def populate_obs_general_time_sec2(**kwargs):
             f'Bad stop time format "{time2}": {e}')
         return None
 
-    time_sec1 = general_row['time_sec1']
+    time1_sec = general_row['time_sec1']
 
-    if time_sec1 is not None and time_sec2 < time_sec1:
+    if time1_sec is not None and time2_sec < time1_sec:
         time1 = general_row['time1']
         import_util.log_error(f'time1 ({time1}) and time2 ({time2}) are '+
-                              f'in the wrong order - setting equal')
+                              f'in the wrong order - setting to time1')
         impglobals.IMPORT_HAS_BAD_DATA = True
-        time_sec2 = time_sec1
+        time2_sec = time1_sec
 
-    return time_sec2
+    return time2_sec
