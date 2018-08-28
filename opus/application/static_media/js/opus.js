@@ -165,7 +165,6 @@ var opus = {
             'order':'time1',  // result table ordering
             'cols': default_columns.split(','),  // default result table columns by slug
             'widgets':[], // search tab widget columns
-            'widgets2':[],
             'widget_size':{}, // search tab resized widgets
             'widget_scroll':{}, // search tab widget internal scroll saved
             'detail':'', // opus_id of detail page content
@@ -306,14 +305,9 @@ var opus = {
                   }
 
                   // result count is back, now send for widget hinting
-                  var widget_cols = ['widgets','widgets2'];
-                  for (key in widget_cols) {
-                      col = widget_cols[key];
-                      for (k in opus.prefs[col]) {
-                          slug = opus.prefs[col][k];
-                          o_search.getHinting(slug);
-                      } // end for widget in..
-                  } // endfor
+                  $.each( opus.prefs.widgets, function( index, slug ){
+                      o_search.getHinting(slug);
+                  });
               } // end result count success
           }); // end result count ajax
     }, // endfunc jeezumcrow! #shootmenow
@@ -440,7 +434,6 @@ var opus = {
             // resets widgets drawn back to system default
             // in the 2 tier button this was the 'start over and restore defaults' behavior
             // note: this is the current deployed behavior for the single 'start over' button
-            opus.prefs.widgets2 = [];
             opus.prefs.widgets = [];
             opus.widgets_drawn = [];
             opus.widget_elements_drawn = [];

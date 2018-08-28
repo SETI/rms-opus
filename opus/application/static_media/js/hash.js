@@ -48,7 +48,7 @@ var o_hash = {
             case 'widget_scroll':
               // these are prefs having to do with widget resize and scrolled
               break; // there's no scroll without size, so we handle scroll when size comes thru
-              
+
             default:
               hash[hash.length] = key + '=' + opus.prefs[key];
           }
@@ -108,8 +108,10 @@ var o_hash = {
 
         for (var q in hash) {
 
-            slug = hash[q].split('=')[0];
-            value = hash[q].split('=')[1];
+            var slug = hash[q].split('=')[0];
+            var value = hash[q].split('=')[1];
+            if (!value)
+                continue;
 
             if (slug.match(/sz-.*/)) {
                 var id = slug.match(/sz-(.*)/)[1];
@@ -126,40 +128,37 @@ var o_hash = {
             }
             // look for prefs
             else if (slug in opus.prefs) {
-
-                if (slug == 'widgets' || slug == 'widgets2') {
-                    if (value) {
+                switch(slug) {
+                    case "widgets":
                         opus.prefs[slug] = value.replace(/\s+/g, '').split(',');
-                    }
-                } else if (slug == 'page') {
-                    if (value) {
-                        opus.prefs.page['gallery'] = parseInt(value, 10);
-                        opus.prefs.page['data'] = parseInt(value, 10);
-                    }
-                } else if (slug == 'limit') {
-                    if (value) {
-                        opus.prefs[slug] = parseInt(value, 10);
-                    }
-                } else if (slug=='cols') {
-                    if (value) {
-                        opus.prefs[slug] = value.split(',');
-                    }
-                }
-                else if (value) {
-                        opus.prefs[slug] = value;
-                }
+                        break;
 
+                    case "page":
+                        opus.prefs.page["gallery"] = parseInt(value, 10);
+                        opus.prefs.page["data"] = parseInt(value, 10);
+                        break;
+
+                    case "limit":
+                        opus.prefs[slug] = parseInt(value, 10);
+                        break;
+
+                    case "cols":
+                        opus.prefs[slug] = value.split(',');
+                        break;
+
+                    default:
+                        opus.prefs[slug] = value;
+                        break;
+                }
             } else {
                 // these are search params/value!
-                if (value) {
-                    opus.selections[slug] = value.replace(/\+/g, " ").split(',');
-                }
+                opus.selections[slug] = value.replace(/\+/g, " ").split(',');
             }
         }
 
         // despite what the url says, make sure every widget that is constrained is actually visible
-        for (slug in opus.selections) {
-          if (jQuery.inArray(slug, opus.prefs['widgets']) < 0) {
+        $.each(opus.selections, function(slug, value) {
+          if ($.inArray(slug, opus.prefs.widgets) < 0) {
             // this slug is constrained in selections but is not
             // found in widgets, but do some extra checking for
             // range widgets:
@@ -169,12 +168,12 @@ var o_hash = {
               // the first param in the range, but this is the 2nd
               // let's see if the first half of this range is constrained
               slug_no_num = slug.slice(0, -1)
-              if (jQuery.inArray(slug_no_num, opus.prefs['widgets']) >= 0
+              if ($.inArray(slug_no_num, opus.prefs.widgets) >= 0
                   ||
-                 jQuery.inArray(slug_no_num + '1', opus.prefs['widgets']) >= 0) {
+                 $.inArray(slug_no_num + '1',opus.prefs.widgets) >= 0) {
                    // the first half of this range is found in widgets
                    // so nothing to do
-                   continue;
+                   return true;  //continue;
                  } else {
                    // the first half of this range is constrained by selections
                    // but NOT found in widgets, so we add it, but don't
@@ -184,14 +183,12 @@ var o_hash = {
                  }
             }
 
-            opus.prefs['widgets'].push(slug);
+            opus.prefs.widgets.push(slug);
           }
-        }
+        });
 
-        if (!jQuery.isEmptyObject(opus.last_selections)) {
+        if (!$.isEmptyObject(opus.last_selections)) {
             opus.load();
         }
     },
-
-
 };

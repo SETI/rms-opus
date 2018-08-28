@@ -11,7 +11,7 @@ var o_widgets = {
 
         // widgets are draggable
         /*
-        $('#search_widgets1, #search_widgets2', '#search').sortable({
+        $('#search_widgets1, '#search').sortable({
                 handle:'.widget_draghandle',
                 cursor: 'crosshair',
                 stop: function(event,ui) {
@@ -108,10 +108,6 @@ var o_widgets = {
             opus.prefs.widgets.splice(opus.prefs.widgets.indexOf(slug), 1);
         }
 
-        if ($.inArray(slug,opus.prefs.widgets2) > -1) {
-            opus.prefs.widgets2.splice(opus.prefs.widgets2.indexOf(slug), 1);
-        }
-
         if ($.inArray(slug,opus.widgets_drawn) > -1) {
             opus.widgets_drawn.splice(opus.widgets_drawn.indexOf(slug), 1);
         }
@@ -141,18 +137,13 @@ var o_widgets = {
 
     widgetDrop: function(ui) {
             // if widget as moved to a different formscolumn,
-            // redefine the opus.prefs.widgets and opus.prefs.widgets2 (preserves order)
+            // redefine the opus.prefs.widgets (preserves order)
             var widgets = $('#search_widgets1').sortable('toArray');
 
             $.each(widgets, function(index,value) {
                 widgets[index]=value.split('__')[1];
             });
-            $.each(widgets2, function(index,value) {
-                widgets2[index]=value.split('__')[1];
-            });
             opus.prefs.widgets = widgets;
-            opus.prefs.widgets2 = widgets2;
-
 
             o_hash.updateHash();
 
@@ -414,33 +405,19 @@ var o_widgets = {
 
      updateWidgetCookies: function() {
          $.cookie("widgets", opus.prefs.widgets.join(','), { expires: 28});  // days
-         $.cookie("widgets2", opus.prefs.widgets2.join(','), { expires: 28});
      },
 
      placeWidgetContainers: function() {
          // this is for when you are first drawing the browse tab and there
          // multiple widgets being requested at once and we want to preserve their order
          // and avoid race conditions that will throw them out of order
-         if (opus.prefs.widgets2.length) {
- 	        o_search.addSecondFormsCol();
- 	     }
-
-         for (var k in opus.prefs.widgets) {
-             var slug = opus.prefs.widgets[k];
+         $.each( opus.prefs.widgets, function( index, slug ){
              var widget = 'widget__' + slug;
              var html = '<li id = "' + widget + '" class = "widget"></li>';
              $(html).appendTo('#search_widgets1 ');
              // $(html).hide().appendTo('#search_widgets1').show("blind",{direction: "vertical" },200);
              opus.widget_elements_drawn.push(slug);
-         }
-
-         for (k in opus.prefs.widgets2) {
-             var slug = opus.prefs.widgets2[k];
-             var widget = 'widget__' + opus.prefs.widgets2[k];
-             var html = '<li id = "' + widget + '" class = "widget"></li>';
-             $(html).hide().appendTo('#search_widgets2').show("blind",{direction: "vertical" },200);
-             opus.widget_elements_drawn.push(slug);
-         }
+         });
      },
 
      // adds a widget and its behaviors, adjusts the opus.prefs variable to include this widget, will not update the hash
@@ -458,19 +435,6 @@ var o_widgets = {
          var widget = 'widget__' + slug;
 
          opus.widgets_fetching.push(slug);
-
-         /**
-         // add the new slug to the url hash and the opus.prefs vars
-         if (formscolumn == '#search_widgets1') {
-             if ($.inArray(slug,opus.prefs.widgets) < 0) {
-                 opus.prefs.widgets.unshift(slug);
-             }
-         } else {
-             if ($.inArray(slug,opus.prefs.widgets2) < 0) {
-                 opus.prefs.widgets2.unshift(slug);
-            }
-         }
-         */
 
         // add the div that will hold the widget
         if ($.inArray(slug,opus.widget_elements_drawn) < 0) {
