@@ -267,6 +267,38 @@ def helper_cassini_mission_phase_name(**kwargs):
             return phase.upper()
     return None
 
+def helper_fix_cassini_sclk(count):
+    if count is None:
+        return None
+
+    ### CIRS
+    if count.find('.') == -1:
+        count += '.000'
+
+    ### UVIS
+    # See pds-opus issue #336
+    count = count.replace('.320', '.032')
+    count = count.replace('.640', '.064')
+    count = count.replace('.960', '.096')
+    if count.endswith('.32'):
+        count = count.replace('.32', '.032')
+    if count.endswith('.64'):
+        count = count.replace('.64', '.064')
+    if count.endswith('.96'):
+        count = count.replace('.96', '.096')
+    # See pds-opus issue #443
+    if count.endswith('.324'):
+        count = count.replace('.324', '.000')
+
+    ### VIMS
+    # See pds-opus issue #444
+    if count.endswith('.971'):
+        count = count.replace('.971', '.000')
+    if count.endswith('.973'):
+        count = count.replace('.973', '.000')
+
+    return count
+
 
 ################################################################################
 # THESE NEED TO BE IMPLEMENTED FOR EVERY MISSION
@@ -378,9 +410,19 @@ def populate_obs_mission_cassini_ert1(**kwargs):
     if start_time == 'UNK':
         # This is left over from an old version of the index files
         # Shouldn't be needed anymore
-        start_time = None
+        return None
 
-    return start_time
+    if start_time is None:
+        return None
+
+    try:
+        ert_sec = julian.tai_from_iso(start_time)
+    except Exception as e:
+        import_util.log_nonrepeating_error(
+            f'Bad earth received start time format "{start_time}": {e}')
+        return None
+
+    return julian.iso_from_tai(ert_sec, digits=3, ymd=True)
 
 def populate_obs_mission_cassini_ert2(**kwargs):
     metadata = kwargs['metadata']
@@ -391,9 +433,19 @@ def populate_obs_mission_cassini_ert2(**kwargs):
     if stop_time == 'UNK':
         # This is left over from an old version of the index files
         # Shouldn't be needed anymore
-        stop_time = None
+        return None
 
-    return stop_time
+    if stop_time is None:
+        return None
+        
+    try:
+        ert_sec = julian.tai_from_iso(stop_time)
+    except Exception as e:
+        import_util.log_nonrepeating_error(
+            f'Bad earth received stop time format "{stop_time}": {e}')
+        return None
+
+    return julian.iso_from_tai(ert_sec, digits=3, ymd=True)
 
 def populate_obs_mission_cassini_ert_sec1(**kwargs):
     metadata = kwargs['metadata']
@@ -435,6 +487,7 @@ def populate_obs_mission_cassini_spacecraft_clock_count_cvt1(**kwargs):
     sc = cassini_row['spacecraft_clock_count1']
     if sc is None:
         return None
+    sc = helper_fix_cassini_sclk(sc)
     try:
         sc_cvt = opus_support.parse_cassini_sclk(sc)
     except Exception as e:
@@ -449,6 +502,7 @@ def populate_obs_mission_cassini_spacecraft_clock_count_cvt2(**kwargs):
     sc = cassini_row['spacecraft_clock_count2']
     if sc is None:
         return None
+    sc = helper_fix_cassini_sclk(sc)
     try:
         sc_cvt = opus_support.parse_cassini_sclk(sc)
     except Exception as e:

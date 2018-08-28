@@ -5,8 +5,6 @@
 # obs_general or obs_mission_galileo.
 ################################################################################
 
-import julian
-
 import opus_support
 
 from config_data import *

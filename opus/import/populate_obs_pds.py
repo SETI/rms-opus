@@ -23,4 +23,11 @@ def populate_obs_pds_product_creation_time_sec(**kwargs):
     if product_time is None:
         return None
 
-    return julian.tai_from_iso(product_time)
+    try:
+        product_time_sec = julian.tai_from_iso(product_time)
+    except Exception as e:
+        import_util.log_nonrepeating_error(
+            f'Bad product creation time format "{product_time}": {e}')
+        return None
+
+    return product_time_sec

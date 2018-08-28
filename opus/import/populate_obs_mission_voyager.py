@@ -62,7 +62,14 @@ def populate_obs_mission_voyager_ert(**kwargs):
     if ert_time.startswith('UNK'):
         return None
 
-    return ert_time
+    try:
+        ert_sec = julian.tai_from_iso(ert_time)
+    except Exception as e:
+        import_util.log_nonrepeating_error(
+            f'Bad earth received time format "{ert_time}": {e}')
+        return None
+
+    return julian.iso_from_tai(ert_sec, digits=3, ymd=True)
 
 def populate_obs_mission_voyager_ert_sec(**kwargs):
     metadata = kwargs['metadata']
@@ -73,13 +80,13 @@ def populate_obs_mission_voyager_ert_sec(**kwargs):
         return None
 
     try:
-        ert = julian.tai_from_iso(ert_time)
+        ert_sec = julian.tai_from_iso(ert_time)
     except Exception as e:
         import_util.log_nonrepeating_error(
-            f'"{ert_time}" is not a valid date-time format in '+
-            f'populate_obs_mission_voyager_ert_sec: {e}')
-        ert = None
-    return ert
+            f'Bad earth received time format "{ert_time}": {e}')
+        return None
+
+    return ert_sec
 
 def populate_obs_mission_voyager_spacecraft_clock_count1(**kwargs):
     metadata = kwargs['metadata']

@@ -116,7 +116,14 @@ def populate_obs_general_time_sec1(**kwargs):
     if time1 is None:
         return None
 
-    return julian.tai_from_iso(time1)
+    try:
+        time1_sec = julian.tai_from_iso(time1)
+    except Exception as e:
+        import_util.log_nonrepeating_error(
+            f'Bad start time format "{time1}": {e}')
+        return None
+
+    return time1_sec
 
 def populate_obs_general_time_sec2(**kwargs):
     metadata = kwargs['metadata']
@@ -126,14 +133,20 @@ def populate_obs_general_time_sec2(**kwargs):
     if time2 is None:
         return None
 
-    time_sec2 = julian.tai_from_iso(time2)
+    try:
+        time2_sec = julian.tai_from_iso(time2)
+    except Exception as e:
+        import_util.log_nonrepeating_error(
+            f'Bad stop time format "{time2}": {e}')
+        return None
 
-    time_sec1 = general_row['time_sec1']
-    if time_sec2 < time_sec1:
+    time1_sec = general_row['time_sec1']
+
+    if time1_sec is not None and time2_sec < time1_sec:
         time1 = general_row['time1']
         import_util.log_error(f'time1 ({time1}) and time2 ({time2}) are '+
-                              f'in the wrong order - setting equal')
+                              f'in the wrong order - setting to time1')
         impglobals.IMPORT_HAS_BAD_DATA = True
-        time_sec2 = time_sec1
+        time2_sec = time1_sec
 
-    return time_sec2
+    return time2_sec

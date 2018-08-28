@@ -172,9 +172,9 @@ def populate_obs_general_HSTx_time1(**kwargs):
 
     try:
         start_time_sec = julian.tai_from_iso(start_time)
-    except:
+    except Exception as e:
         import_util.log_nonrepeating_error(
-            f'Bad start time format "{start_time}"')
+            f'Bad start time format "{start_time}": {e}')
         return None
 
     return julian.iso_from_tai(start_time_sec, digits=3, ymd=True)
@@ -195,9 +195,9 @@ def populate_obs_general_HSTx_time2(**kwargs):
 
     try:
         stop_time_sec = julian.tai_from_iso(stop_time)
-    except:
+    except Exception as e:
         import_util.log_nonrepeating_error(
-            f'Bad stop time format "{stop_time}"')
+            f'Bad stop time format "{stop_time}": {e}')
         return None
 
     return julian.iso_from_tai(stop_time_sec, digits=3, ymd=True)
@@ -263,7 +263,15 @@ def populate_obs_general_HSTx_product_creation_time(**kwargs):
     metadata = kwargs['metadata']
     index_label = metadata['index_label']
     pct = index_label['PRODUCT_CREATION_TIME']
-    return pct
+
+    try:
+        pct_sec = julian.tai_from_iso(pct)
+    except Exception as e:
+        import_util.log_nonrepeating_error(
+            f'Bad product creation time format "{pct}": {e}')
+        return None
+
+    return julian.iso_from_tai(pct_sec, digits=3, ymd=True)
 
 populate_obs_general_HSTACS_product_creation_time = populate_obs_general_HSTx_product_creation_time
 populate_obs_general_HSTNICMOS_product_creation_time = populate_obs_general_HSTx_product_creation_time
@@ -594,8 +602,12 @@ def populate_obs_wavelength_HSTACS_polarization_type(**kwargs):
 
 def populate_obs_mission_hubble_HSTACS_filter_type(**kwargs):
     filter1, filter2 = _decode_filters(**kwargs)
-    # We only care about filter1 since the second is always a polarizer
-    assert filter2 is None or filter2.startswith('POL')
+    # We only care about filter1 since the second is (almost) always a 
+    # polarizer
+    if filter2 is not None and not filter2.startswith('POL'):
+        import_util.log_nonrepeating_warning(
+            f'Filter combination {filter1}+{filter2} does not have a'
+            +' polarizer as the second filter - filter_type may be wrong')
 
     # From ACS Inst handbook Table 3.3
     if filter1 in ['F475W', 'F625W', 'F775W', 'F850LP', 'F435W', 'F555W',
@@ -959,6 +971,24 @@ def populate_obs_mission_hubble_HSTWFPC2_wf4_flag(**kwargs):
     wf4_flag = index_row['WF4_FLAG']
     return wf4_flag
 
+def populate_obs_mission_hubble_publication_date(**kwargs):
+    metadata = kwargs['metadata']
+    index_row = metadata['index_row']
+    pub_date = index_row['PUBLICATION_DATE']
+
+    if pub_date is None:
+        return None
+
+    try:
+        pub_date_sec = julian.tai_from_iso(pub_date)
+    except Exception as e:
+        import_util.log_nonrepeating_error(
+            f'Bad publication date format "{pub_date}": {e}')
+        return None
+
+    new_pub_date = julian.iso_from_tai(pub_date_sec, digits=0, ymd=True)
+    return new_pub_date[:10] # Only want the date, not the time
+
 def populate_obs_mission_hubble_publication_date_sec(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
@@ -967,4 +997,11 @@ def populate_obs_mission_hubble_publication_date_sec(**kwargs):
     if pub_date is None:
         return None
 
-    return julian.tai_from_iso(pub_date)
+    try:
+        pub_date_sec = julian.tai_from_iso(pub_date)
+    except Exception as e:
+        import_util.log_nonrepeating_error(
+            f'Bad publication date format "{pub_date}": {e}')
+        return None
+
+    return pub_date_sec
