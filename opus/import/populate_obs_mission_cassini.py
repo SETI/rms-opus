@@ -412,6 +412,9 @@ def populate_obs_mission_cassini_ert1(**kwargs):
         # Shouldn't be needed anymore
         return None
 
+    if start_time is None:
+        return None
+
     try:
         ert_sec = julian.tai_from_iso(start_time)
     except Exception as e:
@@ -432,6 +435,9 @@ def populate_obs_mission_cassini_ert2(**kwargs):
         # Shouldn't be needed anymore
         return None
 
+    if stop_time is None:
+        return None
+        
     try:
         ert_sec = julian.tai_from_iso(stop_time)
     except Exception as e:

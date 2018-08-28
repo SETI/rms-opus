@@ -982,7 +982,8 @@ def populate_obs_mission_hubble_publication_date(**kwargs):
             f'Bad publication date format "{pub_date}": {e}')
         return None
 
-    return julian.iso_from_tai(pub_date_date, digits=3, ymd=True)
+    new_pub_date = julian.iso_from_tai(pub_date_sec, digits=0, ymd=True)
+    return new_pub_date[:10] # Only want the date, not the time
 
 def populate_obs_mission_hubble_publication_date_sec(**kwargs):
     metadata = kwargs['metadata']
