@@ -241,8 +241,8 @@ def get_user_query_table(selections, extras):
         return cached_val
 
     # Is this key set in the database?
+    desc_sql = 'DESC ' + connection.ops.quote_name(cache_table_name)
     try:
-        desc_sql = 'DESC ' + connection.ops.quote_name(cache_table_name)
         cursor.execute(desc_sql)
     except DatabaseError,e:
         if e.args[0] != MYSQL_TABLE_NOT_EXISTS:
@@ -269,13 +269,12 @@ def get_user_query_table(selections, extras):
                   str(selections), str(extras))
         return None
 
-    # sql_order = _construct_sort_string(selections, extras)
-    sql_order = ''
-
     # With this we can create a table that contains the single column
     create_sql = ('CREATE TABLE '
                   + connection.ops.quote_name(cache_table_name)
-                  + ' ' + sql + ' ' + sql_order)
+                  + '(sort_order INT NOT NULL AUTO_INCREMENT, '
+                  + 'PRIMARY KEY(sort_order), id INT UNSIGNED) '
+                  + sql)
     log.debug('get_user_query_table: %s', create_sql)
     try:
         cursor.execute(create_sql, tuple(params))
@@ -366,12 +365,12 @@ def set_user_search_number(selections, extras):
                                         order_hash=order_hash)
         s = s[0]
         log.error('set_user_search_number: Multiple entries in user_searches '
-                  +' for *** Selections %s *** Qtypes %s *** Units %s '+
+                  +' for *** Selections %s *** Qtypes %s *** Units %s '
                   +' *** Order %s',
-                  str(selections_json,
+                  str(selections_json),
                   str(qtypes_json),
                   str(units_json),
-                  str(order_json)))
+                  str(order_json))
     except UserSearches.DoesNotExist:
         s = UserSearches(selections_json=selections_json,
                          selections_hash=selections_hash,
@@ -607,16 +606,39 @@ def _construct_query_string(selections, extras):
 
     # Add in the ordering
     if 'order' in extras:
+        order_table_names = set()
         order_params, descending_params = extras['order']
         if order_params:
             order_str_list = []
             for i in range(len(order_params)):
                 s = order_params[i]
+                order_table_names.add(s.split('.')[0])
                 if descending_params[i]:
                     s += ' DESC'
                 else:
                     s += ' ASC'
                 order_str_list.append(s)
+            # Splice in the new table names to the FROM field
+            before_from, after_from = sql.split(' FROM ')
+            new_where_list = []
+            for order_table in order_table_names:
+                q_order_table = connection.ops.quote_name(order_table)
+                if after_from.find(q_order_table) == -1:
+                    after_from = q_order_table+','+after_from
+                    new_where_list.append(
+                        connection.ops.quote_name(q_order_table)+'.'
+                        +connection.ops.quote_name('obs_general_id')
+                        +'='
+                        +connection.ops.quote_name('obs_general')+'.'
+                        +connection.ops.quote_name('id')
+                    )
+            sql = before_from + ' FROM ' + after_from
+            if sql.find(' WHERE ') != -1:
+                before_where, after_where = sql.split(' WHERE ')
+                sql = before_where + ' WHERE ' + ' AND '.join(new_where_list)
+                sql += ' AND '+after_where
+            else:
+                sql += ' WHERE ' + ' AND '.join(new_where_list)
             sql += ' ORDER BY ' + ','.join(order_str_list)
 
     log.debug('SEARCH SQL: %s *** PARAMS %s', sql, str(params))

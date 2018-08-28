@@ -24,6 +24,7 @@ from collections import OrderedDict
 import csv
 import json
 import logging
+import os
 
 import settings
 
@@ -743,6 +744,8 @@ def get_page(request, use_collections=None, collections_page=None, page=None,
                       str(page_no))
             return (None, None, None, None, None, None)
 
+    temp_table_name = None
+    drop_temp_table = False
     if not use_collections:
         # This is for a search query
 
@@ -762,6 +765,37 @@ def get_page(request, use_collections=None, collections_page=None, page=None,
                       +'*** Selections %s *** Extras %s',
                       str(selections), str(extras))
             return (None, None, None, None, None, None)
+
+        # First we create a temporary table that contains only those ids
+        # in the limit window that we care about (if there's a limit window).
+        # Then we use that temporary table (or the original cache table) to
+        # extract data from all our data tables.
+        temp_table_name = user_query_table
+
+        if page_no != 'all':
+            drop_temp_table = True
+            pid_sfx = str(os.getpid())
+            time1 = time.time()
+            time_sfx = ('%.6f' % time1).replace('.', '_')
+            temp_table_name = 'temp_'+user_query_table
+            temp_table_name += '_'+pid_sfx+'_'+time_sfx
+            base_limit = 100  # explainer of sorts is above
+            offset = (page_no-1)*base_limit
+            temp_sql = 'CREATE TEMPORARY TABLE '
+            temp_sql += connection.ops.quote_name(temp_table_name)
+            temp_sql += ' SELECT sort_order, id FROM '
+            temp_sql += connection.ops.quote_name(user_query_table)
+            temp_sql += ' LIMIT '+str(limit)
+            temp_sql += ' OFFSET '+str(offset)
+            cursor = connection.cursor()
+            try:
+                cursor.execute(temp_sql)
+            except DatabaseError,e:
+                log.error('get_page: "%s" returned %s',
+                          temp_sql, str(e))
+                return (None, None, None, None, None, None)
+            log.debug('get_page SQL (%.2f secs): %s', time.time()-time1,
+                      temp_sql)
 
         sql = 'SELECT '
         sql += ','.join(column_names)
@@ -785,9 +819,11 @@ def get_page(request, use_collections=None, collections_page=None, page=None,
 
         # But the cache table is an INNER JOIN because we only want opus_ids
         # that appear in the cache table to cause result rows
-        sql += ' INNER JOIN '+connection.ops.quote_name(user_query_table)
+        sql += ' INNER JOIN '+connection.ops.quote_name(temp_table_name)
         sql += ' ON '+connection.ops.quote_name('obs_general')+'.id='
-        sql += connection.ops.quote_name(user_query_table)+'.id'
+        sql += connection.ops.quote_name(temp_table_name)+'.id'
+        sql += ' ORDER BY '
+        sql += connection.ops.quote_name(temp_table_name)+'.sort_order'
     else:
         # This is for a collection
         sql = 'SELECT '
@@ -830,11 +866,11 @@ def get_page(request, use_collections=None, collections_page=None, page=None,
     using the passed limit will result in the wrong offset because of way offset is computed here
     this may be an awful hack.
     """
-    if page_no != 'all':
-        base_limit = 100  # explainer of sorts is above
-        offset = (page_no-1)*base_limit
-        sql += ' LIMIT '+str(limit)
-        sql += ' OFFSET '+str(offset)
+    # if page_no != 'all':
+    #     base_limit = 100  # explainer of sorts is above
+    #     offset = (page_no-1)*base_limit
+    #     sql += ' LIMIT '+str(limit)
+    #     sql += ' OFFSET '+str(offset)
 
     time1 = time.time()
 
@@ -848,6 +884,15 @@ def get_page(request, use_collections=None, collections_page=None, page=None,
         more = cursor.nextset()
 
     log.debug('get_page SQL (%.2f secs): %s', time.time()-time1, sql)
+
+    if drop_temp_table:
+        sql = 'DROP TABLE '+connection.ops.quote_name(temp_table_name)
+        try:
+            cursor.execute(sql)
+        except DatabaseError,e:
+            log.error('get_page: "%s" returned %s',
+                      sql, str(e))
+            return (None, None, None, None, None, None)
 
     # Return a simple list of opus_ids
     opus_id_index = column_names.index('obs_general.opus_id')
