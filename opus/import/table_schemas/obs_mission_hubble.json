@@ -172,8 +172,8 @@
         "field_notnull": true,
         "field_key": true,
         "data_source": [
-            "TAB:index",
-            "PUBLICATION_DATE"
+            "FUNCTION",
+            "obs_mission_hubble_publication_date"
         ],
         "definition": "The date when the data was last updated by Space Telescope Science Institute.",
         "pi_category_name": "obs_mission_hubble",

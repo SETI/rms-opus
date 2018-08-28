@@ -410,9 +410,16 @@ def populate_obs_mission_cassini_ert1(**kwargs):
     if start_time == 'UNK':
         # This is left over from an old version of the index files
         # Shouldn't be needed anymore
-        start_time = None
+        return None
 
-    return start_time
+    try:
+        ert_sec = julian.tai_from_iso(start_time)
+    except Exception as e:
+        import_util.log_nonrepeating_error(
+            f'Bad earth received start time format "{start_time}": {e}')
+        return None
+
+    return julian.iso_from_tai(ert_sec, digits=3, ymd=True)
 
 def populate_obs_mission_cassini_ert2(**kwargs):
     metadata = kwargs['metadata']
@@ -423,9 +430,16 @@ def populate_obs_mission_cassini_ert2(**kwargs):
     if stop_time == 'UNK':
         # This is left over from an old version of the index files
         # Shouldn't be needed anymore
-        stop_time = None
+        return None
 
-    return stop_time
+    try:
+        ert_sec = julian.tai_from_iso(stop_time)
+    except Exception as e:
+        import_util.log_nonrepeating_error(
+            f'Bad earth received stop time format "{stop_time}": {e}')
+        return None
+
+    return julian.iso_from_tai(ert_sec, digits=3, ymd=True)
 
 def populate_obs_mission_cassini_ert_sec1(**kwargs):
     metadata = kwargs['metadata']

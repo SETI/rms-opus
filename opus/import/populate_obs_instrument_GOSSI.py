@@ -95,9 +95,9 @@ def populate_obs_general_GOSSI_time1(**kwargs):
 
     try:
         stop_time_sec = julian.tai_from_iso(stop_time)
-    except:
+    except Exception as e:
         import_util.log_nonrepeating_error(
-            f'Bad image time format "{stop_time}"')
+            f'Bad image time format "{stop_time}": {e}')
         return None
 
     return julian.iso_from_tai(stop_time_sec-exposure/1000, digits=3, ymd=True)
@@ -112,9 +112,9 @@ def populate_obs_general_GOSSI_time2(**kwargs):
 
     try:
         stop_time_sec = julian.tai_from_iso(stop_time)
-    except:
+    except Exception as e:
         import_util.log_nonrepeating_error(
-            f'Bad image time format "{stop_time}"')
+            f'Bad image time format "{stop_time}": {e}')
         return None
 
     return julian.iso_from_tai(stop_time_sec, digits=3, ymd=True)
@@ -162,7 +162,15 @@ def populate_obs_general_GOSSI_product_creation_time(**kwargs):
     metadata = kwargs['metadata']
     index_label = metadata['index_label']
     pct = index_label['PRODUCT_CREATION_TIME']
-    return pct
+
+    try:
+        pct_sec = julian.tai_from_iso(pct)
+    except Exception as e:
+        import_util.log_nonrepeating_error(
+            f'Bad product creation time format "{pct}": {e}')
+        return None
+
+    return julian.iso_from_tai(pct_sec, digits=3, ymd=True)
 
 def populate_obs_general_GOSSI_data_set_id(**kwargs):
     metadata = kwargs['metadata']

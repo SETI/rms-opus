@@ -5,8 +5,6 @@
 # obs_general or obs_mission_new_horizons.
 ################################################################################
 
-import julian
-
 import opus_support
 
 from config_data import *
