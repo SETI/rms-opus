@@ -56,26 +56,7 @@ var o_search = {
 
         // range behaviors and string behaviors for search widgets - qtype select dropdown
         $('#search').on('change','select', function() {
-
-            var qtypes = [];
-            var form_type = $(this).attr("class");
-
-            if (form_type == 'RANGE') {
-                slug_no_num = $(this).attr("name").match(/-(.*)/)[1];
-                slug = slug_no_num + '1';
-
-                $('#widget__' + slug + ' select').each(function() {
-                    qtypes[qtypes.length] = $(this).val();
-                });
-                opus.extras['qtype-' + slug_no_num] = qtypes;
-
-            } else if (form_type == 'STRING') {
-                slug = $(this).attr("name").match(/-(.*)/)[1];
-                $('#widget__' + slug + ' select').each(function() {
-                    qtypes[qtypes.length] = $(this).val();
-                });
-                opus.extras['qtype-' + slug] = qtypes;
-            }
+            o_search.updateQtypes(this);
             o_hash.updateHash();
         });
 
@@ -163,6 +144,30 @@ var o_search = {
         $(".widget_column").height(container_height);
         $(".sidebar_wrapper").height(container_height);
 
+    },
+
+    updateQtypes: function(selector) {
+        var qtypes = [];
+        var formType = $(selector).attr("class");
+
+        switch (formType) {
+            case "RANGE":
+                var slug_no_num = $(selector).attr("name").match(/-(.*)/)[1];
+                var slug = slug_no_num + '1';
+
+                $('#widget__' + slug + ' select').each(function() {
+                    qtypes[qtypes.length] = $(selector).val();
+                });
+                opus.extras['qtype-' + slug_no_num] = qtypes;
+                break;
+
+            case "STRING":
+                var slug = $(selector).attr("name").match(/-(.*)/)[1];
+                $('#widget__' + slug + ' select').each(function() {
+                    qtypes[qtypes.length] = $(selector).val();
+                });
+                opus.extras['qtype-' + slug] = qtypes;
+          }
     },
 
     getSearchTab: function() {

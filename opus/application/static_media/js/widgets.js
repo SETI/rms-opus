@@ -232,177 +232,6 @@ var o_widgets = {
 
     },
 
-    maximizeWidget: function(slug, widget) {
-        // un-minimize widget ... maximize widget
-        $('.minimize_widget', '#' + widget).toggleClass('opened_triangle');
-        $('.minimize_widget', '#' + widget).toggleClass('closed_triangle');
-        // $('.pause_widget', '#' + widget).show();
-        $('#widget_control_' + slug + ' .remove_widget').show();
-        $('#widget_control_' + slug + ' .divider').show();
-        $('#' + widget + ' .widget_minimized').hide();
-        $('#widget_control_' + slug).removeClass('widget_controls_minimized');
-        $('#' + widget + ' .widget_inner').show("blind");
-
-
-        //////////////////// //////////////////// ////////////////////
-        // handle the inner widget scroll thing and hide its handle
-            // if (opus.prefs.widget_size[slug]) {
-
-                    // look for custom widget size and scrollstop
-                    opus.prefs.widget_scroll[slug] ? scrolltop = opus.prefs.widget_scroll[slug] : scrolltop = 0;
-                    opus.prefs.widget_size[slug] ? height = Math.ceil(opus.prefs.widget_size[slug]) : height = opus.widget_full_sizes[slug];
-
-                    // widget_full_sizes
-
-                    $('#widget__' + slug).height(height);
-
-                    $('.widget_scroll_wrapper','#widget__' + slug)
-                        .height(height)
-                        .animate({scrollTop:scrolltop}, 500);
-
-
-            // }
-        //////////////////// //////////////////// ////////////////////
-        /*
-        $('.widget_scroll_wrapper','#'+widget).css({
-            'overflow':'auto'
-        });
-        **/
-        $('.ui-resizable-handle').show();
-    },
-
-
-    minimizeWidget: function(slug, widget) {
-        // grab the current height of the widget, we'll need it later to restore it
-        opus.widget_full_sizes[slug] = $('#' + widget).height();
-
-        // the minimized text version of the contstrained param = like "planet=Saturn"
-        $('.minimize_widget', '#' + widget).toggleClass('opened_triangle');
-        $('.minimize_widget', '#' + widget).toggleClass('closed_triangle');
-
-        $('#widget_control_' + slug + ' .remove_widget').hide();
-        $('#widget_control_' + slug + ' .divider').hide();
-
-        var simple = o_widgets.minimizeWidgetLabel(slug);
-        function doit() {
-            $('#' + widget + ' .widget_inner').hide();
-
-            $('#' + widget).animate({height:'1.2em'}, 'fast');
-            $('#' + widget + ' .widget_minimized').html(simple).fadeIn("fast");
-            $('#widget_control_' + slug).addClass('widget_controls_minimized');
-
-            // handle the inner widget scroll thing and hide its handle
-            $('.widget_scroll_wrapper','#'+widget).css({
-                'overflow':'hidden'
-            });
-            $('.ui-resizable-handle','#'+widget).hide();
-
-        }
-        doit();
-    },
-
-    // the string that shows when a widget is minimized
-    minimizeWidgetLabel: function(slug) {
-        var label;
-         try {
-             label = $('#widget__' + slug + ' h2.widget_label').html();
-         } catch(e) {
-             label = slug;
-         }
-
-         var min = false;
-         if (slug.match(/.*(1|2)/)) {
-             var slug_no_num = slug.match(/(.*)[1|2]/)[1];
-             var min = slug_no_num + '1';
-             var max = slug_no_num + '2';
-         }
-
-         if (opus.selections[slug]) {
-
-             var form_type = $('#widget__' + slug + ' .widget_inner').attr("class").split(' ')[1];
-
-             if (form_type == 'RANGE') {
-
-                 // this is a range widget
-                 var qtypes;
-                 try {
-                     qtypes = opus.extras['qtype-' + slug_no_num];
-                 } catch(e) {
-                     qtypes = [opus.qtype_default];
-                 }
-
-                 var length = (opus.selections[min].length > opus.selections[max].length) ? opus.selections[min].length : opus.selections[max].length;
-
-                 var simple = [];
-                 for (var i=0;i<length;i++) {
-                     // ouch:
-                     var qtype;
-                     try{
-                         qtype = qtypes[i];
-                     } catch(e) {
-                         try {
-                             qtype = qtypes[0];
-                         } catch(e) {
-                             qtype = opus.qtype_default;
-                         }
-                     }
-
-                     switch(qtype) {
-                          case 'only':
-                              simple[simple.length] = ' min >= ' + opus.selections[min][i] + ', ' +
-                                                      ' max <= ' + opus.selections[max][i];
-                              break;
-
-                          case 'all':
-                              simple[simple.length] = ' min <= ' + opus.selections[min][i] + ', ' +
-                                                      ' max  >= ' + opus.selections[max][i];
-                              break;
-
-                          default:
-                              simple[simple.length] = ' min  <= ' + opus.selections[max][i] + ', ' +
-                                                      ' max  >= ' + opus.selections[min][i];
-                      }
-
-                      break;  // we have decided to only show the first range in the minimized display
-                  }
-                  simple = label + simple.join(' and ');
-                  if (length > 1) simple = simple + ' and more..';
-
-             } else if (form_type == 'STRING') {
-                 var s_arr = [];
-                 var last_qtype = '';
-                 for (var key in opus.selections[slug]) {
-                     var value = opus.selections[slug][key];
-                     var qtype;
-                     try {
-                         qtype = opus.extras['qtype-'+slug][key];
-                     } catch(err) {
-                         qtype = 'contains';
-                     }
-                     if (key==0) {
-                         s_arr[s_arr.length] = label + " " + qtype + ": " + value;
-                     } else {
-                         if (last_qtype && qtype == last_qtype) {
-                             s_arr[s_arr.length] = value;
-                         } else {
-                             s_arr[s_arr.length] = qtype + ": " + value;
-                         }
-                     }
-                     last_qtype = qtype
-                 }
-                 var simple = s_arr.join(' or ');
-
-
-             } else {
-                 // this is not a range widget
-                 var simple = label + ' = ' + opus.selections[slug].join(', ');
-             }
-         } else {
-             var simple = label + ' not constrained';
-         }
-         return simple
-     },
-
      updateWidgetCookies: function() {
          $.cookie("widgets", opus.prefs.widgets.join(','), { expires: 28});  // days
      },
@@ -457,18 +286,11 @@ var o_widgets = {
                          handles: 's',
                       });
 
-                // $('.minimize_widget', '#' + widget).toggleClass('opened_triangle');
-                // $('.minimize_widget', '#' + widget).toggleClass('closed_triangle');
-
                 o_widgets.pauseWidgetControlVisibility(opus.selections);
 
             }}).done(function() {
 
                 o_search.adjustSearchHeight();
-
-                // adjust the navbar height after bringing in new widget
-               // var sidebar_height = $('.main-container-inner').height() > 800 ? $('.main-container-inner').height() : 800;
-                //$('#sidebar').height(sidebar_height);
 
                 // bind the resize behavior\
                 // if you don't bind it this way the 'trigger' won't work later
@@ -494,6 +316,7 @@ var o_widgets = {
              if (slug.match(/.*(1|2)/)) {
                // this is a range widget
                  var id = slug.match(/(.*)[1|2]/)[1];
+                 o_search.updateQtypes('#' + widget + ' select');
 
                 // is the qtype constrained in the url?
                  if ($.inArray('qtype-' + id,opus.extras) > -1 && opus.extras['qtype-'+id]) {
@@ -544,12 +367,10 @@ var o_widgets = {
 
              opus.widgets_drawn.unshift(slug);
 
-
              o_widgets.customWidgetBehaviors(slug);
-
              o_widgets.scrollToWidget(widget);
 
-
+             o_hash.updateHash();
              o_search.getHinting(slug);
 
       }); // end function success, end ajax
