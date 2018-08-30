@@ -872,6 +872,7 @@ def populate_obs_mission_hubble_filter_name(**kwargs):
         filter_name = filter_name.replace('_', '')
     else:
         filter_name = filter_name.replace('_', ' ')
+    ret = instrument[3:] + '-' + filter_name
     return (ret, ret)
 
 def populate_obs_mission_hubble_aperture_type(**kwargs):
