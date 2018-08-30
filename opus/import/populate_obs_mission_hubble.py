@@ -868,8 +868,10 @@ def populate_obs_mission_hubble_filter_name(**kwargs):
     instrument = kwargs['instrument_name']
     index_row = metadata['index_row']
     filter_name = index_row['FILTER_NAME']
-    filter_name = filter_name.replace('_', ' ')
-    ret = instrument[3:] + '-' + filter_name
+    if filter_name.startswith('ND'): # For STIS ND_3 => ND3
+        filter_name = filter_name.replace('_', '')
+    else:
+        filter_name = filter_name.replace('_', ' ')
     return (ret, ret)
 
 def populate_obs_mission_hubble_aperture_type(**kwargs):
