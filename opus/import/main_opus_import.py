@@ -239,6 +239,12 @@ parser.add_argument(
     help="""Comma-separated list of volume descriptors (COISS_1xxx,COVIMS_0089)
             to import""")
 
+parser.add_argument(
+    '--exclude-volumes', type=str, default=None,
+    metavar='VOL_NAME,VOL_NAME...',
+    help="""Comma-separated list of volume names (COVIMS_0089,COISS_2111)
+            to exclude from importing""")
+
 # Arguments about logging
 parser.add_argument(
     '--log-pdsfile', action='store_true', default=False,

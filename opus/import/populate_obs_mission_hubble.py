@@ -602,7 +602,7 @@ def populate_obs_wavelength_HSTACS_polarization_type(**kwargs):
 
 def populate_obs_mission_hubble_HSTACS_filter_type(**kwargs):
     filter1, filter2 = _decode_filters(**kwargs)
-    # We only care about filter1 since the second is (almost) always a 
+    # We only care about filter1 since the second is (almost) always a
     # polarizer
     if filter2 is not None and not filter2.startswith('POL'):
         import_util.log_nonrepeating_warning(
@@ -721,7 +721,8 @@ def populate_obs_mission_hubble_HSTSTIS_filter_type(**kwargs):
     filter1, filter2 = _decode_filters(**kwargs)
     assert filter2 is None
 
-    if filter1 in ['CLEAR', 'CRYSTAL QUARTZ', 'LONG_PASS', 'STRONTIUM_FLUORIDE']:
+    if filter1 in ['CLEAR', 'CRYSTAL QUARTZ', 'LONG_PASS',
+                   'STRONTIUM_FLUORIDE', 'ND_3']:
         return 'LP'
     if filter1 == 'LYMAN_ALPHA':
         return 'N'

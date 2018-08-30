@@ -26,6 +26,9 @@ import instruments
 
 def yield_import_volume_ids(arguments):
     volume_descs = []
+    exclude_list = []
+    if arguments.exclude_volumes:
+        exclude_list = arguments.exclude_volumes.split(',')
     if arguments.volumes:
         for volumes in arguments.volumes:
             orig_volume_descs = volumes.split(',')
@@ -110,6 +113,8 @@ def yield_import_volume_ids(arguments):
         # First make sure everything is valid
         any_invalid = False
         for volume_desc in volume_descs:
+            if volume_desc in exclude_list:
+                continue
             try:
                 volume_pdsfile = pdsfile.PdsFile.from_path(volume_desc)
             except (KeyError, ValueError):
@@ -138,6 +143,10 @@ def yield_import_volume_ids(arguments):
                 new_voldescs.append(volume_desc)
         # Now actually return the volume_ids
         for volume_id in new_voldescs:
+            if volume_id in exclude_list:
+                impglobals.LOGGER.log('info',
+                           f'Excluding volume: {volume_id}')
+                continue
             if volume_id.find('.') != -1:
                 continue # Sometimes a bad tar file gets stuck in the dir
             yield volume_id
