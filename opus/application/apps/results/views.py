@@ -279,7 +279,7 @@ def api_get_images_by_size(request, size, fmt):
     session_id = get_session_id(request)
 
     (page_no, limit, page, opus_ids, ring_obs_ids,
-     order) = get_page(request, cols='opusid,ringobsid')
+     order) = get_page(request, cols='opusid,ringobsid', api_code=api_code)
     if page is None:
         ret = Http404('Could not find page')
         exit_api_call(api_code, ret)
@@ -343,10 +343,8 @@ def api_get_images(request, fmt):
 
     session_id = get_session_id(request)
 
-    columns = request.GET.get('cols', settings.DEFAULT_COLUMNS)
-
     (page_no, limit, page, opus_ids, ring_obs_ids,
-     order) = get_page(request, cols='opusid,ringobsid')
+     order) = get_page(request, cols='opusid,ringobsid', api_code=api_code)
     if page is None:
         ret = Http404('Could not find page')
         exit_api_call(api_code, ret)
@@ -538,9 +536,10 @@ def api_get_categories_for_search(request):
     if not selections:
         triggered_tables = settings.BASE_TABLES[:]  # Copy
     else:
-        triggered_tables = get_triggered_tables(selections, extras)
+        triggered_tables = get_triggered_tables(selections, extras,
+                                                api_code=api_code)
 
-    # The main geometry table, obs_surface_geometry, is not table that holds
+    # The main geometry table, obs_surface_geometry, is not a table that holds
     # results data. It is only there for selecting targets, which then trigger
     # the other geometry tables. So in the context of returning list of
     # categories it gets removed.
@@ -562,7 +561,7 @@ def api_get_categories_for_search(request):
 #
 ################################################################################
 
-def get_data(request, fmt, cols=None):
+def get_data(request, fmt, cols=None, api_code=None):
     """Return a page of data for a given search and page_no.
 
     Can return JSON, ZIP, HTML, CSV, or RAW.
@@ -585,7 +584,7 @@ def get_data(request, fmt, cols=None):
         cols = request.GET.get('cols', settings.DEFAULT_COLUMNS)
 
     (page_no, limit, page, opus_ids,
-     ring_obs_ids, order) = get_page(request, cols=cols)
+     ring_obs_ids, order) = get_page(request, cols=cols, api_code=api_code)
 
     if page is None:
         return None
@@ -641,7 +640,7 @@ def get_data(request, fmt, cols=None):
 
 
 def get_page(request, use_collections=None, collections_page=None, page=None,
-             cols=None):
+             cols=None, api_code=None):
     """Return a page of results."""
     session_id = get_session_id(request)
 
@@ -693,37 +692,17 @@ def get_page(request, use_collections=None, collections_page=None, page=None,
         column_names.append('obs_general.ring_obs_id')
         added_extra_columns += 1 # So we know to strip it off later
 
+    # XXX Something here should specify order for collections
+    # colls_order is currently ignored!
+
     # Figure out the sort order
-    all_order = None
-    if use_collections:
-        all_order = request.GET.get('colls_order', settings.DEFAULT_SORT_ORDER)
+    all_order = request.GET.get('order', settings.DEFAULT_SORT_ORDER)
     if not all_order:
-        all_order = request.GET.get('order', settings.DEFAULT_SORT_ORDER)
-    order_params = []
-    descending_params = []
-    if all_order:
-        orders = all_order.split(',')
-        for order in orders:
-            descending = order[0] == '-'
-            order = order.strip('-')
-            pi = get_param_info_by_slug(order, from_ui=True)
-            if not pi:
-                log.error('get_page: Unable to resolve order slug "%s"', order)
-                return (None, None, None, None, None, None)
-            (form_type, form_type_func,
-             form_type_format) = parse_form_type(pi.form_type)
-            if form_type in settings.MULT_FIELDS:
-                mult_table = get_mult_name(pi.param_name())
-                order_param = mult_table + '.label'
-            else:
-                order_param = pi.param_name()
-            table = order_param.split('.')[0]
-            if order_param not in column_names:
-                tables.add(table)
-                column_names.append(order_param)
-                added_extra_columns += 1 # So we know to strip it off later
-            order_params.append(order_param)
-            descending_params.append(descending)
+        all_order = settings.DEFAULT_SORT_ORDER
+    if settings.FINAL_SORT_ORDER not in all_order.split(','):
+        if all_order:
+            all_order += ','
+        all_order += settings.FINAL_SORT_ORDER
 
     # Figure out what page we're asking for
     if use_collections:
@@ -759,7 +738,8 @@ def get_page(request, use_collections=None, collections_page=None, page=None,
                       +' request %s', str(request.GET))
             return (None, None, None, None, None, None)
 
-        user_query_table = get_user_query_table(selections, extras)
+        user_query_table = get_user_query_table(selections, extras,
+                                                api_code=api_code)
         if not user_query_table:
             log.error('get_page: get_user_query_table failed '
                       +'*** Selections %s *** Extras %s',
@@ -785,6 +765,7 @@ def get_page(request, use_collections=None, collections_page=None, page=None,
             temp_sql += connection.ops.quote_name(temp_table_name)
             temp_sql += ' SELECT sort_order, id FROM '
             temp_sql += connection.ops.quote_name(user_query_table)
+            temp_sql += ' ORDER BY sort_order'
             temp_sql += ' LIMIT '+str(limit)
             temp_sql += ' OFFSET '+str(offset)
             cursor = connection.cursor()
@@ -808,20 +789,26 @@ def get_page(request, use_collections=None, collections_page=None, page=None,
             if table == 'obs_general':
                 continue
             sql += ' LEFT JOIN '+connection.ops.quote_name(table)
-            sql += ' ON '+connection.ops.quote_name('obs_general')+'.id='
-            sql += connection.ops.quote_name(table)+'.obs_general_id'
+            sql += ' ON '+connection.ops.quote_name('obs_general')+'.'
+            sql += connection.ops.quote_name('id')+'='
+            sql += connection.ops.quote_name(table)+'.'
+            sql += connection.ops.quote_name('obs_general_id')
 
         # Now JOIN in all the mult_ tables.
         for (mult_table, table) in mult_tables:
             sql += ' LEFT JOIN '+connection.ops.quote_name(mult_table)
-            sql += ' ON '+connection.ops.quote_name(table)+'.'+mult_table+'='
-            sql += connection.ops.quote_name(mult_table)+'.id'
+            sql += ' ON '+connection.ops.quote_name(table)+'.'
+            sql += connection.ops.quote_name(mult_table)+'='
+            sql += connection.ops.quote_name(mult_table)+'.'
+            sql += connection.ops.quote_name('id')
 
         # But the cache table is an INNER JOIN because we only want opus_ids
         # that appear in the cache table to cause result rows
         sql += ' INNER JOIN '+connection.ops.quote_name(temp_table_name)
-        sql += ' ON '+connection.ops.quote_name('obs_general')+'.id='
-        sql += connection.ops.quote_name(temp_table_name)+'.id'
+        sql += ' ON '+connection.ops.quote_name('obs_general')+'.'
+        sql += connection.ops.quote_name('id')+'='
+        sql += connection.ops.quote_name(temp_table_name)+'.'
+        sql += connection.ops.quote_name('id')
         sql += ' ORDER BY '
         sql += connection.ops.quote_name(temp_table_name)+'.sort_order'
     else:
@@ -983,12 +970,13 @@ def _get_metadata_by_slugs(request, opus_id, slugs, fmt, use_param_names):
         return data, all_info  # includes definitions for OPUS interface
 
 
-def get_triggered_tables(selections, extras):
+def get_triggered_tables(selections, extras, api_code=None):
     "Returns the tables triggered by the selections including the base tables."
     if not selections:
         return sorted(settings.BASE_TABLES)
 
-    user_query_table = get_user_query_table(selections, extras)
+    user_query_table = get_user_query_table(selections, extras,
+                                            api_code=api_code)
     if not user_query_table:
         log.error('get_triggered_tables: get_user_query_table failed '
                   +'*** Selections %s *** Extras %s',

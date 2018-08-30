@@ -70,7 +70,8 @@ class SearchForm(forms.Form):
         super(SearchForm, self).__init__(*args, **kwargs)
 
         for slug,values in args[0].items():
-
+            if slug.startswith('qtype-'):
+                continue
             param_info = get_param_info_by_slug(slug)
             if not param_info:
                 log.error(

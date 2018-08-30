@@ -74,7 +74,7 @@ def api_get_result_count(request, fmt='json'):
         exit_api_call(api_code, ret)
         raise ret
 
-    table = get_user_query_table(selections, extras)
+    table = get_user_query_table(selections, extras, api_code=api_code)
 
     if not table:
         log.error('api_get_result_count: Could not find query table for '
@@ -193,7 +193,7 @@ def api_get_mult_counts(request, slug, fmt='json'):
         results = (table_model.objects.values(mult_name)
                    .annotate(Count(mult_name)))
 
-        user_table = get_user_query_table(selections, extras)
+        user_table = get_user_query_table(selections, extras, api_code=api_code)
 
         if selections and not user_table:
             log.error('api_get_mult_counts: has selections but no user_table '
@@ -323,7 +323,7 @@ def api_get_range_endpoints(request, slug, fmt='json'):
         if to_remove in selections:
             del selections[to_remove]
     if selections:
-        user_table = get_user_query_table(selections, extras)
+        user_table = get_user_query_table(selections, extras, api_code=api_code)
         if user_table is None:
             log.error('api_get_range_endpoints: Count not retrieve query table'
                       +' for *** Selections %s *** Extras %s',

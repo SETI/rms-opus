@@ -44,12 +44,12 @@ def url_to_search_params(request_get):
     contains 2 dictionaries:
         The first dict is the user selections: keys of the dictionary are
             param_names of data columns in the data table; values are always
-            lists and represent the users selections
+            lists and represent the user's selections.
         The 2nd dict is any extras being passed by user, like qtypes that
             define what types of queries will be performed for each
-            param-value set in the first dict, or sort order
+            param-value set in the first dict, or sort order.
 
-    NOTE: pass request_get = request.GET to this func please
+    NOTE: Pass request_get = request.GET to this func please
     (This func doesn't return an http response so unit tests freak if you
      pass it an HTTP request)
 
@@ -91,6 +91,10 @@ def url_to_search_params(request_get):
                 all_order = search_param[1]
             else:
                 all_order = settings.DEFAULT_SORT_ORDER
+            if settings.FINAL_SORT_ORDER not in all_order.split(','):
+                if all_order:
+                    all_order += ','
+                all_order += settings.FINAL_SORT_ORDER
             orders = all_order.split(',')
             for order in orders:
                 descending = order[0] == '-'
@@ -108,6 +112,10 @@ def url_to_search_params(request_get):
             continue
         slug_no_num = strip_numeric_suffix(slug)
         values = search_param[1].strip(',').split(',')
+
+        if not values:
+            # If nothing is specified, just ignore the slug
+            continue
 
         qtype = False  # assume this is not a qtype statement
         if slug.startswith('qtype-'): # like qtype-time=ZZZ
@@ -149,56 +157,54 @@ def url_to_search_params(request_get):
                           +'"%s": %s', param_name, request_get)
                 return None, None
             selections[param_name] = sorted(set(values))
-        else:
-            if search_param[1]:
-                if form_type == 'RANGE':
-                    # For RANGE queries, convert the strings into the internal
-                    # representations if necessary
-                    if form_type_func is None:
-                        func = float
-                    else:
-                        if form_type_func in opus_support.RANGE_FUNCTIONS:
-                            func = (opus_support
-                                    .RANGE_FUNCTIONS[form_type_func][1])
-                        else:
-                            log.error('url_to_search_params: Unknown RANGE '
-                                      +'function "%s"', form_type_func)
-                            return None, None
-                    if param_name == param_name_no_num:
-                        # This is a single column range query
-                        ext = slug[-1]
-                        if param_name+ext in selections:
-                            log.error('url_to_search_params: Duplicate slug '
-                                      +'for "%s": %s', param_name+ext,
-                                      request_get)
-                            return None, None
-                        try:
-                            selections[param_name + ext] = map(func, values)
-                        except ValueError,e:
-                            log.error('url_to_search_params: Function "%s" '
-                                      +'threw ValueError(%s) for %s',
-                                      func, e, values)
-                    else:
-                        # Normal 2-column range query
-                        if param_name in selections:
-                            log.error('url_to_search_params: Duplicate slug '
-                                      +'for "%s": %s', param_name,
-                                      request_get)
-                            return None, None
-                        try:
-                            selections[param_name] = map(func, values)
-                        except ValueError,e:
-                            log.error('url_to_search_params: Function "%s" '
-                                      +'threw ValueError(%s) for %s',
-                                      func, e, values)
+        elif form_type == 'RANGE':
+            # For RANGE queries, convert the strings into the internal
+            # representations if necessary
+            if form_type_func is None:
+                func = float
+            else:
+                if form_type_func in opus_support.RANGE_FUNCTIONS:
+                    func = (opus_support
+                            .RANGE_FUNCTIONS[form_type_func][1])
                 else:
-                    # For non-RANGE queries, we just put the values here raw
-                    if param_name in selections:
-                        log.error('url_to_search_params: Duplicate slug '
-                                  +'for "%s": %s', param_name,
-                                  request_get)
-                        return None, None
-                    selections[param_name] = values
+                    log.error('url_to_search_params: Unknown RANGE '
+                              +'function "%s"', form_type_func)
+                    return None, None
+            if param_name == param_name_no_num:
+                # This is a single column range query
+                ext = slug[-1]
+                if param_name+ext in selections:
+                    log.error('url_to_search_params: Duplicate slug '
+                              +'for "%s": %s', param_name+ext,
+                              request_get)
+                    return None, None
+                try:
+                    selections[param_name + ext] = map(func, values)
+                except ValueError,e:
+                    log.error('url_to_search_params: Function "%s" '
+                              +'threw ValueError(%s) for %s',
+                              func, e, values)
+            else:
+                # Normal 2-column range query
+                if param_name in selections:
+                    log.error('url_to_search_params: Duplicate slug '
+                              +'for "%s": %s', param_name,
+                              request_get)
+                    return None, None
+                try:
+                    selections[param_name] = map(func, values)
+                except ValueError,e:
+                    log.error('url_to_search_params: Function "%s" '
+                              +'threw ValueError(%s) for %s',
+                              func, e, values)
+        else:
+            # For non-RANGE queries, we just put the values here raw
+            if param_name in selections:
+                log.error('url_to_search_params: Duplicate slug '
+                          +'for "%s": %s', param_name,
+                          request_get)
+                return None, None
+            selections[param_name] = values
 
     extras['qtypes'] = qtypes
 
@@ -208,7 +214,7 @@ def url_to_search_params(request_get):
     return selections, extras
 
 
-def get_user_query_table(selections, extras):
+def get_user_query_table(selections, extras, api_code=None):
     """Perform a data search and create a table of matching IDs.
 
     This is THE main data query place. Performs a data search and creates
@@ -273,10 +279,11 @@ def get_user_query_table(selections, extras):
     create_sql = ('CREATE TABLE '
                   + connection.ops.quote_name(cache_table_name)
                   + '(sort_order INT NOT NULL AUTO_INCREMENT, '
-                  + 'PRIMARY KEY(sort_order), id INT UNSIGNED) '
+                  + 'PRIMARY KEY(sort_order), id INT UNSIGNED, '
+                  + 'UNIQUE KEY(id)) '
                   + sql)
-    log.debug('get_user_query_table: %s', create_sql)
     try:
+        time1 = time.time()
         cursor.execute(create_sql, tuple(params))
     except DatabaseError,e:
         if e.args[0] == MYSQL_TABLE_ALREADY_EXISTS:
@@ -286,7 +293,9 @@ def get_user_query_table(selections, extras):
         log.error('get_user_query_table: "%s" with params "%s" failed with '
                   +'%s', create_sql, str(tuple(params)), str(e))
         return None
-    # XXXXXXXXXX THIS APPEARS TO SORT THE ID FIELD!!! XXXXXXXXX
+    log.debug('API %s (%.3f) get_user_query_table: %s *** PARAMS %s',
+              str(api_code), time.time()-time1, create_sql, str(params))
+
     # alter_sql = ('ALTER TABLE '
     #              + connection.ops.quote_name(cache_table_name)
     #              + ' ADD UNIQUE KEY(id)')
@@ -304,7 +313,7 @@ def get_user_query_table(selections, extras):
 def set_user_search_number(selections, extras):
     """Creates a new row in the user_searches table for each search request.
 
-    This table (model) lists query params+values plus any extra info needed to
+    This table lists query params+values plus any extra info needed to
     run a data search query.
     This method looks in user_searches table for current selections.
     If none exist, creates it.
@@ -314,16 +323,6 @@ def set_user_search_number(selections, extras):
 
     qtypes_json = qtypes_hash = None
     if 'qtypes' in extras:
-        # 'any' and 'contains' are the default qtypes, so lets not set that in
-        # the cache.
-        # We need to make a copy of the key list because it's going to change
-        # out from under us
-        for k in list(extras['qtypes'].keys())[:]:
-            qlist = extras['qtypes'][k]
-            extras['qtypes'][k] = [x for x in qlist
-                                         if x != 'any' and x != 'contains']
-            if len(extras['qtypes'][k]) == 0:
-                del extras['qtypes'][k]
         if len(extras['qtypes']):
             qtypes_json = str(json.dumps(sort_dictionary(extras['qtypes'])))
             qtypes_hash = hashlib.md5(qtypes_json).hexdigest()
@@ -335,12 +334,8 @@ def set_user_search_number(selections, extras):
 
     order_json = order_hash = None
     if 'order' in extras:
-        default_sort_order = get_param_info_by_slug(settings.DEFAULT_SORT_ORDER)
-        if (len(extras['order'][0]) >= 1 and
-            (extras['order'][0][0] != default_sort_order.param_name() or
-             extras['order'][1][0] != False)):
-            order_json = str(json.dumps(extras['order']))
-            order_hash = hashlib.md5(order_json).hexdigest()
+        order_json = str(json.dumps(extras['order']))
+        order_hash = hashlib.md5(order_json).hexdigest()
 
     selections_json = str(json.dumps(sort_dictionary(selections)))
     selections_hash = hashlib.md5(selections_json).hexdigest()
@@ -446,66 +441,35 @@ def get_param_info_by_slug(slug, from_ui=False):
 
     return None
 
-
 ################################################################################
 #
-# INTERNAL SUPPORT ROUTINES
+# CREATE AN SQL QUERY
 #
 ################################################################################
-
-def _get_param_info_by_qualified_name(param_name):
-    "Given a qualified name cat.name return the ParamInfo"
-    cat_name = param_name.split('.')[0]
-    name = param_name.split('.')[1]
-
-    try:
-        return ParamInfo.objects.get(category_name=cat_name, name=name)
-    except ParamInfo.DoesNotExist:
-        # Single column range queries will not have the numeric suffix
-        name_no_num = strip_numeric_suffix(name)
-        try:
-            return ParamInfo.objects.get(category_name=cat_name,
-                                         name=name_no_num)
-        except ParamInfo.DoesNotExist:
-            return None
-
-
-def _is_single_column_range(param_name):
-    "Given a qualified name cat.name return True if it's a single-column range"
-    cat_name = param_name.split('.')[0]
-    name = param_name.split('.')[1]
-
-    try:
-        param_info = ParamInfo.objects.get(category_name=cat_name, name=name)
-        return False
-    except ParamInfo.DoesNotExist:
-        # Single column range queries will not have the numeric suffix
-        name_no_num = strip_numeric_suffix(name)
-        try:
-            temp = ParamInfo.objects.get(category_name=cat_name,
-                                         name=name_no_num)
-            return True
-        except ParamInfo.DoesNotExist:
-            return False
-
 
 def _construct_query_string(selections, extras):
     """Given a set selections,extras generate the appropriate SQL SELECT"""
     all_qtypes = extras['qtypes'] if 'qtypes' in extras else []
-    long_queries = []    # Special longitudinal queries are pure sql
-    q_objects = []       # For building up the query object
     finished_ranges = [] # Ranges are done for both sides at once so track
                          # which are finished to avoid duplicates
+
+    clauses = []
+    clause_params = []
+    obs_tables = set()
+    mult_tables = set()
+
+    # We always have to have obs_general since it's the master keeper of IDs
+    obs_tables.add('obs_general')
+
+    cursor = connection.cursor()
 
     for param_name, value_list in selections.items():
         # Lookup info about this param_name
         param_name_no_num = strip_numeric_suffix(param_name)
         param_info = _get_param_info_by_qualified_name(param_name)
         cat_name = param_info.category_name
+        quoted_cat_name = connection.ops.quote_name(cat_name)
         name = param_info.name
-        # Django model names in query strings are in all lower case
-        # not title case!
-        cat_model_name = ''.join(cat_name.lower().split('_'))
         if not param_info:
             log.error('_construct_query_string: No param_info for "%s"'
                       +' *** Selections %s *** Extras *** %s', param_name,
@@ -514,13 +478,10 @@ def _construct_query_string(selections, extras):
 
         special_query = param_info.special_query
 
-        # define any qtypes for this param_name from query
         if param_name_no_num in all_qtypes:
             qtypes = all_qtypes[param_name_no_num]
         else:
             qtypes = []
-
-        # now build the q_objects to run the query, by form_type:
 
         (form_type, form_type_func,
          form_type_format) = parse_form_type(param_info.form_type)
@@ -536,13 +497,13 @@ def _construct_query_string(selections, extras):
                            list(model.objects.filter(  Q(label__in=value_list)
                                                      | Q(value__in=value_list))
                                              .values('pk'))]
-            if cat_name != 'obs_general':
-                q_objects.append(
-                    Q(**{"%s__%s__in" % (cat_model_name, mult_name):
-                         mult_values }))
-            else:
-                q_objects.append(
-                    Q(**{"%s__in" % mult_name: mult_values }))
+            clause = quoted_cat_name+'.'+connection.ops.quote_name(mult_name)
+            clause += ' IN ('
+            clause += ','.join(['%s']*len(mult_values))
+            clause += ')'
+            clauses.append(clause)
+            clause_params += mult_values
+            obs_tables.add(cat_name)
 
         elif form_type in settings.RANGE_FIELDS:
             # This prevents range queries from getting through twice.
@@ -553,267 +514,288 @@ def _construct_query_string(selections, extras):
 
             finished_ranges.append(param_name_no_num)
 
+            clause = None
+            params = None
+
             # Longitude queries
             if special_query == 'long':
                 # This parameter requires a longitudinal query.
-                # These are crazy sql and can't use Django's model interface,
-                # so after converting the rest of the query params from Django
-                # model statements to SQL these are tacked on at the end.
                 # Both sides of range must be defined by user for this to work.
                 if (selections[param_name_no_num + '1'] and
                     selections[param_name_no_num + '2']):
-                    lq, lq_params = _get_longitude_query(selections, param_name)
-                    long_queries.append((lq, lq_params))
+                    clause, params = _get_longitude_query(selections,
+                                                          param_name)
                 else:
                     return None, None
             else:
                 # Get the range query object and append it to the query
-                q_obj = _get_range_query_object(selections, param_name, qtypes)
-                q_objects.append(q_obj)
+                clause, params = _get_range_query_object(selections, param_name,
+                                                         qtypes)
+
+            if clause is None:
+                return None, None
+            clauses.append(clause)
+            clause_params += params
+            obs_tables.add(cat_name)
 
         elif form_type == 'STRING':
-            q_obj = _get_string_query_object(param_name, value_list, qtypes)
-            q_objects.append(q_obj)
+            clause, params = _get_string_query_object(selections, param_name,
+                                                      value_list, qtypes)
+            if clause is None:
+                return None, None
+            clauses.append(clause)
+            clause_params += params
+            obs_tables.add(cat_name)
 
         else:
             log.error('_construct_query_string: Unknown field type "%s" for '
                       +'param "%s"', form_type, param_name)
 
-    # Construct our query. We'll be breaking into raw sql, but for that
-    # we'll be using the SQL Django generates through its model interface.
-    try:
-        sql, params = (ObsGeneral.objects.filter(*q_objects).values('pk')
-                                 .query.sql_with_params())
-    except EmptyResultSet:
-        return None, None
-
-    # Append any longitudinal queries to the query string
-    if long_queries:
-        params = list(params)
-
-        if 'where' in sql.lower():
-            sql += ' AND obs_general.id IN '
-        else:
-            sql += ' WHERE obs_general.id IN '
-
-        sql += (' AND obs_general.id IN '
-                .join([" (%s) " % long_query[0]
-                           for long_query in long_queries]))
-        for long_q in long_queries:
-            params += list(long_query[1])
-
-        params = tuple(params)
-
-    # Add in the ordering
+    # Make the ordering SQL
+    order_sql = ''
     if 'order' in extras:
         order_table_names = set()
         order_params, descending_params = extras['order']
         if order_params:
             order_str_list = []
             for i in range(len(order_params)):
-                s = order_params[i]
-                order_table_names.add(s.split('.')[0])
-                if descending_params[i]:
-                    s += ' DESC'
+                order = order_params[i]
+                pi = _get_param_info_by_qualified_name(order)
+                if not pi:
+                    log.error('_construct_query_string: Unable to resolve order'
+                              +' slug "%s"', order)
+                    return None, None
+                (form_type, form_type_func,
+                 form_type_format) = parse_form_type(pi.form_type)
+                if form_type in settings.MULT_FIELDS:
+                    mult_table = get_mult_name(pi.param_name())
+                    order_param = mult_table + '.label'
                 else:
-                    s += ' ASC'
-                order_str_list.append(s)
-            # Splice in the new table names to the FROM field
-            before_from, after_from = sql.split(' FROM ')
-            new_where_list = []
-            for order_table in order_table_names:
-                q_order_table = connection.ops.quote_name(order_table)
-                if after_from.find(q_order_table) == -1:
-                    after_from = q_order_table+','+after_from
-                    new_where_list.append(
-                        connection.ops.quote_name(q_order_table)+'.'
-                        +connection.ops.quote_name('obs_general_id')
-                        +'='
-                        +connection.ops.quote_name('obs_general')+'.'
-                        +connection.ops.quote_name('id')
-                    )
-            sql = before_from + ' FROM ' + after_from
-            if sql.find(' WHERE ') != -1:
-                before_where, after_where = sql.split(' WHERE ')
-                sql = before_where + ' WHERE ' + ' AND '.join(new_where_list)
-                sql += ' AND '+after_where
-            else:
-                sql += ' WHERE ' + ' AND '.join(new_where_list)
-            sql += ' ORDER BY ' + ','.join(order_str_list)
-
-    log.debug('SEARCH SQL: %s *** PARAMS %s', sql, str(params))
-    return sql, params
+                    order_param = pi.param_name()
+                table = order_param.split('.')[0]
+                obs_tables.add(table)
+                if descending_params[i]:
+                    order += ' DESC'
+                else:
+                    order += ' ASC'
+                order_str_list.append(order)
+            order_sql = ' ORDER BY ' + ','.join(order_str_list)
 
 
-def _get_string_query_object(param_name, value_list, qtypes):
+    sql = 'SELECT '
+    sql += connection.ops.quote_name('obs_general')+'.'
+    sql += connection.ops.quote_name('id')
 
-    cat_name, param = param_name.split('.')
-    model_name = cat_name.lower().replace('_','')
+    # Now JOIN all the obs_ tables together
+    sql += ' FROM '+connection.ops.quote_name('obs_general')
+    for table in sorted(obs_tables):
+        if table == 'obs_general':
+            continue
+        sql += ' LEFT JOIN '+connection.ops.quote_name(table)
+        sql += ' ON '+connection.ops.quote_name('obs_general')+'.'
+        sql += connection.ops.quote_name('id')+'='
+        sql += connection.ops.quote_name(table)+'.'
+        sql += connection.ops.quote_name('obs_general_id')
 
-    if param == 'opus_id':
-        # Special case, because opus_id is always a foreign key field, which
-        # is just an integer in Django. So we have to look through the foreign
-        # key into the destination table (always obs_general) to get the
-        # actual string.
-        param_model_name = 'opus_id'
-    elif model_name == 'obsgeneral':
-        param_model_name = param
-    else:
-        param_model_name = model_name + '__' + param
+    # Add in the WHERE clauses
+    if clauses:
+        sql += ' WHERE '
+        sql += ' AND '.join(['('+c+')' for c in clauses])
 
-    if len(value_list) > 1:
-        log.error('string_query_object: value_list for param %s contains >1 item %s qtypes %s', param_name, str(value_list), str(qtypes))
+    # Add in the ORDER BY clause
+    sql += order_sql
 
-    # This can apparently handle multiple string values, but it's not really implemented fully
-    # Maybe it should return a list of q_exp?
-    for val_no,value in enumerate(value_list):
-        qtype = qtypes[val_no] if len(qtypes) > val_no else 'contains'
-        if qtype == 'contains':
-            q_exp = Q(**{"%s__icontains" % param_model_name: value })
-        elif qtype == 'begins':
-            q_exp = Q(**{"%s__startswith" % param_model_name: value })
-        elif qtype == 'ends':
-            q_exp = Q(**{"%s__endswith" % param_model_name: value })
-        elif qtype == 'matches':
-            q_exp = Q(**{"%s" % param_model_name: value })
-        elif qtype == 'excludes':
-            q_exp = ~Q(**{"%s__icontains" % param_model_name: value })
-        else:
-            log.error('string_query_object: Unknown qtype %s for param_name %s', qtype, param_name)
+    # log.debug('SEARCH SQL: %s *** PARAMS %s', sql, str(clause_params))
+    return sql, clause_params
 
-    return q_exp
 
-def _get_range_query_object(selections, param_name, qtypes):
+def _get_string_query_object(selections, param_name, values, qtypes):
+    """Builds query for strings.
+
+    The following q-types are supported:
+        contains
+        begins
+        ends
+        matches
+        excludes
     """
-    builds query for numeric ranges where 2 data columns represent min and max values
-    oh and also single column ranges
-
-    # just some text for searching this file
-    any all only
-    any / all / only
-    any/all/only
-
-    """
-    # grab some info about this param
     param_info = _get_param_info_by_qualified_name(param_name)
     if not param_info:
-        return False
+        return None, None
 
     (form_type, form_type_func,
      form_type_format) = parse_form_type(param_info.form_type)
     table_name = param_info.category_name
 
-    # we will define both sides of the query, so define those param names
+    cat_name = param_info.category_name
+    quoted_cat_name = connection.ops.quote_name(cat_name)
+    name = param_info.name
+    quoted_param_name = (quoted_cat_name+'.'
+                         +connection.ops.quote_name(name))
+
+    if len(values) > 1:
+        log.error('_get_string_query_object: More than one value specified for '
+                  +'"%s" - "%s" '
+                  +'*** Selections %s *** Qtypes %s ***',
+                  param_name, str(values),
+                  str(selections), str(qtypes))
+        return None, None
+
+    if len(qtypes) == 0:
+        qtypes = ['contains']
+
+    if len(qtypes) != 1:
+        log.error('_get_string_query_object: Not one value specified for qtype '
+                  +'for "%s"'
+                  +'*** Selections %s *** Qtypes %s ***',
+                  param_name, str(selections), str(qtypes))
+        return None, None
+
+    qtype = qtypes[0]
+    value = values[0]
+
+    clause = ''
+    params = []
+
+    if qtype == 'contains':
+        clause = quoted_param_name + ' LIKE %s'
+        params.append('%'+value+'%')
+    elif qtype == 'begins':
+        clause = quoted_param_name + ' LIKE %s'
+        params.append(value+'%')
+    elif qtype == 'ends':
+        clause = quoted_param_name + ' LIKE %s'
+        params.append('%'+value)
+    elif qtype == 'matches':
+        clause = quoted_param_name + ' = %s'
+        params.append(value)
+    elif qtype == 'excludes':
+        clause = quoted_param_name + ' NOT LIKE %s'
+        params.append('%'+value+'%')
+    else:
+        log.error('_get_string_query_object: Unknown qtype "%s" '
+                  +'for "%s"'
+                  +'*** Selections %s *** Qtypes %s ***',
+                  qtype, param_name, str(selections), str(qtypes))
+
+    return clause, params
+
+def _get_range_query_object(selections, param_name, qtypes):
+    """Builds query for numeric ranges.
+
+    This can either be a single column range (one table column holds the value)
+    or a normal dual-column range (2 table columns hold min and max values).
+
+    The following q-types are supported:
+        any
+        all
+        only
+    """
+    param_info = _get_param_info_by_qualified_name(param_name)
+    if not param_info:
+        return None, None
+
+    (form_type, form_type_func,
+     form_type_format) = parse_form_type(param_info.form_type)
+    table_name = param_info.category_name
+    name = param_info.name
+
     param_name_no_num = strip_numeric_suffix(param_name)
     param_name_min = param_name_no_num + '1'
     param_name_max = param_name_no_num + '2'
 
-    # grab min and max values from query selections object
-    values_min = selections[param_name_min] if param_name_min in selections else []
-    values_max = selections[param_name_max] if param_name_max in selections else []
+    values_min = selections.get(param_name_min, [])
+    values_max = selections.get(param_name_max, [])
 
-    # but, for constructing the query,
-    # if this is a single column range, the param_names are both the same
+    # But, for constructing the query, if this is a single column range,
+    # the param_names are both the same
+    cat_name = param_info.category_name
+    quoted_cat_name = connection.ops.quote_name(cat_name)
+    name_no_num = strip_numeric_suffix(param_info.name)
+    name_min = name_no_num + '1'
+    name_max = name_no_num + '2'
+
     if _is_single_column_range(param_name):
         param_name_min = param_name_max = param_name_no_num
+        name_min = name_max = name_no_num
 
-    # to follow related models, we need the lowercase model name, not the param name
-    # UNLESS this param is in the obs_General table, then must leave out the model name!
-    if table_name == 'obs_general':
-        param_model_name_min = param_name_min.split('.')[1]
-        param_model_name_max = param_name_max.split('.')[1]
+    quoted_param_name_min = (quoted_cat_name+'.'
+                             +connection.ops.quote_name(name_min))
+    quoted_param_name_max = (quoted_cat_name+'.'
+                             +connection.ops.quote_name(name_max))
+
+    if len(values_min) > 1 or len(values_max) > 1:
+        log.error('_get_range_query_object: More than one value specified for '
+                  +'"%s" - MIN %s MAX %s '
+                  +'*** Selections %s *** Qtypes %s ***',
+                  param_name, str(values_min), str(values_max),
+                  str(selections), str(qtypes))
+        return None, None
+
+    if len(qtypes) == 0:
+        qtypes = ['any']
+
+    if len(qtypes) != 1:
+        log.error('_get_range_query_object: Not one value specified for qtype '
+                  +'for "%s"'
+                  +'*** Selections %s *** Qtypes %s ***',
+                  param_name, str(selections), str(qtypes))
+        return None, None
+
+    # If we want to support more than one set of range fields, loop here
+    if len(values_min):
+        value_min = values_min[0]
     else:
-        param_model_name_min = table_name.lower().replace('_','') + '__' + param_name_min.split('.')[1]
-        param_model_name_max = table_name.lower().replace('_','') + '__' + param_name_max.split('.')[1]
+        value_min = None
+    if len(values_max):
+        value_max = values_max[0]
+    else:
+        value_max = None
+    qtype = qtypes[0]
 
-    # we need to know how many times to go through this loop
-    count = max(len(values_min), len(values_max))  # sometimes you can have queries
-                                                   # that define multiple ranges for same widget
-                                                   # (not currently implemented in UI)
+    clause = ''
+    params = []
 
-    if count < len(qtypes):
-        log.error('Passed qtypes is shorter in length than longest range values list, defaulting to "any"')
-        log.error('.. values_min: %s', str(values_min))
-        log.error('.. values_max: %s', str(values_max))
-        log.error('.. qtypes: %s', str(qtypes))
+    if qtype == 'all':
+        # param_name_min <= value_min AND param_name_max >= value_max
+        if value_min is not None:
+            clause += quoted_param_name_min + ' <= %s'
+            params.append(value_min)
+        if value_max is not None:
+            if clause:
+                clause += ' AND '
+            clause += quoted_param_name_max + ' >= %s'
+            params.append(value_max)
 
-    # XXX This is really awful. What happens if there are a different number
-    # of qtypes and values?
+    elif qtype == 'only':
+        # param_name_min >= value_min AND param_name_max <= value_max
+        if value_min is not None:
+            clause += quoted_param_name_min + ' >= %s'
+            params.append(value_min)
+        if value_max is not None:
+            if clause:
+                clause += ' AND '
+            clause += quoted_param_name_max + ' <= %s'
+            params.append(value_max)
 
-    # now collect the query expressions
-    all_query_expressions = []  # these will be joined by OR
-    i=0
-    while i < count:
+    elif qtype == 'any' or qtype == '':
+        # param_name_min <= value_max AND param_name_max >= value_min
+        if value_min is not None:
+            clause += quoted_param_name_max + ' >= %s'
+            params.append(value_min)
+        if value_max is not None:
+            if clause:
+                clause += ' AND '
+            clause += quoted_param_name_min + ' <= %s'
+            params.append(value_max)
 
-        # define some things
-        value_min, value_max = None, None
-        try:
-            value_min = values_min[i]
-        except IndexError:
-            pass
+    else:
+        log.error('_get_range_query_object: Unknown qtype "%s" '
+                  +'for "%s"'
+                  +'*** Selections %s *** Qtypes %s ***',
+                  qtype, param_name, str(selections), str(qtypes))
 
-        try:
-            value_max = values_max[i]
-        except IndexError:
-            pass
-
-        try:
-            qtype = qtypes[i]
-        except IndexError:
-            qtype = ['any']
-
-        # reverse value_min and value_max if value_min < value_max
-        if value_min is not None and value_max is not None:
-            (value_min,value_max) = sorted([value_min,value_max])
-
-        # we should end up with 2 query expressions
-        q_exp, q_exp1, q_exp2 = None, None, None  # q_exp will hold the concat
-                                                  # of q_exp1 and q_exp2
-
-        if qtype == 'all':
-
-            if value_min is not None:
-                # param_name_min <= value_min
-                q_exp1 = Q(**{"%s__lte" % param_model_name_min: value_min })
-
-            if value_max is not None:
-                # param_name_max >= value_max
-                q_exp2 = Q(**{"%s__gte" % param_model_name_max: value_max })
-
-        elif qtype == 'only':
-
-            if value_min is not None:
-                # param_name_min >= value_min
-                q_exp1 = Q(**{"%s__gte" % param_model_name_min: value_min })
-
-            if value_max is not None:
-                # param_name_max <= value_max
-                q_exp2 = Q(**{"%s__lte" % param_model_name_max: value_max })
-
-        else: # defaults to qtype = any
-            if value_max is not None:
-                # param_name_min <= value_max
-                q_exp1 = Q(**{"%s__lte" % param_model_name_min: value_max })
-
-            if value_min is not None:
-                # param_name_max >= value_min
-                q_exp2 = Q(**{"%s__gte" % param_model_name_max: value_min })
-
-        # put the query expressions together as "&" queries
-        if q_exp1 and q_exp2:
-            q_exp = q_exp1 & q_exp2
-        elif q_exp1:
-            q_exp = q_exp1
-        elif q_exp2:
-            q_exp = q_exp2
-
-        all_query_expressions.append(q_exp)
-        i+=1
-
-
-    # now we have all query expressions, join them with 'OR'
-    return reduce(OR, all_query_expressions)
-
+    return clause, params
 
 def _get_longitude_query(selections,param_name):
     # raises 'KeyError' or IndexError if min or max value is blank
@@ -888,3 +870,45 @@ def convertTimes(value_list):
 def get_user_search_table_name(num):
     """ pass cache_no, returns user search table name"""
     return 'cache_' + str(num);
+
+
+################################################################################
+#
+# INTERNAL SUPPORT ROUTINES
+#
+################################################################################
+
+def _get_param_info_by_qualified_name(param_name):
+    "Given a qualified name cat.name return the ParamInfo"
+    cat_name = param_name.split('.')[0]
+    name = param_name.split('.')[1]
+
+    try:
+        return ParamInfo.objects.get(category_name=cat_name, name=name)
+    except ParamInfo.DoesNotExist:
+        # Single column range queries will not have the numeric suffix
+        name_no_num = strip_numeric_suffix(name)
+        try:
+            return ParamInfo.objects.get(category_name=cat_name,
+                                         name=name_no_num)
+        except ParamInfo.DoesNotExist:
+            return None
+
+
+def _is_single_column_range(param_name):
+    "Given a qualified name cat.name return True if it's a single-column range"
+    cat_name = param_name.split('.')[0]
+    name = param_name.split('.')[1]
+
+    try:
+        param_info = ParamInfo.objects.get(category_name=cat_name, name=name)
+        return False
+    except ParamInfo.DoesNotExist:
+        # Single column range queries will not have the numeric suffix
+        name_no_num = strip_numeric_suffix(name)
+        try:
+            temp = ParamInfo.objects.get(category_name=cat_name,
+                                         name=name_no_num)
+            return True
+        except ParamInfo.DoesNotExist:
+            return False

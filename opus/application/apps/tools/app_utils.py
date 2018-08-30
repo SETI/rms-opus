@@ -212,7 +212,6 @@ def exit_api_call(api_code, ret):
     if api_code in _API_START_TIMES:
         del _API_START_TIMES[api_code]
 
-
 def parse_form_type(s):
     """Parse the ParamInfo FORM_TYPE with its subfields.
 

@@ -330,8 +330,17 @@ SLUGS_NOT_IN_DB = ('browse', 'col_chooser', 'colls_browse', 'cols', 'detail',
 # The root URL used to retrieve product files from a web server
 PRODUCT_HTTP_PATH = 'https://pds-rings.seti.org/'
 
+# The columns selected when OPUS is first initialized
 DEFAULT_COLUMNS = 'opusid,instrumentid,planet,target,time1,observationduration'
+
+# The sort order to be used if there is no order specified in the URL, or
+# the order slug has no value.
 DEFAULT_SORT_ORDER = 'time1' # This must be a slug
+
+# The sort order to append after all other sort orders to ensure the ordering
+# is always deterministic. This field should be unique for all observations.
+FINAL_SORT_ORDER = 'opusid' # This must be a slug
+
 IMAGE_COLUMNS   = ['thumb.jpg','small.jpg','med.jpg','full.jpg']
 
 THUMBNAIL_IMAGE_SIZE = 100 # Pixels

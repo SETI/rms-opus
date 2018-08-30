@@ -206,7 +206,7 @@ def getMenuLabels(request, labels_view):
     if not selections:
         triggered_tables = settings.BASE_TABLES[:]  # makes a copy of settings.BASE_TABLES
     else:
-        triggered_tables = get_triggered_tables(selections, extras)
+        triggered_tables = get_triggered_tables(selections, extras) # Needs api_code
 
     divs = TableNames.objects.filter(display='Y', table_name__in=triggered_tables).order_by('disp_order')
     params = ParamInfo.objects.filter(**{filter:1, "category_name__in":triggered_tables}).order_by('disp_order')
@@ -292,7 +292,7 @@ def api_get_widget(request, **kwargs):
     param_info = get_param_info_by_slug(slug)
     if not param_info:
         log.error(
-            "getWidget: Could not find param_info entry for slug %s",
+            "api_get_widget: Could not find param_info entry for slug %s",
             str(slug))
         exit_api_call(api_code, None)
         raise Http404
@@ -334,7 +334,7 @@ def api_get_widget(request, **kwargs):
         param1 = param_name_no_num+'1'
         param2 = param_name_no_num+'2'
 
-        form_vals = { slug1:None, slug2:None }
+        form_vals = { slug1: None, slug2: None }
 
         # find length of longest list of selections for either param1 or param2,
         # tells us how many times to go through loop below
@@ -366,12 +366,10 @@ def api_get_widget(request, **kwargs):
                 try:
                   form_vals[slug1] = func(selections[param1][key])
                 except (IndexError, KeyError, ValueError) as e:
-                    log.error('getWidget threw %s', str(e))
                     form_vals[slug1] = None
                 try:
                     form_vals[slug2] = func(selections[param2][key])
                 except (IndexError, KeyError, ValueError) as e:
-                    log.error('getWidget threw %s', str(e))
                     form_vals[slug2] = None
 
                 qtypes = request.GET.get('qtype-' + slug, False)
@@ -468,7 +466,7 @@ def api_get_widget(request, **kwargs):
     param_info = get_param_info_by_slug(slug)
     if not param_info:
         log.error(
-            "getWidget: Could not find param_info entry for slug %s",
+            "api_get_widget: Could not find param_info entry for slug %s",
             str(slug))
         raise Http404
 
