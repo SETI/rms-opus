@@ -6656,7 +6656,6 @@ class ZZParamInfo(models.Model):
     tooltip = models.CharField(max_length=255, blank=True, null=True)
     dict_context = models.CharField(max_length=255, blank=True, null=True)
     dict_name = models.CharField(max_length=255, blank=True, null=True)
-    special_query = models.CharField(max_length=15, blank=True, null=True)
     sub_heading = models.CharField(max_length=150, blank=True, null=True)
     timestamp = models.DateTimeField()
 
@@ -6692,11 +6691,11 @@ class TableNames(models.Model):
 class UserSearches(models.Model):
     selections_json = models.TextField()
     selections_hash = models.CharField(max_length=32)
-    string_selects = models.TextField(blank=True, null=True)
-    string_selects_hash = models.CharField(max_length=32, blank=True, null=True)
-    units = models.TextField(blank=True, null=True)
+    order_json = models.TextField(blank=True, null=True)
+    order_hash = models.CharField(max_length=32, blank=True, null=True)
+    units_json = models.TextField(blank=True, null=True)
     units_hash = models.CharField(max_length=32, blank=True, null=True)
-    qtypes = models.TextField(blank=True, null=True)
+    qtypes_json = models.TextField(blank=True, null=True)
     qtypes_hash = models.CharField(max_length=32, blank=True, null=True)
     timestamp = models.DateTimeField(blank=True, null=True)
 

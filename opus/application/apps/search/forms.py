@@ -70,7 +70,8 @@ class SearchForm(forms.Form):
         super(SearchForm, self).__init__(*args, **kwargs)
 
         for slug,values in args[0].items():
-
+            if slug.startswith('qtype-'):
+                continue
             param_info = get_param_info_by_slug(slug)
             if not param_info:
                 log.error(
@@ -161,5 +162,4 @@ class SearchForm(forms.Form):
             self.fields = OrderedDict()
             self.fields[slug_no_num+'1'] = my_fields[slug_no_num+'1']
             self.fields[slug_no_num+'2'] = my_fields[slug_no_num+'2']
-            if not param_info.special_query:
-                self.fields['qtype-'+slug_no_num] = my_fields['qtype-'+slug_no_num]
+            self.fields['qtype-'+slug_no_num] = my_fields['qtype-'+slug_no_num]

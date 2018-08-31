@@ -1,4 +1,19 @@
+################################################################################
+#
 # metadata/views.py
+#
+# The API interface for retrieving metadata (data about searches and the actual
+# database):
+#
+#    Format: api/meta/result_count.(?P<fmt>[json|zip|html|csv]+)
+#    Format: api/meta/mults/(?P<slug>[-\w]+).(?P<fmt>[json|zip|html|csv]+)
+#    Format: api/meta/range/endpoints/(?P<slug>[-\w]+)
+#            .(?P<fmt>[json|zip|html|csv]+)
+#    Format: api/fields/(?P<field>\w+).(?P<fmt>[json|zip|html|csv]+)
+#        or: api/fields.(?P<fmt>[json|zip|html|csv]+)
+#
+################################################################################
+
 from collections import OrderedDict
 import json
 import logging
@@ -17,6 +32,7 @@ from search.views import (get_param_info_by_slug,
                           set_user_search_number,
                           url_to_search_params)
 from tools.app_utils import *
+
 import opus_support
 
 log = logging.getLogger(__name__)
@@ -58,7 +74,7 @@ def api_get_result_count(request, fmt='json'):
         exit_api_call(api_code, ret)
         raise ret
 
-    table = get_user_query_table(selections, extras)
+    table = get_user_query_table(selections, extras, api_code=api_code)
 
     if not table:
         log.error('api_get_result_count: Could not find query table for '
@@ -141,8 +157,15 @@ def api_get_mult_counts(request, slug, fmt='json'):
     if selections:
         has_selections = True
 
-    cache_key = ('mults_' + param_name + '_'
-                 + str(set_user_search_number(selections)))
+    cache_num = set_user_search_number(selections, extras)
+    if cache_num is None:
+        log.error('api_get_mult_counts: Failed to create cache table for '
+                  +'*** Selections %s *** Extras %s',
+                  str(selections), str(extras))
+        exit_api_call(api_code, Http404)
+        raise Http404
+
+    cache_key = ('mults_' + param_name + '_' + str(cache_num))
 
     cached_val = cache.get(cache_key)
     if cached_val is not None:
@@ -170,7 +193,7 @@ def api_get_mult_counts(request, slug, fmt='json'):
         results = (table_model.objects.values(mult_name)
                    .annotate(Count(mult_name)))
 
-        user_table = get_user_query_table(selections, extras)
+        user_table = get_user_query_table(selections, extras, api_code=api_code)
 
         if selections and not user_table:
             log.error('api_get_mult_counts: has selections but no user_table '
@@ -300,7 +323,7 @@ def api_get_range_endpoints(request, slug, fmt='json'):
         if to_remove in selections:
             del selections[to_remove]
     if selections:
-        user_table = get_user_query_table(selections, extras)
+        user_table = get_user_query_table(selections, extras, api_code=api_code)
         if user_table is None:
             log.error('api_get_range_endpoints: Count not retrieve query table'
                       +' for *** Selections %s *** Extras %s',
@@ -314,7 +337,14 @@ def api_get_range_endpoints(request, slug, fmt='json'):
     # Is this result already cached?
     cache_key = 'rangeep:' + param_name_no_num
     if user_table:
-        cache_key += str(set_user_search_number(selections, extras))
+        cache_num = set_user_search_number(selections, extras)
+        if cache_num is None:
+            log.error('api_get_range_endpoints: Failed to create cache table '
+                      +'for *** Selections %s *** Extras %s',
+                      str(selections), str(extras))
+            exit_api_call(api_code, Http404)
+            raise Http404
+        cache_key += ':' + str(cache_num)
 
     cached_val = cache.get(cache_key)
     if cached_val is not None:
@@ -431,6 +461,7 @@ def api_get_fields(request, fmt='json', field=''):
 #
 ################################################################################
 
+# This routine is public because it's called by the API guide in guide/views.py
 def get_fields_info(fmt, field='', category='', collapse=False):
     "Helper routine for api_get_fields."
     cache_key = 'getFields:field:' + field + ':category:' + category

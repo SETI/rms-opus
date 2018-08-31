@@ -77,11 +77,6 @@
         "field_default": null
     },
     {
-        "field_name": "special_query",
-        "field_type": "varchar15",
-        "field_default": null
-    },
-    {
         "field_name": "sub_heading",
         "field_type": "varchar150",
         "field_default": null

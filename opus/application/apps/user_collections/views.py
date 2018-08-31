@@ -122,7 +122,7 @@ def api_collection_status(request, collection_name='default'):
 ################################################################################
 
 
-# This function should really be in user_collections, but it uses _get_page,
+# This function should really be in user_collections, but it uses get_page,
 # which is here, and there would be a circular import loop if we tried to
 # do it the right way.
 def api_get_collection_csv(request, fmt=None):
@@ -130,7 +130,7 @@ def api_get_collection_csv(request, fmt=None):
     update_metrics(request)
     api_code = enter_api_call('api_get_collection_csv', request)
 
-    ret = _get_collection_csv(request, fmt)
+    ret = _get_collection_csv(request, fmt, api_code=api_code)
 
     exit_api_call(api_code, ret)
     return ret
@@ -351,7 +351,7 @@ def api_create_download(request, session_id=None, opus_ids=None, fmt=None):
     manifest_file_name = settings.TAR_FILE_PATH + 'manifest_' + zip_root + '.txt'
     csv_file_name = settings.TAR_FILE_PATH + 'csv_' + zip_root + '.txt'
 
-    _create_csv_file(request, csv_file_name)
+    _create_csv_file(request, csv_file_name, api_code=api_code)
 
     # fetch the full file paths we'll be zipping up
     files = get_pds_products(opus_ids, fmt='raw', loc_type='path',
@@ -474,12 +474,13 @@ def _get_collection_count(session_id):
     return count
 
 
-def _get_collection_csv(request, fmt=None):
+def _get_collection_csv(request, fmt=None, api_code=None):
     "Create and return a CSV file based on user column and selection."
     slugs = request.GET.get('cols', '')
-    all_data = get_page(request, colls=True, colls_page='all')
+    all_data = get_page(request, use_collections=True, collections_page='all',
+                        api_code=api_code)
     # XXX Check all_data for None
-    
+
     if fmt == 'raw':
         return slugs.split(','), all_data[2]
 
@@ -539,15 +540,14 @@ def _edit_collection_range(request, session_id, action):
         return False
     (min_id, max_id) = ids
 
-    data = get_data(request, 'raw')
+    data = get_data(request, 'raw', cols='opusid')
     if data is None:
         return False
 
     selected_range = []
     in_range = False  # loop has reached the range selected
 
-    column_slugs = request.GET.get('cols', settings.DEFAULT_COLUMNS)
-    opus_id_key = column_slugs.split(',').index('opusid')
+    opus_id_key = 0
 
     for row in data['page']:
         opus_id = row[opus_id_key]
@@ -637,7 +637,8 @@ def _zip_filename(opus_id=None):
 
 def _create_csv_file(request, csv_file_name):
     "Create a CSV file containing the collection data."
-    slug_list, all_data = _get_collection_csv(request, fmt='raw')
+    slug_list, all_data = _get_collection_csv(request, fmt='raw',
+                                              api_code=api_code)
     with open(csv_file_name, 'a') as csv_file:
         wr = csv.writer(csv_file)
         wr.writerow(slug_list)

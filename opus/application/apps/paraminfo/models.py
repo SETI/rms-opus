@@ -46,7 +46,6 @@ class ParamInfo(models.Model):
     tooltip = models.CharField(max_length=255, blank=True, null=True)
     dict_context = models.CharField(max_length=255, blank=True, null=True)
     dict_name = models.CharField(max_length=255, blank=True, null=True)
-    special_query = models.CharField(max_length=15, blank=True, null=True)
     sub_heading = models.CharField(max_length=150, blank=True, null=True)
     timestamp = models.DateTimeField()
 
@@ -63,20 +62,3 @@ class ParamInfo(models.Model):
     def get_tooltip(self):
         definition = get_def_for_tooltip(self.dict_name, self.dict_context)
         return definition
-
-
-    # http://djangosnippets.org/snippets/2057/
-    def save(self, *args, **kwargs):
-        model = self.__class__
-        # model.objects.update(group)
-
-        if self.disp_order is None:
-            # Append
-            try:
-                last = model.objects.order_by('-disp_order')[0]
-                self.disp_order = last.disp_order + 1
-            except IndexError:
-                # First row
-                self.disp_order = 0
-
-        return super(ParamInfo, self).save(*args, **kwargs)

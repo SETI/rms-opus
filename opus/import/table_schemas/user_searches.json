@@ -20,17 +20,17 @@
         "field_notnull": true
     },
     {
-        "field_name": "string_selects",
+        "field_name": "order_json",
         "field_type": "text",
         "field_default": null
     },
     {
-        "field_name": "string_selects_hash",
+        "field_name": "order_hash",
         "field_type": "varchar32",
         "field_default": null
     },
     {
-        "field_name": "units",
+        "field_name": "units_json",
         "field_type": "text",
         "field_default": null
     },
@@ -40,7 +40,7 @@
         "field_default": null
     },
     {
-        "field_name": "qtypes",
+        "field_name": "qtypes_json",
         "field_type": "text",
         "field_default": null
     },

@@ -1,46 +1,38 @@
-###############################################
+################################################################################
 #
-#   UI.views
+# ui/views.py
 #
-################################################
-# computer
-import settings
+################################################################################
+
 from collections import OrderedDict
+import logging
 
-# django things
-from django.template import RequestContext
-from django.shortcuts import render
-from django.apps import apps
-from django.http import HttpResponse
-from django.core.exceptions import FieldError, ObjectDoesNotExist
+import settings
 
-
-# lib things
 from annoying.decorators import render_to
 
-# opus things
-from search.models import *
-from search.views import *
-from search.forms import SearchForm
+from django.apps import apps
+from django.core.exceptions import FieldError, ObjectDoesNotExist
+from django.http import HttpResponse
+from django.shortcuts import render
+from django.template import RequestContext
+from django.views.generic import TemplateView
+from django.views.generic import TemplateView
+
+from dictionary.models import *
 from metadata.views import *
 from paraminfo.models import *
-from dictionary.models import *
 from results.views import *
-from django.views.generic import TemplateView
-from metrics.views import update_metrics
-
-# guide only
-import json
+from search.forms import SearchForm
+from search.models import *
+from search.views import *
+from tools.app_utils import *
+from tools.file_utils import *
 
 import opus_support
-import tools.db_utils as db_utils
-import tools.file_utils as file_utils
 
-import logging
 log = logging.getLogger(__name__)
 
-
-from django.views.generic import TemplateView
 
 class main_site(TemplateView):
     template_name = "base.html"
@@ -77,7 +69,6 @@ def api_init_detail_page(request, **kwargs):
     The detail page calls other views via AJAX:
         results.get_metadata()
     """
-    update_metrics(request)
     api_code = enter_api_call('api_get_data', request)
 
     slugs = request.GET.get('cols', False)
@@ -124,7 +115,7 @@ def api_init_detail_page(request, **kwargs):
 
     # On the details page, we display the list of available extensions after
     # each product type
-    products = file_utils.get_pds_products(opus_id, fmt='raw')[opus_id]
+    products = get_pds_products(opus_id, fmt='raw')[opus_id]
     if not products:
         products = {}
     for product_type, file_list in products.items():
@@ -148,12 +139,10 @@ def api_init_detail_page(request, **kwargs):
 
 
 def get_browse_headers(request,template='browse_headers.html'):
-    update_metrics(request)
     return render(request, template)
 
 
 def get_table_headers(request, template='table_headers.html'):
-    update_metrics(request)
     slugs = request.GET.get('cols', settings.DEFAULT_COLUMNS)
     order = request.GET.get('order', None)
     if order:
@@ -191,7 +180,6 @@ def get_menu(request):
     """ hack, need to get menu sometimes without rendering,
         ie from another view.. so this is for column chooser
         couldn't get template include/block.super to heed GET vars """
-    update_metrics(request)
     return getMenuLabels(request,'search')
 
 
@@ -211,17 +199,14 @@ def getMenuLabels(request, labels_view):
         filter = "display_results"
 
     if request and request.GET:
-        try:
-            (selections,extras) = url_to_search_params(request.GET)
-        except TypeError:
-            selections = None
+        (selections, extras) = url_to_search_params(request.GET)
     else:
         selections = None
 
     if not selections:
         triggered_tables = settings.BASE_TABLES[:]  # makes a copy of settings.BASE_TABLES
     else:
-        triggered_tables = get_triggered_tables(selections, extras)
+        triggered_tables = get_triggered_tables(selections, extras) # Needs api_code
 
     divs = TableNames.objects.filter(display='Y', table_name__in=triggered_tables).order_by('disp_order')
     params = ParamInfo.objects.filter(**{filter:1, "category_name__in":triggered_tables}).order_by('disp_order')
@@ -298,7 +283,6 @@ def adjust_slug_name_single_col_ranges(param_info):
 def api_get_widget(request, **kwargs):
 
     """ search form widget as string, http response"""
-    update_metrics(request)
     api_code = enter_api_call('api_get_widget', request, kwargs)
 
     slug = kwargs['slug']
@@ -308,7 +292,7 @@ def api_get_widget(request, **kwargs):
     param_info = get_param_info_by_slug(slug)
     if not param_info:
         log.error(
-            "getWidget: Could not find param_info entry for slug %s",
+            "api_get_widget: Could not find param_info entry for slug %s",
             str(slug))
         exit_api_call(api_code, None)
         raise Http404
@@ -322,10 +306,8 @@ def api_get_widget(request, **kwargs):
     auto_id = True
     selections = {}
 
-    if (request.GET):
-        try:
-            (selections,extras) = url_to_search_params(request.GET)
-        except TypeError: pass
+    if request and request.GET:
+        (selections,extras) = url_to_search_params(request.GET)
 
     addlink = request.GET.get('addlink',True) # suppresses the add_str link
     remove_str = '<a class = "remove_input" href = "">-</a>'
@@ -352,7 +334,7 @@ def api_get_widget(request, **kwargs):
         param1 = param_name_no_num+'1'
         param2 = param_name_no_num+'2'
 
-        form_vals = { slug1:None, slug2:None }
+        form_vals = { slug1: None, slug2: None }
 
         # find length of longest list of selections for either param1 or param2,
         # tells us how many times to go through loop below
@@ -384,12 +366,10 @@ def api_get_widget(request, **kwargs):
                 try:
                   form_vals[slug1] = func(selections[param1][key])
                 except (IndexError, KeyError, ValueError) as e:
-                    log.error('getWidget threw %s', str(e))
                     form_vals[slug1] = None
                 try:
                     form_vals[slug2] = func(selections[param2][key])
                 except (IndexError, KeyError, ValueError) as e:
-                    log.error('getWidget threw %s', str(e))
                     form_vals[slug2] = None
 
                 qtypes = request.GET.get('qtype-' + slug, False)
@@ -486,7 +466,7 @@ def api_get_widget(request, **kwargs):
     param_info = get_param_info_by_slug(slug)
     if not param_info:
         log.error(
-            "getWidget: Could not find param_info entry for slug %s",
+            "api_get_widget: Could not find param_info entry for slug %s",
             str(slug))
         raise Http404
 
@@ -523,8 +503,6 @@ def getColumnInfo(slugs):
 
 
 def get_column_chooser(request, **kwargs):
-    update_metrics(request)
-
     slugs = request.GET.get('cols', settings.DEFAULT_COLUMNS)
     slugs = slugs.split(',')
 
