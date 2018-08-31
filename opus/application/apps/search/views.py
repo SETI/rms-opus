@@ -476,8 +476,6 @@ def _construct_query_string(selections, extras):
                       str(selections), str(extras))
             return None, None
 
-        special_query = param_info.special_query
-
         if param_name_no_num in all_qtypes:
             qtypes = all_qtypes[param_name_no_num]
         else:
@@ -518,18 +516,18 @@ def _construct_query_string(selections, extras):
             params = None
 
             # Longitude queries
-            if special_query == 'long':
+            if form_type == 'LONG':
                 # This parameter requires a longitudinal query.
                 # Both sides of range must be defined by user for this to work.
                 if (selections[param_name_no_num + '1'] and
                     selections[param_name_no_num + '2']):
                     clause, params = _get_longitude_query(selections,
-                                                          param_name)
+                                                          param_name, qtypes)
                 else:
                     return None, None
             else:
                 # Get the range query object and append it to the query
-                clause, params = _get_range_query_object(selections, param_name,
+                clause, params = _get_range_query(selections, param_name,
                                                          qtypes)
 
             if clause is None:
@@ -539,7 +537,7 @@ def _construct_query_string(selections, extras):
             obs_tables.add(cat_name)
 
         elif form_type == 'STRING':
-            clause, params = _get_string_query_object(selections, param_name,
+            clause, params = _get_string_query(selections, param_name,
                                                       value_list, qtypes)
             if clause is None:
                 return None, None
@@ -609,7 +607,7 @@ def _construct_query_string(selections, extras):
     return sql, clause_params
 
 
-def _get_string_query_object(selections, param_name, values, qtypes):
+def _get_string_query(selections, param_name, values, qtypes):
     """Builds query for strings.
 
     The following q-types are supported:
@@ -634,7 +632,7 @@ def _get_string_query_object(selections, param_name, values, qtypes):
                          +connection.ops.quote_name(name))
 
     if len(values) > 1:
-        log.error('_get_string_query_object: More than one value specified for '
+        log.error('_get_string_query: More than one value specified for '
                   +'"%s" - "%s" '
                   +'*** Selections %s *** Qtypes %s ***',
                   param_name, str(values),
@@ -645,7 +643,7 @@ def _get_string_query_object(selections, param_name, values, qtypes):
         qtypes = ['contains']
 
     if len(qtypes) != 1:
-        log.error('_get_string_query_object: Not one value specified for qtype '
+        log.error('_get_string_query: Not one value specified for qtype '
                   +'for "%s"'
                   +'*** Selections %s *** Qtypes %s ***',
                   param_name, str(selections), str(qtypes))
@@ -673,14 +671,14 @@ def _get_string_query_object(selections, param_name, values, qtypes):
         clause = quoted_param_name + ' NOT LIKE %s'
         params.append('%'+value+'%')
     else:
-        log.error('_get_string_query_object: Unknown qtype "%s" '
+        log.error('_get_string_query: Unknown qtype "%s" '
                   +'for "%s"'
                   +'*** Selections %s *** Qtypes %s ***',
                   qtype, param_name, str(selections), str(qtypes))
 
     return clause, params
 
-def _get_range_query_object(selections, param_name, qtypes):
+def _get_range_query(selections, param_name, qtypes):
     """Builds query for numeric ranges.
 
     This can either be a single column range (one table column holds the value)
@@ -707,6 +705,14 @@ def _get_range_query_object(selections, param_name, qtypes):
     values_min = selections.get(param_name_min, [])
     values_max = selections.get(param_name_max, [])
 
+    if len(values_min) > 1 or len(values_max) > 1:
+        log.error('_get_range_query: More than one value specified for '
+                  +'"%s" - MIN %s MAX %s '
+                  +'*** Selections %s *** Qtypes %s ***',
+                  param_name, str(values_min), str(values_max),
+                  str(selections), str(qtypes))
+        return None, None
+
     # But, for constructing the query, if this is a single column range,
     # the param_names are both the same
     cat_name = param_info.category_name
@@ -724,19 +730,11 @@ def _get_range_query_object(selections, param_name, qtypes):
     quoted_param_name_max = (quoted_cat_name+'.'
                              +connection.ops.quote_name(name_max))
 
-    if len(values_min) > 1 or len(values_max) > 1:
-        log.error('_get_range_query_object: More than one value specified for '
-                  +'"%s" - MIN %s MAX %s '
-                  +'*** Selections %s *** Qtypes %s ***',
-                  param_name, str(values_min), str(values_max),
-                  str(selections), str(qtypes))
-        return None, None
-
     if len(qtypes) == 0:
         qtypes = ['any']
 
     if len(qtypes) != 1:
-        log.error('_get_range_query_object: Not one value specified for qtype '
+        log.error('_get_range_query: Not one value specified for qtype '
                   +'for "%s"'
                   +'*** Selections %s *** Qtypes %s ***',
                   param_name, str(selections), str(qtypes))
@@ -790,68 +788,114 @@ def _get_range_query_object(selections, param_name, qtypes):
             params.append(value_max)
 
     else:
-        log.error('_get_range_query_object: Unknown qtype "%s" '
+        log.error('_get_range_query: Unknown qtype "%s" '
                   +'for "%s"'
                   +'*** Selections %s *** Qtypes %s ***',
                   qtype, param_name, str(selections), str(qtypes))
 
     return clause, params
 
-def _get_longitude_query(selections,param_name):
-    # raises 'KeyError' or IndexError if min or max value is blank
-    # or ranges are lopsided, all ranges for LONG query must have both sides
-    # defined returns string sql
+def _get_longitude_query(selections, param_name, qtypes):
+    """Builds query for longitude ranges.
 
-    clauses = []  # we may have a number of clauses to piece together
-    params  = []  # we are building a sql string
+    Both sides of the range must be specified.
 
-    cat_name = param_name.split('.')[0]
-    name = param_name.split('.')[1]
-    name_no_num = strip_numeric_suffix(name)
+    The following q-types are supported:
+        any
+        all
+        only
+    """
+
+    param_info = _get_param_info_by_qualified_name(param_name)
+    if not param_info:
+        return None, None
+
+    (form_type, form_type_func,
+     form_type_format) = parse_form_type(param_info.form_type)
+    table_name = param_info.category_name
+    name = param_info.name
+
     param_name_no_num = strip_numeric_suffix(param_name)
     param_name_min = param_name_no_num + '1'
     param_name_max = param_name_no_num + '2'
+
+    values_min = selections.get(param_name_min, [])
+    values_max = selections.get(param_name_max, [])
+
+    if len(values_min) != 1 or len(values_max) != 1:
+        log.error('_get_longitude_query: Must have one value for each '
+                  +'"%s" - MIN %s MAX %s '
+                  +'*** Selections %s *** Qtypes %s ***',
+                  param_name, str(values_min), str(values_max),
+                  str(selections), str(qtypes))
+        return None, None
+
+    # But, for constructing the query, if this is a single column range,
+    # the param_names are both the same
+    cat_name = param_info.category_name
+    quoted_cat_name = connection.ops.quote_name(cat_name)
+    name_no_num = strip_numeric_suffix(param_info.name)
+    name_min = name_no_num + '1'
+    name_max = name_no_num + '2'
     col_d_long = cat_name + '.d_' + name_no_num
 
-    values_min = selections[param_name_min]
-    values_max = selections[param_name_max]
+    if _is_single_column_range(param_name):
+        param_name_min = param_name_max = param_name_no_num
+        name_min = name_max = name_no_num
 
-    if len(values_min) != len(values_max):
-        raise KeyError
+    quoted_param_name_min = (quoted_cat_name+'.'
+                             +connection.ops.quote_name(name_min))
+    quoted_param_name_max = (quoted_cat_name+'.'
+                             +connection.ops.quote_name(name_max))
 
-    count = len(values_max)
-    i=0
-    while i < count:
+    if len(qtypes) == 0:
+        qtypes = ['any']
 
-        value_min = values_min[i]
-        value_max = values_max[i]
+    if len(qtypes) != 1:
+        log.error('_get_longitude_query: Not one value specified for qtype '
+                  +'for "%s"'
+                  +'*** Selections %s *** Qtypes %s ***',
+                  param_name, str(selections), str(qtypes))
+        return None, None
 
-        # find the midpoint and dx of the user's range
-        if (value_max >= value_min):
-            longit = (value_min + value_max)/2.
-            d_long = longit - value_min
-        else:
-            longit = (value_min + value_max + 360.)/2.
-            d_long = longit - value_min
+    # If we want to support more than one set of range fields, loop here
+    # XXX Need to add parameter validation here
+    value_min = float(values_min[0])
+    value_max = float(values_max[0])
+    qtype = qtypes[0]
 
-        if (longit >= 360): longit = longit - 360.
+    # Find the midpoint and dx of the user's range
+    if value_max >= value_min:
+        longit = (value_min + value_max)/2.
+    else:
+        longit = (value_min + value_max + 360.)/2.
+    longit = longit % 360.
+    d_long = (longit - value_min) % 360.
+    sep_sql = 'ABS(MOD(%s - ' + param_name_no_num + ' + 540., 360.) - 180.)'
+    sep_params = [longit]
 
-        if d_long:
-            clauses += ["(abs(abs(mod(%s - " + param_name_no_num + " + 180., 360.)) - 180.) <= %s + " + col_d_long + ")"];
-            params  += [longit,d_long]
+    clause = ''
+    params = []
 
-        i+=1
+    if qtype == 'any' or qtype == '':
+        clause += sep_sql + ' <= %s + ' + col_d_long
+        params += sep_params
+        params.append(d_long)
+    elif qtype == 'all':
+        clause += sep_sql + ' <= ' + col_d_long + ' - %s'
+        params += sep_params
+        params.append(d_long)
+    elif qtype == 'only':
+        clause += sep_sql + ' <= %s - ' + col_d_long
+        params += sep_params
+        params.append(d_long)
+    else:
+        log.error('_get_longitude_query: Unknown qtype "%s" '
+                  +'for "%s"'
+                  +'*** Selections %s *** Qtypes %s ***',
+                  qtype, param_name, str(selections), str(qtypes))
 
-    clause = ' OR '.join(clauses)
-
-    table_name = param_name_no_num.split('.')[0]
-
-    key_field = 'obs_general_id' if cat_name != 'obs_general' else 'obs_general.id'
-
-    query = "select " + key_field + " from " + table_name + " where " + clause
-
-    return query, tuple(params)
-
+    return clause, params
 
 def convertTimes(value_list):
     """ other conversion scripts are 'seconds_to_time','seconds_to_et' """

@@ -541,7 +541,6 @@ var o_widgets = {
                 // add the helper text for range widgets
                 if ($('.' + widget).hasClass('range-widget') && $('.' + widget).find('select').length) {
                     // this is a range widget and also the any/all/only dropdown is included
-                    // (the server knows not to include it when this is a longitude type query)
                     var help_icon = '<a href = "#" data-toggle="popover" data-placement="left">\
                                     <i class="fa fa-info-circle"></i></a>';
 

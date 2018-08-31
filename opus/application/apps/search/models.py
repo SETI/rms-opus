@@ -6656,7 +6656,6 @@ class ZZParamInfo(models.Model):
     tooltip = models.CharField(max_length=255, blank=True, null=True)
     dict_context = models.CharField(max_length=255, blank=True, null=True)
     dict_name = models.CharField(max_length=255, blank=True, null=True)
-    special_query = models.CharField(max_length=15, blank=True, null=True)
     sub_heading = models.CharField(max_length=150, blank=True, null=True)
     timestamp = models.DateTimeField()
 
