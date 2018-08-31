@@ -635,7 +635,7 @@ def _zip_filename(opus_id=None):
     return 'pdsrms-data-' + random_ascii + '-' + timestamp + '.zip'
 
 
-def _create_csv_file(request, csv_file_name):
+def _create_csv_file(request, csv_file_name, api_code=None):
     "Create a CSV file containing the collection data."
     slug_list, all_data = _get_collection_csv(request, fmt='raw',
                                               api_code=api_code)
