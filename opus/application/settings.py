@@ -81,7 +81,6 @@ MIDDLEWARE = (
     'django.middleware.common.CommonMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
-    # 'last_modified.middleware.CacheControlMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.cache.UpdateCacheMiddleware',
@@ -164,10 +163,6 @@ else:
            'BACKEND': 'django.core.cache.backends.dummy.DummyCache',
       }
     }
-
-# for last_modified middleware
-LAST_MODIFIED_FUNC = 'tools.last_mod.last_mod'
-CACHE_MAX_AGE = 3600 * 24 * 120  # the last number is the number of days
 
 INTERNAL_IPS = ('127.0.0.1',)
 
