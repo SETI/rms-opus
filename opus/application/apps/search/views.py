@@ -557,26 +557,26 @@ def _construct_query_string(selections, extras):
         if order_params:
             order_str_list = []
             for i in range(len(order_params)):
-                order = order_params[i]
-                pi = _get_param_info_by_qualified_name(order)
+                order_slug = order_params[i]
+                pi = _get_param_info_by_qualified_name(order_slug)
                 if not pi:
                     log.error('_construct_query_string: Unable to resolve order'
-                              +' slug "%s"', order)
+                              +' slug "%s"', order_slug)
                     return None, None
                 (form_type, form_type_func,
                  form_type_format) = parse_form_type(pi.form_type)
                 if form_type in settings.MULT_FIELDS:
                     mult_table = get_mult_name(pi.param_name())
                     order_param = mult_table + '.label'
+                    mult_tables.add((mult_table, pi.category_name, mult_table))
                 else:
                     order_param = pi.param_name()
-                table = order_param.split('.')[0]
-                obs_tables.add(table)
+                    obs_tables.add(pi.category_name)
                 if descending_params[i]:
-                    order += ' DESC'
+                    order_param += ' DESC'
                 else:
-                    order += ' ASC'
-                order_str_list.append(order)
+                    order_param += ' ASC'
+                order_str_list.append(order_param)
             order_sql = ' ORDER BY ' + ','.join(order_str_list)
 
 
@@ -594,6 +594,14 @@ def _construct_query_string(selections, extras):
         sql += connection.ops.quote_name('id')+'='
         sql += connection.ops.quote_name(table)+'.'
         sql += connection.ops.quote_name('obs_general_id')
+
+    # And JOIN all the mult_ tables together
+    for mult_table, category, name in sorted(mult_tables):
+        sql += ' LEFT JOIN '+connection.ops.quote_name(mult_table)
+        sql += ' ON '+connection.ops.quote_name(category)+'.'
+        sql += connection.ops.quote_name(name)+'='
+        sql += connection.ops.quote_name(mult_table)+'.'
+        sql += connection.ops.quote_name('id')
 
     # Add in the WHERE clauses
     if clauses:
