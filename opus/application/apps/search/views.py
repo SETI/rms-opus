@@ -80,7 +80,7 @@ def url_to_search_params(request_get):
     # Note that request_get.items() automatically gets rid of duplicate entries
     # because it returns a dict! But we check for them below anyway just for
     # good measure.
-    search_params = request_get.items()
+    search_params = list(request_get.items())
     if 'order' not in [x[0] for x in search_params]:
         # If there's no order slug, then force one
         search_params.append(('order', settings.DEFAULT_SORT_ORDER))
@@ -180,7 +180,7 @@ def url_to_search_params(request_get):
                     return None, None
                 try:
                     selections[param_name + ext] = map(func, values)
-                except ValueError,e:
+                except ValueError as e:
                     log.error('url_to_search_params: Function "%s" '
                               +'threw ValueError(%s) for %s',
                               func, e, values)
@@ -193,7 +193,7 @@ def url_to_search_params(request_get):
                     return None, None
                 try:
                     selections[param_name] = map(func, values)
-                except ValueError,e:
+                except ValueError as e:
                     log.error('url_to_search_params: Function "%s" '
                               +'threw ValueError(%s) for %s',
                               func, e, values)
@@ -250,7 +250,7 @@ def get_user_query_table(selections, extras, api_code=None):
     desc_sql = 'DESC ' + connection.ops.quote_name(cache_table_name)
     try:
         cursor.execute(desc_sql)
-    except DatabaseError,e:
+    except DatabaseError as e:
         if e.args[0] != MYSQL_TABLE_NOT_EXISTS:
             log.error('get_user_query_table: "%s" returned %s',
                       desc_sql, str(e))
@@ -285,7 +285,7 @@ def get_user_query_table(selections, extras, api_code=None):
     try:
         time1 = time.time()
         cursor.execute(create_sql, tuple(params))
-    except DatabaseError,e:
+    except DatabaseError as e:
         if e.args[0] == MYSQL_TABLE_ALREADY_EXISTS:
             log.error('get_user_query_table: Table "%s" originally didn\'t '+
                       'exist, but now it does!', cache_table_name)
@@ -301,7 +301,7 @@ def get_user_query_table(selections, extras, api_code=None):
     #              + ' ADD UNIQUE KEY(id)')
     # try:
     #     cursor.execute(alter_sql)
-    # except DatabaseError,e:
+    # except DatabaseError as e:
     #     log.error('get_user_query_table: "%s" with params "%s" failed with %s',
     #               alter_sql, str(tuple(params)), str(e))
     #     return None
@@ -325,20 +325,20 @@ def set_user_search_number(selections, extras):
     if 'qtypes' in extras:
         if len(extras['qtypes']):
             qtypes_json = str(json.dumps(sort_dictionary(extras['qtypes'])))
-            qtypes_hash = hashlib.md5(qtypes_json).hexdigest()
+            qtypes_hash = hashlib.md5(str.encode(qtypes_json)).hexdigest()
 
     units_json = units_hash = None
     if 'units' in extras:
         units_json = str(json.dumps(sort_dictionary(extras['units'])))
-        units_hash = hashlib.md5(units_json).hexdigest()
+        units_hash = hashlib.md5(str.encode(units_json)).hexdigest()
 
     order_json = order_hash = None
     if 'order' in extras:
         order_json = str(json.dumps(extras['order']))
-        order_hash = hashlib.md5(order_json).hexdigest()
+        order_hash = hashlib.md5(str.encode(order_json)).hexdigest()
 
     selections_json = str(json.dumps(sort_dictionary(selections)))
-    selections_hash = hashlib.md5(selections_json).hexdigest()
+    selections_hash = hashlib.md5(str.encode(selections_json)).hexdigest()
 
     cache_key = ('usersearchno:selections_hash:' + str(selections_hash)
                  +':qtypes_hash:' + str(qtypes_hash)

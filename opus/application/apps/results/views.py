@@ -771,7 +771,7 @@ def get_page(request, use_collections=None, collections_page=None, page=None,
             cursor = connection.cursor()
             try:
                 cursor.execute(temp_sql)
-            except DatabaseError,e:
+            except DatabaseError as e:
                 log.error('get_page: "%s" returned %s',
                           temp_sql, str(e))
                 return (None, None, None, None, None, None)
@@ -876,7 +876,7 @@ def get_page(request, use_collections=None, collections_page=None, page=None,
         sql = 'DROP TABLE '+connection.ops.quote_name(temp_table_name)
         try:
             cursor.execute(sql)
-        except DatabaseError,e:
+        except DatabaseError as e:
             log.error('get_page: "%s" returned %s',
                       sql, str(e))
             return (None, None, None, None, None, None)

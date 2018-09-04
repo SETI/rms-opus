@@ -76,12 +76,12 @@ STATICFILES_DIRS = [
 
 ADMIN_MEDIA_PREFIX = ''
 
-MIDDLEWARE_CLASSES = (
+MIDDLEWARE = (
     'django.middleware.gzip.GZipMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
-    'last_modified.middleware.CacheControlMiddleware',
+    # 'last_modified.middleware.CacheControlMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.cache.UpdateCacheMiddleware',
