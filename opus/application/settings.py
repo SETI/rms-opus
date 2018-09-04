@@ -143,8 +143,7 @@ INSTALLED_APPS = (
     'ui',
     'user_collections',
     'tools',
-    'dictionary',
-    'metrics'
+    'dictionary'
 )
 
 
@@ -256,10 +255,6 @@ LOGGING = {
             'handlers': ['console', 'logfile'],
             'level': 'DEBUG',
         },
-        'metrics': {
-            'handlers': ['console', 'logfile'],
-            'level': 'DEBUG',
-        },
         'search.forms': {
             'handlers': ['console', 'logfile'],
             'level': 'DEBUG',
@@ -288,13 +283,6 @@ DATABASES = {
         'ENGINE': 'django.db.backends.mysql',
         'USER': DB_USER,
         'PASSWORD': DB_PASSWORD,
-    },
-    'metrics': {
-        'NAME': 'opus_metrics',
-        'ENGINE': 'django.db.backends.mysql',
-        'USER': DB_USER,
-        'PASSWORD': DB_PASSWORD,
-        # 'OPTIONS':{ 'unix_socket': '/private/var/mysql/mysql.sock'},
     }
 }
 

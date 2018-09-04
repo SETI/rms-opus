@@ -21,6 +21,7 @@ from django.core.cache import cache
 from django.db import connection, DatabaseError
 from django.db.models import Q
 from django.db.models.sql.datastructures import EmptyResultSet
+from django.db.utils import IntegrityError
 
 from paraminfo.models import ParamInfo
 from search.models import *
@@ -91,7 +92,8 @@ def url_to_search_params(request_get):
                 all_order = search_param[1]
             else:
                 all_order = settings.DEFAULT_SORT_ORDER
-            if settings.FINAL_SORT_ORDER not in all_order.split(','):
+            if (settings.FINAL_SORT_ORDER
+                not in all_order.replace('-','').split(',')):
                 if all_order:
                     all_order += ','
                 all_order += settings.FINAL_SORT_ORDER
@@ -231,10 +233,10 @@ def get_user_query_table(selections, extras, api_code=None):
         return None
 
     # Create a cache key
-    cache_table_num = set_user_search_number(selections, extras)
+    cache_table_num, cache_new_flag = set_user_search_number(selections, extras)
     if cache_table_num is None:
-        log.error('get_user_query_table: Failed to create cache table '+
-                  '*** Selections %s *** Extras %s',
+        log.error('get_user_query_table: Failed to make entry in user_searches'+
+                  ' *** Selections %s *** Extras %s',
                   str(selections), str(extras))
         return None
     cache_table_name = get_user_search_table_name(cache_table_num)
@@ -286,25 +288,34 @@ def get_user_query_table(selections, extras, api_code=None):
         time1 = time.time()
         cursor.execute(create_sql, tuple(params))
     except DatabaseError as e:
+        # So here's what happens.
+        # Proc1: Call get_user_search_table_name and get a new, unique id
+        # Proc2: Call get_user_search_table_name and get the same id as Proc1
+        # Proc1: Do the long search query and try to create the cache table
+        # Proc2: Also do the long search query and try to the create the cache
+        #        table
+        # Proc1: Gets done first, create table succeeds, and all is good
+        # Proc2: Finishes the query, tries to create the table, and finds out
+        #        someone rudely created it already.
+        # This does not actually break anything. It's just inefficient because
+        # we're running the same query twice at the same time, which might slow
+        # things down.
+        # The only obvious way to fix this is to check cache_new_flag and
+        # if it's True we "own" the table and get to create it. If it's False
+        # we know someone else owns the table, and we just sit here polling
+        # until the table shows up or we get tired of waiting.
+        # For the minor performance gain this doesn't seem important to fix
+        # right now but perhaps in the future.
         if e.args[0] == MYSQL_TABLE_ALREADY_EXISTS:
             log.error('get_user_query_table: Table "%s" originally didn\'t '+
                       'exist, but now it does!', cache_table_name)
+            cache.set(cache_key, cache_table_name)
             return cache_table_name
         log.error('get_user_query_table: "%s" with params "%s" failed with '
                   +'%s', create_sql, str(tuple(params)), str(e))
         return None
     log.debug('API %s (%.3f) get_user_query_table: %s *** PARAMS %s',
               str(api_code), time.time()-time1, create_sql, str(params))
-
-    # alter_sql = ('ALTER TABLE '
-    #              + connection.ops.quote_name(cache_table_name)
-    #              + ' ADD UNIQUE KEY(id)')
-    # try:
-    #     cursor.execute(alter_sql)
-    # except DatabaseError as e:
-    #     log.error('get_user_query_table: "%s" with params "%s" failed with %s',
-    #               alter_sql, str(tuple(params)), str(e))
-    #     return None
 
     cache.set(cache_key, cache_table_name)
     return cache_table_name
@@ -317,28 +328,35 @@ def set_user_search_number(selections, extras):
     run a data search query.
     This method looks in user_searches table for current selections.
     If none exist, creates it.
+
+    Returns the number of the cache table that should be used along with a flag
+    indicating if this is a new entry in user_searches so the cache table
+    shouldn't exist yet.
     """
     if selections is None or extras is None:
-        return None
+        return None, False
 
-    qtypes_json = qtypes_hash = None
+    selections_json = str(json.dumps(sort_dictionary(selections)))
+    selections_hash = hashlib.md5(str.encode(selections_json)).hexdigest()
+
+    qtypes_json = None
+    qtypes_hash = 'NONE' # Needed for UNIQUE constraint to work
     if 'qtypes' in extras:
         if len(extras['qtypes']):
             qtypes_json = str(json.dumps(sort_dictionary(extras['qtypes'])))
             qtypes_hash = hashlib.md5(str.encode(qtypes_json)).hexdigest()
 
-    units_json = units_hash = None
+    units_json = None
+    units_hash = 'NONE' # Needed for UNIQUE constraint to work
     if 'units' in extras:
         units_json = str(json.dumps(sort_dictionary(extras['units'])))
         units_hash = hashlib.md5(str.encode(units_json)).hexdigest()
 
-    order_json = order_hash = None
+    order_json = None
+    order_hash = 'NONE' # Needed for UNIQUE constraint to work
     if 'order' in extras:
         order_json = str(json.dumps(extras['order']))
         order_hash = hashlib.md5(str.encode(order_json)).hexdigest()
-
-    selections_json = str(json.dumps(sort_dictionary(selections)))
-    selections_hash = hashlib.md5(str.encode(selections_json)).hexdigest()
 
     cache_key = ('usersearchno:selections_hash:' + str(selections_hash)
                  +':qtypes_hash:' + str(qtypes_hash)
@@ -346,39 +364,50 @@ def set_user_search_number(selections, extras):
                  +':order_hash:' + str(order_hash))
     cached_val = cache.get(cache_key)
     if cached_val is not None:
-        return cached_val
+        return cached_val, False
 
+    # This operation has to be atomic because multiple threads may be trying
+    # to lookup/create the same selections entry at the same time. Thus,
+    # rather than looking it up, and then creating it if it doesn't exist
+    # (which leaves a nice hole for two threads to try to create it
+    # simultaneously), instead we go ahead and try to create it and let the
+    # UNIQUE CONSTRAINT on the hash fields throw an error if it already exists.
+    # That gives us an atomic write.
+    new_entry = False
+    s = UserSearches(selections_json=selections_json,
+                     selections_hash=selections_hash,
+                     qtypes_json=qtypes_json,
+                     qtypes_hash=qtypes_hash,
+                     units_json=units_json,
+                     units_hash=units_hash,
+                     order_json=order_json,
+                     order_hash=order_hash)
     try:
+        s.save()
+        new_entry = True
+    except IntegrityError:
+        # This means it's already there and we tried to duplicate the constraint
         s = UserSearches.objects.get(selections_hash=selections_hash,
                                      qtypes_hash=qtypes_hash,
                                      units_hash=units_hash,
                                      order_hash=order_hash)
     except UserSearches.MultipleObjectsReturned:
+        # This really shouldn't be possible
         s = UserSearches.objects.filter(selections_hash=selections_hash,
                                         qtypes_hash=qtypes_hash,
                                         units_hash=units_hash,
                                         order_hash=order_hash)
         s = s[0]
-        log.error('set_user_search_number: Multiple entries in user_searches '
+        log.error('set_user_search_number: Multiple entries in user_searches'
                   +' for *** Selections %s *** Qtypes %s *** Units %s '
                   +' *** Order %s',
                   str(selections_json),
                   str(qtypes_json),
                   str(units_json),
                   str(order_json))
-    except UserSearches.DoesNotExist:
-        s = UserSearches(selections_json=selections_json,
-                         selections_hash=selections_hash,
-                         qtypes_json=qtypes_json,
-                         qtypes_hash=qtypes_hash,
-                         units_json=units_json,
-                         units_hash=units_hash,
-                         order_json=order_json,
-                         order_hash=order_hash)
-        s.save()
 
     cache.set(cache_key, s.id)
-    return s.id
+    return s.id, new_entry
 
 
 def get_param_info_by_slug(slug, from_ui=False):

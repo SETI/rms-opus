@@ -157,14 +157,17 @@ def api_get_mult_counts(request, slug, fmt='json'):
     if selections:
         has_selections = True
 
-    cache_num = set_user_search_number(selections, extras)
+    cache_num, cache_new_flag = set_user_search_number(selections, extras)
     if cache_num is None:
-        log.error('api_get_mult_counts: Failed to create cache table for '
-                  +'*** Selections %s *** Extras %s',
+        log.error('api_get_mult_counts: Failed to create user_selections entry'
+                  +' for *** Selections %s *** Extras %s',
                   str(selections), str(extras))
         exit_api_call(api_code, Http404)
         raise Http404
 
+    # Note we don't actually care here if the cache table even exists, because
+    # if it's in the cache, it must exist, and if it's not in the cache, it
+    # will be created if necessary by get_user_query_table below.
     cache_key = ('mults_' + param_name + '_' + str(cache_num))
 
     cached_val = cache.get(cache_key)
@@ -337,7 +340,8 @@ def api_get_range_endpoints(request, slug, fmt='json'):
     # Is this result already cached?
     cache_key = 'rangeep:' + param_name_no_num
     if user_table:
-        cache_num = set_user_search_number(selections, extras)
+        cache_num, cache_new_flag = set_user_search_number(selections, extras)
+        # We're guaranteed the table actually exists here
         if cache_num is None:
             log.error('api_get_range_endpoints: Failed to create cache table '
                       +'for *** Selections %s *** Extras %s',

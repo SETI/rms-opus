@@ -20,12 +20,12 @@
         "field_notnull": true
     },
     {
-        "field_name": "order_json",
+        "field_name": "qtypes_json",
         "field_type": "text",
         "field_default": null
     },
     {
-        "field_name": "order_hash",
+        "field_name": "qtypes_hash",
         "field_type": "varchar32",
         "field_default": null
     },
@@ -40,12 +40,12 @@
         "field_default": null
     },
     {
-        "field_name": "qtypes_json",
+        "field_name": "order_json",
         "field_type": "text",
         "field_default": null
     },
     {
-        "field_name": "qtypes_hash",
+        "field_name": "order_hash",
         "field_type": "varchar32",
         "field_default": null
     },
@@ -53,5 +53,8 @@
         "field_name": "timestamp",
         "field_type": "timestamp",
         "field_default": null
+    },
+    {
+        "constraint": "CONSTRAINT hash_fields UNIQUE (selections_hash,qtypes_hash,units_hash,order_hash)"
     }
 ]
