@@ -8,8 +8,6 @@ from importdb.super import ImportDBSuper, ImportDBException
 
 ERR_UNKNOWN_DATABASE = 1049
 
-def _quote(s): return '`'+s+'`'
-
 class ImportDBMySQL(ImportDBSuper):
     # Note that for MySQL, we ignore the db_name and only use the schema_name
     def __init__(self, *args, **kwargs):
@@ -37,13 +35,13 @@ class ImportDBMySQL(ImportDBSuper):
                             f'Connected to MySQL server as "{self.db_user}"')
 
         try:
-            cmd = 'USE '+_quote(self.db_schema)
+            cmd = f'USE `{self.db_schema}`'
             self._execute(cmd)
         except MySQLdb.Error as e:
             err_code = e.args[0]
             if err_code == ERR_UNKNOWN_DATABASE:
                 try:
-                    cmd = 'CREATE DATABASE '+_quote(self.db_schema)
+                    cmd = f'CREATE DATABASE `{self.db_schema}`'
                     self._execute(cmd)
                 except MySQLdb.Error as e:
                     if self.logger:
@@ -56,7 +54,7 @@ class ImportDBMySQL(ImportDBSuper):
                                 f'  Created new database "{self.db_schema}"')
 
                 try:
-                    cmd = 'USE '+_quote(self.db_schema)
+                    cmd = f'USE `{self.db_schema}`'
                     self._execute(cmd)
                 except MySQLdb.Error as e:
                     if self.logger:
@@ -85,19 +83,22 @@ class ImportDBMySQL(ImportDBSuper):
         # to do post-processing on
         self.tables_created = []
 
+        cmd = 'SELECT VERSION()'
+        res = self._execute_and_fetchall(cmd, '__init__')
+        self.mysql_version = res[0][0]
+        self.logger.log('info', f'  MySQL version: {self.mysql_version}')
+
         try:
-            cmd = "set sql_mode = 'NO_ZERO_DATE,NO_ZERO_IN_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION,NO_AUTO_CREATE_USER,STRICT_ALL_TABLES'"
+            cmd = "set sql_mode = 'NO_ZERO_DATE,NO_ZERO_IN_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION,STRICT_ALL_TABLES"
+            if self.mysql_version[0] == '5':
+                cmd += ',NO_AUTO_CREATE_USER'
+            cmd += "'"
             self._execute(cmd)
         except MySQLdb.Error as e:
             if self.logger:
                 self.logger.log('fatal',
                     f'Failed to set STRICT_ALL_TABLES mode: {e.args[1]}')
             raise ImportDBException(e)
-
-        if self.logger:
-            cmd = 'SELECT VERSION()'
-            res = self._execute_and_fetchall(cmd, '__init__')
-            self.logger.log('info', f'  MySQL version: {res[0][0]}')
 
         super(ImportDBMySQL, self)._exit()
 
@@ -123,8 +124,8 @@ class ImportDBMySQL(ImportDBSuper):
 
         if self._table_names is None:
             cmd = f"""
-SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE
-TABLE_TYPE='BASE TABLE' AND TABLE_SCHEMA='{self.db_schema}'"""
+SELECT `TABLE_NAME` FROM `INFORMATION_SCHEMA`.`TABLES` WHERE
+`TABLE_TYPE`='BASE TABLE' AND `TABLE_SCHEMA`='{self.db_schema}'"""
             res = self._execute_and_fetchall(cmd, 'table_names')
             # Note: SQL table names are case-insensitive on SOME OSes and this
             # query returns them in whatever case SQL returns them in.
@@ -170,9 +171,9 @@ TABLE_TYPE='BASE TABLE' AND TABLE_SCHEMA='{self.db_schema}'"""
         table_name = self.convert_raw_to_namespace(namespace, raw_table_name)
 
         cmd = f"""
-SELECT COLUMN_NAME, COLUMN_DEFAULT, IS_NULLABLE, DATA_TYPE, CHARACTER_MAXIMUM_LENGTH, COLUMN_TYPE
-FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA='{self.db_schema}' AND
-TABLE_NAME='{table_name}' ORDER BY ORDINAL_POSITION"""
+SELECT `COLUMN_NAME`, `COLUMN_DEFAULT`, `IS_NULLABLE`, `DATA_TYPE`, `CHARACTER_MAXIMUM_LENGTH`, `COLUMN_TYPE`
+FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `TABLE_SCHEMA`='{self.db_schema}' AND
+`TABLE_NAME`='{table_name}' ORDER BY `ORDINAL_POSITION`"""
         rows = self._execute_and_fetchall(cmd, 'table_info')
 
         column_list = []
@@ -236,7 +237,7 @@ TABLE_NAME='{table_name}' ORDER BY ORDINAL_POSITION"""
                 raise ImportDBException()
         else:
             try:
-                cmd = f'DROP TABLE {_quote(table_name)}'
+                cmd = f'DROP TABLE `{table_name}`'
                 self._execute(cmd, mutates=True)
             except MySQLdb.Error as e:
                 if self.logger:
@@ -416,7 +417,7 @@ TABLE_NAME='{table_name}' ORDER BY ORDINAL_POSITION"""
 
         if key_cmd != '':
             cmd += ',\n' + key_cmd
-        cmd = f'CREATE TABLE {_quote(table_name)} (\n' + cmd + '\n)'
+        cmd = f'CREATE TABLE `{table_name}` (\n' + cmd + '\n)'
         cmd += f' ENGINE={self.default_engine}\n'
 
         try:
@@ -449,7 +450,7 @@ TABLE_NAME='{table_name}' ORDER BY ORDINAL_POSITION"""
 
         table_name = self.convert_raw_to_namespace(namespace, raw_table_name)
 
-        cmd = f'ANALYZE TABLE {_quote(table_name)}'
+        cmd = f'ANALYZE TABLE `{table_name}`'
 
         try:
             self._execute(cmd, mutates=True)
@@ -473,8 +474,8 @@ TABLE_NAME='{table_name}' ORDER BY ORDINAL_POSITION"""
         table_name = self.convert_raw_to_namespace(namespace, raw_table_name)
 
         sorted_column_names = sorted(row.keys())
-        cmd = f'INSERT INTO {_quote(table_name)} ('
-        cmd += ','.join(sorted(sorted_column_names))
+        cmd = f'INSERT INTO `{table_name}` ('
+        cmd += ','.join(['`'+s+'`' for s in sorted(sorted_column_names)])
 
         val_list = []
         for column_name in sorted_column_names:
@@ -519,8 +520,8 @@ TABLE_NAME='{table_name}' ORDER BY ORDINAL_POSITION"""
                           packet_size * (packet_num+1))
 
             sorted_column_names = sorted(rows[0].keys())
-            cmd = f'INSERT INTO {_quote(table_name)} ('
-            cmd += ','.join(sorted(sorted_column_names))
+            cmd = f'INSERT INTO `{table_name}` ('
+            cmd += ','.join(['`'+s+'`' for s in sorted(sorted_column_names)])
 
             cmd += ') VALUES'
 
@@ -557,11 +558,11 @@ TABLE_NAME='{table_name}' ORDER BY ORDINAL_POSITION"""
         table_name = self.convert_raw_to_namespace(namespace, raw_table_name)
 
         sorted_column_names = sorted(row.keys())
-        cmd = f'UPDATE {_quote(table_name)} SET '
+        cmd = f'UPDATE `{table_name}` SET '
 
         set_cmds = []
         for column_name in sorted_column_names:
-            set_cmd = column_name + '='
+            set_cmd = f'`{column_name}`='
             val = row[column_name]
             if val is None:
                 set_cmd += 'NULL'
@@ -589,8 +590,8 @@ TABLE_NAME='{table_name}' ORDER BY ORDINAL_POSITION"""
         table_name = self.convert_raw_to_namespace(namespace, raw_table_name)
 
         sorted_column_names = sorted(row.keys())
-        cmd = f'INSERT INTO {_quote(table_name)} ('
-        cmd += ','.join(sorted(sorted_column_names))
+        cmd = f'INSERT INTO `{table_name}` ('
+        cmd += ','.join(['`'+s+'`' for s in sorted(sorted_column_names)])
 
         val_list = []
         assign_list = []
@@ -635,7 +636,7 @@ TABLE_NAME='{table_name}' ORDER BY ORDINAL_POSITION"""
 
         table_name = self.convert_raw_to_namespace(namespace, raw_table_name)
 
-        cmd = f"DELETE FROM {_quote(table_name)}"
+        cmd = f"DELETE FROM `{table_name}`"
         if where:
             cmd += f" WHERE {where}"
         self._execute(cmd, mutates=True)
@@ -650,8 +651,8 @@ TABLE_NAME='{table_name}' ORDER BY ORDINAL_POSITION"""
         dest_table_name = self.convert_raw_to_namespace(dest_namespace,
                                                         raw_table_name)
 
-        cmd = f"INSERT INTO {_quote(dest_table_name)} SELECT * "
-        cmd += f"FROM {_quote(src_table_name)}"
+        cmd = f"INSERT INTO `{dest_table_name}` SELECT * "
+        cmd += f"FROM `{src_table_name}`"
         if where:
             cmd += f" WHERE {where}"
         self._execute(cmd, mutates=True)
@@ -669,7 +670,7 @@ TABLE_NAME='{table_name}' ORDER BY ORDINAL_POSITION"""
 
         table_name = self.convert_raw_to_namespace(namespace, raw_table_name)
 
-        cmd = f"SELECT MAX({column_name}) FROM {_quote(table_name)}"
+        cmd = f"SELECT MAX({column_name}) FROM `{table_name}`"
         res = self._execute_and_fetchall(cmd, 'find_column_max')
         self._exit()
         return res[0][0]
