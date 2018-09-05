@@ -1,6 +1,5 @@
 from django.db import models
 from django.contrib.contenttypes.models import ContentType
-from django.core.urlresolvers import reverse
 from dictionary.views import get_def_for_tooltip, get_more_info_url
 
 import logging

@@ -2,7 +2,7 @@ from collections import OrderedDict
 import json
 from django.http import HttpResponse
 from django.http import Http404
-from StringIO import StringIO
+from io import StringIO
 from zipfile import ZipFile
 from django.http import HttpResponse
 from django.shortcuts import render_to_response

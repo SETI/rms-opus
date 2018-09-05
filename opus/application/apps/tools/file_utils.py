@@ -73,7 +73,7 @@ def get_product_counts(products_by_type):
     size = 0
     count = 0
     num_products = OrderedDict()
-    for product_type, products in products_by_type.iteritems():
+    for product_type, products in products_by_type.items():
         num_products[product_type] = len(products)
         for pdsf in products:
             size += pdsf.size_bytes

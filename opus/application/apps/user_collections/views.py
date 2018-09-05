@@ -13,7 +13,6 @@ from django.views.decorators.cache import never_cache
 
 from hurry.filesize import size as nice_file_size
 
-from metrics.views import update_metrics
 from results.views import get_data, get_page, get_all_in_collection
 from search.models import ObsGeneral
 from user_collections.models import Collections
@@ -56,7 +55,6 @@ def api_view_collection(request, collection_name,
     This returns information about ALL files and product types, ignoring any
     user choices. Choices are handled in the OPUS UI.
     """
-    update_metrics(request)
     api_code = enter_api_call('api_view_collection', request)
 
     session_id = get_session_id(request)
@@ -92,7 +90,6 @@ def api_view_collection(request, collection_name,
 @never_cache
 def api_collection_status(request, collection_name='default'):
     "Return the number of items in a collection."
-    update_metrics(request)
     api_code = enter_api_call('api_collection_status', request)
 
     session_id = get_session_id(request)
@@ -127,7 +124,6 @@ def api_collection_status(request, collection_name='default'):
 # do it the right way.
 def api_get_collection_csv(request, fmt=None):
     "Creates and returns a CSV file based on user query and selection columns."
-    update_metrics(request)
     api_code = enter_api_call('api_get_collection_csv', request)
 
     ret = _get_collection_csv(request, fmt, api_code=api_code)
@@ -158,7 +154,6 @@ def api_edit_collection(request, **kwargs):
 
     Returns the new number of items in the collection.
     """
-    update_metrics(request)
     api_code = enter_api_call('api_edit_collection', request)
 
     session_id = get_session_id(request)
@@ -244,7 +239,6 @@ def api_edit_collection(request, **kwargs):
 @never_cache
 def api_reset_session(request):
     "Remove everything from the collection and reset the session."
-    update_metrics(request)
     api_code = enter_api_call('api_reset_session', request)
 
     session_id = get_session_id(request)
@@ -281,7 +275,6 @@ def api_get_download_info(request):
     the updated sizes and counts. This is used by the OPUS UI when the user
     clicks to (de)select a product type.
     """
-    update_metrics(request)
     api_code = enter_api_call('api_get_download_info', request)
 
     session_id = get_session_id(request)
@@ -325,7 +318,6 @@ def api_get_download_info(request):
 def api_create_download(request, session_id=None, opus_ids=None, fmt=None):
     "Creates a zip file of all items in the collection or the given OPUS ID."
     # XXX Why does this take a session_id instead of a collection_name?
-    update_metrics(request)
     api_code = enter_api_call('api_create_download', request)
 
     if session_id == 'default' or session_id is None:
@@ -400,7 +392,7 @@ def api_create_download(request, session_id=None, opus_ids=None, fmt=None):
                     try:
                         zip_file.write(f, arcname=filename)
                         added.append(pretty_name)
-                    except Exception,e:
+                    except Exception as e:
                         log.error('create_download threw exception for opus_id %s, product_type %s, file %s, pretty_name %s',
                                   opus_id, product_type, f, pretty_name)
                         log.error('.. %s', str(e))
@@ -602,7 +594,6 @@ def _edit_collection_addall(request, **kwargs):
     return
 
     #XXX NOT YET UPDATED
-    update_metrics(request)
     session_id = request.session.session_key
 
     (selections,extras) = urlToSearchParams(request.GET)
@@ -653,7 +644,7 @@ def md5(filename):
     d = hashlib.md5()
     try:
         d.update(open(filename).read())
-    except Exception,e:
+    except Exception as e:
         return False
     else:
         return d.hexdigest()

@@ -8,6 +8,8 @@ from importdb.super import ImportDBSuper, ImportDBException
 
 ERR_UNKNOWN_DATABASE = 1049
 
+def _quote(s): return '`'+s+'`'
+
 class ImportDBMySQL(ImportDBSuper):
     # Note that for MySQL, we ignore the db_name and only use the schema_name
     def __init__(self, *args, **kwargs):
@@ -35,13 +37,13 @@ class ImportDBMySQL(ImportDBSuper):
                             f'Connected to MySQL server as "{self.db_user}"')
 
         try:
-            cmd = 'USE '+self.db_schema
+            cmd = 'USE '+_quote(self.db_schema)
             self._execute(cmd)
         except MySQLdb.Error as e:
             err_code = e.args[0]
             if err_code == ERR_UNKNOWN_DATABASE:
                 try:
-                    cmd = 'CREATE DATABASE '+self.db_schema
+                    cmd = 'CREATE DATABASE '+_quote(self.db_schema)
                     self._execute(cmd)
                 except MySQLdb.Error as e:
                     if self.logger:
@@ -54,7 +56,7 @@ class ImportDBMySQL(ImportDBSuper):
                                 f'  Created new database "{self.db_schema}"')
 
                 try:
-                    cmd = 'USE '+self.db_schema
+                    cmd = 'USE '+_quote(self.db_schema)
                     self._execute(cmd)
                 except MySQLdb.Error as e:
                     if self.logger:
@@ -234,7 +236,7 @@ TABLE_NAME='{table_name}' ORDER BY ORDINAL_POSITION"""
                 raise ImportDBException()
         else:
             try:
-                cmd = f'DROP TABLE {table_name}'
+                cmd = f'DROP TABLE {_quote(table_name)}'
                 self._execute(cmd, mutates=True)
             except MySQLdb.Error as e:
                 if self.logger:
@@ -309,6 +311,10 @@ TABLE_NAME='{table_name}' ORDER BY ORDINAL_POSITION"""
         for column in schema:
             if cmd != '':
                 cmd += ',\n'
+
+            if 'constraint' in column:
+                cmd += '  '+column['constraint']+'\n'
+                continue
 
             field_name = column['field_name']
             field_type = column['field_type']
@@ -410,7 +416,7 @@ TABLE_NAME='{table_name}' ORDER BY ORDINAL_POSITION"""
 
         if key_cmd != '':
             cmd += ',\n' + key_cmd
-        cmd = f'CREATE TABLE `{table_name}` (\n' + cmd + '\n)'
+        cmd = f'CREATE TABLE {_quote(table_name)} (\n' + cmd + '\n)'
         cmd += f' ENGINE={self.default_engine}\n'
 
         try:
@@ -443,7 +449,7 @@ TABLE_NAME='{table_name}' ORDER BY ORDINAL_POSITION"""
 
         table_name = self.convert_raw_to_namespace(namespace, raw_table_name)
 
-        cmd = f'ANALYZE TABLE `{table_name}`'
+        cmd = f'ANALYZE TABLE {_quote(table_name)}'
 
         try:
             self._execute(cmd, mutates=True)
@@ -467,7 +473,7 @@ TABLE_NAME='{table_name}' ORDER BY ORDINAL_POSITION"""
         table_name = self.convert_raw_to_namespace(namespace, raw_table_name)
 
         sorted_column_names = sorted(row.keys())
-        cmd = f'INSERT INTO {table_name} ('
+        cmd = f'INSERT INTO {_quote(table_name)} ('
         cmd += ','.join(sorted(sorted_column_names))
 
         val_list = []
@@ -513,7 +519,7 @@ TABLE_NAME='{table_name}' ORDER BY ORDINAL_POSITION"""
                           packet_size * (packet_num+1))
 
             sorted_column_names = sorted(rows[0].keys())
-            cmd = f'INSERT INTO {table_name} ('
+            cmd = f'INSERT INTO {_quote(table_name)} ('
             cmd += ','.join(sorted(sorted_column_names))
 
             cmd += ') VALUES'
@@ -551,7 +557,7 @@ TABLE_NAME='{table_name}' ORDER BY ORDINAL_POSITION"""
         table_name = self.convert_raw_to_namespace(namespace, raw_table_name)
 
         sorted_column_names = sorted(row.keys())
-        cmd = f'UPDATE {table_name} SET '
+        cmd = f'UPDATE {_quote(table_name)} SET '
 
         set_cmds = []
         for column_name in sorted_column_names:
@@ -583,7 +589,7 @@ TABLE_NAME='{table_name}' ORDER BY ORDINAL_POSITION"""
         table_name = self.convert_raw_to_namespace(namespace, raw_table_name)
 
         sorted_column_names = sorted(row.keys())
-        cmd = f'INSERT INTO {table_name} ('
+        cmd = f'INSERT INTO {_quote(table_name)} ('
         cmd += ','.join(sorted(sorted_column_names))
 
         val_list = []
@@ -629,7 +635,7 @@ TABLE_NAME='{table_name}' ORDER BY ORDINAL_POSITION"""
 
         table_name = self.convert_raw_to_namespace(namespace, raw_table_name)
 
-        cmd = f"DELETE FROM {table_name}"
+        cmd = f"DELETE FROM {_quote(table_name)}"
         if where:
             cmd += f" WHERE {where}"
         self._execute(cmd, mutates=True)
@@ -644,7 +650,8 @@ TABLE_NAME='{table_name}' ORDER BY ORDINAL_POSITION"""
         dest_table_name = self.convert_raw_to_namespace(dest_namespace,
                                                         raw_table_name)
 
-        cmd = f"INSERT INTO {dest_table_name} SELECT * FROM {src_table_name}"
+        cmd = f"INSERT INTO {_quote(dest_table_name)} SELECT * "
+        cmd += f"FROM {_quote(src_table_name)}"
         if where:
             cmd += f" WHERE {where}"
         self._execute(cmd, mutates=True)
@@ -662,7 +669,7 @@ TABLE_NAME='{table_name}' ORDER BY ORDINAL_POSITION"""
 
         table_name = self.convert_raw_to_namespace(namespace, raw_table_name)
 
-        cmd = f"SELECT MAX({column_name}) FROM {table_name}"
+        cmd = f"SELECT MAX({column_name}) FROM {_quote(table_name)}"
         res = self._execute_and_fetchall(cmd, 'find_column_max')
         self._exit()
         return res[0][0]

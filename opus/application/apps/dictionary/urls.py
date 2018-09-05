@@ -1,14 +1,12 @@
 from django.conf.urls import url
 from django.contrib import admin
 
-from dictionary import views
-
 from django.conf.urls.static import static
 from django.conf import settings
 from django.contrib.staticfiles.storage import staticfiles_storage
 from django.views.generic.base import RedirectView
 
-from views import (
+from dictionary.views import (
     api_get_definition_list,
     api_search_definitions,
     api_display_definitions,

@@ -3,7 +3,7 @@ from __future__ import unicode_literals
 
 from django.contrib import admin
 from django.contrib.sites.models import Site
-from models import Definition
+from dictionary.models import Definition
 
 # Register your models here.
 admin.autodiscover()

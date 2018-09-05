@@ -76,12 +76,11 @@ STATICFILES_DIRS = [
 
 ADMIN_MEDIA_PREFIX = ''
 
-MIDDLEWARE_CLASSES = (
+MIDDLEWARE = (
     'django.middleware.gzip.GZipMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
-    'last_modified.middleware.CacheControlMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.cache.UpdateCacheMiddleware',
@@ -144,8 +143,7 @@ INSTALLED_APPS = (
     'ui',
     'user_collections',
     'tools',
-    'dictionary',
-    'metrics'
+    'dictionary'
 )
 
 
@@ -164,10 +162,6 @@ else:
            'BACKEND': 'django.core.cache.backends.dummy.DummyCache',
       }
     }
-
-# for last_modified middleware
-LAST_MODIFIED_FUNC = 'tools.last_mod.last_mod'
-CACHE_MAX_AGE = 3600 * 24 * 120  # the last number is the number of days
 
 INTERNAL_IPS = ('127.0.0.1',)
 
@@ -261,10 +255,6 @@ LOGGING = {
             'handlers': ['console', 'logfile'],
             'level': 'DEBUG',
         },
-        'metrics': {
-            'handlers': ['console', 'logfile'],
-            'level': 'DEBUG',
-        },
         'search.forms': {
             'handlers': ['console', 'logfile'],
             'level': 'DEBUG',
@@ -293,13 +283,6 @@ DATABASES = {
         'ENGINE': 'django.db.backends.mysql',
         'USER': DB_USER,
         'PASSWORD': DB_PASSWORD,
-    },
-    'metrics': {
-        'NAME': 'opus_metrics',
-        'ENGINE': 'django.db.backends.mysql',
-        'USER': DB_USER,
-        'PASSWORD': DB_PASSWORD,
-        # 'OPTIONS':{ 'unix_socket': '/private/var/mysql/mysql.sock'},
     }
 }
 

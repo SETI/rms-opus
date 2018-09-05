@@ -2,7 +2,7 @@ from django.apps import apps
 
 import settings
 
-from app_utils import get_mult_name, parse_form_type
+from tools.app_utils import get_mult_name, parse_form_type
 
 
 MYSQL_TABLE_NOT_EXISTS = 1146
