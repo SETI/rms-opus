@@ -25,6 +25,8 @@ def validate_param_info(namespace):
 
     pi_table_name = db.convert_raw_to_namespace(namespace, 'param_info')
 
+    q = db.quote_identifier
+
     for obs_table_name in obs_table_names:
         column_list = db.table_info(namespace, obs_table_name)
         field_names = [x['field_name'] for x in column_list]
@@ -40,7 +42,7 @@ def validate_param_info(namespace):
                 (field_name.startswith('mult_'))):
                 continue
             cmd = f"""
-COUNT(*) FROM {pi_table_name} WHERE CATEGORY_NAME='{obs_table_name}' AND
+COUNT(*) FROM {q(pi_table_name)} WHERE CATEGORY_NAME='{obs_table_name}' AND
 NAME='{field_name}'"""
             res = db.general_select(cmd)
             count = res[0][0]
@@ -52,12 +54,12 @@ NAME='{field_name}'"""
     # This is a hideous query that looks for duplicate disp_order fields
     # within a given category as long as the field is displayed
     cmd = f"""
-category_name, name FROM {pi_table_name} pi1 WHERE EXISTS
-    (SELECT 1 FROM {pi_table_name} pi2 WHERE
-        pi1.category_name=pi2.category_name AND
-        pi1.disp_order=pi2.disp_order AND
-        (pi1.display=1 OR pi1.display_results=1) AND
-        (pi2.display=1 OR pi2.display_results=1)
+{q('category_name')}, {q('name')} FROM {q(pi_table_name)} {q('pi1')} WHERE EXISTS
+    (SELECT 1 FROM {q(pi_table_name)} {q('pi2')} WHERE
+        {q('pi1')}.{q('category_name')}={q('pi2')}.{q('category_name')} AND
+        {q('pi1')}.{q('disp_order')}={q('pi2')}.{q('disp_order')} AND
+        ({q('pi1')}.display=1 OR {q('pi1')}.{q('display_results')}=1) AND
+        ({q('pi2')}.display=1 OR {q('pi2')}.{q('display_results')}=1)
         LIMIT 1,1)"""
     res = db.general_select(cmd)
     for cat_name, field_name in res:
@@ -66,9 +68,9 @@ category_name, name FROM {pi_table_name} pi1 WHERE EXISTS
 
     # Every param_info entry should have a unique slug. Period.
     cmd = f"""
-category_name, name FROM {pi_table_name} pi1 WHERE EXISTS
-    (SELECT 1 FROM {pi_table_name} pi2 WHERE
-        pi1.slug=pi2.slug
+{q('category_name')}, {q('name')} FROM {q(pi_table_name)} {q('pi1')} WHERE EXISTS
+    (SELECT 1 FROM {q(pi_table_name)} {q('pi2')} WHERE
+        {q('pi1')}.{q('slug')}={q('pi2')}.{q('slug')}
         LIMIT 1,1)"""
     res = db.general_select(cmd)
     for cat_name, field_name in res:
@@ -85,6 +87,7 @@ def validate_nulls(namespace):
     logger.log('debug', 'Validating non-NULL columns')
 
     obs_table_names = sorted(list(db.table_names(namespace, prefix='obs_')))
+    q = db.quote_identifier
 
     for obs_table_name in obs_table_names:
         column_list = db.table_info(namespace, obs_table_name)
@@ -97,7 +100,7 @@ def validate_nulls(namespace):
             full_obs_table_name = db.convert_raw_to_namespace(namespace,
                                                               obs_table_name)
             cmd = f"""
-count(*) FROM {full_obs_table_name} WHERE {field_name} is NULL"""
+count(*) FROM {q(full_obs_table_name)} WHERE {q(field_name)} is NULL"""
             res = db.general_select(cmd)
             count = res[0][0]
             if count == 0:

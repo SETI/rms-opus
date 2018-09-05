@@ -112,6 +112,9 @@ class ImportDBSuper:
             warnings.showarning = self._old_warning_handler
             self._old_warning_handler = None
 
+    def quote_identifier(self, s):
+        assert False, 'ImportDBSuper::quote_identifier must be overriden'
+
     def table_names(self, namespace, prefix=None):
         assert False, 'ImportDBSuper::table_names must be overriden'
 
@@ -139,8 +142,10 @@ class ImportDBSuper:
 
         table_name = self.convert_raw_to_namespace(namespace, raw_table_name)
 
-        columns = ','.join(column_names)
-        cmd = f"SELECT {columns} FROM {table_name}"
+        q = self.quote_identifier
+        columns = ','.join([q(c) for c in column_names])
+
+        cmd = f"SELECT {columns} FROM {q(table_name)}"
         if where:
             cmd += f" WHERE {where}"
         res = self._execute_and_fetchall(cmd, 'read_rows')

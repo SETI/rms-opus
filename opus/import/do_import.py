@@ -80,7 +80,8 @@ def delete_volume_from_obs_tables(volume_id, namespace):
     table_names = impglobals.DATABASE.table_names(namespace,
                                                   prefix=['obs_', 'mult_'])
     table_names = sorted(table_names)
-    where = f'volume_id="{volume_id}"'
+    q = impglobals.DATABASE.quote_identifier
+    where = f'{q("volume_id")}="{volume_id}"'
 
     # This has to happen in two phases to handle foreign key contraints:
     # 1. All tables except obs_general
@@ -109,11 +110,12 @@ def find_duplicate_opus_ids():
     perm_obs_general_table_name = impglobals.DATABASE.convert_raw_to_namespace(
             'perm', 'obs_general')
 
+    q = impglobals.DATABASE.quote_identifier
     cmd = f"""
-og.opus_id FROM
-    {perm_obs_general_table_name} og,
-    {imp_obs_general_table_name} iog WHERE
-    og.opus_id = iog.opus_id"""
+    og.{q('opus_id')} FROM
+    {q(perm_obs_general_table_name)} og,
+    {q(imp_obs_general_table_name)} iog WHERE
+    og.{q('opus_id')} = iog.{q('opus_id')}"""
     res = impglobals.DATABASE.general_select(cmd)
     return [x[0] for x in res]
 
@@ -127,7 +129,8 @@ def delete_opus_id_from_obs_tables(opus_id, namespace):
     table_names = impglobals.DATABASE.table_names(namespace,
                                                   prefix=['obs_', 'mult_'])
     table_names = sorted(table_names)
-    where = f'opus_id="{opus_id}"'
+    q = impglobals.DATABASE.quote_identifier
+    where = f'{q("opus_id")}="{opus_id}"'
 
     # This has to happen in two phases to handle foreign key contraints:
     # 1. All tables except obs_general
@@ -227,6 +230,8 @@ def copy_volume_from_import_to_permanent(volume_id):
     impglobals.LOGGER.log('info',
         f'Copying volume "{volume_id}" from import to permanent')
 
+    q = impglobals.DATABASE.quote_identifier
+
     table_schemas, table_names_in_order = create_tables_for_import(
                                                     volume_id,
                                                     namespace='perm')
@@ -234,7 +239,7 @@ def copy_volume_from_import_to_permanent(volume_id):
         if table_name.startswith('obs_surface_geometry__'):
             continue
         impglobals.LOGGER.log('debug', f'Copying table "{table_name}"')
-        where = f'volume_id="{volume_id}"'
+        where = f'{q("volume_id")}="{volume_id}"'
         impglobals.DATABASE.copy_rows_between_namespaces('import', 'perm',
                                                          table_name,
                                                          where=where)
@@ -255,7 +260,7 @@ def copy_volume_from_import_to_permanent(volume_id):
                                                      target_name.lower()))
             impglobals.DATABASE.create_table('perm', table_name, table_schema)
         impglobals.LOGGER.log('debug', f'Copying table "{table_name}"')
-        where = f'volume_id="{volume_id}"'
+        where = f'{q("volume_id")}="{volume_id}"'
         impglobals.DATABASE.copy_rows_between_namespaces('import', 'perm',
                                                          table_name,
                                                          where=where)
@@ -273,8 +278,9 @@ def read_existing_import_opus_id():
         # nobody ever created it before.
         return []
 
+    q = impglobals.DATABASE.quote_identifier
     rows = impglobals.DATABASE.general_select(
-        f'opus_id FROM {imp_obs_general_table_name}')
+        f'{q("opus_id")} FROM {q(imp_obs_general_table_name)}')
 
     return [x[0] for x in rows]
 
@@ -1463,9 +1469,10 @@ def do_import_steps():
         imp_obs_general_table_name = (
             impglobals.DATABASE.convert_raw_to_namespace('import',
                                                          'obs_general'))
+        q = impglobals.DATABASE.quote_identifier
         import_volume_ids = [x[0] for x in
                       impglobals.DATABASE.general_select(
-    f'DISTINCT volume_id FROM {imp_obs_general_table_name} ORDER BY volume_id')
+    f'DISTINCT {q("volume_id")} FROM {q(imp_obs_general_table_name)} ORDER BY {q("volume_id")}')
                      ]
         if not old_perm_tables_dropped:
             # Don't bother if there's nothing there!

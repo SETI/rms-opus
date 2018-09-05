@@ -118,6 +118,9 @@ class ImportDBMySQL(ImportDBSuper):
                     f'Failed in {func_name}: {e.args[1]}')
             raise ImportDBException(e)
 
+    def quote_identifier(self, s):
+        return '`' + s + '`'
+
     def table_names(self, namespace, prefix=None):
         "Return a list of all table names in the schema."
         super(ImportDBMySQL, self)._enter('table_names')
@@ -670,7 +673,7 @@ FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `TABLE_SCHEMA`='{self.db_schema}' AND
 
         table_name = self.convert_raw_to_namespace(namespace, raw_table_name)
 
-        cmd = f"SELECT MAX({column_name}) FROM `{table_name}`"
+        cmd = f"SELECT MAX(`{column_name}`) FROM `{table_name}`"
         res = self._execute_and_fetchall(cmd, 'find_column_max')
         self._exit()
         return res[0][0]
