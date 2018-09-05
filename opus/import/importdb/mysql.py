@@ -600,16 +600,16 @@ FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `TABLE_SCHEMA`='{self.db_schema}' AND
             if val is None:
                 val_list.append('NULL')
                 if column_name != key_name:
-                    assign_list.append(column_name + '=NULL')
+                    assign_list.append('`'+column_name+'`=NULL')
             elif isinstance(val, str):
                 s_val = '"' + str(val) + '"'
                 val_list.append(s_val)
                 if column_name != key_name:
-                    assign_list.append(column_name + '=' + s_val)
+                    assign_list.append('`'+column_name+'`=' + s_val)
             else:
                 val_list.append(str(val))
                 if column_name != key_name:
-                    assign_list.append(column_name + '=' + str(val))
+                    assign_list.append('`'+column_name + '`=' + str(val))
         cmd += ') VALUES(' + ','.join(val_list) + ') '
         cmd += 'ON DUPLICATE KEY UPDATE ' + ','.join(assign_list)
 
