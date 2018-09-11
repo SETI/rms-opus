@@ -336,8 +336,6 @@ def set_user_search_number(selections, extras):
     if selections is None or extras is None:
         return None, False
 
-    print(selections)
-    print(sort_dictionary(selections))
     selections_json = str(json.dumps(sort_dictionary(selections)))
     selections_hash = hashlib.md5(str.encode(selections_json)).hexdigest()
 
