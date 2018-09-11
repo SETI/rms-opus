@@ -28,6 +28,7 @@ import julian
 ALLOWED_HOSTS = ('127.0.0.1',
                  'localhost',
                  'dev.pds-rings.seti.org',
+                 '104.244.248.18',
                  'pds-rings-tools.seti.org',
                  'tools.pds-rings.seti.org',
                  '104.244.248.20')
