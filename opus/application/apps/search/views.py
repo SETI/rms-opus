@@ -532,7 +532,7 @@ def _construct_query_string(selections, extras):
             clause_params += mult_values
             obs_tables.add(cat_name)
 
-        elif form_type in settings.RANGE_FIELDS:
+        elif form_type in settings.RANGE_FORM_TYPES:
             # This prevents range queries from getting through twice.
             # If one range side has been processed we can skip the 2nd, because
             # it gets done when the first is.
@@ -594,7 +594,7 @@ def _construct_query_string(selections, extras):
                     return None, None
                 (form_type, form_type_func,
                  form_type_format) = parse_form_type(pi.form_type)
-                if form_type in settings.MULT_FIELDS:
+                if form_type in settings.MULT_FORM_TYPES:
                     mult_table = get_mult_name(pi.param_name())
                     order_param = mult_table + '.label'
                     mult_tables.add((mult_table, pi.category_name, mult_table))

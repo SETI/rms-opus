@@ -323,7 +323,7 @@ def api_get_widget(request, **kwargs):
             pass
 
 
-    if form_type in settings.RANGE_FIELDS:
+    if form_type in settings.RANGE_FORM_TYPES:
         auto_id = False
 
         slug_no_num = strip_numeric_suffix(slug)
@@ -473,8 +473,6 @@ def api_get_widget(request, **kwargs):
     label = param_info.label
     intro = param_info.intro
 
-    range_fields = settings.RANGE_FIELDS
-
     if fmt == 'raw':
         return str(form)
 
@@ -487,7 +485,8 @@ def api_get_widget(request, **kwargs):
         "intro": intro,
         "form": form,
         "form_type": form_type,
-        "range_fields": range_fields
+        "range_form_types": settings.RANGE_FORM_TYPES,
+        "mult_form_types": settings.MULT_FORM_TYPES
     }
     ret = render(request, template, context)
     exit_api_call(api_code, ret)

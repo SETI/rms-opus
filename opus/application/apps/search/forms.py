@@ -103,7 +103,7 @@ class SearchForm(forms.Form):
                      ),
                 )
 
-            if form_type in settings.RANGE_FIELDS:
+            if form_type in settings.RANGE_FORM_TYPES:
 
                 choices =  (('any','any'),('all','all'),('only','only'))
                 slug_no_num = strip_numeric_suffix(slug)
@@ -128,7 +128,7 @@ class SearchForm(forms.Form):
                 )
                 self.fields.keyOrder = [slug_no_num+'1', slug_no_num+'2', 'qtype-'+slug_no_num]  # makes sure min is first! boo ya!
 
-            elif form_type in settings.MULT_FIELDS:
+            elif form_type in settings.MULT_FORM_TYPES:
                 #self.fields[slug]= MultiStringField(forms.Field)
                 try:
                     param_name = ParamInfo.objects.get(slug=slug).param_name()
@@ -157,7 +157,7 @@ class SearchForm(forms.Form):
 
         # hack to get range fields into the right orde since after Django 1.7 this is deprecated:
         # self.fields.keyOrder = [slug_no_num+'1', slug_no_num+'2', 'qtype-'+slug_no_num]  # makes sure min is first! boo ya!
-        if form_type in settings.RANGE_FIELDS:
+        if form_type in settings.RANGE_FORM_TYPES:
             my_fields = self.fields
             self.fields = OrderedDict()
             self.fields[slug_no_num+'1'] = my_fields[slug_no_num+'1']

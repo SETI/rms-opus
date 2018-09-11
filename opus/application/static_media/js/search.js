@@ -289,16 +289,11 @@ var o_search = {
             // this is a range field
             o_search.getRangeEndpoints(slug);
 
-        } else {
-
-            if ($('.widget__' + slug + ' input.STRING').length) {
-                // this is a string search, no hinting happens for these
-
-                $('#widget__' + slug + ' .spinner').fadeOut();
-                return;
-            }
-            // mult field
+        } else if ($('.widget__' + slug).hasClass('mult-widget')) {
+            // this is a mult field
             o_search.getValidMults(slug);
+        } else {
+          $('#widget__' + slug + ' .spinner').fadeOut();
         }
     },
 

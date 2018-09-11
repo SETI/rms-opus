@@ -224,7 +224,7 @@ def _api_get_metadata(api_name, request, opus_id, fmt):
                 (form_type, form_type_func,
                  form_type_format) = parse_form_type(param_info.form_type)
 
-                if (form_type in settings.MULT_FIELDS and
+                if (form_type in settings.MULT_FORM_TYPES and
                     api_name == 'api_get_metadata_v2'):
                     mult_name = get_mult_name(param_info.param_name())
                     mult_val = results.values(mult_name)[0][mult_name]
@@ -674,7 +674,7 @@ def get_page(request, use_collections=None, collections_page=None, page=None,
         tables.add(table)
         (form_type, form_type_func,
          form_type_format) = parse_form_type(pi.form_type)
-        if form_type in settings.MULT_FIELDS:
+        if form_type in settings.MULT_FORM_TYPES:
             # For a mult field, we will have to join in the mult table
             # and put the mult column here
             mult_table = get_mult_name(pi.param_name())
@@ -936,7 +936,7 @@ def _get_metadata_by_slugs(request, opus_id, slugs, fmt, use_param_names):
             (form_type, form_type_func,
              form_type_format) = parse_form_type(param_info.form_type)
 
-            if form_type in settings.MULT_FIELDS and not use_param_names:
+            if form_type in settings.MULT_FORM_TYPES and not use_param_names:
                 mult_name = get_mult_name(param_info.param_name())
                 mult_val = results.values(mult_name)[0][mult_name]
                 result = lookup_pretty_value_for_mult(param_info, mult_val)

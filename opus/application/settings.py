@@ -341,9 +341,8 @@ PREVIEW_GUIDES = {
     'COVIMS': 'https://pds-rings.seti.org/cassini/vims/COVIMS_previews.txt'
 }
 
-RANGE_FIELDS    = ['LONG','RANGE']
-MULT_FIELDS	= ['GROUP','TARGETS']
-MULT_FORM_TYPES = ('GROUP','TARGETS')
+RANGE_FORM_TYPES = ('LONG','RANGE')
+MULT_FORM_TYPES  = ('GROUP','TARGETS')
 DEFAULT_PAGE_LIMIT = 100
 
 THUMBNAIL_NOT_FOUND = 'https://tools.pds-rings.seti.org/static_media/img/thumbnail_not_found.png'

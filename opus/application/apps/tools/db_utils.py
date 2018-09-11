@@ -33,7 +33,7 @@ def lookup_pretty_value_for_mult(param_info, value):
     (form_type, form_type_func,
      form_type_format) = parse_form_type(param_info.form_type)
 
-    if form_type not in settings.MULT_FIELDS:
+    if form_type not in settings.MULT_FORM_TYPES:
         return None
 
     param_name = param_info.param_name()
