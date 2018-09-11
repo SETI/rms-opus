@@ -758,7 +758,7 @@ def _get_range_query(selections, param_name, qtypes):
     name_min = name_no_num + '1'
     name_max = name_no_num + '2'
 
-    if _is_single_column_range(param_name):
+    if is_single_column_range(param_name):
         param_name_min = param_name_max = param_name_no_num
         name_min = name_max = name_no_num
 
@@ -876,7 +876,7 @@ def _get_longitude_query(selections, param_name, qtypes):
     name_max = name_no_num + '2'
     col_d_long = cat_name + '.d_' + name_no_num
 
-    if _is_single_column_range(param_name):
+    if is_single_column_range(param_name):
         param_name_min = param_name_max = param_name_no_num
         name_min = name_max = name_no_num
 
@@ -976,20 +976,18 @@ def _get_param_info_by_qualified_name(param_name):
             return None
 
 
-def _is_single_column_range(param_name):
+def is_single_column_range(param_name):
     "Given a qualified name cat.name return True if it's a single-column range"
     cat_name = param_name.split('.')[0]
     name = param_name.split('.')[1]
 
+    # Single column range queries will not have the numeric suffix
+    name_no_num = strip_numeric_suffix(name)
     try:
-        param_info = ParamInfo.objects.get(category_name=cat_name, name=name)
-        return False
+        temp = ParamInfo.objects.get(category_name=cat_name,
+                                     name=name_no_num)
+        return True
     except ParamInfo.DoesNotExist:
-        # Single column range queries will not have the numeric suffix
-        name_no_num = strip_numeric_suffix(name)
-        try:
-            temp = ParamInfo.objects.get(category_name=cat_name,
-                                         name=name_no_num)
-            return True
-        except ParamInfo.DoesNotExist:
-            return False
+        return False
+
+    return False

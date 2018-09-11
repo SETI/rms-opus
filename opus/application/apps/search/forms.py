@@ -3,7 +3,7 @@ from collections import OrderedDict
 from django.apps import apps
 from django import forms
 from metadata.views import *
-from search.views import get_param_info_by_slug
+from search.views import get_param_info_by_slug, is_single_column_range
 from paraminfo.models import *
 from tools.app_utils import *
 
@@ -113,20 +113,25 @@ class SearchForm(forms.Form):
 
                 label = 'max' if num == '2' else 'min'
 
+                pi = get_param_info_by_slug(slug)
+
                 self.fields[slug] = MultiFloatField(
                      required=False,
                      label = label,
                      widget = forms.TextInput(attrs={'class':label + ' RANGE'}),
                 )
-                self.fields['qtype-'+slug_no_num] = forms.CharField(
-                     required=False,
-                     label = '',
-                     widget=forms.Select(
-                        choices=choices,
-                        attrs={'tabindex':0, 'class':"RANGE"}
-                     ),
-                )
-                self.fields.keyOrder = [slug_no_num+'1', slug_no_num+'2', 'qtype-'+slug_no_num]  # makes sure min is first! boo ya!
+                if not is_single_column_range(pi.param_name()):
+                    self.fields['qtype-'+slug_no_num] = forms.CharField(
+                         required=False,
+                         label = '',
+                         widget=forms.Select(
+                            choices=choices,
+                            attrs={'tabindex':0, 'class':"RANGE"}
+                         ),
+                    )
+                    self.fields.keyOrder = [slug_no_num+'1', slug_no_num+'2', 'qtype-'+slug_no_num]  # makes sure min is first! boo ya!
+                else:
+                    self.fields.keyOrder = [slug_no_num+'1', slug_no_num+'2']  # makes sure min is first! boo ya!
 
             elif form_type in settings.MULT_FORM_TYPES:
                 #self.fields[slug]= MultiStringField(forms.Field)
@@ -162,4 +167,5 @@ class SearchForm(forms.Form):
             self.fields = OrderedDict()
             self.fields[slug_no_num+'1'] = my_fields[slug_no_num+'1']
             self.fields[slug_no_num+'2'] = my_fields[slug_no_num+'2']
-            self.fields['qtype-'+slug_no_num] = my_fields['qtype-'+slug_no_num]
+            if 'qtype-'+slug_no_num in my_fields:
+                self.fields['qtype-'+slug_no_num] = my_fields['qtype-'+slug_no_num]
