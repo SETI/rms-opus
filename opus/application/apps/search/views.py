@@ -181,7 +181,7 @@ def url_to_search_params(request_get):
                               request_get)
                     return None, None
                 try:
-                    selections[param_name + ext] = map(func, values)
+                    selections[param_name + ext] = list(map(func, values))
                 except ValueError as e:
                     log.error('url_to_search_params: Function "%s" '
                               +'threw ValueError(%s) for %s',
@@ -194,7 +194,7 @@ def url_to_search_params(request_get):
                               request_get)
                     return None, None
                 try:
-                    selections[param_name] = map(func, values)
+                    selections[param_name] = list(map(func, values))
                 except ValueError as e:
                     log.error('url_to_search_params: Function "%s" '
                               +'threw ValueError(%s) for %s',
@@ -336,6 +336,8 @@ def set_user_search_number(selections, extras):
     if selections is None or extras is None:
         return None, False
 
+    print(selections)
+    print(sort_dictionary(selections))
     selections_json = str(json.dumps(sort_dictionary(selections)))
     selections_hash = hashlib.md5(str.encode(selections_json)).hexdigest()
 
