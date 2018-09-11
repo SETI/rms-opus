@@ -113,15 +113,15 @@ def api_init_detail_page(request, **kwargs):
     if instrument_id in settings.PREVIEW_GUIDES:
         preview_guide_url = settings.PREVIEW_GUIDES[instrument_id]
 
-    # On the details page, we display the list of available extensions after
+    # On the details page, we display the list of available filenames after
     # each product type
     products = get_pds_products(opus_id, fmt='raw')[opus_id]
     if not products:
         products = {}
     for product_type, file_list in products.items():
         for i in range(len(file_list)):
-            ext = file_list[i].split('.')[-1]
-            file_list[i] = {'ext': ext,
+            fn = file_list[i].split('/')[-1]
+            file_list[i] = {'filename': fn,
                             'link': file_list[i]}
 
     context = {

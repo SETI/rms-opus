@@ -23,7 +23,7 @@
         <ul class="list-inline">
           {{ product_type }}:
   	      {% for f in files %}
-  			     <li><a href="{{ f.link }}" target="_blank">{{ f.ext }}</a></li>
+  			     <li><a href="{{ f.link }}" target="_blank">{{ f.filename }}</a></li>
 	        {% endfor %}
         </ul>
       {% endfor %}
