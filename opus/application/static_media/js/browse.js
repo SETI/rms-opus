@@ -101,7 +101,7 @@ var o_browse = {
                 }
             }
             var q_str = hash.join('&');
-            var csv_link = "/opus/__api/data.csv?" + q_str + '&cols=' + col_str + '&limit=' + opus.result_count.toString();
+            var csv_link = "/opus/__api/data.csv?" + q_str + '&cols=' + col_str + '&limit=' + opus.result_count.toString() + '&order=' + opus.prefs['order'];
             $(this).attr("href", csv_link);
         });
 
