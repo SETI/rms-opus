@@ -358,14 +358,19 @@ def api_create_download(request, session_id=None, opus_ids=None, fmt=None):
     (download_size, download_count,
      product_counts) = _get_download_info(product_types, session_id)
 
-    # don't keep creating downloads after user has reached their size limit
-    cum_download_size = request.session.get('cum_download_size', 0)
-    if cum_download_size > settings.MAX_CUM_DOWNLOAD_SIZE:
-        # user is trying to download > MAX_CUM_DOWNLOAD_SIZE
-        ret = HttpResponse("Sorry, Max cumulative download size reached " + str(cum_download_size) + ' > ' + str(settings.MAX_CUM_DOWNLOAD_SIZE))
+    # don't create download if files are too big
+    if download_size > settings.MAX_DOWNLOAD_SIZE:
+        ret = HttpResponse("Sorry, maximum download size ("+str(settings.MAX_DOWNLOAD_SIZE)+" bytes) exceeded")
         exit_api_call(api_code, ret)
         return ret
-    cum_download_size = cum_download_size + download_size
+
+    # don't keep creating downloads after user has reached their size limit
+    cum_download_size = request.session.get('cum_download_size', 0)
+    cum_download_size += download_size
+    if cum_download_size > settings.MAX_CUM_DOWNLOAD_SIZE:
+        ret = HttpResponse("Sorry, maximum cumulative download size reached for this session")
+        exit_api_call(api_code, ret)
+        return ret
     request.session['cum_download_size'] = int(cum_download_size)
 
     # zip each file into tarball and create a manifest too

@@ -347,4 +347,5 @@ DEFAULT_PAGE_LIMIT = 100
 
 THUMBNAIL_NOT_FOUND = 'https://tools.pds-rings.seti.org/static_media/img/thumbnail_not_found.png'
 
-MAX_CUM_DOWNLOAD_SIZE = 5*1024*1024*1024 # 5 gigs max cum downloads
+MAX_DOWNLOAD_SIZE = 3*1024*1024*1024 # 3 gig max for any single download
+MAX_CUM_DOWNLOAD_SIZE = 5*1024*1024*1024 # 5 gigs max cum downloads for a session
