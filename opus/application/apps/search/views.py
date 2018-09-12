@@ -538,11 +538,12 @@ def _construct_query_string(selections, extras):
             if form_type == 'LONG':
                 # This parameter requires a longitudinal query.
                 # Both sides of range must be defined by user for this to work.
-                if (selections[param_name_no_num + '1'] and
-                    selections[param_name_no_num + '2']):
+                if (selections.get(param_name_no_num + '1', False) and
+                    selections.get(param_name_no_num + '2', False)):
                     clause, params = _get_longitude_query(selections,
                                                           param_name, qtypes)
                 else:
+                    # XXX Need to report this to the user somehow
                     return None, None
             else:
                 # Get the range query object and append it to the query
