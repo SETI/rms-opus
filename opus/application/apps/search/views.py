@@ -88,26 +88,8 @@ def url_to_search_params(request_get):
     for search_param in search_params:
         slug = search_param[0]
         if slug == 'order':
-            if search_param[1]:
-                all_order = search_param[1]
-            else:
-                all_order = settings.DEFAULT_SORT_ORDER
-            if (settings.FINAL_SORT_ORDER
-                not in all_order.replace('-','').split(',')):
-                if all_order:
-                    all_order += ','
-                all_order += settings.FINAL_SORT_ORDER
-            orders = all_order.split(',')
-            for order in orders:
-                descending = order[0] == '-'
-                order = order.strip('-')
-                param_info = get_param_info_by_slug(order, from_ui=True)
-                if not param_info:
-                    log.error('url_to_search_params: Unable to resolve order '
-                              +'slug "%s"', order)
-                    return None, None
-                order_params.append(param_info.param_name())
-                order_descending_params.append(descending)
+            all_order = search_param[1]
+            order_params, order_descending_params = parse_order_slug(all_order)
             extras['order'] = (order_params, order_descending_params)
             continue
         if slug in settings.SLUGS_NOT_IN_DB:
@@ -589,33 +571,14 @@ def _construct_query_string(selections, extras):
     # Make the ordering SQL
     order_sql = ''
     if 'order' in extras:
-        order_table_names = set()
         order_params, descending_params = extras['order']
-        if order_params:
-            order_str_list = []
-            for i in range(len(order_params)):
-                order_slug = order_params[i]
-                pi = _get_param_info_by_qualified_name(order_slug)
-                if not pi:
-                    log.error('_construct_query_string: Unable to resolve order'
-                              +' slug "%s"', order_slug)
-                    return None, None
-                (form_type, form_type_func,
-                 form_type_format) = parse_form_type(pi.form_type)
-                if form_type in settings.MULT_FORM_TYPES:
-                    mult_table = get_mult_name(pi.param_name())
-                    order_param = mult_table + '.label'
-                    mult_tables.add((mult_table, pi.category_name, mult_table))
-                else:
-                    order_param = pi.param_name()
-                    obs_tables.add(pi.category_name)
-                if descending_params[i]:
-                    order_param += ' DESC'
-                else:
-                    order_param += ' ASC'
-                order_str_list.append(order_param)
-            order_sql = ' ORDER BY ' + ','.join(order_str_list)
 
+        (order_sql, order_mult_tables,
+         order_obs_tables) = create_order_by_sql(order_params,
+                                                 descending_params)
+
+        mult_tables |= order_mult_tables
+        obs_tables |= order_obs_tables
 
     sql = 'SELECT '
     sql += connection.ops.quote_name('obs_general')+'.'
@@ -633,10 +596,10 @@ def _construct_query_string(selections, extras):
         sql += connection.ops.quote_name('obs_general_id')
 
     # And JOIN all the mult_ tables together
-    for mult_table, category, name in sorted(mult_tables):
+    for mult_table, category in sorted(mult_tables):
         sql += ' LEFT JOIN '+connection.ops.quote_name(mult_table)
         sql += ' ON '+connection.ops.quote_name(category)+'.'
-        sql += connection.ops.quote_name(name)+'='
+        sql += connection.ops.quote_name(mult_table)+'='
         sql += connection.ops.quote_name(mult_table)+'.'
         sql += connection.ops.quote_name('id')
 
@@ -999,3 +962,59 @@ def is_single_column_range(param_name):
         return False
 
     return False
+
+def parse_order_slug(all_order):
+    order_params = []
+    order_descending_params = []
+
+    if not all_order:
+        all_order = settings.DEFAULT_SORT_ORDER
+    if (settings.FINAL_SORT_ORDER
+        not in all_order.replace('-','').split(',')):
+        if all_order:
+            all_order += ','
+        all_order += settings.FINAL_SORT_ORDER
+    orders = all_order.split(',')
+    for order in orders:
+        descending = order[0] == '-'
+        order = order.strip('-')
+        param_info = get_param_info_by_slug(order, from_ui=True)
+        if not param_info:
+            log.error('parse_order_slug: Unable to resolve order '
+                      +'slug "%s"', order)
+            return None, None
+        order_params.append(param_info.param_name())
+        order_descending_params.append(descending)
+
+    return order_params, order_descending_params
+
+def create_order_by_sql(order_params, descending_params):
+    order_mult_tables = set()
+    order_obs_tables = set()
+    order_sql = ''
+    if order_params:
+        order_str_list = []
+        for i in range(len(order_params)):
+            order_slug = order_params[i]
+            pi = _get_param_info_by_qualified_name(order_slug)
+            if not pi:
+                log.error('_construct_query_string: Unable to resolve order'
+                          +' slug "%s"', order_slug)
+                return None, None
+            (form_type, form_type_func,
+             form_type_format) = parse_form_type(pi.form_type)
+            if form_type in settings.MULT_FORM_TYPES:
+                mult_table = get_mult_name(pi.param_name())
+                order_param = mult_table + '.label'
+                order_mult_tables.add((mult_table, pi.category_name))
+            else:
+                order_param = pi.param_name()
+                order_obs_tables.add(pi.category_name)
+            if descending_params[i]:
+                order_param += ' DESC'
+            else:
+                order_param += ' ASC'
+            order_str_list.append(order_param)
+        order_sql = ' ORDER BY ' + ','.join(order_str_list)
+
+    return order_sql, order_mult_tables, order_obs_tables

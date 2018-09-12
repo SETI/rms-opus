@@ -40,7 +40,9 @@ from paraminfo.models import *
 from search.models import *
 from search.views import (get_param_info_by_slug,
                           get_user_query_table,
-                          url_to_search_params)
+                          url_to_search_params,
+                          create_order_by_sql,
+                          parse_order_slug)
 from user_collections.models import Collections
 from tools.app_utils import *
 from tools.db_utils import *
@@ -699,7 +701,8 @@ def get_page(request, use_collections=None, collections_page=None, page=None,
     all_order = request.GET.get('order', settings.DEFAULT_SORT_ORDER)
     if not all_order:
         all_order = settings.DEFAULT_SORT_ORDER
-    if settings.FINAL_SORT_ORDER not in all_order.split(','):
+    if (settings.FINAL_SORT_ORDER
+        not in all_order.replace('-','').split(',')):
         if all_order:
             all_order += ','
         all_order += settings.FINAL_SORT_ORDER
@@ -779,7 +782,9 @@ def get_page(request, use_collections=None, collections_page=None, page=None,
                       temp_sql)
 
         sql = 'SELECT '
-        sql += ','.join(column_names)
+        sql += ','.join([connection.ops.quote_name(x.split('.')[0])+'.'+
+                         connection.ops.quote_name(x.split('.')[1])
+                         for x in column_names])
         sql += ' FROM '+connection.ops.quote_name('obs_general')
 
         # All the column tables are LEFT JOINs because if the table doesn't
@@ -813,34 +818,51 @@ def get_page(request, use_collections=None, collections_page=None, page=None,
         sql += connection.ops.quote_name(temp_table_name)+'.sort_order'
     else:
         # This is for a collection
+        order_params, order_descending_params = parse_order_slug(all_order)
+        (order_sql, order_mult_tables,
+         order_obs_tables) = create_order_by_sql(order_params,
+                                                 order_descending_params)
+
         sql = 'SELECT '
-        sql += ','.join(column_names)
+        sql += ','.join([connection.ops.quote_name(x.split('.')[0])+'.'+
+                         connection.ops.quote_name(x.split('.')[1])
+                         for x in column_names])
         sql += ' FROM '+connection.ops.quote_name('obs_general')
 
         # All the column tables are LEFT JOINs because if the table doesn't
         # have an entry for a given opus_id, we still want the row to show up,
         # just full of NULLs.
-        for table in tables:
+        for table in tables | order_obs_tables:
             if table == 'obs_general':
                 continue
             sql += ' LEFT JOIN '+connection.ops.quote_name(table)
-            sql += ' ON '+connection.ops.quote_name('obs_general')+'.id='
-            sql += connection.ops.quote_name(table)+'.obs_general_id'
+            sql += ' ON '+connection.ops.quote_name('obs_general')+'.'
+            sql += connection.ops.quote_name('id')+'='
+            sql += connection.ops.quote_name(table)+'.'
+            sql += connection.ops.quote_name('obs_general_id')
 
         # Now JOIN in all the mult_ tables.
-        for (mult_table, table) in mult_tables:
+        for (mult_table, table) in mult_tables | order_mult_tables:
             sql += ' LEFT JOIN '+connection.ops.quote_name(mult_table)
-            sql += ' ON '+connection.ops.quote_name(table)+'.'+mult_table+'='
-            sql += connection.ops.quote_name(mult_table)+'.id'
+            sql += ' ON '+connection.ops.quote_name(table)+'.'
+            sql += connection.ops.quote_name(mult_table)+'='
+            sql += connection.ops.quote_name(mult_table)+'.'
+            sql += connection.ops.quote_name('id')
 
         # But the collections table is an INNER JOIN because we only want
         # opus_ids that appear in the collections table to cause result rows
         sql += ' INNER JOIN '+connection.ops.quote_name('collections')
-        sql += ' ON '+connection.ops.quote_name('obs_general')+'.id='
-        sql += connection.ops.quote_name('collections')+'.obs_general_id'
+        sql += ' ON '+connection.ops.quote_name('obs_general')+'.'
+        sql += connection.ops.quote_name('id')+'='
+        sql += connection.ops.quote_name('collections')+'.'
+        sql += connection.ops.quote_name('obs_general_id')
         sql += ' AND '
-        sql += connection.ops.quote_name('collections')+'.session_id='
+        sql += connection.ops.quote_name('collections')+'.'
+        sql += connection.ops.quote_name('session_id')+'='
         sql += '"'+session_id+'"'
+
+        # Finally add in the sort order
+        sql += order_sql
 
     """
     the limit is pretty much always 100, the user cannot change it in the interface
