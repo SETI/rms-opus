@@ -115,8 +115,16 @@ def url_to_search_params(request_get):
         slug_no_num = strip_numeric_suffix(slug)
         values = search_param[1].strip(',').split(',')
 
+        # If nothing is specified, just ignore the slug
         if not values:
-            # If nothing is specified, just ignore the slug
+            continue
+
+        has_value = False
+        for value in values:
+            if value:
+                has_value = True
+                break
+        if not has_value:
             continue
 
         qtype = False  # assume this is not a qtype statement
@@ -183,9 +191,9 @@ def url_to_search_params(request_get):
                 try:
                     selections[param_name + ext] = list(map(func, values))
                 except ValueError as e:
-                    log.error('url_to_search_params: Function "%s" '
+                    log.error('url_to_search_params: Function "%s" slug "%s" '
                               +'threw ValueError(%s) for %s',
-                              func, e, values)
+                              func, slug, e, values)
             else:
                 # Normal 2-column range query
                 if param_name in selections:
@@ -196,9 +204,9 @@ def url_to_search_params(request_get):
                 try:
                     selections[param_name] = list(map(func, values))
                 except ValueError as e:
-                    log.error('url_to_search_params: Function "%s" '
+                    log.error('url_to_search_params: Function "%s" slug "%s" '
                               +'threw ValueError(%s) for %s',
-                              func, e, values)
+                              func, slug, e, values)
         else:
             # For non-RANGE queries, we just put the values here raw
             if param_name in selections:
