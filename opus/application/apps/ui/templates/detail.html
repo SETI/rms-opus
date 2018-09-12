@@ -14,20 +14,28 @@
 </div>
 
 <div class="col-md-6">
-  <div>
-    <h1 class="">Ring Observation Detail</h1>
-    <p><b>OPUS ID: </b>{{ opus_id }}</p>
-    <h2>PDS Products</h2>
-    <div class="">
-      {% for product_type, files in products.items %}
+  <h1 class="">Observation Detail</h1>
+  <p><b>OPUS ID: </b>{{ opus_id }}</p>
+
+  <h2>PDS Products</h2>
+  <div class="">
+    <p>Click on any "Index" type to see the entry for this observation in that table.</p>
+    <ul>
+    {% for product_type, product_type_info in products.items %}
+      <li>
         <ul class="list-inline">
-          {{ product_type }}:
-  	      {% for f in files %}
+          {% if product_type_info.product_link %}
+            <a href={{ product_type_info.product_link }} target="_blank">{{ product_type }}:</a>
+          {% else %}
+            {{ product_type }}:
+          {% endif %}
+  	      {% for f in product_type_info.files %}
   			     <li><a href="{{ f.link }}" target="_blank">{{ f.filename }}</a></li>
-	        {% endfor %}
+          {% endfor %}
         </ul>
-      {% endfor %}
-    </div>
+      </li>
+    {% endfor %}
+    </ul>
   </div>
 
   <h2>Metadata for Current Columns</h2>
@@ -35,7 +43,7 @@
       <span class="spinner">&nbsp;</span>
   </div>
   <div class="">
-    <h2>All Metadata for this Observation</h2>
+    <h2>All OPUS Metadata for this Observation</h2>
     <p>Grab all metadata <a href="/opus/__api/metadata_v2/{{ opus_id }}.json" target="_blank">as json</a></p>
     <div id="all_metadata_{{ opus_or_ringobs_id }}"></div>
   </div>

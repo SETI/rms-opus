@@ -118,17 +118,35 @@ def api_init_detail_page(request, **kwargs):
     products = get_pds_products(opus_id, fmt='raw')[opus_id]
     if not products:
         products = {}
+    new_products = {}
     for product_type, file_list in products.items():
+        product_info = {}
+        if product_type.find('Index') != -1:
+            tab_url = None
+            for fn in file_list:
+                if (fn.endswith('.tab') or
+                    fn.endswith('.TAB')):
+                    tab_url = fn
+                    break
+            if tab_url:
+                tab_url = tab_url.replace('holdings', 'viewmaster')
+                tab_url += '/'+opus_id.split('-')[-1]
+            product_info['product_link'] = tab_url
+        else:
+            product_info['product_link'] = None
+        file_list = file_list[:]
         for i in range(len(file_list)):
             fn = file_list[i].split('/')[-1]
             file_list[i] = {'filename': fn,
                             'link': file_list[i]}
+        product_info['files'] = file_list
+        new_products[product_type] = product_info
 
     context = {
         'preview_full_url': preview_full_url,
         'preview_med_url': preview_med_url,
         'preview_guide_url': preview_guide_url,
-        'products': products,
+        'products': new_products,
         'opus_id': opus_id,
         'opus_or_ringobs_id': orig_opus_id,
         'instrument_id': instrument_id
