@@ -544,7 +544,9 @@ def _construct_query_string(selections, extras):
                                                           param_name, qtypes)
                 else:
                     # XXX Need to report this to the user somehow
-                    return None, None
+                    # Pretend this is a range query
+                    clause, params = _get_range_query(selections, param_name,
+                                                      qtypes)
             else:
                 # Get the range query object and append it to the query
                 clause, params = _get_range_query(selections, param_name,
