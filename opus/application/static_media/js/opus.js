@@ -338,7 +338,7 @@ var opus = {
         switch(opus.prefs.view) {
 
             case 'search':
-                window.scroll(0,0);
+                window.scrollTo(0,0);
                 $('#search').fadeIn();
                 o_search.getSearchTab();
                 break;
