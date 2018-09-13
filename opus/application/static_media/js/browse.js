@@ -86,7 +86,7 @@ var o_browse = {
             }
 
             // reset scroll position
-            window.scroll(0,opus.browse_view_scrolls[showing]); // restore previous scroll position
+            window.scrollTo(0,opus.browse_view_scrolls[showing]); // restore previous scroll position
 
             return false;
         });
@@ -868,7 +868,7 @@ var o_browse = {
             }
             // total pages indicator
             $('#' + prefix + 'pages', namespace).html(opus[prefix + 'pages']);
-            window.scroll(0,0);  // sometimes you have scrolled down the search tab
+            window.scrollTo(0,opus.browse_view_scrolls[prefix + view_var]);  // sometimes you have scrolled down the search tab
           });
         }
 
@@ -878,13 +878,11 @@ var o_browse = {
 
             // get table headers for table view
             if (!opus.table_headers_drawn) {
-                window.scroll(0,0);  // sometimes you have scrolled down in the search tab
+                window.scrollTo(0,0);  // sometimes you have scrolled down in the search tab
                 o_browse.startDataTable(namespace);
                 return; // startDataTable() starts data table and then calls getBrowseTab again
             }
         }
-        var url = o_hash.getHash() + '&reqno=' + opus.lastRequestNo + add_to_url;
-
         var footer_clicks = opus.browse_footer_clicks[prefix + view_var]; // default: {'gallery':0, 'data':0, 'colls_gallery':0, 'colls_data':0 };
 
         // figure out the page
@@ -921,6 +919,13 @@ var o_browse = {
                 }
             }
         }
+
+        var url = o_hash.getHash() + '&reqno=' + opus.lastRequestNo + add_to_url;
+
+        // remove any existing page= slug before adding in the current page= slug w/new page number
+        url = $.grep(url.split('&'), function(pair, index) {
+          return !pair.startsWith("page");
+        }).join('&');
 
         url += '&page=' + page;
 
@@ -1259,7 +1264,7 @@ var o_browse = {
     // if they match, it triggers refresh, if not then the user is still typing so moves on
     textInputMonitor: function() {
         // which field are we working on? defines which global monitor list we use
-        var ms = 1500;
+        var ms = 750; // original value of 1.5 sec too long
 
         var view_info = o_browse.getViewInfo();
         var namespace = view_info['namespace']; // either '#collection' or '#browse'
