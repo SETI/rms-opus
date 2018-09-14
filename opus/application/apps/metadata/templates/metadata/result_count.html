@@ -1,11 +1,9 @@
 <body>
-{% for dict in data  %} 
-
-<dl>
-	{% for k,v in dict.items %}               
-	    <dt>{{ k }}</dt><dd>{{ v }}</dd>
-	{% endfor %}       
-</dl>
-
-{% endfor %}
+	{% for dict in data  %}
+		<dl>
+			{% for k,v in dict.items %}
+		    <dt>{{ k }}</dt><dd>{{ v }}</dd>
+			{% endfor %}
+		</dl>
+	{% endfor %}
 </body>

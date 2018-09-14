@@ -6,11 +6,9 @@
 			<th>{{ label }}</th>
 		{% endfor %}
 	</tr>
-
 {% endif %}
 
 {% for row in data %}
-
 	<tr id="data__{{ row|index:id_index }}">
 		{% if checkboxes %}
    		<td class="center">
@@ -23,8 +21,7 @@
 					"></span></td>
 		{% endif %}
 		{% for v in row %}
-		    <td class="center">{{ v }}</td>
+	    <td class="center">{{ v }}</td>
 		{% endfor %}
 	</tr>
-
 {% endfor %}

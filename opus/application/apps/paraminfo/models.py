@@ -1,34 +1,10 @@
 from django.db import models
-from django.contrib.contenttypes.models import ContentType
-from dictionary.views import get_def_for_tooltip, get_more_info_url
-
-import logging
-log = logging.getLogger(__name__)
-
-RANK_CHOICES = (('0','Advanced'),('1','Basic'))
+from dictionary.views import get_def_for_tooltip
 
 class ParamInfo(models.Model):
     """
-    This model describes every searchable param in the database
-    each has attributes like display, display order, query type, slug, etc..
-
-    pretty sure this is deprecated:
-    We provide searching accross different missions and instrument (ie: show me all
-    Observations of the A ring where Voyager ISS was using the red filter and Cassini ISS
-    was using a violet filter). This wouldn't work in a traditional relational database
-    (you can't have an Observation that is *both* taken using the Cassini ISS and Voyager ISS)
-
-    To acheive this we tag each parameter with 'mission' or 'instrument' if the field is
-    specific to one of those datasets, and the query builder >>> insert model here <<< groups
-    them appropriately to get all the data
-
-    following our example above, the query issued would look like this:
-
-    select observations.name from observations where
-    (planet='Saturn' and target='A ring' and instrument = 'VGISS' and filter = "red")
-    union
-    (planet='Saturn' and target='A ring' and instrument = 'COISS' and filter = "violet")
-
+    This model describes every searchable param in the database.
+    Each has attributes like display, display order, query type, slug, etc.
     """
     category_name = models.CharField(max_length=150)
     name = models.CharField(max_length=87)
