@@ -23,16 +23,4 @@ urlpatterns = [
     url(r'^__forms/widget/(?P<slug>[-\w]+).html$', api_get_widget),
     url(r'^__forms/column_chooser.html$', api_get_column_chooser),
     url(r'^__initdetail/(?P<opus_id>[-\w]+).html$', api_init_detail_page),
-    url(r'^favicon.ico$',
-        RedirectView.as_view(
-            url=staticfiles_storage.url('favicon.ico'),
-            permanent=False),
-        name="favicon"
-    ),
-    url(r'^robots.txt$',
-        RedirectView.as_view(
-            url=staticfiles_storage.url('robots.txt'),
-            permanent=False),
-        name="robots"
-    ),
 ]
