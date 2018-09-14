@@ -29,4 +29,10 @@ urlpatterns = [
             permanent=False),
         name="favicon"
     ),
+    url(r'^robots.txt$',
+        RedirectView.as_view(
+            url=staticfiles_storage.url('robots.txt'),
+            permanent=False),
+        name="robots"
+    ),
 ]
