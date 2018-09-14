@@ -648,8 +648,10 @@ def md5(filename):
     import hashlib
     d = hashlib.md5()
     try:
-        d.update(open(filename).read())
+        d.update(open(filename, 'rb').read())
     except Exception as e:
+        log.error('Failed to compute MD5 for "%s": %s',
+                  filename, str(e))
         return False
     else:
         return d.hexdigest()
