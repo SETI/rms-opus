@@ -514,13 +514,15 @@ def _construct_query_string(selections, extras):
                            list(model.objects.filter(  Q(label__in=value_list)
                                                      | Q(value__in=value_list))
                                              .values('pk'))]
-            clause = quoted_cat_name+'.'+connection.ops.quote_name(mult_name)
-            clause += ' IN ('
-            clause += ','.join(['%s']*len(mult_values))
-            clause += ')'
-            clauses.append(clause)
-            clause_params += mult_values
-            obs_tables.add(cat_name)
+            if mult_values:
+                clause = (quoted_cat_name+'.'
+                          +connection.ops.quote_name(mult_name))
+                clause += ' IN ('
+                clause += ','.join(['%s']*len(mult_values))
+                clause += ')'
+                clauses.append(clause)
+                clause_params += mult_values
+                obs_tables.add(cat_name)
 
         elif form_type in settings.RANGE_FORM_TYPES:
             # This prevents range queries from getting through twice.
