@@ -279,7 +279,7 @@ def api_get_range_endpoints(request, slug, fmt='json'):
         exit_api_call(api_code, ret)
         raise ret
 
-    param_info = get_param_info_by_slug(slug)
+    param_info = get_param_info_by_slug(slug, from_ui=True)
     if not param_info:
         log.error('get_range_endpoints: Could not find param_info entry for '+
                   'slug %s', str(slug))
@@ -305,7 +305,8 @@ def api_get_range_endpoints(request, slug, fmt='json'):
     param1 = param_no_num + '1'
     param2 = param_no_num + '2'
 
-    if form_type == 'RANGE' and param_info.slug[-1] not in '12':
+    if (form_type in settings.RANGE_FORM_TYPES and
+        param_info.slug[-1] not in '12'):
         param1 = param2 = param_no_num  # single column range query
 
     (selections, extras) = url_to_search_params(request.GET)

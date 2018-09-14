@@ -149,7 +149,7 @@ def url_to_search_params(request_get):
                           +'"%s": %s', param_name, request_get)
                 return None, None
             selections[param_name] = sorted(set(values))
-        elif form_type == 'RANGE':
+        elif form_type in settings.RANGE_FORM_TYPES:
             # For RANGE queries, convert the strings into the internal
             # representations if necessary
             if form_type_func is None:
@@ -850,15 +850,6 @@ def _get_longitude_query(selections, param_name, qtypes):
     name_max = name_no_num + '2'
     col_d_long = cat_name + '.d_' + name_no_num
 
-    if is_single_column_range(param_name):
-        param_name_min = param_name_max = param_name_no_num
-        name_min = name_max = name_no_num
-
-    quoted_param_name_min = (quoted_cat_name+'.'
-                             +connection.ops.quote_name(name_min))
-    quoted_param_name_max = (quoted_cat_name+'.'
-                             +connection.ops.quote_name(name_max))
-
     if len(qtypes) == 0:
         qtypes = ['any']
 
@@ -874,6 +865,30 @@ def _get_longitude_query(selections, param_name, qtypes):
     value_min = float(values_min[0])
     value_max = float(values_max[0])
     qtype = qtypes[0]
+
+    if is_single_column_range(param_name):
+        # A single column range doesn't have center and d_ fields
+        clause = ''
+        params = []
+        quoted_param_name = (quoted_cat_name+'.'
+                             +connection.ops.quote_name(name_no_num))
+        if value_max >= value_min:
+            # Normal range MIN to MAX
+            clause = '(' + quoted_param_name + ' >= %s AND '
+            clause += quoted_param_name + ' <= %s)'
+            params = [value_min, value_max]
+        else:
+            # Wraparound range MIN to 360, 0 to MAX
+            clause = '(' + quoted_param_name + ' >= %s OR '
+            clause += quoted_param_name + ' <= %s)'
+            params = [value_min, value_max]
+        return clause, params
+
+    quoted_param_name_min = (quoted_cat_name+'.'
+                             +connection.ops.quote_name(name_min))
+    quoted_param_name_max = (quoted_cat_name+'.'
+                             +connection.ops.quote_name(name_max))
+
 
     # Find the midpoint and dx of the user's range
     if value_max >= value_min:
