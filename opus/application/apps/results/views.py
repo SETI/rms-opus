@@ -60,11 +60,13 @@ log = logging.getLogger(__name__)
 def api_get_data(request, fmt):
     """Return a page of data for a given search.
 
+    This is a PUBLIC API.
+
     Get data for observations based on search criteria, columns, and sort order.
     Data is returned by "page" in the same sense that OPUS's "Browse Results"
     display is paginated.
 
-    Format: api/data.(json|zip|html|csv)
+    Format: [__]api/data.(json|zip|html|csv)
     Arguments: limit=<N>
                page=<N>
                order=<column>
@@ -104,7 +106,9 @@ def api_get_data(request, fmt):
 def api_get_metadata(request, opus_id, fmt):
     """Return all metadata, sorted by category, for this opus_id.
 
-    Format: api/metadata/(?P<opus_id>[-\w]+).(?P<fmt>[json|html]+
+    This is a PUBLIC API.
+
+    Format: [__]api/metadata/(?P<opus_id>[-\w]+).(?P<fmt>[json|html]+
 
     Arguments: cols=<columns>
                     Limit results to particular columns.
@@ -126,7 +130,9 @@ def api_get_metadata(request, opus_id, fmt):
 def api_get_metadata_v2(request, opus_id, fmt):
     """Return all metadata, sorted by category, for this opus_id.
 
-    Format: api/metadata_v2/(?P<opus_id>[-\w]+).(?P<fmt>[json|html]+
+    This is a PUBLIC API.
+
+    Format: [__]api/metadata_v2/(?P<opus_id>[-\w]+).(?P<fmt>[json|html]+
 
     Arguments: cols=<columns>
                     Limit results to particular columns.
@@ -262,7 +268,9 @@ def _api_get_metadata(api_name, request, opus_id, fmt):
 def api_get_images_by_size(request, size, fmt):
     """Return all images of a particular size for a given search.
 
-    Format: api/images/(?P<size>[thumb|small|med|full]+).
+    This is a PUBLIC API.
+
+    Format: [__]api/images/(?P<size>[thumb|small|med|full]+).
             (?P<fmt>[json|zip|html|csv]+)
     Arguments: limit=<N>
                page=<N>
@@ -318,7 +326,7 @@ def api_get_images_by_size(request, size, fmt):
             image[size] = url
             del image[size+'_url']
 
-    ret = responseFormats({'data': image_list}, fmt,
+    ret = response_formats({'data': image_list}, fmt,
                           template='results/gallery.html', order=order)
     exit_api_call(api_code, ret)
     return ret
@@ -328,7 +336,9 @@ def api_get_images_by_size(request, size, fmt):
 def api_get_images(request, fmt):
     """Return all images of all sizes for a given search.
 
-    Format: api/images.(json|zip|html|csv)
+    This is a PUBLIC API.
+
+    Format: [__]api/images.(json|zip|html|csv)
     Arguments: limit=<N>
                page=<N>
                order=<column>
@@ -372,7 +382,7 @@ def api_get_images(request, fmt):
             'page_no': page_no,
             'limit': limit,
             'count': len(image_list)}
-    ret = responseFormats(data, fmt,
+    ret = response_formats(data, fmt,
                           template='results/gallery.html', order=order)
     exit_api_call(api_code, ret)
     return ret
@@ -381,7 +391,9 @@ def api_get_images(request, fmt):
 def api_get_image(request, opus_id, size='med', fmt='raw'):
     """Return info about a preview image for the given opus_id and size.
 
-    Format: api/image/(?P<size>[thumb|small|med|full]+)/(?P<opus_id>[-\w]+)
+    This is a PUBLIC API.
+
+    Format: [__]api/image/(?P<size>[thumb|small|med|full]+)/(?P<opus_id>[-\w]+)
             .(?P<fmt>[json|zip|html|csv]+)
 
     Can return JSON, ZIP, HTML, or CSV.
@@ -417,7 +429,7 @@ def api_get_image(request, opus_id, size='med', fmt='raw'):
         image['img'] = url
         image['url'] = image[size+'_url']
     data = {'path': path, 'data': image_list}
-    ret = responseFormats(data, fmt, size=size,
+    ret = response_formats(data, fmt, size=size,
                           template='results/image_list.html')
     exit_api_call(api_code, ret)
     return ret
@@ -426,8 +438,10 @@ def api_get_image(request, opus_id, size='med', fmt='raw'):
 def api_get_files(request, opus_id=None, fmt='json'):
     """Return all files for a given opus_id or search results.
 
-    Format: api/files/(?P<opus_id>[-\w]+).(?P<fmt>[json|zip|html|csv]+)
-        or: api/files.(?P<fmt>[json|zip|html|csv]+)
+    This is a PUBLIC API.
+
+    Format: [__]api/files/(?P<opus_id>[-\w]+).(?P<fmt>[json|zip|html|csv]+)
+        or: [__]api/files.(?P<fmt>[json|zip|html|csv]+)
     Arguments: types=<types>
                     Product types
                loc_type=['url', 'path']
@@ -467,13 +481,15 @@ def api_get_files(request, opus_id=None, fmt='json'):
                            product_types=product_types)
     data['data'] = ret
     exit_api_call(api_code, data)
-    return responseFormats(data, fmt=fmt)
+    return response_formats(data, fmt=fmt)
 
 
 def api_get_categories_for_opus_id(request, opus_id):
     """Return a JSON list of all cateories (tables) this opus_id appears in.
 
-    Format: api/categories/(?P<opus_id>[-\w]+).json
+    This is a PUBLIC API.
+
+    Format: [__]api/categories/(?P<opus_id>[-\w]+).json
     """
     api_code = enter_api_call('api_get_categories_for_opus_id', request)
 
@@ -516,7 +532,9 @@ def api_get_categories_for_opus_id(request, opus_id):
 def api_get_categories_for_search(request):
     """Return a JSON list of all cateories (tables) triggered by this search.
 
-    Format: api/categories.json
+    This is a PUBLIC API.
+
+    Format: [__]api/categories.json
 
     Arguments: Normal search arguments
     """
@@ -634,7 +652,7 @@ def get_data(request, fmt, cols=None, api_code=None):
 
     if fmt == 'raw':
         ret = data
-    ret = responseFormats(data, fmt, template='results/data.html',
+    ret = response_formats(data, fmt, template='results/data.html',
                           id_index=id_index,
                           labels=labels, checkboxes=checkboxes,
                           collection=collection, order=order)

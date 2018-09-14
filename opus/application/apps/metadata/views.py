@@ -47,7 +47,9 @@ log = logging.getLogger(__name__)
 def api_get_result_count(request, fmt='json'):
     """Return the result count for a given search.
 
-    Format: api/meta/result_count.(?P<fmt>[json|zip|html|csv]+)
+    This is a PUBLIC API.
+
+    Format: [__]api/meta/result_count.(?P<fmt>[json|zip|html|csv]+)
     Arguments: Normal search and selected-column arguments
 
     Can return JSON, ZIP, HTML, or CSV.
@@ -102,7 +104,7 @@ def api_get_result_count(request, fmt='json'):
     if (request.is_ajax()):
         data['reqno'] = request.GET['reqno']
 
-    ret = responseFormats({'data': [data]}, fmt,
+    ret = response_formats({'data': [data]}, fmt,
                           template='metadata/result_count.html')
     exit_api_call(api_code, ret)
     return ret
@@ -111,7 +113,9 @@ def api_get_result_count(request, fmt='json'):
 def api_get_mult_counts(request, slug, fmt='json'):
     """Return the mults for a given slug along with result counts.
 
-    Format: api/meta/mults/(?P<slug>[-\w]+).(?P<fmt>[json|zip|html|csv]+)
+    This is a PUBLIC API.
+
+    Format: [__]api/meta/mults/(?P<slug>[-\w]+).(?P<fmt>[json|zip|html|csv]+)
     Arguments: Normal search arguments
 
     Can return JSON, ZIP, HTML, or CSV.
@@ -247,7 +251,7 @@ def api_get_mult_counts(request, slug, fmt='json'):
         reqno = request.GET.get('reqno', '')
         multdata['reqno'] = reqno
 
-    ret = responseFormats(multdata, fmt, template='metadata/mults.html')
+    ret = response_formats(multdata, fmt, template='metadata/mults.html')
     exit_api_call(api_code, ret)
     return ret
 
@@ -255,10 +259,12 @@ def api_get_mult_counts(request, slug, fmt='json'):
 def api_get_range_endpoints(request, slug, fmt='json'):
     """Compute and return range widget endpoints (min, max, nulls)
 
+    This is a PUBLIC API.
+
     Compute and return range widget endpoints (min, max, nulls) for the
     widget defined by [slug] based on current search defined in request.
 
-    Format: api/meta/range/endpoints/(?P<slug>[-\w]+)
+    Format: [__]api/meta/range/endpoints/(?P<slug>[-\w]+)
             .(?P<fmt>[json|zip|html|csv]+)
     Arguments: Normal search arguments
 
@@ -353,7 +359,7 @@ def api_get_range_endpoints(request, slug, fmt='json'):
 
     cached_val = cache.get(cache_key)
     if cached_val is not None:
-        ret = responseFormats(cached_val, fmt, template='metadata/mults.html')
+        ret = response_formats(cached_val, fmt, template='metadata/mults.html')
         exit_api_call(api_code, ret)
         return ret
 
@@ -421,7 +427,7 @@ def api_get_range_endpoints(request, slug, fmt='json'):
 
     cache.set(cache_key, range_endpoints)
 
-    ret = responseFormats(range_endpoints, fmt, template='metadata/mults.html')
+    ret = response_formats(range_endpoints, fmt, template='metadata/mults.html')
     exit_api_call(api_code, ret)
     return ret
 
@@ -429,12 +435,14 @@ def api_get_range_endpoints(request, slug, fmt='json'):
 def api_get_fields(request, fmt='json', field=''):
     """Return information about fields in the database (slugs).
 
+    This is a PUBLIC API.
+
     This is helper method for people using the public API.
     It's provides a list of all slugs in the database and helpful info
     about each one like label, dict/more_info links, etc.
 
-    Format: api/fields/(?P<field>\w+).(?P<fmt>[json|zip|html|csv]+)
-        or: api/fields.(?P<fmt>[json|zip|html|csv]+)
+    Format: [__]api/fields/(?P<field>\w+).(?P<fmt>[json|zip|html|csv]+)
+        or: [__]api/fields.(?P<fmt>[json|zip|html|csv]+)
 
     Can return JSON, ZIP, HTML, or CSV.
 
@@ -513,5 +521,5 @@ def get_fields_info(fmt, field='', category='', collapse=False):
     if fmt == 'raw':
         return return_obj
 
-    return responseFormats({'data': return_obj}, fmt=fmt,
+    return response_formats({'data': return_obj}, fmt=fmt,
                            template='metadata/fields.html')

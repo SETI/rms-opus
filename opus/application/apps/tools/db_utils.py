@@ -1,8 +1,14 @@
+################################################################################
+#
+# tools/db_utils.py
+#
+################################################################################
+
 from django.apps import apps
 
-import settings
-
 from tools.app_utils import get_mult_name, parse_form_type
+
+import settings
 
 
 MYSQL_TABLE_NOT_EXISTS = 1146
@@ -27,6 +33,7 @@ def query_table_for_opus_id(table_name, opus_id):
     return table_model.objects.filter(obs_general__opus_id=opus_id)
 
 def lookup_pretty_value_for_mult(param_info, value):
+    "Given a param_info for a mult and the mult value, return the pretty label"
     if param_info.form_type is None:
         return None
 

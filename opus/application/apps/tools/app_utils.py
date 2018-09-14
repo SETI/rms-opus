@@ -1,22 +1,33 @@
+################################################################################
+#
+# tools/app_utils.py
+#
+################################################################################
+
 from collections import OrderedDict
-import json
-from django.http import HttpResponse
-from django.http import Http404
-from io import StringIO
-from zipfile import ZipFile
-from django.http import HttpResponse
-from django.shortcuts import render_to_response
+import csv
 import datetime
-import random, string, csv, settings, re
-from django.core import serializers
+from io import StringIO
+import json
+import random
+import string
 import time
-from search.models import ObsGeneral
+from zipfile import ZipFile
+
+from django.core import serializers
 from django.core.exceptions import ObjectDoesNotExist
+from django.http import Http404, HttpResponse
+from django.shortcuts import render_to_response
+
+from search.models import ObsGeneral
+
+import settings
 
 import logging
 log = logging.getLogger(__name__)
 
-def responseFormats(data, fmt, **kwargs):
+
+def response_formats(data, fmt, **kwargs):
     """
     this is REALLY AWFUL.
 
@@ -96,44 +107,22 @@ def responseFormats(data, fmt, **kwargs):
     # like: [{opus_id=something1, planet=SAt, target = Pan}, {opus_id=something21, planet=Sat, target = Pan}]
     # each row is one dictionary
     elif fmt == 'csv':   # must pass a list of dicts
-        return listToCSV(data['page'],kwargs['labels'])
+        data = data['page']
+        field_names = kwargs['labels']
+        filename = download_file_name()
+        response = HttpResponse(content_type='text/csv')
+        response['Content-Disposition'] = 'attachment; filename=' + filename + '.csv'
+        writer = csv.writer(response)
+        writer.writerow([label for label in field_names])   # first row
+        writer.writerows(data)
+        return response
 
     raise Http404
 
 
-
-# data is a list of dictionaries
-# like: [{opus_id=something1, planet=SAt, target = Pan}, {opus_id=something21, planet=Sat, target = Pan}]
-# each row is one dictionary
-def dictToCSV(data):
-    filename = downloadFileName()
-    response = HttpResponse(content_type='text/csv')
-    response['Content-Disposition'] = 'attachment; filename=' + filename + '.csv'
-    writer = csv.writer(response)
-    writer.writerow([k for k,v in data[0].items()])   # first row
-    for obs in data:
-        writer.writerow([v for k,v in obs.items()])
-    return response
-
-
-# field names = list, data = list of lists or for a single column csv a list of non-list values
-def listToCSV(data,field_names):
-    filename = downloadFileName()
-    response = HttpResponse(content_type='text/csv')
-    response['Content-Disposition'] = 'attachment; filename=' + filename + '.csv'
-    writer = csv.writer(response)
-    writer.writerow([label for label in field_names])   # first row
-    writer.writerows(data)
-    return response
-
-
-
 def zipped(data):
-    """
-    the unique name is a timestamp
-
-    """
-    filename = downloadFileName()
+    "Create a zip file from the given data"
+    filename = download_file_name()
 
     in_memory = StringIO()
     zip = ZipFile(in_memory, "a")
@@ -153,27 +142,35 @@ def zipped(data):
 
     return response
 
-def downloadFileName():
-    randstr = random.choice(string.ascii_lowercase) + random.choice(string.ascii_lowercase) + random.choice(string.ascii_lowercase)
-    return 'ringdata_' + randstr + '_' + 'T'.join(str(datetime.datetime.utcnow()).split(' '))
-
-
+def download_file_name():
+    "Create a unique download filename based on the current time"
+    randstr = (random.choice(string.ascii_lowercase)
+               + random.choice(string.ascii_lowercase)
+               + random.choice(string.ascii_lowercase))
+    return ('ringdata_' + randstr + '_'
+            + 'T'.join(str(datetime.datetime.utcnow()).split(' ')))
 
 def strip_numeric_suffix(name):
-    try:    return re.match("(.*)[1|2]",name).group(1)
-    except: return name
+    "Strip a trailing 1 or 2, if any, from a slug"
+    if name[-1] in ['1', '2']:
+        return name[:-1]
+    return name
 
 def get_numeric_suffix(name):
-    try:    return re.match(".*(1|2)",name).group(1)
-    except: return
+    "Get a trailing 1 or 2, if any, from a slug"
+    if name[-1] in ['1', '2']:
+        return name[-1]
+    return None
 
 def sort_dictionary(old_dict):
+    "Sort a dictionary by key and return an equivalent OrderedDict"
     new_dict = OrderedDict()
     for key in sorted(old_dict.keys()):
         new_dict[key] = old_dict[key]
     return new_dict
 
 def get_session_id(request):
+    "Get the current session id, or create one if none available"
     if not request.session.get('has_session'):
         request.session['has_session'] = True
     if not request.session.session_key:
@@ -186,6 +183,7 @@ _API_CALL_NUMBER = 0
 _API_START_TIMES = {}
 
 def enter_api_call(name, request, kwargs=None):
+    "Record the entry into an API"
     global _API_CALL_NUMBER
     _API_CALL_NUMBER += 1
     if settings.OPUS_LOG_API_CALLS:
@@ -200,6 +198,7 @@ def enter_api_call(name, request, kwargs=None):
     return _API_CALL_NUMBER
 
 def exit_api_call(api_code, ret):
+    "Record the exit into an API"
     end_time = time.time()
     if settings.OPUS_LOG_API_CALLS:
         s = 'API ' + str(api_code) + ' EXIT'
@@ -234,9 +233,11 @@ def parse_form_type(s):
     return form_type, form_type_func, form_type_format
 
 def is_old_format_ring_obs_id(s):
-    return len(s) > 2 and s[1] == '_'
+    "Return True if the string is a valid old-format ringobsid"
+    return len(s) > 2 and (s[0] == '_' or s[1] == '_')
 
 def convert_ring_obs_id_to_opus_id(ring_obs_id):
+    "Given an old-format ringobsid, return the new opusid"
     if not is_old_format_ring_obs_id(ring_obs_id):
         return ring_obs_id
     try:
@@ -248,6 +249,5 @@ def convert_ring_obs_id_to_opus_id(ring_obs_id):
     return ring_obs_id
 
 def get_mult_name(param_name):
-    """ pass param_name, returns mult widget foreign key table name
-        the tables themselves are in the search/models.py """
+    "Returns mult widget foreign key table name"
     return 'mult_' + '_'.join(param_name.split('.'))

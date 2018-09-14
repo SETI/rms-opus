@@ -925,20 +925,6 @@ def _get_longitude_query(selections, param_name, qtypes):
 
     return clause, params
 
-def convertTimes(value_list):
-    """ other conversion scripts are 'seconds_to_time','seconds_to_et' """
-    converted = []
-    for time in value_list:
-        try:
-            (day, sec, timetype) = julian.day_sec_type_from_string(time)
-            time_sec = julian.tai_from_day(day) + sec
-            converted += [time_sec]
-        except ParseException:
-            log.error("Could not convert time: %s", time)
-            converted += [None]
-    return converted
-
-
 def get_user_search_table_name(num):
     """ pass cache_no, returns user search table name"""
     return 'cache_' + str(num);
@@ -984,6 +970,7 @@ def is_single_column_range(param_name):
     return False
 
 def parse_order_slug(all_order):
+    "Given a list of slugs a,b,-c,d create the params and descending lists"
     order_params = []
     order_descending_params = []
 
@@ -1009,6 +996,7 @@ def parse_order_slug(all_order):
     return order_params, order_descending_params
 
 def create_order_by_sql(order_params, descending_params):
+    "Given params and descending lists, make ORDER BY SQL"
     order_mult_tables = set()
     order_obs_tables = set()
     order_sql = ''

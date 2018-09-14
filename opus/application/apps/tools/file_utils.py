@@ -1,15 +1,19 @@
 ################################################################################
-# file_utils.py
+#
+# tools/file_utils.py
+#
 ################################################################################
 
 from collections import OrderedDict
-
-from django.http import HttpResponse
 import json
 
-import pdsfile
+from django.http import HttpResponse
+
 import tools.app_utils as app_utils
+
 import settings
+
+import pdsfile
 
 import logging
 log = logging.getLogger(__name__)
@@ -148,7 +152,7 @@ def get_pds_products(opus_id_list=None, fmt='raw', loc_type='url',
     if fmt == 'raw':
         return results
 
-    return app_utils.responseFormats({'data': results}, fmt,
+    return app_utils.response_formats({'data': results}, fmt,
                                      template='results/list.html')
     # if fmt == 'json':
     #     return HttpResponse(json.dumps({'data': results}),
