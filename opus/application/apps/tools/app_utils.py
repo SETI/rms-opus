@@ -152,13 +152,13 @@ def download_file_name():
 
 def strip_numeric_suffix(name):
     "Strip a trailing 1 or 2, if any, from a slug"
-    if name[-1] in ['1', '2']:
+    if len(name) > 0 and name[-1] in ['1', '2']:
         return name[:-1]
     return name
 
 def get_numeric_suffix(name):
     "Get a trailing 1 or 2, if any, from a slug"
-    if name[-1] in ['1', '2']:
+    if len(name) > 0 and name[-1] in ['1', '2']:
         return name[-1]
     return None
 

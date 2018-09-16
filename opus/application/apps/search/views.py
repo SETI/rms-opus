@@ -90,6 +90,8 @@ def url_to_search_params(request_get):
         if slug == 'order':
             all_order = search_param[1]
             order_params, order_descending_params = parse_order_slug(all_order)
+            if order_params is None:
+                return None, None
             extras['order'] = (order_params, order_descending_params)
             continue
         if slug in settings.SLUGS_NOT_IN_DB:
@@ -254,9 +256,9 @@ def get_user_query_table(selections, extras, api_code=None):
 
     # Cache table does not exist
     # We will make one by doing some data querying
-    sql, params = _construct_query_string(selections, extras)
+    sql, params = construct_query_string(selections, extras)
     if sql is None:
-        log.error('get_user_query_table: _construct_query_string failed'
+        log.error('get_user_query_table: construct_query_string failed'
                   +' *** Selections %s *** Extras %s',
                   str(selections), str(extras))
         return None
@@ -466,7 +468,7 @@ def get_param_info_by_slug(slug, from_ui=False):
 #
 ################################################################################
 
-def _construct_query_string(selections, extras):
+def construct_query_string(selections, extras):
     """Given a set selections,extras generate the appropriate SQL SELECT"""
     all_qtypes = extras['qtypes'] if 'qtypes' in extras else []
     finished_ranges = [] # Ranges are done for both sides at once so track
@@ -482,18 +484,20 @@ def _construct_query_string(selections, extras):
 
     cursor = connection.cursor()
 
-    for param_name, value_list in selections.items():
+    # We sort this so that testing results are predictable
+    for param_name in sorted(selections.keys()):
+        value_list = selections[param_name]
         # Lookup info about this param_name
         param_name_no_num = strip_numeric_suffix(param_name)
         param_info = _get_param_info_by_qualified_name(param_name)
-        cat_name = param_info.category_name
-        quoted_cat_name = connection.ops.quote_name(cat_name)
-        name = param_info.name
         if not param_info:
-            log.error('_construct_query_string: No param_info for "%s"'
+            log.error('construct_query_string: No param_info for "%s"'
                       +' *** Selections %s *** Extras *** %s', param_name,
                       str(selections), str(extras))
             return None, None
+        cat_name = param_info.category_name
+        quoted_cat_name = connection.ops.quote_name(cat_name)
+        name = param_info.name
 
         if param_name_no_num in all_qtypes:
             qtypes = all_qtypes[param_name_no_num]
@@ -514,6 +518,12 @@ def _construct_query_string(selections, extras):
                            list(model.objects.filter(  Q(label__in=value_list)
                                                      | Q(value__in=value_list))
                                              .values('pk'))]
+            if len(mult_values) != len(value_list):
+                log.error('construct_query_string: Bad mult data for "%s", '
+                          +'found %s'
+                          +' *** Selections %s *** Extras *** %s', param_name,
+                          str(mult_values), str(selections), str(extras))
+                return None, None
             if mult_values:
                 clause = (quoted_cat_name+'.'
                           +connection.ops.quote_name(mult_name))
@@ -542,16 +552,16 @@ def _construct_query_string(selections, extras):
                 # Both sides of range must be defined by user for this to work.
                 if (selections.get(param_name_no_num + '1', False) and
                     selections.get(param_name_no_num + '2', False)):
-                    clause, params = _get_longitude_query(selections,
+                    clause, params = get_longitude_query(selections,
                                                           param_name, qtypes)
                 else:
                     # XXX Need to report this to the user somehow
                     # Pretend this is a range query
-                    clause, params = _get_range_query(selections, param_name,
+                    clause, params = get_range_query(selections, param_name,
                                                       qtypes)
             else:
                 # Get the range query object and append it to the query
-                clause, params = _get_range_query(selections, param_name,
+                clause, params = get_range_query(selections, param_name,
                                                          qtypes)
 
             if clause is None:
@@ -561,8 +571,7 @@ def _construct_query_string(selections, extras):
             obs_tables.add(cat_name)
 
         elif form_type == 'STRING':
-            clause, params = _get_string_query(selections, param_name,
-                                                      value_list, qtypes)
+            clause, params = get_string_query(selections, param_name, qtypes)
             if clause is None:
                 return None, None
             clauses.append(clause)
@@ -570,7 +579,7 @@ def _construct_query_string(selections, extras):
             obs_tables.add(cat_name)
 
         else:
-            log.error('_construct_query_string: Unknown field type "%s" for '
+            log.error('construct_query_string: Unknown field type "%s" for '
                       +'param "%s"', form_type, param_name)
 
     # Make the ordering SQL
@@ -620,7 +629,7 @@ def _construct_query_string(selections, extras):
     return sql, clause_params
 
 
-def _get_string_query(selections, param_name, values, qtypes):
+def get_string_query(selections, param_name, qtypes):
     """Builds query for strings.
 
     The following q-types are supported:
@@ -630,6 +639,8 @@ def _get_string_query(selections, param_name, values, qtypes):
         matches
         excludes
     """
+    values = selections[param_name]
+
     param_info = _get_param_info_by_qualified_name(param_name)
     if not param_info:
         return None, None
@@ -691,7 +702,7 @@ def _get_string_query(selections, param_name, values, qtypes):
 
     return clause, params
 
-def _get_range_query(selections, param_name, qtypes):
+def get_range_query(selections, param_name, qtypes):
     """Builds query for numeric ranges.
 
     This can either be a single column range (one table column holds the value)
@@ -719,7 +730,7 @@ def _get_range_query(selections, param_name, qtypes):
     values_max = selections.get(param_name_max, [])
 
     if len(values_min) > 1 or len(values_max) > 1:
-        log.error('_get_range_query: More than one value specified for '
+        log.error('get_range_query: More than one value specified for '
                   +'"%s" - MIN %s MAX %s '
                   +'*** Selections %s *** Qtypes %s ***',
                   param_name, str(values_min), str(values_max),
@@ -737,6 +748,8 @@ def _get_range_query(selections, param_name, qtypes):
     if is_single_column_range(param_name):
         param_name_min = param_name_max = param_name_no_num
         name_min = name_max = name_no_num
+        # qtypes are meaningless for single column ranges!
+        qtypes = ['any']
 
     quoted_param_name_min = (quoted_cat_name+'.'
                              +connection.ops.quote_name(name_min))
@@ -747,7 +760,7 @@ def _get_range_query(selections, param_name, qtypes):
         qtypes = ['any']
 
     if len(qtypes) != 1:
-        log.error('_get_range_query: Not one value specified for qtype '
+        log.error('get_range_query: Not one value specified for qtype '
                   +'for "%s"'
                   +'*** Selections %s *** Qtypes %s ***',
                   param_name, str(selections), str(qtypes))
@@ -801,14 +814,14 @@ def _get_range_query(selections, param_name, qtypes):
             params.append(value_max)
 
     else:
-        log.error('_get_range_query: Unknown qtype "%s" '
+        log.error('get_range_query: Unknown qtype "%s" '
                   +'for "%s"'
                   +'*** Selections %s *** Qtypes %s ***',
                   qtype, param_name, str(selections), str(qtypes))
 
     return clause, params
 
-def _get_longitude_query(selections, param_name, qtypes):
+def get_longitude_query(selections, param_name, qtypes):
     """Builds query for longitude ranges.
 
     Both sides of the range must be specified.
@@ -836,7 +849,7 @@ def _get_longitude_query(selections, param_name, qtypes):
     values_max = selections.get(param_name_max, [])
 
     if len(values_min) != 1 or len(values_max) != 1:
-        log.error('_get_longitude_query: Must have one value for each '
+        log.error('get_longitude_query: Must have one value for each '
                   +'"%s" - MIN %s MAX %s '
                   +'*** Selections %s *** Qtypes %s ***',
                   param_name, str(values_min), str(values_max),
@@ -856,7 +869,7 @@ def _get_longitude_query(selections, param_name, qtypes):
         qtypes = ['any']
 
     if len(qtypes) != 1:
-        log.error('_get_longitude_query: Not one value specified for qtype '
+        log.error('get_longitude_query: Not one value specified for qtype '
                   +'for "%s"'
                   +'*** Selections %s *** Qtypes %s ***',
                   param_name, str(selections), str(qtypes))
@@ -918,7 +931,7 @@ def _get_longitude_query(selections, param_name, qtypes):
         params += sep_params
         params.append(d_long)
     else:
-        log.error('_get_longitude_query: Unknown qtype "%s" '
+        log.error('get_longitude_query: Unknown qtype "%s" '
                   +'for "%s"'
                   +'*** Selections %s *** Qtypes %s ***',
                   qtype, param_name, str(selections), str(qtypes))
@@ -938,6 +951,9 @@ def get_user_search_table_name(num):
 
 def _get_param_info_by_qualified_name(param_name):
     "Given a qualified name cat.name return the ParamInfo"
+    if param_name.find('.') == -1:
+        return None
+
     cat_name = param_name.split('.')[0]
     name = param_name.split('.')[1]
 
@@ -955,6 +971,9 @@ def _get_param_info_by_qualified_name(param_name):
 
 def is_single_column_range(param_name):
     "Given a qualified name cat.name return True if it's a single-column range"
+    if param_name.find('.') == -1:
+        return False
+
     cat_name = param_name.split('.')[0]
     name = param_name.split('.')[1]
 
@@ -1006,7 +1025,7 @@ def create_order_by_sql(order_params, descending_params):
             order_slug = order_params[i]
             pi = _get_param_info_by_qualified_name(order_slug)
             if not pi:
-                log.error('_construct_query_string: Unable to resolve order'
+                log.error('construct_query_string: Unable to resolve order'
                           +' slug "%s"', order_slug)
                 return None, None
             (form_type, form_type_func,

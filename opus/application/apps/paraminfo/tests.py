@@ -45,7 +45,7 @@ class ParamInfoTests(TestCase):
 
     def test__surface_geo_results_label_not_null(self):
         count = ParamInfo.objects.filter(category_name__contains="surface_geo", label_results='').count()
-        print "you may need to \n update param_info set label_results = label where category_name like '%surface_geo%';"
+        print("you may need to \n update param_info set label_results = label where category_name like '%surface_geo%';")
         self.assertEqual(0, count)
 
     def test__surface_geo_all_exist(self):
@@ -59,8 +59,8 @@ class ParamInfoTests(TestCase):
                               # i dunno why it impossible to do a distinct on this
         for cat in all_geo_categories:
             all_names_count = ParamInfo.objects.filter(category_name=cat).values_list('name', flat=True).count()
-            print cat
-            print all_names_count
+            print(cat)
+            print(all_names_count)
             self.assertEqual(expected_number_fields, all_names_count)
 
     def test__primary_file_spec_has_form_type(self):

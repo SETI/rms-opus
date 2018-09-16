@@ -41,7 +41,7 @@ class UITests(TestCase):
 
     def test__getDataTable(self):
         response = self.c.get('/opus/__table_headers.html')
-        print response.content
+        print(response.content)
         self.assertEqual(response.status_code, 200)
         self.assertGreater(len(response.content), 1400)
         self.assertEqual(str(response.content).strip().find('<table class = "data_table'), 0 )
@@ -60,7 +60,7 @@ class UITests(TestCase):
 
     def test__pluto_has_grouping_in_general_target_name(self):
         fields = [f.value for f in MultObsGeneralTargetName.objects.filter(grouping='OTHER')]
-        print """
+        print(""")
             if this fails you need to:
 
                 update mult_obs_general_target_name set planet_group = 'PLU' where value = 'PLUTO';
@@ -71,7 +71,7 @@ class UITests(TestCase):
 
     def test__pluto_has_grouping_in_surface_target_name(self):
         fields = [f.value for f in MultObsSurfaceGeometryTargetName.objects.filter(grouping='OTHER')]
-        print """
+        print(""")
             if this fails you need to:
 
                 update mult_obs_general_target_name set planet_group = 'PLU' where value = 'PLUTO';
