@@ -125,7 +125,7 @@ def api_get_metadata(request, opus_id, fmt):
     JSON is indexed by pretty category name, then by INTERNAL DATABASE COLUMN
     NAME (EEK!).
     """
-    return _api_get_metadata('api_get_metadata', request, opus_id, fmt)
+    return get_metadata('api_get_metadata', request, opus_id, fmt)
 
 def api_get_metadata_v2(request, opus_id, fmt):
     """Return all metadata, sorted by category, for this opus_id.
@@ -148,9 +148,9 @@ def api_get_metadata_v2(request, opus_id, fmt):
 
     JSON is indexed by pretty category name, then by field slug.
     """
-    return _api_get_metadata('api_get_metadata_v2', request, opus_id, fmt)
+    return get_metadata('api_get_metadata_v2', request, opus_id, fmt)
 
-def _api_get_metadata(api_name, request, opus_id, fmt):
+def get_metadata(api_name, request, opus_id, fmt):
     api_code = enter_api_call(api_name, request)
 
     if not request or request.GET is None:

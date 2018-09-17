@@ -24,6 +24,15 @@ from search.views import *
 from results.views import *
 from django.http import QueryDict
 
+# url(r'^admin/', admin.site.urls),
+# url(r'^about/$', api_about),
+# url(r'^__browse_headers.html$', api_get_browse_headers),
+# url(r'^__table_headers.html$', api_get_table_headers),
+# url(r'^__menu.html$', api_get_menu),
+# url(r'^__forms/widget/(?P<slug>[-\w]+).html$', api_get_widget),
+# url(r'^__forms/column_chooser.html$', api_get_column_chooser),
+# url(r'^__initdetail/(?P<opus_id>[-\w]+).html$', api_init_detail_page),
+
 cursor = connection.cursor()
 
 SESSION_ENGINE = 'django.contrib.sessions.backends.cache'
@@ -39,71 +48,71 @@ class UITests(TestCase):
     selections = {}
     selections[param_name] = ['Jupiter']
 
-    def test__getDataTable(self):
-        response = self.c.get('/opus/__table_headers.html')
-        print(response.content)
-        self.assertEqual(response.status_code, 200)
-        self.assertGreater(len(response.content), 1400)
-        self.assertEqual(str(response.content).strip().find('<table class = "data_table'), 0 )
-
-    def test__getWidget_planet_json(self):
-        response = self.c.get('/opus/__forms/widget/planet.html')
-        self.assertEqual(response.status_code, 200)
-        self.assertGreater(len(response.content), 2000)
-        self.assertEqual(str(response.content).strip().find('<div class="row'), 0 )
-
-    def test__getWidget_target_json(self):
-        response = self.c.get('/opus/__forms/widget/target.html')
-        self.assertEqual(response.status_code, 200)
-        self.assertGreater(len(response.content), 2000)
-        self.assertEqual(str(response.content).strip().find('<div class="row'), 0 )
-
-    def test__pluto_has_grouping_in_general_target_name(self):
-        fields = [f.value for f in MultObsGeneralTargetName.objects.filter(grouping='OTHER')]
-        print(""")
-            if this fails you need to:
-
-                update mult_obs_general_target_name set planet_group = 'PLU' where value = 'PLUTO';
-                update mult_obs_surface_geometry_target_name set grouping = 'PLU' where value = 'PLUTO';
-
-            """
-        self.assertNotIn('PLUTO', fields)
-
-    def test__pluto_has_grouping_in_surface_target_name(self):
-        fields = [f.value for f in MultObsSurfaceGeometryTargetName.objects.filter(grouping='OTHER')]
-        print(""")
-            if this fails you need to:
-
-                update mult_obs_general_target_name set planet_group = 'PLU' where value = 'PLUTO';
-                update mult_obs_surface_geometry_target_name set grouping = 'PLU' where value = 'PLUTO';
-
-            """
-        self.assertNotIn('PLUTO', fields)
-
-    """
-    def test__getMenu(self):
-        self.assertEqual(True, False)
-
-    def test__getQuickPage(self):
-        self.assertEqual(True, False)
-
-    """
-
-    def test__getDetailPage(self):
-        response = self.c.get('/opus/api/detail/S_IMG_CO_ISS_1686170088_N.json')
-        self.assertEqual(response.status_code, 200)
-        self.assertGreater(len(response.content), 2000)
-
-
-    """
-
-    def test__getDetailQuick(self):
-        self.assertEqual(True, False)
-
-    def test__getDetailQuick(self):
-        self.assertEqual(True, False)
-
-    def test__getColumnChooser(self):
-        self.assertEqual(True, False)
-
-    """
+    # def test__getDataTable(self):
+    #     response = self.c.get('/opus/__table_headers.html')
+    #     print(response.content)
+    #     self.assertEqual(response.status_code, 200)
+    #     self.assertGreater(len(response.content), 1400)
+    #     self.assertEqual(str(response.content).strip().find('<table class = "data_table'), 0 )
+    #
+    # def test__getWidget_planet_json(self):
+    #     response = self.c.get('/opus/__forms/widget/planet.html')
+    #     self.assertEqual(response.status_code, 200)
+    #     self.assertGreater(len(response.content), 2000)
+    #     self.assertEqual(str(response.content).strip().find('<div class="row'), 0 )
+    #
+    # def test__getWidget_target_json(self):
+    #     response = self.c.get('/opus/__forms/widget/target.html')
+    #     self.assertEqual(response.status_code, 200)
+    #     self.assertGreater(len(response.content), 2000)
+    #     self.assertEqual(str(response.content).strip().find('<div class="row'), 0 )
+    #
+    # def test__pluto_has_grouping_in_general_target_name(self):
+    #     fields = [f.value for f in MultObsGeneralTargetName.objects.filter(grouping='OTHER')]
+    #     print(""")
+    #         if this fails you need to:
+    #
+    #             update mult_obs_general_target_name set planet_group = 'PLU' where value = 'PLUTO';
+    #             update mult_obs_surface_geometry_target_name set grouping = 'PLU' where value = 'PLUTO';
+    #
+    #         """
+    #     self.assertNotIn('PLUTO', fields)
+    #
+    # def test__pluto_has_grouping_in_surface_target_name(self):
+    #     fields = [f.value for f in MultObsSurfaceGeometryTargetName.objects.filter(grouping='OTHER')]
+    #     print(""")
+    #         if this fails you need to:
+    #
+    #             update mult_obs_general_target_name set planet_group = 'PLU' where value = 'PLUTO';
+    #             update mult_obs_surface_geometry_target_name set grouping = 'PLU' where value = 'PLUTO';
+    #
+    #         """
+    #     self.assertNotIn('PLUTO', fields)
+    #
+    # """
+    # def test__getMenu(self):
+    #     self.assertEqual(True, False)
+    #
+    # def test__getQuickPage(self):
+    #     self.assertEqual(True, False)
+    #
+    # """
+    #
+    # def test__getDetailPage(self):
+    #     response = self.c.get('/opus/api/detail/S_IMG_CO_ISS_1686170088_N.json')
+    #     self.assertEqual(response.status_code, 200)
+    #     self.assertGreater(len(response.content), 2000)
+    #
+    #
+    # """
+    #
+    # def test__getDetailQuick(self):
+    #     self.assertEqual(True, False)
+    #
+    # def test__getDetailQuick(self):
+    #     self.assertEqual(True, False)
+    #
+    # def test__getColumnChooser(self):
+    #     self.assertEqual(True, False)
+    #
+    # """

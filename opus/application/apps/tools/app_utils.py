@@ -184,6 +184,8 @@ _API_START_TIMES = {}
 
 def enter_api_call(name, request, kwargs=None):
     "Record the entry into an API"
+    if name is None:
+        return None
     global _API_CALL_NUMBER
     _API_CALL_NUMBER += 1
     if settings.OPUS_LOG_API_CALLS:
@@ -199,6 +201,8 @@ def enter_api_call(name, request, kwargs=None):
 
 def exit_api_call(api_code, ret):
     "Record the exit into an API"
+    if api_code is None:
+        return
     end_time = time.time()
     if settings.OPUS_LOG_API_CALLS:
         s = 'API ' + str(api_code) + ' EXIT'

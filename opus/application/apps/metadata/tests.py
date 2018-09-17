@@ -1,12 +1,11 @@
-"""
-# metadata tests
+# metadata/test.py
 
-"""
 import json
-# from django.test import TestCase  removed because it deletes test table data after every test
 from unittest import TestCase
-from django.test.client import Client
+
 from django.db import connection
+from django.test.client import Client
+
 from metadata.views import *
 
 import logging
@@ -18,194 +17,228 @@ SESSION_ENGINE = 'django.contrib.sessions.backends.cache'
 SESSION_COOKIE_NAME = 'opus-test-cookie'
 settings.CACHE_BACKEND = 'dummy:///'
 
+# url(r'^api/meta/result_count.(?P<fmt>[json|zip|html|csv]+)$', api_get_result_count),
+# url(r'^__api/meta/result_count.(?P<fmt>[json|zip|html|csv]+)$', api_get_result_count),
+# url(r'^api/meta/mults/(?P<slug>[-\w]+).(?P<fmt>[json|zip|html|csv]+)$', api_get_mult_counts),
+# url(r'^__api/meta/mults/(?P<slug>[-\w]+).(?P<fmt>[json|zip|html|csv]+)$', api_get_mult_counts),
+# url(r'^api/meta/range/endpoints/(?P<slug>[-\w]+).(?P<fmt>[json|zip|html|csv]+)$', api_get_range_endpoints),
+# url(r'^__api/meta/range/endpoints/(?P<slug>[-\w]+).(?P<fmt>[json|zip|html|csv]+)$', api_get_range_endpoints),
+# url(r'^api/fields/(?P<field>\w+).(?P<fmt>[json|zip|html|csv]+)$', api_get_fields),
+# url(r'^__api/fields/(?P<field>\w+).(?P<fmt>[json|zip|html|csv]+)$', api_get_fields),
+# url(r'^api/fields.(?P<fmt>[json|zip|html|csv]+)$', api_get_fields),
+# url(r'^__api/fields.(?P<fmt>[json|zip|html|csv]+)$', api_get_fields),
+
 class metadataTests(TestCase):
 
     c = Client()
-    param_name = 'obs_general.planet_id'
-    selections = {}
-    selections[param_name] = ['Saturn']
+
 
     def test__get_range_endpoints_times(self):
-        url = '/opus/api/meta/range/endpoints/timesec1.json?planet=Saturn&view=search&browse=gallery&colls_browse=gallery&page=1&limit=100&order=&cols=opusid,planet,target,phase1&widgets=planet,target,timesec1&widgets2=&detail=&reqno=1'
-        print(url)
-        response = self.c.get(url)
-        print('got:')
-        print(response.content)
-        got = json.loads(response.content)
+        "Range endpoints times."
+        response = self.c.get('/opus/__api/meta/range/endpoints/timesec1.json?volumeid=COISS_2111')
         self.assertEqual(response.status_code, 200)
-
-        try:
-            expected = {"max": "2011-269T19:59:51.124", "nulls": 0, "min": "2009-09-01T00:00:01"}
-            print('expected:')
-            print(expected)
-            self.assertEqual(expected['max'], got['max'])
-            self.assertEqual(expected['min'], got['min'])
-
-        except AssertionError:
-            expected = {"max": "2016-09-30T23:34:23.778", "nulls": 0, "min": "1979-04-07T19:12:41"}
-            print('expected:')
-            print(expected)
-            self.assertGreaterEqual(got['max'], expected['max'])
-            self.assertEqual(got['min'], expected['min'])
+        jdata = json.loads(response.content)
+        expected = {"max": "2017-03-31T13:05:35.059", "nulls": 0, "min": "2017-02-17T23:59:39.059"}
+        print('got:')
+        print(str(jdata))
+        print('expected:')
+        print(str(expected))
+        self.assertEqual(expected, jdata)
 
     def test__get_range_endpoints_COISS_greaterpixelsize1(self):
-        response = self.c.get("/opus/api/meta/range/endpoints/greaterpixelsize1.json?instrumentid=Cassini+ISS")
+        "Range endpoints greaterpixelsize1."
+        response = self.c.get('/opus/__api/meta/range/endpoints/greaterpixelsize1.json?instrumentid=Cassini+ISS')
+        self.assertEqual(response.status_code, 200)
         jdata = json.loads(response.content)
         expected = {"max": 1024.0, "nulls": 0, "min": 256.0}
-        print('got: \n {} \n expected: \n {}').format(str(jdata), str(expected))
-        self.assertEqual(expected['max'], jdata['max'])
-        self.assertEqual(expected['min'], jdata['min'])
-        self.assertEqual(expected['nulls'], jdata['nulls'])
+        print('got:')
+        print(str(jdata))
+        print('expected:')
+        print(str(expected))
+        self.assertEqual(expected, jdata)
+
+    def test__get_range_endpoints_COISS_greaterpixelsize2(self):
+        "Range endpoints greaterpixelsize1."
+        response = self.c.get('/opus/api/meta/range/endpoints/greaterpixelsize2.json?instrumentid=Cassini+ISS')
+        self.assertEqual(response.status_code, 200)
+        jdata = json.loads(response.content)
+        expected = {"max": 1024.0, "nulls": 0, "min": 256.0}
+        print('got:')
+        print(str(jdata))
+        print('expected:')
+        print(str(expected))
+        self.assertEqual(expected, jdata)
 
     def test__get_range_endpoints_COISS_lesserpixelsize1(self):
-        response = self.c.get("/opus/api/meta/range/endpoints/lesserpixelsize1.json?instrumentid=Cassini+ISS")
+        "Range endpoints lesserpixelsize1."
+        response = self.c.get('/opus/api/meta/range/endpoints/lesserpixelsize1.json?instrumentid=Cassini+ISS')
+        self.assertEqual(response.status_code, 200)
         jdata = json.loads(response.content)
         expected = {"max": 1024.0, "nulls": 0, "min": 256.0}
-        print('got: \n {} \n expected: \n {}').format(str(jdata), str(expected))
-        self.assertEqual(expected['max'], jdata['max'])
-        self.assertEqual(expected['min'], jdata['min'])
-        self.assertEqual(expected['nulls'], jdata['nulls'])
+        print('got:')
+        print(str(jdata))
+        print('expected:')
+        print(str(expected))
+        self.assertEqual(expected, jdata)
 
-    def test_getResultCount(self):
-        response = self.c.get('/opus/api/meta/result_count.json?planet=Saturn')
+    def test__get_range_endpoints_COISS_lesserpixelsize2(self):
+        "Range endpoints lesserpixelsize1."
+        response = self.c.get('/opus/__api/meta/range/endpoints/lesserpixelsize2.json?instrumentid=Cassini+ISS')
+        self.assertEqual(response.status_code, 200)
+        jdata = json.loads(response.content)
+        expected = {"max": 1024.0, "nulls": 0, "min": 256.0}
+        print('got:')
+        print(str(jdata))
+        print('expected:')
+        print(str(expected))
+        self.assertEqual(expected, jdata)
+
+    def test_get_result_count_planet(self):
+        "Result count planet=Saturn."
+        response = self.c.get('/opus/__api/meta/result_count.json?planet=Saturn')
         self.assertEqual(response.status_code, 200)
         jdata = json.loads(response.content)
         result_count = int(jdata['data'][0]['result_count'])
         print(result_count)
-        self.assertGreater(result_count, 11000)
+        self.assertGreater(result_count, 1486) # Assume COISS_2111 at a minimum
 
-    def test_getResultCount_string_no_qtype(self):
-        response = self.c.get('/opus/api/meta/result_count.json?primaryfilespec=C11399XX&qtype-primaryfilespec=matches')
+    def test_get_result_count_string_no_qtype(self):
+        "Result count primaryfilespec=1866365558 no qtype."
+        response = self.c.get('/opus/api/meta/result_count.json?primaryfilespec=1866365558')
         self.assertEqual(response.status_code, 200)
         jdata = json.loads(response.content)
         result_count = int(jdata['data'][0]['result_count'])
         print(result_count)
-        self.assertEqual(result_count, 5)
+        self.assertEqual(result_count, 2) # BOTSIM
 
-    def test_getResultCount_string_with_qtype(self):
-        response = self.c.get('/opus/api/meta/result_count.json?primaryfilespec=C11399XX&qtype-primaryfilespec=contains')
+    def test_get_result_count_string_contains(self):
+        "Result count primaryfilespec=1866365558 qtype=contains."
+        response = self.c.get('/opus/__api/meta/result_count.json?primaryfilespec=1866365558&qtype-primaryfilespec=contains')
         self.assertEqual(response.status_code, 200)
         jdata = json.loads(response.content)
         result_count = int(jdata['data'][0]['result_count'])
         print(result_count)
-        self.assertEqual(result_count, 5)
+        self.assertEqual(result_count, 2) # BOTSIM
 
-    def test_getResultCount_times(self):
-        response = self.c.get('/opus/api/meta/result_count.json?planet=Saturn&timesec1=2009-12-23&timesec2=2009-12-28')
+    def test_get_result_count_string_begins(self):
+        "Result count primaryfilespec=1866365558 qtype=begins."
+        response = self.c.get('/opus/api/meta/result_count.json?primaryfilespec=1866365558&qtype-primaryfilespec=begins')
+        self.assertEqual(response.status_code, 200)
+        jdata = json.loads(response.content)
+        result_count = int(jdata['data'][0]['result_count'])
+        print(result_count)
+        self.assertEqual(result_count, 0)
+
+    def test_get_result_count_times(self):
+        "Result count time range."
+        response = self.c.get('/opus/__api/meta/result_count.json?planet=Saturn&volumeid=COISS_2111&timesec1=2017-03-01T00:00:00&timesec2=2017-03-15T12:00:00')
         print(response.content)
         self.assertEqual(response.status_code, 200)
         jdata = json.loads(response.content)
-
         result_count = int(jdata['data'][0]['result_count'])
         print(result_count)
-        self.assertGreater(result_count, 880)
+        self.assertEqual(result_count, 1321)
 
-    def test_resultcount_with_url_cruft(self):
-        url = '/opus/api/meta/result_count.json?planet=Saturn&view=search&page=1&colls_page=1&limit=100&widgets=planet,target&widgets2=&browse=gallery&colls_browse=gallery&detail=&order=&cols=&reqno=1'
+    def test__get_result_count_with_url_cruft(self):
+        "Result count with extra URL cruft."
+        url = '/opus/api/meta/result_count.json?volumeid=COISS_2111&timesec1=2017-03-01T00:00:00&timesec2=2017-03-15T12:00:00&view=search&browse=data&colls_browse=gallery&page=1&gallery_data_viewer=true&limit=100&order=time1&cols=opusid,instrumentid,planet,target,time1,observationduration&widgets=timesec1,COISSshuttermode,volumeid,planet,target&widgets2=&detail='
         print(url)
         response = self.c.get(url)
         print(response.content)
         self.assertEqual(response.status_code, 200)
-
         jdata = json.loads(response.content)
         result_count = int(jdata['data'][0]['result_count'])
         print(result_count)
-        self.assertGreater(result_count, 11000)
+        self.assertEqual(result_count, 1321)
 
-
-    def test_result_count_target_PAN(self):
-        response = self.c.get('/opus/api/meta/result_count.json?planet=Saturn&target=PANDORA')
-        jdata = json.loads(response.content)
-        result_count = int(jdata['data'][0]['result_count'])
-        print(result_count)
-        self.assertGreater(result_count, 20)
-
-    def test_result_count_target_SKY(self):
-        response = self.c.get('/opus/api/meta/result_count.json?planet=Saturn&target=SKY')
+    def test_result_count_target_pan(self):
+        "Result count with target=Pan."
+        url = '/opus/api/meta/result_count.json?volumeid=COISS_2111&target=PAN'
+        print(url)
+        response = self.c.get(url)
         print(response.content)
+        self.assertEqual(response.status_code, 200)
         jdata = json.loads(response.content)
         result_count = int(jdata['data'][0]['result_count'])
         print(result_count)
-        self.assertGreater(result_count, 1500)
+        self.assertEqual(result_count, 56)
+
+    def test_result_count_target_s_rings(self):
+        "Result count with target=S Rings."
+        url = '/opus/api/meta/result_count.json?planet=Saturn&volumeid=COISS_2111&target=S+Rings'
+        print(url)
+        response = self.c.get(url)
+        print(response.content)
+        self.assertEqual(response.status_code, 200)
+        jdata = json.loads(response.content)
+        result_count = int(jdata['data'][0]['result_count'])
+        print(result_count)
+        self.assertEqual(result_count, 1036)
 
     def test_result_count_multi_target(self):
-        response = self.c.get('/opus/api/meta/result_count.json?planet=Saturn&target=IO,PANDORA')
+        "Result count with target=Iapetus,Methone."
+        url = '/opus/api/meta/result_count.json?planet=Saturn&volumeid=COISS_2111&target=Iapetus,Methone'
+        print(url)
+        response = self.c.get(url)
         print(response.content)
+        self.assertEqual(response.status_code, 200)
         jdata = json.loads(response.content)
         result_count = int(jdata['data'][0]['result_count'])
         print(result_count)
-        self.assertGreater(result_count, 22)
+        self.assertEqual(result_count, 129)
 
     def test_result_count_ring_rad_range(self):
+        "Result count with ring radius range, no qtype."
         # some range queries.. single no qtype (defaults any)
-        response = self.c.get('/opus/api/meta/result_count.json?ringradius1=60000&ringradius2=80000')
-        print(response.content)
-        jdata = json.loads(response.content)
-        result_count = int(jdata['data'][0]['result_count'])
-        print(result_count)
-        self.assertGreater(result_count, 1400)
-
-    def test_result_count_ring_rad_range_qtype_all(self):
-        response = self.c.get('/opus/api/meta/result_count.json?ringradius1=80000&ringradius2=120000&qtype-ringradius=all')
-        print(response.content)
-        jdata = json.loads(response.content)
-        result_count = int(jdata['data'][0]['result_count'])
-        print(result_count)
-        self.assertGreater(result_count, 3000)
-
-    def test_result_count_ring_rad_range_qtype_only(self):
-        # qtype only
-        response = self.c.get('/opus/api/meta/result_count.json?ringradius1=60000&ringradius2=80000&qtype-ringradius=only')
-        jdata = json.loads(response.content)
-        result_count = int(jdata['data'][0]['result_count'])
-        print(result_count)
-        try:
-            self.assertEqual(result_count, 0)
-        except AssertionError:
-            self.assertGreater(result_count, 13250)
-
-    def test_result_count_multi_range_single_qtype(self):
-        # mult ranges qtype only 1 given as all
-        response = self.c.get('/opus/api/meta/result_count.json?ringradius1=60000&ringradius2=80000,120000&qtype-ringradius=all')
-        jdata = json.loads(response.content)
-        result_count = int(jdata['data'][0]['result_count'])
-        print(result_count)
-        self.assertGreater(result_count, 7900)
-
-    def test_result_count_mission_general_only(self):
-        # mission and general only
-        response = self.c.get('/opus/api/meta/result_count.json?planet=Neptune&missionid=VG')
-        jdata = json.loads(response.content)
-        result_count = int(jdata['data'][0]['result_count'])
-        print(result_count)
-        self.assertGreater(result_count, 1300)
-
-    def test_getValidMults_planet_SAT_for_target(self):
-        response = self.c.get('/opus/api/meta/mults/target.json?planet=Saturn')
+        response = self.c.get('/opus/api/meta/result_count.json?volumeid=COISS_2111&RINGGEOringradius1=70000&RINGGEOringradius2=80000')
         print(response.content)
         self.assertEqual(response.status_code, 200)
         jdata = json.loads(response.content)
-        result_count = int(jdata['mults']['PAALIAQ'])
+        result_count = int(jdata['data'][0]['result_count'])
         print(result_count)
-        self.assertGreater(result_count, 450)
+        self.assertEqual(result_count, 490)
 
-
-    def test_getValidMults_planet_sat_for_planet(self):
-        response = self.c.get('/opus/api/meta/mults/planet.json?planet=Saturn')
-
+    def test_result_count_ring_rad_range_all(self):
+        "Result count with ring radius range, qtype=all."
+        # some range queries.. single no qtype (defaults any)
+        response = self.c.get('/opus/api/meta/result_count.json?volumeid=COISS_2111&RINGGEOringradius1=70000&RINGGEOringradius2=80000&qtype-RINGGEOringradius=all')
         print(response.content)
         self.assertEqual(response.status_code, 200)
-
         jdata = json.loads(response.content)
-        result_count = int(jdata['mults']['Saturn'])
+        result_count = int(jdata['data'][0]['result_count'])
         print(result_count)
-        self.assertGreater(result_count, 11370)
+        self.assertEqual(result_count, 217)
 
-        """
-
-    def test_getValidMults_by_labels(self):
-        # getting by labels
-        response = self.c.get('/opus/api/meta/mults/labels/?field=target&planet=Saturn')
+    def test_result_count_ring_rad_range_only(self):
+        "Result count with ring radius range, qtype=only."
+        # some range queries.. single no qtype (defaults any)
+        response = self.c.get('/opus/api/meta/result_count.json?volumeid=COISS_2111&RINGGEOringradius1=70000&RINGGEOringradius2=80000&qtype-RINGGEOringradius=only')
+        print(response.content)
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.content, '{"mults": {"EUROPA": 8, "AMALTHEA": 11, "GANYMEDE": 81, "CALLISTO": 54, "Saturn": 1803, "IO": 38, "THEBE": 5}, "field": "target"}')
-        """
+        jdata = json.loads(response.content)
+        result_count = int(jdata['data'][0]['result_count'])
+        print(result_count)
+        self.assertEqual(result_count, 26)
+
+    def test_result_count_bad_param(self):
+        "Result count with bad parameter."
+        # some range queries.. single no qtype (defaults any)
+        response = self.c.get('/opus/api/meta/result_count.json?volumeid=COISS_2111&RINGGEOringradius1=70000&RINGGEOringradius3=80000&qtype-RINGGEOringradius=only')
+        print(response.content)
+        self.assertEqual(response.status_code, 404)
+
+    def test_get_valid_mults_COISS_2111(self):
+        "Mults for COISS_2111."
+        response = self.c.get('/opus/api/meta/mults/target.json?volumeid=COISS_2111&planet=Saturn')
+        print(response.content)
+        self.assertEqual(response.status_code, 200)
+        jdata = json.loads(response.content)
+        result_count = int(jdata['mults']['Polydeuces'])
+        print(result_count)
+        self.assertEqual(result_count, 2)
+
+    def test_get_valid_mults_bad_param(self):
+        "Mults with bad parameter."
+        response = self.c.get('/opus/api/meta/mults/target.json?volumeid=COISS_2111&planetx=Saturn')
+        print(response.content)
+        self.assertEqual(response.status_code, 404)
