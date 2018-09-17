@@ -1177,7 +1177,10 @@ var o_browse = {
         html += '</dl>';
 
         // add a link to detail page
-        html += '<p><a href = "/opus/detail/' + opus_id + '.html" class = "gallery_data_link" data-opusid="' + opus_id + '">View Detail</a></p>';
+        var hashArray = o_hash.getHashArray();
+        hashArray["view"] = "detail";
+        hashArray["detail"] = opus_id;
+        html += '<p><a href = "/opus/#/' + o_hash.hashArrayToHashString(hashArray) + '" class = "gallery_data_link" data-opusid="' + opus_id + '">View Detail</a></p>';
 
         // add link to choose columns
         html += '<p><a href="" class="get_column_chooser close_overlay">choose columns</a></p>';
