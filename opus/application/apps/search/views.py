@@ -98,6 +98,7 @@ def url_to_search_params(request_get):
             continue
         slug_no_num = strip_numeric_suffix(slug)
         values = search_param[1].strip(',').split(',')
+        values = [x.strip() for x in values]
 
         # If nothing is specified, just ignore the slug
         if not values:
