@@ -15,7 +15,7 @@ import time
 from zipfile import ZipFile
 
 from django.core import serializers
-from django.core.exceptions import ObjectDoesNotExist
+from django.core.exceptions import MultipleObjectsReturned, ObjectDoesNotExist
 from django.http import Http404, HttpResponse
 from django.shortcuts import render_to_response
 
@@ -249,6 +249,10 @@ def convert_ring_obs_id_to_opus_id(ring_obs_id):
     except ObjectDoesNotExist:
         log.error('No matching RING_OBS_ID for "%s"', ring_obs_id)
         return ring_obs_id
+    except MultipleObjectsReturned:
+        log.error('More than one matching RING_OBS_ID for "%s"', ring_obs_id)
+        return (ObsGeneral.objects.filter(ring_obs_id=ring_obs_id)
+                .first().opus_id)
 
     return ring_obs_id
 
