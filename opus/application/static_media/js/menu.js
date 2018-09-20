@@ -39,7 +39,7 @@ var o_menu = {
 
 
         // menu state - keep track of what menu items are open
-        $('.sidebar').on(ace.click_event, '.nav-list', function(e){
+        $(".sidebar > .nav-list").click( function(e){
             var link_element = $(e.target).closest('a');
             if(!link_element || link_element.length == 0) return;//if not clicked inside a link element
 

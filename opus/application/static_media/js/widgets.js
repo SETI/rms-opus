@@ -487,43 +487,12 @@ var o_widgets = {
         $.ajax({ url: "/opus/__forms/widget/" + slug + '.html?' + o_hash.getHash(),
              success: function(widget_str){
 
-                 // make this widget resizable
-                $('#' + widget).html(widget_str)
-                     .resizable({
-                         handles: 's',
-                      });
-
-                // $('.minimize_widget', '#' + widget).toggleClass('opened_triangle');
-                // $('.minimize_widget', '#' + widget).toggleClass('closed_triangle');
-
                 o_widgets.pauseWidgetControlVisibility(opus.selections);
 
             }}).done(function() {
 
                 o_search.adjustSearchHeight();
 
-                // adjust the navbar height after bringing in new widget
-               // var sidebar_height = $('.main-container-inner').height() > 800 ? $('.main-container-inner').height() : 800;
-                //$('#sidebar').height(sidebar_height);
-
-                // bind the resize behavior\
-                // if you don't bind it this way the 'trigger' won't work later
-                $('#' + widget).bind( "resizestop",function(event) {
-                         $('.widget_scroll_wrapper','#' + widget)
-                             .bind('scrollstop',function(e) {
-                                 // when they resize we then bind the scroll stop behavior
-                                 if (typeof($(this).scrollTop()) == 'undefined') {
-                                     opus.prefs.widget_scroll[slug] = $('#' + widget).height();
-                                 }
-                                 else opus.prefs.widget_scroll[slug] = $(this).scrollTop();
-                                 o_hash.updateHash();
-                             });
-                             // add new widget size to hash
-                             opus.prefs.widget_size[slug] = Math.floor($('#' + widget).height());
-                             o_hash.updateHash();
-
-
-               });
 
              // if we are drawing a range widget we need to check if the qtype dropdown is
              // already defined by the url:
@@ -594,16 +563,6 @@ var o_widgets = {
      scrollToWidget: function(widget) {
         // scrolls window to a widget and highlights the widge
         // widget is like: "widget__" + slug
-        /*
-        if ($('#' + widget).offset().top > $(window).height() - 50
-            |
-            $(window).height() > 2 * $(window).height()
-            ) {
-            $('html, body').animate({
-                    scrollTop: $('#' + widget).offset().top + 50
-                }, 2000);
-        }
-        */
         //  scroll the widget panel to top
 
             $(".widget_column").mCustomScrollbar("scrollTo","top",
@@ -612,7 +571,7 @@ var o_widgets = {
                 });
 
             setTimeout(function() {
-                $('.' + widget + ' .widget-main').effect("highlight", "slow");
+                //$('.' + widget + ' .widget-main').effect("highlight", "slow");  this seems weird TODO
             }, 1800)
 
      },

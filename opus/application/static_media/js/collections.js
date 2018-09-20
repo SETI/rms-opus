@@ -114,21 +114,21 @@ var o_collections = {
     // init an existing collection on page load
     initCollection: function() {
         // returns any user collection saved in session
-        $.ajax({ url: "/opus/__collections/default/status.json",
-            dataType:"json",
-            success: function(data){
-                   var count = data['count'];
-                   if (parseInt(count, 10)) {
-                       opus.collection_change = true;
+        var url = "/opus/__collections/default/status.json";
+        $.getJSON( url, function(data) {
+            var count = data['count'];
+            if (parseInt(count, 10)) {
+                opus.collection_change = true;
 
-                       opus.mainTabDisplay('collection');  // make sure the main site tab label is displayed
+                opus.mainTabDisplay('collection');  // make sure the main site tab label is displayed
 
-                       $('#collection_tab').fadeIn();
-                       opus.colls_pages = Math.ceil(count/opus.prefs.limit);
-                       $('#collection_count').html(count);
-                   }
-                   opus.lastCartRequestNo = parseInt(data['expected_request_no']) - 1
-            }});
+                $('#collection_tab').fadeIn();
+                
+                opus.colls_pages = Math.ceil(count/opus.prefs.limit);
+                $('#collection_count').html(count);
+            }
+            opus.lastCartRequestNo = parseInt(data['expected_request_no']) - 1
+          });
     },
 
     // get Collections tab

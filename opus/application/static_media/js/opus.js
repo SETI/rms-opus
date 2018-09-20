@@ -1,135 +1,10 @@
-/*
- * there are 3 main content sections can use for jquery contexts: search, browse, detail
- *
- */
+// generic globals, hmm..
+var default_pages = {"gallery":1, "data":1, "colls_gallery":1, "colls_data":1 };
+var reset_footer_clicks = {"gallery":0, "data":0, "colls_gallery":0, "colls_data":0 };
+var reset_last_page_drawn = {"gallery":0, "data":0, "colls_gallery":0, "colls_data":0 };
+var reset_browse_view_scrolls = {"gallery":0, "data":0, "colls_gallery":0, "colls_data":0 };
 
-$(document).ready(function() {
-
-    opus.prefs.widgets = [];
-    o_widgets.updateWidgetCookies();
-
-    $(window).smartresize(function(){
-
-        o_search.adjustSearchHeight();
-
-        // see if the metadata box is off screen, if so redraw it.
-        // find left border of metadata box is > screen width.
-        // if so then move it inside
-        /*
-        $(window).width()
-        $('#cboxOverlay .gallery_data_viewer').width();
-        $('#cboxOverlay .gallery_data_viewer').offset().left;
-        */
-
-        if ($('#cboxOverlay .gallery_data_viewer').is(':visible')) {
-            // user is resizing browser with gallery viewer open
-            // make sure they don't lose the metadata box off to the right
-            // this happens only if they've previously put it there
-            // alert('visible');
-
-            /*
-            window_width = $(window).width();
-            left_margin = '15%';
-            if (window_width < 900) {
-                left_margin = '2%';
-            }
-            $('#cboxContent').animate({
-                left:left_margin
-            }, 'fast');
-            */
-            if ($('#cboxOverlay .gallery_data_viewer').is(':visible')) { // :visible being used here to see if element exists)
-                // colorbox is showing, lets reload it so it shows
-                // the orientation it will show when they next page
-                // first get the opus_id
-                setTimeout(o_browse.reset_colorbox(), 1500);
-            }
-        }
-
-    });
-
-    $( document ).tooltip({
-        show: { delay: 300 }
-    });
-
-    o_hash.initFromHash(); // just returns null if no hash
-
-    if (!opus.prefs.view) {
-        opus.prefs.view = 'search';
-    }
-    //opus.changeTab();
-
-
-    // add the navbar clicking behaviors, selecting which tab to view:
-    // see triggerNavbarClick
-    $('#navbar').on("click", 'ul.main_site_tabs li', function() {
-
-        if ($(this).find('a').hasClass('restore_widgets')) {
-            return;
-        }
-        if ($(this).find('a').hasClass('old_opus')) {
-            return;
-        }
-        if ($(this).find('a').hasClass('restart')) {
-            return;
-        }
-        if ($(this).hasClass('external-link')) {
-            // this is a link to an external site, so just go there...
-            return true;
-        }
-        // remove the active class on whatever other tab it is on
-        $('.navbar-nav li', '#navbar').each(function(index, value) {
-            if ($(this).hasClass("active")) {
-                $(this).toggleClass("active");
-                return false; // we found the active one, so break from this each
-            }
-        });
-        $(this).addClass("active");
-
-        // find out which tab they clicked
-        tab = $(this).find('a').attr('href').substring(1);
-        if (tab == '/') {
-            return true;  // they clicked the brand icon, take them to its link
-        }
-
-        if (!tab) { tab = opus.prefs.search; }
-        opus.prefs.view = tab;
-        o_hash.updateHash();
-        opus.changeTab();
-
-        $(this).find('a').blur(); // or else it holds the hover style which is stoo pid.
-
-        return false;
-
-    });
-
-
-    // restart button behavior - start over button
-    $('#sidebar').on("click", ".restart", function() {
-        // 'start over' button
-        // resets query completely, resets widgets completely
-        if (!jQuery.isEmptyObject(opus.selections)) {
-
-            if (confirm("Are you sure you want to restart? Your current search will be lost.")) {
-                opus.startOver();
-            }
-        } else {
-            opus.startOver();
-        }
-
-    }),
-
-    opus.addAllBehaviors();
-
-    // watch the url for changes, this runs continuously
-    opus.main_timer = setInterval(opus.load, opus.main_timer_interval);
-
-    o_collections.initCollection();
-    opus.triggerNavbarClick();
-
-    return;
-
-});
-
+// defining the opus namespace first; document ready comes after...
 var opus = {
 
 
@@ -277,52 +152,49 @@ var opus = {
 
 
         // start the result count spinner and do the yellow flash
-        $('#result_count').html(opus.spinner).parent().effect("highlight", {}, 500);
-          // query string has changed
-          opus.last_selections = selections;
+        //TODO $('#result_count').html(opus.spinner).parent().effect("highlight", {}, 500);
+        // query string has changed
+        opus.last_selections = selections;
 
-          opus.lastRequestNo++;
+        opus.lastRequestNo++;
 
-      	  // get result count
-          $.ajax({ url: "/opus/__api/meta/result_count.json?" + o_hash.getHash() + '&reqno=' + opus.lastRequestNo,
-              dataType:"json",
-              success: function(json){
+      	// get result count
+        var url = "/opus/__api/meta/result_count.json?";
+        $.getJSON(url + o_hash.getHash() + '&reqno=' + opus.lastRequestNo, function(results) {
+            if (results['reqno'] < opus.lastRequestNo) {
+                return;
+            }
+            $('#browse_tab').fadeIn();
+            opus.updateResultCount(results['data'][0]['result_count']);
 
-                  if (json['reqno'] < opus.lastRequestNo) {
-                      return;
-                  }
-                  $('#browse_tab').fadeIn();
-                  opus.updateResultCount(json['data'][0]['result_count']);
+            opus.mainTabDisplay('results');  // make sure the main site tab label is displayed
 
-                  opus.mainTabDisplay('results');  // make sure the main site tab label is displayed
+            o_menu.getMenu();
 
-                  o_menu.getMenu();
+            // if all we wanted was a new gallery page we can stop here
+            opus.pages = Math.ceil(opus.result_count/opus.prefs.limit);
+            if (opus.prefs.view == "browse") {
+                $('#pages','#browse').html(opus.pages);
+                return;
+            }
 
-                  // if all we wanted was a new gallery page we can stop here
-                  opus.pages = Math.ceil(opus.result_count/opus.prefs.limit);
-                  if (opus.prefs.view == "browse") {
-                      $('#pages','#browse').html(opus.pages);
-                      return;
-                  }
-
-                  // result count is back, now send for widget hinting
-                  var widget_cols = ['widgets','widgets2'];
-                  for (key in widget_cols) {
-                      col = widget_cols[key];
-                      for (k in opus.prefs[col]) {
-                          slug = opus.prefs[col][k];
-                          o_search.getHinting(slug);
-                      } // end for widget in..
-                  } // endfor
-              } // end result count success
-          }); // end result count ajax
+            // result count is back, now send for widget hinting
+            var widget_cols = ['widgets','widgets2'];
+            for (key in widget_cols) {
+                var col = widget_cols[key];
+                for (var k in opus.prefs[col]) {
+                    slug = opus.prefs[col][k];
+                    o_search.getHinting(slug);
+                } // end for widget in..
+            } // endfor
+        });
     }, // endfunc jeezumcrow! #shootmenow
 
     updateResultCount: function(result_count) {
-      opus.result_count = result_count;
-      $('#result_count').fadeOut('fast', function() {
-        $(this).html(o_utils.addCommas(opus.result_count)).fadeIn('fast') ;
-      });
+        opus.result_count = result_count;
+        $('#result_count').fadeOut('fast', function() {
+            $(this).html(o_utils.addCommas(opus.result_count)).fadeIn('fast') ;
+        });
     },
 
     triggerNavbarClick: function() {
@@ -473,6 +345,133 @@ var opus = {
 
 }; // end opus namespace
 
+/*
+ * there are 3 main content sections can use for jquery contexts: search, browse, detail
+ *
+ */
+
+$(document).ready(function() {
+
+    opus.prefs.widgets = [];
+    o_widgets.updateWidgetCookies();
+
+    $(window).smartresize(function(){
+
+        o_search.adjustSearchHeight();
+
+        // see if the metadata box is off screen, if so redraw it.
+        // find left border of metadata box is > screen width.
+        // if so then move it inside
+        /*
+        $(window).width()
+        $('#cboxOverlay .gallery_data_viewer').width();
+        $('#cboxOverlay .gallery_data_viewer').offset().left;
+        */
+
+        if ($('#cboxOverlay .gallery_data_viewer').is(':visible')) {
+            // user is resizing browser with gallery viewer open
+            // make sure they don't lose the metadata box off to the right
+            // this happens only if they've previously put it there
+            // alert('visible');
+
+            /*
+            window_width = $(window).width();
+            left_margin = '15%';
+            if (window_width < 900) {
+                left_margin = '2%';
+            }
+            $('#cboxContent').animate({
+                left:left_margin
+            }, 'fast');
+            */
+            if ($('#cboxOverlay .gallery_data_viewer').is(':visible')) { // :visible being used here to see if element exists)
+                // colorbox is showing, lets reload it so it shows
+                // the orientation it will show when they next page
+                // first get the opus_id
+                setTimeout(o_browse.reset_colorbox(), 1500);
+            }
+        }
+
+    });
+
+    o_hash.initFromHash(); // just returns null if no hash
+
+    if (!opus.prefs.view) {
+        opus.prefs.view = 'search';
+    }
+    //opus.changeTab();
+
+
+    // add the navbar clicking behaviors, selecting which tab to view:
+    // see triggerNavbarClick
+    $('#navbar').on("click", 'ul.main_site_tabs li', function() {
+
+        if ($(this).find('a').hasClass('restore_widgets')) {
+            return;
+        }
+        if ($(this).find('a').hasClass('old_opus')) {
+            return;
+        }
+        if ($(this).find('a').hasClass('restart')) {
+            return;
+        }
+        if ($(this).hasClass('external-link')) {
+            // this is a link to an external site, so just go there...
+            return true;
+        }
+        // remove the active class on whatever other tab it is on
+        $('.navbar-nav li', '#navbar').each(function(index, value) {
+            if ($(this).hasClass("active")) {
+                $(this).toggleClass("active");
+                return false; // we found the active one, so break from this each
+            }
+        });
+        $(this).addClass("active");
+
+        // find out which tab they clicked
+        tab = $(this).find('a').attr('href').substring(1);
+        if (tab == '/') {
+            return true;  // they clicked the brand icon, take them to its link
+        }
+
+        if (!tab) { tab = opus.prefs.search; }
+        opus.prefs.view = tab;
+        o_hash.updateHash();
+        opus.changeTab();
+
+        $(this).find('a').blur(); // or else it holds the hover style which is stoo pid.
+
+        return false;
+
+    });
+
+
+    // restart button behavior - start over button
+    $('#sidebar').on("click", ".restart", function() {
+        // 'start over' button
+        // resets query completely, resets widgets completely
+        if (!jQuery.isEmptyObject(opus.selections)) {
+
+            if (confirm("Are you sure you want to restart? Your current search will be lost.")) {
+                opus.startOver();
+            }
+        } else {
+            opus.startOver();
+        }
+
+    }),
+
+    opus.addAllBehaviors();
+
+    // watch the url for changes, this runs continuously
+    opus.main_timer = setInterval(opus.load, opus.main_timer_interval);
+
+    o_collections.initCollection();
+    opus.triggerNavbarClick();
+
+    return;
+
+});
 
 // Paul Irish's smartresize: http://www.paulirish.com/2009/throttled-smartresize-jquery-event-handler/
 (function($,sr){
