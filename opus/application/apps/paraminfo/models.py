@@ -37,3 +37,39 @@ class ParamInfo(models.Model):
     def get_tooltip(self):
         definition = get_def_for_tooltip(self.dict_name, self.dict_context)
         return definition
+
+    def body_qualified_label(self):
+        # Appended "- Ring" or "- <Surface Body>"
+        append_to_label = None
+
+        if 'obs_surface_geometry__' in self.category_name:
+            # append the target name to surface geo widget labels
+            try:
+                append_to_label = self.category_name.split('__')[1].title()
+            except KeyError:
+                pass
+        elif 'obs_ring_geometry' in self.category_name:
+            append_to_label = 'Ring'
+
+        if append_to_label:
+            return self.label + ' [' + append_to_label + ']'
+        else:
+            return self.label
+
+    def body_qualified_label_results(self):
+        # Appended "- Ring" or "- <Surface Body>"
+        append_to_label = None
+
+        if 'obs_surface_geometry__' in self.category_name:
+            # append the target name to surface geo widget labels
+            try:
+                append_to_label = self.category_name.split('__')[1].title()
+            except KeyError:
+                pass
+        elif 'obs_ring_geometry' in self.category_name:
+            append_to_label = 'Ring'
+
+        if append_to_label:
+            return self.label_results + ' [' + append_to_label + ']'
+        else:
+            return self.label_results

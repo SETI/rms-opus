@@ -967,16 +967,13 @@ def _get_metadata_by_slugs(request, opus_id, slugs, fmt, use_param_names):
             results = query_table_for_opus_id(table_name, opus_id)
         except LookupError:
             continue
-        if not results:
-            # this opus_id doesn't exist in this table, log this..
-            log.error('_get_metadata_by_slugs: Could not find opus_id %s in '
-                      +'table %s', opus_id, table_name)
-            return None
         for param_info, slug in param_info_slug_list:
             (form_type, form_type_func,
              form_type_format) = parse_form_type(param_info.form_type)
 
-            if form_type in settings.MULT_FORM_TYPES and not use_param_names:
+            if not results:
+                result = 'N/A'
+            elif form_type in settings.MULT_FORM_TYPES and not use_param_names:
                 mult_name = get_mult_name(param_info.param_name())
                 mult_val = results.values(mult_name)[0][mult_name]
                 result = lookup_pretty_value_for_mult(param_info, mult_val)
@@ -990,8 +987,8 @@ def _get_metadata_by_slugs(request, opus_id, slugs, fmt, use_param_names):
     # Now put them in the right order
     data = []
     for slug in slugs:
-        param_name = all_info[slug].name
         if use_param_names:
+            param_name = all_info[slug].name
             data.append({param_name: data_dict[param_name]})
         else:
             data.append({slug: data_dict[slug]})

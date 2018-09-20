@@ -112,7 +112,7 @@ def api_get_table_headers(request):
             if not pi:
                 log.error('get_table_headers: Unable to find slug "%s"', slug)
                 continue
-            columns.append([slug, pi.label_results])
+            columns.append([slug, pi.body_qualified_label_results()])
 
     ret = render(request, template,
                  {'columns':   columns,
@@ -178,14 +178,7 @@ def api_get_widget(request, **kwargs):
     remove_str = '<a class="remove_input" href="">-</a>'
     add_str = '<a class="add_input" href="">add</a> '
 
-    append_to_label = ''  # text to append to a widget label
     search_form = param_info.category_name
-    if 'obs_surface_geometry__' in search_form:
-        # append the target name to surface geo widget labels
-        try:
-            append_to_label = ' - %s' % search_form.split('__')[1].title()
-        except KeyError:
-            pass
 
     if form_type in settings.RANGE_FORM_TYPES:
         auto_id = False
@@ -336,14 +329,13 @@ def api_get_widget(request, **kwargs):
             str(slug))
         raise Http404
 
-    label = param_info.label
+    label = param_info.body_qualified_label()
     intro = param_info.intro
 
     template = "widget.html"
     context = {
         "slug": slug,
         "label": label,
-        "append_to_label": append_to_label,
         "dictionary": dictionary,
         "intro": intro,
         "form": form,
@@ -565,7 +557,7 @@ def _get_menu_labels(request, labels_view):
                 for k,param_info in enumerate(all_param_info):
                     param_info.slug = _adjust_slug_name_single_col_ranges(param_info)
                     param_info.tooltip = param_info.get_tooltip()
-                    all_param_info[k] = vars(param_info)
+                    all_param_info[k] = param_info
 
                 menu_data[d.table_name]['data'][sub_head] = all_param_info
 
@@ -575,7 +567,7 @@ def _get_menu_labels(request, labels_view):
             for p in ParamInfo.objects.filter(**{filter:1, "category_name":d.table_name}):
                 p.slug = _adjust_slug_name_single_col_ranges(p)
                 p.tooltip = p.get_tooltip()
-                menu_data[d.table_name].setdefault('data', []).append(vars(p))
+                menu_data[d.table_name].setdefault('data', []).append(p)
 
     return {'menu': {'data': menu_data, 'divs': divs}}
 

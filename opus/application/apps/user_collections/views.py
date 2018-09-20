@@ -7,7 +7,7 @@
 ################################################
 import settings
 from django.db import connection
-from django.http import HttpResponse, Http404
+from django.http import HttpResponse, HttpResponseNotFound, Http404
 from django.shortcuts import render
 from django.views.decorators.cache import never_cache
 
@@ -15,6 +15,7 @@ from hurry.filesize import size as nice_file_size
 
 from results.views import get_data, get_page, get_all_in_collection
 from search.models import ObsGeneral
+from search.views import get_param_info_by_slug
 from user_collections.models import Collections
 
 from tools.app_utils import *
@@ -39,7 +40,7 @@ log = logging.getLogger(__name__)
 #
 # api_view_collection
 #
-# Format: collections/(?P<collection_name>[default]+)/view.html
+# Format: __collections/(?P<collection_name>[default]+)/view.html
 #
 # This returns the OPUS-specific left side of the "Selections" page as HTML.
 # This includes the number of files selected, total size of files selected,
@@ -79,7 +80,7 @@ def api_view_collection(request, collection_name,
 #
 # api_collection_status
 #
-# Format: collections/(?P<collection_name>[default]+)/status.json
+# Format: __collections/(?P<collection_name>[default]+)/status.json
 # Arguments: expected_request_no=<N>
 #
 # This returns the number of items currently in the collection. It is used to
@@ -109,7 +110,7 @@ def api_collection_status(request, collection_name='default'):
 #
 # api_get_collection_csv
 #
-# Format: collections/data.csv
+# Format: __collections/data.csv
 # Arguments: fmt=<FMT>
 #            Normal search and selected-column arguments
 #
@@ -119,9 +120,6 @@ def api_collection_status(request, collection_name='default'):
 ################################################################################
 
 
-# This function should really be in user_collections, but it uses get_page,
-# which is here, and there would be a circular import loop if we tried to
-# do it the right way.
 def api_get_collection_csv(request, fmt=None):
     "Creates and returns a CSV file based on user query and selection columns."
     api_code = enter_api_call('api_get_collection_csv', request)
@@ -136,7 +134,7 @@ def api_get_collection_csv(request, fmt=None):
 #
 # api_edit_collection
 #
-# Format: collections/(?P<collection_name>[default]+)/
+# Format: __collections/(?P<collection_name>[default]+)/
 #                     (?P<action>[add|remove|addrange|removerange|addall]+).json
 # Arguments: opus_id=<ID>
 #            request=<N>
@@ -230,7 +228,7 @@ def api_edit_collection(request, **kwargs):
 #
 # api_reset_session
 #
-# Format: collections/reset.html
+# Format: __collections/reset.html
 #
 # Remove everything from the collection and reset the session.
 #
@@ -259,7 +257,7 @@ def api_reset_session(request):
 #
 # api_get_download_info
 #
-# Format: collections/download/info/
+# Format: __collections/download/info/
 # Arguments: types=<PRODUCT_TYPES>
 #
 # Remove everything from the collection and reset the session.
@@ -306,7 +304,7 @@ def api_get_download_info(request):
 #
 # api_create_download
 #
-# Format: collections/download/(?P<session_id>[default]+).zip
+# Format: __collections/download/(?P<session_id>[default]+).zip
 #     or: zip/(?P<opus_id>[-\w]+).(?P<fmt>[json]+)
 # Arguments: types=<PRODUCT_TYPES>
 #
@@ -470,7 +468,7 @@ def _get_collection_count(session_id):
 
 def _get_collection_csv(request, fmt=None, api_code=None):
     "Create and return a CSV file based on user column and selection."
-    slugs = request.GET.get('cols', '')
+    slugs = request.GET.get('cols', settings.DEFAULT_COLUMNS)
     all_data = get_page(request, use_collections=True, collections_page='all',
                         api_code=api_code)
     # XXX Check all_data for None
@@ -478,10 +476,19 @@ def _get_collection_csv(request, fmt=None, api_code=None):
     if fmt == 'raw':
         return slugs.split(','), all_data[2]
 
+    column_labels = []
+    for slug in slugs.split(','):
+        pi = get_param_info_by_slug(slug)
+        if pi is None:
+            log.error('_get_collection_csv: Unknown slug "%s"', slug)
+            return HttpResponseNotFound('Unknown slug')
+        else:
+            column_labels.append(pi.body_qualified_label_results())
+
     response = HttpResponse(content_type='text/csv')
     response['Content-Disposition'] = 'attachment; filename="data.csv"'
     wr = csv.writer(response)
-    wr.writerow(slugs.split(','))
+    wr.writerow(column_labels)
     wr.writerows(all_data[2])
 
     return response

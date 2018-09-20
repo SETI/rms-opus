@@ -43,6 +43,12 @@
 																{% else %}
 																	{{ p.label }}
 																{% endif %}
+															" data-qualifiedlabel="
+																{% if menu.data.labels_view == 'results' %}
+																	{{ p.body_qualified_label_results }}
+																{% else %}
+																	{{ p.body_qualified_label }}
+																{% endif %}
 															" data-slug="{{ p.slug }}" class="{{ p.slug }}" href="">
 		                            <i class = "fa fa-check"></i>
 																{% if menu.data.labels_view == 'results' %}
@@ -73,7 +79,13 @@
 											{% else %}
 												{{ p.label }}
 											{% endif %}
-										" data-slug="{{ p.slug }}" class="{{ p.slug }}" href="">
+											" data-qualifiedlabel="
+												{% if menu.data.labels_view == 'results' %}
+													{{ p.body_qualified_label_results }}
+												{% else %}
+													{{ p.body_qualified_label }}
+												{% endif %}
+											" data-slug="{{ p.slug }}" class="{{ p.slug }}" href="">
 	                  <i class = "fa fa-check"></i>
 										{% if menu.data.labels_view == 'results' %}
 											{{ p.label_results}}
