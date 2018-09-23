@@ -639,9 +639,18 @@ def _create_csv_file(request, csv_file_name, api_code=None):
     "Create a CSV file containing the collection data."
     slug_list, all_data = _get_collection_csv(request, fmt='raw',
                                               api_code=api_code)
+    column_labels = []
+    for slug in slug_list:
+        pi = get_param_info_by_slug(slug)
+        if pi is None:
+            log.error('_get_collection_csv: Unknown slug "%s"', slug)
+            return HttpResponseNotFound('Unknown slug')
+        else:
+            column_labels.append(pi.body_qualified_label_results())
+
     with open(csv_file_name, 'a') as csv_file:
         wr = csv.writer(csv_file)
-        wr.writerow(slug_list)
+        wr.writerow(column_labels)
         wr.writerows(all_data)
 
 
