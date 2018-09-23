@@ -623,7 +623,7 @@ def get_data(request, fmt, cols=None, api_code=None):
         if not pi:
             log.error('get_data: Could not find param_info for %s', slug)
             return None
-        labels.append(pi.body_qualified_label_results)
+        labels.append(pi.body_qualified_label_results())
 
     # For backwards compatibility. It would be a lot nicer if we didn't need
     # to know this index at all. See data.html for why we do.
