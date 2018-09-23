@@ -407,7 +407,13 @@ def _range_time_encode(tai):
     return julian.iso_from_tai(tai, digits=3)
 def _range_time_decode(iso):
     iso = str(iso)
-    return julian.tai_from_iso(iso)
+    try:
+        (day, sec, time_type) = julian.day_sec_type_from_string(iso)
+    except:
+        raise ValueError('Invalid time syntax: '+iso)
+    if time_type != 'UTC':
+        raise ValueError('Invalid time syntax: '+iso)
+    return julian.tai_from_day(day) + sec
 
 # Format is decode float->string, encode string->float
 
