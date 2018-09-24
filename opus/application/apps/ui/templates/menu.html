@@ -1,5 +1,10 @@
 {% block menu %}
 <ul class="nav nav-list">
+	<li>
+		<div class="restart_button">
+			<a href = "https://pds-rings.seti.org/cgi-bin/comments/form.pl" class="btn btn-info" role="button">Questions/Feedback</a>
+		</div>
+	</li>
 	{% for div in menu.divs %}
 		<li>
 	    <a href="#" class="dropdown-toggle {{ div.table_name }}" data-cat="{{ div.table_name }}">
