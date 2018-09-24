@@ -519,7 +519,8 @@ var o_browse = {
                 return true;  // just a 2nd level menu click, move along
             }
 
-            var label = $(this).data('label');
+            var label = $(this).data('qualifiedlabel');
+            console.log(label);
             var def = $(this).find('i.fa-info-circle').attr("title");
             var cols = opus.prefs['cols'];
             var checkmark = $(this).find('i').first();
@@ -539,7 +540,7 @@ var o_browse = {
                 checkmark.hide();
 
                 if (jQuery.inArray(slug,cols) > -1) {
-                    // slug had been checked, removed from the chosen
+                    // slug had been checked, remove from the chosen
                     cols.splice(jQuery.inArray(slug,cols),1);
                     $('#cchoose__' + slug).fadeOut(function() {
                         $(this).remove();
