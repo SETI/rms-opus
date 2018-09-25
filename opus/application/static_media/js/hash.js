@@ -48,7 +48,8 @@ var o_hash = {
             case 'widget_scroll':
               // these are prefs having to do with widget resize and scrolled
               break; // there's no scroll without size, so we handle scroll when size comes thru
-              
+
+
             default:
               hash[hash.length] = key + '=' + opus.prefs[key];
           }
@@ -58,11 +59,32 @@ var o_hash = {
 
     // returns the hash part of the url minus the #/ symbol
     getHash: function(){
-        if (window.location.hash) {
-            return window.location.hash.match(/^#\/(.*)$/)[1];
-        } else {
-            return '';
+        try {
+            if (window.location.hash) {
+                return window.location.hash.match(/^#\/(.*)$/)[1];
+            } else {
+                return "";
+            }
+        } catch (e) {
+            return "";
         }
+    },
+
+    getHashArray: function() {
+        var hashArray = [];
+        $.each(this.getHash().split('&'), function(index, valuePair) {
+            var paramArray = valuePair.split("=");
+            hashArray[paramArray[0]] = paramArray[1];
+        });
+        return hashArray;
+    },
+
+    hashArrayToHashString: function(hashArray) {
+        var hash = "";
+        for (var param in hashArray) {
+            hash += "&"+param+"="+hashArray[param];
+        }
+        return hash;
     },
 
     // part is part of the hash, selections or prefs
@@ -159,7 +181,7 @@ var o_hash = {
 
         // despite what the url says, make sure every widget that is constrained is actually visible
         for (slug in opus.selections) {
-          if (jQuery.inArray(slug, opus.prefs['widgets']) < 0) {
+          if ($.inArray(slug, opus.prefs['widgets']) < 0) {
             // this slug is constrained in selections but is not
             // found in widgets, but do some extra checking for
             // range widgets:
@@ -169,9 +191,9 @@ var o_hash = {
               // the first param in the range, but this is the 2nd
               // let's see if the first half of this range is constrained
               slug_no_num = slug.slice(0, -1)
-              if (jQuery.inArray(slug_no_num, opus.prefs['widgets']) >= 0
+              if ($.inArray(slug_no_num, opus.prefs['widgets']) >= 0
                   ||
-                 jQuery.inArray(slug_no_num + '1', opus.prefs['widgets']) >= 0) {
+                 $.inArray(slug_no_num + '1', opus.prefs['widgets']) >= 0) {
                    // the first half of this range is found in widgets
                    // so nothing to do
                    continue;
