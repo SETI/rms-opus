@@ -10,7 +10,7 @@ var o_menu = {
          // search menu behaviors
 
          // click cat header in menu toggles arrow style
-         $('#sidebar').on("click", 'a', function() {
+         $('#sidebar').on("click", 'a.dropdown-toggle', function() {
             $(this).find('b.arrow').toggleClass('fa-angle-right').toggleClass('fa-angle-down');
 
          });
@@ -40,6 +40,11 @@ var o_menu = {
 
         // menu state - keep track of what menu items are open
         $('.sidebar').on(ace.click_event, '.nav-list', function(e){
+            event.preventDefault();
+            if ($(e.target).hasClass("btn")) {
+                window.location = $(e.target).attr('href');
+                return;
+            }
             var link_element = $(e.target).closest('a');
             if(!link_element || link_element.length == 0) return;//if not clicked inside a link element
 
