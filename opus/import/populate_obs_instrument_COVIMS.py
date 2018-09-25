@@ -289,15 +289,7 @@ def populate_obs_type_image_COVIMS_duration(**kwargs):
         return None
     return vis_exp/1000
 
-# XXX
 def populate_obs_type_image_COVIMS_levels(**kwargs):
-    metadata = kwargs['metadata']
-    index_row = metadata['index_row']
-    inst_mod = index_row['INSTRUMENT_MODE_ID']
-
-    if inst_mod != 'IMAGE':
-        return None
-
     return 4096
 
 def populate_obs_type_image_COVIMS_lesser_pixel_size(**kwargs):

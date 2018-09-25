@@ -235,7 +235,6 @@ def populate_obs_type_image_VGISS_duration(**kwargs):
     obs_general_row = metadata['obs_general_row']
     return obs_general_row['observation_duration']
 
-# XXX
 def populate_obs_type_image_VGISS_levels(**kwargs):
     return 256
 

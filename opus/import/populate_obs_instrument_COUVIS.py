@@ -88,17 +88,29 @@ def populate_obs_general_COUVIS_inst_host_id(**kwargs):
     return 'CO'
 
 def populate_obs_general_COUVIS_quantity(**kwargs):
-    channel, image_time = _COUVIS_channel_time_helper(**kwargs)
+    # This is the NEW logic
     metadata = kwargs['metadata']
-    index_row = metadata['index_row']
-    slit_state = index_row['SLIT_STATE']
-
-    if channel == 'HSP':
+    supp_index_row = metadata['supp_index_row']
+    if supp_index_row is None:
+        return None
+    description = supp_index_row['DESCRIPTION'].upper()
+    if (description.find('OCCULTATION') != -1 and
+        description.find('CALIBRATION') == -1):
         return 'OPTICAL'
-    if (channel == 'EUV' or channel == 'FUV') and slit_state == 'OCCULTATION':
-        return 'OPTICAL'
-    # HDAC is measuring EMISSION, along with EUV/FUV normal slits
     return 'EMISSION'
+
+    # This is the OLD logic
+    # channel, image_time = _COUVIS_channel_time_helper(**kwargs)
+    # metadata = kwargs['metadata']
+    # index_row = metadata['index_row']
+    # slit_state = index_row['SLIT_STATE']
+    #
+    # if channel == 'HSP':
+    #     return 'OPTICAL'
+    # if (channel == 'EUV' or channel == 'FUV') and slit_state == 'OCCULTATION':
+    #     return 'OPTICAL'
+    # # HDAC is measuring EMISSION, along with EUV/FUV normal slits
+    # return 'EMISSION'
 
 def populate_obs_general_COUVIS_spatial_sampling(**kwargs):
     channel, image_time = _COUVIS_channel_time_helper(**kwargs)
