@@ -15,7 +15,7 @@ import os
 import oyaml as yaml # Cool package that preserves key order
 
 from django.shortcuts import render
-from django.http import Http404, HttpResponse
+from django.http import Http404, HttpResponse, HttpRequest
 
 from metadata.views import get_fields_info
 from tools.app_utils import *
@@ -39,11 +39,21 @@ def api_guide(request):
     """
     api_code = enter_api_call('api_guide', request)
 
+    if not request or request.GET is None:
+        ret = Http404('No request')
+        exit_api_call(api_code, ret)
+        raise ret
+
+    uri = HttpRequest.build_absolute_uri(request)
+    prefix = '/'.join(uri.split('/')[:3])
+
     path = os.path.dirname(os.path.abspath(__file__))
     guide_content_file = 'examples.yaml'
     with open(os.path.join(path, guide_content_file), 'r') as stream:
+        text = stream.read()
+        text = text.replace('<HOST>', prefix)
         try:
-            guide = yaml.load(stream)
+            guide = yaml.load(text)
 
         except yaml.YAMLError as exc:
             log.error('api_guide error: %s', str(exc))

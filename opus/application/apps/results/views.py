@@ -406,7 +406,6 @@ def api_get_image(request, opus_id, size='med', fmt='raw'):
     The fields 'path' and 'img' are provided for backwards compatibility only.
     """
     api_code = enter_api_call('api_get_image', request)
-    print(size, fmt)
     if not request or request.GET is None:
         ret = Http404('No request')
         exit_api_call(api_code, ret)
@@ -474,14 +473,18 @@ def api_get_files(request, opus_id=None, fmt='json'):
         # No opus_id passed, get files from search results
         # Override cols because we don't care about anything except
         # opusid
-        data = get_data(request, 'raw', cols='opusid,__filespec')
+        data = get_data(request, 'raw', cols='opusid,**filespec')
         if data is None:
             exit_api_call(api_code, Http404)
             raise Http404
         opus_ids = [p[0] for p in data['page']]
         file_specs = [p[1] for p in data['page']]
-        del data['page']
-        del data['labels']
+        if 'page' in data:
+            del data['page']
+        if 'labels' in data:
+            del data['labels']
+        if 'columns' in data:
+            del data['columns']
 
     ret = get_pds_products(opus_ids, file_specs, fmt='raw',
                            loc_type=loc_type,

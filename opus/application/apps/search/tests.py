@@ -1,7 +1,7 @@
 # search/tests.py
 
 # These tests require the following volumes, imported in this order:
-# COISS_2002,COISS_2008,COISS_2111,COUVIS_0002,VGISS_6210,VGISS_8201
+# COISS_2002,COISS_2008,COISS_2111,COUVIS_0002,GO_0017,VGISS_6210,VGISS_8201
 
 from unittest import TestCase
 

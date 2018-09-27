@@ -696,7 +696,7 @@
             "obs_pds_<INST>_primary_file_spec"
         ],
         "data_source_order": 40,
-        "pi_category_name": null,
+        "pi_category_name": "obs_general",
         "pi_dict_context": null,
         "pi_dict_name": null,
         "pi_disp_order": 0,
@@ -706,7 +706,7 @@
         "pi_intro": null,
         "pi_label": null,
         "pi_label_results": null,
-        "pi_slug": "__filespec",
+        "pi_slug": "**filespec",
         "pi_sub_heading": null,
         "pi_tooltip": null,
         "pi_units": null,
