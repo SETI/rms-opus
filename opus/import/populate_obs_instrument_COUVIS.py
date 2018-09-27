@@ -55,7 +55,7 @@ def populate_obs_general_COUVIS_opus_id(**kwargs):
     file_spec = _COUVIS_file_spec_helper(**kwargs)
     pds_file = pdsfile.PdsFile.from_filespec(file_spec)
     try:
-        opus_id = pds_file.opus_id
+        opus_id = pds_file.opus_id.replace('.', '-')
     except:
         metadata = kwargs['metadata']
         index_row = metadata['index_row']
@@ -207,7 +207,7 @@ def populate_obs_general_COUVIS_observation_duration(**kwargs):
     time_sec2 = obs_general_row['time_sec2']
     return max(time_sec2 - time_sec1, 0)
 
-def populate_obs_general_COUVIS_note(**kwargs):
+def populate_obs_pds_COUVIS_note(**kwargs):
     metadata = kwargs['metadata']
     supp_index_row = metadata['supp_index_row']
     if supp_index_row is None:
@@ -220,7 +220,10 @@ def populate_obs_general_COUVIS_note(**kwargs):
 def populate_obs_general_COUVIS_primary_file_spec(**kwargs):
     return _COUVIS_file_spec_helper(**kwargs)
 
-def populate_obs_general_COUVIS_product_creation_time(**kwargs):
+def populate_obs_pds_COUVIS_primary_file_spec(**kwargs):
+    return _COUVIS_file_spec_helper(**kwargs)
+
+def populate_obs_pds_COUVIS_product_creation_time(**kwargs):
     metadata = kwargs['metadata']
     index_label = metadata['index_label']
     pct = index_label['PRODUCT_CREATION_TIME']
@@ -235,7 +238,7 @@ def populate_obs_general_COUVIS_product_creation_time(**kwargs):
     return julian.iso_from_tai(pct_sec, digits=3, ymd=True)
 
 # Format: "CO-S-UVIS-2-SSB-V1.4"
-def populate_obs_general_COUVIS_data_set_id(**kwargs):
+def populate_obs_pds_COUVIS_data_set_id(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     dsi = index_row['DATA_SET_ID']
@@ -243,7 +246,7 @@ def populate_obs_general_COUVIS_data_set_id(**kwargs):
     return (dsi, dsi)
 
 # Format: "EUV2015_001_17_57"
-def populate_obs_general_COUVIS_product_id(**kwargs):
+def populate_obs_pds_COUVIS_product_id(**kwargs):
     metadata = kwargs['metadata']
     supp_index_row = metadata.get('supp_index_row', None)
     if supp_index_row is None:

@@ -310,7 +310,6 @@ SLUGS_NOT_IN_DB = ('browse', 'col_chooser', 'colls_browse', 'cols', 'detail',
                    'page', 'range', 'reqno', 'request', 'types', 'view',
                    'widgets', 'widgets2')
 
-
 # The root URL used to retrieve product files from a web server
 PRODUCT_HTTP_PATH = 'https://pds-rings.seti.org/'
 

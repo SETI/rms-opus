@@ -288,14 +288,16 @@ def api_get_images_by_size(request, size, fmt):
 
     session_id = get_session_id(request)
 
-    (page_no, limit, page, opus_ids, ring_obs_ids,
-     order) = get_page(request, cols='opusid,ringobsid', api_code=api_code)
+    (page_no, limit, page, opus_ids, ring_obs_ids, file_specs,
+     order) = get_page(request, cols='opusid,**previewimages',
+                       api_code=api_code)
     if page is None:
         ret = Http404('Could not find page')
         exit_api_call(api_code, ret)
         raise ret
 
-    image_list = get_pds_preview_images(opus_ids, [size])
+    preview_jsons = [json.loads(x[1]) for x in page]
+    image_list = get_pds_preview_images(opus_ids, preview_jsons, [size])
 
     if not image_list:
         log.error('api_get_images_by_size: No image found for: %s',
@@ -355,8 +357,9 @@ def api_get_images(request, fmt):
 
     session_id = get_session_id(request)
 
-    (page_no, limit, page, opus_ids, ring_obs_ids,
-     order) = get_page(request, cols='opusid,ringobsid', api_code=api_code)
+    (page_no, limit, page, opus_ids, ring_obs_ids, file_specs,
+     order) = get_page(request, cols='opusid,**previewimages',
+                       api_code=api_code)
     if page is None:
         ret = Http404('Could not find page')
         exit_api_call(api_code, ret)
@@ -367,7 +370,9 @@ def api_get_images(request, fmt):
     for i in range(len(opus_ids)):
         ring_obs_id_dict[opus_ids[i]] = ring_obs_ids[i]
 
-    image_list = get_pds_preview_images(opus_ids,
+    preview_jsons = [json.loads(x[1]) for x in page]
+
+    image_list = get_pds_preview_images(opus_ids, preview_jsons,
                                         ['thumb', 'small', 'med', 'full'])
 
     if not image_list:
@@ -401,7 +406,7 @@ def api_get_image(request, opus_id, size='med', fmt='raw'):
     The fields 'path' and 'img' are provided for backwards compatibility only.
     """
     api_code = enter_api_call('api_get_image', request)
-
+    print(size, fmt)
     if not request or request.GET is None:
         ret = Http404('No request')
         exit_api_call(api_code, ret)
@@ -410,7 +415,7 @@ def api_get_image(request, opus_id, size='med', fmt='raw'):
     # Backwards compatibility
     opus_id = convert_ring_obs_id_to_opus_id(opus_id)
 
-    image_list = get_pds_preview_images(opus_id, size)
+    image_list = get_pds_preview_images(opus_id, None, size)
     if len(image_list) != 1:
         log.error('api_get_image: Could not find preview for opus_id "%s" '
                   +'size "%s"', str(opus_id), str(size))
@@ -464,22 +469,31 @@ def api_get_files(request, opus_id=None, fmt='json'):
         # Backwards compatibility
         opus_id = convert_ring_obs_id_to_opus_id(opus_id)
         opus_ids = [opus_id]
+        file_specs = None
     else:
         # No opus_id passed, get files from search results
         # Override cols because we don't care about anything except
         # opusid
-        data = get_data(request, 'raw', cols='opusid')
+        data = get_data(request, 'raw', cols='opusid,__filespec')
         if data is None:
             exit_api_call(api_code, Http404)
             raise Http404
         opus_ids = [p[0] for p in data['page']]
+        file_specs = [p[1] for p in data['page']]
         del data['page']
         del data['labels']
 
-    ret = get_pds_products(opus_ids, fmt='raw',
+    ret = get_pds_products(opus_ids, file_specs, fmt='raw',
                            loc_type=loc_type,
                            product_types=product_types)
-    data['data'] = ret
+
+    new_ret = OrderedDict()
+    for opus_id in ret:
+        new_ret[opus_id] = OrderedDict()
+        for product_type in ret[opus_id]:
+            new_ret[opus_id][product_type[2]] = ret[opus_id][product_type]
+
+    data['data'] = new_ret
     exit_api_call(api_code, data)
     return response_formats(data, fmt=fmt)
 
@@ -603,7 +617,7 @@ def get_data(request, fmt, cols=None, api_code=None):
     if cols is None:
         cols = request.GET.get('cols', settings.DEFAULT_COLUMNS)
 
-    (page_no, limit, page, opus_ids,
+    (page_no, limit, page, opus_ids, file_specs,
      ring_obs_ids, order) = get_page(request, cols=cols, api_code=api_code)
 
     if page is None:
@@ -662,6 +676,8 @@ def get_data(request, fmt, cols=None, api_code=None):
 def get_page(request, use_collections=None, collections_page=None, page=None,
              cols=None, api_code=None):
     """Return a page of results."""
+    none_return = (None, None, None, None, None, None, None)
+
     session_id = get_session_id(request)
 
     if use_collections is None:
@@ -682,7 +698,7 @@ def get_page(request, use_collections=None, collections_page=None, page=None,
         pi = get_param_info_by_slug(slug, from_ui=True)
         if not pi:
             log.error('get_page: Slug "%s" not found', slug)
-            return (None, None, None, None, None, None)
+            return none_return
         column = pi.param_name()
         table = column.split('.')[0]
         if column.endswith('.opus_id'):
@@ -710,6 +726,9 @@ def get_page(request, use_collections=None, collections_page=None, page=None,
         added_extra_columns += 1 # So we know to strip it off later
     if 'obs_general.ring_obs_id' not in column_names:
         column_names.append('obs_general.ring_obs_id')
+        added_extra_columns += 1 # So we know to strip it off later
+    if 'obs_general.primary_file_spec' not in column_names:
+        column_names.append('obs_general.primary_file_spec')
         added_extra_columns += 1 # So we know to strip it off later
 
     # XXX Something here should specify order for collections
@@ -742,7 +761,7 @@ def get_page(request, use_collections=None, collections_page=None, page=None,
         except:
             log.error('get_page: Unable to parse page "%s"',
                       str(page_no))
-            return (None, None, None, None, None, None)
+            return none_return
 
     temp_table_name = None
     drop_temp_table = False
@@ -757,7 +776,7 @@ def get_page(request, use_collections=None, collections_page=None, page=None,
         if selections is None:
             log.error('get_page: Could not find selections for'
                       +' request %s', str(request.GET))
-            return (None, None, None, None, None, None)
+            return none_return
 
         user_query_table = get_user_query_table(selections, extras,
                                                 api_code=api_code)
@@ -765,7 +784,7 @@ def get_page(request, use_collections=None, collections_page=None, page=None,
             log.error('get_page: get_user_query_table failed '
                       +'*** Selections %s *** Extras %s',
                       str(selections), str(extras))
-            return (None, None, None, None, None, None)
+            return none_return
 
         # First we create a temporary table that contains only those ids
         # in the limit window that we care about (if there's a limit window).
@@ -795,7 +814,7 @@ def get_page(request, use_collections=None, collections_page=None, page=None,
             except DatabaseError as e:
                 log.error('get_page: "%s" returned %s',
                           temp_sql, str(e))
-                return (None, None, None, None, None, None)
+                return none_return
             log.debug('get_page SQL (%.2f secs): %s', time.time()-time1,
                       temp_sql)
 
@@ -919,7 +938,7 @@ def get_page(request, use_collections=None, collections_page=None, page=None,
         except DatabaseError as e:
             log.error('get_page: "%s" returned %s',
                       sql, str(e))
-            return (None, None, None, None, None, None)
+            return none_return
 
     # Return a simple list of opus_ids
     opus_id_index = column_names.index('obs_general.opus_id')
@@ -929,6 +948,10 @@ def get_page(request, use_collections=None, collections_page=None, page=None,
     ring_obs_id_index = column_names.index('obs_general.ring_obs_id')
     ring_obs_ids = [o[ring_obs_id_index] for o in results]
 
+    # For retrieving preview images, obs_general.primary_file_spec
+    file_spec_index = column_names.index('obs_general.primary_file_spec')
+    file_specs = [o[file_spec_index] for o in results]
+
     # Strip off the opus_id if the user didn't actually ask for it initially
     if added_extra_columns:
         results = [o[:-added_extra_columns] for o in results]
@@ -937,7 +960,7 @@ def get_page(request, use_collections=None, collections_page=None, page=None,
     # data. Replace these so they look prettier.
     results = [[x if x is not None else 'N/A' for x in r] for r in results]
 
-    return (page_no, limit, results, opus_ids, ring_obs_ids,
+    return (page_no, limit, results, opus_ids, ring_obs_ids, file_specs,
             all_order)
 
 

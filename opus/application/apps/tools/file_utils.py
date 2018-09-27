@@ -7,8 +7,10 @@
 from collections import OrderedDict
 import json
 
+from django.core.exceptions import ObjectDoesNotExist
 from django.http import HttpResponse
 
+from search.models import *
 import tools.app_utils as app_utils
 
 import settings
@@ -39,10 +41,27 @@ def _pdsfile_iter_flatten(iterable):
             ret.append(pdsfile)
     return ret
 
+def pds_products_sort_func(x):
+    pref = None
+    if x[0] == 'standard':
+        pref = 1
+    elif x[0] == 'metadata':
+        pref = 2
+    elif x[0] == 'browse':
+        pref = 3
+    if pref:
+        return (str(pref), x[1])
+    return x[0:2]
+
 def get_pds_products_by_type(opus_id_list, product_types=['all']):
     """Return product types and their associated PdsFile objects for opus_ids.
 
         opus_id_list can be a string or a list.
+
+        The returned dict is indexed by product_type and for each entry
+        contains the combined information for all opus_ids. product_type
+        is in the format (category, sort_order, slug, pretty_name) and is
+        sorted in the order 'standard', 'metadata', 'browse', other.
     """
     if opus_id_list:
         if not isinstance(opus_id_list, (list, tuple)):
@@ -50,13 +69,30 @@ def get_pds_products_by_type(opus_id_list, product_types=['all']):
     else:
         opus_id_list = []
 
+    try:
+        res = (ObsGeneral.objects.filter(opus_id__in=opus_id_list)
+               .values('primary_file_spec'))
+    except ObjectDoesNotExist:
+        log.error('get_pds_products_by_type: Failed to find opus_ids "%s" '
+                  +'in obs_general', str(opus_id_list))
+        return None
+    file_specs = [x['primary_file_spec'] for x in res]
+
+    if len(opus_id_list) != len(file_specs):
+        log.error('get_pds_products_by_type: Failed to find some opus_ids "%s" '
+                  +'in obs_general', str(opus_id_list))
+        return None
+
     products_by_type = {}
 
-    for opus_id in opus_id_list:
+    for idx in range(len(opus_id_list)):
+        opus_id = opus_id_list[idx]
+        file_spec = file_specs[idx]
         try:
-            pdsf = pdsfile.PdsFile.from_opus_id(opus_id)
+            pdsf = pdsfile.PdsFile.from_filespec(file_spec)
         except ValueError:
-            log.error('Failed to convert opus_id "%s"', opus_id)
+            log.error('get_pds_products_by_type: Failed to convert file_spec '
+                      +'"%s"', file_spec)
             continue
         products = pdsf.opus_products()
 
@@ -67,7 +103,7 @@ def get_pds_products_by_type(opus_id_list, product_types=['all']):
                 products_by_type.setdefault(product_type, []).extend(flat_list)
 
     ret = OrderedDict()
-    for product_type in sorted(products_by_type):
+    for product_type in sorted(products_by_type, key=pds_products_sort_func):
         ret[product_type] = products_by_type[product_type]
 
     return ret
@@ -86,22 +122,32 @@ def get_product_counts(products_by_type):
     return size, count, num_products
 
 
-def get_pds_products(opus_id_list=None, fmt='raw', loc_type='url',
+def get_pds_products(opus_id_list=None, file_specs=None,
+                     fmt='raw', loc_type='url',
                      product_types=['all']):
     """Return a list of all PDS products for a given opus_id(s).
 
-    The returned list is sorted by opus_id and can be in raw, html, or json.
-    The latter are used by the "files" API.
+    The returned dict is indexed by opus_id and can be in raw, html, or json.
+    The latter are used by the "files" API. The dict is in the same order as
+    the original opus_id_list.
+
+    For each opus_id in the returned dict, there is a dict indexed by
+    product_type in the format (category, sort_order, slug, pretty_name). The
+    dict is sorted in the order 'standard', 'metadata', 'browse', other.
 
     opus_id_list can be a string or a list.
 
+    file_specs can be None, a string, or a list. If a string or list,
+        must correspond 1-to-1 with the entries in opus_list and give the
+        primary_file_spec entry. If None, we will look them up for you.
+
     product_types can be a simple string, a comma-separated string, or a list.
-        'all' means return all product types.
+        'all' means return all product types. product_types are slug names like
+        'browse-medium'.
 
     loc_type is 'url' to return full URLs or 'path' to return paths available on
         the local disk. It can also be 'raw' to return the actual PdsFile
         object.
-
     """
     if not isinstance(product_types, (list, tuple)):
         product_types = product_types.split(',')
@@ -112,6 +158,19 @@ def get_pds_products(opus_id_list=None, fmt='raw', loc_type='url',
     else:
         opus_id_list = []
 
+    if file_specs:
+        if not isinstance(file_specs, (list, tuple)):
+            file_specs = [file_specs]
+    else:
+        try:
+            res = (ObsGeneral.objects.filter(opus_id__in=opus_id_list)
+                   .values('primary_file_spec'))
+        except ObjectDoesNotExist:
+            log.error('get_pds_products: Failed to find opus_ids "%s" '
+                      +'in obs_general', str(opus_id_list))
+            return None
+        file_specs = [x['primary_file_spec'] for x in res]
+
     # you can ask this function for url paths or disk paths
     if loc_type == 'url':
         path = settings.PRODUCT_HTTP_PATH
@@ -120,19 +179,24 @@ def get_pds_products(opus_id_list=None, fmt='raw', loc_type='url',
 
     results = OrderedDict() # Dict of opus_ids
 
-    for opus_id in opus_id_list:
+    for idx in range(len(opus_id_list)):
+        opus_id = opus_id_list[idx]
         results[opus_id] = OrderedDict() # Dict of product types
+        file_spec = file_specs[idx]
         try:
-            pdsf = pdsfile.PdsFile.from_opus_id(opus_id)
+            pdsf = pdsfile.PdsFile.from_filespec(file_spec)
         except ValueError:
-            log.error('Failed to convert opus_id "%s"', opus_id)
+            log.error('get_pds_products: Failed to convert file_spec "%s"',
+                      file_spec)
             continue
         products = pdsf.opus_products()
-
         # Keep a running list of all products by type
-        for product_type in sorted(products.keys()):
+        for product_type in sorted(products, key=pds_products_sort_func):
+            # product_type is in the format
+            # (category, sort_order, slug, pretty_name)
             list_of_sublists = products[product_type]
-            if product_types != ['all'] and product_type not in product_types:
+            if (product_types != ['all'] and
+                product_type[2] not in product_types):
                 continue
             flat_list = _pdsfile_iter_flatten(list_of_sublists)
             res_list = []
@@ -162,10 +226,14 @@ def get_pds_products(opus_id_list=None, fmt='raw', loc_type='url',
     #     return render('list.html', results)
 
 
-def get_pds_preview_images(opus_id_list, sizes):
+def get_pds_preview_images(opus_id_list, preview_jsons, sizes):
     """Given a list of opus_ids, return a list of image info for a size.
 
         opus_id_list can be a string or a list.
+
+        preview_jsons can be None, a string, or a list. If a string or list,
+        must correspond 1-to-1 with the entries in opus_list and give the
+        obs_general.preview_images entry. If None, we will look them up for you.
     """
     if opus_id_list:
         if not isinstance(opus_id_list, (list, tuple)):
@@ -176,53 +244,48 @@ def get_pds_preview_images(opus_id_list, sizes):
     if not isinstance(sizes, (list, tuple)):
         sizes = [sizes]
 
+    if preview_jsons:
+        if not isinstance(preview_jsons, (list, tuple)):
+            preview_jsons = [preview_jsons]
+
     product_types = []
     for size in sizes:
         product_types += settings.PREVIEW_SIZE_TO_PDS_TYPE[size]
 
     image_list = []
-    for opus_id in opus_id_list:
+    for idx in range(len(opus_id_list)):
+        opus_id = opus_id_list[idx]
+        preview_json = None
+        if preview_jsons:
+            preview_json = preview_jsons[idx]
+        else:
+            # try:
+                preview_json_str = (ObsGeneral.objects.get(opus_id=opus_id)
+                                    .preview_images)
+                preview_json = json.loads(preview_json_str)
+            # except ObjectDoesNotExist:
+            #     log.error('get_pds_preview_images: Failed to find opus_ids "%s" '
+            #               +'in obs_general', opus_id)
         data = OrderedDict({'opus_id':  opus_id})
-        products = get_pds_products(opus_id, 'raw', 'raw',
-                                    product_types=product_types)[opus_id]
         for size in sizes:
-            product_type_entry = None
-            for size_type in settings.PREVIEW_SIZE_TO_PDS_TYPE[size]:
-                if size_type in products:
-                    if product_type_entry is not None:
-                        log.error('Multiple product types for image size "%s"'
-                                  +' found for opus_id "%s"',
-                                  size, opus_id)
-                        # We'll go ahead and fall through to return the first
-                        # one found just so there's something to display
-                    else:
-                        product_type_entry = products[size_type]
-            if (product_type_entry is None or
-                len(product_type_entry) == 0):
+            our_size = size
+            if our_size == 'med':
+                our_size = 'medium'
+            if not preview_json or 'browse_'+our_size not in preview_json:
                 log.error('No preview image size "%s" found for '
-                          +'opus_id "%s"', size, opus_id)
+                          +'opus_id "%s"', our_size, opus_id)
                 url = settings.THUMBNAIL_NOT_FOUND
                 alt_text = 'Not found'
                 byte_size = 0
                 width = 0
                 height = 0
             else:
-                if len(product_type_entry) > 1:
-                    # This can happen for CIRS, which has multiple browse
-                    # products. Take that one that starts with IMG if possible.
-                    for product in product_type_entry:
-                        filename = product.url.split('/')[-1]
-                        if filename.startswith('IMG'):
-                            break
-                    else:
-                        product = product_type_entry[0]
-                else:
-                    product = product_type_entry[0]
-                url = settings.PRODUCT_HTTP_PATH + product.url
-                alt_text = product.alt
-                byte_size = product.size_bytes
-                width = product.width
-                height = product.height
+                entry = preview_json['browse_'+our_size]
+                url = settings.PRODUCT_HTTP_PATH + entry['url']
+                alt_text = entry['alt_text']
+                byte_size = entry['size_bytes']
+                width = entry['width']
+                height = entry['height']
             data[size+'_url'] = url
             data[size+'_alt_text'] = alt_text
             data[size+'_size_bytes'] = byte_size

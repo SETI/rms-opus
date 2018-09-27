@@ -4,11 +4,15 @@
 # Routines to populate fields in the obs_general table.
 ################################################################################
 
+import json
+
 import julian
+import pdsfile
 
 from config_data import *
 import impglobals
 import import_util
+import opus_secrets
 
 # Ordering:
 #   target_name must come before target_class
@@ -150,3 +154,64 @@ def populate_obs_general_time_sec2(**kwargs):
         time2_sec = time1_sec
 
     return time2_sec
+
+def _iter_flatten(iterable):
+  it = iter(iterable)
+  for e in it:
+    if isinstance(e, (list, tuple)):
+      for f in _iter_flatten(e):
+        yield f
+    else:
+      yield e
+
+def _pdsfile_iter_flatten(iterable):
+    "Flatten list and remove duplicate PdsFile objects"
+    pdsfiles = _iter_flatten(iterable)
+    abspaths = []
+    ret = []
+    for pdsfile in pdsfiles:
+        if pdsfile.abspath not in abspaths:
+            abspaths.append(pdsfile.abspath)
+            ret.append(pdsfile)
+    return ret
+
+def populate_obs_general_preview_images(**kwargs):
+    metadata = kwargs['metadata']
+    general_row = metadata['obs_general_row']
+    file_spec = general_row['primary_file_spec']
+    pdsf = pdsfile.PdsFile.from_filespec(file_spec)
+    products = pdsf.opus_products()
+
+    browse_data = {}
+
+    for product_type in products.keys():
+        if not isinstance(product_type, tuple):
+            # import_util.log_nonrepeating_error('Non-tuple product type') XXX
+            continue
+        product_class = product_type[0]
+        if product_class != 'browse':
+            continue
+        browse_type = product_type[2]
+        list_of_sublists = products[product_type]
+        flat_list = _pdsfile_iter_flatten(list_of_sublists)
+        if len(flat_list) > 1:
+            # This can happen for CIRS, which has multiple browse
+            # products. Take that one that starts with IMG if possible.
+            for product in flat_list:
+                filename = product.url.split('/')[-1]
+                if filename.startswith('IMG'):
+                    break
+            else:
+                product = flat_list[0]
+        else:
+            product = flat_list[0]
+        data = {}
+        data['url'] = product.url
+        data['alt_text'] = product.alt
+        data['size_bytes'] = product.size_bytes
+        data['width'] = product.width
+        data['height'] = product.height
+        browse_data[browse_type.replace('-','_')] = data
+
+    ret = json.dumps(browse_data)
+    return ret

@@ -41,7 +41,7 @@ _GOSSI_FILTER_WAVELENGTHS = {
 
 ### OBS_GENERAL TABLE ###
 
-def populate_obs_general_GOSSI_opus_id(**kwargs):
+def _GOSSI_file_spec_helper(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     # Format: GO_0017:[J0.OPNAV.C034640]5900R.IMG
@@ -49,9 +49,13 @@ def populate_obs_general_GOSSI_opus_id(**kwargs):
     file_spec = file_spec.replace(':', '').replace('.', '/')
     file_spec = file_spec.replace('[', '/').replace(']', '/')
     file_spec = file_spec.replace('/IMG', '.IMG')
+    return file_spec
+
+def populate_obs_general_GOSSI_opus_id(**kwargs):
+    file_spec = _GOSSI_file_spec_helper(**kwargs)
     pds_file = pdsfile.PdsFile.from_filespec(file_spec)
     try:
-        opus_id = pds_file.opus_id
+        opus_id = pds_file.opus_id.replace('.', '-')
     except:
         metadata = kwargs['metadata']
         index_row = metadata['index_row']
@@ -147,16 +151,16 @@ def populate_obs_general_GOSSI_wavelength_sampling(**kwargs):
 def populate_obs_general_GOSSI_time_sampling(**kwargs):
     return 'N'
 
-def populate_obs_general_GOSSI_note(**kwargs):
+def populate_obs_pds_GOSSI_note(**kwargs):
     return None
 
 def populate_obs_general_GOSSI_primary_file_spec(**kwargs):
-    metadata = kwargs['metadata']
-    index_row = metadata['index_row']
-    # Format: GO_0017:[J0.OPNAV.C034640]5900R.IMG
-    return index_row['FILE_SPECIFICATION_NAME']
+    return _GOSSI_file_spec_helper(**kwargs)
 
-def populate_obs_general_GOSSI_product_creation_time(**kwargs):
+def populate_obs_pds_GOSSI_primary_file_spec(**kwargs):
+    return _GOSSI_file_spec_helper(**kwargs)
+
+def populate_obs_pds_GOSSI_product_creation_time(**kwargs):
     # For GOSSI the PRODUCT_CREATION_TIME is provided in the volume label file,
     # not the individual observation rows
     metadata = kwargs['metadata']
@@ -172,13 +176,13 @@ def populate_obs_general_GOSSI_product_creation_time(**kwargs):
 
     return julian.iso_from_tai(pct_sec, digits=3, ymd=True)
 
-def populate_obs_general_GOSSI_data_set_id(**kwargs):
+def populate_obs_pds_GOSSI_data_set_id(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     dsi = index_row['DATA_SET_ID']
     return dsi
 
-def populate_obs_general_GOSSI_product_id(**kwargs):
+def populate_obs_pds_GOSSI_product_id(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     file_spec = index_row['FILE_SPECIFICATION_NAME']

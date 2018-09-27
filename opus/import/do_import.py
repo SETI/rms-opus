@@ -724,6 +724,7 @@ def import_one_volume(volume_id):
             f'Failed to convert file_spec "{geo_full_file_spec}" to opus_id '+
             f'for {assoc_label_path}')
                             continue
+                        key = key.replace('.', '-')
                         # WARNING: HACK FOR VIMS XXX
                         # The current VIMS geo tables have entries
                         # for VIS and IR but the only way to distinguish

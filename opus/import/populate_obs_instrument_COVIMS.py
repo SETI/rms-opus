@@ -41,14 +41,14 @@ def populate_obs_general_COVIMS_opus_id(**kwargs):
     file_spec = _COVIMS_file_spec_helper(**kwargs)
     pds_file = pdsfile.PdsFile.from_filespec(file_spec)
     try:
-        opus_id = pds_file.opus_id
+        opus_id = pds_file.opus_id.replace('.', '-')
     except:
         metadata = kwargs['metadata']
         index_row = metadata['index_row']
         import_util.log_nonrepeating_error(
             f'Unable to create OPUS_ID for FILE_SPEC "{file_spec}"')
         return file_spec
-    phase_name = metadata['phase_name']
+    phase_name = metadata['phase_name'].lower()
     opus_id += '_' + phase_name
     return opus_id
 
@@ -162,13 +162,16 @@ def populate_obs_general_COVIMS_observation_duration(**kwargs):
     time_sec2 = obs_general_row['time_sec2']
     return max(time_sec2 - time_sec1, 0)
 
-def populate_obs_general_COVIMS_note(**kwargs):
+def populate_obs_pds_COVIMS_note(**kwargs):
     None
 
 def populate_obs_general_COVIMS_primary_file_spec(**kwargs):
     return _COVIMS_file_spec_helper(**kwargs)
 
-def populate_obs_general_COVIMS_product_creation_time(**kwargs):
+def populate_obs_pds_COVIMS_primary_file_spec(**kwargs):
+    return _COVIMS_file_spec_helper(**kwargs)
+
+def populate_obs_pds_COVIMS_product_creation_time(**kwargs):
     metadata = kwargs['metadata']
     index_label = metadata['index_label']
     pct = index_label['PRODUCT_CREATION_TIME']
@@ -183,7 +186,7 @@ def populate_obs_general_COVIMS_product_creation_time(**kwargs):
     return julian.iso_from_tai(pct_sec, digits=3, ymd=True)
 
 # Format: "CO-E/V/J/S-VIMS-2-QUBE-V1.0"
-def populate_obs_general_COVIMS_data_set_id(**kwargs):
+def populate_obs_pds_COVIMS_data_set_id(**kwargs):
     # For VIMS the DATA_SET_ID is provided in the volume label file,
     # not the individual observation rows
     metadata = kwargs['metadata']
@@ -192,7 +195,7 @@ def populate_obs_general_COVIMS_data_set_id(**kwargs):
     return (dsi, dsi)
 
 # Format: "1/1294638283_1"
-def populate_obs_general_COVIMS_product_id(**kwargs):
+def populate_obs_pds_COVIMS_product_id(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     product_id = index_row['PRODUCT_ID']

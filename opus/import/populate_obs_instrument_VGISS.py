@@ -46,7 +46,7 @@ def populate_obs_general_VGISS_opus_id(**kwargs):
     file_spec = _VGISS_file_spec_helper(**kwargs)
     pds_file = pdsfile.PdsFile.from_filespec(file_spec)
     try:
-        opus_id = pds_file.opus_id
+        opus_id = pds_file.opus_id.replace('.', '-')
     except:
         metadata = kwargs['metadata']
         index_row = metadata['index_row']
@@ -151,7 +151,7 @@ def populate_obs_general_VGISS_wavelength_sampling(**kwargs):
 def populate_obs_general_VGISS_time_sampling(**kwargs):
     return 'N'
 
-def populate_obs_general_VGISS_note(**kwargs):
+def populate_obs_pds_VGISS_note(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     return index_row['NOTE']
@@ -159,8 +159,11 @@ def populate_obs_general_VGISS_note(**kwargs):
 def populate_obs_general_VGISS_primary_file_spec(**kwargs):
     return _VGISS_file_spec_helper(**kwargs)
 
+def populate_obs_pds_VGISS_primary_file_spec(**kwargs):
+    return _VGISS_file_spec_helper(**kwargs)
+
 # Format: "VG1/VG2-J-ISS-2/3/4/6-PROCESSED-V1.0"
-def populate_obs_general_VGISS_data_set_id(**kwargs):
+def populate_obs_pds_VGISS_data_set_id(**kwargs):
     # For VGISS the DATA_SET_ID is provided in the volume label file,
     # not the individual observation rows
     metadata = kwargs['metadata']
@@ -168,7 +171,7 @@ def populate_obs_general_VGISS_data_set_id(**kwargs):
     dsi = index_label['DATA_SET_ID']
     return (dsi, dsi)
 
-def populate_obs_general_VGISS_product_creation_time(**kwargs):
+def populate_obs_pds_VGISS_product_creation_time(**kwargs):
     metadata = kwargs['metadata']
     supp_index_row = metadata['supp_index_row']
     if supp_index_row is None:
@@ -185,7 +188,7 @@ def populate_obs_general_VGISS_product_creation_time(**kwargs):
     return julian.iso_from_tai(pct_sec, digits=3, ymd=True)
 
 # Format: "C1385455_CALIB.IMG"
-def populate_obs_general_VGISS_product_id(**kwargs):
+def populate_obs_pds_VGISS_product_id(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     product_id = index_row['PRODUCT_ID']

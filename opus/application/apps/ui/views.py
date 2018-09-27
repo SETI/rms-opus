@@ -419,7 +419,7 @@ def api_init_detail_page(request, **kwargs):
 
     # The medium image is what's displayed on the Detail page
     # XXX This should be replaced with a viewset query and pixel size
-    preview_med_list = get_pds_preview_images(opus_id, 'med')
+    preview_med_list = get_pds_preview_images(opus_id, None, 'med')
     if len(preview_med_list) != 1:
         log.error('Failed to find single med size image for "%s"', opus_id)
         preview_med_url = ''
@@ -427,7 +427,7 @@ def api_init_detail_page(request, **kwargs):
         preview_med_url = preview_med_list[0]['med_url']
 
     # The full-size image is provided in case the user clicks on the medium one
-    preview_full_list = get_pds_preview_images(opus_id, 'full')
+    preview_full_list = get_pds_preview_images(opus_id, None, 'full')
     if len(preview_full_list) != 1:
         log.error('Failed to find single full size image for "%s"', opus_id)
         preview_full_url = ''
@@ -441,13 +441,14 @@ def api_init_detail_page(request, **kwargs):
 
     # On the details page, we display the list of available filenames after
     # each product type
-    products = get_pds_products(opus_id, fmt='raw')[opus_id]
+    products = get_pds_products(opus_id, None, fmt='raw')[opus_id]
     if not products:
         products = {}
-    new_products = {}
-    for product_type, file_list in products.items():
+    new_products = OrderedDict()
+    for product_type in sorted(products, key=pds_products_sort_func):
+        file_list = products[product_type]
         product_info = {}
-        if product_type.find('Index') != -1:
+        if product_type[3].find('Index') != -1:
             tab_url = None
             for fn in file_list:
                 if (fn.endswith('.tab') or
@@ -466,7 +467,7 @@ def api_init_detail_page(request, **kwargs):
             file_list[i] = {'filename': fn,
                             'link': file_list[i]}
         product_info['files'] = file_list
-        new_products[product_type] = product_info
+        new_products[product_type[3]] = product_info
 
     context = {
         'preview_full_url': preview_full_url,

@@ -49,8 +49,7 @@ log = logging.getLogger(__name__)
 ################################################################################
 
 @never_cache
-def api_view_collection(request, collection_name,
-                        template='user_collections/collections.html'):
+def api_view_collection(request, collection_name):
     """Return the HTML for the left side of the Selections page.
 
     This returns information about ALL files and product types, ignoring any
@@ -63,13 +62,32 @@ def api_view_collection(request, collection_name,
     (download_size, download_count,
      product_counts) = _get_download_info(['all'], session_id)
 
+    product_cats = []
+    for product_type in product_counts:
+        name = product_type[0]
+        print(name)
+        pretty_name = name
+        if name == 'standard':
+            pretty_name = 'Standard Data Products'
+        elif name == 'metadata':
+            pretty_name = 'Metadata Products'
+        elif name == 'browse':
+            pretty_name = 'Browse Products'
+        else:
+            pretty_name = name + '-Specific Products'
+        key = (name, pretty_name)
+        if key not in product_cats:
+            product_cats.append(key)
+
     context = {
         'download_count': download_count,
         'download_size': download_size,
         'download_size_pretty':  nice_file_size(download_size),
-        'product_counts': product_counts
+        'product_counts': product_counts,
+        'product_cats': product_cats
     }
 
+    template='user_collections/collections.html'
     ret = render(request, template, context)
 
     exit_api_call(api_code, ret)
@@ -217,7 +235,7 @@ def api_edit_collection(request, **kwargs):
         json_data['download_count'] = download_count
         json_data['download_size'] = download_size
         json_data['download_size_pretty'] = nice_file_size(download_size)
-        json_data['product_counts'] = product_counts
+        json_data['product_counts'] = {x[0][3]: x[1] for x in product_counts}
 
     ret = HttpResponse(json.dumps(json_data))
     exit_api_call(api_code, ret)
@@ -292,7 +310,7 @@ def api_get_download_info(request):
         'download_count': download_count,
         'download_size':  download_size,
         'download_size_pretty':  nice_file_size(download_size),
-        'product_counts': product_counts
+        'product_counts': {x[0][2]: x[1] for x in product_counts}
     }
 
     ret = HttpResponse(json.dumps(context), content_type='application/json')
@@ -344,7 +362,7 @@ def api_create_download(request, session_id=None, opus_ids=None, fmt=None):
     _create_csv_file(request, csv_file_name, api_code=api_code)
 
     # fetch the full file paths we'll be zipping up
-    files = get_pds_products(opus_ids, fmt='raw', loc_type='path',
+    files = get_pds_products(opus_ids, None, fmt='raw', loc_type='path',
                              product_types=product_types)
 
     if not files:
@@ -420,7 +438,7 @@ def api_create_download(request, session_id=None, opus_ids=None, fmt=None):
 
     if not added:
         log.error('No files found for download cart %s', manifest_file_name)
-        raise Http404
+        raise Http404('No files found')
 
     if fmt == 'json':
         ret = HttpResponse(json.dumps(zip_url), content_type='application/json')
@@ -469,12 +487,13 @@ def _get_collection_count(session_id):
 def _get_collection_csv(request, fmt=None, api_code=None):
     "Create and return a CSV file based on user column and selection."
     slugs = request.GET.get('cols', settings.DEFAULT_COLUMNS)
-    all_data = get_page(request, use_collections=True, collections_page='all',
-                        api_code=api_code)
-    # XXX Check all_data for None
+    (page_no, limit, page, opus_ids, file_specs,
+     ring_obs_ids, order) = get_page(request, use_collections=True,
+                                     collections_page='all',
+                                     api_code=api_code)
 
     if fmt == 'raw':
-        return slugs.split(','), all_data[2]
+        return slugs.split(','), page
 
     column_labels = []
     for slug in slugs.split(','):
@@ -489,7 +508,7 @@ def _get_collection_csv(request, fmt=None, api_code=None):
     response['Content-Disposition'] = 'attachment; filename="data.csv"'
     wr = csv.writer(response)
     wr.writerow(column_labels)
-    wr.writerows(all_data[2])
+    wr.writerows(page)
 
     return response
 

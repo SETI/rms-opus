@@ -1126,6 +1126,8 @@ class ObsGeneral(models.Model):
     wavelength_sampling = models.CharField(max_length=3, blank=True, null=True)
     time_sampling = models.CharField(max_length=3, blank=True, null=True)
     ring_obs_id = models.CharField(max_length=40, blank=True, null=True)
+    primary_file_spec = models.CharField(max_length=240, blank=True, null=True)
+    preview_images = models.TextField(blank=True, null=True)  # This field type is a guess.
     mult_obs_general_instrument = models.ForeignKey(MultObsGeneralInstrumentId, models.DO_NOTHING)
     mult_obs_general_mission = models.ForeignKey(MultObsGeneralMissionId, models.DO_NOTHING)
     mult_obs_general_inst_host = models.ForeignKey(MultObsGeneralInstHostId, models.DO_NOTHING)

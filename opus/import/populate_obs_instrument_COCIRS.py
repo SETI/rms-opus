@@ -35,7 +35,7 @@ def populate_obs_general_COCIRS_opus_id(**kwargs):
     file_spec = _COCIRS_file_spec_helper(**kwargs)
     pds_file = pdsfile.PdsFile.from_filespec(file_spec)
     try:
-        opus_id = pds_file.opus_id
+        opus_id = pds_file.opus_id.replace('.', '-')
     except:
         metadata = kwargs['metadata']
         index_row = metadata['index_row']
@@ -61,6 +61,10 @@ def populate_obs_general_COCIRS_ring_obs_id(**kwargs):
         pl_str = planet[0]
 
     return pl_str + '_SPEC_CO_CIRS_' + image_num + '_' + instrument_id
+
+def popular_obs_general_COCIRS_pdsfile_path(**kwargs):
+    file_spec = _COCIRS_file_spec_helper(**kwargs)
+    pds_file = pdsfile.PdsFile.from_filespec(file_spec)
 
 def populate_obs_general_COCIRS_inst_host_id(**kwargs):
     return 'CO'
@@ -126,13 +130,16 @@ def populate_obs_general_COCIRS_wavelength_sampling(**kwargs):
 def populate_obs_general_COCIRS_time_sampling(**kwargs):
     return 'N'
 
-def populate_obs_general_COCIRS_note(**kwargs):
+def populate_obs_pds_COCIRS_note(**kwargs):
     return None
 
 def populate_obs_general_COCIRS_primary_file_spec(**kwargs):
     return _COCIRS_file_spec_helper(**kwargs)
 
-def populate_obs_general_COCIRS_product_creation_time(**kwargs):
+def populate_obs_pds_COCIRS_primary_file_spec(**kwargs):
+    return _COCIRS_file_spec_helper(**kwargs)
+
+def populate_obs_pds_COCIRS_product_creation_time(**kwargs):
     metadata = kwargs['metadata']
     index_label = metadata['index_label']
     pct = index_label['PRODUCT_CREATION_TIME']
@@ -147,13 +154,13 @@ def populate_obs_general_COCIRS_product_creation_time(**kwargs):
     return julian.iso_from_tai(pct_sec, digits=3, ymd=True)
 
 # Format: "CO-S-CIRS-2/3/4-REFORMATTED-V1.0"
-def populate_obs_general_COCIRS_data_set_id(**kwargs):
+def populate_obs_pds_COCIRS_data_set_id(**kwargs):
     metadata = kwargs['metadata']
     index_label = metadata['index_label']
     dsi = index_label['DATA_SET_ID']
     return (dsi, dsi)
 
-def populate_obs_general_COCIRS_product_id(**kwargs):
+def populate_obs_pds_COCIRS_product_id(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     # Format: "DATA/APODSPEC/SPEC0802010000_FP1.DAT"
