@@ -10,16 +10,25 @@ var o_menu = {
          // search menu behaviors
 
          // click cat header in menu toggles arrow style
-         $('#sidebar').on("click", 'a', function() {
-            $(this).find('b.arrow').toggleClass('fa-angle-right').toggleClass('fa-angle-down');
+        // $('#sidebar').on("click", 'a', function() {
+        //    $(this).find('b.arrow').toggleClass('fa-angle-right').toggleClass('fa-angle-down');
 
+         //});
+         $("#sidebar").mCustomScrollbar({
+             theme: "minimal"
+         });
+
+         $('#sidebarCollapse').on('click', function () {
+             $('#sidebar, #content').toggleClass('active');
+             $('.collapse.in').toggleClass('in');
+             $('a[aria-expanded=true]').attr('aria-expanded', 'false');
          });
 
          // click param in menu get new widget
          $('#sidebar').on("click", '.submenu li a', function() {
              slug = $(this).data('slug');
              if (!slug) { return; }
-             if (jQuery.inArray(slug, opus.widgets_drawn)>-1){
+             if ($.inArray(slug, opus.widgets_drawn)>-1){
                  // widget is already showing do not fetch another
                  try {
                     // scroll to widget and highlight it
@@ -50,7 +59,7 @@ var o_menu = {
             if ($(link_element).data( "cat" )) {
                 cat_name = $(link_element).data( "cat" );
                 if ($(sub).parent().hasClass('open')) {
-                    if (jQuery.inArray(cat_name, opus.menu_state['cats']) < 0) {
+                    if ($.inArray(cat_name, opus.menu_state['cats']) < 0) {
                         opus.menu_state['cats'].push(cat_name);
                     }
                 } else {
@@ -61,7 +70,7 @@ var o_menu = {
             if ($(link_element).data( "group" )) {
                 group_name = $(link_element).data( "group" );
                 if ($(sub).parent().hasClass('open')) {
-                    if (jQuery.inArray(group_name, opus.menu_state['groups']) < 0) {
+                    if ($.inArray(group_name, opus.menu_state['groups']) < 0) {
                         opus.menu_state['groups'].push(group_name);
                     }
                 } else {
@@ -128,7 +137,7 @@ var o_menu = {
             // open any newly arrived surface geo tables
             // todo: this could be problematic if user wants to close it and keep it closed..
             geo_cat = $('a[data-cat^="obs_surface_geometry__"]', '.sidebar').data('cat');
-            if (geo_cat && jQuery.inArray(geo_cat, opus.menu_state['cats']) < 0) {
+            if (geo_cat && $.inArray(geo_cat, opus.menu_state['cats']) < 0) {
                 // open it
                 link = $("a." + geo_cat, ".sidebar");
                 sub = link.next().get(0);

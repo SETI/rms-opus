@@ -7,50 +7,6 @@ var o_search = {
      **/
 
     searchBehaviors: function() {
-        /*
-        // result count display hover
-        $('#result_count').parent().hover(
-            function(){ $('#result_count').addClass('result_count_hover'); },
-            function(){ $('#result_count').removeClass('result_count_hover'); }
-        )
-        */
-
-        // the split form buttons - view the search form in 1 or 2 columns
-        /*
-        $('#split_search_form a').live('click', function() {
-            col = $(this).attr("href");
-            if (col == '#2col') {
-                // clicked '2 columns' so add a 2nd column
-                if (opus.search_form_cols==1) o_widgets.resetWidgetScrolls(); // changing shap calls for reset scrolls
-                opus.search_form_cols = 2;
-                o_search.addSecondFormsCol();
-            } else {
-                // clicked '1 column' remove the 2nd column
-                if (opus.search_form_cols==2) o_widgets.resetWidgetScrolls(); // reset all scroll positions
-                // first move the widgets to the first column
-                opus.search_form_cols = 1;
-                $('#search_widgets1').width('70%');
-                $('#search_widgets2 .widget').each(function() {
-                    $(this).appendTo('#search_widgets1');
-                    slug = $(this).attr('id').split('__')[1];
-                    opus.prefs.widgets.push(slug);
-                    opus.prefs.widgets2.splice(jQuery.inArray(slug,opus.prefs.widgets2),1);
-                    o_hash.updateHash();
-                });
-
-                $('#search_widgets1 .widget').each(function() {
-                    o_widgets.adjustWidgetWidth(this);
-                });
-                // remove the 2nd column, widen the first column
-                $('#search_widgets2').remove();
-            }
-
-
-            o_widgets.updateWidgetCookies();
-            return false;
-        });
-        */
-
         // filling in a range or string search field = update the hash
         // range behaviors and string behaviors for search widgets - input box
         $('#search').on('change', 'input.STRING, input.RANGE', function() {
@@ -257,30 +213,6 @@ var o_search = {
 
         o_search.adjustSearchHeight();
 
-    },
-
-
-    addSecondFormsCol: function() {
-        var width = '35%';
-        if (!$('#search_widgets2').length) {
-            $('.formscolumn').width(width);
-
-            $('#search_widgets1').after('<ul  id = "search_widgets2" style = "width:' + width + '" class="formscolumn"></ul>')
-                              .animate({width:width},'fast');
-            $('#search_widgets1, #search_widgets2').sortable({
-                    connectWith: '.formscolumn',
-                    handle:'.widget_draghandle',
-                    cursor: 'crosshair',
-                    stop: function(event,ui) {
-                        o_widgets.widgetDrop(ui);
-                    }
-            });
-
-            $('#search_widgets1 .widget').each(function() {
-                o_widgets.adjustWidgetWidth(this);
-            });
-
-        }
     },
 
     getHinting: function(slug) {

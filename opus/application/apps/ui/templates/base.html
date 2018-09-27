@@ -5,7 +5,7 @@
 
 <body>
   <header>
-    <nav class="navbar fixed-top navbar-expand-sm navbar-light" style="background-color: #e3f2fd;">
+    <nav id="navbar" class="navbar fixed-top navbar-expand-sm navbar-dark bg-dark">
       <button class="navbar-toggler sidebar-toggler d-lg-none mr-auto" type="button" data-toggle="sidebar-show">
         <span class="navbar-toggler-icon"></span>
       </button>
@@ -13,50 +13,90 @@
         <span class="navbar-toggler-icon"></span>
       </button>
       <a class="navbar-brand" href="/opus" >OPUS</a>
-      <ul class="navbar-nav mr-auto main_site_tabs nav-pills flex-column flex-sm-row">
+      <ul class="nav nav-tabs mr-auto main_site_tabs flex-column flex-sm-row" role="tablist">
         <li class="nav-item">
-          <a class="nav-link active" href="#search">Search</a>
+          <a class="nav-link active" href="#search" data-toggle="tab" role="tab">Search</a>
         </li>
         <li class="nav-item">
-          <a class="nav-link" href="#browse">Browse Results <span id="result_count" class="badge badge-primary">0</span></a>
+          <a class="nav-link" href="#browse" data-toggle="tab" role="tab">Browse Results <span id="result_count" class="badge badge-primary">0</span></a>
         </li>
         <li class="nav-item">
-          <a class="nav-link" href="#collection">Selections <span id="collection_count" class="badge badge-primary">0</span></a>
+          <a class="nav-link" href="#collection" data-toggle="tab" role="tab">Selections <span id="collection_count" class="badge badge-primary">0</span></a>
         </li>
         <li class="nav-item">
-          <a class="nav-link" href="#detail">Detail</a>
+          <a class="nav-link" href="#detail" data-toggle="tab" role="tab">Detail</a>
         </li>
         <li class="nav-item external-link">
-          <a href="https://ringsnodesearchtool.blogspot.com/" target="_blank">
-             <img src="{{ STATIC_URL }}img/new_25.gif"/>&nbsp;Recent Announcements
-          </a>
+            <a href="https://ringsnodesearchtool.blogspot.com/" target="_blank" data-toggle="tab" role="tab">
+              <div class="container align-items-center d-flex h-100 my-auto">
+               <img src="{{ STATIC_URL }}img/new_25.gif"/>&nbsp;Recent Announcements
+             </div>
+            </a>
         </li>
       </ul>
     </nav>
   </header>
-
-  <div class="main-container" id="main-container">
-
+  <section class="container-fluid">
     {% block content %}
+    <div class="tab-content">
+      <div id="search" class="tab-pane fade show active" role="tabpanel" aria-labelledby="search-tab">
+        <div class="row">
+            <div class="col">
+              <div class = "sidebar_wrapper mCustomScrollbar">
+                <div class = "" id = "sidebar">
+                  {% include "menu.html" %}
+                </div>
+              </div>
+            </div>
 
-    <div class="main-container-inner">
+            <!-- selected widgets -->
+            <div class="col">
+                <div class = "widget_column mCustomScrollbar">
+                    <ul id = "search_widgets1" class = ""></ul>
+                </div>
+            </div>
+          </div>
+        </div><!-- /search -->
 
-      <a class="menu-toggler" id="menu-toggler" href="#">
-         <span class="menu-text"></span>
-      </a>
+        <div id="browse" class="tab-pane fade" role="tabpanel" aria-labelledby="browse-tab">
+          <div class="row">
+            <div class="col">
+              <div class = "browse_nav navbar-inverse col-lg-12" role="navigation"></div>
 
-      <!-- tabs -->
-      {% include "tabs.html" %}
+              <div class = "embedded_data_viewer_wrapper col-sm-5 col-md-3 col-lg-3">
+                <div class = "embedded_data_viewer"></div>
+              </div>
 
-    </div><!--/.main-container-inner-->
+              <div class = "gallery col-lg-12"><ul class="ace-thumbnails"></ul></div>
+              <div class = "data col-lg-12"></div>
+            </div>
+          </div>
+        </div>
 
-    <a href="#" id="btn-scroll-up" class="btn-scroll-up btn btn-sm btn-inverse">
-        <i class="icon-double-angle-up icon-only bigger-110"></i>
-    </a>
+        <div id="collection" clclass="tab-pane fade" role="tabpanel" aria-labelledby="collection-tab">
+          <div class="row">
+            <div class="col">
+              <div class = "collection_details col-md-4"></div>
+              <div class = "col-md-8">
+                <div class = "navbar-inverse browse_nav" role="navigation"></div>
+                <div class = "gallery"><ul class="ace-thumbnails"></ul></div>
+                <div class = "data"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div id="detail" class="tab-pane fade" role="tabpanel" aria-labelledby="detail-tab">
+          <!-- /detail  -->
+        </div>
+
+      </div><!-- /tabcontent -->
+
+      <!-- / not sure this belongs wthe other tab stuff -->
+      <div class = "column_chooser"></div>
 
     {% endblock %}
-
-  </div><!--/.main-container-->
+  </section><!--/.container-fluid-->
 
   {% include "footer.html" %}
   <div id = "range_query_widget_helper_html">

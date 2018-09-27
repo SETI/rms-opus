@@ -429,7 +429,7 @@ $(document).ready(function() {
         $(this).addClass("active");
 
         // find out which tab they clicked
-        tab = $(this).find('a').attr('href').substring(1);
+        var tab = $(this).find('a').attr('href').substring(1);
         if (tab == '/') {
             return true;  // they clicked the brand icon, take them to its link
         }
