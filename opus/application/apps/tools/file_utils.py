@@ -49,6 +49,8 @@ def pds_products_sort_func(x):
         pref = 2
     elif x[0] == 'browse':
         pref = 3
+    elif x[0] == 'diagram':
+        pref = 4
     if pref:
         return (str(pref), x[1])
     return x[0:2]
@@ -61,7 +63,7 @@ def get_pds_products_by_type(opus_id_list, product_types=['all']):
         The returned dict is indexed by product_type and for each entry
         contains the combined information for all opus_ids. product_type
         is in the format (category, sort_order, slug, pretty_name) and is
-        sorted in the order 'standard', 'metadata', 'browse', other.
+        sorted in the order 'standard', 'metadata', 'browse', 'diagram', other.
     """
     if opus_id_list:
         if not isinstance(opus_id_list, (list, tuple)):
@@ -133,7 +135,8 @@ def get_pds_products(opus_id_list=None, file_specs=None,
 
     For each opus_id in the returned dict, there is a dict indexed by
     product_type in the format (category, sort_order, slug, pretty_name). The
-    dict is sorted in the order 'standard', 'metadata', 'browse', other.
+    dict is sorted in the order 'standard', 'metadata', 'browse', 'diagram',
+    other.
 
     opus_id_list can be a string or a list.
 
@@ -271,7 +274,9 @@ def get_pds_preview_images(opus_id_list, preview_jsons, sizes):
             our_size = size
             if our_size == 'med':
                 our_size = 'medium'
-            if not preview_json or 'browse_'+our_size not in preview_json:
+            if (not preview_json or
+                ('browse_'+our_size not in preview_json and
+                 'diagram_'+our_size not in preview_json)):
                 log.error('No preview image size "%s" found for '
                           +'opus_id "%s"', our_size, opus_id)
                 url = settings.THUMBNAIL_NOT_FOUND
@@ -280,7 +285,10 @@ def get_pds_preview_images(opus_id_list, preview_jsons, sizes):
                 width = 0
                 height = 0
             else:
-                entry = preview_json['browse_'+our_size]
+                if 'browse_'+our_size in preview_json:
+                    entry = preview_json['browse_'+our_size]
+                else:
+                    entry = preview_json['diagram_'+our_size]
                 url = settings.PRODUCT_HTTP_PATH + entry['url']
                 alt_text = entry['alt_text']
                 byte_size = entry['size_bytes']

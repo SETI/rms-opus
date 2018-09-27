@@ -186,10 +186,10 @@ def populate_obs_general_preview_images(**kwargs):
 
     for product_type in products.keys():
         if not isinstance(product_type, tuple):
-            # import_util.log_nonrepeating_error('Non-tuple product type') XXX
+            import_util.log_nonrepeating_error('Non-tuple product type')
             continue
         product_class = product_type[0]
-        if product_class != 'browse':
+        if product_class != 'browse' and product_class != 'diagram':
             continue
         browse_type = product_type[2]
         list_of_sublists = products[product_type]
@@ -213,5 +213,8 @@ def populate_obs_general_preview_images(**kwargs):
         data['height'] = product.height
         browse_data[browse_type.replace('-','_')] = data
 
+    if len(browse_data) != 4:
+        import_util.log_nonrepeating_error(
+            f'Some browse/diagram images missing for "{file_spec}"')
     ret = json.dumps(browse_data)
     return ret
