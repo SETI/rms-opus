@@ -38,17 +38,19 @@ def _COVIMS_file_spec_helper(**kwargs):
 
 def populate_obs_general_COVIMS_opus_id(**kwargs):
     metadata = kwargs['metadata']
+    phase_name = metadata['phase_name'].lower()
     file_spec = _COVIMS_file_spec_helper(**kwargs)
     pds_file = pdsfile.PdsFile.from_filespec(file_spec)
     try:
         opus_id = pds_file.opus_id.replace('.', '-')
     except:
+        opus_id = None
+    if not opus_id:
         metadata = kwargs['metadata']
         index_row = metadata['index_row']
         import_util.log_nonrepeating_error(
             f'Unable to create OPUS_ID for FILE_SPEC "{file_spec}"')
-        return file_spec
-    phase_name = metadata['phase_name'].lower()
+        return file_spec.split('/')[-1] + '_' + phase_name
     opus_id += '_' + phase_name
     return opus_id
 

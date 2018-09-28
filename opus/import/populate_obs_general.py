@@ -148,9 +148,8 @@ def populate_obs_general_time_sec2(**kwargs):
 
     if time1_sec is not None and time2_sec < time1_sec:
         time1 = general_row['time1']
-        import_util.log_error(f'time1 ({time1}) and time2 ({time2}) are '+
-                              f'in the wrong order - setting to time1')
-        impglobals.IMPORT_HAS_BAD_DATA = True
+        import_util.log_warning(f'time1 ({time1}) and time2 ({time2}) are '+
+                                f'in the wrong order - setting to time1')
         time2_sec = time1_sec
 
     return time2_sec
@@ -214,7 +213,8 @@ def populate_obs_general_preview_images(**kwargs):
         browse_data[browse_type.replace('-','_')] = data
 
     if len(browse_data) != 4:
-        import_util.log_nonrepeating_error(
-            f'Some browse/diagram images missing for "{file_spec}"')
+        import_util.log_nonrepeating_warning(
+            f'Some browse/diagram images missing for "{file_spec}" - found '
+            +f'{len(browse_data)}')
     ret = json.dumps(browse_data)
     return ret

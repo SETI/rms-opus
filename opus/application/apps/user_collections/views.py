@@ -73,6 +73,8 @@ def api_view_collection(request, collection_name):
             pretty_name = 'Metadata Products'
         elif name == 'browse':
             pretty_name = 'Browse Products'
+        elif name == 'diagram':
+            pretty_name = 'Diagram Products'
         else:
             pretty_name = name + '-Specific Products'
         key = (name, pretty_name)
