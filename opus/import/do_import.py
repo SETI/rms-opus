@@ -846,7 +846,7 @@ def import_one_volume(volume_id):
         lr = len(metadata['ring_geo'])
         diff = li - lr
         if diff:
-            impglobals.LOGGER.log('warning',
+            impglobals.LOGGER.log('debug',
                 f'Volume "{volume_id}" is missing {diff} RING_GEO entries '+
                 f'({li} vs. {lr})')
 
