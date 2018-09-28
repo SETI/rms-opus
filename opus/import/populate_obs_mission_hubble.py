@@ -240,14 +240,14 @@ populate_obs_general_HSTSTIS_observation_duration = populate_obs_general_HSTx_ob
 populate_obs_general_HSTWFC3_observation_duration = populate_obs_general_HSTx_observation_duration
 populate_obs_general_HSTWFPC2_observation_duration = populate_obs_general_HSTx_observation_duration
 
-def populate_obs_general_HSTx_note(**kwargs):
+def populate_obs_pds_HSTx_note(**kwargs):
     return None
 
-populate_obs_general_HSTACS_note = populate_obs_general_HSTx_note
-populate_obs_general_HSTNICMOS_note = populate_obs_general_HSTx_note
-populate_obs_general_HSTSTIS_note = populate_obs_general_HSTx_note
-populate_obs_general_HSTWFC3_note = populate_obs_general_HSTx_note
-populate_obs_general_HSTWFPC2_note = populate_obs_general_HSTx_note
+populate_obs_pds_HSTACS_note = populate_obs_pds_HSTx_note
+populate_obs_pds_HSTNICMOS_note = populate_obs_pds_HSTx_note
+populate_obs_pds_HSTSTIS_note = populate_obs_pds_HSTx_note
+populate_obs_pds_HSTWFC3_note = populate_obs_pds_HSTx_note
+populate_obs_pds_HSTWFPC2_note = populate_obs_pds_HSTx_note
 
 def populate_obs_general_HSTx_primary_file_spec(**kwargs):
     file_spec = _HST_file_spec_helper(**kwargs)
@@ -259,7 +259,17 @@ populate_obs_general_HSTSTIS_primary_file_spec = populate_obs_general_HSTx_prima
 populate_obs_general_HSTWFC3_primary_file_spec = populate_obs_general_HSTx_primary_file_spec
 populate_obs_general_HSTWFPC2_primary_file_spec = populate_obs_general_HSTx_primary_file_spec
 
-def populate_obs_general_HSTx_product_creation_time(**kwargs):
+def populate_obs_pds_HSTx_primary_file_spec(**kwargs):
+    file_spec = _HST_file_spec_helper(**kwargs)
+    return file_spec
+
+populate_obs_pds_HSTACS_primary_file_spec = populate_obs_pds_HSTx_primary_file_spec
+populate_obs_pds_HSTNICMOS_primary_file_spec = populate_obs_pds_HSTx_primary_file_spec
+populate_obs_pds_HSTSTIS_primary_file_spec = populate_obs_pds_HSTx_primary_file_spec
+populate_obs_pds_HSTWFC3_primary_file_spec = populate_obs_pds_HSTx_primary_file_spec
+populate_obs_pds_HSTWFPC2_primary_file_spec = populate_obs_pds_HSTx_primary_file_spec
+
+def populate_obs_pds_HSTx_product_creation_time(**kwargs):
     metadata = kwargs['metadata']
     index_label = metadata['index_label']
     pct = index_label['PRODUCT_CREATION_TIME']
@@ -273,36 +283,36 @@ def populate_obs_general_HSTx_product_creation_time(**kwargs):
 
     return julian.iso_from_tai(pct_sec, digits=3, ymd=True)
 
-populate_obs_general_HSTACS_product_creation_time = populate_obs_general_HSTx_product_creation_time
-populate_obs_general_HSTNICMOS_product_creation_time = populate_obs_general_HSTx_product_creation_time
-populate_obs_general_HSTSTIS_product_creation_time = populate_obs_general_HSTx_product_creation_time
-populate_obs_general_HSTWFC3_product_creation_time = populate_obs_general_HSTx_product_creation_time
-populate_obs_general_HSTWFPC2_product_creation_time = populate_obs_general_HSTx_product_creation_time
+populate_obs_pds_HSTACS_product_creation_time = populate_obs_pds_HSTx_product_creation_time
+populate_obs_pds_HSTNICMOS_product_creation_time = populate_obs_pds_HSTx_product_creation_time
+populate_obs_pds_HSTSTIS_product_creation_time = populate_obs_pds_HSTx_product_creation_time
+populate_obs_pds_HSTWFC3_product_creation_time = populate_obs_pds_HSTx_product_creation_time
+populate_obs_pds_HSTWFPC2_product_creation_time = populate_obs_pds_HSTx_product_creation_time
 
-def populate_obs_general_HSTx_data_set_id(**kwargs):
+def populate_obs_pds_HSTx_data_set_id(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     dsi = index_row['DATA_SET_ID']
     return (dsi, dsi)
 
-populate_obs_general_HSTACS_data_set_id = populate_obs_general_HSTx_data_set_id
-populate_obs_general_HSTNICMOS_data_set_id = populate_obs_general_HSTx_data_set_id
-populate_obs_general_HSTSTIS_data_set_id = populate_obs_general_HSTx_data_set_id
-populate_obs_general_HSTWFC3_data_set_id = populate_obs_general_HSTx_data_set_id
-populate_obs_general_HSTWFPC2_data_set_id = populate_obs_general_HSTx_data_set_id
+populate_obs_pds_HSTACS_data_set_id = populate_obs_pds_HSTx_data_set_id
+populate_obs_pds_HSTNICMOS_data_set_id = populate_obs_pds_HSTx_data_set_id
+populate_obs_pds_HSTSTIS_data_set_id = populate_obs_pds_HSTx_data_set_id
+populate_obs_pds_HSTWFC3_data_set_id = populate_obs_pds_HSTx_data_set_id
+populate_obs_pds_HSTWFPC2_data_set_id = populate_obs_pds_HSTx_data_set_id
 
-def populate_obs_general_HSTx_product_id(**kwargs):
+def populate_obs_pds_HSTx_product_id(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     product_id = index_row['PRODUCT_ID']
 
     return product_id
 
-populate_obs_general_HSTACS_product_id = populate_obs_general_HSTx_product_id
-populate_obs_general_HSTNICMOS_product_id = populate_obs_general_HSTx_product_id
-populate_obs_general_HSTSTIS_product_id = populate_obs_general_HSTx_product_id
-populate_obs_general_HSTWFC3_product_id = populate_obs_general_HSTx_product_id
-populate_obs_general_HSTWFPC2_product_id = populate_obs_general_HSTx_product_id
+populate_obs_pds_HSTACS_product_id = populate_obs_pds_HSTx_product_id
+populate_obs_pds_HSTNICMOS_product_id = populate_obs_pds_HSTx_product_id
+populate_obs_pds_HSTSTIS_product_id = populate_obs_pds_HSTx_product_id
+populate_obs_pds_HSTWFC3_product_id = populate_obs_pds_HSTx_product_id
+populate_obs_pds_HSTWFPC2_product_id = populate_obs_pds_HSTx_product_id
 
 def populate_obs_general_HSTx_right_asc1(**kwargs):
     return None
