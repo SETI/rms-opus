@@ -48,7 +48,7 @@ var o_hash = {
             case 'widget_scroll':
               // these are prefs having to do with widget resize and scrolled
               break; // there's no scroll without size, so we handle scroll when size comes thru
-              
+
             default:
               hash[hash.length] = key + '=' + opus.prefs[key];
           }
@@ -127,7 +127,7 @@ var o_hash = {
             // look for prefs
             else if (slug in opus.prefs) {
 
-                if (slug == 'widgets' || slug == 'widgets2') {
+                if (slug == 'widgets') {
                     if (value) {
                         opus.prefs[slug] = value.replace(/\s+/g, '').split(',');
                     }

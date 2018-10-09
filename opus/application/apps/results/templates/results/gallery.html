@@ -1,7 +1,12 @@
 {% for i in data %}
-  <li id="gallery__{{ i.opus_id }}">
-    <a class="activeThumbnail" href="{{ i.full_url }}" data-rel="colorbox">
-      <img height=100px width=100px alt="{{ i.thumb_alt_text }}" title="{{ i.opus_id }}" src="{{ i.thumb_url }}">
+  <div id="gallery__{{ i.opus_id }}" class="col-lg-1 col-md-4 col-xs-6 thumb">
+    <a class="thumbnail" href="#" data-image-id="{{ i.opus_id }}" data-toggle="modal" data-title="{{ i.opus_id }}"
+       data-image="{{ i.full_url }}"
+       data-target="#image-gallery">
+        <img class="img-thumbnail"
+            src="{{ i.thumb_url }}"
+            alt="{{ i.thumb_alt_text }}"
+            title="{{ i.opus_id }}">
     </a>
 
     <div class="tools tools-bottom
@@ -30,10 +35,10 @@
       </a>
     </div>
 
-    <div class="thumb_overlay
+    <!--div class="thumb_overlay
       {% if i.in_collection %}
         thumb_selected
       {% endif %}
-    ">&nbsp;</div>
-  </li>
+    ">&nbsp;</div-->
+  </div>
 {% endfor %}

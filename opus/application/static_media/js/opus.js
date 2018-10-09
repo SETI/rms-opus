@@ -30,7 +30,7 @@ var opus = {
 
     // client side prefs, changes to these *do not trigger results to refresh*
     // prefs gets added verbatim to the url, so don't add anything weird into here!
-    prefs:{ 'view':'', // search, browse, collection, detail
+    prefs:{ 'view':'search', // search, browse, collection, detail
             'browse':'gallery', //either 'gallery' or 'data', see all_browse_views below
             'colls_browse':'gallery',  // which view is showing on the collections page, gallery or data
             'page':default_pages,  // what page are we on, per view, default defined in header.html
@@ -40,7 +40,6 @@ var opus = {
             'order':'time1',  // result table ordering
             'cols': default_columns.split(','),  // default result table columns by slug
             'widgets':[], // search tab widget columns
-            'widgets2':[],
             'widget_size':{}, // search tab resized widgets
             'widget_scroll':{}, // search tab widget internal scroll saved
             'detail':'', // opus_id of detail page content
@@ -167,8 +166,6 @@ var opus = {
             $('#browse_tab').fadeIn();
             opus.updateResultCount(results['data'][0]['result_count']);
 
-            opus.mainTabDisplay('results');  // make sure the main site tab label is displayed
-
             o_menu.getMenu();
 
             // if all we wanted was a new gallery page we can stop here
@@ -179,13 +176,9 @@ var opus = {
             }
 
             // result count is back, now send for widget hinting
-            var widget_cols = ['widgets','widgets2'];
-            for (key in widget_cols) {
-                var col = widget_cols[key];
-                for (var k in opus.prefs[col]) {
-                    slug = opus.prefs[col][k];
-                    o_search.getHinting(slug);
-                } // end for widget in..
+            for (var k in opus.prefs['widgets']) {
+                var slug = opus.prefs['widgets'][k];
+                o_search.getHinting(slug);
             } // endfor
         });
     }, // endfunc jeezumcrow! #shootmenow
@@ -198,14 +191,17 @@ var opus = {
     },
 
     triggerNavbarClick: function() {
-        $('.navbar-nav li a[href="#' + opus.prefs.view + '"]', '#navbar').trigger("click");
+        $('.nav-item a[href="#'+opus.prefs.view+'"]').trigger("click");
     },
 
-    changeTab: function() {
+    changeTab: function(tab) {
         // first hide everything and stop any interval timers
         $('#search, #detail, #collection, #browse').hide();
         clearInterval(opus.scroll_watch_interval);
         clearInterval(opus.collection_q_intrvl);
+
+        opus.prefs.view = tab ? tab : opus.prefs.view;
+        o_hash.updateHash();
 
         switch(opus.prefs.view) {
 
@@ -254,32 +250,6 @@ var opus = {
 
     },
 
-    mainTabDisplay: function(tabname) {
-        // disclosing of main site tabs
-        // tab labels at the top of the site are not displayed all at once
-        // become some results, etc
-
-        switch (tabname) {
-            case "results":
-                child = 2;  // results is the 2nd tab
-                break;
-
-            case "collection":
-                child = 3;
-                break;
-
-            case "detail":
-                child = 4;
-                break;
-        }
-
-        if (!$('ul.main_site_tabs li:nth-child(' + child + ')').is(":visible")) {
-            $('ul.main_site_tabs li:nth-child(' + child + ')').addClass('tab_display');
-        }
-
-    },
-
-
     startOver: function() {
         // handles the 'start over' buttons which has 2 selections
         // if keep_set_widgets is true it will leave the current selected widgets alone
@@ -294,8 +264,7 @@ var opus = {
         opus.selections = {};
         opus.extras = {};
         o_browse.resetQuery();
-        opus.prefs.view = 'search';
-        opus.changeTab();
+        opus.changeTab('search');
 
         keep_set_widgets = false  // use as argument for the 2 tiered start over button, currently disabled
         if (keep_set_widgets) {
@@ -304,7 +273,7 @@ var opus = {
             opus.widgets_drawn = [];
             for (key in opus.prefs.widgets) {
                 slug = opus.prefs.widgets[key];
-                o_widgets.getWidget(slug,'#search_widgets1');
+                o_widgets.getWidget(slug,'#search_widgets');
             }
             window.location.hash = '/cols=' + opus.prefs.cols.join(',');
 
@@ -312,13 +281,12 @@ var opus = {
             // resets widgets drawn back to system default
             // in the 2 tier button this was the 'start over and restore defaults' behavior
             // note: this is the current deployed behavior for the single 'start over' button
-            opus.prefs.widgets2 = [];
             opus.prefs.widgets = [];
             opus.widgets_drawn = [];
             opus.widget_elements_drawn = [];
             for (k in opus.default_widgets) {
                 slug = opus.default_widgets[k];
-                o_widgets.getWidget(slug,'#search_widgets1');
+                o_widgets.getWidget(slug,'#search_widgets');
             }
         }
 
@@ -399,34 +367,15 @@ $(document).ready(function() {
     if (!opus.prefs.view) {
         opus.prefs.view = 'search';
     }
-    //opus.changeTab();
 
 
     // add the navbar clicking behaviors, selecting which tab to view:
     // see triggerNavbarClick
-    $('#navbar').on("click", 'ul.main_site_tabs li', function() {
-
-        if ($(this).find('a').hasClass('restore_widgets')) {
-            return;
-        }
-        if ($(this).find('a').hasClass('old_opus')) {
-            return;
-        }
-        if ($(this).find('a').hasClass('restart')) {
-            return;
-        }
+    $('#navbar').on("click", '.main_site_tabs .nav-item', function() {
         if ($(this).hasClass('external-link')) {
             // this is a link to an external site, so just go there...
             return true;
         }
-        // remove the active class on whatever other tab it is on
-        $('.navbar-nav li', '#navbar').each(function(index, value) {
-            if ($(this).hasClass("active")) {
-                $(this).toggleClass("active");
-                return false; // we found the active one, so break from this each
-            }
-        });
-        $(this).addClass("active");
 
         // find out which tab they clicked
         var tab = $(this).find('a').attr('href').substring(1);
@@ -434,14 +383,13 @@ $(document).ready(function() {
             return true;  // they clicked the brand icon, take them to its link
         }
 
-        if (!tab) { tab = opus.prefs.search; }
-        opus.prefs.view = tab;
-        o_hash.updateHash();
-        opus.changeTab();
+        // little hack in case something calls onclick programmatically....
+        tab = tab ? tab : opus.prefs.search;
+        opus.changeTab(tab);
 
-        $(this).find('a').blur(); // or else it holds the hover style which is stoo pid.
+        //$(this).find('a').blur(); // or else it holds the hover style which is stoo pid.
 
-        return false;
+        //return false;
 
     });
 
@@ -450,7 +398,7 @@ $(document).ready(function() {
     $('#sidebar').on("click", ".restart", function() {
         // 'start over' button
         // resets query completely, resets widgets completely
-        if (!jQuery.isEmptyObject(opus.selections)) {
+        if (!$.isEmptyObject(opus.selections)) {
 
             if (confirm("Are you sure you want to restart? Your current search will be lost.")) {
                 opus.startOver();

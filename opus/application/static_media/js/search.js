@@ -125,7 +125,7 @@ var o_search = {
                             // this is the pair we need to remove
                             opus.selections[min].splice(key,1);
                             opus.selections[max].splice(key,1);
-                            if (jQuery.inArray(qname, opus.extras) > -1 && typeof(opus.extras[qname]) != 'undefined') {
+                            if ($.inArray(qname, opus.extras) > -1 && typeof(opus.extras[qname]) != 'undefined') {
                                 opus.extras[qname].splice(key,1);
                             }
                             break;
@@ -144,7 +144,7 @@ var o_search = {
                     for (key in opus.selections[slug]) {
                          if (opus.selections[slug][key] == input_val) {
                              opus.selections[slug].splice(key,1);
-                              if (jQuery.inArray(qname, opus.extras) > -1 && typeof(opus.extras[qname]) != 'undefined') {
+                              if ($.inArray(qname, opus.extras) > -1 && typeof(opus.extras[qname]) != 'undefined') {
                                  opus.extras[qname].splice(key,1);
                              }
                              break;
@@ -168,26 +168,21 @@ var o_search = {
     getSearchTab: function() {
 
         if (opus.search_tab_drawn) { return; }
-        // widgets1 is the left column of widgets, wigets2 is the optional right col
-
+        
         // get any prefs from cookies
         if (!opus.prefs.widgets.length && $.cookie("widgets")) {
             opus.prefs.widgets = $.cookie("widgets").split(',');
         }
-        if (!opus.prefs.widgets2.length && $.cookie("widgets2")) {
-            opus.prefs.widgets2 = $.cookie("widgets2").split(',');
-        }
-
         // get menu
         o_menu.getMenu();
 
         // find and place the widgets
-        if (!opus.prefs.widgets.length && !opus.prefs.widgets2.length) {
+        if (!opus.prefs.widgets.length) {
             // no widgets defined, get the default widgets
             opus.prefs.widgets = ['planet','target'];
             o_widgets.placeWidgetContainers();
-            o_widgets.getWidget('planet','#search_widgets1');
-            o_widgets.getWidget('target','#search_widgets1');
+            o_widgets.getWidget('planet','#search_widgets');
+            o_widgets.getWidget('target','#search_widgets');
         } else {
             if (!opus.widget_elements_drawn.length) {
                 o_widgets.placeWidgetContainers();
@@ -198,17 +193,11 @@ var o_search = {
 
         for (key in opus.prefs.widgets) {  // fetch each widget
             slug = opus.prefs.widgets[key];
-            if (jQuery.inArray(slug, opus.widgets_drawn) < 0) {  // only draw if not already drawn
-                o_widgets.getWidget(slug,'#search_widgets1');
+            if ($.inArray(slug, opus.widgets_drawn) < 0) {  // only draw if not already drawn
+                o_widgets.getWidget(slug,'#search_widgets');
             }
         }
 
-        for (key in jQuery.unique(opus.prefs.widgets2)) {  // fetch each widget
-            slug = opus.prefs.widgets2[key];
-            if (jQuery.inArray(slug, opus.widgets_drawn) < 0) {  // only draw if not already drawn
-                o_widgets.getWidget(slug,'#search_widgets2');
-            }
-        }
         opus.search_tab_drawn = true;
 
         o_search.adjustSearchHeight();

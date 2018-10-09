@@ -33,8 +33,8 @@ var o_widgets = {
             $(this).next().slideToggle("fast");
         });
 
-        // close a widget
-        $('#search').on('click', '.close_widget', function(myevent) {
+        // close a card
+        $('#search').on('click', '.close_card', function(myevent) {
             var slug = $(this).data('slug');
             o_widgets.closeWidget(slug);
             try {
@@ -78,7 +78,7 @@ var o_widgets = {
                opus.selections[id].splice(remove,1);        // remove value from array
            }
            o_hash.updateHash();
-        }); 
+        });
     },
 
 
@@ -126,7 +126,7 @@ var o_widgets = {
     widgetDrop: function(ui) {
             // if widget as moved to a different formscolumn,
             // redefine the opus.prefs.widgets (preserves order)
-            var widgets = $('#search_widgets1').sortable('toArray');
+            var widgets = $('#search_widgets').sortable('toArray');
 
             $.each(widgets, function(index,value) {
                 widgets[index]=value.split('__')[1];
@@ -192,7 +192,7 @@ var o_widgets = {
 
     // adjusts the widths of the widgets in the main column so they fit users screen size
     adjustWidgetWidth: function(widget) {
-            $(widget).animate({width:$('#search_widgets1').width() - 2*20 + 'px'},'fast');  // 20px is the side margin of .widget
+            $(widget).animate({width:$('#search_widgets').width() - 2*20 + 'px'},'fast');  // 20px is the side margin of .widget
             // $('.widget_scroll_wrapper',widget).width($('.formscolumn').width() - 2*20 + 'px'); // 20px is the side margin of .widget
     },
 
@@ -403,8 +403,8 @@ var o_widgets = {
              var slug = opus.prefs.widgets[k];
              var widget = 'widget__' + slug;
              var html = '<li id = "' + widget + '" class = "widget"></li>';
-             $(html).appendTo('#search_widgets1 ');
-             // $(html).hide().appendTo('#search_widgets1').show("blind",{direction: "vertical" },200);
+             $(html).appendTo('#search_widgets ');
+             // $(html).hide().appendTo('#search_widgets').show("blind",{direction: "vertical" },200);
              opus.widget_elements_drawn.push(slug);
          }
      },
@@ -440,6 +440,7 @@ var o_widgets = {
         $.ajax({ url: "/opus/__forms/widget/" + slug + '.html?' + o_hash.getHash(),
              success: function(widget_str){
 
+                $("#widget__"+slug).html(widget_str);
                 o_widgets.pauseWidgetControlVisibility(opus.selections);
 
             }}).done(function() {

@@ -120,7 +120,7 @@ var o_collections = {
             if (parseInt(count, 10)) {
                 opus.collection_change = true;
 
-                opus.mainTabDisplay('collection');  // make sure the main site tab label is displayed
+				//opus.changeTab('collection');
 
                 $('#collection_tab').fadeIn();
                 
@@ -339,7 +339,7 @@ var o_collections = {
     },
 
     editCollection: function(opus_id, action) {
-        opus.mainTabDisplay('collection');  // make sure the main site tab label is displayed
+		//opus.changeTab('collection');
 
         opus.collection_change = true;
         opus.lastCartRequestNo++;

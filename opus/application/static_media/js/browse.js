@@ -386,9 +386,8 @@ var o_browse = {
 
     openDetailTab: function(opus_id) {
         opus.mainTabDisplay('detail');  // make sure the main site tab label is displayed
-        opus.prefs.view = 'detail';
         opus.prefs.detail = opus_id;
-        opus.triggerNavbarClick();
+        opus.changeTab('detail');
     },
 
     // what page no is currently scrolled more into view?
@@ -601,66 +600,7 @@ var o_browse = {
                     o_browse.getBrowseData(pages[i]);
                 }
             }
-
-
         });
-
-         // group header checkbox - lets user add/remove group of columns at a time
-         // this is not working
-        /*
-         $('#column_chooser input[type="checkbox"].cat_input').click(function() {
-             cols = opus.prefs['cols'];
-             if ($(this).is(':checked')) {
-                 // group header checkbox is checked, now check all params in group
-                 $(this).parent().parent().find('.menu_list input[type="checkbox"]').each(function() {
-                     $(this).attr('checked',true);
-                     slug = $(this).data('slug');
-                     label = $(this).data('label');
-                     if (jQuery.inArray(slug,cols) < 0) {
-                         // this slug was previously unselected, add to cols
-                         cols.push(slug);
-                         $('<li id = "cchoose__' + slug + '">' + label + '<span class = "chosen_column_close">X</span></li>').hide().appendTo('.chosen_columns>ul').fadeIn();
-                     }
-                 });
-
-             } else {
-                 // deselect all in this category
-                 $(this).parent().parent().find('.menu_list input[type="checkbox"]').each(function() {
-                     $(this).attr('checked',false);
-                     var slug = $(this).data('slug');
-                     if (jQuery.inArray(slug,cols) > -1) {
-                         cols.splice(jQuery.inArray(slug,cols),1);
-                         $('#cchoose__' + slug).fadeOut(function() {
-                             $(this).remove();
-                         });
-                     }
-                 });
-             }
-             opus.prefs['cols'] = cols;
-
-            // we are about to update the same page we just updated, it will replace
-            // the one that is showing,
-            // set last page to one before first page that is showing in the interface
-            // now update the browse table
-            if (opus.prefs.browse == 'data') {
-                o_browse.updatePage();
-            } else {
-                o_hash.updateHash();
-
-                view_info = o_browse.getViewInfo();
-                prefix = view_info['prefix'];       // either 'colls_' or ''
-                pages = opus.pages_drawn[prefix + 'gallery'];
-                for (var i in pages) {
-                    o_browse.getBrowseData(pages[i]);
-                }
-            }
-
-         }); // /group header checkbox
-        */
-
-
-
-
     },  // /addColumnChooserBehaviors
 
     checkAllRenderedElements: function() {
@@ -860,8 +800,6 @@ var o_browse = {
         // only draw the navbar if we are in gallery mode... doesn't make sense in collection mode
         if (namespace == "#browse") {
           // get the browse nav header?
-          $('.browse_nav', namespace).load( "/opus/__browse_headers.html", function() {
-            // change the link text
             if (opus.prefs.browse == 'gallery') {
                 $('.browse_view', namespace).text('view table');
             } else {
@@ -870,7 +808,6 @@ var o_browse = {
             // total pages indicator
             $('#' + prefix + 'pages', namespace).html(opus[prefix + 'pages']);
             window.scrollTo(0,opus.browse_view_scrolls[prefix + view_var]);  // sometimes you have scrolled down the search tab
-          });
         }
 
         var base_url = "/opus/__api/images.html?";
@@ -954,22 +891,12 @@ var o_browse = {
             success: function(html){
                // bring in the new page
                function appendBrowsePage(page, prefix, view_var) { // for chaining effects
-
-                    // hide the views that aren't supposed to be showing
-                    /*
-                    for (var v in opus.all_browse_views) {
-                        var bv = opus.all_browse_views[v];
-                        if ($('.' + bv, namespace).is(":visible") && bv != opus.prefs[prefix + 'browse']) {
-                            $('.' + bv, namespace).hide();
-                        }
-                    }
-                    */
                     // append the new html
                     if (view_var == 'data') {
                         $(html).appendTo($('.data tbody', namespace)).fadeIn();
                     } else {
                         opus.gallery_begun = true;
-                        $(html).appendTo($('.gallery ul.ace-thumbnails', namespace)).fadeIn();
+                        $(html).appendTo($('.gallery', namespace)).fadeIn();
                     }
 
                     // fade out the spinner

@@ -4,29 +4,23 @@
 	range-qtype-helper div is appended in widgets.js becuase omg was impossible to layout #todo
 {% endcomment %}
 
-<div class="row">
-    <div class="col-xs-12 col-sm-12 widget-container-span">
-        <div class="widget-box widget-color-blue2">
-            <div class="widget-header">
-                <h5 class="widget-title">{{ label }}</h5>
-								<i style = "color:white" class = "ace-icon fa fa-info-circle" title = "
-										{{dictionary.definition|safe }}
-								                      "></i>
-                <span class = "spinner">&nbsp;</span>
-                <div class="widget-toolbar">
+<div class="card">
+    <header class="card-header">
+        <h5 class="card-title">
+            <a href="#" data-toggle="collapse" data-target="#card__{{ slug }}" aria-expanded="true" class="">
+                {{ label }} <i class = "ace-icon fa fa-info-circle" title = "
+                                        {{dictionary.definition|safe }}">
+                            </i>
+            </a>
+            <a href="#" data-action="close" data-slug="{{slug}}" class="close_card">
+                <i class="icon-action fa fa-times"></i>
+            </a>
+            <i class="icon-action fa fa-chevron-down"></i>
+        </h5>
+    </header>
 
-                        <a href="#" data-action="collapse">
-                            <i class="ace-icon fa fa-chevron-up" data-icon-show="fa-chevron-down" data-icon-hide="fa-chevron-up"></i>
-                        </a>
-
-                        <a href="#" data-action="close" data-slug="{{ slug }}" class = "close_widget">
-                            <i class="fa fa-times"></i>
-                        </a>
-
-                </div><!-- /widget-toolbar -->
-            </div><!-- /widget-header -->
-
-            <div class="widget__{{ slug }} widget-body
+    <div class="collapse show" id="card__{{ slug }}" style="">
+        <article class="card-body widget__{{ slug }}
 							{% if form_type in range_form_types %}
 								 range-widget
 							{% endif %}
@@ -34,22 +28,19 @@
 								 mult-widget
 							{% endif %}
 						">
-                <div class="widget-main">
-                    <div id = "hint__{{ slug }}" class = "range_hints"></div>
-                    <ul>
+            <div class="widget-main">
+                <div id = "hint__{{ slug }}" class = "range_hints"></div>
+                <ul>
+                    {% if intro %}
+                        <div class = "intro">
+                            {{ intro }}
 
-                        {% if intro %}
-                            <div class = "intro">
-                                {{ intro }}
+                        </div>
+                    {% endif %}
 
-                            </div>
-                        {% endif %}
-
-                        	{{ form|safe }}
-
-                    </ul>
-                </div><!-- /widget-main -->
-            </div><!-- /widget-body -->
-        </div><!-- /widget-box -->
-    </div><!-- widget-container-span -->
-</div><!-- /row -->
+                    	{{ form|safe }}
+                </ul>
+            </div>
+        </article>
+    </div><!-- /widget-body -->
+</div><!-- /widget-box -->

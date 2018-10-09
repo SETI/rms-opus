@@ -40,7 +40,7 @@ var o_menu = {
                 return false;
 
              } else {
-                 o_widgets.getWidget(slug,'#search_widgets1');
+                 o_widgets.getWidget(slug,'#search_widgets');
              }
              o_hash.updateHash();
              return false;
@@ -145,12 +145,6 @@ var o_menu = {
                 // and add it to open cats list
                 opus.menu_state['cats'].push(geo_cat);
             }
-
-            // add the 'start over' button
-            button_html = '<li class = "restart_button"><button type="button" class="btn btn-sm btn-danger restart">Start Over</button></li>';
-            $('#sidebar ul.nav-list').append(button_html);
-
-
 
             o_search.adjustSearchHeight();
             $('.menu_spinner').fadeOut("fast");
