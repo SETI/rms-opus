@@ -1,8 +1,7 @@
 {% for i in data %}
-  <div id="gallery__{{ i.opus_id }}" class="col-lg-1 col-md-4 col-xs-6 thumb">
-    <a class="thumbnail" href="#" data-image-id="{{ i.opus_id }}" data-toggle="modal" data-title="{{ i.opus_id }}"
-       data-image="{{ i.full_url }}"
-       data-target="#image-gallery">
+  <div class="col-lg-1 col-md-4 col-xs-6 thumb">
+    <a class="thumbnail" href="#" data-toggle="modal" data-target="#galleryView" data-id="{{ i.opus_id }}"
+       data-image="{{ i.full_url }}">
         <img class="img-thumbnail"
             src="{{ i.thumb_url }}"
             alt="{{ i.thumb_alt_text }}"

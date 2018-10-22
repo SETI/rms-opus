@@ -78,6 +78,12 @@ var o_widgets = {
                opus.selections[id].splice(remove,1);        // remove value from array
            }
            o_hash.updateHash();
+
+           // allow user multiple clicks before retriving a new result_count
+           clearTimeout(opus.widget_click_timeout);
+           clickTimeout = setTimeout(function() {
+              opus.updateResultCount();
+           }, 250);
         });
     },
 

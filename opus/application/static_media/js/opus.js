@@ -31,7 +31,7 @@ var opus = {
     // client side prefs, changes to these *do not trigger results to refresh*
     // prefs gets added verbatim to the url, so don't add anything weird into here!
     prefs:{ 'view':'search', // search, browse, collection, detail
-            'browse':'gallery', //either 'gallery' or 'data', see all_browse_views below
+            'browse':'gallery', //either 'gallery' or 'data'
             'colls_browse':'gallery',  // which view is showing on the collections page, gallery or data
             'page':default_pages,  // what page are we on, per view, default defined in header.html
                                    // like {"gallery":1, "data":1, "colls_gallery":1, "colls_data":1 };
@@ -51,7 +51,6 @@ var opus = {
                       // this is not
 
     gallery_data: {},  // holds gallery column data
-    all_browse_views: ['gallery','data'],
 
     pages_drawn: {"colls_gallery": [], "gallery": []},  // keeping track of currently rendered gallery pages
                                                           // so underlying data can be refreshed after 'choose columns'
@@ -69,10 +68,6 @@ var opus = {
 
     // searching - ui
     search_tab_drawn: false,
-    activeWidgetRequest: [],   // prevents repeat calling to server to get widgets
-    page_monitor_data:[],       // holds page number in results during polling
-    page_monitor_gallery:[],       // holds page number in results during polling
-    input_timer:false,     // triggers start of polling an input field when true
     widgets_drawn:[], // keeps track of what widgets are actually drawn
     widgets_fetching:[], // this widget is currently being fetched
     widget_elements_drawn:[], // the element is drawn but the widget might not be fetched yet
@@ -83,6 +78,7 @@ var opus = {
     // menu_state: {'cats':['obs_general'], 'groups':[]},  // keep track of menu items that are open
     menu_state: {'cats':'all', 'groups':[]},
     default_widgets: ['target','planet'],
+    widget_click_timeout:0,
 
     // browse tab
     last_page_drawn: reset_last_page_drawn, // defined in header.html,
@@ -90,15 +86,9 @@ var opus = {
     colls_pages:0, // total number of collections pages
     browse_footer_clicks:reset_footer_clicks, // defined in header.html
     browse_auto:'.chosen_columns', // we are turning this on as default
-    browse_footer_style_disabled: false,  // keeps track of whether we have
-    scroll_watch_interval:'', // holder for setInterval timer
-    footer_clicks_trigger: 0, // number of results footer clicks *after first* to trigger form that lets user set auto, -1 to turn off (not tested)
-    page_bar_offsets:{},  // list of bars that indicate page in infinite scrolling
-    current_page_msg:"",
     column_chooser_drawn:false,
     table_headers_drawn:false,  // have we drawn the table headers
     gallery_begun:false, // have we started the gallery view
-    current_metadatabox:false,
     browse_view_scrolls: reset_browse_view_scrolls, // same defaults as footer clicks (definied in header.html)
                                                       // {"gallery":0, "data":0, "colls_gallery":0, "colls_data":0 };
 
@@ -109,8 +99,6 @@ var opus = {
     addrange_min:false,
     collection_q_intrvl: false,
     colls_options_viz:false,
-    main_timer:false,
-    main_timer_interval:1000,
 
     //------------------------------------------------------------------------------------//
 
@@ -155,16 +143,10 @@ var opus = {
         // query string has changed
         opus.last_selections = selections;
 
-        opus.lastRequestNo++;
-
       	// get result count
-        var url = "/opus/__api/meta/result_count.json?";
-        $.getJSON(url + o_hash.getHash() + '&reqno=' + opus.lastRequestNo, function(results) {
-            if (results['reqno'] < opus.lastRequestNo) {
-                return;
-            }
+
             $('#browse_tab').fadeIn();
-            opus.updateResultCount(results['data'][0]['result_count']);
+            opus.updateResultCount();
 
             o_menu.getMenu();
 
@@ -174,19 +156,24 @@ var opus = {
                 $('#pages','#browse').html(opus.pages);
                 return;
             }
+    }, // endfunc jeezumcrow! #shootmenow
+
+    updateResultCount: function() {
+        var url = "/opus/__api/meta/result_count.json?";
+        opus.lastRequestNo++;
+        $.getJSON(url + o_hash.getHash() + '&reqno=' + opus.lastRequestNo, function(results) {
+            if (results['reqno'] < opus.lastRequestNo) {
+                // garbage collection...?
+                return;
+            }
+            opus.result_count = results['data'][0]['result_count'];
+            $('#result_count').text(o_utils.addCommas(opus.result_count)) ;
 
             // result count is back, now send for widget hinting
             for (var k in opus.prefs['widgets']) {
                 var slug = opus.prefs['widgets'][k];
                 o_search.getHinting(slug);
             } // endfor
-        });
-    }, // endfunc jeezumcrow! #shootmenow
-
-    updateResultCount: function(result_count) {
-        opus.result_count = result_count;
-        $('#result_count').fadeOut('fast', function() {
-            $(this).html(o_utils.addCommas(opus.result_count)).fadeIn('fast') ;
         });
     },
 
@@ -197,8 +184,6 @@ var opus = {
     changeTab: function(tab) {
         // first hide everything and stop any interval timers
         $('#search, #detail, #collection, #browse').hide();
-        clearInterval(opus.scroll_watch_interval);
-        clearInterval(opus.collection_q_intrvl);
 
         opus.prefs.view = tab ? tab : opus.prefs.view;
         o_hash.updateHash();
@@ -225,9 +210,6 @@ var opus = {
                 $('#detail').fadeIn();
 
                 o_detail.getDetail(opus.prefs.detail);
-
-                opus.collection_q_intrvl = setInterval("o_collections.processCollectionQueue()", 1000); // resends any stray requests not recvd back from server
-
                 break;
 
             case 'collection':
@@ -238,9 +220,6 @@ var opus = {
                 }
                 $('#collection').fadeIn();
                 o_collections.getCollectionsTab();
-
-                opus.collection_q_intrvl = setInterval("o_collections.processCollectionQueue()", 1000); // resends any stray requests not recvd back from server
-
                 break;
 
             default:
@@ -257,7 +236,6 @@ var opus = {
         // if keep_set_widgets is false it will remove all widgets and restore
         // the application default widgets
 
-        clearInterval(opus.main_timer);  // hold the phone for a sec
         $('.widget-container-span').empty(); // remove all widgets on the screen
 
         // reset the search query
@@ -289,10 +267,6 @@ var opus = {
                 o_widgets.getWidget(slug,'#search_widgets');
             }
         }
-
-        // start the main timer again
-        opus.main_timer = setInterval(opus.load, opus.main_timer_interval);
-
         return false;
 
     },
@@ -410,9 +384,6 @@ $(document).ready(function() {
     }),
 
     opus.addAllBehaviors();
-
-    // watch the url for changes, this runs continuously
-    opus.main_timer = setInterval(opus.load, opus.main_timer_interval);
 
     o_collections.initCollection();
     opus.triggerNavbarClick();

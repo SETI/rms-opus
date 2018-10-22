@@ -66,19 +66,6 @@
 					<div class="browse-container top_navbar collapse navbar-collapse">
 						<ul class="navbar-nav mr-auto">
 							<li class="nav-item">
-								<a href="#" class="prev nav-link">prev</a>
-							</li>
-							<li class="nav-item">
-								<a href="#" class="next nav-link">next</a>
-							</li>
-							<li class="nav-item paging_indicator">
-								page <input size="4" id="page" value="" type="text">
-								<span class = "text-nowrap">of <span id="pages" class = "pages"></span></span>
-							</li>
-							<li class="nav-item cart_control">
-								<a href="#" class="addrange nav-link">add range</a>
-							</li>
-							<li class="nav-item">
 								<a href="#" class="get_column_chooser nav-link">choose columns</a>
 							</li>
 							<li class="nav-item">
@@ -91,11 +78,21 @@
 					</div>
 				</nav>
 				<div class="container-fluid">
-						<div class = "embedded_data_viewer_wrapper">
-							<div class = "embedded_data_viewer"></div>
+					<div class="row gallery"></div>
+					<div class="galleryTable">
+						<div class="row">
+							<div class="col-lg">
+								<table id="dataTable" class="table table-hover table-bordered table-striped table-dark table-sm">
+								  <thead>
+									<tr>
+									</tr>
+								  </thead>
+								  <tbody>
+								  </tbody>
+								</table>
+							</div>
 						</div>
-						<div class="row gallery"></div>
-						<div class="data"></div>
+					</div>
 				</div>
 			</div>
 
@@ -104,9 +101,7 @@
 					<div class="col">
 						<div class = "collection_details col-md-4"></div>
 						<div class = "col-md-8">
-							<div class = "navbar-inverse browse_nav" role="navigation"></div>
 							<div class = "row gallery"></div>
-							<div class = "data"></div>
 						</div>
 					</div>
 				</div>
@@ -117,6 +112,22 @@
 			</div>
 
 		</div><!-- /tabcontent -->
+		
+		<!-- modal dialog for the gallery views -->
+		<div id="galleryView" class="modal fade" role="dialog" tabbindex="-1" data-backdrop="false" aria-labelledby="galleryViewLabel" aria-hidden="true">
+			<div class="modal-dialog" role="document">
+				<div class="modal-content">
+					<div class="modal-header bg-gray-dark text-light">
+						<div></div>
+						<button type="button" class="close" data-dismiss="modal" aria-label="Close">
+							<i class = "fa fa-times"></i>
+						</button>
+					</div>
+					<div id="galleryViewContents" class="modal-body bg-dark"></div>
+				</div>
+			</div>
+		</div>
+
 		{% endblock %}
 
 		<!-- / not sure this belongs wthe other tab stuff -->

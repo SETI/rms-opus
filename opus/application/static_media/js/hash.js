@@ -187,10 +187,7 @@ var o_hash = {
             opus.prefs['widgets'].push(slug);
           }
         }
-
-        if (!jQuery.isEmptyObject(opus.last_selections)) {
-            opus.load();
-        }
+        opus.load();
     },
 
 

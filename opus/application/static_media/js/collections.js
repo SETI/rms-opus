@@ -123,7 +123,7 @@ var o_collections = {
 				//opus.changeTab('collection');
 
                 $('#collection_tab').fadeIn();
-                
+
                 opus.colls_pages = Math.ceil(count/opus.prefs.limit);
                 $('#collection_count').html(count);
             }
@@ -133,8 +133,6 @@ var o_collections = {
 
     // get Collections tab
     getCollectionsTab: function() {
-        clearInterval(opus.scroll_watch_interval); // hold on cowgirl only 1 page at a time
-
         if (opus.collection_change) {
             var zipped_files_html = $('.zipped_files', '#collection').html();
 
@@ -214,11 +212,6 @@ var o_collections = {
         // this sends the ajax call to edit the cart on the server
         // but this should really be a private method
         // for adding/removing from cart see edit_collection()
-
-        if (!opus.collection_q_intrvl) {
-            opus.collection_q_intrvl = setInterval("o_collections.processCollectionQueue()", 500); // resends any stray requests not recvd back from server
-        }
-
         var view_info = o_browse.getViewInfo();
         var namespace = view_info['namespace']; // either '#collection' or '#browse'
 
@@ -334,7 +327,6 @@ var o_collections = {
     },
 
     resetCollectionQueue: function() {
-        clearInterval(opus.collection_q_intrvl);
         opus.collection_queue = [];
     },
 
