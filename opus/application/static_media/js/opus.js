@@ -1,8 +1,8 @@
 // generic globals, hmm..
-var default_pages = {"gallery":1, "data":1, "colls_gallery":1, "colls_data":1 };
-var reset_footer_clicks = {"gallery":0, "data":0, "colls_gallery":0, "colls_data":0 };
-var reset_last_page_drawn = {"gallery":0, "data":0, "colls_gallery":0, "colls_data":0 };
-var reset_browse_view_scrolls = {"gallery":0, "data":0, "colls_gallery":0, "colls_data":0 };
+var default_pages = {"gallery":1, "dataTable":1, "colls_gallery":1, "colls_data":1 };
+var reset_footer_clicks = {"gallery":0, "dataTable":0, "colls_gallery":0, "colls_data":0 };
+var reset_last_page_drawn = {"gallery":0, "dataTable":0, "colls_gallery":0, "colls_data":0 };
+var reset_browse_view_scrolls = {"gallery":0, "dataTable":0, "colls_gallery":0, "colls_data":0 };
 
 // defining the opus namespace first; document ready comes after...
 var opus = {
@@ -100,6 +100,10 @@ var opus = {
     collection_q_intrvl: false,
     colls_options_viz:false,
 
+    // these are for the process that detects there was a change in the selection criteria and updates things
+    main_timer:false,
+    main_timer_interval:1000,
+
     //------------------------------------------------------------------------------------//
 
     load: function () {
@@ -139,15 +143,20 @@ var opus = {
 
 
         // start the result count spinner and do the yellow flash
-        //TODO $('#result_count').html(opus.spinner).parent().effect("highlight", {}, 500);
-        // query string has changed
+        $('#result_count').html(opus.spinner).parent().effect("highlight", {}, 500);
+
+          // query string has changed
         opus.last_selections = selections;
+        opus.lastRequestNo++;
 
-      	// get result count
-
+        $.getJSON("/opus/__api/meta/result_count.json?" + o_hash.getHash() + '&reqno=' + opus.lastRequestNo, function(results) {
+            var data = results.data[0];
+            if (data['reqno'] < opus.lastRequestNo) {
+                return;
+            }
             $('#browse_tab').fadeIn();
-            opus.updateResultCount();
 
+            opus.updateResultCount(data['result_count']);
             o_menu.getMenu();
 
             // if all we wanted was a new gallery page we can stop here
@@ -156,24 +165,18 @@ var opus = {
                 $('#pages','#browse').html(opus.pages);
                 return;
             }
-    }, // endfunc jeezumcrow! #shootmenow
-
-    updateResultCount: function() {
-        var url = "/opus/__api/meta/result_count.json?";
-        opus.lastRequestNo++;
-        $.getJSON(url + o_hash.getHash() + '&reqno=' + opus.lastRequestNo, function(results) {
-            if (results['reqno'] < opus.lastRequestNo) {
-                // garbage collection...?
-                return;
-            }
-            opus.result_count = results['data'][0]['result_count'];
-            $('#result_count').text(o_utils.addCommas(opus.result_count)) ;
 
             // result count is back, now send for widget hinting
-            for (var k in opus.prefs['widgets']) {
-                var slug = opus.prefs['widgets'][k];
+            $.each(opus.prefs.widgets, function(index, slug) {
                 o_search.getHinting(slug);
-            } // endfor
+            });
+        });
+    },
+
+    updateResultCount: function(result_count) {
+        opus.result_count = result_count;
+        $('#result_count').fadeOut('fast', function() {
+            $(this).html(o_utils.addCommas(opus.result_count)).fadeIn('fast') ;
         });
     },
 
@@ -197,7 +200,7 @@ var opus = {
                 break;
 
             case 'browse':
-                if (opus.prefs.browse == 'data') {
+                if (opus.prefs.browse == 'dataTable') {
                     $('.gallery','#browse').hide();
                     $('.data','#browse').show();
                 }
@@ -236,6 +239,7 @@ var opus = {
         // if keep_set_widgets is false it will remove all widgets and restore
         // the application default widgets
 
+        clearInterval(opus.main_timer);  // stop polling for UI changes for a moment
         $('.widget-container-span').empty(); // remove all widgets on the screen
 
         // reset the search query
@@ -244,29 +248,19 @@ var opus = {
         o_browse.resetQuery();
         opus.changeTab('search');
 
-        keep_set_widgets = false  // use as argument for the 2 tiered start over button, currently disabled
-        if (keep_set_widgets) {
-            // redraw all widgets that user had open before
-            // this is the 'start over' behavior
-            opus.widgets_drawn = [];
-            for (key in opus.prefs.widgets) {
-                slug = opus.prefs.widgets[key];
-                o_widgets.getWidget(slug,'#search_widgets');
-            }
-            window.location.hash = '/cols=' + opus.prefs.cols.join(',');
+        // resets widgets drawn back to system default
+        // in the 2 tier button this was the 'start over and restore defaults' behavior
+        // note: this is the current deployed behavior for the single 'start over' button
+        opus.prefs.widgets = [];
+        opus.widgets_drawn = [];
+        opus.widget_elements_drawn = [];
+        $.each(opus.default_widgets, function(index, slug) {
+            o_widgets.getWidget(slug,'#search_widgets');
+        });
 
-        } else {
-            // resets widgets drawn back to system default
-            // in the 2 tier button this was the 'start over and restore defaults' behavior
-            // note: this is the current deployed behavior for the single 'start over' button
-            opus.prefs.widgets = [];
-            opus.widgets_drawn = [];
-            opus.widget_elements_drawn = [];
-            for (k in opus.default_widgets) {
-                slug = opus.default_widgets[k];
-                o_widgets.getWidget(slug,'#search_widgets');
-            }
-        }
+        // start the main timer again
+        opus.main_timer = setInterval(opus.load, opus.main_timer_interval);
+
         return false;
 
     },
@@ -298,42 +292,7 @@ $(document).ready(function() {
     o_widgets.updateWidgetCookies();
 
     $(window).smartresize(function(){
-
         o_search.adjustSearchHeight();
-
-        // see if the metadata box is off screen, if so redraw it.
-        // find left border of metadata box is > screen width.
-        // if so then move it inside
-        /*
-        $(window).width()
-        $('#cboxOverlay .gallery_data_viewer').width();
-        $('#cboxOverlay .gallery_data_viewer').offset().left;
-        */
-
-        if ($('#cboxOverlay .gallery_data_viewer').is(':visible')) {
-            // user is resizing browser with gallery viewer open
-            // make sure they don't lose the metadata box off to the right
-            // this happens only if they've previously put it there
-            // alert('visible');
-
-            /*
-            window_width = $(window).width();
-            left_margin = '15%';
-            if (window_width < 900) {
-                left_margin = '2%';
-            }
-            $('#cboxContent').animate({
-                left:left_margin
-            }, 'fast');
-            */
-            if ($('#cboxOverlay .gallery_data_viewer').is(':visible')) { // :visible being used here to see if element exists)
-                // colorbox is showing, lets reload it so it shows
-                // the orientation it will show when they next page
-                // first get the opus_id
-                setTimeout(o_browse.reset_colorbox(), 1500);
-            }
-        }
-
     });
 
     o_hash.initFromHash(); // just returns null if no hash
@@ -387,6 +346,9 @@ $(document).ready(function() {
 
     o_collections.initCollection();
     opus.triggerNavbarClick();
+
+    // watch the url for changes, this runs continuously
+    opus.main_timer = setInterval(opus.load, opus.main_timer_interval);
 
     return;
 

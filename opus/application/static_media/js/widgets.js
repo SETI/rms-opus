@@ -78,12 +78,6 @@ var o_widgets = {
                opus.selections[id].splice(remove,1);        // remove value from array
            }
            o_hash.updateHash();
-
-           // allow user multiple clicks before retriving a new result_count
-           clearTimeout(opus.widget_click_timeout);
-           clickTimeout = setTimeout(function() {
-              opus.updateResultCount();
-           }, 250);
         });
     },
 
@@ -502,18 +496,10 @@ var o_widgets = {
 
             if ($.isEmptyObject(opus.selections)) {
                 $('#widget__' + slug + ' .spinner').fadeOut('');
-            } else {
-                o_search.getHinting(slug);
             }
-
              opus.widgets_drawn.unshift(slug);
-
-
              o_widgets.customWidgetBehaviors(slug);
-
              o_widgets.scrollToWidget(widget);
-
-
              o_search.getHinting(slug);
 
       }); // end function success, end ajax

@@ -33,7 +33,7 @@ var o_hash = {
               // page is stored like {"gallery":1, "data":1, "colls_gallery":1, "colls_data":1 }
               // so the curent page depends on the view being shown
               // opus.prefs.view = search, browse, collection, or detail
-              // opus.prefs.browse =  'gallery' or 'data',
+              // opus.prefs.browse =  'gallery' or 'dataTable',
               page = o_browse.getCurrentPage();
 
               hash[hash.length] = 'page=' + page;

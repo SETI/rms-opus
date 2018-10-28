@@ -4,10 +4,6 @@ var o_browse = {
     *
     *  all the things that happen on the browse tab
     *
-    *  do not underestimate this most magical method:
-    •
-    •  o_browse.updatePage(no)
-    *
     **/
 
     browseBehaviors: function() {
@@ -15,13 +11,22 @@ var o_browse = {
         // note: using .on vs .click allows elements to be added dynamically w/out bind/rebind of handler
 
         // click on thumbnail opens modal window
-        $(".gallery").on("click", ".thumbnail", function(e) {
+        $(".gallery, #dataTable ").on("click", ".thumbnail, tr", function(e) {
             var opus_id = $(this).data("id");
             $(".modal-header > div").html("<span class='label'>OPUS ID: </span>"+opus_id);
-            var imageURL = $(this).data("image");
-            var details = "<a href='"+imageURL+"'><img src='"+imageURL+"' title='"+opus_id+"' class='preview'/></a>";
-            details += o_browse.metadataboxHtml(opus_id);
-            $("#galleryViewContents").html(details);
+            var imageURL = $("#browse").find("[data-id='"+opus_id+"'][class='thumbnail']").data("image");
+            if (imageURL === undefined) {
+                // put a temp spinner while retrieving the image; this only happens if the data table is loaded first
+                $("#galleryViewContents").html(opus.spinner + o_browse.metadataboxHtml(opus_id));
+
+                var url = '/opus/__api/image/full/' + opus_id + '.json';
+                $.getJSON(url, function(imageData) {
+                    var imageURL = imageData["data"][0]['url'];
+                    o_browse.updateMetaGalleryView(opus_id, imageURL);
+                });
+            } else {
+                o_browse.updateMetaGalleryView(opus_id, imageURL);
+            }
         });
 
         $("#gallerylView").modal({
@@ -49,52 +54,24 @@ var o_browse = {
 
         // browse nav menu - the gallery/table toggle
         $("#browse").on("click", ".browse_view", function() {
+            opus.prefs.browse = $(this).data("view");
 
-            var browse_view = $(this).text().split(' ')[1];  // data or gallery
-            var hiding, showing;
-            if (browse_view == "gallery") {
-                hiding = "data";
-                showing = "gallery";
-            } else {
-                hiding = "gallery";
-                showing = "data";
-            }
-
-            opus.prefs.browse = showing;
             o_hash.updateHash();
 
-            $('.' + hiding, namespace).hide();
-            $('.' + showing, namespace).fadeIn();
+            var hide = opus.prefs.browse == "gallery" ? "dataTable" : "gallery";
+            $('.' + hide, "#browse").hide();
+            $('.' + opus.prefs.browse, "#browse").fadeIn();
 
-            // change the text on the link in the browse nav
-            if (opus.prefs.browse == "gallery") {
-                // show the gallery's data viewer if something is selected:
-                if ($('.browse_image_selected').length) {
-                    o_browse.embedded_data_viewer_toggle();
-                }
-
-                // change the menu text
-                $('.browse_view', namespace).text('view table');
-
-            } else { // if not gallery
-
-                // hide the gallery's embedded data viewer
-                if ($('.embedded_data_viewer_wrapper').is(':visible')) {
-                    o_browse.embedded_data_viewer_toggle();
-                }
-
-                // change the menu text
-                $('.browse_view', namespace).text('view gallery');
-            }
+            o_browse.updateBrowseNav();
 
             // do we need to fetch a new browse tab?
             if ((opus.prefs.browse == "gallery" && !opus.gallery_begun) ||
-                (opus.prefs.browse == "data" && !opus.table_headers_drawn)) {
+                (opus.prefs.browse == "dataTable" && !opus.table_headers_drawn)) {
                 o_browse.getBrowseTab();
             }
 
             // reset scroll position
-            window.scrollTo(0,opus.browse_view_scrolls[showing]); // restore previous scroll position
+            window.scrollTo(0,opus.browse_view_scrolls[opus.prefs.browse]); // restore previous scroll position
 
             return false;
         });
@@ -345,7 +322,7 @@ var o_browse = {
     addRangeHandler: function(opus_id) {
 
         var element = "li";  // elements to loop thru
-        if (opus.prefs.browse == 'data') {
+        if (opus.prefs.browse == 'dataTable') {
                 element = "td";
         }
 
@@ -353,7 +330,7 @@ var o_browse = {
             // this is only the min side of the range
             var end_hint = "select another thumbnail to make a range.";
             var element_name = 'thumbnail';
-            if (opus.prefs.browse == "data") {
+            if (opus.prefs.browse == "dataTable") {
               element_name = 'row';
             }
             $('.addrange','#browse').text("select range end");
@@ -451,7 +428,7 @@ var o_browse = {
             // the one that is showing,
             // set last page to one before first page that is showing in the interface
             // now update the browse table
-            if (opus.prefs.browse == "data") {
+            if (opus.prefs.browse == "dataTable") {
                 o_browse.updatePage();
             } else {
                 o_hash.updateHash();
@@ -486,7 +463,7 @@ var o_browse = {
             // the one that is showing,
             // set last page to one before first page that is showing in the interface
             // now update the browse table
-            if (opus.prefs.browse == "data") {
+            if (opus.prefs.browse == "dataTable") {
                 o_browse.updatePage();
             } else {
                 o_hash.updateHash();
@@ -571,23 +548,6 @@ var o_browse = {
         }
     },
 
-    // this is like the table headers
-    startDataTable: function(namespace) {
-        var url = '/opus/__table_headers.html?' + o_hash.getHash() + '&reqno=' + opus.lastRequestNo;
-        if (namespace == '#collections') {
-            url += '&colls=true';
-        }
-        $.ajax({ url: url,
-            success: function(html) {
-                $('.data', namespace).append(html);
-                $(".data .data_table", namespace).stickyTableHeaders({ fixedOffset: 94 });
-                opus.table_headers_drawn = true;
-                o_browse.getBrowseTab();
-            }
-        });
-
-    },
-
     // footer bar, indicator bar, browse footer bar
     infiniteScrollPageIndicatorRow: function(page) {
         // this is the bar that appears below each infinite scroll page to indicate page no
@@ -670,18 +630,51 @@ var o_browse = {
         return page;
     },
 
+    updateBrowseNav: function() {
+        if (opus.prefs.browse == "gallery") {
+            $('.browse_view', "#browse").text('view table');
+            $(".browse_view", "#browse").data("view", "dataTable");
+        } else {
+            $('.browse_view', "#browse").text('view gallery');
+            $(".browse_view", "#browse").data("view", "gallery");
+        }
+    },
+
     renderTable: function(tableData) {
-        $(".galleryTable thead > tr > th").detach();
-        $(".galleryTable tbody > tr").detach();
+        $(".dataTable thead > tr > th").detach();
+        $(".dataTable tbody > tr").detach();
     	  $.each(tableData.labels, function( column, header) {
-            $("<th id='"+column+"'scope='col' class='sticky-header'>"+header+"</th>").appendTo(".galleryTable thead tr");
+            $("<th id='"+column+"'scope='col' class='sticky-header'>"+header+"</th>").appendTo(".dataTable thead tr");
         });
         $.each(tableData.page, function(item, value) {
             var row = "";
             $.each(value, function(index, cell) {
                 row += "<td>"+cell+"</td>";
             });
-            $("<tr data-toggle='modal' data-id='"+value[0]+"'>"+row+" data-target='#galleryView'</tr>").appendTo(".galleryTable tbody");
+            var tr = "<tr data-toggle='modal' data-id='"+value[0]+"' data-target='#galleryView'>"+row+"</tr>";
+            $("<tr data-toggle='modal' data-id='"+value[0]+"' data-target='#galleryView'>"+row+"</tr>").appendTo(".dataTable tbody");
+        });
+    },
+
+    getGallery: function(page) {
+        var view = o_browse.getViewInfo();
+        var base_url = "/opus/__api/images.html?";
+        var url = o_hash.getHash() + '&reqno=' + opus.lastRequestNo + view.add_to_url;
+
+        // remove any existing page= slug before adding in the current page= slug w/new page number
+        url = $.grep(url.split('&'), function(pair, index) {
+            return !pair.startsWith("page");
+        }).join('&');
+
+        url += '&page=' + page;
+        $.ajax({ url: base_url + url,
+            success: function(html) {
+                opus.gallery_begun = true;
+                $(html).appendTo($('.gallery', view.namespace)).fadeIn();
+
+                // fade out the spinner
+                $('.infinite_scroll_spinner', view.namespace).fadeOut("fast");
+            }
         });
     },
 
@@ -718,6 +711,7 @@ var o_browse = {
             new_hash.push(param + '=' + values.join(','));
         }
 
+        // metadata; used for both table and gallery
         var new_hash = new_hash.join('&');
         $.getJSON(base_url + new_hash, function(tableData) {
             // assign to data object
@@ -736,84 +730,61 @@ var o_browse = {
             }
             o_browse.renderTable(tableData);
         });
+        // if the data table is drawn first, retrieve the gallery images in the background.
+        // Retrieving the gallery always creates the table
+        if (opus.last_page_drawn["dataTable"] != opus.last_page_drawn["gallery"]) {
+            o_browse.getGallery(page);
+        }
     },
 
 
     getBrowseTab: function() {
-
-        var view_info = o_browse.getViewInfo();
-        var namespace = view_info['namespace']; // either '#collection' or '#browse'
-        var prefix = view_info['prefix'];       // either 'colls_' or ''
-        var add_to_url = view_info['add_to_url'];  // adds colls=true if in collections view
-        var view_var = opus.prefs[prefix + 'browse'];  // either "gallery" or "data"
-
-        if (namespace == '#collection' & opus.colls_pages == 0) {
-            // clicked on collections tab with nothing in collections,
-            // give some helpful hint
-            var html = ' \
-                <div style = "margin:20px"><h2>You Have No Selections</h2>   \
-                <p>To select observations, click on the Browse Results tab \
-                at the top of the page,<br> mouse over the thumbnail gallery images to reveal the tools, \
-                then click the <br>checkbox below a thumbnail.  </p>   \
-                </div>'
-
-            $(html).appendTo($('.gallery .ace-thumbnails', namespace)).fadeIn();
-            return;
-        }
-
         // only draw the navbar if we are in gallery mode... doesn't make sense in collection mode
-        if (namespace == "#browse") {
-          // get the browse nav header?
-            if (opus.prefs.browse == "gallery") {
-                $('.browse_view', namespace).text('view table');
-            } else {
-                $('.browse_view', namespace).text('view gallery');
-            }
-            // total pages indicator
-            $('#' + prefix + 'pages', namespace).html(opus[prefix + 'pages']);
-            window.scrollTo(0,opus.browse_view_scrolls[prefix + view_var]);  // sometimes you have scrolled down the search tab
-        }
+        o_browse.updateBrowseNav();
 
-        var base_url = (opus.prefs[prefix + 'browse'] == "data" ? "/opus/__api/data.html?" : "/opus/__api/images.html?");
+        // total pages indicator
+        $('#' + 'pages', "#browse").html(opus['pages']);
+        window.scrollTo(0,opus.browse_view_scrolls[opus.prefs.browse]);  // sometimes you have scrolled down the search tab
 
-        var footer_clicks = opus.browse_footer_clicks[prefix + view_var]; // default: {"gallery":0, "data":0, 'colls_gallery':0, 'colls_data':0 };
+        var base_url = (opus.prefs.browse == "dataTable" ? "/opus/__api/data.html?" : "/opus/__api/images.html?");
+
+        // all this stuff is for infinite scroll management...
+        var footer_clicks = opus.browse_footer_clicks[opus.prefs.browse]; // default: {"gallery":0, "dataTable":0, 'colls_gallery':0, 'colls_data':0 };
 
         // figure out the page
-        var start_page = opus.prefs.page[prefix + view_var]; // default: {"gallery":1, "data":1, 'colls_gallery':1, 'colls_data':1 };
+        var start_page = opus.prefs.page[opus.prefs.browse]; // default: {"gallery":1, "dataTable":1, 'colls_gallery':1, 'colls_data':1 };
 
         var page = parseInt(start_page, 10) + parseInt(footer_clicks, 10);
 
         // some outlier things that can go wrong with page (when user entered page #)
-        if (!page) {
+        if (!page || page < 1) {
             page = 1;
-        }
-        else if (page < 1) {
-            page = 1;
-            $('#' + prefix + 'page_no', namespace).val(page); // reset the display
+            $('#' + 'page_no', "#browse").val(page); // reset the display
         }
 
-        if (opus[prefix + 'pages'] && page > opus[prefix + 'pages']) {
+        if (opus.pages && page > opus.pages) {
             // page is higher than the total number of pages, reset it to the last page
-            page = opus[prefix + 'pages'];
+            page = opus.pages;
         }
 
         // draw indicator bar if needed
         if (page > 1) {
-            indicator_row = o_browse.infiniteScrollPageIndicatorRow(page);
+            var indicator_row = o_browse.infiniteScrollPageIndicatorRow(page);
 
             if (!$('.page_' + page).length) {
-                if (view_var == "gallery") {
-                    $(indicator_row).appendTo('.gallery .ace-thumbnails', namespace).show();
+                if (opus.prefs.browse == "gallery") {
+                    $(indicator_row).appendTo('.gallery .thumbnails', "#browse").show();
                 } else {
                     // this is the data table view!
                     // do something:
-                    $(".data_table tr:last", namespace).after(indicator_row);
-                    $(".data_table tr:last", namespace).show();  // i dunno why couldn't chain these 2
+                    $(".data_table tr:last", "#browse").after(indicator_row);
+                    $(".data_table tr:last", "#browse").show();  // i dunno why couldn't chain these 2
                 }
             }
         }
+        /// end of infinite scroll management for time being
 
-        var url = o_hash.getHash() + '&reqno=' + opus.lastRequestNo + add_to_url;
+        var url = o_hash.getHash() + '&reqno=' + opus.lastRequestNo;
 
         // remove any existing page= slug before adding in the current page= slug w/new page number
         url = $.grep(url.split('&'), function(pair, index) {
@@ -823,22 +794,23 @@ var o_browse = {
         url += '&page=' + page;
 
         // wait! is this page already drawn?
-        if (opus.last_page_drawn[prefix + view_var] == page) {
+        if (opus.last_page_drawn[opus.prefs.browse] == page) {
             // this page is already drawn, just make sure it's showing and
-            if (view_var == "data") {
-                $('.galleryTable table', namespace).fadeIn("fast");
+            if (opus.prefs.browse == "dataTable") {
+                $('.dataTable table', "#browse").fadeIn("fast");
             } else {
-                $('.gallery .thumbnails', namespace).fadeIn("fast");
+                $('.gallery .thumbnails', "#browse").fadeIn("fast");
             }
             return;
         }
 
-        if (view_var == "gallery") {
-            opus.pages_drawn[prefix + "gallery"].push(page);
+        if (opus.prefs.browse == "gallery") {
+            opus.pages_drawn.gallery.push(page);
+            o_browse.getGallery(page);
         }
 
+        opus.last_page_drawn[opus.prefs.browse] = page;
         o_browse.getBrowseData(page);
-        opus.last_page_drawn[prefix + view_var] = page;
 
         o_browse.pageInViewIndicator();
         o_browse.initColorbox();
@@ -919,7 +891,7 @@ var o_browse = {
             }
         };
 
-        $('.ace-thumbnails [data-rel="colorbox"]').colorbox(colorbox_params);
+        $('.thumbnails [data-rel="colorbox"]').colorbox(colorbox_params);
 
     },
 
@@ -964,11 +936,14 @@ var o_browse = {
         // add a link to detail page
         html += '<p><a href = "/opus/detail/' + opus_id + '.html" class = "gallery_data_link" data-opusid="' + opus_id + '">View Detail</a></p>';
 
-        // add link to choose columns
-        html += '<p><a href="" class="get_column_chooser close_overlay">choose columns</a></p>';
         $('.gallery_data_viewer').html(html);
-
         return html
+    },
+
+    updateMetaGalleryView: function(opus_id, imageURL) {
+        var details = "<a href='"+imageURL+"'><img src='"+imageURL+"' title='"+opus_id+"' class='preview'/></a>";
+        details += o_browse.metadataboxHtml(opus_id);
+        $("#galleryViewContents").html(details);
     },
 
     updateEmbeddedMetadataBox: function(opus_id) {
@@ -1046,8 +1021,8 @@ var o_browse = {
             when the user changes the query and all this stuff is already drawn
             need to reset all of it (todo: replace with framework!)
             */
-            $('.data').empty();  // yes all namespaces
-            $('.gallery .ace-thumbnails').empty();
+            $("#dataTable > tbody").empty();  // yes all namespaces
+            $(".gallery").empty();
             opus.gallery_data = [];
             opus.pages_drawn = {"colls_gallery":[], "gallery":[]};
             opus.browse_footer_clicks = {"gallery":0, "data":0, "colls_gallery":0, "colls_data":0 };
@@ -1067,9 +1042,10 @@ var o_browse = {
             reloads the current results view from server and
             sets other views back to undrawn
             gets page/view info from from getViewInfo()
-            and opus.prefs[prefix + 'browse']
+            and opus.prefs[prefix + "browse"]
             */
             o_browse.resetQuery();
+            // FIX ME - RENDER BROWSE OR COLLECTION TAB, BUT DON'T CALL SAME FUNC FOR BOTH, YUCK
             o_browse.getBrowseTab();
         },
 
@@ -1085,37 +1061,6 @@ var o_browse = {
 
             return (answer);
         },
-
-
-        // infinite scroll
-        // watch for browse tab scrolling, if footer in view get next page
-        browseScrollWatch: function() {
-
-            var view_info = o_browse.getViewInfo();
-            var prefix = view_info['prefix']; // none or colls_
-            var view_var = opus.prefs[prefix + 'browse'];  // data or gallery
-
-            // keep track of each views scroll position because UX
-            opus.browse_view_scrolls[prefix + view_var] = $(window).scrollTop();
-
-            o_browse.pageInViewIndicator();
-
-            // this is for the infinite scroll footer bar
-            if (o_browse.isAlmostScrolledIntoView('.end_of_page')) {
-
-                if (opus.browse_footer_clicks[prefix + view_var] > (opus[prefix + 'pages'] -2)) {
-                    return; // this can't be! so just don't
-                }
-
-                // scroll is in view, up the "footer clicks" for this view
-                opus.browse_footer_clicks[prefix + view_var] = opus.browse_footer_clicks[prefix + view_var] + 1;
-
-
-                o_browse.getBrowseTab();
-
-            }
-        },
-
 
         // column chooser
         getColumnChooser: function() {
@@ -1199,7 +1144,7 @@ var o_browse = {
             // the one that is showing,
             // set last page to one before first page that is showing in the interface
             // now update the browse table
-            if (opus.prefs.browse == "data") {
+            if (opus.prefs.browse == "dataTable") {
                 o_browse.updatePage();
             } else {
                 // update the hash

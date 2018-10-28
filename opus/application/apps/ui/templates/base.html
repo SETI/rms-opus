@@ -31,7 +31,7 @@
 					<a class="nav-link" href="#detail" data-toggle="tab" role="tab" aria-controls="detail" aria-selected="false">Detail</a>
 				</li>
 				<li class="nav-item external-link">
-					<a href="https://ringsnodesearchtool.blogspot.com/" target="_blank" data-toggle="tab" role="tab">
+					<a href="https://ringsnodesearchtool.blogspot.com/" target="_blank" aria-controls="blogspot">
 						<div class="container align-items-center d-flex h-100 my-auto">
 							<img src="{{ STATIC_URL }}img/new_25.gif"/>&nbsp;Recent Announcements
 						</div>
@@ -69,7 +69,7 @@
 								<a href="#" class="get_column_chooser nav-link">choose columns</a>
 							</li>
 							<li class="nav-item">
-								<a href="#" class="browse_view nav-link">view table</a>
+								<a href="#" class="browse_view nav-link" data-view="dataTable">view table</a>
 							</li>
 							<li class="nav-item">
 								<a href="#" class="download_csv nav-link">download csv</a>
@@ -79,18 +79,16 @@
 				</nav>
 				<div class="container-fluid">
 					<div class="row gallery"></div>
-					<div class="galleryTable">
-						<div class="row">
-							<div class="col-lg">
-								<table id="dataTable" class="table table-hover table-bordered table-striped table-dark table-sm">
-								  <thead>
-									<tr>
-									</tr>
-								  </thead>
-								  <tbody>
-								  </tbody>
-								</table>
-							</div>
+					<div class="row dataTable">
+						<div class="col-lg">
+							<table id="dataTable" class="table table-hover table-bordered table-striped table-dark table-sm">
+							  <thead>
+								<tr>
+								</tr>
+							  </thead>
+							  <tbody>
+							  </tbody>
+							</table>
 						</div>
 					</div>
 				</div>
@@ -153,6 +151,11 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/malihu-custom-scrollbar-plugin/3.1.5/jquery.mCustomScrollbar.min.js" type="text/javascript" ></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-cookie/1.4.1/jquery.cookie.min.js" type="text/javascript" ></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.colorbox/1.6.4/jquery.colorbox-min.js" type="text/javascript" ></script>
+	
+	<!-- MDB core JavaScript -->
+	<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mdbootstrap/4.5.11/js/mdb.min.js"></script>
+	
+	<script src="https://unpkg.com/infinite-scroll@3/dist/infinite-scroll.pkgd.min.js"></script>
 
     {% block scripts %}
 

@@ -133,6 +133,21 @@ var o_collections = {
 
     // get Collections tab
     getCollectionsTab: function() {
+
+        if (opus.colls_pages == 0) {
+            // clicked on collections tab with nothing in collections,
+            // give some helpful hint
+            var html = ' \
+                <div style = "margin:20px"><h2>You Have No Selections</h2>   \
+                <p>To select observations, click on the Browse Results tab \
+                at the top of the page,<br> mouse over the thumbnail gallery images to reveal the tools, \
+                then click the <br>checkbox below a thumbnail.  </p>   \
+                </div>'
+
+            $(html).appendTo($('.gallery .thumbnails', namespace)).fadeIn();
+            return;
+        }
+
         if (opus.collection_change) {
             var zipped_files_html = $('.zipped_files', '#collection').html();
 
@@ -145,24 +160,8 @@ var o_collections = {
             // redux: speed this up by splitting into 2 ajax calls
 
             // redux: draw the template immediately after this or only empty individual elements
-            $('.gallery ul.ace-thumbnails', '#collection').empty();
+            $('.gallery ul.thumbnails', '#collection').empty();
             $('.data', '#collection').empty();
-
-            /*
-            // redux: first get the product counts
-            $.ajax({ url: "/opus/__collections/default/product_counts.html",
-                   success: function(html){
-
-                        // then get a page of images + metadata
-                        $.ajax({ url: "/opus/__collections/default/thumbnails.html",
-                               success: function(html){},
-                               error: function(html){}
-                           });
-
-                   },
-                   error: function(html){}
-               });
-            */
 
             // redux: and nix this big thing:
             $.ajax({ url: "/opus/__collections/default/view.html",
@@ -177,7 +176,8 @@ var o_collections = {
 
                     $('#colls_pages').html(opus.colls_pages);
 
-                    o_browse.getBrowseTab();
+                    //FIX ME
+                    o_browse.getBrowseTab();  //WTF, make this a render function, we are not getting a browse tab here
 
                     if (zipped_files_html) {
                         $('.zipped_files', '#collection').html(zipped_files_html);
