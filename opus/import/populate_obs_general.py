@@ -179,42 +179,21 @@ def populate_obs_general_preview_images(**kwargs):
     general_row = metadata['obs_general_row']
     file_spec = general_row['primary_file_spec']
     pdsf = pdsfile.PdsFile.from_filespec(file_spec)
-    products = pdsf.opus_products()
+    try:
+        viewset = pdsf.viewset
+    except ValueError as e:
+        import_util.log_nonrepeating_warning(
+            f'ViewSet threw ValueError for "{file_spec}": {e}')
+        viewset = None
 
-    browse_data = {}
+    if viewset:
+        browse_data = viewset.to_dict()
+    else:
+        browse_data = {'viewables': []}
 
-    for product_type in products.keys():
-        if not isinstance(product_type, tuple):
-            import_util.log_nonrepeating_error('Non-tuple product type')
-            continue
-        product_class = product_type[0]
-        if product_class != 'browse' and product_class != 'diagram':
-            continue
-        browse_type = product_type[2]
-        list_of_sublists = products[product_type]
-        flat_list = _pdsfile_iter_flatten(list_of_sublists)
-        if len(flat_list) > 1:
-            # This can happen for CIRS, which has multiple browse
-            # products. Take that one that starts with IMG if possible.
-            for product in flat_list:
-                filename = product.url.split('/')[-1]
-                if filename.startswith('IMG'):
-                    break
-            else:
-                product = flat_list[0]
-        else:
-            product = flat_list[0]
-        data = {}
-        data['url'] = product.url
-        data['alt_text'] = product.alt
-        data['size_bytes'] = product.size_bytes
-        data['width'] = product.width
-        data['height'] = product.height
-        browse_data[browse_type.replace('-','_')] = data
-
-    if len(browse_data) != 4:
+    if len(browse_data['viewables']) != 4:
         import_util.log_nonrepeating_warning(
             f'Some browse/diagram images missing for "{file_spec}" - found '
-            +f'{len(browse_data)}')
+            +f'{len(browse_data["viewables"])}')
     ret = json.dumps(browse_data)
     return ret

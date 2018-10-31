@@ -16,6 +16,7 @@ import tools.app_utils as app_utils
 import settings
 
 import pdsfile
+import pdsviewable
 
 import logging
 log = logging.getLogger(__name__)
@@ -35,10 +36,10 @@ def _pdsfile_iter_flatten(iterable):
     pdsfiles = _iter_flatten(iterable)
     abspaths = []
     ret = []
-    for pdsfile in pdsfiles:
-        if pdsfile.abspath not in abspaths:
-            abspaths.append(pdsfile.abspath)
-            ret.append(pdsfile)
+    for pdsf in pdsfiles:
+        if pdsf.abspath not in abspaths:
+            abspaths.append(pdsf.abspath)
+            ret.append(pdsf)
     return ret
 
 def pds_products_sort_func(x):
@@ -262,38 +263,44 @@ def get_pds_preview_images(opus_id_list, preview_jsons, sizes):
         if preview_jsons:
             preview_json = preview_jsons[idx]
         else:
-            # try:
+            try:
                 preview_json_str = (ObsGeneral.objects.get(opus_id=opus_id)
                                     .preview_images)
                 preview_json = json.loads(preview_json_str)
-            # except ObjectDoesNotExist:
-            #     log.error('get_pds_preview_images: Failed to find opus_ids "%s" '
-            #               +'in obs_general', opus_id)
+            except ObjectDoesNotExist:
+                log.error('get_pds_preview_images: Failed to find opus_ids "%s" '
+                          +'in obs_general', opus_id)
+        viewset = None
+        if preview_json:
+            viewset = pdsviewable.PdsViewSet.from_dict(preview_json)
         data = OrderedDict({'opus_id':  opus_id})
         for size in sizes:
-            our_size = size
-            if our_size == 'med':
-                our_size = 'medium'
-            if (not preview_json or
-                ('browse_'+our_size not in preview_json and
-                 'diagram_'+our_size not in preview_json)):
+            viewable = None
+            if viewset:
+                if size == 'thumb':
+                    viewable = viewset.thumbnail
+                elif size == 'small':
+                    viewable = viewset.small
+                elif size == 'med':
+                    viewable = viewset.medium
+                elif size == 'full':
+                    viewable = viewset.full_size
+                else:
+                    log.error('Unknown image size "%s"', size)
+            if not preview_json or not viewset:
                 log.error('No preview image size "%s" found for '
-                          +'opus_id "%s"', our_size, opus_id)
+                          +'opus_id "%s"', size, opus_id)
                 url = settings.THUMBNAIL_NOT_FOUND
                 alt_text = 'Not found'
                 byte_size = 0
                 width = 0
                 height = 0
             else:
-                if 'browse_'+our_size in preview_json:
-                    entry = preview_json['browse_'+our_size]
-                else:
-                    entry = preview_json['diagram_'+our_size]
-                url = settings.PRODUCT_HTTP_PATH + entry['url']
-                alt_text = entry['alt_text']
-                byte_size = entry['size_bytes']
-                width = entry['width']
-                height = entry['height']
+                url = settings.PRODUCT_HTTP_PATH + viewable.url
+                alt_text = viewable.alt
+                byte_size = viewable.bytes
+                width = viewable.width
+                height = viewable.height
             data[size+'_url'] = url
             data[size+'_alt_text'] = alt_text
             data[size+'_size_bytes'] = byte_size
