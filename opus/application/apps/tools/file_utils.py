@@ -42,6 +42,21 @@ def _pdsfile_iter_flatten(iterable):
             ret.append(pdsf)
     return ret
 
+def _pdsfile_extract_version(list_of_sublists):
+    # Once versions are implemented in OPUS, this needs to be expanded
+    # to extract the proper version number
+    if len(list_of_sublists) == 0 or len(list_of_sublists[0]) == 0:
+        return list_of_sublists
+
+    best_version_rank = list_of_sublists[0][0].version_rank
+
+    ret_list = []
+    for sublist in list_of_sublists:
+        if len(sublist) and sublist[0].version_rank >= best_version_rank:
+            ret_list.append(sublist)
+
+    return ret_list
+
 def pds_products_sort_func(x):
     pref = None
     if x[0] == 'standard':
@@ -64,7 +79,7 @@ def get_pds_products_by_type(opus_id_list, product_types=['all']):
         The returned dict is indexed by product_type and for each entry
         contains the combined information for all opus_ids. product_type
         is in the format (category, sort_order, slug, pretty_name) and is
-        sorted in the order 'standard', 'metadata', 'browse', 'diagram', other.
+        sorted as defined in pds_products_sort_func.
     """
     if opus_id_list:
         if not isinstance(opus_id_list, (list, tuple)):
@@ -102,6 +117,7 @@ def get_pds_products_by_type(opus_id_list, product_types=['all']):
         # Keep a running list of all products by type
         for (product_type, list_of_sublists) in products.items():
             if product_types == ['all'] or product_type in product_types:
+                list_of_sublists = _pdsfile_extract_version(list_of_sublists)
                 flat_list = _pdsfile_iter_flatten(list_of_sublists)
                 products_by_type.setdefault(product_type, []).extend(flat_list)
 
@@ -131,17 +147,16 @@ def get_pds_products(opus_id_list=None, file_specs=None,
     """Return a list of all PDS products for a given opus_id(s).
 
     The returned dict is indexed by opus_id and can be in raw, html, or json.
-    The latter are used by the "files" API. The dict is in the same order as
-    the original opus_id_list.
+    The latter are used by the "files" API. The dict (which is an OrderedDict)
+    is in the same order as the original opus_id_list.
 
     For each opus_id in the returned dict, there is a dict indexed by
     product_type in the format (category, sort_order, slug, pretty_name). The
-    dict is sorted in the order 'standard', 'metadata', 'browse', 'diagram',
-    other.
+    dict is sorted as defined in pds_products_sort_func.
 
     opus_id_list can be a string or a list.
 
-    file_specs can be None, a string, or a list. If a string or list,
+    file_specs can be None, a string, or a list. If a string or list, it
         must correspond 1-to-1 with the entries in opus_list and give the
         primary_file_spec entry. If None, we will look them up for you.
 
@@ -202,6 +217,7 @@ def get_pds_products(opus_id_list=None, file_specs=None,
             if (product_types != ['all'] and
                 product_type[2] not in product_types):
                 continue
+            list_of_sublists = _pdsfile_extract_version(list_of_sublists)
             flat_list = _pdsfile_iter_flatten(list_of_sublists)
             res_list = []
             for file in flat_list:
