@@ -32,6 +32,11 @@ def helper_voyager_planet_id(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     # MISSION_PHASE_NAME exists for both VGISS and VGIRIS
+    # Values are:
+    #   Jupiter Encounter
+    #   Neptune Encounter
+    #   Saturn Encounter
+    #   Uranus Encounter
     mp = index_row['MISSION_PHASE_NAME']
     pl = mp.upper()[:3]
 

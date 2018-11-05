@@ -189,33 +189,24 @@ def helper_cassini_valid_obs_name(obs_name):
     return False
 
 def helper_cassini_planet_id(**kwargs):
-    """Find the planet associated with an observation. This is usually based on
-    the TARGET_NAME field, but if the planet is marked as None based on the
-    target, we look at the time of the observation to bind it to Jupiter or
-    Saturn."""
+    """Find the planet associated with an observation. This is based on the
+    mission phase (as encoded in the observation time so it works with all
+    instruments)."""
 
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     obs_general_row = metadata['obs_general_row']
-    target_name = index_row['TARGET_NAME'].upper()
-    if target_name in TARGET_NAME_MAPPING:
-        target_name = TARGET_NAME_MAPPING[target_name]
-    if target_name not in TARGET_NAME_INFO:
-        import_util.announce_unknown_target_name(target_name)
-        pl = None
-    else:
-        pl, _ = TARGET_NAME_INFO[target_name]
-    if pl is not None:
-        return pl
-    time_sec1 = obs_general_row['time_sec1']
+
     time_sec2 = obs_general_row['time_sec2']
-    if time_sec1 >= 26611232.0 and time_sec2 <= 41904032.0:
-        # '2000-11-04' to '2001-04-30'
+
+    jup = julian.tai_from_iso('2000-262T00:32:38.930')
+    sat = julian.tai_from_iso('2003-138T02:16:18.383')
+
+    if time_sec2 < jup:
+        return None
+    if time_sec2 < sat:
         return 'JUP'
-    if time_sec1 >= 127180832.0:
-        # '2004-01-12'
-        return 'SAT'
-    return None
+    return 'SAT'
 
 def helper_cassini_target_name(**kwargs):
     metadata = kwargs['metadata']
@@ -437,7 +428,7 @@ def populate_obs_mission_cassini_ert2(**kwargs):
 
     if stop_time is None:
         return None
-        
+
     try:
         ert_sec = julian.tai_from_iso(stop_time)
     except Exception as e:
