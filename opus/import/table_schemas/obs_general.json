@@ -596,6 +596,7 @@
         "pi_intro": null,
         "pi_label": "Observation Type",
         "pi_label_results": "Observation Type",
+        "pi_old_slug": "typeid",
         "pi_slug": "observationtype",
         "pi_sub_heading": null,
         "pi_tooltip": null,
