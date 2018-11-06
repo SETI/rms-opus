@@ -280,14 +280,8 @@ def populate_obs_general_COISS_quantity(**kwargs):
         return 'EMISSION'
     return 'REFLECT'
 
-def populate_obs_general_COISS_spatial_sampling(**kwargs):
-    return '2D'
-
-def populate_obs_general_COISS_wavelength_sampling(**kwargs):
-    return 'N'
-
-def populate_obs_general_COISS_time_sampling(**kwargs):
-    return 'N'
+def populate_obs_general_COISS_observation_type(**kwargs):
+    return 'IMG' # Image
 
 def populate_obs_pds_COISS_note(**kwargs):
     metadata = kwargs['metadata']

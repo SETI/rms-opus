@@ -133,36 +133,24 @@ populate_obs_general_HSTSTIS_quantity = populate_obs_general_HSTx_quantity
 populate_obs_general_HSTWFC3_quantity = populate_obs_general_HSTx_quantity
 populate_obs_general_HSTWFPC2_quantity = populate_obs_general_HSTx_quantity
 
-def populate_obs_general_HSTx_spatial_sampling(**kwargs):
-    return '2D'
-
-populate_obs_general_HSTACS_spatial_sampling = populate_obs_general_HSTx_spatial_sampling
-populate_obs_general_HSTNICMOS_spatial_sampling = populate_obs_general_HSTx_spatial_sampling
-populate_obs_general_HSTSTIS_spatial_sampling = populate_obs_general_HSTx_spatial_sampling
-populate_obs_general_HSTWFC3_spatial_sampling = populate_obs_general_HSTx_spatial_sampling
-populate_obs_general_HSTWFPC2_spatial_sampling = populate_obs_general_HSTx_spatial_sampling
-
-def populate_obs_general_HSTx_wavelength_sampling(**kwargs):
+def populate_obs_general_HSTx_observation_type(**kwargs):
     filter1, filter2 = _decode_filters(**kwargs)
-    if ((filter1 is not None and (filter1.startswith('G') or filter1.startswith('PR'))) or
-        (filter2 is not None and (filter2.startswith('G') or filter2.startswith('PR')))):
-        return 'Y'
-    return 'N'
+    if ((filter1 is not None and
+         (filter1.startswith('G') or
+          filter1.startswith('E') or
+          filter1.startswith('PR'))) or
+        (filter2 is not None and
+         (filter2.startswith('G') or
+          filter2.startswith('E') or
+          filter2.startswith('PR')))):
+        return 'SPI' # Spectral Image (2-D with spectral information)
+    return 'IMG' # Image
 
-populate_obs_general_HSTACS_wavelength_sampling = populate_obs_general_HSTx_wavelength_sampling
-populate_obs_general_HSTNICMOS_wavelength_sampling = populate_obs_general_HSTx_wavelength_sampling
-populate_obs_general_HSTSTIS_wavelength_sampling = populate_obs_general_HSTx_wavelength_sampling
-populate_obs_general_HSTWFC3_wavelength_sampling = populate_obs_general_HSTx_wavelength_sampling
-populate_obs_general_HSTWFPC2_wavelength_sampling = populate_obs_general_HSTx_wavelength_sampling
-
-def populate_obs_general_HSTx_time_sampling(**kwargs):
-    return 'N'
-
-populate_obs_general_HSTACS_time_sampling = populate_obs_general_HSTx_time_sampling
-populate_obs_general_HSTNICMOS_time_sampling = populate_obs_general_HSTx_time_sampling
-populate_obs_general_HSTSTIS_time_sampling = populate_obs_general_HSTx_time_sampling
-populate_obs_general_HSTWFC3_time_sampling = populate_obs_general_HSTx_time_sampling
-populate_obs_general_HSTWFPC2_time_sampling = populate_obs_general_HSTx_time_sampling
+populate_obs_general_HSTACS_observation_type = populate_obs_general_HSTx_observation_type
+populate_obs_general_HSTNICMOS_observation_type = populate_obs_general_HSTx_observation_type
+populate_obs_general_HSTSTIS_observation_type = populate_obs_general_HSTx_observation_type
+populate_obs_general_HSTWFC3_observation_type = populate_obs_general_HSTx_observation_type
+populate_obs_general_HSTWFPC2_observation_type = populate_obs_general_HSTx_observation_type
 
 def populate_obs_general_HSTx_time1(**kwargs):
     metadata = kwargs['metadata']

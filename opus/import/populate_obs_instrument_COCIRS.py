@@ -118,19 +118,8 @@ def populate_obs_general_COCIRS_observation_duration(**kwargs):
 def populate_obs_general_COCIRS_quantity(**kwargs):
     return 'THERMAL'
 
-def populate_obs_general_COCIRS_spatial_sampling(**kwargs):
-    metadata = kwargs['metadata']
-    index_row = metadata['index_row']
-    instrument_id = index_row['DETECTOR_ID']
-    if instrument_id == 'FP1':
-        return 'POINT'
-    return '1D'
-
-def populate_obs_general_COCIRS_wavelength_sampling(**kwargs):
-    return 'Y'
-
-def populate_obs_general_COCIRS_time_sampling(**kwargs):
-    return 'N'
+def populate_obs_general_COCIRS_observation_type(**kwargs):
+    return 'STS' # Spectral Time Series
 
 def populate_obs_pds_COCIRS_note(**kwargs):
     return None

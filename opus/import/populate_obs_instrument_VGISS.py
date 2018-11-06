@@ -144,14 +144,8 @@ def populate_obs_general_VGISS_quantity(**kwargs):
         return 'EMISSION'
     return 'REFLECT'
 
-def populate_obs_general_VGISS_spatial_sampling(**kwargs):
-    return '2D'
-
-def populate_obs_general_VGISS_wavelength_sampling(**kwargs):
-    return 'N'
-
-def populate_obs_general_VGISS_time_sampling(**kwargs):
-    return 'N'
+def populate_obs_general_VGISS_observation_type(**kwargs):
+    return 'IMG' # Image
 
 def populate_obs_pds_VGISS_note(**kwargs):
     metadata = kwargs['metadata']

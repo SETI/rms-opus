@@ -113,14 +113,8 @@ def populate_obs_general_NHLORRI_observation_duration(**kwargs):
 def populate_obs_general_NHLORRI_quantity(**kwargs):
     return 'REFLECT'
 
-def populate_obs_general_NHLORRI_spatial_sampling(**kwargs):
-    return '2D'
-
-def populate_obs_general_NHLORRI_wavelength_sampling(**kwargs):
-    return 'N'
-
-def populate_obs_general_NHLORRI_time_sampling(**kwargs):
-    return 'N'
+def populate_obs_general_NHLORRI_observation_type(**kwargs):
+    return 'IMG' # Image
 
 def populate_obs_pds_NHLORRI_note(**kwargs):
     metadata = kwargs['metadata']

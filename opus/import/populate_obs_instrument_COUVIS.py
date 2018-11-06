@@ -139,31 +139,14 @@ def populate_obs_general_COUVIS_spatial_sampling(**kwargs):
 
     return '2D'
 
-def populate_obs_general_COUVIS_wavelength_sampling(**kwargs):
+def populate_obs_general_COUVIS_observation_duration(**kwargs):
     channel, image_time = _COUVIS_channel_time_helper(**kwargs)
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
-    slit_state = index_row['SLIT_STATE']
-
     if channel == 'HSP' or channel == 'HDAC':
-        return 'N'
+        return 'TS' # Time Series
     assert channel == 'EUV' or channel == 'FUV'
-    if slit_state == 'OCCULTATION':
-        return 'N'
-    return 'Y'
-
-def populate_obs_general_COUVIS_time_sampling(**kwargs):
-    channel, image_time = _COUVIS_channel_time_helper(**kwargs)
-    metadata = kwargs['metadata']
-    index_row = metadata['index_row']
-    slit_state = index_row['SLIT_STATE']
-
-    if channel == 'HSP' or channel == 'HDAC':
-        return 'Y'
-    assert channel == 'EUV' or channel == 'FUV'
-    if slit_state == 'OCCULTATION':
-        return 'Y'
-    return 'N'
+    return 'SCU' # Spectral Cube
 
 def populate_obs_general_COUVIS_time1(**kwargs):
     metadata = kwargs['metadata']

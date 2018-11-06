@@ -144,14 +144,8 @@ def populate_obs_general_GOSSI_observation_duration(**kwargs):
 def populate_obs_general_GOSSI_quantity(**kwargs):
     return 'REFLECT'
 
-def populate_obs_general_GOSSI_spatial_sampling(**kwargs):
-    return '2D'
-
-def populate_obs_general_GOSSI_wavelength_sampling(**kwargs):
-    return 'N'
-
-def populate_obs_general_GOSSI_time_sampling(**kwargs):
-    return 'N'
+def populate_obs_general_GOSSI_observation_type(**kwargs):
+    return 'IMG' # Image
 
 def populate_obs_pds_GOSSI_note(**kwargs):
     return None

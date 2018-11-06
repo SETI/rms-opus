@@ -81,44 +81,14 @@ def populate_obs_general_COVIMS_quantity(**kwargs):
     return 'REFLECT'
     # XXX CAL?
 
-def populate_obs_general_COVIMS_spatial_sampling(**kwargs):
-    metadata = kwargs['metadata']
-    index_row = metadata['index_row']
-    inst_mod = index_row['INSTRUMENT_MODE_ID']
-
-    if inst_mod.startswith('CAL'):
-        return None
-
-    if inst_mod == 'POINT' or inst_mod == 'OCCULTATION':
-        return 'POINT'
-    if inst_mod == 'LINE':
-        return '1D'
-    if inst_mod == 'IMAGE':
-        return '2D'
-
-    import_util.log_nonrepeating_error(
-        f'Unknown INSTRUMENT_MODE_ID "{inst_mod}"')
-    return None
-
-def populate_obs_general_COVIMS_wavelength_sampling(**kwargs):
+def populate_obs_general_COVIMS_observation_type(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     inst_mod = index_row['INSTRUMENT_MODE_ID']
 
     if inst_mod == 'OCCULTATION':
-        return 'N'
-    return 'Y'
-
-def populate_obs_general_COVIMS_time_sampling(**kwargs):
-    metadata = kwargs['metadata']
-    index_row = metadata['index_row']
-    inst_mod = index_row['INSTRUMENT_MODE_ID']
-
-    if inst_mod.startswith('CAL'):
-        return None
-    if inst_mod == 'OCCULTATION':
-        return 'Y'
-    return 'N'
+        return 'TS' # Time Series
+    return 'SCU' # Spectral Cube
 
 def populate_obs_general_COVIMS_time1(**kwargs):
     metadata = kwargs['metadata']
