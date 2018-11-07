@@ -212,7 +212,7 @@ def populate_obs_general_HSTSTIS_observation_type(**kwargs):
 
     if aperture in _STIS_GRATING_APERTURES:
         return 'SPI' # Spectral Image (2-D with spectral information)
-        
+
     return 'IMG' # Image
 
 
@@ -286,7 +286,7 @@ def populate_obs_general_HSTx_observation_duration(**kwargs):
     if exposure is None:
         return None
 
-    return exposure / 1000
+    return exposure
 
 populate_obs_general_HSTACS_observation_duration = populate_obs_general_HSTx_observation_duration
 populate_obs_general_HSTNICMOS_observation_duration = populate_obs_general_HSTx_observation_duration

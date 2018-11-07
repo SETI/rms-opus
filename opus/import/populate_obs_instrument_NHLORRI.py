@@ -108,7 +108,7 @@ def populate_obs_general_NHLORRI_observation_duration(**kwargs):
     if exposure is None:
         return None
 
-    return exposure / 1000
+    return exposure
 
 def populate_obs_general_NHLORRI_quantity(**kwargs):
     return 'REFLECT'

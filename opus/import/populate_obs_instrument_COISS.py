@@ -519,9 +519,7 @@ def populate_obs_wavelength_COISS_wave_no_res2(**kwargs):
     return _wave_no_res_helper(**kwargs)
 
 def populate_obs_wavelength_COISS_spec_flag(**kwargs):
-    metadata = kwargs['metadata']
-    index_row = metadata['obs_general_row']
-    return index_row['wavelength_sampling']
+    return 'N'
 
 def populate_obs_wavelength_COISS_spec_size(**kwargs):
     return None

@@ -133,7 +133,7 @@ def populate_obs_general_VGISS_observation_duration(**kwargs):
         # There's one exposure somewhere that has duration -0.09999
         return None
 
-    return exposure / 1000
+    return exposure
 
 def populate_obs_general_VGISS_quantity(**kwargs):
     metadata = kwargs['metadata']
@@ -330,9 +330,7 @@ def populate_obs_wavelength_VGISS_wave_no_res2(**kwargs):
     return wno2 - wno1
 
 def populate_obs_wavelength_VGISS_spec_flag(**kwargs):
-    metadata = kwargs['metadata']
-    index_row = metadata['obs_general_row']
-    return index_row['wavelength_sampling']
+    return 'N'
 
 def populate_obs_wavelength_VGISS_spec_size(**kwargs):
     return None

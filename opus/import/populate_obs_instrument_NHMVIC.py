@@ -108,7 +108,7 @@ def populate_obs_general_NHMVIC_observation_duration(**kwargs):
     if exposure is None:
         return None
 
-    return exposure / 1000
+    return exposure
 
 def populate_obs_general_NHMVIC_quantity(**kwargs):
     return 'REFLECT'

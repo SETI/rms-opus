@@ -139,7 +139,7 @@ def populate_obs_general_COUVIS_spatial_sampling(**kwargs):
 
     return '2D'
 
-def populate_obs_general_COUVIS_observation_duration(**kwargs):
+def populate_obs_general_COUVIS_observation_type(**kwargs):
     channel, image_time = _COUVIS_channel_time_helper(**kwargs)
     metadata = kwargs['metadata']
     index_row = metadata['index_row']

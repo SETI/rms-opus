@@ -340,9 +340,7 @@ def populate_obs_wavelength_GOSSI_wave_no_res2(**kwargs):
     return wno2 - wno1
 
 def populate_obs_wavelength_GOSSI_spec_flag(**kwargs):
-    metadata = kwargs['metadata']
-    index_row = metadata['obs_general_row']
-    return index_row['wavelength_sampling']
+    return 'N'
 
 def populate_obs_wavelength_GOSSI_spec_size(**kwargs):
     return None
