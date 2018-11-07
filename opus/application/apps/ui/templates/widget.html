@@ -6,21 +6,23 @@
 
 <div class="card">
     <header class="card-header">
-        <h5 class="card-title">
+        <h6 class="card-title mt-0">
             <a href="#" data-toggle="collapse" data-target="#card__{{ slug }}" aria-expanded="true" class="">
-                {{ label }} <i class = "ace-icon fa fa-info-circle" title = "
+                {{ label }} <i class = "fa fa-info-circle" title = "
                                         {{dictionary.definition|safe }}">
                             </i>
             </a>
-            <a href="#" data-action="close" data-slug="{{slug}}" class="close_card">
-                <i class="icon-action fa fa-times"></i>
-            </a>
-            <i class="icon-action fa fa-chevron-down"></i>
-        </h5>
+						<span class="float-right border-left border-dark">
+		            <a href="#" data-action="close" data-slug="{{slug}}" class="close_card">
+		                <i class="icon-action fa fa-times"></i>
+		            </a>
+		            <i class="icon-action fa fa-chevron-down"></i>
+						</span>
+        </h6>
     </header>
 
     <div class="collapse show" id="card__{{ slug }}" style="">
-        <article class="card-body widget__{{ slug }}
+        <article class="card-body p-1 widget__{{ slug }}
 							{% if form_type in range_form_types %}
 								 range-widget
 							{% endif %}

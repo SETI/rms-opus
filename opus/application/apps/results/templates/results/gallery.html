@@ -1,43 +1,45 @@
 {% for i in data %}
-  <div class="col-lg-1 col-md-4 col-xs-6 thumb">
-    <a class="thumbnail" href="#" data-toggle="modal" data-target="#galleryView" data-id="{{ i.opus_id }}"
-       data-image="{{ i.full_url }}">
-        <img class="img-thumbnail"
-            src="{{ i.thumb_url }}"
-            alt="{{ i.thumb_alt_text }}"
-            title="{{ i.opus_id }}">
-    </a>
+	<div class="thumbnailContainer">
+	  <a class="thumbnail" href="#" data-toggle="modal" data-target="#galleryView" data-id="{{ i.opus_id }}"
+		 data-image="{{ i.full_url }}">
+		  <img class="img-thumbnail img-fluid"
+			  src="{{ i.thumb_url }}"
+			  alt="{{ i.thumb_alt_text }}"
+			  title="{{ i.opus_id }}">
+	  </a>
 
-    <div class="tools tools-bottom
-      {% if i.in_collection %} in {% endif %} ">
+	  <div class="overlay">
+		<div class="tools
+		  {% if i.in_collection %} in {% endif %} ">
 
-      <a href="#" data-icon="info"> <!-- detail page link -->
-        <i class="glyphicon glyphicon-info-sign
-          {% if i.in_collection %}
-            thumb_selected_icon
-          {% endif %}
-        "></i>
-      </a>
-      <a href="#" data-icon="check"> <!-- checkmark - add to cart -->
-          <i class="glyphicon glyphicon-ok
-            {% if i.in_collection %}
-              thumb_selected_icon
-            {% endif %}
-          "></i>
-      </a>
-      <a href="#" class="colorbox" data-icon="resize"> <!-- colorbox -->
-        <i class="glyphicon glyphicon-resize-full
-          {% if i.in_collection %}
-            thumb_selected_icon
-          {% endif %}
-        "></i>
-      </a>
-    </div>
+		  <a href="#" data-icon="info"> <!-- detail page link -->
+			<i class="fa fa-info fa-xs
+			  {% if i.in_collection %}
+				thumb_selected_icon
+			  {% endif %}
+			" aria-hidden="true"></i>
+		  </a>
+		  <a href="#" data-icon="check"> <!-- checkmark - add to cart -->
+			  <i class="fa fa-check fa-xs
+				{% if i.in_collection %}
+				  thumb_selected_icon
+				{% endif %}
+			  " aria-hidden="true"></i>
+		  </a>
+		  <a href="#" class="colorbox" data-icon="resize"> <!-- colorbox -->
+			<i class="fas fa-expand-arrows-alt fa-xs
+			  {% if i.in_collection %}
+				thumb_selected_icon
+			  {% endif %}
+			" aria-hidden="true"></i>
+		  </a>
+	  </div>
+	</div>
 
-    <!--div class="thumb_overlay
-      {% if i.in_collection %}
-        thumb_selected
-      {% endif %}
-    ">&nbsp;</div-->
-  </div>
+	<!--div class="thumb_overlay
+	  {% if i.in_collection %}
+		thumb_selected
+	  {% endif %}
+	">&nbsp;</div-->
+</div>
 {% endfor %}

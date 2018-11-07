@@ -54,6 +54,33 @@ var o_search = {
             o_hash.updateHash();
         });
 
+        $('#search').on('change', 'input.multichoice', function() {
+           // mult widget gets changed
+           var id = $(this).attr("id").split('_')[0];
+           var value = $(this).attr("value").replace(/\+/g, '%2B');
+
+           if ($(this).is(':checked')) {
+               var values = [];
+               if (opus.selections[id]) {
+                   var values = opus.selections[id]; // this param already has been constrained
+               }
+
+               values[values.length] = value;    // add the new value to the array of values
+               opus.selections[id] = values;     // add the array of values to selections
+
+               // special menu behavior for surface geo, slide in a loading indicator..
+               if (id == 'surfacetarget') {
+                    var surface_loading = '<li style = "margin-left:50%; display:none" class = "spinner">&nbsp;</li>';
+                    $(surface_loading).appendTo($('a.surfacetarget').parent()).slideDown("slow").delay(500);
+               }
+
+           } else {
+               var remove = opus.selections[id].indexOf(value); // find index of value to remove
+               opus.selections[id].splice(remove,1);        // remove value from array
+           }
+           o_hash.updateHash();
+        });
+
         // range behaviors and string behaviors for search widgets - qtype select dropdown
         $('#search').on('change','select', function() {
             var qtypes = [];

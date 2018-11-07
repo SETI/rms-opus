@@ -7,13 +7,11 @@ var o_browse = {
     **/
 
     browseBehaviors: function() {
-
         // note: using .on vs .click allows elements to be added dynamically w/out bind/rebind of handler
 
         // click on thumbnail opens modal window
         $(".gallery, #dataTable ").on("click", ".thumbnail, tr", function(e) {
             var opus_id = $(this).data("id");
-            $(".modal-header > div").html("<span class='label'>OPUS ID: </span>"+opus_id);
             var imageURL = $("#browse").find("[data-id='"+opus_id+"'][class='thumbnail']").data("image");
             if (imageURL === undefined) {
                 // put a temp spinner while retrieving the image; this only happens if the data table is loaded first
@@ -35,12 +33,45 @@ var o_browse = {
             show: false,
         })
 
+		// selecting column chooser opens modal window
+        $('#browse, #colorbox').on("click", '.get_column_chooser', function() {
+            $(".modal-header > div").html("Select Columns");
+			if (!opus.column_chooser_drawn) {
+				var url = '/opus/__forms/column_chooser.html?' + o_hash.getHash() + '&col_chooser=1';
+				$('.column_chooser').load( url, function(response, status, xhr)  {
+
+				   opus.column_chooser_drawn=true;  // bc this gets saved not redrawn
+
+				   // we keep these all open in the column chooser, they are all closed by default
+				   // disply check next to any default columns
+					for (var key in opus.prefs['cols']) {
+						$('.column_chooser .' + opus.prefs['cols'][key]).find('i').first().show();
+					}
+
+					o_browse.addColumnChooserBehaviors();
+
+				   // dragging to reorder the chosen
+				   $( ".chosen_columns>ul").sortable({
+					   items: "li:not(.unsortable)",
+					   cursor: 'move',
+					   stop: function(event, ui) { o_browse.columnsDragged(this); }
+				   });
+				});
+			}
+        });
+
+        $("#columnChooser").modal({
+            keyboard: false,
+            backdrop: false,
+            show: false,
+        })
+
          $(".modal-dialog").draggable({
-           handle: ".modal-header"
+           handle: ".modal-content"
          });
 
         // mouse over a thumbnail
-        $("#browse")
+/*        $("#browse")
             .on("mouseenter", "div.gallery .thumb",  // , ul.ace-thumbnails li>.tools
                 function() {
                     $(this).find(".thumb_overlay").addClass("gallery_image_focus");
@@ -51,7 +82,7 @@ var o_browse = {
                     $(this).find(".thumb_overlay").removeClass("gallery_image_focus");
                 }
             });
-
+*/
         // browse nav menu - the gallery/table toggle
         $("#browse").on("click", ".browse_view", function() {
             opus.prefs.browse = $(this).data("view");
@@ -119,19 +150,10 @@ var o_browse = {
 
         });
 
-
-        // click embedded_data_viewer_image opens colorbox
-        $("#browse").on("click", '.embedded_data_viewer_image a', function() {
-            var opus_id = $(this).data("opus_id");
-            $('#gallery__' + opus_id + "> a").trigger("click");
-            return false;
-        });
-
-
         // thumbnail overlay tools
         $('.gallery').on("click", ".tools-bottom a", function(e) {
-            //$(this).parent().show();  // whu?
-          var opus_id = $(this).parent().parent().attr("id").substring(9);
+          //snipe the id off of the image..
+          var opus_id = $(this).parent().siblings().data("id");
 
           // clicking thumbnail opens embedded data viewer
           if ($(this).hasClass("colorbox")) {
@@ -211,7 +233,7 @@ var o_browse = {
         });
 
         // close/open column chooser, aka "choose columns"
-        $('#browse, #colorbox').on("click", '.get_column_chooser', function() {
+/*        $('#browse, #colorbox').on("click", '.get_column_chooser', function() {
                 if ($(this).hasClass('close_overlay')) {
                     // close the colorbox because it never wants
                     // to be under the column_chooser
@@ -220,9 +242,9 @@ var o_browse = {
                 o_browse.getColumnChooser();
                 return false;
         });
-
+*/
         // add the 'get detail' behavior
-        $('.embedded_data_viewer').on("click", '.gallery_data_link', function(e) {
+        $('#galleryView').on("click", '.detailViewLink', function(e) {
             if (e.shiftKey || e.ctrlKey || e.metaKey) {
                 // handles command click to open in new tab
                 var link = "/opus/#/" + o_hash.getHash();
@@ -632,9 +654,15 @@ var o_browse = {
 
     updateBrowseNav: function() {
         if (opus.prefs.browse == "gallery") {
+            $('.' + "dataTable", "#browse").hide();
+            $('.' + opus.prefs.browse, "#browse").fadeIn();
+
             $('.browse_view', "#browse").text('view table');
             $(".browse_view", "#browse").data("view", "dataTable");
         } else {
+            $('.' + "gallery", "#browse").hide();
+            $('.' + opus.prefs.browse, "#browse").fadeIn();
+
             $('.browse_view', "#browse").text('view gallery');
             $(".browse_view", "#browse").data("view", "gallery");
         }
@@ -793,14 +821,14 @@ var o_browse = {
 
         url += '&page=' + page;
 
+        if (opus.prefs.browse == "dataTable") {
+            $('.dataTable table', "#browse").fadeIn("fast");
+        } else {
+            $('.gallery .thumbnails', "#browse").fadeIn("fast");
+        }
+
         // wait! is this page already drawn?
         if (opus.last_page_drawn[opus.prefs.browse] == page) {
-            // this page is already drawn, just make sure it's showing and
-            if (opus.prefs.browse == "dataTable") {
-                $('.dataTable table', "#browse").fadeIn("fast");
-            } else {
-                $('.gallery .thumbnails', "#browse").fadeIn("fast");
-            }
             return;
         }
 
@@ -832,8 +860,8 @@ var o_browse = {
             reposition:false,
             /* retinaImage:true, // maybe? */
             scrolling:true,
-            previous: '<i class="ace-icon fa fa-arrow-left"></i>',
-            next: '<i class="ace-icon fa fa-arrow-right"></i>',
+            previous: '<i class="fa fa-arrow-left"></i>',
+            next: '<i class="fa fa-arrow-right"></i>',
             close:'&times;',
             current:'{current} of {total}',
             height:'90%',
@@ -847,7 +875,7 @@ var o_browse = {
             },
             onLoad:function() {
 
-                opus_id = $.colorbox.element().parent().attr("id").split('__')[1];
+                opus_id = $.colorbox.element().closest(".thumbnail").data("id");
                 // get pixel loc of right border of colorbox
 
                 // draw the viewer if not already..
@@ -934,16 +962,15 @@ var o_browse = {
         html += '</dl>';
 
         // add a link to detail page
-        html += '<p><a href = "/opus/detail/' + opus_id + '.html" class = "gallery_data_link" data-opusid="' + opus_id + '">View Detail</a></p>';
+        html += '<p><a href = "/opus/detail/' + opus_id + '.html" class = "detailViewLink" data-opusid="' + opus_id + '">View Detail</a></p>';
 
         $('.gallery_data_viewer').html(html);
         return html
     },
 
     updateMetaGalleryView: function(opus_id, imageURL) {
-        var details = "<a href='"+imageURL+"'><img src='"+imageURL+"' title='"+opus_id+"' class='preview'/></a>";
-        details += o_browse.metadataboxHtml(opus_id);
-        $("#galleryViewContents").html(details);
+        $("#galleryViewContents .left").html("<a href='"+imageURL+"'><img src='"+imageURL+"' title='"+opus_id+"' class='preview'/></a>");
+        $("#galleryViewContents .right").html(o_browse.metadataboxHtml(opus_id));
     },
 
     updateEmbeddedMetadataBox: function(opus_id) {
@@ -993,7 +1020,7 @@ var o_browse = {
         // avoid binding duplication
         var _data =  $._data( $('.gallery_data_viewer')[0], 'events' );
         if (_data == undefined) {
-          $('.gallery_data_viewer').on("click", '.gallery_data_link', function() {
+          $('.gallery_data_viewer').on("click", '.detailViewLink', function() {
               var opus_id = $(this).data('opusid');
               o_browse.openDetailTab(opus_id);
               $.colorbox.close();
@@ -1016,150 +1043,87 @@ var o_browse = {
     },
 
 
-        resetQuery: function() {
-            /*
-            when the user changes the query and all this stuff is already drawn
-            need to reset all of it (todo: replace with framework!)
-            */
-            $("#dataTable > tbody").empty();  // yes all namespaces
-            $(".gallery").empty();
-            opus.gallery_data = [];
-            opus.pages_drawn = {"colls_gallery":[], "gallery":[]};
-            opus.browse_footer_clicks = {"gallery":0, "data":0, "colls_gallery":0, "colls_data":0 };
-            opus.last_page_drawn = {"gallery":0, "data":0, "colls_gallery":0, "colls_data":0 };
-            opus.collection_change = true;  // forces redraw of collections tab because reset_last_page_drawn
-            browse_view_scrolls = reset_browse_view_scrolls;
-            opus.table_headers_drawn = false;
-            opus.gallery_begun = false;
-            opus.column_chooser_drawn = false;
+    resetQuery: function() {
+        /*
+        when the user changes the query and all this stuff is already drawn
+        need to reset all of it (todo: replace with framework!)
+        */
+        $("#dataTable > tbody").empty();  // yes all namespaces
+        $(".gallery").empty();
+        opus.gallery_data = [];
+        opus.pages_drawn = {"colls_gallery":[], "gallery":[]};
+        opus.browse_footer_clicks = {"gallery":0, "data":0, "colls_gallery":0, "colls_data":0 };
+        opus.last_page_drawn = {"gallery":0, "data":0, "colls_gallery":0, "colls_data":0 };
+        opus.collection_change = true;  // forces redraw of collections tab because reset_last_page_drawn
+        browse_view_scrolls = reset_browse_view_scrolls;
+        opus.table_headers_drawn = false;
+        opus.gallery_begun = false;
+        opus.column_chooser_drawn = false;
+        o_hash.updateHash();
+
+    },
+
+    updatePage: function() {
+
+        /*
+        reloads the current results view from server and
+        sets other views back to undrawn
+        gets page/view info from from getViewInfo()
+        and opus.prefs[prefix + "browse"]
+        */
+        o_browse.resetQuery();
+        // FIX ME - RENDER BROWSE OR COLLECTION TAB, BUT DON'T CALL SAME FUNC FOR BOTH, YUCK
+        o_browse.getBrowseTab();
+    },
+
+    // http://stackoverflow.com/questions/487073/jquery-check-if-element-is-visible-after-scroling thanks!
+    isAlmostScrolledIntoView: function(elem) {
+
+        var docViewTop = $(window).scrollTop() + $(window).height()/4;
+        var docViewBottom = docViewTop + $(window).height();
+
+        var elemTop = $(elem).offset().top;
+        var elemBottom = elemTop + $(elem).height();
+        var answer = (elemBottom >= docViewTop) && (elemTop <= docViewBottom) && (elemBottom <= docViewBottom) &&  (elemTop >= docViewTop);
+
+        return (answer);
+    },
+
+    // columns can be reordered wrt each other in 'column chooser' by dragging them
+    columnsDragged: function(element) {
+        var cols = $(element).sortable('toArray');
+        cols.unshift('cchoose__opusid');  // manually add opusid to this list
+        $.each(cols, function(key, value)  {
+            cols[key] = value.split('__')[1];
+        });
+        opus.prefs['cols'] = cols;
+        // if we are in gallery - just change the data-struct that gallery draws from
+        // if we are in table -
+        // $('.gallery', '#browse').html(opus.spinner);
+
+        // we are about to update the same page we just updated, it will replace
+        // the one that is showing,
+
+        // we are about to update the same page we just updated, it will replace
+        // the one that is showing,
+        // set last page to one before first page that is showing in the interface
+        // now update the browse table
+        if (opus.prefs.browse == "dataTable") {
+            o_browse.updatePage();
+        } else {
+            // update the hash
             o_hash.updateHash();
 
-        },
-
-        updatePage: function() {
-
-            /*
-            reloads the current results view from server and
-            sets other views back to undrawn
-            gets page/view info from from getViewInfo()
-            and opus.prefs[prefix + "browse"]
-            */
-            o_browse.resetQuery();
-            // FIX ME - RENDER BROWSE OR COLLECTION TAB, BUT DON'T CALL SAME FUNC FOR BOTH, YUCK
-            o_browse.getBrowseTab();
-        },
-
-        // http://stackoverflow.com/questions/487073/jquery-check-if-element-is-visible-after-scroling thanks!
-        isAlmostScrolledIntoView: function(elem) {
-
-            var docViewTop = $(window).scrollTop() + $(window).height()/4;
-            var docViewBottom = docViewTop + $(window).height();
-
-            var elemTop = $(elem).offset().top;
-            var elemBottom = elemTop + $(elem).height();
-            var answer = (elemBottom >= docViewTop) && (elemTop <= docViewBottom) && (elemBottom <= docViewBottom) &&  (elemTop >= docViewTop);
-
-            return (answer);
-        },
-
-        // column chooser
-        getColumnChooser: function() {
-            /**
-            offset = $('.data_table', '#browse').offset().top + $('.data_table .column_label', '#browse').height() + 10;
-            left = $('.get_column_chooser').parent().offset().left - $('.column_chooser').width()  ;
-            $('.column_chooser').css('top', Math.floor(offset) + 'px');
-            $('.column_chooser').css('left', Math.floor(left) + 'px');
-            **/
-            if (opus.column_chooser_drawn) {
-                // it's already drawn, just move it into view
-                if (!$('.column_chooser').is(":visible")) {
-                    // wtf drawn but not visible?
-                    $('.column_chooser').dialog({
-                            open: function( event, ui ) {
-                                $('.ui-dialog-titlebar-close').removeAttr("title");
-                            },
-                            height: 600,
-                            width: 900,
-                            modal: true,
-                            draggable:true,
-                            dialogClass: 'no-close success-dialog fixed-dialog'
-                        });
-                }
-                return;
+            // update the underlying column data that goes with
+            // thumbnails currently rendered
+            var view_info = o_browse.getViewInfo();
+            var prefix = view_info['prefix'];       // either 'colls_' or ''
+            var pages = opus.pages_drawn[prefix + "gallery"];
+            for (var i in pages) {
+                o_browse.getBrowseData(pages[i]);
             }
+        }
 
-            // column_chooser has not been drawn, fetch it from the server and apply its behaviors:
-            $('.column_chooser').html(opus.spinner);
-            $('.column_chooser').dialog({
-                    create: function( event, ui ) {
-                        $('.ui-dialog-titlebar-close').removeAttr("title");
-                    },
-                    height: 600,
-                    width: 900,
-                    modal: true,
-                    draggable:true,
-                    dialogClass: 'no-close success-dialog fixed-dialog'
-            });
-
-
-            var url = '/opus/__forms/column_chooser.html?' + o_hash.getHash() + '&col_chooser=1';
-            $('.column_chooser').load( url, function(response, status, xhr)  {
-
-               opus.column_chooser_drawn=true;  // bc this gets saved not redrawn
-
-               // we keep these all open in the column chooser, they are all closed by default
-               // disply check next to any default columns
-                for (var key in opus.prefs['cols']) {
-                    $('.column_chooser .' + opus.prefs['cols'][key]).find('i').first().show();
-                }
-
-                o_browse.addColumnChooserBehaviors();
-
-               // dragging to reorder the chosen
-               $( ".chosen_columns>ul").sortable({
-                   items: "li:not(.unsortable)",
-                   cursor: 'move',
-                   stop: function(event, ui) { o_browse.columnsDragged(this); }
-               });
-            });
-        },
-
-
-        // columns can be reordered wrt each other in 'column chooser' by dragging them
-        columnsDragged: function(element) {
-            var cols = $(element).sortable('toArray');
-            cols.unshift('cchoose__opusid');  // manually add opusid to this list
-            $.each(cols, function(key, value)  {
-                cols[key] = value.split('__')[1];
-            });
-            opus.prefs['cols'] = cols;
-            // if we are in gallery - just change the data-struct that gallery draws from
-            // if we are in table -
-            // $('.gallery', '#browse').html(opus.spinner);
-
-            // we are about to update the same page we just updated, it will replace
-            // the one that is showing,
-
-            // we are about to update the same page we just updated, it will replace
-            // the one that is showing,
-            // set last page to one before first page that is showing in the interface
-            // now update the browse table
-            if (opus.prefs.browse == "dataTable") {
-                o_browse.updatePage();
-            } else {
-                // update the hash
-                o_hash.updateHash();
-
-                // update the underlying column data that goes with
-                // thumbnails currently rendered
-                var view_info = o_browse.getViewInfo();
-                var prefix = view_info['prefix'];       // either 'colls_' or ''
-                var pages = opus.pages_drawn[prefix + "gallery"];
-                for (var i in pages) {
-                    o_browse.getBrowseData(pages[i]);
-                }
-            }
-
-        },
+    },
 
 };

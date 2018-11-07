@@ -66,7 +66,22 @@
 					<div class="browse-container top_navbar collapse navbar-collapse">
 						<ul class="navbar-nav mr-auto">
 							<li class="nav-item">
-								<a href="#" class="get_column_chooser nav-link">choose columns</a>
+								<a href="#" class="paging nav-link">prev</a>
+							</li>
+							<li class="nav-item">
+								<a href="#" class="paging nav-link">next</a>
+							</li>
+							<li class="nav-item">
+								<a href="#" class="paging_indicator nav-link">
+									page <input size="4" id="page" value="" type="text">
+									<span class = "text-nowrap">of <span id="pages" class = "pages"></span></span>
+								</a>
+							</li>
+							<li class="nav-item">
+								<a href="#" class="cart_control nav-link">add range</a>
+							</li>
+							<li class="nav-item">
+								<a href="#" class="get_column_chooser nav-link" data-toggle="modal" data-target="#columnChooser">choose columns</a>
 							</li>
 							<li class="nav-item">
 								<a href="#" class="browse_view nav-link" data-view="dataTable">view table</a>
@@ -78,7 +93,9 @@
 					</div>
 				</nav>
 				<div class="container-fluid">
-					<div class="row gallery"></div>
+					<div class="row justify-content-center">
+						<div class="col-lg-12 mr-0 thumb gallery"></div>
+					</div>
 					<div class="row dataTable">
 						<div class="col-lg">
 							<table id="dataTable" class="table table-hover table-bordered table-striped table-dark table-sm">
@@ -110,10 +127,27 @@
 			</div>
 
 		</div><!-- /tabcontent -->
-		
+
 		<!-- modal dialog for the gallery views -->
 		<div id="galleryView" class="modal fade" role="dialog" tabbindex="-1" data-backdrop="false" aria-labelledby="galleryViewLabel" aria-hidden="true">
-			<div class="modal-dialog" role="document">
+			<div class="modal-dialog modal-lg" role="document">
+				<div class="modal-content">
+					<button type="button" class="close" data-dismiss="modal" aria-label="Close">
+						<i class="far fa-times-circle fa-lg text-light"></i>
+					</button>
+					<div id="galleryViewContents" class="modal-body bg-dark">
+						<div class="row">
+							<div class="left col-lg-7"></div>
+							<div class="right col-lg-5"></div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+
+		<!--modal dialog for the column chooser -->
+		<div id="columnChooser" class="modal fade" role="dialog" tabbindex="-1" data-backdrop="false" aria-labelledby="columnChooserLabel" aria-hidden="true">
+			<div class="modal-dialog modal-lg" role="document">
 				<div class="modal-content">
 					<div class="modal-header bg-gray-dark text-light">
 						<div></div>
@@ -121,15 +155,12 @@
 							<i class = "fa fa-times"></i>
 						</button>
 					</div>
-					<div id="galleryViewContents" class="modal-body bg-dark"></div>
+					<div id="columnChooserContents" class="column_chooser modal-body bg-dark"></div>
 				</div>
 			</div>
 		</div>
 
 		{% endblock %}
-
-		<!-- / not sure this belongs wthe other tab stuff -->
-		<div class = "column_chooser"></div>
 
     </div><!--/.container-fluid-->
 
@@ -151,10 +182,10 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/malihu-custom-scrollbar-plugin/3.1.5/jquery.mCustomScrollbar.min.js" type="text/javascript" ></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-cookie/1.4.1/jquery.cookie.min.js" type="text/javascript" ></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.colorbox/1.6.4/jquery.colorbox-min.js" type="text/javascript" ></script>
-	
+
 	<!-- MDB core JavaScript -->
 	<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mdbootstrap/4.5.11/js/mdb.min.js"></script>
-	
+
 	<script src="https://unpkg.com/infinite-scroll@3/dist/infinite-scroll.pkgd.min.js"></script>
 
     {% block scripts %}

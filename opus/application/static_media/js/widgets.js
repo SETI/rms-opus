@@ -8,6 +8,8 @@ var o_widgets = {
 
 
     addWidgetBehaviors: function() {
+		$("#search_widgets").sortable();
+
         $(".widget_column").mCustomScrollbar({
             theme:"rounded-dark",
             scrollInertia:300,
@@ -43,41 +45,6 @@ var o_widgets = {
             } catch (e) {
               console.log("error on close widget, id="+id);
             }
-        });
-
-
-        // mult widget behaviors - user clicks a multi-select checkbox
-
-        /***********************************************************/
-        /**** what? WHY IS THIS HERE MOVE TO search.js       *******/
-        /**** OR move all those behaviors into here because wtf ****/
-        /***********************************************************/
-
-        $('#search').on('change', 'input.multichoice', function() {
-           // mult widget gets changed
-           var id = $(this).attr("id").split('_')[0];
-           var value = $(this).attr("value").replace(/\+/g, '%2B');
-
-           if ($(this).is(':checked')) {
-               var values = [];
-               if (opus.selections[id]) {
-                   var values = opus.selections[id]; // this param already has been constrained
-               }
-
-               values[values.length] = value;    // add the new value to the array of values
-               opus.selections[id] = values;     // add the array of values to selections
-
-               // special menu behavior for surface geo, slide in a loading indicator..
-               if (id == 'surfacetarget') {
-                    var surface_loading = '<li style = "margin-left:50%; display:none" class = "spinner">&nbsp;</li>';
-                    $(surface_loading).appendTo($('a.surfacetarget').parent()).slideDown("slow").delay(500);
-               }
-
-           } else {
-               var remove = opus.selections[id].indexOf(value); // find index of value to remove
-               opus.selections[id].splice(remove,1);        // remove value from array
-           }
-           o_hash.updateHash();
         });
     },
 

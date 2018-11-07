@@ -112,7 +112,6 @@ var o_menu = {
                 $(sub).toggle().parent().toggleClass('open');
                 link.parent().find('b.arrow').toggleClass('fa-angle-right').toggleClass('fa-angle-down');
 
-
             } else {
 
                 // open menu items that were open before
@@ -148,7 +147,6 @@ var o_menu = {
 
             o_search.adjustSearchHeight();
             $('.menu_spinner').fadeOut("fast");
-
         });
      },
 

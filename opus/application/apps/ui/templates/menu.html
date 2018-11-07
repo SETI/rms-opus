@@ -1,26 +1,30 @@
 {% block menu %}
-	<ul class="list-group list-group-flush mCustomScrollbar">
+	<ul class="searchMenu list-group list-group-flush mCustomScrollbar">
 				{% for div in menu.divs %}
 					<li class="list-group-item">
 				    <a href="#submenu-{{ div.table_name }}" data-toggle="collapse" aria-expanded="false" class="dropdown-toggle" data-cat="{{ div.table_name }}">
 				      <span class="menu-text">{{ div.label }}</span>
 				    </a>
 
-				  	<ul class="list-group list-group-flush submenu collapse" id="submenu-{{ div.table_name }}">
+						{% if div.table_name == 'obs_general' %}
+							<ul class="list-group list-group-flush submenu collapse show" id="submenu-{{ div.table_name }}">
+						{% else %}
+				  		<ul class="list-group list-group-flush submenu collapse" id="submenu-{{ div.table_name }}">
+						{% endif %}
 							<!-- all div labels have level 2 submenu to list params-->
 				    	{# loop through all params then check if this param belongs to this div.table_name, because templates #}
 				    	{% for name, info in menu.data.items %}
 				        {% if name == div.table_name %}  {# this param_name IS contained in this div #}
 
 									{% if info.menu_help %}
-										<li class="list-group-item"><div class = "menu_help">{{ info.menu_help }}</div></li>
+										<li class="list-group-item py-1"><div class = "menu_help">{{ info.menu_help }}</div></li>
 									{% endif %}
 
 				          {% if info.has_sub_heading %}
 				            {#  this div has sub_headings, level-3 menu sections.. start sub_heading loop  #}
 				            {% for sub_head,params in info.data.items %}
 				              {% if p.cat_name == sub_head.slugify %}
-				                <li class="list-group-item">
+				                <li class="list-group-item py-1">
 				                  <i class = "fa fa-check"></i>
 				                  <a class="dropdown-toggle {{ sub_head|slugify }}" data-group="{{ sub_head|slugify }}"
 															href="#submenu-{% if menu.data.labels_view == 'results' %}
@@ -41,7 +45,7 @@
 																{% endif %}">
 					                  {% for p in params %}
 					                    {% if p.cat_name == sub_head.slugify %}
-					                    	<li class="list-group-item">
+					                    	<li class="list-group-item py-1">
 					                        <a data-label="
 																			{% if menu.data.labels_view == 'results' %}
 																				{{ p.label_results }}
@@ -77,7 +81,7 @@
 				          {% else %}
 				            {# this div does not have sub_headings, list the params #}
 				            {% for p in info.data %}
-				              <li class="list-group-item">
+				              <li class="list-group-item py-1">
 				                <a data-label="
 														{% if menu.data.labels_view == 'results' %}
 															{{ p.label_results }}

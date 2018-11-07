@@ -1,42 +1,42 @@
 {% extends "menu.html" %}
 
 {% block menu %}
+<div class="row">
+  <div class="all_columns col-md-6">
+    {% with 'menu' as expectedVarName %}
+      {{ block.super }} {# renders menu.html #}
+    {% endwith %}
+  </div>
 
-<div class="all_columns col-md-6">
-  {% with 'menu' as expectedVarName %}
-    {{ block.super }} {# renders menu.html #}
-  {% endwith %}
-</div>
-
-<div class="widget-box chosen_columns col-md-6">
-	<ul>
-		{% for slug, param_info in all_slugs_info.items %}
-			<li id="cchoose__{{ slug }}"
-        {% if slug == 'opusid' %}
-            class = "unsortable"
-        {% endif %}
-      >
-
-        {{ param_info.body_qualified_label_results }}
-
-        <i class="fa fa-info-circle" title = "
-          {% if param_info.get_tooltip.definition %}
-            {{ param_info.get_tooltip.definition|striptags }}
-          {% else  %}
-            {{ param_info.body_qualified_label_results }}
-          {% endif %}
-        "></i>
-
-        <!-- "remove this column" x button -->
-				<span class = "chosen_column_close
+  <div class="widget-box chosen_columns col-md-6">
+  	<ul>
+  		{% for slug, param_info in all_slugs_info.items %}
+  			<li id="cchoose__{{ slug }}"
           {% if slug == 'opusid' %}
-            hidden
+              class = "unsortable"
           {% endif %}
-        ">X</span>
+        >
 
-			</li>
-		{% endfor %}
-	</ul>
+          {{ param_info.body_qualified_label_results }}
+
+          <i class="fa fa-info-circle" title = "
+            {% if param_info.get_tooltip.definition %}
+              {{ param_info.get_tooltip.definition|striptags }}
+            {% else  %}
+              {{ param_info.body_qualified_label_results }}
+            {% endif %}
+          "></i>
+
+          <!-- "remove this column" x button -->
+  				<span class = "chosen_column_close
+            {% if slug == 'opusid' %}
+              hidden
+            {% endif %}
+          ">X</span>
+
+  			</li>
+  		{% endfor %}
+  	</ul>
+  </div>
 </div>
-
 {% endblock %}
