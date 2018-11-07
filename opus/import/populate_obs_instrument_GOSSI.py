@@ -44,11 +44,8 @@ _GOSSI_FILTER_WAVELENGTHS = {
 def _GOSSI_file_spec_helper(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
-    # Format: GO_0017:[J0.OPNAV.C034640]5900R.IMG
+    # Format: GO_0017/J0/OPNAV/C0347569700R.IMG
     file_spec = index_row['FILE_SPECIFICATION_NAME']
-    file_spec = file_spec.replace(':', '').replace('.', '/')
-    file_spec = file_spec.replace('[', '/').replace(']', '/')
-    file_spec = file_spec.replace('/IMG', '.IMG')
     return file_spec
 
 def populate_obs_general_GOSSI_opus_id(**kwargs):

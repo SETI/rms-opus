@@ -114,31 +114,6 @@ def populate_obs_general_COUVIS_quantity(**kwargs):
     # # HDAC is measuring EMISSION, along with EUV/FUV normal slits
     # return 'EMISSION'
 
-def populate_obs_general_COUVIS_spatial_sampling(**kwargs):
-    channel, image_time = _COUVIS_channel_time_helper(**kwargs)
-    metadata = kwargs['metadata']
-    index_row = metadata['index_row']
-    slit_state = index_row['SLIT_STATE']
-
-    if channel == 'HSP' or channel == 'HDAC':
-        return 'POINT'
-    assert channel == 'EUV' or channel == 'FUV'
-    if slit_state == 'OCCULTATION':
-        return '1D'
-
-    supp_index_row = metadata['supp_index_row']
-    if supp_index_row is None:
-        import_util.log_nonrepeating_error(
-            f'COUVIS_spatial_sampling has channel EUV or FUV but no '+
-            f'DATA_OBJECT_TYPE available')
-        return None
-
-    object_type = supp_index_row['DATA_OBJECT_TYPE']
-    if object_type == 'SPECTRUM':
-        return 'POINT'
-
-    return '2D'
-
 def populate_obs_general_COUVIS_observation_type(**kwargs):
     channel, image_time = _COUVIS_channel_time_helper(**kwargs)
     metadata = kwargs['metadata']
@@ -292,40 +267,57 @@ def populate_obs_mission_cassini_COUVIS_sequence_id(**kwargs):
 
 ### OBS_TYPE_IMAGE TABLE ###
 
-def populate_obs_type_image_COUVIS_image_type_id(**kwargs):
+def _COUVIS_is_image(**kwargs):
+    channel, image_time = _COUVIS_channel_time_helper(**kwargs)
     metadata = kwargs['metadata']
-    obs_general_row = metadata['obs_general_row']
-    spatial = obs_general_row['spatial_sampling']
-    if spatial == '2D':
+    index_row = metadata['index_row']
+    slit_state = index_row['SLIT_STATE']
+
+    if channel == 'HSP' or channel == 'HDAC':
+        return False
+    assert channel == 'EUV' or channel == 'FUV'
+    if slit_state == 'OCCULTATION':
+        return False
+
+    supp_index_row = metadata['supp_index_row']
+    if supp_index_row is None:
+        import_util.log_nonrepeating_error(
+            f'_COUVIS_is_image has channel EUV or FUV but no '+
+            f'DATA_OBJECT_TYPE available')
+        return False
+
+    object_type = supp_index_row['DATA_OBJECT_TYPE']
+    if object_type == 'SPECTRUM':
+        return False
+
+    return True
+
+def populate_obs_type_image_COUVIS_image_type_id(**kwargs):
+    if _COUVIS_is_image(**kwargs):
         return 'PUSH'
     return None
 
 def populate_obs_type_image_COUVIS_duration(**kwargs):
-    metadata = kwargs['metadata']
-    obs_general_row = metadata['obs_general_row']
-    spatial = obs_general_row['spatial_sampling']
-    if spatial != '2D':
+    if not _COUVIS_is_image(**kwargs):
         return None
 
+    metadata = kwargs['metadata']
     index_row = metadata['index_row']
     integration_duration = import_util.safe_column(index_row,
                                                    'INTEGRATION_DURATION')
     return integration_duration
 
 def populate_obs_type_image_COUVIS_levels(**kwargs):
-    metadata = kwargs['metadata']
-    obs_general_row = metadata['obs_general_row']
-    spatial = obs_general_row['spatial_sampling']
-    if spatial != '2D':
+    if not _COUVIS_is_image(**kwargs):
         return None
+
     return 65536
 
 def populate_obs_type_image_COUVIS_lesser_pixel_size(**kwargs):
-    metadata = kwargs['metadata']
-    obs_general_row = metadata['obs_general_row']
-    spatial = obs_general_row['spatial_sampling']
-    if spatial != '2D':
+    if not _COUVIS_is_image(**kwargs):
         return None
+
+    metadata = kwargs['metadata']
     supp_index_row = metadata.get('supp_index_row', None)
     if supp_index_row is None:
         return None
@@ -344,11 +336,10 @@ def populate_obs_type_image_COUVIS_lesser_pixel_size(**kwargs):
     return pixels
 
 def populate_obs_type_image_COUVIS_greater_pixel_size(**kwargs):
-    metadata = kwargs['metadata']
-    obs_general_row = metadata['obs_general_row']
-    spatial = obs_general_row['spatial_sampling']
-    if spatial != '2D':
+    if not _COUVIS_is_image(**kwargs):
         return None
+
+    metadata = kwargs['metadata']
     supp_index_row = metadata.get('supp_index_row', None)
     if supp_index_row is None:
         return None

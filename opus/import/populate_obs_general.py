@@ -154,30 +154,20 @@ def populate_obs_general_time_sec2(**kwargs):
 
     return time2_sec
 
-def _iter_flatten(iterable):
-  it = iter(iterable)
-  for e in it:
-    if isinstance(e, (list, tuple)):
-      for f in _iter_flatten(e):
-        yield f
-    else:
-      yield e
-
-def _pdsfile_iter_flatten(iterable):
-    "Flatten list and remove duplicate PdsFile objects"
-    pdsfiles = _iter_flatten(iterable)
-    abspaths = []
-    ret = []
-    for pdsfile in pdsfiles:
-        if pdsfile.abspath not in abspaths:
-            abspaths.append(pdsfile.abspath)
-            ret.append(pdsfile)
-    return ret
-
 def populate_obs_general_preview_images(**kwargs):
     metadata = kwargs['metadata']
     general_row = metadata['obs_general_row']
     file_spec = general_row['primary_file_spec']
+
+    # XXX
+    if file_spec.startswith('NH'):
+        file_spec = file_spec.replace('.lbl', '.fit')
+        file_spec = file_spec.replace('.LBL', '.FIT')
+    elif file_spec.startswith('COUVIS'):
+        file_spec = file_spec.replace('.LBL', '.DAT')
+    elif file_spec.startswith('VGISS'):
+        file_spec = file_spec.replace('.LBL', '.IMG')
+
     pdsf = pdsfile.PdsFile.from_filespec(file_spec)
     try:
         viewset = pdsf.viewset

@@ -608,8 +608,8 @@
               [   2, "SPI",       "Spectral Image",  30, "Y", null],
               [   3, "SCU",        "Spectral Cube",  40, "Y", null],
               [   4,  "TS",          "Time Series",  50, "Y", null],
-              [   5, "STS", "Spectral Time Series",  60, "Y", null],
-          ]
+              [   5, "STS", "Spectral Time Series",  60, "Y", null]
+        ]
     },
     {
         "field_name": "ring_obs_id",

@@ -12,56 +12,6 @@ from config_data import *
 import impglobals
 import import_util
 
-# Every STIS aperture we know how to handle - needs to be updated when new STIS
-# apertures are encountered during import.
-_STIS_APERTURES = (
-    '0.2X0.2',
-    '0.3X0.09', '
-    '1X0.05NDC',
-    '25MAMA',
-    '25QTZ',
-    '25SRF2',
-    '28X50LP',
-    '2X0.05',
-    '2X0.1',
-    '2X0.2',
-    '2X2',
-    '31X0.05NDC',
-    '36X0.05P45',
-    '50CCD',
-    '52X0.05',
-    '52X0.1',
-    '52X0.2',
-    '52X0.5',
-    '52X2',
-    '5MAMA',
-    '6X0.2',
-    'F25LYA',
-    'F25ND3',
-    'F25QTZ',
-    'F25SRF2',
-    'F28X50LP'
-)
-
-# STIS apertures that result in a "Spectral Image" Observation Type instead of
-# a plain "Image"
-_STIS_GRATING_APERTURES = (
-    '0.2X0.2',
-    '0.3X0.09', '
-    '1X0.05NDC',
-    '2X0.05',
-    '2X0.1',
-    '2X0.2',
-    '2X2',
-    '31X0.05NDC',
-    '36X0.05P45',
-    '52X0.05',
-    '52X0.1',
-    '52X0.2',
-    '52X0.5',
-    '52X2',
-    '6X0.2',
-)
 
 def _decode_filters(**kwargs):
     metadata = kwargs['metadata']
@@ -183,38 +133,23 @@ populate_obs_general_HSTWFC3_quantity = populate_obs_general_HSTx_quantity
 populate_obs_general_HSTWFPC2_quantity = populate_obs_general_HSTx_quantity
 
 def populate_obs_general_HSTx_observation_type(**kwargs):
-    filter1, filter2 = _decode_filters(**kwargs)
-    if ((filter1 is not None and
-         (filter1.startswith('G') or
-          filter1.startswith('E') or
-          filter1.startswith('PR'))) or
-        (filter2 is not None and
-         (filter2.startswith('G') or
-          filter2.startswith('E') or
-          filter2.startswith('PR')))):
+    metadata = kwargs['metadata']
+    instrument = kwargs['instrument_name']
+    index_row = metadata['index_row']
+    obs_type = index_row['OBSERVATION_TYPE']
+    if obs_type not in ('IMAGE', 'IMAGING', 'SPECTRUM', 'SPECTROSCOPIC'): # XXX
+        import_util.log_nonrepeating_error(
+            f'Unknown HST OBSERVATION_TYPE "{obs_type}"')
+        return None
+    if obs_type.startswith('SPEC'): # Covers bad "SPECTROSCOPIC" value
         return 'SPI' # Spectral Image (2-D with spectral information)
     return 'IMG' # Image
 
 populate_obs_general_HSTACS_observation_type = populate_obs_general_HSTx_observation_type
 populate_obs_general_HSTNICMOS_observation_type = populate_obs_general_HSTx_observation_type
+populate_obs_general_HSTSTIS_observation_type = populate_obs_general_HSTx_observation_type
 populate_obs_general_HSTWFC3_observation_type = populate_obs_general_HSTx_observation_type
 populate_obs_general_HSTWFPC2_observation_type = populate_obs_general_HSTx_observation_type
-
-def populate_obs_general_HSTSTIS_observation_type(**kwargs):
-    metadata = kwargs['metadata']
-    instrument = kwargs['instrument_name']
-    index_row = metadata['index_row']
-    aperture = index_row['APERTURE_TYPE']
-
-    if aperture not in _STIS_APERTURES:
-        import_util.log_error(f'Unknown STIS aperture type "{aperture}"')
-        return None
-
-    if aperture in _STIS_GRATING_APERTURES:
-        return 'SPI' # Spectral Image (2-D with spectral information)
-
-    return 'IMG' # Image
-
 
 def populate_obs_general_HSTx_time1(**kwargs):
     metadata = kwargs['metadata']

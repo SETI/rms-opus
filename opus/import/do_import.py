@@ -553,7 +553,6 @@ def import_one_volume(volume_id):
     _MODIFIED_MULT_TABLES = {}
     impglobals.ANNOUNCED_IMPORT_WARNINGS = []
     impglobals.ANNOUNCED_IMPORT_ERRORS = []
-    impglobals.IMPORT_HAS_BAD_DATA = False
     impglobals.MAX_TABLE_ID_CACHE = {}
     impglobals.CURRENT_VOLUME_ID = volume_id
     impglobals.CURRENT_INDEX_ROW_NUMBER = None
