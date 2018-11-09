@@ -65,7 +65,6 @@ def api_view_collection(request, collection_name):
     product_cats = []
     for product_type in product_counts:
         name = product_type[0]
-        print(name)
         pretty_name = name
         if name == 'standard':
             pretty_name = 'Standard Data Products'

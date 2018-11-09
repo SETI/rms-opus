@@ -53,7 +53,7 @@ def populate_obs_general_HST_planet_id(**kwargs):
 def _HST_file_spec_helper(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
-    # Format: "data/1999010T054026_1999010T060958"
+    # Format: "DATA/VISIT_05/O43B05C1Q.LBL"
     file_spec = index_row['FILE_SPECIFICATION_NAME']
     volume_id = kwargs['volume_id']
 
