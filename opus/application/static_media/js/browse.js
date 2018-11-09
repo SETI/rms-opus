@@ -9,8 +9,144 @@ var o_browse = {
     browseBehaviors: function() {
         // note: using .on vs .click allows elements to be added dynamically w/out bind/rebind of handler
 
+        // nav stuff
+        $("#browse").on("click", "a.next, a.prev", function() {
+            console.log("prev/next");
+
+            // we will set a timer to wait for settle but right now just do it
+            var currentPage = parseInt($("input#page").val());
+
+            var page = ($(this).hasClass("next") ? currentPage+1 : currentPage-1);
+            if (page > 0 && page <= opus.pages ) {
+                $("input#page").val(page);
+                o_browse.renderBrowseData(page);
+            }
+            return false;
+        });
+
+        $("#browse").on('change', 'input#page', function() {
+          console.log("input page number");
+          return false;
+        });
+
+        $("#browse").on("click", ".cart_control", function() {
+          console.log("add range");
+          return false;
+        });
+
+      // browse nav menu - add range - begins add range interaction
+       $('#browse').on("click", '.addrange', function() {
+          // if someone clicks 'add range' this method sets the addrange_clicked to true
+          // then if they click a thumbnail next it is considered part of the range
+          var container =  $('.cart_control', '#browse');
+          var link = $('.addrange', '#browse');
+          var button_text = link.html();
+          var element_name = 'thumbnail';
+          if (opus.prefs.browse == 'data') {
+              element_name = 'row';
+          }
+          var start_hint = "click on a " + element_name + " to define a range of selections";
+
+          if (button_text = "add range") {
+              // the first click of 'add range' begins the add-range interaction
+              opus.addrange_clicked = true;
+              link.html("select range start");
+              link.popover('destroy');
+              container.popover({
+                  content: start_hint,
+                  trigger:"click",
+                  placement: "bottom",
+              });
+          }
+          return false;
+
+       });
+
+
+       $("#browse").on("click", ".get_column_chooser", function() {
+          $(".modal-header > div").html("Select Columns");
+          if (!opus.column_chooser_drawn) {
+              var url = '/opus/__forms/column_chooser.html?' + o_hash.getHash() + '&col_chooser=1';
+              $('.column_chooser').load( url, function(response, status, xhr)  {
+
+                opus.column_chooser_drawn=true;  // bc this gets saved not redrawn
+
+                // we keep these all open in the column chooser, they are all closed by default
+                // disply check next to any default columns
+                for (var key in opus.prefs['cols']) {
+                  $('.column_chooser .' + opus.prefs['cols'][key]).find('i').first().show();
+                }
+
+                o_browse.addColumnChooserBehaviors();
+
+                // dragging to reorder the chosen
+                $( ".chosen_columns>ul").sortable({
+                  items: "li:not(.unsortable)",
+                  cursor: 'move',
+                  stop: function(event, ui) { o_browse.columnsDragged(this); }
+                });
+              });
+          }
+          return false;
+       });
+
+       $("#columnChooser").modal({
+           keyboard: false,
+           backdrop: false,
+           show: false,
+       })
+
+       $(".modal-dialog").draggable({
+         handle: ".modal-content"
+       });
+
+       // browse nav menu - the gallery/table toggle
+       $("#browse").on("click", ".browse_view", function() {
+          opus.prefs.browse = $(this).data("view");
+
+          o_hash.updateHash();
+
+          var hide = opus.prefs.browse == "gallery" ? "dataTable" : "gallery";
+          $('.' + hide, "#browse").hide();
+          $('.' + opus.prefs.browse, "#browse").fadeIn();
+
+          o_browse.updateBrowseNav();
+
+          // do we need to fetch a new browse tab?
+          if ((opus.prefs.browse == "gallery" && !opus.gallery_begun) ||
+              (opus.prefs.browse == "dataTable" && !opus.table_headers_drawn)) {
+              o_browse.getBrowseTab();
+          }
+
+          // reset scroll position
+          window.scrollTo(0,opus.browse_view_scrolls[opus.prefs.browse]); // restore previous scroll position
+
+          return false;
+       });
+
+       // browse nav menu - download csv
+       $("#browse").on("click", '.download_csv', function() {
+           var col_str = opus.prefs.cols.join(',');
+           var hash = [];
+           for (var param in opus.selections) {
+               if (opus.selections[param].length){
+                   hash[hash.length] = param + '=' + opus.selections[param].join(',').replace(/ /g,'+');
+               }
+           }
+           var q_str = hash.join('&');
+           var csv_link = "/opus/__api/data.csv?" + q_str + '&cols=' + col_str + '&limit=' + opus.result_count.toString() + '&order=' + opus.prefs['order'];
+           $(this).attr("href", csv_link);
+           return false;
+       });
+
+       // other behaviours
         // click on thumbnail opens modal window
-        $(".gallery, #dataTable ").on("click", ".thumbnail, tr", function(e) {
+      $(".gallery, #dataTable ").on("click", ".thumbnail, tr", function(e) {
+            var elem = $(".gallery").find(".thumb_selected");
+            if (elem.length) {
+                elem.toggleClass("thumb_selected");
+            }
+            $(this).parent().addClass("thumb_selected");
             var opus_id = $(this).data("id");
             var imageURL = $("#browse").find("[data-id='"+opus_id+"'][class='thumbnail']").data("image");
             if (imageURL === undefined) {
@@ -25,100 +161,19 @@ var o_browse = {
             } else {
                 o_browse.updateMetaGalleryView(opus_id, imageURL);
             }
+            return false;
         });
 
         $("#gallerylView").modal({
             keyboard: false,
             backdrop: false,
             show: false,
-        })
-
-		// selecting column chooser opens modal window
-        $('#browse, #colorbox').on("click", '.get_column_chooser', function() {
-            $(".modal-header > div").html("Select Columns");
-			if (!opus.column_chooser_drawn) {
-				var url = '/opus/__forms/column_chooser.html?' + o_hash.getHash() + '&col_chooser=1';
-				$('.column_chooser').load( url, function(response, status, xhr)  {
-
-				   opus.column_chooser_drawn=true;  // bc this gets saved not redrawn
-
-				   // we keep these all open in the column chooser, they are all closed by default
-				   // disply check next to any default columns
-					for (var key in opus.prefs['cols']) {
-						$('.column_chooser .' + opus.prefs['cols'][key]).find('i').first().show();
-					}
-
-					o_browse.addColumnChooserBehaviors();
-
-				   // dragging to reorder the chosen
-				   $( ".chosen_columns>ul").sortable({
-					   items: "li:not(.unsortable)",
-					   cursor: 'move',
-					   stop: function(event, ui) { o_browse.columnsDragged(this); }
-				   });
-				});
-			}
         });
-
-        $("#columnChooser").modal({
-            keyboard: false,
-            backdrop: false,
-            show: false,
-        })
-
-         $(".modal-dialog").draggable({
-           handle: ".modal-content"
-         });
-
-        // mouse over a thumbnail
-/*        $("#browse")
-            .on("mouseenter", "div.gallery .thumb",  // , ul.ace-thumbnails li>.tools
-                function() {
-                    $(this).find(".thumb_overlay").addClass("gallery_image_focus");
-                })
-            .on("mouseleave", "div.gallery .thumb", function() {
-                // check and see if it should not be removed because it's being displayed in colorbox/embedded viewer
-                if (!$(this).find(".thumb_overlay").hasClass("browse_image_selected")) {
-                    $(this).find(".thumb_overlay").removeClass("gallery_image_focus");
-                }
-            });
-*/
-        // browse nav menu - the gallery/table toggle
-        $("#browse").on("click", ".browse_view", function() {
-            opus.prefs.browse = $(this).data("view");
-
-            o_hash.updateHash();
-
-            var hide = opus.prefs.browse == "gallery" ? "dataTable" : "gallery";
-            $('.' + hide, "#browse").hide();
-            $('.' + opus.prefs.browse, "#browse").fadeIn();
-
-            o_browse.updateBrowseNav();
-
-            // do we need to fetch a new browse tab?
-            if ((opus.prefs.browse == "gallery" && !opus.gallery_begun) ||
-                (opus.prefs.browse == "dataTable" && !opus.table_headers_drawn)) {
-                o_browse.getBrowseTab();
+        $(".app-body").on("hide.bs.modal", "#galleryView", function(e) {
+            var elem = $(".gallery").find(".thumb_selected");
+            if (elem.length) {
+                elem.toggleClass("thumb_selected");
             }
-
-            // reset scroll position
-            window.scrollTo(0,opus.browse_view_scrolls[opus.prefs.browse]); // restore previous scroll position
-
-            return false;
-        });
-
-        // browse nav menu - download csv
-        $("#browse").on("click", '.download_csv', function() {
-            var col_str = opus.prefs.cols.join(',');
-            var hash = [];
-            for (var param in opus.selections) {
-                if (opus.selections[param].length){
-                    hash[hash.length] = param + '=' + opus.selections[param].join(',').replace(/ /g,'+');
-                }
-            }
-            var q_str = hash.join('&');
-            var csv_link = "/opus/__api/data.csv?" + q_str + '&cols=' + col_str + '&limit=' + opus.result_count.toString() + '&order=' + opus.prefs['order'];
-            $(this).attr("href", csv_link);
         });
 
         // data_table - clicking a table row adds to cart
@@ -147,6 +202,7 @@ var o_browse = {
             } else {
                 o_browse.addRangeHandler(opus_id);
             }
+            return false;
 
         });
 
@@ -169,7 +225,8 @@ var o_browse = {
                     link = link.replace("view=browse", "view=detail");
                     window.open(link, '_blank');
                 } else {
-                    o_browse.openDetailTab(opus_id);
+                    opus.prefs.detail = opus_id;
+                    $('a[href="#detail"]').tab("show");
                 }
                 // leave a highlight on the clicked thumbnail
                 $(' .thumb_overlay').removeClass("gallery_image_focus").removeClass("browse_image_selected");  // remove any old
@@ -195,6 +252,21 @@ var o_browse = {
             }
             return false;
         }); // end click a browse tools icon
+
+        // add the 'get detail' behavior
+        $('#galleryView').on("click", '.detailViewLink', function(e) {
+            if (e.shiftKey || e.ctrlKey || e.metaKey) {
+                // handles command click to open in new tab
+                var link = "/opus/#/" + o_hash.getHash();
+                link = link.replace("view=browse", "view=detail");
+                window.open(link, '_blank');
+            } else {
+                opus.prefs.detail = $(this).data('opusid');
+                opus.changeTab("detail");
+                $('a[href="#detail"]').tab("show");
+            }
+            return false;
+        });
 
 
         // click table column header to reorder by that column
@@ -231,32 +303,6 @@ var o_browse = {
             $('html, body').animate({scrollTop:0}, 'slow');
             return false;
         });
-
-        // close/open column chooser, aka "choose columns"
-/*        $('#browse, #colorbox').on("click", '.get_column_chooser', function() {
-                if ($(this).hasClass('close_overlay')) {
-                    // close the colorbox because it never wants
-                    // to be under the column_chooser
-                    $.colorbox.close();
-                }
-                o_browse.getColumnChooser();
-                return false;
-        });
-*/
-        // add the 'get detail' behavior
-        $('#galleryView').on("click", '.detailViewLink', function(e) {
-            if (e.shiftKey || e.ctrlKey || e.metaKey) {
-                // handles command click to open in new tab
-                var link = "/opus/#/" + o_hash.getHash();
-                link = link.replace("view=browse", "view=detail");
-                window.open(link, '_blank');
-            } else {
-                var opus_id = $(this).data('opusid');
-                o_browse.openDetailTab(opus_id);
-            }
-            return false;
-        });
-
     }, // end browse behaviors
 
     cartHandler: function(opus_id, action) {
@@ -281,9 +327,8 @@ var o_browse = {
         }
     },
 
-    openDetailTab: function(opus_id) {
-        opus.mainTabDisplay('detail');  // make sure the main site tab label is displayed
-        opus.prefs.detail = opus_id;
+    openDetailTab: function() {
+        $("#galleryView").modal('hide');
         opus.changeTab('detail');
     },
 
@@ -584,11 +629,11 @@ var o_browse = {
 
         var data;
         if (opus.prefs.browse == "gallery") {
-            data = '<li class = "infinite_scroll_page navbar-inverse">\
+            data = '<div class = "infinite_scroll_page navbar-inverse">\
                        <span class = "back_to_top"><a href = "#top">back to top</a></span>\
                        <span class = "infinite_scroll_page_container page_' + page + '" id = "' + id + '">Page ' + page + '</span>\
                        <span class = "infinite_scroll_spinner">' + opus.spinner + '</span>\
-                   </li>';
+                   </div>';
         } else {
             data = '<tr class = "infinite_scroll_page">\
                       <td colspan = "' + (opus.prefs['cols'].length +1) + '">\
@@ -738,6 +783,7 @@ var o_browse = {
             // join them all together again
             new_hash.push(param + '=' + values.join(','));
         }
+        opus.last_page_drawn["dataTable"] = page;
 
         // metadata; used for both table and gallery
         var new_hash = new_hash.join('&');
@@ -765,35 +811,8 @@ var o_browse = {
         }
     },
 
-
-    getBrowseTab: function() {
-        // only draw the navbar if we are in gallery mode... doesn't make sense in collection mode
-        o_browse.updateBrowseNav();
-
-        // total pages indicator
-        $('#' + 'pages', "#browse").html(opus['pages']);
+    renderBrowseData: function(page) {
         window.scrollTo(0,opus.browse_view_scrolls[opus.prefs.browse]);  // sometimes you have scrolled down the search tab
-
-        var base_url = (opus.prefs.browse == "dataTable" ? "/opus/__api/data.html?" : "/opus/__api/images.html?");
-
-        // all this stuff is for infinite scroll management...
-        var footer_clicks = opus.browse_footer_clicks[opus.prefs.browse]; // default: {"gallery":0, "dataTable":0, 'colls_gallery':0, 'colls_data':0 };
-
-        // figure out the page
-        var start_page = opus.prefs.page[opus.prefs.browse]; // default: {"gallery":1, "dataTable":1, 'colls_gallery':1, 'colls_data':1 };
-
-        var page = parseInt(start_page, 10) + parseInt(footer_clicks, 10);
-
-        // some outlier things that can go wrong with page (when user entered page #)
-        if (!page || page < 1) {
-            page = 1;
-            $('#' + 'page_no', "#browse").val(page); // reset the display
-        }
-
-        if (opus.pages && page > opus.pages) {
-            // page is higher than the total number of pages, reset it to the last page
-            page = opus.pages;
-        }
 
         // draw indicator bar if needed
         if (page > 1) {
@@ -801,7 +820,7 @@ var o_browse = {
 
             if (!$('.page_' + page).length) {
                 if (opus.prefs.browse == "gallery") {
-                    $(indicator_row).appendTo('.gallery .thumbnails', "#browse").show();
+                    $(indicator_row).appendTo("#browse .thumb").show();
                 } else {
                     // this is the data table view!
                     // do something:
@@ -811,15 +830,6 @@ var o_browse = {
             }
         }
         /// end of infinite scroll management for time being
-
-        var url = o_hash.getHash() + '&reqno=' + opus.lastRequestNo;
-
-        // remove any existing page= slug before adding in the current page= slug w/new page number
-        url = $.grep(url.split('&'), function(pair, index) {
-          return !pair.startsWith("page");
-        }).join('&');
-
-        url += '&page=' + page;
 
         if (opus.prefs.browse == "dataTable") {
             $('.dataTable table', "#browse").fadeIn("fast");
@@ -841,113 +851,35 @@ var o_browse = {
         o_browse.getBrowseData(page);
 
         o_browse.pageInViewIndicator();
-        o_browse.initColorbox();
         o_hash.updateHash();
     },
 
-    // colorbox  is the gallery large image viewer thing
-    initColorbox: function() {
+    getBrowseTab: function() {
+        // only draw the navbar if we are in gallery mode... doesn't make sense in collection mode
+        o_browse.updateBrowseNav();
 
-        var left_margin = o_browse.colorbox_left_margin();
+        // total pages indicator
+        $('#' + 'pages', "#browse").html(opus['pages']);
 
-        // setup colorbox
-        var $overflow = '';
-        var colorbox_params = {
-            rel: 'colorbox',
-            className:"gallery_overlay_bg",
-            top:'17px',
-            left:left_margin,
-            reposition:false,
-            /* retinaImage:true, // maybe? */
-            scrolling:true,
-            previous: '<i class="fa fa-arrow-left"></i>',
-            next: '<i class="fa fa-arrow-right"></i>',
-            close:'&times;',
-            current:'{current} of {total}',
-            height:'90%',
-            initialHeight:'90%',
-            loop:false,
+        // all this stuff is for infinite scroll management...
+        var footer_clicks = opus.browse_footer_clicks[opus.prefs.browse]; // default: {"gallery":0, "dataTable":0, 'colls_gallery':0, 'colls_data':0 };
 
-            onOpen:function(){
-                // prevent scrolling for duration that colorbox is visible
-                $overflow = document.body.style.overflow;
-                document.body.style.overflow = 'hidden';
-            },
-            onLoad:function() {
+        // figure out the page
+        var start_page = opus.prefs.page[opus.prefs.browse]; // default: {"gallery":1, "dataTable":1, 'colls_gallery':1, 'colls_data':1 };
 
-                opus_id = $.colorbox.element().closest(".thumbnail").data("id");
-                // get pixel loc of right border of colorbox
+        var page = parseInt(start_page, 10) + parseInt(footer_clicks, 10);
 
-                // draw the viewer if not already..
-                if (!$('#colorbox .gallery_data_viewer').is(':visible')) { // :visible being used here to see if element exists
-                    // .gallery_data_viewer does not exist
-                    var right_border_colorbox = $('#colorbox').width() + $('#colorbox').position().left;
-                    $('#colorbox .gallery_data_viewer').css({
-                        left: right_border_colorbox + 5 + 'px'
-                    });
-                    $('#colorbox').append('<div class = "gallery_data_viewer"><div>');
-                }
-
-                // append the data to the data view container
-                $('.gallery_data_viewer').html("<h2>" + opus_id + "</h2>");
-                $('.embedded_data_viewer').html("<h2>" + opus_id + "</h2>");
-
-                // update the view data
-                o_browse.updateColorboxDataViewer(opus_id);
-
-
-            },
-            onClosed:function(){
-                $('#cboxContent .gallery_data_viewer').hide();
-                document.body.style.overflow = $overflow;  // return overflow to default.
-
-                // add indicator around the thumb corresponding to the closed image
-                opus_id = $.colorbox.element().parent().attr("id").split('__')[1];
-                $(' .thumb_overlay').removeClass("gallery_image_focus").removeClass('browse_image_selected');  // remove any old
-                $('#gallery__' + opus_id + ' .thumb_overlay').addClass("gallery_image_focus").addClass('browse_image_selected');
-
-
-                if ($('.embedded_data_viewer_wrapper').is(":visible")) {
-                    // embedded data viewer box is open, update it with current
-                    o_browse.updateEmbeddedMetadataBox(opus_id);
-                }
-
-
-            },
-            onComplete:function(){
-                o_browse.adjust_gallery_data_viewer();
-            }
-        };
-
-        $('.thumbnails [data-rel="colorbox"]').colorbox(colorbox_params);
-
-    },
-
-    colorbox_left_margin: function() {
-        var window_width = $(window).width();
-        var left_margin = '5px';
-        if (window_width > 1050) {
-            left_margin = '15%';
+        // some outlier things that can go wrong with page (when user entered page #)
+        if (!page || page < 1) {
+            page = 1;
+            $('#' + 'page_no', "#browse").val(page); // reset the display
         }
-        return left_margin;
-    },
 
-    reset_colorbox: function() {
-        // this is mainly used after a window resize
-        // basically the library will do it for you but have to trigger that click
-        // otherwise it won't do it on page resize but will do it on next/prev
-        var opus_id = $.colorbox.element().parent().attr("id").split('__')[1];
-        $('li#gallery__' + opus_id + ' a.thumbnail').trigger("click");
-        o_browse.adjust_gallery_data_viewer();
-    },
-
-    adjust_gallery_data_viewer: function() {
-        var right_border_colorbox = $('#colorbox').width() + $('#colorbox').position().left;
-        // move metadatabox to be near colorbox
-        $('#colorbox .gallery_data_viewer').animate({
-            left: right_border_colorbox - 10 +  'px'
-        }, 'fast');
-
+        if (opus.pages && page > opus.pages) {
+            // page is higher than the total number of pages, reset it to the last page
+            page = opus.pages;
+        }
+        o_browse.renderBrowseData(page);
     },
 
     metadataboxHtml: function(opus_id) {
@@ -1022,7 +954,9 @@ var o_browse = {
         if (_data == undefined) {
           $('.gallery_data_viewer').on("click", '.detailViewLink', function() {
               var opus_id = $(this).data('opusid');
-              o_browse.openDetailTab(opus_id);
+              opus.prefs.detail = opus_id;
+              opus.changeTab("detail");
+              $('a[href="#detail"]').tab("show");
               $.colorbox.close();
               return false;
           });
@@ -1053,7 +987,7 @@ var o_browse = {
         opus.gallery_data = [];
         opus.pages_drawn = {"colls_gallery":[], "gallery":[]};
         opus.browse_footer_clicks = {"gallery":0, "data":0, "colls_gallery":0, "colls_data":0 };
-        opus.last_page_drawn = {"gallery":0, "data":0, "colls_gallery":0, "colls_data":0 };
+        opus.last_page_drawn = {"gallery":0, "dataTable":0, "colls_gallery":0, "colls_data":0 };
         opus.collection_change = true;  // forces redraw of collections tab because reset_last_page_drawn
         browse_view_scrolls = reset_browse_view_scrolls;
         opus.table_headers_drawn = false;

@@ -3,7 +3,6 @@ var o_detail = {
     getDetail: function (opus_id) {
 
         opus.prefs['detail'] = opus_id;
-        $('#detail_tab').fadeIn();
 
         if (!opus_id) {
             // helpful
@@ -18,7 +17,7 @@ var o_detail = {
         }
 
         $('#detail').html(opus.spinner);
-        $('#detail_extra').html(opus_id);
+        $('#detail_extra').html(opus_id); // ??
 
         $("#detail").load("/opus/__initdetail/" + opus_id + ".html",
                           function(response, status, xhr){

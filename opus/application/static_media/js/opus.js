@@ -188,6 +188,9 @@ var opus = {
         // first hide everything and stop any interval timers
         $('#search, #detail, #collection, #browse').hide();
 
+        // close any open modals
+        $("#galleryView").modal('hide');
+
         opus.prefs.view = tab ? tab : opus.prefs.view;
         o_hash.updateHash();
 
