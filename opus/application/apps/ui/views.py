@@ -448,6 +448,8 @@ def api_init_detail_page(request, **kwargs):
     for product_type in sorted(products, key=pds_products_sort_func):
         file_list = products[product_type]
         product_info = {}
+        # Create the URL to look up a particular OPUS_ID in a given
+        # metadata summary file in ViewMaster
         if product_type[3].find('Index') != -1:
             tab_url = None
             for fn in file_list:

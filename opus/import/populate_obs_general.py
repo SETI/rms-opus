@@ -181,9 +181,18 @@ def populate_obs_general_preview_images(**kwargs):
     else:
         browse_data = {'viewables': []}
 
-    if len(browse_data['viewables']) != 4:
+    if not viewset.thumbnail:
         import_util.log_nonrepeating_warning(
-            f'Some browse/diagram images missing for "{file_spec}" - found '
-            +f'{len(browse_data["viewables"])}')
+            f'Missing thumbnail browse/diagram image for "{file_spec}"')
+    if not viewset.small:
+        import_util.log_nonrepeating_warning(
+            f'Missing small browse/diagram image for "{file_spec}"')
+    if not viewset.medium:
+        import_util.log_nonrepeating_warning(
+            f'Missing medium browse/diagram image for "{file_spec}"')
+    if not viewset.full_size:
+        import_util.log_nonrepeating_warning(
+            f'Missing full_size browse/diagram image for "{file_spec}"')
+
     ret = json.dumps(browse_data)
     return ret

@@ -482,7 +482,7 @@ def populate_obs_mission_cassini_spacecraft_clock_count_cvt1(**kwargs):
     try:
         sc_cvt = opus_support.parse_cassini_sclk(sc)
     except Exception as e:
-        import_util.log_nonrepeating_error(
+        import_util.log_nonrepeating_warning(
             f'Unable to parse Cassini SCLK "{sc}": {e}')
         return None
     return sc_cvt
@@ -497,7 +497,7 @@ def populate_obs_mission_cassini_spacecraft_clock_count_cvt2(**kwargs):
     try:
         sc_cvt = opus_support.parse_cassini_sclk(sc)
     except Exception as e:
-        import_util.log_nonrepeating_error(
+        import_util.log_nonrepeating_warning(
             f'Unable to parse Cassini SCLK "{sc}": {e}')
         return None
     return sc_cvt
