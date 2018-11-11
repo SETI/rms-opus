@@ -293,7 +293,7 @@ def populate_obs_mission_cassini_COCIRS_spacecraft_clock_count1(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     count = index_row['SPACECRAFT_CLOCK_START_COUNT']
-    if not count.startswith('1/'):
+    if not count.startswith('1/') or count[2] == ' ':
         import_util.log_nonrepeating_warning(
             f'Badly formatted SPACECRAFT_CLOCK_START_COUNT "{count}"')
         return None
@@ -303,7 +303,7 @@ def populate_obs_mission_cassini_COCIRS_spacecraft_clock_count2(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     count = index_row['SPACECRAFT_CLOCK_STOP_COUNT']
-    if not count.startswith('1/'):
+    if not count.startswith('1/') or count[2] == ' ':
         import_util.log_nonrepeating_warning(
             f'Badly formatted SPACECRAFT_CLOCK_STOP_COUNT "{count}"')
         return None
