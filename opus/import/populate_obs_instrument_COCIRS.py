@@ -82,7 +82,7 @@ def populate_obs_general_COCIRS_time1(**kwargs):
     try:
         start_time_sec = julian.tai_from_iso(start_time)
     except Exception as e:
-        import_util.log_nonrepeating_error(
+        import_util.log_nonrepeating_warning(
             f'Bad start time format "{start_time}": {e}')
         return None
 
@@ -99,7 +99,7 @@ def populate_obs_general_COCIRS_time2(**kwargs):
     try:
         stop_time_sec = julian.tai_from_iso(stop_time)
     except Exception as e:
-        import_util.log_nonrepeating_error(
+        import_util.log_nonrepeating_warning(
             f'Bad stop time format "{stop_time}": {e} Exception as e')
         return None
 
@@ -138,7 +138,7 @@ def populate_obs_pds_COCIRS_product_creation_time(**kwargs):
     try:
         pct_sec = julian.tai_from_iso(pct)
     except Exception as e:
-        import_util.log_nonrepeating_error(
+        import_util.log_nonrepeating_warning(
             f'Bad product creation time format "{pct}": {e}')
         return None
 
@@ -294,7 +294,7 @@ def populate_obs_mission_cassini_COCIRS_spacecraft_clock_count1(**kwargs):
     index_row = metadata['index_row']
     count = index_row['SPACECRAFT_CLOCK_START_COUNT']
     if not count.startswith('1/'):
-        import_util.log_nonrepeating_error(
+        import_util.log_nonrepeating_warning(
             f'Badly formatted SPACECRAFT_CLOCK_START_COUNT "{count}"')
         return None
     return count
@@ -304,7 +304,7 @@ def populate_obs_mission_cassini_COCIRS_spacecraft_clock_count2(**kwargs):
     index_row = metadata['index_row']
     count = index_row['SPACECRAFT_CLOCK_STOP_COUNT']
     if not count.startswith('1/'):
-        import_util.log_nonrepeating_error(
+        import_util.log_nonrepeating_warning(
             f'Badly formatted SPACECRAFT_CLOCK_STOP_COUNT "{count}"')
         return None
     return count

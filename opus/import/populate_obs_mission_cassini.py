@@ -409,7 +409,7 @@ def populate_obs_mission_cassini_ert1(**kwargs):
     try:
         ert_sec = julian.tai_from_iso(start_time)
     except Exception as e:
-        import_util.log_nonrepeating_error(
+        import_util.log_nonrepeating_warning(
             f'Bad earth received start time format "{start_time}": {e}')
         return None
 
@@ -432,7 +432,7 @@ def populate_obs_mission_cassini_ert2(**kwargs):
     try:
         ert_sec = julian.tai_from_iso(stop_time)
     except Exception as e:
-        import_util.log_nonrepeating_error(
+        import_util.log_nonrepeating_warning(
             f'Bad earth received stop time format "{stop_time}": {e}')
         return None
 
@@ -449,7 +449,7 @@ def populate_obs_mission_cassini_ert_sec1(**kwargs):
     try:
         ert = julian.tai_from_iso(start_time)
     except Exception as e:
-        import_util.log_nonrepeating_error(
+        import_util.log_nonrepeating_warning(
             f'"{start_time}" is not a valid date-time format in '+
             f'mission_cassini_ert_sec1: {e}')
         ert = None
@@ -466,7 +466,7 @@ def populate_obs_mission_cassini_ert_sec2(**kwargs):
     try:
         ert = julian.tai_from_iso(stop_time)
     except Exception as e:
-        import_util.log_nonrepeating_error(
+        import_util.log_nonrepeating_warning(
             f'"{stop_time}" is not a valid date-time format in '+
             f'mission_cassini_ert_sec2: {e}')
         ert = None
@@ -511,7 +511,7 @@ def populate_obs_mission_cassini_rev_no_cvt(**kwargs):
     try:
         rev_no_cvt = opus_support.parse_cassini_orbit(rev_no)
     except Exception as e:
-        import_util.log_nonrepeating_error(
+        import_util.log_nonrepeating_warning(
             f'Unable to parse Cassini orbit "{rev_no}": {e}')
         return None
     return rev_no_cvt
