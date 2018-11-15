@@ -55,7 +55,11 @@ def helper_galileo_target_name(**kwargs):
         import_util.announce_unknown_target_name(target_name)
         return None
 
-    return target_name
+    target_name_info = TARGET_NAME_INFO[target_name]
+    if len(target_name_info) == 3:
+        return target_name, target_name_info[2]
+
+    return (target_name, target_name.title())
 
 def helper_galileo_planet_id(**kwargs):
     # WARNING: This will need to be changed if we ever get additional volumes

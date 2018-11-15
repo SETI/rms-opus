@@ -26,6 +26,15 @@ def helper_new_horizons_target_name(**kwargs):
     if target_name in TARGET_NAME_MAPPING:
         target_name = TARGET_NAME_MAPPING[target_name]
 
+    if target_name not in TARGET_NAME_INFO:
+        import_util.announce_unknown_target_name(target_name)
+        if impglobals.ARGUMENTS.import_ignore_errors:
+            return 'None'
+        return None
+    target_name_info = TARGET_NAME_INFO[target_name]
+    if len(target_name_info) == 3:
+        return target_name, target_name_info[2]
+
     return (target_name, target_name.title())
 
 def helper_new_horizons_planet_id(**kwargs):

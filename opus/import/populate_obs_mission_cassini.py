@@ -232,15 +232,24 @@ def helper_cassini_target_name(**kwargs):
     # Examine targets that are Saturn or Sky - are they really rings?
     if ((target_name == 'SATURN' or target_name == 'SKY') and
         target_code in ('RA','RB','RC','RD','RE','RF','RG','RI')):
-        return ('S RINGS', 'S Rings')
+        return ('S RINGS', 'Saturn Rings')
     if target_desc is not None:
         # Examine targets that are SKY - are they really rings?
         if target_name == 'SKY' and target_code == 'SK':
             if target_desc.find('RING') != -1:
-                return ('S RINGS', 'S Rings')
+                return ('S RINGS', 'Saturn Rings')
             # Let TARGET_DESC override TARGET_NAME for Sky
             if target_desc in TARGET_NAME_INFO:
                 return (target_desc.upper(), target_desc.title())
+
+    if target_name not in TARGET_NAME_INFO:
+        import_util.announce_unknown_target_name(target_name)
+        if impglobals.ARGUMENTS.import_ignore_errors:
+            return 'None'
+        return None
+    target_name_info = TARGET_NAME_INFO[target_name]
+    if len(target_name_info) == 3:
+        return target_name, target_name_info[2]
 
     return (target_name, target_name.title())
 

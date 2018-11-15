@@ -99,8 +99,8 @@ def populate_obs_general_mission_id(**kwargs):
 def populate_obs_general_target_class(**kwargs):
     metadata = kwargs['metadata']
     obs_general_row = metadata['obs_general_row']
-    # This target_name might have "S RINGS" in it; slightly different from the
-    # PDS "TARGET_NAME"
+    # This target_name might have "SATURN RINGS" in it; slightly different
+    # from the PDS "TARGET_NAME"
     target_name = obs_general_row['target_name'].upper()
     if target_name in TARGET_NAME_MAPPING:
         target_name = TARGET_NAME_MAPPING[target_name]
@@ -109,7 +109,7 @@ def populate_obs_general_target_class(**kwargs):
         if impglobals.ARGUMENTS.import_ignore_errors:
             return 'OTHER'
         return None
-    _, target_class = TARGET_NAME_INFO[target_name]
+    target_class = TARGET_NAME_INFO[target_name][1]
     return target_class
 
 def populate_obs_general_time_sec1(**kwargs):
