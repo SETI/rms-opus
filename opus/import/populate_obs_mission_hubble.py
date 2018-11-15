@@ -888,6 +888,13 @@ def populate_obs_mission_hubble_aperture_type(**kwargs):
     instrument = kwargs['instrument_name']
     index_row = metadata['index_row']
     aperture = index_row['APERTURE_TYPE']
+    # Temporary fix for issue #491 XXX
+    if aperture == 'NIC1FIX':
+        aperture = 'NIC1-FIX'
+    elif aperture == 'NIC2FIX':
+        aperture = 'NIC2-FIX'
+    elif aperture == 'NIC3FIX':
+        aperture = 'NIC3-FIX'
     ret = instrument[3:] + '-' + aperture
     return (ret, ret)
 
