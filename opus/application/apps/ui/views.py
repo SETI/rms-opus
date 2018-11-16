@@ -538,13 +538,13 @@ def _get_menu_labels(request, labels_view):
 
         # XXX This really shouldn't be here!!
         if d.table_name == 'obs_surface_geometry':
-            menu_data[d.table_name]['menu_help'] = "Select a target name to reveal more options. Supported Instruments: VGISS, NHLORRI, COISS, COUVIS, and COVIMS"
+            menu_data[d.table_name]['menu_help'] = "Surface geometry is available for all bodies in the field of view. Select a target name to reveal more options. Supported instruments: Cassini ISS, UVIS, and VIMS, New Horizons LORRI, and Voyager ISS."
 
         if d.table_name == 'obs_ring_geometry':
-            menu_data[d.table_name]['menu_help'] = "Supported Instruments: VGISS, NHLORRI, COISS, COUVIS, COVIMS, and early COCIRS"
+            menu_data[d.table_name]['menu_help'] = "Supported instruments: Cassini ISS, UVIS, and VIMS, New Horizons LORRI, and Voyager ISS."
 
         if d.table_name == 'obs_instrument_cocirs':
-            menu_data[d.table_name]['menu_help'] = "COCIRS data is only available through June 30, 2010"
+            menu_data[d.table_name]['menu_help'] = "Cassini CIRS data is only available through June 30, 2010"
 
         if d.table_name in sub_headings and sub_headings[d.table_name]:
             # this div is divided into sub headings

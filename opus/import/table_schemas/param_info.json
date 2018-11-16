@@ -58,7 +58,7 @@
     },
     {
         "field_name": "intro",
-        "field_type": "varchar150",
+        "field_type": "varchar1023",
         "field_default": null
     },
     {

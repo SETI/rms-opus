@@ -68,7 +68,7 @@
         "pi_display": 1,
         "pi_display_results": 0,
         "pi_form_type": "GROUP",
-        "pi_intro": "Select a target below and more search options for that target will appear in the left menu",
+        "pi_intro": "Select a target below and the results will be limited to observations containing that body in the field of view. More search options for that target will appear in the left menu.",
         "pi_label": "Surface Geometry Target Name",
         "pi_label_results": "Surface Geometry Target Name",
         "pi_slug": "surfacegeometrytargetname",
