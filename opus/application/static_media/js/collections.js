@@ -97,10 +97,6 @@ var o_collections = {
          $('ul#product_types input:checkbox:checked').each(function(){
                product_types.push($(this).val());
              });
-         if (product_types.length) {}
-         $('ul#image_types input:checkbox:checked').each(function(){
-               image_types.push($(this).val());
-             });
         var checked_filters = {"types":product_types};
 
         for (var filter_name in checked_filters) {

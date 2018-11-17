@@ -59,7 +59,7 @@ class ImportDBSuper:
             return table_name
         assert False
 
-    def _execute(self, cmd, cur=None, mutates=False):
+    def _execute(self, cmd, param_list=None, cur=None, mutates=False):
         if self.log_sql and self.logger:
             pretty_cmd = cmd.strip()
             if pretty_cmd.find('\n') >= 0:
@@ -74,10 +74,10 @@ class ImportDBSuper:
         self._cmds_executed.append(cmd)
         if not self.read_only or not mutates:
             if cur:
-                cur.execute(cmd)
+                cur.execute(cmd, param_list)
             else:
                 with self.conn.cursor() as cur:
-                    cur.execute(cmd)
+                    cur.execute(cmd, param_list)
                     self.conn.commit()
 
     def _execute_and_fetchall(self, cmd, func_name, cur=None):

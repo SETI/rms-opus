@@ -198,13 +198,15 @@ def populate_obs_general_COISS_opus_id(**kwargs):
     file_spec = _COISS_file_spec_helper(**kwargs)
     pds_file = pdsfile.PdsFile.from_filespec(file_spec)
     try:
-        opus_id = pds_file.opus_id
+        opus_id = pds_file.opus_id.replace('.', '-')
     except:
+        opus_id = None
+    if not opus_id:
         metadata = kwargs['metadata']
         index_row = metadata['index_row']
         import_util.log_nonrepeating_error(
             f'Unable to create OPUS_ID for FILE_SPEC "{file_spec}"')
-        return file_spec
+        return file_spec.split('/')[-1]
     return opus_id
 
 def populate_obs_general_COISS_ring_obs_id(**kwargs):
@@ -278,16 +280,10 @@ def populate_obs_general_COISS_quantity(**kwargs):
         return 'EMISSION'
     return 'REFLECT'
 
-def populate_obs_general_COISS_spatial_sampling(**kwargs):
-    return '2D'
+def populate_obs_general_COISS_observation_type(**kwargs):
+    return 'IMG' # Image
 
-def populate_obs_general_COISS_wavelength_sampling(**kwargs):
-    return 'N'
-
-def populate_obs_general_COISS_time_sampling(**kwargs):
-    return 'N'
-
-def populate_obs_general_COISS_note(**kwargs):
+def populate_obs_pds_COISS_note(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     return index_row['DESCRIPTION']
@@ -295,7 +291,10 @@ def populate_obs_general_COISS_note(**kwargs):
 def populate_obs_general_COISS_primary_file_spec(**kwargs):
     return _COISS_file_spec_helper(**kwargs)
 
-def populate_obs_general_COISS_product_creation_time(**kwargs):
+def populate_obs_pds_COISS_primary_file_spec(**kwargs):
+    return _COISS_file_spec_helper(**kwargs)
+
+def populate_obs_pds_COISS_product_creation_time(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     pct = index_row['PRODUCT_CREATION_TIME']
@@ -310,14 +309,14 @@ def populate_obs_general_COISS_product_creation_time(**kwargs):
     return julian.iso_from_tai(pct_sec, digits=3, ymd=True)
 
 # Format: "CO-E/V/J-ISSNA/ISSWA-2-EDR-V1.0"
-def populate_obs_general_COISS_data_set_id(**kwargs):
+def populate_obs_pds_COISS_data_set_id(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     dsi = index_row['DATA_SET_ID']
     return (dsi, dsi)
 
 # Format: 1_W1294561143.000
-def populate_obs_general_COISS_product_id(**kwargs):
+def populate_obs_pds_COISS_product_id(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     product_id = index_row['PRODUCT_ID']
@@ -520,9 +519,7 @@ def populate_obs_wavelength_COISS_wave_no_res2(**kwargs):
     return _wave_no_res_helper(**kwargs)
 
 def populate_obs_wavelength_COISS_spec_flag(**kwargs):
-    metadata = kwargs['metadata']
-    index_row = metadata['obs_general_row']
-    return index_row['wavelength_sampling']
+    return 'N'
 
 def populate_obs_wavelength_COISS_spec_size(**kwargs):
     return None

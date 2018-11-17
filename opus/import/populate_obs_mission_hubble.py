@@ -13,7 +13,6 @@ import impglobals
 import import_util
 
 
-
 def _decode_filters(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
@@ -54,7 +53,7 @@ def populate_obs_general_HST_planet_id(**kwargs):
 def _HST_file_spec_helper(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
-    # Format: "data/1999010T054026_1999010T060958"
+    # Format: "DATA/VISIT_05/O43B05C1Q.LBL"
     file_spec = index_row['FILE_SPECIFICATION_NAME']
     volume_id = kwargs['volume_id']
 
@@ -64,13 +63,15 @@ def populate_obs_general_HSTx_opus_id(**kwargs):
     file_spec = _HST_file_spec_helper(**kwargs)
     pds_file = pdsfile.PdsFile.from_filespec(file_spec)
     try:
-        opus_id = pds_file.opus_id
+        opus_id = pds_file.opus_id.replace('.', '-')
     except:
+        opus_id = None
+    if not opus_id:
         metadata = kwargs['metadata']
         index_row = metadata['index_row']
         import_util.log_nonrepeating_error(
             f'Unable to create OPUS_ID for FILE_SPEC "{file_spec}"')
-        return file_spec
+        return file_spec.split('/')[-1]
     return opus_id
 
 populate_obs_general_HSTACS_opus_id = populate_obs_general_HSTx_opus_id
@@ -131,36 +132,24 @@ populate_obs_general_HSTSTIS_quantity = populate_obs_general_HSTx_quantity
 populate_obs_general_HSTWFC3_quantity = populate_obs_general_HSTx_quantity
 populate_obs_general_HSTWFPC2_quantity = populate_obs_general_HSTx_quantity
 
-def populate_obs_general_HSTx_spatial_sampling(**kwargs):
-    return '2D'
+def populate_obs_general_HSTx_observation_type(**kwargs):
+    metadata = kwargs['metadata']
+    instrument = kwargs['instrument_name']
+    index_row = metadata['index_row']
+    obs_type = index_row['OBSERVATION_TYPE']
+    if obs_type not in ('IMAGE', 'IMAGING', 'SPECTRUM', 'SPECTROSCOPIC'): # XXX
+        import_util.log_nonrepeating_error(
+            f'Unknown HST OBSERVATION_TYPE "{obs_type}"')
+        return None
+    if obs_type.startswith('SPEC'): # Covers bad "SPECTROSCOPIC" value
+        return 'SPI' # Spectral Image (2-D with spectral information)
+    return 'IMG' # Image
 
-populate_obs_general_HSTACS_spatial_sampling = populate_obs_general_HSTx_spatial_sampling
-populate_obs_general_HSTNICMOS_spatial_sampling = populate_obs_general_HSTx_spatial_sampling
-populate_obs_general_HSTSTIS_spatial_sampling = populate_obs_general_HSTx_spatial_sampling
-populate_obs_general_HSTWFC3_spatial_sampling = populate_obs_general_HSTx_spatial_sampling
-populate_obs_general_HSTWFPC2_spatial_sampling = populate_obs_general_HSTx_spatial_sampling
-
-def populate_obs_general_HSTx_wavelength_sampling(**kwargs):
-    filter1, filter2 = _decode_filters(**kwargs)
-    if ((filter1 is not None and (filter1.startswith('G') or filter1.startswith('PR'))) or
-        (filter2 is not None and (filter2.startswith('G') or filter2.startswith('PR')))):
-        return 'Y'
-    return 'N'
-
-populate_obs_general_HSTACS_wavelength_sampling = populate_obs_general_HSTx_wavelength_sampling
-populate_obs_general_HSTNICMOS_wavelength_sampling = populate_obs_general_HSTx_wavelength_sampling
-populate_obs_general_HSTSTIS_wavelength_sampling = populate_obs_general_HSTx_wavelength_sampling
-populate_obs_general_HSTWFC3_wavelength_sampling = populate_obs_general_HSTx_wavelength_sampling
-populate_obs_general_HSTWFPC2_wavelength_sampling = populate_obs_general_HSTx_wavelength_sampling
-
-def populate_obs_general_HSTx_time_sampling(**kwargs):
-    return 'N'
-
-populate_obs_general_HSTACS_time_sampling = populate_obs_general_HSTx_time_sampling
-populate_obs_general_HSTNICMOS_time_sampling = populate_obs_general_HSTx_time_sampling
-populate_obs_general_HSTSTIS_time_sampling = populate_obs_general_HSTx_time_sampling
-populate_obs_general_HSTWFC3_time_sampling = populate_obs_general_HSTx_time_sampling
-populate_obs_general_HSTWFPC2_time_sampling = populate_obs_general_HSTx_time_sampling
+populate_obs_general_HSTACS_observation_type = populate_obs_general_HSTx_observation_type
+populate_obs_general_HSTNICMOS_observation_type = populate_obs_general_HSTx_observation_type
+populate_obs_general_HSTSTIS_observation_type = populate_obs_general_HSTx_observation_type
+populate_obs_general_HSTWFC3_observation_type = populate_obs_general_HSTx_observation_type
+populate_obs_general_HSTWFPC2_observation_type = populate_obs_general_HSTx_observation_type
 
 def populate_obs_general_HSTx_time1(**kwargs):
     metadata = kwargs['metadata']
@@ -216,6 +205,15 @@ def populate_obs_general_HSTx_target_name(**kwargs):
     if target_name in TARGET_NAME_MAPPING:
         target_name = TARGET_NAME_MAPPING[target_name]
 
+    if target_name not in TARGET_NAME_INFO:
+        import_util.announce_unknown_target_name(target_name)
+        if impglobals.ARGUMENTS.import_ignore_errors:
+            return 'None'
+        return None
+    target_name_info = TARGET_NAME_INFO[target_name]
+    if len(target_name_info) == 3:
+        return target_name, target_name_info[2]
+
     return (target_name, target_name.title())
 
 populate_obs_general_HSTACS_target_name = populate_obs_general_HSTx_target_name
@@ -232,7 +230,7 @@ def populate_obs_general_HSTx_observation_duration(**kwargs):
     if exposure is None:
         return None
 
-    return exposure / 1000
+    return exposure
 
 populate_obs_general_HSTACS_observation_duration = populate_obs_general_HSTx_observation_duration
 populate_obs_general_HSTNICMOS_observation_duration = populate_obs_general_HSTx_observation_duration
@@ -240,14 +238,14 @@ populate_obs_general_HSTSTIS_observation_duration = populate_obs_general_HSTx_ob
 populate_obs_general_HSTWFC3_observation_duration = populate_obs_general_HSTx_observation_duration
 populate_obs_general_HSTWFPC2_observation_duration = populate_obs_general_HSTx_observation_duration
 
-def populate_obs_general_HSTx_note(**kwargs):
+def populate_obs_pds_HSTx_note(**kwargs):
     return None
 
-populate_obs_general_HSTACS_note = populate_obs_general_HSTx_note
-populate_obs_general_HSTNICMOS_note = populate_obs_general_HSTx_note
-populate_obs_general_HSTSTIS_note = populate_obs_general_HSTx_note
-populate_obs_general_HSTWFC3_note = populate_obs_general_HSTx_note
-populate_obs_general_HSTWFPC2_note = populate_obs_general_HSTx_note
+populate_obs_pds_HSTACS_note = populate_obs_pds_HSTx_note
+populate_obs_pds_HSTNICMOS_note = populate_obs_pds_HSTx_note
+populate_obs_pds_HSTSTIS_note = populate_obs_pds_HSTx_note
+populate_obs_pds_HSTWFC3_note = populate_obs_pds_HSTx_note
+populate_obs_pds_HSTWFPC2_note = populate_obs_pds_HSTx_note
 
 def populate_obs_general_HSTx_primary_file_spec(**kwargs):
     file_spec = _HST_file_spec_helper(**kwargs)
@@ -259,7 +257,17 @@ populate_obs_general_HSTSTIS_primary_file_spec = populate_obs_general_HSTx_prima
 populate_obs_general_HSTWFC3_primary_file_spec = populate_obs_general_HSTx_primary_file_spec
 populate_obs_general_HSTWFPC2_primary_file_spec = populate_obs_general_HSTx_primary_file_spec
 
-def populate_obs_general_HSTx_product_creation_time(**kwargs):
+def populate_obs_pds_HSTx_primary_file_spec(**kwargs):
+    file_spec = _HST_file_spec_helper(**kwargs)
+    return file_spec
+
+populate_obs_pds_HSTACS_primary_file_spec = populate_obs_pds_HSTx_primary_file_spec
+populate_obs_pds_HSTNICMOS_primary_file_spec = populate_obs_pds_HSTx_primary_file_spec
+populate_obs_pds_HSTSTIS_primary_file_spec = populate_obs_pds_HSTx_primary_file_spec
+populate_obs_pds_HSTWFC3_primary_file_spec = populate_obs_pds_HSTx_primary_file_spec
+populate_obs_pds_HSTWFPC2_primary_file_spec = populate_obs_pds_HSTx_primary_file_spec
+
+def populate_obs_pds_HSTx_product_creation_time(**kwargs):
     metadata = kwargs['metadata']
     index_label = metadata['index_label']
     pct = index_label['PRODUCT_CREATION_TIME']
@@ -273,36 +281,36 @@ def populate_obs_general_HSTx_product_creation_time(**kwargs):
 
     return julian.iso_from_tai(pct_sec, digits=3, ymd=True)
 
-populate_obs_general_HSTACS_product_creation_time = populate_obs_general_HSTx_product_creation_time
-populate_obs_general_HSTNICMOS_product_creation_time = populate_obs_general_HSTx_product_creation_time
-populate_obs_general_HSTSTIS_product_creation_time = populate_obs_general_HSTx_product_creation_time
-populate_obs_general_HSTWFC3_product_creation_time = populate_obs_general_HSTx_product_creation_time
-populate_obs_general_HSTWFPC2_product_creation_time = populate_obs_general_HSTx_product_creation_time
+populate_obs_pds_HSTACS_product_creation_time = populate_obs_pds_HSTx_product_creation_time
+populate_obs_pds_HSTNICMOS_product_creation_time = populate_obs_pds_HSTx_product_creation_time
+populate_obs_pds_HSTSTIS_product_creation_time = populate_obs_pds_HSTx_product_creation_time
+populate_obs_pds_HSTWFC3_product_creation_time = populate_obs_pds_HSTx_product_creation_time
+populate_obs_pds_HSTWFPC2_product_creation_time = populate_obs_pds_HSTx_product_creation_time
 
-def populate_obs_general_HSTx_data_set_id(**kwargs):
+def populate_obs_pds_HSTx_data_set_id(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     dsi = index_row['DATA_SET_ID']
     return (dsi, dsi)
 
-populate_obs_general_HSTACS_data_set_id = populate_obs_general_HSTx_data_set_id
-populate_obs_general_HSTNICMOS_data_set_id = populate_obs_general_HSTx_data_set_id
-populate_obs_general_HSTSTIS_data_set_id = populate_obs_general_HSTx_data_set_id
-populate_obs_general_HSTWFC3_data_set_id = populate_obs_general_HSTx_data_set_id
-populate_obs_general_HSTWFPC2_data_set_id = populate_obs_general_HSTx_data_set_id
+populate_obs_pds_HSTACS_data_set_id = populate_obs_pds_HSTx_data_set_id
+populate_obs_pds_HSTNICMOS_data_set_id = populate_obs_pds_HSTx_data_set_id
+populate_obs_pds_HSTSTIS_data_set_id = populate_obs_pds_HSTx_data_set_id
+populate_obs_pds_HSTWFC3_data_set_id = populate_obs_pds_HSTx_data_set_id
+populate_obs_pds_HSTWFPC2_data_set_id = populate_obs_pds_HSTx_data_set_id
 
-def populate_obs_general_HSTx_product_id(**kwargs):
+def populate_obs_pds_HSTx_product_id(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     product_id = index_row['PRODUCT_ID']
 
     return product_id
 
-populate_obs_general_HSTACS_product_id = populate_obs_general_HSTx_product_id
-populate_obs_general_HSTNICMOS_product_id = populate_obs_general_HSTx_product_id
-populate_obs_general_HSTSTIS_product_id = populate_obs_general_HSTx_product_id
-populate_obs_general_HSTWFC3_product_id = populate_obs_general_HSTx_product_id
-populate_obs_general_HSTWFPC2_product_id = populate_obs_general_HSTx_product_id
+populate_obs_pds_HSTACS_product_id = populate_obs_pds_HSTx_product_id
+populate_obs_pds_HSTNICMOS_product_id = populate_obs_pds_HSTx_product_id
+populate_obs_pds_HSTSTIS_product_id = populate_obs_pds_HSTx_product_id
+populate_obs_pds_HSTWFC3_product_id = populate_obs_pds_HSTx_product_id
+populate_obs_pds_HSTWFPC2_product_id = populate_obs_pds_HSTx_product_id
 
 def populate_obs_general_HSTx_right_asc1(**kwargs):
     return None
@@ -880,6 +888,13 @@ def populate_obs_mission_hubble_aperture_type(**kwargs):
     instrument = kwargs['instrument_name']
     index_row = metadata['index_row']
     aperture = index_row['APERTURE_TYPE']
+    # Temporary fix for issue #491 XXX
+    if aperture == 'NIC1FIX':
+        aperture = 'NIC1-FIX'
+    elif aperture == 'NIC2FIX':
+        aperture = 'NIC2-FIX'
+    elif aperture == 'NIC3FIX':
+        aperture = 'NIC3-FIX'
     ret = instrument[3:] + '-' + aperture
     return (ret, ret)
 

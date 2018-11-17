@@ -46,13 +46,15 @@ def populate_obs_general_VGISS_opus_id(**kwargs):
     file_spec = _VGISS_file_spec_helper(**kwargs)
     pds_file = pdsfile.PdsFile.from_filespec(file_spec)
     try:
-        opus_id = pds_file.opus_id
+        opus_id = pds_file.opus_id.replace('.', '-')
     except:
+        opus_id = None
+    if not opus_id:
         metadata = kwargs['metadata']
         index_row = metadata['index_row']
         import_util.log_nonrepeating_error(
             f'Unable to create OPUS_ID for FILE_SPEC "{file_spec}"')
-        return file_spec
+        return file_spec.split('/')[-1]
     return opus_id
 
 def populate_obs_general_VGISS_ring_obs_id(**kwargs):
@@ -131,7 +133,7 @@ def populate_obs_general_VGISS_observation_duration(**kwargs):
         # There's one exposure somewhere that has duration -0.09999
         return None
 
-    return exposure / 1000
+    return exposure
 
 def populate_obs_general_VGISS_quantity(**kwargs):
     metadata = kwargs['metadata']
@@ -142,16 +144,10 @@ def populate_obs_general_VGISS_quantity(**kwargs):
         return 'EMISSION'
     return 'REFLECT'
 
-def populate_obs_general_VGISS_spatial_sampling(**kwargs):
-    return '2D'
+def populate_obs_general_VGISS_observation_type(**kwargs):
+    return 'IMG' # Image
 
-def populate_obs_general_VGISS_wavelength_sampling(**kwargs):
-    return 'N'
-
-def populate_obs_general_VGISS_time_sampling(**kwargs):
-    return 'N'
-
-def populate_obs_general_VGISS_note(**kwargs):
+def populate_obs_pds_VGISS_note(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     return index_row['NOTE']
@@ -159,8 +155,11 @@ def populate_obs_general_VGISS_note(**kwargs):
 def populate_obs_general_VGISS_primary_file_spec(**kwargs):
     return _VGISS_file_spec_helper(**kwargs)
 
+def populate_obs_pds_VGISS_primary_file_spec(**kwargs):
+    return _VGISS_file_spec_helper(**kwargs)
+
 # Format: "VG1/VG2-J-ISS-2/3/4/6-PROCESSED-V1.0"
-def populate_obs_general_VGISS_data_set_id(**kwargs):
+def populate_obs_pds_VGISS_data_set_id(**kwargs):
     # For VGISS the DATA_SET_ID is provided in the volume label file,
     # not the individual observation rows
     metadata = kwargs['metadata']
@@ -168,7 +167,7 @@ def populate_obs_general_VGISS_data_set_id(**kwargs):
     dsi = index_label['DATA_SET_ID']
     return (dsi, dsi)
 
-def populate_obs_general_VGISS_product_creation_time(**kwargs):
+def populate_obs_pds_VGISS_product_creation_time(**kwargs):
     metadata = kwargs['metadata']
     supp_index_row = metadata['supp_index_row']
     if supp_index_row is None:
@@ -185,7 +184,7 @@ def populate_obs_general_VGISS_product_creation_time(**kwargs):
     return julian.iso_from_tai(pct_sec, digits=3, ymd=True)
 
 # Format: "C1385455_CALIB.IMG"
-def populate_obs_general_VGISS_product_id(**kwargs):
+def populate_obs_pds_VGISS_product_id(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     product_id = index_row['PRODUCT_ID']
@@ -331,9 +330,7 @@ def populate_obs_wavelength_VGISS_wave_no_res2(**kwargs):
     return wno2 - wno1
 
 def populate_obs_wavelength_VGISS_spec_flag(**kwargs):
-    metadata = kwargs['metadata']
-    index_row = metadata['obs_general_row']
-    return index_row['wavelength_sampling']
+    return 'N'
 
 def populate_obs_wavelength_VGISS_spec_size(**kwargs):
     return None

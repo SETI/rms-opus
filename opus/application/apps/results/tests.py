@@ -86,7 +86,7 @@ class resultsTests(TestCase):
 
     def test__get_triggered_tables_cassini(self):
         "Get tables triggered by mission Cassini."
-        q = QueryDict('planet=SATURN&mission=Cassini')
+        q = QueryDict('mission=Cassini')
         (selections,extras) = url_to_search_params(q)
         print(selections)
         partables = get_triggered_tables(selections, extras)

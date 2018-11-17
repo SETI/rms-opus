@@ -553,7 +553,6 @@ def import_one_volume(volume_id):
     _MODIFIED_MULT_TABLES = {}
     impglobals.ANNOUNCED_IMPORT_WARNINGS = []
     impglobals.ANNOUNCED_IMPORT_ERRORS = []
-    impglobals.IMPORT_HAS_BAD_DATA = False
     impglobals.MAX_TABLE_ID_CACHE = {}
     impglobals.CURRENT_VOLUME_ID = volume_id
     impglobals.CURRENT_INDEX_ROW_NUMBER = None
@@ -724,6 +723,7 @@ def import_one_volume(volume_id):
             f'Failed to convert file_spec "{geo_full_file_spec}" to opus_id '+
             f'for {assoc_label_path}')
                             continue
+                        key = key.replace('.', '-')
                         # WARNING: HACK FOR VIMS XXX
                         # The current VIMS geo tables have entries
                         # for VIS and IR but the only way to distinguish
@@ -845,7 +845,7 @@ def import_one_volume(volume_id):
         lr = len(metadata['ring_geo'])
         diff = li - lr
         if diff:
-            impglobals.LOGGER.log('warning',
+            impglobals.LOGGER.log('debug',
                 f'Volume "{volume_id}" is missing {diff} RING_GEO entries '+
                 f'({li} vs. {lr})')
 

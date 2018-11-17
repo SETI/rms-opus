@@ -365,6 +365,7 @@ try: # Top-level exception handling so we always log what's going on
             limits={'info': impglobals.ARGUMENTS.log_info_limit,
                     'debug': impglobals.ARGUMENTS.log_debug_limit})
 
+    pdsfile.use_pickles()
     if impglobals.ARGUMENTS.override_pds_data_dir:
         pdsfile.preload(impglobals.ARGUMENTS.override_pds_data_dir)
     else:

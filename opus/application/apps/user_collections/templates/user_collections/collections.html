@@ -16,29 +16,35 @@
 
   <ul class="zipped_files"></ul>
 
+  <div>&nbsp;</div>
+
 	<div id="download_options">
-    <h4>Product Types:</h4>
-  	<ul id="product_types" class="list-inline">
-      {% for product_type, count in product_counts.items %}
-        <li>
-          <input type="checkbox" value="{{ product_type }}"
-            {% if count > 0 %}
-              checked
-            {% endif %}
-          >
-          <span
-            {% if count == 0 %}
-              class="fadey"
-            {% endif %}
-          >
-            {{ product_type }}
-          </span>
-          <!-- {% if count > 0 %}
-            <span class="product_count hints">{{ count }}</span>
-			    {% endif %} -->
-        </li>
-  		{% endfor %}
-  	</ul>
+    {% for product_cat_short, product_cat_long in product_cats %}
+      <h4>{{ product_cat_long }}</h4>
+    	<ul id="product_types" class="list-inline">
+        {% for product_type, count in product_counts.items %}
+          {% if product_type.0 == product_cat_short %}
+            <li>
+              <input type="checkbox" value="{{ product_type.2 }}"
+                {% if count > 0 %}
+                  checked
+                {% endif %}
+              >
+              <span
+                {% if count == 0 %}
+                  class="fadey"
+                {% endif %}
+              >
+                {{ product_type.3 }}
+              </span>
+              <!-- {% if count > 0 %}
+                <span class="product_count hints">{{ count }}</span>
+    			    {% endif %} -->
+            </li>
+          {% endif %}
+    		{% endfor %}
+    	</ul>
+    {% endfor %}
   </div>
 
   <h3>
