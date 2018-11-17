@@ -99,7 +99,7 @@ sections:
                 - desc: A Voyager ISS observation, JSON format
                   url: <HOST>/opus/api/files/vg-iss-2-s-c4360022.json
                 - desc: A Galileo SSI observation, JSON format, Raw data only
-                  url: <HOST>/opus/api/files/go-ssi-c0349632000.json?types=raw
+                  url: <HOST>/opus/api/files/go-ssi-c0349632000.json?types=gossi-raw
 
           - title: api/files.[fmt]
             desc: Get a list of all files for the search results.
