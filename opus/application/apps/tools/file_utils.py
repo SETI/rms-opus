@@ -209,6 +209,11 @@ def get_pds_products(opus_id_list=None, file_specs=None,
                       file_spec)
             continue
         products = pdsf.opus_products()
+        if '' in products:
+            file_list_str = '  '.join([x.abspath for x in products[''][0]])
+            log.error('get_pds_products: Empty opus_product key for files: '+
+                      file_list_str)
+            del products['']
         # Keep a running list of all products by type
         for product_type in sorted(products, key=pds_products_sort_func):
             # product_type is in the format
