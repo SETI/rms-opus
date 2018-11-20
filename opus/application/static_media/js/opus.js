@@ -83,7 +83,7 @@ var opus = {
     // browse tab
     last_page_drawn: reset_last_page_drawn, // defined in header.html,
     pages:0, // total number of pages this result
-    colls_pages:0, // total number of collections pages
+    colls_pages:1, // total number of collections pages
     browse_footer_clicks:reset_footer_clicks, // defined in header.html
     browse_auto:'.chosen_columns', // we are turning this on as default
     column_chooser_drawn:false,
@@ -94,7 +94,7 @@ var opus = {
 
     // collections
     collection_queue:[],
-    collection_change:false, // collection has changed wince last load of collection_tab
+    collection_change:false, // collection has changed since last load of collection_tab
     addrange_clicked:false,
     addrange_min:false,
     collection_q_intrvl: false,
@@ -243,7 +243,7 @@ var opus = {
         // the application default widgets
 
         clearInterval(opus.main_timer);  // stop polling for UI changes for a moment
-        $('.widget-container-span').empty(); // remove all widgets on the screen
+        $("#search_widgets").empty(); // remove all widgets on the screen
 
         // reset the search query
         opus.selections = {};
@@ -258,7 +258,7 @@ var opus = {
         opus.widgets_drawn = [];
         opus.widget_elements_drawn = [];
         $.each(opus.default_widgets, function(index, slug) {
-            o_widgets.getWidget(slug,'#search_widgets');
+            o_widgets.getWidget(slug,"#search_widgets");
         });
 
         // start the main timer again

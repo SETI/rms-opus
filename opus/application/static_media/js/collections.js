@@ -133,21 +133,6 @@ var o_collections = {
 
     // get Collections tab
     getCollectionsTab: function() {
-
-        if (opus.colls_pages == 0) {
-            // clicked on collections tab with nothing in collections,
-            // give some helpful hint
-            var html = ' \
-                <div style = "margin:20px"><h2>You Have No Selections</h2>   \
-                <p>To select observations, click on the Browse Results tab \
-                at the top of the page,<br> mouse over the thumbnail gallery images to reveal the tools, \
-                then click the <br>checkbox below a thumbnail.  </p>   \
-                </div>'
-
-            $(html).appendTo($('.gallery .thumbnails', namespace)).fadeIn();
-            return;
-        }
-
         if (opus.collection_change) {
             var zipped_files_html = $('.zipped_files', '#collection').html();
 
@@ -160,14 +145,13 @@ var o_collections = {
             // redux: speed this up by splitting into 2 ajax calls
 
             // redux: draw the template immediately after this or only empty individual elements
-            $('.gallery ul.thumbnails', '#collection').empty();
-            $('.data', '#collection').empty();
+            $('.gallery', '#collection').empty();
 
             // redux: and nix this big thing:
             $.ajax({ url: "/opus/__collections/default/view.html",
                 success: function(html){
                     // this div lives in the in the nav menu template
-                    $('.collection_details', '#collection').hide().html(html).fadeIn();
+                    $('.collection_details', '#collection').html(html).fadeIn();
 
                     opus.collection_change = false;
                     if (opus.download_in_process) {
@@ -177,7 +161,7 @@ var o_collections = {
                     $('#colls_pages').html(opus.colls_pages);
 
                     //FIX ME
-                    o_browse.getBrowseTab();  //WTF, make this a render function, we are not getting a browse tab here
+                    o_browse.getGallery(opus.colls_pages);  //WTF, make this a render function, we are not getting a browse tab here
 
                     if (zipped_files_html) {
                         $('.zipped_files', '#collection').html(zipped_files_html);
@@ -321,7 +305,6 @@ var o_collections = {
 
         // remove 'in collection' styles in gallery/data view
         $('.tools-bottom', '.gallery').removeClass("in"); // this class keeps parent visible when mouseout
-        $( ".tools-bottom a", '.gallery').find('i').removeClass('thumb_selected_icon');
         $('.thumb_overlay', '.gallery').removeClass('thumb_selected');
         $('.data_checkbox', '.data_table').removeClass('fa-check-square-o').addClass('fa-square-o');
     },

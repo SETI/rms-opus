@@ -8,7 +8,10 @@ var o_widgets = {
 
 
     addWidgetBehaviors: function() {
-		$("#search_widgets").sortable();
+		    $("#search_widgets").sortable();
+        $("#search_widgets").on( "sortchange", function( event, ui ) {
+            o_widgets.widgetDrop();
+        });
 
         $(".widget_column").mCustomScrollbar({
             theme:"rounded-dark",
@@ -85,12 +88,13 @@ var o_widgets = {
         delete opus.extras['qtype-'+slug_no_num];
         delete opus.extras['z-'+slug_no_num];
 
+        $("li [data-slug='"+slug+"']").css("background", "initial");
         o_hash.updateHash();
         o_widgets.updateWidgetCookies();
 
     },
 
-    widgetDrop: function(ui) {
+    widgetDrop: function() {
             // if widget as moved to a different formscolumn,
             // redefine the opus.prefs.widgets (preserves order)
             var widgets = $('#search_widgets').sortable('toArray');
@@ -399,7 +403,7 @@ var o_widgets = {
 
             o_widgets.updateWidgetCookies();
             // these sometimes get drawn on page load by placeWidgetContainers, but not this time:
-            var html = '<li id = "' + widget + '" class = "widget"></li>';
+            var html = '<li id = "' + widget + '" class = "widget ui-state-default"></li>';
             $(html).hide().prependTo(formscolumn).show("slow");
             opus.widget_elements_drawn.unshift(slug);
 

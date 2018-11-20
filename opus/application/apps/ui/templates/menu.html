@@ -3,7 +3,7 @@
 				{% for div in menu.divs %}
 					<li class="list-group-item">
 				    <a href="#submenu-{{ div.table_name }}" data-toggle="collapse" aria-expanded="false" class="dropdown-toggle" data-cat="{{ div.table_name }}">
-				      <span class="menu-text">{{ div.label }}</span>
+				      <span class="menu-text title">{{ div.label }}</span>
 				    </a>
 
 						{% if div.table_name == 'obs_general' %}
@@ -25,24 +25,10 @@
 				            {% for sub_head,params in info.data.items %}
 				              {% if p.cat_name == sub_head.slugify %}
 				                <li class="list-group-item py-1">
-				                  <i class = "fa fa-check"></i>
-				                  <a class="dropdown-toggle {{ sub_head|slugify }}" data-group="{{ sub_head|slugify }}"
-															href="#submenu-{% if menu.data.labels_view == 'results' %}
-																	{{ p.label_results }}
-																{% else %}
-																	{{ p.label }}
-																{% endif %}" >
-				                    <i class = "fa fa-check"></i>
-				                    <i class="fa fa-angle-double-right"></i>
-				                    {{ sub_head }}
-				                    <b class="arrow fa fa-angle-right"></b>
-				                  </a>
-
-				                  <ul class="list-group list-group-flush submenu" id="submenu-{% if menu.data.labels_view == 'results' %}
-																	{{ p.label_results }}
-																{% else %}
-																	{{ p.label }}
-																{% endif %}">
+													<a href="#submenu-{{ sub_head|slugify }}" data-toggle="collapse" aria-expanded="false" class="dropdown-toggle" data-cat="{{ sub_head|slugify }}">
+											      <span class="menu-text title">{{ sub_head }}</span>
+											    </a>
+													<ul class="list-group list-group-flush submenu collapse" id="submenu-{{ sub_head|slugify }}">
 					                  {% for p in params %}
 					                    {% if p.cat_name == sub_head.slugify %}
 					                    	<li class="list-group-item py-1">
@@ -58,7 +44,7 @@
 																			{% else %}
 																				{{ p.body_qualified_label }}
 																			{% endif %}
-																		" data-slug="{{ p.slug }}" class="{{ p.slug }}" href="">
+																		" data-slug="{{ p.slug }}" class="search-param" href="#">
 					                            <i class = "fa fa-check"></i>
 																			{% if menu.data.labels_view == 'results' %}
 																				{{ p.label_results }}
@@ -94,7 +80,7 @@
 															{% else %}
 																{{ p.body_qualified_label }}
 															{% endif %}
-														" data-slug="{{ p.slug }}" class="{{ p.slug }}" href="">
+														" data-slug="{{ p.slug }}" class="search-param" href="#">
 				                  <i class = "fa fa-check"></i>
 													{% if menu.data.labels_view == 'results' %}
 														{{ p.label_results}}

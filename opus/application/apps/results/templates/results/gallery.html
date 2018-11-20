@@ -1,45 +1,30 @@
 {% for i in data %}
-	<div class="thumbnailContainer">
-	  <a class="thumbnail" href="#" data-toggle="modal" data-target="#galleryView" data-id="{{ i.opus_id }}"
-		 data-image="{{ i.full_url }}">
+	<div class="thumbnail-container {% if i.in_collection %} thumb_selected{% endif %}">
+	  <a href="#" class="thumbnail {% if i.in_collection %} in {% endif %}"
+				data-toggle="modal"
+				data-target="#galleryView"
+				data-id="{{ i.opus_id }}"
+		 		data-image="{{ i.full_url }}">
 		  <img class="img-thumbnail img-fluid"
 			  src="{{ i.thumb_url }}"
 			  alt="{{ i.thumb_alt_text }}"
 			  title="{{ i.opus_id }}">
 	  </a>
 
-	  <div class="overlay">
-		<div class="tools
-		  {% if i.in_collection %} in {% endif %} ">
+	  <div class="thumb_overlay">
+				<div class="tools"
+					data-id="{{ i.opus_id }}">
 
-		  <a href="#" data-icon="info"> <!-- detail page link -->
-			<i class="fa fa-info fa-xs
-			  {% if i.in_collection %}
-				thumb_selected_icon
-			  {% endif %}
-			" aria-hidden="true"></i>
-		  </a>
-		  <a href="#" data-icon="check"> <!-- checkmark - add to cart -->
-			  <i class="fa fa-check fa-xs
-				{% if i.in_collection %}
-				  thumb_selected_icon
-				{% endif %}
-			  " aria-hidden="true"></i>
-		  </a>
-		  <a href="#" class="colorbox" data-icon="resize"> <!-- colorbox -->
-			<i class="fas fa-expand-arrows-alt fa-xs
-			  {% if i.in_collection %}
-				thumb_selected_icon
-			  {% endif %}
-			" aria-hidden="true"></i>
-		  </a>
-	  </div>
+				  <a href="#" data-icon="info"> <!-- detail page link -->
+							<i class="fa fa-info fa-xs" aria-hidden="true"></i>
+				  </a>
+				  <a href="#" data-icon="check"> <!-- checkmark - add to cart -->
+					  	<i class="fa fa-check fa-xs" aria-hidden="true"></i>
+				  </a>
+				  <a href="#" data-icon="resize"> <!-- expand -->
+							<i class="fas fa-expand-arrows-alt fa-xs" aria-hidden="true"></i>
+				  </a>
+			</div>
 	</div>
-
-	<!--div class="thumb_overlay
-	  {% if i.in_collection %}
-		thumb_selected
-	  {% endif %}
-	">&nbsp;</div-->
 </div>
 {% endfor %}

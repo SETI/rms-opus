@@ -26,7 +26,7 @@ var o_menu = {
 
          // click param in menu get new widget
          $('#sidebar').on("click", '.submenu li a', function() {
-             slug = $(this).data('slug');
+             var slug = $(this).data('slug');
              if (!slug) { return; }
              if ($.inArray(slug, opus.widgets_drawn)>-1){
                  // widget is already showing do not fetch another
@@ -40,7 +40,8 @@ var o_menu = {
                 return false;
 
              } else {
-                 o_widgets.getWidget(slug,'#search_widgets');
+                  $(this).css("background", "gainsboro");
+                  o_widgets.getWidget(slug,'#search_widgets');
              }
              o_hash.updateHash();
              return false;
@@ -57,7 +58,7 @@ var o_menu = {
             // for opus: keeping track of menu state, since menu is constantly refreshed
             // menu cats
             if ($(link_element).data( "cat" )) {
-                cat_name = $(link_element).data( "cat" );
+                var cat_name = $(link_element).data( "cat" );
                 if ($(sub).parent().hasClass('open')) {
                     if ($.inArray(cat_name, opus.menu_state['cats']) < 0) {
                         opus.menu_state['cats'].push(cat_name);
@@ -68,7 +69,7 @@ var o_menu = {
             }
             // menu groups
             if ($(link_element).data( "group" )) {
-                group_name = $(link_element).data( "group" );
+                var group_name = $(link_element).data( "group" );
                 if ($(sub).parent().hasClass('open')) {
                     if ($.inArray(group_name, opus.menu_state['groups']) < 0) {
                         opus.menu_state['groups'].push(group_name);
@@ -77,73 +78,56 @@ var o_menu = {
                     opus.menu_state['groups'].splice(opus.menu_state['groups'].indexOf(group_name), 1);
                 }
             }
-
-
-            // check if this menu group only has one option, if so just open that widget
-            // I'm commenting this out because I do not agree that it is desirable
-            // with the new menu
-            /*
-            if ($(this).next().children().size() == 1) {
-                $(this).next().find('li a').trigger("click");
-            }
-            */
-
             return false;
         });
-
-
-
-
      },
 
      getMenu: function() {
         $('.menu_spinner').fadeIn("fast");
-        hash = o_hash.getHash();
+        var hash = o_hash.getHash();
 
         $( "#sidebar").load( "/opus/__menu.html?" + hash, function() {
             if (opus.menu_state['cats'] == 'all') {
 
                 // first load, open general constraints
                 opus.menu_state['cats'] = [];
-                cat_name = 'obs_general';
+                var cat_name = 'obs_general';
                 opus.menu_state['cats'].push(cat_name);
-                link = $("a." + cat_name, ".sidebar");
-                sub = link.next().get(0);
-                $(sub).toggle().parent().toggleClass('open');
+                var link = $("[data-cat='"+cat_name+"']");
                 link.parent().find('b.arrow').toggleClass('fa-angle-right').toggleClass('fa-angle-down');
 
             } else {
 
                 // open menu items that were open before
                 for (var key in opus.menu_state['cats']) {
-                    cat_name = opus.menu_state['cats'][key];
-                    link = $("a." + cat_name, ".sidebar");
-                    sub = link.next().get(0);
-                    $(sub).toggle().parent().toggleClass('open');
+                    var cat_name = opus.menu_state['cats'][key];
+                    var link = $("[data-cat='"+cat_name+"']");
                     link.find('b.arrow').toggleClass('fa-angle-right').toggleClass('fa-angle-down');
 
                     // $("." + cat_name, ".sidebar").trigger(ace.click_event);
                 }
                 for (var key in opus.menu_state['groups']) {
-                    group_name = opus.menu_state['groups'][key];
-                    link = $("a." + group_name, ".sidebar");
-                    sub = link.next().get(0);
-                    $(sub).toggle().parent().toggleClass('open');
+                    var group_name = opus.menu_state['groups'][key];
+                    var link = $("[data-cat='"+cat_name+"']");
                     link.find('b.arrow').toggleClass('fa-angle-right').toggleClass('fa-angle-down');
                     // $("." + group_name, ".sidebar").trigger(ace.click_event);
                 }
             }
             // open any newly arrived surface geo tables
             // todo: this could be problematic if user wants to close it and keep it closed..
-            geo_cat = $('a[data-cat^="obs_surface_geometry__"]', '.sidebar').data('cat');
+            var geo_cat = $('a[data-cat^="obs_surface_geometry__"]', '.sidebar').data('cat');
             if (geo_cat && $.inArray(geo_cat, opus.menu_state['cats']) < 0) {
                 // open it
-                link = $("a." + geo_cat, ".sidebar");
-                sub = link.next().get(0);
+                var link = $("a." + geo_cat, ".sidebar");
+                var sub = link.next().get(0);
                 $(sub).slideToggle(400).parent().toggleClass('open');
                 // and add it to open cats list
                 opus.menu_state['cats'].push(geo_cat);
             }
+            // highlight open widgets
+            $.each(opus.widgets_drawn, function(index, widget) {
+                $("li > [data-slug='"+widget+"']").css("background", "gainsboro");
+            });
 
             o_search.adjustSearchHeight();
             $('.menu_spinner').fadeOut("fast");
