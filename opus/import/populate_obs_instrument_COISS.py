@@ -528,7 +528,7 @@ def populate_obs_wavelength_COISS_polarization_type(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['obs_instrument_coiss_row']
     the_filter = index_row['combined_filter']
-    if the_filter.find('POL') != -1:
+    if the_filter.find('P') != -1:
         return 'LINEAR'
     return 'NONE'
 
@@ -581,15 +581,15 @@ def populate_obs_instrument_COISS_combined_filter(**kwargs):
             instrument_id, 'CL1', filter2)
 
     # Collapse the various angles of polarizer into one grand polarizer
-    if filter1[0] == 'P':
-        filter1 = 'POL'
-    elif filter1[:3] == 'IRP':
-        filter1 = 'IRPOL'
-
-    if filter2[0] == 'P':
-        filter2 = 'POL'
-    elif filter2[:3] == 'IRP':
-        filter2 = 'IRPOL'
+    # if filter1[0] == 'P':
+    #     filter1 = 'POL'
+    # elif filter1[:3] == 'IRP':
+    #     filter1 = 'IRPOL'
+    #
+    # if filter2[0] == 'P':
+    #     filter2 = 'POL'
+    # elif filter2[:3] == 'IRP':
+    #     filter2 = 'IRPOL'
 
     new_filter = None
 
@@ -601,9 +601,9 @@ def populate_obs_instrument_COISS_combined_filter(**kwargs):
         new_filter = filter1
     else:
         # If one of them is a polarizer, put it second
-        if filter1.find('POL') != -1:
+        if filter1.find('P') != -1:
             new_filter = filter2 + '+' + filter1
-        elif filter2.find('POL') != -1:
+        elif filter2.find('P') != -1:
             new_filter = filter1 + '+' + filter2
         else:
             if (((wl1 is None or wl2 is None or wl1 == wl2) and
