@@ -155,9 +155,6 @@ def create_tables_for_import(volume_id, namespace):
        reference. This does NOT create the target-specific obs_surface_geometry
        tables because we don't yet know what target names we have."""
 
-    global _CREATED_IMP_MULT_TABLES
-    _CREATED_IMP_MULT_TABLES = set()
-
     volume_id_prefix = volume_id[:volume_id.find('_')]
     instrument_name = VOLUME_ID_PREFIX_TO_INSTRUMENT_NAME[volume_id_prefix]
     mission_abbrev = INSTRUMENT_ABBREV_TO_MISSION_ABBREV[instrument_name]
@@ -211,8 +208,9 @@ def create_tables_for_import(volume_id, namespace):
                     schema = mult_target_name_table_schema
                 else:
                     schema = mult_table_schema
-                if impglobals.DATABASE.create_table(namespace, mult_name,
-                                                    schema):
+                if (impglobals.DATABASE.create_table(namespace, mult_name,
+                                                    schema) and
+                    namespace == 'import'):
                     _CREATED_IMP_MULT_TABLES.add(mult_name)
 
         impglobals.DATABASE.create_table(namespace, table_name,
@@ -511,6 +509,10 @@ def dump_import_mult_tables():
         impglobals.LOGGER.log('debug',
             f'Writing mult table "{imp_mult_table_name}"')
         impglobals.DATABASE.upsert_rows('import', mult_table_name, 'id', rows)
+        # If we wrote out a mult table, that means we didn't just create it
+        # empty anymore, so remove it from _CREATED_IMP_MULT_TABLES.
+        if mult_table_name in _CREATED_IMP_MULT_TABLES:
+            _CREATED_IMP_MULT_TABLES.remove(mult_table_name)
 
 
 def copy_mult_from_import_to_permanent():
@@ -1025,7 +1027,7 @@ def import_one_volume(volume_id):
                         if new_table_name not in table_rows:
                             table_rows[new_table_name] = []
                             impglobals.LOGGER.log('debug',
-                    f'Creating surface geo for new target {target_name}')
+                    f'Creating surface geo table for new target {target_name}')
                         table_rows[new_table_name].append(row)
 
     # Now that we have all the values, we have to dump out the mult tables
@@ -1407,6 +1409,8 @@ def do_import_steps():
     "Do all of the steps requested by the user for an import."
     impglobals.IMPORT_HAS_BAD_DATA = False
     impglobals.MAX_TABLE_ID_CACHE = {}
+    global _CREATED_IMP_MULT_TABLES
+    _CREATED_IMP_MULT_TABLES = set()
 
     volume_id_list = []
     for volume_id in import_util.yield_import_volume_ids(

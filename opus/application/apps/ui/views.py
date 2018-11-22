@@ -538,7 +538,7 @@ def _get_menu_labels(request, labels_view):
 
         # XXX This really shouldn't be here!!
         if d.table_name == 'obs_surface_geometry':
-            menu_data[d.table_name]['menu_help'] = "Surface geometry is available for all bodies in the field of view. Select a target name to reveal more options. Supported instruments: Cassini ISS, UVIS, and VIMS, New Horizons LORRI, and Voyager ISS."
+            menu_data[d.table_name]['menu_help'] = "Surface geometry, when available, is provided for all bodies in the field of view. Select a target name to reveal more options. Supported instruments: Cassini ISS, UVIS, and VIMS, New Horizons LORRI, and Voyager ISS."
 
         if d.table_name == 'obs_ring_geometry':
             menu_data[d.table_name]['menu_help'] = "Supported instruments: Cassini ISS, UVIS, and VIMS, New Horizons LORRI, and Voyager ISS."

@@ -153,7 +153,11 @@ parser.add_argument(
 )
 parser.add_argument(
     '--import-check-duplicate-id', action='store_true', default=False,
-    help='Check for duplicate opus_id; needed for GOSSI'
+    help='Check for duplicate opus_id; needed for GOSSI,COUVIS,NH'
+)
+parser.add_argument(
+    '--import-ignore-missing-images', action='store_true', default=False,
+    help='Don\'t warn about missing browse images'
 )
 
 parser.add_argument(

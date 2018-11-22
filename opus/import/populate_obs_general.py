@@ -178,22 +178,24 @@ def populate_obs_general_preview_images(**kwargs):
 
     if viewset:
         browse_data = viewset.to_dict()
-        if not viewset.thumbnail:
-            import_util.log_nonrepeating_warning(
-                f'Missing thumbnail browse/diagram image for "{file_spec}"')
-        if not viewset.small:
-            import_util.log_nonrepeating_warning(
-                f'Missing small browse/diagram image for "{file_spec}"')
-        if not viewset.medium:
-            import_util.log_nonrepeating_warning(
-                f'Missing medium browse/diagram image for "{file_spec}"')
-        if not viewset.full_size:
-            import_util.log_nonrepeating_warning(
-                f'Missing full_size browse/diagram image for "{file_spec}"')
+        if not impglobals.ARGUMENTS.import_ignore_missing_images:
+            if not viewset.thumbnail:
+                import_util.log_nonrepeating_warning(
+                    f'Missing thumbnail browse/diagram image for "{file_spec}"')
+            if not viewset.small:
+                import_util.log_nonrepeating_warning(
+                    f'Missing small browse/diagram image for "{file_spec}"')
+            if not viewset.medium:
+                import_util.log_nonrepeating_warning(
+                    f'Missing medium browse/diagram image for "{file_spec}"')
+            if not viewset.full_size:
+                import_util.log_nonrepeating_warning(
+                    f'Missing full_size browse/diagram image for "{file_spec}"')
     else:
         browse_data = {'viewables': []}
-        import_util.log_nonrepeating_warning(
-            f'Missing all browse/diagram images for "{file_spec}"')
+        if not impglobals.ARGUMENTS.import_ignore_missing_images:
+            import_util.log_nonrepeating_warning(
+                f'Missing all browse/diagram images for "{file_spec}"')
 
     ret = json.dumps(browse_data)
     return ret

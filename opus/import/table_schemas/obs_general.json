@@ -208,7 +208,7 @@
         "pi_display": 1,
         "pi_display_results": 1,
         "pi_form_type": "TARGETS",
-        "pi_intro": "The Intended Target Name is the primary target of the observation and is valid for all missions and instruments. To search for ANY body in the field of view (but only for some instruments), select Surface Geometry Target Name under Surface Geometry Constraints in the left menu.",
+        "pi_intro": "The Intended Target Name represents the observer's intentions and is valid for all missions and instruments. To search for ANY body in the field of view (but only for some instruments), select Surface Geometry Target Name under Surface Geometry Constraints in the left menu.\nTo search for observations containing rings, use the Ring Geometry Constraints menu.",
         "pi_label": "Intended Target Name",
         "pi_label_results": "Intended Target Name",
         "pi_slug": "target",
