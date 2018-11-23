@@ -111,7 +111,7 @@ var o_search = {
 
     adjustSearchHeight: function() {
 
-        var container_height = $(window).height() - 100;
+        var container_height = $("#search").height() - 100;
         $(".widget_column").height(container_height);
         $(".sidebar_wrapper").height(container_height);
 

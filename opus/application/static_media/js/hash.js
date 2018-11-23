@@ -58,11 +58,32 @@ var o_hash = {
 
     // returns the hash part of the url minus the #/ symbol
     getHash: function(){
-        if (window.location.hash) {
-            return window.location.hash.match(/^#\/(.*)$/)[1];
-        } else {
-            return '';
+        try {
+            if (window.location.hash) {
+                return window.location.hash.match(/^#\/(.*)$/)[1];
+            } else {
+                return "";
+            }
+        } catch (e) {
+            return "";
         }
+    },
+
+    getHashArray: function() {
+        var hashArray = [];
+        $.each(this.getHash().split('&'), function(index, valuePair) {
+            var paramArray = valuePair.split("=");
+            hashArray[paramArray[0]] = paramArray[1];
+        });
+        return hashArray;
+    },
+
+    hashArrayToHashString: function(hashArray) {
+        var hash = "";
+        for (var param in hashArray) {
+            hash += "&"+param+"="+hashArray[param];
+        }
+        return hash;
     },
 
     // part is part of the hash, selections or prefs

@@ -1,3 +1,6 @@
+body {
+	overflow:hidden;
+}
 .app-body {
 	margin-top: 3.8em !important;
 }
@@ -55,7 +58,7 @@
 
 #search {
     height:100%;
-    position: absolute;
+    position:absolute;
     left:0;
     margin:0;
 
@@ -81,6 +84,10 @@
     background-color: #303030; /* #383838; */
     padding-left:1.5em;
     min-height:700px;
+}
+
+.gallery-contents {
+		overflow-y:auto !important;
 }
 
 #detail {
@@ -131,6 +138,7 @@
 .sidebar_wrapper {
 	display: flex;
     margin:0; padding:0;
+		overflow: auto;
     margin-top:5px;
     position: relative;
     height:500px; /* matches .widget_column */
@@ -138,6 +146,10 @@
 }
 .sidebar_wrapper.mCustomScrollbar {
     margin-top:10px;
+}
+
+ul.searchMenu{
+		padding-right: 2em;
 }
 
 .card-header .icon-action {
@@ -409,11 +421,12 @@ li.infinite_scroll_page  {
 }
 
 .end_of_page {
-    display:absolute;
+    /*display:absolute;*/
     bottom:0;
     left:0;
     width:100%;
     height:10px;
+		display: none;
 }
 
 img.preview {
@@ -537,6 +550,7 @@ li a.search-param:hover {
 }
 #search_widgets {  /* this fixes problem scrolling when widget column is short */
     padding-bottom: 600px;
+		padding-right: 2em;
 }
 
 .widget-main .range-qtype-helper {

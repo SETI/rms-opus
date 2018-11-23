@@ -148,11 +148,14 @@ var o_browse = {
 
        // other behaviours
         // click on thumbnail opens modal window
-      $(".gallery, #dataTable ").on("click", ".thumbnail, tr", function(e) {
+      $(".gallery, #dataTable ").on("click", ".thumbnail, tbody > tr :not(:input)", function(e) {
             // make sure selected modal thumb is unhighlighted, as clicking on this closes the modal
             // but is not caught in time before hidden.bs to get correct opus_id
             o_browse.toggleGalleryViewHighlight("off");
             var opus_id = $(this).data("id");
+            if (opus_id == undefined) {
+                opus_id = $(this).parent().data("id");
+            }
 
             // while modal is up, highlight the image/table row shown
             $("tr[data-id='"+opus_id+"']").addClass("highlight");
@@ -173,22 +176,8 @@ var o_browse = {
             }
         });
 
-        $("#gallerylView").modal({
-            keyboard: false,
-            backdrop: false,
-            show: false,
-        });
-
-        $(".modal-dialog").draggable({
-            handle: ".modal-content"
-        });
-
-        $(".app-body").on("hide.bs.modal", "#galleryView", function(e) {
-            o_browse.toggleGalleryViewHighlight("off");
-        });
-
         // data_table - clicking a table row adds to cart
-        $("#browse").on("click", ".data_table tr", function() {
+        $("#browse").on("click", "#data_table :input", function() {
 
             var opus_id = $(this).attr("id").substring(6);
             $(this).find('.data_checkbox').toggleClass('fa-check-square-o').toggleClass('fa-square-o');
@@ -217,16 +206,24 @@ var o_browse = {
 
         });
 
+        $("#gallerylView").modal({
+            keyboard: false,
+            backdrop: false,
+            show: false,
+        });
+
+        $(".modal-dialog").draggable({
+            handle: ".modal-content"
+        });
+
+        $(".app-body").on("hide.bs.modal", "#galleryView", function(e) {
+            o_browse.toggleGalleryViewHighlight("off");
+        });
+
         // thumbnail overlay tools
         $('.gallery').on("click", ".tools a", function(e) {
           //snipe the id off of the image..
           var opus_id = $(this).parent().data("id");
-
-          // clicking thumbnail opens embedded data viewer
-          if ($(this).hasClass("colorbox")) {
-            $("#gallery__" + opus_id + "> a").trigger("click");
-            return false;
-          }
 
           switch ($(this).data("icon")) {
               case "info":  // detail page
@@ -831,7 +828,6 @@ var o_browse = {
         opus.last_page_drawn["dataTable"] = page;
 
         $('.gallery', namespace).html(o_browse.loader);
-        $(".dataTable").html(o_browse.loader);
         // metadata; used for both table and gallery
         var new_hash = new_hash.join('&');
         $.getJSON(base_url + new_hash, function(tableData) {
@@ -906,6 +902,12 @@ var o_browse = {
             page = opus.pages;
         }
         o_browse.renderBrowseData(page);
+        o_browse.adjustBrowseHeight();  // may need to go in getGallery
+    },
+
+    adjustBrowseHeight: function() {
+        var container_height = $(window).height()-120;
+        $(".gallery-contents").height(container_height);
     },
 
     metadataboxHtml: function(opus_id) {
@@ -920,12 +922,16 @@ var o_browse = {
         html += '</dl>';
 
         // add a link to detail page; seriously borken at momen
-        html += '<p><a href = "/opus/detail/' + opus_id + '.html" class = "detailViewLink" data-opusid="' + opus_id + '">View Detail</a></p>';
+        //html += '<p><a href = "/opus/detail/' + opus_id + '.html" class = "detailViewLink" data-opusid="' + opus_id + '">View Detail</a></p>';
+        var hashArray = o_hash.getHashArray();
+        hashArray["view"] = "detail";
+        hashArray["detail"] = opus_id;
+        html += '<p><a href = "/opus/#/' + o_hash.hashArrayToHashString(hashArray) + '" class="detailViewLink" data-opusid="' + opus_id + '">View Detail</a></p>';
 
         // prev/next buttons - put this in galleryView html...
-        html += "<div class='fixed-bottom'>";
-        html += "<a href='#' class='prev pr-5'><i class='far fa-hand-point-left fa-3x float-right'></i></a>";
-        html += "<a href='#' class='next pr-5'><i class='far fa-hand-point-right fa-3x float-right'></i></a></div>";
+//        html += "<div class='fixed-bottom'>";
+//        html += "<a href='#' class='prev pr-5'><i class='far fa-hand-point-left fa-3x float-right'></i></a>";
+//        html += "<a href='#' class='next pr-5'><i class='far fa-hand-point-right fa-3x float-right'></i></a></div>";
         return html;
     },
 
@@ -994,38 +1000,11 @@ var o_browse = {
 
     },
 
-    updateColorboxDataViewer: function(opus_id) {
-
-        var html = o_browse.metadataboxHtml(opus_id);
-
-        // add data viewer behaviors - but only if it has not yet been bound to
-        // avoid binding duplication
-        var _data =  $._data( $('.gallery_data_viewer')[0], 'events' );
-        if (_data == undefined) {
-          $('.gallery_data_viewer').on("click", '.detailViewLink', function() {
-              var opus_id = $(this).data('opusid');
-              opus.prefs.detail = opus_id;
-              opus.changeTab("detail");
-              $('a[href="#detail"]').tab("show");
-              $.colorbox.close();
-              return false;
-          });
-        }
-
-        // some alignment adjustments
-        if ($(window).width() > 1500) {
-            $('.gallery_data_viewer').css("right", parseInt($(window).width()/2 - $('#colorbox').width(), 10) + "px");
-        }
-
-    },
-
-
     embedded_data_viewer_toggle: function(opus_id) {
         $('.gallery').toggleClass('col-lg-12').toggleClass('col-sm-7').toggleClass('col-md-9').toggleClass('col-lg-9');
         $('.embedded_data_viewer_wrapper').toggle();
 
     },
-
 
     resetQuery: function() {
         /*

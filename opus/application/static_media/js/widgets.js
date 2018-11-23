@@ -13,17 +13,6 @@ var o_widgets = {
             o_widgets.widgetDrop();
         });
 
-        $(".widget_column").mCustomScrollbar({
-            theme:"rounded-dark",
-            scrollInertia:300,
-        });
-        $(".sidebar_wrapper").mCustomScrollbar({
-            theme:"rounded-dark",
-            scrollInertia:300,
-        });
-
-        // first set sidebar height dynamically
-
         // click the dictionary icon, the definition slides open
         $('#search').on('click', 'a.dict_link', function() {
             var temp = $(this).parent().parent().find('.dictionary');
@@ -481,16 +470,9 @@ var o_widgets = {
         // scrolls window to a widget and highlights the widge
         // widget is like: "widget__" + slug
         //  scroll the widget panel to top
-
-            $(".widget_column").mCustomScrollbar("scrollTo","top",
-                {
-                    timeout:1000,
-                });
-
-            setTimeout(function() {
-                //$('.' + widget + ' .widget-main').effect("highlight", "slow");  this seems weird TODO
-            }, 1800)
-
+        $('#search').animate({
+            scrollTop: $("#"+ widget).offset().top
+        }, 1000);
      },
 
 

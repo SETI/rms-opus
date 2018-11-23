@@ -14,10 +14,6 @@ var o_menu = {
         //    $(this).find('b.arrow').toggleClass('fa-angle-right').toggleClass('fa-angle-down');
 
          //});
-         $("#sidebar").mCustomScrollbar({
-             theme: "minimal"
-         });
-
          $('#sidebarCollapse').on('click', function () {
              $('#sidebar, #content').toggleClass('active');
              $('.collapse.in').toggleClass('in');
