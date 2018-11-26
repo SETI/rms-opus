@@ -144,7 +144,8 @@ INSTALLED_APPS = (
     'ui',
     'user_collections',
     'tools',
-    'dictionary'
+    'dictionary',
+    'rest_framework',
 )
 
 
