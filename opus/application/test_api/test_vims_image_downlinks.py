@@ -1,60 +1,36 @@
+import logging
+import requests
+import sys
+from unittest import TestCase
+
 from rest_framework.test import APIClient
 from rest_framework.test import RequestsClient
-from unittest import TestCase
-import requests
-from api_formats_vims import ApiForVimsDownlinks
-# stop the trace / logging
-import sys
-import logging
+
+from api_for_test_cases.api_vims_image_downlinks import ApiForVimsDownlinks
+
 
 class ApiVimsDownlinksTests(TestCase):
     GO_LIVE = False
     LIVE_TARGET = "production"
 
+    # disable error logging and trace output before test
     def setUp(self):
         sys.tracebacklimit = 0 # default: 1000
         logging.disable(logging.CRITICAL)
 
+    # enable error logging and trace output after test
     def teardown(self):
         sys.tracebacklimit = 1000 # default: 1000
         logging.disable(logging.NOTSET)
 
-    def collect_vims_image_numbers_for_single_primary_filespec(self, primary_filespec, api_dict):
-
-        if not ApiVimsDownlinksTests.GO_LIVE:
-            # client = RequestsClient()
-            raise Exception("Test db has no VIMs data")
-        else:
-            client = requests.Session()
-
-        format = "json"
-        primary_filespec_object = api_dict[primary_filespec]
-        api_url = primary_filespec_object["url"] + format
-        payload = primary_filespec_object["payload"]
-        response = client.get(api_url, params=payload)
-        test_url = response.url
-        image_count = {}
-
-        if response.status_code == 200:
-            data_object = response.json()["data"]
-            for image_id in primary_filespec_object["images_with_opus_id"]:
-                image_count[image_id] = {
-                    "browse-thumb": len(data_object[image_id]["browse-thumb"]),
-                    "browse-small": len(data_object[image_id]["browse-small"]),
-                    "browse-medium": len(data_object[image_id]["browse-medium"]),
-                    "browse-full": len(data_object[image_id]["browse-full"]),
-                    "covims-raw": len(data_object[image_id]["covims-raw"]),
-                    "covims-thumb": len(data_object[image_id]["covims-thumb"]),
-                    "covims-medium": len(data_object[image_id]["covims-medium"]),
-                    "covims-full": len(data_object[image_id]["covims-full"]),
-                }
-            return image_count
-        else:
-            raise Exception("%s: Error, http status code: %s" %(format, http_status_code))
-
-    # check if any image numbers from 001 > ones in 002
-    # check if image counts for each primary filespec are all > 0
+    ###############################
+    ### API VIMS downlink tests ###
+    ###############################
     def test_check_and_compare_vims_downlinks_for_v1_and_v2(self):
+        """Check the number of VIMS downlinks to see if they are valid.
+           Check if any image numbers from 001 > ones in 002
+           Check if image counts for each primary filespec are all > 0
+        """
         api = ApiForVimsDownlinks(target=ApiVimsDownlinksTests.LIVE_TARGET)
         image_count = {}
         error_msg = []
@@ -91,3 +67,53 @@ class ApiVimsDownlinksTests(TestCase):
         if error_msg and ApiVimsDownlinksTests.GO_LIVE:
             for e in error_msg:
                 raise Exception("VIMS downlinks test failed")
+
+    ########################
+    ### Helper functions ###
+    ########################
+    def collect_vims_image_numbers_for_single_primary_filespec(self, primary_filespec, api_dict):
+        """Collect vims image numbers for ONE primary_filespecself.
+           return an image_count object to store the numbers
+           ex:
+           {'co-vims-v1490874598_001_ir': {
+                'browse-thumb': 2,
+                'browse-small': 2,
+                'browse-medium': 2,
+                'browse-full': 2,
+                'covims-raw': 7,
+                'covims-thumb': 2,
+                'covims-medium': 2,
+                'covims-full': 2}
+           }
+        """
+
+        if not ApiVimsDownlinksTests.GO_LIVE:
+            # client = RequestsClient()
+            raise Exception("Test db has no VIMS data")
+        else:
+            client = requests.Session()
+
+        format = "json"
+        primary_filespec_object = api_dict[primary_filespec]
+        api_url = primary_filespec_object["url"] + format
+        payload = primary_filespec_object["payload"]
+        response = client.get(api_url, params=payload)
+        test_url = response.url
+        image_count = {}
+
+        if response.status_code == 200:
+            data_object = response.json()["data"]
+            for image_id in primary_filespec_object["images_with_opus_id"]:
+                image_count[image_id] = {
+                    "browse-thumb": len(data_object[image_id]["browse-thumb"]),
+                    "browse-small": len(data_object[image_id]["browse-small"]),
+                    "browse-medium": len(data_object[image_id]["browse-medium"]),
+                    "browse-full": len(data_object[image_id]["browse-full"]),
+                    "covims-raw": len(data_object[image_id]["covims-raw"]),
+                    "covims-thumb": len(data_object[image_id]["covims-thumb"]),
+                    "covims-medium": len(data_object[image_id]["covims-medium"]),
+                    "covims-full": len(data_object[image_id]["covims-full"]),
+                }
+            return image_count
+        else:
+            raise Exception("%s: Error, http status code: %s" %(format, http_status_code))
