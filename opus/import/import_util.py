@@ -158,6 +158,7 @@ def log_accumulated_warnings(title):
         for w in impglobals.PYTHON_WARNING_LIST:
             impglobals.LOGGER.log('error', '  '+w)
         impglobals.PYTHON_WARNING_LIST = []
+        impglobals.IMPORT_HAS_BAD_DATA = True
         return True
     return False
 

@@ -16,7 +16,7 @@ sections:
 
             examples:
                 - desc: Target Enceladus plumes taken with COISS in JSON
-                  url: https://tools.pds-rings.seti.org/opus/api/data.json?instrumentid=Cassini+ISS&SURFACEGEOenceladusplanetographiclatitude1=70&SURFACEGEOenceladuscenterphaseangle1=160&order=time1&cols=opusid,target,time1,SURFACEGEOenceladuscenterphaseangle1
+                  url: <HOST>/opus/api/data.json?instrumentid=Cassini+ISS&SURFACEGEOenceladusplanetographiclatitude1=70&SURFACEGEOenceladuscenterphaseangle1=160&order=time1&cols=opusid,target,time1,SURFACEGEOenceladuscenterphaseangle1
 
           - title: api/metadata/[opus_id].[fmt]
             desc: Get all available, or particular, metadata for a single observation. NOTE - USE OF THIS API IS DEPRECATED. THIS IS BECAUSE RATHER THAN RETURNING THE SAME SLUG NAMES USED TO PERFORM SEARCHES, IT ERRONEOUSLY RETURNS INTERNAL DATABASE NAMES THAT ARE NOT DOCUMENTED. THESE INTERNAL NAMES MAY NOT BE UNIQUE AND COULD CAUSE PROBLEMS. PLEASE USE THE V2 VERSION OF THIS API BELOW INSTEAD.
@@ -28,11 +28,11 @@ sections:
                 JSON return: "If cols is supplied, a list of pairs {database_column: value}. Otherwise a list of pairs {category: data} where data is a list of pairs {database_column: value}."
             examples:
                 - desc: Single Cassini ISS Saturn Observation (all metadata)
-                  url: https://tools.pds-rings.seti.org/opus/api/metadata/COISS_2111-1866071296_1866225122-N1866071296_1.json
+                  url: <HOST>/opus/api/metadata/co-iss-w1866600688.json
                 - desc: Single Cassini ISS Saturn Observation (start and stop time only)
-                  url: https://tools.pds-rings.seti.org/opus/api/metadata/COISS_2111-1866071296_1866225122-N1866071296_1.json?cols=time1,time2
+                  url: <HOST>/opus/api/metadata/co-iss-w1866600688.json?cols=time1,time2
                 - desc: Single Cassini ISS Saturn Observation (PDS and Images constraints only)
-                  url: https://tools.pds-rings.seti.org/opus/api/metadata/COISS_2111-1866071296_1866225122-N1866071296_1.json?cats=PDS+Constraints,Image+Constraints
+                  url: <HOST>/opus/api/metadata/co-iss-w1866600688.json?cats=PDS+Constraints,Image+Constraints
 
           - title: api/metadata_v2/[opus_id].[fmt]
             desc: Get all available, or particular, metadata for a single observation. NOTE - THIS IS THE NEW VERSION OF THIS API AND SHOULD BE USED BY ALL APPLICATIONS.
@@ -44,11 +44,11 @@ sections:
                 JSON return: "If cols is supplied, a list of pairs {slug: value}. Otherwise a list of pairs {category: data} where data is a list of pairs {slug: value}."
             examples:
                 - desc: Single Cassini ISS Saturn Observation (all metadata)
-                  url: https://tools.pds-rings.seti.org/opus/api/metadata_v2/COISS_2111-1866071296_1866225122-N1866071296_1.json
+                  url: <HOST>/opus/api/metadata_v2/co-iss-w1866600688.json
                 - desc: Single Cassini ISS Saturn Observation (start and stop time only)
-                  url: https://tools.pds-rings.seti.org/opus/api/metadata_v2/COISS_2111-1866071296_1866225122-N1866071296_1.json?cols=time1,time2
+                  url: <HOST>/opus/api/metadata_v2/co-iss-w1866600688.json?cols=time1,time2
                 - desc: Single Cassini ISS Saturn Observation (PDS and Images constraints only)
-                  url: https://tools.pds-rings.seti.org/opus/api/metadata_v2/COISS_2111-1866071296_1866225122-N1866071296_1.json?cats=PDS+Constraints,Image+Constraints
+                  url: <HOST>/opus/api/metadata_v2/co-iss-w1866600688.json?cats=PDS+Constraints,Image+Constraints
 
           - title: api/images/[size].[fmt]
             desc: Get image results of a given size for a search.
@@ -61,7 +61,7 @@ sections:
                 GET param 4: page=N (The 100-observation page number to start with; defaults to 1)
             examples:
                 - desc: planet = Jupiter, medium images, in JSON
-                  url: https://tools.pds-rings.seti.org/opus/api/images/med.json?planet=Jupiter
+                  url: <HOST>/opus/api/images/med.json?planet=Jupiter
 
           - title: api/images.[fmt]
             desc: Get image results of all sizes for a search.
@@ -74,7 +74,7 @@ sections:
                 JSON return: "{'page_no': given page number, 'limit': given limit, 'count': number of observations returned, 'order': sort order, 'data': List of: {'opus_id': opus_id, '<size>_url': full URL, '<size>_alt_text': alt text, '<size>_size_bytes': image size in bytes, '<size>_width': image width in pixels, '<size>_height': image height in pixels}"
             examples:
                 - desc: planet = Saturn, sorted reverse by Saturn phase angle, in JSON
-                  url: https://tools.pds-rings.seti.org/opus/api/images.json?planet=Saturn&order=-SURFACEGEOsaturncenterphaseangle1
+                  url: <HOST>/opus/api/images.json?planet=Saturn&order=-SURFACEGEOsaturncenterphaseangle1
 
           - title: api/image/[size]/[opus_id].[fmt]
             desc: Get an image of the given size for a single observation.
@@ -85,7 +85,7 @@ sections:
                 JSON return: "{'path': root path of the preview directory (deprecated), 'data': ingle-element list: {'opus_id': opus_id, '<size>_url': full URL, '<size>_alt_text': alt text, '<size>_size_bytes': image size in bytes, '<size>_width': image width in pixels, '<size>_height': image height in pixels, 'path': oot path of preview directory (deprecated), 'img': path to image relative to root path (deprecated), 'url': full URL (deprecated)}"
             examples:
                 - desc: Saturn observation, full size, in JSON
-                  url: https://tools.pds-rings.seti.org/opus/api/image/full/VGISS_6101-C32507XX-C3250753.json
+                  url: <HOST>/opus/api/image/full/vg-iss-2-s-c4360022.json
 
           - title: api/files/[opus_id].[fmt]
             desc: Get a list of all files for a single observation.
@@ -97,9 +97,9 @@ sections:
                 JSON return: "{{'page_no': given page number, 'limit': given limit, 'count': number of observations returned, 'order': sort order, 'data': dictionary of opus_id, then indexed by product type}"
             examples:
                 - desc: A Voyager ISS observation, JSON format
-                  url: https://tools.pds-rings.seti.org/opus/api/files/VGISS_6101-C32507XX-C3250753.json
+                  url: <HOST>/opus/api/files/vg-iss-2-s-c4360022.json
                 - desc: A Galileo SSI observation, JSON format, Raw data only
-                  url: https://tools.pds-rings.seti.org/opus/api/files/GO_0017-G1-GANYMEDE-C0349632145R.json?types=Raw+Data+(calibrated+unavailable)
+                  url: <HOST>/opus/api/files/go-ssi-c0349632000.json?types=gossi-raw
 
           - title: api/files.[fmt]
             desc: Get a list of all files for the search results.
@@ -114,7 +114,7 @@ sections:
                 JSON return: "{'page_no': given page number, 'limit': given limit, 'count': number of observations returned, 'order': sort order, 'data': dictionary of opus_id, then indexed by product type}"
             examples:
                 - desc: Target Pan, in JSON
-                  url: https://tools.pds-rings.seti.org/opus/api/files.json?&target=pan
+                  url: <HOST>/opus/api/files.json?&target=pan
 
     - title: Getting Information about Data
       endpoints:
@@ -126,7 +126,7 @@ sections:
                 GET param 1: search params (If not supplied, all results are returned)
             examples:
                 - desc: Target Pan in JSON
-                  url: https://tools.pds-rings.seti.org/opus/api/meta/result_count.json?target=Pan
+                  url: <HOST>/opus/api/meta/result_count.json?target=Pan
 
           - title: api/meta/mults/[param].[fmt]
             desc: Returns all possible values for a given multiple choice field, given a search, and the result count for each value.
@@ -136,7 +136,7 @@ sections:
                 GET param 1: search params (If not supplied, the result is not constrained)
             examples:
                 - desc: Get all possible targets and counts for each when planet=Saturn
-                  url: https://tools.pds-rings.seti.org/opus/api/meta/mults/target.json?planet=Saturn
+                  url: <HOST>/opus/api/meta/mults/target.json?planet=Saturn
 
           - title: api/meta/range/endpoints/[param].[fmt]
             desc: Get range endpoints for a field, given a search
@@ -146,7 +146,7 @@ sections:
                 GET param 1: search params (If not supplied, the result is not constrained)
             examples:
                 - desc: Get ring radius endpoints for target Saturn
-                  url: https://tools.pds-rings.seti.org/opus/api/meta/range/endpoints/RINGGEOringradius1.json?target=Saturn
+                  url: <HOST>/opus/api/meta/range/endpoints/RINGGEOringradius1.json?target=Saturn
 
           - title: api/categories/[opus_id].json
             desc: Return a list of all table names this opus_id exists in.
@@ -155,7 +155,7 @@ sections:
                 JSON return: "List of {'table_name': internal name, 'label': user-visible name}"
             examples:
                 - desc: Category names for a Cassini ISS observation
-                  url: https://tools.pds-rings.seti.org/opus/api/categories/COISS_2111-1866071296_1866225122-N1866071296_1.json
+                  url: <HOST>/opus/api/categories/co-iss-w1866600688.json
 
           - title: api/categories.json
             desc: List all category names triggered by a particular search.
@@ -164,7 +164,7 @@ sections:
                 JSON return: "List of {'table_name': internal name, 'label': user-visible name}"
             examples:
                 - desc: Category names in JSON for a search for Methone
-                  url: https://tools.pds-rings.seti.org/opus/api/categories.json?surfacegeometrytargetname=Methone
+                  url: <HOST>/opus/api/categories.json?surfacegeometrytargetname=Methone
 
           - title: api/fields/[field].[fmt]
             desc: Get information about a particular field
@@ -174,19 +174,21 @@ sections:
                 JSON response: "{'data': {slug: {'category': Pretty category name, 'label': Pretty field name, 'slug': slug, 'old_slug': previous slug (deprecated)}}}"
             examples:
                 - desc: Get information about the "planet" field
-                  url: https://tools.pds-rings.seti.org/opus/api/fields/planet.json
+                  url: <HOST>/opus/api/fields/planet.json
                 - desc: Get information about the "Rhea body center phase angle" field
-                  url: https://tools.pds-rings.seti.org/opus/api/fields/SURFACEGEOrheacenterphaseangle.json
+                  url: <HOST>/opus/api/fields/SURFACEGEOrheacenterphaseangle.json
 
           - title: api/fields.[fmt]
             desc: Get information about all fields
             info:
                 fmt: json,html,zip
+                GET param 1: collapse=1 (collapse all surface geo entries into single generic-target entries)
                 JSON response: "{'data': {slug: {'category': Pretty category name, 'label': Pretty field name, 'slug': slug, 'old_slug': previous slug (deprecated)}}}"
             examples:
                 - desc: Get information about all fields
-                  url: https://tools.pds-rings.seti.org/opus/api/fields.json
-
+                  url: <HOST>/opus/api/fields.json
+                - desc: Get information about all fields but collapse surface geo fields
+                  url: <HOST>/opus/api/fields.json?collapse=1
 
     - title: Extended Examples
       endpoints:
@@ -198,7 +200,7 @@ sections:
                 GET params: search params, limit, offset
             examples:
                 - desc: get count of any results for phase1 = 20 and phase2 = 40 at Saturn (aka phase1 <= 40 and phase2 >= 20)
-                  url: https://tools.pds-rings.seti.org/opus/api/meta/result_count.json?planet=Saturn&phase1=20&phase2=40
+                  url: <HOST>/opus/api/meta/result_count.json?planet=Saturn&phase1=20&phase2=40
 
           - title: range query - type 'all'
             desc: product contains the entire desired range (and possibly more)
@@ -207,7 +209,7 @@ sections:
                 GET params: search params, limit, offset
             examples:
                 - desc: get count of all results for phase1 = 20 and phase2 = 40 at Saturn (aka phase1 <= 20 and phase2 >= 40)
-                  url: https://tools.pds-rings.seti.org/opus/api/meta/result_count.json?planet=Saturn&phase1=20&phase2=40&qtype-phase=all
+                  url: <HOST>/opus/api/meta/result_count.json?planet=Saturn&phase1=20&phase2=40&qtype-phase=all
 
           - title: range query - type 'only'
             desc: No piece of the product's footprint lands outside the desired range
@@ -216,4 +218,4 @@ sections:
                 GET params: search params, limit, offset
             examples:
                 - desc: get count of results only for phase1 = 20 and phase2 = 40 at Saturn (aka phase1 >= 20 and phase2 <= 40)
-                  url: https://tools.pds-rings.seti.org/opus/api/meta/result_count.json?planet=Saturn&phase1=20&phase2=40&qtype-phase=only
+                  url: <HOST>/opus/api/meta/result_count.json?planet=Saturn&phase1=20&phase2=40&qtype-phase=only

@@ -189,33 +189,24 @@ def helper_cassini_valid_obs_name(obs_name):
     return False
 
 def helper_cassini_planet_id(**kwargs):
-    """Find the planet associated with an observation. This is usually based on
-    the TARGET_NAME field, but if the planet is marked as None based on the
-    target, we look at the time of the observation to bind it to Jupiter or
-    Saturn."""
+    """Find the planet associated with an observation. This is based on the
+    mission phase (as encoded in the observation time so it works with all
+    instruments)."""
 
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     obs_general_row = metadata['obs_general_row']
-    target_name = index_row['TARGET_NAME'].upper()
-    if target_name in TARGET_NAME_MAPPING:
-        target_name = TARGET_NAME_MAPPING[target_name]
-    if target_name not in TARGET_NAME_INFO:
-        import_util.announce_unknown_target_name(target_name)
-        pl = None
-    else:
-        pl, _ = TARGET_NAME_INFO[target_name]
-    if pl is not None:
-        return pl
-    time_sec1 = obs_general_row['time_sec1']
+
     time_sec2 = obs_general_row['time_sec2']
-    if time_sec1 >= 26611232.0 and time_sec2 <= 41904032.0:
-        # '2000-11-04' to '2001-04-30'
+
+    jup = julian.tai_from_iso('2000-262T00:32:38.930')
+    sat = julian.tai_from_iso('2003-138T02:16:18.383')
+
+    if time_sec2 < jup:
+        return None
+    if time_sec2 < sat:
         return 'JUP'
-    if time_sec1 >= 127180832.0:
-        # '2004-01-12'
-        return 'SAT'
-    return None
+    return 'SAT'
 
 def helper_cassini_target_name(**kwargs):
     metadata = kwargs['metadata']
@@ -241,15 +232,24 @@ def helper_cassini_target_name(**kwargs):
     # Examine targets that are Saturn or Sky - are they really rings?
     if ((target_name == 'SATURN' or target_name == 'SKY') and
         target_code in ('RA','RB','RC','RD','RE','RF','RG','RI')):
-        return ('S RINGS', 'S Rings')
+        return ('S RINGS', 'Saturn Rings')
     if target_desc is not None:
         # Examine targets that are SKY - are they really rings?
         if target_name == 'SKY' and target_code == 'SK':
             if target_desc.find('RING') != -1:
-                return ('S RINGS', 'S Rings')
+                return ('S RINGS', 'Saturn Rings')
             # Let TARGET_DESC override TARGET_NAME for Sky
             if target_desc in TARGET_NAME_INFO:
                 return (target_desc.upper(), target_desc.title())
+
+    if target_name not in TARGET_NAME_INFO:
+        import_util.announce_unknown_target_name(target_name)
+        if impglobals.ARGUMENTS.import_ignore_errors:
+            return 'None'
+        return None
+    target_name_info = TARGET_NAME_INFO[target_name]
+    if len(target_name_info) == 3:
+        return target_name, target_name_info[2]
 
     return (target_name, target_name.title())
 
@@ -418,7 +418,7 @@ def populate_obs_mission_cassini_ert1(**kwargs):
     try:
         ert_sec = julian.tai_from_iso(start_time)
     except Exception as e:
-        import_util.log_nonrepeating_error(
+        import_util.log_nonrepeating_warning(
             f'Bad earth received start time format "{start_time}": {e}')
         return None
 
@@ -437,11 +437,11 @@ def populate_obs_mission_cassini_ert2(**kwargs):
 
     if stop_time is None:
         return None
-        
+
     try:
         ert_sec = julian.tai_from_iso(stop_time)
     except Exception as e:
-        import_util.log_nonrepeating_error(
+        import_util.log_nonrepeating_warning(
             f'Bad earth received stop time format "{stop_time}": {e}')
         return None
 
@@ -458,7 +458,7 @@ def populate_obs_mission_cassini_ert_sec1(**kwargs):
     try:
         ert = julian.tai_from_iso(start_time)
     except Exception as e:
-        import_util.log_nonrepeating_error(
+        import_util.log_nonrepeating_warning(
             f'"{start_time}" is not a valid date-time format in '+
             f'mission_cassini_ert_sec1: {e}')
         ert = None
@@ -475,7 +475,7 @@ def populate_obs_mission_cassini_ert_sec2(**kwargs):
     try:
         ert = julian.tai_from_iso(stop_time)
     except Exception as e:
-        import_util.log_nonrepeating_error(
+        import_util.log_nonrepeating_warning(
             f'"{stop_time}" is not a valid date-time format in '+
             f'mission_cassini_ert_sec2: {e}')
         ert = None
@@ -491,7 +491,7 @@ def populate_obs_mission_cassini_spacecraft_clock_count_cvt1(**kwargs):
     try:
         sc_cvt = opus_support.parse_cassini_sclk(sc)
     except Exception as e:
-        import_util.log_nonrepeating_error(
+        import_util.log_nonrepeating_warning(
             f'Unable to parse Cassini SCLK "{sc}": {e}')
         return None
     return sc_cvt
@@ -506,7 +506,7 @@ def populate_obs_mission_cassini_spacecraft_clock_count_cvt2(**kwargs):
     try:
         sc_cvt = opus_support.parse_cassini_sclk(sc)
     except Exception as e:
-        import_util.log_nonrepeating_error(
+        import_util.log_nonrepeating_warning(
             f'Unable to parse Cassini SCLK "{sc}": {e}')
         return None
     return sc_cvt
@@ -520,7 +520,7 @@ def populate_obs_mission_cassini_rev_no_cvt(**kwargs):
     try:
         rev_no_cvt = opus_support.parse_cassini_orbit(rev_no)
     except Exception as e:
-        import_util.log_nonrepeating_error(
+        import_util.log_nonrepeating_warning(
             f'Unable to parse Cassini orbit "{rev_no}": {e}')
         return None
     return rev_no_cvt

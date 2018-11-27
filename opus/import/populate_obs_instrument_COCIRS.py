@@ -35,13 +35,15 @@ def populate_obs_general_COCIRS_opus_id(**kwargs):
     file_spec = _COCIRS_file_spec_helper(**kwargs)
     pds_file = pdsfile.PdsFile.from_filespec(file_spec)
     try:
-        opus_id = pds_file.opus_id
+        opus_id = pds_file.opus_id.replace('.', '-')
     except:
+        opus_id = None
+    if not opus_id:
         metadata = kwargs['metadata']
         index_row = metadata['index_row']
         import_util.log_nonrepeating_error(
             f'Unable to create OPUS_ID for FILE_SPEC "{file_spec}"')
-        return file_spec
+        return file_spec.split('/')[-1]
     return opus_id
 
 def populate_obs_general_COCIRS_ring_obs_id(**kwargs):
@@ -62,6 +64,10 @@ def populate_obs_general_COCIRS_ring_obs_id(**kwargs):
 
     return pl_str + '_SPEC_CO_CIRS_' + image_num + '_' + instrument_id
 
+def popular_obs_general_COCIRS_pdsfile_path(**kwargs):
+    file_spec = _COCIRS_file_spec_helper(**kwargs)
+    pds_file = pdsfile.PdsFile.from_filespec(file_spec)
+
 def populate_obs_general_COCIRS_inst_host_id(**kwargs):
     return 'CO'
 
@@ -76,7 +82,7 @@ def populate_obs_general_COCIRS_time1(**kwargs):
     try:
         start_time_sec = julian.tai_from_iso(start_time)
     except Exception as e:
-        import_util.log_nonrepeating_error(
+        import_util.log_nonrepeating_warning(
             f'Bad start time format "{start_time}": {e}')
         return None
 
@@ -93,7 +99,7 @@ def populate_obs_general_COCIRS_time2(**kwargs):
     try:
         stop_time_sec = julian.tai_from_iso(stop_time)
     except Exception as e:
-        import_util.log_nonrepeating_error(
+        import_util.log_nonrepeating_warning(
             f'Bad stop time format "{stop_time}": {e} Exception as e')
         return None
 
@@ -112,27 +118,19 @@ def populate_obs_general_COCIRS_observation_duration(**kwargs):
 def populate_obs_general_COCIRS_quantity(**kwargs):
     return 'THERMAL'
 
-def populate_obs_general_COCIRS_spatial_sampling(**kwargs):
-    metadata = kwargs['metadata']
-    index_row = metadata['index_row']
-    instrument_id = index_row['DETECTOR_ID']
-    if instrument_id == 'FP1':
-        return 'POINT'
-    return '1D'
+def populate_obs_general_COCIRS_observation_type(**kwargs):
+    return 'STS' # Spectral Time Series
 
-def populate_obs_general_COCIRS_wavelength_sampling(**kwargs):
-    return 'Y'
-
-def populate_obs_general_COCIRS_time_sampling(**kwargs):
-    return 'N'
-
-def populate_obs_general_COCIRS_note(**kwargs):
+def populate_obs_pds_COCIRS_note(**kwargs):
     return None
 
 def populate_obs_general_COCIRS_primary_file_spec(**kwargs):
     return _COCIRS_file_spec_helper(**kwargs)
 
-def populate_obs_general_COCIRS_product_creation_time(**kwargs):
+def populate_obs_pds_COCIRS_primary_file_spec(**kwargs):
+    return _COCIRS_file_spec_helper(**kwargs)
+
+def populate_obs_pds_COCIRS_product_creation_time(**kwargs):
     metadata = kwargs['metadata']
     index_label = metadata['index_label']
     pct = index_label['PRODUCT_CREATION_TIME']
@@ -140,20 +138,20 @@ def populate_obs_general_COCIRS_product_creation_time(**kwargs):
     try:
         pct_sec = julian.tai_from_iso(pct)
     except Exception as e:
-        import_util.log_nonrepeating_error(
+        import_util.log_nonrepeating_warning(
             f'Bad product creation time format "{pct}": {e}')
         return None
 
     return julian.iso_from_tai(pct_sec, digits=3, ymd=True)
 
 # Format: "CO-S-CIRS-2/3/4-REFORMATTED-V1.0"
-def populate_obs_general_COCIRS_data_set_id(**kwargs):
+def populate_obs_pds_COCIRS_data_set_id(**kwargs):
     metadata = kwargs['metadata']
     index_label = metadata['index_label']
     dsi = index_label['DATA_SET_ID']
     return (dsi, dsi)
 
-def populate_obs_general_COCIRS_product_id(**kwargs):
+def populate_obs_pds_COCIRS_product_id(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     # Format: "DATA/APODSPEC/SPEC0802010000_FP1.DAT"
@@ -295,8 +293,8 @@ def populate_obs_mission_cassini_COCIRS_spacecraft_clock_count1(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     count = index_row['SPACECRAFT_CLOCK_START_COUNT']
-    if not count.startswith('1/'):
-        import_util.log_nonrepeating_error(
+    if not count.startswith('1/') or count[2] == ' ':
+        import_util.log_nonrepeating_warning(
             f'Badly formatted SPACECRAFT_CLOCK_START_COUNT "{count}"')
         return None
     return count
@@ -305,8 +303,8 @@ def populate_obs_mission_cassini_COCIRS_spacecraft_clock_count2(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     count = index_row['SPACECRAFT_CLOCK_STOP_COUNT']
-    if not count.startswith('1/'):
-        import_util.log_nonrepeating_error(
+    if not count.startswith('1/') or count[2] == ' ':
+        import_util.log_nonrepeating_warning(
             f'Badly formatted SPACECRAFT_CLOCK_STOP_COUNT "{count}"')
         return None
     return count

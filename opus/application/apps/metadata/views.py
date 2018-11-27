@@ -462,7 +462,8 @@ def api_get_fields(request, fmt='json', field=''):
         exit_api_call(api_code, ret)
         raise ret
 
-    ret = get_fields_info(fmt, field, collapse=True)
+    collapse = request.GET.get('collapse', False)
+    ret = get_fields_info(fmt, field, collapse=collapse)
 
     exit_api_call(api_code, ret)
     return ret
@@ -487,7 +488,6 @@ def get_fields_info(fmt, field='', category='', collapse=False):
         else:
             fields = ParamInfo.objects.all()
         fields.order_by('category_name', 'slug')
-
         # We cheat with the HTML return because we want to collapse all the
         # surface geometry down to a single target version to save screen
         # space. This is a horrible hack, but for right now we just assume
@@ -497,6 +497,9 @@ def get_fields_info(fmt, field='', category='', collapse=False):
             if (collapse and
                 f.slug.startswith('SURFACEGEO') and
                 not f.slug.startswith('SURFACEGEOsaturn')):
+                continue
+            if f.slug.startswith('**'):
+                # Internal use only
                 continue
             entry = OrderedDict()
             table_name = TableNames.objects.get(table_name=f.category_name)

@@ -55,13 +55,15 @@ def populate_obs_general_COUVIS_opus_id(**kwargs):
     file_spec = _COUVIS_file_spec_helper(**kwargs)
     pds_file = pdsfile.PdsFile.from_filespec(file_spec)
     try:
-        opus_id = pds_file.opus_id
+        opus_id = pds_file.opus_id.replace('.', '-')
     except:
+        opus_id = None
+    if not opus_id:
         metadata = kwargs['metadata']
         index_row = metadata['index_row']
         import_util.log_nonrepeating_error(
             f'Unable to create OPUS_ID for FILE_SPEC "{file_spec}"')
-        return file_spec
+        return file_spec.split('/')[-1]
     return opus_id
 
 def populate_obs_general_COUVIS_ring_obs_id(**kwargs):
@@ -88,68 +90,38 @@ def populate_obs_general_COUVIS_inst_host_id(**kwargs):
     return 'CO'
 
 def populate_obs_general_COUVIS_quantity(**kwargs):
-    channel, image_time = _COUVIS_channel_time_helper(**kwargs)
+    # This is the NEW logic
     metadata = kwargs['metadata']
-    index_row = metadata['index_row']
-    slit_state = index_row['SLIT_STATE']
-
-    if channel == 'HSP':
-        return 'OPTICAL'
-    if (channel == 'EUV' or channel == 'FUV') and slit_state == 'OCCULTATION':
-        return 'OPTICAL'
-    # HDAC is measuring EMISSION, along with EUV/FUV normal slits
-    return 'EMISSION'
-
-def populate_obs_general_COUVIS_spatial_sampling(**kwargs):
-    channel, image_time = _COUVIS_channel_time_helper(**kwargs)
-    metadata = kwargs['metadata']
-    index_row = metadata['index_row']
-    slit_state = index_row['SLIT_STATE']
-
-    if channel == 'HSP' or channel == 'HDAC':
-        return 'POINT'
-    assert channel == 'EUV' or channel == 'FUV'
-    if slit_state == 'OCCULTATION':
-        return '1D'
-
     supp_index_row = metadata['supp_index_row']
     if supp_index_row is None:
-        import_util.log_nonrepeating_error(
-            f'COUVIS_spatial_sampling has channel EUV or FUV but no '+
-            f'DATA_OBJECT_TYPE available')
         return None
+    description = supp_index_row['DESCRIPTION'].upper()
+    if (description.find('OCCULTATION') != -1 and
+        description.find('CALIBRATION') == -1):
+        return 'OPTICAL'
+    return 'EMISSION'
 
-    object_type = supp_index_row['DATA_OBJECT_TYPE']
-    if object_type == 'SPECTRUM':
-        return 'POINT'
+    # This is the OLD logic
+    # channel, image_time = _COUVIS_channel_time_helper(**kwargs)
+    # metadata = kwargs['metadata']
+    # index_row = metadata['index_row']
+    # slit_state = index_row['SLIT_STATE']
+    #
+    # if channel == 'HSP':
+    #     return 'OPTICAL'
+    # if (channel == 'EUV' or channel == 'FUV') and slit_state == 'OCCULTATION':
+    #     return 'OPTICAL'
+    # # HDAC is measuring EMISSION, along with EUV/FUV normal slits
+    # return 'EMISSION'
 
-    return '2D'
-
-def populate_obs_general_COUVIS_wavelength_sampling(**kwargs):
+def populate_obs_general_COUVIS_observation_type(**kwargs):
     channel, image_time = _COUVIS_channel_time_helper(**kwargs)
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
-    slit_state = index_row['SLIT_STATE']
-
     if channel == 'HSP' or channel == 'HDAC':
-        return 'N'
+        return 'TS' # Time Series
     assert channel == 'EUV' or channel == 'FUV'
-    if slit_state == 'OCCULTATION':
-        return 'N'
-    return 'Y'
-
-def populate_obs_general_COUVIS_time_sampling(**kwargs):
-    channel, image_time = _COUVIS_channel_time_helper(**kwargs)
-    metadata = kwargs['metadata']
-    index_row = metadata['index_row']
-    slit_state = index_row['SLIT_STATE']
-
-    if channel == 'HSP' or channel == 'HDAC':
-        return 'Y'
-    assert channel == 'EUV' or channel == 'FUV'
-    if slit_state == 'OCCULTATION':
-        return 'Y'
-    return 'N'
+    return 'SCU' # Spectral Cube
 
 def populate_obs_general_COUVIS_time1(**kwargs):
     metadata = kwargs['metadata']
@@ -162,7 +134,7 @@ def populate_obs_general_COUVIS_time1(**kwargs):
     try:
         start_time_sec = julian.tai_from_iso(start_time)
     except Exception as e:
-        import_util.log_nonrepeating_error(
+        import_util.log_nonrepeating_warning(
             f'Bad start time format "{start_time}": {e}')
         return None
 
@@ -179,7 +151,7 @@ def populate_obs_general_COUVIS_time2(**kwargs):
     try:
         stop_time_sec = julian.tai_from_iso(stop_time)
     except Exception as e:
-        import_util.log_nonrepeating_error(
+        import_util.log_nonrepeating_warning(
             f'Bad stop time format "{stop_time}": {e}')
         return None
 
@@ -195,7 +167,7 @@ def populate_obs_general_COUVIS_observation_duration(**kwargs):
     time_sec2 = obs_general_row['time_sec2']
     return max(time_sec2 - time_sec1, 0)
 
-def populate_obs_general_COUVIS_note(**kwargs):
+def populate_obs_pds_COUVIS_note(**kwargs):
     metadata = kwargs['metadata']
     supp_index_row = metadata['supp_index_row']
     if supp_index_row is None:
@@ -208,7 +180,10 @@ def populate_obs_general_COUVIS_note(**kwargs):
 def populate_obs_general_COUVIS_primary_file_spec(**kwargs):
     return _COUVIS_file_spec_helper(**kwargs)
 
-def populate_obs_general_COUVIS_product_creation_time(**kwargs):
+def populate_obs_pds_COUVIS_primary_file_spec(**kwargs):
+    return _COUVIS_file_spec_helper(**kwargs)
+
+def populate_obs_pds_COUVIS_product_creation_time(**kwargs):
     metadata = kwargs['metadata']
     index_label = metadata['index_label']
     pct = index_label['PRODUCT_CREATION_TIME']
@@ -216,14 +191,14 @@ def populate_obs_general_COUVIS_product_creation_time(**kwargs):
     try:
         pct_sec = julian.tai_from_iso(pct)
     except Exception as e:
-        import_util.log_nonrepeating_error(
+        import_util.log_nonrepeating_warning(
             f'Bad product creation time format "{pct}": {e}')
         return None
 
     return julian.iso_from_tai(pct_sec, digits=3, ymd=True)
 
 # Format: "CO-S-UVIS-2-SSB-V1.4"
-def populate_obs_general_COUVIS_data_set_id(**kwargs):
+def populate_obs_pds_COUVIS_data_set_id(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     dsi = index_row['DATA_SET_ID']
@@ -231,7 +206,7 @@ def populate_obs_general_COUVIS_data_set_id(**kwargs):
     return (dsi, dsi)
 
 # Format: "EUV2015_001_17_57"
-def populate_obs_general_COUVIS_product_id(**kwargs):
+def populate_obs_pds_COUVIS_product_id(**kwargs):
     metadata = kwargs['metadata']
     supp_index_row = metadata.get('supp_index_row', None)
     if supp_index_row is None:
@@ -292,40 +267,57 @@ def populate_obs_mission_cassini_COUVIS_sequence_id(**kwargs):
 
 ### OBS_TYPE_IMAGE TABLE ###
 
-def populate_obs_type_image_COUVIS_image_type_id(**kwargs):
+def _COUVIS_is_image(**kwargs):
+    channel, image_time = _COUVIS_channel_time_helper(**kwargs)
     metadata = kwargs['metadata']
-    obs_general_row = metadata['obs_general_row']
-    spatial = obs_general_row['spatial_sampling']
-    if spatial == '2D':
+    index_row = metadata['index_row']
+    slit_state = index_row['SLIT_STATE']
+
+    if channel == 'HSP' or channel == 'HDAC':
+        return False
+    assert channel == 'EUV' or channel == 'FUV'
+    if slit_state == 'OCCULTATION':
+        return False
+
+    supp_index_row = metadata['supp_index_row']
+    if supp_index_row is None:
+        import_util.log_nonrepeating_warning(
+            f'_COUVIS_is_image has channel EUV or FUV but no '+
+            f'DATA_OBJECT_TYPE available')
+        return False
+
+    object_type = supp_index_row['DATA_OBJECT_TYPE']
+    if object_type == 'SPECTRUM':
+        return False
+
+    return True
+
+def populate_obs_type_image_COUVIS_image_type_id(**kwargs):
+    if _COUVIS_is_image(**kwargs):
         return 'PUSH'
     return None
 
 def populate_obs_type_image_COUVIS_duration(**kwargs):
-    metadata = kwargs['metadata']
-    obs_general_row = metadata['obs_general_row']
-    spatial = obs_general_row['spatial_sampling']
-    if spatial != '2D':
+    if not _COUVIS_is_image(**kwargs):
         return None
 
+    metadata = kwargs['metadata']
     index_row = metadata['index_row']
     integration_duration = import_util.safe_column(index_row,
                                                    'INTEGRATION_DURATION')
     return integration_duration
 
 def populate_obs_type_image_COUVIS_levels(**kwargs):
-    metadata = kwargs['metadata']
-    obs_general_row = metadata['obs_general_row']
-    spatial = obs_general_row['spatial_sampling']
-    if spatial != '2D':
+    if not _COUVIS_is_image(**kwargs):
         return None
+
     return 65536
 
 def populate_obs_type_image_COUVIS_lesser_pixel_size(**kwargs):
-    metadata = kwargs['metadata']
-    obs_general_row = metadata['obs_general_row']
-    spatial = obs_general_row['spatial_sampling']
-    if spatial != '2D':
+    if not _COUVIS_is_image(**kwargs):
         return None
+
+    metadata = kwargs['metadata']
     supp_index_row = metadata.get('supp_index_row', None)
     if supp_index_row is None:
         return None
@@ -344,11 +336,10 @@ def populate_obs_type_image_COUVIS_lesser_pixel_size(**kwargs):
     return pixels
 
 def populate_obs_type_image_COUVIS_greater_pixel_size(**kwargs):
-    metadata = kwargs['metadata']
-    obs_general_row = metadata['obs_general_row']
-    spatial = obs_general_row['spatial_sampling']
-    if spatial != '2D':
+    if not _COUVIS_is_image(**kwargs):
         return None
+
+    metadata = kwargs['metadata']
     supp_index_row = metadata.get('supp_index_row', None)
     if supp_index_row is None:
         return None
@@ -389,7 +380,7 @@ def populate_obs_wavelength_COUVIS_wavelength1(**kwargs):
     if channel == 'FUV':
         return 0.11 + band1 * 0.000078125
 
-    import_util.log_nonrepeating_error(
+    import_util.log_nonrepeating_warning(
         f'obs_wavelength_COUVIS_wavelength1 has unknown channel type '+
         f' {channel}')
     return None
@@ -414,7 +405,7 @@ def populate_obs_wavelength_COUVIS_wavelength2(**kwargs):
     if channel == 'FUV':
         return 0.11 + (band2 + 1) * 0.000078125
 
-    import_util.log_nonrepeating_error(
+    import_util.log_nonrepeating_warning(
         f'obs_wavelength_COUVIS_wavelength1 has unknown channel type '+
         f' {channel}')
     return None
@@ -558,7 +549,7 @@ def populate_obs_mission_cassini_COUVIS_spacecraft_clock_count1(**kwargs):
     index_row = metadata['index_row']
     count = index_row['SPACECRAFT_CLOCK_START_COUNT']
     if not count.startswith('1/'):
-        import_util.log_nonrepeating_error(
+        import_util.log_nonrepeating_warning(
             f'Badly formatted SPACECRAFT_CLOCK_START_COUNT "{count}"')
         return None
     return count
@@ -576,7 +567,7 @@ def populate_obs_mission_cassini_COUVIS_spacecraft_clock_count2(**kwargs):
     try:
         count_sec = opus_support.parse_cassini_sclk(count)
     except Exception as e:
-        import_util.log_nonrepeating_error(
+        import_util.log_nonrepeating_warning(
             f'Unable to parse Cassini SCLK "{count}": {e}')
         return None
     new_count_sec = count_sec + (time2-time1)

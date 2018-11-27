@@ -82,6 +82,19 @@ class MultObsGeneralMissionId(models.Model):
         db_table = 'mult_obs_general_mission_id'
 
 
+class MultObsGeneralObservationType(models.Model):
+    id = models.PositiveIntegerField(primary_key=True)
+    value = models.CharField(max_length=100, blank=True, null=True)
+    label = models.CharField(max_length=60)
+    disp_order = models.IntegerField()
+    display = models.CharField(max_length=1)
+    timestamp = models.DateTimeField()
+
+    class Meta:
+        managed = False
+        db_table = 'mult_obs_general_observation_type'
+
+
 class MultObsGeneralPlanetId(models.Model):
     id = models.IntegerField(primary_key=True)
     value = models.CharField(max_length=100, blank=True, null=True)
@@ -106,19 +119,6 @@ class MultObsGeneralQuantity(models.Model):
     class Meta:
         managed = False
         db_table = 'mult_obs_general_quantity'
-
-
-class MultObsGeneralSpatialSampling(models.Model):
-    id = models.IntegerField(primary_key=True)
-    value = models.CharField(max_length=100, blank=True, null=True)
-    label = models.CharField(max_length=60)
-    disp_order = models.IntegerField()
-    display = models.CharField(max_length=1)
-    timestamp = models.DateTimeField()
-
-    class Meta:
-        managed = False
-        db_table = 'mult_obs_general_spatial_sampling'
 
 
 class MultObsGeneralTargetClass(models.Model):
@@ -146,32 +146,6 @@ class MultObsGeneralTargetName(models.Model):
     class Meta:
         managed = False
         db_table = 'mult_obs_general_target_name'
-
-
-class MultObsGeneralTimeSampling(models.Model):
-    id = models.IntegerField(primary_key=True)
-    value = models.CharField(max_length=100, blank=True, null=True)
-    label = models.CharField(max_length=60)
-    disp_order = models.IntegerField()
-    display = models.CharField(max_length=1)
-    timestamp = models.DateTimeField()
-
-    class Meta:
-        managed = False
-        db_table = 'mult_obs_general_time_sampling'
-
-
-class MultObsGeneralWavelengthSampling(models.Model):
-    id = models.IntegerField(primary_key=True)
-    value = models.CharField(max_length=100, blank=True, null=True)
-    label = models.CharField(max_length=60)
-    disp_order = models.IntegerField()
-    display = models.CharField(max_length=1)
-    timestamp = models.DateTimeField()
-
-    class Meta:
-        managed = False
-        db_table = 'mult_obs_general_wavelength_sampling'
 
 
 class MultObsInstrumentCoissCamera(models.Model):
@@ -1099,7 +1073,7 @@ class MultObsWavelengthSpecFlag(models.Model):
 
 
 class ObsGeneral(models.Model):
-    id = models.IntegerField(primary_key=True)
+    id = models.PositiveIntegerField(primary_key=True)
     opus_id = models.CharField(unique=True, max_length=80)
     volume_id = models.CharField(max_length=11)
     instrument_id = models.CharField(max_length=9)
@@ -1122,10 +1096,10 @@ class ObsGeneral(models.Model):
     declination2 = models.FloatField(blank=True, null=True)
     declination = models.FloatField(blank=True, null=True)
     d_declination = models.FloatField(blank=True, null=True)
-    spatial_sampling = models.CharField(max_length=5, blank=True, null=True)
-    wavelength_sampling = models.CharField(max_length=3, blank=True, null=True)
-    time_sampling = models.CharField(max_length=3, blank=True, null=True)
+    observation_type = models.CharField(max_length=3, blank=True, null=True)
     ring_obs_id = models.CharField(max_length=40, blank=True, null=True)
+    primary_file_spec = models.CharField(max_length=240, blank=True, null=True)
+    preview_images = models.TextField(blank=True, null=True)  # This field type is a guess.
     mult_obs_general_instrument = models.ForeignKey(MultObsGeneralInstrumentId, models.DO_NOTHING)
     mult_obs_general_mission = models.ForeignKey(MultObsGeneralMissionId, models.DO_NOTHING)
     mult_obs_general_inst_host = models.ForeignKey(MultObsGeneralInstHostId, models.DO_NOTHING)
@@ -1133,9 +1107,7 @@ class ObsGeneral(models.Model):
     mult_obs_general_target_name = models.ForeignKey(MultObsGeneralTargetName, models.DO_NOTHING, db_column='mult_obs_general_target_name')
     mult_obs_general_target_class = models.ForeignKey(MultObsGeneralTargetClass, models.DO_NOTHING, db_column='mult_obs_general_target_class')
     mult_obs_general_quantity = models.ForeignKey(MultObsGeneralQuantity, models.DO_NOTHING, db_column='mult_obs_general_quantity')
-    mult_obs_general_spatial_sampling = models.ForeignKey(MultObsGeneralSpatialSampling, models.DO_NOTHING, db_column='mult_obs_general_spatial_sampling')
-    mult_obs_general_wavelength_sampling = models.ForeignKey(MultObsGeneralWavelengthSampling, models.DO_NOTHING, db_column='mult_obs_general_wavelength_sampling')
-    mult_obs_general_time_sampling = models.ForeignKey(MultObsGeneralTimeSampling, models.DO_NOTHING, db_column='mult_obs_general_time_sampling')
+    mult_obs_general_observation_type = models.ForeignKey(MultObsGeneralObservationType, models.DO_NOTHING, db_column='mult_obs_general_observation_type')
     timestamp = models.DateTimeField()
 
     class Meta:

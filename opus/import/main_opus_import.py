@@ -153,7 +153,11 @@ parser.add_argument(
 )
 parser.add_argument(
     '--import-check-duplicate-id', action='store_true', default=False,
-    help='Check for duplicate opus_id; needed for GOSSI'
+    help='Check for duplicate opus_id; needed for GOSSI,COUVIS,NH'
+)
+parser.add_argument(
+    '--import-ignore-missing-images', action='store_true', default=False,
+    help='Don\'t warn about missing browse images'
 )
 
 parser.add_argument(
@@ -365,6 +369,7 @@ try: # Top-level exception handling so we always log what's going on
             limits={'info': impglobals.ARGUMENTS.log_info_limit,
                     'debug': impglobals.ARGUMENTS.log_debug_limit})
 
+    pdsfile.use_pickles()
     if impglobals.ARGUMENTS.override_pds_data_dir:
         pdsfile.preload(impglobals.ARGUMENTS.override_pds_data_dir)
     else:

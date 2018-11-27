@@ -72,7 +72,7 @@
         "field_key": true,
         "data_source": [
             "FUNCTION",
-            "obs_general_<INST>_data_set_id"
+            "obs_pds_<INST>_data_set_id"
         ],
         "definition": "PDS-supplied name for this data set.",
         "pi_category_name": "obs_pds",
@@ -98,7 +98,7 @@
         "field_key": true,
         "data_source": [
             "FUNCTION",
-            "obs_general_<INST>_product_id"
+            "obs_pds_<INST>_product_id"
         ],
         "definition": "A permanent, unique identifier assigned to a data product.",
         "pi_category_name": "obs_pds",
@@ -124,7 +124,7 @@
         "field_key": true,
         "data_source": [
             "FUNCTION",
-            "obs_general_<INST>_product_creation_time"
+            "obs_pds_<INST>_product_creation_time"
         ],
         "data_source_order": 10,
         "definition": "XXX",
@@ -177,7 +177,7 @@
         "field_key": true,
         "data_source": [
             "FUNCTION",
-            "obs_general_<INST>_primary_file_spec"
+            "obs_pds_<INST>_primary_file_spec"
         ],
         "data_source_order": 0,
         "pi_category_name": "obs_pds",
@@ -202,7 +202,7 @@
         "field_key": true,
         "data_source": [
             "FUNCTION",
-            "obs_general_<INST>_note"
+            "obs_pds_<INST>_note"
         ],
         "data_source_order": 0,
         "pi_category_name": "obs_pds",

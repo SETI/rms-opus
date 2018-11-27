@@ -55,7 +55,11 @@ def helper_galileo_target_name(**kwargs):
         import_util.announce_unknown_target_name(target_name)
         return None
 
-    return target_name
+    target_name_info = TARGET_NAME_INFO[target_name]
+    if len(target_name_info) == 3:
+        return target_name, target_name_info[2]
+
+    return (target_name, target_name.title())
 
 def helper_galileo_planet_id(**kwargs):
     # WARNING: This will need to be changed if we ever get additional volumes
@@ -63,13 +67,6 @@ def helper_galileo_planet_id(**kwargs):
     # it on the target name because we only have volumes for the time Galileo
     # was in Jupiter orbit (GO_0017 to GO_0023).
     return 'JUP'
-    # metadata = kwargs['metadata']
-    # obs_general_row = metadata['obs_general_row']
-    # target_name = helper_galileo_target_name(**kwargs)
-    # if target_name is None:
-    #     return None
-    # planet_id, _ = TARGET_NAME_INFO[target_name]
-    # return planet_id
 
 def populate_obs_general_GO_planet_id(**kwargs):
     return helper_galileo_planet_id(**kwargs)

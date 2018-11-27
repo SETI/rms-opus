@@ -1,6 +1,7 @@
 # search/tests.py
 
-# These tests require COISS_2111 in the database
+# These tests require the following volumes, imported in this order:
+# COISS_2002,COISS_2008,COISS_2111,COUVIS_0002,GO_0017,VGISS_6210,VGISS_8201,HSTI1_2003
 
 from unittest import TestCase
 
@@ -15,7 +16,6 @@ from search.views import *
 from tools.db_utils import MYSQL_TABLE_NOT_EXISTS
 
 settings.CACHE_BACKEND = 'dummy:///'
-
 
 class searchTests(TestCase):
 
@@ -1523,13 +1523,13 @@ class searchTests(TestCase):
         "Check construct_query_string with three tables."
         selections = {'obs_general.planet_id': ['Saturn'],
                       'obs_instrument_coiss.camera': ['Narrow Angle'],
-                      'obs_mission_cassini.rev_no': ['262','263']}
+                      'obs_mission_cassini.rev_no': ['00A','00C']}
         extras = {}
         sql, params = construct_query_string(selections, extras)
         print(sql)
         print(params)
         expected = 'SELECT `obs_general`.`id` FROM `obs_general` LEFT JOIN `obs_instrument_coiss` ON `obs_general`.`id`=`obs_instrument_coiss`.`obs_general_id` LEFT JOIN `obs_mission_cassini` ON `obs_general`.`id`=`obs_mission_cassini`.`obs_general_id` WHERE (`obs_general`.`mult_obs_general_planet_id` IN (%s)) AND (`obs_instrument_coiss`.`mult_obs_instrument_coiss_camera` IN (%s)) AND (`obs_mission_cassini`.`mult_obs_mission_cassini_rev_no` IN (%s,%s))'
-        expected_params = [4, 0, 264, 265]
+        expected_params = [4, 0, 2, 4]
         print(expected)
         print(expected_params)
         self.assertEqual(sql, expected)

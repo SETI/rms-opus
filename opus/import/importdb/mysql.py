@@ -109,7 +109,7 @@ class ImportDBMySQL(ImportDBSuper):
                 return cur.fetchall()
             else:
                 with self.conn.cursor() as cur:
-                    self._execute(cmd, cur)
+                    self._execute(cmd, cur=cur)
                     self.conn.commit()
                     return cur.fetchall()
         except MySQLdb.Error as e:
@@ -357,6 +357,8 @@ FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `TABLE_SCHEMA`='{self.db_schema}' AND
                 cmd += 'varchar('+field_type[7:]+')'
             elif field_type == 'text':
                 cmd += 'text'
+            elif field_type == 'json':
+                cmd += 'JSON'
             elif field_type == 'enum':
                 enum_str = column.get('field_enum_options', None)
                 assert enum_str, (raw_table_name, column)
@@ -481,18 +483,20 @@ FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `TABLE_SCHEMA`='{self.db_schema}' AND
         cmd += ','.join(['`'+s+'`' for s in sorted(sorted_column_names)])
 
         val_list = []
+        param_list = []
         for column_name in sorted_column_names:
             val = row[column_name]
             if val is None:
                 val_list.append('NULL')
             elif isinstance(val, str):
-                val_list.append('"' + str(val) + '"')
+                param_list.append(val)
+                val_list.append('%s')
             else:
                 val_list.append(str(val))
         cmd += ') VALUES(' + ','.join(val_list) + ')'
 
         try:
-            self._execute(cmd, mutates=True)
+            self._execute(cmd, param_list, mutates=True)
         except MySQLdb.Error as e:
             if self.logger:
                 self.logger.log('fatal',
@@ -529,6 +533,7 @@ FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `TABLE_SCHEMA`='{self.db_schema}' AND
             cmd += ') VALUES'
 
             first_row = True
+            param_list = []
             for row in rows[start_row:end_row]:
                 val_list = []
                 assert sorted_column_names == sorted(row.keys())
@@ -537,7 +542,8 @@ FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `TABLE_SCHEMA`='{self.db_schema}' AND
                     if val is None:
                         val_list.append('NULL')
                     elif isinstance(val, str):
-                        val_list.append('"' + str(val) + '"')
+                        val_list.append('%s')
+                        param_list.append(val)
                     else:
                         val_list.append(str(val))
                 if not first_row:
@@ -546,7 +552,7 @@ FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `TABLE_SCHEMA`='{self.db_schema}' AND
                 cmd += '(' + ','.join(val_list) + ')'
 
             try:
-                self._execute(cmd, mutates=True)
+                self._execute(cmd, param_list, mutates=True)
             except MySQLdb.Error as e:
                 if self.logger:
                     self.logger.log('fatal',
@@ -564,13 +570,15 @@ FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `TABLE_SCHEMA`='{self.db_schema}' AND
         cmd = f'UPDATE `{table_name}` SET '
 
         set_cmds = []
+        param_list = []
         for column_name in sorted_column_names:
             set_cmd = f'`{column_name}`='
             val = row[column_name]
             if val is None:
                 set_cmd += 'NULL'
             elif isinstance(val, str):
-                set_cmd += '"' + str(val) + '"'
+                set_cmd += '%s'
+                param_list.append(val)
             else:
                 set_cmd += str(val)
             set_cmds.append(set_cmd)
@@ -578,7 +586,7 @@ FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `TABLE_SCHEMA`='{self.db_schema}' AND
         cmd += ' WHERE '+where
 
         try:
-            self._execute(cmd, mutates=True)
+            self._execute(cmd, param_list, mutates=True)
         except MySQLdb.Error as e:
             if self.logger:
                 self.logger.log('fatal',
@@ -598,6 +606,8 @@ FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `TABLE_SCHEMA`='{self.db_schema}' AND
 
         val_list = []
         assign_list = []
+        param_list = []
+        dup_param_list = []
         for column_name in sorted_column_names:
             val = row[column_name]
             if val is None:
@@ -605,10 +615,11 @@ FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `TABLE_SCHEMA`='{self.db_schema}' AND
                 if column_name != key_name:
                     assign_list.append('`'+column_name+'`=NULL')
             elif isinstance(val, str):
-                s_val = '"' + str(val) + '"'
-                val_list.append(s_val)
+                val_list.append('%s')
+                param_list.append(val)
                 if column_name != key_name:
-                    assign_list.append('`'+column_name+'`=' + s_val)
+                    assign_list.append('`'+column_name+'`=%s')
+                    dup_param_list.append(val)
             else:
                 val_list.append(str(val))
                 if column_name != key_name:
@@ -617,7 +628,7 @@ FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `TABLE_SCHEMA`='{self.db_schema}' AND
         cmd += 'ON DUPLICATE KEY UPDATE ' + ','.join(assign_list)
 
         try:
-            self._execute(cmd, mutates=True)
+            self._execute(cmd, param_list+dup_param_list, mutates=True)
         except MySQLdb.Error as e:
             if self.logger:
                 self.logger.log('fatal',

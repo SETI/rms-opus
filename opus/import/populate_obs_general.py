@@ -4,11 +4,15 @@
 # Routines to populate fields in the obs_general table.
 ################################################################################
 
+import json
+
 import julian
+import pdsfile
 
 from config_data import *
 import impglobals
 import import_util
+import opus_secrets
 
 # Ordering:
 #   target_name must come before target_class
@@ -95,8 +99,8 @@ def populate_obs_general_mission_id(**kwargs):
 def populate_obs_general_target_class(**kwargs):
     metadata = kwargs['metadata']
     obs_general_row = metadata['obs_general_row']
-    # This target_name might have "S RINGS" in it; slightly different from the
-    # PDS "TARGET_NAME"
+    # This target_name might have "SATURN RINGS" in it; slightly different
+    # from the PDS "TARGET_NAME"
     target_name = obs_general_row['target_name'].upper()
     if target_name in TARGET_NAME_MAPPING:
         target_name = TARGET_NAME_MAPPING[target_name]
@@ -105,7 +109,7 @@ def populate_obs_general_target_class(**kwargs):
         if impglobals.ARGUMENTS.import_ignore_errors:
             return 'OTHER'
         return None
-    _, target_class = TARGET_NAME_INFO[target_name]
+    target_class = TARGET_NAME_INFO[target_name][1]
     return target_class
 
 def populate_obs_general_time_sec1(**kwargs):
@@ -144,9 +148,54 @@ def populate_obs_general_time_sec2(**kwargs):
 
     if time1_sec is not None and time2_sec < time1_sec:
         time1 = general_row['time1']
-        import_util.log_error(f'time1 ({time1}) and time2 ({time2}) are '+
-                              f'in the wrong order - setting to time1')
-        impglobals.IMPORT_HAS_BAD_DATA = True
+        import_util.log_warning(f'time1 ({time1}) and time2 ({time2}) are '+
+                                f'in the wrong order - setting to time1')
         time2_sec = time1_sec
 
     return time2_sec
+
+def populate_obs_general_preview_images(**kwargs):
+    metadata = kwargs['metadata']
+    general_row = metadata['obs_general_row']
+    file_spec = general_row['primary_file_spec']
+
+    # XXX
+    if file_spec.startswith('NH'):
+        file_spec = file_spec.replace('.lbl', '.fit')
+        file_spec = file_spec.replace('.LBL', '.FIT')
+    elif file_spec.startswith('COUVIS'):
+        file_spec = file_spec.replace('.LBL', '.DAT')
+    elif file_spec.startswith('VGISS'):
+        file_spec = file_spec.replace('.LBL', '.IMG')
+
+    pdsf = pdsfile.PdsFile.from_filespec(file_spec)
+    try:
+        viewset = pdsf.viewset
+    except ValueError as e:
+        import_util.log_nonrepeating_warning(
+            f'ViewSet threw ValueError for "{file_spec}": {e}')
+        viewset = None
+
+    if viewset:
+        browse_data = viewset.to_dict()
+        if not impglobals.ARGUMENTS.import_ignore_missing_images:
+            if not viewset.thumbnail:
+                import_util.log_nonrepeating_warning(
+                    f'Missing thumbnail browse/diagram image for "{file_spec}"')
+            if not viewset.small:
+                import_util.log_nonrepeating_warning(
+                    f'Missing small browse/diagram image for "{file_spec}"')
+            if not viewset.medium:
+                import_util.log_nonrepeating_warning(
+                    f'Missing medium browse/diagram image for "{file_spec}"')
+            if not viewset.full_size:
+                import_util.log_nonrepeating_warning(
+                    f'Missing full_size browse/diagram image for "{file_spec}"')
+    else:
+        browse_data = {'viewables': []}
+        if not impglobals.ARGUMENTS.import_ignore_missing_images:
+            import_util.log_nonrepeating_warning(
+                f'Missing all browse/diagram images for "{file_spec}"')
+
+    ret = json.dumps(browse_data)
+    return ret

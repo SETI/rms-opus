@@ -179,6 +179,7 @@ def url_to_search_params(request_get):
                     log.error('url_to_search_params: Function "%s" slug "%s" '
                               +'threw ValueError(%s) for %s',
                               func, slug, e, values)
+                    return None, None
             else:
                 # Normal 2-column range query
                 if param_name in selections:
@@ -192,6 +193,7 @@ def url_to_search_params(request_get):
                     log.error('url_to_search_params: Function "%s" slug "%s" '
                               +'threw ValueError(%s) for %s',
                               func, slug, e, values)
+                    return None, None
         else:
             # For non-RANGE queries, we just put the values here raw
             if param_name in selections:
@@ -1031,13 +1033,12 @@ def create_order_by_sql(order_params, descending_params):
                 return None, None
             (form_type, form_type_func,
              form_type_format) = parse_form_type(pi.form_type)
+            order_param = pi.param_name()
+            order_obs_tables.add(pi.category_name)
             if form_type in settings.MULT_FORM_TYPES:
                 mult_table = get_mult_name(pi.param_name())
                 order_param = mult_table + '.label'
                 order_mult_tables.add((mult_table, pi.category_name))
-            else:
-                order_param = pi.param_name()
-                order_obs_tables.add(pi.category_name)
             if descending_params[i]:
                 order_param += ' DESC'
             else:
