@@ -741,9 +741,9 @@ def import_one_volume(volume_id):
                 f'{assoc_label_path} is missing RING_OBSERVATION_ID field')
                                 break
                             if ring_obs_id.endswith('IR'):
-                                key += '_IR'
+                                key += '_ir'
                             elif ring_obs_id.endswith('VIS'):
-                                key += '_VIS'
+                                key += '_vis'
                             else:
                                 import_util.log_nonrepeating_error(
                  f'{assoc_label_path} has bad RING_OBSERVATION_ID for '+

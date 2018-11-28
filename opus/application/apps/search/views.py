@@ -179,6 +179,7 @@ def url_to_search_params(request_get):
                     log.error('url_to_search_params: Function "%s" slug "%s" '
                               +'threw ValueError(%s) for %s',
                               func, slug, e, values)
+                    return None, None
             else:
                 # Normal 2-column range query
                 if param_name in selections:
@@ -192,6 +193,7 @@ def url_to_search_params(request_get):
                     log.error('url_to_search_params: Function "%s" slug "%s" '
                               +'threw ValueError(%s) for %s',
                               func, slug, e, values)
+                    return None, None
         else:
             # For non-RANGE queries, we just put the values here raw
             if param_name in selections:
