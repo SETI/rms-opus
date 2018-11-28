@@ -7,13 +7,13 @@ if __name__ == "__main__":
     # pass in livetest to run against actual server
     argv = sys.argv
     if "live-pro" in argv:
-        argv.remove("live-pro")
+        argv.remove("api-live-pro")
         argv.append("test_api/enable_livetests.py")
     elif "live-dev" in argv:
-        argv.remove("live-dev")
+        argv.remove("api-live-dev")
         argv.append("test_api/enable_livetests_dev.py")
     elif "app" in argv:
-        argv.remove("app")
+        argv.remove("api-internal-db")
         argv.append("test_api/")
 
     from django.core.management import execute_from_command_line
