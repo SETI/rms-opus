@@ -448,6 +448,17 @@ try: # Top-level exception handling so we always log what's going on
 
         impglobals.LOGGER.close()
 
+    if (impglobals.ARGUMENTS.create_collections and
+        impglobals.TRY_COLLECTIONS_LATER):
+        impglobals.LOGGER.open(
+            f'Trying to create collections table a second time',
+            limits={'info': impglobals.ARGUMENTS.log_info_limit,
+                    'debug': impglobals.ARGUMENTS.log_debug_limit})
+
+        do_collections.create_collections()
+
+        impglobals.LOGGER.close()
+
     if impglobals.ARGUMENTS.validate_perm:
         do_validate.do_validate('perm')
 

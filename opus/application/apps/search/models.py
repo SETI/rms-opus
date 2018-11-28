@@ -1094,8 +1094,6 @@ class ObsGeneral(models.Model):
     d_right_asc = models.FloatField(blank=True, null=True)
     declination1 = models.FloatField(blank=True, null=True)
     declination2 = models.FloatField(blank=True, null=True)
-    declination = models.FloatField(blank=True, null=True)
-    d_declination = models.FloatField(blank=True, null=True)
     observation_type = models.CharField(max_length=3, blank=True, null=True)
     ring_obs_id = models.CharField(max_length=40, blank=True, null=True)
     primary_file_spec = models.CharField(max_length=240, blank=True, null=True)
