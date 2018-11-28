@@ -1,3 +1,5 @@
+# opus/application/test_api/test_vims_image_downlinks.py
+
 import logging
 import requests
 import sys
@@ -34,10 +36,11 @@ class ApiVimsDownlinksTests(TestCase):
         api = ApiForVimsDownlinks(target=ApiVimsDownlinksTests.LIVE_TARGET)
         image_count = {}
         error_msg = []
+        test_data_not_available = ""
 
         for primary_filespec in api.api_dict:
             try:
-                image_count = self.collect_vims_image_numbers_for_single_primary_filespec(primary_filespec, api.api_dict)
+                image_count = self._collect_vims_image_numbers_for_single_primary_filespec(primary_filespec, api.api_dict)
             except Exception as error:
                 error_msg.append(error)
 
@@ -64,14 +67,20 @@ class ApiVimsDownlinksTests(TestCase):
                         if v2_count >= v1_count:
                             error_msg.append("%s is missing downlinks for image: %s" %(v1_id, image))
 
-        if error_msg and ApiVimsDownlinksTests.GO_LIVE:
+        if error_msg:
             for e in error_msg:
-                raise Exception("VIMS downlinks test failed")
+                if e.args[0] == "Test db has no VIMS data":
+                    test_data_not_available = "Test db has no VIMS data"
+                else:
+                    raise Exception("VIMS downlinks test failed")
+        if test_data_not_available:
+            print(test_data_not_available)
+
 
     ########################
     ### Helper functions ###
     ########################
-    def collect_vims_image_numbers_for_single_primary_filespec(self, primary_filespec, api_dict):
+    def _collect_vims_image_numbers_for_single_primary_filespec(self, primary_filespec, api_dict):
         """Collect vims image numbers for ONE primary_filespecself.
            return an image_count object to store the numbers
            ex:
@@ -88,8 +97,8 @@ class ApiVimsDownlinksTests(TestCase):
         """
 
         if not ApiVimsDownlinksTests.GO_LIVE:
-            # client = RequestsClient()
-            raise Exception("Test db has no VIMS data")
+            client = RequestsClient()
+            # raise Exception("Test db has no VIMS data")
         else:
             client = requests.Session()
 
@@ -103,6 +112,10 @@ class ApiVimsDownlinksTests(TestCase):
 
         if response.status_code == 200:
             data_object = response.json()["data"]
+            # When test db return empty object, we would NOT proceed to count the number of images
+            if not data_object and not ApiVimsDownlinksTests.GO_LIVE:
+                raise Exception("Test db has no VIMS data")
+
             for image_id in primary_filespec_object["images_with_opus_id"]:
                 image_count[image_id] = {
                     "browse-thumb": len(data_object[image_id]["browse-thumb"]),

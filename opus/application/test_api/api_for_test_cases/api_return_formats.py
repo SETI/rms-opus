@@ -1,6 +1,8 @@
+# opus/application/test_api/api_for_test_cases/api_return_formats.py
+
 # This class is to build up testing APIs for either production or dev sites
 class ApiFormats:
-    formats = ["json", "html", "csv"]
+    formats = ["json", "html", "csv", "zip"]
     # slugs for testing
     payload_for_result_count = {"planet": "Saturn", "target": "Pan", "limit": 2}
     payload_for_mults = {"planet": "Jupiter", "target": "Jupiter", "limit": 2}

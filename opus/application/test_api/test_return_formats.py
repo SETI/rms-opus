@@ -1,3 +1,5 @@
+# opus/application/test_api/test_return_formats.py
+
 import logging
 import requests
 import sys
@@ -54,9 +56,10 @@ class ApiReturnFormatTests(TestCase):
         for api_url in api.api_dict:
             flag = 0
             for target_format in api.api_dict[api_url]["support_format"]:
-                
+            # for target_format in ApiFormats.formats:
+
                 try:
-                    self.one_api_call(api_url, api.api_dict, target_format)
+                    self._one_api_call(api_url, api.api_dict, target_format)
 
                 except Exception as e:
                     error_flag = 1
@@ -71,7 +74,7 @@ class ApiReturnFormatTests(TestCase):
     ########################
     ### Helper functions ###
     ########################
-    def one_api_call(self, api_url_base, api_dict, format):
+    def _one_api_call(self, api_url_base, api_dict, format):
         """Check single api call to see if response is 200.
            api_url_base: a string of api url
            api_dict: a dictionary containing the payload
