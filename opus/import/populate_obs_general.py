@@ -5,6 +5,7 @@
 ################################################################################
 
 import json
+import os
 
 import julian
 import pdsfile
@@ -192,10 +193,30 @@ def populate_obs_general_preview_images(**kwargs):
                 import_util.log_nonrepeating_warning(
                     f'Missing full_size browse/diagram image for "{file_spec}"')
     else:
-        browse_data = {'viewables': []}
-        if not impglobals.ARGUMENTS.import_ignore_missing_images:
-            import_util.log_nonrepeating_warning(
-                f'Missing all browse/diagram images for "{file_spec}"')
+        if impglobals.ARGUMENTS.import_fake_images:
+            base_path = os.path.splitext(pdsf.logical_path)[0]
+            base_path = base_path.replace('volumes', 'previews')
+            base_path = 'holdings/'+base_path
+            ext = 'jpg'
+            if (base_path.find('VIMS') != -1 or
+                base_path.find('UVIS') != -1):
+                ext = 'png'
+            browse_data = {'viewables':
+                [{'url': base_path+'_thumb.'+ext,
+                  'bytes': 500, 'width': 100, 'height': 100},
+                 {'url': base_path+'_small.'+ext,
+                  'bytes': 1000, 'width': 256, 'height': 256},
+                 {'url': base_path+'_med.'+ext,
+                  'bytes': 2000, 'width': 512, 'height': 512},
+                 {'url': base_path+'_full.'+ext, 'name': 'full',
+                  'bytes': 4000, 'width': 1024, 'height': 1024}
+                ]
+            }
+        else:
+            browse_data = {'viewables': []}
+            if not impglobals.ARGUMENTS.import_ignore_missing_images:
+                import_util.log_nonrepeating_warning(
+                    f'Missing all browse/diagram images for "{file_spec}"')
 
     ret = json.dumps(browse_data)
     return ret
