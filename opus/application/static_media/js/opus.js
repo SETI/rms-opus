@@ -44,6 +44,7 @@ var opus = {
             'widget_scroll':{}, // search tab widget internal scroll saved
             'detail':'', // opus_id of detail page content
 
+
      }, // pref changes do not trigger load()
 
     col_labels: [],  // may be empty, contains labels that match prefs.cols

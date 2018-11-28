@@ -36,7 +36,7 @@ var o_menu = {
                 return false;
 
              } else {
-                  $(this).css("background", "gainsboro");
+                  o_menu.markMenuItem(this);
                   o_widgets.getWidget(slug,'#search_widgets');
              }
              o_hash.updateHash();
@@ -122,12 +122,22 @@ var o_menu = {
             }
             // highlight open widgets
             $.each(opus.widgets_drawn, function(index, widget) {
-                $("li > [data-slug='"+widget+"']").css("background", "gainsboro");
+                o_menu.markMenuItem("li > [data-slug='"+widget+"']");
             });
 
             o_search.adjustSearchHeight();
             $('.menu_spinner').fadeOut("fast");
         });
+     },
+
+     markMenuItem: function(selector, selected) {
+        if (selected == undefined || selected == "select") {
+            $(selector).css("background", "gainsboro");
+            $(selector).find("i.fa-check").fadeIn().css('display', 'inline-block');
+        } else {
+            $(selector).css("background", "initial");
+            $(selector).find("i.fa-check").fadeIn().css('display', 'none');
+      }
      },
 
 

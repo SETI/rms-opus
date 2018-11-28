@@ -77,7 +77,9 @@ var o_widgets = {
         delete opus.extras['qtype-'+slug_no_num];
         delete opus.extras['z-'+slug_no_num];
 
-        $("li [data-slug='"+slug+"']").css("background", "initial");
+        var selector = "li [data-slug='"+slug+"']";
+        o_menu.markMenuItem(selector, "unselect");
+
         o_hash.updateHash();
         o_widgets.updateWidgetCookies();
 
@@ -467,7 +469,7 @@ var o_widgets = {
 
 
      scrollToWidget: function(widget) {
-        // scrolls window to a widget and highlights the widge
+        // scrolls window to a widget
         // widget is like: "widget__" + slug
         //  scroll the widget panel to top
         $('#search').animate({

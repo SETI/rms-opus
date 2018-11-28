@@ -2,7 +2,8 @@ var o_detail = {
 
     getDetail: function (opus_id) {
 
-        opus.prefs['detail'] = opus_id;
+        opus.prefs.detail = opus_id;
+        let detailSelector = "#detail .panel";
 
         if (!opus_id) {
             // helpful
@@ -12,14 +13,13 @@ var o_detail = {
                 at the top of the page. Click on a thumbnail and then "View Detail".</p>   \
                 </div>'
 
-            $('#detail').html(html).fadeIn();
+            $(detailSelector).html(html).fadeIn();
             return;
         }
 
-        $('#detail').html(opus.spinner);
-        $('#detail_extra').html(opus_id); // ??
+        $(detailSelector).html(opus.spinner);
 
-        $("#detail").load("/opus/__initdetail/" + opus_id + ".html",
+        $(detailSelector).load("/opus/__initdetail/" + opus_id + ".html",
                           function(response, status, xhr){
             if (status == 'error') {
               html = ' \
@@ -27,12 +27,12 @@ var o_detail = {
                   <p>The specified OPUS_ID (or old RING_OBS_ID) was not found in the database.</p>   \
                   </div>'
 
-              $('#detail').html(html).fadeIn();
+              $(detailSelector).html(html).fadeIn();
               return;
             }
             // get the column metadata, this part is fast
             url = "/opus/__api/metadata_v2/" + opus_id + ".html?" + o_hash.getHash();
-            $("#cols_metadata")
+            $("#cols_metadata_"+opus_id)
                 .load(url, function() {
                     $(this).hide().fadeIn("fast");
                 }

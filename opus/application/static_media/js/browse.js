@@ -14,7 +14,7 @@ var o_browse = {
 
         // nav stuff
         var onRenderBrowse = _.debounce(o_browse.renderBrowseData, 500);
-        $("#browse").on("click", "a.next, a.prev", function() {
+        $(".browse-nav-container").on("click", "a.next, a.prev", function() {
 
             // we will set a timer to wait for settle but right now just do it
             var currentPage = parseInt($("input#page").val());
@@ -157,23 +157,7 @@ var o_browse = {
                 opus_id = $(this).parent().data("id");
             }
 
-            // while modal is up, highlight the image/table row shown
-            $("tr[data-id='"+opus_id+"']").addClass("highlight");
-            $("a.thumbnail[data-id='"+opus_id+"']").parent().addClass("thumb_selected");
-
-            var imageURL = $("#browse").find("a[data-id='"+opus_id+"']").data("image");
-            if (imageURL === undefined) {
-                // put a temp spinner while retrieving the image; this only happens if the data table is loaded first
-                $("#galleryViewContents").html(o_browse.loader + o_browse.metadataboxHtml(opus_id));
-
-                var url = '/opus/__api/image/full/' + opus_id + '.json';
-                $.getJSON(url, function(imageData) {
-                    var imageURL = imageData["data"][0]['url'];
-                    o_browse.updateMetaGalleryView(opus_id, imageURL);
-                });
-            } else {
-                o_browse.updateMetaGalleryView(opus_id, imageURL);
-            }
+            o_browse.updateGalleryView(opus_id);
         });
 
         // data_table - clicking a table row adds to cart
@@ -270,15 +254,32 @@ var o_browse = {
             return false;
         });
 
+        $('#galleryView').on("click", "a.select", function(e) {
+            let opus_id = $(this).data("id");
+            if (opus_id) {
+                let action = o_browse.toggleBrowseInCollectionStyle(opus_id);
+                o_browse.cartHandler(opus_id, action);
+            }
+            return false;
+        });
+
+        $('#galleryView').on("click", "a.prev,a.next", function(e) {
+            let action = $(this).hasClass("prev") ? "prev" : "next";
+            let opus_id = $(this).data("id");
+            if (opus_id) {
+                o_browse.updateGalleryView(opus_id);
+            }
+            return false;
+        });
 
         // click table column header to reorder by that column
         $("#browse").on("click", '.data_table th a',  function() {
-            var order_by =  $(this).data('slug');
+            let order_by =  $(this).data('slug');
             if (order_by == 'collection') {
               // Don't do anything if clicked on the "Selected" column
               return false;
             }
-            var order_indicator = $(this).find('.column_ordering');
+            let order_indicator = $(this).find('.column_ordering');
             if (order_indicator.hasClass('fa-sort-asc')) {
                 // currently ascending, change to descending order
                 order_indicator.removeClass('fa-sort-asc');
@@ -453,8 +454,12 @@ var o_browse = {
 
     toggleBrowseInCollectionStyle: function(opus_id) {
         var elem = o_browse.getGalleryElement(opus_id);
+
+        // if this opus_id is modal, make sure it stays highlighted
+        o_browse.toggleGalleryViewHighlight("on");
+
         elem.toggleClass("in"); // this class keeps parent visible when mouseout
-        elem.parent().toggleClass('thumb_selected');
+
         return (elem.hasClass("in") ? "add" : "remove");
     },
 
@@ -912,26 +917,30 @@ var o_browse = {
 
     metadataboxHtml: function(opus_id) {
         // list columns + values
-        var html = '<dl>';
-        for (var i in opus.prefs['cols']) {
+        var html = "<dl>";
+        for (var i in opus.prefs["cols"]) {
             var column = opus.col_labels[i];  // use the label not the column title
             var value = opus.gallery_data[opus_id][i];
-            html += '<dt>' + column + ':</dt><dd>' + value + '</dd>';
+            html += "<dt>" + column + ":</dt><dd>" + value + "</dd>";
 
         }
-        html += '</dl>';
+        html += "</dl>";
+        let next = $("#browse tr[data-id="+opus_id+"]").next("tr");
+        next = (next.length > 0 ? next.data("id") : "");
+        let prev = $("#browse tr[data-id="+opus_id+"]").prev("tr");
+        prev = (prev.length > 0 ? prev.data("id") : "");
 
-        // add a link to detail page; seriously borken at momen
-        //html += '<p><a href = "/opus/detail/' + opus_id + '.html" class = "detailViewLink" data-opusid="' + opus_id + '">View Detail</a></p>';
+        // add a link to detail page;
         var hashArray = o_hash.getHashArray();
         hashArray["view"] = "detail";
         hashArray["detail"] = opus_id;
         html += '<p><a href = "/opus/#/' + o_hash.hashArrayToHashString(hashArray) + '" class="detailViewLink" data-opusid="' + opus_id + '">View Detail</a></p>';
 
         // prev/next buttons - put this in galleryView html...
-//        html += "<div class='fixed-bottom'>";
-//        html += "<a href='#' class='prev pr-5'><i class='far fa-hand-point-left fa-3x float-right'></i></a>";
-//        html += "<a href='#' class='next pr-5'><i class='far fa-hand-point-right fa-3x float-right'></i></a></div>";
+        html += "<div class='bottom'>";
+        html += "<a href='#' class='select' data-id='"+opus_id+"' title='Add to selections'><i class='fas fa-cart-plus fa-2x float-left'></i></a>";
+        html += "<a href='#' class='next pr-5' data-id='"+next+"' title='Next image'><i class='far fa-hand-point-right fa-2x float-right'></i></a>";
+        html += "<a href='#' class='prev pr-5' data-id='"+prev+"' title='Previous image'><i class='far fa-hand-point-left fa-2x float-right'></i></a></div>";
         return html;
     },
 
@@ -950,11 +959,40 @@ var o_browse = {
                     break;
                 case undefined:
                 default:
-                    $("tr[data-id='"+opus_id+"']").toggleClass("highlight");
-                    $("a.thumbnail[data-id='"+opus_id+"']").parent().toggleClass("thumb_selected");
+                    // don't unhighlight if it is in collection unless specifically asked
+                    if (!$("a.thumbnail[data-id='"+opus_id+"']").hasClass("in")) {
+                        $("tr[data-id='"+opus_id+"']").toggleClass("highlight");
+                        $("a.thumbnail[data-id='"+opus_id+"']").parent().toggleClass("thumb_selected");
+                    }
+                    break;
             }
         }
     },
+
+    updateGalleryView: function(opus_id) {
+        // untoggle previous modal
+        o_browse.toggleGalleryViewHighlight();
+
+        // while modal is up, highlight the image/table row shown
+        $("tr[data-id='"+opus_id+"']").addClass("highlight");
+        $("a.thumbnail[data-id='"+opus_id+"']").parent().addClass("thumb_selected");
+
+        var imageURL = $("#browse").find("a[data-id='"+opus_id+"']").data("image");
+        if (imageURL === undefined) {
+            // put a temp spinner while retrieving the image; this only happens if the data table is loaded first
+            $("#galleryViewContents").html(o_browse.loader + o_browse.metadataboxHtml(opus_id));
+            $("#galleryViewContents").data("id", opus_id);
+
+            var url = '/opus/__api/image/full/' + opus_id + '.json';
+            $.getJSON(url, function(imageData) {
+                var imageURL = imageData["data"][0]['url'];
+                o_browse.updateMetaGalleryView(opus_id, imageURL);
+            });
+        } else {
+            o_browse.updateMetaGalleryView(opus_id, imageURL);
+        }
+    },
+
 
     updateMetaGalleryView: function(opus_id, imageURL) {
         $("#galleryViewContents .left").html("<a href='"+imageURL+"'><img src='"+imageURL+"' title='"+opus_id+"' class='preview'/></a>");

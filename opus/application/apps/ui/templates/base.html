@@ -31,12 +31,19 @@
 					<a class="nav-link" href="#detail" data-toggle="tab" role="tab" aria-controls="detail" aria-selected="false">Detail</a>
 				</li>
 				<li class="nav-item external-link">
-					<a href="https://ringsnodesearchtool.blogspot.com/" target="_blank" aria-controls="blogspot">
+					<a class="nav-link" href="https://ringsnodesearchtool.blogspot.com/" target="_blank" aria-controls="blogspot">
 						<div class="container align-items-center d-flex h-100 my-auto">
 							<img src="{{ STATIC_URL }}img/new_25.gif"/>&nbsp;Recent Announcements
 						</div>
 					</a>
 				</li>
+				<li class="nav-item external-link">
+					<a class="nav-link" href="https://pds-rings.seti.org/cgi-bin/comments/form.pl" target="_blank" aria-controls="feedback">
+						<div class="container align-items-center d-flex h-100 my-auto">
+							Questions/Feedback
+						</div>
+					</a>
+                </li>
 			</ul>
 		</nav>
 		{% block content %}
@@ -123,7 +130,9 @@
 			</div>
 
 			<div id="detail" class="tab-pane fade" role="tabpanel" aria-labelledby="detail-tab">
+				<div class="panel panel-default">
 				<!-- /detail  -->
+				</div>
 			</div>
 
 		</div><!-- /tabcontent -->

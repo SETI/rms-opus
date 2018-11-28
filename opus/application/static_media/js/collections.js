@@ -71,7 +71,7 @@ var o_collections = {
 
          // click create zip file link on detail page
          $("#detail").on("click", '#create_zip_file', function() {
-             $('#zip_file', "#detail").html(opus.spinner + " zipping files");
+             $('#zip_file', "#detail panel").html(opus.spinner + " zipping files");
               $.ajax({ url: $(this).attr("href"),
                      success: function(json){
                          $('#zip_file').html('<a href = "' + json + '">' + json + '</a>');

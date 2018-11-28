@@ -109,8 +109,8 @@ body {
 }
 
 #sidebar {
-	min-width: 350px;
-	max-width: 350px;
+	min-width: 24rem;
+	max-width: 26rem;
 	height: 100%;
 }
 
@@ -131,8 +131,8 @@ body {
 #sidebar .menu_help {
     margin:0;
     color:blue;
-    padding: 5px 10px;
-    padding-left:25px;
+    padding: .1em .2em;
+    padding-left: 1em;
 }
 
 .sidebar_wrapper {
@@ -455,6 +455,22 @@ img.preview {
     top: -10px;
     right: -10px;
 		z-index: 999;
+}
+
+#galleryView .fa-cart-plus {
+		float: left;
+}
+
+#galleryView .bottom {
+		position: fixed;
+		right: 2em;
+		bottom: 1.5em;
+		width: 38%;
+		z-index: 1030;
+}
+
+#galleryView .prev > i {
+		margin-right: .4em;
 }
 
 .collection_details {
