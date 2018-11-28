@@ -159,6 +159,10 @@ parser.add_argument(
     '--import-ignore-missing-images', action='store_true', default=False,
     help='Don\'t warn about missing browse images'
 )
+parser.add_argument(
+    '--import-fake-images', action='store_true', default=False,
+    help='Fake the existence of browse images if real browse files are missing'
+)
 
 parser.add_argument(
     '--delete-permanent-import-volumes', action='store_true', default=False,
@@ -390,6 +394,25 @@ try: # Top-level exception handling so we always log what's going on
 
     impglobals.DATABASE.log_sql = impglobals.ARGUMENTS.log_sql
 
+    # This MUST be done before the permanent tables are created, because there
+    # could be entries in the collections table that point at the permanent
+    # tables, and import could delete entries out of the permanent tables
+    # causing a foreign key violation.
+
+    if (impglobals.ARGUMENTS.drop_cache_tables or
+        impglobals.ARGUMENTS.create_collections):
+        impglobals.LOGGER.open(
+            f'Cleaning up OPUS/Django tables',
+            limits={'info': impglobals.ARGUMENTS.log_info_limit,
+                    'debug': impglobals.ARGUMENTS.log_debug_limit})
+
+        if impglobals.ARGUMENTS.create_collections:
+            do_collections.create_collections()
+        if impglobals.ARGUMENTS.drop_cache_tables:
+            do_django.drop_cache_tables()
+
+        impglobals.LOGGER.close()
+
     do_import.do_import_steps()
 
     # This MUST be done after the permanent tables are created, since they
@@ -412,20 +435,6 @@ try: # Top-level exception handling so we always log what's going on
             do_table_names.do_table_names()
         if impglobals.ARGUMENTS.create_grouping_target_name:
             do_grouping_target_name.do_grouping_target_name()
-
-        impglobals.LOGGER.close()
-
-    if (impglobals.ARGUMENTS.drop_cache_tables or
-        impglobals.ARGUMENTS.create_collections):
-        impglobals.LOGGER.open(
-            f'Cleaning up OPUS/Django tables',
-            limits={'info': impglobals.ARGUMENTS.log_info_limit,
-                    'debug': impglobals.ARGUMENTS.log_debug_limit})
-
-        if impglobals.ARGUMENTS.create_collections:
-            do_collections.create_collections()
-        if impglobals.ARGUMENTS.drop_cache_tables:
-            do_django.drop_cache_tables()
 
         impglobals.LOGGER.close()
 
