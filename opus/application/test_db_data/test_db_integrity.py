@@ -12,33 +12,6 @@ from tools.db_utils import MYSQL_TABLE_NOT_EXISTS
 
 class DBIntegrityTest(TestCase):
 
-    # Clean up the user_searches and cache tables before and after running
-    # the tests so that the results from set_user_search_number and
-    # get_user_query_table are predictable.
-
-    def setUp(self):
-        print('Running setup')
-        cursor = connection.cursor()
-        cursor.execute('DELETE FROM user_searches')
-        cursor.execute("ALTER TABLE user_searches AUTO_INCREMENT = 1")
-        cursor.execute("SHOW TABLES LIKE %s" , ["cache_%"])
-        for row in cursor:
-            q = 'DROP TABLE ' + row[0]
-            print(q)
-            cursor.execute(q)
-
-    def teardown(self):
-        assert False
-        print('Running teardown')
-        cursor = connection.cursor()
-        cursor.execute('DELETE FROM user_searches')
-        cursor.execute("ALTER TABLE user_searches AUTO_INCREMENT = 1")
-        cursor.execute("SHOW TABLES LIKE %s" , ["cache_%"])
-        for row in cursor:
-            q = 'DROP TABLE ' + row[0]
-            print(q)
-            cursor.execute(q)
-
     #############################################
     ######### DATABASE INTEGRITY CHECKS #########
     #############################################

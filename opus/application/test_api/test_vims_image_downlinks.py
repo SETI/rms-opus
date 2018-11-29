@@ -70,16 +70,17 @@ class ApiVimsDownlinksTests(TestCase):
                                 v2_id = v2_vis_id
                             v2_count = image_count[v2_id][image]
 
-                            if not v1_count > 0:
+                            if not v1_count:
                                 error_msg.append(f"{v1_id} is missing downlinks for image: {images}")
-                            if not v2_count > 0:
+                            if not v2_count:
                                 error_msg.append(f"{v2_id} is missing downlinks for image: {image}")
                             if v2_count >= v1_count:
                                 error_msg.append(f"{v1_id} is missing downlinks for image: {image}")
 
         if error_msg:
             for e in error_msg:
-                if e.args[0] in ["No VIMS data in test db", "VIMS image data is not fully available in test db"] :
+                if e.args[0] in ["No VIMS data in test db",
+                                 "VIMS image data is not fully available in test db"] :
                     test_data_not_available = e.args[0]
                 else:
                     raise Exception("VIMS downlinks test failed")

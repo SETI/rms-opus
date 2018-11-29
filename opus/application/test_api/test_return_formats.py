@@ -19,7 +19,7 @@ class ApiReturnFormatTests(TestCase):
     # disable error logging and trace output before test
     def setUp(self):
         sys.tracebacklimit = 0 # default: 1000
-        logging.disable(logging.CRITICAL)
+        logging.disable(logging.WARN)
 
     # enable error logging and trace output after test
     def teardown(self):

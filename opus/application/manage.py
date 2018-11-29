@@ -2,15 +2,13 @@
 import os
 import sys
 
-import re
-
 if __name__ == "__main__":
     os.environ.setdefault("DJANGO_SETTINGS_MODULE", "settings")
 
     # pass in livetest to run against actual server
     argv = sys.argv
     for command in argv:
-        if re.match("api.*", command):
+        if command.startswith("api"):
             if command == "api-livetest-pro":
                 argv.remove("api-livetest-pro")
                 argv.append("test_api/enable_livetests.py")
@@ -25,7 +23,7 @@ if __name__ == "__main__":
                         "api-internal-db, "\
                         "api-livetest-pro, "\
                         "api-livetest-dev"
-                print(f"{usage}")
+                print(usage)
                 sys.exit()
 
     from django.core.management import execute_from_command_line
