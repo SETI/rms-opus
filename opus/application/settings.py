@@ -144,9 +144,17 @@ INSTALLED_APPS = (
     'ui',
     'user_collections',
     'tools',
-    'dictionary'
+    'dictionary',
+    'rest_framework',
 )
 
+REST_FRAMEWORK = {
+    'TEST_REQUEST_RENDERER_CLASSES': (
+        'rest_framework.renderers.MultiPartRenderer',
+        'rest_framework.renderers.JSONRenderer',
+        'rest_framework.renderers.TemplateHTMLRenderer'
+    )
+}
 
 if _HAS_MEMCACHE:
     # https://github.com/edavis/django-infinite-memcached/tree/
