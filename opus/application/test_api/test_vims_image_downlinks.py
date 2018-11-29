@@ -15,7 +15,7 @@ from test_return_formats import ApiFormats
 ##################
 class ApiVimsDownlinksTests(TestCase):
     GO_LIVE = False
-    LIVE_TARGET = "internal"
+    LIVE_TARGET = "production"
 
     # disable error logging and trace output before test
     # def setUp(self):
@@ -35,13 +35,9 @@ class ApiVimsDownlinksTests(TestCase):
            Check if any image numbers from 001 > ones in 002
            Check if image counts for each primary filespec are all > 0
         """
-        if ApiVimsDownlinksTests.GO_LIVE:
-            api = ApiForVimsDownlinks(target=ApiVimsDownlinksTests.LIVE_TARGET)
-            test_dict = [api.api_dict]
-        else:
-            api_internal = ApiForVimsDownlinks(target="internal")
-            api_public = ApiForVimsDownlinks(target="public")
-            test_dict =  [api_internal.api_dict, api_public.api_dict]
+        api_public = ApiForVimsDownlinks(target=ApiVimsDownlinksTests.LIVE_TARGET)
+        api_internal = ApiForVimsDownlinks(target=f"internal-{ApiVimsDownlinksTests.LIVE_TARGET}")
+        test_dict =  [api_internal.api_dict, api_public.api_dict]
 
         image_count = {}
         error_msg = []

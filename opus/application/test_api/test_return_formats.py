@@ -14,7 +14,7 @@ from rest_framework.test import RequestsClient
 ##################
 class ApiReturnFormatTests(TestCase):
     GO_LIVE = False
-    LIVE_TARGET = "public"
+    LIVE_TARGET = "production"
 
     # disable error logging and trace output before test
     def setUp(self):
@@ -50,13 +50,9 @@ class ApiReturnFormatTests(TestCase):
         """Check all api calls with different formats to see if response is 200.
            Raise error when any response status code is NOT 200
         """
-        if ApiReturnFormatTests.GO_LIVE:
-            api = ApiFormats(target=ApiReturnFormatTests.LIVE_TARGET)
-            test_dict = api.api_dict
-        else:
-            api_internal = ApiFormats(target="internal")
-            api_public = ApiFormats(target="public")
-            test_dict =  {**api_internal.api_dict, **api_public.api_dict}
+        api_public = ApiFormats(target=ApiReturnFormatTests.LIVE_TARGET)
+        api_internal = ApiFormats(target=f"internal-{ApiReturnFormatTests.LIVE_TARGET}")
+        test_dict =  {**api_internal.api_dict, **api_public.api_dict}
 
         target_dict = test_dict
         error_flag = None
@@ -102,7 +98,7 @@ class ApiReturnFormatTests(TestCase):
             self.assertEqual(response.status_code, 200)
             # print(response.url)
         except Exception as e:
-            print(response.url)
+            # print(response.url)
             raise
 
 
@@ -153,10 +149,10 @@ class ApiFormats:
             return "https://tools.pds-rings.seti.org/opus/api/"
         elif self.target == "dev":
             return "http://dev.pds-rings.seti.org/opus/api/"
-        elif self.target == "internal":
+        elif self.target == "internal-production":
             return "https://tools.pds-rings.seti.org/opus/__api/"
-        elif self.target == "public":
-            return "https://tools.pds-rings.seti.org/opus/api/"
+        elif self.target == "internal-dev":
+            return "http://dev.pds-rings.seti.org/opus/__api/"
 
     def build_api_data_base(self):
         """api/data.[fmt]
