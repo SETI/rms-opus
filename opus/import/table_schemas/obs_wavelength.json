@@ -270,6 +270,7 @@
             "FUNCTION",
             "obs_wavelength_<INST>_spec_flag"
         ],
+        "data_source_order": 30,
         "definition": "The spectral_information_flag indicates whether a given remote-sensing data product contains information about multiple wavelengths or a single wavelength or electromagnetic radiation. A value of yes indicates that multiple wavelengths are included.",
         "pi_category_name": "obs_wavelength",
         "pi_dict_context": "OPUS_WAVELENGTH",
@@ -296,6 +297,7 @@
             "FUNCTION",
             "obs_wavelength_<INST>_spec_size"
         ],
+        "data_source_order": 30,
         "definition": "The number of distinct wavelengths or wavelength bins that can be detected.",
         "pi_category_name": "obs_wavelength",
         "pi_dict_context": "OPUS_WAVELENGTH",
