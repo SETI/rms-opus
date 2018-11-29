@@ -5,6 +5,6 @@
   * against internal database:
     * python manage.py test -s -v 2 api-internal-db
   * against production site:
-    * python manage.py test -s -v 2 api-live-pro
+    * python manage.py test -s -v 2 api-livetest-pro
   * against dev site:
-    * python manage.py test -s -v 2 api-live-dev
+    * python manage.py test -s -v 2 api-livetest-dev
