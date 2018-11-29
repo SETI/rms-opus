@@ -99,6 +99,8 @@ def url_to_search_params(request_get):
         slug_no_num = strip_numeric_suffix(slug)
         values = search_param[1].strip(',').split(',')
         values = [x.strip() for x in values]
+        value_not_split = search_param[1].strip()
+        values_not_split = [value_not_split]
 
         # If nothing is specified, just ignore the slug
         if not values:
@@ -157,10 +159,12 @@ def url_to_search_params(request_get):
             # representations if necessary
             if form_type_func is None:
                 func = float
+                values_to_use = _clean_numeric_field(values_not_split)
             else:
                 if form_type_func in opus_support.RANGE_FUNCTIONS:
                     func = (opus_support
                             .RANGE_FUNCTIONS[form_type_func][1])
+                    values_to_use = values_not_split
                 else:
                     log.error('url_to_search_params: Unknown RANGE '
                               +'function "%s"', form_type_func)
@@ -174,11 +178,12 @@ def url_to_search_params(request_get):
                               request_get)
                     return None, None
                 try:
-                    selections[param_name + ext] = list(map(func, values))
+                    selections[param_name + ext] = list(map(func,
+                                                            values_to_use))
                 except ValueError as e:
                     log.error('url_to_search_params: Function "%s" slug "%s" '
                               +'threw ValueError(%s) for %s',
-                              func, slug, e, values)
+                              func, slug, e, values_to_use)
                     return None, None
             else:
                 # Normal 2-column range query
@@ -188,11 +193,11 @@ def url_to_search_params(request_get):
                               request_get)
                     return None, None
                 try:
-                    selections[param_name] = list(map(func, values))
+                    selections[param_name] = list(map(func, values_to_use))
                 except ValueError as e:
                     log.error('url_to_search_params: Function "%s" slug "%s" '
                               +'threw ValueError(%s) for %s',
-                              func, slug, e, values)
+                              func, slug, e, values_to_use)
                     return None, None
         else:
             # For non-RANGE queries, we just put the values here raw
@@ -201,7 +206,7 @@ def url_to_search_params(request_get):
                           +'for "%s": %s', param_name,
                           request_get)
                 return None, None
-            selections[param_name] = values
+            selections[param_name] = values_not_split
 
     extras['qtypes'] = qtypes
 
@@ -990,6 +995,15 @@ def is_single_column_range(param_name):
         return False
 
     return False
+
+
+def _clean_numeric_field(s):
+    clean_func = lambda x: x.replace(' ', '').replace(',', '')
+    if isinstance(s, (list, tuple)):
+        return [clean_func(z) for z in s]
+
+    return clean_func(s)
+
 
 def parse_order_slug(all_order):
     "Given a list of slugs a,b,-c,d create the params and descending lists"
