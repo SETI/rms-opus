@@ -5,8 +5,7 @@ import requests
 import sys
 from unittest import TestCase
 
-from rest_framework.test import APIClient
-from rest_framework.test import RequestsClient
+from rest_framework.test import APIClient, RequestsClient
 
 from test_return_formats import ApiFormats
 
