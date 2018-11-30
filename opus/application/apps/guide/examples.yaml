@@ -6,7 +6,7 @@ sections:
           - title: api/data.[fmt]
             desc: Get data for observations based on search criteria, columns, and sort order. Data is returned by "page" in the same sense that OPUS's "Browse Results" display is paginated.
             info:
-                fmt: json,html,zip,csv
+                fmt: json,html,csv
                 GET param 1: search params (If not supplied, all results are returned)
                 GET param 2: column params (If not supplied, default columns are used)
                 GET param 3: order=column_slug,... (Column(s) to sort on; if not supplied, default sort order is used)
@@ -22,7 +22,7 @@ sections:
             desc: Get all available, or particular, metadata for a single observation. NOTE - USE OF THIS API IS DEPRECATED. THIS IS BECAUSE RATHER THAN RETURNING THE SAME SLUG NAMES USED TO PERFORM SEARCHES, IT ERRONEOUSLY RETURNS INTERNAL DATABASE NAMES THAT ARE NOT DOCUMENTED. THESE INTERNAL NAMES MAY NOT BE UNIQUE AND COULD CAUSE PROBLEMS. PLEASE USE THE V2 VERSION OF THIS API BELOW INSTEAD.
             info:
                 opus_id: valid opus_id (or old ring_obs_id)
-                fmt: json,html,zip,csv
+                fmt: json,html
                 GET param 1: cols=<column names> (If supplied, only returns data for these columns; cats is ignored)
                 GET param 2: cats=<category names> (If supplied, only returns data for these categories)
                 JSON return: "If cols is supplied, a list of pairs {database_column: value}. Otherwise a list of pairs {category: data} where data is a list of pairs {database_column: value}."
@@ -38,7 +38,7 @@ sections:
             desc: Get all available, or particular, metadata for a single observation. NOTE - THIS IS THE NEW VERSION OF THIS API AND SHOULD BE USED BY ALL APPLICATIONS.
             info:
                 opus_id: valid opus_id (or old ring_obs_id)
-                fmt: json,html,zip,csv
+                fmt: json,html
                 GET param 1: cols=<column names> (If supplied, only returns data for these columns; cats is ignored)
                 GET param 2: cats=<category names> (If supplied, only returns data for these categories)
                 JSON return: "If cols is supplied, a list of pairs {slug: value}. Otherwise a list of pairs {category: data} where data is a list of pairs {slug: value}."
@@ -54,7 +54,7 @@ sections:
             desc: Get image results of a given size for a search.
             info:
                 size: thumb,small,med,full
-                fmt: json,html,zip,csv
+                fmt: json,html
                 GET param 1: search params (If not supplied, all results are returned)
                 GET param 2: order=column_slug,... (Column(s) to sort on; if not supplied, default sort order is used)
                 GET param 3: limit=N (The maximum number of observations to return; defaults to 100)
@@ -66,7 +66,7 @@ sections:
           - title: api/images.[fmt]
             desc: Get image results of all sizes for a search.
             info:
-                fmt: json,html,zip,csv
+                fmt: json,html
                 GET param 1: search params (If not supplied, all results are returned)
                 GET param 2: order=column_slug,... (Column(s) to sort on; if not supplied, default sort order is used)
                 GET param 3: limit=N (The maximum number of observations to return; defaults to 100)
@@ -80,7 +80,7 @@ sections:
             desc: Get an image of the given size for a single observation.
             info:
                 size: thumb,small,med,full
-                fmt: json,html,zip,csv
+                fmt: json,html
                 opus_id: valid opus_id (or old ring_obs_id)
                 JSON return: "{'path': root path of the preview directory (deprecated), 'data': ingle-element list: {'opus_id': opus_id, '<size>_url': full URL, '<size>_alt_text': alt text, '<size>_size_bytes': image size in bytes, '<size>_width': image width in pixels, '<size>_height': image height in pixels, 'path': oot path of preview directory (deprecated), 'img': path to image relative to root path (deprecated), 'url': full URL (deprecated)}"
             examples:
@@ -91,7 +91,7 @@ sections:
             desc: Get a list of all files for a single observation.
             info:
                 opus_id: valid opus_id (if you provide an old ring_obs_id, you will get the appropriate opus_id back)
-                fmt: json,html,zip,csv
+                fmt: json
                 GET param 1: types=<types> (List of product types; if not supplied, all are returned)
                 GET param 2: loc_type=<loc> (Format of returned path, 'url' or 'path'; defaults to 'url')
                 JSON return: "{{'page_no': given page number, 'limit': given limit, 'count': number of observations returned, 'order': sort order, 'data': dictionary of opus_id, then indexed by product type}"
@@ -104,7 +104,7 @@ sections:
           - title: api/files.[fmt]
             desc: Get a list of all files for the search results.
             info:
-                fmt: json,html,zip,csv
+                fmt: json
                 GET param 1: search params (If not supplied, all results are returned)
                 GET param 2: order=column_slug,... (Column(s) to sort on; if not supplied, default sort order is used)
                 GET param 3: limit=N (The maximum number of observations to return; defaults to 100)
@@ -122,7 +122,7 @@ sections:
           - title: api/meta/result_count.[fmt]
             desc: Get the result count for a search
             info:
-                fmt: json,html,zip
+                fmt: json,html
                 GET param 1: search params (If not supplied, all results are returned)
             examples:
                 - desc: Target Pan in JSON
@@ -132,7 +132,7 @@ sections:
             desc: Returns all possible values for a given multiple choice field, given a search, and the result count for each value.
             info:
                 param: param name
-                fmt : json,html,zip
+                fmt : json,html
                 GET param 1: search params (If not supplied, the result is not constrained)
             examples:
                 - desc: Get all possible targets and counts for each when planet=Saturn
@@ -142,24 +142,26 @@ sections:
             desc: Get range endpoints for a field, given a search
             info:
                 param: param name
-                fmt: json,html,zip,csv
+                fmt: json,html
                 GET param 1: search params (If not supplied, the result is not constrained)
             examples:
                 - desc: Get ring radius endpoints for target Saturn
                   url: <HOST>/opus/api/meta/range/endpoints/RINGGEOringradius1.json?target=Saturn
 
-          - title: api/categories/[opus_id].json
+          - title: api/categories/[opus_id].[fmt]
             desc: Return a list of all table names this opus_id exists in.
             info:
                 opus_id: valid opus_id
+                fmt: json
                 JSON return: "List of {'table_name': internal name, 'label': user-visible name}"
             examples:
                 - desc: Category names for a Cassini ISS observation
                   url: <HOST>/opus/api/categories/co-iss-w1866600688.json
 
-          - title: api/categories.json
+          - title: api/categories.[fmt]
             desc: List all category names triggered by a particular search.
             info:
+                fmt: json
                 GET param 1: search params (If not supplied, the result is not constrained)
                 JSON return: "List of {'table_name': internal name, 'label': user-visible name}"
             examples:
@@ -170,7 +172,7 @@ sections:
             desc: Get information about a particular field
             info:
                 field: field slug
-                fmt: json,html,zip
+                fmt: json,html
                 JSON response: "{'data': {slug: {'category': Pretty category name, 'label': Pretty field name, 'slug': slug, 'old_slug': previous slug (deprecated)}}}"
             examples:
                 - desc: Get information about the "planet" field
@@ -181,7 +183,7 @@ sections:
           - title: api/fields.[fmt]
             desc: Get information about all fields
             info:
-                fmt: json,html,zip
+                fmt: json,html
                 GET param 1: collapse=1 (collapse all surface geo entries into single generic-target entries)
                 JSON response: "{'data': {slug: {'category': Pretty category name, 'label': Pretty field name, 'slug': slug, 'old_slug': previous slug (deprecated)}}}"
             examples:
