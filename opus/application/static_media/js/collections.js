@@ -155,9 +155,7 @@ var o_collections = {
                     }
 
                     $('#colls_pages').html(opus.colls_pages);
-
-                    //FIX ME
-                    o_browse.getGallery(opus.colls_pages);  //WTF, make this a render function, we are not getting a browse tab here
+                    o_browse.getGallery(opus.colls_pages); 
 
                     if (zipped_files_html) {
                         $('.zipped_files', '#collection').html(zipped_files_html);

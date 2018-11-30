@@ -122,9 +122,11 @@
 
 			<div id="collection" class="tab-pane fade" role="tabpanel" aria-labelledby="collection-tab">
 				<div class="row">
-					<div class="col-lg-4 collection_details"></div>
-					<div class="col-lg-8">
-						<div class="mr-0 mt-3 thumb gallery gallery-scroll" data-ui="jscroll-default"></div>
+					<div class="col collection_details"></div>
+					<div class="col pl-0">
+						<div class="panel-body gallery-contents container-fluid  pr-2 scrollbar-morpheus-den">
+							<div class="row mr-0 mt-3 thumb gallery gallery-scroll" data-ui="jscroll-default"></div>
+						</div>
 					</div>
 				</div>
 			</div>
@@ -159,9 +161,9 @@
 			<div class="modal-dialog modal-lg" role="document">
 				<div class="modal-content">
 					<div class="modal-header bg-gray-dark text-light">
-						<div></div>
+						<div>Select Columns</div>
 						<button type="button" class="close" data-dismiss="modal" aria-label="Close">
-							<i class = "fa fa-times"></i>
+							<i class="far fa-times-circle fa-lg text-light"></i>
 						</button>
 					</div>
 					<div id="columnChooserContents" class="column_chooser modal-body bg-dark"></div>
