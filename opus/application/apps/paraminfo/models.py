@@ -1,6 +1,8 @@
 from django.db import models
 from dictionary.views import get_def_for_tooltip
 
+from search.models import TableNames
+
 class ParamInfo(models.Model):
     """
     This model describes every searchable param in the database.
@@ -39,37 +41,31 @@ class ParamInfo(models.Model):
         return definition
 
     def body_qualified_label(self):
-        # Appended "- Ring" or "- <Surface Body>"
+        # Append "[Ring]" or "[<Surface Body>]" or "[Mission]" or "[Instrument]"
         append_to_label = None
 
-        if 'obs_surface_geometry__' in self.category_name:
-            # append the target name to surface geo widget labels
-            try:
-                append_to_label = self.category_name.split('__')[1].title()
-            except KeyError:
-                pass
-        elif 'obs_ring_geometry' in self.category_name:
-            append_to_label = 'Ring'
+        pretty_name = (TableNames.objects
+                       .get(table_name=self.category_name).label)
+        pretty_name = pretty_name.replace(' Surface Geometry Constraints', '')
+        pretty_name = pretty_name.replace(' Geometry Constraints', '')
+        pretty_name = pretty_name.replace(' Mission Constraints', '')
+        pretty_name = pretty_name.replace(' Constraints', '')
 
-        if append_to_label:
-            return self.label + ' [' + append_to_label + ']'
-        else:
+        if pretty_name == 'Surface':
             return self.label
+        return self.label + ' [' + pretty_name + ']'
 
     def body_qualified_label_results(self):
-        # Appended "- Ring" or "- <Surface Body>"
+        # Append "[Ring]" or "[<Surface Body>]" or "[Mission]" or "[Instrument]"
         append_to_label = None
 
-        if 'obs_surface_geometry__' in self.category_name:
-            # append the target name to surface geo widget labels
-            try:
-                append_to_label = self.category_name.split('__')[1].title()
-            except KeyError:
-                pass
-        elif 'obs_ring_geometry' in self.category_name:
-            append_to_label = 'Ring'
+        pretty_name = (TableNames.objects
+                       .get(table_name=self.category_name).label)
+        pretty_name = pretty_name.replace(' Surface Geometry Constraints', '')
+        pretty_name = pretty_name.replace(' Geometry Constraints', '')
+        pretty_name = pretty_name.replace(' Mission Constraints', '')
+        pretty_name = pretty_name.replace(' Constraints', '')
 
-        if append_to_label:
-            return self.label_results + ' [' + append_to_label + ']'
-        else:
+        if pretty_name in ['General', 'PDS', 'Wavelength', 'Image', 'Surface']:
             return self.label_results
+        return self.label_results + ' [' + pretty_name + ']'
