@@ -1,6 +1,7 @@
 # results/tests.py
 
 import json
+import sys
 from unittest import TestCase
 
 from django.conf import settings
@@ -60,32 +61,30 @@ class test_session(dict):
 
 class resultsTests(TestCase):
 
-    def setUp(self):
-        print('Running setup')
+    def _empty_user_searches(self):
         cursor = connection.cursor()
         cursor.execute('DELETE FROM user_searches')
-        cursor.execute('ALTER TABLE user_searches AUTO_INCREMENT = 1')
-        cursor.execute('SHOW TABLES LIKE %s' , ['cache_%'])
+        cursor.execute("ALTER TABLE user_searches AUTO_INCREMENT = 1")
+        cursor.execute("SHOW TABLES LIKE %s" , ["cache_%"])
         for row in cursor:
             q = 'DROP TABLE ' + row[0]
             print(q)
             cursor.execute(q)
-        self.client = Client()
-        self.factory = RequestFactory()
+
+    def setUp(self):
+        print('Running setup')
+        self._empty_user_searches()
+        sys.tracebacklimit = 0 # default: 1000
+        logging.disable(logging.DEBUG)
 
     def teardown(self):
         print('Running teardown')
-        cursor = connection.cursor()
-        cursor.execute('DELETE FROM user_searches')
-        cursor.execute('ALTER TABLE user_searches AUTO_INCREMENT = 1')
-        cursor.execute('SHOW TABLES LIKE %s' , ['cache_%'])
-        for row in cursor:
-            q = 'DROP TABLE ' + row[0]
-            print(q)
-            cursor.execute(q)
+        self._empty_user_searches()
+        sys.tracebacklimit = 1000 # default: 1000
+        logging.disable(logging.NOTSET)
 
     def test__get_triggered_tables_cassini(self):
-        "Get tables triggered by mission Cassini."
+        "get_triggered_tables: tables triggered by mission Cassini"
         q = QueryDict('mission=Cassini')
         (selections,extras) = url_to_search_params(q)
         print(selections)
@@ -102,7 +101,7 @@ class resultsTests(TestCase):
         self.assertEqual(partables, expected)
 
     def test__get_triggered_tables_coiss(self):
-        "Get tables triggered by instrument COISS."
+        "get_triggered_tables: tables triggered by instrument COISS"
         q = QueryDict('planet=SATURN&instrumentid=COISS')
         (selections,extras) = url_to_search_params(q)
         print(selections)
@@ -119,7 +118,7 @@ class resultsTests(TestCase):
         self.assertEqual(partables, expected)
 
     def test__get_triggered_tables_coiss_volume(self):
-        "Get tables triggered by volume COISS."
+        "get_triggered_tables: tables triggered by volume COISS"
         q = QueryDict('planet=SATURN&volumeid=COISS&qtype-volumeid=begins')
         (selections,extras) = url_to_search_params(q)
         print(selections)
