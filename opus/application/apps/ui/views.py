@@ -331,6 +331,7 @@ def api_get_widget(request, **kwargs):
 
     label = param_info.body_qualified_label()
     intro = param_info.intro
+    units = param_info.get_units()
 
     template = "widget.html"
     context = {
@@ -341,7 +342,8 @@ def api_get_widget(request, **kwargs):
         "form": form,
         "form_type": form_type,
         "range_form_types": settings.RANGE_FORM_TYPES,
-        "mult_form_types": settings.MULT_FORM_TYPES
+        "mult_form_types": settings.MULT_FORM_TYPES,
+        "units": units,
     }
     ret = render(request, template, context)
 
