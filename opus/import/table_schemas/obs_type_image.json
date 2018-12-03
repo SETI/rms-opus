@@ -160,7 +160,7 @@
         "pi_slug": "greaterpixelsize",
         "pi_sub_heading": null,
         "pi_tooltip": "",
-        "pi_units": "",
+        "pi_units": "pixels",
         "comment": "Definition is from old OPUS dictionary."
     },
     {
@@ -188,7 +188,7 @@
         "pi_slug": "lesserpixelsize",
         "pi_sub_heading": null,
         "pi_tooltip": "",
-        "pi_units": "",
+        "pi_units": "pixels",
         "comment": "Definition is from old OPUS dictionary."
     },
     {

@@ -75,7 +75,7 @@
         "pi_slug": "wavelength1",
         "pi_sub_heading": null,
         "pi_tooltip": "",
-        "pi_units": "",
+        "pi_units": "micron",
         "comment": "Definition derived from the PSDD and modified for our purposes."
     },
     {
@@ -101,7 +101,7 @@
         "pi_slug": "wavelength2",
         "pi_sub_heading": null,
         "pi_tooltip": "",
-        "pi_units": ""
+        "pi_units": "micron"
     },
     {
         "field_name": "wave_res1",
@@ -153,7 +153,7 @@
         "pi_slug": "waveres2",
         "pi_sub_heading": null,
         "pi_tooltip": "",
-        "pi_units": "",
+        "pi_units": "micron",
         "comment": "Definition is from old OPUS dictionary."
     },
     {
