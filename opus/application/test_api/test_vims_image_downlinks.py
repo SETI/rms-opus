@@ -30,7 +30,7 @@ class ApiVimsDownlinksTests(TestCase):
     ### API VIMS downlink tests ###
     ###############################
     def test_check_and_compare_vims_downlinks_for_v1_and_v2(self):
-        """Check the number of VIMS downlinks to see if they are valid.
+        """VIMS Downlinks: check the number of VIMS downlinks to see if they are valid
            Check if any image numbers from 001 > ones in 002
            Check if image counts for each primary filespec are all > 0
         """
