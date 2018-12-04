@@ -27,7 +27,7 @@ var o_collections = {
          // check an input on selected products and images updates file_info
          $('#collection').on("click",'#download_options input', function() {
              var add_to_url = o_collections.getDownloadFiltersChecked();
-             var url = "/opus/__collections/download/info?" + add_to_url
+             var url = "/opus/__collections/download/info.json?" + add_to_url
              $.ajax({ url: url + '&fmt=json',
                 success: function(json){
                     $('#total_files').fadeOut().html(json['download_count']).fadeIn();
@@ -46,7 +46,7 @@ var o_collections = {
                 $('.spinner', "#collections_summary").fadeIn();
                 opus.download_in_process = true;
                 var add_to_url = o_collections.getDownloadFiltersChecked();
-                var url = '/opus/__collections/download/default.zip?' + add_to_url + "&" + o_hash.getHash();
+                var url = '/opus/__collections/download.zip?' + add_to_url + "&" + o_hash.getHash();
                 $.ajax({ url: url,
                     success: function(filename){
                         opus.download_in_process = false;
@@ -110,7 +110,7 @@ var o_collections = {
     // init an existing collection on page load
     initCollection: function() {
         // returns any user collection saved in session
-        $.ajax({ url: "/opus/__collections/default/status.json",
+        $.ajax({ url: "/opus/__collections/status.json",
             dataType:"json",
             success: function(data){
                    var count = data['count'];
@@ -163,7 +163,7 @@ var o_collections = {
             */
 
             // redux: and nix this big thing:
-            $.ajax({ url: "/opus/__collections/default/view.html",
+            $.ajax({ url: "/opus/__collections/view.html",
                 success: function(html){
                     // this div lives in the in the nav menu template
                     $('.collection_details', '#collection').hide().html(html).fadeIn();
@@ -218,7 +218,7 @@ var o_collections = {
         var view_info = o_browse.getViewInfo();
         var namespace = view_info['namespace']; // either '#collection' or '#browse'
 
-        var url = "/opus/__collections/default/" + action + ".json?request=" + request_no
+        var url = "/opus/__collections/" + action + ".json?request=" + request_no
         switch (action) {
             case "add":
             case "remove":
