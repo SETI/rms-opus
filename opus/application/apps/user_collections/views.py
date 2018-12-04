@@ -179,12 +179,12 @@ def api_edit_collection(request, **kwargs):
     request_no = request.GET.get('request', None)
 
     if action in ['add', 'remove']:
-        if 'opus_id' not in kwargs:
+        opus_id = request.GET.get('opus_id', None)
+        if opus_id is None:
             json_data = {'err': 'No observations specified'}
             ret = HttpResponse(json.dumps(json_data))
             exit_api_call(api_code, ret)
             return ret
-        opus_id = kwargs['opus_id']
 
     if request_no is None: # XXX Is this needed?
         try:
