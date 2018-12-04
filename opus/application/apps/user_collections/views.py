@@ -108,7 +108,7 @@ def api_view_collection(request):
 
 
 @never_cache
-def api_collection_status(request, collection_name='default'):
+def api_collection_status(request):
     """Return the number of items in a collection.
 
     It is used to update the "Selection <N>" tab in the OPUS UI.

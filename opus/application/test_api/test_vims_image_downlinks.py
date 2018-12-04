@@ -102,11 +102,11 @@ class ApiVimsDownlinksTests(TestCase):
            }
         """
 
-        if not ApiVimsDownlinksTests.GO_LIVE:
+        if self.GO_LIVE:
+            client = requests.Session()
+        else:
             client = RequestsClient()
             # raise Exception("Test db has no VIMS data")
-        else:
-            client = requests.Session()
 
         format = "json"
         primary_filespec_object = api_dict[primary_filespec]
@@ -129,7 +129,7 @@ class ApiVimsDownlinksTests(TestCase):
         if response.status_code == 200:
             data_object = response.json()["data"]
             # When test db return empty object, we would NOT proceed to count the number of images
-            if not data_object and not ApiVimsDownlinksTests.GO_LIVE:
+            if not data_object and not self.GO_LIVE:
                 raise Exception("No VIMS data in test db")
 
             for image_id in primary_filespec_object["images_with_opus_id"]:
