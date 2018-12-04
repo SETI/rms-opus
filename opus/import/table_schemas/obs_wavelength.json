@@ -306,7 +306,7 @@
         "pi_disp_order": 60,
         "pi_display": 1,
         "pi_display_results": 1,
-        "pi_form_type": "RANGE%d",
+        "pi_form_type": "RANGE",
         "pi_intro": null,
         "pi_label": "Spectrum Size",
         "pi_label_results": "Spectrum Size",

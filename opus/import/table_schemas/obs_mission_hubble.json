@@ -93,7 +93,7 @@
         "pi_disp_order": 50,
         "pi_display": 1,
         "pi_display_results": 1,
-        "pi_form_type": "RANGE",
+        "pi_form_type": "RANGE%d",
         "pi_intro": null,
         "pi_label": "HST Proposal ID",
         "pi_label_results": "HST Proposal ID",
@@ -101,7 +101,7 @@
         "pi_slug": "HSTproposalid",
         "pi_sub_heading": null,
         "pi_tooltip": null,
-        "pi_units": null
+        "pi_units": ""
     },
     {
         "field_name": "hst_pi_name",

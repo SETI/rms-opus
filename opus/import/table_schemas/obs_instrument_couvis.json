@@ -96,7 +96,7 @@
         "pi_disp_order": 100,
         "pi_display": 1,
         "pi_display_results": 1,
-        "pi_form_type": "RANGE%d",
+        "pi_form_type": "RANGE",
         "pi_intro": null,
         "pi_label": "Integration Duration",
         "pi_label_results": "Integration Duration",
@@ -104,7 +104,7 @@
         "pi_slug": "COUVISintegrationduration",
         "pi_sub_heading": null,
         "pi_tooltip": null,
-        "pi_units": null,
+        "pi_units": "",
         "comment": "Definition is from COUVIS label"
     },
     {
@@ -319,7 +319,7 @@
         "pi_slug": "COUVISband1",
         "pi_sub_heading": null,
         "pi_tooltip": null,
-        "pi_units": null,
+        "pi_units": "",
         "comment": "Definition is from COUVIS supplemental label"
     },
     {
@@ -349,7 +349,7 @@
         "pi_slug": "COUVISband2",
         "pi_sub_heading": null,
         "pi_tooltip": null,
-        "pi_units": null,
+        "pi_units": "",
         "comment": "Definition is from COUVIS supplemental label"
     },
     {
@@ -379,7 +379,7 @@
         "pi_slug": "COUVISbandbin",
         "pi_sub_heading": null,
         "pi_tooltip": null,
-        "pi_units": null,
+        "pi_units": "",
         "comment": "Definition is from COUVIS supplemental label"
     },
     {
@@ -409,7 +409,7 @@
         "pi_slug": "COUVISline1",
         "pi_sub_heading": null,
         "pi_tooltip": null,
-        "pi_units": null,
+        "pi_units": "",
         "comment": "Definition is from COUVIS supplemental label"
     },
     {
@@ -439,7 +439,7 @@
         "pi_slug": "COUVISline2",
         "pi_sub_heading": null,
         "pi_tooltip": null,
-        "pi_units": null,
+        "pi_units": "",
         "comment": "Definition is from COUVIS supplemental label"
     },
     {
@@ -469,7 +469,7 @@
         "pi_slug": "COUVISlinebin",
         "pi_sub_heading": null,
         "pi_tooltip": null,
-        "pi_units": null,
+        "pi_units": "",
         "comment": "Definition is from COUVIS supplemental label"
     },
     {
@@ -499,7 +499,7 @@
         "pi_slug": "COUVISsamples",
         "pi_sub_heading": null,
         "pi_tooltip": null,
-        "pi_units": null,
+        "pi_units": "",
         "comment": "Definition is from COUVIS supplemental label"
     },
     {
