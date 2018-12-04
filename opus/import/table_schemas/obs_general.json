@@ -371,14 +371,15 @@
         "pi_disp_order": 110,
         "pi_display": 1,
         "pi_display_results": 1,
-        "pi_form_type": "RANGE",
+        "pi_form_type": "RANGE%.4f",
         "pi_intro": null,
         "pi_label": "Observation Duration",
         "pi_label_results": "Observation Duration",
         "pi_slug": "observationduration",
         "pi_sub_heading": null,
         "pi_tooltip": "",
-        "pi_units": "seconds"
+        "pi_units": "seconds",
+        "comment": "For units format, VGISS_*_index.lbl is F9.4 so we round up to .4f."
     },
     {
         "field_name": "quantity",
@@ -513,14 +514,15 @@
         "pi_disp_order": 310,
         "pi_display": 1,
         "pi_display_results": 1,
-        "pi_form_type": "RANGE",
+        "pi_form_type": "RANGE%.6f",
         "pi_intro": null,
         "pi_label": "Declination",
         "pi_label_results": "Declination (Min)",
         "pi_slug": "declination1",
         "pi_sub_heading": null,
         "pi_tooltip": "",
-        "pi_units": "degrees"
+        "pi_units": "degrees",
+        "comment": "For units format, COISS_*_index.lbl and COVIMS_0006_index.lbl are F11.6, and ring_geo/ring_geo.lbl is F10.6 so we round up to .6f."
     },
     {
         "field_name": "declination2",
@@ -541,14 +543,15 @@
         "pi_disp_order": 311,
         "pi_display": 0,
         "pi_display_results": 1,
-        "pi_form_type": "RANGE",
+        "pi_form_type": "RANGE%.6f",
         "pi_intro": null,
         "pi_label": "Declination 2",
         "pi_label_results": "Declination (Max)",
         "pi_slug": "declination2",
         "pi_sub_heading": null,
         "pi_tooltip": "",
-        "pi_units": ""
+        "pi_units": "degrees",
+        "comment": "For units format, refer to declination1."
     },
     {
         "field_name": "observation_type",

@@ -76,7 +76,7 @@
         "pi_sub_heading": null,
         "pi_tooltip": "",
         "pi_units": "micron",
-        "comment": "Definition derived from the PSDD and modified for our purposes. For units format, HSTSTIS/index.lbl is E10.4, HST*/index.lbl is F6.4, COCIRS/OBSINDEX.LBL is F8.3, and rest in populate_obs_instrument_COISS/COUVIS/COVIMS/GOSSI/NHLORRI/NHMVIC/VGISS.py are just micron, so we round up to .4f"
+        "comment": "Definition derived from the PSDD and modified for our purposes. For units format, HSTSTIS/index.lbl is E10.4, HSTI1_*_index.lbl is F6.4, COCIRS/OBSINDEX.LBL is F8.3, and rest in populate_obs_instrument_COISS/COUVIS/COVIMS/GOSSI/NHLORRI/NHMVIC/VGISS.py are just micron, so we round up to .4f"
     },
     {
         "field_name": "wavelength2",
@@ -129,7 +129,7 @@
         "pi_sub_heading": null,
         "pi_tooltip": "",
         "pi_units": "micron/pixel",
-        "comment": "Definition is from old OPUS dictionary. For units format, HSTSTIS/index.lbl is E10.4, HST*/index.lbl is F6.4, and rest in populate_obs_instrument_COISS/COUVIS/COVIMS/GOSSI/NHLORRI/NHMVIC/VGISS.py are coverted from math to micron or micron/pixel, so we round up to .4f"
+        "comment": "Definition is from old OPUS dictionary. For units format, HSTSTIS/index.lbl is E10.4, HSTI1_*_index.lbl is F6.4, and rest in populate_obs_instrument_COISS/COUVIS/COVIMS/GOSSI/NHLORRI/NHMVIC/VGISS.py are coverted from math to micron or micron/pixel, so we round up to .4f"
     },
     {
         "field_name": "wave_res2",

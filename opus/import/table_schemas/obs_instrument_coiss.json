@@ -198,7 +198,7 @@
         "pi_disp_order": 100,
         "pi_display": 1,
         "pi_display_results": 1,
-        "pi_form_type": "RANGE",
+        "pi_form_type": "RANGE%d",
         "pi_intro": null,
         "pi_label": "Missing Lines",
         "pi_label_results": "Missing Lines",
@@ -297,8 +297,8 @@
         "pi_slug": "COISSimagenumber",
         "pi_sub_heading": null,
         "pi_tooltip": null,
-        "pi_units": null,
-        "comment": "Definition is from COISS label"
+        "pi_units": "seconds",
+        "comment": "Definition is from COISS label. For units, refer to COISS/index.lbl."
     },
     {
         "field_name": "instrument_mode_id",

@@ -108,7 +108,7 @@
         "pi_sub_heading": null,
         "pi_tooltip": "",
         "pi_units": "seconds",
-        "comment": "For units format, VGISS/index.lbl is F9.4 so we round up to .4f."
+        "comment": "For units format, VGISS_*_index.lbl is F9.4 so we round up to .4f."
     },
     {
         "field_name": "levels",
@@ -161,7 +161,7 @@
         "pi_slug": "greaterpixelsize",
         "pi_sub_heading": null,
         "pi_tooltip": "",
-        "pi_units": "pixels",
+        "pi_units": "",
         "comment": "Definition is from old OPUS dictionary."
     },
     {
@@ -189,7 +189,7 @@
         "pi_slug": "lesserpixelsize",
         "pi_sub_heading": null,
         "pi_tooltip": "",
-        "pi_units": "pixels",
+        "pi_units": "",
         "comment": "Definition is from old OPUS dictionary."
     },
     {
