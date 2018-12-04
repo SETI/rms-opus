@@ -82,10 +82,10 @@ class ApiReturnFormatTests(TestCase):
            api_dict: a dictionary containing the payload
            format: a return format string that concatenates with api_url_base
         """
-        if not ApiReturnFormatTests.GO_LIVE:
-            client = RequestsClient()
-        else:
+        if self.GO_LIVE:
             client = requests.Session()
+        else:
+            client = RequestsClient()
 
         api_url = api_url_base + format
         payload = api_dict[api_url_base]["payload"]

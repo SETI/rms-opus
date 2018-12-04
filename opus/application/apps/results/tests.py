@@ -77,62 +77,162 @@ class resultsTests(TestCase):
         sys.tracebacklimit = 0 # default: 1000
         logging.disable(logging.DEBUG)
 
-    def teardown(self):
+    def tearDown(self):
         print('Running teardown')
         self._empty_user_searches()
         sys.tracebacklimit = 1000 # default: 1000
         logging.disable(logging.NOTSET)
 
-    def test__get_triggered_tables_cassini(self):
-        "get_triggered_tables: tables triggered by mission Cassini"
-        q = QueryDict('mission=Cassini')
+
+            ###################################################
+            ######### get_triggered_tables UNIT TESTS #########
+            ###################################################
+
+    def _test_triggered_tables(self, q, expected):
         (selections,extras) = url_to_search_params(q)
         print(selections)
         partables = get_triggered_tables(selections, extras)
+        print('partables:')
+        print(partables)
+        print('expected:')
+        print(expected)
+        self.assertEqual(partables, expected)
+
+    def test__get_triggered_tables_cassini(self):
+        "get_triggered_tables: tables triggered by mission Cassini"
+        q = QueryDict('mission=Cassini')
         expected = ['obs_general', 'obs_pds', 'obs_type_image',
                     'obs_wavelength',
                     'obs_surface_geometry',
                     'obs_ring_geometry',
                     'obs_mission_cassini']
-        print('partables:')
-        print(partables)
-        print('expected:')
-        print(expected)
-        self.assertEqual(partables, expected)
+        self._test_triggered_tables(q, expected)
 
     def test__get_triggered_tables_coiss(self):
         "get_triggered_tables: tables triggered by instrument COISS"
         q = QueryDict('planet=SATURN&instrumentid=COISS')
-        (selections,extras) = url_to_search_params(q)
-        print(selections)
-        partables = get_triggered_tables(selections, extras)
         expected = ['obs_general', 'obs_pds', 'obs_type_image',
                     'obs_wavelength',
                     'obs_surface_geometry',
                     'obs_ring_geometry',
                     'obs_mission_cassini', 'obs_instrument_coiss']
-        print('partables:')
-        print(partables)
-        print('expected:')
-        print(expected)
-        self.assertEqual(partables, expected)
+        self._test_triggered_tables(q, expected)
 
     def test__get_triggered_tables_coiss_volume(self):
         "get_triggered_tables: tables triggered by volume COISS"
         q = QueryDict('planet=SATURN&volumeid=COISS&qtype-volumeid=begins')
-        (selections,extras) = url_to_search_params(q)
-        print(selections)
-        partables = get_triggered_tables(selections, extras)
         expected = ['obs_general', 'obs_pds', 'obs_type_image',
                     'obs_wavelength',
                     'obs_surface_geometry',
                     'obs_ring_geometry',
                     'obs_mission_cassini', 'obs_instrument_coiss']
-        print('partables:')
-        print(partables)
-        print('expected:')
-        print(expected)
-        self.assertEqual(partables, expected)
+        self._test_triggered_tables(q, expected)
+
+    def test__get_triggered_tables_couvis(self):
+        "get_triggered_tables: tables triggered by instrument COUVIS"
+        q = QueryDict('instrumentid=COUVIS')
+        expected = ['obs_general', 'obs_pds', 'obs_type_image',
+                    'obs_wavelength',
+                    'obs_surface_geometry',
+                    'obs_ring_geometry',
+                    'obs_mission_cassini', 'obs_instrument_couvis']
+        self._test_triggered_tables(q, expected)
+
+    def test__get_triggered_tables_couvis_volume(self):
+        "get_triggered_tables: tables triggered by volume COUVIS"
+        q = QueryDict('volumeid=COUVIS&qtype-volumeid=begins')
+        expected = ['obs_general', 'obs_pds', 'obs_type_image',
+                    'obs_wavelength',
+                    'obs_surface_geometry',
+                    'obs_ring_geometry',
+                    'obs_mission_cassini', 'obs_instrument_couvis']
+        self._test_triggered_tables(q, expected)
+
+    def test__get_triggered_tables_covims(self):
+        "get_triggered_tables: tables triggered by instrument COVIMS"
+        q = QueryDict('instrumentid=COVIMS')
+        expected = ['obs_general', 'obs_pds', 'obs_type_image',
+                    'obs_wavelength',
+                    'obs_surface_geometry',
+                    'obs_ring_geometry',
+                    'obs_mission_cassini', 'obs_instrument_covims']
+        self._test_triggered_tables(q, expected)
+
+    def test__get_triggered_tables_galileo(self):
+        "get_triggered_tables: tables triggered by mission Galileo"
+        q = QueryDict('mission=Galileo')
+        expected = ['obs_general', 'obs_pds', 'obs_type_image',
+                    'obs_wavelength',
+                    'obs_surface_geometry',
+                    'obs_ring_geometry',
+                    'obs_mission_galileo',
+                    'obs_instrument_gossi']
+        self._test_triggered_tables(q, expected)
+
+    def test__get_triggered_tables_gossi(self):
+        "get_triggered_tables: tables triggered by instrument GOSSI"
+        q = QueryDict('instrumentid=Galileo+SSI')
+        expected = ['obs_general', 'obs_pds', 'obs_type_image',
+                    'obs_wavelength',
+                    'obs_surface_geometry',
+                    'obs_ring_geometry',
+                    'obs_mission_galileo',
+                    'obs_instrument_gossi']
+        self._test_triggered_tables(q, expected)
+
+    def test__get_triggered_tables_voyager(self):
+        "get_triggered_tables: tables triggered by mission Voyager"
+        q = QueryDict('mission=Voyager')
+        expected = ['obs_general', 'obs_pds', 'obs_type_image',
+                    'obs_wavelength',
+                    'obs_surface_geometry',
+                    'obs_ring_geometry',
+                    'obs_mission_voyager',
+                    'obs_instrument_vgiss']
+        self._test_triggered_tables(q, expected)
+
+    def test__get_triggered_tables_vgiss(self):
+        "get_triggered_tables: tables triggered by instrument VGISS"
+        q = QueryDict('instrumentid=Voyager+ISS')
+        expected = ['obs_general', 'obs_pds', 'obs_type_image',
+                    'obs_wavelength',
+                    'obs_surface_geometry',
+                    'obs_ring_geometry',
+                    'obs_mission_voyager',
+                    'obs_instrument_vgiss']
+        self._test_triggered_tables(q, expected)
+
+    def test__get_triggered_tables_vgiss_volume(self):
+        "get_triggered_tables: tables triggered by volume VGISS_6210"
+        q = QueryDict('volumeid=VGISS_6210')
+        expected = ['obs_general', 'obs_pds', 'obs_type_image',
+                    'obs_wavelength',
+                    'obs_surface_geometry',
+                    'obs_ring_geometry',
+                    'obs_mission_voyager', 'obs_instrument_vgiss']
+        self._test_triggered_tables(q, expected)
+
+    def test__get_triggered_tables_hubble(self):
+        "get_triggered_tables: tables triggered by mission Hubble"
+        q = QueryDict('mission=Hubble')
+        expected = ['obs_general', 'obs_pds', 'obs_type_image',
+                    'obs_wavelength',
+                    'obs_surface_geometry',
+                    'obs_ring_geometry',
+                    'obs_mission_hubble']
+        self._test_triggered_tables(q, expected)
+
+    def test__get_triggered_tables_hststis(self):
+        "get_triggered_tables: tables triggered by instrument HSTSTIS"
+        q = QueryDict('instrumentid=Hubble+STIS')
+        expected = ['obs_general', 'obs_pds', 'obs_type_image',
+                    'obs_wavelength',
+                    'obs_surface_geometry',
+                    'obs_ring_geometry',
+                    'obs_mission_hubble']
+        self._test_triggered_tables(q, expected)
+
+
 
     # def test__get_metadata(self):
     #     response = self.client.get('/opus/api/metadata/S_IMG_CO_ISS_1686170143_N.json')

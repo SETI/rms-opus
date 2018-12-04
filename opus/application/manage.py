@@ -11,7 +11,7 @@ if __name__ == "__main__":
         if command.startswith("api"):
             if command == "api-livetest-pro":
                 argv.remove("api-livetest-pro")
-                argv.append("test_api/enable_livetests.py")
+                argv.append("test_api/enable_livetests_pro.py")
             elif command == "api-livetest-dev":
                 argv.remove("api-livetest-dev")
                 argv.append("test_api/enable_livetests_dev.py")
@@ -19,7 +19,7 @@ if __name__ == "__main__":
                 argv.remove("api-internal-db")
                 argv.append("test_api/")
             else:
-                usage = "To run api test, please choose one of api test commands: "\
+                usage = "To run api tests, please choose one of these api test commands: "\
                         "api-internal-db, "\
                         "api-livetest-pro, "\
                         "api-livetest-dev"
