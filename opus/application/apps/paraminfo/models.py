@@ -75,4 +75,4 @@ class ParamInfo(models.Model):
         if self.units:
             return '(' + self.units + ')'
         else:
-            return self.units
+            return ''

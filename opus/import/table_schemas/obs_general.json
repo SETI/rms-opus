@@ -432,14 +432,15 @@
         "pi_disp_order": 300,
         "pi_display": 1,
         "pi_display_results": 1,
-        "pi_form_type": "LONG",
+        "pi_form_type": "LONG%.6f",
         "pi_intro": "Because right ascension wraps around, both min and max must be specified for a meaningful result",
         "pi_label": "Right Ascension",
         "pi_label_results": "Right Ascension (Min)",
         "pi_slug": "rightasc1",
         "pi_sub_heading": null,
         "pi_tooltip": "",
-        "pi_units": ""
+        "pi_units": "degrees",
+        "comment": "For units format, ring_geo.lbl is F10.6, COISS_*_index.lbl is F11.6 and COVIMS_0006_index.lbl is F11.6, so we round up to .6f."
     },
     {
         "field_name": "right_asc2",
@@ -460,14 +461,15 @@
         "pi_disp_order": 301,
         "pi_display": 0,
         "pi_display_results": 1,
-        "pi_form_type": "LONG",
+        "pi_form_type": "LONG%.6f",
         "pi_intro": null,
         "pi_label": "Right Ascension 2",
         "pi_label_results": "Right Ascension (Max)",
         "pi_slug": "rightasc2",
         "pi_sub_heading": null,
         "pi_tooltip": "",
-        "pi_units": ""
+        "pi_units": "degrees",
+        "comment": "For units format, refer to right_asc1."
     },
     {
         "field_name": "right_asc",
