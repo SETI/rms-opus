@@ -27,7 +27,7 @@ var o_collections = {
          // check an input on selected products and images updates file_info
          $('#collection').on("click",'#download_options input', function() {
              var add_to_url = o_collections.getDownloadFiltersChecked();
-             var url = "/opus/__collections/download/info?" + add_to_url
+             var url = "/opus/__collections/download/info.json?" + add_to_url
              $.ajax({ url: url + '&fmt=json',
                 success: function(json){
                     $('#total_files').fadeOut().html(json['download_count']).fadeIn();
@@ -46,7 +46,7 @@ var o_collections = {
                 $('.spinner', "#collections_summary").fadeIn();
                 opus.download_in_process = true;
                 var add_to_url = o_collections.getDownloadFiltersChecked();
-                var url = '/opus/__collections/download/default.zip?' + add_to_url + "&" + o_hash.getHash();
+                var url = '/opus/__collections/download.zip?' + add_to_url + "&" + o_hash.getHash();
                 $.ajax({ url: url,
                     success: function(filename){
                         opus.download_in_process = false;
@@ -71,7 +71,7 @@ var o_collections = {
 
          // click create zip file link on detail page
          $("#detail").on("click", '#create_zip_file', function() {
-             $('#zip_file', "#detail panel").html(opus.spinner + " zipping files");
+             $('#zip_file', "#detail").html(opus.spinner + " zipping files");
               $.ajax({ url: $(this).attr("href"),
                      success: function(json){
                          $('#zip_file').html('<a href = "' + json + '">' + json + '</a>');
@@ -110,25 +110,27 @@ var o_collections = {
     // init an existing collection on page load
     initCollection: function() {
         // returns any user collection saved in session
-        var url = "/opus/__collections/default/status.json";
-        $.getJSON( url, function(data) {
-            var count = data['count'];
-            if (parseInt(count, 10)) {
-                opus.collection_change = true;
+        $.ajax({ url: "/opus/__collections/status.json",
+            dataType:"json",
+            success: function(data){
+                   var count = data['count'];
+                   if (parseInt(count, 10)) {
+                       opus.collection_change = true;
 
-				//opus.changeTab('collection');
+                       opus.mainTabDisplay('collection');  // make sure the main site tab label is displayed
 
-                $('#collection_tab').fadeIn();
-
-                opus.colls_pages = Math.ceil(count/opus.prefs.limit);
-                $('#collection_count').html(count);
-            }
-            opus.lastCartRequestNo = parseInt(data['expected_request_no']) - 1
-          });
+                       $('#collection_tab').fadeIn();
+                       opus.colls_pages = Math.ceil(count/opus.prefs.limit);
+                       $('#collection_count').html(count);
+                   }
+                   opus.lastCartRequestNo = parseInt(data['expected_request_no']) - 1
+            }});
     },
 
     // get Collections tab
     getCollectionsTab: function() {
+        clearInterval(opus.scroll_watch_interval); // hold on cowgirl only 1 page at a time
+
         if (opus.collection_change) {
             var zipped_files_html = $('.zipped_files', '#collection').html();
 
@@ -141,13 +143,30 @@ var o_collections = {
             // redux: speed this up by splitting into 2 ajax calls
 
             // redux: draw the template immediately after this or only empty individual elements
-            $('.gallery', '#collection').empty();
+            $('.gallery ul.ace-thumbnails', '#collection').empty();
+            $('.data', '#collection').empty();
+
+            /*
+            // redux: first get the product counts
+            $.ajax({ url: "/opus/__collections/default/product_counts.html",
+                   success: function(html){
+
+                        // then get a page of images + metadata
+                        $.ajax({ url: "/opus/__collections/default/thumbnails.html",
+                               success: function(html){},
+                               error: function(html){}
+                           });
+
+                   },
+                   error: function(html){}
+               });
+            */
 
             // redux: and nix this big thing:
-            $.ajax({ url: "/opus/__collections/default/view.html",
+            $.ajax({ url: "/opus/__collections/view.html",
                 success: function(html){
                     // this div lives in the in the nav menu template
-                    $('.collection_details', '#collection').html(html).fadeIn();
+                    $('.collection_details', '#collection').hide().html(html).fadeIn();
 
                     opus.collection_change = false;
                     if (opus.download_in_process) {
@@ -155,7 +174,8 @@ var o_collections = {
                     }
 
                     $('#colls_pages').html(opus.colls_pages);
-                    o_browse.getGallery(opus.colls_pages); 
+
+                    o_browse.getBrowseTab();
 
                     if (zipped_files_html) {
                         $('.zipped_files', '#collection').html(zipped_files_html);
@@ -190,10 +210,15 @@ var o_collections = {
         // this sends the ajax call to edit the cart on the server
         // but this should really be a private method
         // for adding/removing from cart see edit_collection()
+
+        if (!opus.collection_q_intrvl) {
+            opus.collection_q_intrvl = setInterval("o_collections.processCollectionQueue()", 500); // resends any stray requests not recvd back from server
+        }
+
         var view_info = o_browse.getViewInfo();
         var namespace = view_info['namespace']; // either '#collection' or '#browse'
 
-        var url = "/opus/__collections/default/" + action + ".json?request=" + request_no
+        var url = "/opus/__collections/" + action + ".json?request=" + request_no
         switch (action) {
             case "add":
             case "remove":
@@ -299,16 +324,18 @@ var o_collections = {
 
         // remove 'in collection' styles in gallery/data view
         $('.tools-bottom', '.gallery').removeClass("in"); // this class keeps parent visible when mouseout
+        $( ".tools-bottom a", '.gallery').find('i').removeClass('thumb_selected_icon');
         $('.thumb_overlay', '.gallery').removeClass('thumb_selected');
         $('.data_checkbox', '.data_table').removeClass('fa-check-square-o').addClass('fa-square-o');
     },
 
     resetCollectionQueue: function() {
+        clearInterval(opus.collection_q_intrvl);
         opus.collection_queue = [];
     },
 
     editCollection: function(opus_id, action) {
-		//opus.changeTab('collection');
+        opus.mainTabDisplay('collection');  // make sure the main site tab label is displayed
 
         opus.collection_change = true;
         opus.lastCartRequestNo++;

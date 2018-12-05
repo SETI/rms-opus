@@ -424,7 +424,13 @@ def populate_obs_wavelength_HSTx_wavelength1(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     wl1 = import_util.safe_column(index_row, 'MINIMUM_WAVELENGTH')
+    wl2 = import_util.safe_column(index_row, 'MAXIMUM_WAVELENGTH')
 
+    # This is necessary because in some cases these are backwards in the table!
+    if wl1 > wl2:
+        import_util.log_warning(
+            'MAXIMUM_WAVELENGTH < MINIMUM_WAVELENGTH; swapping')
+        return wl2
     return wl1
 
 populate_obs_wavelength_HSTACS_wavelength1 = populate_obs_wavelength_HSTx_wavelength1
@@ -436,8 +442,12 @@ populate_obs_wavelength_HSTWFPC2_wavelength1 = populate_obs_wavelength_HSTx_wave
 def populate_obs_wavelength_HSTx_wavelength2(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
+    wl1 = import_util.safe_column(index_row, 'MINIMUM_WAVELENGTH')
     wl2 = import_util.safe_column(index_row, 'MAXIMUM_WAVELENGTH')
 
+    # This is necessary because in some cases these are backwards in the table!
+    if wl1 > wl2:
+        return wl1
     return wl2
 
 populate_obs_wavelength_HSTACS_wavelength2 = populate_obs_wavelength_HSTx_wavelength2
@@ -473,14 +483,14 @@ populate_obs_wavelength_HSTWFPC2_wave_res2 = populate_obs_wavelength_HSTx_wave_r
 def populate_obs_wavelength_HSTSTIS_wave_res1(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
-    wr1 = import_util.safe_column(index_row, 'MINIMUM_WAVELENGTH_RESOLUTION')
+    wr1 = import_util.safe_column(index_row, 'MAXIMUM_WAVELENGTH_RESOLUTION')
 
     return wr1
 
 def populate_obs_wavelength_HSTSTIS_wave_res2(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
-    wr2 = import_util.safe_column(index_row, 'MAXIMUM_WAVELENGTH_RESOLUTION')
+    wr2 = import_util.safe_column(index_row, 'MINIMUM_WAVELENGTH_RESOLUTION')
 
     return wr2
 
@@ -717,10 +727,33 @@ def populate_obs_mission_hubble_HSTNICMOS_filter_type(**kwargs):
 ### STIS ###
 
 def populate_obs_wavelength_HSTSTIS_spec_flag(**kwargs):
+    metadata = kwargs['metadata']
+    general_row = metadata['obs_general_row']
+    obs_type = general_row['observation_type']
+
+    if obs_type == 'SPI':
+        return 'Y'
     return 'N'
 
 def populate_obs_wavelength_HSTSTIS_spec_size(**kwargs):
+    metadata = kwargs['metadata']
+    general_row = metadata['obs_general_row']
+    obs_type = general_row['observation_type']
+
     return None
+    # if obs_type == 'IMG':
+    #     return None
+    #
+    # wl_row = metadata['obs_wavelength_row']
+    # wl1 = wl_row['wavelength1']
+    # wl2 = wl_row['wavelength2']
+    # res1 = wl_row['wave_res1']
+    # res2 = wl_row['wave_res2']
+    #
+    # if wl1 is None or wl2 is None or res1 is None or res2 is None:
+    #     return None
+    #
+    # return (wl2-wl1) / ((res1+res2)/2.)
 
 def populate_obs_wavelength_HSTSTIS_polarization_type(**kwargs):
     return 'NONE'

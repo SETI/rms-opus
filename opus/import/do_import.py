@@ -1480,6 +1480,9 @@ def do_import_steps():
                      ]
         if not old_perm_tables_dropped:
             # Don't bother if there's nothing there!
+            if not impglobals.ARGUMENTS.create_collections:
+                impglobals.LOGGER.log('warning',
+        'Deleting volumes from perm tables but collections table not wiped')
             for volume_id in import_volume_ids:
                 delete_volume_from_obs_tables(volume_id, 'perm')
 

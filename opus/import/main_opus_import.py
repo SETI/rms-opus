@@ -159,6 +159,10 @@ parser.add_argument(
     '--import-ignore-missing-images', action='store_true', default=False,
     help='Don\'t warn about missing browse images'
 )
+parser.add_argument(
+    '--import-fake-images', action='store_true', default=False,
+    help='Fake the existence of browse images if real browse files are missing'
+)
 
 parser.add_argument(
     '--delete-permanent-import-volumes', action='store_true', default=False,
@@ -390,6 +394,25 @@ try: # Top-level exception handling so we always log what's going on
 
     impglobals.DATABASE.log_sql = impglobals.ARGUMENTS.log_sql
 
+    # This MUST be done before the permanent tables are created, because there
+    # could be entries in the collections table that point at the permanent
+    # tables, and import could delete entries out of the permanent tables
+    # causing a foreign key violation.
+
+    if (impglobals.ARGUMENTS.drop_cache_tables or
+        impglobals.ARGUMENTS.create_collections):
+        impglobals.LOGGER.open(
+            f'Cleaning up OPUS/Django tables',
+            limits={'info': impglobals.ARGUMENTS.log_info_limit,
+                    'debug': impglobals.ARGUMENTS.log_debug_limit})
+
+        if impglobals.ARGUMENTS.create_collections:
+            do_collections.create_collections()
+        if impglobals.ARGUMENTS.drop_cache_tables:
+            do_django.drop_cache_tables()
+
+        impglobals.LOGGER.close()
+
     do_import.do_import_steps()
 
     # This MUST be done after the permanent tables are created, since they
@@ -415,20 +438,6 @@ try: # Top-level exception handling so we always log what's going on
 
         impglobals.LOGGER.close()
 
-    if (impglobals.ARGUMENTS.drop_cache_tables or
-        impglobals.ARGUMENTS.create_collections):
-        impglobals.LOGGER.open(
-            f'Cleaning up OPUS/Django tables',
-            limits={'info': impglobals.ARGUMENTS.log_info_limit,
-                    'debug': impglobals.ARGUMENTS.log_debug_limit})
-
-        if impglobals.ARGUMENTS.create_collections:
-            do_collections.create_collections()
-        if impglobals.ARGUMENTS.drop_cache_tables:
-            do_django.drop_cache_tables()
-
-        impglobals.LOGGER.close()
-
     if impglobals.ARGUMENTS.update_mult_info:
         impglobals.LOGGER.open(
             f'Updating preprogrammed mult tables',
@@ -436,6 +445,17 @@ try: # Top-level exception handling so we always log what's going on
                     'debug': impglobals.ARGUMENTS.log_debug_limit})
 
         do_update_mult_info.update_mult_info()
+
+        impglobals.LOGGER.close()
+
+    if (impglobals.ARGUMENTS.create_collections and
+        impglobals.TRY_COLLECTIONS_LATER):
+        impglobals.LOGGER.open(
+            f'Trying to create collections table a second time',
+            limits={'info': impglobals.ARGUMENTS.log_info_limit,
+                    'debug': impglobals.ARGUMENTS.log_debug_limit})
+
+        do_collections.create_collections()
 
         impglobals.LOGGER.close()
 
