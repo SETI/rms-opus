@@ -4,7 +4,7 @@
       <li>
         {% for name, param_info in all_info.items %}
           {% if name == param %}
-            {{ param_info.label_results }}: {{ val }}
+            {{ param_info.label_results }} {{ param_info.get_units }}: {{ val }}
             {% if param_info.get_tooltip.definition %}
               <i class="fa fa-info-circle"
                  title="{{ param_info.get_tooltip.definition|striptags }}"></i>
