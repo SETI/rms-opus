@@ -5,12 +5,10 @@ var o_browse = {
     *  all the things that happen on the browse tab
     *
     **/
-    loader: "<div id='preloader'><div id='loader'></div></div>",
-
     browseBehaviors: function() {
         // note: using .on vs .click allows elements to be added dynamically w/out bind/rebind of handler
 
-        $(window).on('scroll', _.debounce(o_browse.checkScroll, 200));
+        $(".gallery-contents").on('scroll', _.debounce(o_browse.checkScroll, 200));
 
         // nav stuff
         var onRenderBrowse = _.debounce(o_browse.renderBrowseData, 500);
@@ -285,13 +283,32 @@ var o_browse = {
             return false;
         });
 
-        // initialize infinite scrolling for gallery
-        $('.gallery-scroll').jscroll();
     }, // end browse behaviors
 
     checkScroll: function() {
-        if ($(window).scrollTop() == $(document).height() - $(window).height()) {
-            console.log("time for more");
+        let pageBottomIndicator = $(".gallery .infinite_scroll_page").last();
+        let page = pageBottomIndicator.data("page");
+        page++;   // get next page
+        // load an extra page so the delay is minimized...
+        if ($(".gallery-contents").scrollTop() + $(window).height() >= $(".gallery").height() - $(".gallery-contents").height()) {
+            if (page != "") {
+                o_browse.renderBrowseData(page, "append");
+            }
+        } else {
+            $.each($(".gallery .infinite_scroll_page"), function(index, elem) {
+                let position = $(elem).prev().offset();
+                if (position) {
+                    // if the marker is closer to the top then the bottom, update the page marker
+                    if (position.top > 0 && (position.top < $(window).height()/2)) {
+                        // Update page number
+                        let page = $(elem).data("page");
+                        opus.prefs.page[opus.prefs.browse] = page;
+                        $("input#page").val(page);
+                        console.log("page: "+page);
+                        return false;
+                    }
+                }
+            })
         }
     },
 
@@ -318,59 +335,6 @@ var o_browse = {
     openDetailTab: function() {
         $("#galleryView").modal('hide');
         opus.changeTab('detail');
-    },
-
-    // what page no is currently scrolled more into view?
-    pageInViewIndicator: function() {
-
-        var view_info = o_browse.getViewInfo();
-        var namespace = view_info['namespace']; // either '#collection' or '#browse'
-        var prefix = view_info['prefix'];       // either 'colls_' or ''
-        var add_to_url = view_info['add_to_url'];  // adds colls=true if in collections view
-
-        if ($('#' + prefix + 'page', namespace).is(":focus")) {
-            // the page element has focus, user is typing, so leave it alone!
-            return;
-        }
-
-        var view_var = opus.prefs[prefix + 'browse'];  // either 'gallery' or 'data'
-
-        var first_page = opus.prefs.page[prefix + view_var];
-
-        if ($(window).scrollTop() === 0 || opus.browse_footer_clicks[prefix + view_var] === 0) {
-            // there has been no scrolling, set it to first page
-            $('#' + prefix + 'page', namespace).val(first_page);
-            return;
-        }
-
-        var no_length = 0;
-        var page = first_page;
-        while (page <= (opus.browse_footer_clicks[prefix + view_var] + first_page)) { // opus.pages
-            var elem = '#infinite_scroll_' + prefix + opus.prefs.browse + '__' + page;
-            if ($(elem).length) {
-                var elem_scroll = $(elem, namespace).offset().top;
-                try {
-                    if (Math.abs(elem_scroll  -  $('.top_navbar', namespace).offset().top ) < $(window).height()/2) {
-                        // the first one that's greater than the window is the page
-                        $('#' + prefix + 'page', namespace).val(page);
-                        return;
-                    }
-                } catch(e) {
-                    // offset of top is undefined
-                    return
-                }
-
-            } else {
-                no_length = no_length + 1; // if we hit 2 in a row stop checking
-                if (no_length > 2) {
-                    // there aren't any more, if we are still here then:
-                    break;
-                }
-            }
-            page = page + 1;
-        }
-
-
     },
 
     // user is adding range with the 'add range' button in the top menu
@@ -590,39 +554,6 @@ var o_browse = {
         }
     },
 
-    // footer bar, indicator bar, browse footer bar
-    infiniteScrollPageIndicatorRow: function(page) {
-        // this is the bar that appears below each infinite scroll page to indicate page no
-
-        (opus.prefs.view == 'browse') ? browse_prefix = '' : browse_prefix = 'colls_';
-
-        var id = 'infinite_scroll_' + browse_prefix + opus.prefs.browse + '__' + page;
-
-        if ($(id).length) {
-            return;  // this is a hack because it sometimes draws it multiple times
-        }
-
-        var data;
-        if (opus.prefs.browse == "gallery") {
-            data = '<div class = "infinite_scroll_page navbar-inverse">\
-                       <span class = "back_to_top"><a href = "#top">back to top</a></span>\
-                       <span class = "infinite_scroll_page_container page_' + page + '" id = "' + id + '">Page ' + page + '</span>\
-                       <span class = "infinite_scroll_spinner">' + opus.spinner + '</span>\
-                   </div>';
-        } else {
-            data = '<tr class = "infinite_scroll_page">\
-                      <td colspan = "' + (opus.prefs['cols'].length +1) + '">\
-                          <div class="navbar-inverse"> \
-                              <span class = "back_to_top"><a href = "#top">back to top</a></span> \
-                              <span class = "infinite_scroll_page_container" id = "' + id + '">Page ' + page + '</span><span class = "infinite_scroll_spinner">' + opus.spinner + '</span> \
-                          </div>\
-                  </td>\
-                  </tr>';
-        }
-        return data;
-    },
-
-
     // there are interactions that are applied to different code snippets,
     // this returns the namespace, view_var, prefix, and add_to_url
     // that distinguishes collections vs result tab views
@@ -749,16 +680,17 @@ var o_browse = {
         return url;
     },
 
-    getGallery: function(page) {
+    getGallery: function(page, append) {
         var view = o_browse.getViewInfo();
         var base_url = "/opus/__api/images.html?";
         var url = o_hash.getHash() + '&reqno=' + opus.lastRequestNo + view.add_to_url;
 
         url = o_browse.updatePageInUrl(url, page);
-        $('.gallery', view.namespace).html(o_browse.loader);
+        $('.gallery .preloader', view.namespace).fadeIn();
 
         $.ajax({ url: base_url + url,
             success: function(html) {
+                $('.gallery .preloader', view.namespace).fadeOut();
                 opus.gallery_begun = true;
                 if (view.namespace == "#collection" && $.trim(html) == "") {
                       // clicked on collections tab with nothing in collections,
@@ -772,11 +704,15 @@ var o_browse = {
 
                       $('.gallery', namespace).html(html);
                 } else {
-                      $('.gallery', namespace).html(html);
-                      var next = o_browse.updatePageInUrl(this.url);
-                      var jscrollNext = "<a href='"+next+"'>next</a> </div>";
-                      //$('.gallery', view.namespace).append(jscrollNext).fadeIn();
+                      if (append != undefined && append == "append") {
+                          $('.gallery', namespace).append(html);
+                      } else {
+                          $('.gallery', namespace).html(html);
+                      }
+                      var pageBottom = "<div class='infinite_scroll_page' data-page='"+page+"'>End of page: "+page+"</div>";
+                      $('.gallery', view.namespace).append(pageBottom).fadeIn();
                 }
+                o_browse.checkScroll();
             }
         });
     },
@@ -797,7 +733,6 @@ var o_browse = {
             } else {
                 param = values = [];
             }
-
 
             // make sure opus_id is in columns
             if (param == 'cols') {
@@ -841,11 +776,10 @@ var o_browse = {
         }
     },
 
-    renderBrowseData: function(page) {
+    renderBrowseData: function(page, append) {
         window.scrollTo(0,opus.browse_view_scrolls[opus.prefs.browse]);
         page = (page == undefined ? $("input#page").val() : page);
-        console.log(page);
-        $("input#page").val(page).css("color","initial");
+//        $("input#page").val(page).css("color","initial");
 
         // wait! is this page already drawn?
         if (opus.last_page_drawn[opus.prefs.browse] == page) {
@@ -854,7 +788,7 @@ var o_browse = {
 
         if (opus.prefs.browse == "gallery") {
             opus.pages_drawn.gallery.push(page);
-            o_browse.getGallery(page);
+            o_browse.getGallery(page, append);
         }
 
         opus.last_page_drawn[opus.prefs.browse] = page;
@@ -871,18 +805,13 @@ var o_browse = {
         // total pages indicator
         $('#' + 'pages', "#browse").html(opus['pages']);
 
-        // all this stuff is for infinite scroll management...
-        var footer_clicks = opus.browse_footer_clicks[opus.prefs.browse]; // default: {"gallery":0, "dataTable":0, 'colls_gallery':0, 'colls_data':0 };
-
         // figure out the page
-        var start_page = opus.prefs.page[opus.prefs.browse]; // default: {"gallery":1, "dataTable":1, 'colls_gallery':1, 'colls_data':1 };
-
-        var page = parseInt(start_page, 10) + parseInt(footer_clicks, 10);
+        var page = opus.prefs.page[opus.prefs.browse]; // default: {"gallery":1, "dataTable":1, 'colls_gallery':1, 'colls_data':1 };
 
         // some outlier things that can go wrong with page (when user entered page #)
         if (!page || page < 1) {
             page = 1;
-            $('#' + 'page_no', "#browse").val(page); // reset the display
+            $("input#page").val(page); // reset the display
         }
 
         if (opus.pages && page > opus.pages) {

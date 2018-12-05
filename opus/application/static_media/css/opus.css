@@ -354,7 +354,7 @@ th.sticky-header {
     width:100%;
 }
 .infinite_scroll_page {
-    display:none;
+    /*display:none; */
 }
 li.infinite_scroll_page  {
     list-style-type: none;
