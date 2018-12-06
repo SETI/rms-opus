@@ -338,7 +338,7 @@ def api_create_download(request, opus_ids=None, fmt=None):
     _create_csv_file(request, csv_file_name, api_code=api_code)
 
     # fetch the full file paths we'll be zipping up
-    files = get_pds_products(opus_ids, None, fmt='raw', loc_type='path',
+    files = get_pds_products(opus_ids, None, loc_type='path',
                              product_types=product_types)
 
     if not files:
@@ -373,8 +373,11 @@ def api_create_download(request, opus_ids=None, fmt=None):
     errors = []
     added = []
     for opus_id in files:
-        for product_type in files[opus_id]:
-            for f in files[opus_id][product_type]:
+        if 'Current' not in files[opus_id]:
+            continue
+        files_version = files[opus_id]['Current']
+        for product_type in files_version:
+            for f in files_version[product_type]:
                 pretty_name = f.split('/')[-1]
                 digest = "%s:%s" % (pretty_name, md5(f))
                 mdigest = "%s:%s" % (opus_id, pretty_name)
