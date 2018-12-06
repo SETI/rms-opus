@@ -21,7 +21,6 @@
 ################################################################################
 
 from collections import OrderedDict
-import csv
 import json
 import logging
 import os

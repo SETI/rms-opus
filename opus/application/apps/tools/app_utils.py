@@ -210,7 +210,9 @@ def exit_api_call(api_code, ret):
             s += ' ' + str(end_time-_API_START_TIMES[api_code]) + ' secs'
         ret_str = str(ret)
         ret_str = ' '.join(ret_str.split()) # Compress whitespace
-        s += ': ' + ret_str[:80]
+        s += ': ' + ret_str[:240]
+        if isinstance(ret, HttpResponse):
+            s += '\n' + ret.content.decode()[:240]
         log.debug(s)
     if api_code in _API_START_TIMES:
         del _API_START_TIMES[api_code]

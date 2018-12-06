@@ -121,7 +121,7 @@ def get_pds_products_by_type(opus_id_list, product_types=['all']):
 
         # Keep a running list of all products by type
         for (product_type, list_of_sublists) in products.items():
-            if product_types == ['all'] or product_type in product_types:
+            if product_types == ['all'] or product_type[2] in product_types:
                 list_of_sublists = _pdsfile_extract_version(list_of_sublists)
                 flat_list = _pdsfile_iter_flatten(list_of_sublists)
                 products_by_type.setdefault(product_type, []).extend(flat_list)

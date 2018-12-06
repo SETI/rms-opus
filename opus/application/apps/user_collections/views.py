@@ -1,11 +1,35 @@
-################################################
+
+################################################################################
 #
-#   user_collections.views
-#   django adds/removes opus_ids from the current collection
-#   note to self: add time added to Collections for timeout
+# results/views.py
 #
-################################################
+# The (private) API interface for adding and removing items from the collection
+# and creating download .zip and .csv files.
+#
+#    Format: __collections/view.html
+#    Format: __collections/status.json
+#    Format: __collections/data.csv
+#    Format: __collections/(?P<action>[add|remove|addrange|removerange|addall]+).json
+#    Format: __collections/reset.html
+#    Format: __collections/download/info.json
+#    Format: __collections/download.zip
+#    Format: __zip/(?P<opus_id>[-\w]+).(?P<fmt>[json]+)
+#
+################################################################################
+
+import csv
+import datetime
+import json
+import logging
+import os
+import random
+import string
+import zipfile
+
+import pdsfile
+
 import settings
+
 from django.db import connection
 from django.http import HttpResponse, HttpResponseNotFound, Http404
 from django.shortcuts import render
@@ -17,43 +41,31 @@ from results.views import get_data, get_page, get_all_in_collection
 from search.models import ObsGeneral
 from search.views import get_param_info_by_slug
 from user_collections.models import Collections
-
 from tools.app_utils import *
 from tools.file_utils import *
 
-import csv
-import datetime
-import json
-import os
-import random
-import settings
-import string
-import zipfile
-
-import pdsfile
-
-import logging
 log = logging.getLogger(__name__)
 
 
 ################################################################################
 #
-# api_view_collection
-#
-# Format: __collections/(?P<collection_name>[default]+)/view.html
-#
-# This returns the OPUS-specific left side of the "Selections" page as HTML.
-# This includes the number of files selected, total size of files selected,
-# and list of product types with their number.
+# API INTERFACES
 #
 ################################################################################
 
-@never_cache
-def api_view_collection(request, collection_name):
-    """Return the HTML for the left side of the Selections page.
 
-    This returns information about ALL files and product types, ignoring any
-    user choices. Choices are handled in the OPUS UI.
+@never_cache
+def api_view_collection(request):
+    """Return the OPUS-specific left side of the "Selections" page as HTML.
+
+    This includes the number of files selected, total size of files selected,
+    and list of product types with their number. This returns information about
+    ALL files and product types, ignoring any user choices. Choices are handled
+    in the OPUS UI.
+
+    This is a PRIVATE API.
+
+    Format: __collections/view.html
     """
     api_code = enter_api_call('api_view_collection', request)
 
@@ -95,21 +107,16 @@ def api_view_collection(request, collection_name):
     return ret
 
 
-################################################################################
-#
-# api_collection_status
-#
-# Format: __collections/(?P<collection_name>[default]+)/status.json
-# Arguments: expected_request_no=<N>
-#
-# This returns the number of items currently in the collection. It is used to
-# update the "Selection <N>" tab in the OPUS UI.
-#
-################################################################################
-
 @never_cache
-def api_collection_status(request, collection_name='default'):
-    "Return the number of items in a collection."
+def api_collection_status(request):
+    """Return the number of items in a collection.
+
+    It is used to update the "Selection <N>" tab in the OPUS UI.
+
+    This is a PRIVATE API.
+
+    Format: __collections/status.json
+    """
     api_code = enter_api_call('api_collection_status', request)
 
     session_id = get_session_id(request)
@@ -125,22 +132,16 @@ def api_collection_status(request, collection_name='default'):
     return ret
 
 
-################################################################################
-#
-# api_get_collection_csv
-#
-# Format: __collections/data.csv
-# Arguments: fmt=<FMT>
-#            Normal search and selected-column arguments
-#
-# This returns a CSV file containing the currently selected columns in the
-# collection.
-#
-################################################################################
-
-
 def api_get_collection_csv(request, fmt=None):
-    "Creates and returns a CSV file based on user query and selection columns."
+    """Returns a CSV file of the current collection.
+
+    The CSV file contains the columns specified in the request.
+
+    This is a PRIVATE API.
+
+    Format: __collections/data.csv
+            Normal selected-column arguments
+    """
     api_code = enter_api_call('api_get_collection_csv', request)
 
     ret = _get_collection_csv(request, fmt, api_code=api_code)
@@ -149,25 +150,19 @@ def api_get_collection_csv(request, fmt=None):
     return ret
 
 
-################################################################################
-#
-# api_edit_collection
-#
-# Format: __collections/(?P<collection_name>[default]+)/
-#                     (?P<action>[add|remove|addrange|removerange|addall]+).json
-# Arguments: opus_id=<ID>
-#            request=<N>
-#            expected_request_no=<N>
-#            addrange=<OPUS_ID>,<OPUS_ID>
-#            removerange=<OPUS_ID>,<OPUS_ID>
-#
-# Add or remove items from the collection.
-#
-################################################################################
-
 @never_cache
 def api_edit_collection(request, **kwargs):
     """Add or remove items from a collection.
+
+    This is a PRIVATE API.
+
+    Format: __collections/
+            (?P<action>[add|remove|addrange|removerange|addall]+).json
+    Arguments: opus_id=<ID>
+               request=<N>
+               expected_request_no=<N>
+               addrange=<OPUS_ID>,<OPUS_ID>
+               removerange=<OPUS_ID>,<OPUS_ID>
 
     Returns the new number of items in the collection.
     """
@@ -181,19 +176,17 @@ def api_edit_collection(request, **kwargs):
         exit_api_call(api_code, None)
         raise Http404
 
-    opus_id = request.GET.get('opus_id', False)
-    request_no = request.GET.get('request', False)
+    request_no = request.GET.get('request', None)
 
-    if not opus_id and action in ['add', 'remove']:
-        try:
-            opus_id = kwargs['opus_id'] # XXX WHY?
-        except KeyError:
-                json_data = {'err': 'No observations specified'}
-                ret = HttpResponse(json.dumps(json_data))
-                exit_api_call(api_code, ret)
-                return ret
+    if action in ['add', 'remove']:
+        opus_id = request.GET.get('opus_id', None)
+        if opus_id is None:
+            json_data = {'err': 'No observations specified'}
+            ret = HttpResponse(json.dumps(json_data))
+            exit_api_call(api_code, ret)
+            return ret
 
-    if not request_no:
+    if request_no is None: # XXX Is this needed?
         try:
             request_no = kwargs['request_no']
         except KeyError:
@@ -209,14 +202,14 @@ def api_edit_collection(request, **kwargs):
     if action == 'add':
         _add_to_collections_table(opus_id, session_id)
 
-    elif (action == 'remove'):
+    elif action == 'remove':
         _remove_from_collections_table(opus_id, session_id)
 
-    elif (action in ['addrange', 'removerange']):
+    elif action in ['addrange', 'removerange']:
         # This returns a boolean indicating success which we ignore XXX
         _edit_collection_range(request, session_id, action)
 
-    elif (action == 'addall'):
+    elif action == 'addall':
         _edit_collection_addall(request, **kwargs)
 
     collection_count = _get_collection_count(session_id)
@@ -243,19 +236,14 @@ def api_edit_collection(request, **kwargs):
     return ret
 
 
-################################################################################
-#
-# api_reset_session
-#
-# Format: __collections/reset.html
-#
-# Remove everything from the collection and reset the session.
-#
-################################################################################
-
 @never_cache
 def api_reset_session(request):
-    "Remove everything from the collection and reset the session."
+    """Remove everything from the collection and reset the session.
+
+    This is a PRIVATE API.
+
+    Format: __collections/reset.html
+    """
     api_code = enter_api_call('api_reset_session', request)
 
     session_id = get_session_id(request)
@@ -272,17 +260,6 @@ def api_reset_session(request):
     return ret
 
 
-################################################################################
-#
-# api_get_download_info
-#
-# Format: __collections/download/info/
-# Arguments: types=<PRODUCT_TYPES>
-#
-# Remove everything from the collection and reset the session.
-#
-################################################################################
-
 @never_cache
 def api_get_download_info(request):
     """Return count, size, and product_type info for selected product types.
@@ -291,6 +268,11 @@ def api_get_download_info(request):
     the HTML for the entire left side of the Selections page, it just returns
     the updated sizes and counts. This is used by the OPUS UI when the user
     clicks to (de)select a product type.
+
+    This is a PRIVATE API.
+
+    Format: __collections/download/info.json
+    Arguments: types=<PRODUCT_TYPES>
     """
     api_code = enter_api_call('api_get_download_info', request)
 
@@ -310,7 +292,7 @@ def api_get_download_info(request):
     context = {
         'download_count': download_count,
         'download_size':  download_size,
-        'download_size_pretty':  nice_file_size(download_size),
+        'download_size_pretty': nice_file_size(download_size),
         'product_counts': {x[0][2]: x[1] for x in product_counts}
     }
 
@@ -319,26 +301,19 @@ def api_get_download_info(request):
     return ret
 
 
-################################################################################
-#
-# api_create_download
-#
-# Format: __collections/download/(?P<session_id>[default]+).zip
-#     or: zip/(?P<opus_id>[-\w]+).(?P<fmt>[json]+)
-# Arguments: types=<PRODUCT_TYPES>
-#
-# Remove everything from the collection and reset the session.
-#
-################################################################################
-
 @never_cache
-def api_create_download(request, session_id=None, opus_ids=None, fmt=None):
-    "Creates a zip file of all items in the collection or the given OPUS ID."
-    # XXX Why does this take a session_id instead of a collection_name?
+def api_create_download(request, opus_ids=None, fmt=None):
+    """Creates a zip file of all items in the collection or the given OPUS ID.
+
+    This is a PRIVATE API.
+
+    Format: __collections/download.zip
+        or: __zip/(?P<opus_id>[-\w]+).(?P<fmt>[json]+)
+    Arguments: types=<PRODUCT_TYPES>
+    """
     api_code = enter_api_call('api_create_download', request)
 
-    if session_id == 'default' or session_id is None:
-        session_id = get_session_id(request)
+    session_id = get_session_id(request)
 
     fmt = request.GET.get('fmt', 'raw')
     product_types = request.GET.get('types', 'none')
@@ -356,9 +331,9 @@ def api_create_download(request, session_id=None, opus_ids=None, fmt=None):
     zip_base_file_name = _zip_filename()
     zip_root = zip_base_file_name.split('.')[0]
     zip_file_name = settings.TAR_FILE_PATH + zip_base_file_name
-    chksum_file_name = settings.TAR_FILE_PATH + 'checksum_' + zip_root + '.txt'
-    manifest_file_name = settings.TAR_FILE_PATH + 'manifest_' + zip_root + '.txt'
-    csv_file_name = settings.TAR_FILE_PATH + 'csv_' + zip_root + '.txt'
+    chksum_file_name = settings.TAR_FILE_PATH + f'checksum_{zip_root}.txt'
+    manifest_file_name = settings.TAR_FILE_PATH + f'manifest_{zip_root}.txt'
+    csv_file_name = settings.TAR_FILE_PATH + f'csv_{zip_root}.txt'
 
     _create_csv_file(request, csv_file_name, api_code=api_code)
 
@@ -367,7 +342,7 @@ def api_create_download(request, session_id=None, opus_ids=None, fmt=None):
                              product_types=product_types)
 
     if not files:
-        log.error("No files found in downloads.create_download")
+        log.error("No files found in api_create_download")
         log.error(".. First 5 opus_ids: %s", str(opus_ids[:5]))
         log.error(".. First 5 PRODUCT TYPES: %s", str(product_types[:5]))
         raise Http404
@@ -646,13 +621,13 @@ def _edit_collection_addall(request, **kwargs):
 
 def _zip_filename(opus_id=None):
     "Create a unique filename for a user's cart."
-    if opus_id:
-        return 'pdsrms-data-' + opus_id + '.zip'
     random_ascii = random.choice(string.ascii_letters).lower()
     timestamp = "T".join(str(datetime.datetime.now()).split(' '))
     # Windows doesn't like ':' in filenames
     timestamp = timestamp.replace(':', '-')
-    return 'pdsrms-data-' + random_ascii + '-' + timestamp + '.zip'
+    if opus_id:
+        return f'pdsrms-data-{opus_id}-{random_ascii}-{timestamp}.zip'
+    return f'pdsrms-data-{random_ascii}-{timestamp}.zip'
 
 
 def _create_csv_file(request, csv_file_name, api_code=None):
