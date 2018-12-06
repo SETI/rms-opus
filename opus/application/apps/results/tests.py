@@ -222,9 +222,19 @@ class resultsTests(TestCase):
                     'obs_mission_hubble']
         self._test_triggered_tables(q, expected)
 
-    def test__get_triggered_tables_hststis(self):
-        "get_triggered_tables: tables triggered by instrument HSTSTIS"
-        q = QueryDict('instrumentid=Hubble+STIS')
+    def test__get_triggered_tables_hstwfc3(self):
+        "get_triggered_tables: tables triggered by instrument HSTWFC3"
+        q = QueryDict('instrumentid=Hubble+WFC3')
+        expected = ['obs_general', 'obs_pds', 'obs_type_image',
+                    'obs_wavelength',
+                    'obs_surface_geometry',
+                    'obs_ring_geometry',
+                    'obs_mission_hubble']
+        self._test_triggered_tables(q, expected)
+
+    def test__get_triggered_tables_hstwfc3_filespec(self):
+        "get_triggered_tables: tables triggered by filespec IB4V12N4Q"
+        q = QueryDict('primaryfilespec=IB4V12N4Q')
         expected = ['obs_general', 'obs_pds', 'obs_type_image',
                     'obs_wavelength',
                     'obs_surface_geometry',

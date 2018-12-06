@@ -443,35 +443,37 @@ def api_init_detail_page(request, **kwargs):
 
     # On the details page, we display the list of available filenames after
     # each product type
-    products = get_pds_products(opus_id, None, fmt='raw')[opus_id]
+    products = get_pds_products(opus_id, None)[opus_id]
     if not products:
         products = {}
     new_products = OrderedDict()
-    for product_type in sorted(products, key=pds_products_sort_func):
-        file_list = products[product_type]
-        product_info = {}
-        # Create the URL to look up a particular OPUS_ID in a given
-        # metadata summary file in ViewMaster
-        if product_type[3].find('Index') != -1:
-            tab_url = None
-            for fn in file_list:
-                if (fn.endswith('.tab') or
-                    fn.endswith('.TAB')):
-                    tab_url = fn
-                    break
-            if tab_url:
-                tab_url = tab_url.replace('holdings', 'viewmaster')
-                tab_url += '/'+opus_id.split('-')[-1]
-            product_info['product_link'] = tab_url
-        else:
-            product_info['product_link'] = None
-        file_list = file_list[:]
-        for i in range(len(file_list)):
-            fn = file_list[i].split('/')[-1]
-            file_list[i] = {'filename': fn,
-                            'link': file_list[i]}
-        product_info['files'] = file_list
-        new_products[product_type[3]] = product_info
+    for version in products:
+        new_products[version] = OrderedDict()
+        for product_type in products[version]:
+            file_list = products[version][product_type]
+            product_info = {}
+            # Create the URL to look up a particular OPUS_ID in a given
+            # metadata summary file in ViewMaster
+            if product_type[3].find('Index') != -1:
+                tab_url = None
+                for fn in file_list:
+                    if (fn.endswith('.tab') or
+                        fn.endswith('.TAB')):
+                        tab_url = fn
+                        break
+                if tab_url:
+                    tab_url = tab_url.replace('holdings', 'viewmaster')
+                    tab_url += '/'+opus_id.split('-')[-1]
+                product_info['product_link'] = tab_url
+            else:
+                product_info['product_link'] = None
+            file_list = file_list[:]
+            for i in range(len(file_list)):
+                fn = file_list[i].split('/')[-1]
+                file_list[i] = {'filename': fn,
+                                'link': file_list[i]}
+            product_info['files'] = file_list
+            new_products[version][product_type[3]] = product_info
 
     context = {
         'preview_full_url': preview_full_url,

@@ -87,33 +87,33 @@ sections:
                 - desc: Saturn observation, full size, in JSON
                   url: <HOST>/opus/api/image/full/vg-iss-2-s-c4360022.json
 
-          - title: api/files/[opus_id].[fmt]
+          - title: api/files/[opus_id].json
             desc: Get a list of all files for a single observation.
             info:
                 opus_id: valid opus_id (if you provide an old ring_obs_id, you will get the appropriate opus_id back)
-                fmt: json
                 GET param 1: types=<types> (List of product types; if not supplied, all are returned)
                 GET param 2: loc_type=<loc> (Format of returned path, 'url' or 'path'; defaults to 'url')
-                JSON return: "{{'page_no': given page number, 'limit': given limit, 'count': number of observations returned, 'order': sort order, 'data': dictionary of opus_id, then indexed by product type}"
+                JSON return: "{'data': dictionary of opus_id, then indexed by product type for current version, 'versions': dictionary of version, then opus_id, then product_type}"
             examples:
-                - desc: A Voyager ISS observation, JSON format
+                - desc: A Voyager ISS observation
                   url: <HOST>/opus/api/files/vg-iss-2-s-c4360022.json
-                - desc: A Galileo SSI observation, JSON format, Raw data only
+                - desc: A Galileo SSI observation, Raw data only
                   url: <HOST>/opus/api/files/go-ssi-c0349632000.json?types=gossi-raw
+                - desc: An HST WFC3 observation with multiple versions
+                  url: <HOST>/opus/api/files/hst-11559-wfc3-ib4v19rp.json
 
-          - title: api/files.[fmt]
+          - title: api/files.json
             desc: Get a list of all files for the search results.
             info:
-                fmt: json
                 GET param 1: search params (If not supplied, all results are returned)
                 GET param 2: order=column_slug,... (Column(s) to sort on; if not supplied, default sort order is used)
                 GET param 3: limit=N (The maximum number of observations to return; defaults to 100)
                 GET param 4: page=N (The 100-observation page number to start with; defaults to 1)
                 GET param 5: types=<types> (List of product types; if not supplied, all are returned)
                 GET param 6: loc_type=<loc> (Format of returned path, 'url' or 'path'; defaults to 'url')
-                JSON return: "{'page_no': given page number, 'limit': given limit, 'count': number of observations returned, 'order': sort order, 'data': dictionary of opus_id, then indexed by product type}"
+                JSON return: "{'page_no': given page number, 'limit': given limit, 'count': number of observations returned, 'order': sort order, 'data': dictionary of opus_id, then indexed by product type for current version, 'versions': dictionary of version, then opus_id, then product_type}"
             examples:
-                - desc: Target Pan, in JSON
+                - desc: Target Pan
                   url: <HOST>/opus/api/files.json?&target=pan
 
     - title: Getting Information about Data
@@ -148,20 +148,18 @@ sections:
                 - desc: Get ring radius endpoints for target Saturn
                   url: <HOST>/opus/api/meta/range/endpoints/RINGGEOringradius1.json?target=Saturn
 
-          - title: api/categories/[opus_id].[fmt]
+          - title: api/categories/[opus_id].json
             desc: Return a list of all table names this opus_id exists in.
             info:
                 opus_id: valid opus_id
-                fmt: json
                 JSON return: "List of {'table_name': internal name, 'label': user-visible name}"
             examples:
                 - desc: Category names for a Cassini ISS observation
                   url: <HOST>/opus/api/categories/co-iss-w1866600688.json
 
-          - title: api/categories.[fmt]
+          - title: api/categories.json
             desc: List all category names triggered by a particular search.
             info:
-                fmt: json
                 GET param 1: search params (If not supplied, the result is not constrained)
                 JSON return: "List of {'table_name': internal name, 'label': user-visible name}"
             examples:

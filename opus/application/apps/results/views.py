@@ -457,18 +457,18 @@ def api_get_image(request, opus_id, size='med', fmt='raw'):
     return ret
 
 
-def api_get_files(request, opus_id=None, fmt='json'):
+def api_get_files(request, opus_id=None):
     """Return all files for a given opus_id or search results.
 
     This is a PUBLIC API.
 
-    Format: [__]api/files/(?P<opus_id>[-\w]+).(?P<fmt>[json|zip|html|csv]+)
-        or: [__]api/files.(?P<fmt>[json|zip|html|csv]+)
+    Format: [__]api/files/(?P<opus_id>[-\w]+).json
+        or: [__]api/files.json
     Arguments: types=<types>
                     Product types
                loc_type=['url', 'path']
 
-    Can return JSON, ZIP, HTML, or CSV.
+    Only returns JSON.
     """
     api_code = enter_api_call('api_get_files', request)
 
@@ -504,19 +504,30 @@ def api_get_files(request, opus_id=None, fmt='json'):
         if 'columns' in data:
             del data['columns']
 
-    ret = get_pds_products(opus_ids, file_specs, fmt='raw',
+    ret = get_pds_products(opus_ids, file_specs,
                            loc_type=loc_type,
                            product_types=product_types)
 
-    new_ret = OrderedDict()
+    versioned_ret = OrderedDict()
+    current_ret = OrderedDict()
     for opus_id in ret:
-        new_ret[opus_id] = OrderedDict()
-        for product_type in ret[opus_id]:
-            new_ret[opus_id][product_type[2]] = ret[opus_id][product_type]
+        versioned_ret[opus_id] = OrderedDict() # Versions
+        current_ret[opus_id] = OrderedDict()
+        for version in ret[opus_id]:
+            versioned_ret[opus_id][version] = OrderedDict()
+            for product_type in ret[opus_id][version]:
+                versioned_ret[opus_id][version][product_type[2]] = \
+                    ret[opus_id][version][product_type]
+                if version == 'Current':
+                    current_ret[opus_id][product_type[2]] = \
+                        ret[opus_id][version][product_type]
 
-    data['data'] = new_ret
-    exit_api_call(api_code, data)
-    return response_formats(data, fmt=fmt)
+    data['data'] = current_ret
+    data['versions'] = versioned_ret
+
+    ret = HttpResponse(json.dumps(data), content_type='application/json')
+    exit_api_call(api_code, ret)
+    return ret
 
 
 def api_get_categories_for_opus_id(request, opus_id):
