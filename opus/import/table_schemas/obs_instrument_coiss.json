@@ -297,7 +297,7 @@
         "pi_slug": "COISSimagenumber",
         "pi_sub_heading": null,
         "pi_tooltip": null,
-        "pi_units": "seconds",
+        "pi_units": "",
         "comment": "Definition is from COISS label. For units, refer to COISS/index.lbl."
     },
     {

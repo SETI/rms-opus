@@ -18,6 +18,8 @@ from collections import OrderedDict
 import json
 import logging
 
+import settings
+
 from django.apps import apps
 from django.db import connection
 from django.core.cache import cache
@@ -403,11 +405,15 @@ def api_get_range_endpoints(request, slug, fmt='json'):
 
     if form_type_format:
         try:
+            if range_endpoints['min'] > settings.THRESHOLD_FOR_EXPOENTIAL_FORMAT:
+                form_type_format = form_type_format.replace("f", "e")
             range_endpoints['min'] = format(range_endpoints['min'],
                                             form_type_format)
         except TypeError:
             pass
         try:
+            if range_endpoints['max'] > settings.THRESHOLD_FOR_EXPOENTIAL_FORMAT:
+                form_type_format = form_type_format.replace("f", "e")
             range_endpoints['max'] = format(range_endpoints['max'],
                                             form_type_format)
         except TypeError:

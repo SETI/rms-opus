@@ -174,7 +174,7 @@
         "pi_disp_order": 30,
         "pi_display": 1,
         "pi_display_results": 1,
-        "pi_form_type": "RANGE%.4f",
+        "pi_form_type": "RANGE%.1f",
         "pi_intro": null,
         "pi_label": "Wavenumber",
         "pi_label_results": "Wavenumber (Min)",
@@ -182,7 +182,7 @@
         "pi_sub_heading": null,
         "pi_tooltip": "",
         "pi_units": "cm^-1",
-        "comment": "Definition is from old OPUS dictionary. For units format, it's derived from wavelength1, rounding up to the same decimal place as wavelength1."
+        "comment": "Definition is from old OPUS dictionary. For units format, it's derived from 10000/wavelength1 and is cm^-1, rounding up to .1f."
     },
     {
         "field_name": "wave_no2",
@@ -200,7 +200,7 @@
         "pi_disp_order": 31,
         "pi_display": 0,
         "pi_display_results": 1,
-        "pi_form_type": "RANGE%.4f",
+        "pi_form_type": "RANGE%.1f",
         "pi_intro": null,
         "pi_label": "Wavenumber 2",
         "pi_label_results": "Wavenumber (Max)",
@@ -227,7 +227,7 @@
         "pi_disp_order": 40,
         "pi_display": 1,
         "pi_display_results": 1,
-        "pi_form_type": "RANGE%.4f",
+        "pi_form_type": "RANGE%.1f",
         "pi_intro": null,
         "pi_label": "Wavenumber Resolution",
         "pi_label_results": "Wavenumber Resolution (Min)",
@@ -235,7 +235,7 @@
         "pi_sub_heading": null,
         "pi_tooltip": "",
         "pi_units": "cm^-1/pixel",
-        "comment": "Definition is from old OPUS dictionary. For units format, it's derived from wave_no1 & wave_no2, ounding up to the same decimal place .4f."
+        "comment": "Definition is from old OPUS dictionary. For units format, it's derived from wave_no1 & wave_no2, rounding up to the same decimal place .1f."
     },
     {
         "field_name": "wave_no_res2",
@@ -253,7 +253,7 @@
         "pi_disp_order": 41,
         "pi_display": 0,
         "pi_display_results": 1,
-        "pi_form_type": "RANGE%.4f",
+        "pi_form_type": "RANGE%.1f",
         "pi_intro": null,
         "pi_label": "Wavenumber Resolution 2",
         "pi_label_results": "Wavenumber Resolution (Max)",
