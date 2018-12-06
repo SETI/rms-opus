@@ -239,6 +239,13 @@ def get_metadata(api_name, request, opus_id, fmt):
                     result = lookup_pretty_value_for_mult(param_info, mult_val)
                 else:
                     result = result_vals[param_info.name]
+
+                # format result depending on its form_type_format and removing the trailing 0s
+                if form_type_format is not None and result is not None:
+                    format_str = "{0:%s}" %(form_type_format)
+                    result = format_str.format(result)
+                    result = result.rstrip("0")
+
                 if api_name == 'api_get_metadata':
                     ordered_results[param_info.name] = result
                 else:
