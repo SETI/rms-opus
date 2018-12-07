@@ -244,12 +244,9 @@ def get_metadata(api_name, request, opus_id, fmt):
                 # format result depending on its form_type_format
                 rounded_off_result = result
                 if form_type_format is not None and result is not None:
-                    if result > settings.THRESHOLD_FOR_EXPOENTIAL_FORMAT:
-                        exponential_format = form_type_format.replace("f", "e")
-                        format_str = f"{exponential_format}"
-                    else:
-                        format_str = f"{form_type_format}"
-                    rounded_off_result = format(result, format_str)
+                    if result > settings.THRESHOLD_FOR_EXPONENTIAL:
+                        form_type_format = form_type_format.replace("f", "e")
+                    rounded_off_result = format(result, form_type_format)
 
                 if api_name == 'api_get_metadata':
                     ordered_results[param_info.name] = result

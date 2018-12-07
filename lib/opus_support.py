@@ -431,18 +431,18 @@ RANGE_FUNCTIONS = {
                             parse_cassini_orbit),
 }
 
-# Format translation table, for now, it's not used
-# short name : longer name stored in db
-FORMAT_TRANSLATION = {
-      "cm^-1" : "cm^-1",
-      "cm^-1/px" : "cm^-1/pixel",
-      "degrees" : "degrees",
-      "degrees/px" : "degrees/pixel",
-      "km" : "km",
-      "km/px" : "km/pixel",
-      "ms" : "milliseconds",
-      "px" : "pixels",
-      "s" : "seconds",
-      "um" : "micron",
-      "um/px" : "micron/pixel",
+# Unit translation table
+# db name : displayed name
+UNIT_TRANSLATION = {
+    "cm^-1" : "cm^-1",
+    "cm^-1/pixel" : "cm^-1/px",
+    "degrees" : "degrees",
+    "degrees/pixel" : "degrees/px",
+    "km" : "km",
+    "km/pixel" : "km/px",
+    "micron" : "um",
+    "micron/pixel" : "um/px",
+    "milliseconds" : "ms",
+    "pixels" : "px",
+    "seconds" : "s",
 }
