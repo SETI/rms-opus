@@ -70,7 +70,7 @@
         "pi_slug": "instrument",
         "pi_sub_heading": null,
         "pi_tooltip": "",
-        "pi_units": "",
+        "pi_units": null,
         "mult_options": [
               [   0,    "COCIRS",       "Cassini CIRS",   10, "Y", null],
               [   1,     "COISS",        "Cassini ISS",   20, "Y", null],
@@ -111,7 +111,7 @@
         "pi_slug": "mission",
         "pi_sub_heading": null,
         "pi_tooltip": "",
-        "pi_units": "",
+        "pi_units": null,
         "mult_options": [
               [   0,  "CO",      "Cassini",   10, "Y", null],
               [   1,  "GO",      "Galileo",   20, "Y", null],
@@ -144,7 +144,7 @@
         "pi_slug": "insthost",
         "pi_sub_heading": null,
         "pi_tooltip": "",
-        "pi_units": "",
+        "pi_units": null,
         "mult_options": [
               [   0,  "CO",      "Cassini",   10, "Y", null],
               [   1,  "GO",      "Galileo",   20, "Y", null],
@@ -178,7 +178,7 @@
         "pi_slug": "planet",
         "pi_sub_heading": null,
         "pi_tooltip": "",
-        "pi_units": "",
+        "pi_units": null,
         "mult_options": [
               [   0, "VEN",   "Venus",   10, "Y", null],
               [   1, "EAR",   "Earth",   20, "Y", null],
@@ -214,7 +214,7 @@
         "pi_slug": "target",
         "pi_sub_heading": null,
         "pi_tooltip": "",
-        "pi_units": ""
+        "pi_units": null
     },
     {
         "field_name": "target_class",
@@ -239,7 +239,7 @@
         "pi_slug": "targetclass",
         "pi_sub_heading": null,
         "pi_tooltip": "",
-        "pi_units": "",
+        "pi_units": null,
         "mult_options": [
               [   0,     "PLANET",               "Planet",  10, "Y", null],
               [   1,     "REG_SAT",   "Regular Satellite",  20, "Y", null],
@@ -272,7 +272,7 @@
         "pi_slug": "time1",
         "pi_sub_heading": null,
         "pi_tooltip": "",
-        "pi_units": ""
+        "pi_units": null
     },
     {
         "field_name": "time2",
@@ -296,7 +296,7 @@
         "pi_slug": "time2",
         "pi_sub_heading": null,
         "pi_tooltip": "",
-        "pi_units": ""
+        "pi_units": null
     },
     {
         "field_name": "time_sec1",
@@ -323,7 +323,7 @@
         "pi_slug": "timesec1",
         "pi_sub_heading": null,
         "pi_tooltip": "UTC Format (you may omit the T):<br>YYYY-MM-DD<strong>T</strong>HH:MM:SS.sss  <strong>or</strong>  YYY-DDD<strong>T</strong>HH:MM:SS.sss",
-        "pi_units": ""
+        "pi_units": null
     },
     {
         "field_name": "time_sec2",
@@ -350,7 +350,7 @@
         "pi_slug": "timesec2",
         "pi_sub_heading": null,
         "pi_tooltip": "",
-        "pi_units": ""
+        "pi_units": null
     },
     {
         "field_name": "observation_duration",
@@ -379,7 +379,7 @@
         "pi_sub_heading": null,
         "pi_tooltip": "",
         "pi_units": "seconds",
-        "comment": "For units format, VGISS_*_index.lbl is F9.4 so we round up to .4f."
+        "comments": "For units format, VGISS_*_index.lbl is F9.4 so we round up to .4f."
     },
     {
         "field_name": "quantity",
@@ -405,7 +405,7 @@
         "pi_slug": "quantity",
         "pi_sub_heading": null,
         "pi_tooltip": "",
-        "pi_units": "",
+        "pi_units": null,
         "mult_options": [
               [   0,  "REFLECT",     "Reflectivity",   10, "Y", null],
               [   1,  "THERMAL", "Thermal Emission",   20, "Y", null],
@@ -440,7 +440,7 @@
         "pi_sub_heading": null,
         "pi_tooltip": "",
         "pi_units": "degrees",
-        "comment": "For units format, ring_geo.lbl is F10.6, COISS_*_index.lbl is F11.6 and COVIMS_0006_index.lbl is F11.6, so we round up to .6f."
+        "comments": "For units format, ring_geo.lbl is F10.6, COISS_*_index.lbl is F11.6 and COVIMS_0006_index.lbl is F11.6, so we round up to .6f."
     },
     {
         "field_name": "right_asc2",
@@ -469,7 +469,7 @@
         "pi_sub_heading": null,
         "pi_tooltip": "",
         "pi_units": "degrees",
-        "comment": "For units format, refer to right_asc1."
+        "comments": "For units format, refer to right_asc1."
     },
     {
         "field_name": "right_asc",
@@ -524,7 +524,7 @@
         "pi_sub_heading": null,
         "pi_tooltip": "",
         "pi_units": "degrees",
-        "comment": "For units format, COISS_*_index.lbl and COVIMS_0006_index.lbl are F11.6, and ring_geo/ring_geo.lbl is F10.6 so we round up to .6f."
+        "comments": "For units format, COISS_*_index.lbl and COVIMS_0006_index.lbl are F11.6, and ring_geo/ring_geo.lbl is F10.6 so we round up to .6f."
     },
     {
         "field_name": "declination2",
@@ -553,7 +553,7 @@
         "pi_sub_heading": null,
         "pi_tooltip": "",
         "pi_units": "degrees",
-        "comment": "For units format, refer to declination1."
+        "comments": "For units format, refer to declination1."
     },
     {
         "field_name": "observation_type",
@@ -639,7 +639,7 @@
         "pi_sub_heading": null,
         "pi_tooltip": null,
         "pi_units": null,
-        "comment": "This is a duplicate of the field in obs_pds to avoid excessive joins. The one in obs_pds is displayed to the user. This one is used to lookup OPUS product types."
+        "comments": "This is a duplicate of the field in obs_pds to avoid excessive joins. The one in obs_pds is displayed to the user. This one is used to lookup OPUS product types."
     },
     {
         "field_name": "preview_images",

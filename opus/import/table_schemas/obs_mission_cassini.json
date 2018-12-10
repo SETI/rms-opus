@@ -12,7 +12,7 @@
             "TAB:obs_general",
             "id"
         ],
-        "comment": "This is the primary (surrogate) key linking the record to obs_general."
+        "comments": "This is the primary (surrogate) key linking the record to obs_general."
     },
     {
         "field_name": "opus_id",
@@ -27,7 +27,7 @@
             "TAB:obs_general",
             "opus_id"
         ],
-        "comment": "This is the secondary key linking the record to obs_general."
+        "comments": "This is the secondary key linking the record to obs_general."
     },
     {
         "field_name": "volume_id",
@@ -38,7 +38,7 @@
             "TAB:obs_general",
             "volume_id"
         ],
-        "comment": "The volume_id is included here for ease of database manipulation only."
+        "comments": "The volume_id is included here for ease of database manipulation only."
     },
     {
         "field_name": "instrument_id",
@@ -49,7 +49,7 @@
             "TAB:obs_general",
             "instrument_id"
         ],
-        "comment": "The instrument_id is included here for ease of database manipulation only."
+        "comments": "The instrument_id is included here for ease of database manipulation only."
     },
     {
         "field_name": "obs_name",
@@ -74,7 +74,7 @@
         "pi_slug": "CASSINIobsname",
         "pi_sub_heading": null,
         "pi_tooltip": "",
-        "pi_units": ""
+        "pi_units": null
     },
     {
         "field_name": "rev_no",
@@ -101,8 +101,8 @@
         "pi_slug": "CASSINIrevno",
         "pi_sub_heading": null,
         "pi_tooltip": "",
-        "pi_units": "",
-        "comment": "XXX Do we want to include cruise orbits in the definition?"
+        "pi_units": null,
+        "comments": "XXX Do we want to include cruise orbits in the definition?"
     },
     {
         "field_name": "rev_no_cvt",
@@ -128,8 +128,8 @@
         "pi_slug": "CASSINIrevnoint",
         "pi_sub_heading": null,
         "pi_tooltip": "",
-        "pi_units": "",
-        "comment": "XXX Do we want to include cruise orbits in the definition?"
+        "pi_units": null,
+        "comments": "XXX Do we want to include cruise orbits in the definition?"
     },
     {
         "field_name": "is_prime",
@@ -155,8 +155,8 @@
         "pi_slug": "CASSINIisprime",
         "pi_sub_heading": null,
         "pi_tooltip": "",
-        "pi_units": "",
-        "comment": "XXX The definition was cut off in old dictionary."
+        "pi_units": null,
+        "comments": "XXX The definition was cut off in old dictionary."
     },
     {
         "field_name": "prime_inst_id",
@@ -181,8 +181,8 @@
         "pi_slug": "CASSINIprimeinst",
         "pi_sub_heading": null,
         "pi_tooltip": "",
-        "pi_units": "",
-        "comment": "XXX The definition was cut off in old dictionary.",
+        "pi_units": null,
+        "comments": "XXX The definition was cut off in old dictionary.",
         "mult_options": [
               [   0,  "CIRS",  "CIRS",   10, "Y", null],
               [   1,   "ISS",   "ISS",   20, "Y", null],
@@ -217,8 +217,8 @@
         "pi_slug": "CASSINIspacecraftclockcount1",
         "pi_sub_heading": null,
         "pi_tooltip": "",
-        "pi_units": "",
-        "comment": "Definition is from COISS label"
+        "pi_units": null,
+        "comments": "Definition is from COISS label"
     },
     {
         "field_name": "spacecraft_clock_count2",
@@ -245,8 +245,8 @@
         "pi_slug": "CASSINIspacecraftclockcount2",
         "pi_sub_heading": null,
         "pi_tooltip": "",
-        "pi_units": "",
-        "comment": "Definition is from COISS label"
+        "pi_units": null,
+        "comments": "Definition is from COISS label"
     },
     {
         "field_name": "spacecraft_clock_count_cvt1",
@@ -274,8 +274,8 @@
         "pi_slug": "CASSINIspacecraftclockcountdec1",
         "pi_sub_heading": null,
         "pi_tooltip": "",
-        "pi_units": "",
-        "comment": "Definition is from COISS label"
+        "pi_units": null,
+        "comments": "Definition is from COISS label"
     },
     {
         "field_name": "spacecraft_clock_count_cvt2",
@@ -303,8 +303,8 @@
         "pi_slug": "CASSINIspacecraftclockcountdec2",
         "pi_sub_heading": null,
         "pi_tooltip": "",
-        "pi_units": "",
-        "comment": "Definition is from COISS label"
+        "pi_units": null,
+        "comments": "Definition is from COISS label"
     },
     {
         "field_name": "ert1",
@@ -330,8 +330,8 @@
         "pi_slug": "CASSINIert1",
         "pi_sub_heading": null,
         "pi_tooltip": "",
-        "pi_units": "",
-        "comment": "Definition is from COISS label"
+        "pi_units": null,
+        "comments": "Definition is from COISS label"
     },
     {
         "field_name": "ert2",
@@ -356,8 +356,8 @@
         "pi_slug": "CASSINIert2",
         "pi_sub_heading": null,
         "pi_tooltip": "",
-        "pi_units": "",
-        "comment": "Definition is from COISS label"
+        "pi_units": null,
+        "comments": "Definition is from COISS label"
     },
     {
         "field_name": "ert_sec1",
@@ -385,8 +385,8 @@
         "pi_slug": "CASSINIertsec1",
         "pi_sub_heading": null,
         "pi_tooltip": "",
-        "pi_units": "",
-        "comment": "Definition is from COISS label. XXX Should be improved to talk about seconds part."
+        "pi_units": null,
+        "comments": "Definition is from COISS label. XXX Should be improved to talk about seconds part."
     },
     {
         "field_name": "ert_sec2",
@@ -414,8 +414,8 @@
         "pi_slug": "CASSINIertsec2",
         "pi_sub_heading": null,
         "pi_tooltip": "",
-        "pi_units": "",
-        "comment": "Definition is from COISS label. XXX Should be improved to talk about seconds part."
+        "pi_units": null,
+        "comments": "Definition is from COISS label. XXX Should be improved to talk about seconds part."
     },
     {
         "field_name": "cassini_target_code",
@@ -440,8 +440,8 @@
         "pi_slug": "CASSINItargetcode",
         "pi_sub_heading": null,
         "pi_tooltip": "",
-        "pi_units": "",
-        "comment": "XXX Definition needs review"
+        "pi_units": null,
+        "comments": "XXX Definition needs review"
     },
     {
         "field_name": "activity_name",
@@ -466,7 +466,7 @@
         "pi_slug": "CASSINIactivityname",
         "pi_sub_heading": null,
         "pi_tooltip": "",
-        "pi_units": ""
+        "pi_units": null
     },
     {
         "field_name": "mission_phase_name",
@@ -492,7 +492,7 @@
         "pi_sub_heading": null,
         "pi_tooltip": null,
         "pi_units": null,
-        "comment": "Definition is from COISS label"
+        "comments": "Definition is from COISS label"
     },
     {
         "field_name": "sequence_id",
@@ -517,7 +517,7 @@
         "pi_sub_heading": null,
         "pi_tooltip": null,
         "pi_units": null,
-        "comment": "Definition is from COISS label"
+        "comments": "Definition is from COISS label"
     },
     {
         "put_mults_here": true

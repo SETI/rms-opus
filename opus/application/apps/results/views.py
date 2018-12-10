@@ -241,25 +241,26 @@ def get_metadata(api_name, request, opus_id, fmt):
                 else:
                     result = result_vals[param_info.name]
 
-                # format result depending on its form_type_format
+                # Format result depending on its form_type_format
                 rounded_off_result = result
                 if form_type_format is not None and result is not None:
                     if result > settings.THRESHOLD_FOR_EXPONENTIAL:
-                        form_type_format = form_type_format.replace("f", "e")
+                        form_type_format = form_type_format.replace('f', 'e')
                     rounded_off_result = format(result, form_type_format)
 
                 if api_name == 'api_get_metadata':
                     ordered_results[param_info.name] = result
-                    rounded_off_ordered_results[param_info.name] = rounded_off_result
+                    rounded_off_ordered_results[param_info.name] = \
+                            rounded_off_result
                 else:
                     if param_info.slug is not None:
                         ordered_results[param_info.slug] = result
-                        rounded_off_ordered_results[param_info.slug] = rounded_off_result
+                        rounded_off_ordered_results[param_info.slug] = \
+                                rounded_off_result
             # data is for json return of api calls
             # rounded_off_data is for html return of api calls
             data[table_label] = ordered_results
             rounded_off_data[table_label] = rounded_off_ordered_results
-
 
     if fmt == 'html':
         # hack because we want to display labels instead of param names

@@ -12,7 +12,7 @@
             "TAB:obs_general",
             "id"
         ],
-        "comment": "This is the primary (surrogate) key linking the record to obs_general."
+        "comments": "This is the primary (surrogate) key linking the record to obs_general."
     },
     {
         "field_name": "opus_id",
@@ -27,7 +27,7 @@
             "TAB:obs_general",
             "opus_id"
         ],
-        "comment": "This is the secondary key linking the record to obs_general."
+        "comments": "This is the secondary key linking the record to obs_general."
     },
     {
         "field_name": "volume_id",
@@ -38,7 +38,7 @@
             "TAB:obs_general",
             "volume_id"
         ],
-        "comment": "The volume_id is included here for ease of database manipulation only."
+        "comments": "The volume_id is included here for ease of database manipulation only."
     },
     {
         "field_name": "image_id",
@@ -63,7 +63,7 @@
         "pi_slug": "VGISSimageid",
         "pi_sub_heading": null,
         "pi_tooltip": "",
-        "pi_units": ""
+        "pi_units": null
     },
     {
         "field_name": "scan_mode",
@@ -89,7 +89,7 @@
         "pi_slug": "VGISSscanmode",
         "pi_sub_heading": null,
         "pi_tooltip": "",
-        "pi_units": "",
+        "pi_units": null,
         "mult_options": [
               [  0,  "1:1",  "1:1",  10, "Y", null],
               [  1,  "2:1",  "2:1",  20, "Y", null],
@@ -122,7 +122,7 @@
         "pi_slug": "VGISSshuttermode",
         "pi_sub_heading": null,
         "pi_tooltip": "",
-        "pi_units": "",
+        "pi_units": null,
         "mult_options": [
               [   0, "NAONLY", "NAONLY",   10, "Y", null],
               [   1, "WAONLY", "WAONLY",   20, "Y", null],
@@ -157,7 +157,7 @@
         "pi_slug": "VGISSgainmode",
         "pi_sub_heading": null,
         "pi_tooltip": "",
-        "pi_units": "",
+        "pi_units": null,
         "mult_options": [
               [   0,  "LOW",  "Low", 10, "Y", null],
               [   1, "HIGH", "High", 20, "Y", null]
@@ -187,7 +187,7 @@
         "pi_slug": "VGISSeditmode",
         "pi_sub_heading": null,
         "pi_tooltip": "",
-        "pi_units": "",
+        "pi_units": null,
         "mult_options": [
               [  0,  "1:1",  "1:1",  10, "Y", null],
               [  1,  "3:4",  "3:4",  20, "Y", null],
@@ -225,7 +225,7 @@
         "pi_slug": "VGISSfilter",
         "pi_sub_heading": null,
         "pi_tooltip": "",
-        "pi_units": "",
+        "pi_units": null,
         "mult_options": [
               [   0,    "CLEAR",           "Clear",   10, "Y", null],
               [   1,       "UV",              "UV",   20, "Y", null],
@@ -261,7 +261,7 @@
         "pi_slug": "VGISSfilternumber",
         "pi_sub_heading": null,
         "pi_tooltip": "",
-        "pi_units": "",
+        "pi_units": null,
         "mult_options": [
               [   0, "0", "0",  10, "Y", null],
               [   1, "1", "1",  20, "Y", null],
@@ -297,7 +297,7 @@
         "pi_slug": "VGISScamera",
         "pi_sub_heading": null,
         "pi_tooltip": "",
-        "pi_units": "",
+        "pi_units": null,
         "mult_options": [
               [   0, "N", "Narrow Angle",   10, "Y", null],
               [   1, "W",   "Wide Angle",   20, "Y", null]
@@ -328,8 +328,8 @@
         "pi_slug": "VGISSusablelines",
         "pi_sub_heading": null,
         "pi_tooltip": "",
-        "pi_units": "",
-        "comment": "Definition made up by RF"
+        "pi_units": null,
+        "comments": "Definition made up by RF"
     },
     {
         "field_name": "usable_samples",
@@ -356,8 +356,8 @@
         "pi_slug": "VGISSusablesamples",
         "pi_sub_heading": null,
         "pi_tooltip": "",
-        "pi_units": "",
-        "comment": "Definition made up by RF"
+        "pi_units": null,
+        "comments": "Definition made up by RF"
     },
     {
         "put_mults_here": true

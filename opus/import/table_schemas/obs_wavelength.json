@@ -12,7 +12,7 @@
             "TAB:obs_general",
             "id"
         ],
-        "comment": "This is the primary (surrogate) key linking the record to obs_general."
+        "comments": "This is the primary (surrogate) key linking the record to obs_general."
     },
     {
         "field_name": "opus_id",
@@ -27,7 +27,7 @@
             "TAB:obs_general",
             "opus_id"
         ],
-        "comment": "This is the secondary key linking the record to obs_general."
+        "comments": "This is the secondary key linking the record to obs_general."
     },
     {
         "field_name": "volume_id",
@@ -38,7 +38,7 @@
             "TAB:obs_general",
             "volume_id"
         ],
-        "comment": "The volume_id is included here for ease of database manipulation only."
+        "comments": "The volume_id is included here for ease of database manipulation only."
     },
     {
         "field_name": "instrument_id",
@@ -49,7 +49,7 @@
             "TAB:obs_general",
             "instrument_id"
         ],
-        "comment": "The instrument_id is included here for ease of database manipulation only."
+        "comments": "The instrument_id is included here for ease of database manipulation only."
     },
     {
         "field_name": "wavelength1",
@@ -76,7 +76,7 @@
         "pi_sub_heading": null,
         "pi_tooltip": "",
         "pi_units": "micron",
-        "comment": "Definition derived from the PSDD and modified for our purposes. For units format, HSTSTIS/index.lbl is E10.4, HSTI1_*_index.lbl is F6.4, COCIRS/OBSINDEX.LBL is F8.3, and rest in populate_obs_instrument_COISS/COUVIS/COVIMS/GOSSI/NHLORRI/NHMVIC/VGISS.py are just micron, so we round up to .4f"
+        "comments": "Definition derived from the PSDD and modified for our purposes. For units format, HSTSTIS/index.lbl is E10.4, HSTI1_*_index.lbl is F6.4, COCIRS/OBSINDEX.LBL is F8.3, and rest in populate_obs_instrument_COISS/COUVIS/COVIMS/GOSSI/NHLORRI/NHMVIC/VGISS.py are just micron, so we round up to .4f"
     },
     {
         "field_name": "wavelength2",
@@ -102,7 +102,7 @@
         "pi_sub_heading": null,
         "pi_tooltip": "",
         "pi_units": "micron",
-        "comment": "Definition derived from the PSDD and modified for our purposes. For units format, refer to wavelength1."
+        "comments": "Definition derived from the PSDD and modified for our purposes. For units format, refer to wavelength1."
     },
     {
         "field_name": "wave_res1",
@@ -121,7 +121,7 @@
         "pi_disp_order": 20,
         "pi_display": 1,
         "pi_display_results": 1,
-        "pi_form_type": "RANGE%.4f",
+        "pi_form_type": "RANGE%.6f",
         "pi_intro": null,
         "pi_label": "Wavelength Resolution",
         "pi_label_results": "Wavelength Resolution (Min)",
@@ -129,7 +129,7 @@
         "pi_sub_heading": null,
         "pi_tooltip": "",
         "pi_units": "micron/pixel",
-        "comment": "Definition is from old OPUS dictionary. For units format, HSTSTIS/index.lbl is E10.4, HSTI1_*_index.lbl is F6.4, and rest in populate_obs_instrument_COISS/COUVIS/COVIMS/GOSSI/NHLORRI/NHMVIC/VGISS.py are coverted from math to micron or micron/pixel, so we round up to .4f"
+        "comments": "Definition is from old OPUS dictionary. For units format, HSTSTIS/index.lbl is E10.4, HSTI1_*_index.lbl is F6.4, and rest in populate_obs_instrument_COISS/COUVIS/COVIMS/GOSSI/NHLORRI/NHMVIC/VGISS.py are converted from math to micron or micron/pixel, so we round up to .6f"
     },
     {
         "field_name": "wave_res2",
@@ -147,7 +147,7 @@
         "pi_disp_order": 21,
         "pi_display": 0,
         "pi_display_results": 1,
-        "pi_form_type": "RANGE%.4f",
+        "pi_form_type": "RANGE%.6f",
         "pi_intro": null,
         "pi_label": "Wavelength Resolution 2",
         "pi_label_results": "Wavelength Resolution (Max)",
@@ -155,7 +155,7 @@
         "pi_sub_heading": null,
         "pi_tooltip": "",
         "pi_units": "micron/pixel",
-        "comment": "Definition is from old OPUS dictionary. For units format, refer to wave_res1"
+        "comments": "Definition is from old OPUS dictionary. For units format, refer to wave_res1"
     },
     {
         "field_name": "wave_no1",
@@ -182,7 +182,7 @@
         "pi_sub_heading": null,
         "pi_tooltip": "",
         "pi_units": "cm^-1",
-        "comment": "Definition is from old OPUS dictionary. For units format, it's derived from 10000/wavelength1 and is cm^-1, rounding up to .1f."
+        "comments": "Definition is from old OPUS dictionary. For units format, it's derived from 10000/wavelength1 and is cm^-1, rounding up to .1f."
     },
     {
         "field_name": "wave_no2",
@@ -208,7 +208,7 @@
         "pi_sub_heading": null,
         "pi_tooltip": "",
         "pi_units": "cm^-1",
-        "comment": "Definition is from old OPUS dictionary. For units format, refer to wave_no1."
+        "comments": "Definition is from old OPUS dictionary. For units format, refer to wave_no1."
     },
     {
         "field_name": "wave_no_res1",
@@ -227,7 +227,7 @@
         "pi_disp_order": 40,
         "pi_display": 1,
         "pi_display_results": 1,
-        "pi_form_type": "RANGE%.1f",
+        "pi_form_type": "RANGE%.3f",
         "pi_intro": null,
         "pi_label": "Wavenumber Resolution",
         "pi_label_results": "Wavenumber Resolution (Min)",
@@ -235,7 +235,7 @@
         "pi_sub_heading": null,
         "pi_tooltip": "",
         "pi_units": "cm^-1/pixel",
-        "comment": "Definition is from old OPUS dictionary. For units format, it's derived from wave_no1 & wave_no2, rounding up to the same decimal place .1f."
+        "comments": "Definition is from old OPUS dictionary. For units format, it's derived from wave_no1 & wave_no2, rounding up to the same decimal place .1f."
     },
     {
         "field_name": "wave_no_res2",
@@ -253,7 +253,7 @@
         "pi_disp_order": 41,
         "pi_display": 0,
         "pi_display_results": 1,
-        "pi_form_type": "RANGE%.1f",
+        "pi_form_type": "RANGE%.3f",
         "pi_intro": null,
         "pi_label": "Wavenumber Resolution 2",
         "pi_label_results": "Wavenumber Resolution (Max)",
@@ -261,7 +261,7 @@
         "pi_sub_heading": null,
         "pi_tooltip": "",
         "pi_units": "cm^-1",
-        "comment": "Definition is from old OPUS dictionary. For units format, refer to wave_no_res1."
+        "comments": "Definition is from old OPUS dictionary. For units format, refer to wave_no_res1."
     },
     {
         "field_name": "spec_flag",
@@ -286,8 +286,8 @@
         "pi_slug": "specflag",
         "pi_sub_heading": null,
         "pi_tooltip": "",
-        "pi_units": "",
-        "comment": "Definition is from old OPUS dictionary."
+        "pi_units": null,
+        "comments": "Definition is from old OPUS dictionary."
     },
     {
         "field_name": "spec_size",
@@ -306,15 +306,15 @@
         "pi_disp_order": 60,
         "pi_display": 1,
         "pi_display_results": 1,
-        "pi_form_type": "RANGE",
+        "pi_form_type": "RANGE%d",
         "pi_intro": null,
         "pi_label": "Spectrum Size",
         "pi_label_results": "Spectrum Size",
         "pi_slug": "specsize",
         "pi_sub_heading": null,
         "pi_tooltip": "",
-        "pi_units": "",
-        "comment": "Definition was made up by RF. For units format, it's integer."
+        "pi_units": null,
+        "comments": "Definition was made up by RF. For units format, it's integer."
     },
     {
         "field_name": "polarization_type",
@@ -338,7 +338,7 @@
         "pi_slug": "polarizationtype",
         "pi_sub_heading": null,
         "pi_tooltip": "",
-        "pi_units": "",
+        "pi_units": null,
         "mult_options": [
               [   0,   "LINEAR",   "Linear",   10, "Y", null],
               [   1,     "NONE",     "None",   20, "Y", null]

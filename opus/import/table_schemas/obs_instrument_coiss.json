@@ -12,7 +12,7 @@
             "TAB:obs_general",
             "id"
         ],
-        "comment": "This is the primary (surrogate) key linking the record to obs_general."
+        "comments": "This is the primary (surrogate) key linking the record to obs_general."
     },
     {
         "field_name": "opus_id",
@@ -27,7 +27,7 @@
             "TAB:obs_general",
             "opus_id"
         ],
-        "comment": "This is the secondary key linking the record to obs_general."
+        "comments": "This is the secondary key linking the record to obs_general."
     },
     {
         "field_name": "volume_id",
@@ -38,7 +38,7 @@
             "TAB:obs_general",
             "volume_id"
         ],
-        "comment": "The volume_id is included here for ease of database manipulation only."
+        "comments": "The volume_id is included here for ease of database manipulation only."
     },
     {
         "field_name": "data_conversion_type",
@@ -65,8 +65,8 @@
         "pi_slug": "COISSdataconversiontype",
         "pi_sub_heading": null,
         "pi_tooltip": "",
-        "pi_units": "",
-        "comment": "Definition is from COISS label",
+        "pi_units": null,
+        "comments": "Definition is from COISS label",
         "mult_options": [
               [   0, "12BIT", "12BIT",  10, "Y", null],
               [   1,  "8LSB",  "8LSB",  20, "Y", null],
@@ -98,8 +98,8 @@
         "pi_slug": "COISScompressiontype",
         "pi_sub_heading": null,
         "pi_tooltip": "",
-        "pi_units": "",
-        "comment": "Definition is from COISS label",
+        "pi_units": null,
+        "comments": "Definition is from COISS label",
         "mult_options": [
               [   0, "LOSSLESS",       "Lossless",  10, "Y", null],
               [   1,    "LOSSY",          "Lossy",  20, "Y", null],
@@ -131,8 +131,8 @@
         "pi_slug": "COISSgainmode",
         "pi_sub_heading": null,
         "pi_tooltip": "",
-        "pi_units": "",
-        "comment": "Definition is from COISS label",
+        "pi_units": null,
+        "comments": "Definition is from COISS label",
         "mult_options": [
               [   0,  "12 ELECTRONS PER DN",  "12 Electrons per DN",   10, "Y", null],
               [   1,  "29 ELECTRONS PER DN",  "29 Electrons per DN",   20, "Y", null],
@@ -164,8 +164,8 @@
         "pi_slug": "COISSimageobservationtype",
         "pi_sub_heading": null,
         "pi_tooltip": "",
-        "pi_units": "",
-        "comment": "Definition is from COISS label",
+        "pi_units": null,
+        "comments": "Definition is from COISS label",
         "mult_options": [
               [   0, "SCIENCE",             "Science",             10, "Y", null],
               [   1, "SCIENCE,OPNAV",       "Science,OpNav",       20, "Y", null],
@@ -206,8 +206,8 @@
         "pi_slug": "COISSmissinglines",
         "pi_sub_heading": null,
         "pi_tooltip": "",
-        "pi_units": "",
-        "comment": "Definition is from COISS label"
+        "pi_units": null,
+        "comments": "Definition is from COISS label"
     },
     {
         "field_name": "shutter_mode_id",
@@ -234,8 +234,8 @@
         "pi_slug": "COISSshuttermode",
         "pi_sub_heading": null,
         "pi_tooltip": "",
-        "pi_units": "",
-        "comment": "Definition is from COISS label",
+        "pi_units": null,
+        "comments": "Definition is from COISS label",
         "mult_options": [
               [   0, "NACONLY", "NACONLY",   10, "Y", null],
               [   1, "WACONLY", "WACONLY",   20, "Y", null],
@@ -267,8 +267,8 @@
         "pi_slug": "COISSshutterstate",
         "pi_sub_heading": null,
         "pi_tooltip": "",
-        "pi_units": "",
-        "comment": "Definition is from COISS label",
+        "pi_units": null,
+        "comments": "Definition is from COISS label",
         "mult_options": [
               [   0, "DISABLED", "Disabled",  10, "Y", null],
               [   1, "ENABLED",  "Enabled",   20, "Y", null]
@@ -297,8 +297,8 @@
         "pi_slug": "COISSimagenumber",
         "pi_sub_heading": null,
         "pi_tooltip": null,
-        "pi_units": "",
-        "comment": "Definition is from COISS label. For units, refer to COISS/index.lbl."
+        "pi_units": null,
+        "comments": "Definition is from COISS label. For units, refer to COISS/index.lbl."
     },
     {
         "field_name": "instrument_mode_id",
@@ -324,7 +324,7 @@
         "pi_sub_heading": null,
         "pi_tooltip": null,
         "pi_units": null,
-        "comment": "Definition is from COISS label",
+        "comments": "Definition is from COISS label",
         "mult_options": [
               [   0, "FULL", "FULL",  10, "Y", null],
               [   1, "SUM2", "SUM2",  20, "Y", null],
@@ -355,7 +355,7 @@
         "pi_sub_heading": null,
         "pi_tooltip": null,
         "pi_units": null,
-        "comment": "Definition is from COISS label"
+        "comments": "Definition is from COISS label"
     },
     {
         "field_name": "combined_filter",
@@ -381,8 +381,8 @@
         "pi_slug": "COISSfilter",
         "pi_sub_heading": null,
         "pi_tooltip": "",
-        "pi_units": "",
-        "comment": "XXX Definition needs to be reviewed"
+        "pi_units": null,
+        "comments": "XXX Definition needs to be reviewed"
     },
     {
         "field_name": "camera",
@@ -408,8 +408,8 @@
         "pi_slug": "COISScamera",
         "pi_sub_heading": null,
         "pi_tooltip": "",
-        "pi_units": "",
-        "comment": "XXX Definition needs to be reviewed",
+        "pi_units": null,
+        "comments": "XXX Definition needs to be reviewed",
         "mult_options": [
               [   0, "N", "Narrow Angle",   10, "Y", null],
               [   1, "W",   "Wide Angle",   20, "Y", null]

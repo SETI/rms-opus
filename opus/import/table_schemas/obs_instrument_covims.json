@@ -12,7 +12,7 @@
             "TAB:obs_general",
             "id"
         ],
-        "comment": "This is the primary (surrogate) key linking the record to obs_general."
+        "comments": "This is the primary (surrogate) key linking the record to obs_general."
     },
     {
         "field_name": "opus_id",
@@ -27,7 +27,7 @@
             "TAB:obs_general",
             "opus_id"
         ],
-        "comment": "This is the secondary key linking the record to obs_general."
+        "comments": "This is the secondary key linking the record to obs_general."
     },
     {
         "field_name": "volume_id",
@@ -38,7 +38,7 @@
             "TAB:obs_general",
             "volume_id"
         ],
-        "comment": "The volume_id is included here for ease of database manipulation only."
+        "comments": "The volume_id is included here for ease of database manipulation only."
     },
     {
         "field_name": "instrument_mode_id",
@@ -64,8 +64,8 @@
         "pi_slug": "COVIMSinstrumentmode",
         "pi_sub_heading": null,
         "pi_tooltip": "",
-        "pi_units": "",
-        "comment": "Definition from COVIMS label",
+        "pi_units": null,
+        "comments": "Definition from COVIMS label",
         "mult_options": [
               [   0,          "IMAGE",          "IMAGE",  10, "Y", null],
               [   1,           "LINE",           "LINE",  20, "Y", null],
@@ -99,8 +99,8 @@
         "pi_slug": "COVIMSspectralediting",
         "pi_sub_heading": null,
         "pi_tooltip": "",
-        "pi_units": "",
-        "comment": "Definition from COVIMS label"
+        "pi_units": null,
+        "comments": "Definition from COVIMS label"
     },
     {
         "field_name": "spectral_summing",
@@ -125,8 +125,8 @@
         "pi_slug": "COVIMSspectralsumming",
         "pi_sub_heading": null,
         "pi_tooltip": "",
-        "pi_units": "",
-        "comment": "Definition from COVIMS label"
+        "pi_units": null,
+        "comments": "Definition from COVIMS label"
     },
     {
         "field_name": "star_tracking",
@@ -150,8 +150,8 @@
         "pi_slug": "COVIMSstartracking",
         "pi_sub_heading": null,
         "pi_tooltip": "",
-        "pi_units": "",
-        "comment": "Definition from COVIMS label"
+        "pi_units": null,
+        "comments": "Definition from COVIMS label"
     },
     {
         "field_name": "swath_width",
@@ -169,15 +169,15 @@
         "pi_disp_order": 60,
         "pi_display": 1,
         "pi_display_results": 1,
-        "pi_form_type": "RANGE",
+        "pi_form_type": "RANGE%d",
         "pi_intro": null,
         "pi_label": "Swath Width",
         "pi_label_results": "Swath Width",
         "pi_slug": "COVIMSswathwidth",
         "pi_sub_heading": null,
         "pi_tooltip": "",
-        "pi_units": "",
-        "comment": "Definition from COVIMS label. XXX Needs val_min/max"
+        "pi_units": null,
+        "comments": "Definition from COVIMS label. XXX Needs val_min/max"
     },
     {
         "field_name": "swath_length",
@@ -195,15 +195,15 @@
         "pi_disp_order": 70,
         "pi_display": 1,
         "pi_display_results": 1,
-        "pi_form_type": "RANGE",
+        "pi_form_type": "RANGE%d",
         "pi_intro": null,
         "pi_label": "Swath Length",
         "pi_label_results": "Swath Length",
         "pi_slug": "COVIMSswathlength",
         "pi_sub_heading": null,
         "pi_tooltip": "",
-        "pi_units": "",
-        "comment": "Definition from COVIMS label. XXX Needs val_min/max"
+        "pi_units": null,
+        "comments": "Definition from COVIMS label. XXX Needs val_min/max"
     },
     {
         "field_name": "ir_exposure",
@@ -233,7 +233,7 @@
         "pi_sub_heading": null,
         "pi_tooltip": "",
         "pi_units": "milliseconds",
-        "comment": "Definition from COVIMS label. For units format, use milliseconds as describled in COVIMS_*_index.lbl, and since observation derived from ir_exposure in seconds has .4f, we set .1f for ir_exposure."
+        "comments": "Definition from COVIMS label. For units format, use milliseconds as describled in COVIMS_*_index.lbl, and since observation derived from ir_exposure in seconds has .4f, we set .1f for ir_exposure."
     },
     {
         "field_name": "ir_sampling_mode_id",
@@ -259,8 +259,8 @@
         "pi_slug": "COVIMSirsamplingmode",
         "pi_sub_heading": null,
         "pi_tooltip": "",
-        "pi_units": "",
-        "comment": "Definition from COVIMS label",
+        "pi_units": null,
+        "comments": "Definition from COVIMS label",
         "mult_options": [
               [   0, "HI-RES", "Hi-Res",  10, "Y", null],
               [   1, "NORMAL", "Normal",  20, "Y", null],
@@ -295,7 +295,7 @@
         "pi_sub_heading": null,
         "pi_tooltip": "",
         "pi_units": "milliseconds",
-        "comment": "Definition from COVIMS label. For units format, similar to ir_exposure."
+        "comments": "Definition from COVIMS label. For units format, similar to ir_exposure."
     },
     {
         "field_name": "vis_sampling_mode_id",
@@ -321,8 +321,8 @@
         "pi_slug": "COVIMSvissamplingmode",
         "pi_sub_heading": null,
         "pi_tooltip": "",
-        "pi_units": "",
-        "comment": "Definition from COVIMS label",
+        "pi_units": null,
+        "comments": "Definition from COVIMS label",
         "mult_options": [
               [   0, "HI-RES",  "Hi-Res",  10, "Y", null],
               [   1, "NORMAL",  "Normal",  20, "Y", null],
@@ -354,7 +354,7 @@
         "pi_sub_heading": null,
         "pi_tooltip": null,
         "pi_units": null,
-        "comment": "XXX Needs definition",
+        "comments": "XXX Needs definition",
         "mult_options": [
               [   0,  "IR",  "IR",  10, "Y", null],
               [   1, "VIS", "VIS",  20, "Y", null]

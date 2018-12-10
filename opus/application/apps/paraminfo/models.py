@@ -73,7 +73,7 @@ class ParamInfo(models.Model):
         return self.label_results + ' [' + pretty_name + ']'
 
     def get_units(self):
-        # put parenthesis around units (units)
+        # Put parentheses around units (units)
         if self.units:
             return '(' + opus_support.UNIT_TRANSLATION[self.units] + ')'
         else:

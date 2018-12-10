@@ -12,7 +12,7 @@
             "TAB:obs_general",
             "id"
         ],
-        "comment": "This is the primary (surrogate) key linking the record to obs_general."
+        "comments": "This is the primary (surrogate) key linking the record to obs_general."
     },
     {
         "field_name": "opus_id",
@@ -27,7 +27,7 @@
             "TAB:obs_general",
             "opus_id"
         ],
-        "comment": "This is the secondary key linking the record to obs_general."
+        "comments": "This is the secondary key linking the record to obs_general."
     },
     {
         "field_name": "volume_id",
@@ -38,7 +38,7 @@
             "TAB:obs_general",
             "volume_id"
         ],
-        "comment": "The volume_id is included here for ease of database manipulation only."
+        "comments": "The volume_id is included here for ease of database manipulation only."
     },
     {
         "field_name": "ert",
@@ -63,8 +63,8 @@
         "pi_slug": "VOYAGERert",
         "pi_sub_heading": null,
         "pi_tooltip": "",
-        "pi_units": "",
-        "comment": "Definition is from VGISS label"
+        "pi_units": null,
+        "comments": "Definition is from VGISS label"
     },
     {
         "field_name": "ert_sec",
@@ -89,8 +89,8 @@
         "pi_slug": "VOYAGERertsec",
         "pi_sub_heading": null,
         "pi_tooltip": "",
-        "pi_units": "",
-        "comment": "Definition is from VGISS label. XXX Should be improved to talk about seconds part."
+        "pi_units": null,
+        "comments": "Definition is from VGISS label. XXX Should be improved to talk about seconds part."
     },
     {
         "field_name": "spacecraft_clock_count1",
@@ -117,8 +117,8 @@
         "pi_slug": "VOYAGERspacecraftclockcount1",
         "pi_sub_heading": null,
         "pi_tooltip": "",
-        "pi_units": "",
-        "comment": "Definition is from VGISS label"
+        "pi_units": null,
+        "comments": "Definition is from VGISS label"
     },
     {
         "field_name": "spacecraft_clock_count2",
@@ -145,8 +145,8 @@
         "pi_slug": "VOYAGERspacecraftclockcount2",
         "pi_sub_heading": null,
         "pi_tooltip": "",
-        "pi_units": "",
-        "comment": "Definition is from VGISS label"
+        "pi_units": null,
+        "comments": "Definition is from VGISS label"
     },
     {
         "field_name": "spacecraft_clock_count_cvt1",
@@ -172,8 +172,8 @@
         "pi_slug": "VOYAGERspacecraftclockcountdec1",
         "pi_sub_heading": null,
         "pi_tooltip": "",
-        "pi_units": "",
-        "comment": "Definition is from VGISS label"
+        "pi_units": null,
+        "comments": "Definition is from VGISS label"
     },
     {
         "field_name": "spacecraft_clock_count_cvt2",
@@ -199,8 +199,8 @@
         "pi_slug": "VOYAGERspacecraftclockcountdec2",
         "pi_sub_heading": null,
         "pi_tooltip": "",
-        "pi_units": "",
-        "comment": "Definition is from VGISS label"
+        "pi_units": null,
+        "comments": "Definition is from VGISS label"
     },
     {
         "field_name": "mission_phase_name",
@@ -226,7 +226,7 @@
         "pi_sub_heading": null,
         "pi_tooltip": null,
         "pi_units": null,
-        "comment": "Definition is from VGISS label"
+        "comments": "Definition is from VGISS label"
     },
     {
         "put_mults_here": true

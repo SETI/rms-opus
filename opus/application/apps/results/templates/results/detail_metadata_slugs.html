@@ -4,7 +4,11 @@
       {% for param, value in pair.items %}
         {% for name, param_info in all_info.items %}
           {% if param == param_info.name %}
-            {{ param_info.body_qualified_label_results }} {{ param_info.get_units }}: {{ value }}
+            {% if param_info.get_units %}
+              {{ param_info.body_qualified_label_results }} {{ param_info.get_units }}: {{ value }}
+            {% else %}
+              {{ param_info.body_qualified_label_results }}: {{ value }}
+            {% endif %}
             {% if param_info.get_tooltip.definition %}
               <i class = "fa fa-info-circle" title = "
                  {{ param_info.get_tooltip.definition|striptags }}

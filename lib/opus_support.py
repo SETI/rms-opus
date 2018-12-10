@@ -435,14 +435,14 @@ RANGE_FUNCTIONS = {
 # db name : displayed name
 UNIT_TRANSLATION = {
     "cm^-1" : "cm^-1",
-    "cm^-1/pixel" : "cm^-1/px",
+    "cm^-1/pixel" : "cm^-1/pixel",
     "degrees" : "degrees",
-    "degrees/pixel" : "degrees/px",
+    "degrees/pixel" : "degrees/pixel",
     "km" : "km",
-    "km/pixel" : "km/px",
-    "micron" : "um",
-    "micron/pixel" : "um/px",
+    "km/pixel" : "km/pixel",
+    "micron" : "microns",
+    "micron/pixel" : "microns/pixel",
     "milliseconds" : "ms",
-    "pixels" : "px",
-    "seconds" : "s",
+    "pixels" : "pixels",
+    "seconds" : "secs",
 }
