@@ -481,7 +481,13 @@ def _get_collection_csv(request, fmt=None, api_code=None):
             log.error('_get_collection_csv: Unknown slug "%s"', slug)
             return HttpResponseNotFound('Unknown slug')
         else:
-            column_labels.append(pi.body_qualified_label_results())
+            # append units if pi_units has unit stored
+            unit = pi.get_units()
+            label = pi.body_qualified_label_results()
+            if unit:
+                column_labels.append(label + ' ' + unit)
+            else:
+                column_labels.append(label)
 
     response = HttpResponse(content_type='text/csv')
     response['Content-Disposition'] = 'attachment; filename="data.csv"'
@@ -644,7 +650,13 @@ def _create_csv_file(request, csv_file_name, api_code=None):
             log.error('_get_collection_csv: Unknown slug "%s"', slug)
             return HttpResponseNotFound('Unknown slug')
         else:
-            column_labels.append(pi.body_qualified_label_results())
+            # append units if pi_units has unit stored
+            unit = pi.get_units()
+            label = pi.body_qualified_label_results()
+            if unit:
+                column_labels.append(label + ' ' + unit)
+            else:
+                column_labels.append(label)
 
     with open(csv_file_name, 'a') as csv_file:
         wr = csv.writer(csv_file)

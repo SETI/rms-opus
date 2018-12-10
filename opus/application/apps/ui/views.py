@@ -112,7 +112,14 @@ def api_get_table_headers(request):
             if not pi:
                 log.error('get_table_headers: Unable to find slug "%s"', slug)
                 continue
-            columns.append([slug, pi.body_qualified_label_results()])
+
+            # append units if pi_units has unit stored
+            unit = pi.get_units()
+            label = pi.body_qualified_label_results()
+            if unit:
+                columns.append([slug, label + ' ' + unit])
+            else:
+                columns.append([slug, label])
 
     ret = render(request, template,
                  {'columns':   columns,
