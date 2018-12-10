@@ -181,6 +181,7 @@ def get_metadata(api_name, request, opus_id, fmt):
 
     data = OrderedDict()     # Holds data struct to be returned
     all_info = OrderedDict() # Holds all the param info objects
+    rounded_off_data = OrderedDict() # Hold rounded off data
 
     if not cats:
         # Find all the tables (categories) this observation belongs to
@@ -227,6 +228,7 @@ def get_metadata(api_name, request, opus_id, fmt):
                 continue
             result_vals = result_vals[0]
             ordered_results = OrderedDict()
+            rounded_off_ordered_results = OrderedDict()
             for param_info in param_info_list:
                 (form_type, form_type_func,
                  form_type_format) = parse_form_type(param_info.form_type)
@@ -238,17 +240,32 @@ def get_metadata(api_name, request, opus_id, fmt):
                     result = lookup_pretty_value_for_mult(param_info, mult_val)
                 else:
                     result = result_vals[param_info.name]
+
+                # Format result depending on its form_type_format
+                rounded_off_result = result
+                if form_type_format is not None and result is not None:
+                    if result > settings.THRESHOLD_FOR_EXPONENTIAL:
+                        form_type_format = form_type_format.replace('f', 'e')
+                    rounded_off_result = format(result, form_type_format)
+
                 if api_name == 'api_get_metadata':
                     ordered_results[param_info.name] = result
+                    rounded_off_ordered_results[param_info.name] = \
+                            rounded_off_result
                 else:
                     if param_info.slug is not None:
                         ordered_results[param_info.slug] = result
+                        rounded_off_ordered_results[param_info.slug] = \
+                                rounded_off_result
+            # data is for json return of api calls
+            # rounded_off_data is for html return of api calls
             data[table_label] = ordered_results
+            rounded_off_data[table_label] = rounded_off_ordered_results
 
     if fmt == 'html':
         # hack because we want to display labels instead of param names
         # on our HTML Detail page
-        context = {'data': data,
+        context = {'data': rounded_off_data,
                    'all_info': all_info}
         if api_name == 'api_get_metadata':
             ret = render(request, 'results/detail_metadata.html', context)

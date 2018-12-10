@@ -430,3 +430,19 @@ RANGE_FUNCTIONS = {
     'range_cassini_rev_no': (format_cassini_orbit,
                             parse_cassini_orbit),
 }
+
+# Unit translation table
+# db name : displayed name
+UNIT_TRANSLATION = {
+    "cm^-1" : "cm^-1",
+    "cm^-1/pixel" : "cm^-1/pixel",
+    "degrees" : "degrees",
+    "degrees/pixel" : "degrees/pixel",
+    "km" : "km",
+    "km/pixel" : "km/pixel",
+    "micron" : "microns",
+    "micron/pixel" : "microns/pixel",
+    "milliseconds" : "ms",
+    "pixels" : "pixels",
+    "seconds" : "secs",
+}

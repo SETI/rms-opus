@@ -8,7 +8,7 @@ import os
 
 import impglobals
 import import_util
-
+import opus_support
 
 def create_import_param_info_table():
     db = impglobals.DATABASE
@@ -34,6 +34,26 @@ def create_import_param_info_table():
             category_name = column.get('pi_category_name', None)
             if category_name is None:
                 continue
+            # Log an error if value in pi_units is not in unit translation table
+            unit = column.get('pi_units', None)
+            field_name = column.get('field_name', None)
+            if unit and unit not in opus_support.UNIT_TRANSLATION:
+                logger.log('error',
+                           f'"{unit}" in "{category_name}/{field_name}" is not '
+                           +'a valid unit in translation table')
+            form_type = column.get('pi_form_type', None)
+            if (unit and
+                (not form_type or
+                 (not form_type.startswith('RANGE%') and
+                  not form_type.startswith('LONG%')))):
+                logger.log('warning',
+                           f'"{category_name}/{field_name}" has units but '
+                           +'not form_type RANGE%')
+            if form_type == 'RANGE':
+                logger.log('warning',
+                           f'"{category_name}/{field_name}" has RANGE type '
+                           +'without numerical format')
+
             new_row = {
                 'category_name': category_name,
                 'dict_context': column['pi_dict_context'],

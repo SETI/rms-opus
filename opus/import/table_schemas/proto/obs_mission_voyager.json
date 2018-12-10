@@ -86,7 +86,7 @@
             "obs_mission_voyager_ert_sec"
         ],
         "data_source_order": 20,
-        "definition": "Earth Received time of the data for this image (seconds).",
+        "definition": "Earth Received time of the data for this image (secs).",
         "pi_category_name": "obs_mission_voyager",
         "pi_dict_context": "VOYAGER",
         "pi_dict_name": "EARTH_RECEIVED_TIME_SECS",

@@ -12,7 +12,7 @@
             "TAB:obs_general",
             "id"
         ],
-        "comment": "This is the primary (surrogate) key linking the record to obs_general."
+        "comments": "This is the primary (surrogate) key linking the record to obs_general."
     },
     {
         "field_name": "opus_id",
@@ -27,7 +27,7 @@
             "TAB:obs_general",
             "opus_id"
         ],
-        "comment": "This is the secondary key linking the record to obs_general."
+        "comments": "This is the secondary key linking the record to obs_general."
     },
     {
         "field_name": "volume_id",
@@ -38,7 +38,7 @@
             "TAB:obs_general",
             "volume_id"
         ],
-        "comment": "The volume_id is included here for ease of database manipulation only."
+        "comments": "The volume_id is included here for ease of database manipulation only."
     },
     {
         "field_name": "detector_id",
@@ -63,7 +63,7 @@
         "pi_slug": "COCIRSdetectorid",
         "pi_sub_heading": null,
         "pi_tooltip": "",
-        "pi_units": "",
+        "pi_units": null,
         "mult_options": [
               [   0, "FP1", "FP1", 10, "Y", null],
               [   1, "FP3", "FP3", 20, "Y", null],
