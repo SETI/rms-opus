@@ -163,7 +163,7 @@
         "pi_form_type": "RANGE:range_time",
         "pi_intro": null,
         "pi_label": "Product Creation Time",
-        "pi_label_results": "Product Creation Time (seconds)",
+        "pi_label_results": "Product Creation Time (secs)",
         "pi_slug": "productcreationtimesec",
         "pi_sub_heading": null,
         "pi_tooltip": null,

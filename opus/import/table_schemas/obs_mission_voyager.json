@@ -85,7 +85,7 @@
         "pi_form_type": "RANGE:range_time",
         "pi_intro": null,
         "pi_label": "Earth Received Time",
-        "pi_label_results": "Earth Received Time (seconds)",
+        "pi_label_results": "Earth Received Time (secs)",
         "pi_slug": "VOYAGERertsec",
         "pi_sub_heading": null,
         "pi_tooltip": "",

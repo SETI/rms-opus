@@ -211,7 +211,7 @@
         "pi_form_type": "RANGE:range_time",
         "pi_intro": null,
         "pi_label": "Publication Date",
-        "pi_label_results": "Publication Date (seconds)",
+        "pi_label_results": "Publication Date (secs)",
         "pi_slug": "HSTpublicationdatesec",
         "pi_sub_heading": null,
         "pi_tooltip": null,
