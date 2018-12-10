@@ -1,12 +1,15 @@
 # -*- coding: utf-8 -*-
-import sys
-import unittest
+import csv
 import json
 import requests
-import csv
+import sys
+import unittest
 
 filename = 'result_counts.csv'
-endpoint_url = "http://{}.pds-rings.seti.org:8000/opus/api/meta/result_count.json?"
+# filename = 'test.csv'
+# endpoint_url = "https://{}.pds-rings.seti.org:8000/opus/api/meta/result_count.json?"
+# we need https and no need to specify port number
+endpoint_url = "https://{}.pds-rings.seti.org/opus/api/meta/result_count.json?"
 
 class APIEndpointTests(unittest.TestCase):
 
@@ -23,13 +26,25 @@ class APIEndpointTests(unittest.TestCase):
             self.verify = False
 
     def test_all_the_things_in_loop(self):
+        """Compare result counts of API calls between csv and live server
+           Result counts from live server should always be larger
+           example of return json:
+           {
+               "data": [
+                   {
+                   "result_count": 1411270
+                   }
+               ]
+           }
+        """
 
         count = 0
-        with open(filename, 'rb') as csvfile:
+        with open(filename, 'r') as csvfile:
 
             filereader = csv.reader(csvfile)
             for row in filereader:
-
+                # print(row)
+                # return
                 q_str, expected, info = row
 
                 url_hash = q_str.split('#/')[1].strip()
@@ -52,9 +67,10 @@ class APIEndpointTests(unittest.TestCase):
 
                 count = count+1
 
-        print "\n ALL TESTS PASS WOOT! \n Actual Number of Tests Run: %s " % str(count)
+        print("\n ALL TESTS PASS WOOT! \n Actual Number of Tests Run: %s " % str(count))
 
 if __name__ == '__main__':
-    server_name = raw_input("dev or prod server? ")
-    my_tests = APIEndpointTests(server_name)
+    # server_name = input("dev or prod server? ")
+    # my_tests = APIEndpointTests(server_name)
+    my_tests = APIEndpointTests("prod")
     my_tests.test_all_the_things_in_loop()
