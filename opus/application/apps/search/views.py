@@ -998,7 +998,7 @@ def is_single_column_range(param_name):
 
 
 def _clean_numeric_field(s):
-    clean_func = lambda x: x.replace(' ', '').replace(',', '')
+    clean_func = lambda x: x.replace(' ', '').replace(',', '').replace('_','')
     if isinstance(s, (list, tuple)):
         return [clean_func(z) for z in s]
 
