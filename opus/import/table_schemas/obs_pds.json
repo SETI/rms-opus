@@ -12,7 +12,7 @@
             "TAB:obs_general",
             "id"
         ],
-        "comment": "This is the primary (surrogate) key linking the record to obs_general."
+        "comments": "This is the primary (surrogate) key linking the record to obs_general."
     },
     {
         "field_name": "opus_id",
@@ -27,7 +27,7 @@
             "TAB:obs_general",
             "opus_id"
         ],
-        "comment": "This is the secondary key linking the record to obs_general."
+        "comments": "This is the secondary key linking the record to obs_general."
     },
     {
         "field_name": "volume_id",
@@ -52,7 +52,7 @@
         "pi_sub_heading": null,
         "pi_tooltip": null,
         "pi_units": null,
-        "comment": "The volume_id is included here for ease of database manipulation only."
+        "comments": "The volume_id is included here for ease of database manipulation only."
     },
     {
         "field_name": "instrument_id",
@@ -63,7 +63,7 @@
             "TAB:obs_general",
             "instrument_id"
         ],
-        "comment": "The instrument_id is included here for ease of database manipulation only."
+        "comments": "The instrument_id is included here for ease of database manipulation only."
     },
     {
         "field_name": "data_set_id",
@@ -89,7 +89,7 @@
         "pi_sub_heading": null,
         "pi_tooltip": null,
         "pi_units": null,
-        "comment": "Definition is from COISS and GOSSI labels."
+        "comments": "Definition is from COISS and GOSSI labels."
     },
     {
         "field_name": "product_id",
@@ -115,7 +115,7 @@
         "pi_sub_heading": null,
         "pi_tooltip": null,
         "pi_units": null,
-        "comment": "Definition is from HSTACS label."
+        "comments": "Definition is from HSTACS label."
     },
     {
         "field_name": "product_creation_time",
@@ -142,7 +142,7 @@
         "pi_sub_heading": null,
         "pi_tooltip": null,
         "pi_units": null,
-        "comment": ""
+        "comments": ""
     },
     {
         "field_name": "product_creation_time_sec",
@@ -163,12 +163,12 @@
         "pi_form_type": "RANGE:range_time",
         "pi_intro": null,
         "pi_label": "Product Creation Time",
-        "pi_label_results": "Product Creation Time (seconds)",
+        "pi_label_results": "Product Creation Time (secs)",
         "pi_slug": "productcreationtimesec",
         "pi_sub_heading": null,
         "pi_tooltip": null,
         "pi_units": null,
-        "comment": ""
+        "comments": ""
     },
     {
         "field_name": "primary_file_spec",
@@ -218,7 +218,7 @@
         "pi_slug": "note",
         "pi_sub_heading": null,
         "pi_tooltip": "",
-        "pi_units": ""
+        "pi_units": null
     },
     {
         "put_mults_here": true

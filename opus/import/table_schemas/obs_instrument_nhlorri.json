@@ -12,7 +12,7 @@
             "TAB:obs_general",
             "id"
         ],
-        "comment": "This is the primary (surrogate) key linking the record to obs_general."
+        "comments": "This is the primary (surrogate) key linking the record to obs_general."
     },
     {
         "field_name": "opus_id",
@@ -27,7 +27,7 @@
             "TAB:obs_general",
             "opus_id"
         ],
-        "comment": "This is the secondary key linking the record to obs_general."
+        "comments": "This is the secondary key linking the record to obs_general."
     },
     {
         "field_name": "volume_id",
@@ -38,7 +38,7 @@
             "TAB:obs_general",
             "volume_id"
         ],
-        "comment": "The volume_id is included here for ease of database manipulation only."
+        "comments": "The volume_id is included here for ease of database manipulation only."
     },
     {
         "field_name": "instrument_compression_type",
@@ -64,7 +64,7 @@
         "pi_sub_heading": null,
         "pi_tooltip": null,
         "pi_units": null,
-        "comment": "Definition is from NHLORRI supplemental index label",
+        "comments": "Definition is from NHLORRI supplemental index label",
         "mult_options": [
               [   0,  "LOSSLESS",       "Lossless",   10, "Y", null],
               [   1,     "LOSSY",          "Lossy",   20, "Y", null],
@@ -96,7 +96,7 @@
         "pi_sub_heading": null,
         "pi_tooltip": null,
         "pi_units": null,
-        "comment": "Definition is from NHLORRI supplemental index label",
+        "comments": "Definition is from NHLORRI supplemental index label",
         "mult_options": [
               [   0, "1x1", "1x1",  10, "Y", null],
               [   1, "4x4", "4x4",  20, "Y", null]

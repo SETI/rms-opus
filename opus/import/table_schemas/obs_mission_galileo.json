@@ -12,7 +12,7 @@
             "TAB:obs_general",
             "id"
         ],
-        "comment": "This is the primary (surrogate) key linking the record to obs_general."
+        "comments": "This is the primary (surrogate) key linking the record to obs_general."
     },
     {
         "field_name": "opus_id",
@@ -27,7 +27,7 @@
             "TAB:obs_general",
             "opus_id"
         ],
-        "comment": "This is the secondary key linking the record to obs_general."
+        "comments": "This is the secondary key linking the record to obs_general."
     },
     {
         "field_name": "volume_id",
@@ -38,7 +38,7 @@
             "TAB:obs_general",
             "volume_id"
         ],
-        "comment": "The volume_id is included here for ease of database manipulation only."
+        "comments": "The volume_id is included here for ease of database manipulation only."
     },
     {
         "field_name": "orbit_number",
@@ -66,8 +66,8 @@
         "pi_slug": "GALILEOorbitnumber",
         "pi_sub_heading": null,
         "pi_tooltip": "",
-        "pi_units": "",
-        "comment": "Definition is from GOSSI label. XXX This won't work for NIMS because ORBIT_NUMBER isn't in the label file, so it will need to be a function."
+        "pi_units": null,
+        "comments": "Definition is from GOSSI label. XXX This won't work for NIMS because ORBIT_NUMBER isn't in the label file, so it will need to be a function."
     },
     {
         "field_name": "spacecraft_clock_count1",
@@ -93,8 +93,8 @@
         "pi_slug": "GALILEOspacecraftclockcount1",
         "pi_sub_heading": null,
         "pi_tooltip": "",
-        "pi_units": "",
-        "comment": "Definition is from GOSSI label. XXX This won't work for NIMS because it's called NATIVE_START_TIME there, so it will need to be a function."
+        "pi_units": null,
+        "comments": "Definition is from GOSSI label. XXX This won't work for NIMS because it's called NATIVE_START_TIME there, so it will need to be a function."
     },
     {
         "field_name": "spacecraft_clock_count2",
@@ -120,7 +120,7 @@
         "pi_slug": "GALILEOspacecraftclockcount2",
         "pi_sub_heading": null,
         "pi_tooltip": "",
-        "pi_units": ""
+        "pi_units": null
     },
     {
         "field_name": "spacecraft_clock_count_cvt1",
@@ -148,8 +148,8 @@
         "pi_slug": "GALILEOspacecraftclockcountdec1",
         "pi_sub_heading": null,
         "pi_tooltip": "",
-        "pi_units": "",
-        "comment": "Definition is from GOSSI label"
+        "pi_units": null,
+        "comments": "Definition is from GOSSI label"
     },
     {
         "field_name": "spacecraft_clock_count_cvt2",
@@ -177,8 +177,8 @@
         "pi_slug": "GALILEOspacecraftclockcountdec2",
         "pi_sub_heading": null,
         "pi_tooltip": "",
-        "pi_units": "",
-        "comment": "Definition is from GOSSI label"
+        "pi_units": null,
+        "comments": "Definition is from GOSSI label"
     },
     {
         "put_mults_here": true

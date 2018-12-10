@@ -12,7 +12,7 @@
             "TAB:obs_general",
             "id"
         ],
-        "comment": "This is the primary (surrogate) key linking the record to obs_general."
+        "comments": "This is the primary (surrogate) key linking the record to obs_general."
     },
     {
         "field_name": "opus_id",
@@ -27,7 +27,7 @@
             "TAB:obs_general",
             "opus_id"
         ],
-        "comment": "This is the secondary key linking the record to obs_general."
+        "comments": "This is the secondary key linking the record to obs_general."
     },
     {
         "field_name": "volume_id",
@@ -38,7 +38,7 @@
             "TAB:obs_general",
             "volume_id"
         ],
-        "comment": "The volume_id is included here for ease of database manipulation only."
+        "comments": "The volume_id is included here for ease of database manipulation only."
     },
     {
         "field_name": "instrument_id",
@@ -49,7 +49,7 @@
             "TAB:obs_general",
             "instrument_id"
         ],
-        "comment": "The instrument_id is included here for ease of database manipulation only."
+        "comments": "The instrument_id is included here for ease of database manipulation only."
     },
     {
         "field_name": "ring_radius1",
@@ -70,7 +70,7 @@
         "pi_disp_order": 0,
         "pi_display": 1,
         "pi_display_results": 1,
-        "pi_form_type": "RANGE",
+        "pi_form_type": "RANGE%.6f",
         "pi_intro": null,
         "pi_label": "Observed Ring Radius",
         "pi_label_results": "Observed Ring Radius (Min)",
@@ -79,7 +79,7 @@
         "pi_sub_heading": "Radius & Longitude",
         "pi_tooltip": null,
         "pi_units": "km",
-        "comments": "Definition is from RING_GEO label file."
+        "comments": "Definition is from RING_GEO label file. Units are %.3f in the label file, but we want to allow greater precision for occulations."
     },
     {
         "field_name": "ring_radius2",
@@ -100,7 +100,7 @@
         "pi_disp_order": 1,
         "pi_display": 0,
         "pi_display_results": 1,
-        "pi_form_type": "RANGE",
+        "pi_form_type": "RANGE%.6f",
         "pi_intro": null,
         "pi_label": "Observed Ring Radius 2",
         "pi_label_results": "Observed Ring Radius (Max)",
@@ -109,7 +109,7 @@
         "pi_sub_heading": "Radius & Longitude",
         "pi_tooltip": null,
         "pi_units": "km",
-        "comments": "Definition is from RING_GEO label file."
+        "comments": "Definition is from RING_GEO label file.  Units are %.3f in the label file, but we want to allow greater precision for occulations."
     },
     {
         "field_name": "resolution1",
@@ -129,7 +129,7 @@
         "pi_disp_order": 120,
         "pi_display": 1,
         "pi_display_results": 1,
-        "pi_form_type": "RANGE",
+        "pi_form_type": "RANGE%.5f",
         "pi_intro": null,
         "pi_label": "Observed Resolution",
         "pi_label_results": "Observed Resolution (Min)",
@@ -137,7 +137,7 @@
         "pi_slug": "RINGGEOresolution1",
         "pi_sub_heading": "Distance & Resolution",
         "pi_tooltip": null,
-        "pi_units": null,
+        "pi_units": "km/pixel",
         "comments": "Definition is from RING_GEO label file."
     },
     {
@@ -158,7 +158,7 @@
         "pi_disp_order": 121,
         "pi_display": 0,
         "pi_display_results": 1,
-        "pi_form_type": "RANGE",
+        "pi_form_type": "RANGE%.5f",
         "pi_intro": null,
         "pi_label": "Observed Resolution 2",
         "pi_label_results": "Observed Resolution (Max)",
@@ -166,7 +166,7 @@
         "pi_slug": "RINGGEOresolution2",
         "pi_sub_heading": "Distance & Resolution",
         "pi_tooltip": null,
-        "pi_units": null,
+        "pi_units": "km/pixel",
         "comments": "Definition is from RING_GEO label file."
     },
     {
@@ -187,7 +187,7 @@
         "pi_disp_order": 130,
         "pi_display": 1,
         "pi_display_results": 1,
-        "pi_form_type": "RANGE",
+        "pi_form_type": "RANGE%.5f",
         "pi_intro": null,
         "pi_label": "Projected Radial Resolution",
         "pi_label_results": "Projected Radial Resolution (Min)",
@@ -195,7 +195,7 @@
         "pi_slug": "RINGGEOprojectedradialresolution1",
         "pi_sub_heading": "Distance & Resolution",
         "pi_tooltip": null,
-        "pi_units": null,
+        "pi_units": "km/pixel",
         "comments": "Definition is from RING_GEO label file."
     },
     {
@@ -216,7 +216,7 @@
         "pi_disp_order": 131,
         "pi_display": 0,
         "pi_display_results": 1,
-        "pi_form_type": "RANGE",
+        "pi_form_type": "RANGE%.5f",
         "pi_intro": null,
         "pi_label": "Projected Radial Resolution 2",
         "pi_label_results": "Projected Radial Resolution (Max)",
@@ -224,7 +224,7 @@
         "pi_slug": "RINGGEOprojectedradialresolution2",
         "pi_sub_heading": "Distance & Resolution",
         "pi_tooltip": null,
-        "pi_units": null,
+        "pi_units": "km/pixel",
         "comments": "Definition is from RING_GEO label file."
     },
     {
@@ -246,7 +246,7 @@
         "pi_disp_order": 100,
         "pi_display": 1,
         "pi_display_results": 1,
-        "pi_form_type": "RANGE",
+        "pi_form_type": "RANGE%.3f",
         "pi_intro": null,
         "pi_label": "Observed Distance to Ring Intercept",
         "pi_label_results": "Observed Distance to Ring Intercept (Min)",
@@ -276,7 +276,7 @@
         "pi_disp_order": 111,
         "pi_display": 0,
         "pi_display_results": 1,
-        "pi_form_type": "RANGE",
+        "pi_form_type": "RANGE%.3f",
         "pi_intro": null,
         "pi_label": "Observed Distance to Ring Intercept 2",
         "pi_label_results": "Observed Distance to Ring Intercept (Max)",
@@ -306,7 +306,7 @@
         "pi_disp_order": 110,
         "pi_display": 1,
         "pi_display_results": 1,
-        "pi_form_type": "RANGE",
+        "pi_form_type": "RANGE%.3f",
         "pi_intro": null,
         "pi_label": "Ring Center Distance",
         "pi_label_results": "Ring Center Distance",
@@ -314,7 +314,7 @@
         "pi_slug": "RINGGEOringcenterdistance",
         "pi_sub_heading": "Distance & Resolution",
         "pi_tooltip": null,
-        "pi_units": null,
+        "pi_units": "km",
         "comments": "Definition is from RING_GEO label file."
     },
     {
@@ -336,7 +336,7 @@
         "pi_disp_order": 10,
         "pi_display": 1,
         "pi_display_results": 1,
-        "pi_form_type": "LONG",
+        "pi_form_type": "LONG%.3f",
         "pi_intro": "Because longitude wraps around, both min and max must be specified for a meaningful result",
         "pi_label": "Observed J2000 Longitude",
         "pi_label_results": "Observed J2000 Longitude (Min)",
@@ -366,7 +366,7 @@
         "pi_disp_order": 11,
         "pi_display": 0,
         "pi_display_results": 1,
-        "pi_form_type": "LONG",
+        "pi_form_type": "LONG%.3f",
         "pi_intro": null,
         "pi_label": "Observed J2000 Longitude 2",
         "pi_label_results": "Observed J2000 Longitude (Max)",
@@ -421,7 +421,7 @@
         "pi_disp_order": 30,
         "pi_display": 1,
         "pi_display_results": 1,
-        "pi_form_type": "LONG",
+        "pi_form_type": "LONG%.3f",
         "pi_intro": "Because solar hour angle wraps around, both min and max must be specified for a meaningful result",
         "pi_label": "Observed Solar Hour Angle",
         "pi_label_results": "Observed Solar Hour Angle (Min)",
@@ -451,7 +451,7 @@
         "pi_disp_order": 31,
         "pi_display": 0,
         "pi_display_results": 1,
-        "pi_form_type": "LONG",
+        "pi_form_type": "LONG%.3f",
         "pi_intro": null,
         "pi_label": "Observed Solar Hour Angle 2",
         "pi_label_results": "Observed Solar Hour Angle (Max)",
@@ -506,7 +506,7 @@
         "pi_disp_order": 50,
         "pi_display": 1,
         "pi_display_results": 1,
-        "pi_form_type": "LONG",
+        "pi_form_type": "LONG%.3f",
         "pi_intro": "Because longitude wraps around, both min and max must be specified for a meaningful result",
         "pi_label": "Longitude WRT Observer",
         "pi_label_results": "Longitude WRT Observer (Min)",
@@ -536,7 +536,7 @@
         "pi_disp_order": 51,
         "pi_display": 0,
         "pi_display_results": 1,
-        "pi_form_type": "RANGE",
+        "pi_form_type": "LONG%.3f",
         "pi_intro": null,
         "pi_label": "Longitude WRT Observer 2",
         "pi_label_results": "Longitude WRT Observer (Max)",
@@ -566,7 +566,7 @@
         "pi_disp_order": 60,
         "pi_display": 1,
         "pi_display_results": 1,
-        "pi_form_type": "LONG",
+        "pi_form_type": "LONG%.3f",
         "pi_intro": "Because azimuth wraps around, both min and max must be specified for a meaningful result",
         "pi_label": "Azimuth WRT Observer",
         "pi_label_results": "Azimuth WRT Observer (Min)",
@@ -596,7 +596,7 @@
         "pi_disp_order": 61,
         "pi_display": 0,
         "pi_display_results": 1,
-        "pi_form_type": "RANGE",
+        "pi_form_type": "LONG%.3f",
         "pi_intro": null,
         "pi_label": "Azimuth WRT Observer 2",
         "pi_label_results": "Azimuth WRT Observer (Max)",
@@ -626,7 +626,7 @@
         "pi_disp_order": 20,
         "pi_display": 1,
         "pi_display_results": 1,
-        "pi_form_type": "LONG",
+        "pi_form_type": "LONG%.3f",
         "pi_intro": "Because longitude wraps around, both min and max must be specified for a meaningful result",
         "pi_label": "Sub-Solar J2000 Longitude",
         "pi_label_results": "Sub-Solar J2000 Longitude",
@@ -634,7 +634,7 @@
         "pi_slug": "RINGGEOsubsolarringlong",
         "pi_sub_heading": "Radius & Longitude",
         "pi_tooltip": null,
-        "pi_units": null,
+        "pi_units": "degrees",
         "comments": "Definition is from RING_GEO label file."
     },
     {
@@ -656,7 +656,7 @@
         "pi_disp_order": 40,
         "pi_display": 1,
         "pi_display_results": 1,
-        "pi_form_type": "LONG",
+        "pi_form_type": "LONG%.3f",
         "pi_intro": "Because longitude wraps around, both min and max must be specified for a meaningful result",
         "pi_label": "Sub-Observer J2000 Longitude",
         "pi_label_results": "Sub-Observer J2000 Longitude",
@@ -664,7 +664,7 @@
         "pi_slug": "RINGGEOsubobserverringlong",
         "pi_sub_heading": "Radius & Longitude",
         "pi_tooltip": null,
-        "pi_units": null,
+        "pi_units": "degrees",
         "comments": "Definition is from RING_GEO label file."
     },
     {
@@ -686,7 +686,7 @@
         "pi_disp_order": 250,
         "pi_display": 1,
         "pi_display_results": 1,
-        "pi_form_type": "RANGE",
+        "pi_form_type": "RANGE%.3f",
         "pi_intro": null,
         "pi_label": "Solar Ring Elevation",
         "pi_label_results": "Solar Ring Elevation (Min)",
@@ -694,7 +694,7 @@
         "pi_slug": "RINGGEOsolarringelev1",
         "pi_sub_heading": "Lighting Geometry - Observed",
         "pi_tooltip": null,
-        "pi_units": null,
+        "pi_units": "degrees",
         "comments": "Definition is from RING_GEO label file."
     },
     {
@@ -716,7 +716,7 @@
         "pi_disp_order": 251,
         "pi_display": 0,
         "pi_display_results": 1,
-        "pi_form_type": "RANGE",
+        "pi_form_type": "RANGE%.3f",
         "pi_intro": null,
         "pi_label": "Solar Ring Elevation 2",
         "pi_label_results": "Solar Ring Elevation (Max)",
@@ -724,7 +724,7 @@
         "pi_slug": "RINGGEOsolarringelev2",
         "pi_sub_heading": "Lighting Geometry - Observed",
         "pi_tooltip": null,
-        "pi_units": null,
+        "pi_units": "degrees",
         "comments": "Definition is from RING_GEO label file."
     },
     {
@@ -746,7 +746,7 @@
         "pi_disp_order": 260,
         "pi_display": 1,
         "pi_display_results": 1,
-        "pi_form_type": "RANGE",
+        "pi_form_type": "RANGE%.3f",
         "pi_intro": null,
         "pi_label": "Observer Ring Elevation",
         "pi_label_results": "Observer Ring Elevation (Min)",
@@ -754,7 +754,7 @@
         "pi_slug": "RINGGEOobserverringelevation1",
         "pi_sub_heading": "Lighting Geometry - Observed",
         "pi_tooltip": null,
-        "pi_units": null,
+        "pi_units": "degrees",
         "comments": "Definition is from RING_GEO label file."
     },
     {
@@ -776,7 +776,7 @@
         "pi_disp_order": 261,
         "pi_display": 0,
         "pi_display_results": 1,
-        "pi_form_type": "RANGE",
+        "pi_form_type": "RANGE%.3f",
         "pi_intro": null,
         "pi_label": "Observer Ring Elevation 2",
         "pi_label_results": "Observer Ring Elevation (Max)",
@@ -784,7 +784,7 @@
         "pi_slug": "RINGGEOobserverringelevation2",
         "pi_sub_heading": "Lighting Geometry - Observed",
         "pi_tooltip": null,
-        "pi_units": null,
+        "pi_units": "degrees",
         "comments": "Definition is from RING_GEO label file."
     },
     {
@@ -806,7 +806,7 @@
         "pi_disp_order": 200,
         "pi_display": 1,
         "pi_display_results": 1,
-        "pi_form_type": "RANGE",
+        "pi_form_type": "RANGE%.3f",
         "pi_intro": null,
         "pi_label": "Observed Phase Angle",
         "pi_label_results": "Observed Phase Angle (Min)",
@@ -836,7 +836,7 @@
         "pi_disp_order": 201,
         "pi_display": 0,
         "pi_display_results": 1,
-        "pi_form_type": "RANGE",
+        "pi_form_type": "RANGE%.3f",
         "pi_intro": null,
         "pi_label": "Observed Phase Angle 2",
         "pi_label_results": "Observed Phase Angle (Max)",
@@ -866,7 +866,7 @@
         "pi_disp_order": 210,
         "pi_display": 1,
         "pi_display_results": 1,
-        "pi_form_type": "RANGE",
+        "pi_form_type": "RANGE%.3f",
         "pi_intro": null,
         "pi_label": "Observed Incidence Angle",
         "pi_label_results": "Observed Incidence Angle (Min)",
@@ -896,7 +896,7 @@
         "pi_disp_order": 211,
         "pi_display": 0,
         "pi_display_results": 1,
-        "pi_form_type": "RANGE",
+        "pi_form_type": "RANGE%.3f",
         "pi_intro": null,
         "pi_label": "Observed Incidence Angle 2",
         "pi_label_results": "Observed Incidence Angle (Max)",
@@ -926,7 +926,7 @@
         "pi_disp_order": 220,
         "pi_display": 1,
         "pi_display_results": 1,
-        "pi_form_type": "RANGE",
+        "pi_form_type": "RANGE%.3f",
         "pi_intro": null,
         "pi_label": "Observed Emission Angle",
         "pi_label_results": "Observed Emission Angle (Min)",
@@ -956,7 +956,7 @@
         "pi_disp_order": 221,
         "pi_display": 0,
         "pi_display_results": 1,
-        "pi_form_type": "RANGE",
+        "pi_form_type": "RANGE%.3f",
         "pi_intro": null,
         "pi_label": "Observed Emission Angle 2",
         "pi_label_results": "Observed Emission Angle (Max)",
@@ -986,7 +986,7 @@
         "pi_disp_order": 230,
         "pi_display": 1,
         "pi_display_results": 1,
-        "pi_form_type": "RANGE",
+        "pi_form_type": "RANGE%.3f",
         "pi_intro": null,
         "pi_label": "Observed North-Based Incidence",
         "pi_label_results": "Observed North-Based Incidence (Min)",
@@ -1016,7 +1016,7 @@
         "pi_disp_order": 231,
         "pi_display": 0,
         "pi_display_results": 1,
-        "pi_form_type": "RANGE",
+        "pi_form_type": "RANGE%.3f",
         "pi_intro": null,
         "pi_label": "Observed North-Based Incidence 2",
         "pi_label_results": "Observed North-Based Incidence (Max)",
@@ -1046,7 +1046,7 @@
         "pi_disp_order": 240,
         "pi_display": 1,
         "pi_display_results": 1,
-        "pi_form_type": "RANGE",
+        "pi_form_type": "RANGE%.3f",
         "pi_intro": null,
         "pi_label": "Observed North-Based Emission",
         "pi_label_results": "Observed North-Based Emission (Min)",
@@ -1076,7 +1076,7 @@
         "pi_disp_order": 241,
         "pi_display": 0,
         "pi_display_results": 1,
-        "pi_form_type": "RANGE",
+        "pi_form_type": "RANGE%.3f",
         "pi_intro": null,
         "pi_label": "Observed North-Based Emission 2",
         "pi_label_results": "Observed North-Based Emission (Max)",
@@ -1106,7 +1106,7 @@
         "pi_disp_order": 300,
         "pi_display": 1,
         "pi_display_results": 1,
-        "pi_form_type": "RANGE",
+        "pi_form_type": "RANGE%.3f",
         "pi_intro": null,
         "pi_label": "Ring Center Phase",
         "pi_label_results": "Ring Center Phase",
@@ -1114,7 +1114,7 @@
         "pi_slug": "RINGGEOringcenterphase",
         "pi_sub_heading": "Lighting Geometry - Ring Center",
         "pi_tooltip": null,
-        "pi_units": null,
+        "pi_units": "degrees",
         "comments": "Definition is from RING_GEO label file."
     },
     {
@@ -1136,7 +1136,7 @@
         "pi_disp_order": 310,
         "pi_display": 1,
         "pi_display_results": 1,
-        "pi_form_type": "RANGE",
+        "pi_form_type": "RANGE%.3f",
         "pi_intro": null,
         "pi_label": "Ring Center Incidence",
         "pi_label_results": "Ring Center Incidence",
@@ -1144,7 +1144,7 @@
         "pi_slug": "RINGGEOringcenterincidence",
         "pi_sub_heading": "Lighting Geometry - Ring Center",
         "pi_tooltip": null,
-        "pi_units": null,
+        "pi_units": "degrees",
         "comments": "Definition is from RING_GEO label file."
     },
     {
@@ -1166,7 +1166,7 @@
         "pi_disp_order": 320,
         "pi_display": 1,
         "pi_display_results": 1,
-        "pi_form_type": "RANGE",
+        "pi_form_type": "RANGE%.3f",
         "pi_intro": null,
         "pi_label": "Ring Center Emission",
         "pi_label_results": "Ring Center Emission",
@@ -1174,7 +1174,7 @@
         "pi_slug": "RINGGEOringcenteremission",
         "pi_sub_heading": "Lighting Geometry - Ring Center",
         "pi_tooltip": null,
-        "pi_units": null,
+        "pi_units": "degrees",
         "comments": "Definition is from RING_GEO label file."
     },
     {
@@ -1196,7 +1196,7 @@
         "pi_disp_order": 330,
         "pi_display": 1,
         "pi_display_results": 1,
-        "pi_form_type": "RANGE",
+        "pi_form_type": "RANGE%.3f",
         "pi_intro": null,
         "pi_label": "Ring Center North-Based Incidence",
         "pi_label_results": "Ring Center North-Based Incidence",
@@ -1204,7 +1204,7 @@
         "pi_slug": "RINGGEOringcenternorthbasedincidence",
         "pi_sub_heading": "Lighting Geometry - Ring Center",
         "pi_tooltip": null,
-        "pi_units": null,
+        "pi_units": "degrees",
         "comments": "Definition is from RING_GEO label file."
     },
     {
@@ -1226,7 +1226,7 @@
         "pi_disp_order": 340,
         "pi_display": 1,
         "pi_display_results": 1,
-        "pi_form_type": "RANGE",
+        "pi_form_type": "RANGE%.3f",
         "pi_intro": null,
         "pi_label": "Ring Center North-Based Emission",
         "pi_label_results": "Ring Center North-Based Emission",
@@ -1234,7 +1234,7 @@
         "pi_slug": "RINGGEOringcenternorthbasedemission",
         "pi_sub_heading": "Lighting Geometry - Ring Center",
         "pi_tooltip": null,
-        "pi_units": null,
+        "pi_units": "degrees",
         "comments": "Definition is from RING_GEO label file."
     },
     {
@@ -1256,7 +1256,7 @@
         "pi_disp_order": 350,
         "pi_display": 1,
         "pi_display_results": 1,
-        "pi_form_type": "RANGE",
+        "pi_form_type": "RANGE%.3f",
         "pi_intro": null,
         "pi_label": "Ring Center Opening Angle to Sun",
         "pi_label_results": "Ring Center Opening Angle to Sun",
@@ -1264,7 +1264,7 @@
         "pi_slug": "RINGGEOsolarringopeningangle",
         "pi_sub_heading": "Lighting Geometry - Ring Center",
         "pi_tooltip": null,
-        "pi_units": null,
+        "pi_units": "degrees",
         "comments": "Definition is from RING_GEO label file."
     },
     {
@@ -1286,7 +1286,7 @@
         "pi_disp_order": 360,
         "pi_display": 1,
         "pi_display_results": 1,
-        "pi_form_type": "RANGE",
+        "pi_form_type": "RANGE%.3f",
         "pi_intro": null,
         "pi_label": "Ring Center Opening Angle to Observer",
         "pi_label_results": "Ring Center Opening Angle to Observer",
@@ -1294,7 +1294,7 @@
         "pi_slug": "RINGGEOobserverringopeningangle",
         "pi_sub_heading": "Lighting Geometry - Ring Center",
         "pi_tooltip": null,
-        "pi_units": null,
+        "pi_units": "degrees",
         "comments": "Definition is from RING_GEO label file."
     },
     {
@@ -1316,7 +1316,7 @@
         "pi_disp_order": 400,
         "pi_display": 1,
         "pi_display_results": 1,
-        "pi_form_type": "RANGE",
+        "pi_form_type": "RANGE%.3f",
         "pi_intro": null,
         "pi_label": "Edge-On Radius",
         "pi_label_results": "Edge-On Radius (Min)",
@@ -1346,7 +1346,7 @@
         "pi_disp_order": 401,
         "pi_display": 0,
         "pi_display_results": 1,
-        "pi_form_type": "RANGE",
+        "pi_form_type": "RANGE%.3f",
         "pi_intro": null,
         "pi_label": "Edge-On Radius 2",
         "pi_label_results": "Edge-On Radius (Max)",
@@ -1376,7 +1376,7 @@
         "pi_disp_order": 450,
         "pi_display": 1,
         "pi_display_results": 1,
-        "pi_form_type": "RANGE",
+        "pi_form_type": "RANGE%.3f",
         "pi_intro": null,
         "pi_label": "Edge-On Altitude",
         "pi_label_results": "Edge-On Altitude (Min)",
@@ -1406,7 +1406,7 @@
         "pi_disp_order": 451,
         "pi_display": 0,
         "pi_display_results": 1,
-        "pi_form_type": "RANGE",
+        "pi_form_type": "RANGE%.3f",
         "pi_intro": null,
         "pi_label": "Edge-On Altitude 2",
         "pi_label_results": "Edge-On Altitude (Max)",
@@ -1435,7 +1435,7 @@
         "pi_disp_order": 440,
         "pi_display": 1,
         "pi_display_results": 1,
-        "pi_form_type": "RANGE",
+        "pi_form_type": "RANGE%.5f",
         "pi_intro": null,
         "pi_label": "Edge-On Radial Resolution",
         "pi_label_results": "Edge-On Radial Resolution (Min)",
@@ -1443,7 +1443,7 @@
         "pi_slug": "RINGGEOedgeonradialresolution1",
         "pi_sub_heading": "Edge-On Viewing Geometry",
         "pi_tooltip": null,
-        "pi_units": "degrees",
+        "pi_units": "km/pixel",
         "comments": "Definition is from RING_GEO label file."
     },
     {
@@ -1464,7 +1464,7 @@
         "pi_disp_order": 441,
         "pi_display": 0,
         "pi_display_results": 1,
-        "pi_form_type": "RANGE",
+        "pi_form_type": "RANGE%.5f",
         "pi_intro": null,
         "pi_label": "Edge-On Radial Resolution 2",
         "pi_label_results": "Edge-On Radial Resolution (Max)",
@@ -1472,7 +1472,7 @@
         "pi_slug": "RINGGEOedgeonradialresolution2",
         "pi_sub_heading": "Edge-On Viewing Geometry",
         "pi_tooltip": null,
-        "pi_units": "degrees",
+        "pi_units": "km/pixel",
         "comments": "Definition is from RING_GEO label file."
     },
     {
@@ -1494,7 +1494,7 @@
         "pi_disp_order": 430,
         "pi_display": 1,
         "pi_display_results": 1,
-        "pi_form_type": "RANGE",
+        "pi_form_type": "RANGE%.3f",
         "pi_intro": null,
         "pi_label": "Edge-On Distance to Ring Intercept",
         "pi_label_results": "Edge-On Distance to Ring Intercept (Min)",
@@ -1524,7 +1524,7 @@
         "pi_disp_order": 431,
         "pi_display": 0,
         "pi_display_results": 1,
-        "pi_form_type": "RANGE",
+        "pi_form_type": "RANGE%.3f",
         "pi_intro": null,
         "pi_label": "Edge-On Distance to Ring Intercept 2",
         "pi_label_results": "Edge-On Distance to Ring Intercept (Max)",
@@ -1554,7 +1554,7 @@
         "pi_disp_order": 410,
         "pi_display": 1,
         "pi_display_results": 1,
-        "pi_form_type": "LONG",
+        "pi_form_type": "LONG%.3f",
         "pi_intro": "Because longitude wraps around, both min and max must be specified for a meaningful result",
         "pi_label": "Edge-On J2000 Longitude",
         "pi_label_results": "Edge-On J2000 Longitude (Min)",
@@ -1584,7 +1584,7 @@
         "pi_disp_order": 411,
         "pi_display": 0,
         "pi_display_results": 1,
-        "pi_form_type": "LONG",
+        "pi_form_type": "LONG%.3f",
         "pi_intro": null,
         "pi_label": "Edge-On J2000 Longitude 2",
         "pi_label_results": "Edge-On J2000 Longitude (Max)",
@@ -1639,7 +1639,7 @@
         "pi_disp_order": 420,
         "pi_display": 1,
         "pi_display_results": 1,
-        "pi_form_type": "LONG",
+        "pi_form_type": "LONG%.3f",
         "pi_intro": "Because longitude wraps around, both min and max must be specified for a meaningful result",
         "pi_label": "Edge-On Solar Hour Angle",
         "pi_label_results": "Edge-On Solar Hour Angle (Min)",
@@ -1669,7 +1669,7 @@
         "pi_disp_order": 421,
         "pi_display": 0,
         "pi_display_results": 1,
-        "pi_form_type": "LONG",
+        "pi_form_type": "LONG%.3f",
         "pi_intro": null,
         "pi_label": "Edge-On Solar Hour Angle 2",
         "pi_label_results": "Edge-On Solar Hour Angle (Max)",

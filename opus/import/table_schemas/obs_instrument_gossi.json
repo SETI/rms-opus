@@ -12,7 +12,7 @@
             "TAB:obs_general",
             "id"
         ],
-        "comment": "This is the primary (surrogate) key linking the record to obs_general."
+        "comments": "This is the primary (surrogate) key linking the record to obs_general."
     },
     {
         "field_name": "opus_id",
@@ -27,7 +27,7 @@
             "TAB:obs_general",
             "opus_id"
         ],
-        "comment": "This is the secondary key linking the record to obs_general."
+        "comments": "This is the secondary key linking the record to obs_general."
     },
     {
         "field_name": "volume_id",
@@ -38,7 +38,7 @@
             "TAB:obs_general",
             "volume_id"
         ],
-        "comment": "The volume_id is included here for ease of database manipulation only."
+        "comments": "The volume_id is included here for ease of database manipulation only."
     },
     {
         "field_name": "observation_id",
@@ -64,8 +64,8 @@
         "pi_slug": "GOSSIobservationid",
         "pi_sub_heading": null,
         "pi_tooltip": "",
-        "pi_units": "",
-        "comment": "Definition is from GOSSI label."
+        "pi_units": null,
+        "comments": "Definition is from GOSSI label."
     },
     {
         "field_name": "image_id",
@@ -90,8 +90,8 @@
         "pi_slug": "GOSSIimageid",
         "pi_sub_heading": null,
         "pi_tooltip": "",
-        "pi_units": "",
-        "comment": "Definition is from GOSSI label."
+        "pi_units": null,
+        "comments": "Definition is from GOSSI label."
     },
     {
         "field_name": "filter_name",
@@ -118,8 +118,8 @@
         "pi_slug": "GOSSIfilter",
         "pi_sub_heading": null,
         "pi_tooltip": "",
-        "pi_units": "",
-        "comment": "Definition is from GOSSI label.",
+        "pi_units": null,
+        "comments": "Definition is from GOSSI label.",
         "mult_options": [
               [   0,    "CLEAR",           "Clear",   10, "Y", null],
               [   1,   "VIOLET",          "Violet",   20, "Y", null],
@@ -157,8 +157,8 @@
         "pi_slug": "GOSSIfilternumber",
         "pi_sub_heading": null,
         "pi_tooltip": "",
-        "pi_units": "",
-        "comment": "Definition is from GOSSI label."
+        "pi_units": null,
+        "comments": "Definition is from GOSSI label."
     },
     {
         "field_name": "gain_mode_id",
@@ -184,8 +184,8 @@
         "pi_slug": "GOSSIgainmode",
         "pi_sub_heading": null,
         "pi_tooltip": "",
-        "pi_units": "",
-        "comment": "Definition is from GOSSI label.",
+        "pi_units": null,
+        "comments": "Definition is from GOSSI label.",
         "mult_options": [
               [   0,  "10K",  "10K",   10, "Y", null],
               [   1,  "40K",  "40K",   20, "Y", null],
@@ -203,7 +203,7 @@
         ],
         "val_min": 2,
         "val_max": 61,
-        "definition": "Scan rate of the camera read out in seconds. Valid 2.333, 8.667, 30.333 60.667",
+        "definition": "Scan rate of the camera read out in seconds. Valid 2.333, 8.667, 30.333, 60.667",
         "pi_category_name": "obs_instrument_gossi",
         "pi_dict_context": "GOSSI",
         "pi_dict_name": "FRAME_DURATION",
@@ -219,7 +219,7 @@
         "pi_sub_heading": null,
         "pi_tooltip": "",
         "pi_units": "seconds",
-        "comment": "Definition is from GOSSI label."
+        "comments": "Definition is from GOSSI label."
     },
     {
         "field_name": "obstruction_id",
@@ -245,8 +245,8 @@
         "pi_slug": "GOSSIobstruction",
         "pi_sub_heading": null,
         "pi_tooltip": "",
-        "pi_units": "",
-        "comment": "Definition is from GOSSI label.",
+        "pi_units": null,
+        "comments": "Definition is from GOSSI label.",
         "mult_options": [
               [   0,          "POSSIBLE",          "Possible",  10, "Y", null],
               [   1,      "NOT POSSIBLE",      "Not Possible",  20, "Y", null],
@@ -276,8 +276,8 @@
         "pi_slug": "GOSSIcompressiontype",
         "pi_sub_heading": null,
         "pi_tooltip": "",
-        "pi_units": "",
-        "comment": "The definition for COMPRESSION_TYPE in the GOSSI label says nothing useful so we use the PSDD one.",
+        "pi_units": null,
+        "comments": "The definition for COMPRESSION_TYPE in the GOSSI label says nothing useful so we use the PSDD one.",
         "mult_options": [
               [   0,        "BARC RATE CONTROL",        "BARC Rate Control", 10, "Y", null],
               [   1,                  "HUFFMAN",                  "Huffman", 20, "Y", null],

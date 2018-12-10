@@ -160,7 +160,7 @@ class ApiMetadataTests(TestCase):
     def test__api_meta_range_endpoints_observation_duration_VGISS(self):
         "/api/meta/range/endpoints: observation duration VGISS"
         url = '/opus/__api/meta/range/endpoints/observationduration1.json?volumeid=VGISS_6210'
-        expected = {"max": 15.36, "nulls": 0, "min": 0.24}
+        expected = {'min': '0.2400', 'max': '15.3600', 'nulls': 0}
         self._run_json_equal(url, expected)
 
     #################################
@@ -179,37 +179,37 @@ class ApiMetadataTests(TestCase):
     def test__api_meta_range_endpoints_COISS_greaterpixelsize1(self):
         "/api/meta/range/endpoints: greaterpixelsize1 COISS"
         url = '/opus/__api/meta/range/endpoints/greaterpixelsize1.json?instrumentid=Cassini+ISS'
-        expected = {"max": 1024.0, "nulls": 0, "min": 256.0}
+        expected = {'max': '1024', 'min': '256', 'nulls': 0}
         self._run_json_equal(url, expected)
 
     def test__api_meta_range_endpoints_COISS_greaterpixelsize2(self):
         "/api/meta/range/endpoints: greaterpixelsize2 COISS"
         url = '/opus/api/meta/range/endpoints/greaterpixelsize2.json?instrumentid=Cassini+ISS'
-        expected = {"max": 1024.0, "nulls": 0, "min": 256.0}
+        expected = {'min': '256', 'max': '1024', 'nulls': 0}
         self._run_json_equal(url, expected)
 
     def test__api_meta_range_endpoints_COISS_lesserpixelsize1(self):
         "/api/meta/range/endpoints: lesserpixelsize1 COISS"
         url = '/opus/api/meta/range/endpoints/lesserpixelsize1.json?instrumentid=Cassini+ISS'
-        expected = {"max": 1024.0, "nulls": 0, "min": 256.0}
+        expected = {'min': '256', 'max': '1024', 'nulls': 0}
         self._run_json_equal(url, expected)
 
     def test__api_meta_range_endpoints_COISS_lesserpixelsize2(self):
         "/api/meta/range/endpoints: lesserpixelsize2 COISS"
         url = '/opus/__api/meta/range/endpoints/lesserpixelsize2.json?instrumentid=Cassini+ISS'
-        expected = {"max": 1024.0, "nulls": 0, "min": 256.0}
+        expected = {'min': '256', 'max': '1024', 'nulls': 0}
         self._run_json_equal(url, expected)
 
     def test__api_meta_range_endpoints_GOSSI_greaterpixelsize1(self):
         "/api/meta/range/endpoints: greaterpixelsize1 GOSSI"
         url = '/opus/__api/meta/range/endpoints/greaterpixelsize1.json?instrumentid=Galileo+SSI'
-        expected = {"max": 800.0, "nulls": 0, "min": 800.0}
+        expected = {'min': '800', 'max': '800', 'nulls': 0}
         self._run_json_equal(url, expected)
 
     def test__api_meta_range_endpoints_GOSSI_lesserpixelsize1(self):
         "/api/meta/range/endpoints: greaterpixelsize1 GOSSI"
         url = '/opus/__api/meta/range/endpoints/lesserpixelsize1.json?instrumentid=Galileo+SSI'
-        expected = {"max": 800.0, "nulls": 0, "min": 800.0}
+        expected = {'min': '800', 'max': '800', 'nulls': 0}
         self._run_json_equal(url, expected)
 
     # We don't do greater/lesserpixelsize for VGISS because it can change in
@@ -222,25 +222,25 @@ class ApiMetadataTests(TestCase):
     def test__api_meta_range_endpoints_COISS_levels1(self):
         "/api/meta/range/endpoints: levels1 COISS"
         url = '/opus/__api/meta/range/endpoints/levels1.json?instrumentid=Cassini+ISS'
-        expected = {"max": 4096.0, "nulls": 0, "min": 4096.0}
+        expected = {'min': '4096', 'max': '4096', 'nulls': 0}
         self._run_json_equal(url, expected)
 
     def test__api_meta_range_endpoints_COVIMS_levels1(self):
         "/api/meta/range/endpoints: levels1 COVIMS"
         url = '/opus/__api/meta/range/endpoints/levels1.json?instrumentid=Cassini+VIMS'
-        expected = {"max": 4096.0, "nulls": 0, "min": 4096.0}
+        expected = {'min': '4096', 'max': '4096', 'nulls': 0}
         self._run_json_equal(url, expected)
 
     def test__api_meta_range_endpoints_GOSSI_levels1(self):
         "/api/meta/range/endpoints: levels1 GOSSI"
         url = '/opus/__api/meta/range/endpoints/levels1.json?instrumentid=Galileo+SSI'
-        expected = {"max": 256.0, "nulls": 0, "min": 256.0}
+        expected = {'min': '256', 'max': '256', 'nulls': 0}
         self._run_json_equal(url, expected)
 
     def test__api_meta_range_endpoints_VGISS_levels1(self):
         "/api/meta/range/endpoints: levels1 VGISS"
         url = '/opus/__api/meta/range/endpoints/levels1.json?instrumentid=Voyager+ISS'
-        expected = {"max": 256.0, "nulls": 0, "min": 256.0}
+        expected = {'min': '256', 'max': '256', 'nulls': 0}
         self._run_json_equal(url, expected)
 
     ########################
