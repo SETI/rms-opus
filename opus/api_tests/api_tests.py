@@ -5,7 +5,7 @@ import requests
 import sys
 import unittest
 
-filename = 'result_counts.csv'
+filename = 'result_counts_new_slugs.csv'
 # filename = 'test.csv'
 # endpoint_url = "https://{}.pds-rings.seti.org:8000/opus/api/meta/result_count.json?"
 # we need https and no need to specify port number
