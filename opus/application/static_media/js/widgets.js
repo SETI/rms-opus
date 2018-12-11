@@ -8,7 +8,12 @@ var o_widgets = {
 
 
     addWidgetBehaviors: function() {
-		    $("#search_widgets").sortable();
+		    $("#search_widgets").sortable({
+            items: "li:not(.unsortable)",
+            cursor: 'move',
+            stop: function(event, ui) { o_widgets.widgetDrop(this); }
+        });
+
         $("#search_widgets").on( "sortchange", function( event, ui ) {
             o_widgets.widgetDrop();
         });
@@ -85,7 +90,7 @@ var o_widgets = {
 
     },
 
-    widgetDrop: function() {
+    widgetDrop: function(obj) {
             // if widget as moved to a different formscolumn,
             // redefine the opus.prefs.widgets (preserves order)
             var widgets = $('#search_widgets').sortable('toArray');
@@ -364,7 +369,7 @@ var o_widgets = {
          for (var k in opus.prefs.widgets) {
              var slug = opus.prefs.widgets[k];
              var widget = 'widget__' + slug;
-             var html = '<li id = "' + widget + '" class = "widget"></li>';
+             var html = '<li id = "' + widget + '" class = "widget ui-state-default"></li>';
              $(html).appendTo('#search_widgets ');
              // $(html).hide().appendTo('#search_widgets').show("blind",{direction: "vertical" },200);
              opus.widget_elements_drawn.push(slug);

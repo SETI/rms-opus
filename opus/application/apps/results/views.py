@@ -382,9 +382,12 @@ def api_get_images(request, fmt):
         image['in_collection'] = image['opus_id'] in collection_opus_ids
         image['ring_obs_id'] = ring_obs_id_dict[image['opus_id']]
 
+    metadata = get_data(request, 'raw')
+
     data = {'data': image_list,
             'page_no': page_no,
             'limit': limit,
+            'metadata': metadata,
             'count': len(image_list)}
     ret = response_formats(data, fmt,
                           template='results/gallery.html', order=order)

@@ -91,6 +91,8 @@ def response_formats(data, fmt, **kwargs):
                     returndata['collection'] = kwargs['collection']
                 if 'id_index' in kwargs:
                     returndata['id_index'] = kwargs['id_index']
+                if 'page_no' in data:
+                    returndata['page_no']=data['page_no']
 
                 return render_to_response(kwargs['template'],returndata)
 

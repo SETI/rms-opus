@@ -103,6 +103,13 @@
 					<div class="panel-body gallery-contents container-fluid scrollbar-morpheus-den">
 						<div class="row justify-content-center">
 							<div class="mr-0 thumb gallery gallery-scroll" data-ui="jscroll-default"></div>
+							<div class="scroller-status">
+								<div class="infinite-scroll-request loader-ellips">
+									<div class='loader'></div>
+								</div>
+								<p class="infinite-scroll-last">End of content</p>
+								<p class="infinite-scroll-error">No more pages to load</p>
+							</div>
 						</div>
 						<div class="row dataTable">
 							<div class="col-lg">
@@ -194,7 +201,7 @@
 	<!--script src="https://unpkg.com/jscroll/dist/jquery.jscroll.min.js"></script-->
 	<script src="https://cdn.jsdelivr.net/npm/lodash@4.17.11/lodash.min.js"></script>
 
-	<script src="https://unpkg.com/infinite-scroll@3/dist/infinite-scroll.pkgd.min.js"></script>
+	<script src="https://unpkg.com/infinite-scroll@3/dist/infinite-scroll.pkgd.js"></script>
 
     {% block scripts %}
 
