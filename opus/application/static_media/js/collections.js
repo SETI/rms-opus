@@ -112,19 +112,16 @@ var o_collections = {
         // returns any user collection saved in session
         $.ajax({ url: "/opus/__collections/status.json",
             dataType:"json",
-            success: function(data){
-                   var count = data['count'];
-                   if (parseInt(count, 10)) {
-                       opus.collection_change = true;
-
-                       opus.mainTabDisplay('collection');  // make sure the main site tab label is displayed
-
-                       $('#collection_tab').fadeIn();
-                       opus.colls_pages = Math.ceil(count/opus.prefs.limit);
-                       $('#collection_count').html(count);
-                   }
-                   opus.lastCartRequestNo = parseInt(data['expected_request_no']) - 1
-            }});
+            success: function(data) {
+                var count = data['count'];
+                if (parseInt(count, 10)) {
+                    opus.collection_change = true;
+                    opus.colls_pages = Math.ceil(count/opus.prefs.limit);
+                    $('#collection_count').html(count);
+                }
+                opus.lastCartRequestNo = parseInt(data['expected_request_no']) - 1
+            }
+        });
     },
 
     // get Collections tab
@@ -335,8 +332,6 @@ var o_collections = {
     },
 
     editCollection: function(opus_id, action) {
-        opus.mainTabDisplay('collection');  // make sure the main site tab label is displayed
-
         opus.collection_change = true;
         opus.lastCartRequestNo++;
         // $('.collections_extra').html(opus.spinner);

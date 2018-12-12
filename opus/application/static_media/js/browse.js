@@ -11,7 +11,7 @@ var o_browse = {
         $(".gallery-contents").on('scroll', _.debounce(o_browse.checkScroll, 200));
 
         // nav stuff
-        var onRenderBrowse = _.debounce(o_browse.renderBrowseData, 500);
+        var onRenderBrowse = _.debounce(o_browse.loadBrowseData, 500);
         $(".browse-nav-container").on("click", "a.next, a.prev", function() {
 
             // we will set a timer to wait for settle but right now just do it
@@ -299,7 +299,6 @@ var o_browse = {
                 }
             }
         })
-        console.log("check scroll");
         return false;
     },
 
@@ -310,74 +309,13 @@ var o_browse = {
 
         // make sure the checkbox for this observation in the other view (either data or gallery)
         // is also checked/unchecked - if that view is drawn
-            $('#data__' + opus_id).find('.data_checkbox').toggleClass('fa-check-square-o').toggleClass('fa-square-o');
-
-        // check if we are clicking as part of an 'add range' interaction
-        if (!opus.addrange_clicked) {
-            // no add range, just add this obs to collection
-            o_collections.editCollection(opus_id,action);
-
-        } else {
-            // addrange clicked
-            o_browse.addRangeHandler(opus_id);
-        }
+        $('#data__' + opus_id).find('.data_checkbox').toggleClass('fa-check-square-o').toggleClass('fa-square-o');
+        o_collections.editCollection(opus_id,action);
     },
 
     openDetailTab: function() {
         $("#galleryView").modal('hide');
         opus.changeTab('detail');
-    },
-
-    // user is adding range with the 'add range' button in the top menu
-    addRangeHandler: function(opus_id) {
-
-        var element = "li";  // elements to loop thru
-        if (opus.prefs.browse == 'dataTable') {
-                element = "td";
-        }
-
-        if (!opus.addrange_min) {
-            // this is only the min side of the range
-            var end_hint = "select another thumbnail to make a range.";
-            var element_name = 'thumbnail';
-            if (opus.prefs.browse == "dataTable") {
-              element_name = 'row';
-            }
-            $('.addrange','#browse').text("select range end");
-            $('.cart_control','#browse').popover("destroy");
-            $('.cart_control','#browse').popover({
-              content: "click another " + element_name + " to complete the range",
-              trigger:"click",
-              placement: "bottom",
-            });
-
-            index = $('#' + opus.prefs.browse + '__' + opus_id).index();
-            opus.addrange_min = { "index":index, "opus_id":opus_id };
-            return;
-
-        } else {
-            var opus_id_min = opus.addrange_min['opus_id'];
-
-            // we have both sides of range
-            $('.addrange','#browse').text("add range");
-            $('.cart_control','#browse').popover('destroy');
-
-            var index = $('#' + opus.prefs.browse + '__' + opus_id).index();
-            if (index > opus.addrange_min['index']) {
-                range = opus_id_min + "," + opus_id;// ???
-                o_browse.checkRangeBoxes(opus_id_min, opus_id);
-            } else {
-                // user clicked later box first, reverse them for server..
-                range = opus_id + "," + opus_id_min;
-                o_browse.checkRangeBoxes(opus_id, opus_id_min);
-            }  // i don't like this
-
-            o_collections.editCollection(range,'addrange');
-
-            opus.addrange_clicked = false;
-            opus.addrange_min = false;
-        }
-
     },
 
     getGalleryElement: function(opus_id) {
@@ -440,7 +378,7 @@ var o_browse = {
             o_hash.updateHash();
             let pages = opus.pages_drawn.gallery;
             for (let i in pages) {
-                o_browse.getBrowseData(pages[i]);
+                o_browse.loadBrowseData(pages[i]);
             }
             return false;
         });
@@ -465,7 +403,7 @@ var o_browse = {
             o_hash.updateHash();
             let pages = opus.pages_drawn.gallery;
             for (let i in pages) {
-                o_browse.getBrowseData(pages[i]);
+                o_browse.loadBrowseData(pages[i]);
             }
             return false;
         });
@@ -610,6 +548,21 @@ var o_browse = {
         }
     },
 
+    updatePageInUrl: function(url, page) {
+        var urlPage = 0;
+        // remove any existing page= slug before adding in the current page= slug w/new page number
+        url = $.grep(url.split('&'), function(pair, index) {
+            if (pair.startsWith("page")) {
+                urlPage = pair.split("=")[1];
+            }
+            return !pair.startsWith("page");
+        }).join('&');
+
+        page = (page === undefined ? ++urlPage : page);
+        url += '&page=' + page;
+        return url;
+    },
+
     renderColumnChooser: function() {
         if (!opus.column_chooser_drawn) {
             let url = '/opus/__forms/column_chooser.html?' + o_hash.getHash() + '&col_chooser=1';
@@ -635,153 +588,23 @@ var o_browse = {
         }
     },
 
+    // note that renderTable also updates the gallery_data table, as it contains the same information/columns as the table
     renderTable: function(tableData) {
-        $(".dataTable thead > tr > th").detach();
-        $(".dataTable tbody > tr").detach();
-        // check all box
-        let checkbox = "<input type='checkbox' name='all' value='all' class='multichoice' id='all'>";
-        $("<th id='checkAll' scope='col' class='sticky-header'>"+checkbox+"</th>").appendTo(".dataTable thead tr");
-    	  $.each(tableData.labels, function( column, header) {
-            $("<th id='"+column+"'scope='col' class='sticky-header'>"+header+"</th>").appendTo(".dataTable thead tr");
-        });
-        $.each(tableData.page, function(item, value) {
-            let checkbox = "<input type='checkbox' name='"+value[0]+"' value='"+value[0]+"' class='multichoice' id='select_"+value[0]+"'>";
+        // update table
+        $.each(tableData.page, function(item, galleryData) {
+              // for now, always assume that opus_id is first item in list
+            let opusId = galleryData[0];
+            opus.gallery_data[opusId] = galleryData;
+
+            let checkbox = "<input type='checkbox' name='"+opusId+"' value='"+opusId+"' class='multichoice' id='select_"+opusId+"'>";
             var row = "<td>"+checkbox+"</td>";
-            var tr = "<tr data-toggle='modal' data-id='"+value[0]+"' data-target='#galleryView'>";
-            $.each(value, function(index, cell) {
+            var tr = "<tr data-toggle='modal' data-id='"+opusId+"' data-target='#galleryView'>";
+            $.each(galleryData, function(index, cell) {
                 row += "<td>"+cell+"</td>";
             });
-            //$("<tr data-toggle='modal' data-id='"+value[0]+"' data-target='#galleryView'>"+row+"</tr>").appendTo(".dataTable tbody");
+            //$("<tr data-toggle='modal' data-id='"+galleryData[0]+"' data-target='#galleryView'>"+row+"</tr>").appendTo(".dataTable tbody");
             $(tr+row+"</tr>").appendTo(".dataTable tbody");
         });
-    },
-
-    updatePageInUrl: function(url, page) {
-        var urlPage = 0;
-        // remove any existing page= slug before adding in the current page= slug w/new page number
-        url = $.grep(url.split('&'), function(pair, index) {
-            if (pair.startsWith("page")) {
-                urlPage = pair.split("=")[1];
-            }
-            return !pair.startsWith("page");
-        }).join('&');
-
-        page = (page === undefined ? ++urlPage : page);
-        url += '&page=' + page;
-        return url;
-    },
-
-    getGallery: function(page, append) {
-        var view = o_browse.getViewInfo();
-        var base_url = "/opus/__api/images.html?";
-        var url = o_hash.getHash() + '&reqno=' + opus.lastRequestNo + view.add_to_url;
-        url = o_browse.updatePageInUrl(url, page);
-        console.log("getGallery : "+base_url + url);
-
-        $.ajax({ url: base_url + url,
-            success: function(html) {
-                if (append != undefined && append == "append") {
-                    $('.gallery', namespace).append(html);
-                } else {
-                    $('.gallery', namespace).html(html);
-                }
-                $("[href='next']").attr("href", o_browse.updatePageInUrl(this.url));
-                if (!opus.gallery_begun) {
-                    $('.gallery-contents').infiniteScroll({
-                        path: '.infinite_scroll_page',
-                        append: '.thumbnail-container',
-                        status: '.scroller-status',
-                        elementScroll: true,
-                        hideNav: '.pagination',
-                        prefill: true,
-                        debug: true,
-                    });
-                    $('.gallery-contents').on( 'load.infiniteScroll', function( event, response ) {
-                        console.log("in load");
-                    });
-                }
-                opus.gallery_begun = true;
-            }
-        });
-    },
-
-    getBrowseData: function(page) {
-        var base_url = '/opus/__api/data.json?';
-        var columns = opus.prefs.cols;
-
-        // we have to do a little hacking of the hash, we want page as we want it and opus_id too
-        var new_hash = [];
-        for (var i in o_hash.getHash().split('&')) {
-
-            // is param a string or array???? this is odd
-            var param = values = [];
-            if (o_hash.getHash()) {
-                param = o_hash.getHash().split('&')[i].split('=')[0];
-                values = o_hash.getHash().split('&')[i].split('=')[1].split(',');
-            } else {
-                param = values = [];
-            }
-
-            // make sure opus_id is in columns
-            if (param == 'cols') {
-                if ($.inArray('opusid', values) < 0) {
-                    values.push('opusid');
-                }
-                columns = values;  // we need this after the ajax call
-            }
-            // make sure page is the page we were passed
-            if (param == 'page') {
-                values = [page];
-            }
-            // join them all together again
-            new_hash.push(param + '=' + values.join(','));
-        }
-        opus.last_page_drawn["dataTable"] = page;
-        opus.table_headers_drawn = true;
-
-        // metadata; used for both table and gallery
-        var new_hash = new_hash.join('&');
-        console.log("table data: "+base_url + new_hash);
-        $.getJSON(base_url + new_hash, function(tableData) {
-            // assign to data object
-            var updated_ids = [];
-
-            for (var i in tableData.page) {
-                var opus_id = tableData.page[i][columns.indexOf('opusid')];
-                updated_ids.push(opus_id);
-                opus.gallery_data[opus_id] = tableData.page[i];
-            }
-
-            // this endpoint also returns column labels:
-            opus.col_labels = [];
-            for (var i in tableData['labels']) {
-                opus.col_labels.push(tableData['labels'][i]);
-            }
-            o_browse.renderTable(tableData);
-        });
-        // if the data table is drawn first, retrieve the gallery images in the background.
-        // Retrieving the gallery always creates the table
-        if (opus.last_page_drawn["dataTable"] != opus.last_page_drawn["gallery"]) {
-            o_browse.getGallery(page);
-        }
-    },
-
-    renderBrowseData: function(page, append) {
-        //window.scrollTo(0,opus.browse_view_scrolls[opus.prefs.browse]);
-        page = (page == undefined ? $("input#page").val() : page);
-
-        // wait! is this page already drawn?
-        if (opus.last_page_drawn[opus.prefs.browse] == page) {
-            return;
-        }
-
-        if (opus.prefs.browse == "gallery") {
-            opus.pages_drawn.gallery.push(page);
-            o_browse.getGallery(page, append);
-        }
-
-        opus.last_page_drawn[opus.prefs.browse] = page;
-        o_browse.getBrowseData(page);
     },
 
     renderGallery: function(data, page, url) {
@@ -813,6 +636,25 @@ var o_browse = {
         $('.gallery', namespace).append(html);
     },
 
+    startTable: function(tableData) {
+        // prepare table and headers...
+        $(".dataTable thead > tr > th").detach();
+        $(".dataTable tbody > tr").detach();
+
+        // this endpoint also returns column labels:
+        opus.col_labels = [];
+        $.each(tableData.labels, function(index, labels) {
+            opus.col_labels.push(labels);
+        })
+
+        // check all box
+        let checkbox = "<input type='checkbox' name='all' value='all' class='multichoice' id='all'>";
+        $("<th id='checkAll' scope='col' class='sticky-header'>"+checkbox+"</th>").appendTo(".dataTable thead tr");
+        $.each(tableData.labels, function( column, header) {
+            $("<th id='"+column+"'scope='col' class='sticky-header'>"+header+"</th>").appendTo(".dataTable thead tr");
+        });
+    },
+
     loadBrowseData: function(page) {
         //window.scrollTo(0,opus.browse_view_scrolls[opus.prefs.browse]);
         page = (page == undefined ? $("input#page").val() : page);
@@ -823,15 +665,20 @@ var o_browse = {
             return;
         }
 
-        var view = o_browse.getViewInfo();
-        var base_url = "/opus/__api/images.json?";
-        var url = o_hash.getHash() + '&reqno=' + opus.lastRequestNo + view.add_to_url;
+        let view = o_browse.getViewInfo();
+        let base_url = "/opus/__api/images.json?";
+        let url = o_hash.getHash() + '&reqno=' + opus.lastRequestNo + view.add_to_url;
 
         url = o_browse.updatePageInUrl(url, page);
 
         // metadata; used for both table and gallery
         $.getJSON(base_url + url, function(allData) {
             o_browse.renderGallery(allData.data, allData.page_no, this.url);
+            if (!opus.gallery_begun)
+                o_browse.startTable(allData.metadata);
+
+            o_browse.renderTable(allData.metadata);
+
             if (!opus.gallery_begun) {
                 // for infinite scroll
                 $('#browse .gallery-contents').infiniteScroll({
@@ -845,6 +692,7 @@ var o_browse = {
                 $('#browse .gallery-contents').on( 'load.infiniteScroll', function( event, response, path ) {
                     let jsonData = JSON.parse( response );
                     o_browse.renderGallery(jsonData.data, jsonData.page_no, path);
+                    o_browse.renderTable(jsonData.metadata);
 
                     // load another page
                     if (jsonData.page_no % 2 == 0) {
@@ -855,19 +703,6 @@ var o_browse = {
                 opus.gallery_begun = true;
             }
 
-            let tableData = allData.metadata;
-            $.each(tableData.page, function(index, galleryData) {
-                // for now, always assume that opus_id is first item in list
-                let opus_id = galleryData[0];
-                opus.gallery_data[galleryData[0]] = galleryData;
-            })
-
-            // this endpoint also returns column labels:
-            opus.col_labels = [];
-            $.each(tableData.labels, function(index, labels) {
-                opus.col_labels.push(labels);
-            })
-            o_browse.renderTable(tableData);
         });
 
         opus.last_page_drawn["dataTable"] = page;
@@ -878,7 +713,7 @@ var o_browse = {
 
     getBrowseTab: function() {
         // only draw the navbar if we are in gallery mode... doesn't make sense in collection mode
-        var hide = opus.prefs.browse == "gallery" ? "dataTable" : "gallery";
+        let hide = opus.prefs.browse == "gallery" ? "dataTable" : "gallery";
         $('.' + hide, "#browse").hide();
 
         $('.' + opus.prefs.browse, "#browse").fadeIn();
@@ -890,7 +725,7 @@ var o_browse = {
         $('#' + 'pages', "#browse").html(opus['pages']);
 
         // figure out the page
-        var page = opus.prefs.page[opus.prefs.browse]; // default: {"gallery":1, "dataTable":1, 'colls_gallery':1, 'colls_data':1 };
+        let page = opus.prefs.page[opus.prefs.browse]; // default: {"gallery":1, "dataTable":1, 'colls_gallery':1, 'colls_data':1 };
 
         // some outlier things that can go wrong with page (when user entered page #)
         page = (!page || page < 1) ? 1 : page;
@@ -907,7 +742,7 @@ var o_browse = {
     },
 
     adjustBrowseHeight: function() {
-        var container_height = $(window).height()-120;
+        let container_height = $(window).height()-120;
         $(".gallery-contents").height(container_height);
         //opus.limit =  (floor($(window).width()/thumbnailSize) * floor(container_height/thumbnailSize));
     },
@@ -1073,7 +908,7 @@ var o_browse = {
             var prefix = view_info['prefix'];       // either 'colls_' or ''
             var pages = opus.pages_drawn[prefix + "gallery"];
             for (var i in pages) {
-                o_browse.getBrowseData(pages[i]);
+                o_browse.loadBrowseData(pages[i]);
             }
         }
 
