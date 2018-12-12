@@ -840,12 +840,10 @@ var o_browse = {
                     status: '.scroller-status',
                     elementScroll: true,
                     history: false,
-                    debug: true,
+                    debug: false,
                 });
                 $('#browse .gallery-contents').on( 'load.infiniteScroll', function( event, response, path ) {
-                    var infScroll = $('.gallery-contents').data('infiniteScroll');
                     let jsonData = JSON.parse( response );
-                    //console.log("in load, page_no: "+jsonData.page_no);
                     o_browse.renderGallery(jsonData.data, jsonData.page_no, path);
 
                     // load another page
@@ -858,20 +856,17 @@ var o_browse = {
             }
 
             let tableData = allData.metadata;
-            // assign to data object
-            var updated_ids = [];
-
-/*            for (var i in tableData.page) {
-                var opus_id = tableData.page[i][columns.indexOf('opusid')];
-                updated_ids.push(opus_id);
-                opus.gallery_data[opus_id] = tableData.page[i];
-            }*/
+            $.each(tableData.page, function(index, galleryData) {
+                // for now, always assume that opus_id is first item in list
+                let opus_id = galleryData[0];
+                opus.gallery_data[galleryData[0]] = galleryData;
+            })
 
             // this endpoint also returns column labels:
             opus.col_labels = [];
-            for (var i in tableData['labels']) {
-                opus.col_labels.push(tableData['labels'][i]);
-            }
+            $.each(tableData.labels, function(index, labels) {
+                opus.col_labels.push(labels);
+            })
             o_browse.renderTable(tableData);
         });
 
@@ -920,9 +915,9 @@ var o_browse = {
     metadataboxHtml: function(opus_id) {
         // list columns + values
         var html = "<dl>";
-        for (var i in opus.prefs["cols"]) {
-            var column = opus.col_labels[i];  // use the label not the column title
-            var value = opus.gallery_data[opus_id][i];
+        for (let i in opus.prefs["cols"]) {
+            let column = opus.col_labels[i];  // use the label not the column title
+            let value = opus.gallery_data[opus_id][i];
             html += "<dt>" + column + ":</dt><dd>" + value + "</dd>";
 
         }
@@ -933,7 +928,7 @@ var o_browse = {
         prev = (prev.length > 0 ? prev.data("id") : "");
 
         // add a link to detail page;
-        var hashArray = o_hash.getHashArray();
+        let hashArray = o_hash.getHashArray();
         hashArray["view"] = "detail";
         hashArray["detail"] = opus_id;
         html += '<p><a href = "/opus/#/' + o_hash.hashArrayToHashString(hashArray) + '" class="detailViewLink" data-opusid="' + opus_id + '">View Detail</a></p>';

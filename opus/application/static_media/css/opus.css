@@ -397,7 +397,7 @@ img.preview {
     pointer-events: none;
 }
 
-#galleryView, #columnChooser button.close {
+#galleryView button.close, #columnChooser button.close {
 		position: absolute;
     float: right;
     top: -10px;
