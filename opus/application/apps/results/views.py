@@ -727,6 +727,7 @@ def get_page(request, use_collections=None, collections_page=None, page=None,
     if cols is None:
         cols = request.GET.get('cols', settings.DEFAULT_COLUMNS)
 
+    form_lists = []
     column_names = []
     tables = set()
     mult_tables = set()
@@ -755,6 +756,7 @@ def get_page(request, use_collections=None, collections_page=None, page=None,
             column_names.append(mult_table+'.label')
         else:
             column_names.append(column)
+        form_lists.append(form_type_format)
 
     added_extra_columns = 0
     tables.add('obs_general') # We must have obs_general since it owns the ids
@@ -996,6 +998,15 @@ def get_page(request, use_collections=None, collections_page=None, page=None,
     # There might be real None entries, which means the join returned null
     # data. Replace these so they look prettier.
     results = [[x if x is not None else 'N/A' for x in r] for r in results]
+
+    # if pi_form_type has format, we format the results
+    for idx, form_type in enumerate(form_lists):
+        for entry in results:
+            if form_type is not None and entry[idx] is not None and \
+               entry[idx] != 'N/A':
+                if entry[idx] > settings.THRESHOLD_FOR_EXPONENTIAL:
+                    form_type = form_type.replace('f', 'e')
+                entry[idx] = format(entry[idx], form_type)
 
     return (page_no, limit, results, opus_ids, ring_obs_ids, file_specs,
             all_order)
