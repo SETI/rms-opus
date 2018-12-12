@@ -1004,6 +1004,8 @@ def get_page(request, use_collections=None, collections_page=None, page=None,
         for entry in results:
             if form_type is not None and entry[idx] is not None and \
                entry[idx] != 'N/A':
+                if entry[idx] > settings.THRESHOLD_FOR_EXPONENTIAL:
+                    form_type = form_type.replace('f', 'e')
                 entry[idx] = format(entry[idx], form_type)
 
     return (page_no, limit, results, opus_ids, ring_obs_ids, file_specs,
