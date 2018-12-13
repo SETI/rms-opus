@@ -150,12 +150,20 @@ class SearchForm(forms.Form):
                 else:
                     choices = [(mult.label, mult.label) for mult in model.objects.filter(display='Y').order_by('disp_order')]
 
-                self.fields[slug] = forms.MultipleChoiceField(
-                        # label = ParamInfo.objects.get(slug=slug).label,
-                        label = '',
-                        choices = choices,
-                        widget = forms.CheckboxSelectMultiple(attrs={'class':'multichoice'}),
-                        required=False)
+                if param_name == 'obs_surface_geometry.target_name':
+                    self.fields[slug] = forms.ChoiceField(
+                            # label = ParamInfo.objects.get(slug=slug).label,
+                            label = '',
+                            choices = choices,
+                            widget = forms.RadioSelect(attrs={'class':'multichoice'}),
+                            required=False)
+                else:
+                    self.fields[slug] = forms.MultipleChoiceField(
+                            # label = ParamInfo.objects.get(slug=slug).label,
+                            label = '',
+                            choices = choices,
+                            widget = forms.CheckboxSelectMultiple(attrs={'class':'multichoice'}),
+                            required=False)
 
         # XXX RF - This is awful. It takes the last form_type from the above loop, but
         # is it possible the loop went more than once??
