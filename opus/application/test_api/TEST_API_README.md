@@ -1,8 +1,8 @@
 # Run api test with manage.py:
-* Run all tests against the app including db search and every test in Django app
+* Run all tests against the app including db integrity and every test in the Django app (not including result count tests)
   * python manage.py test -v 2
 * Run api tests:
-  * against internal database:
+  * against internal database (not including result count tests):
     * python manage.py test -s -v 2 api-internal-db
   * against production site:
     * python manage.py test -s -v 2 api-livetest-pro

@@ -14,7 +14,7 @@ from rest_framework.test import APIClient, CoreAPIClient, RequestsClient
 ### Test cases ###
 ##################
 class APIResultCountsTests(TestCase):
-    filename = "test_api/csv/result_counts_new_slugs.csv"
+    filename = "test_api/csv/result_counts.csv"
     GO_LIVE = False
     LIVE_TARGET = "production"
 
@@ -30,8 +30,8 @@ class APIResultCountsTests(TestCase):
 
     def test_api_result_counts_from_csv(self):
         """Result Counts: compare result counts of API calls between csv and live server
-           Result counts from live server should always be larger
-           Expected values in csv is obtain from production site on 12/12/18
+           Result counts from live server should always be greater or equal.
+           Expected values in csv is obtain from production site on 12/12/18.
            Example of return json:
            {
                "data": [
@@ -59,35 +59,29 @@ class APIResultCountsTests(TestCase):
                     url_hash = q_str.split("#/")[1].strip()
                     api_url = api_public.result_counts_api + url_hash
 
-                    # if current api return has error, we test the next api
+                    # If current api return has error, we test the next api
                     try:
-                        # data = json.loads(requests.get(api_url).text)
                         data = json.loads(client.get(api_url).text)
                     except Exception as error:
-                        error_flag.append(Exception(f"Return error:\n{api_url}"))
+                        error_flag.append(f"Return error:\n{api_url}")
                         continue
 
                     result_count = data["data"][0]["result_count"]
 
-                    msg = """checking: \n{}
-                              result: expected >= {} :: got: {} \n
-                          """.format(api_url, expected, result_count)
+                    msg = "checking: "+api_url+"\n"
+                    msg += f"result: expected >= {expected} :: got {result_count}"
 
-                    print(msg)
-
-                    try:
-                        assert result_count >= int(expected)
-                    except Exception as error:
-                        error_flag.append(AssertionError(msg))
-                        # raise AssertionError(msg)
+                    if int(result_count) < int(expected):
+                        error_flag.append(msg)
 
                     count = count+1
+
             if error_flag:
                 print("============================")
                 print("Result counts error summary:")
                 print("============================")
                 for e in error_flag:
-                    print(f"{e.args[0].strip()}\n")
+                    print(e+'\n')
                 raise Exception("API result counts test failed")
             else:
                 print(f"Pass! No result counts failed! \
