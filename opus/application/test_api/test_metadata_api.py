@@ -124,13 +124,13 @@ class ApiMetadataTests(TestCase):
         self._run_json_equal(url, expected)
 
     def test__api_meta_range_endpoints_times_COUVIS(self):
-        "/api/meta/range/endpoints: times COISS"
+        "/api/meta/range/endpoints: times COUVIS"
         url = '/opus/__api/meta/range/endpoints/timesec1.json?volumeid=COUVIS_0002'
         expected = {"max": "2001-04-01T00:07:19.842", "nulls": 0, "min": "2001-01-01T02:12:02.721"}
         self._run_json_equal(url, expected)
 
     def test__api_meta_range_endpoints_times_COVIMS(self):
-        "/api/meta/range/endpoints: times COISS"
+        "/api/meta/range/endpoints: times COVIMS"
         url = '/opus/__api/meta/range/endpoints/timesec1.json?volumeid=COVIMS_0006'
         expected = {"max": "2005-04-01T00:06:46.867", "nulls": 0, "min": "2005-01-15T17:55:38.899"}
         self._run_json_equal(url, expected)

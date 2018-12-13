@@ -244,9 +244,9 @@ def get_metadata(api_name, request, opus_id, fmt):
                 # Format result depending on its form_type_format
                 rounded_off_result = result
                 if form_type_format is not None and result is not None:
-                    if result > settings.THRESHOLD_FOR_EXPONENTIAL:
-                        form_type_format = form_type_format.replace('f', 'e')
-                    rounded_off_result = format(result, form_type_format)
+                    rounded_off_result = format_metadata_number(
+                                                            result,
+                                                            form_type_format)
 
                 if api_name == 'api_get_metadata':
                     ordered_results[param_info.name] = result
@@ -667,7 +667,14 @@ def get_data(request, fmt, cols=None, api_code=None):
         if not pi:
             log.error('get_data: Could not find param_info for %s', slug)
             return None
-        labels.append(pi.body_qualified_label_results())
+
+        # append units if pi_units has unit stored
+        unit = pi.get_units()
+        label = pi.body_qualified_label_results()
+        if unit:
+            labels.append(label + ' ' + unit)
+        else:
+            labels.append(label)
 
     # For backwards compatibility. It would be a lot nicer if we didn't need
     # to know this index at all. See data.html for why we do.
@@ -720,6 +727,7 @@ def get_page(request, use_collections=None, collections_page=None, page=None,
     if cols is None:
         cols = request.GET.get('cols', settings.DEFAULT_COLUMNS)
 
+    form_type_formats = []
     column_names = []
     tables = set()
     mult_tables = set()
@@ -748,6 +756,7 @@ def get_page(request, use_collections=None, collections_page=None, page=None,
             column_names.append(mult_table+'.label')
         else:
             column_names.append(column)
+        form_type_formats.append(form_type_format)
 
     added_extra_columns = 0
     tables.add('obs_general') # We must have obs_general since it owns the ids
@@ -990,6 +999,14 @@ def get_page(request, use_collections=None, collections_page=None, page=None,
     # data. Replace these so they look prettier.
     results = [[x if x is not None else 'N/A' for x in r] for r in results]
 
+    # If pi_form_type has format, we format the results
+    for idx, form_type_format in enumerate(form_type_formats):
+        for entry in results:
+            if (form_type_format is not None and entry[idx] is not None and
+                entry[idx] != 'N/A'):
+                entry[idx] = format_metadata_number(entry[idx],
+                                                    form_type_format)
+
     return (page_no, limit, results, opus_ids, ring_obs_ids, file_specs,
             all_order)
 
@@ -1032,6 +1049,7 @@ def _get_metadata_by_slugs(request, opus_id, slugs, fmt, use_param_names):
                 result = lookup_pretty_value_for_mult(param_info, mult_val)
             else:
                 result = results.values(param_info.name)[0][param_info.name]
+                result = format_metadata_number(result, form_type_format)
             if use_param_names:
                 data_dict[param_info.name] = result
             else:

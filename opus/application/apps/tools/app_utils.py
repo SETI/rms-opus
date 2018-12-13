@@ -261,3 +261,13 @@ def convert_ring_obs_id_to_opus_id(ring_obs_id):
 def get_mult_name(param_name):
     "Returns mult widget foreign key table name"
     return 'mult_' + '_'.join(param_name.split('.'))
+
+def format_metadata_number(val, form_type_format):
+    if form_type_format is None:
+        return val
+    if abs(val) > settings.THRESHOLD_FOR_EXPONENTIAL:
+        form_type_format = form_type_format.replace('f', 'e')
+    try:
+        return format(val, form_type_format)
+    except TypeError:
+        return val

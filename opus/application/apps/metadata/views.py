@@ -404,20 +404,10 @@ def api_get_range_endpoints(request, slug, fmt='json'):
             log.error('Unknown RANGE function "%s"', form_type_func)
 
     if form_type_format:
-        try:
-            if abs(range_endpoints['min']) > settings.THRESHOLD_FOR_EXPONENTIAL:
-                form_type_format = form_type_format.replace('f', 'e')
-            range_endpoints['min'] = format(range_endpoints['min'],
-                                            form_type_format)
-        except TypeError:
-            pass
-        try:
-            if abs(range_endpoints['max']) > settings.THRESHOLD_FOR_EXPONENTIAL:
-                form_type_format = form_type_format.replace('f', 'e')
-            range_endpoints['max'] = format(range_endpoints['max'],
-                                            form_type_format)
-        except TypeError:
-            pass
+        range_endpoints['min'] = format_metadata_number(range_endpoints['min'],
+                                                        form_type_format)
+        range_endpoints['max'] = format_metadata_number(range_endpoints['max'],
+                                                        form_type_format)
     else:
         try:
             if abs(range_endpoints['min']) > 999000:

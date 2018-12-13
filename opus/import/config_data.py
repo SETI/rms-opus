@@ -214,6 +214,9 @@ TARGET_NAME_MAPPING = {
     'N/A':      'NONE',
     'UNK':      'UNKNOWN',
     'UNK SAT':  'UNKNOWN',
+    'NON_SCIENC':  'NONE',
+    'NON SCIENC':  'NONE',
+    'NON SCIENCE': 'NONE',
 }
 
 # Map each possible target name to:
@@ -231,6 +234,7 @@ TARGET_NAME_INFO = {
     'CAL LAMPS':     (None,  'CALIBRATION', 'Calibration Lamps'),
     'PLAQUE':        (None,  'CALIBRATION'),
     'SKY':           (None,  'SKY'),
+    'BLACK SKY':     (None,  'SKY'),
     'DARK SKY':      (None,  'SKY'),
     'SUN':           (None,  'OTHER'),
     'SOLAR WIND':    (None,  'OTHER'),
