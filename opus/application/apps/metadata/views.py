@@ -5,12 +5,12 @@
 # The API interface for retrieving metadata (data about searches and the actual
 # database):
 #
-#    Format: api/meta/result_count.(?P<fmt>[json|zip|html|csv]+)
-#    Format: api/meta/mults/(?P<slug>[-\w]+).(?P<fmt>[json|zip|html|csv]+)
+#    Format: api/meta/result_count.(?P<fmt>json|html|csv)
+#    Format: api/meta/mults/(?P<slug>[-\w]+).(?P<fmt>json|zip|html|csv)
 #    Format: api/meta/range/endpoints/(?P<slug>[-\w]+)
-#            .(?P<fmt>[json|zip|html|csv]+)
-#    Format: api/fields/(?P<field>\w+).(?P<fmt>[json|zip|html|csv]+)
-#        or: api/fields.(?P<fmt>[json|zip|html|csv]+)
+#            .(?P<fmt>json|zip|html|csv)
+#    Format: api/fields/(?P<slug>\w+).(?P<fmt>json|zip|html|csv)
+#        or: api/fields.(?P<fmt>json|zip|html|csv)
 #
 ################################################################################
 
@@ -26,6 +26,7 @@ from django.core.cache import cache
 from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import Max, Min, Count
 from django.http import Http404, HttpResponse
+from django.shortcuts import render_to_response
 
 from paraminfo.models import ParamInfo
 from search.models import *
@@ -46,22 +47,29 @@ log = logging.getLogger(__name__)
 #
 ################################################################################
 
-def api_get_result_count(request, fmt='json'):
+def api_get_result_count(request, fmt):
     """Return the result count for a given search.
+
+    You can specify a sort order as well as search arguments because the result
+    of the search (including the sort order) is cached for future use.
 
     This is a PUBLIC API.
 
-    Format: [__]api/meta/result_count.(?P<fmt>[json|zip|html|csv]+)
-    Arguments: Normal search and selected-column arguments
+    Format: [__]api/meta/result_count.(?P<fmt>json|html|csv)
+    Arguments: Normal search arguments
 
-    Can return JSON, ZIP, HTML, or CSV.
+    Can return JSON, HTML, or CSV.
 
-    Returned JSON is of the format:
-        data = [
-                 {
-                   'result_count': result_count
-                 }
-               ]
+    Returned JSON:
+        data = {"data": [{"result_count": 47}]}
+
+    Returned HTML:
+        <dl>
+		    <dt>result_count</dt><dd>47</dd>
+		</dl>
+
+    Returned CSV:
+        result count,47
     """
     api_code = enter_api_call('api_get_data', request)
 
@@ -74,16 +82,16 @@ def api_get_result_count(request, fmt='json'):
     if selections is None:
         log.error('api_get_result_count: Could not find selections for '
                   +'request %s', str(request.GET))
-        ret = Http404('Parsing of selections failed')
+        ret = Http404('Parsing of search parameters failed')
         exit_api_call(api_code, ret)
         raise ret
 
     table = get_user_query_table(selections, extras, api_code=api_code)
 
-    if not table:
-        log.error('api_get_result_count: Could not find query table for '
+    if not table: # pragma: no cover
+        log.error('api_get_result_count: Could not find/create query table for '
                   +'request %s', str(request.GET))
-        ret = Http404('Parsing of selections failed')
+        ret = Http404('Parsing of search parameters failed')
         exit_api_call(api_code, ret)
         raise ret
 
@@ -91,23 +99,34 @@ def api_get_result_count(request, fmt='json'):
     count = cache.get(cache_key)
     if count is None:
         cursor = connection.cursor()
-        sql = ('SELECT COUNT(*) FROM '
-               + connection.ops.quote_name(table))
+        sql = ('SELECT COUNT(*) FROM ' + connection.ops.quote_name(table))
         cursor.execute(sql)
         try:
             count = cursor.fetchone()[0]
-        except:
-            count = 0
+        except: # pragma: no cover
+            log.error('api_get_result_count: SQL query failed for request %s',
+                      str(request.GET))
+            ret = Http404('SQL query failed')
+            exit_api_call(api_code, ret)
+            raise ret
 
         cache.set(cache_key, count)
 
     data = {'result_count': count}
 
-    if (request.is_ajax()):
+    if (request.is_ajax()): # pragma: no cover
         data['reqno'] = request.GET['reqno']
 
-    ret = response_formats({'data': [data]}, fmt,
-                          template='metadata/result_count.html')
+    if fmt == 'json':
+        ret = json_response({'data': [data]})
+    elif fmt == 'html':
+        ret = render_to_response('metadata/result_count.html', {'data': data})
+    elif fmt == 'csv':
+        ret = csv_response('result_count', [['result count', count]])
+    else:
+        log.error('api_get_result_count: Unknown format "%s"', fmt)
+        raise Http404(f'Unknown format {fmt}')
+
     exit_api_call(api_code, ret)
     return ret
 
@@ -117,7 +136,7 @@ def api_get_mult_counts(request, slug, fmt='json'):
 
     This is a PUBLIC API.
 
-    Format: [__]api/meta/mults/(?P<slug>[-\w]+).(?P<fmt>[json|zip|html|csv]+)
+    Format: [__]api/meta/mults/(?P<slug>[-\w]+).(?P<fmt>json|zip|html|csv)
     Arguments: Normal search arguments
 
     Can return JSON, ZIP, HTML, or CSV.
@@ -267,7 +286,7 @@ def api_get_range_endpoints(request, slug, fmt='json'):
     widget defined by [slug] based on current search defined in request.
 
     Format: [__]api/meta/range/endpoints/(?P<slug>[-\w]+)
-            .(?P<fmt>[json|zip|html|csv]+)
+            .(?P<fmt>json|zip|html|csv)
     Arguments: Normal search arguments
 
     Can return JSON, ZIP, HTML, or CSV.
@@ -428,7 +447,7 @@ def api_get_range_endpoints(request, slug, fmt='json'):
     return ret
 
 
-def api_get_fields(request, fmt='json', field=''):
+def api_get_fields(request, fmt='json', slug=None):
     """Return information about fields in the database (slugs).
 
     This is a PUBLIC API.
@@ -437,8 +456,8 @@ def api_get_fields(request, fmt='json', field=''):
     It's provides a list of all slugs in the database and helpful info
     about each one like label, dict/more_info links, etc.
 
-    Format: [__]api/fields/(?P<field>\w+).(?P<fmt>[json|zip|html|csv]+)
-        or: [__]api/fields.(?P<fmt>[json|zip|html|csv]+)
+    Format: [__]api/fields/(?P<slug>\w+).(?P<fmt>json|zip|html|csv)
+        or: [__]api/fields.(?P<fmt>json|zip|html|csv)
 
     Can return JSON, ZIP, HTML, or CSV.
 
@@ -459,7 +478,7 @@ def api_get_fields(request, fmt='json', field=''):
         raise ret
 
     collapse = request.GET.get('collapse', False)
-    ret = get_fields_info(fmt, field, collapse=collapse)
+    ret = get_fields_info(fmt, slug, collapse=collapse)
 
     exit_api_call(api_code, ret)
     return ret
@@ -472,13 +491,13 @@ def api_get_fields(request, fmt='json', field=''):
 ################################################################################
 
 # This routine is public because it's called by the API guide in guide/views.py
-def get_fields_info(fmt, field='', category='', collapse=False):
+def get_fields_info(fmt, slug=None, category=None, collapse=False):
     "Helper routine for api_get_fields."
-    cache_key = 'getFields:field:' + field + ':category:' + category
+    cache_key = 'getFields:field:' + str(slug) + ':category:' + str(category)
     return_obj = cache.get(cache_key)
     if return_obj is None:
-        if field:
-            fields = ParamInfo.objects.filter(slug=field)
+        if slug:
+            fields = ParamInfo.objects.filter(slug=slug)
         elif category:
             fields = ParamInfo.objects.filter(category_name=category)
         else:

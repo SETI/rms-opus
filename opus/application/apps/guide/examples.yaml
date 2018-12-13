@@ -122,11 +122,15 @@ sections:
           - title: api/meta/result_count.[fmt]
             desc: Get the result count for a search
             info:
-                fmt: json,html
+                fmt: json,html,csv
                 GET param 1: search params (If not supplied, all results are returned)
             examples:
                 - desc: Target Pan in JSON
                   url: <HOST>/opus/api/meta/result_count.json?target=Pan
+                - desc: Target Pan in HTML
+                  url: <HOST>/opus/api/meta/result_count.html?target=Pan
+                - desc: Target Pan in CSV
+                  url: <HOST>/opus/api/meta/result_count.csv?target=Pan
 
           - title: api/meta/mults/[param].[fmt]
             desc: Returns all possible values for a given multiple choice field, given a search, and the result count for each value.

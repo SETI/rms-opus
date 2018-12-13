@@ -70,6 +70,26 @@ class ApiMetadataTests(TestCase):
         print(str(expected))
         self.assertEqual(expected, jdata)
 
+    def _run_html_equal(self, url, expected):
+        print(url)
+        response = self._get_response(url)
+        self.assertEqual(response.status_code, 200)
+        print('Got:')
+        print(str(response.content))
+        print('Expected:')
+        print(str(expected))
+        self.assertEqual(expected, response.content)
+
+    def _run_csv_equal(self, url, expected):
+        print(url)
+        response = self._get_response(url)
+        self.assertEqual(response.status_code, 200)
+        print('Got:')
+        print(str(response.content))
+        print('Expected:')
+        print(str(expected))
+        self.assertEqual(expected, response.content)
+
     def _run_result_count_equal(self, url, expected):
         print(url)
         response = self._get_response(url)
@@ -98,20 +118,106 @@ class ApiMetadataTests(TestCase):
         self.assertEqual(result_count, expected)
 
 
+            ####################################################
+            ######### /api/meta/result_count: API TESTS #########
+            ####################################################
+
+    def test__api_meta_result_count_all(self):
+        "/api/meta/result_count: no search criteria"
+        url = '/opus/__api/meta/result_count.json'
+        self._run_result_count_greater(url, 1486) # Assume COISS_2111 at a minimum
+
+    def test__api_meta_result_count_planet(self):
+        "/api/meta/result_count: planet=Saturn"
+        url = '/opus/__api/meta/result_count.json?planet=Saturn'
+        self._run_result_count_greater(url, 1486) # Assume COISS_2111 at a minimum
+
+    def test__api_meta_result_count_string_no_qtype(self):
+        "/api/meta/result_count: primaryfilespec=1866365558 no qtype"
+        url = '/opus/api/meta/result_count.json?primaryfilespec=1866365558'
+        self._run_result_count_equal(url, 2) # BOTSIM
+
+    def test__api_meta_result_count_string_contains(self):
+        "/api/meta/result_count: primaryfilespec=1866365558 qtype=contains"
+        url = '/opus/__api/meta/result_count.json?primaryfilespec=1866365558&qtype-primaryfilespec=contains'
+        self._run_result_count_equal(url, 2) # BOTSIM
+
+    def test__api_meta_result_count_string_begins(self):
+        "/api/meta/result_count: primaryfilespec=1866365558 qtype=begins"
+        url = '/opus/api/meta/result_count.json?primaryfilespec=1866365558&qtype-primaryfilespec=begins'
+        self._run_result_count_equal(url, 0)
+
+    def test__api_meta_result_count_string_ends(self):
+        "/api/meta/result_count: primaryfilespec=1866365558_1.IMG qtype=ends"
+        url = '/opus/api/meta/result_count.json?primaryfilespec=1866365558_1.IMG&qtype-primaryfilespec=ends'
+        self._run_result_count_equal(url, 2)
+
+    def test__api_meta_result_count_times(self):
+        "/api/meta/result_count: time range"
+        url = '/opus/__api/meta/result_count.json?planet=Saturn&volumeid=COISS_2111&timesec1=2017-03-01T00:00:00&timesec2=2017-03-15T12:00:00'
+        self._run_result_count_equal(url, 1321)
+
+    def test__api_meta_result_count_with_url_cruft(self):
+        "/api/meta/result_count: with extra URL cruft"
+        url = '/opus/api/meta/result_count.json?volumeid=COISS_2111&timesec1=2017-03-01T00:00:00&timesec2=2017-03-15T12:00:00&view=search&browse=data&colls_browse=gallery&page=1&gallery_data_viewer=true&limit=100&order=time1&cols=opusid,instrumentid,planet,target,time1,observationduration&widgets=timesec1,COISSshuttermode,volumeid,planet,target&widgets2=&detail='
+        self._run_result_count_equal(url, 1321)
+
+    def  test__api_meta_result_count_target_pan(self):
+        "/api/meta/result_count: with target=Pan"
+        url = '/opus/api/meta/result_count.json?volumeid=COISS_2111&target=PAN'
+        self._run_result_count_equal(url, 56)
+
+    def  test__api_meta_result_count_target_s_rings(self):
+        "/api/meta/result_count: with target=S Rings"
+        url = '/opus/api/meta/result_count.json?planet=Saturn&volumeid=COISS_2111&target=S+Rings'
+        self._run_result_count_equal(url, 1036)
+
+    def  test__api_meta_result_count_multi_target(self):
+        "/api/meta/result_count: with target=Iapetus,Methone"
+        url = '/opus/api/meta/result_count.json?planet=Saturn&volumeid=COISS_2111&target=Iapetus,Methone'
+        self._run_result_count_equal(url, 129)
+
+    def  test__api_meta_result_count_ring_rad_range(self):
+        "/api/meta/result_count: with ring radius range, no qtype"
+        url = '/opus/api/meta/result_count.json?volumeid=COISS_2111&RINGGEOringradius1=70000&RINGGEOringradius2=80000'
+        self._run_result_count_equal(url, 490)
+
+    def  test__api_meta_result_count_ring_rad_range_all(self):
+        "/api/meta/result_count: with ring radius range, qtype=all"
+        url = '/opus/api/meta/result_count.json?volumeid=COISS_2111&RINGGEOringradius1=70000&RINGGEOringradius2=80000&qtype-RINGGEOringradius=all'
+        self._run_result_count_equal(url, 217)
+
+    def  test__api_meta_result_count_ring_rad_range_only(self):
+        "/api/meta/result_count: with ring radius range, qtype=only"
+        url = '/opus/api/meta/result_count.json?volumeid=COISS_2111&RINGGEOringradius1=70000&RINGGEOringradius2=80000&qtype-RINGGEOringradius=only'
+        self._run_result_count_equal(url, 26)
+
+    def  test__api_meta_result_count_bad_slug(self):
+        "/api/meta/result_count: with bad slug"
+        url = '/opus/api/meta/result_count.json?volumeid=COISS_2111&RINGGEOringradius1=70000&RINGGEOringradius3=80000&qtype-RINGGEOringradius=only'
+        self._run_status_equal(url, 404)
+
+    def  test__api_meta_result_count_bad_value(self):
+        "/api/meta/result_count: with bad value"
+        url = '/opus/api/meta/result_count.json?observationduration1=1X2'
+        self._run_status_equal(url, 404)
+
+    def test__api_meta_result_count_html(self):
+        "/api/meta/result_count: primaryfilespec=1866365558 no qtype"
+        url = '/opus/api/meta/result_count.html?primaryfilespec=1866365558'
+        expected = b'<body>\n\t<dl>\n\t\t\n\t    <dt>result_count</dt><dd>2</dd>\n\t\t\n\t</dl>\n</body>\n'
+        self._run_html_equal(url, expected) # BOTSIM
+
+    def test__api_meta_result_count_csv(self):
+        "/api/meta/result_count: primaryfilespec=1866365558 no qtype"
+        url = '/opus/api/meta/result_count.csv?primaryfilespec=1866365558'
+        expected = b'result count,2\r\n'
+        self._run_csv_equal(url, expected) # BOTSIM
+
+
             #######################################################
             ######### /api/meta/range/endpoints: API TESTS #########
             #######################################################
-
-    # Available test volumes:
-    #   COISS_2002
-    #   COISS_2008
-    #   COISS_2111
-    #   COUVIS_0002
-    #   COVIMS_0006
-    #   GO_0017
-    #   VGISS_6210
-    #   VGISS_8201
-    #   HSTI1_2003
 
     ##################################
     ### General / OBSERVATION TIME ###
@@ -250,76 +356,6 @@ class ApiMetadataTests(TestCase):
     def test__api_meta_range_endpoints_bad_slug(self):
         "/api/meta/range/endpoints: bad slug name"
         url = '/opus/__api/meta/range/endpoints/badslug.json?instrumentid=Cassini+ISS'
-        self._run_status_equal(url, 404)
-
-
-            ####################################################
-            ######### /api/meta/result_count: API TESTS #########
-            ####################################################
-
-    def test__api_meta_result_count_planet(self):
-        "/api/meta/result_count: planet=Saturn"
-        url = '/opus/__api/meta/result_count.json?planet=Saturn'
-        self._run_result_count_greater(url, 1486) # Assume COISS_2111 at a minimum
-
-    def test__api_meta_result_count_string_no_qtype(self):
-        "/api/meta/result_count: primaryfilespec=1866365558 no qtype"
-        url = '/opus/api/meta/result_count.json?primaryfilespec=1866365558'
-        self._run_result_count_equal(url, 2) # BOTSIM
-
-    def test__api_meta_result_count_string_contains(self):
-        "/api/meta/result_count: primaryfilespec=1866365558 qtype=contains"
-        url = '/opus/__api/meta/result_count.json?primaryfilespec=1866365558&qtype-primaryfilespec=contains'
-        self._run_result_count_equal(url, 2) # BOTSIM
-
-    def test__api_meta_result_count_string_begins(self):
-        "/api/meta/result_count: primaryfilespec=1866365558 qtype=begins"
-        url = '/opus/api/meta/result_count.json?primaryfilespec=1866365558&qtype-primaryfilespec=begins'
-        self._run_result_count_equal(url, 0)
-
-    def test__api_meta_result_count_times(self):
-        "/api/meta/result_count: time range"
-        url = '/opus/__api/meta/result_count.json?planet=Saturn&volumeid=COISS_2111&timesec1=2017-03-01T00:00:00&timesec2=2017-03-15T12:00:00'
-        self._run_result_count_equal(url, 1321)
-
-    def test__api_meta_result_count_with_url_cruft(self):
-        "/api/meta/result_count: with extra URL cruft"
-        url = '/opus/api/meta/result_count.json?volumeid=COISS_2111&timesec1=2017-03-01T00:00:00&timesec2=2017-03-15T12:00:00&view=search&browse=data&colls_browse=gallery&page=1&gallery_data_viewer=true&limit=100&order=time1&cols=opusid,instrumentid,planet,target,time1,observationduration&widgets=timesec1,COISSshuttermode,volumeid,planet,target&widgets2=&detail='
-        self._run_result_count_equal(url, 1321)
-
-    def  test__api_meta_result_count_target_pan(self):
-        "/api/meta/result_count: with target=Pan"
-        url = '/opus/api/meta/result_count.json?volumeid=COISS_2111&target=PAN'
-        self._run_result_count_equal(url, 56)
-
-    def  test__api_meta_result_count_target_s_rings(self):
-        "/api/meta/result_count: with target=S Rings"
-        url = '/opus/api/meta/result_count.json?planet=Saturn&volumeid=COISS_2111&target=S+Rings'
-        self._run_result_count_equal(url, 1036)
-
-    def  test__api_meta_result_count_multi_target(self):
-        "/api/meta/result_count: with target=Iapetus,Methone"
-        url = '/opus/api/meta/result_count.json?planet=Saturn&volumeid=COISS_2111&target=Iapetus,Methone'
-        self._run_result_count_equal(url, 129)
-
-    def  test__api_meta_result_count_ring_rad_range(self):
-        "/api/meta/result_count: with ring radius range, no qtype"
-        url = '/opus/api/meta/result_count.json?volumeid=COISS_2111&RINGGEOringradius1=70000&RINGGEOringradius2=80000'
-        self._run_result_count_equal(url, 490)
-
-    def  test__api_meta_result_count_ring_rad_range_all(self):
-        "/api/meta/result_count: with ring radius range, qtype=all"
-        url = '/opus/api/meta/result_count.json?volumeid=COISS_2111&RINGGEOringradius1=70000&RINGGEOringradius2=80000&qtype-RINGGEOringradius=all'
-        self._run_result_count_equal(url, 217)
-
-    def  test__api_meta_result_count_ring_rad_range_only(self):
-        "/api/meta/result_count: with ring radius range, qtype=only"
-        url = '/opus/api/meta/result_count.json?volumeid=COISS_2111&RINGGEOringradius1=70000&RINGGEOringradius2=80000&qtype-RINGGEOringradius=only'
-        self._run_result_count_equal(url, 26)
-
-    def  test__api_meta_result_count_bad_param(self):
-        "/api/meta/result_count: with bad parameter"
-        url = '/opus/api/meta/result_count.json?volumeid=COISS_2111&RINGGEOringradius1=70000&RINGGEOringradius3=80000&qtype-RINGGEOringradius=only'
         self._run_status_equal(url, 404)
 
 

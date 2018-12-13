@@ -72,13 +72,11 @@ class resultsTests(TestCase):
             cursor.execute(q)
 
     def setUp(self):
-        print('Running setup')
         self._empty_user_searches()
         sys.tracebacklimit = 0 # default: 1000
         logging.disable(logging.DEBUG)
 
     def tearDown(self):
-        print('Running teardown')
         self._empty_user_searches()
         sys.tracebacklimit = 1000 # default: 1000
         logging.disable(logging.NOTSET)
