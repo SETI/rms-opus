@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 import os
+import settings
 import sys
 
 if __name__ == "__main__":
@@ -7,6 +8,7 @@ if __name__ == "__main__":
 
     # pass in livetest to run against actual server
     argv = sys.argv
+    settings.TEST_RESULT_COUNTS_AGAINST_INTERNAL_DB = False
     for command in argv:
         if command.startswith("api"):
             if command == "api-livetest-pro":
@@ -18,11 +20,16 @@ if __name__ == "__main__":
             elif command == "api-internal-db":
                 argv.remove("api-internal-db")
                 argv.append("test_api/")
+            elif command == "api-internal-db-result-counts":
+                argv.remove("api-internal-db-result-counts")
+                argv.append("test_api/test_result_counts.py")
+                settings.TEST_RESULT_COUNTS_AGAINST_INTERNAL_DB = True
             else:
                 usage = "To run api tests, please choose one of these api test commands: "\
-                        "api-internal-db, "\
-                        "api-livetest-pro, "\
-                        "api-livetest-dev"
+                        "\napi-internal-db"\
+                        "\napi-internal-db-result-counts"\
+                        "\napi-livetest-pro"\
+                        "\napi-livetest-dev"
                 print(usage)
                 sys.exit()
 

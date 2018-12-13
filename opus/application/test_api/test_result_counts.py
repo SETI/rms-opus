@@ -4,6 +4,7 @@ import csv
 import json
 import logging
 import requests
+import settings
 import sys
 from unittest import TestCase
 
@@ -13,9 +14,9 @@ from rest_framework.test import APIClient, CoreAPIClient, RequestsClient
 ### Test cases ###
 ##################
 class APIResultCountsTests(TestCase):
-    GO_LIVE = True
-    LIVE_TARGET = "production"
     filename = "test_api/result_counts_new_slugs.csv"
+    GO_LIVE = False
+    LIVE_TARGET = "production"
 
     # disable error logging and trace output before test
     def setUp(self):
@@ -28,9 +29,10 @@ class APIResultCountsTests(TestCase):
         logging.disable(logging.NOTSET)
 
     def test_api_result_counts_from_csv(self):
-        """Compare result counts of API calls between csv and live server
+        """Result Counts: compare result counts of API calls between csv and live server
            Result counts from live server should always be larger
-           example of return json:
+           Expected values in csv is obtain from production site on 12/12/18
+           Example of return json:
            {
                "data": [
                    {
@@ -39,25 +41,28 @@ class APIResultCountsTests(TestCase):
                ]
            }
         """
-        count = 0
+        api_public = ApiForResultCounts(target=self.LIVE_TARGET)
         if self.GO_LIVE:
-            # api_public = ApiForResultCounts(target=self.LIVE_TARGET)
-            api_public = ApiForResultCounts(target="dev")
+            client = requests.Session()
+        else:
+            client = RequestsClient()
 
+        if self.GO_LIVE or settings.TEST_RESULT_COUNTS_AGAINST_INTERNAL_DB:
             error_flag = []
+            count = 0
             with open(self.filename, "r") as csvfile:
 
                 filereader = csv.reader(csvfile)
                 for row in filereader:
-                    # print(row)
-                    # return
                     q_str, expected, info = row
 
                     url_hash = q_str.split("#/")[1].strip()
                     api_url = api_public.result_counts_api + url_hash
 
+                    # if current api return has error, we test the next api
                     try:
-                        data = json.loads(requests.get(api_url).text)
+                        # data = json.loads(requests.get(api_url).text)
+                        data = json.loads(client.get(api_url).text)
                     except Exception as error:
                         error_flag.append(Exception(f"Return error:\n{api_url}"))
                         continue

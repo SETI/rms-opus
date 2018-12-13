@@ -358,3 +358,5 @@ MAX_DOWNLOAD_SIZE = 3*1024*1024*1024 # 3 gig max for any single download
 MAX_CUM_DOWNLOAD_SIZE = 5*1024*1024*1024 # 5 gigs max cum downloads for a session
 
 THRESHOLD_FOR_EXPONENTIAL = 1e8
+
+TEST_RESULT_COUNTS_AGAINST_INTERNAL_DB = False
