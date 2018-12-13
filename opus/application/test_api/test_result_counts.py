@@ -14,7 +14,7 @@ from rest_framework.test import APIClient, CoreAPIClient, RequestsClient
 ### Test cases ###
 ##################
 class APIResultCountsTests(TestCase):
-    filename = "test_api/result_counts_new_slugs.csv"
+    filename = "test_api/csv/result_counts_new_slugs.csv"
     GO_LIVE = False
     LIVE_TARGET = "production"
 
