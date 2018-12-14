@@ -68,9 +68,15 @@ class ApiSearchTests(TestCase):
         self.assertEqual(expected, jdata)
 
 
-            ################################################
+            #################################################
             ######### /api/normalizeinput API TESTS #########
-            ################################################
+            #################################################
+
+    def test__api_normalizeinput_empty(self):
+        "/api/normalizeinput: empty"
+        url = '/opus/__api/normalizeinput.json'
+        expected = {}
+        self._run_json_equal(url, expected)
 
     def test__api_normalizeinput_int_empty(self):
         "/api/normalizeinput: integer empty"

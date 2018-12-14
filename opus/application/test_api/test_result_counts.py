@@ -72,6 +72,8 @@ class APIResultCountsTests(TestCase):
                     msg = "checking: "+api_url+"\n"
                     msg += f"result: expected >= {expected} :: got {result_count}"
 
+                    print(msg)
+
                     if int(result_count) < int(expected):
                         error_flag.append(msg)
 

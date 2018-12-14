@@ -72,10 +72,7 @@ def api_normalize_input(request):
         exit_api_call(api_code, Http404)
         raise Http404
 
-    ret = json.dumps(selections)
-
-    ret = HttpResponse(ret, content_type='application/json')
-
+    ret = json_response(selections)
     exit_api_call(api_code, ret)
     return ret
 

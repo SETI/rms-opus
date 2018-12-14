@@ -45,6 +45,25 @@ class searchTests(TestCase):
         logging.disable(logging.NOTSET)
 
 
+            ##################################################
+            ######### api_normalize_input UNIT TESTS #########
+            ##################################################
+
+    def test__api_normalize_input_no_request(self):
+        "api_normalize_input: no request"
+        with self.assertRaises(Http404):
+            api_normalize_input(None)
+
+    def test__api_normalize_input_no_get(self):
+        "api_normalize_input: no GET"
+        c = Client()
+        response = c.get('/api/meta/result_count.json')
+        request = response.wsgi_request
+        request.GET = None
+        with self.assertRaises(Http404):
+            api_normalize_input(request)
+
+
             ###################################################
             ######### url_to_search_params UNIT TESTS #########
             ###################################################
