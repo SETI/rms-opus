@@ -240,9 +240,32 @@ var o_browse = {
 
         $('#galleryView').on("click", "a.prev,a.next", function(e) {
             let action = $(this).hasClass("prev") ? "prev" : "next";
-            let opus_id = $(this).data("id");
-            if (opus_id) {
-                o_browse.updateGalleryView(opus_id);
+            let opusId = $(this).data("id");
+            if (opusId) {
+                o_browse.updateGalleryView(opusId);
+            }
+            return false;
+        });
+
+        $(document).on("keydown",function(e) {
+            /*  Catch the right/left arrow while in the modal
+                Up: 38
+                Down: 40
+                Right: 39
+                Left: 37 */
+            if ($("#galleryView").hasClass("show")) {
+                let opusId;
+                switch (e.keyCode) {
+                    case 39:  // next
+                        opusId = $("#galleryView").find(".next").data("id");
+                        break;
+                    case 37:  // prev
+                        opusId = $("#galleryView").find(".prev").data("id");
+                        break;
+                }
+                if (opusId) {
+                    o_browse.updateGalleryView(opusId);
+                }
             }
             return false;
         });
