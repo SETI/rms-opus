@@ -400,8 +400,8 @@ img.preview {
 #galleryView button.close, #columnChooser button.close {
 		position: absolute;
     float: right;
-    top: -10px;
-    right: -10px;
+    top: .8em;
+    right: .8em;
 		z-index: 999;
 }
 

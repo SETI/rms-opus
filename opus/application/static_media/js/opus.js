@@ -276,11 +276,6 @@ var opus = {
         o_collections.collectionBehaviors();
         o_search.searchBehaviors();
         return;
-
-
-        // these are the default open groups/cats in search tab side menu
-        $(".cat_label", "li.target-body", "#search").trigger("click");
-
     }
 
 }; // end opus namespace

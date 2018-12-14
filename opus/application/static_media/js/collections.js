@@ -99,7 +99,7 @@ var o_collections = {
              });
         var checked_filters = {"types":product_types};
 
-        for (var filter_name in checked_filters) {
+        for (let filter_name in checked_filters) {
           if (checked_filters[filter_name].length) {
               add_to_url.push(filter_name + "=" + checked_filters[filter_name].join(','));
           }
@@ -126,8 +126,6 @@ var o_collections = {
 
     // get Collections tab
     getCollectionsTab: function() {
-        clearInterval(opus.scroll_watch_interval); // hold on cowgirl only 1 page at a time
-
         if (opus.collection_change) {
             var zipped_files_html = $('.zipped_files', '#collection').html();
 
@@ -136,28 +134,6 @@ var o_collections = {
             // reset page no
             opus.last_page_drawn['colls_gallery'] = 0;
             opus.last_page_drawn['colls_data'] = 0;
-
-            // redux: speed this up by splitting into 2 ajax calls
-
-            // redux: draw the template immediately after this or only empty individual elements
-            $('.gallery ul.ace-thumbnails', '#collection').empty();
-            $('.data', '#collection').empty();
-
-            /*
-            // redux: first get the product counts
-            $.ajax({ url: "/opus/__collections/default/product_counts.html",
-                   success: function(html){
-
-                        // then get a page of images + metadata
-                        $.ajax({ url: "/opus/__collections/default/thumbnails.html",
-                               success: function(html){},
-                               error: function(html){}
-                           });
-
-                   },
-                   error: function(html){}
-               });
-            */
 
             // redux: and nix this big thing:
             $.ajax({ url: "/opus/__collections/view.html",
