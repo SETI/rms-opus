@@ -74,7 +74,7 @@ def api_normalize_input(request):
 
     ret = json.dumps(selections)
 
-    ret = HttpResponse(json.dumps(ret), content_type='application/json')
+    ret = HttpResponse(ret, content_type='application/json')
 
     exit_api_call(api_code, ret)
     return ret
@@ -167,6 +167,8 @@ def url_to_search_params(request_get, allow_errors=False, return_slugs=False,
 
         # If nothing is specified, just ignore the slug
         if not values:
+            if pretty_results and return_slugs:
+                selections[slug] = ""
             continue
 
         has_value = False
@@ -175,6 +177,8 @@ def url_to_search_params(request_get, allow_errors=False, return_slugs=False,
                 has_value = True
                 break
         if not has_value:
+            if pretty_results and return_slugs:
+                selections[slug] = ""
             continue
 
         qtype = False  # assume this is not a qtype statement

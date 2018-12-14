@@ -72,48 +72,162 @@ class ApiSearchTests(TestCase):
 
     def test__api_normalizeinput_int_empty(self):
         "/api/normalizeinput: integer empty"
-        url = '/opus/__api/normalizeinput.json?COISSmissinglines='
-        expected = {"COISSmissinglines": ""}
+        url = '/opus/__api/normalizeinput.json?levels='
+        expected = {"levels": ""}
         self._run_json_equal(url, expected)
 
     def test__api_normalizeinput_int_zero(self):
         "/api/normalizeinput: integer zero"
-        url = '/opus/__api/normalizeinput.json?COISSmissinglines=0'
-        expected = {"COISSmissinglines": "0"}
+        url = '/opus/__api/normalizeinput.json?levels=0'
+        expected = {"levels": "0"}
         self._run_json_equal(url, expected)
 
     def test__api_normalizeinput_int_neg(self):
         "/api/normalizeinput: integer negative"
-        url = '/opus/__api/normalizeinput.json?COISSmissinglines=-1234567890'
-        expected = {"COISSmissinglines": "-1234567890"}
+        url = '/opus/__api/normalizeinput.json?levels=-1234567890'
+        expected = {"levels": "-1234567890"}
         self._run_json_equal(url, expected)
 
     def test__api_normalizeinput_int_pos(self):
         "/api/normalizeinput: integer positive"
-        url = '/opus/__api/normalizeinput.json?COISSmissinglines=1234567890'
-        expected = {"COISSmissinglines": "1234567890"}
+        url = '/opus/__api/normalizeinput.json?levels=1234567890'
+        expected = {"levels": "1234567890"}
         self._run_json_equal(url, expected)
 
     def test__api_normalizeinput_int_spaces(self):
         "/api/normalizeinput: integer spaces"
-        url = '/opus/__api/normalizeinput.json?COISSmissinglines=+1234+'
-        expected = {"COISSmissinglines": "1234"}
+        url = '/opus/__api/normalizeinput.json?levels=+1234+'
+        expected = {"levels": "1234"}
         self._run_json_equal(url, expected)
 
     def test__api_normalizeinput_int_underscores(self):
         "/api/normalizeinput: integer underscores"
-        url = '/opus/__api/normalizeinput.json?COISSmissinglines=_12_34_'
-        expected = {"COISSmissinglines": "1234"}
+        url = '/opus/__api/normalizeinput.json?levels=_12_34_'
+        expected = {"levels": "1234"}
         self._run_json_equal(url, expected)
 
     def test__api_normalizeinput_int_commas(self):
         "/api/normalizeinput: integer commas"
-        url = '/opus/__api/normalizeinput.json?COISSmissinglines=,1,2,3,4,'
-        expected = {"COISSmissinglines": "1234"}
+        url = '/opus/__api/normalizeinput.json?levels=,1,2,3,4,'
+        expected = {"levels": "1234"}
         self._run_json_equal(url, expected)
 
     def test__api_normalizeinput_int_mixed_delim(self):
         "/api/normalizeinput: integer mixed delimiters"
-        url = '/opus/__api/normalizeinput.json?COISSmissinglines=+,1_23_,+'
-        expected = {"COISSmissinglines": "1234"}
+        url = '/opus/__api/normalizeinput.json?levels=+,1_23_,4+'
+        expected = {"levels": "1234"}
+        self._run_json_equal(url, expected)
+
+    def test__api_normalizeinput_int_bad_val1(self):
+        "/api/normalizeinput: integer bad value 1X1"
+        url = '/opus/__api/normalizeinput.json?levels=1X1'
+        expected = {"levels": None}
+        self._run_json_equal(url, expected)
+
+    def test__api_normalizeinput_int_bad_val2(self):
+        "/api/normalizeinput: integer bad value 1.2"
+        url = '/opus/__api/normalizeinput.json?levels=1.2'
+        expected = {"levels": None}
+        self._run_json_equal(url, expected)
+
+    def test__api_normalizeinput_float_empty(self):
+        "/api/normalizeinput: float empty"
+        url = '/opus/__api/normalizeinput.json?rightasc1='
+        expected = {"rightasc1": ""}
+        self._run_json_equal(url, expected)
+
+    def test__api_normalizeinput_float_zero(self):
+        "/api/normalizeinput: float zero"
+        url = '/opus/__api/normalizeinput.json?rightasc1=0'
+        expected = {"rightasc1": "0.000000"}
+        self._run_json_equal(url, expected)
+
+    def test__api_normalizeinput_float_neg(self):
+        "/api/normalizeinput: float negative"
+        url = '/opus/__api/normalizeinput.json?rightasc1=-123456'
+        expected = {"rightasc1": "-123456.000000"}
+        self._run_json_equal(url, expected)
+
+    def test__api_normalizeinput_float_pos(self):
+        "/api/normalizeinput: float positive"
+        url = '/opus/__api/normalizeinput.json?rightasc1=567890'
+        expected = {"rightasc1": "567890.000000"}
+        self._run_json_equal(url, expected)
+
+    def test__api_normalizeinput_float_spaces(self):
+        "/api/normalizeinput: float spaces"
+        url = '/opus/__api/normalizeinput.json?rightasc1=+1234+'
+        expected = {"rightasc1": "1234.000000"}
+        self._run_json_equal(url, expected)
+
+    def test__api_normalizeinput_float_underscores(self):
+        "/api/normalizeinput: float underscores"
+        url = '/opus/__api/normalizeinput.json?rightasc1=_12_34_'
+        expected = {"rightasc1": "1234.000000"}
+        self._run_json_equal(url, expected)
+
+    def test__api_normalizeinput_float_commas(self):
+        "/api/normalizeinput: float commas"
+        url = '/opus/__api/normalizeinput.json?rightasc1=,1,2,3,4,'
+        expected = {"rightasc1": "1234.000000"}
+        self._run_json_equal(url, expected)
+
+    def test__api_normalizeinput_float_mixed_delim(self):
+        "/api/normalizeinput: float mixed delimiters"
+        url = '/opus/__api/normalizeinput.json?rightasc1=+,1_23_,4+'
+        expected = {"rightasc1": "1234.000000"}
+        self._run_json_equal(url, expected)
+
+    def test__api_normalizeinput_float_exponent1(self):
+        "/api/normalizeinput: float mixed delimiters"
+        url = '/opus/__api/normalizeinput.json?rightasc1=1.123e12'
+        expected = {"rightasc1": "1.123000e+12"}
+        self._run_json_equal(url, expected)
+
+    def test__api_normalizeinput_float_exponent2(self):
+        "/api/normalizeinput: float mixed delimiters"
+        url = '/opus/__api/normalizeinput.json?rightasc1=1123000000000'
+        expected = {"rightasc1": "1.123000e+12"}
+        self._run_json_equal(url, expected)
+
+    def test__api_normalizeinput_float_bad_val1(self):
+        "/api/normalizeinput: float bad value 1X1"
+        url = '/opus/__api/normalizeinput.json?rightasc1=1X1'
+        expected = {"rightasc1": None}
+        self._run_json_equal(url, expected)
+
+    def test__api_normalizeinput_float_bad_val2(self):
+        "/api/normalizeinput: float bad value 1.22h+1"
+        url = '/opus/__api/normalizeinput.json?rightasc1=1.22h+1'
+        expected = {"rightasc1": None}
+        self._run_json_equal(url, expected)
+
+    def test__api_normalizeinput_time1(self):
+        "/api/normalizeinput: time 2012-01-04T01:02:03.123"
+        url = '/opus/__api/normalizeinput.json?timesec1=2012-01-04T01:02:03.123'
+        expected = {"timesec1": "2012-01-04T01:02:03.123"}
+        self._run_json_equal(url, expected)
+
+    def test__api_normalizeinput_time2(self):
+        "/api/normalizeinput: time 2012-01-04T01:02:03"
+        url = '/opus/__api/normalizeinput.json?timesec1=2012-01-04T01:02:03'
+        expected = {"timesec1": "2012-01-04T01:02:03.000"}
+        self._run_json_equal(url, expected)
+
+    def test__api_normalizeinput_time3(self):
+        "/api/normalizeinput: time 2012-01-04"
+        url = '/opus/__api/normalizeinput.json?timesec1=2012-01-04'
+        expected = {"timesec1": "2012-01-04T00:00:00.000"}
+        self._run_json_equal(url, expected)
+
+    def test__api_normalizeinput_time4(self):
+        "/api/normalizeinput: time July 4 2001"
+        url = '/opus/__api/normalizeinput.json?timesec1=July+4+2001'
+        expected = {"timesec1": "2001-07-04T00:00:00.000"}
+        self._run_json_equal(url, expected)
+
+    def test__api_normalizeinput_time4(self):
+        "/api/normalizeinput: time July 4 2001 6:05"
+        url = '/opus/__api/normalizeinput.json?timesec1=July+4+2001+6:05'
+        expected = {"timesec1": "2001-07-04T06:05:00.000"}
         self._run_json_equal(url, expected)
