@@ -1,17 +1,18 @@
 ################################################################################
 #
-# ui/views.py
+# search/views.py
+#
+# The API interface for doing things related to searches plus major internal
+# support routines for searching:
+#
+#    Format: __api/normalizeinput.json
 #
 ################################################################################
 
 import hashlib
 import json
-import julian
 import logging
-from operator import __or__ as OR
 import sys
-
-from pyparsing import ParseException
 
 import settings
 
@@ -22,6 +23,7 @@ from django.db import connection, DatabaseError
 from django.db.models import Q
 from django.db.models.sql.datastructures import EmptyResultSet
 from django.db.utils import IntegrityError
+from django.http import Http404, HttpResponse
 
 from paraminfo.models import ParamInfo
 from search.models import *
@@ -33,7 +35,59 @@ import opus_support
 log = logging.getLogger(__name__)
 
 
-def url_to_search_params(request_get):
+################################################################################
+#
+# API INTERFACES
+#
+################################################################################
+
+def api_normalize_input(request):
+    """Validate and normalize slug values.
+
+    This is a PRIVATE API.
+
+    For each searchable slug, check its value to see if it can be parsed.
+    If it can be, return a normalized value by parsing it and then un-parsing
+    it. If it can't be, return false.
+
+    Format: __api/normalizeinput.json
+    Arguments: Normal search arguments
+
+    Returned JSON is of the format:
+        ["slug1": "normalizedval1", "slug2": "normalizedval2"]
+    """
+    api_code = enter_api_call('api_normalize_input', request)
+
+    if not request or request.GET is None:
+        ret = Http404('No request')
+        exit_api_call(api_code, ret)
+        raise ret
+
+    (selections, extras) = url_to_search_params(request.GET,
+                                                allow_errors=True,
+                                                return_slugs=True,
+                                                pretty_results=True)
+
+    if selections is None:
+        exit_api_call(api_code, Http404)
+        raise Http404
+
+    ret = json.dumps(selections)
+
+    ret = HttpResponse(json.dumps(ret), content_type='application/json')
+
+    exit_api_call(api_code, ret)
+    return ret
+
+
+################################################################################
+#
+# MAJOR INTERNAL ROUTINES
+#
+################################################################################
+
+def url_to_search_params(request_get, allow_errors=False, return_slugs=False,
+                         pretty_results=False):
     """Convert a URL to a set of selections and extras.
 
     This is the MAIN routine for taking a URL and parsing it for searching.
@@ -53,6 +107,15 @@ def url_to_search_params(request_get):
     NOTE: Pass request_get = request.GET to this func please
     (This func doesn't return an http response so unit tests freak if you
      pass it an HTTP request)
+
+    If allow_errors is True, then even if a value can't be parsed, the rest
+    of the slugs are processed and the bad slug is just marked with None.
+
+    If return_slugs is True, the indexes into selections are slug names, not
+    qualified names (table.column).
+
+    If pretty_results is True, the resulting values are unparsed back into
+    strings based on the ParamInfo format.
 
     Example command line usage:
 
@@ -153,12 +216,20 @@ def url_to_search_params(request_get):
                 log.error('url_to_search_params: Duplicate slug for '
                           +'"%s": %s', param_name, request_get)
                 return None, None
-            selections[param_name] = sorted(set(values))
+            new_val = sorted(set(values))
+            if pretty_results:
+                new_val = ','.join(new_val)
+            if return_slugs:
+                selections[slug] = new_val
+            else:
+                selections[param_name] = new_val
         elif form_type in settings.RANGE_FORM_TYPES:
             # For RANGE queries, convert the strings into the internal
             # representations if necessary
             if form_type_func is None:
                 func = float
+                if form_type_format and form_type_format[-1] == 'd':
+                    func = int
                 values_to_use = _clean_numeric_field(values_not_split)
             else:
                 if form_type_func in opus_support.RANGE_FUNCTIONS:
@@ -172,29 +243,30 @@ def url_to_search_params(request_get):
             if param_name == param_name_no_num:
                 # This is a single column range query
                 ext = slug[-1]
-                if param_name+ext in selections:
-                    log.error('url_to_search_params: Duplicate slug '
-                              +'for "%s": %s', param_name+ext,
-                              request_get)
-                    return None, None
-                try:
-                    selections[param_name + ext] = list(map(func,
-                                                            values_to_use))
-                except ValueError as e:
-                    log.error('url_to_search_params: Function "%s" slug "%s" '
-                              +'threw ValueError(%s) for %s',
-                              func, slug, e, values_to_use)
-                    return None, None
+                new_param_name = param_name+ext
             else:
-                # Normal 2-column range query
-                if param_name in selections:
-                    log.error('url_to_search_params: Duplicate slug '
-                              +'for "%s": %s', param_name,
-                              request_get)
-                    return None, None
-                try:
-                    selections[param_name] = list(map(func, values_to_use))
-                except ValueError as e:
+                new_param_name = param_name
+            if new_param_name in selections:
+                log.error('url_to_search_params: Duplicate slug '
+                          +'for "%s": %s', param_name+ext,
+                          request_get)
+                return None, None
+            try:
+                new_val = list(map(func, values_to_use))
+                if pretty_results:
+                    new_val = format_metadata_number_or_func(
+                                        new_val[0], form_type_func, form_type_format)
+                if return_slugs:
+                    selections[slug] = new_val
+                else:
+                    selections[new_param_name] = new_val
+            except ValueError as e:
+                if allow_errors:
+                    if return_slugs:
+                        selections[slug] = None
+                    else:
+                        selections[new_param_name] = None
+                else:
                     log.error('url_to_search_params: Function "%s" slug "%s" '
                               +'threw ValueError(%s) for %s',
                               func, slug, e, values_to_use)
@@ -206,7 +278,10 @@ def url_to_search_params(request_get):
                           +'for "%s": %s', param_name,
                           request_get)
                 return None, None
-            selections[param_name] = values_not_split
+            if return_slugs:
+                selections[slug] = values_not_split
+            else:
+                selections[param_name] = values_not_split
 
     extras['qtypes'] = qtypes
 

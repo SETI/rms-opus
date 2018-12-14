@@ -1,15 +1,11 @@
-# metadata/test.py
+# opus/application/test_api/test_metadata_api.py
 
 import json
 import requests
-import sys
 from unittest import TestCase
 
 from django.db import connection
-from django.test.client import Client
 from rest_framework.test import RequestsClient
-
-from metadata.views import *
 
 import logging
 log = logging.getLogger(__name__)

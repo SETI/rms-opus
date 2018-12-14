@@ -264,10 +264,27 @@ def get_mult_name(param_name):
 
 def format_metadata_number(val, form_type_format):
     if form_type_format is None:
-        return val
+        return str(val)
     if abs(val) > settings.THRESHOLD_FOR_EXPONENTIAL:
         form_type_format = form_type_format.replace('f', 'e')
     try:
         return format(val, form_type_format)
     except TypeError:
-        return val
+        return str(val)
+
+def format_metadata_number_or_func(val, form_type_func, form_type_format):
+    if form_type_func:
+        if form_type_func in opus_support.RANGE_FUNCTIONS:
+            func = opus_support.RANGE_FUNCTIONS[form_type_func][0]
+            return func(val)
+        else:
+            log.error('Unknown RANGE function "%s"', form_type_func)
+        return None
+    if form_type_format is None:
+        return str(val)
+    if abs(val) > settings.THRESHOLD_FOR_EXPONENTIAL:
+        form_type_format = form_type_format.replace('f', 'e')
+    try:
+        return format(val, form_type_format)
+    except TypeError:
+        return str(val)
