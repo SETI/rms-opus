@@ -57,6 +57,19 @@ var o_widgets = {
             }
         });
 
+        // close opened surfacegeo widget if user select another surfacegeo target
+        $('#search').on('change', 'input.singlechoice', function() {
+          $('a[data-slug^="SURFACEGEO"]').each( function (index) {
+            let slug = $(this).data('slug');
+            o_widgets.closeWidget(slug);
+            try {
+              var id = "#widget__"+slug;
+              $(id).remove();
+            } catch (e) {
+              console.log("error on close widget, id="+id);
+            }
+          });
+        });
 
         // mult widget behaviors - user clicks a multi-select checkbox
 
@@ -65,7 +78,7 @@ var o_widgets = {
         /**** OR move all those behaviors into here because wtf ****/
         /***********************************************************/
 
-        $('#search').on('change', 'input.multichoice', function() {
+        $('#search').on('change', 'input.multichoice, input.singlechoice', function() {
            // mult widget gets changed
            var id = $(this).attr("id").split('_')[0];
            var value = $(this).attr("value").replace(/\+/g, '%2B');
@@ -76,8 +89,15 @@ var o_widgets = {
                    var values = opus.selections[id]; // this param already has been constrained
                }
 
-               values[values.length] = value;    // add the new value to the array of values
-               opus.selections[id] = values;     // add the array of values to selections
+               // for surfacegeometry we only want a target selected
+               if (id === 'surfacegeometrytargetname') {
+                  opus.selections[id] = [value];
+               } else {
+                  // add the new value to the array of values
+                  values.push(value);
+                  // add the array of values to selections
+                  opus.selections[id] = values;
+               }
 
                // special menu behavior for surface geo, slide in a loading indicator..
                if (id == 'surfacetarget') {

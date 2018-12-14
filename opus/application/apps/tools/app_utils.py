@@ -280,6 +280,8 @@ def get_mult_name(param_name):
     return 'mult_' + '_'.join(param_name.split('.'))
 
 def format_metadata_number(val, form_type_format):
+    if val is None:
+        return None
     if form_type_format is None:
         return str(val)
     if abs(val) > settings.THRESHOLD_FOR_EXPONENTIAL:
@@ -290,6 +292,8 @@ def format_metadata_number(val, form_type_format):
         return str(val)
 
 def format_metadata_number_or_func(val, form_type_func, form_type_format):
+    if val is None:
+        return None
     if form_type_func:
         if form_type_func in opus_support.RANGE_FUNCTIONS:
             func = opus_support.RANGE_FUNCTIONS[form_type_func][0]
