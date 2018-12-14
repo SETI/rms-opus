@@ -94,7 +94,7 @@ var o_widgets = {
                   opus.selections[id] = [value];
                } else {
                   // add the new value to the array of values
-                  values[values.length] = value;
+                  values.push(value);
                   // add the array of values to selections
                   opus.selections[id] = values;
                }
