@@ -155,7 +155,7 @@ class SearchForm(forms.Form):
                             # label = ParamInfo.objects.get(slug=slug).label,
                             label = '',
                             choices = choices,
-                            widget = forms.RadioSelect(attrs={'class':'multichoice'}),
+                            widget = forms.RadioSelect(attrs={'class':'singlechoice'}),
                             required=False)
                 else:
                     self.fields[slug] = forms.MultipleChoiceField(
