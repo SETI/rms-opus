@@ -29,6 +29,18 @@ import logging
 log = logging.getLogger(__name__)
 
 
+def csv_response(filename, data, column_names=None):
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = f'attachment; filename={filename}.csv'
+    writer = csv.writer(response)
+    if column_names:
+        writer.writerow(column_names)
+    writer.writerows(data)
+    return response
+
+def json_response(data):
+    return HttpResponse(json.dumps(data), content_type='application/json')
+
 def response_formats(data, fmt, **kwargs):
     """
     this is REALLY AWFUL.
@@ -191,12 +203,15 @@ def enter_api_call(name, request, kwargs=None):
     global _API_CALL_NUMBER
     _API_CALL_NUMBER += 1
     if settings.OPUS_LOG_API_CALLS:
-        s = 'API ' + str(_API_CALL_NUMBER) + ' ' + request.path
+        s = 'API ' + str(_API_CALL_NUMBER) + ' '
+        if request and request.path:
+            s += request.path
         if kwargs:
             s += ' ' + str(kwargs)
-        s += ' ' + json.dumps(request.GET, sort_keys=True,
-                              indent=4,
-                              separators=(',', ': '))
+        if request and request.GET:
+            s += ' ' + json.dumps(request.GET, sort_keys=True,
+                                  indent=4,
+                                  separators=(',', ': '))
         log.debug(s)
     _API_START_TIMES[_API_CALL_NUMBER] = time.time()
     return _API_CALL_NUMBER

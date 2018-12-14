@@ -1,0 +1,12 @@
+[run]
+branch = True
+include = */application/*,*/opus_support.py
+
+[html]
+Title = Coverage Report for OPUS Tests
+
+[report]
+exclude_lines =
+  pragma: no cover
+  def __repr__
+  def __unicode__
