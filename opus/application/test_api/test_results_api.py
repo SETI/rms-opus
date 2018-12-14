@@ -7,6 +7,8 @@ from unittest import TestCase
 from django.db import connection
 from rest_framework.test import RequestsClient
 
+import settings
+
 import logging
 log = logging.getLogger(__name__)
 
