@@ -102,7 +102,7 @@
 					</nav>
 					<div class="panel-body gallery-contents container-fluid scrollbar-morpheus-den">
 						<div class="row justify-content-center">
-							<div class="mr-0 thumb gallery gallery-scroll" data-ui="jscroll-default"></div>
+							<div class="mr-0 thumb gallery gallery-scroll"></div>
 							<div class="scroller-status">
 								<div class="infinite-scroll-request loader-ellips">
 									<div class='loader'></div>
@@ -132,7 +132,14 @@
 					<div class="col collection_details"></div>
 					<div class="col pl-0">
 						<div class="panel-body gallery-contents container-fluid  pr-2 scrollbar-morpheus-den">
-							<div class="row mr-0 mt-3 thumb gallery gallery-scroll" data-ui="jscroll-default"></div>
+							<div class="row mr-0 mt-3 thumb gallery gallery-scroll"></div>
+							<div class="scroller-status">
+								<div class="infinite-scroll-request loader-ellips">
+									<div class='loader'></div>
+								</div>
+								<p class="infinite-scroll-last">End of content</p>
+								<p class="infinite-scroll-error">No more pages to load</p>
+							</div>
 						</div>
 					</div>
 				</div>
@@ -147,7 +154,7 @@
 		</div><!-- /tabcontent -->
 
 		<!-- modal dialog for the gallery views -->
-		<div id="galleryView" class="modal fade" role="dialog" tabbindex="-1" data-backdrop="false" aria-labelledby="galleryViewLabel" aria-hidden="true">
+		<div id="galleryView" class="modal fade" role="dialog" tabbindex="-1" data-backdrop="false" data-keyboard="false" aria-labelledby="galleryViewLabel" aria-hidden="true">
 			<div class="modal-dialog modal-lg" role="document">
 				<div class="modal-content">
 					<button type="button" class="close" data-dismiss="modal" aria-label="Close">

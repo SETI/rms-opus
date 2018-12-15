@@ -2,13 +2,13 @@
 
 {% block menu %}
 <div class="row">
-  <div class="all_columns col scrollbar-morpheus-den">
+  <div class="allColumns col scrollbar-morpheus-den">
     {% with 'menu' as expectedVarName %}
       {{ block.super }} {# renders menu.html #}
     {% endwith %}
   </div>
 
-  <div class="chosen_columns col scrollbar-morpheus-den">
+  <div class="selectedColumns col scrollbar-morpheus-den">
   	<ul>
   		{% for slug, param_info in all_slugs_info.items %}
   			<li id="cchoose__{{ slug }}"
@@ -28,7 +28,7 @@
           "></i>
 
           <!-- "remove this column" x button -->
-  				<span class = "chosen_column_close
+  				<span class = "unselect
             {% if slug == 'opusid' %}
               hidden
             {% endif %}

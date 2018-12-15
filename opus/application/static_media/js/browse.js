@@ -125,20 +125,21 @@ var o_browse = {
         // click on thumbnail opens modal window
       $(".gallery, #dataTable ").on("click", ".thumbnail, tbody > tr :not(:input)", function(e) {
             // make sure selected modal thumb is unhighlighted, as clicking on this closes the modal
-            // but is not caught in time before hidden.bs to get correct opus_id
+            // but is not caught in time before hidden.bs to get correct opusId
             o_browse.toggleGalleryViewHighlight("off");
-            var opus_id = $(this).data("id");
-            if (opus_id == undefined) {
-                opus_id = $(this).parent().data("id");
+
+            let opusId = $(this).data("id");
+            if (opusId == undefined) {
+                opusId = $(this).parent().data("id");
             }
 
-            o_browse.updateGalleryView(opus_id);
+            o_browse.updateGalleryView(opusId);
         });
 
         // data_table - clicking a table row adds to cart
         $("#browse").on("click", "#data_table :input", function() {
 
-            var opus_id = $(this).attr("id").substring(6);
+            var opusId = $(this).attr("id").substring(6);
             $(this).find('.data_checkbox').toggleClass('fa-check-square-o').toggleClass('fa-square-o');
             var action = 'remove';
             if ($(this).find('.data_checkbox').hasClass('fa-check-square-o')) {
@@ -149,25 +150,60 @@ var o_browse = {
             // make sure the checkbox for this observation in the other view (either data or gallery)
             // is also checked/unchecked - if that view is drawn
             try {
-                o_browse.toggleBrowseInCollectionStyle(opus_id);
+                o_browse.toggleBrowseInCollectionStyle(opusId);
             } catch(e) { } // view not drawn yet so no worries
 
             // check if we are clicking as part of an 'add range' interaction
             if (!opus.addrange_clicked) {
 
                 // no add range, just add this obs to collection
-                o_collections.editCollection(opus_id,action);
+                o_collections.editCollection(opusId,action);
 
             } else {
-                o_browse.addRangeHandler(opus_id);
+                o_browse.addRangeHandler(opusId);
             }
             return false;
 
         });
 
+        // thumbnail overlay tools
+        $('.gallery').on("click", ".tools a", function(e) {
+          //snipe the id off of the image..
+          var opusId = $(this).parent().data("id");
+
+          switch ($(this).data("icon")) {
+              case "info":  // detail page
+                  opus.prefs.detail = opusId;
+                  if (e.shiftKey || e.ctrlKey || e.metaKey) {
+                      // handles command click to open in new tab
+                      var link = "/opus/#/" + o_hash.getHash();
+                      link = link.replace("view=browse", "view=detail");
+                      window.open(link, '_blank');
+                  } else {
+                      opus.prefs.detail = opusId;
+                      opus.changeTab("detail");
+                      $('a[href="#detail"]').tab("show");
+                  }
+                  break;
+
+              case "check":   // add to cart
+                  var action = o_browse.toggleBrowseInCollectionStyle(opusId);
+                  o_browse.cartHandler(opusId, action);
+                  break;
+
+              case "resize":  // expand, same as click on image
+                  $('a[data-id="'+opusId+'"]').trigger("click");
+                  break;
+
+              default:
+                alert("Hmm... should not be here. error 710.");
+            }
+            return false;
+        }); // end click a browse tools icon
+
         $("#gallerylView").modal({
             keyboard: false,
-            backdrop: false,
+            backdrop: 'static',
             show: false,
         });
 
@@ -179,46 +215,11 @@ var o_browse = {
             o_browse.toggleGalleryViewHighlight("off");
         });
 
-        // thumbnail overlay tools
-        $('.gallery').on("click", ".tools a", function(e) {
-          //snipe the id off of the image..
-          var opus_id = $(this).parent().data("id");
-
-          switch ($(this).data("icon")) {
-              case "info":  // detail page
-                  opus.prefs.detail = opus_id;
-                  if (e.shiftKey || e.ctrlKey || e.metaKey) {
-                      // handles command click to open in new tab
-                      var link = "/opus/#/" + o_hash.getHash();
-                      link = link.replace("view=browse", "view=detail");
-                      window.open(link, '_blank');
-                  } else {
-                      opus.prefs.detail = opus_id;
-                      opus.changeTab("detail");
-                      $('a[href="#detail"]').tab("show");
-                  }
-                  break;
-
-              case "check":   // add to cart
-                  var action = o_browse.toggleBrowseInCollectionStyle(opus_id);
-                  o_browse.cartHandler(opus_id, action);
-                  break;
-
-              case "resize":  // expand, same as click on image
-                  $('a[data-id="'+opus_id+'"]').trigger("click");
-                  break;
-
-              default:
-                alert("Hmm... should not be here. error 710.");
-            }
-            return false;
-        }); // end click a browse tools icon
-
         // add the 'get detail' behavior
         $('#galleryView').on("click", '.detailViewLink', function(e) {
             if (e.shiftKey || e.ctrlKey || e.metaKey) {
                 // handles command click to open in new tab
-                var link = "/opus/#/" + o_hash.getHash();
+                let link = "/opus/#/" + o_hash.getHash();
                 link = link.replace("view=browse", "view=detail");
                 window.open(link, '_blank');
             } else {
@@ -230,10 +231,10 @@ var o_browse = {
         });
 
         $('#galleryView').on("click", "a.select", function(e) {
-            let opus_id = $(this).data("id");
-            if (opus_id) {
-                let action = o_browse.toggleBrowseInCollectionStyle(opus_id);
-                o_browse.cartHandler(opus_id, action);
+            let opusId = $(this).data("id");
+            if (opusId) {
+                let action = o_browse.toggleBrowseInCollectionStyle(opusId);
+                o_browse.cartHandler(opusId, action);
             }
             return false;
         });
@@ -242,6 +243,7 @@ var o_browse = {
             let action = $(this).hasClass("prev") ? "prev" : "next";
             let opusId = $(this).data("id");
             if (opusId) {
+                o_browse.toggleGalleryViewHighlight();  // toggle highlight of current
                 o_browse.updateGalleryView(opusId);
             }
             return false;
@@ -264,6 +266,7 @@ var o_browse = {
                         break;
                 }
                 if (opusId) {
+                    o_browse.toggleGalleryViewHighlight();  // toggle highlight of current
                     o_browse.updateGalleryView(opusId);
                 }
             }
@@ -324,15 +327,15 @@ var o_browse = {
         return false;
     },
 
-    cartHandler: function(opus_id, action) {
+    cartHandler: function(opusId, action) {
         // behaviors for the click to add/remove from cart
         // whether that's from checkbox being clicked
         // or thumbnail clicked while 'add range' is happening
 
         // make sure the checkbox for this observation in the other view (either data or gallery)
         // is also checked/unchecked - if that view is drawn
-        $('#data__' + opus_id).find('.data_checkbox').toggleClass('fa-check-square-o').toggleClass('fa-square-o');
-        o_collections.editCollection(opus_id,action);
+        $('#data__' + opusId).find('.data_checkbox').toggleClass('fa-check-square-o').toggleClass('fa-square-o');
+        o_collections.editCollection(opusId,action);
     },
 
     openDetailTab: function() {
@@ -340,16 +343,16 @@ var o_browse = {
         opus.changeTab('detail');
     },
 
-    getGalleryElement: function(opus_id) {
-        var elem = $("#" + opus.prefs.view+" .thumbnail-container a[data-id=" + opus_id + "]");
+    getGalleryElement: function(opusId) {
+        let elem = $("#" + opus.prefs.view+" .thumbnail-container a[data-id=" + opusId + "]");
         return elem;
     },
 
-    toggleBrowseInCollectionStyle: function(opus_id) {
-        var elem = o_browse.getGalleryElement(opus_id);
+    toggleBrowseInCollectionStyle: function(opusId) {
+        var elem = o_browse.getGalleryElement(opusId);
 
-        // if this opus_id is modal, make sure it stays highlighted
-        o_browse.toggleGalleryViewHighlight("on");
+        // if this opusId is modal, make sure it stays highlighted
+        o_browse.toggleGalleryViewHighlight("on", opusId);
 
         elem.toggleClass("in"); // this class keeps parent visible when mouseout
 
@@ -358,49 +361,51 @@ var o_browse = {
 
     // column chooser behaviors
     addColumnChooserBehaviors: function() {
+        // this is a global
+        currentSelectedColumns = opus.prefs.cols.slice();
 
-        // a column is checked/unchecked
-        $('.column_chooser').off("click", '.submenu li a');
-        $('.column_chooser').off("click", '.chosen_column_close');
+        $(".app-body").on("hide.bs.modal", "#columnChooser", function(e) {
+            // update the data table w/the new columns
+            if (!o_utils.areObjectsEqual(opus.prefs.cols, currentSelectedColumns)) {
+                o_hash.updateHash();
+                o_browse.loadBrowseData(last_page_drawn.gallery);
+                currentSelectedColumns = opus.prefs.cols.slice();
+            }
+        });
 
-        $('.column_chooser').on("click", '.submenu li a', function() {
+        $(".app-body").on("show.bs.modal", "#columnChooser", function(e) {
+            // save current column state so we can look for changes
+            currentSelectedColumns = opus.prefs.cols.slice();
+        });
 
-            var slug = $(this).data('slug');
+        $('#columnChooser .allColumns').on("click", '.submenu li a', function() {
+
+            let slug = $(this).data('slug');
             if (!slug) {
                 return false;  // just a 2nd level menu click, move along
             }
 
-            var label = $(this).data('qualifiedlabel');
-            var def = $(this).find('i.fa-info-circle').attr("title");
-            var cols = opus.prefs['cols'];
-            var checkmark = $(this).find('i').first();
+            let label = $(this).data('qualifiedlabel');
+            let def = $(this).find('i.fa-info-circle').attr("title");
+            let checkmark = $(this).find("i.fa-check");
 
             if (!checkmark.is(":visible")) {
-                checkmark.show();
-                if ($.inArray(slug,cols) < 0) {
+                checkmark.fadeIn().css('display', 'inline-block');
+                if ($.inArray(slug, opus.prefs.cols ) < 0) {
                     // this slug was previously unselected, add to cols
-                    $('<li id = "cchoose__' + slug + '">' + label + ' <i class = "fa fa-info-circle" title = "' + def + '"></i><span class = "chosen_column_close">X</span></li>').hide().appendTo('.chosen_columns>ul').fadeIn();
-                    cols.push(slug);
+                    $('<li id = "cchoose__' + slug + '">' + label + ' <i class = "fa fa-info-circle" title = "' + def + '"></i><span class = "unselect">X</span></li>').hide().appendTo('.selectedColumns > ul').fadeIn();
+                    opus.prefs.cols.push(slug);
                 }
 
             } else {
                 checkmark.hide();
-                if ($.inArray(slug,cols) > -1) {
+                if ($.inArray(slug,opus.prefs.cols) > -1) {
                     // slug had been checked, remove from the chosen
-                    cols.splice($.inArray(slug,cols),1);
+                    opus.prefs.cols.splice($.inArray(slug,opus.prefs.cols),1);
                     $('#cchoose__' + slug).fadeOut(function() {
                         $(this).remove();
                     });
                 }
-            }
-
-            opus.prefs['cols'] = cols;
-
-            // update the data table w/the new columns
-            o_hash.updateHash();
-            let pages = opus.pages_drawn.gallery;
-            for (let i in pages) {
-                o_browse.loadBrowseData(pages[i]);
             }
             return false;
         });
@@ -408,8 +413,8 @@ var o_browse = {
 
         // removes chosen column with X
         $('.column_chooser').on("click",'.chosen_column_close', function() {
-            var slug = $(this).parent().attr("id").split('__')[1];
-            var checkmark = $('.all_columns .' + slug).find('i').first();
+            let slug = $(this).parent().attr("id").split('__')[1];
+            let checkmark = $('.all_columns .' + slug).find('i').first();
 
             checkmark.hide();
 
@@ -429,18 +434,14 @@ var o_browse = {
             }
             return false;
         });
-
-        $('#columnChooser').on("click",'.close', function() {
-            console.log("close");
-        });
     },  // /addColumnChooserBehaviors
 
     checkAllRenderedElements: function() {
-      // returns first and last opus_id that is rendered on the page
+      // returns first and last opusId that is rendered on the page
 
       // find the id of the first and last element showing on this page
-      var first = "";
-      var last = "";
+      let first = "";
+      let last = "";
       if (opus.prefs.browse == "gallery") {
         el = $('.gallery li');
         first = el.first().attr('id');
@@ -450,22 +451,22 @@ var o_browse = {
         last = $('.data_table tbody tr:last').attr('id');
       }
 
-      var opus_id1 = first.split('__')[1];
-      var opus_id2 = last.split('__')[1];
+      let opusId1 = first.split('__')[1];
+      let opusId2 = last.split('__')[1];
 
-      o_browse.checkRangeBoxes(opus_id1, opus_id2);
+      o_browse.checkRangeBoxes(opusId1, opusId2);
     },
 
     // handles checking of a range of boxes in each view (table/gallery)
-    checkRangeBoxes: function(opus_id1, opus_id2) {
+    checkRangeBoxes: function(opusId1, opusId2) {
 
         // make all list/td elements bt r1 and r2 be added to cart
-        var elements = ['#gallery__','#data__'];
-        for (var key in elements) {
-            var element = elements[key];
-            var current_id = opus_id1;
-            var next_element = $(element + current_id, '#browse');
-            while (current_id != opus_id2) {
+        let elements = ['#gallery__','#data__'];
+        for (let key in elements) {
+            let element = elements[key];
+            let current_id = opusId1;
+            let next_element = $(element + current_id, '#browse');
+            while (current_id != opusId2) {
 
                 // thumbnail in the list
                 if (next_element.hasClass("infinite_scroll_page")) {
@@ -478,8 +479,8 @@ var o_browse = {
                     /* gallery view */
                     if (!next_element.find('.tools').hasClass("in")) {  // if not already checked
                         try {
-                            opus_id = next_element.attr("id").split('__')[1];
-                            o_browse.toggleBrowseInCollectionStyle(opus_id);
+                            opusId = next_element.attr("id").split('__')[1];
+                            o_browse.toggleBrowseInCollectionStyle(opusId);
                         } catch(e) {
                         }
                     }
@@ -538,11 +539,11 @@ var o_browse = {
     getCurrentPage: function() {
         // sometimes other functions need to know current page for whatever view we
         // are currently looking at..
-        var view_info = o_browse.getViewInfo();
-        var namespace = view_info['namespace']; // either '#collection' or '#browse'
-        var prefix = view_info['prefix'];       // either 'colls_' or ''
-        var view_var = opus.prefs[prefix + 'browse'];  // either "gallery" or "data"
-        var page = 1;
+        let view_info = o_browse.getViewInfo();
+        let namespace = view_info['namespace']; // either '#collection' or '#browse'
+        let prefix = view_info['prefix'];       // either 'colls_' or ''
+        let view_var = opus.prefs[prefix + 'browse'];  // either "gallery" or "data"
+        let page = 1;
 
         if (view_var == "data") {
             page = opus.prefs.page[prefix + "data"];
@@ -571,7 +572,7 @@ var o_browse = {
     },
 
     updatePageInUrl: function(url, page) {
-        var urlPage = 0;
+        let urlPage = 0;
         // remove any existing page= slug before adding in the current page= slug w/new page number
         url = $.grep(url.split('&'), function(pair, index) {
             if (pair.startsWith("page")) {
@@ -594,9 +595,9 @@ var o_browse = {
 
                 // we keep these all open in the column chooser, they are all closed by default
                 // disply check next to any default columns
-                for (let key in opus.prefs['cols']) {
-                  $('.column_chooser .' + opus.prefs['cols'][key]).find('i').first().show();
-                }
+                $.each(opus.prefs['cols'], function(index, col) {
+                    $('.column_chooser li > [data-slug="'+col+'"]').find("i.fa-check").fadeIn().css('display', 'inline-block');
+                });
 
                 o_browse.addColumnChooserBehaviors();
 
@@ -614,7 +615,7 @@ var o_browse = {
     renderTable: function(tableData) {
         // update table
         $.each(tableData.page, function(item, galleryData) {
-              // for now, always assume that opus_id is first item in list
+              // for now, always assume that opusId is first item in list
             let opusId = galleryData[0];
             opus.gallery_data[opusId] = galleryData;
 
@@ -769,88 +770,85 @@ var o_browse = {
         //opus.limit =  (floor($(window).width()/thumbnailSize) * floor(container_height/thumbnailSize));
     },
 
-    metadataboxHtml: function(opus_id) {
+    metadataboxHtml: function(opusId) {
         // list columns + values
         var html = "<dl>";
         for (let i in opus.prefs["cols"]) {
             let column = opus.col_labels[i];  // use the label not the column title
-            let value = opus.gallery_data[opus_id][i];
+            let value = opus.gallery_data[opusId][i];
             html += "<dt>" + column + ":</dt><dd>" + value + "</dd>";
 
         }
         html += "</dl>";
-        let next = $("#browse tr[data-id="+opus_id+"]").next("tr");
+        let next = $("#browse tr[data-id="+opusId+"]").next("tr");
         next = (next.length > 0 ? next.data("id") : "");
-        let prev = $("#browse tr[data-id="+opus_id+"]").prev("tr");
+        let prev = $("#browse tr[data-id="+opusId+"]").prev("tr");
         prev = (prev.length > 0 ? prev.data("id") : "");
 
         // add a link to detail page;
         let hashArray = o_hash.getHashArray();
         hashArray["view"] = "detail";
-        hashArray["detail"] = opus_id;
-        html += '<p><a href = "/opus/#/' + o_hash.hashArrayToHashString(hashArray) + '" class="detailViewLink" data-opusid="' + opus_id + '">View Detail</a></p>';
+        hashArray["detail"] = opusId;
+        html += '<p><a href = "/opus/#/' + o_hash.hashArrayToHashString(hashArray) + '" class="detailViewLink" data-opusid="' + opusId + '">View Detail</a></p>';
 
         // prev/next buttons - put this in galleryView html...
         html += "<div class='bottom'>";
-        html += "<a href='#' class='select' data-id='"+opus_id+"' title='Add to selections'><i class='fas fa-cart-plus fa-2x float-left'></i></a>";
+        html += "<a href='#' class='select' data-id='"+opusId+"' title='Add to selections'><i class='fas fa-cart-plus fa-2x float-left'></i></a>";
         html += "<a href='#' class='next pr-5' data-id='"+next+"' title='Next image'><i class='far fa-hand-point-right fa-2x float-right'></i></a>";
         html += "<a href='#' class='prev pr-5' data-id='"+prev+"' title='Previous image'><i class='far fa-hand-point-left fa-2x float-right'></i></a></div>";
         return html;
     },
 
-    toggleGalleryViewHighlight: function(highlight) {
-        let opus_id = $("#galleryView [data-opusid]").data("opusid");
-        // if galleryView has never been opened, opus_id will likely be undefined...
-        if (opus_id !== undefined) {
+    toggleGalleryViewHighlight: function(highlight, opusId) {
+        if (opusId == undefined) {
+            opusId = $("#galleryView [data-opusid]").data("opusid");
+        }
+        if (opusId !== undefined) {
             switch (highlight) {
                 case "on":
-                    $("tr[data-id='"+opus_id+"']").addClass("highlight");
-                    $("a.thumbnail[data-id='"+opus_id+"']").parent().addClass("thumb_selected");
+                    $("tr[data-id='"+opusId+"']").addClass("highlight");
+                    $("a.thumbnail[data-id='"+opusId+"']").parent().addClass("thumb_selected");
                     break;
                 case "off":
-                    $("tr[data-id='"+opus_id+"']").removeClass("highlight");
-                    $("a.thumbnail[data-id='"+opus_id+"']").parent().removeClass("thumb_selected");
+                    $("tr[data-id='"+opusId+"']").removeClass("highlight");
+                    $("a.thumbnail[data-id='"+opusId+"']").parent().removeClass("thumb_selected");
                     break;
                 case undefined:
                 default:
                     // don't unhighlight if it is in collection unless specifically asked
-                    if (!$("a.thumbnail[data-id='"+opus_id+"']").hasClass("in")) {
-                        $("tr[data-id='"+opus_id+"']").toggleClass("highlight");
-                        $("a.thumbnail[data-id='"+opus_id+"']").parent().toggleClass("thumb_selected");
+                    if (!$("a.thumbnail[data-id='"+opusId+"']").hasClass("in")) {
+                        $("tr[data-id='"+opusId+"']").toggleClass("highlight");
+                        $("a.thumbnail[data-id='"+opusId+"']").parent().toggleClass("thumb_selected");
                     }
                     break;
             }
         }
     },
 
-    updateGalleryView: function(opus_id) {
-        // untoggle previous modal
-        o_browse.toggleGalleryViewHighlight();
-
+    updateGalleryView: function(opusId) {
         // while modal is up, highlight the image/table row shown
-        $("tr[data-id='"+opus_id+"']").addClass("highlight");
-        $("a.thumbnail[data-id='"+opus_id+"']").parent().addClass("thumb_selected");
+        o_browse.toggleGalleryViewHighlight("on", opusId);
 
-        var imageURL = $("#browse").find("a[data-id='"+opus_id+"']").data("image");
+        var imageURL = $("#browse").find("a[data-id='"+opusId+"']").data("image");
         if (imageURL === undefined) {
             // put a temp spinner while retrieving the image; this only happens if the data table is loaded first
-            $("#galleryViewContents").html(o_browse.loader + o_browse.metadataboxHtml(opus_id));
-            $("#galleryViewContents").data("id", opus_id);
+            $("#galleryViewContents").html(o_browse.loader + o_browse.metadataboxHtml(opusId));
+            $("#galleryViewContents").data("id", opusId);
 
-            var url = '/opus/__api/image/full/' + opus_id + '.json';
+            var url = '/opus/__api/image/full/' + opusId + '.json';
             $.getJSON(url, function(imageData) {
                 var imageURL = imageData["data"][0]['url'];
-                o_browse.updateMetaGalleryView(opus_id, imageURL);
+                o_browse.updateMetaGalleryView(opusId, imageURL);
             });
         } else {
-            o_browse.updateMetaGalleryView(opus_id, imageURL);
+            o_browse.updateMetaGalleryView(opusId, imageURL);
         }
     },
 
 
-    updateMetaGalleryView: function(opus_id, imageURL) {
-        $("#galleryViewContents .left").html("<a href='"+imageURL+"'><img src='"+imageURL+"' title='"+opus_id+"' class='preview'/></a>");
-        $("#galleryViewContents .right").html(o_browse.metadataboxHtml(opus_id));
+    updateMetaGalleryView: function(opusId, imageURL) {
+        $("#galleryViewContents .left").html("<a href='"+imageURL+"' target='_blank'><img src='"+imageURL+"' title='"+opusId+"' class='preview'/></a>");
+        $("#galleryViewContents .right").html(o_browse.metadataboxHtml(opusId));
     },
 
     resetQuery: function() {

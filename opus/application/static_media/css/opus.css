@@ -297,38 +297,44 @@ th.sticky-header {
 #product_types {
   display: inline-grid;
 }
-.column_chooser .column_checkbox {
+
+#columnChooser .column_checkbox {
     display:inline;
 }
-.column_chooser ul li {
+
+#columnChooser i.fa-check {
+    display:none;
+}
+
+#columnChooser ul li {
     text-decoration:none;
     margin:5px;
 }
-.all_columns   {
+.allColumns   {
     height: 450px;
     overflow:scroll;
 	overflow-x: auto;
 }
-.all_columns ul li {
+.allColumns ul li {
     padding-bottom:3px;
 
 }
-.all_columns .cat_label {
+.allColumns .cat_label {
     margin-top:15px;
     margin-bottom:-5px;
 }
-.chosen_columns ul li:hover{ cursor:move; }
-.chosen_columns ul li .chosen_column_close:hover{ cursor:move; }
+.selectedColumns ul li:hover{ cursor:move; }
+.selectedColumns ul li .unselect:hover{ cursor:move; }
 
-.chosen_column_close {
+#selectedColumns .unselect {
     float:right;
 }
 
-.chosen_columns {
+.selectedColumns {
     border:0;
     z-index:9999;
 }
-.chosen_columns ul li {
+.selectedColumns ul li {
     padding:5px 15px;
     border:1px dotted gray;
     list-style-type:none;
