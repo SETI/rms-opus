@@ -157,11 +157,10 @@ class SearchForm(forms.Form):
                             widget = forms.RadioSelect(attrs={'class':'singlechoice'}, choices = choices),
                             required=False)
                 else:
-                    self.fields[slug] = forms.MultipleChoiceField(
+                    self.fields[slug] = forms.CharField(
                             # label = ParamInfo.objects.get(slug=slug).label,
                             label = '',
-                            choices = choices,
-                            widget = forms.CheckboxSelectMultiple(attrs={'class':'multichoice'}),
+                            widget = forms.CheckboxSelectMultiple(attrs={'class':'multichoice'}, choices = choices),
                             required=False)
 
         # XXX RF - This is awful. It takes the last form_type from the above loop, but
