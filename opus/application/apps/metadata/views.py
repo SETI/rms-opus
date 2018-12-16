@@ -171,12 +171,12 @@ def api_get_mult_counts(request, slug, fmt='json'):
         raise ret
 
     table_name = param_info.category_name
-    param_name = param_info.param_name()
+    param_qualified_name = param_info.param_qualified_name()
 
     # If this param is in selections already we want to remove it
     # We want mults for a param as they would be without itself
-    if param_name in selections:
-        del selections[param_name]
+    if param_qualified_name in selections:
+        del selections[param_qualified_name]
 
     has_selections = False
     if selections:
@@ -193,13 +193,13 @@ def api_get_mult_counts(request, slug, fmt='json'):
     # Note we don't actually care here if the cache table even exists, because
     # if it's in the cache, it must exist, and if it's not in the cache, it
     # will be created if necessary by get_user_query_table below.
-    cache_key = ('mults_' + param_name + '_' + str(cache_num))
+    cache_key = ('mults_' + param_qualified_name + '_' + str(cache_num))
 
     cached_val = cache.get(cache_key)
     if cached_val is not None:
         mults = cached_val
     else:
-        mult_name = get_mult_name(param_name)
+        mult_name = get_mult_name(param_qualified_name)
         try:
             mult_model = apps.get_model('search',
                                         mult_name.title().replace('_',''))
@@ -315,7 +315,7 @@ def api_get_range_endpoints(request, slug, fmt='json'):
         raise ret
 
     param_name = param_info.name # Just name
-    full_param_name = param_info.param_name() # category.name
+    param_qualified_name = param_info.param_qualified_name() # category.name
     (form_type, form_type_func,
      form_type_format) = parse_form_type(param_info.form_type)
     table_name = param_info.category_name
@@ -347,10 +347,10 @@ def api_get_range_endpoints(request, slug, fmt='json'):
     # Remove this param from the user's query if it is constrained.
     # This keeps the green hinting numbers from reacting to changes to its
     # own field.
-    param_name_no_num = strip_numeric_suffix(full_param_name)
-    for to_remove in [param_name_no_num,
-                      param_name_no_num + '1',
-                      param_name_no_num + '2']:
+    qualified_param_name_no_num = strip_numeric_suffix(param_qualified_name)
+    for to_remove in [qualified_param_name_no_num,
+                      qualified_param_name_no_num + '1',
+                      qualified_param_name_no_num + '2']:
         if to_remove in selections:
             del selections[to_remove]
     if selections:
@@ -366,7 +366,7 @@ def api_get_range_endpoints(request, slug, fmt='json'):
         user_table = None
 
     # Is this result already cached?
-    cache_key = 'rangeep:' + param_name_no_num
+    cache_key = 'rangeep:' + qualified_param_name_no_num
     if user_table:
         cache_num, cache_new_flag = set_user_search_number(selections, extras)
         # We're guaranteed the table actually exists here
