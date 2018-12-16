@@ -167,44 +167,109 @@ def api_string_search_choices(request, slug):
     quoted_param_qualified_name = (quoted_table_name + '.'
                                    +connection.ops.quote_name(param_name))
 
-    sql = 'SELECT DISTINCT ' + quoted_param_qualified_name
-    sql += ' FROM '+quoted_table_name
-
-    # The cache table is an INNER JOIN because we only want opus_ids
-    # that appear in the cache table to cause result rows
-    sql += ' INNER JOIN '+connection.ops.quote_name(user_query_table)
-    sql += ' ON '+quoted_table_name+'.'
-    if param_category == 'obs_general':
-        sql += connection.ops.quote_name('id')+'='
-    else:
-        sql += connection.ops.quote_name('obs_general_id')+'='
-    sql += connection.ops.quote_name(user_query_table)+'.'
-    sql += connection.ops.quote_name('id')
-
-    sql_params = []
-    if partial_query:
-        sql += ' WHERE '
-        sql += quoted_param_qualified_name + ' LIKE %s'
-        sql_params.append('%'+partial_query+'%')
-
-    sql += ' ORDER BY '+quoted_param_qualified_name
-    sql += ' LIMIT '+str(limit)
+    # Check the size of the cache table to see if we can afford to do a
+    # search retricted by the cache table contents. The JOIN of the cache
+    # table can be slow if it has too many entries and gives a bad user
+    # experience.
+    sql = 'SELECT COUNT(*) FROM '+connection.ops.quote_name(user_query_table)
 
     cursor = connection.cursor()
-    cursor.execute(sql, tuple(sql_params))
-    results = []
-    more = True
-    while more:
-        part_results = cursor.fetchall()
-        results += part_results
-        more = cursor.nextset()
+    cursor.execute(sql)
+    results = cursor.fetchall()
+    if len(results) != 1 or len(results[0]) != 1:
+        log.error('api_string_search_choices: SQL failure: %s', sql)
+        ret = Http404('Bad SQL')
+        exit_api_call(api_code, ret)
+        raise ret
 
-    results = [x[0] for x in results]
-    if partial_query:
-        results = [x.replace(partial_query, '<b>'+partial_query+'</b>')
-                   for x in results]
+    final_results = None
 
-    ret = json_response({'choices': results})
+    do_simple_search = False
+    count = int(results[0][0])
+    if count >= settings.STRINGCHOICE_FULL_SEARCH_COUNT_THRESHOLD:
+        do_simple_search = True
+
+    if not do_simple_search:
+        max_time = settings.STRINGCHOICE_FULL_SEARCH_TIME_THRESHOLD
+        sql = f'SELECT /*+ MAX_EXECUTION_TIME({max_time}) */'
+        sql += ' DISTINCT ' + quoted_param_qualified_name
+        sql += ' FROM '+quoted_table_name
+        # The cache table is an INNER JOIN because we only want opus_ids
+        # that appear in the cache table to cause result rows
+        sql += ' INNER JOIN '+connection.ops.quote_name(user_query_table)
+        sql += ' ON '+quoted_table_name+'.'
+        if param_category == 'obs_general':
+            sql += connection.ops.quote_name('id')+'='
+        else:
+            sql += connection.ops.quote_name('obs_general_id')+'='
+        sql += connection.ops.quote_name(user_query_table)+'.'
+        sql += connection.ops.quote_name('id')
+
+        sql_params = []
+        if partial_query:
+            sql += ' WHERE '
+            sql += quoted_param_qualified_name + ' LIKE %s'
+            sql_params.append('%'+partial_query+'%')
+
+        sql += ' ORDER BY '+quoted_param_qualified_name
+        sql += ' LIMIT '+str(limit)
+
+        try:
+            cursor.execute(sql, tuple(sql_params))
+        except DatabaseError as e:
+            if e.args[0] != MYSQL_EXECUTION_TIME_EXCEEDED:
+                log.error('api_string_search_choices: "%s" returned %s',
+                          sql, str(e))
+                ret = Http404('Bad SQL')
+                exit_api_call(api_code, ret)
+                raise ret
+            do_simple_search = True
+
+    if do_simple_search:
+        # Same thing but no cache table join
+        # This will give more results than we really want, but will be much
+        # faster
+        max_time = settings.STRINGCHOICE_FULL_SEARCH_TIME_THRESHOLD2
+        sql = f'SELECT /*+ MAX_EXECUTION_TIME({max_time}) */'
+        sql += ' DISTINCT ' + quoted_param_qualified_name
+        sql += ' FROM '+quoted_table_name
+
+        sql_params = []
+        if partial_query:
+            sql += ' WHERE '
+            sql += quoted_param_qualified_name + ' LIKE %s'
+            sql_params.append('%'+partial_query+'%')
+
+        sql += ' ORDER BY '+quoted_param_qualified_name
+        sql += ' LIMIT '+str(limit)
+
+        try:
+            cursor.execute(sql, tuple(sql_params))
+        except DatabaseError as e:
+            if e.args[0] != MYSQL_EXECUTION_TIME_EXCEEDED:
+                log.error('api_string_search_choices: "%s" returned %s',
+                          sql, str(e))
+                ret = Http404('Bad SQL')
+                exit_api_call(api_code, ret)
+                raise ret
+            final_results = []
+
+    if final_results is None:
+        final_results = []
+        more = True
+        while more:
+            part_results = cursor.fetchall()
+            final_results += part_results
+            more = cursor.nextset()
+
+        final_results = [x[0] for x in final_results]
+        if partial_query:
+            final_results = [x.replace(partial_query,
+                                       '<b>'+partial_query+'</b>')
+                             for x in final_results]
+
+    ret = json_response({'choices': final_results,
+                         'full_search': do_simple_search})
     exit_api_call(api_code, ret)
     return ret
 
