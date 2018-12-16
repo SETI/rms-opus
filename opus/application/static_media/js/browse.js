@@ -368,7 +368,7 @@ var o_browse = {
             // update the data table w/the new columns
             if (!o_utils.areObjectsEqual(opus.prefs.cols, currentSelectedColumns)) {
                 o_hash.updateHash();
-                o_browse.loadBrowseData(last_page_drawn.gallery);
+                o_browse.loadBrowseData(opus.last_page_drawn.gallery);
                 currentSelectedColumns = opus.prefs.cols.slice();
             }
         });
@@ -412,11 +412,8 @@ var o_browse = {
 
 
         // removes chosen column with X
-        $('.column_chooser').on("click",'.chosen_column_close', function() {
+        $('#columnChooser .selectedColumns').on("click", 'li .unselect', function() {
             let slug = $(this).parent().attr("id").split('__')[1];
-            let checkmark = $('.all_columns .' + slug).find('i').first();
-
-            checkmark.hide();
 
             if ($.inArray(slug,opus.prefs['cols']) > -1) {
                 // slug had been checked, removed from the chosen
@@ -424,13 +421,6 @@ var o_browse = {
                 $('#cchoose__' + slug).fadeOut(function() {
                     $(this).remove();
                 });
-            }
-
-            // update the data table w/the new columns
-            o_hash.updateHash();
-            let pages = opus.pages_drawn.gallery;
-            for (let i in pages) {
-                o_browse.loadBrowseData(pages[i]);
             }
             return false;
         });
@@ -602,7 +592,7 @@ var o_browse = {
                 o_browse.addColumnChooserBehaviors();
 
                 // dragging to reorder the chosen
-                $( ".chosen_columns>ul").sortable({
+                $( ".selectedColumns > ul").sortable({
                     items: "li:not(.unsortable)",
                     cursor: 'move',
                     stop: function(event, ui) { o_browse.columnsDragged(this); }

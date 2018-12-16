@@ -28,11 +28,9 @@
           "></i>
 
           <!-- "remove this column" x button -->
-  				<span class = "unselect
-            {% if slug == 'opusid' %}
-              hidden
-            {% endif %}
-          ">X</span>
+          {% if slug != 'opusid' %}
+  				    <span class = "unselect">X</span>
+          {% endif %}
 
   			</li>
   		{% endfor %}

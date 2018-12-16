@@ -322,7 +322,7 @@ SLUGS_NOT_IN_DB = ('browse', 'col_chooser', 'colls_browse', 'cols', 'detail',
 PRODUCT_HTTP_PATH = 'https://pds-rings.seti.org/'
 
 # The columns selected when OPUS is first initialized
-DEFAULT_COLUMNS = 'opusid,instrumentid,planet,target,time1,observationduration'
+DEFAULT_COLUMNS = 'opusid,instrument,planet,target,time1,observationduration'
 
 # The sort order to be used if there is no order specified in the URL, or
 # the order slug has no value.

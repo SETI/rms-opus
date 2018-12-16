@@ -308,7 +308,6 @@ th.sticky-header {
 
 #columnChooser ul li {
     text-decoration:none;
-    margin:5px;
 }
 .allColumns   {
     height: 450px;
@@ -326,7 +325,7 @@ th.sticky-header {
 .selectedColumns ul li:hover{ cursor:move; }
 .selectedColumns ul li .unselect:hover{ cursor:move; }
 
-#selectedColumns .unselect {
+.selectedColumns .unselect {
     float:right;
 }
 
