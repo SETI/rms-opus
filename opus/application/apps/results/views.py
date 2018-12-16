@@ -235,7 +235,7 @@ def get_metadata(api_name, request, opus_id, fmt):
 
                 if (form_type in settings.MULT_FORM_TYPES and
                     api_name == 'api_get_metadata_v2'):
-                    mult_name = get_mult_name(param_info.param_name())
+                    mult_name = get_mult_name(param_info.param_qualified_name())
                     mult_val = results.values(mult_name)[0][mult_name]
                     result = lookup_pretty_value_for_mult(param_info, mult_val)
                 else:
@@ -737,8 +737,8 @@ def get_page(request, use_collections=None, collections_page=None, page=None,
         if not pi:
             log.error('get_page: Slug "%s" not found', slug)
             return none_return
-        column = pi.param_name()
-        table = column.split('.')[0]
+        column = pi.param_qualified_name()
+        table = pi.category_name
         if column.endswith('.opus_id'):
             # opus_id can be displayed from anywhere, but for consistency force
             # it to come from obs_general, since that's the master list.
@@ -751,7 +751,7 @@ def get_page(request, use_collections=None, collections_page=None, page=None,
         if form_type in settings.MULT_FORM_TYPES:
             # For a mult field, we will have to join in the mult table
             # and put the mult column here
-            mult_table = get_mult_name(pi.param_name())
+            mult_table = get_mult_name(pi.param_qualified_name())
             mult_tables.add((mult_table, table))
             column_names.append(mult_table+'.label')
         else:
@@ -1044,7 +1044,7 @@ def _get_metadata_by_slugs(request, opus_id, slugs, fmt, use_param_names):
             if not results:
                 result = 'N/A'
             elif form_type in settings.MULT_FORM_TYPES and not use_param_names:
-                mult_name = get_mult_name(param_info.param_name())
+                mult_name = get_mult_name(param_info.param_qualified_name())
                 mult_val = results.values(mult_name)[0][mult_name]
                 result = lookup_pretty_value_for_mult(param_info, mult_val)
             else:
