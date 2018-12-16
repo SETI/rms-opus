@@ -120,7 +120,7 @@ class SearchForm(forms.Form):
                      label = label,
                      widget = forms.TextInput(attrs={'class':label + ' RANGE'}),
                 )
-                if not is_single_column_range(pi.param_name()):
+                if not is_single_column_range(pi.param_qualified_name()):
                     self.fields['qtype-'+slug_no_num] = forms.CharField(
                          required=False,
                          label = '',
@@ -136,12 +136,12 @@ class SearchForm(forms.Form):
             elif form_type in settings.MULT_FORM_TYPES:
                 #self.fields[slug]= MultiStringField(forms.Field)
                 try:
-                    param_name = ParamInfo.objects.get(slug=slug).param_name()
+                    param_qualified_name = ParamInfo.objects.get(slug=slug).param_qualified_name()
                 except ParamInfo.DoesNotExist:
-                    param_name = ParamInfo.objects.get(old_slug=slug).param_name()
+                    param_qualified_name = ParamInfo.objects.get(old_slug=slug).param_qualified_name()
                 except ParamInfo.DoesNotExist:
                     continue # XXX
-                mult_param = get_mult_name(param_name)
+                mult_param = get_mult_name(param_qualified_name)
                 model      = apps.get_model('search',mult_param.title().replace('_',''))
 
                 #grouped mult fields:
@@ -150,7 +150,7 @@ class SearchForm(forms.Form):
                 else:
                     choices = [(mult.label, mult.label) for mult in model.objects.filter(display='Y').order_by('disp_order')]
 
-                if param_name == 'obs_surface_geometry.target_name':
+                if param_qualified_name == 'obs_surface_geometry.target_name':
                     self.fields[slug] = forms.ChoiceField(
                             # label = ParamInfo.objects.get(slug=slug).label,
                             label = '',

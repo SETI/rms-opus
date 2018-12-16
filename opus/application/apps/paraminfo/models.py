@@ -35,7 +35,7 @@ class ParamInfo(models.Model):
     def __unicode__(self):
         return u"%s" % self.name
 
-    def param_name(self):
+    def param_qualified_name(self):
         return self.category_name + '.' + self.name
 
     def get_tooltip(self):

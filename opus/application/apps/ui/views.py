@@ -171,7 +171,7 @@ def api_get_widget(request, **kwargs):
 
     (form_type, form_type_func,
      form_type_format) = parse_form_type(param_info.form_type)
-    param_name = param_info.param_name()
+    param_qualified_name = param_info.param_qualified_name()
 
     dictionary = param_info.get_tooltip()
     form_vals = {slug: None}
@@ -191,12 +191,12 @@ def api_get_widget(request, **kwargs):
         auto_id = False
 
         slug_no_num = strip_numeric_suffix(slug)
-        param_name_no_num = strip_numeric_suffix(param_name)
+        param_qualified_name_no_num = strip_numeric_suffix(param_qualified_name)
 
         slug1 = slug_no_num+'1'
         slug2 = slug_no_num+'2'
-        param1 = param_name_no_num+'1'
-        param2 = param_name_no_num+'2'
+        param1 = param_qualified_name_no_num+'1'
+        param2 = param_qualified_name_no_num+'2'
 
         form_vals = {slug1: None, slug2: None}
 
@@ -258,9 +258,9 @@ def api_get_widget(request, **kwargs):
 
     elif form_type == 'STRING':
         auto_id = False
-        if param_name in selections:
+        if param_qualified_name in selections:
             key = 0
-            for value in selections[param_name]:
+            for value in selections[param_qualified_name]:
                 form_vals[slug] = value
                 qtypes = request.GET.get('qtype-' + slug, False)
                 if qtypes:
@@ -285,10 +285,10 @@ def api_get_widget(request, **kwargs):
     elif form_type in settings.MULT_FORM_TYPES:
         values = None
         form_vals = {slug: None}
-        if param_name in selections:
-            values = selections[param_name]
+        if param_qualified_name in selections:
+            values = selections[param_qualified_name]
         # determine if this mult param has a grouping field (see doc/group_widgets.md for howto on grouping fields)
-        mult_param = get_mult_name(param_name)
+        mult_param = get_mult_name(param_qualified_name)
         model = apps.get_model('search',mult_param.title().replace('_',''))
 
         if values is not None:
@@ -305,7 +305,7 @@ def api_get_widget(request, **kwargs):
 
         try:
             grouping = model.objects.distinct().values('grouping')
-            grouping_table = 'grouping_' + param_name.split('.')[1]
+            grouping_table = 'grouping_' + param_qualified_name.split('.')[1]
             grouping_model = apps.get_model('metadata',grouping_table.title().replace('_',''))
             for group_info in grouping_model.objects.order_by('disp_order'):
                 gvalue = group_info.value
@@ -325,8 +325,8 @@ def api_get_widget(request, **kwargs):
             form = SearchForm(form_vals, auto_id=auto_id).as_ul()
 
     else:  # all other form types
-        if param_name in selections:
-            form_vals = {slug:selections[param_name]}
+        if param_qualified_name in selections:
+            form_vals = {slug:selections[param_qualified_name]}
         form = SearchForm(form_vals, auto_id=auto_id).as_ul()
 
     param_info = get_param_info_by_slug(slug)

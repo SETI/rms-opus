@@ -275,9 +275,9 @@ def convert_ring_obs_id_to_opus_id(ring_obs_id):
 
     return ring_obs_id
 
-def get_mult_name(param_name):
+def get_mult_name(param_qualified_name):
     "Returns mult widget foreign key table name"
-    return 'mult_' + '_'.join(param_name.split('.'))
+    return 'mult_' + '_'.join(param_qualified_name.split('.'))
 
 def format_metadata_number(val, form_type_format):
     if val is None:

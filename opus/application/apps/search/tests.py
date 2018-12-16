@@ -57,11 +57,30 @@ class searchTests(TestCase):
     def test__api_normalize_input_no_get(self):
         "api_normalize_input: no GET"
         c = Client()
-        response = c.get('/api/meta/result_count.json')
+        response = c.get('/__api/normalizeinput.json')
         request = response.wsgi_request
         request.GET = None
         with self.assertRaises(Http404):
             api_normalize_input(request)
+
+
+            ########################################################
+            ######### api_string_search_choices UNIT TESTS #########
+            ########################################################
+
+    def test__api_string_search_choices_no_request(self):
+        "api_string_search_choices: no request"
+        with self.assertRaises(Http404):
+            api_string_search_choices(None, 'slug')
+
+    def test__api_string_search_choices_no_get(self):
+        "api_string_search_choices: no GET"
+        c = Client()
+        response = c.get('/__api/stringsearchchoices/volumeid.json')
+        request = response.wsgi_request
+        request.GET = None
+        with self.assertRaises(Http404):
+            api_string_search_choices(request, 'slug')
 
 
             ###################################################

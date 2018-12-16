@@ -43,9 +43,8 @@ def lookup_pretty_value_for_mult(param_info, value):
     if form_type not in settings.MULT_FORM_TYPES:
         return None
 
-    param_name = param_info.param_name()
-    mult_param = get_mult_name(param_name)
-    model      = apps.get_model('search', mult_param.title().replace('_',''))
+    mult_param = get_mult_name(param_info.param_qualified_name())
+    model = apps.get_model('search', mult_param.title().replace('_',''))
 
     results = model.objects.filter(id=value).values('label')
     if not results:
