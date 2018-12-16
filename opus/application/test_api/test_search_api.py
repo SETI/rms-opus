@@ -31,10 +31,19 @@ class ApiSearchTests(TestCase):
 
     # disable error logging and trace output before test
     def setUp(self):
+        self.search_count_threshold = settings.STRINGCHOICE_FULL_SEARCH_COUNT_THRESHOLD
+        self.search_time_threshold = settings.STRINGCHOICE_FULL_SEARCH_TIME_THRESHOLD
+        self.search_time_threshold2 = settings.STRINGCHOICE_FULL_SEARCH_TIME_THRESHOLD2
+        self.search_count_threshold = 1000000000
+        self.search_time_threshold = 1000000
+        self.search_time_threshold2 = 1000000
         logging.disable(logging.ERROR)
 
     # enable error logging and trace output after test
-    def teardown(self):
+    def tearDown(self):
+        settings.STRINGCHOICE_FULL_SEARCH_COUNT_THRESHOLD = self.search_count_threshold
+        settings.STRINGCHOICE_FULL_SEARCH_TIME_THRESHOLD = self.search_time_threshold
+        settings.STRINGCHOICE_FULL_SEARCH_TIME_THRESHOLD2 = self.search_time_threshold2
         logging.disable(logging.NOTSET)
 
     def _get_response(self, url):
@@ -325,71 +334,129 @@ class ApiSearchTests(TestCase):
     def test__api_stringsearchchoices_volumeid_none(self):
         "/api/stringsearchchoices: volumeid none"
         url = '/opus/__api/stringsearchchoices/volumeid.json?volumeid=BAD_VOLUME'
-        expected = {'choices': []}
+        expected = {'choices': [],
+                    'full_search': False}
         self._run_json_equal(url, expected)
 
     def test__api_stringsearchchoices_volumeid_GO_0017(self):
         "/api/stringsearchchoices: volumeid GO_0017"
         url = '/opus/__api/stringsearchchoices/volumeid.json?volumeid=GO_0017'
-        expected = {'choices': ['<b>GO_0017</b>']}
+        expected = {'choices': ['<b>GO_0017</b>'],
+                    'full_search': False}
         self._run_json_equal(url, expected)
 
     def test__api_stringsearchchoices_volumeid_O_0017(self):
         "/api/stringsearchchoices: volumeid O_0017"
         url = '/opus/__api/stringsearchchoices/volumeid.json?volumeid=O_0017'
-        expected = {'choices': ['G<b>O_0017</b>']}
+        expected = {'choices': ['G<b>O_0017</b>'],
+                    'full_search': False}
         self._run_json_equal(url, expected)
 
     def test__api_stringsearchchoices_volumeid_O_0017(self):
         "/api/stringsearchchoices: volumeid O_0017"
         url = '/opus/__api/stringsearchchoices/volumeid.json?volumeid=O_0017'
-        expected = {'choices': ['G<b>O_0017</b>']}
+        expected = {'choices': ['G<b>O_0017</b>'],
+                    'full_search': False}
         self._run_json_equal(url, expected)
 
     def test__api_stringsearchchoices_volumeid_COISS_2002(self):
         "/api/stringsearchchoices: volumeid COISS_2002"
         url = '/opus/__api/stringsearchchoices/volumeid.json?volumeid=COISS_2002'
-        expected = {'choices': ['<b>COISS_2002</b>']}
+        expected = {'choices': ['<b>COISS_2002</b>'],
+                    'full_search': False}
         self._run_json_equal(url, expected)
 
     def test__api_stringsearchchoices_datasetid_empty_COISS_2002(self):
         "/api/stringsearchchoices: datasetid empty volumeid COISS_2002"
         url = '/opus/__api/stringsearchchoices/datasetid.json?volumeid=COISS_2002&datasetid='
-        expected = {'choices': ['CO-S-ISSNA/ISSWA-2-EDR-V1.0']}
+        expected = {'choices': ['CO-S-ISSNA/ISSWA-2-EDR-V1.0'],
+                    'full_search': False}
         self._run_json_equal(url, expected)
 
     def test__api_stringsearchchoices_datasetid_empty2_COISS_2002(self):
         "/api/stringsearchchoices: datasetid empty2 volumeid COISS_2002"
         url = '/opus/__api/stringsearchchoices/datasetid.json?volumeid=COISS_2002'
-        expected = {'choices': ['CO-S-ISSNA/ISSWA-2-EDR-V1.0']}
+        expected = {'choices': ['CO-S-ISSNA/ISSWA-2-EDR-V1.0'],
+                    'full_search': False}
         self._run_json_equal(url, expected)
 
     def test__api_stringsearchchoices_datasetid_begin_COISS_2002(self):
         "/api/stringsearchchoices: datasetid CO-S volumeid COISS_2002"
         url = '/opus/__api/stringsearchchoices/datasetid.json?volumeid=COISS_2002&datasetid=CO-S'
-        expected = {'choices': ['<b>CO-S</b>-ISSNA/ISSWA-2-EDR-V1.0']}
+        expected = {'choices': ['<b>CO-S</b>-ISSNA/ISSWA-2-EDR-V1.0'],
+                    'full_search': False}
         self._run_json_equal(url, expected)
 
     def test__api_stringsearchchoices_datasetid_middle_COISS_2002(self):
         "/api/stringsearchchoices: datasetid ISSWA volumeid COISS_2002"
         url = '/opus/__api/stringsearchchoices/datasetid.json?volumeid=COISS_2002&datasetid=ISSWA'
-        expected = {'choices': ['CO-S-ISSNA/<b>ISSWA</b>-2-EDR-V1.0']}
+        expected = {'choices': ['CO-S-ISSNA/<b>ISSWA</b>-2-EDR-V1.0'],
+                    'full_search': False}
         self._run_json_equal(url, expected)
 
     def test__api_stringsearchchoices_datasetid_end_COISS_2002(self):
         "/api/stringsearchchoices: datasetid V1.0 volumeid COISS_2002"
         url = '/opus/__api/stringsearchchoices/datasetid.json?volumeid=COISS_2002&datasetid=V1.0'
-        expected = {'choices': ['CO-S-ISSNA/ISSWA-2-EDR-<b>V1.0</b>']}
+        expected = {'choices': ['CO-S-ISSNA/ISSWA-2-EDR-<b>V1.0</b>'],
+                    'full_search': False}
         self._run_json_equal(url, expected)
 
     def test__api_stringsearchchoices_productid_14609_COISS_2002(self):
         "/api/stringsearchchoices: productid 14609 volumeid COISS_2002"
         url = '/opus/__api/stringsearchchoices/productid.json?volumeid=COISS_2002&productid=14609'
-        expected = {'choices': ['1_N<b>14609</b>60653.122', '1_N<b>14609</b>60868.118', '1_N<b>14609</b>60908.120', '1_N<b>14609</b>60944.118', '1_N<b>14609</b>60992.120', '1_N<b>14609</b>61026.118', '1_N<b>14609</b>61061.118', '1_N<b>14609</b>61193.118', '1_N<b>14609</b>62279.118', '1_N<b>14609</b>62327.120', '1_N<b>14609</b>62415.121', '1_N<b>14609</b>64003.118', '1_N<b>14609</b>64043.120', '1_N<b>14609</b>65631.118', '1_N<b>14609</b>65679.120', '1_N<b>14609</b>65767.121', '1_N<b>14609</b>66953.122', '1_N<b>14609</b>67168.118', '1_N<b>14609</b>67208.120', '1_N<b>14609</b>67244.118', '1_N<b>14609</b>67292.120', '1_N<b>14609</b>67326.118', '1_N<b>14609</b>67361.118', '1_N<b>14609</b>67493.118', '1_N<b>14609</b>69019.122', '1_N<b>14609</b>69979.122', '1_N<b>14609</b>70939.122', '1_N<b>14609</b>71899.122', '1_N<b>14609</b>73253.122', '1_N<b>14609</b>73468.118', '1_N<b>14609</b>73508.120', '1_N<b>14609</b>73544.118', '1_N<b>14609</b>73592.120', '1_N<b>14609</b>73626.118', '1_N<b>14609</b>73661.118', '1_N<b>14609</b>73793.118', '1_N<b>14609</b>74303.122', '1_N<b>14609</b>74933.122', '1_N<b>14609</b>75548.122', '1_N<b>14609</b>79553.122', '1_N<b>14609</b>79768.118', '1_N<b>14609</b>79808.120', '1_N<b>14609</b>79844.118', '1_N<b>14609</b>79892.120', '1_N<b>14609</b>79926.118', '1_N<b>14609</b>79961.118', '1_N<b>14609</b>80093.118', '1_N<b>14609</b>80638.122', '1_N<b>14609</b>80902.123', '1_N<b>14609</b>80958.125', '1_N<b>14609</b>81222.126', '1_N<b>14609</b>81262.127', '1_N<b>14609</b>81366.128', '1_N<b>14609</b>81733.118', '1_N<b>14609</b>81997.120', '1_N<b>14609</b>82134.118', '1_N<b>14609</b>82398.120', '1_N<b>14609</b>82871.118', '1_N<b>14609</b>83007.120', '1_N<b>14609</b>83208.118', '1_N<b>14609</b>83728.120', '1_N<b>14609</b>84033.118', '1_N<b>14609</b>84297.120', '1_N<b>14609</b>84498.118', '1_N<b>14609</b>84762.120', '1_N<b>14609</b>84899.118', '1_N<b>14609</b>85164.118', '1_N<b>14609</b>85853.122', '1_N<b>14609</b>86068.118', '1_N<b>14609</b>86108.120', '1_N<b>14609</b>86144.118', '1_N<b>14609</b>86192.120', '1_N<b>14609</b>86226.118', '1_N<b>14609</b>86261.118', '1_N<b>14609</b>86393.118', '1_N<b>14609</b>88537.122']}
+        expected = {'choices': ['1_N<b>14609</b>60653.122', '1_N<b>14609</b>60868.118', '1_N<b>14609</b>60908.120', '1_N<b>14609</b>60944.118', '1_N<b>14609</b>60992.120', '1_N<b>14609</b>61026.118', '1_N<b>14609</b>61061.118', '1_N<b>14609</b>61193.118', '1_N<b>14609</b>62279.118', '1_N<b>14609</b>62327.120', '1_N<b>14609</b>62415.121', '1_N<b>14609</b>64003.118', '1_N<b>14609</b>64043.120', '1_N<b>14609</b>65631.118', '1_N<b>14609</b>65679.120', '1_N<b>14609</b>65767.121', '1_N<b>14609</b>66953.122', '1_N<b>14609</b>67168.118', '1_N<b>14609</b>67208.120', '1_N<b>14609</b>67244.118', '1_N<b>14609</b>67292.120', '1_N<b>14609</b>67326.118', '1_N<b>14609</b>67361.118', '1_N<b>14609</b>67493.118', '1_N<b>14609</b>69019.122', '1_N<b>14609</b>69979.122', '1_N<b>14609</b>70939.122', '1_N<b>14609</b>71899.122', '1_N<b>14609</b>73253.122', '1_N<b>14609</b>73468.118', '1_N<b>14609</b>73508.120', '1_N<b>14609</b>73544.118', '1_N<b>14609</b>73592.120', '1_N<b>14609</b>73626.118', '1_N<b>14609</b>73661.118', '1_N<b>14609</b>73793.118', '1_N<b>14609</b>74303.122', '1_N<b>14609</b>74933.122', '1_N<b>14609</b>75548.122', '1_N<b>14609</b>79553.122', '1_N<b>14609</b>79768.118', '1_N<b>14609</b>79808.120', '1_N<b>14609</b>79844.118', '1_N<b>14609</b>79892.120', '1_N<b>14609</b>79926.118', '1_N<b>14609</b>79961.118', '1_N<b>14609</b>80093.118', '1_N<b>14609</b>80638.122', '1_N<b>14609</b>80902.123', '1_N<b>14609</b>80958.125', '1_N<b>14609</b>81222.126', '1_N<b>14609</b>81262.127', '1_N<b>14609</b>81366.128', '1_N<b>14609</b>81733.118', '1_N<b>14609</b>81997.120', '1_N<b>14609</b>82134.118', '1_N<b>14609</b>82398.120', '1_N<b>14609</b>82871.118', '1_N<b>14609</b>83007.120', '1_N<b>14609</b>83208.118', '1_N<b>14609</b>83728.120', '1_N<b>14609</b>84033.118', '1_N<b>14609</b>84297.120', '1_N<b>14609</b>84498.118', '1_N<b>14609</b>84762.120', '1_N<b>14609</b>84899.118', '1_N<b>14609</b>85164.118', '1_N<b>14609</b>85853.122', '1_N<b>14609</b>86068.118', '1_N<b>14609</b>86108.120', '1_N<b>14609</b>86144.118', '1_N<b>14609</b>86192.120', '1_N<b>14609</b>86226.118', '1_N<b>14609</b>86261.118', '1_N<b>14609</b>86393.118', '1_N<b>14609</b>88537.122'],
+                    'full_search': False}
         self._run_json_equal(url, expected)
 
     def test__api_stringsearchchoices_productid_14609_COISS_2002_limit3(self):
         "/api/stringsearchchoices: productid 14609 volumeid COISS_2002 limit 3"
         url = '/opus/__api/stringsearchchoices/productid.json?volumeid=COISS_2002&productid=14609&limit=3'
-        expected = {'choices': ['1_N<b>14609</b>60653.122', '1_N<b>14609</b>60868.118', '1_N<b>14609</b>60908.120']}
+        expected = {'choices': ['1_N<b>14609</b>60653.122', '1_N<b>14609</b>60868.118', '1_N<b>14609</b>60908.120'],
+                    'full_search': False}
+        self._run_json_equal(url, expected)
+
+    def test__api_stringsearchchoices_volumeid_002_COISS(self):
+        "/api/stringsearchchoices: volumeid 002 instrumentid COISS"
+        url = '/opus/__api/stringsearchchoices/volumeid.json?volumeid=002&instrumentid=Cassini+ISS'
+        expected = {'choices': ['COISS_2<b>002</b>'],
+                    'full_search': False}
+        self._run_json_equal(url, expected)
+
+    def test__api_stringsearchchoices_volumeid_002_COUVIS(self):
+        "/api/stringsearchchoices: volumeid 002 instrumentid COUVIS"
+        url = '/opus/__api/stringsearchchoices/volumeid.json?volumeid=002&instrumentid=Cassini+UVIS'
+        expected = {'choices': ['COUVIS_0<b>002</b>'],
+                    'full_search': False}
+        self._run_json_equal(url, expected)
+
+    def test__api_stringsearchchoices_volumeid_002_COISS_bigcache(self):
+        "/api/stringsearchchoices: volumeid 002 instrumentid COISS bigcache"
+        settings.STRINGCHOICE_FULL_SEARCH_COUNT_THRESHOLD = 1
+        url = '/opus/__api/stringsearchchoices/volumeid.json?volumeid=002&instrumentid=Cassini+ISS'
+        expected = {'choices': ['COISS_2<b>002</b>', 'COUVIS_0<b>002</b>'],
+                    'full_search': True}
+        self._run_json_equal(url, expected)
+
+    def test__api_stringsearchchoices_volumeid_002_COUVIS_bigcache(self):
+        "/api/stringsearchchoices: volumeid 002 instrumentid COUVIS bigcache"
+        settings.STRINGCHOICE_FULL_SEARCH_COUNT_THRESHOLD = 1
+        url = '/opus/__api/stringsearchchoices/volumeid.json?volumeid=002&instrumentid=Cassini+UVIS'
+        expected = {'choices': ['COISS_2<b>002</b>', 'COUVIS_0<b>002</b>'],
+                    'full_search': True}
+        self._run_json_equal(url, expected)
+
+    def test__api_stringsearchchoices_volumeid_002_COISS_timeout(self):
+        "/api/stringsearchchoices: volumeid 002 instrumentid COISS timeout"
+        settings.STRINGCHOICE_FULL_SEARCH_TIME_THRESHOLD = 1
+        url = '/opus/__api/stringsearchchoices/volumeid.json?volumeid=002&instrumentid=Cassini+ISS'
+        expected = {'choices': ['COISS_2<b>002</b>', 'COUVIS_0<b>002</b>'],
+                    'full_search': True}
+        self._run_json_equal(url, expected)
+
+    def test__api_stringsearchchoices_volumeid_002_COUVIS_timeout(self):
+        "/api/stringsearchchoices: volumeid 002 instrumentid COUVIS timeout"
+        settings.STRINGCHOICE_FULL_SEARCH_TIME_THRESHOLD = 1
+        url = '/opus/__api/stringsearchchoices/volumeid.json?volumeid=002&instrumentid=Cassini+UVIS'
+        expected = {'choices': ['COISS_2<b>002</b>', 'COUVIS_0<b>002</b>'],
+                    'full_search': True}
         self._run_json_equal(url, expected)

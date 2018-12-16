@@ -25,7 +25,7 @@ class APIResultCountsTests(TestCase):
         logging.disable(logging.DEBUG)
 
     # enable error logging and trace output after test
-    def teardown(self):
+    def tearDown(self):
         sys.tracebacklimit = 1000 # default: 1000
         logging.disable(logging.NOTSET)
 

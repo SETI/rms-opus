@@ -13,6 +13,7 @@ import settings
 
 MYSQL_TABLE_NOT_EXISTS = 1146
 MYSQL_TABLE_ALREADY_EXISTS = 1050
+MYSQL_EXECUTION_TIME_EXCEEDED = 3024
 
 def table_model_from_name(table_name):
     "Given a table name (obs_pds) return the Django model class (ObsPds)"

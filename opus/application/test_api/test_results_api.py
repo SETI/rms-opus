@@ -48,7 +48,7 @@ class ApiResultsTests(TestCase):
         logging.disable(logging.ERROR)
 
     # enable error logging and trace output after test
-    def teardown(self):
+    def tearDown(self):
         logging.disable(logging.NOTSET)
 
     def _get_response(self, url):

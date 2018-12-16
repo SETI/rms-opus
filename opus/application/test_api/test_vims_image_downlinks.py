@@ -22,7 +22,7 @@ class ApiVimsDownlinksTests(TestCase):
     #     logging.disable(logging.CRITICAL)
     #
     # # enable error logging and trace output after test
-    # def teardown(self):
+    # def tearDown(self):
     #     sys.tracebacklimit = 1000 # default: 1000
     #     logging.disable(logging.NOTSET)
 

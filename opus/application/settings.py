@@ -353,6 +353,13 @@ MULT_FORM_TYPES  = ('GROUP','TARGETS')
 DEFAULT_PAGE_LIMIT = 100
 DEFAULT_STRINGCHOICE_LIMIT = 100
 
+# More than this many rows in the cache table -> don't join it
+STRINGCHOICE_FULL_SEARCH_COUNT_THRESHOLD = 100000
+# Timeout for SELECT when joined with cache table
+STRINGCHOICE_FULL_SEARCH_TIME_THRESHOLD = 500 # ms
+# Timeout for SELECT When not joined with cache table
+STRINGCHOICE_FULL_SEARCH_TIME_THRESHOLD2 = 500 # ms
+
 THUMBNAIL_NOT_FOUND = 'https://tools.pds-rings.seti.org/static_media/img/thumbnail_not_found.png'
 
 MAX_DOWNLOAD_SIZE = 3*1024*1024*1024 # 3 gig max for any single download
