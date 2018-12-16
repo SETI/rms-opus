@@ -312,6 +312,16 @@ class ApiSearchTests(TestCase):
         url = '/opus/__api/stringsearchchoices/volumeid.json&limit=1000000000001'
         self._run_status_equal(url, 404)
 
+    def test__api_stringsearchchoices_bad_search(self):
+        "/api/stringsearchchoices: bad search"
+        url = '/opus/__api/stringsearchchoices/volumeid.json?fredethel=2'
+        self._run_status_equal(url, 404)
+
+    def test__api_stringsearchchoices_bad_search2(self):
+        "/api/stringsearchchoices: bad search2"
+        url = '/opus/__api/stringsearchchoices/volumeid.json?missionid=A'
+        self._run_status_equal(url, 404)
+
     def test__api_stringsearchchoices_volumeid_none(self):
         "/api/stringsearchchoices: volumeid none"
         url = '/opus/__api/stringsearchchoices/volumeid.json?volumeid=BAD_VOLUME'

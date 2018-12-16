@@ -138,6 +138,13 @@ def api_string_search_choices(request, slug):
 
     user_query_table = get_user_query_table(selections, extras,
                                             api_code=api_code)
+    if not user_query_table:
+        log.error('api_string_search_choices: get_user_query_table failed '
+                  +'*** Selections %s *** Extras %s',
+                  str(selections), str(extras))
+        ret = Http404('Bad search')
+        exit_api_call(api_code, ret)
+        raise ret
 
     limit = request.GET.get('limit', settings.DEFAULT_STRINGCHOICE_LIMIT)
     try:
