@@ -13,7 +13,7 @@ class toolsTests(TestCase):
             ###############################################
 
     def test__get_pds_products_ib4v21gc_opusid_url(self):
-        "get_pds_products: No versions opusid hst-11559-wfc3-ib4v21gc url"
+        "get_pds_products: no versions opusid hst-11559-wfc3-ib4v21gc url"
         opus_id = 'hst-11559-wfc3-ib4v21gc'
         ret = get_pds_products(opus_id)
         expected = OrderedDict([('hst-11559-wfc3-ib4v21gc', OrderedDict([('Current', OrderedDict([(('browse', 10, 'browse-thumb', 'Browse Image (thumbnail)'), [settings.PRODUCT_HTTP_PATH+'holdings/previews/HSTIx_xxxx/HSTI1_1559/DATA/VISIT_21/IB4V21GCQ_thumb.jpg']), (('browse', 20, 'browse-small', 'Browse Image (small)'), [settings.PRODUCT_HTTP_PATH+'holdings/previews/HSTIx_xxxx/HSTI1_1559/DATA/VISIT_21/IB4V21GCQ_small.jpg']), (('browse', 30, 'browse-medium', 'Browse Image (medium)'), [settings.PRODUCT_HTTP_PATH+'holdings/previews/HSTIx_xxxx/HSTI1_1559/DATA/VISIT_21/IB4V21GCQ_med.jpg']), (('browse', 40, 'browse-full', 'Browse Image (full-size)'), [settings.PRODUCT_HTTP_PATH+'holdings/previews/HSTIx_xxxx/HSTI1_1559/DATA/VISIT_21/IB4V21GCQ_full.jpg']), (('HST', 10, 'hst-text', 'FITS Header Text'), [settings.PRODUCT_HTTP_PATH+'holdings/volumes/HSTIx_xxxx/HSTI1_1559/DATA/VISIT_21/IB4V21GCQ.ASC', settings.PRODUCT_HTTP_PATH+'holdings/volumes/HSTIx_xxxx/HSTI1_1559/DATA/VISIT_21/IB4V21GCQ.LBL']), (('HST', 20, 'hst-tiff', 'Raw Data Preview (lossless)'), [settings.PRODUCT_HTTP_PATH+'holdings/volumes/HSTIx_xxxx/HSTI1_1559/DATA/VISIT_21/IB4V21GCQ_RAW.TIF', settings.PRODUCT_HTTP_PATH+'holdings/volumes/HSTIx_xxxx/HSTI1_1559/DATA/VISIT_21/IB4V21GCQ.LBL']), (('HST', 30, 'hst-raw', 'Raw Data Preview'), [settings.PRODUCT_HTTP_PATH+'holdings/volumes/HSTIx_xxxx/HSTI1_1559/DATA/VISIT_21/IB4V21GCQ_RAW.JPG', settings.PRODUCT_HTTP_PATH+'holdings/volumes/HSTIx_xxxx/HSTI1_1559/DATA/VISIT_21/IB4V21GCQ.LBL']), (('HST', 40, 'hst-calib', 'Calibrated Data Preview'), [settings.PRODUCT_HTTP_PATH+'holdings/volumes/HSTIx_xxxx/HSTI1_1559/DATA/VISIT_21/IB4V21GCQ_FLT.JPG', settings.PRODUCT_HTTP_PATH+'holdings/volumes/HSTIx_xxxx/HSTI1_1559/DATA/VISIT_21/IB4V21GCQ.LBL']), (('HST', 50, 'hst-1d-spectrum', 'Line Spectrum Preview'), [settings.PRODUCT_HTTP_PATH+'holdings/volumes/HSTIx_xxxx/HSTI1_1559/DATA/VISIT_21/IB4V21GCQ_DRZ.JPG', settings.PRODUCT_HTTP_PATH+'holdings/volumes/HSTIx_xxxx/HSTI1_1559/DATA/VISIT_21/IB4V21GCQ.LBL'])]))]))])
@@ -24,7 +24,7 @@ class toolsTests(TestCase):
         self.assertEqual(dict(ret), dict(expected))
 
     def test__get_pds_products_ib4v21gc_filespec_url(self):
-        "get_pds_products: No versions filespec hst-11559-wfc3-ib4v21gc url"
+        "get_pds_products: no versions filespec hst-11559-wfc3-ib4v21gc url"
         opus_id = 'hst-11559-wfc3-ib4v21gc'
         filespec = 'HSTI1_1559/DATA/VISIT_21/IB4V21GCQ.LBL'
         ret = get_pds_products(opus_id_list=opus_id, file_specs=filespec)
@@ -59,7 +59,7 @@ class toolsTests(TestCase):
         self.assertEqual(dict(ret), dict(expected))
 
     def test__get_pds_products_ib4v21gc_opusid_path(self):
-        "get_pds_products: No versions opusid hst-11559-wfc3-ib4v21gc path"
+        "get_pds_products: no versions opusid hst-11559-wfc3-ib4v21gc path"
         opus_id = 'hst-11559-wfc3-ib4v21gc'
         ret = get_pds_products(opus_id, loc_type='path')
         expected = OrderedDict([('hst-11559-wfc3-ib4v21gc', OrderedDict([('Current', OrderedDict([(('browse', 10, 'browse-thumb', 'Browse Image (thumbnail)'), [settings.PDS_DATA_DIR+'/previews/HSTIx_xxxx/HSTI1_1559/DATA/VISIT_21/IB4V21GCQ_thumb.jpg']), (('browse', 20, 'browse-small', 'Browse Image (small)'), [settings.PDS_DATA_DIR+'/previews/HSTIx_xxxx/HSTI1_1559/DATA/VISIT_21/IB4V21GCQ_small.jpg']), (('browse', 30, 'browse-medium', 'Browse Image (medium)'), [settings.PDS_DATA_DIR+'/previews/HSTIx_xxxx/HSTI1_1559/DATA/VISIT_21/IB4V21GCQ_med.jpg']), (('browse', 40, 'browse-full', 'Browse Image (full-size)'), [settings.PDS_DATA_DIR+'/previews/HSTIx_xxxx/HSTI1_1559/DATA/VISIT_21/IB4V21GCQ_full.jpg']), (('HST', 10, 'hst-text', 'FITS Header Text'), [settings.PDS_DATA_DIR+'/volumes/HSTIx_xxxx/HSTI1_1559/DATA/VISIT_21/IB4V21GCQ.ASC', settings.PDS_DATA_DIR+'/volumes/HSTIx_xxxx/HSTI1_1559/DATA/VISIT_21/IB4V21GCQ.LBL']), (('HST', 20, 'hst-tiff', 'Raw Data Preview (lossless)'), [settings.PDS_DATA_DIR+'/volumes/HSTIx_xxxx/HSTI1_1559/DATA/VISIT_21/IB4V21GCQ_RAW.TIF', settings.PDS_DATA_DIR+'/volumes/HSTIx_xxxx/HSTI1_1559/DATA/VISIT_21/IB4V21GCQ.LBL']), (('HST', 30, 'hst-raw', 'Raw Data Preview'), [settings.PDS_DATA_DIR+'/volumes/HSTIx_xxxx/HSTI1_1559/DATA/VISIT_21/IB4V21GCQ_RAW.JPG', settings.PDS_DATA_DIR+'/volumes/HSTIx_xxxx/HSTI1_1559/DATA/VISIT_21/IB4V21GCQ.LBL']), (('HST', 40, 'hst-calib', 'Calibrated Data Preview'), [settings.PDS_DATA_DIR+'/volumes/HSTIx_xxxx/HSTI1_1559/DATA/VISIT_21/IB4V21GCQ_FLT.JPG', settings.PDS_DATA_DIR+'/volumes/HSTIx_xxxx/HSTI1_1559/DATA/VISIT_21/IB4V21GCQ.LBL']), (('HST', 50, 'hst-1d-spectrum', 'Line Spectrum Preview'), [settings.PDS_DATA_DIR+'/volumes/HSTIx_xxxx/HSTI1_1559/DATA/VISIT_21/IB4V21GCQ_DRZ.JPG', settings.PDS_DATA_DIR+'/volumes/HSTIx_xxxx/HSTI1_1559/DATA/VISIT_21/IB4V21GCQ.LBL'])]))]))])
@@ -70,7 +70,7 @@ class toolsTests(TestCase):
         self.assertEqual(dict(ret), dict(expected))
 
     def test__get_pds_products_ib4v21gc_filespec_path(self):
-        "get_pds_products: No versions filespec hst-11559-wfc3-ib4v21gc path"
+        "get_pds_products: no versions filespec hst-11559-wfc3-ib4v21gc path"
         opus_id = 'hst-11559-wfc3-ib4v21gc'
         filespec = 'HSTI1_1559/DATA/VISIT_21/IB4V21GCQ.LBL'
         ret = get_pds_products(opus_id_list=opus_id, file_specs=filespec,

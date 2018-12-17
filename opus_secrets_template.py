@@ -96,7 +96,9 @@ IMPORT_DEBUG_LOG_FILE = os.path.join(IMPORT_LOGFILE_DIR, 'opus_import_debug.log'
 # The main namespace in which dictionary tables live.
 # For MySQL this is the database name.
 # For PostgreSQL this is the schema name.
-DICTIONARY_SCHEMA_NAME = 'XXX'
+# Unless something really weird is changed, this should be the same as
+# OPUS_SCHEMA_NAME
+DICTIONARY_SCHEMA_NAME = OPUS_SCHEMA_NAME
 
 
 ####################################

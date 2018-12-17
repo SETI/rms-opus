@@ -3465,7 +3465,7 @@ class ObsSurfaceGeometryHyperion(models.Model):
         db_table = 'obs_surface_geometry__hyperion'
 
 
-class ObsSurfaceGeometryHyrokkin(models.Model):
+class ObsSurfaceGeometryHyrrokkin(models.Model):
     obs_general = models.ForeignKey(ObsGeneral, models.DO_NOTHING)
     opus_id = models.ForeignKey(ObsGeneral, models.DO_NOTHING, related_name='%(class)s_opus_id', db_column='opus_id')
     volume_id = models.CharField(max_length=11)
@@ -3512,7 +3512,7 @@ class ObsSurfaceGeometryHyrokkin(models.Model):
 
     class Meta:
         managed = False
-        db_table = 'obs_surface_geometry__hyrokkin'
+        db_table = 'obs_surface_geometry__hyrrokkin'
 
 
 class ObsSurfaceGeometryIapetus(models.Model):

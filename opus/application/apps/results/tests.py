@@ -70,6 +70,8 @@ class resultsTests(TestCase):
             q = 'DROP TABLE ' + row[0]
             print(q)
             cursor.execute(q)
+        cache.clear()
+        cache._cache.flush_all()  # clears memcache hopefully only on this port!
 
     def setUp(self):
         self._empty_user_searches()
