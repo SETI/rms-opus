@@ -443,8 +443,18 @@ img.preview {
     background-color: #303030; /* #383838; */
 }
 
+#collection .thumb-page {
+		padding-left: 3em;
+}
+
+#collections-sidebar {
+		padding-left: 3em;
+		padding-right: 3em;
+}
+
 .collection_details {
-    padding-left: 4em;
+		border: .3em double black;
+    padding-left: 2em;
     min-width: 28em;
 		max-width: 28em;
 }

@@ -707,10 +707,10 @@ var o_browse = {
                     o_browse.renderGallery(jsonData.data, jsonData.page_no, path);
                     o_browse.renderTable(jsonData.metadata);
 
-                    // load another page
+                    /*load another page
                     if (jsonData.page_no % 2 == 0) {
                         $('#browse .gallery-contents').infiniteScroll('loadNextPage')
-                    }
+                    }*/
                 });
                 $('#browse .gallery-contents').infiniteScroll('loadNextPage');
                 opus.gallery_begun = true;

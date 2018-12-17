@@ -107,8 +107,15 @@ var o_collections = {
         return add_to_url.join('&');
      },
 
-    // init an existing collection on page load
-    initCollection: function() {
+     adjustProductInfoHeight: function() {
+         let container_height = $(window).height()-120;
+         $("#collection .sidebar_wrapper").height(container_height);
+         $("#collection .gallery-contents").height(container_height);
+     },
+
+
+     // init an existing collection on page load
+     initCollection: function() {
         // returns any user collection saved in session
         $.ajax({ url: "/opus/__collections/status.json",
             dataType:"json",
@@ -120,7 +127,41 @@ var o_collections = {
                     $('#collection_count').html(count);
                 }
                 opus.lastCartRequestNo = parseInt(data['expected_request_no']) - 1
+                o_collections.adjustProductInfoHeight();
             }
+        });
+    },
+
+    loadCollectionData: function (page) {
+        //window.scrollTo(0,opus.browse_view_scrolls[opus.prefs.browse]);
+        page = (page == undefined ? 1 : (opus.collection_change ? 1 : page));
+
+        let base_url = "/opus/__api/images.json?";
+        let url = o_hash.getHash() + '&reqno=' + opus.lastRequestNo;
+
+        url = o_browse.updatePageInUrl(url, page);
+
+        // metadata; used for both table and gallery
+        $.getJSON(base_url + url, function(allData) {
+            o_browse.renderGallery(allData.data, allData.page_no, this.url);
+
+            if (opus.collection_change) {
+                // for infinite scroll
+                $('#collection .gallery-contents').infiniteScroll({
+                    path: o_browse.updatePageInUrl(this.url, "{{#}}"),
+                    responseType: 'text',
+                    status: '#collection .scroller-status',
+                    elementScroll: true,
+                    history: false,
+                    debug: false,
+                });
+                $('#collection .gallery-contents').on( 'load.infiniteScroll', function( event, response, path ) {
+                    let jsonData = JSON.parse( response );
+                    o_browse.renderGallery(jsonData.data, jsonData.page_no, path);
+                });
+                opus.collection_change = false;
+            }
+
         });
     },
 
@@ -141,19 +182,17 @@ var o_collections = {
                     // this div lives in the in the nav menu template
                     $('.collection_details', '#collection').hide().html(html).fadeIn();
 
-                    opus.collection_change = false;
                     if (opus.download_in_process) {
                         $('.spinner', "#collections_summary").fadeIn();
                     }
 
                     $('#colls_pages').html(opus.colls_pages);
 
-                    o_browse.getBrowseTab();
+                    o_collections.loadCollectionData();
 
                     if (zipped_files_html) {
                         $('.zipped_files', '#collection').html(zipped_files_html);
                     }
-
                 }});
         }
     },

@@ -95,7 +95,7 @@ var opus = {
 
     // collections
     collection_queue:[],
-    collection_change:false, // collection has changed since last load of collection_tab
+    collection_change:true, // collection has changed since last load of collection_tab
     addrange_clicked:false,
     addrange_min:false,
     collection_q_intrvl: false,
