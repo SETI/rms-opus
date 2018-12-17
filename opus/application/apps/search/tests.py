@@ -1326,6 +1326,7 @@ class searchTests(TestCase):
         expected_params = [4, 0, 2, 4]
         print(expected)
         print(expected_params)
+        print('NOTE: This test requires one of COISS or COVIMS to be imported before COUVIS due to a bad observation name in COUVIS!')
         self.assertEqual(sql, expected)
         self.assertEqual(params, expected_params)
 
