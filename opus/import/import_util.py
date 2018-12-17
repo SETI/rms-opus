@@ -259,7 +259,7 @@ def decode_target_name(target_name):
 
 def table_name_for_sfc_target(target_name):
     if target_name.upper() in TARGET_NAME_MAPPING:
-        target_name = TARGET_NAME_MAPPING[target_name]
+        target_name = TARGET_NAME_MAPPING[target_name.upper()]
     return encode_target_name(target_name)
 
 def slug_name_for_sfc_target(target_name):

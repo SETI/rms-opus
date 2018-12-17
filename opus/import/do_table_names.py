@@ -86,7 +86,7 @@ def create_import_table_names_table():
                                             prefix='obs_surface_geometry__')
     for table_name in sorted(surface_geo_table_names):
         target_name = table_name.replace('obs_surface_geometry__', '')
-        target_name = decode_target_name(target_name).title()
+        target_name = import_util.decode_target_name(target_name).title()
         entry = {
             'table_name': table_name,
             'label':      target_name + ' Surface Geometry Constraints',

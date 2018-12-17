@@ -1014,9 +1014,10 @@ def import_one_volume(volume_id):
                         # obs_surface_geometry. This is fine because we want the
                         # generalized obs_surface_geometry to include all the
                         # targets.
-                        new_table_name = table_name.replace(
-                            '<TARGET>',
-                            import_util.table_name_for_sfc_target(target_name))
+                        new_target_name = import_util.table_name_for_sfc_target(
+                                                                target_name)
+                        new_table_name = table_name.replace('<TARGET>',
+                                                            new_target_name)
                         metadata['body_surface_geo_row'] = target_dict[
                                                                 target_name]
 
@@ -1029,7 +1030,7 @@ def import_one_volume(volume_id):
                         if new_table_name not in table_rows:
                             table_rows[new_table_name] = []
                             impglobals.LOGGER.log('debug',
-                    f'Creating surface geo table for new target {target_name}')
+                f'Creating surface geo table for new target {new_target_name}')
                         table_rows[new_table_name].append(row)
 
     # Now that we have all the values, we have to dump out the mult tables
