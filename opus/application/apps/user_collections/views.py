@@ -338,7 +338,7 @@ def api_create_download(request, opus_ids=None, fmt=None):
     _create_csv_file(request, csv_file_name, api_code=api_code)
 
     # fetch the full file paths we'll be zipping up
-    files = get_pds_products(opus_ids, None, fmt='raw', loc_type='path',
+    files = get_pds_products(opus_ids, None, loc_type='path',
                              product_types=product_types)
 
     if not files:
@@ -373,8 +373,11 @@ def api_create_download(request, opus_ids=None, fmt=None):
     errors = []
     added = []
     for opus_id in files:
-        for product_type in files[opus_id]:
-            for f in files[opus_id][product_type]:
+        if 'Current' not in files[opus_id]:
+            continue
+        files_version = files[opus_id]['Current']
+        for product_type in files_version:
+            for f in files_version[product_type]:
                 pretty_name = f.split('/')[-1]
                 digest = "%s:%s" % (pretty_name, md5(f))
                 mdigest = "%s:%s" % (opus_id, pretty_name)
@@ -478,7 +481,13 @@ def _get_collection_csv(request, fmt=None, api_code=None):
             log.error('_get_collection_csv: Unknown slug "%s"', slug)
             return HttpResponseNotFound('Unknown slug')
         else:
-            column_labels.append(pi.body_qualified_label_results())
+            # append units if pi_units has unit stored
+            unit = pi.get_units()
+            label = pi.body_qualified_label_results()
+            if unit:
+                column_labels.append(label + ' ' + unit)
+            else:
+                column_labels.append(label)
 
     response = HttpResponse(content_type='text/csv')
     response['Content-Disposition'] = 'attachment; filename="data.csv"'
@@ -641,7 +650,13 @@ def _create_csv_file(request, csv_file_name, api_code=None):
             log.error('_get_collection_csv: Unknown slug "%s"', slug)
             return HttpResponseNotFound('Unknown slug')
         else:
-            column_labels.append(pi.body_qualified_label_results())
+            # append units if pi_units has unit stored
+            unit = pi.get_units()
+            label = pi.body_qualified_label_results()
+            if unit:
+                column_labels.append(label + ' ' + unit)
+            else:
+                column_labels.append(label)
 
     with open(csv_file_name, 'a') as csv_file:
         wr = csv.writer(csv_file)

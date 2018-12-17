@@ -122,8 +122,6 @@ TEMPLATES = [
     },
 ]
 
-#DATABASE_ROUTERS = ['dictionary.router.DictionaryRouter']
-
 INSTALLED_APPS = (
     'django.contrib.admin',
     'django.contrib.auth',
@@ -287,12 +285,6 @@ DATABASES = {
                     'NAME': OPUS_SCHEMA_NAME,  # use same database for test as prod YES
                 },
     },
-    'dictionary': {
-        'NAME': DICTIONARY_SCHEMA_NAME,
-        'ENGINE': 'django.db.backends.mysql',
-        'USER': DB_USER,
-        'PASSWORD': DB_PASSWORD,
-    }
 }
 
 ################################################################################
@@ -351,8 +343,20 @@ PREVIEW_GUIDES = {
 RANGE_FORM_TYPES = ('LONG','RANGE')
 MULT_FORM_TYPES  = ('GROUP','TARGETS')
 DEFAULT_PAGE_LIMIT = 100
+DEFAULT_STRINGCHOICE_LIMIT = 100
+
+# More than this many rows in the cache table -> don't join it
+STRINGCHOICE_FULL_SEARCH_COUNT_THRESHOLD = 100000
+# Timeout for SELECT when joined with cache table
+STRINGCHOICE_FULL_SEARCH_TIME_THRESHOLD = 500 # ms
+# Timeout for SELECT When not joined with cache table
+STRINGCHOICE_FULL_SEARCH_TIME_THRESHOLD2 = 500 # ms
 
 THUMBNAIL_NOT_FOUND = 'https://tools.pds-rings.seti.org/static_media/img/thumbnail_not_found.png'
 
 MAX_DOWNLOAD_SIZE = 3*1024*1024*1024 # 3 gig max for any single download
 MAX_CUM_DOWNLOAD_SIZE = 5*1024*1024*1024 # 5 gigs max cum downloads for a session
+
+THRESHOLD_FOR_EXPONENTIAL = 1e8
+
+TEST_RESULT_COUNTS_AGAINST_INTERNAL_DB = False

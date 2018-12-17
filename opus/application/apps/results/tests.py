@@ -70,15 +70,15 @@ class resultsTests(TestCase):
             q = 'DROP TABLE ' + row[0]
             print(q)
             cursor.execute(q)
+        cache.clear()
+        cache._cache.flush_all()  # clears memcache hopefully only on this port!
 
     def setUp(self):
-        print('Running setup')
         self._empty_user_searches()
         sys.tracebacklimit = 0 # default: 1000
         logging.disable(logging.DEBUG)
 
     def tearDown(self):
-        print('Running teardown')
         self._empty_user_searches()
         sys.tracebacklimit = 1000 # default: 1000
         logging.disable(logging.NOTSET)
@@ -110,7 +110,7 @@ class resultsTests(TestCase):
 
     def test__get_triggered_tables_coiss(self):
         "get_triggered_tables: tables triggered by instrument COISS"
-        q = QueryDict('planet=SATURN&instrumentid=COISS')
+        q = QueryDict('planet=SATURN&instrument=COISS')
         expected = ['obs_general', 'obs_pds', 'obs_type_image',
                     'obs_wavelength',
                     'obs_surface_geometry',
@@ -130,7 +130,7 @@ class resultsTests(TestCase):
 
     def test__get_triggered_tables_couvis(self):
         "get_triggered_tables: tables triggered by instrument COUVIS"
-        q = QueryDict('instrumentid=COUVIS')
+        q = QueryDict('instrument=COUVIS')
         expected = ['obs_general', 'obs_pds', 'obs_type_image',
                     'obs_wavelength',
                     'obs_surface_geometry',
@@ -150,7 +150,7 @@ class resultsTests(TestCase):
 
     def test__get_triggered_tables_covims(self):
         "get_triggered_tables: tables triggered by instrument COVIMS"
-        q = QueryDict('instrumentid=COVIMS')
+        q = QueryDict('instrument=COVIMS')
         expected = ['obs_general', 'obs_pds', 'obs_type_image',
                     'obs_wavelength',
                     'obs_surface_geometry',
@@ -171,7 +171,7 @@ class resultsTests(TestCase):
 
     def test__get_triggered_tables_gossi(self):
         "get_triggered_tables: tables triggered by instrument GOSSI"
-        q = QueryDict('instrumentid=Galileo+SSI')
+        q = QueryDict('instrument=Galileo+SSI')
         expected = ['obs_general', 'obs_pds', 'obs_type_image',
                     'obs_wavelength',
                     'obs_surface_geometry',
@@ -193,7 +193,7 @@ class resultsTests(TestCase):
 
     def test__get_triggered_tables_vgiss(self):
         "get_triggered_tables: tables triggered by instrument VGISS"
-        q = QueryDict('instrumentid=Voyager+ISS')
+        q = QueryDict('instrument=Voyager+ISS')
         expected = ['obs_general', 'obs_pds', 'obs_type_image',
                     'obs_wavelength',
                     'obs_surface_geometry',
@@ -222,9 +222,19 @@ class resultsTests(TestCase):
                     'obs_mission_hubble']
         self._test_triggered_tables(q, expected)
 
-    def test__get_triggered_tables_hststis(self):
-        "get_triggered_tables: tables triggered by instrument HSTSTIS"
-        q = QueryDict('instrumentid=Hubble+STIS')
+    def test__get_triggered_tables_hstwfc3(self):
+        "get_triggered_tables: tables triggered by instrument HSTWFC3"
+        q = QueryDict('instrument=Hubble+WFC3')
+        expected = ['obs_general', 'obs_pds', 'obs_type_image',
+                    'obs_wavelength',
+                    'obs_surface_geometry',
+                    'obs_ring_geometry',
+                    'obs_mission_hubble']
+        self._test_triggered_tables(q, expected)
+
+    def test__get_triggered_tables_hstwfc3_filespec(self):
+        "get_triggered_tables: tables triggered by filespec IB4V12N4Q"
+        q = QueryDict('primaryfilespec=IB4V12N4Q')
         expected = ['obs_general', 'obs_pds', 'obs_type_image',
                     'obs_wavelength',
                     'obs_surface_geometry',

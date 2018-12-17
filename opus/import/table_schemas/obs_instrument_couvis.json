@@ -12,7 +12,7 @@
             "TAB:obs_general",
             "id"
         ],
-        "comment": "This is the primary (surrogate) key linking the record to obs_general."
+        "comments": "This is the primary (surrogate) key linking the record to obs_general."
     },
     {
         "field_name": "opus_id",
@@ -27,7 +27,7 @@
             "TAB:obs_general",
             "opus_id"
         ],
-        "comment": "This is the secondary key linking the record to obs_general."
+        "comments": "This is the secondary key linking the record to obs_general."
     },
     {
         "field_name": "volume_id",
@@ -38,7 +38,7 @@
             "TAB:obs_general",
             "volume_id"
         ],
-        "comment": "The volume_id is included here for ease of database manipulation only."
+        "comments": "The volume_id is included here for ease of database manipulation only."
     },
     {
         "field_name": "observation_type",
@@ -64,7 +64,7 @@
         "pi_sub_heading": null,
         "pi_tooltip": null,
         "pi_units": null,
-        "comment": "Definition is from COUVIS label",
+        "comments": "Definition is from COUVIS label",
         "mult_options": [
               [   0,   "CALIB",   "CALIB",  10, "Y", null],
               [   1,  "UCSTAR",  "UCSTAR",  20, "Y", null],
@@ -96,7 +96,7 @@
         "pi_disp_order": 100,
         "pi_display": 1,
         "pi_display_results": 1,
-        "pi_form_type": "RANGE",
+        "pi_form_type": "RANGE%.4f",
         "pi_intro": null,
         "pi_label": "Integration Duration",
         "pi_label_results": "Integration Duration",
@@ -104,8 +104,8 @@
         "pi_slug": "COUVISintegrationduration",
         "pi_sub_heading": null,
         "pi_tooltip": null,
-        "pi_units": null,
-        "comment": "Definition is from COUVIS label"
+        "pi_units": "seconds",
+        "comments": "Definition is from COUVIS label"
     },
     {
         "field_name": "compression_type",
@@ -132,7 +132,7 @@
         "pi_sub_heading": null,
         "pi_tooltip": null,
         "pi_units": null,
-        "comment": "Definition is from COUVIS label",
+        "comments": "Definition is from COUVIS label",
         "mult_options": [
               [   0,  "8_BIT",  "8_BIT",   10, "Y", null],
               [   1, "SQRT_8", "SQRT_8",   20, "Y", null],
@@ -165,7 +165,7 @@
         "pi_sub_heading": null,
         "pi_tooltip": null,
         "pi_units": null,
-        "comment": "Definition is from COUVIS label",
+        "comments": "Definition is from COUVIS label",
         "mult_options": [
               [   0,   "OPEN",   "Open",   10, "Y", null],
               [   1, "CLOSED", "Closed",   20, "Y", null],
@@ -197,7 +197,7 @@
         "pi_sub_heading": null,
         "pi_tooltip": null,
         "pi_units": null,
-        "comment": "Definition is from COUVIS label",
+        "comments": "Definition is from COUVIS label",
         "mult_options": [
               [   0, "HIGH_RESOLUTION", "High Resolution",   10, "Y", null],
               [   1,  "LOW_RESOLUTION",  "Low Resolution",   20, "Y", null],
@@ -229,7 +229,7 @@
         "pi_sub_heading": null,
         "pi_tooltip": null,
         "pi_units": null,
-        "comment": "Definition is from COUVIS label"
+        "comments": "Definition is from COUVIS label"
     },
     {
         "field_name": "dwell_time",
@@ -258,7 +258,7 @@
         "pi_sub_heading": null,
         "pi_tooltip": null,
         "pi_units": null,
-        "comment": "Definition is from COUVIS label"
+        "comments": "Definition is from COUVIS label"
     },
     {
         "field_name": "channel",
@@ -284,7 +284,7 @@
         "pi_sub_heading": null,
         "pi_tooltip": null,
         "pi_units": null,
-        "comment": "XXX Needs definition",
+        "comments": "XXX Needs definition",
         "mult_options": [
               [   0, "EUV",   "EUV",   10, "Y", null],
               [   1, "FUV",   "FUV",   20, "Y", null],
@@ -311,7 +311,7 @@
         "pi_disp_order": 70,
         "pi_display": 1,
         "pi_display_results": 1,
-        "pi_form_type": "RANGE",
+        "pi_form_type": "RANGE%d",
         "pi_intro": null,
         "pi_label": "Band",
         "pi_label_results": "Band (Min)",
@@ -320,7 +320,7 @@
         "pi_sub_heading": null,
         "pi_tooltip": null,
         "pi_units": null,
-        "comment": "Definition is from COUVIS supplemental label"
+        "comments": "Definition is from COUVIS supplemental label"
     },
     {
         "field_name": "band2",
@@ -341,7 +341,7 @@
         "pi_disp_order": 71,
         "pi_display": 0,
         "pi_display_results": 1,
-        "pi_form_type": "RANGE",
+        "pi_form_type": "RANGE%d",
         "pi_intro": null,
         "pi_label": "Band 2",
         "pi_label_results": "Band (Max)",
@@ -350,7 +350,7 @@
         "pi_sub_heading": null,
         "pi_tooltip": null,
         "pi_units": null,
-        "comment": "Definition is from COUVIS supplemental label"
+        "comments": "Definition is from COUVIS supplemental label"
     },
     {
         "field_name": "band_bin",
@@ -371,7 +371,7 @@
         "pi_disp_order": 72,
         "pi_display": 1,
         "pi_display_results": 1,
-        "pi_form_type": "RANGE",
+        "pi_form_type": "RANGE%d",
         "pi_intro": null,
         "pi_label": "Band Binning",
         "pi_label_results": "Band Binning",
@@ -380,7 +380,7 @@
         "pi_sub_heading": null,
         "pi_tooltip": null,
         "pi_units": null,
-        "comment": "Definition is from COUVIS supplemental label"
+        "comments": "Definition is from COUVIS supplemental label"
     },
     {
         "field_name": "line1",
@@ -401,7 +401,7 @@
         "pi_disp_order": 50,
         "pi_display": 1,
         "pi_display_results": 1,
-        "pi_form_type": "RANGE",
+        "pi_form_type": "RANGE%d",
         "pi_intro": null,
         "pi_label": "Line",
         "pi_label_results": "Line (Min)",
@@ -410,7 +410,7 @@
         "pi_sub_heading": null,
         "pi_tooltip": null,
         "pi_units": null,
-        "comment": "Definition is from COUVIS supplemental label"
+        "comments": "Definition is from COUVIS supplemental label"
     },
     {
         "field_name": "line2",
@@ -431,7 +431,7 @@
         "pi_disp_order": 51,
         "pi_display": 0,
         "pi_display_results": 1,
-        "pi_form_type": "RANGE",
+        "pi_form_type": "RANGE%d",
         "pi_intro": null,
         "pi_label": "Line 2",
         "pi_label_results": "Line (Max)",
@@ -440,7 +440,7 @@
         "pi_sub_heading": null,
         "pi_tooltip": null,
         "pi_units": null,
-        "comment": "Definition is from COUVIS supplemental label"
+        "comments": "Definition is from COUVIS supplemental label"
     },
     {
         "field_name": "line_bin",
@@ -461,7 +461,7 @@
         "pi_disp_order": 60,
         "pi_display": 1,
         "pi_display_results": 1,
-        "pi_form_type": "RANGE",
+        "pi_form_type": "RANGE%d",
         "pi_intro": null,
         "pi_label": "Line Binning",
         "pi_label_results": "Line Binning",
@@ -470,7 +470,7 @@
         "pi_sub_heading": null,
         "pi_tooltip": null,
         "pi_units": null,
-        "comment": "Definition is from COUVIS supplemental label"
+        "comments": "Definition is from COUVIS supplemental label"
     },
     {
         "field_name": "samples",
@@ -491,7 +491,7 @@
         "pi_disp_order": 80,
         "pi_display": 1,
         "pi_display_results": 1,
-        "pi_form_type": "RANGE",
+        "pi_form_type": "RANGE%d",
         "pi_intro": null,
         "pi_label": "Samples",
         "pi_label_results": "Samples",
@@ -500,7 +500,7 @@
         "pi_sub_heading": null,
         "pi_tooltip": null,
         "pi_units": null,
-        "comment": "Definition is from COUVIS supplemental label"
+        "comments": "Definition is from COUVIS supplemental label"
     },
     {
         "put_mults_here": true

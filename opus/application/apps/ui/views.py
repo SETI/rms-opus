@@ -112,7 +112,14 @@ def api_get_table_headers(request):
             if not pi:
                 log.error('get_table_headers: Unable to find slug "%s"', slug)
                 continue
-            columns.append([slug, pi.body_qualified_label_results()])
+
+            # append units if pi_units has unit stored
+            unit = pi.get_units()
+            label = pi.body_qualified_label_results()
+            if unit:
+                columns.append([slug, label + ' ' + unit])
+            else:
+                columns.append([slug, label])
 
     ret = render(request, template,
                  {'columns':   columns,
@@ -164,7 +171,7 @@ def api_get_widget(request, **kwargs):
 
     (form_type, form_type_func,
      form_type_format) = parse_form_type(param_info.form_type)
-    param_name = param_info.param_name()
+    param_qualified_name = param_info.param_qualified_name()
 
     dictionary = param_info.get_tooltip()
     form_vals = {slug: None}
@@ -184,12 +191,12 @@ def api_get_widget(request, **kwargs):
         auto_id = False
 
         slug_no_num = strip_numeric_suffix(slug)
-        param_name_no_num = strip_numeric_suffix(param_name)
+        param_qualified_name_no_num = strip_numeric_suffix(param_qualified_name)
 
         slug1 = slug_no_num+'1'
         slug2 = slug_no_num+'2'
-        param1 = param_name_no_num+'1'
-        param2 = param_name_no_num+'2'
+        param1 = param_qualified_name_no_num+'1'
+        param2 = param_qualified_name_no_num+'2'
 
         form_vals = {slug1: None, slug2: None}
 
@@ -251,9 +258,9 @@ def api_get_widget(request, **kwargs):
 
     elif form_type == 'STRING':
         auto_id = False
-        if param_name in selections:
+        if param_qualified_name in selections:
             key = 0
-            for value in selections[param_name]:
+            for value in selections[param_qualified_name]:
                 form_vals[slug] = value
                 qtypes = request.GET.get('qtype-' + slug, False)
                 if qtypes:
@@ -278,10 +285,10 @@ def api_get_widget(request, **kwargs):
     elif form_type in settings.MULT_FORM_TYPES:
         values = None
         form_vals = {slug: None}
-        if param_name in selections:
-            values = selections[param_name]
+        if param_qualified_name in selections:
+            values = selections[param_qualified_name]
         # determine if this mult param has a grouping field (see doc/group_widgets.md for howto on grouping fields)
-        mult_param = get_mult_name(param_name)
+        mult_param = get_mult_name(param_qualified_name)
         model = apps.get_model('search',mult_param.title().replace('_',''))
 
         if values is not None:
@@ -298,7 +305,7 @@ def api_get_widget(request, **kwargs):
 
         try:
             grouping = model.objects.distinct().values('grouping')
-            grouping_table = 'grouping_' + param_name.split('.')[1]
+            grouping_table = 'grouping_' + param_qualified_name.split('.')[1]
             grouping_model = apps.get_model('metadata',grouping_table.title().replace('_',''))
             for group_info in grouping_model.objects.order_by('disp_order'):
                 gvalue = group_info.value
@@ -318,8 +325,8 @@ def api_get_widget(request, **kwargs):
             form = SearchForm(form_vals, auto_id=auto_id).as_ul()
 
     else:  # all other form types
-        if param_name in selections:
-            form_vals = {slug:selections[param_name]}
+        if param_qualified_name in selections:
+            form_vals = {slug:selections[param_qualified_name]}
         form = SearchForm(form_vals, auto_id=auto_id).as_ul()
 
     param_info = get_param_info_by_slug(slug)
@@ -331,6 +338,7 @@ def api_get_widget(request, **kwargs):
 
     label = param_info.body_qualified_label()
     intro = param_info.intro
+    units = param_info.get_units()
 
     template = "widget.html"
     context = {
@@ -341,7 +349,8 @@ def api_get_widget(request, **kwargs):
         "form": form,
         "form_type": form_type,
         "range_form_types": settings.RANGE_FORM_TYPES,
-        "mult_form_types": settings.MULT_FORM_TYPES
+        "mult_form_types": settings.MULT_FORM_TYPES,
+        "units": units,
     }
     ret = render(request, template, context)
 
@@ -441,35 +450,37 @@ def api_init_detail_page(request, **kwargs):
 
     # On the details page, we display the list of available filenames after
     # each product type
-    products = get_pds_products(opus_id, None, fmt='raw')[opus_id]
+    products = get_pds_products(opus_id, None)[opus_id]
     if not products:
         products = {}
     new_products = OrderedDict()
-    for product_type in sorted(products, key=pds_products_sort_func):
-        file_list = products[product_type]
-        product_info = {}
-        # Create the URL to look up a particular OPUS_ID in a given
-        # metadata summary file in ViewMaster
-        if product_type[3].find('Index') != -1:
-            tab_url = None
-            for fn in file_list:
-                if (fn.endswith('.tab') or
-                    fn.endswith('.TAB')):
-                    tab_url = fn
-                    break
-            if tab_url:
-                tab_url = tab_url.replace('holdings', 'viewmaster')
-                tab_url += '/'+opus_id.split('-')[-1]
-            product_info['product_link'] = tab_url
-        else:
-            product_info['product_link'] = None
-        file_list = file_list[:]
-        for i in range(len(file_list)):
-            fn = file_list[i].split('/')[-1]
-            file_list[i] = {'filename': fn,
-                            'link': file_list[i]}
-        product_info['files'] = file_list
-        new_products[product_type[3]] = product_info
+    for version in products:
+        new_products[version] = OrderedDict()
+        for product_type in products[version]:
+            file_list = products[version][product_type]
+            product_info = {}
+            # Create the URL to look up a particular OPUS_ID in a given
+            # metadata summary file in ViewMaster
+            if product_type[3].find('Index') != -1:
+                tab_url = None
+                for fn in file_list:
+                    if (fn.endswith('.tab') or
+                        fn.endswith('.TAB')):
+                        tab_url = fn
+                        break
+                if tab_url:
+                    tab_url = tab_url.replace('holdings', 'viewmaster')
+                    tab_url += '/'+opus_id.split('-')[-1]
+                product_info['product_link'] = tab_url
+            else:
+                product_info['product_link'] = None
+            file_list = file_list[:]
+            for i in range(len(file_list)):
+                fn = file_list[i].split('/')[-1]
+                file_list[i] = {'filename': fn,
+                                'link': file_list[i]}
+            product_info['files'] = file_list
+            new_products[version][product_type[3]] = product_info
 
     context = {
         'preview_full_url': preview_full_url,
@@ -537,6 +548,7 @@ def _get_menu_labels(request, labels_view):
         menu_data.setdefault(d.table_name, OrderedDict())
 
         # XXX This really shouldn't be here!!
+        menu_data[d.table_name]['menu_help'] = None
         if d.table_name == 'obs_surface_geometry':
             menu_data[d.table_name]['menu_help'] = "Surface geometry, when available, is provided for all bodies in the field of view. Select a target name to reveal more options. Supported instruments: Cassini ISS, UVIS, and VIMS, New Horizons LORRI, and Voyager ISS."
 

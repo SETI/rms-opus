@@ -12,7 +12,7 @@
             "TAB:obs_general",
             "id"
         ],
-        "comment": "This is the primary (surrogate) key linking the record to obs_general."
+        "comments": "This is the primary (surrogate) key linking the record to obs_general."
     },
     {
         "field_name": "opus_id",
@@ -27,7 +27,7 @@
             "TAB:obs_general",
             "opus_id"
         ],
-        "comment": "This is the secondary key linking the record to obs_general."
+        "comments": "This is the secondary key linking the record to obs_general."
     },
     {
         "field_name": "volume_id",
@@ -38,7 +38,7 @@
             "TAB:obs_general",
             "volume_id"
         ],
-        "comment": "The volume_id is included here for ease of database manipulation only."
+        "comments": "The volume_id is included here for ease of database manipulation only."
     },
     {
         "field_name": "instrument_id",
@@ -49,7 +49,7 @@
             "TAB:obs_general",
             "instrument_id"
         ],
-        "comment": "The instrument_id is included here for ease of database manipulation only."
+        "comments": "The instrument_id is included here for ease of database manipulation only."
     },
     {
         "field_name": "stsci_group_id",
@@ -93,7 +93,7 @@
         "pi_disp_order": 50,
         "pi_display": 1,
         "pi_display_results": 1,
-        "pi_form_type": "RANGE",
+        "pi_form_type": "RANGE%d",
         "pi_intro": null,
         "pi_label": "HST Proposal ID",
         "pi_label_results": "HST Proposal ID",
@@ -211,7 +211,7 @@
         "pi_form_type": "RANGE:range_time",
         "pi_intro": null,
         "pi_label": "Publication Date",
-        "pi_label_results": "Publication Date (seconds)",
+        "pi_label_results": "Publication Date (secs)",
         "pi_slug": "HSTpublicationdatesec",
         "pi_sub_heading": null,
         "pi_tooltip": null,

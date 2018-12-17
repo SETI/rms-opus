@@ -181,6 +181,7 @@ def get_metadata(api_name, request, opus_id, fmt):
 
     data = OrderedDict()     # Holds data struct to be returned
     all_info = OrderedDict() # Holds all the param info objects
+    rounded_off_data = OrderedDict() # Hold rounded off data
 
     if not cats:
         # Find all the tables (categories) this observation belongs to
@@ -227,28 +228,44 @@ def get_metadata(api_name, request, opus_id, fmt):
                 continue
             result_vals = result_vals[0]
             ordered_results = OrderedDict()
+            rounded_off_ordered_results = OrderedDict()
             for param_info in param_info_list:
                 (form_type, form_type_func,
                  form_type_format) = parse_form_type(param_info.form_type)
 
                 if (form_type in settings.MULT_FORM_TYPES and
                     api_name == 'api_get_metadata_v2'):
-                    mult_name = get_mult_name(param_info.param_name())
+                    mult_name = get_mult_name(param_info.param_qualified_name())
                     mult_val = results.values(mult_name)[0][mult_name]
                     result = lookup_pretty_value_for_mult(param_info, mult_val)
                 else:
                     result = result_vals[param_info.name]
+
+                # Format result depending on its form_type_format
+                rounded_off_result = result
+                if form_type_format is not None and result is not None:
+                    rounded_off_result = format_metadata_number(
+                                                            result,
+                                                            form_type_format)
+
                 if api_name == 'api_get_metadata':
                     ordered_results[param_info.name] = result
+                    rounded_off_ordered_results[param_info.name] = \
+                            rounded_off_result
                 else:
                     if param_info.slug is not None:
                         ordered_results[param_info.slug] = result
+                        rounded_off_ordered_results[param_info.slug] = \
+                                rounded_off_result
+            # data is for json return of api calls
+            # rounded_off_data is for html return of api calls
             data[table_label] = ordered_results
+            rounded_off_data[table_label] = rounded_off_ordered_results
 
     if fmt == 'html':
         # hack because we want to display labels instead of param names
         # on our HTML Detail page
-        context = {'data': data,
+        context = {'data': rounded_off_data,
                    'all_info': all_info}
         if api_name == 'api_get_metadata':
             ret = render(request, 'results/detail_metadata.html', context)
@@ -441,18 +458,18 @@ def api_get_image(request, opus_id, size='med', fmt='raw'):
     return ret
 
 
-def api_get_files(request, opus_id=None, fmt='json'):
+def api_get_files(request, opus_id=None):
     """Return all files for a given opus_id or search results.
 
     This is a PUBLIC API.
 
-    Format: [__]api/files/(?P<opus_id>[-\w]+).(?P<fmt>[json|zip|html|csv]+)
-        or: [__]api/files.(?P<fmt>[json|zip|html|csv]+)
+    Format: [__]api/files/(?P<opus_id>[-\w]+).json
+        or: [__]api/files.json
     Arguments: types=<types>
                     Product types
                loc_type=['url', 'path']
 
-    Can return JSON, ZIP, HTML, or CSV.
+    Only returns JSON.
     """
     api_code = enter_api_call('api_get_files', request)
 
@@ -488,19 +505,30 @@ def api_get_files(request, opus_id=None, fmt='json'):
         if 'columns' in data:
             del data['columns']
 
-    ret = get_pds_products(opus_ids, file_specs, fmt='raw',
+    ret = get_pds_products(opus_ids, file_specs,
                            loc_type=loc_type,
                            product_types=product_types)
 
-    new_ret = OrderedDict()
+    versioned_ret = OrderedDict()
+    current_ret = OrderedDict()
     for opus_id in ret:
-        new_ret[opus_id] = OrderedDict()
-        for product_type in ret[opus_id]:
-            new_ret[opus_id][product_type[2]] = ret[opus_id][product_type]
+        versioned_ret[opus_id] = OrderedDict() # Versions
+        current_ret[opus_id] = OrderedDict()
+        for version in ret[opus_id]:
+            versioned_ret[opus_id][version] = OrderedDict()
+            for product_type in ret[opus_id][version]:
+                versioned_ret[opus_id][version][product_type[2]] = \
+                    ret[opus_id][version][product_type]
+                if version == 'Current':
+                    current_ret[opus_id][product_type[2]] = \
+                        ret[opus_id][version][product_type]
 
-    data['data'] = new_ret
-    exit_api_call(api_code, data)
-    return response_formats(data, fmt=fmt)
+    data['data'] = current_ret
+    data['versions'] = versioned_ret
+
+    ret = HttpResponse(json.dumps(data), content_type='application/json')
+    exit_api_call(api_code, ret)
+    return ret
 
 
 def api_get_categories_for_opus_id(request, opus_id):
@@ -642,7 +670,14 @@ def get_data(request, fmt, cols=None, api_code=None):
         if not pi:
             log.error('get_data: Could not find param_info for %s', slug)
             return None
-        labels.append(pi.body_qualified_label_results())
+
+        # append units if pi_units has unit stored
+        unit = pi.get_units()
+        label = pi.body_qualified_label_results()
+        if unit:
+            labels.append(label + ' ' + unit)
+        else:
+            labels.append(label)
 
     # For backwards compatibility. It would be a lot nicer if we didn't need
     # to know this index at all. See data.html for why we do.
@@ -695,6 +730,7 @@ def get_page(request, use_collections=None, collections_page=None, page=None,
     if cols is None:
         cols = request.GET.get('cols', settings.DEFAULT_COLUMNS)
 
+    form_type_formats = []
     column_names = []
     tables = set()
     mult_tables = set()
@@ -704,8 +740,8 @@ def get_page(request, use_collections=None, collections_page=None, page=None,
         if not pi:
             log.error('get_page: Slug "%s" not found', slug)
             return none_return
-        column = pi.param_name()
-        table = column.split('.')[0]
+        column = pi.param_qualified_name()
+        table = pi.category_name
         if column.endswith('.opus_id'):
             # opus_id can be displayed from anywhere, but for consistency force
             # it to come from obs_general, since that's the master list.
@@ -718,11 +754,12 @@ def get_page(request, use_collections=None, collections_page=None, page=None,
         if form_type in settings.MULT_FORM_TYPES:
             # For a mult field, we will have to join in the mult table
             # and put the mult column here
-            mult_table = get_mult_name(pi.param_name())
+            mult_table = get_mult_name(pi.param_qualified_name())
             mult_tables.add((mult_table, table))
             column_names.append(mult_table+'.label')
         else:
             column_names.append(column)
+        form_type_formats.append(form_type_format)
 
     added_extra_columns = 0
     tables.add('obs_general') # We must have obs_general since it owns the ids
@@ -965,6 +1002,14 @@ def get_page(request, use_collections=None, collections_page=None, page=None,
     # data. Replace these so they look prettier.
     results = [[x if x is not None else 'N/A' for x in r] for r in results]
 
+    # If pi_form_type has format, we format the results
+    for idx, form_type_format in enumerate(form_type_formats):
+        for entry in results:
+            if (form_type_format is not None and entry[idx] is not None and
+                entry[idx] != 'N/A'):
+                entry[idx] = format_metadata_number(entry[idx],
+                                                    form_type_format)
+
     return (page_no, limit, results, opus_ids, ring_obs_ids, file_specs,
             all_order)
 
@@ -1002,11 +1047,12 @@ def _get_metadata_by_slugs(request, opus_id, slugs, fmt, use_param_names):
             if not results:
                 result = 'N/A'
             elif form_type in settings.MULT_FORM_TYPES and not use_param_names:
-                mult_name = get_mult_name(param_info.param_name())
+                mult_name = get_mult_name(param_info.param_qualified_name())
                 mult_val = results.values(mult_name)[0][mult_name]
                 result = lookup_pretty_value_for_mult(param_info, mult_val)
             else:
                 result = results.values(param_info.name)[0][param_info.name]
+                result = format_metadata_number(result, form_type_format)
             if use_param_names:
                 data_dict[param_info.name] = result
             else:

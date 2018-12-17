@@ -5,24 +5,27 @@
             <p><b>OPUS ID: </b>{{ opus_id }}</p>
 
             <h2>PDS Products</h2>
-            <div class="">
+            <div>
                 <p>Click on any "Index" type to see the entry for this observation in that table.</p>
-                <ul>
-                    {% for product_type, product_type_info in products.items %}
-                    <li>
-                        <ul class="list-inline">
-                            {% if product_type_info.product_link %}
-                              <a href={{ product_type_info.product_link }} target="_blank">{{ product_type }}:</a>
-                            {% else %}
-                              {{ product_type }}:
-                            {% endif %}
-                    	      {% for f in product_type_info.files %}
-                    			     <li class="list-inline-item"><a href="{{ f.link }}" target="_blank">{{ f.filename }}</a></li>
-                            {% endfor %}
-                        </ul>
-                    </li>
-                    {% endfor %}
-                </ul>
+                {% for version, version_items in products.items %}
+                  <ul>
+                      <h4>Version: {{ version }}</h4>
+                      {% for product_type, product_type_info in version_items.items %}
+                        <li>
+                            <ul class="list-inline">
+                              {% if product_type_info.product_link %}
+                                <a href={{ product_type_info.product_link }} target="_blank">{{ product_type }}:</a>
+                              {% else %}
+                                {{ product_type }}:
+                              {% endif %}
+                      	      {% for f in product_type_info.files %}
+                      			     <li><a href="{{ f.link }}" target="_blank">{{ f.filename }}</a></li>
+                              {% endfor %}
+                            </ul>
+                        </li>
+                      {% endfor %}
+                  </ul>
+                {% endfor %}
             </div>
 
             <h2>Metadata for Current Columns</h2>

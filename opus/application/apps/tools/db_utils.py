@@ -13,6 +13,7 @@ import settings
 
 MYSQL_TABLE_NOT_EXISTS = 1146
 MYSQL_TABLE_ALREADY_EXISTS = 1050
+MYSQL_EXECUTION_TIME_EXCEEDED = 3024
 
 def table_model_from_name(table_name):
     "Given a table name (obs_pds) return the Django model class (ObsPds)"
@@ -43,9 +44,8 @@ def lookup_pretty_value_for_mult(param_info, value):
     if form_type not in settings.MULT_FORM_TYPES:
         return None
 
-    param_name = param_info.param_name()
-    mult_param = get_mult_name(param_name)
-    model      = apps.get_model('search', mult_param.title().replace('_',''))
+    mult_param = get_mult_name(param_info.param_qualified_name())
+    model = apps.get_model('search', mult_param.title().replace('_',''))
 
     results = model.objects.filter(id=value).values('label')
     if not results:

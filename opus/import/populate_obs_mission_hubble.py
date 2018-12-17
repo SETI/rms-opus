@@ -426,6 +426,9 @@ def populate_obs_wavelength_HSTx_wavelength1(**kwargs):
     wl1 = import_util.safe_column(index_row, 'MINIMUM_WAVELENGTH')
     wl2 = import_util.safe_column(index_row, 'MAXIMUM_WAVELENGTH')
 
+    if wl1 is None or wl2 is None:
+        return None
+
     # This is necessary because in some cases these are backwards in the table!
     if wl1 > wl2:
         import_util.log_warning(
@@ -444,6 +447,9 @@ def populate_obs_wavelength_HSTx_wavelength2(**kwargs):
     index_row = metadata['index_row']
     wl1 = import_util.safe_column(index_row, 'MINIMUM_WAVELENGTH')
     wl2 = import_util.safe_column(index_row, 'MAXIMUM_WAVELENGTH')
+
+    if wl1 is None or wl2 is None:
+        return None
 
     # This is necessary because in some cases these are backwards in the table!
     if wl1 > wl2:

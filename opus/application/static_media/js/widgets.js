@@ -43,6 +43,20 @@ var o_widgets = {
               console.log("error on close widget, id="+id);
             }
         });
+
+        // close opened surfacegeo widget if user select another surfacegeo target
+        $('#search').on('change', 'input.singlechoice', function() {
+            $('a[data-slug^="SURFACEGEO"]').each( function (index) {
+                let slug = $(this).data('slug');
+                o_widgets.closeWidget(slug);
+                try {
+                  var id = "#widget__"+slug;
+                  $(id).remove();
+                } catch (e) {
+                  console.log("error on close widget, id="+id);
+                }
+            });
+        });
     },
 
 

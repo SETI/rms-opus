@@ -12,7 +12,7 @@
             "TAB:obs_general",
             "id"
         ],
-        "comment": "This is the primary (surrogate) key linking the record to obs_general."
+        "comments": "This is the primary (surrogate) key linking the record to obs_general."
     },
     {
         "field_name": "opus_id",
@@ -27,7 +27,7 @@
             "TAB:obs_general",
             "opus_id"
         ],
-        "comment": "This is the secondary key linking the record to obs_general."
+        "comments": "This is the secondary key linking the record to obs_general."
     },
     {
         "field_name": "volume_id",
@@ -38,7 +38,7 @@
             "TAB:obs_general",
             "volume_id"
         ],
-        "comment": "The volume_id is included here for ease of database manipulation only."
+        "comments": "The volume_id is included here for ease of database manipulation only."
     },
     {
         "field_name": "instrument_id",
@@ -49,7 +49,7 @@
             "TAB:obs_general",
             "instrument_id"
         ],
-        "comment": "The instrument_id is included here for ease of database manipulation only."
+        "comments": "The instrument_id is included here for ease of database manipulation only."
     },
     {
         "field_name": "image_type_id",
@@ -75,8 +75,8 @@
         "pi_slug": "imagetype",
         "pi_sub_heading": null,
         "pi_tooltip": "",
-        "pi_units": "",
-        "comment": "Definition is from old OPUS dictionary.",
+        "pi_units": null,
+        "comments": "Definition is from old OPUS dictionary.",
         "mult_options": [
               [   0, "CUBE",        "Cube",   10, "Y", null],
               [   1, "FRAM",       "Frame",   20, "Y", null],
@@ -100,14 +100,15 @@
         "pi_disp_order": 10,
         "pi_display": 1,
         "pi_display_results": 1,
-        "pi_form_type": "RANGE",
+        "pi_form_type": "RANGE%.4f",
         "pi_intro": null,
         "pi_label": "Exposure Duration",
         "pi_label_results": "Exposure Duration",
         "pi_slug": "duration",
         "pi_sub_heading": null,
         "pi_tooltip": "",
-        "pi_units": "seconds"
+        "pi_units": "seconds",
+        "comments": "For units format, VGISS_*_index.lbl is F9.4 so we round up to .4f."
     },
     {
         "field_name": "levels",
@@ -125,15 +126,15 @@
         "pi_disp_order": 40,
         "pi_display": 1,
         "pi_display_results": 1,
-        "pi_form_type": "RANGE",
+        "pi_form_type": "RANGE%d",
         "pi_intro": null,
         "pi_label": "Intensity Levels",
         "pi_label_results": "Intensity Levels",
         "pi_slug": "levels",
         "pi_sub_heading": null,
         "pi_tooltip": "",
-        "pi_units": "",
-        "comment": "Definition is from old OPUS dictionary."
+        "pi_units": null,
+        "comments": "Definition is from old OPUS dictionary."
     },
     {
         "field_name": "greater_pixel_size",
@@ -153,15 +154,15 @@
         "pi_disp_order": 20,
         "pi_display": 1,
         "pi_display_results": 1,
-        "pi_form_type": "RANGE",
+        "pi_form_type": "RANGE%d",
         "pi_intro": null,
         "pi_label": "Greater Size in Pixels",
         "pi_label_results": "Greater Size in Pixels",
         "pi_slug": "greaterpixelsize",
         "pi_sub_heading": null,
         "pi_tooltip": "",
-        "pi_units": "",
-        "comment": "Definition is from old OPUS dictionary."
+        "pi_units": null,
+        "comments": "Definition is from old OPUS dictionary."
     },
     {
         "field_name": "lesser_pixel_size",
@@ -181,15 +182,15 @@
         "pi_disp_order": 30,
         "pi_display": 1,
         "pi_display_results": 1,
-        "pi_form_type": "RANGE",
+        "pi_form_type": "RANGE%d",
         "pi_intro": null,
         "pi_label": "Lesser Size in Pixels",
         "pi_label_results": "Lesser Size in Pixels",
         "pi_slug": "lesserpixelsize",
         "pi_sub_heading": null,
         "pi_tooltip": "",
-        "pi_units": "",
-        "comment": "Definition is from old OPUS dictionary."
+        "pi_units": null,
+        "comments": "Definition is from old OPUS dictionary."
     },
     {
         "put_mults_here": true

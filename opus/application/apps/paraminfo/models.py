@@ -3,6 +3,8 @@ from dictionary.views import get_def_for_tooltip
 
 from search.models import TableNames
 
+import opus_support
+
 class ParamInfo(models.Model):
     """
     This model describes every searchable param in the database.
@@ -33,7 +35,7 @@ class ParamInfo(models.Model):
     def __unicode__(self):
         return u"%s" % self.name
 
-    def param_name(self):
+    def param_qualified_name(self):
         return self.category_name + '.' + self.name
 
     def get_tooltip(self):
@@ -69,3 +71,10 @@ class ParamInfo(models.Model):
         if pretty_name in ['General', 'PDS', 'Wavelength', 'Image', 'Surface']:
             return self.label_results
         return self.label_results + ' [' + pretty_name + ']'
+
+    def get_units(self):
+        # Put parentheses around units (units)
+        if self.units:
+            return '(' + opus_support.UNIT_TRANSLATION[self.units] + ')'
+        else:
+            return ''

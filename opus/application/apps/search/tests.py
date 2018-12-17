@@ -8,6 +8,7 @@ from unittest import TestCase
 
 from django.apps import apps
 from django.conf import settings
+from django.core.cache import cache
 from django.db import connection
 from django.db.models import Count
 from django.http import QueryDict
@@ -33,18 +34,56 @@ class searchTests(TestCase):
             q = 'DROP TABLE ' + row[0]
             print(q)
             cursor.execute(q)
+        cache.clear()
+        cache._cache.flush_all()  # clears memcache hopefully only on this port!
 
     def setUp(self):
-        print('Running setup')
         self._empty_user_searches()
         sys.tracebacklimit = 0 # default: 1000
         logging.disable(logging.ERROR)
 
-    def teardown(self):
-        print('Running teardown')
+    def tearDown(self):
         self._empty_user_searches()
         sys.tracebacklimit = 1000 # default: 1000
         logging.disable(logging.NOTSET)
+
+
+            ##################################################
+            ######### api_normalize_input UNIT TESTS #########
+            ##################################################
+
+    def test__api_normalize_input_no_request(self):
+        "api_normalize_input: no request"
+        with self.assertRaises(Http404):
+            api_normalize_input(None)
+
+    def test__api_normalize_input_no_get(self):
+        "api_normalize_input: no GET"
+        c = Client()
+        response = c.get('/__api/normalizeinput.json')
+        request = response.wsgi_request
+        request.GET = None
+        with self.assertRaises(Http404):
+            api_normalize_input(request)
+
+
+            ########################################################
+            ######### api_string_search_choices UNIT TESTS #########
+            ########################################################
+
+    def test__api_string_search_choices_no_request(self):
+        "api_string_search_choices: no request"
+        with self.assertRaises(Http404):
+            api_string_search_choices(None, 'slug')
+
+    def test__api_string_search_choices_no_get(self):
+        "api_string_search_choices: no GET"
+        c = Client()
+        response = c.get('/__api/stringsearchchoices/volumeid.json')
+        request = response.wsgi_request
+        request.GET = None
+        with self.assertRaises(Http404):
+            api_string_search_choices(request, 'slug')
 
 
             ###################################################
@@ -116,25 +155,25 @@ class searchTests(TestCase):
         self.assertEqual(extras['qtypes'], qtypes_expected)
 
     def test__url_to_search_params_times_bad(self):
-        "url_to_search_params: Bad date format"
+        "url_to_search_params: bad date format"
         q = QueryDict('timesec1=2000 XXX 01')
         (selections, extras) = url_to_search_params(q)
         self.assertIsNone(selections)
 
     def test__url_to_search_params_times_bad_2(self):
-        "url_to_search_params: Bad date format #2"
+        "url_to_search_params: bad date format #2"
         q = QueryDict('timesec1=2000/13/23+06:00:00')
         (selections, extras) = url_to_search_params(q)
         self.assertIsNone(selections)
 
     def test__url_to_search_params_times_bad_3(self):
-        "url_to_search_params: Bad date format #3"
+        "url_to_search_params: bad date format #3"
         q = QueryDict('timesec1=2000')
         (selections, extras) = url_to_search_params(q)
         self.assertIsNone(selections)
 
     def test__url_to_search_params_times_bad_4(self):
-        "url_to_search_params: Bad date format #4"
+        "url_to_search_params: bad date format #4"
         q = QueryDict('timesec1=06:00:00')
         (selections, extras) = url_to_search_params(q)
         self.assertIsNone(selections)
@@ -388,7 +427,7 @@ class searchTests(TestCase):
 
     def test__url_to_search_params_mults_plus(self):
         "url_to_search_params: mults using a + to mean space"
-        q = QueryDict('instrumentid=Cassini+ISS')
+        q = QueryDict('instrument=Cassini+ISS')
         (selections, extras) = url_to_search_params(q)
         sel_expected = {'obs_general.instrument_id': ['Cassini ISS']}
         order_expected = (['obs_general.time1', 'obs_general.opus_id'],

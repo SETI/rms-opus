@@ -20,7 +20,7 @@ class ApiReturnFormatTests(TestCase):
         logging.disable(logging.DEBUG)
 
     # enable error logging and trace output after test
-    def teardown(self):
+    def tearDown(self):
         sys.tracebacklimit = 1000 # default: 1000
         logging.disable(logging.NOTSET)
 
@@ -282,7 +282,7 @@ class ApiFormats:
             self.api_result_count_base: {
                 "api": "api/meta/result_count.[fmt]",
                 "payload": ApiFormats.payload_for_result_count,
-                "support_format": ["json", "html"]
+                "support_format": ["json", "html", "csv"]
             },
             self.api_mults_base: {
                 "api": "api/meta/mults/[param].[fmt]",

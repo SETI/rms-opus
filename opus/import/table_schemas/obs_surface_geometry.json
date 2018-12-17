@@ -12,7 +12,7 @@
             "TAB:obs_general",
             "id"
         ],
-        "comment": "This is the primary (surrogate) key linking the record to obs_general."
+        "comments": "This is the primary (surrogate) key linking the record to obs_general."
     },
     {
         "field_name": "opus_id",
@@ -27,7 +27,7 @@
             "TAB:obs_general",
             "opus_id"
         ],
-        "comment": "This is the secondary key linking the record to obs_general."
+        "comments": "This is the secondary key linking the record to obs_general."
     },
     {
         "field_name": "volume_id",
@@ -38,7 +38,7 @@
             "TAB:obs_general",
             "volume_id"
         ],
-        "comment": "The volume_id is included here for ease of database manipulation only."
+        "comments": "The volume_id is included here for ease of database manipulation only."
     },
     {
         "field_name": "instrument_id",
@@ -49,7 +49,7 @@
             "TAB:obs_general",
             "instrument_id"
         ],
-        "comment": "The instrument_id is included here for ease of database manipulation only."
+        "comments": "The instrument_id is included here for ease of database manipulation only."
     },
     {
         "field_name": "target_name",
@@ -74,8 +74,8 @@
         "pi_slug": "surfacegeometrytargetname",
         "pi_sub_heading": null,
         "pi_tooltip": null,
-        "pi_units": "",
-        "comment": "Definition is from SURFACE_GEO label."
+        "pi_units": null,
+        "comments": "Definition is from SURFACE_GEO label."
     },
     {
         "put_mults_here": true

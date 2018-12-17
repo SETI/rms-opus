@@ -2,7 +2,7 @@
 __pycache__
 .DS_Store
 ._*
-*.*~
+*~*
 *.bak
 *.*.bak
 temp*.*
@@ -19,3 +19,6 @@ p3venv
 opus_secrets.py
 
 migrations/
+
+.coverage
+htmlcov/

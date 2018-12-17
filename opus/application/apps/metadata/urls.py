@@ -9,14 +9,14 @@ from metadata.views import (
 )
 
 urlpatterns = [
-    url(r'^api/meta/result_count.(?P<fmt>[json|zip|html|csv]+)$', api_get_result_count),
-    url(r'^__api/meta/result_count.(?P<fmt>[json|zip|html|csv]+)$', api_get_result_count),
-    url(r'^api/meta/mults/(?P<slug>[-\w]+).(?P<fmt>[json|zip|html|csv]+)$', api_get_mult_counts),
-    url(r'^__api/meta/mults/(?P<slug>[-\w]+).(?P<fmt>[json|zip|html|csv]+)$', api_get_mult_counts),
-    url(r'^api/meta/range/endpoints/(?P<slug>[-\w]+).(?P<fmt>[json|zip|html|csv]+)$', api_get_range_endpoints),
-    url(r'^__api/meta/range/endpoints/(?P<slug>[-\w]+).(?P<fmt>[json|zip|html|csv]+)$', api_get_range_endpoints),
-    url(r'^api/fields/(?P<field>\w+).(?P<fmt>[json|zip|html|csv]+)$', api_get_fields),
-    url(r'^__api/fields/(?P<field>\w+).(?P<fmt>[json|zip|html|csv]+)$', api_get_fields),
-    url(r'^api/fields.(?P<fmt>[json|zip|html|csv]+)$', api_get_fields),
-    url(r'^__api/fields.(?P<fmt>[json|zip|html|csv]+)$', api_get_fields),
+    url(r'^api/meta/result_count.(?P<fmt>json|html|csv)$', api_get_result_count),
+    url(r'^__api/meta/result_count.(?P<fmt>json|html|csv)$', api_get_result_count),
+    url(r'^api/meta/mults/(?P<slug>[-\w]+).(?P<fmt>json|html|csv)$', api_get_mult_counts),
+    url(r'^__api/meta/mults/(?P<slug>[-\w]+).(?P<fmt>json|html|csv)$', api_get_mult_counts),
+    url(r'^api/meta/range/endpoints/(?P<slug>[-\w]+).(?P<fmt>json|zip|html|csv)$', api_get_range_endpoints),
+    url(r'^__api/meta/range/endpoints/(?P<slug>[-\w]+).(?P<fmt>json|zip|html|csv)$', api_get_range_endpoints),
+    url(r'^api/fields/(?P<slug>\w+).(?P<fmt>json|zip|html|csv)$', api_get_fields),
+    url(r'^__api/fields/(?P<slug>\w+).(?P<fmt>json|zip|html|csv)$', api_get_fields),
+    url(r'^api/fields.(?P<fmt>json|zip|html|csv)$', api_get_fields),
+    url(r'^__api/fields.(?P<fmt>json|zip|html|csv)$', api_get_fields),
 ]

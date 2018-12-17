@@ -11,24 +11,6 @@ from config_data import *
 import impglobals
 import import_util
 
-_GOSSI_TARGET_MAPPING = {
-    'J': 'JUPITER',
-    'A': 'AMALTHEA',
-    'I': 'IO',
-    'E': 'EUROPA',
-    'G': 'GANYMEDE',
-    'C': 'CALLISTO',
-    'S': 'J MINOR SAT',
-    'R': 'J RINGS',
-    'H': 'STAR',
-    'L': 'MOON',
-    'W': 'EARTH',
-    'V': 'VENUS',
-    'U': 'IDA',
-    'P': 'GASPRA',
-    'N': 'NONE'
-}
-
 
 ################################################################################
 # THESE NEED TO BE IMPLEMENTED FOR EVERY MISSION
@@ -37,15 +19,7 @@ _GOSSI_TARGET_MAPPING = {
 def helper_galileo_target_name(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
-    image_id = index_row['IMAGE_ID']
-
-    target_id = image_id[2]
-    if target_id not in _GOSSI_TARGET_MAPPING:
-        import_util.log_nonrepeating_error(
-            f'Unknown GOSSI target ID "{target_id}" in IMAGE_ID "{image_id}"')
-        return None
-
-    target_name = _GOSSI_TARGET_MAPPING[target_id]
+    target_name = index_row['TARGET_NAME']
 
     if target_name in TARGET_NAME_MAPPING:
         target_name = TARGET_NAME_MAPPING[target_name]

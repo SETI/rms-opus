@@ -23,9 +23,23 @@ from search.models import ObsGeneral
 
 import settings
 
+import opus_support
+
 import logging
 log = logging.getLogger(__name__)
 
+
+def csv_response(filename, data, column_names=None):
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = f'attachment; filename={filename}.csv'
+    writer = csv.writer(response)
+    if column_names:
+        writer.writerow(column_names)
+    writer.writerows(data)
+    return response
+
+def json_response(data):
+    return HttpResponse(json.dumps(data), content_type='application/json')
 
 def response_formats(data, fmt, **kwargs):
     """
@@ -191,12 +205,15 @@ def enter_api_call(name, request, kwargs=None):
     global _API_CALL_NUMBER
     _API_CALL_NUMBER += 1
     if settings.OPUS_LOG_API_CALLS:
-        s = 'API ' + str(_API_CALL_NUMBER) + ' ' + request.path
+        s = 'API ' + str(_API_CALL_NUMBER) + ' '
+        if request and request.path:
+            s += request.path
         if kwargs:
             s += ' ' + str(kwargs)
-        s += ' ' + json.dumps(request.GET, sort_keys=True,
-                              indent=4,
-                              separators=(',', ': '))
+        if request and request.GET:
+            s += ' ' + json.dumps(request.GET, sort_keys=True,
+                                  indent=4,
+                                  separators=(',', ': '))
         log.debug(s)
     _API_START_TIMES[_API_CALL_NUMBER] = time.time()
     return _API_CALL_NUMBER
@@ -260,6 +277,37 @@ def convert_ring_obs_id_to_opus_id(ring_obs_id):
 
     return ring_obs_id
 
-def get_mult_name(param_name):
+def get_mult_name(param_qualified_name):
     "Returns mult widget foreign key table name"
-    return 'mult_' + '_'.join(param_name.split('.'))
+    return 'mult_' + '_'.join(param_qualified_name.split('.'))
+
+def format_metadata_number(val, form_type_format):
+    if val is None:
+        return None
+    if form_type_format is None:
+        return str(val)
+    if abs(val) > settings.THRESHOLD_FOR_EXPONENTIAL:
+        form_type_format = form_type_format.replace('f', 'e')
+    try:
+        return format(val, form_type_format)
+    except TypeError:
+        return str(val)
+
+def format_metadata_number_or_func(val, form_type_func, form_type_format):
+    if val is None:
+        return None
+    if form_type_func:
+        if form_type_func in opus_support.RANGE_FUNCTIONS:
+            func = opus_support.RANGE_FUNCTIONS[form_type_func][0]
+            return func(val)
+        else:
+            log.error('Unknown RANGE function "%s"', form_type_func)
+        return None
+    if form_type_format is None:
+        return str(val)
+    if abs(val) > settings.THRESHOLD_FOR_EXPONENTIAL:
+        form_type_format = form_type_format.replace('f', 'e')
+    try:
+        return format(val, form_type_format)
+    except TypeError:
+        return str(val)

@@ -54,7 +54,7 @@ var o_search = {
             o_hash.updateHash();
         });
 
-        $('#search').on('change', 'input.multichoice', function() {
+        $('#search').on('change', 'input.multichoice, input.singlechoice', function() {
            // mult widget gets changed
            var id = $(this).attr("id").split('_')[0];
            var value = $(this).attr("value").replace(/\+/g, '%2B');
@@ -65,8 +65,15 @@ var o_search = {
                    var values = opus.selections[id]; // this param already has been constrained
                }
 
-               values[values.length] = value;    // add the new value to the array of values
-               opus.selections[id] = values;     // add the array of values to selections
+               // for surfacegeometry we only want a target selected
+               if (id === 'surfacegeometrytargetname') {
+                  opus.selections[id] = [value];
+               } else {
+                  // add the new value to the array of values
+                  values[values.length] = value;
+                  // add the array of values to selections
+                  opus.selections[id] = values;
+               }
 
                // special menu behavior for surface geo, slide in a loading indicator..
                if (id == 'surfacetarget') {

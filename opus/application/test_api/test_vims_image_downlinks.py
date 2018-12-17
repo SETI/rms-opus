@@ -17,14 +17,14 @@ class ApiVimsDownlinksTests(TestCase):
     LIVE_TARGET = "production"
 
     # disable error logging and trace output before test
-    # def setUp(self):
+    def setUp(self):
     #     sys.tracebacklimit = 0 # default: 1000
-    #     logging.disable(logging.CRITICAL)
-    #
+        logging.disable(logging.ERROR)
+
     # # enable error logging and trace output after test
-    # def teardown(self):
+    def tearDown(self):
     #     sys.tracebacklimit = 1000 # default: 1000
-    #     logging.disable(logging.NOTSET)
+        logging.disable(logging.NOTSET)
 
     ###############################
     ### API VIMS downlink tests ###

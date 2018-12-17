@@ -10,7 +10,7 @@ log = logging.getLogger(__name__)
 def get_def_for_tooltip(term, context):
     "Get a dictionary definition for (i) tooltips in the OPUS UI"
     try:
-        definition = (Definition.objects.using('dictionary')
+        definition = (Definition.objects
                       .select_related()
                       .filter(context=context,
                               term=term).values('definition',
@@ -32,7 +32,7 @@ def api_get_definition_list(request):
     alpha = request.GET.get('alpha', None)
     if alpha is None:
         return JsonResponse({'error': 'No alpha given'})
-    definitions = (Definition.objects.using('dictionary').select_related()
+    definitions = (Definition.objects.select_related()
                    .filter(term__istartswith=alpha)
                    .values('definition', 'term', 'import_date',
                            'context__description').order_by('term'))
@@ -49,7 +49,7 @@ def api_display_definition(request):
     if term is None:
         raise Http404
     try:
-        definition = (Definition.objects.using('dictionary')
+        definition = (Definition.objects
                       .select_related()
                       .filter(context=context,
                               term=term).values('definition',
@@ -71,7 +71,7 @@ def api_search_definitions(request):
     if term is None:
         return JsonResponse({'error': 'No term given'})
     try:
-        definitions = (Definition.objects.using('dictionary').select_related()
+        definitions = (Definition.objects.select_related()
                        .filter(definition__icontains=term)
                        .values('definition', 'term', 'import_date',
                                'context__description').order_by('term'))
