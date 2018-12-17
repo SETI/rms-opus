@@ -417,14 +417,16 @@ class ApiSearchTests(TestCase):
 
     def test__api_stringsearchchoices_volumeid_002_COISS(self):
         "/api/stringsearchchoices: volumeid 002 instrumentid COISS"
-        url = '/opus/__api/stringsearchchoices/volumeid.json?volumeid=002&instrumentid=Cassini+ISS'
+        # The time constraint eliminates COISS_1002 as a result
+        url = '/opus/__api/stringsearchchoices/volumeid.json?volumeid=002&instrumentid=Cassini+ISS&timesec1=2004-02-06T02:07:06.418'
         expected = {'choices': ['COISS_2<b>002</b>'],
                     'full_search': False}
         self._run_json_equal(url, expected)
 
     def test__api_stringsearchchoices_volumeid_002_COUVIS(self):
         "/api/stringsearchchoices: volumeid 002 instrumentid COUVIS"
-        url = '/opus/__api/stringsearchchoices/volumeid.json?volumeid=002&instrumentid=Cassini+UVIS'
+        # The time constraint eliminates COUVIS_002x as results
+        url = '/opus/__api/stringsearchchoices/volumeid.json?volumeid=002&instrumentid=Cassini+UVIS&timesec2=2007-07-01T03:58:49.627'
         expected = {'choices': ['COUVIS_0<b>002</b>'],
                     'full_search': False}
         self._run_json_equal(url, expected)
