@@ -98,7 +98,7 @@ class ApiSearchTests(TestCase):
         print(str(expected))
         print('Restricted Got:')
         print(new_choices)
-        jdata['choices'] = new_choices        
+        jdata['choices'] = new_choices
         self.assertEqual(expected, jdata)
 
             ###################################################
@@ -466,7 +466,7 @@ class ApiSearchTests(TestCase):
         "/api/stringsearchchoices: volumeid 002 instrumentid COUVIS bigcache"
         settings.STRINGCHOICE_FULL_SEARCH_COUNT_THRESHOLD = 1
         # The time constraints eliminate COISS_1002 and COUVIS_002x as results
-        url = '/opus/__api/stringsearchchoices/volumeid.json?volumeid=002&instrument=Cassini+UVIS&timesec1=2004-02-06T02:07:06.418&timesec2=2007-04-05T03:56:00.537'
+        url = '/opus/__api/stringsearchchoices/volumeid.json?volumeid=002&instrument=Cassini+UVIS'
         expected = {'choices': ['COISS_2<b>002</b>', 'COUVIS_0<b>002</b>'],
                     'full_search': True}
         self._run_stringsearchchoices_subset(url, expected)
