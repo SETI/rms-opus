@@ -110,7 +110,7 @@ class resultsTests(TestCase):
 
     def test__get_triggered_tables_coiss(self):
         "get_triggered_tables: tables triggered by instrument COISS"
-        q = QueryDict('planet=SATURN&instrumentid=COISS')
+        q = QueryDict('planet=SATURN&instrument=COISS')
         expected = ['obs_general', 'obs_pds', 'obs_type_image',
                     'obs_wavelength',
                     'obs_surface_geometry',
@@ -130,7 +130,7 @@ class resultsTests(TestCase):
 
     def test__get_triggered_tables_couvis(self):
         "get_triggered_tables: tables triggered by instrument COUVIS"
-        q = QueryDict('instrumentid=COUVIS')
+        q = QueryDict('instrument=COUVIS')
         expected = ['obs_general', 'obs_pds', 'obs_type_image',
                     'obs_wavelength',
                     'obs_surface_geometry',
@@ -150,7 +150,7 @@ class resultsTests(TestCase):
 
     def test__get_triggered_tables_covims(self):
         "get_triggered_tables: tables triggered by instrument COVIMS"
-        q = QueryDict('instrumentid=COVIMS')
+        q = QueryDict('instrument=COVIMS')
         expected = ['obs_general', 'obs_pds', 'obs_type_image',
                     'obs_wavelength',
                     'obs_surface_geometry',
@@ -171,7 +171,7 @@ class resultsTests(TestCase):
 
     def test__get_triggered_tables_gossi(self):
         "get_triggered_tables: tables triggered by instrument GOSSI"
-        q = QueryDict('instrumentid=Galileo+SSI')
+        q = QueryDict('instrument=Galileo+SSI')
         expected = ['obs_general', 'obs_pds', 'obs_type_image',
                     'obs_wavelength',
                     'obs_surface_geometry',
@@ -193,7 +193,7 @@ class resultsTests(TestCase):
 
     def test__get_triggered_tables_vgiss(self):
         "get_triggered_tables: tables triggered by instrument VGISS"
-        q = QueryDict('instrumentid=Voyager+ISS')
+        q = QueryDict('instrument=Voyager+ISS')
         expected = ['obs_general', 'obs_pds', 'obs_type_image',
                     'obs_wavelength',
                     'obs_surface_geometry',
@@ -224,7 +224,7 @@ class resultsTests(TestCase):
 
     def test__get_triggered_tables_hstwfc3(self):
         "get_triggered_tables: tables triggered by instrument HSTWFC3"
-        q = QueryDict('instrumentid=Hubble+WFC3')
+        q = QueryDict('instrument=Hubble+WFC3')
         expected = ['obs_general', 'obs_pds', 'obs_type_image',
                     'obs_wavelength',
                     'obs_surface_geometry',

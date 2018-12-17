@@ -77,6 +77,25 @@ class ApiSearchTests(TestCase):
         print(str(expected))
         self.assertEqual(expected, jdata)
 
+    def _run_stringsearchchoices_subset(self, url, expected):
+        # Ignore any returned choices that aren't in the expected set
+        # to handle databases that have more stuff in them than we're expecting
+        print(url)
+        response = self._get_response(url)
+        self.assertEqual(response.status_code, 200)
+        jdata = json.loads(response.content)
+        if 'versions' in jdata:
+            del jdata['versions']
+        if 'versions' in expected:
+            del expected['versions']
+        for choice in jdata['choices']:
+            if choice not in expected['choices']:
+                del jdata['choices'][choice]
+        print('Got:')
+        print(str(jdata))
+        print('Expected:')
+        print(str(expected))
+        self.assertEqual(expected, jdata)
 
             ###################################################
             ######### /__api/normalizeinput API TESTS #########
@@ -418,7 +437,7 @@ class ApiSearchTests(TestCase):
     def test__api_stringsearchchoices_volumeid_002_COISS(self):
         "/api/stringsearchchoices: volumeid 002 instrumentid COISS"
         # The time constraint eliminates COISS_1002 as a result
-        url = '/opus/__api/stringsearchchoices/volumeid.json?volumeid=002&instrumentid=Cassini+ISS&timesec1=2004-02-06T02:07:06.418'
+        url = '/opus/__api/stringsearchchoices/volumeid.json?volumeid=002&instrument=Cassini+ISS&timesec1=2004-02-06T02:07:06.418'
         expected = {'choices': ['COISS_2<b>002</b>'],
                     'full_search': False}
         self._run_json_equal(url, expected)
@@ -426,7 +445,7 @@ class ApiSearchTests(TestCase):
     def test__api_stringsearchchoices_volumeid_002_COUVIS(self):
         "/api/stringsearchchoices: volumeid 002 instrumentid COUVIS"
         # The time constraint eliminates COUVIS_002x as results
-        url = '/opus/__api/stringsearchchoices/volumeid.json?volumeid=002&instrumentid=Cassini+UVIS&timesec2=2007-07-01T03:58:49.627'
+        url = '/opus/__api/stringsearchchoices/volumeid.json?volumeid=002&instrument=Cassini+UVIS&timesec2=2007-04-05T03:56:00.537'
         expected = {'choices': ['COUVIS_0<b>002</b>'],
                     'full_search': False}
         self._run_json_equal(url, expected)
@@ -434,31 +453,32 @@ class ApiSearchTests(TestCase):
     def test__api_stringsearchchoices_volumeid_002_COISS_bigcache(self):
         "/api/stringsearchchoices: volumeid 002 instrumentid COISS bigcache"
         settings.STRINGCHOICE_FULL_SEARCH_COUNT_THRESHOLD = 1
-        url = '/opus/__api/stringsearchchoices/volumeid.json?volumeid=002&instrumentid=Cassini+ISS'
+        url = '/opus/__api/stringsearchchoices/volumeid.json?volumeid=002&instrument=Cassini+ISS'
         expected = {'choices': ['COISS_2<b>002</b>', 'COUVIS_0<b>002</b>'],
                     'full_search': True}
-        self._run_json_equal(url, expected)
+        self._run_stringsearchchoices_subset(url, expected)
 
     def test__api_stringsearchchoices_volumeid_002_COUVIS_bigcache(self):
         "/api/stringsearchchoices: volumeid 002 instrumentid COUVIS bigcache"
         settings.STRINGCHOICE_FULL_SEARCH_COUNT_THRESHOLD = 1
-        url = '/opus/__api/stringsearchchoices/volumeid.json?volumeid=002&instrumentid=Cassini+UVIS'
+        # The time constraint eliminates COUVIS_002x as results
+        url = '/opus/__api/stringsearchchoices/volumeid.json?volumeid=002&instrument=Cassini+UVIS&timesec2=2007-04-05T03:56:00.537'
         expected = {'choices': ['COISS_2<b>002</b>', 'COUVIS_0<b>002</b>'],
                     'full_search': True}
-        self._run_json_equal(url, expected)
+        self._run_stringsearchchoices_subset(url, expected)
 
     def test__api_stringsearchchoices_volumeid_002_COISS_timeout(self):
         "/api/stringsearchchoices: volumeid 002 instrumentid COISS timeout"
         settings.STRINGCHOICE_FULL_SEARCH_TIME_THRESHOLD = 1
-        url = '/opus/__api/stringsearchchoices/volumeid.json?volumeid=002&instrumentid=Cassini+ISS'
+        url = '/opus/__api/stringsearchchoices/volumeid.json?volumeid=002&instrument=Cassini+ISS'
         expected = {'choices': ['COISS_2<b>002</b>', 'COUVIS_0<b>002</b>'],
                     'full_search': True}
-        self._run_json_equal(url, expected)
+        self._run_stringsearchchoices_subset(url, expected)
 
     def test__api_stringsearchchoices_volumeid_002_COUVIS_timeout(self):
         "/api/stringsearchchoices: volumeid 002 instrumentid COUVIS timeout"
         settings.STRINGCHOICE_FULL_SEARCH_TIME_THRESHOLD = 1
-        url = '/opus/__api/stringsearchchoices/volumeid.json?volumeid=002&instrumentid=Cassini+UVIS'
+        url = '/opus/__api/stringsearchchoices/volumeid.json?volumeid=002&instrument=Cassini+UVIS'
         expected = {'choices': ['COISS_2<b>002</b>', 'COUVIS_0<b>002</b>'],
                     'full_search': True}
-        self._run_json_equal(url, expected)
+        self._run_stringsearchchoices_subset(url, expected)

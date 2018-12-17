@@ -427,7 +427,7 @@ class searchTests(TestCase):
 
     def test__url_to_search_params_mults_plus(self):
         "url_to_search_params: mults using a + to mean space"
-        q = QueryDict('instrumentid=Cassini+ISS')
+        q = QueryDict('instrument=Cassini+ISS')
         (selections, extras) = url_to_search_params(q)
         sel_expected = {'obs_general.instrument_id': ['Cassini ISS']}
         order_expected = (['obs_general.time1', 'obs_general.opus_id'],

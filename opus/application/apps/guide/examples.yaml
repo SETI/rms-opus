@@ -16,7 +16,7 @@ sections:
 
             examples:
                 - desc: Target Enceladus plumes taken with COISS in JSON
-                  url: <HOST>/opus/api/data.json?instrumentid=Cassini+ISS&SURFACEGEOenceladusplanetographiclatitude1=70&SURFACEGEOenceladuscenterphaseangle1=160&order=time1&cols=opusid,target,time1,SURFACEGEOenceladuscenterphaseangle1
+                  url: <HOST>/opus/api/data.json?instrument=Cassini+ISS&SURFACEGEOenceladusplanetographiclatitude1=70&SURFACEGEOenceladuscenterphaseangle1=160&order=time1&cols=opusid,target,time1,SURFACEGEOenceladuscenterphaseangle1
 
           - title: api/metadata/[opus_id].[fmt]
             desc: Get all available, or particular, metadata for a single observation. NOTE - USE OF THIS API IS DEPRECATED. THIS IS BECAUSE RATHER THAN RETURNING THE SAME SLUG NAMES USED TO PERFORM SEARCHES, IT ERRONEOUSLY RETURNS INTERNAL DATABASE NAMES THAT ARE NOT DOCUMENTED. THESE INTERNAL NAMES MAY NOT BE UNIQUE AND COULD CAUSE PROBLEMS. PLEASE USE THE V2 VERSION OF THIS API BELOW INSTEAD.

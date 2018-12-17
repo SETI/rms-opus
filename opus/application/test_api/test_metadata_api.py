@@ -282,37 +282,37 @@ class ApiMetadataTests(TestCase):
 
     def test__api_meta_range_endpoints_COISS_greaterpixelsize1(self):
         "/api/meta/range/endpoints: greaterpixelsize1 COISS"
-        url = '/opus/__api/meta/range/endpoints/greaterpixelsize1.json?instrumentid=Cassini+ISS'
+        url = '/opus/__api/meta/range/endpoints/greaterpixelsize1.json?instrument=Cassini+ISS'
         expected = {'max': '1024', 'min': '256', 'nulls': 0}
         self._run_json_equal(url, expected)
 
     def test__api_meta_range_endpoints_COISS_greaterpixelsize2(self):
         "/api/meta/range/endpoints: greaterpixelsize2 COISS"
-        url = '/opus/api/meta/range/endpoints/greaterpixelsize2.json?instrumentid=Cassini+ISS'
+        url = '/opus/api/meta/range/endpoints/greaterpixelsize2.json?instrument=Cassini+ISS'
         expected = {'min': '256', 'max': '1024', 'nulls': 0}
         self._run_json_equal(url, expected)
 
     def test__api_meta_range_endpoints_COISS_lesserpixelsize1(self):
         "/api/meta/range/endpoints: lesserpixelsize1 COISS"
-        url = '/opus/api/meta/range/endpoints/lesserpixelsize1.json?instrumentid=Cassini+ISS'
+        url = '/opus/api/meta/range/endpoints/lesserpixelsize1.json?instrument=Cassini+ISS'
         expected = {'min': '256', 'max': '1024', 'nulls': 0}
         self._run_json_equal(url, expected)
 
     def test__api_meta_range_endpoints_COISS_lesserpixelsize2(self):
         "/api/meta/range/endpoints: lesserpixelsize2 COISS"
-        url = '/opus/__api/meta/range/endpoints/lesserpixelsize2.json?instrumentid=Cassini+ISS'
+        url = '/opus/__api/meta/range/endpoints/lesserpixelsize2.json?instrument=Cassini+ISS'
         expected = {'min': '256', 'max': '1024', 'nulls': 0}
         self._run_json_equal(url, expected)
 
     def test__api_meta_range_endpoints_GOSSI_greaterpixelsize1(self):
         "/api/meta/range/endpoints: greaterpixelsize1 GOSSI"
-        url = '/opus/__api/meta/range/endpoints/greaterpixelsize1.json?instrumentid=Galileo+SSI'
+        url = '/opus/__api/meta/range/endpoints/greaterpixelsize1.json?instrument=Galileo+SSI'
         expected = {'min': '800', 'max': '800', 'nulls': 0}
         self._run_json_equal(url, expected)
 
     def test__api_meta_range_endpoints_GOSSI_lesserpixelsize1(self):
         "/api/meta/range/endpoints: greaterpixelsize1 GOSSI"
-        url = '/opus/__api/meta/range/endpoints/lesserpixelsize1.json?instrumentid=Galileo+SSI'
+        url = '/opus/__api/meta/range/endpoints/lesserpixelsize1.json?instrument=Galileo+SSI'
         expected = {'min': '800', 'max': '800', 'nulls': 0}
         self._run_json_equal(url, expected)
 
@@ -325,25 +325,25 @@ class ApiMetadataTests(TestCase):
 
     def test__api_meta_range_endpoints_COISS_levels1(self):
         "/api/meta/range/endpoints: levels1 COISS"
-        url = '/opus/__api/meta/range/endpoints/levels1.json?instrumentid=Cassini+ISS'
+        url = '/opus/__api/meta/range/endpoints/levels1.json?instrument=Cassini+ISS'
         expected = {'min': '4096', 'max': '4096', 'nulls': 0}
         self._run_json_equal(url, expected)
 
     def test__api_meta_range_endpoints_COVIMS_levels1(self):
         "/api/meta/range/endpoints: levels1 COVIMS"
-        url = '/opus/__api/meta/range/endpoints/levels1.json?instrumentid=Cassini+VIMS'
+        url = '/opus/__api/meta/range/endpoints/levels1.json?instrument=Cassini+VIMS'
         expected = {'min': '4096', 'max': '4096', 'nulls': 0}
         self._run_json_equal(url, expected)
 
     def test__api_meta_range_endpoints_GOSSI_levels1(self):
         "/api/meta/range/endpoints: levels1 GOSSI"
-        url = '/opus/__api/meta/range/endpoints/levels1.json?instrumentid=Galileo+SSI'
+        url = '/opus/__api/meta/range/endpoints/levels1.json?instrument=Galileo+SSI'
         expected = {'min': '256', 'max': '256', 'nulls': 0}
         self._run_json_equal(url, expected)
 
     def test__api_meta_range_endpoints_VGISS_levels1(self):
         "/api/meta/range/endpoints: levels1 VGISS"
-        url = '/opus/__api/meta/range/endpoints/levels1.json?instrumentid=Voyager+ISS'
+        url = '/opus/__api/meta/range/endpoints/levels1.json?instrument=Voyager+ISS'
         expected = {'min': '256', 'max': '256', 'nulls': 0}
         self._run_json_equal(url, expected)
 
@@ -353,7 +353,7 @@ class ApiMetadataTests(TestCase):
 
     def test__api_meta_range_endpoints_bad_slug(self):
         "/api/meta/range/endpoints: bad slug name"
-        url = '/opus/__api/meta/range/endpoints/badslug.json?instrumentid=Cassini+ISS'
+        url = '/opus/__api/meta/range/endpoints/badslug.json?instrument=Cassini+ISS'
         self._run_status_equal(url, 404)
 
 
