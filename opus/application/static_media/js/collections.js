@@ -170,6 +170,9 @@ var o_collections = {
         if (opus.collection_change) {
             var zipped_files_html = $('.zipped_files', '#collection').html();
 
+            // don't forget to remove existing stuff before append
+            $('.gallery', '#collection').html("");
+
             $('.collection_details', '#collection').html(opus.spinner);
 
             // reset page no
@@ -178,7 +181,7 @@ var o_collections = {
 
             // redux: and nix this big thing:
             $.ajax({ url: "/opus/__collections/view.html",
-                success: function(html){
+                success: function(html) {
                     // this div lives in the in the nav menu template
                     $('.collection_details', '#collection').hide().html(html).fadeIn();
 
@@ -193,7 +196,9 @@ var o_collections = {
                     if (zipped_files_html) {
                         $('.zipped_files', '#collection').html(zipped_files_html);
                     }
-                }});
+                    o_collections.adjustProductInfoHeight();
+                }
+            });
         }
     },
 
@@ -346,15 +351,18 @@ var o_collections = {
         opus.collection_queue = [];
     },
 
-    editCollection: function(opus_id, action) {
+    editCollection: function(opusId, action) {
         opus.collection_change = true;
+
+        // make sure the checkbox for this observation in the other view (either data or gallery)
+        // is also checked/unchecked - if that view is drawn
+        $('#data__' + opusId).find('.data_checkbox').toggleClass('fa-check-square-o').toggleClass('fa-square-o');
+
         opus.lastCartRequestNo++;
         // $('.collections_extra').html(opus.spinner);
         // $('#collection_tab').fadeIn();
-        opus.collection_queue[opus.lastCartRequestNo] = {"action":action, "opus_id":opus_id, "sent":false};
+        opus.collection_queue[opus.lastCartRequestNo] = {"action":action, "opus_id":opusId, "sent":false};
 
         o_collections.processCollectionQueue();
     },
-
-
 };

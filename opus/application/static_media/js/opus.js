@@ -220,7 +220,6 @@ var opus = {
                 break;
 
             case 'collection':
-                opus.collection_change = true;
                 if (opus.prefs.colls_browse == 'data') {
                     $('.data_table','#collection').show();
                     $('.gallery','#collection').hide();

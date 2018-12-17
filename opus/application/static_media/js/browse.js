@@ -188,7 +188,7 @@ var o_browse = {
 
               case "check":   // add to cart
                   var action = o_browse.toggleBrowseInCollectionStyle(opusId);
-                  o_browse.cartHandler(opusId, action);
+                  o_collections.editCollection(opusId, action);
                   break;
 
               case "resize":  // expand, same as click on image
@@ -234,7 +234,7 @@ var o_browse = {
             let opusId = $(this).data("id");
             if (opusId) {
                 let action = o_browse.toggleBrowseInCollectionStyle(opusId);
-                o_browse.cartHandler(opusId, action);
+                o_collections.editCollection(opusId, action);
             }
             return false;
         });
@@ -325,17 +325,6 @@ var o_browse = {
             }
         })
         return false;
-    },
-
-    cartHandler: function(opusId, action) {
-        // behaviors for the click to add/remove from cart
-        // whether that's from checkbox being clicked
-        // or thumbnail clicked while 'add range' is happening
-
-        // make sure the checkbox for this observation in the other view (either data or gallery)
-        // is also checked/unchecked - if that view is drawn
-        $('#data__' + opusId).find('.data_checkbox').toggleClass('fa-check-square-o').toggleClass('fa-square-o');
-        o_collections.editCollection(opusId,action);
     },
 
     openDetailTab: function() {
