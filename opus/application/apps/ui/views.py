@@ -548,6 +548,7 @@ def _get_menu_labels(request, labels_view):
         menu_data.setdefault(d.table_name, OrderedDict())
 
         # XXX This really shouldn't be here!!
+        menu_data[d.table_name]['menu_help'] = None
         if d.table_name == 'obs_surface_geometry':
             menu_data[d.table_name]['menu_help'] = "Surface geometry, when available, is provided for all bodies in the field of view. Select a target name to reveal more options. Supported instruments: Cassini ISS, UVIS, and VIMS, New Horizons LORRI, and Voyager ISS."
 

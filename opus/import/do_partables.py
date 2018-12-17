@@ -84,7 +84,7 @@ def create_import_partables_table():
         entry = {
             'trigger_tab': 'obs_surface_geometry',
             'trigger_col': 'target_name',
-            'trigger_val': target_name.upper(),
+            'trigger_val': decode_target_name(target_name).upper(),
             'partable':    table_name
         }
         rows.append(entry)

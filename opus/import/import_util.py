@@ -246,13 +246,37 @@ def table_name_param_info(namespace):
 def table_name_partables(namespace):
     return impglobals.DATABASES.convert_raw_to_namespace(namespace, 'partables')
 
-def read_schema_for_table(table_name, replace=None):
+def encode_target_name(target_name):
+    target_name = target_name.lower()
+    target_name = target_name.replace('/', '___')
+    target_name = target_name.replace(' ', '____')
+    return target_name
+
+def decode_target_name(target_name):
+    target_name = target_name.replace('____', ' ')
+    target_name = target_name.replace('___', '/')
+    return target_name
+
+def table_name_for_sfc_target(target_name):
+    if target_name.upper() in TARGET_NAME_MAPPING:
+        target_name = TARGET_NAME_MAPPING[target_name]
+    return encode_target_name(target_name)
+
+def slug_name_for_sfc_target(target_name):
+    if target_name.upper() in TARGET_NAME_MAPPING:
+        target_name = TARGET_NAME_MAPPING[target_name]
+    target_name = target_name.lower()
+    target_name = target_name.replace('_', '').replace('/', '').replace(' ', '')
+    return target_name
+
+def read_schema_for_table(table_name, replace=[]):
     table_name = table_name.replace(IMPORT_TABLE_TEMP_PREFIX, '').lower()
     if table_name.startswith('obs_surface_geometry__'):
-        assert replace is None
+        assert replace == []
         target_name = table_name.replace('obs_surface_geometry__', '')
         table_name = 'obs_surface_geometry_target'
-        replace = ('<TARGET>', target_name)
+        replace=[('<TARGET>', table_name_for_sfc_target(target_name)),
+                 ('<SLUGTARGET>', slug_name_for_sfc_target(target_name))]
     schema_filename = os.path.join('table_schemas', table_name+'.json')
     if not os.path.exists(schema_filename):
         return None
@@ -261,7 +285,9 @@ def read_schema_for_table(table_name, replace=None):
             if replace is None:
                 return json.load(fp)
             contents = fp.read()
-            contents = contents.replace(replace[0], replace[1])
+            for r in replace:
+                print(r)
+                contents = contents.replace(r[0], r[1])
             return json.loads(contents)
         except json.decoder.JSONDecodeError:
             impglobals.LOGGER.log('debug', f'Was reading table "{table_name}"')

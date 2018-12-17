@@ -5465,7 +5465,7 @@ class ObsSurfaceGeometryRosalind(models.Model):
         db_table = 'obs_surface_geometry__rosalind'
 
 
-class ObsSurfaceGeometryS122004(models.Model):
+class ObsSurfaceGeometryS2004S12(models.Model):
     obs_general = models.ForeignKey(ObsGeneral, models.DO_NOTHING)
     opus_id = models.ForeignKey(ObsGeneral, models.DO_NOTHING, related_name='%(class)s_opus_id', db_column='opus_id')
     volume_id = models.CharField(max_length=11)
@@ -5512,10 +5512,10 @@ class ObsSurfaceGeometryS122004(models.Model):
 
     class Meta:
         managed = False
-        db_table = 'obs_surface_geometry__s12_2004'
+        db_table = 'obs_surface_geometry__s___2004____s____12'
 
 
-class ObsSurfaceGeometryS132004(models.Model):
+class ObsSurfaceGeometryS2004S13(models.Model):
     obs_general = models.ForeignKey(ObsGeneral, models.DO_NOTHING)
     opus_id = models.ForeignKey(ObsGeneral, models.DO_NOTHING, related_name='%(class)s_opus_id', db_column='opus_id')
     volume_id = models.CharField(max_length=11)
@@ -5562,7 +5562,7 @@ class ObsSurfaceGeometryS132004(models.Model):
 
     class Meta:
         managed = False
-        db_table = 'obs_surface_geometry__s13_2004'
+        db_table = 'obs_surface_geometry__s___2004____s____13'
 
 
 class ObsSurfaceGeometrySaturn(models.Model):
