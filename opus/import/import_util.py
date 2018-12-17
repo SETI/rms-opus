@@ -286,7 +286,6 @@ def read_schema_for_table(table_name, replace=[]):
                 return json.load(fp)
             contents = fp.read()
             for r in replace:
-                print(r)
                 contents = contents.replace(r[0], r[1])
             return json.loads(contents)
         except json.decoder.JSONDecodeError:
