@@ -264,7 +264,7 @@ def table_name_for_sfc_target(target_name):
 
 def slug_name_for_sfc_target(target_name):
     if target_name.upper() in TARGET_NAME_MAPPING:
-        target_name = TARGET_NAME_MAPPING[target_name]
+        target_name = TARGET_NAME_MAPPING[target_name.upper()]
     target_name = target_name.lower()
     target_name = target_name.replace('_', '').replace('/', '').replace(' ', '')
     return target_name
