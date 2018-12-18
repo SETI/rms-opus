@@ -56,7 +56,7 @@ var o_search = {
           slug = $(this).attr("name");
           let values = [];
           let currentValue = $(this).val().trim();
-          let regexPattern =  new RegExp(slug + '=[\\d\\w\\.\\s]*\&');
+          let regexPattern =  new RegExp(slug + '=[\\d\\w\\.\\s\\-\\:]*\&');
           let oldHash = o_hash.getHash();
           let newHash = `${slug}=${currentValue}&`;
 
@@ -82,9 +82,10 @@ var o_search = {
                 $(event.target).css('border', '1px solid #d5d5d5');
               } else if(returnData !== null) {
                 // if it's max, check if it's larger than min if min is available
+                // else just green border since it's a valid input value
                 if(slug[slug.length-1] === '2') {
                   let minSlug = slug.replace('2', '1');
-                  let letterPattern = new RegExp('\w+');
+                  let letterPattern = new RegExp('[^0-9\\.]+');
                   let maxVal = returnData;
                   let minVal = data[minSlug];
                   let maxFloat;
@@ -92,7 +93,9 @@ var o_search = {
 
                   // if it's time pattern, we directly compare with string
                   // else we compare with floating number
-                  if(maxVal.match(letterPattern) || minVal.match(letterPattern)) {
+                  console.log("MATCH MAX: " + maxVal.match(letterPattern));
+                  console.log("MATCH MIN: " + minVal.match(letterPattern));
+                  if(!maxVal.match(letterPattern) || !minVal.match(letterPattern)) {
                     maxFloat = parseFloat(maxVal);
                     minFloat = parseFloat(minVal);
                   }
@@ -101,7 +104,9 @@ var o_search = {
                     maxVal = maxFloat;
                     minVal = minFloat;
                   }
-
+                  console.log("MAX: " + maxVal);
+                  console.log("MIN: " + minVal);
+                  console.log(maxVal >= minVal);
                   if(maxVal >= minVal) {
                     $(event.target).css('border', '1px solid #9EEEBB');
                   } else {
@@ -118,7 +123,7 @@ var o_search = {
           }); // end ajax
 
           // console.log('CURRENT VAL: ' + $(this).val());
-          // console.log('SLUG: ' + slug);
+          console.log('SLUG: ' + slug);
           // console.log('NEW HASH: ' + newHash);
           // console.log('OLD HASH: ' + oldHash);
         });
