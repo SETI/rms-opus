@@ -77,7 +77,7 @@ var o_browse = {
 
        $("#columnChooser").modal({
            keyboard: false,
-           backdrop: false,
+           backdrop: 'static',
            show: false,
        })
 
@@ -258,6 +258,10 @@ var o_browse = {
             if ($("#galleryView").hasClass("show")) {
                 let opusId;
                 switch (e.keyCode) {
+                    case 27:  // esc - close modal
+                        $("#galleryView").modal('hide')
+                        return;
+                        break;
                     case 39:  // next
                         opusId = $("#galleryView").find(".next").data("id");
                         break;
@@ -269,6 +273,8 @@ var o_browse = {
                     o_browse.toggleGalleryViewHighlight();  // toggle highlight of current
                     o_browse.updateGalleryView(opusId);
                 }
+            } else if ($("#columnChooser").hasClass("show") && e.keyCode === 27) {
+                $("#columnChooser").modal('hide')
             }
             // don't return false here or it will snatch all the user input!
         });
