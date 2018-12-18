@@ -51,12 +51,17 @@ var o_search = {
         });
         */
 
+        // Removing the original orange border color #f59942
+        // Avoid the orange blinking on border
+        $('#search').on('focus', 'input.RANGE, input.STRING', function(event) {
+          $(this).attr('style', 'border-color: rgb(213, 213, 213)');
+        });
         // Dynamically get input values right after user input a character
         $('#search').on('input focusin', 'input.RANGE', function(event) {
           slug = $(this).attr("name");
           let values = [];
           let currentValue = $(this).val().trim();
-          let regexPattern =  new RegExp(slug + '=[\\d\\w\\.\\s\\-\\:]*\&');
+          let regexPattern =  new RegExp(slug + '=[\\d\\w\\s\\.\\-\\:]*\&');
           let oldHash = o_hash.getHash();
           let newHash = `${slug}=${currentValue}&`;
 
@@ -65,65 +70,33 @@ var o_search = {
           } else {
             newHash += oldHash;
           }
+          opus.temp_hash = newHash;
 
-          // keep calling api to check input values whenever input got changed
-          // original gray: #d5d5d5
-          // green border: #9EEEBB
-          // red border: #F6AFAF
+          // keep calling normalize api to check input values whenever input got changed
+          // only check if return value is null or not, DON'T compare min & max
           let url = '/opus/__api/normalizeinput.json?' + newHash;
           $.ajax({
             url: url,
             dataType:'json',
-            success: function(data){
+            success: function(data) {
               console.log('ajax call sucess on' + url);
               console.log(data);
               let returnData = data[slug];
               if(returnData === '') {
-                $(event.target).css('border', '1px solid #d5d5d5');
+                // original gray border
+                $(event.target).css('border', '1px solid rgb(213, 213, 213)');
               } else if(returnData !== null) {
-                // if it's max, check if it's larger than min if min is available
-                // else just green border since it's a valid input value
-                if(slug[slug.length-1] === '2') {
-                  let minSlug = slug.replace('2', '1');
-                  let letterPattern = new RegExp('[^0-9\\.]+');
-                  let maxVal = returnData;
-                  let minVal = data[minSlug];
-                  let maxFloat;
-                  let minFloat;
-
-                  // if it's time pattern, we directly compare with string
-                  // else we compare with floating number
-                  console.log("MATCH MAX: " + maxVal.match(letterPattern));
-                  console.log("MATCH MIN: " + minVal.match(letterPattern));
-                  if(!maxVal.match(letterPattern) || !minVal.match(letterPattern)) {
-                    maxFloat = parseFloat(maxVal);
-                    minFloat = parseFloat(minVal);
-                  }
-
-                  if(maxFloat && minFloat) {
-                    maxVal = maxFloat;
-                    minVal = minFloat;
-                  }
-                  console.log("MAX: " + maxVal);
-                  console.log("MIN: " + minVal);
-                  console.log(maxVal >= minVal);
-                  if(maxVal >= minVal) {
-                    $(event.target).css('border', '1px solid #9EEEBB');
-                  } else {
-                    $(event.target).css('border', '1px solid #F6AFAF');
-                  }
-
-                } else {
-                  $(event.target).css('border', '1px solid #9EEEBB');
-                }
+                // green border
+                $(event.target).css('border', '1px solid #9EEEBB');
               } else {
+                // red border
                 $(event.target).css('border', '1px solid #F6AFAF');
               }
             },
           }); // end ajax
 
           // console.log('CURRENT VAL: ' + $(this).val());
-          console.log('SLUG: ' + slug);
+          // console.log('SLUG: ' + slug);
           // console.log('NEW HASH: ' + newHash);
           // console.log('OLD HASH: ' + oldHash);
         });
@@ -134,6 +107,26 @@ var o_search = {
 
             slug = $(this).attr("name");
             css_class = $(this).attr("class").split(' ')[0]; // class will be STRING, min or max
+
+            // Run the final normalize api before performing search
+            let url = '/opus/__api/normalizeinput.json?' + opus.temp_hash;
+            $.ajax({
+              url: url,
+              dataType:'json',
+              success: function(data) {
+                let returnData = data[slug];
+                if(returnData === '') {
+                  // original gray border
+                  $(event.target).css('border', '1px solid rgb(213, 213, 213)');
+                } else if(returnData !== null) {
+                  // green border
+                  $(event.target).css('border', '1px solid #9EEEBB');
+                } else {
+                  // red border
+                  $(event.target).css('border', '1px solid #F6AFAF');
+                }
+              },
+            }); // end ajax
 
             // get values of all inputs
             var values = [];

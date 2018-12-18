@@ -192,6 +192,7 @@ var opus = {
     result_count:0,
     qtype_default: 'any',
     force_load: false, // set this to true to force load() when selections haven't chnaged
+    temp_hash: '', // store current hash based on current user input values
 
     // searching - ui
     search_tab_drawn: false,
