@@ -55,7 +55,7 @@ var o_search = {
         $('#search').on('input focusin', 'input.RANGE', function(event) {
           slug = $(this).attr("name");
           let values = [];
-          let currentValue = $(this).val()
+          let currentValue = $(this).val().trim();
           let regexPattern =  new RegExp(slug + '=[\\d\\w\\.\\s]*\&');
           let oldHash = o_hash.getHash();
           let newHash = `${slug}=${currentValue}&`;
@@ -66,32 +66,61 @@ var o_search = {
             newHash += oldHash;
           }
 
-          // keep calling api to check input values whenever it got changed
+          // keep calling api to check input values whenever input got changed
+          // original gray: #d5d5d5
+          // green border: #9EEEBB
+          // red border: #F6AFAF
           let url = '/opus/__api/normalizeinput.json?' + newHash;
           $.ajax({
-              url: url,
-              dataType:'json',
-              success: function(data){
-                  console.log('ajax call sucess on' + url);
-                  console.log(data);
-                  let returnData = data[slug];
-                  if(returnData === '') {
-                    // original gray border
-                    $(event.target).css('border', '1px solid #d5d5d5');
-                  } else if(returnData !== null) {
-                    // green border
+            url: url,
+            dataType:'json',
+            success: function(data){
+              console.log('ajax call sucess on' + url);
+              console.log(data);
+              let returnData = data[slug];
+              if(returnData === '') {
+                $(event.target).css('border', '1px solid #d5d5d5');
+              } else if(returnData !== null) {
+                // if it's max, check if it's larger than min if min is available
+                if(slug[slug.length-1] === '2') {
+                  let minSlug = slug.replace('2', '1');
+                  let letterPattern = new RegExp('\w+');
+                  let maxVal = returnData;
+                  let minVal = data[minSlug];
+                  let maxFloat;
+                  let minFloat;
+
+                  // if it's time pattern, we directly compare with string
+                  // else we compare with floating number
+                  if(maxVal.match(letterPattern) || minVal.match(letterPattern)) {
+                    maxFloat = parseFloat(maxVal);
+                    minFloat = parseFloat(minVal);
+                  }
+
+                  if(maxFloat && minFloat) {
+                    maxVal = maxFloat;
+                    minVal = minFloat;
+                  }
+
+                  if(maxVal >= minVal) {
                     $(event.target).css('border', '1px solid #9EEEBB');
                   } else {
-                    // red border
                     $(event.target).css('border', '1px solid #F6AFAF');
                   }
-              },
+
+                } else {
+                  $(event.target).css('border', '1px solid #9EEEBB');
+                }
+              } else {
+                $(event.target).css('border', '1px solid #F6AFAF');
+              }
+            },
           }); // end ajax
 
           // console.log('CURRENT VAL: ' + $(this).val());
           // console.log('SLUG: ' + slug);
           // console.log('NEW HASH: ' + newHash);
-          // console.log('HASH: ' + oldHash);
+          // console.log('OLD HASH: ' + oldHash);
         });
 
         // filling in a range or string search field = update the hash
