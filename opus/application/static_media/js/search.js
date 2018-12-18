@@ -52,7 +52,7 @@ var o_search = {
         */
 
         // Dynamically get input values right after user input a character
-        $('#search').on('input focus', 'input.RANGE', function(event) {
+        $('#search').on('input focusin', 'input.RANGE', function(event) {
           slug = $(this).attr("name");
           let values = [];
           let currentValue = $(this).val()
@@ -66,26 +66,24 @@ var o_search = {
             newHash += oldHash;
           }
 
-          // values.push(currentValue);
-          // opus.selections[slug] = values;
-          // updateHash would perform search
-          // o_hash.updateHash();
-
           // keep calling api to check input values whenever it got changed
-          var url = '/opus/__api/normalizeinput.json?' + newHash;
+          let url = '/opus/__api/normalizeinput.json?' + newHash;
           $.ajax({
               url: url,
               dataType:'json',
               success: function(data){
                   console.log('ajax call sucess on' + url);
                   console.log(data);
-                  if(data[slug] === '') {
-                    console.log(event.target);
+                  let returnData = data[slug];
+                  if(returnData === '') {
+                    // original gray border
                     $(event.target).css('border', '1px solid #d5d5d5');
-                  } else if(data[slug] !== null) {
-                    $(event.target).css('border', '2px solid #3AC36C');
+                  } else if(returnData !== null) {
+                    // green border
+                    $(event.target).css('border', '1px solid #9EEEBB');
                   } else {
-                    $(event.target).css('border', '2px solid #F76E6E');
+                    // red border
+                    $(event.target).css('border', '1px solid #F6AFAF');
                   }
               },
           }); // end ajax
