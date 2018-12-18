@@ -1,56 +1,58 @@
-<div class="row">
-    <div class="col-lg-6 col-md-6 pl-5">
-        <div class="detail-matadata scrollbar-morpheus-den">
-            <h1>Observation Detail</h1>
-            <p><b>OPUS ID: </b>{{ opus_id }}</p>
+<section class="container-fluid">
+    <div class="row flex-md-row flex-md-nowrap">
+        <div class="col-md-12 metadata-container">
+            <div class="detail-matadata scrollbar-morpheus-den pr-5">
+                <h1>Observation Detail</h1>
+                <p><b>OPUS ID: </b>{{ opus_id }}</p>
 
-            <h2>PDS Products</h2>
-            <div>
-                <p>Click on any "Index" type to see the entry for this observation in that table.</p>
-                {% for version, version_items in products.items %}
-                  <ul>
-                      <h4>Version: {{ version }}</h4>
-                      {% for product_type, product_type_info in version_items.items %}
-                        <li>
-                            <ul class="list-inline">
-                              {% if product_type_info.product_link %}
-                                <a href={{ product_type_info.product_link }} target="_blank">{{ product_type }}:</a>
-                              {% else %}
-                                {{ product_type }}:
-                              {% endif %}
-                      	      {% for f in product_type_info.files %}
-                      			     <li><a href="{{ f.link }}" target="_blank">{{ f.filename }}</a></li>
-                              {% endfor %}
-                            </ul>
-                        </li>
-                      {% endfor %}
-                  </ul>
-                {% endfor %}
-            </div>
+                <h2>PDS Products</h2>
+                <div>
+                    <p>Click on any "Index" type to see the entry for this observation in that table.</p>
+                    {% for version, version_items in products.items %}
+                      <ul>
+                          <h4>Version: {{ version }}</h4>
+                          {% for product_type, product_type_info in version_items.items %}
+                            <li>
+                                <ul class="list-inline">
+                                  {% if product_type_info.product_link %}
+                                    <a href={{ product_type_info.product_link }} target="_blank">{{ product_type }}:</a>
+                                  {% else %}
+                                    {{ product_type }}:
+                                  {% endif %}
+                          	      {% for f in product_type_info.files %}
+                          			     <li class="list-inline-item"><a href="{{ f.link }}" target="_blank">{{ f.filename }}</a></li>
+                                  {% endfor %}
+                                </ul>
+                            </li>
+                          {% endfor %}
+                      </ul>
+                    {% endfor %}
+                </div>
 
-            <h2>Metadata for Current Columns</h2>
-            <div id="cols_metadata_{{ opus_or_ringobs_id }}">
-                <span class="spinner">&nbsp;</span>
-            </div>
-            <div>
-                <h2>All OPUS Metadata for this Observation</h2>
-                <p>Grab all metadata <a href="/opus/__api/metadata_v2/{{ opus_id }}.json" target="_blank">as json</a></p>
-                <div id="all_metadata_{{ opus_or_ringobs_id }}"></div>
+                <h2>Metadata for Current Columns</h2>
+                <div id="cols_metadata_{{ opus_or_ringobs_id }}">
+                    <span class="spinner">&nbsp;</span>
+                </div>
+                <div>
+                    <h2>All OPUS Metadata for this Observation</h2>
+                    <p>Grab all metadata <a href="/opus/__api/metadata_v2/{{ opus_id }}.json" target="_blank">as json</a></p>
+                    <div id="all_metadata_{{ opus_or_ringobs_id }}"></div>
+                </div>
             </div>
         </div>
-    </div>
-    <div class="detail_img col-lg-6 col-md-6 pt-5">
-      <div>
-          <a href="{{ preview_full_url }}" target="_blank">
-              <img id="detail__{{ img.opus_id }}" src="{{ preview_med_url }}">
-          </a>
+        <div class="col-12 detail_img pt-5">
           <div>
-              <p>
-                  {% if preview_guide_url %}
-                    Read about <a href="{{ preview_guide_url }}" target="_blank">how to interpret {{ instrument_id }} preview images</a>
-                  {% endif %}
-              </p>
+              <a href="{{ preview_full_url }}" target="_blank">
+                  <img id="detail__{{ img.opus_id }}" src="{{ preview_med_url }}">
+              </a>
+              <div>
+                  <p>
+                      {% if preview_guide_url %}
+                        Read about <a href="{{ preview_guide_url }}" target="_blank">how to interpret {{ instrument_id }} preview images</a>
+                      {% endif %}
+                  </p>
+              </div>
           </div>
-      </div>
+        </div>
     </div>
-</div>
+</section>

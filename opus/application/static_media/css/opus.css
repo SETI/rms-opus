@@ -683,12 +683,21 @@ li a.search-param:hover {
 
 /* detail tab */
 .detail-matadata {
-	position:fixed !important;
-	min-width: 45em;
-	top:4em;
-	bottom:3em;
-	overflow-y: auto
+		position:fixed !important;
+		max-width: 700px;
+		top:4em;
+		bottom:3em;
+		overflow-y: auto
 }
+
+@media (min-width: 768px) {
+  	.metadata-container {
+        flex-basis: 800px !important;
+				-webkit-flex-basis: 800px !important;
+        max-width: 800px !important;
+    }
+}
+
 
 footer {
    position: fixed;

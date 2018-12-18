@@ -270,7 +270,7 @@ var o_browse = {
                     o_browse.updateGalleryView(opusId);
                 }
             }
-            return false;
+            // don't return false here or it will snatch all the user input!
         });
 
         // click table column header to reorder by that column
@@ -615,7 +615,7 @@ var o_browse = {
         if (data.length == 0) {
             html += '<div class="thumbnail-message">';
             html += '<h2>You Have No Selections</h2>';
-            html += '<p>To select observations, click on the Browse Results tab';
+            html += '<p>To select observations, click on the Browse Results tab ';
             html += 'at the top of the page,<br> mouse over the thumbnail gallery images to reveal the tools,';
             html += 'then click the <br>checkbox below a thumbnail.  </p>';
             html += '</div>';
@@ -674,7 +674,18 @@ var o_browse = {
         url = o_browse.updatePageInUrl(url, page);
 
         // metadata; used for both table and gallery
-        $.getJSON(base_url + url, function(allData) {
+        $.ajax({
+            dataType: "json",
+            url: base_url,
+            data: url,
+            beforeSend: function (request, settings) {
+                start_time = new Date().getTime();
+            },
+            success: function(allData, request) {
+              let request_time = new Date().getTime() - start_time;
+              console.log(request_time);
+//        });
+//        $.getJSON(base_url + url, function(allData) {
             o_browse.renderGallery(allData.data, allData.page_no, this.url);
             if (!opus.gallery_begun)
                 o_browse.startTable(allData.metadata);
@@ -689,22 +700,26 @@ var o_browse = {
                     status: '.scroller-status',
                     elementScroll: true,
                     history: false,
-                    debug: false,
+                    scrollThreshold: 500,
+                    debug: true,
+                });
+                $('#browse .gallery-contents').on( 'request.infiniteScroll', function( event, response, path ) {
+                    reqStart = new Date().getTime();
                 });
                 $('#browse .gallery-contents').on( 'load.infiniteScroll', function( event, response, path ) {
+                    let request_time = new Date().getTime() - reqStart;
+                    console.log("load: "+request_time);
+
                     let jsonData = JSON.parse( response );
                     o_browse.renderGallery(jsonData.data, jsonData.page_no, path);
                     o_browse.renderTable(jsonData.metadata);
 
-                    /*load another page
-                    if (jsonData.page_no % 2 == 0) {
-                        $('#browse .gallery-contents').infiniteScroll('loadNextPage')
-                    }*/
+                    console.log('Loaded page: ' + $('#browse .gallery-contents').data('infiniteScroll').pageIndex );
                 });
                 $('#browse .gallery-contents').infiniteScroll('loadNextPage');
                 opus.gallery_begun = true;
             }
-
+          }
         });
 
         opus.last_page_drawn["dataTable"] = page;
