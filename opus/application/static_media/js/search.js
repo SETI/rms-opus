@@ -51,6 +51,51 @@ var o_search = {
         });
         */
 
+        // Dynamically get input values right after user input a character
+        $('#search').on('input focus', 'input.RANGE', function(event) {
+          slug = $(this).attr("name");
+          let values = [];
+          let currentValue = $(this).val()
+          let regexPattern =  new RegExp(slug + '=[\\d\\w\\.\\s]*\&');
+          let oldHash = o_hash.getHash();
+          let newHash = `${slug}=${currentValue}&`;
+
+          if (oldHash.match(regexPattern)) {
+            newHash = oldHash.replace(regexPattern, `${slug}=${currentValue}&`);
+          } else {
+            newHash += oldHash;
+          }
+
+          // values.push(currentValue);
+          // opus.selections[slug] = values;
+          // updateHash would perform search
+          // o_hash.updateHash();
+
+          // keep calling api to check input values whenever it got changed
+          var url = '/opus/__api/normalizeinput.json?' + newHash;
+          $.ajax({
+              url: url,
+              dataType:'json',
+              success: function(data){
+                  console.log('ajax call sucess on' + url);
+                  console.log(data);
+                  if(data[slug] === '') {
+                    console.log(event.target);
+                    $(event.target).css('border', '1px solid #d5d5d5');
+                  } else if(data[slug] !== null) {
+                    $(event.target).css('border', '2px solid #3AC36C');
+                  } else {
+                    $(event.target).css('border', '2px solid #F76E6E');
+                  }
+              },
+          }); // end ajax
+
+          // console.log('CURRENT VAL: ' + $(this).val());
+          // console.log('SLUG: ' + slug);
+          // console.log('NEW HASH: ' + newHash);
+          // console.log('HASH: ' + oldHash);
+        });
+
         // filling in a range or string search field = update the hash
         // range behaviors and string behaviors for search widgets - input box
         $('#search').on('change', 'input.STRING, input.RANGE', function() {
@@ -80,7 +125,6 @@ var o_search = {
                         values[values.length] = $(this).val();
                     });
                 }
-
                 opus.selections[slug_no_num + '1'] = values;
                 // max
                 values = [];
