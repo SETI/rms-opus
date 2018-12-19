@@ -316,4 +316,5 @@ def get_latest_git_commit_id():
         # decode here to convert byte object to string
         return subprocess.check_output(['git', 'log', '--format=%H', '-n', '1']).strip().decode('utf8')
     except:
-        return 'No_git_commit_id_found'
+        log.warning('Unable to get the latest git commit id')
+        return random.getrandbits(128)

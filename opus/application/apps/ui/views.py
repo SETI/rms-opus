@@ -40,9 +40,9 @@ class main_site(TemplateView):
         menu = _get_menu_labels('', 'search')
         context['default_columns'] = settings.DEFAULT_COLUMNS
         context['menu'] = menu['menu']
-        if settings.LATEST_GIT_COMMIT_ID == '':
-            settings.LATEST_GIT_COMMIT_ID = get_latest_git_commit_id()
-        context['LATEST_GIT_COMMIT_ID'] = settings.LATEST_GIT_COMMIT_ID
+        if settings.OPUS_JS_VERSION == '':
+            settings.OPUS_JS_VERSION = get_latest_git_commit_id()
+        context['OPUS_JS_VERSION'] = settings.OPUS_JS_VERSION
         return context
 
 def api_about(request):
