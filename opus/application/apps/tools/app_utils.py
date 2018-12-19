@@ -11,6 +11,7 @@ from io import StringIO
 import json
 import random
 import string
+import subprocess
 import time
 from zipfile import ZipFile
 
@@ -309,3 +310,9 @@ def format_metadata_number_or_func(val, form_type_func, form_type_format):
         return format(val, form_type_format)
     except TypeError:
         return str(val)
+
+def get_latest_git_commit_id():
+    try:
+        return subprocess.check_output(['git', 'log', '--format=%H', '-n', '1']).strip()
+    except:
+        return 'No_git_commit_id_found'
