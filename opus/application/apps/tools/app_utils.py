@@ -317,4 +317,4 @@ def get_latest_git_commit_id():
         return subprocess.check_output(['git', 'log', '--format=%H', '-n', '1']).strip().decode('utf8')
     except:
         log.warning('Unable to get the latest git commit id')
-        return random.getrandbits(128)
+        return str(random.getrandbits(128))
