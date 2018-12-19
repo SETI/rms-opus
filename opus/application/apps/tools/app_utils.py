@@ -313,6 +313,7 @@ def format_metadata_number_or_func(val, form_type_func, form_type_format):
 
 def get_latest_git_commit_id():
     try:
-        return subprocess.check_output(['git', 'log', '--format=%H', '-n', '1']).strip()
+        # decode here to convert byte object to string
+        return subprocess.check_output(['git', 'log', '--format=%H', '-n', '1']).strip().decode('utf8')
     except:
         return 'No_git_commit_id_found'
