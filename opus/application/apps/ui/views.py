@@ -13,6 +13,7 @@ from annoying.decorators import render_to
 from django.apps import apps
 from django.core.exceptions import FieldError, ObjectDoesNotExist
 from django.shortcuts import render
+from django.utils.decorators import method_decorator
 from django.views.generic import TemplateView
 
 from dictionary.models import *
@@ -30,7 +31,7 @@ import opus_support
 import logging
 log = logging.getLogger(__name__)
 
-
+@method_decorator(never_cache, name='dispatch')
 class main_site(TemplateView):
     template_name = "base.html"
 
@@ -39,6 +40,9 @@ class main_site(TemplateView):
         menu = _get_menu_labels('', 'search')
         context['default_columns'] = settings.DEFAULT_COLUMNS
         context['menu'] = menu['menu']
+        if settings.OPUS_FILE_VERSION == '':
+            settings.OPUS_FILE_VERSION = get_latest_git_commit_id()
+        context['OPUS_FILE_VERSION'] = settings.OPUS_FILE_VERSION
         return context
 
 def api_about(request):

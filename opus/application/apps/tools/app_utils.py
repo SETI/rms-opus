@@ -9,8 +9,10 @@ import csv
 import datetime
 from io import StringIO
 import json
+import os
 import random
 import string
+import subprocess
 import time
 from zipfile import ZipFile
 
@@ -309,3 +311,12 @@ def format_metadata_number_or_func(val, form_type_func, form_type_format):
         return format(val, form_type_format)
     except TypeError:
         return str(val)
+
+def get_latest_git_commit_id():
+    try:
+        os.chdir(settings.PDS_OPUS_PATH)
+        # decode here to convert byte object to string
+        return subprocess.check_output(['git', 'log', '--format=%H', '-n', '1']).strip().decode('utf8')
+    except:
+        log.warning('Unable to get the latest git commit id')
+        return str(random.getrandbits(128))

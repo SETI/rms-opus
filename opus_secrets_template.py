@@ -27,9 +27,12 @@ DB_PASSWORD = '<DB_PASSWORD>'
 # volumes, calibrated, metadata, previews, and diagrams.
 PDS_DATA_DIR = '<HOLDING_DIR>'
 
+# The directory where pds-opus lives.
+PDS_OPUS_PATH = '<PATH>'
+
 # The directory where the pds-opus library lives. This should normally be
 # .../pds-opus/lib
-PDS_OPUS_LIB_PATH = '<PATH>'
+PDS_OPUS_LIB_PATH = os.path.join(PDS_OPUS_PATH, 'lib')
 
 # The directory where the pds-webtools repo lives. This should
 # normally be .../pds-webtools
