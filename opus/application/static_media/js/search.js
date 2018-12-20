@@ -11,6 +11,38 @@ var o_search = {
         dataType:'json',
       });
     },
+    performSearchOnRangeInput: function(event, slug, url) {
+      $.when(o_search.ajaxAPICall(url)).done(function(data) {
+        // Make sure it's the final call before parsing data
+        if(data['reqno'] < opus.lastNormalizeRequestNo) {
+            return;
+        }
+
+        // if latest input is not valid, change it's background to red
+        let returnData = data[slug];
+        if(returnData === null) {
+          $(event.target).css('background-color', '#F6AFAF');
+          return;
+        }
+
+        for(let eachSlug in data) {
+          if(data[eachSlug] === null) {
+            return;
+          }
+        }
+        // all data are valid, perform final search when user focus out or hit enter
+        for(let eachSlug in data) {
+          if(eachSlug !== 'reqno') {
+            opus.selections[eachSlug] = [data[eachSlug]];
+          }
+        }
+        o_hash.updateHash();
+
+        // reset border and background color is search is perform
+        $('input.RANGE').css('border', '1px solid rgb(213, 213, 213)')
+        $('input.RANGE').css('background-color', '#FFFFFF');
+      });
+    },
     searchBehaviors: function() {
         /*
         // result count display hover
@@ -110,32 +142,15 @@ var o_search = {
           slug = $(this).attr("name");
           opus.lastNormalizeRequestNo++;
           let url = '/opus/__api/normalizeinput.json?' + opus.temp_hash + '&reqno=' + opus.lastNormalizeRequestNo;
-          $.when(o_search.ajaxAPICall(url)).done(function(data) {
-            // Make sure it's the final call before parsing data
-            if(data['reqno'] < opus.lastNormalizeRequestNo) {
-                return;
-            }
-
-            // if latest input is not valid, change it's background to red
-            let returnData = data[slug];
-            if(returnData === null) {
-              $(event.target).css('background-color', '#F6AFAF');
-              return
-            }
-
-            for(let eachSlug in data) {
-              if(data[eachSlug] === null) {
-                return
-              }
-            }
-            // all data are valid, perform final search when user focus out or hit enter
-            for(let eachSlug in data) {
-              if(eachSlug !== 'reqno') {
-                opus.selections[eachSlug] = [data[eachSlug]];
-              }
-            }
-            o_hash.updateHash();
-          });
+          o_search.performSearchOnRangeInput(event, slug, url);
+        });
+        $('#search').on('keypress', 'input.RANGE', function(event) {
+          slug = $(this).attr("name");
+          opus.lastNormalizeRequestNo++;
+          let url = '/opus/__api/normalizeinput.json?' + opus.temp_hash + '&reqno=' + opus.lastNormalizeRequestNo;
+          if(event.keyCode === 13) {
+            o_search.performSearchOnRangeInput(event, slug, url);
+          }
         });
 
         // filling in a range or string search field = update the hash
