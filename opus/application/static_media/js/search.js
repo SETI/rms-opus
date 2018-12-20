@@ -5,7 +5,12 @@ var o_search = {
      *  Everything that appears on the search tab
      *
      **/
-
+    ajaxAPICall: function(url) {
+      return $.ajax({
+        url: url,
+        dataType:'json',
+      });
+    },
     searchBehaviors: function() {
         /*
         // result count display hover
@@ -52,17 +57,17 @@ var o_search = {
         */
 
         // Removing the original orange border color #f59942
-        // Avoid the orange blinking on border
-        $('#search').on('focus', 'input.RANGE, input.STRING', function(event) {
+        // Avoid the orange blinking on border color
+        $('#search').on('focus', 'input.RANGE', function(event) {
           $(this).attr('style', 'border-color: rgb(213, 213, 213)');
+          $(this).css('background-color', '#FFFFFF');
         });
         // Dynamically get input values right after user input a character
         $('#search').on('input focusin', 'input.RANGE', function(event) {
           slug = $(this).attr("name");
-          let values = [];
           let currentValue = $(this).val().trim();
           let regexPattern =  new RegExp(slug + '=[\\d\\w\\s\\.\\-\\:]*\&');
-          let oldHash = o_hash.getHash();
+          let oldHash = opus.temp_hash || o_hash.getHash();
           let newHash = `${slug}=${currentValue}&`;
 
           if (oldHash.match(regexPattern)) {
@@ -80,11 +85,7 @@ var o_search = {
             url: url,
             dataType:'json',
             success: function(data) {
-              console.log('ajax call sucess on' + url);
-              console.log(data);
-              console.log('RETURN REQNO: ' + data['reqno']);
-              console.log('LAST REQNO: ' + opus.lastNormalizeRequestNo);
-              // if a new input is there, re-call api with new input
+              // if a newer input is there, re-call api with new input
               if(data['reqno'] < opus.lastNormalizeRequestNo) {
                   return;
               }
@@ -102,39 +103,47 @@ var o_search = {
               }
             },
           }); // end ajax
+        });
 
-          // console.log('CURRENT VAL: ' + $(this).val());
-          // console.log('SLUG: ' + slug);
-          // console.log('NEW HASH: ' + newHash);
-          // console.log('OLD HASH: ' + oldHash);
+        // perform search on range input when user focus out or hit enter
+        $('#search').on('change focusout', 'input.RANGE', function(event) {
+          slug = $(this).attr("name");
+          opus.lastNormalizeRequestNo++;
+          let url = '/opus/__api/normalizeinput.json?' + opus.temp_hash + '&reqno=' + opus.lastNormalizeRequestNo;
+          $.when(o_search.ajaxAPICall(url)).done(function(data) {
+            // Make sure it's the final call before parsing data
+            if(data['reqno'] < opus.lastNormalizeRequestNo) {
+                return;
+            }
+
+            // if latest input is not valid, change it's background to red
+            let returnData = data[slug];
+            if(returnData === null) {
+              $(event.target).css('background-color', '#F6AFAF');
+              return
+            }
+
+            for(let eachSlug in data) {
+              if(data[eachSlug] === null) {
+                return
+              }
+            }
+            // all data are valid, perform final search when user focus out or hit enter
+            for(let eachSlug in data) {
+              if(eachSlug !== 'reqno') {
+                opus.selections[eachSlug] = [data[eachSlug]];
+              }
+            }
+            o_hash.updateHash();
+          });
         });
 
         // filling in a range or string search field = update the hash
         // range behaviors and string behaviors for search widgets - input box
-        $('#search').on('change', 'input.STRING, input.RANGE', function() {
+        $('#search').on('change', 'input.STRING', function() {
 
             slug = $(this).attr("name");
             css_class = $(this).attr("class").split(' ')[0]; // class will be STRING, min or max
-
-            // Run the final normalize api before performing search
-            let url = '/opus/__api/normalizeinput.json?' + opus.temp_hash;
-            $.ajax({
-              url: url,
-              dataType:'json',
-              success: function(data) {
-                let returnData = data[slug];
-                if(returnData === '') {
-                  // original gray border
-                  $(event.target).css('border', '1px solid rgb(213, 213, 213)');
-                } else if(returnData !== null) {
-                  // green border
-                  $(event.target).css('border', '1px solid #9EEEBB');
-                } else {
-                  // red border
-                  $(event.target).css('border', '1px solid #F6AFAF');
-                }
-              },
-            }); // end ajax
 
             // get values of all inputs
             var values = [];
