@@ -55,7 +55,21 @@ class APIResultCountsTests(TestCase):
 
                 filereader = csv.reader(csvfile)
                 for row in filereader:
+                    if len(row) != 3:
+                        if len(row) == 0:
+                            continue
+                        msg = 'Bad results_count line: '+str(row)
+                        error_flag.append(msg)
+                        msg += ' ==> FAIL!'
+                        continue
+
                     q_str, expected, info = row
+
+                    if q_str.find('#/') == -1:
+                        msg = 'Bad results_count line: '+str(row)
+                        error_flag.append(msg)
+                        msg += ' ==> FAIL!'
+                        continue
 
                     url_hash = q_str.split("#/")[1].strip()
                     api_url = api_public.result_counts_api + url_hash
@@ -69,10 +83,18 @@ class APIResultCountsTests(TestCase):
 
                     result_count = data["data"][0]["result_count"]
 
-                    msg = "checking: "+api_url+"\n"
-                    msg += f"result: expected >= {expected} :: got {result_count}"
+                    comparison = '>='
+                    if expected[0] == '=':
+                        comparison = '='
+                        expected = expected[1:]
 
-                    if int(result_count) < int(expected):
+                    msg = "checking: "+api_url+"\n"
+                    msg += f"result: expected {comparison} {expected} :: got {result_count}"
+
+                    if ((comparison == '>=' and
+                         int(result_count) < int(expected)) or
+                        (comparison == '=' and
+                         int(result_count) != int(expected))):
                         error_flag.append(msg)
                         msg += ' ==> FAIL!'
                     else:
