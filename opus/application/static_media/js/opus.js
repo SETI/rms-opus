@@ -150,6 +150,7 @@ var opus = {
     // avoiding race conditions in ajax calls
     lastRequestNo: 0,          // holds request numbers for main result count loop,
     lastCartRequestNo: 0,
+    lastNormalizeRequestNo: 0,
 
     download_in_process: false,
 
