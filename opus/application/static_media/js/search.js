@@ -71,16 +71,24 @@ var o_search = {
             newHash += oldHash;
           }
           opus.temp_hash = newHash;
+          opus.lastNormalizeRequestNo++;
 
           // keep calling normalize api to check input values whenever input got changed
           // only check if return value is null or not, DON'T compare min & max
-          let url = '/opus/__api/normalizeinput.json?' + newHash;
+          let url = '/opus/__api/normalizeinput.json?' + newHash + '&reqno=' + opus.lastNormalizeRequestNo;
           $.ajax({
             url: url,
             dataType:'json',
             success: function(data) {
               console.log('ajax call sucess on' + url);
               console.log(data);
+              console.log('RETURN REQNO: ' + data['reqno']);
+              console.log('LAST REQNO: ' + opus.lastNormalizeRequestNo);
+              // if a new input is there, re-call api with new input
+              if(data['reqno'] < opus.lastNormalizeRequestNo) {
+                  return;
+              }
+
               let returnData = data[slug];
               if(returnData === '') {
                 // original gray border
