@@ -176,6 +176,30 @@ class ApiSearchTests(TestCase):
         expected = {"levels": None}
         self._run_json_equal(url, expected)
 
+    def test__api_normalizeinput_int_large_val(self):
+        "/api/normalizeinput: integer large value 1e1234"
+        url = '/opus/__api/normalizeinput.json?levels=1e1234'
+        expected = {"levels": None}
+        self._run_json_equal(url, expected)
+
+    def test__api_normalizeinput_int_inf(self):
+        "/api/normalizeinput: integer inf"
+        url = '/opus/__api/normalizeinput.json?levels=inf'
+        expected = {"levels": None}
+        self._run_json_equal(url, expected)
+
+    def test__api_normalizeinput_int_ninf(self):
+        "/api/normalizeinput: integer -inf"
+        url = '/opus/__api/normalizeinput.json?levels=-inf'
+        expected = {"levels": None}
+        self._run_json_equal(url, expected)
+
+    def test__api_normalizeinput_int_nan(self):
+        "/api/normalizeinput: integer nan"
+        url = '/opus/__api/normalizeinput.json?levels=nan'
+        expected = {"levels": None}
+        self._run_json_equal(url, expected)
+
     def test__api_normalizeinput_float_empty(self):
         "/api/normalizeinput: float empty"
         url = '/opus/__api/normalizeinput.json?rightasc1='
@@ -245,6 +269,30 @@ class ApiSearchTests(TestCase):
     def test__api_normalizeinput_float_bad_val2(self):
         "/api/normalizeinput: float bad value 1.22h+1"
         url = '/opus/__api/normalizeinput.json?rightasc1=1.22h+1'
+        expected = {"rightasc1": None}
+        self._run_json_equal(url, expected)
+
+    def test__api_normalizeinput_float_large_val(self):
+        "/api/normalizeinput: float large value 1e1234"
+        url = '/opus/__api/normalizeinput.json?rightasc1=1e1234'
+        expected = {"rightasc1": None}
+        self._run_json_equal(url, expected)
+
+    def test__api_normalizeinput_float_inf(self):
+        "/api/normalizeinput: float inf"
+        url = '/opus/__api/normalizeinput.json?rightasc1=inf'
+        expected = {"rightasc1": None}
+        self._run_json_equal(url, expected)
+
+    def test__api_normalizeinput_int_ninf(self):
+        "/api/normalizeinput: float -inf"
+        url = '/opus/__api/normalizeinput.json?rightasc1=-inf'
+        expected = {"rightasc1": None}
+        self._run_json_equal(url, expected)
+
+    def test__api_normalizeinput_float_nan(self):
+        "/api/normalizeinput: float nan"
+        url = '/opus/__api/normalizeinput.json?rightasc1=nan'
         expected = {"rightasc1": None}
         self._run_json_equal(url, expected)
 
