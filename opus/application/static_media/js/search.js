@@ -24,6 +24,10 @@ var o_search = {
             return;
         }
 
+        // FOR DEBUGGIN PURPOSE
+        // console.log('LAST API CALL: ' + url);
+        // console.log('FINAL RETURN DATA: ' + JSON.stringify(data));
+
         // check each range input if not valid, change to red background
         for(let eachSlug in data) {
           if(data[eachSlug] === null) {
