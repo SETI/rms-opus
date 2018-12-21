@@ -24,7 +24,7 @@ var o_search = {
             return;
         }
 
-        // FOR DEBUGGIN PURPOSE
+        // FOR DEBUGGING PURPOSE
         // console.log('LAST API CALL: ' + url);
         // console.log('FINAL RETURN DATA: ' + JSON.stringify(data));
 
