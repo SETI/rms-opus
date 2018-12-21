@@ -1,3 +1,8 @@
+const GRAY = 'rgb(213, 213, 213)';
+const GREEN = '#9EEEBB';
+const RED = '#F6AFAF';
+const WHITE = '#FFFFFF';
+
 var o_search = {
 
     /**
@@ -12,35 +17,41 @@ var o_search = {
       });
     },
     performSearchOnRangeInput: function(event, slug, url) {
+      let performSearch = true;
       $.when(o_search.ajaxAPICall(url)).done(function(data) {
         // Make sure it's the final call before parsing data
         if(data['reqno'] < opus.lastNormalizeRequestNo) {
             return;
         }
 
-        // if latest input is not valid, change it's background to red
-        let returnData = data[slug];
-        if(returnData === null) {
-          $(event.target).css('background-color', '#F6AFAF');
-          return;
-        }
-
+        // check each range input if not valid, change to red background
         for(let eachSlug in data) {
           if(data[eachSlug] === null) {
-            return;
+            $(`input[name="${eachSlug}"]`).css('background-color', RED);
+            performSearch = false;
+          } else {
+            if($(`input[name="${eachSlug}"]`).css('background-color') !== WHITE) {
+              $(`input[name="${eachSlug}"]`).css('background-color', WHITE);
+            }
           }
         }
-        // all data are valid, perform final search when user focus out or hit enter
-        for(let eachSlug in data) {
-          if(eachSlug !== 'reqno') {
-            opus.selections[eachSlug] = [data[eachSlug]];
-          }
-        }
-        o_hash.updateHash();
 
-        // reset border and background color is search is perform
-        $('input.RANGE').css('border', '1px solid rgb(213, 213, 213)')
-        $('input.RANGE').css('background-color', '#FFFFFF');
+        if(!performSearch) {
+          return;
+        } else {
+          // all data are valid, perform final search when user focus out or hit enter
+          for(let eachSlug in data) {
+            if(eachSlug !== 'reqno') {
+              opus.selections[eachSlug] = [data[eachSlug]];
+            }
+          }
+          o_hash.updateHash();
+
+          // reset border and background color is a search is perform
+          $('input.RANGE').css('border', `1px solid ${GRAY}`)
+          $('input.RANGE').css('background-color', WHITE);
+
+        }
       });
     },
     searchBehaviors: function() {
@@ -88,11 +99,10 @@ var o_search = {
         });
         */
 
-        // Removing the original orange border color #f59942
         // Avoid the orange blinking on border color
         $('#search').on('focus', 'input.RANGE', function(event) {
-          $(this).attr('style', 'border-color: rgb(213, 213, 213)');
-          $(this).css('background-color', '#FFFFFF');
+          $(this).attr('style', `border-color: ${GRAY}`);
+          $(this).css('background-color', WHITE);
         });
         // Dynamically get input values right after user input a character
         $('#search').on('input focusin', 'input.RANGE', function(event) {
@@ -124,14 +134,14 @@ var o_search = {
 
               let returnData = data[slug];
               if(returnData === '') {
-                // original gray border
-                $(event.target).css('border', '1px solid rgb(213, 213, 213)');
+                $(event.target).css('border',`1px solid ${GRAY}`);
               } else if(returnData !== null) {
-                // green border
-                $(event.target).css('border', '1px solid #9EEEBB');
+                $(event.target).css('border', `1px solid ${GREEN}`);
+                if($(event.target).css('background-color') !== WHITE) {
+                  $(event.target).css('background-color', WHITE);
+                }
               } else {
-                // red border
-                $(event.target).css('border', '1px solid #F6AFAF');
+                $(event.target).css('border', `1px solid ${RED}`);
               }
             },
           }); // end ajax
@@ -139,15 +149,17 @@ var o_search = {
 
         // perform search on range input when user focus out or hit enter
         $('#search').on('change focusout', 'input.RANGE', function(event) {
-          slug = $(this).attr("name");
+          let slug = $(this).attr("name");
           opus.lastNormalizeRequestNo++;
           let url = '/opus/__api/normalizeinput.json?' + opus.temp_hash + '&reqno=' + opus.lastNormalizeRequestNo;
           o_search.performSearchOnRangeInput(event, slug, url);
         });
+
         $('#search').on('keypress', 'input.RANGE', function(event) {
-          slug = $(this).attr("name");
+          let slug = $(this).attr("name");
           opus.lastNormalizeRequestNo++;
           let url = '/opus/__api/normalizeinput.json?' + opus.temp_hash + '&reqno=' + opus.lastNormalizeRequestNo;
+          // pressing enter
           if(event.keyCode === 13) {
             o_search.performSearchOnRangeInput(event, slug, url);
           }
