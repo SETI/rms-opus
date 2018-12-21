@@ -223,7 +223,10 @@ def api_get_widget(request, **kwargs):
 
         else: # param is constrained
             if form_type_func is None:
-                func = float
+                if form_type_format == 'd':
+                    func = int
+                else:
+                    func = float
             else:
                 if form_type_func in opus_support.RANGE_FUNCTIONS:
                     func = opus_support.RANGE_FUNCTIONS[form_type_func][0]

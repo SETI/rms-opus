@@ -1,4 +1,4 @@
-const GRAY = 'rgb(213, 213, 213)';
+const GRAY = '#D5D5D5';
 const GREEN = '#9EEEBB';
 const RED = '#F6AFAF';
 const WHITE = '#FFFFFF';
