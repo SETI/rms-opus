@@ -6,7 +6,7 @@ var o_hash = {
      **/
 
     // updates the hash according to user selections
-    updateHash: function(){
+    updateHash: function(runSearch=true){
 
       hash = [];
       for (var param in opus.selections) {
@@ -54,7 +54,11 @@ var o_hash = {
               hash[hash.length] = key + '=' + opus.prefs[key];
           }
       }
-      window.location.hash = '/' + hash.join('&');
+      if(runSearch) {
+        window.location.hash = '/' + hash.join('&');
+      } else {
+        return hash.join('&');
+      }
     },
 
     // returns the hash part of the url minus the #/ symbol

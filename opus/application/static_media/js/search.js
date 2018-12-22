@@ -25,8 +25,9 @@ var o_search = {
         }
 
         // FOR DEBUGGING PURPOSE
-        // console.log('LAST API CALL: ' + url);
-        // console.log('FINAL RETURN DATA: ' + JSON.stringify(data));
+        console.log('Final API call');
+        console.log('LAST API CALL: ' + url);
+        console.log('FINAL RETURN DATA: ' + JSON.stringify(data));
 
         // check each range input if not valid, change to red background
         for(let eachSlug in data) {
@@ -49,6 +50,7 @@ var o_search = {
               opus.selections[eachSlug] = [data[eachSlug]];
             }
           }
+          console.log('SEARCH PERFORM');
           o_hash.updateHash();
 
           // reset border and background color is a search is perform
@@ -104,70 +106,110 @@ var o_search = {
         */
 
         // Avoid the orange blinking on border color
-        $('#search').on('focus', 'input.RANGE', function(event) {
-          $(this).attr('style', `border-color: ${GRAY}`);
-          $(this).css('background-color', WHITE);
-        });
+        // $('#search').on('focus', 'input.RANGE', function(event) {
+        //   $(this).attr('style', `border-color: ${GRAY}`);
+        //   $(this).css('background-color', WHITE);
+        // });
+
         // Dynamically get input values right after user input a character
-        $('#search').on('input focusin', 'input.RANGE', function(event) {
-          slug = $(this).attr("name");
-          let currentValue = $(this).val().trim();
-          let regexPattern =  new RegExp(slug + '=[\\d\\w\\s\\.\\-\\:]*\&');
-          let oldHash = opus.temp_hash || o_hash.getHash();
-          let newHash = `${slug}=${currentValue}&`;
+        $('#search').on('input', 'input.RANGE', function(event) {
+            slug = $(this).attr("name");
+            let currentValue = $(this).val().trim();
+            let values = []
+            // let regexPattern =  new RegExp(slug + '=[\\d\\w\\s\\.\\-\\:]*\&');
+            // let oldHash = opus.temp_hash || o_hash.getHash();
+            // let newHash = `${slug}=${currentValue}&`;
+            //
+            // if (oldHash.match(regexPattern)) {
+            //   newHash = oldHash.replace(regexPattern, `${slug}=${currentValue}&`);
+            // } else {
+            //   newHash += oldHash;
+            // }
 
-          if (oldHash.match(regexPattern)) {
-            newHash = oldHash.replace(regexPattern, `${slug}=${currentValue}&`);
-          } else {
-            newHash += oldHash;
-          }
-          opus.temp_hash = newHash;
-          opus.lastNormalizeRequestNo++;
+            opus.lastNormalizeRequestNo++;
+            // opus.temp_hash = newHash;
+            values.push(currentValue)
+            opus.selections[slug] = values;
+            let newHash = o_hash.updateHash(false);
+            console.log('OPUS selection: ' + o_hash.getSelectionsFromHash());
+            console.log('GET HASH FROM CURRENT URL: ' + o_hash.getHash());
+            console.log('New HASH AFTER UPDATE: ' + newHash);
+            // console.log('TEMP HASH: ' + opus.temp_hash);
+            // console.log('NEW HASH: ' + newHash);
+            // keep calling normalize api to check input values whenever input got changed
+            // only check if return value is null or not, DON'T compare min & max
+            let url = '/opus/__api/normalizeinput.json?' + newHash + '&reqno=' + opus.lastNormalizeRequestNo;
+            $.getJSON(url, function(data) {
 
-          // keep calling normalize api to check input values whenever input got changed
-          // only check if return value is null or not, DON'T compare min & max
-          let url = '/opus/__api/normalizeinput.json?' + newHash + '&reqno=' + opus.lastNormalizeRequestNo;
-          $.ajax({
-            url: url,
-            dataType:'json',
-            success: function(data) {
-              // if a newer input is there, re-call api with new input
-              if(data['reqno'] < opus.lastNormalizeRequestNo) {
-                  return;
-              }
+                    console.log('Current API CALL: ' + url);
+                    console.log('Current reqno: ' + opus.lastNormalizeRequestNo);
+                    console.log('RETURN reqno: ' + JSON.stringify(data['reqno']));
+                    console.log('RETURN DATA: ' + JSON.stringify(data));
 
-              let returnData = data[slug];
-              if(returnData === '') {
-                $(event.target).css('border',`1px solid ${GRAY}`);
-              } else if(returnData !== null) {
-                $(event.target).css('border', `1px solid ${GREEN}`);
-                if($(event.target).css('background-color') !== WHITE) {
-                  $(event.target).css('background-color', WHITE);
-                }
-              } else {
-                $(event.target).css('border', `1px solid ${RED}`);
-              }
-            },
-          }); // end ajax
+                    // if a newer input is there, re-call api with new input
+                    if(data['reqno'] < opus.lastNormalizeRequestNo) {
+                        return;
+                    }
+
+                    let returnData = data[slug];
+                    if(returnData === '') {
+                        $(event.target).css('border',`1px solid ${GRAY}`);
+                    } else if(returnData !== null) {
+                        $(event.target).css('border', `1px solid ${GREEN}`);
+                        if($(event.target).css('background-color') !== WHITE) {
+                            $(event.target).css('background-color', WHITE);
+                        }
+                    } else {
+                        $(event.target).css('border', `1px solid ${RED}`);
+                    }
+            }); // end ajax
+            // $.ajax({
+            //     url: url,
+            //     dataType:'json',
+            //     success: function(data) {
+            //
+            //         console.log('Current API CALL: ' + url);
+            //         console.log('Current reqno: ' + opus.lastNormalizeRequestNo);
+            //         console.log('RETURN reqno: ' + JSON.stringify(data['reqno']));
+            //         console.log('RETURN DATA: ' + JSON.stringify(data));
+            //
+            //         // if a newer input is there, re-call api with new input
+            //         if(data['reqno'] < opus.lastNormalizeRequestNo) {
+            //             return;
+            //         }
+            //
+            //         let returnData = data[slug];
+            //         if(returnData === '') {
+            //             $(event.target).css('border',`1px solid ${GRAY}`);
+            //         } else if(returnData !== null) {
+            //             $(event.target).css('border', `1px solid ${GREEN}`);
+            //             if($(event.target).css('background-color') !== WHITE) {
+            //                 $(event.target).css('background-color', WHITE);
+            //             }
+            //         } else {
+            //             $(event.target).css('border', `1px solid ${RED}`);
+            //         }
+            //       },
+            //   }); // end ajax
         });
 
         // perform search on range input when user focus out or hit enter
-        $('#search').on('change focusout', 'input.RANGE', function(event) {
-          let slug = $(this).attr("name");
-          opus.lastNormalizeRequestNo++;
-          let url = '/opus/__api/normalizeinput.json?' + opus.temp_hash + '&reqno=' + opus.lastNormalizeRequestNo;
-          o_search.performSearchOnRangeInput(event, slug, url);
-        });
-
-        $('#search').on('keypress', 'input.RANGE', function(event) {
-          let slug = $(this).attr("name");
-          opus.lastNormalizeRequestNo++;
-          let url = '/opus/__api/normalizeinput.json?' + opus.temp_hash + '&reqno=' + opus.lastNormalizeRequestNo;
-          // pressing enter
-          if(event.keyCode === 13) {
-            o_search.performSearchOnRangeInput(event, slug, url);
-          }
-        });
+        // $('#search').on('change focusout', 'input.RANGE', function(event) {
+        //   let slug = $(this).attr("name");
+        //   opus.lastNormalizeRequestNo++;
+        //   let url = '/opus/__api/normalizeinput.json?' + opus.temp_hash + '&reqno=' + opus.lastNormalizeRequestNo;
+        //   o_search.performSearchOnRangeInput(event, slug, url);
+        // });
+        //
+        // $('#search').on('keypress', 'input.RANGE', function(event) {
+        //   let slug = $(this).attr("name");
+        //   opus.lastNormalizeRequestNo++;
+        //   let url = '/opus/__api/normalizeinput.json?' + opus.temp_hash + '&reqno=' + opus.lastNormalizeRequestNo;
+        //   // pressing enter
+        //   if(event.keyCode === 13) {
+        //     o_search.performSearchOnRangeInput(event, slug, url);
+        //   }
+        // });
 
         // filling in a range or string search field = update the hash
         // range behaviors and string behaviors for search widgets - input box
