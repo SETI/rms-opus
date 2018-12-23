@@ -326,40 +326,52 @@ class ApiSearchTests(TestCase):
         expected = {"timesec1": "2001-07-04T06:05:00.000"}
         self._run_json_equal(url, expected)
 
-    def test__api_normalizeinput_cassini_orbit1(self):
-        "/api/normalizeinput: cassini revno A"
-        url = '/opus/__api/normalizeinput.json?CASSINIrevnoint1=A'
-        expected = {"CASSINIrevnoint1": "00A"}
+    def test__api_normalizeinput_cassini_orbit_int1(self):
+        "/api/normalizeinput: cassini revnoint A"
+        url = '/opus/__api/normalizeinput.json?CASSINIrevnoint2=A'
+        expected = {"CASSINIrevnoint2": "00A"}
         self._run_json_equal(url, expected)
 
-    def test__api_normalizeinput_cassini_orbit2(self):
-        "/api/normalizeinput: cassini revno 00A"
+    def test__api_normalizeinput_cassini_orbit_int2(self):
+        "/api/normalizeinput: cassini revnoint 00A"
         url = '/opus/__api/normalizeinput.json?CASSINIrevnoint1=00A'
         expected = {"CASSINIrevnoint1": "00A"}
         self._run_json_equal(url, expected)
 
-    def test__api_normalizeinput_cassini_orbit3(self):
-        "/api/normalizeinput: cassini revno 004"
-        url = '/opus/__api/normalizeinput.json?CASSINIrevnoint1=004'
-        expected = {"CASSINIrevnoint1": "004"}
+    def test__api_normalizeinput_cassini_orbit_int3(self):
+        "/api/normalizeinput: cassini revnoint 004"
+        url = '/opus/__api/normalizeinput.json?CASSINIrevnoint2=004'
+        expected = {"CASSINIrevnoint2": "004"}
         self._run_json_equal(url, expected)
 
-    def test__api_normalizeinput_cassini_orbit_bad(self):
-        "/api/normalizeinput: cassini revno bad value 00D"
+    def test__api_normalizeinput_cassini_orbit_int_bad(self):
+        "/api/normalizeinput: cassini revnoint bad value 00D"
         url = '/opus/__api/normalizeinput.json?CASSINIrevnoint1=00D'
         expected = {"CASSINIrevnoint1": None}
         self._run_json_equal(url, expected)
 
-    def test__api_normalizeinput_cassini_sclk(self):
-        "/api/normalizeinput: cassini sclk 1/1294561143"
-        url = '/opus/__api/normalizeinput.json?CASSINIspacecraftclockcountdec1=1/1294561143'
-        expected = {"CASSINIspacecraftclockcountdec1": "1294561143.000"}
+    def test__api_normalizeinput_cassini_sclk1(self):
+        "/api/normalizeinput: cassini sclk1 1/1294561143"
+        url = '/opus/__api/normalizeinput.json?CASSINIspacecraftclockcount1=1/1294561143'
+        expected = {"CASSINIspacecraftclockcount1": "1294561143.000"}
         self._run_json_equal(url, expected)
 
-    def test__api_normalizeinput_cassini_sclk_bad(self):
-        "/api/normalizeinput: cassini sclk bad value 2/1294561143"
-        url = '/opus/__api/normalizeinput.json?CASSINIspacecraftclockcountdec1=2/1294561143'
-        expected = {"CASSINIspacecraftclockcountdec1": None}
+    def test__api_normalizeinput_cassini_sclk1_bad(self):
+        "/api/normalizeinput: cassini sclk1 bad value 2/1294561143"
+        url = '/opus/__api/normalizeinput.json?CASSINIspacecraftclockcount1=2/1294561143'
+        expected = {"CASSINIspacecraftclockcount1": None}
+        self._run_json_equal(url, expected)
+
+    def test__api_normalizeinput_cassini_sclk2(self):
+        "/api/normalizeinput: cassini sclk2 1/1294561143"
+        url = '/opus/__api/normalizeinput.json?CASSINIspacecraftclockcount2=1/1294561143'
+        expected = {"CASSINIspacecraftclockcount2": "1294561143.000"}
+        self._run_json_equal(url, expected)
+
+    def test__api_normalizeinput_cassini_sclk2_bad(self):
+        "/api/normalizeinput: cassini sclk2 bad value 2/1294561143"
+        url = '/opus/__api/normalizeinput.json?CASSINIspacecraftclockcount2=2/1294561143'
+        expected = {"CASSINIspacecraftclockcount2": None}
         self._run_json_equal(url, expected)
 
 

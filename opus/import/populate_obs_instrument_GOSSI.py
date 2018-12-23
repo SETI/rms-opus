@@ -103,7 +103,7 @@ def populate_obs_general_GOSSI_time1(**kwargs):
             f'Bad image time format "{stop_time}": {e}')
         return None
 
-    return julian.iso_from_tai(stop_time_sec-exposure/1000, digits=3, ymd=True)
+    return stop_time_sec-exposure/1000
 
 def populate_obs_general_GOSSI_time2(**kwargs):
     metadata = kwargs['metadata']
@@ -120,7 +120,7 @@ def populate_obs_general_GOSSI_time2(**kwargs):
             f'Bad image time format "{stop_time}": {e}')
         return None
 
-    return julian.iso_from_tai(stop_time_sec, digits=3, ymd=True)
+    return stop_time_sec
 
 def populate_obs_general_GOSSI_target_name(**kwargs):
     target_name = helper_galileo_target_name(**kwargs)
@@ -167,7 +167,7 @@ def populate_obs_pds_GOSSI_product_creation_time(**kwargs):
             f'Bad product creation time format "{pct}": {e}')
         return None
 
-    return julian.iso_from_tai(pct_sec, digits=3, ymd=True)
+    return pct_sec
 
 def populate_obs_pds_GOSSI_data_set_id(**kwargs):
     metadata = kwargs['metadata']

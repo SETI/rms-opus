@@ -409,36 +409,14 @@ def api_get_range_endpoints(request, slug, fmt='json'):
         where = param1 + ' IS NULL AND ' + param2 + ' IS NULL'
         range_endpoints['nulls'] = results.all().extra(where=[where]).count()
 
-    if form_type_func is not None:
-        # We need to run some arbitrary function to convert from float to
-        # some kind of string. This happens for spacecraft clock count
-        # and time fields, among others.
-        if form_type_func in opus_support.RANGE_FUNCTIONS:
-            func = opus_support.RANGE_FUNCTIONS[form_type_func][0]
-            if range_endpoints['min'] is not None:
-                range_endpoints['min'] = func(range_endpoints['min'])
-            if range_endpoints['max'] is not None:
-                range_endpoints['max'] = func(range_endpoints['max'])
-        else:
-            log.error('Unknown RANGE function "%s"', form_type_func)
-
-    if form_type_format:
-        range_endpoints['min'] = format_metadata_number(range_endpoints['min'],
-                                                        form_type_format)
-        range_endpoints['max'] = format_metadata_number(range_endpoints['max'],
-                                                        form_type_format)
-    else:
-        try:
-            if abs(range_endpoints['min']) > 999000:
-                range_endpoints['min'] = format(1.0*range_endpoints['min'],'.3')
-        except TypeError:
-            pass
-
-        try:
-            if abs(range_endpoints['max']) > 999000:
-                range_endpoints['max'] = format(1.0*range_endpoints['max'],'.3')
-        except TypeError:
-            pass
+    range_endpoints['min'] = format_metadata_number_or_func(
+                                            range_endpoints['min'],
+                                            form_type_func,
+                                            form_type_format)
+    range_endpoints['max'] = format_metadata_number_or_func(
+                                            range_endpoints['max'],
+                                            form_type_func,
+                                            form_type_format)
 
     cache.set(cache_key, range_endpoints)
 

@@ -86,7 +86,7 @@ _CASSINI_TARGET_CODE_MAPPING = {
 # were derived from COISS and adjusted so that there is complete date range
 # coverage. When there was a gap, the earlier phase was extended to the
 # beginning of the later one, for lack of anything better to do.
-_CASSINI_MISSION_PHASE_NAME_MAPPING = (
+_CASSINI_PHASE_NAME_MAPPING = (
     # Short encounters that interrupt longer ones; these take priority so
     # are listed first
     ('Phoebe Encounter',          '2004-163T04:30:06.353', '2004-163T20:52:47.180'),
@@ -108,6 +108,20 @@ _CASSINI_MISSION_PHASE_NAME_MAPPING = (
     ('Extended Mission',          '2008-183T21:04:08.998', '2010-285T05:22:24.745'), #'2010-283T14:14:20.741'),
     ('Extended-Extended Mission', '2010-285T05:22:24.745', '2020-001T00:00:00.000')
 )
+
+# These mappings are for the TARGET_DESC field to clean them up
+COISS_TARGET_DESC_MAPPING = {
+    'DIONE, RHEA, MIMAS(?), RINGS': 'ICY SATELLITES',
+    'GENERIC-SATELLITE': 'ICY SATELLITES',
+    'SATELLITE SEARCH': 'ICY SATELLITES',
+    'TETHYS, RHEA, RINGS': 'ICY SATELLITES',
+    'ENCELADUS, RINGS': 'ENCELADUS',
+    'IAPETUS FP1': 'IAPETUS',
+    'METHON': 'METHONE',
+    'ROCK': 'ROCKS',
+    'STAR -- CW LEO': 'STAR',
+    'STAR -- ETA CAR': 'STAR'
+}
 
 ################################################################################
 # HELPER FUNCTIONS USED BY CASSINI INSTRUMENTS
@@ -197,7 +211,7 @@ def helper_cassini_planet_id(**kwargs):
     index_row = metadata['index_row']
     obs_general_row = metadata['obs_general_row']
 
-    time_sec2 = obs_general_row['time_sec2']
+    time_sec2 = obs_general_row['time2']
 
     jup = julian.tai_from_iso('2000-262T00:32:38.930')
     sat = julian.tai_from_iso('2003-138T02:16:18.383')
@@ -220,6 +234,8 @@ def helper_cassini_target_name(**kwargs):
     if 'TARGET_DESC' in index_row:
         # Only for COISS
         target_desc = index_row['TARGET_DESC'].upper()
+        if target_desc in COISS_TARGET_DESC_MAPPING:
+            target_desc = COISS_TARGET_DESC_MAPPING[target_desc]
         if target_desc in TARGET_NAME_MAPPING:
             target_desc = TARGET_NAME_MAPPING[target_desc]
 
@@ -230,17 +246,17 @@ def helper_cassini_target_name(**kwargs):
         target_code = obs_parts[1][-2:]
 
     # Examine targets that are Saturn or Sky - are they really rings?
-    if ((target_name == 'SATURN' or target_name == 'SKY') and
-        target_code in ('RA','RB','RC','RD','RE','RF','RG','RI')):
+    # Leave STAR observations alone
+    if (target_desc is not None and
+        target_desc.find('RING') != -1 and
+        (target_name == 'SATURN' or target_name == 'SKY') and
+        target_code != 'ST'):
         return ('S RINGS', 'Saturn Rings')
-    if target_desc is not None:
-        # Examine targets that are SKY - are they really rings?
-        if target_name == 'SKY' and target_code == 'SK':
-            if target_desc.find('RING') != -1:
-                return ('S RINGS', 'Saturn Rings')
-            # Let TARGET_DESC override TARGET_NAME for Sky
-            if target_desc in TARGET_NAME_INFO:
-                return (target_desc.upper(), target_desc.title())
+    if (target_desc is not None and
+        target_desc in TARGET_NAME_INFO and
+        target_name == 'SKY' and target_code == 'SK'):
+            # Let TARGET_DESC override TARGET_NAME for Sky/Skeleton
+            return (target_desc.upper(), target_desc.title())
 
     if target_name not in TARGET_NAME_INFO:
         import_util.announce_unknown_target_name(target_name)
@@ -259,8 +275,8 @@ def helper_cassini_target_name(**kwargs):
 def helper_cassini_mission_phase_name(**kwargs):
     metadata = kwargs['metadata']
     obs_general_row = metadata['obs_general_row']
-    time1 = obs_general_row['time_sec1']
-    for phase, start_time, stop_time in _CASSINI_MISSION_PHASE_NAME_MAPPING:
+    time1 = obs_general_row['time1']
+    for phase, start_time, stop_time in _CASSINI_PHASE_NAME_MAPPING:
         start_time_sec = julian.tai_from_iso(start_time)
         stop_time_sec = julian.tai_from_iso(stop_time)
         if start_time_sec <= time1 < stop_time_sec:
@@ -422,7 +438,7 @@ def populate_obs_mission_cassini_ert1(**kwargs):
             f'Bad earth received start time format "{start_time}": {e}')
         return None
 
-    return julian.iso_from_tai(ert_sec, digits=3, ymd=True)
+    return ert_sec
 
 def populate_obs_mission_cassini_ert2(**kwargs):
     metadata = kwargs['metadata']
@@ -445,71 +461,7 @@ def populate_obs_mission_cassini_ert2(**kwargs):
             f'Bad earth received stop time format "{stop_time}": {e}')
         return None
 
-    return julian.iso_from_tai(ert_sec, digits=3, ymd=True)
-
-def populate_obs_mission_cassini_ert_sec1(**kwargs):
-    metadata = kwargs['metadata']
-    cassini_row = metadata['obs_mission_cassini_row']
-    start_time = cassini_row['ert1']
-
-    if start_time is None:
-        return None
-
-    try:
-        ert = julian.tai_from_iso(start_time)
-    except Exception as e:
-        import_util.log_nonrepeating_warning(
-            f'"{start_time}" is not a valid date-time format in '+
-            f'mission_cassini_ert_sec1: {e}')
-        ert = None
-    return ert
-
-def populate_obs_mission_cassini_ert_sec2(**kwargs):
-    metadata = kwargs['metadata']
-    cassini_row = metadata['obs_mission_cassini_row']
-    stop_time = cassini_row['ert2']
-
-    if stop_time is None:
-        return None
-
-    try:
-        ert = julian.tai_from_iso(stop_time)
-    except Exception as e:
-        import_util.log_nonrepeating_warning(
-            f'"{stop_time}" is not a valid date-time format in '+
-            f'mission_cassini_ert_sec2: {e}')
-        ert = None
-    return ert
-
-def populate_obs_mission_cassini_spacecraft_clock_count_cvt1(**kwargs):
-    metadata = kwargs['metadata']
-    cassini_row = metadata['obs_mission_cassini_row']
-    sc = cassini_row['spacecraft_clock_count1']
-    if sc is None:
-        return None
-    sc = helper_fix_cassini_sclk(sc)
-    try:
-        sc_cvt = opus_support.parse_cassini_sclk(sc)
-    except Exception as e:
-        import_util.log_nonrepeating_warning(
-            f'Unable to parse Cassini SCLK "{sc}": {e}')
-        return None
-    return sc_cvt
-
-def populate_obs_mission_cassini_spacecraft_clock_count_cvt2(**kwargs):
-    metadata = kwargs['metadata']
-    cassini_row = metadata['obs_mission_cassini_row']
-    sc = cassini_row['spacecraft_clock_count2']
-    if sc is None:
-        return None
-    sc = helper_fix_cassini_sclk(sc)
-    try:
-        sc_cvt = opus_support.parse_cassini_sclk(sc)
-    except Exception as e:
-        import_util.log_nonrepeating_warning(
-            f'Unable to parse Cassini SCLK "{sc}": {e}')
-        return None
-    return sc_cvt
+    return ert_sec
 
 def populate_obs_mission_cassini_rev_no_cvt(**kwargs):
     metadata = kwargs['metadata']

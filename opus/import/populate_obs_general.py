@@ -6,6 +6,7 @@
 
 import json
 import os
+import traceback
 
 import julian
 import pdsfile
@@ -17,8 +18,8 @@ import opus_secrets
 
 # Ordering:
 #   target_name must come before target_class
-#   time_sec1 must come before time_sec2
-#   time_sec1/2 must come before planet_id
+#   time1 must come before 2
+#   time1/2 must come before planet_id
 #   planet_id must come before opus_id
 #   opus_id must come before right_asc[12] and declination[12]
 #   right_asc[12] and declination[12] must come before right_asc/d_right_asc
@@ -113,7 +114,7 @@ def populate_obs_general_target_class(**kwargs):
     target_class = TARGET_NAME_INFO[target_name][1]
     return target_class
 
-def populate_obs_general_time_sec1(**kwargs):
+def populate_obs_general_time1(**kwargs):
     metadata = kwargs['metadata']
     general_row = metadata['obs_general_row']
     time1 = general_row['time1']
@@ -130,7 +131,7 @@ def populate_obs_general_time_sec1(**kwargs):
 
     return time1_sec
 
-def populate_obs_general_time_sec2(**kwargs):
+def populate_obs_general_time2(**kwargs):
     metadata = kwargs['metadata']
     general_row = metadata['obs_general_row']
     time2 = general_row['time2']
@@ -145,7 +146,7 @@ def populate_obs_general_time_sec2(**kwargs):
             f'Bad stop time format "{time2}": {e}')
         return None
 
-    time1_sec = general_row['time_sec1']
+    time1_sec = general_row['time1']
 
     if time1_sec is not None and time2_sec < time1_sec:
         time1 = general_row['time1']
@@ -175,6 +176,12 @@ def populate_obs_general_preview_images(**kwargs):
     except ValueError as e:
         import_util.log_nonrepeating_warning(
             f'ViewSet threw ValueError for "{file_spec}": {e}')
+        if pdsfile.PdsFile.LAST_EXC_INFO != (None, None, None):
+            trace_str = traceback.format_exception(
+                                            *pdsfile.PdsFile.LAST_EXC_INFO)
+            import_util.log_nonrepeating_warning(
+                'PdsFile had internal error: '+''.join(trace_str))
+            pdsfile.PdsFile.LAST_EXC_INFO = (None, None, None)
         viewset = None
 
     if viewset:

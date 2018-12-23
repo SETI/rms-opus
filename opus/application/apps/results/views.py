@@ -238,14 +238,13 @@ def get_metadata(api_name, request, opus_id, fmt):
                     mult_name = get_mult_name(param_info.param_qualified_name())
                     mult_val = results.values(mult_name)[0][mult_name]
                     result = lookup_pretty_value_for_mult(param_info, mult_val)
+                    rounded_off_result = result
                 else:
                     result = result_vals[param_info.name]
-
-                # Format result depending on its form_type_format
-                rounded_off_result = result
-                if form_type_format is not None and result is not None:
-                    rounded_off_result = format_metadata_number(
+                    # Format result depending on its form_type_format
+                    rounded_off_result = format_metadata_number_or_func(
                                                             result,
+                                                            form_type_func,
                                                             form_type_format)
 
                 if api_name == 'api_get_metadata':
@@ -756,7 +755,7 @@ def get_page(request, use_collections=None, collections_page=None, page=None,
             column_names.append(mult_table+'.label')
         else:
             column_names.append(column)
-        form_type_formats.append(form_type_format)
+        form_type_formats.append((form_type_format, form_type_func))
 
     added_extra_columns = 0
     tables.add('obs_general') # We must have obs_general since it owns the ids
@@ -1000,12 +999,12 @@ def get_page(request, use_collections=None, collections_page=None, page=None,
     results = [[x if x is not None else 'N/A' for x in r] for r in results]
 
     # If pi_form_type has format, we format the results
-    for idx, form_type_format in enumerate(form_type_formats):
+    for idx, (form_type_format, form_type_func) in enumerate(form_type_formats):
         for entry in results:
-            if (form_type_format is not None and entry[idx] is not None and
-                entry[idx] != 'N/A'):
-                entry[idx] = format_metadata_number(entry[idx],
-                                                    form_type_format)
+            if entry[idx] != 'N/A':
+                entry[idx] = format_metadata_number_or_func(entry[idx],
+                                                            form_type_func,
+                                                            form_type_format)
 
     return (page_no, limit, results, opus_ids, ring_obs_ids, file_specs,
             all_order)
@@ -1049,7 +1048,9 @@ def _get_metadata_by_slugs(request, opus_id, slugs, fmt, use_param_names):
                 result = lookup_pretty_value_for_mult(param_info, mult_val)
             else:
                 result = results.values(param_info.name)[0][param_info.name]
-                result = format_metadata_number(result, form_type_format)
+                result = format_metadata_number_or_func(result,
+                                                        form_type_func,
+                                                        form_type_format)
             if use_param_names:
                 data_dict[param_info.name] = result
             else:

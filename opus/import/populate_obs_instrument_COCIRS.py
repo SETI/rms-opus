@@ -5,7 +5,7 @@
 ################################################################################
 
 # Ordering:
-#   time_sec1/2 must come before planet_id
+#   time1/2 must come before planet_id
 #   planet_id must come before opus_id
 
 import pdsfile
@@ -86,7 +86,7 @@ def populate_obs_general_COCIRS_time1(**kwargs):
             f'Bad start time format "{start_time}": {e}')
         return None
 
-    return julian.iso_from_tai(start_time_sec, digits=3, ymd=True)
+    return start_time_sec
 
 def populate_obs_general_COCIRS_time2(**kwargs):
     metadata = kwargs['metadata']
@@ -103,7 +103,7 @@ def populate_obs_general_COCIRS_time2(**kwargs):
             f'Bad stop time format "{stop_time}": {e} Exception as e')
         return None
 
-    return julian.iso_from_tai(stop_time_sec, digits=3, ymd=True)
+    return stop_time_sec
 
 def populate_obs_general_COCIRS_target_name(**kwargs):
     return helper_cassini_target_name(**kwargs)
@@ -142,7 +142,7 @@ def populate_obs_pds_COCIRS_product_creation_time(**kwargs):
             f'Bad product creation time format "{pct}": {e}')
         return None
 
-    return julian.iso_from_tai(pct_sec, digits=3, ymd=True)
+    return pct_sec
 
 # Format: "CO-S-CIRS-2/3/4-REFORMATTED-V1.0"
 def populate_obs_pds_COCIRS_data_set_id(**kwargs):
@@ -292,22 +292,36 @@ def populate_obs_wavelength_COCIRS_polarization_type(**kwargs):
 def populate_obs_mission_cassini_COCIRS_spacecraft_clock_count1(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
-    count = index_row['SPACECRAFT_CLOCK_START_COUNT']
-    if not count.startswith('1/') or count[2] == ' ':
+    sc = index_row['SPACECRAFT_CLOCK_START_COUNT']
+    sc = helper_fix_cassini_sclk(sc)
+    if not sc.startswith('1/') or sc[2] == ' ':
         import_util.log_nonrepeating_warning(
-            f'Badly formatted SPACECRAFT_CLOCK_START_COUNT "{count}"')
+            f'Badly formatted SPACECRAFT_CLOCK_START_COUNT "{sc}"')
         return None
-    return count
+    try:
+        sc_cvt = opus_support.parse_cassini_sclk(sc)
+    except Exception as e:
+        import_util.log_nonrepeating_warning(
+            f'Unable to parse Cassini SCLK "{sc}": {e}')
+        return None
+    return sc_cvt
 
 def populate_obs_mission_cassini_COCIRS_spacecraft_clock_count2(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
-    count = index_row['SPACECRAFT_CLOCK_STOP_COUNT']
-    if not count.startswith('1/') or count[2] == ' ':
+    sc = index_row['SPACECRAFT_CLOCK_STOP_COUNT']
+    sc = helper_fix_cassini_sclk(sc)
+    if not sc.startswith('1/') or sc[2] == ' ':
         import_util.log_nonrepeating_warning(
-            f'Badly formatted SPACECRAFT_CLOCK_STOP_COUNT "{count}"')
+            f'Badly formatted SPACECRAFT_CLOCK_STOP_COUNT "{sc}"')
         return None
-    return count
+    try:
+        sc_cvt = opus_support.parse_cassini_sclk(sc)
+    except Exception as e:
+        import_util.log_nonrepeating_warning(
+            f'Unable to parse Cassini SCLK "{sc}": {e}')
+        return None
+    return sc_cvt
 
 
 ################################################################################

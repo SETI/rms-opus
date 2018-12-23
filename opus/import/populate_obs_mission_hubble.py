@@ -166,7 +166,7 @@ def populate_obs_general_HSTx_time1(**kwargs):
             f'Bad start time format "{start_time}": {e}')
         return None
 
-    return julian.iso_from_tai(start_time_sec, digits=3, ymd=True)
+    return start_time_sec
 
 populate_obs_general_HSTACS_time1 = populate_obs_general_HSTx_time1
 populate_obs_general_HSTNICMOS_time1 = populate_obs_general_HSTx_time1
@@ -189,7 +189,7 @@ def populate_obs_general_HSTx_time2(**kwargs):
             f'Bad stop time format "{stop_time}": {e}')
         return None
 
-    return julian.iso_from_tai(stop_time_sec, digits=3, ymd=True)
+    return stop_time_sec
 
 populate_obs_general_HSTACS_time2 = populate_obs_general_HSTx_time2
 populate_obs_general_HSTNICMOS_time2 = populate_obs_general_HSTx_time2
@@ -279,7 +279,7 @@ def populate_obs_pds_HSTx_product_creation_time(**kwargs):
             f'Bad product creation time format "{pct}": {e}')
         return None
 
-    return julian.iso_from_tai(pct_sec, digits=3, ymd=True)
+    return pct_sec
 
 populate_obs_pds_HSTACS_product_creation_time = populate_obs_pds_HSTx_product_creation_time
 populate_obs_pds_HSTNICMOS_product_creation_time = populate_obs_pds_HSTx_product_creation_time

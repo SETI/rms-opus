@@ -5,7 +5,7 @@
 ################################################################################
 
 # Ordering:
-#   time_sec1/2 must come before observation_duration
+#   time1/2 must come before observation_duration
 #   planet_id must come before opus_id
 
 import os
@@ -138,7 +138,7 @@ def populate_obs_general_COUVIS_time1(**kwargs):
             f'Bad start time format "{start_time}": {e}')
         return None
 
-    return julian.iso_from_tai(start_time_sec, digits=3, ymd=True)
+    return start_time_sec
 
 def populate_obs_general_COUVIS_time2(**kwargs):
     metadata = kwargs['metadata']
@@ -155,7 +155,7 @@ def populate_obs_general_COUVIS_time2(**kwargs):
             f'Bad stop time format "{stop_time}": {e}')
         return None
 
-    return julian.iso_from_tai(stop_time_sec, digits=3, ymd=True)
+    return stop_time_sec
 
 def populate_obs_general_COUVIS_target_name(**kwargs):
     return helper_cassini_target_name(**kwargs)
@@ -163,8 +163,8 @@ def populate_obs_general_COUVIS_target_name(**kwargs):
 def populate_obs_general_COUVIS_observation_duration(**kwargs):
     metadata = kwargs['metadata']
     obs_general_row = metadata['obs_general_row']
-    time_sec1 = obs_general_row['time_sec1']
-    time_sec2 = obs_general_row['time_sec2']
+    time_sec1 = obs_general_row['time1']
+    time_sec2 = obs_general_row['time2']
     return max(time_sec2 - time_sec1, 0)
 
 def populate_obs_pds_COUVIS_note(**kwargs):
@@ -195,7 +195,7 @@ def populate_obs_pds_COUVIS_product_creation_time(**kwargs):
             f'Bad product creation time format "{pct}": {e}')
         return None
 
-    return julian.iso_from_tai(pct_sec, digits=3, ymd=True)
+    return pct_sec
 
 # Format: "CO-S-UVIS-2-SSB-V1.4"
 def populate_obs_pds_COUVIS_data_set_id(**kwargs):
@@ -547,23 +547,30 @@ def populate_obs_mission_cassini_COUVIS_ert2(**kwargs):
 def populate_obs_mission_cassini_COUVIS_spacecraft_clock_count1(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
-    count = index_row['SPACECRAFT_CLOCK_START_COUNT']
-    if not count.startswith('1/'):
+    sc = index_row['SPACECRAFT_CLOCK_START_COUNT']
+    sc = helper_fix_cassini_sclk(sc)
+    if not sc.startswith('1/'):
         import_util.log_nonrepeating_warning(
-            f'Badly formatted SPACECRAFT_CLOCK_START_COUNT "{count}"')
+            f'Badly formatted SPACECRAFT_CLOCK_START_COUNT "{sc}"')
         return None
-    return count
+    try:
+        sc_cvt = opus_support.parse_cassini_sclk(sc)
+    except Exception as e:
+        import_util.log_nonrepeating_warning(
+            f'Unable to parse Cassini SCLK "{sc}": {e}')
+        return None
+    return sc_cvt
 
 # There is no SPACECRAFT_CLOCK_STOP_COUNT for COUVIS so we have to compute it.
 # This works because Cassini SCLK is in units of seconds.
 def populate_obs_mission_cassini_COUVIS_spacecraft_clock_count2(**kwargs):
     metadata = kwargs['metadata']
-    cassini_row = metadata['obs_mission_cassini_row']
-    general_row = metadata['obs_general_row']
-    count = cassini_row['spacecraft_clock_count1']
+    index_row = metadata['index_row']
+    count = index_row['SPACECRAFT_CLOCK_START_COUNT']
     count = helper_fix_cassini_sclk(count)
-    time1 = general_row['time_sec1']
-    time2 = general_row['time_sec2']
+    general_row = metadata['obs_general_row']
+    time1 = general_row['time1']
+    time2 = general_row['time2']
     try:
         count_sec = opus_support.parse_cassini_sclk(count)
     except Exception as e:
@@ -571,9 +578,7 @@ def populate_obs_mission_cassini_COUVIS_spacecraft_clock_count2(**kwargs):
             f'Unable to parse Cassini SCLK "{count}": {e}')
         return None
     new_count_sec = count_sec + (time2-time1)
-    new_count = opus_support.format_cassini_sclk(new_count_sec)
-    return '1/' + new_count
-
+    return new_count_sec
 
 ################################################################################
 # THESE ARE SPECIFIC TO OBS_INSTRUMENT_COUVIS

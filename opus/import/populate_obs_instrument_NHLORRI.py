@@ -75,7 +75,7 @@ def populate_obs_general_NHLORRI_time1(**kwargs):
             f'Bad start time format "{start_time}": {e}')
         return None
 
-    return julian.iso_from_tai(start_time_sec, digits=3, ymd=True)
+    return start_time_sec
 
 def populate_obs_general_NHLORRI_time2(**kwargs):
     metadata = kwargs['metadata']
@@ -92,7 +92,7 @@ def populate_obs_general_NHLORRI_time2(**kwargs):
             f'Bad stop time format "{stop_time}": {e}')
         return None
 
-    return julian.iso_from_tai(stop_time_sec, digits=3, ymd=True)
+    return stop_time_sec
 
 def populate_obs_general_NHLORRI_target_name(**kwargs):
     target_name = helper_new_horizons_target_name(**kwargs)
@@ -141,7 +141,7 @@ def populate_obs_pds_NHLORRI_product_creation_time(**kwargs):
             f'Bad product creation time format "{pct}": {e}')
         return None
 
-    return julian.iso_from_tai(pct_sec, digits=3, ymd=True)
+    return pct_sec
 
 # Format: "NH-J-LORRI-2-JUPITER-V3.0"
 def populate_obs_pds_NHLORRI_data_set_id(**kwargs):

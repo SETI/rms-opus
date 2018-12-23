@@ -105,7 +105,7 @@ def populate_obs_general_COVIMS_time1(**kwargs):
             f'Bad start time format "{start_time}": {e}')
         return None
 
-    return julian.iso_from_tai(start_time_sec, digits=3, ymd=True)
+    return start_time_sec
 
 def populate_obs_general_COVIMS_time2(**kwargs):
     metadata = kwargs['metadata']
@@ -122,7 +122,7 @@ def populate_obs_general_COVIMS_time2(**kwargs):
             f'Bad stop time format "{stop_time}": {e}')
         return None
 
-    return julian.iso_from_tai(stop_time_sec, digits=3, ymd=True)
+    return stop_time_sec
 
 def populate_obs_general_COVIMS_target_name(**kwargs):
     return helper_cassini_target_name(**kwargs)
@@ -130,8 +130,8 @@ def populate_obs_general_COVIMS_target_name(**kwargs):
 def populate_obs_general_COVIMS_observation_duration(**kwargs):
     metadata = kwargs['metadata']
     obs_general_row = metadata['obs_general_row']
-    time_sec1 = obs_general_row['time_sec1']
-    time_sec2 = obs_general_row['time_sec2']
+    time_sec1 = obs_general_row['time1']
+    time_sec2 = obs_general_row['time2']
     return max(time_sec2 - time_sec1, 0)
 
 def populate_obs_pds_COVIMS_note(**kwargs):
@@ -155,7 +155,7 @@ def populate_obs_pds_COVIMS_product_creation_time(**kwargs):
             f'Bad product creation time format "{pct}": {e}')
         return None
 
-    return julian.iso_from_tai(pct_sec, digits=3, ymd=True)
+    return pct_sec
 
 # Format: "CO-E/V/J/S-VIMS-2-QUBE-V1.0"
 def populate_obs_pds_COVIMS_data_set_id(**kwargs):
@@ -389,13 +389,29 @@ def populate_obs_mission_cassini_COVIMS_spacecraft_clock_count1(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     count = index_row['SPACECRAFT_CLOCK_START_COUNT']
-    return '1/' + count
+    sc = '1/' + count
+    sc = helper_fix_cassini_sclk(sc)
+    try:
+        sc_cvt = opus_support.parse_cassini_sclk(sc)
+    except Exception as e:
+        import_util.log_nonrepeating_warning(
+            f'Unable to parse Cassini SCLK "{sc}": {e}')
+        return None
+    return sc_cvt
 
 def populate_obs_mission_cassini_COVIMS_spacecraft_clock_count2(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     count = index_row['SPACECRAFT_CLOCK_STOP_COUNT']
-    return '1/' + count
+    sc = '1/' + count
+    sc = helper_fix_cassini_sclk(sc)
+    try:
+        sc_cvt = opus_support.parse_cassini_sclk(sc)
+    except Exception as e:
+        import_util.log_nonrepeating_warning(
+            f'Unable to parse Cassini SCLK "{sc}": {e}')
+        return None
+    return sc_cvt
 
 
 ################################################################################

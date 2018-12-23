@@ -5,7 +5,7 @@
 ################################################################################
 
 # Ordering:
-#   time_sec1/2 must come before planet_id
+#   time1/2 must come before planet_id
 #   planet_id must come before opus_id
 
 import pdsfile
@@ -243,7 +243,7 @@ def populate_obs_general_COISS_time1(**kwargs):
             f'Bad start time format "{start_time}": {e}')
         return None
 
-    return julian.iso_from_tai(start_time_sec, digits=3, ymd=True)
+    return start_time_sec
 
 def populate_obs_general_COISS_time2(**kwargs):
     metadata = kwargs['metadata']
@@ -260,7 +260,7 @@ def populate_obs_general_COISS_time2(**kwargs):
             f'Bad stop time format "{stop_time}": {e}')
         return None
 
-    return julian.iso_from_tai(stop_time_sec, digits=3, ymd=True)
+    return stop_time_sec
 
 def populate_obs_general_COISS_target_name(**kwargs):
     return helper_cassini_target_name(**kwargs)
@@ -306,7 +306,7 @@ def populate_obs_pds_COISS_product_creation_time(**kwargs):
             f'Bad product creation time format "{pct}": {e}')
         return None
 
-    return julian.iso_from_tai(pct_sec, digits=3, ymd=True)
+    return pct_sec
 
 # Format: "CO-E/V/J-ISSNA/ISSWA-2-EDR-V1.0"
 def populate_obs_pds_COISS_data_set_id(**kwargs):
@@ -542,14 +542,30 @@ def populate_obs_mission_cassini_COISS_spacecraft_clock_count1(**kwargs):
     index_row = metadata['index_row']
     partition = index_row['SPACECRAFT_CLOCK_CNT_PARTITION']
     count = index_row['SPACECRAFT_CLOCK_START_COUNT']
-    return str(partition) + '/' + str(count)
+    sc = str(partition) + '/' + str(count)
+    sc = helper_fix_cassini_sclk(sc)
+    try:
+        sc_cvt = opus_support.parse_cassini_sclk(sc)
+    except Exception as e:
+        import_util.log_nonrepeating_warning(
+            f'Unable to parse Cassini SCLK "{sc}": {e}')
+        return None
+    return sc_cvt
 
 def populate_obs_mission_cassini_COISS_spacecraft_clock_count2(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     partition = index_row['SPACECRAFT_CLOCK_CNT_PARTITION']
     count = index_row['SPACECRAFT_CLOCK_STOP_COUNT']
-    return str(partition) + '/' + str(count)
+    sc = str(partition) + '/' + str(count)
+    sc = helper_fix_cassini_sclk(sc)
+    try:
+        sc_cvt = opus_support.parse_cassini_sclk(sc)
+    except Exception as e:
+        import_util.log_nonrepeating_warning(
+            f'Unable to parse Cassini SCLK "{sc}": {e}')
+        return None
+    return sc_cvt
 
 
 ################################################################################
@@ -644,7 +660,7 @@ def populate_obs_instrument_COISS_image_observation_type(**kwargs):
     if has_unk:
         ret_list.append('UNKNOWN')
 
-    ret = ','.join(ret_list)
+    ret = '/'.join(ret_list)
 
     # If the result isn't the same length as what we started with, we must've
     # encountered a new type we didn't know about
@@ -654,3 +670,13 @@ def populate_obs_instrument_COISS_image_observation_type(**kwargs):
         return None
 
     return ret
+
+def populate_obs_instrument_COISS_target_desc(**kwargs):
+    metadata = kwargs['metadata']
+    index_row = metadata['index_row']
+    target_desc = index_row['TARGET_DESC'].upper()
+
+    if target_desc in COISS_TARGET_DESC_MAPPING:
+        target_desc = COISS_TARGET_DESC_MAPPING[target_desc]
+
+    return target_desc
