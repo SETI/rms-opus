@@ -57,10 +57,10 @@ def populate_obs_mission_galileo_rev_no(**kwargs):
 
     return orbit_number
 
-def populate_obs_mission_galileo_spacecraft_clock_count1(**kwargs):
+def populate_obs_mission_galileo_spacecraft_clock_count_cvt1(**kwargs):
     metadata = kwargs['metadata']
-    index_row = metadata['index_row']
-    sc = index_row['SPACECRAFT_CLOCK_START_COUNT']
+    galileo_row = metadata['obs_mission_galileo_row']
+    sc = galileo_row['spacecraft_clock_count1']
     try:
         sc_cvt = opus_support.parse_galileo_sclk(sc)
     except Exception as e:
@@ -69,11 +69,10 @@ def populate_obs_mission_galileo_spacecraft_clock_count1(**kwargs):
         return None
     return sc_cvt
 
-# There is no SPACECRAFT_CLOCK_STOP_COUNT for Galileo
-def populate_obs_mission_galileo_spacecraft_clock_count2(**kwargs):
+def populate_obs_mission_galileo_spacecraft_clock_count_cvt2(**kwargs):
     metadata = kwargs['metadata']
-    index_row = metadata['index_row']
-    sc = index_row['SPACECRAFT_CLOCK_START_COUNT']
+    galileo_row = metadata['obs_mission_galileo_row']
+    sc = galileo_row['spacecraft_clock_count2']
     try:
         sc_cvt = opus_support.parse_galileo_sclk(sc)
     except Exception as e:

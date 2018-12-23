@@ -100,7 +100,7 @@ def populate_obs_general_VGISS_time1(**kwargs):
             f'Bad start time format "{start_time}": {e}')
         return None
 
-    return start_time_sec
+    return julian.iso_from_tai(start_time_sec, digits=3, ymd=True)
 
 def populate_obs_general_VGISS_time2(**kwargs):
     metadata = kwargs['metadata']
@@ -119,7 +119,7 @@ def populate_obs_general_VGISS_time2(**kwargs):
             f'Bad stop time format "{stop_time}": {e}')
         return None
 
-    return stop_time_sec
+    return julian.iso_from_tai(stop_time_sec, digits=3, ymd=True)
 
 def populate_obs_general_VGISS_target_name(**kwargs):
     return helper_voyager_target_name(**kwargs)
@@ -181,7 +181,7 @@ def populate_obs_pds_VGISS_product_creation_time(**kwargs):
             f'Bad product creation time format "{pct}": {e}')
         return None
 
-    return pct_sec
+    return julian.iso_from_tai(pct_sec, digits=3, ymd=True)
 
 # Format: "C1385455_CALIB.IMG"
 def populate_obs_pds_VGISS_product_id(**kwargs):
