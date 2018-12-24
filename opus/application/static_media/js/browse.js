@@ -1,4 +1,6 @@
 var o_browse = {
+    selectedImageID: "",
+    keyPressAction: "",
 
     /**
     *
@@ -37,40 +39,6 @@ var o_browse = {
             return false;
         });
 
-        $("#browse").on("click", ".cart_control", function() {
-          console.log("add range");
-          return false;
-        });
-
-      // browse nav menu - add range - begins add range interaction
-       $('#browse').on("click", '.addrange', function() {
-          // if someone clicks 'add range' this method sets the addrange_clicked to true
-          // then if they click a thumbnail next it is considered part of the range
-          var container =  $('.cart_control', '#browse');
-          var link = $('.addrange', '#browse');
-          var button_text = link.html();
-          var element_name = 'thumbnail';
-          if (opus.prefs.browse == 'data') {
-              element_name = 'row';
-          }
-          var start_hint = "click on a " + element_name + " to define a range of selections";
-
-          if (button_text = "add range") {
-              // the first click of 'add range' begins the add-range interaction
-              opus.addrange_clicked = true;
-              link.html("select range start");
-              link.popover('destroy');
-              container.popover({
-                  content: start_hint,
-                  trigger:"click",
-                  placement: "bottom",
-              });
-          }
-          return false;
-
-       });
-
-
        $("#browse").on("click", ".get_column_chooser", function() {
           o_browse.renderColumnChooser();
        });
@@ -86,13 +54,6 @@ var o_browse = {
           opus.prefs.browse = $(this).data("view");
 
           o_hash.updateHash();
-
-// do i need to do this...?
-          var hide = opus.prefs.browse == "gallery" ? "dataTable" : "gallery";
-          $('.' + hide, "#browse").hide();
-
-          $('.' + opus.prefs.browse, "#browse").fadeIn();
-
           o_browse.updateBrowseNav();
 
           // do we need to fetch a new browse tab?
@@ -122,21 +83,94 @@ var o_browse = {
        });
 
        // other behaviours
-        // click on thumbnail opens modal window
+        // Currently, click on thumbnail opens modal window
+        // HOWEVER... click on thumbnail will now start a range add instead of opening a modal
+
+        // 1- toggle status in shopping cart
+        // 2- ctrl click - open modal, not toggle shopping cart
+        // 3- shift click - takes range from whatever the last thing you clicked on and if the
+        //    thing you previously clicked is IN the card, do an 'add range', otherwise
+        //    do a 'remove range'.  Don't toggle the items inside the range
+        //    NOTE: range can go forward or backwards
+        // 'check' will go away, no longer serves a purpose
+        //
       $(".gallery, #dataTable ").on("click", ".thumbnail, tbody > tr :not(:input)", function(e) {
             // make sure selected modal thumb is unhighlighted, as clicking on this closes the modal
             // but is not caught in time before hidden.bs to get correct opusId
-            o_browse.toggleGalleryViewHighlight("off");
 
+            let action = "add";     // just a default var decl
             let opusId = $(this).data("id");
             if (opusId == undefined) {
                 opusId = $(this).parent().data("id");
             }
 
-            o_browse.updateGalleryView(opusId);
+            switch (o_browse.keyPressAction) {
+                case "showModal":
+                    o_browse.toggleGalleryViewHighlight(false);
+                    o_browse.updateGalleryView(opusId);
+                    $("#galleryView").modal("show");
+                    o_browse.keyPressAction = "";
+                    break;
+
+                case "editRange":
+                    // if there is one selected, then toggle (add/remove) from where clicked to here
+                    // if there is an image already selected in middle of range, don't mess w/it
+                    let namespace = o_browse.getViewInfo().namespace;
+                    if (o_browse.selectedImageID == "") {   // start range
+                        // start the range - if not yet selected, get first item
+                        o_browse.selectedImageID = $(namespace + " .thumbnail")[0].dataset.id;
+                        //let action = o_browse.toggleBrowseInCollectionStyle(opusId);
+                        //o_collections.editCollection(opusId, action);
+                    }
+                    let elementArray = $(namespace + " .thumbnail");
+                    let fromIndex = 0;
+                    let toIndex = 0;
+                    $.each(elementArray, function(index, elem) {
+                        let elemId = $(elem).data("id");
+                        if (elemId == o_browse.selectedImageID) {
+                            fromIndex = index;
+                        }
+                        if (elemId == opusId) {
+                            toIndex = index;
+                        }
+                    });
+                    let highlight = $(elementArray[fromIndex]).hasClass("in");
+                    action = (highlight ? "addrange" : "removerange");
+
+                    // reorder if need be
+                    if (fromIndex > toIndex) {
+                        [fromIndex, toIndex] = [toIndex, fromIndex];
+                    }
+                    let length = toIndex - fromIndex+1;
+                    let opusIdRange = $(elementArray[fromIndex]).data("id") + ","+ $(elementArray[toIndex]).data("id")
+                    console.log(action+" range: "+opusIdRange);
+                    $.each(elementArray.splice(fromIndex, length), function(index, elem) {
+                        // effect no change if it is already selected/deselected same as first item in array
+                        if ($(elem).hasClass("in") != highlight) {
+                            o_browse.toggleGalleryViewHighlight(highlight, $(elem).data("id"));
+                        }
+                    })
+                    o_collections.editCollection(opusIdRange, action);
+                    break;
+
+                default:
+                    // add/remove to/from collection - remember the selected image in case there is a range select
+                    o_browse.selectedImageID = opusId;
+                    action = o_browse.toggleBrowseInCollectionStyle(opusId);
+                    o_collections.editCollection(opusId, action);
+                    // if action is remove, reset the selected imageso_browse.selectedImageID
+                    if (action == "remove") {
+                        o_browse.selectedImageID = "";
+                    }
+            }
+            o_browse.keyPressAction = "";
+            //if (e.shiftKey) {
+                // CANCEL THE EVENT, WHICH WILL PREVENT ANY LINKING FROM OCCURING
+                e.preventDefault()
+            //}
         });
 
-        // data_table - clicking a table row adds to cart
+        // data_table - clicking a table row adds to collection
         $("#browse").on("click", "#data_table :input", function() {
 
             var opusId = $(this).attr("id").substring(6);
@@ -153,15 +187,7 @@ var o_browse = {
                 o_browse.toggleBrowseInCollectionStyle(opusId);
             } catch(e) { } // view not drawn yet so no worries
 
-            // check if we are clicking as part of an 'add range' interaction
-            if (!opus.addrange_clicked) {
-
-                // no add range, just add this obs to collection
-                o_collections.editCollection(opusId,action);
-
-            } else {
-                o_browse.addRangeHandler(opusId);
-            }
+            o_collections.editCollection(opusId,action);
             return false;
 
         });
@@ -186,7 +212,7 @@ var o_browse = {
                   }
                   break;
 
-              case "check":   // add to cart
+              case "check":   // add to collection
                   var action = o_browse.toggleBrowseInCollectionStyle(opusId);
                   o_collections.editCollection(opusId, action);
                   break;
@@ -194,9 +220,6 @@ var o_browse = {
               case "resize":  // expand, same as click on image
                   $('a[data-id="'+opusId+'"]').trigger("click");
                   break;
-
-              default:
-                alert("Hmm... should not be here. error 710.");
             }
             return false;
         }); // end click a browse tools icon
@@ -249,36 +272,6 @@ var o_browse = {
             return false;
         });
 
-        $(document).on("keydown",function(e) {
-            /*  Catch the right/left arrow while in the modal
-                Up: 38
-                Down: 40
-                Right: 39
-                Left: 37 */
-            if ($("#galleryView").hasClass("show")) {
-                let opusId;
-                switch (e.keyCode) {
-                    case 27:  // esc - close modal
-                        $("#galleryView").modal('hide')
-                        return;
-                        break;
-                    case 39:  // next
-                        opusId = $("#galleryView").find(".next").data("id");
-                        break;
-                    case 37:  // prev
-                        opusId = $("#galleryView").find(".prev").data("id");
-                        break;
-                }
-                if (opusId) {
-                    o_browse.toggleGalleryViewHighlight();  // toggle highlight of current
-                    o_browse.updateGalleryView(opusId);
-                }
-            } else if ($("#columnChooser").hasClass("show") && e.keyCode === 27) {
-                $("#columnChooser").modal('hide')
-            }
-            // don't return false here or it will snatch all the user input!
-        });
-
         // click table column header to reorder by that column
         $("#browse").on("click", '.data_table th a',  function() {
             let order_by =  $(this).data('slug');
@@ -314,6 +307,63 @@ var o_browse = {
             return false;
         });
 
+
+        // this is the workhorse function that collects keyboard input and does something useful
+        $(document).on("keydown",function(e) {
+            if ($("#browse").hasClass("active")) {
+                console.log("key = "+e.keyCode);
+                let clickedId = (e.target.data !== undefined ? e.target.data["id"] : "");
+                switch (e.keyCode) {
+                    case 16: // shiftKey
+                        // shift click - takes range from whatever the last thing you clicked on and if the
+                        //    thing you previously clicked is IN the card, do an 'add range', otherwise
+                        //    do a 'remove range'.  Don't toggle the items inside the range
+                        //    NOTE: range can go forward or backwards
+                        o_browse.keyPressAction = "editRange";
+                        e.preventDefault();
+                        break;
+                    case 17: // ctrlKey
+                        // ctrl click - open modal, do not toggle collection
+                        o_browse.keyPressAction = "showModal";
+                        break;
+                    case 18: // altKey
+                        // no action; just for ref
+                        break;
+                }
+            }
+            if ($("#galleryView").hasClass("show")) {
+              /*  Catch the right/left arrow while in the modal
+                  Up: 38
+                  Down: 40
+                  Right: 39
+                  Left: 37 */
+                let opusId;
+                // the || is for cross-browser support; firefox does not support keyCode
+                switch (e.which || e.keyCode) {
+                    case 27:  // esc - close modal
+                        $("#galleryView").modal('hide')
+                        return;
+                        break;
+                    case 39:  // next
+                        opusId = $("#galleryView").find(".next").data("id");
+                        break;
+                    case 37:  // prev
+                        opusId = $("#galleryView").find(".prev").data("id");
+                        break;
+                }
+                if (opusId) {
+                    o_browse.toggleGalleryViewHighlight();  // toggle highlight of current
+                    o_browse.updateGalleryView(opusId);
+                }
+            } else if ($("#columnChooser").hasClass("show") && e.keyCode === 27) {
+                $("#columnChooser").modal('hide')
+            }
+            // don't return false here or it will snatch all the user input!
+        });
+        $(document).on("keyup",function(e) {
+            o_browse.keyPressAction = "";
+            // if there is an opusid, probably need to add/remove it
+        });
     }, // end browse behaviors
 
     checkScroll: function() {
@@ -344,10 +394,11 @@ var o_browse = {
     },
 
     toggleBrowseInCollectionStyle: function(opusId) {
-        var elem = o_browse.getGalleryElement(opusId);
+        let elem = o_browse.getGalleryElement(opusId);
 
         // if this opusId is modal, make sure it stays highlighted
-        o_browse.toggleGalleryViewHighlight("on", opusId);
+        //o_browse.toggleGalleryViewHighlight("on", opusId);
+        o_browse.toggleGalleryViewHighlight(undefined, opusId);
 
         elem.toggleClass("in"); // this class keeps parent visible when mouseout
 
@@ -445,7 +496,7 @@ var o_browse = {
     // handles checking of a range of boxes in each view (table/gallery)
     checkRangeBoxes: function(opusId1, opusId2) {
 
-        // make all list/td elements bt r1 and r2 be added to cart
+        // make all list/td elements bt r1 and r2 be added to collection
         let elements = ['#gallery__','#data__'];
         for (let key in elements) {
             let element = elements[key];
@@ -630,7 +681,8 @@ var o_browse = {
             $.each(data, function( key, imageData ) {
                 html += '<div class="thumbnail-container'+ (imageData.in_collection ? ' thumb_selected' : '') +'">';
                 html += '<a href="#" class="thumbnail '+(imageData.in_collection ? ' in' : '')+'" ';
-                html += 'data-toggle="modal" data-target="#galleryView" data-id="'+imageData.opus_id+'"	data-image="'+imageData.full_url+'">';
+                //html += 'data-toggle="modal" data-target="#galleryView" data-id="'+imageData.opus_id+'"	data-image="'+imageData.full_url+'">';
+                html += 'data-id="'+imageData.opus_id+'"	data-image="'+imageData.full_url+'">';
                 html += '<img class="img-thumbnail img-fluid" src="'+imageData.thumb_url+'" alt="'+imageData.thumb_alt_text+'" title="'+imageData.opus_id+'"> </a>';
                 html += '<div class="thumb_overlay">';
                 html +=    '<div class="tools" data-id="'+imageData.opus_id+'">';
@@ -805,21 +857,24 @@ var o_browse = {
         }
         if (opusId !== undefined) {
             switch (highlight) {
-                case "on":
-                    $("tr[data-id='"+opusId+"']").addClass("highlight");
+                case true:
+                    $("tr[data-id='"+opusId+"']").addClass("row_selected");
+                    $("#select_"+opusId).prop("checked", true);
                     $("a.thumbnail[data-id='"+opusId+"']").parent().addClass("thumb_selected");
                     break;
-                case "off":
-                    $("tr[data-id='"+opusId+"']").removeClass("highlight");
+                case false:
+                    $("tr[data-id='"+opusId+"']").removeClass("row_selected");
+                    $("#select_"+opusId).prop("checked", false);
                     $("a.thumbnail[data-id='"+opusId+"']").parent().removeClass("thumb_selected");
                     break;
                 case undefined:
                 default:
                     // don't unhighlight if it is in collection unless specifically asked
-                    if (!$("a.thumbnail[data-id='"+opusId+"']").hasClass("in")) {
-                        $("tr[data-id='"+opusId+"']").toggleClass("highlight");
-                        $("a.thumbnail[data-id='"+opusId+"']").parent().toggleClass("thumb_selected");
-                    }
+                    // if modal is open, don't unhighlight it
+                    $("tr[data-id='"+opusId+"']").toggleClass("row_selected");
+                    $("#select_"+opusId).prop("checked", !$("#select_"+opusId).is(":checked"));
+                    $("a.thumbnail[data-id='"+opusId+"']").parent().toggleClass("thumb_selected");
+                    //}
                     break;
             }
         }
@@ -827,7 +882,7 @@ var o_browse = {
 
     updateGalleryView: function(opusId) {
         // while modal is up, highlight the image/table row shown
-        o_browse.toggleGalleryViewHighlight("on", opusId);
+        o_browse.toggleGalleryViewHighlight(true, opusId);
 
         var imageURL = $("#browse").find("a[data-id='"+opusId+"']").data("image");
         if (imageURL === undefined) {

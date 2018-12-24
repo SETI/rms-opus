@@ -353,14 +353,7 @@ var o_collections = {
 
     editCollection: function(opusId, action) {
         opus.collection_change = true;
-
-        // make sure the checkbox for this observation in the other view (either data or gallery)
-        // is also checked/unchecked - if that view is drawn
-        $('#data__' + opusId).find('.data_checkbox').toggleClass('fa-check-square-o').toggleClass('fa-square-o');
-
         opus.lastCartRequestNo++;
-        // $('.collections_extra').html(opus.spinner);
-        // $('#collection_tab').fadeIn();
         opus.collection_queue[opus.lastCartRequestNo] = {"action":action, "opus_id":opusId, "sent":false};
 
         o_collections.processCollectionQueue();

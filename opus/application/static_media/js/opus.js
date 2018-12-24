@@ -96,8 +96,6 @@ var opus = {
     // collections
     collection_queue:[],
     collection_change:true, // collection has changed since last load of collection_tab
-    addrange_clicked:false,
-    addrange_min:false,
     collection_q_intrvl: false,
     colls_options_viz:false,
 
@@ -341,6 +339,16 @@ $(document).ready(function() {
         }
 
     }),
+
+    // general functionality to discover if an element is in the viewport
+    // used like this: if ($(this).isInViewport()) {}
+    $.fn.isInViewport = function() {
+        let elementTop = $(this).offset().top;
+        let elementBottom = elementTop + $(this).outerHeight();
+        let viewportTop = $(window).scrollTop();
+        let viewportBottom = viewportTop + $(window).height();
+        return elementBottom > viewportTop && elementTop < viewportBottom;
+    };
 
     opus.addAllBehaviors();
 
