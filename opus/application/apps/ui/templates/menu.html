@@ -23,51 +23,47 @@
 	          {% if info.has_sub_heading %}
 	            {#  this div has sub_headings, level-3 menu sections.. start sub_heading loop  #}
 	            {% for sub_head,params in info.data.items %}
-	              {% if p.cat_name == sub_head.slugify %}
-	                <li>
-	                  <i class = "fa fa-check"></i>
-	                  <a class="dropdown-toggle {{ sub_head|slugify }}" data-group="{{ sub_head|slugify }}" href = "">
-	                    <i class = "fa fa-check"></i>
-	                    <i class="fa fa-angle-double-right"></i>
-	                    {{ sub_head }}
-	                    <b class="arrow fa fa-angle-right"></b>
-	                  </a>
+                <li>
+                  <i class = "fa fa-check"></i>
+                  <a class="dropdown-toggle {{ sub_head|slugify }}" data-group="{{ sub_head|slugify }}" href = "">
+                    <i class = "fa fa-check"></i>
+                    <i class="fa fa-angle-double-right"></i>
+                    {{ sub_head }}
+                    <b class="arrow fa fa-angle-right"></b>
+                  </a>
 
-	                  <ul class="submenu">
-		                  {% for p in params %}
-		                    {% if p.cat_name == sub_head.slugify %}
-		                    	<li>
-		                        <a data-label="
-																{% if menu.data.labels_view == 'results' %}
-																	{{ p.label_results }}
-																{% else %}
-																	{{ p.label }}
-																{% endif %}
-															" data-qualifiedlabel="
-																{% if menu.data.labels_view == 'results' %}
-																	{{ p.body_qualified_label_results }}
-																{% else %}
-																	{{ p.body_qualified_label }}
-																{% endif %}
-															" data-slug="{{ p.slug }}" class="{{ p.slug }}" href="">
-		                            <i class = "fa fa-check"></i>
-																{% if menu.data.labels_view == 'results' %}
-																	{{ p.label_results }}
-																{% else %}
-																	{{ p.label }}
-																{% endif %}
-																{% if p.get_tooltip %}
-			                            <i class="fa fa-info-circle" title="
-		                                 {{ p.get_tooltip }}
-			                              "></i>
-																{% endif %}
-		                        </a>
-		                      </li>
-	                      {% endif %}
-		                  {% endfor %} {# p in params #}
-	                  </ul>
-	                </li>
-	              {% endif %} {# if p.cat_name == sub_head.slugify #}
+                  <ul class="submenu">
+	                  {% for p in params %}
+                    	<li>
+                        <a data-label="
+														{% if menu.data.labels_view == 'results' %}
+															{{ p.label_results }}
+														{% else %}
+															{{ p.label }}
+														{% endif %}
+													" data-qualifiedlabel="
+														{% if menu.data.labels_view == 'results' %}
+															{{ p.body_qualified_label_results }}
+														{% else %}
+															{{ p.body_qualified_label }}
+														{% endif %}
+													" data-slug="{{ p.slug }}" class="{{ p.slug }}" href="">
+                            <i class = "fa fa-check"></i>
+														{% if menu.data.labels_view == 'results' %}
+															{{ p.label_results }}
+														{% else %}
+															{{ p.label }}
+														{% endif %}
+														{% if p.get_tooltip %}
+	                            <i class="fa fa-info-circle" title="
+                                 {{ p.get_tooltip }}
+	                              "></i>
+														{% endif %}
+                        </a>
+                      </li>
+	                  {% endfor %} {# p in params #}
+                  </ul>
+                </li>
 	            {% endfor %} {# for sub_head, params in info.data.items #}
 	          {% else %}
 	            {# this div does not have sub_headings, list the params #}
