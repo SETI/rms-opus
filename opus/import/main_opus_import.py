@@ -36,6 +36,7 @@ import opus_support
 
 from config_data import *
 import do_collections
+import do_dictionary
 import do_django
 import do_grouping_target_name
 import do_import
@@ -239,6 +240,10 @@ parser.add_argument(
     help='Perform validation of the final permanent tables'
 )
 
+parser.add_argument(
+    '--import-dictionary', action='store_true', default=False,
+    help='Import the dictionary and contexts from scratch'
+)
 
 # Arguments about volume selection
 parser.add_argument(
@@ -448,6 +453,9 @@ try: # Top-level exception handling so we always log what's going on
 
         impglobals.LOGGER.close()
 
+    if impglobals.ARGUMENTS.validate_perm:
+        do_validate.do_validate('perm')
+
     if (impglobals.ARGUMENTS.create_collections and
         impglobals.TRY_COLLECTIONS_LATER):
         impglobals.LOGGER.open(
@@ -459,8 +467,13 @@ try: # Top-level exception handling so we always log what's going on
 
         impglobals.LOGGER.close()
 
-    if impglobals.ARGUMENTS.validate_perm:
-        do_validate.do_validate('perm')
+    if impglobals.ARGUMENTS.import_dictionary:
+        impglobals.LOGGER.open(
+            f'Importing dictionary',
+            limits={'info': impglobals.ARGUMENTS.log_info_limit,
+                    'debug': impglobals.ARGUMENTS.log_debug_limit})
+        do_dictionary.do_dictionary()
+        impglobals.LOGGER.close()
 
     impglobals.LOGGER.close()
 
