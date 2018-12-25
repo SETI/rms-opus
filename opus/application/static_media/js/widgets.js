@@ -119,7 +119,6 @@ var o_widgets = {
         var slug_no_num;
         try {
             slug_no_num = slug.match(/(.*)[1|2]/)[1];
-
         } catch (e) {
             slug_no_num = slug;
         }
@@ -153,6 +152,7 @@ var o_widgets = {
 
         delete opus.extras['qtype-'+slug_no_num];
         delete opus.extras['z-'+slug_no_num];
+
 
         o_hash.updateHash();
         o_widgets.updateWidgetCookies();

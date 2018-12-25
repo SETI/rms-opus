@@ -6,7 +6,7 @@ var o_hash = {
      **/
 
     // updates the hash according to user selections
-    updateHash: function(runSearch=true){
+    updateHash: function(updateURL=true){
 
       hash = [];
       for (var param in opus.selections) {
@@ -54,7 +54,7 @@ var o_hash = {
               hash[hash.length] = key + '=' + opus.prefs[key];
           }
       }
-      if(runSearch) {
+      if(updateURL) {
         window.location.hash = '/' + hash.join('&');
       } else {
         return hash.join('&');
