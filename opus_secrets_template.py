@@ -106,7 +106,7 @@ DICTIONARY_TERM_URL = '<URL>'
 
 # The pdsdd.full file including path
 DICTIONARY_PDSDD_FILE = os.path.join(PDS_OPUS_PATH,
-                                     'dictionary/PDSDD/pdsdd.full')
+                                     'dictionary/pdsdd.full')
 
 # The contexts.csv file including path
 DICTIONARY_CONTEXTS_FILE = os.path.join(PDS_OPUS_PATH,
