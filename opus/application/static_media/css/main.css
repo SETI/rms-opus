@@ -708,3 +708,8 @@ input[type="text"].white_background {
 input[type="text"].red_background {
     background-color: #F6AFAF;
 }
+
+.search_overlay {
+  opacity: 0.5;
+  pointer-events: none;
+}

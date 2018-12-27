@@ -5,7 +5,9 @@ var o_search = {
      *  Everything that appears on the search tab
      *
      **/
-    slugReqno : {},
+    rangeInputSearching: false,
+    currentNormalizedData: {},
+    slugReqno: {},
     validateRangeInput: function(event, slug, url) {
         let performSearch = true;
         $.getJSON(url, function(data) {
@@ -36,6 +38,7 @@ var o_search = {
             // check each range input if not valid, change to red background
             $.each(data, function(eachSlug, value) {
                 if(data[eachSlug] === null) {
+                    $('#sidebar').addClass('search_overlay');
                     $(`input[name="${eachSlug}"]`).addClass('red_background');
                     performSearch = false;
                 } else {
@@ -44,29 +47,21 @@ var o_search = {
                     }
                 }
             });
+            console.log('FINAL CURRENTNORMALIZED DATA AFTER SEARCH: ' + JSON.stringify(o_search.currentNormalizedData));
             if(!performSearch) {
                 console.log("Other Value is wrong, no search");
                 return;
-            }
-            console.log("Normalized Value updated, ready for search");
+            } else {
 
-          // if(!performSearch) {
-          //   return;
-          // } else {
-          //   // all data are valid, perform final search when user focus out or hit enter
-          //   for(let eachSlug in data) {
-          //     if(eachSlug !== 'reqno') {
-          //       opus.selections[eachSlug] = [data[eachSlug]];
-          //     }
-          //   }
-          //   console.log('SEARCH PERFORM');
-          //   o_hash.updateHash();
-          //
-          //   // reset border and background color is a search is perform
-          //   $('input.RANGE').css('border', `1px solid ${GRAY}`)
-          //   $('input.RANGE').css('background-color', WHITE);
-          //
-          // }
+                console.log("Normalized Value updated, searching...");
+                console.log('SELECTION BEFORE searching....: ' + JSON.stringify(opus.selections));
+                o_hash.updateHash();
+                $('input.RANGE').removeClass('green_border');
+                $('input.RANGE').addClass('gray_border');
+                $('#sidebar').removeClass('search_overlay');
+            }
+            o_search.rangeInputSearching = false;
+            console.log('DONE => Range input searching done: ' + o_search.rangeInputSearching);
         });
         // $.when(o_search.ajaxAPICall(url)).done(function(data) {
         //   // Make sure it's the final call before parsing data
@@ -164,6 +159,7 @@ var o_search = {
         // Dynamically get input values right after user input a character
         $('#search').on('input', 'input.RANGE', function(event) {
             slug = $(this).attr("name");
+            o_search.rangeInputSearching = false;
             let currentValue = $(this).val().trim();
             let values = []
             // let regexPattern =  new RegExp(slug + '=[\\d\\w\\s\\.\\-\\:]*\&');
@@ -184,7 +180,7 @@ var o_search = {
             // opus.temp_hash = o_hash.updateHash(false);
             // let newHash = opus.temp_hash
             let newHash = o_hash.updateHash(false);
-            console.log('OPUS selection: ' + o_hash.getSelectionsFromHash());
+            console.log('OPUS selection: ' + JSON.stringify(o_hash.getSelectionsFromHash()));
             console.log('GET HASH FROM CURRENT URL: ' + o_hash.getHash());
             console.log('New HASH AFTER UPDATE: ' + newHash);
             // console.log('New HASH AFTER UPDATE: ' + opus.temp_hash);
@@ -195,6 +191,7 @@ var o_search = {
             let url = '/opus/__api/normalizeinput.json?' + newHash + '&reqno=' + opus.lastNormalizeRequestNo;
             $.getJSON(url, function(data) {
                 console.log('Current API CALL: ' + url);
+                console.log('Widget Drawn: ' + opus.widgets_drawn);
                 console.log('Current global reqno: ' + opus.lastNormalizeRequestNo);
                 console.log('Current slug reqno: ' + o_search.slugReqno[slug]);
                 console.log('All slug reqno: ' + JSON.stringify(o_search.slugReqno));
@@ -206,6 +203,7 @@ var o_search = {
                     return;
                 }
 
+                o_search.currentNormalizedData = data;
                 let returnData = data[slug];
                 if(returnData === '') {
                     $(event.target).removeClass('green_border red_border');
@@ -220,12 +218,18 @@ var o_search = {
                     $(event.target).removeClass('gray_border green_border');
                     $(event.target).addClass('red_border');
                 }
+                console.log('CURRENTNORMALIZED DATA: ' + JSON.stringify(o_search.currentNormalizedData));
             }); // end getJSON
         });
 
         // perform search on range input when user focus out or hit enter
         $('#search').on('change', 'input.RANGE', function(event) {
             let slug = $(this).attr("name");
+            o_search.rangeInputSearching = true;
+            console.log('FINAL SELECTION BEFORE FINAL API CALL: ' + JSON.stringify(opus.selections));
+            console.log('FINAL CURRENTNORMALIZED DATA: ' + JSON.stringify(o_search.currentNormalizedData));
+            console.log('FINAL Widget Drawn: ' + opus.widgets_drawn);
+            console.log('FINAL => Range input searching: ' + o_search.rangeInputSearching);
             let newHash = o_hash.updateHash(false);
             opus.lastNormalizeRequestNo++;
             o_search.slugReqno[slug] = opus.lastNormalizeRequestNo;
