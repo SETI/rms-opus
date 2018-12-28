@@ -259,18 +259,24 @@ ul.searchMenu{
 }
 
 th.sticky-header {
-	  position: sticky;
-	  top: 0;
-	  z-index: 10;
-	  background-color: black;
+	position: sticky;
+	top: 0;
+	z-index: 10;
+	background-color: black;
 }
 
-.data_table  {
+#dataTable  {
     padding:0;
-    margin-top:40px;
 }
-.data_table .column_ordering {
+
+#dataTable th a {
+    display:block;
+}
+
+#dataTable .column_ordering {
     margin:0 10px;
+	display: inline-flex;
+	float: right;
 }
 
 .fadey {
@@ -351,21 +357,6 @@ th.sticky-header {
 }
 .range_hints span {
     margin-right: 5px;
-}
-
-.infinite_scroll_page {
-    color:white;
-    padding:10px;
-    text-align:center;
-    margin:2px;
-}
-.infinite_scroll_page {
-    float:none;
-    clear:both;
-    width:100%;
-}
-.infinite_scroll_page {
-    display:none;
 }
 
 .paging_indicator {
@@ -499,6 +490,14 @@ div.gallery {
 .panel-body .gallery-contents {
 	position:fixed !important;
 	overflow-y: auto
+}
+
+.page-load-status {
+  	display: none; /* hidden by default */
+  	padding-top: 20px;
+  	border-top: 1px solid #DDD;
+	text-align: center;
+  	/*color: #777;*/
 }
 
 /* opus-specific card stuff, used to be widgets */
@@ -663,10 +662,6 @@ li a.search-param:hover {
 #zip_files .spinner {
     display:none;
 }
-.data_table th a {
-    display:block;
-}
-
 
 .mult_group_label {
     padding: 5px 4px;

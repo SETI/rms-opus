@@ -56,12 +56,6 @@ var o_browse = {
           o_hash.updateHash();
           o_browse.updateBrowseNav();
 
-          // do we need to fetch a new browse tab?
-          if ((opus.prefs.browse == "gallery" && !opus.gallery_begun) ||
-              (opus.prefs.browse == "dataTable" && !opus.table_headers_drawn)) {
-              o_browse.getBrowseTab();
-          }
-
           // reset scroll position
           window.scrollTo(0,opus.browse_view_scrolls[opus.prefs.browse]); // restore previous scroll position
 
@@ -159,9 +153,6 @@ var o_browse = {
                     action = o_browse.toggleBrowseInCollectionStyle(opusId);
                     o_collections.editCollection(opusId, action);
                     // if action is remove, reset the selected imageso_browse.selectedImageID
-                    if (action == "remove") {
-                        o_browse.selectedImageID = "";
-                    }
             }
             o_browse.keyPressAction = "";
             //if (e.shiftKey) {
@@ -171,7 +162,15 @@ var o_browse = {
         });
 
         // data_table - clicking a table row adds to collection
-        $("#browse").on("click", "#data_table :input", function() {
+        $("#browse").on("click", "#dataTable :checkbox", function() {
+            if ($(this).val() == "all") {
+                // checkbox not currently implemented
+                // pop up a warning if selection total is > 100 items,
+                // with the total number to be selected...
+                // if OK, use 'addall' api and loop thru all checkboxes to set them as selected
+                //o_collections.editCollection("all",action);
+                return false;
+            }
 
             var opusId = $(this).attr("id").substring(6);
             $(this).find('.data_checkbox').toggleClass('fa-check-square-o').toggleClass('fa-square-o');
@@ -472,76 +471,6 @@ var o_browse = {
         });
     },  // /addColumnChooserBehaviors
 
-    checkAllRenderedElements: function() {
-      // returns first and last opusId that is rendered on the page
-
-      // find the id of the first and last element showing on this page
-      let first = "";
-      let last = "";
-      if (opus.prefs.browse == "gallery") {
-        el = $('.gallery li');
-        first = el.first().attr('id');
-        last = el.last().attr('id');
-      } else {
-        first = $('.data_table tbody tr:first').attr('id');
-        last = $('.data_table tbody tr:last').attr('id');
-      }
-
-      let opusId1 = first.split('__')[1];
-      let opusId2 = last.split('__')[1];
-
-      o_browse.checkRangeBoxes(opusId1, opusId2);
-    },
-
-    // handles checking of a range of boxes in each view (table/gallery)
-    checkRangeBoxes: function(opusId1, opusId2) {
-
-        // make all list/td elements bt r1 and r2 be added to collection
-        let elements = ['#gallery__','#data__'];
-        for (let key in elements) {
-            let element = elements[key];
-            let current_id = opusId1;
-            let next_element = $(element + current_id, '#browse');
-            while (current_id != opusId2) {
-
-                // thumbnail in the list
-                if (next_element.hasClass("infinite_scroll_page")) {
-                    // this is the infinite scroll indicator, continue to next
-                    next_element = $(element + current_id, '#browse').next().next();
-                }
-
-                // check the boxes:
-                if (element == '#gallery__') {
-                    /* gallery view */
-                    if (!next_element.find('.tools').hasClass("in")) {  // if not already checked
-                        try {
-                            opusId = next_element.attr("id").split('__')[1];
-                            o_browse.toggleBrowseInCollectionStyle(opusId);
-                        } catch(e) {
-                        }
-                    }
-                } else {
-                    /* this is table view */
-                    if (!next_element.find('.data_checkbox').hasClass('fa-check-square-o')) {  // if not already checked
-                        // box is not checked so checkity check it
-                        $(next_element).find(".data_checkbox").addClass('fa-check-square-o').removeClass('fa-square-o');
-                    }
-
-                }
-
-                // now move along
-                try {
-                    current_id = next_element.attr("id").split('__')[1];
-                } catch(e) {
-                    break;  // no next_id means the view isn't drawn, so we don't need to worry about it
-                }
-
-                next_element = $(element + current_id, '#browse').next();
-
-            } // /while
-        }
-    },
-
     // there are interactions that are applied to different code snippets,
     // this returns the namespace, view_var, prefix, and add_to_url
     // that distinguishes collections vs result tab views
@@ -647,71 +576,86 @@ var o_browse = {
         }
     },
 
-    // note that renderTable also updates the gallery_data table, as it contains the same information/columns as the table
-    renderTable: function(tableData) {
-        // update table
-        $.each(tableData.page, function(item, galleryData) {
-              // for now, always assume that opusId is first item in list
-            let opusId = galleryData[0];
-            opus.gallery_data[opusId] = galleryData;
+    renderGalleryAndTable: function(data, url) {
+        // render the gallery and table at the same time.
+        // gallery is var html; table is row/tr/td.
 
-            let checkbox = "<input type='checkbox' name='"+opusId+"' value='"+opusId+"' class='multichoice' id='select_"+opusId+"'>";
-            var row = "<td>"+checkbox+"</td>";
-            var tr = "<tr data-toggle='modal' data-id='"+opusId+"' data-target='#galleryView'>";
-            $.each(galleryData, function(index, cell) {
-                row += "<td>"+cell+"</td>";
-            });
-            //$("<tr data-toggle='modal' data-id='"+galleryData[0]+"' data-target='#galleryView'>"+row+"</tr>").appendTo(".dataTable tbody");
-            $(tr+row+"</tr>").appendTo(".dataTable tbody");
-        });
-    },
-
-    renderGallery: function(data, page, url) {
         let namespace = o_browse.getViewInfo().namespace;
+        let page = data.page;
         var html = "";
-        if (data.length == 0) {
-            html += '<div class="thumbnail-message">';
-            html += '<h2>You Have No Selections</h2>';
-            html += '<p>To select observations, click on the Browse Results tab ';
-            html += 'at the top of the page,<br> mouse over the thumbnail gallery images to reveal the tools,';
-            html += 'then click the <br>checkbox below a thumbnail.  </p>';
-            html += '</div>';
+
+        if (data.count == 0) {
+            // either there are no selections OR this is signaling the end of the infinite scroll
+            // for now, just post same message to both #browse & #collections tabs
+            if (data.page_no == 1) {
+                html += '<div class="thumbnail-message">';
+                html += '<h2>You Have No Selections</h2>';
+                html += '<p>To select observations, click on the Browse Results tab ';
+                html += 'at the top of the page,<br> mouse over the thumbnail gallery images to reveal the tools,';
+                html += 'then click the <br>checkbox below a thumbnail.  </p>';
+                html += '</div>';
+            } else {
+                // we've hit the end of the infinite scroll.
+            }
         } else {
-            html += '<div class="thumb-page" data-page="'+page+'">';
-            $.each(data, function( key, imageData ) {
-                html += '<div class="thumbnail-container'+ (imageData.in_collection ? ' thumb_selected' : '') +'">';
-                html += '<a href="#" class="thumbnail '+(imageData.in_collection ? ' in' : '')+'" ';
-                //html += 'data-toggle="modal" data-target="#galleryView" data-id="'+imageData.opus_id+'"	data-image="'+imageData.full_url+'">';
-                html += 'data-id="'+imageData.opus_id+'"	data-image="'+imageData.full_url+'">';
-                html += '<img class="img-thumbnail img-fluid" src="'+imageData.thumb_url+'" alt="'+imageData.thumb_alt_text+'" title="'+imageData.opus_id+'"> </a>';
+            html += '<div class="thumb-page" data-page="'+data.page_no+'">';
+            $.each(page, function( index, item ) {
+                let opusId = item.opusid;
+                opus.gallery_data[opusId] = item.metadata;	// for galleryView, store in global array
+
+                // gallery
+                let images = item.images;
+                html += '<div class="thumbnail-container'+ (item.in_collection ? ' thumb_selected' : '') +'">';
+                html += '<a href="#" class="thumbnail '+(item.in_collection ? ' in' : '')+'" ';
+                //html += 'data-toggle="modal" data-target="#galleryView" data-id="'+item.opus_id+'"	data-image="'+item.full_url+'">';
+                html += 'data-id="'+opusId+'"	data-image="'+images.full.url+'">';
+                html += '<img class="img-thumbnail img-fluid" src="'+images.thumb.url+'" alt="'+images.thumb.alt_text+'" title="'+opusId+'"> </a>';
                 html += '<div class="thumb_overlay">';
-                html +=    '<div class="tools" data-id="'+imageData.opus_id+'">';
+                html +=    '<div class="tools" data-id="'+opusId+'">';
                 html +=       '<a href="#" data-icon="info"><i class="fa fa-info fa-xs" aria-hidden="true"></i></a>';
                 html +=       '<a href="#" data-icon="check"><i class="fa fa-check fa-xs" aria-hidden="true"></i></a>';
                 html +=       '<a href="#" data-icon="resize"><i class="fas fa-expand-arrows-alt fa-xs" aria-hidden="true"></i></a>';
                 html += '</div></div></div>';
+
+                // table row
+                let checked = item.in_collection ? " checked" : "";
+                let selected = item.in_collection ? " class='row_selected'" : "";
+                let checkbox = "<input type='checkbox' name='"+opusId+"' value='"+opusId+"' class='multichoice' id='select_"+opusId+"'"+checked+">";
+                let row = "<td>"+checkbox+"</td>";
+                let tr = "<tr data-toggle='modal' data-id='"+opusId+"' data-target='#galleryView'"+selected+">";
+                $.each(item.metadata, function(index, cell) {
+                    row += "<td>"+cell+"</td>";
+                });
+                //$(".dataTable tbody").append("<tr data-toggle='modal' data-id='"+galleryData[0]+"' data-target='#galleryView'>"+row+"</tr>");
+                $(".dataTable tbody").append(tr+row+"</tr>");
             });
             html += '</div>';
         }
         $('.gallery', namespace).append(html);
     },
 
-    startTable: function(tableData) {
+    initTable: function(columns) {
         // prepare table and headers...
         $(".dataTable thead > tr > th").detach();
         $(".dataTable tbody > tr").detach();
 
-        // this endpoint also returns column labels:
-        opus.col_labels = [];
-        $.each(tableData.labels, function(index, labels) {
-            opus.col_labels.push(labels);
-        })
+        // NOTE:  At some point, ORDER needs to be identified in the table, as to which column we are ordering on
+
+        // because i need the slugs for the columns
+        let hashArray = o_hash.getHashArray();
+        let slugs = hashArray["cols"].split(",");
+        let order = hashArray["order"].split(",");
+
+        opus.col_labels = columns;
 
         // check all box
-        let checkbox = "<input type='checkbox' name='all' value='all' class='multichoice' id='all'>";
-        $("<th id='checkAll' scope='col' class='sticky-header'>"+checkbox+"</th>").appendTo(".dataTable thead tr");
-        $.each(tableData.labels, function( column, header) {
-            $("<th id='"+column+"'scope='col' class='sticky-header'>"+header+"</th>").appendTo(".dataTable thead tr");
+        //let checkbox = "<input type='checkbox' name='all' value='all' class='multichoice'>";
+        $(".dataTable thead tr").append("<th scope='col' class='sticky-header'></th>");
+        $.each(columns, function( index, header) {
+            let slug = slugs[index];
+            let icon = ($.inArray(slug, order) >= 0 ? "-down" : ($.inArray("-"+slug, order) >= 0 ? -"up" : ""));
+            let columnOrdering = "<div class='column_ordering'><a href='' data-slug='slug'><i class='fas fa-sort"+icon+"'></i></a></div>";
+            $(".dataTable thead tr").append("<th id='"+slug+" 'scope='col' class='sticky-header'>"+header+columnOrdering+"</th>");
         });
     },
 
@@ -726,36 +670,24 @@ var o_browse = {
         }
 
         let view = o_browse.getViewInfo();
-        let base_url = "/opus/__api/images.json?";
+        let base_url = "/opus/__api/dataimages.json?";
         let url = o_hash.getHash() + '&reqno=' + opus.lastRequestNo + view.add_to_url;
 
         url = o_browse.updatePageInUrl(url, page);
 
         // metadata; used for both table and gallery
-        $.ajax({
-            dataType: "json",
-            url: base_url,
-            data: url,
-            beforeSend: function (request, settings) {
-                start_time = new Date().getTime();
-            },
-            success: function(allData, request) {
-              let request_time = new Date().getTime() - start_time;
-              console.log(request_time);
-//        });
-//        $.getJSON(base_url + url, function(allData) {
-            o_browse.renderGallery(allData.data, allData.page_no, this.url);
-            if (!opus.gallery_begun)
-                o_browse.startTable(allData.metadata);
-
-            o_browse.renderTable(allData.metadata);
+        start_time = new Date().getTime();
+        $.getJSON(base_url + url, function(data) {
+            let request_time = new Date().getTime() - start_time;
+            console.log(request_time);
 
             if (!opus.gallery_begun) {
+                o_browse.initTable(data.columns);
                 // for infinite scroll
                 $('#browse .gallery-contents').infiniteScroll({
                     path: o_browse.updatePageInUrl(this.url, "{{#}}"),
                     responseType: 'text',
-                    status: '.scroller-status',
+                    status: '#browse .page-load-status',
                     elementScroll: true,
                     history: false,
                     scrollThreshold: 500,
@@ -769,20 +701,22 @@ var o_browse = {
                     console.log("load: "+request_time);
 
                     let jsonData = JSON.parse( response );
-                    o_browse.renderGallery(jsonData.data, jsonData.page_no, path);
-                    o_browse.renderTable(jsonData.metadata);
+                    o_browse.renderGalleryAndTable(jsonData, path);
 
                     console.log('Loaded page: ' + $('#browse .gallery-contents').data('infiniteScroll').pageIndex );
                 });
+            }
+
+            o_browse.renderGalleryAndTable(data, this.url);
+
+            if (!opus.gallery_begun) {
                 $('#browse .gallery-contents').infiniteScroll('loadNextPage');
                 opus.gallery_begun = true;
             }
-          }
         });
 
+        // ew.  this needs to be dealt with, as table/gallery are always drawn at same time
         opus.last_page_drawn["dataTable"] = page;
-        opus.table_headers_drawn = true;
-
         opus.last_page_drawn[opus.prefs.browse] = page;
     },
 
@@ -915,11 +849,9 @@ var o_browse = {
         $(".gallery").empty();
         opus.gallery_data = [];
         opus.pages_drawn = {"colls_gallery":[], "gallery":[]};
-        opus.browse_footer_clicks = {"gallery":0, "data":0, "colls_gallery":0, "colls_data":0 };
         opus.last_page_drawn = {"gallery":0, "dataTable":0, "colls_gallery":0, "colls_data":0 };
         opus.collection_change = true;  // forces redraw of collections tab because reset_last_page_drawn
-        browse_view_scrolls = reset_browse_view_scrolls;
-        opus.table_headers_drawn = false;
+        opus.browse_view_scrolls = reset_browse_view_scrolls;
         opus.gallery_begun = false;
         opus.column_chooser_drawn = false;
         o_hash.updateHash();
@@ -937,19 +869,6 @@ var o_browse = {
         o_browse.resetQuery();
         // FIX ME - RENDER BROWSE OR COLLECTION TAB, BUT DON'T CALL SAME FUNC FOR BOTH, YUCK
         o_browse.getBrowseTab();
-    },
-
-    // http://stackoverflow.com/questions/487073/jquery-check-if-element-is-visible-after-scroling thanks!
-    isAlmostScrolledIntoView: function(elem) {
-
-        var docViewTop = $(window).scrollTop() + $(window).height()/4;
-        var docViewBottom = docViewTop + $(window).height();
-
-        var elemTop = $(elem).offset().top;
-        var elemBottom = elemTop + $(elem).height();
-        var answer = (elemBottom >= docViewTop) && (elemTop <= docViewBottom) && (elemBottom <= docViewBottom) &&  (elemTop >= docViewTop);
-
-        return (answer);
     },
 
     // columns can be reordered wrt each other in 'column chooser' by dragging them

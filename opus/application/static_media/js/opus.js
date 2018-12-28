@@ -85,10 +85,8 @@ var opus = {
     last_page_drawn: reset_last_page_drawn, // defined in header.html,
     pages:0, // total number of pages this result
     colls_pages:1, // total number of collections pages
-    browse_footer_clicks:reset_footer_clicks, // defined in header.html
     browse_auto:'.chosen_columns', // we are turning this on as default
     column_chooser_drawn:false,
-    table_headers_drawn:false,  // have we drawn the table headers
     gallery_begun:false, // have we started the gallery view
     browse_view_scrolls: reset_browse_view_scrolls, // same defaults as footer clicks (definied in header.html)
                                                       // {"gallery":0, "data":0, "colls_gallery":0, "colls_data":0 };

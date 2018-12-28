@@ -150,7 +150,7 @@ var o_collections = {
                 $('#collection .gallery-contents').infiniteScroll({
                     path: o_browse.updatePageInUrl(this.url, "{{#}}"),
                     responseType: 'text',
-                    status: '#collection .scroller-status',
+                    status: '#collection .page-load-status',
                     elementScroll: true,
                     history: false,
                     debug: false,
@@ -239,10 +239,10 @@ var o_collections = {
         switch (action) {
             case "add":
             case "remove":
-            case "removerange":
                 url += "&opus_id=" + opus_id;
                 break;
 
+            case "removerange":
             case "addrange":
                 url += "&range=" + opus_id;
                 // need to send to server what page this range lands and what limit of that page is
@@ -285,7 +285,6 @@ var o_collections = {
                 break;
 
           case "addall":
-              // currently not implemented
               url += '&' + o_hash.getHash();
               break;
         }
