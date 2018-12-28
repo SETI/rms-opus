@@ -413,7 +413,9 @@ var o_browse = {
             // update the data table w/the new columns
             if (!o_utils.areObjectsEqual(opus.prefs.cols, currentSelectedColumns)) {
                 o_hash.updateHash();
-                o_browse.loadBrowseData(opus.last_page_drawn.gallery);
+                opus.last_page_drawn[opus.prefs.browse] = 0;
+                opus.gallery_begun = false;     // so that we redraw from the beginning
+                o_browse.loadBrowseData(1);
                 currentSelectedColumns = opus.prefs.cols.slice();
             }
         });
