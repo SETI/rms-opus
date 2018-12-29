@@ -158,9 +158,9 @@ var o_widgets = {
         console.log('CLOSE Widget Drawn: ' + opus.widgets_drawn);
         console.log('SELECTION AFTER CLOSE: ' + JSON.stringify(opus.selections));
         console.log('CLOSEEEEEEEEEE WWWWW');
-        console.log('CLOSE => range input searching: ' + o_search.rangeInputSearching);
+        console.log('CLOSE => range input searching: ' + o_search.rangeInputSearchInProgress);
 
-        if(o_search.rangeInputSearching) {
+        if(o_search.rangeInputSearchInProgress) {
             let performSearch = true;
             $.each(opus.selections, function(eachSlug, value) {
                 if(o_search.currentNormalizedData[eachSlug] === null) {
@@ -172,9 +172,11 @@ var o_widgets = {
                     if($(`input[name="${eachSlug}"]`).hasClass('red_background')) {
                       $(`input[name="${eachSlug}"]`).addClass('white_background');
                     }
-                    $('#sidebar').removeClass('search_overlay');
                 }
             });
+            if(performSearch) {
+                $('#sidebar').removeClass('search_overlay');
+            }
             o_hash.updateHash(performSearch);
             o_widgets.updateWidgetCookies();
             return;

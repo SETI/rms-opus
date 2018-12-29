@@ -5,7 +5,7 @@ var o_search = {
      *  Everything that appears on the search tab
      *
      **/
-    rangeInputSearching: false,
+    rangeInputSearchInProgress: false,
     currentNormalizedData: {},
     slugReqno: {},
     validateRangeInput: function(event, slug, url) {
@@ -60,8 +60,8 @@ var o_search = {
                 $('input.RANGE').addClass('gray_border');
                 $('#sidebar').removeClass('search_overlay');
             }
-            o_search.rangeInputSearching = false;
-            console.log('DONE => Range input searching done: ' + o_search.rangeInputSearching);
+            o_search.rangeInputSearchInProgress = false;
+            console.log('DONE => Range input searching done: ' + o_search.rangeInputSearchInProgress);
         });
         // $.when(o_search.ajaxAPICall(url)).done(function(data) {
         //   // Make sure it's the final call before parsing data
@@ -159,7 +159,7 @@ var o_search = {
         // Dynamically get input values right after user input a character
         $('#search').on('input', 'input.RANGE', function(event) {
             slug = $(this).attr("name");
-            o_search.rangeInputSearching = false;
+            o_search.rangeInputSearchInProgress = false;
             let currentValue = $(this).val().trim();
             let values = []
             // let regexPattern =  new RegExp(slug + '=[\\d\\w\\s\\.\\-\\:]*\&');
@@ -225,11 +225,11 @@ var o_search = {
         // perform search on range input when user focus out or hit enter
         $('#search').on('change', 'input.RANGE', function(event) {
             let slug = $(this).attr("name");
-            o_search.rangeInputSearching = true;
+            o_search.rangeInputSearchInProgress = true;
             console.log('FINAL SELECTION BEFORE FINAL API CALL: ' + JSON.stringify(opus.selections));
             console.log('FINAL CURRENTNORMALIZED DATA: ' + JSON.stringify(o_search.currentNormalizedData));
             console.log('FINAL Widget Drawn: ' + opus.widgets_drawn);
-            console.log('FINAL => Range input searching: ' + o_search.rangeInputSearching);
+            console.log('FINAL => Range input searching: ' + o_search.rangeInputSearchInProgress);
             let newHash = o_hash.updateHash(false);
             opus.lastNormalizeRequestNo++;
             o_search.slugReqno[slug] = opus.lastNormalizeRequestNo;
