@@ -155,10 +155,10 @@ var o_widgets = {
         delete opus.extras['qtype-'+slug_no_num];
         delete opus.extras['z-'+slug_no_num];
 
-        console.log('CLOSE Widget Drawn: ' + opus.widgets_drawn);
-        console.log('SELECTION AFTER CLOSE: ' + JSON.stringify(opus.selections));
-        console.log('CLOSEEEEEEEEEE WWWWW');
-        console.log('CLOSE => range input searching: ' + o_search.rangeInputSearchInProgress);
+        // console.log('CLOSE Widget Drawn: ' + opus.widgets_drawn);
+        // console.log('SELECTION AFTER CLOSE: ' + JSON.stringify(opus.selections));
+        // console.log('CLOSEEEEEEEEEE WWWWW');
+        // console.log('CLOSE => range input searching: ' + o_search.rangeInputSearchInProgress);
 
         if(o_search.rangeInputSearchInProgress) {
             let performSearch = true;

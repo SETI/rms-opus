@@ -238,11 +238,11 @@ def api_get_widget(request, **kwargs):
             while key<length:
                 try:
                   form_vals[slug1] = func(selections[param1][key])
-                except (IndexError, KeyError, ValueError) as e:
+                except (IndexError, KeyError, ValueError, TypeError) as e:
                     form_vals[slug1] = None
                 try:
                     form_vals[slug2] = func(selections[param2][key])
-                except (IndexError, KeyError, ValueError) as e:
+                except (IndexError, KeyError, ValueError, TypeError) as e:
                     form_vals[slug2] = None
 
                 qtypes = request.GET.get('qtype-' + slug, False)

@@ -284,7 +284,7 @@ def api_string_search_choices(request, slug):
 #
 ################################################################################
 
-def url_to_search_params(request_get, allow_errors=False, return_slugs=False,
+def url_to_search_params(request_get, allow_errors=True, return_slugs=False,
                          pretty_results=False):
     """Convert a URL to a set of selections and extras.
 
