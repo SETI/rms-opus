@@ -96,10 +96,11 @@ class searchTests(TestCase):
 
     def test__url_to_search_params_times_yd(self):
         "url_to_search_params: date parsing in YYYY-DDD format"
+        # Using old slug name
         q = QueryDict('timesec1=2000-023T06:00:00&timesec2=2000-024T06:00:00')
         (selections, extras) = url_to_search_params(q)
-        sel_expected = {'obs_general.time_sec1': [1922432.0],
-                        'obs_general.time_sec2': [2008832.0]}
+        sel_expected = {'obs_general.time1': [1922432.0],
+                        'obs_general.time2': [2008832.0]}
         order_expected = (['obs_general.time1', 'obs_general.opus_id'],
                           [False, False])
         qtypes_expected = {}
@@ -111,10 +112,11 @@ class searchTests(TestCase):
 
     def test__url_to_search_params_times_ymd(self):
         "url_to_search_params: date parsing in YYYY-MM-DD format"
+        # Using old slug name
         q = QueryDict('timesec1=2000-01-23T06:00:00&timesec2=2000-01-24T06:00:00')
         (selections, extras) = url_to_search_params(q)
-        sel_expected = {'obs_general.time_sec1': [1922432.0],
-                        'obs_general.time_sec2': [2008832.0]}
+        sel_expected = {'obs_general.time1': [1922432.0],
+                        'obs_general.time2': [2008832.0]}
         order_expected = (['obs_general.time1', 'obs_general.opus_id'],
                           [False, False])
         qtypes_expected = {}
@@ -126,10 +128,10 @@ class searchTests(TestCase):
 
     def test__url_to_search_params_times_expanded(self):
         "url_to_search_params: date parsing in YYYY MMM DD format"
-        q = QueryDict('timesec1=2000+JAN+23+6:00:00&timesec2=2000+January+24+6:00:00')
+        q = QueryDict('time1=2000+JAN+23+6:00:00&time2=2000+January+24+6:00:00')
         (selections, extras) = url_to_search_params(q)
-        sel_expected = {'obs_general.time_sec1': [1922432.0],
-                        'obs_general.time_sec2': [2008832.0]}
+        sel_expected = {'obs_general.time1': [1922432.0],
+                        'obs_general.time2': [2008832.0]}
         order_expected = (['obs_general.time1', 'obs_general.opus_id'],
                           [False, False])
         qtypes_expected = {}
@@ -141,10 +143,10 @@ class searchTests(TestCase):
 
     def test__url_to_search_params_times_expanded_2(self):
         "url_to_search_params: date parsing in YYYY/MM/DD format"
-        q = QueryDict('timesec1=2000/1/23+06:00:00.000&timesec2=2000/01/24+06:00')
+        q = QueryDict('time1=2000/1/23+06:00:00.000&time2=2000/01/24+06:00')
         (selections, extras) = url_to_search_params(q)
-        sel_expected = {'obs_general.time_sec1': [1922432.0],
-                        'obs_general.time_sec2': [2008832.0]}
+        sel_expected = {'obs_general.time1': [1922432.0],
+                        'obs_general.time2': [2008832.0]}
         order_expected = (['obs_general.time1', 'obs_general.opus_id'],
                           [False, False])
         qtypes_expected = {}
@@ -156,25 +158,25 @@ class searchTests(TestCase):
 
     def test__url_to_search_params_times_bad(self):
         "url_to_search_params: bad date format"
-        q = QueryDict('timesec1=2000 XXX 01')
+        q = QueryDict('time1=2000 XXX 01')
         (selections, extras) = url_to_search_params(q)
         self.assertIsNone(selections)
 
     def test__url_to_search_params_times_bad_2(self):
         "url_to_search_params: bad date format #2"
-        q = QueryDict('timesec1=2000/13/23+06:00:00')
+        q = QueryDict('time1=2000/13/23+06:00:00')
         (selections, extras) = url_to_search_params(q)
         self.assertIsNone(selections)
 
     def test__url_to_search_params_times_bad_3(self):
         "url_to_search_params: bad date format #3"
-        q = QueryDict('timesec1=2000')
+        q = QueryDict('time1=2000')
         (selections, extras) = url_to_search_params(q)
         self.assertIsNone(selections)
 
     def test__url_to_search_params_times_bad_4(self):
         "url_to_search_params: bad date format #4"
-        q = QueryDict('timesec1=06:00:00')
+        q = QueryDict('time1=06:00:00')
         (selections, extras) = url_to_search_params(q)
         self.assertIsNone(selections)
 
@@ -577,7 +579,7 @@ class searchTests(TestCase):
     #     self.assertTrue(no)
     #
     # def test__set_user_search_number_with_times(self):
-    #     selections = {'obs_general.planet_id': ['Saturn'], 'obs_general.time_sec2': ['2009-12-28'], 'obs_general.time_sec1': ['2009-12-23']}
+    #     selections = {'obs_general.planet_id': ['Saturn'], 'obs_general.time_sec2': ['2009-12-28'], 'obs_general.time1': ['2009-12-23']}
     #     search_no = set_user_search_number(selections)
     #     print(search_no)
     #     self.assertGreater(len(str(search_no)), 0)
@@ -1333,11 +1335,11 @@ class searchTests(TestCase):
     def test__construct_query_string_order_existing_table(self):
         "construct_query_string: construct_query_string with sort order already joined"
         selections = {'obs_general.observation_duration1': [20]}
-        extras = {'order': (['obs_general.time_sec1'], [False])}
+        extras = {'order': (['obs_general.time1'], [False])}
         sql, params = construct_query_string(selections, extras)
         print(sql)
         print(params)
-        expected = 'SELECT `obs_general`.`id` FROM `obs_general` WHERE (`obs_general`.`observation_duration` >= %s) ORDER BY obs_general.time_sec1 ASC'
+        expected = 'SELECT `obs_general`.`id` FROM `obs_general` WHERE (`obs_general`.`observation_duration` >= %s) ORDER BY obs_general.time1 ASC'
         expected_params = [20]
         print(expected)
         print(expected_params)
@@ -1363,13 +1365,13 @@ class searchTests(TestCase):
     def test__construct_query_string_order_existing_table_multi(self):
         "construct_query_string: construct_query_string with complex sort order already joined"
         selections = {'obs_general.observation_duration1': [20]}
-        extras = {'order': (['obs_general.time_sec1',
-                             'obs_general.time_sec2'],
+        extras = {'order': (['obs_general.time1',
+                             'obs_general.time2'],
                             [False, True])}
         sql, params = construct_query_string(selections, extras)
         print(sql)
         print(params)
-        expected = 'SELECT `obs_general`.`id` FROM `obs_general` WHERE (`obs_general`.`observation_duration` >= %s) ORDER BY obs_general.time_sec1 ASC,obs_general.time_sec2 DESC'
+        expected = 'SELECT `obs_general`.`id` FROM `obs_general` WHERE (`obs_general`.`observation_duration` >= %s) ORDER BY obs_general.time1 ASC,obs_general.time2 DESC'
         expected_params = [20]
         print(expected)
         print(expected_params)

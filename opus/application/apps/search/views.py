@@ -882,7 +882,8 @@ def construct_query_string(selections, extras):
         (order_sql, order_mult_tables,
          order_obs_tables) = create_order_by_sql(order_params,
                                                  descending_params)
-
+        if order_sql is None:
+            return None, None
         mult_tables |= order_mult_tables
         obs_tables |= order_obs_tables
 
@@ -1329,7 +1330,7 @@ def create_order_by_sql(order_params, descending_params):
             if not pi:
                 log.error('construct_query_string: Unable to resolve order'
                           +' slug "%s"', order_slug)
-                return None, None
+                return None, None, None
             (form_type, form_type_func,
              form_type_format) = parse_form_type(pi.form_type)
             order_param = pi.param_qualified_name()

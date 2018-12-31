@@ -98,7 +98,6 @@ def copy_partables_from_import_to_permanent():
     logger.log('info', 'Copying partables table from import to permanent')
     # Start from scratch
     partables_schema = import_util.read_schema_for_table('partables')
-    # Start from scratch
     db.drop_table('perm', 'partables')
     db.create_table('perm', 'partables', partables_schema, ignore_if_exists=False)
 

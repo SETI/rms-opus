@@ -84,7 +84,6 @@ def copy_param_info_from_import_to_permanent():
     logger.log('info', 'Copying param_info table from import to permanent')
     # Start from scratch
     pi_schema = import_util.read_schema_for_table('param_info')
-    # Start from scratch
     db.drop_table('perm', 'param_info')
     db.create_table('perm', 'param_info', pi_schema, ignore_if_exists=False)
 
