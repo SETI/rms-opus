@@ -136,14 +136,15 @@ var o_collections = {
         //window.scrollTo(0,opus.browse_view_scrolls[opus.prefs.browse]);
         page = (page == undefined ? 1 : (opus.collection_change ? 1 : page));
 
-        let base_url = "/opus/__api/images.json?";
-        let url = o_hash.getHash() + '&reqno=' + opus.lastRequestNo;
+        let view = o_browse.getViewInfo();
+        let base_url = "/opus/__api/dataimages.json?";
+        let url = o_hash.getHash() + '&reqno=' + opus.lastRequestNo + view.add_to_url;
 
         url = o_browse.updatePageInUrl(url, page);
 
         // metadata; used for both table and gallery
-        $.getJSON(base_url + url, function(allData) {
-            o_browse.renderGallery(allData.data, allData.page_no, this.url);
+        $.getJSON(base_url + url, function(data) {
+            o_browse.renderGalleryAndTable(data, this.url);
 
             if (opus.collection_change) {
                 // for infinite scroll
@@ -157,11 +158,10 @@ var o_collections = {
                 });
                 $('#collection .gallery-contents').on( 'load.infiniteScroll', function( event, response, path ) {
                     let jsonData = JSON.parse( response );
-                    o_browse.renderGallery(jsonData.data, jsonData.page_no, path);
+                    o_browse.renderGalleryAndTable(jsonData, path);
                 });
                 opus.collection_change = false;
             }
-
         });
     },
 

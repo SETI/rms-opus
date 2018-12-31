@@ -683,6 +683,8 @@ var o_browse = {
             let request_time = new Date().getTime() - start_time;
             console.log(request_time);
 
+            o_browse.renderGalleryAndTable(data, this.url);
+
             if (!opus.gallery_begun) {
                 o_browse.initTable(data.columns);
                 // for infinite scroll
@@ -708,8 +710,6 @@ var o_browse = {
                     console.log('Loaded page: ' + $('#browse .gallery-contents').data('infiniteScroll').pageIndex );
                 });
             }
-
-            o_browse.renderGalleryAndTable(data, this.url);
 
             if (!opus.gallery_begun) {
                 $('#browse .gallery-contents').infiniteScroll('loadNextPage');
