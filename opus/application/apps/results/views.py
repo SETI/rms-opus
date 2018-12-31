@@ -5,6 +5,7 @@
 # The API interface for retrieving results (actual data, actual metadata, or
 # lists of images or files):
 #
+#    Format: api/dataandimages.json
 #    Format: api/data.(json|zip|html|csv)
 #    Format: api/metadata/(?P<opus_id>[-\w]+).(?P<fmt>[json|html]+
 #    Format: api/metadata_v2/(?P<opus_id>[-\w]+).(?P<fmt>[json|html]+
@@ -55,6 +56,108 @@ log = logging.getLogger(__name__)
 # API INTERFACES
 #
 ################################################################################
+
+def api_get_data_and_images(request):
+    """Return a page of data and images for a given search.
+
+    This is a PRIVATE API.
+
+    Get data and images for observations based on search criteria, columns,
+    and sort order. Data is returned by "page" in the same sense that OPUS's
+    "Browse Results" display is paginated.
+
+    Format: __api/dataimages.json
+    Arguments: limit=<N>
+               page=<N>
+               order=<column>
+               Normal search and selected-column arguments
+
+    Returns JSON.
+
+    Returned JSON is of the format:
+
+        {'page': [
+            {'opus_id': OPUS_ID,
+             'metadata': ['<col1>', '<col2>', '<col3>'],
+             'images': {
+                'full':
+                'med':
+             },
+             'in_collection': True/False
+            },
+            ...
+         ],
+         'page_no': page_no,
+         'limit':   limit,
+         'order':   order,
+         'count':   len(page),
+         'columns': columns
+        }
+    """
+    api_code = enter_api_call('api_get_data_and_images', request)
+
+    if not request or request.GET is None:
+        ret = Http404('No request')
+        exit_api_call(api_code, ret)
+        raise ret
+
+    session_id = get_session_id(request)
+
+    (page_no, limit, page, opus_ids, ring_obs_ids, file_specs,
+     order) = get_page(request,
+                       prepend_cols='opusid',
+                       append_cols='**previewimages',
+                       api_code=api_code)
+    if page is None:
+        ret = Http404('Could not find page')
+        exit_api_call(api_code, ret)
+        raise ret
+
+    preview_jsons = [json.loads(x[-1]) for x in page]
+
+    image_list = get_pds_preview_images(opus_ids, preview_jsons,
+                                        ['thumb', 'small', 'med', 'full'])
+
+    if not image_list:
+        log.error('api_get_data_and_images: No image found for: %s',
+                  str(opus_ids[:50]))
+
+    collection_opus_ids = get_all_in_collection(request)
+    new_image_list = []
+    for image in image_list:
+        new_image = {}
+        for key, val in image.items():
+            for size in ['thumb', 'small', 'med', 'full']:
+                new_image[size] = {}
+                for sfx in ['url', 'alt_text', 'size_bytes', 'width', 'height']:
+                    new_image[size][sfx] = image.get(size+'_'+sfx, None)
+        new_image_list.append(new_image)
+
+    new_page = []
+    for i in range(len(opus_ids)):
+        new_entry = {
+            'opusid': opus_ids[i],
+            'metadata': page[i][1:-1],
+            'images': new_image_list[i],
+            'in_collection': opus_ids[i] in collection_opus_ids
+        }
+        new_page.append(new_entry)
+
+    cols = request.GET.get('cols', settings.DEFAULT_COLUMNS)
+
+    labels = labels_for_slugs(cols.split(','))
+
+    data = {'page': new_page,
+            'page_no': page_no,
+            'limit': limit,
+            'count': len(image_list),
+            'order': order,
+            'columns': labels}
+
+    ret = json_response(data)
+    exit_api_call(api_code, ret)
+    return ret
+
 
 def api_get_data(request, fmt):
     """Return a page of data for a given search.
@@ -660,28 +763,16 @@ def get_data(request, fmt, cols=None, api_code=None):
     labels = []
     id_index = None
 
-    for slug_no, slug in enumerate(cols.split(',')):
-        if slug == 'opusid':
-            id_index = slug_no
-        pi = get_param_info_by_slug(slug, from_ui=True)
-        if not pi:
-            log.error('get_data: Could not find param_info for %s', slug)
-            return None
+    slugs = cols.split(',')
+    labels = labels_for_slugs(slugs)
 
-        # append units if pi_units has unit stored
-        unit = pi.get_units()
-        label = pi.body_qualified_label_results()
-        if unit:
-            labels.append(label + ' ' + unit)
-        else:
-            labels.append(label)
-
-    # For backwards compatibility. It would be a lot nicer if we didn't need
-    # to know this index at all. See data.html for why we do.
-    if id_index is None:
-        for slug_no, slug in enumerate(cols.split(',')):
-            if slug == 'ringobsid':
-                id_index = slug_no
+    try:
+        id_index = slugs.index('opusid')
+    except ValueError:
+        try:
+            id_index = slugs.index('ringobsid')
+        except ValueError:
+            id_index = None
 
     if is_column_chooser:
         labels.insert(0, 'add') # adds a column for checkbox add-to-collections
@@ -711,7 +802,8 @@ def get_data(request, fmt, cols=None, api_code=None):
 
 
 def get_page(request, use_collections=None, collections_page=None, page=None,
-             cols=None, api_code=None):
+             cols=None, prepend_cols=None, append_cols=None,
+             api_code=None):
     """Return a page of results."""
     none_return = (None, None, None, None, None, None, None)
 
@@ -726,6 +818,11 @@ def get_page(request, use_collections=None, collections_page=None, page=None,
     limit = int(request.GET.get('limit', settings.DEFAULT_PAGE_LIMIT))
     if cols is None:
         cols = request.GET.get('cols', settings.DEFAULT_COLUMNS)
+
+    if prepend_cols:
+        cols = prepend_cols + ',' + cols
+    if append_cols:
+        cols = cols + ',' + append_cols
 
     form_type_formats = []
     column_names = []
@@ -1191,3 +1288,24 @@ def get_collection_in_page(opus_id_list, session_id):
     coll_ids = [r[0] for r in rows]
     ret = [opus_id for opus_id in opus_id_list if opus_id in coll_ids]
     return ret
+
+
+def labels_for_slugs(slugs):
+    labels = []
+
+    for slug in slugs:
+        pi = get_param_info_by_slug(slug, from_ui=True)
+        if not pi:
+            log.error('api_get_data_and_images: Could not find param_info '
+                      +'for %s', slug)
+            return None
+
+        # append units if pi_units has unit stored
+        unit = pi.get_units()
+        label = pi.body_qualified_label_results()
+        if unit:
+            labels.append(label + ' ' + unit)
+        else:
+            labels.append(label)
+
+    return labels

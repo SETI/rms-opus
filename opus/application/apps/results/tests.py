@@ -84,6 +84,25 @@ class resultsTests(TestCase):
         logging.disable(logging.NOTSET)
 
 
+            ######################################################
+            ######### api_get_data_and_images UNIT TESTS #########
+            ######################################################
+
+    def test__api_get_data_and_images_no_request(self):
+        "api_get_data_and_images: no request"
+        with self.assertRaises(Http404):
+            api_get_data_and_images(None)
+
+    def test__api_get_data_and_images_no_get(self):
+        "api_get_data_and_images: no GET"
+        c = Client()
+        response = c.get('/__api/dataimages.json')
+        request = response.wsgi_request
+        request.GET = None
+        with self.assertRaises(Http404):
+            api_get_data_and_images(request)
+
+
             ###################################################
             ######### get_triggered_tables UNIT TESTS #########
             ###################################################
