@@ -151,6 +151,7 @@ def api_get_data_and_images(request):
             'page_no': page_no,
             'limit': limit,
             'count': len(image_list),
+            'order': order,
             'columns': labels}
 
     ret = json_response(data)
