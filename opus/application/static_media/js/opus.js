@@ -333,6 +333,8 @@ var opus = {
                 $(`input[name="${eachSlug}"]`).addClass('red_background');
                 $(`input[name="${eachSlug}"]`).val(opus.selections[eachSlug]);
                 opus.performSearch = false;
+                // fade out the spinner if some range inputs are not valid
+                $('.spinner').fadeOut('');
                 // delete selections[eachSlug];
             } else {
                 $(`input[name="${eachSlug}"]`).val(value);
@@ -346,7 +348,7 @@ var opus = {
         let nextHash = o_hash.getHash();
         console.log('nextHash: ' + nextHash);
         if(!opus.performSearch) {
-          // remove spinning effect on result count
+          // remove spinning effect on browse count
           $('#result_count').text('0');
           return;
         }
