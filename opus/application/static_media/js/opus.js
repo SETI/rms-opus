@@ -251,8 +251,8 @@ var opus = {
         */
 
         selections = o_hash.getSelectionsFromHash();
-        console.log('LOAD init selections: ' + JSON.stringify(selections));
-        console.log('LOAD last selections: ' + JSON.stringify(opus.last_selections));
+        // console.log('LOAD init selections: ' + JSON.stringify(selections));
+        // console.log('LOAD last selections: ' + JSON.stringify(opus.last_selections));
 
         if (!selections) {
             // there are no selections found in the url hash
@@ -339,35 +339,35 @@ var opus = {
             } else {
                 $(`input[name="${eachSlug}"]`).val(value);
                 if($(`input[name="${eachSlug}"]`).hasClass('red_background')) {
-                  $(`input[name="${eachSlug}"]`).removeClass('red_background');
+                    $(`input[name="${eachSlug}"]`).removeClass('red_background');
                 }
             }
         });
         opus.last_selections = selections;
         opus.lastRequestNo++;
-        let nextHash = o_hash.getHash();
-        console.log('nextHash: ' + nextHash);
+        let resultCountHash = o_hash.getHash();
+        console.log('resultCountHash: ' + resultCountHash);
         if(!opus.performSearch) {
           // remove spinning effect on browse count
           $('#result_count').text('0');
           return;
         }
         return $.ajax({
-            url: '/opus/__api/meta/result_count.json?' + nextHash + '&reqno=' + opus.lastRequestNo,
+            url: '/opus/__api/meta/result_count.json?' + resultCountHash + '&reqno=' + opus.lastRequestNo,
             type: 'GET',
             dataType: 'json'
         });
     },
-    updatePageAfterResultCountAPI: function(json) {
-        console.log('Result count api call return data: ' + JSON.stringify(json))
+    updatePageAfterResultCountAPI: function(resultCountData) {
+        console.log('Result count api call return data: ' + JSON.stringify(resultCountData))
         if(!opus.performSearch) {
             return;
         }
-        if (json['reqno'] < opus.lastRequestNo) {
+        if (resultCountData['reqno'] < opus.lastRequestNo) {
             return;
         }
         $('#browse_tab').fadeIn();
-        opus.updateResultCount(json['data'][0]['result_count']);
+        opus.updateResultCount(resultCountData['data'][0]['result_count']);
 
         opus.mainTabDisplay('results');  // make sure the main site tab label is displayed
 

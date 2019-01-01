@@ -183,7 +183,8 @@ def api_get_widget(request, **kwargs):
     selections = {}
 
     if request and request.GET:
-        (selections, extras) = url_to_search_params(request.GET)
+        (selections, extras) = url_to_search_params(request.GET,
+                                                    allow_errors=True)
 
     addlink = request.GET.get('addlink', True) # suppresses the add_str link
     remove_str = '<a class="remove_input" href="">-</a>'
@@ -518,7 +519,8 @@ def _get_menu_labels(request, labels_view):
         filter = "display_results"
 
     if request and request.GET:
-        (selections, extras) = url_to_search_params(request.GET)
+        (selections, extras) = url_to_search_params(request.GET,
+                                                    allow_errors=True)
     else:
         selections = None
 

@@ -48,7 +48,6 @@ var o_widgets = {
         // close a widget
         $('#search').on('click', '.close_widget', function(myevent) {
             console.log("START CLOSING...")
-            opus.rangeInputWidgetsClosing = true;
             var slug = $(this).data('slug');
             o_widgets.closeWidget(slug);
             try {
@@ -57,7 +56,6 @@ var o_widgets = {
             } catch (e) {
               console.log("error on close widget, id="+id);
             }
-            opus.rangeInputWidgetsClosing = false;
         });
 
         // close opened surfacegeo widget if user select another surfacegeo target
@@ -155,35 +153,59 @@ var o_widgets = {
         delete opus.extras['qtype-'+slug_no_num];
         delete opus.extras['z-'+slug_no_num];
 
-        // console.log('CLOSE Widget Drawn: ' + opus.widgets_drawn);
-        // console.log('SELECTION AFTER CLOSE: ' + JSON.stringify(opus.selections));
-        // console.log('CLOSEEEEEEEEEE WWWWW');
+        console.log('CLOSE Widget Drawn: ' + opus.widgets_drawn);
+        console.log('SELECTION AFTER CLOSE: ' + JSON.stringify(opus.selections));
+        console.log('CLOSEEEEEEEEEE WWWWW');
         // console.log('CLOSE => range input searching: ' + o_search.rangeInputSearchInProgress);
 
-        if(o_search.rangeInputSearchInProgress) {
-            let performSearch = true;
-            $.each(opus.selections, function(eachSlug, value) {
-                if(o_search.currentNormalizedData[eachSlug] === null) {
-                    console.log('CLOSE => Some range input is wrong');
-                    $(`input[name="${eachSlug}"]`).addClass('red_background');
+        // old implementation
+        // if(o_search.rangeInputSearchInProgress) {
+        //     let performSearch = true;
+        //     $.each(opus.selections, function(eachSlug, value) {
+        //         if(o_search.currentNormalizedData[eachSlug] === null) {
+        //             console.log('CLOSE => Some range input is wrong');
+        //             $(`input[name="${eachSlug}"]`).addClass('red_background');
+        //             $('#sidebar').addClass('search_overlay');
+        //             performSearch = false;
+        //         } else {
+        //             if($(`input[name="${eachSlug}"]`).hasClass('red_background')) {
+        //               $(`input[name="${eachSlug}"]`).addClass('white_background');
+        //             }
+        //         }
+        //     });
+        //     if(performSearch) {
+        //         $('#sidebar').removeClass('search_overlay');
+        //     }
+        //     o_hash.updateHash(performSearch);
+        //     o_widgets.updateWidgetCookies();
+        //     return;
+        // }
+        //
+        // o_hash.updateHash();
+        // o_widgets.updateWidgetCookies();
+        o_search.normalizedApiCall().then(function(normalizedData) {
+            opus.performSearch = true;
+            console.log('Normalized data before closing widget: ' + JSON.stringify(normalizedData));
+            $.each(normalizedData, function(eachSlug, value) {
+                if(normalizedData[eachSlug] === null) {
                     $('#sidebar').addClass('search_overlay');
-                    performSearch = false;
+                    $(`input[name="${eachSlug}"]`).addClass('red_background');
+                    $(`input[name="${eachSlug}"]`).val(opus.selections[eachSlug]);
+                    opus.performSearch = false;
                 } else {
+                    $(`input[name="${eachSlug}"]`).val(value);
                     if($(`input[name="${eachSlug}"]`).hasClass('red_background')) {
-                      $(`input[name="${eachSlug}"]`).addClass('white_background');
+                        $(`input[name="${eachSlug}"]`).removeClass('red_background');
                     }
                 }
             });
-            if(performSearch) {
+
+            if(opus.performSearch) {
                 $('#sidebar').removeClass('search_overlay');
             }
-            o_hash.updateHash(performSearch);
+            o_hash.updateHash(opus.performSearch);
             o_widgets.updateWidgetCookies();
-            return;
-        }
-
-        o_hash.updateHash();
-        o_widgets.updateWidgetCookies();
+        });
     },
 
     widgetDrop: function(ui) {
