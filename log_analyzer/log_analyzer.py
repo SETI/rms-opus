@@ -1,6 +1,5 @@
 import argparse
 import ipaddress
-import sys
 from typing import List, Optional
 
 from LogEntry import LogReader
@@ -11,7 +10,7 @@ from SlugInfo import SlugInfo
 DEFAULT_FIELDS_PREFIX = 'https://tools.pds-rings.seti.org'
 
 
-def main(arguments: Optional[List[str]]) -> None:
+def main(arguments: Optional[List[str]] = None) -> None:
     def parse_ignored_ips(x):
         return [ipaddress.ip_network(address, strict=False) for address in x.split(',')]
 
@@ -24,7 +23,7 @@ def main(arguments: Optional[List[str]]) -> None:
                        help='Print a report on one or more completed log files')
     group.add_argument('--summary', '-s', action='store_true',
                        help='Print a batch report sorted by ip')
-    group.add_argument('--fake', action='store_true', help=argparse.SUPPRESS)  # For testing only
+    group.add_argument('--xxfake', action='store_true', help=argparse.SUPPRESS, dest='fake')  # For testing only
 
     parser.add_argument('--api-host-url', default=DEFAULT_FIELDS_PREFIX, metavar='URL', dest='api_host_url',
                         help='base url to access the information')
@@ -36,7 +35,7 @@ def main(arguments: Optional[List[str]]) -> None:
     parser.add_argument('--session-timeout', default=60, type=int, metavar="minutes", dest='session_timeout')
 
     # TODO(fy): Temporary hack for when I don't have internet access
-    parser.add_argument('--use-saved-slugs', action="store_const", const="file:///users/fy/SETI/pds-opus",
+    parser.add_argument('--xxlocal_slugs', action="store_const", const="file:///users/fy/SETI/pds-opus",
                         dest='api_host_url', help=argparse.SUPPRESS)
 
     parser.add_argument('log_files', nargs=argparse.REMAINDER, help='log files')
@@ -66,14 +65,4 @@ def main(arguments: Optional[List[str]]) -> None:
 
 
 if __name__ == '__main__':
-    if 'pydevd' in sys.modules:
-        main([
-            "--batch",
-            # "--realtime",
-            "--use-saved-slugs",
-            "--reverse-dns",
-            "--ignore-ip", "71.0.0.0/8,73.1.2.3",
-            "/users/fy/SETI/logs/tools.pds_access_log-2018-11-01",
-        ])
-    else:
-        main(None)
+    main()
