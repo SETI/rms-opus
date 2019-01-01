@@ -48,7 +48,7 @@ class LogParser:
 
         entries_by_host = self.__group_log_entries_by_host_ip(log_entries)
 
-        # Create a heap whose major key is the start time of the smallest log entry for the hsot
+        # Create a heap whose major key is the start time of the smallest log entry for the host
         heap = [(logs[0].time, logs[0].host_ip, logs) for logs in entries_by_host.values()]
         heapify(heap)
 
@@ -121,7 +121,7 @@ class LogParser:
                 print(f'Host {hostname_from_ip}: {entry.time_string}')
                 self.__print_entry_info(entry, entry_info, session_start_time)
 
-                # Keep on printing session informatin for as long as we have not reached a timeout.
+                # Keep on printing session information for as long as we have not reached a timeout.
                 session_end_time = session_start_time + self._session_timeout
                 while session_log_entries and session_log_entries[0].time <= session_end_time:
                     entry = session_log_entries.popleft()

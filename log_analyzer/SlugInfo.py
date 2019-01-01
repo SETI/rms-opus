@@ -20,13 +20,15 @@ class SlugInfo(object):
                        'timesampling', 'wavelengthsampling', 'colls',
                        }
 
+    QT_SUFFIX = "(QT)"
+
     DEFAULT_FIELDS_SUFFIX = '/opus/api/fields.json'
 
     def __init__(self, url_prefix: str):
         """Initializes the slug info by reading the JSON describing it either from a URL or from a file to which
         it has been copied.
 
-        :param url: The url from which to read the JSON description.
+        :param url_prefix: The prefix of the url from which to read the JSON description.
         """
 
         # Read the json
@@ -98,7 +100,8 @@ class SlugInfo(object):
             self._additional_slugs_for_searches[slug[:-1] + '2'] = base_info + ' (Max)', extra_info
         elif slug.startswith('qtype-') and slug[6:] in self._slug_map:
             # qtype-foo where foo is a known slug
-            self._additional_slugs_for_searches[slug] = self._slug_map[slug[6:]]
+            base_info, extra_info = self._slug_map[slug[6:]]
+            self._additional_slugs_for_searches[slug] = base_info + self.QT_SUFFIX, extra_info
         elif slug.startswith('qtype-') and slug[6:] + '1' in self._slug_map:
             # qtype-foo where foo1 is a known slug
             base_info, extra_info = self._slug_map[slug[6:] + '1']
@@ -107,7 +110,7 @@ class SlugInfo(object):
                 base_info = base_info[:-6]
             else:
                 base_info = re.sub(r'(.*) Start (.*)', r'\1 \2', base_info)
-            self._additional_slugs_for_searches[slug] = base_info, extra_info
+            self._additional_slugs_for_searches[slug] = base_info + self.QT_SUFFIX, extra_info
         else:
             # No idea.  Let's just flag it.
             self._additional_slugs_for_searches[slug] = slug, 'unknown slug'
@@ -117,7 +120,7 @@ class SlugInfo(object):
     def __read_json(url: str) -> Dict[str, Any]:
         if url.startswith('file://'):
             with open(url[7:], "r") as file:
-                text = file.read();
+                text = file.read()
         else:
             response = requests.get(url)
             text = response.text
