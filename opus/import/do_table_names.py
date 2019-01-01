@@ -149,7 +149,6 @@ def copy_table_names_from_import_to_permanent():
     logger.log('info', 'Copying table_names table from import to permanent')
     # Start from scratch
     table_names_schema = import_util.read_schema_for_table('table_names')
-    # Start from scratch
     db.drop_table('perm', 'table_names')
     db.create_table('perm', 'table_names', table_names_schema,
                     ignore_if_exists=False)

@@ -7,3 +7,4 @@ python main_opus_import.py --import-check-duplicate-id --do-it-all COUVIS $1
 python main_opus_import.py --do-it-all VOYAGER $1
 python main_opus_import.py --do-it-all COCIRS $1
 python main_opus_import.py --do-it-all COISS $1
+python main_opus_import.py --import-dictionary

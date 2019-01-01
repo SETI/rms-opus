@@ -60,7 +60,6 @@ def copy_grouping_target_name_from_import_to_permanent():
                'Copying grouping_target_name table from import to permanent')
     # Start from scratch
     grouping_target_name_schema = import_util.read_schema_for_table('grouping_target_name')
-    # Start from scratch
     db.drop_table('perm', 'grouping_target_name')
     db.create_table('perm', 'grouping_target_name', grouping_target_name_schema,
                     ignore_if_exists=False)

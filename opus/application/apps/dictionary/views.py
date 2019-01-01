@@ -10,14 +10,11 @@ log = logging.getLogger(__name__)
 def get_def_for_tooltip(term, context):
     "Get a dictionary definition for (i) tooltips in the OPUS UI"
     try:
-        definition = (Definition.objects
-                      .select_related()
-                      .filter(context=context,
-                              term=term).values('definition',
-                                                'term',
-                                                'context__description').first())
-        return definition
-    except Definition.DoesNotExist:
+        entry = Definitions.objects.get(context__name=context, term=term)
+        return entry.definition
+    except Definitions.DoesNotExist:
+        log.error('No tooltip definition for context "%s" term "%s"',
+                  context, term)
         return None
 
 def get_more_info_url(term, context):
@@ -32,9 +29,9 @@ def api_get_definition_list(request):
     alpha = request.GET.get('alpha', None)
     if alpha is None:
         return JsonResponse({'error': 'No alpha given'})
-    definitions = (Definition.objects.select_related()
+    definitions = (Definitions.objects.select_related()
                    .filter(term__istartswith=alpha)
-                   .values('definition', 'term', 'import_date',
+                   .values('definition', 'term', 'timestamp',
                            'context__description').order_by('term'))
     return JsonResponse(list(definitions), safe=False)
 
@@ -49,14 +46,14 @@ def api_display_definition(request):
     if term is None:
         raise Http404
     try:
-        definition = (Definition.objects
+        definition = (Definitions.objects
                       .select_related()
                       .filter(context=context,
                               term=term).values('definition',
                                                 'term',
                                                 'context__description').first())
         return definition
-    except Definition.DoesNotExist:
+    except Definitions.DoesNotExist:
         return False
 
     return render(request, 'dictionary/dictionary.html', {'alphabetlist':alphabetlist})
@@ -71,12 +68,12 @@ def api_search_definitions(request):
     if term is None:
         return JsonResponse({'error': 'No term given'})
     try:
-        definitions = (Definition.objects.select_related()
+        definitions = (Definitions.objects.select_related()
                        .filter(definition__icontains=term)
-                       .values('definition', 'term', 'import_date',
+                       .values('definition', 'term', 'timestamp',
                                'context__description').order_by('term'))
         return JsonResponse(list(definitions), safe=False)
-    except Definition.DoesNotExist:
+    except Definitions.DoesNotExist:
         log.info('Dictionary search for "%s" returned nothing',
                  slug)
         return JsonResponse({'error': 'Search string "'+slug+'" not found'})

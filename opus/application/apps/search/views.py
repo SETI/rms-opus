@@ -12,6 +12,7 @@
 import hashlib
 import json
 import logging
+import math
 import sys
 
 import settings
@@ -456,6 +457,9 @@ def url_to_search_params(request_get, allow_errors=True, return_slugs=False,
                 return None, None
             try:
                 new_val = list(map(func, values_to_use))
+                if func == float or func == int:
+                    if not all(map(math.isfinite, new_val)):
+                        raise ValueError
                 if pretty_results:
                     new_val = format_metadata_number_or_func(
                                         new_val[0], form_type_func, form_type_format)
@@ -882,7 +886,8 @@ def construct_query_string(selections, extras):
         (order_sql, order_mult_tables,
          order_obs_tables) = create_order_by_sql(order_params,
                                                  descending_params)
-
+        if order_sql is None:
+            return None, None
         mult_tables |= order_mult_tables
         obs_tables |= order_obs_tables
 
@@ -1329,7 +1334,7 @@ def create_order_by_sql(order_params, descending_params):
             if not pi:
                 log.error('construct_query_string: Unable to resolve order'
                           +' slug "%s"', order_slug)
-                return None, None
+                return None, None, None
             (form_type, form_type_func,
              form_type_format) = parse_form_type(pi.form_type)
             order_param = pi.param_qualified_name()

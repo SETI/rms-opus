@@ -5,8 +5,6 @@
 #   * Make sure each ForeignKey has `on_delete` set to the desired behavior.
 #   * Remove `managed = False` lines if you wish to allow Django to create, modify, and delete the table
 # Feel free to rename the models, but don't rename db_table values or field names.
-from __future__ import unicode_literals
-
 from django.db import models
 
 
@@ -19,16 +17,6 @@ class ZZCollections(models.Model):
     class Meta:
         managed = False
         db_table = 'collections'
-
-
-class ZZDjangoMigrations(models.Model):
-    app = models.CharField(max_length=255)
-    name = models.CharField(max_length=255)
-    applied = models.DateTimeField()
-
-    class Meta:
-        managed = False
-        db_table = 'django_migrations'
 
 
 class ZZGroupingTargetName(models.Model):
@@ -44,7 +32,7 @@ class ZZGroupingTargetName(models.Model):
 
 
 class MultObsGeneralInstHostId(models.Model):
-    id = models.IntegerField(primary_key=True)
+    id = models.PositiveIntegerField(primary_key=True)
     value = models.CharField(max_length=100, blank=True, null=True)
     label = models.CharField(max_length=60)
     disp_order = models.IntegerField()
@@ -57,7 +45,7 @@ class MultObsGeneralInstHostId(models.Model):
 
 
 class MultObsGeneralInstrumentId(models.Model):
-    id = models.IntegerField(primary_key=True)
+    id = models.PositiveIntegerField(primary_key=True)
     value = models.CharField(max_length=100, blank=True, null=True)
     label = models.CharField(max_length=60)
     disp_order = models.IntegerField()
@@ -70,7 +58,7 @@ class MultObsGeneralInstrumentId(models.Model):
 
 
 class MultObsGeneralMissionId(models.Model):
-    id = models.IntegerField(primary_key=True)
+    id = models.PositiveIntegerField(primary_key=True)
     value = models.CharField(max_length=100, blank=True, null=True)
     label = models.CharField(max_length=60)
     disp_order = models.IntegerField()
@@ -96,7 +84,7 @@ class MultObsGeneralObservationType(models.Model):
 
 
 class MultObsGeneralPlanetId(models.Model):
-    id = models.IntegerField(primary_key=True)
+    id = models.PositiveIntegerField(primary_key=True)
     value = models.CharField(max_length=100, blank=True, null=True)
     label = models.CharField(max_length=60)
     disp_order = models.IntegerField()
@@ -109,7 +97,7 @@ class MultObsGeneralPlanetId(models.Model):
 
 
 class MultObsGeneralQuantity(models.Model):
-    id = models.IntegerField(primary_key=True)
+    id = models.PositiveIntegerField(primary_key=True)
     value = models.CharField(max_length=100, blank=True, null=True)
     label = models.CharField(max_length=60)
     disp_order = models.IntegerField()
@@ -122,7 +110,7 @@ class MultObsGeneralQuantity(models.Model):
 
 
 class MultObsGeneralTargetClass(models.Model):
-    id = models.IntegerField(primary_key=True)
+    id = models.PositiveIntegerField(primary_key=True)
     value = models.CharField(max_length=100, blank=True, null=True)
     label = models.CharField(max_length=60)
     disp_order = models.IntegerField()
@@ -135,7 +123,7 @@ class MultObsGeneralTargetClass(models.Model):
 
 
 class MultObsGeneralTargetName(models.Model):
-    id = models.IntegerField(primary_key=True)
+    id = models.PositiveIntegerField(primary_key=True)
     value = models.CharField(max_length=100, blank=True, null=True)
     label = models.CharField(max_length=30)
     disp_order = models.IntegerField()
@@ -148,515 +136,8 @@ class MultObsGeneralTargetName(models.Model):
         db_table = 'mult_obs_general_target_name'
 
 
-class MultObsInstrumentCoissCamera(models.Model):
-    id = models.IntegerField(primary_key=True)
-    value = models.CharField(max_length=100, blank=True, null=True)
-    label = models.CharField(max_length=60)
-    disp_order = models.IntegerField()
-    display = models.CharField(max_length=1)
-    timestamp = models.DateTimeField()
-
-    class Meta:
-        managed = False
-        db_table = 'mult_obs_instrument_coiss_camera'
-
-
-class MultObsInstrumentCoissCombinedFilter(models.Model):
-    id = models.IntegerField(primary_key=True)
-    value = models.CharField(max_length=100, blank=True, null=True)
-    label = models.CharField(max_length=60)
-    disp_order = models.IntegerField()
-    display = models.CharField(max_length=1)
-    timestamp = models.DateTimeField()
-
-    class Meta:
-        managed = False
-        db_table = 'mult_obs_instrument_coiss_combined_filter'
-
-
-class MultObsInstrumentCoissCompressionType(models.Model):
-    id = models.IntegerField(primary_key=True)
-    value = models.CharField(max_length=100, blank=True, null=True)
-    label = models.CharField(max_length=60)
-    disp_order = models.IntegerField()
-    display = models.CharField(max_length=1)
-    timestamp = models.DateTimeField()
-
-    class Meta:
-        managed = False
-        db_table = 'mult_obs_instrument_coiss_compression_type'
-
-
-class MultObsInstrumentCoissDataConversionType(models.Model):
-    id = models.IntegerField(primary_key=True)
-    value = models.CharField(max_length=100, blank=True, null=True)
-    label = models.CharField(max_length=60)
-    disp_order = models.IntegerField()
-    display = models.CharField(max_length=1)
-    timestamp = models.DateTimeField()
-
-    class Meta:
-        managed = False
-        db_table = 'mult_obs_instrument_coiss_data_conversion_type'
-
-
-class MultObsInstrumentCoissGainModeId(models.Model):
-    id = models.IntegerField(primary_key=True)
-    value = models.CharField(max_length=100, blank=True, null=True)
-    label = models.CharField(max_length=60)
-    disp_order = models.IntegerField()
-    display = models.CharField(max_length=1)
-    timestamp = models.DateTimeField()
-
-    class Meta:
-        managed = False
-        db_table = 'mult_obs_instrument_coiss_gain_mode_id'
-
-
-class MultObsInstrumentCoissImageObservationType(models.Model):
-    id = models.IntegerField(primary_key=True)
-    value = models.CharField(max_length=100, blank=True, null=True)
-    label = models.CharField(max_length=60)
-    disp_order = models.IntegerField()
-    display = models.CharField(max_length=1)
-    timestamp = models.DateTimeField()
-
-    class Meta:
-        managed = False
-        db_table = 'mult_obs_instrument_coiss_image_observation_type'
-
-
-class MultObsInstrumentCoissInstrumentModeId(models.Model):
-    id = models.IntegerField(primary_key=True)
-    value = models.CharField(max_length=100, blank=True, null=True)
-    label = models.CharField(max_length=60)
-    disp_order = models.IntegerField()
-    display = models.CharField(max_length=1)
-    timestamp = models.DateTimeField()
-
-    class Meta:
-        managed = False
-        db_table = 'mult_obs_instrument_coiss_instrument_mode_id'
-
-
-class MultObsInstrumentCoissShutterModeId(models.Model):
-    id = models.IntegerField(primary_key=True)
-    value = models.CharField(max_length=100, blank=True, null=True)
-    label = models.CharField(max_length=60)
-    disp_order = models.IntegerField()
-    display = models.CharField(max_length=1)
-    timestamp = models.DateTimeField()
-
-    class Meta:
-        managed = False
-        db_table = 'mult_obs_instrument_coiss_shutter_mode_id'
-
-
-class MultObsInstrumentCoissShutterStateId(models.Model):
-    id = models.IntegerField(primary_key=True)
-    value = models.CharField(max_length=100, blank=True, null=True)
-    label = models.CharField(max_length=60)
-    disp_order = models.IntegerField()
-    display = models.CharField(max_length=1)
-    timestamp = models.DateTimeField()
-
-    class Meta:
-        managed = False
-        db_table = 'mult_obs_instrument_coiss_shutter_state_id'
-
-
-class MultObsInstrumentCouvisChannel(models.Model):
-    id = models.IntegerField(primary_key=True)
-    value = models.CharField(max_length=100, blank=True, null=True)
-    label = models.CharField(max_length=60)
-    disp_order = models.IntegerField()
-    display = models.CharField(max_length=1)
-    timestamp = models.DateTimeField()
-
-    class Meta:
-        managed = False
-        db_table = 'mult_obs_instrument_couvis_channel'
-
-
-class MultObsInstrumentCouvisCompressionType(models.Model):
-    id = models.IntegerField(primary_key=True)
-    value = models.CharField(max_length=100, blank=True, null=True)
-    label = models.CharField(max_length=60)
-    disp_order = models.IntegerField()
-    display = models.CharField(max_length=1)
-    timestamp = models.DateTimeField()
-
-    class Meta:
-        managed = False
-        db_table = 'mult_obs_instrument_couvis_compression_type'
-
-
-class MultObsInstrumentCouvisDwellTime(models.Model):
-    id = models.IntegerField(primary_key=True)
-    value = models.CharField(max_length=100, blank=True, null=True)
-    label = models.CharField(max_length=60)
-    disp_order = models.IntegerField()
-    display = models.CharField(max_length=1)
-    timestamp = models.DateTimeField()
-
-    class Meta:
-        managed = False
-        db_table = 'mult_obs_instrument_couvis_dwell_time'
-
-
-class MultObsInstrumentCouvisObservationType(models.Model):
-    id = models.IntegerField(primary_key=True)
-    value = models.CharField(max_length=100, blank=True, null=True)
-    label = models.CharField(max_length=60)
-    disp_order = models.IntegerField()
-    display = models.CharField(max_length=1)
-    timestamp = models.DateTimeField()
-
-    class Meta:
-        managed = False
-        db_table = 'mult_obs_instrument_couvis_observation_type'
-
-
-class MultObsInstrumentCouvisOccultationPortState(models.Model):
-    id = models.IntegerField(primary_key=True)
-    value = models.CharField(max_length=100, blank=True, null=True)
-    label = models.CharField(max_length=60)
-    disp_order = models.IntegerField()
-    display = models.CharField(max_length=1)
-    timestamp = models.DateTimeField()
-
-    class Meta:
-        managed = False
-        db_table = 'mult_obs_instrument_couvis_occultation_port_state'
-
-
-class MultObsInstrumentCouvisSlitState(models.Model):
-    id = models.IntegerField(primary_key=True)
-    value = models.CharField(max_length=100, blank=True, null=True)
-    label = models.CharField(max_length=60)
-    disp_order = models.IntegerField()
-    display = models.CharField(max_length=1)
-    timestamp = models.DateTimeField()
-
-    class Meta:
-        managed = False
-        db_table = 'mult_obs_instrument_couvis_slit_state'
-
-
-class MultObsInstrumentCouvisTestPulseState(models.Model):
-    id = models.IntegerField(primary_key=True)
-    value = models.CharField(max_length=100, blank=True, null=True)
-    label = models.CharField(max_length=60)
-    disp_order = models.IntegerField()
-    display = models.CharField(max_length=1)
-    timestamp = models.DateTimeField()
-
-    class Meta:
-        managed = False
-        db_table = 'mult_obs_instrument_couvis_test_pulse_state'
-
-
-class MultObsInstrumentCovimsChannel(models.Model):
-    id = models.IntegerField(primary_key=True)
-    value = models.CharField(max_length=100, blank=True, null=True)
-    label = models.CharField(max_length=60)
-    disp_order = models.IntegerField()
-    display = models.CharField(max_length=1)
-    timestamp = models.DateTimeField()
-
-    class Meta:
-        managed = False
-        db_table = 'mult_obs_instrument_covims_channel'
-
-
-class MultObsInstrumentCovimsInstrumentModeId(models.Model):
-    id = models.IntegerField(primary_key=True)
-    value = models.CharField(max_length=100, blank=True, null=True)
-    label = models.CharField(max_length=60)
-    disp_order = models.IntegerField()
-    display = models.CharField(max_length=1)
-    timestamp = models.DateTimeField()
-
-    class Meta:
-        managed = False
-        db_table = 'mult_obs_instrument_covims_instrument_mode_id'
-
-
-class MultObsInstrumentCovimsIrSamplingModeId(models.Model):
-    id = models.IntegerField(primary_key=True)
-    value = models.CharField(max_length=100, blank=True, null=True)
-    label = models.CharField(max_length=60)
-    disp_order = models.IntegerField()
-    display = models.CharField(max_length=1)
-    timestamp = models.DateTimeField()
-
-    class Meta:
-        managed = False
-        db_table = 'mult_obs_instrument_covims_ir_sampling_mode_id'
-
-
-class MultObsInstrumentCovimsSpectralEditing(models.Model):
-    id = models.IntegerField(primary_key=True)
-    value = models.CharField(max_length=100, blank=True, null=True)
-    label = models.CharField(max_length=60)
-    disp_order = models.IntegerField()
-    display = models.CharField(max_length=1)
-    timestamp = models.DateTimeField()
-
-    class Meta:
-        managed = False
-        db_table = 'mult_obs_instrument_covims_spectral_editing'
-
-
-class MultObsInstrumentCovimsSpectralSumming(models.Model):
-    id = models.IntegerField(primary_key=True)
-    value = models.CharField(max_length=100, blank=True, null=True)
-    label = models.CharField(max_length=60)
-    disp_order = models.IntegerField()
-    display = models.CharField(max_length=1)
-    timestamp = models.DateTimeField()
-
-    class Meta:
-        managed = False
-        db_table = 'mult_obs_instrument_covims_spectral_summing'
-
-
-class MultObsInstrumentCovimsStarTracking(models.Model):
-    id = models.IntegerField(primary_key=True)
-    value = models.CharField(max_length=100, blank=True, null=True)
-    label = models.CharField(max_length=60)
-    disp_order = models.IntegerField()
-    display = models.CharField(max_length=1)
-    timestamp = models.DateTimeField()
-
-    class Meta:
-        managed = False
-        db_table = 'mult_obs_instrument_covims_star_tracking'
-
-
-class MultObsInstrumentCovimsVisSamplingModeId(models.Model):
-    id = models.IntegerField(primary_key=True)
-    value = models.CharField(max_length=100, blank=True, null=True)
-    label = models.CharField(max_length=60)
-    disp_order = models.IntegerField()
-    display = models.CharField(max_length=1)
-    timestamp = models.DateTimeField()
-
-    class Meta:
-        managed = False
-        db_table = 'mult_obs_instrument_covims_vis_sampling_mode_id'
-
-
-class MultObsInstrumentGossiCompressionType(models.Model):
-    id = models.IntegerField(primary_key=True)
-    value = models.CharField(max_length=100, blank=True, null=True)
-    label = models.CharField(max_length=60)
-    disp_order = models.IntegerField()
-    display = models.CharField(max_length=1)
-    timestamp = models.DateTimeField()
-
-    class Meta:
-        managed = False
-        db_table = 'mult_obs_instrument_gossi_compression_type'
-
-
-class MultObsInstrumentGossiFilterName(models.Model):
-    id = models.IntegerField(primary_key=True)
-    value = models.CharField(max_length=100, blank=True, null=True)
-    label = models.CharField(max_length=60)
-    disp_order = models.IntegerField()
-    display = models.CharField(max_length=1)
-    timestamp = models.DateTimeField()
-
-    class Meta:
-        managed = False
-        db_table = 'mult_obs_instrument_gossi_filter_name'
-
-
-class MultObsInstrumentGossiFilterNumber(models.Model):
-    id = models.IntegerField(primary_key=True)
-    value = models.CharField(max_length=100, blank=True, null=True)
-    label = models.CharField(max_length=60)
-    disp_order = models.IntegerField()
-    display = models.CharField(max_length=1)
-    timestamp = models.DateTimeField()
-
-    class Meta:
-        managed = False
-        db_table = 'mult_obs_instrument_gossi_filter_number'
-
-
-class MultObsInstrumentGossiFrameDuration(models.Model):
-    id = models.IntegerField(primary_key=True)
-    value = models.CharField(max_length=100, blank=True, null=True)
-    label = models.CharField(max_length=60)
-    disp_order = models.IntegerField()
-    display = models.CharField(max_length=1)
-    timestamp = models.DateTimeField()
-
-    class Meta:
-        managed = False
-        db_table = 'mult_obs_instrument_gossi_frame_duration'
-
-
-class MultObsInstrumentGossiGainModeId(models.Model):
-    id = models.IntegerField(primary_key=True)
-    value = models.CharField(max_length=100, blank=True, null=True)
-    label = models.CharField(max_length=60)
-    disp_order = models.IntegerField()
-    display = models.CharField(max_length=1)
-    timestamp = models.DateTimeField()
-
-    class Meta:
-        managed = False
-        db_table = 'mult_obs_instrument_gossi_gain_mode_id'
-
-
-class MultObsInstrumentGossiObstructionId(models.Model):
-    id = models.IntegerField(primary_key=True)
-    value = models.CharField(max_length=100, blank=True, null=True)
-    label = models.CharField(max_length=60)
-    disp_order = models.IntegerField()
-    display = models.CharField(max_length=1)
-    timestamp = models.DateTimeField()
-
-    class Meta:
-        managed = False
-        db_table = 'mult_obs_instrument_gossi_obstruction_id'
-
-
-class MultObsInstrumentNhlorriBinningMode(models.Model):
-    id = models.IntegerField(primary_key=True)
-    value = models.CharField(max_length=100, blank=True, null=True)
-    label = models.CharField(max_length=60)
-    disp_order = models.IntegerField()
-    display = models.CharField(max_length=1)
-    timestamp = models.DateTimeField()
-
-    class Meta:
-        managed = False
-        db_table = 'mult_obs_instrument_nhlorri_binning_mode'
-
-
-class MultObsInstrumentNhlorriInstrumentCompressionType(models.Model):
-    id = models.IntegerField(primary_key=True)
-    value = models.CharField(max_length=100, blank=True, null=True)
-    label = models.CharField(max_length=60)
-    disp_order = models.IntegerField()
-    display = models.CharField(max_length=1)
-    timestamp = models.DateTimeField()
-
-    class Meta:
-        managed = False
-        db_table = 'mult_obs_instrument_nhlorri_instrument_compression_type'
-
-
-class MultObsInstrumentNhmvicInstrumentCompressionType(models.Model):
-    id = models.IntegerField(primary_key=True)
-    value = models.CharField(max_length=100, blank=True, null=True)
-    label = models.CharField(max_length=60)
-    disp_order = models.IntegerField()
-    display = models.CharField(max_length=1)
-    timestamp = models.DateTimeField()
-
-    class Meta:
-        managed = False
-        db_table = 'mult_obs_instrument_nhmvic_instrument_compression_type'
-
-
-class MultObsInstrumentVgissCamera(models.Model):
-    id = models.IntegerField(primary_key=True)
-    value = models.CharField(max_length=100, blank=True, null=True)
-    label = models.CharField(max_length=60)
-    disp_order = models.IntegerField()
-    display = models.CharField(max_length=1)
-    timestamp = models.DateTimeField()
-
-    class Meta:
-        managed = False
-        db_table = 'mult_obs_instrument_vgiss_camera'
-
-
-class MultObsInstrumentVgissEditMode(models.Model):
-    id = models.IntegerField(primary_key=True)
-    value = models.CharField(max_length=100, blank=True, null=True)
-    label = models.CharField(max_length=60)
-    disp_order = models.IntegerField()
-    display = models.CharField(max_length=1)
-    timestamp = models.DateTimeField()
-
-    class Meta:
-        managed = False
-        db_table = 'mult_obs_instrument_vgiss_edit_mode'
-
-
-class MultObsInstrumentVgissFilterName(models.Model):
-    id = models.IntegerField(primary_key=True)
-    value = models.CharField(max_length=100, blank=True, null=True)
-    label = models.CharField(max_length=60)
-    disp_order = models.IntegerField()
-    display = models.CharField(max_length=1)
-    timestamp = models.DateTimeField()
-
-    class Meta:
-        managed = False
-        db_table = 'mult_obs_instrument_vgiss_filter_name'
-
-
-class MultObsInstrumentVgissFilterNumber(models.Model):
-    id = models.IntegerField(primary_key=True)
-    value = models.CharField(max_length=100, blank=True, null=True)
-    label = models.CharField(max_length=60)
-    disp_order = models.IntegerField()
-    display = models.CharField(max_length=1)
-    timestamp = models.DateTimeField()
-
-    class Meta:
-        managed = False
-        db_table = 'mult_obs_instrument_vgiss_filter_number'
-
-
-class MultObsInstrumentVgissGainMode(models.Model):
-    id = models.IntegerField(primary_key=True)
-    value = models.CharField(max_length=100, blank=True, null=True)
-    label = models.CharField(max_length=60)
-    disp_order = models.IntegerField()
-    display = models.CharField(max_length=1)
-    timestamp = models.DateTimeField()
-
-    class Meta:
-        managed = False
-        db_table = 'mult_obs_instrument_vgiss_gain_mode'
-
-
-class MultObsInstrumentVgissScanMode(models.Model):
-    id = models.IntegerField(primary_key=True)
-    value = models.CharField(max_length=100, blank=True, null=True)
-    label = models.CharField(max_length=60)
-    disp_order = models.IntegerField()
-    display = models.CharField(max_length=1)
-    timestamp = models.DateTimeField()
-
-    class Meta:
-        managed = False
-        db_table = 'mult_obs_instrument_vgiss_scan_mode'
-
-
-class MultObsInstrumentVgissShutterMode(models.Model):
-    id = models.IntegerField(primary_key=True)
-    value = models.CharField(max_length=100, blank=True, null=True)
-    label = models.CharField(max_length=60)
-    disp_order = models.IntegerField()
-    display = models.CharField(max_length=1)
-    timestamp = models.DateTimeField()
-
-    class Meta:
-        managed = False
-        db_table = 'mult_obs_instrument_vgiss_shutter_mode'
-
-
 class MultObsInstrumentCocirsDetectorId(models.Model):
-    id = models.IntegerField(primary_key=True)
+    id = models.PositiveIntegerField(primary_key=True)
     value = models.CharField(max_length=100, blank=True, null=True)
     label = models.CharField(max_length=60)
     disp_order = models.IntegerField()
@@ -669,7 +150,7 @@ class MultObsInstrumentCocirsDetectorId(models.Model):
 
 
 class MultObsInstrumentCocirsInstrumentModeAllFlag(models.Model):
-    id = models.IntegerField(primary_key=True)
+    id = models.PositiveIntegerField(primary_key=True)
     value = models.CharField(max_length=100, blank=True, null=True)
     label = models.CharField(max_length=60)
     disp_order = models.IntegerField()
@@ -682,7 +163,7 @@ class MultObsInstrumentCocirsInstrumentModeAllFlag(models.Model):
 
 
 class MultObsInstrumentCocirsInstrumentModeBlinkingFlag(models.Model):
-    id = models.IntegerField(primary_key=True)
+    id = models.PositiveIntegerField(primary_key=True)
     value = models.CharField(max_length=100, blank=True, null=True)
     label = models.CharField(max_length=60)
     disp_order = models.IntegerField()
@@ -695,7 +176,7 @@ class MultObsInstrumentCocirsInstrumentModeBlinkingFlag(models.Model):
 
 
 class MultObsInstrumentCocirsInstrumentModeCentersFlag(models.Model):
-    id = models.IntegerField(primary_key=True)
+    id = models.PositiveIntegerField(primary_key=True)
     value = models.CharField(max_length=100, blank=True, null=True)
     label = models.CharField(max_length=60)
     disp_order = models.IntegerField()
@@ -708,7 +189,7 @@ class MultObsInstrumentCocirsInstrumentModeCentersFlag(models.Model):
 
 
 class MultObsInstrumentCocirsInstrumentModeEvenFlag(models.Model):
-    id = models.IntegerField(primary_key=True)
+    id = models.PositiveIntegerField(primary_key=True)
     value = models.CharField(max_length=100, blank=True, null=True)
     label = models.CharField(max_length=60)
     disp_order = models.IntegerField()
@@ -721,7 +202,7 @@ class MultObsInstrumentCocirsInstrumentModeEvenFlag(models.Model):
 
 
 class MultObsInstrumentCocirsInstrumentModeOddFlag(models.Model):
-    id = models.IntegerField(primary_key=True)
+    id = models.PositiveIntegerField(primary_key=True)
     value = models.CharField(max_length=100, blank=True, null=True)
     label = models.CharField(max_length=60)
     disp_order = models.IntegerField()
@@ -734,7 +215,7 @@ class MultObsInstrumentCocirsInstrumentModeOddFlag(models.Model):
 
 
 class MultObsInstrumentCocirsInstrumentModePairsFlag(models.Model):
-    id = models.IntegerField(primary_key=True)
+    id = models.PositiveIntegerField(primary_key=True)
     value = models.CharField(max_length=100, blank=True, null=True)
     label = models.CharField(max_length=60)
     disp_order = models.IntegerField()
@@ -746,8 +227,528 @@ class MultObsInstrumentCocirsInstrumentModePairsFlag(models.Model):
         db_table = 'mult_obs_instrument_cocirs_instrument_mode_pairs_flag'
 
 
+class MultObsInstrumentCoissCamera(models.Model):
+    id = models.PositiveIntegerField(primary_key=True)
+    value = models.CharField(max_length=100, blank=True, null=True)
+    label = models.CharField(max_length=60)
+    disp_order = models.IntegerField()
+    display = models.CharField(max_length=1)
+    timestamp = models.DateTimeField()
+
+    class Meta:
+        managed = False
+        db_table = 'mult_obs_instrument_coiss_camera'
+
+
+class MultObsInstrumentCoissCombinedFilter(models.Model):
+    id = models.PositiveIntegerField(primary_key=True)
+    value = models.CharField(max_length=100, blank=True, null=True)
+    label = models.CharField(max_length=60)
+    disp_order = models.IntegerField()
+    display = models.CharField(max_length=1)
+    timestamp = models.DateTimeField()
+
+    class Meta:
+        managed = False
+        db_table = 'mult_obs_instrument_coiss_combined_filter'
+
+
+class MultObsInstrumentCoissCompressionType(models.Model):
+    id = models.PositiveIntegerField(primary_key=True)
+    value = models.CharField(max_length=100, blank=True, null=True)
+    label = models.CharField(max_length=60)
+    disp_order = models.IntegerField()
+    display = models.CharField(max_length=1)
+    timestamp = models.DateTimeField()
+
+    class Meta:
+        managed = False
+        db_table = 'mult_obs_instrument_coiss_compression_type'
+
+
+class MultObsInstrumentCoissDataConversionType(models.Model):
+    id = models.PositiveIntegerField(primary_key=True)
+    value = models.CharField(max_length=100, blank=True, null=True)
+    label = models.CharField(max_length=60)
+    disp_order = models.IntegerField()
+    display = models.CharField(max_length=1)
+    timestamp = models.DateTimeField()
+
+    class Meta:
+        managed = False
+        db_table = 'mult_obs_instrument_coiss_data_conversion_type'
+
+
+class MultObsInstrumentCoissGainModeId(models.Model):
+    id = models.PositiveIntegerField(primary_key=True)
+    value = models.CharField(max_length=100, blank=True, null=True)
+    label = models.CharField(max_length=60)
+    disp_order = models.IntegerField()
+    display = models.CharField(max_length=1)
+    timestamp = models.DateTimeField()
+
+    class Meta:
+        managed = False
+        db_table = 'mult_obs_instrument_coiss_gain_mode_id'
+
+
+class MultObsInstrumentCoissImageObservationType(models.Model):
+    id = models.PositiveIntegerField(primary_key=True)
+    value = models.CharField(max_length=100, blank=True, null=True)
+    label = models.CharField(max_length=60)
+    disp_order = models.IntegerField()
+    display = models.CharField(max_length=1)
+    timestamp = models.DateTimeField()
+
+    class Meta:
+        managed = False
+        db_table = 'mult_obs_instrument_coiss_image_observation_type'
+
+
+class MultObsInstrumentCoissInstrumentModeId(models.Model):
+    id = models.PositiveIntegerField(primary_key=True)
+    value = models.CharField(max_length=100, blank=True, null=True)
+    label = models.CharField(max_length=60)
+    disp_order = models.IntegerField()
+    display = models.CharField(max_length=1)
+    timestamp = models.DateTimeField()
+
+    class Meta:
+        managed = False
+        db_table = 'mult_obs_instrument_coiss_instrument_mode_id'
+
+
+class MultObsInstrumentCoissShutterModeId(models.Model):
+    id = models.PositiveIntegerField(primary_key=True)
+    value = models.CharField(max_length=100, blank=True, null=True)
+    label = models.CharField(max_length=60)
+    disp_order = models.IntegerField()
+    display = models.CharField(max_length=1)
+    timestamp = models.DateTimeField()
+
+    class Meta:
+        managed = False
+        db_table = 'mult_obs_instrument_coiss_shutter_mode_id'
+
+
+class MultObsInstrumentCoissShutterStateId(models.Model):
+    id = models.PositiveIntegerField(primary_key=True)
+    value = models.CharField(max_length=100, blank=True, null=True)
+    label = models.CharField(max_length=60)
+    disp_order = models.IntegerField()
+    display = models.CharField(max_length=1)
+    timestamp = models.DateTimeField()
+
+    class Meta:
+        managed = False
+        db_table = 'mult_obs_instrument_coiss_shutter_state_id'
+
+
+class MultObsInstrumentCoissTargetDesc(models.Model):
+    id = models.PositiveIntegerField(primary_key=True)
+    value = models.CharField(max_length=100, blank=True, null=True)
+    label = models.CharField(max_length=60)
+    disp_order = models.IntegerField()
+    display = models.CharField(max_length=1)
+    timestamp = models.DateTimeField()
+
+    class Meta:
+        managed = False
+        db_table = 'mult_obs_instrument_coiss_target_desc'
+
+
+class MultObsInstrumentCouvisChannel(models.Model):
+    id = models.PositiveIntegerField(primary_key=True)
+    value = models.CharField(max_length=100, blank=True, null=True)
+    label = models.CharField(max_length=60)
+    disp_order = models.IntegerField()
+    display = models.CharField(max_length=1)
+    timestamp = models.DateTimeField()
+
+    class Meta:
+        managed = False
+        db_table = 'mult_obs_instrument_couvis_channel'
+
+
+class MultObsInstrumentCouvisCompressionType(models.Model):
+    id = models.PositiveIntegerField(primary_key=True)
+    value = models.CharField(max_length=100, blank=True, null=True)
+    label = models.CharField(max_length=60)
+    disp_order = models.IntegerField()
+    display = models.CharField(max_length=1)
+    timestamp = models.DateTimeField()
+
+    class Meta:
+        managed = False
+        db_table = 'mult_obs_instrument_couvis_compression_type'
+
+
+class MultObsInstrumentCouvisDwellTime(models.Model):
+    id = models.PositiveIntegerField(primary_key=True)
+    value = models.CharField(max_length=100, blank=True, null=True)
+    label = models.CharField(max_length=60)
+    disp_order = models.IntegerField()
+    display = models.CharField(max_length=1)
+    timestamp = models.DateTimeField()
+
+    class Meta:
+        managed = False
+        db_table = 'mult_obs_instrument_couvis_dwell_time'
+
+
+class MultObsInstrumentCouvisObservationType(models.Model):
+    id = models.PositiveIntegerField(primary_key=True)
+    value = models.CharField(max_length=100, blank=True, null=True)
+    label = models.CharField(max_length=60)
+    disp_order = models.IntegerField()
+    display = models.CharField(max_length=1)
+    timestamp = models.DateTimeField()
+
+    class Meta:
+        managed = False
+        db_table = 'mult_obs_instrument_couvis_observation_type'
+
+
+class MultObsInstrumentCouvisOccultationPortState(models.Model):
+    id = models.PositiveIntegerField(primary_key=True)
+    value = models.CharField(max_length=100, blank=True, null=True)
+    label = models.CharField(max_length=60)
+    disp_order = models.IntegerField()
+    display = models.CharField(max_length=1)
+    timestamp = models.DateTimeField()
+
+    class Meta:
+        managed = False
+        db_table = 'mult_obs_instrument_couvis_occultation_port_state'
+
+
+class MultObsInstrumentCouvisSlitState(models.Model):
+    id = models.PositiveIntegerField(primary_key=True)
+    value = models.CharField(max_length=100, blank=True, null=True)
+    label = models.CharField(max_length=60)
+    disp_order = models.IntegerField()
+    display = models.CharField(max_length=1)
+    timestamp = models.DateTimeField()
+
+    class Meta:
+        managed = False
+        db_table = 'mult_obs_instrument_couvis_slit_state'
+
+
+class MultObsInstrumentCouvisTestPulseState(models.Model):
+    id = models.PositiveIntegerField(primary_key=True)
+    value = models.CharField(max_length=100, blank=True, null=True)
+    label = models.CharField(max_length=60)
+    disp_order = models.IntegerField()
+    display = models.CharField(max_length=1)
+    timestamp = models.DateTimeField()
+
+    class Meta:
+        managed = False
+        db_table = 'mult_obs_instrument_couvis_test_pulse_state'
+
+
+class MultObsInstrumentCovimsChannel(models.Model):
+    id = models.PositiveIntegerField(primary_key=True)
+    value = models.CharField(max_length=100, blank=True, null=True)
+    label = models.CharField(max_length=60)
+    disp_order = models.IntegerField()
+    display = models.CharField(max_length=1)
+    timestamp = models.DateTimeField()
+
+    class Meta:
+        managed = False
+        db_table = 'mult_obs_instrument_covims_channel'
+
+
+class MultObsInstrumentCovimsInstrumentModeId(models.Model):
+    id = models.PositiveIntegerField(primary_key=True)
+    value = models.CharField(max_length=100, blank=True, null=True)
+    label = models.CharField(max_length=60)
+    disp_order = models.IntegerField()
+    display = models.CharField(max_length=1)
+    timestamp = models.DateTimeField()
+
+    class Meta:
+        managed = False
+        db_table = 'mult_obs_instrument_covims_instrument_mode_id'
+
+
+class MultObsInstrumentCovimsIrSamplingModeId(models.Model):
+    id = models.PositiveIntegerField(primary_key=True)
+    value = models.CharField(max_length=100, blank=True, null=True)
+    label = models.CharField(max_length=60)
+    disp_order = models.IntegerField()
+    display = models.CharField(max_length=1)
+    timestamp = models.DateTimeField()
+
+    class Meta:
+        managed = False
+        db_table = 'mult_obs_instrument_covims_ir_sampling_mode_id'
+
+
+class MultObsInstrumentCovimsSpectralEditing(models.Model):
+    id = models.PositiveIntegerField(primary_key=True)
+    value = models.CharField(max_length=100, blank=True, null=True)
+    label = models.CharField(max_length=60)
+    disp_order = models.IntegerField()
+    display = models.CharField(max_length=1)
+    timestamp = models.DateTimeField()
+
+    class Meta:
+        managed = False
+        db_table = 'mult_obs_instrument_covims_spectral_editing'
+
+
+class MultObsInstrumentCovimsSpectralSumming(models.Model):
+    id = models.PositiveIntegerField(primary_key=True)
+    value = models.CharField(max_length=100, blank=True, null=True)
+    label = models.CharField(max_length=60)
+    disp_order = models.IntegerField()
+    display = models.CharField(max_length=1)
+    timestamp = models.DateTimeField()
+
+    class Meta:
+        managed = False
+        db_table = 'mult_obs_instrument_covims_spectral_summing'
+
+
+class MultObsInstrumentCovimsStarTracking(models.Model):
+    id = models.PositiveIntegerField(primary_key=True)
+    value = models.CharField(max_length=100, blank=True, null=True)
+    label = models.CharField(max_length=60)
+    disp_order = models.IntegerField()
+    display = models.CharField(max_length=1)
+    timestamp = models.DateTimeField()
+
+    class Meta:
+        managed = False
+        db_table = 'mult_obs_instrument_covims_star_tracking'
+
+
+class MultObsInstrumentCovimsVisSamplingModeId(models.Model):
+    id = models.PositiveIntegerField(primary_key=True)
+    value = models.CharField(max_length=100, blank=True, null=True)
+    label = models.CharField(max_length=60)
+    disp_order = models.IntegerField()
+    display = models.CharField(max_length=1)
+    timestamp = models.DateTimeField()
+
+    class Meta:
+        managed = False
+        db_table = 'mult_obs_instrument_covims_vis_sampling_mode_id'
+
+
+class MultObsInstrumentGossiCompressionType(models.Model):
+    id = models.PositiveIntegerField(primary_key=True)
+    value = models.CharField(max_length=100, blank=True, null=True)
+    label = models.CharField(max_length=60)
+    disp_order = models.IntegerField()
+    display = models.CharField(max_length=1)
+    timestamp = models.DateTimeField()
+
+    class Meta:
+        managed = False
+        db_table = 'mult_obs_instrument_gossi_compression_type'
+
+
+class MultObsInstrumentGossiFilterName(models.Model):
+    id = models.PositiveIntegerField(primary_key=True)
+    value = models.CharField(max_length=100, blank=True, null=True)
+    label = models.CharField(max_length=60)
+    disp_order = models.IntegerField()
+    display = models.CharField(max_length=1)
+    timestamp = models.DateTimeField()
+
+    class Meta:
+        managed = False
+        db_table = 'mult_obs_instrument_gossi_filter_name'
+
+
+class MultObsInstrumentGossiFilterNumber(models.Model):
+    id = models.PositiveIntegerField(primary_key=True)
+    value = models.CharField(max_length=100, blank=True, null=True)
+    label = models.CharField(max_length=60)
+    disp_order = models.IntegerField()
+    display = models.CharField(max_length=1)
+    timestamp = models.DateTimeField()
+
+    class Meta:
+        managed = False
+        db_table = 'mult_obs_instrument_gossi_filter_number'
+
+
+class MultObsInstrumentGossiFrameDuration(models.Model):
+    id = models.PositiveIntegerField(primary_key=True)
+    value = models.CharField(max_length=100, blank=True, null=True)
+    label = models.CharField(max_length=60)
+    disp_order = models.IntegerField()
+    display = models.CharField(max_length=1)
+    timestamp = models.DateTimeField()
+
+    class Meta:
+        managed = False
+        db_table = 'mult_obs_instrument_gossi_frame_duration'
+
+
+class MultObsInstrumentGossiGainModeId(models.Model):
+    id = models.PositiveIntegerField(primary_key=True)
+    value = models.CharField(max_length=100, blank=True, null=True)
+    label = models.CharField(max_length=60)
+    disp_order = models.IntegerField()
+    display = models.CharField(max_length=1)
+    timestamp = models.DateTimeField()
+
+    class Meta:
+        managed = False
+        db_table = 'mult_obs_instrument_gossi_gain_mode_id'
+
+
+class MultObsInstrumentGossiObstructionId(models.Model):
+    id = models.PositiveIntegerField(primary_key=True)
+    value = models.CharField(max_length=100, blank=True, null=True)
+    label = models.CharField(max_length=60)
+    disp_order = models.IntegerField()
+    display = models.CharField(max_length=1)
+    timestamp = models.DateTimeField()
+
+    class Meta:
+        managed = False
+        db_table = 'mult_obs_instrument_gossi_obstruction_id'
+
+
+class MultObsInstrumentNhlorriBinningMode(models.Model):
+    id = models.PositiveIntegerField(primary_key=True)
+    value = models.CharField(max_length=100, blank=True, null=True)
+    label = models.CharField(max_length=60)
+    disp_order = models.IntegerField()
+    display = models.CharField(max_length=1)
+    timestamp = models.DateTimeField()
+
+    class Meta:
+        managed = False
+        db_table = 'mult_obs_instrument_nhlorri_binning_mode'
+
+
+class MultObsInstrumentNhlorriInstrumentCompressionType(models.Model):
+    id = models.PositiveIntegerField(primary_key=True)
+    value = models.CharField(max_length=100, blank=True, null=True)
+    label = models.CharField(max_length=60)
+    disp_order = models.IntegerField()
+    display = models.CharField(max_length=1)
+    timestamp = models.DateTimeField()
+
+    class Meta:
+        managed = False
+        db_table = 'mult_obs_instrument_nhlorri_instrument_compression_type'
+
+
+class MultObsInstrumentNhmvicInstrumentCompressionType(models.Model):
+    id = models.PositiveIntegerField(primary_key=True)
+    value = models.CharField(max_length=100, blank=True, null=True)
+    label = models.CharField(max_length=60)
+    disp_order = models.IntegerField()
+    display = models.CharField(max_length=1)
+    timestamp = models.DateTimeField()
+
+    class Meta:
+        managed = False
+        db_table = 'mult_obs_instrument_nhmvic_instrument_compression_type'
+
+
+class MultObsInstrumentVgissCamera(models.Model):
+    id = models.PositiveIntegerField(primary_key=True)
+    value = models.CharField(max_length=100, blank=True, null=True)
+    label = models.CharField(max_length=60)
+    disp_order = models.IntegerField()
+    display = models.CharField(max_length=1)
+    timestamp = models.DateTimeField()
+
+    class Meta:
+        managed = False
+        db_table = 'mult_obs_instrument_vgiss_camera'
+
+
+class MultObsInstrumentVgissEditMode(models.Model):
+    id = models.PositiveIntegerField(primary_key=True)
+    value = models.CharField(max_length=100, blank=True, null=True)
+    label = models.CharField(max_length=60)
+    disp_order = models.IntegerField()
+    display = models.CharField(max_length=1)
+    timestamp = models.DateTimeField()
+
+    class Meta:
+        managed = False
+        db_table = 'mult_obs_instrument_vgiss_edit_mode'
+
+
+class MultObsInstrumentVgissFilterName(models.Model):
+    id = models.PositiveIntegerField(primary_key=True)
+    value = models.CharField(max_length=100, blank=True, null=True)
+    label = models.CharField(max_length=60)
+    disp_order = models.IntegerField()
+    display = models.CharField(max_length=1)
+    timestamp = models.DateTimeField()
+
+    class Meta:
+        managed = False
+        db_table = 'mult_obs_instrument_vgiss_filter_name'
+
+
+class MultObsInstrumentVgissFilterNumber(models.Model):
+    id = models.PositiveIntegerField(primary_key=True)
+    value = models.CharField(max_length=100, blank=True, null=True)
+    label = models.CharField(max_length=60)
+    disp_order = models.IntegerField()
+    display = models.CharField(max_length=1)
+    timestamp = models.DateTimeField()
+
+    class Meta:
+        managed = False
+        db_table = 'mult_obs_instrument_vgiss_filter_number'
+
+
+class MultObsInstrumentVgissGainMode(models.Model):
+    id = models.PositiveIntegerField(primary_key=True)
+    value = models.CharField(max_length=100, blank=True, null=True)
+    label = models.CharField(max_length=60)
+    disp_order = models.IntegerField()
+    display = models.CharField(max_length=1)
+    timestamp = models.DateTimeField()
+
+    class Meta:
+        managed = False
+        db_table = 'mult_obs_instrument_vgiss_gain_mode'
+
+
+class MultObsInstrumentVgissScanMode(models.Model):
+    id = models.PositiveIntegerField(primary_key=True)
+    value = models.CharField(max_length=100, blank=True, null=True)
+    label = models.CharField(max_length=60)
+    disp_order = models.IntegerField()
+    display = models.CharField(max_length=1)
+    timestamp = models.DateTimeField()
+
+    class Meta:
+        managed = False
+        db_table = 'mult_obs_instrument_vgiss_scan_mode'
+
+
+class MultObsInstrumentVgissShutterMode(models.Model):
+    id = models.PositiveIntegerField(primary_key=True)
+    value = models.CharField(max_length=100, blank=True, null=True)
+    label = models.CharField(max_length=60)
+    disp_order = models.IntegerField()
+    display = models.CharField(max_length=1)
+    timestamp = models.DateTimeField()
+
+    class Meta:
+        managed = False
+        db_table = 'mult_obs_instrument_vgiss_shutter_mode'
+
+
 class MultObsMissionCassiniCassiniTargetCode(models.Model):
-    id = models.IntegerField(primary_key=True)
+    id = models.PositiveIntegerField(primary_key=True)
     value = models.CharField(max_length=100, blank=True, null=True)
     label = models.CharField(max_length=60)
     disp_order = models.IntegerField()
@@ -760,7 +761,7 @@ class MultObsMissionCassiniCassiniTargetCode(models.Model):
 
 
 class MultObsMissionCassiniIsPrime(models.Model):
-    id = models.IntegerField(primary_key=True)
+    id = models.PositiveIntegerField(primary_key=True)
     value = models.CharField(max_length=100, blank=True, null=True)
     label = models.CharField(max_length=60)
     disp_order = models.IntegerField()
@@ -773,7 +774,7 @@ class MultObsMissionCassiniIsPrime(models.Model):
 
 
 class MultObsMissionCassiniMissionPhaseName(models.Model):
-    id = models.IntegerField(primary_key=True)
+    id = models.PositiveIntegerField(primary_key=True)
     value = models.CharField(max_length=100, blank=True, null=True)
     label = models.CharField(max_length=60)
     disp_order = models.IntegerField()
@@ -786,7 +787,7 @@ class MultObsMissionCassiniMissionPhaseName(models.Model):
 
 
 class MultObsMissionCassiniPrimeInstId(models.Model):
-    id = models.IntegerField(primary_key=True)
+    id = models.PositiveIntegerField(primary_key=True)
     value = models.CharField(max_length=100, blank=True, null=True)
     label = models.CharField(max_length=60)
     disp_order = models.IntegerField()
@@ -799,7 +800,7 @@ class MultObsMissionCassiniPrimeInstId(models.Model):
 
 
 class MultObsMissionCassiniRevNo(models.Model):
-    id = models.IntegerField(primary_key=True)
+    id = models.PositiveIntegerField(primary_key=True)
     value = models.CharField(max_length=100, blank=True, null=True)
     label = models.CharField(max_length=60)
     disp_order = models.IntegerField()
@@ -812,7 +813,7 @@ class MultObsMissionCassiniRevNo(models.Model):
 
 
 class MultObsMissionGalileoOrbitNumber(models.Model):
-    id = models.IntegerField(primary_key=True)
+    id = models.PositiveIntegerField(primary_key=True)
     value = models.CharField(max_length=100, blank=True, null=True)
     label = models.CharField(max_length=60)
     disp_order = models.IntegerField()
@@ -825,7 +826,7 @@ class MultObsMissionGalileoOrbitNumber(models.Model):
 
 
 class MultObsMissionHubbleApertureType(models.Model):
-    id = models.IntegerField(primary_key=True)
+    id = models.PositiveIntegerField(primary_key=True)
     value = models.CharField(max_length=100, blank=True, null=True)
     label = models.CharField(max_length=60)
     disp_order = models.IntegerField()
@@ -838,7 +839,7 @@ class MultObsMissionHubbleApertureType(models.Model):
 
 
 class MultObsMissionHubbleDetectorId(models.Model):
-    id = models.IntegerField(primary_key=True)
+    id = models.PositiveIntegerField(primary_key=True)
     value = models.CharField(max_length=100, blank=True, null=True)
     label = models.CharField(max_length=60)
     disp_order = models.IntegerField()
@@ -851,7 +852,7 @@ class MultObsMissionHubbleDetectorId(models.Model):
 
 
 class MultObsMissionHubbleExposureType(models.Model):
-    id = models.IntegerField(primary_key=True)
+    id = models.PositiveIntegerField(primary_key=True)
     value = models.CharField(max_length=100, blank=True, null=True)
     label = models.CharField(max_length=60)
     disp_order = models.IntegerField()
@@ -864,7 +865,7 @@ class MultObsMissionHubbleExposureType(models.Model):
 
 
 class MultObsMissionHubbleFilterName(models.Model):
-    id = models.IntegerField(primary_key=True)
+    id = models.PositiveIntegerField(primary_key=True)
     value = models.CharField(max_length=100, blank=True, null=True)
     label = models.CharField(max_length=60)
     disp_order = models.IntegerField()
@@ -877,7 +878,7 @@ class MultObsMissionHubbleFilterName(models.Model):
 
 
 class MultObsMissionHubbleFilterType(models.Model):
-    id = models.IntegerField(primary_key=True)
+    id = models.PositiveIntegerField(primary_key=True)
     value = models.CharField(max_length=100, blank=True, null=True)
     label = models.CharField(max_length=60)
     disp_order = models.IntegerField()
@@ -890,7 +891,7 @@ class MultObsMissionHubbleFilterType(models.Model):
 
 
 class MultObsMissionHubbleFineGuidanceSystemLockType(models.Model):
-    id = models.IntegerField(primary_key=True)
+    id = models.PositiveIntegerField(primary_key=True)
     value = models.CharField(max_length=100, blank=True, null=True)
     label = models.CharField(max_length=60)
     disp_order = models.IntegerField()
@@ -903,7 +904,7 @@ class MultObsMissionHubbleFineGuidanceSystemLockType(models.Model):
 
 
 class MultObsMissionHubbleGainModeId(models.Model):
-    id = models.IntegerField(primary_key=True)
+    id = models.PositiveIntegerField(primary_key=True)
     value = models.CharField(max_length=100, blank=True, null=True)
     label = models.CharField(max_length=60)
     disp_order = models.IntegerField()
@@ -916,7 +917,7 @@ class MultObsMissionHubbleGainModeId(models.Model):
 
 
 class MultObsMissionHubbleInstrumentModeId(models.Model):
-    id = models.IntegerField(primary_key=True)
+    id = models.PositiveIntegerField(primary_key=True)
     value = models.CharField(max_length=100, blank=True, null=True)
     label = models.CharField(max_length=60)
     disp_order = models.IntegerField()
@@ -929,7 +930,7 @@ class MultObsMissionHubbleInstrumentModeId(models.Model):
 
 
 class MultObsMissionHubblePc1Flag(models.Model):
-    id = models.IntegerField(primary_key=True)
+    id = models.PositiveIntegerField(primary_key=True)
     value = models.CharField(max_length=100, blank=True, null=True)
     label = models.CharField(max_length=60)
     disp_order = models.IntegerField()
@@ -942,7 +943,7 @@ class MultObsMissionHubblePc1Flag(models.Model):
 
 
 class MultObsMissionHubbleTargetedDetectorId(models.Model):
-    id = models.IntegerField(primary_key=True)
+    id = models.PositiveIntegerField(primary_key=True)
     value = models.CharField(max_length=100, blank=True, null=True)
     label = models.CharField(max_length=60)
     disp_order = models.IntegerField()
@@ -955,7 +956,7 @@ class MultObsMissionHubbleTargetedDetectorId(models.Model):
 
 
 class MultObsMissionHubbleWf2Flag(models.Model):
-    id = models.IntegerField(primary_key=True)
+    id = models.PositiveIntegerField(primary_key=True)
     value = models.CharField(max_length=100, blank=True, null=True)
     label = models.CharField(max_length=60)
     disp_order = models.IntegerField()
@@ -968,7 +969,7 @@ class MultObsMissionHubbleWf2Flag(models.Model):
 
 
 class MultObsMissionHubbleWf3Flag(models.Model):
-    id = models.IntegerField(primary_key=True)
+    id = models.PositiveIntegerField(primary_key=True)
     value = models.CharField(max_length=100, blank=True, null=True)
     label = models.CharField(max_length=60)
     disp_order = models.IntegerField()
@@ -981,7 +982,7 @@ class MultObsMissionHubbleWf3Flag(models.Model):
 
 
 class MultObsMissionHubbleWf4Flag(models.Model):
-    id = models.IntegerField(primary_key=True)
+    id = models.PositiveIntegerField(primary_key=True)
     value = models.CharField(max_length=100, blank=True, null=True)
     label = models.CharField(max_length=60)
     disp_order = models.IntegerField()
@@ -994,7 +995,7 @@ class MultObsMissionHubbleWf4Flag(models.Model):
 
 
 class MultObsMissionNewHorizonsMissionPhase(models.Model):
-    id = models.IntegerField(primary_key=True)
+    id = models.PositiveIntegerField(primary_key=True)
     value = models.CharField(max_length=100, blank=True, null=True)
     label = models.CharField(max_length=60)
     disp_order = models.IntegerField()
@@ -1007,7 +1008,7 @@ class MultObsMissionNewHorizonsMissionPhase(models.Model):
 
 
 class MultObsMissionVoyagerMissionPhaseName(models.Model):
-    id = models.IntegerField(primary_key=True)
+    id = models.PositiveIntegerField(primary_key=True)
     value = models.CharField(max_length=100, blank=True, null=True)
     label = models.CharField(max_length=60)
     disp_order = models.IntegerField()
@@ -1020,7 +1021,7 @@ class MultObsMissionVoyagerMissionPhaseName(models.Model):
 
 
 class MultObsSurfaceGeometryTargetName(models.Model):
-    id = models.IntegerField(primary_key=True)
+    id = models.PositiveIntegerField(primary_key=True)
     value = models.CharField(max_length=100, blank=True, null=True)
     label = models.CharField(max_length=30)
     disp_order = models.IntegerField()
@@ -1034,7 +1035,7 @@ class MultObsSurfaceGeometryTargetName(models.Model):
 
 
 class MultObsTypeImageImageTypeId(models.Model):
-    id = models.IntegerField(primary_key=True)
+    id = models.PositiveIntegerField(primary_key=True)
     value = models.CharField(max_length=100, blank=True, null=True)
     label = models.CharField(max_length=60)
     disp_order = models.IntegerField()
@@ -1047,7 +1048,7 @@ class MultObsTypeImageImageTypeId(models.Model):
 
 
 class MultObsWavelengthPolarizationType(models.Model):
-    id = models.IntegerField(primary_key=True)
+    id = models.PositiveIntegerField(primary_key=True)
     value = models.CharField(max_length=100, blank=True, null=True)
     label = models.CharField(max_length=60)
     disp_order = models.IntegerField()
@@ -1060,7 +1061,7 @@ class MultObsWavelengthPolarizationType(models.Model):
 
 
 class MultObsWavelengthSpecFlag(models.Model):
-    id = models.IntegerField(primary_key=True)
+    id = models.PositiveIntegerField(primary_key=True)
     value = models.CharField(max_length=100, blank=True, null=True)
     label = models.CharField(max_length=60)
     disp_order = models.IntegerField()
@@ -1082,10 +1083,8 @@ class ObsGeneral(models.Model):
     planet_id = models.CharField(max_length=3)
     target_name = models.CharField(max_length=20, blank=True, null=True)
     target_class = models.CharField(max_length=12)
-    time1 = models.CharField(max_length=23, blank=True, null=True)
-    time2 = models.CharField(max_length=23, blank=True, null=True)
-    time_sec1 = models.FloatField(blank=True, null=True)
-    time_sec2 = models.FloatField(blank=True, null=True)
+    time1 = models.FloatField(blank=True, null=True)
+    time2 = models.FloatField(blank=True, null=True)
     observation_duration = models.FloatField(blank=True, null=True)
     quantity = models.CharField(max_length=25)
     right_asc1 = models.FloatField(blank=True, null=True)
@@ -1113,6 +1112,32 @@ class ObsGeneral(models.Model):
         db_table = 'obs_general'
 
 
+class ObsInstrumentCocirs(models.Model):
+    obs_general = models.ForeignKey(ObsGeneral, models.DO_NOTHING)
+    opus_id = models.ForeignKey(ObsGeneral, models.DO_NOTHING, related_name='%(class)s_opus_id', db_column='opus_id')
+    volume_id = models.CharField(max_length=11)
+    detector_id = models.CharField(max_length=3)
+    instrument_mode_blinking_flag = models.CharField(max_length=3)
+    instrument_mode_even_flag = models.CharField(max_length=3)
+    instrument_mode_odd_flag = models.CharField(max_length=3)
+    instrument_mode_centers_flag = models.CharField(max_length=3)
+    instrument_mode_pairs_flag = models.CharField(max_length=3)
+    instrument_mode_all_flag = models.CharField(max_length=3)
+    mult_obs_instrument_cocirs_detector = models.ForeignKey(MultObsInstrumentCocirsDetectorId, models.DO_NOTHING)
+    mult_obs_instrument_cocirs_instrument_mode_blinking_flag = models.ForeignKey(MultObsInstrumentCocirsInstrumentModeBlinkingFlag, models.DO_NOTHING, db_column='mult_obs_instrument_cocirs_instrument_mode_blinking_flag')
+    mult_obs_instrument_cocirs_instrument_mode_even_flag = models.ForeignKey(MultObsInstrumentCocirsInstrumentModeEvenFlag, models.DO_NOTHING, db_column='mult_obs_instrument_cocirs_instrument_mode_even_flag')
+    mult_obs_instrument_cocirs_instrument_mode_odd_flag = models.ForeignKey(MultObsInstrumentCocirsInstrumentModeOddFlag, models.DO_NOTHING, db_column='mult_obs_instrument_cocirs_instrument_mode_odd_flag')
+    mult_obs_instrument_cocirs_instrument_mode_centers_flag = models.ForeignKey(MultObsInstrumentCocirsInstrumentModeCentersFlag, models.DO_NOTHING, db_column='mult_obs_instrument_cocirs_instrument_mode_centers_flag')
+    mult_obs_instrument_cocirs_instrument_mode_pairs_flag = models.ForeignKey(MultObsInstrumentCocirsInstrumentModePairsFlag, models.DO_NOTHING, db_column='mult_obs_instrument_cocirs_instrument_mode_pairs_flag')
+    mult_obs_instrument_cocirs_instrument_mode_all_flag = models.ForeignKey(MultObsInstrumentCocirsInstrumentModeAllFlag, models.DO_NOTHING, db_column='mult_obs_instrument_cocirs_instrument_mode_all_flag')
+    id = models.PositiveIntegerField(primary_key=True)
+    timestamp = models.DateTimeField()
+
+    class Meta:
+        managed = False
+        db_table = 'obs_instrument_cocirs'
+
+
 class ObsInstrumentCoiss(models.Model):
     obs_general = models.ForeignKey(ObsGeneral, models.DO_NOTHING)
     opus_id = models.ForeignKey(ObsGeneral, models.DO_NOTHING, related_name='%(class)s_opus_id', db_column='opus_id')
@@ -1136,9 +1161,10 @@ class ObsInstrumentCoiss(models.Model):
     mult_obs_instrument_coiss_shutter_mode = models.ForeignKey(MultObsInstrumentCoissShutterModeId, models.DO_NOTHING)
     mult_obs_instrument_coiss_shutter_state = models.ForeignKey(MultObsInstrumentCoissShutterStateId, models.DO_NOTHING)
     mult_obs_instrument_coiss_instrument_mode = models.ForeignKey(MultObsInstrumentCoissInstrumentModeId, models.DO_NOTHING)
+    mult_obs_instrument_coiss_target_desc = models.ForeignKey(MultObsInstrumentCoissTargetDesc, models.DO_NOTHING, db_column='mult_obs_instrument_coiss_target_desc')
     mult_obs_instrument_coiss_combined_filter = models.ForeignKey(MultObsInstrumentCoissCombinedFilter, models.DO_NOTHING, db_column='mult_obs_instrument_coiss_combined_filter')
     mult_obs_instrument_coiss_camera = models.ForeignKey(MultObsInstrumentCoissCamera, models.DO_NOTHING, db_column='mult_obs_instrument_coiss_camera')
-    id = models.IntegerField(primary_key=True)
+    id = models.PositiveIntegerField(primary_key=True)
     timestamp = models.DateTimeField()
 
     class Meta:
@@ -1172,7 +1198,7 @@ class ObsInstrumentCouvis(models.Model):
     mult_obs_instrument_couvis_test_pulse_state = models.ForeignKey(MultObsInstrumentCouvisTestPulseState, models.DO_NOTHING, db_column='mult_obs_instrument_couvis_test_pulse_state')
     mult_obs_instrument_couvis_dwell_time = models.ForeignKey(MultObsInstrumentCouvisDwellTime, models.DO_NOTHING, db_column='mult_obs_instrument_couvis_dwell_time')
     mult_obs_instrument_couvis_channel = models.ForeignKey(MultObsInstrumentCouvisChannel, models.DO_NOTHING, db_column='mult_obs_instrument_couvis_channel')
-    id = models.IntegerField(primary_key=True)
+    id = models.PositiveIntegerField(primary_key=True)
     timestamp = models.DateTimeField()
 
     class Meta:
@@ -1188,8 +1214,8 @@ class ObsInstrumentCovims(models.Model):
     spectral_editing = models.CharField(max_length=3)
     spectral_summing = models.CharField(max_length=3)
     star_tracking = models.CharField(max_length=3)
-    swath_width = models.SmallIntegerField()
-    swath_length = models.SmallIntegerField()
+    swath_width = models.PositiveSmallIntegerField()
+    swath_length = models.PositiveSmallIntegerField()
     ir_exposure = models.FloatField(blank=True, null=True)
     ir_sampling_mode_id = models.CharField(max_length=6)
     vis_exposure = models.FloatField(blank=True, null=True)
@@ -1202,7 +1228,7 @@ class ObsInstrumentCovims(models.Model):
     mult_obs_instrument_covims_ir_sampling_mode = models.ForeignKey(MultObsInstrumentCovimsIrSamplingModeId, models.DO_NOTHING)
     mult_obs_instrument_covims_vis_sampling_mode = models.ForeignKey(MultObsInstrumentCovimsVisSamplingModeId, models.DO_NOTHING)
     mult_obs_instrument_covims_channel = models.ForeignKey(MultObsInstrumentCovimsChannel, models.DO_NOTHING, db_column='mult_obs_instrument_covims_channel')
-    id = models.IntegerField(primary_key=True)
+    id = models.PositiveIntegerField(primary_key=True)
     timestamp = models.DateTimeField()
 
     class Meta:
@@ -1228,7 +1254,7 @@ class ObsInstrumentGossi(models.Model):
     mult_obs_instrument_gossi_frame_duration = models.ForeignKey(MultObsInstrumentGossiFrameDuration, models.DO_NOTHING, db_column='mult_obs_instrument_gossi_frame_duration')
     mult_obs_instrument_gossi_obstruction = models.ForeignKey(MultObsInstrumentGossiObstructionId, models.DO_NOTHING)
     mult_obs_instrument_gossi_compression_type = models.ForeignKey(MultObsInstrumentGossiCompressionType, models.DO_NOTHING, db_column='mult_obs_instrument_gossi_compression_type')
-    id = models.IntegerField(primary_key=True)
+    id = models.PositiveIntegerField(primary_key=True)
     timestamp = models.DateTimeField()
 
     class Meta:
@@ -1244,7 +1270,7 @@ class ObsInstrumentNhlorri(models.Model):
     binning_mode = models.CharField(max_length=3)
     mult_obs_instrument_nhlorri_instrument_compression_type = models.ForeignKey(MultObsInstrumentNhlorriInstrumentCompressionType, models.DO_NOTHING, db_column='mult_obs_instrument_nhlorri_instrument_compression_type')
     mult_obs_instrument_nhlorri_binning_mode = models.ForeignKey(MultObsInstrumentNhlorriBinningMode, models.DO_NOTHING, db_column='mult_obs_instrument_nhlorri_binning_mode')
-    id = models.IntegerField(primary_key=True)
+    id = models.PositiveIntegerField(primary_key=True)
     timestamp = models.DateTimeField()
 
     class Meta:
@@ -1258,7 +1284,7 @@ class ObsInstrumentNhmvic(models.Model):
     volume_id = models.CharField(max_length=11)
     instrument_compression_type = models.CharField(max_length=10)
     mult_obs_instrument_nhmvic_instrument_compression_type = models.ForeignKey(MultObsInstrumentNhmvicInstrumentCompressionType, models.DO_NOTHING, db_column='mult_obs_instrument_nhmvic_instrument_compression_type')
-    id = models.IntegerField(primary_key=True)
+    id = models.PositiveIntegerField(primary_key=True)
     timestamp = models.DateTimeField()
 
     class Meta:
@@ -1287,38 +1313,12 @@ class ObsInstrumentVgiss(models.Model):
     mult_obs_instrument_vgiss_filter_name = models.ForeignKey(MultObsInstrumentVgissFilterName, models.DO_NOTHING, db_column='mult_obs_instrument_vgiss_filter_name')
     mult_obs_instrument_vgiss_filter_number = models.ForeignKey(MultObsInstrumentVgissFilterNumber, models.DO_NOTHING, db_column='mult_obs_instrument_vgiss_filter_number')
     mult_obs_instrument_vgiss_camera = models.ForeignKey(MultObsInstrumentVgissCamera, models.DO_NOTHING, db_column='mult_obs_instrument_vgiss_camera')
-    id = models.IntegerField(primary_key=True)
+    id = models.PositiveIntegerField(primary_key=True)
     timestamp = models.DateTimeField()
 
     class Meta:
         managed = False
         db_table = 'obs_instrument_vgiss'
-
-
-class ObsInstrumentCocirs(models.Model):
-    obs_general = models.ForeignKey(ObsGeneral, models.DO_NOTHING)
-    opus_id = models.ForeignKey(ObsGeneral, models.DO_NOTHING, related_name='%(class)s_opus_id', db_column='opus_id')
-    volume_id = models.CharField(max_length=11)
-    detector_id = models.CharField(max_length=3)
-    instrument_mode_blinking_flag = models.CharField(max_length=3)
-    instrument_mode_even_flag = models.CharField(max_length=3)
-    instrument_mode_odd_flag = models.CharField(max_length=3)
-    instrument_mode_centers_flag = models.CharField(max_length=3)
-    instrument_mode_pairs_flag = models.CharField(max_length=3)
-    instrument_mode_all_flag = models.CharField(max_length=3)
-    mult_obs_instrument_cocirs_detector = models.ForeignKey(MultObsInstrumentCocirsDetectorId, models.DO_NOTHING)
-    mult_obs_instrument_cocirs_instrument_mode_blinking_flag = models.ForeignKey(MultObsInstrumentCocirsInstrumentModeBlinkingFlag, models.DO_NOTHING, db_column='mult_obs_instrument_cocirs_instrument_mode_blinking_flag')
-    mult_obs_instrument_cocirs_instrument_mode_even_flag = models.ForeignKey(MultObsInstrumentCocirsInstrumentModeEvenFlag, models.DO_NOTHING, db_column='mult_obs_instrument_cocirs_instrument_mode_even_flag')
-    mult_obs_instrument_cocirs_instrument_mode_odd_flag = models.ForeignKey(MultObsInstrumentCocirsInstrumentModeOddFlag, models.DO_NOTHING, db_column='mult_obs_instrument_cocirs_instrument_mode_odd_flag')
-    mult_obs_instrument_cocirs_instrument_mode_centers_flag = models.ForeignKey(MultObsInstrumentCocirsInstrumentModeCentersFlag, models.DO_NOTHING, db_column='mult_obs_instrument_cocirs_instrument_mode_centers_flag')
-    mult_obs_instrument_cocirs_instrument_mode_pairs_flag = models.ForeignKey(MultObsInstrumentCocirsInstrumentModePairsFlag, models.DO_NOTHING, db_column='mult_obs_instrument_cocirs_instrument_mode_pairs_flag')
-    mult_obs_instrument_cocirs_instrument_mode_all_flag = models.ForeignKey(MultObsInstrumentCocirsInstrumentModeAllFlag, models.DO_NOTHING, db_column='mult_obs_instrument_cocirs_instrument_mode_all_flag')
-    id = models.IntegerField(primary_key=True)
-    timestamp = models.DateTimeField()
-
-    class Meta:
-        managed = False
-        db_table = 'obs_instrument_cocirs'
 
 
 class ObsMissionCassini(models.Model):
@@ -1328,17 +1328,13 @@ class ObsMissionCassini(models.Model):
     instrument_id = models.CharField(max_length=9)
     obs_name = models.CharField(max_length=30)
     rev_no = models.CharField(max_length=3, blank=True, null=True)
-    rev_no_cvt = models.IntegerField(blank=True, null=True)
+    rev_no_int = models.IntegerField(blank=True, null=True)
     is_prime = models.CharField(max_length=3)
     prime_inst_id = models.CharField(max_length=6, blank=True, null=True)
-    spacecraft_clock_count1 = models.CharField(max_length=18, blank=True, null=True)
-    spacecraft_clock_count2 = models.CharField(max_length=18, blank=True, null=True)
-    spacecraft_clock_count_cvt1 = models.FloatField(blank=True, null=True)
-    spacecraft_clock_count_cvt2 = models.FloatField(blank=True, null=True)
-    ert1 = models.CharField(max_length=23, blank=True, null=True)
-    ert2 = models.CharField(max_length=23, blank=True, null=True)
-    ert_sec1 = models.FloatField(blank=True, null=True)
-    ert_sec2 = models.FloatField(blank=True, null=True)
+    spacecraft_clock_count1 = models.FloatField(blank=True, null=True)
+    spacecraft_clock_count2 = models.FloatField(blank=True, null=True)
+    ert1 = models.FloatField(blank=True, null=True)
+    ert2 = models.FloatField(blank=True, null=True)
     cassini_target_code = models.CharField(max_length=50, blank=True, null=True)
     activity_name = models.CharField(max_length=9, blank=True, null=True)
     mission_phase_name = models.CharField(max_length=32, blank=True, null=True)
@@ -1348,7 +1344,7 @@ class ObsMissionCassini(models.Model):
     mult_obs_mission_cassini_prime_inst = models.ForeignKey(MultObsMissionCassiniPrimeInstId, models.DO_NOTHING)
     mult_obs_mission_cassini_cassini_target_code = models.ForeignKey(MultObsMissionCassiniCassiniTargetCode, models.DO_NOTHING, db_column='mult_obs_mission_cassini_cassini_target_code')
     mult_obs_mission_cassini_mission_phase_name = models.ForeignKey(MultObsMissionCassiniMissionPhaseName, models.DO_NOTHING, db_column='mult_obs_mission_cassini_mission_phase_name')
-    id = models.IntegerField(primary_key=True)
+    id = models.PositiveIntegerField(primary_key=True)
     timestamp = models.DateTimeField()
 
     class Meta:
@@ -1361,12 +1357,10 @@ class ObsMissionGalileo(models.Model):
     opus_id = models.ForeignKey(ObsGeneral, models.DO_NOTHING, related_name='%(class)s_opus_id', db_column='opus_id')
     volume_id = models.CharField(max_length=11)
     orbit_number = models.IntegerField(blank=True, null=True)
-    spacecraft_clock_count1 = models.CharField(max_length=11, blank=True, null=True)
-    spacecraft_clock_count2 = models.CharField(max_length=11)
-    spacecraft_clock_count_cvt1 = models.FloatField(blank=True, null=True)
-    spacecraft_clock_count_cvt2 = models.FloatField(blank=True, null=True)
+    spacecraft_clock_count1 = models.FloatField(blank=True, null=True)
+    spacecraft_clock_count2 = models.FloatField()
     mult_obs_mission_galileo_orbit_number = models.ForeignKey(MultObsMissionGalileoOrbitNumber, models.DO_NOTHING, db_column='mult_obs_mission_galileo_orbit_number')
-    id = models.IntegerField(primary_key=True)
+    id = models.PositiveIntegerField(primary_key=True)
     timestamp = models.DateTimeField()
 
     class Meta:
@@ -1411,7 +1405,7 @@ class ObsMissionHubble(models.Model):
     mult_obs_mission_hubble_wf3_flag = models.ForeignKey(MultObsMissionHubbleWf3Flag, models.DO_NOTHING, db_column='mult_obs_mission_hubble_wf3_flag')
     mult_obs_mission_hubble_wf4_flag = models.ForeignKey(MultObsMissionHubbleWf4Flag, models.DO_NOTHING, db_column='mult_obs_mission_hubble_wf4_flag')
     mult_obs_mission_hubble_targeted_detector = models.ForeignKey(MultObsMissionHubbleTargetedDetectorId, models.DO_NOTHING)
-    id = models.IntegerField(primary_key=True)
+    id = models.PositiveIntegerField(primary_key=True)
     timestamp = models.DateTimeField()
 
     class Meta:
@@ -1430,7 +1424,7 @@ class ObsMissionNewHorizons(models.Model):
     spacecraft_clock_count_cvt2 = models.FloatField(blank=True, null=True)
     mission_phase = models.CharField(max_length=22, blank=True, null=True)
     mult_obs_mission_new_horizons_mission_phase = models.ForeignKey(MultObsMissionNewHorizonsMissionPhase, models.DO_NOTHING, db_column='mult_obs_mission_new_horizons_mission_phase')
-    id = models.IntegerField(primary_key=True)
+    id = models.PositiveIntegerField(primary_key=True)
     timestamp = models.DateTimeField()
 
     class Meta:
@@ -1442,15 +1436,12 @@ class ObsMissionVoyager(models.Model):
     obs_general = models.ForeignKey(ObsGeneral, models.DO_NOTHING)
     opus_id = models.ForeignKey(ObsGeneral, models.DO_NOTHING, related_name='%(class)s_opus_id', db_column='opus_id')
     volume_id = models.CharField(max_length=11)
-    ert = models.CharField(max_length=23, blank=True, null=True)
-    ert_sec = models.FloatField(blank=True, null=True)
-    spacecraft_clock_count1 = models.CharField(max_length=14, blank=True, null=True)
-    spacecraft_clock_count2 = models.CharField(max_length=14, blank=True, null=True)
-    spacecraft_clock_count_cvt1 = models.FloatField(blank=True, null=True)
-    spacecraft_clock_count_cvt2 = models.FloatField(blank=True, null=True)
+    ert = models.FloatField(blank=True, null=True)
+    spacecraft_clock_count1 = models.FloatField(blank=True, null=True)
+    spacecraft_clock_count2 = models.FloatField(blank=True, null=True)
     mission_phase_name = models.CharField(max_length=32, blank=True, null=True)
     mult_obs_mission_voyager_mission_phase_name = models.ForeignKey(MultObsMissionVoyagerMissionPhaseName, models.DO_NOTHING, db_column='mult_obs_mission_voyager_mission_phase_name')
-    id = models.IntegerField(primary_key=True)
+    id = models.PositiveIntegerField(primary_key=True)
     timestamp = models.DateTimeField()
 
     class Meta:
@@ -1464,12 +1455,11 @@ class ObsPds(models.Model):
     volume_id = models.CharField(max_length=11)
     instrument_id = models.CharField(max_length=9)
     data_set_id = models.CharField(max_length=40)
-    product_id = models.CharField(max_length=30, blank=True, null=True)
-    product_creation_time = models.CharField(max_length=23, blank=True, null=True)
-    product_creation_time_sec = models.FloatField(blank=True, null=True)
+    product_id = models.CharField(max_length=30)
+    product_creation_time = models.FloatField(blank=True, null=True)
     primary_file_spec = models.CharField(max_length=240, blank=True, null=True)
     note = models.CharField(max_length=255, blank=True, null=True)
-    id = models.IntegerField(primary_key=True)
+    id = models.PositiveIntegerField(primary_key=True)
     timestamp = models.DateTimeField()
 
     class Meta:
@@ -1542,7 +1532,7 @@ class ObsRingGeometry(models.Model):
     edge_on_solar_hour_angle2 = models.FloatField(blank=True, null=True)
     edge_on_solar_hour_angle = models.FloatField(blank=True, null=True)
     d_edge_on_solar_hour_angle = models.FloatField(blank=True, null=True)
-    id = models.IntegerField(primary_key=True)
+    id = models.PositiveIntegerField(primary_key=True)
     timestamp = models.DateTimeField()
 
     class Meta:
@@ -1557,7 +1547,7 @@ class ObsSurfaceGeometry(models.Model):
     instrument_id = models.CharField(max_length=9)
     target_name = models.CharField(max_length=75)
     mult_obs_surface_geometry_target_name = models.ForeignKey(MultObsSurfaceGeometryTargetName, models.DO_NOTHING, db_column='mult_obs_surface_geometry_target_name')
-    id = models.IntegerField(primary_key=True)
+    id = models.PositiveIntegerField(primary_key=True)
     timestamp = models.DateTimeField()
 
     class Meta:
@@ -1607,7 +1597,7 @@ class ObsSurfaceGeometryAdrastea(models.Model):
     center_resolution = models.FloatField(blank=True, null=True)
     center_distance = models.FloatField(blank=True, null=True)
     center_phase_angle = models.FloatField(blank=True, null=True)
-    id = models.IntegerField(primary_key=True)
+    id = models.PositiveIntegerField(primary_key=True)
     timestamp = models.DateTimeField()
 
     class Meta:
@@ -1657,7 +1647,7 @@ class ObsSurfaceGeometryAegaeon(models.Model):
     center_resolution = models.FloatField(blank=True, null=True)
     center_distance = models.FloatField(blank=True, null=True)
     center_phase_angle = models.FloatField(blank=True, null=True)
-    id = models.IntegerField(primary_key=True)
+    id = models.PositiveIntegerField(primary_key=True)
     timestamp = models.DateTimeField()
 
     class Meta:
@@ -1707,7 +1697,7 @@ class ObsSurfaceGeometryAlbiorix(models.Model):
     center_resolution = models.FloatField(blank=True, null=True)
     center_distance = models.FloatField(blank=True, null=True)
     center_phase_angle = models.FloatField(blank=True, null=True)
-    id = models.IntegerField(primary_key=True)
+    id = models.PositiveIntegerField(primary_key=True)
     timestamp = models.DateTimeField()
 
     class Meta:
@@ -1757,7 +1747,7 @@ class ObsSurfaceGeometryAmalthea(models.Model):
     center_resolution = models.FloatField(blank=True, null=True)
     center_distance = models.FloatField(blank=True, null=True)
     center_phase_angle = models.FloatField(blank=True, null=True)
-    id = models.IntegerField(primary_key=True)
+    id = models.PositiveIntegerField(primary_key=True)
     timestamp = models.DateTimeField()
 
     class Meta:
@@ -1807,7 +1797,7 @@ class ObsSurfaceGeometryAnthe(models.Model):
     center_resolution = models.FloatField(blank=True, null=True)
     center_distance = models.FloatField(blank=True, null=True)
     center_phase_angle = models.FloatField(blank=True, null=True)
-    id = models.IntegerField(primary_key=True)
+    id = models.PositiveIntegerField(primary_key=True)
     timestamp = models.DateTimeField()
 
     class Meta:
@@ -1857,7 +1847,7 @@ class ObsSurfaceGeometryAriel(models.Model):
     center_resolution = models.FloatField(blank=True, null=True)
     center_distance = models.FloatField(blank=True, null=True)
     center_phase_angle = models.FloatField(blank=True, null=True)
-    id = models.IntegerField(primary_key=True)
+    id = models.PositiveIntegerField(primary_key=True)
     timestamp = models.DateTimeField()
 
     class Meta:
@@ -1907,7 +1897,7 @@ class ObsSurfaceGeometryAtlas(models.Model):
     center_resolution = models.FloatField(blank=True, null=True)
     center_distance = models.FloatField(blank=True, null=True)
     center_phase_angle = models.FloatField(blank=True, null=True)
-    id = models.IntegerField(primary_key=True)
+    id = models.PositiveIntegerField(primary_key=True)
     timestamp = models.DateTimeField()
 
     class Meta:
@@ -1957,7 +1947,7 @@ class ObsSurfaceGeometryBebhionn(models.Model):
     center_resolution = models.FloatField(blank=True, null=True)
     center_distance = models.FloatField(blank=True, null=True)
     center_phase_angle = models.FloatField(blank=True, null=True)
-    id = models.IntegerField(primary_key=True)
+    id = models.PositiveIntegerField(primary_key=True)
     timestamp = models.DateTimeField()
 
     class Meta:
@@ -2007,7 +1997,7 @@ class ObsSurfaceGeometryBelinda(models.Model):
     center_resolution = models.FloatField(blank=True, null=True)
     center_distance = models.FloatField(blank=True, null=True)
     center_phase_angle = models.FloatField(blank=True, null=True)
-    id = models.IntegerField(primary_key=True)
+    id = models.PositiveIntegerField(primary_key=True)
     timestamp = models.DateTimeField()
 
     class Meta:
@@ -2057,7 +2047,7 @@ class ObsSurfaceGeometryBergelmir(models.Model):
     center_resolution = models.FloatField(blank=True, null=True)
     center_distance = models.FloatField(blank=True, null=True)
     center_phase_angle = models.FloatField(blank=True, null=True)
-    id = models.IntegerField(primary_key=True)
+    id = models.PositiveIntegerField(primary_key=True)
     timestamp = models.DateTimeField()
 
     class Meta:
@@ -2107,7 +2097,7 @@ class ObsSurfaceGeometryBestla(models.Model):
     center_resolution = models.FloatField(blank=True, null=True)
     center_distance = models.FloatField(blank=True, null=True)
     center_phase_angle = models.FloatField(blank=True, null=True)
-    id = models.IntegerField(primary_key=True)
+    id = models.PositiveIntegerField(primary_key=True)
     timestamp = models.DateTimeField()
 
     class Meta:
@@ -2157,7 +2147,7 @@ class ObsSurfaceGeometryBianca(models.Model):
     center_resolution = models.FloatField(blank=True, null=True)
     center_distance = models.FloatField(blank=True, null=True)
     center_phase_angle = models.FloatField(blank=True, null=True)
-    id = models.IntegerField(primary_key=True)
+    id = models.PositiveIntegerField(primary_key=True)
     timestamp = models.DateTimeField()
 
     class Meta:
@@ -2207,7 +2197,7 @@ class ObsSurfaceGeometryCallirrhoe(models.Model):
     center_resolution = models.FloatField(blank=True, null=True)
     center_distance = models.FloatField(blank=True, null=True)
     center_phase_angle = models.FloatField(blank=True, null=True)
-    id = models.IntegerField(primary_key=True)
+    id = models.PositiveIntegerField(primary_key=True)
     timestamp = models.DateTimeField()
 
     class Meta:
@@ -2257,7 +2247,7 @@ class ObsSurfaceGeometryCallisto(models.Model):
     center_resolution = models.FloatField(blank=True, null=True)
     center_distance = models.FloatField(blank=True, null=True)
     center_phase_angle = models.FloatField(blank=True, null=True)
-    id = models.IntegerField(primary_key=True)
+    id = models.PositiveIntegerField(primary_key=True)
     timestamp = models.DateTimeField()
 
     class Meta:
@@ -2307,7 +2297,7 @@ class ObsSurfaceGeometryCalypso(models.Model):
     center_resolution = models.FloatField(blank=True, null=True)
     center_distance = models.FloatField(blank=True, null=True)
     center_phase_angle = models.FloatField(blank=True, null=True)
-    id = models.IntegerField(primary_key=True)
+    id = models.PositiveIntegerField(primary_key=True)
     timestamp = models.DateTimeField()
 
     class Meta:
@@ -2357,7 +2347,7 @@ class ObsSurfaceGeometryCharon(models.Model):
     center_resolution = models.FloatField(blank=True, null=True)
     center_distance = models.FloatField(blank=True, null=True)
     center_phase_angle = models.FloatField(blank=True, null=True)
-    id = models.IntegerField(primary_key=True)
+    id = models.PositiveIntegerField(primary_key=True)
     timestamp = models.DateTimeField()
 
     class Meta:
@@ -2407,7 +2397,7 @@ class ObsSurfaceGeometryCordelia(models.Model):
     center_resolution = models.FloatField(blank=True, null=True)
     center_distance = models.FloatField(blank=True, null=True)
     center_phase_angle = models.FloatField(blank=True, null=True)
-    id = models.IntegerField(primary_key=True)
+    id = models.PositiveIntegerField(primary_key=True)
     timestamp = models.DateTimeField()
 
     class Meta:
@@ -2457,7 +2447,7 @@ class ObsSurfaceGeometryCressida(models.Model):
     center_resolution = models.FloatField(blank=True, null=True)
     center_distance = models.FloatField(blank=True, null=True)
     center_phase_angle = models.FloatField(blank=True, null=True)
-    id = models.IntegerField(primary_key=True)
+    id = models.PositiveIntegerField(primary_key=True)
     timestamp = models.DateTimeField()
 
     class Meta:
@@ -2507,7 +2497,7 @@ class ObsSurfaceGeometryCupid(models.Model):
     center_resolution = models.FloatField(blank=True, null=True)
     center_distance = models.FloatField(blank=True, null=True)
     center_phase_angle = models.FloatField(blank=True, null=True)
-    id = models.IntegerField(primary_key=True)
+    id = models.PositiveIntegerField(primary_key=True)
     timestamp = models.DateTimeField()
 
     class Meta:
@@ -2557,7 +2547,7 @@ class ObsSurfaceGeometryDaphnis(models.Model):
     center_resolution = models.FloatField(blank=True, null=True)
     center_distance = models.FloatField(blank=True, null=True)
     center_phase_angle = models.FloatField(blank=True, null=True)
-    id = models.IntegerField(primary_key=True)
+    id = models.PositiveIntegerField(primary_key=True)
     timestamp = models.DateTimeField()
 
     class Meta:
@@ -2607,7 +2597,7 @@ class ObsSurfaceGeometryDesdemona(models.Model):
     center_resolution = models.FloatField(blank=True, null=True)
     center_distance = models.FloatField(blank=True, null=True)
     center_phase_angle = models.FloatField(blank=True, null=True)
-    id = models.IntegerField(primary_key=True)
+    id = models.PositiveIntegerField(primary_key=True)
     timestamp = models.DateTimeField()
 
     class Meta:
@@ -2657,7 +2647,7 @@ class ObsSurfaceGeometryDespina(models.Model):
     center_resolution = models.FloatField(blank=True, null=True)
     center_distance = models.FloatField(blank=True, null=True)
     center_phase_angle = models.FloatField(blank=True, null=True)
-    id = models.IntegerField(primary_key=True)
+    id = models.PositiveIntegerField(primary_key=True)
     timestamp = models.DateTimeField()
 
     class Meta:
@@ -2707,7 +2697,7 @@ class ObsSurfaceGeometryDione(models.Model):
     center_resolution = models.FloatField(blank=True, null=True)
     center_distance = models.FloatField(blank=True, null=True)
     center_phase_angle = models.FloatField(blank=True, null=True)
-    id = models.IntegerField(primary_key=True)
+    id = models.PositiveIntegerField(primary_key=True)
     timestamp = models.DateTimeField()
 
     class Meta:
@@ -2757,7 +2747,7 @@ class ObsSurfaceGeometryEarth(models.Model):
     center_resolution = models.FloatField(blank=True, null=True)
     center_distance = models.FloatField(blank=True, null=True)
     center_phase_angle = models.FloatField(blank=True, null=True)
-    id = models.IntegerField(primary_key=True)
+    id = models.PositiveIntegerField(primary_key=True)
     timestamp = models.DateTimeField()
 
     class Meta:
@@ -2807,7 +2797,7 @@ class ObsSurfaceGeometryElara(models.Model):
     center_resolution = models.FloatField(blank=True, null=True)
     center_distance = models.FloatField(blank=True, null=True)
     center_phase_angle = models.FloatField(blank=True, null=True)
-    id = models.IntegerField(primary_key=True)
+    id = models.PositiveIntegerField(primary_key=True)
     timestamp = models.DateTimeField()
 
     class Meta:
@@ -2857,7 +2847,7 @@ class ObsSurfaceGeometryEnceladus(models.Model):
     center_resolution = models.FloatField(blank=True, null=True)
     center_distance = models.FloatField(blank=True, null=True)
     center_phase_angle = models.FloatField(blank=True, null=True)
-    id = models.IntegerField(primary_key=True)
+    id = models.PositiveIntegerField(primary_key=True)
     timestamp = models.DateTimeField()
 
     class Meta:
@@ -2907,7 +2897,7 @@ class ObsSurfaceGeometryEpimetheus(models.Model):
     center_resolution = models.FloatField(blank=True, null=True)
     center_distance = models.FloatField(blank=True, null=True)
     center_phase_angle = models.FloatField(blank=True, null=True)
-    id = models.IntegerField(primary_key=True)
+    id = models.PositiveIntegerField(primary_key=True)
     timestamp = models.DateTimeField()
 
     class Meta:
@@ -2957,7 +2947,7 @@ class ObsSurfaceGeometryErriapus(models.Model):
     center_resolution = models.FloatField(blank=True, null=True)
     center_distance = models.FloatField(blank=True, null=True)
     center_phase_angle = models.FloatField(blank=True, null=True)
-    id = models.IntegerField(primary_key=True)
+    id = models.PositiveIntegerField(primary_key=True)
     timestamp = models.DateTimeField()
 
     class Meta:
@@ -3007,7 +2997,7 @@ class ObsSurfaceGeometryEuropa(models.Model):
     center_resolution = models.FloatField(blank=True, null=True)
     center_distance = models.FloatField(blank=True, null=True)
     center_phase_angle = models.FloatField(blank=True, null=True)
-    id = models.IntegerField(primary_key=True)
+    id = models.PositiveIntegerField(primary_key=True)
     timestamp = models.DateTimeField()
 
     class Meta:
@@ -3057,7 +3047,7 @@ class ObsSurfaceGeometryFornjot(models.Model):
     center_resolution = models.FloatField(blank=True, null=True)
     center_distance = models.FloatField(blank=True, null=True)
     center_phase_angle = models.FloatField(blank=True, null=True)
-    id = models.IntegerField(primary_key=True)
+    id = models.PositiveIntegerField(primary_key=True)
     timestamp = models.DateTimeField()
 
     class Meta:
@@ -3107,7 +3097,7 @@ class ObsSurfaceGeometryGalatea(models.Model):
     center_resolution = models.FloatField(blank=True, null=True)
     center_distance = models.FloatField(blank=True, null=True)
     center_phase_angle = models.FloatField(blank=True, null=True)
-    id = models.IntegerField(primary_key=True)
+    id = models.PositiveIntegerField(primary_key=True)
     timestamp = models.DateTimeField()
 
     class Meta:
@@ -3157,7 +3147,7 @@ class ObsSurfaceGeometryGanymede(models.Model):
     center_resolution = models.FloatField(blank=True, null=True)
     center_distance = models.FloatField(blank=True, null=True)
     center_phase_angle = models.FloatField(blank=True, null=True)
-    id = models.IntegerField(primary_key=True)
+    id = models.PositiveIntegerField(primary_key=True)
     timestamp = models.DateTimeField()
 
     class Meta:
@@ -3207,7 +3197,7 @@ class ObsSurfaceGeometryGreip(models.Model):
     center_resolution = models.FloatField(blank=True, null=True)
     center_distance = models.FloatField(blank=True, null=True)
     center_phase_angle = models.FloatField(blank=True, null=True)
-    id = models.IntegerField(primary_key=True)
+    id = models.PositiveIntegerField(primary_key=True)
     timestamp = models.DateTimeField()
 
     class Meta:
@@ -3257,7 +3247,7 @@ class ObsSurfaceGeometryHati(models.Model):
     center_resolution = models.FloatField(blank=True, null=True)
     center_distance = models.FloatField(blank=True, null=True)
     center_phase_angle = models.FloatField(blank=True, null=True)
-    id = models.IntegerField(primary_key=True)
+    id = models.PositiveIntegerField(primary_key=True)
     timestamp = models.DateTimeField()
 
     class Meta:
@@ -3307,7 +3297,7 @@ class ObsSurfaceGeometryHelene(models.Model):
     center_resolution = models.FloatField(blank=True, null=True)
     center_distance = models.FloatField(blank=True, null=True)
     center_phase_angle = models.FloatField(blank=True, null=True)
-    id = models.IntegerField(primary_key=True)
+    id = models.PositiveIntegerField(primary_key=True)
     timestamp = models.DateTimeField()
 
     class Meta:
@@ -3357,7 +3347,7 @@ class ObsSurfaceGeometryHimalia(models.Model):
     center_resolution = models.FloatField(blank=True, null=True)
     center_distance = models.FloatField(blank=True, null=True)
     center_phase_angle = models.FloatField(blank=True, null=True)
-    id = models.IntegerField(primary_key=True)
+    id = models.PositiveIntegerField(primary_key=True)
     timestamp = models.DateTimeField()
 
     class Meta:
@@ -3407,7 +3397,7 @@ class ObsSurfaceGeometryHydra(models.Model):
     center_resolution = models.FloatField(blank=True, null=True)
     center_distance = models.FloatField(blank=True, null=True)
     center_phase_angle = models.FloatField(blank=True, null=True)
-    id = models.IntegerField(primary_key=True)
+    id = models.PositiveIntegerField(primary_key=True)
     timestamp = models.DateTimeField()
 
     class Meta:
@@ -3457,7 +3447,7 @@ class ObsSurfaceGeometryHyperion(models.Model):
     center_resolution = models.FloatField(blank=True, null=True)
     center_distance = models.FloatField(blank=True, null=True)
     center_phase_angle = models.FloatField(blank=True, null=True)
-    id = models.IntegerField(primary_key=True)
+    id = models.PositiveIntegerField(primary_key=True)
     timestamp = models.DateTimeField()
 
     class Meta:
@@ -3507,7 +3497,7 @@ class ObsSurfaceGeometryHyrrokkin(models.Model):
     center_resolution = models.FloatField(blank=True, null=True)
     center_distance = models.FloatField(blank=True, null=True)
     center_phase_angle = models.FloatField(blank=True, null=True)
-    id = models.IntegerField(primary_key=True)
+    id = models.PositiveIntegerField(primary_key=True)
     timestamp = models.DateTimeField()
 
     class Meta:
@@ -3557,7 +3547,7 @@ class ObsSurfaceGeometryIapetus(models.Model):
     center_resolution = models.FloatField(blank=True, null=True)
     center_distance = models.FloatField(blank=True, null=True)
     center_phase_angle = models.FloatField(blank=True, null=True)
-    id = models.IntegerField(primary_key=True)
+    id = models.PositiveIntegerField(primary_key=True)
     timestamp = models.DateTimeField()
 
     class Meta:
@@ -3607,7 +3597,7 @@ class ObsSurfaceGeometryIjiraq(models.Model):
     center_resolution = models.FloatField(blank=True, null=True)
     center_distance = models.FloatField(blank=True, null=True)
     center_phase_angle = models.FloatField(blank=True, null=True)
-    id = models.IntegerField(primary_key=True)
+    id = models.PositiveIntegerField(primary_key=True)
     timestamp = models.DateTimeField()
 
     class Meta:
@@ -3657,7 +3647,7 @@ class ObsSurfaceGeometryIo(models.Model):
     center_resolution = models.FloatField(blank=True, null=True)
     center_distance = models.FloatField(blank=True, null=True)
     center_phase_angle = models.FloatField(blank=True, null=True)
-    id = models.IntegerField(primary_key=True)
+    id = models.PositiveIntegerField(primary_key=True)
     timestamp = models.DateTimeField()
 
     class Meta:
@@ -3707,7 +3697,7 @@ class ObsSurfaceGeometryJanus(models.Model):
     center_resolution = models.FloatField(blank=True, null=True)
     center_distance = models.FloatField(blank=True, null=True)
     center_phase_angle = models.FloatField(blank=True, null=True)
-    id = models.IntegerField(primary_key=True)
+    id = models.PositiveIntegerField(primary_key=True)
     timestamp = models.DateTimeField()
 
     class Meta:
@@ -3757,7 +3747,7 @@ class ObsSurfaceGeometryJarnsaxa(models.Model):
     center_resolution = models.FloatField(blank=True, null=True)
     center_distance = models.FloatField(blank=True, null=True)
     center_phase_angle = models.FloatField(blank=True, null=True)
-    id = models.IntegerField(primary_key=True)
+    id = models.PositiveIntegerField(primary_key=True)
     timestamp = models.DateTimeField()
 
     class Meta:
@@ -3807,7 +3797,7 @@ class ObsSurfaceGeometryJuliet(models.Model):
     center_resolution = models.FloatField(blank=True, null=True)
     center_distance = models.FloatField(blank=True, null=True)
     center_phase_angle = models.FloatField(blank=True, null=True)
-    id = models.IntegerField(primary_key=True)
+    id = models.PositiveIntegerField(primary_key=True)
     timestamp = models.DateTimeField()
 
     class Meta:
@@ -3857,7 +3847,7 @@ class ObsSurfaceGeometryJupiter(models.Model):
     center_resolution = models.FloatField(blank=True, null=True)
     center_distance = models.FloatField(blank=True, null=True)
     center_phase_angle = models.FloatField(blank=True, null=True)
-    id = models.IntegerField(primary_key=True)
+    id = models.PositiveIntegerField(primary_key=True)
     timestamp = models.DateTimeField()
 
     class Meta:
@@ -3907,7 +3897,7 @@ class ObsSurfaceGeometryKari(models.Model):
     center_resolution = models.FloatField(blank=True, null=True)
     center_distance = models.FloatField(blank=True, null=True)
     center_phase_angle = models.FloatField(blank=True, null=True)
-    id = models.IntegerField(primary_key=True)
+    id = models.PositiveIntegerField(primary_key=True)
     timestamp = models.DateTimeField()
 
     class Meta:
@@ -3957,7 +3947,7 @@ class ObsSurfaceGeometryKerberos(models.Model):
     center_resolution = models.FloatField(blank=True, null=True)
     center_distance = models.FloatField(blank=True, null=True)
     center_phase_angle = models.FloatField(blank=True, null=True)
-    id = models.IntegerField(primary_key=True)
+    id = models.PositiveIntegerField(primary_key=True)
     timestamp = models.DateTimeField()
 
     class Meta:
@@ -4007,7 +3997,7 @@ class ObsSurfaceGeometryKiviuq(models.Model):
     center_resolution = models.FloatField(blank=True, null=True)
     center_distance = models.FloatField(blank=True, null=True)
     center_phase_angle = models.FloatField(blank=True, null=True)
-    id = models.IntegerField(primary_key=True)
+    id = models.PositiveIntegerField(primary_key=True)
     timestamp = models.DateTimeField()
 
     class Meta:
@@ -4057,7 +4047,7 @@ class ObsSurfaceGeometryLarissa(models.Model):
     center_resolution = models.FloatField(blank=True, null=True)
     center_distance = models.FloatField(blank=True, null=True)
     center_phase_angle = models.FloatField(blank=True, null=True)
-    id = models.IntegerField(primary_key=True)
+    id = models.PositiveIntegerField(primary_key=True)
     timestamp = models.DateTimeField()
 
     class Meta:
@@ -4107,7 +4097,7 @@ class ObsSurfaceGeometryLoge(models.Model):
     center_resolution = models.FloatField(blank=True, null=True)
     center_distance = models.FloatField(blank=True, null=True)
     center_phase_angle = models.FloatField(blank=True, null=True)
-    id = models.IntegerField(primary_key=True)
+    id = models.PositiveIntegerField(primary_key=True)
     timestamp = models.DateTimeField()
 
     class Meta:
@@ -4157,7 +4147,7 @@ class ObsSurfaceGeometryMab(models.Model):
     center_resolution = models.FloatField(blank=True, null=True)
     center_distance = models.FloatField(blank=True, null=True)
     center_phase_angle = models.FloatField(blank=True, null=True)
-    id = models.IntegerField(primary_key=True)
+    id = models.PositiveIntegerField(primary_key=True)
     timestamp = models.DateTimeField()
 
     class Meta:
@@ -4207,7 +4197,7 @@ class ObsSurfaceGeometryMethone(models.Model):
     center_resolution = models.FloatField(blank=True, null=True)
     center_distance = models.FloatField(blank=True, null=True)
     center_phase_angle = models.FloatField(blank=True, null=True)
-    id = models.IntegerField(primary_key=True)
+    id = models.PositiveIntegerField(primary_key=True)
     timestamp = models.DateTimeField()
 
     class Meta:
@@ -4257,7 +4247,7 @@ class ObsSurfaceGeometryMetis(models.Model):
     center_resolution = models.FloatField(blank=True, null=True)
     center_distance = models.FloatField(blank=True, null=True)
     center_phase_angle = models.FloatField(blank=True, null=True)
-    id = models.IntegerField(primary_key=True)
+    id = models.PositiveIntegerField(primary_key=True)
     timestamp = models.DateTimeField()
 
     class Meta:
@@ -4307,7 +4297,7 @@ class ObsSurfaceGeometryMimas(models.Model):
     center_resolution = models.FloatField(blank=True, null=True)
     center_distance = models.FloatField(blank=True, null=True)
     center_phase_angle = models.FloatField(blank=True, null=True)
-    id = models.IntegerField(primary_key=True)
+    id = models.PositiveIntegerField(primary_key=True)
     timestamp = models.DateTimeField()
 
     class Meta:
@@ -4357,7 +4347,7 @@ class ObsSurfaceGeometryMiranda(models.Model):
     center_resolution = models.FloatField(blank=True, null=True)
     center_distance = models.FloatField(blank=True, null=True)
     center_phase_angle = models.FloatField(blank=True, null=True)
-    id = models.IntegerField(primary_key=True)
+    id = models.PositiveIntegerField(primary_key=True)
     timestamp = models.DateTimeField()
 
     class Meta:
@@ -4407,7 +4397,7 @@ class ObsSurfaceGeometryMundilfari(models.Model):
     center_resolution = models.FloatField(blank=True, null=True)
     center_distance = models.FloatField(blank=True, null=True)
     center_phase_angle = models.FloatField(blank=True, null=True)
-    id = models.IntegerField(primary_key=True)
+    id = models.PositiveIntegerField(primary_key=True)
     timestamp = models.DateTimeField()
 
     class Meta:
@@ -4457,7 +4447,7 @@ class ObsSurfaceGeometryNaiad(models.Model):
     center_resolution = models.FloatField(blank=True, null=True)
     center_distance = models.FloatField(blank=True, null=True)
     center_phase_angle = models.FloatField(blank=True, null=True)
-    id = models.IntegerField(primary_key=True)
+    id = models.PositiveIntegerField(primary_key=True)
     timestamp = models.DateTimeField()
 
     class Meta:
@@ -4507,7 +4497,7 @@ class ObsSurfaceGeometryNarvi(models.Model):
     center_resolution = models.FloatField(blank=True, null=True)
     center_distance = models.FloatField(blank=True, null=True)
     center_phase_angle = models.FloatField(blank=True, null=True)
-    id = models.IntegerField(primary_key=True)
+    id = models.PositiveIntegerField(primary_key=True)
     timestamp = models.DateTimeField()
 
     class Meta:
@@ -4557,7 +4547,7 @@ class ObsSurfaceGeometryNeptune(models.Model):
     center_resolution = models.FloatField(blank=True, null=True)
     center_distance = models.FloatField(blank=True, null=True)
     center_phase_angle = models.FloatField(blank=True, null=True)
-    id = models.IntegerField(primary_key=True)
+    id = models.PositiveIntegerField(primary_key=True)
     timestamp = models.DateTimeField()
 
     class Meta:
@@ -4607,7 +4597,7 @@ class ObsSurfaceGeometryNereid(models.Model):
     center_resolution = models.FloatField(blank=True, null=True)
     center_distance = models.FloatField(blank=True, null=True)
     center_phase_angle = models.FloatField(blank=True, null=True)
-    id = models.IntegerField(primary_key=True)
+    id = models.PositiveIntegerField(primary_key=True)
     timestamp = models.DateTimeField()
 
     class Meta:
@@ -4657,7 +4647,7 @@ class ObsSurfaceGeometryNix(models.Model):
     center_resolution = models.FloatField(blank=True, null=True)
     center_distance = models.FloatField(blank=True, null=True)
     center_phase_angle = models.FloatField(blank=True, null=True)
-    id = models.IntegerField(primary_key=True)
+    id = models.PositiveIntegerField(primary_key=True)
     timestamp = models.DateTimeField()
 
     class Meta:
@@ -4707,7 +4697,7 @@ class ObsSurfaceGeometryOberon(models.Model):
     center_resolution = models.FloatField(blank=True, null=True)
     center_distance = models.FloatField(blank=True, null=True)
     center_phase_angle = models.FloatField(blank=True, null=True)
-    id = models.IntegerField(primary_key=True)
+    id = models.PositiveIntegerField(primary_key=True)
     timestamp = models.DateTimeField()
 
     class Meta:
@@ -4757,7 +4747,7 @@ class ObsSurfaceGeometryOphelia(models.Model):
     center_resolution = models.FloatField(blank=True, null=True)
     center_distance = models.FloatField(blank=True, null=True)
     center_phase_angle = models.FloatField(blank=True, null=True)
-    id = models.IntegerField(primary_key=True)
+    id = models.PositiveIntegerField(primary_key=True)
     timestamp = models.DateTimeField()
 
     class Meta:
@@ -4807,7 +4797,7 @@ class ObsSurfaceGeometryPaaliaq(models.Model):
     center_resolution = models.FloatField(blank=True, null=True)
     center_distance = models.FloatField(blank=True, null=True)
     center_phase_angle = models.FloatField(blank=True, null=True)
-    id = models.IntegerField(primary_key=True)
+    id = models.PositiveIntegerField(primary_key=True)
     timestamp = models.DateTimeField()
 
     class Meta:
@@ -4857,7 +4847,7 @@ class ObsSurfaceGeometryPallene(models.Model):
     center_resolution = models.FloatField(blank=True, null=True)
     center_distance = models.FloatField(blank=True, null=True)
     center_phase_angle = models.FloatField(blank=True, null=True)
-    id = models.IntegerField(primary_key=True)
+    id = models.PositiveIntegerField(primary_key=True)
     timestamp = models.DateTimeField()
 
     class Meta:
@@ -4907,7 +4897,7 @@ class ObsSurfaceGeometryPan(models.Model):
     center_resolution = models.FloatField(blank=True, null=True)
     center_distance = models.FloatField(blank=True, null=True)
     center_phase_angle = models.FloatField(blank=True, null=True)
-    id = models.IntegerField(primary_key=True)
+    id = models.PositiveIntegerField(primary_key=True)
     timestamp = models.DateTimeField()
 
     class Meta:
@@ -4957,7 +4947,7 @@ class ObsSurfaceGeometryPandora(models.Model):
     center_resolution = models.FloatField(blank=True, null=True)
     center_distance = models.FloatField(blank=True, null=True)
     center_phase_angle = models.FloatField(blank=True, null=True)
-    id = models.IntegerField(primary_key=True)
+    id = models.PositiveIntegerField(primary_key=True)
     timestamp = models.DateTimeField()
 
     class Meta:
@@ -5007,7 +4997,7 @@ class ObsSurfaceGeometryPerdita(models.Model):
     center_resolution = models.FloatField(blank=True, null=True)
     center_distance = models.FloatField(blank=True, null=True)
     center_phase_angle = models.FloatField(blank=True, null=True)
-    id = models.IntegerField(primary_key=True)
+    id = models.PositiveIntegerField(primary_key=True)
     timestamp = models.DateTimeField()
 
     class Meta:
@@ -5057,7 +5047,7 @@ class ObsSurfaceGeometryPhoebe(models.Model):
     center_resolution = models.FloatField(blank=True, null=True)
     center_distance = models.FloatField(blank=True, null=True)
     center_phase_angle = models.FloatField(blank=True, null=True)
-    id = models.IntegerField(primary_key=True)
+    id = models.PositiveIntegerField(primary_key=True)
     timestamp = models.DateTimeField()
 
     class Meta:
@@ -5107,7 +5097,7 @@ class ObsSurfaceGeometryPluto(models.Model):
     center_resolution = models.FloatField(blank=True, null=True)
     center_distance = models.FloatField(blank=True, null=True)
     center_phase_angle = models.FloatField(blank=True, null=True)
-    id = models.IntegerField(primary_key=True)
+    id = models.PositiveIntegerField(primary_key=True)
     timestamp = models.DateTimeField()
 
     class Meta:
@@ -5157,7 +5147,7 @@ class ObsSurfaceGeometryPolydeuces(models.Model):
     center_resolution = models.FloatField(blank=True, null=True)
     center_distance = models.FloatField(blank=True, null=True)
     center_phase_angle = models.FloatField(blank=True, null=True)
-    id = models.IntegerField(primary_key=True)
+    id = models.PositiveIntegerField(primary_key=True)
     timestamp = models.DateTimeField()
 
     class Meta:
@@ -5207,7 +5197,7 @@ class ObsSurfaceGeometryPortia(models.Model):
     center_resolution = models.FloatField(blank=True, null=True)
     center_distance = models.FloatField(blank=True, null=True)
     center_phase_angle = models.FloatField(blank=True, null=True)
-    id = models.IntegerField(primary_key=True)
+    id = models.PositiveIntegerField(primary_key=True)
     timestamp = models.DateTimeField()
 
     class Meta:
@@ -5257,7 +5247,7 @@ class ObsSurfaceGeometryPrometheus(models.Model):
     center_resolution = models.FloatField(blank=True, null=True)
     center_distance = models.FloatField(blank=True, null=True)
     center_phase_angle = models.FloatField(blank=True, null=True)
-    id = models.IntegerField(primary_key=True)
+    id = models.PositiveIntegerField(primary_key=True)
     timestamp = models.DateTimeField()
 
     class Meta:
@@ -5307,7 +5297,7 @@ class ObsSurfaceGeometryProteus(models.Model):
     center_resolution = models.FloatField(blank=True, null=True)
     center_distance = models.FloatField(blank=True, null=True)
     center_phase_angle = models.FloatField(blank=True, null=True)
-    id = models.IntegerField(primary_key=True)
+    id = models.PositiveIntegerField(primary_key=True)
     timestamp = models.DateTimeField()
 
     class Meta:
@@ -5357,7 +5347,7 @@ class ObsSurfaceGeometryPuck(models.Model):
     center_resolution = models.FloatField(blank=True, null=True)
     center_distance = models.FloatField(blank=True, null=True)
     center_phase_angle = models.FloatField(blank=True, null=True)
-    id = models.IntegerField(primary_key=True)
+    id = models.PositiveIntegerField(primary_key=True)
     timestamp = models.DateTimeField()
 
     class Meta:
@@ -5407,7 +5397,7 @@ class ObsSurfaceGeometryRhea(models.Model):
     center_resolution = models.FloatField(blank=True, null=True)
     center_distance = models.FloatField(blank=True, null=True)
     center_phase_angle = models.FloatField(blank=True, null=True)
-    id = models.IntegerField(primary_key=True)
+    id = models.PositiveIntegerField(primary_key=True)
     timestamp = models.DateTimeField()
 
     class Meta:
@@ -5457,7 +5447,7 @@ class ObsSurfaceGeometryRosalind(models.Model):
     center_resolution = models.FloatField(blank=True, null=True)
     center_distance = models.FloatField(blank=True, null=True)
     center_phase_angle = models.FloatField(blank=True, null=True)
-    id = models.IntegerField(primary_key=True)
+    id = models.PositiveIntegerField(primary_key=True)
     timestamp = models.DateTimeField()
 
     class Meta:
@@ -5507,7 +5497,7 @@ class ObsSurfaceGeometryS2004S12(models.Model):
     center_resolution = models.FloatField(blank=True, null=True)
     center_distance = models.FloatField(blank=True, null=True)
     center_phase_angle = models.FloatField(blank=True, null=True)
-    id = models.IntegerField(primary_key=True)
+    id = models.PositiveIntegerField(primary_key=True)
     timestamp = models.DateTimeField()
 
     class Meta:
@@ -5557,7 +5547,7 @@ class ObsSurfaceGeometryS2004S13(models.Model):
     center_resolution = models.FloatField(blank=True, null=True)
     center_distance = models.FloatField(blank=True, null=True)
     center_phase_angle = models.FloatField(blank=True, null=True)
-    id = models.IntegerField(primary_key=True)
+    id = models.PositiveIntegerField(primary_key=True)
     timestamp = models.DateTimeField()
 
     class Meta:
@@ -5607,7 +5597,7 @@ class ObsSurfaceGeometrySaturn(models.Model):
     center_resolution = models.FloatField(blank=True, null=True)
     center_distance = models.FloatField(blank=True, null=True)
     center_phase_angle = models.FloatField(blank=True, null=True)
-    id = models.IntegerField(primary_key=True)
+    id = models.PositiveIntegerField(primary_key=True)
     timestamp = models.DateTimeField()
 
     class Meta:
@@ -5657,7 +5647,7 @@ class ObsSurfaceGeometrySiarnaq(models.Model):
     center_resolution = models.FloatField(blank=True, null=True)
     center_distance = models.FloatField(blank=True, null=True)
     center_phase_angle = models.FloatField(blank=True, null=True)
-    id = models.IntegerField(primary_key=True)
+    id = models.PositiveIntegerField(primary_key=True)
     timestamp = models.DateTimeField()
 
     class Meta:
@@ -5707,7 +5697,7 @@ class ObsSurfaceGeometrySkathi(models.Model):
     center_resolution = models.FloatField(blank=True, null=True)
     center_distance = models.FloatField(blank=True, null=True)
     center_phase_angle = models.FloatField(blank=True, null=True)
-    id = models.IntegerField(primary_key=True)
+    id = models.PositiveIntegerField(primary_key=True)
     timestamp = models.DateTimeField()
 
     class Meta:
@@ -5757,7 +5747,7 @@ class ObsSurfaceGeometrySkoll(models.Model):
     center_resolution = models.FloatField(blank=True, null=True)
     center_distance = models.FloatField(blank=True, null=True)
     center_phase_angle = models.FloatField(blank=True, null=True)
-    id = models.IntegerField(primary_key=True)
+    id = models.PositiveIntegerField(primary_key=True)
     timestamp = models.DateTimeField()
 
     class Meta:
@@ -5807,7 +5797,7 @@ class ObsSurfaceGeometryStyx(models.Model):
     center_resolution = models.FloatField(blank=True, null=True)
     center_distance = models.FloatField(blank=True, null=True)
     center_phase_angle = models.FloatField(blank=True, null=True)
-    id = models.IntegerField(primary_key=True)
+    id = models.PositiveIntegerField(primary_key=True)
     timestamp = models.DateTimeField()
 
     class Meta:
@@ -5857,7 +5847,7 @@ class ObsSurfaceGeometrySurtur(models.Model):
     center_resolution = models.FloatField(blank=True, null=True)
     center_distance = models.FloatField(blank=True, null=True)
     center_phase_angle = models.FloatField(blank=True, null=True)
-    id = models.IntegerField(primary_key=True)
+    id = models.PositiveIntegerField(primary_key=True)
     timestamp = models.DateTimeField()
 
     class Meta:
@@ -5907,7 +5897,7 @@ class ObsSurfaceGeometrySuttungr(models.Model):
     center_resolution = models.FloatField(blank=True, null=True)
     center_distance = models.FloatField(blank=True, null=True)
     center_phase_angle = models.FloatField(blank=True, null=True)
-    id = models.IntegerField(primary_key=True)
+    id = models.PositiveIntegerField(primary_key=True)
     timestamp = models.DateTimeField()
 
     class Meta:
@@ -5957,7 +5947,7 @@ class ObsSurfaceGeometryTarqeq(models.Model):
     center_resolution = models.FloatField(blank=True, null=True)
     center_distance = models.FloatField(blank=True, null=True)
     center_phase_angle = models.FloatField(blank=True, null=True)
-    id = models.IntegerField(primary_key=True)
+    id = models.PositiveIntegerField(primary_key=True)
     timestamp = models.DateTimeField()
 
     class Meta:
@@ -6007,7 +5997,7 @@ class ObsSurfaceGeometryTarvos(models.Model):
     center_resolution = models.FloatField(blank=True, null=True)
     center_distance = models.FloatField(blank=True, null=True)
     center_phase_angle = models.FloatField(blank=True, null=True)
-    id = models.IntegerField(primary_key=True)
+    id = models.PositiveIntegerField(primary_key=True)
     timestamp = models.DateTimeField()
 
     class Meta:
@@ -6057,7 +6047,7 @@ class ObsSurfaceGeometryTelesto(models.Model):
     center_resolution = models.FloatField(blank=True, null=True)
     center_distance = models.FloatField(blank=True, null=True)
     center_phase_angle = models.FloatField(blank=True, null=True)
-    id = models.IntegerField(primary_key=True)
+    id = models.PositiveIntegerField(primary_key=True)
     timestamp = models.DateTimeField()
 
     class Meta:
@@ -6107,7 +6097,7 @@ class ObsSurfaceGeometryTethys(models.Model):
     center_resolution = models.FloatField(blank=True, null=True)
     center_distance = models.FloatField(blank=True, null=True)
     center_phase_angle = models.FloatField(blank=True, null=True)
-    id = models.IntegerField(primary_key=True)
+    id = models.PositiveIntegerField(primary_key=True)
     timestamp = models.DateTimeField()
 
     class Meta:
@@ -6157,7 +6147,7 @@ class ObsSurfaceGeometryThalassa(models.Model):
     center_resolution = models.FloatField(blank=True, null=True)
     center_distance = models.FloatField(blank=True, null=True)
     center_phase_angle = models.FloatField(blank=True, null=True)
-    id = models.IntegerField(primary_key=True)
+    id = models.PositiveIntegerField(primary_key=True)
     timestamp = models.DateTimeField()
 
     class Meta:
@@ -6207,7 +6197,7 @@ class ObsSurfaceGeometryThebe(models.Model):
     center_resolution = models.FloatField(blank=True, null=True)
     center_distance = models.FloatField(blank=True, null=True)
     center_phase_angle = models.FloatField(blank=True, null=True)
-    id = models.IntegerField(primary_key=True)
+    id = models.PositiveIntegerField(primary_key=True)
     timestamp = models.DateTimeField()
 
     class Meta:
@@ -6257,7 +6247,7 @@ class ObsSurfaceGeometryThrymr(models.Model):
     center_resolution = models.FloatField(blank=True, null=True)
     center_distance = models.FloatField(blank=True, null=True)
     center_phase_angle = models.FloatField(blank=True, null=True)
-    id = models.IntegerField(primary_key=True)
+    id = models.PositiveIntegerField(primary_key=True)
     timestamp = models.DateTimeField()
 
     class Meta:
@@ -6307,7 +6297,7 @@ class ObsSurfaceGeometryTitan(models.Model):
     center_resolution = models.FloatField(blank=True, null=True)
     center_distance = models.FloatField(blank=True, null=True)
     center_phase_angle = models.FloatField(blank=True, null=True)
-    id = models.IntegerField(primary_key=True)
+    id = models.PositiveIntegerField(primary_key=True)
     timestamp = models.DateTimeField()
 
     class Meta:
@@ -6357,7 +6347,7 @@ class ObsSurfaceGeometryTitania(models.Model):
     center_resolution = models.FloatField(blank=True, null=True)
     center_distance = models.FloatField(blank=True, null=True)
     center_phase_angle = models.FloatField(blank=True, null=True)
-    id = models.IntegerField(primary_key=True)
+    id = models.PositiveIntegerField(primary_key=True)
     timestamp = models.DateTimeField()
 
     class Meta:
@@ -6407,7 +6397,7 @@ class ObsSurfaceGeometryTriton(models.Model):
     center_resolution = models.FloatField(blank=True, null=True)
     center_distance = models.FloatField(blank=True, null=True)
     center_phase_angle = models.FloatField(blank=True, null=True)
-    id = models.IntegerField(primary_key=True)
+    id = models.PositiveIntegerField(primary_key=True)
     timestamp = models.DateTimeField()
 
     class Meta:
@@ -6457,7 +6447,7 @@ class ObsSurfaceGeometryUmbriel(models.Model):
     center_resolution = models.FloatField(blank=True, null=True)
     center_distance = models.FloatField(blank=True, null=True)
     center_phase_angle = models.FloatField(blank=True, null=True)
-    id = models.IntegerField(primary_key=True)
+    id = models.PositiveIntegerField(primary_key=True)
     timestamp = models.DateTimeField()
 
     class Meta:
@@ -6507,7 +6497,7 @@ class ObsSurfaceGeometryUranus(models.Model):
     center_resolution = models.FloatField(blank=True, null=True)
     center_distance = models.FloatField(blank=True, null=True)
     center_phase_angle = models.FloatField(blank=True, null=True)
-    id = models.IntegerField(primary_key=True)
+    id = models.PositiveIntegerField(primary_key=True)
     timestamp = models.DateTimeField()
 
     class Meta:
@@ -6557,7 +6547,7 @@ class ObsSurfaceGeometryYmir(models.Model):
     center_resolution = models.FloatField(blank=True, null=True)
     center_distance = models.FloatField(blank=True, null=True)
     center_phase_angle = models.FloatField(blank=True, null=True)
-    id = models.IntegerField(primary_key=True)
+    id = models.PositiveIntegerField(primary_key=True)
     timestamp = models.DateTimeField()
 
     class Meta:
@@ -6572,11 +6562,11 @@ class ObsTypeImage(models.Model):
     instrument_id = models.CharField(max_length=9)
     image_type_id = models.CharField(max_length=4, blank=True, null=True)
     duration = models.FloatField(blank=True, null=True)
-    levels = models.IntegerField(blank=True, null=True)
-    greater_pixel_size = models.IntegerField(blank=True, null=True)
-    lesser_pixel_size = models.IntegerField(blank=True, null=True)
+    levels = models.PositiveIntegerField(blank=True, null=True)
+    greater_pixel_size = models.PositiveIntegerField(blank=True, null=True)
+    lesser_pixel_size = models.PositiveIntegerField(blank=True, null=True)
     mult_obs_type_image_image_type = models.ForeignKey(MultObsTypeImageImageTypeId, models.DO_NOTHING)
-    id = models.IntegerField(primary_key=True)
+    id = models.PositiveIntegerField(primary_key=True)
     timestamp = models.DateTimeField()
 
     class Meta:
@@ -6598,11 +6588,11 @@ class ObsWavelength(models.Model):
     wave_no_res1 = models.FloatField(blank=True, null=True)
     wave_no_res2 = models.FloatField(blank=True, null=True)
     spec_flag = models.CharField(max_length=3)
-    spec_size = models.IntegerField(blank=True, null=True)
+    spec_size = models.PositiveIntegerField(blank=True, null=True)
     polarization_type = models.CharField(max_length=8)
     mult_obs_wavelength_spec_flag = models.ForeignKey(MultObsWavelengthSpecFlag, models.DO_NOTHING, db_column='mult_obs_wavelength_spec_flag')
     mult_obs_wavelength_polarization_type = models.ForeignKey(MultObsWavelengthPolarizationType, models.DO_NOTHING, db_column='mult_obs_wavelength_polarization_type')
-    id = models.IntegerField(primary_key=True)
+    id = models.PositiveIntegerField(primary_key=True)
     timestamp = models.DateTimeField()
 
     class Meta:
@@ -6622,7 +6612,7 @@ class ZZParamInfo(models.Model):
     slug = models.CharField(max_length=255, blank=True, null=True)
     old_slug = models.CharField(max_length=255, blank=True, null=True)
     units = models.CharField(max_length=75, blank=True, null=True)
-    intro = models.CharField(max_length=150, blank=True, null=True)
+    intro = models.CharField(max_length=1023, blank=True, null=True)
     tooltip = models.CharField(max_length=255, blank=True, null=True)
     dict_context = models.CharField(max_length=255, blank=True, null=True)
     dict_name = models.CharField(max_length=255, blank=True, null=True)
@@ -6661,14 +6651,15 @@ class TableNames(models.Model):
 class UserSearches(models.Model):
     selections_json = models.TextField()
     selections_hash = models.CharField(max_length=32)
-    order_json = models.TextField(blank=True, null=True)
-    order_hash = models.CharField(max_length=32, blank=True, null=True)
-    units_json = models.TextField(blank=True, null=True)
-    units_hash = models.CharField(max_length=32, blank=True, null=True)
     qtypes_json = models.TextField(blank=True, null=True)
     qtypes_hash = models.CharField(max_length=32, blank=True, null=True)
-    timestamp = models.DateTimeField(blank=True, null=True)
+    units_json = models.TextField(blank=True, null=True)
+    units_hash = models.CharField(max_length=32, blank=True, null=True)
+    order_json = models.TextField(blank=True, null=True)
+    order_hash = models.CharField(max_length=32, blank=True, null=True)
+    timestamp = models.DateTimeField()
 
     class Meta:
         managed = False
         db_table = 'user_searches'
+        unique_together = (('selections_hash', 'qtypes_hash', 'units_hash', 'order_hash'),)

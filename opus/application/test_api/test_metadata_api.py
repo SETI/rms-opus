@@ -168,7 +168,7 @@ class ApiMetadataTests(TestCase):
     def  test__api_meta_result_count_target_s_rings(self):
         "/api/meta/result_count: with target=S Rings"
         url = '/opus/api/meta/result_count.json?planet=Saturn&volumeid=COISS_2111&target=S+Rings'
-        self._run_result_count_equal(url, 1036)
+        self._run_result_count_equal(url, 1040)
 
     def  test__api_meta_result_count_multi_target(self):
         "/api/meta/result_count: with target=Iapetus,Methone"

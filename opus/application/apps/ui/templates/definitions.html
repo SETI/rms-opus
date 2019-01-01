@@ -17,7 +17,7 @@
           {% autoescape on %}
           {{definition.definition|removeTags|striptags}}<br/>
           {% endautoescape %}
-          <small>Import date: {{definition.term__import_date}}</small><br/>
+          <small>Import date: {{definition.term__timestamp}}</small><br/>
         </li>
         {% endfor %}
       </ul>

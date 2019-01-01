@@ -1,0 +1,29 @@
+[
+    {
+        "field_name": "name",
+        "field_type": "char25",
+        "field_notnull": true,
+        "field_key": "unique"
+    },
+    {
+        "field_name": "description",
+        "field_type": "char100",
+        "field_notnull": true
+    },
+    {
+        "field_name": "parent",
+        "field_type": "char25",
+        "field_notnull": true
+    },
+    {
+        "field_name": "timestamp",
+        "field_type": "timestamp"
+    },
+    {
+        "field_name": "id",
+        "field_type": "uint4",
+        "field_autoincrement": true,
+        "field_key": "primary",
+        "field_notnull": true
+    }
+]

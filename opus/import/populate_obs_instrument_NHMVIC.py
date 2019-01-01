@@ -75,7 +75,7 @@ def populate_obs_general_NHMVIC_time1(**kwargs):
             f'Bad start time format "{start_time}": {e}')
         return None
 
-    return julian.iso_from_tai(start_time_sec, digits=3, ymd=True)
+    return start_time_sec
 
 def populate_obs_general_NHMVIC_time2(**kwargs):
     metadata = kwargs['metadata']
@@ -92,7 +92,16 @@ def populate_obs_general_NHMVIC_time2(**kwargs):
             f'Bad stop time format "{stop_time}": {e}')
         return None
 
-    return julian.iso_from_tai(stop_time_sec, digits=3, ymd=True)
+    general_row = metadata['obs_general_row']
+    start_time_sec = general_row['time1']
+
+    if start_time_sec is not None and stop_time_sec < start_time_sec:
+        start_time = import_util.safe_column(index_row, 'START_TIME')
+        import_util.log_warning(f'time1 ({start_time}) and time2 ({stop_time}) '
+                                f'are in the wrong order - setting to time1')
+        stop_time_sec = start_time_sec
+
+    return stop_time_sec
 
 def populate_obs_general_NHMVIC_target_name(**kwargs):
     target_name = helper_new_horizons_target_name(**kwargs)
@@ -141,7 +150,7 @@ def populate_obs_pds_NHMVIC_product_creation_time(**kwargs):
             f'Bad product creation time format "{pct}": {e}')
         return None
 
-    return julian.iso_from_tai(pct_sec, digits=3, ymd=True)
+    return pct_sec
 
 # Format: "NH-J-MVIC-2-JUPITER-V2.0"
 def populate_obs_pds_NHMVIC_data_set_id(**kwargs):

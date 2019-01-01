@@ -83,23 +83,6 @@ def populate_obs_mission_voyager_ert(**kwargs):
             f'Bad earth received time format "{ert_time}": {e}')
         return None
 
-    return julian.iso_from_tai(ert_sec, digits=3, ymd=True)
-
-def populate_obs_mission_voyager_ert_sec(**kwargs):
-    metadata = kwargs['metadata']
-    voyager_row = metadata['obs_mission_voyager_row']
-    ert_time = voyager_row['ert']
-
-    if ert_time is None or ert_time.startswith('UNK'):
-        return None
-
-    try:
-        ert_sec = julian.tai_from_iso(ert_time)
-    except Exception as e:
-        import_util.log_nonrepeating_error(
-            f'Bad earth received time format "{ert_time}": {e}')
-        return None
-
     return ert_sec
 
 def populate_obs_mission_voyager_spacecraft_clock_count1(**kwargs):
@@ -111,7 +94,14 @@ def populate_obs_mission_voyager_spacecraft_clock_count1(**kwargs):
                                         'SPACECRAFT_CLOCK_PARTITION_NUMBER')
     start_time = supp_index_row['SPACECRAFT_CLOCK_START_COUNT']
 
-    return str(partition) + '/' + start_time
+    sc = str(partition) + '/' + start_time
+    try:
+        sc_cvt = opus_support.parse_voyager_sclk(sc)
+    except Exception as e:
+        import_util.log_nonrepeating_error(
+            f'Unable to parse Voyager SCLK "{sc}": {e}')
+        return None
+    return sc_cvt
 
 def populate_obs_mission_voyager_spacecraft_clock_count2(**kwargs):
     metadata = kwargs['metadata']
@@ -122,24 +112,7 @@ def populate_obs_mission_voyager_spacecraft_clock_count2(**kwargs):
                                         'SPACECRAFT_CLOCK_PARTITION_NUMBER')
     stop_time = supp_index_row['SPACECRAFT_CLOCK_STOP_COUNT']
 
-    return str(partition) + '/' + stop_time
-
-def populate_obs_mission_voyager_spacecraft_clock_count_cvt1(**kwargs):
-    metadata = kwargs['metadata']
-    voyager_row = metadata['obs_mission_voyager_row']
-    sc = voyager_row['spacecraft_clock_count1']
-    try:
-        sc_cvt = opus_support.parse_voyager_sclk(sc)
-    except Exception as e:
-        import_util.log_nonrepeating_error(
-            f'Unable to parse Voyager SCLK "{sc}": {e}')
-        return None
-    return sc_cvt
-
-def populate_obs_mission_voyager_spacecraft_clock_count_cvt2(**kwargs):
-    metadata = kwargs['metadata']
-    voyager_row = metadata['obs_mission_voyager_row']
-    sc = voyager_row['spacecraft_clock_count2']
+    sc = str(partition) + '/' + stop_time
     try:
         sc_cvt = opus_support.parse_voyager_sclk(sc)
     except Exception as e:

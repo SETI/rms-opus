@@ -9,9 +9,9 @@
             {% else %}
               {{ param_info.label_results }}: {{ val }}
             {% endif %}
-            {% if param_info.get_tooltip.definition %}
+            {% if param_info.get_tooltip %}
               <i class="fa fa-info-circle"
-                 title="{{ param_info.get_tooltip.definition|striptags }}"></i>
+                 title="{{ param_info.get_tooltip|striptags }}"></i>
             {% endif %}
           {% endif %}
         {% endfor %}

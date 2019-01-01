@@ -1,6 +1,7 @@
 # results/urls.py
 from django.conf.urls import url
 from results.views import (
+    api_get_data_and_images,
     api_get_data,
     api_get_metadata,
     api_get_metadata_v2,
@@ -14,6 +15,7 @@ from results.views import (
 )
 
 urlpatterns = [
+    url(r'^__api/dataimages.json$', api_get_data_and_images),
     url(r'^api/data.(json|zip|html|csv)$', api_get_data),
     url(r'^__api/data.(json|zip|html|csv)$', api_get_data),
     url(r'^api/metadata/(?P<opus_id>[-\w]+).(?P<fmt>[json|html]+)$', api_get_metadata),
