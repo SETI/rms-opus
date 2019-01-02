@@ -1,12 +1,12 @@
 import abc
 import ipaddress
-import operator
 import re
 import urllib.parse
-from typing import List, Dict, Optional, Match, Tuple, Pattern, Any, cast
+from collections import defaultdict
+from typing import List, Dict, Optional, Match, Tuple, Pattern, Any
 
 from LogEntry import LogEntry
-from SlugInfo import SlugInfo
+from SlugInfo import SlugMap, SlugInfo, SlugFamily, SlugFlags, SlugFamilyType
 
 
 class ForPattern:
@@ -38,47 +38,54 @@ class SessionInfo(metaclass=abc.ABCMeta):
     def parse_log_entry(self, entry: LogEntry) -> Optional[List[str]]:
         raise Exception()
 
+    @staticmethod
+    def get_non_null_slug_info(slugs: List[str], slug_map: SlugMap) -> Dict[str, SlugInfo]:
+        return {
+            slug_info.slug: slug_info
+            for slug in slugs
+            for slug_info in [slug_map.get_info_for_column_slug(slug)]
+            if slug_info is not None
+        }
+
 
 class SessionInfoGenerator:
     """
     A generator class for creating a SessionInfo.
     """
-    _slug_info: SlugInfo
-    _default_column_list: List[Tuple[str, str]]
+    _slug_map: SlugMap
+    _default_column_list: Dict[str, SlugInfo]
     _ignored_ips: List[ipaddress.IPv4Network]
 
     DEFAULT_COLUMN_INFO = 'opusid,instrument,planet,target,time1,observationduration'.split(',')
 
-    def __init__(self, slug_info: SlugInfo, ignored_ips: List[ipaddress.IPv4Network]):
+    def __init__(self, slug_info: SlugMap, ignored_ips: List[ipaddress.IPv4Network]):
         """
 
         :param slug_info: Information about the slugs we expect to see in the URL
         :param ignored_ips: A list representing hosts that we want to ignore
         """
-        column_info = [slug_info.get_info_for_column_slug(column) for column in self.DEFAULT_COLUMN_INFO]
-        assert None not in column_info
-        self._slug_info = slug_info
-        self._default_column_list = cast(List[Tuple[str, str]], column_info)  # cast for static type checker
+        self._slug_map = slug_info
+        self._default_column_list = SessionInfo.get_non_null_slug_info(self.DEFAULT_COLUMN_INFO, slug_info)
         self._ignored_ips = ignored_ips
 
     def create(self) -> SessionInfo:
         """Create a new SessionInfo"""
-        return _SessionInfoImpl(self._slug_info, self._default_column_list, self._ignored_ips)
+        return _SessionInfoImpl(self._slug_map, self._default_column_list, self._ignored_ips)
 
 
 # noinspection PyUnusedLocal
 class _SessionInfoImpl(SessionInfo):
-    _slug_info: SlugInfo
-    _default_column_list: List[Tuple[str, str]]
+    _slug_map: SlugMap
+    _default_column_info: Dict[str, SlugInfo]
     _ignored_ips: List[ipaddress.IPv4Network]
     _previous_product_info_type: Optional[List[str]]
     _previous_api_query: Optional[Dict[str, str]]
 
-    def __init__(self, slug_info: SlugInfo, default_column_list: List[Tuple[str, str]],
+    def __init__(self, slug_map: SlugMap, default_column_info: Dict[str, SlugInfo],
                  ignored_ips: List[ipaddress.IPv4Network]):
         """This initialization should only be called by SessionInfoGenerator above."""
-        self._slug_info = slug_info
-        self._default_column_list = default_column_list
+        self._slug_map = slug_map
+        self._default_column_info = default_column_info
         self._ignored_ips = ignored_ips
 
         # The previous value of types when downloading a collection
@@ -109,8 +116,8 @@ class _SessionInfoImpl(SessionInfo):
                 # raw_query will match a key to a list of values for that key.  Opus only uses each key once
                 # (values are separated by commas), so we convert the raw query to a more useful form.
                 raw_query = urllib.parse.parse_qs(entry.url.query)
-                query = {query: value[0]
-                         for query, value in raw_query.items()
+                query = {key: value[0]
+                         for key, value in raw_query.items()
                          if isinstance(value, list) and len(value) == 1}
                 return method(self, entry=entry, query=query, match=match)
         return None
@@ -121,7 +128,7 @@ class _SessionInfoImpl(SessionInfo):
 
     @ForPattern(r'/__api/data\.(.*)')
     @ForPattern(r'/__api/images\.(.*)')
-    def _api_data(self, entry: LogEntry, query: Dict[str, str], match: Match) -> Optional[List[str]]:
+    def _api_data(self, entry: LogEntry, query: Dict[str, str], match: Match) -> List[str]:
         cols = query.get('cols', None)
         if cols and cols.lower() not in ('0', 'false'):
             return self.__handle_query(query)
@@ -137,7 +144,7 @@ class _SessionInfoImpl(SessionInfo):
         return [f'View Metadata: {metadata}']
 
     @ForPattern('/__api/meta/result_count.json')
-    def _get_info(self, entry: LogEntry, query: Dict[str, str], match: Match) -> Optional[List[str]]:
+    def _get_info(self, entry: LogEntry, query: Dict[str, str], match: Match) -> List[str]:
         return self.__handle_query(query)
 
     #
@@ -214,103 +221,141 @@ class _SessionInfoImpl(SessionInfo):
     def _initialize_detail(self, entry: LogEntry, query: Dict[str, str], match: Match) -> List[str]:
         return [f'View Detail: {match.group(1)}']
 
-    def __handle_query(self, new_query: Dict[str, str]) -> Optional[List[str]]:
-        result = []
+    def __handle_query(self, new_query: Dict[str, str]) -> List[str]:
+        result: List[str] = []
         old_query = self._previous_api_query
         self._previous_api_query = new_query
 
-        def get_info_for_query_slugs(query):
-            info_result = []
-            for key, value in query.items():
-                all_info = self._slug_info.get_info_for_search_slug(key)
-                if all_info:
-                    info, extra_info = all_info
-                    info_result.append((info, extra_info, key, value))  # (slug, extra_info, value)
-            info_result.sort(key=operator.itemgetter(2))  # sort by the original slug.  Just want to be predictable
-            return info_result
+        self.__get_query_info_search_slugs(old_query, new_query, result)
+        self.__get_query_info_column_names(old_query, new_query, result)
+        self.__get_query_info_page_number(old_query, new_query, result)
+        return result
 
+    QTYPE_SLUG_SUFFIX_LENGTH = len(SlugMap.QTYPE_SUFFIX)
+
+    def __get_query_info_search_slugs(self, old_query: Optional[Dict[str, str]], new_query: Dict[str, str],
+                                      result: List[str]):
+        def get_slug_info_for_search_slugs(query) -> Dict[SlugFamily, List[Tuple[SlugInfo, str]]]:
+            temp: Dict[SlugFamily, List[Tuple[SlugInfo, str]]] = defaultdict(list)
+            for slug, value in query.items():
+                slug_info = self._slug_map.get_info_for_search_slug(slug)
+                if slug_info:
+                    temp[slug_info.family].append((slug_info, value))
+            return temp
         if old_query is not None:
-            old_search_slug_info = get_info_for_query_slugs(old_query)
+            old_search_family_info = get_slug_info_for_search_slugs(old_query)
         else:
             result.append('Empty Search')
-            old_search_slug_info = []
-        new_search_slug_info = get_info_for_query_slugs(new_query)
+            old_search_family_info = {}
+        new_search_family_info = get_slug_info_for_search_slugs(new_query)
+        all_search_families = set(old_search_family_info.keys()).union(new_search_family_info.keys())
 
-        old_search_slugs = {name: value for name, _, _, value in old_search_slug_info}
-        new_search_slugs = {name: value for name, _, _, value in new_search_slug_info}
-        for is_qtype in (False, True):
+        def parse_family(pairs: List[Tuple[SlugInfo, str]]):
+            my_min = my_max = my_qtype = None
+            flags = SlugFlags.NONE
+            for slug_info, value in pairs:
+                flags |= slug_info.flags
+                if slug_info.family_type == SlugFamilyType.MIN:
+                    my_min = value
+                elif slug_info.family_type == SlugFamilyType.MAX:
+                    my_max = value
+                elif slug_info.family_type == SlugFamilyType.QTYPE:
+                    my_qtype = value
+                else:
+                    raise Exception(f'Unexpected family type: {slug_info.family_type}')
+            return my_min, my_max, my_qtype, flags
 
-            # Show slugs that have been added
-            for search, extra_info, slug, value in new_search_slug_info:
-                if search not in old_search_slugs and slug.startswith("qtype-") == is_qtype:
-                    postscript = f' **{extra_info}**' if extra_info else ''
-                    if not is_qtype:
-                        result.append(f'Add Search: "{search}" = "{value}"{postscript}')
-                    else:
-                        result.append(f'Change qtype for "{search}" = default -> "{value}"{postscript}')
+        removed_searches, added_searches, changed_searches = [], [], []
+        for family in sorted(all_search_families):
+            if family in old_search_family_info and family not in new_search_family_info:
+                removed_searches.append(f'Remove Search: "{family.label}"')
+            elif family in new_search_family_info and family not in old_search_family_info:
+                if family.is_singleton():
+                    assert len(new_search_family_info[family]) == 1
+                    slug_info, value = new_search_family_info[family][0]
+                    assert family.label == slug_info.label
+                    postscript = f' **{slug_info.flags.pretty_print()}**' if slug_info.flags else ''
+                    added_searches.append(f'Add Search: "{family.label}" = "{value}"{postscript}')
+                else:
+                    new_min, new_max, new_qtype, flags = parse_family(new_search_family_info[family])
+                    new_value = f'({family.min}:"{new_min}", {family.max}:"{new_max}", qtype:"{new_qtype}")'
+                    postscript = f' **{flags.pretty_print()}**' if flags else ''
+                    added_searches.append(f'Add search "{family.label}" = {new_value}{postscript}')
+            else:
+                if family.is_singleton():
+                    assert len(old_search_family_info[family]) == 1
+                    assert len(new_search_family_info[family]) == 1
+                    old_slug_info, old_value = old_search_family_info[family][0]
+                    new_slug_info, new_value = new_search_family_info[family][0]
+                    self.__slug_value_change(new_slug_info.label, old_value, new_value, changed_searches)
+                else:
+                    old_min, old_max, old_qtype, _ = parse_family(old_search_family_info[family])
+                    new_min, new_max, new_qtype, _ = parse_family(new_search_family_info[family])
+                    if (old_min, old_max, old_qtype) != (new_min, new_max, new_qtype):
+                        min_name = family.min if old_min == new_min else family.min.upper()
+                        max_name = family.max if old_max == new_max else family.max.upper()
+                        qtype_name = 'qtype' if old_qtype == new_qtype else 'QTYPE'
+                        new_value = f'({min_name}:"{new_min}", {max_name}:"{new_max}", {qtype_name}:"{new_qtype}")'
+                        changed_searches.append(f'Change Search: "{family.label}" = {new_value}')
 
-            # Show slugs that have been deleted
-            for search, _, slug, value in old_search_slug_info:
-                if search not in new_search_slugs and slug.startswith("qtype-") == is_qtype:
-                    if not is_qtype:
-                        result.append(f'Remove Search: "{search}"')
-                    else:
-                        result.append(f'Change qtype for "{search}" = "{value}" -> default')
+        result.extend(removed_searches)
+        result.extend(added_searches)
+        result.extend(changed_searches)
 
-            # Show slugs that have changed value
-            for search, _, slug, value in old_search_slug_info:
-                if search in new_search_slugs and value != new_search_slugs[search] and slug.startswith(
-                        "qtype-") == is_qtype:
-                    if not is_qtype:
-                        result.append(self.__slug_value_change(search, value, new_search_slugs[search]))
-                    else:
-                        result.append(f'Change qtype for "{search}" = "{value}" -> "{new_search_slugs[search]}"')
-
-        def get_info_for_column_slugs(query):
+    def __get_query_info_column_names(self, old_query: Optional[Dict[str, str]], new_query: Dict[str, str],
+                                      result: List[str]):
+        def get_slug_info_for_column_slugs(query):
             columns_query = query.get('cols', None) if query else None
             if columns_query:
                 columns = columns_query.split(',')
-                return list(filter(None, [self._slug_info.get_info_for_column_slug(column) for column in columns]))
+                return self.get_non_null_slug_info(columns, self._slug_map)
             else:
-                return self._default_column_list
+                return self._default_column_info
 
-        old_column_slug_info = get_info_for_column_slugs(old_query)
-        new_column_slug_info = get_info_for_column_slugs(new_query)
-        old_column_slugs = {column for (column, _) in old_column_slug_info}
-        new_column_slugs = {column for (column, _) in new_column_slug_info}
-        if set(old_column_slugs) != set(new_column_slugs):
-            if set(new_column_slugs) == set(self._default_column_list):
-                result.append('Reset Columns')
-            else:
-                for column, extra_info in new_column_slug_info:
-                    if column not in old_column_slugs:
-                        if not extra_info:
-                            result.append(f'Add Column: "{column}"')
-                        else:
-                            result.append(f'Add Column: "{column}" **{extra_info}**')
+        old_column_info = get_slug_info_for_column_slugs(old_query)
+        new_column_info = get_slug_info_for_column_slugs(new_query)
+        old_columns = set(old_column_info.keys())
+        new_columns = set(new_column_info.keys())
+        if new_columns == old_columns:
+            return
+        if new_columns == set(self._default_column_info.keys()):
+            result.append('Reset Columns')
+            return
+        all_columns = old_columns.union(new_columns)
+        added_columns, removed_columns = [], []
+        for column in sorted(all_columns):
+            if column in new_columns and column not in old_columns:
+                slug_info = new_column_info[column]
+                postscript = f' **{slug_info.flags.pretty_print()}**' if slug_info.flags else ''
+                added_columns.append(f'Add Column: "{slug_info.label}{postscript}"')
+            elif column in old_columns and column not in new_column_info:
+                slug_info = old_column_info[column]
+                removed_columns.append(f'Remove Column: "{slug_info.label}"')
+        result.extend(removed_columns)
+        result.extend(added_columns)
 
-                for column, _ in old_column_slug_info:
-                    if column not in new_column_slugs:
-                        result.append(f'Remove Column: {column}')
+    def __get_query_info_page_number(self, old_query: Optional[Dict[str, str]], new_query: Dict[str, str],
+                                     result: List[str]):
         if old_query and 'page' in old_query and 'page' in new_query and old_query['page'] != new_query['page']:
             result.append(f'Change Page: {old_query["page"]} -> {new_query["page"]}')
-        return result or None  # convert empty result to None
 
-    def __slug_value_change(self, name: str, old_value: str, new_value: str) -> str:
+    def __slug_value_change(self, name: str, old_value: str, new_value: str, result: List[str]) -> None:
         old_value_set = set(old_value.split(','))
         new_value_set = set(new_value.split(','))
         if old_value_set.intersection(new_value_set):
             change_list: List[str] = []
-            change_list.extend(f'+"{item}"'
-                               for item in sorted(new_value_set.difference(old_value_set)))
-            change_list.extend(f'-"{item}"'
-                               for item in sorted(old_value_set.difference(new_value_set)))
-            joined_change_list = ', '.join(change_list)
-            return f'Change Search: "{name}" : {joined_change_list}'
+            for value in sorted(old_value_set.union(new_value_set)):
+                if value in new_value_set and value not in old_value_set:
+                    change_list.append(f'+"{value}"')
+                elif value in old_value_set and value not in new_value_set:
+                    change_list.append(f'-"{value}"')
+            if change_list:
+                joined_change_list = ', '.join(change_list)
+                result.append(f'Change Search: "{name}" = {joined_change_list}')
         else:
             joined_old_value_set = self.__quote_and_join_list(sorted(old_value_set))
             joined_new_value_set = self.__quote_and_join_list(sorted(new_value_set))
-            return f'Change Search: "{name}" = {joined_old_value_set} -> {joined_new_value_set}'
+            result.append(f'Change Search: "{name}" = {joined_old_value_set} -> {joined_new_value_set}')
 
     @staticmethod
     def __quote_and_join_list(string_list: List[str]) -> str:
