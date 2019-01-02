@@ -2,10 +2,11 @@ import abc
 import ipaddress
 import re
 import urllib.parse
+from collections import defaultdict
 from typing import List, Dict, Optional, Match, Tuple, Pattern, Any
 
 from LogEntry import LogEntry
-from SlugInfo import SlugMap, SlugInfo
+from SlugInfo import SlugMap, SlugInfo, SlugFamily, SlugFlags, SlugFamilyType
 
 
 class ForPattern:
@@ -234,56 +235,76 @@ class _SessionInfoImpl(SessionInfo):
 
     def __get_query_info_search_slugs(self, old_query: Optional[Dict[str, str]], new_query: Dict[str, str],
                                       result: List[str]):
-        def get_info_for_query_slugs(query):
-            return {
-                slug_info.slug: (slug_info, value) for slug, value in query.items()
-                for slug_info in [self._slug_map.get_info_for_search_slug(slug)]
-                if slug_info
-            }
+        def get_slug_info_for_search_slugs(query) -> Dict[SlugFamily, List[Tuple[SlugInfo, str]]]:
+            temp: Dict[SlugFamily, List[Tuple[SlugInfo, str]]] = defaultdict(list)
+            for slug, value in query.items():
+                slug_info = self._slug_map.get_info_for_search_slug(slug)
+                if slug_info:
+                    temp[slug_info.family].append((slug_info, value))
+            return temp
         if old_query is not None:
-            old_search_slug_info = get_info_for_query_slugs(old_query)
+            old_search_family_info = get_slug_info_for_search_slugs(old_query)
         else:
             result.append('Empty Search')
-            old_search_slug_info = {}
-        new_search_slug_info = get_info_for_query_slugs(new_query)
-        all_search_slugs = set(old_search_slug_info.keys()).union(new_search_slug_info.keys())
+            old_search_family_info = {}
+        new_search_family_info = get_slug_info_for_search_slugs(new_query)
+        all_search_families = set(old_search_family_info.keys()).union(new_search_family_info.keys())
+
+        def parse_family(pairs: List[Tuple[SlugInfo, str]]):
+            my_min = my_max = my_qtype = None
+            flags = SlugFlags.NONE
+            for slug_info, value in pairs:
+                flags |= slug_info.flags
+                if slug_info.family_type == SlugFamilyType.MIN:
+                    my_min = value
+                elif slug_info.family_type == SlugFamilyType.MAX:
+                    my_max = value
+                elif slug_info.family_type == SlugFamilyType.QTYPE:
+                    my_qtype = value
+                else:
+                    raise Exception(f'Unexpected family type: {slug_info.family_type}')
+            return my_min, my_max, my_qtype, flags
 
         removed_searches, added_searches, changed_searches = [], [], []
-        for slug in sorted(all_search_slugs):
-            is_normal_slug = not slug.startswith('qtype-')
-            if slug in old_search_slug_info and slug not in new_search_slug_info:
-                slug_info, value = old_search_slug_info[slug]
-                if is_normal_slug:
-                    removed_searches.append(f'Remove Search: "{slug_info.label}"')
+        for family in sorted(all_search_families):
+            if family in old_search_family_info and family not in new_search_family_info:
+                removed_searches.append(f'Remove Search: "{family.label}"')
+            elif family in new_search_family_info and family not in old_search_family_info:
+                if family.is_singleton():
+                    assert len(new_search_family_info[family]) == 1
+                    slug_info, value = new_search_family_info[family][0]
+                    assert family.label == slug_info.label
+                    postscript = f' **{slug_info.flags.pretty_print()}**' if slug_info.flags else ''
+                    added_searches.append(f'Add Search: "{family.label}" = "{value}"{postscript}')
                 else:
-                    base_slug = slug[6:]  # remove initial 'qtype-'
-                    if base_slug in new_search_slug_info:
-                        search = slug_info.label[:-self.QTYPE_SLUG_SUFFIX_LENGTH]
-                        changed_searches.append(f'Change qtype for "{search}" = "{value}" -> default')
-            elif slug in new_search_slug_info and slug not in old_search_slug_info:
-                slug_info, value = new_search_slug_info[slug]
-                postscript = f' **{slug_info.flags.pretty_print()}**' if slug_info.flags else ''
-                if is_normal_slug:
-                    added_searches.append(f'Add Search: "{slug_info.label}" = "{value}"{postscript}')
-                else:
-                    search = slug_info.label[:-self.QTYPE_SLUG_SUFFIX_LENGTH]
-                    changed_searches.append(f'Change qtype for "{search:}" = default -> "{value}"{postscript}')
+                    new_min, new_max, new_qtype, flags = parse_family(new_search_family_info[family])
+                    new_value = f'({family.min}:"{new_min}", {family.max}:"{new_max}", qtype:"{new_qtype}")'
+                    postscript = f' **{flags.pretty_print()}**' if flags else ''
+                    added_searches.append(f'Add search "{family.label}" = {new_value}{postscript}')
             else:
-                old_slug_info, old_value = old_search_slug_info[slug]
-                new_slug_info, new_value = new_search_slug_info[slug]
-                if is_normal_slug:
-                    if is_normal_slug:
-                        self.__slug_value_change(new_slug_info.label, old_value, new_value, changed_searches)
-                    else:
-                        search = old_slug_info.label[:-self.QTYPE_SLUG_SUFFIX_LENGTH]
-                        changed_searches.append(f'Change qtype for "{search}" = "{old_value}" -> "{new_value}"')
+                if family.is_singleton():
+                    assert len(old_search_family_info[family]) == 1
+                    assert len(new_search_family_info[family]) == 1
+                    old_slug_info, old_value = old_search_family_info[family][0]
+                    new_slug_info, new_value = new_search_family_info[family][0]
+                    self.__slug_value_change(new_slug_info.label, old_value, new_value, changed_searches)
+                else:
+                    old_min, old_max, old_qtype, _ = parse_family(old_search_family_info[family])
+                    new_min, new_max, new_qtype, _ = parse_family(new_search_family_info[family])
+                    if (old_min, old_max, old_qtype) != (new_min, new_max, new_qtype):
+                        min_name = family.min if old_min == new_min else family.min.upper()
+                        max_name = family.max if old_max == new_max else family.max.upper()
+                        qtype_name = 'qtype' if old_qtype == new_qtype else 'QTYPE'
+                        new_value = f'({min_name}:"{new_min}", {max_name}:"{new_max}", {qtype_name}:"{new_qtype}")'
+                        changed_searches.append(f'Change Search: "{family.label}" = {new_value}')
+
         result.extend(removed_searches)
         result.extend(added_searches)
         result.extend(changed_searches)
 
     def __get_query_info_column_names(self, old_query: Optional[Dict[str, str]], new_query: Dict[str, str],
                                       result: List[str]):
-        def get_info_for_column_slugs(query):
+        def get_slug_info_for_column_slugs(query):
             columns_query = query.get('cols', None) if query else None
             if columns_query:
                 columns = columns_query.split(',')
@@ -291,8 +312,8 @@ class _SessionInfoImpl(SessionInfo):
             else:
                 return self._default_column_info
 
-        old_column_info = get_info_for_column_slugs(old_query)
-        new_column_info = get_info_for_column_slugs(new_query)
+        old_column_info = get_slug_info_for_column_slugs(old_query)
+        new_column_info = get_slug_info_for_column_slugs(new_query)
         old_columns = set(old_column_info.keys())
         new_columns = set(new_column_info.keys())
         if new_columns == old_columns:

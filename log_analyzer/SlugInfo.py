@@ -14,12 +14,16 @@ class SlugFamily(NamedTuple):
     min: str
     max: str
 
+    def is_singleton(self):
+        return self.min == ''
+
 
 class SlugFamilyType(Enum):
-    NONE = auto()
     MIN = auto()
     MAX = auto()
     QTYPE = auto()
+    SINGLETON = auto()
+    COLUMN = auto()
 
 
 class SlugFlags(Flag):
@@ -39,8 +43,8 @@ class SlugInfo(NamedTuple):
     slug: str
     label: str
     flags: SlugFlags
-    family_type: SlugFamilyType = SlugFamilyType.NONE
-    family: Optional[SlugFamily] = None
+    family_type: SlugFamilyType
+    family: Optional[SlugFamily]
 
 
 class SlugMap:
@@ -107,12 +111,13 @@ class SlugMap:
 
         label = self._slug_to_label.get(slug)
         if label:
-            result = search_map[slug] = self._known_label(slug, SlugFlags.NONE)
+            result = search_map[slug] = self._known_label(slug, label, SlugFlags.NONE)
             return result
 
         new_slug = self._old_slug_to_new_slug.get(slug)
         if new_slug:
-            result = search_map[slug] = self._known_label(new_slug, SlugFlags.OBSOLETE_SLUG)
+            label = self._slug_to_label[new_slug]
+            result = search_map[slug] = self._known_label(new_slug, label, SlugFlags.OBSOLETE_SLUG)
             return result
 
         if slug[-1] in '12':
@@ -151,21 +156,22 @@ class SlugMap:
             return result
 
         if create:
-            result = search_map[slug] = SlugInfo(slug=slug, label=original_slug, flags=SlugFlags.UNKNOWN_SLUG)
+            result = search_map[slug] = self._known_label(slug, original_slug, SlugFlags.UNKNOWN_SLUG)
             return result
 
         return None
 
-    def _known_label(self, slug: str, flag: SlugFlags) -> SlugInfo:
-        label = self._slug_to_label[slug]
-        family, family_type = None, SlugFamilyType.NONE
+    def _known_label(self, slug: str, label: str, flag: SlugFlags) -> SlugInfo:
         if slug[-1] in '12':
             if label.endswith(' (Min)') or label.endswith(' (Max)'):
                 family = SlugFamily(base_slug=slug[:-1], label=label[:-6], min='min', max='max')
             else:
                 base_label = re.sub(r'(.*) (Start|Stop) (.*)', r'\1 \3', label)
-                family = SlugFamily(base_slug=slug[-1], label=base_label, min='start', max='stop')
+                family = SlugFamily(base_slug=slug[:-1], label=base_label, min='start', max='stop')
             family_type = SlugFamilyType.MIN if slug[-1] == '1' else SlugFamilyType.MAX
+        else:
+            family_type = SlugFamilyType.SINGLETON
+            family = SlugFamily(base_slug=slug, label=label, min='', max='')
         return SlugInfo(slug=slug, label=label, flags=flag, family=family, family_type=family_type)
 
     def get_info_for_column_slug(self, slug: str, create: bool = True) -> Optional[SlugInfo]:
@@ -178,11 +184,14 @@ class SlugMap:
         slug = slug.lower()
         column_map = self._column_map
 
+        def createSlug(slug: str, label: str, flags:SlugFlags) -> SlugInfo:
+            return SlugInfo(slug, label, flags, SlugFamilyType.COLUMN, None)
+
         if slug in column_map:
             return column_map[slug]
 
         if slug in self._slug_to_label:
-            result = column_map[slug] = SlugInfo(slug, self._slug_to_label[slug], SlugFlags.NONE)
+            result = column_map[slug] = createSlug(slug, self._slug_to_label[slug], SlugFlags.NONE)
             return result
 
         if slug in self._old_slug_to_new_slug:
@@ -193,13 +202,13 @@ class SlugMap:
 
         if slug[-1] in '12':
             temp = self.get_info_for_column_slug(slug[:-1], False)
-            flag = SlugFlags.REMOVED_1_FROM_END if slug[-1] == '1' else SlugFlags.REMOVED_2_FROM_END
+            flag = {'1': SlugFlags.REMOVED_1_FROM_END, '2': SlugFlags.REMOVED_2_FROM_END }[slug[-1]]
             if temp:
-                result = column_map[slug] = SlugInfo(temp.slug, temp.label, temp.flags or flag)
+                result = column_map[slug] = createSlug(temp.slug, temp.label, temp.flags or flag)
                 return result
 
         if create:
-            result = column_map[slug] = SlugInfo(slug, original_slug, SlugFlags.UNKNOWN_SLUG)
+            result = column_map[slug] = createSlug(slug, original_slug, SlugFlags.UNKNOWN_SLUG)
             return result
 
         column_map[slug] = None
