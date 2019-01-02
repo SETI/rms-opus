@@ -297,11 +297,13 @@ var opus = {
           return;
         }
 
-        return $.ajax({
-            url: '/opus/__api/meta/result_count.json?' + resultCountHash + '&reqno=' + opus.lastRequestNo,
-            type: 'GET',
-            dataType: 'json'
-        });
+        return $.getJSON('/opus/__api/meta/result_count.json?' + resultCountHash + '&reqno=' + opus.lastRequestNo);
+
+        // return $.ajax({
+        //     url: '/opus/__api/meta/result_count.json?' + resultCountHash + '&reqno=' + opus.lastRequestNo,
+        //     type: 'GET',
+        //     dataType: 'json'
+        // });
     },
     updatePageAfterResultCountAPI: function(resultCountData) {
         if(!opus.allInputsValid) {

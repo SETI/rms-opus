@@ -11,11 +11,12 @@ var o_search = {
         let newHash = o_hash.updateHash(false);
         opus.lastRequestNo++;
         let url = '/opus/__api/normalizeinput.json?' + newHash + '&reqno=' + opus.lastRequestNo;
-        return $.ajax({
-            url: url,
-            type: 'GET',
-            dataType: 'json',
-        });
+        return $.getJSON(url);
+        // return $.ajax({
+        //     url: url,
+        //     type: 'GET',
+        //     dataType: 'json',
+        // });
     },
     validateRangeInput: function(data, removeSpinner=false) {
         opus.allInputsValid = true;
@@ -116,7 +117,6 @@ var o_search = {
         // Dynamically get input values right after user input a character
         $('#search').on('input', 'input.RANGE', function(event) {
             let slug = $(this).attr("name");
-            // o_search.rangeInputSearchInProgress = false;
             let currentValue = $(this).val().trim();
             let values = []
 
