@@ -5,7 +5,7 @@ import urllib.parse
 from typing import List, Dict, Optional, Match, Tuple, Pattern, Any
 
 from LogEntry import LogEntry
-from SlugInfo import SlugMap
+from SlugInfo import SlugMap, SlugInfo
 
 
 class ForPattern:
@@ -37,13 +37,22 @@ class SessionInfo(metaclass=abc.ABCMeta):
     def parse_log_entry(self, entry: LogEntry) -> Optional[List[str]]:
         raise Exception()
 
+    @staticmethod
+    def get_non_null_slug_info(slugs: List[str], slug_map: SlugMap) -> Dict[str, SlugInfo]:
+        return {
+            slug_info.slug: slug_info
+            for slug in slugs
+            for slug_info in [slug_map.get_info_for_column_slug(slug)]
+            if slug_info is not None
+        }
+
 
 class SessionInfoGenerator:
     """
     A generator class for creating a SessionInfo.
     """
-    _slug_info: SlugMap
-    _default_column_list: Dict[str, Optional[str]]
+    _slug_map: SlugMap
+    _default_column_list: Dict[str, SlugInfo]
     _ignored_ips: List[ipaddress.IPv4Network]
 
     DEFAULT_COLUMN_INFO = 'opusid,instrument,planet,target,time1,observationduration'.split(',')
@@ -54,33 +63,27 @@ class SessionInfoGenerator:
         :param slug_info: Information about the slugs we expect to see in the URL
         :param ignored_ips: A list representing hosts that we want to ignore
         """
-        self._slug_info = slug_info
-        self._default_column_list = {
-            info: extra_info
-            for slug in self.DEFAULT_COLUMN_INFO
-            for info, extra_info in [self._slug_info.get_info_for_column_slug(slug) or (None, None)]
-            if info is not None
-        }
-
+        self._slug_map = slug_info
+        self._default_column_list = SessionInfo.get_non_null_slug_info(self.DEFAULT_COLUMN_INFO, slug_info)
         self._ignored_ips = ignored_ips
 
     def create(self) -> SessionInfo:
         """Create a new SessionInfo"""
-        return _SessionInfoImpl(self._slug_info, self._default_column_list, self._ignored_ips)
+        return _SessionInfoImpl(self._slug_map, self._default_column_list, self._ignored_ips)
 
 
 # noinspection PyUnusedLocal
 class _SessionInfoImpl(SessionInfo):
-    _slug_info: SlugMap
-    _default_column_info: Dict[str, Optional[str]]
+    _slug_map: SlugMap
+    _default_column_info: Dict[str, SlugInfo]
     _ignored_ips: List[ipaddress.IPv4Network]
     _previous_product_info_type: Optional[List[str]]
     _previous_api_query: Optional[Dict[str, str]]
 
-    def __init__(self, slug_info: SlugMap, default_column_info: Dict[str, Optional[str]],
+    def __init__(self, slug_map: SlugMap, default_column_info: Dict[str, SlugInfo],
                  ignored_ips: List[ipaddress.IPv4Network]):
         """This initialization should only be called by SessionInfoGenerator above."""
-        self._slug_info = slug_info
+        self._slug_map = slug_map
         self._default_column_info = default_column_info
         self._ignored_ips = ignored_ips
 
@@ -227,13 +230,13 @@ class _SessionInfoImpl(SessionInfo):
         self.__get_query_info_page_number(old_query, new_query, result)
         return result or None  # convert empty result to None
 
-    QTYPE_SLUG_SUFFIX_LENGTH = len(SlugMap.QTYPE_SUFFIX)   #  TODO(FY): fix!!
+    QTYPE_SLUG_SUFFIX_LENGTH = len(SlugMap.QTYPE_SUFFIX)
 
     def __get_query_info_search_slugs(self, old_query: Optional[Dict[str, str]], new_query: Dict[str, str],
                                       result: List[str]):
         def get_info_for_query_slugs(query):
-            return { slug_info.slug : (slug_info, value) for slug, value in query.items()
-                     for slug_info in [self._slug_info.get_info_for_search_slug(slug)] if slug_info}
+            return {slug_info.slug: (slug_info, value) for slug, value in query.items()
+                    for slug_info in [self._slug_map.get_info_for_search_slug(slug)] if slug_info}
 
         if old_query is not None:
             old_search_slug_info = get_info_for_query_slugs(old_query)
@@ -270,12 +273,11 @@ class _SessionInfoImpl(SessionInfo):
                     if is_normal_slug:
                         self.__slug_value_change(new_slug_info.label, old_value, new_value, changed_searches)
                     else:
-                        search = slug_info.label[:-self.QTYPE_SLUG_SUFFIX_LENGTH]
+                        search = old_slug_info.label[:-self.QTYPE_SLUG_SUFFIX_LENGTH]
                         changed_searches.append(f'Change qtype for "{search}" = "{old_value}" -> "{new_value}"')
         result.extend(removed_searches)
         result.extend(added_searches)
         result.extend(changed_searches)
-
 
     def __get_query_info_column_names(self, old_query: Optional[Dict[str, str]], new_query: Dict[str, str],
                                       result: List[str]):
@@ -283,11 +285,7 @@ class _SessionInfoImpl(SessionInfo):
             columns_query = query.get('cols', None) if query else None
             if columns_query:
                 columns = columns_query.split(',')
-                return {info: extra_info
-                        for slug in columns
-                        for info, extra_info in [self._slug_info.get_info_for_column_slug(slug) or (None, None)]
-                        if info is not None
-                        }
+                return self.get_non_null_slug_info(columns, self._slug_map)
             else:
                 return self._default_column_info
 
@@ -304,11 +302,12 @@ class _SessionInfoImpl(SessionInfo):
         added_columns, removed_columns = [], []
         for column in sorted(all_columns):
             if column in new_columns and column not in old_columns:
-                extra_info = new_column_info[column]
-                postscript = f' **{extra_info}**' if extra_info else ''
-                added_columns.append(f'Add Column: "{column}{postscript}"')
+                slug_info = new_column_info[column]
+                postscript = f' **{slug_info.extra_info}**' if slug_info.extra_info else ''
+                added_columns.append(f'Add Column: "{slug_info.label}{postscript}"')
             elif column in old_columns and column not in new_column_info:
-                removed_columns.append(f'Remove Column: "{column}"')
+                slug_info = old_column_info[column]
+                removed_columns.append(f'Remove Column: "{slug_info.label}"')
         result.extend(removed_columns)
         result.extend(added_columns)
 

@@ -3,7 +3,7 @@ from __future__ import print_function
 import json
 import re
 from enum import Enum, auto
-from typing import Optional, Tuple, Dict, Any, NamedTuple
+from typing import Optional, Dict, Any, NamedTuple, cast
 
 import requests
 
@@ -34,7 +34,7 @@ class SlugMap:
     _slug_to_label: Dict[str, str]
     _old_slug_to_new_slug: Dict[str, str]
     _search_map: Dict[str, Optional[SlugInfo]]
-    _column_map: Dict[str, Optional[Tuple[str, Optional[str]]]]
+    _column_map: Dict[str, Optional[SlugInfo]]
 
     QTYPE_SUFFIX = ' (QT)'
     UNKNOWN_SLUG_INFO = 'unknown slug'
@@ -47,7 +47,6 @@ class SlugMap:
                        # Not mentioned by Rob French, but ignored anyway.
                        'timesampling', 'wavelengthsampling', 'colls',
                        }
-
 
     def __init__(self, url_prefix: str):
         """Initializes the slug info by reading the JSON describing it either from a URL or from a file to which
@@ -76,11 +75,11 @@ class SlugMap:
             self._column_map[slug] = None
             self._search_map[slug] = None
 
-
     def get_info_for_search_slug(self, slug: str, create=True) -> Optional[SlugInfo]:
         """
         Returns information about a slug that appears as part of a search term in a query
         """
+
         result: Optional[SlugInfo]
 
         original_slug = slug
@@ -142,44 +141,45 @@ class SlugMap:
             if label.endswith(' (Min)') or label.endswith(' (Max)'):
                 family = SlugFamily(base_slug=slug[:-1], label=label[:-6], min='min', max='max')
             else:
-                base_label =  re.sub(r'(.*) (Start|Stop) (.*)', r'\1 \3', label)
+                base_label = re.sub(r'(.*) (Start|Stop) (.*)', r'\1 \3', label)
                 family = SlugFamily(base_slug=slug[-1], label=base_label, min='start', max='stop')
             family_type = SlugFamilyType.MIN if slug[-1] == '1' else SlugFamilyType.MAX
         return SlugInfo(slug=slug, label=label, extra_info=extra_info, family=family, family_type=family_type)
 
-    def get_info_for_column_slug(self, slug: str, create: bool=True) -> Optional[Tuple[str, Optional[str]]]:
+    def get_info_for_column_slug(self, slug: str, create: bool = True) -> Optional[SlugInfo]:
         """Returns information about a slug that appears in a cols= part of a query
 
-        :param String slug: A slug that represents a column name
-        :return Tuple(String, String):
+        :param slug: A slug that represents a column name
+        :param create: Used only internally.  Indicates whether to create a slug if this slug is completely unknown
         """
         original_slug = slug
         slug = slug.lower()
         column_map = self._column_map
-        result: Tuple[str, Optional[str]]
 
         if slug in column_map:
             return column_map[slug]
 
         if slug in self._slug_to_label:
-            result = column_map[slug] = self._slug_to_label[slug], None
+            result = column_map[slug] = SlugInfo(slug, self._slug_to_label[slug])
             return result
 
         if slug in self._old_slug_to_new_slug:
             new_slug = self._old_slug_to_new_slug[slug]
-            result = column_map[slug] = self._slug_to_label[new_slug], self.OBSOLETE_SLUG_INFO
+            new_slug_info = cast(SlugInfo, self.get_info_for_column_slug(new_slug, True))
+            result = column_map[slug] = new_slug_info._replace(extra_info=self.OBSOLETE_SLUG_INFO)
             return result
 
         if slug[-1] in '12':
             temp = self.get_info_for_column_slug(slug[:-1], False)
             if temp:
-                result = column_map[slug] = temp[0], f'removed {slug[-1]} from end'
+                result = column_map[slug] = SlugInfo(temp.slug, temp.label, f'removed {slug[-1]} from end')
                 return result
 
         if create:
-            result = column_map[slug] = original_slug, self.UNKNOWN_SLUG_INFO
+            result = column_map[slug] = SlugInfo(slug, original_slug, self.UNKNOWN_SLUG_INFO)
             return result
 
+        column_map[slug] = None
         return None
 
     DEFAULT_FIELDS_SUFFIX = '/opus/api/fields.json'
