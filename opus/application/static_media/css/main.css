@@ -689,23 +689,20 @@ div.gallery {
     margin: 10px 0;
 }
 
-input[type="text"].gray_border {
+input[type="text"].search_input_original {
     border: 1px solid #D5D5D5;
 }
 
-input[type="text"].green_border {
-    border: 1px solid #9EEEBB;
+input[type="text"].search_input_valid {
+    border: 3px solid #9EEEBB;
 }
 
-input[type="text"].red_border {
-    border: 1px solid #F6AFAF;
+input[type="text"].search_input_invalid {
+    border: 3px solid #F6AFAF;
+    background-color: #EEECEC;
 }
 
-input[type="text"].white_background {
-    background-color: #FFFFFF;
-}
-
-input[type="text"].red_background {
+input[type="text"].search_input_invalid_no_focus {
     background-color: #F6AFAF;
 }
 

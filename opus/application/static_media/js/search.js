@@ -24,7 +24,7 @@ var o_search = {
             if(data[eachSlug] === null) {
                 if(currentInput.hasClass('RANGE')) {
                     $('#sidebar').addClass('search_overlay');
-                    currentInput.addClass('red_background');
+                    currentInput.addClass('search_input_invalid_no_focus');
                     currentInput.val(opus.selections[eachSlug]);
                 }
                 opus.allInputsValid = false;
@@ -34,8 +34,8 @@ var o_search = {
             } else {
                 if(currentInput.hasClass('RANGE')) {
                     currentInput.val(value);
-                    if(currentInput.hasClass('red_background')) {
-                        currentInput.removeClass('red_background');
+                    if(currentInput.hasClass('search_input_invalid_no_focus')) {
+                        currentInput.removeClass('search_input_invalid_no_focus');
                     }
                 }
             }
@@ -55,9 +55,9 @@ var o_search = {
                 return;
             } else {
                 o_hash.updateHash();
-                $('input.RANGE').removeClass('green_border');
-                $('input.RANGE').removeClass('red_border');
-                $('input.RANGE').addClass('gray_border');
+                $('input.RANGE').removeClass('search_input_valid');
+                $('input.RANGE').removeClass('search_input_invalid');
+                $('input.RANGE').addClass('search_input_original');
                 $('#sidebar').removeClass('search_overlay');
             }
         });
@@ -109,13 +109,13 @@ var o_search = {
 
         // Avoid the orange blinking on border color
         $('#search').on('focus', 'input.RANGE', function(event) {
-            $(this).addClass('gray_border');
-            $(this).removeClass('red_background');
+            $(this).addClass('search_input_original');
+            $(this).removeClass('search_input_invalid_no_focus');
         });
 
         // Dynamically get input values right after user input a character
         $('#search').on('input', 'input.RANGE', function(event) {
-            slug = $(this).attr("name");
+            let slug = $(this).attr("name");
             // o_search.rangeInputSearchInProgress = false;
             let currentValue = $(this).val().trim();
             let values = []
@@ -138,18 +138,23 @@ var o_search = {
 
                 o_search.currentNormalizedData = data;
                 let returnData = data[slug];
+
+                // parsing normalized data
+                // if it's empty string, don't modify anything
+                // if it's null, add search_input_invalid class
+                // if it's valid, add search_input_valid class
                 if(returnData === '') {
-                    $(event.target).removeClass('green_border red_border');
-                    $(event.target).addClass('gray_border');
+                    $(event.target).removeClass('search_input_valid search_input_invalid');
+                    $(event.target).addClass('search_input_original');
                 } else if(returnData !== null) {
-                    $(event.target).removeClass('gray_border red_border');
-                    $(event.target).addClass('green_border');
-                    if($(event.target).hasClass('red_background')) {
-                        $(event.target).removeClass('red_background');
+                    $(event.target).removeClass('search_input_original search_input_invalid');
+                    $(event.target).addClass('search_input_valid');
+                    if($(event.target).hasClass('search_input_invalid_no_focus')) {
+                        $(event.target).removeClass('search_input_invalid_no_focus');
                     }
                 } else {
-                    $(event.target).removeClass('gray_border green_border');
-                    $(event.target).addClass('red_border');
+                    $(event.target).removeClass('search_input_original search_input_valid');
+                    $(event.target).addClass('search_input_invalid');
                 }
             }); // end getJSON
         });

@@ -76,7 +76,7 @@ def api_normalize_input(request):
         raise ret
 
     if request.is_ajax():
-        reqno = reqno = request.GET.get('reqno', None)
+        reqno = request.GET.get('reqno', None)
         selections['reqno'] = reqno
 
     ret = json_response(selections)

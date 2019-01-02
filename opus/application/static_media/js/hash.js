@@ -55,10 +55,9 @@ var o_hash = {
           }
       }
       if(updateURL) {
-        window.location.hash = '/' + hash.join('&');
-      } else {
-        return hash.join('&');
+          window.location.hash = '/' + hash.join('&');
       }
+      return hash.join('&');
     },
 
     // returns the hash part of the url minus the #/ symbol
