@@ -118,7 +118,7 @@
         "pi_display_results": 1,
         "pi_form_type": "RANGE:range_galileo_sclk",
         "pi_intro": null,
-        "pi_label": "Spacecraft Clock Count 2",
+        "pi_label": "Spacecraft Clock Count",
         "pi_label_results": "Spacecraft Clock Stop Count",
         "pi_old_slug": "missiongalileospacecraftclockcount2",
         "pi_slug": "GALILEOspacecraftclockcount2",
