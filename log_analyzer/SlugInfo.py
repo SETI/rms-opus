@@ -2,15 +2,43 @@ from __future__ import print_function
 
 import json
 import re
-from typing import Optional, Tuple, Dict, Any
+from enum import Enum, auto
+from typing import Optional, Tuple, Dict, Any, NamedTuple
 
 import requests
 
 
-class SlugInfo(object):
-    _slug_map: Dict[str, Tuple[str, Optional[str]]]
-    _additional_slugs_for_searches: Dict[str, Tuple[str, Optional[str]]]
-    _additional_slugs_for_columns: Dict[str, Tuple[str, Optional[str]]]
+class SlugFamily(NamedTuple):
+    base_slug: str  # Is this needed?
+    label: str
+    min: str
+    max: str
+
+
+class SlugFamilyType(Enum):
+    NONE = auto()
+    MIN = auto()
+    MAX = auto()
+    QTYPE = auto()
+
+
+class SlugInfo(NamedTuple):
+    slug: str
+    label: str
+    extra_info: Optional[str] = None
+    family_type: SlugFamilyType = SlugFamilyType.NONE
+    family: Optional[SlugFamily] = None
+
+
+class SlugMap:
+    _slug_to_label: Dict[str, str]
+    _old_slug_to_new_slug: Dict[str, str]
+    _search_map: Dict[str, Optional[SlugInfo]]
+    _column_map: Dict[str, Optional[Tuple[str, Optional[str]]]]
+
+    QTYPE_SUFFIX = ' (QT)'
+    UNKNOWN_SLUG_INFO = 'unknown slug'
+    OBSOLETE_SLUG_INFO = 'obsolete slug'
 
     # Slugs that should be ignored when see them as either a column name or as a search term.
     SLUGS_NOT_IN_DB = {'browse', 'col_chooser', 'colls_browse', 'cols', 'detail',
@@ -20,104 +48,148 @@ class SlugInfo(object):
                        'timesampling', 'wavelengthsampling', 'colls',
                        }
 
-    QT_SUFFIX = "(QT)"
-
-    DEFAULT_FIELDS_SUFFIX = '/opus/api/fields.json'
 
     def __init__(self, url_prefix: str):
         """Initializes the slug info by reading the JSON describing it either from a URL or from a file to which
         it has been copied.
-
-        :param url_prefix: The prefix of the url from which to read the JSON description.
         """
 
         # Read the json
-        if url_prefix.endswith('/'):
-            url_prefix = url_prefix[:-1]
-        url = url_prefix + self.DEFAULT_FIELDS_SUFFIX
-        raw_json = self.__read_json(url)
+        raw_json = self.__read_json(url_prefix)
         json_data: Dict[str, Any] = raw_json['data']
 
-        slug_map: Dict[str, Tuple[str, Optional[str]]] = {}
-
         # Fill in all the normal slugs
-        for slug_info in json_data.values():
-            label = slug_info['label']
-            slug = slug_info['slug'].lower()
-            slug_map[slug] = (label, None)
-        # Only allow an old_slug if it doesn't have the same value as one already existing.
-        for slug_info in json_data.values():
-            label = slug_info['label']
-            slug = slug_info.get('old_slug')
-            if slug and slug.lower() not in slug_info:
-                slug_map[slug.lower()] = (label, 'obsolete slug')
-        self._slug_map = slug_map
-        self._additional_slugs_for_searches = {}
-        self._additional_slugs_for_columns = {}
+        self._slug_to_label = {
+            slug_info['slug'].lower(): slug_info['label'] for slug_info in json_data.values()
+        }
 
-    def get_info_for_column_slug(self, slug: str) -> Optional[Tuple[str, Optional[str]]]:
+        self._old_slug_to_new_slug = {
+            old_slug_info.lower(): slug_info['slug'].lower()
+            for slug_info in json_data.values()
+            for old_slug_info in [slug_info.get('old_slug')]
+            if old_slug_info
+        }
+        self._column_map = {}
+        self._search_map = {}
+
+        for slug in self.SLUGS_NOT_IN_DB:
+            self._column_map[slug] = None
+            self._search_map[slug] = None
+
+
+    def get_info_for_search_slug(self, slug: str, create=True) -> Optional[SlugInfo]:
+        """
+        Returns information about a slug that appears as part of a search term in a query
+        """
+        result: Optional[SlugInfo]
+
+        original_slug = slug
+        slug = slug.lower()
+        search_map = self._search_map
+        if slug in search_map:
+            return search_map[slug]
+
+        if slug in self._slug_to_label:
+            result = search_map[slug] = self._known_label(slug, None)
+            return result
+
+        if slug in self._old_slug_to_new_slug:
+            new_slug = self._old_slug_to_new_slug[slug]
+            result = search_map[slug] = self._known_label(new_slug, self.OBSOLETE_SLUG_INFO)
+            return result
+
+        if slug[-1] in '12':
+            result = self.get_info_for_search_slug(slug[:-1], False)
+            if result:
+                slug_root = slug[:-1]
+                family = SlugFamily(base_slug=result.slug, label=result.label, min='min', max='max')
+                extra_info = result.extra_info
+                search_map[slug_root + '1'] = SlugInfo(
+                    slug=result.slug + '1', label=result.label + ' (Min)',
+                    extra_info=extra_info, family=family, family_type=SlugFamilyType.MIN)
+                search_map[slug_root + '2'] = SlugInfo(
+                    slug=result.slug + '2', label=result.label + ' (Max)',
+                    extra_info=extra_info, family=family, family_type=SlugFamilyType.MAX)
+            return search_map[slug]
+
+        if slug.startswith('qtype-'):
+            result = self.get_info_for_search_slug(slug[6:] + '1', False)
+            if result:
+                assert result.family
+                assert result.slug.endswith('1')
+                sub_result = search_map[slug] = SlugInfo(
+                    slug='qtype-' + result.slug[:-1], label=result.family.label + self.QTYPE_SUFFIX,
+                    extra_info=result.extra_info, family=result.family, family_type=SlugFamilyType.QTYPE)
+                return sub_result
+            result = self.get_info_for_search_slug(slug[6:], False)
+            if result:
+                family = SlugFamily(base_slug=result.slug, label=result.label, min='min', max='max')
+                sub_result = search_map[slug] = SlugInfo(
+                    slug='qtype-' + result.slug, label=result.label + self.QTYPE_SUFFIX,
+                    extra_info=result.extra_info, family=family, family_type=SlugFamilyType.QTYPE)
+                return sub_result
+
+        if create:
+            result = search_map[slug] = SlugInfo(slug=slug, label=original_slug, extra_info=self.UNKNOWN_SLUG_INFO)
+            return result
+
+        return None
+
+    def _known_label(self, slug: str, extra_info: Optional[str]) -> SlugInfo:
+        label = self._slug_to_label[slug]
+        family, family_type = None, SlugFamilyType.NONE
+        if slug[-1] in '12':
+            if label.endswith(' (Min)') or label.endswith(' (Max)'):
+                family = SlugFamily(base_slug=slug[:-1], label=label[:-6], min='min', max='max')
+            else:
+                base_label =  re.sub(r'(.*) (Start|Stop) (.*)', r'\1 \3', label)
+                family = SlugFamily(base_slug=slug[-1], label=base_label, min='start', max='stop')
+            family_type = SlugFamilyType.MIN if slug[-1] == '1' else SlugFamilyType.MAX
+        return SlugInfo(slug=slug, label=label, extra_info=extra_info, family=family, family_type=family_type)
+
+    def get_info_for_column_slug(self, slug: str, create: bool=True) -> Optional[Tuple[str, Optional[str]]]:
         """Returns information about a slug that appears in a cols= part of a query
 
         :param String slug: A slug that represents a column name
         :return Tuple(String, String):
         """
+        original_slug = slug
         slug = slug.lower()
-        if slug in self._slug_map:
-            return self._slug_map[slug]
-        if slug in self._additional_slugs_for_columns:
-            return self._additional_slugs_for_columns[slug]
-        if slug in self.SLUGS_NOT_IN_DB:
-            return None
+        column_map = self._column_map
+        result: Tuple[str, Optional[str]]
 
-        if slug[-1] in '12' and slug[:-1] in self._slug_map:
-            # Rob says this shouldn't be happening, but it is.  A search slug is accidentally being used as a column.
-            # Just silently do the right thing, but mark it as a mistake.  When we see either a '1' or a '2' that
-            # shouldn't be at the end of a slug, just silently add both.
-            base_info, _ = self._slug_map[slug[:-1]]
-            for ch in '12':
-                self._additional_slugs_for_columns[slug[:-1] + ch] = base_info, f'removed {ch} from end'
-        else:
-            # We don't know what to do with this.  Just mark it as itself.
-            self._additional_slugs_for_columns[slug] = slug, 'unknown slug'
-        return self._additional_slugs_for_columns[slug]
+        if slug in column_map:
+            return column_map[slug]
 
-    def get_info_for_search_slug(self, slug: str) -> Optional[Tuple[str, Optional[str]]]:
-        """
-        Returns information about a slug that appears as part of a search term in a query
-        """
-        slug = slug.lower()
-        if slug in self._slug_map:
-            return self._slug_map[slug]
-        if slug in self._additional_slugs_for_searches:
-            return self._additional_slugs_for_searches[slug]
-        if slug in self.SLUGS_NOT_IN_DB:
-            return None
+        if slug in self._slug_to_label:
+            result = column_map[slug] = self._slug_to_label[slug], None
+            return result
 
-        if slug[-1] in '12' and slug[:-1] in self._slug_map:
-            # Sometimes, the search term can have a min and max, even though the column can't.
-            base_info, extra_info = self._slug_map[slug[:-1]]
-            self._additional_slugs_for_searches[slug[:-1] + '1'] = base_info + ' (Min)', extra_info
-            self._additional_slugs_for_searches[slug[:-1] + '2'] = base_info + ' (Max)', extra_info
-        elif slug.startswith('qtype-') and slug[6:] in self._slug_map:
-            # qtype-foo where foo is a known slug
-            base_info, extra_info = self._slug_map[slug[6:]]
-            self._additional_slugs_for_searches[slug] = base_info + self.QT_SUFFIX, extra_info
-        elif slug.startswith('qtype-') and slug[6:] + '1' in self._slug_map:
-            # qtype-foo where foo1 is a known slug
-            base_info, extra_info = self._slug_map[slug[6:] + '1']
-            # We try to make a reasonable name by either deleting '(Min)'  or by deleting ' Start '
-            if base_info.endswith(' (Min)'):
-                base_info = base_info[:-6]
-            else:
-                base_info = re.sub(r'(.*) Start (.*)', r'\1 \2', base_info)
-            self._additional_slugs_for_searches[slug] = base_info + self.QT_SUFFIX, extra_info
-        else:
-            # No idea.  Let's just flag it.
-            self._additional_slugs_for_searches[slug] = slug, 'unknown slug'
-        return self._additional_slugs_for_searches[slug]
+        if slug in self._old_slug_to_new_slug:
+            new_slug = self._old_slug_to_new_slug[slug]
+            result = column_map[slug] = self._slug_to_label[new_slug], self.OBSOLETE_SLUG_INFO
+            return result
+
+        if slug[-1] in '12':
+            temp = self.get_info_for_column_slug(slug[:-1], False)
+            if temp:
+                result = column_map[slug] = temp[0], f'removed {slug[-1]} from end'
+                return result
+
+        if create:
+            result = column_map[slug] = original_slug, self.UNKNOWN_SLUG_INFO
+            return result
+
+        return None
+
+    DEFAULT_FIELDS_SUFFIX = '/opus/api/fields.json'
 
     @staticmethod
-    def __read_json(url: str) -> Dict[str, Any]:
+    def __read_json(url_prefix: str) -> Dict[str, Any]:
+        if url_prefix.endswith('/'):
+            url_prefix = url_prefix[:-1]
+        url = url_prefix + SlugMap.DEFAULT_FIELDS_SUFFIX
+
         if url.startswith('file://'):
             with open(url[7:], "r") as file:
                 text = file.read()
