@@ -239,7 +239,7 @@ var opus = {
     main_timer:false,
     main_timer_interval:1000,
 
-    performSearch: true,
+    allInputsValid: true,
     //------------------------------------------------------------------------------------//
 
     load: function () {
@@ -251,8 +251,6 @@ var opus = {
         */
 
         selections = o_hash.getSelectionsFromHash();
-        // console.log('LOAD init selections: ' + JSON.stringify(selections));
-        // console.log('LOAD last selections: ' + JSON.stringify(opus.last_selections));
 
         if (!selections) {
             // there are no selections found in the url hash
@@ -279,79 +277,26 @@ var opus = {
               o_browse.resetQuery();
         }
 
-
         // start the result count spinner and do the yellow flash
         $('#result_count').html(opus.spinner).parent().effect("highlight", {}, 500);
-        // opus.getResultCount().then(opus.updatePage);
+
         // chain ajax calls, validate range inputs before result count api call
         o_search.normalizedApiCall().then(opus.getResultCount).then(opus.updatePageAfterResultCountAPI);
-          // query string has changed
-        // opus.last_selections = selections;
-        //
-        // opus.lastRequestNo++;
-        //
-    	  // // get result count
-        // $.ajax({ url: "/opus/__api/meta/result_count.json?" + o_hash.getHash() + '&reqno=' + opus.lastRequestNo,
-        //     dataType:"json",
-        //     success: function(json){
-        //
-        //         if (json['reqno'] < opus.lastRequestNo) {
-        //             return;
-        //         }
-        //         $('#browse_tab').fadeIn();
-        //         opus.updateResultCount(json['data'][0]['result_count']);
-        //
-        //         opus.mainTabDisplay('results');  // make sure the main site tab label is displayed
-        //
-        //         o_menu.getMenu();
-        //
-        //         // if all we wanted was a new gallery page we can stop here
-        //         opus.pages = Math.ceil(opus.result_count/opus.prefs.limit);
-        //         if (opus.prefs.view == "browse") {
-        //             $('#pages','#browse').html(opus.pages);
-        //             return;
-        //         }
-        //
-        //         // result count is back, now send for widget hinting
-        //         var widget_cols = ['widgets','widgets2'];
-        //         for (key in widget_cols) {
-        //             col = widget_cols[key];
-        //             for (k in opus.prefs[col]) {
-        //                 slug = opus.prefs[col][k];
-        //                 o_search.getHinting(slug);
-        //             } // end for widget in..
-        //         } // endfor
-        //     } // end result count success
-        // }); // end result count ajax
-    }, // endfunc jeezumcrow! #shootmenow
+    },
     getResultCount: function(normalizedData) {
-        console.log('Normalized api call return data: ' + JSON.stringify(normalizedData))
-        opus.performSearch = true;
-        $.each(normalizedData, function(eachSlug, value) {
-            if(normalizedData[eachSlug] === null) {
-                $('#sidebar').addClass('search_overlay');
-                $(`input[name="${eachSlug}"]`).addClass('red_background');
-                $(`input[name="${eachSlug}"]`).val(opus.selections[eachSlug]);
-                opus.performSearch = false;
-                // fade out the spinner if some range inputs are not valid
-                $('.spinner').fadeOut('');
-                // delete selections[eachSlug];
-            } else {
-                $(`input[name="${eachSlug}"]`).val(value);
-                if($(`input[name="${eachSlug}"]`).hasClass('red_background')) {
-                    $(`input[name="${eachSlug}"]`).removeClass('red_background');
-                }
-            }
-        });
+        o_search.validateRangeInput(normalizedData, true);
+
+        // query string has changed
         opus.last_selections = selections;
         opus.lastRequestNo++;
         let resultCountHash = o_hash.getHash();
-        console.log('resultCountHash: ' + resultCountHash);
-        if(!opus.performSearch) {
+
+        if(!opus.allInputsValid) {
           // remove spinning effect on browse count
           $('#result_count').text('0');
           return;
         }
+
         return $.ajax({
             url: '/opus/__api/meta/result_count.json?' + resultCountHash + '&reqno=' + opus.lastRequestNo,
             type: 'GET',
@@ -359,8 +304,7 @@ var opus = {
         });
     },
     updatePageAfterResultCountAPI: function(resultCountData) {
-        console.log('Result count api call return data: ' + JSON.stringify(resultCountData))
-        if(!opus.performSearch) {
+        if(!opus.allInputsValid) {
             return;
         }
         if (resultCountData['reqno'] < opus.lastRequestNo) {
