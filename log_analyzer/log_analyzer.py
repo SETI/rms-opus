@@ -5,7 +5,7 @@ from typing import List, Optional
 from LogEntry import LogReader
 from LogParser import LogParser
 from SessionInfo import SessionInfoGenerator
-from SlugInfo import SlugInfo
+from SlugInfo import SlugMap
 
 DEFAULT_FIELDS_PREFIX = 'https://tools.pds-rings.seti.org'
 
@@ -41,7 +41,7 @@ def main(arguments: Optional[List[str]] = None) -> None:
     parser.add_argument('log_files', nargs=argparse.REMAINDER, help='log files')
     args = parser.parse_args(arguments)
 
-    slugs = SlugInfo(args.api_host_url)
+    slugs = SlugMap(args.api_host_url)
     # args.ignored_ip comes out as a list of lists, and it needs to be flattened.
     ignored_ips = [ip for arg_list in args.ignore_ip for ip in arg_list]
     session_info_generator = SessionInfoGenerator(slugs, ignored_ips)
