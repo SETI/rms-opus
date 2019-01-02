@@ -127,7 +127,7 @@ class _SessionInfoImpl(SessionInfo):
 
     @ForPattern(r'/__api/data\.(.*)')
     @ForPattern(r'/__api/images\.(.*)')
-    def _api_data(self, entry: LogEntry, query: Dict[str, str], match: Match) -> Optional[List[str]]:
+    def _api_data(self, entry: LogEntry, query: Dict[str, str], match: Match) -> List[str]:
         cols = query.get('cols', None)
         if cols and cols.lower() not in ('0', 'false'):
             return self.__handle_query(query)
@@ -143,7 +143,7 @@ class _SessionInfoImpl(SessionInfo):
         return [f'View Metadata: {metadata}']
 
     @ForPattern('/__api/meta/result_count.json')
-    def _get_info(self, entry: LogEntry, query: Dict[str, str], match: Match) -> Optional[List[str]]:
+    def _get_info(self, entry: LogEntry, query: Dict[str, str], match: Match) -> List[str]:
         return self.__handle_query(query)
 
     #
@@ -220,7 +220,7 @@ class _SessionInfoImpl(SessionInfo):
     def _initialize_detail(self, entry: LogEntry, query: Dict[str, str], match: Match) -> List[str]:
         return [f'View Detail: {match.group(1)}']
 
-    def __handle_query(self, new_query: Dict[str, str]) -> Optional[List[str]]:
+    def __handle_query(self, new_query: Dict[str, str]) -> List[str]:
         result: List[str] = []
         old_query = self._previous_api_query
         self._previous_api_query = new_query
@@ -228,16 +228,18 @@ class _SessionInfoImpl(SessionInfo):
         self.__get_query_info_search_slugs(old_query, new_query, result)
         self.__get_query_info_column_names(old_query, new_query, result)
         self.__get_query_info_page_number(old_query, new_query, result)
-        return result or None  # convert empty result to None
+        return result
 
     QTYPE_SLUG_SUFFIX_LENGTH = len(SlugMap.QTYPE_SUFFIX)
 
     def __get_query_info_search_slugs(self, old_query: Optional[Dict[str, str]], new_query: Dict[str, str],
                                       result: List[str]):
         def get_info_for_query_slugs(query):
-            return {slug_info.slug: (slug_info, value) for slug, value in query.items()
-                    for slug_info in [self._slug_map.get_info_for_search_slug(slug)] if slug_info}
-
+            return {
+                slug_info.slug: (slug_info, value) for slug, value in query.items()
+                for slug_info in [self._slug_map.get_info_for_search_slug(slug)]
+                if slug_info
+            }
         if old_query is not None:
             old_search_slug_info = get_info_for_query_slugs(old_query)
         else:
@@ -260,7 +262,7 @@ class _SessionInfoImpl(SessionInfo):
                         changed_searches.append(f'Change qtype for "{search}" = "{value}" -> default')
             elif slug in new_search_slug_info and slug not in old_search_slug_info:
                 slug_info, value = new_search_slug_info[slug]
-                postscript = f' **{slug_info.extra_info}**' if slug_info.extra_info else ''
+                postscript = f' **{slug_info.flags.pretty_print()}**' if slug_info.flags else ''
                 if is_normal_slug:
                     added_searches.append(f'Add Search: "{slug_info.label}" = "{value}"{postscript}')
                 else:
@@ -303,7 +305,7 @@ class _SessionInfoImpl(SessionInfo):
         for column in sorted(all_columns):
             if column in new_columns and column not in old_columns:
                 slug_info = new_column_info[column]
-                postscript = f' **{slug_info.extra_info}**' if slug_info.extra_info else ''
+                postscript = f' **{slug_info.flags.pretty_print()}**' if slug_info.flags else ''
                 added_columns.append(f'Add Column: "{slug_info.label}{postscript}"')
             elif column in old_columns and column not in new_column_info:
                 slug_info = old_column_info[column]
