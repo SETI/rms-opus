@@ -12,11 +12,6 @@ var o_search = {
         opus.lastRequestNo++;
         let url = '/opus/__api/normalizeinput.json?' + newHash + '&reqno=' + opus.lastRequestNo;
         return $.getJSON(url);
-        // return $.ajax({
-        //     url: url,
-        //     type: 'GET',
-        //     dataType: 'json',
-        // });
     },
     validateRangeInput: function(data, removeSpinner=false) {
         opus.allInputsValid = true;

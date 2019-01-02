@@ -293,17 +293,11 @@ var opus = {
 
         if(!opus.allInputsValid) {
           // remove spinning effect on browse count
-          $('#result_count').text('0');
+          $('#result_count').text('X');
           return;
         }
 
         return $.getJSON('/opus/__api/meta/result_count.json?' + resultCountHash + '&reqno=' + opus.lastRequestNo);
-
-        // return $.ajax({
-        //     url: '/opus/__api/meta/result_count.json?' + resultCountHash + '&reqno=' + opus.lastRequestNo,
-        //     type: 'GET',
-        //     dataType: 'json'
-        // });
     },
     updatePageAfterResultCountAPI: function(resultCountData) {
         if(!opus.allInputsValid) {
