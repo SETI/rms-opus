@@ -44,6 +44,9 @@ class ParamInfo(models.Model):
 
     def body_qualified_label(self):
         # Append "[Ring]" or "[<Surface Body>]" or "[Mission]" or "[Instrument]"
+        if self.label is None:
+            return None
+
         append_to_label = None
 
         pretty_name = (TableNames.objects
@@ -59,6 +62,9 @@ class ParamInfo(models.Model):
 
     def body_qualified_label_results(self):
         # Append "[Ring]" or "[<Surface Body>]" or "[Mission]" or "[Instrument]"
+        if self.label_results is None:
+            return None
+            
         append_to_label = None
 
         pretty_name = (TableNames.objects

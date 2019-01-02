@@ -224,10 +224,12 @@ def exit_api_call(api_code, ret):
         return
     end_time = time.time()
     delay_amount = 0.
-    if settings.OPUS_FAKE_API_DELAYS > 0:
-        delay_amount = settings.OPUS_FAKE_API_DELAYS / 1000.
-    elif settings.OPUS_FAKE_API_DELAYS < 0:
-        delay_amount = random.uniform(0., -settings.OPUS_FAKE_API_DELAYS/1000.)
+    if settings.OPUS_FAKE_API_DELAYS is not None:
+        if settings.OPUS_FAKE_API_DELAYS > 0:
+            delay_amount = settings.OPUS_FAKE_API_DELAYS / 1000.
+        elif settings.OPUS_FAKE_API_DELAYS < 0:
+            delay_amount = random.uniform(0.,
+                                          -settings.OPUS_FAKE_API_DELAYS/1000.)
     if settings.OPUS_LOG_API_CALLS:
         s = 'API ' + str(api_code) + ' EXIT'
         if api_code in _API_START_TIMES:
