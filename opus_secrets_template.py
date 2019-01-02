@@ -78,6 +78,12 @@ OPUS_LOG_CONSOLE_LEVEL = 'INFO'
 OPUS_LOG_DJANGO_LEVEL = 'WARN'
 OPUS_LOG_API_CALLS = False
 
+# Allow faking of slow network connections
+# None = Don't do anything different
+# Positive = Delay this exact number of milliseconds
+# Negative = Delay a random amount between 0 and abs(delay)
+OPUS_FAKE_API_DELAYS = None
+
 
 ##############################
 ### NEEDED FOR OPUS IMPORT ###
