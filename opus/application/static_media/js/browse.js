@@ -167,7 +167,7 @@ var o_browse = {
                 // checkbox not currently implemented
                 // pop up a warning if selection total is > 100 items,
                 // with the total number to be selected...
-                // if OK, use 'addall' api and loop thru all checkboxes to set them as selected
+                // if OK, use 'addall' api and loop tru all checkboxes to set them as selected
                 //o_collections.editCollection("all",action);
                 return false;
             }
@@ -300,13 +300,6 @@ var o_browse = {
             return false;
         });
 
-        // the "back to top" link at bottom of gallery
-        $("#browse").on('click', 'a[href="#top"]', function() {
-            $('html, body').animate({scrollTop:0}, 'slow');
-            return false;
-        });
-
-
         // this is the workhorse function that collects keyboard input and does something useful
         $(document).on("keydown",function(e) {
             if ($("#browse").hasClass("active")) {
@@ -404,6 +397,16 @@ var o_browse = {
         return (elem.hasClass("in") ? "add" : "remove");
     },
 
+    // columns can be reordered wrt each other in 'column chooser' by dragging them
+    columnsDragged: function(element) {
+        let cols = $(element).sortable('toArray');
+        cols.unshift('cchoose__opusid');  // manually add opusid to this list
+        $.each(cols, function(key, value)  {
+            cols[key] = value.split('__')[1];
+        });
+        opus.prefs['cols'] = cols;
+    },
+
     // column chooser behaviors
     addColumnChooserBehaviors: function() {
         // this is a global
@@ -413,8 +416,9 @@ var o_browse = {
             // update the data table w/the new columns
             if (!o_utils.areObjectsEqual(opus.prefs.cols, currentSelectedColumns)) {
                 o_hash.updateHash();
-                opus.last_page_drawn[opus.prefs.browse] = 0;
+                opus.last_page_drawn = $.extend(true, {}, reset_last_page_drawn)
                 opus.gallery_begun = false;     // so that we redraw from the beginning
+                opus.gallery_data = {};
                 o_browse.loadBrowseData(1);
                 currentSelectedColumns = opus.prefs.cols.slice();
             }
@@ -613,11 +617,18 @@ var o_browse = {
                 html += 'data-id="'+opusId+'"	data-image="'+images.full.url+'">';
                 html += '<img class="img-thumbnail img-fluid" src="'+images.thumb.url+'" alt="'+images.thumb.alt_text+'" title="'+opusId+'"> </a>';
                 html += '<div class="thumb_overlay">';
-                html +=    '<div class="tools" data-id="'+opusId+'">';
-                html +=       '<a href="#" data-icon="info"><i class="fa fa-info fa-xs" aria-hidden="true"></i></a>';
-                html +=       '<a href="#" data-icon="check"><i class="fa fa-check fa-xs" aria-hidden="true"></i></a>';
-                html +=       '<a href="#" data-icon="resize"><i class="fas fa-expand-arrows-alt fa-xs" aria-hidden="true"></i></a>';
-                html += '</div></div></div>';
+                if (opus.prefs.view == "browse") {
+                    html +=    '<div class="tools" data-id="'+opusId+'">';
+                    html +=       '<a href="#" data-icon="info"><i class="fa fa-info fa-xs" aria-hidden="true"></i></a>';
+                    html +=       '<a href="#" data-icon="check"><i class="fa fa-check fa-xs" aria-hidden="true"></i></a>';
+                    html +=       '<a href="#" data-icon="resize"><i class="fas fa-expand-arrows-alt fa-xs" aria-hidden="true"></i></a>';
+                    html +=    '</div>';
+                } else {
+                    html +=    '<a href="#" class="remove">';
+                    html +=      '<i class="fas fa-times fa-7x"></i>';
+                    html +=    '</a>';
+                }
+                html += '</div></div>';
 
                 // table row
                 let checked = item.in_collection ? " checked" : "";
@@ -659,6 +670,13 @@ var o_browse = {
             let columnOrdering = "<div class='column_ordering'><a href='' data-slug='slug'><i class='fas fa-sort"+icon+"'></i></a></div>";
             $(".dataTable thead tr").append("<th id='"+slug+" 'scope='col' class='sticky-header'>"+header+columnOrdering+"</th>");
         });
+        $(".dataTable th").resizable({
+            handles: "e",
+            minWidth: 40,
+            resize: function (event, ui) {
+              $(event.target).find("div").width(ui.size.width);
+            }
+        });
     },
 
     loadBrowseData: function(page) {
@@ -682,8 +700,6 @@ var o_browse = {
         $.getJSON(base_url + url, function(data) {
             let request_time = new Date().getTime() - start_time;
             console.log(request_time);
-
-            o_browse.renderGalleryAndTable(data, this.url);
 
             if (!opus.gallery_begun) {
                 o_browse.initTable(data.columns);
@@ -710,6 +726,8 @@ var o_browse = {
                     console.log('Loaded page: ' + $('#browse .gallery-contents').data('infiniteScroll').pageIndex );
                 });
             }
+
+            o_browse.renderGalleryAndTable(data, this.url);
 
             if (!opus.gallery_begun) {
                 $('#browse .gallery-contents').infiniteScroll('loadNextPage');
@@ -872,42 +890,4 @@ var o_browse = {
         // FIX ME - RENDER BROWSE OR COLLECTION TAB, BUT DON'T CALL SAME FUNC FOR BOTH, YUCK
         o_browse.getBrowseTab();
     },
-
-    // columns can be reordered wrt each other in 'column chooser' by dragging them
-    columnsDragged: function(element) {
-        var cols = $(element).sortable('toArray');
-        cols.unshift('cchoose__opusid');  // manually add opusid to this list
-        $.each(cols, function(key, value)  {
-            cols[key] = value.split('__')[1];
-        });
-        opus.prefs['cols'] = cols;
-        // if we are in gallery - just change the data-struct that gallery draws from
-        // if we are in table -
-        // $('.gallery', '#browse').html(opus.spinner);
-
-        // we are about to update the same page we just updated, it will replace
-        // the one that is showing,
-
-        // we are about to update the same page we just updated, it will replace
-        // the one that is showing,
-        // set last page to one before first page that is showing in the interface
-        // now update the browse table
-        if (opus.prefs.browse == "dataTable") {
-            o_browse.updatePage();
-        } else {
-            // update the hash
-            o_hash.updateHash();
-
-            // update the underlying column data that goes with
-            // thumbnails currently rendered
-            var view_info = o_browse.getViewInfo();
-            var prefix = view_info['prefix'];       // either 'colls_' or ''
-            var pages = opus.pages_drawn[prefix + "gallery"];
-            for (var i in pages) {
-                o_browse.loadBrowseData(pages[i]);
-            }
-        }
-
-    },
-
 };
