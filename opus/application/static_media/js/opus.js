@@ -282,6 +282,12 @@ var opus = {
 
 $(document).ready(function() {
 
+    let temp = "";
+    $.each($("link"), function(index, elem) {
+        temp += elem.href + "\n"
+    });
+    alert(temp);
+
     opus.prefs.widgets = [];
     o_widgets.updateWidgetCookies();
 
