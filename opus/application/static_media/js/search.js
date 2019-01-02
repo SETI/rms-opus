@@ -5,7 +5,6 @@ var o_search = {
      *  Everything that appears on the search tab
      *
      **/
-    // rangeInputSearchInProgress: false,
     currentNormalizedData: {},
     slugReqno: {},
     normalizedApiCall: function() {
@@ -13,9 +12,9 @@ var o_search = {
         opus.lastRequestNo++;
         let url = '/opus/__api/normalizeinput.json?' + newHash + '&reqno=' + opus.lastRequestNo;
         return $.ajax({
-          url: url,
-          type: 'GET',
-          dataType: 'json',
+            url: url,
+            type: 'GET',
+            dataType: 'json',
         });
     },
     validateRangeInput: function(data, removeSpinner=false) {
@@ -110,8 +109,8 @@ var o_search = {
 
         // Avoid the orange blinking on border color
         $('#search').on('focus', 'input.RANGE', function(event) {
-          $(this).addClass('gray_border');
-          $(this).removeClass('red_background');
+            $(this).addClass('gray_border');
+            $(this).removeClass('red_background');
         });
 
         // Dynamically get input values right after user input a character
