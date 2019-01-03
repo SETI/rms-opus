@@ -23,6 +23,7 @@ def main(arguments: Optional[List[str]] = None) -> None:
                        help='Print a report on one or more completed log files')
     group.add_argument('--summary', '-s', action='store_true',
                        help='Print a batch report sorted by ip')
+    group.add_argument('--show_slugs', action='store_true', dest='show_slugs')
     group.add_argument('--xxfake', action='store_true', help=argparse.SUPPRESS, dest='fake')  # For testing only
 
     parser.add_argument('--api-host-url', default=DEFAULT_FIELDS_PREFIX, metavar='URL', dest='api_host_url',
@@ -60,6 +61,8 @@ def main(arguments: Optional[List[str]] = None) -> None:
             log_parser.run_batch(log_entries_list)
         elif args.summary:
             log_parser.run_summary(log_entries_list)
+        elif args.show_slugs:
+            log_parser.show_slugs(log_entries_list)
         elif args.fake:
             log_parser.run_realtime(iter(log_entries_list))
 
