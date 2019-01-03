@@ -10,7 +10,7 @@ var o_search = {
     normalizedApiCall: function() {
         let newHash = o_hash.updateHash(false);
         let regexForShortHash = /(.*)&view/;
-
+        // Use short hash 
         if(newHash.match(regexForShortHash)) {
             newHash = newHash.match(regexForShortHash)[1];
         }
@@ -148,7 +148,7 @@ var o_search = {
             opus.selections[slug] = values;
             let newHash = o_hash.updateHash(false);
             let regexForShortHash = /(.*)&view/;
-
+            // Use short hash
             if(newHash.match(regexForShortHash)) {
                 newHash = newHash.match(regexForShortHash)[1];
             }
@@ -190,7 +190,7 @@ var o_search = {
             let slug = $(this).attr("name");
             let newHash = o_hash.updateHash(false);
             let regexForShortHash = /(.*)&view/;
-
+            // Use short hash
             if(newHash.match(regexForShortHash)) {
                 newHash = newHash.match(regexForShortHash)[1];
             }
