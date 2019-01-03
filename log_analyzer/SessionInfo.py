@@ -159,7 +159,7 @@ class _SessionInfoImpl(SessionInfo):
     def _change_selections(self, entry: LogEntry, query: Dict[str, str], match: Match) -> List[str]:
         opus_id = query.get('opus_id', '???')
         selection = match.group(2).title()
-        return [f'Selections {selection}: {opus_id}']
+        return [f'Selections {selection.title() + ":":<7} {opus_id}']
 
     @ForPattern(r'/__collections(/default)?/view.json')
     def collections_view(self, entry: LogEntry, query: Dict[str, str], match: Match) -> List[str]:
@@ -231,8 +231,6 @@ class _SessionInfoImpl(SessionInfo):
         self.__get_query_info_page_number(old_query, new_query, result)
         return result
 
-    QTYPE_SLUG_SUFFIX_LENGTH = len(SlugMap.QTYPE_SUFFIX)
-
     def __get_query_info_search_slugs(self, old_query: Optional[Dict[str, str]], new_query: Dict[str, str],
                                       result: List[str]):
         def get_slug_info_for_search_slugs(query) -> Dict[SlugFamily, List[Tuple[SlugInfo, str]]]:
@@ -275,12 +273,12 @@ class _SessionInfoImpl(SessionInfo):
                     slug_info, value = new_search_family_info[family][0]
                     assert family.label == slug_info.label
                     postscript = f' **{slug_info.flags.pretty_print()}**' if slug_info.flags else ''
-                    added_searches.append(f'Add Search: "{family.label}" = "{value}"{postscript}')
+                    added_searches.append(f'Add Search:    "{family.label}" = "{value}"{postscript}')
                 else:
                     new_min, new_max, new_qtype, flags = parse_family(new_search_family_info[family])
-                    new_value = f'({family.min}:"{new_min}", {family.max}:"{new_max}", qtype:"{new_qtype}")'
+                    new_value = f'({family.min.upper()}:"{new_min}", {family.max.upper()}:"{new_max}", QTYPE:"{new_qtype}")'
                     postscript = f' **{flags.pretty_print()}**' if flags else ''
-                    added_searches.append(f'Add search "{family.label}" = {new_value}{postscript}')
+                    added_searches.append(f'Add Search:    "{family.label}" = {new_value}{postscript}')
             else:
                 if family.is_singleton():
                     assert len(old_search_family_info[family]) == 1
