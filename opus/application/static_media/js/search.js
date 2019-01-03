@@ -38,6 +38,25 @@ var o_search = {
         });
         if(!opus.allInputsValid) {
             $('#result_count').addClass('browse_results_invalid').text('X');
+            opus.widgets_drawn.forEach(function(eachSlug) {
+                if ($('.widget__' + eachSlug).hasClass('range-widget')) {
+                    $('#hint__' + eachSlug).html('<span>min: ?</span><span>max: ?</span><span> nulls: ?</span>');
+                } else if ($('.widget__' + eachSlug).hasClass('mult-widget')) {
+                    let hintForMult = $(`span[id*="hint__${eachSlug}"]`);
+                    console.log('HINT FOR MULT: ' + hintForMult);
+                    $(`span[id*="hint__${eachSlug}"]`).html('<span>?</span>');
+                }
+            });
+            // $('.hints').each(function() {
+            //     $(this).html('<span>?</span>');
+            // });
+        } else {
+            // put back normal hinting info
+            opus.widgets_drawn.forEach(function(eachSlug) {
+                o_search.getHinting(eachSlug);
+            });
+            console.log('widget_drawn: ' + opus.widgets_drawn);
+            console.log('widget_drawn_element: ' + opus.widget_elements_drawn);
         }
     },
     performSearch: function(event, slug, url) {
@@ -58,6 +77,7 @@ var o_search = {
                 $('input.RANGE').removeClass('search_input_invalid');
                 $('input.RANGE').addClass('search_input_original');
                 $('#sidebar').removeClass('search_overlay');
+                // .text is here in case the url is not changed but the input value is set to invalid and valid again
                 $('#result_count').removeClass('browse_results_invalid').text(opus.result_count);
             }
         });
@@ -443,6 +463,8 @@ var o_search = {
                 },
                 error:function (xhr, ajaxOptions, thrownError){
                     $('#widget__' + slug + ' .spinner').removeClass('spinning');
+                    // range input hints are "?" when wrong values of url is pasted
+                    $('#hint__' + slug).html('<span>min: ?</span><span>max: ?</span><span> nulls: ?</span>');
                 }
             }); // end mults ajax
     },
@@ -488,6 +510,10 @@ var o_search = {
             },
             error:function (xhr, ajaxOptions, thrownError){
                 $('#widget__' + slug + ' .spinner').removeClass('spinning');
+                // checkbox hints are "?" when wrong values of url is pasted
+                $('.hints').each(function() {
+                    $(this).html('<span>?</span>');
+                });
             }
         }); // end mults ajax
 
