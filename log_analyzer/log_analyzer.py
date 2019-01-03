@@ -23,7 +23,7 @@ def main(arguments: Optional[List[str]] = None) -> None:
                        help='Print a report on one or more completed log files')
     group.add_argument('--summary', '-s', action='store_true',
                        help='Print a batch report sorted by ip')
-    group.add_argument('--show_slugs', action='store_true', dest='show_slugs')
+    group.add_argument('--slug_summary', action='store_true', dest='show_slugs')
     group.add_argument('--xxfake', action='store_true', help=argparse.SUPPRESS, dest='fake')  # For testing only
 
     parser.add_argument('--api-host-url', default=DEFAULT_FIELDS_PREFIX, metavar='URL', dest='api_host_url',
