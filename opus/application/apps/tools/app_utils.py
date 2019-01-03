@@ -223,6 +223,13 @@ def exit_api_call(api_code, ret):
     if api_code is None:
         return
     end_time = time.time()
+    delay_amount = 0.
+    if settings.OPUS_FAKE_API_DELAYS is not None:
+        if settings.OPUS_FAKE_API_DELAYS > 0:
+            delay_amount = settings.OPUS_FAKE_API_DELAYS / 1000.
+        elif settings.OPUS_FAKE_API_DELAYS < 0:
+            delay_amount = random.uniform(0.,
+                                          -settings.OPUS_FAKE_API_DELAYS/1000.)
     if settings.OPUS_LOG_API_CALLS:
         s = 'API ' + str(api_code) + ' EXIT'
         if api_code in _API_START_TIMES:
@@ -232,9 +239,13 @@ def exit_api_call(api_code, ret):
         s += ': ' + ret_str[:240]
         if isinstance(ret, HttpResponse):
             s += '\n' + ret.content.decode()[:240]
+        if delay_amount:
+            s += f'\nDELAYING RETURN {delay_amount} SECONDS'
         log.debug(s)
     if api_code in _API_START_TIMES:
         del _API_START_TIMES[api_code]
+    if delay_amount:
+        time.sleep(delay_amount)
 
 def parse_form_type(s):
     """Parse the ParamInfo FORM_TYPE with its subfields.

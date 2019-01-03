@@ -497,6 +497,9 @@ def get_fields_info(fmt, slug=None, category=None, collapse=False):
             entry = OrderedDict()
             table_name = TableNames.objects.get(table_name=f.category_name)
             entry['label'] = f.label_results
+            entry['search_label'] = f.label
+            entry['full_label'] = f.body_qualified_label_results()
+            entry['full_search_label'] = f.body_qualified_label()
             collapsed_slug = f.slug
             if collapse:
                 entry['category'] = table_name.label.replace('Saturn',
