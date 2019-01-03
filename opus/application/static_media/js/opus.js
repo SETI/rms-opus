@@ -293,7 +293,7 @@ var opus = {
 
         if(!opus.allInputsValid) {
           // remove spinning effect on browse count
-          $('#result_count').addClass('browse_results_invalid').text('X');
+          $('#result_count').text('?');
           return;
         }
 

@@ -10,7 +10,7 @@ var o_search = {
     normalizedApiCall: function() {
         let newHash = o_hash.updateHash(false);
         let regexForShortHash = /(.*)&view/;
-        // Use short hash 
+        // Use short hash
         if(newHash.match(regexForShortHash)) {
             newHash = newHash.match(regexForShortHash)[1];
         }
@@ -40,7 +40,7 @@ var o_search = {
             }
         });
         if(!opus.allInputsValid) {
-            $('#result_count').addClass('browse_results_invalid').text('X');
+            $('#result_count').text('?');
             // set hinting info to ? when any range input has invalid value
             opus.widgets_drawn.forEach(function(eachSlug) {
                 if ($('.widget__' + eachSlug).hasClass('range-widget')) {
@@ -80,7 +80,7 @@ var o_search = {
                 $('input.RANGE').addClass('search_input_original');
                 $('#sidebar').removeClass('search_overlay');
                 // .text is here in case the url is not changed but the input value is set to invalid and valid again
-                $('#result_count').removeClass('browse_results_invalid').text(opus.result_count);
+                $('#result_count').text(opus.result_count);
             }
         });
     },
