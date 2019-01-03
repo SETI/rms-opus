@@ -3,7 +3,7 @@ import ipaddress
 import re
 import urllib.parse
 from collections import defaultdict
-from typing import List, Dict, Optional, Match, Tuple, Pattern, Any
+from typing import List, Dict, Optional, Match, Tuple, Pattern, Any, cast, Callable
 
 from LogEntry import LogEntry
 from SlugInfo import SlugMap, SlugInfo, SlugFamily, SlugFlags, SlugFamilyType
@@ -14,7 +14,7 @@ class ForPattern:
     A Decorator used by SessionInfo.
     A method is decorated with the regex of the URLs that it knows how to parse.
     """
-    PATTERNS: List[Tuple[Pattern, Any]] = []
+    PATTERNS: List[Tuple[Pattern, Callable[..., List[str]]]] = []
 
     def __init__(self, pattern: str):
         self.pattern = re.compile(pattern + '$')
@@ -35,17 +35,32 @@ class SessionInfo(metaclass=abc.ABCMeta):
     """
 
     @abc.abstractmethod
-    def parse_log_entry(self, entry: LogEntry) -> Optional[List[str]]:
+    def parse_log_entry(self, entry: LogEntry) -> List[str]:
         raise Exception()
 
     @staticmethod
     def get_non_null_slug_info(slugs: List[str], slug_map: SlugMap) -> Dict[str, SlugInfo]:
+        """
+        This returns a map from the slugs that appear in the list of strings to the SlugInfo for that slug,
+        provided that the info exists.
+        """
         return {
-            slug_info.slug: slug_info
+            slug: slug_info
             for slug in slugs
             for slug_info in [slug_map.get_info_for_column_slug(slug)]
             if slug_info is not None
         }
+
+    _all_search_slugs: Dict[str, SlugInfo] = {}
+    _all_column_slugs: Dict[str, SlugInfo] = {}
+
+    @staticmethod
+    def all_search_slugs() -> Dict[str, SlugInfo]:
+        return SessionInfo._all_search_slugs
+
+    @staticmethod
+    def all_column_slugs() -> Dict[str, SlugInfo]:
+        return SessionInfo._all_column_slugs
 
 
 class SessionInfoGenerator:
@@ -94,19 +109,19 @@ class _SessionInfoImpl(SessionInfo):
         # The previous query when using /__api/
         self._previous_api_query = None
 
-    def parse_log_entry(self, entry: LogEntry) -> Optional[List[str]]:
+    def parse_log_entry(self, entry: LogEntry) -> List[str]:
         """Parses a log record within the context of the current session."""
 
         # We ignore all sorts of log entries.
         if entry.method != 'GET' or entry.status != 200:
-            return None
+            return []
         if entry.agent and "bot" in entry.agent.lower():
-            return None
+            return []
         path = entry.url.path
         if not path.startswith('/opus/__'):
-            return None
+            return []
         if any(entry.host_ip in ipNetwork for ipNetwork in self._ignored_ips):
-            return None
+            return []
 
         # See if the path matches one of our patterns.
         path = path[5:]
@@ -120,7 +135,7 @@ class _SessionInfoImpl(SessionInfo):
                          for key, value in raw_query.items()
                          if isinstance(value, list) and len(value) == 1}
                 return method(self, entry=entry, query=query, match=match)
-        return None
+        return []
 
     #
     # API
@@ -159,7 +174,7 @@ class _SessionInfoImpl(SessionInfo):
     def _change_selections(self, entry: LogEntry, query: Dict[str, str], match: Match) -> List[str]:
         opus_id = query.get('opus_id', '???')
         selection = match.group(2).title()
-        return [f'Selections {selection}: {opus_id}']
+        return [f'Selections {selection.title() + ":":<7} {opus_id}']
 
     @ForPattern(r'/__collections(/default)?/view.json')
     def collections_view(self, entry: LogEntry, query: Dict[str, str], match: Match) -> List[str]:
@@ -231,8 +246,6 @@ class _SessionInfoImpl(SessionInfo):
         self.__get_query_info_page_number(old_query, new_query, result)
         return result
 
-    QTYPE_SLUG_SUFFIX_LENGTH = len(SlugMap.QTYPE_SUFFIX)
-
     def __get_query_info_search_slugs(self, old_query: Optional[Dict[str, str]], new_query: Dict[str, str],
                                       result: List[str]):
         def get_slug_info_for_search_slugs(query) -> Dict[SlugFamily, List[Tuple[SlugInfo, str]]]:
@@ -240,8 +253,11 @@ class _SessionInfoImpl(SessionInfo):
             for slug, value in query.items():
                 slug_info = self._slug_map.get_info_for_search_slug(slug)
                 if slug_info:
-                    temp[slug_info.family].append((slug_info, value))
+                    family = cast(SlugFamily, slug_info.family)  # Only None for columns
+                    temp[family].append((slug_info, value))
+                    self._all_search_slugs[slug] = slug_info
             return temp
+
         if old_query is not None:
             old_search_family_info = get_slug_info_for_search_slugs(old_query)
         else:
@@ -275,12 +291,13 @@ class _SessionInfoImpl(SessionInfo):
                     slug_info, value = new_search_family_info[family][0]
                     assert family.label == slug_info.label
                     postscript = f' **{slug_info.flags.pretty_print()}**' if slug_info.flags else ''
-                    added_searches.append(f'Add Search: "{family.label}" = "{value}"{postscript}')
+                    added_searches.append(f'Add Search:    "{family.label}" = "{value}"{postscript}')
                 else:
                     new_min, new_max, new_qtype, flags = parse_family(new_search_family_info[family])
-                    new_value = f'({family.min}:"{new_min}", {family.max}:"{new_max}", qtype:"{new_qtype}")'
+                    new_value = (f'({family.min.upper()}:"{new_min}", {family.max.upper()}:"{new_max}", '
+                                 f'QTYPE:"{new_qtype}")')
                     postscript = f' **{flags.pretty_print()}**' if flags else ''
-                    added_searches.append(f'Add search "{family.label}" = {new_value}{postscript}')
+                    added_searches.append(f'Add Search:    "{family.label}" = {new_value}{postscript}')
             else:
                 if family.is_singleton():
                     assert len(old_search_family_info[family]) == 1
@@ -304,16 +321,20 @@ class _SessionInfoImpl(SessionInfo):
 
     def __get_query_info_column_names(self, old_query: Optional[Dict[str, str]], new_query: Dict[str, str],
                                       result: List[str]):
-        def get_slug_info_for_column_slugs(query):
+        def get_slug_info_for_column_slugs(query, remember):
             columns_query = query.get('cols', None) if query else None
             if columns_query:
                 columns = columns_query.split(',')
-                return self.get_non_null_slug_info(columns, self._slug_map)
+                info = self.get_non_null_slug_info(columns, self._slug_map)
             else:
-                return self._default_column_info
+                info = self._default_column_info
+            # info is a map from the actual slug to to the slug info.
+            if remember:
+                self._all_column_slugs.update(info)
+            return {slug_info.canonical_name: slug_info for slug_info in info.values()}
 
-        old_column_info = get_slug_info_for_column_slugs(old_query)
-        new_column_info = get_slug_info_for_column_slugs(new_query)
+        old_column_info = get_slug_info_for_column_slugs(old_query, False)
+        new_column_info = get_slug_info_for_column_slugs(new_query, True)
         old_columns = set(old_column_info.keys())
         new_columns = set(new_column_info.keys())
         if new_columns == old_columns:
