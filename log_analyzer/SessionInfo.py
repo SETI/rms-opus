@@ -3,7 +3,7 @@ import ipaddress
 import re
 import urllib.parse
 from collections import defaultdict
-from typing import List, Dict, Optional, Match, Tuple, Pattern, Any
+from typing import List, Dict, Optional, Match, Tuple, Pattern, Any, cast
 
 from LogEntry import LogEntry
 from SlugInfo import SlugMap, SlugInfo, SlugFamily, SlugFlags, SlugFamilyType
@@ -40,12 +40,27 @@ class SessionInfo(metaclass=abc.ABCMeta):
 
     @staticmethod
     def get_non_null_slug_info(slugs: List[str], slug_map: SlugMap) -> Dict[str, SlugInfo]:
+        """
+        This returns a map from the slugs that appear in the list of strings to the SlugInfo for that slug,
+        provided that the info exists.
+        """
         return {
-            slug_info.slug: slug_info
+            slug: slug_info
             for slug in slugs
             for slug_info in [slug_map.get_info_for_column_slug(slug)]
             if slug_info is not None
         }
+
+    _all_search_slugs: Dict[str, SlugInfo] = {}
+    _all_column_slugs: Dict[str, SlugInfo] = {}
+
+    @staticmethod
+    def all_search_slugs() -> Dict[str, SlugInfo]:
+        return SessionInfo._all_search_slugs
+
+    @staticmethod
+    def all_column_slugs() -> Dict[str, SlugInfo]:
+        return SessionInfo._all_column_slugs
 
 
 class SessionInfoGenerator:
@@ -238,7 +253,9 @@ class _SessionInfoImpl(SessionInfo):
             for slug, value in query.items():
                 slug_info = self._slug_map.get_info_for_search_slug(slug)
                 if slug_info:
-                    temp[slug_info.family].append((slug_info, value))
+                    family = cast(SlugFamily, slug_info.family)  # Only None for columns
+                    temp[family].append((slug_info, value))
+                    self._all_search_slugs[slug] = slug_info
             return temp
 
         if old_query is not None:
@@ -304,16 +321,20 @@ class _SessionInfoImpl(SessionInfo):
 
     def __get_query_info_column_names(self, old_query: Optional[Dict[str, str]], new_query: Dict[str, str],
                                       result: List[str]):
-        def get_slug_info_for_column_slugs(query):
+        def get_slug_info_for_column_slugs(query, remember):
             columns_query = query.get('cols', None) if query else None
             if columns_query:
                 columns = columns_query.split(',')
-                return self.get_non_null_slug_info(columns, self._slug_map)
+                info = self.get_non_null_slug_info(columns, self._slug_map)
             else:
-                return self._default_column_info
+                info = self._default_column_info
+            # info is a map from the actual slug to to the slug info.
+            if remember:
+                self._all_column_slugs.update(info)
+            return {slug_info.canonical_name: slug_info for slug_info in info.values()}
 
-        old_column_info = get_slug_info_for_column_slugs(old_query)
-        new_column_info = get_slug_info_for_column_slugs(new_query)
+        old_column_info = get_slug_info_for_column_slugs(old_query, False)
+        new_column_info = get_slug_info_for_column_slugs(new_query, True)
         old_columns = set(old_column_info.keys())
         new_columns = set(new_column_info.keys())
         if new_columns == old_columns:

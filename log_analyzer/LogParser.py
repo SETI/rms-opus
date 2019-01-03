@@ -3,6 +3,7 @@ from __future__ import print_function
 import datetime
 import functools
 import socket
+import textwrap
 from collections import defaultdict, deque
 from heapq import heapify, heappop, heappush
 from ipaddress import IPv4Address
@@ -10,6 +11,7 @@ from typing import List, Iterator, Dict, NamedTuple, Optional, Deque, Iterable
 
 from LogEntry import LogEntry
 from SessionInfo import SessionInfo, SessionInfoGenerator
+from SlugInfo import SlugInfo, SlugFlags
 
 
 class _LiveSession(NamedTuple):
@@ -89,6 +91,8 @@ class LogParser:
             if session_log_entries:
                 heappush(heap, (session_log_entries[0].time, session_host_ip, session_log_entries))
 
+        self.__print_used_slugs()
+
     def run_summary(self, log_entries: List[LogEntry]):
         """
         Look at the list of log entries in summary mode.
@@ -129,6 +133,8 @@ class LogParser:
                     entry_info = session_info.parse_log_entry(entry)
                     if entry_info:
                         self.__print_entry_info(entry, entry_info, session_start_time)
+
+        self.__print_used_slugs()
 
     def run_realtime(self, log_entries: Iterator[LogEntry]):
         """
@@ -204,6 +210,21 @@ class LogParser:
         print(f'    +{time_delta}: {this_entry_info[0]}')
         for info in this_entry_info[1:]:
             print(f'              {info}')
+
+    def __print_used_slugs(self):
+        def show_info(name: str, info: Dict[str, SlugInfo]):
+            result = ', '.join(
+                # Use ~ as a non-breaking space for textwrap.  We replace it with a space, below
+                slug + '~[OBSOLETE]' if info[slug].flags & SlugFlags.OBSOLETE_SLUG else slug
+                for slug in sorted(info, key=str.lower)
+            )
+            output = textwrap.fill(result, 100, initial_indent=f'{name} slugs: ', subsequent_indent='    ')
+            print(output.replace('~', ' '))
+
+        print('\n')
+        show_info("Search", SessionInfo.all_search_slugs())
+        print()
+        show_info("Columns", SessionInfo.all_column_slugs())
 
     def __get_hostname_from_ip(self, ip: IPv4Address) -> str:
         name = self.__get_host_by_address(ip) if self._use_reverse_dns else None
