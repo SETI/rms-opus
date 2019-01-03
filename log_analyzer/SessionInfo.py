@@ -240,6 +240,7 @@ class _SessionInfoImpl(SessionInfo):
                 if slug_info:
                     temp[slug_info.family].append((slug_info, value))
             return temp
+
         if old_query is not None:
             old_search_family_info = get_slug_info_for_search_slugs(old_query)
         else:
@@ -276,7 +277,8 @@ class _SessionInfoImpl(SessionInfo):
                     added_searches.append(f'Add Search:    "{family.label}" = "{value}"{postscript}')
                 else:
                     new_min, new_max, new_qtype, flags = parse_family(new_search_family_info[family])
-                    new_value = f'({family.min.upper()}:"{new_min}", {family.max.upper()}:"{new_max}", QTYPE:"{new_qtype}")'
+                    new_value = (f'({family.min.upper()}:"{new_min}", {family.max.upper()}:"{new_max}", '
+                                 f'QTYPE:"{new_qtype}")')
                     postscript = f' **{flags.pretty_print()}**' if flags else ''
                     added_searches.append(f'Add Search:    "{family.label}" = {new_value}{postscript}')
             else:

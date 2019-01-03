@@ -184,14 +184,14 @@ class SlugMap:
         slug = slug.lower()
         column_map = self._column_map
 
-        def createSlug(slug: str, label: str, flags:SlugFlags) -> SlugInfo:
-            return SlugInfo(slug, label, flags, SlugFamilyType.COLUMN, None)
+        def create_slug(create_slug: str, label: str, flags: SlugFlags) -> SlugInfo:
+            return SlugInfo(create_slug, label, flags, SlugFamilyType.COLUMN, None)
 
         if slug in column_map:
             return column_map[slug]
 
         if slug in self._slug_to_label:
-            result = column_map[slug] = createSlug(slug, self._slug_to_label[slug], SlugFlags.NONE)
+            result = column_map[slug] = create_slug(slug, self._slug_to_label[slug], SlugFlags.NONE)
             return result
 
         if slug in self._old_slug_to_new_slug:
@@ -202,13 +202,13 @@ class SlugMap:
 
         if slug[-1] in '12':
             temp = self.get_info_for_column_slug(slug[:-1], False)
-            flag = {'1': SlugFlags.REMOVED_1_FROM_END, '2': SlugFlags.REMOVED_2_FROM_END }[slug[-1]]
+            flag = {'1': SlugFlags.REMOVED_1_FROM_END, '2': SlugFlags.REMOVED_2_FROM_END}[slug[-1]]
             if temp:
-                result = column_map[slug] = createSlug(temp.slug, temp.label, temp.flags or flag)
+                result = column_map[slug] = create_slug(temp.slug, temp.label, temp.flags or flag)
                 return result
 
         if create:
-            result = column_map[slug] = createSlug(slug, original_slug, SlugFlags.UNKNOWN_SLUG)
+            result = column_map[slug] = create_slug(slug, original_slug, SlugFlags.UNKNOWN_SLUG)
             return result
 
         column_map[slug] = None
