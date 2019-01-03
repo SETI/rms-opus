@@ -9,6 +9,12 @@ var o_search = {
     slugReqno: {},
     normalizedApiCall: function() {
         let newHash = o_hash.updateHash(false);
+        let regexForShortHash = /(.*)&view/;
+
+        if(newHash.match(regexForShortHash)) {
+            newHash = newHash.match(regexForShortHash)[1];
+        }
+
         opus.lastRequestNo++;
         let url = '/opus/__api/normalizeinput.json?' + newHash + '&reqno=' + opus.lastRequestNo;
         return $.getJSON(url);
@@ -24,9 +30,6 @@ var o_search = {
                     currentInput.val(opus.selections[eachSlug]);
                 }
                 opus.allInputsValid = false;
-                if(removeSpinner) {
-                    $('.spinner').fadeOut('');
-                }
             } else {
                 if(currentInput.hasClass('RANGE')) {
                     currentInput.val(value);
@@ -38,25 +41,24 @@ var o_search = {
         });
         if(!opus.allInputsValid) {
             $('#result_count').addClass('browse_results_invalid').text('X');
+            // set hinting info to ? when any range input has invalid value
             opus.widgets_drawn.forEach(function(eachSlug) {
                 if ($('.widget__' + eachSlug).hasClass('range-widget')) {
                     $('#hint__' + eachSlug).html('<span>min: ?</span><span>max: ?</span><span> nulls: ?</span>');
                 } else if ($('.widget__' + eachSlug).hasClass('mult-widget')) {
                     let hintForMult = $(`span[id*="hint__${eachSlug}"]`);
-                    console.log('HINT FOR MULT: ' + hintForMult);
                     $(`span[id*="hint__${eachSlug}"]`).html('<span>?</span>');
                 }
             });
-            // $('.hints').each(function() {
-            //     $(this).html('<span>?</span>');
-            // });
+
+            if(removeSpinner) {
+                $('.spinner').fadeOut('');
+            }
         } else {
             // put back normal hinting info
             opus.widgets_drawn.forEach(function(eachSlug) {
                 o_search.getHinting(eachSlug);
             });
-            console.log('widget_drawn: ' + opus.widgets_drawn);
-            console.log('widget_drawn_element: ' + opus.widget_elements_drawn);
         }
     },
     performSearch: function(event, slug, url) {
@@ -145,6 +147,11 @@ var o_search = {
             values.push(currentValue)
             opus.selections[slug] = values;
             let newHash = o_hash.updateHash(false);
+            let regexForShortHash = /(.*)&view/;
+
+            if(newHash.match(regexForShortHash)) {
+                newHash = newHash.match(regexForShortHash)[1];
+            }
 
             // keep calling normalize api to check input values whenever input got changed
             // only check if return value is null or not, DON'T compare min & max
@@ -182,6 +189,12 @@ var o_search = {
         $('#search').on('change', 'input.RANGE', function(event) {
             let slug = $(this).attr("name");
             let newHash = o_hash.updateHash(false);
+            let regexForShortHash = /(.*)&view/;
+
+            if(newHash.match(regexForShortHash)) {
+                newHash = newHash.match(regexForShortHash)[1];
+            }
+
             opus.lastNormalizeRequestNo++;
             o_search.slugReqno[slug] = opus.lastNormalizeRequestNo;
             let url = '/opus/__api/normalizeinput.json?' + newHash + '&reqno=' + opus.lastNormalizeRequestNo;
