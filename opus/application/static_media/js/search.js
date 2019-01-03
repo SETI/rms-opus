@@ -36,6 +36,9 @@ var o_search = {
                 }
             }
         });
+        if(!opus.allInputsValid) {
+            $('#result_count').addClass('browse_results_invalid').text('X');
+        }
     },
     performSearch: function(event, slug, url) {
         $.getJSON(url, function(data) {
@@ -55,6 +58,7 @@ var o_search = {
                 $('input.RANGE').removeClass('search_input_invalid');
                 $('input.RANGE').addClass('search_input_original');
                 $('#sidebar').removeClass('search_overlay');
+                $('#result_count').removeClass('browse_results_invalid').text(opus.result_count);
             }
         });
     },

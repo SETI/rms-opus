@@ -293,7 +293,7 @@ var opus = {
 
         if(!opus.allInputsValid) {
           // remove spinning effect on browse count
-          $('#result_count').text('X');
+          $('#result_count').addClass('browse_results_invalid').text('X');
           return;
         }
 
@@ -334,6 +334,7 @@ var opus = {
       opus.result_count = result_count;
       $('#result_count').fadeOut('fast', function() {
         $(this).html(o_utils.addCommas(opus.result_count)).fadeIn('fast') ;
+        $(this).removeClass('browse_results_invalid');
       });
     },
 

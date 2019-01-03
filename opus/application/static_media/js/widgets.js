@@ -156,7 +156,11 @@ var o_widgets = {
             o_search.validateRangeInput(normalizedData);
 
             if(opus.allInputsValid) {
+                $('input.RANGE').removeClass('search_input_valid');
+                $('input.RANGE').removeClass('search_input_invalid');
+                $('input.RANGE').addClass('search_input_original');
                 $('#sidebar').removeClass('search_overlay');
+                $('#result_count').removeClass('browse_results_invalid').text(opus.result_count);;
             }
             o_hash.updateHash(opus.allInputsValid);
             o_widgets.updateWidgetCookies();

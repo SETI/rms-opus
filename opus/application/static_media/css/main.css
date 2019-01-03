@@ -706,7 +706,11 @@ input[type="text"].search_input_invalid_no_focus {
     background-color: #F6AFAF;
 }
 
+.browse_results_invalid {
+    color: #EF2525;
+}
+
 .search_overlay {
-  opacity: 0.5;
-  pointer-events: none;
+    opacity: 0.5;
+    pointer-events: none;
 }
