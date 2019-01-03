@@ -3,7 +3,7 @@ import ipaddress
 import re
 import urllib.parse
 from collections import defaultdict
-from typing import List, Dict, Optional, Match, Tuple, Pattern, Any, cast
+from typing import List, Dict, Optional, Match, Tuple, Pattern, Any, cast, Callable
 
 from LogEntry import LogEntry
 from SlugInfo import SlugMap, SlugInfo, SlugFamily, SlugFlags, SlugFamilyType
@@ -14,7 +14,7 @@ class ForPattern:
     A Decorator used by SessionInfo.
     A method is decorated with the regex of the URLs that it knows how to parse.
     """
-    PATTERNS: List[Tuple[Pattern, Any]] = []
+    PATTERNS: List[Tuple[Pattern, Callable[..., List[str]]]] = []
 
     def __init__(self, pattern: str):
         self.pattern = re.compile(pattern + '$')
@@ -35,7 +35,7 @@ class SessionInfo(metaclass=abc.ABCMeta):
     """
 
     @abc.abstractmethod
-    def parse_log_entry(self, entry: LogEntry) -> Optional[List[str]]:
+    def parse_log_entry(self, entry: LogEntry) -> List[str]:
         raise Exception()
 
     @staticmethod
@@ -109,19 +109,19 @@ class _SessionInfoImpl(SessionInfo):
         # The previous query when using /__api/
         self._previous_api_query = None
 
-    def parse_log_entry(self, entry: LogEntry) -> Optional[List[str]]:
+    def parse_log_entry(self, entry: LogEntry) -> List[str]:
         """Parses a log record within the context of the current session."""
 
         # We ignore all sorts of log entries.
         if entry.method != 'GET' or entry.status != 200:
-            return None
+            return []
         if entry.agent and "bot" in entry.agent.lower():
-            return None
+            return []
         path = entry.url.path
         if not path.startswith('/opus/__'):
-            return None
+            return []
         if any(entry.host_ip in ipNetwork for ipNetwork in self._ignored_ips):
-            return None
+            return []
 
         # See if the path matches one of our patterns.
         path = path[5:]
@@ -135,7 +135,7 @@ class _SessionInfoImpl(SessionInfo):
                          for key, value in raw_query.items()
                          if isinstance(value, list) and len(value) == 1}
                 return method(self, entry=entry, query=query, match=match)
-        return None
+        return []
 
     #
     # API
