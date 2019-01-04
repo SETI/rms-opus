@@ -78,8 +78,11 @@ var o_search = {
                     return;
                 }
 
-                let returnData = data[slug];
                 console.log("ON INPUT RETURN DATA: " + JSON.stringify(data));
+                let hintsOfString = data["choices"];
+                event.target.autocomplete({
+                    source: hintsOfString
+                });
 
             }); // end getJSON
         });
