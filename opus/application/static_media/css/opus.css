@@ -4,6 +4,7 @@ body {
 .app-body {
 	margin-top: 3.8em !important;
 }
+
 .container-fluid {
 	padding: 0;
 }
@@ -65,6 +66,10 @@ body {
 }
 #search .add_input {
     display:none;
+}
+
+#search .search-param {
+	font-size: 90%;
 }
 
 #browse, #collection, #detail {
@@ -555,10 +560,14 @@ a.search-param {
 a.search-param:hover {
 		text-decoration: none;
 }
+/*
 li a.search-param:hover {
 		background: gainsboro !important;
 }
-
+*/
+#searchMenu .list-group li:nth-child(1){
+  	border-top: 0 none;
+}
 
 
 #search_widgets li {
@@ -609,7 +618,7 @@ li a.search-param:hover {
     margin-left:-5px;
 }
 
-/* Overwrite the default to keep the scrollbar always visible */
+/* Overwrite the default to keep the scrollbar always visiblepadding-top: 1.5em; */
 
 .sidebar_wrapper i.fa-check {
     display:none;
@@ -757,9 +766,14 @@ footer {
 
 .restart_button {
     text-align: center;
+	padding-top: 1.5em;
 }
 .restart_button button {
     margin: 10px 0;
+}
+
+.ps-scrollbar {
+
 }
 
 .scrollbar-morpheus-den::-webkit-scrollbar-track {

@@ -282,11 +282,13 @@ var opus = {
 
 $(document).ready(function() {
 
+/* displays a list of the included css for debug only!
     let temp = "";
     $.each($("link"), function(index, elem) {
         temp += elem.href + "\n"
     });
     alert(temp);
+*/
 
     opus.prefs.widgets = [];
     o_widgets.updateWidgetCookies();

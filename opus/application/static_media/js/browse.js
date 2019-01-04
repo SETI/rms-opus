@@ -1,6 +1,7 @@
 var o_browse = {
     selectedImageID: "",
     keyPressAction: "",
+    //scrollbar: new PerfectScrollbar("#browse .gallery-contents"),
 
     /**
     *
@@ -103,6 +104,9 @@ var o_browse = {
                     o_browse.toggleGalleryViewHighlight(false);
                     o_browse.updateGalleryView(opusId);
                     $("#galleryView").modal("show");
+
+                    // opening the gallery view stops the range selection
+                    o_browse.selectedImageID = "";
                     o_browse.keyPressAction = "";
                     break;
 
@@ -111,48 +115,50 @@ var o_browse = {
                     // if there is an image already selected in middle of range, don't mess w/it
                     let namespace = o_browse.getViewInfo().namespace;
                     if (o_browse.selectedImageID == "") {   // start range
-                        // start the range - if not yet selected, get first item
-                        o_browse.selectedImageID = $(namespace + " .thumbnail")[0].dataset.id;
-                        //let action = o_browse.toggleBrowseInCollectionStyle(opusId);
-                        //o_collections.editCollection(opusId, action);
-                    }
-                    let elementArray = $(namespace + " .thumbnail");
-                    let fromIndex = 0;
-                    let toIndex = 0;
-                    $.each(elementArray, function(index, elem) {
-                        let elemId = $(elem).data("id");
-                        if (elemId == o_browse.selectedImageID) {
-                            fromIndex = index;
-                        }
-                        if (elemId == opusId) {
-                            toIndex = index;
-                        }
-                    });
-                    let highlight = $(elementArray[fromIndex]).hasClass("in");
-                    action = (highlight ? "addrange" : "removerange");
+                        // start the range
+                        o_browse.selectedImageID = $(this).data("id");
+                        let action = o_browse.toggleBrowseInCollectionStyle(opusId);
+                        o_collections.editCollection(opusId, action);
+                    } else  {
+                        let elementArray = $(namespace + " .thumbnail");
+                        let fromIndex = 0;
+                        let toIndex = 0;
+                        $.each(elementArray, function(index, elem) {
+                            let elemId = $(elem).data("id");
+                            if (elemId == o_browse.selectedImageID) {
+                                fromIndex = index;
+                            }
+                            if (elemId == opusId) {
+                                toIndex = index;
+                            }
+                        });
+                        let highlight = $(elementArray[fromIndex]).hasClass("in");
+                        action = (highlight ? "addrange" : "removerange");
 
-                    // reorder if need be
-                    if (fromIndex > toIndex) {
-                        [fromIndex, toIndex] = [toIndex, fromIndex];
-                    }
-                    let length = toIndex - fromIndex+1;
-                    let opusIdRange = $(elementArray[fromIndex]).data("id") + ","+ $(elementArray[toIndex]).data("id")
-                    console.log(action+" range: "+opusIdRange);
-                    $.each(elementArray.splice(fromIndex, length), function(index, elem) {
-                        // effect no change if it is already selected/deselected same as first item in array
-                        if ($(elem).hasClass("in") != highlight) {
-                            o_browse.toggleGalleryViewHighlight(highlight, $(elem).data("id"));
+                        // reorder if need be
+                        if (fromIndex > toIndex) {
+                            [fromIndex, toIndex] = [toIndex, fromIndex];
                         }
-                    })
-                    o_collections.editCollection(opusIdRange, action);
+                        let length = toIndex - fromIndex+1;
+                        let opusIdRange = $(elementArray[fromIndex]).data("id") + ","+ $(elementArray[toIndex]).data("id")
+                        console.log(action+" range: "+opusIdRange);
+                        $.each(elementArray.splice(fromIndex, length), function(index, elem) {
+                            // effect no change if it is already selected/deselected same as first item in array
+                            if ($(elem).hasClass("in") != highlight) {
+                                o_browse.toggleGalleryViewHighlight(highlight, $(elem).data("id"));
+                            }
+                        })
+                        o_collections.editCollection(opusIdRange, action);
+                        o_browse.selectedImageID = "";
+                    }
                     break;
 
                 default:
-                    // add/remove to/from collection - remember the selected image in case there is a range select
-                    o_browse.selectedImageID = opusId;
                     action = o_browse.toggleBrowseInCollectionStyle(opusId);
                     o_collections.editCollection(opusId, action);
-                    // if action is remove, reset the selected imageso_browse.selectedImageID
+                    // clicking on image stops range selection
+                    o_browse.selectedImageID = "";
+                    o_browse.keyPressAction = "";
             }
             o_browse.keyPressAction = "";
             //if (e.shiftKey) {
@@ -187,6 +193,9 @@ var o_browse = {
             } catch(e) { } // view not drawn yet so no worries
 
             o_collections.editCollection(opusId,action);
+
+            // single click stops range selection; shift click starts range
+            o_browse.selectedImageID = "";
             return false;
 
         });
@@ -300,10 +309,17 @@ var o_browse = {
             return false;
         });
 
+        $(document).on("keyup",function(e) {
+            o_browse.keyPressAction = "";
+            o_browse.selectedImageID = "";
+            console.log("keyup");
+            // if there is an opusid, probably need to add/remove it
+        });
+
         // this is the workhorse function that collects keyboard input and does something useful
         $(document).on("keydown",function(e) {
             if ($("#browse").hasClass("active")) {
-                console.log("key = "+e.keyCode);
+                console.log("keydown = "+e.keyCode);
                 let clickedId = (e.target.data !== undefined ? e.target.data["id"] : "");
                 switch (e.keyCode) {
                     case 16: // shiftKey
@@ -351,10 +367,6 @@ var o_browse = {
                 $("#columnChooser").modal('hide')
             }
             // don't return false here or it will snatch all the user input!
-        });
-        $(document).on("keyup",function(e) {
-            o_browse.keyPressAction = "";
-            // if there is an opusid, probably need to add/remove it
         });
     }, // end browse behaviors
 
@@ -635,7 +647,7 @@ var o_browse = {
                 let selected = item.in_collection ? " class='row_selected'" : "";
                 let checkbox = "<input type='checkbox' name='"+opusId+"' value='"+opusId+"' class='multichoice' id='select_"+opusId+"'"+checked+">";
                 let row = "<td>"+checkbox+"</td>";
-                let tr = "<tr data-toggle='modal' data-id='"+opusId+"' data-target='#galleryView'"+selected+">";
+                let tr = "<tr data-id='"+opusId+"' data-target='#galleryView'"+selected+">";
                 $.each(item.metadata, function(index, cell) {
                     row += "<td>"+cell+"</td>";
                 });
@@ -764,7 +776,7 @@ var o_browse = {
             page = opus.pages;
         }
         o_browse.loadBrowseData(page);
-        o_browse.adjustBrowseHeight();  // may need to go in getGallery
+        o_browse.adjustBrowseHeight();
 
         $("input#page").val(page).css("color","initial");
         o_hash.updateHash();
@@ -773,6 +785,7 @@ var o_browse = {
     adjustBrowseHeight: function() {
         let container_height = $(window).height()-120;
         $(".gallery-contents").height(container_height);
+        //o_browse.scrollbar.update();
         //opus.limit =  (floor($(window).width()/thumbnailSize) * floor(container_height/thumbnailSize));
     },
 

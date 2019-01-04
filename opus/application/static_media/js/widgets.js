@@ -426,7 +426,7 @@ var o_widgets = {
 
             }}).done(function() {
 
-                o_search.adjustSearchHeight();
+            o_search.adjustSearchHeight();
 
 
              // if we are drawing a range widget we need to check if the qtype dropdown is

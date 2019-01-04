@@ -5,6 +5,8 @@ var o_search = {
      *  Everything that appears on the search tab
      *
      **/
+    searchScrollbar: new PerfectScrollbar("#sidebar-container"),
+    widgetScrollbar: new PerfectScrollbar("#widget-container"),
 
     searchBehaviors: function() {
         // filling in a range or string search field = update the hash
@@ -121,7 +123,8 @@ var o_search = {
         var container_height = $("#search").height() - 100;
         $(".widget_column").height(container_height);
         $(".sidebar_wrapper").height(container_height);
-
+        o_search.searchScrollbar.update();
+        o_search.widgetScrollbar.update();
     },
 
     getSearchTab: function() {
@@ -160,7 +163,6 @@ var o_search = {
         opus.search_tab_drawn = true;
 
         o_search.adjustSearchHeight();
-
     },
 
     getHinting: function(slug) {
