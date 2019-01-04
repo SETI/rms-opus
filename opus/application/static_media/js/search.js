@@ -5,7 +5,7 @@ var o_search = {
      *  Everything that appears on the search tab
      *
      **/
-
+    slugReqno: {},
     searchBehaviors: function() {
         /*
         // result count display hover
@@ -50,6 +50,39 @@ var o_search = {
             return false;
         });
         */
+
+        // Dynamically call stringsearchchoices api to get latest hints
+        $("#search").on("input", "input.STRING", function(event) {
+            let slug = $(this).attr("name");
+            let currentValue = $(this).val().trim();
+            let values = [];
+
+            opus.lastRequestNo++;
+            o_search.slugReqno[slug] = opus.lastRequestNo;
+
+            values.push(currentValue)
+            opus.selections[slug] = values;
+            let newHash = o_hash.updateHash(false);
+            let regexForShortHash = /(.*)&view/;
+
+            if(newHash.match(regexForShortHash)) {
+                newHash = newHash.match(regexForShortHash)[1];
+            }
+
+            let url = `/opus/__api/stringsearchchoices/${slug}.json?` + newHash + "&reqno=" + opus.lastRequestNo;
+            console.log("ON INPUT current Val: " + currentValue);
+            console.log("ON INPUT API call URL: " + url);
+            $.getJSON(url, function(data) {
+                // if a newer input is there, re-call api with new input
+                if(data["reqno"] < o_search.slugReqno[slug]) {
+                    return;
+                }
+
+                let returnData = data[slug];
+                console.log("ON INPUT RETURN DATA: " + JSON.stringify(data));
+
+            }); // end getJSON
+        });
 
         // filling in a range or string search field = update the hash
         // range behaviors and string behaviors for search widgets - input box
