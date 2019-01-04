@@ -22,3 +22,6 @@ migrations/
 
 .coverage
 htmlcov/
+log_analyzer/.mypy_cache/*
+log_analyzer/golden
+opus/.mypy_cache/*

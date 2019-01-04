@@ -3,27 +3,35 @@ import ipaddress
 import re
 import urllib.parse
 from collections import defaultdict
-from typing import List, Dict, Optional, Match, Tuple, Pattern, Any, cast, Callable
+from typing import List, Dict, Optional, Match, Tuple, Pattern, cast, Callable, Any
 
+import Slug
 from LogEntry import LogEntry
-from SlugInfo import SlugMap, SlugInfo, SlugFamily, SlugFlags, SlugFamilyType
 
 
-class ForPattern:
+class SessionInfoGenerator:
     """
-    A Decorator used by SessionInfo.
-    A method is decorated with the regex of the URLs that it knows how to parse.
+    A generator class for creating a SessionInfo.
     """
-    PATTERNS: List[Tuple[Pattern, Callable[..., List[str]]]] = []
+    _slug_map: Slug.ToInfoMap
+    _default_column_list: Dict[str, Slug.Info]
+    _ignored_ips: List[ipaddress.IPv4Network]
 
-    def __init__(self, pattern: str):
-        self.pattern = re.compile(pattern + '$')
+    DEFAULT_COLUMN_INFO = 'opusid,instrument,planet,target,time1,observationduration'.split(',')
 
-    def __call__(self, fn, *args, **kwargs):
-        # We leave the function unchanged, but we add the regular expression and the function to our list of
-        # regexp/function pairs
-        ForPattern.PATTERNS.append((self.pattern, fn))
-        return fn
+    def __init__(self, slug_info: Slug.ToInfoMap, ignored_ips: List[ipaddress.IPv4Network]):
+        """
+
+        :param slug_info: Information about the slugs we expect to see in the URL
+        :param ignored_ips: A list representing hosts that we want to ignore
+        """
+        self._slug_map = slug_info
+        self._default_column_list = SessionInfo.get_non_null_slug_info(self.DEFAULT_COLUMN_INFO, slug_info)
+        self._ignored_ips = ignored_ips
+
+    def create(self) -> 'SessionInfo':
+        """Create a new SessionInfo"""
+        return _SessionInfoImpl(self._slug_map, self._default_column_list, self._ignored_ips)
 
 
 class SessionInfo(metaclass=abc.ABCMeta):
@@ -39,9 +47,9 @@ class SessionInfo(metaclass=abc.ABCMeta):
         raise Exception()
 
     @staticmethod
-    def get_non_null_slug_info(slugs: List[str], slug_map: SlugMap) -> Dict[str, SlugInfo]:
+    def get_non_null_slug_info(slugs: List[str], slug_map: Slug.ToInfoMap) -> Dict[str, Slug.Info]:
         """
-        This returns a map from the slugs that appear in the list of strings to the SlugInfo for that slug,
+        This returns a map from the slugs that appear in the list of strings to the Info for that slug,
         provided that the info exists.
         """
         return {
@@ -51,52 +59,46 @@ class SessionInfo(metaclass=abc.ABCMeta):
             if slug_info is not None
         }
 
-    _all_search_slugs: Dict[str, SlugInfo] = {}
-    _all_column_slugs: Dict[str, SlugInfo] = {}
+    _all_search_slugs: Dict[str, Slug.Info] = {}
+    _all_column_slugs: Dict[str, Slug.Info] = {}
 
     @staticmethod
-    def all_search_slugs() -> Dict[str, SlugInfo]:
+    def all_search_slugs() -> Dict[str, Slug.Info]:
         return SessionInfo._all_search_slugs
 
     @staticmethod
-    def all_column_slugs() -> Dict[str, SlugInfo]:
+    def all_column_slugs() -> Dict[str, Slug.Info]:
         return SessionInfo._all_column_slugs
 
 
-class SessionInfoGenerator:
+class ForPattern:
     """
-    A generator class for creating a SessionInfo.
+    A Decorator used by SessionInfo.
+    A method is decorated with the regex of the URLs that it knows how to parse.
     """
-    _slug_map: SlugMap
-    _default_column_list: Dict[str, SlugInfo]
-    _ignored_ips: List[ipaddress.IPv4Network]
+    METHOD = Callable[['_SessionInfoImpl', LogEntry, Dict[str, str], Match], List[str]]
 
-    DEFAULT_COLUMN_INFO = 'opusid,instrument,planet,target,time1,observationduration'.split(',')
+    PATTERNS: List[Tuple[Pattern, METHOD]] = []
 
-    def __init__(self, slug_info: SlugMap, ignored_ips: List[ipaddress.IPv4Network]):
-        """
+    def __init__(self, pattern: str):
+        self.pattern = re.compile(pattern + '$')
 
-        :param slug_info: Information about the slugs we expect to see in the URL
-        :param ignored_ips: A list representing hosts that we want to ignore
-        """
-        self._slug_map = slug_info
-        self._default_column_list = SessionInfo.get_non_null_slug_info(self.DEFAULT_COLUMN_INFO, slug_info)
-        self._ignored_ips = ignored_ips
-
-    def create(self) -> SessionInfo:
-        """Create a new SessionInfo"""
-        return _SessionInfoImpl(self._slug_map, self._default_column_list, self._ignored_ips)
+    def __call__(self, fn: METHOD, *args: Any, **kwargs: Any) -> METHOD:
+        # We leave the function unchanged, but we add the regular expression and the function to our list of
+        # regexp/function pairs
+        ForPattern.PATTERNS.append((self.pattern, fn))
+        return fn
 
 
 # noinspection PyUnusedLocal
 class _SessionInfoImpl(SessionInfo):
-    _slug_map: SlugMap
-    _default_column_info: Dict[str, SlugInfo]
+    _slug_map: Slug.ToInfoMap
+    _default_column_info: Dict[str, Slug.Info]
     _ignored_ips: List[ipaddress.IPv4Network]
     _previous_product_info_type: Optional[List[str]]
     _previous_api_query: Optional[Dict[str, str]]
 
-    def __init__(self, slug_map: SlugMap, default_column_info: Dict[str, SlugInfo],
+    def __init__(self, slug_map: Slug.ToInfoMap, default_column_info: Dict[str, Slug.Info],
                  ignored_ips: List[ipaddress.IPv4Network]):
         """This initialization should only be called by SessionInfoGenerator above."""
         self._slug_map = slug_map
@@ -247,13 +249,13 @@ class _SessionInfoImpl(SessionInfo):
         return result
 
     def __get_query_info_search_slugs(self, old_query: Optional[Dict[str, str]], new_query: Dict[str, str],
-                                      result: List[str]):
-        def get_slug_info_for_search_slugs(query) -> Dict[SlugFamily, List[Tuple[SlugInfo, str]]]:
-            temp: Dict[SlugFamily, List[Tuple[SlugInfo, str]]] = defaultdict(list)
+                                      result: List[str]) -> None:
+        def get_slug_info_for_search_slugs(query: Dict[str, str]) -> Dict[Slug.Family, List[Tuple[Slug.Info, str]]]:
+            temp: Dict[Slug.Family, List[Tuple[Slug.Info, str]]] = defaultdict(list)
             for slug, value in query.items():
                 slug_info = self._slug_map.get_info_for_search_slug(slug)
                 if slug_info:
-                    family = cast(SlugFamily, slug_info.family)  # Only None for columns
+                    family = cast(Slug.Family, slug_info.family)  # Only None for columns
                     temp[family].append((slug_info, value))
                     self._all_search_slugs[slug] = slug_info
             return temp
@@ -266,16 +268,17 @@ class _SessionInfoImpl(SessionInfo):
         new_search_family_info = get_slug_info_for_search_slugs(new_query)
         all_search_families = set(old_search_family_info.keys()).union(new_search_family_info.keys())
 
-        def parse_family(pairs: List[Tuple[SlugInfo, str]]):
+        def parse_family(pairs: List[Tuple[Slug.Info, str]]) -> Tuple[
+                Optional[str], Optional[str], Optional[str], Slug.Flags]:
             my_min = my_max = my_qtype = None
-            flags = SlugFlags.NONE
+            flags = Slug.Flags.NONE
             for slug_info, value in pairs:
                 flags |= slug_info.flags
-                if slug_info.family_type == SlugFamilyType.MIN:
+                if slug_info.family_type == Slug.FamilyType.MIN:
                     my_min = value
-                elif slug_info.family_type == SlugFamilyType.MAX:
+                elif slug_info.family_type == Slug.FamilyType.MAX:
                     my_max = value
-                elif slug_info.family_type == SlugFamilyType.QTYPE:
+                elif slug_info.family_type == Slug.FamilyType.QTYPE:
                     my_qtype = value
                 else:
                     raise Exception(f'Unexpected family type: {slug_info.family_type}')
@@ -320,9 +323,9 @@ class _SessionInfoImpl(SessionInfo):
         result.extend(changed_searches)
 
     def __get_query_info_column_names(self, old_query: Optional[Dict[str, str]], new_query: Dict[str, str],
-                                      result: List[str]):
-        def get_slug_info_for_column_slugs(query, remember):
-            columns_query = query.get('cols', None) if query else None
+                                      result: List[str]) -> None:
+        def get_slug_info_for_column_slugs(query: Dict[str, str], remember: bool) -> Dict[str, Slug.Info]:
+            columns_query = query.get('cols', None)
             if columns_query:
                 columns = columns_query.split(',')
                 info = self.get_non_null_slug_info(columns, self._slug_map)
@@ -333,7 +336,7 @@ class _SessionInfoImpl(SessionInfo):
                 self._all_column_slugs.update(info)
             return {slug_info.canonical_name: slug_info for slug_info in info.values()}
 
-        old_column_info = get_slug_info_for_column_slugs(old_query, False)
+        old_column_info = get_slug_info_for_column_slugs(old_query or {}, False)
         new_column_info = get_slug_info_for_column_slugs(new_query, True)
         old_columns = set(old_column_info.keys())
         new_columns = set(new_column_info.keys())
@@ -356,7 +359,7 @@ class _SessionInfoImpl(SessionInfo):
         result.extend(added_columns)
 
     def __get_query_info_page_number(self, old_query: Optional[Dict[str, str]], new_query: Dict[str, str],
-                                     result: List[str]):
+                                     result: List[str]) -> None:
         if old_query and 'page' in old_query and 'page' in new_query and old_query['page'] != new_query['page']:
             result.append(f'Change Page: {old_query["page"]} -> {new_query["page"]}')
 

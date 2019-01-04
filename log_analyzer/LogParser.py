@@ -9,9 +9,9 @@ from heapq import heapify, heappop, heappush
 from ipaddress import IPv4Address
 from typing import List, Iterator, Dict, NamedTuple, Optional, Deque, Iterable
 
+import Slug
 from LogEntry import LogEntry
 from SessionInfo import SessionInfo, SessionInfoGenerator
-from SlugInfo import SlugInfo, SlugFlags
 
 
 class _LiveSession(NamedTuple):
@@ -22,7 +22,7 @@ class _LiveSession(NamedTuple):
     start_time: datetime.datetime
     timeout: datetime.datetime
 
-    def with_timeout(self, timeout: datetime.datetime):
+    def with_timeout(self, timeout: datetime.datetime) -> '_LiveSession':
         return self._replace(timeout=timeout)
 
 
@@ -40,7 +40,7 @@ class LogParser:
         self._use_reverse_dns = use_reverse_dns
         self._session_timeout = datetime.timedelta(minutes=session_timeout_minutes)
 
-    def run_batch(self, log_entries: List[LogEntry]):
+    def run_batch(self, log_entries: List[LogEntry]) -> None:
         """
         Look at the list of log entries in batch mode.
 
@@ -91,7 +91,7 @@ class LogParser:
             if session_log_entries:
                 heappush(heap, (session_log_entries[0].time, session_host_ip, session_log_entries))
 
-    def run_summary(self, log_entries: List[LogEntry]):
+    def run_summary(self, log_entries: List[LogEntry]) -> None:
         """
         Look at the list of log entries in summary mode.
 
@@ -132,7 +132,7 @@ class LogParser:
                     if entry_info:
                         self.__print_entry_info(entry, entry_info, session_start_time)
 
-    def show_slugs(self, log_entries: List[LogEntry]):
+    def show_slugs(self, log_entries: List[LogEntry]) -> None:
         entries_by_host_ip = self.__group_log_entries_by_host_ip(log_entries)
 
         # Look at the host ips in standard order.
@@ -141,10 +141,10 @@ class LogParser:
             for entry in session_log_entries:
                 session_info.parse_log_entry(entry)
 
-        def show_info(name: str, info: Dict[str, SlugInfo]):
+        def show_info(name: str, info: Dict[str, Slug.Info]) -> None:
             result = ', '.join(
                 # Use ~ as a non-breaking space for textwrap.  We replace it with a space, below
-                slug + '~[OBSOLETE]' if info[slug].flags & SlugFlags.OBSOLETE_SLUG else slug
+                (slug + '~[OBSOLETE]') if info[slug].flags.is_obsolete() else slug
                 for slug in sorted(info, key=str.lower)
             )
             output = textwrap.fill(result, 100, initial_indent=f'{name} slugs: ', subsequent_indent='    ')
@@ -153,7 +153,7 @@ class LogParser:
         print()
         show_info("Columns", SessionInfo.all_column_slugs())
 
-    def run_realtime(self, log_entries: Iterator[LogEntry]):
+    def run_realtime(self, log_entries: Iterator[LogEntry]) -> None:
         """
         Look at the list of log entries in real-time mode.
 
