@@ -2,10 +2,10 @@ import argparse
 import ipaddress
 from typing import List, Optional
 
+import Slug
 from LogEntry import LogReader
 from LogParser import LogParser
 from SessionInfo import SessionInfoGenerator
-import Slug
 
 DEFAULT_FIELDS_PREFIX = 'https://tools.pds-rings.seti.org'
 
