@@ -80,8 +80,12 @@ var o_search = {
 
                 console.log("ON INPUT RETURN DATA: " + JSON.stringify(data));
                 let hintsOfString = data["choices"];
-                event.target.autocomplete({
-                    source: hintsOfString
+                $(event.target).autocomplete({
+                    source: hintsOfString,
+                    messages: {
+                        noResults: "",
+                        results: function() {}
+                    }
                 });
 
             }); // end getJSON
