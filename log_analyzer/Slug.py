@@ -9,10 +9,9 @@ import requests
 
 
 class Family(NamedTuple):
-    label: str
-    min: str
-    max: str
-
+    label: str  # The long name for this slug
+    min: str    # 'min' or 'start'.  Empty string if this is a singleton
+    max: str    # 'max' or 'stop'.  Empty string if this is a singleton
     def is_singleton(self) -> bool:
         return self.min == ''
 
@@ -56,8 +55,8 @@ class Info(NamedTuple):
 class ToInfoMap:
     _slug_to_label: Dict[str, str]
     _old_slug_to_new_slug: Dict[str, str]
-    _search_map: Dict[str, Optional[Info]]
-    _column_map: Dict[str, Optional[Info]]
+    _search_map: Dict[str, Optional[Info]] = {}
+    _column_map: Dict[str, Optional[Info]] = {}
 
     QTYPE_SUFFIX = ' (QT)'
     UNKNOWN_SLUG_INFO = 'unknown slug'
@@ -91,8 +90,6 @@ class ToInfoMap:
             for old_slug_info in [slug_info.get('old_slug')]
             if old_slug_info
         }
-        self._column_map = {}
-        self._search_map = {}
 
         for slug in self.SLUGS_NOT_IN_DB:
             self._column_map[slug] = None

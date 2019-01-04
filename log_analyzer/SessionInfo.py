@@ -1,8 +1,10 @@
 import abc
 import ipaddress
+import operator
 import re
 import urllib.parse
 from collections import defaultdict
+from functools import reduce
 from typing import List, Dict, Optional, Match, Tuple, Pattern, cast, Callable, Any
 
 import Slug
@@ -76,9 +78,9 @@ class ForPattern:
     A Decorator used by SessionInfo.
     A method is decorated with the regex of the URLs that it knows how to parse.
     """
-    METHOD = Callable[['_SessionInfoImpl', LogEntry, Dict[str, str], Match], List[str]]
+    METHOD = Callable[[Any, Dict[str, str], Match[str]], List[str]]
 
-    PATTERNS: List[Tuple[Pattern, METHOD]] = []
+    PATTERNS: List[Tuple[Pattern[str], METHOD]] = []
 
     def __init__(self, pattern: str):
         self.pattern = re.compile(pattern + '$')
@@ -136,7 +138,7 @@ class _SessionInfoImpl(SessionInfo):
                 query = {key: value[0]
                          for key, value in raw_query.items()
                          if isinstance(value, list) and len(value) == 1}
-                return method(self, entry=entry, query=query, match=match)
+                return method(self, query, match)
         return []
 
     #
@@ -145,23 +147,22 @@ class _SessionInfoImpl(SessionInfo):
 
     @ForPattern(r'/__api/data\.(.*)')
     @ForPattern(r'/__api/images\.(.*)')
-    def _api_data(self, entry: LogEntry, query: Dict[str, str], match: Match) -> List[str]:
+    def _api_data(self, query: Dict[str, str], match: Match[str]) -> List[str]:
         cols = query.get('cols', None)
         if cols and cols.lower() not in ('0', 'false'):
             return self.__handle_query(query)
         page = query.get('page', '???')
-        if query.get('browse', None) == 'data':
-            return [f'View Table: Page {page}']
-        else:
-            return [f'View Gallery: Page {page}']
+        viewed = 'Table' if query.get('browse') == 'data' else 'Gallery'
+        return [f'View {viewed}: Page {page}']
+
 
     @ForPattern('/__api/image/med/(.*).json')
-    def _view_metadata(self, entry: LogEntry, query: Dict[str, str], match: Match) -> List[str]:
+    def _view_metadata(self, query: Dict[str, str], match: Match[str]) -> List[str]:
         metadata = match.group(1)
         return [f'View Metadata: {metadata}']
 
     @ForPattern('/__api/meta/result_count.json')
-    def _get_info(self, entry: LogEntry, query: Dict[str, str], match: Match) -> List[str]:
+    def _get_info(self, query: Dict[str, str], match: Match[str]) -> List[str]:
         return self.__handle_query(query)
 
     #
@@ -169,26 +170,26 @@ class _SessionInfoImpl(SessionInfo):
     #
 
     @ForPattern(r'/__collections/reset.html')
-    def _reset_selections(self, entry: LogEntry, query: Dict[str, str], match: Match) -> List[str]:
+    def _reset_selections(self, query: Dict[str, str], match: Match[str]) -> List[str]:
         return ['Reset Selections']
 
     @ForPattern(r'/__collections(/default)?/(add|remove).json')
-    def _change_selections(self, entry: LogEntry, query: Dict[str, str], match: Match) -> List[str]:
+    def _change_selections(self, query: Dict[str, str], match: Match[str]) -> List[str]:
         opus_id = query.get('opus_id', '???')
         selection = match.group(2).title()
         return [f'Selections {selection.title() + ":":<7} {opus_id}']
 
     @ForPattern(r'/__collections(/default)?/view.json')
-    def collections_view(self, entry: LogEntry, query: Dict[str, str], match: Match) -> List[str]:
+    def collections_view(self, query: Dict[str, str], match: Match[str]) -> List[str]:
         return ['View Selections']
 
     @ForPattern(r'/__collections/default/addrange.json')
-    def _add_range_selections(self, entry: LogEntry, query: Dict[str, str], match: Match) -> List[str]:
+    def _add_range_selections(self, query: Dict[str, str], match: Match[str]) -> List[str]:
         query_range = query.get('range', '???').replace(',', ', ')
         return [f'Selections Add Range: {query_range}']
 
     @ForPattern(r'/__collections(/download)?/default.zip')
-    def _create_zip_file(self, entry: LogEntry, query: Dict[str, str], match: Match) -> List[str]:
+    def _create_zip_file(self, query: Dict[str, str], match: Match[str]) -> List[str]:
         types = query.get('types', None)
         if types is None:
             output = '???'
@@ -197,7 +198,7 @@ class _SessionInfoImpl(SessionInfo):
         return [f'Create Zip File: {output}']
 
     @ForPattern(r'/__collections/download/info')
-    def _download_product_types(self, entry: LogEntry, query: Dict[str, str], match: Match) -> List[str]:
+    def _download_product_types(self, query: Dict[str, str], match: Match[str]) -> List[str]:
         ptypes_field = query.get('types', None)
         new_ptypes = ptypes_field.split(',') if ptypes_field else []
         old_ptypes = self._previous_product_info_type
@@ -227,7 +228,7 @@ class _SessionInfoImpl(SessionInfo):
     #
 
     @ForPattern(r'/__forms/column_chooser.html')
-    def _column_chooser(self, entry: LogEntry, query: Dict[str, str], match: Match) -> List[str]:
+    def _column_chooser(self, query: Dict[str, str], match: Match[str]) -> List[str]:
         return ['Column Chooser']
 
     #
@@ -235,14 +236,14 @@ class _SessionInfoImpl(SessionInfo):
     #
 
     @ForPattern(r'/__initdetail/(.*).html')
-    def _initialize_detail(self, entry: LogEntry, query: Dict[str, str], match: Match) -> List[str]:
+    def _initialize_detail(self, query: Dict[str, str], match: Match[str]) -> List[str]:
         return [f'View Detail: {match.group(1)}']
 
     def __handle_query(self, new_query: Dict[str, str]) -> List[str]:
-        result: List[str] = []
         old_query = self._previous_api_query
         self._previous_api_query = new_query
 
+        result: List[str] = []
         self.__get_query_info_search_slugs(old_query, new_query, result)
         self.__get_query_info_column_names(old_query, new_query, result)
         self.__get_query_info_page_number(old_query, new_query, result)
@@ -255,7 +256,7 @@ class _SessionInfoImpl(SessionInfo):
             for slug, value in query.items():
                 slug_info = self._slug_map.get_info_for_search_slug(slug)
                 if slug_info:
-                    family = cast(Slug.Family, slug_info.family)  # Only None for columns
+                    family = cast(Slug.Family, slug_info.family)  # It can't be None for search slugs
                     temp[family].append((slug_info, value))
                     self._all_search_slugs[slug] = slug_info
             return temp
@@ -270,25 +271,19 @@ class _SessionInfoImpl(SessionInfo):
 
         def parse_family(pairs: List[Tuple[Slug.Info, str]]) -> Tuple[
                 Optional[str], Optional[str], Optional[str], Slug.Flags]:
-            my_min = my_max = my_qtype = None
-            flags = Slug.Flags.NONE
-            for slug_info, value in pairs:
-                flags |= slug_info.flags
-                if slug_info.family_type == Slug.FamilyType.MIN:
-                    my_min = value
-                elif slug_info.family_type == Slug.FamilyType.MAX:
-                    my_max = value
-                elif slug_info.family_type == Slug.FamilyType.QTYPE:
-                    my_qtype = value
-                else:
-                    raise Exception(f'Unexpected family type: {slug_info.family_type}')
-            return my_min, my_max, my_qtype, flags
+            mapping = { slug_info.family_type : value for slug_info, value in pairs}  # family_type to value
+            return (
+                mapping.get(Slug.FamilyType.MIN), mapping.get(Slug.FamilyType.MAX), mapping.get(Slug.FamilyType.QTYPE),
+                reduce(operator.__or__, (slug_info.flags for (slug_info, _) in pairs))
+            )
 
-        removed_searches, added_searches, changed_searches = [], [], []
+        removed_searches: List[str] = []
+        added_searches: List[str] = []
+        changed_searches: List[str] = []
         for family in sorted(all_search_families):
-            if family in old_search_family_info and family not in new_search_family_info:
+            if family not in new_search_family_info:
                 removed_searches.append(f'Remove Search: "{family.label}"')
-            elif family in new_search_family_info and family not in old_search_family_info:
+            elif family not in old_search_family_info:
                 if family.is_singleton():
                     assert len(new_search_family_info[family]) == 1
                     slug_info, value = new_search_family_info[family][0]
