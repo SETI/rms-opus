@@ -688,3 +688,7 @@ div.gallery {
 .restart_button button {
     margin: 10px 0;
 }
+
+.ui-helper-hidden-accessible {
+    display:none;
+}

@@ -56,6 +56,7 @@ var o_search = {
             let slug = $(this).attr("name");
             let currentValue = $(this).val().trim();
             let values = [];
+            let currentStringInput = $(this);
 
             opus.lastRequestNo++;
             o_search.slugReqno[slug] = opus.lastRequestNo;
@@ -81,12 +82,34 @@ var o_search = {
                 console.log("ON INPUT RETURN DATA: " + JSON.stringify(data));
                 let hintsOfString = data["choices"];
                 $(event.target).autocomplete({
+                    minLength: 1,
                     source: hintsOfString,
-                    messages: {
-                        noResults: "",
-                        results: function() {}
-                    }
-                });
+                    focus: function(event, ui ) {
+                        console.log(ui)
+                        let domP = new DOMParser();
+                        console.log(domP.parseFromString(ui.item.label, "text/html").documentElement.textContent);
+                        $(event.target).val(ui.item.label);
+                        return false;
+                    },
+                    // select: function(event, ui ) {
+                    //     console.log(ui.item);
+                    //     $(event.target).val(ui.item.label);
+                    //     return false;
+                    // },
+                    // messages: {
+                    //     noResults: "",
+                    //     results: function() {}
+                    // },
+                })
+                .data( "ui-autocomplete" )._renderItem = function( ul, item ) {
+                    return $( "<li>" )
+                      .data( "ui-autocomplete-item", item )
+                      .attr( "data-value", item.value )
+                      // need to wrap with <a> tag because of jquery-ui 1.10
+                      .append("<a>" + item.label + "</a>")
+                      .appendTo(ul);
+                };
+                // console.log(currentStringInput.autocomplete().data());
 
             }); // end getJSON
         });
