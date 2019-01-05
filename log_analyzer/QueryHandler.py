@@ -1,53 +1,72 @@
 import operator
 from collections import defaultdict
+from enum import Enum, auto
 from functools import reduce
 from typing import Dict, Tuple, List, Optional, cast, ClassVar, Any
 
 import SessionInfo
 import Slug
 
-SEARCH_SLUG_INFO = Dict[Slug.Family, List[Tuple[Slug.Info, str]]]
-COLUMN_SLUG_INFO = Dict[str, Slug.Info]
+SearchSlugInfo = Dict[Slug.Family, List[Tuple[Slug.Info, str]]]
+ColumnSlugInfo = Dict[Slug.Family, Slug.Info]
+
+class State(Enum):
+    RESET = auto()
+    SEARCHING = auto()
+    FETCHING = auto()
 
 
 class QueryHandler:
     _slug_map: Any
-    _default_column_slug_info: COLUMN_SLUG_INFO
+    _default_column_slug_info: ColumnSlugInfo
 
     _all_search_slugs: ClassVar[Dict[str, Slug.Info]] = {}
     _all_column_slugs: ClassVar[Dict[str, Slug.Info]] = {}
 
     _is_reset: bool
 
-    _previous_query_type: Optional[str]
-    _previous_search_slug_info: SEARCH_SLUG_INFO   # map from family to List[(Slug.Info, Value)]
-    _previous_column_slug_info: COLUMN_SLUG_INFO   # map from raw slug to Slug.Info
-    _previous_page: Optional[str]  # previous page
+    _previous_search_slug_info: SearchSlugInfo   # map from family to List[(Slug.Info, Value)]
+    _previous_column_slug_info: ColumnSlugInfo   # map from raw slug to Slug.Info
+    _previous_page: str  # previous page
+    _previous_state: State
 
-    def __init__(self, slug_map: Slug.ToInfoMap, default_column_slug_info: COLUMN_SLUG_INFO):
+    def __init__(self, slug_map: Slug.ToInfoMap, default_column_slug_info: ColumnSlugInfo):
         self._slug_map = slug_map
         self._default_column_slug_info = default_column_slug_info
         self.reset()
 
     @property
-    @staticmethod
-    def all_search_slugs() -> ClassVar[Dict[str, Slug.Info]]:
-        return QueryHandler._all_search_slugs
+    @classmethod
+    def all_search_slugs(cls) -> Dict[str, Slug.Info]:
+        return cls._all_search_slugs
 
     @property
-    @staticmethod
-    def all_column_slugs() -> ClassVar[Dict[str, Slug.Info]]:
-        return QueryHandler._all_column_slugs
+    @classmethod
+    def all_column_slugs(cls) -> Dict[str, Slug.Info]:
+        return cls._all_column_slugs
 
     def reset(self) -> None:
-        self._is_reset = True
         self._previous_query_type = None
         self._previous_search_slug_info = {}
         self._previous_column_slug_info = self._default_column_slug_info
-        self._previous_page = None
+        self._previous_page = ''
+        self._previous_state = State.RESET
 
     def handle_query(self, query: Dict[str, str], query_type: str) -> List[str]:
         assert query_type in ['data', 'images', 'result_count']
+
+        result: List[str] = []
+
+        uses_columns = query_type == 'data'
+        uses_pages = query_type != 'result_count'
+
+        current_state = State.SEARCHING if query_type == 'result_count' else State.FETCHING
+        previous_state = self._previous_state
+        if current_state != previous_state:
+            if previous_state == State.RESET:
+                result.append('Begin New Search')
+            if (previous_state, current_state) == (State.FETCHING, State.SEARCHING):
+                result.append('Refining Previous Search')
 
         search_slug_info: Dict[Slug.Family, List[Tuple[Slug.Info, str]]] = defaultdict(list)
         for slug, value in query.items():
@@ -57,44 +76,41 @@ class QueryHandler:
                 search_slug_info[family].append((slug_info, value))
                 self._all_search_slugs[slug] = slug_info
 
-        if query_type == 'data':
+        if uses_columns:
             columns_query = query.get('cols')
             if columns_query:
-                column_slug_info = self.get_column_slug_info(columns_query.split(','), self._slug_map)
+                column_slug_info = self.get_column_slug_info(columns_query.split(','), self._slug_map, record=True)
             else:
                 column_slug_info = self._default_column_slug_info
-            self._all_column_slugs.update(column_slug_info)
-            page = query.get('page', None)
-
         else:
             column_slug_info = {}
-            page = None
 
-        result: List[str] = []
+        if uses_pages:
+            page = query.get('page', '')
+        else:
+            page = ''
 
-        if self._is_reset:
-            viewed = 'Table' if query.get('browse') == 'data' else 'Gallery'
-            result.append (f'View {viewed}')
-
-        if query_type != self._previous_query_type:
-            info = query_type.replace('_', ' ').title()
-            result.append(f'Fetching {info}')
         self.__get_search_info(self._previous_search_slug_info, search_slug_info, result)
-        if query_type == 'data':
+        if uses_columns:
             self.__get_column_info(self._previous_column_slug_info, column_slug_info, result)
+        if uses_pages:
             self.__get_page_info(self._previous_page, page, result)
 
-        self._previous_query_type = query_type
+        if current_state != previous_state:
+            if current_state == State.FETCHING:
+                page = query.get('page', '')
+                viewed = 'Table' if query.get('browse') == 'data' else 'Gallery'
+                result.append(f'View {viewed}: Page {page or "???"}')
+
         self._previous_search_slug_info = search_slug_info
-        if query_type == 'data':
+        if uses_columns:
             self._previous_column_slug_info = column_slug_info
+        if uses_pages:
             self._previous_page = page
-        self._is_reset = False
-
-
+        self._previous_state = current_state
         return result
 
-    def __get_search_info(self, old_info: SEARCH_SLUG_INFO, new_info: SEARCH_SLUG_INFO, result: List[str]) -> None:
+    def __get_search_info(self, old_info: SearchSlugInfo, new_info: SearchSlugInfo, result: List[str]) -> None:
         all_search_families = set(old_info.keys()).union(new_info.keys())
 
         def parse_family(pairs: List[Tuple[Slug.Info, str]]) -> Tuple[
@@ -104,6 +120,11 @@ class QueryHandler:
                 mapping.get(Slug.FamilyType.MIN), mapping.get(Slug.FamilyType.MAX), mapping.get(Slug.FamilyType.QTYPE),
                 reduce(operator.or_, (slug_info.flags for (slug_info, _) in pairs))
             )
+
+        if not new_info:
+            if old_info:
+                result.append('Reset Search')
+            return
 
         removed_searches: List[str] = []
         added_searches: List[str] = []
@@ -145,30 +166,30 @@ class QueryHandler:
         result.extend(added_searches)
         result.extend(changed_searches)
 
-    def __get_column_info(self, old_info: COLUMN_SLUG_INFO, new_info: COLUMN_SLUG_INFO, result: List[str]) -> None:
-        old_columns = set(old_info.keys())
-        new_columns = set(new_info.keys())
-        if new_columns == old_columns:
+    def __get_column_info(self, old_info: ColumnSlugInfo, new_info: ColumnSlugInfo, result: List[str]) -> None:
+        old_column_families = set(old_info.keys())
+        new_column_families = set(new_info.keys())
+        if new_column_families == old_column_families:
             return
-        if new_columns == set(self._default_column_slug_info.keys()):
+        if new_column_families == set(self._default_column_slug_info.keys()):
             result.append('Reset Columns')
             return
-        all_columns = old_columns.union(new_columns)
+        all_column_families = old_column_families.union(new_column_families)
         added_columns, removed_columns = [], []
-        for column in sorted(all_columns):
-            if column in new_columns and column not in old_columns:
-                slug_info = new_info[column]
-                postscript = f' **{slug_info.flags.pretty_print()}**' if slug_info.flags else ''
-                added_columns.append(f'Add Column: "{slug_info.label}{postscript}"')
-            elif column in old_columns and column not in new_info:
-                slug_info = old_info[column]
-                removed_columns.append(f'Remove Column: "{slug_info.label}"')
+        for family in sorted(all_column_families):
+            old_slug_info = old_info.get(family)
+            new_slug_info = new_info.get(family)
+            if old_slug_info and not new_slug_info:
+                removed_columns.append(f'Remove Column: "{old_slug_info.label}"')
+            elif new_slug_info and not old_slug_info:
+                postscript = f' **{new_slug_info.flags.pretty_print()}**' if new_slug_info.flags else ''
+                added_columns.append(f'Add Column: "{new_slug_info.label}{postscript}"')
         result.extend(removed_columns)
         result.extend(added_columns)
 
     def __get_page_info(self, old_page: Optional[str], new_page: Optional[str], result: List[str]) -> None:
-        if old_page != new_page and new_page is not None:
-            result.append(f'Get Page: {new_page}')
+        if old_page != new_page and old_page and new_page:
+            result.append(f'Change Page: {old_page} -> {new_page}')
 
     def __slug_value_change(self, name: str, old_value: str, new_value: str, result: List[str]) -> None:
         old_value_set = set(old_value.split(','))
@@ -184,22 +205,24 @@ class QueryHandler:
                 joined_change_list = ', '.join(change_list)
                 result.append(f'Change Search: "{name}" = {joined_change_list}')
         else:
-            joined_old_value_set = SessionInfo.SessionInfo.quote_and_join_list(sorted(old_value_set))
-            joined_new_value_set = SessionInfo.SessionInfo.quote_and_join_list(sorted(new_value_set))
+            joined_old_value_set = SessionInfo.quote_and_join_list(sorted(old_value_set))
+            joined_new_value_set = SessionInfo.quote_and_join_list(sorted(new_value_set))
             result.append(f'Change Search: "{name}" = {joined_old_value_set} -> {joined_new_value_set}')
 
-    @staticmethod
-    def get_column_slug_info(slugs: List[str], slug_map: Slug.ToInfoMap) -> Dict[str, Slug.Info]:
+    @classmethod
+    def get_column_slug_info(cls, slugs: List[str], slug_map: Slug.ToInfoMap, record:bool = False) -> ColumnSlugInfo:
         """
         This returns a map from the slugs that appear in the list of strings to the Info for that slug,
         provided that the info exists.
         """
-        return {
-            slug: slug_info
-            for slug in slugs
-            for slug_info in [slug_map.get_info_for_column_slug(slug)]
-            if slug_info is not None
-        }
-
+        result: ColumnSlugInfo = {}
+        for slug in slugs:
+            slug_info = slug_map.get_info_for_search_slug(slug)
+            if slug_info:
+                assert slug_info.family
+                result[slug_info.family] = slug_info
+                if record:
+                    cls._all_column_slugs[slug] = slug_info
+        return result
 
 

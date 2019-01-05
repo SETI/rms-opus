@@ -6,7 +6,7 @@ from typing import List, Dict, Optional, Match, Tuple, Pattern, Callable, Any
 
 import Slug
 from LogEntry import LogEntry
-from QueryHandler import QueryHandler
+from QueryHandler import QueryHandler, ColumnSlugInfo
 
 
 class SessionInfoGenerator:
@@ -14,7 +14,7 @@ class SessionInfoGenerator:
     A generator class for creating a SessionInfo.
     """
     _slug_map: Slug.ToInfoMap
-    _default_column_slug_info: Dict[str, Slug.Info]
+    _default_column_slug_info: ColumnSlugInfo
     _ignored_ips: List[ipaddress.IPv4Network]
 
     DEFAULT_COLUMN_INFO = 'opusid,instrument,planet,target,time1,observationduration'.split(',')
@@ -46,10 +46,6 @@ class SessionInfo(metaclass=abc.ABCMeta):
     def parse_log_entry(self, entry: LogEntry) -> List[str]:
         raise Exception()
 
-    @staticmethod
-    def quote_and_join_list(string_list: List[str]) -> str:
-        return ', '.join(f'"{string}"' for string in string_list)
-
     @classmethod
     @abc.abstractmethod
     def all_search_slugs(cls) -> Dict[str, Slug.Info]:
@@ -80,13 +76,17 @@ class ForPattern:
         return fn
 
 
+def quote_and_join_list(string_list: List[str]) -> str:
+    return ', '.join(f'"{string}"' for string in string_list)
+
+
 # noinspection PyUnusedLocal
 class _SessionInfoImpl(SessionInfo):
     _ignored_ips: List[ipaddress.IPv4Network]
     _previous_product_info_type: Optional[List[str]]
     _query_handler: QueryHandler
 
-    def __init__(self, slug_map: Slug.ToInfoMap, default_column_slug_info: Dict[str, Slug.Info],
+    def __init__(self, slug_map: Slug.ToInfoMap, default_column_slug_info: ColumnSlugInfo,
                  ignored_ips: List[ipaddress.IPv4Network]):
         """This initialization should only be called by SessionInfoGenerator above."""
         self._ignored_ips = ignored_ips
@@ -178,7 +178,7 @@ class _SessionInfoImpl(SessionInfo):
         if types is None:
             output = '???'
         else:
-            output = self.quote_and_join_list(types.split(','))
+            output = quote_and_join_list(types.split(','))
         return [f'Create Zip File: {output}']
 
     @ForPattern(r'/__collections/download/info')
@@ -197,7 +197,7 @@ class _SessionInfoImpl(SessionInfo):
         def show(verb: str, items: List[str]) -> None:
             if items:
                 plural = 's' if len(items) > 1 else ''
-                joined_items = self.quote_and_join_list(items)
+                joined_items = quote_and_join_list(items)
                 result.append(f'{verb.title()} Product Type{plural}: {joined_items}')
 
         show('add', [ptype for ptype in new_ptypes if ptype not in old_ptypes])
@@ -222,5 +222,4 @@ class _SessionInfoImpl(SessionInfo):
     @ForPattern(r'/__initdetail/(.*).html')
     def _initialize_detail(self, query: Dict[str, str], match: Match[str]) -> List[str]:
         return [f'View Detail: {match.group(1)}']
-
 

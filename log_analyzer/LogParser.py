@@ -147,9 +147,9 @@ class LogParser:
             )
             output = textwrap.fill(result, 100, initial_indent=f'{name} slugs: ', subsequent_indent='    ')
             print(output.replace('~', ' '))
-        show_info("Search", SessionInfo.all_search_slugs())
+        show_info("Search", session_info.all_search_slugs())
         print()
-        show_info("Columns", SessionInfo.all_column_slugs())
+        show_info("Columns", session_info.all_column_slugs())
 
     def run_realtime(self, log_entries: Iterator[LogEntry]) -> None:
         """
