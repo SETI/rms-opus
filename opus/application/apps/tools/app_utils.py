@@ -266,8 +266,10 @@ def parse_form_type(s):
     elif s.find('%') != -1:
         form_type, form_type_format = s.split('%')
 
-    return form_type, form_type_func, form_type_format
-
+    if form_type in settings.RANGE_FORM_TYPES:
+        return form_type, form_type_func, form_type_format
+    return form_type, None, None
+    
 def is_old_format_ring_obs_id(s):
     "Return True if the string is a valid old-format ringobsid"
     return len(s) > 2 and (s[0] == '_' or s[1] == '_')
