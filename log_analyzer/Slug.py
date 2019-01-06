@@ -80,13 +80,14 @@ class ToInfoMap:
         raw_json = self.__read_json(url_prefix)
         json_data: Dict[str, Any] = raw_json['data']
 
+        def create_dictionary(label: str) -> Dict[str, str]:
+            return {slug_info['slug'].lower(): value
+                    for slug_info in json_data.values()
+                    for value in [slug_info.get(label)] if value
+                   }
         # Fill in all the normal slugs
-        self._slug_to_search_label = {
-            slug_info['slug'].lower(): slug_info['full_search_label'] for slug_info in json_data.values()
-        }
-        self._slug_to_column_label = {
-            slug_info['slug'].lower(): slug_info['full_label'] for slug_info in json_data.values()
-        }
+        self._slug_to_search_label = create_dictionary('full_search_label')
+        self._slug_to_column_label = create_dictionary('full_label')
 
         self._old_slug_to_new_slug = {
             old_slug_info.lower(): slug_info['slug'].lower()
