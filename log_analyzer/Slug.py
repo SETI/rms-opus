@@ -53,7 +53,8 @@ class Info(NamedTuple):
 
 
 class ToInfoMap:
-    _slug_to_label: Dict[str, str]
+    _slug_to_search_label: Dict[str, str]
+    _slug_to_column_label: Dict[str, str]
     _old_slug_to_new_slug: Dict[str, str]
     _search_map: Dict[str, Optional[Info]] = {}
     _column_map: Dict[str, Optional[Info]] = {}
@@ -80,15 +81,17 @@ class ToInfoMap:
         json_data: Dict[str, Any] = raw_json['data']
 
         # Fill in all the normal slugs
-        self._slug_to_label = {
-            slug_info['slug'].lower(): slug_info['label'] for slug_info in json_data.values()
+        self._slug_to_search_label = {
+            slug_info['slug'].lower(): slug_info['full_search_label'] for slug_info in json_data.values()
+        }
+        self._slug_to_column_label = {
+            slug_info['slug'].lower(): slug_info['full_label'] for slug_info in json_data.values()
         }
 
         self._old_slug_to_new_slug = {
             old_slug_info.lower(): slug_info['slug'].lower()
             for slug_info in json_data.values()
-            for old_slug_info in [slug_info.get('old_slug')]
-            if old_slug_info
+            for old_slug_info in [slug_info.get('old_slug')] if old_slug_info
         }
 
         for slug in self.SLUGS_NOT_IN_DB:
@@ -111,14 +114,14 @@ class ToInfoMap:
             result = search_map[slug]
             return result
 
-        label = self._slug_to_label.get(slug)
+        label = self._slug_to_search_label.get(slug)
         if label:
             result = search_map[slug] = self._known_label(slug, label, Flags.NONE)
             return result
 
         new_slug = self._old_slug_to_new_slug.get(slug)
         if new_slug:
-            label = self._slug_to_label[new_slug]
+            label = self._slug_to_search_label[new_slug]
             result = search_map[slug] = self._known_label(new_slug, label, Flags.OBSOLETE_SLUG)
             return result
 
@@ -192,8 +195,8 @@ class ToInfoMap:
         if slug in column_map:
             return column_map[slug]
 
-        if slug in self._slug_to_label:
-            result = column_map[slug] = create_slug(slug, self._slug_to_label[slug], Flags.NONE)
+        if slug in self._slug_to_column_label:
+            result = column_map[slug] = create_slug(slug, self._slug_to_search_label[slug], Flags.NONE)
             return result
 
         if slug in self._old_slug_to_new_slug:
