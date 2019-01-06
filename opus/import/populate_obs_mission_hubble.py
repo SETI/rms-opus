@@ -1053,22 +1053,4 @@ def populate_obs_mission_hubble_publication_date(**kwargs):
             f'Bad publication date format "{pub_date}": {e}')
         return None
 
-    new_pub_date = julian.iso_from_tai(pub_date_sec, digits=0, ymd=True)
-    return new_pub_date[:10] # Only want the date, not the time
-
-def populate_obs_mission_hubble_publication_date_sec(**kwargs):
-    metadata = kwargs['metadata']
-    index_row = metadata['index_row']
-    pub_date = index_row['PUBLICATION_DATE']
-
-    if pub_date is None:
-        return None
-
-    try:
-        pub_date_sec = julian.tai_from_iso(pub_date)
-    except Exception as e:
-        import_util.log_nonrepeating_error(
-            f'Bad publication date format "{pub_date}": {e}')
-        return None
-
     return pub_date_sec
