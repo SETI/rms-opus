@@ -147,6 +147,10 @@ class _SessionInfoImpl(SessionInfo):
         metadata = match.group(1)
         return [f'View Metadata: {metadata}']
 
+    @ForPattern(r'/__api/data.csv')
+    def _download_results_csv(self, query: Dict[str, str], match: Match[str]) -> List[str]:
+        return ["Download Results CSV"]
+
     #
     # Collections
     #
@@ -155,13 +159,13 @@ class _SessionInfoImpl(SessionInfo):
     def _reset_selections(self, query: Dict[str, str], match: Match[str]) -> List[str]:
         return ['Reset Selections']
 
-    @ForPattern(r'/__collections(/default)?/(add|remove).json')
+    @ForPattern(r'/__collections(/default)?/(add|remove)\.json')
     def _change_selections(self, query: Dict[str, str], match: Match[str]) -> List[str]:
         opus_id = query.get('opus_id', '???')
         selection = match.group(2).title()
         return [f'Selections {selection.title() + ":":<7} {opus_id}']
 
-    @ForPattern(r'/__collections(/default)?/view\..+')
+    @ForPattern(r'/__collections(/default)?/view(|\.json)')
     def collections_view(self, query: Dict[str, str], match: Match[str]) -> List[str]:
         self._query_handler.reset()
         return ['View Selections']
@@ -171,18 +175,18 @@ class _SessionInfoImpl(SessionInfo):
         query_range = query.get('range', '???').replace(',', ', ')
         return [f'Selections Add Range: {query_range}']
 
-    @ForPattern(r'/__collections(/download)?/default.zip')
+    @ForPattern(r'/__collections(/default)?/download.zip')
+    @ForPattern(r'/__collections/download/default.zip')
     def _create_zip_file(self, query: Dict[str, str], match: Match[str]) -> List[str]:
         self._query_handler.reset();
-        types = query.get('types', None)
+        types = query.get('types')
         if types is None:
             output = '???'
         else:
             output = quote_and_join_list(types.split(','))
         return [f'Create Zip File: {output}']
 
-    @ForPattern(r'/__collections/download/info')
-    @ForPattern(r'/__collections/download/info\..+')
+    @ForPattern(r'/__collections/download/info(|\.json)')
     def _download_product_types(self, query: Dict[str, str], match: Match[str]) -> List[str]:
         ptypes_field = query.get('types', None)
         new_ptypes = ptypes_field.split(',') if ptypes_field else []
@@ -208,6 +212,11 @@ class _SessionInfoImpl(SessionInfo):
         if not result:
             result.append('Product Types are unchanged')
         return result
+
+    @ForPattern(r'/__collections/data.csv')
+    def _download_selections_csv(self, query: Dict[str, str], match: Match[str]) -> List[str]:
+        return ["Download Selections CSV"]
+
 
     #
     # FORMS
