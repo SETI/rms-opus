@@ -161,7 +161,7 @@ class _SessionInfoImpl(SessionInfo):
         selection = match.group(2).title()
         return [f'Selections {selection.title() + ":":<7} {opus_id}']
 
-    @ForPattern(r'/__collections(/default)?/view.json')
+    @ForPattern(r'/__collections(/default)?/view\..+')
     def collections_view(self, query: Dict[str, str], match: Match[str]) -> List[str]:
         self._query_handler.reset()
         return ['View Selections']
@@ -182,6 +182,7 @@ class _SessionInfoImpl(SessionInfo):
         return [f'Create Zip File: {output}']
 
     @ForPattern(r'/__collections/download/info')
+    @ForPattern(r'/__collections/download/info\..+')
     def _download_product_types(self, query: Dict[str, str], match: Match[str]) -> List[str]:
         ptypes_field = query.get('types', None)
         new_ptypes = ptypes_field.split(',') if ptypes_field else []
