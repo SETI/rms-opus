@@ -83,6 +83,30 @@ class ApiResultsTests(TestCase):
         self.assertEqual(expected, jdata)
 
 
+            #######################################
+            ######### /api/data API TESTS #########
+            #######################################
+
+    def test__api_data_CASSINIrevno_sort(self):
+        "/api/data: CASSINIrevno sort"
+        url = '/opus/__api/data.json?instrument=Cassini+ISS,Cassini+VIMS&CASSINIrevno=000,00A,00B,00C,003&CASSINItargetcode=RI+(Rings+-+general)&limit=5000&order=time1&cols=opusid,CASSINIrevno&order=-CASSINIrevnoint1'
+        print(url)
+        response = self._get_response(url)
+        self.assertEqual(response.status_code, 200)
+        jdata = json.loads(response.content)
+        rev_no_map = {
+            '000': 0,
+            '00A': 1,
+            '00B': 2,
+            '00C': 3,
+            '003': 4
+        }
+        rev_nos = [rev_no_map[x[1]] for x in jdata['page']]
+        rev_nos2 = rev_nos[:]
+        rev_nos2.sort(reverse=True)
+        self.assertEqual(rev_nos, rev_nos2)
+
+
             ########################################
             ######### /api/files API TESTS #########
             ########################################
