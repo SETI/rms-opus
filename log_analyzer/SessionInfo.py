@@ -190,7 +190,8 @@ class _SessionInfoImpl(SessionInfo):
 
         if old_ptypes is None:
             joined_new_ptypes = ', '.join(new_ptypes)
-            return [f'Download Product Types: {joined_new_ptypes}']
+            plural = '' if len(new_ptypes) == 1 else 's'
+            return [f'Download Product Type{plural}: {joined_new_ptypes}']
 
         result = []
 

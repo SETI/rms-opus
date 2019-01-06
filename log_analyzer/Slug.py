@@ -49,7 +49,7 @@ class Info(NamedTuple):
     label: str  # The verbose label for this slug
     flags: Flags
     family_type: FamilyType
-    family: Optional[Family]  # only None for columns
+    family: Family
 
 
 class ToInfoMap:
@@ -191,13 +191,14 @@ class ToInfoMap:
         column_map = self._column_map
 
         def create_slug(canonical_name: str, label: str, flags: Flags) -> Info:
-            return Info(canonical_name, label, flags, FamilyType.COLUMN, None)
+            family = Family(label, '', '')
+            return Info(canonical_name, label, flags, FamilyType.COLUMN, family)
 
         if slug in column_map:
             return column_map[slug]
 
         if slug in self._slug_to_column_label:
-            result = column_map[slug] = create_slug(slug, self._slug_to_search_label[slug], Flags.NONE)
+            result = column_map[slug] = create_slug(slug, self._slug_to_column_label[slug], Flags.NONE)
             return result
 
         if slug in self._old_slug_to_new_slug:

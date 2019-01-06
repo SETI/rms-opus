@@ -17,7 +17,9 @@ class State(Enum):
 
 
 class QueryHandler:
-    _slug_map: Any
+    DEFAULT_SORT_ORDER = 'time1'
+
+    _slug_map: Slug.ToInfoMap
     _default_column_slug_info: ColumnSlugInfo
 
     _all_search_slugs: ClassVar[Dict[str, Slug.Info]] = {}
@@ -27,7 +29,8 @@ class QueryHandler:
 
     _previous_search_slug_info: SearchSlugInfo   # map from family to List[(Slug.Info, Value)]
     _previous_column_slug_info: ColumnSlugInfo   # map from raw slug to Slug.Info
-    _previous_page: str  # previous page
+    _previous_page: str                          # previous page
+    _previous_sort_order: str                    # sort order
     _previous_state: State
 
     def __init__(self, slug_map: Slug.ToInfoMap, default_column_slug_info: ColumnSlugInfo):
@@ -49,6 +52,7 @@ class QueryHandler:
         self._previous_query_type = None
         self._previous_search_slug_info = {}
         self._previous_column_slug_info = self._default_column_slug_info
+        self._previous_sort_order = self.DEFAULT_SORT_ORDER
         self._previous_page = ''
         self._previous_state = State.RESET
 
@@ -72,7 +76,7 @@ class QueryHandler:
         for slug, value in query.items():
             slug_info = self._slug_map.get_info_for_search_slug(slug)
             if slug_info:
-                family = cast(Slug.Family, slug_info.family)  # It can't be None for search slugs
+                family = slug_info.family
                 search_slug_info[family].append((slug_info, value))
                 self._all_search_slugs[slug] = slug_info
 
@@ -87,14 +91,17 @@ class QueryHandler:
 
         if uses_pages:
             page = query.get('page', '')
+            sort_order = query.get('order', self.DEFAULT_SORT_ORDER)
         else:
-            page = ''
+            # ignored, but Python is happier if they are set
+            page = sort_order = ''
 
         self.__get_search_info(self._previous_search_slug_info, search_slug_info, result)
         if uses_columns:
             self.__get_column_info(self._previous_column_slug_info, column_slug_info, result)
         if uses_pages:
             self.__get_page_info(self._previous_page, page, result)
+            self.__get_sort_order_info(self._previous_sort_order, sort_order, result)
 
         if current_state != previous_state:
             if current_state == State.FETCHING:
@@ -107,6 +114,8 @@ class QueryHandler:
             self._previous_column_slug_info = column_slug_info
         if uses_pages:
             self._previous_page = page
+            self._previous_sort_order = sort_order
+
         self._previous_state = current_state
         return result
 
@@ -183,13 +192,28 @@ class QueryHandler:
                 removed_columns.append(f'Remove Column: "{old_slug_info.label}"')
             elif new_slug_info and not old_slug_info:
                 postscript = f' **{new_slug_info.flags.pretty_print()}**' if new_slug_info.flags else ''
-                added_columns.append(f'Add Column: "{new_slug_info.label}{postscript}"')
+                added_columns.append(f'Add Column:    "{new_slug_info.label}{postscript}"')
         result.extend(removed_columns)
         result.extend(added_columns)
 
     def __get_page_info(self, old_page: Optional[str], new_page: Optional[str], result: List[str]) -> None:
         if old_page != new_page and old_page and new_page:
             result.append(f'Change Page: {old_page} -> {new_page}')
+
+    def __get_sort_order_info(self, old_sort_order: str, new_sort_order: str, result: List[str]) -> None:
+        if old_sort_order != new_sort_order:
+            columns = new_sort_order.split(',')
+            result.append(f'Change Sort Order:')
+            for column in columns:
+                if column.startswith('-'):
+                    order = 'Descending'
+                    column = column[1:]
+                else:
+                    order = 'Ascending'
+                slug_info = self._slug_map.get_info_for_column_slug(column)
+                assert slug_info
+                result.append(f'        "{slug_info.label}" ({order})')
+
 
     def __slug_value_change(self, name: str, old_value: str, new_value: str, result: List[str]) -> None:
         old_value_set = set(old_value.split(','))
@@ -217,7 +241,7 @@ class QueryHandler:
         """
         result: ColumnSlugInfo = {}
         for slug in slugs:
-            slug_info = slug_map.get_info_for_search_slug(slug)
+            slug_info = slug_map.get_info_for_column_slug(slug)
             if slug_info:
                 assert slug_info.family
                 result[slug_info.family] = slug_info
