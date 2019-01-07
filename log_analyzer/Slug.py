@@ -49,7 +49,7 @@ class Info(NamedTuple):
     label: str  # The verbose label for this slug
     flags: Flags
     family_type: FamilyType
-    family: Optional[Family]  # only None for columns
+    family: Family
 
 
 class ToInfoMap:
@@ -80,13 +80,14 @@ class ToInfoMap:
         raw_json = self.__read_json(url_prefix)
         json_data: Dict[str, Any] = raw_json['data']
 
+        def create_dictionary(label: str) -> Dict[str, str]:
+            return {slug_info['slug'].lower(): value
+                    for slug_info in json_data.values()
+                    for value in [slug_info.get(label)] if value
+                   }
         # Fill in all the normal slugs
-        self._slug_to_search_label = {
-            slug_info['slug'].lower(): slug_info['full_search_label'] for slug_info in json_data.values()
-        }
-        self._slug_to_column_label = {
-            slug_info['slug'].lower(): slug_info['full_label'] for slug_info in json_data.values()
-        }
+        self._slug_to_search_label = create_dictionary('full_search_label')
+        self._slug_to_column_label = create_dictionary('full_label')
 
         self._old_slug_to_new_slug = {
             old_slug_info.lower(): slug_info['slug'].lower()
@@ -190,13 +191,16 @@ class ToInfoMap:
         column_map = self._column_map
 
         def create_slug(canonical_name: str, label: str, flags: Flags) -> Info:
-            return Info(canonical_name, label, flags, FamilyType.COLUMN, None)
+            family = Family(label, '', '')
+            return Info(canonical_name, label, flags, FamilyType.COLUMN, family)
 
         if slug in column_map:
             return column_map[slug]
 
         if slug in self._slug_to_column_label:
-            result = column_map[slug] = create_slug(slug, self._slug_to_search_label[slug], Flags.NONE)
+            label = self._slug_to_column_label[slug]
+            label = label.replace(' (Min)', '').replace(' (Max)', '')
+            result = column_map[slug] = create_slug(slug, label, Flags.NONE)
             return result
 
         if slug in self._old_slug_to_new_slug:
@@ -206,11 +210,11 @@ class ToInfoMap:
             return result
 
         if slug[-1] in '12':
-            temp = self.get_info_for_column_slug(slug[:-1], False)
-            flag = {'1': Flags.REMOVED_1_FROM_END, '2': Flags.REMOVED_2_FROM_END}[slug[-1]]
-            if temp:
-                result = column_map[slug] = create_slug(temp.canonical_name, temp.label, temp.flags or flag)
-                return result
+            base_slug = self.get_info_for_column_slug(slug[:-1], False)
+            if base_slug:
+                column_map[slug[:-1] + '1'] = base_slug._replace(flags=(Flags.REMOVED_1_FROM_END | base_slug.flags))
+                column_map[slug[:-1] + '2'] = base_slug._replace(flags=(Flags.REMOVED_2_FROM_END | base_slug.flags))
+                return column_map[slug]
 
         if create:
             result = column_map[slug] = create_slug(slug, original_slug, Flags.UNKNOWN_SLUG)
