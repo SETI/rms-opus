@@ -84,18 +84,24 @@ var o_search = {
                 $(event.target).autocomplete({
                     minLength: 1,
                     source: hintsOfString,
-                    focus: function(event, ui ) {
+                    focus: function(focusEvent, ui) {
                         let domParser = new DOMParser();
                         let displayValue = domParser.parseFromString(ui.item.label, "text/html").documentElement.textContent;
                         $(event.target).val(displayValue);
                         return false;
                     },
-                    select: function(event, ui ) {
+                    select: function(selectEvent, ui) {
                         let domParser = new DOMParser();
                         let displayValue = domParser.parseFromString(ui.item.label, "text/html").documentElement.textContent;
                         $(event.target).val(displayValue);
                         return false;
                     },
+                })
+                .keyup(function(keyupEvent) {
+                    // Make sure autocomplete menu is hide whenever enter is pressed even if value is not changed
+                    if(keyupEvent.which === 13) {
+                        $(event.target).autocomplete("close");
+                    }
                 })
                 .data( "ui-autocomplete" )._renderItem = function( ul, item ) {
                     return $( "<li>" )
@@ -111,7 +117,7 @@ var o_search = {
 
         // filling in a range or string search field = update the hash
         // range behaviors and string behaviors for search widgets - input box
-        $('#search').on('change', 'input.STRING, input.RANGE', function() {
+        $('#search').on('change', 'input.STRING, input.RANGE', function(event) {
 
             slug = $(this).attr("name");
             css_class = $(this).attr("class").split(' ')[0]; // class will be STRING, min or max
@@ -119,7 +125,6 @@ var o_search = {
             // get values of all inputs
             var values = [];
             if (css_class == 'STRING') {
-
                 $('#widget__' + slug + ' input.STRING').each(function() {
                     values[values.length] = $(this).val();
                 });
