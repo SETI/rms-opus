@@ -6,6 +6,11 @@ var o_search = {
      *
      **/
     slugReqno: {},
+    extractHtmlContent: function(htmlString) {
+        let domParser = new DOMParser();
+        let content = domParser.parseFromString(htmlString, "text/html").documentElement.textContent;
+        return content;
+    },
     searchBehaviors: function() {
         /*
         // result count display hover
@@ -69,10 +74,8 @@ var o_search = {
             if(newHash.match(regexForShortHash)) {
                 newHash = newHash.match(regexForShortHash)[1];
             }
-
-            let url = `/opus/__api/stringsearchchoices/${slug}.json?` + newHash + "&reqno=" + opus.lastRequestNo;
-            console.log("ON INPUT current Val: " + currentValue);
-            console.log("ON INPUT API call URL: " + url);
+            let limitNum = 25;
+            let url = `/opus/__api/stringsearchchoices/${slug}.json?` + newHash + `&limit=${limitNum}` + "&reqno=" + opus.lastRequestNo;
             $.getJSON(url, function(data) {
                 // if a newer input is there, re-call api with new input
                 if(data["reqno"] < o_search.slugReqno[slug]) {
@@ -85,15 +88,17 @@ var o_search = {
                     minLength: 1,
                     source: hintsOfString,
                     focus: function(focusEvent, ui) {
-                        let domParser = new DOMParser();
-                        let displayValue = domParser.parseFromString(ui.item.label, "text/html").documentElement.textContent;
-                        $(event.target).val(displayValue);
+                        // if we want to have hinted value displayed when hovering over
+                        // let displayValue = o_search.extractHtmlContent(ui.item.label);
+                        $(event.target).val(currentValue);
                         return false;
                     },
                     select: function(selectEvent, ui) {
-                        let domParser = new DOMParser();
-                        let displayValue = domParser.parseFromString(ui.item.label, "text/html").documentElement.textContent;
+                        let displayValue = o_search.extractHtmlContent(ui.item.label);
                         $(event.target).val(displayValue);
+                        // search would be performed right away if an item in the list is selected
+                        opus.selections[slug] = [displayValue];
+                        o_hash.updateHash();
                         return false;
                     },
                 })
@@ -159,7 +164,6 @@ var o_search = {
                 opus.selections[slug_no_num + '2'] = values;
             }
             o_hash.updateHash();
-            console.log('ON CHANGE HASH: ' + window.location.hash);
         });
 
         // range behaviors and string behaviors for search widgets - qtype select dropdown
