@@ -63,8 +63,10 @@ class QueryHandler:
 
         uses_columns = query_type == 'data'
         uses_pages = query_type != 'result_count'
+        uses_sort = uses_pages   # For now the same, but this may change in the future
 
         current_state = State.SEARCHING if query_type == 'result_count' else State.FETCHING
+
         previous_state = self._previous_state
         if current_state != previous_state:
             if previous_state == State.RESET:
@@ -89,32 +91,27 @@ class QueryHandler:
         else:
             column_slug_info = {}
 
-        if uses_pages:
-            page = query.get('page', '')
-            sort_order = query.get('order', self.DEFAULT_SORT_ORDER)
-        else:
-            # ignored, but Python is happier if they are set
-            page = sort_order = ''
+        sort_order = query.get('order', self.DEFAULT_SORT_ORDER)
+        page = query.get('page', '')
 
         self.__get_search_info(self._previous_search_slug_info, search_slug_info, result)
+        self._previous_search_slug_info = search_slug_info
+
         if uses_columns:
             self.__get_column_info(self._previous_column_slug_info, column_slug_info, result)
-        if uses_pages:
-            self.__get_page_info(self._previous_page, page, result)
+            self._previous_column_slug_info = column_slug_info
+        if uses_sort:
             self.__get_sort_order_info(self._previous_sort_order, sort_order, result)
+            self._previous_sort_order = sort_order
 
-        if current_state != previous_state:
-            if current_state == State.FETCHING:
-                page = query.get('page', '')
+        if uses_pages:
+            assert current_state == State.FETCHING
+            if current_state != previous_state:
                 viewed = 'Table' if query.get('browse') == 'data' else 'Gallery'
                 result.append(f'View {viewed}: Page {page or "???"}')
-
-        self._previous_search_slug_info = search_slug_info
-        if uses_columns:
-            self._previous_column_slug_info = column_slug_info
-        if uses_pages:
+            else:
+                 self.__get_page_info(self._previous_page, page, result)
             self._previous_page = page
-            self._previous_sort_order = sort_order
 
         self._previous_state = current_state
         return result
