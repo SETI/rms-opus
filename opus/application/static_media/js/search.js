@@ -76,13 +76,18 @@ var o_search = {
             }
             let limitNum = 25;
             let url = `/opus/__api/stringsearchchoices/${slug}.json?` + newHash + `&limit=${limitNum}` + "&reqno=" + opus.lastRequestNo;
+            console.log("INPUT API CALL URL: " + url);
+            console.log("INPUT CURRENT req: " + opus.lastRequestNo);
+            console.log(o_search.slugReqno);
             $.getJSON(url, function(data) {
+                console.log("INPUT RETURN req: " + data["reqno"]);
+                console.log("INPUT RETURN data: " + JSON.stringify(data));
                 // if a newer input is there, re-call api with new input
                 if(data["reqno"] < o_search.slugReqno[slug]) {
                     return;
                 }
 
-                // console.log("ON INPUT RETURN DATA: " + JSON.stringify(data));
+                console.log("ON INPUT RETURN DATA: " + JSON.stringify(data));
                 let hintsOfString = data["choices"];
                 $(event.target).autocomplete({
                     minLength: 1,

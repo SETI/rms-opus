@@ -11,7 +11,8 @@ var o_hash = {
         hash = [];
         for (var param in opus.selections) {
             if (opus.selections[param].length){
-                hash[hash.length] = param + "=" + opus.selections[param].join(",").replace(/ /g,"+");
+                // hash[hash.length] = param + "=" + opus.selections[param].join(",").replace(/ /g,"+");
+                hash.push(param + "=" + opus.selections[param].join(",").replace(/ /g,"+"));
             }
         }
 
@@ -20,10 +21,12 @@ var o_hash = {
         for (var key in opus.extras) {
 
             try {
-                hash[hash.length] = key + "=" + opus.extras[key].join(",");
+                // hash[hash.length] = key + "=" + opus.extras[key].join(",");
+                hash.push(key + "=" + opus.extras[key].join(","));
             } catch(e) {
                 // oops not an arr
-                hash[hash.length] = key + "=" + opus.extras[key];
+                // hash[hash.length] = key + "=" + opus.extras[key];
+                hash.push(key + "=" + opus.extras[key]);
             }
         }
         for (key in opus.prefs) {
@@ -36,12 +39,14 @@ var o_hash = {
                     // opus.prefs.browse =  'gallery' or 'data',
                     page = o_browse.getCurrentPage();
 
-                    hash[hash.length] = "page=" + page;
+                    // hash[hash.length] = "page=" + page;
+                    hash.push("page=" + page);
                     break;
 
                 case "widget_size":
                     for (slug in opus.prefs[key]) {
-                        hash[hash.length] = o_widgets.constructWidgetSizeHash(slug);
+                        // hash[hash.length] = o_widgets.constructWidgetSizeHash(slug);
+                        hash.push(o_widgets.constructWidgetSizeHash(slug));
                     }
                     break;
 
@@ -51,7 +56,7 @@ var o_hash = {
 
 
                 default:
-                    hash[hash.length] = key + "=" + opus.prefs[key];
+                    hash.push(key + "=" + opus.prefs[key]);
             }
         }
         if(updateURL) {

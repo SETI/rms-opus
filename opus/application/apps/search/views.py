@@ -126,6 +126,9 @@ def api_string_search_choices(request, slug):
         exit_api_call(api_code, ret)
         raise ret
 
+    if request.is_ajax():
+        reqno = request.GET.get('reqno', None)
+
     partial_query = ''
     query_qtype = 'contains'
     if param_qualified_name in selections:
@@ -270,7 +273,8 @@ def api_string_search_choices(request, slug):
                              for x in final_results]
 
     ret = json_response({'choices': final_results,
-                         'full_search': do_simple_search})
+                         'full_search': do_simple_search,
+                         'reqno': reqno})
     exit_api_call(api_code, ret)
     return ret
 
