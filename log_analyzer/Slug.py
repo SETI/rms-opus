@@ -173,7 +173,10 @@ class ToInfoMap:
                 family = Family(label=label[:-6], min='min', max='max')
             else:
                 base_label = re.sub(r'(.*) (Start|Stop) (.*)', r'\1 \3', label)
-                family = Family(label=base_label, min='start', max='stop')
+                if base_label != label:
+                    family = Family(label=base_label, min='start', max='stop')
+                else:
+                    family = Family(label=label, min='min', max='max')
             family_type = FamilyType.MIN if slug[-1] == '1' else FamilyType.MAX
         else:
             family_type = FamilyType.SINGLETON

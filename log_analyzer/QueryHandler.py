@@ -127,6 +127,11 @@ class QueryHandler:
                 reduce(operator.or_, (slug_info.flags for (slug_info, _) in pairs))
             )
 
+        def pprint(value: Optional[str]):
+            if value is None:
+                return '~'
+            return '"' + value + '"'
+
         if not new_info:
             if old_info:
                 result.append('Reset Search')
@@ -147,8 +152,9 @@ class QueryHandler:
                     added_searches.append(f'Add Search:    "{family.label}" = "{value}"{postscript}')
                 else:
                     new_min, new_max, new_qtype, flags = parse_family(new_info[family])
-                    new_value = (f'({family.min.upper()}:"{new_min}", {family.max.upper()}:"{new_max}", '
-                                 f'QTYPE:"{new_qtype}")')
+                    new_value = (f'({family.min.upper()}:{pprint(new_min)},'
+                                 f' {family.max.upper()}:{pprint(new_max)}, '
+                                 f'QTYPE:{pprint(new_qtype)})')
                     postscript = f' **{flags.pretty_print()}**' if flags else ''
                     added_searches.append(f'Add Search:    "{family.label}" = {new_value}{postscript}')
             else:
@@ -165,7 +171,9 @@ class QueryHandler:
                         min_name = family.min if old_min == new_min else family.min.upper()
                         max_name = family.max if old_max == new_max else family.max.upper()
                         qtype_name = 'qtype' if old_qtype == new_qtype else 'QTYPE'
-                        new_value = f'({min_name}:"{new_min}", {max_name}:"{new_max}", {qtype_name}:"{new_qtype}")'
+                        new_value = (f'({min_name}:{pprint(new_min)},' 
+                                     f' {max_name}:{pprint(new_max)},' 
+                                     f' {qtype_name}:{pprint(new_qtype)})')
                         changed_searches.append(f'Change Search: "{family.label}" = {new_value}')
 
         result.extend(removed_searches)
