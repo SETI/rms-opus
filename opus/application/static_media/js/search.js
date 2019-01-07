@@ -80,20 +80,14 @@ var o_search = {
             if(newHash.match(regexForShortHash)) {
                 newHash = newHash.match(regexForShortHash)[1];
             }
-            let limitNum = 25;
-            let url = `/opus/__api/stringsearchchoices/${slug}.json?` + newHash + `&limit=${limitNum}` + "&reqno=" + opus.lastRequestNo;
-            console.log("INPUT API CALL URL: " + url);
-            console.log("INPUT CURRENT req: " + opus.lastRequestNo);
-            console.log(o_search.slugReqno);
+
+            let url = `/opus/__api/stringsearchchoices/${slug}.json?` + newHash + "&reqno=" + opus.lastRequestNo;
             $.getJSON(url, function(data) {
-                console.log("INPUT RETURN req: " + data["reqno"]);
-                console.log("INPUT RETURN data: " + JSON.stringify(data));
                 // if a newer input is there, re-call api with new input
                 if(data["reqno"] < o_search.slugReqno[slug]) {
                     return;
                 }
 
-                console.log("ON INPUT RETURN DATA: " + JSON.stringify(data));
                 // dynamically update drop down lists
                 let searchMsg = "";
                 if(data["full_search"]) {
@@ -138,9 +132,6 @@ var o_search = {
                       .append("<a>" + item.label + "</a>")
                       .appendTo(ul);
                 };
-
-                console.log($(event.target).autocomplete( "option", "source" ));
-
             }); // end getJSON
         });
 
