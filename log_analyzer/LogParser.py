@@ -133,48 +133,6 @@ class LogParser:
                     if entry_info:
                         self.__print_entry_info(entry, entry_info, session_start_time)
 
-    def run_summary2(self, log_entries: List[LogEntry]) -> None:
-        """
-        Look at the list of log entries in summary mode.
-
-        All the information for each host_ip are printed out together, though they are still broken into sessions when
-        the user pauses for too long.
-        """
-        output = self._output
-        previous_host_ip: Optional[IPv4Address] = None
-        entries_by_host_ip = self.__group_log_entries_by_host_ip(log_entries)
-
-        # Look at the host ips in standard order.
-        for session_host_ip in sorted(entries_by_host_ip):
-            hostname_from_ip = self.__get_hostname_from_ip(session_host_ip)
-            session_log_entries = entries_by_host_ip[session_host_ip]
-            while session_log_entries:
-                # If the first entry has no information, it doesn't start a session
-                entry = session_log_entries.popleft()
-                session_info = self._session_info_generator.create()
-                entry_info = session_info.parse_log_entry(entry)
-                if not entry_info:
-                    continue
-
-                # Start a new session
-                session_start_time = entry.time
-                if previous_host_ip:
-                    char = '-' if previous_host_ip == session_host_ip else '*'
-                    print(f'\n{char * 10}\n', file=output)
-                previous_host_ip = session_host_ip
-
-                print(f'Host {hostname_from_ip}: {entry.time_string}', file=output)
-                self.__print_entry_info(entry, entry_info, session_start_time)
-
-                # Keep on printing session information for as long as we have not reached a timeout.
-                session_end_time = session_start_time + self._session_timeout
-                while session_log_entries and session_log_entries[0].time <= session_end_time:
-                    entry = session_log_entries.popleft()
-                    session_end_time = entry.time + self._session_timeout
-                    entry_info = session_info.parse_log_entry(entry)
-                    if entry_info:
-                        self.__print_entry_info(entry, entry_info, session_start_time)
-
     def show_slugs(self, log_entries: List[LogEntry]) -> None:
         output = self._output
         entries_by_host_ip = self.__group_log_entries_by_host_ip(log_entries)
