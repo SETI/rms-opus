@@ -56,12 +56,18 @@ var o_search = {
         });
         */
 
+        // Init autocomplete source, this is to make sure first keypress would have drop down shows up
+        $("#search").on("focus", "input.STRING", function(event) {
+          $(event.target).autocomplete({
+              minLength: 0,
+              source: [],
+          });
+        });
         // Dynamically call stringsearchchoices api to get latest hints
         $("#search").on("input", "input.STRING", function(event) {
             let slug = $(this).attr("name");
             let currentValue = $(this).val().trim();
             let values = [];
-            let currentStringInput = $(this);
 
             opus.lastRequestNo++;
             o_search.slugReqno[slug] = opus.lastRequestNo;
@@ -88,6 +94,13 @@ var o_search = {
                 }
 
                 console.log("ON INPUT RETURN DATA: " + JSON.stringify(data));
+                // dynamically update drop down lists
+                let searchMsg = "";
+                if(data["full_search"]) {
+                    searchMsg = "Results from entire database, not current search constraints"
+                } else {
+                    searchMsg = "Results from current search constraints"
+                }
                 let hintsOfString = data["choices"];
                 $(event.target).autocomplete({
                     minLength: 1,
@@ -106,6 +119,10 @@ var o_search = {
                         o_hash.updateHash();
                         return false;
                     },
+                    open: function()
+                    {
+                        $("ul.ui-autocomplete").prepend(`<li><div class="list-header">${searchMsg}</div></li>`);
+                    }
                 })
                 .keyup(function(keyupEvent) {
                     // Make sure autocomplete menu is hide whenever enter is pressed even if value is not changed
@@ -121,6 +138,8 @@ var o_search = {
                       .append("<a>" + item.label + "</a>")
                       .appendTo(ul);
                 };
+
+                console.log($(event.target).autocomplete( "option", "source" ));
 
             }); // end getJSON
         });

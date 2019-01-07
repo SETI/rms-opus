@@ -703,3 +703,7 @@ div.gallery {
 ul.ui-autocomplete {
     list-style: none;
 }
+
+.list-header {
+    background-color: #F9F6F6;
+}
