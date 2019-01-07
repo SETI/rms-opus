@@ -28,7 +28,7 @@ class QueryHandler:
     _is_reset: bool
 
     _previous_search_slug_info: SearchSlugInfo   # map from family to List[(Slug.Info, Value)]
-    _previous_column_slug_info: ColumnSlugInfo   # map from raw slug to Slug.Info
+    _previous_column_slug_info: Optional[ColumnSlugInfo]   # map from raw slug to Slug.Info
     _previous_page: str                          # previous page
     _previous_sort_order: str                    # sort order
     _previous_state: State
@@ -51,7 +51,7 @@ class QueryHandler:
     def reset(self) -> None:
         self._previous_query_type = None
         self._previous_search_slug_info = {}
-        self._previous_column_slug_info = self._default_column_slug_info
+        self._previous_column_slug_info = None  # handled specially by get_column_slug_info
         self._previous_sort_order = self.DEFAULT_SORT_ORDER
         self._previous_page = ''
         self._previous_state = State.RESET
@@ -180,7 +180,16 @@ class QueryHandler:
         result.extend(added_searches)
         result.extend(changed_searches)
 
-    def __get_column_info(self, old_info: ColumnSlugInfo, new_info: ColumnSlugInfo, result: List[str]) -> None:
+    def __get_column_info(self, old_info: Optional[ColumnSlugInfo], new_info: ColumnSlugInfo, result: List[str]) -> None:
+        if old_info is None:
+            new_column_families = set(new_info.keys())
+            if new_column_families == set(self._default_column_slug_info.keys()):
+                return
+            column_labels = [new_info[family].label for family in sorted(new_column_families)]
+            quoted_column_labels = SessionInfo.quote_and_join_list(sorted(column_labels))
+            result.append(f'Starting with Columns: {quoted_column_labels}')
+            return
+
         old_column_families = set(old_info.keys())
         new_column_families = set(new_info.keys())
         if new_column_families == old_column_families:
