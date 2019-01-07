@@ -50,7 +50,9 @@ def main(arguments: Optional[List[str]] = None) -> None:
     # args.ignored_ip comes out as a list of lists, and it needs to be flattened.
     ignored_ips = [ip for arg_list in args.ignore_ip for ip in arg_list]
     session_info_generator = SessionInfoGenerator(slugs, ignored_ips)
-    log_parser = LogParser(session_info_generator, args.reverse_dns, args.session_timeout, args.out)
+    log_parser = LogParser(session_info_generator, args.reverse_dns, args.session_timeout, args.out,
+                           # TODO(fy): Fix me to use args.api_host_url, except when xxlocal_slugs is set
+                           DEFAULT_FIELDS_PREFIX)
 
     if args.realtime:
         if len(args.log_files) != 1:
