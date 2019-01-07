@@ -127,7 +127,7 @@ class QueryHandler:
                 reduce(operator.or_, (slug_info.flags for (slug_info, _) in pairs))
             )
 
-        def pprint(value: Optional[str]):
+        def pprint(value: Optional[str]) -> str:
             if value is None:
                 return '~'
             return '"' + value + '"'
