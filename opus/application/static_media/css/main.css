@@ -697,9 +697,9 @@ div.gallery {
 }
 
 .ui-helper-hidden-accessible {
-  display:none;
+    display:none;
 }
 
 ul.ui-autocomplete {
-  list-style: none;
+    list-style: none;
 }
