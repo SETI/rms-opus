@@ -79,27 +79,23 @@ var o_search = {
                     return;
                 }
 
-                console.log("ON INPUT RETURN DATA: " + JSON.stringify(data));
+                // console.log("ON INPUT RETURN DATA: " + JSON.stringify(data));
                 let hintsOfString = data["choices"];
                 $(event.target).autocomplete({
                     minLength: 1,
                     source: hintsOfString,
                     focus: function(event, ui ) {
-                        console.log(ui)
-                        let domP = new DOMParser();
-                        console.log(domP.parseFromString(ui.item.label, "text/html").documentElement.textContent);
-                        $(event.target).val(ui.item.label);
+                        let domParser = new DOMParser();
+                        let displayValue = domParser.parseFromString(ui.item.label, "text/html").documentElement.textContent;
+                        $(event.target).val(displayValue);
                         return false;
                     },
-                    // select: function(event, ui ) {
-                    //     console.log(ui.item);
-                    //     $(event.target).val(ui.item.label);
-                    //     return false;
-                    // },
-                    // messages: {
-                    //     noResults: "",
-                    //     results: function() {}
-                    // },
+                    select: function(event, ui ) {
+                        let domParser = new DOMParser();
+                        let displayValue = domParser.parseFromString(ui.item.label, "text/html").documentElement.textContent;
+                        $(event.target).val(displayValue);
+                        return false;
+                    },
                 })
                 .data( "ui-autocomplete" )._renderItem = function( ul, item ) {
                     return $( "<li>" )
@@ -109,7 +105,6 @@ var o_search = {
                       .append("<a>" + item.label + "</a>")
                       .appendTo(ul);
                 };
-                // console.log(currentStringInput.autocomplete().data());
 
             }); // end getJSON
         });
@@ -159,6 +154,7 @@ var o_search = {
                 opus.selections[slug_no_num + '2'] = values;
             }
             o_hash.updateHash();
+            console.log('ON CHANGE HASH: ' + window.location.hash);
         });
 
         // range behaviors and string behaviors for search widgets - qtype select dropdown
