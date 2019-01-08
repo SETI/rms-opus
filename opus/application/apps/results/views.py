@@ -493,9 +493,6 @@ def api_get_images(request, fmt):
     image_list = get_pds_preview_images(opus_ids, preview_jsons,
                                         ['thumb', 'small', 'med', 'full'])
 
-    if not image_list:
-        log.error('api_get_images: No image found for: %s', str(opus_ids[:50]))
-
     collection_opus_ids = get_all_in_collection(request)
     for image in image_list:
         image['in_collection'] = image['opus_id'] in collection_opus_ids

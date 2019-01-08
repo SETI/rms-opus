@@ -640,7 +640,7 @@ def get_user_query_table(selections, extras, api_code=None):
         # For the minor performance gain this doesn't seem important to fix
         # right now but perhaps in the future.
         if e.args[0] == MYSQL_TABLE_ALREADY_EXISTS:
-            log.error('get_user_query_table: Table "%s" originally didn\'t '+
+            log.debug('get_user_query_table: Table "%s" originally didn\'t '+
                       'exist, but now it does!', cache_table_name)
             cache.set(cache_key, cache_table_name)
             return cache_table_name
