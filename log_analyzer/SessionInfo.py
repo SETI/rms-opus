@@ -196,7 +196,7 @@ class _SessionInfoImpl(SessionInfo):
         self._previous_product_info_type = new_ptypes
 
         if old_ptypes is None:
-            joined_new_ptypes = ', '.join(new_ptypes)
+            joined_new_ptypes = quote_and_join_list(new_ptypes)
             plural = '' if len(new_ptypes) == 1 else 's'
             return [f'Download Product Type{plural}: {joined_new_ptypes}']
 
