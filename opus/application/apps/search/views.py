@@ -126,9 +126,6 @@ def api_string_search_choices(request, slug):
         exit_api_call(api_code, ret)
         raise ret
 
-    if request.is_ajax():
-        reqno = request.GET.get('reqno', None)
-
     partial_query = ''
     query_qtype = 'contains'
     if param_qualified_name in selections:
