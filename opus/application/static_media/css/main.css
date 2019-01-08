@@ -704,6 +704,6 @@ ul.ui-autocomplete {
     list-style: none;
 }
 
-.list-header {
+.list-header, .list-footer {
     background-color: #F9F6F6;
 }

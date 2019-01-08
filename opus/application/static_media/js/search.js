@@ -82,23 +82,19 @@ var o_search = {
             }
 
             let searchMsg = "";
+            let truncatedResults = false;
+            let truncatedResultsMsg = "&ltMore choices available&gt";
             let url = `/opus/__api/stringsearchchoices/${slug}.json?` + newHash + "&reqno=" + opus.lastRequestNo;
-            // console.log("INPUT API CALL URL: " + url);
-            // console.log("INPUT CURRENT req: " + opus.lastRequestNo);
-            // console.log(o_search.slugReqno);
 
-            $(event.target).autocomplete({
+            let stringInputDropDown = $(event.target).autocomplete({
                 minLength: 1,
                 source: function(request, response) {
                     $.getJSON(url, function(data) {
-                        // console.log("INPUT getJSON RETURN req: " + data["reqno"]);
-                        // console.log("INPUT getJSON RETURN data: " + JSON.stringify(data));
                         // if a newer input is there, re-call api with new input
                         if(data["reqno"] < o_search.slugReqno[slug]) {
                             return;
                         }
 
-                        // console.log("ON INPUT getJSON RETURN DATA: " + JSON.stringify(data));
                         // dynamically update drop down lists
                         // let searchMsg = "";
                         if(data["full_search"]) {
@@ -106,7 +102,9 @@ var o_search = {
                         } else {
                             searchMsg = "Results from current search constraints"
                         }
+
                         let hintsOfString = data["choices"];
+                        truncatedResults = data["truncated_results"];
                         response(hintsOfString);
                     });
                 },
@@ -124,10 +122,6 @@ var o_search = {
                     o_hash.updateHash();
                     return false;
                 },
-                open: function()
-                {
-                    $("ul.ui-autocomplete").prepend(`<li><div class="list-header">${searchMsg}</div></li>`);
-                }
             })
             .keyup(function(keyupEvent) {
                 // Make sure autocomplete menu is hide whenever enter is pressed even if value is not changed
@@ -135,7 +129,21 @@ var o_search = {
                     $(event.target).autocomplete("close");
                 }
             })
-            .data( "ui-autocomplete" )._renderItem = function( ul, item ) {
+            .data( "ui-autocomplete" );
+
+            // Add header and footer for dropdown list
+            stringInputDropDown._renderMenu = function(ul, items) {
+                let self = this;
+                $.each(items, function(index, item) {
+                    self._renderItem(ul, item );
+                });
+                ul.prepend(`<li><div class="list-header">${searchMsg}</div></li>`);
+                if(truncatedResults) {
+                    ul.append(`<li><div class="list-footer">${truncatedResultsMsg}</div></li>`);
+                }
+            };
+            // Customized dropdown list item
+            stringInputDropDown._renderItem = function(ul, item) {
                 return $( "<li>" )
                   .data( "ui-autocomplete-item", item )
                   .attr( "data-value", item.value )
