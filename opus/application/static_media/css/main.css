@@ -710,3 +710,22 @@ input[type="text"].search_input_invalid_no_focus {
     opacity: 0.5;
     pointer-events: none;
 }
+
+/* Make drop down scrollable vertically */
+.ui-autocomplete {
+    max-height: 200px;
+    overflow-y: auto;
+    overflow-x: hidden;
+}
+
+.ui-helper-hidden-accessible {
+    display:none;
+}
+
+ul.ui-autocomplete {
+    list-style: none;
+}
+
+.list-header, .list-footer {
+    background-color: #F9F6F6;
+}
