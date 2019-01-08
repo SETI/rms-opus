@@ -94,7 +94,6 @@ var o_search = {
                         }
 
                         // dynamically update drop down lists
-                        // let searchMsg = "";
                         if(data["full_search"]) {
                             searchMsg = "Results from entire database, not current search constraints"
                         } else {
