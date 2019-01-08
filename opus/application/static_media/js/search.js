@@ -40,19 +40,21 @@ var o_search = {
             }
         });
         if(!opus.allInputsValid) {
-            $('#result_count').text('?');
+            $('#result_count').text("?");
             // set hinting info to ? when any range input has invalid value
-            opus.widgets_drawn.forEach(function(eachSlug) {
-                if ($('.widget__' + eachSlug).hasClass('range-widget')) {
-                    $('#hint__' + eachSlug).html('<span>min: ?</span><span>max: ?</span><span> nulls: ?</span>');
-                } else if ($('.widget__' + eachSlug).hasClass('mult-widget')) {
-                    let hintForMult = $(`span[id*="hint__${eachSlug}"]`);
-                    $(`span[id*="hint__${eachSlug}"]`).html('<span>?</span>');
+            // for range
+            $(".range_hints").each(function() {
+                if($(this).children().length > 0) {
+                    $(this).html("<span>min: ?</span><span>max: ?</span><span> nulls: ?</span>");
                 }
+            });
+            // for mults
+            $(".hints").each(function() {
+                $(this).html("<span>?</span>");
             });
 
             if(removeSpinner) {
-                $('.spinner').fadeOut('');
+                $(".spinner").fadeOut("");
             }
         } else {
             // put back normal hinting info
