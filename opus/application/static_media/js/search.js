@@ -148,13 +148,8 @@ var o_search = {
 
             values.push(currentValue)
             opus.selections[slug] = values;
-            let newHash = o_hash.updateHash(false);
-            let regexForShortHash = /(.*)&view/;
-            // Use short hash
-            if(newHash.match(regexForShortHash)) {
-                newHash = newHash.match(regexForShortHash)[1];
-            }
-
+            // Use only the current slug to call normalized api while input event happened
+            let newHash = `${slug}=${currentValue}`;
             // keep calling normalize api to check input values whenever input got changed
             // only check if return value is null or not, DON'T compare min & max
             let url = "/opus/__api/normalizeinput.json?" + newHash + "&reqno=" + opus.lastNormalizeRequestNo;
@@ -166,7 +161,6 @@ var o_search = {
 
                 o_search.currentNormalizedData = data;
                 let returnData = data[slug];
-
                 // parsing normalized data
                 // if it's empty string, don't modify anything
                 // if it's null, add search_input_invalid class
@@ -196,7 +190,6 @@ var o_search = {
             if(newHash.match(regexForShortHash)) {
                 newHash = newHash.match(regexForShortHash)[1];
             }
-
             opus.lastNormalizeRequestNo++;
             o_search.slugReqno[slug] = opus.lastNormalizeRequestNo;
             let url = "/opus/__api/normalizeinput.json?" + newHash + "&reqno=" + opus.lastNormalizeRequestNo;
