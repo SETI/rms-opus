@@ -1,11 +1,15 @@
 import datetime
 import functools
+import os
 import socket
 import textwrap
 from collections import defaultdict, deque
 from heapq import heapify, heappop, heappush
 from ipaddress import IPv4Address
-from typing import List, Iterator, Dict, NamedTuple, Optional, Deque, Iterable, IO
+from typing import List, Iterator, Dict, NamedTuple, Optional, Deque, Iterable, IO, Any
+
+import django
+from django import template
 
 import Slug
 from LogEntry import LogEntry
@@ -24,6 +28,52 @@ class _LiveSession(NamedTuple):
         return self._replace(timeout=timeout)
 
 
+SUMMARY_TEMPLATE = """
+<!DOCTYPE html>
+<html lang="en">
+<head>
+</head>
+<body>
+{% spaceless %}
+    {% for host_info in host_infos %} 
+    <details>
+        <summary> 
+            {{ host_info.hostname }}  
+            ({{ host_info.sessions | length }} session{{host_info.sessions | length | pluralize}}, 
+            {{ host_info.total_time }})
+        </summary>
+        <div style="margin-left: 1em;">
+        {% for session in host_info.sessions %}
+            {% if not forloop.first %}
+                <hr>
+            {% endif %}
+            Session #{{forloop.counter}} starting at  {{ session.entries.0.log_entry.time_string }} 
+            lasting {{ session.time_delta }}<br>
+            {% for entry in session.entries %}
+                <table>
+                {% for line in entry.data %}
+                   <tr><td>
+                   {% if forloop.first %}
+                       <a href="{{api_host_url}}{{entry.log_entry.url.geturl | safe}}" target="_blank"
+                       >{{entry.start_time_offset}}</a>
+                   {% else %}
+                       &nbsp;
+                   {% endif %}
+                   </td>
+                   <td>{{ line }}</td>
+                   </tr>
+                {% endfor %}
+                </table>
+            {% endfor %} 
+        {% endfor %}
+        </div>
+    </details>
+    {% endfor %}
+{% endspaceless %}
+</body>
+"""
+
+
 class LogParser:
     """
     Code that reads through the log entries, groups them by host and by session, and prints them out in a nice format.
@@ -34,11 +84,12 @@ class LogParser:
     _output: IO[str]
 
     def __init__(self, session_info_generator: SessionInfoGenerator, use_reverse_dns: bool,
-                 session_timeout_minutes: int, output: IO[str]):
+                 session_timeout_minutes: int, output: IO[str], api_host_url: str):
         self._session_info_generator = session_info_generator
         self._use_reverse_dns = use_reverse_dns
         self._session_timeout = datetime.timedelta(minutes=session_timeout_minutes)
         self._output = output
+        self._api_host_url = api_host_url
 
     def run_batch(self, log_entries: List[LogEntry]) -> None:
         """
@@ -91,19 +142,14 @@ class LogParser:
             if session_log_entries:
                 heappush(heap, (session_log_entries[0].time, session_host_ip, session_log_entries))
 
-    def run_summary(self, log_entries: List[LogEntry]) -> None:
-        """
-        Look at the list of log entries in summary mode.
 
-        All the information for each host_ip are printed out together, though they are still broken into sessions when
-        the user pauses for too long.
-        """
-        output = self._output
-        previous_host_ip: Optional[IPv4Address] = None
+    def run_summary(self, log_entries: List[LogEntry]) -> None:
         entries_by_host_ip = self.__group_log_entries_by_host_ip(log_entries)
 
-        # Look at the host ips in standard order.
+        host_infos: List[Dict[str, Any]] = []
         for session_host_ip in sorted(entries_by_host_ip):
+            total_time_on_host = datetime.timedelta(0)
+            sessions: List[Dict[str, Any]] = []
             hostname_from_ip = self.__get_hostname_from_ip(session_host_ip)
             session_log_entries = entries_by_host_ip[session_host_ip]
             while session_log_entries:
@@ -114,15 +160,13 @@ class LogParser:
                 if not entry_info:
                     continue
 
-                # Start a new session
                 session_start_time = entry.time
-                if previous_host_ip:
-                    char = '-' if previous_host_ip == session_host_ip else '*'
-                    print(f'\n{char * 10}\n', file=output)
-                previous_host_ip = session_host_ip
 
-                print(f'Host {hostname_from_ip}: {entry.time_string}', file=output)
-                self.__print_entry_info(entry, entry_info, session_start_time)
+                def create_session_entry(log_entry:LogEntry, entry_info: List[str]) -> Dict[str, Any]:
+                    start_time_offset  = entry.time - session_start_time
+                    return dict(log_entry=log_entry, start_time_offset=start_time_offset, data=entry_info)
+
+                current_session_entries = [create_session_entry(entry, entry_info)]
 
                 # Keep on printing session information for as long as we have not reached a timeout.
                 session_end_time = session_start_time + self._session_timeout
@@ -131,7 +175,21 @@ class LogParser:
                     session_end_time = entry.time + self._session_timeout
                     entry_info = session_info.parse_log_entry(entry)
                     if entry_info:
-                        self.__print_entry_info(entry, entry_info, session_start_time)
+                        current_session_entries.append(create_session_entry(entry, entry_info))
+
+                session_time_delta = (current_session_entries[-1]['log_entry'].time
+                                      - current_session_entries[0]['log_entry'].time)
+                total_time_on_host += session_time_delta
+                sessions.append(dict(entries=current_session_entries, time_delta=session_time_delta))
+            if sessions:
+                host_infos.append(dict(hostname=hostname_from_ip, sessions=sessions, total_time=total_time_on_host))
+
+        os.environ.setdefault("DJANGO_SETTINGS_MODULE", "DjangoSettings")
+        django.setup()
+
+        summary_template = template.Template(SUMMARY_TEMPLATE)
+        summary_context = template.Context({'host_infos': host_infos, 'api_host_url': self._api_host_url})
+        print(summary_template.render(summary_context), file=self._output)
 
     def show_slugs(self, log_entries: List[LogEntry]) -> None:
         output = self._output
