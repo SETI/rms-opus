@@ -83,32 +83,26 @@ var o_search = {
 
             let searchMsg = "";
             let url = `/opus/__api/stringsearchchoices/${slug}.json?` + newHash + "&reqno=" + opus.lastRequestNo;
-            // console.log("INPUT API CALL URL: " + url);
-            // console.log("INPUT CURRENT req: " + opus.lastRequestNo);
-            // console.log(o_search.slugReqno);
 
             $(event.target).autocomplete({
                 minLength: 1,
                 source: function(request, response) {
-                  $.getJSON(url, function(data) {
-                      // console.log("INPUT getJSON RETURN req: " + data["reqno"]);
-                      // console.log("INPUT getJSON RETURN data: " + JSON.stringify(data));
-                      // if a newer input is there, re-call api with new input
-                      if(data["reqno"] < o_search.slugReqno[slug]) {
-                          return;
-                      }
+                    $.getJSON(url, function(data) {
+                        // if a newer input is there, re-call api with new input
+                        if(data["reqno"] < o_search.slugReqno[slug]) {
+                            return;
+                        }
 
-                      // console.log("ON INPUT getJSON RETURN DATA: " + JSON.stringify(data));
-                      // dynamically update drop down lists
-                      // let searchMsg = "";
-                      if(data["full_search"]) {
-                          searchMsg = "Results from entire database, not current search constraints"
-                      } else {
-                          searchMsg = "Results from current search constraints"
-                      }
-                      let hintsOfString = data["choices"];
-                      response(hintsOfString);
-                  });
+                        // dynamically update drop down lists
+                        // let searchMsg = "";
+                        if(data["full_search"]) {
+                            searchMsg = "Results from entire database, not current search constraints"
+                        } else {
+                            searchMsg = "Results from current search constraints"
+                        }
+                        let hintsOfString = data["choices"];
+                        response(hintsOfString);
+                    });
                 },
                 focus: function(focusEvent, ui) {
                     // if we want to have hinted value displayed when hovering over
