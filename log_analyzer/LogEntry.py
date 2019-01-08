@@ -65,7 +65,7 @@ class LogReader(object):
                         yield log_entry
 
     @staticmethod
-    def __parse_line(line: str):
+    def __parse_line(line: str) -> Optional[LogEntry]:
         """Converts a line from an Apache log file into a LogEntry."""
         match = re.match(LOG_PATTERN, line)
         if not match:

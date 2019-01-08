@@ -1,17 +1,18 @@
 import argparse
 import ipaddress
+import sys
 from typing import List, Optional
 
+import Slug
 from LogEntry import LogReader
 from LogParser import LogParser
 from SessionInfo import SessionInfoGenerator
-from SlugInfo import SlugMap
 
 DEFAULT_FIELDS_PREFIX = 'https://tools.pds-rings.seti.org'
 
 
 def main(arguments: Optional[List[str]] = None) -> None:
-    def parse_ignored_ips(x):
+    def parse_ignored_ips(x:str) -> List[ipaddress.IPv4Network]:
         return [ipaddress.ip_network(address, strict=False) for address in x.split(',')]
 
     parser = argparse.ArgumentParser(description='Process log files.')
@@ -23,6 +24,7 @@ def main(arguments: Optional[List[str]] = None) -> None:
                        help='Print a report on one or more completed log files')
     group.add_argument('--summary', '-s', action='store_true',
                        help='Print a batch report sorted by ip')
+    group.add_argument('--slug_summary', action='store_true', dest='show_slugs')
     group.add_argument('--xxfake', action='store_true', help=argparse.SUPPRESS, dest='fake')  # For testing only
 
     parser.add_argument('--api-host-url', default=DEFAULT_FIELDS_PREFIX, metavar='URL', dest='api_host_url',
@@ -34,6 +36,9 @@ def main(arguments: Optional[List[str]] = None) -> None:
                         help='list of ips to ignore.  May be specified multiple times')
     parser.add_argument('--session-timeout', default=60, type=int, metavar="minutes", dest='session_timeout')
 
+    parser.add_argument('--out', '-o', type=argparse.FileType('w'), default=sys.stdout)
+
+
     # TODO(fy): Temporary hack for when I don't have internet access
     parser.add_argument('--xxlocal_slugs', action="store_const", const="file:///users/fy/SETI/pds-opus",
                         dest='api_host_url', help=argparse.SUPPRESS)
@@ -41,11 +46,11 @@ def main(arguments: Optional[List[str]] = None) -> None:
     parser.add_argument('log_files', nargs=argparse.REMAINDER, help='log files')
     args = parser.parse_args(arguments)
 
-    slugs = SlugMap(args.api_host_url)
+    slugs = Slug.ToInfoMap(args.api_host_url)
     # args.ignored_ip comes out as a list of lists, and it needs to be flattened.
     ignored_ips = [ip for arg_list in args.ignore_ip for ip in arg_list]
     session_info_generator = SessionInfoGenerator(slugs, ignored_ips)
-    log_parser = LogParser(session_info_generator, args.reverse_dns, args.session_timeout)
+    log_parser = LogParser(session_info_generator, args.reverse_dns, args.session_timeout, args.out)
 
     if args.realtime:
         if len(args.log_files) != 1:
@@ -60,6 +65,8 @@ def main(arguments: Optional[List[str]] = None) -> None:
             log_parser.run_batch(log_entries_list)
         elif args.summary:
             log_parser.run_summary(log_entries_list)
+        elif args.show_slugs:
+            log_parser.show_slugs(log_entries_list)
         elif args.fake:
             log_parser.run_realtime(iter(log_entries_list))
 
