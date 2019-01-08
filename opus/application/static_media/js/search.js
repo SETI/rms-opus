@@ -16,7 +16,7 @@ var o_search = {
         }
 
         opus.lastRequestNo++;
-        let url = '/opus/__api/normalizeinput.json?' + newHash + '&reqno=' + opus.lastRequestNo;
+        let url = "/opus/__api/normalizeinput.json?" + newHash + "&reqno=" + opus.lastRequestNo;
         return $.getJSON(url);
     },
     validateRangeInput: function(data, removeSpinner=false) {
@@ -24,23 +24,23 @@ var o_search = {
         $.each(data, function(eachSlug, value) {
             let currentInput = $(`input[name="${eachSlug}"]`);
             if(data[eachSlug] === null) {
-                if(currentInput.hasClass('RANGE')) {
-                    $('#sidebar').addClass('search_overlay');
-                    currentInput.addClass('search_input_invalid_no_focus');
+                if(currentInput.hasClass("RANGE")) {
+                    $("#sidebar").addClass("search_overlay");
+                    currentInput.addClass("search_input_invalid_no_focus");
                     currentInput.val(opus.selections[eachSlug]);
                 }
                 opus.allInputsValid = false;
             } else {
-                if(currentInput.hasClass('RANGE')) {
+                if(currentInput.hasClass("RANGE")) {
                     currentInput.val(value);
-                    if(currentInput.hasClass('search_input_invalid_no_focus')) {
-                        currentInput.removeClass('search_input_invalid_no_focus');
+                    if(currentInput.hasClass("search_input_invalid_no_focus")) {
+                        currentInput.removeClass("search_input_invalid_no_focus");
                     }
                 }
             }
         });
         if(!opus.allInputsValid) {
-            $('#result_count').text("?");
+            $("#result_count").text("?");
             // set hinting info to ? when any range input has invalid value
             // for range
             $(".range_hints").each(function() {
@@ -66,7 +66,7 @@ var o_search = {
     performSearch: function(event, slug, url) {
         $.getJSON(url, function(data) {
             // Make sure it's the final call before parsing data
-            if(data['reqno'] < o_search.slugReqno[slug]) {
+            if(data["reqno"] < o_search.slugReqno[slug]) {
                 return;
             }
 
@@ -77,12 +77,12 @@ var o_search = {
                 return;
             } else {
                 o_hash.updateHash();
-                $('input.RANGE').removeClass('search_input_valid');
-                $('input.RANGE').removeClass('search_input_invalid');
-                $('input.RANGE').addClass('search_input_original');
-                $('#sidebar').removeClass('search_overlay');
+                $("input.RANGE").removeClass("search_input_valid");
+                $("input.RANGE").removeClass("search_input_invalid");
+                $("input.RANGE").addClass("search_input_original");
+                $("#sidebar").removeClass("search_overlay");
                 // .text is here in case the url is not changed but the input value is set to invalid and valid again
-                $('#result_count').text(opus.result_count);
+                $("#result_count").text(opus.result_count);
             }
         });
     },
@@ -132,13 +132,13 @@ var o_search = {
         */
 
         // Avoid the orange blinking on border color
-        $('#search').on('focus', 'input.RANGE', function(event) {
-            $(this).addClass('search_input_original');
-            $(this).removeClass('search_input_invalid_no_focus');
+        $("#search").on("focus", "input.RANGE", function(event) {
+            $(this).addClass("search_input_original");
+            $(this).removeClass("search_input_invalid_no_focus");
         });
 
         // Dynamically get input values right after user input a character
-        $('#search').on('input', 'input.RANGE', function(event) {
+        $("#search").on("input", "input.RANGE", function(event) {
             let slug = $(this).attr("name");
             let currentValue = $(this).val().trim();
             let values = []
@@ -157,10 +157,10 @@ var o_search = {
 
             // keep calling normalize api to check input values whenever input got changed
             // only check if return value is null or not, DON'T compare min & max
-            let url = '/opus/__api/normalizeinput.json?' + newHash + '&reqno=' + opus.lastNormalizeRequestNo;
+            let url = "/opus/__api/normalizeinput.json?" + newHash + "&reqno=" + opus.lastNormalizeRequestNo;
             $.getJSON(url, function(data) {
                 // if a newer input is there, re-call api with new input
-                if(data['reqno'] < o_search.slugReqno[slug]) {
+                if(data["reqno"] < o_search.slugReqno[slug]) {
                     return;
                 }
 
@@ -171,24 +171,24 @@ var o_search = {
                 // if it's empty string, don't modify anything
                 // if it's null, add search_input_invalid class
                 // if it's valid, add search_input_valid class
-                if(returnData === '') {
-                    $(event.target).removeClass('search_input_valid search_input_invalid');
-                    $(event.target).addClass('search_input_original');
+                if(returnData === "") {
+                    $(event.target).removeClass("search_input_valid search_input_invalid");
+                    $(event.target).addClass("search_input_original");
                 } else if(returnData !== null) {
-                    $(event.target).removeClass('search_input_original search_input_invalid');
-                    $(event.target).addClass('search_input_valid');
-                    if($(event.target).hasClass('search_input_invalid_no_focus')) {
-                        $(event.target).removeClass('search_input_invalid_no_focus');
+                    $(event.target).removeClass("search_input_original search_input_invalid");
+                    $(event.target).addClass("search_input_valid");
+                    if($(event.target).hasClass("search_input_invalid_no_focus")) {
+                        $(event.target).removeClass("search_input_invalid_no_focus");
                     }
                 } else {
-                    $(event.target).removeClass('search_input_original search_input_valid');
-                    $(event.target).addClass('search_input_invalid');
+                    $(event.target).removeClass("search_input_original search_input_valid");
+                    $(event.target).addClass("search_input_invalid");
                 }
             }); // end getJSON
         });
 
         // perform search on range input when user focus out or hit enter
-        $('#search').on('change', 'input.RANGE', function(event) {
+        $("#search").on("change", "input.RANGE", function(event) {
             let slug = $(this).attr("name");
             let newHash = o_hash.updateHash(false);
             let regexForShortHash = /(.*)&view/;
@@ -199,7 +199,7 @@ var o_search = {
 
             opus.lastNormalizeRequestNo++;
             o_search.slugReqno[slug] = opus.lastNormalizeRequestNo;
-            let url = '/opus/__api/normalizeinput.json?' + newHash + '&reqno=' + opus.lastNormalizeRequestNo;
+            let url = "/opus/__api/normalizeinput.json?" + newHash + "&reqno=" + opus.lastNormalizeRequestNo;
             o_search.performSearch(event, slug, url);
         });
 
@@ -477,9 +477,9 @@ var o_search = {
                   }
                 },
                 error:function (xhr, ajaxOptions, thrownError){
-                    $('#widget__' + slug + ' .spinner').removeClass('spinning');
+                    $("#widget__" + slug + " .spinner").removeClass("spinning");
                     // range input hints are "?" when wrong values of url is pasted
-                    $('#hint__' + slug).html('<span>min: ?</span><span>max: ?</span><span> nulls: ?</span>');
+                    $("#hint__" + slug).html("<span>min: ?</span><span>max: ?</span><span> nulls: ?</span>");
                 }
             }); // end mults ajax
     },
@@ -524,10 +524,10 @@ var o_search = {
               }
             },
             error:function (xhr, ajaxOptions, thrownError){
-                $('#widget__' + slug + ' .spinner').removeClass('spinning');
+                $("#widget__" + slug + " .spinner").removeClass("spinning");
                 // checkbox hints are "?" when wrong values of url is pasted
-                $('.hints').each(function() {
-                    $(this).html('<span>?</span>');
+                $(".hints").each(function() {
+                    $(this).html("<span>?</span>");
                 });
             }
         }); // end mults ajax

@@ -278,7 +278,7 @@ var opus = {
         }
 
         // start the result count spinner and do the yellow flash
-        $('#result_count').html(opus.spinner).parent().effect("highlight", {}, 500);
+        $("#result_count").html(opus.spinner).parent().effect("highlight", {}, 500);
 
         // chain ajax calls, validate range inputs before result count api call
         o_search.normalizedApiCall().then(opus.getResultCount).then(opus.updatePageAfterResultCountAPI);
@@ -293,35 +293,35 @@ var opus = {
 
         if(!opus.allInputsValid) {
           // remove spinning effect on browse count
-          $('#result_count').text('?');
+          $("#result_count").text("?");
           return;
         }
 
-        return $.getJSON('/opus/__api/meta/result_count.json?' + resultCountHash + '&reqno=' + opus.lastRequestNo);
+        return $.getJSON("/opus/__api/meta/result_count.json?" + resultCountHash + "&reqno=" + opus.lastRequestNo);
     },
     updatePageAfterResultCountAPI: function(resultCountData) {
         if(!opus.allInputsValid) {
             return;
         }
-        if (resultCountData['reqno'] < opus.lastRequestNo) {
+        if (resultCountData["reqno"] < opus.lastRequestNo) {
             return;
         }
-        $('#browse_tab').fadeIn();
-        opus.updateResultCount(resultCountData['data'][0]['result_count']);
+        $("#browse_tab").fadeIn();
+        opus.updateResultCount(resultCountData["data"][0]["result_count"]);
 
-        opus.mainTabDisplay('results');  // make sure the main site tab label is displayed
+        opus.mainTabDisplay("results");  // make sure the main site tab label is displayed
 
         o_menu.getMenu();
 
         // if all we wanted was a new gallery page we can stop here
         opus.pages = Math.ceil(opus.result_count/opus.prefs.limit);
         if (opus.prefs.view == "browse") {
-            $('#pages','#browse').html(opus.pages);
+            $("#pages","#browse").html(opus.pages);
             return;
         }
 
         // result count is back, now send for widget hinting
-        var widget_cols = ['widgets','widgets2'];
+        var widget_cols = ["widgets","widgets2"];
         for (key in widget_cols) {
             col = widget_cols[key];
             for (k in opus.prefs[col]) {
@@ -332,9 +332,9 @@ var opus = {
     },
     updateResultCount: function(result_count) {
       opus.result_count = result_count;
-      $('#result_count').fadeOut('fast', function() {
-        $(this).html(o_utils.addCommas(opus.result_count)).fadeIn('fast') ;
-        $(this).removeClass('browse_results_invalid');
+      $("#result_count").fadeOut("fast", function() {
+        $(this).html(o_utils.addCommas(opus.result_count)).fadeIn("fast") ;
+        $(this).removeClass("browse_results_invalid");
       });
     },
 

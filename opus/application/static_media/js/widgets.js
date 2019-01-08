@@ -156,12 +156,12 @@ var o_widgets = {
             o_search.validateRangeInput(normalizedData);
 
             if(opus.allInputsValid) {
-                $('input.RANGE').removeClass('search_input_valid');
-                $('input.RANGE').removeClass('search_input_invalid');
-                $('input.RANGE').addClass('search_input_original');
-                $('#sidebar').removeClass('search_overlay');
+                $("input.RANGE").removeClass("search_input_valid");
+                $("input.RANGE").removeClass("search_input_invalid");
+                $("input.RANGE").addClass("search_input_original");
+                $("#sidebar").removeClass("search_overlay");
                 // .text is here in case the url is not changed but the input value is set to invalid and valid again
-                $('#result_count').text(opus.result_count);
+                $("#result_count").text(opus.result_count);
             }
             o_hash.updateHash(opus.allInputsValid);
             o_widgets.updateWidgetCookies();
