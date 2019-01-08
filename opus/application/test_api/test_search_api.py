@@ -71,6 +71,10 @@ class ApiSearchTests(TestCase):
             del jdata['versions']
         if 'versions' in expected:
             del expected['versions']
+        if 'reqno' in jdata:
+            del jdata['reqno']
+        if 'reqno' in expected:
+            del expected['reqno']
         print('Got:')
         print(str(jdata))
         print('Expected:')
@@ -88,6 +92,10 @@ class ApiSearchTests(TestCase):
             del jdata['versions']
         if 'versions' in expected:
             del expected['versions']
+        if 'reqno' in jdata:
+            del jdata['reqno']
+        if 'reqno' in expected:
+            del expected['reqno']
         new_choices = []
         for choice in jdata['choices']:
             if choice in expected['choices']:
@@ -526,7 +534,7 @@ class ApiSearchTests(TestCase):
                     'truncated_results': False}
         self._run_json_equal(url, expected)
 
-    def test__api_stringsearchchoices_datasetid_COISS_2002_begins_ends(self):
+    def test__api_stringsearchchoices_datasetid_COISS_2002_ends_good(self):
         "/api/stringsearchchoices: datasetid CO-S volumeid COISS_2002 ends good"
         url = '/opus/__api/stringsearchchoices/datasetid.json?volumeid=COISS_2002&datasetid=V1.0&qtype-datasetid=ends'
         expected = {'choices': ['CO-S-ISSNA/ISSWA-2-EDR-<b>V1.0</b>'],

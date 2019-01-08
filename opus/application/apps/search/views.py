@@ -137,6 +137,8 @@ def api_string_search_choices(request, slug):
         exit_api_call(api_code, ret)
         raise ret
 
+    reqno = request.GET.get('reqno', None)
+
     if param_qualified_name not in selections:
         selections[param_qualified_name] = ['']
 
@@ -320,7 +322,8 @@ def api_string_search_choices(request, slug):
 
     result = {'choices': final_results,
               'full_search': do_simple_search,
-              'truncated_results': truncated_results}
+              'truncated_results': truncated_results,
+              'reqno': reqno}
     cache.set(cache_key, result)
     ret = json_response(result)
     exit_api_call(api_code, ret)
