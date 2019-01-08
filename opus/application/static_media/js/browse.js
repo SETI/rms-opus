@@ -93,77 +93,39 @@ var o_browse = {
             // make sure selected modal thumb is unhighlighted, as clicking on this closes the modal
             // but is not caught in time before hidden.bs to get correct opusId
 
+            e.preventDefault();
+
             let action = "add";     // just a default var decl
             let opusId = $(this).data("id");
             if (opusId == undefined) {
                 opusId = $(this).parent().data("id");
             }
+            let startElem = $(e.delegateTarget).find(".selected");
 
-            switch (o_browse.keyPressAction) {
-                case "showModal":
-                    o_browse.toggleGalleryViewHighlight(false);
-                    o_browse.updateGalleryView(opusId);
-                    $("#galleryView").modal("show");
-
-                    // opening the gallery view stops the range selection
-                    o_browse.selectedImageID = "";
-                    o_browse.keyPressAction = "";
-                    break;
-
-                case "editRange":
-                    // if there is one selected, then toggle (add/remove) from where clicked to here
-                    // if there is an image already selected in middle of range, don't mess w/it
-                    let namespace = o_browse.getViewInfo().namespace;
-                    if (o_browse.selectedImageID == "") {   // start range
-                        // start the range
-                        o_browse.selectedImageID = $(this).data("id");
-                        let action = o_browse.toggleBrowseInCollectionStyle(opusId);
-                        o_collections.editCollection(opusId, action);
-                    } else  {
-                        let elementArray = $(namespace + " .thumbnail");
-                        let fromIndex = 0;
-                        let toIndex = 0;
-                        $.each(elementArray, function(index, elem) {
-                            let elemId = $(elem).data("id");
-                            if (elemId == o_browse.selectedImageID) {
-                                fromIndex = index;
-                            }
-                            if (elemId == opusId) {
-                                toIndex = index;
-                            }
-                        });
-                        let highlight = $(elementArray[fromIndex]).hasClass("in");
-                        action = (highlight ? "addrange" : "removerange");
-
-                        // reorder if need be
-                        if (fromIndex > toIndex) {
-                            [fromIndex, toIndex] = [toIndex, fromIndex];
-                        }
-                        let length = toIndex - fromIndex+1;
-                        let opusIdRange = $(elementArray[fromIndex]).data("id") + ","+ $(elementArray[toIndex]).data("id")
-                        console.log(action+" range: "+opusIdRange);
-                        $.each(elementArray.splice(fromIndex, length), function(index, elem) {
-                            // effect no change if it is already selected/deselected same as first item in array
-                            if ($(elem).hasClass("in") != highlight) {
-                                o_browse.toggleGalleryViewHighlight(highlight, $(elem).data("id"));
-                            }
-                        })
-                        o_collections.editCollection(opusIdRange, action);
-                        o_browse.selectedImageID = "";
-                    }
-                    break;
-
-                default:
-                    action = o_browse.toggleBrowseInCollectionStyle(opusId);
-                    o_collections.editCollection(opusId, action);
-                    // clicking on image stops range selection
-                    o_browse.selectedImageID = "";
-                    o_browse.keyPressAction = "";
+            // Detecting ctrl (windows) / meta (mac) key.
+            if (e.ctrlKey || e.metaKey) {
+                o_browse.showModal(opusId);
+                if (startElem.length) {
+                    $(startElem).removeClass("selected");
+                }
             }
-            o_browse.keyPressAction = "";
+            // Detecting shift key
+            else if (e.shiftKey) {
+                if (startElem.length == 0) {
+                    $(this).addClass("selected");
+                    o_collections.toggleInCollection(opusId);
+                    console.log("start range, action="+action);
+                } else {
+                    let fromOpusId = $(startElem).data("id");
+                    o_collections.toggleInCollection(fromOpusId, opusId);
+                    console.log("range, action="+action+", from: "+fromOpusId+" to: "+opusId);
+                }
+            } else {
+                o_collections.toggleInCollection(opusId);
+            }
             //if (e.shiftKey) {
                 // CANCEL THE EVENT, WHICH WILL PREVENT ANY LINKING FROM OCCURING
-                e.preventDefault()
+            e.preventDefault()
             //}
         });
 
@@ -226,7 +188,7 @@ var o_browse = {
                   break;
 
               case "resize":  // expand, same as click on image
-                  $('a[data-id="'+opusId+'"]').trigger("click");
+                  o_browse.showModal(opusId);
                   break;
             }
             return false;
@@ -243,7 +205,8 @@ var o_browse = {
         });
 
         $(".app-body").on("hide.bs.modal", "#galleryView", function(e) {
-            o_browse.toggleGalleryViewHighlight("off");
+            /////o_browse.toggleGalleryViewHighlight("off");
+            // right here we need to remove the CSS bit!!
         });
 
         // add the 'get detail' behavior
@@ -274,7 +237,6 @@ var o_browse = {
             let action = $(this).hasClass("prev") ? "prev" : "next";
             let opusId = $(this).data("id");
             if (opusId) {
-                o_browse.toggleGalleryViewHighlight();  // toggle highlight of current
                 o_browse.updateGalleryView(opusId);
             }
             return false;
@@ -309,65 +271,6 @@ var o_browse = {
             return false;
         });
 
-        $(document).on("keyup",function(e) {
-            o_browse.keyPressAction = "";
-            o_browse.selectedImageID = "";
-            console.log("keyup");
-            // if there is an opusid, probably need to add/remove it
-        });
-
-        // this is the workhorse function that collects keyboard input and does something useful
-        $(document).on("keydown",function(e) {
-            if ($("#browse").hasClass("active")) {
-                console.log("keydown = "+e.keyCode);
-                let clickedId = (e.target.data !== undefined ? e.target.data["id"] : "");
-                switch (e.keyCode) {
-                    case 16: // shiftKey
-                        // shift click - takes range from whatever the last thing you clicked on and if the
-                        //    thing you previously clicked is IN the card, do an 'add range', otherwise
-                        //    do a 'remove range'.  Don't toggle the items inside the range
-                        //    NOTE: range can go forward or backwards
-                        o_browse.keyPressAction = "editRange";
-                        e.preventDefault();
-                        break;
-                    case 17: // ctrlKey
-                        // ctrl click - open modal, do not toggle collection
-                        o_browse.keyPressAction = "showModal";
-                        break;
-                    case 18: // altKey
-                        // no action; just for ref
-                        break;
-                }
-            }
-            if ($("#galleryView").hasClass("show")) {
-              /*  Catch the right/left arrow while in the modal
-                  Up: 38
-                  Down: 40
-                  Right: 39
-                  Left: 37 */
-                let opusId;
-                // the || is for cross-browser support; firefox does not support keyCode
-                switch (e.which || e.keyCode) {
-                    case 27:  // esc - close modal
-                        $("#galleryView").modal('hide')
-                        return;
-                        break;
-                    case 39:  // next
-                        opusId = $("#galleryView").find(".next").data("id");
-                        break;
-                    case 37:  // prev
-                        opusId = $("#galleryView").find(".prev").data("id");
-                        break;
-                }
-                if (opusId) {
-                    o_browse.toggleGalleryViewHighlight();  // toggle highlight of current
-                    o_browse.updateGalleryView(opusId);
-                }
-            } else if ($("#columnChooser").hasClass("show") && e.keyCode === 27) {
-                $("#columnChooser").modal('hide')
-            }
-            // don't return false here or it will snatch all the user input!
-        });
     }, // end browse behaviors
 
     checkScroll: function() {
@@ -387,26 +290,14 @@ var o_browse = {
         return false;
     },
 
+    showModal: function(opusId) {
+        o_browse.updateGalleryView(opusId);
+        $("#galleryView").modal("show");
+    },
+
     openDetailTab: function() {
         $("#galleryView").modal('hide');
         opus.changeTab('detail');
-    },
-
-    getGalleryElement: function(opusId) {
-        let elem = $("#" + opus.prefs.view+" .thumbnail-container a[data-id=" + opusId + "]");
-        return elem;
-    },
-
-    toggleBrowseInCollectionStyle: function(opusId) {
-        let elem = o_browse.getGalleryElement(opusId);
-
-        // if this opusId is modal, make sure it stays highlighted
-        //o_browse.toggleGalleryViewHighlight("on", opusId);
-        o_browse.toggleGalleryViewHighlight(undefined, opusId);
-
-        elem.toggleClass("in"); // this class keeps parent visible when mouseout
-
-        return (elem.hasClass("in") ? "add" : "remove");
     },
 
     // columns can be reordered wrt each other in 'column chooser' by dragging them
@@ -818,38 +709,10 @@ var o_browse = {
         return html;
     },
 
-    toggleGalleryViewHighlight: function(highlight, opusId) {
-        if (opusId == undefined) {
-            opusId = $("#galleryView [data-opusid]").data("opusid");
-        }
-        if (opusId !== undefined) {
-            switch (highlight) {
-                case true:
-                    $("tr[data-id='"+opusId+"']").addClass("row_selected");
-                    $("#select_"+opusId).prop("checked", true);
-                    $("a.thumbnail[data-id='"+opusId+"']").parent().addClass("thumb_selected");
-                    break;
-                case false:
-                    $("tr[data-id='"+opusId+"']").removeClass("row_selected");
-                    $("#select_"+opusId).prop("checked", false);
-                    $("a.thumbnail[data-id='"+opusId+"']").parent().removeClass("thumb_selected");
-                    break;
-                case undefined:
-                default:
-                    // don't unhighlight if it is in collection unless specifically asked
-                    // if modal is open, don't unhighlight it
-                    $("tr[data-id='"+opusId+"']").toggleClass("row_selected");
-                    $("#select_"+opusId).prop("checked", !$("#select_"+opusId).is(":checked"));
-                    $("a.thumbnail[data-id='"+opusId+"']").parent().toggleClass("thumb_selected");
-                    //}
-                    break;
-            }
-        }
-    },
-
     updateGalleryView: function(opusId) {
         // while modal is up, highlight the image/table row shown
-        o_browse.toggleGalleryViewHighlight(true, opusId);
+        // right here need to add a CSS bit!!
+        //////o_browse.toggleGalleryViewHighlight(opusId);
 
         var imageURL = $("#browse").find("a[data-id='"+opusId+"']").data("image");
         if (imageURL === undefined) {

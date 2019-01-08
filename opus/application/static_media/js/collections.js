@@ -350,6 +350,58 @@ var o_collections = {
         opus.collection_queue = [];
     },
 
+    getGalleryElement: function(opusId) {
+        let elem = $("#" + opus.prefs.view+" .thumbnail-container a[data-id=" + opusId + "]");
+        return elem;
+    },
+
+    toggleBrowseInCollectionStyle: function(opusId) {
+        $("tr[data-id='"+opusId+"']").toggleClass("row_selected");
+        $("#select_"+opusId).prop("checked", !$("#select_"+opusId).prop("checked"));
+        $("a.thumbnail[data-id='"+opusId+"']").parent().toggleClass("thumb_selected");
+    },
+
+    toggleInCollection: function(fromOpusId, toOpusId) {
+        let fromElem = o_collections.getGalleryElement(fromOpusId);
+        let action = (fromElem.hasClass("in") ? "add" : "remove");
+
+        // handle it as range
+        if (toOpusId != undefined) {
+            action = (fromElem.hasClass("in") ? "addrange" : "removerange");
+            let collectionAction = (action == "addrange");
+            let toElem = o_collections.getGalleryElement(toOpusId);
+            let fromIndex = $("a.thumbnail").index(fromElem);
+            let toIndex = $("a.thumbnail").index(toElem);
+
+            // reorder if need be
+            if (fromIndex > toIndex) {
+                [fromIndex, toIndex] = [toIndex, fromIndex];
+            }
+            let length = toIndex - fromIndex+1;
+            let namespace = o_browse.getViewInfo().namespace;
+            let elementArray = $(namespace + " .thumbnail");
+            let opusIdRange = $(elementArray[fromIndex]).data("id") + ","+ $(elementArray[toIndex]).data("id")
+            console.log("end range "+action+" : "+opusIdRange);
+            $.each(elementArray.splice(fromIndex, length), function(index, elem) {
+                // effect no change if it is already selected/deselected same as first item in array
+                if ($(elem).hasClass("in") != collectionAction) {
+                    o_collections.toggleBrowseInCollectionStyle($(elem).data("id"));
+                    console.log("changed: "+$(elem).data("id"));
+                }
+            });
+            o_collections.editCollection(opusIdRange, action);
+            $(fromElem).removeClass("selected");
+            $(toElem).removeClass("selected");
+        } else {
+            fromElem.toggleClass("in"); // this class keeps parent visible when mouseout
+
+            o_collections.toggleBrowseInCollectionStyle(fromOpusId);
+            o_collections.editCollection(fromOpusId, action);
+        }
+
+        return action;
+    },
+
     editCollection: function(opusId, action) {
         opus.collection_change = true;
         opus.lastCartRequestNo++;
