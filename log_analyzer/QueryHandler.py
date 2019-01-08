@@ -2,7 +2,7 @@ import operator
 from collections import defaultdict
 from enum import Enum, auto
 from functools import reduce
-from typing import Dict, Tuple, List, Optional, cast, ClassVar, Any
+from typing import Dict, Tuple, List, Optional, ClassVar
 
 from django.utils.html import format_html
 from django.utils.safestring import mark_safe
@@ -12,6 +12,7 @@ import Slug
 
 SearchSlugInfo = Dict[Slug.Family, List[Tuple[Slug.Info, str]]]
 ColumnSlugInfo = Dict[Slug.Family, Slug.Info]
+
 
 class State(Enum):
     RESET = auto()
@@ -31,17 +32,11 @@ class QueryHandler:
 
     _is_reset: bool
 
-    _previous_search_slug_info: SearchSlugInfo   # map from family to List[(Slug.Info, Value)]
-    _previous_column_slug_info: Optional[ColumnSlugInfo]   # map from raw slug to Slug.Info
-    _previous_page: str                          # previous page
-    _previous_sort_order: str                    # sort order
+    _previous_search_slug_info: SearchSlugInfo  # map from family to List[(Slug.Info, Value)]
+    _previous_column_slug_info: Optional[ColumnSlugInfo]  # map from raw slug to Slug.Info
+    _previous_page: str  # previous page
+    _previous_sort_order: str  # sort order
     _previous_state: State
-
-    MARK = mark_safe("<mark>")
-    END_MARK = mark_safe("</mark>")
-    DELETE = mark_safe("<del>")
-    END_DELETE = mark_safe("</del>")
-    EMPTY = mark_safe("&empty;")
 
     def __init__(self, slug_map: Slug.ToInfoMap, default_column_slug_info: ColumnSlugInfo, use_html: bool):
         self._slug_map = slug_map
@@ -74,7 +69,7 @@ class QueryHandler:
 
         uses_columns = query_type == 'data'
         uses_pages = query_type != 'result_count'
-        uses_sort = uses_pages   # For now the same, but this may change in the future
+        uses_sort = uses_pages  # For now the same, but this may change in the future
 
         current_state = State.SEARCHING if query_type == 'result_count' else State.FETCHING
 
@@ -121,7 +116,7 @@ class QueryHandler:
                 viewed = 'Table' if query.get('browse') == 'data' else 'Gallery'
                 result.append(f'View {viewed}: Page {page or "???"}')
             else:
-                 self.__get_page_info(self._previous_page, page, result)
+                self.__get_page_info(self._previous_page, page, result)
             self._previous_page = page
 
         self._previous_state = current_state
@@ -131,7 +126,7 @@ class QueryHandler:
         all_search_families = set(old_info.keys()).union(new_info.keys())
 
         def parse_family(pairs: List[Tuple[Slug.Info, str]]) -> Tuple[
-                  Optional[str], Optional[str], Optional[str], Slug.Flags]:
+            Optional[str], Optional[str], Optional[str], Slug.Flags]:
             mapping = {slug_info.family_type: value for slug_info, value in pairs}  # family_type to value
             return (
                 mapping.get(Slug.FamilyType.MIN), mapping.get(Slug.FamilyType.MAX), mapping.get(Slug.FamilyType.QTYPE),
@@ -186,31 +181,31 @@ class QueryHandler:
                 else:
                     old_min, old_max, old_qtype, _ = parse_family(old_info[family])
                     new_min, new_max, new_qtype, _ = parse_family(new_info[family])
-                    if (old_min, old_max, old_qtype) != (new_min, new_max, new_qtype):
-                        if self._use_html:
-                            min1, min2 = ('', '') if old_min == new_min else (self.MARK, self.END_MARK)
-                            max1, max2 = ('', '') if old_max == new_max else (self.MARK, self.END_MARK)
-                            qtype1, qtype2 = ('', '') if old_qtype == new_qtype else (self.MARK, self.END_MARK)
-                            changed_searches.append(
-                            format_html('Change Search: "{}" = ({}{}:{}{}, {}{}:{}{}, {}{}:{}{})',
-                                    family.label,
-                                    min1, family.min, pprint(new_min), min2,
-                                    max1, family.max, pprint(new_max), max2,
-                                    qtype1, 'qtype', pprint(new_qtype), qtype2))
-                        else:
-                            min_name = family.min if old_min == new_min else family.min.upper()
-                            max_name = family.max if old_max == new_max else family.max.upper()
-                            qtype_name = 'qtype' if old_qtype == new_qtype else 'QTYPE'
-                            new_value = (f'({min_name}:{pprint(new_min)},' 
-                                         f' {max_name}:{pprint(new_max)},' 
-                                         f' {qtype_name}:{pprint(new_qtype)})')
-                            changed_searches.append(f'Change Search: "{family.label}" = {new_value}')
+                    if (old_min, old_max, old_qtype) == (new_min, new_max, new_qtype):
+                        continue
+                    if self._use_html:
+                        def doit(tag, old, new):
+                            return format_html('{}:{}' if old == new else '<mark>{}:{}</mark>', tag, pprint(new))
+                        changed_searches.append(
+                            format_html('Change Search: "{} ({}, {}, {})', family.label,
+                                        doit(family.min, old_min, new_min),
+                                        doit(family.max, old_max, new_max),
+                                        doit('qtype', old_qtype, new_qtype)))
+                    else:
+                        min_name = family.min if old_min == new_min else family.min.upper()
+                        max_name = family.max if old_max == new_max else family.max.upper()
+                        qtype_name = 'qtype' if old_qtype == new_qtype else 'QTYPE'
+                        new_value = (f'({min_name}:{pprint(new_min)},'
+                                     f' {max_name}:{pprint(new_max)},'
+                                     f' {qtype_name}:{pprint(new_qtype)})')
+                        changed_searches.append(f'Change Search: "{family.label}" = {new_value}')
 
         result.extend(removed_searches)
         result.extend(added_searches)
         result.extend(changed_searches)
 
-    def __get_column_info(self, old_info: Optional[ColumnSlugInfo], new_info: ColumnSlugInfo, result: List[str]) -> None:
+    def __get_column_info(self, old_info: Optional[ColumnSlugInfo], new_info: ColumnSlugInfo,
+                          result: List[str]) -> None:
         if old_info is None:
             new_column_families = set(new_info.keys())
             if new_column_families == set(self._default_column_slug_info.keys()):
@@ -261,7 +256,6 @@ class QueryHandler:
                 assert slug_info
                 result.append(f'        "{slug_info.label}" ({order})')
 
-
     def __slug_value_change(self, name: str, old_value: str, new_value: str, result: List[str]) -> None:
         old_value_set = set(old_value.split(','))
         new_value_set = set(new_value.split(','))
@@ -285,7 +279,7 @@ class QueryHandler:
                 result.append(f'Change Search: "{name}" = {joined_old_value_set} -> {joined_new_value_set}')
 
     @classmethod
-    def get_column_slug_info(cls, slugs: List[str], slug_map: Slug.ToInfoMap, record:bool = False) -> ColumnSlugInfo:
+    def get_column_slug_info(cls, slugs: List[str], slug_map: Slug.ToInfoMap, record: bool = False) -> ColumnSlugInfo:
         """
         This returns a map from the slugs that appear in the list of strings to the Info for that slug,
         provided that the info exists.
@@ -299,5 +293,3 @@ class QueryHandler:
                 if record:
                     cls._all_column_slugs[slug] = slug_info
         return result
-
-
