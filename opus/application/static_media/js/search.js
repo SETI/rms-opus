@@ -81,64 +81,69 @@ var o_search = {
                 newHash = newHash.match(regexForShortHash)[1];
             }
 
+            let searchMsg = "";
             let url = `/opus/__api/stringsearchchoices/${slug}.json?` + newHash + "&reqno=" + opus.lastRequestNo;
             // console.log("INPUT API CALL URL: " + url);
             // console.log("INPUT CURRENT req: " + opus.lastRequestNo);
             // console.log(o_search.slugReqno);
-            $.getJSON(url, function(data) {
-                // console.log("INPUT RETURN req: " + data["reqno"]);
-                // console.log("INPUT RETURN data: " + JSON.stringify(data));
-                // if a newer input is there, re-call api with new input
-                if(data["reqno"] < o_search.slugReqno[slug]) {
-                    return;
-                }
 
-                // console.log("ON INPUT RETURN DATA: " + JSON.stringify(data));
-                // dynamically update drop down lists
-                let searchMsg = "";
-                if(data["full_search"]) {
-                    searchMsg = "Results from entire database, not current search constraints"
-                } else {
-                    searchMsg = "Results from current search constraints"
+            $(event.target).autocomplete({
+                minLength: 1,
+                source: function(request, response) {
+                  $.getJSON(url, function(data) {
+                      // console.log("INPUT getJSON RETURN req: " + data["reqno"]);
+                      // console.log("INPUT getJSON RETURN data: " + JSON.stringify(data));
+                      // if a newer input is there, re-call api with new input
+                      if(data["reqno"] < o_search.slugReqno[slug]) {
+                          return;
+                      }
+
+                      // console.log("ON INPUT getJSON RETURN DATA: " + JSON.stringify(data));
+                      // dynamically update drop down lists
+                      // let searchMsg = "";
+                      if(data["full_search"]) {
+                          searchMsg = "Results from entire database, not current search constraints"
+                      } else {
+                          searchMsg = "Results from current search constraints"
+                      }
+                      let hintsOfString = data["choices"];
+                      response(hintsOfString);
+                  });
+                },
+                focus: function(focusEvent, ui) {
+                    // if we want to have hinted value displayed when hovering over
+                    // let displayValue = o_search.extractHtmlContent(ui.item.label);
+                    $(event.target).val(currentValue);
+                    return false;
+                },
+                select: function(selectEvent, ui) {
+                    let displayValue = o_search.extractHtmlContent(ui.item.label);
+                    $(event.target).val(displayValue);
+                    // search would be performed right away if an item in the list is selected
+                    opus.selections[slug] = [displayValue];
+                    o_hash.updateHash();
+                    return false;
+                },
+                open: function()
+                {
+                    $("ul.ui-autocomplete").prepend(`<li><div class="list-header">${searchMsg}</div></li>`);
                 }
-                let hintsOfString = data["choices"];
-                $(event.target).autocomplete({
-                    minLength: 1,
-                    source: hintsOfString,
-                    focus: function(focusEvent, ui) {
-                        // if we want to have hinted value displayed when hovering over
-                        // let displayValue = o_search.extractHtmlContent(ui.item.label);
-                        $(event.target).val(currentValue);
-                        return false;
-                    },
-                    select: function(selectEvent, ui) {
-                        let displayValue = o_search.extractHtmlContent(ui.item.label);
-                        $(event.target).val(displayValue);
-                        // search would be performed right away if an item in the list is selected
-                        opus.selections[slug] = [displayValue];
-                        o_hash.updateHash();
-                        return false;
-                    },
-                    open: function()
-                    {
-                        $("ul.ui-autocomplete").prepend(`<li><div class="list-header">${searchMsg}</div></li>`);
-                    }
-                })
-                .keyup(function(keyupEvent) {
-                    // Make sure autocomplete menu is hide whenever enter is pressed even if value is not changed
-                    if(keyupEvent.which === 13) {
-                        $(event.target).autocomplete("close");
-                    }
-                })
-                .data( "ui-autocomplete" )._renderItem = function( ul, item ) {
-                    return $( "<li>" )
-                      .data( "ui-autocomplete-item", item )
-                      .attr( "data-value", item.value )
-                      // need to wrap with <a> tag because of jquery-ui 1.10
-                      .append("<a>" + item.label + "</a>")
-                      .appendTo(ul);
-                };
-            }); // end getJSON
+            })
+            .keyup(function(keyupEvent) {
+                // Make sure autocomplete menu is hide whenever enter is pressed even if value is not changed
+                if(keyupEvent.which === 13) {
+                    $(event.target).autocomplete("close");
+                }
+            })
+            .data( "ui-autocomplete" )._renderItem = function( ul, item ) {
+                return $( "<li>" )
+                  .data( "ui-autocomplete-item", item )
+                  .attr( "data-value", item.value )
+                  // need to wrap with <a> tag because of jquery-ui 1.10
+                  .append("<a>" + item.label + "</a>")
+                  .appendTo(ul);
+            };
+
         });
 
         // filling in a range or string search field = update the hash
