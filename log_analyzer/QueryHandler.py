@@ -135,7 +135,7 @@ class QueryHandler:
 
         def pprint(value: Optional[str]) -> str:
             if value is None:
-                return '~'
+                return mark_safe('&mdash;') if self._use_html else '~'
             return '"' + value + '"'
 
         if not new_info:
