@@ -155,7 +155,7 @@ class LogParser:
             while session_log_entries:
                 # If the first entry has no information, it doesn't start a session
                 entry = session_log_entries.popleft()
-                session_info = self._session_info_generator.create()
+                session_info = self._session_info_generator.create(uses_html=True)
                 entry_info = session_info.parse_log_entry(entry)
                 if not entry_info:
                     continue

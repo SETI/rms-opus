@@ -4,6 +4,9 @@ from enum import Enum, auto
 from functools import reduce
 from typing import Dict, Tuple, List, Optional, cast, ClassVar, Any
 
+from django.utils.html import format_html
+from django.utils.safestring import mark_safe
+
 import SessionInfo
 import Slug
 
@@ -21,6 +24,7 @@ class QueryHandler:
 
     _slug_map: Slug.ToInfoMap
     _default_column_slug_info: ColumnSlugInfo
+    _use_html: bool
 
     _all_search_slugs: ClassVar[Dict[str, Slug.Info]] = {}
     _all_column_slugs: ClassVar[Dict[str, Slug.Info]] = {}
@@ -33,9 +37,16 @@ class QueryHandler:
     _previous_sort_order: str                    # sort order
     _previous_state: State
 
-    def __init__(self, slug_map: Slug.ToInfoMap, default_column_slug_info: ColumnSlugInfo):
+    MARK = mark_safe("<mark>")
+    END_MARK = mark_safe("</mark>")
+    DELETE = mark_safe("<del>")
+    END_DELETE = mark_safe("</del>")
+    EMPTY = mark_safe("&empty;")
+
+    def __init__(self, slug_map: Slug.ToInfoMap, default_column_slug_info: ColumnSlugInfo, use_html: bool):
         self._slug_map = slug_map
         self._default_column_slug_info = default_column_slug_info
+        self._use_html = use_html
         self.reset()
 
     @property
@@ -152,11 +163,19 @@ class QueryHandler:
                     added_searches.append(f'Add Search:    "{family.label}" = "{value}"{postscript}')
                 else:
                     new_min, new_max, new_qtype, flags = parse_family(new_info[family])
-                    new_value = (f'({family.min.upper()}:{pprint(new_min)},'
-                                 f' {family.max.upper()}:{pprint(new_max)}, '
-                                 f'QTYPE:{pprint(new_qtype)})')
                     postscript = f' **{flags.pretty_print()}**' if flags else ''
-                    added_searches.append(f'Add Search:    "{family.label}" = {new_value}{postscript}')
+                    if self._use_html:
+                        new_value = format_html("(<mark>{}:{}</mark>, <mark>{}:{}</mark>, <mark>{}:{}</mark>)",
+                                                family.min, pprint(new_min), family.max, pprint(new_max),
+                                                'qtype', pprint(new_qtype))
+                        added_searches.append(
+                            format_html('Add Search: "{}" = {}{}', family.label, new_value, postscript))
+                    else:
+                        new_value = (f'({family.min.upper()}:{pprint(new_min)},'
+                                     f' {family.max.upper()}:{pprint(new_max)}, '
+                                     f'QTYPE:{pprint(new_qtype)})')
+                        added_searches.append(f'Add Search:    "{family.label}" = {new_value}{postscript}')
+
             else:
                 if family.is_singleton():
                     assert len(old_info[family]) == 1
@@ -168,13 +187,24 @@ class QueryHandler:
                     old_min, old_max, old_qtype, _ = parse_family(old_info[family])
                     new_min, new_max, new_qtype, _ = parse_family(new_info[family])
                     if (old_min, old_max, old_qtype) != (new_min, new_max, new_qtype):
-                        min_name = family.min if old_min == new_min else family.min.upper()
-                        max_name = family.max if old_max == new_max else family.max.upper()
-                        qtype_name = 'qtype' if old_qtype == new_qtype else 'QTYPE'
-                        new_value = (f'({min_name}:{pprint(new_min)},' 
-                                     f' {max_name}:{pprint(new_max)},' 
-                                     f' {qtype_name}:{pprint(new_qtype)})')
-                        changed_searches.append(f'Change Search: "{family.label}" = {new_value}')
+                        if self._use_html:
+                            min1, min2 = ('', '') if old_min == new_min else (self.MARK, self.END_MARK)
+                            max1, max2 = ('', '') if old_max == new_max else (self.MARK, self.END_MARK)
+                            qtype1, qtype2 = ('', '') if old_qtype == new_qtype else (self.MARK, self.END_MARK)
+                            changed_searches.append(
+                            format_html('Change Search: "{}" = ({}{}:{}{}, {}{}:{}{}, {}{}:{}{})',
+                                    family.label,
+                                    min1, family.min, pprint(new_min), min2,
+                                    max1, family.max, pprint(new_max), max2,
+                                    qtype1, 'qtype', pprint(new_qtype), qtype2))
+                        else:
+                            min_name = family.min if old_min == new_min else family.min.upper()
+                            max_name = family.max if old_max == new_max else family.max.upper()
+                            qtype_name = 'qtype' if old_qtype == new_qtype else 'QTYPE'
+                            new_value = (f'({min_name}:{pprint(new_min)},' 
+                                         f' {max_name}:{pprint(new_max)},' 
+                                         f' {qtype_name}:{pprint(new_qtype)})')
+                            changed_searches.append(f'Change Search: "{family.label}" = {new_value}')
 
         result.extend(removed_searches)
         result.extend(added_searches)
@@ -203,7 +233,10 @@ class QueryHandler:
 
     def __get_page_info(self, old_page: Optional[str], new_page: Optional[str], result: List[str]) -> None:
         if old_page != new_page and old_page and new_page:
-            result.append(f'Change Page: {old_page} -> {new_page}')
+            if self._use_html:
+                result.append(format_html('Change Page: {} &rarr; {}', old_page, new_page))
+            else:
+                result.append(f'Change Page: {old_page} -> {new_page}')
 
     def __get_sort_order_info(self, old_sort_order: str, new_sort_order: str, result: List[str]) -> None:
         if old_sort_order != new_sort_order:
@@ -236,7 +269,11 @@ class QueryHandler:
         else:
             joined_old_value_set = SessionInfo.quote_and_join_list(sorted(old_value_set))
             joined_new_value_set = SessionInfo.quote_and_join_list(sorted(new_value_set))
-            result.append(f'Change Search: "{name}" = {joined_old_value_set} -> {joined_new_value_set}')
+            if self._use_html:
+                result.append(format_html('Change Search: "{}" = {} &rarr; {}',
+                                          name, joined_old_value_set, joined_new_value_set))
+            else:
+                result.append(f'Change Search: "{name}" = {joined_old_value_set} -> {joined_new_value_set}')
 
     @classmethod
     def get_column_slug_info(cls, slugs: List[str], slug_map: Slug.ToInfoMap, record:bool = False) -> ColumnSlugInfo:

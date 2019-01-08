@@ -29,9 +29,9 @@ class SessionInfoGenerator:
         self._default_column_slug_info = QueryHandler.get_column_slug_info(self.DEFAULT_COLUMN_INFO, slug_info)
         self._ignored_ips = ignored_ips
 
-    def create(self) -> 'SessionInfo':
+    def create(self, uses_html: bool = False) -> 'SessionInfo':
         """Create a new SessionInfo"""
-        return _SessionInfoImpl(self._slug_map, self._default_column_slug_info, self._ignored_ips)
+        return _SessionInfoImpl(self._slug_map, self._default_column_slug_info, self._ignored_ips, uses_html)
 
 
 class SessionInfo(metaclass=abc.ABCMeta):
@@ -85,12 +85,14 @@ class _SessionInfoImpl(SessionInfo):
     _ignored_ips: List[ipaddress.IPv4Network]
     _previous_product_info_type: Optional[List[str]]
     _query_handler: QueryHandler
+    _uses_html: bool
 
     def __init__(self, slug_map: Slug.ToInfoMap, default_column_slug_info: ColumnSlugInfo,
-                 ignored_ips: List[ipaddress.IPv4Network]):
+                 ignored_ips: List[ipaddress.IPv4Network], uses_html: bool):
         """This initialization should only be called by SessionInfoGenerator above."""
         self._ignored_ips = ignored_ips
-        self._query_handler = QueryHandler(slug_map, default_column_slug_info)
+        self._uses_html = uses_html
+        self._query_handler = QueryHandler(slug_map, default_column_slug_info, uses_html)
 
         # The previous value of types when downloading a collection
         self._previous_product_info_type = None
