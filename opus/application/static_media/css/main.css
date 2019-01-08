@@ -688,3 +688,44 @@ div.gallery {
 .restart_button button {
     margin: 10px 0;
 }
+
+input[type="text"].search_input_original {
+    border: 1px solid #D5D5D5;
+}
+
+input[type="text"].search_input_valid {
+    border: 3px solid #9EEEBB;
+}
+
+input[type="text"].search_input_invalid {
+    border: 3px solid #F6AFAF;
+    background-color: #EEECEC;
+}
+
+input[type="text"].search_input_invalid_no_focus {
+    background-color: #F6AFAF;
+}
+
+.search_overlay {
+    opacity: 0.5;
+    pointer-events: none;
+}
+
+/* Make drop down scrollable vertically */
+.ui-autocomplete {
+    max-height: 200px;
+    overflow-y: auto;
+    overflow-x: hidden;
+}
+
+.ui-helper-hidden-accessible {
+    display:none;
+}
+
+ul.ui-autocomplete {
+    list-style: none;
+}
+
+.list-header, .list-footer {
+    background-color: #F9F6F6;
+}

@@ -5,7 +5,92 @@ var o_search = {
      *  Everything that appears on the search tab
      *
      **/
+    currentNormalizedData: {},
+    slugReqno: {},
+    normalizedApiCall: function() {
+        let newHash = o_hash.updateHash(false);
+        let regexForShortHash = /(.*)&view/;
+        // Use short hash
+        if(newHash.match(regexForShortHash)) {
+            newHash = newHash.match(regexForShortHash)[1];
+        }
 
+        opus.lastRequestNo++;
+        let url = "/opus/__api/normalizeinput.json?" + newHash + "&reqno=" + opus.lastRequestNo;
+        return $.getJSON(url);
+    },
+    validateRangeInput: function(data, removeSpinner=false) {
+        opus.allInputsValid = true;
+        $.each(data, function(eachSlug, value) {
+            let currentInput = $(`input[name="${eachSlug}"]`);
+            if(data[eachSlug] === null) {
+                if(currentInput.hasClass("RANGE")) {
+                    $("#sidebar").addClass("search_overlay");
+                    currentInput.addClass("search_input_invalid_no_focus");
+                    currentInput.val(opus.selections[eachSlug]);
+                }
+                opus.allInputsValid = false;
+            } else {
+                if(currentInput.hasClass("RANGE")) {
+                    currentInput.val(value);
+                    if(currentInput.hasClass("search_input_invalid_no_focus")) {
+                        currentInput.removeClass("search_input_invalid_no_focus");
+                    }
+                }
+            }
+        });
+        if(!opus.allInputsValid) {
+            $("#result_count").text("?");
+            // set hinting info to ? when any range input has invalid value
+            // for range
+            $(".range_hints").each(function() {
+                if($(this).children().length > 0) {
+                    $(this).html("<span>min: ?</span><span>max: ?</span><span> nulls: ?</span>");
+                }
+            });
+            // for mults
+            $(".hints").each(function() {
+                $(this).html("<span>?</span>");
+            });
+
+            if(removeSpinner) {
+                $(".spinner").fadeOut("");
+            }
+        } else {
+            // put back normal hinting info
+            opus.widgets_drawn.forEach(function(eachSlug) {
+                o_search.getHinting(eachSlug);
+            });
+        }
+    },
+    performSearch: function(event, slug, url) {
+        $.getJSON(url, function(data) {
+            // Make sure it's the final call before parsing data
+            if(data["reqno"] < o_search.slugReqno[slug]) {
+                return;
+            }
+
+            // check each range input if not valid, change to red background
+            o_search.validateRangeInput(data);
+
+            if(!opus.allInputsValid) {
+                return;
+            } else {
+                o_hash.updateHash();
+                $("input.RANGE").removeClass("search_input_valid");
+                $("input.RANGE").removeClass("search_input_invalid");
+                $("input.RANGE").addClass("search_input_original");
+                $("#sidebar").removeClass("search_overlay");
+                // .text is here in case the url is not changed but the input value is set to invalid and valid again
+                $("#result_count").text(opus.result_count);
+            }
+        });
+    },
+    extractHtmlContent: function(htmlString) {
+        let domParser = new DOMParser();
+        let content = domParser.parseFromString(htmlString, "text/html").documentElement.textContent;
+        return content;
+    },
     searchBehaviors: function() {
         /*
         // result count display hover
@@ -51,9 +136,174 @@ var o_search = {
         });
         */
 
+        // Avoid the orange blinking on border color
+        $("#search").on("focus", "input.RANGE", function(event) {
+            $(this).addClass("search_input_original");
+            $(this).removeClass("search_input_invalid_no_focus");
+        });
+
+        // Dynamically get input values right after user input a character
+        $("#search").on("input", "input.RANGE", function(event) {
+            let slug = $(this).attr("name");
+            let currentValue = $(this).val().trim();
+            let values = []
+
+            opus.lastNormalizeRequestNo++;
+            o_search.slugReqno[slug] = opus.lastNormalizeRequestNo;
+
+            values.push(currentValue)
+            opus.selections[slug] = values;
+            // Use only the current slug to call normalized api while input event happened
+            let newHash = `${slug}=${currentValue}`;
+            // keep calling normalize api to check input values whenever input got changed
+            // only check if return value is null or not, DON'T compare min & max
+            let url = "/opus/__api/normalizeinput.json?" + newHash + "&reqno=" + opus.lastNormalizeRequestNo;
+            $.getJSON(url, function(data) {
+                // if a newer input is there, re-call api with new input
+                if(data["reqno"] < o_search.slugReqno[slug]) {
+                    return;
+                }
+
+                o_search.currentNormalizedData = data;
+                let returnData = data[slug];
+                // parsing normalized data
+                // if it's empty string, don't modify anything
+                // if it's null, add search_input_invalid class
+                // if it's valid, add search_input_valid class
+                if(returnData === "") {
+                    $(event.target).removeClass("search_input_valid search_input_invalid");
+                    $(event.target).addClass("search_input_original");
+                } else if(returnData !== null) {
+                    $(event.target).removeClass("search_input_original search_input_invalid");
+                    $(event.target).addClass("search_input_valid");
+                    if($(event.target).hasClass("search_input_invalid_no_focus")) {
+                        $(event.target).removeClass("search_input_invalid_no_focus");
+                    }
+                } else {
+                    $(event.target).removeClass("search_input_original search_input_valid");
+                    $(event.target).addClass("search_input_invalid");
+                }
+            }); // end getJSON
+        });
+
+        // perform search on range input when user focus out or hit enter
+        $("#search").on("change", "input.RANGE", function(event) {
+            let slug = $(this).attr("name");
+            let newHash = o_hash.updateHash(false);
+            let regexForShortHash = /(.*)&view/;
+            // Use short hash
+            if(newHash.match(regexForShortHash)) {
+                newHash = newHash.match(regexForShortHash)[1];
+            }
+            opus.lastNormalizeRequestNo++;
+            o_search.slugReqno[slug] = opus.lastNormalizeRequestNo;
+            let url = "/opus/__api/normalizeinput.json?" + newHash + "&reqno=" + opus.lastNormalizeRequestNo;
+            o_search.performSearch(event, slug, url);
+        });
+
+        // Init autocomplete source, this is to make sure first keypress would have drop down shows up
+        $("#search").on("focus", "input.STRING", function(event) {
+          $(event.target).autocomplete({
+              minLength: 0,
+              source: [],
+          });
+        });
+        // Dynamically call stringsearchchoices api to get latest hints
+        $("#search").on("input", "input.STRING", function(event) {
+            let slug = $(this).attr("name");
+            let currentValue = $(this).val().trim();
+            let values = [];
+
+            opus.lastRequestNo++;
+            o_search.slugReqno[slug] = opus.lastRequestNo;
+
+            values.push(currentValue)
+            opus.selections[slug] = values;
+            let newHash = o_hash.updateHash(false);
+            let regexForShortHash = /(.*)&view/;
+
+            if(newHash.match(regexForShortHash)) {
+                newHash = newHash.match(regexForShortHash)[1];
+            }
+
+            let searchMsg = "";
+            let truncatedResults = false;
+            let truncatedResultsMsg = "&ltMore choices available&gt";
+            let url = `/opus/__api/stringsearchchoices/${slug}.json?` + newHash + "&reqno=" + opus.lastRequestNo;
+
+            let stringInputDropDown = $(event.target).autocomplete({
+                minLength: 1,
+                source: function(request, response) {
+                    $.getJSON(url, function(data) {
+                        // if a newer input is there, re-call api with new input
+                        if(data["reqno"] < o_search.slugReqno[slug]) {
+                            return;
+                        }
+
+                        // dynamically update drop down lists
+                        // let searchMsg = "";
+                        if(data["full_search"]) {
+                            searchMsg = "Results from entire database, not current search constraints"
+                        } else {
+                            searchMsg = "Results from current search constraints"
+                        }
+
+                        let hintsOfString = data["choices"];
+                        truncatedResults = data["truncated_results"];
+                        response(hintsOfString);
+                    });
+                },
+                focus: function(focusEvent, ui) {
+                    // if we want to have hinted value displayed when hovering over
+                    // let displayValue = o_search.extractHtmlContent(ui.item.label);
+                    $(event.target).val(currentValue);
+                    return false;
+                },
+                select: function(selectEvent, ui) {
+                    let displayValue = o_search.extractHtmlContent(ui.item.label);
+                    $(event.target).val(displayValue);
+                    // search would be performed right away if an item in the list is selected
+                    opus.selections[slug] = [displayValue];
+                    o_hash.updateHash();
+                    return false;
+                },
+            })
+            .keyup(function(keyupEvent) {
+                // Make sure autocomplete menu is hide whenever enter is pressed even if value is not changed
+                if(keyupEvent.which === 13) {
+                    $(event.target).autocomplete("close");
+                }
+            })
+            .data( "ui-autocomplete" );
+
+            // Add header and footer for dropdown list
+            stringInputDropDown._renderMenu = function(ul, items) {
+                let self = this;
+                $.each(items, function(index, item) {
+                    self._renderItem(ul, item );
+                });
+                ul.prepend(`<li><div class="list-header">${searchMsg}</div></li>`);
+                if(truncatedResults) {
+                    ul.append(`<li><div class="list-footer">${truncatedResultsMsg}</div></li>`);
+                }
+            };
+            // Customized dropdown list item
+            stringInputDropDown._renderItem = function(ul, item) {
+                return $( "<li>" )
+                  .data( "ui-autocomplete-item", item )
+                  .attr( "data-value", item.value )
+                  // need to wrap with <a> tag because of jquery-ui 1.10
+                  .append("<a>" + item.label + "</a>")
+                  .appendTo(ul);
+            };
+
+        });
+
+
+
         // filling in a range or string search field = update the hash
         // range behaviors and string behaviors for search widgets - input box
-        $('#search').on('change', 'input.STRING, input.RANGE', function() {
+        $('#search').on('change', 'input.STRING', function() {
 
             slug = $(this).attr("name");
             css_class = $(this).attr("class").split(' ')[0]; // class will be STRING, min or max
@@ -61,7 +311,6 @@ var o_search = {
             // get values of all inputs
             var values = [];
             if (css_class == 'STRING') {
-
                 $('#widget__' + slug + ' input.STRING').each(function() {
                     values[values.length] = $(this).val();
                 });
@@ -80,7 +329,6 @@ var o_search = {
                         values[values.length] = $(this).val();
                     });
                 }
-
                 opus.selections[slug_no_num + '1'] = values;
                 // max
                 values = [];
@@ -325,7 +573,9 @@ var o_search = {
                   }
                 },
                 error:function (xhr, ajaxOptions, thrownError){
-                    $('#widget__' + slug + ' .spinner').removeClass('spinning');
+                    $("#widget__" + slug + " .spinner").removeClass("spinning");
+                    // range input hints are "?" when wrong values of url is pasted
+                    $("#hint__" + slug).html("<span>min: ?</span><span>max: ?</span><span> nulls: ?</span>");
                 }
             }); // end mults ajax
     },
@@ -370,7 +620,11 @@ var o_search = {
               }
             },
             error:function (xhr, ajaxOptions, thrownError){
-                $('#widget__' + slug + ' .spinner').removeClass('spinning');
+                $("#widget__" + slug + " .spinner").removeClass("spinning");
+                // checkbox hints are "?" when wrong values of url is pasted
+                $(".hints").each(function() {
+                    $(this).html("<span>?</span>");
+                });
             }
         }); // end mults ajax
 

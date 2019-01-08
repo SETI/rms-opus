@@ -150,6 +150,7 @@ var opus = {
     // avoiding race conditions in ajax calls
     lastRequestNo: 0,          // holds request numbers for main result count loop,
     lastCartRequestNo: 0,
+    lastNormalizeRequestNo: 0,
 
     download_in_process: false,
 
@@ -238,6 +239,7 @@ var opus = {
     main_timer:false,
     main_timer_interval:1000,
 
+    allInputsValid: true,
     //------------------------------------------------------------------------------------//
 
     load: function () {
@@ -275,53 +277,64 @@ var opus = {
               o_browse.resetQuery();
         }
 
-
         // start the result count spinner and do the yellow flash
-        $('#result_count').html(opus.spinner).parent().effect("highlight", {}, 500);
-          // query string has changed
-          opus.last_selections = selections;
+        $("#result_count").html(opus.spinner).parent().effect("highlight", {}, 500);
 
-          opus.lastRequestNo++;
+        // chain ajax calls, validate range inputs before result count api call
+        o_search.normalizedApiCall().then(opus.getResultCount).then(opus.updatePageAfterResultCountAPI);
+    },
+    getResultCount: function(normalizedData) {
+        o_search.validateRangeInput(normalizedData, true);
 
-      	  // get result count
-          $.ajax({ url: "/opus/__api/meta/result_count.json?" + o_hash.getHash() + '&reqno=' + opus.lastRequestNo,
-              dataType:"json",
-              success: function(json){
+        // query string has changed
+        opus.last_selections = selections;
+        opus.lastRequestNo++;
+        let resultCountHash = o_hash.getHash();
 
-                  if (json['reqno'] < opus.lastRequestNo) {
-                      return;
-                  }
-                  $('#browse_tab').fadeIn();
-                  opus.updateResultCount(json['data'][0]['result_count']);
+        if(!opus.allInputsValid) {
+          // remove spinning effect on browse count
+          $("#result_count").text("?");
+          return;
+        }
 
-                  opus.mainTabDisplay('results');  // make sure the main site tab label is displayed
+        return $.getJSON("/opus/__api/meta/result_count.json?" + resultCountHash + "&reqno=" + opus.lastRequestNo);
+    },
+    updatePageAfterResultCountAPI: function(resultCountData) {
+        if(!opus.allInputsValid) {
+            return;
+        }
+        if (resultCountData["reqno"] < opus.lastRequestNo) {
+            return;
+        }
+        $("#browse_tab").fadeIn();
+        opus.updateResultCount(resultCountData["data"][0]["result_count"]);
 
-                  o_menu.getMenu();
+        opus.mainTabDisplay("results");  // make sure the main site tab label is displayed
 
-                  // if all we wanted was a new gallery page we can stop here
-                  opus.pages = Math.ceil(opus.result_count/opus.prefs.limit);
-                  if (opus.prefs.view == "browse") {
-                      $('#pages','#browse').html(opus.pages);
-                      return;
-                  }
+        o_menu.getMenu();
 
-                  // result count is back, now send for widget hinting
-                  var widget_cols = ['widgets','widgets2'];
-                  for (key in widget_cols) {
-                      col = widget_cols[key];
-                      for (k in opus.prefs[col]) {
-                          slug = opus.prefs[col][k];
-                          o_search.getHinting(slug);
-                      } // end for widget in..
-                  } // endfor
-              } // end result count success
-          }); // end result count ajax
-    }, // endfunc jeezumcrow! #shootmenow
+        // if all we wanted was a new gallery page we can stop here
+        opus.pages = Math.ceil(opus.result_count/opus.prefs.limit);
+        if (opus.prefs.view == "browse") {
+            $("#pages","#browse").html(opus.pages);
+            return;
+        }
 
+        // result count is back, now send for widget hinting
+        var widget_cols = ["widgets","widgets2"];
+        for (key in widget_cols) {
+            col = widget_cols[key];
+            for (k in opus.prefs[col]) {
+                slug = opus.prefs[col][k];
+                o_search.getHinting(slug);
+            } // end for widget in..
+        } // endfor
+    },
     updateResultCount: function(result_count) {
       opus.result_count = result_count;
-      $('#result_count').fadeOut('fast', function() {
-        $(this).html(o_utils.addCommas(opus.result_count)).fadeIn('fast') ;
+      $("#result_count").fadeOut("fast", function() {
+        $(this).html(o_utils.addCommas(opus.result_count)).fadeIn("fast") ;
+        $(this).removeClass("browse_results_invalid");
       });
     },
 
