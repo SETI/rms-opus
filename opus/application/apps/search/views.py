@@ -137,16 +137,32 @@ def api_string_search_choices(request, slug):
         exit_api_call(api_code, ret)
         raise ret
 
-    partial_query = ''
-    query_qtype = 'contains'
-    if param_qualified_name in selections:
-        partial_query = selections[param_qualified_name][0]
-        del selections[param_qualified_name]
+    if param_qualified_name not in selections:
+        selections[param_qualified_name] = ['']
+
+    qtypes = {}
+    query_qtype_list = []
     if 'qtypes' in extras:
         qtypes = extras['qtypes']
-        if param_qualified_name in qtypes:
-            query_qtype = qtypes[param_qualified_name]
-            del qtypes[param_qualified_name]
+    if param_qualified_name in qtypes:
+        query_qtype_list = qtypes[param_qualified_name]
+        if query_qtype_list == ['matches']:
+            query_qtype_list = ['contains']
+        query_qtype = query_qtype_list[0]
+        del qtypes[param_qualified_name]
+
+    # Must do this here before deleting the slug from selections below
+    like_query, like_params = get_string_query(selections, param_qualified_name,
+                                               query_qtype_list)
+    if like_query is None:
+        ret = Http404('Bad string query')
+        exit_api_call(api_code, ret)
+        raise ret
+
+    partial_query = ''
+    query_qtype = 'contains'
+    partial_query = selections[param_qualified_name][0]
+    del selections[param_qualified_name]
 
     user_query_table = get_user_query_table(selections, extras,
                                             api_code=api_code)
@@ -238,8 +254,8 @@ def api_string_search_choices(request, slug):
         sql_params = []
         if partial_query:
             sql += ' WHERE '
-            sql += quoted_param_qualified_name + ' LIKE %s'
-            sql_params.append('%'+partial_query+'%')
+            sql += like_query
+            sql_params += like_params
 
         sql += ' ORDER BY '+quoted_param_qualified_name
         sql += ' LIMIT '+str(limit+1)
@@ -267,8 +283,8 @@ def api_string_search_choices(request, slug):
         sql_params = []
         if partial_query:
             sql += ' WHERE '
-            sql += quoted_param_qualified_name + ' LIKE %s'
-            sql_params.append('%'+partial_query+'%')
+            sql += like_query
+            sql_params += like_params
 
         sql += ' ORDER BY '+quoted_param_qualified_name
         sql += ' LIMIT '+str(limit+1)

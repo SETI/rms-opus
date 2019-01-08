@@ -494,6 +494,86 @@ class ApiSearchTests(TestCase):
                     'truncated_results': False}
         self._run_json_equal(url, expected)
 
+    def test__api_stringsearchchoices_datasetid_COISS_2002_begins_good(self):
+        "/api/stringsearchchoices: datasetid CO-S volumeid COISS_2002 begins good"
+        url = '/opus/__api/stringsearchchoices/datasetid.json?volumeid=COISS_2002&datasetid=CO-S&qtype-datasetid=begins'
+        expected = {'choices': ['<b>CO-S</b>-ISSNA/ISSWA-2-EDR-V1.0'],
+                    'full_search': False,
+                    'truncated_results': False}
+        self._run_json_equal(url, expected)
+
+    def test__api_stringsearchchoices_datasetid_COISS_2002_begins_bad(self):
+        "/api/stringsearchchoices: datasetid CO-S volumeid COISS_2002 begins bad"
+        url = '/opus/__api/stringsearchchoices/datasetid.json?volumeid=COISS_2002&datasetid=O-S&qtype-datasetid=begins'
+        expected = {'choices': [],
+                    'full_search': False,
+                    'truncated_results': False}
+        self._run_json_equal(url, expected)
+
+    def test__api_stringsearchchoices_datasetid_COISS_2002_contains_good(self):
+        "/api/stringsearchchoices: datasetid CO-S volumeid COISS_2002 contains good"
+        url = '/opus/__api/stringsearchchoices/datasetid.json?volumeid=COISS_2002&datasetid=ISSNA&qtype-datasetid=contains'
+        expected = {'choices': ['CO-S-<b>ISSNA</b>/ISSWA-2-EDR-V1.0'],
+                    'full_search': False,
+                    'truncated_results': False}
+        self._run_json_equal(url, expected)
+
+    def test__api_stringsearchchoices_datasetid_COISS_2002_contains_bad(self):
+        "/api/stringsearchchoices: datasetid CO-S volumeid COISS_2002 contains bad"
+        url = '/opus/__api/stringsearchchoices/datasetid.json?volumeid=COISS_2002&datasetid=ISSNAISSWA&qtype-datasetid=contains'
+        expected = {'choices': [],
+                    'full_search': False,
+                    'truncated_results': False}
+        self._run_json_equal(url, expected)
+
+    def test__api_stringsearchchoices_datasetid_COISS_2002_begins_ends(self):
+        "/api/stringsearchchoices: datasetid CO-S volumeid COISS_2002 ends good"
+        url = '/opus/__api/stringsearchchoices/datasetid.json?volumeid=COISS_2002&datasetid=V1.0&qtype-datasetid=ends'
+        expected = {'choices': ['CO-S-ISSNA/ISSWA-2-EDR-<b>V1.0</b>'],
+                    'full_search': False,
+                    'truncated_results': False}
+        self._run_json_equal(url, expected)
+
+    def test__api_stringsearchchoices_datasetid_COISS_2002_ends_bad(self):
+        "/api/stringsearchchoices: datasetid CO-S volumeid COISS_2002 ends bad"
+        url = '/opus/__api/stringsearchchoices/datasetid.json?volumeid=COISS_2002&datasetid=O-S&qtype-datasetid=ends'
+        expected = {'choices': [],
+                    'full_search': False,
+                    'truncated_results': False}
+        self._run_json_equal(url, expected)
+
+    def test__api_stringsearchchoices_datasetid_COISS_2002_matches_good(self):
+        "/api/stringsearchchoices: datasetid CO-S volumeid COISS_2002 matches good"
+        url = '/opus/__api/stringsearchchoices/datasetid.json?volumeid=COISS_2002&datasetid=ISSNA&qtype-datasetid=matches'
+        expected = {'choices': ['CO-S-<b>ISSNA</b>/ISSWA-2-EDR-V1.0'],
+                    'full_search': False,
+                    'truncated_results': False}
+        self._run_json_equal(url, expected)
+
+    def test__api_stringsearchchoices_datasetid_COISS_2002_matches_bad(self):
+        "/api/stringsearchchoices: datasetid CO-S volumeid COISS_2002 matches bad"
+        url = '/opus/__api/stringsearchchoices/datasetid.json?volumeid=COISS_2002&datasetid=ISSNAX&qtype-datasetid=matches'
+        expected = {'choices': [],
+                    'full_search': False,
+                    'truncated_results': False}
+        self._run_json_equal(url, expected)
+
+    def test__api_stringsearchchoices_datasetid_COISS_2002_excludes_good(self):
+        "/api/stringsearchchoices: datasetid CO-S volumeid COISS_2002 excludes good"
+        url = '/opus/__api/stringsearchchoices/datasetid.json?volumeid=COISS_2002&datasetid=V1&qtype-datasetid=excludes'
+        expected = {'choices': [],
+                    'full_search': False,
+                    'truncated_results': False}
+        self._run_json_equal(url, expected)
+
+    def test__api_stringsearchchoices_datasetid_COISS_2002_excludes_bad(self):
+        "/api/stringsearchchoices: datasetid CO-S volumeid COISS_2002 excludes bad"
+        url = '/opus/__api/stringsearchchoices/datasetid.json?volumeid=COISS_2002&datasetid=V1X&qtype-datasetid=excludes'
+        expected = {'choices': ['CO-S-ISSNA/ISSWA-2-EDR-V1.0'],
+                    'full_search': False,
+                    'truncated_results': False}
+        self._run_json_equal(url, expected)
+
     def test__api_stringsearchchoices_productid_14609_COISS_2002(self):
         "/api/stringsearchchoices: productid 14609 volumeid COISS_2002"
         url = '/opus/__api/stringsearchchoices/productid.json?volumeid=COISS_2002&productid=14609'
