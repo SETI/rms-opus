@@ -28,7 +28,7 @@ class QueryHandler:
     _is_reset: bool
 
     _previous_search_slug_info: SearchSlugInfo   # map from family to List[(Slug.Info, Value)]
-    _previous_column_slug_info: ColumnSlugInfo   # map from raw slug to Slug.Info
+    _previous_column_slug_info: Optional[ColumnSlugInfo]   # map from raw slug to Slug.Info
     _previous_page: str                          # previous page
     _previous_sort_order: str                    # sort order
     _previous_state: State
@@ -51,7 +51,7 @@ class QueryHandler:
     def reset(self) -> None:
         self._previous_query_type = None
         self._previous_search_slug_info = {}
-        self._previous_column_slug_info = self._default_column_slug_info
+        self._previous_column_slug_info = None  # handled specially by get_column_slug_info
         self._previous_sort_order = self.DEFAULT_SORT_ORDER
         self._previous_page = ''
         self._previous_state = State.RESET
@@ -63,8 +63,10 @@ class QueryHandler:
 
         uses_columns = query_type == 'data'
         uses_pages = query_type != 'result_count'
+        uses_sort = uses_pages   # For now the same, but this may change in the future
 
         current_state = State.SEARCHING if query_type == 'result_count' else State.FETCHING
+
         previous_state = self._previous_state
         if current_state != previous_state:
             if previous_state == State.RESET:
@@ -89,32 +91,27 @@ class QueryHandler:
         else:
             column_slug_info = {}
 
-        if uses_pages:
-            page = query.get('page', '')
-            sort_order = query.get('order', self.DEFAULT_SORT_ORDER)
-        else:
-            # ignored, but Python is happier if they are set
-            page = sort_order = ''
+        sort_order = query.get('order', self.DEFAULT_SORT_ORDER)
+        page = query.get('page', '')
 
         self.__get_search_info(self._previous_search_slug_info, search_slug_info, result)
+        self._previous_search_slug_info = search_slug_info
+
         if uses_columns:
             self.__get_column_info(self._previous_column_slug_info, column_slug_info, result)
-        if uses_pages:
-            self.__get_page_info(self._previous_page, page, result)
+            self._previous_column_slug_info = column_slug_info
+        if uses_sort:
             self.__get_sort_order_info(self._previous_sort_order, sort_order, result)
+            self._previous_sort_order = sort_order
 
-        if current_state != previous_state:
-            if current_state == State.FETCHING:
-                page = query.get('page', '')
+        if uses_pages:
+            assert current_state == State.FETCHING
+            if current_state != previous_state:
                 viewed = 'Table' if query.get('browse') == 'data' else 'Gallery'
                 result.append(f'View {viewed}: Page {page or "???"}')
-
-        self._previous_search_slug_info = search_slug_info
-        if uses_columns:
-            self._previous_column_slug_info = column_slug_info
-        if uses_pages:
+            else:
+                 self.__get_page_info(self._previous_page, page, result)
             self._previous_page = page
-            self._previous_sort_order = sort_order
 
         self._previous_state = current_state
         return result
@@ -129,6 +126,11 @@ class QueryHandler:
                 mapping.get(Slug.FamilyType.MIN), mapping.get(Slug.FamilyType.MAX), mapping.get(Slug.FamilyType.QTYPE),
                 reduce(operator.or_, (slug_info.flags for (slug_info, _) in pairs))
             )
+
+        def pprint(value: Optional[str]) -> str:
+            if value is None:
+                return '~'
+            return '"' + value + '"'
 
         if not new_info:
             if old_info:
@@ -150,8 +152,9 @@ class QueryHandler:
                     added_searches.append(f'Add Search:    "{family.label}" = "{value}"{postscript}')
                 else:
                     new_min, new_max, new_qtype, flags = parse_family(new_info[family])
-                    new_value = (f'({family.min.upper()}:"{new_min}", {family.max.upper()}:"{new_max}", '
-                                 f'QTYPE:"{new_qtype}")')
+                    new_value = (f'({family.min.upper()}:{pprint(new_min)},'
+                                 f' {family.max.upper()}:{pprint(new_max)}, '
+                                 f'QTYPE:{pprint(new_qtype)})')
                     postscript = f' **{flags.pretty_print()}**' if flags else ''
                     added_searches.append(f'Add Search:    "{family.label}" = {new_value}{postscript}')
             else:
@@ -168,14 +171,25 @@ class QueryHandler:
                         min_name = family.min if old_min == new_min else family.min.upper()
                         max_name = family.max if old_max == new_max else family.max.upper()
                         qtype_name = 'qtype' if old_qtype == new_qtype else 'QTYPE'
-                        new_value = f'({min_name}:"{new_min}", {max_name}:"{new_max}", {qtype_name}:"{new_qtype}")'
+                        new_value = (f'({min_name}:{pprint(new_min)},' 
+                                     f' {max_name}:{pprint(new_max)},' 
+                                     f' {qtype_name}:{pprint(new_qtype)})')
                         changed_searches.append(f'Change Search: "{family.label}" = {new_value}')
 
         result.extend(removed_searches)
         result.extend(added_searches)
         result.extend(changed_searches)
 
-    def __get_column_info(self, old_info: ColumnSlugInfo, new_info: ColumnSlugInfo, result: List[str]) -> None:
+    def __get_column_info(self, old_info: Optional[ColumnSlugInfo], new_info: ColumnSlugInfo, result: List[str]) -> None:
+        if old_info is None:
+            new_column_families = set(new_info.keys())
+            if new_column_families == set(self._default_column_slug_info.keys()):
+                return
+            column_labels = [new_info[family].label for family in sorted(new_column_families)]
+            quoted_column_labels = SessionInfo.quote_and_join_list(sorted(column_labels))
+            result.append(f'Starting with Columns: {quoted_column_labels}')
+            return
+
         old_column_families = set(old_info.keys())
         new_column_families = set(new_info.keys())
         if new_column_families == old_column_families:
