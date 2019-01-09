@@ -5,7 +5,6 @@ var o_search = {
      *  Everything that appears on the search tab
      *
      **/
-    currentNormalizedData: {},
     slugReqno: {},
     normalizedApiCall: function() {
         let newHash = o_hash.updateHash(false);
@@ -164,7 +163,6 @@ var o_search = {
                     return;
                 }
 
-                o_search.currentNormalizedData = data;
                 let returnData = data[slug];
                 // parsing normalized data
                 // if it's empty string, don't modify anything
