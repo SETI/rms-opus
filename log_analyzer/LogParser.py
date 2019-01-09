@@ -49,7 +49,7 @@ Kp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
                                                                                                                                
 {% spaceless %}
 
-<div class="container">
+<div class="container-fluid">
 <div class="row">
 <div class="col-sm-3">
 {% for host_info in host_infos %} 
