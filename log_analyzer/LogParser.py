@@ -1,9 +1,10 @@
 import datetime
 import functools
+import itertools
 import os
 import socket
 import textwrap
-from collections import defaultdict, deque
+from collections import defaultdict, deque, Counter
 from heapq import heapify, heappop, heappush
 from ipaddress import IPv4Address
 from typing import List, Iterator, Dict, NamedTuple, Optional, Deque, Iterable, IO, Any
@@ -36,7 +37,7 @@ SUMMARY_TEMPLATE = """
 <body>
 {% spaceless %}
     {% for host_info in host_infos %} 
-    <details>
+    <details {% if forloop.counter < 3 %}open {% endif %}>
         <summary> 
             {{ host_info.hostname }}  
             ({{ host_info.sessions | length }} session{{host_info.sessions | length | pluralize}}, 
@@ -49,22 +50,20 @@ SUMMARY_TEMPLATE = """
             {% endif %}
             Session #{{forloop.counter}} starting at  {{ session.entries.0.log_entry.time_string }} 
             lasting {{ session.time_delta }}<br>
+            <table id="{{ session.id }}" class="Session">
             {% for entry in session.entries %}
-                <table>
                 {% for line in entry.data %}
-                   <tr><td>
+                   <tr>
                    {% if forloop.first %}
-                       <a href="{{api_host_url}}{{entry.log_entry.url.geturl | safe}}" target="_blank"
-                       >{{entry.start_time_offset}}</a>
+                       <td><a href="{{api_host_url}}{{entry.log_entry.url.geturl | safe}}" target="_blank">{{entry.start_time_offset}}</a></td>
                    {% else %}
-                       &nbsp;
+                       <td>&nbsp;</td>
                    {% endif %}
-                   </td>
                    <td>{{ line }}</td>
                    </tr>
                 {% endfor %}
-                </table>
             {% endfor %} 
+            </table>
         {% endfor %}
         </div>
     </details>
@@ -145,6 +144,7 @@ class LogParser:
 
     def run_summary(self, log_entries: List[LogEntry]) -> None:
         entries_by_host_ip = self.__group_log_entries_by_host_ip(log_entries)
+        id_counter = itertools.count(1000000)
 
         host_infos: List[Dict[str, Any]] = []
         for session_host_ip in sorted(entries_by_host_ip):
@@ -180,9 +180,12 @@ class LogParser:
                 session_time_delta = (current_session_entries[-1]['log_entry'].time
                                       - current_session_entries[0]['log_entry'].time)
                 total_time_on_host += session_time_delta
-                sessions.append(dict(entries=current_session_entries, time_delta=session_time_delta))
+                sessions.append(dict(entries=current_session_entries, time_delta=session_time_delta,
+                                     id=next(id_counter)))
+
             if sessions:
-                host_infos.append(dict(hostname=hostname_from_ip, sessions=sessions, total_time=total_time_on_host))
+                host_infos.append(dict(hostname=hostname_from_ip, sessions=sessions, total_time=total_time_on_host,
+                                       id=next(id_counter)))
 
         os.environ.setdefault("DJANGO_SETTINGS_MODULE", "DjangoSettings")
         django.setup()

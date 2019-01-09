@@ -2,7 +2,7 @@ import operator
 from collections import defaultdict
 from enum import Enum, auto
 from functools import reduce
-from typing import Dict, Tuple, List, Optional, cast
+from typing import Dict, Tuple, List, Optional, cast, Any
 
 from django.utils.html import format_html, format_html_join
 from django.utils.safestring import mark_safe
@@ -140,7 +140,7 @@ class QueryHandler:
             assert family.label == slug_info.label
             postscript = f' **{slug_info.flags.pretty_print()}**' if slug_info.flags else ''
             if self._uses_html:
-                result.append(format_html('Add Search: "{}" = {}{}',
+                result.append(format_html('Add Search: "{}" = <mark><ins>{}</ins></mark>{}',
                                           family.label, self.__format_search_value(value), postscript))
             else:
                 result.append(f'Add Search:    "{family.label}" = "{value}"{postscript}')
@@ -148,12 +148,12 @@ class QueryHandler:
             new_min, new_max, new_qtype, flags = self.__parse_search_family(new_info[family])
             postscript = f' **{flags.pretty_print()}**' if flags else ''
             if self._uses_html:
-                new_value = format_html("(<mark>{}:{}</mark>, <mark>{}:{}</mark>, <mark>{}:{}</mark>)",
-                                        family.min, self.__format_search_value(new_min),
-                                        family.max, self.__format_search_value(new_max),
-                                        'qtype', self.__format_search_value(new_qtype))
-                result.append(
-                    format_html('Add Search: &quot;{}&quot; = {}{}', family.label, new_value, postscript))
+                def always_mark(type: str, value: str) -> Any:
+                    return format_html('<mark><ins>{}:{}</ins></mark>', type, self.__format_search_value(value))
+                result.append(format_html('Add Search: &quot:{}&quot = ({}, {}, {}){}',
+                                          family.label, always_mark(family.min, new_min),
+                                          always_mark(family.max, new_max), always_mark('qtype', new_qtype),
+                                          postscript))
             else:
                 new_value = (f'({family.min.upper()}:{self.__format_search_value(new_min)},'
                              f' {family.max.upper()}:{self.__format_search_value(new_max)}, '
