@@ -30,47 +30,98 @@ class _LiveSession(NamedTuple):
 
 
 SUMMARY_TEMPLATE = """
-<!DOCTYPE html>
-<html lang="en">
-<head>
-</head>
-<body>
+<!doctype html>                                                                                                                
+<html lang="en">                                                                                                               
+  <head>                                                                                                                       
+    <!-- Required meta tags -->                                                                                                
+    <meta charset="utf-8">                                                                                                     
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">                                     
+                                                                                                                               
+    <!-- Bootstrap CSS -->                                                                                                     
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css" integrity="sha384-M\
+Cw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO" crossorigin="anonymous">                                      
+                                                                                                                               
+    <!-- jQuery first, then Popper.js, then Bootstrap JS -->                                                                   
+    <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smX\
+Kp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>  
+  </head>
+<body>                                                                                                                                                                                                
+                                                                                                                               
 {% spaceless %}
-    {% for host_info in host_infos %} 
-    <details {% if forloop.counter < 3 %}open {% endif %}>
-        <summary> 
-            {{ host_info.hostname }}  
-            ({{ host_info.sessions | length }} session{{host_info.sessions | length | pluralize}}, 
-            {{ host_info.total_time }})
-        </summary>
-        <div style="margin-left: 1em;">
+
+<div class="container">
+<div class="row">
+<div class="col-sm-3">
+{% for host_info in host_infos %} 
+    {{ host_info.hostname }} ({{ host_info.sessions | length }} session{{host_info.sessions | length | pluralize}}, {{ host_info.total_time }})
+    <ul>
         {% for session in host_info.sessions %}
-            {% if not forloop.first %}
-                <hr>
-            {% endif %}
-            Session #{{forloop.counter}} starting at  {{ session.entries.0.log_entry.time_string }} 
-            lasting {{ session.time_delta }}<br>
-            <table id="{{ session.id }}" class="Session">
-            {% for entry in session.entries %}
-                {% for line in entry.data %}
-                   <tr>
-                   {% if forloop.first %}
-                       <td><a href="{{api_host_url}}{{entry.log_entry.url.geturl | safe}}" target="_blank">{{entry.start_time_offset}}</a></td>
-                   {% else %}
-                       <td>&nbsp;</td>
-                   {% endif %}
-                   <td>{{ line }}</td>
-                   </tr>
-                {% endfor %}
-            {% endfor %} 
-            </table>
+            <li><a href="#" class=SessionLink id="L{{ session.id }}">{{ session.entries.0.log_entry.time_string }} lasting {{ session.time_delta }}</a></li>
         {% endfor %}
+     </ul>
+{% endfor %}
+    
+</div>
+<div class="col-sm-9">
+{% for host_info in host_infos %} 
+    {% for session in host_info.sessions %}
+        <div id="S{{ session.id }}" class="SessionInfo" style="display:none;">
+        <b>{{ session.entries.0.log_entry.time_string }} lasting {{ session.time_delta }}</b><br>
+        <table>
+        {% for entry in session.entries %}
+            {% for line in entry.data %}
+                <tr>
+                {% if forloop.first %}
+                    <td><a href="{{api_host_url}}{{entry.log_entry.url.geturl | safe}}" target="_blank">{{entry.start_time_offset}}</a></td>
+                {% else %}
+                    <td>&nbsp;</td>
+                {% endif %}
+                <td>{{ line }}</td>
+                 </tr>
+            {% endfor %}
+        {% endfor %} 
+        </table>
         </div>
-    </details>
     {% endfor %}
+{% endfor %}
+</div>
+</div>
+
+
 {% endspaceless %}
-</body>
+
+<script>
+var displayedItem = null;
+
+function setUpLinks() {
+    var items = document.getElementsByClassName('SessionLink');
+    Array.prototype.forEach.call(items, function(element, index) {
+        element.onclick = sessionClick
+    })
+}
+
+function sessionClick(event) {
+    if (displayedItem) {
+        document.getElementById(displayedItem).style.display = "none";
+    }
+    var target_id = 'S' + event.target.id.substr(1)
+    document.getElementById(target_id).style.display = "block";
+    displayedItem = target_id;
+    console.log(event);
+    return false;
+}
+
+setUpLinks()
+
+</script>                                                                                                                     \
+
+</body>                                                                                                                        
+</html>                                                                                                                        
 """
+
+
+
+
 
 
 class LogParser:
