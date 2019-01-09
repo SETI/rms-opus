@@ -14,6 +14,7 @@ import hashlib
 import json
 import logging
 import math
+import re
 import sys
 
 import settings
@@ -76,6 +77,9 @@ def api_normalize_input(request):
         exit_api_call(api_code, ret)
         raise ret
 
+    reqno = request.GET.get('reqno', None)
+    selections['reqno'] = reqno
+
     ret = json_response(selections)
     exit_api_call(api_code, ret)
     return ret
@@ -97,7 +101,8 @@ def api_string_search_choices(request, slug):
     Returned JSON is of the format:
         {"choices": ["choice1", "choice2"],
          "full_search": true/false,
-         "truncated_results": true/false}
+         "truncated_results": true/false,
+         "reqno": number or None}
 
     The portion of each choice selected by the partial search is highlighted
     with <b>...</b>.
@@ -138,6 +143,10 @@ def api_string_search_choices(request, slug):
         raise ret
 
     reqno = request.GET.get('reqno', None)
+    try:
+        reqno = int(reqno)
+    except:
+        reqno = None
 
     if param_qualified_name not in selections:
         selections[param_qualified_name] = ['']
@@ -207,6 +216,7 @@ def api_string_search_choices(request, slug):
     cached_val = cache.get(cache_key)
     if cached_val is not None:
         ret = json_response(cached_val)
+        ret['reqno'] = reqno
         exit_api_call(api_code, ret)
         return ret
 
@@ -312,8 +322,9 @@ def api_string_search_choices(request, slug):
 
         final_results = [x[0] for x in final_results]
         if partial_query:
-            final_results = [x.replace(partial_query,
-                                       '<b>'+partial_query+'</b>')
+            partial_query = partial_query.replace('\\', '\\\\')
+            pattern = re.compile('('+partial_query+')', re.IGNORECASE)
+            final_results = [pattern.sub('<b>\\1</b>', x)
                              for x in final_results]
 
     if len(final_results) > limit:
@@ -322,9 +333,9 @@ def api_string_search_choices(request, slug):
 
     result = {'choices': final_results,
               'full_search': do_simple_search,
-              'truncated_results': truncated_results,
-              'reqno': reqno}
+              'truncated_results': truncated_results}
     cache.set(cache_key, result)
+    result['reqno'] = reqno
     ret = json_response(result)
     exit_api_call(api_code, ret)
     return ret
@@ -1023,6 +1034,10 @@ def get_string_query(selections, param_qualified_name, qtypes):
 
     qtype = qtypes[0]
     value = values[0]
+
+    value = value.replace('\\', '\\\\')
+    value = value.replace('%', '\\%')
+    value = value.replace('_', '\\_')
 
     clause = ''
     params = []
