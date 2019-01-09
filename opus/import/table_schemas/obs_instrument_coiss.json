@@ -168,11 +168,11 @@
         "comments": "Definition is from COISS label",
         "mult_options": [
               [   0, "SCIENCE",             "Science",             10, "Y", null],
-              [   1, "SCIENCE,OPNAV",       "Science,OpNav",       20, "Y", null],
-              [   2, "SCIENCE,CALIBRATION", "Science,Calibration", 30, "Y", null],
-              [   3, "SCIENCE,SUPPORT",     "Science,Support",     40, "Y", null],
+              [   1, "SCIENCE/OPNAV",       "Science/OpNav",       20, "Y", null],
+              [   2, "SCIENCE/CALIBRATION", "Science/Calibration", 30, "Y", null],
+              [   3, "SCIENCE/SUPPORT",     "Science/Support",     40, "Y", null],
               [   4, "OPNAV",               "OpNav",               50, "Y", null],
-              [   5, "OPNAV,SUPPORT",       "Opnav,Support",       60, "Y", null],
+              [   5, "OPNAV/SUPPORT",       "Opnav/Support",       60, "Y", null],
               [   6, "CALIBRATION",         "Calibration",         70, "Y", null],
               [   7, "ENGINEERING",         "Engineering",         80, "Y", null],
               [   8, "SUPPORT",             "Support",             90, "Y", null],
@@ -337,8 +337,8 @@
         "field_notnull": true,
         "field_key": true,
         "data_source": [
-            "TAB:index",
-            "TARGET_DESC"
+            "FUNCTION",
+            "obs_instrument_COISS_target_desc"
         ],
         "definition": "The name of the intended target for which the exposure was calculated/selected in the given image. May include calibration type information. Limited to 75 characters. (Comes from the TARGET_DESC keyword in the IOI file.)",
         "pi_category_name": "obs_instrument_coiss",
@@ -347,7 +347,7 @@
         "pi_disp_order": 120,
         "pi_display": 1,
         "pi_display_results": 1,
-        "pi_form_type": "STRING",
+        "pi_form_type": "GROUP",
         "pi_intro": null,
         "pi_label": "Target Description",
         "pi_label_results": "Target Description",

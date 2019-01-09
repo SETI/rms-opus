@@ -16,8 +16,6 @@ import settings
 ##################
 class APIResultCountsTests(TestCase):
     filename = "test_api/csv/result_counts.csv"
-    GO_LIVE = False
-    LIVE_TARGET = "production"
 
     # disable error logging and trace output before test
     def setUp(self):
@@ -42,20 +40,34 @@ class APIResultCountsTests(TestCase):
                ]
            }
         """
-        api_public = ApiForResultCounts(target=self.LIVE_TARGET)
-        if self.GO_LIVE:
+        api_public = ApiForResultCounts(target=settings.TEST_ApiResultCountsTests_LIVE_TARGET)
+        if settings.TEST_ApiResultCountsTests_GO_LIVE:
             client = requests.Session()
         else:
             client = RequestsClient()
 
-        if self.GO_LIVE or settings.TEST_RESULT_COUNTS_AGAINST_INTERNAL_DB:
+        if settings.TEST_ApiResultCountsTests_GO_LIVE or settings.TEST_RESULT_COUNTS_AGAINST_INTERNAL_DB:
             error_flag = []
             count = 0
             with open(self.filename, "r") as csvfile:
 
                 filereader = csv.reader(csvfile)
                 for row in filereader:
+                    if len(row) != 3:
+                        if len(row) == 0:
+                            continue
+                        msg = 'Bad results_count line: '+str(row)
+                        error_flag.append(msg)
+                        msg += ' ==> FAIL!'
+                        continue
+
                     q_str, expected, info = row
+
+                    if q_str.find('#/') == -1:
+                        msg = 'Bad results_count line: '+str(row)
+                        error_flag.append(msg)
+                        msg += ' ==> FAIL!'
+                        continue
 
                     url_hash = q_str.split("#/")[1].strip()
                     api_url = api_public.result_counts_api + url_hash
@@ -69,13 +81,24 @@ class APIResultCountsTests(TestCase):
 
                     result_count = data["data"][0]["result_count"]
 
+                    comparison = '>='
+                    if expected[0] == '=':
+                        comparison = '='
+                        expected = expected[1:]
+
                     msg = "checking: "+api_url+"\n"
-                    msg += f"result: expected >= {expected} :: got {result_count}"
+                    msg += f"result: expected {comparison} {expected} :: got {result_count}"
+
+                    if ((comparison == '>=' and
+                         int(result_count) < int(expected)) or
+                        (comparison == '=' and
+                         int(result_count) != int(expected))):
+                        error_flag.append(msg)
+                        msg += ' ==> FAIL!'
+                    else:
+                        msg += ' - OK'
 
                     print(msg)
-
-                    if int(result_count) < int(expected):
-                        error_flag.append(msg)
 
                     count = count+1
 

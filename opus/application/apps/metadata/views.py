@@ -369,13 +369,13 @@ def api_get_range_endpoints(request, slug, fmt='json'):
     cache_key = 'rangeep:' + qualified_param_name_no_num
     if user_table:
         cache_num, cache_new_flag = set_user_search_number(selections, extras)
-        # We're guaranteed the table actually exists here
         if cache_num is None:
             log.error('api_get_range_endpoints: Failed to create cache table '
                       +'for *** Selections %s *** Extras %s',
                       str(selections), str(extras))
             exit_api_call(api_code, Http404)
             raise Http404
+        # We're guaranteed the table actually exists here
         cache_key += ':' + str(cache_num)
 
     cached_val = cache.get(cache_key)
@@ -409,36 +409,14 @@ def api_get_range_endpoints(request, slug, fmt='json'):
         where = param1 + ' IS NULL AND ' + param2 + ' IS NULL'
         range_endpoints['nulls'] = results.all().extra(where=[where]).count()
 
-    if form_type_func is not None:
-        # We need to run some arbitrary function to convert from float to
-        # some kind of string. This happens for spacecraft clock count
-        # and time fields, among others.
-        if form_type_func in opus_support.RANGE_FUNCTIONS:
-            func = opus_support.RANGE_FUNCTIONS[form_type_func][0]
-            if range_endpoints['min'] is not None:
-                range_endpoints['min'] = func(range_endpoints['min'])
-            if range_endpoints['max'] is not None:
-                range_endpoints['max'] = func(range_endpoints['max'])
-        else:
-            log.error('Unknown RANGE function "%s"', form_type_func)
-
-    if form_type_format:
-        range_endpoints['min'] = format_metadata_number(range_endpoints['min'],
-                                                        form_type_format)
-        range_endpoints['max'] = format_metadata_number(range_endpoints['max'],
-                                                        form_type_format)
-    else:
-        try:
-            if abs(range_endpoints['min']) > 999000:
-                range_endpoints['min'] = format(1.0*range_endpoints['min'],'.3')
-        except TypeError:
-            pass
-
-        try:
-            if abs(range_endpoints['max']) > 999000:
-                range_endpoints['max'] = format(1.0*range_endpoints['max'],'.3')
-        except TypeError:
-            pass
+    range_endpoints['min'] = format_metadata_number_or_func(
+                                            range_endpoints['min'],
+                                            form_type_func,
+                                            form_type_format)
+    range_endpoints['max'] = format_metadata_number_or_func(
+                                            range_endpoints['max'],
+                                            form_type_func,
+                                            form_type_format)
 
     cache.set(cache_key, range_endpoints)
 
@@ -519,6 +497,9 @@ def get_fields_info(fmt, slug=None, category=None, collapse=False):
             entry = OrderedDict()
             table_name = TableNames.objects.get(table_name=f.category_name)
             entry['label'] = f.label_results
+            entry['search_label'] = f.label
+            entry['full_label'] = f.body_qualified_label_results()
+            entry['full_search_label'] = f.body_qualified_label()
             collapsed_slug = f.slug
             if collapse:
                 entry['category'] = table_name.label.replace('Saturn',

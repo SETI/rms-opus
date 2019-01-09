@@ -9,8 +9,10 @@ import csv
 import datetime
 from io import StringIO
 import json
+import os
 import random
 import string
+import subprocess
 import time
 from zipfile import ZipFile
 
@@ -223,6 +225,13 @@ def exit_api_call(api_code, ret):
     if api_code is None:
         return
     end_time = time.time()
+    delay_amount = 0.
+    if settings.OPUS_FAKE_API_DELAYS is not None:
+        if settings.OPUS_FAKE_API_DELAYS > 0:
+            delay_amount = settings.OPUS_FAKE_API_DELAYS / 1000.
+        elif settings.OPUS_FAKE_API_DELAYS < 0:
+            delay_amount = random.uniform(0.,
+                                          -settings.OPUS_FAKE_API_DELAYS/1000.)
     if settings.OPUS_LOG_API_CALLS:
         s = 'API ' + str(api_code) + ' EXIT'
         if api_code in _API_START_TIMES:
@@ -232,9 +241,13 @@ def exit_api_call(api_code, ret):
         s += ': ' + ret_str[:240]
         if isinstance(ret, HttpResponse):
             s += '\n' + ret.content.decode()[:240]
+        if delay_amount:
+            s += f'\nDELAYING RETURN {delay_amount} SECONDS'
         log.debug(s)
     if api_code in _API_START_TIMES:
         del _API_START_TIMES[api_code]
+    if delay_amount:
+        time.sleep(delay_amount)
 
 def parse_form_type(s):
     """Parse the ParamInfo FORM_TYPE with its subfields.
@@ -255,8 +268,10 @@ def parse_form_type(s):
     elif s.find('%') != -1:
         form_type, form_type_format = s.split('%')
 
-    return form_type, form_type_func, form_type_format
-
+    if form_type in settings.RANGE_FORM_TYPES:
+        return form_type, form_type_func, form_type_format
+    return form_type, None, None
+    
 def is_old_format_ring_obs_id(s):
     "Return True if the string is a valid old-format ringobsid"
     return len(s) > 2 and (s[0] == '_' or s[1] == '_')
@@ -281,18 +296,6 @@ def get_mult_name(param_qualified_name):
     "Returns mult widget foreign key table name"
     return 'mult_' + '_'.join(param_qualified_name.split('.'))
 
-def format_metadata_number(val, form_type_format):
-    if val is None:
-        return None
-    if form_type_format is None:
-        return str(val)
-    if abs(val) > settings.THRESHOLD_FOR_EXPONENTIAL:
-        form_type_format = form_type_format.replace('f', 'e')
-    try:
-        return format(val, form_type_format)
-    except TypeError:
-        return str(val)
-
 def format_metadata_number_or_func(val, form_type_func, form_type_format):
     if val is None:
         return None
@@ -311,3 +314,12 @@ def format_metadata_number_or_func(val, form_type_func, form_type_format):
         return format(val, form_type_format)
     except TypeError:
         return str(val)
+
+def get_latest_git_commit_id():
+    try:
+        os.chdir(settings.PDS_OPUS_PATH)
+        # decode here to convert byte object to string
+        return subprocess.check_output(['git', 'log', '--format=%H', '-n', '1']).strip().decode('utf8')
+    except:
+        log.warning('Unable to get the latest git commit id')
+        return str(random.getrandbits(128))

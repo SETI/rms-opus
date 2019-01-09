@@ -52,7 +52,7 @@
 								{% endif %}
 								{% if p.tooltip %}
 		                        <i class="fa fa-info-circle" title="
-									{{ p.tooltip.definition }}
+									{{ p.get_tooltip }}
 								"></i>
 								{% endif %}
 							</a>
@@ -85,7 +85,7 @@
 						{% else %}
 							{{ p.label }}
 						{% endif %}
-						<i class="fa fa-info-circle" title="{{ p.tooltip.definition }}"></i>
+						<i class="fa fa-info-circle" title="{{ p.get_tooltip }}"></i>
 					</a>
 				</li>
 				{% endfor %}

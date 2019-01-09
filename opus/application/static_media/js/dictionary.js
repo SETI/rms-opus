@@ -19,8 +19,8 @@ function postContents(response, searchText) {
   var context = (response.context__description == undefined ? response.context: response.context__description);
   html += "<div class='context'>" + context + "</div></br>";
   html += "<div class='description'>" + definition + "</div></br>";
-  var import_date = (response.term__import_date == undefined ? response.import_date: response.term__import_date);
-  html += "<div class='importDate'>" + import_date + "</div></br>";
+  var timestamp = (response.term__timestamp == undefined ? response.timestamp: response.term__timestamp);
+  html += "<div class='importDate'>" + timestamp + "</div></br>";
   return html;
 }
 

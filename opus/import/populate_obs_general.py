@@ -6,6 +6,7 @@
 
 import json
 import os
+import traceback
 
 import julian
 import pdsfile
@@ -17,8 +18,8 @@ import opus_secrets
 
 # Ordering:
 #   target_name must come before target_class
-#   time_sec1 must come before time_sec2
-#   time_sec1/2 must come before planet_id
+#   time1 must come before 2
+#   time1/2 must come before planet_id
 #   planet_id must come before opus_id
 #   opus_id must come before right_asc[12] and declination[12]
 #   right_asc[12] and declination[12] must come before right_asc/d_right_asc
@@ -113,48 +114,6 @@ def populate_obs_general_target_class(**kwargs):
     target_class = TARGET_NAME_INFO[target_name][1]
     return target_class
 
-def populate_obs_general_time_sec1(**kwargs):
-    metadata = kwargs['metadata']
-    general_row = metadata['obs_general_row']
-    time1 = general_row['time1']
-
-    if time1 is None:
-        return None
-
-    try:
-        time1_sec = julian.tai_from_iso(time1)
-    except Exception as e:
-        import_util.log_nonrepeating_error(
-            f'Bad start time format "{time1}": {e}')
-        return None
-
-    return time1_sec
-
-def populate_obs_general_time_sec2(**kwargs):
-    metadata = kwargs['metadata']
-    general_row = metadata['obs_general_row']
-    time2 = general_row['time2']
-
-    if time2 is None:
-        return None
-
-    try:
-        time2_sec = julian.tai_from_iso(time2)
-    except Exception as e:
-        import_util.log_nonrepeating_error(
-            f'Bad stop time format "{time2}": {e}')
-        return None
-
-    time1_sec = general_row['time_sec1']
-
-    if time1_sec is not None and time2_sec < time1_sec:
-        time1 = general_row['time1']
-        import_util.log_warning(f'time1 ({time1}) and time2 ({time2}) are '+
-                                f'in the wrong order - setting to time1')
-        time2_sec = time1_sec
-
-    return time2_sec
-
 def populate_obs_general_preview_images(**kwargs):
     metadata = kwargs['metadata']
     general_row = metadata['obs_general_row']
@@ -175,6 +134,12 @@ def populate_obs_general_preview_images(**kwargs):
     except ValueError as e:
         import_util.log_nonrepeating_warning(
             f'ViewSet threw ValueError for "{file_spec}": {e}')
+        if pdsfile.PdsFile.LAST_EXC_INFO != (None, None, None):
+            trace_str = traceback.format_exception(
+                                            *pdsfile.PdsFile.LAST_EXC_INFO)
+            import_util.log_nonrepeating_warning(
+                'PdsFile had internal error: '+''.join(trace_str))
+            pdsfile.PdsFile.LAST_EXC_INFO = (None, None, None)
         viewset = None
 
     if viewset:
@@ -194,8 +159,13 @@ def populate_obs_general_preview_images(**kwargs):
                     f'Missing full_size browse/diagram image for "{file_spec}"')
     else:
         if impglobals.ARGUMENTS.import_fake_images:
+            import_util.log_nonrepeating_warning(
+                f'Faking browse/diagram images for "{file_spec}"')
             base_path = os.path.splitext(pdsf.logical_path)[0]
-            base_path = base_path.replace('volumes', 'previews')
+            if base_path.find('CIRS') != -1:
+                base_path = base_path.replace('volumes', 'diagrams/targets')
+            else:
+                base_path = base_path.replace('volumes', 'previews')
             base_path = 'holdings/'+base_path
             ext = 'jpg'
             if (base_path.find('VIMS') != -1 or

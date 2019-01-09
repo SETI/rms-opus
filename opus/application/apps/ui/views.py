@@ -13,6 +13,7 @@ from annoying.decorators import render_to
 from django.apps import apps
 from django.core.exceptions import FieldError, ObjectDoesNotExist
 from django.shortcuts import render
+from django.utils.decorators import method_decorator
 from django.views.generic import TemplateView
 
 from dictionary.models import *
@@ -30,7 +31,7 @@ import opus_support
 import logging
 log = logging.getLogger(__name__)
 
-
+@method_decorator(never_cache, name='dispatch')
 class main_site(TemplateView):
     template_name = "base.html"
 
@@ -39,6 +40,9 @@ class main_site(TemplateView):
         menu = _get_menu_labels('', 'search')
         context['default_columns'] = settings.DEFAULT_COLUMNS
         context['menu'] = menu['menu']
+        if settings.OPUS_FILE_VERSION == '':
+            settings.OPUS_FILE_VERSION = get_latest_git_commit_id()
+        context['OPUS_FILE_VERSION'] = settings.OPUS_FILE_VERSION
         return context
 
 def api_about(request):
@@ -173,7 +177,7 @@ def api_get_widget(request, **kwargs):
      form_type_format) = parse_form_type(param_info.form_type)
     param_qualified_name = param_info.param_qualified_name()
 
-    dictionary = param_info.get_tooltip()
+    tooltip = param_info.get_tooltip()
     form_vals = {slug: None}
     auto_id = True
     selections = {}
@@ -344,7 +348,7 @@ def api_get_widget(request, **kwargs):
     context = {
         "slug": slug,
         "label": label,
-        "dictionary": dictionary,
+        "tooltip": tooltip,
         "intro": intro,
         "form": form,
         "form_type": form_type,
@@ -571,7 +575,6 @@ def _get_menu_labels(request, labels_view):
                 all_param_info = list(all_param_info)
                 for k,param_info in enumerate(all_param_info):
                     param_info.slug = _adjust_slug_name_single_col_ranges(param_info)
-                    param_info.tooltip = param_info.get_tooltip()
                     all_param_info[k] = param_info
 
                 menu_data[d.table_name]['data'][sub_head] = all_param_info
@@ -581,7 +584,6 @@ def _get_menu_labels(request, labels_view):
             menu_data[d.table_name]['has_sub_heading'] = False
             for p in ParamInfo.objects.filter(**{filter:1, "category_name":d.table_name}):
                 p.slug = _adjust_slug_name_single_col_ranges(p)
-                p.tooltip = p.get_tooltip()
                 menu_data[d.table_name].setdefault('data', []).append(p)
 
     return {'menu': {'data': menu_data, 'divs': divs}}

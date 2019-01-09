@@ -6,3 +6,5 @@ python main_opus_import.py --do-it-all --import-fake-images COVIMS_0006
 python main_opus_import.py --do-it-all --import-fake-images GO_0017
 python main_opus_import.py --do-it-all --import-fake-images VGISS_6210,VGISS_8201
 python main_opus_import.py --do-it-all --import-fake-images HSTI1_1559,HSTI1_2003
+python main_opus_import.py --import-dictionary
+(cd ../application; python manage.py migrate)

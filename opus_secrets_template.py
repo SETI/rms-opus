@@ -27,9 +27,12 @@ DB_PASSWORD = '<DB_PASSWORD>'
 # volumes, calibrated, metadata, previews, and diagrams.
 PDS_DATA_DIR = '<HOLDING_DIR>'
 
+# The directory where pds-opus lives.
+PDS_OPUS_PATH = '<PATH>'
+
 # The directory where the pds-opus library lives. This should normally be
 # .../pds-opus/lib
-PDS_OPUS_LIB_PATH = '<PATH>'
+PDS_OPUS_LIB_PATH = os.path.join(PDS_OPUS_PATH, 'lib')
 
 # The directory where the pds-webtools repo lives. This should
 # normally be .../pds-webtools
@@ -75,6 +78,12 @@ OPUS_LOG_CONSOLE_LEVEL = 'INFO'
 OPUS_LOG_DJANGO_LEVEL = 'WARN'
 OPUS_LOG_API_CALLS = False
 
+# Allow faking of slow network connections
+# None = Don't do anything different
+# Positive = Delay this exact number of milliseconds
+# Negative = Delay a random amount between 0 and abs(delay)
+OPUS_FAKE_API_DELAYS = None
+
 
 ##############################
 ### NEEDED FOR OPUS IMPORT ###
@@ -93,12 +102,8 @@ IMPORT_DEBUG_LOG_FILE = os.path.join(IMPORT_LOGFILE_DIR, 'opus_import_debug.log'
 ### NEEDED FOR THE DICTIONARY APPLICATION ###
 #############################################
 
-# The main namespace in which dictionary tables live.
-# For MySQL this is the database name.
-# For PostgreSQL this is the schema name.
-# Unless something really weird is changed, this should be the same as
-# OPUS_SCHEMA_NAME
-DICTIONARY_SCHEMA_NAME = OPUS_SCHEMA_NAME
+# The prefix URL to look up individual terms in the dictionary.
+DICTIONARY_TERM_URL = '<URL>'
 
 
 ####################################
@@ -106,7 +111,13 @@ DICTIONARY_SCHEMA_NAME = OPUS_SCHEMA_NAME
 ####################################
 
 # The pdsdd.full file including path
-DICTIONARY_PDSDD_FILE = '<FILE>'
+DICTIONARY_PDSDD_FILE = os.path.join(PDS_OPUS_PATH,
+                                     'dictionary/pdsdd.full')
+
+# The contexts.csv file including path
+DICTIONARY_CONTEXTS_FILE = os.path.join(PDS_OPUS_PATH,
+                                        'dictionary/contexts.csv')
 
 # The location of the OPUS .json table_schema files
-DICTIONARY_JSON_SCHEMA_PATH = '<PATH>'
+DICTIONARY_JSON_SCHEMA_PATH = os.path.join(PDS_OPUS_PATH,
+                                           'opus/import/table_schemas')
