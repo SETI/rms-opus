@@ -215,8 +215,8 @@ def api_string_search_choices(request, slug):
                  str(limit))
     cached_val = cache.get(cache_key)
     if cached_val is not None:
+        cached_val['reqno'] = reqno
         ret = json_response(cached_val)
-        ret['reqno'] = reqno
         exit_api_call(api_code, ret)
         return ret
 
