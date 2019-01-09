@@ -318,7 +318,7 @@ def get_pds_preview_images(opus_id_list, preview_jsons, sizes):
                                     .preview_images)
                 preview_json = json.loads(preview_json_str)
             except ObjectDoesNotExist:
-                log.error('get_pds_preview_images: Failed to find opus_ids "%s" '
+                log.error('get_pds_preview_images: Failed to find opus_id "%s" '
                           +'in obs_general', opus_id)
         viewset = None
         if preview_json:

@@ -26,8 +26,6 @@ settings.CACHE_BACKEND = 'dummy:///'
 # url(r'^__api/stringsearchchoices/(?P<slug>\w+).json$', api_string_search_choices),
 
 class ApiSearchTests(TestCase):
-    GO_LIVE = False
-    LIVE_TARGET = "production"
 
     # disable error logging and trace output before test
     def setUp(self):
@@ -47,11 +45,11 @@ class ApiSearchTests(TestCase):
         logging.disable(logging.NOTSET)
 
     def _get_response(self, url):
-        if self.GO_LIVE:
+        if settings.TEST_ApiSearchTests_GO_LIVE:
             client = requests.Session()
         else:
             client = RequestsClient()
-        if self.LIVE_TARGET == "production":
+        if settings.TEST_ApiSearchTests_LIVE_TARGET == "production":
             url = "https://tools.pds-rings.seti.org" + url
         else:
             url = "http://dev.pds-rings.seti.org" + url
@@ -71,10 +69,13 @@ class ApiSearchTests(TestCase):
             del jdata['versions']
         if 'versions' in expected:
             del expected['versions']
-        if 'reqno' in jdata:
-            del jdata['reqno']
-        if 'reqno' in expected:
-            del expected['reqno']
+        if 'reqno' not in expected:
+            if 'reqno' in jdata:
+                del jdata['reqno']
+        if 'full_search' not in expected:
+            if 'full_search' in jdata:
+                del jdata['full_search']
+
         print('Got:')
         print(str(jdata))
         print('Expected:')
@@ -92,10 +93,12 @@ class ApiSearchTests(TestCase):
             del jdata['versions']
         if 'versions' in expected:
             del expected['versions']
-        if 'reqno' in jdata:
-            del jdata['reqno']
-        if 'reqno' in expected:
-            del expected['reqno']
+        if 'reqno' not in expected:
+            if 'reqno' in jdata:
+                del jdata['reqno']
+        if 'full_search' not in expected:
+            if 'full_search' in jdata:
+                del jdata['full_search']
         new_choices = []
         for choice in jdata['choices']:
             if choice in expected['choices']:
@@ -306,32 +309,32 @@ class ApiSearchTests(TestCase):
 
     def test__api_normalizeinput_time1(self):
         "/api/normalizeinput: time 2012-01-04T01:02:03.123"
-        url = '/opus/__api/normalizeinput.json?timesec1=2012-01-04T01:02:03.123'
-        expected = {"timesec1": "2012-01-04T01:02:03.123"}
+        url = '/opus/__api/normalizeinput.json?time1=2012-01-04T01:02:03.123'
+        expected = {"time1": "2012-01-04T01:02:03.123"}
         self._run_json_equal(url, expected)
 
     def test__api_normalizeinput_time2(self):
         "/api/normalizeinput: time 2012-01-04T01:02:03"
-        url = '/opus/__api/normalizeinput.json?timesec1=2012-01-04T01:02:03'
-        expected = {"timesec1": "2012-01-04T01:02:03.000"}
+        url = '/opus/__api/normalizeinput.json?time1=2012-01-04T01:02:03'
+        expected = {"time1": "2012-01-04T01:02:03.000"}
         self._run_json_equal(url, expected)
 
     def test__api_normalizeinput_time3(self):
         "/api/normalizeinput: time 2012-01-04"
-        url = '/opus/__api/normalizeinput.json?timesec1=2012-01-04'
-        expected = {"timesec1": "2012-01-04T00:00:00.000"}
+        url = '/opus/__api/normalizeinput.json?time1=2012-01-04'
+        expected = {"time1": "2012-01-04T00:00:00.000"}
         self._run_json_equal(url, expected)
 
     def test__api_normalizeinput_time4(self):
         "/api/normalizeinput: time July 4 2001"
-        url = '/opus/__api/normalizeinput.json?timesec1=July+4+2001'
-        expected = {"timesec1": "2001-07-04T00:00:00.000"}
+        url = '/opus/__api/normalizeinput.json?time1=July+4+2001'
+        expected = {"time1": "2001-07-04T00:00:00.000"}
         self._run_json_equal(url, expected)
 
     def test__api_normalizeinput_time5(self):
         "/api/normalizeinput: time July 4 2001 6:05"
-        url = '/opus/__api/normalizeinput.json?timesec1=July+4+2001+6:05'
-        expected = {"timesec1": "2001-07-04T06:05:00.000"}
+        url = '/opus/__api/normalizeinput.json?time1=July+4+2001+6:05'
+        expected = {"time1": "2001-07-04T06:05:00.000"}
         self._run_json_equal(url, expected)
 
     def test__api_normalizeinput_cassini_orbit_int1(self):
@@ -426,7 +429,7 @@ class ApiSearchTests(TestCase):
         "/api/stringsearchchoices: volumeid none"
         url = '/opus/__api/stringsearchchoices/volumeid.json?volumeid=BAD_VOLUME'
         expected = {'choices': [],
-                    'full_search': False,
+                    # 'full_search': False,
                     'truncated_results': False}
         self._run_json_equal(url, expected)
 
@@ -434,7 +437,7 @@ class ApiSearchTests(TestCase):
         "/api/stringsearchchoices: volumeid GO_0017"
         url = '/opus/__api/stringsearchchoices/volumeid.json?volumeid=GO_0017'
         expected = {'choices': ['<b>GO_0017</b>'],
-                    'full_search': False,
+                    # 'full_search': False,
                     'truncated_results': False}
         self._run_json_equal(url, expected)
 
@@ -450,7 +453,7 @@ class ApiSearchTests(TestCase):
         "/api/stringsearchchoices: volumeid O_0017"
         url = '/opus/__api/stringsearchchoices/volumeid.json?volumeid=O_0017'
         expected = {'choices': ['G<b>O_0017</b>'],
-                    'full_search': False,
+                    # 'full_search': False,
                     'truncated_results': False}
         self._run_json_equal(url, expected)
 
@@ -458,7 +461,7 @@ class ApiSearchTests(TestCase):
         "/api/stringsearchchoices: volumeid COISS_2002"
         url = '/opus/__api/stringsearchchoices/volumeid.json?volumeid=COISS_2002'
         expected = {'choices': ['<b>COISS_2002</b>'],
-                    'full_search': False,
+                    # 'full_search': False,
                     'truncated_results': False}
         self._run_json_equal(url, expected)
 
@@ -617,20 +620,20 @@ class ApiSearchTests(TestCase):
     def test__api_stringsearchchoices_volumeid_002_COISS(self):
         "/api/stringsearchchoices: volumeid 002 instrumentid COISS"
         # The time constraint eliminates COISS_1002 as a result
-        url = '/opus/__api/stringsearchchoices/volumeid.json?volumeid=002&instrument=Cassini+ISS&timesec1=2004-02-06T02:07:06.418'
+        url = '/opus/__api/stringsearchchoices/volumeid.json?volumeid=002&instrument=Cassini+ISS&time1=2004-02-06T02:07:06.418'
         expected = {'choices': ['COISS_2<b>002</b>'],
-                    'full_search': False,
+                    # 'full_search': False,
                     'truncated_results': False}
-        self._run_json_equal(url, expected)
+        self._run_stringsearchchoices_subset(url, expected)
 
     def test__api_stringsearchchoices_volumeid_002_COUVIS(self):
         "/api/stringsearchchoices: volumeid 002 instrumentid COUVIS"
         # The time constraint eliminates COUVIS_002x as results
-        url = '/opus/__api/stringsearchchoices/volumeid.json?volumeid=002&instrument=Cassini+UVIS&timesec2=2007-04-05T03:56:00.537'
+        url = '/opus/__api/stringsearchchoices/volumeid.json?volumeid=002&instrument=Cassini+UVIS&time2=2007-04-05T03:56:00.537'
         expected = {'choices': ['COUVIS_0<b>002</b>'],
-                    'full_search': False,
+                    # 'full_search': False,
                     'truncated_results': False}
-        self._run_json_equal(url, expected)
+        self._run_stringsearchchoices_subset(url, expected)
 
     def test__api_stringsearchchoices_volumeid_002_COISS_bigcache(self):
         "/api/stringsearchchoices: volumeid 002 instrumentid COISS bigcache"
@@ -668,3 +671,46 @@ class ApiSearchTests(TestCase):
                     'full_search': True,
                     'truncated_results': False}
         self._run_stringsearchchoices_subset(url, expected)
+
+    def test__api_stringsearchchoices_volumeid_O_0017_cache(self):
+        "/api/stringsearchchoices: volumeid O_0017 cached reqno"
+        # Make sure that reqno isn't cached along with the rest of the result
+        url = '/opus/__api/stringsearchchoices/volumeid.json?volumeid=O_0017&reqno=5'
+        expected = {'choices': ['G<b>O_0017</b>'],
+                    # 'full_search': False,
+                    'truncated_results': False,
+                    'reqno': 5}
+        self._run_json_equal(url, expected)
+        url = '/opus/__api/stringsearchchoices/volumeid.json?volumeid=O_0017&reqno=100'
+        expected = {'choices': ['G<b>O_0017</b>'],
+                    # 'full_search': False,
+                    'truncated_results': False,
+                    'reqno': 100}
+        self._run_json_equal(url, expected)
+
+    def test__api_stringsearchchoices_underscore(self):
+        "/api/stringsearchchoices: underscore"
+        # Make sure that reqno isn't cached along with the rest of the result
+        url = '/opus/__api/stringsearchchoices/volumeid.json?volumeid=____'
+        expected = {'choices': [],
+                    # 'full_search': False,
+                    'truncated_results': False}
+        self._run_json_equal(url, expected)
+
+    def test__api_stringsearchchoices_percent(self):
+        "/api/stringsearchchoices: percent"
+        # Make sure that reqno isn't cached along with the rest of the result
+        url = '/opus/__api/stringsearchchoices/volumeid.json?volumeid=%%'
+        expected = {'choices': [],
+                    # 'full_search': False,
+                    'truncated_results': False}
+        self._run_json_equal(url, expected)
+
+    def test__api_stringsearchchoices_lower_case(self):
+        "/api/stringsearchchoices: lower_case"
+        # Make sure that reqno isn't cached along with the rest of the result
+        url = '/opus/__api/stringsearchchoices/volumeid.json?volumeid=coiss_2002'
+        expected = {'choices': ['<b>COISS_2002</b>'],
+                    # 'full_search': False,
+                    'truncated_results': False}
+        self._run_json_equal(url, expected)
