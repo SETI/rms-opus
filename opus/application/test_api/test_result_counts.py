@@ -16,8 +16,6 @@ import settings
 ##################
 class APIResultCountsTests(TestCase):
     filename = "test_api/csv/result_counts.csv"
-    GO_LIVE = False
-    LIVE_TARGET = "production"
 
     # disable error logging and trace output before test
     def setUp(self):
@@ -42,13 +40,13 @@ class APIResultCountsTests(TestCase):
                ]
            }
         """
-        api_public = ApiForResultCounts(target=self.LIVE_TARGET)
-        if self.GO_LIVE:
+        api_public = ApiForResultCounts(target=settings.TEST_ApiResultCountsTests_LIVE_TARGET)
+        if settings.TEST_ApiResultCountsTests_GO_LIVE:
             client = requests.Session()
         else:
             client = RequestsClient()
 
-        if self.GO_LIVE or settings.TEST_RESULT_COUNTS_AGAINST_INTERNAL_DB:
+        if settings.TEST_ApiResultCountsTests_GO_LIVE or settings.TEST_RESULT_COUNTS_AGAINST_INTERNAL_DB:
             error_flag = []
             count = 0
             with open(self.filename, "r") as csvfile:
