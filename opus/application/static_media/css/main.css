@@ -729,6 +729,10 @@ ul.ui-autocomplete {
     list-style: none;
 }
 
+ul.ui-autocomplete li a {
+    text-decoration: none;
+}
+
 .list-header, .list-footer {
     background-color: #F9F6F6;
 }
