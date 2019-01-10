@@ -161,7 +161,7 @@ var o_widgets = {
                 $("input.RANGE").addClass("search_input_original");
                 $("#sidebar").removeClass("search_overlay");
                 // .text is here in case the url is not changed but the input value is set to invalid and valid again
-                $("#result_count").text(opus.result_count);
+                $("#result_count").text(o_utils.addCommas(opus.result_count));
             }
             o_hash.updateHash(opus.allInputsValid);
             o_widgets.updateWidgetCookies();
@@ -584,6 +584,85 @@ var o_widgets = {
                     });
                 }
 
+             }
+
+             // if we have a string input widget, autocomplete init for string input
+             let stringInputDropDown = $(`input[name="${slug}"].STRING`).autocomplete({
+                 minLength: 1,
+                 source: function(request, response) {
+                     let currentValue = request.term;
+                     let values = [];
+
+                     opus.lastRequestNo++;
+                     o_search.slugReqno[slug] = opus.lastRequestNo;
+
+                     values.push(currentValue)
+                     opus.selections[slug] = values;
+                     let newHash = o_hash.updateHash(false);
+                     let regexForShortHash = /(.*)&view/;
+
+                     if(newHash.match(regexForShortHash)) {
+                         newHash = newHash.match(regexForShortHash)[1];
+                     }
+                     let url = `/opus/__api/stringsearchchoices/${slug}.json?` + newHash + "&reqno=" + opus.lastRequestNo;
+                     $.getJSON(url, function(data) {
+                         // if a newer input is there, re-call api with new input
+                         if(data["reqno"] < o_search.slugReqno[slug]) {
+                             return;
+                         }
+                         // dynamically update drop down lists
+                         if(data["full_search"]) {
+                             o_search.searchMsg = "Results from entire database, not current search constraints"
+                         } else {
+                             o_search.searchMsg = "Results from current search constraints"
+                         }
+
+                         let hintsOfString = data["choices"];
+                         o_search.truncatedResults = data["truncated_results"];
+                         response(hintsOfString);
+                     });
+                 },
+                 focus: function(focusEvent, ui) {
+                     return false;
+                 },
+                 select: function(selectEvent, ui) {
+                     let displayValue = o_search.extractHtmlContent(ui.item.label);
+                     $(`input[name="${slug}"]`).val(displayValue);
+                     // search would be performed right away if an item in the list is selected
+                     opus.selections[slug] = [displayValue];
+                     o_hash.updateHash();
+                     return false;
+                 },
+             })
+             .keyup(function(keyupEvent) {
+                 // Make sure autocomplete menu is hide whenever enter is pressed even if value is not changed
+                 if(keyupEvent.which === 13) {
+                     $(`input[name="${slug}"]`).autocomplete("close");
+                 }
+             })
+             .data( "ui-autocomplete" );
+
+             if(stringInputDropDown) {
+                 // Add header and footer for dropdown list
+                 stringInputDropDown._renderMenu = function(ul, items) {
+                   let self = this;
+                   $.each(items, function(index, item) {
+                     self._renderItem(ul, item );
+                   });
+                   ul.prepend(`<li><div class="list-header">${o_search.searchMsg}</div></li>`);
+                   if(o_search.truncatedResults) {
+                     ul.append(`<li><div class="list-footer">${o_search.truncatedResultsMsg}</div></li>`);
+                   }
+                 };
+                 // Customized dropdown list item
+                 stringInputDropDown._renderItem = function(ul, item) {
+                   return $( "<li>" )
+                   .data( "ui-autocomplete-item", item )
+                   .attr( "data-value", item.value )
+                   // need to wrap with <a> tag because of jquery-ui 1.10
+                   .append("<a>" + item.label + "</a>")
+                   .appendTo(ul);
+                 };
              }
 
              // add the spans that hold the hinting
