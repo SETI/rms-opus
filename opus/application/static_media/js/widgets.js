@@ -161,7 +161,7 @@ var o_widgets = {
                 $("input.RANGE").addClass("search_input_original");
                 $("#sidebar").removeClass("search_overlay");
                 // .text is here in case the url is not changed but the input value is set to invalid and valid again
-                $("#result_count").text(opus.result_count);
+                $("#result_count").text(o_utils.addCommas(opus.result_count));
             }
             o_hash.updateHash(opus.allInputsValid);
             o_widgets.updateWidgetCookies();
@@ -604,7 +604,6 @@ var o_widgets = {
                      if(newHash.match(regexForShortHash)) {
                          newHash = newHash.match(regexForShortHash)[1];
                      }
-
                      let url = `/opus/__api/stringsearchchoices/${slug}.json?` + newHash + "&reqno=" + opus.lastRequestNo;
                      $.getJSON(url, function(data) {
                          // if a newer input is there, re-call api with new input

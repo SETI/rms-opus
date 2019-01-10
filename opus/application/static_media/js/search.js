@@ -84,7 +84,7 @@ var o_search = {
                 $("input.RANGE").addClass("search_input_original");
                 $("#sidebar").removeClass("search_overlay");
                 // .text is here in case the url is not changed but the input value is set to invalid and valid again
-                $("#result_count").text(opus.result_count);
+                $("#result_count").text(o_utils.addCommas(opus.result_count));
             }
         });
     },
