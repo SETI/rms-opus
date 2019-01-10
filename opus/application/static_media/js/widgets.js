@@ -587,7 +587,7 @@ var o_widgets = {
              }
 
              // if we have a string input widget, autocomplete init for string input
-             let stringInputDropDown = $("input.STRING").autocomplete({
+             let stringInputDropDown = $(`input[name="${slug}"].STRING`).autocomplete({
                  minLength: 1,
                  source: function(request, response) {
                      let currentValue = request.term;
