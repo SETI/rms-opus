@@ -604,6 +604,10 @@ var o_widgets = {
                      if(newHash.match(regexForShortHash)) {
                          newHash = newHash.match(regexForShortHash)[1];
                      }
+
+                     if(!opus.allInputsValid) {
+                        return;
+                     }
                      let url = `/opus/__api/stringsearchchoices/${slug}.json?` + newHash + "&reqno=" + opus.lastRequestNo;
                      $.getJSON(url, function(data) {
                          // if a newer input is there, re-call api with new input
