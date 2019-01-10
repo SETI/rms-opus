@@ -523,7 +523,7 @@ var o_browse = {
                 if (opus.prefs.view == "browse") {
                     html +=    '<div class="tools" data-id="'+opusId+'">';
                     html +=       '<a href="#" data-icon="info"><i class="fa fa-info fa-xs" aria-hidden="true"></i></a>';
-                    html +=       '<a href="#" data-icon="check"><i class="fa fa-check fa-xs" aria-hidden="true"></i></a>';
+                    html +=       '<a href="#" data-icon="check"><i class="fas fa-cart-plus fa-xs" aria-hidden="true"></i></a>';
                     html +=       '<a href="#" data-icon="resize"><i class="fas fa-expand-arrows-alt fa-xs" aria-hidden="true"></i></a>';
                     html +=    '</div>';
                 } else {
