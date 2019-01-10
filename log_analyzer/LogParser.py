@@ -4,13 +4,13 @@ import itertools
 import os
 import socket
 import textwrap
-from collections import defaultdict, deque, Counter
+from collections import defaultdict, deque
 from heapq import heapify, heappop, heappush
 from ipaddress import IPv4Address
 from typing import List, Iterator, Dict, NamedTuple, Optional, Deque, Iterable, IO, Any
 
 import django
-from django import template
+from django.template.loader import get_template
 
 import Slug
 from LogEntry import LogEntry
@@ -27,101 +27,6 @@ class _LiveSession(NamedTuple):
 
     def with_timeout(self, timeout: datetime.datetime) -> '_LiveSession':
         return self._replace(timeout=timeout)
-
-
-SUMMARY_TEMPLATE = """
-<!doctype html>                                                                                                                
-<html lang="en">                                                                                                               
-  <head>                                                                                                                       
-    <!-- Required meta tags -->                                                                                                
-    <meta charset="utf-8">                                                                                                     
-    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">                                     
-                                                                                                                               
-    <!-- Bootstrap CSS -->                                                                                                     
-    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css" integrity="sha384-M\
-Cw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO" crossorigin="anonymous">                                      
-                                                                                                                               
-    <!-- jQuery first, then Popper.js, then Bootstrap JS -->                                                                   
-    <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smX\
-Kp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>  
-  </head>
-<body>                                                                                                                                                                                                
-                                                                                                                               
-{% spaceless %}
-
-<div class="container-fluid">
-<div class="row">
-<div class="col-sm-3">
-{% for host_info in host_infos %} 
-    {{ host_info.hostname }} ({{ host_info.sessions | length }} session{{host_info.sessions | length | pluralize}}, {{ host_info.total_time }})
-    <ul>
-        {% for session in host_info.sessions %}
-            <li><a href="#" class=SessionLink id="L{{ session.id }}">{{ session.entries.0.log_entry.time_string }} lasting {{ session.time_delta }}</a></li>
-        {% endfor %}
-     </ul>
-{% endfor %}
-    
-</div>
-<div class="col-sm-9">
-{% for host_info in host_infos %} 
-    {% for session in host_info.sessions %}
-        <div id="S{{ session.id }}" class="SessionInfo" style="display:none;">
-        <b>{{ session.entries.0.log_entry.time_string }} lasting {{ session.time_delta }}</b><br>
-        <table>
-        {% for entry in session.entries %}
-            {% for line in entry.data %}
-                <tr>
-                {% if forloop.first %}
-                    <td><a href="{{api_host_url}}{{entry.log_entry.url.geturl | safe}}" target="_blank">{{entry.start_time_offset}}</a></td>
-                {% else %}
-                    <td>&nbsp;</td>
-                {% endif %}
-                <td>{{ line }}</td>
-                 </tr>
-            {% endfor %}
-        {% endfor %} 
-        </table>
-        </div>
-    {% endfor %}
-{% endfor %}
-</div>
-</div>
-
-
-{% endspaceless %}
-
-<script>
-var displayedItem = null;
-
-function setUpLinks() {
-    var items = document.getElementsByClassName('SessionLink');
-    Array.prototype.forEach.call(items, function(element, index) {
-        element.onclick = sessionClick
-    })
-}
-
-function sessionClick(event) {
-    if (displayedItem) {
-        document.getElementById(displayedItem).style.display = "none";
-    }
-    var target_id = 'S' + event.target.id.substr(1)
-    document.getElementById(target_id).style.display = "block";
-    displayedItem = target_id;
-    console.log(event);
-    return false;
-}
-
-setUpLinks()
-
-</script>                                                                                                                     \
-
-</body>                                                                                                                        
-</html>                                                                                                                        
-"""
-
-
-
-
 
 
 class LogParser:
@@ -192,7 +97,6 @@ class LogParser:
             if session_log_entries:
                 heappush(heap, (session_log_entries[0].time, session_host_ip, session_log_entries))
 
-
     def run_summary(self, log_entries: List[LogEntry]) -> None:
         entries_by_host_ip = self.__group_log_entries_by_host_ip(log_entries)
         id_counter = itertools.count(1000000)
@@ -213,8 +117,8 @@ class LogParser:
 
                 session_start_time = entry.time
 
-                def create_session_entry(log_entry:LogEntry, entry_info: List[str]) -> Dict[str, Any]:
-                    start_time_offset  = entry.time - session_start_time
+                def create_session_entry(log_entry: LogEntry, entry_info: List[str]) -> Dict[str, Any]:
+                    start_time_offset = entry.time - session_start_time
                     return dict(log_entry=log_entry, start_time_offset=start_time_offset, data=entry_info)
 
                 current_session_entries = [create_session_entry(entry, entry_info)]
@@ -241,8 +145,8 @@ class LogParser:
         os.environ.setdefault("DJANGO_SETTINGS_MODULE", "DjangoSettings")
         django.setup()
 
-        summary_template = template.Template(SUMMARY_TEMPLATE)
-        summary_context = template.Context({'host_infos': host_infos, 'api_host_url': self._api_host_url})
+        summary_template = get_template('summary')
+        summary_context = {'host_infos': host_infos, 'api_host_url': self._api_host_url}
         print(summary_template.render(summary_context), file=self._output)
 
     def show_slugs(self, log_entries: List[LogEntry]) -> None:

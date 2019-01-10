@@ -12,7 +12,7 @@ DEFAULT_FIELDS_PREFIX = 'https://tools.pds-rings.seti.org'
 
 
 def main(arguments: Optional[List[str]] = None) -> None:
-    def parse_ignored_ips(x:str) -> List[ipaddress.IPv4Network]:
+    def parse_ignored_ips(x: str) -> List[ipaddress.IPv4Network]:
         return [ipaddress.ip_network(address, strict=False) for address in x.split(',')]
 
     parser = argparse.ArgumentParser(description='Process log files.')
@@ -37,7 +37,6 @@ def main(arguments: Optional[List[str]] = None) -> None:
     parser.add_argument('--session-timeout', default=60, type=int, metavar="minutes", dest='session_timeout')
 
     parser.add_argument('--out', '-o', type=argparse.FileType('w'), default=sys.stdout)
-
 
     # TODO(fy): Temporary hack for when I don't have internet access
     parser.add_argument('--xxlocal_slugs', action="store_const", const="file:///users/fy/SETI/pds-opus",
