@@ -183,8 +183,7 @@ var o_browse = {
                   break;
 
               case "check":   // add to collection
-                  var action = o_browse.toggleBrowseInCollectionStyle(opusId);
-                  o_collections.editCollection(opusId, action);
+                  o_collections.toggleInCollection(opusId);
                   break;
 
               case "resize":  // expand, same as click on image
