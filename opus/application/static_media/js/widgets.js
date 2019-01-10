@@ -153,6 +153,9 @@ var o_widgets = {
         delete opus.extras['z-'+slug_no_num];
 
         o_search.normalizedApiCall().then(function(normalizedData) {
+            if (normalizedData["reqno"] < o_search.slugReqno[slug]) {
+                return;
+            }
             o_search.validateRangeInput(normalizedData);
 
             if(opus.allInputsValid) {
@@ -604,7 +607,7 @@ var o_widgets = {
                      if(newHash.match(regexForShortHash)) {
                          newHash = newHash.match(regexForShortHash)[1];
                      }
-
+                     // avoid calling api when some inputs are not valid
                      if(!opus.allInputsValid) {
                         return;
                      }

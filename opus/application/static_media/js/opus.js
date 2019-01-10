@@ -284,6 +284,12 @@ var opus = {
         o_search.normalizedApiCall().then(opus.getResultCount).then(opus.updatePageAfterResultCountAPI);
     },
     getResultCount: function(normalizedData) {
+        // console.log("NORM RETURN REQNO: " + normalizedData["reqno"]);
+        // console.log("opus slug dict REQNO: " + o_search.slugReqno[slug]);
+        // we need this to avoid unecessary result count api call
+        if (normalizedData["reqno"] < o_search.slugReqno[slug]) {
+            return;
+        }
         o_search.validateRangeInput(normalizedData, true);
 
         // query string has changed

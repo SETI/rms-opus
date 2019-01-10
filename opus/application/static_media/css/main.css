@@ -699,7 +699,9 @@ input[type="text"].search_input_valid {
 }
 
 input[type="text"].search_input_invalid {
-    border: 3px solid #F6AFAF;
+    /* border: 3px solid #F5F53D; */
+    border: 3px solid #FFD700;
+    /* border: 3px solid #FFFF00; */
     background-color: #EEECEC;
     margin: -2px;
 }

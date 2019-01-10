@@ -17,8 +17,9 @@ var o_search = {
             newHash = newHash.match(regexForShortHash)[1];
         }
 
-        opus.lastRequestNo++;
-        let url = "/opus/__api/normalizeinput.json?" + newHash + "&reqno=" + opus.lastRequestNo;
+        opus.lastNormalizeRequestNo++;
+        o_search.slugReqno[slug] = opus.lastNormalizeRequestNo;
+        let url = "/opus/__api/normalizeinput.json?" + newHash + "&reqno=" + opus.lastNormalizeRequestNo;
         return $.getJSON(url);
     },
     validateRangeInput: function(data, removeSpinner=false) {
