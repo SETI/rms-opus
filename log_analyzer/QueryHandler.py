@@ -247,34 +247,36 @@ class QueryHandler:
     def __slug_value_change(self, name: str, old_value: str, new_value: str, result: List[str]) -> None:
         old_value_set = set(old_value.split(','))
         new_value_set = set(new_value.split(','))
+        if old_value_set == new_value_set:
+            return
         if self._uses_html:
-            return self.__slug_value_change_experimental_html(name, old_value, new_value, result)
-        if old_value_set.intersection(new_value_set):
+            change_list: List[str] = []
+            for value in sorted(old_value_set.union(new_value_set)):
+                formatted_value = self.__format_search_value(value)
+                if value not in old_value_set:
+                    change_list.append(format_html('<mark><ins>{}</ins><mark>', formatted_value))
+                elif value not in new_value_set:
+                    change_list.append(format_html('<mark><del>{}</del></mark>', formatted_value))
+                else:
+                    change_list.append(formatted_value)
+            joined_values = format_html_join(', ', '{}', ((x,) for x in change_list))
+            result.append(format_html('Change Search: &quot;{}&quot; = {}', name, joined_values))
+        elif old_value_set.intersection(new_value_set):
             change_list: List[Tuple[str, str]] = []
             for value in sorted(old_value_set.union(new_value_set)):
-                if value in new_value_set and value not in old_value_set:
+                if value not in old_value_set:
                     change_list.append(('+', self.__format_search_value(value)))
-                elif value in old_value_set and value not in new_value_set:
+                elif value not in new_value_set:
                     change_list.append(('-', self.__format_search_value(value)))
-            if change_list:
-                if self._uses_html:
-                    joined_change_list = format_html_join(',', '{}{}', ((a, b) for (a, b) in change_list))
-                    result.append(format_html('Change Search &quot;{}&quot; = {}', name, joined_change_list))
-                else:
-                    joined_change_list = ', '.join(f'{a}{b}' for (a, b) in change_list)
-                    result.append(f'Change Search: "{name}" = {joined_change_list}')
+            assert change_list
+            joined_change_list = ', '.join(f'{a}{b}' for (a, b) in change_list)
+            result.append(f'Change Search: "{name}" = {joined_change_list}')
         else:
             formatted_old_values = [self.__format_search_value(x) for x in sorted(old_value_set)]
             formatted_new_values = [self.__format_search_value(x) for x in sorted(new_value_set)]
-            if self._uses_html:
-                joined_old_values = format_html_join(', ', '{}', ((x,) for x in formatted_old_values))
-                joined_new_values = format_html_join(', ', '{}', ((x,) for x in formatted_new_values))
-                result.append(format_html('XXXChange Search: &quot;{}&quot; = {} &rarr; {}',
-                                          name, joined_old_values, joined_new_values))
-            else:
-                joined_old_values = ', '.join(formatted_old_values)
-                joined_new_values = ', '.join(formatted_new_values)
-                result.append(f'Change Search: "{name}" = {joined_old_values} -> {joined_new_values}')
+            joined_old_values = ', '.join(formatted_old_values)
+            joined_new_values = ', '.join(formatted_new_values)
+            result.append(f'Change Search: "{name}" = {joined_old_values} -> {joined_new_values}')
 
     def __slug_value_change_experimental_html(self, name: str, old_value: str, new_value: str,
                                               result: List[str]) -> None:
@@ -282,17 +284,6 @@ class QueryHandler:
         new_value_set = set(new_value.split(','))
         if old_value_set == new_value_set:
             return
-        change_list: List[str] = []
-        for value in sorted(old_value_set.union(new_value_set)):
-            formatted_value = self.__format_search_value(value)
-            if value in new_value_set and value not in old_value_set:
-                change_list.append(format_html('<mark><ins>{}</ins><mark>', formatted_value))
-            elif value in old_value_set and value not in new_value_set:
-                change_list.append(format_html('<mark><del>{}</del></mark>', formatted_value))
-            else:
-                change_list.append(formatted_value)
-        joined_values = format_html_join(', ', '{}', ((x,) for x in change_list))
-        result.append(format_html('Change Search: &quot;{}&quot; = {}', name, joined_values))
 
     @staticmethod
     def get_column_slug_info(slugs: List[str], slug_map: Slug.ToInfoMap, record: bool = False) -> ColumnSlugInfo:
