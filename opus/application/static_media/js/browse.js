@@ -271,6 +271,35 @@ var o_browse = {
             return false;
         });
 
+        $(document).on("keydown",function(e) {
+            if ($("#galleryView").hasClass("show")) {
+                /*  Catch the right/left arrow while in the modal
+                    Up: 38
+                    Down: 40
+                    Right: 39
+                    Left: 37 */
+                let opusId;
+                // the || is for cross-browser support; firefox does not support keyCode
+                switch (e.which || e.keyCode) {
+                    case 27:  // esc - close modal
+                        $("#galleryView").modal('hide')
+                        return;
+                        break;
+                    case 39:  // next
+                        opusId = $("#galleryView").find(".next").data("id");
+                        break;
+                    case 37:  // prev
+                        opusId = $("#galleryView").find(".prev").data("id");
+                        break;
+                }
+                if (opusId) {
+                    o_browse.updateGalleryView(opusId);
+                }
+            } else if ($("#columnChooser").hasClass("show") && e.keyCode === 27) {
+                $("#columnChooser").modal('hide')
+            }
+            // don't return false here or it will snatch all the user input!
+        });
     }, // end browse behaviors
 
     checkScroll: function() {
