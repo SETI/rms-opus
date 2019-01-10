@@ -49,10 +49,10 @@ SessionInfo.td {
 <div class="row">
 <div class="col-sm-3" id="left">
 {% for host_info in host_infos %}
-    {{ host_info.hostname }} ({{ host_info.sessions | length }} session{{host_info.sessions | length | pluralize}}, {{ host_info.total_time }})
+    {{ host_info.hostname }} ({{ host_info.sessions | length }}x, {{ host_info.total_time }})
     <ul>
         {% for session in host_info.sessions %}
-            <li><a href="#" class=SessionLink data-id="{{ session.id }}">{{ session.entries.0.log_entry.time_string }} lasting {{ session.time_delta }}</a></li>
+            <li><a href="#" class=SessionLink data-id="{{ session.id }}">{{ session.entries.0.log_entry.time | date:'Y/M/d H:i:s' }} ({{ session.time_delta }})</a></li>
         {% endfor %}
     </ul>
 {% endfor %}
@@ -66,7 +66,7 @@ SessionInfo.td {
 {% for host_info in host_infos %}
     {% for session in host_info.sessions %}
         <div id="{{ session.id }}" class="SessionInfo" style="display:none;">
-        <b>{{ host_info.hostname }} at {{ session.entries.0.log_entry.time_string }}</b>
+        <b>{{ host_info.hostname }} at {{ session.entries.0.log_entry.time | date:'Y/M/d H:i:s O'}}</b>
         <table>
         {% for entry in session.entries %}
             {% for line in entry.data %}
@@ -103,7 +103,6 @@ $(document).ready(function(){
         displayed_target_id = target_id
     })
 });
-</script>                                                                                                                     \
-
+</script>
 </body>
 </html>

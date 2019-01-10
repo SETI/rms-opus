@@ -150,7 +150,7 @@ class QueryHandler:
             if self._uses_html:
                 def always_mark(type: str, value: str) -> Any:
                     return format_html('<mark><ins>{}:{}</ins></mark>', type, self.__format_search_value(value))
-                result.append(format_html('Add Search: &quot:{}&quot = ({}, {}, {}){}',
+                result.append(format_html('Add Search: &quot;{}&quot; = ({}, {}, {}){}',
                                           family.label, always_mark(family.min, new_min),
                                           always_mark(family.max, new_max), always_mark('qtype', new_qtype),
                                           postscript))
