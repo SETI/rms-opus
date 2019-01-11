@@ -138,7 +138,7 @@ class QueryHandler:
             assert len(new_info[family]) == 1
             slug_info, value = new_info[family][0]
             assert family.label == slug_info.label
-            postscript = f' **{slug_info.flags.pretty_print()}**' if slug_info.flags else ''
+            postscript = self.__get_postscript(slug_info)  # is html-aware
             if self._uses_html:
                 result.append(format_html('Add Search: "{}" = <mark><ins>{}</ins></mark>{}',
                                           family.label, self.__format_search_value(value), postscript))
@@ -218,8 +218,12 @@ class QueryHandler:
             if old_slug_info and not new_slug_info:
                 removed_columns.append(f'Remove Column: "{old_slug_info.label}"')
             elif new_slug_info and not old_slug_info:
-                postscript = f' **{new_slug_info.flags.pretty_print()}**' if new_slug_info.flags else ''
-                added_columns.append(f'Add Column:    "{new_slug_info.label}{postscript}"')
+                postscript = self.__get_postscript(new_slug_info)
+                if self._uses_html:
+                    added_columns.append(format_html('Add Column: "{}"{}', new_slug_info.label, postscript))
+                else:
+                    added_columns.append(f'Add Column:    "{new_slug_info.label}"{postscript}')
+
         result.extend(removed_columns)
         result.extend(added_columns)
 
@@ -312,6 +316,15 @@ class QueryHandler:
                 return cast(str, format_html('&quot;<samp>{}</samp>&quot;', value))
         else:
             return '~' if value is None else '"' + value + '"'
+
+    def __get_postscript(self, new_slug_info):
+        flags = new_slug_info.flags
+        if not flags:
+            return ''
+        elif self._uses_html:
+            return format_html(' <span class="text-danger">({})</span>', flags.pretty_print())
+        else:
+            return f' **{new_slug_info.flags.pretty_print()}**'
 
     def __parse_search_family(self, pairs: List[Tuple[Slug.Info, str]]) -> \
             Tuple[Optional[str], Optional[str], Optional[str], Slug.Flags]:
