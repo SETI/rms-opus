@@ -9,6 +9,7 @@ var o_search = {
     truncatedResults: false,
     truncatedResultsMsg: "&ltMore choices available&gt",
     slugReqno: {},
+    slugRangeInputValueFromLastSearch: {},
     allNormalizedApiCall: function() {
         let newHash = o_hash.updateHash(false);
         let regexForShortHash = /(.*)&view/;
@@ -23,6 +24,7 @@ var o_search = {
     },
     validateRangeInput: function(data, removeSpinner=false) {
         opus.allInputsValid = true;
+        o_search.slugRangeInputValueFromLastSearch = {};
         $.each(data, function(eachSlug, value) {
             let currentInput = $(`input[name="${eachSlug}"]`);
             if(data[eachSlug] === null) {
@@ -35,6 +37,7 @@ var o_search = {
             } else {
                 if(currentInput.hasClass("RANGE")) {
                     currentInput.val(value);
+                    o_search.slugRangeInputValueFromLastSearch[eachSlug] = value;
                     if(currentInput.hasClass("search_input_invalid_no_focus")) {
                         currentInput.removeClass("search_input_invalid_no_focus");
                     }
@@ -159,7 +162,8 @@ var o_search = {
             let newHash = `${slug}=${currentValue}`;
 
             // if input field is empty, do not perform api call
-            if(currentValue === "") {
+            // if input value is focus but didn't change from last successful search, do not change border
+            if(currentValue === "" || currentValue === o_search.slugRangeInputValueFromLastSearch[slug]) {
                 $(event.target).removeClass("search_input_valid search_input_invalid");
                 $(event.target).addClass("search_input_original");
                 return;
