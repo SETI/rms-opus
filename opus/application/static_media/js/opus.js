@@ -150,7 +150,10 @@ var opus = {
     // avoiding race conditions in ajax calls
     lastRequestNo: 0,          // holds request numbers for main result count loop,
     lastCartRequestNo: 0,
-    lastNormalizeRequestNo: 0,
+    lastSlugNormalizeRequestNo: 0,
+    lastAllNormalizeRequestNo: 0,
+    lastResultCountRequestNo: 0,
+    waitingForAllNormalizedAPI: false,
 
     download_in_process: false,
 
@@ -279,37 +282,37 @@ var opus = {
 
         // start the result count spinner and do the yellow flash
         $("#result_count").html(opus.spinner).parent().effect("highlight", {}, 500);
+        // move this above allNormalizedApiCall to avoid recursive api call 
+        opus.last_selections = selections;
 
         // chain ajax calls, validate range inputs before result count api call
-        o_search.normalizedApiCall().then(opus.getResultCount).then(opus.updatePageAfterResultCountAPI);
+        o_search.allNormalizedApiCall().then(opus.getResultCount).then(opus.updatePageAfterResultCountAPI);
     },
     getResultCount: function(normalizedData) {
-        // console.log("NORM RETURN REQNO: " + normalizedData["reqno"]);
-        // console.log("opus slug dict REQNO: " + o_search.slugReqno[slug]);
-        // we need this to avoid unecessary result count api call
-        if (normalizedData["reqno"] < o_search.slugReqno[slug]) {
+        // // we need this to avoid unecessary result count api call
+        if (normalizedData["reqno"] < opus.lastAllNormalizeRequestNo) {
             return;
         }
         o_search.validateRangeInput(normalizedData, true);
 
         // query string has changed
-        opus.last_selections = selections;
-        opus.lastRequestNo++;
+        // opus.last_selections = selections;
+        opus.lastResultCountRequestNo++;
         let resultCountHash = o_hash.getHash();
 
         if(!opus.allInputsValid) {
-          // remove spinning effect on browse count
-          $("#result_count").text("?");
-          return;
-        }
-
-        return $.getJSON("/opus/__api/meta/result_count.json?" + resultCountHash + "&reqno=" + opus.lastRequestNo);
-    },
-    updatePageAfterResultCountAPI: function(resultCountData) {
-        if(!opus.allInputsValid) {
+            // remove spinning effect on browse count
+            $("#result_count").text("?");
             return;
         }
-        if (resultCountData["reqno"] < opus.lastRequestNo) {
+
+        return $.getJSON("/opus/__api/meta/result_count.json?" + resultCountHash + "&reqno=" + opus.lastResultCountRequestNo);
+    },
+    updatePageAfterResultCountAPI: function(resultCountData) {
+        if(!opus.allInputsValid || !resultCountData) {
+            return;
+        }
+        if (resultCountData["reqno"] < opus.lastResultCountRequestNo) {
             return;
         }
         $("#browse_tab").fadeIn();
