@@ -5,17 +5,20 @@ var o_search = {
      *  Everything that appears on the search tab
      *
      **/
+    searchMsg: "",
+    truncatedResults: false,
+    truncatedResultsMsg: "&ltMore choices available&gt",
     slugReqno: {},
-    normalizedApiCall: function() {
+    allNormalizedApiCall: function() {
         let newHash = o_hash.updateHash(false);
         let regexForShortHash = /(.*)&view/;
         // Use short hash
         if(newHash.match(regexForShortHash)) {
             newHash = newHash.match(regexForShortHash)[1];
         }
-
-        opus.lastRequestNo++;
-        let url = "/opus/__api/normalizeinput.json?" + newHash + "&reqno=" + opus.lastRequestNo;
+        opus.waitingForAllNormalizedAPI = true;
+        opus.lastAllNormalizeRequestNo++;
+        let url = "/opus/__api/normalizeinput.json?" + newHash + "&reqno=" + opus.lastAllNormalizeRequestNo;
         return $.getJSON(url);
     },
     validateRangeInput: function(data, removeSpinner=false) {
@@ -81,7 +84,7 @@ var o_search = {
                 $("input.RANGE").addClass("search_input_original");
                 $("#sidebar").removeClass("search_overlay");
                 // .text is here in case the url is not changed but the input value is set to invalid and valid again
-                $("#result_count").text(opus.result_count);
+                $("#result_count").text(o_utils.addCommas(opus.result_count));
             }
         });
     },
@@ -147,16 +150,23 @@ var o_search = {
             let currentValue = $(this).val().trim();
             let values = []
 
-            opus.lastNormalizeRequestNo++;
-            o_search.slugReqno[slug] = opus.lastNormalizeRequestNo;
+            opus.lastSlugNormalizeRequestNo++;
+            o_search.slugReqno[slug] = opus.lastSlugNormalizeRequestNo;
 
             values.push(currentValue)
             opus.selections[slug] = values;
             // Use only the current slug to call normalized api while input event happened
             let newHash = `${slug}=${currentValue}`;
+
+            // if input field is empty, do not perform api call
+            if(currentValue === "") {
+                $(event.target).removeClass("search_input_valid search_input_invalid");
+                $(event.target).addClass("search_input_original");
+                return;
+            }
             // keep calling normalize api to check input values whenever input got changed
             // only check if return value is null or not, DON'T compare min & max
-            let url = "/opus/__api/normalizeinput.json?" + newHash + "&reqno=" + opus.lastNormalizeRequestNo;
+            let url = "/opus/__api/normalizeinput.json?" + newHash + "&reqno=" + opus.lastSlugNormalizeRequestNo;
             $.getJSON(url, function(data) {
                 // if a newer input is there, re-call api with new input
                 if(data["reqno"] < o_search.slugReqno[slug]) {
@@ -193,111 +203,11 @@ var o_search = {
             if(newHash.match(regexForShortHash)) {
                 newHash = newHash.match(regexForShortHash)[1];
             }
-            opus.lastNormalizeRequestNo++;
-            o_search.slugReqno[slug] = opus.lastNormalizeRequestNo;
-            let url = "/opus/__api/normalizeinput.json?" + newHash + "&reqno=" + opus.lastNormalizeRequestNo;
+            opus.lastSlugNormalizeRequestNo++;
+            o_search.slugReqno[slug] = opus.lastSlugNormalizeRequestNo;
+            let url = "/opus/__api/normalizeinput.json?" + newHash + "&reqno=" + opus.lastSlugNormalizeRequestNo;
             o_search.performSearch(event, slug, url);
         });
-
-        // Init autocomplete source, this is to make sure first keypress would have drop down shows up
-        $("#search").on("focus", "input.STRING", function(event) {
-          $(event.target).autocomplete({
-              minLength: 0,
-              source: [],
-          });
-        });
-        // Dynamically call stringsearchchoices api to get latest hints
-        $("#search").on("input", "input.STRING", function(event) {
-            let slug = $(this).attr("name");
-            let currentValue = $(this).val().trim();
-            let values = [];
-
-            opus.lastRequestNo++;
-            o_search.slugReqno[slug] = opus.lastRequestNo;
-
-            values.push(currentValue)
-            opus.selections[slug] = values;
-            let newHash = o_hash.updateHash(false);
-            let regexForShortHash = /(.*)&view/;
-
-            if(newHash.match(regexForShortHash)) {
-                newHash = newHash.match(regexForShortHash)[1];
-            }
-
-            let searchMsg = "";
-            let truncatedResults = false;
-            let truncatedResultsMsg = "&ltMore choices available&gt";
-            let url = `/opus/__api/stringsearchchoices/${slug}.json?` + newHash + "&reqno=" + opus.lastRequestNo;
-
-            let stringInputDropDown = $(event.target).autocomplete({
-                minLength: 1,
-                source: function(request, response) {
-                    $.getJSON(url, function(data) {
-                        // if a newer input is there, re-call api with new input
-                        if(data["reqno"] < o_search.slugReqno[slug]) {
-                            return;
-                        }
-
-                        // dynamically update drop down lists
-                        // let searchMsg = "";
-                        if(data["full_search"]) {
-                            searchMsg = "Results from entire database, not current search constraints"
-                        } else {
-                            searchMsg = "Results from current search constraints"
-                        }
-
-                        let hintsOfString = data["choices"];
-                        truncatedResults = data["truncated_results"];
-                        response(hintsOfString);
-                    });
-                },
-                focus: function(focusEvent, ui) {
-                    // if we want to have hinted value displayed when hovering over
-                    // let displayValue = o_search.extractHtmlContent(ui.item.label);
-                    $(event.target).val(currentValue);
-                    return false;
-                },
-                select: function(selectEvent, ui) {
-                    let displayValue = o_search.extractHtmlContent(ui.item.label);
-                    $(event.target).val(displayValue);
-                    // search would be performed right away if an item in the list is selected
-                    opus.selections[slug] = [displayValue];
-                    o_hash.updateHash();
-                    return false;
-                },
-            })
-            .keyup(function(keyupEvent) {
-                // Make sure autocomplete menu is hide whenever enter is pressed even if value is not changed
-                if(keyupEvent.which === 13) {
-                    $(event.target).autocomplete("close");
-                }
-            })
-            .data( "ui-autocomplete" );
-
-            // Add header and footer for dropdown list
-            stringInputDropDown._renderMenu = function(ul, items) {
-                let self = this;
-                $.each(items, function(index, item) {
-                    self._renderItem(ul, item );
-                });
-                ul.prepend(`<li><div class="list-header">${searchMsg}</div></li>`);
-                if(truncatedResults) {
-                    ul.append(`<li><div class="list-footer">${truncatedResultsMsg}</div></li>`);
-                }
-            };
-            // Customized dropdown list item
-            stringInputDropDown._renderItem = function(ul, item) {
-                return $( "<li>" )
-                  .data( "ui-autocomplete-item", item )
-                  .attr( "data-value", item.value )
-                  // need to wrap with <a> tag because of jquery-ui 1.10
-                  .append("<a>" + item.label + "</a>")
-                  .appendTo(ul);
-            };
-
-        });
-
-
 
         // filling in a range or string search field = update the hash
         // range behaviors and string behaviors for search widgets - input box
