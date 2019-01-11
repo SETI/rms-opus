@@ -162,7 +162,7 @@ var o_search = {
             let newHash = `${slug}=${currentValue}`;
 
             // if input field is empty, do not perform api call
-            // if input value is focus but didn't change from last successful search, do not change border
+            // if input value didn't change from last successful search (normalized value), do not change border
             if(currentValue === "" || currentValue === o_search.slugRangeInputValueFromLastSearch[slug]) {
                 $(event.target).removeClass("search_input_valid search_input_invalid");
                 $(event.target).addClass("search_input_original");
