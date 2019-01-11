@@ -65,7 +65,7 @@ td.SessionInfo {
 {% for host_info in host_infos %}
     {% for session in host_info.sessions %}
         <div id="{{ session.id }}" class="SessionInfo">
-        <b>{{ host_info.hostname }} at {{ session.entries.0.log_entry.time | date:'Y/M/d H:i:s O>'}}</b>
+        <b>{{ host_info.hostname }} at {{ session.entries.0.log_entry.time | date:'Y/M/d H:i:s O' }}</b>
         <table>
         {% for entry in session.entries %}
             {% for line in entry.data %}
