@@ -77,37 +77,28 @@ var o_browse = {
            $(this).attr("href", csv_link);
        });
 
-       // other behaviours
-        // Currently, click on thumbnail opens modal window
-        // HOWEVER... click on thumbnail will now start a range add instead of opening a modal
-
-        // 1- toggle status in shopping cart
-        // 2- ctrl click - open modal, not toggle shopping cart
-        // 3- shift click - takes range from whatever the last thing you clicked on and if the
-        //    thing you previously clicked is IN the card, do an 'add range', otherwise
-        //    do a 'remove range'.  Don't toggle the items inside the range
+       // 1 - click on thumbnail opens modal window
+        // 2 - shift click - takes range from whatever the last thing you clicked on and if the
+        //     thing you previously clicked is IN the card, do an 'add range', otherwise
+        //     do a 'remove range'.  Don't toggle the items inside the range
+        // 3 - ctrl click - alternate way to add to shopping cart
         //    NOTE: range can go forward or backwards
-        // 'check' will go away, no longer serves a purpose
         //
-      $(".gallery, #dataTable ").on("click", ".thumbnail, tbody > tr :not(:input)", function(e) {
+
+        // images...
+        $(".gallery").on("click", ".thumbnail", function(e) {
             // make sure selected modal thumb is unhighlighted, as clicking on this closes the modal
             // but is not caught in time before hidden.bs to get correct opusId
-
             e.preventDefault();
 
             let action = "add";     // just a default var decl
-            let opusId = $(this).data("id");
-            if (opusId == undefined) {
-                opusId = $(this).parent().data("id");
-            }
+            let opusId = $(this).parent().data("id");
             let startElem = $(e.delegateTarget).find(".selected");
 
             // Detecting ctrl (windows) / meta (mac) key.
             if (e.ctrlKey || e.metaKey) {
-                o_browse.showModal(opusId);
-                if (startElem.length) {
-                    $(startElem).removeClass("selected");
-                }
+                o_collections.toggleInCollection(opusId);
+                o_browse.undoRangeSelect(e.delegateTarget);
             }
             // Detecting shift key
             else if (e.shiftKey) {
@@ -116,21 +107,21 @@ var o_browse = {
                     o_collections.toggleInCollection(opusId);
                     console.log("start range, action="+action);
                 } else {
-                    let fromOpusId = $(startElem).data("id");
+                    let fromOpusId = $(startElem).parent().data("id");
                     o_collections.toggleInCollection(fromOpusId, opusId);
-                    console.log("range, action="+action+", from: "+fromOpusId+" to: "+opusId);
                 }
             } else {
-                o_collections.toggleInCollection(opusId);
+                o_browse.showModal(opusId);
+                o_browse.undoRangeSelect(e.delegateTarget);
             }
             //if (e.shiftKey) {
                 // CANCEL THE EVENT, WHICH WILL PREVENT ANY LINKING FROM OCCURING
-            e.preventDefault()
+            e.preventDefault();
             //}
         });
 
         // data_table - clicking a table row adds to collection
-        $("#browse").on("click", "#dataTable :checkbox", function() {
+        $("#dataTable").on("click", ":checkbox", function(e) {
             if ($(this).val() == "all") {
                 // checkbox not currently implemented
                 // pop up a warning if selection total is > 100 items,
@@ -139,27 +130,28 @@ var o_browse = {
                 //o_collections.editCollection("all",action);
                 return false;
             }
+            let opusId = $(this).val();
+            let startElem = $(e.delegateTarget).find(".selected");
 
-            var opusId = $(this).attr("id").substring(6);
-            $(this).find('.data_checkbox').toggleClass('fa-check-square-o').toggleClass('fa-square-o');
-            var action = 'remove';
-            if ($(this).find('.data_checkbox').hasClass('fa-check-square-o')) {
-                // this is checked, we are unchecking it now
-                action = 'add';
+            if (e.shiftKey) {
+                if (startElem.length == 0) {
+                    $(this).closest("tr").addClass("selected");
+                    o_collections.toggleInCollection(opusId);
+                } else {
+                    let fromOpusId = $(startElem).data("id");
+                    o_collections.toggleInCollection(fromOpusId, opusId);
+                }
+            } else {
+                o_collections.toggleInCollection(opusId);
+                // single click stops range selection; shift click starts range
+                o_browse.undoRangeSelect(e.delegateTarget);
             }
+        });
 
-            // make sure the checkbox for this observation in the other view (either data or gallery)
-            // is also checked/unchecked - if that view is drawn
-            try {
-                o_browse.toggleBrowseInCollectionStyle(opusId);
-            } catch(e) { } // view not drawn yet so no worries
-
-            o_collections.editCollection(opusId,action);
-
-            // single click stops range selection; shift click starts range
-            o_browse.selectedImageID = "";
-            return false;
-
+        $("#dataTable").on("click", "td:not(:first-child)", function(e) {
+            let opusId = $(this).parent().data("id");
+            o_browse.showModal(opusId);
+            o_browse.undoRangeSelect(e.delegateTarget);
         });
 
         // thumbnail overlay tools
@@ -321,6 +313,13 @@ var o_browse = {
     showModal: function(opusId) {
         o_browse.updateGalleryView(opusId);
         $("#galleryView").modal("show");
+    },
+
+    undoRangeSelect: function(selector) {
+        let startElem = $(selector).find(".selected");
+        if (startElem.length) {
+            $(startElem).removeClass("selected");
+        }
     },
 
     openDetailTab: function() {
@@ -542,17 +541,15 @@ var o_browse = {
 
                 // gallery
                 let images = item.images;
-                html += '<div class="thumbnail-container'+ (item.in_collection ? ' thumb_selected' : '') +'">';
-                html += '<a href="#" class="thumbnail '+(item.in_collection ? ' in' : '')+'" ';
-                //html += 'data-toggle="modal" data-target="#galleryView" data-id="'+item.opus_id+'"	data-image="'+item.full_url+'">';
-                html += 'data-id="'+opusId+'"	data-image="'+images.full.url+'">';
+                html += '<div class="thumbnail-container'+(item.in_collection ? ' in' : '')+'" data-id="'+opusId+'">';
+                html += '<a href="#" class="thumbnail" data-image="'+images.full.url+'">';
                 html += '<img class="img-thumbnail img-fluid" src="'+images.thumb.url+'" alt="'+images.thumb.alt_text+'" title="'+opusId+'"> </a>';
                 html += '<div class="thumb_overlay">';
                 if (opus.prefs.view == "browse") {
                     html +=    '<div class="tools" data-id="'+opusId+'">';
-                    html +=       '<a href="#" data-icon="info"><i class="fa fa-info fa-xs" aria-hidden="true"></i></a>';
                     html +=       '<a href="#" data-icon="check"><i class="fas fa-cart-plus fa-xs" aria-hidden="true"></i></a>';
-                    html +=       '<a href="#" data-icon="resize"><i class="fas fa-expand-arrows-alt fa-xs" aria-hidden="true"></i></a>';
+                    html +=       '<a href="#" data-icon="info"><i class="fas fa-bars"></i></a>';
+                    html +=       '<a href="#" data-icon="resize"><i class="fas fa-ellipsis-v"></i></a>';
                     html +=    '</div>';
                 } else {
                     html +=    '<a href="#" class="remove">';
@@ -564,7 +561,7 @@ var o_browse = {
                 // table row
                 let checked = item.in_collection ? " checked" : "";
                 let selected = item.in_collection ? " class='row_selected'" : "";
-                let checkbox = "<input type='checkbox' name='"+opusId+"' value='"+opusId+"' class='multichoice' id='select_"+opusId+"'"+checked+">";
+                let checkbox = "<input type='checkbox' name='"+opusId+"' value='"+opusId+"' class='multichoice'"+checked+"/>";
                 let row = "<td>"+checkbox+"</td>";
                 let tr = "<tr data-id='"+opusId+"' data-target='#galleryView'"+selected+">";
                 $.each(item.metadata, function(index, cell) {
@@ -742,7 +739,7 @@ var o_browse = {
         // right here need to add a CSS bit!!
         //////o_browse.toggleGalleryViewHighlight(opusId);
 
-        var imageURL = $("#browse").find("a[data-id='"+opusId+"']").data("image");
+        var imageURL = $("#browse").find("[data-id='"+opusId+"'] > a.thumbnail").data("image");
         if (imageURL === undefined) {
             // put a temp spinner while retrieving the image; this only happens if the data table is loaded first
             $("#galleryViewContents").html(o_browse.loader + o_browse.metadataboxHtml(opusId));

@@ -26,8 +26,9 @@ var o_collections = {
 
          // check an input on selected products and images updates file_info
          $('#collection').on("click",'#download_options input', function() {
-             var add_to_url = o_collections.getDownloadFiltersChecked();
-             var url = "/opus/__collections/download/info.json?" + add_to_url
+             let add_to_url = o_collections.getDownloadFiltersChecked();
+             let url = "/opus/__collections/download/info.json?" + add_to_url
+             // FIX ME, probably should be getJSON
              $.ajax({ url: url + '&fmt=json',
                 success: function(json){
                     $('#total_files').fadeOut().html(json['download_count']).fadeIn();
@@ -45,8 +46,8 @@ var o_collections = {
          $('#collection').on("click", '#collections_summary a#create_zip_file button', function() {
                 $('.spinner', "#collections_summary").fadeIn();
                 opus.download_in_process = true;
-                var add_to_url = o_collections.getDownloadFiltersChecked();
-                var url = '/opus/__collections/download.zip?' + add_to_url + "&" + o_hash.getHash();
+                let add_to_url = o_collections.getDownloadFiltersChecked();
+                let url = '/opus/__collections/download.zip?' + add_to_url + "&" + o_hash.getHash();
                 $.ajax({ url: url,
                     success: function(filename){
                         opus.download_in_process = false;
@@ -56,15 +57,12 @@ var o_collections = {
                         } else {
                             $('<li>No Files Found</li>').hide().prependTo('ul.zipped_files', "#collections_summary").slideDown('fast');
                         }
-
                     },
                     error: function(e) {
-
                         $('.spinner', "#collections_summary").fadeOut();
                         $('<li>No Files Found</li>').hide().prependTo('ul.zipped_files', "#collections_summary").slideDown('fast');
                         opus.download_in_process = false;
                     }
-
                 });
                 return false;
          });
@@ -72,11 +70,13 @@ var o_collections = {
          // click create zip file link on detail page
          $("#detail").on("click", '#create_zip_file', function() {
              $('#zip_file', "#detail").html(opus.spinner + " zipping files");
-              $.ajax({ url: $(this).attr("href"),
-                     success: function(json){
-                         $('#zip_file').html('<a href = "' + json + '">' + json + '</a>');
-                     }});
-              return false;
+             $.ajax({
+                 url: $(this).attr("href"),
+                 success: function(json) {
+                     $('#zip_file').html('<a href = "' + json + '">' + json + '</a>');
+                 }
+             });
+             return false;
          });
 
          // empty collection button
@@ -295,20 +295,13 @@ var o_collections = {
             add_to_url = add_to_url + o_collections.getDownloadFiltersChecked();
         }
 
-        $.ajax({
-            url: url  + '&' + add_to_url,
-            dataType: "json",
-            success: function(data) {
-                var count = data['count'];
-                $('#collection_count').html(count);
-                $('#download_size').html(data['download_size_pretty']);
-                opus.colls_pages = Math.ceil(count/opus.prefs.limit);
-                if (opus.collection_queue[data['request_no']] != undefined) {
-                  delete opus.collection_queue[data['request_no']];
-                }
-            },
-            error: function() {
-                //$('#notification-bar').text('An error occurred');
+        $.getJSON(url  + '&' + add_to_url, function(data) {
+            let count = data['count'];
+            $('#collection_count').html(count);
+            $('#download_size').html(data['download_size_pretty']);
+            opus.colls_pages = Math.ceil(count/opus.prefs.limit);
+            if (opus.collection_queue[data['request_no']] != undefined) {
+                delete opus.collection_queue[data['request_no']];
             }
         });
     },
@@ -325,7 +318,8 @@ var o_collections = {
                 opus.colls_pages = 0;
                 opus.collection_change = true;
                 o_collections.getCollectionsTab();
-            }, error: function(e) {
+            },
+            error: function(e) {
             }
         });
 
@@ -339,6 +333,7 @@ var o_collections = {
         collTransition();
 
         // remove 'in collection' styles in gallery/data view
+        // FIX ME
         $('.tools-bottom', '.gallery').removeClass("in"); // this class keeps parent visible when mouseout
         $( ".tools-bottom a", '.gallery').find('i').removeClass('thumb_selected_icon');
         $('.thumb_overlay', '.gallery').removeClass('thumb_selected');
@@ -351,27 +346,25 @@ var o_collections = {
     },
 
     getGalleryElement: function(opusId) {
-        let elem = $("#" + opus.prefs.view+" .thumbnail-container a[data-id=" + opusId + "]");
+        let elem = $("#" + opus.prefs.view+" .thumbnail-container[data-id=" + opusId + "]");
         return elem;
     },
 
     toggleBrowseInCollectionStyle: function(opusId) {
-        $("tr[data-id='"+opusId+"']").toggleClass("row_selected");
-        $("#select_"+opusId).prop("checked", !$("#select_"+opusId).prop("checked"));
-        $("a.thumbnail[data-id='"+opusId+"']").parent().toggleClass("thumb_selected");
+        //$("tr[data-id='"+opusId+"']").toggleClass("row_selected");
+        $("thumbnail-container[data-id='"+opusId+"']").toggleClass("in");
     },
 
     toggleInCollection: function(fromOpusId, toOpusId) {
         let fromElem = o_collections.getGalleryElement(fromOpusId);
-        let action = (fromElem.hasClass("in") ? "add" : "remove");
 
         // handle it as range
         if (toOpusId != undefined) {
-            action = (fromElem.hasClass("in") ? "addrange" : "removerange");
+            let action = (fromElem.hasClass("in") ? "addrange" : "removerange");
             let collectionAction = (action == "addrange");
             let toElem = o_collections.getGalleryElement(toOpusId);
-            let fromIndex = $("a.thumbnail").index(fromElem);
-            let toIndex = $("a.thumbnail").index(toElem);
+            let fromIndex = $(".thumbnail-container").index(fromElem);
+            let toIndex = $(".thumbnail-container").index(toElem);
 
             // reorder if need be
             if (fromIndex > toIndex) {
@@ -379,13 +372,16 @@ var o_collections = {
             }
             let length = toIndex - fromIndex+1;
             let namespace = o_browse.getViewInfo().namespace;
-            let elementArray = $(namespace + " .thumbnail");
+            let elementArray = $(namespace + " .thumbnail-container");
             let opusIdRange = $(elementArray[fromIndex]).data("id") + ","+ $(elementArray[toIndex]).data("id")
             console.log("end range "+action+" : "+opusIdRange);
             $.each(elementArray.splice(fromIndex, length), function(index, elem) {
                 // effect no change if it is already selected/deselected same as first item in array
                 if ($(elem).hasClass("in") != collectionAction) {
-                    o_collections.toggleBrowseInCollectionStyle($(elem).data("id"));
+                    let opusId = $(elem).data("id");
+                    o_collections.toggleBrowseInCollectionStyle(opusId);
+                    // because this is a range, we need to check the boxes by hand
+                    $("input[name="+opusId+"]").prop("checked", !$("input[name="+opusId+"]").is(":checked"));
                     console.log("changed: "+$(elem).data("id"));
                 }
             });
@@ -394,12 +390,11 @@ var o_collections = {
             $(toElem).removeClass("selected");
         } else {
             fromElem.toggleClass("in"); // this class keeps parent visible when mouseout
+            let action = (fromElem.hasClass("in") ? "add" : "remove");
 
             o_collections.toggleBrowseInCollectionStyle(fromOpusId);
             o_collections.editCollection(fromOpusId, action);
         }
-
-        return action;
     },
 
     editCollection: function(opusId, action) {

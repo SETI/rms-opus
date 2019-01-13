@@ -210,13 +210,13 @@ ul.searchMenu{
 	font-size:130%;
 }
 
-#browse .thumb_selected {
+#browse .in {
 	-webkit-box-shadow:inset 0px 0px 0px 10px #097da5;
 	-moz-box-shadow:inset 0px 0px 0px 10px #097da5;
 	box-shadow:inset 0px 0px 0px 10px #097da5
 }
 
-#collection .thumb_selected {
+#collection .in {
 }
 
 #collection .remove {
