@@ -174,12 +174,12 @@ var o_browse = {
                   }
                   break;
 
-              case "check":   // add to collection
+              case "cart":   // add to collection
                   o_collections.toggleInCollection(opusId);
                   break;
 
-              case "resize":  // expand, same as click on image
-                  o_browse.showModal(opusId);
+              case "menu":  // expand, same as click on image
+                  o_browse.showMenu(opusId);
                   break;
             }
             return false;
@@ -315,6 +315,10 @@ var o_browse = {
         $("#galleryView").modal("show");
     },
 
+    showMenu: function(opusId) {
+        // make this like a default right click menu
+    },
+
     undoRangeSelect: function(selector) {
         let startElem = $(selector).find(".selected");
         if (startElem.length) {
@@ -367,11 +371,13 @@ var o_browse = {
             }
 
             let label = $(this).data('qualifiedlabel');
-            let def = $(this).find('i.fa-info-circle').attr("title");
-            let checkmark = $(this).find("i.fa-check");
 
-            if (!checkmark.is(":visible")) {
-                checkmark.fadeIn().css('display', 'inline-block');
+            //CHANGE THESE TO USE DATA-ICON=
+            let def = $(this).find('i.fa-info-circle').attr("title");
+            let addToCart = $(this).find("i.fa-shopping-cart");
+
+            if (!addToCart.is(":visible")) {
+                addToCart.fadeIn().css('display', 'inline-block');
                 if ($.inArray(slug, opus.prefs.cols ) < 0) {
                     // this slug was previously unselected, add to cols
                     $('<li id = "cchoose__' + slug + '">' + label + ' <i class = "fa fa-info-circle" title = "' + def + '"></i><span class = "unselect">X</span></li>').hide().appendTo('.selectedColumns > ul').fadeIn();
@@ -379,7 +385,7 @@ var o_browse = {
                 }
 
             } else {
-                checkmark.hide();
+                addToCart.hide();
                 if ($.inArray(slug,opus.prefs.cols) > -1) {
                     // slug had been checked, remove from the chosen
                     opus.prefs.cols.splice($.inArray(slug,opus.prefs.cols),1);
@@ -496,8 +502,8 @@ var o_browse = {
 
                 // we keep these all open in the column chooser, they are all closed by default
                 // disply check next to any default columns
-                $.each(opus.prefs['cols'], function(index, col) {
-                    $('.column_chooser li > [data-slug="'+col+'"]').find("i.fa-check").fadeIn().css('display', 'inline-block');
+                $.each(opus.prefs['cols'], function(index, col) { //CHANGE BELOW TO USE DATA-ICON=
+                    $('.column_chooser li > [data-slug="'+col+'"]').find("i.fa-shopping-cart").fadeIn().css('display', 'inline-block');
                 });
 
                 o_browse.addColumnChooserBehaviors();
@@ -547,9 +553,9 @@ var o_browse = {
                 html += '<div class="thumb_overlay">';
                 if (opus.prefs.view == "browse") {
                     html +=    '<div class="tools" data-id="'+opusId+'">';
-                    html +=       '<a href="#" data-icon="check"><i class="fas fa-cart-plus fa-xs" aria-hidden="true"></i></a>';
-                    html +=       '<a href="#" data-icon="info"><i class="fas fa-bars"></i></a>';
-                    html +=       '<a href="#" data-icon="resize"><i class="fas fa-ellipsis-v"></i></a>';
+                    html +=       '<a href="#" data-icon="info"><i class="fas fa-info-circle fa-xs"></i></a>';
+                    html +=       '<a href="#" data-icon="cart"><i class="fas fa-shopping-cart fa-xs" aria-hidden="true"></i></a>';
+                    html +=       '<a href="#" data-icon="menu"><i class="fas fa-ellipsis-v fa-xs"></i></a>';
                     html +=    '</div>';
                 } else {
                     html +=    '<a href="#" class="remove">';
@@ -728,7 +734,7 @@ var o_browse = {
 
         // prev/next buttons - put this in galleryView html...
         html += "<div class='bottom'>";
-        html += "<a href='#' class='select' data-id='"+opusId+"' title='Add to selections'><i class='fas fa-cart-plus fa-2x float-left'></i></a>";
+        html += "<a href='#' class='select' data-id='"+opusId+"' title='Add to selections'><i class='fas fa-shopping-cart fa-2x float-left'></i></a>";
         html += "<a href='#' class='next pr-5' data-id='"+next+"' title='Next image'><i class='far fa-hand-point-right fa-2x float-right'></i></a>";
         html += "<a href='#' class='prev pr-5' data-id='"+prev+"' title='Previous image'><i class='far fa-hand-point-left fa-2x float-right'></i></a></div>";
         return html;
