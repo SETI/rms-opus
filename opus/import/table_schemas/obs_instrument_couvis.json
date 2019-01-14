@@ -475,7 +475,7 @@
     {
         "field_name": "samples",
         "field_type": "int4",
-        "field_default": null,
+        "field_notnull": true,
         "field_key": true,
         "data_source": [
             "TAB:supp_index",

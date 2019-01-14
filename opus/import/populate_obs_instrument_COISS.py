@@ -574,6 +574,15 @@ def populate_obs_mission_cassini_COISS_spacecraft_clock_count2(**kwargs):
         import_util.log_nonrepeating_warning(
             f'Unable to parse Cassini SCLK "{sc}": {e}')
         return None
+
+    cassini_row = metadata['obs_mission_cassini_row']
+    sc1 = cassini_row['spacecraft_clock_count1']
+    if sc1 is not None and sc_cvt < sc1:
+        import_util.log_warning(
+    f'spacecraft_clock_count1 ({sc1}) and spacecraft_clock_count2 ({sc_cvt}) '
+    +f'are in the wrong order - setting to count1')
+        sc_cvt = sc1
+
     return sc_cvt
 
 

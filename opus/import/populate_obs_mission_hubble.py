@@ -499,14 +499,25 @@ def populate_obs_wavelength_HSTSTIS_wave_res1(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     wr1 = import_util.safe_column(index_row, 'MAXIMUM_WAVELENGTH_RESOLUTION')
+    wr2 = import_util.safe_column(index_row, 'MINIMUM_WAVELENGTH_RESOLUTION')
 
+    # This is necessary because in some cases these are backwards in the table!
+    if wr1 > wr2:
+        import_util.log_warning(
+            'MAXIMUM_WAVELENGTH_RESOLUTION < MINIMUM_WAVELENGTH_RESOLUTION; '
+            +' swapping')
+        return wr2
     return wr1
 
 def populate_obs_wavelength_HSTSTIS_wave_res2(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
+    wr1 = import_util.safe_column(index_row, 'MAXIMUM_WAVELENGTH_RESOLUTION')
     wr2 = import_util.safe_column(index_row, 'MINIMUM_WAVELENGTH_RESOLUTION')
 
+    # This is necessary because in some cases these are backwards in the table!
+    if wr1 > wr2:
+        return wr1
     return wr2
 
 def populate_obs_wavelength_HSTx_wave_no1(**kwargs):
