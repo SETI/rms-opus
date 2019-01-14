@@ -7,13 +7,12 @@ from unittest import TestCase
 
 from rest_framework.test import APIClient, CoreAPIClient, RequestsClient
 
+import settings
+
 ##################
 ### Test cases ###
 ##################
 class ApiReturnFormatTests(TestCase):
-    GO_LIVE = False
-    LIVE_TARGET = "production"
-
     # disable error logging and trace output before test
     def setUp(self):
         sys.tracebacklimit = 0 # default: 1000
@@ -48,8 +47,8 @@ class ApiReturnFormatTests(TestCase):
         """API Calls: check different formats to see if response is 200
            Raise error when any response status code is NOT 200
         """
-        api_public = ApiFormats(target=ApiReturnFormatTests.LIVE_TARGET)
-        api_internal = ApiFormats(target=f"internal-{ApiReturnFormatTests.LIVE_TARGET}")
+        api_public = ApiFormats(target=settings.TEST_ApiReturnFormatTests_LIVE_TARGET)
+        api_internal = ApiFormats(target=f"internal-{settings.TEST_ApiReturnFormatTests_LIVE_TARGET}")
         test_dict =  {**api_internal.api_dict, **api_public.api_dict}
 
         target_dict = test_dict
@@ -82,7 +81,7 @@ class ApiReturnFormatTests(TestCase):
            api_dict: a dictionary containing the payload
            format: a return format string that concatenates with api_url_base
         """
-        if self.GO_LIVE:
+        if settings.TEST_ApiReturnFormatTests_GO_LIVE:
             client = requests.Session()
         else:
             client = RequestsClient()

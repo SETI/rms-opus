@@ -8,16 +8,15 @@ from typing import Optional, Dict, Any, NamedTuple, cast
 import requests
 
 
-class SlugFamily(NamedTuple):
-    label: str
-    min: str
-    max: str
-
-    def is_singleton(self):
+class Family(NamedTuple):
+    label: str  # The long name for this slug
+    min: str    # 'min' or 'start'.  Empty string if this is a singleton
+    max: str    # 'max' or 'stop'.  Empty string if this is a singleton
+    def is_singleton(self) -> bool:
         return self.min == ''
 
 
-class SlugFamilyType(Enum):
+class FamilyType(Enum):
     MIN = auto()
     MAX = auto()
     QTYPE = auto()
@@ -25,32 +24,40 @@ class SlugFamilyType(Enum):
     COLUMN = auto()
 
 
-class SlugFlags(Flag):
+class Flags(Flag):
     NONE = 0
-    UNKNOWN_SLUG = auto()
-    REMOVED_1_FROM_END = auto()
-    REMOVED_2_FROM_END = auto()
-    OBSOLETE_SLUG = auto()
+    UNKNOWN_SLUG = auto()  # slug not in our database
+    REMOVED_1_FROM_END = auto()  # slug ending in 1 not in our database, but removing 1 works
+    REMOVED_2_FROM_END = auto()  # slug ending in 2 not in our database, but removing 2 works
+    OBSOLETE_SLUG = auto()  # slug in the list of obsolete slugs
 
-    def pretty_print(self):
+    def pretty_print(self) -> str:
         """Print a set of flags in a slightly more human readable format"""
-        temp = str(self).replace('SlugFlags.', '').replace('_', ' ')
+        temp = str(self).replace('Flags.', '').replace('_', ' ')
         return ', '.join(x.lower() for x in temp.split('|'))
 
-
-class SlugInfo(NamedTuple):
-    canonical_name: str
-    label: str
-    flags: SlugFlags
-    family_type: SlugFamilyType
-    family: Optional[SlugFamily] # only None for columns
+    def is_obsolete(self) -> bool:
+        return bool(self & Flags.OBSOLETE_SLUG)
 
 
-class SlugMap:
-    _slug_to_label: Dict[str, str]
+class Info(NamedTuple):
+    """
+    Information about a slug.  Note that we can't let the Info for an obsolete slug and its replacement must be
+    identical, since they are used as keys in a dictionary.
+    """
+    canonical_name: str  # The slug name, but with any obsolete root replaced with its newer version
+    label: str  # The verbose label for this slug
+    flags: Flags
+    family_type: FamilyType
+    family: Family
+
+
+class ToInfoMap:
+    _slug_to_search_label: Dict[str, str]
+    _slug_to_column_label: Dict[str, str]
     _old_slug_to_new_slug: Dict[str, str]
-    _search_map: Dict[str, Optional[SlugInfo]]
-    _column_map: Dict[str, Optional[SlugInfo]]
+    _search_map: Dict[str, Optional[Info]] = {}
+    _column_map: Dict[str, Optional[Info]] = {}
 
     QTYPE_SUFFIX = ' (QT)'
     UNKNOWN_SLUG_INFO = 'unknown slug'
@@ -73,30 +80,31 @@ class SlugMap:
         raw_json = self.__read_json(url_prefix)
         json_data: Dict[str, Any] = raw_json['data']
 
+        def create_dictionary(label: str) -> Dict[str, str]:
+            return {slug_info['slug'].lower(): value
+                    for slug_info in json_data.values()
+                    for value in [slug_info.get(label)] if value
+                   }
         # Fill in all the normal slugs
-        self._slug_to_label = {
-            slug_info['slug'].lower(): slug_info['label'] for slug_info in json_data.values()
-        }
+        self._slug_to_search_label = create_dictionary('full_search_label')
+        self._slug_to_column_label = create_dictionary('full_label')
 
         self._old_slug_to_new_slug = {
             old_slug_info.lower(): slug_info['slug'].lower()
             for slug_info in json_data.values()
-            for old_slug_info in [slug_info.get('old_slug')]
-            if old_slug_info
+            for old_slug_info in [slug_info.get('old_slug')] if old_slug_info
         }
-        self._column_map = {}
-        self._search_map = {}
 
         for slug in self.SLUGS_NOT_IN_DB:
             self._column_map[slug] = None
             self._search_map[slug] = None
 
-    def get_info_for_search_slug(self, slug: str, create=True) -> Optional[SlugInfo]:
+    def get_info_for_search_slug(self, slug: str, create: bool=True) -> Optional[Info]:
         """
         Returns information about a slug that appears as part of a search term in a query
         """
 
-        base_result: Optional[SlugInfo]
+        base_result: Optional[Info]
 
         original_slug = slug
         slug = slug.lower()
@@ -107,23 +115,23 @@ class SlugMap:
             result = search_map[slug]
             return result
 
-        label = self._slug_to_label.get(slug)
+        label = self._slug_to_search_label.get(slug)
         if label:
-            result = search_map[slug] = self._known_label(slug, label, SlugFlags.NONE)
+            result = search_map[slug] = self._known_label(slug, label, Flags.NONE)
             return result
 
         new_slug = self._old_slug_to_new_slug.get(slug)
         if new_slug:
-            label = self._slug_to_label[new_slug]
-            result = search_map[slug] = self._known_label(new_slug, label, SlugFlags.OBSOLETE_SLUG)
+            label = self._slug_to_search_label[new_slug]
+            result = search_map[slug] = self._known_label(new_slug, label, Flags.OBSOLETE_SLUG)
             return result
 
         if slug[-1] in '12':
             slug_root = slug[:-1]
-            base_result = cast(SlugInfo, self.get_info_for_search_slug(slug_root, True))
-            family = SlugFamily(label=base_result.label, min='min', max='max')
-            for value, family_type in ((1, SlugFamilyType.MIN), (2, SlugFamilyType.MAX)):
-                search_map[f'{slug_root}{value}'] = SlugInfo(
+            base_result = cast(Info, self.get_info_for_search_slug(slug_root, True))
+            family = Family(label=base_result.label, min='min', max='max')
+            for value, family_type in ((1, FamilyType.MIN), (2, FamilyType.MAX)):
+                search_map[f'{slug_root}{value}'] = Info(
                     canonical_name=f'{base_result.canonical_name}{value}',
                     label=f'{base_result.label} ({family_type.name.title()})',
                     flags=base_result.flags,
@@ -137,42 +145,45 @@ class SlugMap:
             if base_result:
                 assert base_result.family
                 assert base_result.canonical_name[-1] in '12'
-                result = search_map[slug] = SlugInfo(
+                result = search_map[slug] = Info(
                     canonical_name='qtype-' + base_result.canonical_name[:-1],
                     label=base_result.family.label + self.QTYPE_SUFFIX,
                     flags=base_result.flags,
-                    family=base_result.family, family_type=SlugFamilyType.QTYPE)
+                    family=base_result.family, family_type=FamilyType.QTYPE)
                 return result
             # Okay.  We have a qtype- slug.  Create whatever kind of slug we can without the qtype- and guess.
-            base_result = cast(SlugInfo, self.get_info_for_search_slug(slug[6:], True))
-            family = SlugFamily(label=base_result.label, min='min', max='max')
-            result = search_map[slug] = SlugInfo(
+            base_result = cast(Info, self.get_info_for_search_slug(slug[6:], True))
+            family = Family(label=base_result.label, min='min', max='max')
+            result = search_map[slug] = Info(
                 canonical_name='qtype-' + base_result.canonical_name,
                 label=base_result.label + self.QTYPE_SUFFIX,
                 flags=base_result.flags,
-                family=family, family_type=SlugFamilyType.QTYPE)
+                family=family, family_type=FamilyType.QTYPE)
             return result
 
         if create:
-            result = search_map[slug] = self._known_label(slug, original_slug, SlugFlags.UNKNOWN_SLUG)
+            result = search_map[slug] = self._known_label(slug, original_slug, Flags.UNKNOWN_SLUG)
             return result
 
         return None
 
-    def _known_label(self, slug: str, label: str, flag: SlugFlags) -> SlugInfo:
+    def _known_label(self, slug: str, label: str, flag: Flags) -> Info:
         if slug[-1] in '12':
             if label.endswith(' (Min)') or label.endswith(' (Max)'):
-                family = SlugFamily(label=label[:-6], min='min', max='max')
+                family = Family(label=label[:-6], min='min', max='max')
             else:
                 base_label = re.sub(r'(.*) (Start|Stop) (.*)', r'\1 \3', label)
-                family = SlugFamily(label=base_label, min='start', max='stop')
-            family_type = SlugFamilyType.MIN if slug[-1] == '1' else SlugFamilyType.MAX
+                if base_label != label:
+                    family = Family(label=base_label, min='start', max='stop')
+                else:
+                    family = Family(label=label, min='min', max='max')
+            family_type = FamilyType.MIN if slug[-1] == '1' else FamilyType.MAX
         else:
-            family_type = SlugFamilyType.SINGLETON
-            family = SlugFamily(label=label, min='', max='')
-        return SlugInfo(canonical_name=slug, label=label, flags=flag, family=family, family_type=family_type)
+            family_type = FamilyType.SINGLETON
+            family = Family(label=label, min='', max='')
+        return Info(canonical_name=slug, label=label, flags=flag, family=family, family_type=family_type)
 
-    def get_info_for_column_slug(self, slug: str, create: bool = True) -> Optional[SlugInfo]:
+    def get_info_for_column_slug(self, slug: str, create: bool = True) -> Optional[Info]:
         """Returns information about a slug that appears in a cols= part of a query
 
         :param slug: A slug that represents a column name
@@ -182,31 +193,34 @@ class SlugMap:
         slug = slug.lower()
         column_map = self._column_map
 
-        def create_slug(canonical_name: str, label: str, flags: SlugFlags) -> SlugInfo:
-            return SlugInfo(canonical_name, label, flags, SlugFamilyType.COLUMN, None)
+        def create_slug(canonical_name: str, label: str, flags: Flags) -> Info:
+            family = Family(label, '', '')
+            return Info(canonical_name, label, flags, FamilyType.COLUMN, family)
 
         if slug in column_map:
             return column_map[slug]
 
-        if slug in self._slug_to_label:
-            result = column_map[slug] = create_slug(slug, self._slug_to_label[slug], SlugFlags.NONE)
+        if slug in self._slug_to_column_label:
+            label = self._slug_to_column_label[slug]
+            label = label.replace(' (Min)', '').replace(' (Max)', '')
+            result = column_map[slug] = create_slug(slug, label, Flags.NONE)
             return result
 
         if slug in self._old_slug_to_new_slug:
             new_slug = self._old_slug_to_new_slug[slug]
-            new_slug_info = cast(SlugInfo, self.get_info_for_column_slug(new_slug, True))
-            result = column_map[slug] = new_slug_info._replace(flags=(SlugFlags.OBSOLETE_SLUG | new_slug_info.flags))
+            new_slug_info = cast(Info, self.get_info_for_column_slug(new_slug, True))
+            result = column_map[slug] = new_slug_info._replace(flags=(Flags.OBSOLETE_SLUG | new_slug_info.flags))
             return result
 
         if slug[-1] in '12':
-            temp = self.get_info_for_column_slug(slug[:-1], False)
-            flag = {'1': SlugFlags.REMOVED_1_FROM_END, '2': SlugFlags.REMOVED_2_FROM_END}[slug[-1]]
-            if temp:
-                result = column_map[slug] = create_slug(temp.canonical_name, temp.label, temp.flags or flag)
-                return result
+            base_slug = self.get_info_for_column_slug(slug[:-1], False)
+            if base_slug:
+                column_map[slug[:-1] + '1'] = base_slug._replace(flags=(Flags.REMOVED_1_FROM_END | base_slug.flags))
+                column_map[slug[:-1] + '2'] = base_slug._replace(flags=(Flags.REMOVED_2_FROM_END | base_slug.flags))
+                return column_map[slug]
 
         if create:
-            result = column_map[slug] = create_slug(slug, original_slug, SlugFlags.UNKNOWN_SLUG)
+            result = column_map[slug] = create_slug(slug, original_slug, Flags.UNKNOWN_SLUG)
             return result
 
         column_map[slug] = None
@@ -218,7 +232,7 @@ class SlugMap:
     def __read_json(url_prefix: str) -> Dict[str, Any]:
         if url_prefix.endswith('/'):
             url_prefix = url_prefix[:-1]
-        url = url_prefix + SlugMap.DEFAULT_FIELDS_SUFFIX
+        url = url_prefix + ToInfoMap.DEFAULT_FIELDS_SUFFIX
 
         if url.startswith('file://'):
             with open(url[7:], "r") as file:
@@ -233,4 +247,4 @@ class SlugMap:
         assert data['ringobsid']
         del data['ringobsid']
         data['opusid']['old_slug'] = 'ringobsid'
-        return info
+        return cast(Dict[str, Any], info)

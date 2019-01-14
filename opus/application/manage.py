@@ -9,27 +9,40 @@ if __name__ == "__main__":
     # pass in livetest to run against actual server
     argv = sys.argv
     settings.TEST_RESULT_COUNTS_AGAINST_INTERNAL_DB = False
-    for command in argv:
+    testing_target = "dev"
+    settings.TEST_ApiReturnFormatTests_GO_LIVE = False
+    settings.TEST_ApiReturnFormatTests_LIVE_TARGET = testing_target
+    settings.TEST_ApiVimsDownlinksTests_GO_LIVE = False
+    settings.TEST_ApiVimsDownlinksTests_LIVE_TARGET = testing_target
+    settings.TEST_ApiMetadataTests_GO_LIVE = False
+    settings.TEST_ApiMetadataTests_LIVE_TARGET = testing_target
+    settings.TEST_ApiResultsTests_GO_LIVE = False
+    settings.TEST_ApiResultsTests_LIVE_TARGET = testing_target
+    settings.TEST_ApiResultCountsTests_GO_LIVE = False
+    settings.TEST_ApiResultCountsTests_LIVE_TARGET = testing_target
+    settings.TEST_ApiSearchTests_GO_LIVE = False
+    settings.TEST_ApiSearchTests_LIVE_TARGET = testing_target
+
+    for cmd_no, command in enumerate(argv):
+        if command == 'all':
+            argv[cmd_no] = "test_api/"
         if command.startswith("api"):
             if command == "api-livetest-pro":
-                argv.remove("api-livetest-pro")
-                argv.append("test_api/enable_livetests_pro.py")
+                argv[cmd_no] = "test_api/enable_livetests_pro.py"
             elif command == "api-livetest-dev":
-                argv.remove("api-livetest-dev")
-                argv.append("test_api/enable_livetests_dev.py")
+                argv[cmd_no] = "test_api/enable_livetests_dev.py"
             elif command == "api-internal-db":
-                argv.remove("api-internal-db")
-                argv.append("test_api/")
+                argv[cmd_no] = "test_api/"
             elif command == "api-internal-db-result-counts":
-                argv.remove("api-internal-db-result-counts")
-                argv.append("test_api/test_result_counts.py")
+                argv[cmd_no] = "test_api/test_result_counts.py"
                 settings.TEST_RESULT_COUNTS_AGAINST_INTERNAL_DB = True
             else:
                 usage = "To run api tests, please choose one of these api test commands: "\
                         "\napi-internal-db"\
                         "\napi-internal-db-result-counts"\
                         "\napi-livetest-pro"\
-                        "\napi-livetest-dev"
+                        "\napi-livetest-dev"\
+                        "\nSpecify all to test all server tests"
                 print(usage)
                 sys.exit()
 

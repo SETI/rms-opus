@@ -369,13 +369,13 @@ def api_get_range_endpoints(request, slug, fmt='json'):
     cache_key = 'rangeep:' + qualified_param_name_no_num
     if user_table:
         cache_num, cache_new_flag = set_user_search_number(selections, extras)
-        # We're guaranteed the table actually exists here
         if cache_num is None:
             log.error('api_get_range_endpoints: Failed to create cache table '
                       +'for *** Selections %s *** Extras %s',
                       str(selections), str(extras))
             exit_api_call(api_code, Http404)
             raise Http404
+        # We're guaranteed the table actually exists here
         cache_key += ':' + str(cache_num)
 
     cached_val = cache.get(cache_key)

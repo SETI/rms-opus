@@ -152,11 +152,12 @@ def get_product_counts(products_by_type):
     size = 0
     count = 0
     num_products = OrderedDict()
-    for product_type, products in products_by_type.items():
-        num_products[product_type] = len(products)
-        for pdsf in products:
-            size += pdsf.size_bytes
-            count += 1
+    if products_by_type is not None:
+        for product_type, products in products_by_type.items():
+            num_products[product_type] = len(products)
+            for pdsf in products:
+                size += pdsf.size_bytes
+                count += 1
 
     _check_for_pdsfile_exception()
 
@@ -318,7 +319,7 @@ def get_pds_preview_images(opus_id_list, preview_jsons, sizes):
                                     .preview_images)
                 preview_json = json.loads(preview_json_str)
             except ObjectDoesNotExist:
-                log.error('get_pds_preview_images: Failed to find opus_ids "%s" '
+                log.error('get_pds_preview_images: Failed to find opus_id "%s" '
                           +'in obs_general', opus_id)
         viewset = None
         if preview_json:
