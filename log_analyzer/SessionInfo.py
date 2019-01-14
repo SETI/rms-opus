@@ -47,7 +47,7 @@ class SessionInfo(metaclass=abc.ABCMeta):
     _session_search_slugs: Dict[str, Slug.Info]
     _session_column_slugs: Dict[str, Slug.Info]
 
-    def __init__(self):
+    def __init__(self) -> None:
         self._session_search_slugs = dict()
         self._session_column_slugs = dict()
 
@@ -55,17 +55,19 @@ class SessionInfo(metaclass=abc.ABCMeta):
     def parse_log_entry(self, entry: LogEntry) -> List[str]:
         raise Exception()
 
-    def record_search_slug(self, slug: str, slug_info: Slug.Info) -> None:
+    def add_search_slug(self, slug: str, slug_info: Slug.Info) -> None:
         self._all_search_slugs[slug] = slug_info
         self._session_search_slugs[slug] = slug_info
 
-    def record_column_slug(self, slug: str, slug_info: Slug.Info) -> None:
+    def add_column_slug(self, slug: str, slug_info: Slug.Info) -> None:
         self._all_column_slugs[slug] = slug_info
         self._session_column_slugs[slug] = slug_info
 
+    @property
     def session_search_slugs(self) -> Dict[str, Slug.Info]:
         return self._session_search_slugs
 
+    @property
     def session_column_slugs(self) -> Dict[str, Slug.Info]:
         return self._session_column_slugs
 

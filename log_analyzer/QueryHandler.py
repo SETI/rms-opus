@@ -71,7 +71,7 @@ class QueryHandler:
             if slug_info:
                 family = slug_info.family
                 search_slug_info[family].append((slug_info, value))
-                self._session_info.record_search_slug(slug, slug_info)
+                self._session_info.add_search_slug(slug, slug_info)
 
         if uses_columns:
             columns_query = query.get('cols')
@@ -306,7 +306,7 @@ class QueryHandler:
                 assert slug_info.family
                 result[slug_info.family] = slug_info
                 if session_info:
-                    session_info.record_column_slug(slug, slug_info)
+                    session_info.add_column_slug(slug, slug_info)
 
         return result
 

@@ -137,15 +137,18 @@ class LogParser:
                                       - current_session_entries[0]['log_entry'].time)
                 total_time_on_host += session_time_delta
 
-                def handle_info(info: Dict[str, Slug.Info]) -> List[str]:
-                    return [dict(name=slug, is_obsolete=info[slug].flags.is_obsolete())
+                def slug_info(info: Dict[str, Slug.Info]) -> List[Dict[str, Any]]:
+                    return [{'name': slug, 'is_obsolete': info[slug].flags.is_obsolete()}
                             for slug in sorted(info, key=str.lower)]
 
-                sessions.append(dict(entries=current_session_entries,
-                                     time_delta=session_time_delta,
-                                     id=next(id_generator),
-                                     search_slugs=handle_info(session_info.session_search_slugs()),
-                                     column_slugs=handle_info(session_info.session_column_slugs())))
+                sessions.append({'entries': current_session_entries,
+                                 'time_delta': session_time_delta,
+                                 'id': next(id_generator),
+                                 'slug_list':
+                                     ({'name': 'search', 'info': slug_info(session_info.session_search_slugs)},
+                                      {'name': 'column', 'info': slug_info(session_info.session_column_slugs)})})
+
+
 
             if sessions:
                 host_infos.append(dict(hostname=hostname_from_ip, sessions=sessions, total_time=total_time_on_host,
