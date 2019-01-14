@@ -9,20 +9,22 @@ var o_search = {
     truncatedResults: false,
     truncatedResultsMsg: "&ltMore choices available&gt",
     slugReqno: {},
-    normalizedApiCall: function() {
+    slugRangeInputValueFromLastSearch: {},
+    allNormalizedApiCall: function() {
         let newHash = o_hash.updateHash(false);
         let regexForShortHash = /(.*)&view/;
         // Use short hash
         if(newHash.match(regexForShortHash)) {
             newHash = newHash.match(regexForShortHash)[1];
         }
-
-        opus.lastRequestNo++;
-        let url = "/opus/__api/normalizeinput.json?" + newHash + "&reqno=" + opus.lastRequestNo;
+        opus.waitingForAllNormalizedAPI = true;
+        opus.lastAllNormalizeRequestNo++;
+        let url = "/opus/__api/normalizeinput.json?" + newHash + "&reqno=" + opus.lastAllNormalizeRequestNo;
         return $.getJSON(url);
     },
     validateRangeInput: function(data, removeSpinner=false) {
         opus.allInputsValid = true;
+        o_search.slugRangeInputValueFromLastSearch = {};
         $.each(data, function(eachSlug, value) {
             let currentInput = $(`input[name="${eachSlug}"]`);
             if(data[eachSlug] === null) {
@@ -35,6 +37,7 @@ var o_search = {
             } else {
                 if(currentInput.hasClass("RANGE")) {
                     currentInput.val(value);
+                    o_search.slugRangeInputValueFromLastSearch[eachSlug] = value;
                     if(currentInput.hasClass("search_input_invalid_no_focus")) {
                         currentInput.removeClass("search_input_invalid_no_focus");
                     }
@@ -150,8 +153,8 @@ var o_search = {
             let currentValue = $(this).val().trim();
             let values = []
 
-            opus.lastNormalizeRequestNo++;
-            o_search.slugReqno[slug] = opus.lastNormalizeRequestNo;
+            opus.lastSlugNormalizeRequestNo++;
+            o_search.slugReqno[slug] = opus.lastSlugNormalizeRequestNo;
 
             values.push(currentValue)
             opus.selections[slug] = values;
@@ -159,14 +162,15 @@ var o_search = {
             let newHash = `${slug}=${currentValue}`;
 
             // if input field is empty, do not perform api call
-            if(currentValue === "") {
+            // if input value didn't change from last successful search (normalized value), do not change border
+            if(currentValue === "" || currentValue === o_search.slugRangeInputValueFromLastSearch[slug]) {
                 $(event.target).removeClass("search_input_valid search_input_invalid");
                 $(event.target).addClass("search_input_original");
                 return;
             }
             // keep calling normalize api to check input values whenever input got changed
             // only check if return value is null or not, DON'T compare min & max
-            let url = "/opus/__api/normalizeinput.json?" + newHash + "&reqno=" + opus.lastNormalizeRequestNo;
+            let url = "/opus/__api/normalizeinput.json?" + newHash + "&reqno=" + opus.lastSlugNormalizeRequestNo;
             $.getJSON(url, function(data) {
                 // if a newer input is there, re-call api with new input
                 if(data["reqno"] < o_search.slugReqno[slug]) {
@@ -203,9 +207,9 @@ var o_search = {
             if(newHash.match(regexForShortHash)) {
                 newHash = newHash.match(regexForShortHash)[1];
             }
-            opus.lastNormalizeRequestNo++;
-            o_search.slugReqno[slug] = opus.lastNormalizeRequestNo;
-            let url = "/opus/__api/normalizeinput.json?" + newHash + "&reqno=" + opus.lastNormalizeRequestNo;
+            opus.lastSlugNormalizeRequestNo++;
+            o_search.slugReqno[slug] = opus.lastSlugNormalizeRequestNo;
+            let url = "/opus/__api/normalizeinput.json?" + newHash + "&reqno=" + opus.lastSlugNormalizeRequestNo;
             o_search.performSearch(event, slug, url);
         });
 
