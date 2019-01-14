@@ -2,7 +2,7 @@ import abc
 import ipaddress
 import re
 import urllib.parse
-from typing import List, Dict, Optional, Match, Tuple, Pattern, Callable, Any
+from typing import List, Dict, Optional, Match, Tuple, Pattern, Callable, Any, ClassVar
 
 import Slug
 from LogEntry import LogEntry
@@ -29,9 +29,9 @@ class SessionInfoGenerator:
         self._default_column_slug_info = QueryHandler.get_column_slug_info(self.DEFAULT_COLUMN_INFO, slug_info)
         self._ignored_ips = ignored_ips
 
-    def create(self) -> 'SessionInfo':
+    def create(self, uses_html: bool = False) -> 'SessionInfo':
         """Create a new SessionInfo"""
-        return _SessionInfoImpl(self._slug_map, self._default_column_slug_info, self._ignored_ips)
+        return SessionInfoImpl(self._slug_map, self._default_column_slug_info, self._ignored_ips, uses_html)
 
 
 class SessionInfo(metaclass=abc.ABCMeta):
@@ -41,20 +41,24 @@ class SessionInfo(metaclass=abc.ABCMeta):
 
     This is an abstract class.  The user should only get instances of this class from the SessionInfoGenerator.
     """
+    _uses_html: bool
+    _all_search_slugs: ClassVar[Dict[str, Slug.Info]] = dict()
+    _all_column_slugs: ClassVar[Dict[str, Slug.Info]] = dict()
+
+    def __init__(self, uses_html: bool):
+        self._uses_html = uses_html
 
     @abc.abstractmethod
     def parse_log_entry(self, entry: LogEntry) -> List[str]:
         raise Exception()
 
     @classmethod
-    @abc.abstractmethod
     def all_search_slugs(cls) -> Dict[str, Slug.Info]:
-        raise Exception()
+        return cls._all_search_slugs
 
     @classmethod
-    @abc.abstractmethod
     def all_column_slugs(cls) -> Dict[str, Slug.Info]:
-        raise Exception()
+        return cls._all_column_slugs
 
 
 class ForPattern:
@@ -76,21 +80,18 @@ class ForPattern:
         return fn
 
 
-def quote_and_join_list(string_list: List[str]) -> str:
-    return ', '.join(f'"{string}"' for string in string_list)
-
-
 # noinspection PyUnusedLocal
-class _SessionInfoImpl(SessionInfo):
+class SessionInfoImpl(SessionInfo):
     _ignored_ips: List[ipaddress.IPv4Network]
     _previous_product_info_type: Optional[List[str]]
     _query_handler: QueryHandler
 
     def __init__(self, slug_map: Slug.ToInfoMap, default_column_slug_info: ColumnSlugInfo,
-                 ignored_ips: List[ipaddress.IPv4Network]):
+                 ignored_ips: List[ipaddress.IPv4Network], uses_html: bool):
         """This initialization should only be called by SessionInfoGenerator above."""
+        super(SessionInfoImpl, self).__init__(uses_html)
         self._ignored_ips = ignored_ips
-        self._query_handler = QueryHandler(slug_map, default_column_slug_info)
+        self._query_handler = QueryHandler(slug_map, default_column_slug_info, uses_html)
 
         # The previous value of types when downloading a collection
         self._previous_product_info_type = None
@@ -125,11 +126,11 @@ class _SessionInfoImpl(SessionInfo):
 
     @classmethod
     def all_search_slugs(cls) -> Dict[str, Slug.Info]:
-        return QueryHandler._all_search_slugs
+        return cls._all_search_slugs
 
     @classmethod
     def all_column_slugs(cls) -> Dict[str, Slug.Info]:
-        return QueryHandler._all_column_slugs
+        return cls._all_column_slugs
 
     #
     # API
@@ -178,12 +179,12 @@ class _SessionInfoImpl(SessionInfo):
     @ForPattern(r'/__collections(/default)?/download.zip')
     @ForPattern(r'/__collections/download/default.zip')
     def _create_zip_file(self, query: Dict[str, str], match: Match[str]) -> List[str]:
-        self._query_handler.reset();
+        self._query_handler.reset()
         types = query.get('types')
         if types is None:
             output = '???'
         else:
-            output = quote_and_join_list(types.split(','))
+            output = self._query_handler.quote_and_join_list(types.split(','))
         return [f'Create Zip File: {output}']
 
     @ForPattern(r'/__collections/download/info(|\.json)')
@@ -194,7 +195,7 @@ class _SessionInfoImpl(SessionInfo):
         self._previous_product_info_type = new_ptypes
 
         if old_ptypes is None:
-            joined_new_ptypes = quote_and_join_list(new_ptypes)
+            joined_new_ptypes = self._query_handler.quote_and_join_list(new_ptypes)
             plural = '' if len(new_ptypes) == 1 else 's'
             return [f'Download Product Type{plural}: {joined_new_ptypes}']
 
@@ -203,7 +204,7 @@ class _SessionInfoImpl(SessionInfo):
         def show(verb: str, items: List[str]) -> None:
             if items:
                 plural = 's' if len(items) > 1 else ''
-                joined_items = quote_and_join_list(items)
+                joined_items = self._query_handler.quote_and_join_list(items)
                 result.append(f'{verb.title()} Product Type{plural}: {joined_items}')
 
         show('add', [ptype for ptype in new_ptypes if ptype not in old_ptypes])
@@ -216,7 +217,6 @@ class _SessionInfoImpl(SessionInfo):
     @ForPattern(r'/__collections/data.csv')
     def _download_selections_csv(self, query: Dict[str, str], match: Match[str]) -> List[str]:
         return ["Download Selections CSV"]
-
 
     #
     # FORMS
@@ -234,3 +234,6 @@ class _SessionInfoImpl(SessionInfo):
     def _initialize_detail(self, query: Dict[str, str], match: Match[str]) -> List[str]:
         return [f'View Detail: {match.group(1)}']
 
+    #
+    # Various utilities
+    #
