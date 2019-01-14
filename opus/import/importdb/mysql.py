@@ -202,6 +202,8 @@ FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `TABLE_SCHEMA`='{self.db_schema}' AND
                 field_type = 'real8'
             elif data_type == 'enum':
                 field_type = 'enum'
+            elif data_type == 'json':
+                field_type = 'json'
             elif data_type == 'timestamp':
                 field_type = 'timestamp'
             else:
