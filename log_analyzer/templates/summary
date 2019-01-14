@@ -47,10 +47,12 @@ td.SessionInfo {
 </head>
 <body>
 
+<div class="container-fluid">
+<div class="row">
 <div class="col-sm-3" id="left">
 {% spaceless %}
 {% for host_info in host_infos %}
-    <span>{{ host_info.hostname }} ({{ host_info.sessions | length }}x, {{ host_info.total_time }})</span>
+    <span>{{ host_info.hostname }} ({{ host_info.total_time }})<span class="badge badge-secondary">{{ host_info.sessions | length }}</span></span>
     <ul>
         {% for session in host_info.sessions %}
             <li><a href="#" class=SessionLink data-id="{{ session.id }}">{{ session.entries.0.log_entry.time | date:'Y/M/d H:i:s' }} ({{ session.time_delta }})</a></li>
@@ -59,7 +61,6 @@ td.SessionInfo {
 {% endfor %}
 {% endspaceless %}
 </div>
-
 <div class="col-sm-9" id="right">
 {% spaceless %}
 {% for host_info in host_infos %}
@@ -76,22 +77,30 @@ td.SessionInfo {
                     <td>&nbsp;</td>
                 {% endif %}
                 <td>{{ line }}</td>
-                 </tr>
+                </tr>
             {% endfor %}
         {% endfor %}
         </table>
+        <hr>
+        <b>Search slugs</b>: {% for x in session.search_slugs %} {{ x.name }}{% if x.is_obsolete %} (obsolete){% endif %}{%if not forloop.last %},{%endif %} {% endfor %}
+        <br><br>
+        <b>Column slugs</b>: {% for x in session.column_slugs %} {{ x.name }}{% if x.is_obsolete %} (obsolete){% endif %}{%if not forloop.last %},{%endif %} {% endfor %}
         </div>
     {% endfor %}
 {% endfor %}
 {% endspaceless %}
 </div>
+</div>
+</div>
 
 <script>
 
 $(document).ready(function(){
+    $('.SessionInfo').first().show()
+
     $('.SessionLink').click(function() {
         var target_id = '#' + $(this).attr('data-id');
-        $('.SessionInfo').hide()
+        $('.SessionInfo').hide();
         $(target_id).show()
     })
 });

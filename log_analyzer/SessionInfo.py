@@ -41,16 +41,33 @@ class SessionInfo(metaclass=abc.ABCMeta):
 
     This is an abstract class.  The user should only get instances of this class from the SessionInfoGenerator.
     """
-    _uses_html: bool
     _all_search_slugs: ClassVar[Dict[str, Slug.Info]] = dict()
     _all_column_slugs: ClassVar[Dict[str, Slug.Info]] = dict()
 
-    def __init__(self, uses_html: bool):
-        self._uses_html = uses_html
+    _session_search_slugs: Dict[str, Slug.Info]
+    _session_column_slugs: Dict[str, Slug.Info]
+
+    def __init__(self):
+        self._session_search_slugs = dict()
+        self._session_column_slugs = dict()
 
     @abc.abstractmethod
     def parse_log_entry(self, entry: LogEntry) -> List[str]:
         raise Exception()
+
+    def record_search_slug(self, slug: str, slug_info: Slug.Info) -> None:
+        self._all_search_slugs[slug] = slug_info
+        self._session_search_slugs[slug] = slug_info
+
+    def record_column_slug(self, slug: str, slug_info: Slug.Info) -> None:
+        self._all_column_slugs[slug] = slug_info
+        self._session_column_slugs[slug] = slug_info
+
+    def session_search_slugs(self) -> Dict[str, Slug.Info]:
+        return self._session_search_slugs
+
+    def session_column_slugs(self) -> Dict[str, Slug.Info]:
+        return self._session_column_slugs
 
     @classmethod
     def all_search_slugs(cls) -> Dict[str, Slug.Info]:
@@ -59,6 +76,10 @@ class SessionInfo(metaclass=abc.ABCMeta):
     @classmethod
     def all_column_slugs(cls) -> Dict[str, Slug.Info]:
         return cls._all_column_slugs
+
+    @staticmethod
+    def quote_and_join_list(string_list: List[str]) -> str:
+        return ', '.join(f'"{string}"' for string in string_list)
 
 
 class ForPattern:
@@ -89,9 +110,10 @@ class SessionInfoImpl(SessionInfo):
     def __init__(self, slug_map: Slug.ToInfoMap, default_column_slug_info: ColumnSlugInfo,
                  ignored_ips: List[ipaddress.IPv4Network], uses_html: bool):
         """This initialization should only be called by SessionInfoGenerator above."""
-        super(SessionInfoImpl, self).__init__(uses_html)
+        super(SessionInfoImpl, self).__init__()
         self._ignored_ips = ignored_ips
-        self._query_handler = QueryHandler(slug_map, default_column_slug_info, uses_html)
+        self._query_handler = QueryHandler(self, slug_map, default_column_slug_info, uses_html)
+        self._uses_html = uses_html
 
         # The previous value of types when downloading a collection
         self._previous_product_info_type = None
@@ -123,14 +145,6 @@ class SessionInfoImpl(SessionInfo):
                          if isinstance(value, list) and len(value) == 1}
                 return method(self, query, match)
         return []
-
-    @classmethod
-    def all_search_slugs(cls) -> Dict[str, Slug.Info]:
-        return cls._all_search_slugs
-
-    @classmethod
-    def all_column_slugs(cls) -> Dict[str, Slug.Info]:
-        return cls._all_column_slugs
 
     #
     # API
@@ -184,7 +198,7 @@ class SessionInfoImpl(SessionInfo):
         if types is None:
             output = '???'
         else:
-            output = self._query_handler.quote_and_join_list(types.split(','))
+            output = self.quote_and_join_list(types.split(','))
         return [f'Create Zip File: {output}']
 
     @ForPattern(r'/__collections/download/info(|\.json)')
@@ -195,7 +209,7 @@ class SessionInfoImpl(SessionInfo):
         self._previous_product_info_type = new_ptypes
 
         if old_ptypes is None:
-            joined_new_ptypes = self._query_handler.quote_and_join_list(new_ptypes)
+            joined_new_ptypes = self.quote_and_join_list(new_ptypes)
             plural = '' if len(new_ptypes) == 1 else 's'
             return [f'Download Product Type{plural}: {joined_new_ptypes}']
 
@@ -204,7 +218,7 @@ class SessionInfoImpl(SessionInfo):
         def show(verb: str, items: List[str]) -> None:
             if items:
                 plural = 's' if len(items) > 1 else ''
-                joined_items = self._query_handler.quote_and_join_list(items)
+                joined_items = self.quote_and_join_list(items)
                 result.append(f'{verb.title()} Product Type{plural}: {joined_items}')
 
         show('add', [ptype for ptype in new_ptypes if ptype not in old_ptypes])
@@ -237,3 +251,5 @@ class SessionInfoImpl(SessionInfo):
     #
     # Various utilities
     #
+
+

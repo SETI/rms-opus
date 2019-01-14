@@ -99,7 +99,8 @@ class LogParser:
 
     def run_summary(self, log_entries: List[LogEntry]) -> None:
         entries_by_host_ip = self.__group_log_entries_by_host_ip(log_entries)
-        id_counter = itertools.count(1000000)
+
+        id_generator = (f'{value:X}' for value in itertools.count(1000000))
 
         host_infos: List[Dict[str, Any]] = []
         for session_host_ip in sorted(entries_by_host_ip):
@@ -135,12 +136,20 @@ class LogParser:
                 session_time_delta = (current_session_entries[-1]['log_entry'].time
                                       - current_session_entries[0]['log_entry'].time)
                 total_time_on_host += session_time_delta
-                sessions.append(dict(entries=current_session_entries, time_delta=session_time_delta,
-                                     id=next(id_counter)))
+
+                def handle_info(info: Dict[str, Slug.Info]) -> List[str]:
+                    return [dict(name=slug, is_obsolete=info[slug].flags.is_obsolete())
+                            for slug in sorted(info, key=str.lower)]
+
+                sessions.append(dict(entries=current_session_entries,
+                                     time_delta=session_time_delta,
+                                     id=next(id_generator),
+                                     search_slugs=handle_info(session_info.session_search_slugs()),
+                                     column_slugs=handle_info(session_info.session_column_slugs())))
 
             if sessions:
                 host_infos.append(dict(hostname=hostname_from_ip, sessions=sessions, total_time=total_time_on_host,
-                                       id=next(id_counter)))
+                                       id=next(id_generator)))
 
         os.environ.setdefault("DJANGO_SETTINGS_MODULE", "DjangoSettings")
         django.setup()

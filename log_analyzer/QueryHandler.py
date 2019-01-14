@@ -7,7 +7,6 @@ from typing import Dict, Tuple, List, Optional, cast, Any
 from django.utils.html import format_html, format_html_join
 from django.utils.safestring import mark_safe
 
-import SessionInfo
 import Slug
 
 SearchSlugInfo = Dict[Slug.Family, List[Tuple[Slug.Info, str]]]
@@ -22,6 +21,7 @@ class State(Enum):
 
 class QueryHandler:
     DEFAULT_SORT_ORDER = 'time1'
+    _session_info: Any   # can't handle circular imports.  :-(
     _slug_map: Slug.ToInfoMap
     _default_column_slug_info: ColumnSlugInfo
     _uses_html: bool
@@ -33,7 +33,8 @@ class QueryHandler:
     _previous_sort_order: str  # sort order
     _previous_state: State
 
-    def __init__(self, slug_map: Slug.ToInfoMap, default_column_slug_info: ColumnSlugInfo, uses_html: bool):
+    def __init__(self, session_info: Any, slug_map: Slug.ToInfoMap, default_column_slug_info: ColumnSlugInfo, uses_html: bool):
+        self._session_info = session_info
         self._slug_map = slug_map
         self._default_column_slug_info = default_column_slug_info
         self._uses_html = uses_html
@@ -70,12 +71,12 @@ class QueryHandler:
             if slug_info:
                 family = slug_info.family
                 search_slug_info[family].append((slug_info, value))
-                SessionInfo.SessionInfo.all_search_slugs()[slug] = slug_info
+                self._session_info.record_search_slug(slug, slug_info)
 
         if uses_columns:
             columns_query = query.get('cols')
             if columns_query:
-                column_slug_info = self.get_column_slug_info(columns_query.split(','), self._slug_map, record=True)
+                column_slug_info = self.get_column_slug_info(columns_query.split(','), self._slug_map, self._session_info)
             else:
                 column_slug_info = self._default_column_slug_info
         else:
@@ -148,11 +149,13 @@ class QueryHandler:
             new_min, new_max, new_qtype, flags = self.__parse_search_family(new_info[family])
             postscript = f' **{flags.pretty_print()}**' if flags else ''
             if self._uses_html:
-                def always_mark(type: str, value: str) -> Any:
+                def always_mark(type: str, value: Optional[str]) -> Any:
                     return format_html('<mark><ins>{}:{}</ins></mark>', type, self.__format_search_value(value))
                 result.append(format_html('Add Search: &quot;{}&quot; = ({}, {}, {}){}',
-                                          family.label, always_mark(family.min, new_min),
-                                          always_mark(family.max, new_max), always_mark('qtype', new_qtype),
+                                          family.label,
+                                          always_mark(family.min, new_min),
+                                          always_mark(family.max, new_max),
+                                          always_mark('qtype', new_qtype),
                                           postscript))
             else:
                 new_value = (f'({family.min.upper()}:{self.__format_search_value(new_min)},'
@@ -199,7 +202,7 @@ class QueryHandler:
             if new_column_families == set(self._default_column_slug_info.keys()):
                 return
             column_labels = [new_info[family].label for family in sorted(new_column_families)]
-            quoted_column_labels = self.quote_and_join_list(sorted(column_labels))
+            quoted_column_labels = self._session_info.quote_and_join_list(sorted(column_labels))
             result.append(f'Starting with Columns: {quoted_column_labels}')
             return
 
@@ -254,16 +257,16 @@ class QueryHandler:
         if old_value_set == new_value_set:
             return
         if self._uses_html:
-            change_list: List[str] = []
+            marked_changes: List[str] = []
             for value in sorted(old_value_set.union(new_value_set)):
                 formatted_value = self.__format_search_value(value)
                 if value not in old_value_set:
-                    change_list.append(format_html('<mark><ins>{}</ins><mark>', formatted_value))
+                    marked_changes.append(format_html('<mark><ins>{}</ins><mark>', formatted_value))
                 elif value not in new_value_set:
-                    change_list.append(format_html('<mark><del>{}</del></mark>', formatted_value))
+                    marked_changes.append(format_html('<mark><del>{}</del></mark>', formatted_value))
                 else:
-                    change_list.append(formatted_value)
-            joined_values = format_html_join(', ', '{}', ((x,) for x in change_list))
+                    marked_changes.append(formatted_value)
+            joined_values = format_html_join(', ', '{}', ((x,) for x in marked_changes))
             result.append(format_html('Change Search: &quot;{}&quot; = {}', name, joined_values))
         elif old_value_set.intersection(new_value_set):
             change_list: List[Tuple[str, str]] = []
@@ -290,7 +293,8 @@ class QueryHandler:
             return
 
     @staticmethod
-    def get_column_slug_info(slugs: List[str], slug_map: Slug.ToInfoMap, record: bool = False) -> ColumnSlugInfo:
+    def get_column_slug_info(slugs: List[str], slug_map: Slug.ToInfoMap,
+                             session_info: Optional[Any] = None) -> ColumnSlugInfo:
         """
         This returns a map from the slugs that appear in the list of strings to the Info for that slug,
         provided that the info exists.
@@ -301,12 +305,10 @@ class QueryHandler:
             if slug_info:
                 assert slug_info.family
                 result[slug_info.family] = slug_info
-                if record:
-                    SessionInfo.SessionInfo.all_column_slugs()[slug] = slug_info
-        return result
+                if session_info:
+                    session_info.record_column_slug(slug, slug_info)
 
-    def quote_and_join_list(self, string_list: List[str]) -> str:
-        return ', '.join(f'"{string}"' for string in string_list)
+        return result
 
     def __format_search_value(self, value: Optional[str]) -> str:
         if self._uses_html:
@@ -317,12 +319,12 @@ class QueryHandler:
         else:
             return '~' if value is None else '"' + value + '"'
 
-    def __get_postscript(self, new_slug_info):
+    def __get_postscript(self, new_slug_info: Slug.Info) -> str:
         flags = new_slug_info.flags
         if not flags:
             return ''
         elif self._uses_html:
-            return format_html(' <span class="text-danger">({})</span>', flags.pretty_print())
+            return cast(str, format_html(' <span class="text-danger">({})</span>', flags.pretty_print()))
         else:
             return f' **{new_slug_info.flags.pretty_print()}**'
 
