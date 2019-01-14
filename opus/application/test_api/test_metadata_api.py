@@ -30,8 +30,6 @@ settings.CACHE_BACKEND = 'dummy:///'
 # url(r'^__api/fields.(?P<fmt>[json|zip|html|csv]+)$', api_get_fields),
 
 class ApiMetadataTests(TestCase):
-    GO_LIVE = False
-    LIVE_TARGET = "production"
 
     # disable error logging and trace output before test
     def setUp(self):
@@ -42,11 +40,11 @@ class ApiMetadataTests(TestCase):
         logging.disable(logging.NOTSET)
 
     def _get_response(self, url):
-        if self.GO_LIVE:
+        if settings.TEST_ApiMetadataTests_GO_LIVE:
             client = requests.Session()
         else:
             client = RequestsClient()
-        if self.LIVE_TARGET == "production":
+        if settings.TEST_ApiMetadataTests_LIVE_TARGET == "production":
             url = "https://tools.pds-rings.seti.org" + url
         else:
             url = "http://dev.pds-rings.seti.org" + url
