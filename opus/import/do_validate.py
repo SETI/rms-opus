@@ -167,7 +167,7 @@ NAME='{field_name1}'"""
     f'More than one param_info entry for "{full_obs_table_name}.{field_name1}"')
                 continue
             pi_form_type = res[0][0]
-            if pi_form_type.startswith('LONG'):
+            if pi_form_type is None or pi_form_type.startswith('LONG'):
                 continue
 
             cmd = f"""
@@ -177,7 +177,7 @@ opus_id FROM {q(full_obs_table_name)} WHERE {q(field_name2)} < {q(field_name1)}"
                 opus_ids = [x[0] for x in res]
                 logger.log('error',
     f'Column "{full_obs_table_name}.{field_name1}" has values greater than '+
-    f'{field_name2} for some OPUS IDs; first 10: ' + ' '.join(opus_ids[:10]))
+    f'{field_name2} for some OPUS IDs; first 100: ' + ' '.join(opus_ids[:100]))
 
 
 def do_validate(namespace='perm'):
