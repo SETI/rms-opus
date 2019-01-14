@@ -1,7 +1,7 @@
 certifi==2018.11.29
 chardet==3.0.4
 coverage==4.5.2
-Django==2.1
+Django==2.1.5
 django-annoying==0.10.4
 django-memcached==0.1.2
 django-nose==1.4.5
@@ -18,7 +18,7 @@ psycopg2-binary==2.7.5
 pyparsing==2.2.0
 python-memcached==1.59
 pytz==2018.5
-PyYAML==3.13
+PyYAML==4.2b4
 requests==2.20.1
 six==1.11.0
 urllib3==1.24.1
