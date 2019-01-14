@@ -40,8 +40,6 @@ settings.CACHE_BACKEND = 'dummy:///'
 # url(r'^__api/categories.json$', api_get_categories_for_search),
 
 class ApiResultsTests(TestCase):
-    GO_LIVE = False
-    LIVE_TARGET = "production"
 
     # disable error logging and trace output before test
     def setUp(self):
@@ -52,11 +50,11 @@ class ApiResultsTests(TestCase):
         logging.disable(logging.NOTSET)
 
     def _get_response(self, url):
-        if self.GO_LIVE:
+        if settings.TEST_ApiResultsTests_GO_LIVE:
             client = requests.Session()
         else:
             client = RequestsClient()
-        if self.LIVE_TARGET == "production":
+        if settings.TEST_ApiResultsTests_LIVE_TARGET == "production":
             url = "https://tools.pds-rings.seti.org" + url
         else:
             url = "http://dev.pds-rings.seti.org" + url

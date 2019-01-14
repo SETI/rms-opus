@@ -6,6 +6,7 @@
 # support routines for searching:
 #
 #    Format: __api/normalizeinput.json
+#    Format: __api/stringsearchchoices/<slug>.json
 #
 ################################################################################
 
@@ -13,6 +14,7 @@ import hashlib
 import json
 import logging
 import math
+import re
 import sys
 
 import settings
@@ -75,6 +77,9 @@ def api_normalize_input(request):
         exit_api_call(api_code, ret)
         raise ret
 
+    reqno = request.GET.get('reqno', None)
+    selections['reqno'] = reqno
+
     ret = json_response(selections)
     exit_api_call(api_code, ret)
     return ret
@@ -94,10 +99,21 @@ def api_string_search_choices(request, slug):
                Normal search arguments
 
     Returned JSON is of the format:
-        {"choices": ["choice1", "choice2"]}
+        {"choices": ["choice1", "choice2"],
+         "full_search": true/false,
+         "truncated_results": true/false,
+         "reqno": number or None}
 
     The portion of each choice selected by the partial search is highlighted
     with <b>...</b>.
+
+    full_search is true if the search was so large that it either exceeded the
+    query timeout or the maximum count allowed, thus requiring the results
+    to be on the entire database. full_search is false if the search was
+    performed restricted to the user's other constraints.
+
+    truncated_results is true if the the number of results exceeded the
+    specified limit. Only the limit number will be returned.
     """
     api_code = enter_api_call('api_string_search_choices', request)
 
@@ -126,16 +142,38 @@ def api_string_search_choices(request, slug):
         exit_api_call(api_code, ret)
         raise ret
 
-    partial_query = ''
-    query_qtype = 'contains'
-    if param_qualified_name in selections:
-        partial_query = selections[param_qualified_name][0]
-        del selections[param_qualified_name]
+    reqno = request.GET.get('reqno', None)
+    try:
+        reqno = int(reqno)
+    except:
+        reqno = None
+
+    if param_qualified_name not in selections:
+        selections[param_qualified_name] = ['']
+
+    qtypes = {}
+    query_qtype_list = []
     if 'qtypes' in extras:
         qtypes = extras['qtypes']
-        if param_qualified_name in qtypes:
-            query_qtype = qtypes[param_qualified_name]
-            del qtypes[param_qualified_name]
+    if param_qualified_name in qtypes:
+        query_qtype_list = qtypes[param_qualified_name]
+        if query_qtype_list == ['matches']:
+            query_qtype_list = ['contains']
+        query_qtype = query_qtype_list[0]
+        del qtypes[param_qualified_name]
+
+    # Must do this here before deleting the slug from selections below
+    like_query, like_params = get_string_query(selections, param_qualified_name,
+                                               query_qtype_list)
+    if like_query is None:
+        ret = Http404('Bad string query')
+        exit_api_call(api_code, ret)
+        raise ret
+
+    partial_query = ''
+    query_qtype = 'contains'
+    partial_query = selections[param_qualified_name][0]
+    del selections[param_qualified_name]
 
     user_query_table = get_user_query_table(selections, extras,
                                             api_code=api_code)
@@ -164,6 +202,24 @@ def api_string_search_choices(request, slug):
         exit_api_call(api_code, ret)
         raise ret
 
+    # We do this because the user may have included characters that aren't
+    # allowed in a cache key
+    partial_query_hash = hashlib.md5(str.encode(partial_query)).hexdigest()
+
+    # Is this result already cached?
+    cache_key = ('stringsearchchoices:' +
+                 param_qualified_name + ':' +
+                 partial_query_hash + ':' +
+                 user_query_table + ':' +
+                 query_qtype + ':' +
+                 str(limit))
+    cached_val = cache.get(cache_key)
+    if cached_val is not None:
+        cached_val['reqno'] = reqno
+        ret = json_response(cached_val)
+        exit_api_call(api_code, ret)
+        return ret
+
     quoted_table_name = connection.ops.quote_name(param_category)
     quoted_param_qualified_name = (quoted_table_name + '.'
                                    +connection.ops.quote_name(param_name))
@@ -184,6 +240,7 @@ def api_string_search_choices(request, slug):
         raise ret
 
     final_results = None
+    truncated_results = False
 
     do_simple_search = False
     count = int(results[0][0])
@@ -209,11 +266,11 @@ def api_string_search_choices(request, slug):
         sql_params = []
         if partial_query:
             sql += ' WHERE '
-            sql += quoted_param_qualified_name + ' LIKE %s'
-            sql_params.append('%'+partial_query+'%')
+            sql += like_query
+            sql_params += like_params
 
         sql += ' ORDER BY '+quoted_param_qualified_name
-        sql += ' LIMIT '+str(limit)
+        sql += ' LIMIT '+str(limit+1)
 
         try:
             cursor.execute(sql, tuple(sql_params))
@@ -238,11 +295,11 @@ def api_string_search_choices(request, slug):
         sql_params = []
         if partial_query:
             sql += ' WHERE '
-            sql += quoted_param_qualified_name + ' LIKE %s'
-            sql_params.append('%'+partial_query+'%')
+            sql += like_query
+            sql_params += like_params
 
         sql += ' ORDER BY '+quoted_param_qualified_name
-        sql += ' LIMIT '+str(limit)
+        sql += ' LIMIT '+str(limit+1)
 
         try:
             cursor.execute(sql, tuple(sql_params))
@@ -265,12 +322,21 @@ def api_string_search_choices(request, slug):
 
         final_results = [x[0] for x in final_results]
         if partial_query:
-            final_results = [x.replace(partial_query,
-                                       '<b>'+partial_query+'</b>')
+            partial_query = partial_query.replace('\\', '\\\\')
+            pattern = re.compile('('+partial_query+')', re.IGNORECASE)
+            final_results = [pattern.sub('<b>\\1</b>', x)
                              for x in final_results]
 
-    ret = json_response({'choices': final_results,
-                         'full_search': do_simple_search})
+    if len(final_results) > limit:
+        final_results = final_results[:limit]
+        truncated_results = True
+
+    result = {'choices': final_results,
+              'full_search': do_simple_search,
+              'truncated_results': truncated_results}
+    cache.set(cache_key, result)
+    result['reqno'] = reqno
+    ret = json_response(result)
     exit_api_call(api_code, ret)
     return ret
 
@@ -585,7 +651,7 @@ def get_user_query_table(selections, extras, api_code=None):
         # For the minor performance gain this doesn't seem important to fix
         # right now but perhaps in the future.
         if e.args[0] == MYSQL_TABLE_ALREADY_EXISTS:
-            log.error('get_user_query_table: Table "%s" originally didn\'t '+
+            log.debug('get_user_query_table: Table "%s" originally didn\'t '+
                       'exist, but now it does!', cache_table_name)
             cache.set(cache_key, cache_table_name)
             return cache_table_name
@@ -968,6 +1034,10 @@ def get_string_query(selections, param_qualified_name, qtypes):
 
     qtype = qtypes[0]
     value = values[0]
+
+    value = value.replace('\\', '\\\\')
+    value = value.replace('%', '\\%')
+    value = value.replace('_', '\\_')
 
     clause = ''
     params = []
