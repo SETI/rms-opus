@@ -582,6 +582,14 @@ def populate_obs_mission_cassini_COISS_spacecraft_clock_count2(**kwargs):
     f'spacecraft_clock_count1 ({sc1}) and spacecraft_clock_count2 ({sc_cvt}) '
     +f'are in the wrong order - setting to count1')
         sc_cvt = sc1
+    else:
+        index_row = metadata['index_row']
+        image_number = index_row['IMAGE_NUMBER']
+        sc2_int = int(sc_cvt)
+        if int(image_number) != sc2_int:
+            import_util.log_warning(
+    f'spacecraft_clock_count2 ({sc_cvt}) and COISS IMAGE_NUMBER '
+    +f'({image_number}) don\'t match')
 
     return sc_cvt
 
