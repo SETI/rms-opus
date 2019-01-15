@@ -242,9 +242,11 @@ var o_search = {
         $("#search").on("change", "input.RANGE", function(event) {
             let slug = $(this).attr("name");
             let newHash = o_hash.updateHash(false);
-            // We are relying on URL order now to parse and get slugs before "&view" in the URL
-            // Opus would rewrite the URL when a URL is pasted, all the search related slugs would be moved ahead of "&view"
-            // Refer to hash.js getSelectionsFromHash and updateHash functions
+            /*
+            We are relying on URL order now to parse and get slugs before "&view" in the URL
+            Opus would rewrite the URL when a URL is pasted, all the search related slugs would be moved ahead of "&view"
+            Refer to hash.js getSelectionsFromHash and updateHash functions
+            */
             let regexForHashWithSearchParams = /(.*)&view/;
             if(newHash.match(regexForHashWithSearchParams)) {
                 newHash = newHash.match(regexForHashWithSearchParams)[1];
@@ -300,9 +302,11 @@ var o_search = {
             }
             // make a normalized call to avoid changing url whenever there is an invalid range input value
             let newHash = o_hash.updateHash(false);
-            // We are relying on URL order now to parse and get slugs before "&view" in the URL
-            // Opus would rewrite the URL when a URL is pasted, all the search related slugs would be moved ahead of "&view"
-            // Refer to hash.js getSelectionsFromHash and updateHash functions
+            /*
+            We are relying on URL order now to parse and get slugs before "&view" in the URL
+            Opus would rewrite the URL when a URL is pasted, all the search related slugs would be moved ahead of "&view"
+            Refer to hash.js getSelectionsFromHash and updateHash functions
+            */
             let regexForHashWithSearchParams = /(.*)&view/;
             if(newHash.match(regexForHashWithSearchParams)) {
                 newHash = newHash.match(regexForHashWithSearchParams)[1];
