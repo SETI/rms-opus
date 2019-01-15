@@ -73,7 +73,7 @@ td.SessionInfo {
             {% for line in entry.data %}
                 <tr>
                 {% if forloop.first %}
-                    <td><a href="{{api_host_url | safe}}{{entry.target_url.geturl | safe}}" target="_blank">{{entry.start_time_offset}}</a></td>
+                    <td><a href="{{api_host_url | safe}}{{entry.target_url | safe}}" target="_blank">{{entry.relative_start_time}}</a></td>
                 {% else %}
                     <td>&nbsp;</td>
                 {% endif %}
@@ -82,14 +82,14 @@ td.SessionInfo {
             {% endfor %}
         {% endfor %}
         </table>
-        <hr>
-        {% for name_info in session.slug_list %}
-            <b>{{ name_info.type | capfirst }} Slugs:</b>
-            {% for x in name_info.info %}
-                <span {% if x.is_obsolete %}class="text-danger"{% else %}class="text-dark"{% endif %}>
-                {{ x.slug }}</span>{%if not forloop.last %},{%endif %}
+        </hr>
+        {% for type, slug_info in session.slug_info %}
+            {% if not forloop.first %}<br>{% endif %}
+            <b>{{ type | capfirst }} Slugs: </b>
+            {% for slug_name, is_obsolete in slug_info %}
+                <span>{% if not forloop.first %}, {% endif %}</span>
+                <span {% if is_obsolete %}class="text-danger"{% else %}class="text-dark"{% endif %}>{{ slug_name }}</span>
             {% endfor %}
-            {% if not forloop.last %}<br>{% endif %}
         {% endfor %}
         </div>
     {% endfor %}

@@ -61,7 +61,7 @@ class SessionInfo(metaclass=abc.ABCMeta):
         raise Exception()
 
     @abc.abstractmethod
-    def get_alt_url_link(self, entry: LogEntry) -> Optional[SplitResult]:
+    def get_alternative_url(self, entry: LogEntry) -> Optional[SplitResult]:
         raise Exception()
 
     def add_search_slug(self, slug: str, slug_info: Slug.Info) -> None:
@@ -149,10 +149,16 @@ class SessionInfoImpl(SessionInfo):
                 return method(self, query, match)
         return []
 
-    def get_alt_url_link(self, entry: LogEntry) -> Optional[SplitResult]:
-        path = entry.url.path
-        if path == '/opus/__api/meta/result_count.json':
-            return entry.url._replace(path="/opus/#/")
+    def get_alternative_url(self, url: SplitResult) -> Optional[SplitResult]:
+        """
+        Given a URL, this returns either None or or alternative URL that better represents what the user seens on
+        their screen.
+        """
+        if url.path == '/opus/__api/meta/result_count.json':
+            raw_query = urllib.parse.parse_qs(url.query)
+            raw_query.pop('reqno', None)
+            new_path = "/opus/#/" + urllib.parse.urlencode(raw_query, True)
+            return url._replace(path=new_path, query=None)
         return None
 
     #

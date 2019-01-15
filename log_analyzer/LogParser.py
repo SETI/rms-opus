@@ -7,7 +7,7 @@ import textwrap
 from collections import defaultdict, deque
 from ipaddress import IPv4Address
 from operator import attrgetter
-from typing import List, Iterator, Dict, NamedTuple, Optional, Deque, IO, Any, Tuple
+from typing import List, Iterator, Dict, NamedTuple, Optional, Deque, IO, Any, Tuple, Iterable
 from urllib.parse import SplitResult
 
 import django
@@ -29,20 +29,33 @@ class _LiveSession(NamedTuple):
     def with_timeout(self, timeout: datetime.datetime) -> '_LiveSession':
         return self._replace(timeout=timeout)
 
+
 class Entry(NamedTuple):
     log_entry: LogEntry
-    target_url: SplitResult
-    start_time_offset: datetime.timedelta
+    alternative_url: Optional[SplitResult]
+    relative_start_time: datetime.timedelta
     data: List[str]
+
+    def target_url(self) -> str:
+        parsed_url = self.alternative_url or self.log_entry.url
+        return parsed_url.geturl()
 
 
 class Session(NamedTuple):
     host_ip: IPv4Address
-    start_time: datetime.datetime
-    duration: datetime.timedelta
     entries: List[Entry]
     id: str
-    slug_list: Tuple[Dict[str, Any], Dict[str, Any]]
+    search_slug_list: List[Tuple[str, bool]]
+    column_slug_list: List[Tuple[str, bool]]
+
+    def start_time(self) -> datetime.datetime:
+        return self.entries[0].log_entry.time
+
+    def duration(self) -> datetime.timedelta:
+        return self.entries[-1].log_entry.time - self.entries[0].log_entry.time
+
+    def slug_info(self) -> Iterable[Tuple[str, List[Tuple[str, bool]]]]:
+        return ("search", self.search_slug_list), ("column", self.column_slug_list)
 
 
 class HostInfo(NamedTuple):
@@ -55,7 +68,7 @@ class HostInfo(NamedTuple):
         return f'{self.name} ({self.ip})' if self.name else str(self.ip)
 
     def total_time(self) -> datetime.timedelta:
-        return sum((session.duration for session in self.sessions), datetime.timedelta(0))
+        return sum((session.duration() for session in self.sessions), datetime.timedelta(0))
 
 
 class LogParser:
@@ -86,9 +99,8 @@ class LogParser:
         of the session.
         """
         all_sessions = self.__get_session_list(log_entries, self._uses_html)
-        all_sessions.sort(key=attrgetter('start_time'))
+        all_sessions.sort(key=lambda session: (session.start_time(), session.host_ip))
 
-        output = self._output
         host_infos = [HostInfo(ip=session.host_ip,
                                name=self.__get_reverse_dns_from_ip(session.host_ip),  # may be None
                                sessions=[session],
@@ -98,7 +110,15 @@ class LogParser:
         self.__generate_batch_output(host_infos)
 
     def run_batch_by_ip(self, log_entries: List[LogEntry]) -> None:
+        """
+         Look at the list of log entries in batch mode.
+
+         The logs are aggregated into sessions, and the sessions are aggregated by host_ip.  The sessions are printed
+         out sorted by host_ip and then by session start time.
+         """
         all_sessions = self.__get_session_list(log_entries, self._uses_html)
+        all_sessions.sort(key=lambda session: (session.host_ip, session.start_time()))
+
         host_infos: List[HostInfo] = []
         while all_sessions:
             this_host = all_sessions[0].host_ip
@@ -113,25 +133,27 @@ class LogParser:
         self.__generate_batch_output(host_infos)
 
     def show_slugs(self, log_entries: List[LogEntry]) -> None:
+        """Print out all slugs that have appeared in the text."""
         output = self._output
         all_sessions = self.__get_session_list(log_entries, False)
 
-        def show_info(type: str, index: int) -> None:
+        def show_info(info_type: str) -> None:
             all_info: Dict[str, bool] = {}
             for session in all_sessions:
-                assert session.slug_list[index]['type'] == type
-                for info in session.slug_list[index]['info']:
-                    all_info[info['slug']] = info['is_obsolete']
+                slug_list = session.column_slug_list if info_type == 'column' else session.search_slug_list
+                for slug, is_obsolete in slug_list:
+                    all_info[slug] = is_obsolete
             result = ', '.join(
                 # Use ~ as a non-breaking space for textwrap.  We replace it with a space, below
                 (slug + '~[OBSOLETE]') if all_info[slug] else slug
                 for slug in sorted(all_info, key=str.lower))
 
-            wrapped = textwrap.fill(result, 100, initial_indent=f'{type.title()} slugs: ', subsequent_indent='    ')
+            wrapped = textwrap.fill(result, 100,
+                                    initial_indent=f'{info_type.title()} slugs: ', subsequent_indent='    ')
             print(wrapped.replace('~', ' '), file=output)
-        show_info("search", 0)
+        show_info("search")
         print('', file=output)
-        show_info("column", 1)
+        show_info("column")
 
     def run_realtime(self, log_entries: Iterator[LogEntry]) -> None:
         """
@@ -192,7 +214,9 @@ class LogParser:
             self.__print_entry_info(entry, entry_info, current_session.start_time)
 
     def __get_session_list(self, log_entries: List[LogEntry], uses_html: bool) -> List[Session]:
-        # Group all the logs by host
+        """Group the log entries into parsed sessions."""
+
+        # First, group all the logs by host
         entries_by_host_ip: Dict[IPv4Address, Deque[LogEntry]] = defaultdict(deque)
         for log_entry in log_entries:
             entries_by_host_ip[log_entry.host_ip].append(log_entry)
@@ -211,10 +235,10 @@ class LogParser:
                 session_start_time = entry.time
 
                 def create_session_entry(log_entry: LogEntry, entry_info: List[str]) -> Entry:
-                    start_time_offset = entry.time - session_start_time
-                    alt_url = session_info.get_alt_url_link(log_entry)
-                    return Entry(log_entry=log_entry, target_url=alt_url or log_entry.url,
-                                 start_time_offset=start_time_offset, data=entry_info)
+                    return Entry(log_entry=log_entry,
+                                 alternative_url=session_info.get_alternative_url(log_entry.url),
+                                 relative_start_time=entry.time - session_start_time,
+                                 data=entry_info)
 
                 current_session_entries = [create_session_entry(entry, entry_info)]
 
@@ -227,25 +251,19 @@ class LogParser:
                     if entry_info:
                         current_session_entries.append(create_session_entry(entry, entry_info))
 
-                session_duration = (current_session_entries[-1].log_entry.time
-                                      - current_session_entries[0].log_entry.time)
-
-                def slug_info(info: Dict[str, Slug.Info]) -> List[Dict[str, Any]]:
-                    return [{'slug': slug, 'is_obsolete': info[slug].flags.is_obsolete()}
-                            for slug in sorted(info, key=str.lower)]
+                def slug_info(info: Dict[str, Slug.Info]) -> List[Tuple[str, bool]]:
+                    return [(slug, info[slug].flags.is_obsolete()) for slug in sorted(info, key=str.lower)]
 
                 sessions.append(Session(host_ip=session_host_ip,
-                                        start_time=current_session_entries[0].log_entry.time,
-                                        duration=session_duration,
                                         entries=current_session_entries,
                                         id=next(self._id_generator),
-                                        slug_list=(
-                                            {'type': 'search', 'info': slug_info(session_info.session_search_slugs)},
-                                            {'type': 'column', 'info': slug_info(session_info.session_column_slugs)})))
+                                        search_slug_list=slug_info(session_info.session_search_slugs),
+                                        column_slug_list=slug_info(session_info.session_column_slugs)))
         return sessions
 
     def __generate_batch_output(self, host_infos: List[HostInfo]) -> None:
         output = self._output
+        print(f'Writing file {output.name}')
         if self._uses_html:
             os.environ.setdefault("DJANGO_SETTINGS_MODULE", "DjangoSettings")
             django.setup()
@@ -263,7 +281,7 @@ class LogParser:
                     entries = session.entries
                     print(f'Host {hostname_from_ip}: {entries[0].log_entry.time_string}', file=output)
                     for entry in entries:
-                        self.__print_entry_info(entry.log_entry, entry.data, session.start_time)
+                        self.__print_entry_info(entry.log_entry, entry.data, session.start_time())
 
     def __print_entry_info(self, this_entry: LogEntry, this_entry_info: List[str],
                            session_start_time: datetime.datetime) -> None:
