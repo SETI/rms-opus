@@ -8,6 +8,7 @@ from collections import defaultdict, deque
 from ipaddress import IPv4Address
 from operator import attrgetter
 from typing import List, Iterator, Dict, NamedTuple, Optional, Deque, IO, Any, Tuple
+from urllib.parse import SplitResult
 
 import django
 from django.template.loader import get_template
@@ -30,8 +31,10 @@ class _LiveSession(NamedTuple):
 
 class Entry(NamedTuple):
     log_entry: LogEntry
+    target_url: SplitResult
     start_time_offset: datetime.timedelta
     data: List[str]
+
 
 class Session(NamedTuple):
     host_ip: IPv4Address
@@ -39,7 +42,7 @@ class Session(NamedTuple):
     duration: datetime.timedelta
     entries: List[Entry]
     id: str
-    slug_list: Tuple[Dict[str, Any]]
+    slug_list: Tuple[Dict[str, Any], Dict[str, Any]]
 
 
 class HostInfo(NamedTuple):
@@ -48,10 +51,10 @@ class HostInfo(NamedTuple):
     sessions: List[Session]
     id: str
 
-    def hostname(self):
+    def hostname(self) -> str:
         return f'{self.name} ({self.ip})' if self.name else str(self.ip)
 
-    def total_time(self):
+    def total_time(self) -> datetime.timedelta:
         return sum((session.duration for session in self.sessions), datetime.timedelta(0))
 
 
@@ -209,7 +212,9 @@ class LogParser:
 
                 def create_session_entry(log_entry: LogEntry, entry_info: List[str]) -> Entry:
                     start_time_offset = entry.time - session_start_time
-                    return Entry(log_entry=log_entry, start_time_offset=start_time_offset, data=entry_info)
+                    alt_url = session_info.get_alt_url_link(log_entry)
+                    return Entry(log_entry=log_entry, target_url=alt_url or log_entry.url,
+                                 start_time_offset=start_time_offset, data=entry_info)
 
                 current_session_entries = [create_session_entry(entry, entry_info)]
 
@@ -239,7 +244,7 @@ class LogParser:
                                             {'type': 'column', 'info': slug_info(session_info.session_column_slugs)})))
         return sessions
 
-    def __generate_batch_output(self, host_infos):
+    def __generate_batch_output(self, host_infos: List[HostInfo]) -> None:
         output = self._output
         if self._uses_html:
             os.environ.setdefault("DJANGO_SETTINGS_MODULE", "DjangoSettings")

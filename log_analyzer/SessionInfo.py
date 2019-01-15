@@ -3,6 +3,7 @@ import ipaddress
 import re
 import urllib.parse
 from typing import List, Dict, Optional, Match, Tuple, Pattern, Callable, Any
+from urllib.parse import SplitResult
 
 from django.utils.html import format_html
 from django.utils.safestring import mark_safe, SafeText
@@ -23,7 +24,7 @@ class SessionInfoGenerator:
 
     DEFAULT_COLUMN_INFO = 'opusid,instrument,planet,target,time1,observationduration'.split(',')
 
-    def __init__(self, slug_info: Slug.ToInfoMap, ignored_ips: List[ipaddress.IPv4Network], api_host_url):
+    def __init__(self, slug_info: Slug.ToInfoMap, ignored_ips: List[ipaddress.IPv4Network], api_host_url: str):
         """
 
         :param api_host_url:
@@ -57,6 +58,10 @@ class SessionInfo(metaclass=abc.ABCMeta):
 
     @abc.abstractmethod
     def parse_log_entry(self, entry: LogEntry) -> List[str]:
+        raise Exception()
+
+    @abc.abstractmethod
+    def get_alt_url_link(self, entry: LogEntry) -> Optional[SplitResult]:
         raise Exception()
 
     def add_search_slug(self, slug: str, slug_info: Slug.Info) -> None:
@@ -143,6 +148,12 @@ class SessionInfoImpl(SessionInfo):
                          if isinstance(value, list) and len(value) == 1}
                 return method(self, query, match)
         return []
+
+    def get_alt_url_link(self, entry: LogEntry) -> Optional[SplitResult]:
+        path = entry.url.path
+        if path == '/opus/__api/meta/result_count.json':
+            return entry.url._replace(path="/opus/#/")
+        return None
 
     #
     # API
@@ -260,7 +271,7 @@ class SessionInfoImpl(SessionInfo):
     # Various utilities
     #
 
-    def __wrap_opus_id(self, opus_id):
+    def __wrap_opus_id(self, opus_id: str) -> SafeText:
         assert self._uses_html
         return format_html('<a href="{0}/opus/__initdetail/{1}.html" target="_blank">{1}</a>',
                            self._api_host_url, opus_id)

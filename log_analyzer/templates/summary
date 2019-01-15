@@ -73,7 +73,7 @@ td.SessionInfo {
             {% for line in entry.data %}
                 <tr>
                 {% if forloop.first %}
-                    <td><a href="{{api_host_url}}{{entry.log_entry.url.geturl | safe}}" target="_blank">{{entry.start_time_offset}}</a></td>
+                    <td><a href="{{api_host_url | safe}}{{entry.target_url.geturl | safe}}" target="_blank">{{entry.start_time_offset}}</a></td>
                 {% else %}
                     <td>&nbsp;</td>
                 {% endif %}
