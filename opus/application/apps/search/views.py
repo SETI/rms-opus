@@ -153,6 +153,7 @@ def api_string_search_choices(request, slug):
 
     qtypes = {}
     query_qtype_list = []
+    query_qtype = 'contains'
     if 'qtypes' in extras:
         qtypes = extras['qtypes']
     if param_qualified_name in qtypes:
@@ -171,7 +172,6 @@ def api_string_search_choices(request, slug):
         raise ret
 
     partial_query = ''
-    query_qtype = 'contains'
     partial_query = selections[param_qualified_name][0]
     del selections[param_qualified_name]
 
@@ -215,8 +215,8 @@ def api_string_search_choices(request, slug):
                  str(limit))
     cached_val = cache.get(cache_key)
     if cached_val is not None:
+        cached_val['reqno'] = reqno
         ret = json_response(cached_val)
-        ret['reqno'] = reqno
         exit_api_call(api_code, ret)
         return ret
 
