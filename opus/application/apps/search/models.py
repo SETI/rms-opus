@@ -32,7 +32,7 @@ class ZZContexts(models.Model):
 
 class ZZDefinitions(models.Model):
     term = models.CharField(max_length=255)
-    context = models.ForeignKey(Contexts, models.DO_NOTHING, db_column='context')
+    context = models.ForeignKey(ZZContexts, models.DO_NOTHING, db_column='context')
     definition = models.TextField()
     timestamp = models.DateTimeField()
 
