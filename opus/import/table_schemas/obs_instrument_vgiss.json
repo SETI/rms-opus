@@ -306,7 +306,7 @@
     {
         "field_name": "usable_lines",
         "field_type": "int2",
-        "field_default": null,
+        "field_notnull": true,
         "field_key": true,
         "data_source": [
             "FUNCTION",
@@ -334,7 +334,7 @@
     {
         "field_name": "usable_samples",
         "field_type": "int2",
-        "field_default": null,
+        "field_notnull": true,
         "field_key": true,
         "data_source": [
             "FUNCTION",

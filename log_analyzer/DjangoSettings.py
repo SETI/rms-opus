@@ -10,4 +10,4 @@ TEMPLATES = [{
     ],
 }]
 
-SECRET_KEY = 'secret key'
+SECRET_KEY = 'supercalifragilistic'

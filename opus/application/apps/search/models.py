@@ -19,6 +19,29 @@ class ZZCollections(models.Model):
         db_table = 'collections'
 
 
+class ZZContexts(models.Model):
+    name = models.CharField(unique=True, max_length=25)
+    description = models.CharField(max_length=100)
+    parent = models.CharField(max_length=25)
+    timestamp = models.DateTimeField()
+
+    class Meta:
+        managed = False
+        db_table = 'contexts'
+
+
+class ZZDefinitions(models.Model):
+    term = models.CharField(max_length=255)
+    context = models.ForeignKey(ZZContexts, models.DO_NOTHING, db_column='context')
+    definition = models.TextField()
+    timestamp = models.DateTimeField()
+
+    class Meta:
+        managed = False
+        db_table = 'definitions'
+        unique_together = (('term', 'context'),)
+
+
 class ZZGroupingTargetName(models.Model):
     value = models.CharField(max_length=100, blank=True, null=True)
     label = models.CharField(max_length=30, blank=True, null=True)
@@ -1081,7 +1104,7 @@ class ObsGeneral(models.Model):
     mission_id = models.CharField(max_length=3)
     inst_host_id = models.CharField(max_length=3)
     planet_id = models.CharField(max_length=3)
-    target_name = models.CharField(max_length=20, blank=True, null=True)
+    target_name = models.CharField(max_length=20)
     target_class = models.CharField(max_length=12)
     time1 = models.FloatField(blank=True, null=True)
     time2 = models.FloatField(blank=True, null=True)
@@ -1093,10 +1116,10 @@ class ObsGeneral(models.Model):
     d_right_asc = models.FloatField(blank=True, null=True)
     declination1 = models.FloatField(blank=True, null=True)
     declination2 = models.FloatField(blank=True, null=True)
-    observation_type = models.CharField(max_length=3, blank=True, null=True)
+    observation_type = models.CharField(max_length=3)
     ring_obs_id = models.CharField(max_length=40, blank=True, null=True)
-    primary_file_spec = models.CharField(max_length=240, blank=True, null=True)
-    preview_images = models.TextField(blank=True, null=True)  # This field type is a guess.
+    primary_file_spec = models.CharField(max_length=240)
+    preview_images = models.TextField()  # This field type is a guess.
     mult_obs_general_instrument = models.ForeignKey(MultObsGeneralInstrumentId, models.DO_NOTHING)
     mult_obs_general_mission = models.ForeignKey(MultObsGeneralMissionId, models.DO_NOTHING)
     mult_obs_general_inst_host = models.ForeignKey(MultObsGeneralInstHostId, models.DO_NOTHING)
@@ -1142,13 +1165,13 @@ class ObsInstrumentCoiss(models.Model):
     obs_general = models.ForeignKey(ObsGeneral, models.DO_NOTHING)
     opus_id = models.ForeignKey(ObsGeneral, models.DO_NOTHING, related_name='%(class)s_opus_id', db_column='opus_id')
     volume_id = models.CharField(max_length=11)
-    data_conversion_type = models.CharField(max_length=5, blank=True, null=True)
-    compression_type = models.CharField(max_length=8, blank=True, null=True)
-    gain_mode_id = models.CharField(max_length=20, blank=True, null=True)
-    image_observation_type = models.CharField(max_length=48, blank=True, null=True)
+    data_conversion_type = models.CharField(max_length=5)
+    compression_type = models.CharField(max_length=8)
+    gain_mode_id = models.CharField(max_length=20)
+    image_observation_type = models.CharField(max_length=48)
     missing_lines = models.SmallIntegerField(blank=True, null=True)
-    shutter_mode_id = models.CharField(max_length=7, blank=True, null=True)
-    shutter_state_id = models.CharField(max_length=8, blank=True, null=True)
+    shutter_mode_id = models.CharField(max_length=7)
+    shutter_state_id = models.CharField(max_length=8)
     image_number = models.IntegerField()
     instrument_mode_id = models.CharField(max_length=4)
     target_desc = models.CharField(max_length=75)
@@ -1190,7 +1213,7 @@ class ObsInstrumentCouvis(models.Model):
     line1 = models.IntegerField(blank=True, null=True)
     line2 = models.IntegerField(blank=True, null=True)
     line_bin = models.IntegerField(blank=True, null=True)
-    samples = models.IntegerField(blank=True, null=True)
+    samples = models.IntegerField()
     mult_obs_instrument_couvis_observation_type = models.ForeignKey(MultObsInstrumentCouvisObservationType, models.DO_NOTHING, db_column='mult_obs_instrument_couvis_observation_type')
     mult_obs_instrument_couvis_compression_type = models.ForeignKey(MultObsInstrumentCouvisCompressionType, models.DO_NOTHING, db_column='mult_obs_instrument_couvis_compression_type')
     mult_obs_instrument_couvis_occultation_port_state = models.ForeignKey(MultObsInstrumentCouvisOccultationPortState, models.DO_NOTHING, db_column='mult_obs_instrument_couvis_occultation_port_state')
@@ -1304,8 +1327,8 @@ class ObsInstrumentVgiss(models.Model):
     filter_name = models.CharField(max_length=6)
     filter_number = models.IntegerField()
     camera = models.CharField(max_length=1)
-    usable_lines = models.SmallIntegerField(blank=True, null=True)
-    usable_samples = models.SmallIntegerField(blank=True, null=True)
+    usable_lines = models.SmallIntegerField()
+    usable_samples = models.SmallIntegerField()
     mult_obs_instrument_vgiss_scan_mode = models.ForeignKey(MultObsInstrumentVgissScanMode, models.DO_NOTHING, db_column='mult_obs_instrument_vgiss_scan_mode')
     mult_obs_instrument_vgiss_shutter_mode = models.ForeignKey(MultObsInstrumentVgissShutterMode, models.DO_NOTHING, db_column='mult_obs_instrument_vgiss_shutter_mode')
     mult_obs_instrument_vgiss_gain_mode = models.ForeignKey(MultObsInstrumentVgissGainMode, models.DO_NOTHING, db_column='mult_obs_instrument_vgiss_gain_mode')
@@ -1331,8 +1354,8 @@ class ObsMissionCassini(models.Model):
     rev_no_int = models.IntegerField(blank=True, null=True)
     is_prime = models.CharField(max_length=3)
     prime_inst_id = models.CharField(max_length=6, blank=True, null=True)
-    spacecraft_clock_count1 = models.FloatField(blank=True, null=True)
-    spacecraft_clock_count2 = models.FloatField(blank=True, null=True)
+    spacecraft_clock_count1 = models.FloatField()
+    spacecraft_clock_count2 = models.FloatField()
     ert1 = models.FloatField(blank=True, null=True)
     ert2 = models.FloatField(blank=True, null=True)
     cassini_target_code = models.CharField(max_length=50, blank=True, null=True)
@@ -1356,8 +1379,8 @@ class ObsMissionGalileo(models.Model):
     obs_general = models.ForeignKey(ObsGeneral, models.DO_NOTHING)
     opus_id = models.ForeignKey(ObsGeneral, models.DO_NOTHING, related_name='%(class)s_opus_id', db_column='opus_id')
     volume_id = models.CharField(max_length=11)
-    orbit_number = models.IntegerField(blank=True, null=True)
-    spacecraft_clock_count1 = models.FloatField(blank=True, null=True)
+    orbit_number = models.IntegerField()
+    spacecraft_clock_count1 = models.FloatField()
     spacecraft_clock_count2 = models.FloatField()
     mult_obs_mission_galileo_orbit_number = models.ForeignKey(MultObsMissionGalileoOrbitNumber, models.DO_NOTHING, db_column='mult_obs_mission_galileo_orbit_number')
     id = models.PositiveIntegerField(primary_key=True)
@@ -1377,8 +1400,7 @@ class ObsMissionHubble(models.Model):
     hst_proposal_id = models.IntegerField()
     hst_pi_name = models.CharField(max_length=24)
     detector_id = models.CharField(max_length=14, blank=True, null=True)
-    publication_date = models.CharField(max_length=10)
-    publication_date_sec = models.FloatField()
+    publication_date = models.FloatField()
     hst_target_name = models.CharField(max_length=31)
     fine_guidance_system_lock_type = models.CharField(max_length=10)
     filter_name = models.CharField(max_length=23)
@@ -1418,11 +1440,9 @@ class ObsMissionNewHorizons(models.Model):
     opus_id = models.ForeignKey(ObsGeneral, models.DO_NOTHING, related_name='%(class)s_opus_id', db_column='opus_id')
     volume_id = models.CharField(max_length=11)
     instrument_id = models.CharField(max_length=9)
-    spacecraft_clock_count1 = models.CharField(max_length=19, blank=True, null=True)
-    spacecraft_clock_count2 = models.CharField(max_length=19, blank=True, null=True)
-    spacecraft_clock_count_cvt1 = models.FloatField(blank=True, null=True)
-    spacecraft_clock_count_cvt2 = models.FloatField(blank=True, null=True)
-    mission_phase = models.CharField(max_length=22, blank=True, null=True)
+    spacecraft_clock_count1 = models.FloatField()
+    spacecraft_clock_count2 = models.FloatField()
+    mission_phase = models.CharField(max_length=22)
     mult_obs_mission_new_horizons_mission_phase = models.ForeignKey(MultObsMissionNewHorizonsMissionPhase, models.DO_NOTHING, db_column='mult_obs_mission_new_horizons_mission_phase')
     id = models.PositiveIntegerField(primary_key=True)
     timestamp = models.DateTimeField()
@@ -1437,9 +1457,9 @@ class ObsMissionVoyager(models.Model):
     opus_id = models.ForeignKey(ObsGeneral, models.DO_NOTHING, related_name='%(class)s_opus_id', db_column='opus_id')
     volume_id = models.CharField(max_length=11)
     ert = models.FloatField(blank=True, null=True)
-    spacecraft_clock_count1 = models.FloatField(blank=True, null=True)
-    spacecraft_clock_count2 = models.FloatField(blank=True, null=True)
-    mission_phase_name = models.CharField(max_length=32, blank=True, null=True)
+    spacecraft_clock_count1 = models.FloatField()
+    spacecraft_clock_count2 = models.FloatField()
+    mission_phase_name = models.CharField(max_length=32)
     mult_obs_mission_voyager_mission_phase_name = models.ForeignKey(MultObsMissionVoyagerMissionPhaseName, models.DO_NOTHING, db_column='mult_obs_mission_voyager_mission_phase_name')
     id = models.PositiveIntegerField(primary_key=True)
     timestamp = models.DateTimeField()
@@ -1456,8 +1476,8 @@ class ObsPds(models.Model):
     instrument_id = models.CharField(max_length=9)
     data_set_id = models.CharField(max_length=40)
     product_id = models.CharField(max_length=30)
-    product_creation_time = models.FloatField(blank=True, null=True)
-    primary_file_spec = models.CharField(max_length=240, blank=True, null=True)
+    product_creation_time = models.FloatField()
+    primary_file_spec = models.CharField(max_length=240)
     note = models.CharField(max_length=255, blank=True, null=True)
     id = models.PositiveIntegerField(primary_key=True)
     timestamp = models.DateTimeField()

@@ -5,7 +5,7 @@ import re
 from datetime import datetime
 from time import sleep
 from typing import List, Optional, Iterator, NamedTuple, Iterable
-from urllib.parse import urlparse, ParseResult
+from urllib.parse import urlsplit, SplitResult
 
 # https://gist.github.com/sumeetpareek/9644255
 parts = [
@@ -29,7 +29,7 @@ class LogEntry(NamedTuple):
     user: Optional[str]
     status: int
     method: str
-    url: ParseResult
+    url: SplitResult
     size: Optional[int]
     agent: Optional[str]
     time_string: str
@@ -81,7 +81,7 @@ class LogReader(object):
         if first_space == -1 or last_space == -1 or first_space >= last_space:
             return None
         method = request[:first_space].upper()
-        url = urlparse(request[first_space + 1:last_space])
+        url = urlsplit(request[first_space + 1:last_space])
         size = None if info['size'] == '-' else int(info['size'])
         agent = None if info['agent'] == '-' else info['agent']
         time = datetime.strptime(time_string, '%d/%b/%Y:%H:%M:%S %z')
