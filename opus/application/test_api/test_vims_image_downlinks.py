@@ -34,8 +34,8 @@ class ApiVimsDownlinksTests(TestCase):
            Check if any image numbers from 001 > ones in 002
            Check if image counts for each primary filespec are all > 0
         """
-        api_public = ApiForVimsDownlinks(target=settings.TEST_ApiVimsDownlinksTests_LIVE_TARGET)
-        api_internal = ApiForVimsDownlinks(target=f"internal-{settings.TEST_ApiVimsDownlinksTests_LIVE_TARGET}")
+        api_public = ApiForVimsDownlinks(target=settings.TEST_GO_LIVE)
+        api_internal = ApiForVimsDownlinks(target="internal")
         test_dict =  [api_internal.api_dict, api_public.api_dict]
 
         image_count = {}
@@ -102,7 +102,7 @@ class ApiVimsDownlinksTests(TestCase):
            }
         """
 
-        if settings.TEST_ApiVimsDownlinksTests_GO_LIVE:
+        if settings.TEST_GO_LIVE:
             client = requests.Session()
         else:
             client = RequestsClient()
@@ -129,7 +129,7 @@ class ApiVimsDownlinksTests(TestCase):
         if response.status_code == 200:
             data_object = response.json()["data"]
             # When test db return empty object, we would NOT proceed to count the number of images
-            if not data_object and not settings.TEST_ApiVimsDownlinksTests_GO_LIVE:
+            if not data_object and not settings.TEST_GO_LIVE:
                 raise Exception("No VIMS data in test db")
 
             for image_id in primary_filespec_object["images_with_opus_id"]:

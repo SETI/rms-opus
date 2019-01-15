@@ -45,11 +45,11 @@ class ApiSearchTests(TestCase):
         logging.disable(logging.NOTSET)
 
     def _get_response(self, url):
-        if settings.TEST_ApiSearchTests_GO_LIVE:
+        if settings.TEST_GO_LIVE:
             client = requests.Session()
         else:
             client = RequestsClient()
-        if settings.TEST_ApiSearchTests_LIVE_TARGET == "production":
+        if not settings.TEST_GO_LIVE or settings.TEST_GO_LIVE == "production":
             url = "https://tools.pds-rings.seti.org" + url
         else:
             url = "http://dev.pds-rings.seti.org" + url
