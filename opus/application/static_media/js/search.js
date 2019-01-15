@@ -8,26 +8,30 @@ var o_search = {
     searchMsg: "",
     truncatedResults: false,
     truncatedResultsMsg: "&ltMore choices available&gt",
-    slugReqno: {},
+    slugNormalizeReqno: {},
     slugRangeInputValidValueFromLastSearch: {},
     allNormalizedApiCall: function() {
         let newHash = o_hash.updateHash(false);
-        let regexForShortHash = /(.*)&view/;
-        // Use short hash
-        if(newHash.match(regexForShortHash)) {
-            newHash = newHash.match(regexForShortHash)[1];
+        /*
+        We are relying on URL order now to parse and get slugs before "&view" in the URL
+        Opus would rewrite the URL when a URL is pasted, all the search related slugs would be moved ahead of "&view"
+        Refer to hash.js getSelectionsFromHash and updateHash functions
+        */
+        let regexForHashWithSearchParams = /(.*)&view/;
+        if(newHash.match(regexForHashWithSearchParams)) {
+            newHash = newHash.match(regexForHashWithSearchParams)[1];
         }
         opus.waitingForAllNormalizedAPI = true;
         opus.lastAllNormalizeRequestNo++;
         let url = "/opus/__api/normalizeinput.json?" + newHash + "&reqno=" + opus.lastAllNormalizeRequestNo;
         return $.getJSON(url);
     },
-    validateRangeInput: function(data, removeSpinner=false) {
+    validateRangeInput: function(normalizedInputData, removeSpinner=false) {
         opus.allInputsValid = true;
         o_search.slugRangeInputValidValueFromLastSearch = {};
-        $.each(data, function(eachSlug, value) {
+        $.each(normalizedInputData, function(eachSlug, value) {
             let currentInput = $(`input[name="${eachSlug}"]`);
-            if(data[eachSlug] === null) {
+            if(value === null) {
                 if(currentInput.hasClass("RANGE") && !currentInput.hasClass("remove_search_input_invalid_no_focus")) {
                     $("#sidebar").addClass("search_overlay");
                     currentInput.addClass("search_input_invalid_no_focus");
@@ -64,34 +68,39 @@ var o_search = {
             if(removeSpinner) {
                 $(".spinner").fadeOut("");
             }
-        } else {
-            // put back normal hinting info
-            opus.widgets_drawn.forEach(function(eachSlug) {
-                o_search.getHinting(eachSlug);
-            });
         }
     },
-    performSearch: function(event, slug, url) {
-        $.getJSON(url, function(data) {
-            // Make sure it's the final call before parsing data
-            if(data["reqno"] < o_search.slugReqno[slug]) {
+    parseFinalNormalizedInputDataAndUpdateHash: function(event, slug, url) {
+        $.getJSON(url, function(normalizedInputData) {
+            // Make sure it's the final call before parsing normalizedInputData
+            if(normalizedInputData["reqno"] < o_search.slugNormalizeReqno[slug]) {
                 return;
             }
 
             // check each range input if not valid, change to red background
-            o_search.validateRangeInput(data);
+            o_search.validateRangeInput(normalizedInputData);
 
             if(!opus.allInputsValid) {
                 return;
-            } else {
-                o_hash.updateHash();
-                $("input.RANGE").removeClass("search_input_valid");
-                $("input.RANGE").removeClass("search_input_invalid");
-                $("input.RANGE").addClass("search_input_original");
-                $("#sidebar").removeClass("search_overlay");
-                // .text is here in case the url is not changed but the input value is set to invalid and valid again
+            }
+            o_hash.updateHash();
+            console.log("LAST");
+            console.log(opus.last_selections);
+            console.log("SELECTION");
+            console.log(opus.selections);
+
+            if (o_utils.areObjectsEqual(opus.selections, opus.last_selections))  {
+                console.log("HERE??")
+                // put back normal hinting info
+                opus.widgets_drawn.forEach(function(eachSlug) {
+                    o_search.getHinting(eachSlug);
+                });
                 $("#result_count").text(o_utils.addCommas(opus.result_count));
             }
+            $("input.RANGE").removeClass("search_input_valid");
+            $("input.RANGE").removeClass("search_input_invalid");
+            $("input.RANGE").addClass("search_input_original");
+            $("#sidebar").removeClass("search_overlay");
         });
     },
     extractHtmlContent: function(htmlString) {
@@ -152,15 +161,19 @@ var o_search = {
               $(this).addClass("search_input_original");
             } else {
               $(this).addClass("search_input_invalid");
-              // this dummy class is to properly display yellow border
-              // when on change event happened while user hovered from one invalid input to another invalid input
+              /*
+              this dummy class is to properly display yellow border
+              when the user changed focus from one invalid input to another invalid input
+              */
               $(this).addClass("remove_search_input_invalid_no_focus");
               $(this).removeClass("search_input_invalid_no_focus");
             }
         });
 
-        // this is to properly put back invalid search background
-        // when there is no change event happened while user focus out
+        /*
+        this is to properly put back invalid search background
+        when user focus out and there is no "change" event
+        */
         $("#search").on("focusout", "input.RANGE", function(event) {
             let slug = $(this).attr("name");
             let currentValue = $(this).val().trim();
@@ -177,15 +190,19 @@ var o_search = {
             let values = []
 
             opus.lastSlugNormalizeRequestNo++;
-            o_search.slugReqno[slug] = opus.lastSlugNormalizeRequestNo;
+            o_search.slugNormalizeReqno[slug] = opus.lastSlugNormalizeRequestNo;
 
             values.push(currentValue)
             opus.selections[slug] = values;
             // Use only the current slug to call normalized api while input event happened
             let newHash = `${slug}=${currentValue}`;
 
-            // if input field is empty, do not perform api call
-            // if input value didn't change from last successful search (normalized value), do not change border
+            /*
+            Do not perform normalized api call to change border if:
+            1) Input field is empty
+            OR
+            2) Input value didn't change from the last successful search
+            */
             if(currentValue === "" || currentValue === o_search.slugRangeInputValidValueFromLastSearch[slug]) {
                 $(event.target).removeClass("search_input_valid search_input_invalid");
                 $(event.target).addClass("search_input_original");
@@ -195,8 +212,8 @@ var o_search = {
             // only check if return value is null or not, DON'T compare min & max
             let url = "/opus/__api/normalizeinput.json?" + newHash + "&reqno=" + opus.lastSlugNormalizeRequestNo;
             $.getJSON(url, function(data) {
-                // if a newer input is there, re-call api with new input
-                if(data["reqno"] < o_search.slugReqno[slug]) {
+                // Make sure the return json data is from the latest normalized api call
+                if(data["reqno"] < o_search.slugNormalizeReqno[slug]) {
                     return;
                 }
 
@@ -225,25 +242,26 @@ var o_search = {
         $("#search").on("change", "input.RANGE", function(event) {
             let slug = $(this).attr("name");
             let newHash = o_hash.updateHash(false);
-            let regexForShortHash = /(.*)&view/;
-            // Use short hash
-            if(newHash.match(regexForShortHash)) {
-                newHash = newHash.match(regexForShortHash)[1];
+            // We are relying on URL order now to parse and get slugs before "&view" in the URL
+            // Opus would rewrite the URL when a URL is pasted, all the search related slugs would be moved ahead of "&view"
+            // Refer to hash.js getSelectionsFromHash and updateHash functions
+            let regexForHashWithSearchParams = /(.*)&view/;
+            if(newHash.match(regexForHashWithSearchParams)) {
+                newHash = newHash.match(regexForHashWithSearchParams)[1];
             }
             opus.lastSlugNormalizeRequestNo++;
-            o_search.slugReqno[slug] = opus.lastSlugNormalizeRequestNo;
+            o_search.slugNormalizeReqno[slug] = opus.lastSlugNormalizeRequestNo;
             let url = "/opus/__api/normalizeinput.json?" + newHash + "&reqno=" + opus.lastSlugNormalizeRequestNo;
 
             if($(event.target).hasClass("remove_search_input_invalid_no_focus")) {
               $(event.target).removeClass("remove_search_input_invalid_no_focus");
             }
-            o_search.performSearch(event, slug, url);
+            o_search.parseFinalNormalizedInputDataAndUpdateHash(event, slug, url);
         });
 
         // filling in a range or string search field = update the hash
         // range behaviors and string behaviors for search widgets - input box
         $('#search').on('change', 'input.STRING', function() {
-
             let slug = $(this).attr("name");
             let css_class = $(this).attr("class").split(' ')[0]; // class will be STRING, min or max
 
@@ -254,7 +272,6 @@ var o_search = {
                     values[values.length] = $(this).val();
                 });
                 opus.selections[slug] = values;
-
             } else {
                 // range query
                 var slug_no_num = slug.match(/(.*)[1|2]/)[1];
@@ -279,26 +296,26 @@ var o_search = {
                         values[values.length] = $(this).val();
                     });
                 }
-
                 opus.selections[slug_no_num + '2'] = values;
             }
             // make a normalized call to avoid changing url whenever there is an invalid range input value
             let newHash = o_hash.updateHash(false);
-            let regexForShortHash = /(.*)&view/;
-            // Use short hash
-            if(newHash.match(regexForShortHash)) {
-                newHash = newHash.match(regexForShortHash)[1];
+            // We are relying on URL order now to parse and get slugs before "&view" in the URL
+            // Opus would rewrite the URL when a URL is pasted, all the search related slugs would be moved ahead of "&view"
+            // Refer to hash.js getSelectionsFromHash and updateHash functions
+            let regexForHashWithSearchParams = /(.*)&view/;
+            if(newHash.match(regexForHashWithSearchParams)) {
+                newHash = newHash.match(regexForHashWithSearchParams)[1];
             }
             opus.lastSlugNormalizeRequestNo++;
-            o_search.slugReqno[slug] = opus.lastSlugNormalizeRequestNo;
+            o_search.slugNormalizeReqno[slug] = opus.lastSlugNormalizeRequestNo;
             let url = "/opus/__api/normalizeinput.json?" + newHash + "&reqno=" + opus.lastSlugNormalizeRequestNo;
 
-            o_search.performSearch(event, slug, url);
+            o_search.parseFinalNormalizedInputDataAndUpdateHash(event, slug, url);
         });
 
         // range behaviors and string behaviors for search widgets - qtype select dropdown
         $('#search').on('change','select', function() {
-
             var qtypes = [];
             var form_type = $(this).attr("class");
 

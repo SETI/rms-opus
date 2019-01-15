@@ -597,15 +597,17 @@ var o_widgets = {
                      let values = [];
 
                      opus.lastRequestNo++;
-                     o_search.slugReqno[slug] = opus.lastRequestNo;
+                     o_search.slugNormalizeReqno[slug] = opus.lastRequestNo;
 
                      values.push(currentValue)
                      opus.selections[slug] = values;
                      let newHash = o_hash.updateHash(false);
-                     let regexForShortHash = /(.*)&view/;
-
-                     if(newHash.match(regexForShortHash)) {
-                         newHash = newHash.match(regexForShortHash)[1];
+                     // We are relying on URL order now to parse and get slugs before "&view" in the URL
+                     // Opus would rewrite the URL when a URL is pasted, all the search related slugs would be moved ahead of "&view"
+                     // Refer to hash.js getSelectionsFromHash and updateHash functions
+                     let regexForHashWithSearchParams = /(.*)&view/;
+                     if(newHash.match(regexForHashWithSearchParams)) {
+                         newHash = newHash.match(regexForHashWithSearchParams)[1];
                      }
                      // avoid calling api when some inputs are not valid
                      if(!opus.allInputsValid) {
@@ -614,7 +616,7 @@ var o_widgets = {
                      let url = `/opus/__api/stringsearchchoices/${slug}.json?` + newHash + "&reqno=" + opus.lastRequestNo;
                      $.getJSON(url, function(data) {
                          // if a newer input is there, re-call api with new input
-                         if(data["reqno"] < o_search.slugReqno[slug]) {
+                         if(data["reqno"] < o_search.slugNormalizeReqno[slug]) {
                              return;
                          }
                          // dynamically update drop down lists
