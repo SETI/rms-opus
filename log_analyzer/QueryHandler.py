@@ -313,7 +313,7 @@ class QueryHandler:
     def __format_search_value(self, value: Optional[str]) -> str:
         if self._uses_html:
             if value is None:
-                return cast(str, mark_safe('&mdash;'))
+                return cast(str, mark_safe('&ndash;'))
             else:
                 return cast(str, format_html('&quot;<samp>{}</samp>&quot;', value))
         else:

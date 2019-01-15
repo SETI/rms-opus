@@ -52,10 +52,11 @@ td.SessionInfo {
 <div class="col-sm-3" id="left">
 {% spaceless %}
 {% for host_info in host_infos %}
-    <span>{{ host_info.hostname }} ({{ host_info.total_time }}) <span class="badge badge-secondary">{{ host_info.sessions | length }}</span></span>
+    <span>{{ host_info.ip }} ({{ host_info.total_time }}) <span class="badge badge-secondary">{{ host_info.sessions | length }}</span></span>
+    {% if host_info.name %}<br><span>{{ host_info.name }}{% endif %}
     <ul>
         {% for session in host_info.sessions %}
-            <li><a href="#" class=SessionLink data-id="{{ session.id }}">{{ session.entries.0.log_entry.time | date:'Y/M/d H:i:s' }} ({{ session.time_delta }})</a></li>
+            <li><a href="#" class=SessionLink data-id="{{ session.id }}">{{ session.entries.0.log_entry.time | date:'Y/M/d H:i:s' }} ({{ session.duration }})</a></li>
         {% endfor %}
     </ul>
 {% endfor %}
@@ -83,10 +84,10 @@ td.SessionInfo {
         </table>
         <hr>
         {% for name_info in session.slug_list %}
-            <b>{{ name_info.name | capfirst }} Slugs:</b>
+            <b>{{ name_info.type | capfirst }} Slugs:</b>
             {% for x in name_info.info %}
                 <span {% if x.is_obsolete %}class="text-danger"{% else %}class="text-dark"{% endif %}>
-                {{ x.name }}</span>{%if not forloop.last %},{%endif %}
+                {{ x.slug }}</span>{%if not forloop.last %},{%endif %}
             {% endfor %}
             {% if not forloop.last %}<br>{% endif %}
         {% endfor %}
