@@ -103,8 +103,6 @@ td.SessionInfo {
 <script>
 
 $(document).ready(function(){
-    $('.SessionInfo').first().show()
-
     $('.SessionLink').click(function() {
         var target_id = '#' + $(this).attr('data-id');
         $('.SessionInfo').hide();
