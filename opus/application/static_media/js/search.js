@@ -244,8 +244,8 @@ var o_search = {
         // range behaviors and string behaviors for search widgets - input box
         $('#search').on('change', 'input.STRING', function() {
 
-            slug = $(this).attr("name");
-            css_class = $(this).attr("class").split(' ')[0]; // class will be STRING, min or max
+            let slug = $(this).attr("name");
+            let css_class = $(this).attr("class").split(' ')[0]; // class will be STRING, min or max
 
             // get values of all inputs
             var values = [];
@@ -282,7 +282,18 @@ var o_search = {
 
                 opus.selections[slug_no_num + '2'] = values;
             }
-            o_hash.updateHash();
+            // make a normalized call to avoid changing url whenever there is an invalid range input value
+            let newHash = o_hash.updateHash(false);
+            let regexForShortHash = /(.*)&view/;
+            // Use short hash
+            if(newHash.match(regexForShortHash)) {
+                newHash = newHash.match(regexForShortHash)[1];
+            }
+            opus.lastSlugNormalizeRequestNo++;
+            o_search.slugReqno[slug] = opus.lastSlugNormalizeRequestNo;
+            let url = "/opus/__api/normalizeinput.json?" + newHash + "&reqno=" + opus.lastSlugNormalizeRequestNo;
+
+            o_search.performSearch(event, slug, url);
         });
 
         // range behaviors and string behaviors for search widgets - qtype select dropdown
