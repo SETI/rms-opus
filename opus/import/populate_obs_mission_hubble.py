@@ -505,7 +505,7 @@ def populate_obs_wavelength_HSTSTIS_wave_res1(**kwargs):
     if wr1 > wr2:
         import_util.log_warning(
             'MAXIMUM_WAVELENGTH_RESOLUTION < MINIMUM_WAVELENGTH_RESOLUTION; '
-            +' swapping')
+            +'swapping')
         return wr2
     return wr1
 

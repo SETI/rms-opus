@@ -33,6 +33,7 @@ class ApiMetadataTests(TestCase):
 
     # disable error logging and trace output before test
     def setUp(self):
+        settings.CACHE_KEY_PREFIX = 'opustest:' + settings.OPUS_SCHEMA_NAME
         logging.disable(logging.ERROR)
 
     # enable error logging and trace output after test

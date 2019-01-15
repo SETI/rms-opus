@@ -15,6 +15,7 @@ import settings
 class ApiReturnFormatTests(TestCase):
     # disable error logging and trace output before test
     def setUp(self):
+        settings.CACHE_KEY_PREFIX = 'opustest:' + settings.OPUS_SCHEMA_NAME
         sys.tracebacklimit = 0 # default: 1000
         logging.disable(logging.DEBUG)
 
@@ -142,7 +143,8 @@ class ApiFormats:
     def build_api_base(self):
         """build up base api depending on target site: dev/production
         """
-        if self.target == "production" or self.target == "internal":
+        if (not self.target or self.target == "production"
+            or self.target == "internal"):
             return "https://tools.pds-rings.seti.org/opus/api/"
         elif self.target == "dev":
             return "http://dev.pds-rings.seti.org/opus/api/"
