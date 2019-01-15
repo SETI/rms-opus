@@ -32,7 +32,6 @@
   text-align: left;
   height:100%;
 }
-
 #right {
   height:100%;
   text-align: left;
@@ -42,6 +41,9 @@
 }
 td.SessionInfo {
   vertical-align:top;
+}
+.SessionLinkSelected {
+  background-color:yellow;
 }
 </style>
 </head>
@@ -104,6 +106,10 @@ td.SessionInfo {
 
 $(document).ready(function(){
     $('.SessionLink').click(function() {
+
+        $('SessionLinkSelected').removeClass('SessionLinkSelected')
+        $(this).addClass('SessionLinkSelected')
+
         var target_id = '#' + $(this).attr('data-id');
         $('.SessionInfo').hide();
         $(target_id).show()
