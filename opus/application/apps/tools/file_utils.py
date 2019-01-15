@@ -152,11 +152,12 @@ def get_product_counts(products_by_type):
     size = 0
     count = 0
     num_products = OrderedDict()
-    for product_type, products in products_by_type.items():
-        num_products[product_type] = len(products)
-        for pdsf in products:
-            size += pdsf.size_bytes
-            count += 1
+    if products_by_type is not None:
+        for product_type, products in products_by_type.items():
+            num_products[product_type] = len(products)
+            for pdsf in products:
+                size += pdsf.size_bytes
+                count += 1
 
     _check_for_pdsfile_exception()
 
