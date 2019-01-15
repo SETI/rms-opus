@@ -47,19 +47,21 @@ td.SessionInfo {
 </head>
 <body>
 
+<div class="container-fluid">
+<div class="row">
 <div class="col-sm-3" id="left">
 {% spaceless %}
 {% for host_info in host_infos %}
-    <span>{{ host_info.hostname }} ({{ host_info.sessions | length }}x, {{ host_info.total_time }})</span>
+    <span>{{ host_info.ip }} ({{ host_info.total_time }}) <span class="badge badge-secondary">{{ host_info.sessions | length }}</span></span>
+    {% if host_info.name %}<br><span>{{ host_info.name }}{% endif %}
     <ul>
         {% for session in host_info.sessions %}
-            <li><a href="#" class=SessionLink data-id="{{ session.id }}">{{ session.entries.0.log_entry.time | date:'Y/M/d H:i:s' }} ({{ session.time_delta }})</a></li>
+            <li><a href="#" class=SessionLink data-id="{{ session.id }}">{{ session.entries.0.log_entry.time | date:'Y/M/d H:i:s' }} ({{ session.duration }})</a></li>
         {% endfor %}
     </ul>
 {% endfor %}
 {% endspaceless %}
 </div>
-
 <div class="col-sm-9" id="right">
 {% spaceless %}
 {% for host_info in host_infos %}
@@ -71,27 +73,39 @@ td.SessionInfo {
             {% for line in entry.data %}
                 <tr>
                 {% if forloop.first %}
-                    <td><a href="{{api_host_url}}{{entry.log_entry.url.geturl | safe}}" target="_blank">{{entry.start_time_offset}}</a></td>
+                    <td><a href="{{api_host_url | safe}}{{entry.target_url | safe}}" target="_blank">{{entry.relative_start_time}}</a></td>
                 {% else %}
                     <td>&nbsp;</td>
                 {% endif %}
                 <td>{{ line }}</td>
-                 </tr>
+                </tr>
             {% endfor %}
         {% endfor %}
         </table>
+        </hr>
+        {% for type, slug_info in session.slug_info %}
+            {% if not forloop.first %}<br>{% endif %}
+            <b>{{ type | capfirst }} Slugs: </b>
+            {% for slug_name, is_obsolete in slug_info %}
+                <span>{% if not forloop.first %}, {% endif %}</span>
+                <span {% if is_obsolete %}class="text-danger"{% else %}class="text-dark"{% endif %}>{{ slug_name }}</span>
+            {% endfor %}
+        {% endfor %}
         </div>
     {% endfor %}
 {% endfor %}
 {% endspaceless %}
 </div>
+</div>
+</div>
+
 
 <script>
 
 $(document).ready(function(){
     $('.SessionLink').click(function() {
         var target_id = '#' + $(this).attr('data-id');
-        $('.SessionInfo').hide()
+        $('.SessionInfo').hide();
         $(target_id).show()
     })
 });
