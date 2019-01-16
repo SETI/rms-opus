@@ -596,14 +596,14 @@ var o_widgets = {
                      let values = [];
 
                      opus.lastRequestNo++;
-                     o_search.slugNormalizeReqno[slug] = opus.lastRequestNo;
+                     o_search.slugStringSearchChoicesReqno[slug] = opus.lastRequestNo;
 
                      values.push(currentValue)
                      opus.selections[slug] = values;
                      let newHash = o_hash.updateHash(false);
                      /*
                      We are relying on URL order now to parse and get slugs before "&view" in the URL
-                     Opus would rewrite the URL when a URL is pasted, all the search related slugs would be moved ahead of "&view"
+                     Opus will rewrite the URL when a URL is pasted, all the search related slugs would be moved ahead of "&view"
                      Refer to hash.js getSelectionsFromHash and updateHash functions
                      */
                      let regexForHashWithSearchParams = /(.*)&view/;
@@ -616,7 +616,7 @@ var o_widgets = {
                      }
                      let url = `/opus/__api/stringsearchchoices/${slug}.json?` + newHash + "&reqno=" + opus.lastRequestNo;
                      $.getJSON(url, function(stringSearchChoicesData) {
-                         if(stringSearchChoicesData["reqno"] < o_search.slugNormalizeReqno[slug]) {
+                         if(stringSearchChoicesData["reqno"] < o_search.slugStringSearchChoicesReqno[slug]) {
                              return;
                          }
 
