@@ -8,13 +8,14 @@ var o_search = {
     searchMsg: "",
     truncatedResults: false,
     truncatedResultsMsg: "&ltMore choices available&gt",
+    slugStringSearchChoicesReqno: {},
     slugNormalizeReqno: {},
     slugRangeInputValidValueFromLastSearch: {},
     allNormalizedApiCall: function() {
         let newHash = o_hash.updateHash(false);
         /*
         We are relying on URL order now to parse and get slugs before "&view" in the URL
-        Opus would rewrite the URL when a URL is pasted, all the search related slugs would be moved ahead of "&view"
+        Opus will rewrite the URL when a URL is pasted, all the search related slugs would be moved ahead of "&view"
         Refer to hash.js getSelectionsFromHash and updateHash functions
         */
         let regexForHashWithSearchParams = /(.*)&view/;
@@ -75,15 +76,20 @@ var o_search = {
             }
         }
     },
-    parseFinalNormalizedInputDataAndUpdateHash: function(event, slug, url) {
+    parseFinalNormalizedInputDataAndUpdateHash: function(slug, url) {
         $.getJSON(url, function(normalizedInputData) {
             // Make sure it's the final call before parsing normalizedInputData
+            console.log("RETURN")
+            console.log(o_search.slugNormalizeReqno)
+            console.log(o_search.slugNormalizeReqno[slug])
+            console.log(normalizedInputData);
             if(normalizedInputData["reqno"] < o_search.slugNormalizeReqno[slug]) {
                 return;
             }
 
             // check each range input, if it's not valid, change its background to red
             o_search.validateRangeInput(normalizedInputData);
+            console.log("OPUS ALL INPUT VALID: " + opus.allInputsValid);
             if(!opus.allInputsValid) {
                 return;
             }
@@ -260,7 +266,7 @@ var o_search = {
             let newHash = o_hash.updateHash(false);
             /*
             We are relying on URL order now to parse and get slugs before "&view" in the URL
-            Opus would rewrite the URL when a URL is pasted, all the search related slugs would be moved ahead of "&view"
+            Opus will rewrite the URL when a URL is pasted, all the search related slugs would be moved ahead of "&view"
             Refer to hash.js getSelectionsFromHash and updateHash functions
             */
             let regexForHashWithSearchParams = /(.*)&view/;
@@ -274,12 +280,13 @@ var o_search = {
             if($(event.target).hasClass("input_currently_focused")) {
                 $(event.target).removeClass("input_currently_focused");
             }
-            o_search.parseFinalNormalizedInputDataAndUpdateHash(event, slug, url);
+            o_search.parseFinalNormalizedInputDataAndUpdateHash(slug, url);
         });
 
         // filling in a range or string search field = update the hash
         // range behaviors and string behaviors for search widgets - input box
-        $('#search').on('change', 'input.STRING', function() {
+        $('#search').on('change', 'input.STRING', function(event) {
+            console.log("CURRENT CHANGE EVENT STRING VAL: " + $(this).val());
             let slug = $(this).attr("name");
             let css_class = $(this).attr("class").split(' ')[0]; // class will be STRING, min or max
 
@@ -320,7 +327,7 @@ var o_search = {
             let newHash = o_hash.updateHash(false);
             /*
             We are relying on URL order now to parse and get slugs before "&view" in the URL
-            Opus would rewrite the URL when a URL is pasted, all the search related slugs would be moved ahead of "&view"
+            Opus will rewrite the URL when a URL is pasted, all the search related slugs would be moved ahead of "&view"
             Refer to hash.js getSelectionsFromHash and updateHash functions
             */
             let regexForHashWithSearchParams = /(.*)&view/;
@@ -330,8 +337,11 @@ var o_search = {
             opus.lastSlugNormalizeRequestNo++;
             o_search.slugNormalizeReqno[slug] = opus.lastSlugNormalizeRequestNo;
             let url = "/opus/__api/normalizeinput.json?" + newHash + "&reqno=" + opus.lastSlugNormalizeRequestNo;
-
-            o_search.parseFinalNormalizedInputDataAndUpdateHash(event, slug, url);
+            console.log("CHANGE BEFORE CALLING API")
+            console.log(o_search.slugNormalizeReqno)
+            console.log(o_search.slugNormalizeReqno[slug])
+            console.log("CHANGE EVENT API URL: " + url);
+            o_search.parseFinalNormalizedInputDataAndUpdateHash(slug, url);
         });
 
         // range behaviors and string behaviors for search widgets - qtype select dropdown

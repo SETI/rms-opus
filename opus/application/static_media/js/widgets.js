@@ -596,14 +596,14 @@ var o_widgets = {
                      let values = [];
 
                      opus.lastRequestNo++;
-                     o_search.slugNormalizeReqno[slug] = opus.lastRequestNo;
+                     o_search.slugStringSearchChoicesReqno[slug] = opus.lastRequestNo;
 
                      values.push(currentValue)
                      opus.selections[slug] = values;
                      let newHash = o_hash.updateHash(false);
                      /*
                      We are relying on URL order now to parse and get slugs before "&view" in the URL
-                     Opus would rewrite the URL when a URL is pasted, all the search related slugs would be moved ahead of "&view"
+                     Opus will rewrite the URL when a URL is pasted, all the search related slugs would be moved ahead of "&view"
                      Refer to hash.js getSelectionsFromHash and updateHash functions
                      */
                      let regexForHashWithSearchParams = /(.*)&view/;
@@ -616,7 +616,7 @@ var o_widgets = {
                      }
                      let url = `/opus/__api/stringsearchchoices/${slug}.json?` + newHash + "&reqno=" + opus.lastRequestNo;
                      $.getJSON(url, function(stringSearchChoicesData) {
-                         if(stringSearchChoicesData["reqno"] < o_search.slugNormalizeReqno[slug]) {
+                         if(stringSearchChoicesData["reqno"] < o_search.slugStringSearchChoicesReqno[slug]) {
                              return;
                          }
 
@@ -637,16 +637,26 @@ var o_widgets = {
                  select: function(selectEvent, ui) {
                      let displayValue = o_search.extractHtmlContent(ui.item.label);
                      $(`input[name="${slug}"]`).val(displayValue);
+                     $(`input[name="${slug}"]`).trigger("change");
                      // If an item in the list is selected, we update the hash with selected value
-                     opus.selections[slug] = [displayValue];
-                     o_hash.updateHash();
+                     // opus.selections[slug] = [displayValue];
+                     // o_hash.updateHash();
                      return false;
                  },
+             })
+             .change(function(blurEvent) {
+                 console.log("AUTOCOMPLETE change");
              })
              .keyup(function(keyupEvent) {
                  // Make sure autocomplete dropdown list is closed when enter key is pressed
                  if(keyupEvent.which === 13) {
                      $(`input[name="${slug}"]`).autocomplete("close");
+                     let currentStringInputValue = $(`input[name="${slug}"]`).val().trim();
+                     // if(currentStringInputValue === "") {
+                     //   $(`input[name="${slug}"]`).trigger("change");
+                     //   // opus.selections[slug] = [currentStringInputValue];
+                     //   // o_hash.updateHash();
+                     // }
                  }
              })
              .data( "ui-autocomplete" );
