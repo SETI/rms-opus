@@ -84,14 +84,14 @@ td.SessionInfo {
             {% endfor %}
         {% endfor %}
         </table>
-        </hr>
+        <hr>
         {% for type, slug_info in session.slug_info %}
-            {% if not forloop.first %}<br>{% endif %}
-            <b>{{ type | capfirst }} Slugs: </b>
+            <p><b>{{ type | capfirst }} Slugs: </b>
             {% for slug_name, is_obsolete in slug_info %}
                 <span>{% if not forloop.first %}, {% endif %}</span>
                 <span {% if is_obsolete %}class="text-danger"{% else %}class="text-dark"{% endif %}>{{ slug_name }}</span>
             {% endfor %}
+            </p>
         {% endfor %}
         </div>
     {% endfor %}
