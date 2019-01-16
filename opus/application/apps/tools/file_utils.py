@@ -213,6 +213,10 @@ def get_pds_products(opus_id_list=None, file_specs=None,
                       +'in obs_general', str(opus_id_list))
             return None
         file_specs = [x['primary_file_spec'] for x in res]
+        if len(opus_id_list) != len(file_specs):
+            log.error('get_pds_products: Failed to find some opus_ids "%s" '
+                      +'in obs_general', str(opus_id_list))
+            return None
 
     # you can ask this function for url paths or disk paths
     if loc_type == 'url':
