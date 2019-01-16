@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1">:
   <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css">
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js"></script>
@@ -32,7 +32,6 @@
   text-align: left;
   height:100%;
 }
-
 #right {
   height:100%;
   text-align: left;
@@ -42,6 +41,9 @@
 }
 td.SessionInfo {
   vertical-align:top;
+}
+.SessionLinkSelected {
+  background-color:yellow;
 }
 </style>
 </head>
@@ -82,14 +84,14 @@ td.SessionInfo {
             {% endfor %}
         {% endfor %}
         </table>
-        </hr>
+        <hr>
         {% for type, slug_info in session.slug_info %}
-            {% if not forloop.first %}<br>{% endif %}
-            <b>{{ type | capfirst }} Slugs: </b>
+            <p><b>{{ type | capfirst }} Slugs: </b>
             {% for slug_name, is_obsolete in slug_info %}
                 <span>{% if not forloop.first %}, {% endif %}</span>
                 <span {% if is_obsolete %}class="text-danger"{% else %}class="text-dark"{% endif %}>{{ slug_name }}</span>
             {% endfor %}
+            </p>
         {% endfor %}
         </div>
     {% endfor %}
@@ -104,9 +106,15 @@ td.SessionInfo {
 
 $(document).ready(function(){
     $('.SessionLink').click(function() {
+
+        $('.SessionLinkSelected').removeClass('SessionLinkSelected');
+        $(this).addClass('SessionLinkSelected');
+
         var target_id = '#' + $(this).attr('data-id');
         $('.SessionInfo').hide();
         $(target_id).show()
+
+        return false;
     })
 });
 </script>
