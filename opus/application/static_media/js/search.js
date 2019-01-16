@@ -29,16 +29,21 @@ var o_search = {
     validateRangeInput: function(normalizedInputData, removeSpinner=false) {
         opus.allInputsValid = true;
         o_search.slugRangeInputValidValueFromLastSearch = {};
+
         $.each(normalizedInputData, function(eachSlug, value) {
             let currentInput = $(`input[name="${eachSlug}"]`);
             if(value === null) {
-                if(currentInput.hasClass("RANGE") && !currentInput.hasClass("remove_search_input_invalid_no_focus")) {
+                if(currentInput.hasClass("RANGE") && !currentInput.hasClass("input_currently_focused")) {
                     $("#sidebar").addClass("search_overlay");
                     currentInput.addClass("search_input_invalid_no_focus");
                     currentInput.removeClass("search_input_invalid");
                     currentInput.val(opus.selections[eachSlug]);
+                    opus.allInputsValid = false;
                 }
-                opus.allInputsValid = false;
+
+                if(currentInput.hasClass("input_currently_focused")) {
+                    delete opus.selections[eachSlug];
+                }
             } else {
                 if(currentInput.hasClass("RANGE")) {
                     currentInput.val(value);
@@ -79,7 +84,6 @@ var o_search = {
 
             // check each range input, if it's not valid, change its background to red
             o_search.validateRangeInput(normalizedInputData);
-
             if(!opus.allInputsValid) {
                 return;
             }
@@ -92,9 +96,16 @@ var o_search = {
                 });
                 $("#result_count").text(o_utils.addCommas(opus.result_count));
             }
-            $("input.RANGE").removeClass("search_input_valid");
-            $("input.RANGE").removeClass("search_input_invalid");
-            $("input.RANGE").addClass("search_input_original");
+            $("input.RANGE").each(function() {
+                if(!$(this).hasClass("input_currently_focused")){
+                    $(this).removeClass("search_input_valid");
+                    $(this).removeClass("search_input_invalid");
+                    $(this).addClass("search_input_original");
+                }
+            });
+            // $("input.RANGE").removeClass("search_input_valid");
+            // $("input.RANGE").removeClass("search_input_invalid");
+            // $("input.RANGE").addClass("search_input_original");
             $("#sidebar").removeClass("search_overlay");
         });
     },
@@ -148,19 +159,16 @@ var o_search = {
         });
         */
 
-        // Avoid the orange blinking on border color
+        // Avoid the orange blinking on border color, and also display proper border when input is in focus
         $("#search").on("focus", "input.RANGE", function(event) {
             let slug = $(this).attr("name");
             let currentValue = $(this).val().trim();
             if(o_search.slugRangeInputValidValueFromLastSearch[slug] || currentValue === "") {
+              $(this).addClass("input_currently_focused");
               $(this).addClass("search_input_original");
             } else {
+              $(this).addClass("input_currently_focused");
               $(this).addClass("search_input_invalid");
-              /*
-              This dummy class is to properly display yellow border
-              when the user changed focus from one invalid input to another invalid input
-              */
-              $(this).addClass("remove_search_input_invalid_no_focus");
               $(this).removeClass("search_input_invalid_no_focus");
             }
         });
@@ -172,14 +180,19 @@ var o_search = {
         $("#search").on("focusout", "input.RANGE", function(event) {
             let slug = $(this).attr("name");
             let currentValue = $(this).val().trim();
-            if($(this).hasClass("remove_search_input_invalid_no_focus") && $(this).hasClass("search_input_invalid")) {
-              $(this).addClass("search_input_invalid_no_focus");
-              $(this).removeClass("remove_search_input_invalid_no_focus search_input_invalid");
+            $(this).removeClass("input_currently_focused");
+            if($(this).hasClass("search_input_invalid")) {
+                $(this).addClass("search_input_invalid_no_focus");
+                $(this).removeClass("search_input_invalid");
             }
         });
 
         // Dynamically get input values right after user input a character
         $("#search").on("input", "input.RANGE", function(event) {
+            if(!$(this).hasClass("input_currently_focused")) {
+                $(this).addClass("input_currently_focused");
+            }
+
             let slug = $(this).attr("name");
             let currentValue = $(this).val().trim();
             let values = []
@@ -187,15 +200,14 @@ var o_search = {
             opus.lastSlugNormalizeRequestNo++;
             o_search.slugNormalizeReqno[slug] = opus.lastSlugNormalizeRequestNo;
 
-            values.push(currentValue)
-            opus.selections[slug] = values;
+            // values.push(currentValue)
+            // opus.selections[slug] = values;
             // Call normalized api with the current focused input slug
             let newHash = `${slug}=${currentValue}`;
 
             /*
             Do not perform normalized api call if:
-            1) Input field is empty
-            OR
+            1) Input field is empty OR
             2) Input value didn't change from the last successful search
             */
             if(currentValue === "" || currentValue === o_search.slugRangeInputValidValueFromLastSearch[slug]) {
@@ -223,12 +235,11 @@ var o_search = {
                     $(event.target).addClass("search_input_original");
                 } else if(returnData !== null) {
                     $(event.target).removeClass("search_input_original search_input_invalid");
+                    $(event.target).removeClass("search_input_invalid_no_focus");
                     $(event.target).addClass("search_input_valid");
-                    if($(event.target).hasClass("search_input_invalid_no_focus")) {
-                        $(event.target).removeClass("search_input_invalid_no_focus");
-                    }
                 } else {
                     $(event.target).removeClass("search_input_original search_input_valid");
+                    $(event.target).removeClass("search_input_invalid_no_focus");
                     $(event.target).addClass("search_input_invalid");
                 }
             }); // end getJSON
@@ -241,6 +252,11 @@ var o_search = {
         */
         $("#search").on("change", "input.RANGE", function(event) {
             let slug = $(this).attr("name");
+            let currentValue = $(this).val().trim();
+            let values = []
+            values.push(currentValue)
+            opus.selections[slug] = values;
+
             let newHash = o_hash.updateHash(false);
             /*
             We are relying on URL order now to parse and get slugs before "&view" in the URL
@@ -255,8 +271,8 @@ var o_search = {
             o_search.slugNormalizeReqno[slug] = opus.lastSlugNormalizeRequestNo;
             let url = "/opus/__api/normalizeinput.json?" + newHash + "&reqno=" + opus.lastSlugNormalizeRequestNo;
 
-            if($(event.target).hasClass("remove_search_input_invalid_no_focus")) {
-              $(event.target).removeClass("remove_search_input_invalid_no_focus");
+            if($(event.target).hasClass("input_currently_focused")) {
+                $(event.target).removeClass("input_currently_focused");
             }
             o_search.parseFinalNormalizedInputDataAndUpdateHash(event, slug, url);
         });
