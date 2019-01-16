@@ -43,7 +43,7 @@ var o_search = {
                 if(currentInput.hasClass("RANGE")) {
                     currentInput.val(value);
                     o_search.slugRangeInputValidValueFromLastSearch[eachSlug] = value;
-                    // Make sure no color border when that input is valid when final normalized api is called
+                    // No color border if the input value is valid
                     currentInput.addClass("search_input_original");
                     currentInput.removeClass("search_input_invalid_no_focus");
                     currentInput.removeClass("search_input_invalid");
@@ -77,21 +77,16 @@ var o_search = {
                 return;
             }
 
-            // check each range input if not valid, change to red background
+            // check each range input, if it's not valid, change its background to red
             o_search.validateRangeInput(normalizedInputData);
 
             if(!opus.allInputsValid) {
                 return;
             }
-            o_hash.updateHash();
-            console.log("LAST");
-            console.log(opus.last_selections);
-            console.log("SELECTION");
-            console.log(opus.selections);
 
+            o_hash.updateHash();
             if (o_utils.areObjectsEqual(opus.selections, opus.last_selections))  {
-                console.log("HERE??")
-                // put back normal hinting info
+                // Put back normal hinting info
                 opus.widgets_drawn.forEach(function(eachSlug) {
                     o_search.getHinting(eachSlug);
                 });
@@ -162,7 +157,7 @@ var o_search = {
             } else {
               $(this).addClass("search_input_invalid");
               /*
-              this dummy class is to properly display yellow border
+              This dummy class is to properly display yellow border
               when the user changed focus from one invalid input to another invalid input
               */
               $(this).addClass("remove_search_input_invalid_no_focus");
@@ -171,7 +166,7 @@ var o_search = {
         });
 
         /*
-        this is to properly put back invalid search background
+        This is to properly put back invalid search background
         when user focus out and there is no "change" event
         */
         $("#search").on("focusout", "input.RANGE", function(event) {
@@ -194,11 +189,11 @@ var o_search = {
 
             values.push(currentValue)
             opus.selections[slug] = values;
-            // Use only the current slug to call normalized api while input event happened
+            // Call normalized api with the current focused input slug
             let newHash = `${slug}=${currentValue}`;
 
             /*
-            Do not perform normalized api call to change border if:
+            Do not perform normalized api call if:
             1) Input field is empty
             OR
             2) Input value didn't change from the last successful search
@@ -208,8 +203,7 @@ var o_search = {
                 $(event.target).addClass("search_input_original");
                 return;
             }
-            // keep calling normalize api to check input values whenever input got changed
-            // only check if return value is null or not, DON'T compare min & max
+
             let url = "/opus/__api/normalizeinput.json?" + newHash + "&reqno=" + opus.lastSlugNormalizeRequestNo;
             $.getJSON(url, function(data) {
                 // Make sure the return json data is from the latest normalized api call
@@ -218,10 +212,12 @@ var o_search = {
                 }
 
                 let returnData = data[slug];
-                // parsing normalized data
-                // if it's empty string, don't modify anything
-                // if it's null, add search_input_invalid class
-                // if it's valid, add search_input_valid class
+                /*
+                Parse normalized data
+                If it's empty string, don't modify anything
+                If it's null, add search_input_invalid class
+                If it's valid, add search_input_valid class
+                */
                 if(returnData === "") {
                     $(event.target).removeClass("search_input_valid search_input_invalid");
                     $(event.target).addClass("search_input_original");
@@ -238,7 +234,11 @@ var o_search = {
             }); // end getJSON
         });
 
-        // perform search on range input when user focus out or hit enter
+        /*
+        When user focusout or hit enter on any range input:
+        Call final normalized api and validate all inputs
+        Update URL (and search) if all inputs are valid
+        */
         $("#search").on("change", "input.RANGE", function(event) {
             let slug = $(this).attr("name");
             let newHash = o_hash.updateHash(false);
