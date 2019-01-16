@@ -282,7 +282,7 @@ var opus = {
 
         // start the result count spinner and do the yellow flash
         $("#result_count").html(opus.spinner).parent().effect("highlight", {}, 500);
-        // move this above allNormalizedApiCall to avoid recursive api call 
+        // move this above allNormalizedApiCall to avoid recursive api call
         opus.last_selections = selections;
 
         // chain ajax calls, validate range inputs before result count api call
@@ -294,7 +294,7 @@ var opus = {
             return;
         }
         o_search.validateRangeInput(normalizedData, true);
-
+        
         // query string has changed
         // opus.last_selections = selections;
         opus.lastResultCountRequestNo++;

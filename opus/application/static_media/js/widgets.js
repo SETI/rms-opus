@@ -163,7 +163,6 @@ var o_widgets = {
                 $("input.RANGE").removeClass("search_input_invalid");
                 $("input.RANGE").addClass("search_input_original");
                 $("#sidebar").removeClass("search_overlay");
-                // .text is here in case the url is not changed but the input value is set to invalid and valid again
                 $("#result_count").text(o_utils.addCommas(opus.result_count));
             }
             o_hash.updateHash(opus.allInputsValid);
@@ -589,7 +588,7 @@ var o_widgets = {
 
              }
 
-             // if we have a string input widget, autocomplete init for string input
+             // If we have a string input widget open, initialize autocomplete for string input
              let stringInputDropDown = $(`input[name="${slug}"].STRING`).autocomplete({
                  minLength: 1,
                  source: function(request, response) {
@@ -597,35 +596,38 @@ var o_widgets = {
                      let values = [];
 
                      opus.lastRequestNo++;
-                     o_search.slugReqno[slug] = opus.lastRequestNo;
+                     o_search.slugNormalizeReqno[slug] = opus.lastRequestNo;
 
                      values.push(currentValue)
                      opus.selections[slug] = values;
                      let newHash = o_hash.updateHash(false);
-                     let regexForShortHash = /(.*)&view/;
-
-                     if(newHash.match(regexForShortHash)) {
-                         newHash = newHash.match(regexForShortHash)[1];
+                     /*
+                     We are relying on URL order now to parse and get slugs before "&view" in the URL
+                     Opus would rewrite the URL when a URL is pasted, all the search related slugs would be moved ahead of "&view"
+                     Refer to hash.js getSelectionsFromHash and updateHash functions
+                     */
+                     let regexForHashWithSearchParams = /(.*)&view/;
+                     if(newHash.match(regexForHashWithSearchParams)) {
+                         newHash = newHash.match(regexForHashWithSearchParams)[1];
                      }
-                     // avoid calling api when some inputs are not valid
+                     // Avoid calling api when some inputs are not valid
                      if(!opus.allInputsValid) {
                         return;
                      }
                      let url = `/opus/__api/stringsearchchoices/${slug}.json?` + newHash + "&reqno=" + opus.lastRequestNo;
-                     $.getJSON(url, function(data) {
-                         // if a newer input is there, re-call api with new input
-                         if(data["reqno"] < o_search.slugReqno[slug]) {
+                     $.getJSON(url, function(stringSearchChoicesData) {
+                         if(stringSearchChoicesData["reqno"] < o_search.slugNormalizeReqno[slug]) {
                              return;
                          }
-                         // dynamically update drop down lists
-                         if(data["full_search"]) {
+
+                         if(stringSearchChoicesData["full_search"]) {
                              o_search.searchMsg = "Results from entire database, not current search constraints"
                          } else {
                              o_search.searchMsg = "Results from current search constraints"
                          }
 
-                         let hintsOfString = data["choices"];
-                         o_search.truncatedResults = data["truncated_results"];
+                         let hintsOfString = stringSearchChoicesData["choices"];
+                         o_search.truncatedResults = stringSearchChoicesData["truncated_results"];
                          response(hintsOfString);
                      });
                  },
@@ -635,14 +637,14 @@ var o_widgets = {
                  select: function(selectEvent, ui) {
                      let displayValue = o_search.extractHtmlContent(ui.item.label);
                      $(`input[name="${slug}"]`).val(displayValue);
-                     // search would be performed right away if an item in the list is selected
+                     // If an item in the list is selected, we update the hash with selected value
                      opus.selections[slug] = [displayValue];
                      o_hash.updateHash();
                      return false;
                  },
              })
              .keyup(function(keyupEvent) {
-                 // Make sure autocomplete menu is hide whenever enter is pressed even if value is not changed
+                 // Make sure autocomplete dropdown list is closed when enter key is pressed
                  if(keyupEvent.which === 13) {
                      $(`input[name="${slug}"]`).autocomplete("close");
                  }
@@ -666,7 +668,7 @@ var o_widgets = {
                    return $( "<li>" )
                    .data( "ui-autocomplete-item", item )
                    .attr( "data-value", item.value )
-                   // need to wrap with <a> tag because of jquery-ui 1.10
+                   // Need to wrap with <a> tag because of jquery-ui 1.10
                    .append("<a>" + item.label + "</a>")
                    .appendTo(ul);
                  };
