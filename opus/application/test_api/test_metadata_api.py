@@ -33,6 +33,7 @@ class ApiMetadataTests(TestCase):
 
     # disable error logging and trace output before test
     def setUp(self):
+        settings.CACHE_KEY_PREFIX = 'opustest:' + settings.OPUS_SCHEMA_NAME
         logging.disable(logging.ERROR)
 
     # enable error logging and trace output after test
@@ -40,11 +41,11 @@ class ApiMetadataTests(TestCase):
         logging.disable(logging.NOTSET)
 
     def _get_response(self, url):
-        if settings.TEST_ApiMetadataTests_GO_LIVE:
+        if settings.TEST_GO_LIVE:
             client = requests.Session()
         else:
             client = RequestsClient()
-        if settings.TEST_ApiMetadataTests_LIVE_TARGET == "production":
+        if not settings.TEST_GO_LIVE or settings.TEST_GO_LIVE == "production":
             url = "https://tools.pds-rings.seti.org" + url
         else:
             url = "http://dev.pds-rings.seti.org" + url
