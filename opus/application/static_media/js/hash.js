@@ -6,55 +6,63 @@ var o_hash = {
      **/
 
     // updates the hash according to user selections
-    updateHash: function(){
+    updateHash: function(updateURL=true){
 
-      hash = [];
-      for (var param in opus.selections) {
-          if (opus.selections[param].length){
-              hash[hash.length] = param + '=' + opus.selections[param].join(',').replace(/ /g,'+');
-          }
-      }
+        hash = [];
+        for (var param in opus.selections) {
+            if (opus.selections[param].length){
+                // hash[hash.length] = param + "=" + opus.selections[param].join(",").replace(/ /g,"+");
+                hash.push(param + "=" + opus.selections[param].join(",").replace(/ /g,"+"));
+            }
+        }
 
-      o_widgets.pauseWidgetControlVisibility(opus.selections);
+        o_widgets.pauseWidgetControlVisibility(opus.selections);
 
-      for (var key in opus.extras) {
+        for (var key in opus.extras) {
 
-          try {
-              hash[hash.length] = key + '=' + opus.extras[key].join(',');
-          } catch(e) {
-              // oops not an arr
-              hash[hash.length] = key + '=' + opus.extras[key];
-          }
-      }
-      for (key in opus.prefs) {
+            try {
+                // hash[hash.length] = key + "=" + opus.extras[key].join(",");
+                hash.push(key + "=" + opus.extras[key].join(","));
+            } catch(e) {
+                // oops not an arr
+                // hash[hash.length] = key + "=" + opus.extras[key];
+                hash.push(key + "=" + opus.extras[key]);
+            }
+        }
+        for (key in opus.prefs) {
 
-          switch (key) {
-            case 'page':
-              // page is stored like {"gallery":1, "data":1, "colls_gallery":1, "colls_data":1 }
-              // so the curent page depends on the view being shown
-              // opus.prefs.view = search, browse, collection, or detail
-              // opus.prefs.browse =  'gallery' or 'data',
-              page = o_browse.getCurrentPage();
+            switch (key) {
+                case "page":
+                    // page is stored like {"gallery":1, "data":1, "colls_gallery":1, "colls_data":1 }
+                    // so the curent page depends on the view being shown
+                    // opus.prefs.view = search, browse, collection, or detail
+                    // opus.prefs.browse =  'gallery' or 'data',
+                    page = o_browse.getCurrentPage();
 
-              hash[hash.length] = 'page=' + page;
-              break;
+                    // hash[hash.length] = "page=" + page;
+                    hash.push("page=" + page);
+                    break;
 
-            case 'widget_size':
-              for (slug in opus.prefs[key]) {
-                  hash[hash.length] = o_widgets.constructWidgetSizeHash(slug);
-              }
-              break;
+                case "widget_size":
+                    for (slug in opus.prefs[key]) {
+                        // hash[hash.length] = o_widgets.constructWidgetSizeHash(slug);
+                        hash.push(o_widgets.constructWidgetSizeHash(slug));
+                    }
+                    break;
 
-            case 'widget_scroll':
-              // these are prefs having to do with widget resize and scrolled
-              break; // there's no scroll without size, so we handle scroll when size comes thru
+                case "widget_scroll":
+                    // these are prefs having to do with widget resize and scrolled
+                    break; // there's no scroll without size, so we handle scroll when size comes thru
 
+                default:
+                    hash.push(key + "=" + opus.prefs[key]);
+            }
+        }
+        if(updateURL) {
+            window.location.hash = "/" + hash.join("&");
+        }
 
-            default:
-              hash[hash.length] = key + '=' + opus.prefs[key];
-          }
-      }
-      window.location.hash = '/' + hash.join('&');
+        return hash.join("&");
     },
 
     // returns the hash part of the url minus the #/ symbol
