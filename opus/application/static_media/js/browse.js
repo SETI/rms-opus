@@ -114,10 +114,6 @@ var o_browse = {
                 o_browse.showModal(opusId);
                 o_browse.undoRangeSelect(e.delegateTarget);
             }
-            //if (e.shiftKey) {
-                // CANCEL THE EVENT, WHICH WILL PREVENT ANY LINKING FROM OCCURING
-            e.preventDefault();
-            //}
         });
 
         // data_table - clicking a table row adds to collection
@@ -196,8 +192,8 @@ var o_browse = {
         });
 
         $(".app-body").on("hide.bs.modal", "#galleryView", function(e) {
-            /////o_browse.toggleGalleryViewHighlight("off");
-            // right here we need to remove the CSS bit!!
+            let namespace = o_browse.getViewInfo().namespace;
+            $(namespace).find(".modal-show").removeClass("modal-show");
         });
 
         // add the 'get detail' behavior
@@ -218,8 +214,7 @@ var o_browse = {
         $('#galleryView').on("click", "a.select", function(e) {
             let opusId = $(this).data("id");
             if (opusId) {
-                let action = o_browse.toggleBrowseInCollectionStyle(opusId);
-                o_collections.editCollection(opusId, action);
+                o_collections.toggleInCollection(opusId)
             }
             return false;
         });
@@ -234,7 +229,7 @@ var o_browse = {
         });
 
         // click table column header to reorder by that column
-        $("#browse").on("click", '.data_table th a',  function() {
+        $("#browse").on("click", '.dataTable th a',  function() {
             let order_by =  $(this).data('slug');
             if (order_by == 'collection') {
               // Don't do anything if clicked on the "Selected" column
@@ -549,20 +544,25 @@ var o_browse = {
                 let images = item.images;
                 html += '<div class="thumbnail-container'+(item.in_collection ? ' in' : '')+'" data-id="'+opusId+'">';
                 html += '<a href="#" class="thumbnail" data-image="'+images.full.url+'">';
-                html += '<img class="img-thumbnail img-fluid" src="'+images.thumb.url+'" alt="'+images.thumb.alt_text+'" title="'+opusId+'"> </a>';
-                html += '<div class="thumb_overlay">';
+                html += '<img class="img-thumbnail img-fluid" src="'+images.thumb.url+'" alt="'+images.thumb.alt_text+'" title="'+opusId+'">';
+                // whenever the user clicks an image to show the modal, we need to highlight the selected image w/an icon
+                html += '<div class="modal-overlay">';
+                html += '<p class="content-text"><i class="fa fa-street-view fa-4x text-info" aria-hidden="true"></i></p>';
+                html += '</div></a>';
+
+                html += '<div class="thumb-overlay">';
                 if (opus.prefs.view == "browse") {
-                    html +=    '<div class="tools" data-id="'+opusId+'">';
-                    html +=       '<a href="#" data-icon="info"><i class="fas fa-info-circle fa-xs"></i></a>';
-                    html +=       '<a href="#" data-icon="cart"><i class="fas fa-shopping-cart fa-xs" aria-hidden="true"></i></a>';
-                    html +=       '<a href="#" data-icon="menu"><i class="fas fa-ellipsis-v fa-xs"></i></a>';
-                    html +=    '</div>';
+                    html += '<div class="tools" data-id="'+opusId+'">';
+                    html +=     '<a href="#" data-icon="info"><i class="fas fa-info-circle fa-xs"></i></a>';
+                    html +=     '<a href="#" data-icon="cart"><i class="fas fa-shopping-cart fa-xs" aria-hidden="true"></i></a>';
+                    html +=     '<a href="#" data-icon="menu"><i class="fas fa-ellipsis-v fa-xs"></i></a>';
+                    html += '</div>';
                 } else {
-                    html +=    '<a href="#" class="remove">';
-                    html +=      '<i class="fas fa-times fa-7x"></i>';
-                    html +=    '</a>';
+                    // this will only display if the user has shift-click to remove the image from the cart
+                    html += '<a href="#" class="remove"><i class="fas fa-times fa-7x"></i></a>';
                 }
-                html += '</div></div>';
+                html += '</div>';
+                html += '</div>';
 
                 // table row
                 let checked = item.in_collection ? " checked" : "";
@@ -713,13 +713,12 @@ var o_browse = {
 
     metadataboxHtml: function(opusId) {
         // list columns + values
-        var html = "<dl>";
-        for (let i in opus.prefs["cols"]) {
-            let column = opus.col_labels[i];  // use the label not the column title
-            let value = opus.gallery_data[opusId][i];
-            html += "<dt>" + column + ":</dt><dd>" + value + "</dd>";
+        let html = "<dl>";
+        $.each(opus.col_labels, function(index, columnLabel) {
+            let value = opus.gallery_data[opusId][index];
+            html += "<dt>" + columnLabel + ":</dt><dd>" + value + "</dd>";
+        });
 
-        }
         html += "</dl>";
         let next = $("#browse tr[data-id="+opusId+"]").next("tr");
         next = (next.length > 0 ? next.data("id") : "");
@@ -744,16 +743,18 @@ var o_browse = {
         // while modal is up, highlight the image/table row shown
         // right here need to add a CSS bit!!
         //////o_browse.toggleGalleryViewHighlight(opusId);
-
-        var imageURL = $("#browse").find("[data-id='"+opusId+"'] > a.thumbnail").data("image");
+        let namespace = o_browse.getViewInfo().namespace;
+        $(namespace).find(".modal-show").removeClass("modal-show");
+        $(namespace).find("[data-id='"+opusId+"'] div.modal-overlay").addClass("modal-show");
+        let imageURL = $(namespace).find("[data-id='"+opusId+"'] > a.thumbnail").data("image");
         if (imageURL === undefined) {
             // put a temp spinner while retrieving the image; this only happens if the data table is loaded first
             $("#galleryViewContents").html(o_browse.loader + o_browse.metadataboxHtml(opusId));
             $("#galleryViewContents").data("id", opusId);
 
-            var url = '/opus/__api/image/full/' + opusId + '.json';
+            let url = "/opus/__api/image/full/" + opusId + ".json";
             $.getJSON(url, function(imageData) {
-                var imageURL = imageData["data"][0]['url'];
+                var imageURL = imageData['data'][0]['url'];
                 o_browse.updateMetaGalleryView(opusId, imageURL);
             });
         } else {

@@ -47,9 +47,10 @@ var opus = {
 
      }, // pref changes do not trigger load()
 
-    col_labels: [],  // may be empty, contains labels that match prefs.cols
-                      // it's outside of prefs becuase those are things loaded into urls
+    col_labels: [],  // contains labels that match prefs.cols, which are slugs for each column label
+                      // it's outside of prefs because those are things loaded into urls
                       // this is not
+					  // note that this is also not a dictionary because we need to preserve the order.
 
     gallery_data: {},  // holds gallery column data
 
@@ -344,6 +345,13 @@ $(document).ready(function() {
             opus.startOver();
         }
 
+    }),
+
+    // doesn't work yet
+    $("footer a").on("click", function() {
+        opus.search_tab_drawn = false;
+        window.open(this.href);
+        return false;
     }),
 
     // general functionality to discover if an element is in the viewport

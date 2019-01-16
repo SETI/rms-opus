@@ -188,11 +188,11 @@ ul.searchMenu{
 		margin: auto;
 }
 
-#browse .thumbnail-container:hover .thumb_overlay {
+#browse .thumbnail-container:hover .thumb-overlay {
 	height: 30%;
 }
 
-#browse .thumb_overlay {
+#browse .thumb-overlay {
 	position: absolute;
 	bottom: 0;
 	left: 0;
@@ -205,7 +205,7 @@ ul.searchMenu{
 	height: 0;
 	transition: .5s ease;
 }
-#browse .thumb_overlay a:hover {
+#browse .thumb-overlay a:hover {
 	color:#097da5;
 	font-size:130%;
 }
@@ -236,6 +236,30 @@ ul.searchMenu{
 #collection .fa-times {
   color: #eee;
   opacity: 0.15;
+}
+
+.thumbnail-container .modal-overlay {
+  	position: absolute;
+  	text-align: center;
+  	padding-left: 1em;
+  	padding-right: 1em;
+  	width: 100%;
+  	top: 50%;
+  	left: 50%;
+  	opacity: 0;
+  	-webkit-transform: translate(-50%, -50%);
+  	-moz-transform: translate(-50%, -50%);
+  	transform: translate(-50%, -50%);
+  	-webkit-transition: all 0.3s ease-in-out 0s;
+  	-moz-transition: all 0.3s ease-in-out 0s;
+	transition: all 0.3s ease-in-out 0s;
+}
+.thumbnail-container .modal-show {
+	opacity: 1;
+}
+.thumbnail-container .content-text {
+	margin: 0px;
+	opacity: 0.65;
 }
 
 .thumbnail-message {

@@ -11,55 +11,52 @@ var o_collections = {
      collectionBehaviors: function() {
 
         // collection details hide/show
-         $('#collection').on("click", '#collection_summary_more', function() {
+         $("#collection").on("click", "#collection_summary_more", function() {
              if (opus.colls_options_viz) {
                  opus.colls_options_viz=false;
-                 $('#collection_summary_more','#collection').text('show options');
-                 $('#collection_summary','#collection').animate({height:'8em'});
+                 $("#collection_summary_more","#collection").text("show options");
+                 $("#collection_summary","#collection").animate({height:"8em"});
              } else {
                  opus.colls_options_viz=true;
-                 $('#collection_summary_more','#collection').text('hide options');
-                 $('#collection_summary','#collection').animate({height:'33em'});
+                 $("#collection_summary_more","#collection").text("hide options");
+                 $("#collection_summary","#collection").animate({height:"33em"});
              }
              return false;
          });
 
          // check an input on selected products and images updates file_info
-         $('#collection').on("click",'#download_options input', function() {
+         $("#collection").on("click","#download_options input", function() {
              let add_to_url = o_collections.getDownloadFiltersChecked();
-             let url = "/opus/__collections/download/info.json?" + add_to_url
-             // FIX ME, probably should be getJSON
-             $.ajax({ url: url + '&fmt=json',
-                success: function(json){
-                    $('#total_files').fadeOut().html(json['download_count']).fadeIn();
-                    $('#download_size').fadeOut().html(json['download_size_pretty']).fadeIn();
-                }});
-
+             let url = "/opus/__collections/download/info.json?" + add_to_url + "&fmt=json";
+             $.getJSON(url, function(info) {
+                 $("#total_files").fadeOut().html(info["download_count"]).fadeIn();
+                 $("#download_size").fadeOut().html(info["download_size_pretty"]).fadeIn();
+             });
          });
 
          // Download CSV button - create CSV file with currently chosen columns
-         $('#collection').on("click", '#download_csv', function() {
-            $(this).attr("href", '/opus/__collections/data.csv?'+ o_hash.getHash());
+         $("#collection").on("click", "#download_csv", function() {
+             $(this).attr("href", "/opus/__collections/data.csv?"+ o_hash.getHash());
          });
 
          // Download Zipped Archive button - click create download zip file link on collections page
-         $('#collection').on("click", '#collections_summary a#create_zip_file button', function() {
-                $('.spinner', "#collections_summary").fadeIn();
-                opus.download_in_process = true;
-                let add_to_url = o_collections.getDownloadFiltersChecked();
-                let url = '/opus/__collections/download.zip?' + add_to_url + "&" + o_hash.getHash();
-                $.ajax({ url: url,
-                    success: function(filename){
-                        opus.download_in_process = false;
-                        if (filename) {
-                            $('<li><a href = "' + filename + '">' + filename + '</a></li>').hide().prependTo('ul.zipped_files', "#collections_summary").slideDown('slow');
-                            $('.spinner', "#collections_summary").fadeOut();
+         $("#collection").on("click", "#collections_summary a#create_zip_file button", function() {
+             $(".spinner", "#collections_summary").fadeIn();
+             opus.download_in_process = true;
+             let add_to_url = o_collections.getDownloadFiltersChecked();
+             let url = "/opus/__collections/download.zip?" + add_to_url + "&" + o_hash.getHash();
+             $.ajax({ url: url,
+                 success: function(filename){
+                     opus.download_in_process = false;
+                     if (filename) {
+                         $('<li><a href = "' + filename + '">' + filename + '</a></li>').hide().prependTo('ul.zipped_files', "#collections_summary").slideDown('slow');
+                            $(".spinner", "#collections_summary").fadeOut();
                         } else {
                             $('<li>No Files Found</li>').hide().prependTo('ul.zipped_files', "#collections_summary").slideDown('fast');
                         }
                     },
                     error: function(e) {
-                        $('.spinner', "#collections_summary").fadeOut();
+                        $(".spinner", "#collections_summary").fadeOut();
                         $('<li>No Files Found</li>').hide().prependTo('ul.zipped_files', "#collections_summary").slideDown('fast');
                         opus.download_in_process = false;
                     }
@@ -68,7 +65,7 @@ var o_collections = {
          });
 
          // click create zip file link on detail page
-         $("#detail").on("click", '#create_zip_file', function() {
+         $("#detail").on("click", "#create_zip_file", function() {
              $('#zip_file', "#detail").html(opus.spinner + " zipping files");
              $.ajax({
                  url: $(this).attr("href"),
@@ -80,10 +77,10 @@ var o_collections = {
          });
 
          // empty collection button
-         $('#collection').on("click", '#empty_collection', function() {
-             if (confirm("Are you sure you want to delete all observations in your collection?")) {
+         $("#collection").on("click", "#empty_collection", function() {
+             if (confirm("Are you sure you want to delete all observations in your cart?")) {
                  o_collections.emptyCollection();
-               }
+             }
              return false;
          });
      },
@@ -94,15 +91,15 @@ var o_collections = {
          var product_types = [];
          var image_types = [];
          var add_to_url = [];
-         $('ul#product_types input:checkbox:checked').each(function(){
-               product_types.push($(this).val());
-             });
-        var checked_filters = {"types":product_types};
+         $("ul#product_types input:checkbox:checked").each(function(){
+             product_types.push($(this).val());
+         });
+         var checked_filters = {"types":product_types};
 
-        for (let filter_name in checked_filters) {
-          if (checked_filters[filter_name].length) {
-              add_to_url.push(filter_name + "=" + checked_filters[filter_name].join(','));
-          }
+         for (let filter_name in checked_filters) {
+             if (checked_filters[filter_name].length) {
+                 add_to_url.push(filter_name + "=" + checked_filters[filter_name].join(','));
+             }
         }
         return add_to_url.join('&');
      },
@@ -117,18 +114,15 @@ var o_collections = {
      // init an existing collection on page load
      initCollection: function() {
         // returns any user collection saved in session
-        $.ajax({ url: "/opus/__collections/status.json",
-            dataType:"json",
-            success: function(data) {
-                var count = data['count'];
-                if (parseInt(count, 10)) {
-                    opus.collection_change = true;
-                    opus.colls_pages = Math.ceil(count/opus.prefs.limit);
-                    $('#collection_count').html(count);
-                }
-                opus.lastCartRequestNo = parseInt(data['expected_request_no']) - 1
-                o_collections.adjustProductInfoHeight();
+        $.getJSON("/opus/__collections/status.json", function(statusData) {
+            let count = statusData['count'];
+            if (parseInt(count, 10)) {
+                opus.collection_change = true;
+                opus.colls_pages = Math.ceil(count/opus.prefs.limit);
+                $('#collection_count').html(count);
             }
+            opus.lastCartRequestNo = parseInt(statusData['expected_request_no']) - 1
+            o_collections.adjustProductInfoHeight();
         });
     },
 
@@ -144,6 +138,9 @@ var o_collections = {
 
         // metadata; used for both table and gallery
         $.getJSON(base_url + url, function(data) {
+            if (opus.col_labels.length === 0) {
+                opus.col_labels = data.columns;
+            }
             o_browse.renderGalleryAndTable(data, this.url);
 
             if (opus.collection_change) {
@@ -168,12 +165,12 @@ var o_collections = {
     // get Collections tab
     getCollectionsTab: function() {
         if (opus.collection_change) {
-            var zipped_files_html = $('.zipped_files', '#collection').html();
+            var zipped_files_html = $('.zipped_files', "#collection").html();
 
             // don't forget to remove existing stuff before append
-            $('.gallery', '#collection').html("");
+            $('.gallery', "#collection").html("");
 
-            $('.collection_details', '#collection').html(opus.spinner);
+            $('.collection_details', "#collection").html(opus.spinner);
 
             // reset page no
             opus.last_page_drawn['colls_gallery'] = 0;
@@ -183,10 +180,10 @@ var o_collections = {
             $.ajax({ url: "/opus/__collections/view.html",
                 success: function(html) {
                     // this div lives in the in the nav menu template
-                    $('.collection_details', '#collection').hide().html(html).fadeIn();
+                    $('.collection_details', "#collection").hide().html(html).fadeIn();
 
                     if (opus.download_in_process) {
-                        $('.spinner', "#collections_summary").fadeIn();
+                        $(".spinner", "#collections_summary").fadeIn();
                     }
 
                     $('#colls_pages').html(opus.colls_pages);
@@ -194,7 +191,7 @@ var o_collections = {
                     o_collections.loadCollectionData();
 
                     if (zipped_files_html) {
-                        $('.zipped_files', '#collection').html(zipped_files_html);
+                        $('.zipped_files', "#collection").html(zipped_files_html);
                     }
                     o_collections.adjustProductInfoHeight();
                 }
@@ -233,7 +230,7 @@ var o_collections = {
         }
 
         var view_info = o_browse.getViewInfo();
-        var namespace = view_info['namespace']; // either '#collection' or '#browse'
+        var namespace = view_info['namespace']; // either "#collection" or '#browse'
 
         var url = "/opus/__collections/" + action + ".json?request=" + request_no
         switch (action) {
@@ -325,10 +322,10 @@ var o_collections = {
 
         // hide the collection data viewing page
         function collTransition() {
-            $('.gallery, .data_table', '#collection').fadeOut(function() {
-                $('.gallery ul.ace-thumbnails, .data_table ul','#collection').empty();
+            $('.gallery, .data_table', "#collection").fadeOut(function() {
+                $('.gallery ul.ace-thumbnails, .data_table ul',"#collection").empty();
             });
-            $('.gallery, .data_table','#collection').fadeIn();
+            $('.gallery, .data_table',"#collection").fadeIn();
         }
         collTransition();
 
@@ -336,7 +333,7 @@ var o_collections = {
         // FIX ME
         $('.tools-bottom', '.gallery').removeClass("in"); // this class keeps parent visible when mouseout
         $( ".tools-bottom a", '.gallery').find('i').removeClass('thumb_selected_icon');
-        $('.thumb_overlay', '.gallery').removeClass('thumb_selected');
+        $('.thumb-overlay', '.gallery').removeClass('thumb_selected');
         $('.data_checkbox', '.data_table').removeClass('fa-check-square-o').addClass('fa-square-o');
     },
 
@@ -348,11 +345,6 @@ var o_collections = {
     getGalleryElement: function(opusId) {
         let elem = $("#" + opus.prefs.view+" .thumbnail-container[data-id=" + opusId + "]");
         return elem;
-    },
-
-    toggleBrowseInCollectionStyle: function(opusId) {
-        //$("tr[data-id='"+opusId+"']").toggleClass("row_selected");
-        $("thumbnail-container[data-id='"+opusId+"']").toggleClass("in");
     },
 
     toggleInCollection: function(fromOpusId, toOpusId) {
@@ -379,20 +371,17 @@ var o_collections = {
                 // effect no change if it is already selected/deselected same as first item in array
                 if ($(elem).hasClass("in") != collectionAction) {
                     let opusId = $(elem).data("id");
-                    o_collections.toggleBrowseInCollectionStyle(opusId);
+                    elem.toggleClass("in");
                     // because this is a range, we need to check the boxes by hand
                     $("input[name="+opusId+"]").prop("checked", !$("input[name="+opusId+"]").is(":checked"));
                     console.log("changed: "+$(elem).data("id"));
                 }
             });
             o_collections.editCollection(opusIdRange, action);
-            $(fromElem).removeClass("selected");
-            $(toElem).removeClass("selected");
+            o_browse.undoRangeSelect(namespace);
         } else {
-            fromElem.toggleClass("in"); // this class keeps parent visible when mouseout
+            fromElem.toggleClass("in");
             let action = (fromElem.hasClass("in") ? "add" : "remove");
-
-            o_collections.toggleBrowseInCollectionStyle(fromOpusId);
             o_collections.editCollection(fromOpusId, action);
         }
     },
