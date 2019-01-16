@@ -247,14 +247,16 @@ ul.searchMenu{
   	top: 50%;
   	left: 50%;
   	opacity: 0;
-  	-webkit-transform: translate(-50%, -50%);
-  	-moz-transform: translate(-50%, -50%);
-  	transform: translate(-50%, -50%);
-  	-webkit-transition: all 0.3s ease-in-out 0s;
-  	-moz-transition: all 0.3s ease-in-out 0s;
-	transition: all 0.3s ease-in-out 0s;
+	z-index: -1;
 }
 .thumbnail-container .modal-show {
+	z-index: 999;
+	-webkit-transform: translate(-50%, -50%);
+  	-moz-transform: translate(-50%, -50%);
+  	transform: translate(-50%, -50%);
+	-webkit-transition: opacity 0.5s ease-in;
+	-moz-transition: opacity 0.5s ease-in;
+	-o-transition: opacity 0.5s ease-in;
 	opacity: 1;
 }
 .thumbnail-container .content-text {
