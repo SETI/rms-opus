@@ -431,11 +431,6 @@ def populate_obs_mission_cassini_ert1(**kwargs):
 
     # START_TIME isn't available for COUVIS
     start_time = index_row.get('EARTH_RECEIVED_START_TIME', None)
-    if start_time == 'UNK':
-        # This is left over from an old version of the index files
-        # Shouldn't be needed anymore
-        return None
-
     if start_time is None:
         return None
 
@@ -454,11 +449,6 @@ def populate_obs_mission_cassini_ert2(**kwargs):
 
     # STOP_TIME isn't available for COUVIS
     stop_time = index_row.get('EARTH_RECEIVED_STOP_TIME', None)
-    if stop_time == 'UNK':
-        # This is left over from an old version of the index files
-        # Shouldn't be needed anymore
-        return None
-
     if stop_time is None:
         return None
 
@@ -468,6 +458,15 @@ def populate_obs_mission_cassini_ert2(**kwargs):
         import_util.log_nonrepeating_warning(
             f'Bad earth received stop time format "{stop_time}": {e}')
         return None
+
+    cassini_row = metadata['obs_mission_cassini_row']
+    start_time_sec = cassini_row['ert1']
+
+    if start_time_sec is not None and ert_sec < start_time_sec:
+        import_util.log_warning(
+            f'cassini_ert1 ({start_time_sec}) and cassini_ert2 ({ert_sec}) '
+            +f'are in the wrong order - setting to ert1')
+        ert_sec = start_time_sec
 
     return ert_sec
 

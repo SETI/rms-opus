@@ -2,7 +2,11 @@ import abc
 import ipaddress
 import re
 import urllib.parse
-from typing import List, Dict, Optional, Match, Tuple, Pattern, Callable, Any, ClassVar
+from typing import List, Dict, Optional, Match, Tuple, Pattern, Callable, Any
+from urllib.parse import SplitResult
+
+from django.utils.html import format_html
+from django.utils.safestring import mark_safe, SafeText
 
 import Slug
 from LogEntry import LogEntry
@@ -16,22 +20,26 @@ class SessionInfoGenerator:
     _slug_map: Slug.ToInfoMap
     _default_column_slug_info: ColumnSlugInfo
     _ignored_ips: List[ipaddress.IPv4Network]
+    _api_host_url: SafeText
 
     DEFAULT_COLUMN_INFO = 'opusid,instrument,planet,target,time1,observationduration'.split(',')
 
-    def __init__(self, slug_info: Slug.ToInfoMap, ignored_ips: List[ipaddress.IPv4Network]):
+    def __init__(self, slug_info: Slug.ToInfoMap, ignored_ips: List[ipaddress.IPv4Network], api_host_url: str):
         """
 
+        :param api_host_url:
         :param slug_info: Information about the slugs we expect to see in the URL
         :param ignored_ips: A list representing hosts that we want to ignore
         """
         self._slug_map = slug_info
         self._default_column_slug_info = QueryHandler.get_column_slug_info(self.DEFAULT_COLUMN_INFO, slug_info)
         self._ignored_ips = ignored_ips
+        self._api_host_url = mark_safe(api_host_url)
 
     def create(self, uses_html: bool = False) -> 'SessionInfo':
         """Create a new SessionInfo"""
-        return SessionInfoImpl(self._slug_map, self._default_column_slug_info, self._ignored_ips, uses_html)
+        return SessionInfoImpl(self._slug_map, self._default_column_slug_info, self._ignored_ips, self._api_host_url,
+                               uses_html)
 
 
 class SessionInfo(metaclass=abc.ABCMeta):
@@ -41,24 +49,38 @@ class SessionInfo(metaclass=abc.ABCMeta):
 
     This is an abstract class.  The user should only get instances of this class from the SessionInfoGenerator.
     """
-    _uses_html: bool
-    _all_search_slugs: ClassVar[Dict[str, Slug.Info]] = dict()
-    _all_column_slugs: ClassVar[Dict[str, Slug.Info]] = dict()
+    _session_search_slugs: Dict[str, Slug.Info]
+    _session_column_slugs: Dict[str, Slug.Info]
 
-    def __init__(self, uses_html: bool):
-        self._uses_html = uses_html
+    def __init__(self) -> None:
+        self._session_search_slugs = dict()
+        self._session_column_slugs = dict()
 
     @abc.abstractmethod
     def parse_log_entry(self, entry: LogEntry) -> List[str]:
         raise Exception()
 
-    @classmethod
-    def all_search_slugs(cls) -> Dict[str, Slug.Info]:
-        return cls._all_search_slugs
+    @abc.abstractmethod
+    def get_alternative_url(self, entry: LogEntry) -> Optional[SplitResult]:
+        raise Exception()
 
-    @classmethod
-    def all_column_slugs(cls) -> Dict[str, Slug.Info]:
-        return cls._all_column_slugs
+    def add_search_slug(self, slug: str, slug_info: Slug.Info) -> None:
+        self._session_search_slugs[slug] = slug_info
+
+    def add_column_slug(self, slug: str, slug_info: Slug.Info) -> None:
+        self._session_column_slugs[slug] = slug_info
+
+    @property
+    def session_search_slugs(self) -> Dict[str, Slug.Info]:
+        return self._session_search_slugs
+
+    @property
+    def session_column_slugs(self) -> Dict[str, Slug.Info]:
+        return self._session_column_slugs
+
+    @staticmethod
+    def quote_and_join_list(string_list: List[str]) -> str:
+        return ', '.join(f'"{string}"' for string in string_list)
 
 
 class ForPattern:
@@ -85,13 +107,16 @@ class SessionInfoImpl(SessionInfo):
     _ignored_ips: List[ipaddress.IPv4Network]
     _previous_product_info_type: Optional[List[str]]
     _query_handler: QueryHandler
+    _api_host_url: str
 
     def __init__(self, slug_map: Slug.ToInfoMap, default_column_slug_info: ColumnSlugInfo,
-                 ignored_ips: List[ipaddress.IPv4Network], uses_html: bool):
+                 ignored_ips: List[ipaddress.IPv4Network], api_host_url: str, uses_html: bool):
         """This initialization should only be called by SessionInfoGenerator above."""
-        super(SessionInfoImpl, self).__init__(uses_html)
+        super(SessionInfoImpl, self).__init__()
         self._ignored_ips = ignored_ips
-        self._query_handler = QueryHandler(slug_map, default_column_slug_info, uses_html)
+        self._query_handler = QueryHandler(self, slug_map, default_column_slug_info, uses_html)
+        self._api_host_url = api_host_url
+        self._uses_html = uses_html
 
         # The previous value of types when downloading a collection
         self._previous_product_info_type = None
@@ -124,13 +149,17 @@ class SessionInfoImpl(SessionInfo):
                 return method(self, query, match)
         return []
 
-    @classmethod
-    def all_search_slugs(cls) -> Dict[str, Slug.Info]:
-        return cls._all_search_slugs
-
-    @classmethod
-    def all_column_slugs(cls) -> Dict[str, Slug.Info]:
-        return cls._all_column_slugs
+    def get_alternative_url(self, url: SplitResult) -> Optional[SplitResult]:
+        """
+        Given a URL, this returns either None or or alternative URL that better represents what the user seens on
+        their screen.
+        """
+        if url.path == '/opus/__api/meta/result_count.json':
+            raw_query = urllib.parse.parse_qs(url.query)
+            raw_query.pop('reqno', None)
+            new_path = "/opus/#/" + urllib.parse.urlencode(raw_query, True)
+            return url._replace(path=new_path, query=None)
+        return None
 
     #
     # API
@@ -146,7 +175,10 @@ class SessionInfoImpl(SessionInfo):
     @ForPattern('/__api/image/med/(.*).json')
     def _view_metadata(self, query: Dict[str, str], match: Match[str]) -> List[str]:
         metadata = match.group(1)
-        return [f'View Metadata: {metadata}']
+        if self._uses_html:
+            return [format_html('View Metadata: {}', self.__wrap_opus_id(metadata))]
+        else:
+            return [f'View Metadata: {metadata}']
 
     @ForPattern(r'/__api/data.csv')
     def _download_results_csv(self, query: Dict[str, str], match: Match[str]) -> List[str]:
@@ -162,9 +194,12 @@ class SessionInfoImpl(SessionInfo):
 
     @ForPattern(r'/__collections(/default)?/(add|remove)\.json')
     def _change_selections(self, query: Dict[str, str], match: Match[str]) -> List[str]:
-        opus_id = query.get('opus_id', '???')
+        opus_id = query.get('opus_id')
         selection = match.group(2).title()
-        return [f'Selections {selection.title() + ":":<7} {opus_id}']
+        if self._uses_html and opus_id:
+            return [format_html('Selections {}: {}', selection.title(), self.__wrap_opus_id(opus_id))]
+        else:
+            return [f'Selections {selection.title() + ":":<7} {opus_id or "???"}']
 
     @ForPattern(r'/__collections(/default)?/view(|\.json)')
     def collections_view(self, query: Dict[str, str], match: Match[str]) -> List[str]:
@@ -184,7 +219,7 @@ class SessionInfoImpl(SessionInfo):
         if types is None:
             output = '???'
         else:
-            output = self._query_handler.quote_and_join_list(types.split(','))
+            output = self.quote_and_join_list(types.split(','))
         return [f'Create Zip File: {output}']
 
     @ForPattern(r'/__collections/download/info(|\.json)')
@@ -195,7 +230,7 @@ class SessionInfoImpl(SessionInfo):
         self._previous_product_info_type = new_ptypes
 
         if old_ptypes is None:
-            joined_new_ptypes = self._query_handler.quote_and_join_list(new_ptypes)
+            joined_new_ptypes = self.quote_and_join_list(new_ptypes)
             plural = '' if len(new_ptypes) == 1 else 's'
             return [f'Download Product Type{plural}: {joined_new_ptypes}']
 
@@ -204,7 +239,7 @@ class SessionInfoImpl(SessionInfo):
         def show(verb: str, items: List[str]) -> None:
             if items:
                 plural = 's' if len(items) > 1 else ''
-                joined_items = self._query_handler.quote_and_join_list(items)
+                joined_items = self.quote_and_join_list(items)
                 result.append(f'{verb.title()} Product Type{plural}: {joined_items}')
 
         show('add', [ptype for ptype in new_ptypes if ptype not in old_ptypes])
@@ -232,8 +267,20 @@ class SessionInfoImpl(SessionInfo):
 
     @ForPattern(r'/__initdetail/(.*).html')
     def _initialize_detail(self, query: Dict[str, str], match: Match[str]) -> List[str]:
-        return [f'View Detail: {match.group(1)}']
+        opus_id = match.group(1)
+        if self._uses_html:
+            return [format_html('View Detail: {}', self.__wrap_opus_id(opus_id))]
+        else:
+            return [f'View Detail: { opus_id }']
 
     #
     # Various utilities
     #
+
+    def __wrap_opus_id(self, opus_id: str) -> SafeText:
+        assert self._uses_html
+        return format_html('<a href="{0}/opus/__initdetail/{1}.html" target="_blank">{1}</a>',
+                           self._api_host_url, opus_id)
+
+
+
