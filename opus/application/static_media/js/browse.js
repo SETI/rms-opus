@@ -16,7 +16,7 @@ var o_browse = {
         // nav stuff
         var onRenderBrowse = _.debounce(o_browse.loadBrowseData, 500);
         $(".browse-nav-container").on("click", "a.next, a.prev", function() {
-
+            o_browse.hideMenu();
             // we will set a timer to wait for settle but right now just do it
             var currentPage = parseInt($("input#page").val());
 
@@ -41,7 +41,8 @@ var o_browse = {
         });
 
        $("#browse").on("click", ".get_column_chooser", function() {
-          o_browse.renderColumnChooser();
+           o_browse.hideMenu();
+           o_browse.renderColumnChooser();
        });
 
        $("#columnChooser").modal({
@@ -52,15 +53,16 @@ var o_browse = {
 
        // browse nav menu - the gallery/table toggle
        $("#browse").on("click", ".browse_view", function() {
-          opus.prefs.browse = $(this).data("view");
+           o_browse.hideMenu();
+           opus.prefs.browse = $(this).data("view");
 
-          o_hash.updateHash();
-          o_browse.updateBrowseNav();
+           o_hash.updateHash();
+           o_browse.updateBrowseNav();
 
-          // reset scroll position
-          window.scrollTo(0,opus.browse_view_scrolls[opus.prefs.browse]); // restore previous scroll position
+           // reset scroll position
+           window.scrollTo(0,opus.browse_view_scrolls[opus.prefs.browse]); // restore previous scroll position
 
-          return false;
+           return false;
        });
 
        // browse nav menu - download csv
@@ -90,6 +92,7 @@ var o_browse = {
             // make sure selected modal thumb is unhighlighted, as clicking on this closes the modal
             // but is not caught in time before hidden.bs to get correct opusId
             e.preventDefault();
+            o_browse.hideMenu();
 
             let action = "add";     // just a default var decl
             let opusId = $(this).parent().data("id");
@@ -157,25 +160,17 @@ var o_browse = {
 
           switch ($(this).data("icon")) {
               case "info":  // detail page
-                  opus.prefs.detail = opusId;
-                  if (e.shiftKey || e.ctrlKey || e.metaKey) {
-                      // handles command click to open in new tab
-                      var link = "/opus/#/" + o_hash.getHash();
-                      link = link.replace("view=browse", "view=detail");
-                      window.open(link, '_blank');
-                  } else {
-                      opus.prefs.detail = opusId;
-                      opus.changeTab("detail");
-                      $('a[href="#detail"]').tab("show");
-                  }
+                  o_browse.hideMenu();
+                  o_browse.showDetail(e, opusId);
                   break;
 
               case "cart":   // add to collection
+                  o_browse.hideMenu();
                   o_collections.toggleInCollection(opusId);
                   break;
 
               case "menu":  // expand, same as click on image
-                  o_browse.showMenu(opusId);
+                  o_browse.showMenu(e, opusId);
                   break;
             }
             return false;
@@ -257,6 +252,29 @@ var o_browse = {
             return false;
         });
 
+        $("#obs-menu").on("click", '.dropdown-item',  function(e) {
+            o_browse.hideMenu();
+            var opusId = $(this).parent().data("id");
+
+            switch ($(this).data("action")) {
+                case "cart":  // add/remove from cart
+                    o_collections.toggleInCollection(opusId);
+                    break;
+                case "range": // begin/end range
+                    break;
+                case "info":  // detail page
+                    o_browse.showDetail(e, opusId);
+                    break;
+                case "downloadAll":
+                    break;
+                case "downloadCSV":
+                    break;
+                case "help":
+                    break;
+            }
+            return false;
+        });
+
         $(document).on("keydown",function(e) {
             if ($("#galleryView").hasClass("show")) {
                 /*  Catch the right/left arrow while in the modal
@@ -310,8 +328,38 @@ var o_browse = {
         $("#galleryView").modal("show");
     },
 
-    showMenu: function(opusId) {
+    hideMenu: function() {
+        $("#obs-menu").removeClass("show").hide();
+    },
+
+    showMenu: function(e, opusId) {
         // make this like a default right click menu
+        if ($("#obs-menu").hasClass("show")) {
+            o_browse.hideMenu();
+        } else {
+            let top = e.pageY;
+            let left = e.pageX;
+            $("#obs-menu").css({
+                display: "block",
+                top: top,
+                left: left
+            }).addClass("show")
+            .attr("data-id", opusId);
+        }
+    },
+
+    showDetail: function(e, opusId) {
+        opus.prefs.detail = opusId;
+        if (e.shiftKey || e.ctrlKey || e.metaKey) {
+            // handles command click to open in new tab
+            var link = "/opus/#/" + o_hash.getHash();
+            link = link.replace("view=browse", "view=detail");
+            window.open(link, '_blank');
+        } else {
+            opus.prefs.detail = opusId;
+            opus.changeTab("detail");
+            $('a[href="#detail"]').tab("show");
+        }
     },
 
     undoRangeSelect: function(selector) {
@@ -552,17 +600,16 @@ var o_browse = {
 
                 html += '<div class="thumb-overlay">';
                 if (opus.prefs.view == "browse") {
-                    html += '<div class="tools" data-id="'+opusId+'">';
+                    html += '<div class="tools dropdown" data-id="'+opusId+'">';
                     html +=     '<a href="#" data-icon="info"><i class="fas fa-info-circle fa-xs"></i></a>';
-                    html +=     '<a href="#" data-icon="cart"><i class="fas fa-shopping-cart fa-xs" aria-hidden="true"></i></a>';
+                    html +=     '<a href="#" data-icon="cart"><i class="fas fa-shopping-cart fa-xs"></i></a>';
                     html +=     '<a href="#" data-icon="menu"><i class="fas fa-ellipsis-v fa-xs"></i></a>';
                     html += '</div>';
                 } else {
                     // this will only display if the user has shift-click to remove the image from the cart
                     html += '<a href="#" class="remove"><i class="fas fa-times fa-7x"></i></a>';
                 }
-                html += '</div>';
-                html += '</div>';
+                html += '</div></div>';
 
                 // table row
                 let checked = item.in_collection ? " checked" : "";

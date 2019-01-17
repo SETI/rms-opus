@@ -371,7 +371,7 @@ var o_collections = {
                 // effect no change if it is already selected/deselected same as first item in array
                 if ($(elem).hasClass("in") != collectionAction) {
                     let opusId = $(elem).data("id");
-                    elem.toggleClass("in");
+                    $(elem).toggleClass("in");
                     // because this is a range, we need to check the boxes by hand
                     $("input[name="+opusId+"]").prop("checked", !$("input[name="+opusId+"]").is(":checked"));
                     console.log("changed: "+$(elem).data("id"));
