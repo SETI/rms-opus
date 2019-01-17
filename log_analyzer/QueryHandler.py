@@ -49,7 +49,7 @@ class QueryHandler:
         self._previous_page = ''
         self._previous_state = State.RESET
 
-    def handle_query(self, query: Dict[str, str], query_type: str) -> List[str]:
+    def handle_query(self, query: Dict[str, str], query_type: str) -> Tuple[List[str], Optional[str]]:
         assert query_type in ['data', 'images', 'result_count']
 
         result: List[str] = []
@@ -113,10 +113,10 @@ class QueryHandler:
             if query_type != 'result_count':
                 query['view'] = 'browse'
                 query['browse'] = 'gallery'
-            new_path = '/opus/#/' + urllib.parse.urlencode(query, False)
-            slug = self._session_info.create_badge(new_path)
-            result[0] = format_html('{} {}', result[0], mark_safe(slug))
-        return result
+            url = '/opus/#/' + urllib.parse.urlencode(query, False)
+        else:
+            url = None
+        return result, url
 
     def __handle_search_info(self, old_info: SearchSlugInfo, new_info: SearchSlugInfo, result: List[str]) -> None:
         all_search_families = set(old_info.keys()).union(new_info.keys())

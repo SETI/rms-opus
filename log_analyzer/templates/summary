@@ -85,17 +85,20 @@ td .SessionInfo {
         {% endfor %}
         </ul>
         <hr/>
-        <table>
+        <table cellpadding="3">
         {% for entry in session.entries %}
             {% for line in entry.data %}
                 <tr>
                 {% if forloop.first %}
-                    <td><a data-toggle="tooltip" href="#" title="{{entry.target_url | safe}}">
-                        <span>{{entry.relative_start_time}}</span>
-                    </a></td>
+                    {% if entry.opus_url %}
+                        <td><a href="{{ entry.opus_url | safe }}">{{ entry.relative_start_time }}</a></td>
+                    {% else %}
+                        <td>{{ entry.relative_start_time }}</td>
+                    {% endif %}
                 {% else %}
                     <td>&nbsp;</td>
                 {% endif %}
+                <td><a data-toggle="tooltip" href="#" title="{{entry.target_url | safe}}">&bull;</td>
                 <td>{{ line }}</td>
                 </tr>
             {% endfor %}
