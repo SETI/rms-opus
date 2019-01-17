@@ -46,6 +46,10 @@ var o_search = {
                 }
             } else {
                 if(currentInput.hasClass("RANGE")) {
+                    /*
+                    If Current focused input value is different from returned normalized data
+                    it will be excluded from the search parameters because user is trying to input a new value
+                    */
                     if(currentInput.hasClass("input_currently_focused") && currentInput.val() !== value) {
                         delete opus.selections[eachSlug];
                     } else {
