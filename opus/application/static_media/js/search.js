@@ -41,21 +41,27 @@ var o_search = {
                     currentInput.val(opus.selections[eachSlug]);
                     opus.allInputsValid = false;
                 }
+                if(currentInput.hasClass("input_currently_focused")) {
+                    delete opus.selections[eachSlug];
+                }
             } else {
-                if(currentInput.hasClass("RANGE") && !currentInput.hasClass("input_currently_focused")) {
-                    currentInput.val(value);
-                    o_search.slugRangeInputValidValueFromLastSearch[eachSlug] = value;
-                    // No color border if the input value is valid
-                    currentInput.addClass("search_input_original");
-                    currentInput.removeClass("search_input_invalid_no_focus");
-                    currentInput.removeClass("search_input_invalid");
-                    currentInput.removeClass("search_input_valid");
+                if(currentInput.hasClass("RANGE")) {
+                    if(currentInput.hasClass("input_currently_focused") && currentInput.val() !== value) {
+                        delete opus.selections[eachSlug];
+                    } else {
+                        currentInput.val(value);
+                        o_search.slugRangeInputValidValueFromLastSearch[eachSlug] = value;
+                        // No color border if the input value is valid
+                        currentInput.addClass("search_input_original");
+                        currentInput.removeClass("search_input_invalid_no_focus");
+                        currentInput.removeClass("search_input_invalid");
+                        currentInput.removeClass("search_input_valid");
+                    }
                 }
             }
-            if(currentInput.hasClass("input_currently_focused")) {
-                delete opus.selections[eachSlug];
-            }
+
         });
+
         if(!opus.allInputsValid) {
             $("#result_count").text("?");
             // set hinting info to ? when any range input has invalid value
