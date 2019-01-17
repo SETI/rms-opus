@@ -23,6 +23,12 @@ var o_widgets = {
         $(".widget_column").mCustomScrollbar({
             theme:"rounded-dark",
             scrollInertia:300,
+            callbacks:{
+                onScroll:function(){
+                    console.log("scrolling");
+                    $("input.STRING").autocomplete("close");
+                }
+            }
         });
         $(".sidebar_wrapper").mCustomScrollbar({
             theme:"rounded-dark",

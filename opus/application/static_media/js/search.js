@@ -278,6 +278,10 @@ var o_search = {
             o_search.parseFinalNormalizedInputDataAndUpdateHash(slug, url);
         });
 
+        // $("input.STRING").on("scroll", "#mCSB_1_container", function() {
+        //     console.log("scrolling");
+        // });
+
         // filling in a range or string search field = update the hash
         // range behaviors and string behaviors for search widgets - input box
         $('#search').on('change', 'input.STRING', function(event) {
