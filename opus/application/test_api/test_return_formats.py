@@ -15,6 +15,7 @@ import settings
 class ApiReturnFormatTests(TestCase):
     # disable error logging and trace output before test
     def setUp(self):
+        settings.CACHE_KEY_PREFIX = 'opustest:' + settings.OPUS_SCHEMA_NAME
         sys.tracebacklimit = 0 # default: 1000
         logging.disable(logging.DEBUG)
 
@@ -47,8 +48,8 @@ class ApiReturnFormatTests(TestCase):
         """API Calls: check different formats to see if response is 200
            Raise error when any response status code is NOT 200
         """
-        api_public = ApiFormats(target=settings.TEST_ApiReturnFormatTests_LIVE_TARGET)
-        api_internal = ApiFormats(target=f"internal-{settings.TEST_ApiReturnFormatTests_LIVE_TARGET}")
+        api_public = ApiFormats(target=settings.TEST_GO_LIVE)
+        api_internal = ApiFormats(target=settings.TEST_GO_LIVE or "internal")
         test_dict =  {**api_internal.api_dict, **api_public.api_dict}
 
         target_dict = test_dict
@@ -81,7 +82,7 @@ class ApiReturnFormatTests(TestCase):
            api_dict: a dictionary containing the payload
            format: a return format string that concatenates with api_url_base
         """
-        if settings.TEST_ApiReturnFormatTests_GO_LIVE:
+        if settings.TEST_GO_LIVE:
             client = requests.Session()
         else:
             client = RequestsClient()
@@ -142,14 +143,13 @@ class ApiFormats:
     def build_api_base(self):
         """build up base api depending on target site: dev/production
         """
-        if self.target == "production":
+        if (not self.target or self.target == "production"
+            or self.target == "internal"):
             return "https://tools.pds-rings.seti.org/opus/api/"
         elif self.target == "dev":
             return "http://dev.pds-rings.seti.org/opus/api/"
-        elif self.target == "internal-production":
-            return "https://tools.pds-rings.seti.org/opus/__api/"
-        elif self.target == "internal-dev":
-            return "http://dev.pds-rings.seti.org/opus/__api/"
+        else:
+            assert False, self.target
 
     def build_api_data_base(self):
         """api/data.[fmt]

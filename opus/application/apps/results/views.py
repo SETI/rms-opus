@@ -1188,7 +1188,8 @@ def get_triggered_tables(selections, extras, api_code=None):
 
     cache_key = None
     if user_query_table:
-        cache_key = 'triggered_tables:' + user_query_table
+        cache_key = (settings.CACHE_KEY_PREFIX + ':triggered_tables:'
+                     + user_query_table)
         cached_val = cache.get(cache_key)
         if cached_val is not None:
             return cached_val

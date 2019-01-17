@@ -207,7 +207,7 @@ def api_string_search_choices(request, slug):
     partial_query_hash = hashlib.md5(str.encode(partial_query)).hexdigest()
 
     # Is this result already cached?
-    cache_key = ('stringsearchchoices:' +
+    cache_key = (settings.CACHE_KEY_PREFIX + ':stringsearchchoices:' +
                  param_qualified_name + ':' +
                  partial_query_hash + ':' +
                  user_query_table + ':' +
@@ -586,7 +586,8 @@ def get_user_query_table(selections, extras, api_code=None):
     cache_table_name = get_user_search_table_name(cache_table_num)
 
     # Is this key set in the cache?
-    cache_key = 'cache_table:' + str(cache_table_num)
+    cache_key = (settings.CACHE_KEY_PREFIX + ':cache_table:'
+                 + str(cache_table_num))
 
     cached_val = cache.get(cache_key)
     if cached_val:
@@ -702,7 +703,8 @@ def set_user_search_number(selections, extras):
         order_json = str(json.dumps(extras['order']))
         order_hash = hashlib.md5(str.encode(order_json)).hexdigest()
 
-    cache_key = ('usersearchno:selections_hash:' + str(selections_hash)
+    cache_key = (settings.CACHE_KEY_PREFIX
+                 +':usersearchno:selections_hash:' + str(selections_hash)
                  +':qtypes_hash:' + str(qtypes_hash)
                  +':units_hash:' + str(units_hash)
                  +':order_hash:' + str(order_hash))

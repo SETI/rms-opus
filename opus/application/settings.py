@@ -170,6 +170,8 @@ else:
       }
     }
 
+CACHE_KEY_PREFIX = 'opus:' + OPUS_SCHEMA_NAME
+
 INTERNAL_IPS = ('127.0.0.1',)
 
 TEST_RUNNER = 'django_nose.NoseTestSuiteRunner'

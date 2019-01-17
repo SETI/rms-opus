@@ -127,6 +127,16 @@ class resultsTests(TestCase):
                     'obs_mission_cassini']
         self._test_triggered_tables(q, expected)
 
+    def test__get_triggered_tables_cocirs(self):
+        "get_triggered_tables: tables triggered by instrument COCIRS"
+        q = QueryDict('planet=SATURN&instrument=COCIRS')
+        expected = ['obs_general', 'obs_pds', 'obs_type_image',
+                    'obs_wavelength',
+                    'obs_surface_geometry',
+                    'obs_ring_geometry',
+                    'obs_mission_cassini', 'obs_instrument_cocirs']
+        self._test_triggered_tables(q, expected)
+
     def test__get_triggered_tables_coiss(self):
         "get_triggered_tables: tables triggered by instrument COISS"
         q = QueryDict('planet=SATURN&instrument=COISS')
@@ -241,6 +251,36 @@ class resultsTests(TestCase):
                     'obs_mission_hubble']
         self._test_triggered_tables(q, expected)
 
+    def test__get_triggered_tables_hstacs(self):
+        "get_triggered_tables: tables triggered by instrument HSTACS"
+        q = QueryDict('instrument=Hubble+ACS')
+        expected = ['obs_general', 'obs_pds', 'obs_type_image',
+                    'obs_wavelength',
+                    'obs_surface_geometry',
+                    'obs_ring_geometry',
+                    'obs_mission_hubble']
+        self._test_triggered_tables(q, expected)
+
+    def test__get_triggered_tables_hstnicmos(self):
+        "get_triggered_tables: tables triggered by instrument HSTNICMOS"
+        q = QueryDict('instrument=Hubble+NICMOS')
+        expected = ['obs_general', 'obs_pds', 'obs_type_image',
+                    'obs_wavelength',
+                    'obs_surface_geometry',
+                    'obs_ring_geometry',
+                    'obs_mission_hubble']
+        self._test_triggered_tables(q, expected)
+
+    def test__get_triggered_tables_hststis(self):
+        "get_triggered_tables: tables triggered by instrument HSTSTIS"
+        q = QueryDict('instrument=Hubble+STIS')
+        expected = ['obs_general', 'obs_pds', 'obs_type_image',
+                    'obs_wavelength',
+                    'obs_surface_geometry',
+                    'obs_ring_geometry',
+                    'obs_mission_hubble']
+        self._test_triggered_tables(q, expected)
+
     def test__get_triggered_tables_hstwfc3(self):
         "get_triggered_tables: tables triggered by instrument HSTWFC3"
         q = QueryDict('instrument=Hubble+WFC3')
@@ -259,6 +299,48 @@ class resultsTests(TestCase):
                     'obs_surface_geometry',
                     'obs_ring_geometry',
                     'obs_mission_hubble']
+        self._test_triggered_tables(q, expected)
+
+    def test__get_triggered_tables_hstwfpc2(self):
+        "get_triggered_tables: tables triggered by instrument HSTWFPC2"
+        q = QueryDict('instrument=Hubble+WFPC2')
+        expected = ['obs_general', 'obs_pds', 'obs_type_image',
+                    'obs_wavelength',
+                    'obs_surface_geometry',
+                    'obs_ring_geometry',
+                    'obs_mission_hubble']
+        self._test_triggered_tables(q, expected)
+
+    def test__get_triggered_tables_newhorizons(self):
+        "get_triggered_tables: tables triggered by mission New Horizons"
+        q = QueryDict('mission=New+Horizons')
+        expected = ['obs_general', 'obs_pds', 'obs_type_image',
+                    'obs_wavelength',
+                    'obs_surface_geometry',
+                    'obs_ring_geometry',
+                    'obs_mission_new_horizons']
+        self._test_triggered_tables(q, expected)
+
+    def test__get_triggered_tables_nhlorri(self):
+        "get_triggered_tables: tables triggered by instrument NHLORRI"
+        q = QueryDict('instrument=New+Horizons+LORRI')
+        expected = ['obs_general', 'obs_pds', 'obs_type_image',
+                    'obs_wavelength',
+                    'obs_surface_geometry',
+                    'obs_ring_geometry',
+                    'obs_mission_new_horizons',
+                    'obs_instrument_nhlorri']
+        self._test_triggered_tables(q, expected)
+
+    def test__get_triggered_tables_nhmvic(self):
+        "get_triggered_tables: tables triggered by instrument NHMVIC"
+        q = QueryDict('instrument=New+Horizons+MVIC')
+        expected = ['obs_general', 'obs_pds', 'obs_type_image',
+                    'obs_wavelength',
+                    'obs_surface_geometry',
+                    'obs_ring_geometry',
+                    'obs_mission_new_horizons',
+                    'obs_instrument_nhmvic']
         self._test_triggered_tables(q, expected)
 
 

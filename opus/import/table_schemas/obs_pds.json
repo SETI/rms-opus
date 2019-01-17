@@ -120,7 +120,7 @@
     {
         "field_name": "product_creation_time",
         "field_type": "real8",
-        "field_default": null,
+        "field_notnull": true,
         "field_key": true,
         "data_source": [
             "FUNCTION",
@@ -147,7 +147,7 @@
     {
         "field_name": "primary_file_spec",
         "field_type": "char240",
-        "field_default": null,
+        "field_notnull": true,
         "field_key": true,
         "data_source": [
             "FUNCTION",

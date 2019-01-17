@@ -29,6 +29,7 @@ class ApiSearchTests(TestCase):
 
     # disable error logging and trace output before test
     def setUp(self):
+        settings.CACHE_KEY_PREFIX = 'opustest:' + settings.OPUS_SCHEMA_NAME
         self.search_count_threshold = settings.STRINGCHOICE_FULL_SEARCH_COUNT_THRESHOLD
         self.search_time_threshold = settings.STRINGCHOICE_FULL_SEARCH_TIME_THRESHOLD
         self.search_time_threshold2 = settings.STRINGCHOICE_FULL_SEARCH_TIME_THRESHOLD2
@@ -45,11 +46,11 @@ class ApiSearchTests(TestCase):
         logging.disable(logging.NOTSET)
 
     def _get_response(self, url):
-        if settings.TEST_ApiSearchTests_GO_LIVE:
+        if settings.TEST_GO_LIVE:
             client = requests.Session()
         else:
             client = RequestsClient()
-        if settings.TEST_ApiSearchTests_LIVE_TARGET == "production":
+        if not settings.TEST_GO_LIVE or settings.TEST_GO_LIVE == "production":
             url = "https://tools.pds-rings.seti.org" + url
         else:
             url = "http://dev.pds-rings.seti.org" + url
