@@ -644,19 +644,24 @@ var o_widgets = {
                      return false;
                  },
              })
-             .change(function(blurEvent) {
-                 console.log("AUTOCOMPLETE change");
-             })
              .keyup(function(keyupEvent) {
-                 // Make sure autocomplete dropdown list is closed when enter key is pressed
+                 /*
+                 When "enter" key is pressed:
+                 (1) autocomplete dropdown list is closed
+                 (2) change event is triggered if input is an empty string
+                 */
                  if(keyupEvent.which === 13) {
                      $(`input[name="${slug}"]`).autocomplete("close");
                      let currentStringInputValue = $(`input[name="${slug}"]`).val().trim();
-                     // if(currentStringInputValue === "") {
-                     //   $(`input[name="${slug}"]`).trigger("change");
-                     //   // opus.selections[slug] = [currentStringInputValue];
-                     //   // o_hash.updateHash();
-                     // }
+                     if(currentStringInputValue === "") {
+                         $(`input[name="${slug}"]`).trigger("change");
+                     }
+                 }
+             })
+             .focusout(function(focusoutEvent) {
+                 let currentStringInputValue = $(`input[name="${slug}"]`).val().trim();
+                 if(currentStringInputValue === "") {
+                     $(`input[name="${slug}"]`).trigger("change");
                  }
              })
              .data( "ui-autocomplete" );

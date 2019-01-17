@@ -79,17 +79,12 @@ var o_search = {
     parseFinalNormalizedInputDataAndUpdateHash: function(slug, url) {
         $.getJSON(url, function(normalizedInputData) {
             // Make sure it's the final call before parsing normalizedInputData
-            console.log("RETURN")
-            console.log(o_search.slugNormalizeReqno)
-            console.log(o_search.slugNormalizeReqno[slug])
-            console.log(normalizedInputData);
             if(normalizedInputData["reqno"] < o_search.slugNormalizeReqno[slug]) {
                 return;
             }
 
             // check each range input, if it's not valid, change its background to red
             o_search.validateRangeInput(normalizedInputData);
-            console.log("OPUS ALL INPUT VALID: " + opus.allInputsValid);
             if(!opus.allInputsValid) {
                 return;
             }
@@ -286,7 +281,6 @@ var o_search = {
         // filling in a range or string search field = update the hash
         // range behaviors and string behaviors for search widgets - input box
         $('#search').on('change', 'input.STRING', function(event) {
-            console.log("CURRENT CHANGE EVENT STRING VAL: " + $(this).val());
             let slug = $(this).attr("name");
             let css_class = $(this).attr("class").split(' ')[0]; // class will be STRING, min or max
 
@@ -323,6 +317,12 @@ var o_search = {
                 }
                 opus.selections[slug_no_num + '2'] = values;
             }
+
+            if(opus.last_selections && opus.last_selections[slug]) {
+                if(opus.last_selections[slug][0] === $(this).val().trim()) {
+                    return;
+                }
+            }
             // make a normalized call to avoid changing url whenever there is an invalid range input value
             let newHash = o_hash.updateHash(false);
             /*
@@ -337,10 +337,6 @@ var o_search = {
             opus.lastSlugNormalizeRequestNo++;
             o_search.slugNormalizeReqno[slug] = opus.lastSlugNormalizeRequestNo;
             let url = "/opus/__api/normalizeinput.json?" + newHash + "&reqno=" + opus.lastSlugNormalizeRequestNo;
-            console.log("CHANGE BEFORE CALLING API")
-            console.log(o_search.slugNormalizeReqno)
-            console.log(o_search.slugNormalizeReqno[slug])
-            console.log("CHANGE EVENT API URL: " + url);
             o_search.parseFinalNormalizedInputDataAndUpdateHash(slug, url);
         });
 
