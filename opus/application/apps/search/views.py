@@ -195,7 +195,7 @@ def api_string_search_choices(request, slug):
         exit_api_call(api_code, ret)
         raise ret
 
-    if limit < 1 or limit > 1000000000000:
+    if limit < 1 or limit > settings.SQL_MAX_LIMIT:
         log.error('api_string_search_choices: Bad limit for'
                   +' request %s', str(request.GET))
         ret = Http404('Bad limit')

@@ -309,8 +309,8 @@ BASE_TABLES = ['obs_general', 'obs_pds', 'obs_ring_geometry',
 # queries and thus should be ignored when creating SQL
 SLUGS_NOT_IN_DB = ('browse', 'col_chooser', 'colls_browse', 'cols', 'detail',
                    'gallery_data_viewer', 'limit', 'loc_type', 'order',
-                   'page', 'range', 'reqno', 'request', 'types', 'view',
-                   'widgets', 'widgets2')
+                   'page', 'range', 'reqno', 'request', 'startobs', 'types',
+                   'view', 'widgets', 'widgets2')
 
 # The root URL used to retrieve product files from a web server
 PRODUCT_HTTP_PATH = 'https://pds-rings.seti.org/'
@@ -346,6 +346,8 @@ RANGE_FORM_TYPES = ('LONG','RANGE')
 MULT_FORM_TYPES  = ('GROUP','TARGETS')
 DEFAULT_PAGE_LIMIT = 100
 DEFAULT_STRINGCHOICE_LIMIT = 100
+
+SQL_MAX_LIMIT = 100000000 # Max size for a LIMIT clause
 
 # More than this many rows in the cache table -> don't join it
 STRINGCHOICE_FULL_SEARCH_COUNT_THRESHOLD = 100000

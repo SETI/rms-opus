@@ -37,7 +37,9 @@ from django.views.decorators.cache import never_cache
 
 from hurry.filesize import size as nice_file_size
 
-from results.views import get_data, get_page, get_all_in_collection
+from results.views import (get_data,
+                           get_search_results_chunk,
+                           get_all_in_collection)
 from search.models import ObsGeneral
 from search.views import get_param_info_by_slug
 from user_collections.models import Collections
@@ -466,10 +468,11 @@ def _get_collection_count(session_id):
 def _get_collection_csv(request, fmt=None, api_code=None):
     "Create and return a CSV file based on user column and selection."
     slugs = request.GET.get('cols', settings.DEFAULT_COLUMNS)
-    (page_no, limit, page, opus_ids, file_specs,
-     ring_obs_ids, order) = get_page(request, use_collections=True,
-                                     collections_page='all',
-                                     api_code=api_code)
+    (page_no, start_obs, limit, page, opus_ids, file_specs,
+     ring_obs_ids, order) = get_search_results_chunk(request,
+                                                     use_collections=True,
+                                                     limit='all',
+                                                     api_code=api_code)
 
     if fmt == 'raw':
         return slugs.split(','), page
