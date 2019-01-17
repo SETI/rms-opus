@@ -58,7 +58,7 @@ def main(arguments: Optional[List[str]] = None) -> None:
     slugs = Slug.ToInfoMap(LOCAL_SLUGS_PREFIX if args.xxlocal_slugs else args.api_host_url)
     # args.ignored_ip comes out as a list of lists, and it needs to be flattened.
     ignored_ips = [ip for arg_list in args.ignore_ip for ip in arg_list]
-    session_info_generator = SessionInfoGenerator(slugs, ignored_ips, args.api_host_url)
+    session_info_generator = SessionInfoGenerator(slugs, ignored_ips)
     log_parser = LogParser(session_info_generator, args.reverse_dns, args.session_timeout, args.out,
                            args.api_host_url, args.html)
 

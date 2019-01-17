@@ -2,7 +2,8 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">:
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <base href="{{ api_host_url | safe }}" target="_blank">
   <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css">
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js"></script>
@@ -39,7 +40,7 @@
 .SessionInfo {
   display: none;
 }
-td.SessionInfo {
+td .SessionInfo {
   vertical-align:top;
 }
 .SessionLinkSelected {
@@ -54,7 +55,7 @@ td.SessionInfo {
 <div class="col-sm-3" id="left">
 {% spaceless %}
 {% for host_info in host_infos %}
-    <span>{{ host_info.ip }} ({{ host_info.total_time }}) <span class="badge badge-secondary">{{ host_info.sessions | length }}</span></span>
+    <span>{{ host_info.ip }} ({{ host_info.total_time }})</span>
     {% if host_info.name %}<br><span>{{ host_info.name }}{% endif %}
     <ul>
         {% for session in host_info.sessions %}
@@ -69,13 +70,29 @@ td.SessionInfo {
 {% for host_info in host_infos %}
     {% for session in host_info.sessions %}
         <div id="{{ session.id }}" class="SessionInfo">
-        <b>{{ host_info.hostname }} at {{ session.entries.0.log_entry.time | date:'Y/M/d H:i:s O' }}</b>
+        <h3>{{ host_info.hostname }} at {{ session.entries.0.log_entry.time | date:'Y/M/d H:i:s O' }}</h3>
+        <ul class="list-unstyled">
+        {% for type, slug_info in session.slug_info %}
+            <li>
+            <b>{{ type | capfirst }} Slugs: </b>
+            {% for slug_name, is_obsolete in slug_info %}
+                <span {% if is_obsolete %}class="text-danger"{% else %}class="text-dark"{% endif %}>{{ slug_name }}</span>
+                {% if not forloop.last %}<span>, </span>{% endif %}
+            {% empty %}
+                <i>none</i>
+            {% endfor %}
+            </li>
+        {% endfor %}
+        </ul>
+        <hr/>
         <table>
         {% for entry in session.entries %}
             {% for line in entry.data %}
                 <tr>
                 {% if forloop.first %}
-                    <td><a href="{{api_host_url | safe}}{{entry.target_url | safe}}" target="_blank">{{entry.relative_start_time}}</a></td>
+                    <td><a data-toggle="tooltip" href="#" title="{{entry.target_url | safe}}">
+                        <span>{{entry.relative_start_time}}</span>
+                    </a></td>
                 {% else %}
                     <td>&nbsp;</td>
                 {% endif %}
@@ -84,15 +101,6 @@ td.SessionInfo {
             {% endfor %}
         {% endfor %}
         </table>
-        <hr>
-        {% for type, slug_info in session.slug_info %}
-            <p><b>{{ type | capfirst }} Slugs: </b>
-            {% for slug_name, is_obsolete in slug_info %}
-                <span>{% if not forloop.first %}, {% endif %}</span>
-                <span {% if is_obsolete %}class="text-danger"{% else %}class="text-dark"{% endif %}>{{ slug_name }}</span>
-            {% endfor %}
-            </p>
-        {% endfor %}
         </div>
     {% endfor %}
 {% endfor %}
@@ -105,6 +113,8 @@ td.SessionInfo {
 <script>
 
 $(document).ready(function(){
+    $('[data-toggle="tooltip"]').tooltip();
+
     $('.SessionLink').click(function() {
 
         $('.SessionLinkSelected').removeClass('SessionLinkSelected');

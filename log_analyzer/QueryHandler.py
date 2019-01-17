@@ -1,4 +1,6 @@
 import operator
+import urllib
+import urllib.parse
 from collections import defaultdict
 from enum import Enum, auto
 from functools import reduce
@@ -105,6 +107,15 @@ class QueryHandler:
             self._previous_page = page
 
         self._previous_state = current_state
+
+        if result and self._uses_html:
+            query.pop('reqno', None)  # Remove if there, but okay if not
+            if query_type != 'result_count':
+                query['view'] = 'browse'
+                query['browse'] = 'gallery'
+            new_path = '/opus/#/' + urllib.parse.urlencode(query, False)
+            slug = self._session_info.create_badge(new_path)
+            result[0] = format_html('{} {}', result[0], mark_safe(slug))
         return result
 
     def __handle_search_info(self, old_info: SearchSlugInfo, new_info: SearchSlugInfo, result: List[str]) -> None:

@@ -20,26 +20,22 @@ class SessionInfoGenerator:
     _slug_map: Slug.ToInfoMap
     _default_column_slug_info: ColumnSlugInfo
     _ignored_ips: List[ipaddress.IPv4Network]
-    _api_host_url: SafeText
 
     DEFAULT_COLUMN_INFO = 'opusid,instrument,planet,target,time1,observationduration'.split(',')
 
-    def __init__(self, slug_info: Slug.ToInfoMap, ignored_ips: List[ipaddress.IPv4Network], api_host_url: str):
+    def __init__(self, slug_info: Slug.ToInfoMap, ignored_ips: List[ipaddress.IPv4Network]):
         """
 
-        :param api_host_url:
         :param slug_info: Information about the slugs we expect to see in the URL
         :param ignored_ips: A list representing hosts that we want to ignore
         """
         self._slug_map = slug_info
         self._default_column_slug_info = QueryHandler.get_column_slug_info(self.DEFAULT_COLUMN_INFO, slug_info)
         self._ignored_ips = ignored_ips
-        self._api_host_url = mark_safe(api_host_url)
 
     def create(self, uses_html: bool = False) -> 'SessionInfo':
         """Create a new SessionInfo"""
-        return SessionInfoImpl(self._slug_map, self._default_column_slug_info, self._ignored_ips, self._api_host_url,
-                               uses_html)
+        return SessionInfoImpl(self._slug_map, self._default_column_slug_info, self._ignored_ips, uses_html)
 
 
 class SessionInfo(metaclass=abc.ABCMeta):
@@ -58,10 +54,6 @@ class SessionInfo(metaclass=abc.ABCMeta):
 
     @abc.abstractmethod
     def parse_log_entry(self, entry: LogEntry) -> List[str]:
-        raise Exception()
-
-    @abc.abstractmethod
-    def get_alternative_url(self, entry: LogEntry) -> Optional[SplitResult]:
         raise Exception()
 
     def add_search_slug(self, slug: str, slug_info: Slug.Info) -> None:
@@ -107,15 +99,13 @@ class SessionInfoImpl(SessionInfo):
     _ignored_ips: List[ipaddress.IPv4Network]
     _previous_product_info_type: Optional[List[str]]
     _query_handler: QueryHandler
-    _api_host_url: str
 
     def __init__(self, slug_map: Slug.ToInfoMap, default_column_slug_info: ColumnSlugInfo,
-                 ignored_ips: List[ipaddress.IPv4Network], api_host_url: str, uses_html: bool):
+                 ignored_ips: List[ipaddress.IPv4Network], uses_html: bool):
         """This initialization should only be called by SessionInfoGenerator above."""
         super(SessionInfoImpl, self).__init__()
         self._ignored_ips = ignored_ips
         self._query_handler = QueryHandler(self, slug_map, default_column_slug_info, uses_html)
-        self._api_host_url = api_host_url
         self._uses_html = uses_html
 
         # The previous value of types when downloading a collection
@@ -149,18 +139,6 @@ class SessionInfoImpl(SessionInfo):
                 return method(self, query, match)
         return []
 
-    def get_alternative_url(self, url: SplitResult) -> Optional[SplitResult]:
-        """
-        Given a URL, this returns either None or or alternative URL that better represents what the user seens on
-        their screen.
-        """
-        if url.path == '/opus/__api/meta/result_count.json':
-            raw_query = urllib.parse.parse_qs(url.query)
-            raw_query.pop('reqno', None)
-            new_path = "/opus/#/" + urllib.parse.urlencode(raw_query, True)
-            return url._replace(path=new_path, query=None)
-        return None
-
     #
     # API
     #
@@ -176,7 +154,7 @@ class SessionInfoImpl(SessionInfo):
     def _view_metadata(self, query: Dict[str, str], match: Match[str]) -> List[str]:
         metadata = match.group(1)
         if self._uses_html:
-            return [format_html('View Metadata: {}', self.__wrap_opus_id(metadata))]
+            return [format_html('View Metadata: {} {}', metadata, self.__create_opus_slug(metadata))]
         else:
             return [f'View Metadata: {metadata}']
 
@@ -197,7 +175,7 @@ class SessionInfoImpl(SessionInfo):
         opus_id = query.get('opus_id')
         selection = match.group(2).title()
         if self._uses_html and opus_id:
-            return [format_html('Selections {}: {}', selection.title(), self.__wrap_opus_id(opus_id))]
+            return [format_html('Selections {}: {} {}', selection.title(), opus_id, self.__create_opus_slug(opus_id))]
         else:
             return [f'Selections {selection.title() + ":":<7} {opus_id or "???"}']
 
@@ -269,7 +247,7 @@ class SessionInfoImpl(SessionInfo):
     def _initialize_detail(self, query: Dict[str, str], match: Match[str]) -> List[str]:
         opus_id = match.group(1)
         if self._uses_html:
-            return [format_html('View Detail: {}', self.__wrap_opus_id(opus_id))]
+            return [format_html('View Detail: {} {}', opus_id, self.__create_opus_slug(opus_id))]
         else:
             return [f'View Detail: { opus_id }']
 
@@ -277,10 +255,16 @@ class SessionInfoImpl(SessionInfo):
     # Various utilities
     #
 
-    def __wrap_opus_id(self, opus_id: str) -> SafeText:
+    def __create_opus_slug(self, opus_id: str) -> SafeText:
         assert self._uses_html
-        return format_html('<a href="{0}/opus/__initdetail/{1}.html" target="_blank">{1}</a>',
-                           self._api_host_url, opus_id)
+        url = format_html('/opus/#/view=detail&detail={0}', opus_id)
+        return self.create_badge(url)
+
+    def create_badge_old(self, url: str, text: str= "") -> SafeText:
+        return format_html('<a href="{}" class="badge badge-primary badge-pill">({})</a>', mark_safe(url), text)
+
+    def create_badge(self, url: str, text: str= "opus") -> SafeText:
+        return format_html('<a href="{}">({})</a>', mark_safe(url), text)
 
 
 

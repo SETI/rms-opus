@@ -32,14 +32,11 @@ class _LiveSession(NamedTuple):
 
 class Entry(NamedTuple):
     log_entry: LogEntry
-    alternative_url: Optional[SplitResult]
     relative_start_time: datetime.timedelta
     data: List[str]
 
     def target_url(self) -> str:
-        parsed_url = self.alternative_url or self.log_entry.url
-        return parsed_url.geturl()
-
+        return self.log_entry.url.geturl()
 
 class Session(NamedTuple):
     host_ip: IPv4Address
@@ -236,7 +233,6 @@ class LogParser:
 
                 def create_session_entry(log_entry: LogEntry, entry_info: List[str]) -> Entry:
                     return Entry(log_entry=log_entry,
-                                 alternative_url=session_info.get_alternative_url(log_entry.url),
                                  relative_start_time=entry.time - session_start_time,
                                  data=entry_info)
 
