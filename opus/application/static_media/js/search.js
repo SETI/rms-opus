@@ -15,7 +15,7 @@ var o_search = {
         let newHash = o_hash.updateHash(false);
         /*
         We are relying on URL order now to parse and get slugs before "&view" in the URL
-        Opus will rewrite the URL when a URL is pasted, all the search related slugs would be moved ahead of "&view"
+        Opus will rewrite the URL when a URL is pasted, and all the search related slugs will be moved ahead of "&view"
         Refer to hash.js getSelectionsFromHash and updateHash functions
         */
         let regexForHashWithSearchParams = /(.*)&view/;
@@ -261,7 +261,7 @@ var o_search = {
             let newHash = o_hash.updateHash(false);
             /*
             We are relying on URL order now to parse and get slugs before "&view" in the URL
-            Opus will rewrite the URL when a URL is pasted, all the search related slugs would be moved ahead of "&view"
+            Opus will rewrite the URL when a URL is pasted, and all the search related slugs will be moved ahead of "&view"
             Refer to hash.js getSelectionsFromHash and updateHash functions
             */
             let regexForHashWithSearchParams = /(.*)&view/;
@@ -327,7 +327,7 @@ var o_search = {
             let newHash = o_hash.updateHash(false);
             /*
             We are relying on URL order now to parse and get slugs before "&view" in the URL
-            Opus will rewrite the URL when a URL is pasted, all the search related slugs would be moved ahead of "&view"
+            Opus will rewrite the URL when a URL is pasted, and all the search related slugs will be moved ahead of "&view"
             Refer to hash.js getSelectionsFromHash and updateHash functions
             */
             let regexForHashWithSearchParams = /(.*)&view/;
