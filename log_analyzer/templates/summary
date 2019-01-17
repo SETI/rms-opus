@@ -40,8 +40,10 @@
 .SessionInfo {
   display: none;
 }
-td .SessionInfo {
+.SessionInfo td {
   vertical-align:top;
+  padding-left:5px;
+  padding-right:5px;
 }
 .SessionLinkSelected {
   background-color:yellow;
@@ -85,7 +87,7 @@ td .SessionInfo {
         {% endfor %}
         </ul>
         <hr/>
-        <table cellpadding="3">
+        <table>
         {% for entry in session.entries %}
             {% for line in entry.data %}
                 <tr>
@@ -95,10 +97,10 @@ td .SessionInfo {
                     {% else %}
                         <td>{{ entry.relative_start_time }}</td>
                     {% endif %}
+                    <td><a data-toggle="tooltip" href="#" title="{{entry.target_url | safe}}">&bull;</td>
                 {% else %}
-                    <td>&nbsp;</td>
+                    <td></td><td></td>
                 {% endif %}
-                <td><a data-toggle="tooltip" href="#" title="{{entry.target_url | safe}}">&bull;</td>
                 <td>{{ line }}</td>
                 </tr>
             {% endfor %}
@@ -126,6 +128,7 @@ $(document).ready(function(){
         var target_id = '#' + $(this).attr('data-id');
         $('.SessionInfo').hide();
         $(target_id).show()
+        $('#right').scrollTop(0)
 
         return false;
     })
