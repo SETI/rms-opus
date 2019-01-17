@@ -310,7 +310,7 @@ BASE_TABLES = ['obs_general', 'obs_pds', 'obs_ring_geometry',
 SLUGS_NOT_IN_DB = ('browse', 'col_chooser', 'colls_browse', 'cols', 'detail',
                    'gallery_data_viewer', 'limit', 'loc_type', 'order',
                    'page', 'range', 'reqno', 'request', 'startobs', 'types',
-                   'view', 'widgets', 'widgets2')
+                   'view', 'widgets', 'widgets2', '__sessionid')
 
 # The root URL used to retrieve product files from a web server
 PRODUCT_HTTP_PATH = 'https://pds-rings.seti.org/'

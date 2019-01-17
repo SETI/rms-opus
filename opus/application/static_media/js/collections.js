@@ -27,11 +27,11 @@ var o_collections = {
          // check an input on selected products and images updates file_info
          $('#collection').on("click",'#download_options input', function() {
              var add_to_url = o_collections.getDownloadFiltersChecked();
-             var url = "/opus/__collections/download/info.json?" + add_to_url
-             $.ajax({ url: url + '&fmt=json',
+             var url = "/opus/__collections/view.json?" + add_to_url
+             $.ajax({ url: url,
                 success: function(json){
-                    $('#total_files').fadeOut().html(json['download_count']).fadeIn();
-                    $('#download_size').fadeOut().html(json['download_size_pretty']).fadeIn();
+                    $('#total_download_count').fadeOut().html(json['total_download_count']).fadeIn();
+                    $('#total_download_size').fadeOut().html(json['total_download_size_pretty']).fadeIn();
                 }});
 
          });

@@ -7,15 +7,15 @@
 #
 #    Format: api/dataimages.json
 #    Format: api/data.(json|zip|html|csv)
-#    Format: api/metadata/(?P<opus_id>[-\w]+).(?P<fmt>[json|html]+
-#    Format: api/metadata_v2/(?P<opus_id>[-\w]+).(?P<fmt>[json|html]+
-#    Format: api/images/(?P<size>[thumb|small|med|full]+).
-#            (?P<fmt>[json|zip|html|csv]+)
+#    Format: api/metadata/(?P<opus_id>[-\w]+).(?P<fmt>json|html)
+#    Format: api/metadata_v2/(?P<opus_id>[-\w]+).(?P<fmt>json|html)
+#    Format: api/images/(?P<size>thumb|small|med|full).
+#            (?P<fmt>json|zip|html|csv)
 #    Format: api/images.(json|zip|html|csv)
-#    Format: api/image/(?P<size>[thumb|small|med|full]+)/(?P<opus_id>[-\w]+)
-#            .(?P<fmt>[json|zip|html|csv]+)
-#    Format: api/files/(?P<opus_id>[-\w]+).(?P<fmt>[json|zip|html|csv]+)
-#        or: api/files.(?P<fmt>[json|zip|html|csv]+)
+#    Format: api/image/(?P<size>thumb|small|med|full)/(?P<opus_id>[-\w]+)
+#            .(?P<fmt>json|zip|html|csv)
+#    Format: api/files/(?P<opus_id>[-\w]+).(?P<fmt>json|zip|html|csv)
+#        or: api/files.(?P<fmt>json|zip|html|csv)
 #    Format: api/categories/(?P<opus_id>[-\w]+).json
 #    Format: api/categories.json
 #

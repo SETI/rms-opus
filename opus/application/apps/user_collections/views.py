@@ -6,12 +6,11 @@
 # The (private) API interface for adding and removing items from the collection
 # and creating download .zip and .csv files.
 #
-#    Format: __collections/view.html
+#    Format: __collections/view.(html|json)
 #    Format: __collections/status.json
 #    Format: __collections/data.csv
 #    Format: __collections/(?P<action>[add|remove|addrange|removerange|addall]+).json
 #    Format: __collections/reset.html
-#    Format: __collections/download/info.json
 #    Format: __collections/download.zip
 #    Format: __zip/(?P<opus_id>[-\w]+).(?P<fmt>[json]+)
 #
@@ -57,27 +56,37 @@ log = logging.getLogger(__name__)
 
 
 @never_cache
-def api_view_collection(request):
+def api_view_collection(request, fmt):
     """Return the OPUS-specific left side of the "Selections" page as HTML.
 
     This includes the number of files selected, total size of files selected,
     and list of product types with their number. This returns information about
-    ALL files and product types, ignoring any user choices. Choices are handled
-    in the OPUS UI.
+    ALL files and product types, ignoring any user choices. However, there is
+    an optional types=<PRODUCT_TYPES> parameter which, if specified, causes
+    product types not listed to return "0" for number of products and sizes.
 
     This is a PRIVATE API.
 
     Format: __collections/view.html
+    Arguments: types=<PRODUCT_TYPES>
     """
     api_code = enter_api_call('api_view_collection', request)
 
     session_id = get_session_id(request)
 
-    (download_size, download_count,
-     product_counts) = _get_download_info(['all'], session_id)
+    product_types_str = request.GET.get('types', 'all')
+    product_types = product_types_str.split(',')
+
+    (total_download_size, total_download_count,
+     product_counts) = _get_download_info(product_types, session_id)
 
     product_cats = []
-    for product_type in product_counts:
+    product_cat_list = []
+    for (product_type, product_count,
+         download_count, download_size) in product_counts:
+        # product_type format is:
+        #   ('Cassini ISS', 0, 'coiss-raw', 'Raw image')
+        #   ('browse', 40, 'browse-full', 'Browse Image (full-size)')
         name = product_type[0]
         pretty_name = name
         if name == 'standard':
@@ -93,17 +102,31 @@ def api_view_collection(request):
         key = (name, pretty_name)
         if key not in product_cats:
             product_cats.append(key)
+            cur_product_list = []
+            product_cat_list.append((pretty_name, cur_product_list))
+        product_dict_entry = {
+            'slug_name': product_type[2],
+            'product_type': product_type[3],
+            'product_count': product_count,
+            'download_count': download_count,
+            'download_size': download_size,
+            'download_size_pretty': nice_file_size(download_size)
+        }
+        cur_product_list.append(product_dict_entry)
 
     context = {
-        'download_count': download_count,
-        'download_size': download_size,
-        'download_size_pretty':  nice_file_size(download_size),
-        'product_counts': product_counts,
-        'product_cats': product_cats
+        'total_download_count': total_download_count,
+        'total_download_size': total_download_size,
+        'total_download_size_pretty':  nice_file_size(total_download_size),
+        'product_cat_list': product_cat_list
     }
 
-    template='user_collections/collections.html'
-    ret = render(request, template, context)
+    if fmt == 'json':
+        ret = json_response(context)
+    else:
+        assert fmt == 'html'
+        template = 'user_collections/collections.html'
+        ret = render(request, template, context)
 
     exit_api_call(api_code, ret)
     return ret
@@ -125,16 +148,15 @@ def api_collection_status(request):
 
     count = _get_collection_count(session_id)
 
-    # XXX What is the point of expected_request_no?
     expected_request_no = request.session.get('expected_request_no', 1)
 
-    ret = HttpResponse(json.dumps({'count': count,
-                                   'expected_request_no': expected_request_no}))
+    ret = json_response({'count': count,
+                         'expected_request_no': expected_request_no})
     exit_api_call(api_code, ret)
     return ret
 
 
-def api_get_collection_csv(request, fmt=None):
+def api_get_collection_csv(request):
     """Returns a CSV file of the current collection.
 
     The CSV file contains the columns specified in the request.
@@ -146,7 +168,7 @@ def api_get_collection_csv(request, fmt=None):
     """
     api_code = enter_api_call('api_get_collection_csv', request)
 
-    ret = _get_collection_csv(request, fmt, api_code=api_code)
+    ret = _get_collection_csv(request, 'csv', api_code=api_code)
 
     exit_api_call(api_code, ret)
     return ret
@@ -258,47 +280,6 @@ def api_reset_session(request):
     request.session.flush()
     session_id = get_session_id(request) # Creates a new session id
     ret = HttpResponse('session reset')
-    exit_api_call(api_code, ret)
-    return ret
-
-
-@never_cache
-def api_get_download_info(request):
-    """Return count, size, and product_type info for selected product types.
-
-    This is very similar to api_view_collection, except instead of returning
-    the HTML for the entire left side of the Selections page, it just returns
-    the updated sizes and counts. This is used by the OPUS UI when the user
-    clicks to (de)select a product type.
-
-    This is a PRIVATE API.
-
-    Format: __collections/download/info.json
-    Arguments: types=<PRODUCT_TYPES>
-    """
-    api_code = enter_api_call('api_get_download_info', request)
-
-    session_id = get_session_id(request)
-
-    product_types_str = request.GET.get('types', '')
-    product_types = product_types_str.split(',')
-
-    # Since we are assuming this is coming from user interaction
-    # if no filters exist then none of this product type is wanted
-    if product_types == ['none']:
-        product_types = []
-
-    (download_size, download_count,
-     product_counts) = _get_download_info(product_types, session_id)
-
-    context = {
-        'download_count': download_count,
-        'download_size':  download_size,
-        'download_size_pretty': nice_file_size(download_size),
-        'product_counts': {x[0][2]: x[1] for x in product_counts}
-    }
-
-    ret = HttpResponse(json.dumps(context), content_type='application/json')
     exit_api_call(api_code, ret)
     return ret
 
@@ -443,20 +424,20 @@ def _get_download_info(product_types, session_id):
     product_types.
 
     Returns:
-        download_size       (bytes)
-        download_count      (total number of files)
-        product_counts      (indexed by product_type)
+        total_download_size       (total bytes)
+        total_download_count      (total number of files)
+        product_counts            (list of product_count info;
+                                   see get_product_counts)
     """
     opus_ids = (Collections.objects.filter(session_id__exact=session_id)
                 .values_list('opus_id'))
     opus_id_list = [x[0] for x in opus_ids]
 
-    products_by_type = get_pds_products_by_type(opus_id_list,
-                                                product_types=product_types)
-    (download_size, download_count,
-     product_counts) = get_product_counts(products_by_type)
+    (total_download_size, total_download_count,
+     product_counts) = get_product_counts(opus_id_list,
+                                          product_types=product_types)
 
-    return download_size, download_count, product_counts
+    return total_download_size, total_download_count, product_counts
 
 
 def _get_collection_count(session_id):
@@ -465,7 +446,7 @@ def _get_collection_count(session_id):
     return count
 
 
-def _get_collection_csv(request, fmt=None, api_code=None):
+def _get_collection_csv(request, api_code=None):
     "Create and return a CSV file based on user column and selection."
     slugs = request.GET.get('cols', settings.DEFAULT_COLUMNS)
     (page_no, start_obs, limit, page, opus_ids, file_specs,
@@ -473,9 +454,6 @@ def _get_collection_csv(request, fmt=None, api_code=None):
                                                      use_collections=True,
                                                      limit='all',
                                                      api_code=api_code)
-
-    if fmt == 'raw':
-        return slugs.split(','), page
 
     column_labels = []
     for slug in slugs.split(','):
@@ -644,8 +622,14 @@ def _zip_filename(opus_id=None):
 
 def _create_csv_file(request, csv_file_name, api_code=None):
     "Create a CSV file containing the collection data."
-    slug_list, all_data = _get_collection_csv(request, fmt='raw',
-                                              api_code=api_code)
+    slugs = request.GET.get('cols', settings.DEFAULT_COLUMNS)
+    (page_no, start_obs, limit, page, opus_ids, file_specs,
+     ring_obs_ids, order) = get_search_results_chunk(request,
+                                                     use_collections=True,
+                                                     limit='all',
+                                                     api_code=api_code)
+
+    slug_list = slugs.split(',')
     column_labels = []
     for slug in slug_list:
         pi = get_param_info_by_slug(slug)
@@ -664,7 +648,7 @@ def _create_csv_file(request, csv_file_name, api_code=None):
     with open(csv_file_name, 'a') as csv_file:
         wr = csv.writer(csv_file)
         wr.writerow(column_labels)
-        wr.writerows(all_data)
+        wr.writerows(page)
 
 
 # XXX We need to get MD5 checksums from PdsFile instead of computing them here.
