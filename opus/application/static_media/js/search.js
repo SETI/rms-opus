@@ -63,7 +63,6 @@ var o_search = {
                     }
                 }
             }
-
         });
 
         if(!opus.allInputsValid) {
