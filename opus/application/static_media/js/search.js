@@ -41,12 +41,8 @@ var o_search = {
                     currentInput.val(opus.selections[eachSlug]);
                     opus.allInputsValid = false;
                 }
-
-                if(currentInput.hasClass("input_currently_focused")) {
-                    delete opus.selections[eachSlug];
-                }
             } else {
-                if(currentInput.hasClass("RANGE")) {
+                if(currentInput.hasClass("RANGE") && !currentInput.hasClass("input_currently_focused")) {
                     currentInput.val(value);
                     o_search.slugRangeInputValidValueFromLastSearch[eachSlug] = value;
                     // No color border if the input value is valid
@@ -55,6 +51,9 @@ var o_search = {
                     currentInput.removeClass("search_input_invalid");
                     currentInput.removeClass("search_input_valid");
                 }
+            }
+            if(currentInput.hasClass("input_currently_focused")) {
+                delete opus.selections[eachSlug];
             }
         });
         if(!opus.allInputsValid) {
