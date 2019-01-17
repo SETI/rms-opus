@@ -1,4 +1,6 @@
 import operator
+import urllib
+import urllib.parse
 from collections import defaultdict
 from enum import Enum, auto
 from functools import reduce
@@ -47,7 +49,7 @@ class QueryHandler:
         self._previous_page = ''
         self._previous_state = State.RESET
 
-    def handle_query(self, query: Dict[str, str], query_type: str) -> List[str]:
+    def handle_query(self, query: Dict[str, str], query_type: str) -> Tuple[List[str], Optional[str]]:
         assert query_type in ['data', 'images', 'result_count']
 
         result: List[str] = []
@@ -105,7 +107,16 @@ class QueryHandler:
             self._previous_page = page
 
         self._previous_state = current_state
-        return result
+
+        if result and self._uses_html:
+            query.pop('reqno', None)  # Remove if there, but okay if not
+            if query_type != 'result_count':
+                query['view'] = 'browse'
+                query['browse'] = 'gallery'
+            url = '/opus/#/' + urllib.parse.urlencode(query, False)
+        else:
+            url = None
+        return result, url
 
     def __handle_search_info(self, old_info: SearchSlugInfo, new_info: SearchSlugInfo, result: List[str]) -> None:
         all_search_families = set(old_info.keys()).union(new_info.keys())

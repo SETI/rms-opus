@@ -11,8 +11,9 @@ sections:
                 GET param 2: column params (If not supplied, default columns are used)
                 GET param 3: order=column_slug,... (Column(s) to sort on; if not supplied, default sort order is used)
                 GET param 4: limit=N (The maximum number of observations to return; defaults to 100; can be more than 100)
-                GET param 5: page=N (The 100-observation page number to start with; defaults to 1)
-                JSON return: "{'page_no': given page number, 'limit': given limit, 'count': number of observations returned, 'order': sort order, 'labels': selected column headers, 'page': data}. Data is a list of lists in the requested sort order with one list entry per column."
+                GET param 5: startobs=N (The observation number to start with; one-based) OR...
+                GET param 6: page=N (The 100-observation page number to start with; defaults to 1)
+                JSON return: "{'page_no': given page number OR 'start_obs': given starting observation, 'limit': given limit, 'count': number of observations returned, 'order': sort order, 'labels': selected column headers, 'page': data}. Data is a list of lists in the requested sort order with one list entry per column."
 
             examples:
                 - desc: Target Enceladus plumes taken with COISS in JSON
@@ -58,7 +59,8 @@ sections:
                 GET param 1: search params (If not supplied, all results are returned)
                 GET param 2: order=column_slug,... (Column(s) to sort on; if not supplied, default sort order is used)
                 GET param 3: limit=N (The maximum number of observations to return; defaults to 100)
-                GET param 4: page=N (The 100-observation page number to start with; defaults to 1)
+                GET param 4: startobs=N (The observation number to start with; one-based) OR...
+                GET param 5: page=N (The 100-observation page number to start with; defaults to 1)
             examples:
                 - desc: planet = Jupiter, medium images, in JSON
                   url: <HOST>/opus/api/images/med.json?planet=Jupiter
@@ -70,8 +72,9 @@ sections:
                 GET param 1: search params (If not supplied, all results are returned)
                 GET param 2: order=column_slug,... (Column(s) to sort on; if not supplied, default sort order is used)
                 GET param 3: limit=N (The maximum number of observations to return; defaults to 100)
-                GET param 4: page=N (The 100-observation page number to start with; defaults to 1)
-                JSON return: "{'page_no': given page number, 'limit': given limit, 'count': number of observations returned, 'order': sort order, 'data': List of: {'opus_id': opus_id, '<size>_url': full URL, '<size>_alt_text': alt text, '<size>_size_bytes': image size in bytes, '<size>_width': image width in pixels, '<size>_height': image height in pixels}"
+                GET param 4: startobs=N (The observation number to start with; one-based) OR...
+                GET param 5: page=N (The 100-observation page number to start with; defaults to 1)
+                JSON return: "{'page_no': given page number OR 'start_obs': given starting observation, 'limit': given limit, 'count': number of observations returned, 'order': sort order, 'data': List of: {'opus_id': opus_id, '<size>_url': full URL, '<size>_alt_text': alt text, '<size>_size_bytes': image size in bytes, '<size>_width': image width in pixels, '<size>_height': image height in pixels}"
             examples:
                 - desc: planet = Saturn, sorted reverse by Saturn phase angle, in JSON
                   url: <HOST>/opus/api/images.json?planet=Saturn&order=-SURFACEGEOsaturncenterphaseangle1
@@ -108,10 +111,11 @@ sections:
                 GET param 1: search params (If not supplied, all results are returned)
                 GET param 2: order=column_slug,... (Column(s) to sort on; if not supplied, default sort order is used)
                 GET param 3: limit=N (The maximum number of observations to return; defaults to 100)
-                GET param 4: page=N (The 100-observation page number to start with; defaults to 1)
-                GET param 5: types=<types> (List of product types; if not supplied, all are returned)
-                GET param 6: loc_type=<loc> (Format of returned path, 'url' or 'path'; defaults to 'url')
-                JSON return: "{'page_no': given page number, 'limit': given limit, 'count': number of observations returned, 'order': sort order, 'data': dictionary of opus_id, then indexed by product type for current version, 'versions': dictionary of version, then opus_id, then product_type}"
+                GET param 4: startobs=N (The observation number to start with; one-based) OR...
+                GET param 5: page=N (The 100-observation page number to start with; defaults to 1)
+                GET param 6: types=<types> (List of product types; if not supplied, all are returned)
+                GET param 7: loc_type=<loc> (Format of returned path, 'url' or 'path'; defaults to 'url')
+                JSON return: "{'page_no': given page number OR 'start_obs': given starting observation, 'limit': given limit, 'count': number of observations returned, 'order': sort order, 'data': dictionary of opus_id, then indexed by product type for current version, 'versions': dictionary of version, then opus_id, then product_type}"
             examples:
                 - desc: Target Pan
                   url: <HOST>/opus/api/files.json?&target=pan

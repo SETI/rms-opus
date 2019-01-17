@@ -6,9 +6,7 @@ import socket
 import textwrap
 from collections import defaultdict, deque
 from ipaddress import IPv4Address
-from operator import attrgetter
-from typing import List, Iterator, Dict, NamedTuple, Optional, Deque, IO, Any, Tuple, Iterable
-from urllib.parse import SplitResult
+from typing import List, Iterator, Dict, NamedTuple, Optional, Deque, IO, Tuple, Iterable
 
 import django
 from django.template.loader import get_template
@@ -32,13 +30,12 @@ class _LiveSession(NamedTuple):
 
 class Entry(NamedTuple):
     log_entry: LogEntry
-    alternative_url: Optional[SplitResult]
     relative_start_time: datetime.timedelta
     data: List[str]
+    opus_url: Optional[str]
 
     def target_url(self) -> str:
-        parsed_url = self.alternative_url or self.log_entry.url
-        return parsed_url.geturl()
+        return self.log_entry.url.geturl()
 
 
 class Session(NamedTuple):
@@ -185,13 +182,13 @@ class LogParser:
                 current_session = live_sessions[entry.host_ip].with_timeout(next_timeout)
                 live_sessions[entry.host_ip] = current_session
                 session_info = current_session.session_info
-                entry_info = session_info.parse_log_entry(entry)
+                entry_info, _ = session_info.parse_log_entry(entry)
                 if not entry_info:
                     continue
             else:
                 is_just_created_session = True
                 session_info = self._session_info_generator.create()
-                entry_info = session_info.parse_log_entry(entry)
+                entry_info, _ = session_info.parse_log_entry(entry)
                 if not entry_info:
                     continue
                 current_session = _LiveSession(host_ip=entry.host_ip, session_info=session_info,
@@ -228,28 +225,27 @@ class LogParser:
                 # If the first entry has no information, it doesn't start a session
                 entry = session_log_entries.popleft()
                 session_info = self._session_info_generator.create(uses_html=uses_html)
-                entry_info = session_info.parse_log_entry(entry)
+                entry_info, opus_url = session_info.parse_log_entry(entry)
                 if not entry_info:
                     continue
 
                 session_start_time = entry.time
 
-                def create_session_entry(log_entry: LogEntry, entry_info: List[str]) -> Entry:
+                def create_session_entry(log_entry: LogEntry, entry_info: List[str], opus_url: Optional[str]) -> Entry:
                     return Entry(log_entry=log_entry,
-                                 alternative_url=session_info.get_alternative_url(log_entry.url),
                                  relative_start_time=entry.time - session_start_time,
-                                 data=entry_info)
+                                 data=entry_info, opus_url=opus_url)
 
-                current_session_entries = [create_session_entry(entry, entry_info)]
+                current_session_entries = [create_session_entry(entry, entry_info, opus_url)]
 
                 # Keep on printing session information for as long as we have not reached a timeout.
                 session_end_time = session_start_time + self._session_timeout
                 while session_log_entries and session_log_entries[0].time <= session_end_time:
                     entry = session_log_entries.popleft()
                     session_end_time = entry.time + self._session_timeout
-                    entry_info = session_info.parse_log_entry(entry)
+                    entry_info, opus_url = session_info.parse_log_entry(entry)
                     if entry_info:
-                        current_session_entries.append(create_session_entry(entry, entry_info))
+                        current_session_entries.append(create_session_entry(entry, entry_info, opus_url))
 
                 def slug_info(info: Dict[str, Slug.Info]) -> List[Tuple[str, bool]]:
                     return [(slug, info[slug].flags.is_obsolete()) for slug in sorted(info, key=str.lower)]
