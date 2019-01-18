@@ -524,7 +524,7 @@ class ApiCollectionsTests(TestCase):
         self._run_json_equal(url, expected)
 
     def test__api_collections_addrange_bad_range3(self):
-        "/collections/addrange: Bad range 4 no reqno no download"
+        "/collections/addrange: Bad range 3 no reqno no download"
         url = '/opus/__collections/reset.json'
         self._run_status_equal(url, 200)
         url = '/opus/__collections/addrange.json?range=,co-vims-v1484504505_ir'
@@ -570,7 +570,77 @@ class ApiCollectionsTests(TestCase):
         expected = {'count': 1, 'reqno': None}
         self._run_json_equal(url, expected)
 
-    def test__api_collections_addrange_bad(self):
+    def test__api_collections_addrange_duplicate2(self):
+        "/collections/addrange: Duplicate 2 no reqno no download"
+        url = '/opus/__collections/reset.json'
+        self._run_status_equal(url, 200)
+        url = '/opus/__collections/addrange.json?volumeid=COVIMS_0006&range=co-vims-v1488642557_ir,co-vims-v1488646261_ir'
+        expected = {'count': 17, 'err': False, 'reqno': None}
+        self._run_json_equal(url, expected)
+        url = '/opus/__collections/addrange.json?volumeid=COVIMS_0006&range=co-vims-v1488642557_ir,co-vims-v1488646261_ir'
+        expected = {'count': 17, 'err': False, 'reqno': None}
+        self._run_json_equal(url, expected)
+        url = '/opus/__collections/status.json'
+        expected = {'count': 17, 'reqno': None}
+        self._run_json_equal(url, expected)
+
+    def test__api_collections_addrange_duplicate3(self):
+        "/collections/addrange: Duplicate 3 no reqno no download"
+        url = '/opus/__collections/reset.json'
+        self._run_status_equal(url, 200)
+        url = '/opus/__collections/addrange.json?volumeid=COVIMS_0006&range=co-vims-v1488642557_ir,co-vims-v1488646261_ir'
+        expected = {'count': 17, 'err': False, 'reqno': None}
+        self._run_json_equal(url, expected)
+        url = '/opus/__collections/addrange.json?volumeid=COVIMS_0006&range=co-vims-v1488644667_vis,co-vims-v1488647105_vis'
+        expected = {'count': 22, 'err': False, 'reqno': None}
+        self._run_json_equal(url, expected)
+        url = '/opus/__collections/status.json'
+        expected = {'count': 22, 'reqno': None}
+        self._run_json_equal(url, expected)
+
+    def test__api_collections_addrange_duplicate4(self):
+        "/collections/addrange: Duplicate 4 no reqno no download"
+        url = '/opus/__collections/reset.json'
+        self._run_status_equal(url, 200)
+        url = '/opus/__collections/addrange.json?volumeid=COVIMS_0006&range=co-vims-v1488642557_ir,co-vims-v1488646261_ir'
+        expected = {'count': 17, 'err': False, 'reqno': None}
+        self._run_json_equal(url, expected)
+        url = '/opus/__collections/addrange.json?volumeid=COVIMS_0006&range=co-vims-v1488642979_ir,co-vims-v1488647105_vis'
+        expected = {'count': 22, 'err': False, 'reqno': None}
+        self._run_json_equal(url, expected)
+        url = '/opus/__collections/status.json'
+        expected = {'count': 22, 'reqno': None}
+        self._run_json_equal(url, expected)
+
+    def test__api_collections_addrange_duplicate5(self):
+        "/collections/addrange: Duplicate 5 no reqno no download"
+        url = '/opus/__collections/reset.json'
+        self._run_status_equal(url, 200)
+        url = '/opus/__collections/add.json?opusid=co-vims-v1488642557_ir'
+        expected = {'count': 1, 'err': False, 'reqno': None}
+        self._run_json_equal(url, expected)
+        url = '/opus/__collections/addrange.json?volumeid=COVIMS_0006&range=co-vims-v1488642557_ir,co-vims-v1488646261_ir'
+        expected = {'count': 17, 'err': False, 'reqno': None}
+        self._run_json_equal(url, expected)
+        url = '/opus/__collections/status.json'
+        expected = {'count': 17, 'reqno': None}
+        self._run_json_equal(url, expected)
+
+    def test__api_collections_addrange_duplicate6(self):
+        "/collections/addrange: Duplicate 6 no reqno no download"
+        url = '/opus/__collections/reset.json'
+        self._run_status_equal(url, 200)
+        url = '/opus/__collections/addrange.json?volumeid=COVIMS_0006&range=co-vims-v1488642557_ir,co-vims-v1488646261_ir'
+        expected = {'count': 17, 'err': False, 'reqno': None}
+        self._run_json_equal(url, expected)
+        url = '/opus/__collections/add.json?opusid=co-vims-v1488642557_ir'
+        expected = {'count': 17, 'err': False, 'reqno': None}
+        self._run_json_equal(url, expected)
+        url = '/opus/__collections/status.json'
+        expected = {'count': 17, 'reqno': None}
+        self._run_json_equal(url, expected)
+
+    def test__api_collections_addrange_bad_opusid(self):
         "/collections/addrange: Bad OPUSID no reqno no download"
         url = '/opus/__collections/reset.json'
         self._run_status_equal(url, 200)
@@ -581,11 +651,22 @@ class ApiCollectionsTests(TestCase):
         expected = {'count': 0, 'reqno': None}
         self._run_json_equal(url, expected)
 
-    def test__api_collections_addrange_bad2(self):
+    def test__api_collections_addrange_bad_opusid2(self):
         "/collections/addrange: Bad OPUSID 2 no reqno no download"
         url = '/opus/__collections/reset.json'
         self._run_status_equal(url, 200)
         url = '/opus/__collections/addrange.json?volumeid=COVIMS_0006&range=co-vims-v1484528864_ir,co-vims-v1484528864_irx'
+        expected = {'count': 0, 'err': 'opusid not found', 'reqno': None}
+        self._run_json_equal(url, expected)
+        url = '/opus/__collections/status.json'
+        expected = {'count': 0, 'reqno': None}
+        self._run_json_equal(url, expected)
+
+    def test__api_collections_addrange_not_search(self):
+        "/collections/addrange: OPUSID not in search no reqno no download"
+        url = '/opus/__collections/reset.json'
+        self._run_status_equal(url, 200)
+        url = '/opus/__collections/addrange.json?volumeid=COVIMS_0006&range=vg-iss-2-s-c4360001,vg-iss-2-s-c4360001'
         expected = {'count': 0, 'err': 'opusid not found', 'reqno': None}
         self._run_json_equal(url, expected)
         url = '/opus/__collections/status.json'
@@ -623,76 +704,6 @@ class ApiCollectionsTests(TestCase):
         self._run_json_equal(url, expected)
         url = '/opus/__collections/status.json'
         expected = {'count': 10, 'reqno': None}
-        self._run_json_equal(url, expected)
-
-    def test__api_collections_addrange_duplicate(self):
-        "/collections/addrange: Duplicate no reqno no download"
-        url = '/opus/__collections/reset.json'
-        self._run_status_equal(url, 200)
-        url = '/opus/__collections/addrange.json?volumeid=COVIMS_0006&range=co-vims-v1488642557_ir,co-vims-v1488646261_ir'
-        expected = {'count': 17, 'err': False, 'reqno': None}
-        self._run_json_equal(url, expected)
-        url = '/opus/__collections/addrange.json?volumeid=COVIMS_0006&range=co-vims-v1488642557_ir,co-vims-v1488646261_ir'
-        expected = {'count': 17, 'err': False, 'reqno': None}
-        self._run_json_equal(url, expected)
-        url = '/opus/__collections/status.json'
-        expected = {'count': 17, 'reqno': None}
-        self._run_json_equal(url, expected)
-
-    def test__api_collections_addrange_duplicate2(self):
-        "/collections/addrange: Duplicate 2 no reqno no download"
-        url = '/opus/__collections/reset.json'
-        self._run_status_equal(url, 200)
-        url = '/opus/__collections/addrange.json?volumeid=COVIMS_0006&range=co-vims-v1488642557_ir,co-vims-v1488646261_ir'
-        expected = {'count': 17, 'err': False, 'reqno': None}
-        self._run_json_equal(url, expected)
-        url = '/opus/__collections/addrange.json?volumeid=COVIMS_0006&range=co-vims-v1488644667_vis,co-vims-v1488647105_vis'
-        expected = {'count': 22, 'err': False, 'reqno': None}
-        self._run_json_equal(url, expected)
-        url = '/opus/__collections/status.json'
-        expected = {'count': 22, 'reqno': None}
-        self._run_json_equal(url, expected)
-
-    def test__api_collections_addrange_duplicate3(self):
-        "/collections/addrange: Duplicate 3 no reqno no download"
-        url = '/opus/__collections/reset.json'
-        self._run_status_equal(url, 200)
-        url = '/opus/__collections/addrange.json?volumeid=COVIMS_0006&range=co-vims-v1488642557_ir,co-vims-v1488646261_ir'
-        expected = {'count': 17, 'err': False, 'reqno': None}
-        self._run_json_equal(url, expected)
-        url = '/opus/__collections/addrange.json?volumeid=COVIMS_0006&range=co-vims-v1488642979_ir,co-vims-v1488647105_vis'
-        expected = {'count': 22, 'err': False, 'reqno': None}
-        self._run_json_equal(url, expected)
-        url = '/opus/__collections/status.json'
-        expected = {'count': 22, 'reqno': None}
-        self._run_json_equal(url, expected)
-
-    def test__api_collections_addrange_duplicate4(self):
-        "/collections/addrange: Duplicate 4 no reqno no download"
-        url = '/opus/__collections/reset.json'
-        self._run_status_equal(url, 200)
-        url = '/opus/__collections/add.json?opusid=co-vims-v1488642557_ir'
-        expected = {'count': 1, 'err': False, 'reqno': None}
-        self._run_json_equal(url, expected)
-        url = '/opus/__collections/addrange.json?volumeid=COVIMS_0006&range=co-vims-v1488642557_ir,co-vims-v1488646261_ir'
-        expected = {'count': 17, 'err': False, 'reqno': None}
-        self._run_json_equal(url, expected)
-        url = '/opus/__collections/status.json'
-        expected = {'count': 17, 'reqno': None}
-        self._run_json_equal(url, expected)
-
-    def test__api_collections_addrange_duplicate5(self):
-        "/collections/addrange: Duplicate 5 no reqno no download"
-        url = '/opus/__collections/reset.json'
-        self._run_status_equal(url, 200)
-        url = '/opus/__collections/addrange.json?volumeid=COVIMS_0006&range=co-vims-v1488642557_ir,co-vims-v1488646261_ir'
-        expected = {'count': 17, 'err': False, 'reqno': None}
-        self._run_json_equal(url, expected)
-        url = '/opus/__collections/add.json?opusid=co-vims-v1488642557_ir'
-        expected = {'count': 17, 'err': False, 'reqno': None}
-        self._run_json_equal(url, expected)
-        url = '/opus/__collections/status.json'
-        expected = {'count': 17, 'reqno': None}
         self._run_json_equal(url, expected)
 
     def test__api_collections_addrange_missing_reqno(self):
@@ -737,6 +748,267 @@ class ApiCollectionsTests(TestCase):
         self._run_json_equal(url, expected)
         url = '/opus/__collections/status.json'
         expected = {'count': 17, 'reqno': None}
+        self._run_json_equal(url, expected)
+
+
+            #################################################
+            ######### /api/meta/removerange: API TESTS #########
+            #################################################
+
+    def test__api_collections_removerange_missing(self):
+        "/collections/removerange: Missing range no reqno no download"
+        url = '/opus/__collections/reset.json'
+        self._run_status_equal(url, 200)
+        url = '/opus/__collections/removerange.json'
+        expected = {'count': 0, 'err': 'no range given', 'reqno': None}
+        self._run_json_equal(url, expected)
+        url = '/opus/__collections/status.json'
+        expected = {'count': 0, 'reqno': None}
+        self._run_json_equal(url, expected)
+
+    def test__api_collections_removerange_empty(self):
+        "/collections/removerange: Empty range no reqno no download"
+        url = '/opus/__collections/reset.json'
+        self._run_status_equal(url, 200)
+        url = '/opus/__collections/removerange.json?range='
+        expected = {'count': 0, 'err': 'no range given', 'reqno': None}
+        self._run_json_equal(url, expected)
+        url = '/opus/__collections/status.json'
+        expected = {'count': 0, 'reqno': None}
+        self._run_json_equal(url, expected)
+
+    def test__api_collections_removerange_bad_range1(self):
+        "/collections/removerange: Bad range 1 no reqno no download"
+        url = '/opus/__collections/reset.json'
+        self._run_status_equal(url, 200)
+        url = '/opus/__collections/removerange.json?range=co-vims-v1484504505_ir'
+        expected = {'count': 0, 'err': 'bad range', 'reqno': None}
+        self._run_json_equal(url, expected)
+        url = '/opus/__collections/status.json'
+        expected = {'count': 0, 'reqno': None}
+        self._run_json_equal(url, expected)
+
+    def test__api_collections_removerange_bad_range2(self):
+        "/collections/removerange: Bad range 2 no reqno no download"
+        url = '/opus/__collections/reset.json'
+        self._run_status_equal(url, 200)
+        url = '/opus/__collections/removerange.json?range=co-vims-v1484504505_ir,'
+        expected = {'count': 0, 'err': 'bad range', 'reqno': None}
+        self._run_json_equal(url, expected)
+        url = '/opus/__collections/status.json'
+        expected = {'count': 0, 'reqno': None}
+        self._run_json_equal(url, expected)
+
+    def test__api_collections_removerange_bad_range3(self):
+        "/collections/removerange: Bad range 3 no reqno no download"
+        url = '/opus/__collections/reset.json'
+        self._run_status_equal(url, 200)
+        url = '/opus/__collections/removerange.json?range=,co-vims-v1484504505_ir'
+        expected = {'count': 0, 'err': 'bad range', 'reqno': None}
+        self._run_json_equal(url, expected)
+        url = '/opus/__collections/status.json'
+        expected = {'count': 0, 'reqno': None}
+        self._run_json_equal(url, expected)
+
+    def test__api_collections_removerange_bad_range4(self):
+        "/collections/removerange: Bad range 4 no reqno no download"
+        url = '/opus/__collections/reset.json'
+        self._run_status_equal(url, 200)
+        url = '/opus/__collections/removerange.json?range=co-vims-v1484504505_ir,co-vims-v1484504505_ir,co-vims-v1484504505_ir'
+        expected = {'count': 0, 'err': 'bad range', 'reqno': None}
+        self._run_json_equal(url, expected)
+        url = '/opus/__collections/status.json'
+        expected = {'count': 0, 'reqno': None}
+        self._run_json_equal(url, expected)
+
+    def test__api_collections_removerange_one(self):
+        "/collections/removerange: One good OPUSID no reqno no download"
+        url = '/opus/__collections/reset.json'
+        self._run_status_equal(url, 200)
+        url = '/opus/__collections/add.json?opusid=co-vims-v1484504505_ir'
+        expected = {'count': 1, 'err': False, 'reqno': None}
+        self._run_json_equal(url, expected)
+        url = '/opus/__collections/removerange.json?volumeid=COVIMS_0006&range=co-vims-v1484504505_ir,co-vims-v1484504505_ir'
+        expected = {'count': 0, 'err': False, 'reqno': None}
+        self._run_json_equal(url, expected)
+        url = '/opus/__collections/status.json'
+        expected = {'count': 0, 'reqno': None}
+        self._run_json_equal(url, expected)
+
+    def test__api_collections_removerange_duplicate(self):
+        "/collections/removerange: Duplicate OPUSID no reqno no download"
+        url = '/opus/__collections/reset.json'
+        self._run_status_equal(url, 200)
+        url = '/opus/__collections/add.json?opusid=co-vims-v1484528864_ir'
+        expected = {'count': 1, 'err': False, 'reqno': None}
+        self._run_json_equal(url, expected)
+        url = '/opus/__collections/removerange.json?volumeid=COVIMS_0006&range=co-vims-v1484528864_ir,co-vims-v1484528864_ir'
+        expected = {'count': 0, 'err': False, 'reqno': None}
+        self._run_json_equal(url, expected)
+        url = '/opus/__collections/removerange.json?volumeid=COVIMS_0006&range=co-vims-v1484528864_ir,co-vims-v1484528864_ir'
+        expected = {'count': 0, 'err': False, 'reqno': None}
+        self._run_json_equal(url, expected)
+        url = '/opus/__collections/status.json'
+        expected = {'count': 0, 'reqno': None}
+        self._run_json_equal(url, expected)
+
+    def test__api_collections_removerange_duplicate2(self):
+        "/collections/removerange: Duplicate 2 no reqno no download"
+        url = '/opus/__collections/reset.json'
+        self._run_status_equal(url, 200)
+        url = '/opus/__collections/addrange.json?volumeid=COVIMS_0006&range=co-vims-v1488642557_ir,co-vims-v1488646261_ir'
+        expected = {'count': 17, 'err': False, 'reqno': None}
+        self._run_json_equal(url, expected)
+        url = '/opus/__collections/removerange.json?volumeid=COVIMS_0006&range=co-vims-v1488642557_ir,co-vims-v1488646261_ir'
+        expected = {'count': 0, 'err': False, 'reqno': None}
+        self._run_json_equal(url, expected)
+        url = '/opus/__collections/removerange.json?volumeid=COVIMS_0006&range=co-vims-v1488642557_ir,co-vims-v1488646261_ir'
+        expected = {'count': 0, 'err': False, 'reqno': None}
+        self._run_json_equal(url, expected)
+        url = '/opus/__collections/status.json'
+        expected = {'count': 0, 'reqno': None}
+        self._run_json_equal(url, expected)
+
+    def test__api_collections_removerange_duplicate3(self):
+        "/collections/removerange: Duplicate 3 no reqno no download"
+        url = '/opus/__collections/reset.json'
+        self._run_status_equal(url, 200)
+        url = '/opus/__collections/addrange.json?volumeid=COVIMS_0006&range=co-vims-v1488642557_ir,co-vims-v1488646261_ir'
+        expected = {'count': 17, 'err': False, 'reqno': None}
+        self._run_json_equal(url, expected)
+        url = '/opus/__collections/removerange.json?volumeid=COVIMS_0006&range=co-vims-v1488644667_vis,co-vims-v1488647105_vis'
+        expected = {'count': 11, 'err': False, 'reqno': None}
+        self._run_json_equal(url, expected)
+        url = '/opus/__collections/removerange.json?volumeid=COVIMS_0006&range=co-vims-v1488644667_vis,co-vims-v1488647105_vis'
+        expected = {'count': 11, 'err': False, 'reqno': None}
+        self._run_json_equal(url, expected)
+        url = '/opus/__collections/status.json'
+        expected = {'count': 11, 'reqno': None}
+        self._run_json_equal(url, expected)
+
+    def test__api_collections_removerange_bad_opusid(self):
+        "/collections/removerange: Bad OPUSID no reqno no download"
+        url = '/opus/__collections/reset.json'
+        self._run_status_equal(url, 200)
+        url = '/opus/__collections/removerange.json?volumeid=COVIMS_0006&range=co-vims-v1484528864_irx,co-vims-v1484528864_ir'
+        expected = {'count': 0, 'err': 'opusid not found', 'reqno': None}
+        self._run_json_equal(url, expected)
+        url = '/opus/__collections/status.json'
+        expected = {'count': 0, 'reqno': None}
+        self._run_json_equal(url, expected)
+
+    def test__api_collections_removerange_bad_opusid2(self):
+        "/collections/removerange: Bad OPUSID 2 no reqno no download"
+        url = '/opus/__collections/reset.json'
+        self._run_status_equal(url, 200)
+        url = '/opus/__collections/addrange.json?volumeid=COVIMS_0006&range=co-vims-v1484528864_ir,co-vims-v1484528864_irx'
+        expected = {'count': 0, 'err': 'opusid not found', 'reqno': None}
+        self._run_json_equal(url, expected)
+        url = '/opus/__collections/status.json'
+        expected = {'count': 0, 'reqno': None}
+        self._run_json_equal(url, expected)
+
+    def test__api_collections_removerange_not_search(self):
+        "/collections/removerange: OPUSID not in search no reqno no download"
+        url = '/opus/__collections/reset.json'
+        self._run_status_equal(url, 200)
+        url = '/opus/__collections/removerange.json?volumeid=COVIMS_0006&range=vg-iss-2-s-c4360001,vg-iss-2-s-c4360001'
+        expected = {'count': 0, 'err': 'opusid not found', 'reqno': None}
+        self._run_json_equal(url, expected)
+        url = '/opus/__collections/status.json'
+        expected = {'count': 0, 'reqno': None}
+        self._run_json_equal(url, expected)
+
+    def test__api_collections_removerange_multi(self):
+        "/collections/removerange: Multiple no reqno no download"
+        url = '/opus/__collections/reset.json'
+        self._run_status_equal(url, 200)
+        url = '/opus/__collections/addrange.json?volumeid=COVIMS_0006&range=co-vims-v1488642557_ir,co-vims-v1488646261_ir'
+        expected = {'count': 17, 'err': False, 'reqno': None}
+        self._run_json_equal(url, expected)
+        url = '/opus/__collections/removerange.json?volumeid=COVIMS_0006&range=co-vims-v1488642979_vis,co-vims-v1488644245_vis'
+        expected = {'count': 10, 'err': False, 'reqno': None}
+        self._run_json_equal(url, expected)
+        url = '/opus/__collections/status.json'
+        expected = {'count': 10, 'reqno': None}
+        self._run_json_equal(url, expected)
+
+    def test__api_collections_removerange_multi_reverse(self):
+        "/collections/removerange: Multiple reversed no reqno no download"
+        url = '/opus/__collections/reset.json'
+        self._run_status_equal(url, 200)
+        url = '/opus/__collections/addrange.json?volumeid=COVIMS_0006&range=co-vims-v1488642557_ir,co-vims-v1488646261_ir'
+        expected = {'count': 17, 'err': False, 'reqno': None}
+        self._run_json_equal(url, expected)
+        url = '/opus/__collections/removerange.json?volumeid=COVIMS_0006&range=co-vims-v1488644245_vis,co-vims-v1488642979_vis'
+        expected = {'count': 10, 'err': False, 'reqno': None}
+        self._run_json_equal(url, expected)
+        url = '/opus/__collections/status.json'
+        expected = {'count': 10, 'reqno': None}
+        self._run_json_equal(url, expected)
+
+    def test__api_collections_removerange_multi_sort(self):
+        "/collections/removerange: Multiple nonstandard sort no reqno no download"
+        url = '/opus/__collections/reset.json'
+        self._run_status_equal(url, 200)
+        url = '/opus/__collections/addrange.json?volumeid=COVIMS_0006&order=COVIMSswathlength1,-time1,opusid&range=co-vims-v1490784910_ir,co-vims-v1490782254_vis'
+        expected = {'count': 10, 'err': False, 'reqno': None}
+        self._run_json_equal(url, expected)
+        # Note sort reverses opusid! This leaves two observations behind
+        # because _ir and _vis are in a different order for each observation
+        # pair
+        url = '/opus/__collections/removerange.json?volumeid=COVIMS_0006&order=COVIMSswathlength1,-time1,-opusid&range=co-vims-v1490784910_ir,co-vims-v1490782254_vis'
+        expected = {'count': 2, 'err': False, 'reqno': None}
+        self._run_json_equal(url, expected)
+        url = '/opus/__collections/status.json'
+        expected = {'count': 2, 'reqno': None}
+        self._run_json_equal(url, expected)
+
+    def test__api_collections_removerange_missing_reqno(self):
+        "/collections/removerange: Missing range with reqno no download"
+        url = '/opus/__collections/reset.json'
+        self._run_status_equal(url, 200)
+        url = '/opus/__collections/removerange.json?reqno=124'
+        expected = {'count': 0, 'err': 'no range given', 'reqno': 124}
+        self._run_json_equal(url, expected)
+        url = '/opus/__collections/status.json?reqno=456'
+        expected = {'count': 0, 'reqno': 456}
+        self._run_json_equal(url, expected)
+
+    def test__api_collections_removerange_one_reqno(self):
+        "/collections/removerange: One good OPUSID with reqno no download"
+        url = '/opus/__collections/reset.json'
+        self._run_status_equal(url, 200)
+        url = '/opus/__collections/removerange.json?volumeid=COVIMS_0006&range=co-vims-v1484504505_ir,co-vims-v1484504505_ir&reqno=567'
+        expected = {'count': 0, 'err': False, 'reqno': 567}
+        self._run_json_equal(url, expected)
+        url = '/opus/__collections/status.json'
+        expected = {'count': 0, 'reqno': None}
+        self._run_json_equal(url, expected)
+
+    def test__api_collections_removerange_missing_download(self):
+        "/collections/removerange: Missing range no reqno with download"
+        url = '/opus/__collections/reset.json'
+        self._run_status_equal(url, 200)
+        url = '/opus/__collections/removerange.json?download=1'
+        expected = {"err": "no range given", "count": 0, "reqno": None, "total_download_count": 0, "total_download_size": 0, "total_download_size_pretty": "0B", "product_cat_list": []}
+        self._run_json_equal(url, expected)
+        url = '/opus/__collections/status.json'
+        expected = {'count': 0, 'reqno': None}
+        self._run_json_equal(url, expected)
+
+    def test__api_collections_removerange_multi_reqno_download(self):
+        "/collections/removerange: Multiple with reqno with download"
+        url = '/opus/__collections/reset.json'
+        self._run_status_equal(url, 200)
+        url = '/opus/__collections/addrange.json?volumeid=COVIMS_0006&range=co-vims-v1488642557_ir,co-vims-v1488646261_ir&reqno=1234567'
+        expected = {"err": False, "count": 17, "reqno": 1234567}
+        self._run_json_equal(url, expected)
+        url = '/opus/__collections/removerange.json?volumeid=COVIMS_0006&range=co-vims-v1488642135_ir,co-vims-v1488643823_ir&reqno=12345678&download=1'
+        expected = {"err": False, "count": 10, "reqno": 12345678, "total_download_count": 65, "total_download_size": 7770738, "total_download_size_pretty": "7M", "product_cat_list": [["Metadata Products", [{"slug_name": "inventory", "product_type": "Target Body Inventory", "product_count": 10, "download_count": 2, "download_size": 415545, "download_size_pretty": "405K"}, {"slug_name": "planet-geometry", "product_type": "Planet Geometry Index", "product_count": 10, "download_count": 2, "download_size": 1527684, "download_size_pretty": "1M"}, {"slug_name": "moon-geometry", "product_type": "Moon Geometry Index", "product_count": 10, "download_count": 2, "download_size": 481067, "download_size_pretty": "469K"}, {"slug_name": "ring-geometry", "product_type": "Ring Geometry Index", "product_count": 10, "download_count": 2, "download_size": 2448696, "download_size_pretty": "2M"}]], ["Browse Products", [{"slug_name": "browse-thumb", "product_type": "Browse Image (thumbnail)", "product_count": 10, "download_count": 6, "download_size": 54402, "download_size_pretty": "53K"}, {"slug_name": "browse-small", "product_type": "Browse Image (small)", "product_count": 10, "download_count": 6, "download_size": 149668, "download_size_pretty": "146K"}, {"slug_name": "browse-medium", "product_type": "Browse Image (medium)", "product_count": 10, "download_count": 6, "download_size": 153800, "download_size_pretty": "150K"}, {"slug_name": "browse-full", "product_type": "Browse Image (full-size)", "product_count": 10, "download_count": 6, "download_size": 153800, "download_size_pretty": "150K"}]], ["Cassini VIMS-Specific Products", [{"slug_name": "covims-raw", "product_type": "Raw cube", "product_count": 10, "download_count": 15, "download_size": 1948066, "download_size_pretty": "1M"}, {"slug_name": "covims-thumb", "product_type": "Extra preview (thumbnail)", "product_count": 10, "download_count": 6, "download_size": 11718, "download_size_pretty": "11K"}, {"slug_name": "covims-medium", "product_type": "Extra preview (medium)", "product_count": 10, "download_count": 6, "download_size": 122860, "download_size_pretty": "119K"}, {"slug_name": "covims-full", "product_type": "Extra preview (full)", "product_count": 10, "download_count": 6, "download_size": 303432, "download_size_pretty": "296K"}]]]}
+        self._run_json_equal(url, expected)
+        url = '/opus/__collections/status.json'
+        expected = {'count': 10, 'reqno': None}
         self._run_json_equal(url, expected)
 
 
