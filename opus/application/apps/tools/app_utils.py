@@ -198,7 +198,7 @@ def get_session_id(request):
             request.session['has_session'] = True
         if not request.session.session_key:
             request.session.create()
-    session_id = request.session.session_key
+        session_id = request.session.session_key
     return session_id
 
 

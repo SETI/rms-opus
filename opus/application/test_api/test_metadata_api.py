@@ -35,21 +35,21 @@ class ApiMetadataTests(TestCase):
     def setUp(self):
         settings.CACHE_KEY_PREFIX = 'opustest:' + settings.OPUS_SCHEMA_NAME
         logging.disable(logging.ERROR)
+        if settings.TEST_GO_LIVE:
+            self.client = requests.Session()
+        else:
+            self.client = RequestsClient()
 
     # enable error logging and trace output after test
     def tearDown(self):
         logging.disable(logging.NOTSET)
 
     def _get_response(self, url):
-        if settings.TEST_GO_LIVE:
-            client = requests.Session()
-        else:
-            client = RequestsClient()
         if not settings.TEST_GO_LIVE or settings.TEST_GO_LIVE == "production":
             url = "https://tools.pds-rings.seti.org" + url
         else:
             url = "http://dev.pds-rings.seti.org" + url
-        return client.get(url)
+        return self.client.get(url)
 
     def _run_status_equal(self, url, expected):
         print(url)
