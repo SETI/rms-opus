@@ -71,6 +71,28 @@ def api_view_collection(request, fmt):
 
     Format: __collections/view.(html|json)
     Arguments: types=<PRODUCT_TYPES>
+
+    For HTML format, returns the left side of the Selections page.
+
+    For JSON format, returns a dict containing:
+        'total_download_count':       Total number of unique files
+        'total_download_size':        Total size of unique files (bytes)
+        'total_download_size_pretty': Total size of unique files (pretty format)
+        'product_cat_list':           List of categories and info:
+            [
+             ['<Product Type Category>',
+              [{'slug_name':            Like "browse-thumb"
+                'product_type':         Like "Browse Image (thumbnail)"
+                'product_count':        Number of opus_ids in this category
+                'download_count':       Number of unique files in this category
+                'download_size':        Size of unique files in this category
+                                            (bytes)
+                'download_size_pretty': Size of unique files in this category
+                                            (pretty format)
+               }
+              ], ...
+             ], ...
+            ]
     """
     api_code = enter_api_call('api_view_collection', request)
 
@@ -79,56 +101,14 @@ def api_view_collection(request, fmt):
     product_types_str = request.GET.get('types', 'all')
     product_types = product_types_str.split(',')
 
-    (total_download_size, total_download_count,
-     product_counts) = _get_download_info(product_types, session_id)
-
-    product_cats = []
-    product_cat_list = []
-    for (product_type, product_count,
-         download_count, download_size) in product_counts:
-        # product_type format is:
-        #   ('Cassini ISS', 0, 'coiss-raw', 'Raw image')
-        #   ('browse', 40, 'browse-full', 'Browse Image (full-size)')
-        name = product_type[0]
-        pretty_name = name
-        if name == 'standard':
-            pretty_name = 'Standard Data Products'
-        elif name == 'metadata':
-            pretty_name = 'Metadata Products'
-        elif name == 'browse':
-            pretty_name = 'Browse Products'
-        elif name == 'diagram':
-            pretty_name = 'Diagram Products'
-        else:
-            pretty_name = name + '-Specific Products'
-        key = (name, pretty_name)
-        if key not in product_cats:
-            product_cats.append(key)
-            cur_product_list = []
-            product_cat_list.append((pretty_name, cur_product_list))
-        product_dict_entry = {
-            'slug_name': product_type[2],
-            'product_type': product_type[3],
-            'product_count': product_count,
-            'download_count': download_count,
-            'download_size': download_size,
-            'download_size_pretty': nice_file_size(download_size)
-        }
-        cur_product_list.append(product_dict_entry)
-
-    context = {
-        'total_download_count': total_download_count,
-        'total_download_size': total_download_size,
-        'total_download_size_pretty':  nice_file_size(total_download_size),
-        'product_cat_list': product_cat_list
-    }
+    info = _get_download_info(product_types, session_id)
 
     if fmt == 'json':
-        ret = json_response(context)
+        ret = json_response(info)
     else:
         assert fmt == 'html'
         template = 'user_collections/collections.html'
-        ret = render(request, template, context)
+        ret = render(request, template, info)
 
     exit_api_call(api_code, ret)
     return ret
@@ -150,7 +130,11 @@ def api_collection_status(request):
 
     count = _get_collection_count(session_id)
 
-    reqno = request.session.get('reqno', None)
+    reqno = request.GET.get('reqno', None)
+    try:
+        reqno = int(reqno)
+    except:
+        pass
 
     ret = json_response({'count': count,
                          'reqno': reqno})
@@ -158,6 +142,7 @@ def api_collection_status(request):
     return ret
 
 
+@never_cache
 def api_get_collection_csv(request):
     """Returns a CSV file of the current collection.
 
@@ -170,7 +155,7 @@ def api_get_collection_csv(request):
     """
     api_code = enter_api_call('api_get_collection_csv', request)
 
-    ret = _get_collection_csv(request, 'csv', api_code=api_code)
+    ret = _get_collection_csv(request, api_code=api_code)
 
     exit_api_call(api_code, ret)
     return ret
@@ -184,13 +169,14 @@ def api_edit_collection(request, **kwargs):
 
     Format: __collections/
             (?P<action>add|remove|addrange|removerange|addall).json
-    Arguments: opus_id=<ID>
-               request=<N>
-               addrange=<OPUS_ID>,<OPUS_ID>
-               removerange=<OPUS_ID>,<OPUS_ID>
-               reqno=<N>
+    Arguments: opus_id=<ID>                 (add, remove)
+               range=<OPUS_ID>,<OPUS_ID>    (addrange, removerange)
+               [reqno=<N>]
+               [download=<N>]
 
     Returns the new number of items in the collection.
+    If download=1, also returns all the data returns by
+        /__collections/status.json
     """
     api_code = enter_api_call('api_edit_collection', request)
 
@@ -203,47 +189,49 @@ def api_edit_collection(request, **kwargs):
         raise Http404
 
     reqno = request.GET.get('reqno', None)
+    try:
+        reqno = int(reqno)
+    except:
+        pass
 
-    if action in ['add', 'remove']:
-        opus_id = request.GET.get('opus_id', None)
-        if opus_id is None:
-            json_data = {'err': 'No observations specified'}
-            ret = json_response(json_data)
-            exit_api_call(api_code, ret)
-            return ret
+    err = False
 
-    if action == 'add':
-        _add_to_collections_table(opus_id, session_id)
+    opus_id = None
+    if action in ('add', 'remove'):
+        opus_id = request.GET.get('opusid', None)
+        if not opus_id: # Also catches empty string
+            err = 'No opusid specified'
 
-    elif action == 'remove':
-        _remove_from_collections_table(opus_id, session_id)
-
-    elif action in ['addrange', 'removerange']:
-        _edit_collection_range(request, session_id, action, api_code)
-
-    elif action == 'addall':
-        _edit_collection_addall(request, **kwargs)
+    if not err:
+        if action == 'add':
+            err = _add_to_collections_table(opus_id, session_id)
+        elif action == 'remove':
+            err = _remove_from_collections_table(opus_id, session_id)
+        elif action in ('addrange', 'removerange'):
+            err = _edit_collection_range(request, session_id, action, api_code)
+        elif action == 'addall':
+            err = _edit_collection_addall(request, **kwargs)
 
     collection_count = _get_collection_count(session_id)
-    json_data = {'err': False,
+    json_data = {'err': err,
                  'count': collection_count,
                  'reqno': reqno}
 
     download = request.GET.get('download', False)
+    try:
+        download = int(download)
+    except:
+        pass
     # Minor performance check - if we don't need a total download size, don't
     # bother
     # Only the selection tab is interested in updating that count at this time.
     if download:
         product_types_str = request.GET.get('types', 'all')
         product_types = product_types_str.split(',')
-        (download_size, download_count,
-         product_counts) = _get_download_info(product_types, session_id)
-        json_data['download_count'] = download_count
-        json_data['download_size'] = download_size
-        json_data['download_size_pretty'] = nice_file_size(download_size)
-        json_data['product_counts'] = {x[0][3]: x[1] for x in product_counts}
+        info = _get_download_info(product_types, session_id)
+        json_data.update(info)
 
-    ret = HttpResponse(json.dumps(json_data))
+    ret = json_response(json_data)
     exit_api_call(api_code, ret)
     return ret
 
@@ -319,9 +307,8 @@ def api_create_download(request, opus_ids=None):
         log.error(".. First 5 PRODUCT TYPES: %s", str(product_types[:5]))
         raise Http404
 
-    (download_size, download_count,
-     product_counts) = _get_download_info(product_types, session_id)
-
+    info = _get_download_info(product_types, session_id)
+    download_size = info['total_download_size']
     # don't create download if files are too big
     if download_size > settings.MAX_DOWNLOAD_SIZE:
         ret = HttpResponse("Sorry, maximum download size ("+str(settings.MAX_DOWNLOAD_SIZE)+" bytes) exceeded")
@@ -409,11 +396,25 @@ def _get_download_info(product_types, session_id):
     The result is limited to the given product_types. ['all'] means return all
     product_types.
 
-    Returns:
-        total_download_size       (total bytes)
-        total_download_count      (total number of files)
-        product_counts            (list of product_count info;
-                                   see get_product_counts)
+    Returns dict containing:
+        'total_download_count':       Total number of unique files
+        'total_download_size':        Total size of unique files (bytes)
+        'total_download_size_pretty': Total size of unique files (pretty format)
+        'product_cat_list':           List of categories and info:
+            [
+             ['<Product Type Category>',
+              [{'slug_name':            Like "browse-thumb"
+                'product_type':         Like "Browse Image (thumbnail)"
+                'product_count':        Number of opus_ids in this category
+                'download_count':       Number of unique files in this category
+                'download_size':        Size of unique files in this category
+                                            (bytes)
+                'download_size_pretty': Size of unique files in this category
+                                            (pretty format)
+               }
+              ], ...
+             ], ...
+            ]
     """
     opus_ids = (Collections.objects.filter(session_id__exact=session_id)
                 .values_list('opus_id'))
@@ -423,7 +424,48 @@ def _get_download_info(product_types, session_id):
      product_counts) = get_product_counts(opus_id_list,
                                           product_types=product_types)
 
-    return total_download_size, total_download_count, product_counts
+    product_cats = []
+    product_cat_list = []
+    for (product_type, product_count,
+         download_count, download_size) in product_counts:
+        # product_type format is:
+        #   ('Cassini ISS', 0, 'coiss-raw', 'Raw image')
+        #   ('browse', 40, 'browse-full', 'Browse Image (full-size)')
+        name = product_type[0]
+        pretty_name = name
+        if name == 'standard':
+            pretty_name = 'Standard Data Products'
+        elif name == 'metadata':
+            pretty_name = 'Metadata Products'
+        elif name == 'browse':
+            pretty_name = 'Browse Products'
+        elif name == 'diagram':
+            pretty_name = 'Diagram Products'
+        else:
+            pretty_name = name + '-Specific Products'
+        key = (name, pretty_name)
+        if key not in product_cats:
+            product_cats.append(key)
+            cur_product_list = []
+            product_cat_list.append((pretty_name, cur_product_list))
+        product_dict_entry = {
+            'slug_name': product_type[2],
+            'product_type': product_type[3],
+            'product_count': product_count,
+            'download_count': download_count,
+            'download_size': download_size,
+            'download_size_pretty': nice_file_size(download_size)
+        }
+        cur_product_list.append(product_dict_entry)
+
+    ret = {
+        'total_download_count': total_download_count,
+        'total_download_size': total_download_size,
+        'total_download_size_pretty':  nice_file_size(total_download_size),
+        'product_cat_list': product_cat_list
+    }
+
+    return ret
 
 
 def _get_collection_count(session_id):
@@ -441,6 +483,7 @@ def _get_collection_csv(request, api_code=None):
                                                      limit='all',
                                                      api_code=api_code)
 
+    print(page)
     column_labels = []
     for slug in slugs.split(','):
         pi = get_param_info_by_slug(slug)
@@ -456,13 +499,8 @@ def _get_collection_csv(request, api_code=None):
             else:
                 column_labels.append(label)
 
-    response = HttpResponse(content_type='text/csv')
-    response['Content-Disposition'] = 'attachment; filename="data.csv"'
-    wr = csv.writer(response)
-    wr.writerow(column_labels)
-    wr.writerows(page)
-
-    return response
+    ret = csv_response('data', page, column_labels)
+    return ret
 
 
 ################################################################################
@@ -478,6 +516,9 @@ def _add_to_collections_table(opus_id_list, session_id):
         opus_id_list = [opus_id_list]
     res = (ObsGeneral.objects.filter(opus_id__in=opus_id_list)
            .values_list('opus_id', 'id'))
+    if len(opus_id_list) != len(res):
+        return 'opusid not found'
+
     values = [(session_id, id, opus_id) for opus_id, id in res]
     sql = 'REPLACE INTO '+connection.ops.quote_name('collections')
     sql += ' ('
@@ -488,6 +529,7 @@ def _add_to_collections_table(opus_id_list, session_id):
     log.debug('_add_to_collections_table SQL: %s %s', sql, values)
     cursor.executemany(sql, values)
 
+    return False
 
 def _remove_from_collections_table(opus_id_list, session_id):
     "Remove OPUS_IDs from the collections table."
@@ -500,25 +542,27 @@ def _remove_from_collections_table(opus_id_list, session_id):
     log.debug('_remove_from_collections_table SQL: %s %s', sql, values)
     cursor.executemany(sql, values)
 
+    return False
 
 def _edit_collection_range(request, session_id, action, api_code):
     "Add or remove a range of opus_ids based on the current sort order."
     id_range = request.GET.get('range', False)
     if not id_range:
-        log.error('Got to _edit_collection_range but no range given: %s',
-                  str(request.GET))
-        return
+        return 'no range given'
 
     ids = id_range.split(',')
     if len(ids) != 2:
-        return
+        return 'bad range'
+
+    if not ids[0] or not ids[1]:
+        return 'bad range'
 
     # Find the index in the cache table for the min and max opus_ids
     (selections, extras) = url_to_search_params(request.GET)
     if selections is None:
         log.error('_edit_collection_range: Could not find selections for'
                   +' request %s', str(request.GET))
-        return none_return
+        return 'bad search'
 
     user_query_table = get_user_query_table(selections, extras,
                                             api_code=api_code)
@@ -526,7 +570,7 @@ def _edit_collection_range(request, session_id, action, api_code):
         log.error('_edit_collection_range: get_user_query_table failed '
                   +'*** Selections %s *** Extras %s',
                   str(selections), str(extras))
-        return
+        return 'search failed'
 
     cursor = connection.cursor()
 
@@ -535,9 +579,11 @@ def _edit_collection_range(request, session_id, action, api_code):
         sql = 'SELECT '
         sql += connection.ops.quote_name('sort_order')
         sql += ' FROM '
-        sql += connection.ops.quote_name(user_query_table)
-        sql += ' RIGHT JOIN '
         sql += connection.ops.quote_name('obs_general')
+        # INNER JOIN because we only want rows that exist in the
+        # user_query_table
+        sql += ' INNER JOIN '
+        sql += connection.ops.quote_name(user_query_table)
         sql += ' ON '
         sql += connection.ops.quote_name(user_query_table)+'.'
         sql += connection.ops.quote_name('id')+'='
@@ -553,10 +599,11 @@ def _edit_collection_range(request, session_id, action, api_code):
         if len(results) == 0:
             log.error('_edit_collection_range: No OPUS ID "%s" in obs_general',
                       opus_id)
-            return
+            return 'opusid not found'
         sort_orders.append(results[0][0])
 
     if action == 'addrange':
+        values = [session_id]
         sql = 'REPLACE INTO '+connection.ops.quote_name('collections')
         sql += ' ('
         sql += connection.ops.quote_name('session_id')+','
@@ -569,6 +616,8 @@ def _edit_collection_range(request, session_id, action, api_code):
         sql += connection.ops.quote_name('opus_id')
         sql += ' FROM '
         sql += connection.ops.quote_name('obs_general')
+        # INNER JOIN because we only want rows that exist in the
+        # user_query_table
         sql += ' INNER JOIN '
         sql += connection.ops.quote_name(user_query_table)
         sql += ' ON '
@@ -576,18 +625,9 @@ def _edit_collection_range(request, session_id, action, api_code):
         sql += connection.ops.quote_name('id')+'='
         sql += connection.ops.quote_name('obs_general')+'.'
         sql += connection.ops.quote_name('id')
-        sql += ' WHERE '
-        sql += connection.ops.quote_name(user_query_table)+'.'
-        sql += connection.ops.quote_name('sort_order')
-        sql += ' >= '+str(sort_orders[0])+' AND '
-        sql += connection.ops.quote_name(user_query_table)+'.'
-        sql += connection.ops.quote_name('sort_order')
-        sql += ' <= '+str(sort_orders[1])
-        values = [session_id]
-        log.debug('_edit_collection_range SQL: %s %s', sql, values)
-        cursor.execute(sql, values)
 
     elif action == 'removerange':
+        values = []
         sql = 'DELETE '
         sql += connection.ops.quote_name('collections')
         sql += ' FROM '+connection.ops.quote_name('collections')
@@ -598,21 +638,20 @@ def _edit_collection_range(request, session_id, action, api_code):
         sql += connection.ops.quote_name('id')+'='
         sql += connection.ops.quote_name('collections')+'.'
         sql += connection.ops.quote_name('obs_general_id')
-        sql += ' WHERE '
-        sql += connection.ops.quote_name(user_query_table)+'.'
-        sql += connection.ops.quote_name('sort_order')
-        sql += ' >= '+str(sort_orders[0])+' AND '
-        sql += connection.ops.quote_name(user_query_table)+'.'
-        sql += connection.ops.quote_name('sort_order')
-        sql += ' <= '+str(sort_orders[1])
-        values = []
-        log.debug('_edit_collection_range SQL: %s %s', sql, values)
-        cursor.execute(sql, values)
-
     else:
         assert False
 
-    return
+    sql += ' WHERE '
+    sql += connection.ops.quote_name(user_query_table)+'.'
+    sql += connection.ops.quote_name('sort_order')
+    sql += ' >= '+str(min(sort_orders))+' AND '
+    sql += connection.ops.quote_name(user_query_table)+'.'
+    sql += connection.ops.quote_name('sort_order')
+    sql += ' <= '+str(max(sort_orders))
+    log.debug('_edit_collection_range SQL: %s %s', sql, values)
+    cursor.execute(sql, values)
+
+    return False
 
 
 def _edit_collection_addall(request, **kwargs):
@@ -695,7 +734,7 @@ def _create_csv_file(request, csv_file_name, api_code=None):
     for slug in slug_list:
         pi = get_param_info_by_slug(slug)
         if pi is None:
-            log.error('_get_collection_csv: Unknown slug "%s"', slug)
+            log.error('_create_csv_file: Unknown slug "%s"', slug)
             return HttpResponseNotFound('Unknown slug')
         else:
             # append units if pi_units has unit stored

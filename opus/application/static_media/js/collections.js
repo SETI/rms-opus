@@ -111,7 +111,7 @@ var o_collections = {
      },
 
      updateCartStatus: function(status) {
-         if (status.reqno != null && status.reqno < opus.lastCartRequestNo) {
+         if (status.reqno < opus.lastCartRequestNo) {
              return;
          }
          let count = status.count;
