@@ -259,6 +259,13 @@ ul.searchMenu{
 	-o-transition: opacity 0.5s ease-in;
 	opacity: 1;
 }
+
+tr.modal-show {
+	color: #167495;
+	opacity: 0.92;
+	filter: alpha(opacity=92);
+}
+
 .thumbnail-container .content-text {
 	margin: 0px;
 	opacity: 0.65;
@@ -267,12 +274,6 @@ ul.searchMenu{
 .thumbnail-message {
 	color: #fff;
 	padding-left: 3em;
-}
-
-.row_selected {
-	color: #167495;
-	opacity: 0.92;
-	filter: alpha(opacity=92);
 }
 
 .img-thumbnail {

@@ -613,10 +613,9 @@ var o_browse = {
 
                 // table row
                 let checked = item.in_collection ? " checked" : "";
-                let selected = item.in_collection ? " class='row_selected'" : "";
                 let checkbox = "<input type='checkbox' name='"+opusId+"' value='"+opusId+"' class='multichoice'"+checked+"/>";
                 let row = "<td>"+checkbox+"</td>";
-                let tr = "<tr data-id='"+opusId+"' data-target='#galleryView'"+selected+">";
+                let tr = "<tr data-id='"+opusId+"' data-target='#galleryView'>";
                 $.each(item.metadata, function(index, cell) {
                     row += "<td>"+cell+"</td>";
                 });
@@ -793,6 +792,7 @@ var o_browse = {
         let namespace = o_browse.getViewInfo().namespace;
         $(namespace).find(".modal-show").removeClass("modal-show");
         $(namespace).find("[data-id='"+opusId+"'] div.modal-overlay").addClass("modal-show");
+        $(namespace).find("tr[data-id='"+opusId+"']").addClass("modal-show");
         let imageURL = $(namespace).find("[data-id='"+opusId+"'] > a.thumbnail").data("image");
         if (imageURL === undefined) {
             // put a temp spinner while retrieving the image; this only happens if the data table is loaded first
