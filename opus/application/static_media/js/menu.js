@@ -22,7 +22,7 @@ var o_menu = {
 
          // click param in menu get new widget
          $('#sidebar').on("click", '.submenu li a', function() {
-             var slug = $(this).data('slug');
+             let slug = $(this).data('slug');
              if (!slug) { return; }
              if ($.inArray(slug, opus.widgets_drawn)>-1){
                  // widget is already showing do not fetch another
@@ -46,8 +46,8 @@ var o_menu = {
 
         // menu state - keep track of what menu items are open
         $(".sidebar > .nav-list").click( function(e){
-            var link_element = $(e.target).closest('a');
-            if(!link_element || link_element.length == 0) return;//if not clicked inside a link element
+            let link_element = $(e.target).closest('a');
+            if (!link_element || link_element.length == 0) return;//if not clicked inside a link element
 
             var sub = link_element.next().get(0);
 
@@ -56,22 +56,22 @@ var o_menu = {
             if ($(link_element).data( "cat" )) {
                 var cat_name = $(link_element).data( "cat" );
                 if ($(sub).parent().hasClass('open')) {
-                    if ($.inArray(cat_name, opus.menu_state['cats']) < 0) {
-                        opus.menu_state['cats'].push(cat_name);
+                    if ($.inArray(cat_name, opus.menu_state.cats) < 0) {
+                        opus.menu_state.cats.push(cat_name);
                     }
                 } else {
-                    opus.menu_state['cats'].splice(opus.menu_state['cats'].indexOf(cat_name), 1);
+                    opus.menu_state.cats.splice(opus.menu_state.cats.indexOf(cat_name), 1);
                 }
             }
             // menu groups
             if ($(link_element).data( "group" )) {
                 var group_name = $(link_element).data( "group" );
                 if ($(sub).parent().hasClass('open')) {
-                    if ($.inArray(group_name, opus.menu_state['groups']) < 0) {
-                        opus.menu_state['groups'].push(group_name);
+                    if ($.inArray(group_name, opus.menu_state.groups) < 0) {
+                        opus.menu_state.groups.push(group_name);
                     }
                 } else {
-                    opus.menu_state['groups'].splice(opus.menu_state['groups'].indexOf(group_name), 1);
+                    opus.menu_state.groups.splice(opus.menu_state.groups.indexOf(group_name), 1);
                 }
             }
             return false;
@@ -83,42 +83,34 @@ var o_menu = {
         var hash = o_hash.getHash();
 
         $( "#sidebar").load( "/opus/__menu.html?" + hash, function() {
-            if (opus.menu_state['cats'] == 'all') {
+            if (opus.menu_state.cats == "all") {
 
                 // first load, open general constraints
-                opus.menu_state['cats'] = [];
+                opus.menu_state.cats = [];
                 var cat_name = 'obs_general';
-                opus.menu_state['cats'].push(cat_name);
+                opus.menu_state.cats.push(cat_name);
                 var link = $("[data-cat='"+cat_name+"']");
                 link.parent().find('b.arrow').toggleClass('fa-angle-right').toggleClass('fa-angle-down');
-
             } else {
-
                 // open menu items that were open before
-                for (var key in opus.menu_state['cats']) {
-                    var cat_name = opus.menu_state['cats'][key];
-                    var link = $("[data-cat='"+cat_name+"']");
-                    link.find('b.arrow').toggleClass('fa-angle-right').toggleClass('fa-angle-down');
-
-                    // $("." + cat_name, ".sidebar").trigger(ace.click_event);
-                }
-                for (var key in opus.menu_state['groups']) {
-                    var group_name = opus.menu_state['groups'][key];
-                    var link = $("[data-cat='"+cat_name+"']");
-                    link.find('b.arrow').toggleClass('fa-angle-right').toggleClass('fa-angle-down');
-                    // $("." + group_name, ".sidebar").trigger(ace.click_event);
-                }
+                $.each(opus.menu_state.cats, function(key, catName) {
+                    $("[data-cat='"+catName+"']").find('b.arrow').toggleClass('fa-angle-right').toggleClass('fa-angle-down');
+                });
+                $.each(opus.menu_state.groups, function(key, groupName) {
+                    $("[data-cat='"+groupName+"']").find('b.arrow').toggleClass('fa-angle-right').toggleClass('fa-angle-down');
+                });
             }
+
             // open any newly arrived surface geo tables
             // todo: this could be problematic if user wants to close it and keep it closed..
             var geo_cat = $('a[data-cat^="obs_surface_geometry__"]', '.sidebar').data('cat');
-            if (geo_cat && $.inArray(geo_cat, opus.menu_state['cats']) < 0) {
+            if (geo_cat && $.inArray(geo_cat, opus.menu_state.cats) < 0) {
                 // open it
                 var link = $("a." + geo_cat, ".sidebar");
                 var sub = link.next().get(0);
                 $(sub).slideToggle(400).parent().toggleClass('open');
                 // and add it to open cats list
-                opus.menu_state['cats'].push(geo_cat);
+                opus.menu_state.cats.push(geo_cat);
             }
             // highlight open widgets
             $.each(opus.widgets_drawn, function(index, widget) {
@@ -140,22 +132,17 @@ var o_menu = {
       }
      },
 
-
      // type = cat/group
      getCatGroupFromSlug: function(slug) {
-         cat = '';
-         group = '';
+         var cat = '';
+         var group = '';
          $('ul.menu_list>li a', '#search').each(function() {
              if (slug == $(this).data('slug')) {
-                   cat = $(this).data('cat');
-                   group = $(this).data('group');
-                   return false; // this is how you break in an each!
+                 cat = $(this).data('cat');
+                 group = $(this).data('group');
+                 return false; // this is how you break in an each!
              }
          });
-         return {"cat":cat, "group":group}
-
+         return {"cat":cat, "group":group};
      },
-
-
-
 };
