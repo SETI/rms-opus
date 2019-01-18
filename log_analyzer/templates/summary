@@ -42,8 +42,7 @@
 }
 .SessionInfo td {
   vertical-align:top;
-  padding-left:5px;
-  padding-right:5px;
+  padding: 0px 5px;
 }
 .SessionLinkSelected {
   background-color:yellow;
@@ -118,7 +117,9 @@
 <script>
 
 $(document).ready(function(){
-    $('[data-toggle="tooltip"]').tooltip();
+    $('[data-toggle="tooltip"]')
+        .tooltip()
+        .click(function() { return false; })
 
     $('.SessionLink').click(function() {
 
