@@ -194,7 +194,7 @@
     {
         "field_name": "target_name",
         "field_type": "char20",
-        "field_default": null,
+        "field_notnull": true,
         "field_key": true,
         "data_source": [
             "FUNCTION",
@@ -512,7 +512,7 @@
     {
         "field_name": "observation_type",
         "field_type": "char3",
-        "field_not_null": true,
+        "field_notnull": true,
         "data_source": [
             "FUNCTION",
             "obs_general_<INST>_observation_type"
@@ -572,7 +572,7 @@
     {
         "field_name": "primary_file_spec",
         "field_type": "char240",
-        "field_default": null,
+        "field_notnull": true,
         "field_key": true,
         "data_source": [
             "FUNCTION",
@@ -598,6 +598,7 @@
     {
         "field_name": "preview_images",
         "field_type": "json",
+        "field_notnull": true,
         "field_key": false,
         "data_source": [
             "FUNCTION",

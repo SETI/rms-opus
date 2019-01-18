@@ -1,11 +1,15 @@
 import datetime
 import functools
+import itertools
+import os
 import socket
 import textwrap
 from collections import defaultdict, deque
-from heapq import heapify, heappop, heappush
 from ipaddress import IPv4Address
-from typing import List, Iterator, Dict, NamedTuple, Optional, Deque, Iterable, IO
+from typing import List, Iterator, Dict, NamedTuple, Optional, Deque, IO, Tuple, Iterable
+
+import django
+from django.template.loader import get_template
 
 import Slug
 from LogEntry import LogEntry
@@ -24,6 +28,46 @@ class _LiveSession(NamedTuple):
         return self._replace(timeout=timeout)
 
 
+class Entry(NamedTuple):
+    log_entry: LogEntry
+    relative_start_time: datetime.timedelta
+    data: List[str]
+    opus_url: Optional[str]
+
+    def target_url(self) -> str:
+        return self.log_entry.url.geturl()
+
+
+class Session(NamedTuple):
+    host_ip: IPv4Address
+    entries: List[Entry]
+    id: str
+    search_slug_list: List[Tuple[str, bool]]
+    column_slug_list: List[Tuple[str, bool]]
+
+    def start_time(self) -> datetime.datetime:
+        return self.entries[0].log_entry.time
+
+    def duration(self) -> datetime.timedelta:
+        return self.entries[-1].log_entry.time - self.entries[0].log_entry.time
+
+    def slug_info(self) -> Iterable[Tuple[str, List[Tuple[str, bool]]]]:
+        return ("search", self.search_slug_list), ("column", self.column_slug_list)
+
+
+class HostInfo(NamedTuple):
+    ip: IPv4Address
+    name: Optional[str]
+    sessions: List[Session]
+    id: str
+
+    def hostname(self) -> str:
+        return f'{self.name} ({self.ip})' if self.name else str(self.ip)
+
+    def total_time(self) -> datetime.timedelta:
+        return sum((session.duration() for session in self.sessions), datetime.timedelta(0))
+
+
 class LogParser:
     """
     Code that reads through the log entries, groups them by host and by session, and prints them out in a nice format.
@@ -32,128 +76,81 @@ class LogParser:
     _use_reverse_dns: bool
     _session_timeout: datetime.timedelta
     _output: IO[str]
+    _id_generator: Iterator[str]
 
     def __init__(self, session_info_generator: SessionInfoGenerator, use_reverse_dns: bool,
-                 session_timeout_minutes: int, output: IO[str]):
+                 session_timeout_minutes: int, output: IO[str], api_host_url: str, uses_html: bool):
         self._session_info_generator = session_info_generator
         self._use_reverse_dns = use_reverse_dns
         self._session_timeout = datetime.timedelta(minutes=session_timeout_minutes)
         self._output = output
+        self._api_host_url = api_host_url
+        self._uses_html = uses_html
+        self._id_generator = (f'{value:X}' for value in itertools.count(2718281828))
 
-    def run_batch(self, log_entries: List[LogEntry]) -> None:
+    def run_batch_by_time(self, log_entries: List[LogEntry]) -> None:
         """
         Look at the list of log entries in batch mode.
 
         The logs are aggregated into sessions, and each complete session is printed out in order of the start
         of the session.
         """
-        output = self._output
-        entries_by_host = self.__group_log_entries_by_host_ip(log_entries)
+        all_sessions = self.__get_session_list(log_entries, self._uses_html)
+        all_sessions.sort(key=lambda session: (session.start_time(), session.host_ip))
 
-        # Create a heap whose major key is the start time of the smallest log entry for the host
-        heap = [(logs[0].time, logs[0].host_ip, logs) for logs in entries_by_host.values()]
-        heapify(heap)
+        host_infos = [HostInfo(ip=session.host_ip,
+                               name=self.__get_reverse_dns_from_ip(session.host_ip),  # may be None
+                               sessions=[session],
+                               id=next(self._id_generator))
+                      for session in all_sessions]
 
-        need_host_separator = False
+        self.__generate_batch_output(host_infos)
 
-        while heap:
-            # Grab the smallest element of the heap, which has the earliest start time.
-            session_start_time, session_host_ip, session_log_entries = heappop(heap)
-            # Get session info about the earliest log entry, which is popped off the list
-            session_info = self._session_info_generator.create()
-            entry = session_log_entries.popleft()
-            entry_info = session_info.parse_log_entry(entry)
-            if not entry_info:
-                # Nope.  Update the information and put back onto the heap
-                if session_log_entries:
-                    heappush(heap, (session_log_entries[0].time, session_host_ip, session_log_entries))
-                continue
-
-            # No problems.  We have the start of a session
-            if need_host_separator:
-                print('\n----------\n', file=output)
-            need_host_separator = True
-
-            hostname_from_ip = self.__get_hostname_from_ip(session_host_ip)
-            print(f'Host {hostname_from_ip}: {entry.time_string}', file=output)
-            self.__print_entry_info(entry, entry_info, session_start_time)
-
-            # Keep on processing elements for as long as each entry is within the session timeout of the previous one.
-            session_end_time = session_start_time + self._session_timeout
-            while session_log_entries and session_log_entries[0].time <= session_end_time:
-                entry = session_log_entries.popleft()
-                session_end_time = entry.time + self._session_timeout
-                entry_info = session_info.parse_log_entry(entry)
-                if entry_info:
-                    self.__print_entry_info(entry, entry_info, session_start_time)
-
-            # If we ended because we timed out, put the remaining log entries back on the heap.
-            if session_log_entries:
-                heappush(heap, (session_log_entries[0].time, session_host_ip, session_log_entries))
-
-    def run_summary(self, log_entries: List[LogEntry]) -> None:
+    def run_batch_by_ip(self, log_entries: List[LogEntry]) -> None:
         """
-        Look at the list of log entries in summary mode.
+         Look at the list of log entries in batch mode.
 
-        All the information for each host_ip are printed out together, though they are still broken into sessions when
-        the user pauses for too long.
-        """
-        output = self._output
-        previous_host_ip: Optional[IPv4Address] = None
-        entries_by_host_ip = self.__group_log_entries_by_host_ip(log_entries)
+         The logs are aggregated into sessions, and the sessions are aggregated by host_ip.  The sessions are printed
+         out sorted by host_ip and then by session start time.
+         """
+        all_sessions = self.__get_session_list(log_entries, self._uses_html)
+        all_sessions.sort(key=lambda session: (session.host_ip, session.start_time()))
 
-        # Look at the host ips in standard order.
-        for session_host_ip in sorted(entries_by_host_ip):
-            hostname_from_ip = self.__get_hostname_from_ip(session_host_ip)
-            session_log_entries = entries_by_host_ip[session_host_ip]
-            while session_log_entries:
-                # If the first entry has no information, it doesn't start a session
-                entry = session_log_entries.popleft()
-                session_info = self._session_info_generator.create()
-                entry_info = session_info.parse_log_entry(entry)
-                if not entry_info:
-                    continue
-
-                # Start a new session
-                session_start_time = entry.time
-                if previous_host_ip:
-                    char = '-' if previous_host_ip == session_host_ip else '*'
-                    print(f'\n{char * 10}\n', file=output)
-                previous_host_ip = session_host_ip
-
-                print(f'Host {hostname_from_ip}: {entry.time_string}', file=output)
-                self.__print_entry_info(entry, entry_info, session_start_time)
-
-                # Keep on printing session information for as long as we have not reached a timeout.
-                session_end_time = session_start_time + self._session_timeout
-                while session_log_entries and session_log_entries[0].time <= session_end_time:
-                    entry = session_log_entries.popleft()
-                    session_end_time = entry.time + self._session_timeout
-                    entry_info = session_info.parse_log_entry(entry)
-                    if entry_info:
-                        self.__print_entry_info(entry, entry_info, session_start_time)
+        host_infos: List[HostInfo] = []
+        while all_sessions:
+            this_host = all_sessions[0].host_ip
+            next_host_start = next((i for i in range(len(all_sessions)) if all_sessions[i].host_ip != this_host),
+                                   len(all_sessions))
+            sessions = all_sessions[0:next_host_start]
+            all_sessions = all_sessions[next_host_start:]
+            host_infos.append(HostInfo(ip=this_host,
+                                       name=self.__get_reverse_dns_from_ip(this_host),  # may be None
+                                       sessions=sessions,
+                                       id=next(self._id_generator)))
+        self.__generate_batch_output(host_infos)
 
     def show_slugs(self, log_entries: List[LogEntry]) -> None:
+        """Print out all slugs that have appeared in the text."""
         output = self._output
-        entries_by_host_ip = self.__group_log_entries_by_host_ip(log_entries)
+        all_sessions = self.__get_session_list(log_entries, False)
 
-        # Look at the host ips in standard order.
-        for session_host_ip, session_log_entries in entries_by_host_ip.items():
-            session_info = self._session_info_generator.create()
-            for entry in session_log_entries:
-                session_info.parse_log_entry(entry)
-
-        def show_info(name: str, info: Dict[str, Slug.Info]) -> None:
+        def show_info(info_type: str) -> None:
+            all_info: Dict[str, bool] = {}
+            for session in all_sessions:
+                slug_list = session.column_slug_list if info_type == 'column' else session.search_slug_list
+                for slug, is_obsolete in slug_list:
+                    all_info[slug] = is_obsolete
             result = ', '.join(
                 # Use ~ as a non-breaking space for textwrap.  We replace it with a space, below
-                (slug + '~[OBSOLETE]') if info[slug].flags.is_obsolete() else slug
-                for slug in sorted(info, key=str.lower)
-            )
-            wrapped = textwrap.fill(result, 100, initial_indent=f'{name} slugs: ', subsequent_indent='    ')
+                (slug + '~[OBSOLETE]') if all_info[slug] else slug
+                for slug in sorted(all_info, key=str.lower))
+
+            wrapped = textwrap.fill(result, 100,
+                                    initial_indent=f'{info_type.title()} slugs: ', subsequent_indent='    ')
             print(wrapped.replace('~', ' '), file=output)
-        show_info("Search", session_info.all_search_slugs())
+        show_info("search")
         print('', file=output)
-        show_info("Columns", session_info.all_column_slugs())
+        show_info("column")
 
     def run_realtime(self, log_entries: Iterator[LogEntry]) -> None:
         """
@@ -185,13 +182,13 @@ class LogParser:
                 current_session = live_sessions[entry.host_ip].with_timeout(next_timeout)
                 live_sessions[entry.host_ip] = current_session
                 session_info = current_session.session_info
-                entry_info = session_info.parse_log_entry(entry)
+                entry_info, _ = session_info.parse_log_entry(entry)
                 if not entry_info:
                     continue
             else:
                 is_just_created_session = True
                 session_info = self._session_info_generator.create()
-                entry_info = session_info.parse_log_entry(entry)
+                entry_info, _ = session_info.parse_log_entry(entry)
                 if not entry_info:
                     continue
                 current_session = _LiveSession(host_ip=entry.host_ip, session_info=session_info,
@@ -213,21 +210,80 @@ class LogParser:
 
             self.__print_entry_info(entry, entry_info, current_session.start_time)
 
-    def __group_log_entries_by_host_ip(self, log_entries: Iterable[LogEntry]) -> Dict[IPv4Address, Deque[LogEntry]]:
-        """
-        Create a dictionary in which the keys are the host ips and the values are a deque of all the log entries for
-        that host ip.
-        """
-        entries_by_host: Dict[IPv4Address, Deque[LogEntry]] = defaultdict(deque)
+    def __get_session_list(self, log_entries: List[LogEntry], uses_html: bool) -> List[Session]:
+        """Group the log entries into parsed sessions."""
+
+        # First, group all the logs by host
+        entries_by_host_ip: Dict[IPv4Address, Deque[LogEntry]] = defaultdict(deque)
         for log_entry in log_entries:
-            entries_by_host[log_entry.host_ip].append(log_entry)
-        return entries_by_host
+            entries_by_host_ip[log_entry.host_ip].append(log_entry)
+
+        sessions: List[Session] = []
+        for session_host_ip in sorted(entries_by_host_ip):
+            session_log_entries = entries_by_host_ip[session_host_ip]
+            while session_log_entries:
+                # If the first entry has no information, it doesn't start a session
+                entry = session_log_entries.popleft()
+                session_info = self._session_info_generator.create(uses_html=uses_html)
+                entry_info, opus_url = session_info.parse_log_entry(entry)
+                if not entry_info:
+                    continue
+
+                session_start_time = entry.time
+
+                def create_session_entry(log_entry: LogEntry, entry_info: List[str], opus_url: Optional[str]) -> Entry:
+                    return Entry(log_entry=log_entry,
+                                 relative_start_time=entry.time - session_start_time,
+                                 data=entry_info, opus_url=opus_url)
+
+                current_session_entries = [create_session_entry(entry, entry_info, opus_url)]
+
+                # Keep on printing session information for as long as we have not reached a timeout.
+                session_end_time = session_start_time + self._session_timeout
+                while session_log_entries and session_log_entries[0].time <= session_end_time:
+                    entry = session_log_entries.popleft()
+                    session_end_time = entry.time + self._session_timeout
+                    entry_info, opus_url = session_info.parse_log_entry(entry)
+                    if entry_info:
+                        current_session_entries.append(create_session_entry(entry, entry_info, opus_url))
+
+                def slug_info(info: Dict[str, Slug.Info]) -> List[Tuple[str, bool]]:
+                    return [(slug, info[slug].flags.is_obsolete()) for slug in sorted(info, key=str.lower)]
+
+                sessions.append(Session(host_ip=session_host_ip,
+                                        entries=current_session_entries,
+                                        id=next(self._id_generator),
+                                        search_slug_list=slug_info(session_info.session_search_slugs),
+                                        column_slug_list=slug_info(session_info.session_column_slugs)))
+        return sessions
+
+    def __generate_batch_output(self, host_infos: List[HostInfo]) -> None:
+        output = self._output
+        print(f'Writing file {output.name}')
+        if self._uses_html:
+            os.environ.setdefault("DJANGO_SETTINGS_MODULE", "DjangoSettings")
+            django.setup()
+            summary_template = get_template('summary')
+            summary_context = {'host_infos': host_infos, 'api_host_url': self._api_host_url}
+            print(summary_template.render(summary_context), file=output)
+        else:
+            for i, host_info in enumerate(host_infos):
+                if i > 0:
+                    print('\n----------\n', file=output)
+                hostname_from_ip = f"{host_info.name, ({host_info.ip})}" if host_info.name else str(host_info.ip)
+                for j, session in enumerate(host_info.sessions):
+                    if j > 0:
+                        print(file=output)
+                    entries = session.entries
+                    print(f'Host {hostname_from_ip}: {entries[0].log_entry.time_string}', file=output)
+                    for entry in entries:
+                        self.__print_entry_info(entry.log_entry, entry.data, session.start_time())
 
     def __print_entry_info(self, this_entry: LogEntry, this_entry_info: List[str],
                            session_start_time: datetime.datetime) -> None:
         """Print out the information for a log entry."""
-        time_delta = this_entry.time - session_start_time
-        print(f'    +{time_delta}: {this_entry_info[0]}', file=self._output)
+        duration = this_entry.time - session_start_time
+        print(f'    +{duration}: {this_entry_info[0]}', file=self._output)
         for info in this_entry_info[1:]:
             print(f'              {info}', file=self._output)
 
@@ -237,6 +293,10 @@ class LogParser:
             return f'{name} ({ip})'
         else:
             return f'{ip}'
+
+    def __get_reverse_dns_from_ip(self, ip: IPv4Address) -> Optional[str]:
+        name = self.__get_host_by_address(ip) if self._use_reverse_dns else None
+        return name
 
     @staticmethod
     @functools.lru_cache(maxsize=None)

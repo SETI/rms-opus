@@ -80,15 +80,31 @@ def pds_products_sort_func(x):
         return (str(pref), x[1])
     return x[0:2]
 
-def get_pds_products_by_type(opus_id_list, product_types=['all']):
-    """Return product types and their associated PdsFile objects for opus_ids.
+def get_product_counts(opus_id_list, product_types=['all']):
+    """Return product and download information for a list of opus_ids.
 
         opus_id_list can be a string or a list.
 
-        The returned dict is indexed by product_type and for each entry
-        contains the combined information for all opus_ids. product_type
-        is in the format (category, sort_order, slug, pretty_name) and is
-        sorted as defined in pds_products_sort_func.
+        Returns: total_size, total_count, product_counts
+
+        total_size is the TOTAL size of all unique files for downloading
+        total_count is the TOTAL count of all unique files for downloading
+        product_counts is a list containing:
+            (product_type, product_count, download_count, download_size)
+
+            product_type is of the format:
+                ('Cassini ISS', 0, 'coiss-raw', 'Raw image')
+                ('browse', 40, 'browse-full', 'Browse Image (full-size)')
+            product_count is the number of opus_ids that have a product of this
+                type
+            download_count is the number of unique files that will be downloaded
+                for this type
+            download_size is the size of the unique files that will be
+                downloaded for this type
+
+        All product types and their respective information are always returned.
+        The purpose of the product_types arguments is to change what goes into
+        the total_count and total_size returns.
     """
     if opus_id_list:
         if not isinstance(opus_id_list, (list, tuple)):
@@ -100,17 +116,19 @@ def get_pds_products_by_type(opus_id_list, product_types=['all']):
         res = (ObsGeneral.objects.filter(opus_id__in=opus_id_list)
                .values('primary_file_spec'))
     except ObjectDoesNotExist:
-        log.error('get_pds_products_by_type: Failed to find opus_ids "%s" '
-                  +'in obs_general', str(opus_id_list))
+        log.error('get_product_counts: Failed to find opus_ids "%s" '
+                  +'in obs_general', str(opus_id_list[:100]))
         return None
     file_specs = [x['primary_file_spec'] for x in res]
 
     if len(opus_id_list) != len(file_specs):
-        log.error('get_pds_products_by_type: Failed to find some opus_ids "%s" '
-                  +'in obs_general', str(opus_id_list))
+        log.error('get_product_counts: Number of opus_ids and file_specs '
+                  +'do not agree "%s"', str(opus_id_list[:100]))
         return None
 
-    products_by_type = {}
+    total_size = 0
+    total_count = 0
+    results_by_type = {}
 
     for idx in range(len(opus_id_list)):
         opus_id = opus_id_list[idx]
@@ -119,48 +137,55 @@ def get_pds_products_by_type(opus_id_list, product_types=['all']):
             pdsf = pdsfile.PdsFile.from_filespec(file_spec)
             _check_for_pdsfile_exception()
         except ValueError:
-            log.error('get_pds_products_by_type: Failed to convert file_spec '
+            log.error('get_product_counts: Failed to convert file_spec '
                       +'"%s"', file_spec)
-            continue
+            return None
         products = pdsf.opus_products()
         _check_for_pdsfile_exception()
         if '' in products:
+            # This happens in some obscure cases where there are filenames
+            # in the product directories that aren't caught by a PdsFile regex
             file_list_str = '  '.join([x.abspath for x in products[''][0]])
-            log.error('get_pds_products_by_type: Empty opus_product key for '
-                      +'files: '+file_list_str)
+            log.error('get_product_counts: Empty opus_product key for '
+                      +'files: %s', file_list_str)
             del products['']
             _check_for_pdsfile_exception()
 
-        # Keep a running list of all products by type
-        for (product_type, list_of_sublists) in products.items():
+        for product_type, list_of_sublists in products.items():
+            add_to_total = False
             if product_types == ['all'] or product_type[2] in product_types:
-                list_of_sublists = _pdsfile_extract_version(list_of_sublists)
-                flat_list = _pdsfile_iter_flatten(list_of_sublists)
-                products_by_type.setdefault(product_type, []).extend(flat_list)
+                add_to_total = True
+            list_of_sublists = _pdsfile_extract_version(list_of_sublists)
+            flat_list = _pdsfile_iter_flatten(list_of_sublists)
+            if len(flat_list) == 0:
+                continue
+
+            (product_count, download_size, files_added) = results_by_type.get(
+                                                   product_type,
+                                                   (0, 0, set()))
+            for pdsf in flat_list:
+                if pdsf.abspath in files_added:
+                    continue
+                files_added.add(pdsf.abspath)
+                download_size += pdsf.size_bytes
+                if add_to_total:
+                    total_size += pdsf.size_bytes
+                    total_count += 1
+            results_by_type[product_type] = (product_count+1, download_size,
+                                             files_added)
+
             _check_for_pdsfile_exception()
 
-    ret = OrderedDict()
-    for product_type in sorted(products_by_type, key=pds_products_sort_func):
-        ret[product_type] = products_by_type[product_type]
+    product_counts = []
+    for product_type in sorted(results_by_type, key=pds_products_sort_func):
+        (product_count, download_size,
+         files_added) = results_by_type[product_type]
+        product_counts.append((product_type, product_count,
+                               len(files_added), download_size))
 
     _check_for_pdsfile_exception()
 
-    return ret
-
-
-def get_product_counts(products_by_type):
-    size = 0
-    count = 0
-    num_products = OrderedDict()
-    for product_type, products in products_by_type.items():
-        num_products[product_type] = len(products)
-        for pdsf in products:
-            size += pdsf.size_bytes
-            count += 1
-
-    _check_for_pdsfile_exception()
-
-    return size, count, num_products
+    return total_size, total_count, product_counts
 
 
 def get_pds_products(opus_id_list=None, file_specs=None,
@@ -212,6 +237,10 @@ def get_pds_products(opus_id_list=None, file_specs=None,
                       +'in obs_general', str(opus_id_list))
             return None
         file_specs = [x['primary_file_spec'] for x in res]
+        if len(opus_id_list) != len(file_specs):
+            log.error('get_pds_products: Failed to find some opus_ids "%s" '
+                      +'in obs_general', str(opus_id_list))
+            return None
 
     # you can ask this function for url paths or disk paths
     if loc_type == 'url':

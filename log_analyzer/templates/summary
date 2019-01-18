@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <base href="{{ api_host_url | safe }}" target="_blank">
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css">
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js"></script>
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.min.js"></script>
+
+<style>
+@media (min-width: 768px){
+  #left {
+    position: absolute;
+    top: 0px;
+    bottom: 0;
+    left: 0;
+    width: 25%;
+    overflow-y: scroll;
+    border-right: 1px solid blue;
+  }
+  #right {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    right: 0;
+    overflow-y: scroll;
+    width: 75%;
+  }
+}
+#left {
+  text-align: left;
+  height:100%;
+}
+#right {
+  height:100%;
+  text-align: left;
+}
+.SessionInfo {
+  display: none;
+}
+.SessionInfo td {
+  vertical-align:top;
+  padding-left:5px;
+  padding-right:5px;
+}
+.SessionLinkSelected {
+  background-color:yellow;
+}
+</style>
+</head>
+<body>
+
+<div class="container-fluid">
+<div class="row">
+<div class="col-sm-3" id="left">
+{% spaceless %}
+{% for host_info in host_infos %}
+    <span>{{ host_info.ip }} ({{ host_info.total_time }})</span>
+    {% if host_info.name %}<br><span>{{ host_info.name }}{% endif %}
+    <ul>
+        {% for session in host_info.sessions %}
+            <li><a href="#" class=SessionLink data-id="{{ session.id }}">{{ session.entries.0.log_entry.time | date:'Y/M/d H:i:s' }} ({{ session.duration }})</a></li>
+        {% endfor %}
+    </ul>
+{% endfor %}
+{% endspaceless %}
+</div>
+<div class="col-sm-9" id="right">
+{% spaceless %}
+{% for host_info in host_infos %}
+    {% for session in host_info.sessions %}
+        <div id="{{ session.id }}" class="SessionInfo">
+        <h3>{{ host_info.hostname }} at {{ session.entries.0.log_entry.time | date:'Y/M/d H:i:s O' }}</h3>
+        <ul class="list-unstyled">
+        {% for type, slug_info in session.slug_info %}
+            <li>
+            <b>{{ type | capfirst }} Slugs: </b>
+            {% for slug_name, is_obsolete in slug_info %}
+                <span {% if is_obsolete %}class="text-danger"{% else %}class="text-dark"{% endif %}>{{ slug_name }}</span>
+                {% if not forloop.last %}<span>, </span>{% endif %}
+            {% empty %}
+                <i>none</i>
+            {% endfor %}
+            </li>
+        {% endfor %}
+        </ul>
+        <hr/>
+        <table>
+        {% for entry in session.entries %}
+            {% for line in entry.data %}
+                <tr>
+                {% if forloop.first %}
+                    {% if entry.opus_url %}
+                        <td><a href="{{ entry.opus_url | safe }}">{{ entry.relative_start_time }}</a></td>
+                    {% else %}
+                        <td>{{ entry.relative_start_time }}</td>
+                    {% endif %}
+                    <td><a data-toggle="tooltip" href="#" title="{{entry.target_url | safe}}">&bull;</td>
+                {% else %}
+                    <td></td><td></td>
+                {% endif %}
+                <td>{{ line }}</td>
+                </tr>
+            {% endfor %}
+        {% endfor %}
+        </table>
+        </div>
+    {% endfor %}
+{% endfor %}
+{% endspaceless %}
+</div>
+</div>
+</div>
+
+
+<script>
+
+$(document).ready(function(){
+    $('[data-toggle="tooltip"]').tooltip();
+
+    $('.SessionLink').click(function() {
+
+        $('.SessionLinkSelected').removeClass('SessionLinkSelected');
+        $(this).addClass('SessionLinkSelected');
+
+        var target_id = '#' + $(this).attr('data-id');
+        $('.SessionInfo').hide();
+        $(target_id).show()
+        $('#right').scrollTop(0)
+
+        return false;
+    })
+});
+</script>
+</body>
+</html>

@@ -27,10 +27,10 @@ var o_collections = {
          // check an input on selected products and images updates file_info
          $("#collection").on("click","#download_options input", function() {
              let add_to_url = o_collections.getDownloadFiltersChecked();
-             let url = "/opus/__collections/download/info.json?" + add_to_url + "&fmt=json";
+             let url = "/opus/__collections/download/view.json?" + add_to_url + "&fmt=json";
              $.getJSON(url, function(info) {
-                 $("#total_files").fadeOut().html(info["download_count"]).fadeIn();
-                 $("#total_download_size").fadeOut().html(info["download_size_pretty"]).fadeIn();
+                 $('#total_download_count').fadeOut().html(json['total_download_count']).fadeIn();
+                 $('#total_download_size').fadeOut().html(json['total_download_size_pretty']).fadeIn();
              });
          });
 
@@ -111,7 +111,7 @@ var o_collections = {
      },
 
      updateCartStatus: function(status) {
-         if (status.reqno < opus.lastCartRequestNo) {
+         if (status.reqno != null && status.reqno < opus.lastCartRequestNo) {
              return;
          }
          let count = status.count;
@@ -209,13 +209,11 @@ var o_collections = {
     emptyCollection: function() {
         // change indicator to zero and let the server know:
         // FIX ME - this is becoming a JSON
-        $.ajax({ url: "/opus/__collections/reset.html",
-            success: function(html){
-                $("#collection_count").html("0");
-                opus.colls_pages = 0;
-                opus.collection_change = true;
-                o_collections.getCollectionsTab();
-            },
+        $.getJSON("/opus/__collections/reset.json", function(data) {
+            $("#collection_count").html("0");
+            opus.colls_pages = 0;
+            opus.collection_change = true;
+            o_collections.getCollectionsTab();
         });
 
         $(".thumbnail-container.in").removeClass("in");

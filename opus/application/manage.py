@@ -9,19 +9,7 @@ if __name__ == "__main__":
     # pass in livetest to run against actual server
     argv = sys.argv
     settings.TEST_RESULT_COUNTS_AGAINST_INTERNAL_DB = False
-    testing_target = "dev"
-    settings.TEST_ApiReturnFormatTests_GO_LIVE = False
-    settings.TEST_ApiReturnFormatTests_LIVE_TARGET = testing_target
-    settings.TEST_ApiVimsDownlinksTests_GO_LIVE = False
-    settings.TEST_ApiVimsDownlinksTests_LIVE_TARGET = testing_target
-    settings.TEST_ApiMetadataTests_GO_LIVE = False
-    settings.TEST_ApiMetadataTests_LIVE_TARGET = testing_target
-    settings.TEST_ApiResultsTests_GO_LIVE = False
-    settings.TEST_ApiResultsTests_LIVE_TARGET = testing_target
-    settings.TEST_ApiResultCountsTests_GO_LIVE = False
-    settings.TEST_ApiResultCountsTests_LIVE_TARGET = testing_target
-    settings.TEST_ApiSearchTests_GO_LIVE = False
-    settings.TEST_ApiSearchTests_LIVE_TARGET = testing_target
+    settings.TEST_GO_LIVE = None
 
     for cmd_no, command in enumerate(argv):
         if command == 'all':

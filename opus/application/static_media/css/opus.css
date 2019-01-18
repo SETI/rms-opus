@@ -817,4 +817,56 @@ border-radius: 6px;
 -webkit-box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.1);
 background-image: -webkit-gradient(linear, left bottom, left top, from(#30cfd0), to(#330867));
 background-image: -webkit-linear-gradient(bottom, #30cfd0 0%, #330867 100%);
-background-image: linear-gradient(to top, #30cfd0 0%, #330867 100%); }
+background-image: linear-gradient(to top, #30cfd0 0%, #330867 100%);
+}
+
+
+
+input[type="text"].search_input_original {
+    border: 1px solid #D5D5D5;
+}
+
+input[type="text"].search_input_valid {
+    border: 3px solid #9EEEBB;
+    margin: -2px;
+}
+
+input[type="text"].search_input_invalid {
+    border: 3px solid #FFD700;
+    background-color: #EEECEC;
+    margin: -2px;
+}
+
+input[type="text"].search_input_invalid_no_focus {
+    background-color: #F6AFAF;
+    border: 3px solid #F6AFAF;
+    margin: -2px;
+}
+
+.search_overlay {
+    opacity: 0.5;
+    pointer-events: none;
+}
+
+/* Make drop down scrollable vertically */
+.ui-autocomplete {
+    max-height: 200px;
+    overflow-y: auto;
+    overflow-x: hidden;
+}
+
+.ui-helper-hidden-accessible {
+    display:none;
+}
+
+ul.ui-autocomplete {
+    list-style: none;
+}
+
+ul.ui-autocomplete li a {
+    text-decoration: none;
+}
+
+.list-header, .list-footer {
+    background-color: #F9F6F6;
+}

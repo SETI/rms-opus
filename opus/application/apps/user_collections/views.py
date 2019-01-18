@@ -6,14 +6,13 @@
 # The (private) API interface for adding and removing items from the collection
 # and creating download .zip and .csv files.
 #
-#    Format: __collections/view.html
+#    Format: __collections/view.(html|json)
 #    Format: __collections/status.json
 #    Format: __collections/data.csv
-#    Format: __collections/(?P<action>[add|remove|addrange|removerange|addall]+).json
+#    Format: __collections/(?P<action>add|remove|addrange|removerange|addall).json
 #    Format: __collections/reset.html
-#    Format: __collections/download/info.json
 #    Format: __collections/download.zip
-#    Format: __zip/(?P<opus_id>[-\w]+).(?P<fmt>[json]+)
+#    Format: __zip/(?P<opus_id>[-\w]+).json
 #
 ################################################################################
 
@@ -37,9 +36,13 @@ from django.views.decorators.cache import never_cache
 
 from hurry.filesize import size as nice_file_size
 
-from results.views import get_data, get_page, get_all_in_collection
+from results.views import (get_data,
+                           get_search_results_chunk,
+                           get_all_in_collection)
 from search.models import ObsGeneral
-from search.views import get_param_info_by_slug
+from search.views import (get_param_info_by_slug,
+                          url_to_search_params,
+                          get_user_query_table)
 from user_collections.models import Collections
 from tools.app_utils import *
 from tools.file_utils import *
@@ -55,27 +58,37 @@ log = logging.getLogger(__name__)
 
 
 @never_cache
-def api_view_collection(request):
+def api_view_collection(request, fmt):
     """Return the OPUS-specific left side of the "Selections" page as HTML.
 
     This includes the number of files selected, total size of files selected,
     and list of product types with their number. This returns information about
-    ALL files and product types, ignoring any user choices. Choices are handled
-    in the OPUS UI.
+    ALL files and product types, ignoring any user choices. However, there is
+    an optional types=<PRODUCT_TYPES> parameter which, if specified, causes
+    product types not listed to return "0" for number of products and sizes.
 
     This is a PRIVATE API.
 
-    Format: __collections/view.html
+    Format: __collections/view.(html|json)
+    Arguments: types=<PRODUCT_TYPES>
     """
     api_code = enter_api_call('api_view_collection', request)
 
     session_id = get_session_id(request)
 
-    (download_size, download_count,
-     product_counts) = _get_download_info(['all'], session_id)
+    product_types_str = request.GET.get('types', 'all')
+    product_types = product_types_str.split(',')
+
+    (total_download_size, total_download_count,
+     product_counts) = _get_download_info(product_types, session_id)
 
     product_cats = []
-    for product_type in product_counts:
+    product_cat_list = []
+    for (product_type, product_count,
+         download_count, download_size) in product_counts:
+        # product_type format is:
+        #   ('Cassini ISS', 0, 'coiss-raw', 'Raw image')
+        #   ('browse', 40, 'browse-full', 'Browse Image (full-size)')
         name = product_type[0]
         pretty_name = name
         if name == 'standard':
@@ -91,17 +104,31 @@ def api_view_collection(request):
         key = (name, pretty_name)
         if key not in product_cats:
             product_cats.append(key)
+            cur_product_list = []
+            product_cat_list.append((pretty_name, cur_product_list))
+        product_dict_entry = {
+            'slug_name': product_type[2],
+            'product_type': product_type[3],
+            'product_count': product_count,
+            'download_count': download_count,
+            'download_size': download_size,
+            'download_size_pretty': nice_file_size(download_size)
+        }
+        cur_product_list.append(product_dict_entry)
 
     context = {
-        'download_count': download_count,
-        'download_size': download_size,
-        'download_size_pretty':  nice_file_size(download_size),
-        'product_counts': product_counts,
-        'product_cats': product_cats
+        'total_download_count': total_download_count,
+        'total_download_size': total_download_size,
+        'total_download_size_pretty':  nice_file_size(total_download_size),
+        'product_cat_list': product_cat_list
     }
 
-    template='user_collections/collections.html'
-    ret = render(request, template, context)
+    if fmt == 'json':
+        ret = json_response(context)
+    else:
+        assert fmt == 'html'
+        template = 'user_collections/collections.html'
+        ret = render(request, template, context)
 
     exit_api_call(api_code, ret)
     return ret
@@ -111,7 +138,7 @@ def api_view_collection(request):
 def api_collection_status(request):
     """Return the number of items in a collection.
 
-    It is used to update the "Selection <N>" tab in the OPUS UI.
+    It is used to update the "Selections <N>" tab in the OPUS UI.
 
     This is a PRIVATE API.
 
@@ -123,16 +150,15 @@ def api_collection_status(request):
 
     count = _get_collection_count(session_id)
 
-    # XXX What is the point of expected_request_no?
-    expected_request_no = request.session.get('expected_request_no', 1)
+    reqno = request.session.get('reqno', None)
 
-    ret = HttpResponse(json.dumps({'count': count,
-                                   'expected_request_no': expected_request_no}))
+    ret = json_response({'count': count,
+                         'reqno': reqno})
     exit_api_call(api_code, ret)
     return ret
 
 
-def api_get_collection_csv(request, fmt=None):
+def api_get_collection_csv(request):
     """Returns a CSV file of the current collection.
 
     The CSV file contains the columns specified in the request.
@@ -144,7 +170,7 @@ def api_get_collection_csv(request, fmt=None):
     """
     api_code = enter_api_call('api_get_collection_csv', request)
 
-    ret = _get_collection_csv(request, fmt, api_code=api_code)
+    ret = _get_collection_csv(request, 'csv', api_code=api_code)
 
     exit_api_call(api_code, ret)
     return ret
@@ -157,12 +183,12 @@ def api_edit_collection(request, **kwargs):
     This is a PRIVATE API.
 
     Format: __collections/
-            (?P<action>[add|remove|addrange|removerange|addall]+).json
+            (?P<action>add|remove|addrange|removerange|addall).json
     Arguments: opus_id=<ID>
                request=<N>
-               expected_request_no=<N>
                addrange=<OPUS_ID>,<OPUS_ID>
                removerange=<OPUS_ID>,<OPUS_ID>
+               reqno=<N>
 
     Returns the new number of items in the collection.
     """
@@ -182,22 +208,9 @@ def api_edit_collection(request, **kwargs):
         opus_id = request.GET.get('opus_id', None)
         if opus_id is None:
             json_data = {'err': 'No observations specified'}
-            ret = HttpResponse(json.dumps(json_data))
+            ret = json_response(json_data)
             exit_api_call(api_code, ret)
             return ret
-
-    if reqno is None: # XXX Is this needed?
-        try:
-            reqno = kwargs['reqno']
-        except KeyError:
-            json_data = {'err': 'No request number received'}
-            ret = HttpResponse(json.dumps(json_data))
-            exit_api_call(api_code, ret)
-            return ret
-
-    reqno = int(reqno)
-
-    expected_request_no = request.session.get('expected_request_no', 1)
 
     if action == 'add':
         _add_to_collections_table(opus_id, session_id)
@@ -206,8 +219,7 @@ def api_edit_collection(request, **kwargs):
         _remove_from_collections_table(opus_id, session_id)
 
     elif action in ['addrange', 'removerange']:
-        # This returns a boolean indicating success which we ignore XXX
-        _edit_collection_range(request, session_id, action)
+        _edit_collection_range(request, session_id, action, api_code)
 
     elif action == 'addall':
         _edit_collection_addall(request, **kwargs)
@@ -242,7 +254,7 @@ def api_reset_session(request):
 
     This is a PRIVATE API.
 
-    Format: __collections/reset.html
+    Format: __collections/reset.json
     """
     api_code = enter_api_call('api_reset_session', request)
 
@@ -250,72 +262,32 @@ def api_reset_session(request):
 
     sql = 'DELETE FROM '+connection.ops.quote_name('collections')
     sql += ' WHERE session_id=%s'
+    values = [session_id]
+    log.debug('api_reset_session SQL: %s %s', sql, values)
     cursor = connection.cursor()
-    cursor.execute(sql, [session_id])
+    cursor.execute(sql, values)
 
     request.session.flush()
     session_id = get_session_id(request) # Creates a new session id
-    ret = HttpResponse('session reset')
+    ret = json_response('session reset')
     exit_api_call(api_code, ret)
     return ret
 
 
 @never_cache
-def api_get_download_info(request):
-    """Return count, size, and product_type info for selected product types.
-
-    This is very similar to api_view_collection, except instead of returning
-    the HTML for the entire left side of the Selections page, it just returns
-    the updated sizes and counts. This is used by the OPUS UI when the user
-    clicks to (de)select a product type.
-
-    This is a PRIVATE API.
-
-    Format: __collections/download/info.json
-    Arguments: types=<PRODUCT_TYPES>
-    """
-    api_code = enter_api_call('api_get_download_info', request)
-
-    session_id = get_session_id(request)
-
-    product_types_str = request.GET.get('types', '')
-    product_types = product_types_str.split(',')
-
-    # Since we are assuming this is coming from user interaction
-    # if no filters exist then none of this product type is wanted
-    if product_types == ['none']:
-        product_types = []
-
-    (download_size, download_count,
-     product_counts) = _get_download_info(product_types, session_id)
-
-    context = {
-        'download_count': download_count,
-        'download_size':  download_size,
-        'download_size_pretty': nice_file_size(download_size),
-        'product_counts': {x[0][2]: x[1] for x in product_counts}
-    }
-
-    ret = HttpResponse(json.dumps(context), content_type='application/json')
-    exit_api_call(api_code, ret)
-    return ret
-
-
-@never_cache
-def api_create_download(request, opus_ids=None, fmt=None):
+def api_create_download(request, opus_ids=None):
     """Creates a zip file of all items in the collection or the given OPUS ID.
 
     This is a PRIVATE API.
 
     Format: __collections/download.zip
-        or: __zip/(?P<opus_id>[-\w]+).(?P<fmt>[json]+)
+        or: __zip/(?P<opus_id>[-\w]+).json
     Arguments: types=<PRODUCT_TYPES>
     """
     api_code = enter_api_call('api_create_download', request)
 
     session_id = get_session_id(request)
 
-    fmt = request.GET.get('fmt', 'raw')
     product_types = request.GET.get('types', 'none')
     product_types = product_types.split(',')
 
@@ -419,10 +391,7 @@ def api_create_download(request, opus_ids=None, fmt=None):
         log.error('No files found for download cart %s', manifest_file_name)
         raise Http404('No files found')
 
-    if fmt == 'json':
-        ret = HttpResponse(json.dumps(zip_url), content_type='application/json')
-    else:
-        ret = HttpResponse(zip_url)
+    ret = json_response(zip_url)
 
     exit_api_call(api_code, ret)
     return ret
@@ -441,20 +410,20 @@ def _get_download_info(product_types, session_id):
     product_types.
 
     Returns:
-        download_size       (bytes)
-        download_count      (total number of files)
-        product_counts      (indexed by product_type)
+        total_download_size       (total bytes)
+        total_download_count      (total number of files)
+        product_counts            (list of product_count info;
+                                   see get_product_counts)
     """
     opus_ids = (Collections.objects.filter(session_id__exact=session_id)
                 .values_list('opus_id'))
     opus_id_list = [x[0] for x in opus_ids]
 
-    products_by_type = get_pds_products_by_type(opus_id_list,
-                                                product_types=product_types)
-    (download_size, download_count,
-     product_counts) = get_product_counts(products_by_type)
+    (total_download_size, total_download_count,
+     product_counts) = get_product_counts(opus_id_list,
+                                          product_types=product_types)
 
-    return download_size, download_count, product_counts
+    return total_download_size, total_download_count, product_counts
 
 
 def _get_collection_count(session_id):
@@ -463,16 +432,14 @@ def _get_collection_count(session_id):
     return count
 
 
-def _get_collection_csv(request, fmt=None, api_code=None):
+def _get_collection_csv(request, api_code=None):
     "Create and return a CSV file based on user column and selection."
     slugs = request.GET.get('cols', settings.DEFAULT_COLUMNS)
-    (page_no, limit, page, opus_ids, file_specs,
-     ring_obs_ids, order) = get_page(request, use_collections=True,
-                                     collections_page='all',
-                                     api_code=api_code)
-
-    if fmt == 'raw':
-        return slugs.split(','), page
+    (page_no, start_obs, limit, page, order, aux) = get_search_results_chunk(
+                                                     request,
+                                                     use_collections=True,
+                                                     limit='all',
+                                                     api_code=api_code)
 
     column_labels = []
     for slug in slugs.split(','):
@@ -512,12 +479,13 @@ def _add_to_collections_table(opus_id_list, session_id):
     res = (ObsGeneral.objects.filter(opus_id__in=opus_id_list)
            .values_list('opus_id', 'id'))
     values = [(session_id, id, opus_id) for opus_id, id in res]
-    # Get rid of one that's already there - we can't use REPLACE INTO because
-    # we don't have a single unique key to use
-    for opus_id in opus_id_list:
-        _remove_from_collections_table(opus_id, session_id)
-    sql = 'INSERT INTO '+connection.ops.quote_name('collections')
-    sql += ' (session_id, obs_general_id, opus_id) VALUES (%s, %s, %s)'
+    sql = 'REPLACE INTO '+connection.ops.quote_name('collections')
+    sql += ' ('
+    sql += connection.ops.quote_name('session_id')+','
+    sql += connection.ops.quote_name('obs_general_id')+','
+    sql += connection.ops.quote_name('opus_id')+')'
+    sql += ' VALUES (%s, %s, %s)'
+    log.debug('_add_to_collections_table SQL: %s %s', sql, values)
     cursor.executemany(sql, values)
 
 
@@ -529,48 +497,122 @@ def _remove_from_collections_table(opus_id_list, session_id):
     values = [(session_id, opus_id) for opus_id in opus_id_list]
     sql = 'DELETE FROM '+connection.ops.quote_name('collections')
     sql += ' WHERE session_id=%s AND opus_id=%s'
+    log.debug('_remove_from_collections_table SQL: %s %s', sql, values)
     cursor.executemany(sql, values)
 
 
-def _edit_collection_range(request, session_id, action):
+def _edit_collection_range(request, session_id, action, api_code):
     "Add or remove a range of opus_ids based on the current sort order."
     id_range = request.GET.get('range', False)
     if not id_range:
-        log.error('Got to _edit_collection_range but no range given')
-        log.error('... %s', str(request.GET))
-        return False
+        log.error('Got to _edit_collection_range but no range given: %s',
+                  str(request.GET))
+        return
 
     ids = id_range.split(',')
     if len(ids) != 2:
-        return False
-    (min_id, max_id) = ids
+        return
 
-    data = get_data(request, 'raw', cols='opusid')
-    if data is None:
-        return False
+    # Find the index in the cache table for the min and max opus_ids
+    (selections, extras) = url_to_search_params(request.GET)
+    if selections is None:
+        log.error('_edit_collection_range: Could not find selections for'
+                  +' request %s', str(request.GET))
+        return none_return
 
-    selected_range = []
-    in_range = False  # loop has reached the range selected
+    user_query_table = get_user_query_table(selections, extras,
+                                            api_code=api_code)
+    if not user_query_table:
+        log.error('_edit_collection_range: get_user_query_table failed '
+                  +'*** Selections %s *** Extras %s',
+                  str(selections), str(extras))
+        return
 
-    opus_id_key = 0
+    cursor = connection.cursor()
 
-    for row in data['page']:
-        opus_id = row[opus_id_key]
-        if opus_id == min_id:
-            in_range = True
-        if in_range:
-            selected_range.append(opus_id)
-        if in_range and opus_id == max_id:
-            break
+    sort_orders = []
+    for opus_id in ids:
+        sql = 'SELECT '
+        sql += connection.ops.quote_name('sort_order')
+        sql += ' FROM '
+        sql += connection.ops.quote_name(user_query_table)
+        sql += ' RIGHT JOIN '
+        sql += connection.ops.quote_name('obs_general')
+        sql += ' ON '
+        sql += connection.ops.quote_name(user_query_table)+'.'
+        sql += connection.ops.quote_name('id')+'='
+        sql += connection.ops.quote_name('obs_general')+'.'
+        sql += connection.ops.quote_name('id')
+        sql += ' WHERE '
+        sql += connection.ops.quote_name('obs_general')+'.'
+        sql += connection.ops.quote_name('opus_id')+'=%s'
+        values = [opus_id]
+        log.debug('_edit_collection_range SQL: %s %s', sql, values)
+        cursor.execute(sql, values)
+        results = cursor.fetchall()
+        if len(results) == 0:
+            log.error('_edit_collection_range: No OPUS ID "%s" in obs_general',
+                      opus_id)
+            return
+        sort_orders.append(results[0][0])
 
-    if not selected_range:
-        log.error('_edit_collection_range failed to find range: %s', id_range)
-    elif action == 'addrange':
-        _add_to_collections_table(selected_range, session_id)
+    if action == 'addrange':
+        sql = 'REPLACE INTO '+connection.ops.quote_name('collections')
+        sql += ' ('
+        sql += connection.ops.quote_name('session_id')+','
+        sql += connection.ops.quote_name('obs_general_id')+','
+        sql += connection.ops.quote_name('opus_id')+')'
+        sql += ' SELECT %s,'
+        sql += connection.ops.quote_name('obs_general')+'.'
+        sql += connection.ops.quote_name('id')+','
+        sql += connection.ops.quote_name('obs_general')+'.'
+        sql += connection.ops.quote_name('opus_id')
+        sql += ' FROM '
+        sql += connection.ops.quote_name('obs_general')
+        sql += ' INNER JOIN '
+        sql += connection.ops.quote_name(user_query_table)
+        sql += ' ON '
+        sql += connection.ops.quote_name(user_query_table)+'.'
+        sql += connection.ops.quote_name('id')+'='
+        sql += connection.ops.quote_name('obs_general')+'.'
+        sql += connection.ops.quote_name('id')
+        sql += ' WHERE '
+        sql += connection.ops.quote_name(user_query_table)+'.'
+        sql += connection.ops.quote_name('sort_order')
+        sql += ' >= '+str(sort_orders[0])+' AND '
+        sql += connection.ops.quote_name(user_query_table)+'.'
+        sql += connection.ops.quote_name('sort_order')
+        sql += ' <= '+str(sort_orders[1])
+        values = [session_id]
+        log.debug('_edit_collection_range SQL: %s %s', sql, values)
+        cursor.execute(sql, values)
+
     elif action == 'removerange':
-        _remove_from_collections_table(selected_range, session_id)
+        sql = 'DELETE '
+        sql += connection.ops.quote_name('collections')
+        sql += ' FROM '+connection.ops.quote_name('collections')
+        sql += ' INNER JOIN '
+        sql += connection.ops.quote_name(user_query_table)
+        sql += ' ON '
+        sql += connection.ops.quote_name(user_query_table)+'.'
+        sql += connection.ops.quote_name('id')+'='
+        sql += connection.ops.quote_name('collections')+'.'
+        sql += connection.ops.quote_name('obs_general_id')
+        sql += ' WHERE '
+        sql += connection.ops.quote_name(user_query_table)+'.'
+        sql += connection.ops.quote_name('sort_order')
+        sql += ' >= '+str(sort_orders[0])+' AND '
+        sql += connection.ops.quote_name(user_query_table)+'.'
+        sql += connection.ops.quote_name('sort_order')
+        sql += ' <= '+str(sort_orders[1])
+        values = []
+        log.debug('_edit_collection_range SQL: %s %s', sql, values)
+        cursor.execute(sql, values)
 
-    return True
+    else:
+        assert False
+
+    return
 
 
 def _edit_collection_addall(request, **kwargs):
@@ -641,8 +683,14 @@ def _zip_filename(opus_id=None):
 
 def _create_csv_file(request, csv_file_name, api_code=None):
     "Create a CSV file containing the collection data."
-    slug_list, all_data = _get_collection_csv(request, fmt='raw',
-                                              api_code=api_code)
+    slugs = request.GET.get('cols', settings.DEFAULT_COLUMNS)
+    (page_no, start_obs, limit, page, order) = get_search_results_chunk(
+                                                     request,
+                                                     use_collections=True,
+                                                     limit='all',
+                                                     api_code=api_code)
+
+    slug_list = slugs.split(',')
     column_labels = []
     for slug in slug_list:
         pi = get_param_info_by_slug(slug)
@@ -661,7 +709,7 @@ def _create_csv_file(request, csv_file_name, api_code=None):
     with open(csv_file_name, 'a') as csv_file:
         wr = csv.writer(csv_file)
         wr.writerow(column_labels)
-        wr.writerows(all_data)
+        wr.writerows(page)
 
 
 # XXX We need to get MD5 checksums from PdsFile instead of computing them here.

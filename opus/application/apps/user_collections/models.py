@@ -11,7 +11,3 @@ class Collections(models.Model):
     class Meta:
         managed = False
         db_table = 'collections'
-
-    def save(self, *args, **kwargs):
-        #check if thing to be saved exists, replace into instead ... or something()
-        super(Collections, self).save(*args, **kwargs) # Call the "real" save() method.

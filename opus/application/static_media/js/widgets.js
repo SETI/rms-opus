@@ -65,7 +65,6 @@ var o_widgets = {
         var slug_no_num;
         try {
             slug_no_num = slug.match(/(.*)[1|2]/)[1];
-
         } catch (e) {
             slug_no_num = slug;
         }
@@ -96,12 +95,22 @@ var o_widgets = {
         delete opus.extras['qtype-'+slug_no_num];
         delete opus.extras['z-'+slug_no_num];
 
-        var selector = "li [data-slug='"+slug+"']";
-        o_menu.markMenuItem(selector, "unselect");
+        o_search.allNormalizedApiCall().then(function(normalizedData) {
+            if (normalizedData.reqno < opus.lastAllNormalizeRequestNo) {
+                return;
+            }
+            o_search.validateRangeInput(normalizedData);
 
-        o_hash.updateHash();
-        o_widgets.updateWidgetCookies();
-
+            if(opus.allInputsValid) {
+                $("input.RANGE").removeClass("search_input_valid");
+                $("input.RANGE").removeClass("search_input_invalid");
+                $("input.RANGE").addClass("search_input_original");
+                $("#sidebar").removeClass("search_overlay");
+                $("#result_count").text(o_utils.addCommas(opus.result_count));
+            }
+            o_hash.updateHash(opus.allInputsValid);
+            o_widgets.updateWidgetCookies();
+        });
     },
 
     widgetDrop: function(obj) {
@@ -458,7 +467,107 @@ var o_widgets = {
                       }
                     });
                 }
+             }
 
+             // If we have a string input widget open, initialize autocomplete for string input
+             let stringInputDropDown = $(`input[name="${slug}"].STRING`).autocomplete({
+                 minLength: 1,
+                 source: function(request, response) {
+                     let currentValue = request.term;
+                     let values = [];
+
+                     opus.lastRequestNo++;
+                     o_search.slugStringSearchChoicesReqno[slug] = opus.lastRequestNo;
+
+                     values.push(currentValue)
+                     opus.selections[slug] = values;
+                     let newHash = o_hash.updateHash(false);
+                     /*
+                     We are relying on URL order now to parse and get slugs before "&view" in the URL
+                     Opus will rewrite the URL when a URL is pasted, all the search related slugs would be moved ahead of "&view"
+                     Refer to hash.js getSelectionsFromHash and updateHash functions
+                     */
+                     let regexForHashWithSearchParams = /(.*)&view/;
+                     if(newHash.match(regexForHashWithSearchParams)) {
+                         newHash = newHash.match(regexForHashWithSearchParams)[1];
+                     }
+                     // Avoid calling api when some inputs are not valid
+                     if(!opus.allInputsValid) {
+                        return;
+                     }
+                     let url = `/opus/__api/stringsearchchoices/${slug}.json?` + newHash + "&reqno=" + opus.lastRequestNo;
+                     $.getJSON(url, function(stringSearchChoicesData) {
+                         if(stringSearchChoicesData["reqno"] < o_search.slugStringSearchChoicesReqno[slug]) {
+                             return;
+                         }
+
+                         if(stringSearchChoicesData["full_search"]) {
+                             o_search.searchMsg = "Results from entire database, not current search constraints"
+                         } else {
+                             o_search.searchMsg = "Results from current search constraints"
+                         }
+
+                         let hintsOfString = stringSearchChoicesData["choices"];
+                         o_search.truncatedResults = stringSearchChoicesData["truncated_results"];
+                         response(hintsOfString);
+                     });
+                 },
+                 focus: function(focusEvent, ui) {
+                     return false;
+                 },
+                 select: function(selectEvent, ui) {
+                     let displayValue = o_search.extractHtmlContent(ui.item.label);
+                     $(`input[name="${slug}"]`).val(displayValue);
+                     $(`input[name="${slug}"]`).trigger("change");
+                     // If an item in the list is selected, we update the hash with selected value
+                     // opus.selections[slug] = [displayValue];
+                     // o_hash.updateHash();
+                     return false;
+                 },
+             })
+             .keyup(function(keyupEvent) {
+                 /*
+                 When "enter" key is pressed:
+                 (1) autocomplete dropdown list is closed
+                 (2) change event is triggered if input is an empty string
+                 */
+                 if(keyupEvent.which === 13) {
+                     $(`input[name="${slug}"]`).autocomplete("close");
+                     let currentStringInputValue = $(`input[name="${slug}"]`).val().trim();
+                     if(currentStringInputValue === "") {
+                         $(`input[name="${slug}"]`).trigger("change");
+                     }
+                 }
+             })
+             .focusout(function(focusoutEvent) {
+                 let currentStringInputValue = $(`input[name="${slug}"]`).val().trim();
+                 if(currentStringInputValue === "") {
+                     $(`input[name="${slug}"]`).trigger("change");
+                 }
+             })
+             .data( "ui-autocomplete" );
+
+             if(stringInputDropDown) {
+                 // Add header and footer for dropdown list
+                 stringInputDropDown._renderMenu = function(ul, items) {
+                   let self = this;
+                   $.each(items, function(index, item) {
+                     self._renderItem(ul, item );
+                   });
+                   ul.prepend(`<li><div class="list-header">${o_search.searchMsg}</div></li>`);
+                   if(o_search.truncatedResults) {
+                     ul.append(`<li><div class="list-footer">${o_search.truncatedResultsMsg}</div></li>`);
+                   }
+                 };
+                 // Customized dropdown list item
+                 stringInputDropDown._renderItem = function(ul, item) {
+                   return $( "<li>" )
+                   .data( "ui-autocomplete-item", item )
+                   .attr( "data-value", item.value )
+                   // Need to wrap with <a> tag because of jquery-ui 1.10
+                   .append("<a>" + item.label + "</a>")
+                   .appendTo(ul);
+                 };
              }
 
              // add the spans that hold the hinting

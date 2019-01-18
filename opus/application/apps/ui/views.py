@@ -183,7 +183,8 @@ def api_get_widget(request, **kwargs):
     selections = {}
 
     if request and request.GET:
-        (selections, extras) = url_to_search_params(request.GET)
+        (selections, extras) = url_to_search_params(request.GET,
+                                                    allow_errors=True)
 
     addlink = request.GET.get('addlink', True) # suppresses the add_str link
     remove_str = '<a class="remove_input" href="">-</a>'
@@ -223,7 +224,10 @@ def api_get_widget(request, **kwargs):
 
         else: # param is constrained
             if form_type_func is None:
-                func = float
+                if form_type_format == 'd':
+                    func = int
+                else:
+                    func = float
             else:
                 if form_type_func in opus_support.RANGE_FUNCTIONS:
                     func = opus_support.RANGE_FUNCTIONS[form_type_func][0]
@@ -235,11 +239,11 @@ def api_get_widget(request, **kwargs):
             while key<length:
                 try:
                   form_vals[slug1] = func(selections[param1][key])
-                except (IndexError, KeyError, ValueError) as e:
+                except (IndexError, KeyError, ValueError, TypeError) as e:
                     form_vals[slug1] = None
                 try:
                     form_vals[slug2] = func(selections[param2][key])
-                except (IndexError, KeyError, ValueError) as e:
+                except (IndexError, KeyError, ValueError, TypeError) as e:
                     form_vals[slug2] = None
 
                 qtypes = request.GET.get('qtype-' + slug, False)
@@ -515,7 +519,8 @@ def _get_menu_labels(request, labels_view):
         filter = "display_results"
 
     if request and request.GET:
-        (selections, extras) = url_to_search_params(request.GET)
+        (selections, extras) = url_to_search_params(request.GET,
+                                                    allow_errors=True)
     else:
         selections = None
 

@@ -1,61 +1,56 @@
 <div class = "sidebar_wrapper scrollbar-morpheus-den pr-0">
-  <div id = "collections-sidebar">
-    <div id="collections_summary" class="well well-lg">
-      <h1>Your Selections</h1>
-      <!-- <p>Total Files: <span id="total_files">{{ download_count }}</span></p> -->
-      <p>Total Size (before zip): <span id="total_download_size">{{ download_size_pretty }}</span></p>
+	<div id = "collections-sidebar">
+		<div id="collections_summary" class="well well-lg">
+			<h1>Your Selections</h1>
+			<!-- <p>Total Files: <span id="total_files">{{ download_count }}</span></p> -->
+			<p>Total Size (before zip): <span id="total_download_size">{{ download_size_pretty }}</span></p>
 
-      <p><a id="download_csv" target="_blank" href="">Download CSV of Chosen Columns</a></p>
+			<p><a id="download_csv" target="_blank" href="">Download CSV of Chosen Columns</a></p>
 
-      <div>
-        <a id="create_zip_file" href="">
-          <button type="button" class="btn btn-sm btn-success">
-            Download Zipped Archive
-            <span class="spinner">&nbsp;&nbsp;&nbsp;&nbsp;</span>
-          </button>
-        </a>
-      </div>
+			<div>
+				<a id="create_zip_file" href="">
+					<button type="button" class="btn btn-sm btn-success">
+						Download Zipped Archive
+						<span class="spinner">&nbsp;&nbsp;&nbsp;&nbsp;</span>
+					</button>
+				</a>
+			</div>
 
-      <ul class="zipped_files"></ul>
+			<ul class="zipped_files"></ul>
 
-      <div>&nbsp;</div>
+			<div>&nbsp;</div>
 
-    	<div id="download_options">
-        {% for product_cat_short, product_cat_long in product_cats %}
-          <h4>{{ product_cat_long }}</h4>
-        	<ul id="product_types" class="list-inline">
-            {% for product_type, count in product_counts.items %}
-              {% if product_type.0 == product_cat_short %}
-                <li>
-                  <input type="checkbox" value="{{ product_type.2 }}"
-                    {% if count > 0 %}
-                      checked
-                    {% endif %}
-                  >
-                  <span
-                    {% if count == 0 %}
-                      class="fadey"
-                    {% endif %}
-                  >
-                    {{ product_type.3 }}
-                  </span>
-                  <!-- {% if count > 0 %}
-                    <span class="product_count hints">{{ count }}</span>
-        			    {% endif %} -->
-                </li>
-              {% endif %}
-        		{% endfor %}
-        	</ul>
-        {% endfor %}
-      </div>
-
-      <h3>
-        <a href="" id="empty_collection">
-          <button type="button" class="btn btn-sm btn-danger">
-            Remove All Selections
-          </button>
-        </a>
-      </h3>
-    </div>
-  </div>
+			<div id="download_options">
+				{% for product_cat, product_list in product_cat_list %}
+					<h4>{{ product_cat }}</h4>
+					<ul id="product_types" class="list-inline">
+						{% for product_info in product_list %}
+							<li>
+								<input type="checkbox" value="{{ product_info.slug_name }}"
+									{% if product_info.product_count > 0 %}
+										checked
+									{% endif %}
+								>
+								<span
+									{% if product_info.product_count == 0 %}
+										class="fadey"
+									{% endif %}
+								>
+								{{ product_info.product_type }}
+								<!-- ({{ product_info.product_count }}, {{ product_info.download_count }}, {{ product_info.download_size_pretty }}) -->
+								</span>
+							</li>
+						{% endfor %}
+					</ul>
+				{% endfor %}
+			</div>
+			<h3>
+				<a href="" id="empty_collection">
+					<button type="button" class="btn btn-sm btn-danger">
+						Remove All Selections
+					</button>
+				</a>
+			</h3>
+		</div>
+	</div>
 </div><!-- /collections_summary  -->

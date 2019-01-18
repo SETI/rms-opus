@@ -320,16 +320,27 @@ def populate_obs_mission_cassini_COCIRS_spacecraft_clock_count2(**kwargs):
     index_row = metadata['index_row']
     sc = index_row['SPACECRAFT_CLOCK_STOP_COUNT']
     sc = helper_fix_cassini_sclk(sc)
+    cassini_row = metadata['obs_mission_cassini_row']
+
+    # For CIRS only, there are some badly formatted clock counts
+    sc1 = cassini_row['spacecraft_clock_count1']
     if not sc.startswith('1/') or sc[2] == ' ':
         import_util.log_nonrepeating_warning(
             f'Badly formatted SPACECRAFT_CLOCK_STOP_COUNT "{sc}"')
-        return None
+        return sc1
     try:
         sc_cvt = opus_support.parse_cassini_sclk(sc)
     except Exception as e:
         import_util.log_nonrepeating_warning(
             f'Unable to parse Cassini SCLK "{sc}": {e}')
-        return None
+        return sc1
+
+    if sc1 is not None and sc_cvt < sc1:
+        import_util.log_warning(
+    f'spacecraft_clock_count1 ({sc1}) and spacecraft_clock_count2 ({sc_cvt}) '
+    +f'are in the wrong order - setting to count1')
+        sc_cvt = sc1
+
     return sc_cvt
 
 
