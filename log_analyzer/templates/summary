@@ -47,6 +47,9 @@
 .SessionLinkSelected {
   background-color:yellow;
 }
+.tooltip-inner {
+    text-align: left;
+}
 </style>
 </head>
 <body>
@@ -116,13 +119,12 @@
 
 <script>
 
-$(document).ready(function(){
+$(document).ready(function() {
     $('[data-toggle="tooltip"]')
         .tooltip()
         .click(function() { return false; })
 
     $('.SessionLink').click(function() {
-
         $('.SessionLinkSelected').removeClass('SessionLinkSelected');
         $(this).addClass('SessionLinkSelected');
 

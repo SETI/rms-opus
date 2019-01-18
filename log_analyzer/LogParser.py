@@ -41,9 +41,9 @@ class Entry(NamedTuple):
 class Session(NamedTuple):
     host_ip: IPv4Address
     entries: List[Entry]
-    id: str
     search_slug_list: List[Tuple[str, bool]]
     column_slug_list: List[Tuple[str, bool]]
+    id: str
 
     def start_time(self) -> datetime.datetime:
         return self.entries[0].log_entry.time
@@ -59,7 +59,6 @@ class HostInfo(NamedTuple):
     ip: IPv4Address
     name: Optional[str]
     sessions: List[Session]
-    id: str
 
     def hostname(self) -> str:
         return f'{self.name} ({self.ip})' if self.name else str(self.ip)
@@ -86,7 +85,7 @@ class LogParser:
         self._output = output
         self._api_host_url = api_host_url
         self._uses_html = uses_html
-        self._id_generator = (f'{value:X}' for value in itertools.count(2718281828))
+        self._id_generator = (f'{value:X}' for value in itertools.count(100))
 
     def run_batch_by_time(self, log_entries: List[LogEntry]) -> None:
         """
@@ -100,8 +99,7 @@ class LogParser:
 
         host_infos = [HostInfo(ip=session.host_ip,
                                name=self.__get_reverse_dns_from_ip(session.host_ip),  # may be None
-                               sessions=[session],
-                               id=next(self._id_generator))
+                               sessions=[session])
                       for session in all_sessions]
 
         self.__generate_batch_output(host_infos)
@@ -125,8 +123,7 @@ class LogParser:
             all_sessions = all_sessions[next_host_start:]
             host_infos.append(HostInfo(ip=this_host,
                                        name=self.__get_reverse_dns_from_ip(this_host),  # may be None
-                                       sessions=sessions,
-                                       id=next(self._id_generator)))
+                                       sessions=sessions))
         self.__generate_batch_output(host_infos)
 
     def show_slugs(self, log_entries: List[LogEntry]) -> None:
@@ -238,7 +235,7 @@ class LogParser:
 
                 current_session_entries = [create_session_entry(entry, entry_info, opus_url)]
 
-                # Keep on printing session information for as long as we have not reached a timeout.
+                # Keep on grabbing entries for as long as we have not reached a timeout.
                 session_end_time = session_start_time + self._session_timeout
                 while session_log_entries and session_log_entries[0].time <= session_end_time:
                     entry = session_log_entries.popleft()
@@ -252,9 +249,9 @@ class LogParser:
 
                 sessions.append(Session(host_ip=session_host_ip,
                                         entries=current_session_entries,
-                                        id=next(self._id_generator),
                                         search_slug_list=slug_info(session_info.session_search_slugs),
-                                        column_slug_list=slug_info(session_info.session_column_slugs)))
+                                        column_slug_list=slug_info(session_info.session_column_slugs),
+                                        id=next(self._id_generator)))
         return sessions
 
     def __generate_batch_output(self, host_infos: List[HostInfo]) -> None:
