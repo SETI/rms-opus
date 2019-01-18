@@ -105,10 +105,11 @@ def api_get_data_and_images(request):
 
     session_id = get_session_id(request)
 
-    (page_no, start_obs, limit, page, opus_ids, ring_obs_ids, file_specs,
-     order) = get_search_results_chunk(request,
+    (page_no, start_obs, limit, page, order, aux) = get_search_results_chunk(
+                                       request,
                                        prepend_cols='opusid',
                                        append_cols='**previewimages',
+                                       return_opusids=True,
                                        api_code=api_code)
     if page is None:
         ret = Http404('Could not find page')
@@ -117,6 +118,7 @@ def api_get_data_and_images(request):
 
     preview_jsons = [json.loads(x[-1]) for x in page]
 
+    opus_ids = aux['opus_ids']
     image_list = get_pds_preview_images(opus_ids, preview_jsons,
                                         ['thumb', 'small', 'med', 'full'])
 
@@ -414,8 +416,11 @@ def api_get_images_by_size(request, size, fmt):
 
     session_id = get_session_id(request)
 
-    (page_no, start_obs, limit, page, opus_ids, ring_obs_ids, file_specs,
-     order) = get_search_results_chunk(request, cols='opusid,**previewimages',
+    (page_no, start_obs, limit, page, order, aux) = get_search_results_chunk(
+                                       request,
+                                       cols='opusid,**previewimages',
+                                       return_opusids=True,
+                                       return_ringobsids=True,
                                        api_code=api_code)
     if page is None:
         ret = Http404('Could not find page')
@@ -423,6 +428,7 @@ def api_get_images_by_size(request, size, fmt):
         raise ret
 
     preview_jsons = [json.loads(x[1]) for x in page]
+    opus_ids = aux['opus_ids']
     image_list = get_pds_preview_images(opus_ids, preview_jsons, [size])
 
     if not image_list:
@@ -430,11 +436,11 @@ def api_get_images_by_size(request, size, fmt):
                   str(opus_ids[:50]))
 
     # Backwards compatibility
+    ring_obs_ids = aux['ring_obs_ids']
     ring_obs_id_dict = {}
     for i in range(len(opus_ids)):
         ring_obs_id_dict[opus_ids[i]] = ring_obs_ids[i]
 
-    collection_opus_ids = get_all_in_collection(request)
     for image in image_list:
         image['ring_obs_id'] = ring_obs_id_dict[image['opus_id']]
         if size+'_alt_text' in image:
@@ -492,23 +498,32 @@ def api_get_images(request, fmt):
 
     session_id = get_session_id(request)
 
-    (page_no, start_obs, limit, page, opus_ids, ring_obs_ids, file_specs,
-     order) = get_search_results_chunk(request, cols='opusid,**previewimages',
+    (page_no, start_obs, limit, page, order, aux) = get_search_results_chunk(
+                                       request,
+                                       cols='opusid,**previewimages',
+                                       return_opusids=True,
+                                       return_ringobsids=True,
                                        api_code=api_code)
     if page is None:
         ret = Http404('Could not find page')
         exit_api_call(api_code, ret)
         raise ret
 
+    preview_jsons = [json.loads(x[1]) for x in page]
+
+    opus_ids = aux['opus_ids']
+    image_list = get_pds_preview_images(opus_ids, preview_jsons,
+                                        ['thumb', 'small', 'med', 'full'])
+
+    if not image_list:
+        log.error('api_get_images: No image found for: %s',
+                  str(opus_ids[:50]))
+
     # Backwards compatibility
+    ring_obs_ids = aux['ring_obs_ids']
     ring_obs_id_dict = {}
     for i in range(len(opus_ids)):
         ring_obs_id_dict[opus_ids[i]] = ring_obs_ids[i]
-
-    preview_jsons = [json.loads(x[1]) for x in page]
-
-    image_list = get_pds_preview_images(opus_ids, preview_jsons,
-                                        ['thumb', 'small', 'med', 'full'])
 
     collection_opus_ids = get_all_in_collection(request)
     for image in image_list:
@@ -767,8 +782,10 @@ def get_data(request, fmt, cols=None, api_code=None):
     if cols is None:
         cols = request.GET.get('cols', settings.DEFAULT_COLUMNS)
 
-    (page_no, start_obs, limit, page, opus_ids, file_specs,
-     ring_obs_ids, order) = get_search_results_chunk(request, cols=cols,
+    (page_no, start_obs, limit, page, order, aux) = get_search_results_chunk(
+                                                     request,
+                                                     cols=cols,
+                                                     return_opusids=True,
                                                      api_code=api_code)
 
     if page is None:
@@ -799,13 +816,14 @@ def get_data(request, fmt, cols=None, api_code=None):
     if request.is_ajax():
         # Find the members of user collection in this page
         # for pre-filling checkboxes
+        opus_ids = aux['opus_ids']
         collection = get_collection_in_page(opus_ids, session_id)
 
-    data = {'limit':   limit,
-            'page':    page,
-            'order':   order,
-            'count':   len(page),
-            'labels':  labels,
+    data = {'limit':    limit,
+            'page':     page,
+            'order':    order,
+            'count':    len(page),
+            'labels':   labels,
             'columns':  labels # Backwards compatibility with external apps
            }
 
@@ -817,17 +835,20 @@ def get_data(request, fmt, cols=None, api_code=None):
     if fmt == 'raw':
         ret = data
     ret = response_formats(data, fmt, template='results/data.html',
-                          id_index=id_index,
-                          labels=labels, checkboxes=checkboxes,
-                          collection=collection, order=order)
+                           id_index=id_index,
+                           labels=labels, checkboxes=checkboxes,
+                           collection=collection, order=order)
     return ret
 
 
 def get_search_results_chunk(request, use_collections=None,
                              cols=None, prepend_cols=None, append_cols=None,
-                             limit=None, api_code=None):
+                             limit=None,
+                             return_opusids=False, return_ringobsids=False,
+                             return_filespecs=False,
+                             api_code=None):
     """Return a page of results."""
-    none_return = (None, None, None, None, None, None, None, None)
+    none_return = (None, None, None, None, None, {})
 
     session_id = get_session_id(request)
 
@@ -892,15 +913,18 @@ def get_search_results_chunk(request, use_collections=None,
 
     added_extra_columns = 0
     tables.add('obs_general') # We must have obs_general since it owns the ids
-    if 'obs_general.opus_id' not in column_names:
-        column_names.append('obs_general.opus_id')
-        added_extra_columns += 1 # So we know to strip it off later
-    if 'obs_general.ring_obs_id' not in column_names:
-        column_names.append('obs_general.ring_obs_id')
-        added_extra_columns += 1 # So we know to strip it off later
-    if 'obs_general.primary_file_spec' not in column_names:
-        column_names.append('obs_general.primary_file_spec')
-        added_extra_columns += 1 # So we know to strip it off later
+    if return_opusids:
+        if 'obs_general.opus_id' not in column_names:
+            column_names.append('obs_general.opus_id')
+            added_extra_columns += 1 # So we know to strip it off later
+    if return_ringobsids:
+        if 'obs_general.ring_obs_id' not in column_names:
+            column_names.append('obs_general.ring_obs_id')
+            added_extra_columns += 1 # So we know to strip it off later
+    if return_filespecs:
+        if 'obs_general.primary_file_spec' not in column_names:
+            column_names.append('obs_general.primary_file_spec')
+            added_extra_columns += 1 # So we know to strip it off later
 
     # XXX Something here should specify order for collections
     # colls_order is currently ignored!
@@ -1117,17 +1141,20 @@ def get_search_results_chunk(request, use_collections=None,
                       sql, str(e))
             return none_return
 
-    # Return a simple list of opus_ids
-    opus_id_index = column_names.index('obs_general.opus_id')
-    opus_ids = [o[opus_id_index] for o in results]
+    if return_opusids:
+        # Return a simple list of opus_ids
+        opus_id_index = column_names.index('obs_general.opus_id')
+        opus_ids = [o[opus_id_index] for o in results]
 
-    # And for backwards compatibility, ring_obs_ids
-    ring_obs_id_index = column_names.index('obs_general.ring_obs_id')
-    ring_obs_ids = [o[ring_obs_id_index] for o in results]
+    if return_ringobsids:
+        # And for backwards compatibility, ring_obs_ids
+        ring_obs_id_index = column_names.index('obs_general.ring_obs_id')
+        ring_obs_ids = [o[ring_obs_id_index] for o in results]
 
-    # For retrieving preview images, obs_general.primary_file_spec
-    file_spec_index = column_names.index('obs_general.primary_file_spec')
-    file_specs = [o[file_spec_index] for o in results]
+    if return_filespecs:
+        # For retrieving preview images, obs_general.primary_file_spec
+        file_spec_index = column_names.index('obs_general.primary_file_spec')
+        file_specs = [o[file_spec_index] for o in results]
 
     # Strip off the opus_id if the user didn't actually ask for it initially
     if added_extra_columns:
@@ -1145,8 +1172,15 @@ def get_search_results_chunk(request, use_collections=None,
                                                             form_type_func,
                                                             form_type_format)
 
-    return (page_no, start_obs, limit, results, opus_ids, ring_obs_ids,
-            file_specs, all_order)
+    aux_dict = {}
+    if return_opusids:
+        aux_dict['opus_ids'] = opus_ids
+    if return_ringobsids:
+        aux_dict['ring_obs_ids'] = ring_obs_ids
+    if return_filespecs:
+        aux_dict['file_specs'] = file_specs
+
+    return (page_no, start_obs, limit, results, all_order, aux_dict)
 
 
 def _get_metadata_by_slugs(request, opus_id, slugs, fmt, use_param_names):

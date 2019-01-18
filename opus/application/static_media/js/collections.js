@@ -123,7 +123,7 @@ var o_collections = {
                        opus.colls_pages = Math.ceil(count/opus.prefs.limit);
                        $('#collection_count').html(count);
                    }
-                   opus.lastCartRequestNo = parseInt(data['expected_request_no']) - 1
+                   opus.lastCartRequestNo = parseInt(data['reqno']) - 1
             }});
     },
 
@@ -218,7 +218,7 @@ var o_collections = {
         var view_info = o_browse.getViewInfo();
         var namespace = view_info['namespace']; // either '#collection' or '#browse'
 
-        var url = "/opus/__collections/" + action + ".json?request=" + request_no
+        var url = "/opus/__collections/" + action + ".json?reqno=" + request_no
         switch (action) {
             case "add":
             case "remove":
@@ -285,10 +285,10 @@ var o_collections = {
             success: function(data) {
                 var count = data['count'];
                 $('#collection_count').html(count);
-                $('#download_size').html(data['download_size_pretty']);
+                $('#total_download_size').html(data.download_size_pretty);
                 opus.colls_pages = Math.ceil(count/opus.prefs.limit);
-                if (opus.collection_queue[data['request_no']] != undefined) {
-                  delete opus.collection_queue[data['request_no']];
+                if (opus.collection_queue[data['reqno']] != undefined) {
+                  delete opus.collection_queue[data['reqno']];
                 }
             },
             error: function() {
@@ -303,8 +303,8 @@ var o_collections = {
         opus.lastCartRequestNo = 0;
 
         // change indicator to zero and let the server know:
-        $.ajax({ url: "/opus/__collections/reset.html",
-            success: function(html){
+        $.ajax({ url: "/opus/__collections/reset.json",
+            success: function(data){
                 $('#collection_count').html('0');
                 opus.colls_pages = 0;
                 opus.collection_change = true;
