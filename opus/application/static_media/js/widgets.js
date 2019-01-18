@@ -24,7 +24,7 @@ var o_widgets = {
             theme:"rounded-dark",
             scrollInertia:300,
             callbacks:{
-                onScroll:function(){
+                onScrollStart:function(){
                     $("input.STRING").autocomplete("close");
                 }
             }
