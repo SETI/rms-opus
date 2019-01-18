@@ -93,7 +93,6 @@ var opus = {
                                                       // {"gallery":0, "data":0, "colls_gallery":0, "colls_data":0 };
 
     // collections
-    collection_queue:[],
     collection_change:true, // collection has changed since last load of collection_tab
     collection_q_intrvl: false,
     colls_options_viz:false,

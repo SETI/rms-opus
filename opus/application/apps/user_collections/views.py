@@ -176,7 +176,7 @@ def api_edit_collection(request, **kwargs):
         exit_api_call(api_code, None)
         raise Http404
 
-    request_no = request.GET.get('request', None)
+    reqno = request.GET.get('reqno', None)
 
     if action in ['add', 'remove']:
         opus_id = request.GET.get('opus_id', None)
@@ -186,16 +186,16 @@ def api_edit_collection(request, **kwargs):
             exit_api_call(api_code, ret)
             return ret
 
-    if request_no is None: # XXX Is this needed?
+    if reqno is None: # XXX Is this needed?
         try:
-            request_no = kwargs['request_no']
+            reqno = kwargs['reqno']
         except KeyError:
             json_data = {'err': 'No request number received'}
             ret = HttpResponse(json.dumps(json_data))
             exit_api_call(api_code, ret)
             return ret
 
-    request_no = int(request_no)
+    reqno = int(reqno)
 
     expected_request_no = request.session.get('expected_request_no', 1)
 
@@ -215,7 +215,7 @@ def api_edit_collection(request, **kwargs):
     collection_count = _get_collection_count(session_id)
     json_data = {'err': False,
                  'count': collection_count,
-                 'request_no': request_no}
+                 'reqno': reqno}
 
     download = request.GET.get('download', False)
     # Minor performance check - if we don't need a total download size, don't
