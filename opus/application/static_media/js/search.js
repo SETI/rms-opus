@@ -34,24 +34,25 @@ var o_search = {
         $.each(normalizedInputData, function(eachSlug, value) {
             let currentInput = $(`input[name="${eachSlug}"]`);
             if(value === null) {
-                if(currentInput.hasClass("RANGE") && !currentInput.hasClass("input_currently_focused")) {
-                    $("#sidebar").addClass("search_overlay");
-                    currentInput.addClass("search_input_invalid_no_focus");
-                    currentInput.removeClass("search_input_invalid");
-                    currentInput.val(opus.selections[eachSlug]);
-                    opus.allInputsValid = false;
+                if(currentInput.hasClass("RANGE")) {
+                    if(currentInput.hasClass("input_currently_focused")) {
+                        $("#sidebar").addClass("search_overlay");
+                    } else {
+                        $("#sidebar").addClass("search_overlay");
+                        currentInput.addClass("search_input_invalid_no_focus");
+                        currentInput.removeClass("search_input_invalid");
+                        currentInput.val(opus.selections[eachSlug]);
+                    }
                 }
-                if(currentInput.hasClass("input_currently_focused")) {
-                    delete opus.selections[eachSlug];
-                }
+                opus.allInputsValid = false;
             } else {
                 if(currentInput.hasClass("RANGE")) {
                     /*
-                    If Current focused input value is different from returned normalized data
-                    it will be excluded from the search parameters because user is trying to input a new value
+                    If current focused input value is different from returned normalized data
+                    we will not overwrite its displayed value.
                     */
                     if(currentInput.hasClass("input_currently_focused") && currentInput.val() !== value) {
-                        delete opus.selections[eachSlug];
+                        o_search.slugRangeInputValidValueFromLastSearch[eachSlug] = value;
                     } else {
                         currentInput.val(value);
                         o_search.slugRangeInputValidValueFromLastSearch[eachSlug] = value;
