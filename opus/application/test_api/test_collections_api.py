@@ -86,9 +86,17 @@ class ApiCollectionsTests(TestCase):
         self.assertEqual(expected, response.content)
 
 
-            ##############################################
-            ######### /api/meta/reset: API TESTS #########
-            ##############################################
+            #########################################################
+            ######### /__collections/status.json: API TESTS #########
+            #########################################################
+
+    # We don't bother testing this separately because it's used extensively
+    # in all the tests below
+
+
+            ########################################################
+            ######### /__collections/reset.json: API TESTS #########
+            ########################################################
 
     def test__api_collections_reset(self):
         "/collections/reset.json"
@@ -99,9 +107,9 @@ class ApiCollectionsTests(TestCase):
         self._run_json_equal(url, expected)
 
 
-            ##############################################
-            ######### /api/meta/add: API TESTS #########
-            ##############################################
+            ######################################################
+            ######### /__collections/add.json: API TESTS #########
+            ######################################################
 
     def test__api_collections_add_missing(self):
         "/collections/add: Missing OPUSID no reqno no download"
@@ -271,9 +279,9 @@ class ApiCollectionsTests(TestCase):
         self._run_json_equal(url, expected)
 
 
-            ###############################################
-            ######### /api/meta/remove: API TESTS #########
-            ###############################################
+            #########################################################
+            ######### /__collections/remove.json: API TESTS #########
+            #########################################################
 
     def test__api_collections_remove_missing(self):
         "/collections/remove: Missing OPUSID no reqno no download"
@@ -475,9 +483,9 @@ class ApiCollectionsTests(TestCase):
         self._run_json_equal(url, expected)
 
 
-            #################################################
-            ######### /api/meta/addrange: API TESTS #########
-            #################################################
+            ###########################################################
+            ######### /__collections/addrange.json: API TESTS #########
+            ###########################################################
 
     def test__api_collections_addrange_missing(self):
         "/collections/addrange: Missing range no reqno no download"
@@ -673,6 +681,17 @@ class ApiCollectionsTests(TestCase):
         expected = {'count': 0, 'reqno': None}
         self._run_json_equal(url, expected)
 
+    def test__api_collections_addrange_bad_search(self):
+        "/collections/addrange: Bad search no reqno no download"
+        url = '/opus/__collections/reset.json'
+        self._run_status_equal(url, 200)
+        url = '/opus/__collections/addrange.json?volumeidXX=COVIMS_0006&range=vg-iss-2-s-c4360001,vg-iss-2-s-c4360001'
+        expected = {'count': 0, 'err': 'bad search', 'reqno': None}
+        self._run_json_equal(url, expected)
+        url = '/opus/__collections/status.json'
+        expected = {'count': 0, 'reqno': None}
+        self._run_json_equal(url, expected)
+
     def test__api_collections_addrange_multi(self):
         "/collections/addrange: Multiple no reqno no download"
         url = '/opus/__collections/reset.json'
@@ -751,9 +770,9 @@ class ApiCollectionsTests(TestCase):
         self._run_json_equal(url, expected)
 
 
-            #################################################
-            ######### /api/meta/removerange: API TESTS #########
-            #################################################
+            ##############################################################
+            ######### /__collections/removerange.json: API TESTS #########
+            ##############################################################
 
     def test__api_collections_removerange_missing(self):
         "/collections/removerange: Missing range no reqno no download"
@@ -919,6 +938,17 @@ class ApiCollectionsTests(TestCase):
         expected = {'count': 0, 'reqno': None}
         self._run_json_equal(url, expected)
 
+    def test__api_collections_removerange_bad_search(self):
+        "/collections/removerange: Bad search no reqno no download"
+        url = '/opus/__collections/reset.json'
+        self._run_status_equal(url, 200)
+        url = '/opus/__collections/removerange.json?volumeidXX=COVIMS_0006&range=vg-iss-2-s-c4360001,vg-iss-2-s-c4360001'
+        expected = {'count': 0, 'err': 'bad search', 'reqno': None}
+        self._run_json_equal(url, expected)
+        url = '/opus/__collections/status.json'
+        expected = {'count': 0, 'reqno': None}
+        self._run_json_equal(url, expected)
+
     def test__api_collections_removerange_multi(self):
         "/collections/removerange: Multiple no reqno no download"
         url = '/opus/__collections/reset.json'
@@ -1012,26 +1042,139 @@ class ApiCollectionsTests(TestCase):
         self._run_json_equal(url, expected)
 
 
-    # ########################
-    # ### Error Conditions ###
-    # ########################
-    #
-    # def test__api_meta_range_endpoints_bad_slug(self):
-    #     "/api/meta/range/endpoints: bad slug name"
-    #     url = '/opus/__api/meta/range/endpoints/badslug.json?instrument=Cassini+ISS'
-    #     self._run_status_equal(url, 404)
-    #
-    #
-    #         ##############################################
-    #         ######### /api/meta/mults UNIT TESTS #########
-    #         ##############################################
-    #
-    # def test__api_meta_mults_COISS_2111(self):
-    #     "/api/meta/meta/mults: for COISS_2111"
-    #     url = '/opus/api/meta/mults/target.json?volumeid=COISS_2111&planet=Saturn'
-    #     self._run_mults_equal(url, 2, 'Polydeuces')
-    #
-    # def test__api_meta_mults_bad_param(self):
-    #     "/api/meta/mults: bad parameter"
-    #     url = '/opus/api/meta/mults/target.json?volumeid=COISS_2111&planetx=Saturn'
-    #     self._run_status_equal(url, 404)
+            #########################################################
+            ######### /__collections/addall.json: API TESTS #########
+            #########################################################
+
+    def test__api_collections_addall_one(self):
+        "/collections/addall: One time no reqno no download"
+        url = '/opus/__collections/reset.json'
+        self._run_status_equal(url, 200)
+        url = '/opus/__collections/addall.json?volumeid=VGISS_6210'
+        expected = {'count': 906, 'err': False, 'reqno': None}
+        self._run_json_equal(url, expected)
+        url = '/opus/__collections/status.json'
+        expected = {'count': 906, 'reqno': None}
+        self._run_json_equal(url, expected)
+
+    def test__api_collections_addall_duplicate(self):
+        "/collections/addall: Twice no reqno no download"
+        url = '/opus/__collections/reset.json'
+        self._run_status_equal(url, 200)
+        url = '/opus/__collections/addall.json?volumeid=VGISS_6210'
+        expected = {'count': 906, 'err': False, 'reqno': None}
+        self._run_json_equal(url, expected)
+        url = '/opus/__collections/status.json'
+        expected = {'count': 906, 'reqno': None}
+        self._run_json_equal(url, expected)
+
+    def test__api_collections_addall_duplicate2(self):
+        "/collections/addall: Add plus addall no reqno no download"
+        url = '/opus/__collections/reset.json'
+        self._run_status_equal(url, 200)
+        url = '/opus/__collections/addrange.json?volumeid=VGISS_6210&range=vg-iss-2-s-c4360037,vg-iss-2-s-c4365644'
+        expected = {'count': 597, 'err': False, 'reqno': None}
+        self._run_json_equal(url, expected)
+        url = '/opus/__collections/addall.json?volumeid=VGISS_6210'
+        expected = {'count': 906, 'err': False, 'reqno': None}
+        self._run_json_equal(url, expected)
+        url = '/opus/__collections/status.json'
+        expected = {'count': 906, 'reqno': None}
+        self._run_json_equal(url, expected)
+
+    def test__api_collections_addall_bad_search(self):
+        "/collections/addall: Bad search no reqno no download"
+        url = '/opus/__collections/reset.json'
+        self._run_status_equal(url, 200)
+        url = '/opus/__collections/addall.json?volumeidXX=COVIMS_0006'
+        expected = {'count': 0, 'err': 'bad search', 'reqno': None}
+        self._run_json_equal(url, expected)
+        url = '/opus/__collections/status.json'
+        expected = {'count': 0, 'reqno': None}
+        self._run_json_equal(url, expected)
+
+    def test__api_collections_addall_multi(self):
+        "/collections/addall: Multiple no reqno no download"
+        url = '/opus/__collections/reset.json'
+        self._run_status_equal(url, 200)
+        url = '/opus/__collections/addrange.json?volumeid=COVIMS_0006&range=co-vims-v1484506475_ir,co-vims-v1484509868_vis'
+        expected = {'count': 10, 'err': False, 'reqno': None}
+        self._run_json_equal(url, expected)
+        url = '/opus/__collections/addall.json?volumeid=COVIMS_0006'
+        expected = {'count': 3544, 'err': False, 'reqno': None}
+        self._run_json_equal(url, expected)
+        url = '/opus/__collections/removerange.json?volumeid=COVIMS_0006&range=co-vims-v1485893300_vis,co-vims-v1485894711_vis'
+        expected = {'count': 3531, 'err': False, 'reqno': None}
+        self._run_json_equal(url, expected)
+        url = '/opus/__collections/addall.json?volumeid=VGISS_6210'
+        expected = {'count': 3531+906, 'err': False, 'reqno': None}
+        self._run_json_equal(url, expected)
+        url = '/opus/__collections/status.json'
+        expected = {'count': 3531+906, 'reqno': None}
+        self._run_json_equal(url, expected)
+
+    def test__api_collections_addall_one_reqno(self):
+        "/collections/addall: One time with reqno no download"
+        url = '/opus/__collections/reset.json'
+        self._run_status_equal(url, 200)
+        url = '/opus/__collections/addall.json?volumeid=VGISS_6210&reqno=987'
+        expected = {'count': 906, 'err': False, 'reqno': 987}
+        self._run_json_equal(url, expected)
+        url = '/opus/__collections/status.json?reqno=456'
+        expected = {'count': 906, 'reqno': 456}
+        self._run_json_equal(url, expected)
+
+    def test__api_collections_addall_one_reqno_download(self):
+        "/collections/addall: One time with reqno with download"
+        url = '/opus/__collections/reset.json'
+        self._run_status_equal(url, 200)
+        url = '/opus/__collections/addall.json?volumeid=VGISS_8201&productid=12&reqno=9878&download=1'
+        expected = {'count': 34, 'err': False, 'reqno': 9878, "total_download_count": 620, "total_download_size": 169444386, "total_download_size_pretty": "161M", "product_cat_list": [["Metadata Products", [{"slug_name": "inventory", "product_type": "Target Body Inventory", "product_count": 34, "download_count": 2, "download_size": 93792, "download_size_pretty": "91K"}, {"slug_name": "planet-geometry", "product_type": "Planet Geometry Index", "product_count": 34, "download_count": 2, "download_size": 307087, "download_size_pretty": "299K"}, {"slug_name": "moon-geometry", "product_type": "Moon Geometry Index", "product_count": 34, "download_count": 2, "download_size": 1775739, "download_size_pretty": "1M"}, {"slug_name": "ring-geometry", "product_type": "Ring Geometry Index", "product_count": 34, "download_count": 2, "download_size": 509807, "download_size_pretty": "497K"}]], ["Browse Products", [{"slug_name": "browse-thumb", "product_type": "Browse Image (thumbnail)", "product_count": 34, "download_count": 34, "download_size": 49298, "download_size_pretty": "48K"}, {"slug_name": "browse-small", "product_type": "Browse Image (small)", "product_count": 34, "download_count": 34, "download_size": 117246, "download_size_pretty": "114K"}, {"slug_name": "browse-medium", "product_type": "Browse Image (medium)", "product_count": 34, "download_count": 34, "download_size": 428816, "download_size_pretty": "418K"}, {"slug_name": "browse-full", "product_type": "Browse Image (full-size)", "product_count": 34, "download_count": 34, "download_size": 2020408, "download_size_pretty": "1M"}]], ["Voyager ISS-Specific Products", [{"slug_name": "vgiss-raw", "product_type": "Raw Image", "product_count": 34, "download_count": 68, "download_size": 28148748, "download_size_pretty": "26M"}, {"slug_name": "vgiss-cleaned", "product_type": "Cleaned Image", "product_count": 34, "download_count": 68, "download_size": 21936280, "download_size_pretty": "20M"}, {"slug_name": "vgiss-calib", "product_type": "Calibrated Image", "product_count": 34, "download_count": 68, "download_size": 43769972, "download_size_pretty": "41M"}, {"slug_name": "vgiss-geomed", "product_type": "Geometrically Corrected Image", "product_count": 34, "download_count": 68, "download_size": 68190894, "download_size_pretty": "65M"}, {"slug_name": "vgiss-resloc", "product_type": "Reseau Table", "product_count": 34, "download_count": 102, "download_size": 672296, "download_size_pretty": "656K"}, {"slug_name": "vgiss-geoma", "product_type": "Geometric Tiepoint Table", "product_count": 34, "download_count": 102, "download_size": 1424003, "download_size_pretty": "1M"}]]]}
+        self._run_json_equal(url, expected)
+        url = '/opus/__collections/status.json?reqno=456'
+        expected = {'count': 34, 'reqno': 456}
+        self._run_json_equal(url, expected)
+
+
+            ######################################################
+            ######### /__collections/data.csv: API TESTS #########
+            ######################################################
+
+    def test__api_collections_datacsv_empty(self):
+        "/collections/datacsv: Empty"
+        url = '/opus/__collections/reset.json'
+        self._run_status_equal(url, 200)
+        url = '/opus/__collections/data.csv?cols=opusid,instrument,planet'
+        expected = b'OPUS ID,Instrument Name,Planet\r\n'
+        self._run_csv_equal(url, expected)
+        url = '/opus/__collections/status.json'
+        expected = {'count': 0, 'reqno': None}
+        self._run_json_equal(url, expected)
+
+    def test__api_collections_datacsv_multi(self):
+        "/collections/datacsv: Multiple"
+        url = '/opus/__collections/reset.json'
+        self._run_status_equal(url, 200)
+        url = '/opus/__collections/addrange.json?volumeid=COVIMS_0006&range=co-vims-v1488549680_ir,co-vims-v1488550102_ir'
+        expected = {'count': 3, 'err': False, 'reqno': None}
+        self._run_json_equal(url, expected)
+        url = '/opus/__collections/data.csv?cols=opusid,instrument,planet,target,time1,observationduration,COVIMSchannel,CASSINIspacecraftclockcount1'
+        expected = b'OPUS ID,Instrument Name,Planet,Intended Target Name,Observation Start Time,Observation Duration (secs),Channel [Cassini VIMS],Spacecraft Clock Start Count [Cassini]\r\nco-vims-v1488549680_ir,Cassini VIMS,Saturn,Saturn Rings,2005-03-03T13:34:47.689,415.5770,IR,1488549680.211\r\nco-vims-v1488549680_vis,Cassini VIMS,Saturn,Saturn Rings,2005-03-03T13:34:47.689,415.5770,VIS,1488549680.211\r\nco-vims-v1488550102_ir,Cassini VIMS,Saturn,Saturn Rings,2005-03-03T13:41:49.683,415.5770,IR,1488550102.209\r\n'
+        self._run_csv_equal(url, expected)
+        url = '/opus/__collections/status.json'
+        expected = {'count': 3, 'reqno': None}
+        self._run_json_equal(url, expected)
+
+
+            ###########################################################
+            ######### /__collections/download.json: API TESTS #########
+            ###########################################################
+
+    # XXX Need to implement tests
+
+
+            ##################################################
+            ######### /__zip/<opusid>.zip: API TESTS #########
+            ##################################################
+
+    # XXX Need to implement tests

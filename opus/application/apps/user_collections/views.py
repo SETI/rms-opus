@@ -11,7 +11,7 @@
 #    Format: __collections/data.csv
 #    Format: __collections/(?P<action>add|remove|addrange|removerange|addall).json
 #    Format: __collections/reset.html
-#    Format: __collections/download.zip
+#    Format: __collections/download.json
 #    Format: __zip/(?P<opus_id>[-\w]+).json
 #
 ################################################################################
@@ -204,13 +204,15 @@ def api_edit_collection(request, **kwargs):
 
     if not err:
         if action == 'add':
-            err = _add_to_collections_table(opus_id, session_id)
+            err = _add_to_collections_table(opus_id, session_id, api_code)
         elif action == 'remove':
-            err = _remove_from_collections_table(opus_id, session_id)
+            err = _remove_from_collections_table(opus_id, session_id, api_code)
         elif action in ('addrange', 'removerange'):
             err = _edit_collection_range(request, session_id, action, api_code)
         elif action == 'addall':
-            err = _edit_collection_addall(request, **kwargs)
+            err = _edit_collection_addall(request, session_id, api_code)
+        else:
+            assert False
 
     collection_count = _get_collection_count(session_id)
     json_data = {'err': err,
@@ -268,7 +270,7 @@ def api_create_download(request, opus_ids=None):
 
     This is a PRIVATE API.
 
-    Format: __collections/download.zip
+    Format: __collections/download.json
         or: __zip/(?P<opus_id>[-\w]+).json
     Arguments: types=<PRODUCT_TYPES>
     """
@@ -509,7 +511,7 @@ def _get_collection_csv(request, api_code=None):
 #
 ################################################################################
 
-def _add_to_collections_table(opus_id_list, session_id):
+def _add_to_collections_table(opus_id_list, session_id, api_code):
     "Add OPUS_IDs to the collections table."
     cursor = connection.cursor()
     if not isinstance(opus_id_list, (list, tuple)):
@@ -531,7 +533,7 @@ def _add_to_collections_table(opus_id_list, session_id):
 
     return False
 
-def _remove_from_collections_table(opus_id_list, session_id):
+def _remove_from_collections_table(opus_id_list, session_id, api_code):
     "Remove OPUS_IDs from the collections table."
     cursor = connection.cursor()
     if not isinstance(opus_id_list, (list, tuple)):
@@ -654,52 +656,52 @@ def _edit_collection_range(request, session_id, action, api_code):
     return False
 
 
-def _edit_collection_addall(request, **kwargs):
-    """XXX NOT IMPLEMENTED - FIX THIS
-    add the entire result set to the collection cart
+def _edit_collection_addall(request, session_id, api_code):
+    "Add all results from a search into the collections table."
+    # Find the index in the cache table for the min and max opus_ids
+    (selections, extras) = url_to_search_params(request.GET)
+    if selections is None:
+        log.error('_edit_collection_addall: Could not find selections for'
+                  +' request %s', str(request.GET))
+        return 'bad search'
 
-    This may be turned off. The way to turn this off is:
+    user_query_table = get_user_query_table(selections, extras,
+                                            api_code=api_code)
+    if not user_query_table:
+        log.error('_edit_collection_addall: get_user_query_table failed '
+                  +'*** Selections %s *** Extras %s',
+                  str(selections), str(extras))
+        return 'search failed'
 
-    - comment out html link in apps/ui/templates/browse_headers.html
-    - add these lines below:
-
-            # turn off this functionality
-            log.debug("edit_collection_addall is currently turned off. see apps/user_collections.edit_collection_addall")
-            return  # this thing is turned off for now
-
-
-    The reason is it needs more testing, but this branch makes a big
-    efficiency improvements to the way downloads are handled, and fixes
-    some things, so I wanted to merge it into master
-
-    Things that needs further exploration:
-    This functionality provides no checks on how large a cart can be.
-    There needs to be some limit.
-    It doesn't hide the menu link when the result count is too high.
-    And what happens when it bumps against the MAX_CUM_DOWNLOAD_SIZE.
-    The functionality is there but these are questions!
-
-    To bring this functionality back for testing do the folloing:
-        - uncomment the "add all to cart" link in apps/ui/templates/browse_headers.html
-        - comment out the 2 lines below in this function
-
-    """
-    log.error("edit_collection_addall is currently unavailable. see user_collections.edit_collection_addall()")
-    return
-
-    #XXX NOT YET UPDATED
-    session_id = request.session.session_key
-
-    (selections,extras) = urlToSearchParams(request.GET)
-    query_table_name = getUserQueryTable(selections,extras)
-    assert query_table_name # This can be FALSE - Beware! XXX
     cursor = connection.cursor()
-    coll_table_name = get_collection_table(session_id)
-    sql = "replace into " + connection.ops.quote_name(coll_table_name) + \
-          " (id, opus_id) select o.id, o.opus_id from obs_general o, " + connection.ops.quote_name(query_table_name) + \
-          " s where o.id = s.id"
-    cursor.execute(sql)
-    return _get_collection_count(session_id)
+
+    values = [session_id]
+    sql = 'REPLACE INTO '+connection.ops.quote_name('collections')
+    sql += ' ('
+    sql += connection.ops.quote_name('session_id')+','
+    sql += connection.ops.quote_name('obs_general_id')+','
+    sql += connection.ops.quote_name('opus_id')+')'
+    sql += ' SELECT %s,'
+    sql += connection.ops.quote_name('obs_general')+'.'
+    sql += connection.ops.quote_name('id')+','
+    sql += connection.ops.quote_name('obs_general')+'.'
+    sql += connection.ops.quote_name('opus_id')
+    sql += ' FROM '
+    sql += connection.ops.quote_name('obs_general')
+    # INNER JOIN because we only want rows that exist in the
+    # user_query_table
+    sql += ' INNER JOIN '
+    sql += connection.ops.quote_name(user_query_table)
+    sql += ' ON '
+    sql += connection.ops.quote_name(user_query_table)+'.'
+    sql += connection.ops.quote_name('id')+'='
+    sql += connection.ops.quote_name('obs_general')+'.'
+    sql += connection.ops.quote_name('id')
+
+    log.debug('_edit_collection_addall SQL: %s %s', sql, values)
+    cursor.execute(sql, values)
+
+    return False
 
 
 ################################################################################

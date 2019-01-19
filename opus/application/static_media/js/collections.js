@@ -46,7 +46,7 @@ var o_collections = {
                 $('.spinner', "#collections_summary").fadeIn();
                 opus.download_in_process = true;
                 var add_to_url = o_collections.getDownloadFiltersChecked();
-                var url = '/opus/__collections/download.zip?' + add_to_url + "&" + o_hash.getHash();
+                var url = '/opus/__collections/download.json?' + add_to_url + "&" + o_hash.getHash();
                 $.ajax({ url: url,
                     success: function(filename){
                         opus.download_in_process = false;
