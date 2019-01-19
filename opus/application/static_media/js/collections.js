@@ -272,7 +272,7 @@ var o_collections = {
         switch (action) {
             case "add":
             case "remove":
-                url += "opus_id=" + opusId;
+                url += "opusid=" + opusId;
                 break;
 
             case "removerange":
