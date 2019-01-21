@@ -71,10 +71,7 @@ def main(arguments: Optional[List[str]] = None) -> None:
             raise Exception("Must specify at least one log file.")
         log_entries_list = LogReader.read_logs(args.log_files)
         if args.batch:
-            if args.by_ip:
-                log_parser.run_batch_by_ip(log_entries_list)
-            else:
-                log_parser.run_batch_by_time(log_entries_list)
+            log_parser.run_batch(log_entries_list)
         elif args.show_slugs:
             log_parser.show_slugs(log_entries_list)
         elif args.fake:

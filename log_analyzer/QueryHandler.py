@@ -108,14 +108,13 @@ class QueryHandler:
 
         self._previous_state = current_state
 
+        url: Optional[str] = None
         if result and self._uses_html:
             query.pop('reqno', None)  # Remove if there, but okay if not
             if query_type != 'result_count':
                 query['view'] = 'browse'
                 query['browse'] = 'gallery'
-            url: Optional[str] = '/opus/#/' + urllib.parse.urlencode(query, False)
-        else:
-            url = None
+            url = format_html('/opus/#/{}', urllib.parse.urlencode(query, False))
         return result, url
 
     def __handle_search_info(self, old_info: SearchSlugInfo, new_info: SearchSlugInfo, result: List[str]) -> None:
@@ -272,7 +271,7 @@ class QueryHandler:
             for value in sorted(old_value_set.union(new_value_set)):
                 formatted_value = self.__format_search_value(value)
                 if value not in old_value_set:
-                    marked_changes.append(format_html('<mark><ins>{}</ins><mark>', formatted_value))
+                    marked_changes.append(format_html('<mark><ins>{}</ins></mark>', formatted_value))
                 elif value not in new_value_set:
                     marked_changes.append(format_html('<mark><del>{}</del></mark>', formatted_value))
                 else:

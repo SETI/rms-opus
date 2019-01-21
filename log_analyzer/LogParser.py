@@ -76,11 +76,12 @@ class LogParser:
     _session_timeout: datetime.timedelta
     _output: TextIO
     _uses_local: bool
+    _by_ip: bool
     _id_generator: Iterator[str]
 
     def __init__(self, session_info_generator: SessionInfoGenerator, uses_reverse_dns: bool,
                  session_timeout_minutes: int, output: TextIO, api_host_url: str, uses_html: bool,
-                 uses_local: bool, **_):
+                 uses_local: bool, by_ip: bool, **_):
         self._session_info_generator = session_info_generator
         self._uses_reverse_dns = uses_reverse_dns
         self._session_timeout = datetime.timedelta(minutes=session_timeout_minutes)
@@ -88,45 +89,24 @@ class LogParser:
         self._api_host_url = api_host_url
         self._uses_html = uses_html
         self._uses_local = uses_local
+        self._by_ip = by_ip
         self._id_generator = (f'{value:X}' for value in itertools.count(100))
 
-    def run_batch_by_time(self, log_entries: List[LogEntry]) -> None:
-        """
-        Look at the list of log entries in batch mode.
-
-        The logs are aggregated into sessions, and each complete session is printed out in order of the start
-        of the session.
-        """
+    def run_batch(self, log_entries: List[LogEntry]) -> None:
         all_sessions = self.__get_session_list(log_entries, self._uses_html)
-        all_sessions.sort(key=lambda session: (session.start_time(), session.host_ip))
 
-        host_infos = [HostInfo(ip=session.host_ip,
-                               name=self.__get_reverse_dns_from_ip(session.host_ip),  # may be None
-                               sessions=[session])
-                      for session in all_sessions]
-
-        self.__generate_batch_output(host_infos)
-
-    def run_batch_by_ip(self, log_entries: List[LogEntry]) -> None:
-        """
-         Look at the list of log entries in batch mode.
-
-         The logs are aggregated into sessions, and the sessions are aggregated by host_ip.  The sessions are printed
-         out sorted by host_ip and then by session start time.
-         """
-        all_sessions = self.__get_session_list(log_entries, self._uses_html)
-        all_sessions.sort(key=lambda session: (session.host_ip, session.start_time()))
-
+        if self._by_ip:
+            all_sessions.sort(key=lambda session: (session.host_ip, session.start_time()))
+            groupby = itertools.groupby(all_sessions, lambda session: session.host_ip)
+        else:
+            all_sessions.sort(key=lambda session: (session.start_time(), session.host_ip))
+            groupby = itertools.groupby(all_sessions, None)
         host_infos: List[HostInfo] = []
-        while all_sessions:
-            this_host = all_sessions[0].host_ip
-            next_host_start = next((i for i in range(len(all_sessions)) if all_sessions[i].host_ip != this_host),
-                                   len(all_sessions))
-            sessions = all_sessions[0:next_host_start]
-            all_sessions = all_sessions[next_host_start:]
-            host_infos.append(HostInfo(ip=this_host,
-                                       name=self.__get_reverse_dns_from_ip(this_host),  # may be None
-                                       sessions=sessions))
+        for _, group in groupby:
+            sessions = list(group)
+            ip = sessions[0].host_ip
+            name = self.__get_reverse_dns_from_ip(ip)
+            host_infos.append(HostInfo(ip=ip, name=name, sessions=sessions))
         self.__generate_batch_output(host_infos)
 
     def show_slugs(self, log_entries: List[LogEntry]) -> None:

@@ -1,6 +1,7 @@
 <!doctype html>
 <html lang="en">
 <head>
+  <title>Log Analyzer</title>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
 {% if uses_local %}
@@ -62,6 +63,7 @@
 
 <div class="container-fluid">
 <div class="row">
+
 <div class="col-sm-3" id="left">
 {% spaceless %}
 {% for host_info in host_infos %}
@@ -69,12 +71,15 @@
     {% if host_info.name %}<br><span>{{ host_info.name }}{% endif %}
     <ul class="list-unstyled">
         {% for session in host_info.sessions %}
-            <li><a href="#" class=SessionLink data-target="#{{ session.id }}">{{ session.entries.0.log_entry.time | date:'Y/M/d H:i:s' }} ({{ session.duration }})</a></li>
+            <li><a href="#" class=SessionLink data-target="#{{ session.id }}">
+            <span>{{ session.entries.0.log_entry.time | date:'Y/M/d H:i:s' }} ({{ session.duration }})</span>
+            </a></li>
         {% endfor %}
     </ul>
 {% endfor %}
 {% endspaceless %}
 </div>
+
 <div class="col-sm-9" id="right">
 {% spaceless %}
 {% for host_info in host_infos %}
@@ -105,7 +110,7 @@
                     {% else %}
                         <td>{{ entry.relative_start_time }}</td>
                     {% endif %}
-                    <td><a data-toggle="tooltip" href="#" title="{{entry.target_url | safe}}">&bull;</td>
+                    <td><a data-toggle="tooltip" href="#" title="{{ entry.target_url }}">&bull;</a></td>
                 {% else %}
                     <td></td><td></td>
                 {% endif %}

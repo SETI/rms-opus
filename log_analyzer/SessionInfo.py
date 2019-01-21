@@ -255,6 +255,6 @@ class SessionInfoImpl(SessionInfo):
     #
 
     def __create_opus_url(self, opus_id: str) -> str:
-        return cast(str, format_html('/opus/#/view=detail&detail={0}', opus_id))
+        return cast(str, format_html('/opus/#/view=detail&amp;detail={0}', opus_id))
 
 
