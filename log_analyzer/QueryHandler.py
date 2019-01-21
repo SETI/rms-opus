@@ -113,7 +113,7 @@ class QueryHandler:
             if query_type != 'result_count':
                 query['view'] = 'browse'
                 query['browse'] = 'gallery'
-            url = '/opus/#/' + urllib.parse.urlencode(query, False)
+            url: Optional[str] = '/opus/#/' + urllib.parse.urlencode(query, False)
         else:
             url = None
         return result, url

@@ -6,7 +6,7 @@ import socket
 import textwrap
 from collections import defaultdict, deque
 from ipaddress import IPv4Address
-from typing import List, Iterator, Dict, NamedTuple, Optional, Deque, IO, Tuple, Iterable
+from typing import List, Iterator, Dict, NamedTuple, Optional, Deque, Tuple, Iterable, TextIO
 
 import django
 from django.template.loader import get_template
@@ -72,19 +72,22 @@ class LogParser:
     Code that reads through the log entries, groups them by host and by session, and prints them out in a nice format.
     """
     _session_info_generator: SessionInfoGenerator
-    _use_reverse_dns: bool
+    _uses_reverse_dns: bool
     _session_timeout: datetime.timedelta
-    _output: IO[str]
+    _output: TextIO
+    _uses_local: bool
     _id_generator: Iterator[str]
 
-    def __init__(self, session_info_generator: SessionInfoGenerator, use_reverse_dns: bool,
-                 session_timeout_minutes: int, output: IO[str], api_host_url: str, uses_html: bool):
+    def __init__(self, session_info_generator: SessionInfoGenerator, uses_reverse_dns: bool,
+                 session_timeout_minutes: int, output: TextIO, api_host_url: str, uses_html: bool,
+                 uses_local: bool, **_):
         self._session_info_generator = session_info_generator
-        self._use_reverse_dns = use_reverse_dns
+        self._uses_reverse_dns = uses_reverse_dns
         self._session_timeout = datetime.timedelta(minutes=session_timeout_minutes)
         self._output = output
         self._api_host_url = api_host_url
         self._uses_html = uses_html
+        self._uses_local = uses_local
         self._id_generator = (f'{value:X}' for value in itertools.count(100))
 
     def run_batch_by_time(self, log_entries: List[LogEntry]) -> None:
@@ -261,7 +264,9 @@ class LogParser:
             os.environ.setdefault("DJANGO_SETTINGS_MODULE", "DjangoSettings")
             django.setup()
             summary_template = get_template('summary')
-            summary_context = {'host_infos': host_infos, 'api_host_url': self._api_host_url}
+            summary_context = {'host_infos': host_infos,
+                               'api_host_url': self._api_host_url,
+                               'uses_local': self._uses_local}
             print(summary_template.render(summary_context), file=output)
         else:
             for i, host_info in enumerate(host_infos):
@@ -285,14 +290,14 @@ class LogParser:
             print(f'              {info}', file=self._output)
 
     def __get_hostname_from_ip(self, ip: IPv4Address) -> str:
-        name = self.__get_host_by_address(ip) if self._use_reverse_dns else None
+        name = self.__get_host_by_address(ip) if self._uses_reverse_dns else None
         if name:
             return f'{name} ({ip})'
         else:
             return f'{ip}'
 
     def __get_reverse_dns_from_ip(self, ip: IPv4Address) -> Optional[str]:
-        name = self.__get_host_by_address(ip) if self._use_reverse_dns else None
+        name = self.__get_host_by_address(ip) if self._uses_reverse_dns else None
         return name
 
     @staticmethod
