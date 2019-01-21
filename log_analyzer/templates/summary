@@ -5,10 +5,9 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
 {% if uses_local %}
-  <link rel="stylesheet" href="/bootstrap-4.1.3/css/bootstrap.min.css">
-  <script src="/bootstrap-4.1.3/js/jquery-3.3.1.min.js"></script>
-  <script src="/bootstrap-4.1.3/js/popper.min.js"></script>
-  <script src="/bootstrap-4.1.3/js/bootstrap.min.js"></script>
+  <link rel="stylesheet" href="bootstrap/3.4.0/css/bootstrap.min.css">
+  <script src="/jquery/3.3.1/jquery.min.js"></script>
+  <script src="/bootstrap/3.4.0/js/bootstrap.min.js"></script>
 {% else %}
   <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css">
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
@@ -65,8 +64,18 @@
 <div class="row">
 
 <div class="col-sm-3" id="left">
+
+<h2>Dynamic Pills</h2>
+<ul class="nav nav-pills">
+  <li class="active"><a data-toggle="pill" href="#ByIP">By IP</a></li>
+  <li><a data-toggle="pill" href="#ByTime">By Time</a></li>
+</ul>
+
+<div class="tab-content">
+
+<div id="ByIP" class="tab-pane fade in active">
 {% spaceless %}
-{% for host_info in host_infos %}
+{% for host_info in host_infos_by_ip %}
     <span>{{ host_info.ip }} ({{ host_info.total_time }})</span>
     {% if host_info.name %}<br><span>{{ host_info.name }}{% endif %}
     <ul class="list-unstyled">
@@ -80,10 +89,28 @@
 {% endspaceless %}
 </div>
 
-<div class="col-sm-9" id="right">
+<div id="ByTime" class="tab-pane fade">
 {% spaceless %}
-{% for host_info in host_infos %}
-    {% for session in host_info.sessions %}
+{% for host_info in host_infos_by_time %}
+    <span>{{ host_info.ip }} ({{ host_info.total_time }})</span>
+    {% if host_info.name %}<br><span>{{ host_info.name }}{% endif %}
+    <ul class="list-unstyled">
+        {% for session in host_info.sessions %}
+            <li><a href="#" class=SessionLink data-target="#{{ session.id }}">
+            <span>{{ session.entries.0.log_entry.time | date:'Y/M/d H:i:s' }} ({{ session.duration }})</span>
+            </a></li>
+        {% endfor %}
+    </ul>
+{% endfor %}
+{% endspaceless %}
+</div>
+</div>  <!-- tab content -->
+</div>  <!-- left column -->
+
+<div class="col-sm-9" id="right">
+<div class="EventualNavigationTrickNotWorking">
+{% spaceless %}
+{% for session in sessions %}
         <div id="{{ session.id }}" class="SessionInfo">
         <h3>{{ host_info.hostname }} at {{ session.entries.0.log_entry.time | date:'Y/M/d H:i:s O' }}</h3>
         <ul class="list-unstyled">
@@ -120,13 +147,12 @@
         {% endfor %}
         </table>
         </div>
-    {% endfor %}
 {% endfor %}
 {% endspaceless %}
-</div>
-</div>
-</div>
-
+</div>   <!-- navigation -->
+</div>   <!-- right column -->
+</div>   <!-- row -->
+</div>   <!-- container -->
 
 <script>
 

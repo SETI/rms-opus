@@ -93,21 +93,39 @@ class LogParser:
         self._id_generator = (f'{value:X}' for value in itertools.count(100))
 
     def run_batch(self, log_entries: List[LogEntry]) -> None:
+        print(f'Parsing input')
         all_sessions = self.__get_session_list(log_entries, self._uses_html)
 
-        if self._by_ip:
-            all_sessions.sort(key=lambda session: (session.host_ip, session.start_time()))
-            groupby = itertools.groupby(all_sessions, lambda session: session.host_ip)
+        def do_grouping(by_ip: bool) -> List[HostInfo]:
+            if by_ip:
+                all_sessions.sort(key=lambda session: (session.host_ip, session.start_time()))
+                groupby = itertools.groupby(all_sessions, lambda session: session.host_ip)
+            else:
+                all_sessions.sort(key=lambda session: (session.start_time(), session.host_ip))
+                groupby = itertools.groupby(all_sessions, None)
+            host_infos: List[HostInfo] = []
+            for _, group in groupby:
+                sessions = list(group)
+                ip = sessions[0].host_ip
+                name = self.__get_reverse_dns_from_ip(ip)
+                host_infos.append(HostInfo(ip=ip, name=name, sessions=sessions))
+            return host_infos
+
+        output = self._output
+        print(f'Writing file {output.name}')
+        if not self._uses_html:
+            host_infos = do_grouping(self._by_ip)
+            self.__generate_batch_text_output(host_infos)
         else:
-            all_sessions.sort(key=lambda session: (session.start_time(), session.host_ip))
-            groupby = itertools.groupby(all_sessions, None)
-        host_infos: List[HostInfo] = []
-        for _, group in groupby:
-            sessions = list(group)
-            ip = sessions[0].host_ip
-            name = self.__get_reverse_dns_from_ip(ip)
-            host_infos.append(HostInfo(ip=ip, name=name, sessions=sessions))
-        self.__generate_batch_output(host_infos)
+            os.environ.setdefault("DJANGO_SETTINGS_MODULE", "DjangoSettings")
+            django.setup()
+            summary_template = get_template('summary')
+            summary_context = {'host_infos_by_ip': do_grouping(by_ip=True),
+                               'host_infos_by_time': do_grouping(by_ip=False),
+                               'api_host_url': self._api_host_url,
+                               'uses_local': self._uses_local,
+                               'sessions': all_sessions}
+            print(summary_template.render(summary_context), file=output)
 
     def show_slugs(self, log_entries: List[LogEntry]) -> None:
         """Print out all slugs that have appeared in the text."""
@@ -237,29 +255,21 @@ class LogParser:
                                         id=next(self._id_generator)))
         return sessions
 
-    def __generate_batch_output(self, host_infos: List[HostInfo]) -> None:
+    def __generate_batch_text_output(self, host_infos: List[HostInfo]) -> None:
         output = self._output
         print(f'Writing file {output.name}')
-        if self._uses_html:
-            os.environ.setdefault("DJANGO_SETTINGS_MODULE", "DjangoSettings")
-            django.setup()
-            summary_template = get_template('summary')
-            summary_context = {'host_infos': host_infos,
-                               'api_host_url': self._api_host_url,
-                               'uses_local': self._uses_local}
-            print(summary_template.render(summary_context), file=output)
-        else:
-            for i, host_info in enumerate(host_infos):
-                if i > 0:
-                    print('\n----------\n', file=output)
-                hostname_from_ip = f"{host_info.name, ({host_info.ip})}" if host_info.name else str(host_info.ip)
-                for j, session in enumerate(host_info.sessions):
-                    if j > 0:
-                        print(file=output)
-                    entries = session.entries
-                    print(f'Host {hostname_from_ip}: {entries[0].log_entry.time_string}', file=output)
-                    for entry in entries:
-                        self.__print_entry_info(entry.log_entry, entry.data, session.start_time())
+        assert not self._uses_html
+        for i, host_info in enumerate(host_infos):
+            if i > 0:
+                print('\n----------\n', file=output)
+            hostname_from_ip = f"{host_info.name, ({host_info.ip})}" if host_info.name else str(host_info.ip)
+            for j, session in enumerate(host_info.sessions):
+                if j > 0:
+                    print(file=output)
+                entries = session.entries
+                print(f'Host {hostname_from_ip}: {entries[0].log_entry.time_string}', file=output)
+                for entry in entries:
+                    self.__print_entry_info(entry.log_entry, entry.data, session.start_time())
 
     def __print_entry_info(self, this_entry: LogEntry, this_entry_info: List[str],
                            session_start_time: datetime.datetime) -> None:
