@@ -23,6 +23,11 @@ var o_widgets = {
         $(".widget_column").mCustomScrollbar({
             theme:"rounded-dark",
             scrollInertia:300,
+            callbacks:{
+                onScrollStart:function(){
+                    $("input.STRING").autocomplete("close");
+                }
+            }
         });
         $(".sidebar_wrapper").mCustomScrollbar({
             theme:"rounded-dark",
@@ -589,6 +594,7 @@ var o_widgets = {
              }
 
              // If we have a string input widget open, initialize autocomplete for string input
+             let displayDropDownList = true;
              let stringInputDropDown = $(`input[name="${slug}"].STRING`).autocomplete({
                  minLength: 1,
                  source: function(request, response) {
@@ -628,7 +634,7 @@ var o_widgets = {
 
                          let hintsOfString = stringSearchChoicesData["choices"];
                          o_search.truncatedResults = stringSearchChoicesData["truncated_results"];
-                         response(hintsOfString);
+                         response(displayDropDownList ? hintsOfString : null);
                      });
                  },
                  focus: function(focusEvent, ui) {
@@ -643,6 +649,9 @@ var o_widgets = {
                      // o_hash.updateHash();
                      return false;
                  },
+                 // search: function(searchEvent, ui) {
+                 //     console.log(searchEvent);
+                 // }
              })
              .keyup(function(keyupEvent) {
                  /*
@@ -651,11 +660,14 @@ var o_widgets = {
                  (2) change event is triggered if input is an empty string
                  */
                  if(keyupEvent.which === 13) {
+                     displayDropDownList = false;
                      $(`input[name="${slug}"]`).autocomplete("close");
                      let currentStringInputValue = $(`input[name="${slug}"]`).val().trim();
                      if(currentStringInputValue === "") {
                          $(`input[name="${slug}"]`).trigger("change");
                      }
+                 } else {
+                     displayDropDownList = true;
                  }
              })
              .focusout(function(focusoutEvent) {

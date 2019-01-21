@@ -34,29 +34,38 @@ var o_search = {
         $.each(normalizedInputData, function(eachSlug, value) {
             let currentInput = $(`input[name="${eachSlug}"]`);
             if(value === null) {
-                if(currentInput.hasClass("RANGE") && !currentInput.hasClass("input_currently_focused")) {
-                    $("#sidebar").addClass("search_overlay");
-                    currentInput.addClass("search_input_invalid_no_focus");
-                    currentInput.removeClass("search_input_invalid");
-                    currentInput.val(opus.selections[eachSlug]);
-                    opus.allInputsValid = false;
+                if(currentInput.hasClass("RANGE")) {
+                    if(currentInput.hasClass("input_currently_focused")) {
+                        $("#sidebar").addClass("search_overlay");
+                    } else {
+                        $("#sidebar").addClass("search_overlay");
+                        currentInput.addClass("search_input_invalid_no_focus");
+                        currentInput.removeClass("search_input_invalid");
+                        currentInput.val(opus.selections[eachSlug]);
+                    }
                 }
-
-                if(currentInput.hasClass("input_currently_focused")) {
-                    delete opus.selections[eachSlug];
-                }
+                opus.allInputsValid = false;
             } else {
                 if(currentInput.hasClass("RANGE")) {
-                    currentInput.val(value);
-                    o_search.slugRangeInputValidValueFromLastSearch[eachSlug] = value;
-                    // No color border if the input value is valid
-                    currentInput.addClass("search_input_original");
-                    currentInput.removeClass("search_input_invalid_no_focus");
-                    currentInput.removeClass("search_input_invalid");
-                    currentInput.removeClass("search_input_valid");
+                    /*
+                    If current focused input value is different from returned normalized data
+                    we will not overwrite its displayed value.
+                    */
+                    if(currentInput.hasClass("input_currently_focused") && currentInput.val() !== value) {
+                        o_search.slugRangeInputValidValueFromLastSearch[eachSlug] = value;
+                    } else {
+                        currentInput.val(value);
+                        o_search.slugRangeInputValidValueFromLastSearch[eachSlug] = value;
+                        // No color border if the input value is valid
+                        currentInput.addClass("search_input_original");
+                        currentInput.removeClass("search_input_invalid_no_focus");
+                        currentInput.removeClass("search_input_invalid");
+                        currentInput.removeClass("search_input_valid");
+                    }
                 }
             }
         });
+
         if(!opus.allInputsValid) {
             $("#result_count").text("?");
             // set hinting info to ? when any range input has invalid value
