@@ -1,5 +1,6 @@
 import argparse
 import ipaddress
+import operator
 import sys
 from typing import List, Optional
 
@@ -34,7 +35,7 @@ def main(arguments: Optional[List[str]] = None) -> None:
                         help='Sorts batched logs by session start time')
 
     parser.add_argument('--html', action='store_true', dest='uses_html',
-                       help='Generate html output rather than text output')
+                        help='Generate html output rather than text output')
 
     parser.add_argument('--api-host-url', default=DEFAULT_FIELDS_PREFIX, metavar='URL', dest='api_host_url',
                         help='base url to access the information')
@@ -75,6 +76,7 @@ def main(arguments: Optional[List[str]] = None) -> None:
         elif args.show_slugs:
             log_parser.show_slugs(log_entries_list)
         elif args.fake:
+            log_entries_list.sort(key=operator.attrgetter('time'))
             log_parser.run_realtime(iter(log_entries_list))
 
 
