@@ -224,26 +224,26 @@ var o_browse = {
         });
 
         // click table column header to reorder by that column
-        $("#browse").on("click", '.dataTable th a',  function() {
-            let order_by =  $(this).data('slug');
-            if (order_by == 'collection') {
+        $("#browse").on("click", ".dataTable th a",  function() {
+            let order_by =  $(this).data("slug");
+            if (order_by == "collection") {
               // Don't do anything if clicked on the "Selected" column
               return false;
             }
-            let order_indicator = $(this).find('.column_ordering');
-            if (order_indicator.hasClass('fa-sort-asc')) {
-                // currently ascending, change to descending order
-                order_indicator.removeClass('fa-sort-asc');
-                order_indicator.addClass('fa-sort-desc');
-                order_by = '-' + order_by;
-            } else if (order_indicator.hasClass('fa-sort-desc')) {
-                // change to not ordered
-                order_indicator.removeClass('fa-sort-desc');
-                order_by = "";
 
+            let order_indicator = $(this).children()
+
+            if (order_indicator.data("sort") === "sort-asc") {
+                // currently ascending, change to descending order
+                order_indicator.data("sort", "sort-desc")
+                order_by = '-' + order_by;
+            } else if (order_indicator.data("sort") === "sort-desc") {
+                // currently descending, change to ascending order
+                order_indicator.data("sort", "sort-asc")
+                order_by = order_by;
             } else {
                 // not currently ordered, change to ascending
-                order_indicator.addClass('fa-sort-asc');
+                order_indicator.data("sort", "sort-asc")
             }
             opus.prefs['order'] = order_by;
             opus.prefs.page = default_pages; // reset pages to 1 when col ordering changes
@@ -646,8 +646,9 @@ var o_browse = {
         $(".dataTable thead tr").append("<th scope='col' class='sticky-header'></th>");
         $.each(columns, function( index, header) {
             let slug = slugs[index];
-            let icon = ($.inArray(slug, order) >= 0 ? "-down" : ($.inArray("-"+slug, order) >= 0 ? -"up" : ""));
-            let columnOrdering = "<div class='column_ordering'><a href='' data-slug='slug'><i class='fas fa-sort"+icon+"'></i></a></div>";
+            let icon = ($.inArray(slug, order) >= 0 ? "-down" : ($.inArray("-"+slug, order) >= 0 ? "-up" : ""));
+            let columnSorting = icon === "-down" ? "sort-asc" : icon === "-up" ? "sort-desc" : "none";
+            let columnOrdering = `<div class='column_ordering'><a href='' data-slug='${slug}'><i data-sort='${columnSorting}' class='fas fa-sort`+icon+"'></i></a></div>";
             $(".dataTable thead tr").append("<th id='"+slug+" 'scope='col' class='sticky-header'>"+header+columnOrdering+"</th>");
         });
         $(".dataTable th").resizable({
