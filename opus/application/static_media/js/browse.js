@@ -262,31 +262,31 @@ var o_browse = {
         // Dave: table column sorting event handler
         // click table column header to reorder by that column
         // $("#browse").on("click", ".dataTable th a",  function() {
-        //    let order_by =  $(this).data("slug");
-        //    if (order_by == "collection") {
-        //      // Don't do anything if clicked on the "Selected" column
-        //      return false;
-        //    }
+        //     let orderBy =  $(this).data("slug");
+        //     if (orderBy == "collection") {
+        //         // Don't do anything if clicked on the "Selected" column
+        //         return false;
+        //     }
         //
-        //    let order_indicator = $(this).children()
+        //     let order_indicator = $(this).children()
         //
-        //    if (order_indicator.data("sort") === "sort-asc") {
-        //        // currently ascending, change to descending order
-        //        order_indicator.data("sort", "sort-desc")
-        //        order_by = '-' + order_by;
-        //    } else if (order_indicator.data("sort") === "sort-desc") {
-        //        // currently descending, change to ascending order
-        //        order_indicator.data("sort", "sort-asc")
-        //        order_by = order_by;
-        //    } else {
-        //        // not currently ordered, change to ascending
-        //        order_indicator.data("sort", "sort-asc")
-        //    }
-        //    opus.prefs['order'] = order_by;
-        //    opus.prefs.page = default_pages; // reset pages to 1 when col ordering changes
+        //     if (order_indicator.data("sort") === "sort-asc") {
+        //         // currently ascending, change to descending order
+        //         order_indicator.data("sort", "sort-desc")
+        //         orderBy = '-' + orderBy;
+        //     } else if (order_indicator.data("sort") === "sort-desc") {
+        //         // currently descending, change to ascending order
+        //         order_indicator.data("sort", "sort-asc")
+        //         orderBy = orderBy;
+        //     } else {
+        //         // not currently ordered, change to ascending
+        //         order_indicator.data("sort", "sort-asc")
+        //     }
+        //     opus.prefs['order'] = orderBy;
+        //     opus.prefs.page = default_pages; // reset pages to 1 when col ordering changes
         //
-        //    o_browse.updatePage();
-        //    return false;
+        //     o_browse.updatePage();
+        //     return false;
         // });
 
         $("#obs-menu").on("click", '.dropdown-item',  function(e) {
@@ -687,9 +687,9 @@ var o_browse = {
             let slug = slugs[index];
 
             // Dave: assigning data attribute for table column sorting
-            // let icon = ($.inArray(slug, order) >= 0 ? "-down" : ($.inArray("-"+slug, order) >= 0 ? "-up" : ""));
-            // let columnSorting = icon === "-down" ? "sort-asc" : icon === "-up" ? "sort-desc" : "none";
-            // let columnOrdering = `<div class='column_ordering'><a href='' data-slug='${slug}'><i data-sort='${columnSorting}' class='fas fa-sort`+icon+"'></i></a></div>";
+            // let icon = ($.inArray(slug, order) >= 0 ? o_browse.sortDescIcon : ($.inArray("-"+slug, order) >= 0 ? o_browse.sortAscIcon : o_browse.sortIcon));
+            // let columnSorting = icon === o_browse.sortDescIcon ? "sort-asc" : icon === o_browse.sortAscIcon ? "sort-desc" : "none";
+            // let columnOrdering = `<div class='column_ordering'><a href='' data-slug='${slug}'><i data-sort='${columnSorting}' class='fas `+icon+"'></i></a></div>";
 
             let icon = ($.inArray(slug, order) >= 0 ? o_browse.sortDescIcon : ($.inArray("-"+slug, order) >= 0 ? o_browse.sortAscIcon : o_browse.sortIcon));
             let columnOrdering = "<div class='column_ordering'><a href='' data-slug='"+slug+"'><i class='fas "+icon+"'></i></a></div>";
