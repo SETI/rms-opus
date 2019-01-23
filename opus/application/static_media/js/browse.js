@@ -655,7 +655,7 @@ var o_browse = {
             handles: "e",
             minWidth: 40,
             resize: function (event, ui) {
-              $(event.target).find("div").width(ui.size.width);
+              $(event.target).width(ui.size.width);
             }
         });
     },
