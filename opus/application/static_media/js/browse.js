@@ -1,6 +1,10 @@
 var o_browse = {
     selectedImageID: "",
     keyPressAction: "",
+    sortIcon: "fa-sort",
+    sortAscIcon: "fa-sort-up",
+    sortDescIcon: "fa-sort-down",
+
     //scrollbar: new PerfectScrollbar("#browse .gallery-contents"),
 
     /**
@@ -223,34 +227,67 @@ var o_browse = {
             return false;
         });
 
-        // click table column header to reorder by that column
-        $("#browse").on("click", ".dataTable th a",  function() {
-            let order_by =  $(this).data("slug");
-            if (order_by == "collection") {
-              // Don't do anything if clicked on the "Selected" column
-              return false;
+        $("#browse").on("click", '.dataTable th a',  function() {
+            let orderBy =  $(this).data('slug');
+            let classList = $(this).find("i").attr('class').split(" ");
+            let desc = $("#dataTable thead").find("."+o_browse.sortDescIcon);
+            let asc = $("#dataTable thead").find("."+o_browse.sortAscIcon);
+            if (asc.length > 0) {
+                asc.removeClass(o_browse.sortAscIcon);
+                asc.addClass(o_browse.sortIcon);
+            } else if (desc.length > 0) {
+                desc.removeClass(o_browse.sortDescIcon);
+                desc.addClass(o_browse.sortIcon);
             }
 
-            let order_indicator = $(this).children()
-
-            if (order_indicator.data("sort") === "sort-asc") {
-                // currently ascending, change to descending order
-                order_indicator.data("sort", "sort-desc")
-                order_by = '-' + order_by;
-            } else if (order_indicator.data("sort") === "sort-desc") {
-                // currently descending, change to ascending order
-                order_indicator.data("sort", "sort-asc")
-                order_by = order_by;
+            let orderElem = $(this).find("i");
+            if ($.inArray(o_browse.sortAscIcon, classList) >= 0) {
+                orderElem.addClass(o_browse.sortDescIcon);
             } else {
-                // not currently ordered, change to ascending
-                order_indicator.data("sort", "sort-asc")
+                orderElem.addClass(o_browse.sortAscIcon);
+                orderBy = "-" + orderBy;
             }
-            opus.prefs['order'] = order_by;
+            opus.prefs['order'] = orderBy;
+
+            o_hash.updateHash();
+            opus.last_page_drawn = $.extend(true, {}, reset_last_page_drawn)
+            opus.gallery_begun = false;     // so that we redraw from the beginning
+            opus.gallery_data = {};
             opus.prefs.page = default_pages; // reset pages to 1 when col ordering changes
 
-            o_browse.updatePage();
+            o_browse.loadBrowseData(1);
             return false;
         });
+
+        // Dave: table column sorting event handler
+        // click table column header to reorder by that column
+        // $("#browse").on("click", ".dataTable th a",  function() {
+        //    let order_by =  $(this).data("slug");
+        //    if (order_by == "collection") {
+        //      // Don't do anything if clicked on the "Selected" column
+        //      return false;
+        //    }
+        //
+        //    let order_indicator = $(this).children()
+        //
+        //    if (order_indicator.data("sort") === "sort-asc") {
+        //        // currently ascending, change to descending order
+        //        order_indicator.data("sort", "sort-desc")
+        //        order_by = '-' + order_by;
+        //    } else if (order_indicator.data("sort") === "sort-desc") {
+        //        // currently descending, change to ascending order
+        //        order_indicator.data("sort", "sort-asc")
+        //        order_by = order_by;
+        //    } else {
+        //        // not currently ordered, change to ascending
+        //        order_indicator.data("sort", "sort-asc")
+        //    }
+        //    opus.prefs['order'] = order_by;
+        //    opus.prefs.page = default_pages; // reset pages to 1 when col ordering changes
+        //
+        //    o_browse.updatePage();
+        //    return false;
+        // });
 
         $("#obs-menu").on("click", '.dropdown-item',  function(e) {
             o_browse.hideMenu();
@@ -507,16 +544,18 @@ var o_browse = {
 
     updateBrowseNav: function() {
         if (opus.prefs.browse == "gallery") {
-            $('.' + "dataTable", "#browse").hide();
-            $('.' + opus.prefs.browse, "#browse").fadeIn();
+            $("." + "dataTable", "#browse").hide();
+            $("." + opus.prefs.browse, "#browse").fadeIn();
 
-            $('.browse_view', "#browse").text('view table');
+            $(".browse_view", "#browse").html("<i class='far fa-list-alt'></i>&nbsp;View Table");
+            $(".browse_view", "#browse").attr("title", "Click to view sortable table");
             $(".browse_view", "#browse").data("view", "dataTable");
         } else {
-            $('.' + "gallery", "#browse").hide();
-            $('.' + opus.prefs.browse, "#browse").fadeIn();
+            $("." + "gallery", "#browse").hide();
+            $("." + opus.prefs.browse, "#browse").fadeIn();
 
-            $('.browse_view', "#browse").text('view gallery');
+            $(".browse_view", "#browse").html("<i class='far fa-images'></i>&nbsp;View Gallery");
+            $(".browse_view", "#browse").attr("title", "Click to view sortable gallery");
             $(".browse_view", "#browse").data("view", "gallery");
         }
     },
@@ -646,9 +685,15 @@ var o_browse = {
         $(".dataTable thead tr").append("<th scope='col' class='sticky-header'></th>");
         $.each(columns, function( index, header) {
             let slug = slugs[index];
-            let icon = ($.inArray(slug, order) >= 0 ? "-down" : ($.inArray("-"+slug, order) >= 0 ? "-up" : ""));
-            let columnSorting = icon === "-down" ? "sort-asc" : icon === "-up" ? "sort-desc" : "none";
-            let columnOrdering = `<div class='column_ordering'><a href='' data-slug='${slug}'><i data-sort='${columnSorting}' class='fas fa-sort`+icon+"'></i></a></div>";
+
+            // Dave: assigning data attribute for table column sorting
+            // let icon = ($.inArray(slug, order) >= 0 ? "-down" : ($.inArray("-"+slug, order) >= 0 ? "-up" : ""));
+            // let columnSorting = icon === "-down" ? "sort-asc" : icon === "-up" ? "sort-desc" : "none";
+            // let columnOrdering = `<div class='column_ordering'><a href='' data-slug='${slug}'><i data-sort='${columnSorting}' class='fas fa-sort`+icon+"'></i></a></div>";
+
+            let icon = ($.inArray(slug, order) >= 0 ? o_browse.sortDescIcon : ($.inArray("-"+slug, order) >= 0 ? o_browse.sortAscIcon : o_browse.sortIcon));
+            let columnOrdering = "<div class='column_ordering'><a href='' data-slug='"+slug+"'><i class='fas "+icon+"'></i></a></div>";
+
             $(".dataTable thead tr").append("<th id='"+slug+" 'scope='col' class='sticky-header'>"+header+columnOrdering+"</th>");
         });
         $(".dataTable th").resizable({
