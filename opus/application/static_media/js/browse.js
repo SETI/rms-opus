@@ -514,16 +514,18 @@ var o_browse = {
 
     updateBrowseNav: function() {
         if (opus.prefs.browse == "gallery") {
-            $('.' + "dataTable", "#browse").hide();
-            $('.' + opus.prefs.browse, "#browse").fadeIn();
+            $("." + "dataTable", "#browse").hide();
+            $("." + opus.prefs.browse, "#browse").fadeIn();
 
-            $('.browse_view', "#browse").text('view table');
+            $(".browse_view", "#browse").html("<i class='far fa-list-alt'></i>&nbsp;View Table");
+            $(".browse_view", "#browse").attr("title", "Click to view sortable table");
             $(".browse_view", "#browse").data("view", "dataTable");
         } else {
-            $('.' + "gallery", "#browse").hide();
-            $('.' + opus.prefs.browse, "#browse").fadeIn();
+            $("." + "gallery", "#browse").hide();
+            $("." + opus.prefs.browse, "#browse").fadeIn();
 
-            $('.browse_view', "#browse").text('view gallery');
+            $(".browse_view", "#browse").html("<i class='far fa-images'></i>&nbsp;View Gallery");
+            $(".browse_view", "#browse").attr("title", "Click to view sortable gallery");
             $(".browse_view", "#browse").data("view", "gallery");
         }
     },
