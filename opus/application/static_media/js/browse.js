@@ -668,6 +668,16 @@ var o_browse = {
         });
     },
 
+    updateSortOrder: function() {
+        let hashArray = o_hash.getHashArray();
+        let order = hashArray["order"].split(",");
+        let listHtml = "";
+        $.each(order, function(index, slug) {
+            listHtml += "<li class='list-inline-item'><i class='fas fa-arrow-circle-right'></i> "+opus.col_labels[index]+"</li>";
+        });
+        $(".order-container ul").html(listHtml);
+    },
+
     loadBrowseData: function(page) {
         //window.scrollTo(0,opus.browse_view_scrolls[opus.prefs.browse]);
         page = (page == undefined ? $("input#page").val() : page);
@@ -717,6 +727,7 @@ var o_browse = {
             }
 
             o_browse.renderGalleryAndTable(data, this.url);
+            o_browse.updateSortOrder();
 
             if (!opus.gallery_begun) {
                 $('#browse .gallery-contents').infiniteScroll('loadNextPage');

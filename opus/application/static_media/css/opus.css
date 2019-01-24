@@ -526,6 +526,10 @@ div.gallery {
     width:4.2em;
     text-align: center;
  }
+.browse-nav-container .order-container {
+	display:inline-flex;
+	float: right;
+}
 @media (max-width: 700px) {
     .navbar-header {
         display:none;
@@ -538,8 +542,10 @@ div.gallery {
      .browse-nav-container {
         width:100%;
         margin:0;
-
      }
+	 .browse-nav-container .order-container {
+		 display:none;
+	 }
 }
 .panel-body .gallery-contents {
 	position:fixed !important;
@@ -819,8 +825,6 @@ background-image: -webkit-gradient(linear, left bottom, left top, from(#30cfd0),
 background-image: -webkit-linear-gradient(bottom, #30cfd0 0%, #330867 100%);
 background-image: linear-gradient(to top, #30cfd0 0%, #330867 100%);
 }
-
-
 
 input[type="text"].search_input_original {
     border: 1px solid #D5D5D5;
