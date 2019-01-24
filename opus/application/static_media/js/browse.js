@@ -260,10 +260,10 @@ var o_browse = {
         // });
 
         // click table column header to reorder by that column
-        $("#browse").on("click", ".dataTable th a",  function() {
-            let orderBy =  $(this).data("slug");
+        $("#browse").on("click", ".dataTable th",  function() {
+            let orderBy =  $(this).find("a").data("slug");
 
-            let order_indicator = $(this).children()
+            let order_indicator = $(this).find("a").children()
 
             if (order_indicator.data("sort") === "sort-asc") {
                 // currently ascending, change to descending order
@@ -689,12 +689,14 @@ var o_browse = {
             // Assigning data attribute for table column sorting
             let icon = ($.inArray(slug, order) >= 0 ? "-down" : ($.inArray("-"+slug, order) >= 0 ? "-up" : ""));
             let columnSorting = icon === "-down" ? "sort-asc" : icon === "-up" ? "sort-desc" : "none";
+            // let columnOrdering = `<a href='' data-slug='${slug}'>${header}<span data-sort='${columnSorting}' class='column_ordering fas fa-sort`+icon+"'></span></a>";
             let columnOrdering = `<div class='column_ordering'><a href='' data-slug='${slug}'><i data-sort='${columnSorting}' class='fas fa-sort`+icon+"'></i></a></div>";
 
             // let icon = ($.inArray(slug, order) >= 0 ? o_browse.sortDescIcon : ($.inArray("-"+slug, order) >= 0 ? o_browse.sortAscIcon : o_browse.sortIcon));
             // let columnOrdering = "<div class='column_ordering'><a href='' data-slug='"+slug+"'><i class='fas "+icon+"'></i></a></div>";
 
             $(".dataTable thead tr").append("<th id='"+slug+" 'scope='col' class='sticky-header'>"+header+columnOrdering+"</th>");
+            // $(".dataTable thead tr").append("<th id='"+slug+" 'scope='col' class='sticky-header'>"+columnOrdering+"</th>");
         });
         $(".dataTable th").resizable({
             handles: "e",
