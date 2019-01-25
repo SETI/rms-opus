@@ -7,6 +7,7 @@ body {
 
 .container-fluid {
 	padding: 0;
+	margin-bottom: -12px;
 }
 
 .addScroll{
@@ -93,6 +94,14 @@ body {
 
 .gallery-contents {
 		overflow-y:auto !important;
+		/* overflow-x:hidden; */
+}
+
+.enable-x-axis-scrolling {
+		overflow-x:auto;
+}
+
+.disable-x-axis-scrolling {
 		overflow-x:hidden;
 }
 
@@ -321,6 +330,10 @@ th.sticky-header {
 
 #dataTable  {
     padding:0;
+}
+
+#dataTable th {
+    vertical-align: middle;
 }
 
 #dataTable th a {
