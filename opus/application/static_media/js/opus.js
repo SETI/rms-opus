@@ -336,9 +336,11 @@ $(document).ready(function() {
 
     var adjustSearchHeight = _.debounce(o_search.adjustSearchHeight, 200);
     var adjustBrowseHeight = _.debounce(o_browse.adjustBrowseHeight, 200);
+    var adjustTableWidth = _.debounce(o_browse.adjustTableWidth, 200);
     $( window ).on("resize", function() {
         adjustSearchHeight();
         adjustBrowseHeight();
+        adjustTableWidth();
     });
 
     // add the navbar clicking behaviors, selecting which tab to view:

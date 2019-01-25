@@ -94,16 +94,16 @@ body {
 
 .gallery-contents {
 		overflow-y:auto !important;
-		/* overflow-x:hidden; */
+		overflow-x:hidden;
 }
 
-.enable-x-axis-scrolling {
+/* .enable-x-axis-scrolling {
 		overflow-x:auto;
 }
 
 .disable-x-axis-scrolling {
 		overflow-x:hidden;
-}
+} */
 
 #detail {
     padding:20px 50px;
@@ -884,4 +884,23 @@ ul.ui-autocomplete li a {
 
 .list-header, .list-footer {
     background-color: #F9F6F6;
+}
+
+/* Not overlap table y-axis scrollbar with the window y-axis scrollbar */
+.gallery-contents .ps__rail-y {
+		display: none !important;
+}
+/* Make sure x-axis rail is not moving */
+.gallery-contents .ps__rail-x {
+		left: 0px !important;
+		/* bottom: 26px !important; */
+}
+
+/* i dont' think we want to do this. */
+.lower-x-axis-scrollbar-pos {
+		bottom: 26px !important;
+}
+
+.higher-x-axis-scrollbar-pos {
+		bottom: 47px !important;
 }

@@ -1,7 +1,10 @@
 var o_browse = {
     selectedImageID: "",
     keyPressAction: "",
-    // tableScrollbar: new PerfectScrollbar("#dataTable"),
+    xAxisTableScrollbar: new PerfectScrollbar(".gallery-contents", {
+        useBothWheelAxes: false,
+        // suppressScrollY: true,
+    }),
     // scrollbar: new PerfectScrollbar("#browse .gallery-contents"),
 
     /**
@@ -516,10 +519,10 @@ var o_browse = {
             $(".browse_view", "#browse").attr("title", "Click to view sortable table");
             $(".browse_view", "#browse").data("view", "dataTable");
 
-            $(".gallery-contents").removeClass("enable-x-axis-scrolling");
-            if(!$(".gallery-contents").hasClass("disable-x-axis-scrolling")) {
-                $(".gallery-contents").addClass("disable-x-axis-scrolling");
-            }
+            // $(".gallery-contents").removeClass("enable-x-axis-scrolling");
+            // if(!$(".gallery-contents").hasClass("disable-x-axis-scrolling")) {
+            //     $(".gallery-contents").addClass("disable-x-axis-scrolling");
+            // }
         } else {
             $("." + "gallery", "#browse").hide();
             $("." + opus.prefs.browse, "#browse").fadeIn();
@@ -527,11 +530,11 @@ var o_browse = {
             $(".browse_view", "#browse").html("<i class='far fa-images'></i>&nbsp;View Gallery");
             $(".browse_view", "#browse").attr("title", "Click to view sortable gallery");
             $(".browse_view", "#browse").data("view", "gallery");
-
-            $(".gallery-contents").removeClass("disable-x-axis-scrolling");
-            if(!$(".gallery-contents").hasClass("enable-x-axis-scrolling")) {
-                $(".gallery-contents").addClass("enable-x-axis-scrolling");
-            }
+            //
+            // $(".gallery-contents").removeClass("disable-x-axis-scrolling");
+            // if(!$(".gallery-contents").hasClass("enable-x-axis-scrolling")) {
+            //     $(".gallery-contents").addClass("enable-x-axis-scrolling");
+            // }
         }
     },
 
@@ -639,6 +642,8 @@ var o_browse = {
             html += '</div>';
         }
         $('.gallery', namespace).append(html);
+
+        o_browse.adjustTableWidth();
     },
 
     initTable: function(columns) {
@@ -765,6 +770,7 @@ var o_browse = {
         }
         o_browse.loadBrowseData(page);
         o_browse.adjustBrowseHeight();
+        o_browse.adjustTableWidth();
 
         $("input#page").val(page).css("color","initial");
         o_hash.updateHash();
@@ -775,6 +781,35 @@ var o_browse = {
         $(".gallery-contents").height(container_height);
         // o_browse.scrollbar.update();
         //opus.limit =  (floor($(window).width()/thumbnailSize) * floor(container_height/thumbnailSize));
+    },
+
+    adjustTableWidth: function() {
+        let containerWidth = $(".gallery-contents").width()-100;
+        let xRailPosition = $(".app-footer").height();
+        console.log("Table Width: " + containerWidth);
+        console.log("Table Bottom: " + xRailPosition);
+        console.log(xRailPosition === 25);
+        console.log(xRailPosition === 46);
+
+        if(xRailPosition === 25) {
+            $(".gallery-contents > .ps__rail-x").removeClass("higher-x-axis-scrollbar-pos");
+            if(!$(".gallery-contents > .ps__rail-x").hasClass("lower-x-axis-scrollbar-pos")) {
+                $(".gallery-contents > .ps__rail-x").addClass("lower-x-axis-scrollbar-pos");
+            }
+        } else if(xRailPosition === 46) {
+            $(".gallery-contents > .ps__rail-x").removeClass("lower-x-axis-scrollbar-pos");
+            if(!$(".gallery-contents > .ps__rail-x").hasClass("higher-x-axis-scrollbar-pos")) {
+                $(".gallery-contents > .ps__rail-x").addClass("higher-x-axis-scrollbar-pos");
+            }
+        }
+        // $(".gallery-contents > .ps__rail-x").each(function () {
+        //     this.style.setProperty( "bottom", `${xRailPosition}px`, "important");
+        // });
+        // console.log("X RAIL:" + $(".gallery-contents > .ps__rail-x").attr("style"));
+        // $(".gallery-contents > .ps__rail-x").attr("style", `bottom: ${xRailPosition}px !important;`);
+        // $(".gallery-contents > .ps__rail-x").style("bottom", `${xRailPosition}px`, "important");
+        // $("#dataTable").width(containerWidth);
+        o_browse.xAxisTableScrollbar.update();
     },
 
     metadataboxHtml: function(opusId) {
