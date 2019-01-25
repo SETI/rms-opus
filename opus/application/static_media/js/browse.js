@@ -1,10 +1,6 @@
 var o_browse = {
     selectedImageID: "",
     keyPressAction: "",
-    // sortIcon: "fa-sort",
-    // sortAscIcon: "fa-sort-up",
-    // sortDescIcon: "fa-sort-down",
-
     //scrollbar: new PerfectScrollbar("#browse .gallery-contents"),
 
     /**
@@ -227,43 +223,11 @@ var o_browse = {
             return false;
         });
 
-        // $("#browse").on("click", '.dataTable th a',  function() {
-        //     let orderBy =  $(this).data('slug');
-        //     let classList = $(this).find("i").attr('class').split(" ");
-        //     let desc = $("#dataTable thead").find("."+o_browse.sortDescIcon);
-        //     let asc = $("#dataTable thead").find("."+o_browse.sortAscIcon);
-        //     if (asc.length > 0) {
-        //         asc.removeClass(o_browse.sortAscIcon);
-        //         asc.addClass(o_browse.sortIcon);
-        //     } else if (desc.length > 0) {
-        //         desc.removeClass(o_browse.sortDescIcon);
-        //         desc.addClass(o_browse.sortIcon);
-        //     }
-        //
-        //     let orderElem = $(this).find("i");
-        //     if ($.inArray(o_browse.sortAscIcon, classList) >= 0) {
-        //         orderElem.addClass(o_browse.sortDescIcon);
-        //     } else {
-        //         orderElem.addClass(o_browse.sortAscIcon);
-        //         orderBy = "-" + orderBy;
-        //     }
-        //     opus.prefs['order'] = orderBy;
-        //
-        //     o_hash.updateHash();
-        //     opus.last_page_drawn = $.extend(true, {}, reset_last_page_drawn)
-        //     opus.gallery_begun = false;     // so that we redraw from the beginning
-        //     opus.gallery_data = {};
-        //     opus.prefs.page = default_pages; // reset pages to 1 when col ordering changes
-        //
-        //     o_browse.loadBrowseData(1);
-        //     return false;
-        // });
-
         // click table column header to reorder by that column
-        $("#browse").on("click", ".dataTable th",  function() {
-            let orderBy =  $(this).find("a").data("slug");
+        $("#browse").on("click", ".dataTable th a",  function() {
+            let orderBy =  $(this).data("slug");
 
-            let order_indicator = $(this).find("a").children()
+            let order_indicator = $(this).children()
 
             if (order_indicator.data("sort") === "sort-asc") {
                 // currently ascending, change to descending order
@@ -689,14 +653,11 @@ var o_browse = {
             // Assigning data attribute for table column sorting
             let icon = ($.inArray(slug, order) >= 0 ? "-down" : ($.inArray("-"+slug, order) >= 0 ? "-up" : ""));
             let columnSorting = icon === "-down" ? "sort-asc" : icon === "-up" ? "sort-desc" : "none";
-            // let columnOrdering = `<a href='' data-slug='${slug}'>${header}<span data-sort='${columnSorting}' class='column_ordering fas fa-sort`+icon+"'></span></a>";
-            let columnOrdering = `<div class='column_ordering'><a href='' data-slug='${slug}'><i data-sort='${columnSorting}' class='fas fa-sort`+icon+"'></i></a></div>";
+            let columnOrdering = `<a href='' data-slug='${slug}'>${header}<span data-sort='${columnSorting}' class='column_ordering fas fa-sort`+icon+"'></span></a>";
+            // let columnOrdering = `<div class='column_ordering'><a href='' data-slug='${slug}'><i data-sort='${columnSorting}' class='fas fa-sort`+icon+"'></i></a></div>";
 
-            // let icon = ($.inArray(slug, order) >= 0 ? o_browse.sortDescIcon : ($.inArray("-"+slug, order) >= 0 ? o_browse.sortAscIcon : o_browse.sortIcon));
-            // let columnOrdering = "<div class='column_ordering'><a href='' data-slug='"+slug+"'><i class='fas "+icon+"'></i></a></div>";
-
-            $(".dataTable thead tr").append("<th id='"+slug+" 'scope='col' class='sticky-header'>"+header+columnOrdering+"</th>");
-            // $(".dataTable thead tr").append("<th id='"+slug+" 'scope='col' class='sticky-header'>"+columnOrdering+"</th>");
+            // $(".dataTable thead tr").append("<th id='"+slug+" 'scope='col' class='sticky-header'>"+header+columnOrdering+"</th>");
+            $(".dataTable thead tr").append("<th id='"+slug+" 'scope='col' class='sticky-header'>"+columnOrdering+"</th>");
         });
         $(".dataTable th").resizable({
             handles: "e",

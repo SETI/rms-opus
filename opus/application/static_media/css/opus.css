@@ -325,12 +325,14 @@ th.sticky-header {
 
 #dataTable th a {
     display:block;
+		text-align: center;
+		text-decoration: none;
 }
 
 #dataTable .column_ordering {
     margin:0 10px;
-	display: inline-flex;
-	float: right;
+		/* display: inline-flex; */
+		/* float: right; */
 }
 
 .fadey {
