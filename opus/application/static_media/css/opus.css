@@ -904,3 +904,9 @@ ul.ui-autocomplete li a {
 .higher-x-axis-scrollbar-pos {
 		bottom: 47px !important;
 }
+
+/* Fix the spinner*/
+#tablePage {
+		display: none;
+		top: 250px;
+}

@@ -93,7 +93,7 @@
 								</li>
 								<li class="nav-item">
 									<a href="#" class="download_csv nav-link" title="Click to download CSV"><i class="fas fa-download"></i>&nbsp;Download CSV</a>
-								</li> 
+								</li>
 							</ul>
 						</div>
 					</nav>
@@ -110,6 +110,7 @@
 						</div>
 						<div class="row dataTable">
 							<div class="col-lg">
+								<div id="tablePage" class="loader"></div>
 								<table id="dataTable" class="table table-hover table-bordered table-striped table-dark table-sm">
 								  <thead>
 									<tr>
@@ -149,7 +150,7 @@
 			</div>
 
 		</div><!-- /tabcontent -->
-		
+
 		<!-- dropdown menu for observations -->
 		<div class="dropdown-menu dropdown-menu-sm" id="obs-menu" aria-labelledby="obs-menu">
 			<a class="dropdown-item" data-action="cart" href="#"><i class="fas fa-shopping-cart"></i>Add to Cart</a>

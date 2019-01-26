@@ -229,6 +229,8 @@ var o_browse = {
 
         // click table column header to reorder by that column
         $("#browse").on("click", ".dataTable th a",  function() {
+            console.log("Display table spinner");
+            $("#tablePage").attr("style", "display: block");
             let orderBy =  $(this).data("slug");
 
             let order_indicator = $(this).children()
@@ -519,6 +521,7 @@ var o_browse = {
             $(".browse_view", "#browse").attr("title", "Click to view sortable table");
             $(".browse_view", "#browse").data("view", "dataTable");
 
+            $(".justify-content-center").attr("style", "");
             // $(".gallery-contents").removeClass("enable-x-axis-scrolling");
             // if(!$(".gallery-contents").hasClass("disable-x-axis-scrolling")) {
             //     $(".gallery-contents").addClass("disable-x-axis-scrolling");
@@ -530,7 +533,9 @@ var o_browse = {
             $(".browse_view", "#browse").html("<i class='far fa-images'></i>&nbsp;View Gallery");
             $(".browse_view", "#browse").attr("title", "Click to view sortable gallery");
             $(".browse_view", "#browse").data("view", "gallery");
-            //
+
+            // remove that extra space on top when loading table page
+            $(".justify-content-center").attr("style", "display: none");
             // $(".gallery-contents").removeClass("disable-x-axis-scrolling");
             // if(!$(".gallery-contents").hasClass("enable-x-axis-scrolling")) {
             //     $(".gallery-contents").addClass("enable-x-axis-scrolling");
@@ -738,6 +743,9 @@ var o_browse = {
                 $('#browse .gallery-contents').infiniteScroll('loadNextPage');
                 opus.gallery_begun = true;
             }
+            console.log("current page: " + opus.prefs.browse);
+            // remove spinner from table page after the page is fetched
+            $("#tablePage").attr("style", "display: none");
         });
 
         // ew.  this needs to be dealt with, as table/gallery are always drawn at same time
@@ -786,10 +794,6 @@ var o_browse = {
     adjustTableWidth: function() {
         let containerWidth = $(".gallery-contents").width()-100;
         let xRailPosition = $(".app-footer").height();
-        console.log("Table Width: " + containerWidth);
-        console.log("Table Bottom: " + xRailPosition);
-        console.log(xRailPosition === 25);
-        console.log(xRailPosition === 46);
 
         if(xRailPosition === 25) {
             $(".gallery-contents > .ps__rail-x").removeClass("higher-x-axis-scrollbar-pos");
