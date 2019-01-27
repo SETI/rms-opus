@@ -399,10 +399,7 @@ var o_browse = {
         $(".app-body").on("hide.bs.modal", "#columnChooser", function(e) {
             // update the data table w/the new columns
             if (!o_utils.areObjectsEqual(opus.prefs.cols, currentSelectedColumns)) {
-                o_hash.updateHash();
-                opus.last_page_drawn = $.extend(true, {}, reset_last_page_drawn)
-                opus.gallery_begun = false;     // so that we redraw from the beginning
-                opus.gallery_data = {};
+                o_browse.resetData();
                 o_browse.loadBrowseData(1);
                 currentSelectedColumns = opus.prefs.cols.slice();
             }
@@ -430,7 +427,7 @@ var o_browse = {
                 addToCart.fadeIn().css('display', 'inline-block');
                 if ($.inArray(slug, opus.prefs.cols ) < 0) {
                     // this slug was previously unselected, add to cols
-                    $('<li id = "cchoose__' + slug + '">' + label + ' <i class = "fa fa-info-circle" title = "' + def + '"></i><span class = "unselect">X</span></li>').hide().appendTo('.selectedColumns > ul').fadeIn();
+                    $('<li id = "cchoose__' + slug + '">' + label + ' <i class = "fa fa-info-circle" title = "' + def + '"></i><span class="unselect"><i class="far fa-trash-alt"></span></li>').hide().appendTo('.selectedColumns > ul').fadeIn();
                     opus.prefs.cols.push(slug);
                 }
 
@@ -835,11 +832,7 @@ var o_browse = {
         $("#galleryViewContents .right").html(o_browse.metadataboxHtml(opusId));
     },
 
-    resetQuery: function() {
-        /*
-        when the user changes the query and all this stuff is already drawn
-        need to reset all of it (todo: replace with framework!)
-        */
+    resetData: function() {
         $("#dataTable > tbody").empty();  // yes all namespaces
         $(".gallery").empty();
         opus.gallery_data = [];
@@ -848,13 +841,19 @@ var o_browse = {
         opus.collection_change = true;  // forces redraw of collections tab because reset_last_page_drawn
         opus.browse_view_scrolls = reset_browse_view_scrolls;
         opus.gallery_begun = false;
-        opus.column_chooser_drawn = false;
         o_hash.updateHash();
+    },
 
+    resetQuery: function() {
+        /*
+        when the user changes the query and all this stuff is already drawn
+        need to reset all of it (todo: replace with framework!)
+        */
+        opus.column_chooser_drawn = false;
+        o_browse.resetData();
     },
 
     updatePage: function() {
-
         /*
         reloads the current results view from server and
         sets other views back to undrawn

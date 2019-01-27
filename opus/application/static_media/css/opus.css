@@ -382,8 +382,12 @@ th.sticky-header {
     margin-top:15px;
     margin-bottom:-5px;
 }
-.selectedColumns ul li:hover{ cursor:move; }
-.selectedColumns ul li .unselect:hover{ cursor:move; }
+.selectedColumns ul li:hover{
+	cursor:grab;
+}
+.selectedColumns ul li .unselect:hover{
+	 cursor:default; 
+ }
 
 .selectedColumns .unselect {
     float:right;
