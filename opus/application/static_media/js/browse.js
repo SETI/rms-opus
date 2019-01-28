@@ -674,7 +674,7 @@ var o_browse = {
             // Assigning data attribute for table column sorting
             let icon = ($.inArray(slug, order) >= 0 ? "-down" : ($.inArray("-"+slug, order) >= 0 ? "-up" : ""));
             let columnSorting = icon === "-down" ? "sort-asc" : icon === "-up" ? "sort-desc" : "none";
-            let columnOrdering = `<a href='' data-slug='${slug}'>${header}<span data-sort='${columnSorting}' class='column_ordering fas fa-sort`+icon+"'></span></a>";
+            let columnOrdering = "<a href='' data-slug='"+slug+"'>"+header+"<span data-sort='"+columnSorting+"' class='column_ordering fas fa-sort"+icon+"'></span></a>";
             // let columnOrdering = `<div class='column_ordering'><a href='' data-slug='${slug}'><i data-sort='${columnSorting}' class='fas fa-sort`+icon+"'></i></a></div>";
 
             // $(".dataTable thead tr").append("<th id='"+slug+" 'scope='col' class='sticky-header'>"+header+columnOrdering+"</th>");
@@ -745,7 +745,7 @@ var o_browse = {
             }
             console.log("current page: " + opus.prefs.browse);
             // remove spinner from table page after the page is fetched
-            $("#tablePage").attr("style", "display: none");
+            setTimeout(function() { $("#tablePage").attr("style", "display: none"); }, 3000);
         });
 
         // ew.  this needs to be dealt with, as table/gallery are always drawn at same time
