@@ -5,6 +5,10 @@ body {
 	margin-top: 3.8em !important;
 }
 
+/* .app-footer {
+		margin-bottom: -12px;
+} */
+
 .container-fluid {
 	padding: 0;
 	margin-bottom: -12px;
@@ -95,6 +99,27 @@ body {
 .gallery-contents {
 		overflow-y:auto !important;
 		overflow-x:hidden;
+}
+
+/* Not overlap table y-axis scrollbar with the window y-axis scrollbar */
+.gallery-contents .ps__rail-y {
+		display: none !important;
+}
+/* Make sure x-axis rail is not moving and always visible */
+.gallery-contents .ps__rail-x {
+		opacity: 1 !important;
+		left: 0px !important;
+		/* background-color: #FFFFFF; */
+		/* bottom: 26px !important; */
+}
+
+/* i dont' think we want to do this. */
+.lower-x-axis-scrollbar-pos {
+		bottom: 26px !important;
+}
+
+.higher-x-axis-scrollbar-pos {
+		bottom: 47px !important;
 }
 
 /* .enable-x-axis-scrolling {
@@ -346,6 +371,12 @@ th.sticky-header {
     margin:0 10px;
 		/* display: inline-flex; */
 		/* float: right; */
+}
+
+/* Fix the spinner*/
+.table-page-load-status .loader {
+		display: none;
+		top: 250px;
 }
 
 .fadey {
@@ -884,29 +915,4 @@ ul.ui-autocomplete li a {
 
 .list-header, .list-footer {
     background-color: #F9F6F6;
-}
-
-/* Not overlap table y-axis scrollbar with the window y-axis scrollbar */
-.gallery-contents .ps__rail-y {
-		display: none !important;
-}
-/* Make sure x-axis rail is not moving */
-.gallery-contents .ps__rail-x {
-		left: 0px !important;
-		/* bottom: 26px !important; */
-}
-
-/* i dont' think we want to do this. */
-.lower-x-axis-scrollbar-pos {
-		bottom: 26px !important;
-}
-
-.higher-x-axis-scrollbar-pos {
-		bottom: 47px !important;
-}
-
-/* Fix the spinner*/
-#tablePage {
-		display: none;
-		top: 250px;
 }

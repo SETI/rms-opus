@@ -68,10 +68,14 @@
  * Scrollbar thumb styles
  */
 .ps__thumb-x {
-  background-color: #aaa;
-  border-radius: 6px;
+  /* background-color: #aaa;
   transition: background-color .2s linear, height .2s ease-in-out;
-  -webkit-transition: background-color .2s linear, height .2s ease-in-out;
+  -webkit-transition: background-color .2s linear, height .2s ease-in-out; */
+  border-radius: 6px;
+  -webkit-box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.1);
+  background-image: -webkit-gradient(linear, left bottom, left top, from(#30cfd0), to(#330867));
+  background-image: -webkit-linear-gradient(bottom, #30cfd0 0%, #330867 100%);
+  background-image: linear-gradient(to top, #30cfd0 0%, #330867 100%);
   height: 6px;
   /* there must be 'bottom' for ps__thumb-x */
   bottom: 2px;

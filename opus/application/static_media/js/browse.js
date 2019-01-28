@@ -229,8 +229,7 @@ var o_browse = {
 
         // click table column header to reorder by that column
         $("#browse").on("click", ".dataTable th a",  function() {
-            console.log("Display table spinner");
-            $("#tablePage").attr("style", "display: block");
+            $(".table-page-load-status > .loader").attr("style", "display: block");
             let orderBy =  $(this).data("slug");
 
             let order_indicator = $(this).children()
@@ -702,12 +701,16 @@ var o_browse = {
         let view = o_browse.getViewInfo();
         let base_url = "/opus/__api/dataimages.json?";
         let url = o_hash.getHash() + '&reqno=' + opus.lastRequestNo + view.add_to_url;
-
+        console.log("Current reqno: " + opus.lastRequestNo);
+        console.log("Current URL: " + url);
         url = o_browse.updatePageInUrl(url, page);
 
         // metadata; used for both table and gallery
         start_time = new Date().getTime();
         $.getJSON(base_url + url, function(data) {
+            console.log("DATA========");
+            console.log(data)
+            console.log("Return reqno: " + data["reqno"]);
             let request_time = new Date().getTime() - start_time;
             console.log(request_time);
 
@@ -745,7 +748,7 @@ var o_browse = {
             }
             console.log("current page: " + opus.prefs.browse);
             // remove spinner from table page after the page is fetched
-            setTimeout(function() { $("#tablePage").attr("style", "display: none"); }, 3000);
+            setTimeout(function() { $(".table-page-load-status > .loader").attr("style", "display: none"); }, 3000);
         });
 
         // ew.  this needs to be dealt with, as table/gallery are always drawn at same time
