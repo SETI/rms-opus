@@ -5,10 +5,6 @@ body {
 	margin-top: 3.8em !important;
 }
 
-/* .app-footer {
-		margin-bottom: -12px;
-} */
-
 .container-fluid {
 	padding: 0;
 	margin-bottom: -12px;
@@ -99,26 +95,6 @@ body {
 .gallery-contents {
 		overflow-y:auto !important;
 		overflow-x:hidden;
-}
-
-/* Not overlap table y-axis scrollbar with the window y-axis scrollbar */
-.gallery-contents .ps__rail-y {
-		display: none !important;
-}
-/* Make sure x-axis rail is not moving and always visible */
-.ps__rail-x {
-		opacity: 1 !important;
-		left: 0px !important;
-		/* bottom: 26px !important; */
-}
-
-/* i dont' think we want to do this. */
-.lower-x-axis-scrollbar-pos {
-		/* bottom: 26px !important; */
-}
-
-.higher-x-axis-scrollbar-pos {
-		/* bottom: 47px !important; */
 }
 
 #detail {
@@ -362,6 +338,20 @@ th.sticky-header {
     margin:0 10px;
 		/* display: inline-flex; */
 		/* float: right; */
+}
+
+#dataTable td {
+	white-space: nowrap;
+}
+
+/* Not overlap table y-axis scrollbar with the window y-axis scrollbar */
+.dataTable .ps__rail-y {
+		display: none !important;
+}
+/* Make sure x-axis rail is not moving and always visible */
+.dataTable .ps__rail-x {
+		opacity: 1 !important;
+		left: 0px !important;
 }
 
 /* Fix the spinner*/
