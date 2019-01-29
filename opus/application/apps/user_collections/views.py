@@ -304,8 +304,10 @@ def api_create_download(request, opus_id=None):
 
     _create_csv_file(request, csv_file_name, api_code=api_code)
 
-    # fetch the full file paths we'll be zipping up
-    files = get_pds_products(opus_ids, None, loc_type='path',
+    # Fetch the full file info of the files we'll be zipping up
+    # We want the PdsFile objects so we can get the checksum as well as the
+    # abspath
+    files = get_pds_products(opus_ids, None, loc_type='raw',
                              product_types=product_types)
 
     if not files:
@@ -335,7 +337,7 @@ def api_create_download(request, opus_id=None):
         return ret
     request.session['cum_download_size'] = int(cum_download_size)
 
-    # zip each file into tarball and create a manifest too
+    # Add each file to the new zip file and create a manifest too
     if return_directly:
         response = HttpResponse(content_type='application/zip')
         zip_file = zipfile.ZipFile(response, mode='w')
@@ -351,10 +353,11 @@ def api_create_download(request, opus_id=None):
             continue
         files_version = files[opus_id]['Current']
         for product_type in files_version:
-            for f in files_version[product_type]:
+            for pdsf in files_version[product_type]:
+                f = pdsf.abspath
                 pretty_name = f.split('/')[-1]
-                digest = "%s:%s" % (pretty_name, md5(f))
-                mdigest = "%s:%s" % (opus_id, pretty_name)
+                digest = f'{pretty_name}:{pdsf.checksum}'
+                mdigest = f'{opus_id}:{pretty_name}'
 
                 if pretty_name not in added:
                     chksum_fp.write(digest+'\n')
@@ -368,7 +371,7 @@ def api_create_download(request, opus_id=None):
         'api_create_download threw exception for opus_id %s, product_type %s, '
         +'file %s, pretty_name %s: %s',
         opus_id, product_type, f, pretty_name, str(e))
-                        errors.append('Could not find: ' + pretty_name)
+                        errors.append('Error adding: ' + pretty_name)
 
     # Write errors to manifest file
     if errors:
@@ -751,19 +754,3 @@ def _create_csv_file(request, csv_file_name, api_code=None):
         wr = csv.writer(csv_file)
         wr.writerow(column_labels)
         wr.writerows(page)
-
-
-# XXX We need to get MD5 checksums from PdsFile instead of computing them here.
-def md5(filename):
-    """ accepts full path file name and returns its md5
-    """
-    import hashlib
-    d = hashlib.md5()
-    try:
-        d.update(open(filename, 'rb').read())
-    except Exception as e:
-        log.error('Failed to compute MD5 for "%s": %s',
-                  filename, str(e))
-        return False
-    else:
-        return d.hexdigest()

@@ -242,12 +242,6 @@ def get_pds_products(opus_id_list=None, file_specs=None,
                       +'in obs_general', str(opus_id_list))
             return None
 
-    # you can ask this function for url paths or disk paths
-    if loc_type == 'url':
-        path = settings.PRODUCT_HTTP_PATH
-    elif loc_type == 'path':
-        path = settings.PDS_DATA_DIR
-
     results = OrderedDict() # Dict of opus_ids
 
     for idx in range(len(opus_id_list)):
