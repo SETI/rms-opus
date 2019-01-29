@@ -521,10 +521,6 @@ var o_browse = {
             $(".browse_view", "#browse").data("view", "dataTable");
 
             $(".justify-content-center").attr("style", "");
-            // $(".gallery-contents").removeClass("enable-x-axis-scrolling");
-            // if(!$(".gallery-contents").hasClass("disable-x-axis-scrolling")) {
-            //     $(".gallery-contents").addClass("disable-x-axis-scrolling");
-            // }
         } else {
             $("." + "gallery", "#browse").hide();
             $("." + opus.prefs.browse, "#browse").fadeIn();
@@ -535,10 +531,6 @@ var o_browse = {
 
             // remove that extra space on top when loading table page
             $(".justify-content-center").attr("style", "display: none");
-            // $(".gallery-contents").removeClass("disable-x-axis-scrolling");
-            // if(!$(".gallery-contents").hasClass("enable-x-axis-scrolling")) {
-            //     $(".gallery-contents").addClass("enable-x-axis-scrolling");
-            // }
         }
     },
 
@@ -645,6 +637,7 @@ var o_browse = {
             });
             html += '</div>';
         }
+
         $('.gallery', namespace).append(html);
 
         o_browse.adjustTableWidth();
@@ -679,7 +672,7 @@ var o_browse = {
             // $(".dataTable thead tr").append("<th id='"+slug+" 'scope='col' class='sticky-header'>"+header+columnOrdering+"</th>");
             $(".dataTable thead tr").append("<th id='"+slug+" 'scope='col' class='sticky-header'>"+columnOrdering+"</th>");
         });
-        $(".dataTable th").resizable({
+        $("#dataTable th").resizable({
             handles: "e",
             minWidth: 40,
             resize: function (event, ui) {
@@ -700,19 +693,19 @@ var o_browse = {
 
         let view = o_browse.getViewInfo();
         let base_url = "/opus/__api/dataimages.json?";
-        let url = o_hash.getHash() + '&reqno=' + opus.lastRequestNo + view.add_to_url;
-        console.log("Current reqno: " + opus.lastRequestNo);
-        console.log("Current URL: " + url);
+        opus.lastLoadBrowseDataRequestNo++;
+        let url = o_hash.getHash() + '&reqno=' + opus.lastLoadBrowseDataRequestNo + view.add_to_url;
         url = o_browse.updatePageInUrl(url, page);
 
         // metadata; used for both table and gallery
         start_time = new Date().getTime();
         $.getJSON(base_url + url, function(data) {
-            console.log("DATA========");
-            console.log(data)
-            console.log("Return reqno: " + data["reqno"]);
             let request_time = new Date().getTime() - start_time;
             console.log(request_time);
+
+            if(data["reqno"] < opus.lastLoadBrowseDataRequestNo) {
+                return;
+            }
 
             if (!opus.gallery_begun) {
                 o_browse.initTable(data.columns);
@@ -748,7 +741,7 @@ var o_browse = {
             }
             console.log("current page: " + opus.prefs.browse);
             // remove spinner from table page after the page is fetched
-            setTimeout(function() { $(".table-page-load-status > .loader").attr("style", "display: none"); }, 3000);
+            $(".table-page-load-status > .loader").attr("style", "display: none");
         });
 
         // ew.  this needs to be dealt with, as table/gallery are always drawn at same time
@@ -798,24 +791,33 @@ var o_browse = {
         let containerWidth = $(".gallery-contents").width()-100;
         let xRailPosition = $(".app-footer").height();
 
-        if(xRailPosition === 25) {
-            $(".gallery-contents > .ps__rail-x").removeClass("higher-x-axis-scrollbar-pos");
-            if(!$(".gallery-contents > .ps__rail-x").hasClass("lower-x-axis-scrollbar-pos")) {
-                $(".gallery-contents > .ps__rail-x").addClass("lower-x-axis-scrollbar-pos");
-            }
-        } else if(xRailPosition === 46) {
-            $(".gallery-contents > .ps__rail-x").removeClass("lower-x-axis-scrollbar-pos");
-            if(!$(".gallery-contents > .ps__rail-x").hasClass("higher-x-axis-scrollbar-pos")) {
-                $(".gallery-contents > .ps__rail-x").addClass("higher-x-axis-scrollbar-pos");
-            }
-        }
+        // console.log("xRailPosition: " + xRailPosition);
+        // $(".gallery-contents > .ps__rail-x").attr("style", `bottom: ${xRailPosition}px !important;`);
+        // $(".gallery-contents > .ps__rail-x").css("cssText", "bottom: "+xRailPosition+"px !important;");
+        // console.log("css pro: " + $(".gallery-contents > .ps__rail-x").css("cssText"));
+        //
+        // document.getElelmentsByClassName()
+
+        // if(xRailPosition === 25) {
+        //     $(".gallery-contents > .ps__rail-x").removeClass("higher-x-axis-scrollbar-pos");
+        //     if(!$(".gallery-contents > .ps__rail-x").hasClass("lower-x-axis-scrollbar-pos")) {
+        //         $(".gallery-contents > .ps__rail-x").addClass("lower-x-axis-scrollbar-pos");
+        //     }
+        // } else if(xRailPosition === 46) {
+        //     $(".gallery-contents > .ps__rail-x").removeClass("lower-x-axis-scrollbar-pos");
+        //     if(!$(".gallery-contents > .ps__rail-x").hasClass("higher-x-axis-scrollbar-pos")) {
+        //         $(".gallery-contents > .ps__rail-x").addClass("higher-x-axis-scrollbar-pos");
+        //     }
+        // }
         // $(".gallery-contents > .ps__rail-x").each(function () {
-        //     this.style.setProperty( "bottom", `${xRailPosition}px`, "important");
+        //     console.log(this);
+        //     this.style.setProperty( "bottom", xRailPosition+"px", "important");
         // });
         // console.log("X RAIL:" + $(".gallery-contents > .ps__rail-x").attr("style"));
         // $(".gallery-contents > .ps__rail-x").attr("style", `bottom: ${xRailPosition}px !important;`);
         // $(".gallery-contents > .ps__rail-x").style("bottom", `${xRailPosition}px`, "important");
-        // $("#dataTable").width(containerWidth);
+
+        $("#dataTable").width(containerWidth);
         o_browse.xAxisTableScrollbar.update();
     },
 

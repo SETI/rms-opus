@@ -106,11 +106,10 @@ body {
 		display: none !important;
 }
 /* Make sure x-axis rail is not moving and always visible */
-.gallery-contents .ps__rail-x {
+.ps__rail-x {
 		opacity: 1 !important;
 		left: 0px !important;
-		/* background-color: #FFFFFF; */
-		/* bottom: 26px !important; */
+		bottom: 26px !important;
 }
 
 /* i dont' think we want to do this. */
@@ -121,14 +120,6 @@ body {
 .higher-x-axis-scrollbar-pos {
 		bottom: 47px !important;
 }
-
-/* .enable-x-axis-scrolling {
-		overflow-x:auto;
-}
-
-.disable-x-axis-scrolling {
-		overflow-x:hidden;
-} */
 
 #detail {
     padding:20px 50px;

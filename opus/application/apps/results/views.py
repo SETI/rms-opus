@@ -151,11 +151,18 @@ def api_get_data_and_images(request):
 
     labels = labels_for_slugs(cols.split(','))
 
+    reqno = request.GET.get('reqno', None)
+    try:
+        reqno = int(reqno)
+    except:
+        reqno = None
+
     data = {'page':    new_page,
             'limit':   limit,
             'count':   len(image_list),
             'order':   order,
-            'columns': labels
+            'columns': labels,
+            'reqno': reqno
            }
 
     if page_no is not None:
