@@ -109,16 +109,16 @@ body {
 .ps__rail-x {
 		opacity: 1 !important;
 		left: 0px !important;
-		bottom: 26px !important;
+		/* bottom: 26px !important; */
 }
 
 /* i dont' think we want to do this. */
 .lower-x-axis-scrollbar-pos {
-		bottom: 26px !important;
+		/* bottom: 26px !important; */
 }
 
 .higher-x-axis-scrollbar-pos {
-		bottom: 47px !important;
+		/* bottom: 47px !important; */
 }
 
 #detail {

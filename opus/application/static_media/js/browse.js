@@ -1,10 +1,7 @@
 var o_browse = {
     selectedImageID: "",
     keyPressAction: "",
-    xAxisTableScrollbar: new PerfectScrollbar(".gallery-contents", {
-        useBothWheelAxes: false,
-        // suppressScrollY: true,
-    }),
+    xAxisTableScrollbar: new PerfectScrollbar(".gallery-contents"),
     // scrollbar: new PerfectScrollbar("#browse .gallery-contents"),
 
     /**
@@ -640,7 +637,7 @@ var o_browse = {
 
         $('.gallery', namespace).append(html);
 
-        o_browse.adjustTableWidth();
+        // o_browse.adjustTableWidth();
     },
 
     initTable: function(columns) {
@@ -679,8 +676,67 @@ var o_browse = {
                 $(event.target).width(ui.size.width);
             }
         });
-    },
 
+        let xRailPosition = $(".app-footer").height();
+        console.log("CurrentHeight: " + xRailPosition);
+        if($("body").find("style")) {
+          console.log("REMOVING old ones");
+            console.log($("body").find("style").parent());
+          $("body").find("style").parent().remove();
+        }
+        $(".gallery-contents > .ps__rail-x").removeClass("update-x-scrollbar-pos");
+        console.log("BEFORE====");
+        console.log($("body").find("style"));
+        o_browse.injectStyle(".update-x-scrollbar-pos { bottom:"+ xRailPosition +"px !important}");
+        $(".gallery-contents > .ps__rail-x").addClass("update-x-scrollbar-pos");
+        console.log("AFTER====");
+        console.log($("body").find("style"));
+        // PerfectScrollbar x scrolling
+        // let xScrollbar = document.getElementsByClassName("gallery-contents ps");
+        // for(let i = 0; i < xScrollbar.length; i++){
+        //     console.log(xScrollbar[i]);
+        //     console.log(opus.prefs.browse);
+        //     if(opus.prefs.browse == "dataTable") {
+        //       xScrollbar[i].addEventListener("ps-scroll-y", function() {
+        //           console.log("yyy-scrolling");
+        //           let currentStyle = $(".gallery-contents > .ps__rail-x").attr("style");
+        //           let regexForBottomAttr = /bottom:\s*(.*)px; width/;
+        //           let bottomAttr = currentStyle.match(regexForBottomAttr)[1];
+        //           console.log($(".gallery-contents > .ps__rail-x").attr("style"));
+        //           console.log("BOTTOM: " + bottomAttr);
+        //           let newPos = xRailPosition - bottomAttr;
+        //           $(".gallery-contents > .ps__rail-x").attr("style", "bottom: " + xRailPosition + "px !important");
+        //       })
+        //       xScrollbar[i].addEventListener("ps-scroll-x", function() {
+        //           console.log("xxx-scrolling");
+        //           $(".gallery-contents > .ps__rail-x").attr("style", "bottom: " + xRailPosition + "px !important");
+        //       })
+        //     }
+        // }
+        // $(".gallery-contents > .ps__rail-x").addClass("lower-x-axis-scrollbar-pos");
+
+        // $(".lower-x-axis-scrollbar-pos").attr("style", "bottom: 25px !important");
+        // $(".lower-x-axis-scrollbar-pos").css("cssText", "bottom: 25px !important;");
+        // let xScrollbar = document.getElementsByClassName("lower-x-axis-scrollbar-pos");
+        // for(let i = 0; i < xScrollbar.length; i++){
+        //   console.log(xScrollbar[i]);
+        //   if(opus.prefs.browse == "dataTable") {
+        //     xScrollbar[i].setAttribute('style', 'bottom: 25px !important');
+        //   }
+        // }
+        // $(".lower-x-axis-scrollbar-pos").each(function() {
+        //     this.style.setProperty("bottom", "25px", "important");
+        // })
+
+
+    },
+    injectStyle: function(rule) {
+        let div = $("<div />", {
+            html: "<style>" + rule + "</style>"
+            // html: "&shy;<style>" + rule + "</style>"
+        });
+        $("body").append(div);
+    },
     loadBrowseData: function(page) {
         //window.scrollTo(0,opus.browse_view_scrolls[opus.prefs.browse]);
         page = (page == undefined ? $("input#page").val() : page);
@@ -791,12 +847,28 @@ var o_browse = {
         let containerWidth = $(".gallery-contents").width()-100;
         let xRailPosition = $(".app-footer").height();
 
-        // console.log("xRailPosition: " + xRailPosition);
+        console.log("xRailPosition: " + xRailPosition);
+        if($("body").find("style")) {
+          console.log("REMOVING old ones");
+          console.log($("body").find("style").parent());
+          $("body").find("style").parent().remove();
+        }
+        $(".gallery-contents > .ps__rail-x").removeClass("update-x-scrollbar-pos");
+        o_browse.injectStyle(".update-x-scrollbar-pos { bottom:"+ xRailPosition +"px !important}");
+        $(".gallery-contents > .ps__rail-x").addClass("update-x-scrollbar-pos");
         // $(".gallery-contents > .ps__rail-x").attr("style", `bottom: ${xRailPosition}px !important;`);
         // $(".gallery-contents > .ps__rail-x").css("cssText", "bottom: "+xRailPosition+"px !important;");
         // console.log("css pro: " + $(".gallery-contents > .ps__rail-x").css("cssText"));
-        //
-        // document.getElelmentsByClassName()
+
+        // let xScrollbar = document.querySelectorAll(".gallery-contents .ps__rail-x");
+        // let xScrollbar = container.children;
+        // for(let i = 0; i < xScrollbar.length; i++){
+        //   console.log(xScrollbar[i]);
+        //   if(opus.prefs.browse == "dataTable") {
+        //     xScrollbar[i].style.cssText = "bottom: "+xRailPosition+"px !important;"
+        //     console.log("CSS TEXT: " + xScrollbar[i].style.cssText);
+        //   }
+        // }
 
         // if(xRailPosition === 25) {
         //     $(".gallery-contents > .ps__rail-x").removeClass("higher-x-axis-scrollbar-pos");
@@ -816,8 +888,8 @@ var o_browse = {
         // console.log("X RAIL:" + $(".gallery-contents > .ps__rail-x").attr("style"));
         // $(".gallery-contents > .ps__rail-x").attr("style", `bottom: ${xRailPosition}px !important;`);
         // $(".gallery-contents > .ps__rail-x").style("bottom", `${xRailPosition}px`, "important");
+        // $("#dataTable").width(containerWidth);
 
-        $("#dataTable").width(containerWidth);
         o_browse.xAxisTableScrollbar.update();
     },
 
