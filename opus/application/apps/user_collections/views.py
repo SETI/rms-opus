@@ -12,7 +12,7 @@
 #    Format: __collections/(?P<action>add|remove|addrange|removerange|addall).json
 #    Format: __collections/reset.html
 #    Format: __collections/download.json
-#    Format: __zip/(?P<opus_id>[-\w]+).json
+#    Format: __zip/(?P<opus_id>[-\w]+).zip
 #
 ################################################################################
 
@@ -155,7 +155,8 @@ def api_get_collection_csv(request):
     """
     api_code = enter_api_call('api_get_collection_csv', request)
 
-    ret = _get_collection_csv(request, api_code=api_code)
+    column_labels, page = _csv_helper(request, api_code)
+    ret = csv_response('data', page, column_labels)
 
     exit_api_call(api_code, ret)
     return ret
@@ -265,30 +266,34 @@ def api_reset_session(request):
 
 
 @never_cache
-def api_create_download(request, opus_ids=None):
+def api_create_download(request, opus_id=None):
     """Creates a zip file of all items in the collection or the given OPUS ID.
 
     This is a PRIVATE API.
 
     Format: __collections/download.json
-        or: __zip/(?P<opus_id>[-\w]+).json
+        or: __zip/(?P<opus_id>[-\w]+).zip
     Arguments: types=<PRODUCT_TYPES>
     """
     api_code = enter_api_call('api_create_download', request)
 
     session_id = get_session_id(request)
 
-    product_types = request.GET.get('types', 'none')
-    product_types = product_types.split(',')
-
-    if not opus_ids:
-        opus_ids = get_all_in_collection(request)
-
-    if not isinstance(opus_ids, (list, tuple)):
+    if opus_id:
+        product_types = ['all']
         opus_ids = [opus_id]
+        return_directly = True
+    else:
+        product_types = request.GET.get('types', 'none')
+        product_types = product_types.split(',')
+        opus_ids = get_all_in_collection(request)
+        return_directly = False
 
     if not opus_ids:
-        raise Http404
+        if return_directly:
+            raise Http404("No OPUSID specified")
+        else:
+            raise Http404("No observations selected")
 
     zip_base_file_name = _zip_filename()
     zip_root = zip_base_file_name.split('.')[0]
@@ -304,30 +309,38 @@ def api_create_download(request, opus_ids=None):
                              product_types=product_types)
 
     if not files:
-        log.error("No files found in api_create_download")
-        log.error(".. First 5 opus_ids: %s", str(opus_ids[:5]))
-        log.error(".. First 5 PRODUCT TYPES: %s", str(product_types[:5]))
-        raise Http404
+        raise Http404("No files found")
 
     info = _get_download_info(product_types, session_id)
     download_size = info['total_download_size']
-    # don't create download if files are too big
+    # Don't create download if the resultant zip file would be too big
     if download_size > settings.MAX_DOWNLOAD_SIZE:
-        ret = HttpResponse("Sorry, maximum download size ("+str(settings.MAX_DOWNLOAD_SIZE)+" bytes) exceeded")
+        ret = HttpResponse('Sorry, this download would require '
+                           +'{:,}'.format(download_size)
+                           +' bytes but the maximum allowed is '
+                           +'{:,}'.format(settings.MAX_DOWNLOAD_SIZE)
+                           +' bytes')
         exit_api_call(api_code, ret)
         return ret
 
-    # don't keep creating downloads after user has reached their size limit
+    # Don't keep creating downloads after user has reached their size limit
+    # for this session
     cum_download_size = request.session.get('cum_download_size', 0)
     cum_download_size += download_size
     if cum_download_size > settings.MAX_CUM_DOWNLOAD_SIZE:
-        ret = HttpResponse("Sorry, maximum cumulative download size reached for this session")
+        ret = HttpResponse('Sorry, maximum cumulative download size ('
+                           +'{:,}'.format(settings.MAX_CUM_DOWNLOAD_SIZE)
+                           +' bytes) reached for this session')
         exit_api_call(api_code, ret)
         return ret
     request.session['cum_download_size'] = int(cum_download_size)
 
     # zip each file into tarball and create a manifest too
-    zip_file = zipfile.ZipFile(zip_file_name, mode='w')
+    if return_directly:
+        response = HttpResponse(content_type='application/zip')
+        zip_file = zipfile.ZipFile(response, mode='w')
+    else:
+        zip_file = zipfile.ZipFile(zip_file_name, mode='w')
     chksum_fp = open(chksum_file_name, 'w')
     manifest_fp = open(manifest_file_name, 'w')
 
@@ -351,9 +364,10 @@ def api_create_download(request, opus_ids=None):
                         zip_file.write(f, arcname=filename)
                         added.append(pretty_name)
                     except Exception as e:
-                        log.error('create_download threw exception for opus_id %s, product_type %s, file %s, pretty_name %s',
-                                  opus_id, product_type, f, pretty_name)
-                        log.error('.. %s', str(e))
+                        log.error(
+        'api_create_download threw exception for opus_id %s, product_type %s, '
+        +'file %s, pretty_name %s: %s',
+        opus_id, product_type, f, pretty_name, str(e))
                         errors.append('Could not find: ' + pretty_name)
 
     # Write errors to manifest file
@@ -374,15 +388,18 @@ def api_create_download(request, opus_ids=None):
     os.remove(manifest_file_name)
     os.remove(csv_file_name)
 
-    zip_url = settings.TAR_FILE_URL_PATH + zip_base_file_name
-
     if not added:
         log.error('No files found for download cart %s', manifest_file_name)
         raise Http404('No files found')
 
-    ret = json_response(zip_url)
+    if return_directly:
+        response['Content-Disposition'] = f'attachment; filename={zip_base_file_name}'
+        ret = response
+    else:
+        zip_url = settings.TAR_FILE_URL_PATH + zip_base_file_name
+        ret = json_response(zip_url)
 
-    exit_api_call(api_code, ret)
+    exit_api_call(api_code, '<Encoded zip file>')
     return ret
 
 
@@ -476,35 +493,6 @@ def _get_collection_count(session_id):
     return count
 
 
-def _get_collection_csv(request, api_code=None):
-    "Create and return a CSV file based on user column and selection."
-    slugs = request.GET.get('cols', settings.DEFAULT_COLUMNS)
-    (page_no, start_obs, limit, page, order, aux) = get_search_results_chunk(
-                                                     request,
-                                                     use_collections=True,
-                                                     limit='all',
-                                                     api_code=api_code)
-
-    print(page)
-    column_labels = []
-    for slug in slugs.split(','):
-        pi = get_param_info_by_slug(slug)
-        if pi is None:
-            log.error('_get_collection_csv: Unknown slug "%s"', slug)
-            return HttpResponseNotFound('Unknown slug')
-        else:
-            # append units if pi_units has unit stored
-            unit = pi.get_units()
-            label = pi.body_qualified_label_results()
-            if unit:
-                column_labels.append(label + ' ' + unit)
-            else:
-                column_labels.append(label)
-
-    ret = csv_response('data', page, column_labels)
-    return ret
-
-
 ################################################################################
 #
 # Support routines - add or remove items from collections
@@ -521,6 +509,10 @@ def _add_to_collections_table(opus_id_list, session_id, api_code):
     if len(opus_id_list) != len(res):
         return 'opusid not found'
 
+    # We use REPLACE INTO to avoid problems with duplicate entries or
+    # race conditions that would be caused by deleting first and then adding.
+    # Note that REPLACE INTO only works because we have a constraint on the
+    # collections table that makes the fields into a unique key.
     values = [(session_id, id, opus_id) for opus_id, id in res]
     sql = 'REPLACE INTO '+connection.ops.quote_name('collections')
     sql += ' ('
@@ -560,6 +552,7 @@ def _edit_collection_range(request, session_id, action, api_code):
         return 'bad range'
 
     # Find the index in the cache table for the min and max opus_ids
+
     (selections, extras) = url_to_search_params(request.GET)
     if selections is None:
         log.error('_edit_collection_range: Could not find selections for'
@@ -722,10 +715,10 @@ def _zip_filename(opus_id=None):
     return f'pdsrms-data-{random_ascii}-{timestamp}.zip'
 
 
-def _create_csv_file(request, csv_file_name, api_code=None):
-    "Create a CSV file containing the collection data."
+def _csv_helper(request, api_code=None):
+    "Create the data for a CSV file containing the collection data."
     slugs = request.GET.get('cols', settings.DEFAULT_COLUMNS)
-    (page_no, start_obs, limit, page, order) = get_search_results_chunk(
+    (page_no, start_obs, limit, page, order, aux) = get_search_results_chunk(
                                                      request,
                                                      use_collections=True,
                                                      limit='all',
@@ -746,6 +739,13 @@ def _create_csv_file(request, csv_file_name, api_code=None):
                 column_labels.append(label + ' ' + unit)
             else:
                 column_labels.append(label)
+
+    return column_labels, page
+
+
+def _create_csv_file(request, csv_file_name, api_code=None):
+    "Create a CSV file containing the collection data."
+    column_labels, page = _csv_helper(request, api_code)
 
     with open(csv_file_name, 'a') as csv_file:
         wr = csv.writer(csv_file)

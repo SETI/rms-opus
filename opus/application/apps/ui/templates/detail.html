@@ -20,6 +20,7 @@
   <h2>PDS Products</h2>
   <div class="">
     <p>Click on any "Index" type to see the entry for this observation in that table.</p>
+    <p><a href="/opus/__zip/{{ opus_id }}.zip">Download all products (current version only) in a single zip file</a></p>
     {% for version, version_items in products.items %}
       <ul>
       <h4>Version: {{ version }}</h4>
