@@ -592,6 +592,9 @@ var o_browse = {
                 opus.column_chooser_drawn=true;  // bc this gets saved not redrawn
                 $("#columnChooser .restart_button").hide(); // we are not using this
 
+                // since we are rendering the left side of column chooser w/the same code that builds the select menu, we need to unhighlight the selected widgets
+                o_menu.markMenuItem(".column_shooser li", "unselect");
+
                 // we keep these all open in the column chooser, they are all closed by default
                 // disply check next to any default columns
                 $.each(opus.prefs.cols, function(index, col) { //CHANGE BELOW TO USE DATA-ICON=
