@@ -665,19 +665,20 @@ var o_browse = {
             let columnSorting = icon === "-down" ? "sort-asc" : icon === "-up" ? "sort-desc" : "none";
             let columnOrdering = `<a href='' data-slug='${slug}'>${header}<span data-sort='${columnSorting}' class='column_ordering fas fa-sort${icon}'></span></a>`;
 
-            $(".dataTable thead tr").append(`<th id='${slug} 'scope='col' class='sticky-header'><div>${columnOrdering}</div></th>`);
+            $(".dataTable thead tr").append(`<th id='${slug} 'scope='col' class='sticky-header'>${columnOrdering}</th>`);
         });
 
         o_browse.initResizableColumn();
         o_browse.updateTableXScrollbarVerticalPosition();
+        // o_browse.adjustTableWidth();
     },
 
     initResizableColumn: function() {
       console.log("y-scroll w: " + $(".scrollbar-morpheus-den::-webkit-scrollbar").width())
-        $("#dataTable th div").height($("#dataTable th").height());
+        // $("#dataTable th div").height($("#dataTable th").height());
         let initWidth;
         let initHeight;
-        $("#dataTable th div").resizable({
+        $("#dataTable th").resizable({
             handles: "e",
             minWidth: 40,
             // alsoResize: "#dataTable",
@@ -685,7 +686,7 @@ var o_browse = {
                 $(event.target).width(ui.size.width);
                 console.log("INIT W: " + initWidth);
                 // $(event.target).parent().width(ui.size.width);
-                console.log($(event.target).parent().width());
+                // console.log($(event.target).parent().width());
 
             },
             create: function (event, ui) {
@@ -822,7 +823,7 @@ var o_browse = {
     },
 
     adjustTableWidth: function() {
-        let containerWidth = $(".gallery-contents").width();
+        let containerWidth = $(".gallery-contents").width()+5;
         // Make sure the rightmost column is not cut off by the y-scrollbar
         $(".dataTable").width(containerWidth);
         o_browse.updateTableXScrollbarVerticalPosition();
