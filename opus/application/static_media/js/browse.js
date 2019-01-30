@@ -485,6 +485,7 @@ var o_browse = {
                 });
                 $(`#columnChooser .allColumns [data-slug=${slug}]`).find("i.fa-check").hide();
             }
+            o_browse.selectedColumnsScrollbar.update();
             return false;
         });
         // buttons
@@ -651,7 +652,7 @@ var o_browse = {
                 html += '<img class="img-thumbnail img-fluid" src="'+images.thumb.url+'" alt="'+images.thumb.alt_text+'" title="'+opusId+'">';
                 // whenever the user clicks an image to show the modal, we need to highlight the selected image w/an icon
                 html += '<div class="modal-overlay">';
-                html += '<p class="content-text"><i class="fa fa-eye fa-4x text-info" aria-hidden="true"></i></p>';
+                html += '<p class="content-text"><i class="fas fa-binoculars fa-4x text-info" aria-hidden="true"></i></p>';
                 html += '</div></a>';
 
                 html += '<div class="thumb-overlay">';

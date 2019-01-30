@@ -242,7 +242,7 @@ ul.searchMenu{
 	border-radius: 1%;
 }
 .modal-footer .left-container {
-	width: 85%;
+	width: 74%;
 }
 
 .thumbnail-container .modal-overlay {
@@ -261,9 +261,9 @@ ul.searchMenu{
 	-webkit-transform: translate(-50%, -50%);
   	-moz-transform: translate(-50%, -50%);
   	transform: translate(-50%, -50%);
-	-webkit-transition: opacity 0.1s ease-in;
+/*	-webkit-transition: opacity 0.1s ease-in;
 	-moz-transition: opacity 0.1s ease-in;
-	-o-transition: opacity 0.1s ease-in;
+	-o-transition: opacity 0.1s ease-in;*/
 	opacity: 1;
 }
 
