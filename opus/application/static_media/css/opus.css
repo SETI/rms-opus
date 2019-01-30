@@ -238,6 +238,13 @@ ul.searchMenu{
   opacity: 0.15;
 }
 
+.modal-content {
+	border-radius: 1%;
+}
+.modal-footer .left-container {
+	width: 85%;
+}
+
 .thumbnail-container .modal-overlay {
   	position: absolute;
   	text-align: center;
@@ -357,7 +364,6 @@ th.sticky-header {
 #product_types {
   display: inline-grid;
 }
-
 #columnChooser .column_checkbox {
     display:inline;
 }
@@ -386,7 +392,7 @@ th.sticky-header {
 	cursor:grab;
 }
 .selectedColumns ul li .unselect:hover{
-	 cursor:default; 
+	 cursor:default;
  }
 
 .selectedColumns .unselect {

@@ -2,13 +2,13 @@
 
 {% block menu %}
 <div class="row">
-  <div class="allColumns col scrollbar-morpheus-den">
+  <div class="allColumns col">
     {% with 'menu' as expectedVarName %}
       {{ block.super }} {# renders menu.html #}
     {% endwith %}
   </div>
 
-  <div class="selectedColumns col scrollbar-morpheus-den">
+  <div class="selectedColumns col">
   	<ul>
   		{% for slug, param_info in all_slugs_info.items %}
   			<li id="cchoose__{{ slug }}"
