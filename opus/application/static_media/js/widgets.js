@@ -92,8 +92,11 @@ var o_widgets = {
             delete opus.selections[slug_no_num + '2'];
         }
 
-        delete opus.extras['qtype-'+slug_no_num];
-        delete opus.extras['z-'+slug_no_num];
+        delete opus.extras[`qtype-${slug_no_num}`];
+        delete opus.extras[`z-${slug_no_num}`];
+
+        var selector = `li [data-slug='${slug}']`;
+        o_menu.markMenuItem(selector, "unselect");
 
         o_search.allNormalizedApiCall().then(function(normalizedData) {
             if (normalizedData.reqno < opus.lastAllNormalizeRequestNo) {
