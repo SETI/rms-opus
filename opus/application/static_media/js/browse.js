@@ -663,12 +663,16 @@ var o_browse = {
             // Assigning data attribute for table column sorting
             let icon = ($.inArray(slug, order) >= 0 ? "-down" : ($.inArray("-"+slug, order) >= 0 ? "-up" : ""));
             let columnSorting = icon === "-down" ? "sort-asc" : icon === "-up" ? "sort-desc" : "none";
-            let columnOrdering = "<a href='' data-slug='"+slug+"'>"+header+"<span data-sort='"+columnSorting+"' class='column_ordering fas fa-sort"+icon+"'></span></a>";
-            // let columnOrdering = `<div class='column_ordering'><a href='' data-slug='${slug}'><i data-sort='${columnSorting}' class='fas fa-sort`+icon+"'></i></a></div>";
+            let columnOrdering = `<a href='' data-slug='${slug}'>${header}<span data-sort='${columnSorting}' class='column_ordering fas fa-sort${icon}'></span></a>`;
 
-            // $(".dataTable thead tr").append("<th id='"+slug+" 'scope='col' class='sticky-header'>"+header+columnOrdering+"</th>");
-            $(".dataTable thead tr").append("<th id='"+slug+" 'scope='col' class='sticky-header'>"+columnOrdering+"</th>");
+            $(".dataTable thead tr").append(`<th id='${slug} 'scope='col' class='sticky-header'>${columnOrdering}</th>`);
         });
+
+        o_browse.initResizableColumn();
+        o_browse.updateTableXScrollbarVerticalPosition();
+    },
+
+    initResizableColumn: function() {
         $("#dataTable th").resizable({
             handles: "e",
             minWidth: 40,
@@ -676,8 +680,6 @@ var o_browse = {
                 $(event.target).width(ui.size.width);
             }
         });
-
-        o_browse.updateTableXScrollbarVerticalPosition();
     },
 
     updateTableXScrollbarVerticalPosition: function() {
@@ -692,7 +694,7 @@ var o_browse = {
 
     injectStyle: function(rule) {
         let div = $("<div />", {
-            html: "<style>" + rule + "</style>"
+            html: `<style>${rule}</style>`
         });
         $("body").append(div);
     },
