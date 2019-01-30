@@ -273,8 +273,11 @@ def api_create_download(request, opus_id=None):
     Format: __collections/download.json
         or: __zip/(?P<opus_id>[-\w]+).zip
     Arguments: types=<PRODUCT_TYPES>
+               urlonly=1 (optional) means to not zip the actual data products
     """
     api_code = enter_api_call('api_create_download', request)
+
+    url_file_only = request.GET.get('urlonly', 0)
 
     session_id = get_session_id(request)
 
@@ -285,11 +288,16 @@ def api_create_download(request, opus_id=None):
     else:
         product_types = request.GET.get('types', 'none')
         product_types = product_types.split(',')
-        num_selections = (Collections.objects.filter(session_id__exact=session_id)
+        num_selections = (Collections.objects
+                          .filter(session_id__exact=session_id)
                           .count())
-        if num_selections > settings.MAX_SELECTIONS_FOR_DOWNLOAD:
+        if url_file_only:
+            max_selections = settings.MAX_SELECTIONS_FOR_URL_DOWNLOAD
+        else:
+            max_selections = settings.MAX_SELECTIONS_FOR_DATA_DOWNLOAD
+        if num_selections > max_selections:
             ret = json_response({'error':
-         f'Too many selections ({settings.MAX_SELECTIONS_FOR_DOWNLOAD} max)'})
+                                 f'Too many selections ({max_selections} max)'})
             exit_api_call(api_code, ret)
             return ret
         res = (Collections.objects.filter(session_id__exact=session_id)
@@ -305,15 +313,6 @@ def api_create_download(request, opus_id=None):
             exit_api_call(api_code, ret)
             return ret
 
-    zip_base_file_name = _zip_filename()
-    zip_root = zip_base_file_name.split('.')[0]
-    zip_file_name = settings.TAR_FILE_PATH + zip_base_file_name
-    chksum_file_name = settings.TAR_FILE_PATH + f'checksum_{zip_root}.txt'
-    manifest_file_name = settings.TAR_FILE_PATH + f'manifest_{zip_root}.txt'
-    csv_file_name = settings.TAR_FILE_PATH + f'csv_{zip_root}.txt'
-
-    _create_csv_file(request, csv_file_name, api_code=api_code)
-
     # Fetch the full file info of the files we'll be zipping up
     # We want the PdsFile objects so we can get the checksum as well as the
     # abspath
@@ -325,31 +324,42 @@ def api_create_download(request, opus_id=None):
         exit_api_call(api_code, ret)
         return ret
 
-    info = _get_download_info(product_types, session_id)
-    download_size = info['total_download_size']
-    # Don't create download if the resultant zip file would be too big
-    if download_size > settings.MAX_DOWNLOAD_SIZE:
-        ret = json_response({'error':
-                             'Sorry, this download would require '
-                             +'{:,}'.format(download_size)
-                             +' bytes but the maximum allowed is '
-                             +'{:,}'.format(settings.MAX_DOWNLOAD_SIZE)
-                             +' bytes'})
-        exit_api_call(api_code, ret)
-        return ret
+    zip_base_file_name = _zip_filename()
+    zip_root = zip_base_file_name.split('.')[0]
+    zip_file_name = settings.TAR_FILE_PATH + zip_base_file_name
+    chksum_file_name = settings.TAR_FILE_PATH + f'checksum_{zip_root}.txt'
+    manifest_file_name = settings.TAR_FILE_PATH + f'manifest_{zip_root}.txt'
+    csv_file_name = settings.TAR_FILE_PATH + f'csv_{zip_root}.txt'
+    url_file_name = settings.TAR_FILE_PATH + f'url_{zip_root}.txt'
 
-    # Don't keep creating downloads after user has reached their size limit
-    # for this session
-    cum_download_size = request.session.get('cum_download_size', 0)
-    cum_download_size += download_size
-    if cum_download_size > settings.MAX_CUM_DOWNLOAD_SIZE:
-        ret = json_response({'error':
-                             'Sorry, maximum cumulative download size ('
-                             +'{:,}'.format(settings.MAX_CUM_DOWNLOAD_SIZE)
-                             +' bytes) reached for this session'})
-        exit_api_call(api_code, ret)
-        return ret
-    request.session['cum_download_size'] = int(cum_download_size)
+    _create_csv_file(request, csv_file_name, api_code=api_code)
+
+    # Don't create download if the resultant zip file would be too big
+    if not url_file_only:
+        info = _get_download_info(product_types, session_id)
+        download_size = info['total_download_size']
+        if download_size > settings.MAX_DOWNLOAD_SIZE:
+            ret = json_response({'error':
+                                 'Sorry, this download would require '
+                                 +'{:,}'.format(download_size)
+                                 +' bytes but the maximum allowed is '
+                                 +'{:,}'.format(settings.MAX_DOWNLOAD_SIZE)
+                                 +' bytes'})
+            exit_api_call(api_code, ret)
+            return ret
+
+        # Don't keep creating downloads after user has reached their size limit
+        # for this session
+        cum_download_size = request.session.get('cum_download_size', 0)
+        cum_download_size += download_size
+        if cum_download_size > settings.MAX_CUM_DOWNLOAD_SIZE:
+            ret = json_response({'error':
+                                 'Sorry, maximum cumulative download size ('
+                                 +'{:,}'.format(settings.MAX_CUM_DOWNLOAD_SIZE)
+                                 +' bytes) reached for this session'})
+            exit_api_call(api_code, ret)
+            return ret
+        request.session['cum_download_size'] = int(cum_download_size)
 
     # Add each file to the new zip file and create a manifest too
     if return_directly:
@@ -359,6 +369,7 @@ def api_create_download(request, opus_id=None):
         zip_file = zipfile.ZipFile(zip_file_name, mode='w')
     chksum_fp = open(chksum_file_name, 'w')
     manifest_fp = open(manifest_file_name, 'w')
+    url_fp = open(url_file_name, 'w')
 
     errors = []
     added = []
@@ -376,16 +387,18 @@ def api_create_download(request, opus_id=None):
                 if pretty_name not in added:
                     chksum_fp.write(digest+'\n')
                     manifest_fp.write(mdigest+'\n')
+                    url_fp.write(settings.PRODUCT_HTTP_PATH+pdsf.url+'\n')
                     filename = os.path.basename(f)
-                    try:
-                        zip_file.write(f, arcname=filename)
-                        added.append(pretty_name)
-                    except Exception as e:
-                        log.error(
-        'api_create_download threw exception for opus_id %s, product_type %s, '
-        +'file %s, pretty_name %s: %s',
-        opus_id, product_type, f, pretty_name, str(e))
-                        errors.append('Error adding: ' + pretty_name)
+                    if not url_file_only:
+                        try:
+                            zip_file.write(f, arcname=filename)
+                        except Exception as e:
+                            log.error(
+            'api_create_download threw exception for opus_id %s, product_type %s, '
+            +'file %s, pretty_name %s: %s',
+            opus_id, product_type, f, pretty_name, str(e))
+                            errors.append('Error adding: ' + pretty_name)
+                    added.append(pretty_name)
 
     # Write errors to manifest file
     if errors:
@@ -396,14 +409,17 @@ def api_create_download(request, opus_id=None):
     # Add manifests and checksum files to tarball and close everything up
     manifest_fp.close()
     chksum_fp.close()
+    url_fp.close()
     zip_file.write(chksum_file_name, arcname='checksum.txt')
     zip_file.write(manifest_file_name, arcname='manifest.txt')
     zip_file.write(csv_file_name, arcname='data.csv')
+    zip_file.write(url_file_name, arcname='urls.txt')
     zip_file.close()
 
     os.remove(chksum_file_name)
     os.remove(manifest_file_name)
     os.remove(csv_file_name)
+    os.remove(url_file_name)
 
     if not added:
         log.error('No files found for download cart %s', manifest_file_name)
@@ -533,11 +549,9 @@ def _add_to_collections_table(opus_id_list, session_id, api_code):
     # Note that REPLACE INTO only works because we have a constraint on the
     # collections table that makes the fields into a unique key.
     values = [(session_id, id, opus_id) for opus_id, id in res]
-    sql = 'REPLACE INTO '+connection.ops.quote_name('collections')
-    sql += ' ('
-    sql += connection.ops.quote_name('session_id')+','
-    sql += connection.ops.quote_name('obs_general_id')+','
-    sql += connection.ops.quote_name('opus_id')+')'
+    q = connection.ops.quote_name
+    sql = 'REPLACE INTO '+q('collections')+' ('+q('session_id')+','
+    sql += q('obs_general_id')+','+q('opus_id')+')'
     sql += ' VALUES (%s, %s, %s)'
     log.debug('_add_to_collections_table SQL: %s %s', sql, values)
     cursor.executemany(sql, values)
@@ -589,23 +603,15 @@ def _edit_collection_range(request, session_id, action, api_code):
     cursor = connection.cursor()
 
     sort_orders = []
+    q = connection.ops.quote_name
     for opus_id in ids:
-        sql = 'SELECT '
-        sql += connection.ops.quote_name('sort_order')
-        sql += ' FROM '
-        sql += connection.ops.quote_name('obs_general')
+        sql = 'SELECT '+q('sort_order')+' FROM '+q('obs_general')
         # INNER JOIN because we only want rows that exist in the
         # user_query_table
-        sql += ' INNER JOIN '
-        sql += connection.ops.quote_name(user_query_table)
-        sql += ' ON '
-        sql += connection.ops.quote_name(user_query_table)+'.'
-        sql += connection.ops.quote_name('id')+'='
-        sql += connection.ops.quote_name('obs_general')+'.'
-        sql += connection.ops.quote_name('id')
-        sql += ' WHERE '
-        sql += connection.ops.quote_name('obs_general')+'.'
-        sql += connection.ops.quote_name('opus_id')+'=%s'
+        sql += ' INNER JOIN '+q(user_query_table)+' ON '
+        sql += q(user_query_table)+'.'+q('id')+'='
+        sql += q('obs_general')+'.'+q('id')
+        sql += ' WHERE '+q('obs_general')+'.'+q('opus_id')+'=%s'
         values = [opus_id]
         log.debug('_edit_collection_range SQL: %s %s', sql, values)
         cursor.execute(sql, values)
@@ -618,49 +624,30 @@ def _edit_collection_range(request, session_id, action, api_code):
 
     if action == 'addrange':
         values = [session_id]
-        sql = 'REPLACE INTO '+connection.ops.quote_name('collections')
-        sql += ' ('
-        sql += connection.ops.quote_name('session_id')+','
-        sql += connection.ops.quote_name('obs_general_id')+','
-        sql += connection.ops.quote_name('opus_id')+')'
+        sql = 'REPLACE INTO '+q('collections')+' ('
+        sql += q('session_id')+','+q('obs_general_id')+','+q('opus_id')+')'
         sql += ' SELECT %s,'
-        sql += connection.ops.quote_name('obs_general')+'.'
-        sql += connection.ops.quote_name('id')+','
-        sql += connection.ops.quote_name('obs_general')+'.'
-        sql += connection.ops.quote_name('opus_id')
-        sql += ' FROM '
-        sql += connection.ops.quote_name('obs_general')
+        sql += q('obs_general')+'.'+q('id')+','
+        sql += q('obs_general')+'.'+q('opus_id')+' FROM '+q('obs_general')
         # INNER JOIN because we only want rows that exist in the
         # user_query_table
-        sql += ' INNER JOIN '
-        sql += connection.ops.quote_name(user_query_table)
-        sql += ' ON '
-        sql += connection.ops.quote_name(user_query_table)+'.'
-        sql += connection.ops.quote_name('id')+'='
-        sql += connection.ops.quote_name('obs_general')+'.'
-        sql += connection.ops.quote_name('id')
+        sql += ' INNER JOIN '+q(user_query_table)+' ON '
+        sql += q(user_query_table)+'.'+q('id')+'='+q('obs_general')+'.'+q('id')
 
     elif action == 'removerange':
         values = []
         sql = 'DELETE '
-        sql += connection.ops.quote_name('collections')
-        sql += ' FROM '+connection.ops.quote_name('collections')
-        sql += ' INNER JOIN '
-        sql += connection.ops.quote_name(user_query_table)
-        sql += ' ON '
-        sql += connection.ops.quote_name(user_query_table)+'.'
-        sql += connection.ops.quote_name('id')+'='
-        sql += connection.ops.quote_name('collections')+'.'
-        sql += connection.ops.quote_name('obs_general_id')
+        sql += q('collections')+' FROM '+q('collections')+' INNER JOIN '
+        sql += q(user_query_table)+' ON '
+        sql += q(user_query_table)+'.'+q('id')+'='
+        sql += q('collections')+'.'+q('obs_general_id')
     else:
         assert False
 
     sql += ' WHERE '
-    sql += connection.ops.quote_name(user_query_table)+'.'
-    sql += connection.ops.quote_name('sort_order')
+    sql += q(user_query_table)+'.'+q('sort_order')
     sql += ' >= '+str(min(sort_orders))+' AND '
-    sql += connection.ops.quote_name(user_query_table)+'.'
-    sql += connection.ops.quote_name('sort_order')
+    sql += q(user_query_table)+'.'+q('sort_order')
     sql += ' <= '+str(max(sort_orders))
     log.debug('_edit_collection_range SQL: %s %s', sql, values)
     cursor.execute(sql, values)
@@ -688,27 +675,16 @@ def _edit_collection_addall(request, session_id, api_code):
     cursor = connection.cursor()
 
     values = [session_id]
-    sql = 'REPLACE INTO '+connection.ops.quote_name('collections')
-    sql += ' ('
-    sql += connection.ops.quote_name('session_id')+','
-    sql += connection.ops.quote_name('obs_general_id')+','
-    sql += connection.ops.quote_name('opus_id')+')'
+    q = connection.ops.quote_name
+    sql = 'REPLACE INTO '+q('collections')+' ('
+    sql += q('session_id')+','+q('obs_general_id')+','+q('opus_id')+')'
     sql += ' SELECT %s,'
-    sql += connection.ops.quote_name('obs_general')+'.'
-    sql += connection.ops.quote_name('id')+','
-    sql += connection.ops.quote_name('obs_general')+'.'
-    sql += connection.ops.quote_name('opus_id')
-    sql += ' FROM '
-    sql += connection.ops.quote_name('obs_general')
+    sql += q('obs_general')+'.'+q('id')+','+q('obs_general')+'.'+q('opus_id')
+    sql += ' FROM '+q('obs_general')
     # INNER JOIN because we only want rows that exist in the
     # user_query_table
-    sql += ' INNER JOIN '
-    sql += connection.ops.quote_name(user_query_table)
-    sql += ' ON '
-    sql += connection.ops.quote_name(user_query_table)+'.'
-    sql += connection.ops.quote_name('id')+'='
-    sql += connection.ops.quote_name('obs_general')+'.'
-    sql += connection.ops.quote_name('id')
+    sql += ' INNER JOIN '+q(user_query_table)+' ON '
+    sql += q(user_query_table)+'.'+q('id')+'='+q('obs_general')+'.'+q('id')
 
     log.debug('_edit_collection_addall SQL: %s %s', sql, values)
     cursor.execute(sql, values)
@@ -724,7 +700,7 @@ def _edit_collection_addall(request, session_id, api_code):
 
 
 def _zip_filename(opus_id=None):
-    "Create a unique filename for a user's cart."
+    "Create a unique .zip filename for a user's cart."
     random_ascii = random.choice(string.ascii_letters).lower()
     timestamp = "T".join(str(datetime.datetime.now()).split(' '))
     # Windows doesn't like ':' in filenames

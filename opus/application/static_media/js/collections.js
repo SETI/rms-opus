@@ -41,10 +41,13 @@ var o_collections = {
             $(this).attr("href", '/opus/__collections/data.csv?'+ o_hash.getHash());
          });
 
-         // Download Zipped Archive button - click create download zip file link on collections page
-         $('#collection').on("click", '#collections_summary a#create_zip_file button', function() {
-                $('.spinner', "#collections_summary").fadeIn();
+         // Download Zipped Data Archive button
+         $('#collection').on("click", '#collections_summary a#create_zip_data_file button', function() {
+                if (opus.download_in_process) {
+                  return false;
+                }
                 opus.download_in_process = true;
+                $('.spinner', "#collections_summary").fadeIn();
                 var add_to_url = o_collections.getDownloadFiltersChecked();
                 var url = '/opus/__collections/download.json?' + add_to_url + "&" + o_hash.getHash();
                 $.ajax({ url: url, dataType: "json",
@@ -59,22 +62,41 @@ var o_collections = {
                         $('.spinner', "#collections_summary").fadeOut();
                     },
                     error: function(e) {
+                        opus.download_in_process = false;
                         $('.spinner', "#collections_summary").fadeOut();
                         $('<li>Internal error creating zip file</li>').hide().prependTo('ul.zipped_files', "#collections_summary").slideDown('fast');
-                        opus.download_in_process = false;
                     }
                 });
                 return false;
          });
 
-         // click create zip file link on detail page
-         $("#detail").on("click", '#create_zip_file', function() {
-             $('#zip_file', "#detail").html(opus.spinner + " zipping files");
-              $.ajax({ url: $(this).attr("href"),
-                     success: function(json){
-                         $('#zip_file').html('<a href = "' + json + '">' + json + '</a>');
-                     }});
-              return false;
+         // Download Zipped URL Archive button
+         $('#collection').on("click", '#collections_summary a#create_zip_url_file button', function() {
+                if (opus.download_in_process) {
+                  return false;
+                }
+                opus.download_in_process = true;
+                $('.spinner', "#collections_summary").fadeIn();
+                var add_to_url = o_collections.getDownloadFiltersChecked();
+                var url = '/opus/__collections/download.json?' + add_to_url + "&" + o_hash.getHash() + "&urlonly=1";
+                $.ajax({ url: url, dataType: "json",
+                    success: function(json){
+                        opus.download_in_process = false;
+                        if (json['error'] !== undefined) {
+                          $('<li>'+json['error']+'</li>').hide().prependTo('ul.zipped_files', "#collections_summary").slideDown('fast');
+                        } else {
+                          filename = json['filename']
+                            $('<li><a href = "' + filename + '">' + filename + '</a></li>').hide().prependTo('ul.zipped_files', "#collections_summary").slideDown('slow');
+                        }
+                        $('.spinner', "#collections_summary").fadeOut();
+                    },
+                    error: function(e) {
+                        opus.download_in_process = false;
+                        $('.spinner', "#collections_summary").fadeOut();
+                        $('<li>Internal error creating wget script</li>').hide().prependTo('ul.zipped_files', "#collections_summary").slideDown('fast');
+                    }
+                });
+                return false;
          });
 
          // empty collection button
