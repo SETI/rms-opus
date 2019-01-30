@@ -665,7 +665,7 @@ var o_browse = {
             let columnSorting = icon === "-down" ? "sort-asc" : icon === "-up" ? "sort-desc" : "none";
             let columnOrdering = `<a href='' data-slug='${slug}'>${header}<span data-sort='${columnSorting}' class='column_ordering fas fa-sort${icon}'></span></a>`;
 
-            $(".dataTable thead tr").append(`<th id='${slug} 'scope='col' class='sticky-header'>${columnOrdering}</th>`);
+            $(".dataTable thead tr").append(`<th id='${slug} 'scope='col' class='sticky-header'><div>${columnOrdering}</div></th>`);
         });
 
         o_browse.initResizableColumn();
@@ -673,13 +673,28 @@ var o_browse = {
     },
 
     initResizableColumn: function() {
-        $("#dataTable th").resizable({
+      console.log("y-scroll w: " + $(".scrollbar-morpheus-den::-webkit-scrollbar").width())
+        $("#dataTable th div").height($("#dataTable th").height());
+        let initWidth;
+        let initHeight;
+        $("#dataTable th div").resizable({
             handles: "e",
             minWidth: 40,
-            alsoResize: "#dataTable",
+            // alsoResize: "#dataTable",
             resize: function (event, ui) {
                 $(event.target).width(ui.size.width);
-            }
+                console.log("INIT W: " + initWidth);
+                // $(event.target).parent().width(ui.size.width);
+                console.log($(event.target).parent().width());
+
+            },
+            create: function (event, ui) {
+                initWidth = $(event.target).width();
+                initHeight = $(event.target ).height();
+                console.log($(event.target).find("a").data("slug"))
+                console.log("INIT W: " + initWidth);
+                console.log("INIT H: " + initHeight);
+            },
         });
     },
 
@@ -807,7 +822,9 @@ var o_browse = {
     },
 
     adjustTableWidth: function() {
-        let containerWidth = $(".dataTable").width();
+        let containerWidth = $(".gallery-contents").width();
+        // Make sure the rightmost column is not cut off by the y-scrollbar
+        $(".dataTable").width(containerWidth);
         o_browse.updateTableXScrollbarVerticalPosition();
         o_browse.xAxisTableScrollbar.update();
     },

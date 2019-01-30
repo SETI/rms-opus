@@ -327,7 +327,7 @@ th.sticky-header {
 #dataTable th {
     vertical-align: middle;
 		/* Fix the hidden th left/right border in firebox */
-		background-clip: padding-box
+		background-clip: padding-box;
 }
 
 #dataTable th a {
