@@ -37,8 +37,7 @@ from django.views.decorators.cache import never_cache
 from hurry.filesize import size as nice_file_size
 
 from results.views import (get_data,
-                           get_search_results_chunk,
-                           get_all_in_collection)
+                           get_search_results_chunk)
 from search.models import ObsGeneral
 from search.views import (get_param_info_by_slug,
                           url_to_search_params,
@@ -216,7 +215,7 @@ def api_edit_collection(request, **kwargs):
             assert False
 
     collection_count = _get_collection_count(session_id)
-    json_data = {'err': err,
+    json_data = {'error': err,
                  'count': collection_count,
                  'reqno': reqno}
 
@@ -286,14 +285,25 @@ def api_create_download(request, opus_id=None):
     else:
         product_types = request.GET.get('types', 'none')
         product_types = product_types.split(',')
-        opus_ids = get_all_in_collection(request)
+        num_selections = (Collections.objects.filter(session_id__exact=session_id)
+                          .count())
+        if num_selections > settings.MAX_SELECTIONS_FOR_DOWNLOAD:
+            ret = json_response({'error':
+         f'Too many selections ({settings.MAX_SELECTIONS_FOR_DOWNLOAD} max)'})
+            exit_api_call(api_code, ret)
+            return ret
+        res = (Collections.objects.filter(session_id__exact=session_id)
+               .values_list('opus_id'))
+        opus_ids = [x[0] for x in res]
         return_directly = False
 
     if not opus_ids:
         if return_directly:
-            raise Http404("No OPUSID specified")
+            raise Http404('No OPUSID specified')
         else:
-            raise Http404("No observations selected")
+            ret = json_response({'error': 'No observations selected'})
+            exit_api_call(api_code, ret)
+            return ret
 
     zip_base_file_name = _zip_filename()
     zip_root = zip_base_file_name.split('.')[0]
@@ -311,17 +321,20 @@ def api_create_download(request, opus_id=None):
                              product_types=product_types)
 
     if not files:
-        raise Http404("No files found")
+        ret = json_response({'error': 'No files found'})
+        exit_api_call(api_code, ret)
+        return ret
 
     info = _get_download_info(product_types, session_id)
     download_size = info['total_download_size']
     # Don't create download if the resultant zip file would be too big
     if download_size > settings.MAX_DOWNLOAD_SIZE:
-        ret = HttpResponse('Sorry, this download would require '
-                           +'{:,}'.format(download_size)
-                           +' bytes but the maximum allowed is '
-                           +'{:,}'.format(settings.MAX_DOWNLOAD_SIZE)
-                           +' bytes')
+        ret = json_response({'error':
+                             'Sorry, this download would require '
+                             +'{:,}'.format(download_size)
+                             +' bytes but the maximum allowed is '
+                             +'{:,}'.format(settings.MAX_DOWNLOAD_SIZE)
+                             +' bytes'})
         exit_api_call(api_code, ret)
         return ret
 
@@ -330,9 +343,10 @@ def api_create_download(request, opus_id=None):
     cum_download_size = request.session.get('cum_download_size', 0)
     cum_download_size += download_size
     if cum_download_size > settings.MAX_CUM_DOWNLOAD_SIZE:
-        ret = HttpResponse('Sorry, maximum cumulative download size ('
-                           +'{:,}'.format(settings.MAX_CUM_DOWNLOAD_SIZE)
-                           +' bytes) reached for this session')
+        ret = json_response({'error':
+                             'Sorry, maximum cumulative download size ('
+                             +'{:,}'.format(settings.MAX_CUM_DOWNLOAD_SIZE)
+                             +' bytes) reached for this session'})
         exit_api_call(api_code, ret)
         return ret
     request.session['cum_download_size'] = int(cum_download_size)
@@ -393,14 +407,16 @@ def api_create_download(request, opus_id=None):
 
     if not added:
         log.error('No files found for download cart %s', manifest_file_name)
-        raise Http404('No files found')
+        ret = json_response({'error': 'No files found'})
+        exit_api_call(api_code, ret)
+        return ret
 
     if return_directly:
         response['Content-Disposition'] = f'attachment; filename={zip_base_file_name}'
         ret = response
     else:
         zip_url = settings.TAR_FILE_URL_PATH + zip_base_file_name
-        ret = json_response(zip_url)
+        ret = json_response({'filename': zip_url})
 
     exit_api_call(api_code, '<Encoded zip file>')
     return ret

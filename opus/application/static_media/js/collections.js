@@ -47,24 +47,22 @@ var o_collections = {
                 opus.download_in_process = true;
                 var add_to_url = o_collections.getDownloadFiltersChecked();
                 var url = '/opus/__collections/download.json?' + add_to_url + "&" + o_hash.getHash();
-                $.ajax({ url: url,
-                    success: function(filename){
+                $.ajax({ url: url, dataType: "json",
+                    success: function(json){
                         opus.download_in_process = false;
-                        if (filename) {
-                            $('<li><a href = "' + filename + '">' + filename + '</a></li>').hide().prependTo('ul.zipped_files', "#collections_summary").slideDown('slow');
-                            $('.spinner', "#collections_summary").fadeOut();
+                        if (json['error'] !== undefined) {
+                          $('<li>'+json['error']+'</li>').hide().prependTo('ul.zipped_files', "#collections_summary").slideDown('fast');
                         } else {
-                            $('<li>No Files Found</li>').hide().prependTo('ul.zipped_files', "#collections_summary").slideDown('fast');
+                          filename = json['filename']
+                            $('<li><a href = "' + filename + '">' + filename + '</a></li>').hide().prependTo('ul.zipped_files', "#collections_summary").slideDown('slow');
                         }
-
+                        $('.spinner', "#collections_summary").fadeOut();
                     },
                     error: function(e) {
-
                         $('.spinner', "#collections_summary").fadeOut();
-                        $('<li>No Files Found</li>').hide().prependTo('ul.zipped_files', "#collections_summary").slideDown('fast');
+                        $('<li>Internal error creating zip file</li>').hide().prependTo('ul.zipped_files', "#collections_summary").slideDown('fast');
                         opus.download_in_process = false;
                     }
-
                 });
                 return false;
          });
