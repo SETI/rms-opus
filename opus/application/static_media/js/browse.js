@@ -468,6 +468,7 @@ var o_browse = {
                     });
                 }
             }
+            o_browse.selectedColumnsScrollbar.update();
             return false;
         });
 

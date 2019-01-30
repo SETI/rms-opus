@@ -375,7 +375,7 @@ th.sticky-header {
 #columnChooser ul li {
     text-decoration:none;
 }
-.allColumns   {
+.allColumns, .selectedColumns   {
     height: 450px;
     overflow:scroll;
 	overflow-x: auto;
@@ -387,6 +387,11 @@ th.sticky-header {
 .allColumns .cat_label {
     margin-top:15px;
     margin-bottom:-5px;
+}
+
+.selectedColumns ul {
+	padding-inline-start: 0.5em;
+	padding-inline-end: 1em;
 }
 .selectedColumns ul li:hover{
 	cursor:grab;
