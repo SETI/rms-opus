@@ -676,6 +676,7 @@ var o_browse = {
         $("#dataTable th").resizable({
             handles: "e",
             minWidth: 40,
+            alsoResize: "#dataTable",
             resize: function (event, ui) {
                 $(event.target).width(ui.size.width);
             }
