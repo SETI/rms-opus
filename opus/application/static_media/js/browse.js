@@ -519,16 +519,16 @@ var o_browse = {
     getViewInfo: function() {
         // this function returns some data you need depending on whether
         // you are in #collection or #browse views
-        if (opus.prefs.view == 'collection') {
-            namespace = '#collection';
-            prefix = 'colls_';
+        if (opus.prefs.view == "collection") {
+            namespace = "#collection";
+            prefix = "colls_";
             add_to_url = "&colls=true";
         } else {
-            namespace = '#browse';
-            prefix = '';
+            namespace = "#browse";
+            prefix = "";
             add_to_url = "";
         }
-        return {'namespace':namespace, 'prefix':prefix, 'add_to_url':add_to_url};
+        return {"namespace":namespace, "prefix":prefix, "add_to_url":add_to_url};
 
     },
 
@@ -536,9 +536,9 @@ var o_browse = {
         // sometimes other functions need to know current page for whatever view we
         // are currently looking at..
         let view_info = o_browse.getViewInfo();
-        let namespace = view_info['namespace']; // either '#collection' or '#browse'
-        let prefix = view_info['prefix'];       // either 'colls_' or ''
-        let view_var = opus.prefs[prefix + 'browse'];  // either "gallery" or "data"
+        let namespace = view_info.namespace; // either '#collection' or '#browse'
+        let prefix = view_info.prefix;       // either 'colls_' or ''
+        let view_var = opus.prefs[prefix + "browse"];  // either "gallery" or "data"
         let page = 1;
 
         if (view_var == "data") {
@@ -586,10 +586,11 @@ var o_browse = {
 
     renderColumnChooser: function() {
         if (!opus.column_chooser_drawn) {
-            let url = '/opus/__forms/column_chooser.html?' + o_hash.getHash() + '&col_chooser=1';
-            $('.column_chooser').load( url, function(response, status, xhr)  {
+            let url = "/opus/__forms/column_chooser.html?" + o_hash.getHash() + "&col_chooser=1";
+            $(".column_chooser").load( url, function(response, status, xhr)  {
 
                 opus.column_chooser_drawn=true;  // bc this gets saved not redrawn
+                $("#columnChooser .restart_button").hide(); // we are not using this
 
                 // we keep these all open in the column chooser, they are all closed by default
                 // disply check next to any default columns
@@ -605,7 +606,7 @@ var o_browse = {
                 // dragging to reorder the chosen
                 $( ".selectedColumns > ul").sortable({
                     items: "li:not(.unsortable)",
-                    cursor: 'grab',
+                    cursor: "grab",
                     stop: function(event, ui) { o_browse.columnsDragged(this); }
                 });
             });
