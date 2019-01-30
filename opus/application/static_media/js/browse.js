@@ -227,7 +227,7 @@ var o_browse = {
 
         // click table column header to reorder by that column
         $("#browse").on("click", ".dataTable th a",  function() {
-            $(".table-page-load-status > .loader").attr("style", "display: block");
+            $(".table-page-load-status > .loader").show();
             let orderBy =  $(this).data("slug");
 
             let order_indicator = $(this).children()
@@ -518,7 +518,7 @@ var o_browse = {
             $(".browse_view", "#browse").attr("title", "Click to view sortable table");
             $(".browse_view", "#browse").data("view", "dataTable");
 
-            $(".justify-content-center").attr("style", "");
+            $(".justify-content-center").show();
         } else {
             $("." + "gallery", "#browse").hide();
             $("." + opus.prefs.browse, "#browse").fadeIn();
@@ -528,7 +528,7 @@ var o_browse = {
             $(".browse_view", "#browse").data("view", "gallery");
 
             // remove that extra space on top when loading table page
-            $(".justify-content-center").attr("style", "display: none");
+            $(".justify-content-center").hide();
         }
     },
 
@@ -760,7 +760,7 @@ var o_browse = {
             }
             console.log("current page: " + opus.prefs.browse);
             // remove spinner from table page after the page is fetched
-            $(".table-page-load-status > .loader").attr("style", "display: none");
+            $(".table-page-load-status > .loader").hide();
         });
 
         // ew.  this needs to be dealt with, as table/gallery are always drawn at same time
@@ -807,7 +807,7 @@ var o_browse = {
     },
 
     adjustTableWidth: function() {
-        let containerWidth = $(".gallery-contents").width()-100;
+        let containerWidth = $(".dataTable").width();
         o_browse.updateTableXScrollbarVerticalPosition();
         o_browse.xAxisTableScrollbar.update();
     },
