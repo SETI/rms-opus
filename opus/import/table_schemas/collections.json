@@ -32,5 +32,8 @@
     {
         "field_name": "timestamp",
         "field_type": "timestamp"
+    },
+    {
+        "constraint": "CONSTRAINT all_fields UNIQUE (session_id,obs_general_id)"
     }
 ]

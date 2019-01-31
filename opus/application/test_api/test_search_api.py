@@ -37,6 +37,10 @@ class ApiSearchTests(TestCase):
         self.search_time_threshold = 1000000
         self.search_time_threshold2 = 1000000
         logging.disable(logging.ERROR)
+        if settings.TEST_GO_LIVE:
+            self.client = requests.Session()
+        else:
+            self.client = RequestsClient()
 
     # enable error logging and trace output after test
     def tearDown(self):
@@ -46,15 +50,11 @@ class ApiSearchTests(TestCase):
         logging.disable(logging.NOTSET)
 
     def _get_response(self, url):
-        if settings.TEST_GO_LIVE:
-            client = requests.Session()
-        else:
-            client = RequestsClient()
         if not settings.TEST_GO_LIVE or settings.TEST_GO_LIVE == "production":
             url = "https://tools.pds-rings.seti.org" + url
         else:
             url = "http://dev.pds-rings.seti.org" + url
-        return client.get(url)
+        return self.client.get(url)
 
     def _run_status_equal(self, url, expected):
         print(url)
@@ -112,6 +112,7 @@ class ApiSearchTests(TestCase):
         print(new_choices)
         jdata['choices'] = new_choices
         self.assertEqual(expected, jdata)
+
 
             ###################################################
             ######### /__api/normalizeinput API TESTS #########

@@ -89,6 +89,7 @@ class ApiReturnFormatTests(TestCase):
 
         api_url = api_url_base + format
         payload = api_dict[api_url_base]["payload"]
+        print("Testing URL", api_url, "Payload", payload)
         response = client.get(api_url, params=payload)
         # response = client.get("https://tools.pds-rings.seti.org/opus/api/meta/mults/planet.json", params={'target': 'Jupiter'})
 
