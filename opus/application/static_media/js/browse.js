@@ -663,9 +663,9 @@ var o_browse = {
             // Assigning data attribute for table column sorting
             let icon = ($.inArray(slug, order) >= 0 ? "-down" : ($.inArray("-"+slug, order) >= 0 ? "-up" : ""));
             let columnSorting = icon === "-down" ? "sort-asc" : icon === "-up" ? "sort-desc" : "none";
-            let columnOrdering = `<a href='' data-slug='${slug}'>${header}<span data-sort='${columnSorting}' class='column_ordering fas fa-sort${icon}'></span></a>`;
+            let columnOrdering = `<a href='' data-slug='${slug}'><span>${header}</span><span data-sort='${columnSorting}' class='column_ordering fas fa-sort${icon}'></span></a>`;
 
-            $(".dataTable thead tr").append(`<th id='${slug} 'scope='col' class='sticky-header'>${columnOrdering}</th>`);
+            $(".dataTable thead tr").append(`<th id='${slug} 'scope='col' class='sticky-header'><div>${columnOrdering}</div></th>`);
         });
 
         o_browse.initResizableColumn();
@@ -674,28 +674,66 @@ var o_browse = {
     },
 
     initResizableColumn: function() {
-      console.log("y-scroll w: " + $(".scrollbar-morpheus-den::-webkit-scrollbar").width())
-        // $("#dataTable th div").height($("#dataTable th").height());
-        let initWidth;
-        let initHeight;
-        $("#dataTable th").resizable({
+        let initWidth = {};
+        $("#dataTable th div").resizable({
             handles: "e",
             minWidth: 40,
             // alsoResize: "#dataTable",
             resize: function (event, ui) {
-                $(event.target).width(ui.size.width);
-                console.log("INIT W: " + initWidth);
-                // $(event.target).parent().width(ui.size.width);
-                // console.log($(event.target).parent().width());
+                let slug = $(event.target).find("a").data("slug");
+                let resizableContainerWidth = $(event.target).parent().width();
+                let columnTextWidth = $(event.target).find("a").find('span:first').width();
+                let sortLabelWidth = $(event.target).find("a").find('span:last').width();
+                let columnContentWidth = columnTextWidth + sortLabelWidth;
+                let beginningSpace = (resizableContainerWidth - columnContentWidth)/2;
+                let columnWidthUptoEndContent = columnContentWidth + beginningSpace;
+                // let columnContentWidth = columnTextWidth + 10;
+                console.log("Column" + slug + ": " + columnTextWidth);
+                console.log("label: " + sortLabelWidth);
+                console.log("Beginning space: " + beginningSpace);
+                console.log("columnWidthUptoEndContent: " + columnWidthUptoEndContent);
+                // console.log("TH H: " + $(event.target).parent().height());
+                console.log("parent TH W: " + $(event.target).parent().width());
+                // $(event.target).height($(event.target).parent().height());
+                // $(event.target).width($(event.target).parent().width());
+                console.log("div Orig Siz W: " + ui.originalSize.width);
+                if(ui.size.width > columnWidthUptoEndContent + 10) {
+                    $(event.target).width(ui.size.width);
+                    $(event.target).parent().width(ui.size.width);
+                    $(event.target).parent().height(ui.size.height);
+                } else {
+                    let tableCellWidth = $(event.target).parent().width();
+                    let resizableElementWidth = tableCellWidth > columnContentWidth ? tableCellWidth : columnContentWidth;
+                    console.log("resize el: " + resizableElementWidth);
+                    console.log("table cell: " + tableCellWidth);
+                    console.log("content : " + columnContentWidth);
+                    $(event.target).width(resizableElementWidth);
+                    // Make sure resizable handle is always at the right border of th
+                    $(event.target).attr("style", "width: 100%");
+                }
+                // $(event.target).width(ui.size.width);
+                // $(event.target).parent().width(ui.size.width)
+                // $(event.target).parent().height(ui.size.height)
+                // if(ui.size.width >= $(event.target).parent().width()) {
+                //     $(event.target).width(ui.size.width);
+                //     $(event.target).parent().width(ui.size.width)
+                //     $(event.target).parent().height(ui.size.height)
+                // } else {
+                //     $(event.target).width(ui.size.width);
+                //     $(event.target).parent().width(initWidth[slug]);
+                //     $(event.target).parent().height(ui.size.height)
+                // }
 
+                console.log("target W: " + $(event.target).width())
+                console.log("ui-resizable W: " + $(event.target).find(".ui-resizable-handle").width())
+                console.log("ui W: " + ui.size.width)
             },
-            create: function (event, ui) {
-                initWidth = $(event.target).width();
-                initHeight = $(event.target ).height();
-                console.log($(event.target).find("a").data("slug"))
-                console.log("INIT W: " + initWidth);
-                console.log("INIT H: " + initHeight);
-            },
+            // create: function (event, ui) {
+            //     let slug = $(event.target).find("a").data("slug");
+            //     initWidth[slug] = $(event.target).width();
+            //     // console.log($(event.target).find("a").data("slug"))
+            //     console.log(initWidth);
+            // },
         });
     },
 
@@ -823,7 +861,7 @@ var o_browse = {
     },
 
     adjustTableWidth: function() {
-        let containerWidth = $(".gallery-contents").width()+5;
+        let containerWidth = $(".gallery-contents").width();
         // Make sure the rightmost column is not cut off by the y-scrollbar
         $(".dataTable").width(containerWidth);
         o_browse.updateTableXScrollbarVerticalPosition();

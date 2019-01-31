@@ -328,6 +328,7 @@ th.sticky-header {
     vertical-align: middle;
 		/* Fix the hidden th left/right border in firebox */
 		background-clip: padding-box;
+		text-align: center;
 }
 
 #dataTable th a {
@@ -344,6 +345,12 @@ th.sticky-header {
 
 #dataTable td {
 	white-space: nowrap;
+}
+
+#dataTable th > div {
+		display: inline-block;
+		width: 100%;
+		white-space: nowrap;
 }
 
 /* Not overlap table y-axis scrollbar with the window y-axis scrollbar */
