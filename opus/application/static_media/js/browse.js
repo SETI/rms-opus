@@ -690,13 +690,19 @@ var o_browse = {
                     $(event.target).width(ui.size.width);
                     $(event.target).parent().width(ui.size.width);
                     $(event.target).parent().height(ui.size.height);
+                    $(event.target).find("div").height($(event.target).parent().height());
                 } else {
                     let tableCellWidth = $(event.target).parent().width();
                     let resizableElementWidth = tableCellWidth > columnContentWidth ? tableCellWidth : columnContentWidth;
                     $(event.target).width(resizableElementWidth);
+                    $(event.target).find("div").height($(event.target).parent().height());
                     // Make sure resizable handle is always at the right border of th
                     $(event.target).attr("style", "width: 100%");
                 }
+            },
+            create: function (event, ui) {
+                // Make sure the resizable handle has enough height
+                $(event.target).find("div").height($(event.target).parent().height());
             },
         });
     },
@@ -825,7 +831,7 @@ var o_browse = {
     },
 
     adjustTableWidth: function() {
-        let containerWidth = $(".gallery-contents").width();
+        let containerWidth = $(".gallery-contents").width()-5;
         // Make sure the rightmost column is not cut off by the y-scrollbar
         $(".dataTable").width(containerWidth);
         o_browse.updateTableXScrollbarVerticalPosition();

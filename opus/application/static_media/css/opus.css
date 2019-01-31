@@ -348,9 +348,19 @@ th.sticky-header {
 }
 
 #dataTable th > div {
+		vertical-align: middle;
 		display: inline-block;
 		width: 100%;
+		position: relative;
 		/* white-space: nowrap; */
+		/* height: 100%; */
+}
+
+/* vertically center the resizable handle */
+#dataTable th > div div {
+		position: absolute;
+		top: 50%;
+		transform: translateY(-50%);
 }
 
 /* Not overlap table y-axis scrollbar with the window y-axis scrollbar */
