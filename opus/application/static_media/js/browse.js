@@ -678,25 +678,14 @@ var o_browse = {
         $("#dataTable th div").resizable({
             handles: "e",
             minWidth: 40,
-            // alsoResize: "#dataTable",
             resize: function (event, ui) {
-                let slug = $(event.target).find("a").data("slug");
                 let resizableContainerWidth = $(event.target).parent().width();
                 let columnTextWidth = $(event.target).find("a").find('span:first').width();
                 let sortLabelWidth = $(event.target).find("a").find('span:last').width();
                 let columnContentWidth = columnTextWidth + sortLabelWidth;
                 let beginningSpace = (resizableContainerWidth - columnContentWidth)/2;
                 let columnWidthUptoEndContent = columnContentWidth + beginningSpace;
-                // let columnContentWidth = columnTextWidth + 10;
-                console.log("Column" + slug + ": " + columnTextWidth);
-                console.log("label: " + sortLabelWidth);
-                console.log("Beginning space: " + beginningSpace);
-                console.log("columnWidthUptoEndContent: " + columnWidthUptoEndContent);
-                // console.log("TH H: " + $(event.target).parent().height());
-                console.log("parent TH W: " + $(event.target).parent().width());
-                // $(event.target).height($(event.target).parent().height());
-                // $(event.target).width($(event.target).parent().width());
-                console.log("div Orig Siz W: " + ui.originalSize.width);
+
                 if(ui.size.width > columnWidthUptoEndContent + 10) {
                     $(event.target).width(ui.size.width);
                     $(event.target).parent().width(ui.size.width);
@@ -704,36 +693,11 @@ var o_browse = {
                 } else {
                     let tableCellWidth = $(event.target).parent().width();
                     let resizableElementWidth = tableCellWidth > columnContentWidth ? tableCellWidth : columnContentWidth;
-                    console.log("resize el: " + resizableElementWidth);
-                    console.log("table cell: " + tableCellWidth);
-                    console.log("content : " + columnContentWidth);
                     $(event.target).width(resizableElementWidth);
                     // Make sure resizable handle is always at the right border of th
                     $(event.target).attr("style", "width: 100%");
                 }
-                // $(event.target).width(ui.size.width);
-                // $(event.target).parent().width(ui.size.width)
-                // $(event.target).parent().height(ui.size.height)
-                // if(ui.size.width >= $(event.target).parent().width()) {
-                //     $(event.target).width(ui.size.width);
-                //     $(event.target).parent().width(ui.size.width)
-                //     $(event.target).parent().height(ui.size.height)
-                // } else {
-                //     $(event.target).width(ui.size.width);
-                //     $(event.target).parent().width(initWidth[slug]);
-                //     $(event.target).parent().height(ui.size.height)
-                // }
-
-                console.log("target W: " + $(event.target).width())
-                console.log("ui-resizable W: " + $(event.target).find(".ui-resizable-handle").width())
-                console.log("ui W: " + ui.size.width)
             },
-            // create: function (event, ui) {
-            //     let slug = $(event.target).find("a").data("slug");
-            //     initWidth[slug] = $(event.target).width();
-            //     // console.log($(event.target).find("a").data("slug"))
-            //     console.log(initWidth);
-            // },
         });
     },
 

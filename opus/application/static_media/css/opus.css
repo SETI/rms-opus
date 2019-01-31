@@ -350,7 +350,7 @@ th.sticky-header {
 #dataTable th > div {
 		display: inline-block;
 		width: 100%;
-		white-space: nowrap;
+		/* white-space: nowrap; */
 }
 
 /* Not overlap table y-axis scrollbar with the window y-axis scrollbar */
