@@ -674,7 +674,6 @@ var o_browse = {
     },
 
     initResizableColumn: function() {
-        let initWidth = {};
         $("#dataTable th div").resizable({
             handles: "e",
             minWidth: 40,
@@ -699,10 +698,6 @@ var o_browse = {
                     // Make sure resizable handle is always at the right border of th
                     $(event.target).attr("style", "width: 100%");
                 }
-            },
-            create: function (event, ui) {
-                // Make sure the resizable handle has enough height
-                $(event.target).find("div").height($(event.target).parent().height());
             },
         });
     },
