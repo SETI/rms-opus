@@ -686,7 +686,7 @@ var o_browse = {
                 let beginningSpace = (resizableContainerWidth - columnContentWidth)/2;
                 let columnWidthUptoEndContent = columnContentWidth + beginningSpace;
 
-                if(ui.size.width > columnWidthUptoEndContent + 10) {
+                if(ui.size.width > columnWidthUptoEndContent) {
                     $(event.target).width(ui.size.width);
                     $(event.target).parent().width(ui.size.width);
                     $(event.target).parent().height(ui.size.height);
