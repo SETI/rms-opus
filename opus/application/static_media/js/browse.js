@@ -230,8 +230,8 @@ var o_browse = {
         $("#browse").on("click", ".dataTable th a",  function() {
             $(".table-page-load-status > .loader").show();
             let orderBy =  $(this).data("slug");
-
-            let order_indicator = $(this).children()
+            console.log("orderBy: " + orderBy)
+            let order_indicator = $(this).find("span:last")
 
             if (order_indicator.data("sort") === "sort-asc") {
                 // currently ascending, change to descending order
