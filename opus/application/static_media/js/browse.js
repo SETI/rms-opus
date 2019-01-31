@@ -252,6 +252,7 @@ var o_browse = {
             opus.gallery_data = {};
             opus.prefs.page = default_pages; // reset pages to 1 when col ordering changes
 
+            $('#browse .gallery-contents').infiniteScroll("destroy");
             o_browse.loadBrowseData(1);
             return false;
         });
@@ -740,13 +741,11 @@ var o_browse = {
         $.getJSON(base_url + url, function(data) {
             let request_time = new Date().getTime() - start_time;
             console.log(request_time);
-
             if(data["reqno"] < opus.lastLoadBrowseDataRequestNo) {
                 return;
             }
 
             if (!opus.gallery_begun) {
-            // if (!opus.gallery_begun && !o_browse.tableSorting) {
                 o_browse.initTable(data.columns);
 
                 // for infinite scroll
@@ -759,12 +758,14 @@ var o_browse = {
                     scrollThreshold: 500,
                     debug: true,
                 });
-                $('#browse .gallery-contents').on( 'request.infiniteScroll', function( event, response, path ) {
+
+                // let p = $('#browse .gallery-contents').infiniteScroll('getPath')
+                // console.log("PP: " + p)
+                $('#browse .gallery-contents').on( 'request.infiniteScroll', function( event, path ) {
                     reqStart = new Date().getTime();
                 });
 
                 $('#browse .gallery-contents').on( 'load.infiniteScroll', function( event, response, path ) {
-                    console.log("LOAD infiniteScroll")
                     let request_time = new Date().getTime() - reqStart;
                     console.log("load: "+request_time);
 
