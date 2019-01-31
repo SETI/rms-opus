@@ -324,7 +324,7 @@ def api_create_download(request, opus_id=None):
         exit_api_call(api_code, ret)
         return ret
 
-    zip_base_file_name = _zip_filename()
+    zip_base_file_name = _zip_filename(opus_id, url_file_only)
     zip_root = zip_base_file_name.split('.')[0]
     zip_file_name = settings.TAR_FILE_PATH + zip_base_file_name
     chksum_file_name = settings.TAR_FILE_PATH + f'checksum_{zip_root}.txt'
@@ -373,16 +373,16 @@ def api_create_download(request, opus_id=None):
 
     errors = []
     added = []
-    for opus_id in files:
-        if 'Current' not in files[opus_id]:
+    for f_opus_id in files:
+        if 'Current' not in files[f_opus_id]:
             continue
-        files_version = files[opus_id]['Current']
+        files_version = files[f_opus_id]['Current']
         for product_type in files_version:
             for pdsf in files_version[product_type]:
                 f = pdsf.abspath
                 pretty_name = f.split('/')[-1]
                 digest = f'{pretty_name}:{pdsf.checksum}'
-                mdigest = f'{opus_id}:{pretty_name}'
+                mdigest = f'{f_opus_id}:{pretty_name}'
 
                 if pretty_name not in added:
                     chksum_fp.write(digest+'\n')
@@ -396,7 +396,7 @@ def api_create_download(request, opus_id=None):
                             log.error(
             'api_create_download threw exception for opus_id %s, product_type %s, '
             +'file %s, pretty_name %s: %s',
-            opus_id, product_type, f, pretty_name, str(e))
+            f_opus_id, product_type, f, pretty_name, str(e))
                             errors.append('Error adding: ' + pretty_name)
                     added.append(pretty_name)
 
@@ -699,15 +699,16 @@ def _edit_collection_addall(request, session_id, api_code):
 ################################################################################
 
 
-def _zip_filename(opus_id=None):
+def _zip_filename(opus_id, url_file_only):
     "Create a unique .zip filename for a user's cart."
     random_ascii = random.choice(string.ascii_letters).lower()
     timestamp = "T".join(str(datetime.datetime.now()).split(' '))
     # Windows doesn't like ':' in filenames
     timestamp = timestamp.replace(':', '-')
+    data_url = 'url' if url_file_only else 'data'
     if opus_id:
-        return f'pdsrms-data-{opus_id}-{random_ascii}-{timestamp}.zip'
-    return f'pdsrms-data-{random_ascii}-{timestamp}.zip'
+        return f'pdsrms-{data_url}-{random_ascii}-{timestamp}_{opus_id}.zip'
+    return f'pdsrms-{data_url}-{random_ascii}-{timestamp}.zip'
 
 
 def _csv_helper(request, api_code=None):
