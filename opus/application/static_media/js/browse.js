@@ -1,7 +1,6 @@
 var o_browse = {
     selectedImageID: "",
     keyPressAction: "",
-    tableSorting: false,
     xAxisTableScrollbar: new PerfectScrollbar(".dataTable"),
     // xAxisTableScrollbar: new PerfectScrollbar(".gallery-contents"),
     // scrollbar: new PerfectScrollbar("#browse .gallery-contents"),
@@ -231,19 +230,19 @@ var o_browse = {
             $(".table-page-load-status > .loader").show();
             let orderBy =  $(this).data("slug");
             console.log("orderBy: " + orderBy)
-            let order_indicator = $(this).find("span:last")
+            let orderIndicator = $(this).find("span:last")
 
-            if (order_indicator.data("sort") === "sort-asc") {
+            if (orderIndicator.data("sort") === "sort-asc") {
                 // currently ascending, change to descending order
-                order_indicator.data("sort", "sort-desc")
+                orderIndicator.data("sort", "sort-desc")
                 orderBy = '-' + orderBy;
-            } else if (order_indicator.data("sort") === "sort-desc") {
+            } else if (orderIndicator.data("sort") === "sort-desc") {
                 // currently descending, change to ascending order
-                order_indicator.data("sort", "sort-asc")
+                orderIndicator.data("sort", "sort-asc")
                 orderBy = orderBy;
             } else {
                 // not currently ordered, change to ascending
-                order_indicator.data("sort", "sort-asc")
+                orderIndicator.data("sort", "sort-asc")
             }
             opus.prefs['order'] = orderBy;
 
@@ -253,7 +252,6 @@ var o_browse = {
             opus.gallery_data = {};
             opus.prefs.page = default_pages; // reset pages to 1 when col ordering changes
 
-            o_browse.tableSorting = true;
             o_browse.loadBrowseData(1);
             return false;
         });
@@ -742,9 +740,7 @@ var o_browse = {
         $.getJSON(base_url + url, function(data) {
             let request_time = new Date().getTime() - start_time;
             console.log(request_time);
-            console.log("URL: " + url);
-            console.log("Current reqno: " + opus.lastLoadBrowseDataRequestNo);
-            console.log("Return reqno: " + data["reqno"]);
+
             if(data["reqno"] < opus.lastLoadBrowseDataRequestNo) {
                 return;
             }
@@ -753,7 +749,6 @@ var o_browse = {
             // if (!opus.gallery_begun && !o_browse.tableSorting) {
                 o_browse.initTable(data.columns);
 
-                console.log("RUNNING infiniteScroll")
                 // for infinite scroll
                 $('#browse .gallery-contents').infiniteScroll({
                     path: o_browse.updatePageInUrl(this.url, "{{#}}"),
@@ -769,32 +764,14 @@ var o_browse = {
                 });
 
                 $('#browse .gallery-contents').on( 'load.infiniteScroll', function( event, response, path ) {
-                    console.log("load infinite scroll")
+                    console.log("LOAD infiniteScroll")
                     let request_time = new Date().getTime() - reqStart;
                     console.log("load: "+request_time);
 
                     let jsonData = JSON.parse( response );
-                    console.log(jsonData)
                     o_browse.renderGalleryAndTable(jsonData, path);
-                    console.log('Load count: ' + $('#browse .gallery-contents').data('infiniteScroll').loadCount );
                     console.log('Loaded page: ' + $('#browse .gallery-contents').data('infiniteScroll').pageIndex );
                 });
-
-                // o_browse.renderGalleryAndTable(data, this.url);
-
-                // if (!opus.gallery_begun && !o_browse.tableSorting) {
-                //     $('#browse .gallery-contents').infiniteScroll('loadNextPage');
-                //     opus.gallery_begun = true;
-                // }
-            } else {
-                console.log("NO PREFETCH PAGE")
-                o_browse.initTable(data.columns);
-                o_browse.tableSorting = false;
-                // o_browse.renderGalleryAndTable(data, this.url);
-
-                // if(!opus.gallery_begun) {
-                //     opus.gallery_begun = true;
-                // }
             }
 
             o_browse.renderGalleryAndTable(data, this.url);
