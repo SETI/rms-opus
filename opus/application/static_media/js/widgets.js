@@ -119,7 +119,7 @@ var o_widgets = {
     widgetDrop: function(obj) {
             // if widget as moved to a different formscolumn,
             // redefine the opus.prefs.widgets (preserves order)
-            var widgets = $('#search_widgets').sortable('toArray');
+            let widgets = $('#search_widgets').sortable('toArray');
 
             $.each(widgets, function(index,value) {
                 widgets[index]=value.split('__')[1];
@@ -130,7 +130,7 @@ var o_widgets = {
 
             // for some reason if the widget is scrolled it loses scroll position after sorting, bring it back:
             if (opus.prefs.widget_scroll[slug]) {
-                var scrolltop = opus.prefs.widget_scroll[slug];
+                let scrolltop = opus.prefs.widget_scroll[slug];
                 $('.widget_scroll_wrapper','#widget__'+slug).scrollTop(scrolltop);
             }
             o_widgets.updateWidgetCookies();
@@ -473,6 +473,7 @@ var o_widgets = {
              }
 
              // If we have a string input widget open, initialize autocomplete for string input
+             let displayDropDownList = true;
              let stringInputDropDown = $(`input[name="${slug}"].STRING`).autocomplete({
                  minLength: 1,
                  source: function(request, response) {
@@ -500,19 +501,19 @@ var o_widgets = {
                      }
                      let url = `/opus/__api/stringsearchchoices/${slug}.json?` + newHash + "&reqno=" + opus.lastRequestNo;
                      $.getJSON(url, function(stringSearchChoicesData) {
-                         if(stringSearchChoicesData["reqno"] < o_search.slugStringSearchChoicesReqno[slug]) {
+                         if(stringSearchChoicesData.reqno < o_search.slugStringSearchChoicesReqno[slug]) {
                              return;
                          }
 
-                         if(stringSearchChoicesData["full_search"]) {
+                         if(stringSearchChoicesData.full_search) {
                              o_search.searchMsg = "Results from entire database, not current search constraints"
                          } else {
                              o_search.searchMsg = "Results from current search constraints"
                          }
 
-                         let hintsOfString = stringSearchChoicesData["choices"];
-                         o_search.truncatedResults = stringSearchChoicesData["truncated_results"];
-                         response(hintsOfString);
+                         let hintsOfString = stringSearchChoicesData.choices;
+                         o_search.truncatedResults = stringSearchChoicesData.truncated_results;
+                         response(displayDropDownList ? hintsOfString : null);
                      });
                  },
                  focus: function(focusEvent, ui) {
@@ -535,11 +536,14 @@ var o_widgets = {
                  (2) change event is triggered if input is an empty string
                  */
                  if(keyupEvent.which === 13) {
+                     displayDropDownList = false;
                      $(`input[name="${slug}"]`).autocomplete("close");
                      let currentStringInputValue = $(`input[name="${slug}"]`).val().trim();
                      if(currentStringInputValue === "") {
                          $(`input[name="${slug}"]`).trigger("change");
                      }
+                 } else {
+                     displayDropDownList = true;
                  }
              })
              .focusout(function(focusoutEvent) {
