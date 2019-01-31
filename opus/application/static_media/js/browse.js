@@ -1,6 +1,7 @@
 var o_browse = {
     selectedImageID: "",
     keyPressAction: "",
+    tableSorting: false,
     xAxisTableScrollbar: new PerfectScrollbar(".dataTable"),
     // xAxisTableScrollbar: new PerfectScrollbar(".gallery-contents"),
     // scrollbar: new PerfectScrollbar("#browse .gallery-contents"),
@@ -252,6 +253,7 @@ var o_browse = {
             opus.gallery_data = {};
             opus.prefs.page = default_pages; // reset pages to 1 when col ordering changes
 
+            o_browse.tableSorting = true;
             o_browse.loadBrowseData(1);
             return false;
         });
@@ -740,13 +742,18 @@ var o_browse = {
         $.getJSON(base_url + url, function(data) {
             let request_time = new Date().getTime() - start_time;
             console.log(request_time);
-
+            console.log("URL: " + url);
+            console.log("Current reqno: " + opus.lastLoadBrowseDataRequestNo);
+            console.log("Return reqno: " + data["reqno"]);
             if(data["reqno"] < opus.lastLoadBrowseDataRequestNo) {
                 return;
             }
 
             if (!opus.gallery_begun) {
+            // if (!opus.gallery_begun && !o_browse.tableSorting) {
                 o_browse.initTable(data.columns);
+
+                console.log("RUNNING infiniteScroll")
                 // for infinite scroll
                 $('#browse .gallery-contents').infiniteScroll({
                     path: o_browse.updatePageInUrl(this.url, "{{#}}"),
@@ -760,15 +767,34 @@ var o_browse = {
                 $('#browse .gallery-contents').on( 'request.infiniteScroll', function( event, response, path ) {
                     reqStart = new Date().getTime();
                 });
+
                 $('#browse .gallery-contents').on( 'load.infiniteScroll', function( event, response, path ) {
+                    console.log("load infinite scroll")
                     let request_time = new Date().getTime() - reqStart;
                     console.log("load: "+request_time);
 
                     let jsonData = JSON.parse( response );
+                    console.log(jsonData)
                     o_browse.renderGalleryAndTable(jsonData, path);
-
+                    console.log('Load count: ' + $('#browse .gallery-contents').data('infiniteScroll').loadCount );
                     console.log('Loaded page: ' + $('#browse .gallery-contents').data('infiniteScroll').pageIndex );
                 });
+
+                // o_browse.renderGalleryAndTable(data, this.url);
+
+                // if (!opus.gallery_begun && !o_browse.tableSorting) {
+                //     $('#browse .gallery-contents').infiniteScroll('loadNextPage');
+                //     opus.gallery_begun = true;
+                // }
+            } else {
+                console.log("NO PREFETCH PAGE")
+                o_browse.initTable(data.columns);
+                o_browse.tableSorting = false;
+                // o_browse.renderGalleryAndTable(data, this.url);
+
+                // if(!opus.gallery_begun) {
+                //     opus.gallery_begun = true;
+                // }
             }
 
             o_browse.renderGalleryAndTable(data, this.url);
