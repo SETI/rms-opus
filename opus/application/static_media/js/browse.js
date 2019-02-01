@@ -1,6 +1,7 @@
 var o_browse = {
     selectedImageID: "",
     keyPressAction: "",
+    tableSorting: false,
     xAxisTableScrollbar: new PerfectScrollbar(".dataTable"),
     // xAxisTableScrollbar: new PerfectScrollbar(".gallery-contents"),
     // scrollbar: new PerfectScrollbar("#browse .gallery-contents"),
@@ -229,7 +230,7 @@ var o_browse = {
         $("#browse").on("click", ".dataTable th a",  function() {
             $(".table-page-load-status > .loader").show();
             let orderBy =  $(this).data("slug");
-            console.log("orderBy: " + orderBy)
+
             let orderIndicator = $(this).find("span:last")
 
             if (orderIndicator.data("sort") === "sort-asc") {
@@ -252,7 +253,7 @@ var o_browse = {
             opus.gallery_data = {};
             opus.prefs.page = default_pages; // reset pages to 1 when col ordering changes
 
-            $('#browse .gallery-contents').infiniteScroll("destroy");
+            o_browse.tableSorting = true;
             o_browse.loadBrowseData(1);
             return false;
         });
@@ -744,41 +745,69 @@ var o_browse = {
             if(data["reqno"] < opus.lastLoadBrowseDataRequestNo) {
                 return;
             }
-
-            if (!opus.gallery_begun) {
+            if (!opus.gallery_begun && !o_browse.tableSorting) {
                 o_browse.initTable(data.columns);
 
                 // for infinite scroll
-                $('#browse .gallery-contents').infiniteScroll({
-                    path: o_browse.updatePageInUrl(this.url, "{{#}}"),
-                    responseType: 'text',
-                    status: '#browse .page-load-status',
-                    elementScroll: true,
-                    history: false,
-                    scrollThreshold: 500,
-                    debug: true,
-                });
+                if (!$('#browse .gallery-contents').data('infiniteScroll')) {
+                    console.log("INIT INF ==========")
+                    $('#browse .gallery-contents').infiniteScroll({
+                        path: o_browse.updatePageInUrl(this.url, "{{#}}"),
+                        responseType: 'text',
+                        status: '#browse .page-load-status',
+                        elementScroll: true,
+                        history: false,
+                        scrollThreshold: 500,
+                        debug: true,
+                    });
 
-                // let p = $('#browse .gallery-contents').infiniteScroll('getPath')
-                // console.log("PP: " + p)
-                $('#browse .gallery-contents').on( 'request.infiniteScroll', function( event, path ) {
-                    reqStart = new Date().getTime();
-                });
+                    // $('#browse .gallery-contents').on( 'request.infiniteScroll', function( event, path ) {
+                    //     reqStart = new Date().getTime();
+                    // });
+                    //
+                    // $('#browse .gallery-contents').on( 'load.infiniteScroll', function( event, response, path ) {
+                    //     let request_time = new Date().getTime() - reqStart;
+                    //     console.log("load: "+request_time);
+                    //
+                    //     let jsonData = JSON.parse( response );
+                    //     o_browse.renderGalleryAndTable(jsonData, path);
+                    //     console.log('Loaded page: ' + $('#browse .gallery-contents').data('infiniteScroll').pageIndex );
+                    // });
+                    $('#browse .gallery-contents').on( 'load.infiniteScroll', o_browse.infiniteScrollLoadEventListener);
+                }
+            } else if(o_browse.tableSorting) {
+                /*
+                if table column is clicked for sorting:
+                (1) we remove the old event listener to infiniteScroll
+                (2) destroy nfiniteScroll functionality and initialize a new one
+                */
+                $('#browse .gallery-contents').off( 'load.infiniteScroll', o_browse.infiniteScrollLoadEventListener);
+                $('#browse .gallery-contents').infiniteScroll("destroy");
 
-                $('#browse .gallery-contents').on( 'load.infiniteScroll', function( event, response, path ) {
-                    let request_time = new Date().getTime() - reqStart;
-                    console.log("load: "+request_time);
+                o_browse.initTable(data.columns);
+                if (!$('#browse .gallery-contents').data('infiniteScroll')) {
+                    $('#browse .gallery-contents').infiniteScroll({
+                        path: o_browse.updatePageInUrl(this.url, "{{#}}"),
+                        responseType: 'text',
+                        status: '#browse .page-load-status',
+                        elementScroll: true,
+                        history: false,
+                        scrollThreshold: 500,
+                        debug: true,
+                    });
 
-                    let jsonData = JSON.parse( response );
-                    o_browse.renderGalleryAndTable(jsonData, path);
-                    console.log('Loaded page: ' + $('#browse .gallery-contents').data('infiniteScroll').pageIndex );
-                });
+                    $('#browse .gallery-contents').on( 'load.infiniteScroll', o_browse.infiniteScrollLoadEventListener);
+                }
             }
 
             o_browse.renderGalleryAndTable(data, this.url);
 
             if (!opus.gallery_begun) {
                 $('#browse .gallery-contents').infiniteScroll('loadNextPage');
+                opus.gallery_begun = true;
+            }
+            if(o_browse.tableSorting) {
+                o_browse.tableSorting = false;
                 opus.gallery_begun = true;
             }
             console.log("current page: " + opus.prefs.browse);
@@ -789,6 +818,12 @@ var o_browse = {
         // ew.  this needs to be dealt with, as table/gallery are always drawn at same time
         opus.last_page_drawn["dataTable"] = page;
         opus.last_page_drawn[opus.prefs.browse] = page;
+    },
+
+    infiniteScrollLoadEventListener: function( event, response, path ) {
+        let jsonData = JSON.parse( response );
+        o_browse.renderGalleryAndTable(jsonData, path);
+        console.log('Loaded page: ' + $('#browse .gallery-contents').data('infiniteScroll').pageIndex );
     },
 
     getBrowseTab: function() {
