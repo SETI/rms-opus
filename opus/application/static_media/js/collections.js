@@ -40,14 +40,14 @@ var o_collections = {
          });
 
          // Download Zipped Data Archive button
-         $('#collection').on("click", "#collections_summary a#create_zip_data_file button", function() {
+         $("#collection").on("click", "#create_zip_data_file", function() {
              o_collections.downloadZip("create_zip_data_file", "Internal error creating data zip file");
              return false;
          });
 
          // Download Zipped URL Archive button
-         $('#collection').on("click", "#collections_summary a#create_zip_url_file button", function() {
-             o_collections.downloadZip("create_zip_url_file button", "Internal error creating URL zip file");
+         $("#collection").on("click", "#create_zip_url_file", function() {
+             o_collections.downloadZip("create_zip_url_file", "Internal error creating URL zip file");
              return false;
          });
 
@@ -84,10 +84,10 @@ var o_collections = {
              return false;
          }
          opus.download_in_process = true;
-         $('.spinner', "#collections_summary").fadeIn();
+         $(".spinner", `#${type}`).fadeIn().css("display","inline-block");
 
          let add_to_url = o_collections.getDownloadFiltersChecked();
-         let url = "/opus/__collections/download.zip?" + add_to_url + "&" + o_hash.getHash();
+         let url = "/opus/__collections/download.json?" + add_to_url + "&" + o_hash.getHash();
          url += (type = "create_zip_url_file" ? "&urlonly=1" : "");
          $.ajax({
              url: url,

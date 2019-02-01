@@ -504,12 +504,12 @@ img.preview {
 }
 
 #collection .thumb-page {
-		padding-left: 3em;
+	padding-left: 3em;
 }
 
 #collections-sidebar {
-		padding-left: 3em;
-		padding-right: 3em;
+	padding-left: 3em;
+	padding-right: 3em;
 }
 
 .collection_details {
@@ -725,6 +725,9 @@ li a.search-param:hover {
     display:none;
     margin:0px 10px;
     width:30px;
+}
+#collections_summary .button-container button {
+	margin-bottom: 1em;
 }
 .menu_spinner {
     display:none;
