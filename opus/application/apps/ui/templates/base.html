@@ -51,7 +51,7 @@
 			<div id="search" class="tab-pane fade" role="tabpanel" aria-labelledby="search-tab">
 				<div class="row">
 					<div class="col pr-0">
-						<div id="sidebar-container" class = "sidebar_wrapper ps-scrollbar -scrollbar-morpheus-den pr-0">
+						<div id="sidebar-container" class = "sidebar_wrapper ps-scrollbar pr-0">
 							<div id = "sidebar">
 								{% include "menu.html" %}
 							</div>
@@ -60,7 +60,7 @@
 
 					<!-- selected widgets -->
 					<div class="col">
-						<div id="widget-container" class = "widget_column -scrollbar-morpheus-den">
+						<div id="widget-container" class = "widget_column">
 							<!-- note to self:  this is where the widgets will be replace by cards; should no longer by ul/li -->
 							<ul id="search_widgets" class = ""></ul>
 						</div>
@@ -95,6 +95,7 @@
 									<a href="#" class="download_csv nav-link" title="Click to download CSV"><i class="fas fa-download"></i>&nbsp;Download CSV</a>
 								</li>
 							</ul>
+							<div class="order-container">Sorted by:<ul class="sort-contents list-inline"></ul></div>
 						</div>
 					</nav>
 					<div class="panel-body gallery-contents container-fluid scrollbar-morpheus-den">
@@ -184,13 +185,22 @@
 		<div id="columnChooser" class="modal fade" role="dialog" tabbindex="-1" data-backdrop="false" aria-labelledby="columnChooserLabel" aria-hidden="true">
 			<div class="modal-dialog modal-lg" role="document">
 				<div class="modal-content">
-					<div class="modal-header bg-gray text-dark font-weight-bold font-lg py-3">
-						<div>Select Columns</div>
+					<div class="modal-header bg-dark text-light font-weight-bold font-lg py-3">
+						<div>Choose Columns</div>
 						<button type="button" class="close" data-dismiss="modal" aria-label="Close">
 							<i class="far fa-times-circle fa-lg text-light"></i>
 						</button>
 					</div>
-					<div id="columnChooserContents" class="column_chooser modal-body"></div>
+					<div class="modal-body column_chooser" id="columnChooserContents"></div>
+					<div class="modal-footer">
+						<div class="left-container">
+							<button type="reset" class="btn btn-info">Reset to Default</button>
+						</div>
+						<div class="right-container">
+							<button type="submit" class="btn btn-primary" data-dismiss="modal">Save Changes</button>
+							<button type="cancel" class="btn btn-danger" data-dismiss="modal">Discard Changes</button>
+						</div>
+					</div>
 				</div>
 			</div>
 		</div>

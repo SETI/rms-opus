@@ -110,6 +110,7 @@ def api_get_data_and_images(request):
                                        prepend_cols='opusid',
                                        append_cols='**previewimages',
                                        return_opusids=True,
+                                       return_collection_status=True,
                                        api_code=api_code)
     if page is None:
         ret = Http404('Could not find page')
@@ -126,7 +127,6 @@ def api_get_data_and_images(request):
         log.error('api_get_data_and_images: No image found for: %s',
                   str(opus_ids[:50]))
 
-    collection_opus_ids = get_all_in_collection(request)
     new_image_list = []
     for image in image_list:
         new_image = {}
@@ -137,13 +137,14 @@ def api_get_data_and_images(request):
                     new_image[size][sfx] = image.get(size+'_'+sfx, None)
         new_image_list.append(new_image)
 
+    collection_status = aux['collection_status']
     new_page = []
     for i in range(len(opus_ids)):
         new_entry = {
             'opusid': opus_ids[i],
             'metadata': page[i][1:-1],
             'images': new_image_list[i],
-            'in_collection': opus_ids[i] in collection_opus_ids
+            'in_collection': collection_status[i] is not None
         }
         new_page.append(new_entry)
 
@@ -510,6 +511,7 @@ def api_get_images(request, fmt):
                                        cols='opusid,**previewimages',
                                        return_opusids=True,
                                        return_ringobsids=True,
+                                       return_collection_status=True,
                                        api_code=api_code)
     if page is None:
         ret = Http404('Could not find page')
@@ -532,9 +534,9 @@ def api_get_images(request, fmt):
     for i in range(len(opus_ids)):
         ring_obs_id_dict[opus_ids[i]] = ring_obs_ids[i]
 
-    collection_opus_ids = get_all_in_collection(request)
-    for image in image_list:
-        image['in_collection'] = image['opus_id'] in collection_opus_ids
+    collection_status = aux['collection_status']
+    for image, in_collection in zip(image_list, collection_status):
+        image['in_collection'] = in_collection is not None
         image['ring_obs_id'] = ring_obs_id_dict[image['opus_id']]
 
     data = {'data':  image_list,
@@ -851,8 +853,10 @@ def get_data(request, fmt, cols=None, api_code=None):
 def get_search_results_chunk(request, use_collections=None,
                              cols=None, prepend_cols=None, append_cols=None,
                              limit=None,
-                             return_opusids=False, return_ringobsids=False,
+                             return_opusids=False,
+                             return_ringobsids=False,
                              return_filespecs=False,
+                             return_collection_status=False,
                              api_code=None):
     """Return a page of results."""
     none_return = (None, None, None, None, None, {})
@@ -932,6 +936,9 @@ def get_search_results_chunk(request, use_collections=None,
         if 'obs_general.primary_file_spec' not in column_names:
             column_names.append('obs_general.primary_file_spec')
             added_extra_columns += 1 # So we know to strip it off later
+    if return_collection_status:
+        column_names.append('collections.opus_id')
+        added_extra_columns += 1 # So we know to strip it off later
 
     # XXX Something here should specify order for collections
     # colls_order is currently ignored!
@@ -984,6 +991,7 @@ def get_search_results_chunk(request, use_collections=None,
 
     temp_table_name = None
     drop_temp_table = False
+    params = []
     if not use_collections:
         # This is for a search query
 
@@ -1069,6 +1077,18 @@ def get_search_results_chunk(request, use_collections=None,
         sql += connection.ops.quote_name('id')+'='
         sql += connection.ops.quote_name(temp_table_name)+'.'
         sql += connection.ops.quote_name('id')
+
+        # Maybe join in the collections table if we need collections_status
+        if return_collection_status:
+            sql += ' LEFT JOIN '+connection.ops.quote_name('collections')
+            sql += ' ON '+connection.ops.quote_name('obs_general')+'.'
+            sql += connection.ops.quote_name('id')+'='
+            sql += connection.ops.quote_name('collections')+'.'
+            sql += connection.ops.quote_name('obs_general_id')
+            sql += ' AND '
+            sql += connection.ops.quote_name('session_id')+'=%s'
+            params.append(session_id)
+
         sql += ' ORDER BY '
         sql += connection.ops.quote_name(temp_table_name)+'.sort_order'
     else:
@@ -1113,8 +1133,12 @@ def get_search_results_chunk(request, use_collections=None,
         sql += connection.ops.quote_name('obs_general_id')
         sql += ' AND '
         sql += connection.ops.quote_name('collections')+'.'
-        sql += connection.ops.quote_name('session_id')+'='
-        sql += '"'+session_id+'"'
+        sql += connection.ops.quote_name('session_id')+'=%s'
+        params.append(session_id)
+
+        # Note we don't need to add in a special collections JOIN here for
+        # return_collection_status, because we're already joining in the
+        # collections table.
 
         # Finally add in the sort order
         sql += order_sql
@@ -1128,7 +1152,7 @@ def get_search_results_chunk(request, use_collections=None,
     time1 = time.time()
 
     cursor = connection.cursor()
-    cursor.execute(sql)
+    cursor.execute(sql, params)
     results = []
     more = True
     while more:
@@ -1163,6 +1187,11 @@ def get_search_results_chunk(request, use_collections=None,
         file_spec_index = column_names.index('obs_general.primary_file_spec')
         file_specs = [o[file_spec_index] for o in results]
 
+    if return_collection_status:
+        # For retrieving collection status
+        coll_index = column_names.index('collections.opus_id')
+        collection_status = [o[coll_index] for o in results]
+
     # Strip off the opus_id if the user didn't actually ask for it initially
     if added_extra_columns:
         results = [o[:-added_extra_columns] for o in results]
@@ -1186,6 +1215,8 @@ def get_search_results_chunk(request, use_collections=None,
         aux_dict['ring_obs_ids'] = ring_obs_ids
     if return_filespecs:
         aux_dict['file_specs'] = file_specs
+    if return_collection_status:
+        aux_dict['collection_status'] = collection_status
 
     return (page_no, start_obs, limit, results, all_order, aux_dict)
 
@@ -1338,15 +1369,6 @@ def get_triggered_tables(selections, extras, api_code=None):
         cache.set(cache_key, final_table_list)
 
     return final_table_list
-
-
-def get_all_in_collection(request):
-    "Return a list of all OPUS IDs in the collection."
-    session_id = get_session_id(request)
-    res = (Collections.objects.filter(session_id__exact=session_id)
-           .values_list('opus_id'))
-    opus_ids = [x[0] for x in res]
-    return opus_ids
 
 
 def get_collection_in_page(opus_id_list, session_id):

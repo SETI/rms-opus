@@ -292,8 +292,7 @@ var o_browse = {
                 // the || is for cross-browser support; firefox does not support keyCode
                 switch (e.which || e.keyCode) {
                     case 27:  // esc - close modal
-                        $("#galleryView").modal('hide')
-                        return;
+                        $("#galleryView").modal('hide');
                         break;
                     case 39:  // next
                         opusId = $("#galleryView").find(".next").data("id");
@@ -387,29 +386,56 @@ var o_browse = {
         $.each(cols, function(key, value)  {
             cols[key] = value.split('__')[1];
         });
-        opus.prefs['cols'] = cols;
+        opus.prefs.cols = cols;
+    },
+
+    addColumn: function(slug) {
+        let elem = $(`#columnChooser .allColumns a[data-slug=${slug}]`);
+        elem.find("i.fa-check").fadeIn().css('display', 'inline-block');
+
+        let label = elem.data("qualifiedlabel");
+        let info = '<i class = "fa fa-info-circle" title = "' + elem.find('*[title]').attr("title") + '"></i>';
+        let html = `<li id = "cchoose__${slug}">${label}${info}<span class="unselect"><i class="far fa-trash-alt"></span></li>`
+        $(".selectedColumns > ul").append(html);
+        opus.prefs.cols.push(slug);
+    },
+
+    resetToDefaultColumns: function() {
+        // uncheck all on left; we will check them as we go
+        $("#columnChooser .allColumns .fa-check").hide();
+
+        // remove all from selected column
+        $("#columnChooser .selectedColumns li").remove();
+        opus.prefs.cols = [];
+
+        // add them back and set the check
+        $.each(default_columns.split(','), function(index, slug) {
+            o_browse.addColumn(slug);
+        });
     },
 
     // column chooser behaviors
     addColumnChooserBehaviors: function() {
         // this is a global
-        currentSelectedColumns = opus.prefs.cols.slice();
+        var currentSelectedColumns = opus.prefs.cols.slice();
 
-        $(".app-body").on("hide.bs.modal", "#columnChooser", function(e) {
+        $("#columnChooser").on("hide.bs.modal", function(e) {
             // update the data table w/the new columns
             if (!o_utils.areObjectsEqual(opus.prefs.cols, currentSelectedColumns)) {
-                o_hash.updateHash();
-                opus.last_page_drawn = $.extend(true, {}, reset_last_page_drawn)
-                opus.gallery_begun = false;     // so that we redraw from the beginning
-                opus.gallery_data = {};
+                o_browse.resetData();
                 o_browse.loadBrowseData(1);
                 currentSelectedColumns = opus.prefs.cols.slice();
             }
         });
 
-        $(".app-body").on("show.bs.modal", "#columnChooser", function(e) {
+        $("#columnChooser").on("show.bs.modal", function(e) {
             // save current column state so we can look for changes
             currentSelectedColumns = opus.prefs.cols.slice();
+        });
+
+        $("#columnChooser").on("shown.bs.modal", function () {
+            o_browse.columnSelectorScrollbar.update();
+            o_browse.selectedColumnsScrollbar.update();
         });
 
         $('#columnChooser .allColumns').on("click", '.submenu li a', function() {
@@ -423,18 +449,18 @@ var o_browse = {
 
             //CHANGE THESE TO USE DATA-ICON=
             let def = $(this).find('i.fa-info-circle').attr("title");
-            let addToCart = $(this).find("i.fa-shopping-cart");
+            let selectedColumn = $(this).find("i.fa-check");
 
-            if (!addToCart.is(":visible")) {
-                addToCart.fadeIn().css('display', 'inline-block');
+            if (!selectedColumn.is(":visible")) {
+                selectedColumn.fadeIn().css('display', 'inline-block');
                 if ($.inArray(slug, opus.prefs.cols ) < 0) {
                     // this slug was previously unselected, add to cols
-                    $('<li id = "cchoose__' + slug + '">' + label + ' <i class = "fa fa-info-circle" title = "' + def + '"></i><span class = "unselect">X</span></li>').hide().appendTo('.selectedColumns > ul').fadeIn();
+                    $('<li id = "cchoose__' + slug + '">' + label + ' <i class = "fa fa-info-circle" title = "' + def + '"></i><span class="unselect"><i class="far fa-trash-alt"></span></li>').hide().appendTo('.selectedColumns > ul').fadeIn();
                     opus.prefs.cols.push(slug);
                 }
 
             } else {
-                addToCart.hide();
+                selectedColumn.hide();
                 if ($.inArray(slug,opus.prefs.cols) > -1) {
                     // slug had been checked, remove from the chosen
                     opus.prefs.cols.splice($.inArray(slug,opus.prefs.cols),1);
@@ -443,22 +469,39 @@ var o_browse = {
                     });
                 }
             }
+            o_browse.selectedColumnsScrollbar.update();
             return false;
         });
 
 
-        // removes chosen column with X
+        // removes chosen column
         $('#columnChooser .selectedColumns').on("click", 'li .unselect', function() {
             let slug = $(this).parent().attr("id").split('__')[1];
 
-            if ($.inArray(slug,opus.prefs['cols']) > -1) {
+            if ($.inArray(slug, opus.prefs.cols) >= 0) {
                 // slug had been checked, removed from the chosen
-                opus.prefs['cols'].splice($.inArray(slug,opus.prefs['cols']),1);
-                $('#cchoose__' + slug).fadeOut(function() {
+                opus.prefs.cols.splice($.inArray(slug, opus.prefs.cols), 1);
+                $(`#cchoose__${slug}`).fadeOut(function() {
                     $(this).remove();
                 });
+                $(`#columnChooser .allColumns [data-slug=${slug}]`).find("i.fa-check").hide();
             }
+            o_browse.selectedColumnsScrollbar.update();
             return false;
+        });
+        // buttons
+        $("#columnChooser").on("click", ".btn", function() {
+            switch($(this).attr("type")) {
+                case "reset":
+                    o_browse.resetToDefaultColumns();
+                    break;
+                case "submit":
+                    break;
+                case "cancel":
+                    // add an "are you sure?" here...
+                    currentSelectedColumns = opus.prefs.cols;
+                    break;
+            }
         });
     },  // /addColumnChooserBehaviors
 
@@ -479,16 +522,16 @@ var o_browse = {
     getViewInfo: function() {
         // this function returns some data you need depending on whether
         // you are in #collection or #browse views
-        if (opus.prefs.view == 'collection') {
-            namespace = '#collection';
-            prefix = 'colls_';
+        if (opus.prefs.view == "collection") {
+            namespace = "#collection";
+            prefix = "colls_";
             add_to_url = "&colls=true";
         } else {
-            namespace = '#browse';
-            prefix = '';
+            namespace = "#browse";
+            prefix = "";
             add_to_url = "";
         }
-        return {'namespace':namespace, 'prefix':prefix, 'add_to_url':add_to_url};
+        return {"namespace":namespace, "prefix":prefix, "add_to_url":add_to_url};
 
     },
 
@@ -496,9 +539,9 @@ var o_browse = {
         // sometimes other functions need to know current page for whatever view we
         // are currently looking at..
         let view_info = o_browse.getViewInfo();
-        let namespace = view_info['namespace']; // either '#collection' or '#browse'
-        let prefix = view_info['prefix'];       // either 'colls_' or ''
-        let view_var = opus.prefs[prefix + 'browse'];  // either "gallery" or "data"
+        let namespace = view_info.namespace; // either '#collection' or '#browse'
+        let prefix = view_info.prefix;       // either 'colls_' or ''
+        let view_var = opus.prefs[prefix + "browse"];  // either "gallery" or "data"
         let page = 1;
 
         if (view_var == "data") {
@@ -551,23 +594,30 @@ var o_browse = {
 
     renderColumnChooser: function() {
         if (!opus.column_chooser_drawn) {
-            let url = '/opus/__forms/column_chooser.html?' + o_hash.getHash() + '&col_chooser=1';
-            $('.column_chooser').load( url, function(response, status, xhr)  {
+            let url = "/opus/__forms/column_chooser.html?" + o_hash.getHash() + "&col_chooser=1";
+            $(".column_chooser").load( url, function(response, status, xhr)  {
 
                 opus.column_chooser_drawn=true;  // bc this gets saved not redrawn
+                $("#columnChooser .restart_button").hide(); // we are not using this
+
+                // since we are rendering the left side of column chooser w/the same code that builds the select menu, we need to unhighlight the selected widgets
+                o_menu.markMenuItem(".column_shooser li", "unselect");
 
                 // we keep these all open in the column chooser, they are all closed by default
                 // disply check next to any default columns
-                $.each(opus.prefs['cols'], function(index, col) { //CHANGE BELOW TO USE DATA-ICON=
-                    $('.column_chooser li > [data-slug="'+col+'"]').find("i.fa-shopping-cart").fadeIn().css('display', 'inline-block');
+                $.each(opus.prefs.cols, function(index, col) { //CHANGE BELOW TO USE DATA-ICON=
+                    $(`.column_chooser li > [data-slug="${col}"]`).find("i.fa-check").fadeIn().css('display', 'inline-block');
                 });
 
                 o_browse.addColumnChooserBehaviors();
 
+                o_browse.columnSelectorScrollbar = new PerfectScrollbar("#columnChooserContents .allColumns");
+                o_browse.selectedColumnsScrollbar = new PerfectScrollbar("#columnChooserContents .selectedColumns");
+
                 // dragging to reorder the chosen
                 $( ".selectedColumns > ul").sortable({
                     items: "li:not(.unsortable)",
-                    cursor: 'move',
+                    cursor: "grab",
                     stop: function(event, ui) { o_browse.columnsDragged(this); }
                 });
             });
@@ -608,7 +658,7 @@ var o_browse = {
                 html += '<img class="img-thumbnail img-fluid" src="'+images.thumb.url+'" alt="'+images.thumb.alt_text+'" title="'+opusId+'">';
                 // whenever the user clicks an image to show the modal, we need to highlight the selected image w/an icon
                 html += '<div class="modal-overlay">';
-                html += '<p class="content-text"><i class="fa fa-street-view fa-4x text-info" aria-hidden="true"></i></p>';
+                html += '<p class="content-text"><i class="fas fa-binoculars fa-4x text-info" aria-hidden="true"></i></p>';
                 html += '</div></a>';
 
                 html += '<div class="thumb-overlay">';
@@ -721,6 +771,16 @@ var o_browse = {
         $("body").append(div);
     },
 
+    updateSortOrder: function() {
+        let hashArray = o_hash.getHashArray();
+        let order = hashArray["order"].split(",");
+        let listHtml = "";
+        $.each(order, function(index, slug) {
+            listHtml += "<li class='list-inline-item'><i class='fas fa-arrow-circle-right'></i> "+opus.col_labels[index]+"</li>";
+        });
+        $(".order-container ul").html(listHtml);
+    },
+
     loadBrowseData: function(page) {
         //window.scrollTo(0,opus.browse_view_scrolls[opus.prefs.browse]);
         page = (page == undefined ? $("input#page").val() : page);
@@ -801,6 +861,7 @@ var o_browse = {
             }
 
             o_browse.renderGalleryAndTable(data, this.url);
+            o_browse.updateSortOrder();
 
             if (!opus.gallery_begun) {
                 $('#browse .gallery-contents').infiniteScroll('loadNextPage');
@@ -930,11 +991,7 @@ var o_browse = {
         $("#galleryViewContents .right").html(o_browse.metadataboxHtml(opusId));
     },
 
-    resetQuery: function() {
-        /*
-        when the user changes the query and all this stuff is already drawn
-        need to reset all of it (todo: replace with framework!)
-        */
+    resetData: function() {
         $("#dataTable > tbody").empty();  // yes all namespaces
         $(".gallery").empty();
         opus.gallery_data = [];
@@ -943,13 +1000,19 @@ var o_browse = {
         opus.collection_change = true;  // forces redraw of collections tab because reset_last_page_drawn
         opus.browse_view_scrolls = reset_browse_view_scrolls;
         opus.gallery_begun = false;
-        opus.column_chooser_drawn = false;
         o_hash.updateHash();
+    },
 
+    resetQuery: function() {
+        /*
+        when the user changes the query and all this stuff is already drawn
+        need to reset all of it (todo: replace with framework!)
+        */
+        opus.column_chooser_drawn = false;
+        o_browse.resetData();
     },
 
     updatePage: function() {
-
         /*
         reloads the current results view from server and
         sets other views back to undrawn

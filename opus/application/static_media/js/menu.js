@@ -128,7 +128,7 @@ var o_menu = {
             $(selector).find("i.fa-check").fadeIn().css('display', 'inline-block');
         } else {
             $(selector).css("background", "initial");
-            $(selector).find("i.fa-check").fadeIn().css('display', 'none');
+            $(selector).find("i.fa-check").hide();
       }
      },
 

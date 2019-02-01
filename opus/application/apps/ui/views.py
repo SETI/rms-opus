@@ -595,12 +595,7 @@ def _get_menu_labels(request, labels_view):
 
 
 def _adjust_slug_name_single_col_ranges(param_info):
-    slug = param_info.slug
-    form_type = param_info.form_type
-    if (form_type is not None and form_type.startswith('RANGE') and
-        '1' not in slug and '2' not in slug):
-        slug = slug + '1'
-    return slug
+    return param_info.slug
 
 def _get_column_info(slugs):
     info = OrderedDict()
