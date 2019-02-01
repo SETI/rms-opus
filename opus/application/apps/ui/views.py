@@ -458,7 +458,7 @@ def api_init_detail_page(request, **kwargs):
 
     # On the details page, we display the list of available filenames after
     # each product type
-    products = get_pds_products(opus_id, None)[opus_id]
+    products = get_pds_products(opus_id)[opus_id]
     if not products:
         products = {}
     new_products = OrderedDict()

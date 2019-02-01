@@ -5,12 +5,15 @@
 ################################################################################
 
 import os
+import traceback
 
 import pdsfile
 
 import opus_support
 
 from config_data import *
+import do_collections
+import do_django
 import impglobals
 import import_util
 
@@ -571,6 +574,11 @@ def import_one_volume(volume_id):
     instrument_name = VOLUME_ID_PREFIX_TO_INSTRUMENT_NAME[volume_id_prefix]
     mission_abbrev = INSTRUMENT_ABBREV_TO_MISSION_ABBREV[instrument_name]
 
+
+    #################################
+    ### FIND RELEVANT INDEX FILES ###
+    #################################
+
     # First see if we have a brand new label and index tab in the metadata
     # directory. If so, ignore the one in volumes because it's probably
     # broken.
@@ -655,6 +663,11 @@ def import_one_volume(volume_id):
     metadata = {}
     metadata['index'] = obs_rows
     metadata['index_label'] = obs_label_dict
+
+
+    ######################################
+    ### FIND ASSOCIATED METADATA FILES ###
+    ######################################
 
     # Look for all the "associated" metadata files and read them in
     # Metadata filenames include:
@@ -755,11 +768,12 @@ def import_one_volume(volume_id):
                             # keyed by opus_id.
                             assoc_dict[key] = row
                         elif assoc_type == 'body_surface_geo':
-                            # SURFACE_GEO is more complicated, because there can be
-                            # more than one entry per observation, since there is
-                            # one for each target. We create a dictionary keyed by
-                            # opus_id containing a dictionary keyed by target name
-                            # so we can collect all the target entries in one place.
+                            # SURFACE_GEO is more complicated, because there can
+                            # be more than one entry per observation, since
+                            # there is one for each target. We create a
+                            # dictionary keyed by opus_id containing a
+                            # dictionary keyed by target nameso we can collect
+                            # all the target entries in one place.
                             key2 = row.get('TARGET_NAME', None)
                             if key2 is None:
                                 import_util.log_nonrepeating_error(
@@ -886,14 +900,16 @@ def import_one_volume(volume_id):
 
     used_targets = set()
 
-    ####################################
-    ### MASTER LOOP - IMPORT ONE ROW ###
-    ####################################
+
+    ##############################################
+    ### MASTER LOOP - IMPORT ONE ROW AT A TIME ###
+    ##############################################
 
     for index_row_num, index_row in enumerate(obs_rows):
         metadata['index_row'] = index_row
         metadata['index_row_num'] = index_row_num+1
         obs_general_row = None
+        obs_pds_row = None
         impglobals.CURRENT_INDEX_ROW_NUMBER = index_row_num+1
 
         if 'supp_index' in metadata and instrument_name == 'COUVIS':
@@ -957,6 +973,10 @@ def import_one_volume(volume_id):
                 if table_name.startswith('obs_surface_geometry'):
                     # Deal with surface geometry a little later
                     continue
+                if table_name == 'obs_files':
+                    # obs_files is done separately below because it has multiple
+                    # rows per observation
+                    continue
                 if table_name not in table_schemas:
                     # Table not relevant for this product
                     continue
@@ -966,6 +986,8 @@ def import_one_volume(volume_id):
                                                table_name,
                                                table_schemas[table_name],
                                                metadata)
+                if table_name == 'obs_pds':
+                    obs_pds_row = row
                 if table_name == 'obs_general':
                     obs_general_row = row
                     opus_id = row['opus_id']
@@ -1032,6 +1054,27 @@ def import_one_volume(volume_id):
                             impglobals.LOGGER.log('debug',
                 f'Creating surface geo table for new target {new_target_name}')
                         table_rows[new_table_name].append(row)
+
+            # Handle obs_files
+
+            if 'obs_files' not in table_rows:
+                table_rows['obs_files'] = []
+            for table_name in table_names_in_order:
+                if table_name != 'obs_files':
+                    # Deal with obs_files only
+                    continue
+                rows = get_pdsfile_rows_for_filespec(
+                                obs_pds_row['primary_file_spec'],
+                                obs_general_row['id'],
+                                obs_general_row['opus_id'],
+                                obs_general_row['volume_id'],
+                                obs_general_row['instrument_id'])
+                table_rows[table_name].extend(rows)
+
+
+    #################################################################
+    ### DONE COMPUTING ROW CONTENTS - CREATE MULTS AND DUMP TO DB ###
+    #################################################################
 
     # Now that we have all the values, we have to dump out the mult tables
     # because they are referenced as foreign keys
@@ -1391,6 +1434,92 @@ def import_run_field_function(func_name_suffix, volume_id,
                 table_name=table_name, table_schema=table_schema,
                 metadata=metadata)
 
+def _check_for_pdsfile_exception():
+    if pdsfile.PdsFile.LAST_EXC_INFO != (None, None, None):
+        trace_str = traceback.format_exception(*pdsfile.PdsFile.LAST_EXC_INFO)
+        import_util.log_nonrepeating_error('PdsFile had internal error: '
+                                           +''.join(trace_str))
+        pdsfile.PdsFile.LAST_EXC_INFO = (None, None, None)
+
+def get_pdsfile_rows_for_filespec(filespec, obs_general_id, opus_id, volume_id,
+                                  instrument_id):
+    rows = []
+
+    try:
+        pdsf = pdsfile.PdsFile.from_filespec(filespec)
+        _check_for_pdsfile_exception()
+    except ValueError:
+        import_util.log_nonrepeating_error(
+                                    f'Failed to convert file_spec "{file_spec}"')
+        return
+
+    products = pdsf.opus_products()
+    _check_for_pdsfile_exception()
+    if '' in products:
+        file_list_str = '  '.join([x.abspath for x in products[''][0]])
+        import_util.log_nonrepeating_error(
+                  f'Empty opus_product key for files: %s'+
+                  file_list_str)
+        del products['']
+        _check_for_pdsfile_exception()
+    # Keep a running list of all products by type, sorted by version
+    for product_type in products:
+        (category, sort_order_num, short_name, full_name) = product_type
+        pref = (category[:3]+category[-3:]).upper()
+        if category == 'standard':
+            pref = '000001'
+        elif category == 'metadata':
+            pref = '000002'
+        elif category == 'browse':
+            pref = '000003'
+        elif category == 'diagram':
+            pref = '000004'
+        sort_order = pref + ('%03d' % sort_order_num)
+        list_of_sublists = products[product_type]
+        for sublist in list_of_sublists:
+            for file_num, file in enumerate(sublist):
+                version_number = sublist[0].version_rank
+                version_name = sublist[0].version_id
+                if version_name == '':
+                    version_name = 'Current'
+                logical_path = file.logical_path
+                url = file.url
+                checksum = file.checksum
+                size = file.size_bytes
+                width = file.width
+                height = file.height
+
+                if 'obs_files' not in impglobals.MAX_TABLE_ID_CACHE:
+                    impglobals.MAX_TABLE_ID_CACHE['obs_files'] = (
+                        import_util.find_max_table_id('obs_files'))
+                impglobals.MAX_TABLE_ID_CACHE['obs_files'] = (
+                    impglobals.MAX_TABLE_ID_CACHE['obs_files']+1)
+                id = impglobals.MAX_TABLE_ID_CACHE['obs_files']
+
+                row = {'id': id,
+                       'obs_general_id': obs_general_id,
+                       'opus_id': opus_id,
+                       'volume_id': volume_id,
+                       'instrument_id': instrument_id,
+                       'version_number': version_number,
+                       'version_name': version_name,
+                       'category': category,
+                       'sort_order': sort_order,
+                       'product_order': file_num,
+                       'short_name': short_name,
+                       'full_name': full_name,
+                       'logical_path': logical_path,
+                       'url': url,
+                       'checksum': checksum,
+                       'size': size,
+                       'width': width,
+                       'height': height
+                      }
+                rows.append(row)
+                _check_for_pdsfile_exception()
+
+    return rows
+
 def remove_opus_id_from_tables(table_rows, opus_id):
     for table_name in table_rows:
         rows = table_rows[table_name]
@@ -1443,6 +1572,23 @@ def do_import_steps():
         impglobals.LOGGER.log('warning', '** DELETING ALL PERMANENT TABLES **')
         delete_all_obs_mult_tables('perm')
         old_perm_tables_dropped = True
+
+        # This must be done after the permanent tables were deleted, since
+        # that process also deleted these tables. In this case, we didn't do
+        # this step earlier.
+        if (impglobals.ARGUMENTS.drop_cache_tables or
+            impglobals.ARGUMENTS.create_collections):
+            impglobals.LOGGER.open(
+                f'Cleaning up OPUS/Django tables',
+                limits={'info': impglobals.ARGUMENTS.log_info_limit,
+                        'debug': impglobals.ARGUMENTS.log_debug_limit})
+
+            if impglobals.ARGUMENTS.create_collections:
+                do_collections.create_collections()
+            if impglobals.ARGUMENTS.drop_cache_tables:
+                do_django.drop_cache_tables()
+
+            impglobals.LOGGER.close()
 
     # If --import is given, first delete the volumes from the import tables,
     # then do the new import

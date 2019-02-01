@@ -20,7 +20,7 @@ if __name__ == "__main__":
             elif command == "api-livetest-dev":
                 argv[cmd_no] = "test_api/enable_livetests_dev.py"
             elif command == "api-internal-db":
-                argv[cmd_no] = "test_api/"
+                argv[cmd_no] = "test_api/enable_livetests_internal.py"
             elif command == "api-internal-db-result-counts":
                 argv[cmd_no] = "test_api/test_result_counts.py"
                 settings.TEST_RESULT_COUNTS_AGAINST_INTERNAL_DB = True

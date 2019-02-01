@@ -1098,7 +1098,7 @@ class MultObsWavelengthSpecFlag(models.Model):
 
 class ObsGeneral(models.Model):
     id = models.PositiveIntegerField(primary_key=True)
-    opus_id = models.CharField(unique=True, max_length=80)
+    opus_id = models.CharField(unique=True, max_length=40)
     volume_id = models.CharField(max_length=11)
     instrument_id = models.CharField(max_length=9)
     mission_id = models.CharField(max_length=3)

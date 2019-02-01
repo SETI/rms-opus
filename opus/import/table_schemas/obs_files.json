@@ -52,33 +52,82 @@
         "comments": "The instrument_id is included here for ease of database manipulation only."
     },
     {
-        "field_name": "target_name",
-        "field_type": "char75",
-        "field_notnull": true,
+        "field_name": "version_number",
+        "field_type": "uint4",
         "field_key": true,
-        "data_source": [
-            "FUNCTION",
-            "obs_surface_geo_target_name"
-        ],
-        "definition": "The target name is the name of the body for which the surface geometry parameters in this row of the table are applicable.",
-        "pi_category_name": "obs_surface_geometry",
-        "pi_dict_context": "SURFACE_GEO",
-        "pi_dict_name": "TARGET_NAME",
-        "pi_disp_order": 10,
-        "pi_display": 1,
-        "pi_display_results": 0,
-        "pi_form_type": "GROUP",
-        "pi_intro": "Select a target below and the results will be limited to observations from supported instruments that contain that body in the field of view. More search options for that target will appear in the left menu.",
-        "pi_label": "Surface Geometry Target Name",
-        "pi_label_results": "Surface Geometry Target Name",
-        "pi_slug": "surfacegeometrytargetname",
-        "pi_sub_heading": null,
-        "pi_tooltip": null,
-        "pi_units": null,
-        "comments": "Definition is from SURFACE_GEO label."
+        "fueld_notnull": true
     },
     {
-        "put_mults_here": true
+        "field_name": "version_name",
+        "field_type": "char16",
+        "field_key": true,
+        "fueld_notnull": true
+    },
+    {
+        "field_name": "category",
+        "field_type": "char16",
+        "field_key": true,
+        "fueld_notnull": true
+    },
+    {
+        "field_name": "sort_order",
+        "field_type": "char9",
+        "field_key": true,
+        "fueld_notnull": true
+    },
+    {
+        "field_name": "short_name",
+        "field_type": "char20",
+        "field_key": true,
+        "fueld_notnull": true
+    },
+    {
+        "field_name": "full_name",
+        "field_type": "char40",
+        "field_key": true,
+        "fueld_notnull": true
+    },
+    {
+        "field_name": "product_order",
+        "field_type": "uint4",
+        "field_key": false,
+        "fueld_notnull": true
+    },
+    {
+        "field_name": "logical_path",
+        "field_type": "text",
+        "field_key": false,
+        "fueld_notnull": true
+    },
+    {
+        "field_name": "url",
+        "field_type": "text",
+        "field_key": false,
+        "fueld_notnull": true
+    },
+    {
+        "field_name": "checksum",
+        "field_type": "char32",
+        "field_key": false,
+        "fueld_notnull": true
+    },
+    {
+        "field_name": "size",
+        "field_type": "uint4",
+        "field_key": false,
+        "fueld_notnull": true
+    },
+    {
+        "field_name": "width",
+        "field_type": "uint4",
+        "field_key": false,
+        "fueld_notnull": false
+    },
+    {
+        "field_name": "height",
+        "field_type": "uint4",
+        "field_key": false,
+        "fueld_notnull": false
     },
     {
         "field_name": "id",
