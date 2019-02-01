@@ -837,9 +837,9 @@ var o_browse = {
                 }
             } else if(o_browse.tableSorting) {
                 /*
-                if table column is clicked for sorting:
+                If table column is clicked for sorting:
                 (1) we remove the old event listener to infiniteScroll
-                (2) destroy nfiniteScroll functionality and initialize a new one
+                (2) destroy infiniteScroll functionality and initialize a new one
                 */
                 $('#browse .gallery-contents').off( 'load.infiniteScroll', o_browse.infiniteScrollLoadEventListener);
                 $('#browse .gallery-contents').infiniteScroll("destroy");
