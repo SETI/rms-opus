@@ -517,6 +517,25 @@ var o_widgets = {
                      });
                  },
                  focus: function(focusEvent, ui) {
+                     let currentMenu = $(focusEvent.currentTarget)
+                     let header = currentMenu.find("div.list-header")
+                     let footer = currentMenu.find("div.list-footer")
+                     // let menu = $(this).data("uiAutocomplete").menu.element;
+                     // let currentItem = menu.find("li:has(div.ui-state-active)");
+                     console.log(currentMenu.find("div.ui-state-active").hasClass("list-header"));
+
+                     try {
+                         if(!ui.item && currentMenu.find("div.ui-state-active").hasClass("list-header")) {
+                             focusEvent.preventDefault();
+                             let e = jQuery.Event("keydown");
+                             e.keyCode = 40;
+                             // currentMenu.children().eq(1).trigger(e);
+                             header.trigger(e);
+                         }
+                     } catch(e) {
+                         console.log("error")
+                     }
+
                      return false;
                  },
                  select: function(selectEvent, ui) {
@@ -561,9 +580,9 @@ var o_widgets = {
                    $.each(items, function(index, item) {
                      self._renderItem(ul, item );
                    });
-                   ul.prepend(`<li><div class="list-header">${o_search.searchMsg}</div></li>`);
+                   ul.prepend(`<li><div class="list-header ui-state-disabled">${o_search.searchMsg}</div></li>`);
                    if(o_search.truncatedResults) {
-                     ul.append(`<li><div class="list-footer">${o_search.truncatedResultsMsg}</div></li>`);
+                     ul.append(`<li><div class="list-footer ui-state-disabled">${o_search.truncatedResultsMsg}</div></li>`);
                    }
                  };
                  // Customized dropdown list item
