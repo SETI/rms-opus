@@ -96,7 +96,6 @@ var o_browse = {
             e.preventDefault();
             o_browse.hideMenu();
 
-            let action = "add";     // just a default var decl
             let opusId = $(this).parent().data("id");
             let startElem = $(e.delegateTarget).find(".selected");
 
@@ -110,7 +109,6 @@ var o_browse = {
                 if (startElem.length == 0) {
                     $(this).addClass("selected");
                     o_collections.toggleInCollection(opusId);
-                    console.log("start range, action="+action);
                 } else {
                     let fromOpusId = $(startElem).parent().data("id");
                     o_collections.toggleInCollection(fromOpusId, opusId);
@@ -211,7 +209,10 @@ var o_browse = {
         $('#galleryView').on("click", "a.select", function(e) {
             let opusId = $(this).data("id");
             if (opusId) {
-                o_collections.toggleInCollection(opusId)
+                let status = o_collections.toggleInCollection(opusId) == "add" ? "" : "in";
+                let buttonInfo = o_browse.cartButtonInfo(opusId, status);
+                $(this).attr("title", buttonInfo.title);
+                $(this).html(`<i class="${buttonInfo.icon} fa-2x float-left"></i>`);
             }
             return false;
         });
@@ -474,7 +475,7 @@ var o_browse = {
 
 
         // removes chosen column
-        $('#columnChooser .selectedColumns').on("click", 'li .unselect', function() {
+        $("#columnChooser .selectedColumns").on("click", "li .unselect", function() {
             let slug = $(this).parent().attr("id").split('__')[1];
 
             if ($.inArray(slug, opus.prefs.cols) >= 0) {
@@ -658,8 +659,8 @@ var o_browse = {
                 html += '<div class="thumb-overlay">';
                 if (opus.prefs.view == "browse") {
                     html += '<div class="tools dropdown" data-id="'+opusId+'">';
-                    html +=     '<a href="#" data-icon="info"><i class="fas fa-info-circle fa-xs"></i></a>';
-                    html +=     '<a href="#" data-icon="cart"><i class="fas fa-shopping-cart fa-xs"></i></a>';
+                    html +=     '<a href="#" data-icon="info" title="View observation detail"><i class="fas fa-info-circle fa-xs"></i></a>';
+                    html +=     '<a href="#" data-icon="cart" title="Add to shopping cart"><i class="fas fa-shopping-cart fa-xs"></i></a>';
                     html +=     '<a href="#" data-icon="menu"><i class="fas fa-ellipsis-v fa-xs"></i></a>';
                     html += '</div>';
                 } else {
@@ -825,6 +826,16 @@ var o_browse = {
         //opus.limit =  (floor($(window).width()/thumbnailSize) * floor(container_height/thumbnailSize));
     },
 
+    cartButtonInfo: function(opusId, status) {
+        let icon = "fas fa-cart-plus";
+        let title = "Add to shopping cart";
+        if (status != "in") {
+            icon = "far fa-trash-alt";
+            title = "Remove from shopping cart";
+        }
+        return  {"icon":icon, "title":title};
+    },
+
     metadataboxHtml: function(opusId) {
         // list columns + values
         let html = "<dl>";
@@ -839,17 +850,20 @@ var o_browse = {
         let prev = $("#browse tr[data-id="+opusId+"]").prev("tr");
         prev = (prev.length > 0 ? prev.data("id") : "");
 
+        let status = o_collections.isIn(opusId) ? "" : "in";
+        let buttonInfo = o_browse.cartButtonInfo(opusId, status);
+
         // add a link to detail page;
         let hashArray = o_hash.getHashArray();
-        hashArray["view"] = "detail";
-        hashArray["detail"] = opusId;
+        hashArray.view = "detail";
+        hashArray.detail = opusId;
         html += '<p><a href = "/opus/#/' + o_hash.hashArrayToHashString(hashArray) + '" class="detailViewLink" data-opusid="' + opusId + '">View Detail</a></p>';
 
         // prev/next buttons - put this in galleryView html...
         html += "<div class='bottom'>";
-        html += "<a href='#' class='select' data-id='"+opusId+"' title='Add to selections'><i class='fas fa-shopping-cart fa-2x float-left'></i></a>";
-        html += "<a href='#' class='next pr-5' data-id='"+next+"' title='Next image'><i class='far fa-hand-point-right fa-2x float-right'></i></a>";
-        html += "<a href='#' class='prev pr-5' data-id='"+prev+"' title='Previous image'><i class='far fa-hand-point-left fa-2x float-right'></i></a></div>";
+        html += `<a href="#" class="select" data-id="${opusId}" title="${buttonInfo.title}"><i class="${buttonInfo.icon} fa-2x float-left"></i></a>`;
+        html += `<a href="#" class="next pr-5" data-id="${next}" title="Next image"><i class="far fa-hand-point-right fa-2x float-right"></i></a>`;
+        html += `<a href="#" class="prev pr-5" data-id="${prev}" title="Previous image"><i class="far fa-hand-point-left fa-2x float-right"></i></a></div>`;
         return html;
     },
 

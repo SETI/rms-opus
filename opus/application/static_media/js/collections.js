@@ -212,6 +212,10 @@ var o_collections = {
         }
     },
 
+    isIn: function(opusId) {
+        return  $("[data-id='"+opusId+"'].thumbnail-container").hasClass("in");
+    },
+
     emptyCollection: function() {
         // change indicator to zero and let the server know:
         // FIX ME - this is becoming a JSON
@@ -266,6 +270,7 @@ var o_collections = {
             fromElem.toggleClass("in");
             let action = (fromElem.hasClass("in") ? "add" : "remove");
             o_collections.editCollection(fromOpusId, action);
+            return action;
         }
     },
 
