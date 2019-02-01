@@ -516,6 +516,10 @@ var o_widgets = {
                          response(displayDropDownList ? hintsOfString : null);
                      });
                  },
+                 open: function(openEvent, ui) {
+                     // let menu = $(this).data("ui-autocomplete").menu;
+                     // console.log(menu.element)
+                 },
                  focus: function(focusEvent, ui) {
                      let currentMenu = $(focusEvent.currentTarget)
                      let header = currentMenu.find("div.list-header")
@@ -535,6 +539,9 @@ var o_widgets = {
                      } catch(e) {
                          console.log("error")
                      }
+
+                     let menu = $(this).data("ui-autocomplete").menu;
+
 
                      return false;
                  },
@@ -592,6 +599,7 @@ var o_widgets = {
                    .attr( "data-value", item.value )
                    // Need to wrap with <a> tag because of jquery-ui 1.10
                    .append("<a>" + item.label + "</a>")
+                   // .append("<div>" + item.label + "</div>")
                    .appendTo(ul);
                  };
              }

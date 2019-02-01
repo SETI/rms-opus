@@ -931,8 +931,19 @@ ul.ui-autocomplete {
     list-style: none;
 }
 
+ul.ui-autocomplete li {
+		display: block
+}
+
 ul.ui-autocomplete li a {
     text-decoration: none;
+		/* display: inline-block; */
+}
+
+ul.ui-autocomplete a.ui-state-active {
+		background: #CECBFA;
+		/* background: #4f99c6; */
+		border: none;
 }
 
 .list-header, .list-footer {
