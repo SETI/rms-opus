@@ -939,6 +939,10 @@ ul.ui-autocomplete li a {
     text-decoration: none;
 }
 
+ul.ui-autocomplete li a:hover {
+    color: #000000;
+}
+
 ul.ui-autocomplete a.ui-state-active {
 		background: #CECBFA;
 		/* background: #4f99c6; */
