@@ -1458,7 +1458,7 @@ def get_pdsfile_rows_for_filespec(filespec, obs_general_id, opus_id, volume_id,
     if '' in products:
         file_list_str = '  '.join([x.abspath for x in products[''][0]])
         import_util.log_nonrepeating_warning(
-                  f'Empty opus_product key for files: %s'+
+                  f'Empty opus_product key for files: '+
                   file_list_str)
         del products['']
         _check_for_pdsfile_exception()

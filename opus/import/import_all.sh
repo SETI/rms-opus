@@ -1,4 +1,5 @@
 #!/bin/sh
+python main_opus_import.py --drop-permanent-tables --scorched-earth
 python main_opus_import.py --import-check-duplicate-id --do-it-all GALILEO $1
 python main_opus_import.py --import-check-duplicate-id --do-it-all HST --exclude-volumes HSTJ0_9391 $1
 python main_opus_import.py --import-check-duplicate-id --do-it-all NEWHORIZONS $1
