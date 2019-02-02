@@ -1,9 +1,10 @@
 var o_browse = {
     selectedImageID: "",
     keyPressAction: "",
-    sortIcon: "fa-sort",
-    sortAscIcon: "fa-sort-up",
-    sortDescIcon: "fa-sort-down",
+    tableSorting: false,
+    xAxisTableScrollbar: new PerfectScrollbar(".dataTable"),
+    // xAxisTableScrollbar: new PerfectScrollbar(".gallery-contents"),
+    // scrollbar: new PerfectScrollbar("#browse .gallery-contents"),
 
     /**
     *
@@ -227,24 +228,23 @@ var o_browse = {
         });
 
         // click table column header to reorder by that column
-        $("#browse").on("click", '.dataTable th a',  function() {
-            let orderBy =  $(this).data('slug');
-            let classList = $(this).find("i").attr('class').split(" ");
-            let desc = $("#dataTable thead").find("."+o_browse.sortDescIcon);
-            let asc = $("#dataTable thead").find("."+o_browse.sortAscIcon);
-            if (asc.length > 0) {
-                asc.removeClass(o_browse.sortAscIcon);
-                asc.addClass(o_browse.sortIcon);
-            } else if (desc.length > 0) {
-                desc.removeClass(o_browse.sortDescIcon);
-                desc.addClass(o_browse.sortIcon);
-            }
-            let orderElem = $(this).find("i");
-            if ($.inArray(o_browse.sortAscIcon, classList) >= 0) {
-                orderElem.addClass(o_browse.sortDescIcon);
+        $("#browse").on("click", ".dataTable th a",  function() {
+            $(".table-page-load-status > .loader").show();
+            let orderBy =  $(this).data("slug");
+
+            let orderIndicator = $(this).find("span:last")
+
+            if (orderIndicator.data("sort") === "sort-asc") {
+                // currently ascending, change to descending order
+                orderIndicator.data("sort", "sort-desc")
+                orderBy = '-' + orderBy;
+            } else if (orderIndicator.data("sort") === "sort-desc") {
+                // currently descending, change to ascending order
+                orderIndicator.data("sort", "sort-asc")
+                orderBy = orderBy;
             } else {
-                orderElem.addClass(o_browse.sortAscIcon);
-                orderBy = "-" + orderBy;
+                // not currently ordered, change to ascending
+                orderIndicator.data("sort", "sort-asc")
             }
             opus.prefs['order'] = orderBy;
 
@@ -254,6 +254,7 @@ var o_browse = {
             opus.gallery_data = {};
             opus.prefs.page = default_pages; // reset pages to 1 when col ordering changes
 
+            o_browse.tableSorting = true;
             o_browse.loadBrowseData(1);
             return false;
         });
@@ -589,6 +590,8 @@ var o_browse = {
             $(".browse_view", "#browse").html("<i class='far fa-list-alt'></i>&nbsp;View Table");
             $(".browse_view", "#browse").attr("title", "Click to view sortable table");
             $(".browse_view", "#browse").data("view", "dataTable");
+
+            $(".justify-content-center").show();
         } else {
             $("." + "gallery", "#browse").hide();
             $("." + opus.prefs.browse, "#browse").fadeIn();
@@ -596,6 +599,9 @@ var o_browse = {
             $(".browse_view", "#browse").html("<i class='far fa-images'></i>&nbsp;View Gallery");
             $(".browse_view", "#browse").attr("title", "Click to view sortable gallery");
             $(".browse_view", "#browse").data("view", "gallery");
+
+            // remove that extra space on top when loading table page
+            $(".justify-content-center").hide();
         }
     },
 
@@ -709,7 +715,9 @@ var o_browse = {
             });
             html += '</div>';
         }
+
         $('.gallery', namespace).append(html);
+        o_browse.xAxisTableScrollbar.update();
     },
 
     initTable: function(columns) {
@@ -731,17 +739,64 @@ var o_browse = {
         $(".dataTable thead tr").append("<th scope='col' class='sticky-header'></th>");
         $.each(columns, function( index, header) {
             let slug = slugs[index];
-            let icon = ($.inArray(slug, order) >= 0 ? o_browse.sortDescIcon : ($.inArray("-"+slug, order) >= 0 ? o_browse.sortAscIcon : o_browse.sortIcon));
-            let columnOrdering = "<div class='column_ordering'><a href='' data-slug='"+slug+"'><i class='fas "+icon+"'></i></a></div>";
-            $(".dataTable thead tr").append("<th id='"+slug+" 'scope='col' class='sticky-header'>"+header+columnOrdering+"</th>");
+
+            // Assigning data attribute for table column sorting
+            let icon = ($.inArray(slug, order) >= 0 ? "-down" : ($.inArray("-"+slug, order) >= 0 ? "-up" : ""));
+            let columnSorting = icon === "-down" ? "sort-asc" : icon === "-up" ? "sort-desc" : "none";
+            let columnOrdering = `<a href='' data-slug='${slug}'><span>${header}</span><span data-sort='${columnSorting}' class='column_ordering fas fa-sort${icon}'></span></a>`;
+
+            $(".dataTable thead tr").append(`<th id='${slug} 'scope='col' class='sticky-header'><div>${columnOrdering}</div></th>`);
         });
-        $(".dataTable th").resizable({
+
+        o_browse.initResizableColumn();
+        o_browse.updateTableXScrollbarVerticalPosition();
+        // o_browse.adjustTableWidth();
+    },
+
+    initResizableColumn: function() {
+        $("#dataTable th div").resizable({
             handles: "e",
             minWidth: 40,
             resize: function (event, ui) {
-              $(event.target).find("div").width(ui.size.width);
-            }
+                let resizableContainerWidth = $(event.target).parent().width();
+                let columnTextWidth = $(event.target).find("a").find('span:first').width();
+                let sortLabelWidth = $(event.target).find("a").find('span:last').width();
+                let columnContentWidth = columnTextWidth + sortLabelWidth;
+                let beginningSpace = (resizableContainerWidth - columnContentWidth)/2;
+                let columnWidthUptoEndContent = columnContentWidth + beginningSpace;
+
+                if(ui.size.width > columnWidthUptoEndContent) {
+                    $(event.target).width(ui.size.width);
+                    $(event.target).parent().width(ui.size.width);
+                    $(event.target).parent().height(ui.size.height);
+                    $(event.target).find("div").height($(event.target).parent().height());
+                } else {
+                    let tableCellWidth = $(event.target).parent().width();
+                    let resizableElementWidth = tableCellWidth > columnContentWidth ? tableCellWidth : columnContentWidth;
+                    $(event.target).width(resizableElementWidth);
+                    $(event.target).find("div").height($(event.target).parent().height());
+                    // Make sure resizable handle is always at the right border of th
+                    $(event.target).attr("style", "width: 100%");
+                }
+            },
         });
+    },
+
+    updateTableXScrollbarVerticalPosition: function() {
+        let xRailPosition = $(".app-footer").height();
+        if($("body").find("style")) {
+            $("body").find("style").parent().remove();
+        }
+        $(".dataTable > .ps__rail-x").removeClass("update-x-scrollbar-pos");
+        o_browse.injectStyle(`.update-x-scrollbar-pos { bottom: ${xRailPosition}px !important}`);
+        $(".dataTable > .ps__rail-x").addClass("update-x-scrollbar-pos");
+    },
+
+    injectStyle: function(rule) {
+        let div = $("<div />", {
+            html: `<style>${rule}</style>`
+        });
+        $("body").append(div);
     },
 
     updateSortOrder: function() {
@@ -766,8 +821,8 @@ var o_browse = {
 
         let view = o_browse.getViewInfo();
         let base_url = "/opus/__api/dataimages.json?";
-        let url = o_hash.getHash() + '&reqno=' + opus.lastRequestNo + view.add_to_url;
-
+        opus.lastLoadBrowseDataRequestNo++;
+        let url = o_hash.getHash() + '&reqno=' + opus.lastLoadBrowseDataRequestNo + view.add_to_url;
         url = o_browse.updatePageInUrl(url, page);
 
         // metadata; used for both table and gallery
@@ -775,31 +830,62 @@ var o_browse = {
         $.getJSON(base_url + url, function(data) {
             let request_time = new Date().getTime() - start_time;
             console.log(request_time);
-
-            if (!opus.gallery_begun) {
+            if(data["reqno"] < opus.lastLoadBrowseDataRequestNo) {
+                return;
+            }
+            if (!opus.gallery_begun && !o_browse.tableSorting) {
                 o_browse.initTable(data.columns);
+
                 // for infinite scroll
-                $('#browse .gallery-contents').infiniteScroll({
-                    path: o_browse.updatePageInUrl(this.url, "{{#}}"),
-                    responseType: 'text',
-                    status: '#browse .page-load-status',
-                    elementScroll: true,
-                    history: false,
-                    scrollThreshold: 500,
-                    debug: true,
-                });
-                $('#browse .gallery-contents').on( 'request.infiniteScroll', function( event, response, path ) {
-                    reqStart = new Date().getTime();
-                });
-                $('#browse .gallery-contents').on( 'load.infiniteScroll', function( event, response, path ) {
-                    let request_time = new Date().getTime() - reqStart;
-                    console.log("load: "+request_time);
+                if (!$('#browse .gallery-contents').data('infiniteScroll')) {
+                    console.log("INIT INF ==========")
+                    $('#browse .gallery-contents').infiniteScroll({
+                        path: o_browse.updatePageInUrl(this.url, "{{#}}"),
+                        responseType: 'text',
+                        status: '#browse .page-load-status',
+                        elementScroll: true,
+                        history: false,
+                        scrollThreshold: 500,
+                        debug: true,
+                    });
 
-                    let jsonData = JSON.parse( response );
-                    o_browse.renderGalleryAndTable(jsonData, path);
+                    // $('#browse .gallery-contents').on( 'request.infiniteScroll', function( event, path ) {
+                    //     reqStart = new Date().getTime();
+                    // });
+                    //
+                    // $('#browse .gallery-contents').on( 'load.infiniteScroll', function( event, response, path ) {
+                    //     let request_time = new Date().getTime() - reqStart;
+                    //     console.log("load: "+request_time);
+                    //
+                    //     let jsonData = JSON.parse( response );
+                    //     o_browse.renderGalleryAndTable(jsonData, path);
+                    //     console.log('Loaded page: ' + $('#browse .gallery-contents').data('infiniteScroll').pageIndex );
+                    // });
+                    $('#browse .gallery-contents').on( 'load.infiniteScroll', o_browse.infiniteScrollLoadEventListener);
+                }
+            } else if(o_browse.tableSorting) {
+                /*
+                If table column is clicked for sorting:
+                (1) we remove the old event listener to infiniteScroll
+                (2) destroy infiniteScroll functionality and initialize a new one
+                */
+                $('#browse .gallery-contents').off( 'load.infiniteScroll', o_browse.infiniteScrollLoadEventListener);
+                $('#browse .gallery-contents').infiniteScroll("destroy");
 
-                    console.log('Loaded page: ' + $('#browse .gallery-contents').data('infiniteScroll').pageIndex );
-                });
+                o_browse.initTable(data.columns);
+                if (!$('#browse .gallery-contents').data('infiniteScroll')) {
+                    $('#browse .gallery-contents').infiniteScroll({
+                        path: o_browse.updatePageInUrl(this.url, "{{#}}"),
+                        responseType: 'text',
+                        status: '#browse .page-load-status',
+                        elementScroll: true,
+                        history: false,
+                        scrollThreshold: 500,
+                        debug: true,
+                    });
+
+                    $('#browse .gallery-contents').on( 'load.infiniteScroll', o_browse.infiniteScrollLoadEventListener);
+                }
             }
 
             o_browse.renderGalleryAndTable(data, this.url);
@@ -809,11 +895,24 @@ var o_browse = {
                 $('#browse .gallery-contents').infiniteScroll('loadNextPage');
                 opus.gallery_begun = true;
             }
+            if(o_browse.tableSorting) {
+                o_browse.tableSorting = false;
+                opus.gallery_begun = true;
+            }
+            console.log("current page: " + opus.prefs.browse);
+            // remove spinner from table page after the page is fetched
+            $(".table-page-load-status > .loader").hide();
         });
 
         // ew.  this needs to be dealt with, as table/gallery are always drawn at same time
         opus.last_page_drawn["dataTable"] = page;
         opus.last_page_drawn[opus.prefs.browse] = page;
+    },
+
+    infiniteScrollLoadEventListener: function( event, response, path ) {
+        let jsonData = JSON.parse( response );
+        o_browse.renderGalleryAndTable(jsonData, path);
+        console.log('Loaded page: ' + $('#browse .gallery-contents').data('infiniteScroll').pageIndex );
     },
 
     getBrowseTab: function() {
@@ -841,6 +940,7 @@ var o_browse = {
         }
         o_browse.loadBrowseData(page);
         o_browse.adjustBrowseHeight();
+        o_browse.adjustTableWidth();
 
         $("input#page").val(page).css("color","initial");
         o_hash.updateHash();
@@ -851,6 +951,14 @@ var o_browse = {
         $(".gallery-contents").height(container_height);
         //o_browse.scrollbar.update();
         //opus.limit =  (floor($(window).width()/thumbnailSize) * floor(container_height/thumbnailSize));
+    },
+
+    adjustTableWidth: function() {
+        let containerWidth = $(".gallery-contents").width()-5;
+        // Make sure the rightmost column is not cut off by the y-scrollbar
+        $(".dataTable").width(containerWidth);
+        o_browse.updateTableXScrollbarVerticalPosition();
+        o_browse.xAxisTableScrollbar.update();
     },
 
     cartButtonInfo: function(opusId, status) {

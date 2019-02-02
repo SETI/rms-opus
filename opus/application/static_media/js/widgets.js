@@ -472,6 +472,7 @@ var o_widgets = {
                 }
              }
 
+
              // If we have a string input widget open, initialize autocomplete for string input
              let displayDropDownList = true;
              let stringInputDropDown = $(`input[name="${slug}"].STRING`).autocomplete({
@@ -509,6 +510,16 @@ var o_widgets = {
                              o_search.searchMsg = "Results from entire database, not current search constraints"
                          } else {
                              o_search.searchMsg = "Results from current search constraints"
+                         }
+
+                         if(stringSearchChoicesData.choices.length !== 0) {
+                             stringSearchChoicesData.choices.unshift(o_search.searchMsg);
+                             o_search.searchResultsNotEmpty = true;
+                         } else {
+                             o_search.searchResultsNotEmpty = false;
+                         }
+                         if(stringSearchChoicesData.truncated_results) {
+                             stringSearchChoicesData.choices.push(o_search.truncatedResultsMsg);
                          }
 
                          let hintsOfString = stringSearchChoicesData.choices;
@@ -554,28 +565,40 @@ var o_widgets = {
              })
              .data( "ui-autocomplete" );
 
+             // element with ui-autocomplete-category class will not be selectable
+             let menuWidget = $(`input[name="${slug}"].STRING`).autocomplete("widget");
+             menuWidget.menu( "option", "items", "> :not(.ui-autocomplete-not-selectable)" );
+
              if(stringInputDropDown) {
                  // Add header and footer for dropdown list
                  stringInputDropDown._renderMenu = function(ul, items) {
                    let self = this;
                    $.each(items, function(index, item) {
-                     self._renderItem(ul, item );
+                       self._renderItem(ul, item );
                    });
-                   ul.prepend(`<li><div class="list-header">${o_search.searchMsg}</div></li>`);
+
+                   if(o_search.searchResultsNotEmpty) {
+                       ul.find("li:first").addClass("ui-state-disabled ui-autocomplete-not-selectable");
+                   }
                    if(o_search.truncatedResults) {
-                     ul.append(`<li><div class="list-footer">${o_search.truncatedResultsMsg}</div></li>`);
+                       ul.find("li:last").addClass("ui-state-disabled ui-autocomplete-not-selectable");
                    }
                  };
                  // Customized dropdown list item
                  stringInputDropDown._renderItem = function(ul, item) {
-                   return $( "<li>" )
-                   .data( "ui-autocomplete-item", item )
-                   .attr( "data-value", item.value )
-                   // Need to wrap with <a> tag because of jquery-ui 1.10
-                   .append("<a>" + item.label + "</a>")
-                   .appendTo(ul);
+                     return $( "<li>" )
+                     .data( "ui-autocomplete-item", item )
+                     .attr( "data-value", item.value )
+                     // Need to wrap with <a> tag because of jquery-ui 1.10
+                     .append("<a>" + item.label + "</a>")
+                     .appendTo(ul);
                  };
              }
+
+             // close autocomplete dropdown menu when y-axis scrolling happens
+             $("#widget-container").on("ps-scroll-y", function() {
+                 $("input.STRING").autocomplete("close");
+             });
 
              // add the spans that hold the hinting
              try {

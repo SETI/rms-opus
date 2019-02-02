@@ -7,6 +7,7 @@ body {
 
 .container-fluid {
 	padding: 0;
+	margin-bottom: -12px;
 }
 
 .addScroll{
@@ -330,14 +331,59 @@ th.sticky-header {
     padding:0;
 }
 
+#dataTable th {
+    vertical-align: middle;
+		/* Fix the hidden th left/right border in firebox */
+		background-clip: padding-box;
+		text-align: center;
+}
+
 #dataTable th a {
     display:block;
+		text-align: center;
+		text-decoration: none;
 }
 
 #dataTable .column_ordering {
     margin:0 10px;
-	display: inline-flex;
-	float: right;
+		/* display: inline-flex; */
+		/* float: right; */
+}
+
+#dataTable td {
+	white-space: nowrap;
+}
+
+#dataTable th > div {
+		vertical-align: middle;
+		display: inline-block;
+		width: 100%;
+		position: relative;
+		/* white-space: nowrap; */
+		/* height: 100%; */
+}
+
+/* vertically center the resizable handle */
+#dataTable th > div div {
+		position: absolute;
+		top: 50%;
+		transform: translateY(-50%);
+}
+
+/* Not overlap table y-axis scrollbar with the window y-axis scrollbar */
+.dataTable .ps__rail-y {
+		display: none !important;
+}
+/* Make sure x-axis rail is not moving and always visible */
+.dataTable .ps__rail-x {
+		opacity: 1 !important;
+		left: 0px !important;
+}
+
+/* Fix the spinner*/
+.table-page-load-status .loader {
+		display: none;
+		top: 250px;
 }
 
 .fadey {
@@ -893,8 +939,22 @@ ul.ui-autocomplete {
     list-style: none;
 }
 
+ul.ui-autocomplete li {
+		display: block
+}
+
 ul.ui-autocomplete li a {
     text-decoration: none;
+}
+
+ul.ui-autocomplete li a:hover {
+    color: #000000;
+}
+
+ul.ui-autocomplete a.ui-state-active {
+		background: #CECBFA;
+		/* background: #4f99c6; */
+		border: none;
 }
 
 .list-header, .list-footer {
