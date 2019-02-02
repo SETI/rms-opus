@@ -472,6 +472,7 @@ var o_widgets = {
                 }
              }
 
+
              // If we have a string input widget open, initialize autocomplete for string input
              let displayDropDownList = true;
              let stringInputDropDown = $(`input[name="${slug}"].STRING`).autocomplete({
@@ -511,26 +512,34 @@ var o_widgets = {
                              o_search.searchMsg = "Results from current search constraints"
                          }
 
+                         if(stringSearchChoicesData.choices.length !== 0) {
+                             stringSearchChoicesData.choices.unshift(o_search.searchMsg);
+                         }
+                         if(stringSearchChoicesData.truncated_results) {
+                             stringSearchChoicesData.choices.push(o_search.truncatedResultsMsg);
+                         }
+
                          let hintsOfString = stringSearchChoicesData.choices;
                          o_search.truncatedResults = stringSearchChoicesData.truncated_results;
                          response(displayDropDownList ? hintsOfString : null);
                      });
                  },
                  focus: function(focusEvent, ui) {
-                     let currentMenu = $(focusEvent.currentTarget)
-                     let header = currentMenu.find("div.list-header")
-                     let footer = currentMenu.find("div.list-footer")
-                     // let menu = $(this).data("uiAutocomplete").menu.element;
-                     // let currentItem = menu.find("li:has(div.ui-state-active)");
-                     // console.log(currentMenu.find("div.ui-state-active").hasClass("list-header"));
-
-                     if(!ui.item && currentMenu.find("div.ui-state-active").hasClass("list-header")) {
-                         focusEvent.preventDefault();
-                         let e = jQuery.Event("keydown");
-                         e.keyCode = 40;
-                         // currentMenu.children().eq(1).trigger(e);
-                         header.trigger(e);
-                     }
+                     // let currentMenu = $(focusEvent.currentTarget)
+                     // let header = currentMenu.find("div.list-header")
+                     // let footer = currentMenu.find("div.list-footer")
+                     // // let menu = $(this).data("uiAutocomplete").menu.element;
+                     // // let currentItem = menu.find("li:has(div.ui-state-active)");
+                     // // console.log(currentMenu.find("div.ui-state-active").hasClass("list-header"));
+                     // console.log("FOCUS");
+                     //
+                     // if(!ui.item && currentMenu.find("div.ui-state-active").hasClass("list-header")) {
+                     //     focusEvent.preventDefault();
+                     //     let e = jQuery.Event("keydown");
+                     //     e.keyCode = 40;
+                     //     // currentMenu.children().eq(1).trigger(e);
+                     //     header.trigger(e);
+                     // }
                      return false;
                  },
                  select: function(selectEvent, ui) {
@@ -568,31 +577,35 @@ var o_widgets = {
              })
              .data( "ui-autocomplete" );
 
-
-             // let menu = $(this).data("ui-autocomplete").menu;
-
-
+             // element with ui-autocomplete-category class will not be selectable
+             let menuWidget = $(`input[name="${slug}"].STRING`).autocomplete("widget");
+             menuWidget.menu( "option", "items", "> :not(.ui-autocomplete-category)" );
 
              if(stringInputDropDown) {
                  // Add header and footer for dropdown list
                  stringInputDropDown._renderMenu = function(ul, items) {
                    let self = this;
                    $.each(items, function(index, item) {
-                     self._renderItem(ul, item );
+                       self._renderItem(ul, item );
                    });
-                   ul.prepend(`<li><div class="list-header ui-state-disabled">${o_search.searchMsg}</div></li>`);
+
+                   ul.find("li:first").addClass("ui-state-disabled ui-autocomplete-category");
                    if(o_search.truncatedResults) {
-                     ul.append(`<li><div class="list-footer ui-state-disabled">${o_search.truncatedResultsMsg}</div></li>`);
+                       ul.find("li:last").addClass("ui-state-disabled ui-autocomplete-category");
                    }
+                   // ul.prepend(`<li><div class="list-header ui-state-disabled">${o_search.searchMsg}</div></li>`);
+                   // if(o_search.truncatedResults) {
+                   //     ul.append(`<li><div class="list-footer ui-state-disabled">${o_search.truncatedResultsMsg}</div></li>`);
+                   // }
                  };
                  // Customized dropdown list item
                  stringInputDropDown._renderItem = function(ul, item) {
-                   return $( "<li>" )
-                   .data( "ui-autocomplete-item", item )
-                   .attr( "data-value", item.value )
-                   // Need to wrap with <a> tag because of jquery-ui 1.10
-                   .append("<a>" + item.label + "</a>")
-                   .appendTo(ul);
+                     return $( "<li>" )
+                     .data( "ui-autocomplete-item", item )
+                     .attr( "data-value", item.value )
+                     // Need to wrap with <a> tag because of jquery-ui 1.10
+                     .append("<a>" + item.label + "</a>")
+                     .appendTo(ul);
                  };
              }
 
