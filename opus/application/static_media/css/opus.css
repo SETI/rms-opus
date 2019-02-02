@@ -208,7 +208,7 @@ ul.searchMenu{
 }
 #browse .thumb-overlay a:hover {
 	color:#097da5;
-	font-size:130%;
+	/*font-size:130%;*/
 }
 
 #browse .in {
