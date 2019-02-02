@@ -7,7 +7,7 @@
 
                 <h2>PDS Products</h2>
                 <div>
-                    <p><a id="download_csv" target="_blank" href="">Download CSV of Chosen Columns</a></p>
+                    <p><a class="download_csv" target="_blank" href="#">Download CSV of Chosen Columns</a></p>
                     <p>Download zipped <a href="/opus/__zip/{{ opus_id }}.zip">data archive</a> or <a href="/opus/__zip/{{ opus_id }}.zip?urlonly=1">URL archive</a> for this observation (all products, current version only)</a></p>
                     <p>Click on any "Index" type to see the entry for this observation in that table.</p>
                     {% for version, version_items in products.items %}

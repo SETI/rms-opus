@@ -729,6 +729,12 @@ li a.search-param:hover {
 #collections_summary .button-container button {
 	margin-bottom: 1em;
 }
+
+#obs-menu .spinner {
+    display:none;
+    margin:0px 10px;
+    width:30px;
+}
 .menu_spinner {
     display:none;
     margin-left:5px;

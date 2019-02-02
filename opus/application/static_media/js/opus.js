@@ -219,6 +219,7 @@ var opus = {
     changeTab: function(tab) {
         // first hide everything and stop any interval timers
         $('#search, #detail, #collection, #browse').hide();
+        o_browse.hideMenu();
 
         // close any open modals
         $("#galleryView").modal('hide');

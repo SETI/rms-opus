@@ -35,7 +35,7 @@ var o_collections = {
          });
 
          // Download CSV button - create CSV file with currently chosen columns
-         $("#collection").on("click", "#download_csv", function() {
+         $("#collection").on("click", ".download_csv", function() {
              $(this).attr("href", "/opus/__collections/data.csv?"+ o_hash.getHash());
          });
 

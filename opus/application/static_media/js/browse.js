@@ -68,16 +68,16 @@ var o_browse = {
        });
 
        // browse nav menu - download csv
-       $("#browse").on("click", '.download_csv', function() {
-           var col_str = opus.prefs.cols.join(',');
-           var hash = [];
-           for (var param in opus.selections) {
+       $("#browse").on("click", ".download_csv", function() {
+           let col_str = opus.prefs.cols.join(',');
+           let hash = [];
+           for (let param in opus.selections) {
                if (opus.selections[param].length){
                    hash[hash.length] = param + '=' + opus.selections[param].join(',').replace(/ /g,'+');
                }
            }
-           var q_str = hash.join('&');
-           var csv_link = "/opus/__api/data.csv?" + q_str + '&cols=' + col_str + '&limit=' + opus.result_count.toString() + '&order=' + opus.prefs['order'];
+           let q_str = hash.join('&');
+           let csv_link = "/opus/__api/data.csv?" + q_str + "&cols=" + col_str + "&limit=" + opus.result_count.toString() + "&order=" + opus.prefs.order;
            $(this).attr("href", csv_link);
        });
 
@@ -156,7 +156,7 @@ var o_browse = {
         // thumbnail overlay tools
         $('.gallery').on("click", ".tools a", function(e) {
           //snipe the id off of the image..
-          var opusId = $(this).parent().data("id");
+          let opusId = $(this).parent().data("id");
 
           switch ($(this).data("icon")) {
               case "info":  // detail page
@@ -260,7 +260,7 @@ var o_browse = {
 
         $("#obs-menu").on("click", '.dropdown-item',  function(e) {
             o_browse.hideMenu();
-            var opusId = $(this).parent().data("id");
+            let opusId = $(this).parent().data("id");
 
             switch ($(this).data("action")) {
                 case "cart":  // add/remove from cart
@@ -271,9 +271,14 @@ var o_browse = {
                 case "info":  // detail page
                     o_browse.showDetail(e, opusId);
                     break;
-                case "downloadAll":
-                    break;
                 case "downloadCSV":
+                    $(this).attr("href", "/opus/__collections/data.csv?"+ o_hash.getHash());
+                    break;
+                case "downloadData":
+                    o_browse.downloadZip("create_zip_data_file");
+                    break;
+                case "downloadURL":
+                    o_browse.downloadZip("create_zip_url_file");
                     break;
                 case "help":
                     break;
@@ -282,6 +287,11 @@ var o_browse = {
         });
 
         $(document).on("keydown",function(e) {
+            if ((e.which || e.keyCode) == 27) { // esc - close modals
+                $("#galleryView").modal('hide');
+                $("#columnChooser").modal('hide')
+                o_browse.hideMenu();
+            }
             if ($("#galleryView").hasClass("show")) {
                 /*  Catch the right/left arrow while in the modal
                     Up: 38
@@ -291,9 +301,6 @@ var o_browse = {
                 let opusId;
                 // the || is for cross-browser support; firefox does not support keyCode
                 switch (e.which || e.keyCode) {
-                    case 27:  // esc - close modal
-                        $("#galleryView").modal('hide');
-                        break;
                     case 39:  // next
                         opusId = $("#galleryView").find(".next").data("id");
                         break;
@@ -304,8 +311,6 @@ var o_browse = {
                 if (opusId) {
                     o_browse.updateGalleryView(opusId);
                 }
-            } else if ($("#columnChooser").hasClass("show") && e.keyCode === 27) {
-                $("#columnChooser").modal('hide')
             }
             // don't return false here or it will snatch all the user input!
         });
@@ -341,23 +346,28 @@ var o_browse = {
         // make this like a default right click menu
         if ($("#obs-menu").hasClass("show")) {
             o_browse.hideMenu();
-        } else {
-            let top = e.pageY;
-            let left = e.pageX;
-            $("#obs-menu").css({
-                display: "block",
-                top: top,
-                left: left
-            }).addClass("show")
-            .attr("data-id", opusId);
         }
+        let inCart = o_collections.isIn(opusId) ? "" : "in";
+        let buttonInfo = o_browse.cartButtonInfo(opusId, inCart);
+        $("#obs-menu .shopping-cart-item").html(`<i class="${buttonInfo.icon}"></i>${buttonInfo.title}`);
+
+        $("#obs-menu .dropdown-item[data-action='range']").hide();
+
+        let top = e.pageY;
+        let left = e.pageX;
+        $("#obs-menu").css({
+            display: "block",
+            top: top,
+            left: left
+        }).addClass("show")
+            .attr("data-id", opusId);
     },
 
     showDetail: function(e, opusId) {
         opus.prefs.detail = opusId;
         if (e.shiftKey || e.ctrlKey || e.metaKey) {
             // handles command click to open in new tab
-            var link = "/opus/#/" + o_hash.getHash();
+            let link = "/opus/#/" + o_hash.getHash();
             link = link.replace("view=browse", "view=detail");
             window.open(link, '_blank');
         } else {
@@ -378,6 +388,23 @@ var o_browse = {
         $("#galleryView").modal('hide');
         opus.changeTab('detail');
     },
+
+    downloadZip: function(type) {
+        if (opus.download_in_process) {
+            return false;
+        }
+        opus.download_in_process = true;
+        $(".spinner", `.${type}`).fadeIn().css("display","inline-block");
+
+        let add_to_url = o_collections.getDownloadFiltersChecked();
+        let url = "/opus/__collections/download.json?" + add_to_url + "&" + o_hash.getHash();
+        url += (type = "create_zip_url_file" ? "&urlonly=1" : "");
+        $.getJSON(url, function(data) {
+            $(".spinner", "#obs-menu").fadeOut();
+            opus.download_in_process = false;
+        });
+    },
+
 
     // columns can be reordered wrt each other in 'column chooser' by dragging them
     columnsDragged: function(element) {
