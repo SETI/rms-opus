@@ -516,33 +516,21 @@ var o_widgets = {
                          response(displayDropDownList ? hintsOfString : null);
                      });
                  },
-                 open: function(openEvent, ui) {
-                     // let menu = $(this).data("ui-autocomplete").menu;
-                     // console.log(menu.element)
-                 },
                  focus: function(focusEvent, ui) {
                      let currentMenu = $(focusEvent.currentTarget)
                      let header = currentMenu.find("div.list-header")
                      let footer = currentMenu.find("div.list-footer")
                      // let menu = $(this).data("uiAutocomplete").menu.element;
                      // let currentItem = menu.find("li:has(div.ui-state-active)");
-                     console.log(currentMenu.find("div.ui-state-active").hasClass("list-header"));
+                     // console.log(currentMenu.find("div.ui-state-active").hasClass("list-header"));
 
-                     try {
-                         if(!ui.item && currentMenu.find("div.ui-state-active").hasClass("list-header")) {
-                             focusEvent.preventDefault();
-                             let e = jQuery.Event("keydown");
-                             e.keyCode = 40;
-                             // currentMenu.children().eq(1).trigger(e);
-                             header.trigger(e);
-                         }
-                     } catch(e) {
-                         console.log("error")
+                     if(!ui.item && currentMenu.find("div.ui-state-active").hasClass("list-header")) {
+                         focusEvent.preventDefault();
+                         let e = jQuery.Event("keydown");
+                         e.keyCode = 40;
+                         // currentMenu.children().eq(1).trigger(e);
+                         header.trigger(e);
                      }
-
-                     let menu = $(this).data("ui-autocomplete").menu;
-
-
                      return false;
                  },
                  select: function(selectEvent, ui) {
@@ -580,6 +568,11 @@ var o_widgets = {
              })
              .data( "ui-autocomplete" );
 
+
+             // let menu = $(this).data("ui-autocomplete").menu;
+
+
+
              if(stringInputDropDown) {
                  // Add header and footer for dropdown list
                  stringInputDropDown._renderMenu = function(ul, items) {
@@ -599,10 +592,14 @@ var o_widgets = {
                    .attr( "data-value", item.value )
                    // Need to wrap with <a> tag because of jquery-ui 1.10
                    .append("<a>" + item.label + "</a>")
-                   // .append("<div>" + item.label + "</div>")
                    .appendTo(ul);
                  };
              }
+
+             // close autocomplete dropdown menu when y-axis scrolling happens
+             $("#widget-container").on("ps-scroll-y", function() {
+                 $("input.STRING").autocomplete("close");
+             });
 
              // add the spans that hold the hinting
              try {
