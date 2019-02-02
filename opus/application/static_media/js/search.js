@@ -9,6 +9,7 @@ var o_search = {
     widgetScrollbar: new PerfectScrollbar("#widget-container"),
 
     // for input validation in the search widgets
+    searchResultsNotEmpty: false,
     searchMsg: "",
     truncatedResults: false,
     truncatedResultsMsg: "&ltMore choices available&gt",

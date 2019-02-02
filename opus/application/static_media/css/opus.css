@@ -937,7 +937,6 @@ ul.ui-autocomplete li {
 
 ul.ui-autocomplete li a {
     text-decoration: none;
-		/* display: inline-block; */
 }
 
 ul.ui-autocomplete a.ui-state-active {

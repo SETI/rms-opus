@@ -514,6 +514,9 @@ var o_widgets = {
 
                          if(stringSearchChoicesData.choices.length !== 0) {
                              stringSearchChoicesData.choices.unshift(o_search.searchMsg);
+                             o_search.searchResultsNotEmpty = true;
+                         } else {
+                             o_search.searchResultsNotEmpty = false;
                          }
                          if(stringSearchChoicesData.truncated_results) {
                              stringSearchChoicesData.choices.push(o_search.truncatedResultsMsg);
@@ -525,21 +528,6 @@ var o_widgets = {
                      });
                  },
                  focus: function(focusEvent, ui) {
-                     // let currentMenu = $(focusEvent.currentTarget)
-                     // let header = currentMenu.find("div.list-header")
-                     // let footer = currentMenu.find("div.list-footer")
-                     // // let menu = $(this).data("uiAutocomplete").menu.element;
-                     // // let currentItem = menu.find("li:has(div.ui-state-active)");
-                     // // console.log(currentMenu.find("div.ui-state-active").hasClass("list-header"));
-                     // console.log("FOCUS");
-                     //
-                     // if(!ui.item && currentMenu.find("div.ui-state-active").hasClass("list-header")) {
-                     //     focusEvent.preventDefault();
-                     //     let e = jQuery.Event("keydown");
-                     //     e.keyCode = 40;
-                     //     // currentMenu.children().eq(1).trigger(e);
-                     //     header.trigger(e);
-                     // }
                      return false;
                  },
                  select: function(selectEvent, ui) {
@@ -579,7 +567,7 @@ var o_widgets = {
 
              // element with ui-autocomplete-category class will not be selectable
              let menuWidget = $(`input[name="${slug}"].STRING`).autocomplete("widget");
-             menuWidget.menu( "option", "items", "> :not(.ui-autocomplete-category)" );
+             menuWidget.menu( "option", "items", "> :not(.ui-autocomplete-not-selectable)" );
 
              if(stringInputDropDown) {
                  // Add header and footer for dropdown list
@@ -589,14 +577,12 @@ var o_widgets = {
                        self._renderItem(ul, item );
                    });
 
-                   ul.find("li:first").addClass("ui-state-disabled ui-autocomplete-category");
-                   if(o_search.truncatedResults) {
-                       ul.find("li:last").addClass("ui-state-disabled ui-autocomplete-category");
+                   if(o_search.searchResultsNotEmpty) {
+                       ul.find("li:first").addClass("ui-state-disabled ui-autocomplete-not-selectable");
                    }
-                   // ul.prepend(`<li><div class="list-header ui-state-disabled">${o_search.searchMsg}</div></li>`);
-                   // if(o_search.truncatedResults) {
-                   //     ul.append(`<li><div class="list-footer ui-state-disabled">${o_search.truncatedResultsMsg}</div></li>`);
-                   // }
+                   if(o_search.truncatedResults) {
+                       ul.find("li:last").addClass("ui-state-disabled ui-autocomplete-not-selectable");
+                   }
                  };
                  // Customized dropdown list item
                  stringInputDropDown._renderItem = function(ul, item) {
