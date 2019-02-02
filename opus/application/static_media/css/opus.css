@@ -399,7 +399,9 @@ th.sticky-header {
 .selectedColumns ul li .unselect:hover{
 	 cursor:default;
  }
-
+ .selectedColumns ul li .fa-info-circle:hover{
+ 	 cursor:default;
+ }
 .selectedColumns .unselect {
     float:right;
 }
