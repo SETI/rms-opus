@@ -3,7 +3,7 @@ var o_browse = {
     keyPressAction: "",
     tableSorting: false,
     xAxisTableScrollbar: new PerfectScrollbar(".dataTable"),
-    // xAxisTableScrollbar: new PerfectScrollbar(".gallery-contents"),
+    yAxisGalleryScrollbar: new PerfectScrollbar("#browse .gallery-scroll"),
     // scrollbar: new PerfectScrollbar("#browse .gallery-contents"),
 
     /**
@@ -422,7 +422,7 @@ var o_browse = {
         elem.find("i.fa-check").fadeIn().css('display', 'inline-block');
 
         let label = elem.data("qualifiedlabel");
-        let info = '<i class = "fa fa-info-circle" title = "' + elem.find('*[title]').attr("title") + '"></i>';
+        let info = '<i class = "fas fa-info-circle" title = "' + elem.find('*[title]').attr("title") + '"></i>';
         let html = `<li id = "cchoose__${slug}">${label}${info}<span class="unselect"><i class="far fa-trash-alt"></span></li>`
         $(".selectedColumns > ul").append(html);
         opus.prefs.cols.push(slug);
@@ -483,7 +483,7 @@ var o_browse = {
                 selectedColumn.fadeIn().css('display', 'inline-block');
                 if ($.inArray(slug, opus.prefs.cols ) < 0) {
                     // this slug was previously unselected, add to cols
-                    $('<li id = "cchoose__' + slug + '">' + label + ' <i class = "fa fa-info-circle" title = "' + def + '"></i><span class="unselect"><i class="far fa-trash-alt"></span></li>').hide().appendTo('.selectedColumns > ul').fadeIn();
+                    $('<li id = "cchoose__' + slug + '">' + label + ' <i class = "fas fa-info-circle" title = "' + def + '"></i><span class="unselect"><i class="far fa-trash-alt"></span></li>').hide().appendTo('.selectedColumns > ul').fadeIn();
                     opus.prefs.cols.push(slug);
                 }
 
@@ -717,6 +717,7 @@ var o_browse = {
         }
 
         $('.gallery', namespace).append(html);
+        o_browse.yAxisGalleryScrollbar.update();
         o_browse.xAxisTableScrollbar.update();
     },
 
@@ -973,13 +974,13 @@ var o_browse = {
 
     metadataboxHtml: function(opusId) {
         // list columns + values
-        let html = "<dl>";
+        let html = "<div class='metadata'><dl>";
         $.each(opus.col_labels, function(index, columnLabel) {
             let value = opus.gallery_data[opusId][index];
             html += "<dt>" + columnLabel + ":</dt><dd>" + value + "</dd>";
         });
 
-        html += "</dl>";
+        html += "</dl></div>";
         let next = $("#browse tr[data-id="+opusId+"]").next("tr");
         next = (next.length > 0 ? next.data("id") : "");
         let prev = $("#browse tr[data-id="+opusId+"]").prev("tr");
@@ -992,7 +993,7 @@ var o_browse = {
         let hashArray = o_hash.getHashArray();
         hashArray.view = "detail";
         hashArray.detail = opusId;
-        html += '<p><a href = "/opus/#/' + o_hash.hashArrayToHashString(hashArray) + '" class="detailViewLink" data-opusid="' + opusId + '">View Detail</a></p>';
+        html += '<p class="detail"><a href = "/opus/#/' + o_hash.hashArrayToHashString(hashArray) + '" class="detailViewLink" data-opusid="' + opusId + '"><i class = "fas fa-info-circle"></i>&nbsp;View Detail</a></p>';
 
         // prev/next buttons - put this in galleryView html...
         html += "<div class='bottom'>";
@@ -1032,6 +1033,9 @@ var o_browse = {
     updateMetaGalleryView: function(opusId, imageURL) {
         $("#galleryViewContents .left").html("<a href='"+imageURL+"' target='_blank'><img src='"+imageURL+"' title='"+opusId+"' class='preview'/></a>");
         $("#galleryViewContents .right").html(o_browse.metadataboxHtml(opusId));
+        if (o_browse.yAxisModalScrollbar == undefined) {
+            o_browse.yAxisGalleryScrollbar = new PerfectScrollbar("#galleryViewContents .metadata");
+        }
     },
 
     resetData: function() {
