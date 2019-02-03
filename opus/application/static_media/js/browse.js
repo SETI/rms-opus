@@ -273,14 +273,9 @@ var o_browse = {
                     o_browse.showDetail(e, opusId);
                     break;
                 case "downloadCSV":
-                    $(this).attr("href", "/opus/__collections/data.csv?"+ o_hash.getHash());
-                    break;
                 case "downloadData":
-                    o_browse.downloadZip("create_zip_data_file");
-                    break;
                 case "downloadURL":
-                    o_browse.downloadZip("create_zip_url_file");
-                    break;
+                    return;
                 case "help":
                     break;
             }
@@ -351,6 +346,9 @@ var o_browse = {
         let inCart = o_collections.isIn(opusId) ? "" : "in";
         let buttonInfo = o_browse.cartButtonInfo(opusId, inCart);
         $("#obs-menu .shopping-cart-item").html(`<i class="${buttonInfo.icon}"></i>${buttonInfo.title}`);
+        $("#obs-menu [data-action='downloadCSV']").attr("href",`/opus/api/data/${opusId}.csv?cols=${opus.prefs.cols.join()}`);
+        $("#obs-menu [data-action='downloadData']").attr("href",`/opus/__api/download/${opusId}.zip`);
+        $("#obs-menu [data-action='downloadURL']").attr("href",`/opus/__api/download/${opusId}.zip?urlonly=1`);
 
         $("#obs-menu .dropdown-item[data-action='range']").hide();
 
@@ -389,23 +387,6 @@ var o_browse = {
         $("#galleryView").modal('hide');
         opus.changeTab('detail');
     },
-
-    downloadZip: function(type) {
-        if (opus.download_in_process) {
-            return false;
-        }
-        opus.download_in_process = true;
-        $(".spinner", `.${type}`).fadeIn().css("display","inline-block");
-
-        let add_to_url = o_collections.getDownloadFiltersChecked();
-        let url = "/opus/__collections/download.json?" + add_to_url + "&" + o_hash.getHash();
-        url += (type = "create_zip_url_file" ? "&urlonly=1" : "");
-        $.getJSON(url, function(data) {
-            $(".spinner", "#obs-menu").fadeOut();
-            opus.download_in_process = false;
-        });
-    },
-
 
     // columns can be reordered wrt each other in 'column chooser' by dragging them
     columnsDragged: function(element) {
