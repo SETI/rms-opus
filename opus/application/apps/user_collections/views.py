@@ -37,7 +37,8 @@ from django.views.decorators.cache import never_cache
 from hurry.filesize import size as nice_file_size
 
 from results.views import (get_data,
-                           get_search_results_chunk)
+                           get_search_results_chunk,
+                           labels_for_slugs)
 from search.models import ObsGeneral
 from search.views import (get_param_info_by_slug,
                           url_to_search_params,
@@ -813,23 +814,9 @@ def _csv_helper(request, api_code=None):
                                                      limit='all',
                                                      api_code=api_code)
 
-    slug_list = slugs.split(',')
-    column_labels = []
-    for slug in slug_list:
-        pi = get_param_info_by_slug(slug)
-        if pi is None:
-            log.error('_create_csv_file: Unknown slug "%s"', slug)
-            return HttpResponseNotFound('Unknown slug')
-        else:
-            # append units if pi_units has unit stored
-            unit = pi.get_units()
-            label = pi.body_qualified_label_results()
-            if unit:
-                column_labels.append(label + ' ' + unit)
-            else:
-                column_labels.append(label)
+    slug_list = cols_to_slug_list(slugs)
 
-    return column_labels, page
+    return labels_for_slugs(slug_list), page
 
 
 def _create_csv_file(request, csv_file_name, api_code=None):

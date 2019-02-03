@@ -1145,7 +1145,7 @@ class ApiCollectionsTests(TestCase):
         url = '/opus/__collections/reset.json'
         self._run_status_equal(url, 200)
         url = '/opus/__collections/data.csv?cols=opusid,instrument,planet'
-        expected = b'OPUS ID,Instrument Name,Planet\r\n'
+        expected = b'OPUS ID,Instrument Name,Planet\n'
         self._run_csv_equal(url, expected)
         url = '/opus/__collections/status.json'
         expected = {'count': 0, 'reqno': None}
@@ -1159,7 +1159,7 @@ class ApiCollectionsTests(TestCase):
         expected = {'count': 3, 'error': False, 'reqno': None}
         self._run_json_equal(url, expected)
         url = '/opus/__collections/data.csv?cols=opusid,instrument,planet,target,time1,observationduration,COVIMSchannel,CASSINIspacecraftclockcount1'
-        expected = b'OPUS ID,Instrument Name,Planet,Intended Target Name,Observation Start Time,Observation Duration (secs),Channel [Cassini VIMS],Spacecraft Clock Start Count [Cassini]\r\nco-vims-v1488549680_ir,Cassini VIMS,Saturn,Saturn Rings,2005-03-03T13:34:47.689,415.5770,IR,1488549680.211\r\nco-vims-v1488549680_vis,Cassini VIMS,Saturn,Saturn Rings,2005-03-03T13:34:47.689,415.5770,VIS,1488549680.211\r\nco-vims-v1488550102_ir,Cassini VIMS,Saturn,Saturn Rings,2005-03-03T13:41:49.683,415.5770,IR,1488550102.209\r\n'
+        expected = b'OPUS ID,Instrument Name,Planet,Intended Target Name,Observation Start Time,Observation Duration (secs),Channel [Cassini VIMS],Spacecraft Clock Start Count [Cassini]\nco-vims-v1488549680_ir,Cassini VIMS,Saturn,Saturn Rings,2005-03-03T13:34:47.689,415.5770,IR,1488549680.211\nco-vims-v1488549680_vis,Cassini VIMS,Saturn,Saturn Rings,2005-03-03T13:34:47.689,415.5770,VIS,1488549680.211\nco-vims-v1488550102_ir,Cassini VIMS,Saturn,Saturn Rings,2005-03-03T13:41:49.683,415.5770,IR,1488550102.209\n'
         self._run_csv_equal(url, expected)
         url = '/opus/__collections/status.json'
         expected = {'count': 3, 'reqno': None}

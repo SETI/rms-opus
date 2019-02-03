@@ -86,6 +86,7 @@ MIDDLEWARE = (
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.cache.UpdateCacheMiddleware',
     'django.middleware.cache.FetchFromCacheMiddleware',
+    'apps.tools.opus_middleware.StripWhitespaceMiddleware',
     # prod remove:
     #'debug_toolbar.middleware.DebugToolbarMiddleware',
 )
@@ -368,3 +369,14 @@ THRESHOLD_FOR_EXPONENTIAL = 1e8
 TEST_RESULT_COUNTS_AGAINST_INTERNAL_DB = False
 
 OPUS_FILE_VERSION = ''
+
+HTTP404_NO_REQUEST = 'No request'
+HTTP404_SEARCH_PARAMS_INVALID = 'Search params invalid'
+HTTP404_UNKNOWN_FORMAT = 'Unknown format'
+HTTP404_UNKNOWN_SLUG = 'Unknown slug'
+HTTP404_UNKNOWN_OPUS_ID = 'Unknown OPUSID'
+
+HTTP500_SEARCH_FAILED = 'Search failed'
+HTTP500_SQL_FAILED = 'SQL query failed'
+HTTP500_DATABASE_ERROR = 'Database error'
+HTTP500_INTERNAL_ERROR = 'Internal error'
