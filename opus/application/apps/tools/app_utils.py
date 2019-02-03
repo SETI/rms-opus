@@ -337,3 +337,8 @@ def get_latest_git_commit_id():
     except:
         log.warning('Unable to get the latest git commit id')
         return str(random.getrandbits(128))
+
+def cols_to_slug_list(slugs):
+    if not slugs:
+        return []
+    return slugs.split(',')

@@ -1,16 +1,15 @@
-# metadata/test.py
+# metadata/tests.py
 
 import json
 import sys
 from unittest import TestCase
 
-from django.db import connection
+from django.conf import settings
 from django.http import Http404
-from django.test.client import Client, RequestFactory
+from django.test.client import Client
 from metadata.views import *
 
 import logging
-log = logging.getLogger(__name__)
 
 settings.CACHE_BACKEND = 'dummy:///'
 

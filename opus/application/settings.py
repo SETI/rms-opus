@@ -374,6 +374,7 @@ HTTP404_NO_REQUEST = 'No request'
 HTTP404_SEARCH_PARAMS_INVALID = 'Search params invalid'
 HTTP404_UNKNOWN_FORMAT = 'Unknown format'
 HTTP404_UNKNOWN_SLUG = 'Unknown slug'
+HTTP404_UNKNOWN_OPUS_ID = 'Unknown OPUSID'
 
 HTTP500_SEARCH_FAILED = 'Search failed'
 HTTP500_SQL_FAILED = 'SQL query failed'

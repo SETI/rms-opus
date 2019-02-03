@@ -61,10 +61,14 @@ class ApiResultsTests(TestCase):
             url = "http://dev.pds-rings.seti.org" + url
         return self.client.get(url)
 
-    def _run_status_equal(self, url, expected):
+    def _run_status_equal(self, url, expected, err_string=None):
         print(url)
         response = self._get_response(url)
         self.assertEqual(response.status_code, expected)
+        # XXX Fix this once we have a proper 404 page
+        # if err_string:
+        #     print(response.content)
+        #     self.assertEqual(response.content, err_string)
 
     def _run_json_equal(self, url, expected):
         print(url)
@@ -80,6 +84,26 @@ class ApiResultsTests(TestCase):
         print('Expected:')
         print(str(expected))
         self.assertEqual(expected, jdata)
+
+    def _run_html_equal(self, url, expected):
+        print(url)
+        response = self._get_response(url)
+        self.assertEqual(response.status_code, 200)
+        print('Got:')
+        print(str(response.content))
+        print('Expected:')
+        print(str(expected))
+        self.assertEqual(expected, response.content)
+
+    def _run_csv_equal(self, url, expected):
+        print(url)
+        response = self._get_response(url)
+        self.assertEqual(response.status_code, 200)
+        print('Got:')
+        print(str(response.content))
+        print('Expected:')
+        print(str(expected))
+        self.assertEqual(expected, response.content)
 
 
             #######################################
@@ -104,6 +128,46 @@ class ApiResultsTests(TestCase):
         rev_nos2 = rev_nos[:]
         rev_nos2.sort(reverse=True)
         self.assertEqual(rev_nos, rev_nos2)
+
+
+            ##################################################
+            ######### /api/data/opusid.csv API TESTS #########
+            ##################################################
+
+    def test__api_one_data_csv_vg_iss_2_s_c4360845_default(self):
+        "/api/data/opusid.csv: vg-iss-2-s-c4360845 default"
+        url = '/opus/__api/data/vg-iss-2-s-c4360845.csv'
+        expected = b'OPUS ID,Instrument Name,Planet,Intended Target Name,Observation Start Time,Observation Duration (secs)\nvg-iss-2-s-c4360845,Voyager ISS,Saturn,Saturn,1981-08-12T21:54:21.120,2.8800\n'
+        self._run_csv_equal(url, expected)
+
+    def test__api_one_data_csv_vg_iss_2_s_c4360845_cols_empty(self):
+        "/api/data/opusid.csv: vg-iss-2-s-c4360845 cols empty"
+        url = '/opus/__api/data/vg-iss-2-s-c4360845.csv?cols='
+        expected = b''
+        self._run_csv_equal(url, expected)
+
+    def test__api_one_data_csv_vg_iss_2_s_c4360845_cols_opusid(self):
+        "/api/data/opusid.csv: vg-iss-2-s-c4360845 cols opusid"
+        url = '/opus/__api/data/vg-iss-2-s-c4360845.csv?cols=opusid'
+        expected = b'OPUS ID\nvg-iss-2-s-c4360845\n'
+        self._run_csv_equal(url, expected)
+
+    def test__api_one_data_csv_vg_iss_2_s_c4365507_cols_all_voyager(self):
+        "/api/data/opusid.csv: vg-iss-2-s-c4365507 cols all voyager"
+        url = '/opus/__api/data/vg-iss-2-s-c4365507.csv?cols=opusid,VOYAGERmissionphasename,VOYAGERspacecraftclockcount1,VOYAGERspacecraftclockcount2,VOYAGERert1,VGISScamera,VGISSfilter,VGISSfilternumber,VGISSshuttermode,VGISSeditmode,VGISSgainmode,VGISSscanmode,VGISSimageid,VGISSusablelines1,VGISSusablesamples1'
+        expected = b'OPUS ID,Mission Phase [Voyager],Spacecraft Clock Start Count [Voyager],Spacecraft Clock Stop Count [Voyager],Earth Received Time [Voyager],Camera [Voyager ISS],Filter Name [Voyager ISS],Filter Number [Voyager ISS],Shutter Mode [Voyager ISS],Edit Mode [Voyager ISS],Gain Mode [Voyager ISS],Scan Mode [Voyager ISS],Image ID [Voyager ISS],Usable Lines [Voyager ISS],Usable Samples [Voyager ISS]\nvg-iss-2-s-c4365507,Saturn Encounter,43655:06:544,43655:07:001,1981-08-14T12:24:54.000,Narrow Angle,UV,7,NAONLY,1:3,Low,1:1,0570S2-012,800,544\n'
+        self._run_csv_equal(url, expected)
+
+    def test__api_one_data_csv_vg_iss_2_s_c4365507_cols_all_cassini(self):
+        "/api/data/opusid.csv: vg-iss-2-s-c4365507 cols all cassini"
+        url = '/opus/__api/data/vg-iss-2-s-c4365507.csv?cols=opusid,volumeid,greaterpixelsize1,lesserpixelsize1,wavelength1,wavelength2,CASSINIobsname,CASSINIactivityname,CASSINImissionphasename,CASSINItargetcode,CASSINIrevnoint1,CASSINIprimeinst,CASSINIisprime,CASSINIsequenceid,CASSINIspacecraftclockcount1,CASSINIspacecraftclockcount2,CASSINIert1,CASSINIert2'
+        expected = b'OPUS ID,Volume ID,Greater Size in Pixels,Lesser Size in Pixels,Wavelength (Min) (microns),Wavelength (Max) (microns),Observation Name [Cassini],Activity Name [Cassini],Mission Phase [Cassini],Cassini Target Code [Cassini],Saturn Orbit Number [Cassini],Primary Instrument [Cassini],Is Prime [Cassini],Sequence ID [Cassini],Spacecraft Clock Start Count [Cassini],Spacecraft Clock Stop Count [Cassini],Earth Received Start Time [Cassini],Earth Received Stop Time [Cassini]\nvg-iss-2-s-c4365507,VGISS_6210,800,544,0.2800,0.3700,N/A,N/A,N/A,N/A,N/A,N/A,N/A,N/A,N/A,N/A,N/A,N/A\n'
+        self._run_csv_equal(url, expected)
+
+    def test__api_one_data_csv_bad(self):
+        "/api/data/opusid.csv: bad opusid"
+        url = '/opus/__api/data/vg-iss-2-s-c4360845x.csv'
+        self._run_status_equal(url, 404, settings.HTTP404_UNKNOWN_OPUS_ID)
 
 
             ########################################
