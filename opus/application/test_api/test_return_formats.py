@@ -287,7 +287,7 @@ class ApiFormats:
             self.api_mults_base: {
                 "api": "api/meta/mults/[param].[fmt]",
                 "payload": ApiFormats.payload_for_mults,
-                "support_format": ["json", "html"]
+                "support_format": ["json", "html", "csv"]
             },
             self.api_endpoints_base: {
                 "api": "api/meta/range/endpoints/[param].[fmt]",

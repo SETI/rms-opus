@@ -120,6 +120,16 @@ sections:
                 - desc: Target Pan
                   url: <HOST>/opus/api/files.json?&target=pan
 
+          - title: api/download/[opus_id].zip
+            desc: Download a ZIP file containing all the products related to opus_id
+            info:
+                GET param 1: urlonly=N (Optional; if urlonly=1, only include the urls.txt file and omit all data files from the resulting zip)
+            examples:
+                - desc: A Voyager ISS observation
+                  url: <HOST>/opus/api/download/vg-iss-2-s-c4360022.zip
+                - desc: A Voyager ISS observation, URLs only
+                  url: <HOST>/opus/api/download/vg-iss-2-s-c4360022.zip?urlonly=1
+
     - title: Getting Information about Data
       endpoints:
 
@@ -140,7 +150,7 @@ sections:
             desc: Returns all possible values for a given multiple choice field, given a search, and the result count for each value.
             info:
                 param: param name
-                fmt : json,html
+                fmt : json,html,csv
                 GET param 1: search params (If not supplied, the result is not constrained)
             examples:
                 - desc: Get all possible targets and counts for each when planet=Saturn

@@ -77,7 +77,7 @@ def api_normalize_input(request):
         exit_api_call(api_code, ret)
         raise ret
 
-    reqno = request.GET.get('reqno', None)
+    reqno = get_reqno(request)
     selections['reqno'] = reqno
 
     ret = json_response(selections)

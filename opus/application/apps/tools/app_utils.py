@@ -203,6 +203,15 @@ def get_session_id(request):
         session_id = request.session.session_key
     return session_id
 
+def get_reqno(request):
+    "Get the reqno, if any, and return it as an int if possible."
+    reqno = request.GET.get('reqno', None)
+    try:
+        reqno = int(reqno)
+    except:
+        pass
+    return reqno
+
 
 _API_CALL_NUMBER = 0
 _API_START_TIMES = {}
@@ -330,3 +339,8 @@ def get_latest_git_commit_id():
     except:
         log.warning('Unable to get the latest git commit id')
         return str(random.getrandbits(128))
+
+def cols_to_slug_list(slugs):
+    if not slugs:
+        return []
+    return slugs.split(',')

@@ -5,19 +5,20 @@
 # The API interface for retrieving results (actual data, actual metadata, or
 # lists of images or files):
 #
-#    Format: api/dataimages.json
-#    Format: api/data.(json|zip|html|csv)
-#    Format: api/metadata/(?P<opus_id>[-\w]+).(?P<fmt>json|html)
-#    Format: api/metadata_v2/(?P<opus_id>[-\w]+).(?P<fmt>json|html)
-#    Format: api/images/(?P<size>thumb|small|med|full).
-#            (?P<fmt>json|zip|html|csv)
-#    Format: api/images.(json|zip|html|csv)
-#    Format: api/image/(?P<size>thumb|small|med|full)/(?P<opus_id>[-\w]+)
-#            .(?P<fmt>json|zip|html|csv)
-#    Format: api/files/(?P<opus_id>[-\w]+).(?P<fmt>json|zip|html|csv)
+#    Format: __api/dataimages.json
+#    Format: [__]api/data.(json|zip|html|csv)
+#    Format: [__]api/data/(?P<opus_id>[-\w]+).csv
+#    Format: [__]api/metadata/(?P<opus_id>[-\w]+).(?P<fmt>json|html)
+#    Format: [__]api/metadata_v2/(?P<opus_id>[-\w]+).(?P<fmt>json|html)
+#    Format: [__]api/images/(?P<size>thumb|small|med|full).
+#                           (?P<fmt>json|zip|html|csv)
+#    Format: [__]api/images.(json|zip|html|csv)
+#    Format: [__]api/image/(?P<size>thumb|small|med|full)/(?P<opus_id>[-\w]+)
+#                          .(?P<fmt>json|zip|html|csv)
+#    Format: [__]api/files/(?P<opus_id>[-\w]+).(?P<fmt>json|zip|html|csv)
 #        or: api/files.(?P<fmt>json|zip|html|csv)
-#    Format: api/categories/(?P<opus_id>[-\w]+).json
-#    Format: api/categories.json
+#    Format: [__]api/categories/(?P<opus_id>[-\w]+).json
+#    Format: [__]api/categories.json
 #
 ################################################################################
 
@@ -150,7 +151,7 @@ def api_get_data_and_images(request):
 
     cols = request.GET.get('cols', settings.DEFAULT_COLUMNS)
 
-    labels = labels_for_slugs(cols.split(','))
+    labels = labels_for_slugs(cols_to_slug_list(cols))
 
     reqno = request.GET.get('reqno', None)
     try:
@@ -223,6 +224,44 @@ def api_get_data(request, fmt):
     return ret
 
 
+def api_get_one_data_csv(request, opus_id):
+    """Return s CSV file containing the current columns for a single OPUSID.
+
+    This is a PUBLIC API.
+
+    Format: [__]api/data/(?P<opus_id>[-\w]+).csv
+    """
+    api_code = enter_api_call('api_get_one_data_csv', request)
+
+    if not request or request.GET is None:
+        ret = Http404('No request')
+        exit_api_call(api_code, ret)
+        raise ret
+
+    slugs = request.GET.get('cols', settings.DEFAULT_COLUMNS)
+    (page_no, start_obs, limit, page, order, aux) = get_search_results_chunk(
+                                                     request,
+                                                     opus_id=opus_id,
+                                                     limit=1,
+                                                     api_code=api_code)
+
+    if page is None or len(page) != 1:
+        ret = Http404(settings.HTTP404_UNKNOWN_OPUS_ID)
+        log.error('api_get_one_data_csv: Error searching for opus_id "%s"',
+                  opus_id)
+        exit_api_call(api_code, ret)
+        raise ret
+
+    slug_list = cols_to_slug_list(slugs)
+
+    labels = labels_for_slugs(slug_list)
+
+    ret = csv_response(opus_id, page, labels)
+
+    exit_api_call(api_code, ret)
+    return ret
+
+
 def api_get_metadata(request, opus_id, fmt):
     """Return all metadata, sorted by category, for this opus_id.
 
@@ -288,7 +327,7 @@ def get_metadata(api_name, request, opus_id, fmt):
 
     cols = request.GET.get('cols', False)
     if cols:
-        ret = _get_metadata_by_slugs(request, opus_id, cols.split(','),
+        ret = _get_metadata_by_slugs(request, opus_id, cols_to_slug_list(cols),
                                      fmt,
                                      use_param_names=
                                         (api_name=='api_get_metadata'))
@@ -807,7 +846,7 @@ def get_data(request, fmt, cols=None, api_code=None):
     labels = []
     id_index = None
 
-    slugs = cols.split(',')
+    slugs = cols_to_slug_list(cols)
     labels = labels_for_slugs(slugs)
 
     try:
@@ -852,13 +891,57 @@ def get_data(request, fmt, cols=None, api_code=None):
 
 def get_search_results_chunk(request, use_collections=None,
                              cols=None, prepend_cols=None, append_cols=None,
-                             limit=None,
+                             limit=None, opus_id=None,
                              return_opusids=False,
                              return_ringobsids=False,
                              return_filespecs=False,
                              return_collection_status=False,
                              api_code=None):
-    """Return a page of results."""
+    """Return a page of results.
+
+        request             Used to find the search and order parameters and
+                            columns if not overridden.
+        use_collections     Ignore the search parameters and instead use the
+                            observations stored in the collections table for
+                            this session.
+        cols                If specified, overrides the columns in request.
+        prepend_cols        A string to prepend to the column list.
+        append_cols         A string to append to the column list.
+        limit               The maximum number of results to return. If not
+                            specified, use the limit provided in the request,
+                            or the default if none given.
+        opus_id             Ignore the search parameters and instead return
+                            the result for a single opusid.
+        return_opusids      Include 'opus_ids' in the returned aux dict.
+                            This is a list of opus_ids 1:1 with the returned
+                            data.
+        return_ringobsids   Include 'ring_obs_ids' in the returned aux dict.
+        return_filespecs    Include 'file_specs' in the returned aux dict.
+                            This is a list of primary_file_specs 1:1 with the
+                            returned data.
+        return_collection_status
+                            Include 'collection_status' in the returned aux
+                            dict. This is a list of True/False values 1:1
+                            with the returned data indicating if the given
+                            observation is in the current collections table for
+                            this session.
+
+        Returns:
+
+        (page_no, start_obs, limit, results, all_order, aux_dict)
+
+        page_no             The starting page number, if page= was provided.
+        start_obs           The starting observation number, if startobs=
+                            was provided.
+        limit               The maximum number of results that could be
+                            returned.
+        results             A list containing the columns for all returned
+                            observations.
+        all_order           The sort order that was used, including a trailing
+                            opus_id if necessary.
+        aux_dict            A dictionary that may contain keys as specified
+                            above.
+    """
     none_return = (None, None, None, None, None, {})
 
     session_id = get_session_id(request)
@@ -895,7 +978,7 @@ def get_search_results_chunk(request, use_collections=None,
     column_names = []
     tables = set()
     mult_tables = set()
-    for slug in cols.split(','):
+    for slug in cols_to_slug_list(cols):
         # First try the full name, which might include a trailing 1 or 2
         pi = get_param_info_by_slug(slug, from_ui=True)
         if not pi:
@@ -924,10 +1007,6 @@ def get_search_results_chunk(request, use_collections=None,
 
     added_extra_columns = 0
     tables.add('obs_general') # We must have obs_general since it owns the ids
-    if return_opusids:
-        if 'obs_general.opus_id' not in column_names:
-            column_names.append('obs_general.opus_id')
-            added_extra_columns += 1 # So we know to strip it off later
     if return_ringobsids:
         if 'obs_general.ring_obs_id' not in column_names:
             column_names.append('obs_general.ring_obs_id')
@@ -939,6 +1018,14 @@ def get_search_results_chunk(request, use_collections=None,
     if return_collection_status:
         column_names.append('collections.opus_id')
         added_extra_columns += 1 # So we know to strip it off later
+    # This is kind of obscure, but if there are NO columns at this point,
+    # go ahead and force opus_ids to be present because we can't actually
+    # do a query on no columns, and we at least want to return a page
+    # with the correct number of rows, even if they're all empty!
+    if return_opusids or not column_names:
+        if 'obs_general.opus_id' not in column_names:
+            column_names.append('obs_general.opus_id')
+            added_extra_columns += 1 # So we know to strip it off later
 
     # XXX Something here should specify order for collections
     # colls_order is currently ignored!
@@ -999,7 +1086,11 @@ def get_search_results_chunk(request, use_collections=None,
         # There MUST be some way to do this in Django, but I just can't figure
         # it out. It's incredibly easy to do in raw SQL, so we just do that
         # instead. -RF
-        (selections, extras) = url_to_search_params(request.GET)
+        if opus_id:
+            selections = {'obs_general.opus_id': [opus_id]}
+            extras = {'qtypes': {'obs_general.opus_id': ['matches']}}
+        else:
+            (selections, extras) = url_to_search_params(request.GET)
         if selections is None:
             log.error('get_search_results_chunk: Could not find selections for'
                       +' request %s', str(request.GET))
