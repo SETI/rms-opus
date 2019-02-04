@@ -93,8 +93,29 @@ body {
 }
 
 .gallery-contents {
-		overflow-y:auto !important;
+		/* overflow-y:auto !important; */
+		overflow-y:hidden;
 		overflow-x:hidden;
+}
+
+div.gallery {
+		overflow-y: hidden;
+}
+
+/* No x-axis scrollbar in gallery view */
+.gallery-contents .ps__rail-x {
+		opacity: 1 !important;
+		left: 0px !important;
+}
+
+/* Make sure y-axis rail is not moving and always visible */
+.gallery-contents .ps__rail-y {
+		opacity: 1 !important;
+		top: 95px !important;
+}
+
+.disable-ps__rail-x {
+		display: none !important;
 }
 
 #detail {
@@ -371,14 +392,15 @@ th.sticky-header {
 }
 
 /* Not overlap table y-axis scrollbar with the window y-axis scrollbar */
-.dataTable .ps__rail-y {
+/* .dataTable .ps__rail-y {
 		display: none !important;
-}
-/* Make sure x-axis rail is not moving and always visible */
-.dataTable .ps__rail-x {
+} */
+/* Make sure x-axis rail is not moving and always visible in table view*/
+/* .dataTable .ps__rail-x {
 		opacity: 1 !important;
 		left: 0px !important;
-}
+		display: block !important;
+} */
 
 /* Fix the spinner*/
 .table-page-load-status .loader {

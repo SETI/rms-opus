@@ -2,9 +2,10 @@ var o_browse = {
     selectedImageID: "",
     keyPressAction: "",
     tableSorting: false,
-    xAxisTableScrollbar: new PerfectScrollbar(".dataTable"),
-    // xAxisTableScrollbar: new PerfectScrollbar(".gallery-contents"),
-    // scrollbar: new PerfectScrollbar("#browse .gallery-contents"),
+    // xAxisTableScrollbar: new PerfectScrollbar(".dataTable"),
+
+    galleryScrollbar: new PerfectScrollbar(".gallery-contents"),
+    // galleryScrollbar: new PerfectScrollbar(".justify-content-center"),
 
     /**
     *
@@ -564,6 +565,10 @@ var o_browse = {
             $(".browse_view", "#browse").data("view", "dataTable");
 
             $(".justify-content-center").show();
+
+            if(!$(".gallery-contents > .ps__rail-x").hasClass("disable-ps__rail-x")) {
+                $(".gallery-contents > .ps__rail-x").addClass("disable-ps__rail-x");
+            }
         } else {
             $("." + "gallery", "#browse").hide();
             $("." + opus.prefs.browse, "#browse").fadeIn();
@@ -574,6 +579,8 @@ var o_browse = {
 
             // remove that extra space on top when loading table page
             $(".justify-content-center").hide();
+
+            $(".gallery-contents > .ps__rail-x").removeClass("disable-ps__rail-x");
         }
     },
 
@@ -689,7 +696,8 @@ var o_browse = {
         }
 
         $('.gallery', namespace).append(html);
-        o_browse.xAxisTableScrollbar.update();
+        o_browse.galleryScrollbar.update();
+        // o_browse.xAxisTableScrollbar.update();
     },
 
     initTable: function(columns) {
@@ -721,8 +729,8 @@ var o_browse = {
         });
 
         o_browse.initResizableColumn();
-        o_browse.updateTableXScrollbarVerticalPosition();
-        // o_browse.adjustTableWidth();
+        // o_browse.updateTableXScrollbarVerticalPosition();
+        o_browse.adjustTableWidth();
     },
 
     initResizableColumn: function() {
@@ -759,9 +767,11 @@ var o_browse = {
         if($("body").find("style")) {
             $("body").find("style").parent().remove();
         }
-        $(".dataTable > .ps__rail-x").removeClass("update-x-scrollbar-pos");
+        $(".gallery-contents > .ps__rail-x").removeClass("update-x-scrollbar-pos");
+        // $(".dataTable > .ps__rail-x").removeClass("update-x-scrollbar-pos");
         o_browse.injectStyle(`.update-x-scrollbar-pos { bottom: ${xRailPosition}px !important}`);
-        $(".dataTable > .ps__rail-x").addClass("update-x-scrollbar-pos");
+        $(".gallery-contents > .ps__rail-x").addClass("update-x-scrollbar-pos");
+        // $(".dataTable > .ps__rail-x").addClass("update-x-scrollbar-pos");
     },
 
     injectStyle: function(rule) {
@@ -810,7 +820,6 @@ var o_browse = {
 
                 // for infinite scroll
                 if (!$('#browse .gallery-contents').data('infiniteScroll')) {
-                    console.log("INIT INF ==========")
                     $('#browse .gallery-contents').infiniteScroll({
                         path: o_browse.updatePageInUrl(this.url, "{{#}}"),
                         responseType: 'text',
@@ -857,6 +866,16 @@ var o_browse = {
                     });
 
                     $('#browse .gallery-contents').on( 'load.infiniteScroll', o_browse.infiniteScrollLoadEventListener);
+                }
+            }
+
+            // enable x-axis scrollbar if it's dataTable
+            console.log("OPUS PREF BROWSE: " + opus.prefs.browse);
+            if(opus.prefs.browse === "dataTable") {
+                $(".gallery-contents > .ps__rail-x").removeClass("disable-ps__rail-x");
+            } else {
+                if(!$(".gallery-contents > .ps__rail-x").hasClass("disable-ps__rail-x")) {
+                    $(".gallery-contents > .ps__rail-x").addClass("disable-ps__rail-x");
                 }
             }
 
@@ -920,17 +939,21 @@ var o_browse = {
 
     adjustBrowseHeight: function() {
         let container_height = $(window).height()-120;
+        // let container_height = $(".gallery-contents").height()-5;
         $(".gallery-contents").height(container_height);
-        // o_browse.scrollbar.update();
+        o_browse.galleryScrollbar.update();
         //opus.limit =  (floor($(window).width()/thumbnailSize) * floor(container_height/thumbnailSize));
     },
 
     adjustTableWidth: function() {
-        let containerWidth = $(".gallery-contents").width()-5;
+        let containerWidth = $(".gallery-contents").width()-10;
+        let tableWidth = $(".gallery-contents").width()-50;
         // Make sure the rightmost column is not cut off by the y-scrollbar
-        $(".dataTable").width(containerWidth);
+        $("#dataTable").width(tableWidth);
+        $(".justify-content-center").width(containerWidth);
         o_browse.updateTableXScrollbarVerticalPosition();
-        o_browse.xAxisTableScrollbar.update();
+        o_browse.galleryScrollbar.update();
+        // o_browse.xAxisTableScrollbar.update();
     },
 
     metadataboxHtml: function(opusId) {
