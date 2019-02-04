@@ -1029,8 +1029,9 @@ def get_string_query(selections, param_qualified_name, qtypes):
     value = values[0]
 
     value = value.replace('\\', '\\\\')
-    value = value.replace('%', '\\%')
-    value = value.replace('_', '\\_')
+    if qtype != 'matches':
+        value = value.replace('%', '\\%')
+        value = value.replace('_', '\\_')
 
     clause = ''
     params = []

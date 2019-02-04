@@ -75,3 +75,30 @@ class MetadataTests(TestCase):
         request = response.wsgi_request
         with self.assertRaises(Http404):
             api_get_mult_counts(request, 'target', 'jsonx')
+
+
+            ######################################################
+            ######### api_get_range_endpoints UNIT TESTS #########
+            ######################################################
+
+    def test__api_get_range_endpoints_no_request(self):
+        "api_get_range_endpoints: no request"
+        with self.assertRaises(Http404):
+            api_get_range_endpoints(None, 'observationduration', 'json')
+
+    def test__api_get_range_endpoints_no_get(self):
+        "api_get_range_endpoints: no GET"
+        c = Client()
+        response = c.get('/api/meta/range/endpoints/observationduration.json')
+        request = response.wsgi_request
+        request.GET = None
+        with self.assertRaises(Http404):
+            api_get_range_endpoints(request, 'observationduration', 'json')
+
+    def test__api_get_range_endpoints_bad_fmt(self):
+        "api_get_range_endpoints: bad fmt"
+        c = Client()
+        response = c.get('/api/meta/range/endpoints/observationduration.json')
+        request = response.wsgi_request
+        with self.assertRaises(Http404):
+            api_get_range_endpoints(request, 'observationduration', 'jsonx')

@@ -2,30 +2,20 @@
 
 import json
 import requests
-import sys
 from unittest import TestCase
 
-from django.db import connection
-from django.test.client import Client
 from rest_framework.test import RequestsClient
 
-from search.views import *
+from api_test_helper import ApiTestHelper
 
 import settings
 
 import logging
 log = logging.getLogger(__name__)
 
-cursor = connection.cursor()
-
-SESSION_ENGINE = 'django.contrib.sessions.backends.cache'
-SESSION_COOKIE_NAME = 'opus-test-cookie'
 settings.CACHE_BACKEND = 'dummy:///'
 
-# url(r'^__api/normalizeinput.json$', api_normalize_input),
-# url(r'^__api/stringsearchchoices/(?P<slug>\w+).json$', api_string_search_choices),
-
-class ApiSearchTests(TestCase):
+class ApiSearchTests(TestCase, ApiTestHelper):
 
     # disable error logging and trace output before test
     def setUp(self):
