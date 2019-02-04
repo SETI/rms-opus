@@ -338,7 +338,7 @@ def get_metadata(request, opus_id, fmt, api_name, return_db_names, internal):
         log.error('api_get_metadata: Could not find data model for obs_general')
         ret = HttpResponseServerError(settings.HTTP500_INTERNAL_ERROR)
         exit_api_call(api_code, ret)
-        raise ret
+        return ret
     if len(results) == 0:
         log.error('get_metadata: Error searching for opus_id "%s"',
                   opus_id)
@@ -398,7 +398,7 @@ def get_metadata(request, opus_id, fmt, api_name, return_db_names, internal):
                           +'category %s', model_name)
                 ret = HttpResponseServerError(settings.HTTP500_INTERNAL_ERROR)
                 exit_api_call(api_code, ret)
-                raise ret
+                return ret
 
             all_param_names = [p.name for p in param_info_list]
             result_vals = results.values(*all_param_names)
