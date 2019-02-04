@@ -1111,6 +1111,20 @@ class searchTests(TestCase):
         self.assertEqual(sql, expected)
         self.assertEqual(params, expected_params)
 
+    def test__string_query_ends_special_chars(self):
+        "string_query: string query with qtype matches special chars"
+        selections = {'obs_pds.volume_id': ['ISS_\\%\\X\\']}
+        sql, params = get_string_query(selections, 'obs_pds.volume_id',
+                                       ['ends'])
+        print(sql)
+        print(params)
+        expected = '`obs_pds`.`volume_id` LIKE %s'
+        expected_params = ['%ISS\\_\\\\\\%\\\\X\\\\']
+        print(expected)
+        print(expected_params)
+        self.assertEqual(sql, expected)
+        self.assertEqual(params, expected_params)
+
     def test__string_query_matches_special_chars(self):
         "string_query: string query with qtype matches special chars"
         selections = {'obs_pds.volume_id': ['ISS_\\%\\X\\']}
@@ -1119,7 +1133,7 @@ class searchTests(TestCase):
         print(sql)
         print(params)
         expected = '`obs_pds`.`volume_id` = %s'
-        expected_params = ['ISS\\_\\\\\\%\\\\X\\\\']
+        expected_params = ['ISS_\\\\%\\\\X\\\\']
         print(expected)
         print(expected_params)
         self.assertEqual(sql, expected)

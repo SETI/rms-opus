@@ -1,21 +1,18 @@
-{% for cat, d in data.items %}
-  <ul id="detail__data_{{ cat.lower.split|join:"_" }}">
-    {% for param, val in d.items %}
-      <li>
-        {% for name, param_info in all_info.items %}
-          {% if name == param %}
-            {% if param_info.get_units %}
-              {{ param_info.label_results }} {{ param_info.get_units }}: {{ val }}
-            {% else %}
-              {{ param_info.label_results }}: {{ val }}
+<dl>
+  {% for cat, d in data.items %}
+    <dt>{{ cat }}</dt>
+    <dl>
+      {% for param, val in d.items %}
+          {% for name, param_info in all_info.items %}
+            {% if name == param %}
+              {% if param_info.get_units %}
+                <dt>{{ param_info.label_results }} {{ param_info.get_units }}</dt><dd>{{ val }}</dd>
+              {% else %}
+                <dt>{{ param_info.label_results }}</dt><dd>{{ val }}</dd>
+              {% endif %}
             {% endif %}
-            {% if param_info.get_tooltip %}
-              <i class="fa fa-info-circle" data-toggle="tooltip" 
-                 title="{{ param_info.get_tooltip|striptags }}"></i>
-            {% endif %}
-          {% endif %}
-        {% endfor %}
-      </li>
-    {% endfor %}
-  </ul>
-{% endfor %}
+          {% endfor %}
+      {% endfor %}
+    </dl>
+  {% endfor %}
+</dl>

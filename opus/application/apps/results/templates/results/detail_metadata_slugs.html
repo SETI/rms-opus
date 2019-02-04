@@ -1,21 +1,7 @@
-<ul class="columns_metadata">
-  {% for pair in data %}
-    <li>
-      {% for param, value in pair.items %}
-        {% for name, param_info in all_info.items %}
-          {% if param == param_info.name %}
-            {% if param_info.get_units %}
-              {{ param_info.body_qualified_label_results }} {{ param_info.get_units }}: {{ value }}
-            {% else %}
-              {{ param_info.body_qualified_label_results }}: {{ value }}
-            {% endif %}
-            {% if param_info.get_tooltip %}
-              <i class="fa fa-info-circle" data-toggle="tooltip"
-                 title="{{ param_info.get_tooltip|striptags }}"></i>
-            {% endif %}
-          {% endif %}
-        {% endfor %}
-      {% endfor %}
-    </li>
+<dl>
+  {% for entry in data %}
+    {% for param, value in entry.items %}
+      <dt>{{ param }}</dt><dd>{{ value }}</dd>
+    {% endfor %}
   {% endfor %}
-</ul>
+</dl>

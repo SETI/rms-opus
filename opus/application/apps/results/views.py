@@ -224,50 +224,12 @@ def api_get_data(request, fmt):
     return ret
 
 
-def api_get_one_data_csv(request, opus_id):
-    """Return s CSV file containing the current columns for a single OPUSID.
-
-    This is a PUBLIC API.
-
-    Format: [__]api/data/(?P<opus_id>[-\w]+).csv
-    """
-    api_code = enter_api_call('api_get_one_data_csv', request)
-
-    if not request or request.GET is None:
-        ret = Http404('No request')
-        exit_api_call(api_code, ret)
-        raise ret
-
-    slugs = request.GET.get('cols', settings.DEFAULT_COLUMNS)
-    (page_no, start_obs, limit, page, order, aux) = get_search_results_chunk(
-                                                     request,
-                                                     opus_id=opus_id,
-                                                     limit=1,
-                                                     api_code=api_code)
-
-    if page is None or len(page) != 1:
-        ret = Http404(settings.HTTP404_UNKNOWN_OPUS_ID)
-        log.error('api_get_one_data_csv: Error searching for opus_id "%s"',
-                  opus_id)
-        exit_api_call(api_code, ret)
-        raise ret
-
-    slug_list = cols_to_slug_list(slugs)
-
-    labels = labels_for_slugs(slug_list)
-
-    ret = csv_response(opus_id, page, labels)
-
-    exit_api_call(api_code, ret)
-    return ret
-
-
 def api_get_metadata(request, opus_id, fmt):
     """Return all metadata, sorted by category, for this opus_id.
 
     This is a PUBLIC API.
 
-    Format: [__]api/metadata/(?P<opus_id>[-\w]+).(?P<fmt>[json|html]+
+    Format: api/metadata/(?P<opus_id>[-\w]+).(?P<fmt>[json|html|csv]+
 
     Arguments: cols=<columns>
                     Limit results to particular columns.
@@ -279,19 +241,21 @@ def api_get_metadata(request, opus_id, fmt):
                     given as "pretty names" as displayed on the Details page,
                     or can be given as table names.
 
-    Can return JSON, ZIP, HTML, or CSV.
+    Can return JSON, HTML, or CSV.
 
-    JSON is indexed by pretty category name, then by INTERNAL DATABASE COLUMN
-    NAME (EEK!).
+    JSON is indexed by pretty category name, then by field database name (EEK).
+
+    HTML and CSV return fully qualified labels.
     """
-    return get_metadata('api_get_metadata', request, opus_id, fmt)
+    return get_metadata(request, opus_id, fmt,
+                        'api_get_metadata', True, False)
 
 def api_get_metadata_v2(request, opus_id, fmt):
     """Return all metadata, sorted by category, for this opus_id.
 
     This is a PUBLIC API.
 
-    Format: [__]api/metadata_v2/(?P<opus_id>[-\w]+).(?P<fmt>[json|html]+
+    Format: api/metadata_v2/(?P<opus_id>[-\w]+).(?P<fmt>[json|html|csv]+
 
     Arguments: cols=<columns>
                     Limit results to particular columns.
@@ -303,13 +267,48 @@ def api_get_metadata_v2(request, opus_id, fmt):
                     given as "pretty names" as displayed on the Details page,
                     or can be given as table names.
 
-    Can return JSON, ZIP, HTML, or CSV.
+    Can return JSON, HTML, or CSV.
 
-    JSON is indexed by pretty category name, then by field slug.
+    JSON is indexed by pretty category name, then by field pretty name.
+
+    HTML and CSV return fully qualified labels.
     """
-    return get_metadata('api_get_metadata_v2', request, opus_id, fmt)
+    return get_metadata(request, opus_id, fmt,
+                        'api_get_metadata_v2', False, False)
 
-def get_metadata(api_name, request, opus_id, fmt):
+def api_get_metadata_v2_internal(request, opus_id, fmt):
+    """Return all metadata, sorted by category, for this opus_id.
+
+    This is a PRIVATE API.
+
+    Format: __api/metadata_v2/(?P<opus_id>[-\w]+).(?P<fmt>[json|html|csv]+
+
+    Arguments: cols=<columns>
+                    Limit results to particular columns.
+                    This is a list of slugs separated by commas. Note that the
+                    return will be indexed by field name, but by slug name.
+                    If cols is supplied, cats is ignored.
+               cats=<cats>
+                    Limit results to particular categories. Categories can be
+                    given as "pretty names" as displayed on the Details page,
+                    or can be given as table names.
+
+    Can return JSON, HTML, or CSV.
+
+    JSON is indexed by pretty category name, then by field pretty name.
+
+    HTML and CSV return fully qualified labels.
+
+    The only difference between __api/metadata_v2 and api_metadata_v2 is in the
+    returned HTML. The __api version returns an internally-formatted HTML needed
+    by the Details tab including things like tooltips. The api version returns
+    an external-formatted HTML that is acceptable to outside users without
+    exposing internal details.
+    """
+    return get_metadata(request, opus_id, fmt,
+                        'api_get_metadata_v2_internal', False, True)
+
+def get_metadata(request, opus_id, fmt, api_name, return_db_names, internal):
     api_code = enter_api_call(api_name, request)
 
     if not request or request.GET is None:
@@ -326,34 +325,60 @@ def get_metadata(api_name, request, opus_id, fmt):
     opus_id = convert_ring_obs_id_to_opus_id(opus_id)
 
     cols = request.GET.get('cols', False)
-    if cols:
-        ret = _get_metadata_by_slugs(request, opus_id, cols_to_slug_list(cols),
+    if cols or cols == '':
+        ret = _get_metadata_by_slugs(request, opus_id, cols,
                                      fmt,
-                                     use_param_names=
-                                        (api_name=='api_get_metadata'))
+                                     return_db_names,
+                                     internal,
+                                     api_code)
         if ret is None:
-            exit_api_call(api_code, Http404)
-            raise Http404
+            ret = Http404(settings.HTTP404_UNKNOWN_SLUG)
+            exit_api_call(api_code, ret)
+            raise ret
         exit_api_call(api_code, ret)
         return ret
+
+    # Make sure it's a valid OPUS ID
+    try:
+        results = query_table_for_opus_id('obs_general', opus_id)
+    except LookupError:
+        log.error('api_get_metadata: Could not find data model for obs_general')
+        ret = HttpResponseServerError(settings.HTTP500_INTERNAL_ERROR)
+        exit_api_call(api_code, ret)
+        raise ret
+    if len(results) == 0:
+        log.error('get_metadata: Error searching for opus_id "%s"',
+                  opus_id)
+        ret = Http404(settings.HTTP404_UNKNOWN_OPUS_ID)
+        exit_api_call(api_code, ret)
+        raise ret
 
     cats = request.GET.get('cats', False)
 
     data = OrderedDict()     # Holds data struct to be returned
     all_info = OrderedDict() # Holds all the param info objects
-    rounded_off_data = OrderedDict() # Hold rounded off data
 
-    if not cats:
+    if cats == '':
+        all_tables = []
+    elif not cats:
         # Find all the tables (categories) this observation belongs to
         all_tables = (TableNames.objects.filter(display='Y')
                       .order_by('disp_order'))
     else:
+        # Uniquify
+        cat_list = list(set(cats.split(',')))
         # Restrict tables to those found in cats
-        all_tables = ((TableNames.objects.filter(label__in=cats.split(','),
+        all_tables = ((TableNames.objects.filter(label__in=cat_list,
                                                  display='Y') |
-                       TableNames.objects.filter(table_name__in=cats.split(','),
+                       TableNames.objects.filter(table_name__in=cat_list,
                                                  display='Y'))
-                      .order_by('disp_order'))
+                                         .order_by('disp_order'))
+        if len(all_tables) != len(cat_list):
+            log.error('get_metadata: Unknown category name in "%s"',
+                      cats)
+            ret = Http404(settings.HTTP404_UNKNOWN_CATEGORY)
+            exit_api_call(api_code, ret)
+            raise ret
 
     # Now find all params and their values in each of these tables
     for table in all_tables:
@@ -362,12 +387,13 @@ def get_metadata(api_name, request, opus_id, fmt):
         model_name = ''.join(table_name.title().split('_'))
 
         # Make a list of all slugs and another of all param_names in this table
-        param_info_list = list(ParamInfo.objects.filter(category_name=table_name,
-                                                        display_results=1)
-                                                .order_by('disp_order'))
+        param_info_list = list(ParamInfo.objects
+                               .filter(category_name=table_name,
+                                       display_results=1)
+                               .order_by('disp_order'))
         if param_info_list:
             for param_info in param_info_list:
-                if api_name == 'api_get_metadata':
+                if return_db_names:
                     all_info[param_info.name] = param_info
                 else:
                     all_info[param_info.slug] = param_info
@@ -377,8 +403,9 @@ def get_metadata(api_name, request, opus_id, fmt):
             except LookupError:
                 log.error('api_get_metadata: Could not find data model for '
                           +'category %s', model_name)
-                exit_api_call(api_code, Http404)
-                raise Http404
+                ret = HttpResponseServerError(settings.HTTP500_INTERNAL_ERROR)
+                exit_api_call(api_code, ret)
+                raise ret
 
             all_param_names = [p.name for p in param_info_list]
             result_vals = results.values(*all_param_names)
@@ -388,52 +415,59 @@ def get_metadata(api_name, request, opus_id, fmt):
                 continue
             result_vals = result_vals[0]
             ordered_results = OrderedDict()
-            rounded_off_ordered_results = OrderedDict()
             for param_info in param_info_list:
                 (form_type, form_type_func,
                  form_type_format) = parse_form_type(param_info.form_type)
 
                 if (form_type in settings.MULT_FORM_TYPES and
-                    api_name == 'api_get_metadata_v2'):
+                    not return_db_names):
                     mult_name = get_mult_name(param_info.param_qualified_name())
                     mult_val = results.values(mult_name)[0][mult_name]
                     result = lookup_pretty_value_for_mult(param_info, mult_val)
-                    rounded_off_result = result
                 else:
                     result = result_vals[param_info.name]
                     # Format result depending on its form_type_format
-                    rounded_off_result = format_metadata_number_or_func(
-                                                            result,
+                    result = format_metadata_number_or_func(result,
                                                             form_type_func,
                                                             form_type_format)
 
-                if api_name == 'api_get_metadata':
-                    ordered_results[param_info.name] = result
-                    rounded_off_ordered_results[param_info.name] = \
-                            rounded_off_result
+                if fmt == 'csv':
+                    index = param_info.fully_qualified_label_results()
+                elif return_db_names:
+                    index = param_info.name
                 else:
-                    if param_info.slug is not None:
-                        ordered_results[param_info.slug] = result
-                        rounded_off_ordered_results[param_info.slug] = \
-                                rounded_off_result
-            # data is for json return of api calls
-            # rounded_off_data is for html return of api calls
-            data[table_label] = ordered_results
-            rounded_off_data[table_label] = rounded_off_ordered_results
+                    index = param_info.slug
+                if index:
+                    ordered_results[index] = result
 
-    if fmt == 'html':
-        # hack because we want to display labels instead of param names
-        # on our HTML Detail page
-        context = {'data': rounded_off_data,
+            data[table_label] = ordered_results
+
+    if fmt == 'csv':
+        csv_data = []
+        for table_label in data:
+            csv_data.append([table_label])
+            row_title = []
+            row_data = []
+            for k,v in data[table_label].items():
+                row_title.append(k)
+                row_data.append(v)
+            csv_data.append(row_title)
+            csv_data.append(row_data)
+        ret = csv_response(opus_id, csv_data)
+    elif fmt == 'html':
+        context = {'data': data,
                    'all_info': all_info}
-        if api_name == 'api_get_metadata':
-            ret = render(request, 'results/detail_metadata.html', context)
+        if internal:
+            ret = render(request, 'results/detail_metadata_internal.html', context)
         else:
-            ret = render(request, 'results/detail_metadata_v2.html', context)
-    if fmt == 'json':
+            ret = render(request, 'results/detail_metadata.html', context)
+    elif fmt == 'json':
         ret = HttpResponse(json.dumps(data), content_type='application/json')
-    if fmt == 'raw':
-        ret = data, all_info  # includes definitions for opus interface
+    else:
+        log.error('get_metadata: Unknown format "%s"', fmt)
+        ret = Http404(settings.HTTP404_UNKNOWN_FORMAT)
+        exit_api_call(api_code, ret)
+        raise ret
 
     exit_api_call(api_code, ret)
     return ret
@@ -1312,73 +1346,55 @@ def get_search_results_chunk(request, use_collections=None,
     return (page_no, start_obs, limit, results, all_order, aux_dict)
 
 
-def _get_metadata_by_slugs(request, opus_id, slugs, fmt, use_param_names):
+def _get_metadata_by_slugs(request, opus_id, cols, fmt, use_param_names,
+                           internal, api_code):
     "Returns results for specified slugs."
-    params_by_table = OrderedDict()
-    all_info = OrderedDict()
+    (page_no, start_obs, limit, page, order, aux) = get_search_results_chunk(
+                                                     request,
+                                                     cols=cols,
+                                                     opus_id=opus_id,
+                                                     limit=1,
+                                                     api_code=api_code)
 
-    for slug in slugs:
-        param_info = get_param_info_by_slug(slug, from_ui=True)
-        if not param_info:
-            log.error('_get_metadata_by_slugs: Could not find param_info entry '
-                      +'for slug %s', str(slug))
-            return None
-        table_name = param_info.category_name
-        params_by_table.setdefault(table_name, []).append((param_info, slug))
-        # Note we are intentionally using "slug" here instead of
-        # param_info.slug, which means we might get an old slug and index with
-        # it. But at least that way the requested column and the given result
-        # will match for the user.
-        all_info[slug] = param_info
+    if page is None or len(page) != 1:
+        log.error('_get_metadata_by_slugs: Error searching for opus_id "%s"',
+                  opus_id)
+        ret = Http404(settings.HTTP404_UNKNOWN_OPUS_ID)
+        exit_api_call(api_code, ret)
+        raise ret
 
-    data_dict = {}
+    slug_list = cols_to_slug_list(cols)
+    labels = labels_for_slugs(slug_list)
 
-    for table_name, param_info_slug_list in params_by_table.items():
-        try:
-            results = query_table_for_opus_id(table_name, opus_id)
-        except LookupError:
-            continue
-        for param_info, slug in param_info_slug_list:
-            (form_type, form_type_func,
-             form_type_format) = parse_form_type(param_info.form_type)
+    if fmt == 'csv':
+        return csv_response(opus_id, page, labels)
 
-            if not results:
-                result = 'N/A'
-            elif form_type in settings.MULT_FORM_TYPES and not use_param_names:
-                mult_name = get_mult_name(param_info.param_qualified_name())
-                mult_val = results.values(mult_name)[0][mult_name]
-                result = lookup_pretty_value_for_mult(param_info, mult_val)
-            else:
-                result = results.values(param_info.name)[0][param_info.name]
-                result = format_metadata_number_or_func(result,
-                                                        form_type_func,
-                                                        form_type_format)
-            if use_param_names:
-                data_dict[param_info.name] = result
-            else:
-                data_dict[slug] = result
+    # We're just screwing backwards compatibility here and always returning
+    # the slug names instead of supporting the support database-internal names
+    # that used to be supplied by the metadata API.
 
-    # Now put them in the right order
     data = []
-    for slug in slugs:
-        if use_param_names:
-            param_name = all_info[slug].name
-            data.append({param_name: data_dict[param_name]})
-        else:
-            data.append({slug: data_dict[slug]})
-
-    if fmt == 'html':
-        if use_param_names:
-            template = 'results/detail_metadata_slugs.html'
-        else:
-            template = 'results/detail_metadata_slugs_v2.html'
-        return render(request, template,
-                      {'data': data,
-                       'all_info': all_info})
     if fmt == 'json':
-        return HttpResponse(json.dumps(data), content_type="application/json")
-    if fmt == 'raw':
-        return data, all_info  # includes definitions for OPUS interface
+        for slug, result in zip(slug_list, page[0]):
+            data.append({slug: result})
+        return json_response(data)
+    if fmt == 'html':
+        if internal:
+            for slug, label, result in zip(slug_list, labels, page[0]):
+                pi = get_param_info_by_slug(slug)
+                data.append({label: (result, pi)})
+            return render(request,
+                          'results/detail_metadata_slugs_internal.html',
+                          {'data': data})
+        for label, result in zip(labels, page[0]):
+            data.append({label: result})
+        return render(request, 'results/detail_metadata_slugs.html',
+                      {'data': data})
+
+    log.error('_get_metadata_by_slugs: Unknown format "%s"', fmt)
+    ret = Http404(settings.HTTP404_UNKNOWN_FORMAT)
+    exit_api_call(api_code, ret)
+    raise ret
 
 
 def get_triggered_tables(selections, extras, api_code=None):
