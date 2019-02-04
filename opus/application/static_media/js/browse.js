@@ -3,9 +3,7 @@ var o_browse = {
     keyPressAction: "",
     tableSorting: false,
     xAxisTableScrollbar: new PerfectScrollbar(".dataTable"),
-
     galleryScrollbar: new PerfectScrollbar(".gallery-contents"),
-    // galleryScrollbar: new PerfectScrollbar(".justify-content-center"),
 
     /**
     *
@@ -936,7 +934,6 @@ var o_browse = {
 
     adjustBrowseHeight: function() {
         let container_height = $(window).height()-120;
-        // let container_height = $(".gallery-contents").height()-5;
         $(".gallery-contents").height(container_height);
         o_browse.galleryScrollbar.update();
         //opus.limit =  (floor($(window).width()/thumbnailSize) * floor(container_height/thumbnailSize));
@@ -944,12 +941,10 @@ var o_browse = {
 
     adjustTableWidth: function() {
         let containerWidth = $(".gallery-contents").width()-5;
-        // let tableWidth = $(".gallery-contents").width()-50;
         // Make sure the rightmost column is not cut off by the y-scrollbar
         $(".dataTable").width(containerWidth);
         $(".justify-content-center").width(containerWidth);
         o_browse.updateTableXScrollbarVerticalPosition();
-        // o_browse.galleryScrollbar.update();
         o_browse.xAxisTableScrollbar.update();
     },
 
