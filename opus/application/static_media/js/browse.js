@@ -695,6 +695,7 @@ var o_browse = {
 
         $('.gallery', namespace).append(html);
         o_browse.xAxisTableScrollbar.update();
+        o_browse.galleryScrollbar.update();
     },
 
     initTable: function(columns) {
