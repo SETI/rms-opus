@@ -563,10 +563,6 @@ var o_browse = {
             $(".browse_view", "#browse").data("view", "dataTable");
 
             $(".justify-content-center").show();
-
-            // if(!$(".gallery-contents > .ps__rail-x").hasClass("disable-ps__rail-x")) {
-            //     $(".gallery-contents > .ps__rail-x").addClass("disable-ps__rail-x");
-            // }
         } else {
             $("." + "gallery", "#browse").hide();
             $("." + opus.prefs.browse, "#browse").fadeIn();
@@ -577,8 +573,6 @@ var o_browse = {
 
             // remove that extra space on top when loading table page
             $(".justify-content-center").hide();
-
-            // $(".gallery-contents > .ps__rail-x").removeClass("disable-ps__rail-x");
         }
     },
 
@@ -865,16 +859,6 @@ var o_browse = {
                 }
             }
 
-            // enable x-axis scrollbar if it's dataTable
-            // console.log("OPUS PREF BROWSE: " + opus.prefs.browse);
-            // if(opus.prefs.browse === "dataTable") {
-            //     $(".gallery-contents > .ps__rail-x").removeClass("disable-ps__rail-x");
-            // } else {
-            //     if(!$(".gallery-contents > .ps__rail-x").hasClass("disable-ps__rail-x")) {
-            //         $(".gallery-contents > .ps__rail-x").addClass("disable-ps__rail-x");
-            //     }
-            // }
-
             o_browse.renderGalleryAndTable(data, this.url);
             o_browse.updateSortOrder();
 
@@ -945,6 +929,7 @@ var o_browse = {
         // Make sure the rightmost column is not cut off by the y-scrollbar
         $(".dataTable").width(containerWidth);
         $(".justify-content-center").width(containerWidth);
+
         o_browse.updateTableXScrollbarVerticalPosition();
         o_browse.xAxisTableScrollbar.update();
     },
