@@ -11,3 +11,4 @@ python main_opus_import.py --do-it-all --import-fake-images HSTJ0_9975,HSTN0_724
 python main_opus_import.py --do-it-all --import-fake-images NHPELO_2001,NHLAMV_2001
 python main_opus_import.py --import-dictionary
 (cd ../application; python manage.py migrate)
+python main_opus_import.py --validate-perm

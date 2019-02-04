@@ -55,79 +55,81 @@
         "field_name": "version_number",
         "field_type": "uint4",
         "field_key": true,
-        "fueld_notnull": true
+        "field_notnull": true
     },
     {
         "field_name": "version_name",
         "field_type": "char16",
         "field_key": true,
-        "fueld_notnull": true
+        "field_notnull": true
     },
     {
         "field_name": "category",
         "field_type": "char20",
         "field_key": true,
-        "fueld_notnull": true
+        "field_notnull": true
     },
     {
         "field_name": "sort_order",
         "field_type": "char9",
         "field_key": true,
-        "fueld_notnull": true
+        "field_notnull": true
     },
     {
         "field_name": "short_name",
         "field_type": "char32",
         "field_key": true,
-        "fueld_notnull": true
+        "field_notnull": true
     },
     {
         "field_name": "full_name",
         "field_type": "char64",
         "field_key": true,
-        "fueld_notnull": true
+        "field_notnull": true
     },
     {
         "field_name": "product_order",
         "field_type": "uint4",
         "field_key": false,
-        "fueld_notnull": true
+        "field_notnull": true
     },
     {
         "field_name": "logical_path",
         "field_type": "text",
         "field_key": false,
-        "fueld_notnull": true
+        "field_notnull": true
     },
     {
         "field_name": "url",
         "field_type": "text",
         "field_key": false,
-        "fueld_notnull": true
+        "field_notnull": true
     },
     {
         "field_name": "checksum",
         "field_type": "char32",
         "field_key": false,
-        "fueld_notnull": true
+        "field_notnull": true
     },
     {
         "field_name": "size",
         "field_type": "uint4",
         "field_key": false,
-        "fueld_notnull": true
+        "field_notnull": true
     },
     {
         "field_name": "width",
         "field_type": "uint4",
         "field_key": false,
-        "fueld_notnull": false
+        "field_notnull": false,
+        "field_default": null
     },
     {
         "field_name": "height",
         "field_type": "uint4",
         "field_key": false,
-        "fueld_notnull": false
+        "field_notnull": false,
+        "field_default": null
     },
     {
         "field_name": "id",

@@ -1486,8 +1486,8 @@ def get_pdsfile_rows_for_filespec(filespec, obs_general_id, opus_id, volume_id,
                 url = file.url
                 checksum = file.checksum
                 size = file.size_bytes
-                width = file.width
-                height = file.height
+                width = file.width or None
+                height = file.height or None
 
                 if 'obs_files' not in impglobals.MAX_TABLE_ID_CACHE:
                     impglobals.MAX_TABLE_ID_CACHE['obs_files'] = (

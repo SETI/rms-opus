@@ -206,6 +206,8 @@ FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `TABLE_SCHEMA`='{self.db_schema}' AND
                 field_type = 'json'
             elif data_type == 'timestamp':
                 field_type = 'timestamp'
+            elif data_type == 'text':
+                field_type = 'text'
             else:
                 assert False, data_type
             if (field_type.startswith('int') and
