@@ -52,11 +52,13 @@ class ApiTestHelper:
         print(url)
         response = self._get_response(url)
         self.assertEqual(response.status_code, 200)
+        expected = str(expected)[2:-1].replace('\r', '')
+        resp = str(response.content)[2:-1].replace('\r', '')[:len(expected)]
         print('Got:')
-        print(str(response.content))
+        print(resp)
         print('Expected:')
-        print(str(expected))
-        self.assertEqual(expected, response.content)
+        print(expected)
+        self.assertEqual(expected, resp)
 
     def _run_html_equal_file(self, url, exp_file):
         with open(_RESPONSES_FILE_ROOT+exp_file, 'rb') as fp:
@@ -64,32 +66,38 @@ class ApiTestHelper:
         print(url)
         response = self._get_response(url)
         self.assertEqual(response.status_code, 200)
+        expected = str(expected)[2:-1].replace('\r', '')
+        resp = str(response.content)[2:-1].replace('\r', '')[:len(expected)]
         print('Got:')
-        print(str(response.content))
+        print(resp)
         print('Expected:')
-        print(str(expected))
-        self.assertEqual(expected, response.content)
+        print(expected)
+        self.assertEqual(expected, resp)
 
     def _run_html_startswith(self, url, expected):
         print(url)
         response = self._get_response(url)
         self.assertEqual(response.status_code, 200)
-        resp = response.content[:len(expected)]
+        # Strip off b'...''
+        expected = str(expected)[2:-1].replace('\r', '')
+        resp = str(response.content)[2:-1].replace('\r', '')[:len(expected)]
         print('Got:')
-        print(str(resp))
+        print(resp)
         print('Expected:')
-        print(str(expected))
+        print(expected)
         self.assertEqual(expected, resp)
 
     def _run_csv_equal(self, url, expected):
         print(url)
         response = self._get_response(url)
         self.assertEqual(response.status_code, 200)
+        expected = str(expected)[2:-1].replace('\r', '')
+        resp = str(response.content)[2:-1].replace('\r', '')[:len(expected)]
         print('Got:')
-        print(str(response.content))
+        print(resp)
         print('Expected:')
-        print(str(expected))
-        self.assertEqual(expected, response.content)
+        print(expected)
+        self.assertEqual(expected, resp)
 
     def _run_csv_equal_file(self, url, exp_file):
         with open(_RESPONSES_FILE_ROOT+exp_file, 'rb') as fp:
@@ -97,8 +105,10 @@ class ApiTestHelper:
         print(url)
         response = self._get_response(url)
         self.assertEqual(response.status_code, 200)
+        expected = str(expected)[2:-1].replace('\r', '')
+        resp = str(response.content)[2:-1].replace('\r', '')[:len(expected)]
         print('Got:')
-        print(str(response.content))
+        print(resp)
         print('Expected:')
-        print(str(expected))
-        self.assertEqual(expected, response.content)
+        print(expected)
+        self.assertEqual(expected, resp)
