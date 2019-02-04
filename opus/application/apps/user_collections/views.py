@@ -12,7 +12,7 @@
 #    Format: __collections/(?P<action>add|remove|addrange|removerange|addall).json
 #    Format: __collections/reset.html
 #    Format: __collections/download.json
-#    Format: __zip/(?P<opus_id>[-\w]+).zip
+#    Format: [__]api/download/(?P<opus_id>[-\w]+).zip
 #
 ################################################################################
 
@@ -272,7 +272,7 @@ def api_create_download(request, opus_id=None):
     This is a PRIVATE API.
 
     Format: __collections/download.json
-        or: __zip/(?P<opus_id>[-\w]+).zip
+        or: [__]api/download/(?P<opus_id>[-\w]+).zip
     Arguments: types=<PRODUCT_TYPES>
                urlonly=1 (optional) means to not zip the actual data products
     """
@@ -282,13 +282,16 @@ def api_create_download(request, opus_id=None):
 
     session_id = get_session_id(request)
 
+    product_types = request.GET.get('types', 'all')
+    if product_types is None or product_types == '':
+        product_types = []
+    else:
+        product_types = product_types.split(',')
+
     if opus_id:
-        product_types = ['all']
         opus_ids = [opus_id]
         return_directly = True
     else:
-        product_types = request.GET.get('types', 'none')
-        product_types = product_types.split(',')
         num_selections = (Collections.objects
                           .filter(session_id__exact=session_id)
                           .count())

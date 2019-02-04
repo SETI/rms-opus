@@ -60,23 +60,28 @@ class resultsTests(TestCase):
             api_get_data_and_images(request)
 
 
-            ###################################################
-            ######### api_get_one_data_csv UNIT TESTS #########
-            ###################################################
+            ###########################################
+            ######### api_get_data UNIT TESTS #########
+            ###########################################
 
-    def test__api_get_one_data_csv_no_request(self):
-        "api_get_one_data_csv: no request"
+
+            ###############################################
+            ######### api_get_metadata UNIT TESTS #########
+            ###############################################
+
+    def test__api_get_metadata_no_request(self):
+        "api_get_metadata: no request"
         with self.assertRaises(Http404):
-            api_get_one_data_csv(None, 'x')
+            api_get_metadata(None, 'vg-iss-2-s-c4360845', 'json')
 
-    def test__api_get_one_data_csv_no_get(self):
-        "api_get_one_data_csv: no GET"
+    def test__api_get_metadata_no_get(self):
+        "api_get_metadata: no GET"
         c = Client()
-        response = c.get('/__api/dataimages.json')
+        response = c.get('/api/metadata/vg-iss-2-s-c4360845.json')
         request = response.wsgi_request
         request.GET = None
         with self.assertRaises(Http404):
-            api_get_one_data_csv(request, 'x')
+            api_get_metadata(request, 'vg-iss-2-s-c4360845', 'json')
 
 
             ###################################################
