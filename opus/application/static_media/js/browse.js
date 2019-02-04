@@ -2,7 +2,7 @@ var o_browse = {
     selectedImageID: "",
     keyPressAction: "",
     tableSorting: false,
-    // xAxisTableScrollbar: new PerfectScrollbar(".dataTable"),
+    xAxisTableScrollbar: new PerfectScrollbar(".dataTable"),
 
     galleryScrollbar: new PerfectScrollbar(".gallery-contents"),
     // galleryScrollbar: new PerfectScrollbar(".justify-content-center"),
@@ -566,9 +566,9 @@ var o_browse = {
 
             $(".justify-content-center").show();
 
-            if(!$(".gallery-contents > .ps__rail-x").hasClass("disable-ps__rail-x")) {
-                $(".gallery-contents > .ps__rail-x").addClass("disable-ps__rail-x");
-            }
+            // if(!$(".gallery-contents > .ps__rail-x").hasClass("disable-ps__rail-x")) {
+            //     $(".gallery-contents > .ps__rail-x").addClass("disable-ps__rail-x");
+            // }
         } else {
             $("." + "gallery", "#browse").hide();
             $("." + opus.prefs.browse, "#browse").fadeIn();
@@ -580,7 +580,7 @@ var o_browse = {
             // remove that extra space on top when loading table page
             $(".justify-content-center").hide();
 
-            $(".gallery-contents > .ps__rail-x").removeClass("disable-ps__rail-x");
+            // $(".gallery-contents > .ps__rail-x").removeClass("disable-ps__rail-x");
         }
     },
 
@@ -696,8 +696,7 @@ var o_browse = {
         }
 
         $('.gallery', namespace).append(html);
-        o_browse.galleryScrollbar.update();
-        // o_browse.xAxisTableScrollbar.update();
+        o_browse.xAxisTableScrollbar.update();
     },
 
     initTable: function(columns) {
@@ -729,8 +728,8 @@ var o_browse = {
         });
 
         o_browse.initResizableColumn();
-        // o_browse.updateTableXScrollbarVerticalPosition();
-        o_browse.adjustTableWidth();
+        o_browse.updateTableXScrollbarVerticalPosition();
+        // o_browse.adjustTableWidth();
     },
 
     initResizableColumn: function() {
@@ -767,11 +766,9 @@ var o_browse = {
         if($("body").find("style")) {
             $("body").find("style").parent().remove();
         }
-        $(".gallery-contents > .ps__rail-x").removeClass("update-x-scrollbar-pos");
-        // $(".dataTable > .ps__rail-x").removeClass("update-x-scrollbar-pos");
+        $(".dataTable > .ps__rail-x").removeClass("update-x-scrollbar-pos");
         o_browse.injectStyle(`.update-x-scrollbar-pos { bottom: ${xRailPosition}px !important}`);
-        $(".gallery-contents > .ps__rail-x").addClass("update-x-scrollbar-pos");
-        // $(".dataTable > .ps__rail-x").addClass("update-x-scrollbar-pos");
+        $(".dataTable > .ps__rail-x").addClass("update-x-scrollbar-pos");
     },
 
     injectStyle: function(rule) {
@@ -870,14 +867,14 @@ var o_browse = {
             }
 
             // enable x-axis scrollbar if it's dataTable
-            console.log("OPUS PREF BROWSE: " + opus.prefs.browse);
-            if(opus.prefs.browse === "dataTable") {
-                $(".gallery-contents > .ps__rail-x").removeClass("disable-ps__rail-x");
-            } else {
-                if(!$(".gallery-contents > .ps__rail-x").hasClass("disable-ps__rail-x")) {
-                    $(".gallery-contents > .ps__rail-x").addClass("disable-ps__rail-x");
-                }
-            }
+            // console.log("OPUS PREF BROWSE: " + opus.prefs.browse);
+            // if(opus.prefs.browse === "dataTable") {
+            //     $(".gallery-contents > .ps__rail-x").removeClass("disable-ps__rail-x");
+            // } else {
+            //     if(!$(".gallery-contents > .ps__rail-x").hasClass("disable-ps__rail-x")) {
+            //         $(".gallery-contents > .ps__rail-x").addClass("disable-ps__rail-x");
+            //     }
+            // }
 
             o_browse.renderGalleryAndTable(data, this.url);
             o_browse.updateSortOrder();
@@ -946,14 +943,14 @@ var o_browse = {
     },
 
     adjustTableWidth: function() {
-        let containerWidth = $(".gallery-contents").width()-10;
-        let tableWidth = $(".gallery-contents").width()-50;
+        let containerWidth = $(".gallery-contents").width()-5;
+        // let tableWidth = $(".gallery-contents").width()-50;
         // Make sure the rightmost column is not cut off by the y-scrollbar
-        $("#dataTable").width(tableWidth);
+        $(".dataTable").width(containerWidth);
         $(".justify-content-center").width(containerWidth);
         o_browse.updateTableXScrollbarVerticalPosition();
-        o_browse.galleryScrollbar.update();
-        // o_browse.xAxisTableScrollbar.update();
+        // o_browse.galleryScrollbar.update();
+        o_browse.xAxisTableScrollbar.update();
     },
 
     metadataboxHtml: function(opusId) {
