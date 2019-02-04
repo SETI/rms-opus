@@ -78,7 +78,7 @@ var o_browse = {
                }
            }
            let q_str = hash.join('&');
-           let csv_link = "/opus/__api/data.csv?" + q_str + "&cols=" + col_str + "&limit=" + opus.result_count.toString() + "&order=" + opus.prefs.order;
+           let csv_link = "/opus/__api/metadata.csv?" + q_str + "&cols=" + col_str + "&limit=" + opus.result_count.toString() + "&order=" + opus.prefs.order;
            $(this).attr("href", csv_link);
        });
 
@@ -273,6 +273,7 @@ var o_browse = {
                     o_browse.showDetail(e, opusId);
                     break;
                 case "downloadCSV":
+                case "downloadCSVAll":
                 case "downloadData":
                 case "downloadURL":
                     return;
@@ -346,7 +347,8 @@ var o_browse = {
         let inCart = o_collections.isIn(opusId) ? "" : "in";
         let buttonInfo = o_browse.cartButtonInfo(opusId, inCart);
         $("#obs-menu .shopping-cart-item").html(`<i class="${buttonInfo.icon}"></i>${buttonInfo.title}`);
-        $("#obs-menu [data-action='downloadCSV']").attr("href",`/opus/api/data/${opusId}.csv?cols=${opus.prefs.cols.join()}`);
+        $("#obs-menu [data-action='downloadCSV']").attr("href",`/opus/__api/metadata_v2/${opusId}.csv?cols=${opus.prefs.cols.join()}`);
+        $("#obs-menu [data-action='downloadCSVAll']").attr("href",`/opus/__api/metadata_v2/${opusId}.csv`);
         $("#obs-menu [data-action='downloadData']").attr("href",`/opus/__api/download/${opusId}.zip`);
         $("#obs-menu [data-action='downloadURL']").attr("href",`/opus/__api/download/${opusId}.zip?urlonly=1`);
 
