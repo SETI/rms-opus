@@ -98,10 +98,6 @@ body {
 		overflow-x:hidden;
 }
 
-div.gallery {
-		overflow-y: hidden;
-}
-
 /* Make sure y-axis rail is not moving and always visible */
 .gallery-contents .ps__rail-y {
 		opacity: 1 !important;
@@ -584,6 +580,7 @@ div.gallery {
     margin:0; padding:0;
     position: relative;
     overflow-x:hidden;
+		overflow-y:hidden;
     margin-right:-80px;
 }
 .browse-nav-container {
