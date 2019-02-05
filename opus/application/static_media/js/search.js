@@ -550,14 +550,14 @@ var o_search = {
     getRangeEndpoints: function(slug) {
 
         $('#widget__' + slug + ' .spinner').fadeIn();
-
-        var url = "/opus/__api/meta/range/endpoints/" + slug + ".json?" + o_hash.getHash() +  '&reqno=' + opus.lastRequestNo;
+        opus.lastEndpointsRequestNo++
+        var url = "/opus/__api/meta/range/endpoints/" + slug + ".json?" + o_hash.getHash() +  '&reqno=' + opus.lastEndpointsRequestNo;
             $.ajax({url: url,
                 dataType:"json",
                 success: function(multdata){
                     $('#widget__' + slug + ' .spinner').fadeOut();
 
-                    if (multdata['reqno'] < opus.lastRequestNo) {
+                    if (multdata['reqno'] < opus.lastEndpointsRequestNo) {
                         return;
                     }
 
@@ -585,15 +585,15 @@ var o_search = {
     getValidMults: function (slug) {
         // turn on spinner
         $('#widget__' + slug + ' .spinner').fadeIn();
-
-        var url = "/opus/__api/meta/mults/" + slug + ".json?" + o_hash.getHash() +  '&reqno=' + opus.lastRequestNo;
+        opus.lastMultsRequestNo++;
+        var url = "/opus/__api/meta/mults/" + slug + ".json?" + o_hash.getHash() +  '&reqno=' + opus.lastMultsRequestNo;
         $.ajax({url: url,
             dataType:"json",
             success: function(multdata){
 
                 $('#widget__' + slug + ' .spinner').fadeOut('');
 
-                if (multdata['reqno'] < opus.lastRequestNo) {
+                if (multdata['reqno'] < opus.lastMultsRequestNo) {
                     return;
                 }
                 slug = multdata['field'];
