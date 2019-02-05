@@ -40,14 +40,13 @@ class LogReader(object):
     @staticmethod
     def read_logs(file_names: Iterable[str]) -> List[LogEntry]:
         log_entries = []
-        for file_name in sorted(file_names):
+        for file_name in file_names:
             print(f'Reading {file_name}')
             with open(file_name) as file:
                 for log_line in file.readlines():
                     log_entry = LogReader.__parse_line(log_line)
                     if log_entry:
                         log_entries.append(log_entry)
-        log_entries.sort(key=operator.attrgetter('time'))
         return log_entries
 
     @staticmethod
