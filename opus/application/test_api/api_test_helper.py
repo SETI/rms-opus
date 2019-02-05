@@ -52,8 +52,11 @@ class ApiTestHelper:
         print(url)
         response = self._get_response(url)
         self.assertEqual(response.status_code, 200)
-        expected = str(expected)[2:-1].replace('\r', '')
-        resp = str(response.content)[2:-1].replace('\r', '')[:len(expected)]
+        expected = str(expected)[2:-1]
+        expected = (expected.replace('\\\\r', '').replace('\\r', '')
+                    .replace('\r', ''))
+        resp = str(response.content)[2:-1]
+        resp = resp.replace('\\\\r', '').replace('\\r', '').replace('\r', '')
         print('Got:')
         print(resp)
         print('Expected:')
@@ -66,8 +69,11 @@ class ApiTestHelper:
         print(url)
         response = self._get_response(url)
         self.assertEqual(response.status_code, 200)
-        expected = str(expected)[2:-1].replace('\r', '')
-        resp = str(response.content)[2:-1].replace('\r', '')[:len(expected)]
+        expected = str(expected)[2:-1]
+        expected = (expected.replace('\\\\r', '').replace('\\r', '')
+                    .replace('\r', ''))
+        resp = str(response.content)[2:-1]
+        resp = resp.replace('\\\\r', '').replace('\\r', '').replace('\r', '')
         print('Got:')
         print(resp)
         print('Expected:')
@@ -78,9 +84,12 @@ class ApiTestHelper:
         print(url)
         response = self._get_response(url)
         self.assertEqual(response.status_code, 200)
-        # Strip off b'...''
-        expected = str(expected)[2:-1].replace('\r', '')
-        resp = str(response.content)[2:-1].replace('\r', '')[:len(expected)]
+        expected = str(expected)[2:-1]
+        expected = (expected.replace('\\\\r', '').replace('\\r', '')
+                    .replace('\r', ''))
+        resp = str(response.content)[2:-1]
+        resp = resp.replace('\\\\r', '').replace('\\r', '').replace('\r', '')
+        resp = resp[:len(expected)]
         print('Got:')
         print(resp)
         print('Expected:')
@@ -91,8 +100,11 @@ class ApiTestHelper:
         print(url)
         response = self._get_response(url)
         self.assertEqual(response.status_code, 200)
-        expected = str(expected)[2:-1].replace('\r', '')
-        resp = str(response.content)[2:-1].replace('\r', '')[:len(expected)]
+        expected = str(expected)[2:-1]
+        expected = (expected.replace('\\\\r', '').replace('\\r', '')
+                    .replace('\r', ''))
+        resp = str(response.content)[2:-1]
+        resp = resp.replace('\\\\r', '').replace('\\r', '').replace('\r', '')
         print('Got:')
         print(resp)
         print('Expected:')
@@ -105,8 +117,11 @@ class ApiTestHelper:
         print(url)
         response = self._get_response(url)
         self.assertEqual(response.status_code, 200)
-        expected = str(expected)[2:-1].replace('\r', '')
-        resp = str(response.content)[2:-1].replace('\r', '')[:len(expected)]
+        expected = str(expected)[2:-1]
+        expected = (expected.replace('\\\\r', '').replace('\\r', '')
+                    .replace('\r', ''))
+        resp = str(response.content)[2:-1]
+        resp = resp.replace('\\\\r', '').replace('\\r', '').replace('\r', '')
         print('Got:')
         print(resp)
         print('Expected:')
