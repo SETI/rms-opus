@@ -12,7 +12,7 @@
 #    Format: __collections/(?P<action>add|remove|addrange|removerange|addall).json
 #    Format: __collections/reset.html
 #    Format: __collections/download.json
-#    Format: __zip/(?P<opus_id>[-\w]+).zip
+#    Format: [__]api/download/(?P<opus_id>[-\w]+).zip
 #
 ################################################################################
 
@@ -37,7 +37,8 @@ from django.views.decorators.cache import never_cache
 from hurry.filesize import size as nice_file_size
 
 from results.views import (get_data,
-                           get_search_results_chunk)
+                           get_search_results_chunk,
+                           labels_for_slugs)
 from search.models import ObsGeneral
 from search.views import (get_param_info_by_slug,
                           url_to_search_params,
@@ -271,7 +272,7 @@ def api_create_download(request, opus_id=None):
     This is a PRIVATE API.
 
     Format: __collections/download.json
-        or: __zip/(?P<opus_id>[-\w]+).zip
+        or: [__]api/download/(?P<opus_id>[-\w]+).zip
     Arguments: types=<PRODUCT_TYPES>
                urlonly=1 (optional) means to not zip the actual data products
     """
@@ -281,13 +282,16 @@ def api_create_download(request, opus_id=None):
 
     session_id = get_session_id(request)
 
+    product_types = request.GET.get('types', 'all')
+    if product_types is None or product_types == '':
+        product_types = []
+    else:
+        product_types = product_types.split(',')
+
     if opus_id:
-        product_types = ['all']
         opus_ids = [opus_id]
         return_directly = True
     else:
-        product_types = request.GET.get('types', 'none')
-        product_types = product_types.split(',')
         num_selections = (Collections.objects
                           .filter(session_id__exact=session_id)
                           .count())
@@ -720,23 +724,9 @@ def _csv_helper(request, api_code=None):
                                                      limit='all',
                                                      api_code=api_code)
 
-    slug_list = slugs.split(',')
-    column_labels = []
-    for slug in slug_list:
-        pi = get_param_info_by_slug(slug)
-        if pi is None:
-            log.error('_create_csv_file: Unknown slug "%s"', slug)
-            return HttpResponseNotFound('Unknown slug')
-        else:
-            # append units if pi_units has unit stored
-            unit = pi.get_units()
-            label = pi.body_qualified_label_results()
-            if unit:
-                column_labels.append(label + ' ' + unit)
-            else:
-                column_labels.append(label)
+    slug_list = cols_to_slug_list(slugs)
 
-    return column_labels, page
+    return labels_for_slugs(slug_list), page
 
 
 def _create_csv_file(request, csv_file_name, api_code=None):

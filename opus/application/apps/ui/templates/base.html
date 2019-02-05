@@ -33,7 +33,7 @@
 				<li class="nav-item external-link">
 					<a class="nav-link" href="https://ringsnodesearchtool.blogspot.com/" target="_blank" aria-controls="blogspot">
 						<div class="container align-items-center d-flex h-100 my-auto">
-							<img src="{{ STATIC_URL }}img/new_25.gif"/>&nbsp;Recent Announcements
+							<img src="{{ STATIC_URL }}img/new_25.gif" alt="Recent Announcements"/>&nbsp;Recent Announcements
 						</div>
 					</a>
 				</li>
@@ -93,12 +93,12 @@
 								</li>
 								<li class="nav-item">
 									<a href="#" class="download_csv nav-link" title="Click to download CSV"><i class="fas fa-download"></i>&nbsp;Download CSV</a>
-								</li>
+								</li> 
 							</ul>
 							<div class="order-container">Sorted by:<ul class="sort-contents list-inline"></ul></div>
 						</div>
 					</nav>
-					<div class="panel-body gallery-contents container-fluid scrollbar-morpheus-den">
+					<div class="panel-body gallery-contents container-fluid">
 						<div class="row justify-content-center">
 							<div class="mr-0 thumb gallery gallery-scroll"></div>
 							<div class="page-load-status">
@@ -132,7 +132,7 @@
 				<div class="row">
 					<div class="col collection_details pr-0"></div>
 					<div class="col pl-0">
-						<div class="panel-body gallery-contents container-fluid  pr-2 scrollbar-morpheus-den">
+						<div class="panel-body gallery-contents container-fluid  pr-2">
 							<div class="row mr-0 mt-3 thumb gallery gallery-scroll"></div>
 							<div class="page-load-status">
 								<div class="infinite-scroll-request loader-ellips">
@@ -153,14 +153,17 @@
 			</div>
 
 		</div><!-- /tabcontent -->
+		
 
 		<!-- dropdown menu for observations -->
 		<div class="dropdown-menu dropdown-menu-sm" id="obs-menu" aria-labelledby="obs-menu">
-			<a class="dropdown-item" data-action="cart" href="#"><i class="fas fa-shopping-cart"></i>Add to Cart</a>
+			<a class="dropdown-item shopping-cart-item" data-action="cart" href="#"><i class="fas fa-shopping-cart"></i>Add to Cart</a>
 			<a class="dropdown-item" data-action="range" href="#"><i class="fas fa-step-backward"></i>Range Selection</a>
 			<a class="dropdown-item" data-action="info" href="#"><i class="fas fa-info-circle"></i>Show Detail</a>
-			<a class="dropdown-item" data-action="downloadAll" href="#"><i class="fas fa-download"></i>Download Observation and all associated Products</a>
-			<a class="dropdown-item" data-action="downloadCSV" href="#"><i class="fas fa-file-download"></i>Download CSV of Chosen Columns for this Observation</a>
+			<a class="dropdown-item" data-action="downloadCSV" href="#" target="__blank"><i class="fas fa-file-download"></i>Download CSV of Chosen Columns&nbsp;<span class="spinner">&nbsp;</span></a>
+			<a class="dropdown-item" data-action="downloadCSVAll" href="#" target="__blank"><i class="fas fa-file-download"></i>Download CSV of All Metadata&nbsp;<span class="spinner">&nbsp;</span></a>
+			<a class="dropdown-item" data-action="downloadData" href="#" target="__blank"><i class="fas fa-download"></i>Download Zipped Data Archive&nbsp;<span class="spinner">&nbsp;</span></a>
+			<a class="dropdown-item" data-action="downloadURL" href="#" target="__blank"><i class="fas fa-download"></i>Download Zipped URL Archive&nbsp;<span class="spinner">&nbsp;</span></a>
 			<a class="dropdown-item" data-action="help" href="#"><i class="far fa-question-circle"></i>Help</a>
 		</div>
 
@@ -174,7 +177,7 @@
 					<div id="galleryViewContents" class="modal-body bg-dark">
 						<div class="row">
 							<div class="left col-lg-7"></div>
-							<div class="right col-lg-5 scrollbar-morpheus-den"></div>
+							<div class="right col-lg-5"></div>
 						</div>
 					</div>
 				</div>

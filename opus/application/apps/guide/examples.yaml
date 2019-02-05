@@ -23,33 +23,57 @@ sections:
             desc: Get all available, or particular, metadata for a single observation. NOTE - USE OF THIS API IS DEPRECATED. THIS IS BECAUSE RATHER THAN RETURNING THE SAME SLUG NAMES USED TO PERFORM SEARCHES, IT ERRONEOUSLY RETURNS INTERNAL DATABASE NAMES THAT ARE NOT DOCUMENTED. THESE INTERNAL NAMES MAY NOT BE UNIQUE AND COULD CAUSE PROBLEMS. PLEASE USE THE V2 VERSION OF THIS API BELOW INSTEAD.
             info:
                 opus_id: valid opus_id (or old ring_obs_id)
-                fmt: json,html
+                fmt: json,html,csv
                 GET param 1: cols=<column names> (If supplied, only returns data for these columns; cats is ignored)
                 GET param 2: cats=<category names> (If supplied, only returns data for these categories)
                 JSON return: "If cols is supplied, a list of pairs {database_column: value}. Otherwise a list of pairs {category: data} where data is a list of pairs {database_column: value}."
             examples:
-                - desc: Single Cassini ISS Saturn Observation (all metadata)
+                - desc: Single Cassini ISS Saturn Observation (JSON, all metadata)
                   url: <HOST>/opus/api/metadata/co-iss-w1866600688.json
-                - desc: Single Cassini ISS Saturn Observation (start and stop time only)
+                - desc: Single Cassini ISS Saturn Observation (JSON, start and stop time only)
                   url: <HOST>/opus/api/metadata/co-iss-w1866600688.json?cols=time1,time2
-                - desc: Single Cassini ISS Saturn Observation (PDS and Images constraints only)
+                - desc: Single Cassini ISS Saturn Observation (JSON, PDS and Images constraints only)
                   url: <HOST>/opus/api/metadata/co-iss-w1866600688.json?cats=PDS+Constraints,Image+Constraints
+                - desc: Single Cassini ISS Saturn Observation (HTML, all metadata)
+                  url: <HOST>/opus/api/metadata/co-iss-w1866600688.html
+                - desc: Single Cassini ISS Saturn Observation (HTML, start and stop time only)
+                  url: <HOST>/opus/api/metadata/co-iss-w1866600688.html?cols=time1,time2
+                - desc: Single Cassini ISS Saturn Observation (HTML, PDS and Images constraints only)
+                  url: <HOST>/opus/api/metadata/co-iss-w1866600688.html?cats=PDS+Constraints,Image+Constraints
+                - desc: Single Cassini ISS Saturn Observation (CSV, all metadata)
+                  url: <HOST>/opus/api/metadata/co-iss-w1866600688.csv
+                - desc: Single Cassini ISS Saturn Observation (CSV, start and stop time only)
+                  url: <HOST>/opus/api/metadata/co-iss-w1866600688.csv?cols=time1,time2
+                - desc: Single Cassini ISS Saturn Observation (CSV, PDS and Images constraints only)
+                  url: <HOST>/opus/api/metadata/co-iss-w1866600688.csv?cats=PDS+Constraints,Image+Constraints
 
           - title: api/metadata_v2/[opus_id].[fmt]
             desc: Get all available, or particular, metadata for a single observation. NOTE - THIS IS THE NEW VERSION OF THIS API AND SHOULD BE USED BY ALL APPLICATIONS.
             info:
                 opus_id: valid opus_id (or old ring_obs_id)
-                fmt: json,html
+                fmt: json,html,csv
                 GET param 1: cols=<column names> (If supplied, only returns data for these columns; cats is ignored)
                 GET param 2: cats=<category names> (If supplied, only returns data for these categories)
                 JSON return: "If cols is supplied, a list of pairs {slug: value}. Otherwise a list of pairs {category: data} where data is a list of pairs {slug: value}."
             examples:
-                - desc: Single Cassini ISS Saturn Observation (all metadata)
+                - desc: Single Cassini ISS Saturn Observation (JSON, all metadata)
                   url: <HOST>/opus/api/metadata_v2/co-iss-w1866600688.json
-                - desc: Single Cassini ISS Saturn Observation (start and stop time only)
+                - desc: Single Cassini ISS Saturn Observation (JSON, start and stop time only)
                   url: <HOST>/opus/api/metadata_v2/co-iss-w1866600688.json?cols=time1,time2
-                - desc: Single Cassini ISS Saturn Observation (PDS and Images constraints only)
+                - desc: Single Cassini ISS Saturn Observation (JSON, PDS and Images constraints only)
                   url: <HOST>/opus/api/metadata_v2/co-iss-w1866600688.json?cats=PDS+Constraints,Image+Constraints
+                - desc: Single Cassini ISS Saturn Observation (HTML, all metadata)
+                  url: <HOST>/opus/api/metadata_v2/co-iss-w1866600688.html
+                - desc: Single Cassini ISS Saturn Observation (HTML, start and stop time only)
+                  url: <HOST>/opus/api/metadata_v2/co-iss-w1866600688.html?cols=time1,time2
+                - desc: Single Cassini ISS Saturn Observation (HTML, PDS and Images constraints only)
+                  url: <HOST>/opus/api/metadata_v2/co-iss-w1866600688.html?cats=PDS+Constraints,Image+Constraints
+                - desc: Single Cassini ISS Saturn Observation (CSV, all metadata)
+                  url: <HOST>/opus/api/metadata_v2/co-iss-w1866600688.csv
+                - desc: Single Cassini ISS Saturn Observation (CSV, start and stop time only)
+                  url: <HOST>/opus/api/metadata_v2/co-iss-w1866600688.csv?cols=time1,time2
+                - desc: Single Cassini ISS Saturn Observation (CSV, PDS and Images constraints only)
+                  url: <HOST>/opus/api/metadata_v2/co-iss-w1866600688.csv?cats=PDS+Constraints,Image+Constraints
 
           - title: api/images/[size].[fmt]
             desc: Get image results of a given size for a search.
@@ -120,6 +144,17 @@ sections:
                 - desc: Target Pan
                   url: <HOST>/opus/api/files.json?&target=pan
 
+          - title: api/download/[opus_id].zip
+            desc: Download a ZIP file containing all the products related to opus_id
+            info:
+                GET param 1: urlonly=N (Optional; if urlonly=1, only include the urls.txt file and omit all data files from the resulting zip)
+                GET param 2: types=<types> (List of product types; if not supplied, all are returned)
+            examples:
+                - desc: A Voyager ISS observation
+                  url: <HOST>/opus/api/download/vg-iss-2-s-c4360022.zip
+                - desc: A Voyager ISS observation, URLs only
+                  url: <HOST>/opus/api/download/vg-iss-2-s-c4360022.zip?urlonly=1
+
     - title: Getting Information about Data
       endpoints:
 
@@ -140,21 +175,29 @@ sections:
             desc: Returns all possible values for a given multiple choice field, given a search, and the result count for each value.
             info:
                 param: param name
-                fmt : json,html
+                fmt : json,html,csv
                 GET param 1: search params (If not supplied, the result is not constrained)
             examples:
-                - desc: Get all possible targets and counts for each when planet=Saturn
+                - desc: Get all possible targets and counts for each when planet=Saturn in JSON
                   url: <HOST>/opus/api/meta/mults/target.json?planet=Saturn
+                - desc: Get all possible targets and counts for each when planet=Saturn in HTML
+                  url: <HOST>/opus/api/meta/mults/target.html?planet=Saturn
+                - desc: Get all possible targets and counts for each when planet=Saturn in CSV
+                  url: <HOST>/opus/api/meta/mults/target.csv?planet=Saturn
 
           - title: api/meta/range/endpoints/[param].[fmt]
             desc: Get range endpoints for a field, given a search
             info:
                 param: param name
-                fmt: json,html
+                fmt: json,html,csv
                 GET param 1: search params (If not supplied, the result is not constrained)
             examples:
-                - desc: Get ring radius endpoints for target Saturn
+                - desc: Get ring radius endpoints for target Saturn in JSON
                   url: <HOST>/opus/api/meta/range/endpoints/RINGGEOringradius1.json?target=Saturn
+                - desc: Get ring radius endpoints for target Saturn in HTML
+                  url: <HOST>/opus/api/meta/range/endpoints/RINGGEOringradius1.html?target=Saturn
+                - desc: Get ring radius endpoints for target Saturn in CSV
+                  url: <HOST>/opus/api/meta/range/endpoints/RINGGEOringradius1.csv?target=Saturn
 
           - title: api/categories/[opus_id].json
             desc: Return a list of all table names this opus_id exists in.

@@ -77,7 +77,7 @@ def api_normalize_input(request):
         exit_api_call(api_code, ret)
         raise ret
 
-    reqno = request.GET.get('reqno', None)
+    reqno = get_reqno(request)
     selections['reqno'] = reqno
 
     ret = json_response(selections)
@@ -1029,8 +1029,9 @@ def get_string_query(selections, param_qualified_name, qtypes):
     value = values[0]
 
     value = value.replace('\\', '\\\\')
-    value = value.replace('%', '\\%')
-    value = value.replace('_', '\\_')
+    if qtype != 'matches':
+        value = value.replace('%', '\\%')
+        value = value.replace('_', '\\_')
 
     clause = ''
     params = []

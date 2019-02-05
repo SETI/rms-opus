@@ -1,13 +1,14 @@
 <section class="container-fluid">
     <div class="row flex-md-row flex-md-nowrap">
         <div class="col-md-12 metadata-container">
-            <div class="detail-matadata scrollbar-morpheus-den pr-5">
+            <div class="detail-matadata pr-5">
                 <h1>Observation Detail</h1>
                 <p><b>OPUS ID: </b>{{ opus_id }}</p>
 
                 <h2>PDS Products</h2>
                 <div>
-                    <p>Download zipped <a href="/opus/__zip/{{ opus_id }}.zip">data archive</a> or <a href="/opus/__zip/{{ opus_id }}.zip?urlonly=1">URL archive</a> for this observation (all products, current version only)</a></p>
+                    <p><a class="download_csv" target="_blank" href="#">Download CSV of Chosen Columns</a></p>
+                    <p>Download zipped <a href="/opus/__api/download/{{ opus_id }}.zip">data archive</a> or <a href="/opus/__api/download/{{ opus_id }}.zip?urlonly=1">URL archive</a> for this observation (all products, current version only)</a></p>
                     <p>Click on any "Index" type to see the entry for this observation in that table.</p>
                     {% for version, version_items in products.items %}
                       <ul>

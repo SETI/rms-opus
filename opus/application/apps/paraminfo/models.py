@@ -64,7 +64,7 @@ class ParamInfo(models.Model):
         # Append "[Ring]" or "[<Surface Body>]" or "[Mission]" or "[Instrument]"
         if self.label_results is None:
             return None
-            
+
         append_to_label = None
 
         pretty_name = (TableNames.objects
@@ -84,3 +84,12 @@ class ParamInfo(models.Model):
             return '(' + opus_support.UNIT_TRANSLATION[self.units] + ')'
         else:
             return ''
+
+    def fully_qualified_label_results(self):
+        ret = self.body_qualified_label_results()
+        if ret is None:
+            return None
+        units = self.get_units()
+        if units != '':
+            ret += ' '+units
+        return ret

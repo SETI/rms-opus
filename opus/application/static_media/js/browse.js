@@ -3,7 +3,15 @@ var o_browse = {
     keyPressAction: "",
     tableSorting: false,
     xAxisTableScrollbar: new PerfectScrollbar(".dataTable"),
+<<<<<<< HEAD
     galleryScrollbar: new PerfectScrollbar(".gallery-contents"),
+||||||| merged common ancestors
+    // xAxisTableScrollbar: new PerfectScrollbar(".gallery-contents"),
+    // scrollbar: new PerfectScrollbar("#browse .gallery-contents"),
+=======
+    yAxisGalleryScrollbar: new PerfectScrollbar("#browse .gallery-scroll"),
+    // scrollbar: new PerfectScrollbar("#browse .gallery-contents"),
+>>>>>>> debby_repo/bug_427_bootstrap_upgrade
 
     /**
     *
@@ -68,16 +76,16 @@ var o_browse = {
        });
 
        // browse nav menu - download csv
-       $("#browse").on("click", '.download_csv', function() {
-           var col_str = opus.prefs.cols.join(',');
-           var hash = [];
-           for (var param in opus.selections) {
+       $("#browse").on("click", ".download_csv", function() {
+           let col_str = opus.prefs.cols.join(',');
+           let hash = [];
+           for (let param in opus.selections) {
                if (opus.selections[param].length){
                    hash[hash.length] = param + '=' + opus.selections[param].join(',').replace(/ /g,'+');
                }
            }
-           var q_str = hash.join('&');
-           var csv_link = "/opus/__api/data.csv?" + q_str + '&cols=' + col_str + '&limit=' + opus.result_count.toString() + '&order=' + opus.prefs['order'];
+           let q_str = hash.join('&');
+           let csv_link = "/opus/__api/metadata.csv?" + q_str + "&cols=" + col_str + "&limit=" + opus.result_count.toString() + "&order=" + opus.prefs.order;
            $(this).attr("href", csv_link);
        });
 
@@ -96,7 +104,6 @@ var o_browse = {
             e.preventDefault();
             o_browse.hideMenu();
 
-            let action = "add";     // just a default var decl
             let opusId = $(this).parent().data("id");
             let startElem = $(e.delegateTarget).find(".selected");
 
@@ -110,7 +117,6 @@ var o_browse = {
                 if (startElem.length == 0) {
                     $(this).addClass("selected");
                     o_collections.toggleInCollection(opusId);
-                    console.log("start range, action="+action);
                 } else {
                     let fromOpusId = $(startElem).parent().data("id");
                     o_collections.toggleInCollection(fromOpusId, opusId);
@@ -158,7 +164,7 @@ var o_browse = {
         // thumbnail overlay tools
         $('.gallery').on("click", ".tools a", function(e) {
           //snipe the id off of the image..
-          var opusId = $(this).parent().data("id");
+          let opusId = $(this).parent().data("id");
 
           switch ($(this).data("icon")) {
               case "info":  // detail page
@@ -211,7 +217,10 @@ var o_browse = {
         $('#galleryView').on("click", "a.select", function(e) {
             let opusId = $(this).data("id");
             if (opusId) {
-                o_collections.toggleInCollection(opusId)
+                let status = o_collections.toggleInCollection(opusId) == "add" ? "" : "in";
+                let buttonInfo = o_browse.cartButtonInfo(opusId, status);
+                $(this).attr("title", buttonInfo.title);
+                $(this).html(`<i class="${buttonInfo.icon} fa-2x float-left"></i>`);
             }
             return false;
         });
@@ -259,7 +268,7 @@ var o_browse = {
 
         $("#obs-menu").on("click", '.dropdown-item',  function(e) {
             o_browse.hideMenu();
-            var opusId = $(this).parent().data("id");
+            let opusId = $(this).parent().data("id");
 
             switch ($(this).data("action")) {
                 case "cart":  // add/remove from cart
@@ -270,10 +279,11 @@ var o_browse = {
                 case "info":  // detail page
                     o_browse.showDetail(e, opusId);
                     break;
-                case "downloadAll":
-                    break;
                 case "downloadCSV":
-                    break;
+                case "downloadCSVAll":
+                case "downloadData":
+                case "downloadURL":
+                    return;
                 case "help":
                     break;
             }
@@ -281,6 +291,11 @@ var o_browse = {
         });
 
         $(document).on("keydown",function(e) {
+            if ((e.which || e.keyCode) == 27) { // esc - close modals
+                $("#galleryView").modal('hide');
+                $("#columnChooser").modal('hide')
+                o_browse.hideMenu();
+            }
             if ($("#galleryView").hasClass("show")) {
                 /*  Catch the right/left arrow while in the modal
                     Up: 38
@@ -290,9 +305,6 @@ var o_browse = {
                 let opusId;
                 // the || is for cross-browser support; firefox does not support keyCode
                 switch (e.which || e.keyCode) {
-                    case 27:  // esc - close modal
-                        $("#galleryView").modal('hide');
-                        break;
                     case 39:  // next
                         opusId = $("#galleryView").find(".next").data("id");
                         break;
@@ -303,8 +315,6 @@ var o_browse = {
                 if (opusId) {
                     o_browse.updateGalleryView(opusId);
                 }
-            } else if ($("#columnChooser").hasClass("show") && e.keyCode === 27) {
-                $("#columnChooser").modal('hide')
             }
             // don't return false here or it will snatch all the user input!
         });
@@ -340,23 +350,32 @@ var o_browse = {
         // make this like a default right click menu
         if ($("#obs-menu").hasClass("show")) {
             o_browse.hideMenu();
-        } else {
-            let top = e.pageY;
-            let left = e.pageX;
-            $("#obs-menu").css({
-                display: "block",
-                top: top,
-                left: left
-            }).addClass("show")
-            .attr("data-id", opusId);
         }
+        let inCart = o_collections.isIn(opusId) ? "" : "in";
+        let buttonInfo = o_browse.cartButtonInfo(opusId, inCart);
+        $("#obs-menu .shopping-cart-item").html(`<i class="${buttonInfo.icon}"></i>${buttonInfo.title}`);
+        $("#obs-menu [data-action='downloadCSV']").attr("href",`/opus/__api/metadata_v2/${opusId}.csv?cols=${opus.prefs.cols.join()}`);
+        $("#obs-menu [data-action='downloadCSVAll']").attr("href",`/opus/__api/metadata_v2/${opusId}.csv`);
+        $("#obs-menu [data-action='downloadData']").attr("href",`/opus/__api/download/${opusId}.zip`);
+        $("#obs-menu [data-action='downloadURL']").attr("href",`/opus/__api/download/${opusId}.zip?urlonly=1`);
+
+        $("#obs-menu .dropdown-item[data-action='range']").hide();
+
+        let top = e.pageY;
+        let left = e.pageX;
+        $("#obs-menu").css({
+            display: "block",
+            top: top,
+            left: left
+        }).addClass("show")
+            .attr("data-id", opusId);
     },
 
     showDetail: function(e, opusId) {
         opus.prefs.detail = opusId;
         if (e.shiftKey || e.ctrlKey || e.metaKey) {
             // handles command click to open in new tab
-            var link = "/opus/#/" + o_hash.getHash();
+            let link = "/opus/#/" + o_hash.getHash();
             link = link.replace("view=browse", "view=detail");
             window.open(link, '_blank');
         } else {
@@ -393,7 +412,7 @@ var o_browse = {
         elem.find("i.fa-check").fadeIn().css('display', 'inline-block');
 
         let label = elem.data("qualifiedlabel");
-        let info = '<i class = "fa fa-info-circle" title = "' + elem.find('*[title]').attr("title") + '"></i>';
+        let info = '<i class = "fas fa-info-circle" title = "' + elem.find('*[title]').attr("title") + '"></i>';
         let html = `<li id = "cchoose__${slug}">${label}${info}<span class="unselect"><i class="far fa-trash-alt"></span></li>`
         $(".selectedColumns > ul").append(html);
         opus.prefs.cols.push(slug);
@@ -454,7 +473,7 @@ var o_browse = {
                 selectedColumn.fadeIn().css('display', 'inline-block');
                 if ($.inArray(slug, opus.prefs.cols ) < 0) {
                     // this slug was previously unselected, add to cols
-                    $('<li id = "cchoose__' + slug + '">' + label + ' <i class = "fa fa-info-circle" title = "' + def + '"></i><span class="unselect"><i class="far fa-trash-alt"></span></li>').hide().appendTo('.selectedColumns > ul').fadeIn();
+                    $('<li id = "cchoose__' + slug + '">' + label + ' <i class = "fas fa-info-circle" title = "' + def + '"></i><span class="unselect"><i class="far fa-trash-alt"></span></li>').hide().appendTo('.selectedColumns > ul').fadeIn();
                     opus.prefs.cols.push(slug);
                 }
 
@@ -474,7 +493,7 @@ var o_browse = {
 
 
         // removes chosen column
-        $('#columnChooser .selectedColumns').on("click", 'li .unselect', function() {
+        $("#columnChooser .selectedColumns").on("click", "li .unselect", function() {
             let slug = $(this).parent().attr("id").split('__')[1];
 
             if ($.inArray(slug, opus.prefs.cols) >= 0) {
@@ -663,8 +682,8 @@ var o_browse = {
                 html += '<div class="thumb-overlay">';
                 if (opus.prefs.view == "browse") {
                     html += '<div class="tools dropdown" data-id="'+opusId+'">';
-                    html +=     '<a href="#" data-icon="info"><i class="fas fa-info-circle fa-xs"></i></a>';
-                    html +=     '<a href="#" data-icon="cart"><i class="fas fa-shopping-cart fa-xs"></i></a>';
+                    html +=     '<a href="#" data-icon="info" title="View observation detail"><i class="fas fa-info-circle fa-xs"></i></a>';
+                    html +=     '<a href="#" data-icon="cart" title="Add to shopping cart"><i class="fas fa-shopping-cart fa-xs"></i></a>';
                     html +=     '<a href="#" data-icon="menu"><i class="fas fa-ellipsis-v fa-xs"></i></a>';
                     html += '</div>';
                 } else {
@@ -688,6 +707,7 @@ var o_browse = {
         }
 
         $('.gallery', namespace).append(html);
+        o_browse.yAxisGalleryScrollbar.update();
         o_browse.xAxisTableScrollbar.update();
         o_browse.galleryScrollbar.update();
     },
@@ -920,7 +940,13 @@ var o_browse = {
     adjustBrowseHeight: function() {
         let container_height = $(window).height()-120;
         $(".gallery-contents").height(container_height);
+<<<<<<< HEAD
         o_browse.galleryScrollbar.update();
+||||||| merged common ancestors
+        // o_browse.scrollbar.update();
+=======
+        //o_browse.scrollbar.update();
+>>>>>>> debby_repo/bug_427_bootstrap_upgrade
         //opus.limit =  (floor($(window).width()/thumbnailSize) * floor(container_height/thumbnailSize));
     },
 
@@ -934,31 +960,46 @@ var o_browse = {
         o_browse.xAxisTableScrollbar.update();
     },
 
+    cartButtonInfo: function(opusId, status) {
+        let icon = "fas fa-cart-plus";
+        let title = "Add to shopping cart";
+        if (status != "in") {
+            icon = "far fa-trash-alt";
+            title = "Remove from shopping cart";
+        }
+        return  {"icon":icon, "title":title};
+    },
+
     metadataboxHtml: function(opusId) {
         // list columns + values
-        let html = "<dl>";
+        let html = "<div class='metadata'><dl>";
         $.each(opus.col_labels, function(index, columnLabel) {
             let value = opus.gallery_data[opusId][index];
             html += "<dt>" + columnLabel + ":</dt><dd>" + value + "</dd>";
         });
 
-        html += "</dl>";
+        html += "</dl></div>";
         let next = $("#browse tr[data-id="+opusId+"]").next("tr");
         next = (next.length > 0 ? next.data("id") : "");
         let prev = $("#browse tr[data-id="+opusId+"]").prev("tr");
         prev = (prev.length > 0 ? prev.data("id") : "");
 
+        let status = o_collections.isIn(opusId) ? "" : "in";
+        let buttonInfo = o_browse.cartButtonInfo(opusId, status);
+
         // add a link to detail page;
         let hashArray = o_hash.getHashArray();
-        hashArray["view"] = "detail";
-        hashArray["detail"] = opusId;
-        html += '<p><a href = "/opus/#/' + o_hash.hashArrayToHashString(hashArray) + '" class="detailViewLink" data-opusid="' + opusId + '">View Detail</a></p>';
+        hashArray.view = "detail";
+        hashArray.detail = opusId;
+        html += '<p class="detail"><a href = "/opus/#/' + o_hash.hashArrayToHashString(hashArray) + '" class="detailViewLink" data-opusid="' + opusId + '"><i class = "fas fa-info-circle"></i>&nbsp;View Detail</a></p>';
 
         // prev/next buttons - put this in galleryView html...
         html += "<div class='bottom'>";
-        html += "<a href='#' class='select' data-id='"+opusId+"' title='Add to selections'><i class='fas fa-shopping-cart fa-2x float-left'></i></a>";
-        html += "<a href='#' class='next pr-5' data-id='"+next+"' title='Next image'><i class='far fa-hand-point-right fa-2x float-right'></i></a>";
-        html += "<a href='#' class='prev pr-5' data-id='"+prev+"' title='Previous image'><i class='far fa-hand-point-left fa-2x float-right'></i></a></div>";
+        html += `<a href="#" class="select" data-id="${opusId}" title="${buttonInfo.title}"><i class="${buttonInfo.icon} fa-2x float-left"></i></a>`;
+        if (next != "")
+            html += `<a href="#" class="next pr-5" data-id="${next}" title="Next image"><i class="far fa-hand-point-right fa-2x float-right"></i></a>`;
+        if (prev != "")
+            html += `<a href="#" class="prev pr-5" data-id="${prev}" title="Previous image"><i class="far fa-hand-point-left fa-2x float-right"></i></a></div>`;
         return html;
     },
 
@@ -990,6 +1031,11 @@ var o_browse = {
     updateMetaGalleryView: function(opusId, imageURL) {
         $("#galleryViewContents .left").html("<a href='"+imageURL+"' target='_blank'><img src='"+imageURL+"' title='"+opusId+"' class='preview'/></a>");
         $("#galleryViewContents .right").html(o_browse.metadataboxHtml(opusId));
+        if (o_browse.yAxisModalScrollbar == undefined) {
+            o_browse.yAxisModalScrollbar = new PerfectScrollbar("#galleryViewContents .metadata");
+        } else {
+            o_browse.yAxisModalScrollbar.update();
+        }
     },
 
     resetData: function() {

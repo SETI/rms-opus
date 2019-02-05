@@ -395,7 +395,7 @@ var o_widgets = {
          for (var k in opus.prefs.widgets) {
              var slug = opus.prefs.widgets[k];
              var widget = 'widget__' + slug;
-             var html = '<li id = "' + widget + '" class = "widget ui-state-default"></li>';
+             var html = '<li id = "' + widget + '" class = "widget"></li>';
              $(html).appendTo('#search_widgets ');
              // $(html).hide().appendTo('#search_widgets').show("blind",{direction: "vertical" },200);
              opus.widget_elements_drawn.push(slug);
@@ -425,7 +425,7 @@ var o_widgets = {
 
             o_widgets.updateWidgetCookies();
             // these sometimes get drawn on page load by placeWidgetContainers, but not this time:
-            var html = '<li id = "' + widget + '" class = "widget ui-state-default"></li>';
+            var html = '<li id = "' + widget + '" class = "widget"></li>';
             $(html).hide().prependTo(formscolumn).show("slow");
             opus.widget_elements_drawn.unshift(slug);
 

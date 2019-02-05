@@ -52,8 +52,8 @@
 
 "https://tools.pds-rings.seti.org/#/observationtype=Image",555148,Observation Type Image
 "https://tools.pds-rings.seti.org/#/observationtype=Spectrum",0,Observation Type Spectrum
-"https://tools.pds-rings.seti.org/#/observationtype=Spectral Image",1153,Observation Type Spectral Image
-"https://tools.pds-rings.seti.org/#/observationtype=Spectral Cube",884432,Observation Type Spectral Cube
+"https://tools.pds-rings.seti.org/#/observationtype=Spectral+Image",1153,Observation Type Spectral Image
+"https://tools.pds-rings.seti.org/#/observationtype=Spectral+Cube",884432,Observation Type Spectral Cube
 "https://tools.pds-rings.seti.org/#/observationtype=Time+Series",58711,Observation Type Time Series
 "https://tools.pds-rings.seti.org/#/observationtype=Spectral+Time+Series",24950,Observation Type Spectral Time Series
 

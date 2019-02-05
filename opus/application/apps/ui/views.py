@@ -99,7 +99,7 @@ def api_get_table_headers(request):
 
     if not slugs:
         slugs = settings.DEFAULT_COLUMNS
-    slugs = slugs.split(',')
+    slugs = cols_to_slug_list(slugs)
     columns = []
 
     # If this is an ajax call it means it's from our app, so append the
@@ -377,11 +377,11 @@ def api_get_column_chooser(request):
     api_code = enter_api_call('api_get_column_chooser', request)
 
     slugs = request.GET.get('cols', settings.DEFAULT_COLUMNS)
-    slugs = slugs.split(',')
+    slugs = cols_to_slug_list(slugs)
 
     slugs = filter(None, slugs)
     if not slugs:
-        slugs = settings.DEFAULT_COLUMNS.split(',')
+        slugs = cols_to_slug_list(settings.DEFAULT_COLUMNS)
     all_slugs_info = _get_column_info(slugs)
     namespace = 'column_chooser_input'
     menu = _get_menu_labels(request, 'results')['menu']

@@ -2,6 +2,10 @@ var o_detail = {
 
     getDetail: function (opus_id) {
 
+        $("#detail").on("click", ".download_csv", function() {
+            $(this).attr("href", "/opus/__collections/data.csv?"+ o_hash.getHash());
+        });
+
         opus.prefs.detail = opus_id;
         let detailSelector = "#detail .panel";
 

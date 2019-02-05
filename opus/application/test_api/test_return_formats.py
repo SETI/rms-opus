@@ -247,12 +247,12 @@ class ApiFormats:
             self.api_metadata_base: {
                 "api": "api/metadata/[opus_id].[fmt]",
                 "payload": ApiFormats.payload_for_metadata,
-                "support_format": ["json", "html"]
+                "support_format": ["json", "html", "csv"]
             },
             self.api_metadata_v2_base: {
                 "api": "api/metadata_v2/[opus_id].[fmt]",
                 "payload": ApiFormats.payload_for_metadata,
-                "support_format": ["json", "html"]
+                "support_format": ["json", "html", "csv"]
             },
             self.api_images_size_base: {
                 "api": "api/images/[size].[fmt]",
@@ -287,12 +287,12 @@ class ApiFormats:
             self.api_mults_base: {
                 "api": "api/meta/mults/[param].[fmt]",
                 "payload": ApiFormats.payload_for_mults,
-                "support_format": ["json", "html"]
+                "support_format": ["json", "html", "csv"]
             },
             self.api_endpoints_base: {
                 "api": "api/meta/range/endpoints/[param].[fmt]",
                 "payload": ApiFormats.payload_for_endpoints,
-                "support_format": ["json", "html"]
+                "support_format": ["json", "html", "csv"]
             },
             self.api_categories_with_opus_id_base: {
                 "api": "api/categories/[opus_id].json",
