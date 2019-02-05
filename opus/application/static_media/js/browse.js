@@ -1017,7 +1017,9 @@ var o_browse = {
         $("#galleryViewContents .left").html("<a href='"+imageURL+"' target='_blank'><img src='"+imageURL+"' title='"+opusId+"' class='preview'/></a>");
         $("#galleryViewContents .right").html(o_browse.metadataboxHtml(opusId));
         if (o_browse.yAxisModalScrollbar == undefined) {
-            o_browse.yAxisGalleryScrollbar = new PerfectScrollbar("#galleryViewContents .metadata");
+            o_browse.yAxisModalScrollbar = new PerfectScrollbar("#galleryViewContents .metadata");
+        } else {
+            o_browse.yAxisModalScrollbar.update();
         }
     },
 
