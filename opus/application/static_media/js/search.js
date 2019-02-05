@@ -15,6 +15,8 @@ var o_search = {
     truncatedResultsMsg: "&ltMore choices available&gt",
     slugStringSearchChoicesReqno: {},
     slugNormalizeReqno: {},
+    slugMultsReqno: {},
+    slugEndpointsReqno: {},
     slugRangeInputValidValueFromLastSearch: {},
 
     searchBehaviors: function() {
@@ -434,49 +436,51 @@ var o_search = {
             // this is a mult field
             o_search.getValidMults(slug);
         } else {
-          $("#widget__" + slug + " .spinner").fadeOut();
+          $(`#widget__${slug}.spinner`).fadeOut();
         }
     },
 
     getRangeEndpoints: function(slug) {
 
-        $("#widget__" + slug + " .spinner").fadeIn();
+        $(`#widget__${slug}.spinner`).fadeIn();
 
-        var url = "/opus/__api/meta/range/endpoints/" + slug + ".json?" + o_hash.getHash() +  "&reqno=" + opus.lastRequestNo;
+        opus.lastEndpointsRequestNo++;
+        o_search.slugEndpointsReqno[slug] = opus.lastEndpointsRequestNo;
+        var url = `/opus/__api/meta/range/endpoints/${slug}.json?${o_hash.getHash()}&reqno=${o_search.slugEndpointsReqno[slug]}`;
         $.ajax({url: url,
             dataType:"json",
             success: function(multdata){
-                $("#widget__" + slug + " .spinner").fadeOut();
+                $(`#widget__${slug}.spinner`).fadeOut();
 
-                if (multdata['reqno'] < opus.lastRequestNo) {
+                if (multdata.reqno< o_search.slugEndpointsReqno[slug]) {
                     return;
                 }
-                $('#hint__' + slug).html("<span>min: " + multdata['min'] +
-                                         "</span><span>max: " + multdata['max'] +
-                                         "</span><span> nulls: " + multdata['nulls'] + '</span>');
-            },
+                $('#hint__' + slug).html(`<span>min: ${multdata.min}</span><span>max: ${multdata.max}</span><span> nulls: ${multdata.nulls}</span>`);
+                            },
             statusCode: {
                 404: function() {
-                    $("#widget__" + slug + " .spinner").removeClass("spinning");
+                    $(`#widget__${slug}.spinner`).removeClass("spinning");
                 }
             },
             error:function (xhr, ajaxOptions, thrownError){
-                $("#widget__" + slug + " .spinner").removeClass("spinning");
+                $(`#widget__${slug}.spinner`).removeClass("spinning");
                 // range input hints are "?" when wrong values of url is pasted
-                $("#hint__" + slug).html("<span>min: ?</span><span>max: ?</span><span> nulls: ?</span>");
+                $(`#hint__${slug}`).html("<span>min: ?</span><span>max: ?</span><span> nulls: ?</span>");
             }
         }); // end mults ajax
     },
 
     getValidMults: function (slug) {
         // turn on spinner
-        $("#widget__" + slug + " .spinner").fadeIn();
+        $(`#widget__${slug}.spinner`).fadeIn();
 
-        var url = "/opus/__api/meta/mults/" + slug + ".json?" + o_hash.getHash() +  "&reqno=" + opus.lastRequestNo;
+        opus.lastMultsRequestNo++;
+        o_search.slugMultsReqno[slug] = opus.lastMultsRequestNo;
+        var url = `/opus/__api/meta/mults/${slug}.json?${o_hash.getHash()}&reqno=${o_search.slugMultsReqno[slug]}`;
         $.ajax({url: url,
             dataType:"json",
             success: function(multdata){
-                if (multdata.reqno < opus.lastRequestNo) {
+                if (multdata.reqno < o_search.slugMultsReqno[slug]) {
                     return;
                 }
 
@@ -504,11 +508,11 @@ var o_search = {
             },
             statusCode: {
                 404: function() {
-                  $("#widget__" + slug + " .spinner").removeClass("spinning");
+                  $(`#widget__${slug}.spinner`).removeClass("spinning");
               }
             },
             error:function (xhr, ajaxOptions, thrownError){
-                $("#widget__" + slug + " .spinner").removeClass("spinning");
+                $(`#widget__${slug}.spinner`).removeClass("spinning");
                 // checkbox hints are "?" when wrong values of url is pasted
                 $(".hints").each(function() {
                     $(this).html("<span>?</span>");

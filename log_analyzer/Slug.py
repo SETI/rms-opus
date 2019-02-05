@@ -10,8 +10,9 @@ import requests
 
 class Family(NamedTuple):
     label: str  # The long name for this slug
-    min: str    # 'min' or 'start'.  Empty string if this is a singleton
-    max: str    # 'max' or 'stop'.  Empty string if this is a singleton
+    min: str  # 'min' or 'start'.  Empty string if this is a singleton
+    max: str  # 'max' or 'stop'.  Empty string if this is a singleton
+
     def is_singleton(self) -> bool:
         return self.min == ''
 
@@ -84,7 +85,8 @@ class ToInfoMap:
             return {slug_info['slug'].lower(): value
                     for slug_info in json_data.values()
                     for value in [slug_info.get(label)] if value
-                   }
+                    }
+
         # Fill in all the normal slugs
         self._slug_to_search_label = create_dictionary('full_search_label')
         self._slug_to_column_label = create_dictionary('full_label')
@@ -99,7 +101,7 @@ class ToInfoMap:
             self._column_map[slug] = None
             self._search_map[slug] = None
 
-    def get_info_for_search_slug(self, slug: str, create: bool=True) -> Optional[Info]:
+    def get_info_for_search_slug(self, slug: str, create: bool = True) -> Optional[Info]:
         """
         Returns information about a slug that appears as part of a search term in a query
         """

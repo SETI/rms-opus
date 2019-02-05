@@ -28,6 +28,8 @@ var opus = {
     lastSlugNormalizeRequestNo: 0,
     lastAllNormalizeRequestNo: 0,
     lastResultCountRequestNo: 0,
+    lastMultsRequestNo: 0,
+    lastEndpointsRequestNo: 0,
     lastLoadBrowseDataRequestNo: 0,
     waitingForAllNormalizedAPI: false,
 

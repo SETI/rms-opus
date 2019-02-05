@@ -1,13 +1,19 @@
 <!doctype html>
 <html lang="en">
 <head>
+  <title>Log Analyzer</title>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <base href="{{ api_host_url | safe }}" target="_blank">
+{% if uses_local and False %}
+  <link rel="stylesheet" href="bootstrap/3.4.0/css/bootstrap.css">
+  <script src="/jquery/3.3.1/jquery.min.js"></script>
+  <script src="/bootstrap/3.4.0/js/bootstrap.js"></script>
+{% else %}
   <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css">
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js"></script>
   <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.min.js"></script>
+{% endif %}
 
 <style>
 @media (min-width: 768px){
@@ -37,42 +43,141 @@
   height:100%;
   text-align: left;
 }
-.SessionInfo {
-  display: none;
+.SessionLink.active {
+  background-color:yellow;
 }
 .SessionInfo td {
   vertical-align:top;
-  padding-left:5px;
-  padding-right:5px;
+  padding: 0px 5px;
 }
-.SessionLinkSelected {
-  background-color:yellow;
+.tooltip-inner {
+    text-align: left;
 }
+span.la-hidden {
+    opacity: 0.0;
+}
+span.la-has-search:before {
+    content: "S";
+}
+span.la-fetched-gallery:before {
+    content: "G";
+}
+span.la-has-download:before {
+    content: "\2913";
+}
+span.la-has-obsolete-slug:before {
+    content: "\29bc";
+}
+
+
 </style>
 </head>
 <body>
 
 <div class="container-fluid">
 <div class="row">
+
 <div class="col-sm-3" id="left">
+
+<!--
+The left hand column is a controlled by a bootstrap navbar.  The user clicks on either "By IP" or "By Time" and
+bootstrap shows the appropriate tab-pane in the tab contents.
+
+The left-hand column controls what is visible in the right-hand panel by marking at most one of them as "active".
+Being inside a tab contents, only those marked active are made visible.  We unfortunately cannot use a bootstrap navbar
+because it requires that all the navigation tabs be within a single unordered list.
+-->
+
+<nav class="navbar navbar-light bg-light">
+  <ul class="nav nav-tabs">
+    <li class="nav-item"><a class="nav-link active" data-toggle="tab" href="#ByIP">By IP</a></li>
+    <li class="nav-item"><a class="nav-link" data-toggle="tab" href="#ByTime">By Time</a></li>
+  </ul>
+</nav>
+
+<div class="tab-content">
+
+<div id="ByIP" class="tab-pane fade show active">
+
 {% spaceless %}
-{% for host_info in host_infos %}
-    <span>{{ host_info.ip }} ({{ host_info.total_time }})</span>
-    {% if host_info.name %}<br><span>{{ host_info.name }}{% endif %}
-    <ul>
+
+{% for host_info in host_infos_by_ip %}
+    {% if not forloop.first %}<hr/>{% endif %}
+    {% if host_info.name %}
+        <a data-toggle="tooltip" title="{{ host_info.ip }}"><strong>{{host_info.name}}</strong></a>
+    {% else %}
+        <span><strong>{{ host_info.ip }}</strong></span>
+    {% endif %}
+    <span> ({{ host_info.total_time }})</span>
+    <table>
         {% for session in host_info.sessions %}
-            <li><a href="#" class=SessionLink data-id="{{ session.id }}">{{ session.entries.0.log_entry.time | date:'Y/M/d H:i:s' }} ({{ session.duration }})</a></li>
+           <tr>
+           {% for flag in action_flags_list %}
+                {% if flag in session.action_flags %}
+                    <td><span class="la-{{ flag.as_html_classname }}"></span></td>
+                {% elif forloop.parentloop.first %}
+                    <td><span class="la-{{ flag.as_html_classname }} la-hidden"></span></td>
+                {% else %}
+                    <td></td>
+                {%endif%}
+           {% endfor %}
+           <td><a href="#" class=SessionLink data-target="#{{ session.id }}">
+                    <span>{{ session.start_time | date:'Y M d H:i:s' }} ({{ session.duration }})</span>
+           </a></td>
+           </tr>
         {% endfor %}
-    </ul>
+    </table>
+
 {% endfor %}
 {% endspaceless %}
 </div>
-<div class="col-sm-9" id="right">
+
+<div id="ByTime" class="tab-pane fade">
 {% spaceless %}
-{% for host_info in host_infos %}
-    {% for session in host_info.sessions %}
-        <div id="{{ session.id }}" class="SessionInfo">
-        <h3>{{ host_info.hostname }} at {{ session.entries.0.log_entry.time | date:'Y/M/d H:i:s O' }}</h3>
+{% regroup host_infos_by_time by sessions.0.start_time.date as host_infos_by_day %}
+{% for day, host_infos_for_day in host_infos_by_day %}
+    {% if not forloop.first %}<hr/>{% endif %}
+    <h4>{{ day | date:'Y M d' }}</h4>
+    <table>
+    {% for host_info in host_infos_for_day %}
+        <tr>
+        {% with session=host_info.sessions.0 %}
+            {% for flag in action_flags_list %}
+                {% if flag in session.action_flags %}
+                    <td><span class="la-{{ flag.as_html_classname }}"></span></td>
+                {% elif forloop.parentloop.first %}
+                    <td><span class="la-{{ flag.as_html_classname }} la-hidden"></span></td>
+                {% else %}
+                    <td></td>
+                {%endif%}
+            {% endfor %}
+            <td><a href="#" class=SessionLink data-target="#{{ session.id }}">
+                <span>{{ session.start_time | date:'H:i:s' }}&nbsp;({{ host_info.total_time }})</span>
+                </a>
+            {% if host_info.name %}
+                <a data-toggle="tooltip" title="{{ host_info.ip }}"> {{host_info.name}}</a>
+            {% else %}
+                <span> {{ host_info.ip }}</span>
+            {% endif %}
+            </td>
+        {% endwith %}
+        </tr>
+    {% endfor %}
+    </table>
+{% endfor %}
+
+{% endspaceless %}
+</div>  {% comment %} #ByTime {% endcomment %}
+</div>  {% comment %} Tab Content containing #ByIp and #ByTime {% endcomment %}
+</div>  {% comment %} #left {% endcomment %}
+
+<div class="col-sm-9" id="right">
+<div class="tab-content">
+{% spaceless %}
+{% for host_info in host_infos_by_time %}
+    {% with session=host_info.sessions.0 %}
+        <div id="{{ session.id }}" class="SessionInfo tab-pane">
+        <h3>{{ host_info.hostname }} at {{ session.entries.0.log_entry.time | date:'Y M d H:i:s O' }}</h3>
         <ul class="list-unstyled">
         {% for type, slug_info in session.slug_info %}
             <li>
@@ -93,11 +198,13 @@
                 <tr>
                 {% if forloop.first %}
                     {% if entry.opus_url %}
-                        <td><a href="{{ entry.opus_url | safe }}">{{ entry.relative_start_time }}</a></td>
+                        <td><a href="{{ api_host_url | safe }}{{ entry.opus_url | safe }}" target="_blank">
+                        <span>{{ entry.relative_start_time }}</span>
+                        </a></td>
                     {% else %}
                         <td>{{ entry.relative_start_time }}</td>
                     {% endif %}
-                    <td><a data-toggle="tooltip" href="#" title="{{entry.target_url | safe}}">&bull;</td>
+                    <td><a data-toggle="tooltip" href="#" title="{{ entry.target_url }}">&bull;</a></td>
                 {% else %}
                     <td></td><td></td>
                 {% endif %}
@@ -107,29 +214,56 @@
         {% endfor %}
         </table>
         </div>
-    {% endfor %}
+    {% endwith %}
 {% endfor %}
 {% endspaceless %}
-</div>
-</div>
-</div>
-
+</div>  {% comment %} class=tabContent {% endcomment %}
+</div>  {% comment %} #right {% endcomment %}
+</div>  {% comment %} class=row {% endcomment %}
+</div>  {% comment %} class=container {% endcomment %}
 
 <script>
 
-$(document).ready(function(){
+{% comment This was fun, but it doesn't work on all screens %}
+    function addGlyphs(name, glyph) {
+       $(`span.la-${name}`).addClass('glyphicon').addClass(`glyphicon-${glyph}`).before('&MediumSpace;')
+    }
+    addGlyphs('has-search', 'search')
+    addGlyphs('has-download', 'download')
+    addGlyphs('has-obsolete-slug', 'warning-sign')
+    addGlyphs('fetched-image', 'picture')
+    addGlyphs('fetched-table', 'th-list')
+{% endcomment %}
+
+
+$(function() {
     $('[data-toggle="tooltip"]').tooltip();
+    $('#right [data-toggle="tooltip"]').data('placement', 'right');
+
+    {% comment %}
+    function addGlyphs(name, value) {
+       $(`span.la-${name}`).html(`${value}`)
+    }
+    $(`span.la-hidden`).css("opacity", "0.0")
+    addGlyphs('has-search', 'S')
+    addGlyphs('fetched-gallery', 'G')
+    addGlyphs('has-download', '&DownArrowBar;')
+    addGlyphs('has-obsolete-slug', '&odsold;')
+    {% endcomment %}
 
     $('.SessionLink').click(function() {
+        var target = $(this).data('target');
 
-        $('.SessionLinkSelected').removeClass('SessionLinkSelected');
-        $(this).addClass('SessionLinkSelected');
+        // Deactivate the session links and session infos that are currently active.
+        $('.SessionLink.active').removeClass('active');
+        $('.SessionInfo.active').removeClass('active');
 
-        var target_id = '#' + $(this).attr('data-id');
-        $('.SessionInfo').hide();
-        $(target_id).show()
-        $('#right').scrollTop(0)
+        // Mark as active both of the Session Links that point to this target so that they will be highlighted.
+        $(`a.SessionLink[data-target="${target}"]`).addClass('active');
+        // Mark the target itself (a Session Info) as active.  It's inside a tab pane, so this unhides it.
+        $(target).addClass('active');
 
+        $('#right').scrollTop(0);
         return false;
     })
 });
