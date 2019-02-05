@@ -3,15 +3,8 @@ var o_browse = {
     keyPressAction: "",
     tableSorting: false,
     xAxisTableScrollbar: new PerfectScrollbar(".dataTable"),
-<<<<<<< HEAD
     galleryScrollbar: new PerfectScrollbar(".gallery-contents"),
-||||||| merged common ancestors
-    // xAxisTableScrollbar: new PerfectScrollbar(".gallery-contents"),
-    // scrollbar: new PerfectScrollbar("#browse .gallery-contents"),
-=======
-    yAxisGalleryScrollbar: new PerfectScrollbar("#browse .gallery-scroll"),
-    // scrollbar: new PerfectScrollbar("#browse .gallery-contents"),
->>>>>>> debby_repo/bug_427_bootstrap_upgrade
+    // yAxisGalleryScrollbar: new PerfectScrollbar("#browse .gallery-scroll"),
 
     /**
     *
@@ -707,7 +700,7 @@ var o_browse = {
         }
 
         $('.gallery', namespace).append(html);
-        o_browse.yAxisGalleryScrollbar.update();
+        // o_browse.yAxisGalleryScrollbar.update();
         o_browse.xAxisTableScrollbar.update();
         o_browse.galleryScrollbar.update();
     },
@@ -940,13 +933,7 @@ var o_browse = {
     adjustBrowseHeight: function() {
         let container_height = $(window).height()-120;
         $(".gallery-contents").height(container_height);
-<<<<<<< HEAD
         o_browse.galleryScrollbar.update();
-||||||| merged common ancestors
-        // o_browse.scrollbar.update();
-=======
-        //o_browse.scrollbar.update();
->>>>>>> debby_repo/bug_427_bootstrap_upgrade
         //opus.limit =  (floor($(window).width()/thumbnailSize) * floor(container_height/thumbnailSize));
     },
 
