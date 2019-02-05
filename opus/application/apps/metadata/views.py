@@ -98,7 +98,7 @@ def api_get_result_count(request, fmt):
                   +'request %s', str(request.GET))
         ret = HttpResponseServerError(settings.HTTP500_SEARCH_FAILED)
         exit_api_call(api_code, ret)
-        raise ret
+        return ret
 
     cache_key = settings.CACHE_KEY_PREFIX + ':resultcount:' + table
     count = cache.get(cache_key)
@@ -114,7 +114,7 @@ def api_get_result_count(request, fmt):
                       str(request.GET), sql, str(e))
             ret = HttpResponseServerError(settings.HTTP500_SQL_FAILED)
             exit_api_call(api_code, ret)
-            raise ret
+            return ret
 
         cache.set(cache_key, count)
 
@@ -208,7 +208,7 @@ def api_get_mult_counts(request, slug, fmt):
                   str(selections), str(extras))
         ret = HttpResponseServerError(settings.HTTP500_DATABASE_ERROR)
         exit_api_call(api_code, ret)
-        raise ret
+        return ret
 
     # Note we don't actually care here if the cache table even exists, because
     # if it's in the cache, it must exist, and if it's not in the cache, it
@@ -229,7 +229,7 @@ def api_get_mult_counts(request, slug, fmt):
                       mult_name.title().replace('_',''))
             ret = HttpResponseServerError(settings.HTTP500_INTERNAL_ERROR)
             exit_api_call(api_code, ret)
-            raise ret
+            return ret
 
         try:
             table_model = apps.get_model('search',
@@ -239,7 +239,7 @@ def api_get_mult_counts(request, slug, fmt):
                       table_name.title().replace('_',''))
             ret = HttpResponseServerError(settings.HTTP500_INTERNAL_ERROR)
             exit_api_call(api_code, ret)
-            raise ret
+            return ret
 
         results = (table_model.objects.values(mult_name)
                    .annotate(Count(mult_name)))
@@ -252,7 +252,7 @@ def api_get_mult_counts(request, slug, fmt):
                       str(selections), str(extras))
             ret = HttpResponseServerError(settings.HTTP500_SEARCH_FAILED)
             exit_api_call(api_code, ret)
-            raise ret
+            return ret
 
         if selections:
             # selections are constrained so join in the user_table
@@ -277,7 +277,7 @@ def api_get_mult_counts(request, slug, fmt):
                           +'mult_model %s id %s', str(mult_model), str(mult_id))
                 ret = HttpResponseServerError(settings.HTTP500_INTERNAL_ERROR)
                 exit_api_call(api_code, ret)
-                raise ret
+                return ret
 
             mult_result_list.append((mult_disp_order,
                                      (mult_label,
@@ -382,7 +382,7 @@ def api_get_range_endpoints(request, slug, fmt):
                   table_name.title().replace('_',''))
         ret = HttpResponseServerError(settings.HTTP500_INTERNAL_ERROR)
         exit_api_call(api_code, ret)
-        raise ret
+        return ret
 
     param_no_num = strip_numeric_suffix(param_name)
     param1 = param_no_num + '1'
@@ -417,7 +417,7 @@ def api_get_range_endpoints(request, slug, fmt):
                       str(selections), str(extras))
             ret = HttpResponseServerError(settings.HTTP500_SEARCH_FAILED)
             exit_api_call(api_code, ret)
-            raise ret
+            return ret
     else:
         user_table = None
 
