@@ -153,6 +153,8 @@ var opus = {
     lastSlugNormalizeRequestNo: 0,
     lastAllNormalizeRequestNo: 0,
     lastResultCountRequestNo: 0,
+    lastMultsRequestNo: 0,
+    lastEndpointsRequestNo: 0,
     waitingForAllNormalizedAPI: false,
 
     download_in_process: false,
@@ -294,7 +296,7 @@ var opus = {
             return;
         }
         o_search.validateRangeInput(normalizedData, true);
-        
+
         // query string has changed
         // opus.last_selections = selections;
         opus.lastResultCountRequestNo++;

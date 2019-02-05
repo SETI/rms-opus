@@ -4,12 +4,13 @@ import urllib.parse
 from collections import defaultdict
 from enum import Enum, auto
 from functools import reduce
-from typing import Dict, Tuple, List, Optional, cast, Any
+from typing import Dict, Tuple, List, Optional, Any
 
 from django.utils.html import format_html, format_html_join
 from django.utils.safestring import mark_safe
 
 import Slug
+from Slug import Flags
 
 SearchSlugInfo = Dict[Slug.Family, List[Tuple[Slug.Info, str]]]
 ColumnSlugInfo = Dict[Slug.Family, Slug.Info]
@@ -40,9 +41,9 @@ class QueryHandler:
         self._slug_map = slug_map
         self._default_column_slug_info = default_column_slug_info
         self._uses_html = uses_html
-        self.reset()
+        self._reset()
 
-    def reset(self) -> None:
+    def _reset(self) -> None:
         self._previous_search_slug_info = {}
         self._previous_column_slug_info = None  # handled specially by get_column_slug_info
         self._previous_sort_order = self.DEFAULT_SORT_ORDER
@@ -50,15 +51,16 @@ class QueryHandler:
         self._previous_state = State.RESET
 
     def handle_query(self, query: Dict[str, str], query_type: str) -> Tuple[List[str], Optional[str]]:
-        assert query_type in ['data', 'images', 'result_count']
+        assert query_type in ['data', 'images', 'result_count', 'dataimages']
 
         result: List[str] = []
 
-        uses_columns = query_type == 'data'
-        uses_pages = query_type != 'result_count'
-        uses_sort = uses_pages  # For now the same, but this may change in the future
-
-        current_state = State.SEARCHING if query_type == 'result_count' else State.FETCHING
+        if query_type == 'result_count':
+            uses_columns, uses_pages, uses_sort, current_state = False, False, False, State.SEARCHING
+        elif query_type == 'data' or query_type == 'dataimages':
+            uses_columns, uses_pages, uses_sort, current_state = True, True, True, State.FETCHING
+        else:  # images
+            uses_columns, uses_pages, uses_sort, current_state = False, True, True, State.FETCHING
 
         previous_state = self._previous_state
         if current_state != previous_state:
@@ -108,14 +110,17 @@ class QueryHandler:
 
         self._previous_state = current_state
 
+        url: Optional[str] = None
         if result and self._uses_html:
             query.pop('reqno', None)  # Remove if there, but okay if not
             if query_type != 'result_count':
                 query['view'] = 'browse'
                 query['browse'] = 'gallery'
-            url = '/opus/#/' + urllib.parse.urlencode(query, False)
-        else:
-            url = None
+            url = format_html('/opus/#/{}', urllib.parse.urlencode(query, False))
+
+        if result and query_type != 'result_count':
+            self._session_info.fetched_gallery()
+
         return result, url
 
     def __handle_search_info(self, old_info: SearchSlugInfo, new_info: SearchSlugInfo, result: List[str]) -> None:
@@ -150,7 +155,7 @@ class QueryHandler:
             assert len(new_info[family]) == 1
             slug_info, value = new_info[family][0]
             assert family.label == slug_info.label
-            postscript = self.__get_postscript(slug_info)  # is html-aware
+            postscript = self.__get_postscript(slug_info.flags)  # is html-aware
             if self._uses_html:
                 result.append(format_html('Add Search: "{}" = <mark><ins>{}</ins></mark>{}',
                                           family.label, self.__format_search_value(value), postscript))
@@ -158,7 +163,7 @@ class QueryHandler:
                 result.append(f'Add Search:    "{family.label}" = "{value}"{postscript}')
         else:
             new_min, new_max, new_qtype, flags = self.__parse_search_family(new_info[family])
-            postscript = f' **{flags.pretty_print()}**' if flags else ''
+            postscript = self.__get_postscript(flags)  # is html-aware
             if self._uses_html:
                 def always_mark(type: str, value: Optional[str]) -> Any:
                     return format_html('<mark><ins>{}:{}</ins></mark>', type, self.__format_search_value(value))
@@ -190,7 +195,7 @@ class QueryHandler:
             elif self._uses_html:
                 def maybe_mark(tag: str, old: Optional[str], new: Optional[str]) -> str:
                     fmt = '{}:{}' if old == new else '<mark>{}:{}</mark>'
-                    return cast(str, format_html(fmt, tag, self.__format_search_value(new)))
+                    return format_html(fmt, tag, self.__format_search_value(new))
 
                 result.append(
                     format_html('Change Search: &quot;{}&quot;: ({}, {}, {})', family.label,
@@ -232,11 +237,11 @@ class QueryHandler:
             if old_slug_info and not new_slug_info:
                 removed_columns.append(f'Remove Column: "{old_slug_info.label}"')
             elif new_slug_info and not old_slug_info:
-                postscript = self.__get_postscript(new_slug_info)
-                if self._uses_html:
-                    added_columns.append(format_html('Add Column: "{}"{}', new_slug_info.label, postscript))
-                else:
+                postscript = self.__get_postscript(new_slug_info.flags)
+                if not self._uses_html:
                     added_columns.append(f'Add Column:    "{new_slug_info.label}"{postscript}')
+                else:
+                    added_columns.append(format_html('Add Column: "{}"{}', new_slug_info.label, postscript))
 
         result.extend(removed_columns)
         result.extend(added_columns)
@@ -272,7 +277,7 @@ class QueryHandler:
             for value in sorted(old_value_set.union(new_value_set)):
                 formatted_value = self.__format_search_value(value)
                 if value not in old_value_set:
-                    marked_changes.append(format_html('<mark><ins>{}</ins><mark>', formatted_value))
+                    marked_changes.append(format_html('<mark><ins>{}</ins></mark>', formatted_value))
                 elif value not in new_value_set:
                     marked_changes.append(format_html('<mark><del>{}</del></mark>', formatted_value))
                 else:
@@ -324,20 +329,19 @@ class QueryHandler:
     def __format_search_value(self, value: Optional[str]) -> str:
         if self._uses_html:
             if value is None:
-                return cast(str, mark_safe('&ndash;'))
+                return mark_safe('&ndash;')
             else:
-                return cast(str, format_html('&quot;<samp>{}</samp>&quot;', value))
+                return format_html('&quot;<samp>{}</samp>&quot;', value)
         else:
             return '~' if value is None else '"' + value + '"'
 
-    def __get_postscript(self, new_slug_info: Slug.Info) -> str:
-        flags = new_slug_info.flags
+    def __get_postscript(self, flags: Flags) -> str:
         if not flags:
             return ''
         elif self._uses_html:
-            return cast(str, format_html(' <span class="text-danger">({})</span>', flags.pretty_print()))
+            return format_html(' <span class="text-danger">({})</span>', flags.pretty_print())
         else:
-            return f' **{new_slug_info.flags.pretty_print()}**'
+            return f' **{flags.pretty_print()}**'
 
     def __parse_search_family(self, pairs: List[Tuple[Slug.Info, str]]) -> \
             Tuple[Optional[str], Optional[str], Optional[str], Slug.Flags]:

@@ -2,16 +2,17 @@ import abc
 import ipaddress
 import re
 import urllib.parse
+from enum import auto, Flag
 from typing import List, Dict, Optional, Match, Tuple, Pattern, Callable, Any, cast
 
 from django.utils.html import format_html
-from django.utils.safestring import mark_safe, SafeText
 
 import Slug
 from LogEntry import LogEntry
 from QueryHandler import QueryHandler, ColumnSlugInfo
 
 SESSION_INFO = Tuple[List[str], Optional[str]]
+
 
 class SessionInfoGenerator:
     """
@@ -38,6 +39,17 @@ class SessionInfoGenerator:
         return SessionInfoImpl(self._slug_map, self._default_column_slug_info, self._ignored_ips, uses_html)
 
 
+class ActionFlags(Flag):
+    # These should be in the order we want to see them in the output
+    HAS_SEARCH = auto()
+    FETCHED_GALLERY = auto()
+    HAS_DOWNLOAD = auto()
+    HAS_OBSOLETE_SLUG = auto()
+
+    def as_html_classname(self):
+        return self.name.lower().replace('_', '-')
+
+
 class SessionInfo(metaclass=abc.ABCMeta):
     """
     A class that keeps track of information about the current user session and parses log entries based on information
@@ -47,10 +59,12 @@ class SessionInfo(metaclass=abc.ABCMeta):
     """
     _session_search_slugs: Dict[str, Slug.Info]
     _session_column_slugs: Dict[str, Slug.Info]
+    _action_flags: ActionFlags
 
     def __init__(self) -> None:
         self._session_search_slugs = dict()
         self._session_column_slugs = dict()
+        self._action_flags = ActionFlags(0)
 
     @abc.abstractmethod
     def parse_log_entry(self, entry: LogEntry) -> SESSION_INFO:
@@ -58,9 +72,20 @@ class SessionInfo(metaclass=abc.ABCMeta):
 
     def add_search_slug(self, slug: str, slug_info: Slug.Info) -> None:
         self._session_search_slugs[slug] = slug_info
+        self._action_flags = self._action_flags | ActionFlags.HAS_SEARCH
+        if slug_info.flags.is_obsolete():
+            self._action_flags |= ActionFlags.HAS_OBSOLETE_SLUG
 
     def add_column_slug(self, slug: str, slug_info: Slug.Info) -> None:
         self._session_column_slugs[slug] = slug_info
+        if slug_info.flags.is_obsolete():
+            self._action_flags |= ActionFlags.HAS_OBSOLETE_SLUG
+
+    def performed_download(self) -> None:
+        self._action_flags |= ActionFlags.HAS_DOWNLOAD
+
+    def fetched_gallery(self) -> None:
+        self._action_flags |= ActionFlags.FETCHED_GALLERY
 
     @property
     def session_search_slugs(self) -> Dict[str, Slug.Info]:
@@ -69,6 +94,10 @@ class SessionInfo(metaclass=abc.ABCMeta):
     @property
     def session_column_slugs(self) -> Dict[str, Slug.Info]:
         return self._session_column_slugs
+
+    @property
+    def action_flags(self) -> ActionFlags:
+        return self._action_flags
 
     @staticmethod
     def quote_and_join_list(string_list: List[str]) -> str:
@@ -144,22 +173,33 @@ class SessionInfoImpl(SessionInfo):
     # API
     #
 
-    @ForPattern(r'/__api/(data)\.(.*)')
+    @ForPattern(r'/__api/(data)\.json')
     @ForPattern(r'/__api/(images)\.(.*)')
-    @ForPattern(r'/__api/meta/(result_count).json')
+    @ForPattern(r'/__api/(dataimages)\.json')
+    @ForPattern(r'/__api/meta/(result_count)\.json')
     def _api_data(self, query: Dict[str, str], match: Match[str]) -> SESSION_INFO:
-        assert match.group(1) in ['data', 'images', 'result_count']
         return self._query_handler.handle_query(query, match.group(1))
 
-    @ForPattern('/__api/image/med/(.*).json')
+    @ForPattern('/__api/image/med/(.*)\.json')
     def _view_metadata(self, query: Dict[str, str], match: Match[str]) -> SESSION_INFO:
         metadata = match.group(1)
         return [f'View Metadata: {metadata}'], self.__create_opus_url(metadata)
 
-
-    @ForPattern(r'/__api/data.csv')
+    @ForPattern(r'/__api/data\.csv')
     def _download_results_csv(self, query: Dict[str, str], match: Match[str]) -> SESSION_INFO:
-        return ["Download Results CSV"], None
+        self.performed_download()
+        return ["Download Search Results CSV"], None
+
+    @ForPattern(r'/__api/(download)/(.*)\.zip')
+    @ForPattern(r'/__api/(metadata)/(.*)\.csv')
+    def _download_one_zip(self, query: Dict[str, str], match: Match[str]) -> SESSION_INFO:
+        self.performed_download()
+        call_type, opus_id = match.groups()
+        text = 'Download Single OPUSID' if call_type == 'download' else 'Download CSV for OPUSID'
+        if self._uses_html:
+            return [format_html('{}: {}', text, opus_id)], self.__create_opus_url(opus_id)
+        else:
+            return [f'{text}: { opus_id }'], None
 
     #
     # Collections
@@ -180,7 +220,6 @@ class SessionInfoImpl(SessionInfo):
 
     @ForPattern(r'/__collections(/default)?/view(|\.json)')
     def collections_view(self, query: Dict[str, str], match: Match[str]) -> SESSION_INFO:
-        self._query_handler.reset()
         return ['View Selections'], None
 
     @ForPattern(r'/__collections/default/addrange.json')
@@ -189,9 +228,10 @@ class SessionInfoImpl(SessionInfo):
         return [f'Selections Add Range: {query_range}'], None
 
     @ForPattern(r'/__collections(/default)?/download.zip')
+    @ForPattern(r'/__collections(/default)?/download.json')
     @ForPattern(r'/__collections/download/default.zip')
     def _create_zip_file(self, query: Dict[str, str], match: Match[str]) -> SESSION_INFO:
-        self._query_handler.reset()
+        self.performed_download()
         types = query.get('types')
         if types is None:
             output = '???'
@@ -201,6 +241,7 @@ class SessionInfoImpl(SessionInfo):
 
     @ForPattern(r'/__collections/download/info(|\.json)')
     def _download_product_types(self, query: Dict[str, str], match: Match[str]) -> SESSION_INFO:
+        self.performed_download()
         ptypes_field = query.get('types', None)
         new_ptypes = ptypes_field.split(',') if ptypes_field else []
         old_ptypes = self._previous_product_info_type
@@ -228,13 +269,14 @@ class SessionInfoImpl(SessionInfo):
 
     @ForPattern(r'/__collections/data.csv')
     def _download_selections_csv(self, query: Dict[str, str], match: Match[str]) -> SESSION_INFO:
+        self.performed_download()
         return ["Download Selections CSV"], None
 
     #
     # FORMS
     #
 
-    @ForPattern(r'/__forms/column_chooser.html')
+    @ForPattern(r'/__forms/column_chooser\.html')
     def _column_chooser(self, query: Dict[str, str], match: Match[str]) -> SESSION_INFO:
         return ['Column Chooser'], None
 
@@ -242,7 +284,7 @@ class SessionInfoImpl(SessionInfo):
     # INIT DETAIL
     #
 
-    @ForPattern(r'/__initdetail/(.*).html')
+    @ForPattern(r'/__initdetail/(.*)\.html')
     def _initialize_detail(self, query: Dict[str, str], match: Match[str]) -> SESSION_INFO:
         opus_id = match.group(1)
         if self._uses_html:
@@ -255,6 +297,6 @@ class SessionInfoImpl(SessionInfo):
     #
 
     def __create_opus_url(self, opus_id: str) -> str:
-        return cast(str, format_html('/opus/#/view=detail&detail={0}', opus_id))
+        return format_html('/opus/#/view=detail&amp;detail={0}', opus_id)
 
 
