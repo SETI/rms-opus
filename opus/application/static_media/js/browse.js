@@ -3,7 +3,6 @@ var o_browse = {
     keyPressAction: "",
     tableSorting: false,
     xAxisTableScrollbar: new PerfectScrollbar(".dataTable"),
-    yAxisGalleryScrollbar: new PerfectScrollbar("#browse .gallery-scroll"),
     // scrollbar: new PerfectScrollbar("#browse .gallery-contents"),
 
     /**
@@ -700,7 +699,6 @@ var o_browse = {
         }
 
         $('.gallery', namespace).append(html);
-        o_browse.yAxisGalleryScrollbar.update();
         o_browse.xAxisTableScrollbar.update();
     },
 
