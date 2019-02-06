@@ -3,8 +3,7 @@ var o_browse = {
     keyPressAction: "",
     tableSorting: false,
     xAxisTableScrollbar: new PerfectScrollbar(".dataTable"),
-    galleryScrollbar: new PerfectScrollbar(".gallery-contents"),
-    // yAxisGalleryScrollbar: new PerfectScrollbar("#browse .gallery-scroll"),
+    yAxisGalleryScrollbar: new PerfectScrollbar(".gallery-contents"),
 
     /**
     *
@@ -700,9 +699,8 @@ var o_browse = {
         }
 
         $('.gallery', namespace).append(html);
-        // o_browse.yAxisGalleryScrollbar.update();
         o_browse.xAxisTableScrollbar.update();
-        o_browse.galleryScrollbar.update();
+        o_browse.yAxisGalleryScrollbar.update();
     },
 
     initTable: function(columns) {
@@ -933,7 +931,7 @@ var o_browse = {
     adjustBrowseHeight: function() {
         let container_height = $(window).height()-120;
         $(".gallery-contents").height(container_height);
-        o_browse.galleryScrollbar.update();
+        o_browse.yAxisGalleryScrollbar.update();
         //opus.limit =  (floor($(window).width()/thumbnailSize) * floor(container_height/thumbnailSize));
     },
 
