@@ -4,6 +4,7 @@ var o_browse = {
     tableSorting: false,
     xAxisTableScrollbar: new PerfectScrollbar(".dataTable"),
     yAxisGalleryScrollbar: new PerfectScrollbar(".gallery-contents"),
+    yAxisModalScrollbar: new PerfectScrollbar("#galleryViewContents .metadata"),
 
     /**
     *
@@ -957,16 +958,17 @@ var o_browse = {
 
     metadataboxHtml: function(opusId) {
         // list columns + values
-        let html = "<div class='metadata'><dl>";
+        let html = "<dl>";
         $.each(opus.col_labels, function(index, columnLabel) {
             let value = opus.gallery_data[opusId][index];
-            html += "<dt>" + columnLabel + ":</dt><dd>" + value + "</dd>";
+            html += `<dt>${columnLabel}:</dt><dd>${value}</dd>`;
         });
+        html += "</dl>";
+        $("#galleryViewContents .contents").html(html);
 
-        html += "</dl></div>";
-        let next = $("#browse tr[data-id="+opusId+"]").next("tr");
+        let next = $(`#browse tr[data-id=${opusId}]`).next("tr");
         next = (next.length > 0 ? next.data("id") : "");
-        let prev = $("#browse tr[data-id="+opusId+"]").prev("tr");
+        let prev = $(`#browse tr[data-id=${opusId}]`).prev("tr");
         prev = (prev.length > 0 ? prev.data("id") : "");
 
         let status = o_collections.isIn(opusId) ? "" : "in";
@@ -976,16 +978,15 @@ var o_browse = {
         let hashArray = o_hash.getHashArray();
         hashArray.view = "detail";
         hashArray.detail = opusId;
-        html += '<p class="detail"><a href = "/opus/#/' + o_hash.hashArrayToHashString(hashArray) + '" class="detailViewLink" data-opusid="' + opusId + '"><i class = "fas fa-info-circle"></i>&nbsp;View Detail</a></p>';
+        $("#galleryViewContents .detail").html(`<a href = "/opus/#/${o_hash.hashArrayToHashString(hashArray)}" class="detailViewLink" data-opusid="${opusId}"><i class = "fas fa-info-circle"></i>&nbsp;View Detail</a></p>`);
 
         // prev/next buttons - put this in galleryView html...
-        html += "<div class='bottom'>";
-        html += `<a href="#" class="select" data-id="${opusId}" title="${buttonInfo.title}"><i class="${buttonInfo.icon} fa-2x float-left"></i></a>`;
+        html = `<a href="#" class="select" data-id="${opusId}" title="${buttonInfo.title}"><i class="${buttonInfo.icon} fa-2x float-left"></i></a>`;
         if (next != "")
             html += `<a href="#" class="next pr-5" data-id="${next}" title="Next image"><i class="far fa-hand-point-right fa-2x float-right"></i></a>`;
         if (prev != "")
             html += `<a href="#" class="prev pr-5" data-id="${prev}" title="Previous image"><i class="far fa-hand-point-left fa-2x float-right"></i></a></div>`;
-        return html;
+        $("#galleryViewContents .bottom").html(html);
     },
 
     updateGalleryView: function(opusId) {
@@ -1015,12 +1016,9 @@ var o_browse = {
 
     updateMetaGalleryView: function(opusId, imageURL) {
         $("#galleryViewContents .left").html("<a href='"+imageURL+"' target='_blank'><img src='"+imageURL+"' title='"+opusId+"' class='preview'/></a>");
-        $("#galleryViewContents .right").html(o_browse.metadataboxHtml(opusId));
-        if (o_browse.yAxisModalScrollbar == undefined) {
-            o_browse.yAxisModalScrollbar = new PerfectScrollbar("#galleryViewContents .metadata");
-        } else {
-            o_browse.yAxisModalScrollbar.update();
-        }
+        o_browse.metadataboxHtml(opusId);
+        o_browse.yAxisModalScrollbar.update();
+        $( "#galleryViewContents .metadata" ).scrollTop( 0 );
     },
 
     resetData: function() {

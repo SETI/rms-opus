@@ -566,6 +566,10 @@ img.preview {
 	bottom: 3.7em;
 }
 
+#galleryViewContents .ps__rail-y {
+	background-color: transparent !important;
+}
+
 #collection .gallery, .gallery-contents {
     margin-top:.25em;
     background-color: #303030; /* #383838; */
