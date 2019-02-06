@@ -3,7 +3,7 @@ var o_browse = {
     keyPressAction: "",
     tableSorting: false,
     xAxisTableScrollbar: new PerfectScrollbar(".dataTable"),
-    // scrollbar: new PerfectScrollbar("#browse .gallery-contents"),
+    yAxisGalleryScrollbar: new PerfectScrollbar(".gallery-contents"),
 
     /**
     *
@@ -700,6 +700,7 @@ var o_browse = {
 
         $('.gallery', namespace).append(html);
         o_browse.xAxisTableScrollbar.update();
+        o_browse.yAxisGalleryScrollbar.update();
     },
 
     initTable: function(columns) {
@@ -820,7 +821,6 @@ var o_browse = {
 
                 // for infinite scroll
                 if (!$('#browse .gallery-contents').data('infiniteScroll')) {
-                    console.log("INIT INF ==========")
                     $('#browse .gallery-contents').infiniteScroll({
                         path: o_browse.updatePageInUrl(this.url, "{{#}}"),
                         responseType: 'text',
@@ -931,7 +931,7 @@ var o_browse = {
     adjustBrowseHeight: function() {
         let container_height = $(window).height()-120;
         $(".gallery-contents").height(container_height);
-        //o_browse.scrollbar.update();
+        o_browse.yAxisGalleryScrollbar.update();
         //opus.limit =  (floor($(window).width()/thumbnailSize) * floor(container_height/thumbnailSize));
     },
 
@@ -939,6 +939,8 @@ var o_browse = {
         let containerWidth = $(".gallery-contents").width()-5;
         // Make sure the rightmost column is not cut off by the y-scrollbar
         $(".dataTable").width(containerWidth);
+        $(".justify-content-center").width(containerWidth);
+
         o_browse.updateTableXScrollbarVerticalPosition();
         o_browse.xAxisTableScrollbar.update();
     },

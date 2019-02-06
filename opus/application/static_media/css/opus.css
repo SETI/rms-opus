@@ -93,8 +93,16 @@ body {
 }
 
 .gallery-contents {
-		overflow-y:auto !important;
+		/* overflow-y:auto !important; */
+		overflow-y:hidden;
 		overflow-x:hidden;
+}
+
+/* Make sure y-axis rail is not moving and always visible */
+.gallery-contents .ps__rail-y {
+		opacity: 1 !important;
+		/* navbar height: 95px, this will match the scrollbar and gallery/table view */
+		top: 95px !important;
 }
 
 #detail {
@@ -370,11 +378,11 @@ th.sticky-header {
 		transform: translateY(-50%);
 }
 
-/* Not overlap table y-axis scrollbar with the window y-axis scrollbar */
 .dataTable .ps__rail-y {
 		display: none !important;
 }
-/* Make sure x-axis rail is not moving and always visible */
+
+/* Make sure x-scrollbar in dataTable is always at the left and visible */
 .dataTable .ps__rail-x {
 		opacity: 1 !important;
 		left: 0px !important;
@@ -586,6 +594,7 @@ div.gallery {
     margin:0; padding:0;
     position: relative;
     overflow-x:hidden;
+		overflow-y:hidden;
     margin-right:-80px;
 }
 .browse-nav-container {
