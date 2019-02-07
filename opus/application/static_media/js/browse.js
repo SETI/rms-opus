@@ -627,7 +627,7 @@ var o_browse = {
 
                 // dragging to reorder the chosen
                 $( ".selectedColumns > ul").sortable({
-                    items: "li:not(.unsortable)",
+                    items: "li",
                     cursor: "grab",
                     stop: function(event, ui) { o_browse.columnsDragged(this); }
                 });
@@ -1018,7 +1018,6 @@ var o_browse = {
         $("#galleryViewContents .left").html("<a href='"+imageURL+"' target='_blank'><img src='"+imageURL+"' title='"+opusId+"' class='preview'/></a>");
         o_browse.metadataboxHtml(opusId);
         o_browse.yAxisModalScrollbar.update();
-        $( "#galleryViewContents .metadata" ).scrollTop( 0 );
     },
 
     resetData: function() {
