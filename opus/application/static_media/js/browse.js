@@ -167,7 +167,9 @@ var o_browse = {
 
               case "cart":   // add to collection
                   o_browse.hideMenu();
-                  o_collections.toggleInCollection(opusId);
+                  let action = o_collections.toggleInCollection(opusId);
+                  let buttonInfo = o_browse.cartButtonInfo(opusId, action);
+                  $(this).html(`<i class="${buttonInfo.icon} fa-xs"></i>`);
                   break;
 
               case "menu":  // expand, same as click on image
@@ -276,7 +278,7 @@ var o_browse = {
                 case "downloadCSVAll":
                 case "downloadData":
                 case "downloadURL":
-                    return;
+                    document.location.href = $(this).attr("href");
                 case "help":
                     break;
             }
@@ -664,9 +666,9 @@ var o_browse = {
 
                 // gallery
                 let images = item.images;
-                html += '<div class="thumbnail-container'+(item.in_collection ? ' in' : '')+'" data-id="'+opusId+'">';
-                html += '<a href="#" class="thumbnail" data-image="'+images.full.url+'">';
-                html += '<img class="img-thumbnail img-fluid" src="'+images.thumb.url+'" alt="'+images.thumb.alt_text+'" title="'+opusId+'">';
+                html += `<div class="thumbnail-container ${(item.in_collection ? ' in' : '')}" data-id="${opusId}">`;
+                html += `<a href="#" class="thumbnail" data-image="${images.full.url}">`;
+                html += `<img class="img-thumbnail img-fluid" src="${images.thumb.url}" alt="${images.thumb.alt_text}" title="${opusId}">`;
                 // whenever the user clicks an image to show the modal, we need to highlight the selected image w/an icon
                 html += '<div class="modal-overlay">';
                 html += '<p class="content-text"><i class="fas fa-binoculars fa-4x text-info" aria-hidden="true"></i></p>';
@@ -674,10 +676,12 @@ var o_browse = {
 
                 html += '<div class="thumb-overlay">';
                 if (opus.prefs.view == "browse") {
-                    html += '<div class="tools dropdown" data-id="'+opusId+'">';
+                    html += `<div class="tools dropdown" data-id="${opusId}">`;
                     html +=     '<a href="#" data-icon="info" title="View observation detail"><i class="fas fa-info-circle fa-xs"></i></a>';
-                    html +=     '<a href="#" data-icon="cart" title="Add to shopping cart"><i class="fas fa-shopping-cart fa-xs"></i></a>';
-                    html +=     '<a href="#" data-icon="menu"><i class="fas fa-ellipsis-v fa-xs"></i></a>';
+
+                    let buttonInfo = o_browse.cartButtonInfo(opusId, (item.in_collection ? 'add' : 'remove'));
+                    html +=     `<a href="#" data-icon="cart" title="Add to cart"><i class="${buttonInfo.icon} fa-xs"></i></a>`;
+                    html +=     '<a href="#" data-icon="menu"><i class="fas fa-bars fa-xs"></i></a>';
                     html += '</div>';
                 } else {
                     // this will only display if the user has shift-click to remove the image from the cart
@@ -948,10 +952,10 @@ var o_browse = {
 
     cartButtonInfo: function(opusId, status) {
         let icon = "fas fa-cart-plus";
-        let title = "Add to shopping cart";
-        if (status != "in") {
+        let title = "Add to cart";
+        if (status != "in" && status != "remove") {
             icon = "far fa-trash-alt";
-            title = "Remove from shopping cart";
+            title = "Remove from cart";
         }
         return  {"icon":icon, "title":title};
     },
