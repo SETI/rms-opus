@@ -300,6 +300,7 @@
     },
     {
         "field_name": "timestamp",
-        "field_type": "timestamp"
+        "field_type": "timestamp",
+        "field_notnull": true
     }
 ]

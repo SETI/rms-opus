@@ -99,7 +99,6 @@ parser.add_argument(
             --import
             --copy-import-to-permanent-tables
             --drop-new-import-tables
-            --analyze-permanent-tables
          """
 )
 
@@ -315,7 +314,6 @@ if impglobals.ARGUMENTS.do_all_import:
     impglobals.ARGUMENTS.do_import = True
     impglobals.ARGUMENTS.copy_import_to_permanent_tables = True
     impglobals.ARGUMENTS.drop_new_import_tables = True
-    impglobals.ARGUMENTS.analyze_permanent_tables = True
 
 if impglobals.ARGUMENTS.do_import_finalization:
     impglobals.ARGUMENTS.copy_import_to_permanent_tables = True
