@@ -16,6 +16,7 @@ TABLES_TO_POPULATE = ['obs_general',
                       'obs_instrument_<INST>',
                       'obs_type_image',
                       'obs_wavelength',
+                      'obs_files',
                       'obs_ring_geometry',
                       'obs_surface_geometry',
                       'obs_surface_geometry__<TARGET>']
