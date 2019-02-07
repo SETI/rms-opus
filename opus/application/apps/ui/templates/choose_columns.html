@@ -15,13 +15,13 @@
 
                 {{ param_info.body_qualified_label_results }}
 
-                <i class="fa fa-info-circle" title = "
+                <span class="info">&nbsp;<i class="fa fa-info-circle" title = "
                     {% if param_info.get_tooltip %}
                         {{ param_info.get_tooltip|striptags }}
                     {% else  %}
                         {{ param_info.body_qualified_label_results }}
                     {% endif %}
-                "></i>
+                "></i>&nbsp;&nbsp;&nbsp;</span>
 
                 <!-- "remove this column" x button -->
                 <span class="unselect"><i class="far fa-trash-alt"></i></span>

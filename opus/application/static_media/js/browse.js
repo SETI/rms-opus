@@ -463,10 +463,10 @@ var o_browse = {
             let selectedColumn = $(this).find("i.fa-check");
 
             if (!selectedColumn.is(":visible")) {
-                selectedColumn.fadeIn().css('display', 'inline-block');
+                selectedColumn.fadeIn().css("display", "inline-block");
                 if ($.inArray(slug, opus.prefs.cols ) < 0) {
                     // this slug was previously unselected, add to cols
-                    $('<li id = "cchoose__' + slug + '">' + label + ' <i class = "fas fa-info-circle" title = "' + def + '"></i><span class="unselect"><i class="far fa-trash-alt"></span></li>').hide().appendTo('.selectedColumns > ul').fadeIn();
+                    $(`<li id = "cchoose__${slug}">${label}<span class="info">&nbsp;<i class = "fas fa-info-circle" title = "${def}"></i>&nbsp;&nbsp;&nbsp;<span><span class="unselect"><i class="far fa-trash-alt"></span></li>`).hide().appendTo(".selectedColumns > ul").fadeIn();
                     opus.prefs.cols.push(slug);
                 }
 
@@ -475,7 +475,7 @@ var o_browse = {
                 if ($.inArray(slug,opus.prefs.cols) > -1) {
                     // slug had been checked, remove from the chosen
                     opus.prefs.cols.splice($.inArray(slug,opus.prefs.cols),1);
-                    $('#cchoose__' + slug).fadeOut(function() {
+                    $(`#cchoose__${slug}`).fadeOut(function() {
                         $(this).remove();
                     });
                 }
