@@ -290,6 +290,7 @@ tr.modal-show {
 .thumbnail-message {
 	color: #fff;
 	padding-left: 3em;
+	width: 500px;
 }
 
 .img-thumbnail {

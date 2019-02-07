@@ -650,10 +650,10 @@ var o_browse = {
             // for now, just post same message to both #browse & #collections tabs
             if (data.page_no == 1) {
                 html += '<div class="thumbnail-message">';
-                html += '<h2>You Have No Selections</h2>';
-                html += '<p>To select observations, click on the Browse Results tab ';
-                html += 'at the top of the page,<br> mouse over the thumbnail gallery images to reveal the tools,';
-                html += 'then click the <br>checkbox below a thumbnail.  </p>';
+                html += '<h2>Your Shopping Cart is empty</h2>';
+                html += '<p>To add observations to the cart, click on the Browse Results tab ';
+                html += 'at the top of the page, mouse over the thumbnail gallery images to reveal the tools, ';
+                html += 'then click on the shopping cart icon.  </p>';
                 html += '</div>';
             } else {
                 // we've hit the end of the infinite scroll.
