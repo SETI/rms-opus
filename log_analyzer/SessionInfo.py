@@ -3,7 +3,7 @@ import ipaddress
 import re
 import urllib.parse
 from enum import auto, Flag
-from typing import List, Dict, Optional, Match, Tuple, Pattern, Callable, Any, cast
+from typing import List, Dict, Optional, Match, Tuple, Pattern, Callable, Any
 
 from django.utils.html import format_html
 
@@ -42,11 +42,12 @@ class SessionInfoGenerator:
 class ActionFlags(Flag):
     # These should be in the order we want to see them in the output
     HAS_SEARCH = auto()
+    HAS_COLUMNS = auto()
     FETCHED_GALLERY = auto()
     HAS_DOWNLOAD = auto()
     HAS_OBSOLETE_SLUG = auto()
 
-    def as_html_classname(self):
+    def as_html_classname(self) -> str:
         return self.name.lower().replace('_', '-')
 
 
@@ -72,7 +73,6 @@ class SessionInfo(metaclass=abc.ABCMeta):
 
     def add_search_slug(self, slug: str, slug_info: Slug.Info) -> None:
         self._session_search_slugs[slug] = slug_info
-        self._action_flags = self._action_flags | ActionFlags.HAS_SEARCH
         if slug_info.flags.is_obsolete():
             self._action_flags |= ActionFlags.HAS_OBSOLETE_SLUG
 
@@ -80,6 +80,12 @@ class SessionInfo(metaclass=abc.ABCMeta):
         self._session_column_slugs[slug] = slug_info
         if slug_info.flags.is_obsolete():
             self._action_flags |= ActionFlags.HAS_OBSOLETE_SLUG
+
+    def changed_search_slugs(self) -> None:
+        self._action_flags |= ActionFlags.HAS_SEARCH
+
+    def changed_column_slugs(self) -> None:
+        self._action_flags |= ActionFlags.HAS_COLUMNS
 
     def performed_download(self) -> None:
         self._action_flags |= ActionFlags.HAS_DOWNLOAD
@@ -180,7 +186,7 @@ class SessionInfoImpl(SessionInfo):
     def _api_data(self, query: Dict[str, str], match: Match[str]) -> SESSION_INFO:
         return self._query_handler.handle_query(query, match.group(1))
 
-    @ForPattern('/__api/image/med/(.*)\.json')
+    @ForPattern(r'/__api/image/med/(.*)\.json')
     def _view_metadata(self, query: Dict[str, str], match: Match[str]) -> SESSION_INFO:
         metadata = match.group(1)
         return [f'View Metadata: {metadata}'], self.__create_opus_url(metadata)
@@ -298,5 +304,3 @@ class SessionInfoImpl(SessionInfo):
 
     def __create_opus_url(self, opus_id: str) -> str:
         return format_html('/opus/#/view=detail&amp;detail={0}', opus_id)
-
-

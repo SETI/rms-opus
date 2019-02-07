@@ -273,14 +273,14 @@ class LogParser:
                 for entry in entries:
                     self.__print_entry_info(entry.log_entry, entry.data, session.start_time())
 
-    def __generate_batch_html_output(self, host_infos_by_ip, host_infos_by_time):
+    def __generate_batch_html_output(self, host_infos_by_ip: List[HostInfo], host_infos_by_time: List[HostInfo]) -> None:
         os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'DjangoSettings')
         django.setup()
         summary_context = {'host_infos_by_ip': host_infos_by_ip,
                            'host_infos_by_time': host_infos_by_time,
                            'api_host_url': self._api_host_url,
                            'uses_local': self._uses_local,
-                           'action_flags_list': list(ActionFlags)
+                           'action_flags_list': list(ActionFlags),
                            }
         result = render_to_string('summary', summary_context)
         print(result, file=self._output)

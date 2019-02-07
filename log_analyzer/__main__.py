@@ -13,7 +13,7 @@ if __name__ == '__main__':
     # args.append("--dns")
     # args.extend(glob.glob("/users/fy/SETI/logs/tools.pds_access_log-201?-??-??"))
     # args.extend(glob.glob("/users/fy/SETI/logs/tools.pds_access_log-*"))
-    args.extend(glob.glob("/users/fy/SETI/logs/tools.pds_access_log-2018-12-2[567]"))
+    args.extend(glob.glob("/users/fy/SETI/logs/tools.pds_access_log-2018-12-2[4567]"))
 
     log_analyzer.main(args)
 

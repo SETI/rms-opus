@@ -4,15 +4,20 @@
   <title>Log Analyzer</title>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-{% if uses_local and False %}
-  <link rel="stylesheet" href="bootstrap/3.4.0/css/bootstrap.css">
+
+{% if uses_local %}
+  <link rel="stylesheet" href="bootstrap/4.1.3/css/bootstrap.css">
   <script src="/jquery/3.3.1/jquery.min.js"></script>
-  <script src="/bootstrap/3.4.0/js/bootstrap.js"></script>
-{% else %}
+  <script src="/popper/1.14.3/js/popper.min.js"></script>
+  <script src="/bootstrap/4.1.3/js/bootstrap.js"></script>
+<!--
+{%endif}
   <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css">
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js"></script>
   <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.min.js"></script>
+{% if uses_local %}
+ -->
 {% endif %}
 
 <style>
@@ -43,6 +48,9 @@
   height:100%;
   text-align: left;
 }
+.SessionLink {
+  font-family: "Helvetica Neue";
+}
 .SessionLink.active {
   background-color:yellow;
 }
@@ -54,10 +62,13 @@
     text-align: left;
 }
 span.la-hidden {
-    opacity: 0.0;
+    visibility: hidden;
 }
 span.la-has-search:before {
     content: "S";
+}
+span.la-has-columns:before {
+    content: "C";
 }
 span.la-fetched-gallery:before {
     content: "G";
@@ -68,7 +79,6 @@ span.la-has-download:before {
 span.la-has-obsolete-slug:before {
     content: "\29bc";
 }
-
 
 </style>
 </head>
@@ -89,10 +99,10 @@ because it requires that all the navigation tabs be within a single unordered li
 -->
 
 <nav class="navbar navbar-light bg-light">
-  <ul class="nav nav-tabs">
+<ul class="nav nav-tabs">
     <li class="nav-item"><a class="nav-link active" data-toggle="tab" href="#ByIP">By IP</a></li>
     <li class="nav-item"><a class="nav-link" data-toggle="tab" href="#ByTime">By Time</a></li>
-  </ul>
+</ul>
 </nav>
 
 <div class="tab-content">
@@ -114,9 +124,9 @@ because it requires that all the navigation tabs be within a single unordered li
            <tr>
            {% for flag in action_flags_list %}
                 {% if flag in session.action_flags %}
-                    <td><span class="la-{{ flag.as_html_classname }}"></span></td>
+                    <td><span class="la-{{ flag.as_html_classname }}">&zwj;</span></td>
                 {% elif forloop.parentloop.first %}
-                    <td><span class="la-{{ flag.as_html_classname }} la-hidden"></span></td>
+                    <td><span class="la-{{ flag.as_html_classname }} la-hidden">&zwj;</span></td>
                 {% else %}
                     <td></td>
                 {%endif%}
@@ -144,9 +154,9 @@ because it requires that all the navigation tabs be within a single unordered li
         {% with session=host_info.sessions.0 %}
             {% for flag in action_flags_list %}
                 {% if flag in session.action_flags %}
-                    <td><span class="la-{{ flag.as_html_classname }}"></span></td>
+                    <td><span class="la-{{ flag.as_html_classname }}">&zwj;</span></td>
                 {% elif forloop.parentloop.first %}
-                    <td><span class="la-{{ flag.as_html_classname }} la-hidden"></span></td>
+                    <td><span class="la-{{ flag.as_html_classname }} la-hidden">&zwj;</span></td>
                 {% else %}
                     <td></td>
                 {%endif%}
