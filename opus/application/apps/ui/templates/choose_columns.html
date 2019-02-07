@@ -2,13 +2,13 @@
 
 {% block menu %}
 <div class="row">
-  <div class="allColumns col">
+  <div class="allMetadata col">
     {% with 'menu' as expectedVarName %}
       {{ block.super }} {# renders menu.html #}
     {% endwith %}
   </div>
 
-  <div class="selectedColumns col">
+  <div class="selectedMetadata col">
   	<ul>
   		{% for slug, param_info in all_slugs_info.items %}
   		    <li id="cchoose__{{ slug }}">

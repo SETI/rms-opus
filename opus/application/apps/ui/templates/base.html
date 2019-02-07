@@ -86,7 +86,7 @@
 									</a>
 								</li>
 								<li class="nav-item">
-									<a href="#" class="get_column_chooser nav-link" data-toggle="modal" data-target="#columnChooser" title="Select columns for metadata display"><i class="fas fa-columns"></i>&nbsp;Choose Columns</a>
+									<a href="#" class="metadataModal nav-link" data-toggle="modal" data-target="#metadataSelector" title="Select columns for metadata display"><i class="fas fa-columns"></i>&nbsp;Select Metadata</a>
 								</li>
 								<li class="nav-item">
 									<a href="#" class="browse_view nav-link"><i class="far fa-list-alt"></i></a>
@@ -191,16 +191,16 @@
 		</div>
 
 		<!--modal dialog for the column chooser -->
-		<div id="columnChooser" class="modal fade" role="dialog" tabbindex="-1" data-backdrop="false" aria-labelledby="columnChooserLabel" aria-hidden="true">
+		<div id="metadataSelector" class="modal fade" role="dialog" tabbindex="-1" data-backdrop="false" aria-labelledby="metadataSelectorLabel" aria-hidden="true">
 			<div class="modal-dialog modal-lg" role="document">
 				<div class="modal-content">
 					<div class="modal-header bg-dark text-light font-weight-bold font-lg py-3">
-						<div>Choose Columns</div>
+						<div>Select Metadata</div>
 						<button type="button" class="close" data-dismiss="modal" aria-label="Close">
 							<i class="far fa-times-circle fa-lg text-light"></i>
 						</button>
 					</div>
-					<div class="modal-body column_chooser" id="columnChooserContents"></div>
+					<div class="modal-body metadata" id="metadataSelectorContents"></div>
 					<div class="modal-footer">
 						<div class="left-container">
 							<button type="reset" class="btn btn-info">Reset to Default</button>

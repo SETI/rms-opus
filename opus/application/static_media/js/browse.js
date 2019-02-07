@@ -43,12 +43,12 @@ var o_browse = {
             return false;
         });
 
-       $("#browse").on("click", ".get_column_chooser", function() {
+       $("#browse").on("click", ".metadataModal", function() {
            o_browse.hideMenu();
-           o_browse.renderColumnChooser();
+           o_browse.renderMetadataSelector();
        });
 
-       $("#columnChooser").modal({
+       $("#metadataSelector").modal({
            keyboard: false,
            backdrop: 'static',
            show: false,
@@ -288,7 +288,7 @@ var o_browse = {
         $(document).on("keydown",function(e) {
             if ((e.which || e.keyCode) == 27) { // esc - close modals
                 $("#galleryView").modal('hide');
-                $("#columnChooser").modal('hide')
+                $("#metadataSelector").modal('hide')
                 o_browse.hideMenu();
             }
             if ($("#galleryView").hasClass("show")) {
@@ -393,7 +393,7 @@ var o_browse = {
     },
 
     // columns can be reordered wrt each other in 'column chooser' by dragging them
-    columnsDragged: function(element) {
+    metadataDragged: function(element) {
         let cols = $(element).sortable('toArray');
         cols.unshift('cchoose__opusid');  // manually add opusid to this list
         $.each(cols, function(key, value)  {
@@ -403,22 +403,22 @@ var o_browse = {
     },
 
     addColumn: function(slug) {
-        let elem = $(`#columnChooser .allColumns a[data-slug=${slug}]`);
+        let elem = $(`#metadataSelector .allMetadata a[data-slug=${slug}]`);
         elem.find("i.fa-check").fadeIn().css('display', 'inline-block');
 
         let label = elem.data("qualifiedlabel");
         let info = '<i class = "fas fa-info-circle" title = "' + elem.find('*[title]').attr("title") + '"></i>';
         let html = `<li id = "cchoose__${slug}">${label}${info}<span class="unselect"><i class="far fa-trash-alt"></span></li>`
-        $(".selectedColumns > ul").append(html);
+        $(".selectedMetadata > ul").append(html);
         opus.prefs.cols.push(slug);
     },
 
-    resetToDefaultColumns: function() {
+    resetToDefaultMetadata: function() {
         // uncheck all on left; we will check them as we go
-        $("#columnChooser .allColumns .fa-check").hide();
+        $("#metadataSelector .allMetadata .fa-check").hide();
 
         // remove all from selected column
-        $("#columnChooser .selectedColumns li").remove();
+        $("#metadataSelector .selectedMetadata li").remove();
         opus.prefs.cols = [];
 
         // add them back and set the check
@@ -428,30 +428,30 @@ var o_browse = {
     },
 
     // column chooser behaviors
-    addColumnChooserBehaviors: function() {
+    addmetadataSelectorBehaviors: function() {
         // this is a global
-        var currentSelectedColumns = opus.prefs.cols.slice();
+        var currentselectedMetadata = opus.prefs.cols.slice();
 
-        $("#columnChooser").on("hide.bs.modal", function(e) {
+        $("#metadataSelector").on("hide.bs.modal", function(e) {
             // update the data table w/the new columns
-            if (!o_utils.areObjectsEqual(opus.prefs.cols, currentSelectedColumns)) {
+            if (!o_utils.areObjectsEqual(opus.prefs.cols, currentselectedMetadata)) {
                 o_browse.resetData();
                 o_browse.loadBrowseData(1);
-                currentSelectedColumns = opus.prefs.cols.slice();
+                currentselectedMetadata = opus.prefs.cols.slice();
             }
         });
 
-        $("#columnChooser").on("show.bs.modal", function(e) {
+        $("#metadataSelector").on("show.bs.modal", function(e) {
             // save current column state so we can look for changes
-            currentSelectedColumns = opus.prefs.cols.slice();
+            currentselectedMetadata = opus.prefs.cols.slice();
         });
 
-        $("#columnChooser").on("shown.bs.modal", function () {
-            o_browse.columnSelectorScrollbar.update();
-            o_browse.selectedColumnsScrollbar.update();
+        $("#metadataSelector").on("shown.bs.modal", function () {
+            o_browse.allMetadataScrollbar.update();
+            o_browse.selectedMetadataScrollbar.update();
         });
 
-        $('#columnChooser .allColumns').on("click", '.submenu li a', function() {
+        $('#metadataSelector .allMetadata').on("click", '.submenu li a', function() {
 
             let slug = $(this).data('slug');
             if (!slug) {
@@ -468,7 +468,7 @@ var o_browse = {
                 selectedColumn.fadeIn().css("display", "inline-block");
                 if ($.inArray(slug, opus.prefs.cols ) < 0) {
                     // this slug was previously unselected, add to cols
-                    $(`<li id = "cchoose__${slug}">${label}<span class="info">&nbsp;<i class = "fas fa-info-circle" title = "${def}"></i>&nbsp;&nbsp;&nbsp;<span><span class="unselect"><i class="far fa-trash-alt"></span></li>`).hide().appendTo(".selectedColumns > ul").fadeIn();
+                    $(`<li id = "cchoose__${slug}">${label}<span class="info">&nbsp;<i class = "fas fa-info-circle" title = "${def}"></i>&nbsp;&nbsp;&nbsp;<span><span class="unselect"><i class="far fa-trash-alt"></span></li>`).hide().appendTo(".selectedMetadata > ul").fadeIn();
                     opus.prefs.cols.push(slug);
                 }
 
@@ -482,13 +482,13 @@ var o_browse = {
                     });
                 }
             }
-            o_browse.selectedColumnsScrollbar.update();
+            o_browse.selectedMetadataScrollbar.update();
             return false;
         });
 
 
         // removes chosen column
-        $("#columnChooser .selectedColumns").on("click", "li .unselect", function() {
+        $("#metadataSelector .selectedMetadata").on("click", "li .unselect", function() {
             let slug = $(this).parent().attr("id").split('__')[1];
 
             if ($.inArray(slug, opus.prefs.cols) >= 0) {
@@ -497,26 +497,26 @@ var o_browse = {
                 $(`#cchoose__${slug}`).fadeOut(function() {
                     $(this).remove();
                 });
-                $(`#columnChooser .allColumns [data-slug=${slug}]`).find("i.fa-check").hide();
+                $(`#metadataSelector .allMetadata [data-slug=${slug}]`).find("i.fa-check").hide();
             }
-            o_browse.selectedColumnsScrollbar.update();
+            o_browse.selectedMetadataScrollbar.update();
             return false;
         });
         // buttons
-        $("#columnChooser").on("click", ".btn", function() {
+        $("#metadataSelector").on("click", ".btn", function() {
             switch($(this).attr("type")) {
                 case "reset":
-                    o_browse.resetToDefaultColumns();
+                    o_browse.resetToDefaultMetadata();
                     break;
                 case "submit":
                     break;
                 case "cancel":
                     // add an "are you sure?" here...
-                    currentSelectedColumns = opus.prefs.cols;
+                    currentselectedMetadata = opus.prefs.cols;
                     break;
             }
         });
-    },  // /addColumnChooserBehaviors
+    },  // /addmetadataSelectorBehaviors
 
     // there are interactions that are applied to different code snippets,
     // this returns the namespace, view_var, prefix, and add_to_url
@@ -605,33 +605,33 @@ var o_browse = {
         return url;
     },
 
-    renderColumnChooser: function() {
-        if (!opus.column_chooser_drawn) {
+    renderMetadataSelector: function() {
+        if (!opus.metadata_selector_drawn) {
             let url = "/opus/__forms/column_chooser.html?" + o_hash.getHash() + "&col_chooser=1";
-            $(".column_chooser").load( url, function(response, status, xhr)  {
+            $(".modal-body.metadata").load( url, function(response, status, xhr)  {
 
-                opus.column_chooser_drawn=true;  // bc this gets saved not redrawn
-                $("#columnChooser .restart_button").hide(); // we are not using this
+                opus.metadata_selector_drawn=true;  // bc this gets saved not redrawn
+                $("#metadataSelector .restart_button").hide(); // we are not using this
 
                 // since we are rendering the left side of column chooser w/the same code that builds the select menu, we need to unhighlight the selected widgets
-                o_menu.markMenuItem(".column_shooser li", "unselect");
+                o_menu.markMenuItem(".modal-body.metadata li", "unselect");
 
                 // we keep these all open in the column chooser, they are all closed by default
                 // disply check next to any default columns
                 $.each(opus.prefs.cols, function(index, col) { //CHANGE BELOW TO USE DATA-ICON=
-                    $(`.column_chooser li > [data-slug="${col}"]`).find("i.fa-check").fadeIn().css('display', 'inline-block');
+                    $(`.modal-body.metadata li > [data-slug="${col}"]`).find("i.fa-check").fadeIn().css('display', 'inline-block');
                 });
 
-                o_browse.addColumnChooserBehaviors();
+                o_browse.addmetadataSelectorBehaviors();
 
-                o_browse.columnSelectorScrollbar = new PerfectScrollbar("#columnChooserContents .allColumns");
-                o_browse.selectedColumnsScrollbar = new PerfectScrollbar("#columnChooserContents .selectedColumns");
+                o_browse.allMetadataScrollbar = new PerfectScrollbar("#metadataSelectorContents .allMetadata");
+                o_browse.selectedMetadataScrollbar = new PerfectScrollbar("#metadataSelectorContents .selectedMetadata");
 
                 // dragging to reorder the chosen
-                $( ".selectedColumns > ul").sortable({
+                $( ".selectedMetadata > ul").sortable({
                     items: "li",
                     cursor: "grab",
-                    stop: function(event, ui) { o_browse.columnsDragged(this); }
+                    stop: function(event, ui) { o_browse.metadataDragged(this); }
                 });
             });
         }
@@ -905,7 +905,7 @@ var o_browse = {
         $('.' + opus.prefs.browse, "#browse").fadeIn();
 
         o_browse.updateBrowseNav();
-        o_browse.renderColumnChooser();   // just do this in background so there's no delay when we want it...
+        o_browse.renderMetadataSelector();   // just do this in background so there's no delay when we want it...
 
         // total pages indicator
         $('#' + 'pages', "#browse").html(opus['pages']);
@@ -1036,7 +1036,7 @@ var o_browse = {
         when the user changes the query and all this stuff is already drawn
         need to reset all of it (todo: replace with framework!)
         */
-        opus.column_chooser_drawn = false;
+        opus.metadata_selector_drawn = false;
         o_browse.resetData();
     },
 

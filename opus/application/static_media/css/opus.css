@@ -419,53 +419,50 @@ th.sticky-header {
 #product_types {
   display: inline-grid;
 }
-#columnChooser .column_checkbox {
-    display:inline;
-}
 
-#columnChooser i.fa-check {
+#metadataSelector i.fa-check {
     display:none;
 }
 
-#columnChooser ul li {
+#metadataSelector ul li {
     text-decoration:none;
 }
-.allColumns, .selectedColumns   {
+.allMetadata, .selectedMetadata   {
     height: 450px;
     overflow:scroll;
 	overflow-x: auto;
 }
-.allColumns ul li {
+.allMetadata ul li {
     padding-bottom:3px;
 
 }
-.allColumns .cat_label {
+.allMetadata .cat_label {
     margin-top:15px;
     margin-bottom:-5px;
 }
 
-.selectedColumns ul {
+.selectedMetadata ul {
 	padding-inline-start: 0.5em;
 	padding-inline-end: 1em;
 }
-.selectedColumns ul li:hover{
+.selectedMetadata ul li:hover{
 	cursor:grab;
 }
-.selectedColumns ul li .unselect:hover{
+.selectedMetadata ul li .unselect:hover{
 	 cursor:default;
  }
- .selectedColumns ul li .info:hover{
+ .selectedMetadata ul li .info:hover{
  	 cursor:default;
  }
-.selectedColumns .unselect {
+.selectedMetadata .unselect {
     float:right;
 }
 
-.selectedColumns {
+.selectedMetadata {
     border:0;
     z-index:9999;
 }
-.selectedColumns ul li {
+.selectedMetadata ul li {
     padding:5px 15px;
     border:1px dotted gray;
     list-style-type:none;
@@ -519,7 +516,7 @@ img.preview {
     pointer-events: none;
 }
 
-#galleryView button.close, #columnChooser button.close {
+#galleryView button.close, #metadataSelector button.close {
 	position: absolute;
     float: right;
     top: .8em;

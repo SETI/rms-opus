@@ -62,7 +62,7 @@ var opus = {
     gallery_data: {},  // holds gallery column data
 
     pages_drawn: {"colls_gallery": [], "gallery": []},  // keeping track of currently rendered gallery pages
-                                                          // so underlying data can be refreshed after 'choose columns'
+                                                          // so underlying data can be refreshed after 'choose metadata'
 
     // additional defaults are in base.html
 
@@ -94,7 +94,7 @@ var opus = {
     pages:0, // total number of pages this result
     colls_pages:1, // total number of collections pages
     browse_auto:'.chosen_columns', // we are turning this on as default
-    column_chooser_drawn:false,
+    metadata_selector_drawn:false,
     gallery_begun:false, // have we started the gallery view
     browse_view_scrolls: reset_browse_view_scrolls, // same defaults as footer clicks (definied in header.html)
                                                       // {"gallery":0, "data":0, "colls_gallery":0, "colls_data":0 };
