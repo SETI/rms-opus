@@ -675,18 +675,13 @@ var o_browse = {
                 html += '</div></a>';
 
                 html += '<div class="thumb-overlay">';
-                if (opus.prefs.view == "browse") {
-                    html += `<div class="tools dropdown" data-id="${opusId}">`;
-                    html +=     '<a href="#" data-icon="info" title="View observation detail"><i class="fas fa-info-circle fa-xs"></i></a>';
+                html += `<div class="tools dropdown" data-id="${opusId}">`;
+                html +=     '<a href="#" data-icon="info" title="View observation detail"><i class="fas fa-info-circle fa-xs"></i></a>';
 
-                    let buttonInfo = o_browse.cartButtonInfo(opusId, (item.in_collection ? 'add' : 'remove'));
-                    html +=     `<a href="#" data-icon="cart" title="Add to cart"><i class="${buttonInfo.icon} fa-xs"></i></a>`;
-                    html +=     '<a href="#" data-icon="menu"><i class="fas fa-bars fa-xs"></i></a>';
-                    html += '</div>';
-                } else {
-                    // this will only display if the user has shift-click to remove the image from the cart
-                    html += '<a href="#" class="remove"><i class="fas fa-times fa-7x"></i></a>';
-                }
+                let buttonInfo = o_browse.cartButtonInfo(opusId, (item.in_collection ? 'add' : 'remove'));
+                html +=     `<a href="#" data-icon="cart" title="Add to cart"><i class="${buttonInfo.icon} fa-xs"></i></a>`;
+                html +=     '<a href="#" data-icon="menu"><i class="fas fa-bars fa-xs"></i></a>';
+                html += '</div>';
                 html += '</div></div>';
 
                 // table row

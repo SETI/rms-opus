@@ -197,11 +197,11 @@ ul.searchMenu{
 		margin: auto;
 }
 
-#browse .thumbnail-container:hover .thumb-overlay {
+.thumbnail-container:hover .thumb-overlay {
 	height: 30%;
 }
 
-#browse .thumb-overlay {
+.thumb-overlay {
 	position: absolute;
 	bottom: 0;
 	left: 0;
@@ -214,7 +214,7 @@ ul.searchMenu{
 	height: 0;
 	transition: .5s ease;
 }
-#browse .thumb-overlay a:hover {
+.thumb-overlay a:hover {
 	color:#097da5;
 	/*font-size:130%;*/
 }
