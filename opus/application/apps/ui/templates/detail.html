@@ -7,8 +7,7 @@
 
                 <h2>PDS Products</h2>
                 <div>
-                    <p><a class="download_csv" target="_blank" href="#">Download CSV of Chosen Columns</a></p>
-                    <p>Download zipped <a href="/opus/__api/download/{{ opus_id }}.zip">data archive</a> or <a href="/opus/__api/download/{{ opus_id }}.zip?urlonly=1">URL archive</a> for this observation (all products, current version only)</a></p>
+                     <p>Download zipped <a href="/opus/__api/download/{{ opus_id }}.zip">data archive</a> or <a href="/opus/__api/download/{{ opus_id }}.zip?urlonly=1">URL archive</a> for this observation (all products, current version only)</a></p>
                     <p>Click on any "Index" type to see the entry for this observation in that table.</p>
                     {% for version, version_items in products.items %}
                       <ul>
@@ -31,13 +30,14 @@
                     {% endfor %}
                 </div>
 
-                <h2>Metadata for Current Columns</h2>
+                <h2>Selected Metadata</h2>
+                <p><a class="download_csv" target="_blank" href="#">Download CSV of Selected Metadata</a></p>
                 <div id="cols_metadata_{{ opus_or_ringobs_id }}">
                     <span class="spinner">&nbsp;</span>
                 </div>
                 <div>
                     <h2>All OPUS Metadata for this Observation</h2>
-                    <p>Grab all metadata <a href="/opus/__api/metadata_v2/{{ opus_id }}.json" target="_blank">as json</a></p>
+                    <p>Download all metadata <a href="/opus/__api/metadata_v2/{{ opus_id }}.json" target="_blank">as json</a></p>
                     <div id="all_metadata_{{ opus_or_ringobs_id }}"></div>
                 </div>
             </div>

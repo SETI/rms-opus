@@ -86,7 +86,7 @@ var o_browse = {
         // 2 - shift click - takes range from whatever the last thing you clicked on and if the
         //     thing you previously clicked is IN the card, do an 'add range', otherwise
         //     do a 'remove range'.  Don't toggle the items inside the range
-        // 3 - ctrl click - alternate way to add to shopping cart
+        // 3 - ctrl click - alternate way to add to cart
         //    NOTE: range can go forward or backwards
         //
 
@@ -348,7 +348,7 @@ var o_browse = {
         }
         let inCart = o_collections.isIn(opusId) ? "" : "in";
         let buttonInfo = o_browse.cartButtonInfo(opusId, inCart);
-        $("#obs-menu .shopping-cart-item").html(`<i class="${buttonInfo.icon}"></i>${buttonInfo.title}`);
+        $("#obs-menu .cart-item").html(`<i class="${buttonInfo.icon}"></i>${buttonInfo.title}`);
         $("#obs-menu [data-action='downloadCSV']").attr("href",`/opus/__api/metadata_v2/${opusId}.csv?cols=${opus.prefs.cols.join()}`);
         $("#obs-menu [data-action='downloadCSVAll']").attr("href",`/opus/__api/metadata_v2/${opusId}.csv`);
         $("#obs-menu [data-action='downloadData']").attr("href",`/opus/__api/download/${opusId}.zip`);
@@ -650,10 +650,10 @@ var o_browse = {
             // for now, just post same message to both #browse & #collections tabs
             if (data.page_no == 1) {
                 html += '<div class="thumbnail-message">';
-                html += '<h2>Your Shopping Cart is empty</h2>';
+                html += '<h2>Your Cart is empty</h2>';
                 html += '<p>To add observations to the cart, click on the Browse Results tab ';
                 html += 'at the top of the page, mouse over the thumbnail gallery images to reveal the tools, ';
-                html += 'then click on the shopping cart icon.  </p>';
+                html += 'then click on the cart icon.  </p>';
                 html += '</div>';
             } else {
                 // we've hit the end of the infinite scroll.
@@ -679,7 +679,7 @@ var o_browse = {
                 html +=     '<a href="#" data-icon="info" title="View observation detail"><i class="fas fa-info-circle fa-xs"></i></a>';
 
                 let buttonInfo = o_browse.cartButtonInfo(opusId, (item.in_collection ? 'add' : 'remove'));
-                html +=     `<a href="#" data-icon="cart" title="Add to cart"><i class="${buttonInfo.icon} fa-xs"></i></a>`;
+                html +=     `<a href="#" data-icon="cart" title="Add to Cart"><i class="${buttonInfo.icon} fa-xs"></i></a>`;
                 html +=     '<a href="#" data-icon="menu"><i class="fas fa-bars fa-xs"></i></a>';
                 html += '</div>';
                 html += '</div></div>';
@@ -947,10 +947,10 @@ var o_browse = {
 
     cartButtonInfo: function(opusId, status) {
         let icon = "fas fa-cart-plus";
-        let title = "Add to cart";
+        let title = "Add to Cart";
         if (status != "in" && status != "remove") {
             icon = "far fa-trash-alt";
-            title = "Remove from cart";
+            title = "Remove from Cart";
         }
         return  {"icon":icon, "title":title};
     },

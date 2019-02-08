@@ -583,10 +583,10 @@ img.preview {
 }
 
 .collection_details {
-		border: .3em double black;
+	border-left: .3em double black;
     padding-left: 2em;
     min-width: 28em;
-		max-width: 28em;
+	max-width: 28em;
 }
 .collection_download_button {
     padding-top:0px;
@@ -596,7 +596,7 @@ div.gallery {
     margin:0; padding:0;
     position: relative;
     overflow-x:hidden;
-		overflow-y:hidden;
+	overflow-y:hidden;
     margin-right:-80px;
 }
 .browse-nav-container {
