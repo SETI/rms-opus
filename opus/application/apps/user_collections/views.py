@@ -80,7 +80,7 @@ def api_view_collection(request, fmt):
         'total_download_size_pretty': Total size of unique files (pretty format)
         'product_cat_list':           List of categories and info:
             [
-             ['<Product Type Category>',
+             [<Product Type Category>,
               [{'slug_name':            Like "browse-thumb"
                 'product_type':         Like "Browse Image (thumbnail)"
                 'product_count':        Number of opus_ids in this category
@@ -320,7 +320,7 @@ def api_create_download(request, opus_id=None):
     # Fetch the full file info of the files we'll be zipping up
     # We want the PdsFile objects so we can get the checksum as well as the
     # abspath
-    files = get_pds_products(opus_ids, None, loc_type='raw',
+    files = get_pds_products(opus_ids, loc_type='raw',
                              product_types=product_types)
 
     if not files:
@@ -382,25 +382,27 @@ def api_create_download(request, opus_id=None):
             continue
         files_version = files[f_opus_id]['Current']
         for product_type in files_version:
-            for pdsf in files_version[product_type]:
-                f = pdsf.abspath
-                pretty_name = f.split('/')[-1]
-                digest = f'{pretty_name}:{pdsf.checksum}'
+            for file_data in files_version[product_type]:
+                path = file_data['path']
+                url = file_data['url']
+                checksum = file_data['checksum']
+                pretty_name = path.split('/')[-1]
+                digest = f'{pretty_name}:{checksum}'
                 mdigest = f'{f_opus_id}:{pretty_name}'
 
                 if pretty_name not in added:
                     chksum_fp.write(digest+'\n')
                     manifest_fp.write(mdigest+'\n')
-                    url_fp.write(settings.PRODUCT_HTTP_PATH+pdsf.url+'\n')
-                    filename = os.path.basename(f)
+                    url_fp.write(url+'\n')
+                    filename = os.path.basename(path)
                     if not url_file_only:
                         try:
-                            zip_file.write(f, arcname=filename)
+                            zip_file.write(path, arcname=filename)
                         except Exception as e:
                             log.error(
             'api_create_download threw exception for opus_id %s, product_type %s, '
             +'file %s, pretty_name %s: %s',
-            f_opus_id, product_type, f, pretty_name, str(e))
+            f_opus_id, product_type, path, pretty_name, str(e))
                             errors.append('Error adding: ' + pretty_name)
                     added.append(pretty_name)
 
@@ -451,8 +453,8 @@ def api_create_download(request, opus_id=None):
 def _get_download_info(product_types, session_id):
     """Return information about the current collection useful for download.
 
-    The result is limited to the given product_types. ['all'] means return all
-    product_types.
+    The resulting totals are limited to the given product_types.
+    ['all'] means return all product_types.
 
     Returns dict containing:
         'total_download_count':       Total number of unique files
@@ -460,7 +462,7 @@ def _get_download_info(product_types, session_id):
         'total_download_size_pretty': Total size of unique files (pretty format)
         'product_cat_list':           List of categories and info:
             [
-             ['<Product Type Category>',
+             [<Product Type Category>,
               [{'slug_name':            Like "browse-thumb"
                 'product_type':         Like "Browse Image (thumbnail)"
                 'product_count':        Number of opus_ids in this category
@@ -474,41 +476,132 @@ def _get_download_info(product_types, session_id):
              ], ...
             ]
     """
-    opus_ids = (Collections.objects.filter(session_id__exact=session_id)
-                .values_list('opus_id'))
-    opus_id_list = [x[0] for x in opus_ids]
+    cursor = connection.cursor()
+    q = connection.ops.quote_name
 
-    (total_download_size, total_download_count,
-     product_counts) = get_product_counts(opus_id_list,
-                                          product_types=product_types)
+    values = []
+    sql = 'SELECT '
 
+# The prototype query:
+# SELECT obs_files.short_name,
+#        count(distinct obs_files.opus_id) as product_count,
+#        count(distinct obs_files.logical_path) as download_count,
+#        t2.download_size as downloadsize
+# FROM obs_files,
+#
+#      (SELECT t1.short_name, sum(t1.size) as download_size
+#              FROM (SELECT DISTINCT obs_files.short_name, obs_files.logical_path, obs_files.size
+#                           FROM obs_files
+#                           WHERE opus_id IN ('co-iss-n1460960653', 'co-iss-n1460960868')
+#                   ) as t1
+#              GROUP BY t1.short_name
+#      ) as t2
+# WHERE obs_files.short_name=t2.short_name
+#   AND obs_files.opus_id in ('co-iss-n1460960653', 'co-iss-n1460960868')
+# GROUP BY obs_files.category, obs_files.sort_order, obs_files.short_name, t2.download_size
+# ORDER BY sort_order;
+
+
+    # For a given short_name, the category, sort_order, and full_name are
+    # always the same. Thus we can group by all four and it's the same as
+    # grouping by just short_name. We need them all here to return to the user.
+    sql += q('obs_files')+'.'+q('category')+' AS '+q('cat')+', '
+    sql += q('obs_files')+'.'+q('sort_order')+' AS '+q('sort')+', '
+    sql += q('obs_files')+'.'+q('short_name')+' AS '+q('short')+', '
+    sql += q('obs_files')+'.'+q('full_name')+' AS '+q('full')+', '
+
+    # download_size is the total sizes of all distinct filenames
+    # Note there is only one download_size per short_name, so when we add
+    # download_size to the GROUP BY later, we aren't actually aggregating
+    # anything.
+    sql += q('t2')+'.'+q('download_size')+' AS '+q('download_size')+', '
+
+    # download_count is the number of distinct filenames
+    sql += 'COUNT(DISTINCT '+q('obs_files')+'.'+q('logical_path')+') AS '
+    sql += q('download_count')+', '
+
+    # product_count is the number of distinct OPUS_IDs in each group
+    sql += 'COUNT(DISTINCT '+q('obs_files')+'.'+q('obs_general_id')+') AS '
+    sql += q('product_count')+' '
+
+    sql += 'FROM '
+
+    # Nested SELECT #1
+    sql += '(SELECT '+q('t1')+'.'+q('short_name')+', '
+    sql += 'SUM('+q('t1')+'.'+q('size')+') AS '+q('download_size')+' '
+    sql += 'FROM '
+
+    # Nested SELECT #2
+    sql += '(SELECT DISTINCT '+q('obs_files')+'.'+q('short_name')+', '
+    sql += q('obs_files')+'.'+q('logical_path')+', '
+    sql += q('obs_files')+'.'+q('size')+' '
+    sql += 'FROM '+q('obs_files')+' '
+    sql += 'INNER JOIN '+q('collections')+' ON '
+    sql += q('collections')+'.'+q('obs_general_id')+'='
+    sql += q('obs_files')+'.'+q('obs_general_id')+' '
+    sql += 'WHERE '+q('collections')+'.'+q('session_id')+'=%s '
+    values.append(session_id)
+    sql += 'AND '+q('obs_files')+'.'+q('version_number')+' >= 900000'
+    sql += ') AS '+q('t1')+' '
+    # End of nested SELECT #2
+
+    # Back to nested SELECT #1
+    sql += 'GROUP BY '+q('t1')+'.'+q('short_name')
+    sql += ') AS '+q('t2')+', '
+    # End of nested SELECT #1
+
+    sql += q('obs_files')+' '
+    sql += 'INNER JOIN '+q('collections')+' ON '
+    sql += q('collections')+'.'+q('obs_general_id')+'='
+    sql += q('obs_files')+'.'+q('obs_general_id')+' '
+    sql += 'WHERE '+q('collections')+'.'+q('session_id')+'=%s '
+    values.append(session_id)
+    sql += 'AND '+q('obs_files')+'.'+q('short_name')+'='
+    sql += q('t2')+'.'+q('short_name')+' '
+    sql += 'AND '+q('obs_files')+'.'+q('version_number')+' >= 900000 '
+
+    sql += 'GROUP BY '+q('cat')+', '+q('sort')+', '
+    sql += q('short')+', '+q('full')+' '
+    sql += 'ORDER BY '+q('sort')
+
+    log.debug('_get_download_info SQL: %s %s', sql, values)
+    cursor.execute(sql, values)
+
+    results = cursor.fetchall()
+
+    total_download_size = 0
+    total_download_count = 0
     product_cats = []
     product_cat_list = []
-    for (product_type, product_count,
-         download_count, download_size) in product_counts:
-        # product_type format is:
-        #   ('Cassini ISS', 0, 'coiss-raw', 'Raw image')
-        #   ('browse', 40, 'browse-full', 'Browse Image (full-size)')
-        name = product_type[0]
-        pretty_name = name
-        if name == 'standard':
+
+    for res in results:
+        (category, sort_order, short_name, full_name,
+         download_size, download_count, product_count) = res
+        download_size = int(download_size)
+        download_count = int(download_count)
+        product_count = int(product_count)
+        if product_types == ['all'] or short_name in product_types:
+            total_download_size += download_size
+            total_download_count += download_count
+        pretty_name = category
+        if category == 'standard':
             pretty_name = 'Standard Data Products'
-        elif name == 'metadata':
+        elif category == 'metadata':
             pretty_name = 'Metadata Products'
-        elif name == 'browse':
+        elif category == 'browse':
             pretty_name = 'Browse Products'
-        elif name == 'diagram':
+        elif category == 'diagram':
             pretty_name = 'Diagram Products'
         else:
-            pretty_name = name + '-Specific Products'
-        key = (name, pretty_name)
+            pretty_name = category + '-Specific Products'
+        key = (category, pretty_name)
         if key not in product_cats:
             product_cats.append(key)
             cur_product_list = []
             product_cat_list.append((pretty_name, cur_product_list))
         product_dict_entry = {
-            'slug_name': product_type[2],
-            'product_type': product_type[3],
+            'slug_name': short_name,
+            'product_type': full_name,
             'product_count': product_count,
             'download_count': download_count,
             'download_size': download_size,

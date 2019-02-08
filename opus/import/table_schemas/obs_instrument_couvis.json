@@ -16,7 +16,7 @@
     },
     {
         "field_name": "opus_id",
-        "field_type": "char80",
+        "field_type": "char40",
         "field_key": "foreign",
         "field_key_foreign": [
             "obs_general",
@@ -517,6 +517,7 @@
     },
     {
         "field_name": "timestamp",
-        "field_type": "timestamp"
+        "field_type": "timestamp",
+        "field_notnull": true
     }
 ]

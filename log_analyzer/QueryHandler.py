@@ -24,19 +24,20 @@ class State(Enum):
 
 class QueryHandler:
     DEFAULT_SORT_ORDER = 'time1'
-    _session_info: Any   # can't handle circular imports.  :-(
+    _session_info: Any  # can't handle circular imports.  :-(
     _slug_map: Slug.ToInfoMap
     _default_column_slug_info: ColumnSlugInfo
     _uses_html: bool
-    _is_reset: bool
 
     _previous_search_slug_info: SearchSlugInfo  # map from family to List[(Slug.Info, Value)]
     _previous_column_slug_info: Optional[ColumnSlugInfo]  # map from raw slug to Slug.Info
     _previous_page: str  # previous page
+    _previous_startobs: str  # previous start observation
     _previous_sort_order: str  # sort order
     _previous_state: State
 
-    def __init__(self, session_info: Any, slug_map: Slug.ToInfoMap, default_column_slug_info: ColumnSlugInfo, uses_html: bool):
+    def __init__(self, session_info: Any, slug_map: Slug.ToInfoMap, default_column_slug_info: ColumnSlugInfo,
+                 uses_html: bool):
         self._session_info = session_info
         self._slug_map = slug_map
         self._default_column_slug_info = default_column_slug_info
@@ -80,7 +81,8 @@ class QueryHandler:
         if uses_columns:
             columns_query = query.get('cols')
             if columns_query:
-                column_slug_info = self.get_column_slug_info(columns_query.split(','), self._slug_map, self._session_info)
+                column_slug_info = self.get_column_slug_info(columns_query.split(','),
+                                                             self._slug_map, self._session_info)
             else:
                 column_slug_info = self._default_column_slug_info
         else:
@@ -88,6 +90,7 @@ class QueryHandler:
 
         sort_order = query.get('order', self.DEFAULT_SORT_ORDER)
         page = query.get('page', '')
+        startobs = query.get('startobs', '')
 
         self.__handle_search_info(self._previous_search_slug_info, search_slug_info, result)
         self._previous_search_slug_info = search_slug_info
@@ -101,12 +104,15 @@ class QueryHandler:
 
         if uses_pages:
             assert current_state == State.FETCHING
+            page_type = 'Page' if page else 'Starting observation'
             if current_state != previous_state:
                 viewed = 'Table' if query.get('browse') == 'data' else 'Gallery'
-                result.append(f'View {viewed}: Page {page or "???"}')
+                result.append(f'View {viewed}: {page_type} {page or startobs or "???"}')
             else:
-                self.__get_page_info(self._previous_page, page, result)
+                self.__get_page_info('Page', self._previous_page, page, result)
+                self.__get_page_info('Starting observation', self._previous_startobs, startobs, result)
             self._previous_page = page
+            self._previous_startobs = startobs
 
         self._previous_state = current_state
 
@@ -148,9 +154,11 @@ class QueryHandler:
         result.extend(changed_searches)
 
     def __handle_search_remove(self, result: List[str], family: Slug.Family) -> None:
+        self._session_info.changed_search_slugs()
         result.append(f'Remove Search: "{family.label}"')
 
     def __handle_search_add(self, result: List[str], family: Slug.Family, new_info: SearchSlugInfo) -> None:
+        self._session_info.changed_search_slugs()
         if family.is_singleton():
             assert len(new_info[family]) == 1
             slug_info, value = new_info[family][0]
@@ -165,8 +173,9 @@ class QueryHandler:
             new_min, new_max, new_qtype, flags = self.__parse_search_family(new_info[family])
             postscript = self.__get_postscript(flags)  # is html-aware
             if self._uses_html:
-                def always_mark(type: str, value: Optional[str]) -> Any:
-                    return format_html('<mark><ins>{}:{}</ins></mark>', type, self.__format_search_value(value))
+                def always_mark(which: str, value: Optional[str]) -> str:
+                    return format_html('<mark><ins>{}:{}</ins></mark>', which, self.__format_search_value(value))
+
                 result.append(format_html('Add Search: &quot;{}&quot; = ({}, {}, {}){}',
                                           family.label,
                                           always_mark(family.min, new_min),
@@ -229,6 +238,7 @@ class QueryHandler:
         if new_column_families == set(self._default_column_slug_info.keys()):
             result.append('Reset Columns')
             return
+        self._session_info.changed_column_slugs()
         all_column_families = old_column_families.union(new_column_families)
         added_columns, removed_columns = [], []
         for family in sorted(all_column_families):
@@ -246,12 +256,12 @@ class QueryHandler:
         result.extend(removed_columns)
         result.extend(added_columns)
 
-    def __get_page_info(self, old_page: Optional[str], new_page: Optional[str], result: List[str]) -> None:
+    def __get_page_info(self, what: str, old_page: Optional[str], new_page: Optional[str], result: List[str]) -> None:
         if old_page != new_page and old_page and new_page:
             if self._uses_html:
-                result.append(format_html('Change Page: {} &rarr; {}', old_page, new_page))
+                result.append(format_html('Change {}: {} &rarr; {}', what.title(), old_page, new_page))
             else:
-                result.append(f'Change Page: {old_page} -> {new_page}')
+                result.append(f'Change {what.title()}: {old_page} -> {new_page}')
 
     def __get_sort_order_info(self, old_sort_order: str, new_sort_order: str, result: List[str]) -> None:
         if old_sort_order != new_sort_order:
@@ -300,13 +310,6 @@ class QueryHandler:
             joined_old_values = ', '.join(formatted_old_values)
             joined_new_values = ', '.join(formatted_new_values)
             result.append(f'Change Search: "{name}" = {joined_old_values} -> {joined_new_values}')
-
-    def __slug_value_change_experimental_html(self, name: str, old_value: str, new_value: str,
-                                              result: List[str]) -> None:
-        old_value_set = set(old_value.split(','))
-        new_value_set = set(new_value.split(','))
-        if old_value_set == new_value_set:
-            return
 
     @staticmethod
     def get_column_slug_info(slugs: List[str], slug_map: Slug.ToInfoMap,

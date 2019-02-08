@@ -119,7 +119,6 @@ def api_get_data_and_images(request):
         raise ret
 
     preview_jsons = [json.loads(x[-1]) for x in page]
-
     opus_ids = aux['opus_ids']
     image_list = get_pds_preview_images(opus_ids, preview_jsons,
                                         ['thumb', 'small', 'med', 'full'])
@@ -592,7 +591,6 @@ def api_get_images(request, fmt):
         raise ret
 
     preview_jsons = [json.loads(x[1]) for x in page]
-
     opus_ids = aux['opus_ids']
     image_list = get_pds_preview_images(opus_ids, preview_jsons,
                                         ['thumb', 'small', 'med', 'full'])
@@ -701,25 +699,18 @@ def api_get_files(request, opus_id=None):
         # Backwards compatibility
         opus_id = convert_ring_obs_id_to_opus_id(opus_id)
         opus_ids = [opus_id]
-        file_specs = None
     else:
         # No opus_id passed, get files from search results
         # Override cols because we don't care about anything except
         # opusid
-        data = get_data(request, 'raw', cols='opusid,**filespec')
-        if data is None:
-            exit_api_call(api_code, Http404)
-            raise Http404
-        opus_ids = [p[0] for p in data['page']]
-        file_specs = [p[1] for p in data['page']]
-        if 'page' in data:
-            del data['page']
-        if 'labels' in data:
-            del data['labels']
-        if 'columns' in data:
-            del data['columns']
+        (page_no, start_obs, limit, page,
+         order, aux) = get_search_results_chunk(request,
+                                                cols='',
+                                                return_opusids=True,
+                                                api_code=api_code)
+        opus_ids = aux['opus_ids']
 
-    ret = get_pds_products(opus_ids, file_specs,
+    ret = get_pds_products(opus_ids,
                            loc_type=loc_type,
                            product_types=product_types)
 

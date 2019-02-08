@@ -6,17 +6,17 @@ import itertools
 import re
 import sys
 from bisect import bisect_left, bisect_right
-from collections import deque
+from collections import deque, defaultdict
 from operator import attrgetter
-from typing import List, Optional, NamedTuple, Iterable, TextIO
+from typing import List, Optional, NamedTuple, Iterable, TextIO, Tuple, Dict
 
 from LogEntry import LogReader, LogEntry
 
 ERROR_PATTERN = re.compile(r'^\[([^\]]+)\] \[([^\]]+)\] \[([^\]]+)\] \[(client|remote) ([^\]]+):\d+\] (.*)$')
+
 TEXT_ERROR_PATTERN = re.compile(r'^\[([^\]]+)\] (ERROR|WARNING) \[([^\]]+)\] (.*)$')
 
-ERROR_LEEWAY = datetime.timedelta(milliseconds=200)
-EXTENDED_LEEWAY = datetime.timedelta(seconds=1)
+ERROR_LEEWAY = datetime.timedelta(milliseconds=20)
 
 
 class ErrorEntry(NamedTuple):
@@ -31,10 +31,12 @@ class ErrorEntry(NamedTuple):
 class ErrorReader(object):
     _files: List[str]
     _output: TextIO
+    _seen_errors: Dict[Tuple[str, ...], List[Tuple[List[ErrorEntry], List[LogEntry]]]]
 
     def __init__(self, files: List[str], output: TextIO):
         self._files = files
         self._output = output
+        self._seen_errors = defaultdict(list)
 
     def run(self) -> None:
         error_entries = self._get_error_entries()
@@ -49,6 +51,7 @@ class ErrorReader(object):
         for host_ip, error_entries in errors_by_host_ip:
             log_entries = log_entries_by_host_ip.get(host_ip, [])
             self._check_one_ip(host_ip, error_entries, log_entries)
+        self._show_results()
 
     def _get_error_entries(self) -> List[ErrorEntry]:
         files = [file for file in self._files if "pds_error_log" in file]
@@ -81,13 +84,13 @@ class ErrorReader(object):
             print(f'Reading {file_name}')
             with open(file_name) as file:
                 for error_line in file.readlines():
-                    error_entry = ErrorReader.__parse_line(error_line)
+                    error_entry = ErrorReader.__parse_line_in_error_log(error_line)
                     if error_entry:
                         error_entries.append(error_entry)
         return error_entries
 
     @staticmethod
-    def __parse_line(line: str) -> Optional[ErrorEntry]:
+    def __parse_line_in_error_log(line: str) -> Optional[ErrorEntry]:
         """Converts a line from an Apache log file into a LogEntry."""
         match = re.match(ERROR_PATTERN, line)
         if not match:
@@ -107,42 +110,52 @@ class ErrorReader(object):
             return ErrorEntry(time=time, host_ip=host_ip, message=rest)
 
     def _check_one_ip(self, host_ip: str, error_entries: List[ErrorEntry], log_entries: List[LogEntry]) -> None:
-        output = self._output
-        print(f'Host {host_ip}', file=output)
         error_entries_deque = deque(error_entries)
         log_entry_dates = [log_entry.time.replace(tzinfo=None) for log_entry in log_entries]
 
-        def merge_error_entries(old_entry: ErrorEntry, new_entry: ErrorEntry) -> bool:
-            delta = new_entry.time - old_entry.time
-            return delta < ERROR_LEEWAY or (old_entry.message == new_entry.message and delta < EXTENDED_LEEWAY)
+        def merge_error_entries(old_entries: List[ErrorEntry], new_entry: ErrorEntry) -> bool:
+            delta = new_entry.time - old_entries[-1].time
+            if delta >= ERROR_LEEWAY:
+                return False
+            if new_entry.message in (x.message for x in old_entries):
+                return False
+            return True
 
         while error_entries_deque:
             # Any set of error logs on the same host, in which each log is separated from the previous one by less than
             # 200ms is a single set of error logs
             these_error_entries = [error_entries_deque.popleft()]
-            while error_entries_deque and merge_error_entries(these_error_entries[-1], error_entries_deque[0]):
+            while error_entries_deque and merge_error_entries(these_error_entries, error_entries_deque[0]):
                 these_error_entries.append(error_entries_deque.popleft())
             if not log_entries:
-                print('No log entries for this host', file=output)
+                these_log_entries: List[LogEntry] = []
             else:
                 start_time = these_error_entries[0].time.replace(microsecond=0)
                 end_time = these_error_entries[-1].time
                 left = bisect_left(log_entry_dates, start_time)
                 right = bisect_right(log_entry_dates, end_time)
                 if left < right and left != len(log_entry_dates):
-                    for i in range(left, right):
-                        print(f'{log_entries[i].time}   {log_entries[i].url.geturl()}', file=output)
-                elif left > 0:
-                    i = left - 1
-                    print(f'{log_entries[i].time}?? {log_entries[i].url.geturl()}', file=output)
+                    these_log_entries = log_entries[left:right]
                 else:
-                    print("No matching entries found", file=output)
-            for entry in these_error_entries:
-                if entry.severity:
-                    print(f'{entry.time}: {entry.severity} {entry.code_location} {entry.message}', file=output)
-                else:
-                    print(f'{entry.time}: {entry.message}', file=output)
-            print(file=output)
+                    these_log_entries = []
+            error_key = tuple(entry.message for entry in these_error_entries)
+            self._seen_errors[error_key].append((these_error_entries, these_log_entries))
+
+    def _show_results(self) -> None:
+        output = self._output
+        seen_errors = self._seen_errors
+        for key in sorted(seen_errors.keys(), key=lambda strs: (-len(seen_errors[strs]), -len(strs), strs)):
+            print('\n========================\n', file=output)
+            count = len(seen_errors[key])
+            print(f'This error occurs { count } {"times" if count > 1 else "time"}', file=output)
+            for line in key:
+                print(line, file=output)
+            for error_entries, log_entries in seen_errors[key]:
+                print('   --- ', file=output)
+                for log_entry in log_entries:
+                    print(f'{log_entry.time}   {log_entry.url.geturl()}', file=output)
+                if not log_entries:
+                    print(f'Log entries missing', file=output)
 
 
 def main(arguments: Optional[List[str]] = None) -> None:

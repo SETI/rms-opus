@@ -31,6 +31,9 @@ def validate_param_info(namespace):
     q = db.quote_identifier
 
     for obs_table_name in obs_table_names:
+        if obs_table_name == 'obs_files':
+            # Not really a user-visible table so no param_info needed
+            continue
         column_list = db.table_info(namespace, obs_table_name)
         field_names = [x['field_name'] for x in column_list]
         for column in column_list:
