@@ -682,7 +682,6 @@ class ApiSearchTests(TestCase, ApiTestHelper):
 
     def test__api_stringsearchchoices_underscore(self):
         "/api/stringsearchchoices: underscore"
-        # Make sure that reqno isn't cached along with the rest of the result
         url = '/opus/__api/stringsearchchoices/volumeid.json?volumeid=____'
         expected = {'choices': [],
                     # 'full_search': False,
@@ -691,7 +690,6 @@ class ApiSearchTests(TestCase, ApiTestHelper):
 
     def test__api_stringsearchchoices_percent(self):
         "/api/stringsearchchoices: percent"
-        # Make sure that reqno isn't cached along with the rest of the result
         url = '/opus/__api/stringsearchchoices/volumeid.json?volumeid=%%'
         expected = {'choices': [],
                     # 'full_search': False,
@@ -700,9 +698,32 @@ class ApiSearchTests(TestCase, ApiTestHelper):
 
     def test__api_stringsearchchoices_lower_case(self):
         "/api/stringsearchchoices: lower_case"
-        # Make sure that reqno isn't cached along with the rest of the result
         url = '/opus/__api/stringsearchchoices/volumeid.json?volumeid=coiss_2002'
         expected = {'choices': ['<b>COISS_2002</b>'],
+                    # 'full_search': False,
+                    'truncated_results': False}
+        self._run_json_equal(url, expected)
+
+    def test__api_stringsearchchoices_parens(self):
+        "/api/stringsearchchoices: parens"
+        url = '/opus/__api/stringsearchchoices/volumeid.json?volumeid=coiss_)'
+        expected = {'choices': [],
+                    # 'full_search': False,
+                    'truncated_results': False}
+        self._run_json_equal(url, expected)
+
+    def test__api_stringsearchchoices_parens2(self):
+        "/api/stringsearchchoices: parens 2"
+        url = '/opus/__api/stringsearchchoices/volumeid.json?volumeid=coiss_()'
+        expected = {'choices': [],
+                    # 'full_search': False,
+                    'truncated_results': False}
+        self._run_json_equal(url, expected)
+
+    def test__api_stringsearchchoices_backslash(self):
+        "/api/stringsearchchoices: backslash"
+        url = '/opus/__api/stringsearchchoices/volumeid.json?volumeid=\\1'
+        expected = {'choices': [],
                     # 'full_search': False,
                     'truncated_results': False}
         self._run_json_equal(url, expected)

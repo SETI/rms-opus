@@ -322,8 +322,8 @@ def api_string_search_choices(request, slug):
 
         final_results = [x[0] for x in final_results]
         if partial_query:
-            partial_query = partial_query.replace('\\', '\\\\')
-            pattern = re.compile('('+partial_query+')', re.IGNORECASE)
+            pattern = re.compile('('+re.escape(partial_query)+')',
+                                 re.IGNORECASE)
             final_results = [pattern.sub('<b>\\1</b>', x)
                              for x in final_results]
 
