@@ -1,7 +1,6 @@
 var o_browse = {
     selectedImageID: "",
     keyPressAction: "",
-    tableSorting: false,
     xAxisTableScrollbar: new PerfectScrollbar(".dataTable"),
     yAxisGalleryScrollbar: new PerfectScrollbar(".gallery-contents"),
     yAxisModalScrollbar: new PerfectScrollbar("#galleryViewContents .metadata"),
@@ -38,7 +37,7 @@ var o_browse = {
                 onRenderBrowse();
             } else {
                 // put back
-                $("input#page").val(opus.last_page_drawn[opus.prefs.browse]);
+                $("input#page").val(opus.lastPageDrawn[opus.prefs.view]);
             }
             return false;
         });
@@ -251,12 +250,11 @@ var o_browse = {
             opus.prefs['order'] = orderBy;
 
             o_hash.updateHash();
-            opus.last_page_drawn = $.extend(true, {}, reset_last_page_drawn)
+            opus.lastPageDrawn.browse = 0;
             opus.gallery_begun = false;     // so that we redraw from the beginning
             opus.gallery_data = {};
             opus.prefs.page = default_pages; // reset pages to 1 when col ordering changes
 
-            o_browse.tableSorting = true;
             o_browse.loadBrowseData(1);
             return false;
         });
@@ -428,7 +426,7 @@ var o_browse = {
     },
 
     // column chooser behaviors
-    addmetadataSelectorBehaviors: function() {
+    addMetadataSelectorBehaviors: function() {
         // this is a global
         var currentselectedMetadata = opus.prefs.cols.slice();
 
@@ -436,6 +434,8 @@ var o_browse = {
             // update the data table w/the new columns
             if (!o_utils.areObjectsEqual(opus.prefs.cols, currentselectedMetadata)) {
                 o_browse.resetData();
+                o_browse.initTable(opus.col_labels);
+                opus.prefs.page.gallery = 1;
                 o_browse.loadBrowseData(1);
                 currentselectedMetadata = opus.prefs.cols.slice();
             }
@@ -462,18 +462,18 @@ var o_browse = {
 
             //CHANGE THESE TO USE DATA-ICON=
             let def = $(this).find('i.fa-info-circle').attr("title");
-            let selectedColumn = $(this).find("i.fa-check");
+            let selectedMetadata = $(this).find("i.fa-check");
 
-            if (!selectedColumn.is(":visible")) {
-                selectedColumn.fadeIn().css("display", "inline-block");
+            if (!selectedMetadata.is(":visible")) {
+                selectedMetadata.fadeIn().css("display", "inline-block");
                 if ($.inArray(slug, opus.prefs.cols ) < 0) {
                     // this slug was previously unselected, add to cols
-                    $(`<li id = "cchoose__${slug}">${label}<span class="info">&nbsp;<i class = "fas fa-info-circle" title = "${def}"></i>&nbsp;&nbsp;&nbsp;<span><span class="unselect"><i class="far fa-trash-alt"></span></li>`).hide().appendTo(".selectedMetadata > ul").fadeIn();
+                    $(`<li id = "cchoose__${slug}">${label}<span class="info">&nbsp;<i class = "fas fa-info-circle" title = "${def}"></i>&nbsp;&nbsp;&nbsp;</span><span class="unselect"><i class="far fa-trash-alt"></span></li>`).hide().appendTo(".selectedMetadata > ul").fadeIn();
                     opus.prefs.cols.push(slug);
                 }
 
             } else {
-                selectedColumn.hide();
+                selectedMetadata.hide();
                 if ($.inArray(slug,opus.prefs.cols) > -1) {
                     // slug had been checked, remove from the chosen
                     opus.prefs.cols.splice($.inArray(slug,opus.prefs.cols),1);
@@ -516,7 +516,7 @@ var o_browse = {
                     break;
             }
         });
-    },  // /addmetadataSelectorBehaviors
+    },  // /addMetadataSelectorBehaviors
 
     // there are interactions that are applied to different code snippets,
     // this returns the namespace, view_var, prefix, and add_to_url
@@ -622,7 +622,7 @@ var o_browse = {
                     $(`.modal-body.metadata li > [data-slug="${col}"]`).find("i.fa-check").fadeIn().css('display', 'inline-block');
                 });
 
-                o_browse.addmetadataSelectorBehaviors();
+                o_browse.addMetadataSelectorBehaviors();
 
                 o_browse.allMetadataScrollbar = new PerfectScrollbar("#metadataSelectorContents .allMetadata");
                 o_browse.selectedMetadataScrollbar = new PerfectScrollbar("#metadataSelectorContents .selectedMetadata");
@@ -640,7 +640,6 @@ var o_browse = {
     renderGalleryAndTable: function(data, url) {
         // render the gallery and table at the same time.
         // gallery is var html; table is row/tr/td.
-
         let namespace = o_browse.getViewInfo().namespace;
         let page = data.page;
         var html = "";
@@ -660,6 +659,7 @@ var o_browse = {
             }
         } else {
             html += '<div class="thumb-page" data-page="'+data.page_no+'">';
+            opus.lastPageDrawn[opus.prefs.view] = data.page_no;
             $.each(page, function( index, item ) {
                 let opusId = item.opusid;
                 opus.gallery_data[opusId] = item.metadata;	// for galleryView, store in global array
@@ -701,6 +701,8 @@ var o_browse = {
         $('.gallery', namespace).append(html);
         o_browse.xAxisTableScrollbar.update();
         o_browse.yAxisGalleryScrollbar.update();
+
+        o_hash.updateHash(true);
     },
 
     initTable: function(columns) {
@@ -792,80 +794,54 @@ var o_browse = {
         $(".order-container ul").html(listHtml);
     },
 
+    getBrowseURL: function(page) {
+        let view = o_browse.getViewInfo();
+        let base_url = "/opus/__api/dataimages.json?";
+        if (page == undefined) {
+            page = opus.lastPageDrawn[opus.prefs.view]+1;
+        }
+        opus.lastLoadBrowseDataRequestNo++;
+        let url = o_hash.getHash() + '&reqno=' + opus.lastLoadBrowseDataRequestNo + view.add_to_url;
+        url = base_url + o_browse.updatePageInUrl(url, page);
+        return url;
+    },
+
     loadBrowseData: function(page) {
         //window.scrollTo(0,opus.browse_view_scrolls[opus.prefs.browse]);
         page = (page == undefined ? $("input#page").val() : page);
         $("input#page").val(page);
 
         // wait! is this page already drawn?
-        if (opus.last_page_drawn[opus.prefs.browse] == page) {
+        if (opus.lastPageDrawn[opus.prefs.view] == page) {
             return;
         }
 
-        let view = o_browse.getViewInfo();
-        let base_url = "/opus/__api/dataimages.json?";
-        opus.lastLoadBrowseDataRequestNo++;
-        let url = o_hash.getHash() + '&reqno=' + opus.lastLoadBrowseDataRequestNo + view.add_to_url;
-        url = o_browse.updatePageInUrl(url, page);
+        let url = o_browse.getBrowseURL(page);
 
         // metadata; used for both table and gallery
         start_time = new Date().getTime();
-        $.getJSON(base_url + url, function(data) {
+        $.getJSON(url, function(data) {
             let request_time = new Date().getTime() - start_time;
-            console.log(request_time);
-            if(data["reqno"] < opus.lastLoadBrowseDataRequestNo) {
+            if (data.reqno < opus.lastLoadBrowseDataRequestNo) {
                 return;
             }
-            if (!opus.gallery_begun && !o_browse.tableSorting) {
+            if (!opus.gallery_begun) {
                 o_browse.initTable(data.columns);
 
                 // for infinite scroll
                 if (!$('#browse .gallery-contents').data('infiniteScroll')) {
                     $('#browse .gallery-contents').infiniteScroll({
-                        path: o_browse.updatePageInUrl(this.url, "{{#}}"),
+                        path: function() {
+                            let path = o_browse.getBrowseURL();
+                            return path;
+                        },
                         responseType: 'text',
                         status: '#browse .page-load-status',
                         elementScroll: true,
                         history: false,
                         scrollThreshold: 500,
-                        debug: true,
+                        debug: false,
                     });
-
-                    // $('#browse .gallery-contents').on( 'request.infiniteScroll', function( event, path ) {
-                    //     reqStart = new Date().getTime();
-                    // });
-                    //
-                    // $('#browse .gallery-contents').on( 'load.infiniteScroll', function( event, response, path ) {
-                    //     let request_time = new Date().getTime() - reqStart;
-                    //     console.log("load: "+request_time);
-                    //
-                    //     let jsonData = JSON.parse( response );
-                    //     o_browse.renderGalleryAndTable(jsonData, path);
-                    //     console.log('Loaded page: ' + $('#browse .gallery-contents').data('infiniteScroll').pageIndex );
-                    // });
-                    $('#browse .gallery-contents').on( 'load.infiniteScroll', o_browse.infiniteScrollLoadEventListener);
-                }
-            } else if(o_browse.tableSorting) {
-                /*
-                If table column is clicked for sorting:
-                (1) we remove the old event listener to infiniteScroll
-                (2) destroy infiniteScroll functionality and initialize a new one
-                */
-                $('#browse .gallery-contents').off( 'load.infiniteScroll', o_browse.infiniteScrollLoadEventListener);
-                $('#browse .gallery-contents').infiniteScroll("destroy");
-
-                o_browse.initTable(data.columns);
-                if (!$('#browse .gallery-contents').data('infiniteScroll')) {
-                    $('#browse .gallery-contents').infiniteScroll({
-                        path: o_browse.updatePageInUrl(this.url, "{{#}}"),
-                        responseType: 'text',
-                        status: '#browse .page-load-status',
-                        elementScroll: true,
-                        history: false,
-                        scrollThreshold: 500,
-                        debug: true,
-                    });
-
                     $('#browse .gallery-contents').on( 'load.infiniteScroll', o_browse.infiniteScrollLoadEventListener);
                 }
             }
@@ -877,23 +853,20 @@ var o_browse = {
                 $('#browse .gallery-contents').infiniteScroll('loadNextPage');
                 opus.gallery_begun = true;
             }
-            if(o_browse.tableSorting) {
-                o_browse.tableSorting = false;
-                opus.gallery_begun = true;
-            }
-            console.log("current page: " + opus.prefs.browse);
             // remove spinner from table page after the page is fetched
             $(".table-page-load-status > .loader").hide();
         });
 
-        // ew.  this needs to be dealt with, as table/gallery are always drawn at same time
-        opus.last_page_drawn["dataTable"] = page;
-        opus.last_page_drawn[opus.prefs.browse] = page;
+        opus.lastPageDrawn[opus.prefs.view] = page;
     },
 
     infiniteScrollLoadEventListener: function( event, response, path ) {
-        let jsonData = JSON.parse( response );
-        o_browse.renderGalleryAndTable(jsonData, path);
+        let data = JSON.parse( response );
+        if ($(`.thumb-page[data-page='${data.page_no}']`).length != 0) {
+            console.log(`data.reqno: ${data.reqno}, last reqno: ${opus.lastLoadBrowseDataRequestNo}`);
+            return;
+        }
+        o_browse.renderGalleryAndTable(data, path);
         console.log('Loaded page: ' + $('#browse .gallery-contents').data('infiniteScroll').pageIndex );
     },
 
@@ -1023,9 +996,8 @@ var o_browse = {
         $("#dataTable > tbody").empty();  // yes all namespaces
         $(".gallery").empty();
         opus.gallery_data = [];
-        opus.pages_drawn = {"colls_gallery":[], "gallery":[]};
-        opus.last_page_drawn = {"gallery":0, "dataTable":0, "colls_gallery":0, "colls_data":0 };
-        opus.collection_change = true;  // forces redraw of collections tab because reset_last_page_drawn
+        opus.lastPageDrawn = {"browse":0, "collection":0};
+        opus.collection_change = true;  // forces redraw of collections tab because reset_lastPageDrawn
         opus.browse_view_scrolls = reset_browse_view_scrolls;
         opus.gallery_begun = false;
         o_hash.updateHash();

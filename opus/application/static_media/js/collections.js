@@ -177,6 +177,7 @@ var o_collections = {
 
     // get Collections tab
     getCollectionsTab: function() {
+        o_browse.renderMetadataSelector();   // just do this in background so there's no delay when we want it...
         if (opus.collection_change) {
             var zipped_files_html = $(".zipped_files", "#collection").html();
 
@@ -186,8 +187,7 @@ var o_collections = {
             $(".collection_details", "#collection").html(opus.spinner);
 
             // reset page no
-            opus.last_page_drawn.colls_gallery = 0;
-            opus.last_page_drawn.colls_data = 0;
+            opus.lastPageDrawn.collection = 0;
 
             // redux: and nix this big thing:
             $.ajax({ url: "/opus/__collections/view.html",
@@ -296,12 +296,8 @@ var o_collections = {
                 // server uses offset = (page_no-1)*limit
                 // i.e. the offset of the 23rd page at 100 per page starts with the 2200st record:
 
-                // first find what does opus.prefs.page say we are looking at:
-                let prefix = viewInfo.prefix;       // either 'colls_' or ''
-                let view_var = opus.prefs[prefix + "browse"];  // either 'gallery' or 'data'
-
                 let first_page = o_browse.getCurrentPage();
-                let last_page = opus.last_page_drawn[prefix + view_var];
+                let last_page = opus.lastPageDrawn[opus.prefs.view];
 
                 // now find the number of results showing on the page, different from opus.prefs.limit:
                 // number of "pages" showing on screen at any time = limit * (1+footer_clicks)

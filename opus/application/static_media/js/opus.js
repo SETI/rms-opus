@@ -1,7 +1,6 @@
 // generic globals, hmm..
 var default_pages = {"gallery":1, "dataTable":1, "colls_gallery":1, "colls_data":1 };
 var reset_footer_clicks = {"gallery":0, "dataTable":0, "colls_gallery":0, "colls_data":0 };
-var reset_last_page_drawn = {"gallery":0, "dataTable":0, "colls_gallery":0, "colls_data":0 };
 var reset_browse_view_scrolls = {"gallery":0, "dataTable":0, "colls_gallery":0, "colls_data":0 };
 
 // defining the opus namespace first; document ready comes after...
@@ -61,7 +60,8 @@ var opus = {
 
     gallery_data: {},  // holds gallery column data
 
-    pages_drawn: {"colls_gallery": [], "gallery": []},  // keeping track of currently rendered gallery pages
+    lastPageDrawn: {"browse":0, "collection":0},
+    pages_drawn: {"browse": [], "collection": []},  // keeping track of currently rendered gallery pages
                                                           // so underlying data can be refreshed after 'choose metadata'
 
     // additional defaults are in base.html
@@ -90,7 +90,6 @@ var opus = {
     widget_click_timeout:0,
 
     // browse tab
-    last_page_drawn: reset_last_page_drawn, // defined in header.html,
     pages:0, // total number of pages this result
     colls_pages:1, // total number of collections pages
     browse_auto:'.chosen_columns', // we are turning this on as default

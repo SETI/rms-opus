@@ -569,7 +569,7 @@ img.preview {
 }
 
 #collection .gallery, .gallery-contents {
-    margin-top:.25em;
+    /*margin-top:.25em; */
     background-color: #303030; /* #383838; */
 }
 
