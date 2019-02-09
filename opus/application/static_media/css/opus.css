@@ -380,19 +380,13 @@ th.sticky-header {
 }
 
 .dataTable .ps__rail-y {
-		display: none !important;
+	display: none !important;
 }
 
 /* Make sure x-scrollbar in dataTable is always at the left and visible */
 .dataTable .ps__rail-x {
-		opacity: 1 !important;
-		left: 0px !important;
-}
-
-/* Fix the spinner*/
-.table-page-load-status .loader {
-		display: none;
-		top: 250px;
+	opacity: 1 !important;
+	left: 0px !important;
 }
 
 .fadey {

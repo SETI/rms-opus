@@ -7,7 +7,7 @@
 }
 .loader {
     display: block;
-    position: absolute;
+    position: fixed;
     left: 50%;
     top: 50%;
     width: 150px;
@@ -21,7 +21,7 @@
 }
 .loader:before {
     content: "";
-    position: absolute;
+    position: fixed;
     top: 5px;
     left: 5px;
     right: 5px;
@@ -34,7 +34,7 @@
 }
 .loader:after {
     content: "";
-    position: absolute;
+    position: fixed;
     top: 15px;
     left: 15px;
     right: 15px;

@@ -699,6 +699,7 @@ var o_browse = {
         }
 
         $('.gallery', namespace).append(html);
+        $('.table-page-load-status').hide();
         o_browse.xAxisTableScrollbar.update();
         o_browse.yAxisGalleryScrollbar.update();
 
@@ -815,6 +816,7 @@ var o_browse = {
         if (opus.lastPageDrawn[opus.prefs.view] == page) {
             return;
         }
+        let selector = `#${opus.prefs.view} .gallery-contents`;
 
         let url = o_browse.getBrowseURL(page);
 
@@ -829,20 +831,23 @@ var o_browse = {
                 o_browse.initTable(data.columns);
 
                 // for infinite scroll
-                if (!$('#browse .gallery-contents').data('infiniteScroll')) {
-                    $('#browse .gallery-contents').infiniteScroll({
+                if (!$(selector).data("infiniteScroll")) {
+                    $(selector).infiniteScroll({
                         path: function() {
                             let path = o_browse.getBrowseURL();
                             return path;
                         },
-                        responseType: 'text',
-                        status: '#browse .page-load-status',
+                        responseType: "text",
+                        status: `#${opus.prefs.view} .page-load-status`,
                         elementScroll: true,
                         history: false,
                         scrollThreshold: 500,
                         debug: false,
                     });
-                    $('#browse .gallery-contents').on( 'load.infiniteScroll', o_browse.infiniteScrollLoadEventListener);
+                    $(selector).on("load.infiniteScroll", o_browse.infiniteScrollLoadEventListener);
+                    $(selector).on("request.infiniteScroll", function( event, path ) {
+                        $(".table-page-load-status").show();
+                    });
                 }
             }
 
@@ -850,11 +855,9 @@ var o_browse = {
             o_browse.updateSortOrder();
 
             if (!opus.gallery_begun) {
-                $('#browse .gallery-contents').infiniteScroll('loadNextPage');
+                $(selector).infiniteScroll('loadNextPage');
                 opus.gallery_begun = true;
             }
-            // remove spinner from table page after the page is fetched
-            $(".table-page-load-status > .loader").hide();
         });
 
         opus.lastPageDrawn[opus.prefs.view] = page;
@@ -867,7 +870,7 @@ var o_browse = {
             return;
         }
         o_browse.renderGalleryAndTable(data, path);
-        console.log('Loaded page: ' + $('#browse .gallery-contents').data('infiniteScroll').pageIndex );
+        //console.log('Loaded page: ' + $('#browse .gallery-contents').data('infiniteScroll').pageIndex );
     },
 
     getBrowseTab: function() {
