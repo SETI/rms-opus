@@ -16,7 +16,7 @@
     },
     {
         "field_name": "opus_id",
-        "field_type": "char80",
+        "field_type": "char40",
         "field_key": "foreign",
         "field_key_foreign": [
             "obs_general",
@@ -195,7 +195,7 @@
     {
         "field_name": "spacecraft_clock_count1",
         "field_type": "real8",
-        "field_default": null,
+        "field_notnull": true,
         "field_key": true,
         "data_source": [
               "FUNCTION",
@@ -225,7 +225,7 @@
     {
         "field_name": "spacecraft_clock_count2",
         "field_type": "real8",
-        "field_default": null,
+        "field_notnull": true,
         "field_key": true,
         "data_source": [
               "FUNCTION",
@@ -428,6 +428,7 @@
     },
     {
         "field_name": "timestamp",
-        "field_type": "timestamp"
+        "field_type": "timestamp",
+        "field_notnull": true
     }
 ]

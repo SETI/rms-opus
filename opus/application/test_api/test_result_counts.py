@@ -19,6 +19,7 @@ class APIResultCountsTests(TestCase):
 
     # disable error logging and trace output before test
     def setUp(self):
+        settings.CACHE_KEY_PREFIX = 'opustest:' + settings.OPUS_SCHEMA_NAME
         sys.tracebacklimit = 0 # default: 1000
         logging.disable(logging.DEBUG)
 
@@ -40,13 +41,13 @@ class APIResultCountsTests(TestCase):
                ]
            }
         """
-        api_public = ApiForResultCounts(target=settings.TEST_ApiResultCountsTests_LIVE_TARGET)
-        if settings.TEST_ApiResultCountsTests_GO_LIVE:
+        api_public = ApiForResultCounts(target=settings.TEST_GO_LIVE)
+        if settings.TEST_GO_LIVE:
             client = requests.Session()
         else:
             client = RequestsClient()
 
-        if settings.TEST_ApiResultCountsTests_GO_LIVE or settings.TEST_RESULT_COUNTS_AGAINST_INTERNAL_DB:
+        if settings.TEST_GO_LIVE or settings.TEST_RESULT_COUNTS_AGAINST_INTERNAL_DB:
             error_flag = []
             count = 0
             with open(self.filename, "r") as csvfile:
@@ -124,7 +125,9 @@ class ApiForResultCounts:
 
     def __init__(self, target="production"):
         self.target = target
-        if self.target == "production":
+        if not self.target or self.target == "production":
             self.result_counts_api = self.api_base_url.format("https", "tools")
         elif self.target == "dev":
-            self.result_counts_api = self.api_base_url.format("http", "dev")
+            self.result_counts_api = self.api_base_url.format("https", "dev")
+        else:
+            assert False, self.target

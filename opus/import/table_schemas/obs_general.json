@@ -11,7 +11,7 @@
     },
     {
         "field_name": "opus_id",
-        "field_type": "char80",
+        "field_type": "char40",
         "field_notnull": true,
         "field_key": "unique",
         "data_source": [
@@ -194,7 +194,7 @@
     {
         "field_name": "target_name",
         "field_type": "char20",
-        "field_default": null,
+        "field_notnull": true,
         "field_key": true,
         "data_source": [
             "FUNCTION",
@@ -512,7 +512,7 @@
     {
         "field_name": "observation_type",
         "field_type": "char3",
-        "field_not_null": true,
+        "field_notnull": true,
         "data_source": [
             "FUNCTION",
             "obs_general_<INST>_observation_type"
@@ -572,11 +572,11 @@
     {
         "field_name": "primary_file_spec",
         "field_type": "char240",
-        "field_default": null,
+        "field_notnull": true,
         "field_key": true,
         "data_source": [
             "FUNCTION",
-            "obs_pds_<INST>_primary_file_spec"
+            "obs_general_<INST>_primary_file_spec"
         ],
         "data_source_order": 40,
         "pi_category_name": "obs_general",
@@ -598,6 +598,7 @@
     {
         "field_name": "preview_images",
         "field_type": "json",
+        "field_notnull": true,
         "field_key": false,
         "data_source": [
             "FUNCTION",
@@ -624,6 +625,7 @@
     },
     {
         "field_name": "timestamp",
-        "field_type": "timestamp"
+        "field_type": "timestamp",
+        "field_notnull": true
     }
 ]

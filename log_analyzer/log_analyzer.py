@@ -1,5 +1,6 @@
 import argparse
 import ipaddress
+import operator
 import sys
 from typing import List, Optional
 
@@ -33,34 +34,33 @@ def main(arguments: Optional[List[str]] = None) -> None:
     group2.add_argument('--by-time', action='store_false', dest='by_ip',
                         help='Sorts batched logs by session start time')
 
-    parser.add_argument('--html', action='store_true',
-                       help='Generate html output rather than text output')
+    parser.add_argument('--html', action='store_true', dest='uses_html',
+                        help='Generate html output rather than text output')
 
     parser.add_argument('--api-host-url', default=DEFAULT_FIELDS_PREFIX, metavar='URL', dest='api_host_url',
                         help='base url to access the information')
-    parser.add_argument('--reverse-dns', '--dns', action='store_true', dest='reverse_dns',
+    parser.add_argument('--reverse-dns', '--dns', action='store_true', dest='uses_reverse_dns',
                         help='Attempt to resolve the real host name')
     parser.add_argument('--ignore-ip', '-x', default=[], action="append", metavar='cidrlist', dest='ignore_ip',
                         type=parse_ignored_ips,
                         help='list of ips to ignore.  May be specified multiple times')
-    parser.add_argument('--session-timeout', default=60, type=int, metavar="minutes", dest='session_timeout',
+    parser.add_argument('--session-timeout', default=60, type=int, metavar="minutes", dest='session_timeout_minutes',
                         help='a session ends after this period (minutes) of inactivity')
 
-    parser.add_argument('--out', '-o', type=argparse.FileType('w'), default=sys.stdout,
+    parser.add_argument('--output', '-o', type=argparse.FileType('w'), default=sys.stdout, dest='output',
                         help="output file.  default is stdout")
 
     # TODO(fy): Temporary hack for when I don't have internet access
-    parser.add_argument('--xxlocal_slugs', action="store_true", dest="xxlocal_slugs", help=argparse.SUPPRESS)
+    parser.add_argument('--xxlocal', action="store_true", dest="uses_local", help=argparse.SUPPRESS)
 
     parser.add_argument('log_files', nargs=argparse.REMAINDER, help='log files')
     args = parser.parse_args(arguments)
 
-    slugs = Slug.ToInfoMap(LOCAL_SLUGS_PREFIX if args.xxlocal_slugs else args.api_host_url)
+    slugs = Slug.ToInfoMap(LOCAL_SLUGS_PREFIX if args.uses_local else args.api_host_url)
     # args.ignored_ip comes out as a list of lists, and it needs to be flattened.
     ignored_ips = [ip for arg_list in args.ignore_ip for ip in arg_list]
-    session_info_generator = SessionInfoGenerator(slugs, ignored_ips, args.api_host_url)
-    log_parser = LogParser(session_info_generator, args.reverse_dns, args.session_timeout, args.out,
-                           args.api_host_url, args.html)
+    session_info_generator = SessionInfoGenerator(slugs, ignored_ips)
+    log_parser = LogParser(session_info_generator, **vars(args))
 
     if args.realtime:
         if len(args.log_files) != 1:
@@ -72,13 +72,11 @@ def main(arguments: Optional[List[str]] = None) -> None:
             raise Exception("Must specify at least one log file.")
         log_entries_list = LogReader.read_logs(args.log_files)
         if args.batch:
-            if args.by_ip:
-                log_parser.run_batch_by_ip(log_entries_list)
-            else:
-                log_parser.run_batch_by_time(log_entries_list)
+            log_parser.run_batch(log_entries_list)
         elif args.show_slugs:
             log_parser.show_slugs(log_entries_list)
         elif args.fake:
+            log_entries_list.sort(key=operator.attrgetter('time'))
             log_parser.run_realtime(iter(log_entries_list))
 
 

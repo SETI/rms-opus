@@ -499,14 +499,25 @@ def populate_obs_wavelength_HSTSTIS_wave_res1(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     wr1 = import_util.safe_column(index_row, 'MAXIMUM_WAVELENGTH_RESOLUTION')
+    wr2 = import_util.safe_column(index_row, 'MINIMUM_WAVELENGTH_RESOLUTION')
 
+    # This is necessary because in some cases these are backwards in the table!
+    if wr1 > wr2:
+        import_util.log_warning(
+            'MAXIMUM_WAVELENGTH_RESOLUTION < MINIMUM_WAVELENGTH_RESOLUTION; '
+            +'swapping')
+        return wr2
     return wr1
 
 def populate_obs_wavelength_HSTSTIS_wave_res2(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
+    wr1 = import_util.safe_column(index_row, 'MAXIMUM_WAVELENGTH_RESOLUTION')
     wr2 = import_util.safe_column(index_row, 'MINIMUM_WAVELENGTH_RESOLUTION')
 
+    # This is necessary because in some cases these are backwards in the table!
+    if wr1 > wr2:
+        return wr1
     return wr2
 
 def populate_obs_wavelength_HSTx_wave_no1(**kwargs):
@@ -1039,24 +1050,6 @@ def populate_obs_mission_hubble_HSTWFPC2_wf4_flag(**kwargs):
     return wf4_flag
 
 def populate_obs_mission_hubble_publication_date(**kwargs):
-    metadata = kwargs['metadata']
-    index_row = metadata['index_row']
-    pub_date = index_row['PUBLICATION_DATE']
-
-    if pub_date is None:
-        return None
-
-    try:
-        pub_date_sec = julian.tai_from_iso(pub_date)
-    except Exception as e:
-        import_util.log_nonrepeating_error(
-            f'Bad publication date format "{pub_date}": {e}')
-        return None
-
-    new_pub_date = julian.iso_from_tai(pub_date_sec, digits=0, ymd=True)
-    return new_pub_date[:10] # Only want the date, not the time
-
-def populate_obs_mission_hubble_publication_date_sec(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     pub_date = index_row['PUBLICATION_DATE']

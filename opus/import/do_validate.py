@@ -31,6 +31,9 @@ def validate_param_info(namespace):
     q = db.quote_identifier
 
     for obs_table_name in obs_table_names:
+        if obs_table_name == 'obs_files':
+            # Not really a user-visible table so no param_info needed
+            continue
         column_list = db.table_info(namespace, obs_table_name)
         field_names = [x['field_name'] for x in column_list]
         for column in column_list:
@@ -180,6 +183,70 @@ opus_id FROM {q(full_obs_table_name)} WHERE {q(field_name2)} < {q(field_name1)}"
     f'{field_name2} for some OPUS IDs; first 100: ' + ' '.join(opus_ids[:100]))
 
 
+def validate_filter_wavelength_consistency(namespace):
+    # For each mission and instrument, then for each filter, look at the
+    # wavelength table and see if the wl1 and wl2 fields contain only a single
+    # value.
+
+    db = impglobals.DATABASE
+    logger = impglobals.LOGGER
+
+    logger.log('debug', 'Validating filter/wavelength consistency')
+
+    obs_table_names = sorted(list(db.table_names(namespace, prefix='obs_')))
+
+    q = db.quote_identifier
+    wl_table = q('obs_wavelength')
+    wl_fields = ('wavelength1',
+                 'wavelength2',
+                 'wave_res1',
+                 'wave_res2',
+                 'wave_no1',
+                 'wave_no2',
+                 'wave_no_res1',
+                 'wave_no_res2',
+                 'spec_size')
+
+    for obs_table_name in obs_table_names:
+        full_obs_table_name = db.convert_raw_to_namespace(namespace,
+                                                          obs_table_name)
+        column_list = db.table_info(namespace, obs_table_name)
+        for column in column_list:
+            field_name = column['field_name']
+            if field_name not in ('filter_name', 'combined_filter'):
+                continue
+
+            # Select obs_wavelength entries that match, group by filter name,
+            # and check the range for the various wavelength fields
+            if obs_table_name == 'obs_instrument_coiss':
+                cmd = f"{q('camera')}, {q(field_name)}"
+                start_col = 2
+            else:
+                cmd = f"{q(field_name)}"
+                start_col = 1
+
+            for wl_field in wl_fields:
+                cmd += f", MIN(IFNULL({q(wl_field)}, 'NULL'))"
+                cmd += f", MAX(IFNULL({q(wl_field)}, 'NULL'))"
+            cmd += f"""
+ FROM {q(full_obs_table_name)}
+LEFT JOIN {wl_table} ON {q(full_obs_table_name)}.{q('obs_general_id')} =
+{wl_table}.{q('obs_general_id')}"""
+            if obs_table_name == 'obs_instrument_coiss':
+                cmd += f"GROUP BY {q('camera')}, {q(field_name)}"
+            else:
+                cmd += f"GROUP BY {q(field_name)}"
+
+            res = db.general_select(cmd)
+            for row in res:
+                for col in range(start_col, len(row)-1, 2):
+                    pretty_filter = ':'.join(row[0:start_col])
+                    if row[col] != row[col+1]:
+                        logger.log('warning',
+            f'"obs_wavelength.{wl_fields[(col-start_col)//2]}" has inconsistent'
+            +f' values for {full_obs_table_name} filter "{pretty_filter}": '
+            +f'{row[col]} and {row[col+1]}')
+
 def do_validate(namespace='perm'):
     impglobals.LOGGER.open(
             f'Performing database validation', limits={'info': -1, 'debug': -1})
@@ -187,5 +254,6 @@ def do_validate(namespace='perm'):
     validate_param_info(namespace)
     validate_nulls(namespace)
     validate_min_max_order(namespace)
+    validate_filter_wavelength_consistency(namespace)
 
     impglobals.LOGGER.close()

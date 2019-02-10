@@ -1,0 +1,10 @@
+{
+  "PDS Constraints": {
+    "volume_id": "HSTJ0_9975",
+    "data_set_id": "HST-M-ACS-5-ID9975-V1.0",
+    "product_id": "J8N410LBQ",
+    "product_creation_time": "2013-06-17T00:00:00.000",
+    "primary_file_spec": "HSTJ0_9975/DATA/VISIT_10/J8N410LBQ.LBL",
+    "note": null
+  }
+}

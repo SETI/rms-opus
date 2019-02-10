@@ -206,6 +206,8 @@ FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `TABLE_SCHEMA`='{self.db_schema}' AND
                 field_type = 'json'
             elif data_type == 'timestamp':
                 field_type = 'timestamp'
+            elif data_type == 'text':
+                field_type = 'text'
             else:
                 assert False, data_type
             if (field_type.startswith('int') and
@@ -538,7 +540,8 @@ FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `TABLE_SCHEMA`='{self.db_schema}' AND
             param_list = []
             for row in rows[start_row:end_row]:
                 val_list = []
-                assert sorted_column_names == sorted(row.keys())
+                assert sorted_column_names == sorted(row.keys()), \
+                        (sorted_column_names, sorted(row.keys()))
                 for column_name in sorted_column_names:
                     val = row[column_name]
                     if val is None:

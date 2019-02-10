@@ -159,11 +159,13 @@ def populate_obs_general_preview_images(**kwargs):
                     f'Missing full_size browse/diagram image for "{file_spec}"')
     else:
         if impglobals.ARGUMENTS.import_fake_images:
-            import_util.log_nonrepeating_warning(
-                f'Faking browse/diagram images for "{file_spec}"')
+            # impglobals.LOGGER.log('debug',
+            #                 f'Faking browse/diagram images for "{file_spec}"')
             base_path = os.path.splitext(pdsf.logical_path)[0]
             if base_path.find('CIRS') != -1:
-                base_path = base_path.replace('volumes', 'diagrams/targets')
+                base_path = base_path.replace('volumes', 'diagrams')
+                base_path = base_path.replace('DATA/APODSPEC/SPEC',
+                                              'BROWSE/TARGETS/IMG')
             else:
                 base_path = base_path.replace('volumes', 'previews')
             base_path = 'holdings/'+base_path

@@ -1,14 +1,25 @@
 <div id="collections_summary" class="well well-lg">
   <h1>Your Selections</h1>
-  <!-- <p>Total Files: <span id="total_files">{{ download_count }}</span></p> -->
-  <p>Total Size (before zip): <span id="download_size">{{ download_size_pretty }}</span></p>
+  <!-- <p>Total Files: <span id="total_download_count">{{ total_download_count }}</span></p> -->
+  <p>Total Size (before zip): <span id="total_download_size">{{ total_download_size_pretty }}</span></p>
 
   <p><a id="download_csv" target="_blank" href="">Download CSV of Chosen Columns</a></p>
 
   <div>
-    <a id="create_zip_file" href="">
+    <a id="create_zip_data_file" href="">
       <button type="button" class="btn btn-sm btn-success">
-        Download Zipped Archive
+        Download Zipped Data Archive
+        <span class="spinner">&nbsp;&nbsp;&nbsp;&nbsp;</span>
+      </button>
+    </a>
+  </div>
+
+  <div>&nbsp;</div>
+
+  <div>
+    <a id="create_zip_url_file" href="">
+      <button type="button" class="btn btn-sm btn-success">
+        Download Zipped URL Archive
         <span class="spinner">&nbsp;&nbsp;&nbsp;&nbsp;</span>
       </button>
     </a>
@@ -19,29 +30,25 @@
   <div>&nbsp;</div>
 
 	<div id="download_options">
-    {% for product_cat_short, product_cat_long in product_cats %}
-      <h4>{{ product_cat_long }}</h4>
+    {% for product_cat, product_list in product_cat_list %}
+      <h4>{{ product_cat }}</h4>
     	<ul id="product_types" class="list-inline">
-        {% for product_type, count in product_counts.items %}
-          {% if product_type.0 == product_cat_short %}
-            <li>
-              <input type="checkbox" value="{{ product_type.2 }}"
-                {% if count > 0 %}
-                  checked
-                {% endif %}
-              >
-              <span
-                {% if count == 0 %}
-                  class="fadey"
-                {% endif %}
-              >
-                {{ product_type.3 }}
-              </span>
-              <!-- {% if count > 0 %}
-                <span class="product_count hints">{{ count }}</span>
-    			    {% endif %} -->
-            </li>
-          {% endif %}
+        {% for product_info in product_list %}
+          <li>
+            <input type="checkbox" value="{{ product_info.slug_name }}"
+              {% if product_info.product_count > 0 %}
+                checked
+              {% endif %}
+            >
+            <span
+              {% if product_info.product_count == 0 %}
+                class="fadey"
+              {% endif %}
+            >
+              {{ product_info.product_type }}
+              <!-- ({{ product_info.product_count }}, {{ product_info.download_count }}, {{ product_info.download_size_pretty }}) -->
+            </span>
+          </li>
     		{% endfor %}
     	</ul>
     {% endfor %}

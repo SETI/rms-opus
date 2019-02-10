@@ -99,7 +99,7 @@ def api_get_table_headers(request):
 
     if not slugs:
         slugs = settings.DEFAULT_COLUMNS
-    slugs = slugs.split(',')
+    slugs = cols_to_slug_list(slugs)
     columns = []
 
     # If this is an ajax call it means it's from our app, so append the
@@ -183,7 +183,11 @@ def api_get_widget(request, **kwargs):
     selections = {}
 
     if request and request.GET:
-        (selections, extras) = url_to_search_params(request.GET)
+        (selections, extras) = url_to_search_params(request.GET,
+                                                    allow_errors=True)
+        if selections is None: # XXX Really should throw an error of some kind
+            selections = {}
+            extras = {}
 
     addlink = request.GET.get('addlink', True) # suppresses the add_str link
     remove_str = '<a class="remove_input" href="">-</a>'
@@ -223,7 +227,10 @@ def api_get_widget(request, **kwargs):
 
         else: # param is constrained
             if form_type_func is None:
-                func = float
+                if form_type_format == 'd':
+                    func = int
+                else:
+                    func = float
             else:
                 if form_type_func in opus_support.RANGE_FUNCTIONS:
                     func = opus_support.RANGE_FUNCTIONS[form_type_func][0]
@@ -235,11 +242,11 @@ def api_get_widget(request, **kwargs):
             while key<length:
                 try:
                   form_vals[slug1] = func(selections[param1][key])
-                except (IndexError, KeyError, ValueError) as e:
+                except (IndexError, KeyError, ValueError, TypeError) as e:
                     form_vals[slug1] = None
                 try:
                     form_vals[slug2] = func(selections[param2][key])
-                except (IndexError, KeyError, ValueError) as e:
+                except (IndexError, KeyError, ValueError, TypeError) as e:
                     form_vals[slug2] = None
 
                 qtypes = request.GET.get('qtype-' + slug, False)
@@ -373,11 +380,11 @@ def api_get_column_chooser(request):
     api_code = enter_api_call('api_get_column_chooser', request)
 
     slugs = request.GET.get('cols', settings.DEFAULT_COLUMNS)
-    slugs = slugs.split(',')
+    slugs = cols_to_slug_list(slugs)
 
     slugs = filter(None, slugs)
     if not slugs:
-        slugs = settings.DEFAULT_COLUMNS.split(',')
+        slugs = cols_to_slug_list(settings.DEFAULT_COLUMNS)
     all_slugs_info = _get_column_info(slugs)
     namespace = 'column_chooser_input'
     menu = _get_menu_labels(request, 'results')['menu']
@@ -454,7 +461,7 @@ def api_init_detail_page(request, **kwargs):
 
     # On the details page, we display the list of available filenames after
     # each product type
-    products = get_pds_products(opus_id, None)[opus_id]
+    products = get_pds_products(opus_id)[opus_id]
     if not products:
         products = {}
     new_products = OrderedDict()
@@ -515,7 +522,8 @@ def _get_menu_labels(request, labels_view):
         filter = "display_results"
 
     if request and request.GET:
-        (selections, extras) = url_to_search_params(request.GET)
+        (selections, extras) = url_to_search_params(request.GET,
+                                                    allow_errors=True)
     else:
         selections = None
 

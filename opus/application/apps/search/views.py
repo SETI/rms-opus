@@ -77,7 +77,7 @@ def api_normalize_input(request):
         exit_api_call(api_code, ret)
         raise ret
 
-    reqno = request.GET.get('reqno', None)
+    reqno = get_reqno(request)
     selections['reqno'] = reqno
 
     ret = json_response(selections)
@@ -195,7 +195,7 @@ def api_string_search_choices(request, slug):
         exit_api_call(api_code, ret)
         raise ret
 
-    if limit < 1 or limit > 1000000000000:
+    if limit < 1 or limit > settings.SQL_MAX_LIMIT:
         log.error('api_string_search_choices: Bad limit for'
                   +' request %s', str(request.GET))
         ret = Http404('Bad limit')
@@ -207,7 +207,7 @@ def api_string_search_choices(request, slug):
     partial_query_hash = hashlib.md5(str.encode(partial_query)).hexdigest()
 
     # Is this result already cached?
-    cache_key = ('stringsearchchoices:' +
+    cache_key = (settings.CACHE_KEY_PREFIX + ':stringsearchchoices:' +
                  param_qualified_name + ':' +
                  partial_query_hash + ':' +
                  user_query_table + ':' +
@@ -322,8 +322,8 @@ def api_string_search_choices(request, slug):
 
         final_results = [x[0] for x in final_results]
         if partial_query:
-            partial_query = partial_query.replace('\\', '\\\\')
-            pattern = re.compile('('+partial_query+')', re.IGNORECASE)
+            pattern = re.compile('('+re.escape(partial_query)+')',
+                                 re.IGNORECASE)
             final_results = [pattern.sub('<b>\\1</b>', x)
                              for x in final_results]
 
@@ -563,9 +563,28 @@ def url_to_search_params(request_get, allow_errors=False, return_slugs=False,
 def get_user_query_table(selections, extras, api_code=None):
     """Perform a data search and create a table of matching IDs.
 
-    This is THE main data query place. Performs a data search and creates
-    a table of IDs (obs_general_id) that match the result rows, possibly
-    sorted.
+    This is THE main data query place.
+
+    - Look in the "user_searches" table to see if this search has already
+      been requested before. If so, retrieve the cache table number. If not,
+      create the entry in "user_searches", which assigns a cache table number.
+    - See if the cache table name has been cached in memory. (This means that
+      we are SURE the table actually exists and don't have to check again)
+      - If so, return the cached table name.
+    - Otherwise, try to perform the search and store the results in the
+      cache_NNN table.
+      - If the table already existed, or was in the process of being created
+        by another process, this will throw an error (after possibly waiting for
+        the lock to clear), which we ignore.
+    - Store the cache table name in the memory cache and return it. (At this
+      point we KNOW the table exists and has been fully populated)
+
+    The cache_NNN table has two columns:
+        1) sort_order: A unique, monotonically increasing id that gives the
+           order of the results based on the sort order requested when the
+           search was done.
+        2) id: A unique is corresponding to the obs_general.id of the
+           observation.
 
     Note: The function url_to_search_params takes the user HTTP request object
           and creates the data objects that are passed to this function.
@@ -586,28 +605,21 @@ def get_user_query_table(selections, extras, api_code=None):
     cache_table_name = get_user_search_table_name(cache_table_num)
 
     # Is this key set in the cache?
-    cache_key = 'cache_table:' + str(cache_table_num)
-
+    cache_key = (settings.CACHE_KEY_PREFIX + ':cache_table:'
+                 + str(cache_table_num))
     cached_val = cache.get(cache_key)
     if cached_val:
         return cached_val
 
-    # Is this key set in the database?
-    desc_sql = 'DESC ' + connection.ops.quote_name(cache_table_name)
-    try:
-        cursor.execute(desc_sql)
-    except DatabaseError as e:
-        if e.args[0] != MYSQL_TABLE_NOT_EXISTS:
-            log.error('get_user_query_table: "%s" returned %s',
-                      desc_sql, str(e))
-            return None
-    else:
-        # DESC was successful, so the database table exists
-        cache.set(cache_key, cache_table_name)
-        return cache_table_name
-
-    # Cache table does not exist
-    # We will make one by doing some data querying
+    # Try to create the table using the selection criteria.
+    # If the table already exists from earlier, this will throw a
+    # MYSQL_TABLE_ALREADY_EXISTS exception and we can just return the table
+    # name.
+    # If the table is in the process of being created by another process,
+    # the CREATE TABLE will hang due to the lock and eventually return
+    # when the CREATE TABLE is finished, at which point it will throw
+    # a MYSQL_TABLE_ALREADY_EXISTS exception and we can just return the table
+    # name.
     sql, params = construct_query_string(selections, extras)
     if sql is None:
         log.error('get_user_query_table: construct_query_string failed'
@@ -632,27 +644,7 @@ def get_user_query_table(selections, extras, api_code=None):
         time1 = time.time()
         cursor.execute(create_sql, tuple(params))
     except DatabaseError as e:
-        # So here's what happens.
-        # Proc1: Call get_user_search_table_name and get a new, unique id
-        # Proc2: Call get_user_search_table_name and get the same id as Proc1
-        # Proc1: Do the long search query and try to create the cache table
-        # Proc2: Also do the long search query and try to the create the cache
-        #        table
-        # Proc1: Gets done first, create table succeeds, and all is good
-        # Proc2: Finishes the query, tries to create the table, and finds out
-        #        someone rudely created it already.
-        # This does not actually break anything. It's just inefficient because
-        # we're running the same query twice at the same time, which might slow
-        # things down.
-        # The only obvious way to fix this is to check cache_new_flag and
-        # if it's True we "own" the table and get to create it. If it's False
-        # we know someone else owns the table, and we just sit here polling
-        # until the table shows up or we get tired of waiting.
-        # For the minor performance gain this doesn't seem important to fix
-        # right now but perhaps in the future.
         if e.args[0] == MYSQL_TABLE_ALREADY_EXISTS:
-            log.debug('get_user_query_table: Table "%s" originally didn\'t '+
-                      'exist, but now it does!', cache_table_name)
             cache.set(cache_key, cache_table_name)
             return cache_table_name
         log.error('get_user_query_table: "%s" with params "%s" failed with '
@@ -702,7 +694,8 @@ def set_user_search_number(selections, extras):
         order_json = str(json.dumps(extras['order']))
         order_hash = hashlib.md5(str.encode(order_json)).hexdigest()
 
-    cache_key = ('usersearchno:selections_hash:' + str(selections_hash)
+    cache_key = (settings.CACHE_KEY_PREFIX
+                 +':usersearchno:selections_hash:' + str(selections_hash)
                  +':qtypes_hash:' + str(qtypes_hash)
                  +':units_hash:' + str(units_hash)
                  +':order_hash:' + str(order_hash))
@@ -1036,8 +1029,9 @@ def get_string_query(selections, param_qualified_name, qtypes):
     value = values[0]
 
     value = value.replace('\\', '\\\\')
-    value = value.replace('%', '\\%')
-    value = value.replace('_', '\\_')
+    if qtype != 'matches':
+        value = value.replace('%', '\\%')
+        value = value.replace('_', '\\_')
 
     clause = ''
     params = []

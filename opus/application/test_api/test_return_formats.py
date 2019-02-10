@@ -15,6 +15,7 @@ import settings
 class ApiReturnFormatTests(TestCase):
     # disable error logging and trace output before test
     def setUp(self):
+        settings.CACHE_KEY_PREFIX = 'opustest:' + settings.OPUS_SCHEMA_NAME
         sys.tracebacklimit = 0 # default: 1000
         logging.disable(logging.DEBUG)
 
@@ -47,8 +48,8 @@ class ApiReturnFormatTests(TestCase):
         """API Calls: check different formats to see if response is 200
            Raise error when any response status code is NOT 200
         """
-        api_public = ApiFormats(target=settings.TEST_ApiReturnFormatTests_LIVE_TARGET)
-        api_internal = ApiFormats(target=f"internal-{settings.TEST_ApiReturnFormatTests_LIVE_TARGET}")
+        api_public = ApiFormats(target=settings.TEST_GO_LIVE)
+        api_internal = ApiFormats(target=settings.TEST_GO_LIVE or "internal")
         test_dict =  {**api_internal.api_dict, **api_public.api_dict}
 
         target_dict = test_dict
@@ -81,13 +82,14 @@ class ApiReturnFormatTests(TestCase):
            api_dict: a dictionary containing the payload
            format: a return format string that concatenates with api_url_base
         """
-        if settings.TEST_ApiReturnFormatTests_GO_LIVE:
+        if settings.TEST_GO_LIVE:
             client = requests.Session()
         else:
             client = RequestsClient()
 
         api_url = api_url_base + format
         payload = api_dict[api_url_base]["payload"]
+        print("Testing URL", api_url, "Payload", payload)
         response = client.get(api_url, params=payload)
         # response = client.get("https://tools.pds-rings.seti.org/opus/api/meta/mults/planet.json", params={'target': 'Jupiter'})
 
@@ -142,14 +144,13 @@ class ApiFormats:
     def build_api_base(self):
         """build up base api depending on target site: dev/production
         """
-        if self.target == "production":
+        if (not self.target or self.target == "production"
+            or self.target == "internal"):
             return "https://tools.pds-rings.seti.org/opus/api/"
         elif self.target == "dev":
             return "http://dev.pds-rings.seti.org/opus/api/"
-        elif self.target == "internal-production":
-            return "https://tools.pds-rings.seti.org/opus/__api/"
-        elif self.target == "internal-dev":
-            return "http://dev.pds-rings.seti.org/opus/__api/"
+        else:
+            assert False, self.target
 
     def build_api_data_base(self):
         """api/data.[fmt]
@@ -246,12 +247,12 @@ class ApiFormats:
             self.api_metadata_base: {
                 "api": "api/metadata/[opus_id].[fmt]",
                 "payload": ApiFormats.payload_for_metadata,
-                "support_format": ["json", "html"]
+                "support_format": ["json", "html", "csv"]
             },
             self.api_metadata_v2_base: {
                 "api": "api/metadata_v2/[opus_id].[fmt]",
                 "payload": ApiFormats.payload_for_metadata,
-                "support_format": ["json", "html"]
+                "support_format": ["json", "html", "csv"]
             },
             self.api_images_size_base: {
                 "api": "api/images/[size].[fmt]",
@@ -286,12 +287,12 @@ class ApiFormats:
             self.api_mults_base: {
                 "api": "api/meta/mults/[param].[fmt]",
                 "payload": ApiFormats.payload_for_mults,
-                "support_format": ["json", "html"]
+                "support_format": ["json", "html", "csv"]
             },
             self.api_endpoints_base: {
                 "api": "api/meta/range/endpoints/[param].[fmt]",
                 "payload": ApiFormats.payload_for_endpoints,
-                "support_format": ["json", "html"]
+                "support_format": ["json", "html", "csv"]
             },
             self.api_categories_with_opus_id_base: {
                 "api": "api/categories/[opus_id].json",
