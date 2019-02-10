@@ -39,40 +39,6 @@ class ApiSearchTests(TestCase, ApiTestHelper):
         settings.STRINGCHOICE_FULL_SEARCH_TIME_THRESHOLD2 = self.search_time_threshold2
         logging.disable(logging.NOTSET)
 
-    def _get_response(self, url):
-        if not settings.TEST_GO_LIVE or settings.TEST_GO_LIVE == "production":
-            url = "https://tools.pds-rings.seti.org" + url
-        else:
-            url = "http://dev.pds-rings.seti.org" + url
-        return self.client.get(url)
-
-    def _run_status_equal(self, url, expected):
-        print(url)
-        response = self._get_response(url)
-        self.assertEqual(response.status_code, expected)
-
-    def _run_json_equal(self, url, expected):
-        print(url)
-        response = self._get_response(url)
-        self.assertEqual(response.status_code, 200)
-        jdata = json.loads(response.content)
-        if 'versions' in jdata:
-            del jdata['versions']
-        if 'versions' in expected:
-            del expected['versions']
-        if 'reqno' not in expected:
-            if 'reqno' in jdata:
-                del jdata['reqno']
-        if 'full_search' not in expected:
-            if 'full_search' in jdata:
-                del jdata['full_search']
-
-        print('Got:')
-        print(str(jdata))
-        print('Expected:')
-        print(str(expected))
-        self.assertEqual(expected, jdata)
-
     def _run_stringsearchchoices_subset(self, url, expected):
         # Ignore any returned choices that aren't in the expected set
         # to handle databases that have more stuff in them than we're expecting
@@ -80,13 +46,6 @@ class ApiSearchTests(TestCase, ApiTestHelper):
         response = self._get_response(url)
         self.assertEqual(response.status_code, 200)
         jdata = json.loads(response.content)
-        if 'versions' in jdata:
-            del jdata['versions']
-        if 'versions' in expected:
-            del expected['versions']
-        if 'reqno' not in expected:
-            if 'reqno' in jdata:
-                del jdata['reqno']
         if 'full_search' not in expected:
             if 'full_search' in jdata:
                 del jdata['full_search']
@@ -423,7 +382,7 @@ class ApiSearchTests(TestCase, ApiTestHelper):
         expected = {'choices': [],
                     # 'full_search': False,
                     'truncated_results': False}
-        self._run_json_equal(url, expected)
+        self._run_json_equal(url, expected, ignore=['full_search'])
 
     def test__api_stringsearchchoices_volumeid_GO_0017(self):
         "/api/stringsearchchoices: volumeid GO_0017"
@@ -431,7 +390,7 @@ class ApiSearchTests(TestCase, ApiTestHelper):
         expected = {'choices': ['<b>GO_0017</b>'],
                     # 'full_search': False,
                     'truncated_results': False}
-        self._run_json_equal(url, expected)
+        self._run_json_equal(url, expected, ignore=['full_search'])
 
     def test__api_stringsearchchoices_volumeid_O_0017(self):
         "/api/stringsearchchoices: volumeid O_0017"
@@ -447,7 +406,7 @@ class ApiSearchTests(TestCase, ApiTestHelper):
         expected = {'choices': ['G<b>O_0017</b>'],
                     # 'full_search': False,
                     'truncated_results': False}
-        self._run_json_equal(url, expected)
+        self._run_json_equal(url, expected, ignore=['full_search'])
 
     def test__api_stringsearchchoices_volumeid_COISS_2002(self):
         "/api/stringsearchchoices: volumeid COISS_2002"
@@ -455,7 +414,7 @@ class ApiSearchTests(TestCase, ApiTestHelper):
         expected = {'choices': ['<b>COISS_2002</b>'],
                     # 'full_search': False,
                     'truncated_results': False}
-        self._run_json_equal(url, expected)
+        self._run_json_equal(url, expected, ignore=['full_search'])
 
     def test__api_stringsearchchoices_datasetid_empty_COISS_2002(self):
         "/api/stringsearchchoices: datasetid empty volumeid COISS_2002"
@@ -672,13 +631,13 @@ class ApiSearchTests(TestCase, ApiTestHelper):
                     # 'full_search': False,
                     'truncated_results': False,
                     'reqno': 5}
-        self._run_json_equal(url, expected)
+        self._run_json_equal(url, expected, ignore=['full_search'])
         url = '/opus/__api/stringsearchchoices/volumeid.json?volumeid=O_0017&reqno=100'
         expected = {'choices': ['G<b>O_0017</b>'],
                     # 'full_search': False,
                     'truncated_results': False,
                     'reqno': 100}
-        self._run_json_equal(url, expected)
+        self._run_json_equal(url, expected, ignore=['full_search'])
 
     def test__api_stringsearchchoices_underscore(self):
         "/api/stringsearchchoices: underscore"
@@ -686,7 +645,7 @@ class ApiSearchTests(TestCase, ApiTestHelper):
         expected = {'choices': [],
                     # 'full_search': False,
                     'truncated_results': False}
-        self._run_json_equal(url, expected)
+        self._run_json_equal(url, expected, ignore=['full_search'])
 
     def test__api_stringsearchchoices_percent(self):
         "/api/stringsearchchoices: percent"
@@ -694,7 +653,7 @@ class ApiSearchTests(TestCase, ApiTestHelper):
         expected = {'choices': [],
                     # 'full_search': False,
                     'truncated_results': False}
-        self._run_json_equal(url, expected)
+        self._run_json_equal(url, expected, ignore=['full_search'])
 
     def test__api_stringsearchchoices_lower_case(self):
         "/api/stringsearchchoices: lower_case"
@@ -702,7 +661,7 @@ class ApiSearchTests(TestCase, ApiTestHelper):
         expected = {'choices': ['<b>COISS_2002</b>'],
                     # 'full_search': False,
                     'truncated_results': False}
-        self._run_json_equal(url, expected)
+        self._run_json_equal(url, expected, ignore=['full_search'])
 
     def test__api_stringsearchchoices_parens(self):
         "/api/stringsearchchoices: parens"
@@ -710,7 +669,7 @@ class ApiSearchTests(TestCase, ApiTestHelper):
         expected = {'choices': [],
                     # 'full_search': False,
                     'truncated_results': False}
-        self._run_json_equal(url, expected)
+        self._run_json_equal(url, expected, ignore=['full_search'])
 
     def test__api_stringsearchchoices_parens2(self):
         "/api/stringsearchchoices: parens 2"
@@ -718,7 +677,7 @@ class ApiSearchTests(TestCase, ApiTestHelper):
         expected = {'choices': [],
                     # 'full_search': False,
                     'truncated_results': False}
-        self._run_json_equal(url, expected)
+        self._run_json_equal(url, expected, ignore=['full_search'])
 
     def test__api_stringsearchchoices_backslash(self):
         "/api/stringsearchchoices: backslash"
@@ -726,4 +685,4 @@ class ApiSearchTests(TestCase, ApiTestHelper):
         expected = {'choices': [],
                     # 'full_search': False,
                     'truncated_results': False}
-        self._run_json_equal(url, expected)
+        self._run_json_equal(url, expected, ignore=['full_search'])

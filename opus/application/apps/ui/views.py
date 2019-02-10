@@ -45,22 +45,44 @@ class main_site(TemplateView):
         context['OPUS_FILE_VERSION'] = settings.OPUS_FILE_VERSION
         return context
 
-def api_about(request):
-    """Return the about page.
+def api_help(request, page):
+    """Return any of the large help pages.
 
-    This is a PRIVATE API, but we don't use the initial __ because it's a
-    visible link.
+    This is a PRIVATE API.
 
-    Format: about.html
+    Format: __help/(?P<page>[-\w]+).html
+
+    <page> can be one of:
+        about
+        datasets
+        tutorial
     """
-    api_code = enter_api_call('api_about', request)
-    template = 'about.html'
-    all_volumes = OrderedDict()
-    for d in (ObsGeneral.objects.values('instrument_id','volume_id')
-              .order_by('instrument_id','volume_id').distinct()):
-        all_volumes.setdefault(d['instrument_id'], []).append(d['volume_id'])
+    api_code = enter_api_call('api_help', request)
 
-    ret = render(request, template, {'all_volumes': all_volumes})
+    data = {}
+    if page == 'about':
+        template = 'help_about.html'
+
+    elif page == 'datasets':
+        template = 'help_datasets.html'
+        all_volumes = OrderedDict()
+        for d in (ObsGeneral.objects.values('instrument_id','volume_id')
+                  .order_by('instrument_id','volume_id').distinct()):
+            all_volumes.setdefault(d['instrument_id'],
+                                   []).append(d['volume_id'])
+        for k,v in all_volumes.items():
+            all_volumes[k] = ', '.join(all_volumes[k])
+        data = {'all_volumes': all_volumes}
+
+    elif page == 'tutorial':
+        template = 'help_tutorial.html'
+
+    else:
+        log.error('api_help: Unknown page "%s"', page)
+        exit_api_call(api_code, Http404)
+        raise Http404
+
+    ret = render(request, 'ui/'+template, data)
     exit_api_call(api_code, ret)
     return ret
 

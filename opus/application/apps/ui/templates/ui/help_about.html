@@ -1,0 +1,136 @@
+<h1>About OPUS</h1>
+
+<p>OPUS (Outer Planets Unified Search), a web-based data search tool for NASA outer planet missions, is a project of the
+   <a href="https://pds-rings.seti.org/" target="_blank">Ring-Moon Systems Node</a>
+	 of NASA's <a href="https://pds.jpl.nasa.gov/" target="_blank">Planetary Data System (PDS)</a>,
+
+	 The <a href="https://pds.jpl.nasa.gov/" target="_blank">PDS</a> is a carefully-curated permanent archive of all types of mission data,
+	 which are freely available to researchers and the general public. The
+	 <a href="https://pds-rings.seti.org/" target="_blank">Ring-Moon Systems Node<a>,
+	 one of eight Discipline Nodes, specializes in imaging, spectral, and
+	 occultation data related to the outer planets, rings, and moons of our solar
+	 system. It is hosted at
+	 <a href="https://seti.org/" target="_blank">The SETI Institute</a>
+	 in Mountain View, California.
+</p>
+
+<p>OPUS supports user-friendly searching on metadata normally associated with each
+	 observation, such as the mission, instrument, intended target, observation
+	 time, and PDS volume name, as well as metadata specific to each supported mission and instrument.
+</p>
+
+<p>In addition, OPUS excels at multi-mission and multi-instrument searches by providing search parameters that are
+	 more generic in nature. Among these, which are computed by the Ring-Moon Systems Node and uniquely available in OPUS, are:
+</p>
+
+<ul>
+	<li>Ring Geometry, such as radius, longitude, resolution, and phase angle,
+		  calculated separately for each observation relative to the ring plane of the appropriate planet.
+			<br/>For example,
+			consider <a href="https://tools.pds-rings.seti.org/#/instrument=Cassini+ISS&COISScamera=Narrow+Angle&RINGGEOringradius1=136400.000000&RINGGEOringradius2=136600.000000&RINGGEOresolution2=2&RINGGEOemission1=0&RINGGEOemission2=75&planet=Saturn&qtype-RINGGEOringradius=any&view=search&browse=gallery&colls_browse=gallery&page=1&gallery_data_viewer=true&limit=100&order=time1&cols=opusid,instrument,COISSfilter,time1,RINGGEOringradius1,RINGGEOringradius2,RINGGEOresolution1,RINGGEOresolution2,RINGGEOprojectedradialresolution1,RINGGEOprojectedradialresolution2,RINGGEOphase1,RINGGEOphase2,RINGGEOincidence1,RINGGEOemission1,RINGGEOemission2&widgets=RINGGEOemission1,RINGGEOresolution1,RINGGEOringradius1,COISScamera,instrument,planet&widgets2=&detail=" target="_blank">this query</a>, which searches for:
+		<ul>
+			<li>Images taken by Cassini's ISS Narrow-Angle Camera</li>
+			<li>of the Keeler Gap in Saturn's rings (136,400-136,600 km)</li>
+			<li>at high resolution (&lt; 2 km per pixel)</li>
+			<li>on the lit side of the rings (emission angle 0-75&deg;)
+		</ul>
+	</li>
+	<li>Body Surface Geometry, such as longitude, latitude, distance, resolution, and phase angle,
+			calculated separately for each observation for <em>all</em> bodies in the field of view.
+			<br/>For example,
+			consider <a href="https://tools.pds-rings.seti.org/#/surfacegeometrytargetname=Pluto&SURFACEGEOplutophase1=160&SURFACEGEOplutocenterresolution2=5&view=search&browse=gallery&colls_browse=gallery&page=1&gallery_data_viewer=true&limit=100&order=time1&cols=opusid,instrument,time1,SURFACEGEOplutoplanetographiclatitude1,SURFACEGEOplutoplanetographiclatitude2,SURFACEGEOplutoIAUwestlongitude1,SURFACEGEOplutoIAUwestlongitude2,SURFACEGEOplutocenterdistance1,SURFACEGEOplutocenterresolution1,SURFACEGEOplutophase1,SURFACEGEOplutophase2&widgets=SURFACEGEOplutocenterresolution1,SURFACEGEOplutophase1,surfacegeometrytargetname&widgets2=&detail=" target="_blank">this query</a>, which searches for:
+		<ul>
+			<li>All observations of Pluto</li>
+			<li>at high phase (&gt; 160&deg;)</li>
+			<li>and high resolution (&lt; 5 km per pixel)</li>
+		</ul>
+	</li>
+	<li>Observation Type, such as "Image", "Spectrum", or "Spectral Time Series".</li>
+	<li>Measurement Quantity, such as "Reflectivity" or "Optical Depth".</li>
+	<li>Image attributes, such as size in pixels or number possible levels.</li>
+	<li>Wavelength attributes, such as wavelength range and resolution, which permit
+		  searching for observations in a particular bandpass across instruments and
+			filters.</li>
+</ul>
+
+<p>OPUS supplies data from the following missions and instruments:</p>
+
+<ul>
+	<li><a href="https://solarsystem.nasa.gov/missions/cassini/mission/spacecraft/cassini-orbiter/" target="_blank">Cassini</a>
+		  (Flew past Jupiter in 2001, orbited Saturn from 2004-2017)
+		<ul>
+			<li><a href="https://solarsystem.nasa.gov/missions/cassini/mission/spacecraft/cassini-orbiter/composite-infrared-spectrometer/" target="_blank">CIRS</a>
+			  	(Composite Infrared Spectrometer)
+			</li>
+			<li><a href="https://solarsystem.nasa.gov/missions/cassini/mission/spacecraft/cassini-orbiter/imaging-science-subsystem/" target="_blank">ISS</a>
+					(Imaging Science Subsystem) - the primary image cameras
+			</li>
+			<li><a href"https://solarsystem.nasa.gov/missions/cassini/mission/spacecraft/cassini-orbiter/ultraviolet-imaging-spectrograph/" target="_blank">UVIS</a>
+				  (Ultraviolet Imaging Spectrograph)
+			</li>
+			<li><a href="https://solarsystem.nasa.gov/missions/cassini/mission/spacecraft/cassini-orbiter/visible-and-infrared-mapping-spectrometer/" target="_blank">VIMS</a>
+				  (Visible and Infrared Mapping Spectrometer)
+			</li>
+		</ul>
+	</li>
+	<li><a href="https://solarsystem.nasa.gov/missions/galileo/overview/" target="_blank">Galileo</a>
+		  (orbited Jupiter from 1995-2003)
+		<ul>
+			<li><a href="https://nssdc.gsfc.nasa.gov/nmc/experiment/display.action?id=1989-084B-10" target="_blank">SSI</a>
+			    (Solid-State Imaging) - the primary image camera
+			</li>
+		</ul>
+	</li>
+	<li><a href="https://voyager.jpl.nasa.gov/mission/" target="_blank">Voyager 1 and 2</a>
+			(Flew past Jupiter in 1977-1978 and Saturn in 1980-1981; Voyager 2 continued past Uranus in 1986 and Neptune in 1989)
+		<ul>
+			<li><a href="https://voyager.jpl.nasa.gov/mission/spacecraft/instruments/iss/" target="_blank">ISS</a>
+					(Imaging Science Subsystem) - the primary image cameras
+			</li>
+		</ul>
+	</li>
+	<li><a href="http://pluto.jhuapl.edu/Mission/The-New-Horizons-Mission.php" target="_blank">New Horizons</a>
+		  (flew past Jupiter in 2007, Pluto in 2016, and MU69 in 2019)
+		<ul>
+			<li><a href="http://pluto.jhuapl.edu/Mission/Spacecraft/Payload.php" target="_blank">LORRI</a>
+				  (Long Range Reconnaissance Imager) - the primary image camera
+			</li>
+			<li><a href="http://pluto.jhuapl.edu/Mission/Spacecraft/Payload.php" target="_blank">MVIC</a>
+				  (Multispectral Visible Imaging Camera)
+			</li>
+		</ul>
+	</li>
+	<li><a href="https://www.nasa.gov/mission_pages/hubble/main/index.html" target="_blank">The Hubble Space Telescope</a>
+		  (in Earth orbit)
+		<ul>
+			<li><a href="http://www.stsci.edu/hst/acs" target="_blank">ACS</a>
+				  (Advanced Camera for Surveys)
+			</li>
+			<li><a href="http://www.stsci.edu/hst/nicmos/" target="_blank">NICMOS</a>
+				  (Near Infrared Camera and Multi-Object Spectrometer)
+			</li>
+			<li><a href="http://www.stsci.edu/instruments/stis/" target="_blank">STIS</a>
+				  (Space Telescope Imaging Spectrograph)
+			</li>
+			<li><a href="http://www.stsci.edu/hst/wfc3" target ="_blank">WFC3</a>
+				  (Wide-Field Camera 3)
+			</li>
+			<li><a href="http://www.stsci.edu/hst/wfpc2" target="_blank">WFPC2</a>
+				  (Wide-Field Planetary Camera 2)
+			</li>
+		</ul>
+	</li>
+</ul>
+
+<p>Please note that OPUS works best with a browser size greater than X by Y. We
+	 support Firefox (VV and higher), Chrome (VV and higher), and Safari (VV and higher).
+</p>
+
+<p>Updates are announced on
+	 <a href="https://ringsnodesearchtool.blogspot.com/" target="_blank">our blog</a>
+	 and <a href="https://twitter.com/pdsopus" target="_blank">Twitter</a>.
+</p>
+
+<p>We actively solicit <a href="https://pds-rings.seti.org/cgi-bin/comments/form.pl" target="_blank">questions, comments, and feedback</a>
+	 and look forward to hearing from you.
+</p>
