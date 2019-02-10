@@ -11,6 +11,8 @@ from typing import List, Iterator, Dict, NamedTuple, Optional, Tuple, Iterable, 
 
 import django
 from django.template.loader import render_to_string
+from jinja2 import Environment, FileSystemLoader, StrictUndefined
+from markupsafe import Markup
 
 import Slug
 from LogEntry import LogEntry
@@ -278,6 +280,7 @@ class LogParser:
 
     def __generate_batch_html_output(self, host_infos_by_ip: List[HostInfo],
                                      host_infos_by_time: List[HostInfo]) -> None:
+        self.foo()
         os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'DjangoSettings')
         django.setup()
         # noinspection PyTypeChecker
@@ -290,6 +293,28 @@ class LogParser:
                            }
         result = render_to_string('log_analysis.html', summary_context)
         print(result, file=self._output)
+
+    def foo(self, host_infos_by_ip: List[HostInfo],
+                                     host_infos_by_time: List[HostInfo]) -> None:
+        env = Environment(
+            loader = FileSystemLoader("templates/"),
+            autoescape=True,
+            line_statement_prefix='#',
+            line_comment_prefix='##',
+            undefined=StrictUndefined,
+        )
+        template = env.get_template('log_analysis.html')
+        # noinspection PyTypeChecker
+        action_flags_list = list(ActionFlags)  # python type checker doesn't realize that class of enum is Iterable.
+        summary_context = {'host_infos_by_ip': host_infos_by_ip,
+                           'host_infos_by_time': host_infos_by_time,
+                           'api_host_url': self._api_host_url,
+                           'uses_local': self._uses_local,
+                           'action_flags_list': action_flags_list,
+                           }
+        template = env.get_template('log_analysis.html')
+        template.render(**summary_context)
+
 
     def __print_entry_info(self, this_entry: LogEntry, this_entry_info: List[str],
                            session_start_time: datetime.datetime) -> None:
