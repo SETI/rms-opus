@@ -22,7 +22,7 @@ ERROR_LEEWAY = datetime.timedelta(milliseconds=20)
 class ErrorEntry(NamedTuple):
     """Information from one line of an Apache log entry."""
     time: datetime.datetime
-    host_ip: ipaddress.IPv6Network
+    host_ip: ipaddress.IPv4Address
     message: str
     code_location: Optional[str] = None
     severity: Optional[str] = None
