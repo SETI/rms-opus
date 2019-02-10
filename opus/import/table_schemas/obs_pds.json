@@ -16,7 +16,7 @@
     },
     {
         "field_name": "opus_id",
-        "field_type": "char80",
+        "field_type": "char40",
         "field_key": "foreign",
         "field_key_foreign": [
             "obs_general",
@@ -127,7 +127,7 @@
             "obs_pds_<INST>_product_creation_time"
         ],
         "data_source_order": 10,
-        "definition": "XXX",
+        "definition": "Approximate UTC date and time when the PDS data product was created. Often rounded to 12:00.",
         "pi_category_name": "obs_pds",
         "pi_dict_context": "OPUS_GENERAL",
         "pi_dict_name": "PRODUCT_CREATION_TIME",
@@ -142,7 +142,7 @@
         "pi_sub_heading": null,
         "pi_tooltip": null,
         "pi_units": null,
-        "comments": ""
+        "comments": "Definition is from HSTACS label."
     },
     {
         "field_name": "primary_file_spec",
@@ -209,6 +209,7 @@
     },
     {
         "field_name": "timestamp",
-        "field_type": "timestamp"
+        "field_type": "timestamp",
+        "field_notnull": true
     }
 ]

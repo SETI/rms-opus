@@ -99,7 +99,7 @@ def api_get_table_headers(request):
 
     if not slugs:
         slugs = settings.DEFAULT_COLUMNS
-    slugs = slugs.split(',')
+    slugs = cols_to_slug_list(slugs)
     columns = []
 
     # If this is an ajax call it means it's from our app, so append the
@@ -185,6 +185,9 @@ def api_get_widget(request, **kwargs):
     if request and request.GET:
         (selections, extras) = url_to_search_params(request.GET,
                                                     allow_errors=True)
+        if selections is None: # XXX Really should throw an error of some kind
+            selections = {}
+            extras = {}
 
     addlink = request.GET.get('addlink', True) # suppresses the add_str link
     remove_str = '<a class="remove_input" href="">-</a>'
@@ -377,11 +380,11 @@ def api_get_column_chooser(request):
     api_code = enter_api_call('api_get_column_chooser', request)
 
     slugs = request.GET.get('cols', settings.DEFAULT_COLUMNS)
-    slugs = slugs.split(',')
+    slugs = cols_to_slug_list(slugs)
 
     slugs = filter(None, slugs)
     if not slugs:
-        slugs = settings.DEFAULT_COLUMNS.split(',')
+        slugs = cols_to_slug_list(settings.DEFAULT_COLUMNS)
     all_slugs_info = _get_column_info(slugs)
     namespace = 'column_chooser_input'
     menu = _get_menu_labels(request, 'results')['menu']
@@ -458,7 +461,7 @@ def api_init_detail_page(request, **kwargs):
 
     # On the details page, we display the list of available filenames after
     # each product type
-    products = get_pds_products(opus_id, None)[opus_id]
+    products = get_pds_products(opus_id)[opus_id]
     if not products:
         products = {}
     new_products = OrderedDict()

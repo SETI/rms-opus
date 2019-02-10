@@ -10,6 +10,8 @@ var o_search = {
     truncatedResultsMsg: "&ltMore choices available&gt",
     slugStringSearchChoicesReqno: {},
     slugNormalizeReqno: {},
+    slugMultsReqno: {},
+    slugEndpointsReqno: {},
     slugRangeInputValidValueFromLastSearch: {},
     allNormalizedApiCall: function() {
         let newHash = o_hash.updateHash(false);
@@ -550,52 +552,57 @@ var o_search = {
     getRangeEndpoints: function(slug) {
 
         $('#widget__' + slug + ' .spinner').fadeIn();
+        opus.lastEndpointsRequestNo++;
+        o_search.slugEndpointsReqno[slug] = opus.lastEndpointsRequestNo;
+        var url = "/opus/__api/meta/range/endpoints/" + slug + ".json?" + o_hash.getHash() +  '&reqno=' + o_search.slugEndpointsReqno[slug];
+        
+        $.ajax({url: url,
+            dataType:"json",
+            success: function(multdata){
+                $('#widget__' + slug + ' .spinner').fadeOut();
 
-        var url = "/opus/__api/meta/range/endpoints/" + slug + ".json?" + o_hash.getHash() +  '&reqno=' + opus.lastRequestNo;
-            $.ajax({url: url,
-                dataType:"json",
-                success: function(multdata){
-                    $('#widget__' + slug + ' .spinner').fadeOut();
-
-                    if (multdata['reqno'] < opus.lastRequestNo) {
-                        return;
-                    }
-
-                    min = multdata['min'];
-                    max = multdata['max'];
-                    nulls = multdata['nulls'];
-
-                    widget = "widget__" + slug;
-                    $('#hint__' + slug).html("<span>min: " + min + "</span><span>max: " + max + "</span><span> nulls: " + nulls + '</span>');
-
-                },
-                statusCode: {
-                    404: function() {
-                      $('#widget__' + slug + ' .spinner').removeClass('spinning');
-                  }
-                },
-                error:function (xhr, ajaxOptions, thrownError){
-                    $("#widget__" + slug + " .spinner").removeClass("spinning");
-                    // range input hints are "?" when wrong values of url is pasted
-                    $("#hint__" + slug).html("<span>min: ?</span><span>max: ?</span><span> nulls: ?</span>");
+                if (multdata['reqno'] < o_search.slugEndpointsReqno[slug]) {
+                    return;
                 }
-            }); // end mults ajax
+
+                min = multdata['min'];
+                max = multdata['max'];
+                nulls = multdata['nulls'];
+
+                widget = "widget__" + slug;
+                $('#hint__' + slug).html("<span>min: " + min + "</span><span>max: " + max + "</span><span> nulls: " + nulls + '</span>');
+
+            },
+            statusCode: {
+                404: function() {
+                  $('#widget__' + slug + ' .spinner').removeClass('spinning');
+              }
+            },
+            error:function (xhr, ajaxOptions, thrownError){
+                $("#widget__" + slug + " .spinner").removeClass("spinning");
+                // range input hints are "?" when wrong values of url is pasted
+                $("#hint__" + slug).html("<span>min: ?</span><span>max: ?</span><span> nulls: ?</span>");
+            }
+        }); // end mults ajax
     },
 
     getValidMults: function (slug) {
         // turn on spinner
         $('#widget__' + slug + ' .spinner').fadeIn();
+        opus.lastMultsRequestNo++;
+        o_search.slugMultsReqno[slug] = opus.lastMultsRequestNo;
+        var url = "/opus/__api/meta/mults/" + slug + ".json?" + o_hash.getHash() +  '&reqno=' + o_search.slugMultsReqno[slug];
 
-        var url = "/opus/__api/meta/mults/" + slug + ".json?" + o_hash.getHash() +  '&reqno=' + opus.lastRequestNo;
         $.ajax({url: url,
             dataType:"json",
             success: function(multdata){
 
                 $('#widget__' + slug + ' .spinner').fadeOut('');
 
-                if (multdata['reqno'] < opus.lastRequestNo) {
+                if (multdata['reqno'] < o_search.slugMultsReqno[slug]) {
                     return;
                 }
+
                 slug = multdata['field'];
                 widget = "widget__" + slug;
                 mults = multdata['mults'];

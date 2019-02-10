@@ -27,11 +27,11 @@ var o_collections = {
          // check an input on selected products and images updates file_info
          $('#collection').on("click",'#download_options input', function() {
              var add_to_url = o_collections.getDownloadFiltersChecked();
-             var url = "/opus/__collections/download/info.json?" + add_to_url
-             $.ajax({ url: url + '&fmt=json',
+             var url = "/opus/__collections/view.json?" + add_to_url
+             $.ajax({ url: url,
                 success: function(json){
-                    $('#total_files').fadeOut().html(json['download_count']).fadeIn();
-                    $('#download_size').fadeOut().html(json['download_size_pretty']).fadeIn();
+                    $('#total_download_count').fadeOut().html(json['total_download_count']).fadeIn();
+                    $('#total_download_size').fadeOut().html(json['total_download_size_pretty']).fadeIn();
                 }});
 
          });
@@ -41,42 +41,62 @@ var o_collections = {
             $(this).attr("href", '/opus/__collections/data.csv?'+ o_hash.getHash());
          });
 
-         // Download Zipped Archive button - click create download zip file link on collections page
-         $('#collection').on("click", '#collections_summary a#create_zip_file button', function() {
-                $('.spinner', "#collections_summary").fadeIn();
+         // Download Zipped Data Archive button
+         $('#collection').on("click", '#collections_summary a#create_zip_data_file button', function() {
+                if (opus.download_in_process) {
+                  return false;
+                }
                 opus.download_in_process = true;
+                $('.spinner', "#collections_summary").fadeIn();
                 var add_to_url = o_collections.getDownloadFiltersChecked();
-                var url = '/opus/__collections/download.zip?' + add_to_url + "&" + o_hash.getHash();
-                $.ajax({ url: url,
-                    success: function(filename){
+                var url = '/opus/__collections/download.json?' + add_to_url + "&" + o_hash.getHash();
+                $.ajax({ url: url, dataType: "json",
+                    success: function(json){
                         opus.download_in_process = false;
-                        if (filename) {
-                            $('<li><a href = "' + filename + '">' + filename + '</a></li>').hide().prependTo('ul.zipped_files', "#collections_summary").slideDown('slow');
-                            $('.spinner', "#collections_summary").fadeOut();
+                        if (json['error'] !== undefined) {
+                          $('<li>'+json['error']+'</li>').hide().prependTo('ul.zipped_files', "#collections_summary").slideDown('fast');
                         } else {
-                            $('<li>No Files Found</li>').hide().prependTo('ul.zipped_files', "#collections_summary").slideDown('fast');
+                          filename = json['filename']
+                            $('<li><a href = "' + filename + '">' + filename + '</a></li>').hide().prependTo('ul.zipped_files', "#collections_summary").slideDown('slow');
                         }
-
+                        $('.spinner', "#collections_summary").fadeOut();
                     },
                     error: function(e) {
-
-                        $('.spinner', "#collections_summary").fadeOut();
-                        $('<li>No Files Found</li>').hide().prependTo('ul.zipped_files', "#collections_summary").slideDown('fast');
                         opus.download_in_process = false;
+                        $('.spinner', "#collections_summary").fadeOut();
+                        $('<li>Internal error creating zip file</li>').hide().prependTo('ul.zipped_files', "#collections_summary").slideDown('fast');
                     }
-
                 });
                 return false;
          });
 
-         // click create zip file link on detail page
-         $("#detail").on("click", '#create_zip_file', function() {
-             $('#zip_file', "#detail").html(opus.spinner + " zipping files");
-              $.ajax({ url: $(this).attr("href"),
-                     success: function(json){
-                         $('#zip_file').html('<a href = "' + json + '">' + json + '</a>');
-                     }});
-              return false;
+         // Download Zipped URL Archive button
+         $('#collection').on("click", '#collections_summary a#create_zip_url_file button', function() {
+                if (opus.download_in_process) {
+                  return false;
+                }
+                opus.download_in_process = true;
+                $('.spinner', "#collections_summary").fadeIn();
+                var add_to_url = o_collections.getDownloadFiltersChecked();
+                var url = '/opus/__collections/download.json?' + add_to_url + "&" + o_hash.getHash() + "&urlonly=1";
+                $.ajax({ url: url, dataType: "json",
+                    success: function(json){
+                        opus.download_in_process = false;
+                        if (json['error'] !== undefined) {
+                          $('<li>'+json['error']+'</li>').hide().prependTo('ul.zipped_files', "#collections_summary").slideDown('fast');
+                        } else {
+                          filename = json['filename']
+                            $('<li><a href = "' + filename + '">' + filename + '</a></li>').hide().prependTo('ul.zipped_files', "#collections_summary").slideDown('slow');
+                        }
+                        $('.spinner', "#collections_summary").fadeOut();
+                    },
+                    error: function(e) {
+                        opus.download_in_process = false;
+                        $('.spinner', "#collections_summary").fadeOut();
+                        $('<li>Internal error creating wget script</li>').hide().prependTo('ul.zipped_files', "#collections_summary").slideDown('fast');
+                    }
+                });
+                return false;
          });
 
          // empty collection button
@@ -123,7 +143,7 @@ var o_collections = {
                        opus.colls_pages = Math.ceil(count/opus.prefs.limit);
                        $('#collection_count').html(count);
                    }
-                   opus.lastCartRequestNo = parseInt(data['expected_request_no']) - 1
+                   opus.lastCartRequestNo = parseInt(data['reqno']) - 1
             }});
     },
 
@@ -218,12 +238,12 @@ var o_collections = {
         var view_info = o_browse.getViewInfo();
         var namespace = view_info['namespace']; // either '#collection' or '#browse'
 
-        var url = "/opus/__collections/" + action + ".json?request=" + request_no
+        var url = "/opus/__collections/" + action + ".json?reqno=" + request_no
         switch (action) {
             case "add":
             case "remove":
             case "removerange":
-                url += "&opus_id=" + opus_id;
+                url += "&opusid=" + opus_id;
                 break;
 
             case "addrange":
@@ -285,10 +305,10 @@ var o_collections = {
             success: function(data) {
                 var count = data['count'];
                 $('#collection_count').html(count);
-                $('#download_size').html(data['download_size_pretty']);
+                $('#total_download_size').html(data.download_size_pretty);
                 opus.colls_pages = Math.ceil(count/opus.prefs.limit);
-                if (opus.collection_queue[data['request_no']] != undefined) {
-                  delete opus.collection_queue[data['request_no']];
+                if (opus.collection_queue[data['reqno']] != undefined) {
+                  delete opus.collection_queue[data['reqno']];
                 }
             },
             error: function() {
@@ -303,8 +323,8 @@ var o_collections = {
         opus.lastCartRequestNo = 0;
 
         // change indicator to zero and let the server know:
-        $.ajax({ url: "/opus/__collections/reset.html",
-            success: function(html){
+        $.ajax({ url: "/opus/__collections/reset.json",
+            success: function(data){
                 $('#collection_count').html('0');
                 opus.colls_pages = 0;
                 opus.collection_change = true;

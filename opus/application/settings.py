@@ -86,6 +86,7 @@ MIDDLEWARE = (
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.cache.UpdateCacheMiddleware',
     'django.middleware.cache.FetchFromCacheMiddleware',
+    'apps.tools.opus_middleware.StripWhitespaceMiddleware',
     # prod remove:
     #'debug_toolbar.middleware.DebugToolbarMiddleware',
 )
@@ -308,9 +309,9 @@ BASE_TABLES = ['obs_general', 'obs_pds', 'obs_ring_geometry',
 # These slugs may show up in the hash but are not actually database
 # queries and thus should be ignored when creating SQL
 SLUGS_NOT_IN_DB = ('browse', 'col_chooser', 'colls_browse', 'cols', 'detail',
-                   'gallery_data_viewer', 'limit', 'loc_type', 'order',
-                   'page', 'range', 'reqno', 'request', 'startobs', 'types',
-                   'view', 'widgets', 'widgets2')
+                   'download', 'gallery_data_viewer', 'limit', 'loc_type',
+                   'order', 'page', 'range', 'reqno', 'request', 'startobs',
+                   'types', 'view', 'widgets', 'widgets2', '__sessionid')
 
 # The root URL used to retrieve product files from a web server
 PRODUCT_HTTP_PATH = 'https://pds-rings.seti.org/'
@@ -358,6 +359,8 @@ STRINGCHOICE_FULL_SEARCH_TIME_THRESHOLD2 = 500 # ms
 
 THUMBNAIL_NOT_FOUND = 'https://tools.pds-rings.seti.org/static_media/img/thumbnail_not_found.png'
 
+MAX_SELECTIONS_FOR_DATA_DOWNLOAD = 250
+MAX_SELECTIONS_FOR_URL_DOWNLOAD = 10000
 MAX_DOWNLOAD_SIZE = 3*1024*1024*1024 # 3 gig max for any single download
 MAX_CUM_DOWNLOAD_SIZE = 5*1024*1024*1024 # 5 gigs max cum downloads for a session
 
@@ -366,3 +369,15 @@ THRESHOLD_FOR_EXPONENTIAL = 1e8
 TEST_RESULT_COUNTS_AGAINST_INTERNAL_DB = False
 
 OPUS_FILE_VERSION = ''
+
+HTTP404_NO_REQUEST = 'No request'
+HTTP404_SEARCH_PARAMS_INVALID = 'Search params invalid'
+HTTP404_UNKNOWN_FORMAT = 'Unknown format'
+HTTP404_UNKNOWN_SLUG = 'Unknown slug'
+HTTP404_UNKNOWN_OPUS_ID = 'Unknown OPUSID'
+HTTP404_UNKNOWN_CATEGORY = 'Unknown category'
+
+HTTP500_SEARCH_FAILED = 'Search failed'
+HTTP500_SQL_FAILED = 'SQL query failed'
+HTTP500_DATABASE_ERROR = 'Database error'
+HTTP500_INTERNAL_ERROR = 'Internal error'

@@ -4,82 +4,30 @@ import json
 import requests
 from unittest import TestCase
 
-from django.db import connection
 from rest_framework.test import RequestsClient
+
+from api_test_helper import ApiTestHelper
 
 import settings
 
 import logging
 log = logging.getLogger(__name__)
 
-cursor = connection.cursor()
-
-SESSION_ENGINE = 'django.contrib.sessions.backends.cache'
-SESSION_COOKIE_NAME = 'opus-test-cookie'
 settings.CACHE_BACKEND = 'dummy:///'
 
-# url(r'^api/data.(json|zip|html|csv)$', api_get_data),
-# url(r'^__api/data.(json|zip|html|csv)$', api_get_data),
-# url(r'^api/metadata/(?P<opus_id>[-\w]+).(?P<fmt>[json|html]+)$', api_get_metadata),
-# url(r'^__api/metadata/(?P<opus_id>[-\w]+).(?P<fmt>[json|html]+)$', api_get_metadata),
-# url(r'^api/metadata_v2/(?P<opus_id>[-\w]+).(?P<fmt>[json|html]+)$', api_get_metadata_v2),
-# url(r'^__api/metadata_v2/(?P<opus_id>[-\w]+).(?P<fmt>[json|html]+)$', api_get_metadata_v2),
-# url(r'^api/images/(?P<size>[thumb|small|med|full]+).(?P<fmt>[json|zip|html|csv]+)$', api_get_images_by_size),
-# url(r'^__api/images/(?P<size>[thumb|small|med|full]+).(?P<fmt>[json|zip|html|csv]+)$', api_get_images_by_size),
-# url(r'^api/images.(json|zip|html|csv)$', api_get_images),
-# url(r'^__api/images.(json|zip|html|csv)$', api_get_images),
-# url(r'^api/image/(?P<size>[thumb|small|med|full]+)/(?P<opus_id>[-\w]+).(?P<fmt>[json|zip|html|csv]+)$', api_get_image),
-# url(r'^__api/image/(?P<size>[thumb|small|med|full]+)/(?P<opus_id>[-\w]+).(?P<fmt>[json|zip|html|csv]+)$', api_get_image),
-# url(r'^api/files/(?P<opus_id>[-\w]+).json$', api_get_files),
-# url(r'^__api/files/(?P<opus_id>[-\w]+).json$', api_get_files),
-# url(r'^api/files.json$', api_get_files),
-# url(r'^__api/files.json$', api_get_files),
-# url(r'^api/categories/(?P<opus_id>[-\w]+).json$', api_get_categories_for_opus_id),
-# url(r'^__api/categories/(?P<opus_id>[-\w]+).json$', api_get_categories_for_opus_id),
-# url(r'^api/categories.json$', api_get_categories_for_search),
-# url(r'^__api/categories.json$', api_get_categories_for_search),
-
-class ApiResultsTests(TestCase):
-
+class ApiResultsTests(TestCase, ApiTestHelper):
     # disable error logging and trace output before test
     def setUp(self):
         settings.CACHE_KEY_PREFIX = 'opustest:' + settings.OPUS_SCHEMA_NAME
         logging.disable(logging.ERROR)
+        if settings.TEST_GO_LIVE:
+            self.client = requests.Session()
+        else:
+            self.client = RequestsClient()
 
     # enable error logging and trace output after test
     def tearDown(self):
         logging.disable(logging.NOTSET)
-
-    def _get_response(self, url):
-        if settings.TEST_GO_LIVE:
-            client = requests.Session()
-        else:
-            client = RequestsClient()
-        if not settings.TEST_GO_LIVE or settings.TEST_GO_LIVE == "production":
-            url = "https://tools.pds-rings.seti.org" + url
-        else:
-            url = "http://dev.pds-rings.seti.org" + url
-        return client.get(url)
-
-    def _run_status_equal(self, url, expected):
-        print(url)
-        response = self._get_response(url)
-        self.assertEqual(response.status_code, expected)
-
-    def _run_json_equal(self, url, expected):
-        print(url)
-        response = self._get_response(url)
-        self.assertEqual(response.status_code, 200)
-        jdata = json.loads(response.content)
-        if 'versions' in jdata:
-            del jdata['versions']
-        if 'versions' in expected:
-            del expected['versions']
-        print('Got:')
-        print(str(jdata))
-        print('Expected:')
-        print(str(expected))
-        self.assertEqual(expected, jdata)
 
 
             #######################################
@@ -104,6 +52,425 @@ class ApiResultsTests(TestCase):
         rev_nos2 = rev_nos[:]
         rev_nos2.sort(reverse=True)
         self.assertEqual(rev_nos, rev_nos2)
+
+
+            #######################################
+            ######### /api/data API TESTS #########
+            #######################################
+
+
+            ################################################
+            ######### /api/metadata[_v2] API TESTS #########
+            ################################################
+
+    # All metadata
+    def test__api_metadata_vg_iss_2_s_c4360845_default_json(self):
+        "/api/metadata: vg-iss-2-s-c4360845 default json"
+        url = '/opus/api/metadata/vg-iss-2-s-c4360845.json'
+        self._run_json_equal_file(url, 'api_metadata_vg_iss_2_s_c4360845_default_json.json')
+
+    def test__api_metadata2_vg_iss_2_s_c4360845_default_json(self):
+        "/api/metadata_v2: vg-iss-2-s-c4360845 default json"
+        url = '/opus/api/metadata_v2/vg-iss-2-s-c4360845.json'
+        self._run_json_equal_file(url, 'api_metadata2_vg_iss_2_s_c4360845_default_json.json')
+
+    def test__api_metadata_vg_iss_2_s_c4360845_default_html(self):
+        "/api/metadata: vg-iss-2-s-c4360845 default html"
+        url = '/opus/api/metadata/vg-iss-2-s-c4360845.html'
+        self._run_html_equal_file(url, 'api_metadata_vg_iss_2_s_c4360845_default_html.html')
+
+    def test__api_metadata2_vg_iss_2_s_c4360845_default_html(self):
+        "/api/metadata_v2: vg-iss-2-s-c4360845 default html"
+        url = '/opus/api/metadata_v2/vg-iss-2-s-c4360845.html'
+        self._run_html_equal_file(url, 'api_metadata2_vg_iss_2_s_c4360845_default_html.html')
+
+    def test__api_metadata2_vg_iss_2_s_c4360845_default_html_private(self):
+        "/api/metadata_v2: vg-iss-2-s-c4360845 default html private"
+        url = '/opus/__api/metadata_v2/vg-iss-2-s-c4360845.html'
+        expected = b'<ul id="detail__data_general_constraints">\n<li>\nPlanet: Saturn\n<i class="fa fa-info-circle"'
+        self._run_html_startswith(url, expected)
+
+    def test__api_metadata_vg_iss_2_s_c4360845_default_csv(self):
+        "/api/metadata: vg-iss-2-s-c4360845 default csv"
+        url = '/opus/api/metadata/vg-iss-2-s-c4360845.csv'
+        self._run_csv_equal_file(url, 'api_metadata_vg_iss_2_s_c4360845_default_csv.csv')
+
+    def test__api_metadata2_vg_iss_2_s_c4360845_default_csv(self):
+        "/api/metadata_v2: vg-iss-2-s-c4360845 default csv"
+        url = '/opus/api/metadata_v2/vg-iss-2-s-c4360845.csv'
+        self._run_csv_equal_file(url, 'api_metadata2_vg_iss_2_s_c4360845_default_csv.csv')
+
+    # Specified columns, empty
+    def test__api_metadata_vg_iss_2_s_c4360845_cols_empty_json(self):
+        "/api/metadata: vg-iss-2-s-c4360845 cols empty json"
+        url = '/opus/api/metadata/vg-iss-2-s-c4360845.json?cols='
+        expected = []
+        self._run_json_equal(url, expected)
+
+    def test__api_metadata2_vg_iss_2_s_c4360845_cols_empty_json(self):
+        "/api/metadata_v2: vg-iss-2-s-c4360845 cols empty json"
+        url = '/opus/api/metadata_v2/vg-iss-2-s-c4360845.json?cols='
+        expected = []
+        self._run_json_equal(url, expected)
+
+    def test__api_metadata_vg_iss_2_s_c4360845_cols_empty_html(self):
+        "/api/metadata: vg-iss-2-s-c4360845 cols empty html"
+        url = '/opus/api/metadata/vg-iss-2-s-c4360845.html?cols='
+        expected = b'<dl>\n</dl>\n'
+        self._run_html_equal(url, expected)
+
+    def test__api_metadata2_vg_iss_2_s_c4360845_cols_empty_html(self):
+        "/api/metadata_v2: vg-iss-2-s-c4360845 cols empty html"
+        url = '/opus/api/metadata_v2/vg-iss-2-s-c4360845.html?cols='
+        expected = b'<dl>\n</dl>\n'
+        self._run_html_equal(url, expected)
+
+    def test__api_metadata2_vg_iss_2_s_c4360845_cols_empty_html_private(self):
+        "/api/metadata_v2: vg-iss-2-s-c4360845 cols empty html private"
+        url = '/opus/__api/metadata_v2/vg-iss-2-s-c4360845.html?cols='
+        expected = b'<ul class="columns_metadata">\n</ul>\n'
+        self._run_html_equal(url, expected)
+
+    def test__api_metadata_vg_iss_2_s_c4360845_cols_empty_csv(self):
+        "/api/metadata: vg-iss-2-s-c4360845 cols empty csv"
+        url = '/opus/api/metadata/vg-iss-2-s-c4360845.csv?cols='
+        expected = b''
+        self._run_csv_equal(url, expected)
+
+    def test__api_metadata2_vg_iss_2_s_c4360845_cols_empty_csv(self):
+        "/api/metadata_v2: vg-iss-2-s-c4360845 cols empty csv"
+        url = '/opus/api/metadata_v2/vg-iss-2-s-c4360845.csv?cols='
+        expected = b''
+        self._run_csv_equal(url, expected)
+
+    # Specified columns, opusid only
+    def test__api_metadata_vg_iss_2_s_c4360845_cols_opusid_json(self):
+        "/api/metadata: vg-iss-2-s-c4360845 cols opusid json"
+        url = '/opus/api/metadata/vg-iss-2-s-c4360845.json?cols=opusid'
+        expected = [{"opusid": "vg-iss-2-s-c4360845"}]
+        self._run_json_equal(url, expected)
+
+    def test__api_metadata2_vg_iss_2_s_c4360845_cols_opusid_json(self):
+        "/api/metadata_v2: vg-iss-2-s-c4360845 cols opusid json"
+        url = '/opus/api/metadata_v2/vg-iss-2-s-c4360845.json?cols=opusid'
+        expected = [{"opusid": "vg-iss-2-s-c4360845"}]
+        self._run_json_equal(url, expected)
+
+    def test__api_metadata2_nh_lorri_lor_0284457489_cols_opusid_json(self):
+        "/api/metadata_v2: nh-lorri-lor_0284457489 cols opusid json"
+        # Check an OPUS ID with a _ in it which can screw up database searches
+        url = '/opus/api/metadata_v2/nh-lorri-lor_0284457489.json?cols=opusid'
+        expected = [{"opusid": "nh-lorri-lor_0284457489"}]
+        self._run_json_equal(url, expected)
+
+    def test__api_metadata_vg_iss_2_s_c4360845_cols_opusid_html(self):
+        "/api/metadata: vg-iss-2-s-c4360845 cols opusid html"
+        url = '/opus/api/metadata/vg-iss-2-s-c4360845.html?cols=opusid'
+        expected = b'<dl>\n<dt>OPUS ID</dt><dd>vg-iss-2-s-c4360845</dd>\n</dl>\n'
+        self._run_html_equal(url, expected)
+
+    def test__api_metadata2_vg_iss_2_s_c4360845_cols_opusid_html(self):
+        "/api/metadata_v2: vg-iss-2-s-c4360845 cols opusid html"
+        url = '/opus/api/metadata_v2/vg-iss-2-s-c4360845.html?cols=opusid'
+        expected = b'<dl>\n<dt>OPUS ID</dt><dd>vg-iss-2-s-c4360845</dd>\n</dl>\n'
+        self._run_html_equal(url, expected)
+
+    def test__api_metadata2_vg_iss_2_s_c4360845_cols_opusid_html_private(self):
+        "/api/metadata_v2: vg-iss-2-s-c4360845 cols opusid html private"
+        url = '/opus/__api/metadata_v2/vg-iss-2-s-c4360845.html?cols=opusid'
+        expected = b'<ul class="columns_metadata">\n<li>\nOPUS ID: vg-iss-2-s-c4360845\n<i class="fa fa-info-circle" data-toggle="tooltip"\n'
+        self._run_html_startswith(url, expected)
+
+    def test__api_metadata_vg_iss_2_s_c4360845_cols_opusid_csv(self):
+        "/api/metadata: vg-iss-2-s-c4360845 cols opusid csv"
+        url = '/opus/api/metadata/vg-iss-2-s-c4360845.csv?cols=opusid'
+        expected = b'OPUS ID\nvg-iss-2-s-c4360845\n'
+        self._run_csv_equal(url, expected)
+
+    def test__api_metadata2_vg_iss_2_s_c4360845_cols_opusid_csv(self):
+        "/api/metadata_v2: vg-iss-2-s-c4360845 cols opusid csv"
+        url = '/opus/api/metadata_v2/vg-iss-2-s-c4360845.csv?cols=opusid'
+        expected = b'OPUS ID\nvg-iss-2-s-c4360845\n'
+        self._run_csv_equal(url, expected)
+
+    # Specified columns, all Voyager or Cassini slugs
+    def test__api_metadata_vg_iss_2_s_c4365507_cols_all_voyager_json(self):
+        "/api/metadata: vg-iss-2-s-c4365507 cols all voyager json"
+        url = '/opus/api/metadata/vg-iss-2-s-c4365507.json?cols=opusid,VOYAGERmissionphasename,VOYAGERspacecraftclockcount1,VOYAGERspacecraftclockcount2,VOYAGERert1,VGISScamera,VGISSfilter,VGISSfilternumber,VGISSshuttermode,VGISSeditmode,VGISSgainmode,VGISSscanmode,VGISSimageid,VGISSusablelines1,VGISSusablesamples1'
+        self._run_json_equal_file(url, 'api_metadata_vg_iss_2_s_c4365507_cols_all_voyager_json.json')
+
+    def test__api_metadata2_vg_iss_2_s_c4365507_cols_all_voyager_json(self):
+        "/api/metadata_v2: vg-iss-2-s-c4365507 cols all voyager json"
+        url = '/opus/api/metadata_v2/vg-iss-2-s-c4365507.json?cols=opusid,VOYAGERmissionphasename,VOYAGERspacecraftclockcount1,VOYAGERspacecraftclockcount2,VOYAGERert1,VGISScamera,VGISSfilter,VGISSfilternumber,VGISSshuttermode,VGISSeditmode,VGISSgainmode,VGISSscanmode,VGISSimageid,VGISSusablelines1,VGISSusablesamples1'
+        self._run_json_equal_file(url, 'api_metadata2_vg_iss_2_s_c4365507_cols_all_voyager_json.json')
+
+    def test__api_metadata_vg_iss_2_s_c4365507_cols_all_cassini_json(self):
+        "/api/metadata: vg-iss-2-s-c4365507 cols all cassini json"
+        url = '/opus/api/metadata/vg-iss-2-s-c4365507.json?cols=opusid,volumeid,greaterpixelsize1,lesserpixelsize1,wavelength1,wavelength2,CASSINIobsname,CASSINIactivityname,CASSINImissionphasename,CASSINItargetcode,CASSINIrevnoint1,CASSINIprimeinst,CASSINIisprime,CASSINIsequenceid,CASSINIspacecraftclockcount1,CASSINIspacecraftclockcount2,CASSINIert1,CASSINIert2'
+        self._run_json_equal_file(url, 'api_metadata_vg_iss_2_s_c4365507_cols_all_cassini_json.json')
+
+    def test__api_metadata2_vg_iss_2_s_c4365507_cols_all_cassini_json(self):
+        "/api/metadata_v2: vg-iss-2-s-c4365507 cols all cassini json"
+        url = '/opus/api/metadata_v2/vg-iss-2-s-c4365507.json?cols=opusid,volumeid,greaterpixelsize1,lesserpixelsize1,wavelength1,wavelength2,CASSINIobsname,CASSINIactivityname,CASSINImissionphasename,CASSINItargetcode,CASSINIrevnoint1,CASSINIprimeinst,CASSINIisprime,CASSINIsequenceid,CASSINIspacecraftclockcount1,CASSINIspacecraftclockcount2,CASSINIert1,CASSINIert2'
+        self._run_json_equal_file(url, 'api_metadata2_vg_iss_2_s_c4365507_cols_all_cassini_json.json')
+
+    def test__api_metadata_vg_iss_2_s_c4365507_cols_all_voyager_html(self):
+        "/api/metadata: vg-iss-2-s-c4365507 cols all voyager html"
+        url = '/opus/api/metadata/vg-iss-2-s-c4365507.html?cols=opusid,VOYAGERmissionphasename,VOYAGERspacecraftclockcount1,VOYAGERspacecraftclockcount2,VOYAGERert1,VGISScamera,VGISSfilter,VGISSfilternumber,VGISSshuttermode,VGISSeditmode,VGISSgainmode,VGISSscanmode,VGISSimageid,VGISSusablelines1,VGISSusablesamples1'
+        self._run_html_equal_file(url, 'api_metadata_vg_iss_2_s_c4365507_cols_all_voyager_html.html')
+
+    def test__api_metadata2_vg_iss_2_s_c4365507_cols_all_voyager_html(self):
+        "/api/metadata_v2: vg-iss-2-s-c4365507 cols all voyager html"
+        url = '/opus/api/metadata_v2/vg-iss-2-s-c4365507.html?cols=opusid,VOYAGERmissionphasename,VOYAGERspacecraftclockcount1,VOYAGERspacecraftclockcount2,VOYAGERert1,VGISScamera,VGISSfilter,VGISSfilternumber,VGISSshuttermode,VGISSeditmode,VGISSgainmode,VGISSscanmode,VGISSimageid,VGISSusablelines1,VGISSusablesamples1'
+        self._run_html_equal_file(url, 'api_metadata2_vg_iss_2_s_c4365507_cols_all_voyager_html.html')
+
+    def test__api_metadata_vg_iss_2_s_c4365507_cols_all_cassini_html(self):
+        "/api/metadata: vg-iss-2-s-c4365507 cols all cassini html"
+        url = '/opus/api/metadata/vg-iss-2-s-c4365507.html?cols=opusid,volumeid,greaterpixelsize1,lesserpixelsize1,wavelength1,wavelength2,CASSINIobsname,CASSINIactivityname,CASSINImissionphasename,CASSINItargetcode,CASSINIrevnoint1,CASSINIprimeinst,CASSINIisprime,CASSINIsequenceid,CASSINIspacecraftclockcount1,CASSINIspacecraftclockcount2,CASSINIert1,CASSINIert2'
+        self._run_html_equal_file(url, 'api_metadata_vg_iss_2_s_c4365507_cols_all_cassini_html.html')
+
+    def test__api_metadata2_vg_iss_2_s_c4365507_cols_all_cassini_html(self):
+        "/api/metadata_v2: vg-iss-2-s-c4365507 cols all cassini html"
+        url = '/opus/api/metadata_v2/vg-iss-2-s-c4365507.html?cols=opusid,volumeid,greaterpixelsize1,lesserpixelsize1,wavelength1,wavelength2,CASSINIobsname,CASSINIactivityname,CASSINImissionphasename,CASSINItargetcode,CASSINIrevnoint1,CASSINIprimeinst,CASSINIisprime,CASSINIsequenceid,CASSINIspacecraftclockcount1,CASSINIspacecraftclockcount2,CASSINIert1,CASSINIert2'
+        self._run_html_equal_file(url, 'api_metadata2_vg_iss_2_s_c4365507_cols_all_cassini_html.html')
+
+    def test__api_metadata_vg_iss_2_s_c4365507_cols_all_voyager_csv(self):
+        "/api/metadata: vg-iss-2-s-c4365507 cols all voyager csv"
+        url = '/opus/api/metadata/vg-iss-2-s-c4365507.csv?cols=opusid,VOYAGERmissionphasename,VOYAGERspacecraftclockcount1,VOYAGERspacecraftclockcount2,VOYAGERert1,VGISScamera,VGISSfilter,VGISSfilternumber,VGISSshuttermode,VGISSeditmode,VGISSgainmode,VGISSscanmode,VGISSimageid,VGISSusablelines1,VGISSusablesamples1'
+        self._run_csv_equal_file(url, 'api_metadata_vg_iss_2_s_c4365507_cols_all_voyager_csv.csv')
+
+    def test__api_metadata2_vg_iss_2_s_c4365507_cols_all_voyager_csv(self):
+        "/api/metadata_v2: vg-iss-2-s-c4365507 cols all voyager csv"
+        url = '/opus/api/metadata_v2/vg-iss-2-s-c4365507.csv?cols=opusid,VOYAGERmissionphasename,VOYAGERspacecraftclockcount1,VOYAGERspacecraftclockcount2,VOYAGERert1,VGISScamera,VGISSfilter,VGISSfilternumber,VGISSshuttermode,VGISSeditmode,VGISSgainmode,VGISSscanmode,VGISSimageid,VGISSusablelines1,VGISSusablesamples1'
+        self._run_csv_equal_file(url, 'api_metadata2_vg_iss_2_s_c4365507_cols_all_voyager_csv.csv')
+
+    def test__api_metadata_vg_iss_2_s_c4365507_cols_all_cassini_csv(self):
+        "/api/metadata: vg-iss-2-s-c4365507 cols all cassini csv"
+        url = '/opus/api/metadata/vg-iss-2-s-c4365507.csv?cols=opusid,volumeid,greaterpixelsize1,lesserpixelsize1,wavelength1,wavelength2,CASSINIobsname,CASSINIactivityname,CASSINImissionphasename,CASSINItargetcode,CASSINIrevnoint1,CASSINIprimeinst,CASSINIisprime,CASSINIsequenceid,CASSINIspacecraftclockcount1,CASSINIspacecraftclockcount2,CASSINIert1,CASSINIert2'
+        self._run_csv_equal_file(url, 'api_metadata_vg_iss_2_s_c4365507_cols_all_cassini_csv.csv')
+
+    def test__api_metadata2_vg_iss_2_s_c4365507_cols_all_cassini_csv(self):
+        "/api/metadata_v2: vg-iss-2-s-c4365507 cols all cassini csv"
+        url = '/opus/api/metadata_v2/vg-iss-2-s-c4365507.csv?cols=opusid,volumeid,greaterpixelsize1,lesserpixelsize1,wavelength1,wavelength2,CASSINIobsname,CASSINIactivityname,CASSINImissionphasename,CASSINItargetcode,CASSINIrevnoint1,CASSINIprimeinst,CASSINIisprime,CASSINIsequenceid,CASSINIspacecraftclockcount1,CASSINIspacecraftclockcount2,CASSINIert1,CASSINIert2'
+        self._run_csv_equal_file(url, 'api_metadata2_vg_iss_2_s_c4365507_cols_all_cassini_csv.csv')
+
+    # Specified cats, empty
+    def test__api_metadata_hst_09975_acs_j8n410lb_cats_empty_json(self):
+        "/api/metadata: hst-09975-acs-j8n410lb cats empty json"
+        url = '/opus/api/metadata/hst-09975-acs-j8n410lb.json?cats='
+        expected = {}
+        self._run_json_equal(url, expected)
+
+    def test__api_metadata2_hst_09975_acs_j8n410lb_cats_empty_json(self):
+        "/api/metadata_v2: hst-09975-acs-j8n410lb cats empty json"
+        url = '/opus/api/metadata_v2/hst-09975-acs-j8n410lb.json?cats='
+        expected = {}
+        self._run_json_equal(url, expected)
+
+    def test__api_metadata_hst_09975_acs_j8n410lb_cats_empty_html(self):
+        "/api/metadata: hst-09975-acs-j8n410lb cats empty html"
+        url = '/opus/api/metadata/hst-09975-acs-j8n410lb.html?cats='
+        expected = b'<dl>\n</dl>\n'
+        self._run_html_equal(url, expected)
+
+    def test__api_metadata2_hst_09975_acs_j8n410lb_cats_empty_html(self):
+        "/api/metadata_v2: hst-09975-acs-j8n410lb cats empty html"
+        url = '/opus/api/metadata_v2/hst-09975-acs-j8n410lb.html?cats='
+        expected = b'<dl>\n</dl>\n'
+        self._run_html_equal(url, expected)
+
+    def test__api_metadata_hst_09975_acs_j8n410lb_cats_empty_csv(self):
+        "/api/metadata: hst-09975-acs-j8n410lb cats empty csv"
+        url = '/opus/api/metadata/hst-09975-acs-j8n410lb.csv?cats='
+        expected = b''
+        self._run_csv_equal(url, expected)
+
+    def test__api_metadata2_hst_09975_acs_j8n410lb_cats_empty_csv(self):
+        "/api/metadata_v2: hst-09975-acs-j8n410lb cats empty csv"
+        url = '/opus/api/metadata_v2/hst-09975-acs-j8n410lb.csv?cats='
+        expected = b''
+        self._run_csv_equal(url, expected)
+
+    # Specified cats, PDS Constraints only
+    def test__api_metadata_hst_09975_acs_j8n410lb_cats_pds_constraints_json(self):
+        "/api/metadata: hst-09975-acs-j8n410lb cats PDS Constraints json"
+        url = '/opus/api/metadata/hst-09975-acs-j8n410lb.json?cats=PDS+Constraints'
+        expected = [{"opusid": "hst-09975-acs-j8n410lb"}]
+        self._run_json_equal_file(url, 'api_metadata_hst_09975_acs_j8n410lb_cats_pds_constraints_json.json')
+
+    def test__api_metadata_hst_09975_acs_j8n410lb_cats_pds_constraints_lc_json(self):
+        "/api/metadata: hst-09975-acs-j8n410lb cats pds constraints json"
+        url = '/opus/api/metadata/hst-09975-acs-j8n410lb.json?cats=pds+CONSTRAINTS'
+        expected = [{"opusid": "hst-09975-acs-j8n410lb"}]
+        self._run_json_equal_file(url, 'api_metadata_hst_09975_acs_j8n410lb_cats_pds_constraints_json.json')
+
+    def test__api_metadata_hst_09975_acs_j8n410lb_cats_pds_constraints_table_json(self):
+        "/api/metadata: hst-09975-acs-j8n410lb cats pds constraints json"
+        url = '/opus/api/metadata/hst-09975-acs-j8n410lb.json?cats=obs_pds'
+        expected = [{"opusid": "hst-09975-acs-j8n410lb"}]
+        self._run_json_equal_file(url, 'api_metadata_hst_09975_acs_j8n410lb_cats_pds_constraints_json.json')
+
+    def test__api_metadata_hst_09975_acs_j8n410lb_cats_pds_constraints_table2_json(self):
+        "/api/metadata: hst-09975-acs-j8n410lb cats pds constraints dup json"
+        url = '/opus/api/metadata/hst-09975-acs-j8n410lb.json?cats=obs_pds,obs_pds'
+        expected = [{"opusid": "hst-09975-acs-j8n410lb"}]
+        self._run_json_equal_file(url, 'api_metadata_hst_09975_acs_j8n410lb_cats_pds_constraints_json.json')
+
+    def test__api_metadata2_hst_09975_acs_j8n410lb_cats_pds_constraints_json(self):
+        "/api/metadata_v2: hst-09975-acs-j8n410lb cats PDS Constraints json"
+        url = '/opus/api/metadata_v2/hst-09975-acs-j8n410lb.json?cats=PDS+Constraints'
+        expected = [{"opusid": "hst-09975-acs-j8n410lb"}]
+        self._run_json_equal_file(url, 'api_metadata2_hst_09975_acs_j8n410lb_cats_pds_constraints_json.json')
+
+    def test__api_metadata_hst_09975_acs_j8n410lb_cats_pds_constraints_html(self):
+        "/api/metadata: hst-09975-acs-j8n410lb cats PDS Constraints html"
+        url = '/opus/api/metadata/hst-09975-acs-j8n410lb.html?cats=PDS+Constraints'
+        expected = b'<dl>\n<dt>OPUS ID</dt><dd>hst-09975-acs-j8n410lb</dd>\n</dl>\n'
+        self._run_html_equal_file(url, 'api_metadata_hst_09975_acs_j8n410lb_cats_pds_constraints_html.html')
+
+    def test__api_metadata2_hst_09975_acs_j8n410lb_cats_pds_constraints_html(self):
+        "/api/metadata_v2: hst-09975-acs-j8n410lb cats PDS Constraints html"
+        url = '/opus/api/metadata_v2/hst-09975-acs-j8n410lb.html?cats=PDS+Constraints'
+        expected = b'<dl>\n<dt>OPUS ID</dt><dd>hst-09975-acs-j8n410lb</dd>\n</dl>\n'
+        self._run_html_equal_file(url, 'api_metadata2_hst_09975_acs_j8n410lb_cats_pds_constraints_html.html')
+
+    def test__api_metadata_hst_09975_acs_j8n410lb_cats_pds_constraints_csv(self):
+        "/api/metadata: hst-09975-acs-j8n410lb cats PDS Constraints csv"
+        url = '/opus/api/metadata/hst-09975-acs-j8n410lb.csv?cats=PDS+Constraints'
+        expected = b'OPUS ID\nhst-09975-acs-j8n410lb\n'
+        self._run_csv_equal_file(url, 'api_metadata_hst_09975_acs_j8n410lb_cats_pds_constraints_csv.csv')
+
+    def test__api_metadata2_hst_09975_acs_j8n410lb_cats_pds_constraints_csv(self):
+        "/api/metadata_v2: hst-09975-acs-j8n410lb cats PDS Constraints csv"
+        url = '/opus/api/metadata_v2/hst-09975-acs-j8n410lb.csv?cats=PDS+Constraints'
+        expected = b'OPUS ID\nhst-09975-acs-j8n410lb\n'
+        self._run_csv_equal_file(url, 'api_metadata2_hst_09975_acs_j8n410lb_cats_pds_constraints_csv.csv')
+
+    # Specified cats, PDS, Hubble Constraints
+    def test__api_metadata_hst_09975_acs_j8n410lb_cats_pds_hubble_constraints_json(self):
+        "/api/metadata: hst-09975-acs-j8n410lb cats PDS, Hubble Constraints json"
+        url = '/opus/api/metadata/hst-09975-acs-j8n410lb.json?cats=PDS+Constraints,Hubble+Mission+Constraints'
+        expected = [{"opusid": "hst-09975-acs-j8n410lb"}]
+        self._run_json_equal_file(url, 'api_metadata_hst_09975_acs_j8n410lb_cats_pds_hubble_constraints_json.json')
+
+    def test__api_metadata_hst_09975_acs_j8n410lb_cats_pds_hubble_constraints_lc_json(self):
+        "/api/metadata: hst-09975-acs-j8n410lb cats PDS, Hubble Constraints json"
+        url = '/opus/api/metadata/hst-09975-acs-j8n410lb.json?cats=PDS+Constraints,Hubble+Mission+Constraints'
+        expected = [{"opusid": "hst-09975-acs-j8n410lb"}]
+        self._run_json_equal_file(url, 'api_metadata_hst_09975_acs_j8n410lb_cats_pds_hubble_constraints_json.json')
+
+    def test__api_metadata_hst_09975_acs_j8n410lb_cats_pds_hubble_constraints_table_json(self):
+        "/api/metadata: hst-09975-acs-j8n410lb cats PDS, Hubble Constraints json"
+        url = '/opus/api/metadata/hst-09975-acs-j8n410lb.json?cats=obs_pds,obs_mission_hubble'
+        expected = [{"opusid": "hst-09975-acs-j8n410lb"}]
+        self._run_json_equal_file(url, 'api_metadata_hst_09975_acs_j8n410lb_cats_pds_hubble_constraints_json.json')
+
+    def test__api_metadata_hst_09975_acs_j8n410lb_cats_pds_hubble_constraints_table2_json(self):
+        "/api/metadata: hst-09975-acs-j8n410lb cats PDS, Hubble Constraints rev json"
+        url = '/opus/api/metadata/hst-09975-acs-j8n410lb.json?cats=obs_mission_hubble,obs_pds'
+        expected = [{"opusid": "hst-09975-acs-j8n410lb"}]
+        self._run_json_equal_file(url, 'api_metadata_hst_09975_acs_j8n410lb_cats_pds_hubble_constraints_json.json')
+
+    def test__api_metadata2_hst_09975_acs_j8n410lb_cats_pds_hubble_constraints_json(self):
+        "/api/metadata_v2: hst-09975-acs-j8n410lb cats PDS, Hubble Constraints json"
+        url = '/opus/api/metadata_v2/hst-09975-acs-j8n410lb.json?cats=PDS+Constraints,Hubble+Mission+Constraints'
+        expected = [{"opusid": "hst-09975-acs-j8n410lb"}]
+        self._run_json_equal_file(url, 'api_metadata2_hst_09975_acs_j8n410lb_cats_pds_hubble_constraints_json.json')
+
+    def test__api_metadata_hst_09975_acs_j8n410lb_cats_pds_hubble_constraints_html(self):
+        "/api/metadata: hst-09975-acs-j8n410lb cats PDS, Hubble Constraints html"
+        url = '/opus/api/metadata/hst-09975-acs-j8n410lb.html?cats=PDS+Constraints,Hubble+Mission+Constraints'
+        expected = b'<dl>\n<dt>OPUS ID</dt><dd>hst-09975-acs-j8n410lb</dd>\n</dl>\n'
+        self._run_html_equal_file(url, 'api_metadata_hst_09975_acs_j8n410lb_cats_pds_hubble_constraints_html.html')
+
+    def test__api_metadata2_hst_09975_acs_j8n410lb_cats_pds_hubble_constraints_html(self):
+        "/api/metadata_v2: hst-09975-acs-j8n410lb cats PDS, Hubble Constraints html"
+        url = '/opus/api/metadata_v2/hst-09975-acs-j8n410lb.html?cats=PDS+Constraints,Hubble+Mission+Constraints'
+        expected = b'<dl>\n<dt>OPUS ID</dt><dd>hst-09975-acs-j8n410lb</dd>\n</dl>\n'
+        self._run_html_equal_file(url, 'api_metadata2_hst_09975_acs_j8n410lb_cats_pds_hubble_constraints_html.html')
+
+    def test__api_metadata_hst_09975_acs_j8n410lb_cats_pds_hubble_constraints_csv(self):
+        "/api/metadata: hst-09975-acs-j8n410lb cats PDS, Hubble Constraints csv"
+        url = '/opus/api/metadata/hst-09975-acs-j8n410lb.csv?cats=PDS+Constraints,Hubble+Mission+Constraints'
+        expected = b'OPUS ID\nhst-09975-acs-j8n410lb\n'
+        self._run_csv_equal_file(url, 'api_metadata_hst_09975_acs_j8n410lb_cats_pds_hubble_constraints_csv.csv')
+
+    def test__api_metadata2_hst_09975_acs_j8n410lb_cats_pds_hubble_constraints_csv(self):
+        "/api/metadata_v2: hst-09975-acs-j8n410lb cats PDS, Hubble Constraints csv"
+        url = '/opus/api/metadata_v2/hst-09975-acs-j8n410lb.csv?cats=PDS+Constraints,Hubble+Mission+Constraints'
+        expected = b'OPUS ID\nhst-09975-acs-j8n410lb\n'
+        self._run_csv_equal_file(url, 'api_metadata2_hst_09975_acs_j8n410lb_cats_pds_hubble_constraints_csv.csv')
+
+    # Bad queries
+    def test__api_metadata_bad_opusid_json(self):
+        "/api/metadata: bad opusid json"
+        url = '/opus/api/metadata/vg-iss-2-s-c4360845x.json'
+        self._run_status_equal(url, 404, settings.HTTP404_UNKNOWN_OPUS_ID)
+
+    def test__api_metadata2_bad_opusid_json(self):
+        "/api/metadata_v2: bad opusid json"
+        url = '/opus/api/metadata_v2/vg-iss-2-s-,c4360845.json'
+        self._run_status_equal(url, 404, settings.HTTP404_UNKNOWN_OPUS_ID)
+
+    def test__api_metadata_bad_opusid_html(self):
+        "/api/metadata: bad opusid html"
+        url = '/opus/api/metadata/vg-iss-2s-c4360845.html'
+        self._run_status_equal(url, 404, settings.HTTP404_UNKNOWN_OPUS_ID)
+
+    def test__api_metadata2_bad_opusid_html(self):
+        "/api/metadata_v2: bad opusid html"
+        url = '/opus/api/metadata_v2/,,,.html'
+        self._run_status_equal(url, 404, settings.HTTP404_UNKNOWN_OPUS_ID)
+
+    def test__api_metadata_bad_opusid_csv(self):
+        "/api/metadata: bad opusid csv"
+        url = '/opus/api/metadata/0124.csv'
+        self._run_status_equal(url, 404, settings.HTTP404_UNKNOWN_OPUS_ID)
+
+    def test__api_metadata2_bad_opusid_csv(self):
+        "/api/metadata_v2: bad opusid csv"
+        url = '/opus/api/metadata_v2/1.csv'
+        self._run_status_equal(url, 404, settings.HTTP404_UNKNOWN_OPUS_ID)
+
+    def test__api_metadata_bad_cols_json(self):
+        "/api/metadata: bad cols 1 json"
+        url = '/opus/api/metadata/vg-iss-2-s-c4360845.json?cols=observationduration,fredethel,volumeid'
+        self._run_status_equal(url, 404, settings.HTTP404_UNKNOWN_SLUG)
+
+    def test__api_metadata_bad_cols2_json(self):
+        "/api/metadata: bad cols 2 json"
+        url = '/opus/api/metadata/vg-iss-2-s-c4360845.json?cols=,observationduration,volumeid'
+        self._run_status_equal(url, 404, settings.HTTP404_UNKNOWN_SLUG)
+
+    def test__api_metadata_bad_cols3_json(self):
+        "/api/metadata: bad cols 3 json"
+        url = '/opus/api/metadata/vg-iss-2-s-c4360845.json?cols=observationduration,,volumeid'
+        self._run_status_equal(url, 404, settings.HTTP404_UNKNOWN_SLUG)
+
+    def test__api_metadata_bad_cols4_json(self):
+        "/api/metadata: bad cols 4 json"
+        url = '/opus/api/metadata/vg-iss-2-s-c4360845.json?cols=observationduration,volumeid,'
+        self._run_status_equal(url, 404, settings.HTTP404_UNKNOWN_SLUG)
+
+    def test__api_metadata_bad_cats_json(self):
+        "/api/metadata: bad cats 1 json"
+        url = '/opus/api/metadata/vg-iss-2-s-c4360845.json?cats=obs_pds,whatever,obs_general'
+        self._run_status_equal(url, 404, settings.HTTP404_UNKNOWN_CATEGORY)
+
+    def test__api_metadata_bad_cats2_json(self):
+        "/api/metadata: bad cats 2 json"
+        url = '/opus/api/metadata/vg-iss-2-s-c4360845.json?cats=,obs_pds,obs_general'
+        self._run_status_equal(url, 404, settings.HTTP404_UNKNOWN_CATEGORY)
+
+    def test__api_metadata_bad_cats3_json(self):
+        "/api/metadata: bad cats 3 json"
+        url = '/opus/api/metadata/vg-iss-2-s-c4360845.json?cats=obs_pds,,obs_general'
+        self._run_status_equal(url, 404, settings.HTTP404_UNKNOWN_CATEGORY)
+
+    def test__api_metadata_bad_cats4_json(self):
+        "/api/metadata: bad cats 4 json"
+        url = '/opus/api/metadata/vg-iss-2-s-c4360845.json?cats=obs_pds,obs_general,'
+        self._run_status_equal(url, 404, settings.HTTP404_UNKNOWN_CATEGORY)
 
 
             ########################################
@@ -147,9 +514,9 @@ class ApiResultsTests(TestCase):
         self._run_json_equal(url, expected)
 
     def test__api_files_HSTWFC3_no_versions_ibcz21fl(self):
-        "/api/files: HSTWFC3 no versions ibcz21fl"
-        url = '/opus/__api/files/hst-12003-wfc3-ibcz21fl.json'
-        expected = {"data": {"hst-12003-wfc3-ibcz21fl": {"browse-thumb": ["https://pds-rings.seti.org/holdings/previews/HSTIx_xxxx/HSTI1_2003/DATA/VISIT_21/IBCZ21FLQ_thumb.jpg"], "browse-small": ["https://pds-rings.seti.org/holdings/previews/HSTIx_xxxx/HSTI1_2003/DATA/VISIT_21/IBCZ21FLQ_small.jpg"], "browse-medium": ["https://pds-rings.seti.org/holdings/previews/HSTIx_xxxx/HSTI1_2003/DATA/VISIT_21/IBCZ21FLQ_med.jpg"], "browse-full": ["https://pds-rings.seti.org/holdings/previews/HSTIx_xxxx/HSTI1_2003/DATA/VISIT_21/IBCZ21FLQ_full.jpg"], "hst-text": ["https://pds-rings.seti.org/holdings/volumes/HSTIx_xxxx/HSTI1_2003/DATA/VISIT_21/IBCZ21FLQ.ASC", "https://pds-rings.seti.org/holdings/volumes/HSTIx_xxxx/HSTI1_2003/DATA/VISIT_21/IBCZ21FLQ.LBL"], "hst-tiff": ["https://pds-rings.seti.org/holdings/volumes/HSTIx_xxxx/HSTI1_2003/DATA/VISIT_21/IBCZ21FLQ_RAW.TIF", "https://pds-rings.seti.org/holdings/volumes/HSTIx_xxxx/HSTI1_2003/DATA/VISIT_21/IBCZ21FLQ.LBL"], "hst-raw": ["https://pds-rings.seti.org/holdings/volumes/HSTIx_xxxx/HSTI1_2003/DATA/VISIT_21/IBCZ21FLQ_RAW.JPG", "https://pds-rings.seti.org/holdings/volumes/HSTIx_xxxx/HSTI1_2003/DATA/VISIT_21/IBCZ21FLQ.LBL"], "hst-calib": ["https://pds-rings.seti.org/holdings/volumes/HSTIx_xxxx/HSTI1_2003/DATA/VISIT_21/IBCZ21FLQ_FLT.JPG", "https://pds-rings.seti.org/holdings/volumes/HSTIx_xxxx/HSTI1_2003/DATA/VISIT_21/IBCZ21FLQ.LBL"], "hst-1d-spectrum": ["https://pds-rings.seti.org/holdings/volumes/HSTIx_xxxx/HSTI1_2003/DATA/VISIT_21/IBCZ21FLQ_DRZ.JPG", "https://pds-rings.seti.org/holdings/volumes/HSTIx_xxxx/HSTI1_2003/DATA/VISIT_21/IBCZ21FLQ.LBL"]}}, "versions": {"hst-12003-wfc3-ibcz21fl": {"Current": {"browse-thumb": ["https://pds-rings.seti.org/holdings/previews/HSTIx_xxxx/HSTI1_2003/DATA/VISIT_21/IBCZ21FLQ_thumb.jpg"], "browse-small": ["https://pds-rings.seti.org/holdings/previews/HSTIx_xxxx/HSTI1_2003/DATA/VISIT_21/IBCZ21FLQ_small.jpg"], "browse-medium": ["https://pds-rings.seti.org/holdings/previews/HSTIx_xxxx/HSTI1_2003/DATA/VISIT_21/IBCZ21FLQ_med.jpg"], "browse-full": ["https://pds-rings.seti.org/holdings/previews/HSTIx_xxxx/HSTI1_2003/DATA/VISIT_21/IBCZ21FLQ_full.jpg"], "hst-text": ["https://pds-rings.seti.org/holdings/volumes/HSTIx_xxxx/HSTI1_2003/DATA/VISIT_21/IBCZ21FLQ.ASC", "https://pds-rings.seti.org/holdings/volumes/HSTIx_xxxx/HSTI1_2003/DATA/VISIT_21/IBCZ21FLQ.LBL"], "hst-tiff": ["https://pds-rings.seti.org/holdings/volumes/HSTIx_xxxx/HSTI1_2003/DATA/VISIT_21/IBCZ21FLQ_RAW.TIF", "https://pds-rings.seti.org/holdings/volumes/HSTIx_xxxx/HSTI1_2003/DATA/VISIT_21/IBCZ21FLQ.LBL"], "hst-raw": ["https://pds-rings.seti.org/holdings/volumes/HSTIx_xxxx/HSTI1_2003/DATA/VISIT_21/IBCZ21FLQ_RAW.JPG", "https://pds-rings.seti.org/holdings/volumes/HSTIx_xxxx/HSTI1_2003/DATA/VISIT_21/IBCZ21FLQ.LBL"], "hst-calib": ["https://pds-rings.seti.org/holdings/volumes/HSTIx_xxxx/HSTI1_2003/DATA/VISIT_21/IBCZ21FLQ_FLT.JPG", "https://pds-rings.seti.org/holdings/volumes/HSTIx_xxxx/HSTI1_2003/DATA/VISIT_21/IBCZ21FLQ.LBL"], "hst-1d-spectrum": ["https://pds-rings.seti.org/holdings/volumes/HSTIx_xxxx/HSTI1_2003/DATA/VISIT_21/IBCZ21FLQ_DRZ.JPG", "https://pds-rings.seti.org/holdings/volumes/HSTIx_xxxx/HSTI1_2003/DATA/VISIT_21/IBCZ21FLQ.LBL"]}}}}
+        "/api/files: HSTWFC3 no versions ib4v21gc"
+        url = '/opus/__api/files/hst-11559-wfc3-ib4v21gc.json'
+        expected = {"data": {"hst-11559-wfc3-ib4v21gc": {"browse-thumb": ["https://pds-rings.seti.org/holdings/previews/HSTIx_xxxx/HSTI1_1559/DATA/VISIT_21/IB4V21GCQ_thumb.jpg"], "browse-small": ["https://pds-rings.seti.org/holdings/previews/HSTIx_xxxx/HSTI1_1559/DATA/VISIT_21/IB4V21GCQ_small.jpg"], "browse-medium": ["https://pds-rings.seti.org/holdings/previews/HSTIx_xxxx/HSTI1_1559/DATA/VISIT_21/IB4V21GCQ_med.jpg"], "browse-full": ["https://pds-rings.seti.org/holdings/previews/HSTIx_xxxx/HSTI1_1559/DATA/VISIT_21/IB4V21GCQ_full.jpg"], "hst-text": ["https://pds-rings.seti.org/holdings/volumes/HSTIx_xxxx/HSTI1_1559/DATA/VISIT_21/IB4V21GCQ.ASC", "https://pds-rings.seti.org/holdings/volumes/HSTIx_xxxx/HSTI1_1559/DATA/VISIT_21/IB4V21GCQ.LBL"], "hst-tiff": ["https://pds-rings.seti.org/holdings/volumes/HSTIx_xxxx/HSTI1_1559/DATA/VISIT_21/IB4V21GCQ_RAW.TIF", "https://pds-rings.seti.org/holdings/volumes/HSTIx_xxxx/HSTI1_1559/DATA/VISIT_21/IB4V21GCQ.LBL"], "hst-raw": ["https://pds-rings.seti.org/holdings/volumes/HSTIx_xxxx/HSTI1_1559/DATA/VISIT_21/IB4V21GCQ_RAW.JPG", "https://pds-rings.seti.org/holdings/volumes/HSTIx_xxxx/HSTI1_1559/DATA/VISIT_21/IB4V21GCQ.LBL"], "hst-calib": ["https://pds-rings.seti.org/holdings/volumes/HSTIx_xxxx/HSTI1_1559/DATA/VISIT_21/IB4V21GCQ_FLT.JPG", "https://pds-rings.seti.org/holdings/volumes/HSTIx_xxxx/HSTI1_1559/DATA/VISIT_21/IB4V21GCQ.LBL"], "hst-1d-spectrum": ["https://pds-rings.seti.org/holdings/volumes/HSTIx_xxxx/HSTI1_1559/DATA/VISIT_21/IB4V21GCQ_DRZ.JPG", "https://pds-rings.seti.org/holdings/volumes/HSTIx_xxxx/HSTI1_1559/DATA/VISIT_21/IB4V21GCQ.LBL"]}}, "versions": {"hst-11559-wfc3-ib4v21gc": {"Current": {"browse-thumb": ["https://pds-rings.seti.org/holdings/previews/HSTIx_xxxx/HSTI1_1559/DATA/VISIT_21/IB4V21GCQ_thumb.jpg"], "browse-small": ["https://pds-rings.seti.org/holdings/previews/HSTIx_xxxx/HSTI1_1559/DATA/VISIT_21/IB4V21GCQ_small.jpg"], "browse-medium": ["https://pds-rings.seti.org/holdings/previews/HSTIx_xxxx/HSTI1_1559/DATA/VISIT_21/IB4V21GCQ_med.jpg"], "browse-full": ["https://pds-rings.seti.org/holdings/previews/HSTIx_xxxx/HSTI1_1559/DATA/VISIT_21/IB4V21GCQ_full.jpg"], "hst-text": ["https://pds-rings.seti.org/holdings/volumes/HSTIx_xxxx/HSTI1_1559/DATA/VISIT_21/IB4V21GCQ.ASC", "https://pds-rings.seti.org/holdings/volumes/HSTIx_xxxx/HSTI1_1559/DATA/VISIT_21/IB4V21GCQ.LBL"], "hst-tiff": ["https://pds-rings.seti.org/holdings/volumes/HSTIx_xxxx/HSTI1_1559/DATA/VISIT_21/IB4V21GCQ_RAW.TIF", "https://pds-rings.seti.org/holdings/volumes/HSTIx_xxxx/HSTI1_1559/DATA/VISIT_21/IB4V21GCQ.LBL"], "hst-raw": ["https://pds-rings.seti.org/holdings/volumes/HSTIx_xxxx/HSTI1_1559/DATA/VISIT_21/IB4V21GCQ_RAW.JPG", "https://pds-rings.seti.org/holdings/volumes/HSTIx_xxxx/HSTI1_1559/DATA/VISIT_21/IB4V21GCQ.LBL"], "hst-calib": ["https://pds-rings.seti.org/holdings/volumes/HSTIx_xxxx/HSTI1_1559/DATA/VISIT_21/IB4V21GCQ_FLT.JPG", "https://pds-rings.seti.org/holdings/volumes/HSTIx_xxxx/HSTI1_1559/DATA/VISIT_21/IB4V21GCQ.LBL"], "hst-1d-spectrum": ["https://pds-rings.seti.org/holdings/volumes/HSTIx_xxxx/HSTI1_1559/DATA/VISIT_21/IB4V21GCQ_DRZ.JPG", "https://pds-rings.seti.org/holdings/volumes/HSTIx_xxxx/HSTI1_1559/DATA/VISIT_21/IB4V21GCQ.LBL"]}}}}
         self._run_json_equal(url, expected)
 
     def test__api_files_HSTWFC3_versions_ib4v12n6(self):

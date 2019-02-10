@@ -1,0 +1,30 @@
+{
+  "PDS Constraints": {
+    "volume_id": "HSTJ0_9975",
+    "data_set_id": "HST-M-ACS-5-ID9975-V1.0",
+    "product_id": "J8N410LBQ",
+    "product_creation_time": "2013-06-17T00:00:00.000",
+    "primary_file_spec": "HSTJ0_9975/DATA/VISIT_10/J8N410LBQ.LBL",
+    "note": null
+  },
+  "Hubble Mission Constraints": {
+    "detector_id": "ACS-HRC",
+    "filter_name": "ACS-F435W",
+    "filter_type": "W",
+    "aperture_type": "ACS-HRC",
+    "hst_proposal_id": "9975",
+    "hst_pi_name": "James, Philip B.",
+    "stsci_group_id": "J8N410LBQ",
+    "hst_target_name": "MARS-CML015",
+    "targeted_detector_id": null,
+    "pc1_flag": null,
+    "wf2_flag": null,
+    "wf3_flag": null,
+    "wf4_flag": null,
+    "exposure_type": "NORMAL",
+    "fine_guidance_system_lock_type": "FINE",
+    "gain_mode_id": "N/A",
+    "instrument_mode_id": "ACCUM",
+    "publication_date": "2003-08-07T00:00:00.000"
+  }
+}

@@ -186,13 +186,29 @@ def sort_dictionary(old_dict):
     return new_dict
 
 def get_session_id(request):
-    "Get the current session id, or create one if none available"
-    if not request.session.get('has_session'):
-        request.session['has_session'] = True
-    if not request.session.session_key:
-        request.session.create()
-    session_id = request.session.session_key
+    """Get the current session id, or create one if none available.
+
+    The caller can override the sessionid (only for internal testing
+    purposes) by specifying the __sessionid=<S> parameter."""
+    session_id = None
+    if request.GET is not None:
+        session_id = request.GET.get('__sessionid', None)
+    if session_id is None:
+        if not request.session.get('has_session'):
+            request.session['has_session'] = True
+        if not request.session.session_key:
+            request.session.create()
+        session_id = request.session.session_key
     return session_id
+
+def get_reqno(request):
+    "Get the reqno, if any, and return it as an int if possible."
+    reqno = request.GET.get('reqno', None)
+    try:
+        reqno = int(reqno)
+    except:
+        pass
+    return reqno
 
 
 _API_CALL_NUMBER = 0
@@ -269,7 +285,7 @@ def parse_form_type(s):
     if form_type in settings.RANGE_FORM_TYPES:
         return form_type, form_type_func, form_type_format
     return form_type, None, None
-    
+
 def is_old_format_ring_obs_id(s):
     "Return True if the string is a valid old-format ringobsid"
     return len(s) > 2 and (s[0] == '_' or s[1] == '_')
@@ -321,3 +337,8 @@ def get_latest_git_commit_id():
     except:
         log.warning('Unable to get the latest git commit id')
         return str(random.getrandbits(128))
+
+def cols_to_slug_list(slugs):
+    if not slugs:
+        return []
+    return slugs.split(',')

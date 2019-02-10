@@ -11,6 +11,7 @@ import json
 import traceback
 
 from django.core.exceptions import ObjectDoesNotExist
+from django.db import connection
 from django.http import HttpResponse
 
 from search.models import *
@@ -18,153 +19,13 @@ import tools.app_utils as app_utils
 
 import settings
 
-import pdsfile
 import pdsviewable
 
 import logging
 log = logging.getLogger(__name__)
 
 
-def _check_for_pdsfile_exception():
-    if pdsfile.PdsFile.LAST_EXC_INFO != (None, None, None):
-        trace_str = traceback.format_exception(*pdsfile.PdsFile.LAST_EXC_INFO)
-        log.error('PdsFile had internal error: '+''.join(trace_str))
-        pdsfile.PdsFile.LAST_EXC_INFO = (None, None, None)
-
-def _iter_flatten(iterable):
-  it = iter(iterable)
-  for e in it:
-    if isinstance(e, (list, tuple)):
-      for f in _iter_flatten(e):
-        yield f
-    else:
-      yield e
-
-def _pdsfile_iter_flatten(iterable):
-    "Flatten list and remove duplicate PdsFile objects"
-    pdsfiles = _iter_flatten(iterable)
-    abspaths = []
-    ret = []
-    for pdsf in pdsfiles:
-        if pdsf.abspath not in abspaths:
-            abspaths.append(pdsf.abspath)
-            ret.append(pdsf)
-    return ret
-
-def _pdsfile_extract_version(list_of_sublists):
-    # Once versions are implemented in OPUS, this needs to be expanded
-    # to extract the proper version number
-    if len(list_of_sublists) == 0 or len(list_of_sublists[0]) == 0:
-        return list_of_sublists
-
-    best_version_rank = list_of_sublists[0][0].version_rank
-
-    ret_list = []
-    for sublist in list_of_sublists:
-        if len(sublist) and sublist[0].version_rank >= best_version_rank:
-            ret_list.append(sublist)
-
-    return ret_list
-
-def pds_products_sort_func(x):
-    pref = None
-    if x[0] == 'standard':
-        pref = 1
-    elif x[0] == 'metadata':
-        pref = 2
-    elif x[0] == 'browse':
-        pref = 3
-    elif x[0] == 'diagram':
-        pref = 4
-    if pref:
-        return (str(pref), x[1])
-    return x[0:2]
-
-def get_pds_products_by_type(opus_id_list, product_types=['all']):
-    """Return product types and their associated PdsFile objects for opus_ids.
-
-        opus_id_list can be a string or a list.
-
-        The returned dict is indexed by product_type and for each entry
-        contains the combined information for all opus_ids. product_type
-        is in the format (category, sort_order, slug, pretty_name) and is
-        sorted as defined in pds_products_sort_func.
-    """
-    if opus_id_list:
-        if not isinstance(opus_id_list, (list, tuple)):
-            opus_id_list = [opus_id_list]
-    else:
-        opus_id_list = []
-
-    try:
-        res = (ObsGeneral.objects.filter(opus_id__in=opus_id_list)
-               .values('primary_file_spec'))
-    except ObjectDoesNotExist:
-        log.error('get_pds_products_by_type: Failed to find opus_ids "%s" '
-                  +'in obs_general', str(opus_id_list))
-        return None
-    file_specs = [x['primary_file_spec'] for x in res]
-
-    if len(opus_id_list) != len(file_specs):
-        log.error('get_pds_products_by_type: Failed to find some opus_ids "%s" '
-                  +'in obs_general', str(opus_id_list))
-        return None
-
-    products_by_type = {}
-
-    for idx in range(len(opus_id_list)):
-        opus_id = opus_id_list[idx]
-        file_spec = file_specs[idx]
-        try:
-            pdsf = pdsfile.PdsFile.from_filespec(file_spec)
-            _check_for_pdsfile_exception()
-        except ValueError:
-            log.error('get_pds_products_by_type: Failed to convert file_spec '
-                      +'"%s"', file_spec)
-            continue
-        products = pdsf.opus_products()
-        _check_for_pdsfile_exception()
-        if '' in products:
-            file_list_str = '  '.join([x.abspath for x in products[''][0]])
-            log.error('get_pds_products_by_type: Empty opus_product key for '
-                      +'files: '+file_list_str)
-            del products['']
-            _check_for_pdsfile_exception()
-
-        # Keep a running list of all products by type
-        for (product_type, list_of_sublists) in products.items():
-            if product_types == ['all'] or product_type[2] in product_types:
-                list_of_sublists = _pdsfile_extract_version(list_of_sublists)
-                flat_list = _pdsfile_iter_flatten(list_of_sublists)
-                products_by_type.setdefault(product_type, []).extend(flat_list)
-            _check_for_pdsfile_exception()
-
-    ret = OrderedDict()
-    for product_type in sorted(products_by_type, key=pds_products_sort_func):
-        ret[product_type] = products_by_type[product_type]
-
-    _check_for_pdsfile_exception()
-
-    return ret
-
-
-def get_product_counts(products_by_type):
-    size = 0
-    count = 0
-    num_products = OrderedDict()
-    if products_by_type is not None:
-        for product_type, products in products_by_type.items():
-            num_products[product_type] = len(products)
-            for pdsf in products:
-                size += pdsf.size_bytes
-                count += 1
-
-    _check_for_pdsfile_exception()
-
-    return size, count, num_products
-
-
-def get_pds_products(opus_id_list=None, file_specs=None,
+def get_pds_products(opus_id_list,
                      loc_type='url',
                      product_types=['all']):
     """Return all PDS products for a given opus_id(s) organized by version.
@@ -176,13 +37,12 @@ def get_pds_products(opus_id_list=None, file_specs=None,
     version that contains another dict. For each version in this dict, there
     is an entry per product_type in the format
         (category, sort_order, slug, pretty_name).
-    The dict is sorted as defined in pds_products_sort_func.
+    The dict is sorted as defined in in obs_files.
 
     opus_id_list can be a string or a list.
 
-    file_specs can be None, a string, or a list. If a string or list, it
-        must correspond 1-to-1 with the entries in opus_list and give the
-        primary_file_spec entry. If None, we will look them up for you.
+    WARNING: The returned OrderedDict() is not currently guaranteed to be in the same
+             order as opus_id_list. Instead it is in a sorted order.
 
     product_types can be a simple string, a comma-separated string, or a list.
         'all' means return all product types. product_types are slug names like
@@ -192,95 +52,91 @@ def get_pds_products(opus_id_list=None, file_specs=None,
         the local disk. It can also be 'raw' to return the actual PdsFile
         object.
     """
+    assert loc_type in ('path', 'url', 'raw'), loc_type
+    if opus_id_list is None:
+        return {}
+
     if not isinstance(product_types, (list, tuple)):
         product_types = product_types.split(',')
 
-    if opus_id_list:
-        if not isinstance(opus_id_list, (list, tuple)):
-            opus_id_list = [opus_id_list]
-    else:
-        opus_id_list = []
-
-    if file_specs:
-        if not isinstance(file_specs, (list, tuple)):
-            file_specs = [file_specs]
-    else:
-        try:
-            res = (ObsGeneral.objects.filter(opus_id__in=opus_id_list)
-                   .values('primary_file_spec'))
-        except ObjectDoesNotExist:
-            log.error('get_pds_products: Failed to find opus_ids "%s" '
-                      +'in obs_general', str(opus_id_list))
-            return None
-        file_specs = [x['primary_file_spec'] for x in res]
-        if len(opus_id_list) != len(file_specs):
-            log.error('get_pds_products: Failed to find some opus_ids "%s" '
-                      +'in obs_general', str(opus_id_list))
-            return None
-
-    # you can ask this function for url paths or disk paths
-    if loc_type == 'url':
-        path = settings.PRODUCT_HTTP_PATH
-    elif loc_type == 'path':
-        path = settings.PDS_DATA_DIR
+    if not isinstance(opus_id_list, (list, tuple)):
+        opus_id_list = [opus_id_list]
 
     results = OrderedDict() # Dict of opus_ids
 
-    for idx in range(len(opus_id_list)):
-        opus_id = opus_id_list[idx]
-        results[opus_id] = OrderedDict() # Dict of versions
-        file_spec = file_specs[idx]
-        try:
-            pdsf = pdsfile.PdsFile.from_filespec(file_spec)
-            _check_for_pdsfile_exception()
-        except ValueError:
-            log.error('get_pds_products: Failed to convert file_spec "%s"',
-                      file_spec)
-            continue
-        products = pdsf.opus_products()
-        _check_for_pdsfile_exception()
-        if '' in products:
-            file_list_str = '  '.join([x.abspath for x in products[''][0]])
-            log.error('get_pds_products: Empty opus_product key for files: '+
-                      file_list_str)
-            del products['']
-            _check_for_pdsfile_exception()
-        # Keep a running list of all products by type, sorted by version
-        for product_type in sorted(products, key=pds_products_sort_func):
-            # product_type is in the format
-            #   (category, sort_order, slug, pretty_name)
-            if (product_types != ['all'] and
-                product_type[2] not in product_types):
-                continue
-            list_of_sublists = products[product_type]
-            for sublist in list_of_sublists:
-                if len(sublist) == 0:
-                    continue
-                version = sublist[0].version_id
-                if version == '':
-                    version = 'Current'
-                if version not in results[opus_id]:
-                    results[opus_id][version] = OrderedDict()
-                res_list = []
-                for file in sublist:
-                    if loc_type == 'path':
-                        res_list.append(file.abspath)
-                    elif loc_type == 'url':
-                        res_list.append(settings.PRODUCT_HTTP_PATH + file.url)
-                    elif loc_type == 'raw':
-                        res_list.append(file)
-                    else:
-                        log.error('get_pds_products: Unknown loc_type %s',
-                                  str(loc_type))
-                        return None
-                if product_type not in results[opus_id][version]:
-                    results[opus_id][version][product_type] = []
-                for res in res_list:
-                    if res not in results[opus_id][version][product_type]:
-                        results[opus_id][version][product_type].append(res)
-                _check_for_pdsfile_exception()
+    cursor = connection.cursor()
+    q = connection.ops.quote_name
 
-    _check_for_pdsfile_exception()
+    values = []
+    sql = 'SELECT '
+    sql += q('obs_files')+'.'+q('opus_id')+', '
+    sql += q('obs_files')+'.'+q('version_name')+', '
+    sql += q('obs_files')+'.'+q('category')+', '
+    sql += q('obs_files')+'.'+q('sort_order')+', '
+    sql += q('obs_files')+'.'+q('short_name')+', '
+    sql += q('obs_files')+'.'+q('full_name')
+    if loc_type == 'path' or loc_type == 'raw':
+        sql += ', '+q('obs_files')+'.'+q('logical_path')
+    if loc_type == 'url' or loc_type == 'raw':
+        sql += ', '+q('obs_files')+'.'+q('url')
+    if loc_type == 'raw':
+        sql += ', '+q('obs_files')+'.'+q('checksum')
+
+    sql += ' FROM '+q('obs_files')
+    sql += ' WHERE '
+    if product_types != ['all']:
+        sql += q('obs_files')+'.'+q('short_name')+' IN %s AND '
+        values.append(product_types)
+    sql += q('obs_files')+'.'+q('opus_id')+' IN %s'
+    values.append(opus_id_list)
+    sql += ' ORDER BY '
+    sql += q('obs_files')+'.'+q('opus_id')+', '
+    sql += q('obs_files')+'.'+q('version_number')+' DESC, '
+    sql += q('obs_files')+'.'+q('sort_order')
+
+    log.debug('get_pds_products SQL: %s %s', sql, values)
+    cursor.execute(sql, values)
+
+    for row in cursor:
+        path = None
+        url = None
+        if loc_type == 'path':
+            (opus_id, version_name, category, sort_order, short_name,
+             full_name, path) = row
+        elif loc_type == 'url':
+            (opus_id, version_name, category, sort_order, short_name,
+             full_name, url) = row
+        else:
+            (opus_id, version_name, category, sort_order, short_name,
+             full_name, path, url, checksum) = row
+
+        # sort_order is the format CASISSxxx where xxx is the original numeric
+        # sort order
+        sort_order = int(sort_order[6:])
+
+        if opus_id not in results:
+            results[opus_id] = OrderedDict() # Dict of versions
+        if version_name not in results[opus_id]:
+            results[opus_id][version_name] = OrderedDict()
+        product_type = (category, sort_order, short_name, full_name)
+        if product_type not in results[opus_id][version_name]:
+            results[opus_id][version_name][product_type] = []
+
+        if path:
+            path = settings.PDS_DATA_DIR + '/' + path
+        if url:
+            url = settings.PRODUCT_HTTP_PATH + url
+
+        if loc_type == 'path':
+            res = path
+        elif loc_type == 'url':
+            res = url
+        else:
+            res = {'path': path,
+                   'url': url,
+                   'checksum': checksum}
+        if res not in results[opus_id][version_name][product_type]:
+            results[opus_id][version_name][product_type].append(res)
 
     return results
 

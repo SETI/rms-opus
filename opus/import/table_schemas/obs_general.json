@@ -11,7 +11,7 @@
     },
     {
         "field_name": "opus_id",
-        "field_type": "char80",
+        "field_type": "char40",
         "field_notnull": true,
         "field_key": "unique",
         "data_source": [
@@ -576,7 +576,7 @@
         "field_key": true,
         "data_source": [
             "FUNCTION",
-            "obs_pds_<INST>_primary_file_spec"
+            "obs_general_<INST>_primary_file_spec"
         ],
         "data_source_order": 40,
         "pi_category_name": "obs_general",
@@ -625,6 +625,7 @@
     },
     {
         "field_name": "timestamp",
-        "field_type": "timestamp"
+        "field_type": "timestamp",
+        "field_notnull": true
     }
 ]

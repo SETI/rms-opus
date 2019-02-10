@@ -77,7 +77,7 @@ parser.add_argument(
 # What to actually do - main import
 parser.add_argument(
     '--do-it-all', action='store_true', default=False,
-    help="""Perform all import functions. This implies, in order:
+    help="""Perform all import and aux functions. This implies, in order:
             --drop-old-import-tables
             --import
             --copy-import-to-permanent-tables
@@ -86,8 +86,19 @@ parser.add_argument(
             --create-param-info
             --create-partables
             --create-table-names
+            --create-grouping-target-name
             --create-collections
             --drop-cache-tables
+         """
+)
+
+parser.add_argument(
+    '--do-all-import', action='store_true', default=False,
+    help="""Perform all import functions. This implies, in order:
+            --drop-old-import-tables
+            --import
+            --copy-import-to-permanent-tables
+            --drop-new-import-tables
          """
 )
 
@@ -100,6 +111,7 @@ parser.add_argument(
             --create-param-info
             --create-partables
             --create-table-names
+            --create-grouping-target-name
             --create-collections
             --drop-cache-tables
          """
@@ -111,6 +123,7 @@ parser.add_argument(
             --create-param-info
             --create-partables
             --create-table-names
+            --create-grouping-target-name
             --create-collections
             --drop-cache-tables
          """
@@ -296,6 +309,12 @@ if impglobals.ARGUMENTS.do_it_all:
     impglobals.ARGUMENTS.create_collections = True
     impglobals.ARGUMENTS.drop_cache_tables = True
 
+if impglobals.ARGUMENTS.do_all_import:
+    impglobals.ARGUMENTS.drop_old_import_tables = True
+    impglobals.ARGUMENTS.do_import = True
+    impglobals.ARGUMENTS.copy_import_to_permanent_tables = True
+    impglobals.ARGUMENTS.drop_new_import_tables = True
+
 if impglobals.ARGUMENTS.do_import_finalization:
     impglobals.ARGUMENTS.copy_import_to_permanent_tables = True
     impglobals.ARGUMENTS.drop_new_import_tables = True
@@ -403,9 +422,12 @@ try: # Top-level exception handling so we always log what's going on
     # could be entries in the collections table that point at the permanent
     # tables, and import could delete entries out of the permanent tables
     # causing a foreign key violation.
-
-    if (impglobals.ARGUMENTS.drop_cache_tables or
-        impglobals.ARGUMENTS.create_collections):
+    # Note, however, that do_import_steps() might actually delete ALL permanent
+    # tables with --scorched-earth, which means our effort here will be wasted,
+    # so don't bother in that case.
+    if ((impglobals.ARGUMENTS.drop_cache_tables or
+         impglobals.ARGUMENTS.create_collections) and
+         not impglobals.ARGUMENTS.drop_permanent_tables):
         impglobals.LOGGER.open(
             f'Cleaning up OPUS/Django tables',
             limits={'info': impglobals.ARGUMENTS.log_info_limit,

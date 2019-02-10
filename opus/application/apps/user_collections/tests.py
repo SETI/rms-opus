@@ -12,14 +12,13 @@ from search.views import *
 from results.views import *
 from django.http import QueryDict
 
-# url(r'^__collections/(?P<collection_name>[default]+)/view.html$', api_view_collection),
-# url(r'^__collections/(?P<collection_name>[default]+)/status.json$', api_collection_status),
+# url(r'^__collections/view.(?P<fmt>html|json)$', api_view_collection),
+# url(r'^__collections/status.json$', api_collection_status),
 # url(r'^__collections/data.csv$', api_get_collection_csv),
-# url(r'^__collections/(?P<collection_name>[default]+)/(?P<action>[add|remove|addrange|removerange|addall]+).json$', api_edit_collection),
-# url(r'^__collections/reset.html$', api_reset_session),
-# url(r'^__collections/download/info$', api_get_download_info),
-# url(r'^__collections/download/(?P<session_id>[default]+).zip$', api_create_download),
-# url(r'^__zip/(?P<opus_id>[-\w]+).(?P<fmt>[json]+)$', api_create_download),
+# url(r'^__collections/(?P<action>[add|remove|addrange|removerange|addall]+).json$', api_edit_collection),
+# url(r'^__collections/reset.json$', api_reset_session),
+# url(r'^__collections/download.zip$', api_create_download),
+# url(r'^__zip/(?P<opus_id>[-\w]+).json$', api_create_download),
 
 SESSION_ENGINE = 'django.contrib.sessions.backends.cache'
 SESSION_COOKIE_NAME = 'opus-test-cookie'
@@ -50,19 +49,27 @@ class test_session(dict):
     has_session = True
 
 
-class user_CollectionsTests(TestCase):
+class userCollectionsTests(TestCase):
+
+    def _empty_collections(self):
+        cursor = connection.cursor()
+        cursor.execute('DELETE FROM collections')
+        cache.clear()
+        cache._cache.flush_all()  # clears memcache hopefully only on this port!
+
+    def setUp(self):
+        self._empty_collections()
+        sys.tracebacklimit = 0 # default: 1000
+        logging.disable(logging.ERROR)
+
+    def tearDown(self):
+        self._empty_collections()
+        sys.tracebacklimit = 1000 # default: 1000
+        logging.disable(logging.NOTSET)
 
     def setUp(self):
         self.client = Client()
         self.factory = RequestFactory()
-
-    def emptycollection(self):
-        test_db = settings.DATABASES['default']['TEST']['NAME']
-        cursor = connection.cursor()
-        table_name = 'colls_' + test_session().session_key
-        query = 'delete from %s.%s' % (test_db, table_name)
-        print(query)
-        cursor.execute(query)
 
 #     def test__edit_collection_add_one(self):
 #         self.emptycollection()

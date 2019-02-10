@@ -5,59 +5,16 @@ import sys
 from unittest import TestCase
 
 from django.conf import settings
-from django.contrib.auth.models import AnonymousUser, User
-from django.http import QueryDict
-from django.test import RequestFactory
+from django.db import connection
+from django.http import Http404, QueryDict
 from django.test.client import Client
-
-from search.views import *
 from results.views import *
 
-SESSION_ENGINE = 'django.contrib.sessions.backends.cache'
-SESSION_COOKIE_NAME = 'opus-test-cookie'
+import logging
+
 settings.CACHE_BACKEND = 'dummy:///'
 
-    # url(r'^api/data.(json|zip|html|csv)$', api_get_data),
-    # url(r'^__api/data.(json|zip|html|csv)$', api_get_data),
-    # url(r'^api/metadata/(?P<opus_id>[-\w]+).(?P<fmt>[json|html]+)$', api_get_metadata),
-    # url(r'^__api/metadata/(?P<opus_id>[-\w]+).(?P<fmt>[json|html]+)$', api_get_metadata),
-    # url(r'^api/metadata_v2/(?P<opus_id>[-\w]+).(?P<fmt>[json|html]+)$', api_get_metadata_v2),
-    # url(r'^__api/metadata_v2/(?P<opus_id>[-\w]+).(?P<fmt>[json|html]+)$', api_get_metadata_v2),
-    # url(r'^api/images/(?P<size>[thumb|small|med|full]+).(?P<fmt>[json|zip|html|csv]+)$', api_get_images_by_size),
-    # url(r'^__api/images/(?P<size>[thumb|small|med|full]+).(?P<fmt>[json|zip|html|csv]+)$', api_get_images_by_size),
-    # url(r'^api/images.(json|zip|html|csv)$', api_get_images),
-    # url(r'^__api/images.(json|zip|html|csv)$', api_get_images),
-    # url(r'^api/image/(?P<size>[thumb|small|med|full]+)/(?P<opus_id>[-\w]+).(?P<fmt>[json|zip|html|csv]+)$', api_get_image),
-    # url(r'^__api/image/(?P<size>[thumb|small|med|full]+)/(?P<opus_id>[-\w]+).(?P<fmt>[json|zip|html|csv]+)$', api_get_image),
-    # url(r'^api/files/(?P<opus_id>[-\w]+).(?P<fmt>[json|zip|html|csv]+)$', api_get_files),
-    # url(r'^__api/files/(?P<opus_id>[-\w]+).(?P<fmt>[json|zip|html|csv]+)$', api_get_files),
-    # url(r'^api/files.(?P<fmt>[json|zip|html|csv]+)$', api_get_files),
-    # url(r'^__api/files.(?P<fmt>[json|zip|html|csv]+)$', api_get_files),
-    # url(r'^api/categories/(?P<opus_id>[-\w]+).json$', api_get_categories_for_opus_id),
-    # url(r'^__api/categories/(?P<opus_id>[-\w]+).json$', api_get_categories_for_opus_id),
-    # url(r'^api/categories.json$', api_get_categories_for_search),
-    # url(r'^__api/categories.json$', api_get_categories_for_search),
-
-
 cursor = connection.cursor()
-
-class test_session(dict):
-    """
-    Extends a dict object and adds a session_key attribute for use in this test
-    suite.
-
-    This is needed because in Django tests, session and authentication
-    attributes must be supplied by the test itself if required for the view to
-    function properly.
-    http://stackoverflow.com/questions/14714585/using-session-object-in-django-unit-test
-
-    In most cases a request.session = {} in the test itself would suffice
-    but in user_collections views we also want to receive a string from
-    request.session.session_key because that's how user collections tables are
-    named.
-    """
-    session_key = 'test_key'
-
 
 class resultsTests(TestCase):
 
@@ -101,6 +58,30 @@ class resultsTests(TestCase):
         request.GET = None
         with self.assertRaises(Http404):
             api_get_data_and_images(request)
+
+
+            ###########################################
+            ######### api_get_data UNIT TESTS #########
+            ###########################################
+
+
+            ###############################################
+            ######### api_get_metadata UNIT TESTS #########
+            ###############################################
+
+    def test__api_get_metadata_no_request(self):
+        "api_get_metadata: no request"
+        with self.assertRaises(Http404):
+            api_get_metadata(None, 'vg-iss-2-s-c4360845', 'json')
+
+    def test__api_get_metadata_no_get(self):
+        "api_get_metadata: no GET"
+        c = Client()
+        response = c.get('/api/metadata/vg-iss-2-s-c4360845.json')
+        request = response.wsgi_request
+        request.GET = None
+        with self.assertRaises(Http404):
+            api_get_metadata(request, 'vg-iss-2-s-c4360845', 'json')
 
 
             ###################################################

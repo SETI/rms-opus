@@ -128,6 +128,6 @@ class ApiForResultCounts:
         if not self.target or self.target == "production":
             self.result_counts_api = self.api_base_url.format("https", "tools")
         elif self.target == "dev":
-            self.result_counts_api = self.api_base_url.format("http", "dev")
+            self.result_counts_api = self.api_base_url.format("https", "dev")
         else:
             assert False, self.target

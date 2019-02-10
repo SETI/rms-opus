@@ -25,7 +25,7 @@ from django.db import connection
 from django.core.cache import cache
 from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import Max, Min, Count
-from django.http import Http404, HttpResponse
+from django.http import Http404, HttpResponse, HttpResponseServerError
 from django.shortcuts import render_to_response
 
 from paraminfo.models import ParamInfo
@@ -57,24 +57,29 @@ def api_get_result_count(request, fmt):
 
     Format: [__]api/meta/result_count.(?P<fmt>json|html|csv)
     Arguments: Normal search arguments
+               reqno=<N> (Optional)
 
     Can return JSON, HTML, or CSV.
 
     Returned JSON:
-        data = {"data": [{"result_count": 47}]}
+        {"data": [{"result_count": 47}]}
+      or
+        {"data": [{"result_count": 47, "reqno": 1}]}
 
     Returned HTML:
-        <dl>
-		    <dt>result_count</dt><dd>47</dd>
-		</dl>
+        <body>
+            <dl>
+		        <dt>result_count</dt><dd>47</dd>
+            </dl>
+        </body>
 
     Returned CSV:
         result count,47
     """
-    api_code = enter_api_call('api_get_data', request)
+    api_code = enter_api_call('api_get_result_count', request)
 
     if not request or request.GET is None:
-        ret = Http404('No request')
+        ret = Http404(settings.HTTP404_NO_REQUEST)
         exit_api_call(api_code, ret)
         raise ret
 
@@ -82,7 +87,7 @@ def api_get_result_count(request, fmt):
     if selections is None:
         log.error('api_get_result_count: Could not find selections for '
                   +'request %s', str(request.GET))
-        ret = Http404('Parsing of search parameters failed')
+        ret = Http404(settings.HTTP404_SEARCH_PARAMS_INVALID)
         exit_api_call(api_code, ret)
         raise ret
 
@@ -91,31 +96,32 @@ def api_get_result_count(request, fmt):
     if not table: # pragma: no cover
         log.error('api_get_result_count: Could not find/create query table for '
                   +'request %s', str(request.GET))
-        ret = Http404('Parsing of search parameters failed')
+        ret = HttpResponseServerError(settings.HTTP500_SEARCH_FAILED)
         exit_api_call(api_code, ret)
-        raise ret
+        return ret
 
     cache_key = settings.CACHE_KEY_PREFIX + ':resultcount:' + table
     count = cache.get(cache_key)
     if count is None:
         cursor = connection.cursor()
-        sql = ('SELECT COUNT(*) FROM ' + connection.ops.quote_name(table))
+        sql = 'SELECT COUNT(*) FROM ' + connection.ops.quote_name(table)
         cursor.execute(sql)
         try:
             count = cursor.fetchone()[0]
-        except: # pragma: no cover
-            log.error('api_get_result_count: SQL query failed for request %s',
-                      str(request.GET))
-            ret = Http404('SQL query failed')
+        except DatabaseError as e: # pragma: no cover
+            log.error('api_get_result_count: SQL query failed for request %s: '
+                      +' SQL "%s" ERR "%s"',
+                      str(request.GET), sql, str(e))
+            ret = HttpResponseServerError(settings.HTTP500_SQL_FAILED)
             exit_api_call(api_code, ret)
-            raise ret
+            return ret
 
         cache.set(cache_key, count)
 
     data = {'result_count': count}
-
-    if (request.is_ajax()): # pragma: no cover
-        data['reqno'] = request.GET['reqno']
+    reqno = get_reqno(request)
+    if reqno is not None and fmt == 'json':
+        data['reqno'] = reqno
 
     if fmt == 'json':
         ret = json_response({'data': [data]})
@@ -125,31 +131,48 @@ def api_get_result_count(request, fmt):
         ret = csv_response('result_count', [['result count', count]])
     else:
         log.error('api_get_result_count: Unknown format "%s"', fmt)
-        raise Http404(f'Unknown format {fmt}')
+        ret = Http404(settings.HTTP404_UNKNOWN_FORMAT)
+        exit_api_call(api_code, ret)
+        raise ret
 
     exit_api_call(api_code, ret)
     return ret
 
 
-def api_get_mult_counts(request, slug, fmt='json'):
+def api_get_mult_counts(request, slug, fmt):
     """Return the mults for a given slug along with result counts.
 
     This is a PUBLIC API.
 
-    Format: [__]api/meta/mults/(?P<slug>[-\w]+).(?P<fmt>json|zip|html|csv)
+    Format: [__]api/meta/mults/(?P<slug>[-\w]+).(?P<fmt>json|html|csv)
     Arguments: Normal search arguments
+               reqno=<N> (Optional)
 
-    Can return JSON, ZIP, HTML, or CSV.
+    Can return JSON, HTML, or CSV.
 
-    Returned JSON is of the format:
-        { 'field': slug,
-          'mults': mults }
-    mult is a list of entries pairing mult name and result count.
+    Returned JSON:
+        {'field': slug, 'mults': mults}
+      or:
+        {'field': slug, 'mults': mults, 'reqno': reqno}
+
+        mult is a list of entries pairing mult name and result count.
+
+    Returned HTML:
+        <body>
+        	<dl>
+        	    <dt>Atlas</dt><dd>2</dd>
+        	    <dt>Daphnis</dt><dd>4</dd>
+        	</dl>
+        </body>
+
+    Returned CSV:
+        name1,name2,name3
+        number1,number2,number3
     """
-    api_code = enter_api_call('api_get_data', request)
+    api_code = enter_api_call('api_get_mult_counts', request)
 
     if not request or request.GET is None:
-        ret = Http404('No request')
+        ret = Http404(settings.HTTP404_NO_REQUEST)
         exit_api_call(api_code, ret)
         raise ret
 
@@ -157,7 +180,7 @@ def api_get_mult_counts(request, slug, fmt='json'):
     if selections is None:
         log.error('api_get_mult_counts: Failed to get selections for slug %s, '
                   +'URL %s', str(slug), request.GET)
-        ret = Http404('Parsing of selections failed')
+        ret = Http404(settings.HTTP404_SEARCH_PARAMS_INVALID)
         exit_api_call(api_code, ret)
         raise ret
 
@@ -166,7 +189,7 @@ def api_get_mult_counts(request, slug, fmt='json'):
         log.error('api_get_mult_counts: Could not find param_info entry for '
                   +'slug %s *** Selections %s *** Extras %s', str(slug),
                   str(selections), str(extras))
-        ret = Http404('Unknown slug')
+        ret = Http404(settings.HTTP404_UNKNOWN_SLUG)
         exit_api_call(api_code, ret)
         raise ret
 
@@ -178,23 +201,20 @@ def api_get_mult_counts(request, slug, fmt='json'):
     if param_qualified_name in selections:
         del selections[param_qualified_name]
 
-    has_selections = False
-    if selections:
-        has_selections = True
-
     cache_num, cache_new_flag = set_user_search_number(selections, extras)
     if cache_num is None:
         log.error('api_get_mult_counts: Failed to create user_selections entry'
                   +' for *** Selections %s *** Extras %s',
                   str(selections), str(extras))
-        exit_api_call(api_code, Http404)
-        raise Http404
+        ret = HttpResponseServerError(settings.HTTP500_DATABASE_ERROR)
+        exit_api_call(api_code, ret)
+        return ret
 
     # Note we don't actually care here if the cache table even exists, because
     # if it's in the cache, it must exist, and if it's not in the cache, it
     # will be created if necessary by get_user_query_table below.
     cache_key = (settings.CACHE_KEY_PREFIX + ':mults_' + param_qualified_name
-                 + '_' + str(cache_num))
+                 + ':' + str(cache_num))
 
     cached_val = cache.get(cache_key)
     if cached_val is not None:
@@ -207,8 +227,9 @@ def api_get_mult_counts(request, slug, fmt='json'):
         except LookupError:
             log.error('api_get_mult_counts: Could not get_model for %s',
                       mult_name.title().replace('_',''))
-            exit_api_call(api_code, Http404)
-            raise Http404
+            ret = HttpResponseServerError(settings.HTTP500_INTERNAL_ERROR)
+            exit_api_call(api_code, ret)
+            return ret
 
         try:
             table_model = apps.get_model('search',
@@ -216,8 +237,9 @@ def api_get_mult_counts(request, slug, fmt='json'):
         except LookupError:
             log.error('api_get_mult_counts: Could not get_model for %s',
                       table_name.title().replace('_',''))
-            exit_api_call(api_code, Http404)
-            raise Http404
+            ret = HttpResponseServerError(settings.HTTP500_INTERNAL_ERROR)
+            exit_api_call(api_code, ret)
+            return ret
 
         results = (table_model.objects.values(mult_name)
                    .annotate(Count(mult_name)))
@@ -228,8 +250,9 @@ def api_get_mult_counts(request, slug, fmt='json'):
             log.error('api_get_mult_counts: has selections but no user_table '
                       +'found *** Selections %s *** Extras %s',
                       str(selections), str(extras))
-            exit_api_call(api_code, Http404)
-            raise Http404
+            ret = HttpResponseServerError(settings.HTTP500_SEARCH_FAILED)
+            exit_api_call(api_code, ret)
+            return ret
 
         if selections:
             # selections are constrained so join in the user_table
@@ -252,8 +275,9 @@ def api_get_mult_counts(request, slug, fmt='json'):
             except ObjectDoesNotExist:
                 log.error('api_get_mult_counts: Could not find mult entry for '
                           +'mult_model %s id %s', str(mult_model), str(mult_id))
-                mult_label = str(mult_id)
-                mult_disp_order = 0
+                ret = HttpResponseServerError(settings.HTTP500_INTERNAL_ERROR)
+                exit_api_call(api_code, ret)
+                return ret
 
             mult_result_list.append((mult_disp_order,
                                      (mult_label,
@@ -266,19 +290,31 @@ def api_get_mult_counts(request, slug, fmt='json'):
 
         cache.set(cache_key, mults)
 
-    multdata = {'field': slug,
-                'mults': mults }
+    data = {'field': slug,
+            'mults': mults}
 
-    if (request.is_ajax()):
-        reqno = request.GET.get('reqno', '')
-        multdata['reqno'] = reqno
+    reqno = get_reqno(request)
+    if reqno is not None and fmt == 'json':
+        data['reqno'] = reqno
 
-    ret = response_formats(multdata, fmt, template='metadata/mults.html')
+    if fmt == 'json':
+        ret = json_response(data)
+    elif fmt == 'html':
+        ret = render_to_response('metadata/mults.html', data)
+    elif fmt == 'csv':
+        ret = csv_response(slug, [list(mults.values())],
+                           column_names=list(mults.keys()))
+    else:
+        log.error('api_get_mult_counts: Unknown format "%s"', fmt)
+        ret = Http404(settings.HTTP404_UNKNOWN_FORMAT)
+        exit_api_call(api_code, ret)
+        raise ret
+
     exit_api_call(api_code, ret)
     return ret
 
 
-def api_get_range_endpoints(request, slug, fmt='json'):
+def api_get_range_endpoints(request, slug, fmt):
     """Compute and return range widget endpoints (min, max, nulls)
 
     This is a PUBLIC API.
@@ -287,23 +323,41 @@ def api_get_range_endpoints(request, slug, fmt='json'):
     widget defined by [slug] based on current search defined in request.
 
     Format: [__]api/meta/range/endpoints/(?P<slug>[-\w]+)
-            .(?P<fmt>json|zip|html|csv)
+            .(?P<fmt>json|html|csv)
     Arguments: Normal search arguments
+               reqno=<N> (Optional)
 
-    Can return JSON, ZIP, HTML, or CSV.
+    Can return JSON, HTML, or CSV.
 
-    Returned JSON is of the format:
-        { min: 63.592, max: 88.637, nulls: 2365}
+    Returned JSON:
+        {"min": 63.592, "max": 88.637, "nulls": 2365}
+      or
+        {"min": 63.592, "max": 88.637, "nulls": 2365, "reqno": 123}
 
-    Note that min and max can be strings, not just real numbers. This happens,
-    for example, with spacecraft clock counts, and may also happen with
-    floating point values when we want to force a particular display format
-    (such as full-length numbers instead of exponential notation).
+        Note that min and max can be strings, not just real numbers. This
+        happens, for example, with spacecraft clock counts, and may also happen
+        with floating point values when we want to force a particular display
+        format (such as full-length numbers instead of exponential notation).
+
+        {"min": "0.0000", "max": "50000.0000", "nulls": 11}
+
+    Returned HTML:
+        <body>
+            <dl>
+                <dt>min</dt><dd>0.0000</dd>
+                <dt>max</dt><dd>50000.0000</dd>
+                <dt>nulls</dt><dd>11</dd>
+            </dl>
+        </body>
+
+    Returned CSV:
+        min,max,nulls
+        0.0000,50000.0000,11
     """
     api_code = enter_api_call('api_get_range_endpoints', request)
 
     if not request or request.GET is None:
-        ret = Http404('No request')
+        ret = Http404(settings.HTTP404_NO_REQUEST)
         exit_api_call(api_code, ret)
         raise ret
 
@@ -311,7 +365,7 @@ def api_get_range_endpoints(request, slug, fmt='json'):
     if not param_info:
         log.error('get_range_endpoints: Could not find param_info entry for '+
                   'slug %s', str(slug))
-        ret = Http404('Unknown slug')
+        ret = Http404(settings.HTTP404_UNKNOWN_SLUG)
         exit_api_call(api_code, ret)
         raise ret
 
@@ -326,8 +380,9 @@ def api_get_range_endpoints(request, slug, fmt='json'):
     except LookupError:
         log.error('api_get_range_endpoints: Could not get_model for %s',
                   table_name.title().replace('_',''))
-        exit_api_call(api_code, Http404)
-        raise Http404
+        ret = HttpResponseServerError(settings.HTTP500_INTERNAL_ERROR)
+        exit_api_call(api_code, ret)
+        return ret
 
     param_no_num = strip_numeric_suffix(param_name)
     param1 = param_no_num + '1'
@@ -341,7 +396,7 @@ def api_get_range_endpoints(request, slug, fmt='json'):
     if selections is None:
         log.error('api_get_range_endpoints: Could not find selections for '
                   +'request %s', str(request.GET))
-        ret = Http404('Parsing of selections failed')
+        ret = Http404(settings.HTTP404_SEARCH_PARAMS_INVALID)
         exit_api_call(api_code, ret)
         raise ret
 
@@ -360,9 +415,9 @@ def api_get_range_endpoints(request, slug, fmt='json'):
             log.error('api_get_range_endpoints: Count not retrieve query table'
                       +' for *** Selections %s *** Extras %s',
                       str(selections), str(extras))
-            ret = Http404('Parsing of selections failed')
+            ret = HttpResponseServerError(settings.HTTP500_SEARCH_FAILED)
             exit_api_call(api_code, ret)
-            raise ret
+            return ret
     else:
         user_table = None
 
@@ -377,52 +432,70 @@ def api_get_range_endpoints(request, slug, fmt='json'):
                       str(selections), str(extras))
             exit_api_call(api_code, Http404)
             raise Http404
-        # We're guaranteed the table actually exists here
+        # We're guaranteed the table actually exists here, since
+        # get_user_query_table has already returned for the same search.
         cache_key += ':' + str(cache_num)
 
-    cached_val = cache.get(cache_key)
-    if cached_val is not None:
-        ret = response_formats(cached_val, fmt, template='metadata/mults.html')
-        exit_api_call(api_code, ret)
-        return ret
+    range_endpoints = cache.get(cache_key)
+    if range_endpoints is None:
+        # We didn't find a cache entry, so calculate the endpoints
+        results = table_model.objects
 
-    # We didn't find a cache entry, so calculate the endpoints
-    results = table_model.objects
-
-    if selections:
-        # There are selections, so tie the query to user_table
-        if table_name == 'obs_general':
-            where = (connection.ops.quote_name(table_name) + '.id='
-                     + connection.ops.quote_name(user_table) + '.id')
+        if selections:
+            # There are selections, so tie the query to user_table
+            if table_name == 'obs_general':
+                where = (connection.ops.quote_name(table_name)+'.id='
+                         +connection.ops.quote_name(user_table)+'.id')
+            else:
+                where = (connection.ops.quote_name(table_name)
+                         +'.'+connection.ops.quote_name('obs_general_id')+'='
+                         +connection.ops.quote_name(user_table)+'.id')
+            range_endpoints = (results.extra(where=[where],
+                               tables=[user_table]).
+                               aggregate(min=Min(param1), max=Max(param2)))
+            where += ' AND ' + param1 + ' IS NULL AND ' + param2 + ' IS NULL'
+            range_endpoints['nulls'] = (results.extra(where=[where],
+                                                      tables=[user_table])
+                                               .count())
         else:
-            where = (connection.ops.quote_name(table_name)
-                     + '.obs_general_id='
-                     + connection.ops.quote_name(user_table) + '.id')
-        range_endpoints = (results.extra(where=[where], tables=[user_table]).
-                           aggregate(min=Min(param1), max=Max(param2)))
+            # There are no selections, so hit the whole table
+            range_endpoints = results.all().aggregate(min=Min(param1),
+                                                      max=Max(param2))
+            where = param1 + ' IS NULL AND ' + param2 + ' IS NULL'
+            range_endpoints['nulls'] = (results.all().extra(where=[where])
+                                                     .count())
 
-        where += ' AND ' + param1 + ' IS NULL AND ' + param2 + ' IS NULL'
-        range_endpoints['nulls'] = results.extra(where=[where],
-                                                 tables=[user_table]).count()
+        range_endpoints['min'] = format_metadata_number_or_func(
+                                                range_endpoints['min'],
+                                                form_type_func,
+                                                form_type_format)
+        range_endpoints['max'] = format_metadata_number_or_func(
+                                                range_endpoints['max'],
+                                                form_type_func,
+                                                form_type_format)
+
+        cache.set(cache_key, range_endpoints)
+
+    reqno = get_reqno(request)
+    if reqno is not None and fmt == 'json':
+        range_endpoints['reqno'] = reqno
+
+    if fmt == 'json':
+        ret = json_response(range_endpoints)
+    elif fmt == 'html':
+        ret = render_to_response('metadata/endpoints.html',
+                                 {'data': range_endpoints})
+    elif fmt == 'csv':
+        ret = csv_response(slug, [[range_endpoints['min'],
+                                   range_endpoints['max'],
+                                   range_endpoints['nulls']]],
+                           ['min', 'max', 'nulls'])
     else:
-        # There are no selections, so hit the whole table
-        range_endpoints = results.all().aggregate(min=Min(param1),
-                                                  max=Max(param2))
-        where = param1 + ' IS NULL AND ' + param2 + ' IS NULL'
-        range_endpoints['nulls'] = results.all().extra(where=[where]).count()
+        log.error('api_get_range_endpoints: Unknown format "%s"', fmt)
+        ret = Http404(settings.HTTP404_UNKNOWN_FORMAT)
+        exit_api_call(api_code, ret)
+        raise ret
 
-    range_endpoints['min'] = format_metadata_number_or_func(
-                                            range_endpoints['min'],
-                                            form_type_func,
-                                            form_type_format)
-    range_endpoints['max'] = format_metadata_number_or_func(
-                                            range_endpoints['max'],
-                                            form_type_func,
-                                            form_type_format)
-
-    cache.set(cache_key, range_endpoints)
-
-    ret = response_formats(range_endpoints, fmt, template='metadata/mults.html')
     exit_api_call(api_code, ret)
     return ret
 
