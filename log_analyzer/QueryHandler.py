@@ -4,10 +4,9 @@ import urllib.parse
 from collections import defaultdict
 from enum import Enum, auto
 from functools import reduce
-from typing import Dict, Tuple, List, Optional, Any
+from typing import Dict, Tuple, List, Optional, Any, cast
 
-from django.utils.html import format_html, format_html_join
-from django.utils.safestring import mark_safe
+from markupsafe import Markup
 
 import Slug
 from Slug import Flags
@@ -122,7 +121,7 @@ class QueryHandler:
             if query_type != 'result_count':
                 query['view'] = 'browse'
                 query['browse'] = 'gallery'
-            url = format_html('/opus/#/{}', urllib.parse.urlencode(query, False))
+            url = self.safe_format('/opus/#/{}', urllib.parse.urlencode(query, False))
 
         if result and query_type != 'result_count':
             self._session_info.fetched_gallery()
@@ -165,8 +164,8 @@ class QueryHandler:
             assert family.label == slug_info.label
             postscript = self.__get_postscript(slug_info.flags)  # is html-aware
             if self._uses_html:
-                result.append(format_html('Add Search: "{}" = <mark><ins>{}</ins></mark>{}',
-                                          family.label, self.__format_search_value(value), postscript))
+                result.append(self.safe_format('Add Search: "{}" = <mark><ins>{}</ins></mark>{}',
+                                               family.label, self.__format_search_value(value), postscript))
             else:
                 result.append(f'Add Search:    "{family.label}" = "{value}"{postscript}')
         else:
@@ -174,14 +173,14 @@ class QueryHandler:
             postscript = self.__get_postscript(flags)  # is html-aware
             if self._uses_html:
                 def always_mark(which: str, value: Optional[str]) -> str:
-                    return format_html('<mark><ins>{}:{}</ins></mark>', which, self.__format_search_value(value))
+                    return self.safe_format('<mark><ins>{}:{}</ins></mark>', which, self.__format_search_value(value))
 
-                result.append(format_html('Add Search: &quot;{}&quot; = ({}, {}, {}){}',
-                                          family.label,
-                                          always_mark(family.min, new_min),
-                                          always_mark(family.max, new_max),
-                                          always_mark('qtype', new_qtype),
-                                          postscript))
+                result.append(self.safe_format('Add Search: &quot;{}&quot; = ({}, {}, {}){}',
+                                               family.label,
+                                               always_mark(family.min, new_min),
+                                               always_mark(family.max, new_max),
+                                               always_mark('qtype', new_qtype),
+                                               postscript))
             else:
                 new_value = (f'({family.min.upper()}:{self.__format_search_value(new_min)},'
                              f' {family.max.upper()}:{self.__format_search_value(new_max)}, '
@@ -204,13 +203,13 @@ class QueryHandler:
             elif self._uses_html:
                 def maybe_mark(tag: str, old: Optional[str], new: Optional[str]) -> str:
                     fmt = '{}:{}' if old == new else '<mark>{}:{}</mark>'
-                    return format_html(fmt, tag, self.__format_search_value(new))
+                    return self.safe_format(fmt, tag, self.__format_search_value(new))
 
                 result.append(
-                    format_html('Change Search: &quot;{}&quot;: ({}, {}, {})', family.label,
-                                maybe_mark(family.min, old_min, new_min),
-                                maybe_mark(family.max, old_max, new_max),
-                                maybe_mark('qtype', old_qtype, new_qtype)))
+                    self.safe_format('Change Search: &quot;{}&quot;: ({}, {}, {})', family.label,
+                                     maybe_mark(family.min, old_min, new_min),
+                                     maybe_mark(family.max, old_max, new_max),
+                                     maybe_mark('qtype', old_qtype, new_qtype)))
             else:
                 min_name = family.min if old_min == new_min else family.min.upper()
                 max_name = family.max if old_max == new_max else family.max.upper()
@@ -251,7 +250,7 @@ class QueryHandler:
                 if not self._uses_html:
                     added_columns.append(f'Add Column:    "{new_slug_info.label}"{postscript}')
                 else:
-                    added_columns.append(format_html('Add Column: "{}"{}', new_slug_info.label, postscript))
+                    added_columns.append(self.safe_format('Add Column: "{}"{}', new_slug_info.label, postscript))
 
         result.extend(removed_columns)
         result.extend(added_columns)
@@ -259,7 +258,7 @@ class QueryHandler:
     def __get_page_info(self, what: str, old_page: Optional[str], new_page: Optional[str], result: List[str]) -> None:
         if old_page != new_page and old_page and new_page:
             if self._uses_html:
-                result.append(format_html('Change {}: {} &rarr; {}', what.title(), old_page, new_page))
+                result.append(self.safe_format('Change {}: {} &rarr; {}', what.title(), old_page, new_page))
             else:
                 result.append(f'Change {what.title()}: {old_page} -> {new_page}')
 
@@ -287,13 +286,13 @@ class QueryHandler:
             for value in sorted(old_value_set.union(new_value_set)):
                 formatted_value = self.__format_search_value(value)
                 if value not in old_value_set:
-                    marked_changes.append(format_html('<mark><ins>{}</ins></mark>', formatted_value))
+                    marked_changes.append(self.safe_format('<mark><ins>{}</ins></mark>', formatted_value))
                 elif value not in new_value_set:
-                    marked_changes.append(format_html('<mark><del>{}</del></mark>', formatted_value))
+                    marked_changes.append(self.safe_format('<mark><del>{}</del></mark>', formatted_value))
                 else:
-                    marked_changes.append(formatted_value)
-            joined_values = format_html_join(', ', '{}', ((x,) for x in marked_changes))
-            result.append(format_html('Change Search: &quot;{}&quot; = {}', name, joined_values))
+                    marked_changes.append(Markup(formatted_value))
+            joined_values = Markup(',').join(marked_changes);
+            result.append(self.safe_format('Change Search: &quot;{}&quot; = {}', name, joined_values))
         elif old_value_set.intersection(new_value_set):
             change_list: List[Tuple[str, str]] = []
             for value in sorted(old_value_set.union(new_value_set)):
@@ -332,9 +331,9 @@ class QueryHandler:
     def __format_search_value(self, value: Optional[str]) -> str:
         if self._uses_html:
             if value is None:
-                return mark_safe('&ndash;')
+                return Markup('&ndash;')
             else:
-                return format_html('&quot;<samp>{}</samp>&quot;', value)
+                return self.safe_format('&quot;<samp>{}</samp>&quot;', value)
         else:
             return '~' if value is None else '"' + value + '"'
 
@@ -342,7 +341,7 @@ class QueryHandler:
         if not flags:
             return ''
         elif self._uses_html:
-            return format_html(' <span class="text-danger">({})</span>', flags.pretty_print())
+            return self.safe_format(' <span class="text-danger">({})</span>', flags.pretty_print())
         else:
             return f' **{flags.pretty_print()}**'
 
@@ -353,3 +352,8 @@ class QueryHandler:
             mapping.get(Slug.FamilyType.MIN), mapping.get(Slug.FamilyType.MAX), mapping.get(Slug.FamilyType.QTYPE),
             reduce(operator.or_, (slug_info.flags for (slug_info, _) in pairs))
         )
+
+    def safe_format(self, format: str, *args: Any) -> str:
+        return cast(str, self._session_info.safe_format(format, *args))
+
+

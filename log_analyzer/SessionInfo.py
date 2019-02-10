@@ -5,7 +5,7 @@ import urllib.parse
 from enum import auto, Flag
 from typing import List, Dict, Optional, Match, Tuple, Pattern, Callable, Any
 
-from django.utils.html import format_html
+from markupsafe import Markup
 
 import Slug
 from LogEntry import LogEntry
@@ -109,6 +109,9 @@ class SessionInfo(metaclass=abc.ABCMeta):
     def quote_and_join_list(string_list: List[str]) -> str:
         return ', '.join(f'"{string}"' for string in string_list)
 
+    def safe_format(self, format: str, *args: Any) -> str:
+        return Markup(format).format(*args)
+
 
 class ForPattern:
     """
@@ -203,7 +206,7 @@ class SessionInfoImpl(SessionInfo):
         call_type, opus_id = match.groups()
         text = 'Download Single OPUSID' if call_type == 'download' else 'Download CSV for OPUSID'
         if self._uses_html:
-            return [format_html('{}: {}', text, opus_id)], self.__create_opus_url(opus_id)
+            return [self.safe_format('{}: {}', text, opus_id)], self.__create_opus_url(opus_id)
         else:
             return [f'{text}: { opus_id }'], None
 
@@ -220,7 +223,7 @@ class SessionInfoImpl(SessionInfo):
         opus_id = query.get('opus_id')
         selection = match.group(2).title()
         if self._uses_html and opus_id:
-            return [format_html('Selections {}: {}', selection.title(), opus_id)], self.__create_opus_url(opus_id)
+            return [self.safe_format('Selections {}: {}', selection.title(), opus_id)], self.__create_opus_url(opus_id)
         else:
             return [f'Selections {selection.title() + ":":<7} {opus_id or "???"}'], None
 
@@ -294,7 +297,7 @@ class SessionInfoImpl(SessionInfo):
     def _initialize_detail(self, query: Dict[str, str], match: Match[str]) -> SESSION_INFO:
         opus_id = match.group(1)
         if self._uses_html:
-            return [format_html('View Detail: {}', opus_id)], self.__create_opus_url(opus_id)
+            return [self.safe_format('View Detail: {}', opus_id)], self.__create_opus_url(opus_id)
         else:
             return [f'View Detail: { opus_id }'], None
 
@@ -303,4 +306,4 @@ class SessionInfoImpl(SessionInfo):
     #
 
     def __create_opus_url(self, opus_id: str) -> str:
-        return format_html('/opus/#/view=detail&amp;detail={0}', opus_id)
+        return self.safe_format('/opus/#/view=detail&amp;detail={0}', opus_id)
