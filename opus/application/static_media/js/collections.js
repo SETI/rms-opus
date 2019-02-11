@@ -8,6 +8,9 @@ var o_collections = {
      *  from cart see browse.js
      *
      **/
+     // downloadOptionsScrollbar: new PerfectScrollbar("#download-options-container"),
+     // downloadOptionsScrollbar: new PerfectScrollbar("#collections_details"),
+
      collectionBehaviors: function() {
 
         // collection details hide/show
@@ -114,7 +117,14 @@ var o_collections = {
          let container_height = $(window).height()-120;
          $("#collection .sidebar_wrapper").height(container_height);
          $("#collection .gallery-contents").height(container_height);
+         // o_collections.downloadOptionsScrollbar.update();
      },
+
+     // adjustDownloadOptionsHeight: function() {
+     //     var container_height = $("#collections").height() - 100;
+     //     $(".sidebar_wrapper").height(container_height);
+     //     o_collections.downloadOptionsScrollbar.update();
+     // },
 
      updateCartStatus: function(status) {
          if (status.reqno < opus.lastCartRequestNo) {
@@ -135,7 +145,11 @@ var o_collections = {
         // returns any user collection saved in session
         opus.lastCartRequestNo++;
         $.getJSON("/opus/__collections/status.json?reqno=" + opus.lastCartRequestNo, function(statusData) {
+            if(statusData.reqno < opus.lastCartRequestNo) {
+                return;
+            }
             o_collections.updateCartStatus(statusData);
+            // o_collections.downloadOptionsScrollbar = new PerfectScrollbar("#collections #download-options-container");
         });
      },
 
@@ -207,6 +221,7 @@ var o_collections = {
                         $(".zipped_files", "#collection").html(zipped_files_html);
                     }
                     o_collections.adjustProductInfoHeight();
+                    o_collections.downloadOptionsScrollbar = new PerfectScrollbar("#download-options-container");
                 }
             });
         }

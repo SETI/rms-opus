@@ -3,7 +3,6 @@ var o_browse = {
     keyPressAction: "",
     tableSorting: false,
     tableScrollbar: new PerfectScrollbar(".dataTable"),
-    // tableScrollbar: new PerfectScrollbar(".col-lg"),
     yAxisGalleryScrollbar: new PerfectScrollbar(".gallery-contents"),
     yAxisModalScrollbar: new PerfectScrollbar("#galleryViewContents .metadata"),
 
@@ -834,7 +833,9 @@ var o_browse = {
         if (opus.lastPageDrawn[opus.prefs.view] == page) {
             return;
         }
-        let selector = `#${opus.prefs.view} .gallery-contents`;
+
+        let selector = `#${opus.prefs.view} .gallery-contents, .dataTable`;
+        // let selector = `#${opus.prefs.view} .gallery-contents`;
 
         let url = o_browse.getBrowseURL(page);
 
@@ -876,6 +877,7 @@ var o_browse = {
                 $(selector).infiniteScroll('loadNextPage');
                 opus.gallery_begun = true;
             }
+            $(".table-page-load-status > .loader").hide();
         });
 
         opus.lastPageDrawn[opus.prefs.view] = page;
@@ -883,6 +885,8 @@ var o_browse = {
 
     infiniteScrollLoadEventListener: function( event, response, path ) {
         let data = JSON.parse( response );
+        console.log("return reqno: " + data.reqno);
+        console.log("opus.lastLoadBrowseDataRequestNo reqno: " + opus.lastLoadBrowseDataRequestNo);
         if ($(`.thumb-page[data-page='${data.page_no}']`).length != 0) {
             console.log(`data.reqno: ${data.reqno}, last reqno: ${opus.lastLoadBrowseDataRequestNo}`);
             return;
