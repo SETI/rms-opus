@@ -1,0 +1,23 @@
+{
+  "limit": 100,
+  "page": [],
+  "order": "time1,opusid",
+  "count": 0,
+  "labels": [
+    "OPUS ID",
+    "Instrument Name",
+    "Planet",
+    "Intended Target Name",
+    "Observation Start Time",
+    "Observation Duration (secs)"
+  ],
+  "columns": [
+    "OPUS ID",
+    "Instrument Name",
+    "Planet",
+    "Intended Target Name",
+    "Observation Start Time",
+    "Observation Duration (secs)"
+  ],
+  "start_obs": 1
+}

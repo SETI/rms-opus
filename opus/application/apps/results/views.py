@@ -77,7 +77,7 @@ def api_get_data_and_images(request):
 
     Returns JSON.
 
-    Returned JSON is of the format:
+    Returned JSON:
 
         {'page': [
             {'opus_id': OPUS_ID,
@@ -106,6 +106,14 @@ def api_get_data_and_images(request):
 
     session_id = get_session_id(request)
 
+    cols = request.GET.get('cols', settings.DEFAULT_COLUMNS)
+
+    labels = labels_for_slugs(cols_to_slug_list(cols))
+    if labels is None:
+        ret = Http404(settings.HTTP404_UNKNOWN_SLUG)
+        exit_api_call(api_code, ret)
+        raise ret
+
     (page_no, start_obs, limit, page, order, aux) = get_search_results_chunk(
                                        request,
                                        prepend_cols='opusid',
@@ -114,9 +122,9 @@ def api_get_data_and_images(request):
                                        return_collection_status=True,
                                        api_code=api_code)
     if page is None:
-        ret = Http404('Could not find page')
+        ret = HttpResponseServerError(settings.HTTP500_SEARCH_FAILED)
         exit_api_call(api_code, ret)
-        raise ret
+        return ret
 
     preview_jsons = [json.loads(x[-1]) for x in page]
     opus_ids = aux['opus_ids']
@@ -148,10 +156,6 @@ def api_get_data_and_images(request):
         }
         new_page.append(new_entry)
 
-    cols = request.GET.get('cols', settings.DEFAULT_COLUMNS)
-
-    labels = labels_for_slugs(cols_to_slug_list(cols))
-
     data = {'page':    new_page,
             'limit':   limit,
             'count':   len(image_list),
@@ -179,26 +183,47 @@ def api_get_data(request, fmt):
     many to return. We also support "pages" for specifying the starting
     observation for backwards compatibility. A "page" is 100 observations long.
 
-    Format: [__]api/data.(json|zip|html|csv)
+    Format: [__]api/data.(json|html|csv)
     Arguments: limit=<N>
                page=<N>  OR  startobs=<N> (1-based)
                order=<column>[,<column>...]
                Normal search and selected-column arguments
 
-    In addition to the standard formats, we also allow 'raw' which returns a
-    dictionary for internal use.
+    Can return JSON, HTML, or CSV.
 
-    Can return JSON, ZIP, HTML, or CSV.
+    Returned JSON:
+        {
+            'page_no': page_no,   OR   'startobs': start_obs,
+            'limit':   limit,
+            'order':   order,
+            'count':   len(page),
+            'labels':  labels,
+            'page':    page         # tabular page data
+        }
 
-    Returned JSON is of the format:
-        data = {
-                'page_no': page_no,   OR   'startobs': start_obs,
-                'limit':   limit,
-                'order':   order,
-                'count':   len(page),
-                'labels':  labels,
-                'page':    page         # tabular page data
-               }
+    Returned HTML:
+        <table>
+            <tr>
+                <th>OPUS ID</th>
+                <th>Instrument Name</th>
+                <th>Planet</th>
+                <th>Intended Target Name</th>
+                <th>Observation Start Time</th>
+                <th>Observation Duration (secs)</th>
+            </tr>
+            <tr>
+                <td>vg-iss-2-s-c4360001</td>
+                <td>Voyager ISS</td>
+                <td>Saturn</td>
+                <td>Titan</td>
+                <td>1981-08-12T14:55:10.080</td>
+                <td>1.9200</td>
+            </tr>
+        </table>
+
+    Returned CSV:
+        OPUS ID,Instrument Name,Planet,Intended Target Name,Observation Start Time,Observation Duration (secs)
+        vg-iss-2-s-c4360001,Voyager ISS,Saturn,Titan,1981-08-12T14:55:10.080,1.9200
     """
     api_code = enter_api_call('api_get_data', request)
 
@@ -207,10 +232,55 @@ def api_get_data(request, fmt):
         exit_api_call(api_code, ret)
         raise ret
 
-    ret = get_data(request, fmt)
-    if ret is None:
-        exit_api_call(api_code, Http404)
-        raise Http404
+    session_id = get_session_id(request)
+
+    cols = request.GET.get('cols', settings.DEFAULT_COLUMNS)
+
+    labels = labels_for_slugs(cols_to_slug_list(cols))
+    if labels is None:
+        ret = Http404(settings.HTTP404_UNKNOWN_SLUG)
+        exit_api_call(api_code, ret)
+        raise ret
+
+    (page_no, start_obs, limit, page, order, aux) = get_search_results_chunk(
+                                                     request,
+                                                     cols=cols,
+                                                     return_opusids=True,
+                                                     api_code=api_code)
+
+    if page is None:
+        ret = HttpResponseServerError(settings.HTTP500_SEARCH_FAILED)
+        exit_api_call(api_code, ret)
+        return ret
+
+    data = {'limit':    limit,
+            'page':     page,
+            'order':    order,
+            'count':    len(page),
+            'labels':   labels,
+            'columns':  labels # Backwards compatibility with external apps
+           }
+
+    if page_no is not None:
+        data['page_no'] = page_no
+    if start_obs is not None:
+        data['start_obs'] = start_obs
+
+    if fmt == 'csv':
+        csv_data = []
+        csv_data.append(labels)
+        csv_data.extend(page)
+        ret = csv_response('data', csv_data)
+    elif fmt == 'html':
+        context = {'data': data}
+        ret = render(request, 'results/data.html', context)
+    elif fmt == 'json':
+        ret = HttpResponse(json.dumps(data), content_type='application/json')
+    else:
+        log.error('api_get_data: Unknown format "%s"', fmt)
+        ret = Http404(settings.HTTP404_UNKNOWN_FORMAT)
+        exit_api_call(api_code, ret)
+        raise ret
 
     exit_api_call(api_code, ret)
     return ret
@@ -826,87 +896,6 @@ def api_get_categories_for_search(request):
 #
 ################################################################################
 
-def get_data(request, fmt, cols=None, api_code=None):
-    """Return a page of data for a given search and page_no.
-
-    Can return JSON, ZIP, HTML, CSV, or RAW.
-
-    cols is a comma-separated list.
-
-    Returned JSON is of the format:
-        data = {
-                'page_no': page_no,   OR   'start_obs': start_obs,
-                'limit':   limit,
-                'order':   order,
-                'count':   len(page),
-                'labels':  labels,
-                'page':    page         # tabular page data
-                }
-    """
-    session_id = get_session_id(request)
-
-    if cols is None:
-        cols = request.GET.get('cols', settings.DEFAULT_COLUMNS)
-
-    (page_no, start_obs, limit, page, order, aux) = get_search_results_chunk(
-                                                     request,
-                                                     cols=cols,
-                                                     return_opusids=True,
-                                                     api_code=api_code)
-
-    if page is None:
-        return None
-
-    checkboxes = request.is_ajax()
-
-    is_column_chooser = request.GET.get('col_chooser', False)
-
-    labels = []
-    id_index = None
-
-    slugs = cols_to_slug_list(cols)
-    labels = labels_for_slugs(slugs)
-
-    try:
-        id_index = slugs.index('opusid')
-    except ValueError:
-        try:
-            id_index = slugs.index('ringobsid')
-        except ValueError:
-            id_index = None
-
-    if is_column_chooser:
-        labels.insert(0, 'add') # adds a column for checkbox add-to-collections
-
-    collection = ''
-    if request.is_ajax():
-        # Find the members of user collection in this page
-        # for pre-filling checkboxes
-        opus_ids = aux['opus_ids']
-        collection = get_collection_in_page(opus_ids, session_id)
-
-    data = {'limit':    limit,
-            'page':     page,
-            'order':    order,
-            'count':    len(page),
-            'labels':   labels,
-            'columns':  labels # Backwards compatibility with external apps
-           }
-
-    if page_no is not None:
-        data['page_no'] = page_no
-    if start_obs is not None:
-        data['start_obs'] = start_obs
-
-    if fmt == 'raw':
-        ret = data
-    ret = response_formats(data, fmt, template='results/data.html',
-                           id_index=id_index,
-                           labels=labels, checkboxes=checkboxes,
-                           collection=collection, order=order)
-    return ret
-
-
 def get_search_results_chunk(request, use_collections=None,
                              cols=None, prepend_cols=None, append_cols=None,
                              limit=None, opus_id=None,
@@ -1072,7 +1061,9 @@ def get_search_results_chunk(request, use_collections=None,
     else:
         start_obs = request.GET.get('startobs', None)
         if start_obs is None:
-            page_no = request.GET.get('page', 1)
+            page_no = request.GET.get('page', None)
+        if start_obs is None and page_no is None:
+            start_obs = 1 # Default to using start_obs
     if start_obs is not None:
         try:
             start_obs = int(start_obs)
