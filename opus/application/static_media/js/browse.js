@@ -2,7 +2,8 @@ var o_browse = {
     selectedImageID: "",
     keyPressAction: "",
     tableSorting: false,
-    xAxisTableScrollbar: new PerfectScrollbar(".dataTable"),
+    tableScrollbar: new PerfectScrollbar(".dataTable"),
+    // tableScrollbar: new PerfectScrollbar(".col-lg"),
     yAxisGalleryScrollbar: new PerfectScrollbar(".gallery-contents"),
     yAxisModalScrollbar: new PerfectScrollbar("#galleryViewContents .metadata"),
 
@@ -577,6 +578,13 @@ var o_browse = {
             $(".browse_view", "#browse").data("view", "dataTable");
 
             $(".justify-content-center").show();
+
+            // $(".gallery-contents > .ps__rail-y").removeClass("disable_ps__rail-y");
+            o_browse.yAxisGalleryScrollbar.settings.suppressScrollY = false;
+            $(".gallery-contents > .ps__rail-y").show();
+            $(".dataTable > .ps__rail-y").hide();
+
+            o_browse.yAxisGalleryScrollbar.update();
         } else {
             $("." + "gallery", "#browse").hide();
             $("." + opus.prefs.browse, "#browse").fadeIn();
@@ -587,6 +595,15 @@ var o_browse = {
 
             // remove that extra space on top when loading table page
             $(".justify-content-center").hide();
+
+            // if(!$(".gallery-contents > .ps__rail-y").hasClass("disable_ps__rail-y")) {
+            //     $(".gallery-contents > .ps__rail-y").addClass("disable_ps__rail-y");
+            // }
+            o_browse.yAxisGalleryScrollbar.settings.suppressScrollY = true;
+            $(".gallery-contents > .ps__rail-y").hide();
+            $(".dataTable > .ps__rail-y").show();
+            o_browse.tableScrollbar.update();
+            console.log(o_browse.tableScrollbar)
         }
     },
 
@@ -699,7 +716,7 @@ var o_browse = {
         }
 
         $('.gallery', namespace).append(html);
-        o_browse.xAxisTableScrollbar.update();
+        o_browse.tableScrollbar.update();
         o_browse.yAxisGalleryScrollbar.update();
     },
 
@@ -733,7 +750,7 @@ var o_browse = {
 
         o_browse.initResizableColumn();
         o_browse.updateTableXScrollbarVerticalPosition();
-        // o_browse.adjustTableWidth();
+        // o_browse.adjustTableSize();
     },
 
     initResizableColumn: function() {
@@ -922,7 +939,7 @@ var o_browse = {
         }
         o_browse.loadBrowseData(page);
         o_browse.adjustBrowseHeight();
-        o_browse.adjustTableWidth();
+        o_browse.adjustTableSize();
 
         $("input#page").val(page).css("color","initial");
         o_hash.updateHash();
@@ -935,14 +952,16 @@ var o_browse = {
         //opus.limit =  (floor($(window).width()/thumbnailSize) * floor(container_height/thumbnailSize));
     },
 
-    adjustTableWidth: function() {
-        let containerWidth = $(".gallery-contents").width()-5;
+    adjustTableSize: function() {
+        let containerWidth = $(".gallery-contents").width();
+        let containerHeight = $(".gallery-contents").height();
         // Make sure the rightmost column is not cut off by the y-scrollbar
         $(".dataTable").width(containerWidth);
-        $(".justify-content-center").width(containerWidth);
+        $(".dataTable").height(containerHeight);
+        // $(".justify-content-center").width(containerWidth);
 
         o_browse.updateTableXScrollbarVerticalPosition();
-        o_browse.xAxisTableScrollbar.update();
+        o_browse.tableScrollbar.update();
     },
 
     cartButtonInfo: function(opusId, status) {

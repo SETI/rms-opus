@@ -100,9 +100,13 @@ body {
 
 /* Make sure y-axis rail is not moving and always visible */
 .gallery-contents .ps__rail-y {
-		opacity: 1 !important;
+		background-color: transparent !important;
 		/* navbar height: 95px, this will match the scrollbar and gallery/table view */
 		top: 95px !important;
+}
+
+.disable_ps__rail-y {
+		display: none !important;
 }
 
 #detail {
@@ -380,12 +384,13 @@ th.sticky-header {
 }
 
 .dataTable .ps__rail-y {
-		display: none !important;
+		background-color: transparent !important;
+		right: 0px !important;
 }
 
 /* Make sure x-scrollbar in dataTable is always at the left and visible */
 .dataTable .ps__rail-x {
-		opacity: 1 !important;
+		background-color: transparent !important;
 		left: 0px !important;
 }
 
