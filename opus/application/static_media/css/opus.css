@@ -334,6 +334,7 @@ tr.modal-show {
 }
 
 th.sticky-header {
+	border-top: 0px;
 	position: sticky;
 	top: 0;
 	z-index: 10;
@@ -392,6 +393,11 @@ th.sticky-header {
 .dataTable .ps__rail-x {
 		background-color: transparent !important;
 		left: 0px !important;
+}
+
+/* Remove the gap between y-scrollbar and table in table view */
+.col-lg {
+		padding-right: 0px;
 }
 
 /* Fix the spinner*/
@@ -585,6 +591,10 @@ img.preview {
 #collections-sidebar {
 	padding-left: 3em;
 	padding-right: 3em;
+}
+
+#collection .gallery-contents .ps__rail-y {
+		background-color: transparent !important;
 }
 
 .collection_details {
@@ -847,10 +857,6 @@ li a.search-param:hover {
 		top:4.15em;
 		bottom:3em;
 		overflow-y: auto
-}
-
-.detail-metadata .ps__rail-y {
-		background-color: transparent !important;
 }
 
 @media (min-width: 768px) {

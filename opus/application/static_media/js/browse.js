@@ -752,8 +752,8 @@ var o_browse = {
         });
 
         o_browse.initResizableColumn();
-        o_browse.updateTableXScrollbarVerticalPosition();
-        // o_browse.adjustTableSize();
+        // o_browse.updateTableXScrollbarVerticalPosition();
+        o_browse.adjustTableSize();
     },
 
     initResizableColumn: function() {
@@ -937,8 +937,10 @@ var o_browse = {
         let containerWidth = $(".gallery-contents").width();
         let containerHeight = $(".gallery-contents").height();
         // Make sure the rightmost column is not cut off by the y-scrollbar
+        // $(".col-lg").width(containerWidth);
         $(".dataTable").width(containerWidth);
         $(".dataTable").height(containerHeight);
+
         // $(".justify-content-center").width(containerWidth);
 
         o_browse.updateTableXScrollbarVerticalPosition();
