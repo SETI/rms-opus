@@ -34,11 +34,13 @@ var o_detail = {
               $(detailSelector).html(html).fadeIn();
               return;
             }
+            o_detail.detailPageScrollbar = new PerfectScrollbar(".detail-metadata");
             // get the column metadata, this part is fast
             url = "/opus/__api/metadata_v2/" + opus_id + ".html?" + o_hash.getHash();
             $("#cols_metadata_"+opus_id)
                 .load(url, function() {
                     $(this).hide().fadeIn("fast");
+                    o_detail.detailPageScrollbar.update();
                 }
             );
 
@@ -56,12 +58,12 @@ var o_detail = {
                   $("#all_metadata_" + opus_id + ' .detail_' + name)
                       .load(url, function() {
                           $(this).hide().slideDown("fast");
+                          o_detail.detailPageScrollbar.update();
                       }
                   );
                 } // end json loop
 
             });
-
           } // /detail.load
         );
     }, // / getDetail

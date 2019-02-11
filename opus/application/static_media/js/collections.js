@@ -222,6 +222,7 @@ var o_collections = {
                     }
                     o_collections.adjustProductInfoHeight();
                     o_collections.downloadOptionsScrollbar = new PerfectScrollbar("#download-options-container");
+                    o_collections.collectionGalleryScrollbar = new PerfectScrollbar("#collection .gallery-contents");
                 }
             });
         }

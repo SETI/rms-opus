@@ -841,12 +841,16 @@ li a.search-param:hover {
 }
 
 /* detail tab */
-.detail-matadata {
+.detail-metadata {
 		position:fixed !important;
 		max-width: 700px;
-		top:4em;
+		top:4.15em;
 		bottom:3em;
 		overflow-y: auto
+}
+
+.detail-metadata .ps__rail-y {
+		background-color: transparent !important;
 }
 
 @media (min-width: 768px) {
