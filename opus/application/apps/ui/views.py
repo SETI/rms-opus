@@ -185,6 +185,9 @@ def api_get_widget(request, **kwargs):
     if request and request.GET:
         (selections, extras) = url_to_search_params(request.GET,
                                                     allow_errors=True)
+        if selections is None: # XXX Really should throw an error of some kind
+            selections = {}
+            extras = {}
 
     addlink = request.GET.get('addlink', True) # suppresses the add_str link
     remove_str = '<a class="remove_input" href="">-</a>'
