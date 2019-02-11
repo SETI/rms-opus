@@ -92,7 +92,8 @@ def get_pds_products(opus_id_list,
     sql += ' ORDER BY '
     sql += q('obs_files')+'.'+q('opus_id')+', '
     sql += q('obs_files')+'.'+q('version_number')+' DESC, '
-    sql += q('obs_files')+'.'+q('sort_order')
+    sql += q('obs_files')+'.'+q('sort_order')+', '
+    sql += q('obs_files')+'.'+q('product_order')
 
     log.debug('get_pds_products SQL: %s %s', sql, values)
     cursor.execute(sql, values)

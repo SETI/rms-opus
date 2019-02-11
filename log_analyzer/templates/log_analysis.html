@@ -111,7 +111,7 @@ because it requires that all the navigation tabs be within a single unordered li
 
 <div id="ByIP" class="tab-pane show active">
 
-{% macro print_flags(session, full) -%}
+{% macro print_flags(session, full) %}
     {% for flag in action_flags_list %}
         {% if flag in session.action_flags %}
             <td><span class="la-{{ flag.as_html_classname() }}">&zwj;</span></td>
@@ -121,7 +121,7 @@ because it requires that all the navigation tabs be within a single unordered li
             <td></td>
         {% endif %}
     {% endfor %}
-{%- endmacro %}
+{% endmacro %}
 
 {% macro host_info_ip_or_name(host_info) %}
     {% if host_info.name %}
@@ -136,12 +136,12 @@ because it requires that all the navigation tabs be within a single unordered li
     {{ host_info_ip_or_name(host_info) }}
     ({{ host_info.total_time() }})
     <table>
-        {%- for session in host_info.sessions -%}
+        {% for session in host_info.sessions %}
            <tr>{{ print_flags(session, loop.first) }}
            <td><a href="#" class=SessionLink data-target="#{{ session.id }}">
                     {{ session.start_time().strftime("%Y %b %d %H:%M:%S") }} ({{ session.duration() }})</a></td>
            </tr>
-        {%- endfor -%}
+        {% endfor %}
     </table>
 
 {% endfor %}
@@ -149,20 +149,18 @@ because it requires that all the navigation tabs be within a single unordered li
 
 <div id="ByTime" class="tab-pane">
 {% for day, host_infos_for_day in host_infos_by_date %}
-    {% set divider = joiner('<hr/>') %}
     {% if not loop.first %}<hr/>{% endif %}
     <h4>{{ day.strftime("%Y %b %d") }}</h4>
     <table>
-    {%- for host_info in host_infos_for_day -%}
-        <tr>
+    {% for host_info in host_infos_for_day %}
         {% set session = host_info.sessions[0] %}
-        {{ print_flags(session, loop.first) }}
+        <tr>{{ print_flags(session, loop.first) }}
         <td><a href="#" class=SessionLink data-target="#{{ session.id }}">
-               {{ session.start_time().strftime("%H:%M:%S") }}&nbsp;({{ host_info.total_time() }})</a>
+               {{ session.start_time().strftime("%H:%M:%S") }}&nbsp;({{ session.duration() }})</a>
                {{ host_info_ip_or_name(host_info) }}
         </td>
         </tr>
-    {%- endfor -%}
+    {% endfor %}
     </table>
 {% endfor %}
 
@@ -175,12 +173,12 @@ because it requires that all the navigation tabs be within a single unordered li
      {% for type, slug_info in session.slug_info() %}
          <li>
          <b>{{ type.title() }} Slugs: </b>
-         {% set comma = joiner(', ') %}
-         {%- for slug_name, is_obsolete in slug_info -%}
-             {{ comma() }}<span class="{{'text-danger' if is_obsolete else 'text-dark'}}">{{ slug_name }}</span>
-         {%- else -%}
+         {% for slug_name, is_obsolete in slug_info %}
+             <span class="{{'text-danger' if is_obsolete else 'text-dark'}}">{{ slug_name }}</span>
+             {{- '' if loop.last else ', ' }}  ## minus sign kills the spaces before the comma
+         {% else %}
              <i>none</i>
-         {%- endfor -%}
+         {% endfor %}
          </li>
      {% endfor %}
      </ul>
@@ -188,23 +186,23 @@ because it requires that all the navigation tabs be within a single unordered li
 
 {% macro print_session_entries(session) %}
     <table>
-    {%- for entry in session.entries -%}
-        {%- for line in entry.data -%}
+    {% for entry in session.entries %}
+        {% for line in entry.data %}
         <tr>
-            {%- if loop.first -%}
-                {%- if entry.opus_url -%}
+            {% if loop.first %}
+                {% if entry.opus_url %}
                     <td><a href="{{ api_host_url ~ entry.opus_url }}" target="_blank">{{ entry.relative_start_time }}</a></td>
-                {%- else -%}
+                {% else %}
                     <td>{{ entry.relative_start_time }}</td>
-                {%- endif -%}
+                {% endif %}
                 <td><a data-toggle="tooltip" href="#" title="{{ entry.target_url() }}">&bull;</a></td>
-            {%- else -%}
+            {% else %}
                 <td></td><td></td>
-            {%- endif -%}
+            {% endif %}
             <td>{{ line }}</td>
         </tr>
-        {%- endfor -%}
-     {%- endfor -%}
+        {% endfor %}
+     {% endfor %}
      </table>
 {% endmacro %}
 
