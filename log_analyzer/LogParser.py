@@ -293,9 +293,7 @@ class LogParser:
         summary_context = {'host_infos_by_ip': host_infos_by_ip,
                            'host_infos_by_date': host_infos_by_date,
                            'api_host_url': self._api_host_url,
-                           'uses_local': self._uses_local,
                            'action_flags_list': action_flags_list,
-                           'log_parser': self,
                            }
         template = env.get_template('log_analysis.html')
         for result in template.generate(**summary_context):
