@@ -1,4 +1,4 @@
-# results/tests.py
+# results/test_results.py
 
 import json
 import sys
@@ -67,7 +67,7 @@ class resultsTests(TestCase):
     def test__api_get_data_no_request(self):
         "api_get_data: no request"
         with self.assertRaises(Http404):
-            api_get_data(None)
+            api_get_data(None, 'json')
 
     def test__api_get_data_no_get(self):
         "api_get_data: no GET"
@@ -76,7 +76,7 @@ class resultsTests(TestCase):
         request = response.wsgi_request
         request.GET = None
         with self.assertRaises(Http404):
-            api_get_data(request)
+            api_get_data(request, 'json')
 
 
 

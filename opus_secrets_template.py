@@ -72,6 +72,9 @@ TAR_FILE_URL_PATH = '<URL>/'
 OPUS_LOGFILE_DIR = '<LOGFILE_DIR>'
 OPUS_LOG_FILE = os.path.join(OPUS_LOGFILE_DIR, 'opus_log.txt')
 
+# The file that contains the date of the last blog update
+OPUS_LAST_BLOG_UPDATE_FILE = '<FILE>'
+
 # What level of message to log at each destination
 OPUS_LOG_FILE_LEVEL = 'INFO'
 OPUS_LOG_CONSOLE_LEVEL = 'INFO'

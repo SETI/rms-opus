@@ -87,6 +87,42 @@ def api_help(request, page):
     return ret
 
 
+def api_last_blog_update(request):
+    """Return the date of the last blog update.
+
+    This is a PRIVATE API.
+
+    Format: __lastblogupdate.json
+
+    JSON return:
+        {'lastupdate': '2019-JAN-01'}
+      or if none available:
+        {'lastupdate': None}
+    """
+    api_code = enter_api_call('api_help', request)
+
+    if not request or request.GET is None:
+        ret = Http404(settings.HTTP404_NO_REQUEST)
+        exit_api_call(api_code, ret)
+        raise ret
+
+    lastupdate = None
+    try:
+        with open(settings.OPUS_LAST_BLOG_UPDATE_FILE, 'r') as fp:
+            lastupdate = fp.read().strip()
+    except:
+        try:
+            log.error('api_last_blog_update: Failed to read file "%s"',
+                      settings.OPUS_LAST_BLOG_UPDATE_FILE)
+        except:
+            log.error('api_last_blog_update: Failed to read file UNKNOWN')
+
+    ret = json_response({'lastupdate': lastupdate})
+
+    exit_api_call(api_code, ret)
+    return ret
+
+
 def api_get_browse_headers(request):
     """Return the menu bar for the gallery view.
 

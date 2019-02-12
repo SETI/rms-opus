@@ -62,7 +62,7 @@ def api_normalize_input(request):
     api_code = enter_api_call('api_normalize_input', request)
 
     if not request or request.GET is None:
-        ret = Http404('No request')
+        ret = Http404(settings.HTTP404_NO_REQUEST)
         exit_api_call(api_code, ret)
         raise ret
 
@@ -119,7 +119,7 @@ def api_string_search_choices(request, slug):
     api_code = enter_api_call('api_string_search_choices', request)
 
     if not request or request.GET is None:
-        ret = Http404('No request')
+        ret = Http404(settings.HTTP404_NO_REQUEST)
         exit_api_call(api_code, ret)
         raise ret
 

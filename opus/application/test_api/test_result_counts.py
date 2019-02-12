@@ -15,7 +15,7 @@ import settings
 ### Test cases ###
 ##################
 class APIResultCountsTests(TestCase):
-    filename = "test_api/csv/result_counts.csv"
+    filename = "test_api/data/result_counts.csv"
 
     # disable error logging and trace output before test
     def setUp(self):

@@ -100,7 +100,7 @@ def api_get_data_and_images(request):
     api_code = enter_api_call('api_get_data_and_images', request)
 
     if not request or request.GET is None:
-        ret = Http404('No request')
+        ret = Http404(settings.HTTP404_NO_REQUEST)
         exit_api_call(api_code, ret)
         raise ret
 
@@ -228,7 +228,7 @@ def api_get_data(request, fmt):
     api_code = enter_api_call('api_get_data', request)
 
     if not request or request.GET is None:
-        ret = Http404('No request')
+        ret = Http404(settings.HTTP404_NO_REQUEST)
         exit_api_call(api_code, ret)
         raise ret
 
@@ -374,7 +374,7 @@ def get_metadata(request, opus_id, fmt, api_name, return_db_names, internal):
     api_code = enter_api_call(api_name, request)
 
     if not request or request.GET is None:
-        ret = Http404('No request')
+        ret = Http404(settings.HTTP404_NO_REQUEST)
         exit_api_call(api_code, ret)
         raise ret
 
@@ -553,7 +553,7 @@ def api_get_images_by_size(request, size, fmt):
     api_code = enter_api_call('api_get_images_by_size', request)
 
     if not request or request.GET is None:
-        ret = Http404('No request')
+        ret = Http404(settings.HTTP404_NO_REQUEST)
         exit_api_call(api_code, ret)
         raise ret
 
@@ -635,7 +635,7 @@ def api_get_images(request, fmt):
     api_code = enter_api_call('api_get_images', request)
 
     if not request or request.GET is None:
-        ret = Http404('No request')
+        ret = Http404(settings.HTTP404_NO_REQUEST)
         exit_api_call(api_code, ret)
         raise ret
 
@@ -701,7 +701,7 @@ def api_get_image(request, opus_id, size='med', fmt='raw'):
     """
     api_code = enter_api_call('api_get_image', request)
     if not request or request.GET is None:
-        ret = Http404('No request')
+        ret = Http404(settings.HTTP404_NO_REQUEST)
         exit_api_call(api_code, ret)
         raise ret
 
@@ -749,7 +749,7 @@ def api_get_files(request, opus_id=None):
     api_code = enter_api_call('api_get_files', request)
 
     if not request or request.GET is None:
-        ret = Http404('No request')
+        ret = Http404(settings.HTTP404_NO_REQUEST)
         exit_api_call(api_code, ret)
         raise ret
 
@@ -809,7 +809,7 @@ def api_get_categories_for_opus_id(request, opus_id):
     api_code = enter_api_call('api_get_categories_for_opus_id', request)
 
     if not request or request.GET is None:
-        ret = Http404('No request')
+        ret = Http404(settings.HTTP404_NO_REQUEST)
         exit_api_call(api_code, ret)
         raise ret
 
@@ -856,7 +856,7 @@ def api_get_categories_for_search(request):
     api_code = enter_api_call('api_get_categories_for_search', request)
 
     if not request or request.GET is None:
-        ret = Http404('No request')
+        ret = Http404(settings.HTTP404_NO_REQUEST)
         exit_api_call(api_code, ret)
         raise ret
 

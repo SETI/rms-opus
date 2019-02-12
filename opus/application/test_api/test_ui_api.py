@@ -15,7 +15,7 @@ log = logging.getLogger(__name__)
 
 settings.CACHE_BACKEND = 'dummy:///'
 
-class ApiSearchTests(TestCase, ApiTestHelper):
+class ApiUITests(TestCase, ApiTestHelper):
 
     # disable error logging and trace output before test
     def setUp(self):
@@ -29,63 +29,6 @@ class ApiSearchTests(TestCase, ApiTestHelper):
     # enable error logging and trace output after test
     def tearDown(self):
         logging.disable(logging.NOTSET)
-
-    def _run_status_equal(self, url, expected):
-        print(url)
-        response = self._get_response(url)
-        self.assertEqual(response.status_code, expected)
-
-    def _run_json_equal(self, url, expected):
-        print(url)
-        response = self._get_response(url)
-        self.assertEqual(response.status_code, 200)
-        jdata = json.loads(response.content)
-        if 'versions' in jdata:
-            del jdata['versions']
-        if 'versions' in expected:
-            del expected['versions']
-        if 'reqno' not in expected:
-            if 'reqno' in jdata:
-                del jdata['reqno']
-        if 'full_search' not in expected:
-            if 'full_search' in jdata:
-                del jdata['full_search']
-
-        print('Got:')
-        print(str(jdata))
-        print('Expected:')
-        print(str(expected))
-        self.assertEqual(expected, jdata)
-
-    def _run_stringsearchchoices_subset(self, url, expected):
-        # Ignore any returned choices that aren't in the expected set
-        # to handle databases that have more stuff in them than we're expecting
-        print(url)
-        response = self._get_response(url)
-        self.assertEqual(response.status_code, 200)
-        jdata = json.loads(response.content)
-        if 'versions' in jdata:
-            del jdata['versions']
-        if 'versions' in expected:
-            del expected['versions']
-        if 'reqno' not in expected:
-            if 'reqno' in jdata:
-                del jdata['reqno']
-        if 'full_search' not in expected:
-            if 'full_search' in jdata:
-                del jdata['full_search']
-        new_choices = []
-        for choice in jdata['choices']:
-            if choice in expected['choices']:
-                new_choices.append(choice)
-        print('Got:')
-        print(str(jdata))
-        print('Expected:')
-        print(str(expected))
-        print('Restricted Got:')
-        print(new_choices)
-        jdata['choices'] = new_choices
-        self.assertEqual(expected, jdata)
 
 
             #####################################
@@ -111,3 +54,13 @@ class ApiSearchTests(TestCase, ApiTestHelper):
         "/__help: bad"
         url = '/opus/__help/bad.html'
         self._run_status_equal(url, 404)
+
+
+            ###############################################
+            ######### /__lastblogupdate API TESTS #########
+            ###############################################
+
+    def test__api_lastblogupdate(self):
+        "/__lastblogupdate: normal"
+        url = '/opus/__lastblogupdate.json'
+        self._run_status_equal(url, 200)
