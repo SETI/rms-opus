@@ -436,7 +436,6 @@ var o_browse = {
                 o_browse.initTable(opus.col_labels);
                 opus.prefs.page.gallery = 1;
                 o_browse.loadBrowseData(1);
-                currentSelectedMetadata = opus.prefs.cols.slice();
             }
         });
 
@@ -511,8 +510,8 @@ var o_browse = {
                 case "submit":
                     break;
                 case "cancel":
-                    opus.prefs.cols = currentSelectedMetadata.slice();
-                    o_browse.resetMetadata(opus.prefs.cols);
+                    opus.prefs.cols = [];
+                    o_browse.resetMetadata(currentSelectedMetadata);
                     break;
             }
         });
