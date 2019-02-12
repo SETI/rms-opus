@@ -603,7 +603,6 @@ var o_browse = {
             $(".gallery-contents > .ps__rail-y").hide();
             $(".dataTable > .ps__rail-y").show();
             o_browse.tableScrollbar.update();
-            console.log(o_browse.tableScrollbar)
         }
     },
 
@@ -819,6 +818,7 @@ var o_browse = {
             page = opus.lastPageDrawn[opus.prefs.view]+1;
         }
         opus.lastLoadBrowseDataRequestNo++;
+        console.log("CALL GETBROWSEURL, CURRENT REQ: " +   opus.lastLoadBrowseDataRequestNo);
         let url = o_hash.getHash() + '&reqno=' + opus.lastLoadBrowseDataRequestNo + view.add_to_url;
         url = base_url + o_browse.updatePageInUrl(url, page);
         return url;
@@ -834,14 +834,18 @@ var o_browse = {
             return;
         }
 
-        let selector = `#${opus.prefs.view} .gallery-contents, .dataTable`;
-        // let selector = `#${opus.prefs.view} .gallery-contents`;
-
+        // let selector = `#${opus.prefs.view} .gallery-contents, .dataTable`;
+        // let selector = `.dataTable`;
+        let selector = `#${opus.prefs.view} .gallery-contents`;
+        console.log("LOAD CALL")
         let url = o_browse.getBrowseURL(page);
 
         // metadata; used for both table and gallery
         start_time = new Date().getTime();
         $.getJSON(url, function(data) {
+            console.log("loadBrowseData return reqno: " + data.reqno);
+            console.log("opus.lastLoadBrowseDataRequestNo reqno: " + opus.lastLoadBrowseDataRequestNo);
+            console.log("URL: " + this.url)
             let request_time = new Date().getTime() - start_time;
             if (data.reqno < opus.lastLoadBrowseDataRequestNo) {
                 return;
@@ -853,6 +857,7 @@ var o_browse = {
                 if (!$(selector).data("infiniteScroll")) {
                     $(selector).infiniteScroll({
                         path: function() {
+                            console.log("PATH CALL: " + this.pageIndex);
                             let path = o_browse.getBrowseURL();
                             return path;
                         },
@@ -861,12 +866,13 @@ var o_browse = {
                         elementScroll: true,
                         history: false,
                         scrollThreshold: 500,
-                        debug: false,
+                        debug: true,
                     });
-                    $(selector).on("load.infiniteScroll", o_browse.infiniteScrollLoadEventListener);
+
                     $(selector).on("request.infiniteScroll", function( event, path ) {
                         $(".table-page-load-status").show();
                     });
+                    $(selector).on("load.infiniteScroll", o_browse.infiniteScrollLoadEventListener);
                 }
             }
 
@@ -885,7 +891,8 @@ var o_browse = {
 
     infiniteScrollLoadEventListener: function( event, response, path ) {
         let data = JSON.parse( response );
-        console.log("return reqno: " + data.reqno);
+        console.log("eventListener return reqno: " + data.reqno);
+        console.log("eventListener path: " + path);
         console.log("opus.lastLoadBrowseDataRequestNo reqno: " + opus.lastLoadBrowseDataRequestNo);
         if ($(`.thumb-page[data-page='${data.page_no}']`).length != 0) {
             console.log(`data.reqno: ${data.reqno}, last reqno: ${opus.lastLoadBrowseDataRequestNo}`);
@@ -918,6 +925,7 @@ var o_browse = {
             // page is higher than the total number of pages, reset it to the last page
             page = opus.pages;
         }
+
         o_browse.loadBrowseData(page);
         o_browse.adjustBrowseHeight();
         o_browse.adjustTableSize();
