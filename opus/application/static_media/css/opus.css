@@ -394,7 +394,7 @@ th.sticky-header {
 .dataTable .ps__rail-x {
 		background-color: transparent !important;
 		left: 0px !important;
-		opacity: 1;
+		opacity: 1 !important;
 }
 
 /* Remove the gap between y-scrollbar and table in table view */
