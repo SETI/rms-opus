@@ -27,7 +27,7 @@
 	<li>Ring Geometry, such as radius, longitude, resolution, and phase angle,
 		  calculated separately for each observation relative to the ring plane of the appropriate planet.
 			<br/>For example,
-			consider <a href="https://tools.pds-rings.seti.org/#/instrument=Cassini+ISS&COISScamera=Narrow+Angle&RINGGEOringradius1=136400.000000&RINGGEOringradius2=136600.000000&RINGGEOresolution2=2&RINGGEOemission1=0&RINGGEOemission2=75&planet=Saturn&qtype-RINGGEOringradius=any&view=search&browse=gallery&colls_browse=gallery&page=1&gallery_data_viewer=true&limit=100&order=time1&cols=opusid,instrument,COISSfilter,time1,RINGGEOringradius1,RINGGEOringradius2,RINGGEOresolution1,RINGGEOresolution2,RINGGEOprojectedradialresolution1,RINGGEOprojectedradialresolution2,RINGGEOphase1,RINGGEOphase2,RINGGEOincidence1,RINGGEOemission1,RINGGEOemission2&widgets=RINGGEOemission1,RINGGEOresolution1,RINGGEOringradius1,COISScamera,instrument,planet&widgets2=&detail=" target="_blank">this query</a>, which searches for:
+			<a href="https://tools.pds-rings.seti.org/#/instrument=Cassini+ISS&COISScamera=Narrow+Angle&RINGGEOringradius1=136400.000000&RINGGEOringradius2=136600.000000&RINGGEOresolution2=2&RINGGEOemission1=0&RINGGEOemission2=75&planet=Saturn&qtype-RINGGEOringradius=any&view=search&browse=gallery&colls_browse=gallery&page=1&gallery_data_viewer=true&limit=100&order=time1&cols=opusid,instrument,COISSfilter,time1,RINGGEOringradius1,RINGGEOringradius2,RINGGEOresolution1,RINGGEOresolution2,RINGGEOprojectedradialresolution1,RINGGEOprojectedradialresolution2,RINGGEOphase1,RINGGEOphase2,RINGGEOincidence1,RINGGEOemission1,RINGGEOemission2&widgets=RINGGEOemission1,RINGGEOresolution1,RINGGEOringradius1,COISScamera,instrument,planet&widgets2=&detail=" target="_blank">this query</a> searches for:
 		<ul>
 			<li>Images taken by Cassini's ISS Narrow-Angle Camera</li>
 			<li>of the Keeler Gap in Saturn's rings (136,400-136,600 km)</li>
@@ -38,7 +38,7 @@
 	<li>Body Surface Geometry, such as longitude, latitude, distance, resolution, and phase angle,
 			calculated separately for each observation for <em>all</em> bodies in the field of view.
 			<br/>For example,
-			consider <a href="https://tools.pds-rings.seti.org/#/surfacegeometrytargetname=Pluto&SURFACEGEOplutophase1=160&SURFACEGEOplutocenterresolution2=5&view=search&browse=gallery&colls_browse=gallery&page=1&gallery_data_viewer=true&limit=100&order=time1&cols=opusid,instrument,time1,SURFACEGEOplutoplanetographiclatitude1,SURFACEGEOplutoplanetographiclatitude2,SURFACEGEOplutoIAUwestlongitude1,SURFACEGEOplutoIAUwestlongitude2,SURFACEGEOplutocenterdistance1,SURFACEGEOplutocenterresolution1,SURFACEGEOplutophase1,SURFACEGEOplutophase2&widgets=SURFACEGEOplutocenterresolution1,SURFACEGEOplutophase1,surfacegeometrytargetname&widgets2=&detail=" target="_blank">this query</a>, which searches for:
+			<a href="https://tools.pds-rings.seti.org/#/surfacegeometrytargetname=Pluto&SURFACEGEOplutophase1=160&SURFACEGEOplutocenterresolution2=5&view=search&browse=gallery&colls_browse=gallery&page=1&gallery_data_viewer=true&limit=100&order=time1&cols=opusid,instrument,time1,SURFACEGEOplutoplanetographiclatitude1,SURFACEGEOplutoplanetographiclatitude2,SURFACEGEOplutoIAUwestlongitude1,SURFACEGEOplutoIAUwestlongitude2,SURFACEGEOplutocenterdistance1,SURFACEGEOplutocenterresolution1,SURFACEGEOplutophase1,SURFACEGEOplutophase2&widgets=SURFACEGEOplutocenterresolution1,SURFACEGEOplutophase1,surfacegeometrytargetname&widgets2=&detail=" target="_blank">this query</a> searches for:
 		<ul>
 			<li>All observations of Pluto</li>
 			<li>at high phase (&gt; 160&deg;)</li>
@@ -47,80 +47,121 @@
 	</li>
 	<li>Observation Type, such as "Image", "Spectrum", or "Spectral Time Series".</li>
 	<li>Measurement Quantity, such as "Reflectivity" or "Optical Depth".</li>
-	<li>Image attributes, such as size in pixels or number possible levels.</li>
+	<li>Image attributes, such as size in pixels, image type, and exposure duration.</li>
 	<li>Wavelength attributes, such as wavelength range and resolution, which permit
 		  searching for observations in a particular bandpass across instruments and
 			filters.</li>
 </ul>
 
-<p>OPUS supplies data from the following missions and instruments:</p>
+<p>OPUS supplies data from the following missions and instruments. In addition
+  to the data supplied by the instrument teams, OPUS provides calibrated images
+  for Cassini ISS and Voyager ISS.
+</p>
 
-<ul>
-	<li><a href="https://solarsystem.nasa.gov/missions/cassini/mission/spacecraft/cassini-orbiter/" target="_blank">Cassini</a>
-		  (Flew past Jupiter in 2001, orbited Saturn from 2004-2017)
-		<ul>
-			<li><a href="https://solarsystem.nasa.gov/missions/cassini/mission/spacecraft/cassini-orbiter/composite-infrared-spectrometer/" target="_blank">CIRS</a>
-			  	(Composite Infrared Spectrometer)
-			</li>
-			<li><a href="https://solarsystem.nasa.gov/missions/cassini/mission/spacecraft/cassini-orbiter/imaging-science-subsystem/" target="_blank">ISS</a>
-					(Imaging Science Subsystem) - the primary image cameras
-			</li>
-			<li><a href"https://solarsystem.nasa.gov/missions/cassini/mission/spacecraft/cassini-orbiter/ultraviolet-imaging-spectrograph/" target="_blank">UVIS</a>
-				  (Ultraviolet Imaging Spectrograph)
-			</li>
-			<li><a href="https://solarsystem.nasa.gov/missions/cassini/mission/spacecraft/cassini-orbiter/visible-and-infrared-mapping-spectrometer/" target="_blank">VIMS</a>
-				  (Visible and Infrared Mapping Spectrometer)
-			</li>
-		</ul>
-	</li>
-	<li><a href="https://solarsystem.nasa.gov/missions/galileo/overview/" target="_blank">Galileo</a>
-		  (orbited Jupiter from 1995-2003)
-		<ul>
-			<li><a href="https://nssdc.gsfc.nasa.gov/nmc/experiment/display.action?id=1989-084B-10" target="_blank">SSI</a>
-			    (Solid-State Imaging) - the primary image camera
-			</li>
-		</ul>
-	</li>
-	<li><a href="https://voyager.jpl.nasa.gov/mission/" target="_blank">Voyager 1 and 2</a>
-			(Flew past Jupiter in 1977-1978 and Saturn in 1980-1981; Voyager 2 continued past Uranus in 1986 and Neptune in 1989)
-		<ul>
-			<li><a href="https://voyager.jpl.nasa.gov/mission/spacecraft/instruments/iss/" target="_blank">ISS</a>
-					(Imaging Science Subsystem) - the primary image cameras
-			</li>
-		</ul>
-	</li>
-	<li><a href="http://pluto.jhuapl.edu/Mission/The-New-Horizons-Mission.php" target="_blank">New Horizons</a>
-		  (flew past Jupiter in 2007, Pluto in 2016, and MU69 in 2019)
-		<ul>
-			<li><a href="http://pluto.jhuapl.edu/Mission/Spacecraft/Payload.php" target="_blank">LORRI</a>
-				  (Long Range Reconnaissance Imager) - the primary image camera
-			</li>
-			<li><a href="http://pluto.jhuapl.edu/Mission/Spacecraft/Payload.php" target="_blank">MVIC</a>
-				  (Multispectral Visible Imaging Camera)
-			</li>
-		</ul>
-	</li>
-	<li><a href="https://www.nasa.gov/mission_pages/hubble/main/index.html" target="_blank">The Hubble Space Telescope</a>
-		  (in Earth orbit)
-		<ul>
-			<li><a href="http://www.stsci.edu/hst/acs" target="_blank">ACS</a>
-				  (Advanced Camera for Surveys)
-			</li>
-			<li><a href="http://www.stsci.edu/hst/nicmos/" target="_blank">NICMOS</a>
-				  (Near Infrared Camera and Multi-Object Spectrometer)
-			</li>
-			<li><a href="http://www.stsci.edu/instruments/stis/" target="_blank">STIS</a>
-				  (Space Telescope Imaging Spectrograph)
-			</li>
-			<li><a href="http://www.stsci.edu/hst/wfc3" target ="_blank">WFC3</a>
-				  (Wide-Field Camera 3)
-			</li>
-			<li><a href="http://www.stsci.edu/hst/wfpc2" target="_blank">WFPC2</a>
-				  (Wide-Field Planetary Camera 2)
-			</li>
-		</ul>
-	</li>
-</ul>
+<table border="1">
+  <tr>
+    <th>Mission</th>
+    <th>Instrument</th>
+  </tr>
+  <tr>
+    <td rowspan="4" valign="top">
+      <a href="https://solarsystem.nasa.gov/missions/cassini/mission/spacecraft/cassini-orbiter/" target="_blank">Cassini</a><br>
+		  Jupiter: 2001<br>
+      Saturn: 2004-2017
+    </td>
+    <td>
+      <a href="https://solarsystem.nasa.gov/missions/cassini/mission/spacecraft/cassini-orbiter/composite-infrared-spectrometer/" target="_blank">CIRS</a>
+	  	(Composite Infrared Spectrometer)
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <a href="https://solarsystem.nasa.gov/missions/cassini/mission/spacecraft/cassini-orbiter/imaging-science-subsystem/" target="_blank">ISS</a>
+			(Imaging Science Subsystem)
+    </td>
+  </tr>
+  <tr>
+		<td>
+      <a href="https://solarsystem.nasa.gov/missions/cassini/mission/spacecraft/cassini-orbiter/ultraviolet-imaging-spectrograph/" target="_blank">UVIS</a>
+		  (Ultraviolet Imaging Spectrograph)
+    </td>
+  </tr>
+  <tr>
+		<td>
+      <a href="https://solarsystem.nasa.gov/missions/cassini/mission/spacecraft/cassini-orbiter/visible-and-infrared-mapping-spectrometer/" target="_blank">VIMS</a>
+		  (Visible and Infrared Mapping Spectrometer)
+    </td>
+  </tr>
+  <tr>
+    <td rowspan="2" valign="top"><a href="http://pluto.jhuapl.edu/Mission/The-New-Horizons-Mission.php" target="_blank">New Horizons</a><br>
+	    Jupiter: 2007<br>
+      Pluto: 2016<br>
+      MU69: 2019
+    </td>
+    <td>
+      <a href="http://pluto.jhuapl.edu/Mission/Spacecraft/Payload.php" target="_blank">LORRI</a> (Long Range Reconnaissance Imager)
+    </td>
+  <tr>
+		<td>
+      <a href="http://pluto.jhuapl.edu/Mission/Spacecraft/Payload.php" target="_blank">MVIC</a>
+		  (Multispectral Visible Imaging Camera)
+    </td>
+  </tr>
+  <tr>
+    <td><a href="https://voyager.jpl.nasa.gov/mission/" target="_blank">Voyager 1 and 2</a><br>
+			Jupiter: 1977-1978<br>
+      Saturn: 1980-1981<br>
+      Uranus: 1986 (Voyager 2)<br>
+      Neptune: 1989 (Voyager 2)
+    </td>
+    <td valign="top">
+      <a href="https://voyager.jpl.nasa.gov/mission/spacecraft/instruments/iss/" target="_blank">ISS</a>
+			(Imaging Science Subsystem)
+    </td>
+  </tr>
+  <tr>
+    <td rowspan="5" valign="top">
+      <a href="https://www.nasa.gov/mission_pages/hubble/main/index.html" target="_blank">Hubble Space Telescope</a><br>
+	    (in Earth orbit)
+    </td>
+		<td>
+      <a href="http://www.stsci.edu/hst/acs" target="_blank">ACS</a>
+		  (Advanced Camera for Surveys)
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <a href="http://www.stsci.edu/hst/nicmos/" target="_blank">NICMOS</a>
+		  (Near Infrared Camera and Multi-Object Spectrometer)
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <a href="http://www.stsci.edu/instruments/stis/" target="_blank">STIS</a>
+		  (Space Telescope Imaging Spectrograph)
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <a href="http://www.stsci.edu/hst/wfc3" target ="_blank">WFC3</a>
+		  (Wide-Field Camera 3)
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <a href="http://www.stsci.edu/hst/wfpc2" target="_blank">WFPC2</a>
+		  (Wide-Field Planetary Camera 2)
+    </td>
+  </tr>
+  <tr>
+    <td><a href="https://solarsystem.nasa.gov/missions/galileo/overview/" target="_blank">Galileo</a><br>
+		  Jupiter: 1996-2002
+    </td>
+    <td valign="top"><a href="https://nssdc.gsfc.nasa.gov/nmc/experiment/display.action?id=1989-084B-10" target="_blank">SSI</a>
+			    (Solid-State Imaging)
+    </td>
+  </tr>
+</table>
 
 <p>Please note that OPUS works best with a browser size greater than X by Y. We
 	 support Firefox (VV and higher), Chrome (VV and higher), and Safari (VV and higher).

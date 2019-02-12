@@ -87,6 +87,7 @@ def api_help(request, page):
     return ret
 
 
+@never_cache
 def api_last_blog_update(request):
     """Return the date of the last blog update.
 
