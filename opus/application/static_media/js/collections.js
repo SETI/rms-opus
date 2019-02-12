@@ -9,6 +9,26 @@ var o_collections = {
      *
      **/
      collectionBehaviors: function() {
+         // nav bar
+         $("#collection").on("click", ".download_csv", function() {
+             $(this).attr("href", "/opus/__collections/data.csv?"+ o_hash.getHash());
+         });
+
+         $("#collection").on("click", ".downloadData", function() {
+             o_collections.downloadZip("create_zip_data_file", "Internal error creating data zip file");
+         });
+
+         $("#collection").on("click", ".downloadURL", function() {
+             o_collections.downloadZip("create_zip_url_file", "Internal error creating URL zip file");
+         });
+         $("#collection").on("click", ".metadataModal", function() {
+
+         });
+         $("#collection").on("click", ".emptyCart", function() {
+             if (confirm("Are you sure you want to delete all observations in your cart?")) {
+                 o_collections.emptyCollection();
+             }
+         });
 
         // collection details hide/show
          $("#collection").on("click", "#collection_summary_more", function() {
@@ -32,31 +52,6 @@ var o_collections = {
                  $("#total_download_count").fadeOut().html(info.total_download_count).fadeIn();
                  $("#total_download_size").fadeOut().html(info.total_download_size_pretty).fadeIn();
              });
-         });
-
-         // Download CSV button - create CSV file with currently chosen columns
-         $("#collection").on("click", ".download_csv", function() {
-             $(this).attr("href", "/opus/__collections/data.csv?"+ o_hash.getHash());
-         });
-
-         // Download Zipped Data Archive button
-         $("#collection").on("click", "#create_zip_data_file", function() {
-             o_collections.downloadZip("create_zip_data_file", "Internal error creating data zip file");
-             return false;
-         });
-
-         // Download Zipped URL Archive button
-         $("#collection").on("click", "#create_zip_url_file", function() {
-             o_collections.downloadZip("create_zip_url_file", "Internal error creating URL zip file");
-             return false;
-         });
-
-         // empty collection button
-         $("#collection").on("click", "#empty_collection", function() {
-             if (confirm("Are you sure you want to delete all observations in your cart?")) {
-                 o_collections.emptyCollection();
-             }
-             return false;
          });
      },
 

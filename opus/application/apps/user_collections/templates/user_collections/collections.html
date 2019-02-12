@@ -5,29 +5,6 @@
 			<!-- <p>Total Files: <span id="total_files">{{ download_count }}</span></p> -->
 			<p>Total Size (before zip): <span id="total_download_size">{{ total_download_size_pretty }}</span></p>
 
-			<p><a class="download_csv" target="_blank" href="#">Download CSV of Selected Metadata</a></p>
-
-			<div class="button-container">
-				<button type="button" class="btn btn-info" id="create_zip_data_file" data-toggle="button" aria-pressed="false" >
-					Download Zipped Data Archive
-					<span class="spinner">&nbsp;</span>
-				</button>
-				<button type="button" class="btn btn-info" id="create_zip_url_file" data-toggle="button" aria-pressed="false" >
-					Download Zipped URL Archive
-					<span class="spinner">&nbsp;</span>
-				</button>
-			</div>
-
-			<ul class="zipped_files"></ul>
-
-			<h3>
-				<a href="" id="empty_collection">
-					<button type="button" class="btn btn-sm btn-danger">
-						Empty Cart
-					</button>
-				</a>
-			</h3>
-			
 			<div id="download_options">
 				{% for product_cat, product_list in product_cat_list %}
 					<h4>{{ product_cat }}</h4>
