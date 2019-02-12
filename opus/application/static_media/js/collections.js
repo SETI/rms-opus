@@ -10,18 +10,19 @@ var o_collections = {
      **/
      collectionBehaviors: function() {
          // nav bar
-         $("#collection").on("click", ".download_csv", function() {
-             $(this).attr("href", "/opus/__collections/data.csv?"+ o_hash.getHash());
+         $("#collection").on("click", ".download_csv", function(e) {
+             window.open(`/opus/__collections/data.csv?${o_hash.getHash()}`, '_blank');
+             //$(this).attr("href", "/opus/__collections/data.csv?"+ o_hash.getHash());
          });
 
-         $("#collection").on("click", ".downloadData", function() {
+         $("#collection").on("click", ".downloadData", function(e) {
              o_collections.downloadZip("create_zip_data_file", "Internal error creating data zip file");
          });
 
-         $("#collection").on("click", ".downloadURL", function() {
+         $("#collection").on("click", ".downloadURL", function(e) {
              o_collections.downloadZip("create_zip_url_file", "Internal error creating URL zip file");
          });
-         $("#collection").on("click", ".metadataModal", function() {
+         $("#collection").on("click", ".metadataModal", function(e) {
 
          });
          $("#collection").on("click", ".emptyCart", function() {
@@ -78,8 +79,9 @@ var o_collections = {
          if (opus.download_in_process) {
              return false;
          }
+         $("#download_links").show();
          opus.download_in_process = true;
-         $(".spinner", `#${type}`).fadeIn().css("display","inline-block");
+         $(".spinner", "#download_links").fadeIn().css("display","inline-block");
 
          let add_to_url = o_collections.getDownloadFiltersChecked();
          let url = "/opus/__collections/download.json?" + add_to_url + "&" + o_hash.getHash();
@@ -89,15 +91,15 @@ var o_collections = {
              dataType: "json",
              success: function(data){
                  if (data.error !== undefined) {
-                     $(`<li>${data.error}</li>`).hide().prependTo("ul.zipped_files", "#collections_summary").slideDown("fast");
+                     $(`<li>${data.error}</li>`).hide().prependTo("ul.zippedFiles", "#collections_summary").slideDown("fast");
                  } else {
-                     $(`<li><a href = "${data.filename}">${data.filename}</a></li>`).hide().prependTo("ul.zipped_files", "#collections_summary").slideDown("slow");
+                     $(`<li><a href = "${data.filename}">${data.filename}</a></li>`).hide().prependTo("ul.zippedFiles", "#collections_summary").slideDown("slow");
                  }
-                 $(".spinner", "#collections_summary").fadeOut();
+                 $(".spinner", "#download_links").fadeOut();
              },
              error: function(e) {
-                 $(".spinner", "#collections_summary").fadeOut();
-                 $(`<li>${errorMsg}</li>`).hide().prependTo("ul.zipped_files", "#collections_summary").slideDown("fast");
+                 $(".spinner", "#download_links").fadeOut();
+                 $(`<li>${errorMsg}</li>`).hide().prependTo("ul.zippedFiles", "#collections_summary").slideDown("fast");
              },
              complete: function() {
                  opus.download_in_process = false;
@@ -174,7 +176,7 @@ var o_collections = {
     getCollectionsTab: function() {
         o_browse.renderMetadataSelector();   // just do this in background so there's no delay when we want it...
         if (opus.collection_change) {
-            var zipped_files_html = $(".zipped_files", "#collection").html();
+            var zippedFiles_html = $(".zippedFiles", "#collection").html();
 
             // don't forget to remove existing stuff before append
             $(".gallery", "#collection").html("");
@@ -198,8 +200,8 @@ var o_collections = {
 
                     o_collections.loadCollectionData();
 
-                    if (zipped_files_html) {
-                        $(".zipped_files", "#collection").html(zipped_files_html);
+                    if (zippedFiles_html) {
+                        $(".zippedFiles", "#collection").html(zippedFiles_html);
                     }
                     o_collections.adjustProductInfoHeight();
                 }
@@ -213,12 +215,12 @@ var o_collections = {
 
     emptyCollection: function() {
         // change indicator to zero and let the server know:
-        // FIX ME - this is becoming a JSON
         $.getJSON("/opus/__collections/reset.json", function(data) {
             $("#collection_count").html("0");
             opus.colls_pages = 0;
             opus.collection_change = true;
-            o_collections.getCollectionsTab();
+            $("#collection .navbar").hide();
+            opus.changeTab("collection");
         });
 
         $(".thumbnail-container.in").removeClass("in");

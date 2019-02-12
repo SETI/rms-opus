@@ -283,11 +283,11 @@ var o_browse = {
             return false;
         });
 
-        $(document).on("keydown",function(e) {
+        $(document).on("keydown click", function(e) {
+            o_browse.hideMenu();
             if ((e.which || e.keyCode) == 27) { // esc - close modals
                 $("#galleryView").modal('hide');
                 $("#metadataSelector").modal('hide')
-                o_browse.hideMenu();
             }
             if ($("#galleryView").hasClass("show")) {
                 /*  Catch the right/left arrow while in the modal
