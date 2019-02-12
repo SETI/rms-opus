@@ -7,9 +7,9 @@ from typing import List, Dict, Optional, Match, Tuple, Pattern, Callable, Any
 
 from markupsafe import Markup
 
-import Slug
-from LogEntry import LogEntry
-from QueryHandler import QueryHandler, ColumnSlugInfo
+import slug as Slug
+from log_entry import LogEntry
+from query_handler import QueryHandler, ColumnSlugInfo
 
 SESSION_INFO = Tuple[List[str], Optional[str]]
 

@@ -8,8 +8,7 @@ from typing import Dict, Tuple, List, Optional, Any, cast
 
 from markupsafe import Markup
 
-import Slug
-from Slug import Flags
+import slug as Slug
 
 SearchSlugInfo = Dict[Slug.Family, List[Tuple[Slug.Info, str]]]
 ColumnSlugInfo = Dict[Slug.Family, Slug.Info]
@@ -337,7 +336,7 @@ class QueryHandler:
         else:
             return '~' if value is None else '"' + value + '"'
 
-    def __get_postscript(self, flags: Flags) -> str:
+    def __get_postscript(self, flags: Slug.Flags) -> str:
         if not flags:
             return ''
         elif self._uses_html:

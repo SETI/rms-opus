@@ -4,10 +4,10 @@ import operator
 import sys
 from typing import List, Optional
 
-import Slug
-from LogEntry import LogReader
-from LogParser import LogParser
-from SessionInfo import SessionInfoGenerator
+import slug as Slug
+from log_entry import LogReader
+from log_parser import LogParser
+from session_info import SessionInfoGenerator
 
 DEFAULT_FIELDS_PREFIX = 'https://tools.pds-rings.seti.org'
 LOCAL_SLUGS_PREFIX = 'file:///users/fy/SETI/pds-opus'

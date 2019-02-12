@@ -10,9 +10,9 @@ from typing import List, Iterator, Dict, NamedTuple, Optional, Tuple, Iterable, 
 
 from jinja2 import Environment, FileSystemLoader, StrictUndefined
 
-import Slug
-from LogEntry import LogEntry
-from SessionInfo import SessionInfo, SessionInfoGenerator, ActionFlags
+from log_entry import LogEntry
+from session_info import SessionInfo, SessionInfoGenerator, ActionFlags
+from slug import Info
 
 
 class _LiveSession(NamedTuple):
@@ -247,7 +247,7 @@ class LogParser:
                     if entry_info:
                         current_session_entries.append(create_session_entry(entry, entry_info, opus_url))
 
-                def slug_info(info: Dict[str, Slug.Info]) -> List[Tuple[str, bool]]:
+                def slug_info(info: Dict[str, Info]) -> List[Tuple[str, bool]]:
                     return [(slug, info[slug].flags.is_obsolete())
                             for slug in sorted(info, key=str.lower)
                             # Rob doesn't want to see slugs that start with 'qtype-' in the list.

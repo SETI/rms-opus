@@ -10,7 +10,7 @@ from collections import deque, defaultdict
 from operator import attrgetter
 from typing import List, Optional, NamedTuple, Iterable, TextIO, Tuple, Dict
 
-from LogEntry import LogReader, LogEntry
+from log_entry import LogReader, LogEntry
 
 ERROR_PATTERN = re.compile(r'^\[([^\]]+)\] \[([^\]]+)\] \[([^\]]+)\] \[(client|remote) ([^\]]+):\d+\] (.*)$')
 
