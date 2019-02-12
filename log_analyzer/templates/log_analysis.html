@@ -5,23 +5,14 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
-{% if uses_local %}
-  <link rel="stylesheet" href="bootstrap/4.1.3/css/bootstrap.css">
-  <script src="/jquery/3.3.1/jquery.min.js"></script>
-  <script src="/popper/1.14.3/js/popper.min.js"></script>
-  <script src="/bootstrap/4.1.3/js/bootstrap.js"></script>
-<!--
-{% endif %}
   <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css">
   <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.1/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js"></script>
   <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.min.js"></script>
-{% if uses_local %}
- -->
-{% endif %}
 
 <style>
+{% raw %}
 @media (min-width: 768px){
   #left {
     position: absolute;
@@ -80,7 +71,7 @@ span.la-has-download:before {
 span.la-has-obsolete-slug:before {
     content: "\29bc";
 }
-
+{% endraw %}
 </style>
 </head>
 <body>
@@ -110,148 +101,126 @@ because it requires that all the navigation tabs be within a single unordered li
 
 <div id="ByIP" class="tab-pane show active">
 
-{% spaceless %}
+{% macro print_flags(session, full) %}
+    {% for flag in action_flags_list %}
+        {% if flag in session.action_flags %}
+            <td><span class="la-{{ flag.as_html_classname() }}">&zwj;</span></td>
+        {% elif full %}
+            <td><span class="la-{{ flag.as_html_classname() }} la-hidden">&zwj;</span></td>
+        {% else %}
+            <td></td>
+        {% endif %}
+    {% endfor %}
+{% endmacro %}
+
+{% macro host_info_ip_or_name(host_info) %}
+    {% if host_info.name %}
+        <a data-toggle="tooltip" title="{{ host_info.ip }}"> {{host_info.name}}</a>
+    {% else %}
+        {{ host_info.ip }}
+    {% endif %}
+{% endmacro %}
 
 {% for host_info in host_infos_by_ip %}
-    {% if not forloop.first %}<hr/>{% endif %}
-    {% if host_info.name %}
-        <a data-toggle="tooltip" title="{{ host_info.ip }}"><strong>{{host_info.name}}</strong></a>
-    {% else %}
-        <span><strong>{{ host_info.ip }}</strong></span>
-    {% endif %}
-    <span> ({{ host_info.total_time }})</span>
+    {% if not loop.first %}<hr/>{% endif %}
+    {{ host_info_ip_or_name(host_info) }}
+    ({{ host_info.total_time() }})
     <table>
         {% for session in host_info.sessions %}
-           <tr>
-           {% for flag in action_flags_list %}
-                {% if flag in session.action_flags %}
-                    <td><span class="la-{{ flag.as_html_classname }}">&zwj;</span></td>
-                {% elif forloop.parentloop.first %}
-                    <td><span class="la-{{ flag.as_html_classname }} la-hidden">&zwj;</span></td>
-                {% else %}
-                    <td></td>
-                {%endif%}
-           {% endfor %}
+           <tr>{{ print_flags(session, loop.first) }}
            <td><a href="#" class=SessionLink data-target="#{{ session.id }}">
-                    <span>{{ session.start_time | date:'Y M d H:i:s' }} ({{ session.duration }})</span>
-           </a></td>
+                    {{ session.start_time().strftime("%Y %b %d %H:%M:%S") }} ({{ session.duration() }})</a></td>
            </tr>
         {% endfor %}
     </table>
 
 {% endfor %}
-{% endspaceless %}
 </div>
 
 <div id="ByTime" class="tab-pane">
-{% spaceless %}
-{% regroup host_infos_by_time by start_time.date as host_infos_by_day %}
-{% for day, host_infos_for_day in host_infos_by_day %}
-    {% if not forloop.first %}<hr/>{% endif %}
-    <h4>{{ day | date:'Y M d' }}</h4>
+{% for day, host_infos_for_day in host_infos_by_date %}
+    {% if not loop.first %}<hr/>{% endif %}
+    <h4>{{ day.strftime("%Y %b %d") }}</h4>
     <table>
     {% for host_info in host_infos_for_day %}
-        <tr>
-        {% with session=host_info.sessions.0 %}
-            {% for flag in action_flags_list %}
-                {% if flag in session.action_flags %}
-                    <td><span class="la-{{ flag.as_html_classname }}">&zwj;</span></td>
-                {% elif forloop.parentloop.first %}
-                    <td><span class="la-{{ flag.as_html_classname }} la-hidden">&zwj;</span></td>
-                {% else %}
-                    <td></td>
-                {%endif%}
-            {% endfor %}
-            <td><a href="#" class=SessionLink data-target="#{{ session.id }}">
-                <span>{{ session.start_time | date:'H:i:s' }}&nbsp;({{ host_info.total_time }})</span>
-                </a>
-            {% if host_info.name %}
-                <a data-toggle="tooltip" title="{{ host_info.ip }}"> {{host_info.name}}</a>
-            {% else %}
-                <span> {{ host_info.ip }}</span>
-            {% endif %}
-            </td>
-        {% endwith %}
+        {% set session = host_info.sessions[0] %}
+        <tr>{{ print_flags(session, loop.first) }}
+        <td><a href="#" class=SessionLink data-target="#{{ session.id }}">
+               {{ session.start_time().strftime("%H:%M:%S") }}&nbsp;({{ session.duration() }})</a>
+               {{ host_info_ip_or_name(host_info) }}
+        </td>
         </tr>
     {% endfor %}
     </table>
 {% endfor %}
 
-{% endspaceless %}
-</div>  {% comment %} #ByTime {% endcomment %}
-</div>  {% comment %} Tab Content containing #ByIp and #ByTime {% endcomment %}
-</div>  {% comment %} #left {% endcomment %}
+</div>  ## #ByTime
+</div>  ## Tab Content containing #ByIp and #ByTime
+</div>  ## #left
+
+{% macro print_slugs(session) %}
+     <ul class="list-unstyled">
+     {% for type, slug_info in session.slug_info() %}
+         <li>
+         <b>{{ type.title() }} Slugs: </b>
+         {% for slug_name, is_obsolete in slug_info %}
+             <span class="{{'text-danger' if is_obsolete else 'text-dark'}}">{{ slug_name }}</span>
+             {{- '' if loop.last else ', ' }}  ## minus sign kills the spaces before the comma
+         {% else %}
+             <i>none</i>
+         {% endfor %}
+         </li>
+     {% endfor %}
+     </ul>
+{% endmacro %}
+
+{% macro print_session_entries(session) %}
+    <table>
+    {% for entry in session.entries %}
+        {% for line in entry.data %}
+        <tr>
+            {% if loop.first %}
+                {% if entry.opus_url %}
+                    <td><a href="{{ api_host_url ~ entry.opus_url }}" target="_blank">{{ entry.relative_start_time }}</a></td>
+                {% else %}
+                    <td>{{ entry.relative_start_time }}</td>
+                {% endif %}
+                <td><a data-toggle="tooltip" href="#" title="{{ entry.target_url() }}">&bull;</a></td>
+            {% else %}
+                <td></td><td></td>
+            {% endif %}
+            <td>{{ line }}</td>
+        </tr>
+        {% endfor %}
+     {% endfor %}
+     </table>
+{% endmacro %}
 
 <div class="col-sm-9" id="right">
 <div class="tab-content">
-{% spaceless %}
-{% for host_info in host_infos_by_time %}
-    {% with session=host_info.sessions.0 %}
-        <div id="{{ session.id }}" class="SessionInfo tab-pane">
-        <h3>{{ host_info.hostname }} at {{ session.entries.0.log_entry.time | date:'Y M d H:i:s O' }}</h3>
-        <ul class="list-unstyled">
-        {% for type, slug_info in session.slug_info %}
-            <li>
-            <b>{{ type | capfirst }} Slugs: </b>
-            {% for slug_name, is_obsolete in slug_info %}
-                <span {% if is_obsolete %}class="text-danger"{% else %}class="text-dark"{% endif %}>{{ slug_name }}</span>
-                {% if not forloop.last %}<span>, </span>{% endif %}
-            {% empty %}
-                <i>none</i>
-            {% endfor %}
-            </li>
-        {% endfor %}
-        </ul>
+{% for host_info in host_infos_by_ip %}
+    {% for session in host_info.sessions %}
+    <div id="{{ session.id }}" class="SessionInfo tab-pane">
+        <h3>{{ host_info.hostname() }} at {{ host_info.start_time().strftime("%Y %b %d %H:%M:%S %z") }}</h3>
+        {{ print_slugs(session) }}
         <hr/>
-        <table>
-        {% for entry in session.entries %}
-            {% for line in entry.data %}
-                <tr>
-                {% if forloop.first %}
-                    {% if entry.opus_url %}
-                        <td><a href="{{ api_host_url | safe }}{{ entry.opus_url | safe }}" target="_blank">
-                        <span>{{ entry.relative_start_time }}</span>
-                        </a></td>
-                    {% else %}
-                        <td>{{ entry.relative_start_time }}</td>
-                    {% endif %}
-                    <td><a data-toggle="tooltip" href="#" title="{{ entry.target_url }}">&bull;</a></td>
-                {% else %}
-                    <td></td><td></td>
-                {% endif %}
-                <td>{{ line }}</td>
-                </tr>
-            {% endfor %}
-        {% endfor %}
-        </table>
-        </div>
-    {% endwith %}
+        {{ print_session_entries(session) }}
+    </div>
+    {% endfor %}
 {% endfor %}
-{% endspaceless %}
-</div>  {% comment %} class=tabContent {% endcomment %}
-</div>  {% comment %} #right {% endcomment %}
-</div>  {% comment %} class=row {% endcomment %}
-</div>  {% comment %} class=container {% endcomment %}
+</div>  ## class=tabContent
+</div>  ## #right
+</div>  ## class=row
+</div>  ## class=container
 
 <script>
-
-{% comment This was fun, but it doesn't work on all screens %}
-    function addGlyphs(name, glyph) {
-       $(`span.la-${name}`).addClass('glyphicon').addClass(`glyphicon-${glyph}`).before('&MediumSpace;')
-    }
-    addGlyphs('has-search', 'search')
-    addGlyphs('has-download', 'download')
-    addGlyphs('has-obsolete-slug', 'warning-sign')
-    addGlyphs('fetched-image', 'picture')
-    addGlyphs('fetched-table', 'th-list')
-{% endcomment %}
 
 
 $(function() {
     $('[data-toggle="tooltip"]').tooltip();
     $('#right [data-toggle="tooltip"]').data('placement', 'right');
 
-{% comment Alternative ways of doing the glyphs that we might want to consider in the future. %}
+{# Alternative ways of doing the glyphs that we might want to consider in the future. %}
     function addGlyphs(name, value) {
        $(`span.la-${name}`).html(`${value}`)
     }
@@ -269,7 +238,7 @@ $(function() {
     addGlyphs('fetched-table', 'fa-list-ul')
     addGlyphs('has-download', 'fa-file-download')
     addGlyphs('has-obsolete-slug', 'fa-times-circle')
-{% endcomment %}
+#}
 
     $('.SessionLink').click(function() {
         var target = $(this).data('target');
