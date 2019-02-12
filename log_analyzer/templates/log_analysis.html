@@ -6,7 +6,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
   <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css">
+{% if uses_glyphs %}
   <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.1/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
+{% endif %}
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js"></script>
   <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.min.js"></script>
@@ -92,7 +94,6 @@ because it requires that all the navigation tabs be within a single unordered li
 {% set marker_to_glyph = { "has-search": "search", "has-columns": "images", "fetched-gallery": "list-ul",
                             "has-download": "file-download;", "has-obsolete-slug" : "times-circle" }
 %}
-{% set marker_to_code = marker_to_glyph if uses_glyphs else marker_to_letter %}
 
 {% macro print_flags(session, full) %}
     {% for flag in action_flags_list %}
