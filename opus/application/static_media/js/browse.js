@@ -411,16 +411,15 @@ var o_browse = {
         opus.prefs.cols.push(slug);
     },
 
-    resetToDefaultMetadata: function() {
+    resetMetadata: function(cols) {
         // uncheck all on left; we will check them as we go
         $("#metadataSelector .allMetadata .fa-check").hide();
 
         // remove all from selected column
         $("#metadataSelector .selectedMetadata li").remove();
-        opus.prefs.cols = [];
 
         // add them back and set the check
-        $.each(default_columns.split(','), function(index, slug) {
+        $.each(cols, function(index, slug) {
             o_browse.addColumn(slug);
         });
     },
@@ -428,22 +427,22 @@ var o_browse = {
     // column chooser behaviors
     addMetadataSelectorBehaviors: function() {
         // this is a global
-        var currentselectedMetadata = opus.prefs.cols.slice();
+        var currentSelectedMetadata = opus.prefs.cols.slice();
 
         $("#metadataSelector").on("hide.bs.modal", function(e) {
             // update the data table w/the new columns
-            if (!o_utils.areObjectsEqual(opus.prefs.cols, currentselectedMetadata)) {
+            if (!o_utils.areObjectsEqual(opus.prefs.cols, currentSelectedMetadata)) {
                 o_browse.resetData();
                 o_browse.initTable(opus.col_labels);
                 opus.prefs.page.gallery = 1;
                 o_browse.loadBrowseData(1);
-                currentselectedMetadata = opus.prefs.cols.slice();
+                currentSelectedMetadata = opus.prefs.cols.slice();
             }
         });
 
         $("#metadataSelector").on("show.bs.modal", function(e) {
             // save current column state so we can look for changes
-            currentselectedMetadata = opus.prefs.cols.slice();
+            currentSelectedMetadata = opus.prefs.cols.slice();
         });
 
         $("#metadataSelector").on("shown.bs.modal", function () {
@@ -506,13 +505,14 @@ var o_browse = {
         $("#metadataSelector").on("click", ".btn", function() {
             switch($(this).attr("type")) {
                 case "reset":
-                    o_browse.resetToDefaultMetadata();
+                    opus.prefs.cols = [];
+                    o_browse.resetMetadata(default_columns.split(','));
                     break;
                 case "submit":
                     break;
                 case "cancel":
-                    // add an "are you sure?" here...
-                    currentselectedMetadata = opus.prefs.cols;
+                    opus.prefs.cols = currentSelectedMetadata.slice();
+                    o_browse.resetMetadata(opus.prefs.cols);
                     break;
             }
         });
