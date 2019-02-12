@@ -56,21 +56,6 @@
 span.la-hidden {
     visibility: hidden;
 }
-span.la-has-search:before {
-    content: "S";
-}
-span.la-has-columns:before {
-    content: "C";
-}
-span.la-fetched-gallery:before {
-    content: "G";
-}
-span.la-has-download:before {
-    content: "\2913";
-}
-span.la-has-obsolete-slug:before {
-    content: "\29bc";
-}
 {% endraw %}
 </style>
 </head>
@@ -101,12 +86,40 @@ because it requires that all the navigation tabs be within a single unordered li
 
 <div id="ByIP" class="tab-pane show active">
 
+{% set marker_to_letter = { "has-search": "S", "has-columns": "C", "fetched-gallery": "G",
+                            "has-download": "&DownArrowBar;", "has-obsolete-slug" : "&odsold;" }
+%}
+{% set marker_to_glyph = { "has-search": "search", "has-columns": "images", "fetched-gallery": "list-ul",
+                            "has-download": "file-download;", "has-obsolete-slug" : "times-circle" }
+%}
+{% set marker_to_code = marker_to_glyph if uses_glyphs else marker_to_letter %}
+
 {% macro print_flags(session, full) %}
     {% for flag in action_flags_list %}
         {% if flag in session.action_flags %}
-            <td><span class="la-{{ flag.as_html_classname() }}">&zwj;</span></td>
+            {% if uses_glyphs %}
+                <td><span class="fas fa-{{ marker_to_glyph[flag.as_html_classname()] }}">&zwnj;</span></td>
+            {% else %}
+                <td>{{ marker_to_letter[flag.as_html_classname()] | safe}}</td>
+            {% endif %}
         {% elif full %}
-            <td><span class="la-{{ flag.as_html_classname() }} la-hidden">&zwj;</span></td>
+            {% if uses_glyphs %}
+                <td><span class="fas fa-{{ marker_to_glyph[flag.as_html_classname()] }} la-hidden">&zwnj;</span></td>
+            {% else %}
+                <td><span class="la-hidden">{{ marker_to_letter[flag.as_html_classname()] | safe }}</span></td>
+            {% endif %}
+        {% else %}
+                <td></td>
+        {% endif %}
+    {% endfor %}
+{% endmacro %}
+
+{% macro print_flags_alt(session, full) %}
+    {% for flag in action_flags_list %}
+        {% if flag in session.action_flags %}
+            <td><span class="fas fa-{{ marker_to_glyph[flag.as_html_classname()] }}">&zwnj;</span></td>
+        {% elif full %}
+            <td><span class="fas fa-{{ marker_to_glyph[flag.as_html_classname()] }} la-hidden">&zwnj;</span></td>
         {% else %}
             <td></td>
         {% endif %}
@@ -219,26 +232,6 @@ because it requires that all the navigation tabs be within a single unordered li
 $(function() {
     $('[data-toggle="tooltip"]').tooltip();
     $('#right [data-toggle="tooltip"]').data('placement', 'right');
-
-{# Alternative ways of doing the glyphs that we might want to consider in the future. %}
-    function addGlyphs(name, value) {
-       $(`span.la-${name}`).html(`${value}`)
-    }
-    $(`span.la-hidden`).css("opacity", "0.0")
-    addGlyphs('has-search', 'S')
-    addGlyphs('fetched-gallery', 'G')
-    addGlyphs('has-download', '&DownArrowBar;')
-    addGlyphs('has-obsolete-slug', '&odsold;')
-
-    function addGlyphs(name, value) {
-       $(`span.la-${name}`).html(`<i class="fas ${value}"></i>`)
-    }
-    addGlyphs('has-search', 'fa-search')
-    addGlyphs('fetched-image', 'fa-images')
-    addGlyphs('fetched-table', 'fa-list-ul')
-    addGlyphs('has-download', 'fa-file-download')
-    addGlyphs('has-obsolete-slug', 'fa-times-circle')
-#}
 
     $('.SessionLink').click(function() {
         var target = $(this).data('target');
