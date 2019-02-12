@@ -115,18 +115,6 @@ because it requires that all the navigation tabs be within a single unordered li
     {% endfor %}
 {% endmacro %}
 
-{% macro print_flags_alt(session, full) %}
-    {% for flag in action_flags_list %}
-        {% if flag in session.action_flags %}
-            <td><span class="fas fa-{{ marker_to_glyph[flag.as_html_classname()] }}">&zwnj;</span></td>
-        {% elif full %}
-            <td><span class="fas fa-{{ marker_to_glyph[flag.as_html_classname()] }} la-hidden">&zwnj;</span></td>
-        {% else %}
-            <td></td>
-        {% endif %}
-    {% endfor %}
-{% endmacro %}
-
 {% macro host_info_ip_or_name(host_info) %}
     {% if host_info.name %}
         <a data-toggle="tooltip" title="{{ host_info.ip }}"> {{host_info.name}}</a>
