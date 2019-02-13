@@ -167,7 +167,7 @@ var o_browse = {
               case "cart":   // add to collection
                   o_browse.hideMenu();
                   let action = o_collections.toggleInCollection(opusId);
-                  let buttonInfo = o_browse.cartButtonInfo(opusId, action);
+                  let buttonInfo = o_browse.cartButtonInfo(action);
                   $(this).html(`<i class="${buttonInfo.icon} fa-xs"></i>`);
                   break;
 
@@ -212,7 +212,7 @@ var o_browse = {
             let opusId = $(this).data("id");
             if (opusId) {
                 let status = o_collections.toggleInCollection(opusId) == "add" ? "" : "in";
-                let buttonInfo = o_browse.cartButtonInfo(opusId, status);
+                let buttonInfo = o_browse.cartButtonInfo(status);
                 $(this).attr("title", buttonInfo.title);
                 $(this).html(`<i class="${buttonInfo.icon} fa-2x float-left"></i>`);
             }
@@ -345,7 +345,8 @@ var o_browse = {
             o_browse.hideMenu();
         }
         let inCart = o_collections.isIn(opusId) ? "" : "in";
-        let buttonInfo = o_browse.cartButtonInfo(opusId, inCart);
+        let buttonInfo = o_browse.cartButtonInfo(inCart);
+        $("#obs-menu .dropdown-header").html(opusId);
         $("#obs-menu .cart-item").html(`<i class="${buttonInfo.icon}"></i>${buttonInfo.title}`);
         $("#obs-menu [data-action='downloadCSV']").attr("href",`/opus/__api/metadata_v2/${opusId}.csv?cols=${opus.prefs.cols.join()}`);
         $("#obs-menu [data-action='downloadCSVAll']").attr("href",`/opus/__api/metadata_v2/${opusId}.csv`);
@@ -679,7 +680,7 @@ var o_browse = {
                 html += `<div class="tools dropdown" data-id="${opusId}">`;
                 html +=     '<a href="#" data-icon="info" title="View observation detail"><i class="fas fa-info-circle fa-xs"></i></a>';
 
-                let buttonInfo = o_browse.cartButtonInfo(opusId, (item.in_collection ? 'add' : 'remove'));
+                let buttonInfo = o_browse.cartButtonInfo((item.in_collection ? 'add' : 'remove'));
                 html +=     `<a href="#" data-icon="cart" title="Add to Cart"><i class="${buttonInfo.icon} fa-xs"></i></a>`;
                 html +=     '<a href="#" data-icon="menu"><i class="fas fa-bars fa-xs"></i></a>';
                 html += '</div>';
@@ -922,7 +923,7 @@ var o_browse = {
         o_browse.xAxisTableScrollbar.update();
     },
 
-    cartButtonInfo: function(opusId, status) {
+    cartButtonInfo: function(status) {
         let icon = "fas fa-cart-plus";
         let title = "Add to Cart";
         if (status != "in" && status != "remove") {
@@ -948,7 +949,7 @@ var o_browse = {
         prev = (prev.length > 0 ? prev.data("id") : "");
 
         let status = o_collections.isIn(opusId) ? "" : "in";
-        let buttonInfo = o_browse.cartButtonInfo(opusId, status);
+        let buttonInfo = o_browse.cartButtonInfo(status);
 
         // add a link to detail page;
         let hashArray = o_hash.getHashArray();

@@ -223,6 +223,8 @@ var o_collections = {
             opus.changeTab("collection");
         });
 
+        let buttonInfo = o_browse.cartButtonInfo("in");
+        $(".thumbnail-container.in [data-icon=cart]").html(`<i class="${buttonInfo.icon} fa-xs"></i>`);
         $(".thumbnail-container.in").removeClass("in");
         $("#dataTable input").prop("checked", false);
     },
