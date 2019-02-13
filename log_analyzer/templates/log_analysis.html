@@ -55,9 +55,6 @@
 .tooltip-inner {
     text-align: left;
 }
-span.la-hidden {
-    visibility: hidden;
-}
 {% endraw %}
 </style>
 </head>
@@ -97,20 +94,21 @@ because it requires that all the navigation tabs be within a single unordered li
 
 {% macro print_flags(session, full) %}
     {% for flag in action_flags_list %}
-        {% if flag in session.action_flags %}
+        {% set flag_in_use = flag in session.action_flags %}
+        {% if flag_in_use or full %}
             {% if uses_glyphs %}
-                <td><span class="fas fa-{{ marker_to_glyph[flag.as_html_classname()] }}">&zwnj;</span></td>
+                {% set glyph = marker_to_glyph[flag.as_html_classname()] %}
+                <td><span class="{{ 'fas fa-' ~  glyph ~ ('' if flag_in_use else ' invisible') }}">&zwj;</span></td>
             {% else %}
-                <td>{{ marker_to_letter[flag.as_html_classname()] | safe}}</td>
-            {% endif %}
-        {% elif full %}
-            {% if uses_glyphs %}
-                <td><span class="fas fa-{{ marker_to_glyph[flag.as_html_classname()] }} la-hidden">&zwnj;</span></td>
-            {% else %}
-                <td><span class="la-hidden">{{ marker_to_letter[flag.as_html_classname()] | safe }}</span></td>
+                {% set entity = (marker_to_letter[flag.as_html_classname()] | safe) %}
+                {% if flag_in_use %}
+                    <td>{{ entity }}</td>
+                {% else %}
+                    <td><span class="invisible">{{ entity }}</span></td>
+                {% endif %}
             {% endif %}
         {% else %}
-                <td></td>
+            <td></td>
         {% endif %}
     {% endfor %}
 {% endmacro %}
