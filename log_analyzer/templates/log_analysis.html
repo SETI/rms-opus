@@ -91,8 +91,8 @@ because it requires that all the navigation tabs be within a single unordered li
 {% set marker_to_letter = { "has-search": "S", "has-columns": "C", "fetched-gallery": "G",
                             "has-download": "&DownArrowBar;", "has-obsolete-slug" : "&odsold;" }
 %}
-{% set marker_to_glyph = { "has-search": "search", "has-columns": "images", "fetched-gallery": "list-ul",
-                            "has-download": "file-download;", "has-obsolete-slug" : "times-circle" }
+{% set marker_to_glyph = { "has-search": "search", "has-columns": "list-ul", "fetched-gallery": "images",
+                            "has-download": "file-download", "has-obsolete-slug" : "times-circle" }
 %}
 
 {% macro print_flags(session, full) %}
@@ -111,18 +111,6 @@ because it requires that all the navigation tabs be within a single unordered li
             {% endif %}
         {% else %}
                 <td></td>
-        {% endif %}
-    {% endfor %}
-{% endmacro %}
-
-{% macro print_flags_alt(session, full) %}
-    {% for flag in action_flags_list %}
-        {% if flag in session.action_flags %}
-            <td><span class="fas fa-{{ marker_to_glyph[flag.as_html_classname()] }}">&zwnj;</span></td>
-        {% elif full %}
-            <td><span class="fas fa-{{ marker_to_glyph[flag.as_html_classname()] }} la-hidden">&zwnj;</span></td>
-        {% else %}
-            <td></td>
         {% endif %}
     {% endfor %}
 {% endmacro %}
