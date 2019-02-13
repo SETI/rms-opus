@@ -115,8 +115,6 @@ var o_collections = {
          let container_height = $(window).height()-120;
          $("#collection .sidebar_wrapper").height(container_height);
          $("#collection .gallery-contents").height(container_height);
-         o_collections.downloadOptionsScrollbar.update();
-         o_collections.collectionGalleryScrollbar.update();
      },
 
      updateCartStatus: function(status) {

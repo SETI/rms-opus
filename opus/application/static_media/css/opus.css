@@ -397,11 +397,6 @@ th.sticky-header {
     opacity: 1 !important;
 }
 
-/* Remove the gap between y-scrollbar and table in table view */
-.col-lg {
-    padding-right: 0px;
-}
-
 /* Fix the spinner*/
 .table-page-load-status .loader {
     display: none;
