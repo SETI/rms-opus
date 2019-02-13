@@ -8,8 +8,6 @@ var o_collections = {
      *  from cart see browse.js
      *
      **/
-     // downloadOptionsScrollbar: new PerfectScrollbar("#download-options-container"),
-     // downloadOptionsScrollbar: new PerfectScrollbar("#collections_details"),
 
      collectionBehaviors: function() {
 
@@ -117,14 +115,9 @@ var o_collections = {
          let container_height = $(window).height()-120;
          $("#collection .sidebar_wrapper").height(container_height);
          $("#collection .gallery-contents").height(container_height);
-         // o_collections.downloadOptionsScrollbar.update();
+         o_collections.downloadOptionsScrollbar.update();
+         o_collections.collectionGalleryScrollbar.update();
      },
-
-     // adjustDownloadOptionsHeight: function() {
-     //     var container_height = $("#collections").height() - 100;
-     //     $(".sidebar_wrapper").height(container_height);
-     //     o_collections.downloadOptionsScrollbar.update();
-     // },
 
      updateCartStatus: function(status) {
          if (status.reqno < opus.lastCartRequestNo) {
@@ -149,7 +142,6 @@ var o_collections = {
                 return;
             }
             o_collections.updateCartStatus(statusData);
-            // o_collections.downloadOptionsScrollbar = new PerfectScrollbar("#collections #download-options-container");
         });
      },
 

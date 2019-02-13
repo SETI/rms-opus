@@ -3,8 +3,8 @@ var o_browse = {
     keyPressAction: "",
     tableSorting: false,
     tableScrollbar: new PerfectScrollbar(".dataTable"),
-    yAxisGalleryScrollbar: new PerfectScrollbar(".gallery-contents"),
-    yAxisModalScrollbar: new PerfectScrollbar("#galleryViewContents .metadata"),
+    galleryScrollbar: new PerfectScrollbar(".gallery-contents"),
+    modalScrollbar: new PerfectScrollbar("#galleryViewContents .metadata"),
 
     /**
     *
@@ -580,11 +580,11 @@ var o_browse = {
             $(".justify-content-center").show();
 
             // $(".gallery-contents > .ps__rail-y").removeClass("disable_ps__rail-y");
-            o_browse.yAxisGalleryScrollbar.settings.suppressScrollY = false;
+            o_browse.galleryScrollbar.settings.suppressScrollY = false;
             $(".gallery-contents > .ps__rail-y").show();
             $(".dataTable > .ps__rail-y").hide();
 
-            o_browse.yAxisGalleryScrollbar.update();
+            o_browse.galleryScrollbar.update();
         } else {
             $("." + "gallery", "#browse").hide();
             $("." + opus.prefs.browse, "#browse").fadeIn();
@@ -599,7 +599,7 @@ var o_browse = {
             // if(!$(".gallery-contents > .ps__rail-y").hasClass("disable_ps__rail-y")) {
             //     $(".gallery-contents > .ps__rail-y").addClass("disable_ps__rail-y");
             // }
-            o_browse.yAxisGalleryScrollbar.settings.suppressScrollY = true;
+            o_browse.galleryScrollbar.settings.suppressScrollY = true;
             $(".gallery-contents > .ps__rail-y").hide();
             $(".dataTable > .ps__rail-y").show();
             o_browse.tableScrollbar.update();
@@ -717,7 +717,7 @@ var o_browse = {
         $('.gallery', namespace).append(html);
         $('.table-page-load-status').hide();
         o_browse.tableScrollbar.update();
-        o_browse.yAxisGalleryScrollbar.update();
+        o_browse.galleryScrollbar.update();
 
         o_hash.updateHash(true);
     },
@@ -953,7 +953,7 @@ var o_browse = {
     adjustBrowseHeight: function() {
         let container_height = $(window).height()-120;
         $(".gallery-contents").height(container_height);
-        o_browse.yAxisGalleryScrollbar.update();
+        o_browse.galleryScrollbar.update();
         //opus.limit =  (floor($(window).width()/thumbnailSize) * floor(container_height/thumbnailSize));
     },
 
@@ -1042,7 +1042,7 @@ var o_browse = {
     updateMetaGalleryView: function(opusId, imageURL) {
         $("#galleryViewContents .left").html("<a href='"+imageURL+"' target='_blank'><img src='"+imageURL+"' title='"+opusId+"' class='preview'/></a>");
         o_browse.metadataboxHtml(opusId);
-        o_browse.yAxisModalScrollbar.update();
+        o_browse.modalScrollbar.update();
     },
 
     resetData: function() {
