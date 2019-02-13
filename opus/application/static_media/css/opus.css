@@ -1,13 +1,13 @@
 body {
-	overflow:hidden;
+  overflow:hidden;
 }
 .app-body {
-	margin-top: 3.8em !important;
+  margin-top: 3.8em !important;
 }
 
 .container-fluid {
-	padding: 0;
-	margin-bottom: -12px;
+  padding: 0;
+  margin-bottom: -12px;
 }
 
 .addScroll{
@@ -55,7 +55,7 @@ body {
 }
 
 .navbar-brand {
-	width: 3em !important;
+  width: 3em !important;
 }
 
 #search {
@@ -70,7 +70,7 @@ body {
 }
 
 #search .search-param {
-	font-size: 90%;
+  font-size: 90%;
 }
 
 #browse, #collection, #detail {
@@ -93,20 +93,20 @@ body {
 }
 
 .gallery-contents {
-		/* overflow-y:auto !important; */
-		overflow-y:hidden;
-		overflow-x:hidden;
+    /* overflow-y:auto !important; */
+    overflow-y:hidden;
+    overflow-x:hidden;
 }
 
 /* Make sure y-axis rail is not moving and always visible */
 .gallery-contents .ps__rail-y {
-		background-color: transparent !important;
-		/* navbar height: 95px, this will match the scrollbar and gallery/table view */
-		top: 95px !important;
+    background-color: transparent !important;
+    /* navbar height: 95px, this will match the scrollbar and gallery/table view */
+    top: 95px !important;
 }
 
 .disable_ps__rail-y {
-		display: none !important;
+    display: none !important;
 }
 
 #detail {
@@ -128,9 +128,9 @@ body {
 }
 
 #sidebar {
-	min-width: 24rem;
-	max-width: 26rem;
-	height: 100%;
+  min-width: 24rem;
+  max-width: 26rem;
+  height: 100%;
 }
 
 #sidebar ul.nav-lst {
@@ -155,9 +155,9 @@ body {
 }
 
 .sidebar_wrapper {
-	display: flex;
+  display: flex;
     margin:0; padding:0;
-		overflow: auto;
+    overflow: auto;
     margin-top:5px;
     position: relative;
     height:500px; /* matches .widget_column */
@@ -168,82 +168,82 @@ body {
 }
 
 ul.searchMenu{
-		padding-right: 2em;
+    padding-right: 2em;
 }
 
 .card-header .icon-action {
-	transition: .3s transform ease-in-out;
+  transition: .3s transform ease-in-out;
 }
 .card-header .collapsed .icon-action {
     -ms-transform: rotate(90deg); /* IE 9 */
     -ms-transform-origin: 80%; /* IE 9 */
     -webkit-transform: rotate(90deg); /* Safari 3-8 */
     -webkit-transform-origin: 80%; /* Safari 3-8 */
-	transform-origin: 80%;
-	transform: rotate(90deg);
+  transform-origin: 80%;
+  transform: rotate(90deg);
 }
 
 .thumbnail-container {
-		display: inline-block;
-		float: left;
-		position: relative;
-		padding: .10em;
-		min-width:100px;
-		min-height:100px;
+    display: inline-block;
+    float: left;
+    position: relative;
+    padding: .10em;
+    min-width:100px;
+    min-height:100px;
 }
 
 .thumbnail-container .img-thumbnail {
-		position: absolute;
-		top: 0;
-		right: 0;
-		bottom: 0;
-		left: 0;
-		margin: auto;
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    margin: auto;
 }
 
 .thumbnail-container:hover .thumb-overlay {
-	height: 30%;
+  height: 30%;
 }
 
 .thumb-overlay {
-	position: absolute;
-	bottom: 0;
-	left: 0;
-	right: 0;
-	opacity: 0.92;
-	filter: alpha(opacity=92);
-	background: rgba(76, 75, 80, 0.3);
-	overflow: hidden;
-	width: 100%;
-	height: 0;
-	transition: .5s ease;
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  opacity: 0.92;
+  filter: alpha(opacity=92);
+  background: rgba(76, 75, 80, 0.3);
+  overflow: hidden;
+  width: 100%;
+  height: 0;
+  transition: .5s ease;
 }
 .thumb-overlay a:hover {
-	color:#097da5;
-	/*font-size:130%;*/
+  color:#097da5;
+  /*font-size:130%;*/
 }
 
 #browse .in {
-	-webkit-box-shadow:inset 0px 0px 0px 10px #097da5;
-	-moz-box-shadow:inset 0px 0px 0px 10px #097da5;
-	box-shadow:inset 0px 0px 0px 10px #097da5
+  -webkit-box-shadow:inset 0px 0px 0px 10px #097da5;
+  -moz-box-shadow:inset 0px 0px 0px 10px #097da5;
+  box-shadow:inset 0px 0px 0px 10px #097da5
 }
 
 #collection .in {
 }
 
 #collection .remove {
-	display: none;
+  display: none;
 }
 
 #collection .removed {
-	color: white;
-	position: absolute;
-	top: 50%;
-	left: 50%;
-	transform: translate(-50%, -50%);
-	-ms-transform: translate(-50%, -50%);
-	text-align: center;
+  color: white;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  -ms-transform: translate(-50%, -50%);
+  text-align: center;
 }
 
 #collection .fa-times {
@@ -252,70 +252,70 @@ ul.searchMenu{
 }
 
 .modal-content {
-	border-radius: 1%;
+  border-radius: 1%;
 }
 .modal-footer .left-container {
-	width: 74%;
+  width: 74%;
 }
 
 .thumbnail-container .modal-overlay {
-  	position: absolute;
-  	text-align: center;
-  	padding-left: 1em;
-  	padding-right: 1em;
-  	width: 100%;
-  	top: 50%;
-  	left: 50%;
-  	opacity: 0;
-	z-index: -1;
+    position: absolute;
+    text-align: center;
+    padding-left: 1em;
+    padding-right: 1em;
+    width: 100%;
+    top: 50%;
+    left: 50%;
+    opacity: 0;
+  z-index: -1;
 }
 .thumbnail-container .modal-show {
-	z-index: 999;
-	-webkit-transform: translate(-50%, -50%);
-  	-moz-transform: translate(-50%, -50%);
-  	transform: translate(-50%, -50%);
-/*	-webkit-transition: opacity 0.1s ease-in;
-	-moz-transition: opacity 0.1s ease-in;
-	-o-transition: opacity 0.1s ease-in;*/
-	opacity: 1;
+  z-index: 999;
+  -webkit-transform: translate(-50%, -50%);
+    -moz-transform: translate(-50%, -50%);
+    transform: translate(-50%, -50%);
+/*  -webkit-transition: opacity 0.1s ease-in;
+  -moz-transition: opacity 0.1s ease-in;
+  -o-transition: opacity 0.1s ease-in;*/
+  opacity: 1;
 }
 
 tr.modal-show {
-	color: #167495;
-	opacity: 0.92;
-	filter: alpha(opacity=92);
+  color: #167495;
+  opacity: 0.92;
+  filter: alpha(opacity=92);
 }
 
 .thumbnail-container .content-text {
-	margin: 0px;
-	opacity: 0.65;
+  margin: 0px;
+  opacity: 0.65;
 }
 
 .thumbnail-message {
-	color: #fff;
-	padding-left: 3em;
-	width: 500px;
+  color: #fff;
+  padding-left: 3em;
+  width: 500px;
 }
 
 .img-thumbnail {
-		background-color: transparent !important;
-		border: 0px solid #000000 !important;
+    background-color: transparent !important;
+    border: 0px solid #000000 !important;
 }
 
 .tools {
-		text-align: center;
+    text-align: center;
 }
 
 .tools > a {
-	  color: white;
-	  font-size: 20px;
-	  position: absolute;
-	  top: 50%;
-	  left: 50%;
-	  -webkit-transform: translate(-50%, -50%);
-	  -ms-transform: translate(-50%, -50%);
-	  transform: translate(-50%, -50%);
-	  text-align: center;
+    color: white;
+    font-size: 20px;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    -webkit-transform: translate(-50%, -50%);
+    -ms-transform: translate(-50%, -50%);
+    transform: translate(-50%, -50%);
+    text-align: center;
 }
 
 .tools a:nth-child(1n) {
@@ -324,8 +324,8 @@ tr.modal-show {
 }
 
 .tools a:nth-child(2n) {
-	 margin-right:0.8em;
-	 margin-left:0.8em;
+   margin-right:0.8em;
+   margin-left:0.8em;
 }
 
 .tools a:nth-child(3n) {
@@ -334,12 +334,12 @@ tr.modal-show {
 }
 
 th.sticky-header {
-		/*  avoid seeing through at the top of header */
-		border-top: 0px;
-		position: sticky;
-		top: 0;
-		z-index: 10;
-		background-color: black;
+    /*  avoid seeing through at the top of header */
+    border-top: 0px;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background-color: black;
 }
 
 #dataTable  {
@@ -348,64 +348,64 @@ th.sticky-header {
 
 #dataTable th {
     vertical-align: middle;
-		/* Fix the hidden th left/right border in firebox */
-		background-clip: padding-box;
-		text-align: center;
+    /* Fix the hidden th left/right border in firebox */
+    background-clip: padding-box;
+    text-align: center;
 }
 
 #dataTable th a {
     display:block;
-		text-align: center;
-		text-decoration: none;
+    text-align: center;
+    text-decoration: none;
 }
 
 #dataTable .column_ordering {
     margin:0 10px;
-		/* display: inline-flex; */
-		/* float: right; */
+    /* display: inline-flex; */
+    /* float: right; */
 }
 
 #dataTable td {
-	white-space: nowrap;
+  white-space: nowrap;
 }
 
 #dataTable th > div {
-		vertical-align: middle;
-		display: inline-block;
-		width: 100%;
-		position: relative;
-		/* white-space: nowrap; */
-		/* height: 100%; */
+    vertical-align: middle;
+    display: inline-block;
+    width: 100%;
+    position: relative;
+    /* white-space: nowrap; */
+    /* height: 100%; */
 }
 
 /* vertically center the resizable handle */
 #dataTable th > div div {
-		position: absolute;
-		top: 50%;
-		transform: translateY(-50%);
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
 }
 
 .dataTable .ps__rail-y {
-		background-color: transparent !important;
-		right: 0px !important;
+    background-color: transparent !important;
+    right: 0px !important;
 }
 
 /* Make sure x-scrollbar in dataTable is always at the left and visible */
 .dataTable .ps__rail-x {
-		background-color: transparent !important;
-		left: 0px !important;
-		opacity: 1 !important;
+    background-color: transparent !important;
+    left: 0px !important;
+    opacity: 1 !important;
 }
 
 /* Remove the gap between y-scrollbar and table in table view */
 .col-lg {
-		padding-right: 0px;
+    padding-right: 0px;
 }
 
 /* Fix the spinner*/
 .table-page-load-status .loader {
-		display: none;
-		top: 250px;
+    display: none;
+    top: 250px;
 }
 
 .fadey {
@@ -443,7 +443,7 @@ th.sticky-header {
 .allMetadata, .selectedMetadata   {
     height: 450px;
     overflow:scroll;
-	overflow-x: auto;
+  overflow-x: auto;
 }
 .allMetadata ul li {
     padding-bottom:3px;
@@ -455,17 +455,17 @@ th.sticky-header {
 }
 
 .selectedMetadata ul {
-	padding-inline-start: 0.5em;
-	padding-inline-end: 1em;
+  padding-inline-start: 0.5em;
+  padding-inline-end: 1em;
 }
 .selectedMetadata ul li:hover{
-	cursor:grab;
+  cursor:grab;
 }
 .selectedMetadata ul li .unselect:hover{
-	 cursor:default;
+   cursor:default;
  }
  .selectedMetadata ul li .info:hover{
- 	 cursor:default;
+    cursor:default;
  }
 .selectedMetadata .unselect {
     float:right;
@@ -506,23 +506,23 @@ th.sticky-header {
     left:0;
     width:100%;
     height:10px;
-		display: none;
+    display: none;
 }
 
 img.preview {
-	max-width: 400px    !important;
-	max-width: 400px    !important;
+  max-width: 400px    !important;
+  max-width: 400px    !important;
 }
 
 @media (min-width: 1200px) {
-	.modal-lg {
-		max-width: 1100px	!important;
-		max-height: 1100px	!important;
-	}
-	img.preview {
-		max-width: 600px    !important;
-		max-width: 600px    !important;
-	}
+  .modal-lg {
+    max-width: 1100px  !important;
+    max-height: 1100px  !important;
+  }
+  img.preview {
+    max-width: 600px    !important;
+    max-width: 600px    !important;
+  }
 }
 
 #galleryView {
@@ -530,55 +530,55 @@ img.preview {
 }
 
 #galleryView button.close, #metadataSelector button.close {
-	position: absolute;
+  position: absolute;
     float: right;
     top: .8em;
     right: 1em;
-	z-index: 999;
+  z-index: 999;
 }
 
 #galleryView .fa-cart-plus {
-	float: left;
+  float: left;
 }
 
 #galleryView .bottom {
-	position: fixed;
-	right: 2em;
-	bottom: 1.5em;
-	width: 38%;
-	z-index: 1030;
+  position: fixed;
+  right: 2em;
+  bottom: 1.5em;
+  width: 38%;
+  z-index: 1030;
 }
 
 #galleryView .prev > i {
-	margin-right: .4em;
+  margin-right: .4em;
 }
 
 #galleryViewContents {
-	position: relative;
-	height: 625px;
+  position: relative;
+  height: 625px;
 }
 
 #galleryViewContents .preview {
-	position: absolute;
-	right: 0;
-	left: 0;
-	margin: auto;
+  position: absolute;
+  right: 0;
+  left: 0;
+  margin: auto;
 }
 
 #galleryViewContents .metadata {
-	overflow-y: auto;
-	max-height: 500px;
-	width: 440px;
-	position: fixed;
+  overflow-y: auto;
+  max-height: 500px;
+  width: 440px;
+  position: fixed;
 }
 
 #galleryViewContents .detail {
-	position: fixed;
-	bottom: 3.7em;
+  position: fixed;
+  bottom: 3.7em;
 }
 
 #galleryViewContents .ps__rail-y {
-	background-color: transparent !important;
+  background-color: transparent !important;
 }
 
 #collection .gallery, .gallery-contents {
@@ -587,23 +587,23 @@ img.preview {
 }
 
 #collection .thumb-page {
-	padding-left: 3em;
+  padding-left: 3em;
 }
 
 #collections-sidebar {
-	padding-left: 3em;
-	padding-right: 3em;
+  padding-left: 3em;
+  padding-right: 3em;
 }
 
 #collection .gallery-contents .ps__rail-y {
-		background-color: transparent !important;
+    background-color: transparent !important;
 }
 
 .collection_details {
-	border-left: .3em double black;
+  border-left: .3em double black;
     padding-left: 2em;
     min-width: 28em;
-	max-width: 28em;
+  max-width: 28em;
 }
 .collection_download_button {
     padding-top:0px;
@@ -613,14 +613,14 @@ div.gallery {
     margin:0; padding:0;
     position: relative;
     overflow-x:hidden;
-	overflow-y:hidden;
+  overflow-y:hidden;
     margin-right:-80px;
 }
 .browse-nav-container {
-		height: 1.5em;
+    height: 1.5em;
 }
 .browse-nav-container li {
-		display: flex;
+    display: flex;
     align-items: center;
 }
 
@@ -630,8 +630,8 @@ div.gallery {
     text-align: center;
  }
 .browse-nav-container .order-container {
-	display:inline-flex;
-	float: right;
+  display:inline-flex;
+  float: right;
 }
 @media (max-width: 700px) {
     .navbar-header {
@@ -646,27 +646,27 @@ div.gallery {
         width:100%;
         margin:0;
      }
-	 .browse-nav-container .order-container {
-		 display:none;
-	 }
+   .browse-nav-container .order-container {
+     display:none;
+   }
 }
 .panel-body .gallery-contents {
-	position:fixed !important;
-	overflow-y: auto
+  position:fixed !important;
+  overflow-y: auto
 }
 
 .page-load-status {
-  	display: none; /* hidden by default */
-  	padding-top: 20px;
-  	border-top: 1px solid #DDD;
-	text-align: center;
-  	/*color: #777;*/
+    display: none; /* hidden by default */
+    padding-top: 20px;
+    border-top: 1px solid #DDD;
+  text-align: center;
+    /*color: #777;*/
 }
 
 /* opus-specific card stuff, used to be widgets */
 .card-title {
     margin-top: .15em;
-		margin-bottom: .15em;
+    margin-bottom: .15em;
 }
 
 .icon-action {
@@ -679,30 +679,30 @@ a.dropdown-toggle {
     margin-top: 5px;
     margin-bottom: 12px;
     font-weight: 600;
-		color: initial;
+    color: initial;
 }
 
 a.dropdown-toggle:hover {
-		text-decoration: none;
+    text-decoration: none;
 }
 
 a.search-param {
     margin-top: 5px;
     margin-bottom: 12px;
     font-weight: 70;
-		color: initial;
+    color: initial;
 }
 
 a.search-param:hover {
-		text-decoration: none;
+    text-decoration: none;
 }
 /*
 li a.search-param:hover {
-		background: gainsboro !important;
+    background: gainsboro !important;
 }
 */
 #searchMenu .list-group li:nth-child(1){
-  	border-top: 0 none;
+    border-top: 0 none;
 }
 
 
@@ -712,7 +712,7 @@ li a.search-param:hover {
 }
 #search_widgets {  /* this fixes problem scrolling when widget column is short */
     padding-bottom: 600px;
-		padding-right: 2em;
+    padding-right: 2em;
 }
 
 .widget-main .range-qtype-helper {
@@ -731,7 +731,7 @@ li a.search-param:hover {
     padding-bottom:0;
  }
  .widget-main > ul > li ul {
-	  padding-left:0;
+    padding-left:0;
     padding-bottom:0;
  }
 .widget-main ul li {
@@ -815,7 +815,7 @@ li a.search-param:hover {
     width:30px;
 }
 #collections_summary .button-container button {
-	margin-bottom: 1em;
+  margin-bottom: 1em;
 }
 
 #obs-menu .spinner {
@@ -844,27 +844,27 @@ li a.search-param:hover {
     padding-left:5px;
 }
 .mult_group {
-		padding-left:0;
+    padding-left:0;
     display:none;
 }
 
 .mult_group > .multichoice {
-		padding-left:0;
+    padding-left:0;
 }
 
 /* detail tab */
 .detail-metadata {
-		position:fixed !important;
-		max-width: 700px;
-		top:4.15em;
-		bottom:3em;
-		overflow-y: auto
+    position:fixed !important;
+    max-width: 700px;
+    top:4.15em;
+    bottom:3em;
+    overflow-y: auto
 }
 
 @media (min-width: 768px) {
-  	.metadata-container {
+    .metadata-container {
         flex-basis: 800px !important;
-				-webkit-flex-basis: 800px !important;
+        -webkit-flex-basis: 800px !important;
         max-width: 800px !important;
     }
 }
@@ -877,7 +877,7 @@ footer {
    width: 100%;
    color: white;
    text-align: center;
-   margin-left: 0px	!important;
+   margin-left: 0px  !important;
 }
 
 .footer .container {
@@ -911,7 +911,7 @@ footer {
 
 .restart_button {
     text-align: center;
-	padding-top: 1.5em;
+  padding-top: 1.5em;
 }
 .restart_button button {
     margin: 10px 0;
@@ -963,7 +963,7 @@ ul.ui-autocomplete {
 }
 
 ul.ui-autocomplete li {
-		display: block
+    display: block
 }
 
 ul.ui-autocomplete li a {
@@ -975,9 +975,9 @@ ul.ui-autocomplete li a:hover {
 }
 
 ul.ui-autocomplete a.ui-state-active {
-		background: #CECBFA;
-		/* background: #4f99c6; */
-		border: none;
+    background: #CECBFA;
+    /* background: #4f99c6; */
+    border: none;
 }
 
 .list-header, .list-footer {
