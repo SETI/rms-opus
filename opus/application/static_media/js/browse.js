@@ -450,18 +450,27 @@ var o_browse = {
             o_browse.selectedMetadataScrollbar.update();
         });
 
-        $('#metadataSelector .allMetadata').on("click", '.submenu li a', function() {
+        $('#metadataSelector .allMetadata').on("click", '.submenu li', function() {
 
-            let slug = $(this).data('slug');
+            let elem = this;
+            let slug = $(elem).data('slug');
             if (!slug) {
-                return false;  // just a 2nd level menu click, move along
+                if ($(this).children().length > 0) {
+                     elem = $(this).children()[0];
+                     slug = $(elem).data('slug');
+                     if (!slug) {
+                         return false;
+                     }
+                } else {
+                    return false;
+                }
             }
 
-            let label = $(this).data('qualifiedlabel');
+            let label = $(elem).data('qualifiedlabel');
 
             //CHANGE THESE TO USE DATA-ICON=
-            let def = $(this).find('i.fa-info-circle').attr("title");
-            let selectedMetadata = $(this).find("i.fa-check");
+            let def = $(elem).find('i.fa-info-circle').attr("title");
+            let selectedMetadata = $(elem).find("i.fa-check");
 
             if (!selectedMetadata.is(":visible")) {
                 selectedMetadata.fadeIn().css("display", "inline-block");
@@ -477,7 +486,7 @@ var o_browse = {
                     // slug had been checked, remove from the chosen
                     opus.prefs.cols.splice($.inArray(slug,opus.prefs.cols),1);
                     $(`#cchoose__${slug}`).fadeOut(function() {
-                        $(this).remove();
+                        $(`#cchoose__${slug}`).remove();
                     });
                 }
             }
