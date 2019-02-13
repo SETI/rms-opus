@@ -1,4 +1,4 @@
-# tools/tests.py
+# tools/test_file_utils.py
 
 from collections import OrderedDict
 import logging

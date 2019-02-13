@@ -218,6 +218,20 @@ var opus = {
         $('.nav-item a[href="#'+opus.prefs.view+'"]').trigger("click");
     },
 
+    lastBlogUpdate: function() {
+        $.getJSON("/opus/__lastblogupdate.json", function(data) {
+            if (data.lastupdate !== null) {
+                let today = Date.now();
+                let days = (today - Date.parse(data.lastupdate))/1000/60/60/24;
+                if (days <= 7) {
+                    $(".blogspot img").show();
+                } else {
+                    $(".blogspot img").hide();
+                }
+            }
+        });
+    },
+
     changeTab: function(tab) {
         // first hide everything and stop any interval timers
         $('#search, #detail, #collection, #browse').hide();
@@ -228,6 +242,7 @@ var opus = {
 
         opus.prefs.view = tab ? tab : opus.prefs.view;
         o_hash.updateHash();
+        opus.lastBlogUpdate();
 
         switch(opus.prefs.view) {
 
@@ -330,6 +345,7 @@ $(document).ready(function() {
 
     opus.prefs.widgets = [];
     o_widgets.updateWidgetCookies();
+    opus.lastBlogUpdate();
 
     o_hash.initFromHash(); // just returns null if no hash
 

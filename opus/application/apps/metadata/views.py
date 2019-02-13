@@ -526,7 +526,7 @@ def api_get_fields(request, fmt='json', slug=None):
     api_code = enter_api_call('api_get_fields', request)
 
     if not request or request.GET is None:
-        ret = Http404('No request')
+        ret = Http404(settings.HTTP404_NO_REQUEST)
         exit_api_call(api_code, ret)
         raise ret
 

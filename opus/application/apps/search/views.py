@@ -62,7 +62,7 @@ def api_normalize_input(request):
     api_code = enter_api_call('api_normalize_input', request)
 
     if not request or request.GET is None:
-        ret = Http404('No request')
+        ret = Http404(settings.HTTP404_NO_REQUEST)
         exit_api_call(api_code, ret)
         raise ret
 
@@ -78,7 +78,8 @@ def api_normalize_input(request):
         raise ret
 
     reqno = get_reqno(request)
-    selections['reqno'] = reqno
+    if reqno is not None:
+        selections['reqno'] = reqno
 
     ret = json_response(selections)
     exit_api_call(api_code, ret)
@@ -118,7 +119,7 @@ def api_string_search_choices(request, slug):
     api_code = enter_api_call('api_string_search_choices', request)
 
     if not request or request.GET is None:
-        ret = Http404('No request')
+        ret = Http404(settings.HTTP404_NO_REQUEST)
         exit_api_call(api_code, ret)
         raise ret
 
@@ -142,11 +143,7 @@ def api_string_search_choices(request, slug):
         exit_api_call(api_code, ret)
         raise ret
 
-    reqno = request.GET.get('reqno', None)
-    try:
-        reqno = int(reqno)
-    except:
-        reqno = None
+    reqno = get_reqno(request)
 
     if param_qualified_name not in selections:
         selections[param_qualified_name] = ['']
@@ -215,7 +212,8 @@ def api_string_search_choices(request, slug):
                  str(limit))
     cached_val = cache.get(cache_key)
     if cached_val is not None:
-        cached_val['reqno'] = reqno
+        if reqno is not None:
+            cached_val['reqno'] = reqno
         ret = json_response(cached_val)
         exit_api_call(api_code, ret)
         return ret
@@ -335,7 +333,8 @@ def api_string_search_choices(request, slug):
               'full_search': do_simple_search,
               'truncated_results': truncated_results}
     cache.set(cache_key, result)
-    result['reqno'] = reqno
+    if reqno is not None:
+        result['reqno'] = reqno
     ret = json_response(result)
     exit_api_call(api_code, ret)
     return ret

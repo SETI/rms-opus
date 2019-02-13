@@ -54,10 +54,86 @@ class ApiResultsTests(TestCase, ApiTestHelper):
         rev_nos2.sort(reverse=True)
         self.assertEqual(rev_nos, rev_nos2)
 
+    def test__api_data_no_results_default_json(self):
+        "/api/data: no results default cols json"
+        url = '/opus/api/data.json?opusid=notgoodid'
+        expected = {}
+        self._run_json_equal_file(url, 'api_data_no_results_default_json.json')
 
-            #######################################
-            ######### /api/data API TESTS #########
-            #######################################
+    def test__api_data_no_results_default_csv(self):
+        "/api/data: no results default cols csv"
+        url = '/opus/api/data.csv?opusid=notgoodid'
+        expected = b'OPUS ID,Instrument Name,Planet,Intended Target Name,Observation Start Time,Observation Duration (secs)\n'
+        self._run_csv_equal(url, expected)
+
+    def test__api_data_no_results_default_html(self):
+        "/api/data: no results default cols html"
+        url = '/opus/api/data.html?opusid=notgoodid'
+        self._run_html_equal_file(url, 'api_data_no_results_default_html.html')
+
+    def test__api_data_no_results_empty_cols_json(self):
+        "/api/data: no results empty cols json"
+        url = '/opus/api/data.json?opusid=notgoodid&cols='
+        expected = {"limit": 100, "page": [], "order": "time1,opusid", "count": 0, "labels": [], "columns": [], "start_obs": 1}
+        self._run_json_equal(url, expected)
+
+    def test__api_data_no_results_empty_cols_csv(self):
+        "/api/data: no results empty cols csv"
+        url = '/opus/api/data.csv?opusid=notgoodid&cols='
+        expected = b''
+        self._run_csv_equal(url, expected)
+
+    def test__api_data_no_results_empty_cols_html(self):
+        "/api/data: no results empty cols html"
+        url = '/opus/api/data.html?opusid=notgoodid&cols='
+        expected = b'<table>\n<tr>\n</tr>\n</table>\n'
+        self._run_html_equal(url, expected)
+
+    def test__api_data_coiss_2002_more_cols_json(self):
+        "/api/data: coiss_2002 more cols json"
+        url = '/opus/api/data.json?cols=opusid,instrument,planet,target,time1,observationduration,CASSINIspacecraftclockcount1,CASSINIobsname,CASSINIactivityname,CASSINImissionphasename,CASSINItargetcode,CASSINIrevnoint1,CASSINIprimeinst,CASSINIisprime,CASSINIsequenceid,CASSINIspacecraftclockcount2,CASSINIert1,CASSINIert2,COISScamera,COISSfilter,COISSshuttermode,COISSshutterstate,COISScompressiontype,COISSdataconversiontype,COISSgainmode,COISSinstrumentmode,COISSmissinglines1,COISSimagenumber1,COISStargetdesc,COISSimageobservationtype&volumeid=COISS_2002'
+        self._run_json_equal_file(url, 'api_data_coiss_2002_more_cols_json.json')
+
+    def test__api_data_coiss_2002_more_cols_csv(self):
+        "/api/data: coiss_2002 more cols csv"
+        url = '/opus/api/data.csv?cols=opusid,instrument,planet,target,time1,observationduration,CASSINIspacecraftclockcount1,CASSINIobsname,CASSINIactivityname,CASSINImissionphasename,CASSINItargetcode,CASSINIrevnoint1,CASSINIprimeinst,CASSINIisprime,CASSINIsequenceid,CASSINIspacecraftclockcount2,CASSINIert1,CASSINIert2,COISScamera,COISSfilter,COISSshuttermode,COISSshutterstate,COISScompressiontype,COISSdataconversiontype,COISSgainmode,COISSinstrumentmode,COISSmissinglines1,COISSimagenumber1,COISStargetdesc,COISSimageobservationtype&volumeid=COISS_2002'
+        self._run_csv_equal_file(url, 'api_data_coiss_2002_more_cols_csv.csv')
+
+    def test__api_data_coiss_2002_more_cols_html(self):
+        "/api/data: coiss_2002 more cols html"
+        url = '/opus/api/data.html?cols=opusid,instrument,planet,target,time1,observationduration,CASSINIspacecraftclockcount1,CASSINIobsname,CASSINIactivityname,CASSINImissionphasename,CASSINItargetcode,CASSINIrevnoint1,CASSINIprimeinst,CASSINIisprime,CASSINIsequenceid,CASSINIspacecraftclockcount2,CASSINIert1,CASSINIert2,COISScamera,COISSfilter,COISSshuttermode,COISSshutterstate,COISScompressiontype,COISSdataconversiontype,COISSgainmode,COISSinstrumentmode,COISSmissinglines1,COISSimagenumber1,COISStargetdesc,COISSimageobservationtype&volumeid=COISS_2002'
+        self._run_html_equal_file(url, 'api_data_coiss_2002_more_cols_html.html')
+
+    def test__api_data_bad_cols_json(self):
+        "/api/data: bad cols 1 json"
+        url = '/opus/api/data.json?volumeid=COISS_2002&cols=observationduration,fredethel,volumeid'
+        self._run_status_equal(url, 404, settings.HTTP404_UNKNOWN_SLUG)
+
+    def test__api_data_bad_cols_csv(self):
+        "/api/data: bad cols 1 csv"
+        url = '/opus/api/data.csv?volumeid=COISS_2002&cols=observationduration,fredethel,volumeid'
+        self._run_status_equal(url, 404, settings.HTTP404_UNKNOWN_SLUG)
+
+    def test__api_data_bad_cols_html(self):
+        "/api/data: bad cols 1 html"
+        url = '/opus/api/data.html?volumeid=COISS_2002&cols=observationduration,fredethel,volumeid'
+        self._run_status_equal(url, 404, settings.HTTP404_UNKNOWN_SLUG)
+
+    def test__api_data_bad_cols2_json(self):
+        "/api/data: bad cols 2 json"
+        url = '/opus/api/data.json?volumeid=COISS_2002&cols=,observationduration,volumeid'
+        self._run_status_equal(url, 404, settings.HTTP404_UNKNOWN_SLUG)
+
+    def test__api_data_bad_cols3_json(self):
+        "/api/data: bad cols 3 json"
+        url = '/opus/api/data.json?volumeid=COISS_2002&cols=observationduration,,volumeid'
+        self._run_status_equal(url, 404, settings.HTTP404_UNKNOWN_SLUG)
+
+    def test__api_data_bad_cols4_json(self):
+        "/api/data: bad cols 4 json"
+        url = '/opus/api/data.json?volumeid=COISS_2002&cols=observationduration,volumeid,'
+        self._run_status_equal(url, 404, settings.HTTP404_UNKNOWN_SLUG)
+
 
 
             ################################################
@@ -436,6 +512,16 @@ class ApiResultsTests(TestCase, ApiTestHelper):
     def test__api_metadata_bad_cols_json(self):
         "/api/metadata: bad cols 1 json"
         url = '/opus/api/metadata/vg-iss-2-s-c4360845.json?cols=observationduration,fredethel,volumeid'
+        self._run_status_equal(url, 404, settings.HTTP404_UNKNOWN_SLUG)
+
+    def test__api_metadata_bad_cols_csv(self):
+        "/api/metadata: bad cols 1 csv"
+        url = '/opus/api/metadata/vg-iss-2-s-c4360845.csv?cols=observationduration,fredethel,volumeid'
+        self._run_status_equal(url, 404, settings.HTTP404_UNKNOWN_SLUG)
+
+    def test__api_metadata_bad_cols_html(self):
+        "/api/metadata: bad cols 1 html"
+        url = '/opus/api/metadata/vg-iss-2-s-c4360845.html?cols=observationduration,fredethel,volumeid'
         self._run_status_equal(url, 404, settings.HTTP404_UNKNOWN_SLUG)
 
     def test__api_metadata_bad_cols2_json(self):
