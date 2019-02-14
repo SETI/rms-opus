@@ -5,6 +5,7 @@ var o_browse = {
     tableScrollbar: new PerfectScrollbar(".dataTable"),
     galleryScrollbar: new PerfectScrollbar(".gallery-contents"),
     modalScrollbar: new PerfectScrollbar("#galleryViewContents .metadata"),
+    infiniteScrollLoadCount: 0,
 
     /**
     *
@@ -579,7 +580,6 @@ var o_browse = {
 
             $(".justify-content-center").show();
 
-            // $(".gallery-contents > .ps__rail-y").removeClass("disable_ps__rail-y");
             o_browse.galleryScrollbar.settings.suppressScrollY = false;
             $(".gallery-contents > .ps__rail-y").show();
             $(".dataTable > .ps__rail-y").hide();
@@ -596,9 +596,6 @@ var o_browse = {
             // remove that extra space on top when loading table page
             $(".justify-content-center").hide();
 
-            // if(!$(".gallery-contents > .ps__rail-y").hasClass("disable_ps__rail-y")) {
-            //     $(".gallery-contents > .ps__rail-y").addClass("disable_ps__rail-y");
-            // }
             o_browse.galleryScrollbar.settings.suppressScrollY = true;
             $(".gallery-contents > .ps__rail-y").hide();
             $(".dataTable > .ps__rail-y").show();
@@ -830,7 +827,6 @@ var o_browse = {
         if (page == undefined) {
             page = opus.lastPageDrawn[opus.prefs.view]+1;
         }
-
         console.log(`CALL GETBROWSEURL, CURRENT REQ: ${reqno}, CURRENT PAGE: ${page}` );
         let url = o_hash.getHash() + '&reqno=' + reqno + view.add_to_url;
         url = base_url + o_browse.updatePageInUrl(url, page);
@@ -847,20 +843,16 @@ var o_browse = {
             return;
         }
 
-        // let selector = `#${opus.prefs.view} .gallery-contents, .dataTable`;
-        // let selector = `.dataTable`;
-        let selector = `#${opus.prefs.view} .gallery-contents`;
+        // let selector = `#${opus.prefs.view} .gallery-contents`;
+        let selector = ".browse-infiniteScroll-element";
 
-        console.log("LOAD CALL")
+        console.log("OUTER LOAD CALL")
         opus.lastLoadBrowseDataRequestNo++;
         let url = o_browse.getBrowseURL(page, opus.lastLoadBrowseDataRequestNo);
 
         // metadata; used for both table and gallery
         start_time = new Date().getTime();
         $.getJSON(url, function(data) {
-            console.log("loadBrowseData return reqno: " + data.reqno);
-            console.log("opus.lastLoadBrowseDataRequestNo reqno: " + opus.lastLoadBrowseDataRequestNo);
-            console.log("URL: " + this.url)
             let request_time = new Date().getTime() - start_time;
             if (data.reqno < opus.lastLoadBrowseDataRequestNo) {
                 return;
@@ -869,12 +861,13 @@ var o_browse = {
                 o_browse.initTable(data.columns);
 
                 if (!$(selector).data("infiniteScroll")) {
-                    console.log("INIT INF");
+                    console.log("======= INIT INF =======");
                     $(selector).infiniteScroll({
                         path: function() {
-                            console.log("PATH CALL LOAD COUNT: " + this.loadCount);
-                            console.log("PATH CALL PAGE IDx: " + this.pageIndex);
-                            let path = o_browse.getBrowseURL(page+this.pageIndex, opus.lastLoadBrowseDataRequestNo+1+this.loadCount);
+                            console.log("PATH opus.lastLoadBrowseDataRequestNo: " + opus.lastLoadBrowseDataRequestNo);
+                            console.log("PATH LOAD COUNT: " + this.loadCount);
+                            o_browse.infiniteScrollLoadCount = this.loadCount;
+                            let path = o_browse.getBrowseURL(undefined, this.loadCount);
                             return path;
                         },
                         responseType: "text",
@@ -896,6 +889,7 @@ var o_browse = {
             o_browse.updateSortOrder();
 
             if (!opus.gallery_begun) {
+                console.log("LOADING NEXT PAGE");
                 $(selector).infiniteScroll('loadNextPage');
                 opus.gallery_begun = true;
             }
@@ -908,8 +902,13 @@ var o_browse = {
     infiniteScrollLoadEventListener: function( event, response, path ) {
         let data = JSON.parse( response );
         console.log("eventListener return reqno: " + data.reqno);
+        console.log("this.load count: " + o_browse.infiniteScrollLoadCount);
         console.log("eventListener path: " + path);
-        console.log("opus.lastLoadBrowseDataRequestNo reqno: " + this.loadCount);
+        if(data.reqno < o_browse.infiniteScrollLoadCount - 1) {
+            console.log('RACE HAPPENED .................');
+            return;
+        }
+
         if ($(`.thumb-page[data-page='${data.page_no}']`).length != 0) {
             console.log(`data.reqno: ${data.reqno}, last reqno: ${opus.lastLoadBrowseDataRequestNo}`);
             return;
