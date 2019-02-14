@@ -39,7 +39,7 @@ class ErrorReader(object):
     _output: TextIO
     _seen_errors: Dict[Tuple[str, ...], List[ErrorAndLog]]
 
-    def __init__(self, files: List[str], ignored_ips:List[ipaddress.IPv4Network], output: TextIO):
+    def __init__(self, files: List[str], ignored_ips: List[ipaddress.IPv4Network], output: TextIO):
         self._files = files
         self._ignored_ips = ignored_ips
         self._output = output
@@ -57,7 +57,7 @@ class ErrorReader(object):
                                   itertools.groupby(log_entries, attrgetter('host_ip'))}
         for host_ip, error_entries in errors_by_host_ip:
             log_entries = log_entries_by_host_ip.get(host_ip, [])
-            self._check_one_ip(host_ip, error_entries, log_entries)
+            self._check_one_ip(error_entries, log_entries)
         self._show_results()
 
     def _get_error_entries(self) -> List[ErrorEntry]:
@@ -69,7 +69,7 @@ class ErrorReader(object):
                          # private networks mean a VPN or the local link
                          if not entry.host_ip.is_private
                          # we don't are about "URL not found" messages
-                         if not (entry.severity  and entry.message.startswith('Not Found: '))]
+                         if not (entry.severity and entry.message.startswith('Not Found: '))]
         return error_entries
 
     def _get_log_entries(self) -> List[LogEntry]:
@@ -113,7 +113,7 @@ class ErrorReader(object):
         else:
             return ErrorEntry(time=time, host_ip=host_ip, message=rest)
 
-    def _check_one_ip(self, host_ip: str, error_entries: List[ErrorEntry], log_entries: List[LogEntry]) -> None:
+    def _check_one_ip(self, error_entries: List[ErrorEntry], log_entries: List[LogEntry]) -> None:
         error_entries_deque = deque(error_entries)
         log_entry_dates = [log_entry.time.replace(tzinfo=None) for log_entry in log_entries]
 
@@ -150,7 +150,7 @@ class ErrorReader(object):
         output = self._output
         seen_errors = self._seen_errors
         for key in sorted(seen_errors.keys(), key=lambda strs: (-len(seen_errors[strs]), -len(strs), strs)):
-            sorted_error_and_log_pairs = sorted(seen_errors[key], key = lambda x: x.error_entries[0].time)
+            sorted_error_and_log_pairs = sorted(seen_errors[key], key=lambda x: x.error_entries[0].time)
             min_time = sorted_error_and_log_pairs[0].error_entries[0].time
             output.write('\n========================\n\n')
             count = len(seen_errors[key])

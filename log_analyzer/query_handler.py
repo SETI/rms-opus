@@ -290,7 +290,7 @@ class QueryHandler:
                     marked_changes.append(self.safe_format('<mark><del>{}</del></mark>', formatted_value))
                 else:
                     marked_changes.append(Markup(formatted_value))
-            joined_values = Markup(',').join(marked_changes);
+            joined_values = Markup(',').join(marked_changes)
             result.append(self.safe_format('Change Search: &quot;{}&quot; = {}', name, joined_values))
         elif old_value_set.intersection(new_value_set):
             change_list: List[Tuple[str, str]] = []

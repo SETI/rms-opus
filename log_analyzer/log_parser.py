@@ -279,7 +279,7 @@ class LogParser:
     def __generate_batch_html_output(self, host_infos_by_ip: List[HostInfo],
                                      host_infos_by_time: List[HostInfo]) -> None:
         env = Environment(
-            loader = FileSystemLoader("templates/"),
+            loader=FileSystemLoader("templates/"),
             autoescape=True,
             # line_statement_prefix='#',
             line_comment_prefix='##',
@@ -288,7 +288,8 @@ class LogParser:
             lstrip_blocks=True
         )
         host_infos_by_date = [(date, list(values))
-                              for date, values in itertools.groupby(host_infos_by_time, lambda host_info: host_info.start_time().date())]
+                              for date, values in itertools.groupby(host_infos_by_time,
+                                                                    lambda host_info: host_info.start_time().date())]
 
         # noinspection PyTypeChecker
         action_flags_list = list(ActionFlags)  # python type checker doesn't realize that class of enum is Iterable.
