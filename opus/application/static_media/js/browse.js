@@ -361,8 +361,12 @@ var o_browse = {
 
         $("#obs-menu .dropdown-item[data-action='range']").hide();
 
-        let top = e.pageY;
-        let left = e.pageX;
+        let namespace = `#${opus.prefs.view}`;
+        let menu = {"height":$("#obs-menu").innerHeight(), "width":$("#obs-menu").innerWidth()};
+
+        let top = ($(namespace).innerHeight() - e.pageY > menu.height) ? e.pageY-5 : e.pageY-menu.height;
+        let left = ($(namespace).innerWidth() - e.pageX > menu.width)  ? e.pageX-5 : e.pageX-menu.width;
+
         $("#obs-menu").css({
             display: "block",
             top: top,
