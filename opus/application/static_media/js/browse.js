@@ -260,8 +260,8 @@ var o_browse = {
         });
 
         $("#obs-menu").on("click", '.dropdown-item',  function(e) {
+            let opusId = $(this).parent().attr("data-id");
             o_browse.hideMenu();
-            let opusId = $(this).parent().data("id");
 
             switch ($(this).data("action")) {
                 case "cart":  // add/remove from cart
@@ -348,6 +348,8 @@ var o_browse = {
         let buttonInfo = o_browse.cartButtonInfo(inCart);
         $("#obs-menu .dropdown-header").html(opusId);
         $("#obs-menu .cart-item").html(`<i class="${buttonInfo.icon}"></i>${buttonInfo.title}`);
+        $("#obs-menu [data-action='cart']").attr("data-id", opusId);
+        $("#obs-menu [data-action='info']").attr("data-id", opusId);
         $("#obs-menu [data-action='downloadCSV']").attr("href",`/opus/__api/metadata_v2/${opusId}.csv?cols=${opus.prefs.cols.join()}`);
         $("#obs-menu [data-action='downloadCSVAll']").attr("href",`/opus/__api/metadata_v2/${opusId}.csv`);
         $("#obs-menu [data-action='downloadData']").attr("href",`/opus/__api/download/${opusId}.zip`);
