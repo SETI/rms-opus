@@ -261,6 +261,7 @@ var o_browse = {
 
         $("#obs-menu").on("click", '.dropdown-header',  function(e) {
             o_browse.hideMenu();
+            return false;
         });
 
         $("#obs-menu").on("click", '.dropdown-item',  function(e) {
