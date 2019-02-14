@@ -256,7 +256,7 @@ var o_browse = {
             opus.gallery_begun = false;     // so that we redraw from the beginning
             opus.gallery_data = {};
             opus.prefs.page = default_pages; // reset pages to 1 when col ordering changes
-
+            console.log("Click SORTING.............")
             o_browse.loadBrowseData(1);
             return false;
         });
@@ -838,13 +838,14 @@ var o_browse = {
         page = (page == undefined ? $("input#page").val() : page);
         $("input#page").val(page);
 
+        console.log("OUTER last page drawn: " + opus.lastPageDrawn[opus.prefs.view])
         // wait! is this page already drawn?
         if (opus.lastPageDrawn[opus.prefs.view] == page) {
             return;
         }
 
-        // let selector = `#${opus.prefs.view} .gallery-contents`;
-        let selector = ".browse-infiniteScroll-element";
+        let selector = `#${opus.prefs.view} .gallery-contents`;
+        let scrollingElement = ".browse-infiniteScroll-element";
 
         console.log("OUTER LOAD CALL")
         opus.lastLoadBrowseDataRequestNo++;
@@ -861,10 +862,8 @@ var o_browse = {
                 o_browse.initTable(data.columns);
 
                 if (!$(selector).data("infiniteScroll")) {
-                    console.log("======= INIT INF =======");
                     $(selector).infiniteScroll({
                         path: function() {
-                            console.log("PATH opus.lastLoadBrowseDataRequestNo: " + opus.lastLoadBrowseDataRequestNo);
                             console.log("PATH LOAD COUNT: " + this.loadCount);
                             o_browse.infiniteScrollLoadCount = this.loadCount;
                             let path = o_browse.getBrowseURL(undefined, this.loadCount);
@@ -872,7 +871,7 @@ var o_browse = {
                         },
                         responseType: "text",
                         status: `#${opus.prefs.view} .page-load-status`,
-                        elementScroll: true,
+                        elementScroll: scrollingElement,
                         history: false,
                         scrollThreshold: 500,
                         debug: true,
@@ -897,18 +896,19 @@ var o_browse = {
         });
 
         opus.lastPageDrawn[opus.prefs.view] = page;
+        console.log("FINAL PAGE: " + opus.lastPageDrawn[opus.prefs.view])
     },
 
     infiniteScrollLoadEventListener: function( event, response, path ) {
         let data = JSON.parse( response );
         console.log("eventListener return reqno: " + data.reqno);
+        console.log("eventListener return page_no: " + data.page_no);
         console.log("this.load count: " + o_browse.infiniteScrollLoadCount);
         console.log("eventListener path: " + path);
         if(data.reqno < o_browse.infiniteScrollLoadCount - 1) {
             console.log('RACE HAPPENED .................');
             return;
         }
-
         if ($(`.thumb-page[data-page='${data.page_no}']`).length != 0) {
             console.log(`data.reqno: ${data.reqno}, last reqno: ${opus.lastLoadBrowseDataRequestNo}`);
             return;

@@ -112,9 +112,17 @@ var o_collections = {
      },
 
      adjustProductInfoHeight: function() {
-         let container_height = $(window).height()-120;
-         $("#collection .sidebar_wrapper").height(container_height);
-         $("#collection .gallery-contents").height(container_height);
+         let containerHeight = $(window).height()-120;
+
+         $("#collection .sidebar_wrapper").height(containerHeight);
+         $("#collection .gallery-contents").height(containerHeight);
+         
+         if(o_collections.downloadOptionsScrollbar) {
+             o_collections.downloadOptionsScrollbar.update();
+         }
+         if(o_collections.collectionGalleryScrollbar) {
+             o_collections.collectionGalleryScrollbar.update();
+         }
      },
 
      updateCartStatus: function(status) {

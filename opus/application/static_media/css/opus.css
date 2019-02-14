@@ -594,6 +594,10 @@ img.preview {
     background-color: transparent !important;
 }
 
+#download-options-container .ps__rail-y {
+    background-color: transparent !important;
+}
+
 .collection_details {
   border-left: .3em double black;
     padding-left: 2em;
