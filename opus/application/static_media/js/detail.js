@@ -68,4 +68,10 @@ var o_detail = {
         );
     }, // / getDetail
 
+    adjustDetailHeight: function() {
+        let containerHeight = $(window).height()-120;
+        $(".detail-metadata").height(containerHeight);
+        o_detail.detailPageScrollbar.update();
+    },
+
 };
