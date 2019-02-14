@@ -259,6 +259,10 @@ var o_browse = {
             return false;
         });
 
+        $("#obs-menu").on("click", '.dropdown-header',  function(e) {
+            o_browse.hideMenu();
+        });
+
         $("#obs-menu").on("click", '.dropdown-item',  function(e) {
             let opusId = $(this).parent().attr("data-id");
             o_browse.hideMenu();
