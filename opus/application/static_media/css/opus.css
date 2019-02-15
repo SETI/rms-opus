@@ -58,6 +58,10 @@ body {
 	width: 3em !important;
 }
 
+#opusTab img.newGIF {
+    display: none;
+}
+
 #search {
     height:100%;
     position:absolute;
