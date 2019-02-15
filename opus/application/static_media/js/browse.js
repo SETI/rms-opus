@@ -978,12 +978,6 @@ var o_browse = {
         let status = o_collections.isIn(opusId) ? "" : "in";
         let buttonInfo = o_browse.cartButtonInfo(status);
 
-        // add a link to detail page;
-        let hashArray = o_hash.getHashArray();
-        hashArray.view = "detail";
-        hashArray.detail = opusId;
-        $("#galleryViewContents .detail").html(`<a href = "/opus/#/${o_hash.hashArrayToHashString(hashArray)}" class="detailViewLink" data-opusid="${opusId}"><i class = "fas fa-info-circle float-left"></i>&nbsp;View Detail</a></p>`);
-
         // prev/next buttons - put this in galleryView html...
         html = `<div class="col"><a href="#" class="select" data-id="${opusId}" title="${buttonInfo.title}"><i class="${buttonInfo.icon} fa-2x float-left"></i></a></div>`;
         html += `<div class="col">`;
