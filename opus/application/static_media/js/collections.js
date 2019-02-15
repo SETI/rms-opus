@@ -8,6 +8,7 @@ var o_collections = {
      *  from cart see browse.js
      *
      **/
+
      collectionBehaviors: function() {
          // nav bar
          $("#collection").on("click", ".download_csv", function(e) {
@@ -108,9 +109,28 @@ var o_collections = {
      },
 
      adjustProductInfoHeight: function() {
-         let container_height = $(window).height()-120;
-         $("#collection .sidebar_wrapper").height(container_height);
-         $("#collection .gallery-contents").height(container_height);
+         let containerHeight = $(window).height()-120;
+         let collectionsSummary = $("#collections_summary").height();
+         $("#collection .sidebar_wrapper").height(containerHeight);
+         $("#collection .gallery-contents").height(containerHeight);
+
+         if(o_collections.downloadOptionsScrollbar) {
+             // The following steps will hide the y-scrollbar when it's not needed.
+             // Without these steps, y-scrollbar will exist at the beginning, and disappear after the first attempt of scrolling
+             if(containerHeight > collectionsSummary) {
+                 if(!$("#download-options-container .ps__rail-y").hasClass("hide_ps__rail-y")) {
+                     $("#download-options-container .ps__rail-y").addClass("hide_ps__rail-y");
+                     o_collections.downloadOptionsScrollbar.settings.suppressScrollY = true;
+                 }
+             } else {
+                 $("#download-options-container .ps__rail-y").removeClass("hide_ps__rail-y");
+                 o_collections.downloadOptionsScrollbar.settings.suppressScrollY = false;
+             }
+             o_collections.downloadOptionsScrollbar.update();
+         }
+         if(o_collections.collectionGalleryScrollbar) {
+             o_collections.collectionGalleryScrollbar.update();
+         }
      },
 
      updateCartStatus: function(status) {
@@ -134,6 +154,9 @@ var o_collections = {
         // returns any user collection saved in session
         opus.lastCartRequestNo++;
         $.getJSON("/opus/__collections/status.json?reqno=" + opus.lastCartRequestNo, function(statusData) {
+            if(statusData.reqno < opus.lastCartRequestNo) {
+                return;
+            }
             o_collections.updateCartStatus(statusData);
         });
      },
@@ -205,7 +228,10 @@ var o_collections = {
                     if (zippedFiles_html) {
                         $(".zippedFiles", "#collection").html(zippedFiles_html);
                     }
+
                     o_collections.adjustProductInfoHeight();
+                    o_collections.downloadOptionsScrollbar = new PerfectScrollbar("#download-options-container");
+                    o_collections.collectionGalleryScrollbar = new PerfectScrollbar("#collection .gallery-contents");
                 }
             });
         }

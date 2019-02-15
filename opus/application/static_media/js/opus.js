@@ -360,11 +360,15 @@ $(document).ready(function() {
 
     var adjustSearchHeight = _.debounce(o_search.adjustSearchHeight, 200);
     var adjustBrowseHeight = _.debounce(o_browse.adjustBrowseHeight, 200);
-    var adjustTableWidth = _.debounce(o_browse.adjustTableWidth, 200);
+    var adjustTableSize = _.debounce(o_browse.adjustTableSize, 200);
+    var adjustProductInfoHeight = _.debounce(o_collections.adjustProductInfoHeight, 200);
+    var adjustDetailHeight = _.debounce(o_detail.adjustDetailHeight, 200);
     $( window ).on("resize", function() {
         adjustSearchHeight();
         adjustBrowseHeight();
-        adjustTableWidth();
+        adjustTableSize();
+        adjustProductInfoHeight();
+        adjustDetailHeight();
     });
 
     // add the navbar clicking behaviors, selecting which tab to view:

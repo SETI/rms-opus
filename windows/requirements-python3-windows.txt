@@ -1,4 +1,4 @@
-Django==2.1
+Django==2.1.5
 django-annoying==0.10.4
 django-memcached==0.1.2
 django-nose==1.4.5
@@ -11,4 +11,4 @@ Pillow==5.2.0
 psycopg2-binary==2.7.5
 pyparsing==2.2.0
 pytz==2018.5
-PyYAML==3.13
+PyYAML==4.2b4

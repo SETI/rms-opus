@@ -1,9 +1,11 @@
 var o_browse = {
     selectedImageID: "",
     keyPressAction: "",
-    xAxisTableScrollbar: new PerfectScrollbar(".dataTable"),
-    yAxisGalleryScrollbar: new PerfectScrollbar(".gallery-contents"),
-    yAxisModalScrollbar: new PerfectScrollbar("#galleryViewContents .metadata"),
+    tableSorting: false,
+    tableScrollbar: new PerfectScrollbar(".dataTable"),
+    galleryScrollbar: new PerfectScrollbar(".gallery-contents", { suppressScrollX: true }),
+    modalScrollbar: new PerfectScrollbar("#galleryViewContents .metadata"),
+    infiniteScrollLoadCount: 0,
 
     /**
     *
@@ -254,7 +256,7 @@ var o_browse = {
             opus.gallery_begun = false;     // so that we redraw from the beginning
             opus.gallery_data = {};
             opus.prefs.page = default_pages; // reset pages to 1 when col ordering changes
-
+            console.log("Click SORTING.............")
             o_browse.loadBrowseData(1);
             return false;
         });
@@ -597,6 +599,12 @@ var o_browse = {
             $(".browse_view", "#browse").data("view", "dataTable");
 
             $(".justify-content-center").show();
+
+            o_browse.galleryScrollbar.settings.suppressScrollY = false;
+            $(".gallery-contents > .ps__rail-y").show();
+            $(".dataTable > .ps__rail-y").hide();
+
+            o_browse.galleryScrollbar.update();
         } else {
             $("." + "gallery", "#browse").hide();
             $("." + opus.prefs.browse, "#browse").fadeIn();
@@ -607,6 +615,11 @@ var o_browse = {
 
             // remove that extra space on top when loading table page
             $(".justify-content-center").hide();
+
+            o_browse.galleryScrollbar.settings.suppressScrollY = true;
+            $(".gallery-contents > .ps__rail-y").hide();
+            $(".dataTable > .ps__rail-y").show();
+            o_browse.tableScrollbar.update();
         }
     },
 
@@ -722,8 +735,8 @@ var o_browse = {
 
         $('.gallery', namespace).append(html);
         $('.table-page-load-status').hide();
-        o_browse.xAxisTableScrollbar.update();
-        o_browse.yAxisGalleryScrollbar.update();
+        o_browse.tableScrollbar.update();
+        o_browse.galleryScrollbar.update();
 
         o_hash.updateHash(true);
     },
@@ -757,8 +770,8 @@ var o_browse = {
         });
 
         o_browse.initResizableColumn();
-        o_browse.updateTableXScrollbarVerticalPosition();
-        // o_browse.adjustTableWidth();
+        // o_browse.updateTableXScrollbarVerticalPosition();
+        o_browse.adjustTableSize();
     },
 
     initResizableColumn: function() {
@@ -834,13 +847,16 @@ var o_browse = {
         page = (page == undefined ? $("input#page").val() : page);
         $("input#page").val(page);
 
+        console.log("OUTER last page drawn: " + opus.lastPageDrawn[opus.prefs.view])
         // wait! is this page already drawn?
         if (opus.lastPageDrawn[opus.prefs.view] == page) {
             return;
         }
+
         let selector = `#${opus.prefs.view} .gallery-contents`;
 
-        let url = o_browse.getBrowseURL(page);
+        opus.lastLoadBrowseDataRequestNo++;
+        let url = o_browse.getBrowseURL(page, opus.lastLoadBrowseDataRequestNo);
 
         // metadata; used for both table and gallery
         start_time = new Date().getTime();
@@ -852,7 +868,6 @@ var o_browse = {
             if (!opus.gallery_begun) {
                 o_browse.initTable(data.columns);
 
-                // for infinite scroll
                 if (!$(selector).data("infiniteScroll")) {
                     $(selector).infiniteScroll({
                         path: function() {
@@ -864,12 +879,13 @@ var o_browse = {
                         elementScroll: true,
                         history: false,
                         scrollThreshold: 500,
-                        debug: false,
+                        debug: true,
                     });
-                    $(selector).on("load.infiniteScroll", o_browse.infiniteScrollLoadEventListener);
+
                     $(selector).on("request.infiniteScroll", function( event, path ) {
                         $(".table-page-load-status").show();
                     });
+                    $(selector).on("load.infiniteScroll", o_browse.infiniteScrollLoadEventListener);
                 }
             }
 
@@ -880,6 +896,7 @@ var o_browse = {
                 $(selector).infiniteScroll('loadNextPage');
                 opus.gallery_begun = true;
             }
+            $(".table-page-load-status > .loader").hide();
         });
 
         opus.lastPageDrawn[opus.prefs.view] = page;
@@ -918,9 +935,10 @@ var o_browse = {
             // page is higher than the total number of pages, reset it to the last page
             page = opus.pages;
         }
+
         o_browse.loadBrowseData(page);
         o_browse.adjustBrowseHeight();
-        o_browse.adjustTableWidth();
+        o_browse.adjustTableSize();
 
         $("input#page").val(page).css("color","initial");
         o_hash.updateHash();
@@ -929,18 +947,22 @@ var o_browse = {
     adjustBrowseHeight: function() {
         let container_height = $(window).height()-120;
         $(".gallery-contents").height(container_height);
-        o_browse.yAxisGalleryScrollbar.update();
+        o_browse.galleryScrollbar.update();
         //opus.limit =  (floor($(window).width()/thumbnailSize) * floor(container_height/thumbnailSize));
     },
 
-    adjustTableWidth: function() {
-        let containerWidth = $(".gallery-contents").width()-5;
+    adjustTableSize: function() {
+        let containerWidth = $(".gallery-contents").width();
+        let containerHeight = $(".gallery-contents").height();
         // Make sure the rightmost column is not cut off by the y-scrollbar
+        // $(".col-lg").width(containerWidth);
         $(".dataTable").width(containerWidth);
-        $(".justify-content-center").width(containerWidth);
+        $(".dataTable").height(containerHeight);
+
+        // $(".justify-content-center").width(containerWidth);
 
         o_browse.updateTableXScrollbarVerticalPosition();
-        o_browse.xAxisTableScrollbar.update();
+        o_browse.tableScrollbar.update();
     },
 
     cartButtonInfo: function(status) {
@@ -1014,7 +1036,7 @@ var o_browse = {
     updateMetaGalleryView: function(opusId, imageURL) {
         $("#galleryViewContents .left").html("<a href='"+imageURL+"' target='_blank'><img src='"+imageURL+"' title='"+opusId+"' class='preview'/></a>");
         o_browse.metadataboxHtml(opusId);
-        o_browse.yAxisModalScrollbar.update();
+        o_browse.modalScrollbar.update();
     },
 
     resetData: function() {
