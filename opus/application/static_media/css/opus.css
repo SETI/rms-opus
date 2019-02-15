@@ -97,7 +97,6 @@ body {
 }
 
 .gallery-contents {
-    /* overflow-y:auto !important; */
     overflow-y:hidden;
     overflow-x:hidden;
 }
@@ -387,7 +386,7 @@ th.sticky-header {
 
 .dataTable .ps__rail-y {
     background-color: transparent !important;
-    right: 0px !important;
+    right: 1px !important;
 }
 
 /* Make sure x-scrollbar in dataTable is always at the left and visible */
@@ -580,8 +579,15 @@ img.preview {
   padding-right: 3em;
 }
 
+#collection .col {
+  overflow-x: hidden;
+  overflow-y: hidden;
+}
+
 #collection .gallery-contents .ps__rail-y {
-    background-color: transparent !important;
+    top: 40px !important;
+    /* we need this to make ps visible */
+    right: 15px !important;
 }
 
 .hide_ps__rail-y {

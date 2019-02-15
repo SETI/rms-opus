@@ -194,6 +194,7 @@ var o_collections = {
                 });
                 opus.collection_change = false;
             }
+            o_collections.adjustProductInfoHeight();
         });
     },
 
@@ -229,9 +230,11 @@ var o_collections = {
                         $(".zippedFiles", "#collection").html(zippedFiles_html);
                     }
 
-                    o_collections.adjustProductInfoHeight();
                     o_collections.downloadOptionsScrollbar = new PerfectScrollbar("#download-options-container");
-                    o_collections.collectionGalleryScrollbar = new PerfectScrollbar("#collection .gallery-contents");
+                    o_collections.collectionGalleryScrollbar = new PerfectScrollbar("#collection .gallery-contents", {
+                        suppressScrollX: true,
+                    });
+                    o_collections.adjustProductInfoHeight();
                 }
             });
         }
