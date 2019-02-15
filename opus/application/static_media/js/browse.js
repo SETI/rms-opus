@@ -169,7 +169,7 @@ var o_browse = {
               case "cart":   // add to collection
                   o_browse.hideMenu();
                   let action = o_collections.toggleInCollection(opusId);
-                  let buttonInfo = o_browse.cartButtonInfo(opusId, action);
+                  let buttonInfo = o_browse.cartButtonInfo(action);
                   $(this).html(`<i class="${buttonInfo.icon} fa-xs"></i>`);
                   break;
 
@@ -214,7 +214,7 @@ var o_browse = {
             let opusId = $(this).data("id");
             if (opusId) {
                 let status = o_collections.toggleInCollection(opusId) == "add" ? "" : "in";
-                let buttonInfo = o_browse.cartButtonInfo(opusId, status);
+                let buttonInfo = o_browse.cartButtonInfo(status);
                 $(this).attr("title", buttonInfo.title);
                 $(this).html(`<i class="${buttonInfo.icon} fa-2x float-left"></i>`);
             }
@@ -261,9 +261,14 @@ var o_browse = {
             return false;
         });
 
-        $("#obs-menu").on("click", '.dropdown-item',  function(e) {
+        $("#obs-menu").on("click", '.dropdown-header',  function(e) {
             o_browse.hideMenu();
-            let opusId = $(this).parent().data("id");
+            return false;
+        });
+
+        $("#obs-menu").on("click", '.dropdown-item',  function(e) {
+            let opusId = $(this).parent().attr("data-id");
+            o_browse.hideMenu();
 
             switch ($(this).data("action")) {
                 case "cart":  // add/remove from cart
@@ -285,11 +290,11 @@ var o_browse = {
             return false;
         });
 
-        $(document).on("keydown",function(e) {
+        $(document).on("keydown click", function(e) {
+            o_browse.hideMenu();
             if ((e.which || e.keyCode) == 27) { // esc - close modals
                 $("#galleryView").modal('hide');
                 $("#metadataSelector").modal('hide')
-                o_browse.hideMenu();
             }
             if ($("#galleryView").hasClass("show")) {
                 /*  Catch the right/left arrow while in the modal
@@ -347,8 +352,11 @@ var o_browse = {
             o_browse.hideMenu();
         }
         let inCart = o_collections.isIn(opusId) ? "" : "in";
-        let buttonInfo = o_browse.cartButtonInfo(opusId, inCart);
+        let buttonInfo = o_browse.cartButtonInfo(inCart);
+        $("#obs-menu .dropdown-header").html(opusId);
         $("#obs-menu .cart-item").html(`<i class="${buttonInfo.icon}"></i>${buttonInfo.title}`);
+        $("#obs-menu [data-action='cart']").attr("data-id", opusId);
+        $("#obs-menu [data-action='info']").attr("data-id", opusId);
         $("#obs-menu [data-action='downloadCSV']").attr("href",`/opus/__api/metadata_v2/${opusId}.csv?cols=${opus.prefs.cols.join()}`);
         $("#obs-menu [data-action='downloadCSVAll']").attr("href",`/opus/__api/metadata_v2/${opusId}.csv`);
         $("#obs-menu [data-action='downloadData']").attr("href",`/opus/__api/download/${opusId}.zip`);
@@ -356,8 +364,12 @@ var o_browse = {
 
         $("#obs-menu .dropdown-item[data-action='range']").hide();
 
-        let top = e.pageY;
-        let left = e.pageX;
+        let namespace = `#${opus.prefs.view}`;
+        let menu = {"height":$("#obs-menu").innerHeight(), "width":$("#obs-menu").innerWidth()};
+
+        let top = ($(namespace).innerHeight() - e.pageY > menu.height) ? e.pageY-5 : e.pageY-menu.height;
+        let left = ($(namespace).innerWidth() - e.pageX > menu.width)  ? e.pageX-5 : e.pageX-menu.width;
+
         $("#obs-menu").css({
             display: "block",
             top: top,
@@ -413,16 +425,15 @@ var o_browse = {
         opus.prefs.cols.push(slug);
     },
 
-    resetToDefaultMetadata: function() {
+    resetMetadata: function(cols) {
         // uncheck all on left; we will check them as we go
         $("#metadataSelector .allMetadata .fa-check").hide();
 
         // remove all from selected column
         $("#metadataSelector .selectedMetadata li").remove();
-        opus.prefs.cols = [];
 
         // add them back and set the check
-        $.each(default_columns.split(','), function(index, slug) {
+        $.each(cols, function(index, slug) {
             o_browse.addColumn(slug);
         });
     },
@@ -430,22 +441,21 @@ var o_browse = {
     // column chooser behaviors
     addMetadataSelectorBehaviors: function() {
         // this is a global
-        var currentselectedMetadata = opus.prefs.cols.slice();
+        var currentSelectedMetadata = opus.prefs.cols.slice();
 
         $("#metadataSelector").on("hide.bs.modal", function(e) {
             // update the data table w/the new columns
-            if (!o_utils.areObjectsEqual(opus.prefs.cols, currentselectedMetadata)) {
+            if (!o_utils.areObjectsEqual(opus.prefs.cols, currentSelectedMetadata)) {
                 o_browse.resetData();
                 o_browse.initTable(opus.col_labels);
                 opus.prefs.page.gallery = 1;
                 o_browse.loadBrowseData(1);
-                currentselectedMetadata = opus.prefs.cols.slice();
             }
         });
 
         $("#metadataSelector").on("show.bs.modal", function(e) {
             // save current column state so we can look for changes
-            currentselectedMetadata = opus.prefs.cols.slice();
+            currentSelectedMetadata = opus.prefs.cols.slice();
         });
 
         $("#metadataSelector").on("shown.bs.modal", function () {
@@ -453,18 +463,27 @@ var o_browse = {
             o_browse.selectedMetadataScrollbar.update();
         });
 
-        $('#metadataSelector .allMetadata').on("click", '.submenu li a', function() {
+        $('#metadataSelector .allMetadata').on("click", '.submenu li', function() {
 
-            let slug = $(this).data('slug');
+            let elem = this;
+            let slug = $(elem).data('slug');
             if (!slug) {
-                return false;  // just a 2nd level menu click, move along
+                if ($(this).children().length > 0) {
+                     elem = $(this).children()[0];
+                     slug = $(elem).data('slug');
+                     if (!slug) {
+                         return false;
+                     }
+                } else {
+                    return false;
+                }
             }
 
-            let label = $(this).data('qualifiedlabel');
+            let label = $(elem).data('qualifiedlabel');
 
             //CHANGE THESE TO USE DATA-ICON=
-            let def = $(this).find('i.fa-info-circle').attr("title");
-            let selectedMetadata = $(this).find("i.fa-check");
+            let def = $(elem).find('i.fa-info-circle').attr("title");
+            let selectedMetadata = $(elem).find("i.fa-check");
 
             if (!selectedMetadata.is(":visible")) {
                 selectedMetadata.fadeIn().css("display", "inline-block");
@@ -480,7 +499,7 @@ var o_browse = {
                     // slug had been checked, remove from the chosen
                     opus.prefs.cols.splice($.inArray(slug,opus.prefs.cols),1);
                     $(`#cchoose__${slug}`).fadeOut(function() {
-                        $(this).remove();
+                        $(`#cchoose__${slug}`).remove();
                     });
                 }
             }
@@ -496,7 +515,7 @@ var o_browse = {
             if ($.inArray(slug, opus.prefs.cols) >= 0) {
                 // slug had been checked, removed from the chosen
                 opus.prefs.cols.splice($.inArray(slug, opus.prefs.cols), 1);
-                $(`#cchoose__${slug}`).fadeOut(function() {
+                $(`#cchoose__${slug}`).fadeOut(200, function() {
                     $(this).remove();
                 });
                 $(`#metadataSelector .allMetadata [data-slug=${slug}]`).find("i.fa-check").hide();
@@ -508,13 +527,14 @@ var o_browse = {
         $("#metadataSelector").on("click", ".btn", function() {
             switch($(this).attr("type")) {
                 case "reset":
-                    o_browse.resetToDefaultMetadata();
+                    opus.prefs.cols = [];
+                    o_browse.resetMetadata(default_columns.split(','));
                     break;
                 case "submit":
                     break;
                 case "cancel":
-                    // add an "are you sure?" here...
-                    currentselectedMetadata = opus.prefs.cols;
+                    opus.prefs.cols = [];
+                    o_browse.resetMetadata(currentSelectedMetadata);
                     break;
             }
         });
@@ -661,6 +681,7 @@ var o_browse = {
             // either there are no selections OR this is signaling the end of the infinite scroll
             // for now, just post same message to both #browse & #collections tabs
             if (data.page_no == 1) {
+                $("#collection .navbar").hide();
                 html += '<div class="thumbnail-message">';
                 html += '<h2>Your Cart is empty</h2>';
                 html += '<p>To add observations to the cart, click on the Browse Results tab ';
@@ -671,6 +692,7 @@ var o_browse = {
                 // we've hit the end of the infinite scroll.
             }
         } else {
+            $("#collection .navbar").show();
             html += '<div class="thumb-page" data-page="'+data.page_no+'">';
             opus.lastPageDrawn[opus.prefs.view] = data.page_no;
             $.each(page, function( index, item ) {
@@ -691,7 +713,7 @@ var o_browse = {
                 html += `<div class="tools dropdown" data-id="${opusId}">`;
                 html +=     '<a href="#" data-icon="info" title="View observation detail"><i class="fas fa-info-circle fa-xs"></i></a>';
 
-                let buttonInfo = o_browse.cartButtonInfo(opusId, (item.in_collection ? 'add' : 'remove'));
+                let buttonInfo = o_browse.cartButtonInfo((item.in_collection ? 'add' : 'remove'));
                 html +=     `<a href="#" data-icon="cart" title="Add to Cart"><i class="${buttonInfo.icon} fa-xs"></i></a>`;
                 html +=     '<a href="#" data-icon="menu"><i class="fas fa-bars fa-xs"></i></a>';
                 html += '</div>';
@@ -943,7 +965,7 @@ var o_browse = {
         o_browse.tableScrollbar.update();
     },
 
-    cartButtonInfo: function(opusId, status) {
+    cartButtonInfo: function(status) {
         let icon = "fas fa-cart-plus";
         let title = "Add to Cart";
         if (status != "in" && status != "remove") {
@@ -969,7 +991,7 @@ var o_browse = {
         prev = (prev.length > 0 ? prev.data("id") : "");
 
         let status = o_collections.isIn(opusId) ? "" : "in";
-        let buttonInfo = o_browse.cartButtonInfo(opusId, status);
+        let buttonInfo = o_browse.cartButtonInfo(status);
 
         // add a link to detail page;
         let hashArray = o_hash.getHashArray();

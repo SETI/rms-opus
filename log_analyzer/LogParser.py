@@ -1,7 +1,6 @@
 import datetime
 import functools
 import itertools
-import os
 import socket
 import textwrap
 from collections import deque
@@ -9,8 +8,7 @@ from ipaddress import IPv4Address
 from random import randrange, choice, seed
 from typing import List, Iterator, Dict, NamedTuple, Optional, Tuple, Iterable, TextIO, Any
 
-import django
-from django.template.loader import render_to_string
+from jinja2 import Environment, FileSystemLoader, StrictUndefined
 
 import Slug
 from LogEntry import LogEntry
@@ -73,6 +71,9 @@ class HostInfo(NamedTuple):
 
     def total_time(self) -> datetime.timedelta:
         return sum((session.duration() for session in self.sessions), datetime.timedelta(0))
+
+    def start_time(self) -> datetime.datetime:
+        return self.sessions[0].start_time()
 
 
 class LogParser:
@@ -254,7 +255,7 @@ class LogParser:
                                         entries=current_session_entries,
                                         search_slug_list=slug_info(session_info.session_search_slugs),
                                         column_slug_list=slug_info(session_info.session_column_slugs),
-                                        action_flags = session_info.action_flags,
+                                        action_flags=session_info.action_flags,
                                         id=next(self._id_generator)))
         return sessions
 
@@ -273,17 +274,30 @@ class LogParser:
                 for entry in entries:
                     self.__print_entry_info(entry.log_entry, entry.data, session.start_time())
 
-    def __generate_batch_html_output(self, host_infos_by_ip: List[HostInfo], host_infos_by_time: List[HostInfo]) -> None:
-        os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'DjangoSettings')
-        django.setup()
+    def __generate_batch_html_output(self, host_infos_by_ip: List[HostInfo],
+                                     host_infos_by_time: List[HostInfo]) -> None:
+        env = Environment(
+            loader = FileSystemLoader("templates/"),
+            autoescape=True,
+            # line_statement_prefix='#',
+            line_comment_prefix='##',
+            undefined=StrictUndefined,
+            trim_blocks=True,
+            lstrip_blocks=True
+        )
+        host_infos_by_date = [(date, list(values))
+                              for date, values in itertools.groupby(host_infos_by_time, lambda host_info: host_info.start_time().date())]
+
+        # noinspection PyTypeChecker
+        action_flags_list = list(ActionFlags)  # python type checker doesn't realize that class of enum is Iterable.
         summary_context = {'host_infos_by_ip': host_infos_by_ip,
-                           'host_infos_by_time': host_infos_by_time,
+                           'host_infos_by_date': host_infos_by_date,
                            'api_host_url': self._api_host_url,
-                           'uses_local': self._uses_local,
-                           'action_flags_list': list(ActionFlags),
+                           'action_flags_list': action_flags_list,
                            }
-        result = render_to_string('summary', summary_context)
-        print(result, file=self._output)
+        template = env.get_template('log_analysis.html')
+        for result in template.generate(**summary_context):
+            self._output.write(result)
 
     def __print_entry_info(self, this_entry: LogEntry, this_entry_info: List[str],
                            session_start_time: datetime.datetime) -> None:
@@ -301,6 +315,7 @@ class LogParser:
             return f'{ip}'
 
     def __get_reverse_dns_from_ip(self, ip: IPv4Address) -> Optional[str]:
+        """Returns the hostname of the ip if we can find it.  Otherwise None."""
         if not self._uses_reverse_dns:
             return None
         elif self._uses_local:

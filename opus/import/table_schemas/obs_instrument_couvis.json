@@ -269,6 +269,7 @@
             "FUNCTION",
             "obs_instrument_COUVIS_channel"
         ],
+        "definition": "The UVIS channel used (EUV, FUV, HDAC, or HSP)",
         "pi_category_name": "obs_instrument_couvis",
         "pi_dict_context": "COUVIS",
         "pi_dict_name": "CHANNEL",

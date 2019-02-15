@@ -24,7 +24,7 @@ class ApiTestHelper:
         #     print(response.content)
         #     self.assertEqual(response.content, err_string)
 
-    def _run_json_equal(self, url, expected):
+    def _run_json_equal(self, url, expected, ignore=None):
         print(url)
         response = self._get_response(url)
         self.assertEqual(response.status_code, 200)
@@ -33,6 +33,12 @@ class ApiTestHelper:
         print(jdata)
         print('Expected:')
         print(expected)
+        if ignore:
+            for field in ignore:
+                if field in expected:
+                    del expected[field]
+                if field in jdata:
+                    del jdata[field]
         self.assertEqual(expected, jdata)
 
     def _run_json_equal_file(self, url, exp_file):

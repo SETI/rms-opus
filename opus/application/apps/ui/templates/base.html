@@ -30,10 +30,10 @@
 				<li class="nav-item">
 					<a class="nav-link" href="#detail" data-toggle="tab" role="tab" aria-controls="detail" aria-selected="false">Detail</a>
 				</li>
-				<li class="nav-item external-link">
+				<li class="nav-item external-link blogspot">
 					<a class="nav-link" href="https://ringsnodesearchtool.blogspot.com/" target="_blank" aria-controls="blogspot">
 						<div class="container align-items-center d-flex h-100 my-auto">
-							<img src="{{ STATIC_URL }}img/new_25.gif" alt="Recent Announcements"/>&nbsp;Recent Announcements
+							<img class="newGIF" src="{{ STATIC_URL }}img/new_25.gif" alt="Recent Announcements"/>&nbsp;Recent Announcements
 						</div>
 					</a>
 				</li>
@@ -136,13 +136,25 @@
 							<div class="browse-nav-container top_navbar collapse navbar-collapse">
 								<ul class="navbar-nav mr-auto">
 									<li class="nav-item">
-										<a href="#" class="metadataModal nav-link" data-toggle="modal" data-target="#metadataSelector" title="Select columns for metadata display"><i class="fas fa-columns"></i>&nbsp;Select Metadata</a>
+										<a href="javascript:void(0)" class="download_csv nav-link" title="Click to download a CSV" target="_blank"><i class="fas fa-file-csv"></i>&nbsp;Download CSV of Selected Metadata</a>
 									</li>
 									<li class="nav-item">
-										<a href="#" class="browse_view nav-link"><i class="far fa-list-alt"></i></a>
+										<div id="create_zip_data_file">
+											<a href="#" class="downloadData nav-link" title="Click to download a zipped data archive"><i class="fas fa-download"></i>&nbsp;Download Zipped Data Archive</a>
+										</div>
 									</li>
 									<li class="nav-item">
-										<a href="#" class="download_csv nav-link" title="Click to download CSV"><i class="fas fa-download"></i>&nbsp;Download CSV</a>
+										<div id="create_zip_url_file">
+											<a href="#" class="downloadURL nav-link" title="Click to download a zipped URL archive"><i class="fas fa-download"></i>&nbsp;Download Zipped URL Archive</a>
+										</div>
+									</li>
+									<li class="nav-item">
+										<div class="b-l-1">
+											<a href="#" class="metadataModal nav-link" data-toggle="modal" data-target="#metadataSelector" title="Select columns for metadata display"><i class="fas fa-columns"></i>&nbsp;Select Metadata</a>
+										</div
+									</li>
+									<li class="nav-item ">
+										<a href="#" class="emptyCart nav-link" title="Remove all observations from cart"></i>&nbsp;Empty Cart</a>
 									</li>
 								</ul>
 								<div class="order-container">Sorted by:<ul class="sort-contents list-inline"></ul></div>
@@ -173,13 +185,14 @@
 
 		<!-- dropdown menu for observations -->
 		<div class="dropdown-menu dropdown-menu-sm" id="obs-menu" data-toggle="dropdown" aria-labelledby="obs-menu" aria-haspopup="true" aria-expanded="false">
-			<a class="dropdown-item cart-item" data-action="cart" href="#"><i class="fas fa-shopping-cart"></i>Add to Cart</a>
-			<a class="dropdown-item" data-action="range" href="#"><i class="fas fa-step-backward"></i>Range Selection</a>
-			<a class="dropdown-item" data-action="info" href="#"><i class="fas fa-info-circle"></i>Show Detail</a>
-			<a class="dropdown-item" data-action="downloadCSV" href="#" target="__blank"><i class="fas fa-file-download"></i>Download CSV of Selected Metadata&nbsp;<span class="spinner">&nbsp;</span></a>
-			<a class="dropdown-item" data-action="downloadCSVAll" href="#" target="__blank"><i class="fas fa-file-download"></i>Download CSV of All Metadata&nbsp;<span class="spinner">&nbsp;</span></a>
-			<a class="dropdown-item" data-action="downloadData" href="#" target="__blank"><i class="fas fa-download"></i>Download Zipped Data Archive&nbsp;<span class="spinner">&nbsp;</span></a>
-			<a class="dropdown-item" data-action="downloadURL" href="#" target="__blank"><i class="fas fa-download"></i>Download Zipped URL Archive&nbsp;<span class="spinner">&nbsp;</span></a>
+			<h2 class="dropdown-header"></h2>
+			<a class="dropdown-item cart-item" data-action="cart" href="#"><i class="fas fa-shopping-cart"></i>Add to cart</a>
+			<a class="dropdown-item" data-action="range" href="#"><i class="fas fa-step-backward"></i>Range selection</a>
+			<a class="dropdown-item" data-action="info" href="#"><i class="fas fa-info-circle"></i>Show detail</a>
+			<a class="dropdown-item" data-action="downloadCSV" href="#" target="__blank"><i class="fas fa-file-csv"></i>Download CSV of selected metadata&nbsp;<span class="spinner">&nbsp;</span></a>
+			<a class="dropdown-item" data-action="downloadCSVAll" href="#" target="__blank"><i class="fas fa-file-csv"></i>Download CSV of all metadata&nbsp;<span class="spinner">&nbsp;</span></a>
+			<a class="dropdown-item" data-action="downloadData" href="#" target="__blank"><i class="fas fa-download"></i>Download zipped data archive&nbsp;<span class="spinner">&nbsp;</span></a>
+			<a class="dropdown-item" data-action="downloadURL" href="#" target="__blank"><i class="fas fa-download"></i>Download zipped URL archive&nbsp;<span class="spinner">&nbsp;</span></a>
 			<a class="dropdown-item" data-action="help" href="#"><i class="far fa-question-circle"></i>Help</a>
 		</div>
 
@@ -223,7 +236,7 @@
 						</div>
 						<div class="right-container">
 							<button type="submit" class="btn btn-primary" data-dismiss="modal">Save Changes</button>
-							<button type="cancel" class="btn btn-danger" data-dismiss="modal">Discard Changes</button>
+							<button type="cancel" class="btn btn-danger"  data-dismiss="modal">Discard Changes</button>
 						</div>
 					</div>
 				</div>

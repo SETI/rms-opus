@@ -1,4 +1,4 @@
-# results/tests.py
+# results/test_results.py
 
 import json
 import sys
@@ -63,6 +63,21 @@ class resultsTests(TestCase):
             ###########################################
             ######### api_get_data UNIT TESTS #########
             ###########################################
+
+    def test__api_get_data_no_request(self):
+        "api_get_data: no request"
+        with self.assertRaises(Http404):
+            api_get_data(None, 'json')
+
+    def test__api_get_data_no_get(self):
+        "api_get_data: no GET"
+        c = Client()
+        response = c.get('/__api/data.json')
+        request = response.wsgi_request
+        request.GET = None
+        with self.assertRaises(Http404):
+            api_get_data(request, 'json')
+
 
 
             ###############################################

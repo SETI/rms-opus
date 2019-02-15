@@ -1,4 +1,4 @@
-# metadata/tests.py
+# metadata/test_metadata.py
 
 import json
 import sys

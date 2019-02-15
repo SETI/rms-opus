@@ -36,8 +36,7 @@ from django.views.decorators.cache import never_cache
 
 from hurry.filesize import size as nice_file_size
 
-from results.views import (get_data,
-                           get_search_results_chunk,
+from results.views import (get_search_results_chunk,
                            labels_for_slugs)
 from search.models import ObsGeneral
 from search.views import (get_param_info_by_slug,

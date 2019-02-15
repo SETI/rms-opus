@@ -58,6 +58,10 @@ body {
   width: 3em !important;
 }
 
+#opusTab img.newGIF {
+    display: none;
+}
+
 #search {
     height:100%;
     position:absolute;
@@ -403,16 +407,6 @@ th.sticky-header {
     color:#b0b0b0;
 }
 
-.zipped_files li {
-    margin:0; padding:0;
-    list-style-type:none;
-    margin:10px 0px 15px -20px;
-}
-.gallery_image_focus {
-    border:1px solid #E8FCF6;
-    border:1px solid #B0D0CF;
-}
-
 .detailViewLink {
     margin-top:70px;
     font-size:130%;
@@ -594,14 +588,21 @@ img.preview {
     display: none !important;
 }
 
+#collections-sidebar .zippedFiles li {
+    margin:0; padding:0;
+    list-style-type:none;
+    margin:10px 0px 15px -20px;
+}
+
 .collection_details {
   border-left: .3em double black;
     padding-left: 2em;
     min-width: 28em;
   max-width: 28em;
 }
-.collection_download_button {
-    padding-top:0px;
+
+#download_links {
+	display: none;
 }
 
 div.gallery {
