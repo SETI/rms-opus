@@ -433,10 +433,13 @@ var o_browse = {
         let info = '<i class = "fas fa-info-circle" title = "' + elem.find('*[title]').attr("title") + '"></i>';
         let html = `<li id = "cchoose__${slug}">${label}${info}<span class="unselect"><i class="far fa-trash-alt"></span></li>`
         $(".selectedMetadata > ul").append(html);
-        opus.prefs.cols.push(slug);
     },
 
-    resetMetadata: function(cols) {
+    resetMetadata: function(cols, closeModal) {
+        opus.prefs.cols = cols.slice();
+        if (closeModal == true)
+            $("#galleryView").modal('hide');
+
         // uncheck all on left; we will check them as we go
         $("#metadataSelector .allMetadata .fa-check").hide();
 
@@ -544,8 +547,9 @@ var o_browse = {
                 case "submit":
                     break;
                 case "cancel":
+                    $('#myModal').modal('hide')
                     opus.prefs.cols = [];
-                    o_browse.resetMetadata(currentSelectedMetadata);
+                    o_browse.resetMetadata(currentSelectedMetadata, true);
                     break;
             }
         });
