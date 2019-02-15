@@ -96,7 +96,7 @@ def api_last_blog_update(request):
     Format: __lastblogupdate.json
 
     JSON return:
-        {'lastupdate': '2019-JAN-01'}
+        {'lastupdate': '2019-01-31'}
       or if none available:
         {'lastupdate': None}
     """

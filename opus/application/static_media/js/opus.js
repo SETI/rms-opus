@@ -221,13 +221,18 @@ var opus = {
     lastBlogUpdate: function() {
         $.getJSON("/opus/__lastblogupdate.json", function(data) {
             if (data.lastupdate !== null) {
+                let last_update_date = new Date(data.lastupdate);
                 let today = Date.now();
-                let days = (today - Date.parse(data.lastupdate))/1000/60/60/24;
+                let days = (today - last_update_date.valueOf())/1000/60/60/24;
                 if (days <= 7) {
                     $(".blogspot img").show();
                 } else {
                     $(".blogspot img").hide();
                 }
+                let pretty_date = last_update_date.toLocaleDateString('en-GB', options={year: 'numeric', month: 'long', day: 'numeric'});
+                $("#last_blog_update_date").attr("title", "Blog last updated "+pretty_date);
+            } else {
+                $("#last_blog_update_date").title("");
             }
         });
     },

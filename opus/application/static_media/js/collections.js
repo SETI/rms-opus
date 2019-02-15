@@ -48,7 +48,7 @@ var o_collections = {
          // check an input on selected products and images updates file_info
          $("#collection").on("click","#download_options input", function() {
              let add_to_url = o_collections.getDownloadFiltersChecked();
-             let url = "/opus/__collections/download/view.json?" + add_to_url + "&fmt=json";
+             let url = "/opus/__collections/view.json?" + add_to_url + "&fmt=json";
              $.getJSON(url, function(info) {
                  $("#total_download_count").fadeOut().html(info.total_download_count).fadeIn();
                  $("#total_download_size").fadeOut().html(info.total_download_size_pretty).fadeIn();
