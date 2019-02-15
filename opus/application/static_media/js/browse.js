@@ -199,6 +199,7 @@ var o_browse = {
 
         // add the 'get detail' behavior
         $('#galleryView').on("click", '.detailViewLink', function(e) {
+            o_browse.hideMenu();
             if (e.shiftKey || e.ctrlKey || e.metaKey) {
                 // handles command click to open in new tab
                 let link = "/opus/#/" + o_hash.getHash();
@@ -213,6 +214,7 @@ var o_browse = {
         });
 
         $('#galleryView').on("click", "a.select", function(e) {
+            o_browse.hideMenu();
             let opusId = $(this).data("id");
             if (opusId) {
                 let status = o_collections.toggleInCollection(opusId) == "add" ? "" : "in";
@@ -224,6 +226,7 @@ var o_browse = {
         });
 
         $('#galleryView').on("click", "a.prev,a.next", function(e) {
+            o_browse.hideMenu();
             let action = $(this).hasClass("prev") ? "prev" : "next";
             let opusId = $(this).data("id");
             if (opusId) {
@@ -711,7 +714,7 @@ var o_browse = {
                 html +=     '<a href="#" data-icon="info" title="View observation detail"><i class="fas fa-info-circle fa-xs"></i></a>';
 
                 let buttonInfo = o_browse.cartButtonInfo((item.in_collection ? 'add' : 'remove'));
-                html +=     `<a href="#" data-icon="cart" title="Add to Cart"><i class="${buttonInfo.icon} fa-xs"></i></a>`;
+                html +=     `<a href="#" data-icon="cart" title="Add to cart"><i class="${buttonInfo.icon} fa-xs"></i></a>`;
                 html +=     '<a href="#" data-icon="menu"><i class="fas fa-bars fa-xs"></i></a>';
                 html += '</div>';
                 html += '</div></div>';
@@ -955,10 +958,10 @@ var o_browse = {
 
     cartButtonInfo: function(status) {
         let icon = "fas fa-cart-plus";
-        let title = "Add to Cart";
+        let title = "Add to cart";
         if (status != "in" && status != "remove") {
             icon = "far fa-trash-alt";
-            title = "Remove from Cart";
+            title = "Remove from cart";
         }
         return  {"icon":icon, "title":title};
     },
