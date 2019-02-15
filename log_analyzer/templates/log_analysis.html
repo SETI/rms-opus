@@ -97,7 +97,8 @@ because it requires that all the navigation tabs be within a single unordered li
                             "has-download": "file-download", "has-obsolete-slug" : "times-circle" }
 %}
 
-{% macro print_flags(session, full) %}
+{% macro generate_session_row(session, full) %}
+    <tr>
     {% for flag in action_flags_list %}
         {% set flag_in_use = flag in session.action_flags %}
         {% if flag_in_use or full %}
@@ -116,6 +117,8 @@ because it requires that all the navigation tabs be within a single unordered li
             <td></td>
         {% endif %}
     {% endfor %}
+    <td>{{ caller() }}</td>
+    </tr>
 {% endmacro %}
 
 {% macro host_info_ip_or_name(host_info) %}
@@ -132,10 +135,10 @@ because it requires that all the navigation tabs be within a single unordered li
     ({{ host_info.total_time() }})
     <table class="SessionLinkTable">
         {% for session in host_info.sessions %}
-           <tr>{{ print_flags(session, loop.first) }}
-           <td><a href="#" class=SessionLink data-target="#{{ session.id }}">
-                    {{ session.start_time().strftime("%Y %b %d %H:%M:%S") }} ({{ session.duration() }})</a></td>
-           </tr>
+            {% call generate_session_row(session, loop.first) %}
+               <a href="#" class=SessionLink data-target="#{{ session.id }}">
+                    {{ session.start_time().strftime("%Y %b %d %H:%M:%S") }} ({{ session.duration() }})</a>
+            {% endcall %}}
         {% endfor %}
     </table>
 
@@ -149,13 +152,12 @@ because it requires that all the navigation tabs be within a single unordered li
     <table class="SessionLinkTable">
     {% for host_info in host_infos_for_day %}
         {% set session = host_info.sessions[0] %}
-        <tr>{{ print_flags(session, loop.first) }}
-        <td><a href="#" class=SessionLink data-target="#{{ session.id }}">
+        {% call generate_session_row(session, loop.first) %}
+            <a href="#" class=SessionLink data-target="#{{ session.id }}">
                {{ session.start_time().strftime("%H:%M:%S") }}&nbsp;({{ session.duration() }})</a>
                {{ host_info_ip_or_name(host_info) }}
-        </td>
-        </tr>
-    {% endfor %}
+        {% endcall %}
+=    {% endfor %}
     </table>
 {% endfor %}
 
@@ -210,8 +212,7 @@ because it requires that all the navigation tabs be within a single unordered li
         {{ print_slugs(session) }}
         <hr/>
         {{ print_session_entries(session) }}
-    </div>
-    {% endfor %}
+    </div>{% endfor %}
 {% endfor %}
 </div>  ## class=tabContent
 </div>  ## #right

@@ -14,6 +14,16 @@ from log_entry import LogEntry
 from session_info import SessionInfo, SessionInfoGenerator, ActionFlags
 from slug import Info
 
+JINJA_ENVIRONMENT = Environment(
+    loader=FileSystemLoader("templates/"),
+    autoescape=True,
+    # line_statement_prefix='#',
+    line_comment_prefix='##',
+    undefined=StrictUndefined,
+    trim_blocks=True,
+    lstrip_blocks=True
+)
+
 
 class _LiveSession(NamedTuple):
     """Used by LogParser.run_realtime to keep track of active session"""
@@ -278,15 +288,6 @@ class LogParser:
 
     def __generate_batch_html_output(self, host_infos_by_ip: List[HostInfo],
                                      host_infos_by_time: List[HostInfo]) -> None:
-        env = Environment(
-            loader=FileSystemLoader("templates/"),
-            autoescape=True,
-            # line_statement_prefix='#',
-            line_comment_prefix='##',
-            undefined=StrictUndefined,
-            trim_blocks=True,
-            lstrip_blocks=True
-        )
         host_infos_by_date = [(date, list(values))
                               for date, values in itertools.groupby(host_infos_by_time,
                                                                     lambda host_info: host_info.start_time().date())]
@@ -299,7 +300,7 @@ class LogParser:
                            'action_flags_list': action_flags_list,
                            'uses_glyphs': self._uses_glyphs
                            }
-        template = env.get_template('log_analysis.html')
+        template = JINJA_ENVIRONMENT.get_template('log_analysis.html')
         for result in template.generate(**summary_context):
             self._output.write(result)
 
