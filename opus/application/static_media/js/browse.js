@@ -256,7 +256,6 @@ var o_browse = {
             opus.gallery_begun = false;     // so that we redraw from the beginning
             opus.gallery_data = {};
             opus.prefs.page = default_pages; // reset pages to 1 when col ordering changes
-            console.log("Click SORTING.............")
             o_browse.loadBrowseData(1);
             return false;
         });
@@ -847,7 +846,6 @@ var o_browse = {
         page = (page == undefined ? $("input#page").val() : page);
         $("input#page").val(page);
 
-        console.log("OUTER last page drawn: " + opus.lastPageDrawn[opus.prefs.view])
         // wait! is this page already drawn?
         if (opus.lastPageDrawn[opus.prefs.view] == page) {
             return;
