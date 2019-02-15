@@ -3,7 +3,7 @@ var o_browse = {
     keyPressAction: "",
     tableSorting: false,
     tableScrollbar: new PerfectScrollbar(".dataTable"),
-    galleryScrollbar: new PerfectScrollbar(".gallery-contents"),
+    galleryScrollbar: new PerfectScrollbar(".gallery-contents", { suppressScrollX: true }),
     modalScrollbar: new PerfectScrollbar("#galleryViewContents .metadata"),
     infiniteScrollLoadCount: 0,
 
@@ -808,27 +808,14 @@ var o_browse = {
         $(".order-container ul").html(listHtml);
     },
 
-    // getBrowseURL: function(page) {
-    //     let view = o_browse.getViewInfo();
-    //     let base_url = "/opus/__api/dataimages.json?";
-    //     if (page == undefined) {
-    //         page = opus.lastPageDrawn[opus.prefs.view]+1;
-    //     }
-    //     opus.lastLoadBrowseDataRequestNo++;
-    //     console.log("CALL GETBROWSEURL, CURRENT REQ: " +   opus.lastLoadBrowseDataRequestNo);
-    //     let url = o_hash.getHash() + '&reqno=' + opus.lastLoadBrowseDataRequestNo + view.add_to_url;
-    //     url = base_url + o_browse.updatePageInUrl(url, page);
-    //     return url;
-    // },
-
-    getBrowseURL: function(page, reqno) {
+    getBrowseURL: function(page) {
         let view = o_browse.getViewInfo();
         let base_url = "/opus/__api/dataimages.json?";
         if (page == undefined) {
             page = opus.lastPageDrawn[opus.prefs.view]+1;
         }
-        console.log(`CALL GETBROWSEURL, CURRENT REQ: ${reqno}, CURRENT PAGE: ${page}` );
-        let url = o_hash.getHash() + '&reqno=' + reqno + view.add_to_url;
+        opus.lastLoadBrowseDataRequestNo++;
+        let url = o_hash.getHash() + '&reqno=' + opus.lastLoadBrowseDataRequestNo + view.add_to_url;
         url = base_url + o_browse.updatePageInUrl(url, page);
         return url;
     },
@@ -845,9 +832,7 @@ var o_browse = {
         }
 
         let selector = `#${opus.prefs.view} .gallery-contents`;
-        let scrollingElement = ".browse-infiniteScroll-element";
 
-        console.log("OUTER LOAD CALL")
         opus.lastLoadBrowseDataRequestNo++;
         let url = o_browse.getBrowseURL(page, opus.lastLoadBrowseDataRequestNo);
 
@@ -864,14 +849,12 @@ var o_browse = {
                 if (!$(selector).data("infiniteScroll")) {
                     $(selector).infiniteScroll({
                         path: function() {
-                            console.log("PATH LOAD COUNT: " + this.loadCount);
-                            o_browse.infiniteScrollLoadCount = this.loadCount;
-                            let path = o_browse.getBrowseURL(undefined, this.loadCount);
+                            let path = o_browse.getBrowseURL();
                             return path;
                         },
                         responseType: "text",
                         status: `#${opus.prefs.view} .page-load-status`,
-                        elementScroll: scrollingElement,
+                        elementScroll: true,
                         history: false,
                         scrollThreshold: 500,
                         debug: true,
@@ -888,7 +871,6 @@ var o_browse = {
             o_browse.updateSortOrder();
 
             if (!opus.gallery_begun) {
-                console.log("LOADING NEXT PAGE");
                 $(selector).infiniteScroll('loadNextPage');
                 opus.gallery_begun = true;
             }
@@ -896,19 +878,10 @@ var o_browse = {
         });
 
         opus.lastPageDrawn[opus.prefs.view] = page;
-        console.log("FINAL PAGE: " + opus.lastPageDrawn[opus.prefs.view])
     },
 
     infiniteScrollLoadEventListener: function( event, response, path ) {
         let data = JSON.parse( response );
-        console.log("eventListener return reqno: " + data.reqno);
-        console.log("eventListener return page_no: " + data.page_no);
-        console.log("this.load count: " + o_browse.infiniteScrollLoadCount);
-        console.log("eventListener path: " + path);
-        if(data.reqno < o_browse.infiniteScrollLoadCount - 1) {
-            console.log('RACE HAPPENED .................');
-            return;
-        }
         if ($(`.thumb-page[data-page='${data.page_no}']`).length != 0) {
             console.log(`data.reqno: ${data.reqno}, last reqno: ${opus.lastLoadBrowseDataRequestNo}`);
             return;

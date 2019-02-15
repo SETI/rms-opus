@@ -70,8 +70,10 @@ var o_detail = {
 
     adjustDetailHeight: function() {
         let containerHeight = $(window).height()-120;
-        $(".detail-metadata").height(containerHeight);
-        o_detail.detailPageScrollbar.update();
+        if(o_detail.detailPageScrollbar) {
+            $(".detail-metadata").height(containerHeight);
+            o_detail.detailPageScrollbar.update();
+        }
     },
 
 };

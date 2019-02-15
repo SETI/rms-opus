@@ -113,10 +113,9 @@ var o_collections = {
 
      adjustProductInfoHeight: function() {
          let containerHeight = $(window).height()-120;
-
          $("#collection .sidebar_wrapper").height(containerHeight);
          $("#collection .gallery-contents").height(containerHeight);
-         
+
          if(o_collections.downloadOptionsScrollbar) {
              o_collections.downloadOptionsScrollbar.update();
          }
@@ -218,6 +217,7 @@ var o_collections = {
                     if (zipped_files_html) {
                         $(".zipped_files", "#collection").html(zipped_files_html);
                     }
+
                     o_collections.adjustProductInfoHeight();
                     o_collections.downloadOptionsScrollbar = new PerfectScrollbar("#download-options-container");
                     o_collections.collectionGalleryScrollbar = new PerfectScrollbar("#collection .gallery-contents");
