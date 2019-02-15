@@ -119,8 +119,10 @@ var o_collections = {
          }
          let count = status.count;
          $("#collection_count").html(count);
-         if (status.download_size_pretty !== undefined) {
-             $("#total_download_size").html(status.download_size_pretty);
+         if (status.total_download_size_pretty !== undefined) {
+             $("#total_download_size").html(status.total_download_size_pretty);
+             $("#total_download_count").fadeOut().html(status.total_download_count).fadeIn();
+             $("#total_download_size").fadeOut().html(status.total_download_size_pretty).fadeIn();
          }
          opus.colls_pages = Math.ceil(count/opus.prefs.limit);
          o_collections.adjustProductInfoHeight();
