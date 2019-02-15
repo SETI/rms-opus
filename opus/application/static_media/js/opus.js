@@ -232,7 +232,7 @@ var opus = {
                 let pretty_date = last_update_date.toLocaleDateString('en-GB', options={year: 'numeric', month: 'long', day: 'numeric'});
                 $("#last_blog_update_date").attr("title", "Blog last updated "+pretty_date);
             } else {
-                $("#last_blog_update_date").title("");
+                $("#last_blog_update_date").attr("title", "");
             }
         });
     },
