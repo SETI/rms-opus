@@ -769,7 +769,6 @@ var o_browse = {
         });
 
         o_browse.initResizableColumn();
-        // o_browse.updateTableXScrollbarVerticalPosition();
         o_browse.adjustTableSize();
     },
 
@@ -800,23 +799,6 @@ var o_browse = {
                 }
             },
         });
-    },
-
-    updateTableXScrollbarVerticalPosition: function() {
-        let xRailPosition = $(".app-footer").height();
-        if($("body").find("style")) {
-            $("body").find("style").parent().remove();
-        }
-        $(".dataTable > .ps__rail-x").removeClass("update-x-scrollbar-pos");
-        o_browse.injectStyle(`.update-x-scrollbar-pos { bottom: ${xRailPosition}px !important}`);
-        $(".dataTable > .ps__rail-x").addClass("update-x-scrollbar-pos");
-    },
-
-    injectStyle: function(rule) {
-        let div = $("<div />", {
-            html: `<style>${rule}</style>`
-        });
-        $("body").append(div);
     },
 
     updateSortOrder: function() {
@@ -953,13 +935,8 @@ var o_browse = {
         let containerWidth = $(".gallery-contents").width();
         let containerHeight = $(".gallery-contents").height();
         // Make sure the rightmost column is not cut off by the y-scrollbar
-        // $(".col-lg").width(containerWidth);
         $(".dataTable").width(containerWidth);
         $(".dataTable").height(containerHeight);
-
-        // $(".justify-content-center").width(containerWidth);
-
-        o_browse.updateTableXScrollbarVerticalPosition();
         o_browse.tableScrollbar.update();
     },
 

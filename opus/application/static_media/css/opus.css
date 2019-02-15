@@ -394,6 +394,7 @@ th.sticky-header {
     background-color: transparent !important;
     left: 0px !important;
     opacity: 1 !important;
+    bottom: 25px !important;
 }
 
 /* Fix the spinner*/
