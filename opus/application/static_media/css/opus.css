@@ -502,6 +502,7 @@ img.preview {
 
 #galleryView {
     pointer-events: none;
+    z-index: 999;
 }
 
 #galleryView button.close, #metadataSelector button.close {
@@ -518,9 +519,9 @@ img.preview {
 
 #galleryView .bottom {
 	position: fixed;
-	right: 2em;
+	right: 2.5em;
 	bottom: 1.5em;
-	width: 38%;
+	width: 40%;
 	z-index: 1030;
 }
 

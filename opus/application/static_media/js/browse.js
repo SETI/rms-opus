@@ -169,6 +169,7 @@ var o_browse = {
                   let action = o_collections.toggleInCollection(opusId);
                   let buttonInfo = o_browse.cartButtonInfo(action);
                   $(this).html(`<i class="${buttonInfo.icon} fa-xs"></i>`);
+                  $(this).prop("title", buttonInfo.title);
                   break;
 
               case "menu":  // expand, same as click on image
@@ -225,6 +226,12 @@ var o_browse = {
             if (opusId) {
                 o_browse.updateGalleryView(opusId);
             }
+            return false;
+        });
+
+        $('#galleryView').on("click", "a.menu", function(e) {
+            let opusId = $(this).data("id");
+            o_browse.showMenu(e, opusId);
             return false;
         });
 
@@ -975,14 +982,19 @@ var o_browse = {
         let hashArray = o_hash.getHashArray();
         hashArray.view = "detail";
         hashArray.detail = opusId;
-        $("#galleryViewContents .detail").html(`<a href = "/opus/#/${o_hash.hashArrayToHashString(hashArray)}" class="detailViewLink" data-opusid="${opusId}"><i class = "fas fa-info-circle"></i>&nbsp;View Detail</a></p>`);
+        $("#galleryViewContents .detail").html(`<a href = "/opus/#/${o_hash.hashArrayToHashString(hashArray)}" class="detailViewLink" data-opusid="${opusId}"><i class = "fas fa-info-circle float-left"></i>&nbsp;View Detail</a></p>`);
 
         // prev/next buttons - put this in galleryView html...
-        html = `<a href="#" class="select" data-id="${opusId}" title="${buttonInfo.title}"><i class="${buttonInfo.icon} fa-2x float-left"></i></a>`;
-        if (next != "")
-            html += `<a href="#" class="next pr-5" data-id="${next}" title="Next image"><i class="far fa-hand-point-right fa-2x float-right"></i></a>`;
+        html = `<div class="col"><a href="#" class="select" data-id="${opusId}" title="${buttonInfo.title}"><i class="${buttonInfo.icon} fa-2x float-left"></i></a></div>`;
+        html += `<div class="col">`;
         if (prev != "")
-            html += `<a href="#" class="prev pr-5" data-id="${prev}" title="Previous image"><i class="far fa-hand-point-left fa-2x float-right"></i></a></div>`;
+            html += `<a href="#" class="prev" data-id="${prev}" title="Previous image"><i class="far fa-hand-point-left fa-2x"></i></a>`;
+        if (next != "")
+            html += `<a href="#" class="next" data-id="${next}" title="Next image"><i class="far fa-hand-point-right fa-2x"></i></a>`;
+        html += `</div>`;
+
+        // mini-menu like the hamburger on the observation/gallery page
+        html += `<div class="col"><a href="#" class="menu pr-5" data-id="${opusId}"><i class="fas fa-bars fa-2x float-right"></i></a></div>`;
         $("#galleryViewContents .bottom").html(html);
     },
 
