@@ -113,10 +113,22 @@ var o_collections = {
 
      adjustProductInfoHeight: function() {
          let containerHeight = $(window).height()-120;
+         let collectionsSummary = $("#collections_summary").height();
          $("#collection .sidebar_wrapper").height(containerHeight);
          $("#collection .gallery-contents").height(containerHeight);
 
          if(o_collections.downloadOptionsScrollbar) {
+             // The following steps will hide the y-scrollbar when it's not needed.
+             // Without these steps, y-scrollbar will exist at the beginning, and disappear after the first attempt of scrolling
+             if(containerHeight > collectionsSummary) {
+                 if(!$("#download-options-container .ps__rail-y").hasClass("hide_ps__rail-y")) {
+                     $("#download-options-container .ps__rail-y").addClass("hide_ps__rail-y");
+                     o_collections.downloadOptionsScrollbar.settings.suppressScrollY = true;
+                 }
+             } else {
+                 $("#download-options-container .ps__rail-y").removeClass("hide_ps__rail-y");
+                 o_collections.downloadOptionsScrollbar.settings.suppressScrollY = false;
+             }
              o_collections.downloadOptionsScrollbar.update();
          }
          if(o_collections.collectionGalleryScrollbar) {

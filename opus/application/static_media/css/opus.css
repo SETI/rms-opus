@@ -105,10 +105,6 @@ body {
     top: 95px !important;
 }
 
-.disable_ps__rail-y {
-    display: none !important;
-}
-
 #detail {
     padding:20px 50px;
 }
@@ -594,8 +590,8 @@ img.preview {
     background-color: transparent !important;
 }
 
-#download-options-container .ps__rail-y {
-    background-color: transparent !important;
+.hide_ps__rail-y {
+    display: none !important;
 }
 
 .collection_details {
