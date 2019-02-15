@@ -81,13 +81,13 @@ var o_browse = {
            $(this).attr("href", csv_link);
        });
 
-       // 1 - click on thumbnail opens modal window
-        // 2 - shift click - takes range from whatever the last thing you clicked on and if the
-        //     thing you previously clicked is IN the card, do an 'add range', otherwise
-        //     do a 'remove range'.  Don't toggle the items inside the range
+        // 1 - click on thumbnail opens modal window
+        // 2 - shift click - takes range from whatever the last thing you shift+clicked on and if the
+        //     thing you previously shift+clicked is IN the cart, do an 'add range', otherwise
+        //     do a 'remove range'. If there was nothing you previously shift+clicked on, then
+        //     toggle the selection and set up for the next shift+click.
         // 3 - ctrl click - alternate way to add to cart
-        //    NOTE: range can go forward or backwards
-        //
+        // NOTE: range can go forward or backwards
 
         // images...
         $(".gallery").on("click", ".thumbnail", function(e) {
