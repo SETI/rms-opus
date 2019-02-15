@@ -6,9 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
   <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css">
-{% if uses_glyphs %}
   <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.1/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
-{% endif %}
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js"></script>
   <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.min.js"></script>
@@ -102,17 +100,8 @@ because it requires that all the navigation tabs be within a single unordered li
     {% for flag in action_flags_list %}
         {% set flag_in_use = flag in session.action_flags %}
         {% if flag_in_use or full %}
-            {% if uses_glyphs %}
-                {% set glyph = marker_to_glyph[flag.as_html_classname()] %}
-                <td><span class="{{ 'fas fa-' ~  glyph ~ ('' if flag_in_use else ' invisible') }}">&zwj;</span></td>
-            {% else %}
-                {% set entity = (marker_to_letter[flag.as_html_classname()] | safe) %}
-                {% if flag_in_use %}
-                    <td>{{ entity }}</td>
-                {% else %}
-                    <td><span class="invisible">{{ entity }}</span></td>
-                {% endif %}
-            {% endif %}
+            {% set glyph = marker_to_glyph[flag.as_html_classname()] %}
+            <td><span class="{{ 'fas fa-' ~  glyph ~ ('' if flag_in_use else ' invisible') }}">&zwj;</span></td>
         {% else %}
             <td></td>
         {% endif %}
@@ -138,7 +127,7 @@ because it requires that all the navigation tabs be within a single unordered li
             {% call generate_session_row(session, loop.first) %}
                <a href="#" class=SessionLink data-target="#{{ session.id }}">
                     {{ session.start_time().strftime("%Y %b %d %H:%M:%S") }} ({{ session.duration() }})</a>
-            {% endcall %}}
+            {% endcall %}
         {% endfor %}
     </table>
 
@@ -157,7 +146,7 @@ because it requires that all the navigation tabs be within a single unordered li
                {{ session.start_time().strftime("%H:%M:%S") }}&nbsp;({{ session.duration() }})</a>
                {{ host_info_ip_or_name(host_info) }}
         {% endcall %}
-=    {% endfor %}
+    {% endfor %}
     </table>
 {% endfor %}
 

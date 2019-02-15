@@ -42,8 +42,8 @@ class SessionInfoGenerator:
 class ActionFlags(Flag):
     # These should be in the order we want to see them in the output
     HAS_SEARCH = auto()
-    HAS_COLUMNS = auto()
     FETCHED_GALLERY = auto()
+    HAS_COLUMNS = auto()
     HAS_DOWNLOAD = auto()
     HAS_OBSOLETE_SLUG = auto()
 

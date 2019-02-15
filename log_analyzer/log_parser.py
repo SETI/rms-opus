@@ -95,13 +95,12 @@ class LogParser:
     _session_timeout: datetime.timedelta
     _output: TextIO
     _uses_local: bool
-    _uses_glyphs: bool
     _by_ip: bool
     _id_generator: Iterator[str]
 
     def __init__(self, session_info_generator: SessionInfoGenerator, uses_reverse_dns: bool,
                  session_timeout_minutes: int, output: TextIO, api_host_url: str, uses_html: bool,
-                 uses_local: bool, uses_glyphs: bool, by_ip: bool, **_: Any):
+                 uses_local: bool, by_ip: bool, **_: Any):
         self._session_info_generator = session_info_generator
         self._uses_reverse_dns = uses_reverse_dns
         self._session_timeout = datetime.timedelta(minutes=session_timeout_minutes)
@@ -109,7 +108,6 @@ class LogParser:
         self._api_host_url = api_host_url
         self._uses_html = uses_html
         self._uses_local = uses_local
-        self._uses_glyphs = uses_glyphs
         self._by_ip = by_ip
         self._id_generator = (f'{value:X}' for value in itertools.count(100))
 
@@ -298,7 +296,6 @@ class LogParser:
                            'host_infos_by_date': host_infos_by_date,
                            'api_host_url': self._api_host_url,
                            'action_flags_list': action_flags_list,
-                           'uses_glyphs': self._uses_glyphs
                            }
         template = JINJA_ENVIRONMENT.get_template('log_analysis.html')
         for result in template.generate(**summary_context):

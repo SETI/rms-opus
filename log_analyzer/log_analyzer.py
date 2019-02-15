@@ -46,7 +46,6 @@ def main(arguments: Optional[List[str]] = None) -> None:
                         help='list of ips to ignore.  May be specified multiple times')
     parser.add_argument('--session-timeout', default=60, type=int, metavar="minutes", dest='session_timeout_minutes',
                         help='a session ends after this period (minutes) of inactivity')
-    parser.add_argument('--glyphs', action='store_true', dest='uses_glyphs', help="Use glyphs in html output")
 
     parser.add_argument('--output', '-o', type=argparse.FileType('w'), default=sys.stdout, dest='output',
                         help="output file.  default is stdout")
