@@ -513,7 +513,7 @@ var o_browse = {
             if ($.inArray(slug, opus.prefs.cols) >= 0) {
                 // slug had been checked, removed from the chosen
                 opus.prefs.cols.splice($.inArray(slug, opus.prefs.cols), 1);
-                $(`#cchoose__${slug}`).fadeOut(function() {
+                $(`#cchoose__${slug}`).fadeOut(200, function() {
                     $(this).remove();
                 });
                 $(`#metadataSelector .allMetadata [data-slug=${slug}]`).find("i.fa-check").hide();
