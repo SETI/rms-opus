@@ -186,7 +186,10 @@ var o_browse = {
         });
 
         $(".modal-dialog").draggable({
-            handle: ".modal-content"
+            handle: ".modal-content",
+            drag: function( event, ui ) {
+                o_browse.hideMenu();
+            }
         });
 
         $(".app-body").on("hide.bs.modal", "#galleryView", function(e) {
