@@ -35,18 +35,22 @@ var o_detail = {
                     return;
                 }
 
+                let arrOfDeferred = [];
+
                 // get the column metadata, this part is fast
                 url = "/opus/__api/metadata_v2/" + opus_id + ".html?" + o_hash.getHash();
+                let metadataDeferred = $.Deferred();
                 $("#cols_metadata_"+opus_id)
                     .load(url, function() {
                         $(this).hide().fadeIn("fast");
+                        metadataDeferred.resolve();
                     }
                 );
+                arrOfDeferred.push(metadataDeferred);
 
                 // get categories and then send for data for each category separately:
                 url = "/opus/__api/categories/" + opus_id + ".json?" + o_hash.getHash();
                 $.getJSON(url, function(json) {
-                    let arrOfDeferred = [];
                     for (var index in json) {
                         let deferredObj = $.Deferred();
                         name = json[index]['table_name'];
