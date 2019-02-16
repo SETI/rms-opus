@@ -110,14 +110,15 @@ var o_collections = {
 
      adjustProductInfoHeight: function() {
          let containerHeight = $(window).height()-120;
-         let collectionsSummary = $("#collections_summary").height();
+         let collectionsSummaryHeight = $("#collections_summary").height();
+         let collectionsGalleryHeight = $("#collection .gallery-scroll").height();
          $("#collection .sidebar_wrapper").height(containerHeight);
          $("#collection .gallery-contents").height(containerHeight);
 
+         // The following steps will hide the y-scrollbar when it's not needed.
+         // Without these steps, y-scrollbar will exist at the beginning, and disappear after the first attempt of scrolling
          if(o_collections.downloadOptionsScrollbar) {
-             // The following steps will hide the y-scrollbar when it's not needed.
-             // Without these steps, y-scrollbar will exist at the beginning, and disappear after the first attempt of scrolling
-             if(containerHeight > collectionsSummary) {
+             if(containerHeight > collectionsSummaryHeight) {
                  if(!$("#download-options-container .ps__rail-y").hasClass("hide_ps__rail-y")) {
                      $("#download-options-container .ps__rail-y").addClass("hide_ps__rail-y");
                      o_collections.downloadOptionsScrollbar.settings.suppressScrollY = true;
@@ -128,6 +129,7 @@ var o_collections = {
              }
              o_collections.downloadOptionsScrollbar.update();
          }
+
          if(o_collections.collectionGalleryScrollbar) {
              o_collections.collectionGalleryScrollbar.update();
          }
