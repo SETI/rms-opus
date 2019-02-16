@@ -861,7 +861,7 @@ li a.search-param:hover {
     max-width: 700px;
     top:4.15em;
     bottom:3em;
-    overflow-y: auto
+    overflow-y: hidden;
 }
 
 @media (min-width: 768px) {
