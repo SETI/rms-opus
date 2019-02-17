@@ -7,9 +7,9 @@ from typing import List, Dict, Optional, Match, Tuple, Pattern, Callable, Any
 
 from markupsafe import Markup
 
-import Slug
-from LogEntry import LogEntry
-from QueryHandler import QueryHandler, ColumnSlugInfo
+import slug as Slug
+from log_entry import LogEntry
+from query_handler import QueryHandler, ColumnSlugInfo
 
 SESSION_INFO = Tuple[List[str], Optional[str]]
 
@@ -42,8 +42,8 @@ class SessionInfoGenerator:
 class ActionFlags(Flag):
     # These should be in the order we want to see them in the output
     HAS_SEARCH = auto()
-    HAS_COLUMNS = auto()
     FETCHED_GALLERY = auto()
+    HAS_COLUMNS = auto()
     HAS_DOWNLOAD = auto()
     HAS_OBSOLETE_SLUG = auto()
 
