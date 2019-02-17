@@ -62,6 +62,9 @@ class ErrorReader(object):
 
     def _get_error_entries(self) -> List[ErrorEntry]:
         files = [file for file in self._files if "pds_error_log" in file]
+        if not files:
+            raise Exception("You must specify at least one error log.")
+
         error_entries = self._read_error_files(files)
         error_entries = [entry for entry in error_entries
                          # skip the ignored IPs
@@ -181,12 +184,10 @@ def main(arguments: Optional[List[str]] = None) -> None:
     parser.add_argument('--output', '-o', type=argparse.FileType('w'), default=sys.stdout, dest='output',
                         help="output file.  default is stdout")
 
-    parser.add_argument('files', nargs=argparse.REMAINDER, help='files')
+    parser.add_argument('files', nargs=argparse.REMAINDER, help='log and error files')
     args = parser.parse_args(arguments)
     # args.ignored_ip comes out as a list of lists, and it needs to be flattened.
     ignored_ips = [ip for arg_list in args.ignore_ip for ip in arg_list]
-    if not args.files:
-        args.files = glob.glob("/users/fy/SETI/logs/tools.*")
     ErrorReader(args.files, ignored_ips, args.output).run()
 
 
