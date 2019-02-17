@@ -18,7 +18,7 @@ Defines the o_hash object. Every change a user makes causes a hash update. (This
 
 ## browse.js
 
-Defines the o_browse object. All the things that happen on the browse tab, such as rendering the gallery or table view, handling clicks of thumbnails and thumbnail tool links, displaying larger images (colorbox) and metadata box, adding range selections, toggling gallery vs table view, results tab pagination, the column chooser interface, the infinite scroll handling.
+Defines the o_browse object. All the things that happen on the browse tab, such as rendering the gallery or table view, handling clicks of thumbnails and thumbnail tool links, displaying larger images (colorbox) and metadata box, adding range selections, toggling gallery vs table view, results tab pagination, the metadata selector interface, the infinite scroll handling.
 
 ## collections.js
 
@@ -30,7 +30,7 @@ Defines the o_detail object. Rendering the Detail tab. Not much interaction on t
 
 ## menu.js
 
-Defines the o_menu object. This builds the menu that contains the categories and search params that are displayed on the search tab, and also in the column chooser.
+Defines the o_menu object. This builds the menu that contains the categories and search params that are displayed on the search tab, and also in the metadata selector.
 
 ## search.js
 

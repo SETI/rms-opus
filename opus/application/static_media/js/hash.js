@@ -54,7 +54,7 @@ var o_hash = {
 		if (updateURL) {
 			window.location.hash = '/' + hash.join('&');
 		}
-		
+
 		return hash.join("&");
 	},
 
@@ -105,20 +105,16 @@ var o_hash = {
             var value = pairs[i].split('=')[1];
             if (!param) continue;
             if (!(param in opus.prefs) && !param.match(/sz-.*/)) {
-
-            if (param in selections) {
-                selections[param].push(value);
-            } else {
-                selections[param] = [value];
+                if (param in selections) {
+                    selections[param].push(value);
+                } else {
+                    selections[param] = [value];
                 }
-            } else {
-                if (param  == 'qtype-phase') {}
             }
         }
         if (!jQuery.isEmptyObject(selections)) {
             return selections;
         }
-
     },
 
 
@@ -163,7 +159,11 @@ var o_hash = {
                     if (value) {
                         opus.prefs[slug] = parseInt(value, 10);
                     }
-                } else if (slug=='cols') {
+                } else if (slug == 'cols') {
+                    if (value) {
+                        opus.prefs[slug] = value.split(',');
+                    }
+                } else if (slug == 'order') {
                     if (value) {
                         opus.prefs[slug] = value.split(',');
                     }

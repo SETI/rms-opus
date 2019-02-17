@@ -607,9 +607,10 @@ div.gallery {
     width:4.2em;
     text-align: center;
  }
-.browse-nav-container .order-container {
+.browse-nav-container .sort-order-container {
 	display:inline-flex;
 	float: right;
+    padding-top: 18px;
 }
 @media (max-width: 700px) {
     .navbar-header {

@@ -42,44 +42,80 @@ var o_browse = {
             return false;
         });
 
-       $("#browse").on("click", ".metadataModal", function() {
-           o_browse.hideMenu();
-           o_browse.renderMetadataSelector();
-       });
+        $("#browse").on("click", ".metadataModal", function() {
+            o_browse.hideMenu();
+            o_browse.renderMetadataSelector();
+        });
 
-       $("#metadataSelector").modal({
-           keyboard: false,
-           backdrop: 'static',
-           show: false,
-       })
+        $("#metadataSelector").modal({
+            keyboard: false,
+            backdrop: 'static',
+            show: false,
+        })
 
-       // browse nav menu - the gallery/table toggle
-       $("#browse").on("click", ".browse_view", function() {
-           o_browse.hideMenu();
-           opus.prefs.browse = $(this).data("view");
+        // browse nav menu - the gallery/table toggle
+        $("#browse").on("click", ".browse_view", function() {
+            o_browse.hideMenu();
+            opus.prefs.browse = $(this).data("view");
 
-           o_hash.updateHash();
-           o_browse.updateBrowseNav();
+            o_hash.updateHash();
+            o_browse.updateBrowseNav();
 
-           // reset scroll position
-           window.scrollTo(0,opus.browse_view_scrolls[opus.prefs.browse]); // restore previous scroll position
+            // reset scroll position
+            window.scrollTo(0,opus.browse_view_scrolls[opus.prefs.browse]); // restore previous scroll position
 
-           return false;
-       });
+            return false;
+        });
 
-       // browse nav menu - download csv
-       $("#browse").on("click", ".download_csv", function() {
-           let col_str = opus.prefs.cols.join(',');
-           let hash = [];
-           for (let param in opus.selections) {
-               if (opus.selections[param].length){
-                   hash[hash.length] = param + '=' + opus.selections[param].join(',').replace(/ /g,'+');
-               }
-           }
-           let q_str = hash.join('&');
-           let csv_link = "/opus/__api/metadata.csv?" + q_str + "&cols=" + col_str + "&limit=" + opus.result_count.toString() + "&order=" + opus.prefs.order;
-           $(this).attr("href", csv_link);
-       });
+        // browse nav menu - download csv
+        $("#browse").on("click", ".download_csv", function() {
+            let col_str = opus.prefs.cols.join(',');
+            let hash = [];
+            for (let param in opus.selections) {
+                if (opus.selections[param].length){
+                    hash[hash.length] = param + '=' + opus.selections[param].join(',').replace(/ /g,'+');
+                }
+            }
+            let q_str = hash.join('&');
+            let csv_link = "/opus/__api/metadata.csv?" + q_str + "&cols=" + col_str + "&limit=" + opus.result_count.toString() + "&order=" + opus.prefs.order.join(",");
+            $(this).attr("href", csv_link);
+        });
+
+        // browse sort order - remove sort slug
+        $("#browse .sort-contents").on("click", "li .remove-sort", function() {
+            let slug = $(this).parent().attr("data-slug");
+            let descending = $(this).parent().attr("data-descending");
+            if (descending == "true") {
+                slug = "-"+slug;
+            }
+            let slugIndex = $.inArray(slug, opus.prefs.order);
+            if (slugIndex >= 0) {
+                // The clicked-on slug should always be in the order list; this is just a safety precaution
+                opus.prefs.order.splice(slugIndex, 1);
+            }
+            o_hash.updateHash();
+            o_browse.updatePage();
+        });
+
+        // browse sort order - flip sort order of a slug
+        $("#browse .sort-contents").on("click", "li .flip-sort", function() {
+            let slug = $(this).parent().attr("data-slug");
+            let descending = $(this).parent().attr("data-descending");
+
+            let new_slug = slug;
+            if (descending == "true") {
+                slug = "-"+slug; // Old descending, new ascending
+            } else {
+                new_slug = "-"+slug; // Old ascending, new descending
+            }
+            let slugIndex = $.inArray(slug, opus.prefs.order);
+            if (slugIndex >= 0) {
+                // The clicked-on slug should always be in the order list; this is just a safety precaution
+                opus.prefs.order[slugIndex] = new_slug;
+            }
+            o_hash.updateHash();
+            o_browse.updatePage();
+        });
 
         // 1 - click on thumbnail opens modal window
         // 2 - shift click - takes range from whatever the last thing you shift+clicked on and if the
@@ -402,7 +438,7 @@ var o_browse = {
         opus.changeTab('detail');
     },
 
-    // columns can be reordered wrt each other in 'column chooser' by dragging them
+    // columns can be reordered wrt each other in 'metadata selector' by dragging them
     metadataDragged: function(element) {
         let cols = $(element).sortable('toArray');
         cols.unshift('cchoose__opusid');  // manually add opusid to this list
@@ -436,7 +472,7 @@ var o_browse = {
         });
     },
 
-    // column chooser behaviors
+    // metadata selector behaviors
     addMetadataSelectorBehaviors: function() {
         // this is a global
         var currentSelectedMetadata = opus.prefs.cols.slice();
@@ -627,16 +663,16 @@ var o_browse = {
 
     renderMetadataSelector: function() {
         if (!opus.metadata_selector_drawn) {
-            let url = "/opus/__forms/column_chooser.html?" + o_hash.getHash() + "&col_chooser=1";
+            let url = "/opus/__forms/metadata_selector.html?" + o_hash.getHash();
             $(".modal-body.metadata").load( url, function(response, status, xhr)  {
 
                 opus.metadata_selector_drawn=true;  // bc this gets saved not redrawn
                 $("#metadataSelector .restart_button").hide(); // we are not using this
 
-                // since we are rendering the left side of column chooser w/the same code that builds the select menu, we need to unhighlight the selected widgets
+                // since we are rendering the left side of metadata selector w/the same code that builds the select menu, we need to unhighlight the selected widgets
                 o_menu.markMenuItem(".modal-body.metadata li", "unselect");
 
-                // we keep these all open in the column chooser, they are all closed by default
+                // we keep these all open in the metadata selector, they are all closed by default
                 // disply check next to any default columns
                 $.each(opus.prefs.cols, function(index, col) { //CHANGE BELOW TO USE DATA-ICON=
                     $(`.modal-body.metadata li > [data-slug="${col}"]`).find("i.fa-check").fadeIn().css('display', 'inline-block');
@@ -768,7 +804,7 @@ var o_browse = {
             resize: function (event, ui) {
                 let resizableContainerWidth = $(event.target).parent().width();
                 let columnTextWidth = $(event.target).find("a").find('span:first').width();
-                let sortLabelWidth = $(event.target).find("a").find('span:last').width();
+                let sortLabelxzWidth = $(event.target).find("a").find('span:last').width();
                 let columnContentWidth = columnTextWidth + sortLabelWidth;
                 let beginningSpace = (resizableContainerWidth - columnContentWidth)/2;
                 let columnWidthUptoEndContent = columnContentWidth + beginningSpace;
@@ -807,17 +843,38 @@ var o_browse = {
         $("body").append(div);
     },
 
-    updateSortOrder: function() {
-        let hashArray = o_hash.getHashArray();
-        let order = hashArray["order"].split(",");
+    updateSortOrder: function(data) {
         let listHtml = "";
-        $.each(order, function(index, slug) {
-            listHtml += "<li class='list-inline-item'><i class='fas fa-arrow-circle-right'></i> "+opus.col_labels[index]+"</li>";
+        opus.prefs.order = []
+        $.each(data.order_list, function(index, order_entry) {
+            let slug = order_entry.slug;
+            let label = order_entry.label;
+            let descending = order_entry.descending;
+            let removeable = order_entry.removeable;
+            listHtml += "<li class='list-inline-item'>";
+            listHtml += `<span class='badge badge-pill badge-info' data-slug="${slug}" data-descending="${descending}">`;
+            if (removeable) {
+                listHtml += "<span class='remove-sort'><i class='fas fa-times-circle'></i></span> ";
+            }
+            listHtml += "<span class='flip-sort'>";
+            listHtml += label;
+            if (descending) {
+                listHtml += " <i class='fas fa-arrow-circle-up'></i>";
+            } else {
+                listHtml += " <i class='fas fa-arrow-circle-down'></i>";
+            }
+            listHtml += "</span></span></li>";
+            let fullSlug = slug;
+            if (descending) {
+                fullSlug = "-"+slug;
+            }
+            opus.prefs.order.push(fullSlug);
         });
-        $(".order-container ul").html(listHtml);
-    },
+        $(".sort-contents").html(listHtml);
+        o_hash.updateHash();
+},
 
-    getBrowseURL: function(page) {
+    getDataURL: function(page) {
         let view = o_browse.getViewInfo();
         let base_url = "/opus/__api/dataimages.json?";
         if (page == undefined) {
@@ -840,7 +897,7 @@ var o_browse = {
         }
         let selector = `#${opus.prefs.view} .gallery-contents`;
 
-        let url = o_browse.getBrowseURL(page);
+        let url = o_browse.getDataURL(page);
 
         // metadata; used for both table and gallery
         start_time = new Date().getTime();
@@ -856,7 +913,7 @@ var o_browse = {
                 if (!$(selector).data("infiniteScroll")) {
                     $(selector).infiniteScroll({
                         path: function() {
-                            let path = o_browse.getBrowseURL();
+                            let path = o_browse.getDataURL();
                             return path;
                         },
                         responseType: "text",
@@ -874,7 +931,7 @@ var o_browse = {
             }
 
             o_browse.renderGalleryAndTable(data, this.url);
-            o_browse.updateSortOrder();
+            o_browse.updateSortOrder(data);
 
             if (!opus.gallery_begun) {
                 $(selector).infiniteScroll('loadNextPage');

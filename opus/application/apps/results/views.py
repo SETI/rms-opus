@@ -90,11 +90,16 @@ def api_get_data_and_images(request):
             },
             ...
          ],
-         'page_no': page_no,   OR   'start_obs': start_obs,
-         'limit':   limit,
-         'order':   order,
-         'count':   len(page),
-         'columns': columns
+         'page_no':         page_no,   OR   'start_obs': start_obs,
+         'limit':           limit,
+         'order':           comma-separate list of slugs,
+         'order_list':      [entry, entry...]
+                            entry is {'slug': slug_name,
+                                      'label': pretty_name,
+                                      'descending': True/False,
+                                      'removeable': True/False},
+         'count':           len(page),
+         'columns':         columns (corresponds to <col1> etc. in 'metadata')
         }
     """
     api_code = enter_api_call('api_get_data_and_images', request)
@@ -159,6 +164,22 @@ def api_get_data_and_images(request):
     cols = request.GET.get('cols', settings.DEFAULT_COLUMNS)
 
     labels = labels_for_slugs(cols_to_slug_list(cols))
+    order_slugs = cols_to_slug_list(order)
+    order_slugs_pure = [x[1:] if x[0] == '-' else x for x in order_slugs]
+    order_labels = labels_for_slugs(order_slugs_pure)
+
+    order_list = []
+    for idx, (slug, label) in enumerate(zip(order_slugs, order_labels)):
+        removeable = idx != len(order_slugs)-1;
+        desc = False
+        if slug[0] == '-':
+            slug = slug[1:]
+            desc = True
+        order_entry = {'slug': slug,
+                       'label': label,
+                       'descending': desc,
+                       'removeable': removeable}
+        order_list.append(order_entry)
 
     reqno = request.GET.get('reqno', None)
     try:
@@ -166,12 +187,13 @@ def api_get_data_and_images(request):
     except:
         reqno = None
 
-    data = {'page':    new_page,
-            'limit':   limit,
-            'count':   len(image_list),
-            'order':   order,
-            'columns': labels,
-            'reqno': reqno
+    data = {'page':         new_page,
+            'limit':        limit,
+            'count':        len(image_list),
+            'order':        order,
+            'order_list':   order_list,
+            'columns':      labels,
+            'reqno':        reqno
            }
 
     if page_no is not None:

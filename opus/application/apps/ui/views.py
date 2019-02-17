@@ -39,6 +39,7 @@ class main_site(TemplateView):
         context = super(main_site, self).get_context_data(**kwargs)
         menu = _get_menu_labels('', 'search')
         context['default_columns'] = settings.DEFAULT_COLUMNS
+        context['default_sort_order'] = settings.DEFAULT_SORT_ORDER
         context['menu'] = menu['menu']
         if settings.OPUS_FILE_VERSION == '':
             settings.OPUS_FILE_VERSION = get_latest_git_commit_id()
@@ -199,7 +200,7 @@ def api_get_menu(request):
 
     This is a PRIVATE API.
 
-    This is a hack to provide the widget names to the column chooser.
+    This is a hack to provide the widget names to the metadata selector.
 
     Format: __menu.html
     """
@@ -428,15 +429,15 @@ def api_get_widget(request, **kwargs):
     return ret
 
 
-def api_get_column_chooser(request):
-    """Create a search widget and return its HTML.
+def api_get_metadata_selector(request):
+    """Create the metadata selector list.
 
     This is a PRIVATE API.
 
-    Format: __forms/column_chooser.html
-    Arguments: cols=<columns>
+    Format: __forms/metadata_selector.html
+    Arguments: None
     """
-    api_code = enter_api_call('api_get_column_chooser', request)
+    api_code = enter_api_call('api_get_metadata_selector', request)
 
     slugs = request.GET.get('cols', settings.DEFAULT_COLUMNS)
     slugs = cols_to_slug_list(slugs)
@@ -445,15 +446,13 @@ def api_get_column_chooser(request):
     if not slugs:
         slugs = cols_to_slug_list(settings.DEFAULT_COLUMNS)
     all_slugs_info = _get_column_info(slugs)
-    namespace = 'column_chooser_input'
     menu = _get_menu_labels(request, 'results')['menu']
 
     context = {
         "all_slugs_info": all_slugs_info,
-        "namespace": namespace,
         "menu": menu
     }
-    ret = render(request, "choose_columns.html", context)
+    ret = render(request, "select_metadata.html", context)
 
     exit_api_call(api_code, ret)
     return ret
