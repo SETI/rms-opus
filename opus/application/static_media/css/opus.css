@@ -607,11 +607,17 @@ div.gallery {
     width:4.2em;
     text-align: center;
  }
+
 .browse-nav-container .sort-order-container {
 	display:inline-flex;
 	float: right;
     padding-top: 18px;
 }
+
+.browse-nav-container .flip-sort {
+    cursor:row-resize;
+}
+
 @media (max-width: 700px) {
     .navbar-header {
         display:none;
