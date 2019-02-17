@@ -16,7 +16,7 @@
 @media (min-width: 768px){
   #left {
     position: absolute;
-    top: 0px;
+    top: 0;
     bottom: 0;
     left: 0;
     width: 25%;
@@ -48,29 +48,16 @@
 }
 .SessionInfo td {
   vertical-align:top;
-  padding: 0px 5px;
+  padding: 0 5px;
 }
 .tooltip-inner {
     text-align: left;
 }
-span.la-hidden {
-    visibility: hidden;
+table.SessionLinkTable {
+  border-collapse: separate;
+  border-spacing: 4px 2px;
 }
-span.la-has-search:before {
-    content: "S";
-}
-span.la-has-columns:before {
-    content: "C";
-}
-span.la-fetched-gallery:before {
-    content: "G";
-}
-span.la-has-download:before {
-    content: "\2913";
-}
-span.la-has-obsolete-slug:before {
-    content: "\29bc";
-}
+
 {% endraw %}
 </style>
 </head>
@@ -101,16 +88,26 @@ because it requires that all the navigation tabs be within a single unordered li
 
 <div id="ByIP" class="tab-pane show active">
 
-{% macro print_flags(session, full) %}
+{% set marker_to_letter = { "has-search": "S", "has-columns": "C", "fetched-gallery": "G",
+                            "has-download": "&DownArrowBar;", "has-obsolete-slug" : "&odsold;" }
+%}
+{% set marker_to_glyph = { "has-search": "search", "has-columns": "list-ul", "fetched-gallery": "images",
+                            "has-download": "file-download", "has-obsolete-slug" : "times-circle" }
+%}
+
+{% macro generate_session_row(session, full) %}
+    <tr>
     {% for flag in action_flags_list %}
-        {% if flag in session.action_flags %}
-            <td><span class="la-{{ flag.as_html_classname() }}">&zwj;</span></td>
-        {% elif full %}
-            <td><span class="la-{{ flag.as_html_classname() }} la-hidden">&zwj;</span></td>
+        {% set flag_in_use = flag in session.action_flags %}
+        {% if flag_in_use or full %}
+            {% set glyph = marker_to_glyph[flag.as_html_classname()] %}
+            <td><span class="{{ 'fas fa-' ~  glyph ~ ('' if flag_in_use else ' invisible') }}">&zwj;</span></td>
         {% else %}
             <td></td>
         {% endif %}
     {% endfor %}
+    <td>{{ caller() }}</td>
+    </tr>
 {% endmacro %}
 
 {% macro host_info_ip_or_name(host_info) %}
@@ -125,12 +122,12 @@ because it requires that all the navigation tabs be within a single unordered li
     {% if not loop.first %}<hr/>{% endif %}
     {{ host_info_ip_or_name(host_info) }}
     ({{ host_info.total_time() }})
-    <table>
+    <table class="SessionLinkTable">
         {% for session in host_info.sessions %}
-           <tr>{{ print_flags(session, loop.first) }}
-           <td><a href="#" class=SessionLink data-target="#{{ session.id }}">
-                    {{ session.start_time().strftime("%Y %b %d %H:%M:%S") }} ({{ session.duration() }})</a></td>
-           </tr>
+            {% call generate_session_row(session, loop.first) %}
+               <a href="#" class=SessionLink data-target="#{{ session.id }}">
+                    {{ session.start_time().strftime("%Y %b %d %H:%M:%S") }} ({{ session.duration() }})</a>
+            {% endcall %}
         {% endfor %}
     </table>
 
@@ -141,15 +138,14 @@ because it requires that all the navigation tabs be within a single unordered li
 {% for day, host_infos_for_day in host_infos_by_date %}
     {% if not loop.first %}<hr/>{% endif %}
     <h4>{{ day.strftime("%Y %b %d") }}</h4>
-    <table>
+    <table class="SessionLinkTable">
     {% for host_info in host_infos_for_day %}
         {% set session = host_info.sessions[0] %}
-        <tr>{{ print_flags(session, loop.first) }}
-        <td><a href="#" class=SessionLink data-target="#{{ session.id }}">
+        {% call generate_session_row(session, loop.first) %}
+            <a href="#" class=SessionLink data-target="#{{ session.id }}">
                {{ session.start_time().strftime("%H:%M:%S") }}&nbsp;({{ session.duration() }})</a>
                {{ host_info_ip_or_name(host_info) }}
-        </td>
-        </tr>
+        {% endcall %}
     {% endfor %}
     </table>
 {% endfor %}
@@ -205,8 +201,7 @@ because it requires that all the navigation tabs be within a single unordered li
         {{ print_slugs(session) }}
         <hr/>
         {{ print_session_entries(session) }}
-    </div>
-    {% endfor %}
+    </div>{% endfor %}
 {% endfor %}
 </div>  ## class=tabContent
 </div>  ## #right
@@ -219,26 +214,6 @@ because it requires that all the navigation tabs be within a single unordered li
 $(function() {
     $('[data-toggle="tooltip"]').tooltip();
     $('#right [data-toggle="tooltip"]').data('placement', 'right');
-
-{# Alternative ways of doing the glyphs that we might want to consider in the future. %}
-    function addGlyphs(name, value) {
-       $(`span.la-${name}`).html(`${value}`)
-    }
-    $(`span.la-hidden`).css("opacity", "0.0")
-    addGlyphs('has-search', 'S')
-    addGlyphs('fetched-gallery', 'G')
-    addGlyphs('has-download', '&DownArrowBar;')
-    addGlyphs('has-obsolete-slug', '&odsold;')
-
-    function addGlyphs(name, value) {
-       $(`span.la-${name}`).html(`<i class="fas ${value}"></i>`)
-    }
-    addGlyphs('has-search', 'fa-search')
-    addGlyphs('fetched-image', 'fa-images')
-    addGlyphs('fetched-table', 'fa-list-ul')
-    addGlyphs('has-download', 'fa-file-download')
-    addGlyphs('has-obsolete-slug', 'fa-times-circle')
-#}
 
     $('.SessionLink').click(function() {
         var target = $(this).data('target');
