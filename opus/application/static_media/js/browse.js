@@ -221,6 +221,8 @@ var o_browse = {
             show: false,
         });
 
+        // do we need an on.resize for when the user makes the screen tiny?
+
         $(".modal-dialog").draggable({
             handle: ".modal-content",
             drag: function( event, ui ) {
@@ -233,24 +235,7 @@ var o_browse = {
             $(namespace).find(".modal-show").removeClass("modal-show");
         });
 
-        // add the 'get detail' behavior
-        $('#galleryView').on("click", '.detailViewLink', function(e) {
-            o_browse.hideMenu();
-            if (e.shiftKey || e.ctrlKey || e.metaKey) {
-                // handles command click to open in new tab
-                let link = "/opus/#/" + o_hash.getHash();
-                link = link.replace("view=browse", "view=detail");
-                window.open(link, '_blank');
-            } else {
-                opus.prefs.detail = $(this).data('opusid');
-                opus.changeTab("detail");
-                $('a[href="#detail"]').tab("show");
-            }
-            return false;
-        });
-
         $('#galleryView').on("click", "a.select", function(e) {
-            o_browse.hideMenu();
             let opusId = $(this).data("id");
             if (opusId) {
                 let status = o_collections.toggleInCollection(opusId) == "add" ? "" : "in";
@@ -262,7 +247,6 @@ var o_browse = {
         });
 
         $('#galleryView').on("click", "a.prev,a.next", function(e) {
-            o_browse.hideMenu();
             let action = $(this).hasClass("prev") ? "prev" : "next";
             let opusId = $(this).data("id");
             if (opusId) {
@@ -271,7 +255,7 @@ var o_browse = {
             return false;
         });
 
-        $('#galleryView').on("click", "a.menu", function(e) {
+        $("#galleryView").on("click", "a.menu", function(e) {
             let opusId = $(this).data("id");
             o_browse.showMenu(e, opusId);
             return false;
@@ -337,11 +321,15 @@ var o_browse = {
             return false;
         });
 
+        $("#page-slider").on("change", ".slider", function(e) {
+            let page = e.target.value;
+        });
+
         $(document).on("keydown click", function(e) {
             o_browse.hideMenu();
             if ((e.which || e.keyCode) == 27) { // esc - close modals
                 $("#galleryView").modal('hide');
-                $("#metadataSelector").modal('hide')
+                $("#metadataSelector").modal('hide');
             }
             if ($("#galleryView").hasClass("show")) {
                 /*  Catch the right/left arrow while in the modal
@@ -474,7 +462,7 @@ var o_browse = {
     resetMetadata: function(cols, closeModal) {
         opus.prefs.cols = cols.slice();
         if (closeModal == true)
-            $("#galleryView").modal('hide');
+            $("#metadataSelector").modal('hide');
 
         // uncheck all on left; we will check them as we go
         $("#metadataSelector .allMetadata .fa-check").hide();
@@ -1057,7 +1045,7 @@ var o_browse = {
         html += `</div>`;
 
         // mini-menu like the hamburger on the observation/gallery page
-        html += `<div class="col"><a href="#" class="menu pr-5" data-id="${opusId}"><i class="fas fa-bars fa-2x float-right"></i></a></div>`;
+        html += `<div class="col"><a href="#" class="menu pr-5" data-toggle="dropdown" role="button" data-id="${opusId}"><i class="fas fa-bars fa-2x float-right"></i></a></div>`;
         $("#galleryViewContents .bottom").html(html);
     },
 
