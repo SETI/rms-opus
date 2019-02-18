@@ -271,6 +271,13 @@ var o_collections = {
         } else {
             fromElem.toggleClass("in");
             let action = (fromElem.hasClass("in") ? "add" : "remove");
+            // if this came from the mini menu off the modal, need to update the icon
+            let modalCartSelector = `#galleryViewContents .bottom .select[data-id=${fromOpusId}]`;
+            if ($("#galleryView").is(":visible") && $(modalCartSelector).length > 0) {
+                let buttonInfo = o_browse.cartButtonInfo(action);
+                $(modalCartSelector).html(`<i class="${buttonInfo.icon} fa-2x"></i>`);
+                $(modalCartSelector).prop("title", buttonInfo.title);
+            }
             o_collections.editCollection(fromOpusId, action);
             return action;
         }

@@ -205,6 +205,7 @@ var o_browse = {
                   let action = o_collections.toggleInCollection(opusId);
                   let buttonInfo = o_browse.cartButtonInfo(action);
                   $(this).html(`<i class="${buttonInfo.icon} fa-xs"></i>`);
+                  $(this).prop("title", buttonInfo.title);
                   break;
 
               case "menu":  // expand, same as click on image
@@ -221,7 +222,10 @@ var o_browse = {
         });
 
         $(".modal-dialog").draggable({
-            handle: ".modal-content"
+            handle: ".modal-content",
+            drag: function( event, ui ) {
+                o_browse.hideMenu();
+            }
         });
 
         $(".app-body").on("hide.bs.modal", "#galleryView", function(e) {
@@ -231,6 +235,7 @@ var o_browse = {
 
         // add the 'get detail' behavior
         $('#galleryView').on("click", '.detailViewLink', function(e) {
+            o_browse.hideMenu();
             if (e.shiftKey || e.ctrlKey || e.metaKey) {
                 // handles command click to open in new tab
                 let link = "/opus/#/" + o_hash.getHash();
@@ -245,6 +250,7 @@ var o_browse = {
         });
 
         $('#galleryView').on("click", "a.select", function(e) {
+            o_browse.hideMenu();
             let opusId = $(this).data("id");
             if (opusId) {
                 let status = o_collections.toggleInCollection(opusId) == "add" ? "" : "in";
@@ -256,11 +262,18 @@ var o_browse = {
         });
 
         $('#galleryView').on("click", "a.prev,a.next", function(e) {
+            o_browse.hideMenu();
             let action = $(this).hasClass("prev") ? "prev" : "next";
             let opusId = $(this).data("id");
             if (opusId) {
                 o_browse.updateGalleryView(opusId);
             }
+            return false;
+        });
+
+        $('#galleryView').on("click", "a.menu", function(e) {
+            let opusId = $(this).data("id");
+            o_browse.showMenu(e, opusId);
             return false;
         });
 
@@ -456,10 +469,13 @@ var o_browse = {
         let info = '<i class = "fas fa-info-circle" title = "' + elem.find('*[title]').attr("title") + '"></i>';
         let html = `<li id = "cchoose__${slug}">${label}${info}<span class="unselect"><i class="far fa-trash-alt"></span></li>`
         $(".selectedMetadata > ul").append(html);
-        opus.prefs.cols.push(slug);
     },
 
-    resetMetadata: function(cols) {
+    resetMetadata: function(cols, closeModal) {
+        opus.prefs.cols = cols.slice();
+        if (closeModal == true)
+            $("#galleryView").modal('hide');
+
         // uncheck all on left; we will check them as we go
         $("#metadataSelector .allMetadata .fa-check").hide();
 
@@ -567,8 +583,9 @@ var o_browse = {
                 case "submit":
                     break;
                 case "cancel":
+                    $('#myModal').modal('hide')
                     opus.prefs.cols = [];
-                    o_browse.resetMetadata(currentSelectedMetadata);
+                    o_browse.resetMetadata(currentSelectedMetadata, true);
                     break;
             }
         });
@@ -737,7 +754,7 @@ var o_browse = {
                 html +=     '<a href="#" data-icon="info" title="View observation detail"><i class="fas fa-info-circle fa-xs"></i></a>';
 
                 let buttonInfo = o_browse.cartButtonInfo((item.in_collection ? 'add' : 'remove'));
-                html +=     `<a href="#" data-icon="cart" title="Add to Cart"><i class="${buttonInfo.icon} fa-xs"></i></a>`;
+                html +=     `<a href="#" data-icon="cart" title="Add to cart"><i class="${buttonInfo.icon} fa-xs"></i></a>`;
                 html +=     '<a href="#" data-icon="menu"><i class="fas fa-bars fa-xs"></i></a>';
                 html += '</div>';
                 html += '</div></div>';
@@ -1004,10 +1021,10 @@ var o_browse = {
 
     cartButtonInfo: function(status) {
         let icon = "fas fa-cart-plus";
-        let title = "Add to Cart";
+        let title = "Add to cart";
         if (status != "in" && status != "remove") {
             icon = "far fa-trash-alt";
-            title = "Remove from Cart";
+            title = "Remove from cart";
         }
         return  {"icon":icon, "title":title};
     },
@@ -1030,18 +1047,17 @@ var o_browse = {
         let status = o_collections.isIn(opusId) ? "" : "in";
         let buttonInfo = o_browse.cartButtonInfo(status);
 
-        // add a link to detail page;
-        let hashArray = o_hash.getHashArray();
-        hashArray.view = "detail";
-        hashArray.detail = opusId;
-        $("#galleryViewContents .detail").html(`<a href = "/opus/#/${o_hash.hashArrayToHashString(hashArray)}" class="detailViewLink" data-opusid="${opusId}"><i class = "fas fa-info-circle"></i>&nbsp;View Detail</a></p>`);
-
         // prev/next buttons - put this in galleryView html...
-        html = `<a href="#" class="select" data-id="${opusId}" title="${buttonInfo.title}"><i class="${buttonInfo.icon} fa-2x float-left"></i></a>`;
-        if (next != "")
-            html += `<a href="#" class="next pr-5" data-id="${next}" title="Next image"><i class="far fa-hand-point-right fa-2x float-right"></i></a>`;
+        html = `<div class="col"><a href="#" class="select" data-id="${opusId}" title="${buttonInfo.title}"><i class="${buttonInfo.icon} fa-2x float-left"></i></a></div>`;
+        html += `<div class="col">`;
         if (prev != "")
-            html += `<a href="#" class="prev pr-5" data-id="${prev}" title="Previous image"><i class="far fa-hand-point-left fa-2x float-right"></i></a></div>`;
+            html += `<a href="#" class="prev" data-id="${prev}" title="Previous image"><i class="far fa-hand-point-left fa-2x"></i></a>`;
+        if (next != "")
+            html += `<a href="#" class="next" data-id="${next}" title="Next image"><i class="far fa-hand-point-right fa-2x"></i></a>`;
+        html += `</div>`;
+
+        // mini-menu like the hamburger on the observation/gallery page
+        html += `<div class="col"><a href="#" class="menu pr-5" data-id="${opusId}"><i class="fas fa-bars fa-2x float-right"></i></a></div>`;
         $("#galleryViewContents .bottom").html(html);
     },
 
