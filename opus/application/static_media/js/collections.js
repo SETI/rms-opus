@@ -154,6 +154,7 @@ var o_collections = {
                 opus.col_labels = data.columns;
             }
             o_browse.renderGalleryAndTable(data, this.url);
+            o_browse.updateSortOrder(data);
 
             if (opus.collection_change) {
                 // for infinite scroll

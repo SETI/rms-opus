@@ -608,13 +608,19 @@ div.gallery {
     text-align: center;
  }
 
-.browse-nav-container .sort-order-container {
+.sort-order-container {
 	display:inline-flex;
 	float: right;
-    padding-top: 18px;
+    height: 100%;
+    padding-right: 20px;
 }
 
-.browse-nav-container .flip-sort {
+.sort-contents {
+	display:flex;
+    height: 100%;
+}
+
+.flip-sort {
     cursor:row-resize;
 }
 

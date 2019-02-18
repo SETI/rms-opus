@@ -82,7 +82,7 @@ var o_browse = {
         });
 
         // browse sort order - remove sort slug
-        $("#browse .sort-contents").on("click", "li .remove-sort", function() {
+        $(".sort-contents").on("click", "li .remove-sort", function() {
             let slug = $(this).parent().attr("data-slug");
             let descending = $(this).parent().attr("data-descending");
             if (descending == "true") {
@@ -98,7 +98,7 @@ var o_browse = {
         });
 
         // browse sort order - flip sort order of a slug
-        $("#browse .sort-contents").on("click", "li .flip-sort", function() {
+        $(".sort-contents").on("click", "li .flip-sort", function() {
             let slug = $(this).parent().attr("data-slug");
             let descending = $(this).parent().attr("data-descending");
 
@@ -629,7 +629,7 @@ var o_browse = {
             $("." + opus.prefs.browse, "#browse").fadeIn();
 
             $(".browse_view", "#browse").html("<i class='far fa-list-alt'></i>&nbsp;View Table");
-            $(".browse_view", "#browse").attr("title", "Click to view sortable table");
+            $(".browse_view", "#browse").attr("title", "View sortable metadata table");
             $(".browse_view", "#browse").data("view", "dataTable");
 
             $(".justify-content-center").show();
@@ -638,7 +638,7 @@ var o_browse = {
             $("." + opus.prefs.browse, "#browse").fadeIn();
 
             $(".browse_view", "#browse").html("<i class='far fa-images'></i>&nbsp;View Gallery");
-            $(".browse_view", "#browse").attr("title", "Click to view sortable gallery");
+            $(".browse_view", "#browse").attr("title", "View sortable thumbnail gallery");
             $(".browse_view", "#browse").data("view", "gallery");
 
             // remove that extra space on top when loading table page
@@ -854,13 +854,15 @@ var o_browse = {
             listHtml += "<li class='list-inline-item'>";
             listHtml += `<span class='badge badge-pill badge-info' data-slug="${slug}" data-descending="${descending}">`;
             if (removeable) {
-                listHtml += "<span class='remove-sort'><i class='fas fa-times-circle'></i></span> ";
+                listHtml += "<span class='remove-sort' title='Remove metadata field from sort'><i class='fas fa-times-circle'></i></span> ";
             }
-            listHtml += "<span class='flip-sort'>";
-            listHtml += label;
             if (descending) {
+                listHtml += "<span class='flip-sort' title='Change to ascending sort'>";
+                listHtml += label;
                 listHtml += " <i class='fas fa-arrow-circle-up'></i>";
             } else {
+                listHtml += "<span class='flip-sort' title='Change to descending sort'>";
+                listHtml += label;
                 listHtml += " <i class='fas fa-arrow-circle-down'></i>";
             }
             listHtml += "</span></span></li>";
