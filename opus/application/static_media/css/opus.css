@@ -557,7 +557,7 @@ img.preview {
 	background-color: transparent !important;
 }
 
-#collection .gallery, .gallery-contents {
+#collection .collection-gallery-side {
     /*margin-top:.25em; */
     background-color: #303030; /* #383838; */
 }
@@ -611,14 +611,21 @@ div.gallery {
 
 .sort-order-container {
 	display:inline-flex;
-	float: right;
-    height: 100%;
-    padding-right: 20px;
+    padding-left: 25px;
+}
+
+.sort-order-icon {
+    color: rgba(255, 255, 255, 0.5);
+    vertical-align: middle;
 }
 
 .sort-contents {
-	display:flex;
-    height: 100%;
+	display: flex;
+}
+
+.sort-contents li {
+    opacity: 0.7;
+    margin-bottom: -10px;
 }
 
 .flip-sort {

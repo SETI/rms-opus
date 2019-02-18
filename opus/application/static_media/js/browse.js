@@ -857,7 +857,7 @@ var o_browse = {
             let descending = order_entry.descending;
             let removeable = order_entry.removeable;
             listHtml += "<li class='list-inline-item'>";
-            listHtml += `<span class='badge badge-pill badge-info' data-slug="${slug}" data-descending="${descending}">`;
+            listHtml += `<span class='badge badge-pill badge-light' data-slug="${slug}" data-descending="${descending}">`;
             if (removeable) {
                 listHtml += "<span class='remove-sort' title='Remove metadata field from sort'><i class='fas fa-times-circle'></i></span> ";
             }
