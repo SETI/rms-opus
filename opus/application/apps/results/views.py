@@ -166,7 +166,7 @@ def api_get_data_and_images(request):
     labels = labels_for_slugs(cols_to_slug_list(cols))
     order_slugs = cols_to_slug_list(order)
     order_slugs_pure = [x[1:] if x[0] == '-' else x for x in order_slugs]
-    order_labels = labels_for_slugs(order_slugs_pure)
+    order_labels = labels_for_slugs(order_slugs_pure, units=False)
 
     order_list = []
     for idx, (slug, label) in enumerate(zip(order_slugs, order_labels)):
@@ -1512,7 +1512,7 @@ def get_collection_in_page(opus_id_list, session_id):
     return ret
 
 
-def labels_for_slugs(slugs):
+def labels_for_slugs(slugs, units=True):
     labels = []
 
     for slug in slugs:
@@ -1523,7 +1523,9 @@ def labels_for_slugs(slugs):
             return None
 
         # append units if pi_units has unit stored
-        unit = pi.get_units()
+        unit = None
+        if units:
+            unit = pi.get_units()
         label = pi.body_qualified_label_results()
         if unit:
             labels.append(label + ' ' + unit)

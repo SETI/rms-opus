@@ -32,26 +32,11 @@ var o_collections = {
              }
          });
 
-        // collection details hide/show
-         $("#collection").on("click", "#collection_summary_more", function() {
-             if (opus.colls_options_viz) {
-                 opus.colls_options_viz=false;
-                 $("#collection_summary_more","#collection").text("show options");
-                 $("#collection_summary","#collection").animate({height:"8em"});
-             } else {
-                 opus.colls_options_viz=true;
-                 $("#collection_summary_more","#collection").text("hide options");
-                 $("#collection_summary","#collection").animate({height:"33em"});
-             }
-             return false;
-         });
-
          // check an input on selected products and images updates file_info
          $("#collection").on("click","#download_options input", function() {
              let add_to_url = o_collections.getDownloadFiltersChecked();
              let url = "/opus/__collections/view.json?" + add_to_url + "&fmt=json";
              $.getJSON(url, function(info) {
-                 $("#total_download_count").fadeOut().html(info.total_download_count).fadeIn();
                  $("#total_download_size").fadeOut().html(info.total_download_size_pretty).fadeIn();
              });
          });
@@ -142,8 +127,6 @@ var o_collections = {
          let count = status.count;
          $("#collection_count").html(count);
          if (status.total_download_size_pretty !== undefined) {
-             $("#total_download_size").html(status.total_download_size_pretty);
-             $("#total_download_count").fadeOut().html(status.total_download_count).fadeIn();
              $("#total_download_size").fadeOut().html(status.total_download_size_pretty).fadeIn();
          }
          opus.colls_pages = Math.ceil(count/opus.prefs.limit);
