@@ -722,6 +722,7 @@ var o_browse = {
             // for now, just post same message to both #browse & #collections tabs
             if (data.page_no == 1) {
                 $("#collection .navbar").hide();
+                $("#collection .sort-order-container").hide();
                 html += '<div class="thumbnail-message">';
                 html += '<h2>Your Cart is empty</h2>';
                 html += '<p>To add observations to the cart, click on the Browse Results tab ';
@@ -733,6 +734,7 @@ var o_browse = {
             }
         } else {
             $("#collection .navbar").show();
+            $("#collection .sort-order-container").show();
             html += '<div class="thumb-page" data-page="'+data.page_no+'">';
             opus.lastPageDrawn[opus.prefs.view] = data.page_no;
             $.each(page, function( index, item ) {

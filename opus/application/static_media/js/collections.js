@@ -27,7 +27,7 @@ var o_collections = {
 
          });
          $("#collection").on("click", ".emptyCart", function() {
-             if (confirm("Are you sure you want to delete all observations in your cart?")) {
+             if (confirm("Are you sure you want to remove all observations from your cart?")) {
                  o_collections.emptyCollection();
              }
          });
@@ -254,6 +254,7 @@ var o_collections = {
             opus.colls_pages = 0;
             opus.collection_change = true;
             $("#collection .navbar").hide();
+            $("#collection .sort-order-container").hide();
             opus.changeTab("collection");
         });
 
