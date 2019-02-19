@@ -79,7 +79,7 @@ var o_browse = {
                 }
             }
             let q_str = hash.join('&');
-            let csv_link = "/opus/__api/metadata.csv?" + q_str + "&cols=" + col_str + "&limit=" + opus.result_count.toString() + "&order=" + opus.prefs.order.join(",");
+            let csv_link = "/opus/__api/data.csv?" + q_str + "&cols=" + col_str + "&limit=" + opus.result_count.toString() + "&order=" + opus.prefs.order.join(",");
             $(this).attr("href", csv_link);
         });
 

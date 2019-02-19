@@ -86,7 +86,7 @@ var o_collections = {
 
          let add_to_url = o_collections.getDownloadFiltersChecked();
          let url = "/opus/__collections/download.json?" + add_to_url + "&" + o_hash.getHash();
-         url += (type = "create_zip_url_file" ? "&urlonly=1" : "");
+         url += (type == "create_zip_url_file" ? "&urlonly=1" : "");
          $.ajax({
              url: url,
              dataType: "json",
