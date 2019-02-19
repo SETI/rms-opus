@@ -8,6 +8,7 @@ var o_collections = {
      *  from cart see browse.js
      *
      **/
+
      collectionBehaviors: function() {
          // nav bar
          $("#collection").on("click", ".download_csv", function(e) {
@@ -26,31 +27,16 @@ var o_collections = {
 
          });
          $("#collection").on("click", ".emptyCart", function() {
-             if (confirm("Are you sure you want to delete all observations in your cart?")) {
+             if (confirm("Are you sure you want to remove all observations from your cart?")) {
                  o_collections.emptyCollection();
              }
-         });
-
-        // collection details hide/show
-         $("#collection").on("click", "#collection_summary_more", function() {
-             if (opus.colls_options_viz) {
-                 opus.colls_options_viz=false;
-                 $("#collection_summary_more","#collection").text("show options");
-                 $("#collection_summary","#collection").animate({height:"8em"});
-             } else {
-                 opus.colls_options_viz=true;
-                 $("#collection_summary_more","#collection").text("hide options");
-                 $("#collection_summary","#collection").animate({height:"33em"});
-             }
-             return false;
          });
 
          // check an input on selected products and images updates file_info
          $("#collection").on("click","#download_options input", function() {
              let add_to_url = o_collections.getDownloadFiltersChecked();
-             let url = "/opus/__collections/download/view.json?" + add_to_url + "&fmt=json";
+             let url = "/opus/__collections/view.json?" + add_to_url + "&fmt=json";
              $.getJSON(url, function(info) {
-                 $("#total_download_count").fadeOut().html(info.total_download_count).fadeIn();
                  $("#total_download_size").fadeOut().html(info.total_download_size_pretty).fadeIn();
              });
          });
@@ -85,7 +71,7 @@ var o_collections = {
 
          let add_to_url = o_collections.getDownloadFiltersChecked();
          let url = "/opus/__collections/download.json?" + add_to_url + "&" + o_hash.getHash();
-         url += (type = "create_zip_url_file" ? "&urlonly=1" : "");
+         url += (type == "create_zip_url_file" ? "&urlonly=1" : "");
          $.ajax({
              url: url,
              dataType: "json",
@@ -108,9 +94,30 @@ var o_collections = {
      },
 
      adjustProductInfoHeight: function() {
-         let container_height = $(window).height()-120;
-         $("#collection .sidebar_wrapper").height(container_height);
-         $("#collection .gallery-contents").height(container_height);
+         let containerHeight = $(window).height()-120;
+         let collectionsSummaryHeight = $("#collections_summary").height();
+         let collectionsGalleryHeight = $("#collection .gallery-scroll").height();
+         $("#collection .sidebar_wrapper").height(containerHeight);
+         $("#collection .gallery-contents").height(containerHeight);
+
+         // The following steps will hide the y-scrollbar when it's not needed.
+         // Without these steps, y-scrollbar will exist at the beginning, and disappear after the first attempt of scrolling
+         if(o_collections.downloadOptionsScrollbar) {
+             if(containerHeight > collectionsSummaryHeight) {
+                 if(!$("#download-options-container .ps__rail-y").hasClass("hide_ps__rail-y")) {
+                     $("#download-options-container .ps__rail-y").addClass("hide_ps__rail-y");
+                     o_collections.downloadOptionsScrollbar.settings.suppressScrollY = true;
+                 }
+             } else {
+                 $("#download-options-container .ps__rail-y").removeClass("hide_ps__rail-y");
+                 o_collections.downloadOptionsScrollbar.settings.suppressScrollY = false;
+             }
+             o_collections.downloadOptionsScrollbar.update();
+         }
+
+         if(o_collections.collectionGalleryScrollbar) {
+             o_collections.collectionGalleryScrollbar.update();
+         }
      },
 
      updateCartStatus: function(status) {
@@ -120,8 +127,6 @@ var o_collections = {
          let count = status.count;
          $("#collection_count").html(count);
          if (status.total_download_size_pretty !== undefined) {
-             $("#total_download_size").html(status.total_download_size_pretty);
-             $("#total_download_count").fadeOut().html(status.total_download_count).fadeIn();
              $("#total_download_size").fadeOut().html(status.total_download_size_pretty).fadeIn();
          }
          opus.colls_pages = Math.ceil(count/opus.prefs.limit);
@@ -134,6 +139,9 @@ var o_collections = {
         // returns any user collection saved in session
         opus.lastCartRequestNo++;
         $.getJSON("/opus/__collections/status.json?reqno=" + opus.lastCartRequestNo, function(statusData) {
+            if(statusData.reqno < opus.lastCartRequestNo) {
+                return;
+            }
             o_collections.updateCartStatus(statusData);
         });
      },
@@ -154,6 +162,7 @@ var o_collections = {
                 opus.col_labels = data.columns;
             }
             o_browse.renderGalleryAndTable(data, this.url);
+            o_browse.updateSortOrder(data);
 
             if (opus.collection_change) {
                 // for infinite scroll
@@ -171,6 +180,7 @@ var o_collections = {
                 });
                 opus.collection_change = false;
             }
+            o_collections.adjustProductInfoHeight();
         });
     },
 
@@ -205,6 +215,11 @@ var o_collections = {
                     if (zippedFiles_html) {
                         $(".zippedFiles", "#collection").html(zippedFiles_html);
                     }
+
+                    o_collections.downloadOptionsScrollbar = new PerfectScrollbar("#download-options-container");
+                    o_collections.collectionGalleryScrollbar = new PerfectScrollbar("#collection .gallery-contents", {
+                        suppressScrollX: true,
+                    });
                     o_collections.adjustProductInfoHeight();
                 }
             });
@@ -222,6 +237,7 @@ var o_collections = {
             opus.colls_pages = 0;
             opus.collection_change = true;
             $("#collection .navbar").hide();
+            $("#collection .sort-order-container").hide();
             opus.changeTab("collection");
         });
 

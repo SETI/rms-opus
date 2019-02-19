@@ -43,7 +43,7 @@ var opus = {
                                    // like {"gallery":1, "data":1, "colls_gallery":1, "colls_data":1 };
             'gallery_data_viewer': true, // true if you want to view data in the box rather than img
             'limit': 100, // results per page
-            'order':'time1',  // result table ordering
+            'order': default_sort_order.split(','),  // result table ordering
             'cols': default_columns.split(','),  // default result table columns by slug
             'widgets':[], // search tab widget columns
             'widget_size':{}, // search tab resized widgets
@@ -221,13 +221,18 @@ var opus = {
     lastBlogUpdate: function() {
         $.getJSON("/opus/__lastblogupdate.json", function(data) {
             if (data.lastupdate !== null) {
+                let last_update_date = new Date(data.lastupdate);
                 let today = Date.now();
-                let days = (today - Date.parse(data.lastupdate))/1000/60/60/24;
+                let days = (today - last_update_date.valueOf())/1000/60/60/24;
                 if (days <= 7) {
                     $(".blogspot img").show();
                 } else {
                     $(".blogspot img").hide();
                 }
+                let pretty_date = last_update_date.toLocaleDateString('en-GB', options={year: 'numeric', month: 'long', day: 'numeric'});
+                $("#last_blog_update_date").attr("title", "Blog last updated "+pretty_date);
+            } else {
+                $("#last_blog_update_date").attr("title", "");
             }
         });
     },
@@ -355,11 +360,15 @@ $(document).ready(function() {
 
     var adjustSearchHeight = _.debounce(o_search.adjustSearchHeight, 200);
     var adjustBrowseHeight = _.debounce(o_browse.adjustBrowseHeight, 200);
-    var adjustTableWidth = _.debounce(o_browse.adjustTableWidth, 200);
+    var adjustTableSize = _.debounce(o_browse.adjustTableSize, 200);
+    var adjustProductInfoHeight = _.debounce(o_collections.adjustProductInfoHeight, 200);
+    var adjustDetailHeight = _.debounce(o_detail.adjustDetailHeight, 200);
     $( window ).on("resize", function() {
         adjustSearchHeight();
         adjustBrowseHeight();
-        adjustTableWidth();
+        adjustTableSize();
+        adjustProductInfoHeight();
+        adjustDetailHeight();
     });
 
     // add the navbar clicking behaviors, selecting which tab to view:

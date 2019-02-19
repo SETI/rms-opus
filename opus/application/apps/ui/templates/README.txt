@@ -1,4 +1,4 @@
-choose_columns.html - Displays the column choose modal dialog. Used in ui/views.py::get_column_chooser
+select_metadata.html - Displays the select metadata modal dialog. Used in ui/views.py::get_select_metadata
 
 detail.html - The top of the detail tab (not including any actual metadata). Used in ui/views.py::init_detail_page
 

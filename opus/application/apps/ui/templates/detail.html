@@ -1,7 +1,7 @@
 <section class="container-fluid">
     <div class="row flex-md-row flex-md-nowrap">
         <div class="col-md-12 metadata-container">
-            <div class="detail-matadata pr-5">
+            <div class="detail-metadata pr-5">
                 <h1>Observation Detail</h1>
                 <p><b>OPUS ID: </b>{{ opus_id }}</p>
 
@@ -31,13 +31,13 @@
                 </div>
 
                 <h2>Selected Metadata</h2>
-                <p><a class="download_csv" target="_blank" href="#">Download CSV of Selected Metadata</a></p>
+                <p><a class="download_csv" target="_blank" href="#">Download CSV of selected metadata</a></p>
                 <div id="cols_metadata_{{ opus_or_ringobs_id }}">
                     <span class="spinner">&nbsp;</span>
                 </div>
                 <div>
                     <h2>All OPUS Metadata for this Observation</h2>
-                    <p>Download all metadata <a href="/opus/__api/metadata_v2/{{ opus_id }}.json" target="_blank">as json</a></p>
+                    <p>Download all metadata <a href="/opus/__api/metadata_v2/{{ opus_id }}.json" target="_blank">as JSON</a></p>
                     <div id="all_metadata_{{ opus_or_ringobs_id }}"></div>
                 </div>
             </div>

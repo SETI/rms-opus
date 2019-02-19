@@ -1,6 +1,5 @@
 import io
 import ipaddress
-import operator
 import re
 from datetime import datetime
 from time import sleep

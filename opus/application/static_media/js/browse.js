@@ -1,9 +1,11 @@
 var o_browse = {
     selectedImageID: "",
     keyPressAction: "",
-    xAxisTableScrollbar: new PerfectScrollbar(".dataTable"),
-    yAxisGalleryScrollbar: new PerfectScrollbar(".gallery-contents"),
-    yAxisModalScrollbar: new PerfectScrollbar("#galleryViewContents .metadata"),
+    tableSorting: false,
+    tableScrollbar: new PerfectScrollbar(".dataTable"),
+    galleryScrollbar: new PerfectScrollbar(".gallery-contents", { suppressScrollX: true }),
+    modalScrollbar: new PerfectScrollbar("#galleryViewContents .metadata"),
+    infiniteScrollLoadCount: 0,
 
     /**
     *
@@ -42,52 +44,88 @@ var o_browse = {
             return false;
         });
 
-       $("#browse").on("click", ".metadataModal", function() {
-           o_browse.hideMenu();
-           o_browse.renderMetadataSelector();
-       });
+        $("#browse").on("click", ".metadataModal", function() {
+            o_browse.hideMenu();
+            o_browse.renderMetadataSelector();
+        });
 
-       $("#metadataSelector").modal({
-           keyboard: false,
-           backdrop: 'static',
-           show: false,
-       })
+        $("#metadataSelector").modal({
+            keyboard: false,
+            backdrop: 'static',
+            show: false,
+        })
 
-       // browse nav menu - the gallery/table toggle
-       $("#browse").on("click", ".browse_view", function() {
-           o_browse.hideMenu();
-           opus.prefs.browse = $(this).data("view");
+        // browse nav menu - the gallery/table toggle
+        $("#browse").on("click", ".browse_view", function() {
+            o_browse.hideMenu();
+            opus.prefs.browse = $(this).data("view");
 
-           o_hash.updateHash();
-           o_browse.updateBrowseNav();
+            o_hash.updateHash();
+            o_browse.updateBrowseNav();
 
-           // reset scroll position
-           window.scrollTo(0,opus.browse_view_scrolls[opus.prefs.browse]); // restore previous scroll position
+            // reset scroll position
+            window.scrollTo(0,opus.browse_view_scrolls[opus.prefs.browse]); // restore previous scroll position
 
-           return false;
-       });
+            return false;
+        });
 
-       // browse nav menu - download csv
-       $("#browse").on("click", ".download_csv", function() {
-           let col_str = opus.prefs.cols.join(',');
-           let hash = [];
-           for (let param in opus.selections) {
-               if (opus.selections[param].length){
-                   hash[hash.length] = param + '=' + opus.selections[param].join(',').replace(/ /g,'+');
-               }
-           }
-           let q_str = hash.join('&');
-           let csv_link = "/opus/__api/metadata.csv?" + q_str + "&cols=" + col_str + "&limit=" + opus.result_count.toString() + "&order=" + opus.prefs.order;
-           $(this).attr("href", csv_link);
-       });
+        // browse nav menu - download csv
+        $("#browse").on("click", ".download_csv", function() {
+            let col_str = opus.prefs.cols.join(',');
+            let hash = [];
+            for (let param in opus.selections) {
+                if (opus.selections[param].length){
+                    hash[hash.length] = param + '=' + opus.selections[param].join(',').replace(/ /g,'+');
+                }
+            }
+            let q_str = hash.join('&');
+            let csv_link = "/opus/__api/data.csv?" + q_str + "&cols=" + col_str + "&limit=" + opus.result_count.toString() + "&order=" + opus.prefs.order.join(",");
+            $(this).attr("href", csv_link);
+        });
 
-       // 1 - click on thumbnail opens modal window
-        // 2 - shift click - takes range from whatever the last thing you clicked on and if the
-        //     thing you previously clicked is IN the card, do an 'add range', otherwise
-        //     do a 'remove range'.  Don't toggle the items inside the range
+        // browse sort order - remove sort slug
+        $(".sort-contents").on("click", "li .remove-sort", function() {
+            let slug = $(this).parent().attr("data-slug");
+            let descending = $(this).parent().attr("data-descending");
+            if (descending == "true") {
+                slug = "-"+slug;
+            }
+            let slugIndex = $.inArray(slug, opus.prefs.order);
+            if (slugIndex >= 0) {
+                // The clicked-on slug should always be in the order list; this is just a safety precaution
+                opus.prefs.order.splice(slugIndex, 1);
+            }
+            o_hash.updateHash();
+            o_browse.updatePage();
+        });
+
+        // browse sort order - flip sort order of a slug
+        $(".sort-contents").on("click", "li .flip-sort", function() {
+            let slug = $(this).parent().attr("data-slug");
+            let descending = $(this).parent().attr("data-descending");
+
+            let new_slug = slug;
+            if (descending == "true") {
+                slug = "-"+slug; // Old descending, new ascending
+            } else {
+                new_slug = "-"+slug; // Old ascending, new descending
+            }
+            let slugIndex = $.inArray(slug, opus.prefs.order);
+            if (slugIndex >= 0) {
+                // The clicked-on slug should always be in the order list; this is just a safety precaution
+                opus.prefs.order[slugIndex] = new_slug;
+            }
+            o_hash.updateHash();
+            o_browse.updatePage();
+        });
+
+        // 1 - click on thumbnail opens modal window
+        // 2 - shift click - takes range from whatever the last thing you shift+clicked on and if the
+        //     thing you previously shift+clicked is IN the cart, do an 'add range', otherwise
+        //     do a 'remove range'. If there was nothing you previously shift+clicked on, then
+        //     toggle the selection and set up for the next shift+click.
         // 3 - ctrl click - alternate way to add to cart
-        //    NOTE: range can go forward or backwards
-        //
+        // NOTE: range can go forward or backwards
 
         // images...
         $(".gallery").on("click", ".thumbnail", function(e) {
@@ -251,7 +289,6 @@ var o_browse = {
             opus.gallery_begun = false;     // so that we redraw from the beginning
             opus.gallery_data = {};
             opus.prefs.page = default_pages; // reset pages to 1 when col ordering changes
-
             o_browse.loadBrowseData(1);
             return false;
         });
@@ -403,7 +440,7 @@ var o_browse = {
         opus.changeTab('detail');
     },
 
-    // columns can be reordered wrt each other in 'column chooser' by dragging them
+    // columns can be reordered wrt each other in 'metadata selector' by dragging them
     metadataDragged: function(element) {
         let cols = $(element).sortable('toArray');
         cols.unshift('cchoose__opusid');  // manually add opusid to this list
@@ -440,7 +477,7 @@ var o_browse = {
         });
     },
 
-    // column chooser behaviors
+    // metadata selector behaviors
     addMetadataSelectorBehaviors: function() {
         // this is a global
         var currentSelectedMetadata = opus.prefs.cols.slice();
@@ -598,20 +635,31 @@ var o_browse = {
             $("." + opus.prefs.browse, "#browse").fadeIn();
 
             $(".browse_view", "#browse").html("<i class='far fa-list-alt'></i>&nbsp;View Table");
-            $(".browse_view", "#browse").attr("title", "Click to view sortable table");
+            $(".browse_view", "#browse").attr("title", "View sortable metadata table");
             $(".browse_view", "#browse").data("view", "dataTable");
 
             $(".justify-content-center").show();
+
+            o_browse.galleryScrollbar.settings.suppressScrollY = false;
+            $(".gallery-contents > .ps__rail-y").show();
+            $(".dataTable > .ps__rail-y").hide();
+
+            o_browse.galleryScrollbar.update();
         } else {
             $("." + "gallery", "#browse").hide();
             $("." + opus.prefs.browse, "#browse").fadeIn();
 
             $(".browse_view", "#browse").html("<i class='far fa-images'></i>&nbsp;View Gallery");
-            $(".browse_view", "#browse").attr("title", "Click to view sortable gallery");
+            $(".browse_view", "#browse").attr("title", "View sortable thumbnail gallery");
             $(".browse_view", "#browse").data("view", "gallery");
 
             // remove that extra space on top when loading table page
             $(".justify-content-center").hide();
+
+            o_browse.galleryScrollbar.settings.suppressScrollY = true;
+            $(".gallery-contents > .ps__rail-y").hide();
+            $(".dataTable > .ps__rail-y").show();
+            o_browse.tableScrollbar.update();
         }
     },
 
@@ -632,16 +680,16 @@ var o_browse = {
 
     renderMetadataSelector: function() {
         if (!opus.metadata_selector_drawn) {
-            let url = "/opus/__forms/column_chooser.html?" + o_hash.getHash() + "&col_chooser=1";
+            let url = "/opus/__forms/metadata_selector.html?" + o_hash.getHash();
             $(".modal-body.metadata").load( url, function(response, status, xhr)  {
 
                 opus.metadata_selector_drawn=true;  // bc this gets saved not redrawn
                 $("#metadataSelector .restart_button").hide(); // we are not using this
 
-                // since we are rendering the left side of column chooser w/the same code that builds the select menu, we need to unhighlight the selected widgets
+                // since we are rendering the left side of metadata selector w/the same code that builds the select menu, we need to unhighlight the selected widgets
                 o_menu.markMenuItem(".modal-body.metadata li", "unselect");
 
-                // we keep these all open in the column chooser, they are all closed by default
+                // we keep these all open in the metadata selector, they are all closed by default
                 // disply check next to any default columns
                 $.each(opus.prefs.cols, function(index, col) { //CHANGE BELOW TO USE DATA-ICON=
                     $(`.modal-body.metadata li > [data-slug="${col}"]`).find("i.fa-check").fadeIn().css('display', 'inline-block');
@@ -674,6 +722,7 @@ var o_browse = {
             // for now, just post same message to both #browse & #collections tabs
             if (data.page_no == 1) {
                 $("#collection .navbar").hide();
+                $("#collection .sort-order-container").hide();
                 html += '<div class="thumbnail-message">';
                 html += '<h2>Your Cart is empty</h2>';
                 html += '<p>To add observations to the cart, click on the Browse Results tab ';
@@ -685,6 +734,7 @@ var o_browse = {
             }
         } else {
             $("#collection .navbar").show();
+            $("#collection .sort-order-container").show();
             html += '<div class="thumb-page" data-page="'+data.page_no+'">';
             opus.lastPageDrawn[opus.prefs.view] = data.page_no;
             $.each(page, function( index, item ) {
@@ -727,8 +777,8 @@ var o_browse = {
 
         $('.gallery', namespace).append(html);
         $('.table-page-load-status').hide();
-        o_browse.xAxisTableScrollbar.update();
-        o_browse.yAxisGalleryScrollbar.update();
+        o_browse.tableScrollbar.update();
+        o_browse.galleryScrollbar.update();
 
         o_hash.updateHash(true);
     },
@@ -762,8 +812,7 @@ var o_browse = {
         });
 
         o_browse.initResizableColumn();
-        o_browse.updateTableXScrollbarVerticalPosition();
-        // o_browse.adjustTableWidth();
+        o_browse.adjustTableSize();
     },
 
     initResizableColumn: function() {
@@ -773,7 +822,7 @@ var o_browse = {
             resize: function (event, ui) {
                 let resizableContainerWidth = $(event.target).parent().width();
                 let columnTextWidth = $(event.target).find("a").find('span:first').width();
-                let sortLabelWidth = $(event.target).find("a").find('span:last').width();
+                let sortLabelxzWidth = $(event.target).find("a").find('span:last').width();
                 let columnContentWidth = columnTextWidth + sortLabelWidth;
                 let beginningSpace = (resizableContainerWidth - columnContentWidth)/2;
                 let columnWidthUptoEndContent = columnContentWidth + beginningSpace;
@@ -795,34 +844,40 @@ var o_browse = {
         });
     },
 
-    updateTableXScrollbarVerticalPosition: function() {
-        let xRailPosition = $(".app-footer").height();
-        if($("body").find("style")) {
-            $("body").find("style").parent().remove();
-        }
-        $(".dataTable > .ps__rail-x").removeClass("update-x-scrollbar-pos");
-        o_browse.injectStyle(`.update-x-scrollbar-pos { bottom: ${xRailPosition}px !important}`);
-        $(".dataTable > .ps__rail-x").addClass("update-x-scrollbar-pos");
-    },
-
-    injectStyle: function(rule) {
-        let div = $("<div />", {
-            html: `<style>${rule}</style>`
-        });
-        $("body").append(div);
-    },
-
-    updateSortOrder: function() {
-        let hashArray = o_hash.getHashArray();
-        let order = hashArray["order"].split(",");
+    updateSortOrder: function(data) {
         let listHtml = "";
-        $.each(order, function(index, slug) {
-            listHtml += "<li class='list-inline-item'><i class='fas fa-arrow-circle-right'></i> "+opus.col_labels[index]+"</li>";
+        opus.prefs.order = []
+        $.each(data.order_list, function(index, order_entry) {
+            let slug = order_entry.slug;
+            let label = order_entry.label;
+            let descending = order_entry.descending;
+            let removeable = order_entry.removeable;
+            listHtml += "<li class='list-inline-item'>";
+            listHtml += `<span class='badge badge-pill badge-light' data-slug="${slug}" data-descending="${descending}">`;
+            if (removeable) {
+                listHtml += "<span class='remove-sort' title='Remove metadata field from sort'><i class='fas fa-times-circle'></i></span> ";
+            }
+            if (descending) {
+                listHtml += "<span class='flip-sort' title='Change to ascending sort'>";
+                listHtml += label;
+                listHtml += " <i class='fas fa-arrow-circle-up'></i>";
+            } else {
+                listHtml += "<span class='flip-sort' title='Change to descending sort'>";
+                listHtml += label;
+                listHtml += " <i class='fas fa-arrow-circle-down'></i>";
+            }
+            listHtml += "</span></span></li>";
+            let fullSlug = slug;
+            if (descending) {
+                fullSlug = "-"+slug;
+            }
+            opus.prefs.order.push(fullSlug);
         });
-        $(".order-container ul").html(listHtml);
-    },
+        $(".sort-contents").html(listHtml);
+        o_hash.updateHash();
+},
 
-    getBrowseURL: function(page) {
+    getDataURL: function(page) {
         let view = o_browse.getViewInfo();
         let base_url = "/opus/__api/dataimages.json?";
         if (page == undefined) {
@@ -843,9 +898,10 @@ var o_browse = {
         if (opus.lastPageDrawn[opus.prefs.view] == page) {
             return;
         }
+
         let selector = `#${opus.prefs.view} .gallery-contents`;
 
-        let url = o_browse.getBrowseURL(page);
+        let url = o_browse.getDataURL(page);
 
         // metadata; used for both table and gallery
         start_time = new Date().getTime();
@@ -857,11 +913,10 @@ var o_browse = {
             if (!opus.gallery_begun) {
                 o_browse.initTable(data.columns);
 
-                // for infinite scroll
                 if (!$(selector).data("infiniteScroll")) {
                     $(selector).infiniteScroll({
                         path: function() {
-                            let path = o_browse.getBrowseURL();
+                            let path = o_browse.getDataURL();
                             return path;
                         },
                         responseType: "text",
@@ -869,22 +924,24 @@ var o_browse = {
                         elementScroll: true,
                         history: false,
                         scrollThreshold: 500,
-                        debug: false,
+                        debug: true,
                     });
-                    $(selector).on("load.infiniteScroll", o_browse.infiniteScrollLoadEventListener);
+
                     $(selector).on("request.infiniteScroll", function( event, path ) {
                         $(".table-page-load-status").show();
                     });
+                    $(selector).on("load.infiniteScroll", o_browse.infiniteScrollLoadEventListener);
                 }
             }
 
             o_browse.renderGalleryAndTable(data, this.url);
-            o_browse.updateSortOrder();
+            o_browse.updateSortOrder(data);
 
             if (!opus.gallery_begun) {
                 $(selector).infiniteScroll('loadNextPage');
                 opus.gallery_begun = true;
             }
+            $(".table-page-load-status > .loader").hide();
         });
 
         opus.lastPageDrawn[opus.prefs.view] = page;
@@ -923,9 +980,10 @@ var o_browse = {
             // page is higher than the total number of pages, reset it to the last page
             page = opus.pages;
         }
+
         o_browse.loadBrowseData(page);
         o_browse.adjustBrowseHeight();
-        o_browse.adjustTableWidth();
+        o_browse.adjustTableSize();
 
         $("input#page").val(page).css("color","initial");
         o_hash.updateHash();
@@ -934,18 +992,17 @@ var o_browse = {
     adjustBrowseHeight: function() {
         let container_height = $(window).height()-120;
         $(".gallery-contents").height(container_height);
-        o_browse.yAxisGalleryScrollbar.update();
+        o_browse.galleryScrollbar.update();
         //opus.limit =  (floor($(window).width()/thumbnailSize) * floor(container_height/thumbnailSize));
     },
 
-    adjustTableWidth: function() {
-        let containerWidth = $(".gallery-contents").width()-5;
+    adjustTableSize: function() {
+        let containerWidth = $(".gallery-contents").width();
+        let containerHeight = $(".gallery-contents").height();
         // Make sure the rightmost column is not cut off by the y-scrollbar
         $(".dataTable").width(containerWidth);
-        $(".justify-content-center").width(containerWidth);
-
-        o_browse.updateTableXScrollbarVerticalPosition();
-        o_browse.xAxisTableScrollbar.update();
+        $(".dataTable").height(containerHeight);
+        o_browse.tableScrollbar.update();
     },
 
     cartButtonInfo: function(status) {
@@ -1018,7 +1075,7 @@ var o_browse = {
     updateMetaGalleryView: function(opusId, imageURL) {
         $("#galleryViewContents .left").html("<a href='"+imageURL+"' target='_blank'><img src='"+imageURL+"' title='"+opusId+"' class='preview'/></a>");
         o_browse.metadataboxHtml(opusId);
-        o_browse.yAxisModalScrollbar.update();
+        o_browse.modalScrollbar.update();
     },
 
     resetData: function() {

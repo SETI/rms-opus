@@ -1,102 +1,105 @@
 {% block menu %}
 	<ul class="searchMenu list-group list-group-flush">
 		{% for div in menu.divs %}
-		<li class="list-group-item py-2">
-			<a href="#submenu-{{ div.table_name }}" data-toggle="collapse" aria-expanded="false" class="dropdown-toggle" data-cat="{{ div.table_name }}">
-				<span class="menu-text title">{{ div.label }}</span>
-			</a>
+    		<li class="list-group-item py-2">
 
-			{% if div.table_name == 'obs_general' %}
-			<ul class="list-group list-group-flush submenu collapse show" id="submenu-{{ div.table_name }}">
-			{% else %}
-			<ul class="list-group list-group-flush submenu collapse" id="submenu-{{ div.table_name }}">
-			{% endif %}
-				<!-- all div labels have level 2 submenu to list params-->
-				{# loop through all params then check if this param belongs to this div.table_name, because templates #}
-				{% for name, info in menu.data.items %}
-				{% if name == div.table_name %}  {# this param_name IS contained in this div #}
+                {#  Each div has a top-level catgory  #}
+    			<a href="#submenu-{{ div.table_name }}" data-toggle="collapse" aria-expanded="false" class="dropdown-toggle" data-cat="{{ div.table_name }}">
+    				<span class="menu-text title">{{ div.label }}</span>
+    			</a>
 
-				{% if info.menu_help %}
-				<li class="list-group-item list-group-item-action py-0 pl-0"><div class = "menu_help">{{ info.menu_help }}</div></li>
-				{% endif %}
+    			{% if div.table_name == 'obs_general' %}
+	                <ul class="list-group list-group-flush submenu collapse show" id="submenu-{{ div.table_name }}">
+    			{% else %}
+    			    <ul class="list-group list-group-flush submenu collapse" id="submenu-{{ div.table_name }}">
+    			{% endif %}
 
-				{% if info.has_sub_heading %}
-				{#  this div has sub_headings, level-3 menu sections.. start sub_heading loop  #}
-				{% for sub_head,params in info.data.items %}
-		        <li class="list-group-item py-0 pl-0">
-					<a href="#submenu-{{ sub_head|slugify }}" data-toggle="collapse" aria-expanded="false" class="dropdown-toggle" data-cat="{{ sub_head|slugify }}">
-						<span class="menu-text title">{{ sub_head }}</span>
-					</a>
-					<ul class="list-group list-group-flush submenu collapse" id="submenu-{{ sub_head|slugify }}">
-						{% for p in params %}
-						{% if p.cat_name == sub_head.slugify %}
-						<li class="list-group-item py-0 pl-0">
-		                    <a data-label="
-									{% if menu.data.labels_view == 'results' %}
-										{{ p.label_results }}
-									{% else %}
-										{{ p.label }}
-									{% endif %}
-								" data-qualifiedlabel="
-									{% if menu.data.labels_view == 'results' %}
-										{{ p.body_qualified_label_results }}
-									{% else %}
-										{{ p.body_qualified_label }}
-									{% endif %}
-								" data-slug="{{ p.slug }}" class="search-param" href="#">
-		                        <i class = "fa fa-check"></i>
-								{% if menu.data.labels_view == 'results' %}
-									{{ p.label_results }}
-								{% else %}
-									{{ p.label }}
-								{% endif %}
-								{% if p.tooltip %}
-		                        <i class="fa fa-info-circle" title="
-									{{ p.get_tooltip }}
-								"></i>
-								{% endif %}
-							</a>
-						</li>
-						{% endif %}
-						{% endfor %} {# p in params #}
-					</ul>
-				</li>
-				{% endfor %} {# for sub_head, params in info.data.items #}
-				{% else %}
-				{# this div does not have sub_headings, list the params #}
-				{% for p in info.data %}
-				<li class="list-group-item py-0 pl-0">
-					<a data-label="
-								{% if menu.data.labels_view == 'results' %}
-									{{ p.label_results }}
-								{% else %}
-									{{ p.label }}
-								{% endif %}
-							" data-qualifiedlabel="
-								{% if menu.data.labels_view == 'results' %}
-									{{ p.body_qualified_label_results }}
-								{% else %}
-									{{ p.body_qualified_label }}
-								{% endif %}
-							" data-slug="{{ p.slug }}" class="search-param" href="#">
-						<i class = "fa fa-check"></i>
-						{% if menu.data.labels_view == 'results' %}
-							{{ p.label_results}}
-						{% else %}
-							{{ p.label }}
-						{% endif %}
-						<i class="fa fa-info-circle" title="{{ p.get_tooltip }}"></i>
-					</a>
-				</li>
-				{% endfor %}
-				{% endif %}
-				{% endif %} {# nem == div.table_name #}
-				{% endfor %} {# for name, info in menu.data.items #}
-			</ul>
-		</li>
+    				<!-- all div labels have level 2 submenu to list params-->
+    				{# loop through all params then check if this param belongs to this div.table_name #}
+    				{% for name, info in menu.data.items %}
+    	                {% if name == div.table_name %}  {# this param_name IS contained in this div #}
+
+            				{% if info.menu_help %}
+            				    <li class="list-group-item list-group-item-action py-0 pl-0"><div class = "menu_help">{{ info.menu_help }}</div></li>
+            				{% endif %}
+
+            				{% if info.has_sub_heading %}
+            				    {#  this div has sub_headings, level-3 menu sections.. start sub_heading loop  #}
+            				    {% for sub_head,params in info.data.items %}
+                    		        <li class="list-group-item py-0 pl-0">
+                    					<a href="#submenu-{{ sub_head|slugify }}" data-toggle="collapse" aria-expanded="false" class="dropdown-toggle" data-cat="{{ sub_head|slugify }}">
+                    						<span class="menu-text title">{{ sub_head }}</span>
+                    					</a>
+                    					<ul class="list-group list-group-flush submenu collapse" id="submenu-{{ sub_head|slugify }}">
+                    						{% for p in params %}
+                        						{% if p.cat_name == sub_head.slugify %}
+                            						<li class="list-group-item py-0 pl-0">
+                            		                    <a data-label="
+                            									{% if menu.data.labels_view == 'results' %}
+                            										{{ p.label_results }}
+                            									{% else %}
+                            										{{ p.label }}
+                            									{% endif %}
+                            								" data-qualifiedlabel="
+                            									{% if menu.data.labels_view == 'results' %}
+                            										{{ p.body_qualified_label_results }}
+                            									{% else %}
+                            										{{ p.body_qualified_label }}
+                            									{% endif %}
+                            								" data-slug="{{ p.slug }}" class="search-param" href="#">
+                            		                        <i class="fa fa-check"></i>
+                            								{% if menu.data.labels_view == 'results' %}
+                            									{{ p.label_results }}
+                            								{% else %}
+                            									{{ p.label }}
+                            								{% endif %}
+                            								{% if p.get_tooltip %}
+                                		                        <i class="fa fa-info-circle" title="{{ p.get_tooltip }}"></i>
+                            								{% endif %}
+                            							</a>
+                            						</li>
+                        						{% endif %}
+                    						{% endfor %} {# p in params #}
+                    					</ul>
+                    				</li>
+    		                    {% endfor %} {# for sub_head, params in info.data.items #}
+
+                            {% else %}
+                				{# this div does not have sub_headings, list the params #}
+                				{% for p in info.data %}
+                    				<li class="list-group-item py-0 pl-0">
+                    					<a data-label="
+                    								{% if menu.data.labels_view == 'results' %}
+                    									{{ p.label_results }}
+                    								{% else %}
+                    									{{ p.label }}
+                    								{% endif %}
+                    							" data-qualifiedlabel="
+                    								{% if menu.data.labels_view == 'results' %}
+                    									{{ p.body_qualified_label_results }}
+                    								{% else %}
+                    									{{ p.body_qualified_label }}
+                    								{% endif %}
+                    							" data-slug="{{ p.slug }}" class="search-param" href="#">
+                    						<i class = "fa fa-check"></i>
+                    						{% if menu.data.labels_view == 'results' %}
+                    							{{ p.label_results}}
+                    						{% else %}
+                    							{{ p.label }}
+                    						{% endif %}
+                                            {% if p.get_tooltip %}
+    						                    <i class="fa fa-info-circle" title="{{ p.get_tooltip }}"></i>
+                                            {% endif %}
+                    					</a>
+                    				</li>
+                				{% endfor %}
+            				{% endif %}
+        				{% endif %} {# name == div.table_name #}
+    				{% endfor %} {# for name, info in menu.data.items #}
+    			</ul>
+    		</li>
 		{% endfor %} {# for div in menu.divs #}
 	</ul>
 	<div class="restart_button"><button type="reset" class="btn btn-sm btn-danger restart">Start Over</button></div>
-</nav>
 {% endblock %}
 <div class = "sidenav_spacer">&nbsp;</div>

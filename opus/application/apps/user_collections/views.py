@@ -175,7 +175,7 @@ def api_edit_collection(request, **kwargs):
                [download=<N>]
 
     Returns the new number of items in the collection.
-    If download=1, also returns all the data returns by
+    If download=1, also returns all the data returned by
         /__collections/status.json
     """
     api_code = enter_api_call('api_edit_collection', request)
