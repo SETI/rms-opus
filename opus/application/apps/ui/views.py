@@ -590,6 +590,10 @@ def _get_menu_labels(request, labels_view):
     else:
         triggered_tables = get_triggered_tables(selections, extras) # Needs api_code
 
+    if labels_view == 'results':
+        if 'obs_surface_geometry' in triggered_tables:
+            triggered_tables.remove('obs_surface_geometry')
+            
     divs = (TableNames.objects.filter(display='Y',
                                       table_name__in=triggered_tables)
                                .order_by('disp_order'))
