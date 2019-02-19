@@ -573,7 +573,7 @@ img.preview {
 }
 
 #collection .thumb-page {
-  padding-left: 3em;
+	padding: 0 1.0em;
 }
 
 #collections-sidebar {
@@ -674,6 +674,11 @@ div.gallery {
      display:none;
    }
 }
+
+#page-slider .slider {
+    width: 150px;
+}
+
 .panel-body .gallery-contents {
   position:fixed !important;
   overflow-y: auto
