@@ -8,8 +8,7 @@ from typing import Dict, Tuple, List, Optional, Any, cast
 
 from markupsafe import Markup
 
-import Slug
-from Slug import Flags
+import slug as Slug
 
 SearchSlugInfo = Dict[Slug.Family, List[Tuple[Slug.Info, str]]]
 ColumnSlugInfo = Dict[Slug.Family, Slug.Info]
@@ -291,7 +290,7 @@ class QueryHandler:
                     marked_changes.append(self.safe_format('<mark><del>{}</del></mark>', formatted_value))
                 else:
                     marked_changes.append(Markup(formatted_value))
-            joined_values = Markup(',').join(marked_changes);
+            joined_values = Markup(',').join(marked_changes)
             result.append(self.safe_format('Change Search: &quot;{}&quot; = {}', name, joined_values))
         elif old_value_set.intersection(new_value_set):
             change_list: List[Tuple[str, str]] = []
@@ -337,7 +336,7 @@ class QueryHandler:
         else:
             return '~' if value is None else '"' + value + '"'
 
-    def __get_postscript(self, flags: Flags) -> str:
+    def __get_postscript(self, flags: Slug.Flags) -> str:
         if not flags:
             return ''
         elif self._uses_html:

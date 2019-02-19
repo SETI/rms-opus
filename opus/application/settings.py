@@ -321,7 +321,7 @@ DEFAULT_COLUMNS = 'opusid,instrument,planet,target,time1,observationduration'
 
 # The sort order to be used if there is no order specified in the URL, or
 # the order slug has no value.
-DEFAULT_SORT_ORDER = 'time1' # This must be a slug
+DEFAULT_SORT_ORDER = 'time1,opusid' # This must be a list of slugs
 
 # The sort order to append after all other sort orders to ensure the ordering
 # is always deterministic. This field should be unique for all observations.

@@ -27,23 +27,9 @@ var o_collections = {
 
          });
          $("#collection").on("click", ".emptyCart", function() {
-             if (confirm("Are you sure you want to delete all observations in your cart?")) {
+             if (confirm("Are you sure you want to remove all observations from your cart?")) {
                  o_collections.emptyCollection();
              }
-         });
-
-        // collection details hide/show
-         $("#collection").on("click", "#collection_summary_more", function() {
-             if (opus.colls_options_viz) {
-                 opus.colls_options_viz=false;
-                 $("#collection_summary_more","#collection").text("show options");
-                 $("#collection_summary","#collection").animate({height:"8em"});
-             } else {
-                 opus.colls_options_viz=true;
-                 $("#collection_summary_more","#collection").text("hide options");
-                 $("#collection_summary","#collection").animate({height:"33em"});
-             }
-             return false;
          });
 
          // check an input on selected products and images updates file_info
@@ -51,7 +37,6 @@ var o_collections = {
              let add_to_url = o_collections.getDownloadFiltersChecked();
              let url = "/opus/__collections/view.json?" + add_to_url + "&fmt=json";
              $.getJSON(url, function(info) {
-                 $("#total_download_count").fadeOut().html(info.total_download_count).fadeIn();
                  $("#total_download_size").fadeOut().html(info.total_download_size_pretty).fadeIn();
              });
          });
@@ -86,7 +71,7 @@ var o_collections = {
 
          let add_to_url = o_collections.getDownloadFiltersChecked();
          let url = "/opus/__collections/download.json?" + add_to_url + "&" + o_hash.getHash();
-         url += (type = "create_zip_url_file" ? "&urlonly=1" : "");
+         url += (type == "create_zip_url_file" ? "&urlonly=1" : "");
          $.ajax({
              url: url,
              dataType: "json",
@@ -142,8 +127,6 @@ var o_collections = {
          let count = status.count;
          $("#collection_count").html(count);
          if (status.total_download_size_pretty !== undefined) {
-             $("#total_download_size").html(status.total_download_size_pretty);
-             $("#total_download_count").fadeOut().html(status.total_download_count).fadeIn();
              $("#total_download_size").fadeOut().html(status.total_download_size_pretty).fadeIn();
          }
          opus.colls_pages = Math.ceil(count/opus.prefs.limit);
@@ -179,6 +162,7 @@ var o_collections = {
                 opus.col_labels = data.columns;
             }
             o_browse.renderGalleryAndTable(data, this.url);
+            o_browse.updateSortOrder(data);
 
             if (opus.collection_change) {
                 // for infinite scroll
@@ -253,6 +237,7 @@ var o_collections = {
             opus.colls_pages = 0;
             opus.collection_change = true;
             $("#collection .navbar").hide();
+            $("#collection .sort-order-container").hide();
             opus.changeTab("collection");
         });
 
@@ -301,6 +286,13 @@ var o_collections = {
         } else {
             fromElem.toggleClass("in");
             let action = (fromElem.hasClass("in") ? "add" : "remove");
+            // if this came from the mini menu off the modal, need to update the icon
+            let modalCartSelector = `#galleryViewContents .bottom .select[data-id=${fromOpusId}]`;
+            if ($("#galleryView").is(":visible") && $(modalCartSelector).length > 0) {
+                let buttonInfo = o_browse.cartButtonInfo(action);
+                $(modalCartSelector).html(`<i class="${buttonInfo.icon} fa-2x"></i>`);
+                $(modalCartSelector).prop("title", buttonInfo.title);
+            }
             o_collections.editCollection(fromOpusId, action);
             return action;
         }

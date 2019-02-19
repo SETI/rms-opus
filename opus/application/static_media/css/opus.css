@@ -512,6 +512,7 @@ img.preview {
 
 #galleryView {
     pointer-events: none;
+    z-index: 999;
 }
 
 #galleryView button.close, #metadataSelector button.close {
@@ -528,9 +529,9 @@ img.preview {
 
 #galleryView .bottom {
   position: fixed;
-  right: 2em;
+  right: 2.5em;
   bottom: 1.5em;
-  width: 38%;
+  width: 40%;
   z-index: 1030;
 }
 
@@ -566,13 +567,13 @@ img.preview {
   background-color: transparent !important;
 }
 
-#collection .gallery, .gallery-contents {
+#collection .collection-gallery-side {
     /*margin-top:.25em; */
     background-color: #303030; /* #383838; */
 }
 
 #collection .thumb-page {
-  padding-left: 3em;
+	padding: 0 1.0em;
 }
 
 #collections-sidebar {
@@ -632,10 +633,30 @@ div.gallery {
     width:4.2em;
     text-align: center;
  }
-.browse-nav-container .order-container {
-  display:inline-flex;
-  float: right;
+
+.sort-order-container {
+	display:inline-flex;
+    padding-left: 25px;
 }
+
+.sort-order-icon {
+    color: rgba(255, 255, 255, 0.5);
+    vertical-align: middle;
+}
+
+.sort-contents {
+	display: flex;
+}
+
+.sort-contents li {
+    opacity: 0.7;
+    margin-bottom: -10px;
+}
+
+.flip-sort {
+    cursor:row-resize;
+}
+
 @media (max-width: 700px) {
     .navbar-header {
         display:none;
@@ -653,6 +674,11 @@ div.gallery {
      display:none;
    }
 }
+
+#page-slider .slider {
+    width: 150px;
+}
+
 .panel-body .gallery-contents {
   position:fixed !important;
   overflow-y: auto

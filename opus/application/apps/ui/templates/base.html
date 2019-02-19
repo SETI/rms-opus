@@ -77,13 +77,7 @@
 									<a href="#" class="browse_view nav-link"><i class="far fa-list-alt"></i></a>
 								</li>
 								<li class="nav-item">
-									<a href="#" class="metadataModal nav-link" data-toggle="modal" data-target="#metadataSelector" title="Select metadata to display for each observation"><i class="fas fa-columns"></i>&nbsp;Select Metadata</a>
-								</li>
-								<li class="nav-item">
-									<a href="#" class="prev nav-link">prev</a>
-								</li>
-								<li class="nav-item">
-									<a href="#" class="next nav-link">next</a>
+									<a href="#" class="metadataModal nav-link" data-toggle="modal" data-target="#metadataSelector" title="Select metadata to display or include in CSV files for each observation"><i class="fas fa-columns"></i>&nbsp;Select Metadata</a>
 								</li>
 								<li class="nav-item">
 									<a href="#" class="paging_indicator nav-link">
@@ -92,13 +86,18 @@
 									</a>
 								</li>
 								<li class="nav-item">
-									<a href="#" class="download_csv nav-link" title="Click to download CSV of selected metadata for all observations in current results"><i class="fas fa-download"></i>&nbsp;Download CSV (all results)</a>
+									<a href="#" class="download_csv nav-link" title="Download CSV of selected metadata for ALL observations in current results"><i class="fas fa-download"></i>&nbsp;Download CSV (all results)</a>
+								</li>
+								<li class="nav-item">
+									<div id="page-slider">
+										<div id="page-handle" class="ui-slider-handle"></div>
+									</div>								
 								</li>
 							</ul>
-							<div class="order-container">Sorted by:<ul class="sort-contents list-inline"></ul></div>
 						</div>
 					</nav>
-					<div class="panel-body gallery-contents container-fluid browse-infiniteScroll-element">
+                    <div class="sort-order-container"><span class="sort-order-icon" title="Results are sorted by these metadata fields"><i class="fas fa-random"></i></span>&nbsp;<ul class="sort-contents list-inline"></ul></div>
+                    <div class="panel-body gallery-contents container-fluid browse-infiniteScroll-element">
 						<div class="row justify-content-center">
 							<div class="mr-0 thumb gallery gallery-scroll"></div>
 							<div class="page-load-status">
@@ -131,37 +130,37 @@
 			<div id="collection" class="tab-pane fade" role="tabpanel" aria-labelledby="collection-tab">
 				<div class="row">
 					<div class="col collection_details pr-0"></div>
-					<div class="col pl-0">
+					<div class="col pl-0 collection-gallery-side">
 						<nav class="panel-heading navbar navbar-expand-lg navbar-dark bg-dark">
 							<div class="browse-nav-container top_navbar collapse navbar-collapse">
 								<ul class="navbar-nav mr-auto">
 									<li class="nav-item">
-										<a href="javascript:void(0)" class="download_csv nav-link" title="Click to download a CSV" target="_blank"><i class="fas fa-file-csv"></i>&nbsp;Download CSV of Selected Metadata</a>
+										<a href="javascript:void(0)" class="download_csv nav-link" title="Download CSV of selected metadata for all observations in cart" target="_blank"><i class="fas fa-file-csv"></i>&nbsp;Metadata CSV</a>
 									</li>
 									<li class="nav-item">
 										<div id="create_zip_data_file">
-											<a href="#" class="downloadData nav-link" title="Click to download a zipped data archive"><i class="fas fa-download"></i>&nbsp;Download Zipped Data Archive</a>
+											<a href="#" class="downloadData nav-link" title="Download a zipped data archive of all observations in cart using selected products"><i class="fas fa-download"></i>&nbsp;Data Archive</a>
 										</div>
 									</li>
 									<li class="nav-item">
 										<div id="create_zip_url_file">
-											<a href="#" class="downloadURL nav-link" title="Click to download a zipped URL archive"><i class="fas fa-download"></i>&nbsp;Download Zipped URL Archive</a>
+											<a href="#" class="downloadURL nav-link" title="Download a zipped URL archive of all observations in cart using selected products"><i class="fas fa-download"></i>&nbsp;URL Archive</a>
 										</div>
 									</li>
 									<li class="nav-item">
 										<div class="b-l-1">
-											<a href="#" class="metadataModal nav-link" data-toggle="modal" data-target="#metadataSelector" title="Select columns for metadata display"><i class="fas fa-columns"></i>&nbsp;Select Metadata</a>
+											<a href="#" class="metadataModal nav-link" data-toggle="modal" data-target="#metadataSelector" title="Select metadata to display or include in CSV files for each observation"><i class="fas fa-columns"></i>&nbsp;Select Metadata</a>
 										</div
 									</li>
 									<li class="nav-item ">
-										<a href="#" class="emptyCart nav-link" title="Remove all observations from cart"></i>&nbsp;Empty Cart</a>
+										<a href="#" class="emptyCart nav-link" title="Remove all observations from cart"><i class="fas fa-trash-alt"></i>&nbsp;Empty Cart</a>
 									</li>
 								</ul>
-								<div class="order-container">Sorted by:<ul class="sort-contents list-inline"></ul></div>
 							</div>
 						</nav>
+                        <div class="sort-order-container"><span class="sort-order-icon" title="Results are sorted by these metadata fields"><i class="fas fa-random"></i></span>&nbsp;<ul class="sort-contents list-inline"></ul></div>
 						<div class="panel-body gallery-contents container-fluid  pr-2">
-							<div class="row mr-0 mt-3 thumb gallery gallery-scroll"></div>
+							<div class="row mr-0 mt-0 thumb gallery gallery-scroll"></div>
 							<div class="page-load-status">
 								<div class="infinite-scroll-request loader-ellips">
 									<!--div class='loader'></div-->
@@ -211,7 +210,7 @@
 									<div class="contents"></div>
 								</div>
 								<div class="detail"></div>
-								<div class="bottom"></div>
+								<div class="row bottom"></div>
 							</div>
 						</div>
 					</div>
@@ -219,7 +218,7 @@
 			</div>
 		</div>
 
-		<!--modal dialog for the column chooser -->
+		<!--modal dialog for the metadata selector -->
 		<div id="metadataSelector" class="modal fade" role="dialog" tabbindex="-1" data-backdrop="false" aria-labelledby="metadataSelectorLabel" aria-hidden="true">
 			<div class="modal-dialog modal-lg" role="document">
 				<div class="modal-content">
@@ -236,7 +235,7 @@
 						</div>
 						<div class="right-container">
 							<button type="submit" class="btn btn-primary" data-dismiss="modal">Save Changes</button>
-							<button type="cancel" class="btn btn-danger"  data-dismiss="modal">Discard Changes</button>
+							<button type="cancel" class="btn btn-danger">Discard Changes</button>
 						</div>
 					</div>
 				</div>
