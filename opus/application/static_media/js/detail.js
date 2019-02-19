@@ -18,6 +18,7 @@ var o_detail = {
                 </div>'
 
             $(detailSelector).html(html).fadeIn();
+
             return;
         }
 
@@ -34,25 +35,22 @@ var o_detail = {
                     $(detailSelector).html(html).fadeIn();
                     return;
                 }
-
                 let arrOfDeferred = [];
-
                 // get the column metadata, this part is fast
                 url = "/opus/__api/metadata_v2/" + opus_id + ".html?" + o_hash.getHash();
-                let metadataDeferred = $.Deferred();
                 $("#cols_metadata_"+opus_id)
                     .load(url, function() {
                         $(this).hide().fadeIn("fast");
-                        metadataDeferred.resolve();
                     }
                 );
-                arrOfDeferred.push(metadataDeferred);
 
                 // get categories and then send for data for each category separately:
                 url = "/opus/__api/categories/" + opus_id + ".json?" + o_hash.getHash();
                 $.getJSON(url, function(json) {
-                    for (var index in json) {
-                        let deferredObj = $.Deferred();
+                    for(let i = 0; i < json.length; i++) {
+                        arrOfDeferred.push($.Deferred());
+                    }
+                    for (let index in json) {
                         name = json[index]['table_name'];
                         label = json[index]['label'];
                         var html = '<h3>' + label + '</h3><div class = "detail_' + name + '">Loading <span class = "spinner">&nbsp;</span></div>'
@@ -63,24 +61,28 @@ var o_detail = {
                         $("#all_metadata_" + opus_id + ' .detail_' + name)
                             .load(url, function() {
                                 $(this).hide().slideDown("fast");
-                                deferredObj.resolve();
+                                arrOfDeferred[index].resolve();
                             }
                         );
-                        arrOfDeferred.push(deferredObj);
+
                     } // end json loop
 
                     // Wait until all .load are done, and then update perfectScrollbar
-                    $.when(...arrOfDeferred).then(function() {
-                        o_detail.detailPageScrollbar = new PerfectScrollbar(".detail-metadata");
-                        o_detail.detailPageScrollbar.update();
+                    $.when.apply(null, arrOfDeferred).then(function() {
+                        _.debounce(o_detail.initAndUpdatePerfectScrollbar, 200)();
                     })
                 });
             } // /detail.load
         );
     }, // / getDetail
 
+    initAndUpdatePerfectScrollbar: function() {
+        o_detail.detailPageScrollbar = new PerfectScrollbar(".detail-metadata");
+        o_detail.detailPageScrollbar.update()
+    },
+
     adjustDetailHeight: function() {
-        let containerHeight = $(window).height()-120;
+        let containerHeight = $(window).height()-100;
         if(o_detail.detailPageScrollbar) {
             $(".detail-metadata").height(containerHeight);
             o_detail.detailPageScrollbar.update();

@@ -872,6 +872,10 @@ li a.search-param:hover {
     }
 }
 
+/* TODO: use @media to fine tune the heights of footer & nav bar
+   when the width of browser window is small
+*/
+
 
 footer {
    position: fixed;
