@@ -69,7 +69,7 @@ var o_detail = {
 
                     // Wait until all .load are done, and then update perfectScrollbar
                     $.when.apply(null, arrOfDeferred).then(function() {
-                        _.debounce(o_detail.initAndUpdatePerfectScrollbar, 200)();
+                        _.debounce(o_detail.initAndUpdatePerfectScrollbar, 500)();
                     })
                 });
             } // /detail.load
