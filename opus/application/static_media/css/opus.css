@@ -679,6 +679,10 @@ div.gallery {
     width: 150px;
 }
 
+.table-page {
+    display: none;
+}
+
 .panel-body .gallery-contents {
   position:fixed !important;
   overflow-y: auto

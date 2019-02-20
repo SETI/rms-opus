@@ -1,4 +1,6 @@
 var o_collections = {
+    lastCartRequestNo: 0,
+
     /**
      *
      *  managing collections communication between server and client and
@@ -121,7 +123,7 @@ var o_collections = {
      },
 
      updateCartStatus: function(status) {
-         if (status.reqno < opus.lastCartRequestNo) {
+         if (status.reqno < o_collections.lastCartRequestNo) {
              return;
          }
          let count = status.count;
@@ -137,9 +139,9 @@ var o_collections = {
      // init an existing collection on page load
      initCollection: function() {
         // returns any user collection saved in session
-        opus.lastCartRequestNo++;
-        $.getJSON("/opus/__collections/status.json?reqno=" + opus.lastCartRequestNo, function(statusData) {
-            if(statusData.reqno < opus.lastCartRequestNo) {
+        o_collections.lastCartRequestNo++;
+        $.getJSON("/opus/__collections/status.json?reqno=" + o_collections.lastCartRequestNo, function(statusData) {
+            if(statusData.reqno < o_collections.lastCartRequestNo) {
                 return;
             }
             o_collections.updateCartStatus(statusData);
@@ -351,8 +353,8 @@ var o_collections = {
             add_to_url = "&download=1&" + o_collections.getDownloadFiltersChecked();
         }
 
-        opus.lastCartRequestNo++;
-        $.getJSON(url  + add_to_url + "&reqno=" + opus.lastCartRequestNo, function(statusData) {
+        o_collections.lastCartRequestNo++;
+        $.getJSON(url  + add_to_url + "&reqno=" + o_collections.lastCartRequestNo, function(statusData) {
             o_collections.updateCartStatus(statusData);
         });
     },
