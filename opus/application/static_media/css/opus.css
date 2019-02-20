@@ -387,6 +387,8 @@ th.sticky-header {
 .dataTable .ps__rail-y {
     background-color: transparent !important;
     right: 1px !important;
+    /* navbar + top_navbar + sort-order-container */
+    top: 117px !important;
 }
 
 /* Make sure x-scrollbar in dataTable is always at the left and visible */

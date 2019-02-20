@@ -2,7 +2,7 @@ var o_browse = {
     selectedImageID: "",
     keyPressAction: "",
     tableSorting: false,
-    tableScrollbar: new PerfectScrollbar(".dataTable"),
+    tableScrollbar: new PerfectScrollbar(".dataTable", { minScrollbarLength: 30 }),
     galleryScrollbar: new PerfectScrollbar(".gallery-contents", { suppressScrollX: true }),
     modalScrollbar: new PerfectScrollbar("#galleryViewContents .metadata"),
 
@@ -747,6 +747,10 @@ var o_browse = {
             // add an indicator row that says this is the start of page/observation X - needs to be two hidden rows so as not to mess with the stripes
             $(".dataTable tbody").append(`<tr class="table-page" data-page="${data.page_no}"><td colspan="${data.columns.length}"></td></tr><tr class="table-page"><td colspan="${data.columns.length}"></td></tr>`);
 
+            if(!$(".dataTable tbody").hasClass("tableBody")) {
+                $(".dataTable tbody").addClass("tableBody")
+            }
+
             $.each(page, function( index, item ) {
                 let opusId = item.opusid;
                 opus.gallery_data[opusId] = item.metadata;	// for galleryView, store in global array
@@ -787,7 +791,9 @@ var o_browse = {
 
         $(".gallery", namespace).append(html);
         $(".table-page-load-status").hide();
-        o_browse.tableScrollbar.update();
+
+        // o_browse.tableScrollbar.update();
+        o_browse.adjustTableSize();
         o_browse.galleryScrollbar.update();
 
         o_hash.updateHash(true);
@@ -832,7 +838,7 @@ var o_browse = {
             resize: function (event, ui) {
                 let resizableContainerWidth = $(event.target).parent().width();
                 let columnTextWidth = $(event.target).find("a").find('span:first').width();
-                let sortLabelxzWidth = $(event.target).find("a").find('span:last').width();
+                let sortLabelWidth = $(event.target).find("a").find('span:last').width();
                 let columnContentWidth = columnTextWidth + sortLabelWidth;
                 let beginningSpace = (resizableContainerWidth - columnContentWidth)/2;
                 let columnWidthUptoEndContent = columnContentWidth + beginningSpace;
@@ -943,7 +949,7 @@ var o_browse = {
                         $(".table-page-load-status").show();
                     });
                     $(selector).on("scrollThreshold.infiniteScroll", function( event ) {
-                         $(selector).infiniteScroll("loadNextPage");
+                        $(selector).infiniteScroll("loadNextPage");
                     });
                     $(selector).on("load.infiniteScroll", o_browse.infiniteScrollLoadEventListener);
                 }
@@ -1015,8 +1021,7 @@ var o_browse = {
 
     adjustTableSize: function() {
         let containerWidth = $(".gallery-contents").width();
-        let containerHeight = $(".gallery-contents").height();
-        // Make sure the rightmost column is not cut off by the y-scrollbar
+        let containerHeight = $(".gallery-contents").height() - $(".app-footer").height();
         $(".dataTable").width(containerWidth);
         $(".dataTable").height(containerHeight);
         o_browse.tableScrollbar.update();
