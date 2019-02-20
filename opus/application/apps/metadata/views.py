@@ -6,9 +6,12 @@
 # database):
 #
 #    Format: api/meta/result_count.(?P<fmt>json|html|csv)
+#            __api/meta/result_count.json
 #    Format: api/meta/mults/(?P<slug>[-\w]+).(?P<fmt>json|zip|html|csv)
+#            __api/meta/mults/(?P<slug>[-\w]+).json
 #    Format: api/meta/range/endpoints/(?P<slug>[-\w]+)
 #            .(?P<fmt>json|zip|html|csv)
+#            __api/meta/range/endpoints/(?P<slug>[-\w]+).json
 #    Format: api/fields/(?P<slug>\w+).(?P<fmt>json|zip|html|csv)
 #        or: api/fields.(?P<fmt>json|zip|html|csv)
 #
@@ -47,7 +50,7 @@ log = logging.getLogger(__name__)
 #
 ################################################################################
 
-def api_get_result_count(request, fmt):
+def api_get_result_count(request, fmt, internal=False):
     """Return the result count for a given search.
 
     You can specify a sort order as well as search arguments because the result
@@ -55,11 +58,12 @@ def api_get_result_count(request, fmt):
 
     This is a PUBLIC API.
 
-    Format: [__]api/meta/result_count.(?P<fmt>json|html|csv)
+    Format: api/meta/result_count.(?P<fmt>json|html|csv)
+            __api/meta/result_count.json
     Arguments: Normal search arguments
-               reqno=<N> (Optional)
+               reqno=<N> (Required for internal, ignored for external)
 
-    Can return JSON, HTML, or CSV.
+    Can return JSON, HTML, or CSV (external) or JSON (internal)
 
     Returned JSON:
         {"data": [{"result_count": 47}]}
@@ -119,8 +123,13 @@ def api_get_result_count(request, fmt):
         cache.set(cache_key, count)
 
     data = {'result_count': count}
-    reqno = get_reqno(request)
-    if reqno is not None and fmt == 'json':
+    if internal:
+        reqno = get_reqno(request)
+        if reqno is None:
+            log.error('api_get_result_count: Missing or badly formatted reqno')
+            ret = Http404(settings.HTTP404_MISSING_REQNO)
+            exit_api_call(api_code, ret)
+            raise ret
         data['reqno'] = reqno
 
     if fmt == 'json':
@@ -138,17 +147,21 @@ def api_get_result_count(request, fmt):
     exit_api_call(api_code, ret)
     return ret
 
+def api_get_result_count_internal(request):
+    return api_get_result_count(request, 'json', internal=True)
 
-def api_get_mult_counts(request, slug, fmt):
+
+def api_get_mult_counts(request, slug, fmt, internal=False):
     """Return the mults for a given slug along with result counts.
 
     This is a PUBLIC API.
 
-    Format: [__]api/meta/mults/(?P<slug>[-\w]+).(?P<fmt>json|html|csv)
+    Format: api/meta/mults/(?P<slug>[-\w]+).(?P<fmt>json|html|csv)
+            __api/meta/mults/(?P<slug>[-\w]+).json
     Arguments: Normal search arguments
-               reqno=<N> (Optional)
+               reqno=<N> (Required for internal, ignored for external)
 
-    Can return JSON, HTML, or CSV.
+    Can return JSON, HTML, or CSV (external) or JSON (internal)
 
     Returned JSON:
         {'field': slug, 'mults': mults}
@@ -292,9 +305,13 @@ def api_get_mult_counts(request, slug, fmt):
 
     data = {'field': slug,
             'mults': mults}
-
-    reqno = get_reqno(request)
-    if reqno is not None and fmt == 'json':
+    if internal:
+        reqno = get_reqno(request)
+        if reqno is None:
+            log.error('api_get_mult_counts: Missing or badly formatted reqno')
+            ret = Http404(settings.HTTP404_MISSING_REQNO)
+            exit_api_call(api_code, ret)
+            raise ret
         data['reqno'] = reqno
 
     if fmt == 'json':
@@ -313,8 +330,11 @@ def api_get_mult_counts(request, slug, fmt):
     exit_api_call(api_code, ret)
     return ret
 
+def api_get_mult_counts_internal(request, slug):
+    return api_get_mult_counts(request, slug, 'json', internal=True)
 
-def api_get_range_endpoints(request, slug, fmt):
+
+def api_get_range_endpoints(request, slug, fmt, internal=False):
     """Compute and return range widget endpoints (min, max, nulls)
 
     This is a PUBLIC API.
@@ -322,12 +342,13 @@ def api_get_range_endpoints(request, slug, fmt):
     Compute and return range widget endpoints (min, max, nulls) for the
     widget defined by [slug] based on current search defined in request.
 
-    Format: [__]api/meta/range/endpoints/(?P<slug>[-\w]+)
+    Format: api/meta/range/endpoints/(?P<slug>[-\w]+)
             .(?P<fmt>json|html|csv)
+            __api/meta/range/endpoints/(?P<slug>[-\w]+).json
     Arguments: Normal search arguments
-               reqno=<N> (Optional)
+               reqno=<N> (Required for internal, ignored for external)
 
-    Can return JSON, HTML, or CSV.
+    Can return JSON, HTML, or CSV (external) or JSON (internal)
 
     Returned JSON:
         {"min": 63.592, "max": 88.637, "nulls": 2365}
@@ -476,8 +497,14 @@ def api_get_range_endpoints(request, slug, fmt):
 
         cache.set(cache_key, range_endpoints)
 
-    reqno = get_reqno(request)
-    if reqno is not None and fmt == 'json':
+    if internal:
+        reqno = get_reqno(request)
+        if reqno is None:
+            log.error(
+                'api_get_range_endpoints: Missing or badly formatted reqno')
+            ret = Http404(settings.HTTP404_MISSING_REQNO)
+            exit_api_call(api_code, ret)
+            raise ret
         range_endpoints['reqno'] = reqno
 
     if fmt == 'json':
@@ -498,6 +525,9 @@ def api_get_range_endpoints(request, slug, fmt):
 
     exit_api_call(api_code, ret)
     return ret
+
+def api_get_range_endpoints_internal(request, slug):
+    return api_get_range_endpoints(request, slug, 'json', internal=True)
 
 
 def api_get_fields(request, fmt='json', slug=None):
