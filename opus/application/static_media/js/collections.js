@@ -1,5 +1,6 @@
 var o_collections = {
     lastCartRequestNo: 0,
+    lastRequestNo: 0,
 
     /**
      *
@@ -154,12 +155,16 @@ var o_collections = {
 
         let view = o_browse.getViewInfo();
         let base_url = "/opus/__api/dataimages.json?";
-        let url = o_hash.getHash() + "&reqno=" + opus.lastRequestNo + view.add_to_url;
+        o_collections.lastRequestNo++;
+        let url = o_hash.getHash() + "&reqno=" + o_collections.lastRequestNo + view.add_to_url;
 
         url = o_browse.updatePageInUrl(url, page);
 
         // metadata; used for both table and gallery
         $.getJSON(base_url + url, function(data) {
+            if (data.reqno < o_collections.lastRequestNo) {
+                return;
+            }
             if (opus.col_labels.length === 0) {
                 opus.col_labels = data.columns;
             }
