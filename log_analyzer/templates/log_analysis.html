@@ -41,7 +41,7 @@
   text-align: left;
 }
 .SessionLink {
-  font-family: "Roboto";
+  font-family: "Roboto",sans-serif;
 }
 .SessionLink.active {
   background-color:yellow;
@@ -91,6 +91,7 @@ because it requires that all the navigation tabs be within a single unordered li
 {% set marker_to_glyph = { "has-search": "search", "has-columns": "list-ul", "fetched-gallery": "images",
                             "has-download": "file-download", "has-obsolete-slug" : "times-circle" }
 %}
+{% set walking_cane = "https://cdn0.iconfinder.com/data/icons/people-and-lifestyle-1/64/people-elderly-cane-walking-senior-16.png" %}
 
 {% macro generate_session_row(session, full) %}
     <tr>
@@ -98,7 +99,11 @@ because it requires that all the navigation tabs be within a single unordered li
         {% set flag_in_use = flag in session.action_flags %}
         {% if flag_in_use or full %}
             {% set glyph = marker_to_glyph[flag.as_html_classname()] %}
-            <td><span class="{{ 'fas fa-' ~  glyph ~ ('' if flag_in_use else ' invisible') }}">&zwj;</span></td>
+            {% if glyph == "times-circle" %}
+                <td><img {%if not flag_in_use %}class="invisible" {% endif %}src="{{ walking_cane | safe}}"></td>
+            {% else %}
+                <td><span class="{{ 'fas fa-' ~  glyph ~ ('' if flag_in_use else ' invisible') }}">&zwj;</span></td>
+            {% endif %}
         {% else %}
             <td></td>
         {% endif %}
@@ -209,8 +214,7 @@ because it requires that all the navigation tabs be within a single unordered li
 
 
 $(function() {
-    $('[data-toggle="tooltip"]').tooltip();
-    $('#right [data-toggle="tooltip"]').data('placement', 'right');
+    $('[data-toggle="tooltip"]').tooltip({ boundary: 'window' });
 
     $('.SessionLink').click(function() {
         var target = $(this).data('target');
