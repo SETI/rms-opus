@@ -5,7 +5,12 @@ var o_browse = {
     tableScrollbar: new PerfectScrollbar(".dataTable"),
     galleryScrollbar: new PerfectScrollbar(".gallery-contents", { suppressScrollX: true }),
     modalScrollbar: new PerfectScrollbar("#galleryViewContents .metadata"),
-    infiniteScrollLoadCount: 0,
+
+    // if the user entered a number/slider for page/obs number,
+    // selector to set scrolltop to after data has been loaded
+    galleryScrollTo: 0,
+
+    lastLoadDataRequestNo: 0,
 
     /**
     *
@@ -15,28 +20,22 @@ var o_browse = {
     browseBehaviors: function() {
         // note: using .on vs .click allows elements to be added dynamically w/out bind/rebind of handler
 
-        $(".gallery-contents").on('scroll', _.debounce(o_browse.checkScroll, 200));
+        $(".gallery-contents, .dataTable").on('scroll', _.debounce(o_browse.checkScroll, 200));
 
         // nav stuff
-        var onRenderBrowse = _.debounce(o_browse.loadBrowseData, 500);
-        $(".browse-nav-container").on("click", "a.next, a.prev", function() {
-            o_browse.hideMenu();
-            // we will set a timer to wait for settle but right now just do it
-            var currentPage = parseInt($("input#page").val());
+        var onRenderData = _.debounce(o_browse.loadData, 500);
 
-            var page = ($(this).hasClass("next") ? currentPage+1 : currentPage-1);
-            if (page > 0 && page <= opus.pages ) {
-                $("input#page").val(page).css("color","red");
-                onRenderBrowse();
-            }
+        $("#browse").on('click', 'input#page', function() {
+            let newPage = parseInt($("input#page").val());
             return false;
         });
 
         $("#browse").on('change', 'input#page', function() {
-            var newPage = parseInt($("input#page").val());
+            let newPage = parseInt($("input#page").val());
             if (newPage > 0 && newPage <= opus.pages ) {
-                $("input#page").css("color","red");
-                onRenderBrowse();
+                opus.gallery_begun = false;     // so that we redraw from the beginning
+                $("input#page").addClass("text-warning");
+                onRenderData();
             } else {
                 // put back
                 $("input#page").val(opus.lastPageDrawn[opus.prefs.view]);
@@ -289,7 +288,7 @@ var o_browse = {
             opus.gallery_begun = false;     // so that we redraw from the beginning
             opus.gallery_data = {};
             opus.prefs.page = default_pages; // reset pages to 1 when col ordering changes
-            o_browse.loadBrowseData(1);
+            o_browse.loadData(1);
             return false;
         });
 
@@ -370,6 +369,13 @@ var o_browse = {
                 }
             }
         })
+        // infinite scroll is attached to the gallery, so we have to force a loadData when we are in table mode
+        if (opus.prefs.browse == "dataTable") {
+            let bottom = $("tbody").offset().top + $("tbody").height();
+            if (bottom <= $(document).height()) {
+                $(`#${opus.prefs.view} .gallery-contents`).infiniteScroll("loadNextPage");
+            }
+        }
         return false;
     },
 
@@ -488,7 +494,7 @@ var o_browse = {
                 o_browse.resetData();
                 o_browse.initTable(opus.col_labels);
                 opus.prefs.page.gallery = 1;
-                o_browse.loadBrowseData(1);
+                o_browse.loadData(1);
             }
         });
 
@@ -737,6 +743,10 @@ var o_browse = {
             $("#collection .sort-order-container").show();
             html += '<div class="thumb-page" data-page="'+data.page_no+'">';
             opus.lastPageDrawn[opus.prefs.view] = data.page_no;
+
+            // add an indicator row that says this is the start of page/observation X - needs to be two hidden rows so as not to mess with the stripes
+            $(".dataTable tbody").append(`<tr class="table-page" data-page="${data.page_no}"><td colspan="${data.columns.length}"></td></tr><tr class="table-page"><td colspan="${data.columns.length}"></td></tr>`);
+
             $.each(page, function( index, item ) {
                 let opusId = item.opusid;
                 opus.gallery_data[opusId] = item.metadata;	// for galleryView, store in global array
@@ -763,20 +773,20 @@ var o_browse = {
 
                 // table row
                 let checked = item.in_collection ? " checked" : "";
-                let checkbox = "<input type='checkbox' name='"+opusId+"' value='"+opusId+"' class='multichoice'"+checked+"/>";
-                let row = "<td>"+checkbox+"</td>";
-                let tr = "<tr data-id='"+opusId+"' data-target='#galleryView'>";
+                let checkbox = `<input type="checkbox" name="${opusId}" value="${opusId}" class="multichoice"${checked}/>`;
+                let row = `<td>${checkbox}</td>`;
+                let tr = `<tr data-id="${opusId}" data-target="#galleryView">`;
                 $.each(item.metadata, function(index, cell) {
-                    row += "<td>"+cell+"</td>";
+                    row += `<td>${cell}</td>`;
                 });
                 //$(".dataTable tbody").append("<tr data-toggle='modal' data-id='"+galleryData[0]+"' data-target='#galleryView'>"+row+"</tr>");
                 $(".dataTable tbody").append(tr+row+"</tr>");
             });
-            html += '</div>';
+            html += "</div>";
         }
 
-        $('.gallery', namespace).append(html);
-        $('.table-page-load-status').hide();
+        $(".gallery", namespace).append(html);
+        $(".table-page-load-status").hide();
         o_browse.tableScrollbar.update();
         o_browse.galleryScrollbar.update();
 
@@ -883,16 +893,16 @@ var o_browse = {
         if (page == undefined) {
             page = opus.lastPageDrawn[opus.prefs.view]+1;
         }
-        opus.lastLoadBrowseDataRequestNo++;
-        let url = o_hash.getHash() + '&reqno=' + opus.lastLoadBrowseDataRequestNo + view.add_to_url;
+        o_browse.lastLoadDataRequestNo++;
+        let url = o_hash.getHash() + '&reqno=' + o_browse.lastLoadDataRequestNo + view.add_to_url;
         url = base_url + o_browse.updatePageInUrl(url, page);
         return url;
     },
 
-    loadBrowseData: function(page) {
+    loadData: function(page) {
         //window.scrollTo(0,opus.browse_view_scrolls[opus.prefs.browse]);
         page = (page == undefined ? $("input#page").val() : page);
-        $("input#page").val(page);
+        $("input#page").val(page).removeClass("text-warning");
 
         // wait! is this page already drawn?
         if (opus.lastPageDrawn[opus.prefs.view] == page) {
@@ -907,9 +917,11 @@ var o_browse = {
         start_time = new Date().getTime();
         $.getJSON(url, function(data) {
             let request_time = new Date().getTime() - start_time;
-            if (data.reqno < opus.lastLoadBrowseDataRequestNo) {
+            if (data.reqno < o_browse.lastLoadDataRequestNo) {
                 return;
             }
+            opus.lastPageDrawn[opus.prefs.view] = data.page_no;
+
             if (!opus.gallery_begun) {
                 o_browse.initTable(data.columns);
 
@@ -930,6 +942,9 @@ var o_browse = {
                     $(selector).on("request.infiniteScroll", function( event, path ) {
                         $(".table-page-load-status").show();
                     });
+                    $(selector).on("scrollThreshold.infiniteScroll", function( event ) {
+                         $(selector).infiniteScroll("loadNextPage");
+                    });
                     $(selector).on("load.infiniteScroll", o_browse.infiniteScrollLoadEventListener);
                 }
             }
@@ -937,38 +952,41 @@ var o_browse = {
             o_browse.renderGalleryAndTable(data, this.url);
             o_browse.updateSortOrder(data);
 
+            // prefill next page
             if (!opus.gallery_begun) {
                 $(selector).infiniteScroll('loadNextPage');
                 opus.gallery_begun = true;
             }
             $(".table-page-load-status > .loader").hide();
         });
-
-        opus.lastPageDrawn[opus.prefs.view] = page;
     },
 
     infiniteScrollLoadEventListener: function( event, response, path ) {
         let data = JSON.parse( response );
         if ($(`.thumb-page[data-page='${data.page_no}']`).length != 0) {
-            console.log(`data.reqno: ${data.reqno}, last reqno: ${opus.lastLoadBrowseDataRequestNo}`);
+            console.log(`data.reqno: ${data.reqno}, last reqno: ${o_browse.lastLoadDataRequestNo}`);
             return;
         }
         o_browse.renderGalleryAndTable(data, path);
+        // update the scroll position in the 'other' bit
+        if (opus.prefs.browse == "dataTable") {
+            //$(`.thumb-page[data-page='${data.page_no}']`).scrollTop(0);
+        }
         //console.log('Loaded page: ' + $('#browse .gallery-contents').data('infiniteScroll').pageIndex );
     },
 
     getBrowseTab: function() {
         // only draw the navbar if we are in gallery mode... doesn't make sense in collection mode
         let hide = opus.prefs.browse == "gallery" ? "dataTable" : "gallery";
-        $('.' + hide, "#browse").hide();
+        $(`${hide}#browse`).hide();
 
-        $('.' + opus.prefs.browse, "#browse").fadeIn();
+        $(`.${opus.prefs.browse}#browse`).fadeIn();
 
         o_browse.updateBrowseNav();
         o_browse.renderMetadataSelector();   // just do this in background so there's no delay when we want it...
 
         // total pages indicator
-        $('#' + 'pages', "#browse").html(opus['pages']);
+        $("#pages", "#browse").html(opus.pages);
 
         // figure out the page
         let page = opus.prefs.page[opus.prefs.browse]; // default: {"gallery":1, "dataTable":1, 'colls_gallery':1, 'colls_data':1 };
@@ -981,11 +999,10 @@ var o_browse = {
             page = opus.pages;
         }
 
-        o_browse.loadBrowseData(page);
+        o_browse.loadData(page);
         o_browse.adjustBrowseHeight();
         o_browse.adjustTableSize();
 
-        $("input#page").val(page).css("color","initial");
         o_hash.updateHash();
     },
 

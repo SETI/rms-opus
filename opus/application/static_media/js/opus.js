@@ -23,14 +23,10 @@ var opus = {
 
     // avoiding race conditions in ajax calls
     lastRequestNo: 0,          // holds request numbers for main result count loop,
-    lastCartRequestNo: 0,
-    lastSlugNormalizeRequestNo: 0,
     lastAllNormalizeRequestNo: 0,
     lastResultCountRequestNo: 0,
-    lastMultsRequestNo: 0,
-    lastEndpointsRequestNo: 0,
-    lastLoadBrowseDataRequestNo: 0,
-    waitingForAllNormalizedAPI: false,
+    
+    waitingForAllNormalizedAPI: false,  // what is this used for?
 
     download_in_process: false,
 

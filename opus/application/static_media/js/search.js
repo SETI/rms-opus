@@ -13,6 +13,10 @@ var o_search = {
     searchMsg: "",
     truncatedResults: false,
     truncatedResultsMsg: "&ltMore choices available&gt",
+    lastSlugNormalizeRequestNo: 0,
+    lastMultsRequestNo: 0,
+    lastEndpointsRequestNo: 0,
+
     slugStringSearchChoicesReqno: {},
     slugNormalizeReqno: {},
     slugMultsReqno: {},
@@ -58,8 +62,8 @@ var o_search = {
             let currentValue = $(this).val().trim();
             let values = []
 
-            opus.lastSlugNormalizeRequestNo++;
-            o_search.slugNormalizeReqno[slug] = opus.lastSlugNormalizeRequestNo;
+            o_search.lastSlugNormalizeRequestNo++;
+            o_search.slugNormalizeReqno[slug] = o_search.lastSlugNormalizeRequestNo;
 
             // values.push(currentValue)
             // opus.selections[slug] = values;
@@ -77,7 +81,7 @@ var o_search = {
                 return;
             }
 
-            let url = "/opus/__api/normalizeinput.json?" + newHash + "&reqno=" + opus.lastSlugNormalizeRequestNo;
+            let url = "/opus/__api/normalizeinput.json?" + newHash + "&reqno=" + o_search.lastSlugNormalizeRequestNo;
             $.getJSON(url, function(data) {
                 // Make sure the return json data is from the latest normalized api call
                 if(data["reqno"] < o_search.slugNormalizeReqno[slug]) {
@@ -128,9 +132,9 @@ var o_search = {
             if(newHash.match(regexForHashWithSearchParams)) {
                 newHash = newHash.match(regexForHashWithSearchParams)[1];
             }
-            opus.lastSlugNormalizeRequestNo++;
-            o_search.slugNormalizeReqno[slug] = opus.lastSlugNormalizeRequestNo;
-            let url = "/opus/__api/normalizeinput.json?" + newHash + "&reqno=" + opus.lastSlugNormalizeRequestNo;
+            o_search.lastSlugNormalizeRequestNo++;
+            o_search.slugNormalizeReqno[slug] = o_search.lastSlugNormalizeRequestNo;
+            let url = "/opus/__api/normalizeinput.json?" + newHash + "&reqno=" + o_search.lastSlugNormalizeRequestNo;
 
             if($(event.target).hasClass("input_currently_focused")) {
                 $(event.target).removeClass("input_currently_focused");
@@ -195,9 +199,9 @@ var o_search = {
             if (newHash.match(regexForHashWithSearchParams)) {
                 newHash = newHash.match(regexForHashWithSearchParams)[1];
             }
-            opus.lastSlugNormalizeRequestNo++;
-            o_search.slugNormalizeReqno[slug] = opus.lastSlugNormalizeRequestNo;
-            let url = "/opus/__api/normalizeinput.json?" + newHash + "&reqno=" + opus.lastSlugNormalizeRequestNo;
+            o_search.lastSlugNormalizeRequestNo++;
+            o_search.slugNormalizeReqno[slug] = o_search.lastSlugNormalizeRequestNo;
+            let url = "/opus/__api/normalizeinput.json?" + newHash + "&reqno=" + o_search.lastSlugNormalizeRequestNo;
             o_search.parseFinalNormalizedInputDataAndUpdateHash(slug, url);
         });
 
@@ -444,8 +448,8 @@ var o_search = {
 
         $(`#widget__${slug}.spinner`).fadeIn();
 
-        opus.lastEndpointsRequestNo++;
-        o_search.slugEndpointsReqno[slug] = opus.lastEndpointsRequestNo;
+        o_search.lastEndpointsRequestNo++;
+        o_search.slugEndpointsReqno[slug] = o_search.lastEndpointsRequestNo;
         var url = `/opus/__api/meta/range/endpoints/${slug}.json?${o_hash.getHash()}&reqno=${o_search.slugEndpointsReqno[slug]}`;
         $.ajax({url: url,
             dataType:"json",
@@ -474,8 +478,8 @@ var o_search = {
         // turn on spinner
         $(`#widget__${slug}.spinner`).fadeIn();
 
-        opus.lastMultsRequestNo++;
-        o_search.slugMultsReqno[slug] = opus.lastMultsRequestNo;
+        o_search.lastMultsRequestNo++;
+        o_search.slugMultsReqno[slug] = o_search.lastMultsRequestNo;
         var url = `/opus/__api/meta/mults/${slug}.json?${o_hash.getHash()}&reqno=${o_search.slugMultsReqno[slug]}`;
         $.ajax({url: url,
             dataType:"json",
