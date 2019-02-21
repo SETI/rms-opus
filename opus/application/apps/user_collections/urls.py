@@ -10,7 +10,7 @@ from user_collections.views import (
 )
 
 urlpatterns = [
-    url(r'^__collections/view.(?P<fmt>html|json)$', api_view_collection),
+    url(r'^__collections/view.html$', api_view_collection),
     url(r'^__collections/status.json$', api_collection_status),
     url(r'^__collections/data.csv$', api_get_collection_csv),
     url(r'^__collections/(?P<action>add|remove|addrange|removerange|addall).json$', api_edit_collection),

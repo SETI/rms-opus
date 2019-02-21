@@ -54,10 +54,12 @@ def api_normalize_input(request):
     it. If it can't be, return false.
 
     Format: __api/normalizeinput.json
-    Arguments: Normal search arguments
+    Arguments: reqno=<N>
+               Normal search arguments
 
     Returned JSON is of the format:
-        {"slug1": "normalizedval1", "slug2": "normalizedval2"}
+        {"slug1": "normalizedval1", "slug2": "normalizedval2",
+         "reqno": N}
     """
     api_code = enter_api_call('api_normalize_input', request)
 
@@ -78,8 +80,12 @@ def api_normalize_input(request):
         raise ret
 
     reqno = get_reqno(request)
-    if reqno is not None:
-        selections['reqno'] = reqno
+    if reqno is None:
+        log.error('api_normalize_input: Missing or badly formatted reqno')
+        ret = Http404(settings.HTTP404_MISSING_REQNO)
+        exit_api_call(api_code, ret)
+        raise ret
+    selections['reqno'] = reqno
 
     ret = json_response(selections)
     exit_api_call(api_code, ret)
@@ -97,13 +103,14 @@ def api_string_search_choices(request, slug):
 
     Format: __api/stringsearchchoices/<slug>.json
     Arguments: limit=<N>
+               reqno=<N>
                Normal search arguments
 
     Returned JSON is of the format:
         {"choices": ["choice1", "choice2"],
          "full_search": true/false,
          "truncated_results": true/false,
-         "reqno": number or None}
+         "reqno": N}
 
     The portion of each choice selected by the partial search is highlighted
     with <b>...</b>.
@@ -144,6 +151,11 @@ def api_string_search_choices(request, slug):
         raise ret
 
     reqno = get_reqno(request)
+    if reqno is None:
+        log.error('api_normalize_input: Missing or badly formatted reqno')
+        ret = Http404(settings.HTTP404_MISSING_REQNO)
+        exit_api_call(api_code, ret)
+        raise ret
 
     if param_qualified_name not in selections:
         selections[param_qualified_name] = ['']
@@ -212,8 +224,7 @@ def api_string_search_choices(request, slug):
                  str(limit))
     cached_val = cache.get(cache_key)
     if cached_val is not None:
-        if reqno is not None:
-            cached_val['reqno'] = reqno
+        cached_val['reqno'] = reqno
         ret = json_response(cached_val)
         exit_api_call(api_code, ret)
         return ret
@@ -333,8 +344,7 @@ def api_string_search_choices(request, slug):
               'full_search': do_simple_search,
               'truncated_results': truncated_results}
     cache.set(cache_key, result)
-    if reqno is not None:
-        result['reqno'] = reqno
+    result['reqno'] = reqno
     ret = json_response(result)
     exit_api_call(api_code, ret)
     return ret

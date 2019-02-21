@@ -57,7 +57,7 @@ log = logging.getLogger(__name__)
 
 
 @never_cache
-def api_view_collection(request, fmt):
+def api_view_collection(request):
     """Return the OPUS-specific left side of the "Selections" page as HTML.
 
     This includes the number of files selected, total size of files selected,
@@ -68,46 +68,20 @@ def api_view_collection(request, fmt):
 
     This is a PRIVATE API.
 
-    Format: __collections/view.(html|json)
-    Arguments: types=<PRODUCT_TYPES>
+    Format: __collections/view.html
 
     For HTML format, returns the left side of the Selections page.
-
-    For JSON format, returns a dict containing:
-        'total_download_count':       Total number of unique files
-        'total_download_size':        Total size of unique files (bytes)
-        'total_download_size_pretty': Total size of unique files (pretty format)
-        'product_cat_list':           List of categories and info:
-            [
-             [<Product Type Category>,
-              [{'slug_name':            Like "browse-thumb"
-                'product_type':         Like "Browse Image (thumbnail)"
-                'product_count':        Number of opus_ids in this category
-                'download_count':       Number of unique files in this category
-                'download_size':        Size of unique files in this category
-                                            (bytes)
-                'download_size_pretty': Size of unique files in this category
-                                            (pretty format)
-               }
-              ], ...
-             ], ...
-            ]
     """
     api_code = enter_api_call('api_view_collection', request)
 
     session_id = get_session_id(request)
 
-    product_types_str = request.GET.get('types', 'all')
-    product_types = product_types_str.split(',')
+    product_types = ['all']
 
     info = _get_download_info(product_types, session_id)
 
-    if fmt == 'json':
-        ret = json_response(info)
-    else:
-        assert fmt == 'html'
-        template = 'user_collections/collections.html'
-        ret = render(request, template, info)
+    template = 'user_collections/collections.html'
+    ret = render(request, template, info)
 
     exit_api_call(api_code, ret)
     return ret
@@ -122,21 +96,64 @@ def api_collection_status(request):
     This is a PRIVATE API.
 
     Format: __collections/status.json
+    Arguments: reqno=<N>
+               [types=<list of types>]
+               [download=<N>]
+
+    Returns a JSON dict containing:
+        In all cases:
+            'count':                      Total number of items in cart
+
+        If download=1:
+            'total_download_count':       Total number of unique files
+            'total_download_size':        Total size of unique files (bytes)
+            'total_download_size_pretty': Total size of unique files (pretty format)
+            'product_cat_list':           List of categories and info:
+                [
+                 [<Product Type Category>,
+                  [{'slug_name':            Like "browse-thumb"
+                    'product_type':         Like "Browse Image (thumbnail)"
+                    'product_count':        Number of opus_ids in this category
+                    'download_count':       Number of unique files in this category
+                    'download_size':        Size of unique files in this category
+                                                (bytes)
+                    'download_size_pretty': Size of unique files in this category
+                                                (pretty format)
+                   }
+                  ], ...
+                 ], ...
+                ]
+
+
     """
     api_code = enter_api_call('api_collection_status', request)
 
     session_id = get_session_id(request)
 
-    count = _get_collection_count(session_id)
+    reqno = get_reqno(request)
+    if reqno is None:
+        log.error('api_collection_status: Missing or badly formatted reqno')
+        ret = Http404(settings.HTTP404_MISSING_REQNO)
+        exit_api_call(api_code, ret)
+        raise ret
 
-    reqno = request.GET.get('reqno', None)
+    download = request.GET.get('download', 0)
     try:
-        reqno = int(reqno)
+        download = int(download)
     except:
         pass
+    if download:
+        product_types_str = request.GET.get('types', 'all')
+        product_types = product_types_str.split(',')
+        info = _get_download_info(product_types, session_id)
+    else:
+        info = {}
 
-    ret = json_response({'count': count,
-                         'reqno': reqno})
+    count = _get_collection_count(session_id)
+
+    info['count'] = count
+    info['reqno'] = reqno
+    ret = json_response(info)
     exit_api_call(api_code, ret)
     return ret
 
@@ -171,7 +188,7 @@ def api_edit_collection(request, **kwargs):
             (?P<action>add|remove|addrange|removerange|addall).json
     Arguments: opus_id=<ID>                 (add, remove)
                range=<OPUS_ID>,<OPUS_ID>    (addrange, removerange)
-               [reqno=<N>]
+               reqno=<N>
                [download=<N>]
 
     Returns the new number of items in the collection.
@@ -188,11 +205,12 @@ def api_edit_collection(request, **kwargs):
         exit_api_call(api_code, None)
         raise Http404
 
-    reqno = request.GET.get('reqno', None)
-    try:
-        reqno = int(reqno)
-    except:
-        pass
+    reqno = get_reqno(request)
+    if reqno is None:
+        log.error('api_edit_collection: Missing or badly formatted reqno')
+        ret = Http404(settings.HTTP404_MISSING_REQNO)
+        exit_api_call(api_code, ret)
+        raise ret
 
     err = False
 
@@ -214,26 +232,24 @@ def api_edit_collection(request, **kwargs):
         else:
             assert False
 
-    collection_count = _get_collection_count(session_id)
-    json_data = {'error': err,
-                 'count': collection_count,
-                 'reqno': reqno}
-
-    download = request.GET.get('download', False)
+    download = request.GET.get('download', 0)
     try:
         download = int(download)
     except:
         pass
-    # Minor performance check - if we don't need a total download size, don't
-    # bother
-    # Only the selection tab is interested in updating that count at this time.
     if download:
         product_types_str = request.GET.get('types', 'all')
         product_types = product_types_str.split(',')
         info = _get_download_info(product_types, session_id)
-        json_data.update(info)
+    else:
+        info = {}
 
-    ret = json_response(json_data)
+    collection_count = _get_collection_count(session_id)
+    info['error'] = err
+    info['count'] = collection_count
+    info['reqno'] = reqno
+
+    ret = json_response(info)
     exit_api_call(api_code, ret)
     return ret
 
