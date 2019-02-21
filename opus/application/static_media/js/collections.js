@@ -232,7 +232,7 @@ var o_collections = {
         return  $("[data-id='"+opusId+"'].thumbnail-container").hasClass("in");
     },
 
-    emptyCollection: function() {
+    emptyCollection: function(returnToSearch=false) {
         // change indicator to zero and let the server know:
         $.getJSON("/opus/__collections/reset.json", function(data) {
             $("#collection_count").html("0");
@@ -240,7 +240,11 @@ var o_collections = {
             opus.collection_change = true;
             $("#collection .navbar").hide();
             $("#collection .sort-order-container").hide();
-            opus.changeTab("collection");
+            if(!returnToSearch){
+                opus.changeTab("collection");
+            } else {
+                opus.changeTab("search");
+            }
         });
 
         let buttonInfo = o_browse.cartButtonInfo("in");

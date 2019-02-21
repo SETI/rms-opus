@@ -25,7 +25,7 @@ var opus = {
     lastRequestNo: 0,          // holds request numbers for main result count loop,
     lastAllNormalizeRequestNo: 0,
     lastResultCountRequestNo: 0,
-    
+
     waitingForAllNormalizedAPI: false,  // what is this used for?
 
     download_in_process: false,
@@ -393,18 +393,24 @@ $(document).ready(function() {
 
 
     // restart button behavior - start over button
-    $('#sidebar').on("click", ".restart", function() {
+    // $('#sidebar').on("click", ".restart", function() {
+    $(".reset, .reset-all").on("click", function(event) {
         // 'start over' button
         // resets query completely, resets widgets completely
-        if (!$.isEmptyObject(opus.selections)) {
+        console.log($("#collection_count").text() !== "0")
+        // empty shopping cart if Reset Everything is clicked
+        if($(event.target).hasClass("reset-all") && $("#collection_count").text() !== "0") {
+            console.log("empty shopping cart")
+            o_collections.emptyCollection(returnToSearch=true);
+        }
 
+        if (!$.isEmptyObject(opus.selections)) {
             if (confirm("Are you sure you want to restart? Your current search will be lost.")) {
                 opus.startOver();
             }
         } else {
             opus.startOver();
         }
-
     }),
 
     // doesn't work yet

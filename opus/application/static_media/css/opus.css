@@ -153,9 +153,10 @@ body {
     padding-left: 1em;
 }
 
+/* Styling for sidebar nav in search page */
 .sidebar-nav {
-    border: 1px solid #C8CED3;
-    border-radius: 3px;
+    /* border: 1px solid #C8CED3;
+    border-radius: 3px; */
     background-color: #F0F3F5;
 }
 
