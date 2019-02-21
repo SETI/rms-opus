@@ -23,10 +23,14 @@ var opus = {
 
     // avoiding race conditions in ajax calls
     lastRequestNo: 0,          // holds request numbers for main result count loop,
+    lastCartRequestNo: 0,
+    lastSlugNormalizeRequestNo: 0,
     lastAllNormalizeRequestNo: 0,
     lastResultCountRequestNo: 0,
-
-    waitingForAllNormalizedAPI: false,  // what is this used for?
+    lastMultsRequestNo: 0,
+    lastEndpointsRequestNo: 0,
+    lastLoadBrowseDataRequestNo: 0,
+    waitingForAllNormalizedAPI: false,
 
     download_in_process: false,
 
@@ -396,10 +400,9 @@ $(document).ready(function() {
     $(".reset, .reset-all").on("click", function(event) {
         // 'start over' button
         // resets query completely, resets widgets completely
-        console.log($("#collection_count").text() !== "0")
+
         // empty shopping cart if Reset Everything is clicked
         if($(event.target).hasClass("reset-all") && $("#collection_count").text() !== "0") {
-            console.log("empty shopping cart")
             o_collections.emptyCollection(returnToSearch=true);
         }
 

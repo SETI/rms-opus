@@ -385,9 +385,11 @@ var o_search = {
     },
 
     adjustSearchHeight: function() {
-        var container_height = $("#search").height() - 100;
-        $(".widget_column").height(container_height);
-        $(".sidebar_wrapper").height(container_height);
+        var containerHeight = $("#search").height() - 100;
+        console.log(`container: ${containerHeight}`);
+        console.log(`search menu height: ${$(".searchMenu").height()}`);
+        $(".widget_column").height(containerHeight);
+        $(".sidebar_wrapper").height(containerHeight);
         o_search.searchScrollbar.update();
         o_search.widgetScrollbar.update();
     },
