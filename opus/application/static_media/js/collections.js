@@ -37,8 +37,12 @@ var o_collections = {
          // check an input on selected products and images updates file_info
          $("#collection").on("click","#download_options input", function() {
              let add_to_url = o_collections.getDownloadFiltersChecked();
-             let url = "/opus/__collections/view.json?" + add_to_url + "&fmt=json";
+             opus.lastCartRequestNo++;
+             let url = "/opus/__collections/status.json?reqno=" + opus.lastCartRequestNo + "&" + add_to_url + "&download=1";
              $.getJSON(url, function(info) {
+                 if(info.reqno < opus.lastCartRequestNo) {
+                     return;
+                 }
                  $("#total_download_size").fadeOut().html(info.total_download_size_pretty).fadeIn();
              });
          });
@@ -123,15 +127,11 @@ var o_collections = {
      },
 
      updateCartStatus: function(status) {
-         if (status.reqno < o_collections.lastCartRequestNo) {
-             return;
-         }
          let count = status.count;
          $("#collection_count").html(count);
          if (status.total_download_size_pretty !== undefined) {
              $("#total_download_size").fadeOut().html(status.total_download_size_pretty).fadeIn();
          }
-         opus.colls_pages = Math.ceil(count/opus.prefs.limit);
          o_collections.adjustProductInfoHeight();
      },
 
@@ -210,8 +210,6 @@ var o_collections = {
                         $(".spinner", "#collections_summary").fadeIn();
                     }
 
-                    $("#colls_pages").html(opus.colls_pages);
-
                     o_collections.loadCollectionData();
 
                     if (zippedFiles_html) {
@@ -236,7 +234,6 @@ var o_collections = {
         // change indicator to zero and let the server know:
         $.getJSON("/opus/__collections/reset.json", function(data) {
             $("#collection_count").html("0");
-            opus.colls_pages = 0;
             opus.collection_change = true;
             $("#collection .navbar").hide();
             $("#collection .sort-order-container").hide();
@@ -351,14 +348,17 @@ var o_collections = {
         }
 
         // Minor performance check - if we don't need a total download size, don't bother
-        //Only the selection tab is interested in updating that count at this time.
+        // Only the selection tab is interested in updating that count at this time.
         let add_to_url = "";
         if (opus.prefs.view == "collection") {
             add_to_url = "&download=1&" + o_collections.getDownloadFiltersChecked();
         }
 
-        o_collections.lastCartRequestNo++;
-        $.getJSON(url  + add_to_url + "&reqno=" + o_collections.lastCartRequestNo, function(statusData) {
+        opus.lastCartRequestNo++;
+        $.getJSON(url  + add_to_url + "&reqno=" + opus.lastCartRequestNo, function(statusData) {
+            if(statusData.reqno < opus.lastCartRequestNo) {
+                return;
+            }
             o_collections.updateCartStatus(statusData);
         });
     },

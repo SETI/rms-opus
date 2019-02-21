@@ -37,12 +37,15 @@ class ApiMetadataTests(TestCase, ApiTestHelper):
         result_count = int(jdata['data'][0]['result_count'])
         print(result_count)
         self.assertEqual(result_count, expected)
-        if expected_reqno is not None:
+        if expected_reqno is None:
+            self.assertFalse('reqno' in jdata)
+        else:
             result_reqno = jdata['data'][0]['reqno']
             print(result_reqno)
             self.assertEqual(result_reqno, expected_reqno)
 
-    def _run_result_count_greater_equal(self, url, expected):
+    def _run_result_count_greater_equal(self, url, expected,
+                                        expected_reqno=None):
         print(url)
         response = self._get_response(url)
         self.assertEqual(response.status_code, 200)
@@ -50,6 +53,12 @@ class ApiMetadataTests(TestCase, ApiTestHelper):
         result_count = int(jdata['data'][0]['result_count'])
         print(result_count)
         self.assertGreaterEqual(result_count, expected)
+        if expected_reqno is None:
+            self.assertFalse('reqno' in jdata)
+        else:
+            result_reqno = jdata['data'][0]['reqno']
+            print(result_reqno)
+            self.assertEqual(result_reqno, expected_reqno)
 
     def _run_mults_equal(self, url, expected, mult_name):
         print(url)
@@ -71,11 +80,10 @@ class ApiMetadataTests(TestCase, ApiTestHelper):
         url = '/opus/api/meta/result_count.json'
         self._run_result_count_greater_equal(url, 26493) # Assume required volumes
 
-    # No arguments private
-    def test__api_meta_result_count_all_private(self):
-        "/api/meta/result_count: no search criteria private"
-        url = '/opus/__api/meta/result_count.json'
-        self._run_result_count_greater_equal(url, 26493) # Assume required volumes
+    def test__api_meta_result_count_all_internal(self):
+        "/api/meta/result_count: no search criteria internal"
+        url = '/opus/__api/meta/result_count.json?reqno=1'
+        self._run_result_count_greater_equal(url, 26493, 1) # Assume required volumes
 
     # Extra args
     def test__api_meta_result_count_with_url_cruft(self):
@@ -86,7 +94,7 @@ class ApiMetadataTests(TestCase, ApiTestHelper):
     # Mults
     def test__api_meta_result_count_planet(self):
         "/api/meta/result_count: planet=Saturn"
-        url = '/opus/__api/meta/result_count.json?planet=Saturn'
+        url = '/opus/api/meta/result_count.json?planet=Saturn'
         self._run_result_count_greater_equal(url, 15486) # Assume required volumes
 
     def  test__api_meta_result_count_target_pan(self):
@@ -112,7 +120,7 @@ class ApiMetadataTests(TestCase, ApiTestHelper):
 
     def test__api_meta_result_count_string_contains(self):
         "/api/meta/result_count: primaryfilespec=1866365558 qtype=contains"
-        url = '/opus/__api/meta/result_count.json?primaryfilespec=1866365558&qtype-primaryfilespec=contains'
+        url = '/opus/api/meta/result_count.json?primaryfilespec=1866365558&qtype-primaryfilespec=contains'
         self._run_result_count_equal(url, 2) # BOTSIM
 
     def test__api_meta_result_count_string_begins(self):
@@ -128,7 +136,7 @@ class ApiMetadataTests(TestCase, ApiTestHelper):
     # Times
     def test__api_meta_result_count_times(self):
         "/api/meta/result_count: time range"
-        url = '/opus/__api/meta/result_count.json?planet=Saturn&volumeid=COISS_2111&timesec1=2017-03-01T00:00:00&timesec2=2017-03-15T12:00:00'
+        url = '/opus/api/meta/result_count.json?planet=Saturn&volumeid=COISS_2111&timesec1=2017-03-01T00:00:00&timesec2=2017-03-15T12:00:00'
         self._run_result_count_equal(url, 1321)
 
     # 1-column numeric range
@@ -171,32 +179,61 @@ class ApiMetadataTests(TestCase, ApiTestHelper):
 
     # Other return formats
     def test__api_meta_result_count_html(self):
-        "/api/meta/result_count: primaryfilespec=1866365558 no qtype"
+        "/api/meta/result_count: primaryfilespec=1866365558 no qtype html"
         url = '/opus/api/meta/result_count.html?primaryfilespec=1866365558'
         expected = b'<dl>\n<dt>result_count</dt><dd>2</dd>\n</dl>\n'
         self._run_html_equal(url, expected) # BOTSIM
 
     def test__api_meta_result_count_csv(self):
-        "/api/meta/result_count: primaryfilespec=1866365558 no qtype"
+        "/api/meta/result_count: primaryfilespec=1866365558 no qtype csv"
         url = '/opus/api/meta/result_count.csv?primaryfilespec=1866365558'
         expected = b'result count,2\n'
         self._run_csv_equal(url, expected) # BOTSIM
 
+    def test__api_meta_result_count_html_internal(self):
+        "/api/meta/result_count: primaryfilespec=1866365558 no qtype html internal"
+        url = '/opus/__api/meta/result_count.html?primaryfilespec=1866365558'
+        expected = b'<dl>\n<dt>result_count</dt><dd>2</dd>\n</dl>\n'
+        self._run_status_equal(url, 404)
+
+    def test__api_meta_result_count_csv_internal(self):
+        "/api/meta/result_count: primaryfilespec=1866365558 no qtype csv internal"
+        url = '/opus/__api/meta/result_count.csv?primaryfilespec=1866365558'
+        expected = b'result count,2\n'
+        self._run_status_equal(url, 404)
+
     # reqno
     def test__api_meta_result_count_string_no_qtype_reqno(self):
-        "/api/meta/result_count: primaryfilespec=1866365558 no qtype"
+        "/api/meta/result_count: primaryfilespec=1866365558 no qtype reqno"
         url = '/opus/api/meta/result_count.json?primaryfilespec=1866365558&reqno=12345'
+        self._run_result_count_equal(url, 2) # BOTSIM
+
+    def test__api_meta_result_count_string_no_qtype_reqno_internal(self):
+        "/api/meta/result_count: primaryfilespec=1866365558 no qtype reqno internal"
+        url = '/opus/__api/meta/result_count.json?primaryfilespec=1866365558&reqno=12345'
         self._run_result_count_equal(url, 2, 12345) # BOTSIM
 
+    def test__api_meta_result_count_string_no_qtype_reqno_bad_internal(self):
+        "/api/meta/result_count: primaryfilespec=1866365558 no qtype reqno bad internal"
+        url = '/opus/__api/meta/result_count.json?primaryfilespec=1866365558&reqno=NaN'
+        self._run_status_equal(url, 404,
+                               settings.HTTP404_MISSING_REQNO)
+
+    def test__api_meta_result_count_string_no_qtype_reqno_bad_internal_2(self):
+        "/api/meta/result_count: primaryfilespec=1866365558 no qtype reqno bad internal 2"
+        url = '/opus/__api/meta/result_count.json?primaryfilespec=1866365558&reqno=-1'
+        self._run_status_equal(url, 404,
+                               settings.HTTP404_MISSING_REQNO)
+
     def test__api_meta_result_count_html_reqno(self):
-        "/api/meta/result_count: primaryfilespec=1866365558 no qtype reqno"
+        "/api/meta/result_count: primaryfilespec=1866365558 no qtype reqno html"
         url = '/opus/api/meta/result_count.html?primaryfilespec=1866365558&reqno=100'
         expected = b'<dl>\n<dt>result_count</dt><dd>2</dd>\n</dl>\n'
         self._run_html_equal(url, expected) # BOTSIM
 
     def test__api_meta_result_count_csv_reqno(self):
-        "/api/meta/result_count: primaryfilespec=1866365558 no qtype reqno"
-        url = '/opus/api/meta/result_count.csv?primaryfilespec=1866365558&reqno=12345'
+        "/api/meta/result_count: primaryfilespec=1866365558 no qtype reqno csv"
+        url = '/opus/api/meta/result_count.csv?primaryfilespec=1866365558&reqno=NaN'
         expected = b'result count,2\n'
         self._run_csv_equal(url, expected) # BOTSIM
 
@@ -226,11 +263,11 @@ class ApiMetadataTests(TestCase, ApiTestHelper):
                     "Polydeuces": 2, "Prometheus": 4, "Saturn": 1483, "Saturn Rings": 1040, "Sky": 90, "Telesto": 2, "Tethys": 11, "Titan": 384, "Unknown": 16}}
         self._run_json_equal(url, expected)
 
-    def test__api_meta_mults_COISS_2111_private(self):
-        "/api/meta/meta/mults: for COISS_2111"
-        url = '/opus/__api/meta/mults/target.json?volumeid=COISS_2111'
+    def test__api_meta_mults_COISS_2111_internal(self):
+        "/api/meta/meta/mults: for COISS_2111 internal"
+        url = '/opus/__api/meta/mults/target.json?volumeid=COISS_2111&reqno=1'
         expected = {"field": "target", "mults": {"Atlas": 2, "Daphnis": 4, "Enceladus": 271, "Epimetheus": 27, "Hyrrokkin": 140, "Iapetus": 127, "Janus": 4, "Methone": 2, "Pallene": 2, "Pan": 56,
-                    "Polydeuces": 2, "Prometheus": 4, "Saturn": 1483, "Saturn Rings": 1040, "Sky": 90, "Telesto": 2, "Tethys": 11, "Titan": 384, "Unknown": 16}}
+                    "Polydeuces": 2, "Prometheus": 4, "Saturn": 1483, "Saturn Rings": 1040, "Sky": 90, "Telesto": 2, "Tethys": 11, "Titan": 384, "Unknown": 16}, "reqno": 1}
         self._run_json_equal(url, expected)
 
     def test__api_meta_mults_COISS_2111_saturn(self):
@@ -292,13 +329,52 @@ class ApiMetadataTests(TestCase, ApiTestHelper):
         expected = b'<dl>\n<dt>2002 Ms4</dt><dd>60</dd>\n<dt>2010 Jj124</dt><dd>90</dd>\n<dt>Arawn</dt><dd>290</dd>\n<dt>Calibration</dt><dd>6</dd>\n<dt>Charon</dt><dd>490</dd>\n<dt>Chiron</dt><dd>90</dd>\n<dt>Hd 205905</dt><dd>10</dd>\n<dt>Hd 37962</dt><dd>10</dd>\n<dt>Hydra</dt><dd>143</dd>\n<dt>Ixion</dt><dd>60</dd>\n<dt>Kerberos</dt><dd>10</dd>\n<dt>Ngc 3532</dt><dd>45</dd>\n<dt>Nix</dt><dd>102</dd>\n<dt>Pluto</dt><dd>5265</dd>\n<dt>Quaoar</dt><dd>96</dd>\n<dt>Styx</dt><dd>6</dd>\n</dl>\n'
         self._run_html_equal(url, expected)
 
+    def test__api_meta_mults_NHPELO_2001_csv_internal(self):
+        "/api/meta/meta/mults: for NHPELO_2001 target csv internal"
+        url = '/opus/__api/meta/mults/target.csv?instrument=New+Horizons+LORRI&volumeid=NHPELO_2001'
+        self._run_status_equal(url, 404)
+
+    def test__api_meta_mults_NHPELO_2001_html_internal(self):
+        "/api/meta/meta/mults: for NHPELO_2001 target html internal"
+        url = '/opus/__api/meta/mults/target.html?instrument=New+Horizons+LORRI&volumeid=NHPELO_2001'
+        self._run_status_equal(url, 404)
+
     # reqno
     def test__api_meta_mults_COISS_2111_saturn_reqno(self):
         "/api/meta/meta/mults: for COISS_2111 planet Saturn reqno"
         url = '/opus/api/meta/mults/target.json?volumeid=COISS_2111&planet=Saturn&reqno=98765'
         expected = {"field": "target", "mults": {"Atlas": 2, "Daphnis": 4, "Enceladus": 271, "Epimetheus": 27, "Hyrrokkin": 140, "Iapetus": 127, "Janus": 4, "Methone": 2, "Pallene": 2, "Pan": 56,
+                    "Polydeuces": 2, "Prometheus": 4, "Saturn": 1483, "Saturn Rings": 1040, "Sky": 90, "Telesto": 2, "Tethys": 11, "Titan": 384, "Unknown": 16}}
+        self._run_json_equal(url, expected)
+
+    def test__api_meta_mults_COISS_2111_saturn_reqno_internal(self):
+        "/api/meta/meta/mults: for COISS_2111 planet Saturn reqno internal"
+        url = '/opus/__api/meta/mults/target.json?volumeid=COISS_2111&planet=Saturn&reqno=98765'
+        expected = {"field": "target", "mults": {"Atlas": 2, "Daphnis": 4, "Enceladus": 271, "Epimetheus": 27, "Hyrrokkin": 140, "Iapetus": 127, "Janus": 4, "Methone": 2, "Pallene": 2, "Pan": 56,
                     "Polydeuces": 2, "Prometheus": 4, "Saturn": 1483, "Saturn Rings": 1040, "Sky": 90, "Telesto": 2, "Tethys": 11, "Titan": 384, "Unknown": 16}, "reqno": 98765}
         self._run_json_equal(url, expected)
+
+    def test__api_meta_mults_COISS_2111_saturn_reqno_bad_internal(self):
+        "/api/meta/meta/mults: for COISS_2111 planet Saturn reqno bad internal"
+        url = '/opus/__api/meta/mults/target.json?volumeid=COISS_2111&planet=Saturn&reqno=NaN'
+        self._run_status_equal(url, 404, settings.HTTP404_MISSING_REQNO)
+
+    def test__api_meta_mults_COISS_2111_saturn_reqno_bad_internal_2(self):
+        "/api/meta/meta/mults: for COISS_2111 planet Saturn reqno bad internal 2"
+        url = '/opus/__api/meta/mults/target.json?volumeid=COISS_2111&planet=Saturn&reqno=-101010'
+        self._run_status_equal(url, 404, settings.HTTP404_MISSING_REQNO)
+
+    def test__api_meta_mults_NHPELO_2001_csv_reqno(self):
+        "/api/meta/meta/mults: for NHPELO_2001 target reqno csv"
+        url = '/opus/api/meta/mults/target.csv?instrument=New+Horizons+LORRI&volumeid=NHPELO_2001&reqno=NaN'
+        expected = b'2002 Ms4,2010 Jj124,Arawn,Calibration,Charon,Chiron,Hd 205905,Hd 37962,Hydra,Ixion,Kerberos,Ngc 3532,Nix,Pluto,Quaoar,Styx\n60,90,290,6,490,90,10,10,143,60,10,45,102,5265,96,6\n'
+        self._run_csv_equal(url, expected)
+
+    def test__api_meta_mults_NHPELO_2001_html_reqno(self):
+        "/api/meta/meta/mults: for NHPELO_2001 target reqno html"
+        url = '/opus/api/meta/mults/target.html?instrument=New+Horizons+LORRI&volumeid=NHPELO_2001&reqno=5'
+        expected = b'<dl>\n<dt>2002 Ms4</dt><dd>60</dd>\n<dt>2010 Jj124</dt><dd>90</dd>\n<dt>Arawn</dt><dd>290</dd>\n<dt>Calibration</dt><dd>6</dd>\n<dt>Charon</dt><dd>490</dd>\n<dt>Chiron</dt><dd>90</dd>\n<dt>Hd 205905</dt><dd>10</dd>\n<dt>Hd 37962</dt><dd>10</dd>\n<dt>Hydra</dt><dd>143</dd>\n<dt>Ixion</dt><dd>60</dd>\n<dt>Kerberos</dt><dd>10</dd>\n<dt>Ngc 3532</dt><dd>45</dd>\n<dt>Nix</dt><dd>102</dd>\n<dt>Pluto</dt><dd>5265</dd>\n<dt>Quaoar</dt><dd>96</dd>\n<dt>Styx</dt><dd>6</dd>\n</dl>\n'
+        self._run_html_equal(url, expected)
 
     # Bad queries
     def test__api_meta_mults_bad_param(self):
@@ -323,10 +399,10 @@ class ApiMetadataTests(TestCase, ApiTestHelper):
         expected = {"max": "2017-03-31T13:05:35.059", "nulls": 0, "min": "2017-02-17T23:59:39.059"}
         self._run_json_equal(url, expected)
 
-    def test__api_meta_range_endpoints_times_COISS_private(self):
-        "/api/meta/range/endpoints: times COISS private"
-        url = '/opus/__api/meta/range/endpoints/timesec1.json?volumeid=COISS_2111'
-        expected = {"max": "2017-03-31T13:05:35.059", "nulls": 0, "min": "2017-02-17T23:59:39.059"}
+    def test__api_meta_range_endpoints_times_COISS_internal(self):
+        "/api/meta/range/endpoints: times COISS internal"
+        url = '/opus/__api/meta/range/endpoints/timesec1.json?volumeid=COISS_2111&reqno=1'
+        expected = {"max": "2017-03-31T13:05:35.059", "nulls": 0, "min": "2017-02-17T23:59:39.059", "reqno": 1}
         self._run_json_equal(url, expected)
 
     def test__api_meta_range_endpoints_times_COUVIS(self):
@@ -478,12 +554,28 @@ class ApiMetadataTests(TestCase, ApiTestHelper):
     def test__api_meta_range_endpoints_GOSSI_lesserpixelsize1_reqno(self):
         "/api/meta/range/endpoints: greaterpixelsize1 GOSSI reqno"
         url = '/opus/api/meta/range/endpoints/lesserpixelsize1.json?instrument=Galileo+SSI&reqno=12345'
+        expected = {'min': '800', 'max': '800', 'nulls': 0}
+        self._run_json_equal(url, expected)
+
+    def test__api_meta_range_endpoints_GOSSI_lesserpixelsize1_reqno_internal(self):
+        "/api/meta/range/endpoints: greaterpixelsize1 GOSSI reqno internal"
+        url = '/opus/__api/meta/range/endpoints/lesserpixelsize1.json?instrument=Galileo+SSI&reqno=12345'
         expected = {'min': '800', 'max': '800', 'nulls': 0, 'reqno': 12345}
         self._run_json_equal(url, expected)
 
+    def test__api_meta_range_endpoints_GOSSI_lesserpixelsize1_reqno_bad_internal(self):
+        "/api/meta/range/endpoints: greaterpixelsize1 GOSSI reqno bad internal"
+        url = '/opus/__api/meta/range/endpoints/lesserpixelsize1.json?instrument=Galileo+SSI&reqno=NaN'
+        self._run_status_equal(url, 404, settings.HTTP404_MISSING_REQNO)
+
+    def test__api_meta_range_endpoints_GOSSI_lesserpixelsize1_reqno_bad_internal_2(self):
+        "/api/meta/range/endpoints: greaterpixelsize1 GOSSI reqno bad internal 2"
+        url = '/opus/__api/meta/range/endpoints/lesserpixelsize1.json?instrument=Galileo+SSI&reqno=-101010'
+        self._run_status_equal(url, 404, settings.HTTP404_MISSING_REQNO)
+
     def test__api_meta_range_endpoints_GOSSI_lesserpixelsize1_html_reqno(self):
         "/api/meta/range/endpoints: greaterpixelsize1 GOSSI html reqno"
-        url = '/opus/api/meta/range/endpoints/lesserpixelsize1.html?instrument=Galileo+SSI&reqno=12345'
+        url = '/opus/api/meta/range/endpoints/lesserpixelsize1.html?instrument=Galileo+SSI&reqno=1e38'
         expected = b'<dl>\n<dt>min</dt><dd>800</dd>\n<dt>max</dt><dd>800</dd>\n<dt>nulls</dt><dd>0</dd>\n</dl>\n'
         self._run_html_equal(url, expected)
 

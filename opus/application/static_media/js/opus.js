@@ -87,7 +87,6 @@ var opus = {
 
     // browse tab
     pages:0, // total number of pages this result
-    colls_pages:1, // total number of collections pages
     browse_auto:'.chosen_columns', // we are turning this on as default
     metadata_selector_drawn:false,
     gallery_begun:false, // have we started the gallery view

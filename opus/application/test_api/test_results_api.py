@@ -31,13 +31,39 @@ class ApiResultsTests(TestCase, ApiTestHelper):
         logging.disable(logging.NOTSET)
 
 
+            #############################################
+            ######### /api/dataimages API TESTS #########
+            #############################################
+
+# reqno
+    def test__api_dataimages_no_results_default(self):
+        "/__api/dataimages: no results default cols"
+        url = '/opus/__api/dataimages.json?opusid=notgoodid'
+        self._run_status_equal(url, 404, settings.HTTP404_MISSING_REQNO)
+
+    def test__api_dataimages_no_results_default_reqno(self):
+        "/__api/dataimages: no results default cols reqno"
+        url = '/opus/__api/dataimages.json?opusid=notgoodid&reqno=5'
+        self._run_status_equal(url, 200)
+
+    def test__api_dataimages_no_results_default_reqno_bad(self):
+        "/__api/dataimages: no results default cols reqno bad"
+        url = '/opus/__api/dataimages.json?opusid=notgoodid&reqno=-1'
+        self._run_status_equal(url, 404, settings.HTTP404_MISSING_REQNO)
+
+    def test__api_dataimages_no_results_default_reqno_bad_2(self):
+        "/__api/dataimages: no results default cols reqno bad 2"
+        url = '/opus/__api/dataimages.json?opusid=notgoodid&reqno=1.0'
+        self._run_status_equal(url, 404, settings.HTTP404_MISSING_REQNO)
+
+
             #######################################
             ######### /api/data API TESTS #########
             #######################################
 
     def test__api_data_CASSINIrevno_sort(self):
         "/api/data: CASSINIrevno sort"
-        url = '/opus/__api/data.json?instrument=Cassini+ISS,Cassini+VIMS&CASSINIrevno=000,00A,00B,00C,003&CASSINItargetcode=RI+(Rings+-+general)&limit=5000&order=time1&cols=opusid,CASSINIrevno&order=-CASSINIrevnoint1'
+        url = '/opus/api/data.json?instrument=Cassini+ISS,Cassini+VIMS&CASSINIrevno=000,00A,00B,00C,003&CASSINItargetcode=RI+(Rings+-+general)&limit=5000&order=time1&cols=opusid,CASSINIrevno&order=-CASSINIrevnoint1'
         print(url)
         response = self._get_response(url)
         self.assertEqual(response.status_code, 200)
@@ -566,42 +592,42 @@ class ApiResultsTests(TestCase, ApiTestHelper):
 
     def test__api_files_COISS_no_versions_w1866145657(self):
         "/api/files: COISS no versions w1866145657"
-        url = '/opus/__api/files/co-iss-w1866145657.json'
+        url = '/opus/api/files/co-iss-w1866145657.json'
         self._run_json_equal_file(url, 'api_files_COISS_no_versions_w1866145657.json')
 
     def test__api_files_COISS_versions_n1461112307(self):
         "/api/files: COISS versions n1461112307"
-        url = '/opus/__api/files/co-iss-n1461112307.json'
+        url = '/opus/api/files/co-iss-n1461112307.json'
         self._run_json_equal_file(url, 'api_files_COISS_versions_n1461112307.json')
 
     def test__api_files_COVIMS_no_versions_v1487539692_ir(self):
         "/api/files: COVIMS no versions v1487539692_ir"
-        url = '/opus/__api/files/co-vims-v1487539692_ir.json'
+        url = '/opus/api/files/co-vims-v1487539692_ir.json'
         self._run_json_equal_file(url, 'api_files_COVIMS_no_versions_v1487539692_ir.json')
 
     def test__api_files_COVIMS_no_versions_v1487539692_vis(self):
         "/api/files: COVIMS no versions v1487539692_vis"
-        url = '/opus/__api/files/co-vims-v1487539692_vis.json'
+        url = '/opus/api/files/co-vims-v1487539692_vis.json'
         self._run_json_equal_file(url, 'api_files_COVIMS_no_versions_v1487539692_vis.json')
 
     def test__api_files_GOSSI_versions_c0368388622(self):
         "/api/files: GOSSI versions c0368388622"
-        url = '/opus/__api/files/go-ssi-c0368388622.json'
+        url = '/opus/api/files/go-ssi-c0368388622.json'
         self._run_json_equal_file(url, 'api_files_GOSSI_versions_c0368388622.json')
 
     def test__api_files_VGISS_no_versions_c0948955(self):
         "/api/files: VGISS no versions c0948955"
-        url = '/opus/__api/files/vg-iss-2-n-c0948955.json'
+        url = '/opus/api/files/vg-iss-2-n-c0948955.json'
         self._run_json_equal_file(url, 'api_files_VGISS_no_versions_c0948955.json')
 
     def test__api_files_HSTWFC3_no_versions_ib4v21gc(self):
         "/api/files: HSTWFC3 no versions ib4v21gc"
-        url = '/opus/__api/files/hst-11559-wfc3-ib4v21gc.json'
+        url = '/opus/api/files/hst-11559-wfc3-ib4v21gc.json'
         self._run_json_equal_file(url, 'api_files_HSTWFC3_no_versions_ib4v21gc.json')
 
     def test__api_files_HSTWFC3_versions_ib4v12n6(self):
         "/api/files: HSTWFC3 versions ib4v12n6"
-        url = '/opus/__api/files/hst-11559-wfc3-ib4v12n6.json'
+        url = '/opus/api/files/hst-11559-wfc3-ib4v12n6.json'
         self._run_json_equal_file(url, 'api_files_HSTWFC3_versions_ib4v12n6.json')
 
     ##################################

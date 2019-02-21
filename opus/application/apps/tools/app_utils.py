@@ -208,8 +208,10 @@ def get_reqno(request):
     reqno = request.GET.get('reqno', None)
     try:
         reqno = int(reqno)
+        if reqno < 0:
+            reqno = None
     except:
-        pass
+        reqno = None
     return reqno
 
 

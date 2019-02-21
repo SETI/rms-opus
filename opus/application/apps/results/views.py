@@ -73,6 +73,7 @@ def api_get_data_and_images(request):
     Arguments: limit=<N>
                page=<N>  OR  startobs=<N> (1-based)
                order=<column>[,<column>...]
+               reqno=<N>
                Normal search and selected-column arguments
 
     Returns JSON.
@@ -99,7 +100,8 @@ def api_get_data_and_images(request):
                                       'descending': True/False,
                                       'removeable': True/False},
          'count':           len(page),
-         'columns':         columns (corresponds to <col1> etc. in 'metadata')
+         'columns':         columns (corresponds to <col1> etc. in 'metadata'),
+         'reqno':           reqno
         }
     """
     api_code = enter_api_call('api_get_data_and_images', request)
@@ -181,11 +183,12 @@ def api_get_data_and_images(request):
                        'removeable': removeable}
         order_list.append(order_entry)
 
-    reqno = request.GET.get('reqno', None)
-    try:
-        reqno = int(reqno)
-    except:
-        reqno = None
+    reqno = get_reqno(request)
+    if reqno is None:
+        log.error('api_get_data_and_images: Missing or badly formatted reqno')
+        ret = Http404(settings.HTTP404_MISSING_REQNO)
+        exit_api_call(api_code, ret)
+        raise ret
 
     data = {'page':         new_page,
             'limit':        limit,
