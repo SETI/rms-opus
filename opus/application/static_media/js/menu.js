@@ -20,6 +20,13 @@ var o_menu = {
              $('a[aria-expanded=true]').attr('aria-expanded', 'false');
          });
 
+         $('#sidebar').on("click", '.searchMenu li .dropdown-toggle', function() {
+             console.log("height changes, trigger adjustment");
+             let adjustSearchHeight = _.debounce(o_search.adjustSearchHeight, 300);
+             adjustSearchHeight();
+             // o_search.adjustSearchHeight();
+         })
+
          // click param in menu get new widget
          $('#sidebar').on("click", '.submenu li a', function() {
              let slug = $(this).data('slug');

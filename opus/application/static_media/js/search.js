@@ -385,11 +385,23 @@ var o_search = {
     },
 
     adjustSearchHeight: function() {
-        var containerHeight = $("#search").height() - 100;
+        let containerHeight = $("#search").height() - 120;
+        let searchMenuHeight = $(".searchMenu").height();
         console.log(`container: ${containerHeight}`);
         console.log(`search menu height: ${$(".searchMenu").height()}`);
         $(".widget_column").height(containerHeight);
         $(".sidebar_wrapper").height(containerHeight);
+
+        if(containerHeight > searchMenuHeight) {
+            if(!$("#sidebar-container .ps__rail-y").hasClass("hide_ps__rail-y")) {
+                $("#sidebar-container .ps__rail-y").addClass("hide_ps__rail-y");
+                o_search.searchScrollbar.settings.suppressScrollY = true;
+            }
+        } else {
+            $("#sidebar-container .ps__rail-y").removeClass("hide_ps__rail-y");
+            o_search.searchScrollbar.settings.suppressScrollY = false;
+        }
+
         o_search.searchScrollbar.update();
         o_search.widgetScrollbar.update();
     },
