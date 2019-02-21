@@ -111,6 +111,8 @@ var o_widgets = {
                 $("#sidebar").removeClass("search_overlay");
                 $("#result_count").text(o_utils.addCommas(opus.result_count));
             }
+            let adjustSearchWidgetHeight = _.debounce(o_search.adjustSearchWidgetHeight, 200);
+            adjustSearchWidgetHeight();
             o_hash.updateHash(opus.allInputsValid);
             o_widgets.updateWidgetCookies();
         });
@@ -438,8 +440,7 @@ var o_widgets = {
 
             }}).done(function() {
 
-            o_search.adjustSearchHeight();
-
+            // o_search.adjustSearchHeight();
 
              // if we are drawing a range widget we need to check if the qtype dropdown is
              // already defined by the url:

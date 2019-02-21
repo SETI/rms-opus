@@ -21,14 +21,13 @@ var o_menu = {
          });
 
          $('#sidebar').on("click", '.searchMenu li .dropdown-toggle', function() {
-             console.log("height changes, trigger adjustment");
-             let adjustSearchHeight = _.debounce(o_search.adjustSearchHeight, 300);
-             adjustSearchHeight();
-             // o_search.adjustSearchHeight();
+             let adjustSearchSideBarHeight = _.debounce(o_search.adjustSearchSideBarHeight, 200);
+             adjustSearchSideBarHeight();
          })
 
          // click param in menu get new widget
          $('#sidebar').on("click", '.submenu li a', function() {
+
              let slug = $(this).data('slug');
              if (!slug) { return; }
              if ($.inArray(slug, opus.widgets_drawn)>-1){
@@ -46,6 +45,7 @@ var o_menu = {
                   o_menu.markMenuItem(this);
                   o_widgets.getWidget(slug,'#search_widgets');
              }
+
              o_hash.updateHash();
              return false;
          });

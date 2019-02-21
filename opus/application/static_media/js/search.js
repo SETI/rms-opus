@@ -385,11 +385,15 @@ var o_search = {
     },
 
     adjustSearchHeight: function() {
+        console.log("adjust search height");
+        o_search.adjustSearchSideBarHeight();
+        o_search.adjustSearchWidgetHeight();
+    },
+
+    adjustSearchSideBarHeight: function() {
+        console.log("adjust search sidebar height");
         let containerHeight = $("#search").height() - 120;
         let searchMenuHeight = $(".searchMenu").height();
-        console.log(`container: ${containerHeight}`);
-        console.log(`search menu height: ${$(".searchMenu").height()}`);
-        $(".widget_column").height(containerHeight);
         $(".sidebar_wrapper").height(containerHeight);
 
         if(containerHeight > searchMenuHeight) {
@@ -403,6 +407,25 @@ var o_search = {
         }
 
         o_search.searchScrollbar.update();
+    },
+
+    adjustSearchWidgetHeight: function() {
+        console.log("adjust search wdget height");
+        let containerHeight = $("#search").height() - 120;
+        let searchWidgetHeight = $("#search_widgets").height();
+        $(".widget_column").height(containerHeight);
+        console.log(`container height: ${containerHeight}`);
+        console.log(`widget height: ${searchWidgetHeight}`);
+        if(containerHeight > searchWidgetHeight) {
+            if(!$("#widget-container .ps__rail-y").hasClass("hide_ps__rail-y")) {
+                $("#widget-container .ps__rail-y").addClass("hide_ps__rail-y");
+                o_search.widgetScrollbar.settings.suppressScrollY = true;
+            }
+        } else {
+            $("#widget-container .ps__rail-y").removeClass("hide_ps__rail-y");
+            o_search.widgetScrollbar.settings.suppressScrollY = false;
+        }
+
         o_search.widgetScrollbar.update();
     },
 
@@ -455,6 +478,8 @@ var o_search = {
             o_search.getValidMults(slug);
         } else {
           $(`#widget__${slug}.spinner`).fadeOut();
+          let adjustSearchWidgetHeight = _.debounce(o_search.adjustSearchWidgetHeight, 200);
+          adjustSearchWidgetHeight();
         }
     },
 
@@ -474,7 +499,9 @@ var o_search = {
                     return;
                 }
                 $('#hint__' + slug).html(`<span>min: ${multdata.min}</span><span>max: ${multdata.max}</span><span> nulls: ${multdata.nulls}</span>`);
-                            },
+                let adjustSearchWidgetHeight = _.debounce(o_search.adjustSearchWidgetHeight, 200);
+                adjustSearchWidgetHeight();
+            },
             statusCode: {
                 404: function() {
                     $(`#widget__${slug}.spinner`).removeClass("spinning");
@@ -522,7 +549,8 @@ var o_search = {
                     }
 
                 });
-
+                let adjustSearchWidgetHeight = _.debounce(o_search.adjustSearchWidgetHeight, 200);
+                adjustSearchWidgetHeight();
             },
             statusCode: {
                 404: function() {

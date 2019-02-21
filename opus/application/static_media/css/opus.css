@@ -763,7 +763,7 @@ li a.search-param:hover {
     list-style-type:none;
 }
 #search_widgets {  /* this fixes problem scrolling when widget column is short */
-    padding-bottom: 600px;
+    padding-bottom: 20px;
     padding-right: 2em;
 }
 
