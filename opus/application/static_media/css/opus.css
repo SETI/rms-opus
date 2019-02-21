@@ -153,6 +153,14 @@ body {
     padding-left: 1em;
 }
 
+/*
+Fix the sidebar width so the width will not change when .menu_help message shows up
+Not sure if this is the desired behavior
+*/
+.sidebar-area {
+    width: 400px;
+}
+
 /* Styling for sidebar nav in search page */
 .sidebar-nav {
     /* border: 1px solid #C8CED3;
