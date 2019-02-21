@@ -153,6 +153,12 @@ body {
     padding-left: 1em;
 }
 
+.sidebar-nav {
+    border: 1px solid #C8CED3;
+    border-radius: 3px;
+    background-color: #F0F3F5;
+}
+
 .sidebar_wrapper {
   display: flex;
     margin:0; padding:0;
@@ -386,9 +392,9 @@ th.sticky-header {
 
 .dataTable .ps__rail-y {
     background-color: transparent !important;
-    right: 1px !important;
+    right: 2px !important;
     /* navbar + top_navbar + sort-order-container */
-    top: 117px !important;
+    top: 118px !important;
 }
 
 /* Make sure x-scrollbar in dataTable is always at the left and visible */
@@ -398,6 +404,16 @@ th.sticky-header {
     opacity: 1 !important;
     bottom: 25px !important;
 }
+
+/* remove hover effect from ps in tabe view */
+.dataTable .ps__thumb-y {
+    width: 11px;
+}
+
+.dataTable .ps__thumb-x {
+    height: 11px;
+}
+
 
 /* Fix the spinner*/
 .table-page-load-status .loader {
