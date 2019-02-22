@@ -220,7 +220,7 @@ class SessionInfoImpl(SessionInfo):
 
     @ForPattern(r'/__collections(/default)?/(add|remove)\.json')
     def _change_selections(self, query: Dict[str, str], match: Match[str]) -> SESSION_INFO:
-        opus_id = query.get('opus_id')
+        opus_id = query.get('opusid') or query.get('opus_id') # opusid is new name, opus_id is old
         selection = match.group(2).title()
         if self._uses_html and opus_id:
             return [self.safe_format('Selections {}: {}', selection.title(), opus_id)], self.__create_opus_url(opus_id)

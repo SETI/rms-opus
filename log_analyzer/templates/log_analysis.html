@@ -86,24 +86,18 @@ because it requires that all the navigation tabs be within a single unordered li
 
 <div class="tab-content">
 
-<div id="ByIP" class="tab-pane show active">
 
 {% set marker_to_glyph = { "has-search": "search", "has-columns": "list-ul", "fetched-gallery": "images",
                             "has-download": "file-download", "has-obsolete-slug" : "times-circle" }
 %}
-{% set walking_cane = "https://cdn0.iconfinder.com/data/icons/people-and-lifestyle-1/64/people-elderly-cane-walking-senior-16.png" %}
-
 {% macro generate_session_row(session, full) %}
     <tr>
     {% for flag in action_flags_list %}
         {% set flag_in_use = flag in session.action_flags %}
         {% if flag_in_use or full %}
             {% set glyph = marker_to_glyph[flag.as_html_classname()] %}
-            {% if glyph == "times-circle" %}
-                <td><img {%if not flag_in_use %}class="invisible" {% endif %}src="{{ walking_cane | safe}}"></td>
-            {% else %}
-                <td><span class="{{ 'fas fa-' ~  glyph ~ ('' if flag_in_use else ' invisible') }}">&zwj;</span></td>
-            {% endif %}
+            {% set classes = ['fas', 'fa-' ~ glyph] + ([] if flag_in_use else ['invisible']) %}
+            <td><span class="{{ classes | join(' ') }}">&zwj;</span></td>
         {% else %}
             <td></td>
         {% endif %}
@@ -120,6 +114,7 @@ because it requires that all the navigation tabs be within a single unordered li
     {% endif %}
 {% endmacro %}
 
+<div id="ByIP" class="tab-pane show active">
 {% for host_info in host_infos_by_ip %}
     {% if not loop.first %}<hr/>{% endif %}
     {{ host_info_ip_or_name(host_info) }}
@@ -132,9 +127,8 @@ because it requires that all the navigation tabs be within a single unordered li
             {% endcall %}
         {% endfor %}
     </table>
-
 {% endfor %}
-</div>
+</div>  ## #ByIP
 
 <div id="ByTime" class="tab-pane">
 {% for day, host_infos_for_day in host_infos_by_date %}
