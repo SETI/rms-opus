@@ -6,6 +6,19 @@ var o_detail = {
             $(this).attr("href", "/opus/__api/metadata_v2/"+opus_id+".csv?"+ o_hash.getHash());
         });
 
+        $("#detail").on("click", "a[data-action]", function() {
+            let href = $(this).attr("href");
+            switch($(this).data("action")) {
+                case "downloadData":
+                    $(this).attr("href", `${href}?cols=${opus.prefs.cols.join()}`);
+                    break;
+                case "downloadURL":
+                    $(this).attr("href", `${href}&cols=${opus.prefs.cols.join()}`);
+                    break;
+            }
+            //return false;
+        });
+
         opus.prefs.detail = opus_id;
         let detailSelector = "#detail .panel";
 
