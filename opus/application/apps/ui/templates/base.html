@@ -55,8 +55,9 @@
               <div class="browse-nav-container top_navbar collapse navbar-collapse">
                 <ul class="navbar-nav mr-auto">
                   <li class="nav-item">
-                    <a href="#" class="nav-link reset" title="Reset all search params">&nbsp;Reset Search</a>
+                    <!-- <a href="#" class="nav-link reset" title="Reset all search params">&nbsp;Reset Search</a> -->
                     <!-- <button type="reset" class="btn btn-sm btn-danger restart">Reset Search</button> -->
+                    <a href="#" class="reset nav-link" data-toggle="modal" data-target="#resetModal" title="Reset all search params">&nbsp;Reset Search</a>
                   </li>
                   <li class="nav-item">
                     <a href="#" class="nav-link reset-all" title="Reset all search params and empty shopping cart">&nbsp;Reset Everything</a>
@@ -254,6 +255,13 @@
         </div>
       </div>
     </div>
+
+    {% include "confirm.html" with
+      id_name="resetModal"
+      confirm_title="Confirm Reset Search"
+      confirm_msg="Are you sure you want to restart? Your current search will be lost." 
+    %}
+
 
     {% endblock %}
 

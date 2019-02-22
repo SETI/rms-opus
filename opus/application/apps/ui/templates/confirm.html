@@ -1,0 +1,20 @@
+<!-- generic confirmation Modal -->
+<div class="modal fade" id={{id_name}} tabindex="-1" role="dialog" aria-labelledby="confirmModalLabel" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content confirmModal">
+      <div class="modal-header bg-dark text-light font-weight-bold font-lg py-3">
+        <div>{{confirm_title}}</div>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <i class="far fa-times-circle fa-lg text-light"></i>
+        </button>
+      </div>
+      <div class="modal-body">
+        {{confirm_msg}}
+      </div>
+      <div class="modal-footer">
+        <button type="submit" class="btn btn-primary" data-dismiss="modal">Yes</button>
+        <button type="cancel" class="btn btn-danger">No</button>
+      </div>
+    </div>
+  </div>
+</div>

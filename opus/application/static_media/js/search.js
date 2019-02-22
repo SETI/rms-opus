@@ -385,13 +385,11 @@ var o_search = {
     },
 
     adjustSearchHeight: function() {
-        console.log("adjust search height");
         o_search.adjustSearchSideBarHeight();
         o_search.adjustSearchWidgetHeight();
     },
 
     adjustSearchSideBarHeight: function() {
-        console.log("adjust search sidebar height");
         let containerHeight = $("#search").height() - 120;
         let searchMenuHeight = $(".searchMenu").height();
         $(".sidebar_wrapper").height(containerHeight);
@@ -410,12 +408,10 @@ var o_search = {
     },
 
     adjustSearchWidgetHeight: function() {
-        console.log("adjust search wdget height");
         let containerHeight = $("#search").height() - 120;
         let searchWidgetHeight = $("#search_widgets").height();
         $(".widget_column").height(containerHeight);
-        console.log(`container height: ${containerHeight}`);
-        console.log(`widget height: ${searchWidgetHeight}`);
+
         if(containerHeight > searchWidgetHeight) {
             if(!$("#widget-container .ps__rail-y").hasClass("hide_ps__rail-y")) {
                 $("#widget-container .ps__rail-y").addClass("hide_ps__rail-y");
