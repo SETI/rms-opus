@@ -265,7 +265,7 @@ ul.searchMenu{
   opacity: 0.15;
 }
 
-.confirmModal {
+#confirm-modal {
   border-radius: 6px;
 }
 
@@ -417,16 +417,6 @@ th.sticky-header {
     opacity: 1 !important;
     bottom: 25px !important;
 }
-
-/* remove hover effect from ps in tabe view */
-.dataTable .ps__thumb-y {
-    width: 11px;
-}
-
-.dataTable .ps__thumb-x {
-    height: 11px;
-}
-
 
 /* Fix the spinner*/
 .table-page-load-status .loader {
@@ -977,10 +967,11 @@ footer {
   content: '';
 }
 
-.restart_button {
+/* .restart_button {
     text-align: center;
-  padding-top: 1.5em;
-}
+    padding-top: 1.5em;
+} */
+
 .restart_button button {
     margin: 10px 0;
 }

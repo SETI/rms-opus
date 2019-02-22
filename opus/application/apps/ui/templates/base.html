@@ -51,24 +51,14 @@
       <div id="search" class="tab-pane fade" role="tabpanel" aria-labelledby="search-tab">
         <div class="row">
           <div class="col pr-0 sidebar-area">
-            <nav class="panel-heading navbar navbar-expand-lg sidebar-nav">
-              <div class="browse-nav-container top_navbar collapse navbar-collapse">
-                <ul class="navbar-nav mr-auto">
-                  <li class="nav-item">
-                    <!-- <a href="#" class="nav-link reset" title="Reset all search params">&nbsp;Reset Search</a> -->
-                    <!-- <button type="reset" class="btn btn-sm btn-danger restart">Reset Search</button> -->
-                    <a href="#" class="reset nav-link" data-toggle="modal" data-target="#resetModal" title="Reset all search params">&nbsp;Reset Search</a>
-                  </li>
-                  <li class="nav-item">
-                    <a href="#" class="nav-link reset-all" title="Reset all search params and empty shopping cart">&nbsp;Reset Everything</a>
-                    <!-- <button type="reset" class="btn btn-sm btn-danger restart">Reset Everything</button> -->
-                  </li>
-              </div>
-            </nav>
             <div id="sidebar-container" class = "sidebar_wrapper ps-scrollbar pr-0">
               <div id = "sidebar">
                 {% include "menu.html" %}
               </div>
+            </div>
+            <div class="restart_button reset">
+                <button type="reset" class="btn btn-sm btn-danger restart">Reset Search</button>
+                <button type="reset" class="btn btn-sm btn-danger restart">Reset Everything</button>
             </div>
           </div>
 
@@ -256,10 +246,10 @@
       </div>
     </div>
 
-    {% include "confirm.html" with
+    {% include "confirmModal.html" with
       id_name="resetModal"
       confirm_title="Confirm Reset Search"
-      confirm_msg="Are you sure you want to restart? Your current search will be lost." 
+      confirm_msg="Are you sure you want to restart? Your current search will be lost."
     %}
 
 
