@@ -394,26 +394,21 @@ $(document).ready(function() {
 
     });
 
-
-    // restart button behavior - start over button
-    // $('#sidebar').on("click", ".restart", function() {
-    $(".reset, .reset-all").on("click", function(event) {
-        // 'start over' button
-        // resets query completely, resets widgets completely
-
-        // empty shopping cart if Reset Everything is clicked
-        if($(event.target).hasClass("reset-all") && $("#collection_count").text() !== "0") {
-            o_collections.emptyCollection(returnToSearch=true);
-        }
-
-        if (!$.isEmptyObject(opus.selections)) {
-            if (confirm("Are you sure you want to restart? Your current search will be lost.")) {
+    // reset buttons
+    $(".confirmModal").on("click", ".btn", function() {
+        let target = $(this).data("target");
+        switch($(this).attr("type")) {
+            case "submit":
+                if(target === "reset-all-modal" && $("#collection_count").text() !== "0") {
+                    o_collections.emptyCollection(returnToSearch=true);
+                }
                 opus.startOver();
-            }
-        } else {
-            opus.startOver();
+                break;
+            case "cancel":
+                $('.modal').modal('hide')
+                break;
         }
-    }),
+    });
 
     // doesn't work yet
     $("footer a").on("click", function() {
