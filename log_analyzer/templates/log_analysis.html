@@ -14,37 +14,31 @@
 <style>
 {% raw %}
 @media (min-width: 768px){
-  #left {
+  #left, #right {
     position: absolute;
     top: 0;
     bottom: 0;
+    overflow-y: scroll;
+  }
+  #left {
     left: 0;
     width: 25%;
-    overflow-y: scroll;
     border-right: 1px solid blue;
   }
   #right {
-    position: absolute;
-    top: 0;
-    bottom: 0;
     right: 0;
-    overflow-y: scroll;
     width: 75%;
   }
 }
-#left {
+#left, #right {
   text-align: left;
   height:100%;
-}
-#right {
-  height:100%;
-  text-align: left;
 }
 .SessionLink {
   font-family: "Roboto",sans-serif;
 }
 .SessionLink.active {
-  background-color:yellow;
+  background-color: yellow;
 }
 .SessionInfo td {
   vertical-align:top;
@@ -87,16 +81,16 @@ because it requires that all the navigation tabs be within a single unordered li
 <div class="tab-content">
 
 
-{% set marker_to_glyph = { "has-search": "search", "has-columns": "list-ul", "fetched-gallery": "images",
-                            "has-download": "file-download", "has-obsolete-slug" : "times-circle" }
+{% set marker_to_glyph = { "HAS_SEARCH": "search", "HAS_COLUMNS": "list-ul", "FETCHED_GALLERY": "images",
+                           "HAS_DOWNLOAD": "file-download", "HAS_OBSOLETE_SLUG" : "book-dead" }
 %}
 {% macro generate_session_row(session, full) %}
     <tr>
     {% for flag in action_flags_list %}
         {% set flag_in_use = flag in session.action_flags %}
         {% if flag_in_use or full %}
-            {% set glyph = marker_to_glyph[flag.as_html_classname()] %}
-            {% set classes = ['fas', 'fa-' ~ glyph] + ([] if flag_in_use else ['invisible']) %}
+            {% set glyph = 'fa-' ~ marker_to_glyph[flag.name] %}
+            {% set classes = ['fas', glyph] + ([] if flag_in_use else ['invisible']) %}
             <td><span class="{{ classes | join(' ') }}">&zwj;</span></td>
         {% else %}
             <td></td>

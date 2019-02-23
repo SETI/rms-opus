@@ -47,9 +47,6 @@ class ActionFlags(Flag):
     HAS_DOWNLOAD = auto()
     HAS_OBSOLETE_SLUG = auto()
 
-    def as_html_classname(self) -> str:
-        return self.name.lower().replace('_', '-')
-
 
 class SessionInfo(metaclass=abc.ABCMeta):
     """
