@@ -169,7 +169,7 @@ Not sure if this is the desired behavior
 }
 
 .sidebar_wrapper {
-  display: flex;
+    display: flex;
     margin:0; padding:0;
     overflow: auto;
     margin-top:5px;
@@ -177,6 +177,11 @@ Not sure if this is the desired behavior
     height:500px; /* matches .widget_column */
     -webkit-box-sizing: border-box; -moz-box-sizing: border-box; box-sizing: border-box;
 }
+
+.sidebar_wrapper_divider {
+    border-right: 1px solid #C8CED3;
+}
+
 .sidebar_wrapper.mCustomScrollbar {
     margin-top:10px;
 }

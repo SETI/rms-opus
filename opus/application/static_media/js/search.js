@@ -5,7 +5,7 @@ var o_search = {
      *  Everything that appears on the search tab
      *
      **/
-    searchScrollbar: new PerfectScrollbar("#sidebar-container"),
+    searchScrollbar: new PerfectScrollbar("#sidebar-container", { suppressScrollX: true }),
     widgetScrollbar: new PerfectScrollbar("#widget-container"),
 
     // for input validation in the search widgets
@@ -393,17 +393,19 @@ var o_search = {
         let containerHeight = $("#search").height() - 120;
         let searchMenuHeight = $(".searchMenu").height();
         $(".sidebar_wrapper").height(containerHeight);
-        console.log(`================ adjust search sidebar ===============`);
-        console.log(`search container height: ${containerHeight}`);
-        console.log(`search menu height: ${searchMenuHeight}`);
+
         if(containerHeight > searchMenuHeight) {
             if(!$("#sidebar-container .ps__rail-y").hasClass("hide_ps__rail-y")) {
                 $("#sidebar-container .ps__rail-y").addClass("hide_ps__rail-y");
                 o_search.searchScrollbar.settings.suppressScrollY = true;
+                if(!$("#sidebar-container").hasClass("sidebar_wrapper_divider")) {
+                    $("#sidebar-container").addClass("sidebar_wrapper_divider");
+                }
             }
         } else {
             $("#sidebar-container .ps__rail-y").removeClass("hide_ps__rail-y");
             o_search.searchScrollbar.settings.suppressScrollY = false;
+            $("#sidebar-container").removeClass("sidebar_wrapper_divider");
         }
 
         o_search.searchScrollbar.update();
@@ -412,15 +414,7 @@ var o_search = {
     adjustSearchWidgetHeight: function() {
         let containerHeight = $("#search").height() - 120;
         let searchWidgetHeight = $("#search_widgets").height();
-        let cardsHeight = 0;
         $(".widget_column").height(containerHeight);
-        console.log(`================ adjust search widget ===============`);
-        console.log(`search container height: ${containerHeight}`);
-        console.log(`search widget height: ${searchWidgetHeight}`);
-        // $.each($("#search_widgets .card"), function(idx, el){
-        //     cardsHeight += $(el).height();
-        // })
-        // console.log(`search cards height: ${cardsHeight}`);
 
         if(containerHeight > searchWidgetHeight) {
             if(!$("#widget-container .ps__rail-y").hasClass("hide_ps__rail-y")) {
@@ -505,7 +499,6 @@ var o_search = {
                     return;
                 }
                 $('#hint__' + slug).html(`<span>min: ${multdata.min}</span><span>max: ${multdata.max}</span><span> nulls: ${multdata.nulls}</span>`);
-                console.log("adjust at get range endpoint");
                 let adjustSearchWidgetHeight = _.debounce(o_search.adjustSearchWidgetHeight, 200);
                 adjustSearchWidgetHeight();
             },
@@ -554,9 +547,7 @@ var o_search = {
                         $(id).html('<span>0</span>');
                         $(id).parent().addClass("fadey");
                     }
-
                 });
-                console.log("adjust at get mults");
                 let adjustSearchWidgetHeight = _.debounce(o_search.adjustSearchWidgetHeight, 200);
                 adjustSearchWidgetHeight();
             },

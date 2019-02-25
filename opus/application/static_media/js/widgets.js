@@ -434,6 +434,7 @@ var o_widgets = {
             opus.widget_elements_drawn.unshift(slug);
 
         }
+        let reqStart = new Date().getTime();
         $.ajax({ url: "/opus/__forms/widget/" + slug + '.html?' + o_hash.getHash(),
              success: function(widget_str){
 
