@@ -129,6 +129,13 @@ var o_menu = {
         });
      },
 
+     markDefaultMenuItem: function() {
+         o_menu.markMenuItem(".submenu li a", "unselect");
+         $.each(opus.default_widgets, function(index, slug) {
+             o_menu.markMenuItem(`li > [data-slug="${slug}"]`);
+         });
+     },
+
      markMenuItem: function(selector, selected) {
         if (selected == undefined || selected == "select") {
             $(selector).css("background", "gainsboro");

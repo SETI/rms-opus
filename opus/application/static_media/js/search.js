@@ -393,7 +393,9 @@ var o_search = {
         let containerHeight = $("#search").height() - 120;
         let searchMenuHeight = $(".searchMenu").height();
         $(".sidebar_wrapper").height(containerHeight);
-
+        console.log(`================ adjust search sidebar ===============`);
+        console.log(`search container height: ${containerHeight}`);
+        console.log(`search menu height: ${searchMenuHeight}`);
         if(containerHeight > searchMenuHeight) {
             if(!$("#sidebar-container .ps__rail-y").hasClass("hide_ps__rail-y")) {
                 $("#sidebar-container .ps__rail-y").addClass("hide_ps__rail-y");
@@ -410,7 +412,15 @@ var o_search = {
     adjustSearchWidgetHeight: function() {
         let containerHeight = $("#search").height() - 120;
         let searchWidgetHeight = $("#search_widgets").height();
+        let cardsHeight = 0;
         $(".widget_column").height(containerHeight);
+        console.log(`================ adjust search widget ===============`);
+        console.log(`search container height: ${containerHeight}`);
+        console.log(`search widget height: ${searchWidgetHeight}`);
+        // $.each($("#search_widgets .card"), function(idx, el){
+        //     cardsHeight += $(el).height();
+        // })
+        // console.log(`search cards height: ${cardsHeight}`);
 
         if(containerHeight > searchWidgetHeight) {
             if(!$("#widget-container .ps__rail-y").hasClass("hide_ps__rail-y")) {
@@ -463,15 +473,15 @@ var o_search = {
         o_search.adjustSearchHeight();
     },
 
-    getHinting: function(slug) {
+    getHinting: function(slug, deferredObj) {
 
         if ($(".widget__" + slug).hasClass("range-widget")) {
             // this is a range field
-            o_search.getRangeEndpoints(slug);
+            o_search.getRangeEndpoints(slug, deferredObj);
 
         } else if ($(".widget__" + slug).hasClass("mult-widget")) {
             // this is a mult field
-            o_search.getValidMults(slug);
+            o_search.getValidMults(slug, deferredObj);
         } else {
           $(`#widget__${slug}.spinner`).fadeOut();
           let adjustSearchWidgetHeight = _.debounce(o_search.adjustSearchWidgetHeight, 200);
@@ -495,6 +505,7 @@ var o_search = {
                     return;
                 }
                 $('#hint__' + slug).html(`<span>min: ${multdata.min}</span><span>max: ${multdata.max}</span><span> nulls: ${multdata.nulls}</span>`);
+                console.log("adjust at get range endpoint");
                 let adjustSearchWidgetHeight = _.debounce(o_search.adjustSearchWidgetHeight, 200);
                 adjustSearchWidgetHeight();
             },
@@ -545,6 +556,7 @@ var o_search = {
                     }
 
                 });
+                console.log("adjust at get mults");
                 let adjustSearchWidgetHeight = _.debounce(o_search.adjustSearchWidgetHeight, 200);
                 adjustSearchWidgetHeight();
             },

@@ -30,6 +30,8 @@ var o_widgets = {
             $(this).find('.indicator').toggleClass('fa-plus');
             $(this).find('.indicator').toggleClass('fa-minus');
             $(this).next().slideToggle("fast");
+            let adjustSearchWidgetHeight = _.debounce(o_search.adjustSearchWidgetHeight, 200);
+            adjustSearchWidgetHeight();
         });
 
         // close a card
@@ -405,7 +407,7 @@ var o_widgets = {
      },
 
      // adds a widget and its behaviors, adjusts the opus.prefs variable to include this widget, will not update the hash
-     getWidget: function(slug, formscolumn){
+     getWidget: function(slug, formscolumn, deferredObj=null){
 
          if (!slug) return;
 
@@ -437,7 +439,6 @@ var o_widgets = {
 
                 $("#widget__"+slug).html(widget_str);
                 o_widgets.pauseWidgetControlVisibility(opus.selections);
-
             }}).done(function() {
 
             // o_search.adjustSearchHeight();
@@ -622,6 +623,10 @@ var o_widgets = {
              o_widgets.customWidgetBehaviors(slug);
              o_widgets.scrollToWidget(widget);
              o_search.getHinting(slug);
+
+             if(deferredObj) {
+                 deferredObj.resolve();
+             }
 
       }); // end function success, end ajax
      }, // end func

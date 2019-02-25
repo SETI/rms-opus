@@ -973,7 +973,8 @@ footer {
 } */
 
 .restart_button button {
-    margin: 10px 0;
+    margin: 10px 1px;
+    font-weight: bold;
 }
 
 .ps-scrollbar {

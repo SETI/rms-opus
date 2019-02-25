@@ -310,10 +310,20 @@ var opus = {
         opus.prefs.widgets = [];
         opus.widgets_drawn = [];
         opus.widget_elements_drawn = [];
+
+        o_menu.markDefaultMenuItem();
+        console.log("############startOver get widgets")
+        let ajaxArr = [];
         $.each(opus.default_widgets, function(index, slug) {
-            o_widgets.getWidget(slug,"#search_widgets");
+            ajaxArr.push($.Deferred());
+            o_widgets.getWidget(slug,"#search_widgets",ajaxArr[index]);
         });
 
+        $.when.apply(null, ajaxArr).then(function(){
+            console.log("@@@@@@@@@@@ Final ajax call")
+            let adjustSearchWidgetHeight = _.debounce(o_search.adjustSearchHeight, 800);
+            adjustSearchWidgetHeight();
+        });
         // start the main timer again
         opus.main_timer = setInterval(opus.load, opus.main_timer_interval);
 
