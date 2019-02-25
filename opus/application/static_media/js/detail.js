@@ -46,13 +46,14 @@ var o_detail = {
 
                 // get categories and then send for data for each category separately:
                 url = "/opus/__api/categories/" + opus_id + ".json?" + o_hash.getHash();
-                $.getJSON(url, function(json) {
-                    for(let i = 0; i < json.length; i++) {
+                $.getJSON(url, function(categories) {
+                    $.each(categories, function(idx, val) {
                         arrOfDeferred.push($.Deferred());
-                    }
-                    for (let index in json) {
-                        name = json[index]['table_name'];
-                        label = json[index]['label'];
+                    })
+
+                    for (let index in categories) {
+                        name = categories[index]['table_name'];
+                        label = categories[index]['label'];
                         var html = '<h3>' + label + '</h3><div class = "detail_' + name + '">Loading <span class = "spinner">&nbsp;</span></div>'
                         $("#all_metadata_" + opus_id).append(html);
 

@@ -837,8 +837,8 @@ var o_browse = {
             minWidth: 40,
             resize: function (event, ui) {
                 let resizableContainerWidth = $(event.target).parent().width();
-                let columnTextWidth = $(event.target).find("a").find('span:first').width();
-                let sortLabelWidth = $(event.target).find("a").find('span:last').width();
+                let columnTextWidth = $(event.target).find("a span:first").width();
+                let sortLabelWidth = $(event.target).find("a span:last").width();
                 let columnContentWidth = columnTextWidth + sortLabelWidth;
                 let beginningSpace = (resizableContainerWidth - columnContentWidth)/2;
                 let columnWidthUptoEndContent = columnContentWidth + beginningSpace;
