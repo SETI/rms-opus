@@ -398,14 +398,10 @@ var o_search = {
             if(!$("#sidebar-container .ps__rail-y").hasClass("hide_ps__rail-y")) {
                 $("#sidebar-container .ps__rail-y").addClass("hide_ps__rail-y");
                 o_search.searchScrollbar.settings.suppressScrollY = true;
-                if(!$("#sidebar-container").hasClass("sidebar_wrapper_divider")) {
-                    $("#sidebar-container").addClass("sidebar_wrapper_divider");
-                }
             }
         } else {
             $("#sidebar-container .ps__rail-y").removeClass("hide_ps__rail-y");
             o_search.searchScrollbar.settings.suppressScrollY = false;
-            $("#sidebar-container").removeClass("sidebar_wrapper_divider");
         }
 
         o_search.searchScrollbar.update();

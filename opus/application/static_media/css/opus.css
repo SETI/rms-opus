@@ -178,12 +178,14 @@ Not sure if this is the desired behavior
     -webkit-box-sizing: border-box; -moz-box-sizing: border-box; box-sizing: border-box;
 }
 
-.sidebar_wrapper_divider {
-    border-right: 1px solid #C8CED3;
-}
-
 .sidebar_wrapper.mCustomScrollbar {
     margin-top:10px;
+}
+
+hr.horizontal-shadow-divider {
+  height: 10px;
+  border: 0;
+  box-shadow: 0 10px 10px -10px #8c8b8b inset;
 }
 
 ul.searchMenu{
@@ -599,7 +601,7 @@ img.preview {
 }
 
 #collection .thumb-page {
-	padding: 0 1.0em;
+  padding: 0 1.0em;
 }
 
 #collections-sidebar {
@@ -636,7 +638,7 @@ img.preview {
 }
 
 #download_links {
-	display: none;
+  display: none;
 }
 
 div.gallery {
@@ -661,7 +663,7 @@ div.gallery {
  }
 
 .sort-order-container {
-	display:inline-flex;
+  display:inline-flex;
     padding-left: 25px;
 }
 
@@ -671,7 +673,7 @@ div.gallery {
 }
 
 .sort-contents {
-	display: flex;
+  display: flex;
 }
 
 .sort-contents li {
@@ -972,18 +974,13 @@ footer {
   content: '';
 }
 
-/* .restart_button {
+.restart_button {
     text-align: center;
-    padding-top: 1.5em;
-} */
-
-.restart_button button {
-    margin: 10px 1px;
-    font-weight: bold;
 }
 
-.ps-scrollbar {
-
+.restart_button button {
+    margin: 5px 1px;
+    font-weight: bold;
 }
 
 input[type="text"].search_input_original {

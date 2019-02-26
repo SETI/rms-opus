@@ -51,14 +51,15 @@
       <div id="search" class="tab-pane fade" role="tabpanel" aria-labelledby="search-tab">
         <div class="row">
           <div class="col pr-0 sidebar-area">
-            <div id="sidebar-container" class = "sidebar_wrapper ps-scrollbar pr-0">
+            <div id="sidebar-container" class = "sidebar_wrapper ps-scrollbar pr-0 border-right">
               <div id = "sidebar">
                 {% include "menu.html" %}
               </div>
             </div>
+            <hr class="horizontal-shadow-divider m-0">
             <div class="restart_button">
                 <button type="button" class="btn btn-sm btn-danger restart" data-toggle="modal" data-target="#reset-modal" title="Reset all search params">Reset Search</button>
-                <button type="button" class="btn btn-sm btn-danger restart" data-toggle="modal" data-target="#reset-all-modal" title="Reset all search params and empty shopping cart">Reset Everything</button>
+                <button type="button" class="btn btn-sm btn-danger restart" data-toggle="modal" data-target="#reset-all-modal" title="Reset all search params and empty shopping cart">Reset Search and Metadata</button>
             </div>
           </div>
 
@@ -249,13 +250,13 @@
     {% include "confirmModal.html" with
       id_name="reset-modal"
       confirm_title="Confirm Reset Search"
-      confirm_msg="Are you sure you want to restart? Your current search will be lost."
+      confirm_msg="Are you sure you want to reset your search? Your current search will be lost."
       target="reset-modal"
     %}
     {% include "confirmModal.html" with
       id_name="reset-all-modal"
-      confirm_title="Confirm Reset Everything"
-      confirm_msg="Are you sure you want to restart? Your current search and shopping cart will be lost."
+      confirm_title="Confirm Reset Search and Metadata"
+      confirm_msg="Are you sure you want to reset your search and metadata? Your current search and metadata selection will be lost."
       target="reset-all-modal"
     %}
 
