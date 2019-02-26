@@ -182,7 +182,7 @@ Not sure if this is the desired behavior
     margin-top:10px;
 }
 
-hr.horizontal-shadow-divider {
+hr.shadow-divider {
   height: 10px;
   border: 0;
   box-shadow: 0 10px 10px -10px #8c8b8b inset;
@@ -636,6 +636,10 @@ img.preview {
     min-width: 28em;
   max-width: 28em;
 }
+
+/* #download-options-container {
+    height: 80% !important;
+} */
 
 #download_links {
   display: none;

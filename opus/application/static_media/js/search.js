@@ -392,7 +392,7 @@ var o_search = {
     adjustSearchSideBarHeight: function() {
         let containerHeight = $("#search").height() - 120;
         let searchMenuHeight = $(".searchMenu").height();
-        $(".sidebar_wrapper").height(containerHeight);
+        $("#search .sidebar_wrapper").height(containerHeight);
 
         if(containerHeight > searchMenuHeight) {
             if(!$("#sidebar-container .ps__rail-y").hasClass("hide_ps__rail-y")) {

@@ -101,15 +101,20 @@ var o_collections = {
 
      adjustProductInfoHeight: function() {
          let containerHeight = $(window).height()-120;
+         let downloadOptionsContainer = $(window).height()-90;
          let collectionsSummaryHeight = $("#collections_summary").height();
-         let collectionsGalleryHeight = $("#collection .gallery-scroll").height();
-         $("#collection .sidebar_wrapper").height(containerHeight);
+         $("#collection .sidebar_wrapper").height(downloadOptionsContainer);
          $("#collection .gallery-contents").height(containerHeight);
+         console.log(`=====================`)
+         console.log(`container height: ${containerHeight}`)
+         console.log(`collectionsSummaryHeight height: ${collectionsSummaryHeight}`)
+         console.log(`downloadOptionsContainer height: ${downloadOptionsContainer}`)
+         console.log(`window height: ${$(window).height()}`)
 
          // The following steps will hide the y-scrollbar when it's not needed.
          // Without these steps, y-scrollbar will exist at the beginning, and disappear after the first attempt of scrolling
          if(o_collections.downloadOptionsScrollbar) {
-             if(containerHeight > collectionsSummaryHeight) {
+             if(downloadOptionsContainer > collectionsSummaryHeight) {
                  if(!$("#download-options-container .ps__rail-y").hasClass("hide_ps__rail-y")) {
                      $("#download-options-container .ps__rail-y").addClass("hide_ps__rail-y");
                      o_collections.downloadOptionsScrollbar.settings.suppressScrollY = true;
@@ -220,7 +225,8 @@ var o_collections = {
                     o_collections.collectionGalleryScrollbar = new PerfectScrollbar("#collection .gallery-contents", {
                         suppressScrollX: true,
                     });
-                    o_collections.adjustProductInfoHeight();
+                    let adjustProductInfoHeight = _.debounce(o_collections.adjustProductInfoHeight, 200);
+                    adjustProductInfoHeight();
                 }
             });
         }
