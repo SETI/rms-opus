@@ -138,7 +138,7 @@ INSTALLED_APPS = (
     'search',
     'paraminfo',
     'metadata',
-    'guide',
+    'help',
     'results',
     'ui',
     'user_collections',
@@ -237,7 +237,7 @@ LOGGING = {
             'handlers': ['console', 'logfile'],
             'level': 'DEBUG',
         },
-        'guide': {
+        'help': {
             'handlers': ['console', 'logfile'],
             'level': 'DEBUG',
         },

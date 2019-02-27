@@ -17,7 +17,7 @@ base_urlpatterns = [
     url(r'^', include('results.urls')),
     url(r'^', include('metadata.urls')),
     url(r'^', include('search.urls')),
-    url(r'^', include('guide.urls')),
+    url(r'^', include('help.urls')),
     url(r'^', include('user_collections.urls')),
 ]
 
@@ -31,3 +31,4 @@ urlpatterns = [
     url('^dictionary/', include(dictionary_urlpatterns)),
     url('^__dictionary/', include(dictionary_urlpatterns)),
 ]
+help
