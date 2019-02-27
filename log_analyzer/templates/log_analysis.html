@@ -14,37 +14,31 @@
 <style>
 {% raw %}
 @media (min-width: 768px){
-  #left {
+  #left, #right {
     position: absolute;
     top: 0;
     bottom: 0;
+    overflow-y: scroll;
+  }
+  #left {
     left: 0;
     width: 25%;
-    overflow-y: scroll;
     border-right: 1px solid blue;
   }
   #right {
-    position: absolute;
-    top: 0;
-    bottom: 0;
     right: 0;
-    overflow-y: scroll;
     width: 75%;
   }
 }
-#left {
+#left, #right {
   text-align: left;
   height:100%;
-}
-#right {
-  height:100%;
-  text-align: left;
 }
 .SessionLink {
-  font-family: "Roboto";
+  font-family: "Roboto",sans-serif;
 }
 .SessionLink.active {
-  background-color:yellow;
+  background-color: yellow;
 }
 .SessionInfo td {
   vertical-align:top;
@@ -86,22 +80,18 @@ because it requires that all the navigation tabs be within a single unordered li
 
 <div class="tab-content">
 
-<div id="ByIP" class="tab-pane show active">
 
-{% set marker_to_letter = { "has-search": "S", "has-columns": "C", "fetched-gallery": "G",
-                            "has-download": "&DownArrowBar;", "has-obsolete-slug" : "&odsold;" }
+{% set marker_to_glyph = { "HAS_SEARCH": "search", "HAS_COLUMNS": "list-ul", "FETCHED_GALLERY": "images",
+                           "HAS_DOWNLOAD": "file-download", "HAS_OBSOLETE_SLUG" : "book-dead" }
 %}
-{% set marker_to_glyph = { "has-search": "search", "has-columns": "list-ul", "fetched-gallery": "images",
-                            "has-download": "file-download", "has-obsolete-slug" : "times-circle" }
-%}
-
 {% macro generate_session_row(session, full) %}
     <tr>
     {% for flag in action_flags_list %}
         {% set flag_in_use = flag in session.action_flags %}
         {% if flag_in_use or full %}
-            {% set glyph = marker_to_glyph[flag.as_html_classname()] %}
-            <td><span class="{{ 'fas fa-' ~  glyph ~ ('' if flag_in_use else ' invisible') }}">&zwj;</span></td>
+            {% set glyph = 'fa-' ~ marker_to_glyph[flag.name] %}
+            {% set classes = ['fas', glyph] + ([] if flag_in_use else ['invisible']) %}
+            <td><span class="{{ classes | join(' ') }}">&zwj;</span></td>
         {% else %}
             <td></td>
         {% endif %}
@@ -118,6 +108,7 @@ because it requires that all the navigation tabs be within a single unordered li
     {% endif %}
 {% endmacro %}
 
+<div id="ByIP" class="tab-pane show active">
 {% for host_info in host_infos_by_ip %}
     {% if not loop.first %}<hr/>{% endif %}
     {{ host_info_ip_or_name(host_info) }}
@@ -130,9 +121,8 @@ because it requires that all the navigation tabs be within a single unordered li
             {% endcall %}
         {% endfor %}
     </table>
-
 {% endfor %}
-</div>
+</div>  ## #ByIP
 
 <div id="ByTime" class="tab-pane">
 {% for day, host_infos_for_day in host_infos_by_date %}
@@ -212,8 +202,7 @@ because it requires that all the navigation tabs be within a single unordered li
 
 
 $(function() {
-    $('[data-toggle="tooltip"]').tooltip();
-    $('#right [data-toggle="tooltip"]').data('placement', 'right');
+    $('[data-toggle="tooltip"]').tooltip({ boundary: 'window' });
 
     $('.SessionLink').click(function() {
         var target = $(this).data('target');
