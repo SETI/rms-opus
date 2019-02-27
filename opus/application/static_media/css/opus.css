@@ -148,7 +148,6 @@ body {
 
 #sidebar .menu_help {
     margin:0;
-    color:blue;
     padding: .1em .2em;
     padding-left: 1em;
 }
@@ -250,6 +249,9 @@ ul.searchMenu{
   opacity: 0.15;
 }
 
+.modal {
+    top: 4%;
+}
 .modal-content {
   border-radius: 1%;
 }
@@ -677,6 +679,10 @@ div.gallery {
 
 #page-slider .slider {
     width: 150px;
+}
+
+.table-page {
+    display: none;
 }
 
 .panel-body .gallery-contents {

@@ -1,4 +1,7 @@
 var o_collections = {
+    lastCartRequestNo: 0,
+    lastRequestNo: 0,
+
     /**
      *
      *  managing collections communication between server and client and
@@ -125,6 +128,9 @@ var o_collections = {
      },
 
      updateCartStatus: function(status) {
+         if (status.reqno < o_collections.lastCartRequestNo) {
+             return;
+         }
          let count = status.count;
          $("#collection_count").html(count);
          if (status.total_download_size_pretty !== undefined) {
@@ -137,9 +143,9 @@ var o_collections = {
      // init an existing collection on page load
      initCollection: function() {
         // returns any user collection saved in session
-        opus.lastCartRequestNo++;
-        $.getJSON("/opus/__collections/status.json?reqno=" + opus.lastCartRequestNo, function(statusData) {
-            if(statusData.reqno < opus.lastCartRequestNo) {
+        o_collections.lastCartRequestNo++;
+        $.getJSON("/opus/__collections/status.json?reqno=" + o_collections.lastCartRequestNo, function(statusData) {
+            if(statusData.reqno < o_collections.lastCartRequestNo) {
                 return;
             }
             o_collections.updateCartStatus(statusData);
@@ -152,12 +158,16 @@ var o_collections = {
 
         let view = o_browse.getViewInfo();
         let base_url = "/opus/__api/dataimages.json?";
-        let url = o_hash.getHash() + "&reqno=" + opus.lastRequestNo + view.add_to_url;
+        o_collections.lastRequestNo++;
+        let url = o_hash.getHash() + "&reqno=" + o_collections.lastRequestNo + view.add_to_url;
 
         url = o_browse.updatePageInUrl(url, page);
 
         // metadata; used for both table and gallery
         $.getJSON(base_url + url, function(data) {
+            if (data.reqno < o_collections.lastRequestNo) {
+                return;
+            }
             if (opus.col_labels.length === 0) {
                 opus.col_labels = data.columns;
             }
@@ -348,11 +358,8 @@ var o_collections = {
             add_to_url = "&download=1&" + o_collections.getDownloadFiltersChecked();
         }
 
-        opus.lastCartRequestNo++;
-        $.getJSON(url  + add_to_url + "&reqno=" + opus.lastCartRequestNo, function(statusData) {
-            if(statusData.reqno < opus.lastCartRequestNo) {
-                return;
-            }
+        o_collections.lastCartRequestNo++;
+        $.getJSON(url  + add_to_url + "&reqno=" + o_collections.lastCartRequestNo, function(statusData) {
             o_collections.updateCartStatus(statusData);
         });
     },
