@@ -942,7 +942,7 @@ var o_browse = {
                         elementScroll: true,
                         history: false,
                         scrollThreshold: 500,
-                        debug: true,
+                        debug: false,
                     });
 
                     $(selector).on("request.infiniteScroll", function( event, path ) {

@@ -352,35 +352,24 @@ var opus = {
         if(opus.default_widgets.length !== opus.widgets_drawn.length) {
             return false;
         }
-
         let defaultWidgetsString = JSON.stringify(opus.default_widgets.sort());
         let drawnWidgetsString = JSON.stringify(opus.widgets_drawn.sort());
-        // let drawnWidgetsString2 = JSON.stringify(opus.widgets_drawn.reverse());
-        // console.log("===widgets stirng comp===")
-        // console.log(defaultWidgetsString !== drawnWidgetsString1)
-        // console.log(defaultWidgetsString !== drawnWidgetsString2)
         if(defaultWidgetsString !== drawnWidgetsString) {
           return false;
         }
-
         return true;
     },
 
     // check if current cols (metadata) are default ones
     checkIfMetadataAreDefault: function() {
-        console.log("===metadata comp===")
-        console.log(opus.prefs.cols)
-        console.log(default_columns.split(','))
         if(opus.prefs.cols.length !== default_columns.split(',').length) {
           return false;
         }
         let defaultColsString = JSON.stringify(default_columns.split(',').sort());
         let selectedColsString = JSON.stringify(opus.prefs.cols.sort());
-
         if(defaultColsString !== selectedColsString) {
           return false;
         }
-
         return true;
     }
 
@@ -449,19 +438,12 @@ $(document).ready(function() {
     });
 
     $(".restart_button button").on("click", function() {
-        console.log(`click button to open ${$(this).data("target")} modal if needed`)
         let targetModal = $(this).data("target");
 
-        console.log(opus.widgets_drawn);
-        console.log(opus.default_widgets);
         if (!$.isEmptyObject(opus.selections) || !opus.checkIfDrawnWidgetsAreDefault()) {
-            console.log("some changes happened, need to reset")
             $(targetModal).modal("show")
         } else if(targetModal === "#reset-all-modal" && !opus.checkIfMetadataAreDefault()){
-            console.log("no changes happened but need to reset metadata")
             $(targetModal).modal("show")
-        } else {
-            console.log("no changes happened, no need to reset")
         }
     });
 
