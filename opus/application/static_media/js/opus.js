@@ -288,7 +288,7 @@ var opus = {
 
     },
 
-    startOver: function() {
+    startOver: function(resetMetadata=false) {
         // handles the 'start over' buttons which has 2 selections
         // if keep_set_widgets is true it will leave the current selected widgets alone
         // and just redraw them with no selections in them
@@ -311,6 +311,11 @@ var opus = {
         opus.widgets_drawn = [];
         opus.widget_elements_drawn = [];
 
+        if(resetMetadata) {
+            opus.prefs.cols = [];
+            o_browse.resetMetadata(default_columns.split(','), true);
+        }
+
         o_menu.markDefaultMenuItem();
 
         let deferredArr = [];
@@ -327,6 +332,8 @@ var opus = {
         // start the main timer again
         opus.main_timer = setInterval(opus.load, opus.main_timer_interval);
 
+        o_hash.updateHash();
+
         return false;
 
     },
@@ -338,6 +345,43 @@ var opus = {
         o_collections.collectionBehaviors();
         o_search.searchBehaviors();
         return;
+    },
+
+    // check if current drawn widgets are default ones
+    checkIfDrawnWidgetsAreDefault: function() {
+        if(opus.default_widgets.length !== opus.widgets_drawn.length) {
+            return false;
+        }
+
+        let defaultWidgetsString = JSON.stringify(opus.default_widgets.sort());
+        let drawnWidgetsString = JSON.stringify(opus.widgets_drawn.sort());
+        // let drawnWidgetsString2 = JSON.stringify(opus.widgets_drawn.reverse());
+        // console.log("===widgets stirng comp===")
+        // console.log(defaultWidgetsString !== drawnWidgetsString1)
+        // console.log(defaultWidgetsString !== drawnWidgetsString2)
+        if(defaultWidgetsString !== drawnWidgetsString) {
+          return false;
+        }
+
+        return true;
+    },
+
+    // check if current cols (metadata) are default ones
+    checkIfMetadataAreDefault: function() {
+        console.log("===metadata comp===")
+        console.log(opus.prefs.cols)
+        console.log(default_columns.split(','))
+        if(opus.prefs.cols.length !== default_columns.split(',').length) {
+          return false;
+        }
+        let defaultColsString = JSON.stringify(default_columns.split(',').sort());
+        let selectedColsString = JSON.stringify(opus.prefs.cols.sort());
+
+        if(defaultColsString !== selectedColsString) {
+          return false;
+        }
+
+        return true;
     }
 
 }; // end opus namespace
@@ -404,15 +448,32 @@ $(document).ready(function() {
 
     });
 
-    // reset buttons
-    $(".confirmModal").on("click", ".btn", function() {
+    $(".restart_button button").on("click", function() {
+        console.log(`click button to open ${$(this).data("target")} modal if needed`)
+        let targetModal = $(this).data("target");
+
+        console.log(opus.widgets_drawn);
+        console.log(opus.default_widgets);
+        if (!$.isEmptyObject(opus.selections) || !opus.checkIfDrawnWidgetsAreDefault()) {
+            console.log("some changes happened, need to reset")
+            $(targetModal).modal("show")
+        } else if(targetModal === "#reset-all-modal" && !opus.checkIfMetadataAreDefault()){
+            console.log("no changes happened but need to reset metadata")
+            $(targetModal).modal("show")
+        } else {
+            console.log("no changes happened, no need to reset")
+        }
+    });
+
+    $(".confirm-modal").on("click", ".btn", function() {
         let target = $(this).data("target");
         switch($(this).attr("type")) {
             case "submit":
-                if(target === "reset-all-modal" && $("#collection_count").text() !== "0") {
-                    o_collections.emptyCollection(returnToSearch=true);
+                if(target === "reset-all-modal") {
+                    opus.startOver(resetMetadata=true);
+                } else {
+                    opus.startOver();
                 }
-                opus.startOver();
                 break;
             case "cancel":
                 $('.modal').modal('hide')
