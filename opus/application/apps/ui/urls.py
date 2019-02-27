@@ -5,7 +5,6 @@ from django.contrib.staticfiles.storage import staticfiles_storage
 from django.views.generic.base import RedirectView
 
 from ui.views import (
-    api_help,
     api_last_blog_update,
     api_get_table_headers,
     api_get_browse_headers,
@@ -17,7 +16,6 @@ from ui.views import (
 
 urlpatterns = [
     url(r'^admin/', admin.site.urls),
-    url(r'^__help/(?P<page>[-\w]+).html$', api_help),
     url(r'^__lastblogupdate.json$', api_last_blog_update),
     url(r'^__browse_headers.html$', api_get_browse_headers),
     url(r'^__table_headers.html$', api_get_table_headers),

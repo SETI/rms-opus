@@ -7,7 +7,7 @@
 
                 <h2>PDS Products</h2>
                 <div>
-                     <p>Download zipped <a href="/opus/__api/download/{{ opus_id }}.zip">data archive</a> or <a href="/opus/__api/download/{{ opus_id }}.zip?urlonly=1">URL archive</a> for this observation (all products, current version only)</a></p>
+                    <p>Download zipped <a data-action="downloadData" href="/opus/__api/download/{{ opus_id }}.zip">data archive</a> or <a data-action="downloadURL" href="/opus/__api/download/{{ opus_id }}.zip?urlonly=1">URL archive</a> for this observation (all products, current version only)</a></p>
                     <p>Click on any "Index" type to see the entry for this observation in that table.</p>
                     {% for version, version_items in products.items %}
                       <ul>

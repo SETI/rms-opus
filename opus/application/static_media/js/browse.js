@@ -401,8 +401,8 @@ var o_browse = {
         $("#obs-menu [data-action='info']").attr("data-id", opusId);
         $("#obs-menu [data-action='downloadCSV']").attr("href",`/opus/__api/metadata_v2/${opusId}.csv?cols=${opus.prefs.cols.join()}`);
         $("#obs-menu [data-action='downloadCSVAll']").attr("href",`/opus/__api/metadata_v2/${opusId}.csv`);
-        $("#obs-menu [data-action='downloadData']").attr("href",`/opus/__api/download/${opusId}.zip`);
-        $("#obs-menu [data-action='downloadURL']").attr("href",`/opus/__api/download/${opusId}.zip?urlonly=1`);
+        $("#obs-menu [data-action='downloadData']").attr("href",`/opus/__api/download/${opusId}.zip?cols=${opus.prefs.cols.join()}`);
+        $("#obs-menu [data-action='downloadURL']").attr("href",`/opus/__api/download/${opusId}.zip?urlonly=1&cols=${opus.prefs.cols.join()}`);
 
         $("#obs-menu .dropdown-item[data-action='range']").hide();
 
@@ -1081,27 +1081,15 @@ var o_browse = {
         //////o_browse.toggleGalleryViewHighlight(opusId);
         let namespace = o_browse.getViewInfo().namespace;
         $(namespace).find(".modal-show").removeClass("modal-show");
-        $(namespace).find("[data-id='"+opusId+"'] div.modal-overlay").addClass("modal-show");
-        $(namespace).find("tr[data-id='"+opusId+"']").addClass("modal-show");
-        let imageURL = $(namespace).find("[data-id='"+opusId+"'] > a.thumbnail").data("image");
-        if (imageURL === undefined) {
-            // put a temp spinner while retrieving the image; this only happens if the data table is loaded first
-            $("#galleryViewContents").html(o_browse.loader + o_browse.metadataboxHtml(opusId));
-            $("#galleryViewContents").data("id", opusId);
-
-            let url = "/opus/__api/image/full/" + opusId + ".json";
-            $.getJSON(url, function(imageData) {
-                var imageURL = imageData['data'][0]['url'];
-                o_browse.updateMetaGalleryView(opusId, imageURL);
-            });
-        } else {
-            o_browse.updateMetaGalleryView(opusId, imageURL);
-        }
+        $(namespace).find(`[data-id='${opusId}'] div.modal-overlay`).addClass("modal-show");
+        $(namespace).find(`tr[data-id='${opusId}']`).addClass("modal-show");
+        let imageURL = $(namespace).find(`[data-id='${opusId}'] > a.thumbnail`).data("image");
+        o_browse.updateMetaGalleryView(opusId, imageURL);
     },
 
 
     updateMetaGalleryView: function(opusId, imageURL) {
-        $("#galleryViewContents .left").html("<a href='"+imageURL+"' target='_blank'><img src='"+imageURL+"' title='"+opusId+"' class='preview'/></a>");
+        $("#galleryViewContents .left").html(`<a href='${imageURL}' target='_blank'><img src='${imageURL}' title='${opusId}' class='preview'/></a>`);
         o_browse.metadataboxHtml(opusId);
         o_browse.modalScrollbar.update();
     },

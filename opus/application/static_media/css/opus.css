@@ -148,7 +148,6 @@ body {
 
 #sidebar .menu_help {
     margin:0;
-    color:blue;
     padding: .1em .2em;
     padding-left: 1em;
 }
@@ -276,6 +275,9 @@ ul.searchMenu{
   border-radius: 6px;
 }
 
+.modal {
+    top: 4%;
+}
 .modal-content {
   border-radius: 1%;
 }

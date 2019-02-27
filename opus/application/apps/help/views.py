@@ -1,11 +1,6 @@
 ################################################################################
 #
-# guide/views.py
-#
-# The API interface for the API guide:
-#
-#    Format: api/
-#        or: api/guide.html
+# help/views.py
 #
 ################################################################################
 
@@ -28,6 +23,68 @@ log = logging.getLogger(__name__)
 # API INTERFACES
 #
 ################################################################################
+
+def api_about(request):
+    """Renders the about page
+
+    This is a PRIVATE API.
+
+    Format: __help/about.html
+    """
+    api_code = enter_api_call('api_about', request)
+
+    ret = render(request, 'help/about.html')
+    exit_api_call(api_code, ret)
+    return ret
+
+def api_datasets(request):
+    """Renders the datasets page
+
+    This is a PRIVATE API.
+
+    Format: __help/datasets.html
+    """
+    api_code = enter_api_call('api_datasets', request)
+
+    data = {}
+    all_volumes = OrderedDict()
+    for d in (ObsGeneral.objects.values('instrument_id','volume_id')
+              .order_by('instrument_id','volume_id').distinct()):
+        all_volumes.setdefault(d['instrument_id'],
+                               []).append(d['volume_id'])
+    for k,v in all_volumes.items():
+        all_volumes[k] = ', '.join(all_volumes[k])
+    data = {'all_volumes': all_volumes}
+
+    ret = render(request, 'help/datasets.html', data)
+    exit_api_call(api_code, ret)
+    return ret
+
+def api_faq(request):
+    """Renders the faq page
+
+    This is a PRIVATE API.
+
+    Format: __help/faq.html
+    """
+    api_code = enter_api_call('api_faq', request)
+
+    ret = render(request, 'help/faq.html')
+    exit_api_call(api_code, ret)
+    return ret
+
+def api_tutorial(request):
+    """Renders the tutorial page
+
+    This is a PRIVATE API.
+
+    Format: __help/tutorial.html
+    """
+    api_code = enter_api_call('api_tutorial', request)
+
+    ret = render(request, 'help/tutorial.html')
+    exit_api_call(api_code, ret)
+    return ret
 
 def api_guide(request):
     """Renders the API guide at opus/api
@@ -62,7 +119,7 @@ def api_guide(request):
 
     slugs = get_fields_info('raw', collapse=True)
 
-    ret = render(request, 'guide/guide.html',
+    ret = render(request, 'help/guide.html',
                  {'guide': guide, 'slugs': slugs})
     exit_api_call(api_code, ret)
     return ret
