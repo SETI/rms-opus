@@ -647,8 +647,11 @@ var o_browse = {
             $(".justify-content-center").show();
 
             o_browse.galleryScrollbar.settings.suppressScrollY = false;
-            $(".gallery-contents > .ps__rail-y").show();
-            $(".dataTable > .ps__rail-y").hide();
+
+            $(".gallery-contents > .ps__rail-y").removeClass("hide_ps__rail-y");
+            if(!$(".dataTable > .ps__rail-y").hasClass("hide_ps__rail-y")) {
+                $(".dataTable > .ps__rail-y").addClass("hide_ps__rail-y");
+            }
 
             o_browse.galleryScrollbar.update();
         } else {
@@ -663,8 +666,12 @@ var o_browse = {
             $(".justify-content-center").hide();
 
             o_browse.galleryScrollbar.settings.suppressScrollY = true;
-            $(".gallery-contents > .ps__rail-y").hide();
-            $(".dataTable > .ps__rail-y").show();
+
+            if(!$(".gallery-contents > .ps__rail-y").hasClass("hide_ps__rail-y")) {
+                $(".gallery-contents > .ps__rail-y").addClass("hide_ps__rail-y");
+            }
+            $(".dataTable > .ps__rail-y").removeClass("hide_ps__rail-y");
+
             o_browse.tableScrollbar.update();
         }
     },
@@ -792,7 +799,6 @@ var o_browse = {
         $(".gallery", namespace).append(html);
         $(".table-page-load-status").hide();
 
-        // o_browse.tableScrollbar.update();
         o_browse.adjustTableSize();
         o_browse.galleryScrollbar.update();
 
