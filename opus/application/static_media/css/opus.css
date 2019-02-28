@@ -985,6 +985,10 @@ footer {
     font-weight: bold;
 }
 
+.op-reset-button button:disabled {
+    pointer-events: none;
+}
+
 input[type="text"].search_input_original {
     border: 1px solid #D5D5D5;
 }

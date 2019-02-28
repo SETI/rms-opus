@@ -120,7 +120,7 @@ var opus = {
         selections = o_hash.getSelectionsFromHash();
 
         // if (!$.isEmptyObject(opus.selections) || !opus.checkIfDrawnWidgetsAreDefault() || !opus.checkIfMetadataAreDefault()) {
-        if (selections || !opus.checkIfDrawnWidgetsAreDefault() || !opus.checkIfMetadataAreDefault()) {
+        if (selections || !opus.checkIfDrawnWidgetsAreDefault()) {
             console.log("======== THERE IS SOMETHING CHANGED =========")
             // console.log(selections);
             // console.log(opus.selections);
@@ -128,6 +128,10 @@ var opus = {
             // console.log(opus.widgets_drawn);
             // console.log(opus.prefs.widgets);
             $(".op-reset-button button").prop("disabled", false);
+        } else  if (!opus.checkIfMetadataAreDefault()) {
+            console.log("======== ONLY METADAT CHANGED =========")
+            $(".op-reset-button .op-reset-search-metadata").prop("disabled", false);
+            $(".op-reset-button .op-reset-search").prop("disabled", true);
         } else {
             console.log("======== THERE IS NOTHING CHANGED =========")
             $(".op-reset-button button").prop("disabled", true);
@@ -369,11 +373,7 @@ var opus = {
         let reversedDefaultWidgets = new Array(...opus.default_widgets)
         reversedDefaultWidgets.reverse();
         let defaultWidgetsString = JSON.stringify(reversedDefaultWidgets);
-        // let drawnWidgetsString = JSON.stringify(opus.widgets_drawn.sort());
         let drawnWidgetsString = JSON.stringify(opus.prefs.widgets);
-        console.log(`opus.default_widgets: ${defaultWidgetsString}`);
-        console.log(`opus.prefs.widgets: ${drawnWidgetsString}`);
-        // console.log(`opus.widgets_drawn: ${drawnWidgets}`);
         if(defaultWidgetsString !== drawnWidgetsString) {
             return false;
         }
