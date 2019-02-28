@@ -408,7 +408,7 @@ var o_search = {
     },
 
     adjustSearchWidgetHeight: function() {
-        let containerHeight = $("#search").height() - 85;
+        let containerHeight = $("#search").height() - 80;
         let searchWidgetHeight = $("#search_widgets").height();
         $(".widget_column").height(containerHeight);
 
