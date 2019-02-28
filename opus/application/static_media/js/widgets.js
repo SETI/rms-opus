@@ -8,6 +8,26 @@ var o_widgets = {
 
 
     addWidgetBehaviors: function() {
+		    // $("#search_widgets").sortable({
+        //     items: "> li",
+        //     cursor: 'grab',
+        //     stop: function(event, ui) {
+        //       console.log("=====sortable stops=====")
+        //       o_widgets.widgetDrop(this);
+        //
+        //     },
+        //     start: function(event, ui) {
+        //       console.log("=====sortable start=====")
+        //       let widget = $("#search_widgets").sortable( "widget" );
+        //       console.log(widget);
+        //     },
+        //     update: function(event, ui) {
+        //         console.log("=====sortable update done=====")
+        //         console.log(ui.item)
+        //     },
+        //     placeholder: "ui-state-highlight",
+        // });
+
 		    $("#search_widgets").sortable({
             items: "li:not(.unsortable)",
             cursor: 'move',
@@ -121,13 +141,14 @@ var o_widgets = {
     },
 
     widgetDrop: function(obj) {
-            // if widget as moved to a different formscolumn,
+            // if widget is moved to a different formscolumn,
             // redefine the opus.prefs.widgets (preserves order)
             let widgets = $('#search_widgets').sortable('toArray');
-
+            console.log(`sortable id: ${widgets}`)
             $.each(widgets, function(index,value) {
                 widgets[index]=value.split('__')[1];
             });
+            console.log(`sortable id array: ${widgets}`)
             opus.prefs.widgets = widgets;
 
             o_hash.updateHash();

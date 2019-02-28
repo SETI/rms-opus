@@ -6,7 +6,7 @@ var o_search = {
      *
      **/
     searchScrollbar: new PerfectScrollbar("#sidebar-container", { suppressScrollX: true }),
-    widgetScrollbar: new PerfectScrollbar("#widget-container"),
+    widgetScrollbar: new PerfectScrollbar("#widget-container" , { suppressScrollX: true }),
 
     // for input validation in the search widgets
     searchResultsNotEmpty: false,
