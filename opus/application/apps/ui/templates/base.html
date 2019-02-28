@@ -57,9 +57,9 @@
               </div>
             </div>
             <hr class="shadow-divider m-0">
-            <div class="restart_button">
-                <button type="button" class="btn btn-sm btn-secondary" data-target="#reset-modal" title="Reset all search params">Reset Search</button>
-                <button type="button" class="btn btn-sm btn-secondary" data-target="#reset-all-modal" title="Reset all search params and empty shopping cart">Reset Search and Metadata</button>
+            <div class="op-reset-button">
+                <button type="button" disabled class="btn btn-sm btn-secondary" data-target="#op-reset-search-modal" title="Reset all search params">Reset Search</button>
+                <button type="button" disabled class="btn btn-sm btn-secondary" data-target="#op-reset-search-metadata-modal" title="Reset all search params and metadata">Reset Search and Metadata</button>
             </div>
           </div>
 
@@ -248,16 +248,16 @@
     </div>
 
     {% include "confirm_modal.html" with
-      id_name="reset-modal"
+      id_name="op-reset-search-modal"
       confirm_title="Confirm Reset Search"
       confirm_msg="Are you sure you want to reset your search? Your current search will be lost."
-      target="reset-modal"
+      target="op-reset-search-modal"
     %}
     {% include "confirm_modal.html" with
-      id_name="reset-all-modal"
+      id_name="op-reset-search-metadata-modal"
       confirm_title="Confirm Reset Search and Metadata"
       confirm_msg="Are you sure you want to reset your search and metadata? Your current search and metadata selection will be lost."
-      target="reset-all-modal"
+      target="op-reset-search-metadata-modal"
     %}
 
 

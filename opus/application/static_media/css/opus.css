@@ -976,11 +976,11 @@ footer {
   content: '';
 }
 
-.restart_button {
+.op-reset-button {
     text-align: center;
 }
 
-.restart_button button {
+.op-reset-button button {
     margin: 5px 1px;
     font-weight: bold;
 }

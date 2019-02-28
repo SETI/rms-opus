@@ -697,7 +697,7 @@ var o_browse = {
             $(".modal-body.metadata").load( url, function(response, status, xhr)  {
 
                 opus.metadata_selector_drawn=true;  // bc this gets saved not redrawn
-                $("#metadataSelector .restart_button").hide(); // we are not using this
+                $("#metadataSelector .op-reset-button").hide(); // we are not using this
 
                 // since we are rendering the left side of metadata selector w/the same code that builds the select menu, we need to unhighlight the selected widgets
                 o_menu.markMenuItem(".modal-body.metadata li", "unselect");

@@ -119,6 +119,20 @@ var opus = {
 
         selections = o_hash.getSelectionsFromHash();
 
+        // if (!$.isEmptyObject(opus.selections) || !opus.checkIfDrawnWidgetsAreDefault() || !opus.checkIfMetadataAreDefault()) {
+        if (selections || !opus.checkIfDrawnWidgetsAreDefault() || !opus.checkIfMetadataAreDefault()) {
+            console.log("======== THERE IS SOMETHING CHANGED =========")
+            // console.log(selections);
+            // console.log(opus.selections);
+            // console.log(opus.default_widgets);
+            // console.log(opus.widgets_drawn);
+            // console.log(opus.prefs.widgets);
+            $(".op-reset-button button").prop("disabled", false);
+        } else {
+            console.log("======== THERE IS NOTHING CHANGED =========")
+            $(".op-reset-button button").prop("disabled", true);
+        }
+
         if (!selections) {
             // there are no selections found in the url hash
             if (!jQuery.isEmptyObject(opus.last_selections)) {
@@ -143,7 +157,6 @@ var opus = {
               // and reset the query:
               o_browse.resetQuery();
         }
-
 
         // start the result count spinner and do the yellow flash
         $("#result_count").html(opus.spinner).parent().effect("highlight", {}, 500);
@@ -349,13 +362,20 @@ var opus = {
 
     // check if current drawn widgets are default ones
     checkIfDrawnWidgetsAreDefault: function() {
-        if(opus.default_widgets.length !== opus.widgets_drawn.length) {
+        // if(opus.default_widgets.length !== opus.widgets_drawn.length) {
+        if(opus.prefs.widgets.length !== opus.default_widgets.length) {
             return false;
         }
-        let defaultWidgetsString = JSON.stringify(opus.default_widgets.sort());
-        let drawnWidgetsString = JSON.stringify(opus.widgets_drawn.sort());
+        let reversedDefaultWidgets = new Array(...opus.default_widgets)
+        reversedDefaultWidgets.reverse();
+        let defaultWidgetsString = JSON.stringify(reversedDefaultWidgets);
+        // let drawnWidgetsString = JSON.stringify(opus.widgets_drawn.sort());
+        let drawnWidgetsString = JSON.stringify(opus.prefs.widgets);
+        console.log(`opus.default_widgets: ${defaultWidgetsString}`);
+        console.log(`opus.prefs.widgets: ${drawnWidgetsString}`);
+        // console.log(`opus.widgets_drawn: ${drawnWidgets}`);
         if(defaultWidgetsString !== drawnWidgetsString) {
-          return false;
+            return false;
         }
         return true;
     },
@@ -363,12 +383,12 @@ var opus = {
     // check if current cols (metadata) are default ones
     checkIfMetadataAreDefault: function() {
         if(opus.prefs.cols.length !== default_columns.split(',').length) {
-          return false;
+            return false;
         }
-        let defaultColsString = JSON.stringify(default_columns.split(',').sort());
-        let selectedColsString = JSON.stringify(opus.prefs.cols.sort());
+        let defaultColsString = JSON.stringify(default_columns.split(','));
+        let selectedColsString = JSON.stringify(opus.prefs.cols);
         if(defaultColsString !== selectedColsString) {
-          return false;
+            return false;
         }
         return true;
     }
@@ -437,12 +457,22 @@ $(document).ready(function() {
 
     });
 
-    $(".restart_button button").on("click", function() {
+    $(".op-reset-button button").on("click", function() {
         let targetModal = $(this).data("target");
 
         if (!$.isEmptyObject(opus.selections) || !opus.checkIfDrawnWidgetsAreDefault()) {
             $(targetModal).modal("show")
-        } else if(targetModal === "#reset-all-modal" && !opus.checkIfMetadataAreDefault()){
+        } else if(targetModal === "#op-reset-search-metadata-modal" && !opus.checkIfMetadataAreDefault()){
+            $(targetModal).modal("show")
+        }
+    });
+
+    $(".op-reset-button button").on("click", function() {
+        let targetModal = $(this).data("target");
+
+        if (!$.isEmptyObject(opus.selections) || !opus.checkIfDrawnWidgetsAreDefault()) {
+            $(targetModal).modal("show")
+        } else if(targetModal === "#op-reset-search-metadata-modal" && !opus.checkIfMetadataAreDefault()){
             $(targetModal).modal("show")
         }
     });
@@ -451,7 +481,7 @@ $(document).ready(function() {
         let target = $(this).data("target");
         switch($(this).attr("type")) {
             case "submit":
-                if(target === "reset-all-modal") {
+                if(target === "op-reset-search-metadata-modal") {
                     opus.startOver(resetMetadata=true);
                 } else {
                     opus.startOver();
