@@ -328,9 +328,15 @@ var opus = {
         opus.widgets_drawn = [];
         opus.widget_elements_drawn = [];
 
-        if(resetMetadata) {
+        if(resetMetadata && !opus.checkIfMetadataAreDefault()) {
             opus.prefs.cols = [];
             o_browse.resetMetadata(default_columns.split(','), true);
+            $(".op-reset-button button").prop("disabled", true);
+        } else if(!opus.checkIfMetadataAreDefault()) {
+            $(".op-reset-button .op-reset-search-metadata").prop("disabled", false);
+            $(".op-reset-button .op-reset-search").prop("disabled", true);
+        } else {
+            $(".op-reset-button button").prop("disabled", true);
         }
 
         o_menu.markDefaultMenuItem();
@@ -345,6 +351,15 @@ var opus = {
             let adjustSearchWidgetHeight = _.debounce(o_search.adjustSearchHeight, 800);
             adjustSearchWidgetHeight();
         });
+
+        // if(resetMetadata) {
+        //     $(".op-reset-button button").prop("disabled", false);
+        // } else if(!opus.checkIfMetadataAreDefault()) {
+        //     $(".op-reset-button .op-reset-search-metadata").prop("disabled", false);
+        //     $(".op-reset-button .op-reset-search").prop("disabled", true);
+        // } else {
+        //     $(".op-reset-button button").prop("disabled", true);
+        // }
 
         // start the main timer again
         opus.main_timer = setInterval(opus.load, opus.main_timer_interval);
@@ -366,7 +381,6 @@ var opus = {
 
     // check if current drawn widgets are default ones
     checkIfDrawnWidgetsAreDefault: function() {
-        // if(opus.default_widgets.length !== opus.widgets_drawn.length) {
         if(opus.prefs.widgets.length !== opus.default_widgets.length) {
             return false;
         }
