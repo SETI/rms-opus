@@ -38,10 +38,10 @@ var o_collections = {
          // check an input on selected products and images updates file_info
          $("#collection").on("click","#download_options input", function() {
              let add_to_url = o_collections.getDownloadFiltersChecked();
-             opus.lastCartRequestNo++;
-             let url = "/opus/__collections/status.json?reqno=" + opus.lastCartRequestNo + "&" + add_to_url + "&download=1";
+             o_collections.lastCartRequestNo++;
+             let url = "/opus/__collections/status.json?reqno=" + o_collections.lastCartRequestNo + "&" + add_to_url + "&download=1";
              $.getJSON(url, function(info) {
-                 if(info.reqno < opus.lastCartRequestNo) {
+                 if(info.reqno < o_collections.lastCartRequestNo) {
                      return;
                  }
                  $("#total_download_size").fadeOut().html(info.total_download_size_pretty).fadeIn();

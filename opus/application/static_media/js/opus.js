@@ -23,13 +23,8 @@ var opus = {
 
     // avoiding race conditions in ajax calls
     lastRequestNo: 0,          // holds request numbers for main result count loop,
-    lastCartRequestNo: 0,
-    lastSlugNormalizeRequestNo: 0,
     lastAllNormalizeRequestNo: 0,
     lastResultCountRequestNo: 0,
-    lastMultsRequestNo: 0,
-    lastEndpointsRequestNo: 0,
-    lastLoadBrowseDataRequestNo: 0,
     waitingForAllNormalizedAPI: false,
 
     download_in_process: false,
@@ -121,19 +116,11 @@ var opus = {
 
         // if (!$.isEmptyObject(opus.selections) || !opus.checkIfDrawnWidgetsAreDefault() || !opus.checkIfMetadataAreDefault()) {
         if (selections || !opus.checkIfDrawnWidgetsAreDefault()) {
-            console.log("======== THERE IS SOMETHING CHANGED =========")
-            // console.log(selections);
-            // console.log(opus.selections);
-            // console.log(opus.default_widgets);
-            // console.log(opus.widgets_drawn);
-            // console.log(opus.prefs.widgets);
             $(".op-reset-button button").prop("disabled", false);
         } else  if (!opus.checkIfMetadataAreDefault()) {
-            console.log("======== ONLY METADAT CHANGED =========")
             $(".op-reset-button .op-reset-search-metadata").prop("disabled", false);
             $(".op-reset-button .op-reset-search").prop("disabled", true);
         } else {
-            console.log("======== THERE IS NOTHING CHANGED =========")
             $(".op-reset-button button").prop("disabled", true);
         }
 
@@ -469,16 +456,6 @@ $(document).ready(function() {
 
         //return false;
 
-    });
-
-    $(".op-reset-button button").on("click", function() {
-        let targetModal = $(this).data("target");
-
-        if (!$.isEmptyObject(opus.selections) || !opus.checkIfDrawnWidgetsAreDefault()) {
-            $(targetModal).modal("show")
-        } else if(targetModal === "#op-reset-search-metadata-modal" && !opus.checkIfMetadataAreDefault()){
-            $(targetModal).modal("show")
-        }
     });
 
     $(".op-reset-button button").on("click", function() {
