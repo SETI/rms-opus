@@ -36,7 +36,7 @@ class ApiCollectionsTests(TestCase, ApiTestHelper):
             #########################################################
 
     def test__api_collections_status_no_reqno(self):
-        "/__collections/status.json no reqno"
+        "/__collections/status: no reqno"
         url = '/opus/__collections/status.json'
         self._run_status_equal(url, 404, settings.HTTP404_MISSING_REQNO)
 
@@ -49,7 +49,7 @@ class ApiCollectionsTests(TestCase, ApiTestHelper):
             ########################################################
 
     def test__api_collections_reset(self):
-        "/__collections/reset.json"
+        "/__collections/reset"
         url = '/opus/__collections/reset.json'
         self._run_status_equal(url, 200)
         url = '/opus/__collections/status.json?reqno=1'
@@ -62,12 +62,12 @@ class ApiCollectionsTests(TestCase, ApiTestHelper):
             ######################################################
 
     def test__api_collections_add_no_reqno(self):
-        "/__collections/add.json no reqno"
+        "/__collections/add: no reqno"
         url = '/opus/__collections/add.json?opusid=co-iss-n1460961026'
         self._run_status_equal(url, 404, settings.HTTP404_MISSING_REQNO)
 
     def test__api_collections_add_missing(self):
-        "/__collections/add: Missing OPUSID no download"
+        "/__collections/add: missing OPUSID no download"
         url = '/opus/__collections/reset.json'
         self._run_status_equal(url, 200)
         url = '/opus/__collections/add.json?reqno=456'
@@ -78,7 +78,7 @@ class ApiCollectionsTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
 
     def test__api_collections_add_empty(self):
-        "/__collections/add: Empty OPUSID no download"
+        "/__collections/add: empty OPUSID no download"
         url = '/opus/__collections/reset.json'
         self._run_status_equal(url, 200)
         url = '/opus/__collections/add.json?opusid=&reqno=456'
@@ -89,7 +89,7 @@ class ApiCollectionsTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
 
     def test__api_collections_add_one(self):
-        "/__collections/add: Good OPUSID no download"
+        "/__collections/add: good OPUSID no download"
         url = '/opus/__collections/reset.json'
         self._run_status_equal(url, 200)
         url = '/opus/__collections/add.json?opusid=co-iss-n1460961026&reqno=456'
@@ -100,7 +100,7 @@ class ApiCollectionsTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
 
     def test__api_collections_add_duplicate(self):
-        "/__collections/add: Duplicate OPUSID no download"
+        "/__collections/add: duplicate OPUSID no download"
         url = '/opus/__collections/reset.json'
         self._run_status_equal(url, 200)
         url = '/opus/__collections/add.json?opusid=co-iss-n1460961026&reqno=456'
@@ -114,7 +114,7 @@ class ApiCollectionsTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
 
     def test__api_collections_add_bad(self):
-        "/__collections/add: Bad OPUSID no download"
+        "/__collections/add: bad OPUSID no download"
         url = '/opus/__collections/reset.json'
         self._run_status_equal(url, 200)
         url = '/opus/__collections/add.json?opusid=co-iss-xn1460961026&reqno=456'
@@ -125,7 +125,7 @@ class ApiCollectionsTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
 
     def test__api_collections_add_good_bad(self):
-        "/__collections/add: Good+bad OPUSID no download"
+        "/__collections/add: good+bad OPUSID no download"
         url = '/opus/__collections/reset.json'
         self._run_status_equal(url, 200)
         url = '/opus/__collections/add.json?opusid=co-iss-n1460961026&reqno=456'
@@ -139,7 +139,7 @@ class ApiCollectionsTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
 
     def test__api_collections_add_mixture(self):
-        "/__collections/add: Mixture no download"
+        "/__collections/add: mixture no download"
         url = '/opus/__collections/reset.json'
         self._run_status_equal(url, 200)
         url = '/opus/__collections/add.json?opusid=vg-iss-2-s-c4360010&reqno=456'
@@ -165,7 +165,7 @@ class ApiCollectionsTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
 
     def test__api_collections_add_missing(self):
-        "/__collections/add: Missing OPUSID no download"
+        "/__collections/add: missing OPUSID no download"
         url = '/opus/__collections/reset.json'
         self._run_status_equal(url, 200)
         url = '/opus/__collections/add.json?reqno=124'
@@ -176,7 +176,7 @@ class ApiCollectionsTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
 
     def test__api_collections_add_one(self):
-        "/__collections/add: Good OPUSID no download"
+        "/__collections/add: good OPUSID no download"
         url = '/opus/__collections/reset.json'
         self._run_status_equal(url, 200)
         url = '/opus/__collections/add.json?opusid=co-iss-n1460961026&reqno=12345'
@@ -187,7 +187,7 @@ class ApiCollectionsTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
 
     def test__api_collections_add_bad(self):
-        "/__collections/add: Bad OPUSID no download"
+        "/__collections/add: bad OPUSID no download"
         url = '/opus/__collections/reset.json'
         self._run_status_equal(url, 200)
         url = '/opus/__collections/add.json?opusid=co-iss-xn1460961026&reqno=101010101'
@@ -198,7 +198,7 @@ class ApiCollectionsTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
 
     def test__api_collections_add_missing_download(self):
-        "/__collections/add: Missing OPUSID with download"
+        "/__collections/add: missing OPUSID with download"
         url = '/opus/__collections/reset.json'
         self._run_status_equal(url, 200)
         url = '/opus/__collections/add.json?download=1&reqno=456'
@@ -209,7 +209,7 @@ class ApiCollectionsTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
 
     def test__api_collections_add_download_one(self):
-        "/__collections/add: Good OPUSID with download"
+        "/__collections/add: good OPUSID with download"
         url = '/opus/__collections/reset.json'
         self._run_status_equal(url, 200)
         url = '/opus/__collections/add.json?opusid=co-iss-n1460960653&download=1&reqno=101010101'
@@ -220,7 +220,7 @@ class ApiCollectionsTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
 
     def test__api_collections_add_download_two(self):
-        "/__collections/add: Two OPUSIDs with download"
+        "/__collections/add: two OPUSIDs with download"
         url = '/opus/__collections/reset.json'
         self._run_status_equal(url, 200)
         url = '/opus/__collections/add.json?opusid=co-iss-n1460960868&download=0&reqno=101010100'
@@ -239,12 +239,12 @@ class ApiCollectionsTests(TestCase, ApiTestHelper):
             #########################################################
 
     def test__api_collections_remove_no_reqno(self):
-        "/__collections/remove.json no reqno"
+        "/__collections/remove: no reqno"
         url = '/opus/__collections/remove.json?opusid=co-iss-n1460961026'
         self._run_status_equal(url, 404, settings.HTTP404_MISSING_REQNO)
 
     def test__api_collections_remove_missing(self):
-        "/__collections/remove: Missing OPUSID no download"
+        "/__collections/remove: missing OPUSID no download"
         url = '/opus/__collections/reset.json'
         self._run_status_equal(url, 200)
         url = '/opus/__collections/remove.json?reqno=456'
@@ -255,7 +255,7 @@ class ApiCollectionsTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
 
     def test__api_collections_remove_empty(self):
-        "/__collections/remove: Empty OPUSID no download"
+        "/__collections/remove: empty OPUSID no download"
         url = '/opus/__collections/reset.json'
         self._run_status_equal(url, 200)
         url = '/opus/__collections/remove.json?opusid=&reqno=456'
@@ -266,7 +266,7 @@ class ApiCollectionsTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
 
     def test__api_collections_remove_one(self):
-        "/__collections/remove: Add+remove good OPUSID no download"
+        "/__collections/remove: add+remove good OPUSID no download"
         url = '/opus/__collections/reset.json'
         self._run_status_equal(url, 200)
         url = '/opus/__collections/add.json?opusid=co-vims-v1484504505_ir&reqno=456'
@@ -280,7 +280,7 @@ class ApiCollectionsTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
 
     def test__api_collections_remove_duplicate(self):
-        "/__collections/remove: Duplicate OPUSID no download"
+        "/__collections/remove: duplicate OPUSID no download"
         url = '/opus/__collections/reset.json'
         self._run_status_equal(url, 200)
         url = '/opus/__collections/add.json?opusid=co-vims-v1484528864_ir&reqno=456'
@@ -297,7 +297,7 @@ class ApiCollectionsTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
 
     def test__api_collections_remove_bad(self):
-        "/__collections/remove: Bad OPUSID no download"
+        "/__collections/remove: bad OPUSID no download"
         url = '/opus/__collections/reset.json'
         self._run_status_equal(url, 200)
         # Removing an unknown opusid doesn't throw an error
@@ -309,7 +309,7 @@ class ApiCollectionsTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
 
     def test__api_collections_remove_good_bad(self):
-        "/__collections/remove: Good+bad OPUSID no download"
+        "/__collections/remove: good+bad OPUSID no download"
         url = '/opus/__collections/reset.json'
         self._run_status_equal(url, 200)
         url = '/opus/__collections/add.json?opusid=co-vims-v1484528864_ir&reqno=456'
@@ -326,7 +326,7 @@ class ApiCollectionsTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
 
     def test__api_collections_remove_mixture(self):
-        "/__collections/remove: Mixture no download"
+        "/__collections/remove: mixture no download"
         url = '/opus/__collections/reset.json'
         self._run_status_equal(url, 200)
         url = '/opus/__collections/add.json?opusid=vg-iss-2-s-c4360010&reqno=456'
@@ -361,7 +361,7 @@ class ApiCollectionsTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
 
     def test__api_collections_remove_missing(self):
-        "/__collections/remove: Missing OPUSID no download"
+        "/__collections/remove: missing OPUSID no download"
         url = '/opus/__collections/reset.json'
         self._run_status_equal(url, 200)
         url = '/opus/__collections/remove.json?reqno=124'
@@ -372,7 +372,7 @@ class ApiCollectionsTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
 
     def test__api_collections_remove_one(self):
-        "/__collections/remove: Good OPUSID no download"
+        "/__collections/remove: good OPUSID no download"
         url = '/opus/__collections/reset.json'
         self._run_status_equal(url, 200)
         url = '/opus/__collections/add.json?opusid=co-iss-n1460961026&reqno=456'
@@ -386,7 +386,7 @@ class ApiCollectionsTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
 
     def test__api_collections_remove_bad(self):
-        "/__collections/remove: Bad OPUSID no download"
+        "/__collections/remove: bad OPUSID no download"
         url = '/opus/__collections/reset.json'
         self._run_status_equal(url, 200)
         url = '/opus/__collections/add.json?opusid=co-iss-xn1460961026&reqno=456'
@@ -401,7 +401,7 @@ class ApiCollectionsTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
 
     def test__api_collections_remove_missing_download(self):
-        "/__collections/remove: Missing OPUSID with download"
+        "/__collections/remove: missing OPUSID with download"
         url = '/opus/__collections/reset.json'
         self._run_status_equal(url, 200)
         url = '/opus/__collections/remove.json?download=1&reqno=456'
@@ -412,7 +412,7 @@ class ApiCollectionsTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
 
     def test__api_collections_remove_one_download(self):
-        "/__collections/remove: Good OPUSID with download"
+        "/__collections/remove: good OPUSID with download"
         url = '/opus/__collections/reset.json'
         self._run_status_equal(url, 200)
         url = '/opus/__collections/add.json?opusid=co-iss-n1460961026&reqno=456'
@@ -426,7 +426,7 @@ class ApiCollectionsTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
 
     def test__api_collections_add_two_remove_one_download(self):
-        "/__collections/remove: Two OPUSIDs remove one with download"
+        "/__collections/remove: two OPUSIDs remove one with download"
         url = '/opus/__collections/reset.json'
         self._run_status_equal(url, 200)
         url = '/opus/__collections/add.json?opusid=co-iss-n1460960868&download=0&reqno=101010100'
@@ -448,12 +448,12 @@ class ApiCollectionsTests(TestCase, ApiTestHelper):
             ###########################################################
 
     def test__api_collections_addrange_no_reqno(self):
-        "/__collections/addrange.json no reqno"
+        "/__collections/addrange: no reqno"
         url = '/opus/__collections/addrange.json?volumeid=COVIMS_0006&range=co-vims-v1484504505_ir,co-vims-v1484504505_ir'
         self._run_status_equal(url, 404, settings.HTTP404_MISSING_REQNO)
 
     def test__api_collections_addrange_missing(self):
-        "/__collections/addrange: Missing range no download"
+        "/__collections/addrange: missing range no download"
         url = '/opus/__collections/reset.json'
         self._run_status_equal(url, 200)
         url = '/opus/__collections/addrange.json?reqno=456'
@@ -464,7 +464,7 @@ class ApiCollectionsTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
 
     def test__api_collections_addrange_empty(self):
-        "/__collections/addrange: Empty range no download"
+        "/__collections/addrange: empty range no download"
         url = '/opus/__collections/reset.json'
         self._run_status_equal(url, 200)
         url = '/opus/__collections/addrange.json?range=&reqno=456'
@@ -475,7 +475,7 @@ class ApiCollectionsTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
 
     def test__api_collections_addrange_bad_range1(self):
-        "/__collections/addrange: Bad range 1 no download"
+        "/__collections/addrange: bad range 1 no download"
         url = '/opus/__collections/reset.json'
         self._run_status_equal(url, 200)
         url = '/opus/__collections/addrange.json?range=co-vims-v1484504505_ir&reqno=456'
@@ -486,7 +486,7 @@ class ApiCollectionsTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
 
     def test__api_collections_addrange_bad_range2(self):
-        "/__collections/addrange: Bad range 2 no download"
+        "/__collections/addrange: bad range 2 no download"
         url = '/opus/__collections/reset.json'
         self._run_status_equal(url, 200)
         url = '/opus/__collections/addrange.json?range=co-vims-v1484504505_ir,&reqno=456'
@@ -497,7 +497,7 @@ class ApiCollectionsTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
 
     def test__api_collections_addrange_bad_range3(self):
-        "/__collections/addrange: Bad range 3 no download"
+        "/__collections/addrange: bad range 3 no download"
         url = '/opus/__collections/reset.json'
         self._run_status_equal(url, 200)
         url = '/opus/__collections/addrange.json?range=,co-vims-v1484504505_ir&reqno=456'
@@ -508,7 +508,7 @@ class ApiCollectionsTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
 
     def test__api_collections_addrange_bad_range4(self):
-        "/__collections/addrange: Bad range 4 no download"
+        "/__collections/addrange: bad range 4 no download"
         url = '/opus/__collections/reset.json'
         self._run_status_equal(url, 200)
         url = '/opus/__collections/addrange.json?range=co-vims-v1484504505_ir,co-vims-v1484504505_ir,co-vims-v1484504505_ir&reqno=456'
@@ -519,7 +519,7 @@ class ApiCollectionsTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
 
     def test__api_collections_addrange_one(self):
-        "/__collections/addrange: One good OPUSID no download"
+        "/__collections/addrange: one good OPUSID no download"
         url = '/opus/__collections/reset.json'
         self._run_status_equal(url, 200)
         url = '/opus/__collections/addrange.json?volumeid=COVIMS_0006&range=co-vims-v1484504505_ir,co-vims-v1484504505_ir&reqno=456'
@@ -530,7 +530,7 @@ class ApiCollectionsTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
 
     def test__api_collections_addrange_duplicate(self):
-        "/__collections/addrange: Duplicate OPUSID no download"
+        "/__collections/addrange: duplicate OPUSID no download"
         url = '/opus/__collections/reset.json'
         self._run_status_equal(url, 200)
         url = '/opus/__collections/add.json?opusid=co-vims-v1484528864_ir&reqno=456'
@@ -544,7 +544,7 @@ class ApiCollectionsTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
 
     def test__api_collections_addrange_duplicate2(self):
-        "/__collections/addrange: Duplicate 2 no download"
+        "/__collections/addrange: duplicate 2 no download"
         url = '/opus/__collections/reset.json'
         self._run_status_equal(url, 200)
         url = '/opus/__collections/addrange.json?volumeid=COVIMS_0006&range=co-vims-v1488642557_ir,co-vims-v1488646261_ir&reqno=456'
@@ -558,7 +558,7 @@ class ApiCollectionsTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
 
     def test__api_collections_addrange_duplicate3(self):
-        "/__collections/addrange: Duplicate 3 no download"
+        "/__collections/addrange: duplicate 3 no download"
         url = '/opus/__collections/reset.json'
         self._run_status_equal(url, 200)
         url = '/opus/__collections/addrange.json?volumeid=COVIMS_0006&range=co-vims-v1488642557_ir,co-vims-v1488646261_ir&reqno=456'
@@ -572,7 +572,7 @@ class ApiCollectionsTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
 
     def test__api_collections_addrange_duplicate4(self):
-        "/__collections/addrange: Duplicate 4 no download"
+        "/__collections/addrange: duplicate 4 no download"
         url = '/opus/__collections/reset.json'
         self._run_status_equal(url, 200)
         url = '/opus/__collections/addrange.json?volumeid=COVIMS_0006&range=co-vims-v1488642557_ir,co-vims-v1488646261_ir&reqno=456'
@@ -586,7 +586,7 @@ class ApiCollectionsTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
 
     def test__api_collections_addrange_duplicate5(self):
-        "/__collections/addrange: Duplicate 5 no download"
+        "/__collections/addrange: duplicate 5 no download"
         url = '/opus/__collections/reset.json'
         self._run_status_equal(url, 200)
         url = '/opus/__collections/add.json?opusid=co-vims-v1488642557_ir&reqno=456'
@@ -600,7 +600,7 @@ class ApiCollectionsTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
 
     def test__api_collections_addrange_duplicate6(self):
-        "/__collections/addrange: Duplicate 6 no download"
+        "/__collections/addrange: duplicate 6 no download"
         url = '/opus/__collections/reset.json'
         self._run_status_equal(url, 200)
         url = '/opus/__collections/addrange.json?volumeid=COVIMS_0006&range=co-vims-v1488642557_ir,co-vims-v1488646261_ir&reqno=456'
@@ -614,7 +614,7 @@ class ApiCollectionsTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
 
     def test__api_collections_addrange_bad_opusid(self):
-        "/__collections/addrange: Bad OPUSID no download"
+        "/__collections/addrange: bad OPUSID no download"
         url = '/opus/__collections/reset.json'
         self._run_status_equal(url, 200)
         url = '/opus/__collections/addrange.json?volumeid=COVIMS_0006&range=co-vims-v1484528864_irx,co-vims-v1484528864_ir&reqno=456'
@@ -625,7 +625,7 @@ class ApiCollectionsTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
 
     def test__api_collections_addrange_bad_opusid2(self):
-        "/__collections/addrange: Bad OPUSID 2 no download"
+        "/__collections/addrange: bad OPUSID 2 no download"
         url = '/opus/__collections/reset.json'
         self._run_status_equal(url, 200)
         url = '/opus/__collections/addrange.json?volumeid=COVIMS_0006&range=co-vims-v1484528864_ir,co-vims-v1484528864_irx&reqno=456'
@@ -647,7 +647,7 @@ class ApiCollectionsTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
 
     def test__api_collections_addrange_bad_search(self):
-        "/__collections/addrange: Bad search no download"
+        "/__collections/addrange: bad search no download"
         url = '/opus/__collections/reset.json'
         self._run_status_equal(url, 200)
         url = '/opus/__collections/addrange.json?volumeidXX=COVIMS_0006&range=vg-iss-2-s-c4360001,vg-iss-2-s-c4360001&reqno=456'
@@ -658,7 +658,7 @@ class ApiCollectionsTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
 
     def test__api_collections_addrange_multi(self):
-        "/__collections/addrange: Multiple no download"
+        "/__collections/addrange: multiple no download"
         url = '/opus/__collections/reset.json'
         self._run_status_equal(url, 200)
         url = '/opus/__collections/addrange.json?volumeid=COVIMS_0006&range=co-vims-v1488642557_ir,co-vims-v1488646261_ir&reqno=456'
@@ -669,7 +669,7 @@ class ApiCollectionsTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
 
     def test__api_collections_addrange_multi_reverse(self):
-        "/__collections/addrange: Multiple reversed no download"
+        "/__collections/addrange: multiple reversed no download"
         url = '/opus/__collections/reset.json'
         self._run_status_equal(url, 200)
         url = '/opus/__collections/addrange.json?volumeid=COVIMS_0006&range=co-vims-v1488646261_ir,co-vims-v1488642557_ir&reqno=456'
@@ -680,7 +680,7 @@ class ApiCollectionsTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
 
     def test__api_collections_addrange_multi_sort(self):
-        "/__collections/addrange: Multiple nonstandard sort no download"
+        "/__collections/addrange: multiple nonstandard sort no download"
         url = '/opus/__collections/reset.json'
         self._run_status_equal(url, 200)
         url = '/opus/__collections/addrange.json?volumeid=COVIMS_0006&instrument=Cassini+VIMS&primaryfilespec=8864&order=COVIMSswathlength1,-time1,-opusid&range=co-vims-v1488649724_vis,co-vims-v1488647527_ir&reqno=456'
@@ -691,7 +691,7 @@ class ApiCollectionsTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
 
     def test__api_collections_addrange_missing(self):
-        "/__collections/addrange: Missing range no download"
+        "/__collections/addrange: missing range no download"
         url = '/opus/__collections/reset.json'
         self._run_status_equal(url, 200)
         url = '/opus/__collections/addrange.json?reqno=124'
@@ -702,7 +702,7 @@ class ApiCollectionsTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
 
     def test__api_collections_addrange_one(self):
-        "/__collections/addrange: One good OPUSID no download"
+        "/__collections/addrange: one good OPUSID no download"
         url = '/opus/__collections/reset.json'
         self._run_status_equal(url, 200)
         url = '/opus/__collections/addrange.json?volumeid=COVIMS_0006&range=co-vims-v1484504505_ir,co-vims-v1484504505_ir&reqno=567'
@@ -713,7 +713,7 @@ class ApiCollectionsTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
 
     def test__api_collections_addrange_missing_download(self):
-        "/__collections/addrange: Missing range with download"
+        "/__collections/addrange: missing range with download"
         url = '/opus/__collections/reset.json'
         self._run_status_equal(url, 200)
         url = '/opus/__collections/addrange.json?download=1&reqno=456'
@@ -724,7 +724,7 @@ class ApiCollectionsTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
 
     def test__api_collections_addrange_multi_download(self):
-        "/__collections/addrange: Multiple with download"
+        "/__collections/addrange: multiple with download"
         url = '/opus/__collections/reset.json'
         self._run_status_equal(url, 200)
         url = '/opus/__collections/addrange.json?volumeid=COVIMS_0006&range=co-vims-v1488642557_ir,co-vims-v1488646261_ir&reqno=1234567&download=1'
@@ -740,12 +740,12 @@ class ApiCollectionsTests(TestCase, ApiTestHelper):
             ##############################################################
 
     def test__api_collections_removerange_no_reqno(self):
-        "/__collections/removerange.json no reqno"
+        "/__collections/removerange: no reqno"
         url = '/opus/__collections/removerange.json?volumeid=COVIMS_0006&range=co-vims-v1484504505_ir,co-vims-v1484504505_ir'
         self._run_status_equal(url, 404, settings.HTTP404_MISSING_REQNO)
 
     def test__api_collections_removerange_missing(self):
-        "/__collections/removerange: Missing range no download"
+        "/__collections/removerange: missing range no download"
         url = '/opus/__collections/reset.json'
         self._run_status_equal(url, 200)
         url = '/opus/__collections/removerange.json?reqno=456'
@@ -756,7 +756,7 @@ class ApiCollectionsTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
 
     def test__api_collections_removerange_empty(self):
-        "/__collections/removerange: Empty range no download"
+        "/__collections/removerange: empty range no download"
         url = '/opus/__collections/reset.json'
         self._run_status_equal(url, 200)
         url = '/opus/__collections/removerange.json?range=&reqno=456'
@@ -767,7 +767,7 @@ class ApiCollectionsTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
 
     def test__api_collections_removerange_bad_range1(self):
-        "/__collections/removerange: Bad range 1 no download"
+        "/__collections/removerange: bad range 1 no download"
         url = '/opus/__collections/reset.json'
         self._run_status_equal(url, 200)
         url = '/opus/__collections/removerange.json?range=co-vims-v1484504505_ir&reqno=456'
@@ -778,7 +778,7 @@ class ApiCollectionsTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
 
     def test__api_collections_removerange_bad_range2(self):
-        "/__collections/removerange: Bad range 2 no download"
+        "/__collections/removerange: bad range 2 no download"
         url = '/opus/__collections/reset.json'
         self._run_status_equal(url, 200)
         url = '/opus/__collections/removerange.json?range=co-vims-v1484504505_ir,&reqno=456'
@@ -789,7 +789,7 @@ class ApiCollectionsTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
 
     def test__api_collections_removerange_bad_range3(self):
-        "/__collections/removerange: Bad range 3 no download"
+        "/__collections/removerange: bad range 3 no download"
         url = '/opus/__collections/reset.json'
         self._run_status_equal(url, 200)
         url = '/opus/__collections/removerange.json?range=,co-vims-v1484504505_ir&reqno=456'
@@ -800,7 +800,7 @@ class ApiCollectionsTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
 
     def test__api_collections_removerange_bad_range4(self):
-        "/__collections/removerange: Bad range 4 no download"
+        "/__collections/removerange: bad range 4 no download"
         url = '/opus/__collections/reset.json'
         self._run_status_equal(url, 200)
         url = '/opus/__collections/removerange.json?range=co-vims-v1484504505_ir,co-vims-v1484504505_ir,co-vims-v1484504505_ir&reqno=456'
@@ -811,7 +811,7 @@ class ApiCollectionsTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
 
     def test__api_collections_removerange_one(self):
-        "/__collections/removerange: One good OPUSID no download"
+        "/__collections/removerange: one good OPUSID no download"
         url = '/opus/__collections/reset.json'
         self._run_status_equal(url, 200)
         url = '/opus/__collections/add.json?opusid=co-vims-v1484504505_ir&reqno=456'
@@ -825,7 +825,7 @@ class ApiCollectionsTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
 
     def test__api_collections_removerange_duplicate(self):
-        "/__collections/removerange: Duplicate OPUSID no download"
+        "/__collections/removerange: duplicate OPUSID no download"
         url = '/opus/__collections/reset.json'
         self._run_status_equal(url, 200)
         url = '/opus/__collections/add.json?opusid=co-vims-v1484528864_ir&reqno=456'
@@ -842,7 +842,7 @@ class ApiCollectionsTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
 
     def test__api_collections_removerange_duplicate2(self):
-        "/__collections/removerange: Duplicate 2 no download"
+        "/__collections/removerange: duplicate 2 no download"
         url = '/opus/__collections/reset.json'
         self._run_status_equal(url, 200)
         url = '/opus/__collections/addrange.json?volumeid=COVIMS_0006&range=co-vims-v1488642557_ir,co-vims-v1488646261_ir&reqno=456'
@@ -859,7 +859,7 @@ class ApiCollectionsTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
 
     def test__api_collections_removerange_duplicate3(self):
-        "/__collections/removerange: Duplicate 3 no download"
+        "/__collections/removerange: duplicate 3 no download"
         url = '/opus/__collections/reset.json'
         self._run_status_equal(url, 200)
         url = '/opus/__collections/addrange.json?volumeid=COVIMS_0006&range=co-vims-v1488642557_ir,co-vims-v1488646261_ir&reqno=456'
@@ -876,7 +876,7 @@ class ApiCollectionsTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
 
     def test__api_collections_removerange_bad_opusid(self):
-        "/__collections/removerange: Bad OPUSID no download"
+        "/__collections/removerange: bad OPUSID no download"
         url = '/opus/__collections/reset.json'
         self._run_status_equal(url, 200)
         url = '/opus/__collections/removerange.json?volumeid=COVIMS_0006&range=co-vims-v1484528864_irx,co-vims-v1484528864_ir&reqno=456'
@@ -887,7 +887,7 @@ class ApiCollectionsTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
 
     def test__api_collections_removerange_bad_opusid2(self):
-        "/__collections/removerange: Bad OPUSID 2 no download"
+        "/__collections/removerange: bad OPUSID 2 no download"
         url = '/opus/__collections/reset.json'
         self._run_status_equal(url, 200)
         url = '/opus/__collections/addrange.json?volumeid=COVIMS_0006&range=co-vims-v1484528864_ir,co-vims-v1484528864_irx&reqno=456'
@@ -909,7 +909,7 @@ class ApiCollectionsTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
 
     def test__api_collections_removerange_bad_search(self):
-        "/__collections/removerange: Bad search no download"
+        "/__collections/removerange: bad search no download"
         url = '/opus/__collections/reset.json'
         self._run_status_equal(url, 200)
         url = '/opus/__collections/removerange.json?volumeidXX=COVIMS_0006&range=vg-iss-2-s-c4360001,vg-iss-2-s-c4360001&reqno=456'
@@ -920,7 +920,7 @@ class ApiCollectionsTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
 
     def test__api_collections_removerange_multi(self):
-        "/__collections/removerange: Multiple no download"
+        "/__collections/removerange: multiple no download"
         url = '/opus/__collections/reset.json'
         self._run_status_equal(url, 200)
         url = '/opus/__collections/addrange.json?volumeid=COVIMS_0006&range=co-vims-v1488642557_ir,co-vims-v1488646261_ir&reqno=456'
@@ -934,7 +934,7 @@ class ApiCollectionsTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
 
     def test__api_collections_removerange_multi_reverse(self):
-        "/__collections/removerange: Multiple reversed no download"
+        "/__collections/removerange: multiple reversed no download"
         url = '/opus/__collections/reset.json'
         self._run_status_equal(url, 200)
         url = '/opus/__collections/addrange.json?volumeid=COVIMS_0006&range=co-vims-v1488642557_ir,co-vims-v1488646261_ir&reqno=456'
@@ -948,7 +948,7 @@ class ApiCollectionsTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
 
     def test__api_collections_removerange_multi_sort(self):
-        "/__collections/removerange: Multiple nonstandard sort no download"
+        "/__collections/removerange: multiple nonstandard sort no download"
         url = '/opus/__collections/reset.json'
         self._run_status_equal(url, 200)
         url = '/opus/__collections/addrange.json?volumeid=COVIMS_0006&order=COVIMSswathlength1,-time1,opusid&range=co-vims-v1490784910_ir,co-vims-v1490782254_vis&reqno=456'
@@ -965,7 +965,7 @@ class ApiCollectionsTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
 
     def test__api_collections_removerange_missing(self):
-        "/__collections/removerange: Missing range no download"
+        "/__collections/removerange: missing range no download"
         url = '/opus/__collections/reset.json'
         self._run_status_equal(url, 200)
         url = '/opus/__collections/removerange.json?reqno=124'
@@ -976,7 +976,7 @@ class ApiCollectionsTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
 
     def test__api_collections_removerange_one(self):
-        "/__collections/removerange: One good OPUSID no download"
+        "/__collections/removerange: one good OPUSID no download"
         url = '/opus/__collections/reset.json'
         self._run_status_equal(url, 200)
         url = '/opus/__collections/removerange.json?volumeid=COVIMS_0006&range=co-vims-v1484504505_ir,co-vims-v1484504505_ir&reqno=567'
@@ -987,7 +987,7 @@ class ApiCollectionsTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
 
     def test__api_collections_removerange_missing_download(self):
-        "/__collections/removerange: Missing range with download"
+        "/__collections/removerange: missing range with download"
         url = '/opus/__collections/reset.json'
         self._run_status_equal(url, 200)
         url = '/opus/__collections/removerange.json?download=1&reqno=456'
@@ -998,7 +998,7 @@ class ApiCollectionsTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
 
     def test__api_collections_removerange_multi_download(self):
-        "/__collections/removerange: Multiple with download"
+        "/__collections/removerange: multiple with download"
         url = '/opus/__collections/reset.json'
         self._run_status_equal(url, 200)
         url = '/opus/__collections/addrange.json?volumeid=COVIMS_0006&range=co-vims-v1488642557_ir,co-vims-v1488646261_ir&reqno=1234567'
@@ -1017,12 +1017,12 @@ class ApiCollectionsTests(TestCase, ApiTestHelper):
             #########################################################
 
     def test__api_collections_addall_no_reqno(self):
-        "/__collections/addall.json no reqno"
+        "/__collections/addall: no reqno"
         url = '/opus/__collections/addall.json?volumeid=VGISS_6210'
         self._run_status_equal(url, 404, settings.HTTP404_MISSING_REQNO)
 
     def test__api_collections_addall_one(self):
-        "/__collections/addall: One time no download"
+        "/__collections/addall: one time no download"
         url = '/opus/__collections/reset.json'
         self._run_status_equal(url, 200)
         url = '/opus/__collections/addall.json?volumeid=VGISS_6210&reqno=456'
@@ -1033,7 +1033,7 @@ class ApiCollectionsTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
 
     def test__api_collections_addall_duplicate(self):
-        "/__collections/addall: Twice no download"
+        "/__collections/addall: twice no download"
         url = '/opus/__collections/reset.json'
         self._run_status_equal(url, 200)
         url = '/opus/__collections/addall.json?volumeid=VGISS_6210&reqno=456'
@@ -1044,7 +1044,7 @@ class ApiCollectionsTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
 
     def test__api_collections_addall_duplicate2(self):
-        "/__collections/addall: Add plus addall no download"
+        "/__collections/addall: add plus addall no download"
         url = '/opus/__collections/reset.json'
         self._run_status_equal(url, 200)
         url = '/opus/__collections/addrange.json?volumeid=VGISS_6210&range=vg-iss-2-s-c4360037,vg-iss-2-s-c4365644&reqno=456'
@@ -1058,7 +1058,7 @@ class ApiCollectionsTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
 
     def test__api_collections_addall_bad_search(self):
-        "/__collections/addall: Bad search no download"
+        "/__collections/addall: bad search no download"
         url = '/opus/__collections/reset.json'
         self._run_status_equal(url, 200)
         url = '/opus/__collections/addall.json?volumeidXX=COVIMS_0006&reqno=456'
@@ -1069,7 +1069,7 @@ class ApiCollectionsTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
 
     def test__api_collections_addall_multi(self):
-        "/__collections/addall: Multiple no download"
+        "/__collections/addall: multiple no download"
         url = '/opus/__collections/reset.json'
         self._run_status_equal(url, 200)
         url = '/opus/__collections/addrange.json?volumeid=COVIMS_0006&range=co-vims-v1484506475_ir,co-vims-v1484509868_vis&reqno=456'
@@ -1089,7 +1089,7 @@ class ApiCollectionsTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
 
     def test__api_collections_addall_one(self):
-        "/__collections/addall: One time no download"
+        "/__collections/addall: one time no download"
         url = '/opus/__collections/reset.json'
         self._run_status_equal(url, 200)
         url = '/opus/__collections/addall.json?volumeid=VGISS_6210&reqno=987'
@@ -1100,7 +1100,7 @@ class ApiCollectionsTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
 
     def test__api_collections_addall_one_download(self):
-        "/__collections/addall: One time with download"
+        "/__collections/addall: one time with download"
         url = '/opus/__collections/reset.json'
         self._run_status_equal(url, 200)
         url = '/opus/__collections/addall.json?volumeid=VGISS_8201&productid=12&reqno=9878&download=1'
@@ -1116,7 +1116,7 @@ class ApiCollectionsTests(TestCase, ApiTestHelper):
             ######################################################
 
     def test__api_collections_datacsv_empty(self):
-        "/__collections/datacsv: Empty"
+        "/__collections/datacsv: empty"
         url = '/opus/__collections/reset.json'
         self._run_status_equal(url, 200)
         url = '/opus/__collections/data.csv?cols=opusid,instrument,planet'
@@ -1127,7 +1127,7 @@ class ApiCollectionsTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
 
     def test__api_collections_datacsv_multi(self):
-        "/__collections/datacsv: Multiple"
+        "/__collections/datacsv: multiple"
         url = '/opus/__collections/reset.json'
         self._run_status_equal(url, 200)
         url = '/opus/__collections/addrange.json?volumeid=COVIMS_0006&range=co-vims-v1488549680_ir,co-vims-v1488550102_ir&reqno=456'

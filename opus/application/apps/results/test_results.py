@@ -33,7 +33,7 @@ class resultsTests(TestCase):
     def setUp(self):
         self._empty_user_searches()
         sys.tracebacklimit = 0 # default: 1000
-        logging.disable(logging.DEBUG)
+        logging.disable(logging.ERROR)
 
     def tearDown(self):
         self._empty_user_searches()
