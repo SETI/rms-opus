@@ -784,8 +784,6 @@ li a.search-param:hover {
     list-style-type:none;
 }
 
-.ui-state-highlight { height: 1.5em; line-height: 1.2em; }
-
 #search_widgets {  /* this fixes problem scrolling when widget column is short */
     padding-bottom: 20px;
     padding-right: 2em;
