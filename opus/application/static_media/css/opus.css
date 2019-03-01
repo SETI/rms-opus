@@ -188,7 +188,7 @@ Not sure if this is the desired behavior
 hr.shadow-divider {
   height: 10px;
   border: 0;
-  box-shadow: 0 10px 10px -10px #8c8b8b inset;
+  box-shadow: 0 9px 9px -10px #8c8b8b inset;
 }
 
 ul.searchMenu{
@@ -789,8 +789,6 @@ li a.search-param:hover {
 #search_widgets {  /* this fixes problem scrolling when widget column is short */
     padding-bottom: 20px;
     padding-right: 2em;
-    /* this will prevent the last sortable widget from moving upward when being grabbed */
-    /* overflow: auto; */
 }
 
 .widget-main .range-qtype-helper {
@@ -851,6 +849,7 @@ li a.search-param:hover {
     top: 5px;
 }
 
+/* This is to make sortable scrolling (when sorting happened) works with ps */
 #widget-container {
     overflow:auto !important;
     overflow-y: hidden !important;

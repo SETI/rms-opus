@@ -11,38 +11,16 @@ var o_widgets = {
         $("#search_widgets").sortable({
             items: "> li",
             cursor: "grab",
+            // we need the clone so that widgets in url gets changed only when sorting is stopped
+            helper: "clone",
+            scrollSensitivity: 100,
+            axis: "y",
+            opacity: 0.8,
             stop: function(event, ui) {
-                console.log("=====sortable stops=====")
-                // o_widgets.widgetDrop(this);
+                o_widgets.widgetDrop(this);
                 o_search.adjustSearchWidgetHeight();
             },
-            start: function(event, ui) {
-                console.log("=====sortable start=====")
-            },
-            update: function(event, ui) {
-                console.log("=====sortable update done=====")
-                o_widgets.widgetDrop(this);
-            },
-            // placeholder: "ui-sortable-placeholder",
-            // placeholder: "ui-state-highlight",
-            // tolerance: "pointer",
-            // revert: 50,
-            // revert: 50,
-            // helper: "clone",
-            // scroll: true,
-            scrollSensitivity: 100,
-            // scrollSpeed: 20,
-            axis: "y",
-            // containment: "parent",
-            opacity: 0.8,
         });
-         // $( "#sortable" ).disableSelection();
-
-		    // $("#search_widgets").sortable({
-        //     items: "li:not(.unsortable)",
-        //     cursor: 'move',
-        //     stop: function(event, ui) { o_widgets.widgetDrop(this); }
-        // });
 
         $("#search_widgets").on( "sortchange", function( event, ui ) {
             o_widgets.widgetDrop();
