@@ -10,32 +10,33 @@ var o_widgets = {
     addWidgetBehaviors: function() {
         $("#search_widgets").sortable({
             items: "> li",
-            cursor: "move",
+            cursor: "grab",
             stop: function(event, ui) {
               console.log("=====sortable stops=====")
               o_widgets.widgetDrop(this);
-
+              o_search.adjustSearchWidgetHeight();
             },
             start: function(event, ui) {
               console.log("=====sortable start=====")
-              let widget = $("#search_widgets").sortable( "widget" );
-              // console.log(widget);
             },
             update: function(event, ui) {
                 console.log("=====sortable update done=====")
                 console.log(ui.item)
+
             },
             // placeholder: "ui-sortable-placeholder",
-            placeholder: "ui-state-highlight",
+            // placeholder: "ui-state-highlight",
             // tolerance: "pointer",
-            revert: 50,
-            helper: "clone",
+            // revert: 50,
+            // revert: 50,
+            // helper: "clone",
             // scroll: true,
-            // scrollSensitivity: 200,
-            // scrollSpeed: 40,
-
+            scrollSensitivity: 100,
+            // scrollSpeed: 20,
+            // axis: "y",
+            // containment: "parent",
         });
-         $( "#sortable" ).disableSelection();
+         // $( "#sortable" ).disableSelection();
 
 		    // $("#search_widgets").sortable({
         //     items: "li:not(.unsortable)",

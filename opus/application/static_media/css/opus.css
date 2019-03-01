@@ -790,7 +790,7 @@ li a.search-param:hover {
     padding-bottom: 20px;
     padding-right: 2em;
     /* this will prevent the last sortable widget from moving upward when being grabbed */
-    overflow: auto;
+    /* overflow: auto; */
 }
 
 .widget-main .range-qtype-helper {
@@ -849,6 +849,11 @@ li a.search-param:hover {
     position: absolute;
     right: 10px;
     top: 5px;
+}
+
+#widget-container {
+    overflow:auto !important;
+    overflow-y: hidden !important;
 }
 
 .widget_column {
