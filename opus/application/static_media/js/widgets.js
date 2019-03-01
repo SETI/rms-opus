@@ -12,17 +12,16 @@ var o_widgets = {
             items: "> li",
             cursor: "grab",
             stop: function(event, ui) {
-              console.log("=====sortable stops=====")
-              o_widgets.widgetDrop(this);
-              o_search.adjustSearchWidgetHeight();
+                console.log("=====sortable stops=====")
+                // o_widgets.widgetDrop(this);
+                o_search.adjustSearchWidgetHeight();
             },
             start: function(event, ui) {
-              console.log("=====sortable start=====")
+                console.log("=====sortable start=====")
             },
             update: function(event, ui) {
                 console.log("=====sortable update done=====")
-                console.log(ui.item)
-
+                o_widgets.widgetDrop(this);
             },
             // placeholder: "ui-sortable-placeholder",
             // placeholder: "ui-state-highlight",
@@ -33,8 +32,9 @@ var o_widgets = {
             // scroll: true,
             scrollSensitivity: 100,
             // scrollSpeed: 20,
-            // axis: "y",
+            axis: "y",
             // containment: "parent",
+            opacity: 0.8,
         });
          // $( "#sortable" ).disableSelection();
 
@@ -154,11 +154,9 @@ var o_widgets = {
             // if widget is moved to a different formscolumn,
             // redefine the opus.prefs.widgets (preserves order)
             let widgets = $('#search_widgets').sortable('toArray');
-            console.log(`widgets id: ${widgets}`);
             $.each(widgets, function(index,value) {
                 widgets[index]=value.split('__')[1];
             });
-            console.log(`widgets: ${widgets}`);
             opus.prefs.widgets = widgets;
 
             o_hash.updateHash();

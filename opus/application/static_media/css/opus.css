@@ -862,7 +862,7 @@ li a.search-param:hover {
     padding 0 20px;
     margin: 0 10px;
     margin-left:-20px;
-    margin-top:10px;
+    margin-top:5px;
     width: 740px;
     max-width: 97%;
     height: 500px;  /* matches .sidebar_wrapper */
