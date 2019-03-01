@@ -4,320 +4,319 @@
 {% include "header.html" %}
 
 <body class="app header-fixed sidebar-fixed aside-menu-fixed sidebar-lg-show">
-  <div class="app-body container-fluid">
-    <nav id="navbar" class="navbar nav-pills fixed-top navbar-expand-sm navbar-dark bg-dark border-bottom border-info">
-      <button class="navbar-toggler sidebar-toggler d-lg-none mr-auto" type="button" data-toggle="sidebar-show">
-        <span class="navbar-toggler-icon"></span>
-      </button>
-      <button class="navbar-toggler sidebar-toggler d-md-down-none" type="button" data-toggle="sidebar-lg-show">
-        <span class="navbar-toggler-icon"></span>
-      </button>
-      <a class="navbar-brand" href="/opus" >OPUS</a>
-      <ul id="opusTab" class="nav nav-navbar mr-auto main_site_tabs flex-column flex-sm-row" role="tablist">
-        <li class="nav-item">
-          <a class="nav-link" href="#search" data-toggle="tab" role="tab" aria-controls="search" aria-selected="true">Search</a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link" href="#browse" data-toggle="tab" role="tab" aria-controls="browse" aria-selected="false">
-            Browse Results <span id="result_count" class="badge badge-primary">0</span>
-          </a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link" href="#collection" data-toggle="tab" role="tab" aria-controls="cart" aria-selected="false">
-            <i class="fas fa-shopping-cart"></i> Cart <span id="collection_count" class="badge badge-primary">0</span>
-          </a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link" href="#detail" data-toggle="tab" role="tab" aria-controls="detail" aria-selected="false">Detail</a>
-        </li>
-        <li class="nav-item external-link blogspot">
-          <a class="nav-link" href="https://ringsnodesearchtool.blogspot.com/" target="_blank" aria-controls="blogspot">
-            <div id="last_blog_update_date" class="container align-items-center d-flex h-100 my-auto" data-toggle="tooltip" data-placement="bottom" title="">
-              <img class="newGIF" src="{{ STATIC_URL }}img/new_25.gif" alt="Recent Announcements"/>&nbsp;Recent Announcements
-            </div>
-          </a>
-        </li>
-        <li class="nav-item external-link">
-          <a class="nav-link" href="https://pds-rings.seti.org/cgi-bin/comments/form.pl" target="_blank" aria-controls="feedback">
-            <div class="container align-items-center d-flex h-100 my-auto">
-              Questions/Feedback
-            </div>
-          </a>
-                </li>
-      </ul>
-    </nav>
-    {% block content %}
-    <div class="tab-content container-fluid tab-full-width">
-      <div id="search" class="tab-pane fade" role="tabpanel" aria-labelledby="search-tab">
-        <div class="row">
-          <div class="col pr-0 sidebar-area border-right">
-            <div id="sidebar-container" class = "sidebar_wrapper ps-scrollbar">
-              <div id = "sidebar">
-                {% include "menu.html" %}
-              </div>
-            </div>
-            <hr class="shadow-divider my-0 ml-0 mr-3">
-            <div class="op-reset-button">
-                <button type="button" class="btn btn-sm btn-secondary op-reset-search" data-target="#op-reset-search-modal" title="Reset all search params" disabled>Reset Search</button>
-                <button type="button" class="btn btn-sm btn-secondary op-reset-search-metadata" data-target="#op-reset-search-metadata-modal" title="Reset all search params and metadata" disabled>Reset Search and Metadata</button>
-            </div>
-          </div>
-
-          <!-- selected widgets -->
-          <div class="col">
-            <div id="widget-container" class = "widget_column">
-              <!-- note to self:  this is where the widgets will be replace by cards; should no longer by ul/li -->
-              <ul id="search_widgets" class = ""></ul>
-            </div>
-          </div>
-        </div>
-      </div><!-- /search -->
-
-      <div id="browse" class="tab-pane fade" role="tabpanel" aria-labelledby="browse-tab">
-        <div class="panel panel-default">
-          <nav class="panel-heading navbar navbar-expand-lg navbar-dark bg-dark">
-            <div class="browse-nav-container top_navbar collapse navbar-collapse">
-              <ul class="navbar-nav mr-auto">
-                <li class="nav-item">
-                  <a href="#" class="browse_view nav-link"><i class="far fa-list-alt"></i></a>
-                </li>
-                <li class="nav-item">
-                  <a href="#" class="metadataModal nav-link" data-toggle="modal" data-target="#metadataSelector" title="Select metadata to display or include in CSV files for each observation"><i class="fas fa-columns"></i>&nbsp;Select Metadata</a>
-                </li>
-                <li class="nav-item">
-                  <a href="#" class="paging_indicator nav-link">
-                    page <input size="4" id="page" type="number">
-                    <span class = "text-nowrap">of <span id="pages"></span></span>
-                  </a>
-                </li>
-                <li class="nav-item">
-                  <a href="#" class="download_csv nav-link" title="Download CSV of selected metadata for ALL observations in current results"><i class="fas fa-download"></i>&nbsp;Download CSV (all results)</a>
-                </li>
-                <li class="nav-item">
-                  <div id="page-slider">
-                    <div id="page-handle" class="ui-slider-handle"></div>
-                  </div>
-                </li>
-              </ul>
-            </div>
-          </nav>
-                    <div class="sort-order-container"><span class="sort-order-icon" title="Results are sorted by these metadata fields"><i class="fas fa-random"></i></span>&nbsp;<ul class="sort-contents list-inline"></ul></div>
-                    <div class="panel-body gallery-contents container-fluid browse-infiniteScroll-element">
-            <div class="row justify-content-center">
-              <div class="mr-0 thumb gallery gallery-scroll"></div>
-              <div class="page-load-status">
-                <div class="infinite-scroll-request loader-ellips">
-                  <div class='loader'></div>
-                </div>
-                <p class="infinite-scroll-last">End of content</p>
-                <p class="infinite-scroll-error">No more pages to load</p>
-              </div>
-            </div>
-            <div class="row dataTable browse-infiniteScroll-element">
-              <div class="col-lg pr-0">
-                <div class="table-page-load-status">
-                  <div class="loader"></div>
-                </div>
-                <table id="dataTable" class="table table-hover table-bordered table-striped table-dark table-sm">
-                  <thead>
-                  <tr>
-                  </tr>
-                  </thead>
-                  <tbody>
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div id="collection" class="tab-pane fade" role="tabpanel" aria-labelledby="collection-tab">
-        <div class="row">
-          <div class="col collection_details pr-0"></div>
-          <div class="col pl-0 collection-gallery-side">
-            <nav class="panel-heading navbar navbar-expand-lg navbar-dark bg-dark">
-              <div class="browse-nav-container top_navbar collapse navbar-collapse">
-                <ul class="navbar-nav mr-auto">
-                  <li class="nav-item">
-                    <a href="javascript:void(0)" class="download_csv nav-link" title="Download CSV of selected metadata for all observations in cart" target="_blank"><i class="fas fa-file-csv"></i>&nbsp;Metadata CSV</a>
-                  </li>
-                  <li class="nav-item">
-                    <div id="create_zip_data_file">
-                      <a href="#" class="downloadData nav-link" title="Download a zipped data archive of all observations in cart using selected products"><i class="fas fa-download"></i>&nbsp;Data Archive</a>
-                    </div>
-                  </li>
-                  <li class="nav-item">
-                    <div id="create_zip_url_file">
-                      <a href="#" class="downloadURL nav-link" title="Download a zipped URL archive of all observations in cart using selected products"><i class="fas fa-download"></i>&nbsp;URL Archive</a>
-                    </div>
-                  </li>
-                  <li class="nav-item">
-                    <div class="b-l-1">
-                      <a href="#" class="metadataModal nav-link" data-toggle="modal" data-target="#metadataSelector" title="Select metadata to display or include in CSV files for each observation"><i class="fas fa-columns"></i>&nbsp;Select Metadata</a>
-                    </div
-                  </li>
-                  <li class="nav-item ">
-                    <a href="#" class="emptyCart nav-link" title="Remove all observations from cart"><i class="fas fa-trash-alt"></i>&nbsp;Empty Cart</a>
-                  </li>
-                </ul>
-              </div>
-            </nav>
-                        <div class="sort-order-container"><span class="sort-order-icon" title="Results are sorted by these metadata fields"><i class="fas fa-random"></i></span>&nbsp;<ul class="sort-contents list-inline"></ul></div>
-            <div class="panel-body gallery-contents container-fluid  pr-2">
-              <div class="row mr-0 mt-0 thumb gallery gallery-scroll"></div>
-              <div class="page-load-status">
-                <div class="infinite-scroll-request loader-ellips">
-                  <!--div class='loader'></div-->
-                </div>
-                <p class="infinite-scroll-last">End of content</p>
-                <p class="infinite-scroll-error">No more pages to load</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div id="detail" class="tab-pane fade" role="tabpanel" aria-labelledby="detail-tab">
-        <div class="panel panel-default">
-        <!-- /detail  -->
-        </div>
-      </div>
-
-    </div><!-- /tabcontent -->
-
-
-    <!-- dropdown menu for observations -->
-    <div class="dropdown-menu dropdown-menu-sm" id="obs-menu" data-toggle="dropdown" aria-labelledby="obs-menu" aria-haspopup="true" aria-expanded="false">
-      <h2 class="dropdown-header"></h2>
-      <a class="dropdown-item cart-item" data-action="cart" href="#"><i class="fas fa-shopping-cart"></i>Add to cart</a>
-      <a class="dropdown-item" data-action="range" href="#"><i class="fas fa-step-backward"></i>Range selection</a>
-      <a class="dropdown-item" data-action="info" href="#"><i class="fas fa-info-circle"></i>Show detail</a>
-      <a class="dropdown-item" data-action="downloadCSV" href="#" target="__blank"><i class="fas fa-file-csv"></i>Download CSV of selected metadata&nbsp;<span class="spinner">&nbsp;</span></a>
-      <a class="dropdown-item" data-action="downloadCSVAll" href="#" target="__blank"><i class="fas fa-file-csv"></i>Download CSV of all metadata&nbsp;<span class="spinner">&nbsp;</span></a>
-      <a class="dropdown-item" data-action="downloadData" href="#" target="__blank"><i class="fas fa-download"></i>Download zipped data archive&nbsp;<span class="spinner">&nbsp;</span></a>
-      <a class="dropdown-item" data-action="downloadURL" href="#" target="__blank"><i class="fas fa-download"></i>Download zipped URL archive&nbsp;<span class="spinner">&nbsp;</span></a>
-      <a class="dropdown-item" data-action="help" href="#"><i class="far fa-question-circle"></i>Help</a>
-    </div>
-
-    <!-- modal dialog for the gallery views -->
-    <div id="galleryView" class="modal fade" role="dialog" tabbindex="-1" data-backdrop="false" data-keyboard="false" aria-labelledby="galleryViewLabel" aria-hidden="true">
-      <div class="modal-dialog modal-lg" role="document">
-        <div class="modal-content">
-          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-            <i class="far fa-times-circle fa-lg text-info"></i>
-          </button>
-          <div id="galleryViewContents" class="modal-body bg-dark">
-            <div class="row">
-              <div class="left col-lg-7"></div>
-              <div class="right col-lg-5">
-                <div class="metadata">
-                  <div class="contents"></div>
-                </div>
-                <div class="detail"></div>
-                <div class="row bottom"></div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!--modal dialog for the metadata selector -->
-    <div id="metadataSelector" class="modal fade" role="dialog" tabbindex="-1" data-backdrop="false" aria-labelledby="metadataSelectorLabel" aria-hidden="true">
-      <div class="modal-dialog modal-lg" role="document">
-        <div class="modal-content">
-          <div class="modal-header bg-dark text-light font-weight-bold font-lg py-3">
-            <div>Select Metadata</div>
-            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-              <i class="far fa-times-circle fa-lg text-light"></i>
+    <div class="app-body container-fluid">
+        <nav id="navbar" class="navbar nav-pills fixed-top navbar-expand-sm navbar-dark bg-dark border-bottom border-info">
+            <button class="navbar-toggler sidebar-toggler d-lg-none mr-auto" type="button" data-toggle="sidebar-show">
+                <span class="navbar-toggler-icon"></span>
             </button>
-          </div>
-          <div class="modal-body metadata" id="metadataSelectorContents"></div>
-          <div class="modal-footer">
-            <div class="left-container">
-              <button type="reset" class="btn btn-info">Reset to Default</button>
+            <button class="navbar-toggler sidebar-toggler d-md-down-none" type="button" data-toggle="sidebar-lg-show">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <a class="navbar-brand" href="/opus" >OPUS</a>
+            <ul id="opusTab" class="nav nav-navbar mr-auto main_site_tabs flex-column flex-sm-row" role="tablist">
+                <li class="nav-item">
+                    <a class="nav-link" href="#search" data-toggle="tab" role="tab" aria-controls="search" aria-selected="true">Search</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#browse" data-toggle="tab" role="tab" aria-controls="browse" aria-selected="false">
+                        Browse Results <span id="result_count" class="badge badge-primary">0</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#collection" data-toggle="tab" role="tab" aria-controls="cart" aria-selected="false">
+                        <i class="fas fa-shopping-cart"></i> Cart <span id="collection_count" class="badge badge-primary">0</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#detail" data-toggle="tab" role="tab" aria-controls="detail" aria-selected="false">Detail</a>
+                </li>
+                <li class="nav-item external-link blogspot">
+                    <a class="nav-link" href="https://ringsnodesearchtool.blogspot.com/" target="_blank" aria-controls="blogspot">
+                        <div id="last_blog_update_date" class="container align-items-center d-flex h-100 my-auto" data-toggle="tooltip" data-placement="bottom" title="">
+                            <img class="newGIF" src="{{ STATIC_URL }}img/new_25.gif" alt="Recent Announcements"/>&nbsp;Recent Announcements
+                        </div>
+                    </a>
+                </li>
+                <li class="nav-item external-link">
+                    <a class="nav-link" href="https://pds-rings.seti.org/cgi-bin/comments/form.pl" target="_blank" aria-controls="feedback">
+                        <div class="container align-items-center d-flex h-100 my-auto">
+                            Questions/Feedback
+                        </div>
+                    </a>
+                                </li>
+            </ul>
+        </nav>
+        {% block content %}
+        <div class="tab-content container-fluid tab-full-width">
+            <div id="search" class="tab-pane fade" role="tabpanel" aria-labelledby="search-tab">
+                <div class="row">
+                    <div class="col pr-0 sidebar-area border-right">
+                        <div id="sidebar-container" class = "sidebar_wrapper ps-scrollbar">
+                            <div id = "sidebar">
+                                {% include "menu.html" %}
+                            </div>
+                        </div>
+                        <hr class="shadow-divider my-0 ml-0 mr-3">
+                        <div class="op-reset-button">
+                                <button type="button" class="btn btn-sm btn-secondary op-reset-search" data-target="#op-reset-search-modal" title="Reset all search params" disabled>Reset Search</button>
+                                <button type="button" class="btn btn-sm btn-secondary op-reset-search-metadata" data-target="#op-reset-search-metadata-modal" title="Reset all search params and metadata" disabled>Reset Search and Metadata</button>
+                        </div>
+                    </div>
+                    <!-- selected widgets -->
+                    <div class="col">
+                        <div id="widget-container" class = "widget_column">
+                            <!-- note to self:    this is where the widgets will be replace by cards; should no longer by ul/li -->
+                            <ul id="search_widgets" class = ""></ul>
+                        </div>
+                    </div>
+                </div>
+            </div><!-- /search -->
+
+            <div id="browse" class="tab-pane fade" role="tabpanel" aria-labelledby="browse-tab">
+                <div class="panel panel-default">
+                    <nav class="panel-heading navbar navbar-expand-lg navbar-dark bg-dark">
+                        <div class="browse-nav-container top_navbar collapse navbar-collapse">
+                            <ul class="navbar-nav mr-auto">
+                                <li class="nav-item">
+                                    <a href="#" class="browse_view nav-link"><i class="far fa-list-alt"></i></a>
+                                </li>
+                                <li class="nav-item">
+                                    <a href="#" class="metadataModal nav-link" data-toggle="modal" data-target="#metadataSelector" title="Select metadata to display or include in CSV files for each observation"><i class="fas fa-columns"></i>&nbsp;Select Metadata</a>
+                                </li>
+                                <li class="nav-item">
+                                    <a href="#" class="paging_indicator nav-link">
+                                        page <input size="4" id="page" type="number">
+                                        <span class = "text-nowrap">of <span id="pages"></span></span>
+                                    </a>
+                                </li>
+                                <li class="nav-item">
+                                    <a href="#" class="download_csv nav-link" title="Download CSV of selected metadata for ALL observations in current results"><i class="fas fa-download"></i>&nbsp;Download CSV (all results)</a>
+                                </li>
+                                <li class="nav-item">
+                                    <div id="page-slider">
+                                        <div id="page-handle" class="ui-slider-handle"></div>
+                                    </div>
+                                </li>
+                            </ul>
+                        </div>
+                    </nav>
+                                        <div class="sort-order-container"><span class="sort-order-icon" title="Results are sorted by these metadata fields"><i class="fas fa-random"></i></span>&nbsp;<ul class="sort-contents list-inline"></ul></div>
+                                        <div class="panel-body gallery-contents container-fluid browse-infiniteScroll-element">
+                        <div class="row justify-content-center">
+                            <div class="mr-0 thumb gallery gallery-scroll"></div>
+                            <div class="page-load-status">
+                                <div class="infinite-scroll-request loader-ellips">
+                                    <div class='loader'></div>
+                                </div>
+                                <p class="infinite-scroll-last">End of content</p>
+                                <p class="infinite-scroll-error">No more pages to load</p>
+                            </div>
+                        </div>
+                        <div class="row dataTable browse-infiniteScroll-element">
+                            <div class="col-lg pr-0">
+                                <div class="table-page-load-status">
+                                    <div class="loader"></div>
+                                </div>
+                                <table id="dataTable" class="table table-hover table-bordered table-striped table-dark table-sm">
+                                    <thead>
+                                    <tr>
+                                    </tr>
+                                    </thead>
+                                    <tbody>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
-            <div class="right-container">
-              <button type="submit" class="btn btn-primary" data-dismiss="modal">Save Changes</button>
-              <button type="cancel" class="btn btn-danger">Discard Changes</button>
+
+            <div id="collection" class="tab-pane fade" role="tabpanel" aria-labelledby="collection-tab">
+                <div class="row">
+                    <div class="col collection_details pr-0"></div>
+                    <div class="col pl-0 collection-gallery-side">
+                        <nav class="panel-heading navbar navbar-expand-lg navbar-dark bg-dark">
+                            <div class="browse-nav-container top_navbar collapse navbar-collapse">
+                                <ul class="navbar-nav mr-auto">
+                                    <li class="nav-item">
+                                        <a href="javascript:void(0)" class="download_csv nav-link" title="Download CSV of selected metadata for all observations in cart" target="_blank"><i class="fas fa-file-csv"></i>&nbsp;Metadata CSV</a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <div id="create_zip_data_file">
+                                            <a href="#" class="downloadData nav-link" title="Download a zipped data archive of all observations in cart using selected products"><i class="fas fa-download"></i>&nbsp;Data Archive</a>
+                                        </div>
+                                    </li>
+                                    <li class="nav-item">
+                                        <div id="create_zip_url_file">
+                                            <a href="#" class="downloadURL nav-link" title="Download a zipped URL archive of all observations in cart using selected products"><i class="fas fa-download"></i>&nbsp;URL Archive</a>
+                                        </div>
+                                    </li>
+                                    <li class="nav-item">
+                                        <div class="b-l-1">
+                                            <a href="#" class="metadataModal nav-link" data-toggle="modal" data-target="#metadataSelector" title="Select metadata to display or include in CSV files for each observation"><i class="fas fa-columns"></i>&nbsp;Select Metadata</a>
+                                        </div
+                                    </li>
+                                    <li class="nav-item ">
+                                        <a href="#" class="emptyCart nav-link" title="Remove all observations from cart"><i class="fas fa-trash-alt"></i>&nbsp;Empty Cart</a>
+                                    </li>
+                                </ul>
+                            </div>
+                        </nav>
+                                                <div class="sort-order-container"><span class="sort-order-icon" title="Results are sorted by these metadata fields"><i class="fas fa-random"></i></span>&nbsp;<ul class="sort-contents list-inline"></ul></div>
+                        <div class="panel-body gallery-contents container-fluid    pr-2">
+                            <div class="row mr-0 mt-0 thumb gallery gallery-scroll"></div>
+                            <div class="page-load-status">
+                                <div class="infinite-scroll-request loader-ellips">
+                                    <!--div class='loader'></div-->
+                                </div>
+                                <p class="infinite-scroll-last">End of content</p>
+                                <p class="infinite-scroll-error">No more pages to load</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
-          </div>
+
+            <div id="detail" class="tab-pane fade" role="tabpanel" aria-labelledby="detail-tab">
+                <div class="panel panel-default">
+                <!-- /detail    -->
+                </div>
+            </div>
+
+        </div><!-- /tabcontent -->
+
+
+        <!-- dropdown menu for observations -->
+        <div class="dropdown-menu dropdown-menu-sm" id="obs-menu" data-toggle="dropdown" aria-labelledby="obs-menu" aria-haspopup="true" aria-expanded="false">
+            <h2 class="dropdown-header"></h2>
+            <a class="dropdown-item cart-item" data-action="cart" href="#"><i class="fas fa-shopping-cart"></i>Add to cart</a>
+            <a class="dropdown-item" data-action="range" href="#"><i class="fas fa-step-backward"></i>Range selection</a>
+            <a class="dropdown-item" data-action="info" href="#"><i class="fas fa-info-circle"></i>Show detail</a>
+            <a class="dropdown-item" data-action="downloadCSV" href="#" target="__blank"><i class="fas fa-file-csv"></i>Download CSV of selected metadata&nbsp;<span class="spinner">&nbsp;</span></a>
+            <a class="dropdown-item" data-action="downloadCSVAll" href="#" target="__blank"><i class="fas fa-file-csv"></i>Download CSV of all metadata&nbsp;<span class="spinner">&nbsp;</span></a>
+            <a class="dropdown-item" data-action="downloadData" href="#" target="__blank"><i class="fas fa-download"></i>Download zipped data archive&nbsp;<span class="spinner">&nbsp;</span></a>
+            <a class="dropdown-item" data-action="downloadURL" href="#" target="__blank"><i class="fas fa-download"></i>Download zipped URL archive&nbsp;<span class="spinner">&nbsp;</span></a>
+            <a class="dropdown-item" data-action="help" href="#"><i class="far fa-question-circle"></i>Help</a>
         </div>
-      </div>
-    </div>
 
-    {% include "confirm_modal.html" with
-      id_name="op-reset-search-modal"
-      confirm_title="Confirm Reset Search"
-      confirm_msg="Are you sure you want to reset your search? Your current search will be lost."
-      target="op-reset-search-modal"
-    %}
-    {% include "confirm_modal.html" with
-      id_name="op-reset-search-metadata-modal"
-      confirm_title="Confirm Reset Search and Metadata"
-      confirm_msg="Are you sure you want to reset your search and metadata? Your current search and metadata selection will be lost."
-      target="op-reset-search-metadata-modal"
-    %}
+        <!-- modal dialog for the gallery views -->
+        <div id="galleryView" class="modal fade" role="dialog" tabbindex="-1" data-backdrop="false" data-keyboard="false" aria-labelledby="galleryViewLabel" aria-hidden="true">
+            <div class="modal-dialog modal-lg" role="document">
+                <div class="modal-content">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <i class="far fa-times-circle fa-lg text-info"></i>
+                    </button>
+                    <div id="galleryViewContents" class="modal-body bg-dark">
+                        <div class="row">
+                            <div class="left col-lg-7"></div>
+                            <div class="right col-lg-5">
+                                <div class="metadata">
+                                    <div class="contents"></div>
+                                </div>
+                                <div class="detail"></div>
+                                <div class="row bottom"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!--modal dialog for the metadata selector -->
+        <div id="metadataSelector" class="modal fade" role="dialog" tabbindex="-1" data-backdrop="false" aria-labelledby="metadataSelectorLabel" aria-hidden="true">
+            <div class="modal-dialog modal-lg" role="document">
+                <div class="modal-content">
+                    <div class="modal-header bg-dark text-light font-weight-bold font-lg py-3">
+                        <div>Select Metadata</div>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <i class="far fa-times-circle fa-lg text-light"></i>
+                        </button>
+                    </div>
+                    <div class="modal-body metadata" id="metadataSelectorContents"></div>
+                    <div class="modal-footer">
+                        <div class="left-container">
+                            <button type="reset" class="btn btn-info">Reset to Default</button>
+                        </div>
+                        <div class="right-container">
+                            <button type="submit" class="btn btn-primary" data-dismiss="modal">Save Changes</button>
+                            <button type="cancel" class="btn btn-danger">Discard Changes</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {% include "confirm_modal.html" with
+            id_name="op-reset-search-modal"
+            confirm_title="Confirm Reset Search"
+            confirm_msg="Are you sure you want to reset your search? Your current search will be lost."
+            target="op-reset-search-modal"
+        %}
+        {% include "confirm_modal.html" with
+            id_name="op-reset-search-metadata-modal"
+            confirm_title="Confirm Reset Search and Metadata"
+            confirm_msg="Are you sure you want to reset your search and metadata? Your current search and metadata selection will be lost."
+            target="op-reset-search-metadata-modal"
+        %}
 
 
-    {% endblock %}
+        {% endblock %}
 
-    </div><!--/.container-fluid-->
+        </div><!--/.container-fluid-->
 
-    {% include "footer.html" %}
-    <div id = "range_query_widget_helper_html">
-        <p><strong>Any</strong> = The image contains at least a portion of the region bounded by the given min and max.</p>
+        {% include "footer.html" %}
+        <div id = "range_query_widget_helper_html">
+            <p><strong>Any</strong> = The image contains at least a portion of the region bounded by the given min and max.</p>
 
-        <p><strong>All</strong> = The image contains the entire requested range from min to max.</p>
+            <p><strong>All</strong> = The image contains the entire requested range from min to max.</p>
 
-        <p><strong>Only</strong> = Everything within the image is in the requested range.</p>
-    </div>
+            <p><strong>Only</strong> = Everything within the image is in the requested range.</p>
+        </div>
 
 
-    <!-- basic scripts - always include right before /body tag, do not use jquery slim. -->
-    <script src="https://code.jquery.com/jquery-3.3.1.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script>
-    <script>window.jQuery || document.write('<script src="{{ STATIC_URL }}cdn_fallback/jquery/js/jquery-3.3.1.min.js"><\/script>')</script>
+        <!-- basic scripts - always include right before /body tag, do not use jquery slim. -->
+        <script src="https://code.jquery.com/jquery-3.3.1.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script>
+        <script>window.jQuery || document.write('<script src="{{ STATIC_URL }}cdn_fallback/jquery/js/jquery-3.3.1.min.js"><\/script>')</script>
 
-    <script src="https://code.jquery.com/ui/1.12.0/jquery-ui.min.js" integrity="sha256-eGE6blurk5sHj+rmkfsGYeKyZx3M4bG+ZlFyA7Kns7E=" crossorigin="anonymous"></script>
-    <script>window.jQuery.ui || document.write('<script src="{{ STATIC_URL }}cdn_fallback/jquery/js/jquery-ui-1.12.0.min.js"><\/script>')</script>
+        <script src="https://code.jquery.com/ui/1.12.0/jquery-ui.min.js" integrity="sha256-eGE6blurk5sHj+rmkfsGYeKyZx3M4bG+ZlFyA7Kns7E=" crossorigin="anonymous"></script>
+        <script>window.jQuery.ui || document.write('<script src="{{ STATIC_URL }}cdn_fallback/jquery/js/jquery-ui-1.12.0.min.js"><\/script>')</script>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js" integrity="sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49" crossorigin="anonymous"></script>
-    <script>window.Popper || document.write('<script src="{{ STATIC_URL }}cdn_fallback/popper/js/popper-1.14.3.min.js"><\/script>')</script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js" integrity="sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49" crossorigin="anonymous"></script>
+        <script>window.Popper || document.write('<script src="{{ STATIC_URL }}cdn_fallback/popper/js/popper-1.14.3.min.js"><\/script>')</script>
 
-    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.min.js" integrity="sha384-ChfqqxuZUCnJSK3+MXmPNIyE6ZbWh2IMqE241rYiqJxyMiZ6OW/JmZQ5stwEULTy" crossorigin="anonymous"></script>
-    <!-- bootstrap cdn fallback -->
-    <script>
-        if (!$.fn.modal) {
-            document.write('<script src="{{ STATIC_URL }}cdn_fallback/bootstrap/js/bootstrap-4.1.3.min.js"><\/script>');
-        }
-    </script>
+        <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.min.js" integrity="sha384-ChfqqxuZUCnJSK3+MXmPNIyE6ZbWh2IMqE241rYiqJxyMiZ6OW/JmZQ5stwEULTy" crossorigin="anonymous"></script>
+        <!-- bootstrap cdn fallback -->
+        <script>
+                if (!$.fn.modal) {
+                        document.write('<script src="{{ STATIC_URL }}cdn_fallback/bootstrap/js/bootstrap-4.1.3.min.js"><\/script>');
+                }
+        </script>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-cookie/1.4.1/jquery.cookie.min.js" type="text/javascript" ></script>
-    <script>window.jQuery.cookie || document.write('<script src="{{ STATIC_URL }}cdn_fallback/jquery/js/jquery.cookie-1.4.1.min.js"><\/script>')</script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-cookie/1.4.1/jquery.cookie.min.js" type="text/javascript" ></script>
+        <script>window.jQuery.cookie || document.write('<script src="{{ STATIC_URL }}cdn_fallback/jquery/js/jquery.cookie-1.4.1.min.js"><\/script>')</script>
 
-    <!--script src="https://unpkg.com/jscroll/dist/jquery.jscroll.min.js"></script-->
-    <script src="https://cdn.jsdelivr.net/npm/lodash@4.17.11/lodash.min.js"></script>
-    <script>(window._ && window._.get) || document.write('<script src="{{ STATIC_URL }}cdn_fallback/lodash/js/lodash-4.17.11.min.js"><\/script>')</script>
+        <!--script src="https://unpkg.com/jscroll/dist/jquery.jscroll.min.js"></script-->
+        <script src="https://cdn.jsdelivr.net/npm/lodash@4.17.11/lodash.min.js"></script>
+        <script>(window._ && window._.get) || document.write('<script src="{{ STATIC_URL }}cdn_fallback/lodash/js/lodash-4.17.11.min.js"><\/script>')</script>
 
-    <script src="https://unpkg.com/infinite-scroll@3/dist/infinite-scroll.pkgd.js"></script>
-    <script>window.InfiniteScroll || document.write('<script src="{{ STATIC_URL }}cdn_fallback/infinite_scroll/js/infinite-scroll-3.0.5.pkgd.min.js"><\/script>')</script>
+        <script src="https://unpkg.com/infinite-scroll@3/dist/infinite-scroll.pkgd.js"></script>
+        <script>window.InfiniteScroll || document.write('<script src="{{ STATIC_URL }}cdn_fallback/infinite_scroll/js/infinite-scroll-3.0.5.pkgd.min.js"><\/script>')</script>
 
-    <script src="{{ STATIC_URL }}perfect-scrollbar/dist/perfect-scrollbar.js"></script>
+        <script src="{{ STATIC_URL }}perfect-scrollbar/dist/perfect-scrollbar.js"></script>
 
-    {% block scripts %}
+        {% block scripts %}
 
-    <script src = "{{ STATIC_URL }}js/opus.js?version={{ OPUS_FILE_VERSION }}" type="text/javascript"></script>
-    <script src = "{{ STATIC_URL }}js/menu.js?version={{ OPUS_FILE_VERSION }}" type="text/javascript"></script>
-    <script src = "{{ STATIC_URL }}js/utils.js?version={{ OPUS_FILE_VERSION }}" type="text/javascript"></script>
-    <script src = "{{ STATIC_URL }}js/collections.js?version={{ OPUS_FILE_VERSION }}" type="text/javascript"></script>
-    <script src = "{{ STATIC_URL }}js/browse.js?version={{ OPUS_FILE_VERSION }}" type="text/javascript"></script>
-    <script src = "{{ STATIC_URL }}js/detail.js?version={{ OPUS_FILE_VERSION }}" type="text/javascript"></script>
-    <script src = "{{ STATIC_URL }}js/search.js?version={{ OPUS_FILE_VERSION }}" type="text/javascript"></script>
-    <script src = "{{ STATIC_URL }}js/widgets.js?version={{ OPUS_FILE_VERSION }}" type="text/javascript"></script>
-    <script src = "{{ STATIC_URL }}js/hash.js?version={{ OPUS_FILE_VERSION }}" type="text/javascript"></script>
-    <script src = "{{ STATIC_URL }}js/dictionary.js?version={{ OPUS_FILE_VERSION }}" type="text/javascript"></script>
-    {% endblock  %}
+        <script src = "{{ STATIC_URL }}js/opus.js?version={{ OPUS_FILE_VERSION }}" type="text/javascript"></script>
+        <script src = "{{ STATIC_URL }}js/menu.js?version={{ OPUS_FILE_VERSION }}" type="text/javascript"></script>
+        <script src = "{{ STATIC_URL }}js/utils.js?version={{ OPUS_FILE_VERSION }}" type="text/javascript"></script>
+        <script src = "{{ STATIC_URL }}js/collections.js?version={{ OPUS_FILE_VERSION }}" type="text/javascript"></script>
+        <script src = "{{ STATIC_URL }}js/browse.js?version={{ OPUS_FILE_VERSION }}" type="text/javascript"></script>
+        <script src = "{{ STATIC_URL }}js/detail.js?version={{ OPUS_FILE_VERSION }}" type="text/javascript"></script>
+        <script src = "{{ STATIC_URL }}js/search.js?version={{ OPUS_FILE_VERSION }}" type="text/javascript"></script>
+        <script src = "{{ STATIC_URL }}js/widgets.js?version={{ OPUS_FILE_VERSION }}" type="text/javascript"></script>
+        <script src = "{{ STATIC_URL }}js/hash.js?version={{ OPUS_FILE_VERSION }}" type="text/javascript"></script>
+        <script src = "{{ STATIC_URL }}js/dictionary.js?version={{ OPUS_FILE_VERSION }}" type="text/javascript"></script>
+        {% endblock    %}
 
 </body>
 </html>
