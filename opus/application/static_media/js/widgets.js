@@ -26,7 +26,14 @@ var o_widgets = {
                 console.log(ui.item)
             },
             // placeholder: "ui-sortable-placeholder",
-            placeholder: "ui-sortable-placeholder",
+            placeholder: "ui-state-highlight",
+            // tolerance: "pointer",
+            revert: 50,
+            helper: "clone",
+            // scroll: true,
+            // scrollSensitivity: 200,
+            // scrollSpeed: 40,
+
         });
          $( "#sortable" ).disableSelection();
 

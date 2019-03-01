@@ -781,12 +781,16 @@ li a.search-param:hover {
 /* this is for sorting widgets cards, display has to be block */
 #search_widgets > li {
     display:block;
-    /* list-style-type:none; */
+    list-style-type:none;
 }
+
+.ui-state-highlight { height: 1.5em; line-height: 1.2em; }
 
 #search_widgets {  /* this fixes problem scrolling when widget column is short */
     padding-bottom: 20px;
     padding-right: 2em;
+    /* this will prevent the last sortable widget from moving upward when being grabbed */
+    overflow: auto;
 }
 
 .widget-main .range-qtype-helper {
