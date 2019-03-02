@@ -149,7 +149,7 @@ Not sure if this is the desired behavior
 hr.shadow-divider {
   height: 10px;
   border: 0;
-  box-shadow: 0 10px 10px -10px #8c8b8b inset;
+  box-shadow: 0 9px 9px -10px #8c8b8b inset;
 }
 
 ul.searchMenu{
@@ -735,6 +735,13 @@ li a.search-param:hover {
     display:inline;
     list-style-type:none;
 }
+
+/* this is for sorting widgets cards, display has to be block */
+#search_widgets > li {
+    display:block;
+    list-style-type:none;
+}
+
 #search_widgets {  /* this fixes problem scrolling when widget column is short */
     padding-bottom: 20px;
     padding-right: 2em;
@@ -787,13 +794,19 @@ li a.search-param:hover {
     top: 5px;
 }
 
+/* This is to make sortable scrolling (when sorting happened) works with ps */
+#widget-container {
+    overflow:auto !important;
+    overflow-y: hidden !important;
+}
+
 .widget_column {
     overflow: auto;
     position: relative;
     padding 0 20px;
     margin: 0 10px;
     margin-left:-20px;
-    margin-top:10px;
+    margin-top:5px;
     width: 740px;
     max-width: 97%;
     height: 500px;  /* matches .sidebar_wrapper */

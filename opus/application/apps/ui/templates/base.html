@@ -95,24 +95,24 @@
                         <div class="browse-nav-container top_navbar collapse navbar-collapse">
                             <ul class="navbar-nav mr-auto">
                                 <li class="nav-item">
-                                        <a href="#" class="browse_view nav-link"><i class="far fa-list-alt"></i></a>
+                                    <a href="#" class="browse_view nav-link"><i class="far fa-list-alt"></i></a>
                                 </li>
                                 <li class="nav-item">
-                                        <a href="#" class="metadataModal nav-link" data-toggle="modal" data-target="#metadataSelector" title="Select metadata to display or include in CSV files for each observation"><i class="fas fa-columns"></i>&nbsp;Select Metadata</a>
+                                    <a href="#" class="metadataModal nav-link" data-toggle="modal" data-target="#metadataSelector" title="Select metadata to display or include in CSV files for each observation"><i class="fas fa-columns"></i>&nbsp;Select Metadata</a>
                                 </li>
                                 <li class="nav-item">
-                                        <a href="#" class="paging_indicator nav-link">
-                                            page <input size="4" id="page" type="number">
-                                            <span class = "text-nowrap">of <span id="pages"></span></span>
-                                        </a>
+                                    <a href="#" class="paging_indicator nav-link">
+                                        page <input size="4" id="page" type="number">
+                                        <span class = "text-nowrap">of <span id="pages"></span></span>
+                                    </a>
                                 </li>
                                 <li class="nav-item">
-                                        <a href="#" class="download_csv nav-link" title="Download CSV of selected metadata for ALL observations in current results"><i class="fas fa-download"></i>&nbsp;Download CSV (all results)</a>
+                                    <a href="#" class="download_csv nav-link" title="Download CSV of selected metadata for ALL observations in current results"><i class="fas fa-download"></i>&nbsp;Download CSV (all results)</a>
                                 </li>
                                 <li class="nav-item">
-                                        <div id="page-slider">
-                                            <div id="page-handle" class="ui-slider-handle"></div>
-                                        </div>
+                                    <div id="page-slider">
+                                        <div id="page-handle" class="ui-slider-handle"></div>
+                                    </div>
                                 </li>
                             </ul>
                         </div>
@@ -137,7 +137,7 @@
                         <div class="row dataTable browse-infiniteScroll-element">
                             <div class="col-lg pr-0">
                                 <div class="table-page-load-status">
-                                        <div class="loader"></div>
+                                    <div class="loader"></div>
                                 </div>
                                 <table id="dataTable" class="table table-hover table-bordered table-striped table-dark table-sm">
                                     <thead>
@@ -184,7 +184,7 @@
                         </nav>
                         <div class="sort-order-container">
                             <span class="sort-order-icon" title="Results are sorted by these metadata fields">
-                                        <i class="fas fa-random"></i>
+                                <i class="fas fa-random"></i>
                             </span>&nbsp;
                             <ul class="sort-contents list-inline"></ul>
                         </div>
@@ -192,7 +192,7 @@
                             <div class="row mr-0 mt-0 thumb gallery gallery-scroll"></div>
                             <div class="page-load-status">
                                 <div class="infinite-scroll-request loader-ellips">
-                                        <!--div class='loader'></div-->
+                                    <!--div class='loader'></div-->
                                 </div>
                                 <p class="infinite-scroll-last">End of content</p>
                                 <p class="infinite-scroll-error">No more pages to load</p>
@@ -204,12 +204,11 @@
 
             <div id="detail" class="tab-pane fade" role="tabpanel" aria-labelledby="detail-tab">
                 <div class="panel panel-default">
-                <!-- /detail    -->
+                <!-- /detail -->
                 </div>
             </div>
-            
-        </div><!-- /tabcontent -->
 
+        </div><!-- /tabcontent -->
 
         <!-- dropdown menu for observations -->
         <div class="dropdown-menu dropdown-menu-sm" id="obs-menu" data-toggle="dropdown" aria-labelledby="obs-menu" aria-haspopup="true" aria-expanded="false">
@@ -226,10 +225,10 @@
 
         <!--sliding panel for the help menu items -->
         <div id="op-help-panel" class="card w-75">
-        	<div class="card-header align-items-center h-auto pb-0 bg-secondary">
-        		<h3 class='op-header-text'></h3>
+            <div class="card-header align-items-center h-auto pb-0 bg-secondary">
+                <h3 class='op-header-text'></h3>
                 <a class="close" aria-label="Close"><i class="far fa-times-circle fa-lg"></i></a>
-         	</div>
+             </div>
             <div class="card-body bg-light">
                 <div class="op-card-contents">
                     Loading... please wait.
@@ -237,13 +236,13 @@
                 <div class='loader'></div>
             </div>
         </div>
- 
+
       <!-- modal dialog for the gallery views -->
         <div id="galleryView" class="modal fade" role="dialog" tabbindex="-1" data-backdrop="false" data-keyboard="false" aria-labelledby="galleryViewLabel" aria-hidden="true">
             <div class="modal-dialog modal-lg" role="document">
                 <div class="modal-content">
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                            <i class="far fa-times-circle fa-lg text-info"></i>
+                        <i class="far fa-times-circle fa-lg text-info"></i>
                     </button>
                     <div id="galleryViewContents" class="modal-body bg-dark">
                         <div class="row">
@@ -298,16 +297,14 @@
             target="op-reset-search-metadata-modal"
         %}
 
-    {% endblock %}
-
     </div><!--/.container-fluid-->
 
     <!--sliding panel for the help menu items -->
     <div id="op-help-panel" class="card w-75">
-    	<div class="card-header align-items-center h-auto pb-0 bg-secondary">
-    		<h3 class='op-header-text'></h3>
+        <div class="card-header align-items-center h-auto pb-0 bg-secondary">
+            <h3 class='op-header-text'></h3>
             <a class="close" aria-label="Close"><i class="far fa-times-circle fa-lg"></i></a>
-     	</div>
+         </div>
         <div class="card-body bg-light">
             <div class="op-card-contents">
                 Loading... please wait.
@@ -320,12 +317,9 @@
     {% include "footer.html" %}
     <div id = "range_query_widget_helper_html">
         <p><strong>Any</strong> = The image contains at least a portion of the region bounded by the given min and max.</p>
-
         <p><strong>All</strong> = The image contains the entire requested range from min to max.</p>
-
         <p><strong>Only</strong> = Everything within the image is in the requested range.</p>
     </div>
-
 
     <!-- basic scripts - always include right before /body tag, do not use jquery slim. -->
     <script src="https://code.jquery.com/jquery-3.3.1.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script>
