@@ -10,48 +10,13 @@ body {
   margin-bottom: -12px;
 }
 
-.addScroll{
-  overflow-y:auto;
-  height: 200px;
-}
-
 .dictionary {
     display:none;
-}
-.ui-tooltip {
-    max-width:40em;
-    padding:10px;
-    margin:0 30px;
-    font-size:130%;
-    z-index:9999;
 }
 
 .tab-full-width {
   margin: 0 auto;
   width: 100%;
-}
-
-.navbar-nav .nav-item.active:hover {
-    background: white !important;
-}
-.navbar-nav .nav-item.active a:hover {
-    color: #383838 !important;
-}
-
-.navbar-header {
-    position:fixed;
-    left:20px;
-    top:0;
-    width:10em;
-}
-
-.tab-content {
-    border: 1px solid black;
-    padding: 0;
-}
-
-.nav-tabs {
-    margin-bottom: 0;
 }
 
 .navbar-brand {
@@ -688,9 +653,6 @@ div.gallery {
 }
 
 @media (max-width: 700px) {
-    .navbar-header {
-        display:none;
-    }
      .browse-nav-container li {
         border: 1px solid #383838;
         padding:0;
@@ -738,25 +700,25 @@ div.gallery {
     font-size: 80%;
 }
 
-a.dropdown-toggle {
+.searchMenu a.dropdown-toggle {
     margin-top: 5px;
     margin-bottom: 12px;
     font-weight: 600;
     color: initial;
 }
 
-a.dropdown-toggle:hover {
+.searchMenua.dropdown-toggle:hover {
     text-decoration: none;
 }
 
-a.search-param {
+.searchMenu a.search-param {
     margin-top: 5px;
     margin-bottom: 12px;
     font-weight: 70;
     color: initial;
 }
 
-a.search-param:hover {
+.searchMenu a.search-param:hover {
     text-decoration: none;
 }
 /*
@@ -804,17 +766,6 @@ li a.search-param:hover {
 }
 .widget-main label {
     font-size:95%;
-}
-.widget-main .intro {
-    color:blue;
-    margin:0 0 5px 0;
-}
-
-.start_over_controls {
-    margin-top:5px;
-}
-.start_over_controls .btn:nth-child(2) {
-    margin-left:-5px;
 }
 
 /* Overwrite the default to keep the scrollbar always visiblepadding-top: 1.5em; */
@@ -954,11 +905,47 @@ footer {
   height: 42px;
   padding:10px 20px;
   text-align:right;
-  background-color: #f5f5f5;
 }
 .footer a {
     white-space: nowrap;
 }
+
+#op-help-panel {
+    display: none;
+    position: absolute;
+    right: 0;
+    z-index: 9999;
+    top: 2em;
+}
+.op-header-text {
+    display: inline-block;
+}
+
+#op-help-panel .card-body {
+    overflow: auto;
+}
+
+.op-overlay {
+    display: none;
+    position: fixed;
+    /* full screen */
+    width: 100vw;
+    height: 100vh;
+    /* transparent black */
+    background: rgba(0, 0, 0, 0.7);
+    /* middle layer, i.e. appears below the panel */
+    z-index: 1099;
+    opacity: 0;
+    /* animate the transition */
+    transition: all 0.5s ease-in-out;
+}
+/* display .overlay when it has the .active class */
+.op-overlay.active {
+    display: block;
+    opacity: 1;
+}
+
+
 /* about page */
 .about ul {
     padding-left:30px;

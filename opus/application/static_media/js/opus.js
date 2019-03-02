@@ -392,8 +392,12 @@ var opus = {
             return false;
         }
         return true;
-    }
+    },
 
+    adjustHelpPanelHeight: function() {
+        let height = $(window).height()-120;
+        $("#op-help-panel .card-body").css("height", height);
+    }
 }; // end opus namespace
 
 /*
@@ -426,24 +430,27 @@ $(document).ready(function() {
     var adjustTableSize = _.debounce(o_browse.adjustTableSize, 200);
     var adjustProductInfoHeight = _.debounce(o_collections.adjustProductInfoHeight, 200);
     var adjustDetailHeight = _.debounce(o_detail.adjustDetailHeight, 200);
+    var adjustHelpPanelHeight = _.debounce(opus.adjustHelpPanelHeight, 200);
+
     $( window ).on("resize", function() {
         adjustSearchHeight();
         adjustBrowseHeight();
         adjustTableSize();
         adjustProductInfoHeight();
         adjustDetailHeight();
+        adjustHelpPanelHeight();
     });
 
     // add the navbar clicking behaviors, selecting which tab to view:
     // see triggerNavbarClick
-    $('#navbar').on("click", '.main_site_tabs .nav-item', function() {
-        if ($(this).hasClass('external-link')) {
+    $("#navbar").on("click", ".main_site_tabs .nav-item", function() {
+        if ($(this).hasClass("external-link")) {
             // this is a link to an external site, so just go there...
             return true;
         }
 
         // find out which tab they clicked
-        var tab = $(this).find('a').attr('href').substring(1);
+        var tab = $(this).find("a").attr("href").substring(1);
         if (tab == '/') {
             return true;  // they clicked the brand icon, take them to its link
         }
@@ -456,6 +463,54 @@ $(document).ready(function() {
 
         //return false;
 
+    });
+
+    $(".op-help-item").on("click", function() {
+        let url = "opus/__help/";
+        var header = "";
+        switch ($(this).data("action")) {
+            case "about":
+                url += "about.html";
+                header = "About OPUS";
+                break;
+            case "datasets":
+                url += "datasets.html";
+                header = "Datasets Available for Searching with OPUS";
+                break;
+            case "faq":
+                url += "faq.html";
+                header = "Frequently Asked Questions (FAQ)";
+                break;
+            case "guide":
+                url += "guide.html";
+                header = "OPUS API Guide";
+                break;
+            case "tutorial":
+                url += "tutorial.html";
+                header = "A Brief Tutorial";
+                break;
+        }
+        opus.adjustHelpPanelHeight();
+        $("#op-help-panel .op-header-text").html(`<h2>${header}</h2`);
+        $("#op-help-panel .op-card-contents").html("Loading... please wait.");
+        $("#op-help-panel .loader").show();
+        $("#op-help-panel").toggle("slide", {direction:'right'}, function() {
+            $(".op-overlay").addClass("active");
+        });
+        $.ajax({
+            url: url,
+            dataType: "html",
+            success: function(page) {
+                $("#op-help-panel .loader").hide();
+                $("#op-help-panel .op-card-contents").html(page);
+            }
+        });
+    });
+
+    $("#op-help-panel .close, .op-overlay").on("click", function() {
+        $("#op-help-panel").toggle("slide", {direction:'right'});
+        $(".op-overlay").removeClass("active");
+        return false;
     });
 
     $(".op-reset-button button").on("click", function() {
@@ -479,17 +534,10 @@ $(document).ready(function() {
                 }
                 break;
             case "cancel":
-                $('.modal').modal('hide')
+                $(".modal").modal("hide")
                 break;
         }
     });
-
-    // doesn't work yet
-    $("footer a").on("click", function() {
-        opus.search_tab_drawn = false;
-        window.open(this.href);
-        return false;
-    }),
 
     // general functionality to discover if an element is in the viewport
     // used like this: if ($(this).isInViewport()) {}

@@ -3,11 +3,6 @@
     box-sizing: border-box
 }
 
-a {
-  color: #89ba2c;
-  text-decoration: none;
-}
-
 .cd-main-content h1 {
   font-size: 20px;
   font-size: 1.25rem;
