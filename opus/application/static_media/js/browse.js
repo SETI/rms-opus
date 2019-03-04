@@ -327,6 +327,7 @@ var o_browse = {
 
         $(document).on("keydown click", function(e) {
             o_browse.hideMenu();
+            opus.hideHelpPanel();
             if ((e.which || e.keyCode) == 27) { // esc - close modals
                 $("#galleryView").modal('hide');
                 $("#metadataSelector").modal('hide');
