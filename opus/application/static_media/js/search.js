@@ -427,7 +427,10 @@ var o_search = {
 
     getSearchTab: function() {
 
-        if (opus.search_tab_drawn) { return; }
+        if (opus.search_tab_drawn) {
+            o_search.adjustSearchHeight();
+            return;
+        }
 
         // get any prefs from cookies
         if (!opus.prefs.widgets.length && $.cookie("widgets")) {
