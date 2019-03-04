@@ -382,6 +382,7 @@ var o_browse = {
     showModal: function(opusId) {
         o_browse.updateGalleryView(opusId);
         $("#galleryView").modal("show");
+        o_browse.modalScrollbar.update();
     },
 
     hideMenu: function() {
