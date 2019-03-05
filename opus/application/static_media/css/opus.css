@@ -553,6 +553,19 @@ img.preview {
   position: fixed;
 }
 
+#galleryView .modal-dialog:hover {
+    cursor: grab;
+}
+
+#galleryViewContents .contents:hover {
+    cursor: pointer;
+}
+
+/* note - this is here to allow the user-style to be overridden on the modal */
+a:-webkit-any-link {
+    cursor: inherit;
+}
+
 #galleryViewContents .detail {
   position: fixed;
   bottom: 3.7em;
