@@ -28,7 +28,9 @@
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="#detail" data-toggle="tab" role="tab" aria-controls="detail" aria-selected="false">Detail</a>
+                    <a class="nav-link" href="#detail" data-toggle="tab" role="tab" aria-controls="detail" aria-selected="false">
+                        <i class="fas fa-info-circle"></i> Detail
+                    </a>
                 </li>
                 <li class="nav-item external-link blogspot">
                     <a class="nav-link" href="https://ringsnodesearchtool.blogspot.com/" target="_blank" aria-controls="blogspot">
@@ -44,6 +46,20 @@
                         </div>
                     </a>
                                 </li>
+            </ul>
+            <ul class="nav navbar-nav flex-column flex-sm-row">
+                <li id="op-help" class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle my-0" href="#" id="op-help-menu" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                        <i class="fas fa-question-circle"></i> Help
+                    </a>
+                    <div class="dropdown-menu" aria-labelledby="op-help-menu">
+                        <a class="dropdown-item op-help-item" data-action="about" href="#">About</a>
+                        <a class="dropdown-item op-help-item" data-action="datasets" href="#">Datasets</a>
+                        <a class="dropdown-item op-help-item" data-action="faq" href="#">FAQ</a>
+                        <a class="dropdown-item op-help-item" data-action="guide" href="#">Guide</a>
+                        <a class="dropdown-item op-help-item" data-action="tutorial" href="#">Tutorial</a>
+                   </div>
+               </li>
             </ul>
         </nav>
         {% block content %}
@@ -62,6 +78,7 @@
                                 <button type="button" class="btn btn-sm btn-secondary op-reset-search-metadata" data-target="#op-reset-search-metadata-modal" title="Reset all search params and metadata" disabled>Reset Search and Metadata</button>
                         </div>
                     </div>
+
                     <!-- selected widgets -->
                     <div class="col">
                         <div id="widget-container" class = "widget_column">
@@ -100,7 +117,12 @@
                             </ul>
                         </div>
                     </nav>
-                                        <div class="sort-order-container"><span class="sort-order-icon" title="Results are sorted by these metadata fields"><i class="fas fa-random"></i></span>&nbsp;<ul class="sort-contents list-inline"></ul></div>
+                    <div class="sort-order-container">
+                        <span class="sort-order-icon" title="Results are sorted by these metadata fields">
+                            <i class="fas fa-random"></i>
+                        </span>&nbsp;
+                        <ul class="sort-contents list-inline"></ul>
+                    </div>
                                         <div class="panel-body gallery-contents container-fluid browse-infiniteScroll-element">
                         <div class="row justify-content-center">
                             <div class="mr-0 thumb gallery gallery-scroll"></div>
@@ -119,11 +141,9 @@
                                 </div>
                                 <table id="dataTable" class="table table-hover table-bordered table-striped table-dark table-sm">
                                     <thead>
-                                    <tr>
-                                    </tr>
+                                        <tr></tr>
                                     </thead>
-                                    <tbody>
-                                    </tbody>
+                                    <tbody></tbody>
                                 </table>
                             </div>
                         </div>
@@ -154,7 +174,7 @@
                                     <li class="nav-item">
                                         <div class="b-l-1">
                                             <a href="#" class="metadataModal nav-link" data-toggle="modal" data-target="#metadataSelector" title="Select metadata to display or include in CSV files for each observation"><i class="fas fa-columns"></i>&nbsp;Select Metadata</a>
-                                        </div
+                                        </div>
                                     </li>
                                     <li class="nav-item ">
                                         <a href="#" class="emptyCart nav-link" title="Remove all observations from cart"><i class="fas fa-trash-alt"></i>&nbsp;Empty Cart</a>
@@ -162,7 +182,12 @@
                                 </ul>
                             </div>
                         </nav>
-                                                <div class="sort-order-container"><span class="sort-order-icon" title="Results are sorted by these metadata fields"><i class="fas fa-random"></i></span>&nbsp;<ul class="sort-contents list-inline"></ul></div>
+                        <div class="sort-order-container">
+                            <span class="sort-order-icon" title="Results are sorted by these metadata fields">
+                                        <i class="fas fa-random"></i>
+                            </span>&nbsp;
+                            <ul class="sort-contents list-inline"></ul>
+                        </div>
                         <div class="panel-body gallery-contents container-fluid    pr-2">
                             <div class="row mr-0 mt-0 thumb gallery gallery-scroll"></div>
                             <div class="page-load-status">
@@ -199,6 +224,20 @@
             <a class="dropdown-item" data-action="help" href="#"><i class="far fa-question-circle"></i>Help</a>
         </div>
 
+        <!--sliding panel for the help menu items -->
+        <div id="op-help-panel" class="card w-75">
+        	<div class="card-header align-items-center h-auto pb-0 bg-secondary">
+        		<h3 class='op-header-text'></h3>
+                <a class="close" aria-label="Close"><i class="far fa-times-circle fa-lg"></i></a>
+         	</div>
+            <div class="card-body bg-light">
+                <div class="op-card-contents">
+                    Loading... please wait.
+                </div>
+                <div class='loader'></div>
+            </div>
+        </div>
+ 
         <!-- modal dialog for the gallery views -->
         <div id="galleryView" class="modal fade" role="dialog" tabbindex="-1" data-backdrop="false" data-keyboard="false" aria-labelledby="galleryViewLabel" aria-hidden="true">
             <div class="modal-dialog modal-lg" role="document">
@@ -259,10 +298,24 @@
             target="op-reset-search-metadata-modal"
         %}
 
-
         {% endblock %}
 
         </div><!--/.container-fluid-->
+
+    <!--sliding panel for the help menu items -->
+    <div id="op-help-panel" class="card w-75">
+    	<div class="card-header align-items-center h-auto pb-0 bg-secondary">
+    		<h3 class='op-header-text'></h3>
+            <a class="close" aria-label="Close"><i class="far fa-times-circle fa-lg"></i></a>
+     	</div>
+        <div class="card-body bg-light">
+            <div class="op-card-contents">
+                Loading... please wait.
+            </div>
+            <div class='loader'></div>
+        </div>
+    </div>
+    <div class="op-overlay"></div>
 
         {% include "footer.html" %}
         <div id = "range_query_widget_helper_html">

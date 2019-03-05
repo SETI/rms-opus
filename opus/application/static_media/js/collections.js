@@ -263,7 +263,7 @@ var o_collections = {
     },
 
     getGalleryElement: function(opusId) {
-        return $("#" + opus.prefs.view+" .thumbnail-container[data-id=" + opusId + "]");
+        return $(`#${opus.prefs.view} .thumbnail-container[data-id=${opusId}]`);
     },
 
     toggleInCollection: function(fromOpusId, toOpusId) {
@@ -299,7 +299,9 @@ var o_collections = {
             o_collections.editCollection(opusIdRange, action);
             o_browse.undoRangeSelect(namespace);
         } else {
-            fromElem.toggleClass("in");
+            // note - doing it this way handles the obs on the browse tab at the same time
+            $(`.thumbnail-container[data-id=${fromOpusId}]`).toggleClass("in");
+
             let action = (fromElem.hasClass("in") ? "add" : "remove");
             // if this came from the mini menu off the modal, need to update the icon
             let modalCartSelector = `#galleryViewContents .bottom .select[data-id=${fromOpusId}]`;

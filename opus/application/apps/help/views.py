@@ -25,7 +25,7 @@ log = logging.getLogger(__name__)
 ################################################################################
 
 def api_about(request):
-    """Renders the about page
+    """Renders the about page.
 
     This is a PRIVATE API.
 
@@ -38,7 +38,7 @@ def api_about(request):
     return ret
 
 def api_datasets(request):
-    """Renders the datasets page
+    """Renders the datasets page.
 
     This is a PRIVATE API.
 
@@ -61,7 +61,7 @@ def api_datasets(request):
     return ret
 
 def api_faq(request):
-    """Renders the faq page
+    """Renders the faq page.
 
     This is a PRIVATE API.
 
@@ -69,12 +69,27 @@ def api_faq(request):
     """
     api_code = enter_api_call('api_faq', request)
 
-    ret = render(request, 'help/faq.html')
+    path = os.path.dirname(os.path.abspath(__file__))
+    faq_content_file = 'faq.yaml'
+    with open(os.path.join(path, faq_content_file), 'r') as stream:
+        text = stream.read()
+        try:
+            faq = yaml.load(text)
+
+        except yaml.YAMLError as exc:
+            log.error('api_faq error: %s', str(exc))
+            exit_api_call(api_code, None)
+            raise Http404
+
+    print(faq)
+    ret = render(request, 'help/faq.html',
+                 {'faq': faq})
+
     exit_api_call(api_code, ret)
     return ret
 
 def api_tutorial(request):
-    """Renders the tutorial page
+    """Renders the tutorial page.
 
     This is a PRIVATE API.
 
@@ -87,7 +102,7 @@ def api_tutorial(request):
     return ret
 
 def api_guide(request):
-    """Renders the API guide at opus/api
+    """Renders the API guide at opus/api.
 
     Format: api/
         or: api/guide.html
