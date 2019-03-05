@@ -1046,6 +1046,7 @@ var o_browse = {
 
     metadataboxHtml: function(opusId) {
         // list columns + values
+        console.log(`current ID: ${opusId}`);
         let html = "<dl>";
         $.each(opus.col_labels, function(index, columnLabel) {
             let value = opus.gallery_data[opusId][index];
@@ -1053,9 +1054,27 @@ var o_browse = {
         });
         html += "</dl>";
         $("#galleryViewContents .contents").html(html);
-
         let next = $(`#browse tr[data-id=${opusId}]`).next("tr");
-        next = (next.length > 0 ? next.data("id") : "");
+        let nextNext = next.next("tr");
+        console.log(next)
+        while(next.hasClass("table-page")) {
+            console.log("NEW PAGE LOADED, NEED TO FIND tHE CORRECT TR")
+            console.log(next.data("page"))
+            next = next.next("tr");
+            nextNext = next.next("tr");
+        }
+
+        next = (next.data("id") ? next.data("id") : "");
+        // next = (next.length > 0 ? next.data("id") : "");
+        console.log(`NEXT ID: ${next}`)
+        let nextNextId = (nextNext.data("id") ? nextNext.data("id") : "");
+        console.log(`NEXT NEXT ID: ${nextNextId}`);
+        if(!nextNextId && !nextNext.hasClass("table-page")) {
+            console.log("Need to load more content...LOADING")
+            $(`#${opus.prefs.view} .gallery-contents`).infiniteScroll("loadNextPage");
+        }
+
+
         let prev = $(`#browse tr[data-id=${opusId}]`).prev("tr");
         prev = (prev.length > 0 ? prev.data("id") : "");
 
