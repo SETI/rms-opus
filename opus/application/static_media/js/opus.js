@@ -397,6 +397,11 @@ var opus = {
     adjustHelpPanelHeight: function() {
         let height = $(window).height()-120;
         $("#op-help-panel .card-body").css("height", height);
+        if(opus.helpScrollbar) {
+            // Make ps always start from top
+            $("#op-help-panel .card-body").scrollTop(0);
+            opus.helpScrollbar.update();
+        }
     }
 }; // end opus namespace
 
@@ -466,7 +471,7 @@ $(document).ready(function() {
     });
 
     $(".op-help-item").on("click", function() {
-        let url = "opus/__help/";
+        let url = "/opus/__help/";
         var header = "";
         switch ($(this).data("action")) {
             case "about":
@@ -490,10 +495,15 @@ $(document).ready(function() {
                 header = "A Brief Tutorial";
                 break;
         }
-        opus.adjustHelpPanelHeight();
+
         $("#op-help-panel .op-header-text").html(`<h2>${header}</h2`);
         $("#op-help-panel .op-card-contents").html("Loading... please wait.");
         $("#op-help-panel .loader").show();
+        // We only need one perfectScrollbar
+        if(!opus.helpScrollbar) {
+            opus.helpScrollbar = new PerfectScrollbar("#op-help-panel .card-body", { suppressScrollX: true });
+        }
+        adjustHelpPanelHeight();
         $("#op-help-panel").toggle("slide", {direction:'right'}, function() {
             $(".op-overlay").addClass("active");
         });
@@ -503,6 +513,7 @@ $(document).ready(function() {
             success: function(page) {
                 $("#op-help-panel .loader").hide();
                 $("#op-help-panel .op-card-contents").html(page);
+                adjustHelpPanelHeight()
             }
         });
     });

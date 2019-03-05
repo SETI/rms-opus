@@ -936,6 +936,8 @@ footer {
 
 #op-help-panel .card-body {
     overflow: auto;
+    /* requirement for perfectScrollbar */
+    position: relative;
 }
 
 .op-overlay {
