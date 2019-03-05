@@ -23,7 +23,22 @@ body {
   width: 3em !important;
 }
 
-#opusTab img.newGIF {
+@media(max-width:992px) {
+    #op-main-nav.navbar .navbar-brand {
+        float:none;
+        display: block;
+    }
+    #op-main-nav.navbar .navbar-nav>.nav-item {
+        float: none;
+        margin-left: .1rem;
+    }
+    #op-main-nav.navbar .navbar-nav {
+        float:none !important;
+    }
+}
+
+
+#op-tab img.newGIF {
     display: none;
 }
 
@@ -558,7 +573,7 @@ img.preview {
 }
 
 #galleryViewContents .contents:hover {
-    cursor: pointer;
+    cursor: text;
 }
 
 /* note - this is here to allow the user-style to be overridden on the modal */
