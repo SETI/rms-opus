@@ -342,13 +342,11 @@ var o_browse = {
 
         $(document).on("keydown click", function(e) {
             o_browse.hideMenu();
-            // only close the help panel if the user clicked outside of the panel element
-            if ($(e.target).parents("#op-help-panel").length == 0) {
-                opus.hideHelpPanel();
-            }
+
             if ((e.which || e.keyCode) == 27) { // esc - close modals
                 $("#galleryView").modal('hide');
                 $("#metadataSelector").modal('hide');
+                opus.hideHelpPanel();
             }
             if ($("#galleryView").hasClass("show")) {
                 /*  Catch the right/left arrow while in the modal
