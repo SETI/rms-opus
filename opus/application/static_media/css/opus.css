@@ -1053,3 +1053,8 @@ ul.ui-autocomplete a.ui-state-active {
 .list-header, .list-footer {
     background-color: #F9F6F6;
 }
+
+.op-disabled {
+    pointer-events: none;
+    cursor: default;
+}

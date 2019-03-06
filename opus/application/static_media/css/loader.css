@@ -18,6 +18,8 @@
     border-top-color: #9370DB;
     -webkit-animation: spin 2s linear infinite;
     animation: spin 2s linear infinite;
+    /* this is to display the spinner over the modal */
+    z-index: 1000;
 }
 .loader:before {
     content: "";
