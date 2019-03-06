@@ -102,6 +102,8 @@ var opus = {
     main_timer_interval:1000,
 
     allInputsValid: true,
+
+    helpPanelOpen: false,
     //------------------------------------------------------------------------------------//
 
     load: function () {
@@ -394,6 +396,14 @@ var opus = {
         return true;
     },
 
+    hideHelpPanel: function() {
+        if (opus.helpPanelOpen) {
+            $("#op-help-panel").toggle("slide", {direction:'right'});
+            $(".op-overlay").removeClass("active");
+        }
+        opus.helpPanelOpen = false;
+    },
+
     adjustHelpPanelHeight: function() {
         let height = $(window).height()-120;
         $("#op-help-panel .card-body").css("height", height);
@@ -448,7 +458,7 @@ $(document).ready(function() {
 
     // add the navbar clicking behaviors, selecting which tab to view:
     // see triggerNavbarClick
-    $("#navbar").on("click", ".main_site_tabs .nav-item", function() {
+    $("#op-main-nav").on("click", ".main_site_tabs .nav-item", function() {
         if ($(this).hasClass("external-link")) {
             // this is a link to an external site, so just go there...
             return true;
@@ -513,14 +523,14 @@ $(document).ready(function() {
             success: function(page) {
                 $("#op-help-panel .loader").hide();
                 $("#op-help-panel .op-card-contents").html(page);
+                opus.helpPanelOpen = true;
                 adjustHelpPanelHeight()
             }
         });
     });
 
     $("#op-help-panel .close, .op-overlay").on("click", function() {
-        $("#op-help-panel").toggle("slide", {direction:'right'});
-        $(".op-overlay").removeClass("active");
+        opus.hideHelpPanel();
         return false;
     });
 
