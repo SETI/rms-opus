@@ -11,7 +11,6 @@ var o_browse = {
     galleryScrollTo: 0,
 
     lastLoadDataRequestNo: 0,
-
     /**
     *
     *  all the things that happen on the browse tab
@@ -251,6 +250,21 @@ var o_browse = {
         $('#galleryView').on("click", "a.prev,a.next", function(e) {
             let action = $(this).hasClass("prev") ? "prev" : "next";
             let opusId = $(this).data("id");
+
+            let next = $(`#browse tr[data-id=${opusId}]`).next("tr");
+            let nextNext = next.next("tr");
+            let nextNextId = (nextNext.data("id") ? nextNext.data("id") : "");
+
+            // load the next page when the next next item is the dead end (no more prefected data)
+            if(!nextNextId && !nextNext.hasClass("table-page")) {
+                // disable clicking on modal when it's loading
+                // this will make sure we have correct html elements displayed for next opus id
+                if(!$("#galleryViewContents").hasClass("op-disabled")) {
+                    $("#galleryViewContents").addClass("op-disabled");
+                }
+                $(`#${opus.prefs.view} .gallery-contents`).infiniteScroll("loadNextPage");
+            }
+
             if (opusId) {
                 o_browse.updateGalleryView(opusId);
             }
@@ -384,6 +398,7 @@ var o_browse = {
     showModal: function(opusId) {
         o_browse.updateGalleryView(opusId);
         $("#galleryView").modal("show");
+        o_browse.modalScrollbar.update();
     },
 
     hideMenu: function() {
@@ -987,6 +1002,10 @@ var o_browse = {
             //$(`.thumb-page[data-page='${data.page_no}']`).scrollTop(0);
         }
         //console.log('Loaded page: ' + $('#browse .gallery-contents').data('infiniteScroll').pageIndex );
+
+        // if left/right arrow are disabled, make them clickable again
+        $("#galleryViewContents").removeClass("op-disabled");
+        // $(`#${opus.prefs.view} .page-load-status .loader`).hide();
     },
 
     getBrowseTab: function() {
@@ -1054,11 +1073,18 @@ var o_browse = {
         });
         html += "</dl>";
         $("#galleryViewContents .contents").html(html);
-
         let next = $(`#browse tr[data-id=${opusId}]`).next("tr");
-        next = (next.length > 0 ? next.data("id") : "");
+
+        while(next.hasClass("table-page")) {
+            next = next.next("tr");
+        }
+        next = (next.data("id") ? next.data("id") : "");
+
         let prev = $(`#browse tr[data-id=${opusId}]`).prev("tr");
-        prev = (prev.length > 0 ? prev.data("id") : "");
+        while(prev.hasClass("table-page")) {
+            prev = prev.prev("tr");
+        }
+        prev = (prev.data("id") ? prev.data("id") : "");
 
         let status = o_collections.isIn(opusId) ? "" : "in";
         let buttonInfo = o_browse.cartButtonInfo(status);

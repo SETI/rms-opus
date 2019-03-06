@@ -593,6 +593,12 @@ a:-webkit-any-link, a::any-link {
     width: 0px;
 }
 
+/* this is used to disable clicking on modal (#galleryViewContents) when infiniteScroll is still loading the next page*/
+.op-disabled {
+    pointer-events: none;
+    cursor: default;
+}
+
 #collection .collection-gallery-side {
     /*margin-top:.25em; */
     background-color: #303030; /* #383838; */
@@ -967,6 +973,8 @@ footer {
 
 #op-help-panel .card-body {
     overflow: auto;
+    /* requirement for perfectScrollbar */
+    position: relative;
 }
 
 .op-overlay {

@@ -232,6 +232,9 @@ var o_collections = {
                     adjustProductInfoHeight();
                 }
             });
+        } else {
+            o_collections.adjustProductInfoHeight();
+            return;
         }
     },
 

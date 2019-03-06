@@ -10,12 +10,13 @@ var o_widgets = {
     addWidgetBehaviors: function() {
         $("#search_widgets").sortable({
             items: "> li",
-            cursor: "grab",
+            cursor: "move",
             // we need the clone so that widgets in url gets changed only when sorting is stopped
             helper: "clone",
             scrollSensitivity: 100,
             axis: "y",
             opacity: 0.8,
+            cursorAt: {top: 10, left: 10},
             stop: function(event, ui) {
                 o_widgets.widgetDrop(this);
                 o_search.adjustSearchWidgetHeight();

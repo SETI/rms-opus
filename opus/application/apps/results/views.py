@@ -33,7 +33,7 @@ from django.apps import apps
 from django.core.cache import cache
 from django.core.exceptions import FieldError
 from django.db import connection, DatabaseError
-from django.http import Http404
+from django.http import Http404, HttpResponseServerError
 from django.shortcuts import render
 from django.views.decorators.cache import never_cache
 
