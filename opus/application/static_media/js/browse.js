@@ -253,6 +253,8 @@ var o_browse = {
             let next = $(`#browse tr[data-id=${opusId}]`).next("tr");
             let nextNext = next.next("tr");
             let nextNextId = (nextNext.data("id") ? nextNext.data("id") : "");
+
+            // load the next page when the next next item is the dead end (no more prefected data)
             if(!nextNextId && !nextNext.hasClass("table-page")) {
                 // disable clicking on modal when it's loading
                 // this will make sure we have correct html elements displayed for next opus id
