@@ -6,7 +6,7 @@ var o_search = {
      *
      **/
     searchScrollbar: new PerfectScrollbar("#sidebar-container", { suppressScrollX: true }),
-    widgetScrollbar: new PerfectScrollbar("#widget-container"),
+    widgetScrollbar: new PerfectScrollbar("#widget-container" , { suppressScrollX: true }),
 
     // for input validation in the search widgets
     searchResultsNotEmpty: false,
@@ -408,7 +408,7 @@ var o_search = {
     },
 
     adjustSearchWidgetHeight: function() {
-        let containerHeight = $("#search").height() - 120;
+        let containerHeight = $("#search").height() - 80;
         let searchWidgetHeight = $("#search_widgets").height();
         $(".widget_column").height(containerHeight);
 

@@ -1,34 +1,22 @@
 <div class="op-help-container">
-    <ol id="op-faq">
-        <li class="op-question">
-            <a data-toggle="collapse" href="#faq1">
-                 OPUS faq #1
-            </a>
-            <div id="faq1" class="collapse">
-                <p class="op-response">
-                    Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.
-                </p>
-            </div>
-        </li>
-        <li class="op-question">
-            <a data-toggle="collapse" href="#faq2">
-                 OPUS faq  #2
-            </a>
-            <div id="faq2" class="collapse">
-                <p class="op-response">
-                    Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.
-                </p>
-            </div>
-        </li>
-        <li class="op-question">
-            <a data-toggle="collapse" href="#faq3">
-                 OPUS faq #3
-            </a>
-            <div id="faq3" class="collapse">
-                <p class="op-response">
-                    Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.
-                </p>
-            </div>
-        </li>
-    </ol>
+    {% for category, contents in faq.items %}
+        <div class="op-faq-category">
+    		<h2>{{ category }}</h2>
+            <ol id="op-faq">
+                {{ faq.category }}
+                {% for entry in contents %}
+                    <li class="op-faq-question">
+                        <a data-toggle="collapse" href="#{{entry.Q|slugify}}">
+                            {{ entry.Q }}
+                        </a>
+                        <div id="{{entry.Q|slugify}}" class="collapse">
+                            <p class="op-faq-response">
+                                {{ entry.A|linebreaks }}
+                            </p>
+                        </div>
+                    </li>
+                {% endfor %}
+            </ol>
+        </div>
+    {% endfor %}
 </div>

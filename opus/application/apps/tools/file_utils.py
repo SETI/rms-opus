@@ -98,6 +98,11 @@ def get_pds_products(opus_id_list,
     log.debug('get_pds_products SQL: %s %s', sql, values)
     cursor.execute(sql, values)
 
+    # We do this here so if there aren't any product, there's still an empty
+    # dictionary returned
+    for opus_id in opus_id_list:
+        results[opus_id] = OrderedDict() # Dict of versions
+
     for row in cursor:
         path = None
         url = None
@@ -115,8 +120,6 @@ def get_pds_products(opus_id_list,
         # sort order
         sort_order = int(sort_order[6:])
 
-        if opus_id not in results:
-            results[opus_id] = OrderedDict() # Dict of versions
         if version_name not in results[opus_id]:
             results[opus_id][version_name] = OrderedDict()
         product_type = (category, sort_order, short_name, full_name)

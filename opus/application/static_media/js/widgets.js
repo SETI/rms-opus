@@ -8,10 +8,18 @@ var o_widgets = {
 
 
     addWidgetBehaviors: function() {
-		    $("#search_widgets").sortable({
-            items: "li:not(.unsortable)",
-            cursor: 'move',
-            stop: function(event, ui) { o_widgets.widgetDrop(this); }
+        $("#search_widgets").sortable({
+            items: "> li",
+            cursor: "grab",
+            // we need the clone so that widgets in url gets changed only when sorting is stopped
+            helper: "clone",
+            scrollSensitivity: 100,
+            axis: "y",
+            opacity: 0.8,
+            stop: function(event, ui) {
+                o_widgets.widgetDrop(this);
+                o_search.adjustSearchWidgetHeight();
+            },
         });
 
         $("#search_widgets").on( "sortchange", function( event, ui ) {
@@ -121,10 +129,9 @@ var o_widgets = {
     },
 
     widgetDrop: function(obj) {
-            // if widget as moved to a different formscolumn,
+            // if widget is moved to a different formscolumn,
             // redefine the opus.prefs.widgets (preserves order)
             let widgets = $('#search_widgets').sortable('toArray');
-
             $.each(widgets, function(index,value) {
                 widgets[index]=value.split('__')[1];
             });
