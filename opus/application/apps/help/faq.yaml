@@ -1,15 +1,191 @@
 Using Search:
     -
-        Q: What do Any, All, and Only mean?
-        A: It's complicated.
+        Q: >
+            How do I search for images that were taken using a particular color
+            filter?
+        A: >
+            There are two methods to search for images that were taken using a
+            particular color filter.
+
+            <h4>Method 1</h4>
+            This method relies on knowledge of the filters used by a particular
+            imaging instrument (currently Cassini ISS, Galileo SSI, Voyager ISS,
+            New Horizons LORRI, and the Hubble instruments). You must first
+            select the instrument you are interested
+            in (<em>e.g.</em> <b>Cassini ISS</b>) by using the <b>Instrument
+            Name</b> search box. When you do this, a search menu with a name
+            like <b>Cassini ISS Constraints</b> will become available. Under
+            this menu there will be a search field called <b>Filter</b> or
+            <b>Filter Name</b>. Selecting this field will allow you to select
+            one or more filters to restrict your search.
+
+
+            <h4>Method 2</h4>
+            One of the benefits of OPUS is the ability to search across missions
+            and instruments using common search fields. For all observations
+            where it makes sense, OPUS provides wavelength information under
+            the <b>Wavelength Constraints</b> menu. The <b>Wavelength</b>
+            search field allows you to restrict your search based on the
+            wavelengths avaible in the respective instrument, instrument mode,
+            and filter combinations. For example, for an imaging instrument
+            the wavelength range is based on the filter bandpass. For a
+            spectroscopic instrument, the wavelength range is based on the
+            limits of the spectrum collected. This field can thus be used to
+            select all observations that include a particular wavelength range,
+            and you can use this to restrict your search to observations of
+            a specific color. For example, you might look for "red"
+            observations by searching for a wavelength range of 600-700 nm.
+
+
+            Please see the FAQ titled "What do Any, All, and Only Mean?"
+            to understand how you can further control your search.
+    -
+        Q: >
+            How do I search for a series of observations that were designed to
+            be a movie?
+        A: >
+            A "movie" is a series of observations that was taken in rapid
+            succession while an instrument was pointing at approximately
+            the same point in space or while tracking a particular body
+            or feature. Movies were most commonly taken by Cassini. In many,
+            but not all, cases, movies were marked by the Cassini team with
+            an <b>Observation Name</b> that contains "MOV" or "MOVIE". To search
+            for these, select the Cassini mission or a particular Cassini
+            instrument and then select the <b>Observation Name</b> search field
+            under <b>Cassini Mission Constraints</b>. Enter "MOV" in the
+            search box using the <b>contains</b> search type. In the special
+            case of movies of Saturn's F ring, you can use "FMOV" instead.
+
+            A future version of OPUS will automatically detect observation
+            series that appear to be movies or mosaics and provide a specific
+            means to search for them.
+    -
+        Q: >
+            How do I search for observations that contain two particular bodies
+            in the same observation?
+        A: >
+            OPUS does not support this particular search directly, but there are
+            three ways that you can accomplish this goal with a little extra
+            work. Note that methods 1 and 2 only work for instruments that
+            support surface geometry (currently Cassini ISS, UVIS, and VIMS,
+            New Horizons LORRI, and Voyager ISS).
+
+
+            <h4>Method 1:</h4>
+            A) Restrict the search to whatever mission, instrument, time period,
+            volume, etc. that you are interested in.
+
+            B) Under <b>Surface Geometry Constraints</b> select the
+            <b>Surface Geometry Target Name</b> search field. Select the first
+            body in the <b>Surface Geometry Target Name</b> search box.
+
+            C) Using entries under <b>[Body] Surface Geometry Constraints</b>,
+            restrict your search using lighting geometry, distance, resolution,
+            etc.
+
+            D) Select the <b>Browse Results</b> tab and then click on
+            <b>Download CSV</b> to retrieve a CSV containing information about
+            each observation of the first body.
+
+            E) Go back to the <b>Search</b> tab and select a different body
+            under <b>Surface Geometry Target Name</b>. Restrict this search as
+            desired.
+
+            F) Select the <b>Browse Results</b> tab and then click on
+            <b>Download CSV</b> to retrieve a CSV containing information about
+            each observation of the second body.
+
+            G) Use your favorite comparison tool or text editor to look at the
+            two CSV files to see which observations they have in common.
+
+
+            <h4>Method 2:</h4>
+            A) Restrict the search to whatever mission, instrument, time period,
+            volume, etc. that you are interested in.
+
+            B) Under <b>Surface Geometry Constraints</b> select the
+            <b>Surface Geometry Target Name</b> search field. Select the first
+            body in the <b>Surface Geometry Target Name</b> search box.
+
+            C) Using entries under <b>[Body] Surface Geometry Constraints</b>,
+            restrict your search using lighting geometry, distance, resolution,
+            etc.
+
+            D) Select the <b>Browse Results</b> tab and visually scan through
+            the thumbnails looking for images with two or more bodies in them.
+
+            E) When you find such an image, click on the
+            <i class="fas fa-info-circle fa-xs"></i> icon or select
+            <b>View Detail</b> from the observation's menu. Scroll down the
+            Detail page to see which bodies are present in the observation.
+
+
+            <h4>Method 3:</h4>
+            Note: This method is only applicable to Cassini observations. In
+            many cases, the Cassini team marked "mutual event" observations
+            using the Cassini <b>Observation Name</b>.
+
+            A) Restrict the search to the Cassini mission or a particular
+            Cassini instrument. You can also restrict your search by time
+            period, volume, etc. at this time.
+
+            B) Select the <b>Observation Name</b> search field
+            under <b>Cassini Mission Constraints</b>. Enter "MUTUALEVE" in the
+            search box using the <b>contains</b> search type.
+    -
+        Q: >
+            What do Any, All, and Only mean?
+        A: >
+            Some types of metadata vary for each pixel in an observation.
+            For example, an image covers a particular swath of sky, and each
+            pixel corresponds to a unique right ascension and declination.
+            An observation of a planetary ring will cover a radial range and a
+            longitude range. An observation of a body will have a range of
+            incidence, emission, and phase angles. To make these
+            ranges easy to search, OPUS summaries them for each observation
+            by recording the <em>minimum</em> and <em>maximum</em> for any
+            pixel in the image. We call this the "observation range".
+            When performing your search, you can also select a minimum and a
+            maximum value. We call this the "search range".
+
+
+            There are three ways you can compare these two ranges:
+
+
+            1) ANY - The observation range overlaps at least some with the
+            search range. In other words, either the observation maximum is
+            greater than the search minimum, or the observation minimum is
+            less than the search maximum. This option is used to request
+            the widest possible set of observations that contains at least
+            some of the range you are searching for.
+
+            2) ALL - The observation range is a strict superset of the search
+            range. In other words, the observation minimum is less than the
+            search minimum, and the observation maximum is greater than the
+            search maximum. This option is used to ensure that an entire
+            feature you are looking for (such as a crater) is visible in the
+            observation.
+
+            3) ONLY - The observation range is a strict subset of the
+            search range. In other words, there is no pixel in the observation
+            that contains a value that is smaller than the search minimum
+            or larger than the search maximum. This option is used to tighly
+            constrain your search to the smallest possible set of results.
     -
         Q: How do I find all observations containing a particular body?
         A: Use surface geometry
+
 Using Browse:
     -
-        Q: Why are the thumbnails colored?
+        Q: Why are some image thumbnails colored?
         A:
-            It makes them look prettier.
+            Thumbnails of imaging instruments (<em>e.g.</em> Cassini ISS,
+            Galileo SSI, Voyager ISS, New Horizons LORRI, and most Hubble
+            instruments) have a variety of filters that can be used. We color
+            the thumbnails on the <b>Browse Results</b> page in an attempt
+            to convey the approximate color of the filter that was used.
+            If a thumbnail is not colored, it usually means a clear filter
+            was used.
     -
         Q: What is an example of a long response?
         A: >

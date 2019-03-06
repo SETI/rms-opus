@@ -23,7 +23,21 @@ body {
   width: 3em !important;
 }
 
-#opusTab img.newGIF {
+@media(max-width:992px) {
+    #op-main-nav.navbar .navbar-brand {
+        float:none;
+        display: block;
+    }
+    #op-main-nav.navbar .navbar-nav>.nav-item {
+        float: none;
+        margin-left: .1rem;
+    }
+    #op-main-nav.navbar .navbar-nav {
+        float:none !important;
+    }
+}
+
+#op-tab img.newGIF {
     display: none;
 }
 
@@ -551,6 +565,19 @@ img.preview {
   max-height: 500px;
   width: 440px;
   position: fixed;
+}
+
+#galleryView .modal-dialog:hover {
+    cursor: grab;
+}
+
+#galleryViewContents .contents:hover {
+    cursor: text;
+}
+
+/* note - this is here to allow the user-style to be overridden on the modal */
+a:-webkit-any-link {
+    cursor: inherit;
 }
 
 #galleryViewContents .detail {

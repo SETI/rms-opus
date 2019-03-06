@@ -7,11 +7,15 @@
                 {% for entry in contents %}
                     <li class="op-faq-question">
                         <a data-toggle="collapse" href="#{{entry.Q|slugify}}">
+                            {% autoescape off %}
                             {{ entry.Q }}
+                            {% endautoescape %}
                         </a>
                         <div id="{{entry.Q|slugify}}" class="collapse">
                             <p class="op-faq-response">
+                                {% autoescape off %}
                                 {{ entry.A|linebreaks }}
+                                {% endautoescape %}
                             </p>
                         </div>
                     </li>

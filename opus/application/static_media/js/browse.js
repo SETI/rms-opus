@@ -225,6 +225,7 @@ var o_browse = {
 
         $(".modal-dialog").draggable({
             handle: ".modal-content",
+            cancel: ".metadata",
             drag: function( event, ui ) {
                 o_browse.hideMenu();
             }
@@ -341,6 +342,7 @@ var o_browse = {
 
         $(document).on("keydown click", function(e) {
             o_browse.hideMenu();
+            opus.hideHelpPanel();
             if ((e.which || e.keyCode) == 27) { // esc - close modals
                 $("#galleryView").modal('hide');
                 $("#metadataSelector").modal('hide');
