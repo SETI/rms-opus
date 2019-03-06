@@ -81,7 +81,6 @@ def api_faq(request):
             exit_api_call(api_code, None)
             raise Http404
 
-    print(faq)
     ret = render(request, 'help/faq.html',
                  {'faq': faq})
 
