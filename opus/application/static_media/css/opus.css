@@ -946,6 +946,7 @@ footer {
    color: white;
    text-align: center;
    margin-left: 0px  !important;
+   z-index: 9999;
 }
 
 .footer .container {
