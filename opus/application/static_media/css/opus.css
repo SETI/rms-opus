@@ -576,7 +576,7 @@ img.preview {
 }
 
 /* note - this is here to allow the user-style to be overridden on the modal */
-a:-webkit-any-link {
+a:-webkit-any-link, a::any-link {
     cursor: inherit;
 }
 
