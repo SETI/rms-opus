@@ -589,6 +589,10 @@ a:-webkit-any-link {
   background-color: transparent !important;
 }
 
+#galleryViewContents a.menu {
+    width: 0px;
+}
+
 #collection .collection-gallery-side {
     /*margin-top:.25em; */
     background-color: #303030; /* #383838; */
