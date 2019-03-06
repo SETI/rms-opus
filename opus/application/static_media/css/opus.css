@@ -562,6 +562,12 @@ img.preview {
   background-color: transparent !important;
 }
 
+/* this is used to disable clicking on modal (#galleryViewContents) when infiniteScroll is still loading the next page*/
+.op-disabled {
+    pointer-events: none;
+    cursor: default;
+}
+
 #collection .collection-gallery-side {
     /*margin-top:.25em; */
     background-color: #303030; /* #383838; */
@@ -1052,9 +1058,4 @@ ul.ui-autocomplete a.ui-state-active {
 
 .list-header, .list-footer {
     background-color: #F9F6F6;
-}
-
-.op-disabled {
-    pointer-events: none;
-    cursor: default;
 }

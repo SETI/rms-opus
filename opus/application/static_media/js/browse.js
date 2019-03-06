@@ -255,13 +255,12 @@ var o_browse = {
             let nextNext = next.next("tr");
             let nextNextId = (nextNext.data("id") ? nextNext.data("id") : "");
             if(!nextNextId && !nextNext.hasClass("table-page")) {
-                // need to disable right arrow while it's loading
-                console.log("DISABLED RIGHT ARROW CLICK")
+                // disable clicking on modal when it's loading
+                // this will make sure we have correct html elements displayed for next opus id
                 if(!$("#galleryViewContents").hasClass("op-disabled")) {
                     $("#galleryViewContents").addClass("op-disabled");
                 }
                 $(`#${opus.prefs.view} .gallery-contents`).infiniteScroll("loadNextPage");
-                console.log("Need to load more content...LOADING")
             }
 
             if (opusId) {
@@ -963,7 +962,7 @@ var o_browse = {
                         elementScroll: true,
                         history: false,
                         scrollThreshold: 500,
-                        debug: true,
+                        debug: false,
                     });
 
                     $(selector).on("request.infiniteScroll", function( event, path ) {
@@ -1065,8 +1064,6 @@ var o_browse = {
 
     metadataboxHtml: function(opusId) {
         // list columns + values
-        console.log("========================");
-        console.log(`current ID: ${opusId}`);
         let html = "<dl>";
         $.each(opus.col_labels, function(index, columnLabel) {
             let value = opus.gallery_data[opusId][index];
@@ -1076,55 +1073,16 @@ var o_browse = {
         $("#galleryViewContents .contents").html(html);
         let next = $(`#browse tr[data-id=${opusId}]`).next("tr");
 
-        // let nextId = (next.data("id") ? next.data("id") : "");
-        //
-        // if(!nextId && !next.hasClass("table-page")) {
-        //     console.log("Need to load more content...LOADING");
-        //     o_browse.nextPageLoaded = false;
-        //     $(`#${opus.prefs.view} .gallery-contents`).infiniteScroll("loadNextPage");
-        //     // while(!o_browse.nextPageLoaded) {
-        //     //     console.log("WAIT UNTIL NEXT PAGE LOADED IS DONE")
-        //     // }
-        //     next = $(`#browse tr[data-id=${opusId}]`).next("tr");
-        // }
-        // while(next.hasClass("table-page")) {
-        //     console.log("NEW PAGE LOADED, NEED TO FIND tHE CORRECT TR")
-        //     console.log(next.data("page"))
-        //     next = next.next("tr");
-        //     nextId = (next.data("id") ? next.data("id") : "");
-        // }
-        // console.log(`NEXT ID: ${nextId}`);
-
-
-        // let nextNext = next.next("tr");
         while(next.hasClass("table-page")) {
-            console.log("NEW PAGE LOADED, NEED TO FIND tHE CORRECT TR")
-            console.log(next.data("page"))
             next = next.next("tr");
-            // nextNext = next.next("tr");
         }
-
         next = (next.data("id") ? next.data("id") : "");
-        // next = (next.length > 0 ? next.data("id") : "");
-        // console.log(`NEXT ID: ${next}`)
-        // let nextNextId = (nextNext.data("id") ? nextNext.data("id") : "");
-        // console.log(`NEXT NEXT ID: ${nextNextId}`);
-        // if(!nextNextId && !nextNext.hasClass("table-page")) {
-        //     // need to add spinner or disabled right arrow while it's loading
-        //     // if(!$(".next").hasClass("op-disabled")) {
-        //     //     $(".next").addClass("op-disabled");
-        //     // }
-        //     $(`#${opus.prefs.view} .gallery-contents`).infiniteScroll("loadNextPage");
-        //     console.log("Need to load more content...LOADING")
-        // }
 
         let prev = $(`#browse tr[data-id=${opusId}]`).prev("tr");
         while(prev.hasClass("table-page")) {
             prev = prev.prev("tr");
         }
         prev = (prev.data("id") ? prev.data("id") : "");
-        console.log(`PREV id: ${prev}`)
-        // prev = (prev.length > 0 ? prev.data("id") : "");
 
         let status = o_collections.isIn(opusId) ? "" : "in";
         let buttonInfo = o_browse.cartButtonInfo(status);
@@ -1159,7 +1117,6 @@ var o_browse = {
     updateMetaGalleryView: function(opusId, imageURL) {
         $("#galleryViewContents .left").html(`<a href='${imageURL}' target='_blank'><img src='${imageURL}' title='${opusId}' class='preview'/></a>`);
         o_browse.metadataboxHtml(opusId);
-        console.log("done displaying current metadata")
         o_browse.modalScrollbar.update();
     },
 
