@@ -11,7 +11,6 @@ var o_browse = {
     galleryScrollTo: 0,
 
     lastLoadDataRequestNo: 0,
-    nextPageLoaded: false,
     /**
     *
     *  all the things that happen on the browse tab
@@ -999,7 +998,6 @@ var o_browse = {
             //$(`.thumb-page[data-page='${data.page_no}']`).scrollTop(0);
         }
         //console.log('Loaded page: ' + $('#browse .gallery-contents').data('infiniteScroll').pageIndex );
-        o_browse.nextPageLoaded = true;
 
         // if left/right arrow are disabled, make them clickable again
         $("#galleryViewContents").removeClass("op-disabled");
