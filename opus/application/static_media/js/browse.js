@@ -11,6 +11,8 @@ var o_browse = {
     galleryScrollTo: 0,
 
     lastLoadDataRequestNo: 0,
+
+    allowKeydownOnMetaDataModal: true,
     /**
     *
     *  all the things that happen on the browse tab
@@ -354,16 +356,35 @@ var o_browse = {
                     Right: 39
                     Left: 37 */
                 let opusId;
+                // opusId = $("#galleryView").find(".select").data("id");
+                // console.log(`current id when show: ${opusId}`);
+
                 // the || is for cross-browser support; firefox does not support keyCode
                 switch (e.which || e.keyCode) {
                     case 39:  // next
                         opusId = $("#galleryView").find(".next").data("id");
+                        console.log(`id to show: ${opusId}`);
+                        let next = $(`#browse tr[data-id=${opusId}]`).next("tr");
+                        let nextNext = next.next("tr");
+                        let nextNextId = (nextNext.data("id") ? nextNext.data("id") : "");
+
+                        // load the next page when the next next item is the dead end (no more prefected data)
+                        if(!nextNextId && !nextNext.hasClass("table-page")) {
+                            // disable keydown on modal when it's loading
+                            // this will make sure we have correct html elements displayed for next opus id
+                            if(!$("#galleryViewContents").hasClass("op-disabled")) {
+                                $("#galleryViewContents").addClass("op-disabled");
+                            }
+                            o_browse.allowKeydownOnMetaDataModal = false;
+                            console.log("DDDisabled keydown")
+                            $(`#${opus.prefs.view} .gallery-contents`).infiniteScroll("loadNextPage");
+                        }
                         break;
                     case 37:  // prev
                         opusId = $("#galleryView").find(".prev").data("id");
                         break;
                 }
-                if (opusId) {
+                if (opusId && o_browse.allowKeydownOnMetaDataModal) {
                     o_browse.updateGalleryView(opusId);
                 }
             }
@@ -1005,6 +1026,8 @@ var o_browse = {
 
         // if left/right arrow are disabled, make them clickable again
         $("#galleryViewContents").removeClass("op-disabled");
+        o_browse.allowKeydownOnMetaDataModal = true;
+        console.log("EEEnabled keydown")
         // $(`#${opus.prefs.view} .page-load-status .loader`).hide();
     },
 
@@ -1066,6 +1089,7 @@ var o_browse = {
 
     metadataboxHtml: function(opusId) {
         // list columns + values
+        console.log(opus.gallery_data[opusId]);
         let html = "<dl>";
         $.each(opus.col_labels, function(index, columnLabel) {
             let value = opus.gallery_data[opusId][index];
