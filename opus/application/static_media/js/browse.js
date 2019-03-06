@@ -963,7 +963,7 @@ var o_browse = {
                         elementScroll: true,
                         history: false,
                         scrollThreshold: 500,
-                        debug: false,
+                        debug: true,
                     });
 
                     $(selector).on("request.infiniteScroll", function( event, path ) {
@@ -1072,7 +1072,6 @@ var o_browse = {
         html += "</dl>";
         $("#galleryViewContents .contents").html(html);
         let next = $(`#browse tr[data-id=${opusId}]`).next("tr");
-
         while(next.hasClass("table-page")) {
             next = next.next("tr");
         }
@@ -1083,7 +1082,9 @@ var o_browse = {
             prev = prev.prev("tr");
         }
         prev = (prev.data("id") ? prev.data("id") : "");
-
+        console.log(`current id: ${opusId}`);
+        console.log(`next id: ${next}`);
+        console.log(`prev id: ${prev}`);
         let status = o_collections.isIn(opusId) ? "" : "in";
         let buttonInfo = o_browse.cartButtonInfo(status);
 
