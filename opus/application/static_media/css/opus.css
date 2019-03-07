@@ -262,7 +262,6 @@ ul.searchMenu{
 }
 .modal-footer .left-container {
   width: 74%;
-  min-height:590px;
 }
 
 .thumbnail-container .modal-overlay {
@@ -559,6 +558,10 @@ img.preview {
   max-height: 500px;
   width: 440px;
   position: fixed;
+}
+
+#galleryViewContents .left {
+    min-height:590px;
 }
 
 #galleryView .modal-dialog:hover {
