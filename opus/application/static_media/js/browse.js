@@ -998,13 +998,14 @@ var o_browse = {
                 }
             }
 
-
+            // Because we redraw from the beginning or user inputted page, we need to remove previous drawn thumb-pages
+            $(".gallery > .thumb-page").detach();
             o_browse.renderGalleryAndTable(data, this.url);
             o_browse.updateSortOrder(data);
 
             // prefill next page
             if (!opus.gallery_begun) {
-                $(selector).infiniteScroll('loadNextPage');
+                // $(selector).infiniteScroll('loadNextPage');
                 opus.gallery_begun = true;
             }
             $(".table-page-load-status > .loader").hide();
