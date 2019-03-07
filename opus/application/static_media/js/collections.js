@@ -29,11 +29,6 @@ var o_collections = {
          $("#collection").on("click", ".metadataModal", function(e) {
 
          });
-         $("#collection").on("click", ".emptyCart", function() {
-             if (confirm("Are you sure you want to remove all observations from your cart?")) {
-                 o_collections.emptyCollection();
-             }
-         });
 
          // check an input on selected products and images updates file_info
          $("#collection").on("click","#download_options input", function() {

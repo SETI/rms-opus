@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 
-{% include "header.html" %} 
+{% include "header.html" %}
 
 <body class="app header-fixed sidebar-fixed aside-menu-fixed sidebar-lg-show">
     <div class="app-body container-fluid">
@@ -176,7 +176,7 @@
                                         </div>
                                     </li>
                                     <li class="nav-item ">
-                                        <a href="#" class="emptyCart nav-link" title="Remove all observations from cart"><i class="fas fa-trash-alt"></i>&nbsp;Empty Cart</a>
+                                        <a href="#" class="emptyCart nav-link" data-toggle="modal" data-target="#op-empty-cart" title="Remove all observations from cart"><i class="fas fa-trash-alt"></i>&nbsp;Empty Cart</a>
                                     </li>
                                 </ul>
                             </div>
@@ -236,7 +236,7 @@
                 <div class='loader'></div>
             </div>
         </div>
- 
+
         <!-- modal dialog for the gallery views -->
         <div id="galleryView" class="modal fade" role="dialog" tabbindex="-1" data-backdrop="false" data-keyboard="false" aria-labelledby="galleryViewLabel" aria-hidden="true">
             <div class="modal-dialog modal-lg" role="document">
@@ -295,6 +295,12 @@
             confirm_title="Confirm Reset Search and Metadata"
             confirm_msg="Are you sure you want to reset your search and metadata? Your current search and metadata selection will be lost."
             target="op-reset-search-metadata-modal"
+        %}
+        {% include "confirm_modal.html" with
+            id_name="op-empty-cart"
+            confirm_title="Confirm Remove All Observations From Cart"
+            confirm_msg="Are you sure you want to remove all observations from your cart?"
+            target="op-empty-cart"
         %}
 
         {% endblock %}
