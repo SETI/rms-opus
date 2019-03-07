@@ -752,14 +752,22 @@ var o_browse = {
             // either there are no selections OR this is signaling the end of the infinite scroll
             // for now, just post same message to both #browse & #collections tabs
             if (data.page_no == 1) {
-                $("#collection .navbar").hide();
-                $("#collection .sort-order-container").hide();
-                html += '<div class="thumbnail-message">';
-                html += '<h2>Your Cart is empty</h2>';
-                html += '<p>To add observations to the cart, click on the Browse Results tab ';
-                html += 'at the top of the page, mouse over the thumbnail gallery images to reveal the tools, ';
-                html += 'then click on the cart icon.  </p>';
-                html += '</div>';
+                if (opus.prefs.view == "browse") {
+                    html += '<div class="thumbnail-message">';
+                    html += '<h2>Your search produced no results</h2>';
+                    html += '<p>Remove or edit one or more of the search criteria selected on the Search tab ';
+                    html += 'or click on the Reset Search button to reset the search criteria to default.</p>';
+                    html += '</div>';
+                } else {
+                    $("#collection .navbar").hide();
+                    $("#collection .sort-order-container").hide();
+                    html += '<div class="thumbnail-message">';
+                    html += '<h2>Your cart is empty</h2>';
+                    html += '<p>To add observations to the cart, click on the Browse Results tab ';
+                    html += 'at the top of the page, mouse over the thumbnail gallery images to reveal the tools, ';
+                    html += 'then click on the cart icon.  </p>';
+                    html += '</div>';
+                }
             } else {
                 // we've hit the end of the infinite scroll.
             }
