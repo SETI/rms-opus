@@ -89,6 +89,7 @@ var o_collections = {
                      $(`<li><a href = "${data.filename}">${data.filename}</a></li>`).hide().prependTo("ul.zippedFiles", "#collections_summary").slideDown("slow");
                  }
                  $(".spinner", "#download_links").fadeOut();
+                 o_collections.downloadOptionsScrollbar.update();
              },
              error: function(e) {
                  $(".spinner", "#download_links").fadeOut();
