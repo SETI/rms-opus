@@ -122,7 +122,7 @@ class ImportDBMySQL(ImportDBSuper):
 
         super(ImportDBMySQL, self)._exit()
 
-    def _execute(*args, **kwargs):
+    def _execute(self, *args, **kwargs):
         if not MYSQLDB_AVAILABLE:
             return
         super(ImportDBMySQL, self)._execute(*args, **kwargs)
