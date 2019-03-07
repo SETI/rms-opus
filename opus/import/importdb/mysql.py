@@ -2,7 +2,12 @@ from functools import lru_cache
 
 import csv
 import numpy as np
-import MySQLdb
+
+try:
+    import MySQLdb
+    MYSQLDB_AVAILABLE = True
+except ImportError:
+    MYSQLDB_AVAILABLE = False
 
 from importdb.super import ImportDBSuper, ImportDBException
 
@@ -16,58 +21,70 @@ class ImportDBMySQL(ImportDBSuper):
         super(ImportDBMySQL, self).__init__(*args, **kwargs)
         super(ImportDBMySQL, self)._enter('__init__')
 
+        if not MYSQLDB_AVAILABLE:
+            self.read_only = True
+            self.logger.log('warning',
+                'Python package MySQLdb not available - simulating all '+
+                'database accesses!')
+
         self.default_engine = 'INNODB'
         if 'engine' in kwargs:
             self.default_engine = kwargs['engine']
 
-        try:
-            self.conn = MySQLdb.connect(host=self.db_hostname,
-                                        user=self.db_user,
-                                        passwd=self.db_password)
-        except MySQLdb.Error as e:
+        if not MYSQLDB_AVAILABLE:
+            self.conn = None
             if self.logger:
-                self.logger.log('fatal',
-                        f'Unable to connect to MySQL server: {e.args[1]}')
-            raise ImportDBException(e)
-
-        if self.logger:
-            self.logger.log('info',
-                            f'Connected to MySQL server as "{self.db_user}"')
-
-        try:
-            cmd = f'USE `{self.db_schema}`'
-            self._execute(cmd)
-        except MySQLdb.Error as e:
-            err_code = e.args[0]
-            if err_code == ERR_UNKNOWN_DATABASE:
-                try:
-                    cmd = f'CREATE DATABASE `{self.db_schema}`'
-                    self._execute(cmd)
-                except MySQLdb.Error as e:
-                    if self.logger:
-                        self.logger.log('fatal',
-                            f'Unable to create new database "{self.db_schema}"'+
-                            f': {e.args[1]}')
-                    raise ImportDBException(e)
-                if self.logger:
-                    self.logger.log('warning',
-                                f'  Created new database "{self.db_schema}"')
-
-                try:
-                    cmd = f'USE `{self.db_schema}`'
-                    self._execute(cmd)
-                except MySQLdb.Error as e:
-                    if self.logger:
-                        self.logger.log('fatal',
-                            f'Unable to use new database "{self.db_schema}": '+
-                            f'{e.args[1]}')
-                    raise ImportDBException(e)
-            else:
+                self.logger.log('info',
+                        f'[SIM] Connected to MySQL server as "{self.db_user}"')
+        else:
+            try:
+                self.conn = MySQLdb.connect(host=self.db_hostname,
+                                            user=self.db_user,
+                                            passwd=self.db_password)
+            except MySQLdb.Error as e:
                 if self.logger:
                     self.logger.log('fatal',
-                        f'Unable to use existing database "{self.db_schema}": '+
-                        f'{e.args[1]}')
+                            f'Unable to connect to MySQL server: {e.args[1]}')
                 raise ImportDBException(e)
+
+            if self.logger:
+                self.logger.log('info',
+                            f'Connected to MySQL server as "{self.db_user}"')
+
+            try:
+                cmd = f'USE `{self.db_schema}`'
+                self._execute(cmd)
+            except MySQLdb.Error as e:
+                err_code = e.args[0]
+                if err_code == ERR_UNKNOWN_DATABASE:
+                    try:
+                        cmd = f'CREATE DATABASE `{self.db_schema}`'
+                        self._execute(cmd)
+                    except MySQLdb.Error as e:
+                        if self.logger:
+                            self.logger.log('fatal',
+                            f'Unable to create new database "{self.db_schema}"'+
+                            f': {e.args[1]}')
+                        raise ImportDBException(e)
+                    if self.logger:
+                        self.logger.log('warning',
+                                f'  Created new database "{self.db_schema}"')
+
+                    try:
+                        cmd = f'USE `{self.db_schema}`'
+                        self._execute(cmd)
+                    except MySQLdb.Error as e:
+                        if self.logger:
+                            self.logger.log('fatal',
+                                'Unable to use new database '+
+                                f'"{self.db_schema}": {e.args[1]}')
+                        raise ImportDBException(e)
+                else:
+                    if self.logger:
+                        self.logger.log('fatal',
+                            'Unable to use existing database '+
+                            f'"{self.db_schema}": {e.args[1]}')
+                    raise ImportDBException(e)
 
         if self.logger:
             self.logger.log('info',
@@ -83,35 +100,42 @@ class ImportDBMySQL(ImportDBSuper):
         # to do post-processing on
         self.tables_created = []
 
-        cmd = 'SELECT VERSION()'
-        res = self._execute_and_fetchall(cmd, '__init__')
-        self.mysql_version = res[0][0]
-        self.logger.log('info', f'  MySQL version: {self.mysql_version}')
+        if not MYSQLDB_AVAILABLE:
+            self.mysql_version = 'Simulated'
+        else:
+            cmd = 'SELECT VERSION()'
+            res = self._execute_and_fetchall(cmd, '__init__')
+            self.mysql_version = res[0][0]
+            self.logger.log('info', f'  MySQL version: {self.mysql_version}')
 
-        try:
-            cmd = "set sql_mode = 'NO_ZERO_DATE,NO_ZERO_IN_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION,STRICT_ALL_TABLES"
-            if self.mysql_version[0] == '5':
-                cmd += ',NO_AUTO_CREATE_USER'
-            cmd += "'"
-            self._execute(cmd)
-        except MySQLdb.Error as e:
-            if self.logger:
-                self.logger.log('fatal',
-                    f'Failed to set STRICT_ALL_TABLES mode: {e.args[1]}')
-            raise ImportDBException(e)
+            try:
+                cmd = "set sql_mode = 'NO_ZERO_DATE,NO_ZERO_IN_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION,STRICT_ALL_TABLES"
+                if self.mysql_version[0] == '5':
+                    cmd += ',NO_AUTO_CREATE_USER'
+                cmd += "'"
+                self._execute(cmd)
+            except MySQLdb.Error as e:
+                if self.logger:
+                    self.logger.log('fatal',
+                        f'Failed to set STRICT_ALL_TABLES mode: {e.args[1]}')
+                raise ImportDBException(e)
 
         super(ImportDBMySQL, self)._exit()
 
-    def _execute_and_fetchall(self, cmd, func_name, cur=None):
+    def _execute(*args, **kwargs):
+        if not MYSQLDB_AVAILABLE:
+            return
+        super(ImportDBMySQL, self)._execute(*args, **kwargs)
+
+    def _execute_and_fetchall(self, cmd, func_name):
+        if not MYSQLDB_AVAILABLE:
+            return []
+
         try:
-            if cur:
-                self._execute(cur)
+            with self.conn.cursor() as cur:
+                self._execute(cmd, cur=cur)
+                self.conn.commit()
                 return cur.fetchall()
-            else:
-                with self.conn.cursor() as cur:
-                    self._execute(cmd, cur=cur)
-                    self.conn.commit()
-                    return cur.fetchall()
         except MySQLdb.Error as e:
             if self.logger:
                 self.logger.log('fatal',

@@ -948,12 +948,16 @@ def populate_obs_mission_hubble_aperture_type(**kwargs):
     index_row = metadata['index_row']
     aperture = index_row['APERTURE_TYPE']
     # Temporary fix for issue #491 XXX
+    old_aperture = aperture
     if aperture == 'NIC1FIX':
         aperture = 'NIC1-FIX'
     elif aperture == 'NIC2FIX':
         aperture = 'NIC2-FIX'
     elif aperture == 'NIC3FIX':
         aperture = 'NIC3-FIX'
+    if old_aperture != aperture:
+        import_util.log_nonrepeating_warning(
+            f'Replaced bad aperture {old_aperture} with {aperture}')
     ret = instrument[3:] + '-' + aperture
     return (ret, ret)
 
