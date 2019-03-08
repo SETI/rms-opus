@@ -701,8 +701,10 @@ div.gallery {
    }
 }
 
-#page-slider .slider {
-    width: 150px;
+#observation-slider.ui-slider {
+    display: none;
+    width: 200px;
+    margin-left:45px;
 }
 
 .table-page {
