@@ -156,10 +156,6 @@ Not sure if this is the desired behavior
     -webkit-box-sizing: border-box; -moz-box-sizing: border-box; box-sizing: border-box;
 }
 
-.sidebar_wrapper.mCustomScrollbar {
-    margin-top:10px;
-}
-
 hr.shadow-divider {
   height: 10px;
   border: 0;
