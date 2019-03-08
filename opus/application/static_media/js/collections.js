@@ -262,18 +262,14 @@ var o_collections = {
         $("#dataTable input").prop("checked", false);
     },
 
-    getGalleryElement: function(opusId) {
-        return $(`#${opus.prefs.view} .thumbnail-container[data-id=${opusId}]`);
-    },
-
     toggleInCollection: function(fromOpusId, toOpusId) {
-        let fromElem = o_collections.getGalleryElement(fromOpusId);
+        let fromElem = o_browse.getGalleryElement(fromOpusId);
 
         // handle it as range
         if (toOpusId != undefined) {
-            let action = (fromElem.hasClass("in") ? "addrange" : "removerange");
+            let action = (fromElem.hasClass("in") ? "removerange" : "addrange");
             let collectionAction = (action == "addrange");
-            let toElem = o_collections.getGalleryElement(toOpusId);
+            let toElem = o_browse.getGalleryElement(toOpusId);
             let fromIndex = $(".thumbnail-container").index(fromElem);
             let toIndex = $(".thumbnail-container").index(toElem);
 

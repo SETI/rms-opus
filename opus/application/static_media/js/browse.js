@@ -139,20 +139,20 @@ var o_browse = {
             // Detecting ctrl (windows) / meta (mac) key.
             if (e.ctrlKey || e.metaKey) {
                 o_collections.toggleInCollection(opusId);
-                o_browse.undoRangeSelect(e.delegateTarget);
+                o_browse.undoRangeSelect();
             }
             // Detecting shift key
             else if (e.shiftKey) {
                 if (startElem.length == 0) {
-                    $(this).addClass("selected");
-                    o_collections.toggleInCollection(opusId);
+                    o_browse.startRangeSelect(opusId);
+                    //o_collections.toggleInCollection(opusId);
                 } else {
-                    let fromOpusId = $(startElem).parent().data("id");
+                    let fromOpusId = $(startElem).data("id");
                     o_collections.toggleInCollection(fromOpusId, opusId);
                 }
             } else {
                 o_browse.showModal(opusId);
-                o_browse.undoRangeSelect(e.delegateTarget);
+                o_browse.undoRangeSelect();
             }
         });
 
@@ -171,8 +171,8 @@ var o_browse = {
 
             if (e.shiftKey) {
                 if (startElem.length == 0) {
-                    $(this).closest("tr").addClass("selected");
-                    o_collections.toggleInCollection(opusId);
+                    o_browse.startRangeSelect(opusId);
+                    //o_collections.toggleInCollection(opusId);
                 } else {
                     let fromOpusId = $(startElem).data("id");
                     o_collections.toggleInCollection(fromOpusId, opusId);
@@ -180,14 +180,14 @@ var o_browse = {
             } else {
                 o_collections.toggleInCollection(opusId);
                 // single click stops range selection; shift click starts range
-                o_browse.undoRangeSelect(e.delegateTarget);
+                o_browse.undoRangeSelect();
             }
         });
 
         $("#dataTable").on("click", "td:not(:first-child)", function(e) {
             let opusId = $(this).parent().data("id");
             o_browse.showModal(opusId);
-            o_browse.undoRangeSelect(e.delegateTarget);
+            o_browse.undoRangeSelect();
         });
 
         // thumbnail overlay tools
@@ -204,7 +204,7 @@ var o_browse = {
               case "cart":   // add to collection
                   o_browse.hideMenu();
                   // clicking on the cart/trash can aborts range select
-                  o_browse.undoRangeSelect(`#${opus.prefs.view}`);
+                  o_browse.undoRangeSelect();
 
                   let action = o_collections.toggleInCollection(opusId);
                   o_browse.updateCartIcon(opusId, action);
@@ -242,7 +242,7 @@ var o_browse = {
             let opusId = $(this).data("id");
             if (opusId) {
                 // clicking on the cart/trash can aborts range select
-                o_browse.undoRangeSelect(`#${opus.prefs.view}`);
+                o_browse.undoRangeSelect();
                 let status = o_collections.toggleInCollection(opusId) == "add" ? "" : "in";
             }
             return false;
@@ -308,13 +308,13 @@ var o_browse = {
                 case "cart":  // add/remove from cart
                     o_collections.toggleInCollection(opusId);
                     // clicking on the cart/trash can aborts range select
-                    o_browse.undoRangeSelect(`#${opus.prefs.view}`);
+                    o_browse.undoRangeSelect();
                     break;
                 case "range": // begin/end range
                     let startElem = $(`#${opus.prefs.view}`).find(".selected");
                     if (startElem.length == 0) {
-                        $(`#${opus.prefs.view} .thumbnail-container[data-id=${opusId}]`).addClass("selected");
-                        o_collections.toggleInCollection(opusId);
+                        o_browse.startRangeSelect(opusId);
+                        //o_collections.toggleInCollection(opusId);
                     } else {
                         let fromOpusId = $(startElem).data("id");
                         o_collections.toggleInCollection(fromOpusId, opusId);
@@ -501,8 +501,17 @@ var o_browse = {
         }
     },
 
-    undoRangeSelect: function(selector) {
-        let startElem = $(selector).find(".selected");
+    getGalleryElement: function(opusId) {
+        return $(`#${opus.prefs.view} .thumbnail-container[data-id=${opusId}]`);
+    },
+
+    startRangeSelect: function(opusId) {
+        o_browse.undoRangeSelect(); // probably not necessary...
+        o_browse.getGalleryElement(opusId).addClass("selected");
+    },
+
+    undoRangeSelect: function() {
+        let startElem = $(`#${opus.prefs.view}`).find(".selected");
         if (startElem.length) {
             $(startElem).removeClass("selected");
         }
@@ -1075,7 +1084,7 @@ var o_browse = {
         $(`${hide}#browse`).hide();
 
         // reset range select
-        o_browse.undoRangeSelect(`#${opus.prefs.view}`);
+        o_browse.undoRangeSelect();
 
         $(`.${opus.prefs.browse}#browse`).fadeIn();
 
