@@ -441,7 +441,7 @@ var o_browse = {
         if ($("#obs-menu").hasClass("show")) {
             o_browse.hideMenu();
         }
-        let inCart = o_collections.isIn(opusId) ? "" : "in";
+        let inCart = (o_collections.isIn(opusId) ? "" : "in");
         let buttonInfo = o_browse.cartButtonInfo(inCart);
         $("#obs-menu .dropdown-header").html(opusId);
         $("#obs-menu .cart-item").html(`<i class="${buttonInfo.icon}"></i>${buttonInfo.title}`);
@@ -452,9 +452,10 @@ var o_browse = {
         $("#obs-menu [data-action='downloadData']").attr("href",`/opus/__api/download/${opusId}.zip?cols=${opus.prefs.cols.join()}`);
         $("#obs-menu [data-action='downloadURL']").attr("href",`/opus/__api/download/${opusId}.zip?urlonly=1&cols=${opus.prefs.cols.join()}`);
 
+        let addRemoveText = (o_collections.isIn(opusId) ? "remove range from" : "add range to");
         let rangeText = ($(e.delegateTarget).find(".selected").length == 0 ?
-                            "<i class='fas fa-sign-out-alt'></i>Start Add[Remove] Range Here" :
-                            "<i class='fas fa-sign-out-alt fa-rotate-180'></i>End Add[Remove] Range Here");
+                            `<i class='fas fa-sign-out-alt'></i>Start ${addRemoveText} cart here` :
+                            `<i class='fas fa-sign-out-alt fa-rotate-180'></i>End ${addRemoveText} here`);
         $("#obs-menu .dropdown-item[data-action='range']").html(rangeText);
 
         let namespace = `#${opus.prefs.view}`;
