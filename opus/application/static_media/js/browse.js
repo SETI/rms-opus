@@ -460,7 +460,14 @@ var o_browse = {
         $("#obs-menu [data-action='downloadData']").attr("href",`/opus/__api/download/${opusId}.zip?cols=${opus.prefs.cols.join()}`);
         $("#obs-menu [data-action='downloadURL']").attr("href",`/opus/__api/download/${opusId}.zip?urlonly=1&cols=${opus.prefs.cols.join()}`);
 
-        let addRemoveText = (o_collections.isIn(opusId) ? "remove range from" : "add range to");
+        // use the state of the current selected observation to set the icons if one has been selected,
+        // otherwise use the state of the current observation - this will identify what will happen to the range
+        let selectedElem = $(`#${opus.prefs.view}`).find(".selected");
+        if (selectedElem.length != 0) {
+            inCart =  (o_collections.isIn($(selectedElem).data("id")) ? "in" : "");
+        }
+        let addRemoveText = (inCart != "in" ? "remove range from" : "add range to");
+
         let rangeText = ($(e.delegateTarget).find(".selected").length == 0 ?
                             `<i class='fas fa-sign-out-alt'></i>Start ${addRemoveText} cart here` :
                             `<i class='fas fa-sign-out-alt fa-rotate-180'></i>End ${addRemoveText} cart here`);
