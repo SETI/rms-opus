@@ -17,3 +17,4 @@ VGISS,Voyager Imaging Science Subsystem (ISS),VOYAGER
 NEWHORIZONS,New Horizons Mission,OPUS_GENERAL
 NHLORRI,New Horizons Long-Range Reconnaissance Imager (LORRI),NEWHORIZONS
 NHMVIC,New Horizons Multispectral Visible Imaging Camera (MVIC),NEWHORIZONS
+OPUS_PRODUCT_TYPE,OPUS Product Types,NULL

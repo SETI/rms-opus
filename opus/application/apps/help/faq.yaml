@@ -1,3 +1,69 @@
+General Questions:
+    -
+        Q: >
+            What is OPUS?
+        A: >
+            OPUS (Outer Planets Unified Search) is a web-based search tool that
+            allows researchers and members of the public to find and download
+            data from NASA missions to the outer planets (Jupiter, Saturn,
+            Uranus, Neptune, and various bodies beyond such as Pluto and
+            MU69/Ultima Thule). It also includes observations taken of those
+            planets from the Hubble Space Telescope. OPUS is a product of
+            the <a href="https://pds-rings.seti.org/" target="_blank">Ring-Moon
+            Systems Node</a> of NASA's <a href="https://pds.jpl.nasa.gov/"
+            target="_blank">Planetary Data System (PDS)</a>. In addition to
+            the web interface, OPUS supports an API so that third-party
+            software can perform searches and retrieve results.
+
+
+            For more information about OPUS, including which spacecraft and
+            instruments are available, see <b>About</b> under the
+            <b>Help</b> menu. For more information about which particular
+            datasets are available in OPUS, see <B>Datasets</b> under
+            the <b>Help</b> menu. For more information about the third-party
+            API, see <b>API Guide</b> under the <b>Help</b> menu.
+    -
+        Q: >
+            Where are all the pretty pictures?
+        A: >
+            While we at the Ring-Moon Systems Node like to think that
+            <em>all</em> scientific data is beautiful, we understand that you
+            might be interested in more traditional images. You can follow
+            these steps to retrieve some great ones:
+
+
+            1) OPUS contains a variety of data types, but you'll want to
+            restrict your search to images. You can do this by clicking on
+            <b>Observation Type</b> under <b>General Constraints</b> on the
+            left side of the <b>Search</b> tab. Then select the <b>Image</b>
+            checkbox.
+
+            2) If you are looking for images of a particular planet or moon,
+            you can select it in the <b>Intended Target Name</b> search box.
+            First click on the planet you are interested in and then you will
+            be able to select checkboxes next to the particular bodies
+            available. If you skip this step, you will simply get all images.
+            Note that this won't give you <em>every</em> image containing the
+            body you've selected, but it's a good start.
+
+            3) At this point you can click on the <b>Browse Results</b>
+            tab and simply scroll through the thumbnails of the
+            (hundreds of thousands of) available images. If you click on a
+            thumbnail, you will see a larger image and have the ability to
+            navigate using the right and left arrow keys or by clicking on the
+            pointing fingers.
+
+            4) If you are really interested in only a single planet or moon,
+            expand the <b>Surface Geometry Constraints</b> menu on the left
+            and click on <b>Surface Geometry Target Name</b>. Then select
+            the body in the search box that appears. This will show you
+            every image that contains that body from a subset of the missions
+            and instruments that are supported. You will also now have the
+            ability to narrow your search by using the search terms in the
+            <b><em>Body</em> Surface Geometry Constraints</b> menu. For example,
+            you might want to experiment with <b>Body Center Distance</b> or
+            <b>Body Center Resolution</b> to restrict your search to close-up
+            images.
 Using Search:
     -
         Q: >

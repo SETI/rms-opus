@@ -11,6 +11,8 @@ var o_browse = {
     galleryScrollTo: 0,
 
     lastLoadDataRequestNo: 0,
+
+    allowKeydownOnMetaDataModal: true,
     /**
     *
     *  all the things that happen on the browse tab
@@ -249,20 +251,7 @@ var o_browse = {
         $('#galleryView').on("click", "a.prev,a.next", function(e) {
             let action = $(this).hasClass("prev") ? "prev" : "next";
             let opusId = $(this).data("id");
-
-            let next = $(`#browse tr[data-id=${opusId}]`).next("tr");
-            let nextNext = next.next("tr");
-            let nextNextId = (nextNext.data("id") ? nextNext.data("id") : "");
-
-            // load the next page when the next next item is the dead end (no more prefected data)
-            if(!nextNextId && !nextNext.hasClass("table-page")) {
-                // disable clicking on modal when it's loading
-                // this will make sure we have correct html elements displayed for next opus id
-                if(!$("#galleryViewContents").hasClass("op-disabled")) {
-                    $("#galleryViewContents").addClass("op-disabled");
-                }
-                $(`#${opus.prefs.view} .gallery-contents`).infiniteScroll("loadNextPage");
-            }
+            o_browse.checkIfLoadingNextPageIsNeeded(opusId);
 
             if (opusId) {
                 o_browse.updateGalleryView(opusId);
@@ -371,16 +360,18 @@ var o_browse = {
                     Right: 39
                     Left: 37 */
                 let opusId;
+
                 // the || is for cross-browser support; firefox does not support keyCode
                 switch (e.which || e.keyCode) {
                     case 39:  // next
                         opusId = $("#galleryView").find(".next").data("id");
+                        o_browse.checkIfLoadingNextPageIsNeeded(opusId);
                         break;
                     case 37:  // prev
                         opusId = $("#galleryView").find(".prev").data("id");
                         break;
                 }
-                if (opusId) {
+                if (opusId && o_browse.allowKeydownOnMetaDataModal) {
                     o_browse.updateGalleryView(opusId);
                 }
             }
@@ -389,6 +380,23 @@ var o_browse = {
         o_browse.updateSliderHandle();
     }, // end browse behaviors
 
+    // check if we need infiniteScroll to load next page when there is no more prefetched data
+    checkIfLoadingNextPageIsNeeded: function(opusId) {
+        let next = $(`#browse tr[data-id=${opusId}]`).next("tr");
+        let nextNext = next.next("tr");
+        let nextNextId = (nextNext.data("id") ? nextNext.data("id") : "");
+
+        // load the next page when the next next item is the dead end (no more prefected data)
+        if(!nextNextId && !nextNext.hasClass("table-page")) {
+            // disable keydown on modal when it's loading
+            // this will make sure we have correct html elements displayed for next opus id
+            if(!$("#galleryViewContents").hasClass("op-disabled")) {
+                $("#galleryViewContents").addClass("op-disabled");
+            }
+            o_browse.allowKeydownOnMetaDataModal = false;
+            $(`#${opus.prefs.view} .gallery-contents`).infiniteScroll("loadNextPage");
+        }
+    },
     updateSliderHandle: function(value, update) {
         value = (value == undefined? 1 : value);
         let handle = `<label><i class="fas fa-angle-double-left"></i>${value}<i class="fas fa-angle-double-right"></i><\label>`;
@@ -1050,6 +1058,7 @@ var o_browse = {
 
         // if left/right arrow are disabled, make them clickable again
         $("#galleryViewContents").removeClass("op-disabled");
+        o_browse.allowKeydownOnMetaDataModal = true;
         // $(`#${opus.prefs.view} .page-load-status .loader`).hide();
     },
 
@@ -1135,7 +1144,6 @@ var o_browse = {
         html += "</dl>";
         $("#galleryViewContents .contents").html(html);
         let next = $(`#browse tr[data-id=${opusId}]`).next("tr");
-
         while(next.hasClass("table-page")) {
             next = next.next("tr");
         }
@@ -1146,7 +1154,9 @@ var o_browse = {
             prev = prev.prev("tr");
         }
         prev = (prev.data("id") ? prev.data("id") : "");
-
+        // console.log(`current id: ${opusId}`);
+        // console.log(`next id: ${next}`);
+        // console.log(`prev id: ${prev}`);
         let status = o_collections.isIn(opusId) ? "" : "in";
         let buttonInfo = o_browse.cartButtonInfo(status);
 

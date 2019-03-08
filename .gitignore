@@ -22,4 +22,3 @@ migrations/
 
 .coverage
 htmlcov/
-opus/application/test_api/data/lastblogupdate.txt
