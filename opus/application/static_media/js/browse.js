@@ -463,7 +463,7 @@ var o_browse = {
         let addRemoveText = (o_collections.isIn(opusId) ? "remove range from" : "add range to");
         let rangeText = ($(e.delegateTarget).find(".selected").length == 0 ?
                             `<i class='fas fa-sign-out-alt'></i>Start ${addRemoveText} cart here` :
-                            `<i class='fas fa-sign-out-alt fa-rotate-180'></i>End ${addRemoveText} here`);
+                            `<i class='fas fa-sign-out-alt fa-rotate-180'></i>End ${addRemoveText} cart here`);
         $("#obs-menu .dropdown-item[data-action='range']").html(rangeText);
 
         let namespace = `#${opus.prefs.view}`;
