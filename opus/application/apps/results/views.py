@@ -138,7 +138,7 @@ def api_get_data_and_images(request):
     image_list = get_pds_preview_images(opus_ids, preview_jsons,
                                         ['thumb', 'small', 'med', 'full'])
 
-    if not image_list:
+    if not image_list and len(opus_ids) > 0:
         log.error('api_get_data_and_images: No image found for: %s',
                   str(opus_ids[:50]))
 

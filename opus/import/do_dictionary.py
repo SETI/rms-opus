@@ -31,7 +31,9 @@ def create_import_definitions_table():
     pds_file = opus_secrets.DICTIONARY_PDSDD_FILE
     json_schema_path = opus_secrets.DICTIONARY_JSON_SCHEMA_PATH + '/obs*.json'
     json_list = glob.glob(json_schema_path)
-
+    json_def_path = (opus_secrets.DICTIONARY_JSON_SCHEMA_PATH +
+                     '/internal_def*.json')
+    json_list += glob.glob(json_def_path)
     rows = []
 
     logger.log('info', f'Importing {pds_file}')
