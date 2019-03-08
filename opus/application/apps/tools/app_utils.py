@@ -334,13 +334,17 @@ def format_metadata_number_or_func(val, form_type_func, form_type_format):
         return str(val)
 
 def get_latest_git_commit_id():
+    curcwd = os.getcwd()
     try:
         os.chdir(settings.PDS_OPUS_PATH)
         # decode here to convert byte object to string
-        return subprocess.check_output(['git', 'log', '--format=%H', '-n', '1']).strip().decode('utf8')
+        ret = (subprocess.check_output(['git', 'log', '--format=%H', '-n', '1'])
+               .strip().decode('utf8'))
     except:
         log.warning('Unable to get the latest git commit id')
-        return str(random.getrandbits(128))
+        ret = str(random.getrandbits(128))
+    os.chdir(curcwd)
+    return ret
 
 def cols_to_slug_list(slugs):
     if not slugs:

@@ -505,7 +505,7 @@ th.sticky-header {
 
 img.preview {
   max-width: 400px    !important;
-  max-width: 400px    !important;
+  max-height: 400px    !important;
 }
 
 @media (min-width: 1200px) {
@@ -515,7 +515,7 @@ img.preview {
   }
   img.preview {
     max-width: 600px    !important;
-    max-width: 600px    !important;
+    max-height: 600px    !important;
   }
 }
 
@@ -553,18 +553,15 @@ img.preview {
   height: 625px;
 }
 
-#galleryViewContents .preview {
-  position: absolute;
-  right: 0;
-  left: 0;
-  margin: auto;
-}
-
 #galleryViewContents .metadata {
   overflow-y: auto;
   max-height: 500px;
   width: 440px;
   position: fixed;
+}
+
+#galleryViewContents .left {
+    min-height:590px;
 }
 
 #galleryView .modal-dialog:hover {
@@ -704,8 +701,10 @@ div.gallery {
    }
 }
 
-#page-slider .slider {
-    width: 150px;
+#observation-slider.ui-slider {
+    display: none;
+    width: 200px;
+    margin-left:45px;
 }
 
 .table-page {

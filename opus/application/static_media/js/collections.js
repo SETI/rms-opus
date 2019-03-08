@@ -287,14 +287,16 @@ var o_collections = {
             let opusIdRange = $(elementArray[fromIndex]).data("id") + ","+ $(elementArray[toIndex]).data("id")
             console.log("end range "+action+" : "+opusIdRange);
             $.each(elementArray.splice(fromIndex, length), function(index, elem) {
-                // effect no change if it is already selected/deselected same as first item in array
-                if ($(elem).hasClass("in") != collectionAction) {
-                    let opusId = $(elem).data("id");
-                    $(elem).toggleClass("in");
-                    // because this is a range, we need to check the boxes by hand
-                    $("input[name="+opusId+"]").prop("checked", !$("input[name="+opusId+"]").is(":checked"));
-                    console.log("changed: "+$(elem).data("id"));
+                let opusId = $(elem).data("id");
+                let status = "in";
+                if (action == "addrange") {
+                    $(elem).addClass("in");
+                    status = "out"; // this is only so that we can make sure the icon is a trash can
+                } else {
+                    $(elem).removeClass("in");
                 }
+                $("input[name="+opusId+"]").prop("checked", (action == "addrange"));
+                o_browse.updateCartIcon(opusId, status);
             });
             o_collections.editCollection(opusIdRange, action);
             o_browse.undoRangeSelect(namespace);
@@ -303,13 +305,7 @@ var o_collections = {
             $(`.thumbnail-container[data-id=${fromOpusId}]`).toggleClass("in");
 
             let action = (fromElem.hasClass("in") ? "add" : "remove");
-            // if this came from the mini menu off the modal, need to update the icon
-            let modalCartSelector = `#galleryViewContents .bottom .select[data-id=${fromOpusId}]`;
-            if ($("#galleryView").is(":visible") && $(modalCartSelector).length > 0) {
-                let buttonInfo = o_browse.cartButtonInfo(action);
-                $(modalCartSelector).html(`<i class="${buttonInfo.icon} fa-2x"></i>`);
-                $(modalCartSelector).prop("title", buttonInfo.title);
-            }
+            o_browse.updateCartIcon(fromOpusId, action);
             o_collections.editCollection(fromOpusId, action);
             return action;
         }
