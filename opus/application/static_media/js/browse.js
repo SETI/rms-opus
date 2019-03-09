@@ -26,8 +26,8 @@ var o_browse = {
 
         $(".gallery-contents, .dataTable").on('scroll', _.debounce(o_browse.checkScroll, 200));
 
-        // nav stuff
-        var onRenderData = _.debounce(o_browse.loadData, 500);
+        // nav stuff - NOTE - this needs to be a global
+        onRenderData = _.debounce(o_browse.loadData, 500);
 
         $("#browse").on('click', 'input#page', function() {
             let newPage = parseInt($("input#page").val());
@@ -123,10 +123,9 @@ var o_browse = {
         });
 
         // 1 - click on thumbnail opens modal window
-        // 2 - shift click - takes range from whatever the last thing you shift+clicked on and if the
-        //     thing you previously shift+clicked is IN the cart, do an 'add range', otherwise
-        //     do a 'remove range'. If there was nothing you previously shift+clicked on, then
-        //     toggle the selection and set up for the next shift+click.
+        // 2-  Shift+click or menu/"Start Add[Remove] Range Here" starts a range
+        //          Shfit+click on menu/"End Add[Remove] Range Here" ends a range
+        //          Clicking on a cart/trash can anywhere aborts the range selection
         // 3 - ctrl click - alternate way to add to cart
         // NOTE: range can go forward or backwards
 
@@ -207,10 +206,11 @@ var o_browse = {
 
               case "cart":   // add to collection
                   o_browse.hideMenu();
+                  // clicking on the cart/trash can aborts range select
+                  o_browse.undoRangeSelect(`#${opus.prefs.view}`);
+
                   let action = o_collections.toggleInCollection(opusId);
-                  let buttonInfo = o_browse.cartButtonInfo(action);
-                  $(this).html(`<i class="${buttonInfo.icon} fa-xs"></i>`);
-                  $(this).prop("title", buttonInfo.title);
+                  o_browse.updateCartIcon(opusId, action);
                   break;
 
               case "menu":  // expand, same as click on image
@@ -244,10 +244,9 @@ var o_browse = {
         $('#galleryView').on("click", "a.select", function(e) {
             let opusId = $(this).data("id");
             if (opusId) {
+                // clicking on the cart/trash can aborts range select
+                o_browse.undoRangeSelect(`#${opus.prefs.view}`);
                 let status = o_collections.toggleInCollection(opusId) == "add" ? "" : "in";
-                let buttonInfo = o_browse.cartButtonInfo(status);
-                $(this).attr("title", buttonInfo.title);
-                $(this).html(`<i class="${buttonInfo.icon} fa-2x float-left"></i>`);
             }
             return false;
         });
@@ -314,8 +313,18 @@ var o_browse = {
             switch ($(this).data("action")) {
                 case "cart":  // add/remove from cart
                     o_collections.toggleInCollection(opusId);
+                    // clicking on the cart/trash can aborts range select
+                    o_browse.undoRangeSelect(`#${opus.prefs.view}`);
                     break;
                 case "range": // begin/end range
+                    let startElem = $(`#${opus.prefs.view}`).find(".selected");
+                    if (startElem.length == 0) {
+                        $(`#${opus.prefs.view} .thumbnail-container[data-id=${opusId}]`).addClass("selected");
+                        o_collections.toggleInCollection(opusId);
+                    } else {
+                        let fromOpusId = $(startElem).data("id");
+                        o_collections.toggleInCollection(fromOpusId, opusId);
+                    }
                     break;
                 case "info":  // detail page
                     o_browse.showDetail(e, opusId);
@@ -331,16 +340,24 @@ var o_browse = {
             return false;
         });
 
-        $("#page-slider").on("change", ".slider", function(e) {
-            let page = e.target.value;
+        $("#observation-slider").slider({
+            animate: true,
+            value:1,
+            min: 1,
+            max: 1000,
+            step: 100,
+            slide: function(event, ui) {
+                o_browse.updateSliderHandle(ui.value, true);
+            }
         });
 
         $(document).on("keydown click", function(e) {
             o_browse.hideMenu();
-            opus.hideHelpPanel();
+
             if ((e.which || e.keyCode) == 27) { // esc - close modals
                 $("#galleryView").modal('hide');
                 $("#metadataSelector").modal('hide');
+                opus.hideHelpPanel();
             }
             if ($("#galleryView").hasClass("show")) {
                 /*  Catch the right/left arrow while in the modal
@@ -366,6 +383,7 @@ var o_browse = {
             }
             // don't return false here or it will snatch all the user input!
         });
+        o_browse.updateSliderHandle();
     }, // end browse behaviors
 
     // check if we need infiniteScroll to load next page when there is no more prefected data
@@ -389,6 +407,18 @@ var o_browse = {
             console.log(`Last page drawn before load next: ${opus.lastPageDrawn[opus.prefs.view]}`)
             $(`#${opus.prefs.view} .gallery-contents`).infiniteScroll("loadNextPage");
         }
+    },
+    updateSliderHandle: function(value, update) {
+        value = (value == undefined? 1 : value);
+        let handle = `<label><i class="fas fa-angle-double-left"></i>${value}<i class="fas fa-angle-double-right"></i><\label>`;
+        $("#observation-slider .ui-slider-handle").html(handle);
+        if (update !== undefined && update == true) {
+            // temp til we get rid of page
+            let page = Math.round(value/100)+1;
+            $("input#page").val(page).addClass("text-warning");;
+            onRenderData();
+        }
+        let test =1;
     },
 
     checkScroll: function() {
@@ -430,7 +460,7 @@ var o_browse = {
         if ($("#obs-menu").hasClass("show")) {
             o_browse.hideMenu();
         }
-        let inCart = o_collections.isIn(opusId) ? "" : "in";
+        let inCart = (o_collections.isIn(opusId) ? "" : "in");
         let buttonInfo = o_browse.cartButtonInfo(inCart);
         $("#obs-menu .dropdown-header").html(opusId);
         $("#obs-menu .cart-item").html(`<i class="${buttonInfo.icon}"></i>${buttonInfo.title}`);
@@ -441,7 +471,18 @@ var o_browse = {
         $("#obs-menu [data-action='downloadData']").attr("href",`/opus/__api/download/${opusId}.zip?cols=${opus.prefs.cols.join()}`);
         $("#obs-menu [data-action='downloadURL']").attr("href",`/opus/__api/download/${opusId}.zip?urlonly=1&cols=${opus.prefs.cols.join()}`);
 
-        $("#obs-menu .dropdown-item[data-action='range']").hide();
+        // use the state of the current selected observation to set the icons if one has been selected,
+        // otherwise use the state of the current observation - this will identify what will happen to the range
+        let selectedElem = $(`#${opus.prefs.view}`).find(".selected");
+        if (selectedElem.length != 0) {
+            inCart =  (o_collections.isIn($(selectedElem).data("id")) ? "in" : "");
+        }
+        let addRemoveText = (inCart != "in" ? "remove range from" : "add range to");
+
+        let rangeText = ($(e.delegateTarget).find(".selected").length == 0 ?
+                            `<i class='fas fa-sign-out-alt'></i>Start ${addRemoveText} cart here` :
+                            `<i class='fas fa-sign-out-alt fa-rotate-180'></i>End ${addRemoveText} cart here`);
+        $("#obs-menu .dropdown-item[data-action='range']").html(rangeText);
 
         let namespace = `#${opus.prefs.view}`;
         let menu = {"height":$("#obs-menu").innerHeight(), "width":$("#obs-menu").innerWidth()};
@@ -724,7 +765,9 @@ var o_browse = {
         }).join('&');
 
         page = (page === undefined ? ++urlPage : page);
-        url += '&page=' + page;
+        //let startObs = (page-1)*100+1;
+        //url += '&startobs=${startObs}';
+        url += `&page=${page}`;
         return url;
     },
 
@@ -771,14 +814,22 @@ var o_browse = {
             // either there are no selections OR this is signaling the end of the infinite scroll
             // for now, just post same message to both #browse & #collections tabs
             if (data.page_no == 1) {
-                $("#collection .navbar").hide();
-                $("#collection .sort-order-container").hide();
-                html += '<div class="thumbnail-message">';
-                html += '<h2>Your Cart is empty</h2>';
-                html += '<p>To add observations to the cart, click on the Browse Results tab ';
-                html += 'at the top of the page, mouse over the thumbnail gallery images to reveal the tools, ';
-                html += 'then click on the cart icon.  </p>';
-                html += '</div>';
+                if (opus.prefs.view == "browse") {
+                    html += '<div class="thumbnail-message">';
+                    html += '<h2>Your search produced no results</h2>';
+                    html += '<p>Remove or edit one or more of the search criteria selected on the Search tab ';
+                    html += 'or click on the Reset Search button to reset the search criteria to default.</p>';
+                    html += '</div>';
+                } else {
+                    $("#collection .navbar").hide();
+                    $("#collection .sort-order-container").hide();
+                    html += '<div class="thumbnail-message">';
+                    html += '<h2>Your cart is empty</h2>';
+                    html += '<p>To add observations to the cart, click on the Browse Results tab ';
+                    html += 'at the top of the page, mouse over the thumbnail gallery images to reveal the tools, ';
+                    html += 'then click on the cart icon.  </p>';
+                    html += '</div>';
+                }
             } else {
                 // we've hit the end of the infinite scroll.
             }
@@ -982,16 +1033,15 @@ var o_browse = {
     },
 
     loadData: function(page) {
-        //window.scrollTo(0,opus.browse_view_scrolls[opus.prefs.browse]);
         page = (page == undefined ? $("input#page").val() : page);
         $("input#page").val(page).removeClass("text-warning");
 
+        let selector = `#${opus.prefs.view} .gallery-contents`;
         // wait! is this page already drawn?
-        if (opus.lastPageDrawn[opus.prefs.view] == page) {
+        if ($(`${selector} .thumb-page[data-page='${page}']`).length > 0) {
+            $(`${selector} .thumb-page[data-page='${page}']`).scrollTop(0);
             return;
         }
-
-        let selector = `#${opus.prefs.view} .gallery-contents`;
 
         let url = o_browse.getDataURL(page);
 
@@ -1002,6 +1052,7 @@ var o_browse = {
             if (data.reqno < o_browse.lastLoadDataRequestNo) {
                 return;
             }
+            // data.start_obs, data.count
             opus.lastPageDrawn[opus.prefs.view] = data.page_no;
             if(o_browse.infiniteScrollCurrentMaxPageNumber < opus.lastPageDrawn[opus.prefs.view]) {
                 o_browse.infiniteScrollCurrentMaxPageNumber = opus.lastPageDrawn[opus.prefs.view];
@@ -1071,7 +1122,7 @@ var o_browse = {
         // o_browse.renderGalleryAndTable(data, path);
         // update the scroll position in the 'other' bit
         if (opus.prefs.browse == "dataTable") {
-            //$(`.thumb-page[data-page='${data.page_no}']`).scrollTop(0);
+            $(`.thumb-page[data-page='${data.page_no}']`).scrollTop(0);
         }
         //console.log('Loaded page: ' + $('#browse .gallery-contents').data('infiniteScroll').pageIndex );
 
@@ -1085,6 +1136,9 @@ var o_browse = {
         // only draw the navbar if we are in gallery mode... doesn't make sense in collection mode
         let hide = opus.prefs.browse == "gallery" ? "dataTable" : "gallery";
         $(`${hide}#browse`).hide();
+
+        // reset range select
+        o_browse.undoRangeSelect(`#${opus.prefs.view}`);
 
         $(`.${opus.prefs.browse}#browse`).fadeIn();
 
@@ -1135,6 +1189,19 @@ var o_browse = {
             title = "Remove from cart";
         }
         return  {"icon":icon, "title":title};
+    },
+
+    updateCartIcon: function(opusId, action) {
+        let buttonInfo = o_browse.cartButtonInfo(action);
+        let selector = `.thumb-overlay [data-id=${opusId}] [data-icon="cart"]`;
+        $(selector).html(`<i class="${buttonInfo.icon} fa-xs"></i>`);
+        $(selector).prop("title", buttonInfo.title);
+
+        let modalCartSelector = `#galleryViewContents .bottom .select[data-id=${opusId}]`;
+        if ($("#galleryView").is(":visible") && $(modalCartSelector).length > 0) {
+            $(modalCartSelector).html(`<i class="${buttonInfo.icon} fa-2x"></i>`);
+            $(modalCartSelector).prop("title", buttonInfo.title);
+        }
     },
 
     metadataboxHtml: function(opusId) {
@@ -1195,15 +1262,15 @@ var o_browse = {
 
         // prev/next buttons - put this in galleryView html...
         html = `<div class="col"><a href="#" class="select" data-id="${opusId}" title="${buttonInfo.title}"><i class="${buttonInfo.icon} fa-2x float-left"></i></a></div>`;
-        html += `<div class="col">`;
+        html += `<div class="col text-center">`;
         if (prev != "")
-            html += `<a href="#" class="prev" data-id="${prev}" title="Previous image"><i class="far fa-hand-point-left fa-2x"></i></a>`;
+            html += `<a href="#" class="prev text-center" data-id="${prev}" title="Previous image"><i class="far fa-hand-point-left fa-2x"></i></a>`;
         if (next != "")
             html += `<a href="#" class="next" data-id="${next}" title="Next image"><i class="far fa-hand-point-right fa-2x"></i></a>`;
         html += `</div>`;
 
         // mini-menu like the hamburger on the observation/gallery page
-        html += `<div class="col"><a href="#" class="menu pr-5" data-toggle="dropdown" role="button" data-id="${opusId}"><i class="fas fa-bars fa-2x float-right"></i></a></div>`;
+        html += `<div class="col"><a href="#" class="menu pr-3 float-right" data-toggle="dropdown" role="button" data-id="${opusId}"><i class="fas fa-bars fa-2x"></i></a></div>`;
         $("#galleryViewContents .bottom").html(html);
     },
 

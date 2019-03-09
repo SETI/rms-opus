@@ -156,10 +156,6 @@ Not sure if this is the desired behavior
     -webkit-box-sizing: border-box; -moz-box-sizing: border-box; box-sizing: border-box;
 }
 
-.sidebar_wrapper.mCustomScrollbar {
-    margin-top:10px;
-}
-
 hr.shadow-divider {
   height: 10px;
   border: 0;
@@ -505,7 +501,7 @@ th.sticky-header {
 
 img.preview {
   max-width: 400px    !important;
-  max-width: 400px    !important;
+  max-height: 400px    !important;
 }
 
 @media (min-width: 1200px) {
@@ -515,7 +511,7 @@ img.preview {
   }
   img.preview {
     max-width: 600px    !important;
-    max-width: 600px    !important;
+    max-height: 600px    !important;
   }
 }
 
@@ -553,18 +549,15 @@ img.preview {
   height: 625px;
 }
 
-#galleryViewContents .preview {
-  position: absolute;
-  right: 0;
-  left: 0;
-  margin: auto;
-}
-
 #galleryViewContents .metadata {
   overflow-y: auto;
   max-height: 500px;
   width: 440px;
   position: fixed;
+}
+
+#galleryViewContents .left {
+    min-height:590px;
 }
 
 #galleryView .modal-dialog:hover {
@@ -576,7 +569,7 @@ img.preview {
 }
 
 /* note - this is here to allow the user-style to be overridden on the modal */
-a:-webkit-any-link {
+a:-webkit-any-link, a::any-link {
     cursor: inherit;
 }
 
@@ -587,6 +580,10 @@ a:-webkit-any-link {
 
 #galleryViewContents .ps__rail-y {
   background-color: transparent !important;
+}
+
+#galleryViewContents a.menu {
+    width: 0px;
 }
 
 /* this is used to disable clicking on modal (#galleryViewContents) when infiniteScroll is still loading the next page*/
@@ -700,8 +697,10 @@ div.gallery {
    }
 }
 
-#page-slider .slider {
-    width: 150px;
+#observation-slider.ui-slider {
+    display: none;
+    width: 200px;
+    margin-left:45px;
 }
 
 .table-page {
@@ -942,6 +941,7 @@ footer {
    color: white;
    text-align: center;
    margin-left: 0px  !important;
+   z-index: 9999;
 }
 
 .footer .container {

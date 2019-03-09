@@ -1,4 +1,3 @@
-
 ################################################################################
 #
 # results/views.py
@@ -36,6 +35,7 @@ from django.views.decorators.cache import never_cache
 
 from hurry.filesize import size as nice_file_size
 
+from dictionary.models import Definitions
 from results.views import (get_search_results_chunk,
                            labels_for_slugs)
 from search.models import ObsGeneral
@@ -480,6 +480,7 @@ def _get_download_info(product_types, session_id):
              [<Product Type Category>,
               [{'slug_name':            Like "browse-thumb"
                 'product_type':         Like "Browse Image (thumbnail)"
+                'tooltip':              User-friendly tooltip, if any
                 'product_count':        Number of opus_ids in this category
                 'download_count':       Number of unique files in this category
                 'download_size':        Size of unique files in this category
@@ -614,8 +615,17 @@ def _get_download_info(product_types, session_id):
             product_cats.append(key)
             cur_product_list = []
             product_cat_list.append((pretty_name, cur_product_list))
+        try:
+            entry = Definitions.objects.get(context__name='OPUS_PRODUCT_TYPE',
+                                            term=short_name)
+            tooltip = entry.definition
+        except Definitions.DoesNotExist:
+            log.error('No tooltip definition for OPUS_PRODUCT_TYPE "%s"',
+                      short_name)
+            tooltip = None
         product_dict_entry = {
             'slug_name': short_name,
+            'tooltip': tooltip,
             'product_type': full_name,
             'product_count': product_count,
             'download_count': download_count,

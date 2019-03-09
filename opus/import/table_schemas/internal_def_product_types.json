@@ -1,0 +1,327 @@
+[
+    {
+        "pi_dict_context": "OPUS_PRODUCT_TYPE",
+        "pi_dict_name": "browse-thumb",
+        "definition": "Browse Image (thumbnail)"
+    },
+    {
+        "pi_dict_context": "OPUS_PRODUCT_TYPE",
+        "pi_dict_name": "browse-small",
+        "definition": "Browse Image (small)"
+    },
+    {
+        "pi_dict_context": "OPUS_PRODUCT_TYPE",
+        "pi_dict_name": "browse-medium",
+        "definition": "Browse Image (medium)"
+    },
+    {
+        "pi_dict_context": "OPUS_PRODUCT_TYPE",
+        "pi_dict_name": "browse-full",
+        "definition": "Browse Image (full-size)"
+    },
+    {
+        "pi_dict_context": "OPUS_PRODUCT_TYPE",
+        "pi_dict_name": "diagram-thumb",
+        "definition": "Browse Diagram (thumbnail)"
+    },
+    {
+        "pi_dict_context": "OPUS_PRODUCT_TYPE",
+        "pi_dict_name": "diagram-small",
+        "definition": "Browse Diagram (small)"
+    },
+    {
+        "pi_dict_context": "OPUS_PRODUCT_TYPE",
+        "pi_dict_name": "diagram-medium",
+        "definition": "Browse Diagram (medium)"
+    },
+    {
+        "pi_dict_context": "OPUS_PRODUCT_TYPE",
+        "pi_dict_name": "diagram-full",
+        "definition": "Browse Diagram (full-size)"
+    },
+    {
+        "pi_dict_context": "OPUS_PRODUCT_TYPE",
+        "pi_dict_name": "inventory",
+        "definition": "Target Body Inventory"
+    },
+    {
+        "pi_dict_context": "OPUS_PRODUCT_TYPE",
+        "pi_dict_name": "planet-geometry",
+        "definition": "Planet Geometry Index"
+    },
+    {
+        "pi_dict_context": "OPUS_PRODUCT_TYPE",
+        "pi_dict_name": "moon-geometry",
+        "definition": "Moon Geometry Index"
+    },
+    {
+        "pi_dict_context": "OPUS_PRODUCT_TYPE",
+        "pi_dict_name": "ring-geometry",
+        "definition": "Ring Geometry Index"
+    },
+    {
+        "pi_dict_context": "OPUS_PRODUCT_TYPE",
+        "pi_dict_name": "coiss-raw",
+        "definition": "Label (*.LBL) and raw image (*.IMG) files for Cassini ISS. These images are in VICAR format, uncalibrated, and in units of DN (data number)."
+    },
+    {
+        "pi_dict_context": "OPUS_PRODUCT_TYPE",
+        "pi_dict_name": "coiss-calib",
+        "definition": "Label (*.LBL) and calibrated image (*_CALIB.IMG) files for Cassini ISS. These files are in VICAR format and have been calibrated at the Ring-Moon Systems Node using the CISSCAL pipeline. They are in units of I/F."
+    },
+    {
+        "pi_dict_context": "OPUS_PRODUCT_TYPE",
+        "pi_dict_name": "coiss-thumb",
+        "definition": "Extra preview (thumbnail)"
+    },
+    {
+        "pi_dict_context": "OPUS_PRODUCT_TYPE",
+        "pi_dict_name": "coiss-medium",
+        "definition": "Extra preview (medium)"
+    },
+    {
+        "pi_dict_context": "OPUS_PRODUCT_TYPE",
+        "pi_dict_name": "coiss-full",
+        "definition": "Extra preview (full)"
+    },
+    {
+        "pi_dict_context": "OPUS_PRODUCT_TYPE",
+        "pi_dict_name": "couvis-raw",
+        "definition": "COUVIS Raw Data"
+    },
+    {
+        "pi_dict_context": "OPUS_PRODUCT_TYPE",
+        "pi_dict_name": "covims-raw",
+        "definition": "COVIMS Raw Data"
+    },
+    {
+        "pi_dict_context": "OPUS_PRODUCT_TYPE",
+        "pi_dict_name": "covims-thumb",
+        "definition": "COVIMS Thumb"
+    },
+    {
+        "pi_dict_context": "OPUS_PRODUCT_TYPE",
+        "pi_dict_name": "covims-medium",
+        "definition": "COVIMS Medium"
+    },
+    {
+        "pi_dict_context": "OPUS_PRODUCT_TYPE",
+        "pi_dict_name": "covims-full",
+        "definition": "COVIMS Full"
+    },
+    {
+        "pi_dict_context": "OPUS_PRODUCT_TYPE",
+        "pi_dict_name": "nh-raw",
+        "definition": "New Horizons Raw Data"
+    },
+    {
+        "pi_dict_context": "OPUS_PRODUCT_TYPE",
+        "pi_dict_name": "nh-calib",
+        "definition": "New Horizons Calibrated Data"
+    },
+    {
+        "pi_dict_context": "OPUS_PRODUCT_TYPE",
+        "pi_dict_name": "gossi-raw",
+        "definition": "Galileo SSI Raw Image"
+    },
+    {
+        "pi_dict_context": "OPUS_PRODUCT_TYPE",
+        "pi_dict_name": "cirs-spec",
+        "definition": "Calibrated Interferograms"
+    },
+    {
+        "pi_dict_context": "OPUS_PRODUCT_TYPE",
+        "pi_dict_name": "cirs-geo",
+        "definition": "System Geometry"
+    },
+    {
+        "pi_dict_context": "OPUS_PRODUCT_TYPE",
+        "pi_dict_name": "cirs-ispm",
+        "definition": "Observation Metadata"
+    },
+    {
+        "pi_dict_context": "OPUS_PRODUCT_TYPE",
+        "pi_dict_name": "cirs-poi",
+        "definition": "Footprint Geometry on Bodies"
+    },
+    {
+        "pi_dict_context": "OPUS_PRODUCT_TYPE",
+        "pi_dict_name": "cirs-rin",
+        "definition": "Footprint Geometry on Rings"
+    },
+    {
+        "pi_dict_context": "OPUS_PRODUCT_TYPE",
+        "pi_dict_name": "cirs-tar",
+        "definition": "Target Body Identifications"
+    },
+    {
+        "pi_dict_context": "OPUS_PRODUCT_TYPE",
+        "pi_dict_name": "cirs-browse-target",
+        "definition": "Extra Browse Diagram (default)"
+    },
+    {
+        "pi_dict_context": "OPUS_PRODUCT_TYPE",
+        "pi_dict_name": "cirs-browse-saturn",
+        "definition": "Extra Browse Diagram (Saturn)"
+    },
+    {
+        "pi_dict_context": "OPUS_PRODUCT_TYPE",
+        "pi_dict_name": "cirs-browse-rings",
+        "definition": "Extra Browse Diagram (rings)"
+    },
+    {
+        "pi_dict_context": "OPUS_PRODUCT_TYPE",
+        "pi_dict_name": "cirs-browse-mimas",
+        "definition": "Extra Browse Diagram (Mimas)"
+    },
+    {
+        "pi_dict_context": "OPUS_PRODUCT_TYPE",
+        "pi_dict_name": "cirs-browse-enceladus",
+        "definition": "Extra Browse Diagram (Enceladus)"
+    },
+    {
+        "pi_dict_context": "OPUS_PRODUCT_TYPE",
+        "pi_dict_name": "cirs-browse-tethys",
+        "definition": "Extra Browse Diagram (Tethys)"
+    },
+    {
+        "pi_dict_context": "OPUS_PRODUCT_TYPE",
+        "pi_dict_name": "cirs-browse-dione",
+        "definition": "Extra Browse Diagram (Dione)"
+    },
+    {
+        "pi_dict_context": "OPUS_PRODUCT_TYPE",
+        "pi_dict_name": "cirs-browse-rhea",
+        "definition": "Extra Browse Diagram (Rhea)"
+    },
+    {
+        "pi_dict_context": "OPUS_PRODUCT_TYPE",
+        "pi_dict_name": "cirs-browse-titan",
+        "definition": "Extra Browse Diagram (Titan)"
+    },
+    {
+        "pi_dict_context": "OPUS_PRODUCT_TYPE",
+        "pi_dict_name": "cirs-browse-hyperion",
+        "definition": "Extra Browse Diagram (Hyperion)"
+    },
+    {
+        "pi_dict_context": "OPUS_PRODUCT_TYPE",
+        "pi_dict_name": "cirs-browse-iapetus",
+        "definition": "Extra Browse Diagram (Iapetus)"
+    },
+    {
+        "pi_dict_context": "OPUS_PRODUCT_TYPE",
+        "pi_dict_name": "cirs-browse-phoebe",
+        "definition": "Extra Browse Diagram (Phoebe)"
+    },
+    {
+        "pi_dict_context": "OPUS_PRODUCT_TYPE",
+        "pi_dict_name": "cirs-browse-janus",
+        "definition": "Extra Browse Diagram (Janus)"
+    },
+    {
+        "pi_dict_context": "OPUS_PRODUCT_TYPE",
+        "pi_dict_name": "cirs-browse-epimetheus",
+        "definition": "Extra Browse Diagram (Epimetheus)"
+    },
+    {
+        "pi_dict_context": "OPUS_PRODUCT_TYPE",
+        "pi_dict_name": "cirs-browse-helene",
+        "definition": "Extra Browse Diagram (Helene)"
+    },
+    {
+        "pi_dict_context": "OPUS_PRODUCT_TYPE",
+        "pi_dict_name": "cirs-browse-telesto",
+        "definition": "Extra Browse Diagram (Telesto)"
+    },
+    {
+        "pi_dict_context": "OPUS_PRODUCT_TYPE",
+        "pi_dict_name": "cirs-browse-calypso",
+        "definition": "Extra Browse Diagram (Calypso)"
+    },
+    {
+        "pi_dict_context": "OPUS_PRODUCT_TYPE",
+        "pi_dict_name": "cirs-browse-atlas",
+        "definition": "Extra Browse Diagram (Atlas)"
+    },
+    {
+        "pi_dict_context": "OPUS_PRODUCT_TYPE",
+        "pi_dict_name": "cirs-browse-prometheus",
+        "definition": "Extra Browse Diagram (Prometheus)"
+    },
+    {
+        "pi_dict_context": "OPUS_PRODUCT_TYPE",
+        "pi_dict_name": "cirs-browse-pandora",
+        "definition": "Extra Browse Diagram (Pandora)"
+    },
+    {
+        "pi_dict_context": "OPUS_PRODUCT_TYPE",
+        "pi_dict_name": "cirs-browse-pan",
+        "definition": "Extra Browse Diagram (Pan)"
+    },
+    {
+        "pi_dict_context": "OPUS_PRODUCT_TYPE",
+        "pi_dict_name": "hst-text",
+        "definition": "FITS Header Text"
+    },
+    {
+        "pi_dict_context": "OPUS_PRODUCT_TYPE",
+        "pi_dict_name": "hst-preview",
+        "definition": "HST Preview Products"
+    },
+    {
+        "pi_dict_context": "OPUS_PRODUCT_TYPE",
+        "pi_dict_name": "hst-tiff",
+        "definition": "Raw Data Preview (lossless)"
+    },
+    {
+        "pi_dict_context": "OPUS_PRODUCT_TYPE",
+        "pi_dict_name": "hst-raw",
+        "definition": "Raw Data Preview"
+    },
+    {
+        "pi_dict_context": "OPUS_PRODUCT_TYPE",
+        "pi_dict_name": "hst-calib",
+        "definition": "Calibrated Data Preview"
+    },
+    {
+        "pi_dict_context": "OPUS_PRODUCT_TYPE",
+        "pi_dict_name": "hst-1d-spectrum",
+        "definition": "Line Spectrum Preview"
+    },
+    {
+        "pi_dict_context": "OPUS_PRODUCT_TYPE",
+        "pi_dict_name": "hst-2d-spectrum",
+        "definition": "2-D Spectrum Preview"
+    },
+    {
+        "pi_dict_context": "OPUS_PRODUCT_TYPE",
+        "pi_dict_name": "vgiss-raw",
+        "definition": "Raw Image"
+    },
+    {
+        "pi_dict_context": "OPUS_PRODUCT_TYPE",
+        "pi_dict_name": "vgiss-cleaned",
+        "definition": "Cleaned Image"
+    },
+    {
+        "pi_dict_context": "OPUS_PRODUCT_TYPE",
+        "pi_dict_name": "vgiss-calib",
+        "definition": "Calibrated Image"
+    },
+    {
+        "pi_dict_context": "OPUS_PRODUCT_TYPE",
+        "pi_dict_name": "vgiss-geomed",
+        "definition": "Geometrically Corrected Image"
+    },
+    {
+        "pi_dict_context": "OPUS_PRODUCT_TYPE",
+        "pi_dict_name": "vgiss-resloc",
+        "definition": "Reseau Table"
+    },
+    {
+        "pi_dict_context": "OPUS_PRODUCT_TYPE",
+        "pi_dict_name": "vgiss-geoma",
+        "definition": "Geometric Tiepoint Table"
+    }
+]
