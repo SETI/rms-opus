@@ -852,7 +852,7 @@ var o_browse = {
                 let images = item.images;
                 html += `<div class="thumbnail-container ${(item.in_collection ? ' in' : '')}" data-id="${opusId}">`;
                 html += `<a href="#" class="thumbnail" data-image="${images.full.url}">`;
-                html += `<img class="img-thumbnail img-fluid" src="${images.thumb.url}" alt="${images.thumb.alt_text}" title="${opusId}">`;
+                html += `<img class="img-thumbnail img-fluid" src="${images.thumb.url}" alt="${images.thumb.alt_text}" title="${opusId}\r\nClick to enlarge">`;
                 // whenever the user clicks an image to show the modal, we need to highlight the selected image w/an icon
                 html += '<div class="modal-overlay">';
                 html += '<p class="content-text"><i class="fas fa-binoculars fa-4x text-info" aria-hidden="true"></i></p>';
