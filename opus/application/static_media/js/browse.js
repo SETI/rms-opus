@@ -681,7 +681,7 @@ var o_browse = {
             $(".browse_view", "#browse").attr("title", "View sortable metadata table");
             $(".browse_view", "#browse").data("view", "dataTable");
 
-            $(".justify-content-center").show();
+            // $(".justify-content-center").show();
 
             o_browse.galleryScrollbar.settings.suppressScrollY = false;
 
@@ -700,7 +700,7 @@ var o_browse = {
             $(".browse_view", "#browse").data("view", "gallery");
 
             // remove that extra space on top when loading table page
-            $(".justify-content-center").hide();
+            // $(".justify-content-center").hide();
 
             o_browse.galleryScrollbar.settings.suppressScrollY = true;
 
@@ -844,7 +844,7 @@ var o_browse = {
                         let prevIdx = index-1
                         let selector = `.dataTable tbody tr:eq(${prevIdx})`
                         let currentEl = tr+row+"</tr>";
-                        console.log("selector: " + selector );
+                        // console.log("selector: " + selector );
                         // $(selector).append(tr+row+"</tr>");
                         $(currentEl).insertAfter($(selector));
                     }
@@ -1029,6 +1029,7 @@ var o_browse = {
 
                     $(selector).on("request.infiniteScroll", function( event, path ) {
                         $(".table-page-load-status").show();
+                        console.log("request")
                     });
                     $(selector).on("scrollThreshold.infiniteScroll", function( event ) {
                         $(selector).infiniteScroll("loadNextPage");
@@ -1045,7 +1046,7 @@ var o_browse = {
             // prefill next page
             if (!opus.gallery_begun) {
                 // (maybe temporarily) remove load next page so that when user inputted 2 in page input, both gallery and table view will display data from the beginning of page 2
-                // $(selector).infiniteScroll('loadNextPage');
+                $(selector).infiniteScroll('loadNextPage');
                 opus.gallery_begun = true;
             }
             $(".table-page-load-status > .loader").hide();
@@ -1058,8 +1059,8 @@ var o_browse = {
             console.log(`data.reqno: ${data.reqno}, last reqno: ${o_browse.lastLoadDataRequestNo}`);
             return;
         }
-        console.log(data)
-        console.log(path)
+        // console.log(data)
+        // console.log(path)
         if(o_browse.infiniteScrollCurrentMaxPageNumber > data.page_no) {
             console.log("PREPENDING to the FRONT");
             o_browse.renderGalleryAndTable(data, path, true);
