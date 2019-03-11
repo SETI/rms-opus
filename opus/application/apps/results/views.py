@@ -166,9 +166,18 @@ def api_get_data_and_images(request):
     cols = request.GET.get('cols', settings.DEFAULT_COLUMNS)
 
     labels = labels_for_slugs(cols_to_slug_list(cols))
+    if labels is None:
+        ret = Http404(settings.HTTP404_UNKNOWN_SLUG)
+        exit_api_call(api_code, ret)
+        raise ret
+
     order_slugs = cols_to_slug_list(order)
     order_slugs_pure = [x[1:] if x[0] == '-' else x for x in order_slugs]
     order_labels = labels_for_slugs(order_slugs_pure, units=False)
+    if order_labels is None:
+        ret = Http404(settings.HTTP404_UNKNOWN_SLUG)
+        exit_api_call(api_code, ret)
+        raise ret
 
     order_list = []
     for idx, (slug, label) in enumerate(zip(order_slugs, order_labels)):
@@ -1376,6 +1385,10 @@ def _get_metadata_by_slugs(request, opus_id, cols, fmt, use_param_names,
 
     slug_list = cols_to_slug_list(cols)
     labels = labels_for_slugs(slug_list)
+    if labels is None:
+        ret = Http404(settings.HTTP404_UNKNOWN_SLUG)
+        exit_api_call(api_code, ret)
+        raise ret
 
     if fmt == 'csv':
         return csv_response(opus_id, page, labels)

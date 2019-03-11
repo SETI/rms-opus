@@ -171,6 +171,11 @@ def api_get_collection_csv(request):
     api_code = enter_api_call('api_get_collection_csv', request)
 
     column_labels, page = _csv_helper(request, api_code)
+    if column_labels is None:
+        ret = Http404(settings.HTTP404_UNKNOWN_SLUG)
+        exit_api_call(api_code, ret)
+        raise ret
+
     ret = csv_response('data', page, column_labels)
 
     exit_api_call(api_code, ret)
@@ -849,6 +854,10 @@ def _csv_helper(request, api_code=None):
 def _create_csv_file(request, csv_file_name, api_code=None):
     "Create a CSV file containing the collection data."
     column_labels, page = _csv_helper(request, api_code)
+    if column_labels is None:
+        ret = Http404(settings.HTTP404_UNKNOWN_SLUG)
+        exit_api_call(api_code, ret)
+        raise ret
 
     with open(csv_file_name, 'a') as csv_file:
         wr = csv.writer(csv_file)
