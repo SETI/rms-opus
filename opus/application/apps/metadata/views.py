@@ -197,7 +197,7 @@ def api_get_mult_counts(request, slug, fmt, internal=False):
         exit_api_call(api_code, ret)
         raise ret
 
-    param_info = get_param_info_by_slug(slug)
+    param_info = get_param_info_by_slug(slug, 'col')
     if not param_info:
         log.error('api_get_mult_counts: Could not find param_info entry for '
                   +'slug %s *** Selections %s *** Extras %s', str(slug),
@@ -382,7 +382,7 @@ def api_get_range_endpoints(request, slug, fmt, internal=False):
         exit_api_call(api_code, ret)
         raise ret
 
-    param_info = get_param_info_by_slug(slug, from_ui=True)
+    param_info = get_param_info_by_slug(slug, 'widget')
     if not param_info:
         log.error('get_range_endpoints: Could not find param_info entry for '+
                   'slug %s', str(slug))

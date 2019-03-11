@@ -39,8 +39,7 @@ from dictionary.models import Definitions
 from results.views import (get_search_results_chunk,
                            labels_for_slugs)
 from search.models import ObsGeneral
-from search.views import (get_param_info_by_slug,
-                          url_to_search_params,
+from search.views import (url_to_search_params,
                           get_user_query_table)
 from user_collections.models import Collections
 from tools.app_utils import *

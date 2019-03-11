@@ -319,6 +319,9 @@ PRODUCT_HTTP_PATH = 'https://pds-rings.seti.org/'
 # The columns selected when OPUS is first initialized
 DEFAULT_COLUMNS = 'opusid,instrument,planet,target,time1,observationduration'
 
+# The search widgets selected when OPUS is first intialized
+DEFAULT_WIDGETS = 'planet,target'
+
 # The sort order to be used if there is no order specified in the URL, or
 # the order slug has no value.
 DEFAULT_SORT_ORDER = 'time1,opusid' # This must be a list of slugs

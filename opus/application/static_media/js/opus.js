@@ -36,7 +36,6 @@ var opus = {
             'colls_browse':'gallery',  // which view is showing on the collections page, gallery or data
             'page':default_pages,  // what page are we on, per view, default defined in header.html
                                    // like {"gallery":1, "data":1, "colls_gallery":1, "colls_data":1 };
-            'gallery_data_viewer': true, // true if you want to view data in the box rather than img
             'limit': 100, // results per page
             'order': default_sort_order.split(','),  // result table ordering
             'cols': default_columns.split(','),  // default result table columns by slug
@@ -81,7 +80,7 @@ var opus = {
     menu_list_indicators: {'slug':[], 'cat':[], 'group':[] },
     // menu_state: {'cats':['obs_general'], 'groups':[]},  // keep track of menu items that are open
     menu_state: {'cats':'all', 'groups':[]},
-    default_widgets: ['target','planet'],
+    default_widgets: default_widgets.split(','),
     widget_click_timeout:0,
 
     // browse tab
@@ -201,13 +200,9 @@ var opus = {
         }
 
         // result count is back, now send for widget hinting
-        var widget_cols = ["widgets","widgets2"];
-        for (key in widget_cols) {
-            col = widget_cols[key];
-            for (k in opus.prefs[col]) {
-                slug = opus.prefs[col][k];
-                o_search.getHinting(slug);
-            } // end for widget in..
+        for (k in opus.prefs.widgets) {
+            slug = opus.prefs.widgets[k];
+            o_search.getHinting(slug);
         } // endfor
     },
 
