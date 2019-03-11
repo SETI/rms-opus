@@ -106,7 +106,8 @@ class SessionInfo(metaclass=abc.ABCMeta):
     def quote_and_join_list(string_list: List[str]) -> str:
         return ', '.join(f'"{string}"' for string in string_list)
 
-    def safe_format(self, format: str, *args: Any) -> str:
+    @staticmethod
+    def safe_format(format: str, *args: Any) -> str:
         return Markup(format).format(*args)
 
 
@@ -297,6 +298,12 @@ class SessionInfoImpl(SessionInfo):
             return [self.safe_format('View Detail: {}', opus_id)], self.__create_opus_url(opus_id)
         else:
             return [f'View Detail: { opus_id }'], None
+
+    @ForPattern(r'/__help/(faq|about|datasets|tutorial)\.html')
+    def _get_help_information(self, query: Dict[str, str], match: Match[str]) -> SESSION_INFO:
+        help_type = match.group(1)
+        help_name = help_type.upper() if help_type == 'faq' else help_type.title()
+        return [f'Read {help_name}'], None
 
     #
     # Various utilities
