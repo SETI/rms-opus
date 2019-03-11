@@ -170,7 +170,7 @@ def api_edit_collection(request, **kwargs):
 
     Format: __collections/
             (?P<action>add|remove|addrange|removerange|addall).json
-    Arguments: opus_id=<ID>                 (add, remove)
+    Arguments: opusid=<ID>                  (add, remove)
                range=<OPUS_ID>,<OPUS_ID>    (addrange, removerange)
                [reqno=<N>]
                [download=<N>]
