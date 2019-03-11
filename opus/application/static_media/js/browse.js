@@ -841,9 +841,6 @@ var o_browse = {
             if(o_browse.infiniteScrollCurrentMaxPageNumber < opus.lastPageDrawn[opus.prefs.view]) {
                 o_browse.infiniteScrollCurrentMaxPageNumber = opus.lastPageDrawn[opus.prefs.view];
             }
-            // if(o_browse.infiniteScrollCurrentMinPageNumber > opus.lastPageDrawn[opus.prefs.view]) {
-            //     o_browse.infiniteScrollCurrentMinPageNumber = opus.lastPageDrawn[opus.prefs.view];
-            // }
 
             // add an indicator row that says this is the start of page/observation X - needs to be two hidden rows so as not to mess with the stripes
             if(!prev) {
@@ -1037,9 +1034,24 @@ var o_browse = {
         $("input#page").val(page).removeClass("text-warning");
 
         let selector = `#${opus.prefs.view} .gallery-contents`;
+
         // wait! is this page already drawn?
         if ($(`${selector} .thumb-page[data-page='${page}']`).length > 0) {
-            $(`${selector} .thumb-page[data-page='${page}']`).scrollTop(0);
+            console.log(`PAGE ${page} is already drawn.`);
+            if(page === "1") {
+                $(`${selector} .thumb-page[data-page='${page}']`).scrollTop(0);
+                // make sure it's scrolled to the correct position in table view
+                $(`${selector} .dataTable`).scrollTop(0);
+            } else {
+                $(`${selector} .thumb-page[data-page='${page}']`).scrollTop(0);
+                // make sure it's scrolled to the correct position in table view
+                let targetTopPosition = $(`.table-page[data-page='${page}']`).prev().offset().top;
+                let containerTopPosition = $(".dataTable").offset().top;
+                let scrollbarPosition = $(".dataTable").scrollTop();
+                let finalPosition = targetTopPosition - containerTopPosition + scrollbarPosition
+                $(`${selector} .dataTable`).scrollTop(finalPosition);
+            }
+
             return;
         }
 
@@ -1057,9 +1069,6 @@ var o_browse = {
             if(o_browse.infiniteScrollCurrentMaxPageNumber < opus.lastPageDrawn[opus.prefs.view]) {
                 o_browse.infiniteScrollCurrentMaxPageNumber = opus.lastPageDrawn[opus.prefs.view];
             }
-            // if(o_browse.infiniteScrollCurrentMinPageNumber > opus.lastPageDrawn[opus.prefs.view]) {
-            //     o_browse.infiniteScrollCurrentMinPageNumber = opus.lastPageDrawn[opus.prefs.view];
-            // }
 
             if (!opus.gallery_begun) {
                 o_browse.initTable(data.columns);
