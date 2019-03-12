@@ -226,7 +226,7 @@ class QueryHandler:
                 return
             column_labels = [new_info[family].label for family in sorted(new_column_families)]
             quoted_column_labels = self._session_info.quote_and_join_list(sorted(column_labels))
-            result.append(f'Starting with Columns: {quoted_column_labels}')
+            result.append(f'Starting with Selected Metadata: {quoted_column_labels}')
             return
 
         old_column_families = set(old_info.keys())
@@ -234,7 +234,7 @@ class QueryHandler:
         if new_column_families == old_column_families:
             return
         if new_column_families == set(self._default_column_slug_info.keys()):
-            result.append('Reset Columns')
+            result.append('Reset Selected Metadata')
             return
         self._session_info.changed_column_slugs()
         all_column_families = old_column_families.union(new_column_families)
@@ -243,13 +243,13 @@ class QueryHandler:
             old_slug_info = old_info.get(family)
             new_slug_info = new_info.get(family)
             if old_slug_info and not new_slug_info:
-                removed_columns.append(f'Remove Column: "{old_slug_info.label}"')
+                removed_columns.append(f'Remove Selected Metadata: "{old_slug_info.label}"')
             elif new_slug_info and not old_slug_info:
                 postscript = self.__get_postscript(new_slug_info.flags)
                 if not self._uses_html:
-                    added_columns.append(f'Add Column:    "{new_slug_info.label}"{postscript}')
+                    added_columns.append(f'Add Selected Metadata:    "{new_slug_info.label}"{postscript}')
                 else:
-                    added_columns.append(self.safe_format('Add Column: "{}"{}', new_slug_info.label, postscript))
+                    added_columns.append(self.safe_format('Add Selected Metadata: "{}"{}', new_slug_info.label, postscript))
 
         result.extend(removed_columns)
         result.extend(added_columns)
