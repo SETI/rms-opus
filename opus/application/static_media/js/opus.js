@@ -31,9 +31,9 @@ var opus = {
 
     // client side prefs, changes to these *do not trigger results to refresh*
     // prefs gets added verbatim to the url, so don't add anything weird into here!
-    prefs:{ 'view':'search', // search, browse, collection, detail
+    prefs:{ 'view':'search', // search, browse, cart, detail
             'browse':'gallery', //either 'gallery' or 'data'
-            'colls_browse':'gallery',  // which view is showing on the collections page, gallery or data
+            'colls_browse':'gallery',  // which view is showing on the cart page, gallery or data
             'page':default_pages,  // what page are we on, per view, default defined in header.html
                                    // like {"gallery":1, "data":1, "colls_gallery":1, "colls_data":1 };
             'gallery_data_viewer': true, // true if you want to view data in the box rather than img
@@ -55,8 +55,8 @@ var opus = {
 
     gallery_data: {},  // holds gallery column data
 
-    lastPageDrawn: {"browse":0, "collection":0},
-    pages_drawn: {"browse": [], "collection": []},  // keeping track of currently rendered gallery pages
+    lastPageDrawn: {"browse":0, "cart":0},
+    pages_drawn: {"browse": [], "cart": []},  // keeping track of currently rendered gallery pages
                                                           // so underlying data can be refreshed after 'choose metadata'
 
     // additional defaults are in base.html
@@ -92,9 +92,9 @@ var opus = {
     browse_view_scrolls: reset_browse_view_scrolls, // same defaults as footer clicks (definied in header.html)
                                                       // {"gallery":0, "data":0, "colls_gallery":0, "colls_data":0 };
 
-    // collections
-    collection_change:true, // collection has changed since last load of collection_tab
-    collection_q_intrvl: false,
+    // cart
+    cart_change:true, // cart has changed since last load of cart_tab
+    cart_q_intrvl: false,
     colls_options_viz:false,
 
     // these are for the process that detects there was a change in the selection criteria and updates things
@@ -244,7 +244,7 @@ var opus = {
 
     changeTab: function(tab) {
         // first hide everything and stop any interval timers
-        $('#search, #detail, #collection, #browse').hide();
+        $('#search, #detail, #cart, #browse').hide();
         o_browse.hideMenu();
 
         // close any open modals
@@ -278,13 +278,13 @@ var opus = {
                 o_detail.getDetail(opus.prefs.detail);
                 break;
 
-            case 'collection':
+            case 'cart':
                 if (opus.prefs.colls_browse == 'data') {
-                    $('.data_table','#collection').show();
-                    $('.gallery','#collection').hide();
+                    $('.data_table','#cart').show();
+                    $('.gallery','#cart').hide();
                 }
-                $('#collection').fadeIn();
-                o_collections.getCollectionsTab();
+                $('#cart').fadeIn();
+                o_cart.getCartTab();
                 break;
 
             default:
@@ -363,7 +363,7 @@ var opus = {
         o_widgets.addWidgetBehaviors();
         o_menu.menuBehaviors();
         o_browse.browseBehaviors();
-        o_collections.collectionBehaviors();
+        o_cart.cartBehaviors();
         o_search.searchBehaviors();
         return;
     },
@@ -443,7 +443,7 @@ $(document).ready(function() {
     var adjustSearchHeight = _.debounce(o_search.adjustSearchHeight, 200);
     var adjustBrowseHeight = _.debounce(o_browse.adjustBrowseHeight, 200);
     var adjustTableSize = _.debounce(o_browse.adjustTableSize, 200);
-    var adjustProductInfoHeight = _.debounce(o_collections.adjustProductInfoHeight, 200);
+    var adjustProductInfoHeight = _.debounce(o_cart.adjustProductInfoHeight, 200);
     var adjustDetailHeight = _.debounce(o_detail.adjustDetailHeight, 200);
     var adjustHelpPanelHeight = _.debounce(opus.adjustHelpPanelHeight, 200);
 
@@ -572,7 +572,7 @@ $(document).ready(function() {
 
     opus.addAllBehaviors();
 
-    o_collections.initCollection();
+    o_cart.initCart();
     opus.triggerNavbarClick();
 
     // watch the url for changes, this runs continuously

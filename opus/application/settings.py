@@ -141,7 +141,7 @@ INSTALLED_APPS = (
     'help',
     'results',
     'ui',
-    'user_collections',
+    'cart',
     'tools',
     'dictionary',
     'rest_framework',
@@ -253,7 +253,7 @@ LOGGING = {
             'handlers': ['console', 'logfile'],
             'level': 'DEBUG',
         },
-        'user_collections': {
+        'cart': {
             'handlers': ['console', 'logfile'],
             'level': 'DEBUG',
         },

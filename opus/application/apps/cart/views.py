@@ -2,15 +2,15 @@
 #
 # results/views.py
 #
-# The (private) API interface for adding and removing items from the collection
+# The (private) API interface for adding and removing items from the cart
 # and creating download .zip and .csv files.
 #
-#    Format: __collections/view.(html|json)
-#    Format: __collections/status.json
-#    Format: __collections/data.csv
-#    Format: __collections/(?P<action>add|remove|addrange|removerange|addall).json
-#    Format: __collections/reset.html
-#    Format: __collections/download.json
+#    Format: __cart/view.(html|json)
+#    Format: __cart/status.json
+#    Format: __cart/data.csv
+#    Format: __cart/(?P<action>add|remove|addrange|removerange|addall).json
+#    Format: __cart/reset.html
+#    Format: __cart/download.json
 #    Format: [__]api/download/(?P<opus_id>[-\w]+).zip
 #
 ################################################################################
@@ -42,7 +42,7 @@ from search.models import ObsGeneral
 from search.views import (get_param_info_by_slug,
                           url_to_search_params,
                           get_user_query_table)
-from user_collections.models import Collections
+from cart.models import Cart
 from tools.app_utils import *
 from tools.file_utils import *
 
@@ -57,7 +57,7 @@ log = logging.getLogger(__name__)
 
 
 @never_cache
-def api_view_collection(request):
+def api_view_cart(request):
     """Return the OPUS-specific left side of the "Selections" page as HTML.
 
     This includes the number of files selected, total size of files selected,
@@ -68,11 +68,11 @@ def api_view_collection(request):
 
     This is a PRIVATE API.
 
-    Format: __collections/view.html
+    Format: __cart/view.html
 
     For HTML format, returns the left side of the Selections page.
     """
-    api_code = enter_api_call('api_view_collection', request)
+    api_code = enter_api_call('api_view_cart', request)
 
     session_id = get_session_id(request)
 
@@ -80,7 +80,7 @@ def api_view_collection(request):
 
     info = _get_download_info(product_types, session_id)
 
-    template = 'user_collections/collections.html'
+    template = 'cart/cart.html'
     ret = render(request, template, info)
 
     exit_api_call(api_code, ret)
@@ -88,14 +88,14 @@ def api_view_collection(request):
 
 
 @never_cache
-def api_collection_status(request):
-    """Return the number of items in a collection.
+def api_cart_status(request):
+    """Return the number of items in a cart.
 
     It is used to update the "Selections <N>" tab in the OPUS UI.
 
     This is a PRIVATE API.
 
-    Format: __collections/status.json
+    Format: __cart/status.json
     Arguments: reqno=<N>
                [types=<list of types>]
                [download=<N>]
@@ -126,13 +126,13 @@ def api_collection_status(request):
 
 
     """
-    api_code = enter_api_call('api_collection_status', request)
+    api_code = enter_api_call('api_cart_status', request)
 
     session_id = get_session_id(request)
 
     reqno = get_reqno(request)
     if reqno is None:
-        log.error('api_collection_status: Missing or badly formatted reqno')
+        log.error('api_cart_status: Missing or badly formatted reqno')
         ret = Http404(settings.HTTP404_MISSING_REQNO)
         exit_api_call(api_code, ret)
         raise ret
@@ -149,7 +149,7 @@ def api_collection_status(request):
     else:
         info = {}
 
-    count = _get_collection_count(session_id)
+    count = _get_cart_count(session_id)
 
     info['count'] = count
     info['reqno'] = reqno
@@ -159,17 +159,17 @@ def api_collection_status(request):
 
 
 @never_cache
-def api_get_collection_csv(request):
-    """Returns a CSV file of the current collection.
+def api_get_cart_csv(request):
+    """Returns a CSV file of the current cart.
 
     The CSV file contains the columns specified in the request.
 
     This is a PRIVATE API.
 
-    Format: __collections/data.csv
+    Format: __cart/data.csv
             Normal selected-column arguments
     """
-    api_code = enter_api_call('api_get_collection_csv', request)
+    api_code = enter_api_call('api_get_cart_csv', request)
 
     column_labels, page = _csv_helper(request, api_code)
     ret = csv_response('data', page, column_labels)
@@ -179,23 +179,23 @@ def api_get_collection_csv(request):
 
 
 @never_cache
-def api_edit_collection(request, **kwargs):
-    """Add or remove items from a collection.
+def api_edit_cart(request, **kwargs):
+    """Add or remove items from a cart.
 
     This is a PRIVATE API.
 
-    Format: __collections/
+    Format: __cart/
             (?P<action>add|remove|addrange|removerange|addall).json
     Arguments: opus_id=<ID>                 (add, remove)
                range=<OPUS_ID>,<OPUS_ID>    (addrange, removerange)
                reqno=<N>
                [download=<N>]
 
-    Returns the new number of items in the collection.
+    Returns the new number of items in the cart.
     If download=1, also returns all the data returned by
-        /__collections/status.json
+        /__cart/status.json
     """
-    api_code = enter_api_call('api_edit_collection', request)
+    api_code = enter_api_call('api_edit_cart', request)
 
     session_id = get_session_id(request)
 
@@ -207,7 +207,7 @@ def api_edit_collection(request, **kwargs):
 
     reqno = get_reqno(request)
     if reqno is None:
-        log.error('api_edit_collection: Missing or badly formatted reqno')
+        log.error('api_edit_cart: Missing or badly formatted reqno')
         ret = Http404(settings.HTTP404_MISSING_REQNO)
         exit_api_call(api_code, ret)
         raise ret
@@ -222,13 +222,13 @@ def api_edit_collection(request, **kwargs):
 
     if not err:
         if action == 'add':
-            err = _add_to_collections_table(opus_id, session_id, api_code)
+            err = _add_to_cart_table(opus_id, session_id, api_code)
         elif action == 'remove':
-            err = _remove_from_collections_table(opus_id, session_id, api_code)
+            err = _remove_from_cart_table(opus_id, session_id, api_code)
         elif action in ('addrange', 'removerange'):
-            err = _edit_collection_range(request, session_id, action, api_code)
+            err = _edit_cart_range(request, session_id, action, api_code)
         elif action == 'addall':
-            err = _edit_collection_addall(request, session_id, api_code)
+            err = _edit_cart_addall(request, session_id, api_code)
         else:
             assert False
 
@@ -244,9 +244,9 @@ def api_edit_collection(request, **kwargs):
     else:
         info = {}
 
-    collection_count = _get_collection_count(session_id)
+    cart_count = _get_cart_count(session_id)
     info['error'] = err
-    info['count'] = collection_count
+    info['count'] = cart_count
     info['reqno'] = reqno
 
     ret = json_response(info)
@@ -256,17 +256,17 @@ def api_edit_collection(request, **kwargs):
 
 @never_cache
 def api_reset_session(request):
-    """Remove everything from the collection and reset the session.
+    """Remove everything from the cart and reset the session.
 
     This is a PRIVATE API.
 
-    Format: __collections/reset.json
+    Format: __cart/reset.json
     """
     api_code = enter_api_call('api_reset_session', request)
 
     session_id = get_session_id(request)
 
-    sql = 'DELETE FROM '+connection.ops.quote_name('collections')
+    sql = 'DELETE FROM '+connection.ops.quote_name('cart')
     sql += ' WHERE session_id=%s'
     values = [session_id]
     log.debug('api_reset_session SQL: %s %s', sql, values)
@@ -282,11 +282,11 @@ def api_reset_session(request):
 
 @never_cache
 def api_create_download(request, opus_id=None):
-    """Creates a zip file of all items in the collection or the given OPUS ID.
+    """Creates a zip file of all items in the cart or the given OPUS ID.
 
     This is a PRIVATE API.
 
-    Format: __collections/download.json
+    Format: __cart/download.json
         or: [__]api/download/(?P<opus_id>[-\w]+).zip
     Arguments: types=<PRODUCT_TYPES>
                urlonly=1 (optional) means to not zip the actual data products
@@ -307,7 +307,7 @@ def api_create_download(request, opus_id=None):
         opus_ids = [opus_id]
         return_directly = True
     else:
-        num_selections = (Collections.objects
+        num_selections = (Cart.objects
                           .filter(session_id__exact=session_id)
                           .count())
         if url_file_only:
@@ -319,7 +319,7 @@ def api_create_download(request, opus_id=None):
                                  f'Too many selections ({max_selections} max)'})
             exit_api_call(api_code, ret)
             return ret
-        res = (Collections.objects.filter(session_id__exact=session_id)
+        res = (Cart.objects.filter(session_id__exact=session_id)
                .values_list('opus_id'))
         opus_ids = [x[0] for x in res]
         return_directly = False
@@ -466,7 +466,7 @@ def api_create_download(request, opus_id=None):
 ################################################################################
 
 def _get_download_info(product_types, session_id):
-    """Return information about the current collection useful for download.
+    """Return information about the current cart useful for download.
 
     The resulting totals are limited to the given product_types.
     ['all'] means return all product_types.
@@ -552,10 +552,10 @@ def _get_download_info(product_types, session_id):
     sql += q('obs_files')+'.'+q('logical_path')+', '
     sql += q('obs_files')+'.'+q('size')+' '
     sql += 'FROM '+q('obs_files')+' '
-    sql += 'INNER JOIN '+q('collections')+' ON '
-    sql += q('collections')+'.'+q('obs_general_id')+'='
+    sql += 'INNER JOIN '+q('cart')+' ON '
+    sql += q('cart')+'.'+q('obs_general_id')+'='
     sql += q('obs_files')+'.'+q('obs_general_id')+' '
-    sql += 'WHERE '+q('collections')+'.'+q('session_id')+'=%s '
+    sql += 'WHERE '+q('cart')+'.'+q('session_id')+'=%s '
     values.append(session_id)
     sql += 'AND '+q('obs_files')+'.'+q('version_number')+' >= 900000'
     sql += ') AS '+q('t1')+' '
@@ -567,10 +567,10 @@ def _get_download_info(product_types, session_id):
     # End of nested SELECT #1
 
     sql += q('obs_files')+' '
-    sql += 'INNER JOIN '+q('collections')+' ON '
-    sql += q('collections')+'.'+q('obs_general_id')+'='
+    sql += 'INNER JOIN '+q('cart')+' ON '
+    sql += q('cart')+'.'+q('obs_general_id')+'='
     sql += q('obs_files')+'.'+q('obs_general_id')+' '
-    sql += 'WHERE '+q('collections')+'.'+q('session_id')+'=%s '
+    sql += 'WHERE '+q('cart')+'.'+q('session_id')+'=%s '
     values.append(session_id)
     sql += 'AND '+q('obs_files')+'.'+q('short_name')+'='
     sql += q('t2')+'.'+q('short_name')+' '
@@ -644,20 +644,20 @@ def _get_download_info(product_types, session_id):
     return ret
 
 
-def _get_collection_count(session_id):
-    "Return the number of items in the current collection."
-    count = Collections.objects.filter(session_id__exact=session_id).count()
+def _get_cart_count(session_id):
+    "Return the number of items in the current cart."
+    count = Cart.objects.filter(session_id__exact=session_id).count()
     return count
 
 
 ################################################################################
 #
-# Support routines - add or remove items from collections
+# Support routines - add or remove items from cart
 #
 ################################################################################
 
-def _add_to_collections_table(opus_id_list, session_id, api_code):
-    "Add OPUS_IDs to the collections table."
+def _add_to_cart_table(opus_id_list, session_id, api_code):
+    "Add OPUS_IDs to the cart table."
     cursor = connection.cursor()
     if not isinstance(opus_id_list, (list, tuple)):
         opus_id_list = [opus_id_list]
@@ -669,31 +669,31 @@ def _add_to_collections_table(opus_id_list, session_id, api_code):
     # We use REPLACE INTO to avoid problems with duplicate entries or
     # race conditions that would be caused by deleting first and then adding.
     # Note that REPLACE INTO only works because we have a constraint on the
-    # collections table that makes the fields into a unique key.
+    # cart table that makes the fields into a unique key.
     values = [(session_id, id, opus_id) for opus_id, id in res]
     q = connection.ops.quote_name
-    sql = 'REPLACE INTO '+q('collections')+' ('+q('session_id')+','
+    sql = 'REPLACE INTO '+q('cart')+' ('+q('session_id')+','
     sql += q('obs_general_id')+','+q('opus_id')+')'
     sql += ' VALUES (%s, %s, %s)'
-    log.debug('_add_to_collections_table SQL: %s %s', sql, values)
+    log.debug('_add_to_cart_table SQL: %s %s', sql, values)
     cursor.executemany(sql, values)
 
     return False
 
-def _remove_from_collections_table(opus_id_list, session_id, api_code):
-    "Remove OPUS_IDs from the collections table."
+def _remove_from_cart_table(opus_id_list, session_id, api_code):
+    "Remove OPUS_IDs from the cart table."
     cursor = connection.cursor()
     if not isinstance(opus_id_list, (list, tuple)):
         opus_id_list = [opus_id_list]
     values = [(session_id, opus_id) for opus_id in opus_id_list]
-    sql = 'DELETE FROM '+connection.ops.quote_name('collections')
+    sql = 'DELETE FROM '+connection.ops.quote_name('cart')
     sql += ' WHERE session_id=%s AND opus_id=%s'
-    log.debug('_remove_from_collections_table SQL: %s %s', sql, values)
+    log.debug('_remove_from_cart_table SQL: %s %s', sql, values)
     cursor.executemany(sql, values)
 
     return False
 
-def _edit_collection_range(request, session_id, action, api_code):
+def _edit_cart_range(request, session_id, action, api_code):
     "Add or remove a range of opus_ids based on the current sort order."
     id_range = request.GET.get('range', False)
     if not id_range:
@@ -710,14 +710,14 @@ def _edit_collection_range(request, session_id, action, api_code):
 
     (selections, extras) = url_to_search_params(request.GET)
     if selections is None:
-        log.error('_edit_collection_range: Could not find selections for'
+        log.error('_edit_cart_range: Could not find selections for'
                   +' request %s', str(request.GET))
         return 'bad search'
 
     user_query_table = get_user_query_table(selections, extras,
                                             api_code=api_code)
     if not user_query_table:
-        log.error('_edit_collection_range: get_user_query_table failed '
+        log.error('_edit_cart_range: get_user_query_table failed '
                   +'*** Selections %s *** Extras %s',
                   str(selections), str(extras))
         return 'search failed'
@@ -735,18 +735,18 @@ def _edit_collection_range(request, session_id, action, api_code):
         sql += q('obs_general')+'.'+q('id')
         sql += ' WHERE '+q('obs_general')+'.'+q('opus_id')+'=%s'
         values = [opus_id]
-        log.debug('_edit_collection_range SQL: %s %s', sql, values)
+        log.debug('_edit_cart_range SQL: %s %s', sql, values)
         cursor.execute(sql, values)
         results = cursor.fetchall()
         if len(results) == 0:
-            log.error('_edit_collection_range: No OPUS ID "%s" in obs_general',
+            log.error('_edit_cart_range: No OPUS ID "%s" in obs_general',
                       opus_id)
             return 'opusid not found'
         sort_orders.append(results[0][0])
 
     if action == 'addrange':
         values = [session_id]
-        sql = 'REPLACE INTO '+q('collections')+' ('
+        sql = 'REPLACE INTO '+q('cart')+' ('
         sql += q('session_id')+','+q('obs_general_id')+','+q('opus_id')+')'
         sql += ' SELECT %s,'
         sql += q('obs_general')+'.'+q('id')+','
@@ -759,10 +759,10 @@ def _edit_collection_range(request, session_id, action, api_code):
     elif action == 'removerange':
         values = []
         sql = 'DELETE '
-        sql += q('collections')+' FROM '+q('collections')+' INNER JOIN '
+        sql += q('cart')+' FROM '+q('cart')+' INNER JOIN '
         sql += q(user_query_table)+' ON '
         sql += q(user_query_table)+'.'+q('id')+'='
-        sql += q('collections')+'.'+q('obs_general_id')
+        sql += q('cart')+'.'+q('obs_general_id')
     else:
         assert False
 
@@ -771,25 +771,25 @@ def _edit_collection_range(request, session_id, action, api_code):
     sql += ' >= '+str(min(sort_orders))+' AND '
     sql += q(user_query_table)+'.'+q('sort_order')
     sql += ' <= '+str(max(sort_orders))
-    log.debug('_edit_collection_range SQL: %s %s', sql, values)
+    log.debug('_edit_cart_range SQL: %s %s', sql, values)
     cursor.execute(sql, values)
 
     return False
 
 
-def _edit_collection_addall(request, session_id, api_code):
-    "Add all results from a search into the collections table."
+def _edit_cart_addall(request, session_id, api_code):
+    "Add all results from a search into the cart table."
     # Find the index in the cache table for the min and max opus_ids
     (selections, extras) = url_to_search_params(request.GET)
     if selections is None:
-        log.error('_edit_collection_addall: Could not find selections for'
+        log.error('_edit_cart_addall: Could not find selections for'
                   +' request %s', str(request.GET))
         return 'bad search'
 
     user_query_table = get_user_query_table(selections, extras,
                                             api_code=api_code)
     if not user_query_table:
-        log.error('_edit_collection_addall: get_user_query_table failed '
+        log.error('_edit_cart_addall: get_user_query_table failed '
                   +'*** Selections %s *** Extras %s',
                   str(selections), str(extras))
         return 'search failed'
@@ -798,7 +798,7 @@ def _edit_collection_addall(request, session_id, api_code):
 
     values = [session_id]
     q = connection.ops.quote_name
-    sql = 'REPLACE INTO '+q('collections')+' ('
+    sql = 'REPLACE INTO '+q('cart')+' ('
     sql += q('session_id')+','+q('obs_general_id')+','+q('opus_id')+')'
     sql += ' SELECT %s,'
     sql += q('obs_general')+'.'+q('id')+','+q('obs_general')+'.'+q('opus_id')
@@ -808,7 +808,7 @@ def _edit_collection_addall(request, session_id, api_code):
     sql += ' INNER JOIN '+q(user_query_table)+' ON '
     sql += q(user_query_table)+'.'+q('id')+'='+q('obs_general')+'.'+q('id')
 
-    log.debug('_edit_collection_addall SQL: %s %s', sql, values)
+    log.debug('_edit_cart_addall SQL: %s %s', sql, values)
     cursor.execute(sql, values)
 
     return False
@@ -834,11 +834,11 @@ def _zip_filename(opus_id, url_file_only):
 
 
 def _csv_helper(request, api_code=None):
-    "Create the data for a CSV file containing the collection data."
+    "Create the data for a CSV file containing the cart data."
     slugs = request.GET.get('cols', settings.DEFAULT_COLUMNS)
     (page_no, start_obs, limit, page, order, aux) = get_search_results_chunk(
                                                      request,
-                                                     use_collections=True,
+                                                     use_cart=True,
                                                      limit='all',
                                                      api_code=api_code)
 
@@ -848,7 +848,7 @@ def _csv_helper(request, api_code=None):
 
 
 def _create_csv_file(request, csv_file_name, api_code=None):
-    "Create a CSV file containing the collection data."
+    "Create a CSV file containing the cart data."
     column_labels, page = _csv_helper(request, api_code)
 
     with open(csv_file_name, 'a') as csv_file:
