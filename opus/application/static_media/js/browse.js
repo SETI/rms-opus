@@ -16,6 +16,7 @@ var o_browse = {
     // infiniteScrollCurrentMaxPageNumber: opus.lastPageDrawn[opus.prefs.view],
     infiniteScrollCurrentMaxPageNumber: 0,
     infiniteScrollCurrentMinPageNumber: 1000, // give it a large number
+    loadPrevPage: false,
     /**
     *
     *  all the things that happen on the browse tab
@@ -923,6 +924,9 @@ var o_browse = {
         } else {
             $(".gallery", namespace).append(html);
         }
+        console.log(`Current Page: ${data.page_no}`)
+        console.log(`MIN Page: ${o_browse.infiniteScrollCurrentMinPageNumber}`)
+        console.log(`MAX Page: ${o_browse.infiniteScrollCurrentMaxPageNumber}`)
         // $(".gallery", namespace).append(html);
         $(".table-page-load-status").hide();
 
@@ -1058,8 +1062,6 @@ var o_browse = {
                 // make sure it's scrolled to the correct position in table view
                 $(`${selector} .dataTable`).scrollTop(0);
             } else {
-                // $(`${selector} .thumb-page[data-page='${page}']`).scrollTop(0);
-
                 let galleryTargetTopPosition = $(`#browse .gallery-contents .thumb-page[data-page='${page}'] .thumbnail-container:eq(0) a img`).offset().top;
                 // console.log($(`#browse .gallery-contents .thumb-page[data-page='${newPage}'] .thumbnail-container:eq(0)`).data("id"))
                 let galleryContainerTopPosition = $(".gallery-contents").offset().top;
@@ -1076,8 +1078,6 @@ var o_browse = {
             }
 
             return;
-        } else {
-
         }
 
         let url = o_browse.getDataURL(page);
@@ -1114,7 +1114,6 @@ var o_browse = {
 
                     $(selector).on("request.infiniteScroll", function( event, path ) {
                         $(".table-page-load-status").show();
-                        console.log("request")
                     });
                     $(selector).on("scrollThreshold.infiniteScroll", function( event ) {
                         $(selector).infiniteScroll("loadNextPage");
@@ -1130,8 +1129,14 @@ var o_browse = {
 
             // prefill next page
             if (!opus.gallery_begun) {
+
                 // (maybe temporarily) remove load next page so that when user inputted 2 in page input, both gallery and table view will display data from the beginning of page 2
                 $(selector).infiniteScroll('loadNextPage');
+
+                // load prev page
+                if(opus.lastPageDrawn[opus.prefs.view] > 2) {
+                    o_browse.loadPrevPage = true;
+                }
                 opus.gallery_begun = true;
             }
             $(".table-page-load-status > .loader").hide();
@@ -1146,9 +1151,9 @@ var o_browse = {
         }
         // console.log(data)
         // console.log(path)
-        console.log(`Current Page: ${data.page_no}`)
-        console.log(`MIN Page: ${o_browse.infiniteScrollCurrentMinPageNumber}`)
-        console.log(`MAX Page: ${o_browse.infiniteScrollCurrentMaxPageNumber}`)
+        // console.log(`Current Page: ${data.page_no}`)
+        // console.log(`MIN Page: ${o_browse.infiniteScrollCurrentMinPageNumber}`)
+        // console.log(`MAX Page: ${o_browse.infiniteScrollCurrentMaxPageNumber}`)
         if(o_browse.infiniteScrollCurrentMaxPageNumber > data.page_no) {
             console.log("PREPENDING to the FRONT");
             o_browse.renderGalleryAndTable(data, path, true);
@@ -1162,6 +1167,38 @@ var o_browse = {
             $(`.thumb-page[data-page='${data.page_no}']`).scrollTop(0);
         }
         //console.log('Loaded page: ' + $('#browse .gallery-contents').data('infiniteScroll').pageIndex );
+        if(o_browse.loadPrevPage) {
+            let selector = `#${opus.prefs.view} .gallery-contents`;
+            console.log("load prev page")
+            opus.lastPageDrawn[opus.prefs.view] = opus.lastPageDrawn[opus.prefs.view] - 3;
+            console.log(`PREV page num: ${opus.lastPageDrawn[opus.prefs.view]}`)
+            $(selector).infiniteScroll('loadNextPage');
+            o_browse.loadPrevPage = false;
+        }
+
+        let selector = `#${opus.prefs.view} .gallery-contents`;
+        let page = $("input#page").val()
+        if ($(`${selector} .thumb-page[data-page='${page}']`).length > 0) {
+            if(!$(`.table-page[data-page='${page}']`).prev().offset()) {
+                $(`${selector}`).scrollTop(0);
+                // make sure it's scrolled to the correct position in table view
+                $(`${selector} .dataTable`).scrollTop(0);
+            } else {
+                let galleryTargetTopPosition = $(`#browse .gallery-contents .thumb-page[data-page='${page}'] .thumbnail-container:eq(0) a img`).offset().top;
+                // console.log($(`#browse .gallery-contents .thumb-page[data-page='${newPage}'] .thumbnail-container:eq(0)`).data("id"))
+                let galleryContainerTopPosition = $(".gallery-contents").offset().top;
+                let galleryScrollbarPosition = $(".gallery-contents").scrollTop();
+
+                let galleryTargetFinalPosition = galleryTargetTopPosition - galleryContainerTopPosition + galleryScrollbarPosition
+                $(`#browse .gallery-contents`).scrollTop(galleryTargetFinalPosition);
+                // make sure it's scrolled to the correct position in table view
+                let tableTargetTopPosition = $(`.table-page[data-page='${page}']`).prev().offset().top;
+                let tableContainerTopPosition = $(".dataTable").offset().top;
+                let tableScrollbarPosition = $(".dataTable").scrollTop();
+                let tableTargetFinalPosition = tableTargetTopPosition - tableContainerTopPosition + tableScrollbarPosition
+                $(`${selector} .dataTable`).scrollTop(tableTargetFinalPosition);
+            }
+        }
 
         // if left/right arrow are disabled, make them clickable again
         $("#galleryViewContents").removeClass("op-disabled");
