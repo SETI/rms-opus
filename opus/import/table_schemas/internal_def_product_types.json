@@ -266,7 +266,7 @@
     },
     {
         "pi_dict_context": "OPUS_PRODUCT_TYPE",
-        "pi_dict_name": "hst-preview",
+        "pi_dict_name": "hst-label",
         "definition": "HST Preview Products"
     },
     {

@@ -44,7 +44,7 @@ from search.views import (get_param_info_by_slug,
                           url_to_search_params,
                           create_order_by_sql,
                           parse_order_slug)
-from user_collections.models import Collections
+from cart.models import Cart
 from tools.app_utils import *
 from tools.db_utils import *
 from tools.file_utils import *
@@ -87,7 +87,7 @@ def api_get_data_and_images(request):
                 'full':
                 'med':
              },
-             'in_collection': True/False
+             'in_cart': True/False
             },
             ...
          ],
@@ -126,7 +126,7 @@ def api_get_data_and_images(request):
                                        prepend_cols='opusid',
                                        append_cols='**previewimages',
                                        return_opusids=True,
-                                       return_collection_status=True,
+                                       return_cart_status=True,
                                        api_code=api_code)
     if page is None:
         ret = HttpResponseServerError(settings.HTTP500_SEARCH_FAILED)
@@ -152,14 +152,14 @@ def api_get_data_and_images(request):
                     new_image[size][sfx] = image.get(size+'_'+sfx, None)
         new_image_list.append(new_image)
 
-    collection_status = aux['collection_status']
+    cart_status = aux['cart_status']
     new_page = []
     for i in range(len(opus_ids)):
         new_entry = {
             'opusid': opus_ids[i],
             'metadata': page[i][1:-1],
             'images': new_image_list[i],
-            'in_collection': collection_status[i] is not None
+            'in_cart': cart_status[i] is not None
         }
         new_page.append(new_entry)
 
@@ -682,7 +682,7 @@ def api_get_images(request, fmt):
                                        cols='opusid,**previewimages',
                                        return_opusids=True,
                                        return_ringobsids=True,
-                                       return_collection_status=True,
+                                       return_cart_status=True,
                                        api_code=api_code)
     if page is None:
         ret = Http404('Could not find page')
@@ -704,9 +704,9 @@ def api_get_images(request, fmt):
     for i in range(len(opus_ids)):
         ring_obs_id_dict[opus_ids[i]] = ring_obs_ids[i]
 
-    collection_status = aux['collection_status']
-    for image, in_collection in zip(image_list, collection_status):
-        image['in_collection'] = in_collection is not None
+    cart_status = aux['cart_status']
+    for image, in_cart in zip(image_list, cart_status):
+        image['in_cart'] = in_cart is not None
         image['ring_obs_id'] = ring_obs_id_dict[image['opus_id']]
 
     data = {'data':  image_list,
@@ -932,20 +932,20 @@ def api_get_categories_for_search(request):
 #
 ################################################################################
 
-def get_search_results_chunk(request, use_collections=None,
+def get_search_results_chunk(request, use_cart=None,
                              cols=None, prepend_cols=None, append_cols=None,
                              limit=None, opus_id=None,
                              return_opusids=False,
                              return_ringobsids=False,
                              return_filespecs=False,
-                             return_collection_status=False,
+                             return_cart_status=False,
                              api_code=None):
     """Return a page of results.
 
         request             Used to find the search and order parameters and
                             columns if not overridden.
-        use_collections     Ignore the search parameters and instead use the
-                            observations stored in the collections table for
+        use_cart            Ignore the search parameters and instead use the
+                            observations stored in the cart table for
                             this session.
         cols                If specified, overrides the columns in request.
         prepend_cols        A string to prepend to the column list.
@@ -962,11 +962,11 @@ def get_search_results_chunk(request, use_collections=None,
         return_filespecs    Include 'file_specs' in the returned aux dict.
                             This is a list of primary_file_specs 1:1 with the
                             returned data.
-        return_collection_status
-                            Include 'collection_status' in the returned aux
+        return_cart_status
+                            Include 'cart_status' in the returned aux
                             dict. This is a list of True/False values 1:1
                             with the returned data indicating if the given
-                            observation is in the current collections table for
+                            observation is in the current cart table for
                             this session.
 
         Returns:
@@ -989,11 +989,11 @@ def get_search_results_chunk(request, use_collections=None,
 
     session_id = get_session_id(request)
 
-    if use_collections is None:
-        if request.GET.get('view', 'browse') == 'collection':
-            use_collections = True
+    if use_cart is None:
+        if request.GET.get('view', 'browse') == 'cart':
+            use_cart = True
         else:
-            use_collections = False
+            use_cart = False
 
     if limit is None:
         limit = request.GET.get('limit', settings.DEFAULT_PAGE_LIMIT)
@@ -1058,8 +1058,8 @@ def get_search_results_chunk(request, use_collections=None,
         if 'obs_general.primary_file_spec' not in column_names:
             column_names.append('obs_general.primary_file_spec')
             added_extra_columns += 1 # So we know to strip it off later
-    if return_collection_status:
-        column_names.append('collections.opus_id')
+    if return_cart_status:
+        column_names.append('cart.opus_id')
         added_extra_columns += 1 # So we know to strip it off later
     # This is kind of obscure, but if there are NO columns at this point,
     # go ahead and force opus_ids to be present because we can't actually
@@ -1070,7 +1070,7 @@ def get_search_results_chunk(request, use_collections=None,
             column_names.append('obs_general.opus_id')
             added_extra_columns += 1 # So we know to strip it off later
 
-    # XXX Something here should specify order for collections
+    # XXX Something here should specify order for cart
     # colls_order is currently ignored!
 
     # Figure out the sort order
@@ -1090,7 +1090,7 @@ def get_search_results_chunk(request, use_collections=None,
     start_obs = None
     offset = None
 
-    if use_collections:
+    if use_cart:
         start_obs = request.GET.get('colls_startobs', None)
         if start_obs is None:
             page_no = request.GET.get('colls_page', 1)
@@ -1124,7 +1124,7 @@ def get_search_results_chunk(request, use_collections=None,
     temp_table_name = None
     drop_temp_table = False
     params = []
-    if not use_collections:
+    if not use_cart:
         # This is for a search query
 
         # Create the SQL query
@@ -1214,12 +1214,12 @@ def get_search_results_chunk(request, use_collections=None,
         sql += connection.ops.quote_name(temp_table_name)+'.'
         sql += connection.ops.quote_name('id')
 
-        # Maybe join in the collections table if we need collections_status
-        if return_collection_status:
-            sql += ' LEFT JOIN '+connection.ops.quote_name('collections')
+        # Maybe join in the cart table if we need cart_status
+        if return_cart_status:
+            sql += ' LEFT JOIN '+connection.ops.quote_name('cart')
             sql += ' ON '+connection.ops.quote_name('obs_general')+'.'
             sql += connection.ops.quote_name('id')+'='
-            sql += connection.ops.quote_name('collections')+'.'
+            sql += connection.ops.quote_name('cart')+'.'
             sql += connection.ops.quote_name('obs_general_id')
             sql += ' AND '
             sql += connection.ops.quote_name('session_id')+'=%s'
@@ -1228,7 +1228,7 @@ def get_search_results_chunk(request, use_collections=None,
         sql += ' ORDER BY '
         sql += connection.ops.quote_name(temp_table_name)+'.sort_order'
     else:
-        # This is for a collection
+        # This is for a cart
         order_params, order_descending_params = parse_order_slug(all_order)
         (order_sql, order_mult_tables,
          order_obs_tables) = create_order_by_sql(order_params,
@@ -1260,21 +1260,21 @@ def get_search_results_chunk(request, use_collections=None,
             sql += connection.ops.quote_name(mult_table)+'.'
             sql += connection.ops.quote_name('id')
 
-        # But the collections table is an INNER JOIN because we only want
-        # opus_ids that appear in the collections table to cause result rows
-        sql += ' INNER JOIN '+connection.ops.quote_name('collections')
+        # But the cart table is an INNER JOIN because we only want
+        # opus_ids that appear in the cart table to cause result rows
+        sql += ' INNER JOIN '+connection.ops.quote_name('cart')
         sql += ' ON '+connection.ops.quote_name('obs_general')+'.'
         sql += connection.ops.quote_name('id')+'='
-        sql += connection.ops.quote_name('collections')+'.'
+        sql += connection.ops.quote_name('cart')+'.'
         sql += connection.ops.quote_name('obs_general_id')
         sql += ' AND '
-        sql += connection.ops.quote_name('collections')+'.'
+        sql += connection.ops.quote_name('cart')+'.'
         sql += connection.ops.quote_name('session_id')+'=%s'
         params.append(session_id)
 
-        # Note we don't need to add in a special collections JOIN here for
-        # return_collection_status, because we're already joining in the
-        # collections table.
+        # Note we don't need to add in a special cart JOIN here for
+        # return_cart_status, because we're already joining in the
+        # cart table.
 
         # Finally add in the sort order
         sql += order_sql
@@ -1323,10 +1323,10 @@ def get_search_results_chunk(request, use_collections=None,
         file_spec_index = column_names.index('obs_general.primary_file_spec')
         file_specs = [o[file_spec_index] for o in results]
 
-    if return_collection_status:
-        # For retrieving collection status
-        coll_index = column_names.index('collections.opus_id')
-        collection_status = [o[coll_index] for o in results]
+    if return_cart_status:
+        # For retrieving cart status
+        coll_index = column_names.index('cart.opus_id')
+        cart_status = [o[coll_index] for o in results]
 
     # Strip off the opus_id if the user didn't actually ask for it initially
     if added_extra_columns:
@@ -1351,8 +1351,8 @@ def get_search_results_chunk(request, use_collections=None,
         aux_dict['ring_obs_ids'] = ring_obs_ids
     if return_filespecs:
         aux_dict['file_specs'] = file_specs
-    if return_collection_status:
-        aux_dict['collection_status'] = collection_status
+    if return_cart_status:
+        aux_dict['cart_status'] = cart_status
 
     return (page_no, start_obs, limit, results, all_order, aux_dict)
 
@@ -1489,8 +1489,8 @@ def get_triggered_tables(selections, extras, api_code=None):
     return final_table_list
 
 
-def get_collection_in_page(opus_id_list, session_id):
-    """Returns obs_general_ids in page that are also in user collection.
+def get_cart_in_page(opus_id_list, session_id):
+    """Returns obs_general_ids in page that are also in user cart.
 
     This is for views in results where you have to display the gallery
     and indicate which thumbnails are in cart.
@@ -1499,9 +1499,9 @@ def get_collection_in_page(opus_id_list, session_id):
         return
 
     cursor = connection.cursor()
-    collection_in_page = []
+    cart_in_page = []
     sql = 'SELECT DISTINCT opus_id FROM '
-    sql += connection.ops.quote_name('collections')
+    sql += connection.ops.quote_name('cart')
     sql += ' WHERE session_id=%s'
     cursor.execute(sql, [session_id])
     rows = []

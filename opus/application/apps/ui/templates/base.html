@@ -21,8 +21,8 @@
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="#collection" data-toggle="tab" role="tab" aria-controls="cart" aria-selected="false">
-                            <i class="fas fa-shopping-cart"></i> Cart <span id="collection_count" class="badge badge-primary">0</span>
+                        <a class="nav-link" href="#cart" data-toggle="tab" role="tab" aria-controls="cart" aria-selected="false">
+                            <i class="fas fa-shopping-cart"></i> Cart <span id="cart_count" class="badge badge-primary">0</span>
                         </a>
                     </li>
                     <li class="nav-item">
@@ -150,10 +150,10 @@
                 </div>
             </div>
 
-            <div id="collection" class="tab-pane fade" role="tabpanel" aria-labelledby="collection-tab">
+            <div id="cart" class="tab-pane fade" role="tabpanel" aria-labelledby="cart-tab">
                 <div class="row">
-                    <div class="col collection_details pr-0"></div>
-                    <div class="col pl-0 collection-gallery-side">
+                    <div class="col cart_details pr-0"></div>
+                    <div class="col pl-0 cart-gallery-side">
                         <nav class="panel-heading navbar navbar-expand-lg navbar-dark bg-dark">
                             <div class="browse-nav-container top_navbar collapse navbar-collapse">
                                 <ul class="navbar-nav mr-auto">
@@ -367,7 +367,7 @@
     <script src = "{{ STATIC_URL }}js/opus.js?version={{ OPUS_FILE_VERSION }}" type="text/javascript"></script>
     <script src = "{{ STATIC_URL }}js/menu.js?version={{ OPUS_FILE_VERSION }}" type="text/javascript"></script>
     <script src = "{{ STATIC_URL }}js/utils.js?version={{ OPUS_FILE_VERSION }}" type="text/javascript"></script>
-    <script src = "{{ STATIC_URL }}js/collections.js?version={{ OPUS_FILE_VERSION }}" type="text/javascript"></script>
+    <script src = "{{ STATIC_URL }}js/cart.js?version={{ OPUS_FILE_VERSION }}" type="text/javascript"></script>
     <script src = "{{ STATIC_URL }}js/browse.js?version={{ OPUS_FILE_VERSION }}" type="text/javascript"></script>
     <script src = "{{ STATIC_URL }}js/detail.js?version={{ OPUS_FILE_VERSION }}" type="text/javascript"></script>
     <script src = "{{ STATIC_URL }}js/search.js?version={{ OPUS_FILE_VERSION }}" type="text/javascript"></script>

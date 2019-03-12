@@ -24,7 +24,24 @@ class ApiTestHelper:
         #     print(response.content)
         #     self.assertEqual(response.content, err_string)
 
-    def _run_json_equal(self, url, expected, ignore=None):
+    @staticmethod
+    def _depth_first_remove(data, ignore_list):
+        if isinstance(data, dict):
+            for ignore in ignore_list:
+                if ignore in data:
+                    del data[ignore]
+            for key in data:
+                ApiTestHelper._depth_first_remove(data[key], ignore_list)
+        if isinstance(data, list):
+            for ignore in ignore_list:
+                while ignore in data:
+                    data.remove(ignore)
+            for el in data:
+                ApiTestHelper._depth_first_remove(el, ignore_list)
+
+    def _run_json_equal(self, url, expected, ignore=[]):
+        if not isinstance(ignore, (list, tuple)):
+            ignore = [ignore]
         print(url)
         response = self._get_response(url)
         self.assertEqual(response.status_code, 200)
@@ -33,12 +50,8 @@ class ApiTestHelper:
         print(jdata)
         print('Expected:')
         print(expected)
-        if ignore:
-            for field in ignore:
-                if field in expected:
-                    del expected[field]
-                if field in jdata:
-                    del jdata[field]
+        self._depth_first_remove(jdata, ignore)
+        self._depth_first_remove(expected, ignore)
         self.assertEqual(expected, jdata)
 
     def _run_json_equal_file(self, url, exp_file):

@@ -2,7 +2,7 @@
 
 from django.db import models
 
-class Collections(models.Model):
+class Cart(models.Model):
     session_id = models.CharField(max_length=80)
     obs_general = models.ForeignKey('search.ObsGeneral', models.DO_NOTHING)
     opus_id = models.CharField(max_length=40)
@@ -10,4 +10,4 @@ class Collections(models.Model):
 
     class Meta:
         managed = False
-        db_table = 'collections'
+        db_table = 'cart'

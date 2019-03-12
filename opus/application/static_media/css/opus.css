@@ -56,7 +56,7 @@ body {
   font-size: 90%;
 }
 
-#browse, #collection, #detail {
+#browse, #cart, #detail {
     padding:0; margin:0;
     display:none;
 }
@@ -224,14 +224,14 @@ ul.searchMenu{
   box-shadow:inset 0px 0px 0px 10px #097da5
 }
 
-#collection .in {
+#cart .in {
 }
 
-#collection .remove {
+#cart .remove {
   display: none;
 }
 
-#collection .removed {
+#cart .removed {
   color: white;
   position: absolute;
   top: 50%;
@@ -241,7 +241,7 @@ ul.searchMenu{
   text-align: center;
 }
 
-#collection .fa-times {
+#cart .fa-times {
   color: #eee;
   opacity: 0.15;
 }
@@ -592,26 +592,26 @@ a:-webkit-any-link, a::any-link {
     cursor: default;
 }
 
-#collection .collection-gallery-side {
+#cart .cart-gallery-side {
     /*margin-top:.25em; */
     background-color: #303030; /* #383838; */
 }
 
-#collection .thumb-page {
+#cart .thumb-page {
   padding: 0 1.0em;
 }
 
-#collections-sidebar {
+#cart-sidebar {
   padding-left: 3em;
   padding-right: 3em;
 }
 
-#collection .col {
+#cart .col {
   overflow-x: hidden;
   overflow-y: hidden;
 }
 
-#collection .gallery-contents .ps__rail-y {
+#cart .gallery-contents .ps__rail-y {
     top: 40px !important;
     /* we need this to make ps visible */
     right: 15px !important;
@@ -621,13 +621,13 @@ a:-webkit-any-link, a::any-link {
     display: none !important;
 }
 
-#collections-sidebar .zippedFiles li {
+#cart-sidebar .zippedFiles li {
     margin:0; padding:0;
     list-style-type:none;
     margin:10px 0px 15px -20px;
 }
 
-.collection_details {
+.cart_details {
   border-left: .3em double black;
     padding-left: 2em;
     min-width: 28em;
@@ -868,12 +868,12 @@ li a.search-param:hover {
     display:inline-block;
     background-repeat: no-repeat;
 }
-#collections_summary .spinner {
+#cart_summary .spinner {
     display:none;
     margin:0px 10px;
     width:30px;
 }
-#collections_summary .button-container button {
+#cart_summary .button-container button {
   margin-bottom: 1em;
 }
 

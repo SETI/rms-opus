@@ -141,32 +141,32 @@ var o_browse = {
 
             // Detecting ctrl (windows) / meta (mac) key.
             if (e.ctrlKey || e.metaKey) {
-                o_collections.toggleInCollection(opusId);
-                o_browse.undoRangeSelect(e.delegateTarget);
+                o_cart.toggleInCart(opusId);
+                o_browse.undoRangeSelect();
             }
             // Detecting shift key
             else if (e.shiftKey) {
                 if (startElem.length == 0) {
-                    $(this).addClass("selected");
-                    o_collections.toggleInCollection(opusId);
+                    o_browse.startRangeSelect(opusId);
+                    //o_cart.toggleInCart(opusId);
                 } else {
-                    let fromOpusId = $(startElem).parent().data("id");
-                    o_collections.toggleInCollection(fromOpusId, opusId);
+                    let fromOpusId = $(startElem).data("id");
+                    o_cart.toggleInCart(fromOpusId, opusId);
                 }
             } else {
                 o_browse.showModal(opusId);
-                o_browse.undoRangeSelect(e.delegateTarget);
+                o_browse.undoRangeSelect();
             }
         });
 
-        // data_table - clicking a table row adds to collection
+        // data_table - clicking a table row adds to cart
         $("#dataTable").on("click", ":checkbox", function(e) {
             if ($(this).val() == "all") {
                 // checkbox not currently implemented
                 // pop up a warning if selection total is > 100 items,
                 // with the total number to be selected...
                 // if OK, use 'addall' api and loop tru all checkboxes to set them as selected
-                //o_collections.editCollection("all",action);
+                //o_cart.editCart("all",action);
                 return false;
             }
             let opusId = $(this).val();
@@ -174,23 +174,23 @@ var o_browse = {
 
             if (e.shiftKey) {
                 if (startElem.length == 0) {
-                    $(this).closest("tr").addClass("selected");
-                    o_collections.toggleInCollection(opusId);
+                    o_browse.startRangeSelect(opusId);
+                    //o_cart.toggleInCart(opusId);
                 } else {
                     let fromOpusId = $(startElem).data("id");
-                    o_collections.toggleInCollection(fromOpusId, opusId);
+                    o_cart.toggleInCart(fromOpusId, opusId);
                 }
             } else {
-                o_collections.toggleInCollection(opusId);
+                o_cart.toggleInCart(opusId);
                 // single click stops range selection; shift click starts range
-                o_browse.undoRangeSelect(e.delegateTarget);
+                o_browse.undoRangeSelect();
             }
         });
 
         $("#dataTable").on("click", "td:not(:first-child)", function(e) {
             let opusId = $(this).parent().data("id");
             o_browse.showModal(opusId);
-            o_browse.undoRangeSelect(e.delegateTarget);
+            o_browse.undoRangeSelect();
         });
 
         // thumbnail overlay tools
@@ -204,12 +204,12 @@ var o_browse = {
                   o_browse.showDetail(e, opusId);
                   break;
 
-              case "cart":   // add to collection
+              case "cart":   // add to cart
                   o_browse.hideMenu();
                   // clicking on the cart/trash can aborts range select
-                  o_browse.undoRangeSelect(`#${opus.prefs.view}`);
+                  o_browse.undoRangeSelect();
 
-                  let action = o_collections.toggleInCollection(opusId);
+                  let action = o_cart.toggleInCart(opusId);
                   o_browse.updateCartIcon(opusId, action);
                   break;
 
@@ -245,8 +245,8 @@ var o_browse = {
             let opusId = $(this).data("id");
             if (opusId) {
                 // clicking on the cart/trash can aborts range select
-                o_browse.undoRangeSelect(`#${opus.prefs.view}`);
-                let status = o_collections.toggleInCollection(opusId) == "add" ? "" : "in";
+                o_browse.undoRangeSelect();
+                let status = o_cart.toggleInCart(opusId) == "add" ? "" : "in";
             }
             return false;
         });
@@ -312,18 +312,18 @@ var o_browse = {
 
             switch ($(this).data("action")) {
                 case "cart":  // add/remove from cart
-                    o_collections.toggleInCollection(opusId);
+                    o_cart.toggleInCart(opusId);
                     // clicking on the cart/trash can aborts range select
-                    o_browse.undoRangeSelect(`#${opus.prefs.view}`);
+                    o_browse.undoRangeSelect();
                     break;
                 case "range": // begin/end range
                     let startElem = $(`#${opus.prefs.view}`).find(".selected");
                     if (startElem.length == 0) {
-                        $(`#${opus.prefs.view} .thumbnail-container[data-id=${opusId}]`).addClass("selected");
-                        o_collections.toggleInCollection(opusId);
+                        o_browse.startRangeSelect(opusId);
+                        //o_cart.toggleInCart(opusId);
                     } else {
                         let fromOpusId = $(startElem).data("id");
-                        o_collections.toggleInCollection(fromOpusId, opusId);
+                        o_cart.toggleInCart(fromOpusId, opusId);
                     }
                     break;
                 case "info":  // detail page
@@ -460,7 +460,7 @@ var o_browse = {
         if ($("#obs-menu").hasClass("show")) {
             o_browse.hideMenu();
         }
-        let inCart = (o_collections.isIn(opusId) ? "" : "in");
+        let inCart = (o_cart.isIn(opusId) ? "" : "in");
         let buttonInfo = o_browse.cartButtonInfo(inCart);
         $("#obs-menu .dropdown-header").html(opusId);
         $("#obs-menu .cart-item").html(`<i class="${buttonInfo.icon}"></i>${buttonInfo.title}`);
@@ -475,7 +475,7 @@ var o_browse = {
         // otherwise use the state of the current observation - this will identify what will happen to the range
         let selectedElem = $(`#${opus.prefs.view}`).find(".selected");
         if (selectedElem.length != 0) {
-            inCart =  (o_collections.isIn($(selectedElem).data("id")) ? "in" : "");
+            inCart =  (o_cart.isIn($(selectedElem).data("id")) ? "in" : "");
         }
         let addRemoveText = (inCart != "in" ? "remove range from" : "add range to");
 
@@ -512,8 +512,17 @@ var o_browse = {
         }
     },
 
-    undoRangeSelect: function(selector) {
-        let startElem = $(selector).find(".selected");
+    getGalleryElement: function(opusId) {
+        return $(`#${opus.prefs.view} .thumbnail-container[data-id=${opusId}]`);
+    },
+
+    startRangeSelect: function(opusId) {
+        o_browse.undoRangeSelect(); // probably not necessary...
+        o_browse.getGalleryElement(opusId).addClass("selected");
+    },
+
+    undoRangeSelect: function() {
+        let startElem = $(`#${opus.prefs.view}`).find(".selected");
         if (startElem.length) {
             $(startElem).removeClass("selected");
         }
@@ -666,7 +675,7 @@ var o_browse = {
 
     // there are interactions that are applied to different code snippets,
     // this returns the namespace, view_var, prefix, and add_to_url
-    // that distinguishes collections vs result tab views
+    // that distinguishes cart vs result tab views
     // NOTE: get rid of all this with a framework!
     // usage:
     // utility function to figure out what view we are in
@@ -680,9 +689,9 @@ var o_browse = {
     */
     getViewInfo: function() {
         // this function returns some data you need depending on whether
-        // you are in #collection or #browse views
-        if (opus.prefs.view == "collection") {
-            namespace = "#collection";
+        // you are in #cart or #browse views
+        if (opus.prefs.view == "cart") {
+            namespace = "#cart";
             prefix = "colls_";
             add_to_url = "&colls=true";
         } else {
@@ -698,7 +707,7 @@ var o_browse = {
         // sometimes other functions need to know current page for whatever view we
         // are currently looking at..
         let view_info = o_browse.getViewInfo();
-        let namespace = view_info.namespace; // either '#collection' or '#browse'
+        let namespace = view_info.namespace; // either '#cart' or '#browse'
         let prefix = view_info.prefix;       // either 'colls_' or ''
         let view_var = opus.prefs[prefix + "browse"];  // either "gallery" or "data"
         let page = 1;
@@ -812,7 +821,7 @@ var o_browse = {
 
         if (data.count == 0) {
             // either there are no selections OR this is signaling the end of the infinite scroll
-            // for now, just post same message to both #browse & #collections tabs
+            // for now, just post same message to both #browse & #cart tabs
             if (data.page_no == 1) {
                 if (opus.prefs.view == "browse") {
                     html += '<div class="thumbnail-message">';
@@ -821,8 +830,8 @@ var o_browse = {
                     html += 'or click on the Reset Search button to reset the search criteria to default.</p>';
                     html += '</div>';
                 } else {
-                    $("#collection .navbar").hide();
-                    $("#collection .sort-order-container").hide();
+                    $("#cart .navbar").hide();
+                    $("#cart .sort-order-container").hide();
                     html += '<div class="thumbnail-message">';
                     html += '<h2>Your cart is empty</h2>';
                     html += '<p>To add observations to the cart, click on the Browse Results tab ';
@@ -834,8 +843,8 @@ var o_browse = {
                 // we've hit the end of the infinite scroll.
             }
         } else {
-            $("#collection .navbar").show();
-            $("#collection .sort-order-container").show();
+            $("#cart .navbar").show();
+            $("#cart .sort-order-container").show();
             html += '<div class="thumb-page" data-page="'+data.page_no+'">';
             opus.lastPageDrawn[opus.prefs.view] = data.page_no;
             if(o_browse.infiniteScrollCurrentMaxPageNumber < opus.lastPageDrawn[opus.prefs.view]) {
@@ -858,9 +867,9 @@ var o_browse = {
 
                 // gallery
                 let images = item.images;
-                html += `<div class="thumbnail-container ${(item.in_collection ? ' in' : '')}" data-id="${opusId}">`;
+                html += `<div class="thumbnail-container ${(item.in_cart ? ' in' : '')}" data-id="${opusId}">`;
                 html += `<a href="#" class="thumbnail" data-image="${images.full.url}">`;
-                html += `<img class="img-thumbnail img-fluid" src="${images.thumb.url}" alt="${images.thumb.alt_text}" title="${opusId}">`;
+                html += `<img class="img-thumbnail img-fluid" src="${images.thumb.url}" alt="${images.thumb.alt_text}" title="${opusId}\r\nClick to enlarge">`;
                 // whenever the user clicks an image to show the modal, we need to highlight the selected image w/an icon
                 html += '<div class="modal-overlay">';
                 html += '<p class="content-text"><i class="fas fa-binoculars fa-4x text-info" aria-hidden="true"></i></p>';
@@ -870,14 +879,14 @@ var o_browse = {
                 html += `<div class="tools dropdown" data-id="${opusId}">`;
                 html +=     '<a href="#" data-icon="info" title="View observation detail"><i class="fas fa-info-circle fa-xs"></i></a>';
 
-                let buttonInfo = o_browse.cartButtonInfo((item.in_collection ? 'add' : 'remove'));
+                let buttonInfo = o_browse.cartButtonInfo((item.in_cart ? 'add' : 'remove'));
                 html +=     `<a href="#" data-icon="cart" title="Add to cart"><i class="${buttonInfo.icon} fa-xs"></i></a>`;
                 html +=     '<a href="#" data-icon="menu"><i class="fas fa-bars fa-xs"></i></a>';
                 html += '</div>';
                 html += '</div></div>';
 
                 // table row
-                let checked = item.in_collection ? " checked" : "";
+                let checked = item.in_cart ? " checked" : "";
                 let checkbox = `<input type="checkbox" name="${opusId}" value="${opusId}" class="multichoice"${checked}/>`;
                 let row = `<td>${checkbox}</td>`;
                 let tr = `<tr data-id="${opusId}" data-target="#galleryView">`;
@@ -1161,12 +1170,12 @@ var o_browse = {
     },
 
     getBrowseTab: function() {
-        // only draw the navbar if we are in gallery mode... doesn't make sense in collection mode
+        // only draw the navbar if we are in gallery mode... doesn't make sense in cart mode
         let hide = opus.prefs.browse == "gallery" ? "dataTable" : "gallery";
         $(`${hide}#browse`).hide();
 
         // reset range select
-        o_browse.undoRangeSelect(`#${opus.prefs.view}`);
+        o_browse.undoRangeSelect();
 
         $(`.${opus.prefs.browse}#browse`).fadeIn();
 
@@ -1285,7 +1294,7 @@ var o_browse = {
 
 
 
-        let status = o_collections.isIn(opusId) ? "" : "in";
+        let status = o_cart.isIn(opusId) ? "" : "in";
         let buttonInfo = o_browse.cartButtonInfo(status);
 
         // prev/next buttons - put this in galleryView html...
@@ -1325,8 +1334,8 @@ var o_browse = {
         $("#dataTable > tbody").empty();  // yes all namespaces
         $(".gallery").empty();
         opus.gallery_data = [];
-        opus.lastPageDrawn = {"browse":0, "collection":0};
-        opus.collection_change = true;  // forces redraw of collections tab because reset_lastPageDrawn
+        opus.lastPageDrawn = {"browse":0, "cart":0};
+        opus.cart_change = true;  // forces redraw of cart tab because reset_lastPageDrawn
         opus.browse_view_scrolls = reset_browse_view_scrolls;
         opus.gallery_begun = false;
         o_hash.updateHash();

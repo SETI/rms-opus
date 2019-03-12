@@ -103,8 +103,8 @@ def response_formats(data, fmt, **kwargs):
                     returndata['labels'] = kwargs['labels']
                 if 'checkboxes' in kwargs:
                     returndata['checkboxes'] = kwargs['checkboxes']
-                if 'collection' in kwargs:
-                    returndata['collection'] = kwargs['collection']
+                if 'cart' in kwargs:
+                    returndata['cart'] = kwargs['cart']
                 if 'id_index' in kwargs:
                     returndata['id_index'] = kwargs['id_index']
                 if 'page_no' in data:

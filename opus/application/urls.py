@@ -18,7 +18,7 @@ base_urlpatterns = [
     url(r'^', include('metadata.urls')),
     url(r'^', include('search.urls')),
     url(r'^', include('help.urls')),
-    url(r'^', include('user_collections.urls')),
+    url(r'^', include('cart.urls')),
 ]
 
 dictionary_urlpatterns = [
