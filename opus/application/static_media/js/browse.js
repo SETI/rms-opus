@@ -1033,26 +1033,42 @@ var o_browse = {
         page = (page == undefined ? $("input#page").val() : page);
         $("input#page").val(page).removeClass("text-warning");
 
+        if(page === $("input#page").val() && !opus.gallery_begun) {
+            console.log("reset counter")
+            o_browse.infiniteScrollCurrentMinPageNumber = parseInt(page);
+            o_browse.infiniteScrollCurrentMaxPageNumber = parseInt(page) + 1;
+        }
+
         let selector = `#${opus.prefs.view} .gallery-contents`;
 
         // wait! is this page already drawn?
         if ($(`${selector} .thumb-page[data-page='${page}']`).length > 0) {
             console.log(`PAGE ${page} is already drawn.`);
-            if(page === "1") {
-                $(`${selector} .thumb-page[data-page='${page}']`).scrollTop(0);
+            if(!$(`.table-page[data-page='${page}']`).prev().offset()) {
+                $(`${selector}`).scrollTop(0);
                 // make sure it's scrolled to the correct position in table view
                 $(`${selector} .dataTable`).scrollTop(0);
             } else {
-                $(`${selector} .thumb-page[data-page='${page}']`).scrollTop(0);
+                // $(`${selector} .thumb-page[data-page='${page}']`).scrollTop(0);
+
+                let galleryTargetTopPosition = $(`#browse .gallery-contents .thumb-page[data-page='${page}'] .thumbnail-container:eq(0) a img`).offset().top;
+                // console.log($(`#browse .gallery-contents .thumb-page[data-page='${newPage}'] .thumbnail-container:eq(0)`).data("id"))
+                let galleryContainerTopPosition = $(".gallery-contents").offset().top;
+                let galleryScrollbarPosition = $(".gallery-contents").scrollTop();
+
+                let galleryTargetFinalPosition = galleryTargetTopPosition - galleryContainerTopPosition + galleryScrollbarPosition
+                $(`#browse .gallery-contents`).scrollTop(galleryTargetFinalPosition);
                 // make sure it's scrolled to the correct position in table view
-                let targetTopPosition = $(`.table-page[data-page='${page}']`).prev().offset().top;
-                let containerTopPosition = $(".dataTable").offset().top;
-                let scrollbarPosition = $(".dataTable").scrollTop();
-                let finalPosition = targetTopPosition - containerTopPosition + scrollbarPosition
-                $(`${selector} .dataTable`).scrollTop(finalPosition);
+                let tableTargetTopPosition = $(`.table-page[data-page='${page}']`).prev().offset().top;
+                let tableContainerTopPosition = $(".dataTable").offset().top;
+                let tableScrollbarPosition = $(".dataTable").scrollTop();
+                let tableTargetFinalPosition = tableTargetTopPosition - tableContainerTopPosition + tableScrollbarPosition
+                $(`${selector} .dataTable`).scrollTop(tableTargetFinalPosition);
             }
 
             return;
+        } else {
+
         }
 
         let url = o_browse.getDataURL(page);
@@ -1121,6 +1137,9 @@ var o_browse = {
         }
         // console.log(data)
         // console.log(path)
+        console.log(`Current Page: ${data.page_no}`)
+        console.log(`MIN Page: ${o_browse.infiniteScrollCurrentMinPageNumber}`)
+        console.log(`MAX Page: ${o_browse.infiniteScrollCurrentMaxPageNumber}`)
         if(o_browse.infiniteScrollCurrentMaxPageNumber > data.page_no) {
             console.log("PREPENDING to the FRONT");
             o_browse.renderGalleryAndTable(data, path, true);
