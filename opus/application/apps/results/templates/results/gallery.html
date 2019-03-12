@@ -1,8 +1,8 @@
 {% if data|length > 1 %}
 	<div class="thumb-page" data-page="{{ page_no }}">
 	{% for i in data %}
-		<div class="thumbnail-container {% if i.in_collection %} thumb_selected{% endif %}">
-		  <a href="#" class="thumbnail {% if i.in_collection %} in {% endif %}"
+		<div class="thumbnail-container {% if i.in_cart %} thumb_selected{% endif %}">
+		  <a href="#" class="thumbnail {% if i.in_cart %} in {% endif %}"
 					data-toggle="modal"
 					data-target="#galleryView"
 					data-id="{{ i.opus_id }}"

@@ -123,7 +123,7 @@ def api_get_table_headers(request):
     # If this is an ajax call it means it's from our app, so append the
     # checkbox column for adding to selections
     if (request.is_ajax()):
-        columns.append(['collection', 'Selected'])
+        columns.append(['cart', 'Selected'])
 
     template = 'table_headers.html'
     param_info = ParamInfo.objects
