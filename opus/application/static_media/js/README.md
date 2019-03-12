@@ -20,9 +20,9 @@ Defines the o_hash object. Every change a user makes causes a hash update. (This
 
 Defines the o_browse object. All the things that happen on the browse tab, such as rendering the gallery or table view, handling clicks of thumbnails and thumbnail tool links, displaying larger images (colorbox) and metadata box, adding range selections, toggling gallery vs table view, results tab pagination, the metadata selector interface, the infinite scroll handling.
 
-## collections.js
+## cart.js
 
-Defines the o_collections object. All things having to do with a user collection, adding to cart, editing collection, collections tab interface behaviors, fetching and displaying download links, deleting a collection.
+Defines the o_cart object. All things having to do with a user cart, adding to cart, editing cart, cart tab interface behaviors, fetching and displaying download links, deleting a cart.
 
 ## detail.js
 

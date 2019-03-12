@@ -8,7 +8,7 @@
 from django.db import models
 
 
-class ZZCollections(models.Model):
+class ZZCart(models.Model):
     session_id = models.CharField(max_length=80)
     obs_general = models.ForeignKey('ObsGeneral', models.DO_NOTHING)
     opus_id = models.CharField(max_length=80)
@@ -16,7 +16,7 @@ class ZZCollections(models.Model):
 
     class Meta:
         managed = False
-        db_table = 'collections'
+        db_table = 'cart'
 
 
 class ZZContexts(models.Model):

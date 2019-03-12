@@ -122,7 +122,7 @@ def api_get_table_headers(request):
     slugs = cols_to_slug_list(slugs)
     columns = []
 
-    columns.append(['collection', 'Selected'])
+    columns.append(['cart', 'Selected'])
 
     template = 'table_headers.html'
     param_info = ParamInfo.objects
