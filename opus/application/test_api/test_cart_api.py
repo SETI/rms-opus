@@ -683,7 +683,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         "/__cart/addrange: multiple nonstandard sort no download"
         url = '/opus/__cart/reset.json'
         self._run_status_equal(url, 200)
-        url = '/opus/__cart/addrange.json?volumeid=COVIMS_0006&instrument=Cassini+VIMS&primaryfilespec=8864&order=COVIMSswathlength1,-time1,-opusid&range=co-vims-v1488649724_vis,co-vims-v1488647527_ir&reqno=456'
+        url = '/opus/__cart/addrange.json?volumeid=COVIMS_0006&instrument=Cassini+VIMS&primaryfilespec=8864&order=COVIMSswathlength,-time1,-opusid&range=co-vims-v1488649724_vis,co-vims-v1488647527_ir&reqno=456'
         expected = {'count': 10, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
         url = '/opus/__cart/status.json?reqno=456'
@@ -951,13 +951,13 @@ class ApiCartTests(TestCase, ApiTestHelper):
         "/__cart/removerange: multiple nonstandard sort no download"
         url = '/opus/__cart/reset.json'
         self._run_status_equal(url, 200)
-        url = '/opus/__cart/addrange.json?volumeid=COVIMS_0006&order=COVIMSswathlength1,-time1,opusid&range=co-vims-v1490784910_ir,co-vims-v1490782254_vis&reqno=456'
+        url = '/opus/__cart/addrange.json?volumeid=COVIMS_0006&order=COVIMSswathlength,-time1,opusid&range=co-vims-v1490784910_ir,co-vims-v1490782254_vis&reqno=456'
         expected = {'count': 10, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
         # Note sort reverses opusid! This leaves two observations behind
         # because _ir and _vis are in a different order for each observation
         # pair
-        url = '/opus/__cart/removerange.json?volumeid=COVIMS_0006&order=COVIMSswathlength1,-time1,-opusid&range=co-vims-v1490784910_ir,co-vims-v1490782254_vis&reqno=456'
+        url = '/opus/__cart/removerange.json?volumeid=COVIMS_0006&order=COVIMSswathlength,-time1,-opusid&range=co-vims-v1490784910_ir,co-vims-v1490782254_vis&reqno=456'
         expected = {'count': 2, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
         url = '/opus/__cart/status.json?reqno=456'

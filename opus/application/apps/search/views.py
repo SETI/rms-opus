@@ -784,29 +784,52 @@ def get_param_info_by_slug(slug, source):
                   'numeric suffix', slug)
         return None
 
+    ret = None
     # Current slug as given
     try:
-        return ParamInfo.objects.get(slug=slug)
+        ret = ParamInfo.objects.get(slug=slug)
     except ParamInfo.DoesNotExist:
         pass
 
-    # Old slug as given
-    try:
-        return ParamInfo.objects.get(old_slug=slug)
-    except ParamInfo.DoesNotExist:
-        pass
-
-    if source == 'widget' and slug[-1] == '1':
+    if not ret:
+        # Old slug as given
         try:
-            return ParamInfo.objects.get(slug=slug.strip('1'))
+            ret = ParamInfo.objects.get(old_slug=slug)
+        except ParamInfo.DoesNotExist:
+            pass
+
+    if ret:
+        if source == 'search':
+            if slug[-1] in ('1', '2'):
+                # Search slug has 1/2, param_info has 1/2 - all is good
+                return ret
+            # For a single-column range, the slug we were given MUST end
+            # in a '1' or '2' - but for non-range types, it's OK to not
+            # have the '1' or '2'. Note the non-single-column ranges were
+            # already dealt with above.
+            (form_type, form_type_func,
+             form_type_format) = parse_form_type(ret.form_type)
+            if form_type in settings.RANGE_FORM_TYPES:
+                # Whoops! We are missing the numeric suffix.
+                return None
+
+        return ret
+
+    # For widgets, if this is a multi-column range, return the version with
+    # the '1' suffix.
+    if source == 'widget':
+        try:
+            return ParamInfo.objects.get(slug=slug+'1')
         except ParamInfo.DoesNotExist:
             pass
 
         try:
-            return ParamInfo.objects.get(old_slug=slug.strip('1'))
+            return ParamInfo.objects.get(old_slug=slug+'1')
         except ParamInfo.DoesNotExist:
             pass
 
+    # Q-types can never have a '1' or '2' suffix, but the database entries
+    # might.
     if source == 'qtype' and slug[-1] not in ('1', '2'):
         try:
             return ParamInfo.objects.get(slug=slug+'1')
@@ -818,16 +841,29 @@ def get_param_info_by_slug(slug, source):
         except ParamInfo.DoesNotExist:
             pass
 
+    # Searching on a single-column range is done with '1' or '2' suffixes
+    # even though the database entry is just a single column without a numeric
+    # suffix.
     if source == 'search' and (slug[-1] == '1' or slug[-1] == '2'):
+        ret = None
         try:
-            return ParamInfo.objects.get(slug=slug[:-1])
+            ret = ParamInfo.objects.get(slug=slug[:-1])
         except ParamInfo.DoesNotExist:
             pass
 
-        try:
-            return ParamInfo.objects.get(old_slug=slug[:-1])
-        except ParamInfo.DoesNotExist:
-            pass
+        if not ret:
+            try:
+                ret = ParamInfo.objects.get(old_slug=slug[:-1])
+            except ParamInfo.DoesNotExist:
+                pass
+
+        if ret:
+            (form_type, form_type_func,
+             form_type_format) = parse_form_type(ret.form_type)
+            if form_type not in settings.RANGE_FORM_TYPES:
+                # Whoops! It's not a range, but we have a numeric suffix.
+                return None
+            return ret
 
     log.error('get_param_info_by_slug: Slug "%s" source "%s" not found',
               slug, source)

@@ -694,6 +694,9 @@ def api_normalize_url(request):
         if col == 'ringobsid':
             col = 'opusid'
         pi = get_param_info_by_slug(col, 'col')
+        # It used to be OK for single-column ranges to have a '1' at the end
+        if not pi and col[-1] == '1':
+            pi = get_param_info_by_slug(col[:-1], 'widget')
         if not pi:
             msg = ('Selected metadata field "' + escape(col)
                    + '" is unknown; it has been removed.')
@@ -712,6 +715,8 @@ def api_normalize_url(request):
     new_url_suffix_list.append(('cols', ','.join(cols_list)))
 
     ### WIDGETS
+    # XXX Note that old widgets had a '1' suffix on single-column ranges but
+    # no longer do!
     widgets_list = []
     if 'widgets' in old_slugs:
         widgets = old_slugs['widgets']
@@ -726,6 +731,8 @@ def api_normalize_url(request):
         widgets = settings.DEFAULT_WIDGETS
     for widget in widgets.split(','):
         pi = get_param_info_by_slug(widget, 'widget')
+        if not pi and widget[-1] == '1':
+            pi = get_param_info_by_slug(widget[:-1], 'widget')
         if not pi:
             msg = ('Search field "' + escape(widget) + '" is unknown; it '
                    +'has been removed.')
@@ -776,6 +783,9 @@ def api_normalize_url(request):
             desc = True
             order = order[1:]
         pi = get_param_info_by_slug(order, 'col')
+        # It used to be OK for single-column ranges to have a '1' at the end
+        if not pi and order[-1] == '1':
+            pi = get_param_info_by_slug(order[:-1], 'widget')
         if not pi:
             msg = ('Sort order metadata field "' + escape(order)
                    +'" is unknown; it has been removed.')
