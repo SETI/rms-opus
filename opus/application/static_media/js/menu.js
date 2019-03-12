@@ -14,12 +14,6 @@ var o_menu = {
         //    $(this).find('b.arrow').toggleClass('fa-angle-right').toggleClass('fa-angle-down');
 
          //});
-         $('#sidebarCollapse').on('click', function () {
-             $('#sidebar, #content').toggleClass('active');
-             $('.collapse.in').toggleClass('in');
-             $('a[aria-expanded=true]').attr('aria-expanded', 'false');
-         });
-
          $('#sidebar').on("click", '.searchMenu li .dropdown-toggle', function() {
              let adjustSearchSideBarHeight = _.debounce(o_search.adjustSearchSideBarHeight, 500);
              adjustSearchSideBarHeight();
@@ -52,36 +46,23 @@ var o_menu = {
 
 
         // menu state - keep track of what menu items are open
-        $(".sidebar > .nav-list").click( function(e){
-            let link_element = $(e.target).closest('a');
-            if (!link_element || link_element.length == 0) return;//if not clicked inside a link element
-
-            var sub = link_element.next().get(0);
-
+        $("#sidebar").on("click", ".dropdown-toggle", function(e) {
             // for opus: keeping track of menu state, since menu is constantly refreshed
             // menu cats
-            if ($(link_element).data( "cat" )) {
-                var cat_name = $(link_element).data( "cat" );
-                if ($(sub).parent().hasClass('open')) {
-                    if ($.inArray(cat_name, opus.menu_state.cats) < 0) {
-                        opus.menu_state.cats.push(cat_name);
-                    }
+            let category = $(this).data( "cat" );
+            let groupElem = $(`#sidebar #submenu-${category}`);
+            if ($(groupElem).hasClass("show")) {
+                opus.menu_state.cats.splice(opus.menu_state.cats.indexOf(category), 1);
+            } else {
+                if ($.inArray(category, opus.menu_state.cats) >= 0 ) {
+                    console.log(`submenu ${category } state already in array`);
                 } else {
-                    opus.menu_state.cats.splice(opus.menu_state.cats.indexOf(cat_name), 1);
+                    opus.menu_state.cats.push(category);
                 }
             }
-            // menu groups
-            if ($(link_element).data( "group" )) {
-                var group_name = $(link_element).data( "group" );
-                if ($(sub).parent().hasClass('open')) {
-                    if ($.inArray(group_name, opus.menu_state.groups) < 0) {
-                        opus.menu_state.groups.push(group_name);
-                    }
-                } else {
-                    opus.menu_state.groups.splice(opus.menu_state.groups.indexOf(group_name), 1);
-                }
-            }
-            return false;
+        });
+        $(".searchMenu").on("shown.bs.collapse", function(e) {
+            o_search.adjustSearchHeight();
         });
      },
 
@@ -90,41 +71,21 @@ var o_menu = {
         var hash = o_hash.getHash();
 
         $( "#sidebar").load( "/opus/__menu.html?" + hash, function() {
-            if (opus.menu_state.cats == "all") {
-
-                // first load, open general constraints
-                opus.menu_state.cats = [];
-                var cat_name = 'obs_general';
-                opus.menu_state.cats.push(cat_name);
-                var link = $("[data-cat='"+cat_name+"']");
-                link.parent().find('b.arrow').toggleClass('fa-angle-right').toggleClass('fa-angle-down');
-            } else {
-                // open menu items that were open before
-                $.each(opus.menu_state.cats, function(key, catName) {
-                    $("[data-cat='"+catName+"']").find('b.arrow').toggleClass('fa-angle-right').toggleClass('fa-angle-down');
-                });
-                $.each(opus.menu_state.groups, function(key, groupName) {
-                    $("[data-cat='"+groupName+"']").find('b.arrow').toggleClass('fa-angle-right').toggleClass('fa-angle-down');
-                });
-            }
-
+            // open menu items that were open before
+            $.each(opus.menu_state.cats, function(key, catName) {
+                $(`#submenu-${catName}`).collapse('show');
+            });
             // open any newly arrived surface geo tables
             // todo: this could be problematic if user wants to close it and keep it closed..
             var geo_cat = $('a[data-cat^="obs_surface_geometry__"]', '.sidebar').data('cat');
             if (geo_cat && $.inArray(geo_cat, opus.menu_state.cats) < 0) {
                 // open it
-                var link = $("a." + geo_cat, ".sidebar");
+                var link = $(`a.${geo_cat}`, ".sidebar");
                 var sub = link.next().get(0);
                 $(sub).slideToggle(400).parent().toggleClass('open');
                 // and add it to open cats list
                 opus.menu_state.cats.push(geo_cat);
             }
-            // highlight open widgets
-            $.each(opus.widgets_drawn, function(index, widget) {
-                o_menu.markMenuItem("li > [data-slug='"+widget+"']");
-            });
-
-            o_search.adjustSearchHeight();
             $('.menu_spinner').fadeOut("fast");
         });
      },
