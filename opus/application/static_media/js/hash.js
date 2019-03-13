@@ -17,29 +17,29 @@ var o_hash = {
 
         o_widgets.pauseWidgetControlVisibility(opus.selections);
 
-		for (var key in opus.extras) {
-			try {
-				hash.push(key + "=" + opus.extras[key].join(","));
-			} catch(e) {
-				// oops not an arr
-				hash.push(key + "=" + opus.extras[key]);
-			}
-		}
+        for (var key in opus.extras) {
+            try {
+                hash.push(key + "=" + opus.extras[key].join(","));
+            } catch(e) {
+                // oops not an arr
+                hash.push(key + "=" + opus.extras[key]);
+            }
+        }
         $.each(opus.prefs, function(key, value) {
-    			switch (key) {
+                switch (key) {
                     case "browse":
                         value = (value == "dataTable" ? "data" : value);
                         hash.push(key + "=" + value);
                         break;
 
-    				case "page":
-    					// page is stored like {"gallery":1, "data":1, "colls_gallery":1, "colls_data":1 }
-    					// so the curent page depends on the view being shown
-    					// opus.prefs.view = search, browse, cart, or detail
-    					// opus.prefs.browse =  'gallery' or 'dataTable',
-    					page = o_browse.getCurrentPage();
-    					hash.push("page=" + page);
-    					break;
+                    case "page":
+                        // page is stored like {"gallery":1, "data":1, "colls_gallery":1, "colls_data":1 }
+                        // so the curent page depends on the view being shown
+                        // opus.prefs.view = search, browse, cart, or detail
+                        // opus.prefs.browse =  'gallery' or 'dataTable',
+                        page = o_browse.getCurrentPage();
+                        hash.push("page=" + page);
+                        break;
 
                     case 'widget_size':
                         for (slug in opus.prefs[key]) {

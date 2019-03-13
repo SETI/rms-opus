@@ -299,7 +299,8 @@ var o_browse = {
             let orderBy =  $(this).data("slug");
 
             let orderIndicator = $(this).find("span:last")
-
+            console.log(orderIndicator.data("sort"))
+            o_browse.tableSorting = true;
             if (orderIndicator.data("sort") === "sort-asc") {
                 // currently ascending, change to descending order
                 orderIndicator.data("sort", "sort-desc")
@@ -992,6 +993,7 @@ var o_browse = {
     },
 
     initTable: function(columns) {
+        console.log("init table again")
         // prepare table and headers...
         $(".dataTable thead > tr > th").detach();
         $(".dataTable tbody > tr").detach();
@@ -1010,7 +1012,6 @@ var o_browse = {
         $(".dataTable thead tr").append("<th scope='col' class='sticky-header'></th>");
         $.each(columns, function( index, header) {
             let slug = slugs[index];
-
             // Assigning data attribute for table column sorting
             let icon = ($.inArray(slug, order) >= 0 ? "-down" : ($.inArray("-"+slug, order) >= 0 ? "-up" : ""));
             let columnSorting = icon === "-down" ? "sort-asc" : icon === "-up" ? "sort-desc" : "none";
@@ -1115,7 +1116,7 @@ var o_browse = {
             page = opus.lastPageDrawn[opus.prefs.view]+1;
         }
         o_browse.lastLoadDataRequestNo++;
-        // this is a workaround for firefox 
+        // this is a workaround for firefox
         let hashString = o_hash.getHash() ? o_hash.getHash() : o_browse.tempHash;
         let url = hashString + '&reqno=' + o_browse.lastLoadDataRequestNo + view.add_to_url;
         url = base_url + o_browse.updatePageInUrl(url, page);
@@ -1126,12 +1127,13 @@ var o_browse = {
     loadData: function(page) {
         page = (page == undefined ? $("input#page").val() : page);
         $("input#page").val(page).removeClass("text-warning");
-
+        console.log(`page after clicking sort: ${page}`)
         let selector = `#${opus.prefs.view} .gallery-contents`;
 
         // wait! is this page already drawn?
-        if ($(`${selector} .thumb-page[data-page='${page}']`).length > 0) {
+        if ($(`${selector} .thumb-page[data-page='${page}']`).length > 0 && !o_browse.tableSorting) {
             o_browse.setScrollbarPosition(selector, page);
+            console.log("here?")
             return;
         } else {
             // reset counter
@@ -1195,6 +1197,7 @@ var o_browse = {
                 opus.gallery_begun = true;
             }
             $(".table-page-load-status > .loader").hide();
+            o_browse.tableSorting = false;
         });
     },
 
