@@ -548,12 +548,17 @@ $(document).ready(function() {
         let target = $(this).data("target");
         switch($(this).attr("type")) {
             case "submit":
-                if(target === "op-reset-search-metadata-modal") {
-                    opus.startOver(resetMetadata=true);
-                } else {
-                    opus.startOver();
+                switch(target) {
+                    case "op-reset-search-metadata-modal":
+                        opus.startOver(resetMetadata=true);
+                        break;
+                    case "op-reset-search-modal":
+                        opus.startOver();
+                        break;
+                    case "op-empty-cart":
+                        o_cart.emptyCart();
+                        break;
                 }
-                break;
             case "cancel":
                 $(".modal").modal("hide")
                 break;
