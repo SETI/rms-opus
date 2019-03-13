@@ -7,7 +7,7 @@ var o_detail = {
         });
 
         $("#detail").on("click", "a[data-action]", function() {
-            let href = $(this).attr("href");
+            let href = $(this).attr("href").split('?')[0];
             switch($(this).data("action")) {
                 case "downloadData":
                     $(this).attr("href", `${href}?cols=${opus.prefs.cols.join()}`);
