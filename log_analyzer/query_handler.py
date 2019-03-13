@@ -40,9 +40,9 @@ class QueryHandler:
         self._slug_map = slug_map
         self._default_column_slug_info = default_column_slug_info
         self._uses_html = uses_html
-        self._reset()
+        self.__reset()
 
-    def _reset(self) -> None:
+    def __reset(self) -> None:
         self._previous_search_slug_info = {}
         self._previous_column_slug_info = None  # handled specially by get_column_slug_info
         self._previous_sort_order = self.DEFAULT_SORT_ORDER
@@ -97,22 +97,27 @@ class QueryHandler:
         if uses_columns:
             self.__get_column_info(self._previous_column_slug_info, column_slug_info, result)
             self._previous_column_slug_info = column_slug_info
+
         if uses_sort:
             self.__get_sort_order_info(self._previous_sort_order, sort_order, result)
             self._previous_sort_order = sort_order
 
         if uses_pages:
             assert current_state == State.FETCHING
-            page_type = 'Page' if page else 'Starting observation'
+            if page:
+                page_type, info, previous_info = 'Page', page, self._previous_pages
+            elif startobs:
+                page_type, info, previous_info = 'Starting observation', startobs, self._previous_startobss
+            else:
+                page_type, info, previous_info = 'Page', '???', ['???', '???']
             is_browsing = query.get('view') == 'browse'
+            browse_or_cart = 'Browse' if is_browsing else 'Cart'
             if current_state != previous_state:
                 viewed = 'Table' if query.get('browse') == 'data' else 'Gallery'
-                result.append(f'View {viewed}: {page_type} {page or startobs or "???"}')
+                result.append(f'View {viewed}: {browse_or_cart} {page_type} {info}')
             else:
-                self.__get_page_info('Page', self._previous_pages[is_browsing], page, result)
-                self.__get_page_info('Starting observation', self._previous_startobss[is_browsing], startobs, result)
-            self._previous_pages[is_browsing] = page
-            self._previous_startobss[is_browsing] = startobs
+                self.__get_page_info(f'{browse_or_cart} {page_type}', previous_info[is_browsing], info, result)
+            previous_info[is_browsing] = info
 
         self._previous_state = current_state
 
@@ -258,11 +263,17 @@ class QueryHandler:
         result.extend(added_columns)
 
     def __get_page_info(self, what: str, old_page: str, new_page: str, result: List[str]) -> None:
-        if old_page != new_page and old_page and new_page:
-            if self._uses_html:
-                result.append(self.safe_format('Change {}: {} &rarr; {}', what.title(), old_page, new_page))
+        if old_page != new_page and new_page:
+            if old_page:
+                if self._uses_html:
+                    result.append(self.safe_format('Change {}: {} &rarr; {}', what.title(), old_page, new_page))
+                else:
+                    result.append(f'Change {what.title()}: {old_page} -> {new_page}')
             else:
-                result.append(f'Change {what.title()}: {old_page} -> {new_page}')
+                if self._uses_html:
+                    result.append(self.safe_format('Go To {}: {}', what.title(), new_page))
+                else:
+                    result.append(f'Go To {what.title()}: {new_page}')
 
     def __get_sort_order_info(self, old_sort_order: str, new_sort_order: str, result: List[str]) -> None:
         if old_sort_order != new_sort_order:
