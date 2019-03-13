@@ -31,7 +31,7 @@ var o_browse = {
         $(".gallery-contents, .dataTable").on('scroll', _.debounce(o_browse.checkScroll, 200));
 
         // $(".gallery-contents, .dataTable").on('ps-y-reach-start', function() {
-        $(".gallery-contents, .dataTable").on('wheel', function(event) {
+        $(".gallery-contents, .dataTable").on('wheel ps-scroll-up', function(event) {
             console.log("SCROLL AT tHE START")
             // let galleryScrollbarPosition = $(".gallery-contents").scrollTop();
             // let tableScrollbarPosition = $(".dataTable").scrollTop();
