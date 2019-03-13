@@ -1115,6 +1115,7 @@ var o_browse = {
             page = opus.lastPageDrawn[opus.prefs.view]+1;
         }
         o_browse.lastLoadDataRequestNo++;
+        // this is a workaround for firefox 
         let hashString = o_hash.getHash() ? o_hash.getHash() : o_browse.tempHash;
         let url = hashString + '&reqno=' + o_browse.lastLoadDataRequestNo + view.add_to_url;
         url = base_url + o_browse.updatePageInUrl(url, page);
