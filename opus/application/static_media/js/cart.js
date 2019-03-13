@@ -26,7 +26,7 @@ var o_cart = {
          $("#cart").on("click", ".downloadURL", function(e) {
              o_cart.downloadZip("create_zip_url_file", "Internal error creating URL zip file");
          });
-         
+
          $("#cart").on("click", ".metadataModal", function(e) {
 
          });
@@ -86,7 +86,7 @@ var o_cart = {
                  }
                  $(".spinner", "#download_links").fadeOut();
                  // o_collections.downloadOptionsScrollbar.update();
-                 let adjustProductInfoHeight = _.debounce(o_collections.adjustProductInfoHeight, 200);
+                 let adjustProductInfoHeight = _.debounce(o_cart.adjustProductInfoHeight, 200);
                  adjustProductInfoHeight();
              },
              error: function(e) {

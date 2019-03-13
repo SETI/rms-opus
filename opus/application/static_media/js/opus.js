@@ -556,7 +556,7 @@ $(document).ready(function() {
                         opus.startOver();
                         break;
                     case "op-empty-cart":
-                        o_collections.emptyCollection();
+                        o_cart.emptyCart();
                         break;
                 }
             case "cancel":
