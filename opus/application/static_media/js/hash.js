@@ -6,11 +6,11 @@ var o_hash = {
      **/
 
     // updates the hash according to user selections
-    updateHash: function(updateURL=true){
+    updateHash: function(updateURL=true) {
 
         hash = [];
         for (var param in opus.selections) {
-            if (opus.selections[param].length){
+            if (opus.selections[param].length) {
                 hash.push(param + "=" + opus.selections[param].join(",").replace(/ /g,"+"));
             }
         }
@@ -26,35 +26,36 @@ var o_hash = {
 			}
 		}
         $.each(opus.prefs, function(key, value) {
-			switch (key) {
-                case "browse":
-                    value = (value == "dataTable" ? "data" : value);
-                    hash.push(key + "=" + value);
-                    break;
+    			switch (key) {
+                    case "browse":
+                        value = (value == "dataTable" ? "data" : value);
+                        hash.push(key + "=" + value);
+                        break;
 
-				case "page":
-					// page is stored like {"gallery":1, "data":1, "colls_gallery":1, "colls_data":1 }
-					// so the curent page depends on the view being shown
-					// opus.prefs.view = search, browse, cart, or detail
-					// opus.prefs.browse =  'gallery' or 'dataTable',
-					page = o_browse.getCurrentPage();
-					hash.push("page=" + page);
-					break;
+    				case "page":
+    					// page is stored like {"gallery":1, "data":1, "colls_gallery":1, "colls_data":1 }
+    					// so the curent page depends on the view being shown
+    					// opus.prefs.view = search, browse, cart, or detail
+    					// opus.prefs.browse =  'gallery' or 'dataTable',
+    					page = o_browse.getCurrentPage();
+    					hash.push("page=" + page);
+    					break;
 
-                case 'widget_size':
-                    for (slug in opus.prefs[key]) {
-                        hash.push(o_widgets.constructWidgetSizeHash(slug));
-                    }
-                    break;
+                    case 'widget_size':
+                        for (slug in opus.prefs[key]) {
+                            hash.push(o_widgets.constructWidgetSizeHash(slug));
+                        }
+                        break;
 
-                case 'widget_scroll':
-                    // these are prefs having to do with widget resize and scrolled
-                    break; // there's no scroll without size, so we handle scroll when size comes thru
+                    case 'widget_scroll':
+                        // these are prefs having to do with widget resize and scrolled
+                        break; // there's no scroll without size, so we handle scroll when size comes thru
 
-                default:
-                    hash.push(key + "=" + opus.prefs[key]);
+                    default:
+                        hash.push(key + "=" + opus.prefs[key]);
+                }
             }
-        }
+        )
         if (updateURL) {
             window.location.hash = '/' + hash.join('&');
         }
