@@ -72,20 +72,15 @@ var o_menu = {
 
         $( "#sidebar").load( "/opus/__menu.html?" + hash, function() {
             // open menu items that were open before
-            $.each(opus.menu_state.cats, function(key, catName) {
-                $(`#submenu-${catName}`).collapse('show');
+            $.each(opus.menu_state.cats, function(key, category) {
+                if ($(`#submenu-${category}`).length != 0) {
+                    $(`#submenu-${category}`).collapse('show');
+                } else {
+                    // this is if the surface geometry target is no longer applicable so it's not
+                    // on the menu, remove from the menu_state
+                    opus.menu_state.cats.splice(opus.menu_state.cats.indexOf(category), 1);
+                }
             });
-            // open any newly arrived surface geo tables
-            // todo: this could be problematic if user wants to close it and keep it closed..
-            var geo_cat = $('a[data-cat^="obs_surface_geometry__"]', '.sidebar').data('cat');
-            if (geo_cat && $.inArray(geo_cat, opus.menu_state.cats) < 0) {
-                // open it
-                var link = $(`a.${geo_cat}`, ".sidebar");
-                var sub = link.next().get(0);
-                $(sub).slideToggle(400).parent().toggleClass('open');
-                // and add it to open cats list
-                opus.menu_state.cats.push(geo_cat);
-            }
             $('.menu_spinner').fadeOut("fast");
         });
      },
