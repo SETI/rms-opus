@@ -1,7 +1,7 @@
 // generic globals, hmm..
-var default_pages = {"gallery":1, "dataTable":1, "colls_gallery":1, "colls_data":1 };
-var reset_footer_clicks = {"gallery":0, "dataTable":0, "colls_gallery":0, "colls_data":0 };
-var reset_browse_view_scrolls = {"gallery":0, "dataTable":0, "colls_gallery":0, "colls_data":0 };
+var default_pages = {"gallery":1, "dataTable":1, "cart_gallery":1, "cart_data":1 };
+var reset_footer_clicks = {"gallery":0, "dataTable":0, "cart_gallery":0, "cart_data":0 };
+var reset_browse_view_scrolls = {"gallery":0, "dataTable":0, "cart_gallery":0, "cart_data":0 };
 
 // defining the opus namespace first; document ready comes after...
 var opus = {
@@ -33,9 +33,9 @@ var opus = {
     // prefs gets added verbatim to the url, so don't add anything weird into here!
     prefs:{ 'view':'search', // search, browse, cart, detail
             'browse':'gallery', //either 'gallery' or 'data'
-            'colls_browse':'gallery',  // which view is showing on the cart page, gallery or data
+            'cart_browse':'gallery',  // which view is showing on the cart page, gallery or data
             'page':default_pages,  // what page are we on, per view, default defined in header.html
-                                   // like {"gallery":1, "data":1, "colls_gallery":1, "colls_data":1 };
+                                   // like {"gallery":1, "data":1, "cart_gallery":1, "cart_data":1 };
             'limit': 100, // results per page
             'order': default_sort_order.split(','),  // result table ordering
             'cols': default_columns.split(','),  // default result table columns by slug
@@ -89,12 +89,12 @@ var opus = {
     metadata_selector_drawn:false,
     gallery_begun:false, // have we started the gallery view
     browse_view_scrolls: reset_browse_view_scrolls, // same defaults as footer clicks (definied in header.html)
-                                                      // {"gallery":0, "data":0, "colls_gallery":0, "colls_data":0 };
+                                                      // {"gallery":0, "data":0, "cart_gallery":0, "cart_data":0 };
 
     // cart
     cart_change:true, // cart has changed since last load of cart_tab
     cart_q_intrvl: false,
-    colls_options_viz:false,
+    cart_options_viz:false,
 
     // these are for the process that detects there was a change in the selection criteria and updates things
     main_timer:false,
@@ -144,7 +144,7 @@ var opus = {
         } else {
             // selections in the url hash is different from opus.last_selections
               // reset the pages:
-              opus.prefs.page = {"gallery":1, "data":1, "colls_gallery":1, "colls_data":1 };
+              opus.prefs.page = {"gallery":1, "data":1, "cart_gallery":1, "cart_data":1 };
 
               // and reset the query:
               o_browse.resetQuery();
@@ -274,7 +274,7 @@ var opus = {
                 break;
 
             case 'cart':
-                if (opus.prefs.colls_browse == 'data') {
+                if (opus.prefs.cart_browse == 'data') {
                     $('.data_table','#cart').show();
                     $('.gallery','#cart').hide();
                 }

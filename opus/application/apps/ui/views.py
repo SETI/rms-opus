@@ -702,6 +702,11 @@ def api_normalize_url(request):
                    + '" is unknown; it has been removed.')
             msg_list.append(msg)
             continue
+        if not pi.display_results:
+            msg = ('Selected metadata field "' + escape(col)
+                   +'" is not displayable; it has been removed.')
+            msg_list.append(msg)
+            continue
         if pi.slug in cols_list:
             msg = ('Selected metadata field "'
                    + pi.body_qualified_label_results()
@@ -715,8 +720,6 @@ def api_normalize_url(request):
     new_url_suffix_list.append(('cols', ','.join(cols_list)))
 
     ### WIDGETS
-    # XXX Note that old widgets had a '1' suffix on single-column ranges but
-    # no longer do!
     widgets_list = []
     if 'widgets' in old_slugs:
         widgets = old_slugs['widgets']
@@ -743,12 +746,7 @@ def api_normalize_url(request):
                    +'searchable; it has been removed.')
             msg_list.append(msg)
             continue
-        widget_name = pi.slug
-        if pi.slug[-1] != '1':
-            (form_type, form_type_func,
-             form_type_format) = parse_form_type(pi.form_type)
-            if form_type in settings.RANGE_FORM_TYPES:
-                widget_name = pi.slug + '1'
+        widget_name = pi.slug.strip('1')
         if widget_name in widgets_list:
             msg = ('Search field "' + pi.body_qualified_label_results()
                    +'" is duplicated in the list of search fields; '
@@ -806,18 +804,18 @@ def api_normalize_url(request):
     ### VIEW
     view_val = None
     if 'view' in old_slugs:
-        if old_slugs['view'] not in ('search', 'gallery', 'data',
+        if old_slugs['view'] not in ('search', 'browse',
                                      'collection', 'cart', 'detail'):
             msg = ('The value for "view" was not one of '
-                   +' "search", "gallery", "data", "collection", "cart", or '
+                   +'"search", "browse", "collection", "cart", or '
                    +'"detail"); it has been set to "gallery".')
             msg_list.append(msg)
             view_val = 'gallery'
         else:
-            view_val = old_slugs['browse']
-            # if view_val == 'collection':
-            #     old_ui_slug_flag = True
-            #     view_val = 'cart'
+            view_val = old_slugs['view']
+            if view_val == 'collection':
+                old_ui_slug_flag = True
+                view_val = 'cart'
         del old_slugs['view']
     if view_val is None:
         msg = 'The "view" field is missing; it has been set to the default.'
@@ -848,7 +846,7 @@ def api_normalize_url(request):
         page_no = 1
         try:
             page_no = int(old_slugs['page'])
-        except TypeError:
+        except ValueError:
             msg = ('The value for the "page" term was not a valid '
                    +'integer; it has been set to 1.')
             msg_list.append(msg)
@@ -865,7 +863,7 @@ def api_normalize_url(request):
     if 'startobs' in old_slugs:
         try:
             startobs_val = int(old_slugs['startobs'])
-        except TypeError:
+        except ValueError:
             msg = ('The value for the "startobs" term was not a valid '
                    +'integer; it has been set to 1.')
             msg_list.append(msg)
@@ -884,19 +882,26 @@ def api_normalize_url(request):
         startobs_val = 1
     new_url_suffix_list.append(('startobs', startobs_val))
 
-    ### COLLS_BROWSE
-    colls_browse_val = None
-    if 'colls_browse' in old_slugs:
-        if old_slugs['colls_browse'] not in ('gallery', 'data'):
-            msg = ('The value for "colls_browse" was not either "gallery" or '
-                   +'"data"; it has been set to "gallery".')
-            msg_list.append(msg)
-        else:
-            colls_browse_val = old_slugs['colls_browse']
-        del old_slugs['colls_browse']
-    if colls_browse_val is None:
-        colls_browse_val = 'gallery'
-    new_url_suffix_list.append(('colls_browse', colls_browse_val))
+    ### CART_BROWSE
+    cart_browse_val = None
+    # Force it to always be "gallery" for now since we don't support the
+    # table view!
+    # if 'colls_browse' in old_slugs or 'cart_browse' in old_slugs:
+    #     temp_val = (old_slugs.get('colls_browse', None) or
+    #                 old_slugs.get('cart_browse', None))
+    #     if temp_val not in ('gallery', 'data'):
+    #         msg = ('The value for "cart_browse" was not either "gallery" or '
+    #                +'"data"; it has been set to "gallery".')
+    #         msg_list.append(msg)
+    #     else:
+    #         cart_browse_val = temp_val
+    #     if 'colls_browse' in old_slugs:
+    #         del old_slugs['colls_browse']
+    #     if 'cart_browse' in old_slugs:
+    #         del old_slugs['cart_browse']
+    if cart_browse_val is None:
+        cart_browse_val = 'gallery'
+    new_url_suffix_list.append(('cart_browse', cart_browse_val))
 
     ### DETAIL
     detail_val = None
@@ -949,9 +954,8 @@ def api_normalize_url(request):
                    '" is unknown; it has been ignored.')
             msg_list.append(msg)
             continue
-        qtype_slug = 'qtype-' + pi.slug
-        if (qtype_slug not in widgets_list and
-            qtype_slug+'1' not in widgets_list):
+        qtype_slug = 'qtype-' + strip_numeric_suffix(pi.slug)
+        if pi.slug.strip('1') not in widgets_list:
             # Dead qtype
             msg = ('Search query type "' + pi.body_qualified_label_results()
                    +'" refers to a search field that is not being used; '
@@ -983,10 +987,13 @@ def api_normalize_url(request):
         new_url_search_list.append((qtype_slug, qtype_val))
 
     new_url_list = []
+    new_url_dict_list = []
     for slug, val in new_url_search_list:
         new_url_list.append(slug + '=' + str(val))
+        new_url_dict_list.append({slug: val})
     for slug, val in new_url_suffix_list:
         new_url_list.append(slug + '=' + str(val))
+        new_url_dict_list.append({slug: val})
 
     final_msg = ''
     if old_ui_slug_flag:
@@ -1006,6 +1013,7 @@ def api_normalize_url(request):
         final_msg += msg
 
     ret = json_response({'new_url': '&'.join(new_url_list),
+                         'new_slugs': new_url_dict_list,
                          'msg': final_msg})
 
     exit_api_call(api_code, ret)
@@ -1093,6 +1101,13 @@ def _get_menu_labels(request, labels_view):
             # this div has no sub headings
             menu_data[d.table_name]['has_sub_heading'] = False
             for p in ParamInfo.objects.filter(**{filter:1, "category_name":d.table_name}):
+                if p.slug[-1] == '2':
+                    # We can just skip these because we never use them for
+                    # widgets
+                    continue
+                if p.slug[-1] == '1':
+                    # Strip the trailing 1 off all ranges
+                    p.slug = p.slug[:-1]
                 menu_data[d.table_name].setdefault('data', []).append(p)
 
     return {'menu': {'data': menu_data, 'divs': divs}}

@@ -681,7 +681,7 @@ var o_browse = {
         // you are in #cart or #browse views
         if (opus.prefs.view == "cart") {
             namespace = "#cart";
-            prefix = "colls_";
+            prefix = "cart_";
             add_to_url = "&colls=true";
         } else {
             namespace = "#browse";
@@ -697,7 +697,7 @@ var o_browse = {
         // are currently looking at..
         let view_info = o_browse.getViewInfo();
         let namespace = view_info.namespace; // either '#cart' or '#browse'
-        let prefix = view_info.prefix;       // either 'colls_' or ''
+        let prefix = view_info.prefix;       // either 'cart_' or ''
         let view_var = opus.prefs[prefix + "browse"];  // either "gallery" or "data"
         let page = 1;
 
@@ -1095,7 +1095,7 @@ var o_browse = {
         $("#pages", "#browse").html(opus.pages);
 
         // figure out the page
-        let page = opus.prefs.page[opus.prefs.browse]; // default: {"gallery":1, "dataTable":1, 'colls_gallery':1, 'colls_data':1 };
+        let page = opus.prefs.page[opus.prefs.browse]; // default: {"gallery":1, "dataTable":1, 'cart_gallery':1, 'cart_data':1 };
 
         // some outlier things that can go wrong with page (when user entered page #)
         page = (!page || page < 1) ? 1 : page;

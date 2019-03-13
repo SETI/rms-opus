@@ -56,3 +56,22 @@ class uiTests(TestCase):
         print(ret)
         print(ret.content)
         self.assertEqual(ret.content, b'{"lastupdate": null}')
+
+
+            ################################################
+            ######### api_normalize_url UNIT TESTS #########
+            ################################################
+
+    def test__api_normalize_url_no_request(self):
+        "api_normalize_url: no request"
+        with self.assertRaises(Http404):
+            api_normalize_url(None)
+
+    def test__api_normalize_url_no_get(self):
+        "api_normalize_url: no GET"
+        c = Client()
+        response = c.get('__normalizeurl.json')
+        request = response.wsgi_request
+        request.GET = None
+        with self.assertRaises(Http404):
+            api_normalize_url(request)
