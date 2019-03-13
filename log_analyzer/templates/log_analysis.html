@@ -31,8 +31,8 @@
     left: 30%;
     width: 4px;
     cursor: col-resize;
-    padding-right: 0px;
-    padding-left: 0px;
+    padding-right: 0;
+    padding-left: 0;
   }
   #right {
     right: 0;
@@ -53,23 +53,21 @@
   vertical-align:top;
   padding: 0 5px;
 }
-.tooltip-inner {
-    text-align: left;
-}
 table.SessionLinkTable {
   border-collapse: separate;
   border-spacing: 4px 2px;
 }
-.show_all {
+.show_all {   /* Used by --xxshowall for URLs that would orderinarily be ignored. */
   white-space: nowrap;
   color: darkgray;
 }
-
+.tooltip-inner {  /* Forces tooltips to be left aligned rather than centered. */
+    text-align: left;
+}
 {% endraw %}
 </style>
 </head>
 <body>
-
 <div class="container-fluid">
 <div class="row">
 
@@ -240,7 +238,7 @@ $(function() {
 let gutter = document.querySelector('#gutter');
 let wrapper = gutter.closest('.row');
 let boxLeft = wrapper.querySelector('#left');
-let boxRight = wrapper.querySelector('#right')
+let boxRight = wrapper.querySelector('#right');
 let isHandlerDragging = false;
 
 document.addEventListener('mousedown', function(e) {
@@ -268,7 +266,7 @@ document.addEventListener('mousemove', function(e) {
   let leftWidth = Math.min(containerOffsetWidth / 2, Math.max(containerOffsetWidth * .10, pointerRelativeXpos - 8));
   boxLeft.style.width =  (leftWidth * widthToPercentMultiplier) + '%';
   gutter.style.left = boxLeft.style.width;
-  gutter.style.width = (4 * widthToPercentMultiplier) + '%'
+  gutter.style.width = (4 * widthToPercentMultiplier) + '%';
   boxRight.style.width = ((containerOffsetWidth - 4 - leftWidth) * widthToPercentMultiplier) + '%';
 });
 

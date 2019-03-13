@@ -8,10 +8,10 @@ from typing import Dict, Tuple, List, Optional, Any, cast
 
 from markupsafe import Markup
 
-import slug as Slug
+import slug as slug
 
-SearchSlugInfo = Dict[Slug.Family, List[Tuple[Slug.Info, str]]]
-ColumnSlugInfo = Dict[Slug.Family, Slug.Info]
+SearchSlugInfo = Dict[slug.Family, List[Tuple[slug.Info, str]]]
+ColumnSlugInfo = Dict[slug.Family, slug.Info]
 
 
 class State(Enum):
@@ -23,18 +23,18 @@ class State(Enum):
 class QueryHandler:
     DEFAULT_SORT_ORDER = 'time1'
     _session_info: Any  # can't handle circular imports.  :-(
-    _slug_map: Slug.ToInfoMap
+    _slug_map: slug.ToInfoMap
     _default_column_slug_info: ColumnSlugInfo
     _uses_html: bool
 
     _previous_search_slug_info: SearchSlugInfo  # map from family to List[(Slug.Info, Value)]
     _previous_column_slug_info: Optional[ColumnSlugInfo]  # map from raw slug to Slug.Info
-    _previous_page: str  # previous page
-    _previous_startobs: str  # previous start observation
+    _previous_pages: List[str]  # previous page.  Two entries for browse and cart
+    _previous_startobss: List[str]  # previous start observation.  Two entries for browse and cart
     _previous_sort_order: str  # sort order
     _previous_state: State
 
-    def __init__(self, session_info: Any, slug_map: Slug.ToInfoMap, default_column_slug_info: ColumnSlugInfo,
+    def __init__(self, session_info: Any, slug_map: slug.ToInfoMap, default_column_slug_info: ColumnSlugInfo,
                  uses_html: bool):
         self._session_info = session_info
         self._slug_map = slug_map
@@ -46,7 +46,8 @@ class QueryHandler:
         self._previous_search_slug_info = {}
         self._previous_column_slug_info = None  # handled specially by get_column_slug_info
         self._previous_sort_order = self.DEFAULT_SORT_ORDER
-        self._previous_page = ''
+        self._previous_pages = ['', '']
+        self._previous_startobss = ['', '']
         self._previous_state = State.RESET
 
     def handle_query(self, query: Dict[str, str], query_type: str) -> Tuple[List[str], Optional[str]]:
@@ -68,7 +69,7 @@ class QueryHandler:
             if (previous_state, current_state) == (State.FETCHING, State.SEARCHING):
                 result.append('Refining Previous Search')
 
-        search_slug_info: Dict[Slug.Family, List[Tuple[Slug.Info, str]]] = defaultdict(list)
+        search_slug_info: SearchSlugInfo = defaultdict(list)
         for slug, value in query.items():
             slug_info = self._slug_map.get_info_for_search_slug(slug)
             if slug_info:
@@ -103,14 +104,15 @@ class QueryHandler:
         if uses_pages:
             assert current_state == State.FETCHING
             page_type = 'Page' if page else 'Starting observation'
+            is_browsing = query.get('view') == 'browse'
             if current_state != previous_state:
                 viewed = 'Table' if query.get('browse') == 'data' else 'Gallery'
                 result.append(f'View {viewed}: {page_type} {page or startobs or "???"}')
             else:
-                self.__get_page_info('Page', self._previous_page, page, result)
-                self.__get_page_info('Starting observation', self._previous_startobs, startobs, result)
-            self._previous_page = page
-            self._previous_startobs = startobs
+                self.__get_page_info('Page', self._previous_pages[is_browsing], page, result)
+                self.__get_page_info('Starting observation', self._previous_startobss[is_browsing], startobs, result)
+            self._previous_pages[is_browsing] = page
+            self._previous_startobss[is_browsing] = startobs
 
         self._previous_state = current_state
 
@@ -151,11 +153,11 @@ class QueryHandler:
         result.extend(added_searches)
         result.extend(changed_searches)
 
-    def __handle_search_remove(self, result: List[str], family: Slug.Family) -> None:
+    def __handle_search_remove(self, result: List[str], family: slug.Family) -> None:
         self._session_info.changed_search_slugs()
         result.append(f'Remove Search: "{family.label}"')
 
-    def __handle_search_add(self, result: List[str], family: Slug.Family, new_info: SearchSlugInfo) -> None:
+    def __handle_search_add(self, result: List[str], family: slug.Family, new_info: SearchSlugInfo) -> None:
         self._session_info.changed_search_slugs()
         if family.is_singleton():
             assert len(new_info[family]) == 1
@@ -186,7 +188,7 @@ class QueryHandler:
                              f'QTYPE:{self.__format_search_value(new_qtype)})')
                 result.append(f'Add Search:    "{family.label}" = {new_value}{postscript}')
 
-    def __handle_search_change(self, result: List[str], family: Slug.Family, old_info: SearchSlugInfo,
+    def __handle_search_change(self, result: List[str], family: slug.Family, old_info: SearchSlugInfo,
                                new_info: SearchSlugInfo) -> None:
         if family.is_singleton():
             assert len(old_info[family]) == 1
@@ -249,12 +251,13 @@ class QueryHandler:
                 if not self._uses_html:
                     added_columns.append(f'Add Selected Metadata:    "{new_slug_info.label}"{postscript}')
                 else:
-                    added_columns.append(self.safe_format('Add Selected Metadata: "{}"{}', new_slug_info.label, postscript))
+                    added_columns.append(
+                        self.safe_format('Add Selected Metadata: "{}"{}', new_slug_info.label, postscript))
 
         result.extend(removed_columns)
         result.extend(added_columns)
 
-    def __get_page_info(self, what: str, old_page: Optional[str], new_page: Optional[str], result: List[str]) -> None:
+    def __get_page_info(self, what: str, old_page: str, new_page: str, result: List[str]) -> None:
         if old_page != new_page and old_page and new_page:
             if self._uses_html:
                 result.append(self.safe_format('Change {}: {} &rarr; {}', what.title(), old_page, new_page))
@@ -310,7 +313,7 @@ class QueryHandler:
             result.append(f'Change Search: "{name}" = {joined_old_values} -> {joined_new_values}')
 
     @staticmethod
-    def get_column_slug_info(slugs: List[str], slug_map: Slug.ToInfoMap,
+    def get_column_slug_info(slugs: List[str], slug_map: slug.ToInfoMap,
                              session_info: Optional[Any] = None) -> ColumnSlugInfo:
         """
         This returns a map from the slugs that appear in the list of strings to the Info for that slug,
@@ -336,7 +339,7 @@ class QueryHandler:
         else:
             return '~' if value is None else '"' + value + '"'
 
-    def __get_postscript(self, flags: Slug.Flags) -> str:
+    def __get_postscript(self, flags: slug.Flags) -> str:
         if not flags:
             return ''
         elif self._uses_html:
@@ -344,15 +347,14 @@ class QueryHandler:
         else:
             return f' **{flags.pretty_print()}**'
 
-    def __parse_search_family(self, pairs: List[Tuple[Slug.Info, str]]) -> \
-            Tuple[Optional[str], Optional[str], Optional[str], Slug.Flags]:
+    def __parse_search_family(self, pairs: List[Tuple[slug.Info, str]]) -> \
+            Tuple[Optional[str], Optional[str], Optional[str], slug.Flags]:
         mapping = {slug_info.family_type: value for slug_info, value in pairs}  # family_type to value
         return (
-            mapping.get(Slug.FamilyType.MIN), mapping.get(Slug.FamilyType.MAX), mapping.get(Slug.FamilyType.QTYPE),
+            mapping.get(slug.FamilyType.MIN), mapping.get(slug.FamilyType.MAX), mapping.get(slug.FamilyType.QTYPE),
             reduce(operator.or_, (slug_info.flags for (slug_info, _) in pairs))
         )
 
-    def safe_format(self, format: str, *args: Any) -> str:
-        return cast(str, self._session_info.safe_format(format, *args))
-
+    def safe_format(self, format_string: str, *args: Any) -> str:
+        return cast(str, self._session_info.safe_format(format_string, *args))
 

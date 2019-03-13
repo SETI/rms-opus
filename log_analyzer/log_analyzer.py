@@ -4,7 +4,7 @@ import operator
 import sys
 from typing import List, Optional
 
-import slug as Slug
+import slug
 from log_entry import LogReader
 from log_parser import LogParser
 from session_info import SessionInfoGenerator
@@ -52,12 +52,13 @@ def main(arguments: Optional[List[str]] = None) -> None:
 
     # TODO(fy): Temporary hack for when I don't have internet access
     parser.add_argument('--xxlocal', action="store_true", dest="uses_local", help=argparse.SUPPRESS)
+    # TODO(fy): Debugging hack that shows all URLs.
     parser.add_argument('--xxshowall', action='store_true', dest='debug_show_all', help=argparse.SUPPRESS)
 
     parser.add_argument('log_files', nargs=argparse.REMAINDER, help='log files')
     args = parser.parse_args(arguments)
 
-    slugs = Slug.ToInfoMap(LOCAL_SLUGS_PREFIX if args.uses_local else args.api_host_url)
+    slugs = slug.ToInfoMap(LOCAL_SLUGS_PREFIX if args.uses_local else args.api_host_url)
     # args.ignored_ip comes out as a list of lists, and it needs to be flattened.
     ignored_ips = [ip for arg_list in args.ignore_ip for ip in arg_list]
     session_info_generator = SessionInfoGenerator(slugs, ignored_ips, args.debug_show_all)

@@ -7,7 +7,7 @@ from typing import List, Dict, Optional, Match, Tuple, Pattern, Callable, Any
 
 from markupsafe import Markup
 
-import slug as slug
+import slug
 from log_entry import LogEntry
 from query_handler import QueryHandler, ColumnSlugInfo
 
@@ -194,8 +194,9 @@ class SessionInfoImpl(SessionInfo):
     # API
     #
 
-    @ForPattern(r'/__api/(data)\.json')
-    @ForPattern(r'/__api/(images)\.(.*)')
+    @ForPattern(r'/__api/(data)\.json')  # is this correct?
+    @ForPattern(r'/__api/(data)\.html')  # is this correct?
+    @ForPattern(r'/__api/(images)\.html')
     @ForPattern(r'/__api/(dataimages)\.json')
     @ForPattern(r'/__api/meta/(result_count)\.json')
     def _api_data(self, query: Dict[str, str], match: Match[str]) -> SESSION_INFO:
@@ -209,19 +210,25 @@ class SessionInfoImpl(SessionInfo):
     @ForPattern(r'/__api/data\.csv')
     def _download_results_csv(self, query: Dict[str, str], match: Match[str]) -> SESSION_INFO:
         self.performed_download()
-        return ["Download Search Results CSV"], None
+        return ["Download CSV of Search Results"], None
 
-    @ForPattern(r'/__api/download/(.*)\.(zip)')
-    @ForPattern(r'/__api/metadata/(.*)\.(csv)')
-    @ForPattern(r'/__api/metadata_v2/(.*)\.(csv)')
-    def _download_one_zip(self, query: Dict[str, str], match: Match[str]) -> SESSION_INFO:
+    @ForPattern(r'/__api/metadata_v2/(.*)\.csv')
+    def _download_metadata_csv(self, query: Dict[str, str], match: Match[str]) -> SESSION_INFO:
         self.performed_download()
-        opus_id, result_type = match.groups()
-        if result_type == 'zip':
-            text = 'Download URL Archive of Single OPUSID'
+        opus_id = match.group(1)
+        extra = 'Selected' if query.get('cols') else 'All'
+        text = f'Download CSV of {extra} Metadata for OPUSID'
+        if self._uses_html:
+            return [self.safe_format('{}: {}', text, opus_id)], self.__create_opus_url(opus_id)
         else:
-            extra = 'Current' if query.get('cols') else 'All'
-            text = f'Download CSV of {extra} Metadata for Single OPUSID'
+            return [f'{text}: { opus_id }'], None
+
+    @ForPattern(r'/__api/download/(.*)\.zip')
+    def _download_archive(self, query: Dict[str, str], match: Match[str]) -> SESSION_INFO:
+        self.performed_download()
+        opus_id = match.group(1)
+        extra = 'URL' if query.get('urlonly') not in (None, "0") else 'Data'
+        text = f'Download {extra} Archive for OPUSID'
         if self._uses_html:
             return [self.safe_format('{}: {}', text, opus_id)], self.__create_opus_url(opus_id)
         else:
@@ -231,52 +238,35 @@ class SessionInfoImpl(SessionInfo):
     # Collections
     #
 
-    @ForPattern(r'/__collections/reset.html')
-    @ForPattern(r'/__cart/reset.html')
-    def _reset_cart(self, query: Dict[str, str], match: Match[str]) -> SESSION_INFO:
-        return ['Reset Cart'], None
+    @ForPattern(r'/__collections/view\.json')
+    @ForPattern(r'/__cart/view\.json')
+    def download_product_types(self, query: Dict[str, str], match: Match[str]) -> SESSION_INFO:
+        return ['Download Product Types'], None
 
-    @ForPattern(r'/__collections(/default)?/(add|remove)\.json')
-    @ForPattern(r'/__cart(/default)?/(add|remove)\.json')
-    def _change_cart(self, query: Dict[str, str], match: Match[str]) -> SESSION_INFO:
-        opus_id = query.get('opusid') or query.get('opus_id')  # opusid is new name, opus_id is old
-        selection = match.group(2).title()
-        if self._uses_html and opus_id:
-            return [self.safe_format('Cart {}: {}', selection.title(), opus_id)], self.__create_opus_url(opus_id)
-        else:
-            return [f'Cart {selection.title() + ":":<7} {opus_id or "???"}'], None
-
-    @ForPattern(r'/__collections(/default)?/view(|\.json)')
-    @ForPattern(r'/__cart(/default)?/view(|\.json)')
-    def collections_view(self, query: Dict[str, str], match: Match[str]) -> SESSION_INFO:
+    @ForPattern(r'/__collections/view\.html')
+    @ForPattern(r'/__cart/view\.html')
+    def collections_view_cart(self, query: Dict[str, str], match: Match[str]) -> SESSION_INFO:
         return ['View Cart'], None
 
-    @ForPattern(r'/__collections/default/addrange.json')
-    @ForPattern(r'/__cart/default/addrange.json')
-    def _add_range_to_cart(self, query: Dict[str, str], match: Match[str]) -> SESSION_INFO:
-        query_range = query.get('range', '???').replace(',', ', ')
-        return [f'Cart Add Range: {query_range}'], None
-
-    @ForPattern(r'/__collections(/default)?/download.zip')
-    @ForPattern(r'/__collections(/default)?/download.json')
-    @ForPattern(r'/__collections/download/default.zip')
-    @ForPattern(r'/__cart(/default)?/download.zip')
-    @ForPattern(r'/__cart(/default)?/download.json')
-    @ForPattern(r'/__cart/download/default.zip')
-    def _create_zip_file(self, query: Dict[str, str], match: Match[str]) -> SESSION_INFO:
+    @ForPattern(r'/__collections/data.csv')
+    @ForPattern(r'/__cart/data.csv')
+    def _download_cart_metadata_csv(self, query: Dict[str, str], match: Match[str]) -> SESSION_INFO:
         self.performed_download()
-        types = query.get('types')
-        urlonly = query.get('urlonly')
-        if types is None:
-            output = '???'
-        else:
-            output = self.quote_and_join_list(types.split(','))
-        creation = 'URL' if (urlonly and urlonly != '0') else 'Data'
-        return [f'Create {creation} Archive: {output}'], None
+        return ["Download CSV of Selected Metadata for Cart"], None
 
-    @ForPattern(r'/__collections/download/info(|\.json)')
-    @ForPattern(r'/__cart/download/info(|\.json)')
+    @ForPattern(r'/__collections/download.json')
+    @ForPattern(r'/__cart/download.json')
+    def _create_archive(self, query: Dict[str, str], match: Match[str]) -> SESSION_INFO:
+        self.performed_download()
+        has_url = query.get('urlonly') not in [None, '0']
+        text = f'Download {"URL" if has_url else "Data"} Archive for Cart'
+        return [text], None
+
+    @ForPattern(r'/__collections/status\.json')
+    @ForPattern(r'/__cart/status\.json')
     def _download_product_types(self, query: Dict[str, str], match: Match[str]) -> SESSION_INFO:
+        if query.get('download') != '1':
+            return [], None
         self.performed_download()
         ptypes_field = query.get('types', None)
         new_ptypes = ptypes_field.split(',') if ptypes_field else []
@@ -303,11 +293,33 @@ class SessionInfoImpl(SessionInfo):
             result.append('Product Types are unchanged')
         return result, None
 
-    @ForPattern(r'/__collections/data.csv')
-    @ForPattern(r'/__cart/data.csv')
-    def _download_cart_csv(self, query: Dict[str, str], match: Match[str]) -> SESSION_INFO:
-        self.performed_download()
-        return ["Download Cart CSV"], None
+    @ForPattern(r'/__collections/reset.html')
+    @ForPattern(r'/__cart/reset.html')
+    def _reset_cart(self, query: Dict[str, str], match: Match[str]) -> SESSION_INFO:
+        return ['Empty Cart'], None
+
+    @ForPattern(r'/__collections/(add|remove)\.json')
+    @ForPattern(r'/__cart/(add|remove)\.json')
+    def _change_cart(self, query: Dict[str, str], match: Match[str]) -> SESSION_INFO:
+        opus_id = query.get('opusid') or query.get('opus_id')  # opusid is new name, opus_id is old
+        selection = match.group(1).title()
+        if self._uses_html and opus_id:
+            return [self.safe_format('Cart {}: {}', selection.title(), opus_id)], self.__create_opus_url(opus_id)
+        else:
+            return [f'Cart {selection.title() + ":":<7} {opus_id or "???"}'], None
+
+    @ForPattern(r'/__collections/(add|remove)range.json')
+    @ForPattern(r'/__cart/(add|remove)range.json')
+    def _add_range_to_cart(self, query: Dict[str, str], match: Match[str]) -> SESSION_INFO:
+        selection = match.group(1).title()
+        query_range = query.get('range', '???').replace(',', ', ')
+        return [f'Cart {selection} Range: {query_range}'], None
+
+    @ForPattern(r'/__collections/addall.json')
+    @ForPattern(r'/__cart/addall.json')
+    def _add_all_to_cart(self, query: Dict[str, str], match: Match[str]) -> SESSION_INFO:
+        query_range = query.get('range', '???').replace(',', ', ')
+        return [f'Cart Add All'], None
 
     #
     # FORMS
@@ -315,7 +327,7 @@ class SessionInfoImpl(SessionInfo):
 
     @ForPattern(r'/__forms/column_chooser\.html')
     def _column_chooser(self, query: Dict[str, str], match: Match[str]) -> SESSION_INFO:
-        return ['Column Chooser'], None
+        return ['Metadata Selector'], None
 
     #
     # INIT DETAIL
@@ -328,6 +340,10 @@ class SessionInfoImpl(SessionInfo):
             return [self.safe_format('View Detail: {}', opus_id)], self.__create_opus_url(opus_id)
         else:
             return [f'View Detail: { opus_id }'], None
+
+    #
+    # HELP
+    #
 
     @ForPattern(r'/__help/(\w+)\.html')
     def _get_help_information(self, query: Dict[str, str], match: Match[str]) -> SESSION_INFO:
