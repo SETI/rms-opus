@@ -13,10 +13,11 @@ var o_browse = {
     lastLoadDataRequestNo: 0,
 
     allowKeydownOnMetaDataModal: true,
-    // infiniteScrollCurrentMaxPageNumber: opus.lastPageDrawn[opus.prefs.view],
-    infiniteScrollCurrentMaxPageNumber: 0,
-    infiniteScrollCurrentMinPageNumber: 1000, // give it a large number
+
+    infiniteScrollCurrentMaxPageNumber: 0, // the largest drawn page number
+    infiniteScrollCurrentMinPageNumber: 1000, // prev page of the smallest drawn page number
     loadPrevPage: false,
+    currentPage: 1,
     currentOpusId: "",
     reRenderFirstMetadataModalOfThePage: false,
     /**
@@ -29,6 +30,45 @@ var o_browse = {
 
         $(".gallery-contents, .dataTable").on('scroll', _.debounce(o_browse.checkScroll, 200));
 
+        // $(".gallery-contents, .dataTable").on('ps-y-reach-start', function() {
+        $(".gallery-contents, .dataTable").on('wheel', function(event) {
+            console.log("SCROLL AT tHE START")
+            // let galleryScrollbarPosition = $(".gallery-contents").scrollTop();
+            // let tableScrollbarPosition = $(".dataTable").scrollTop();
+            // console.log(`Gallery Scrollbar Pos: ${galleryScrollbarPosition}`);
+            // console.log(`Table Scrollbar Pos: ${tableScrollbarPosition}`);
+            console.log(`page location: ${o_browse.currentPage}`)
+            console.log(opus.lastPageDrawn[opus.prefs.view])
+            console.log(o_browse.infiniteScrollCurrentMinPageNumber)
+            console.log(o_browse.infiniteScrollCurrentMaxPageNumber)
+            if(o_browse.infiniteScrollCurrentMinPageNumber > 0) {
+            // if(opus.lastPageDrawn[opus.prefs.view] > 2 && o_browse.infiniteScrollCurrentMinPageNumber > 0) {
+                if(opus.prefs.browse == "dataTable" && $(".dataTable").scrollTop() === 0) {
+                    console.log("table reach to top and still scrolling")
+                    // o_browse.infiniteScrollCurrentMinPageNumber = o_browse.currentPage - 1;
+                    opus.lastPageDrawn[opus.prefs.view] = o_browse.infiniteScrollCurrentMinPageNumber - 1;
+                    $(`#${opus.prefs.view} .gallery-contents`).infiniteScroll("loadNextPage");
+
+                } else if(opus.prefs.browse == "gallery" && $(".gallery-contents").scrollTop() === 0) {
+                    console.log("gallery view reach to the top and still scorlling")
+                    // o_browse.infiniteScrollCurrentMinPageNumber = o_browse.currentPage - 1;
+                    opus.lastPageDrawn[opus.prefs.view] = o_browse.infiniteScrollCurrentMinPageNumber - 1;
+                    $(`#${opus.prefs.view} .gallery-contents`).infiniteScroll("loadNextPage");
+                }
+            }
+
+            // if(o_browse.loadPrevPage) {
+            //     let selector = `#${opus.prefs.view} .gallery-contents`;
+            //     console.log("load prev page")
+            //     opus.lastPageDrawn[opus.prefs.view] = opus.lastPageDrawn[opus.prefs.view] - 3;
+            //     console.log(`PREV page num: ${opus.lastPageDrawn[opus.prefs.view]}`)
+            //     $(selector).infiniteScroll('loadNextPage');
+            //     o_browse.loadPrevPage = false;
+            // }
+        });
+
+
+
         // nav stuff - NOTE - this needs to be a global
         onRenderData = _.debounce(o_browse.loadData, 500);
 
@@ -39,6 +79,7 @@ var o_browse = {
 
         $("#browse").on('change', 'input#page', function() {
             let newPage = parseInt($("input#page").val());
+            o_browse.currentPage = newPage;
             if (newPage > 0 && newPage <= opus.pages ) {
                 opus.gallery_begun = false;     // so that we redraw from the beginning
                 $("input#page").addClass("text-warning");
@@ -438,7 +479,7 @@ var o_browse = {
         if(!prev && o_browse.infiniteScrollCurrentMinPageNumber > 0) {
             console.log("LOAD PREV PAGE")
 
-            if(opus.lastPageDrawn[opus.prefs.view] > o_browse.infiniteScrollCurrentMinPageNumber) {
+            if(opus.lastPageDrawn[opus.prefs.view] >= o_browse.infiniteScrollCurrentMinPageNumber) {
                 opus.lastPageDrawn[opus.prefs.view] = o_browse.infiniteScrollCurrentMinPageNumber - 1;
             }
             // disable keydown on modal when it's loading
@@ -477,6 +518,7 @@ var o_browse = {
                     opus.prefs.page[opus.prefs.browse] = page;
                     $("input#page").val(page).css("color","initial");
                     console.log("page: "+page);
+                    o_browse.currentPage = page;
                     return false;
                 }
             }
@@ -490,6 +532,8 @@ var o_browse = {
                 }
                 $(`#${opus.prefs.view} .gallery-contents`).infiniteScroll("loadNextPage");
             }
+        } else if (opus.prefs.browse == "gallery") {
+            opus.lastPageDrawn[opus.prefs.view] = Math.max(o_browse.currentPage, opus.lastPageDrawn[opus.prefs.view], o_browse.infiniteScrollCurrentMaxPageNumber);
         }
         return false;
     },
@@ -1081,10 +1125,12 @@ var o_browse = {
 
     setScrollbarPosition: function(selector, page) {
         if(!$(`.table-page[data-page='${page}']`).prev().offset()) {
+            console.log("set scrollbar position to top")
             $(`${selector}`).scrollTop(0);
             // make sure it's scrolled to the correct position in table view
             $(`${selector} .dataTable`).scrollTop(0);
         } else {
+            console.log("set scrollbar position with page: " + page)
             let galleryTargetTopPosition = $(`#browse .gallery-contents .thumb-page[data-page='${page}'] .thumbnail-container:eq(0) a img`).offset().top;
             // console.log($(`#browse .gallery-contents .thumb-page[data-page='${newPage}'] .thumbnail-container:eq(0)`).data("id"))
             let galleryContainerTopPosition = $(".gallery-contents").offset().top;
@@ -1116,12 +1162,12 @@ var o_browse = {
     loadData: function(page) {
         page = (page == undefined ? $("input#page").val() : page);
         $("input#page").val(page).removeClass("text-warning");
-
-        if(page === $("input#page").val() && !opus.gallery_begun) {
-            console.log("reset counter")
-            o_browse.infiniteScrollCurrentMinPageNumber = parseInt(page);
-            o_browse.infiniteScrollCurrentMaxPageNumber = parseInt(page) + 1;
-        }
+        console.log("page at LOAD: " + page)
+        // if(page === $("input#page").val() && !opus.gallery_begun) {
+        //     console.log("reset counter")
+        //     o_browse.infiniteScrollCurrentMinPageNumber = parseInt(page) - 1;
+        //     o_browse.infiniteScrollCurrentMaxPageNumber = parseInt(page) + 1;
+        // }
 
         let selector = `#${opus.prefs.view} .gallery-contents`;
 
@@ -1130,6 +1176,10 @@ var o_browse = {
             console.log(`PAGE ${page} is already drawn.`);
             o_browse.setScrollbarPosition(selector, page);
             return;
+        } else {
+            console.log("reset counter")
+            o_browse.infiniteScrollCurrentMinPageNumber = parseInt(page) - 1;
+            o_browse.infiniteScrollCurrentMaxPageNumber = parseInt(page) + 1;
         }
 
         let url = o_browse.getDataURL(page);
@@ -1206,7 +1256,7 @@ var o_browse = {
             console.log(`data.reqno: ${data.reqno}, last reqno: ${o_browse.lastLoadDataRequestNo}`);
             return;
         }
-        console.log(data)
+        // console.log(data)
         // console.log(path)
         // console.log(`Current Page: ${data.page_no}`)
         // console.log(`MIN Page: ${o_browse.infiniteScrollCurrentMinPageNumber}`)
@@ -1250,6 +1300,8 @@ var o_browse = {
         if(o_browse.loadPrevPage) {
             let selector = `#${opus.prefs.view} .gallery-contents`;
             let newPage = o_browse.infiniteScrollCurrentMinPageNumber + 1;
+            o_browse.infiniteScrollCurrentMinPageNumber -= 1;
+            console.log('current Page: ' + newPage)
             // let newPage = $("input#page").val() ? $("input#page").val() : page;
             if ($(`${selector} .thumb-page[data-page='${newPage}']`).length > 0) {
                 o_browse.setScrollbarPosition(selector, newPage);
