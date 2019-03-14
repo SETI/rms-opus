@@ -299,7 +299,6 @@ var o_browse = {
             let orderBy =  $(this).data("slug");
 
             let orderIndicator = $(this).find("span:last")
-            console.log(orderIndicator.data("sort"))
             o_browse.tableSorting = true;
             if (orderIndicator.data("sort") === "sort-asc") {
                 // currently ascending, change to descending order
@@ -313,7 +312,21 @@ var o_browse = {
                 // not currently ordered, change to ascending
                 orderIndicator.data("sort", "sort-asc")
             }
-            opus.prefs['order'] = orderBy;
+            console.log(opus.prefs["order"])
+            // opus.prefs["order"] is an array
+            let newOrderInserted = false;
+            $.each(opus.prefs["order"], function(idx, slug) {
+                if(orderBy === slug || orderBy === `-${slug}` || `-${orderBy}` === slug) {
+                    opus.prefs["order"][idx] = orderBy;
+                    newOrderInserted = true;
+                    return false; // break out of $.each loop
+                }
+            })
+            if(!newOrderInserted) {
+                // opus.prefs["order"] = `${orderBy},${opus.prefs["order"]}`;
+                opus.prefs["order"].unshift(orderBy);
+            }
+            console.log(opus.prefs["order"])
 
             o_hash.updateHash();
             opus.lastPageDrawn.browse = 0;
@@ -993,7 +1006,6 @@ var o_browse = {
     },
 
     initTable: function(columns) {
-        console.log("init table again")
         // prepare table and headers...
         $(".dataTable thead > tr > th").detach();
         $(".dataTable tbody > tr").detach();
@@ -1127,7 +1139,6 @@ var o_browse = {
     loadData: function(page) {
         page = (page == undefined ? $("input#page").val() : page);
         $("input#page").val(page).removeClass("text-warning");
-        console.log(`page after clicking sort: ${page}`)
         let selector = `#${opus.prefs.view} .gallery-contents`;
 
         // wait! is this page already drawn?
