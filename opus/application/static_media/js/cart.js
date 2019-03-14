@@ -26,13 +26,9 @@ var o_cart = {
          $("#cart").on("click", ".downloadURL", function(e) {
              o_cart.downloadZip("create_zip_url_file", "Internal error creating URL zip file");
          });
+
          $("#cart").on("click", ".metadataModal", function(e) {
 
-         });
-         $("#cart").on("click", ".emptyCart", function() {
-             if (confirm("Are you sure you want to remove all observations from your cart?")) {
-                 o_cart.emptyCart();
-             }
          });
 
          // check an input on selected products and images updates file_info
@@ -89,6 +85,9 @@ var o_cart = {
                      $(`<li><a href = "${data.filename}">${data.filename}</a></li>`).hide().prependTo("ul.zippedFiles", "#cart_summary").slideDown("slow");
                  }
                  $(".spinner", "#download_links").fadeOut();
+                 // o_collections.downloadOptionsScrollbar.update();
+                 let adjustProductInfoHeight = _.debounce(o_cart.adjustProductInfoHeight, 200);
+                 adjustProductInfoHeight();
              },
              error: function(e) {
                  $(".spinner", "#download_links").fadeOut();

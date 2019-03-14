@@ -137,10 +137,14 @@ def populate_obs_general_HSTx_observation_type(**kwargs):
     instrument = kwargs['instrument_name']
     index_row = metadata['index_row']
     obs_type = index_row['OBSERVATION_TYPE']
-    if obs_type not in ('IMAGE', 'IMAGING', 'SPECTRUM', 'SPECTROSCOPIC'): # XXX
+    # XXX Temporary fix for issue pds-webserver/10
+    if obs_type not in ('IMAGE', 'IMAGING', 'SPECTRUM', 'SPECTROSCOPIC'):
         import_util.log_nonrepeating_error(
             f'Unknown HST OBSERVATION_TYPE "{obs_type}"')
         return None
+    if obs_type in ('IMAGING', 'SPECTROSCOPIC'):
+        import_util.log_nonrepeating_warning(
+            f'Converting bad observation_type {obs_type}')
     if obs_type.startswith('SPEC'): # Covers bad "SPECTROSCOPIC" value
         return 'SPI' # Spectral Image (2-D with spectral information)
     return 'IMG' # Image
@@ -948,12 +952,16 @@ def populate_obs_mission_hubble_aperture_type(**kwargs):
     index_row = metadata['index_row']
     aperture = index_row['APERTURE_TYPE']
     # Temporary fix for issue #491 XXX
+    old_aperture = aperture
     if aperture == 'NIC1FIX':
         aperture = 'NIC1-FIX'
     elif aperture == 'NIC2FIX':
         aperture = 'NIC2-FIX'
     elif aperture == 'NIC3FIX':
         aperture = 'NIC3-FIX'
+    if old_aperture != aperture:
+        import_util.log_nonrepeating_warning(
+            f'Replaced bad aperture {old_aperture} with {aperture}')
     ret = instrument[3:] + '-' + aperture
     return (ret, ret)
 

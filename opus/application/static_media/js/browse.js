@@ -13,6 +13,13 @@ var o_browse = {
     lastLoadDataRequestNo: 0,
 
     allowKeydownOnMetaDataModal: true,
+    infiniteScrollCurrentMaxPageNumber: 0, // the largest drawn page number
+    infiniteScrollCurrentMinPageNumber: 1000, // prev page of the smallest drawn page number
+    loadPrevPage: false,
+    currentPage: 1,
+    currentOpusId: "",
+    reRenderFirstMetadataModalOfThePage: false,
+    tempHash: "",
     /**
     *
     *  all the things that happen on the browse tab
@@ -22,6 +29,20 @@ var o_browse = {
         // note: using .on vs .click allows elements to be added dynamically w/out bind/rebind of handler
 
         $(".gallery-contents, .dataTable").on('scroll', _.debounce(o_browse.checkScroll, 200));
+
+        $(".gallery-contents, .dataTable").on('wheel ps-scroll-up', function(event) {
+            if(o_browse.infiniteScrollCurrentMinPageNumber > 0) {
+                if(opus.prefs.browse == "dataTable" && $(".dataTable").scrollTop() === 0) {
+                    opus.lastPageDrawn[opus.prefs.view] = o_browse.infiniteScrollCurrentMinPageNumber - 1;
+                    $(`#${opus.prefs.view} .gallery-contents`).infiniteScroll("loadNextPage");
+                } else if(opus.prefs.browse == "gallery" && $(".gallery-contents").scrollTop() === 0) {
+                    opus.lastPageDrawn[opus.prefs.view] = o_browse.infiniteScrollCurrentMinPageNumber - 1;
+                    $(`#${opus.prefs.view} .gallery-contents`).infiniteScroll("loadNextPage");
+                }
+            }
+        });
+
+
 
         // nav stuff - NOTE - this needs to be a global
         onRenderData = _.debounce(o_browse.loadData, 500);
@@ -33,6 +54,7 @@ var o_browse = {
 
         $("#browse").on('change', 'input#page', function() {
             let newPage = parseInt($("input#page").val());
+            o_browse.currentPage = newPage;
             if (newPage > 0 && newPage <= opus.pages ) {
                 opus.gallery_begun = false;     // so that we redraw from the beginning
                 $("input#page").addClass("text-warning");
@@ -41,6 +63,7 @@ var o_browse = {
                 // put back
                 $("input#page").val(opus.lastPageDrawn[opus.prefs.view]);
             }
+            o_browse.tempHash = o_hash.getHash();
             return false;
         });
 
@@ -251,7 +274,12 @@ var o_browse = {
         $('#galleryView').on("click", "a.prev,a.next", function(e) {
             let action = $(this).hasClass("prev") ? "prev" : "next";
             let opusId = $(this).data("id");
-            o_browse.checkIfLoadingNextPageIsNeeded(opusId);
+
+            if(action === "next") {
+                o_browse.checkIfLoadNextPageIsNeeded(opusId);
+            } else if(action === "prev") {
+                o_browse.checkIfLoadPrevPageIsNeeded(opusId);
+            }
 
             if (opusId) {
                 o_browse.updateGalleryView(opusId);
@@ -365,10 +393,11 @@ var o_browse = {
                 switch (e.which || e.keyCode) {
                     case 39:  // next
                         opusId = $("#galleryView").find(".next").data("id");
-                        o_browse.checkIfLoadingNextPageIsNeeded(opusId);
+                        o_browse.checkIfLoadNextPageIsNeeded(opusId);
                         break;
                     case 37:  // prev
                         opusId = $("#galleryView").find(".prev").data("id");
+                        o_browse.checkIfLoadPrevPageIsNeeded(opusId);
                         break;
                 }
                 if (opusId && o_browse.allowKeydownOnMetaDataModal) {
@@ -380,12 +409,15 @@ var o_browse = {
         o_browse.updateSliderHandle();
     }, // end browse behaviors
 
-    // check if we need infiniteScroll to load next page when there is no more prefetched data
-    checkIfLoadingNextPageIsNeeded: function(opusId) {
+    // check if we need infiniteScroll to load next page when there is no more prefected data
+    checkIfLoadNextPageIsNeeded: function(opusId) {
         let next = $(`#browse tr[data-id=${opusId}]`).next("tr");
         let nextNext = next.next("tr");
         let nextNextId = (nextNext.data("id") ? nextNext.data("id") : "");
 
+        if(opus.lastPageDrawn[opus.prefs.view] < o_browse.infiniteScrollCurrentMaxPageNumber) {
+            opus.lastPageDrawn[opus.prefs.view] = o_browse.infiniteScrollCurrentMaxPageNumber;
+        }
         // load the next page when the next next item is the dead end (no more prefected data)
         if(!nextNextId && !nextNext.hasClass("table-page")) {
             // disable keydown on modal when it's loading
@@ -394,9 +426,42 @@ var o_browse = {
                 $("#galleryViewContents").addClass("op-disabled");
             }
             o_browse.allowKeydownOnMetaDataModal = false;
+
             $(`#${opus.prefs.view} .gallery-contents`).infiniteScroll("loadNextPage");
         }
     },
+
+    checkIfLoadPrevPageIsNeeded: function(opusId) {
+        o_browse.currentOpusId = opusId;
+        let prev = $(`#browse tr[data-id=${opusId}]`).prev("tr");
+        while(prev.hasClass("table-page")) {
+            prev = prev.prev("tr");
+            if(prev.data("page")) {
+                // if(o_browse.infiniteScrollCurrentMinPageNumber > (prev.data("page") - 1) && prev.data("page") > 0) {
+                // if(o_browse.infiniteScrollCurrentMinPageNumber > prev.data("page")) {
+                    o_browse.infiniteScrollCurrentMinPageNumber = prev.data("page") - 1;
+
+            }
+        }
+        prev = (prev.data("id") ? prev.data("id") : "");
+
+        if(!prev && o_browse.infiniteScrollCurrentMinPageNumber > 0) {
+            if(opus.lastPageDrawn[opus.prefs.view] >= o_browse.infiniteScrollCurrentMinPageNumber) {
+                opus.lastPageDrawn[opus.prefs.view] = o_browse.infiniteScrollCurrentMinPageNumber - 1;
+            }
+            // disable keydown on modal when it's loading
+            // this will make sure we have correct html elements displayed for prev opus id
+            if(!$("#galleryViewContents").hasClass("op-disabled")) {
+                $("#galleryViewContents").addClass("op-disabled");
+            }
+            o_browse.allowKeydownOnMetaDataModal = false;
+
+            o_browse.reRenderFirstMetadataModalOfThePage = true;
+            $(`#${opus.prefs.view} .gallery-contents`).infiniteScroll("loadNextPage");
+
+        }
+    },
+
     updateSliderHandle: function(value, update) {
         value = (value == undefined? 1 : value);
         let handle = `<label><i class="fas fa-angle-double-left"></i>${value}<i class="fas fa-angle-double-right"></i><\label>`;
@@ -420,6 +485,7 @@ var o_browse = {
                     opus.prefs.page[opus.prefs.browse] = page;
                     $("input#page").val(page).css("color","initial");
                     console.log("page: "+page);
+                    o_browse.currentPage = page;
                     return false;
                 }
             }
@@ -428,13 +494,19 @@ var o_browse = {
         if (opus.prefs.browse == "dataTable") {
             let bottom = $("tbody").offset().top + $("tbody").height();
             if (bottom <= $(document).height()) {
+                if(opus.lastPageDrawn[opus.prefs.view] < o_browse.infiniteScrollCurrentMaxPageNumber) {
+                    opus.lastPageDrawn[opus.prefs.view] = o_browse.infiniteScrollCurrentMaxPageNumber;
+                }
                 $(`#${opus.prefs.view} .gallery-contents`).infiniteScroll("loadNextPage");
             }
+        } else if (opus.prefs.browse == "gallery") {
+            opus.lastPageDrawn[opus.prefs.view] = Math.max(o_browse.currentPage, opus.lastPageDrawn[opus.prefs.view], o_browse.infiniteScrollCurrentMaxPageNumber);
         }
         return false;
     },
 
     showModal: function(opusId) {
+        o_browse.checkIfLoadPrevPageIsNeeded(opusId);
         o_browse.updateGalleryView(opusId);
         $("#galleryView").modal("show");
         o_browse.modalScrollbar.update();
@@ -720,7 +792,7 @@ var o_browse = {
             $(".browse_view", "#browse").attr("title", "View sortable metadata table");
             $(".browse_view", "#browse").data("view", "dataTable");
 
-            $(".justify-content-center").show();
+            // $(".justify-content-center").show();
 
             o_browse.galleryScrollbar.settings.suppressScrollY = false;
 
@@ -739,7 +811,7 @@ var o_browse = {
             $(".browse_view", "#browse").data("view", "gallery");
 
             // remove that extra space on top when loading table page
-            $(".justify-content-center").hide();
+            // $(".justify-content-center").hide();
 
             o_browse.galleryScrollbar.settings.suppressScrollY = true;
 
@@ -801,7 +873,7 @@ var o_browse = {
         }
     },
 
-    renderGalleryAndTable: function(data, url) {
+    renderGalleryAndTable: function(data, url, prev=false) {
         // render the gallery and table at the same time.
         // gallery is var html; table is row/tr/td.
         let namespace = o_browse.getViewInfo().namespace;
@@ -836,9 +908,15 @@ var o_browse = {
             $("#cart .sort-order-container").show();
             html += '<div class="thumb-page" data-page="'+data.page_no+'">';
             opus.lastPageDrawn[opus.prefs.view] = data.page_no;
+            if(o_browse.infiniteScrollCurrentMaxPageNumber < opus.lastPageDrawn[opus.prefs.view]) {
+                o_browse.infiniteScrollCurrentMaxPageNumber = opus.lastPageDrawn[opus.prefs.view];
+            }
 
             // add an indicator row that says this is the start of page/observation X - needs to be two hidden rows so as not to mess with the stripes
-            $(".dataTable tbody").append(`<tr class="table-page" data-page="${data.page_no}"><td colspan="${data.columns.length}"></td></tr><tr class="table-page"><td colspan="${data.columns.length}"></td></tr>`);
+            if(!prev) {
+                $(".dataTable tbody").append(`<tr class="table-page" data-page="${data.page_no}"><td colspan="${data.columns.length}"></td></tr><tr class="table-page"><td colspan="${data.columns.length}"></td></tr>`);
+            }
+            // $(".dataTable tbody").append(`<tr class="table-page" data-page="${data.page_no}"><td colspan="${data.columns.length}"></td></tr><tr class="table-page"><td colspan="${data.columns.length}"></td></tr>`);
 
             if(!$(".dataTable tbody").hasClass("tableBody")) {
                 $(".dataTable tbody").addClass("tableBody")
@@ -877,12 +955,34 @@ var o_browse = {
                     row += `<td>${cell}</td>`;
                 });
                 //$(".dataTable tbody").append("<tr data-toggle='modal' data-id='"+galleryData[0]+"' data-target='#galleryView'>"+row+"</tr>");
-                $(".dataTable tbody").append(tr+row+"</tr>");
+                if(prev) {
+                    if(index === 0) {
+                        $(".dataTable tbody").prepend(tr+row+"</tr>");
+                    } else {
+                        let prevIdx = index-1
+                        let selector = `.dataTable tbody tr:eq(${prevIdx})`
+                        let currentEl = tr+row+"</tr>";
+                        $(currentEl).insertAfter($(selector));
+                    }
+                } else {
+                    $(".dataTable tbody").append(tr+row+"</tr>");
+                }
+                // $(".dataTable tbody").append(tr+row+"</tr>");
             });
+
+            if(prev) {
+                $(".dataTable tbody").prepend(`<tr class="table-page" data-page="${data.page_no}"><td colspan="${data.columns.length}"></td></tr><tr class="table-page"><td colspan="${data.columns.length}"></td></tr>`);
+            }
+
             html += "</div>";
         }
 
-        $(".gallery", namespace).append(html);
+        if(prev) {
+            $(".gallery", namespace).prepend(html);
+        } else {
+            $(".gallery", namespace).append(html);
+        }
+        // $(".gallery", namespace).append(html);
         $(".table-page-load-status").hide();
 
         o_browse.adjustTableSize();
@@ -983,7 +1083,30 @@ var o_browse = {
         });
         $(".sort-contents").html(listHtml);
         o_hash.updateHash();
-},
+    },
+
+    // set the scrollbar position in gallery / table view
+    setScrollbarPosition: function(selector, page) {
+        if(!$(`.table-page[data-page='${page}']`).prev().offset()) {
+            $(`${selector}`).scrollTop(0);
+            // make sure it's scrolled to the correct position in table view
+            $(`${selector} .dataTable`).scrollTop(0);
+        } else {
+            let galleryTargetTopPosition = $(`#browse .gallery-contents .thumb-page[data-page='${page}'] .thumbnail-container:eq(0) a img`).offset().top;
+            // console.log($(`#browse .gallery-contents .thumb-page[data-page='${newPage}'] .thumbnail-container:eq(0)`).data("id"))
+            let galleryContainerTopPosition = $(".gallery-contents").offset().top;
+            let galleryScrollbarPosition = $(".gallery-contents").scrollTop();
+
+            let galleryTargetFinalPosition = galleryTargetTopPosition - galleryContainerTopPosition + galleryScrollbarPosition
+            $(`#browse .gallery-contents`).scrollTop(galleryTargetFinalPosition);
+            // make sure it's scrolled to the correct position in table view
+            let tableTargetTopPosition = $(`.table-page[data-page='${page}']`).prev().offset().top;
+            let tableContainerTopPosition = $(".dataTable").offset().top;
+            let tableScrollbarPosition = $(".dataTable").scrollTop();
+            let tableTargetFinalPosition = tableTargetTopPosition - tableContainerTopPosition + tableScrollbarPosition
+            $(`${selector} .dataTable`).scrollTop(tableTargetFinalPosition);
+        }
+    },
 
     getDataURL: function(page) {
         let view = o_browse.getViewInfo();
@@ -992,8 +1115,11 @@ var o_browse = {
             page = opus.lastPageDrawn[opus.prefs.view]+1;
         }
         o_browse.lastLoadDataRequestNo++;
-        let url = o_hash.getHash() + '&reqno=' + o_browse.lastLoadDataRequestNo + view.add_to_url;
+        // this is a workaround for firefox 
+        let hashString = o_hash.getHash() ? o_hash.getHash() : o_browse.tempHash;
+        let url = hashString + '&reqno=' + o_browse.lastLoadDataRequestNo + view.add_to_url;
         url = base_url + o_browse.updatePageInUrl(url, page);
+
         return url;
     },
 
@@ -1002,10 +1128,15 @@ var o_browse = {
         $("input#page").val(page).removeClass("text-warning");
 
         let selector = `#${opus.prefs.view} .gallery-contents`;
+
         // wait! is this page already drawn?
         if ($(`${selector} .thumb-page[data-page='${page}']`).length > 0) {
-            $(`${selector} .thumb-page[data-page='${page}']`).scrollTop(0);
+            o_browse.setScrollbarPosition(selector, page);
             return;
+        } else {
+            // reset counter
+            o_browse.infiniteScrollCurrentMinPageNumber = parseInt(page) - 1;
+            o_browse.infiniteScrollCurrentMaxPageNumber = parseInt(page) + 1;
         }
 
         let url = o_browse.getDataURL(page);
@@ -1019,6 +1150,9 @@ var o_browse = {
             }
             // data.start_obs, data.count
             opus.lastPageDrawn[opus.prefs.view] = data.page_no;
+            if(o_browse.infiniteScrollCurrentMaxPageNumber < opus.lastPageDrawn[opus.prefs.view]) {
+                o_browse.infiniteScrollCurrentMaxPageNumber = opus.lastPageDrawn[opus.prefs.view];
+            }
 
             if (!opus.gallery_begun) {
                 o_browse.initTable(data.columns);
@@ -1041,12 +1175,17 @@ var o_browse = {
                         $(".table-page-load-status").show();
                     });
                     $(selector).on("scrollThreshold.infiniteScroll", function( event ) {
+                        if(opus.lastPageDrawn[opus.prefs.view] < o_browse.infiniteScrollCurrentMaxPageNumber) {
+                            opus.lastPageDrawn[opus.prefs.view] = o_browse.infiniteScrollCurrentMaxPageNumber;
+                        }
                         $(selector).infiniteScroll("loadNextPage");
                     });
                     $(selector).on("load.infiniteScroll", o_browse.infiniteScrollLoadEventListener);
                 }
             }
 
+            // Because we redraw from the beginning or user inputted page, we need to remove previous drawn thumb-pages
+            $(".gallery > .thumb-page").detach();
             o_browse.renderGalleryAndTable(data, this.url);
             o_browse.updateSortOrder(data);
 
@@ -1065,17 +1204,48 @@ var o_browse = {
             console.log(`data.reqno: ${data.reqno}, last reqno: ${o_browse.lastLoadDataRequestNo}`);
             return;
         }
-        o_browse.renderGalleryAndTable(data, path);
+
+        if(o_browse.infiniteScrollCurrentMaxPageNumber > data.page_no) {
+            // prepend data from new page
+            o_browse.renderGalleryAndTable(data, path, true);
+            // render the 1st item's metadata modal again to make sure prev button show up
+            if(o_browse.reRenderFirstMetadataModalOfThePage) {
+                let namespace = o_browse.getViewInfo().namespace;
+                $(namespace).find(".modal-show").removeClass("modal-show");
+                $(namespace).find(`[data-id='${o_browse.currentOpusId}'] div.modal-overlay`).addClass("modal-show");
+                $(namespace).find(`tr[data-id='${o_browse.currentOpusId}']`).addClass("modal-show");
+                let imageURL = $(namespace).find(`[data-id='${o_browse.currentOpusId}'] > a.thumbnail`).data("image");
+                o_browse.metadataboxHtml(o_browse.currentOpusId);
+
+                o_browse.reRenderFirstMetadataModalOfThePage = false;
+            }
+
+            o_browse.loadPrevPage = true;
+        } else {
+            // append data from new page
+            o_browse.renderGalleryAndTable(data, path);
+        }
+
         // update the scroll position in the 'other' bit
         if (opus.prefs.browse == "dataTable") {
             $(`.thumb-page[data-page='${data.page_no}']`).scrollTop(0);
         }
         //console.log('Loaded page: ' + $('#browse .gallery-contents').data('infiniteScroll').pageIndex );
 
+        if(o_browse.loadPrevPage) {
+            let selector = `#${opus.prefs.view} .gallery-contents`;
+            let newPage = o_browse.infiniteScrollCurrentMinPageNumber + 1;
+            o_browse.infiniteScrollCurrentMinPageNumber -= 1;
+
+            if ($(`${selector} .thumb-page[data-page='${newPage}']`).length > 0) {
+                o_browse.setScrollbarPosition(selector, newPage);
+            }
+            o_browse.loadPrevPage = false;
+        }
+
         // if left/right arrow are disabled, make them clickable again
         $("#galleryViewContents").removeClass("op-disabled");
         o_browse.allowKeydownOnMetaDataModal = true;
-        // $(`#${opus.prefs.view} .page-load-status .loader`).hide();
     },
 
     getBrowseTab: function() {
@@ -1151,6 +1321,8 @@ var o_browse = {
     },
 
     metadataboxHtml: function(opusId) {
+        o_browse.currentOpusId = opusId;
+
         // list columns + values
         let html = "<dl>";
         $.each(opus.col_labels, function(index, columnLabel) {
@@ -1170,9 +1342,7 @@ var o_browse = {
             prev = prev.prev("tr");
         }
         prev = (prev.data("id") ? prev.data("id") : "");
-        // console.log(`current id: ${opusId}`);
-        // console.log(`next id: ${next}`);
-        // console.log(`prev id: ${prev}`);
+
         let status = o_cart.isIn(opusId) ? "" : "in";
         let buttonInfo = o_browse.cartButtonInfo(status);
 

@@ -79,7 +79,7 @@ var opus = {
     widget_full_sizes:{}, // when a widget is minimized and doesn't have a custom size defined we keep track of what the full size was so we can restore it when they unminimize/maximize widget
     menu_list_indicators: {'slug':[], 'cat':[], 'group':[] },
     // menu_state: {'cats':['obs_general'], 'groups':[]},  // keep track of menu items that are open
-    menu_state: {'cats':'all', 'groups':[]},
+    menu_state: {'cats':['obs_general']},
     default_widgets: default_widgets.split(','),
     widget_click_timeout:0,
 
@@ -543,12 +543,17 @@ $(document).ready(function() {
         let target = $(this).data("target");
         switch($(this).attr("type")) {
             case "submit":
-                if(target === "op-reset-search-metadata-modal") {
-                    opus.startOver(resetMetadata=true);
-                } else {
-                    opus.startOver();
+                switch(target) {
+                    case "op-reset-search-metadata-modal":
+                        opus.startOver(resetMetadata=true);
+                        break;
+                    case "op-reset-search-modal":
+                        opus.startOver();
+                        break;
+                    case "op-empty-cart":
+                        o_cart.emptyCart();
+                        break;
                 }
-                break;
             case "cancel":
                 $(".modal").modal("hide")
                 break;

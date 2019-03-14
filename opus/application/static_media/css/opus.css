@@ -1086,3 +1086,8 @@ ul.ui-autocomplete a.ui-state-active {
 .list-header, .list-footer {
     background-color: #F9F6F6;
 }
+
+/* remove that extra space on top when loading table page */
+.justify-content-center {
+    height: 0px;
+}
