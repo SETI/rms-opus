@@ -645,6 +645,13 @@ div.gallery {
   overflow-y:hidden;
     margin-right:-80px;
 }
+
+/* Make sort-order-container wrapped within the same container as browse-nav-containers */
+nav.panel-heading {
+    flex-direction: column;
+    align-items: flex-start;
+}
+
 .browse-nav-container {
     height: 1.5em;
 }
@@ -660,8 +667,9 @@ div.gallery {
  }
 
 .sort-order-container {
-  display:inline-flex;
-    padding-left: 25px;
+    display:inline-flex;
+    padding-left: 0.5em;
+    /* padding-top: 0.5em; */
 }
 
 .sort-order-icon {
