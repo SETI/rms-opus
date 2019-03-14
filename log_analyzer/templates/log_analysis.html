@@ -14,20 +14,29 @@
 <style>
 {% raw %}
 @media (min-width: 768px){
-  #left, #right {
+  #left, #right, #gutter {
     position: absolute;
     top: 0;
     bottom: 0;
     overflow-y: scroll;
+    padding-right: 15px;
+    padding-left: 15px;
   }
   #left {
     left: 0;
-    width: 25%;
-    border-right: 1px solid blue;
+    width: 30%;
+  }
+  #gutter {
+    background: blue;
+    left: 30%;
+    width: 4px;
+    cursor: col-resize;
+    padding-right: 0;
+    padding-left: 0;
   }
   #right {
     right: 0;
-    width: 75%;
+    width: calc(70% - 4px);
   }
 }
 #left, #right {
@@ -44,23 +53,25 @@
   vertical-align:top;
   padding: 0 5px;
 }
-.tooltip-inner {
-    text-align: left;
-}
 table.SessionLinkTable {
   border-collapse: separate;
   border-spacing: 4px 2px;
 }
-
+.show_all {   /* Used by --xxshowall for URLs that would orderinarily be ignored. */
+  white-space: nowrap;
+  color: darkgray;
+}
+.tooltip-inner {  /* Forces tooltips to be left aligned rather than centered. */
+    text-align: left;
+}
 {% endraw %}
 </style>
 </head>
 <body>
-
 <div class="container-fluid">
 <div class="row">
 
-<div class="col-sm-3" id="left">
+<div id="left">
 
 <!--
 The left hand column is a controlled by a bootstrap navbar.  The user clicks on either "By IP" or "By Time" and
@@ -182,7 +193,10 @@ because it requires that all the navigation tabs be within a single unordered li
      </table>
 {% endmacro %}
 
-<div class="col-sm-9" id="right">
+<div id="gutter">
+</div>
+
+<div id="right">
 <div class="tab-content">
 {% for host_info in host_infos_by_ip %}
     {% for session in host_info.sessions %}
@@ -205,7 +219,7 @@ $(function() {
     $('[data-toggle="tooltip"]').tooltip({ boundary: 'window' });
 
     $('.SessionLink').click(function() {
-        var target = $(this).data('target');
+        let target = $(this).data('target');
 
         // Deactivate the session links and session infos that are currently active.
         $('.SessionLink.active').removeClass('active');
@@ -220,6 +234,47 @@ $(function() {
         return false;
     })
 });
+
+let gutter = document.querySelector('#gutter');
+let wrapper = gutter.closest('.row');
+let boxLeft = wrapper.querySelector('#left');
+let boxRight = wrapper.querySelector('#right');
+let isHandlerDragging = false;
+
+document.addEventListener('mousedown', function(e) {
+  // If mousedown event is fired from gutter, toggle flag to true
+  if (e.target === gutter) {
+    isHandlerDragging = true;
+  }
+});
+
+document.addEventListener('mousemove', function(e) {
+  // Don't do anything if dragging flag is false
+  if (!isHandlerDragging) {
+    return false;
+  }
+
+  // Get offset
+  let containerOffsetLeft = wrapper.offsetLeft;
+  let containerOffsetWidth = wrapper.offsetWidth;
+
+  // Get x-coordinate of pointer relative to container
+  let pointerRelativeXpos = e.clientX - containerOffsetLeft;
+
+  // * 8px is the left/right spacing between gutter?? and its inner pseudo-elementb
+  let widthToPercentMultiplier = 100.0 / containerOffsetWidth;
+  let leftWidth = Math.min(containerOffsetWidth / 2, Math.max(containerOffsetWidth * .10, pointerRelativeXpos - 8));
+  boxLeft.style.width =  (leftWidth * widthToPercentMultiplier) + '%';
+  gutter.style.left = boxLeft.style.width;
+  gutter.style.width = (4 * widthToPercentMultiplier) + '%';
+  boxRight.style.width = ((containerOffsetWidth - 4 - leftWidth) * widthToPercentMultiplier) + '%';
+});
+
+document.addEventListener('mouseup', function(e) {
+  // Turn off dragging flag when user mouse is up
+  isHandlerDragging = false;
+});
+
 </script>
 </body>
 </html>
