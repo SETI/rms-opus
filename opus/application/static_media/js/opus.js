@@ -114,7 +114,10 @@ var opus = {
         whether to fire an ajax call.
         */
 
-        selections = o_hash.getSelectionsFromHash();
+        let selections = o_hash.getSelectionsFromHash();
+        if (selections == undefined) {
+            return;
+        }
 
         // if (!$.isEmptyObject(opus.selections) || !opus.checkIfDrawnWidgetsAreDefault() || !opus.checkIfMetadataAreDefault()) {
         if (selections || !opus.checkIfDrawnWidgetsAreDefault()) {
