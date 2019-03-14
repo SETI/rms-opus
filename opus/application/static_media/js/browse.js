@@ -3,6 +3,7 @@ var o_browse = {
     keyPressAction: "",
     tableSorting: false,
     tableScrollbar: new PerfectScrollbar(".dataTable", { minScrollbarLength: 30 }),
+    // tableScrollbar: new PerfectScrollbar(".dataTable > .col-lg", { minScrollbarLength: 30 }),
     galleryScrollbar: new PerfectScrollbar(".gallery-contents", { suppressScrollX: true }),
     modalScrollbar: new PerfectScrollbar("#galleryViewContents .metadata"),
 

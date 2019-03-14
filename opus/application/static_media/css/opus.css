@@ -387,6 +387,10 @@ th.sticky-header {
     transform: translateY(-50%);
 }
 
+/* .dataTable {
+    position: relative;
+} */
+
 .dataTable .ps__rail-y {
     background-color: transparent !important;
     right: 2px !important;
@@ -678,7 +682,9 @@ nav.panel-heading {
 }
 
 .sort-contents {
-  display: flex;
+  /* display: flex; */
+  display: block;
+  margin-bottom: 0;
 }
 
 .sort-contents li {
