@@ -1,6 +1,5 @@
 import argparse
 import datetime
-import glob
 import ipaddress
 import itertools
 import re
