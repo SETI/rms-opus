@@ -496,6 +496,11 @@ def api_normalize_url(request):
         {'new_url': '...'}
         {'message': None or 'MSG'}
     """
+    def _escape_or_label_results(old_slug, pi):
+        if pi.display_results:
+            return pi.body_qualified_label_results()
+        return escape(old_slug)
+
     api_code = enter_api_call('api_normalize_url', request)
 
     if not request or request.GET is None:
@@ -516,7 +521,7 @@ def api_normalize_url(request):
     required_widgets_list = []
 
     handled_slugs = []
-    for slug in old_slugs:
+    for slug in sorted(old_slugs): # Sort just to make tests deterministic
         if slug in settings.SLUGS_NOT_IN_DB:
             continue
         if slug in handled_slugs:
@@ -524,19 +529,35 @@ def api_normalize_url(request):
         if slug.startswith('qtype-'):
             continue
         handled_slugs.append(slug)
+        if slug == 'ringobsid':
+            slug = 'opusid'
+            handled_slugs.append(slug)
+        # Note 'slug' could be old or new version, but pi.slug is always new
         pi = get_param_info_by_slug(slug, 'search')
         if not pi:
             msg = ('Search term "' + escape(slug) + '" is unknown; '
                    +'it has been ignored.')
             msg_list.append(msg)
             continue
-        if not pi.display:
-            msg = ('Search field "' + pi.body_qualified_label_results()
+        pi_searchable = pi
+        if pi.slug[-1] == '2':
+            # We have to look at the '1' version to see if it's searchable
+            pi_searchable = get_param_info_by_slug(
+                                    strip_numeric_suffix(pi.slug)+'1', 'search')
+            if not pi_searchable: # pragma: no cover
+                log.error('api_normalize_url: Found slug "%s" but not "%s"',
+                          pi.slug, strip_numeric_suffix(pi.slug)+'1')
+                continue
+        handled_slugs.append(pi.slug)
+        if pi.old_slug:
+            handled_slugs.append(pi.old_slug)
+        if not pi_searchable.display:
+            msg = ('Search field "' + _escape_or_label_results(slug, pi)
                    + '" is not searchable; it has been removed.')
             msg_list.append(msg)
             continue
         (form_type, form_type_func,
-         form_type_format) = parse_form_type(pi.form_type)
+         form_type_format) = parse_form_type(pi_searchable.form_type)
 
         is_range = form_type in settings.RANGE_FORM_TYPES
         is_string = not is_range and form_type not in settings.MULT_FORM_TYPES
@@ -549,42 +570,65 @@ def api_normalize_url(request):
         qtype_val = None
         pi1 = None
         pi2 = None
-        if pi.slug[-1] == '1':
+        if slug[-1] == '1':
             pi1 = pi
-            search1 = pi.slug
+            search1 = strip_numeric_suffix(pi.slug)+'1'
             search1_val = old_slugs[slug]
             # We found a '1', look for a '2'
-            slug2 = slug[:-1]+'2'
+            # Do some trickery to allow an old1/new2 or old2/new1 combination
+            # If a user was being really obnoxious they could mix old1/new1
+            # as well, so handle that case too by throwing away one of them.
+            # This is so unusual we don't bother to make a message for it.
+            slug2 = strip_numeric_suffix(pi.slug)+'2'
+            if slug2 not in old_slugs and pi.old_slug:
+                slug2 = strip_numeric_suffix(pi.old_slug)+'2'
             if slug2 in old_slugs:
-                handled_slugs.append(slug2)
+                if pi.old_slug:
+                    handled_slugs.append(strip_numeric_suffix(pi.old_slug)+'2')
+                handled_slugs.append(strip_numeric_suffix(pi.slug)+'2')
                 pi2 = get_param_info_by_slug(slug2, 'search')
-                if not pi2:
-                    msg = ('Search term "' + escape(slug2) + '" is '
-                           +'unknown; it has been ignored.')
-                    msg_list.append(msg)
+                if not pi2: # pragma: no cover
+                    log.error('api_normalize_url: Search term "%s" was found '
+                              +' but "%s" was not',
+                              escape(slug), escape(slug2))
                 else:
-                    search2 = pi2.slug
+                    # Don't bother checking .display and .display_results
+                    # here because this slug is governed by the '1' version.
+                    search2 = strip_numeric_suffix(pi2.slug)+'2'
                     search2_val = old_slugs[slug2]
             else:
-                search2 = pi.slug[:-1]+'2'
-        elif pi.slug[-1] == '2':
+                search2 = strip_numeric_suffix(pi.slug)+'2'
+        elif slug[-1] == '2':
             pi2 = pi
-            search2 = pi.slug
+            search2 = strip_numeric_suffix(pi.slug)+'2'
             search2_val = old_slugs[slug]
             # We found a '2', look for a '1'
-            slug1 = slug[:-1]+'1'
+            # Do some trickery to allow an old1/new2 or old2/new1 combination
+            # If a user was being really obnoxious they could mix old1/new1
+            # as well, so handle that case too by throwing away one of them.
+            # This is so unusual we don't bother to make a message for it.
+            slug1 = strip_numeric_suffix(pi.slug)+'1'
+            if slug1 not in old_slugs and pi.old_slug:
+                slug1 = strip_numeric_suffix(pi.old_slug)+'1'
             if slug1 in old_slugs:
-                handled_slugs.append(slug1)
+                if pi.old_slug: # pragma: no cover
+                    # This always has to be true if we got this far. We can
+                    # only be in this section if we had a '2' slug
+                    # alphabetically earlier than a '1' slug, which means they
+                    # must be a combination of old/new. But if they are a
+                    # combination, then by definition there's an old_slug!
+                    handled_slugs.append(strip_numeric_suffix(pi.old_slug)+'1')
+                handled_slugs.append(strip_numeric_suffix(pi.slug)+'1')
                 pi1 = get_param_info_by_slug(slug1, 'search')
-                if not pi1:
-                    msg = ('Search term "' + escape(slug1) + '" is '
-                           +'unknown; it has been ignored.')
-                    msg_list.append(msg)
+                if not pi1: # pragma: no cover
+                    log.error('api_normalize_url: Search term "%s" was found '
+                              +' but "%s" was not',
+                              escape(slug), escape(slug1))
                 else:
-                    search1 = pi1.slug
+                    search1 = strip_numeric_suffix(pi1.slug)+'1'
                     search1_val = old_slugs[slug1]
             else:
-                search1 = pi.slug[:-1]+'1'
+                search1 = strip_numeric_suffix(pi.slug)+'1'
         else:
             # Not numeric
             pi1 = pi
@@ -599,43 +643,43 @@ def api_normalize_url(request):
             qtype_default = 'contains'
         if valid_qtypes:
             # Only look for a qtype field if there's a reason to have one
-            old_qtype_slug = 'qtype-' + strip_numeric_suffix(slug)
+            # Same trick as above in case there is qtype-old and qtype-new
+            qtype_slug = 'qtype-' + strip_numeric_suffix(pi.slug)
+            old_qtype_slug = 'qtype-' + strip_numeric_suffix(pi.slug)
+            if old_qtype_slug not in old_slugs and pi.old_slug:
+                old_qtype_slug = 'qtype-' + strip_numeric_suffix(pi.old_slug)
             if old_qtype_slug in old_slugs:
-                handled_slugs.append(old_qtype_slug)
-                piq = get_param_info_by_slug(old_qtype_slug, 'qtype')
-                if not piq:
-                    msg = ('Search field "' + escape(old_qtype_slug) +
-                           '" is unknown; it has been ignored.')
+                if pi.old_slug:
+                    handled_slugs.append('qtype-'
+                                         + strip_numeric_suffix(pi.old_slug))
+                handled_slugs.append('qtype-' + strip_numeric_suffix(pi.slug))
+                if old_slugs[old_qtype_slug] not in valid_qtypes:
+                    msg = ('Search field "'
+                           + escape(old_slugs[old_qtype_slug])
+                           + '" is unknown; it has been ignored.')
                     msg_list.append(msg)
+                    qtype_val = qtype_default
                 else:
-                    if old_slugs[old_qtype_val] not in valid_qtypes:
-                        msg = ('Search field "'
-                               + escape(old_slugs[old_qtype_val])
-                               + '" is unknown; it has been ignored.')
-                        msg_list.append(msg)
-                    else:
-                        qtype_slug = 'qtype-' + strip_numeric_suffix(piq.slug)
-                        qtype_val = old_slugs[old_qtype_slug]
+                    qtype_val = old_slugs[old_qtype_slug]
             else:
                 # Force a default qtype
-                qtype_slug = 'qtype-' + strip_numeric_suffix(pi.slug)
                 qtype_val = qtype_default
 
         # Now normalize all the values
         temp_dict = {}
-        if search1:
+        if search1 and search1_val:
             temp_dict[search1] = search1_val
-        if search2:
+        if search2 and search2_val:
             temp_dict[search2] = search2_val
-        if qtype_slug:
+        if qtype_slug and qtype_val:
             temp_dict[qtype_slug] = qtype_val
         (selections, extras) = url_to_search_params(temp_dict,
                                                     allow_errors=True,
                                                     return_slugs=True,
                                                     pretty_results=True)
-        if selections is None:
+        if selections is None: # pragma: no cover
             # Even after all that effort, something still failed miserably
-            msg = ('Search query for "'+escape(old_slug)+'" failed for '
+            msg = ('Search query for "'+escape(slug)+'" failed for '
                    +'internal reasons - ignoring')
             msg_list.append(msg)
             continue
@@ -643,34 +687,40 @@ def api_normalize_url(request):
         if search1_val:
             if not selections[search1]:
                 msg = ('Search query for "'
-                       + pi1.body_qualified_label_results()
+                       + _escape_or_label_results(search1, pi1)
                        + '" minimum had an illegal '
                        'value; it has been ignored.')
                 msg_list.append(msg)
                 search1 = None
             else:
                 search1_val = selections[search1]
+                if isinstance(search1_val, (list, tuple)):
+                    search1_val = search1_val[0]
         if search2_val:
             if not selections[search2]:
                 msg = ('Search query for "'
-                       + pi2.body_qualified_label_results()
+                       + _escape_or_label_results(search2, pi2)
                        + '" maximum had an illegal '
                        'value; it has been ignored.')
                 msg_list.append(msg)
                 search2 = None
             else:
                 search2_val = selections[search2]
+                if isinstance(search2_val, (list, tuple)): # pragma: no cover
+                    # This should never happen, because lists are only returned
+                    # for strings, and strings never have a '2' slug
+                    search2_val = search2_val[0]
 
-        if search1:
+        if search1 and search1_val:
             new_url_search_list.append((search1, search1_val))
-        if search2:
+        if search2 and search2_val:
             new_url_search_list.append((search2, search2_val))
-        if qtype_slug:
+        if qtype_slug: # Always include the qtype
             new_url_search_list.append((qtype_slug, qtype_val))
 
         # Make sure that if we have values to search, that the search widget
         # is also enabled.
-        required_widgets_list.append(search1)
+        required_widgets_list.append(strip_numeric_suffix(pi.slug))
 
     #
     # Deal with all the slugs we know about that AREN'T search terms.
@@ -690,13 +740,20 @@ def api_normalize_url(request):
                +'they have been replaced with the new defaults.')
         msg_list.append(msg)
         cols = settings.DEFAULT_COLUMNS
+    if cols == '':
+        msg = ('Your selected metadata list is empty; '
+               +'it has been replaced with the defaults.')
+        msg_list.append(msg)
+        cols = settings.DEFAULT_COLUMNS
     for col in cols.split(','):
+        if col == '':
+            continue
         if col == 'ringobsid':
             col = 'opusid'
         pi = get_param_info_by_slug(col, 'col')
         # It used to be OK for single-column ranges to have a '1' at the end
         if not pi and col[-1] == '1':
-            pi = get_param_info_by_slug(col[:-1], 'widget')
+            pi = get_param_info_by_slug(strip_numeric_suffix(col), 'widget')
         if not pi:
             msg = ('Selected metadata field "' + escape(col)
                    + '" is unknown; it has been removed.')
@@ -717,7 +774,14 @@ def api_normalize_url(request):
         cols_list.append(pi.slug)
         if col != pi.slug:
             old_ui_slug_flag = True
-    new_url_suffix_list.append(('cols', ','.join(cols_list)))
+    if len(cols_list) == 0:
+        msg = ('Your new selected metadata list is empty; '
+               +'it has been replaced with the defaults.')
+        msg_list.append(msg)
+        new_cols = settings.DEFAULT_COLUMNS
+    else:
+        new_cols = ','.join(cols_list)
+    new_url_suffix_list.append(('cols', new_cols))
 
     ### WIDGETS
     widgets_list = []
@@ -727,15 +791,19 @@ def api_normalize_url(request):
         msg = 'The "widgets" field is missing; it has been set to the default.'
         msg_list.append(msg)
         widgets = settings.DEFAULT_WIDGETS
-    if widgets == 'planet,target' and widgets != settings.DEFAULT_WIDGETS:
+    # Note: at least for now, these are the same
+    if (widgets == 'planet,target' and
+        widgets != settings.DEFAULT_WIDGETS): # pragma: no cover
         msg = ('Your URL uses the old defaults for search fields; '
                +'they have been replaced with the new defaults.')
         msg_list.append(msg)
         widgets = settings.DEFAULT_WIDGETS
     for widget in widgets.split(','):
+        if widget == '':
+            continue
         pi = get_param_info_by_slug(widget, 'widget')
         if not pi and widget[-1] == '1':
-            pi = get_param_info_by_slug(widget[:-1], 'widget')
+            pi = get_param_info_by_slug(strip_numeric_suffix(widget), 'widget')
         if not pi:
             msg = ('Search field "' + escape(widget) + '" is unknown; it '
                    +'has been removed.')
@@ -746,7 +814,7 @@ def api_normalize_url(request):
                    +'searchable; it has been removed.')
             msg_list.append(msg)
             continue
-        widget_name = pi.slug.strip('1')
+        widget_name = strip_numeric_suffix(pi.slug)
         if widget_name in widgets_list:
             msg = ('Search field "' + pi.body_qualified_label_results()
                    +'" is duplicated in the list of search fields; '
@@ -754,7 +822,7 @@ def api_normalize_url(request):
             msg_list.append(msg)
             continue
         widgets_list.append(widget_name)
-        if widget != pi.slug:
+        if widget != strip_numeric_suffix(pi.slug):
             old_ui_slug_flag = True
     for widget in required_widgets_list:
         if widget not in widgets_list:
@@ -769,13 +837,23 @@ def api_normalize_url(request):
 
     ### ORDER
     order_list = []
+    order_slug_list = []
     if 'order' in old_slugs:
         orders = old_slugs['order']
     else:
         msg = 'The "order" field is missing; it has been set to the default.'
         msg_list.append(msg)
         orders = settings.DEFAULT_SORT_ORDER
+    if orders == 'time1' and orders != settings.DEFAULT_SORT_ORDER:
+        msg = ('Your URL uses the old defaults for sort order; '
+               +'they have been replaced with the new defaults.')
+        msg_list.append(msg)
+        orders = settings.DEFAULT_SORT_ORDER
     for order in orders.split(','):
+        if order == '':
+            continue
+        if order == 'ringobsid':
+            order = 'opusid'
         desc = False
         if order[0] == '-':
             desc = True
@@ -783,12 +861,25 @@ def api_normalize_url(request):
         pi = get_param_info_by_slug(order, 'col')
         # It used to be OK for single-column ranges to have a '1' at the end
         if not pi and order[-1] == '1':
-            pi = get_param_info_by_slug(order[:-1], 'widget')
+            pi = get_param_info_by_slug(strip_numeric_suffix(order), 'widget')
         if not pi:
             msg = ('Sort order metadata field "' + escape(order)
                    +'" is unknown; it has been removed.')
             msg_list.append(msg)
             continue
+        if pi.slug in order_slug_list:
+            msg = ('Sort order metadata field "'
+                   + pi.body_qualified_label_results()
+                   +'" is duplicated in the list of sort orders; '
+                   +'only one copy is being used.')
+            msg_list.append(msg)
+            continue
+        if not pi.display_results:
+            msg = ('Sort order metadata field "' + escape(col)
+                   +'" is not displayable; it has been removed.')
+            msg_list.append(msg)
+            continue
+        order_slug_list.append(pi.slug)
         if desc:
             order_list.append('-'+pi.slug)
         else:
@@ -798,8 +889,10 @@ def api_normalize_url(request):
     if len(order_list) == 0:
         msg = 'The "order" field is empty; it has been set to the default.'
         msg_list.append(msg)
-        order_list = settings.DEFAULT_SORT_ORDER.split(',')
-    new_url_suffix_list.append(('order', ','.join(order_list)))
+        order_str = settings.DEFAULT_SORT_ORDER
+    else:
+        order_str = ','.join(order_list)
+    new_url_suffix_list.append(('order', order_str))
 
     ### VIEW
     view_val = None
@@ -899,7 +992,7 @@ def api_normalize_url(request):
     #         del old_slugs['colls_browse']
     #     if 'cart_browse' in old_slugs:
     #         del old_slugs['cart_browse']
-    if cart_browse_val is None:
+    if cart_browse_val is None: # pragma: no cover
         cart_browse_val = 'gallery'
     new_url_suffix_list.append(('cart_browse', cart_browse_val))
 
@@ -910,7 +1003,7 @@ def api_normalize_url(request):
         if opus_id != old_slugs['detail']:
             msg = ('You appear to be using an obsolete RINGOBS_ID ('
                    +old_slugs['detail']+') instead of the equivalent new '
-                   +' OPUS_ID ('+opus_id+'); it has been converted for you.')
+                   +'OPUS_ID ('+opus_id+'); it has been converted for you.')
             msg_list.append(msg)
         try:
             obs_general = ObsGeneral.objects.get(opus_id=opus_id)
@@ -932,30 +1025,28 @@ def api_normalize_url(request):
 
     for slug_to_ignore in settings.SLUGS_NOT_IN_DB:
         if slug_to_ignore in old_slugs:
-            old_ui_slug_flag = True
             del old_slugs[slug_to_ignore]
 
     # Now let's see if we forgot anything
-    handled_slugs = []
     for slug in old_slugs:
         if slug in handled_slugs:
             continue
-        if not slug.startswith('qtype-'):
+        if not slug.startswith('qtype-'): # pragma: no cover
             log.error('api_normalize_url: Failed to handle slug "'+slug+'"')
             continue
         handled_slugs.append(slug)
         # If there's a qtype left behind, then it's either dead, or related to
         # a widget that is active but has no search input.
 
-        old_qtype_slug = slug.split('-')[1]
-        pi = get_param_info_by_slug(old_qtype_slug, 'qtype')
+        qtype_base_slug = slug.split('-')[1]
+        pi = get_param_info_by_slug(qtype_base_slug, 'qtype')
         if not pi:
-            msg = ('Search query field "' + escape(old_qtype_slug) +
+            msg = ('Search query field "' + escape(slug) +
                    '" is unknown; it has been ignored.')
             msg_list.append(msg)
             continue
         qtype_slug = 'qtype-' + strip_numeric_suffix(pi.slug)
-        if pi.slug.strip('1') not in widgets_list:
+        if strip_numeric_suffix(pi.slug) not in widgets_list:
             # Dead qtype
             msg = ('Search query type "' + pi.body_qualified_label_results()
                    +'" refers to a search field that is not being used; '
@@ -969,22 +1060,22 @@ def api_normalize_url(request):
         is_string = not is_range and form_type not in settings.MULT_FORM_TYPES
         if is_range and not is_single_column_range(pi.param_qualified_name()):
             valid_qtypes = ('any','all','only')
-            qtype_default = 'any'
         if is_string:
             valid_qtypes = ('contains', 'begins', 'ends', 'matches', 'excludes')
-            qtype_default = 'contains'
         if valid_qtypes:
             if old_slugs[slug] not in valid_qtypes:
                 msg = ('Search field "'
-                       + escape(old_slugs[old_qtype_val])
+                       + _escape_or_label_results(slug, pi)
                        + '" has an unknown query type; it has been ignored.')
                 msg_list.append(msg)
                 continue
             qtype_val = old_slugs[slug]
+            new_url_search_list.append((qtype_slug, qtype_val))
         else:
-            # Force a default qtype
-            qtype_val = qtype_default
-        new_url_search_list.append((qtype_slug, qtype_val))
+            msg = ('Search field "'
+                   + _escape_or_label_results(slug, pi)
+                   + '" does not accept query types; it has been ignored.')
+            msg_list.append(msg)
 
     new_url_list = []
     new_url_dict_list = []
@@ -1107,7 +1198,7 @@ def _get_menu_labels(request, labels_view):
                     continue
                 if p.slug[-1] == '1':
                     # Strip the trailing 1 off all ranges
-                    p.slug = p.slug[:-1]
+                    p.slug = strip_numeric_suffix(p.slug)
                 menu_data[d.table_name].setdefault('data', []).append(p)
 
     return {'menu': {'data': menu_data, 'divs': divs}}
