@@ -175,7 +175,7 @@ def api_string_search_choices(request, slug):
     # Must do this here before deleting the slug from selections below
     like_query, like_params = get_string_query(selections, param_qualified_name,
                                                query_qtype_list)
-    if like_query is None:
+    if like_query is None: # pragma: no cover
         ret = Http404('Bad string query')
         exit_api_call(api_code, ret)
         raise ret
@@ -242,7 +242,7 @@ def api_string_search_choices(request, slug):
     cursor = connection.cursor()
     cursor.execute(sql)
     results = cursor.fetchall()
-    if len(results) != 1 or len(results[0]) != 1:
+    if len(results) != 1 or len(results[0]) != 1: # pragma: no cover
         log.error('api_string_search_choices: SQL failure: %s', sql)
         ret = Http404('Bad SQL')
         exit_api_call(api_code, ret)
@@ -265,7 +265,8 @@ def api_string_search_choices(request, slug):
         # that appear in the cache table to cause result rows
         sql += ' INNER JOIN '+connection.ops.quote_name(user_query_table)
         sql += ' ON '+quoted_table_name+'.'
-        if param_category == 'obs_general':
+        if param_category == 'obs_general': # pragma: no cover
+            # There are currently no string fields in obs_general
             sql += connection.ops.quote_name('id')+'='
         else:
             sql += connection.ops.quote_name('obs_general_id')+'='
@@ -284,7 +285,7 @@ def api_string_search_choices(request, slug):
         try:
             cursor.execute(sql, tuple(sql_params))
         except DatabaseError as e:
-            if e.args[0] != MYSQL_EXECUTION_TIME_EXCEEDED:
+            if e.args[0] != MYSQL_EXECUTION_TIME_EXCEEDED: # pragma: no cover
                 log.error('api_string_search_choices: "%s" returned %s',
                           sql, str(e))
                 ret = Http404('Bad SQL')
@@ -313,7 +314,7 @@ def api_string_search_choices(request, slug):
         try:
             cursor.execute(sql, tuple(sql_params))
         except DatabaseError as e:
-            if e.args[0] != MYSQL_EXECUTION_TIME_EXCEEDED:
+            if e.args[0] != MYSQL_EXECUTION_TIME_EXCEEDED: # pragma: no cover
                 log.error('api_string_search_choices: "%s" returned %s',
                           sql, str(e))
                 ret = Http404('Bad SQL')
@@ -477,7 +478,8 @@ def url_to_search_params(request_get, allow_errors=False, return_slugs=False,
         param_qualified_name_no_num = strip_numeric_suffix(param_qualified_name)
 
         if qtype:
-            if param_qualified_name_no_num in qtypes:
+            if param_qualified_name_no_num in qtypes: # pragma: no cover
+                # This can't happen in real life
                 log.error('url_to_search_params: Duplicate slug for '
                           +'qtype "%s": %s', param_qualified_name_no_num,
                           request_get)
@@ -490,7 +492,8 @@ def url_to_search_params(request_get, allow_errors=False, return_slugs=False,
             # queries being built.
             # No other form types can be sorted since their ordering
             # corresponds to qtype ordering.
-            if param_qualified_name in selections:
+            if param_qualified_name in selections: # pragma: no cover
+                # This can't happen in real life
                 log.error('url_to_search_params: Duplicate slug for '
                           +'"%s": %s', param_qualified_name, request_get)
                 return None, None
@@ -514,7 +517,7 @@ def url_to_search_params(request_get, allow_errors=False, return_slugs=False,
                     func = (opus_support
                             .RANGE_FUNCTIONS[form_type_func][1])
                     values_to_use = values_not_split
-                else:
+                else: # pragma: no cover
                     log.error('url_to_search_params: Unknown RANGE '
                               +'function "%s"', form_type_func)
                     return None, None
@@ -554,7 +557,8 @@ def url_to_search_params(request_get, allow_errors=False, return_slugs=False,
                     return None, None
         else:
             # For non-RANGE queries, we just put the values here raw
-            if param_qualified_name in selections:
+            if param_qualified_name in selections: # pragma: no cover
+                # This can't happen in real life
                 log.error('url_to_search_params: Duplicate slug '
                           +'for "%s": %s', param_qualified_name,
                           request_get)
@@ -1119,7 +1123,7 @@ def get_string_query(selections, param_qualified_name, qtypes):
                   +'for "%s"'
                   +'*** Selections %s *** Qtypes %s ***',
                   qtype, param_qualified_name, str(selections), str(qtypes))
-
+        return None, None
     return clause, params
 
 def get_range_query(selections, param_qualified_name, qtypes):

@@ -493,8 +493,9 @@ def api_normalize_url(request):
     Format: __normalizeurl.json?<slugs>
 
     JSON return:
-        {'new_url': '...'}
-        {'message': None or 'MSG'}
+        {'new_url': '...',
+         'new_slugs': [{'slug1': val}, {'slug2': val}],
+         'message': None or 'MSG'}
     """
     def _escape_or_label_results(old_slug, pi):
         if pi.display_results:
@@ -1103,6 +1104,9 @@ def api_normalize_url(request):
                +'this message in the future.</p>')
         final_msg += msg
 
+    if final_msg == '':
+        final_msg = None
+        
     ret = json_response({'new_url': '&'.join(new_url_list),
                          'new_slugs': new_url_dict_list,
                          'msg': final_msg})

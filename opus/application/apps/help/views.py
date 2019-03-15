@@ -91,7 +91,7 @@ def api_faq(request):
         try:
             faq = yaml.load(text)
 
-        except yaml.YAMLError as exc:
+        except yaml.YAMLError as exc: # pragma: no cover
             log.error('api_faq error: %s', str(exc))
             exit_api_call(api_code, None)
             raise Http404
@@ -146,7 +146,7 @@ def api_guide(request):
         try:
             guide = yaml.load(text)
 
-        except yaml.YAMLError as exc:
+        except yaml.YAMLError as exc: # pragma: no cover
             log.error('api_guide error: %s', str(exc))
             exit_api_call(api_code, None)
             raise Http404

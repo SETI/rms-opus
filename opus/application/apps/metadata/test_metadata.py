@@ -144,3 +144,22 @@ class MetadataTests(TestCase):
         request.GET = None
         with self.assertRaises(Http404):
             api_get_range_endpoints_internal(request, 'observationduration')
+
+
+            #############################################
+            ######### api_get_fields UNIT TESTS #########
+            #############################################
+
+    def test__api_get_fields_no_request(self):
+        "api_get_fields: no request"
+        with self.assertRaises(Http404):
+            api_get_fields(None)
+
+    def test__api_get_fields_no_get(self):
+        "api_get_fields: no GET"
+        c = Client()
+        response = c.get('/api/fields/rightasc1.json')
+        request = response.wsgi_request
+        request.GET = None
+        with self.assertRaises(Http404):
+            api_get_fields(request)

@@ -384,7 +384,7 @@ class ApiMetadataTests(TestCase, ApiTestHelper):
 
     def test__api_meta_mults_bad_slug(self):
         "/api/meta/mults: bad slug"
-        url = '/opus/api/meta/mults/targetx.json?volumeid=COISS_2111&planetx=Saturn'
+        url = '/opus/api/meta/mults/targetx.json?volumeid=COISS_2111&planet=Saturn'
         self._run_status_equal(url, 404, settings.HTTP404_UNKNOWN_SLUG)
 
 
@@ -538,6 +538,12 @@ class ApiMetadataTests(TestCase, ApiTestHelper):
         expected = {'min': '256', 'max': '256', 'nulls': 0}
         self._run_json_equal(url, expected)
 
+    def test__api_meta_range_endpoints_VGISS_levels_constrained(self):
+        "/api/meta/range/endpoints: levels1 VGISS constrained"
+        url = '/opus/api/meta/range/endpoints/levels.json?instrument=Voyager+ISS&levels1=5&levels2=10'
+        expected = {'min': '256', 'max': '256', 'nulls': 0}
+        self._run_json_equal(url, expected)
+
     # reqno
     def test__api_meta_range_endpoints_GOSSI_lesserpixelsize_reqno(self):
         "/api/meta/range/endpoints: greaterpixelsize GOSSI reqno"
@@ -576,7 +582,7 @@ class ApiMetadataTests(TestCase, ApiTestHelper):
     # Bad queries
     def test__api_meta_range_endpoints_bad_search(self):
         "/api/meta/range/endpoints: bad search"
-        url = '/opus/__api/meta/range/endpoints/badslug.json?observationduration=1x2'
+        url = '/opus/__api/meta/range/endpoints/lesserpixelsize.json?observationduration=1x2'
         self._run_status_equal(url, 404, settings.HTTP404_SEARCH_PARAMS_INVALID)
 
     def test__api_meta_range_endpoints_bad_slug(self):
