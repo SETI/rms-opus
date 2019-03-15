@@ -33,6 +33,11 @@ def api_about(request):
     """
     api_code = enter_api_call('api_about', request)
 
+    if not request or request.GET is None:
+        ret = Http404(settings.HTTP404_NO_REQUEST)
+        exit_api_call(api_code, ret)
+        raise ret
+
     ret = render(request, 'help/about.html')
     exit_api_call(api_code, ret)
     return ret
@@ -45,6 +50,11 @@ def api_datasets(request):
     Format: __help/datasets.html
     """
     api_code = enter_api_call('api_datasets', request)
+
+    if not request or request.GET is None:
+        ret = Http404(settings.HTTP404_NO_REQUEST)
+        exit_api_call(api_code, ret)
+        raise ret
 
     data = {}
     all_volumes = OrderedDict()
@@ -68,6 +78,11 @@ def api_faq(request):
     Format: __help/faq.html
     """
     api_code = enter_api_call('api_faq', request)
+
+    if not request or request.GET is None:
+        ret = Http404(settings.HTTP404_NO_REQUEST)
+        exit_api_call(api_code, ret)
+        raise ret
 
     path = os.path.dirname(os.path.abspath(__file__))
     faq_content_file = 'faq.yaml'
@@ -95,6 +110,11 @@ def api_tutorial(request):
     Format: __help/tutorial.html
     """
     api_code = enter_api_call('api_tutorial', request)
+
+    if not request or request.GET is None:
+        ret = Http404(settings.HTTP404_NO_REQUEST)
+        exit_api_call(api_code, ret)
+        raise ret
 
     ret = render(request, 'help/tutorial.html')
     exit_api_call(api_code, ret)

@@ -57,31 +57,6 @@ class ApiUITests(TestCase, ApiTestHelper):
         self.assertEqual(expected, slug_data)
 
 
-            #####################################
-            ######### /__help API TESTS #########
-            #####################################
-
-    def test__api_help_about(self):
-        "/__help: about"
-        url = '/opus/__help/about.html'
-        self._run_status_equal(url, 200)
-
-    def test__api_help_datasets(self):
-        "/__help: datasets"
-        url = '/opus/__help/datasets.html'
-        self._run_status_equal(url, 200)
-
-    def test__api_help_tutorial(self):
-        "/__help: tutorial"
-        url = '/opus/__help/tutorial.html'
-        self._run_status_equal(url, 200)
-
-    def test__api_help_bad(self):
-        "/__help: bad"
-        url = '/opus/__help/bad.html'
-        self._run_status_equal(url, 404)
-
-
             ###############################################
             ######### /__lastblogupdate API TESTS #########
             ###############################################

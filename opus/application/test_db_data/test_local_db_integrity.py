@@ -52,7 +52,7 @@ class DBIntegrityTest(TestCase):
                .order_by('volume_id'))
         try:
             self.assertEqual(list(obs), list(ref))
-        except Exception as e:
+        except Exception as e: # pragma: no cover
             if e.args[0] != MYSQL_TABLE_NOT_EXISTS:
                 raise
 
@@ -70,7 +70,7 @@ class DBIntegrityTest(TestCase):
                .order_by('volume_id'))
         try:
             self.assertEqual(list(obs), list(ref))
-        except Exception as e:
+        except Exception as e: # pragma: no cover
             if e.args[0] != MYSQL_TABLE_NOT_EXISTS:
                 raise
 
@@ -88,7 +88,7 @@ class DBIntegrityTest(TestCase):
                .order_by('volume_id'))
         try:
             self.assertEqual(list(obs), list(ref))
-        except Exception as e:
+        except Exception as e: # pragma: no cover
             if e.args[0] != MYSQL_TABLE_NOT_EXISTS:
                 raise
 
@@ -106,7 +106,7 @@ class DBIntegrityTest(TestCase):
                .order_by('volume_id'))
         try:
             self.assertEqual(list(obs), list(ref))
-        except Exception as e:
+        except Exception as e: # pragma: no cover
             if e.args[0] != MYSQL_TABLE_NOT_EXISTS:
                 raise
 
@@ -124,7 +124,7 @@ class DBIntegrityTest(TestCase):
                .order_by('volume_id'))
         try:
            self.assertEqual(list(obs), list(ref))
-        except Exception as e:
+        except Exception as e: # pragma: no cover
             if e.args[0] != MYSQL_TABLE_NOT_EXISTS:
                 raise
 
@@ -142,7 +142,7 @@ class DBIntegrityTest(TestCase):
                .order_by('volume_id'))
         try:
             self.assertEqual(list(obs), list(ref))
-        except Exception as e:
+        except Exception as e: # pragma: no cover
             if e.args[0] != MYSQL_TABLE_NOT_EXISTS:
                 raise
 
@@ -160,7 +160,7 @@ class DBIntegrityTest(TestCase):
                .order_by('volume_id'))
         try:
             self.assertEqual(list(obs), list(ref))
-        except Exception as e:
+        except Exception as e: # pragma: no cover
             if e.args[0] != MYSQL_TABLE_NOT_EXISTS:
                 raise
 
@@ -178,7 +178,7 @@ class DBIntegrityTest(TestCase):
                .order_by('volume_id'))
         try:
             self.assertEqual(list(obs), list(ref))
-        except Exception as e:
+        except Exception as e: # pragma: no cover
             if e.args[0] != MYSQL_TABLE_NOT_EXISTS:
                 raise
 
@@ -196,7 +196,7 @@ class DBIntegrityTest(TestCase):
                .order_by('volume_id'))
         try:
             self.assertEqual(list(obs), list(ref))
-        except Exception as e:
+        except Exception as e: # pragma: no cover
             if e.args[0] != MYSQL_TABLE_NOT_EXISTS:
                 raise
 
@@ -214,7 +214,7 @@ class DBIntegrityTest(TestCase):
                .order_by('volume_id'))
         try:
             self.assertEqual(list(obs), list(ref))
-        except Exception as e:
+        except Exception as e: # pragma: no cover
             if e.args[0] != MYSQL_TABLE_NOT_EXISTS:
                 raise
 
@@ -232,7 +232,7 @@ class DBIntegrityTest(TestCase):
                .order_by('volume_id'))
         try:
             self.assertEqual(list(obs), list(ref))
-        except Exception as e:
+        except Exception as e: # pragma: no cover
             if e.args[0] != MYSQL_TABLE_NOT_EXISTS:
                 raise
 
@@ -250,7 +250,7 @@ class DBIntegrityTest(TestCase):
                .order_by('volume_id'))
         try:
             self.assertEqual(list(obs), list(ref))
-        except Exception as e:
+        except Exception as e: # pragma: no cover
             if e.args[0] != MYSQL_TABLE_NOT_EXISTS:
                 raise
 
@@ -268,7 +268,7 @@ class DBIntegrityTest(TestCase):
                .order_by('volume_id'))
         try:
             self.assertEqual(list(obs), list(ref))
-        except Exception as e:
+        except Exception as e: # pragma: no cover
             if e.args[0] != MYSQL_TABLE_NOT_EXISTS:
                 raise
 
