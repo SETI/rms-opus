@@ -246,7 +246,7 @@ class ApiMetadataTests(TestCase, ApiTestHelper):
 
     def test__api_meta_result_count_bad_value(self):
         "/api/meta/result_count: with bad value"
-        url = '/opus/api/meta/result_count.json?observationduration1=1X2'
+        url = '/opus/api/meta/result_count.json?observationduration=1X2'
         self._run_status_equal(url, 404,
                                settings.HTTP404_SEARCH_PARAMS_INVALID)
 
@@ -450,7 +450,7 @@ class ApiMetadataTests(TestCase, ApiTestHelper):
     # General / Observation Duration (floating point return)
     def test__api_meta_range_endpoints_observation_duration_VGISS(self):
         "/api/meta/range/endpoints: observation duration VGISS"
-        url = '/opus/api/meta/range/endpoints/observationduration1.json?volumeid=VGISS_6210'
+        url = '/opus/api/meta/range/endpoints/observationduration.json?volumeid=VGISS_6210'
         expected = {'min': '0.2400', 'max': '15.3600', 'nulls': 0}
         self._run_json_equal(url, expected)
 
@@ -474,51 +474,39 @@ class ApiMetadataTests(TestCase, ApiTestHelper):
         self._run_csv_equal(url, expected)
 
     # Image / Pixel Size (integer return)
-    def test__api_meta_range_endpoints_COISS_greaterpixelsize1(self):
-        "/api/meta/range/endpoints: greaterpixelsize1 COISS"
-        url = '/opus/api/meta/range/endpoints/greaterpixelsize1.json?instrument=Cassini+ISS'
+    def test__api_meta_range_endpoints_COISS_greaterpixelsize(self):
+        "/api/meta/range/endpoints: greaterpixelsize COISS"
+        url = '/opus/api/meta/range/endpoints/greaterpixelsize.json?instrument=Cassini+ISS'
         expected = {'max': '1024', 'min': '256', 'nulls': 0}
         self._run_json_equal(url, expected)
 
-    def test__api_meta_range_endpoints_COISS_greaterpixelsize2(self):
-        "/api/meta/range/endpoints: greaterpixelsize2 COISS"
-        url = '/opus/api/meta/range/endpoints/greaterpixelsize2.json?instrument=Cassini+ISS'
+    def test__api_meta_range_endpoints_COISS_lesserpixelsize(self):
+        "/api/meta/range/endpoints: lesserpixelsize COISS"
+        url = '/opus/api/meta/range/endpoints/lesserpixelsize.json?instrument=Cassini+ISS'
         expected = {'min': '256', 'max': '1024', 'nulls': 0}
         self._run_json_equal(url, expected)
 
-    def test__api_meta_range_endpoints_COISS_lesserpixelsize1(self):
-        "/api/meta/range/endpoints: lesserpixelsize1 COISS"
-        url = '/opus/api/meta/range/endpoints/lesserpixelsize1.json?instrument=Cassini+ISS'
-        expected = {'min': '256', 'max': '1024', 'nulls': 0}
-        self._run_json_equal(url, expected)
-
-    def test__api_meta_range_endpoints_COISS_lesserpixelsize2(self):
-        "/api/meta/range/endpoints: lesserpixelsize2 COISS"
-        url = '/opus/api/meta/range/endpoints/lesserpixelsize2.json?instrument=Cassini+ISS'
-        expected = {'min': '256', 'max': '1024', 'nulls': 0}
-        self._run_json_equal(url, expected)
-
-    def test__api_meta_range_endpoints_GOSSI_greaterpixelsize1(self):
-        "/api/meta/range/endpoints: greaterpixelsize1 GOSSI"
-        url = '/opus/api/meta/range/endpoints/greaterpixelsize1.json?instrument=Galileo+SSI'
+    def test__api_meta_range_endpoints_GOSSI_greaterpixelsize(self):
+        "/api/meta/range/endpoints: greaterpixelsize GOSSI"
+        url = '/opus/api/meta/range/endpoints/greaterpixelsize.json?instrument=Galileo+SSI'
         expected = {'min': '800', 'max': '800', 'nulls': 0}
         self._run_json_equal(url, expected)
 
-    def test__api_meta_range_endpoints_GOSSI_lesserpixelsize1(self):
-        "/api/meta/range/endpoints: greaterpixelsize1 GOSSI"
-        url = '/opus/api/meta/range/endpoints/lesserpixelsize1.json?instrument=Galileo+SSI'
+    def test__api_meta_range_endpoints_GOSSI_lesserpixelsize(self):
+        "/api/meta/range/endpoints: lesserpixelsize GOSSI"
+        url = '/opus/api/meta/range/endpoints/lesserpixelsize.json?instrument=Galileo+SSI'
         expected = {'min': '800', 'max': '800', 'nulls': 0}
         self._run_json_equal(url, expected)
 
-    def test__api_meta_range_endpoints_GOSSI_lesserpixelsize1_html(self):
-        "/api/meta/range/endpoints: greaterpixelsize1 GOSSI html"
-        url = '/opus/api/meta/range/endpoints/lesserpixelsize1.html?instrument=Galileo+SSI'
+    def test__api_meta_range_endpoints_GOSSI_lesserpixelsize_html(self):
+        "/api/meta/range/endpoints: lesserpixelsize GOSSI html"
+        url = '/opus/api/meta/range/endpoints/lesserpixelsize.html?instrument=Galileo+SSI'
         expected = b'<dl>\n<dt>min</dt><dd>800</dd>\n<dt>max</dt><dd>800</dd>\n<dt>nulls</dt><dd>0</dd>\n</dl>\n'
         self._run_html_equal(url, expected)
 
-    def test__api_meta_range_endpoints_GOSSI_lesserpixelsize1_csv(self):
-        "/api/meta/range/endpoints: greaterpixelsize1 GOSSI csv"
-        url = '/opus/api/meta/range/endpoints/lesserpixelsize1.csv?instrument=Galileo+SSI'
+    def test__api_meta_range_endpoints_GOSSI_lesserpixelsize_csv(self):
+        "/api/meta/range/endpoints: lesserpixelsize GOSSI csv"
+        url = '/opus/api/meta/range/endpoints/lesserpixelsize.csv?instrument=Galileo+SSI'
         expected = b'min,max,nulls\n800,800,0\n'
         self._run_csv_equal(url, expected)
 
@@ -528,60 +516,60 @@ class ApiMetadataTests(TestCase, ApiTestHelper):
     # Image / Intensity Levels (integer return)
     def test__api_meta_range_endpoints_COISS_levels1(self):
         "/api/meta/range/endpoints: levels1 COISS"
-        url = '/opus/api/meta/range/endpoints/levels1.json?instrument=Cassini+ISS'
+        url = '/opus/api/meta/range/endpoints/levels.json?instrument=Cassini+ISS'
         expected = {'min': '4096', 'max': '4096', 'nulls': 0}
         self._run_json_equal(url, expected)
 
     def test__api_meta_range_endpoints_COVIMS_levels1(self):
         "/api/meta/range/endpoints: levels1 COVIMS"
-        url = '/opus/api/meta/range/endpoints/levels1.json?instrument=Cassini+VIMS'
+        url = '/opus/api/meta/range/endpoints/levels.json?instrument=Cassini+VIMS'
         expected = {'min': '4096', 'max': '4096', 'nulls': 0}
         self._run_json_equal(url, expected)
 
     def test__api_meta_range_endpoints_GOSSI_levels1(self):
         "/api/meta/range/endpoints: levels1 GOSSI"
-        url = '/opus/api/meta/range/endpoints/levels1.json?instrument=Galileo+SSI'
+        url = '/opus/api/meta/range/endpoints/levels.json?instrument=Galileo+SSI'
         expected = {'min': '256', 'max': '256', 'nulls': 0}
         self._run_json_equal(url, expected)
 
     def test__api_meta_range_endpoints_VGISS_levels1(self):
         "/api/meta/range/endpoints: levels1 VGISS"
-        url = '/opus/api/meta/range/endpoints/levels1.json?instrument=Voyager+ISS'
+        url = '/opus/api/meta/range/endpoints/levels.json?instrument=Voyager+ISS'
         expected = {'min': '256', 'max': '256', 'nulls': 0}
         self._run_json_equal(url, expected)
 
     # reqno
-    def test__api_meta_range_endpoints_GOSSI_lesserpixelsize1_reqno(self):
-        "/api/meta/range/endpoints: greaterpixelsize1 GOSSI reqno"
-        url = '/opus/api/meta/range/endpoints/lesserpixelsize1.json?instrument=Galileo+SSI&reqno=12345'
+    def test__api_meta_range_endpoints_GOSSI_lesserpixelsize_reqno(self):
+        "/api/meta/range/endpoints: greaterpixelsize GOSSI reqno"
+        url = '/opus/api/meta/range/endpoints/lesserpixelsize.json?instrument=Galileo+SSI&reqno=12345'
         expected = {'min': '800', 'max': '800', 'nulls': 0}
         self._run_json_equal(url, expected)
 
-    def test__api_meta_range_endpoints_GOSSI_lesserpixelsize1_reqno_internal(self):
-        "/api/meta/range/endpoints: greaterpixelsize1 GOSSI reqno internal"
-        url = '/opus/__api/meta/range/endpoints/lesserpixelsize1.json?instrument=Galileo+SSI&reqno=12345'
+    def test__api_meta_range_endpoints_GOSSI_lesserpixelsize_reqno_internal(self):
+        "/api/meta/range/endpoints: greaterpixelsize GOSSI reqno internal"
+        url = '/opus/__api/meta/range/endpoints/lesserpixelsize.json?instrument=Galileo+SSI&reqno=12345'
         expected = {'min': '800', 'max': '800', 'nulls': 0, 'reqno': 12345}
         self._run_json_equal(url, expected)
 
-    def test__api_meta_range_endpoints_GOSSI_lesserpixelsize1_reqno_bad_internal(self):
-        "/api/meta/range/endpoints: greaterpixelsize1 GOSSI reqno bad internal"
-        url = '/opus/__api/meta/range/endpoints/lesserpixelsize1.json?instrument=Galileo+SSI&reqno=NaN'
+    def test__api_meta_range_endpoints_GOSSI_lesserpixelsize_reqno_bad_internal(self):
+        "/api/meta/range/endpoints: greaterpixelsize GOSSI reqno bad internal"
+        url = '/opus/__api/meta/range/endpoints/lesserpixelsize.json?instrument=Galileo+SSI&reqno=NaN'
         self._run_status_equal(url, 404, settings.HTTP404_MISSING_REQNO)
 
-    def test__api_meta_range_endpoints_GOSSI_lesserpixelsize1_reqno_bad_internal_2(self):
-        "/api/meta/range/endpoints: greaterpixelsize1 GOSSI reqno bad internal 2"
-        url = '/opus/__api/meta/range/endpoints/lesserpixelsize1.json?instrument=Galileo+SSI&reqno=-101010'
+    def test__api_meta_range_endpoints_GOSSI_lesserpixelsize_reqno_bad_internal_2(self):
+        "/api/meta/range/endpoints: greaterpixelsize GOSSI reqno bad internal 2"
+        url = '/opus/__api/meta/range/endpoints/lesserpixelsize.json?instrument=Galileo+SSI&reqno=-101010'
         self._run_status_equal(url, 404, settings.HTTP404_MISSING_REQNO)
 
-    def test__api_meta_range_endpoints_GOSSI_lesserpixelsize1_html_reqno(self):
-        "/api/meta/range/endpoints: greaterpixelsize1 GOSSI html reqno"
-        url = '/opus/api/meta/range/endpoints/lesserpixelsize1.html?instrument=Galileo+SSI&reqno=1e38'
+    def test__api_meta_range_endpoints_GOSSI_lesserpixelsize_html_reqno(self):
+        "/api/meta/range/endpoints: greaterpixelsize GOSSI html reqno"
+        url = '/opus/api/meta/range/endpoints/lesserpixelsize.html?instrument=Galileo+SSI&reqno=1e38'
         expected = b'<dl>\n<dt>min</dt><dd>800</dd>\n<dt>max</dt><dd>800</dd>\n<dt>nulls</dt><dd>0</dd>\n</dl>\n'
         self._run_html_equal(url, expected)
 
-    def test__api_meta_range_endpoints_GOSSI_lesserpixelsize1_csv_reqno(self):
-        "/api/meta/range/endpoints: greaterpixelsize1 GOSSI csv reqno"
-        url = '/opus/api/meta/range/endpoints/lesserpixelsize1.csv?instrument=Galileo+SSI&reqno=12345'
+    def test__api_meta_range_endpoints_GOSSI_lesserpixelsize_csv_reqno(self):
+        "/api/meta/range/endpoints: greaterpixelsize GOSSI csv reqno"
+        url = '/opus/api/meta/range/endpoints/lesserpixelsize.csv?instrument=Galileo+SSI&reqno=12345'
         expected = b'min,max,nulls\n800,800,0\n'
         self._run_csv_equal(url, expected)
 

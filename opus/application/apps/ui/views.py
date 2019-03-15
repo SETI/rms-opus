@@ -14,6 +14,7 @@ from django.apps import apps
 from django.core.exceptions import FieldError, ObjectDoesNotExist
 from django.shortcuts import render
 from django.utils.decorators import method_decorator
+from django.utils.html import escape
 from django.views.generic import TemplateView
 
 from dictionary.models import *
@@ -39,6 +40,7 @@ class main_site(TemplateView):
         context = super(main_site, self).get_context_data(**kwargs)
         menu = _get_menu_labels('', 'search')
         context['default_columns'] = settings.DEFAULT_COLUMNS
+        context['default_widgets'] = settings.DEFAULT_WIDGETS
         context['default_sort_order'] = settings.DEFAULT_SORT_ORDER
         context['menu'] = menu['menu']
         if settings.OPUS_FILE_VERSION == '':
@@ -59,7 +61,7 @@ def api_last_blog_update(request):
       or if none available:
         {'lastupdate': None}
     """
-    api_code = enter_api_call('api_help', request)
+    api_code = enter_api_call('api_last_blog_update', request)
 
     if not request or request.GET is None:
         ret = Http404(settings.HTTP404_NO_REQUEST)
@@ -120,17 +122,14 @@ def api_get_table_headers(request):
     slugs = cols_to_slug_list(slugs)
     columns = []
 
-    # If this is an ajax call it means it's from our app, so append the
-    # checkbox column for adding to selections
-    if (request.is_ajax()):
-        columns.append(['cart', 'Selected'])
+    columns.append(['cart', 'Selected'])
 
     template = 'table_headers.html'
     param_info = ParamInfo.objects
 
     for slug in slugs:
         if slug and slug != 'opus_id':
-            pi = get_param_info_by_slug(slug, from_ui=True)
+            pi = get_param_info_by_slug(slug, 'col')
             if not pi:
                 log.error('get_table_headers: Unable to find slug "%s"', slug)
                 continue
@@ -183,7 +182,7 @@ def api_get_widget(request, **kwargs):
     fmt = 'html'
     form = ''
 
-    param_info = get_param_info_by_slug(slug)
+    param_info = get_param_info_by_slug(slug, 'widget')
     if not param_info:
         log.error(
             'api_get_widget: Could not find param_info entry for slug %s',
@@ -206,10 +205,6 @@ def api_get_widget(request, **kwargs):
         if selections is None: # XXX Really should throw an error of some kind
             selections = {}
             extras = {}
-
-    addlink = request.GET.get('addlink', True) # suppresses the add_str link
-    remove_str = '<a class="remove_input" href="">-</a>'
-    add_str = '<a class="add_input" href="">add</a> '
 
     search_form = param_info.category_name
 
@@ -236,12 +231,6 @@ def api_get_widget(request, **kwargs):
 
         if not length: # param is not constrained
             form = str(SearchForm(form_vals, auto_id=auto_id).as_ul());
-            if addlink == 'false':
-                # Remove input is last list item in form
-                form = '<ul>' + form + '<li>'+remove_str+'</li></ul>'
-            else:
-                # Add input link comes before form
-                form = '<span>'+add_str+'</span><ul>' + form + '</ul>'
 
         else: # param is constrained
             if form_type_func is None:
@@ -275,12 +264,6 @@ def api_get_widget(request, **kwargs):
                         form_vals['qtype-'+slug] = False
                 form = form + str(SearchForm(form_vals, auto_id=auto_id).as_ul())
 
-                if key > 0:
-                    # remove input is last list item in form
-                    form = '<ul>' + form + '<li>'+remove_str+'</li></ul>'
-                else:
-                    # add input link comes before form
-                    form = '<span>'+add_str+'</span><ul>' + form + '</ul>'
                 if length > 1:
                     form = form + '</span><div style = "clear: both;"></div></section><section><span class="widget_form">'
                 key = key+1
@@ -298,17 +281,9 @@ def api_get_widget(request, **kwargs):
                     except KeyError:
                         form_vals['qtype-'+slug] = False
                 form = form + str(SearchForm(form_vals, auto_id=auto_id).as_ul())
-                if key > 0:
-                    form = form + '<li>'+remove_str+'</li>'
-                else:
-                    form = form + '<li>'+add_str+'</li>'
                 key = key+1
         else:
             form = str(SearchForm(form_vals, auto_id=auto_id).as_ul());
-            if addlink == 'false':
-                form = form + '<li>'+remove_str+'<li>'
-            else:
-                form = form + '<li>'+add_str+'<li>'
 
     # MULT form types
     elif form_type in settings.MULT_FORM_TYPES:
@@ -358,13 +333,6 @@ def api_get_widget(request, **kwargs):
             form_vals = {slug:selections[param_qualified_name]}
         form = SearchForm(form_vals, auto_id=auto_id).as_ul()
 
-    param_info = get_param_info_by_slug(slug)
-    if not param_info:
-        log.error(
-            "api_get_widget: Could not find param_info entry for slug %s",
-            str(slug))
-        raise Http404
-
     label = param_info.body_qualified_label()
     intro = param_info.intro
     units = param_info.get_units()
@@ -403,7 +371,9 @@ def api_get_metadata_selector(request):
     slugs = filter(None, slugs)
     if not slugs:
         slugs = cols_to_slug_list(settings.DEFAULT_COLUMNS)
-    all_slugs_info = _get_column_info(slugs)
+    all_slugs_info = OrderedDict()
+    for slug in slugs:
+        all_slugs_info[slug] = get_param_info_by_slug(slug, 'col')
     menu = _get_menu_labels(request, 'results')['menu']
 
     context = {
@@ -436,14 +406,6 @@ def api_init_detail_page(request, **kwargs):
     slugs = request.GET.get('cols', False)
 
     opus_id = kwargs['opus_id']
-    orig_opus_id = opus_id
-    opus_id = convert_ring_obs_id_to_opus_id(opus_id)
-    # We have to save the original opus_id in case it's a ring_obs_id, and then
-    # pass it to the detail.html template below, because the JS detail.js has
-    # no way of knowing that we mapped ring_obs_id -> opus_id and tries to
-    # reference HTML tags based on what it thinks of as the right name (the
-    # old ring_obs_id). Thus we go ahead and name the appropriate HTML tag using
-    # the user-provided name, whatever format it's in.
 
     try:
         obs_general = ObsGeneral.objects.get(opus_id=opus_id)
@@ -515,10 +477,636 @@ def api_init_detail_page(request, **kwargs):
         'preview_guide_url': preview_guide_url,
         'products': new_products,
         'opus_id': opus_id,
-        'opus_or_ringobs_id': orig_opus_id,
         'instrument_id': instrument_id
     }
     ret = render(request, 'detail.html', context)
+    exit_api_call(api_code, ret)
+    return ret
+
+
+@never_cache
+def api_normalize_url(request):
+    """Given a top-level OPUS URL, normalize it to modern format and return.
+
+    This is a PRIVATE API.
+
+    Format: __normalizeurl.json?<slugs>
+
+    JSON return:
+        {'new_url': '...'}
+        {'message': None or 'MSG'}
+    """
+    def _escape_or_label_results(old_slug, pi):
+        if pi.display_results:
+            return pi.body_qualified_label_results()
+        return escape(old_slug)
+
+    api_code = enter_api_call('api_normalize_url', request)
+
+    if not request or request.GET is None:
+        ret = Http404(settings.HTTP404_NO_REQUEST)
+        exit_api_call(api_code, ret)
+        raise ret
+
+    old_slugs = dict(list(request.GET.items())) # Make it mutable
+    msg_list = []
+    new_url_suffix_list = []
+    new_url_search_list = []
+    old_ui_slug_flag = False
+
+    #
+    # Handle search slugs including qtypes
+    #
+
+    required_widgets_list = []
+
+    handled_slugs = []
+    for slug in sorted(old_slugs): # Sort just to make tests deterministic
+        if slug in settings.SLUGS_NOT_IN_DB:
+            continue
+        if slug in handled_slugs:
+            continue
+        if slug.startswith('qtype-'):
+            continue
+        handled_slugs.append(slug)
+        if slug == 'ringobsid':
+            slug = 'opusid'
+            handled_slugs.append(slug)
+        # Note 'slug' could be old or new version, but pi.slug is always new
+        pi = get_param_info_by_slug(slug, 'search')
+        if not pi:
+            msg = ('Search term "' + escape(slug) + '" is unknown; '
+                   +'it has been ignored.')
+            msg_list.append(msg)
+            continue
+        pi_searchable = pi
+        if pi.slug[-1] == '2':
+            # We have to look at the '1' version to see if it's searchable
+            pi_searchable = get_param_info_by_slug(
+                                    strip_numeric_suffix(pi.slug)+'1', 'search')
+            if not pi_searchable: # pragma: no cover
+                log.error('api_normalize_url: Found slug "%s" but not "%s"',
+                          pi.slug, strip_numeric_suffix(pi.slug)+'1')
+                continue
+        handled_slugs.append(pi.slug)
+        if pi.old_slug:
+            handled_slugs.append(pi.old_slug)
+        if not pi_searchable.display:
+            msg = ('Search field "' + _escape_or_label_results(slug, pi)
+                   + '" is not searchable; it has been removed.')
+            msg_list.append(msg)
+            continue
+        (form_type, form_type_func,
+         form_type_format) = parse_form_type(pi_searchable.form_type)
+
+        is_range = form_type in settings.RANGE_FORM_TYPES
+        is_string = not is_range and form_type not in settings.MULT_FORM_TYPES
+
+        search1 = None
+        search1_val = ''
+        search2 = None
+        search2_val = ''
+        qtype_slug = None
+        qtype_val = None
+        pi1 = None
+        pi2 = None
+        if slug[-1] == '1':
+            pi1 = pi
+            search1 = strip_numeric_suffix(pi.slug)+'1'
+            search1_val = old_slugs[slug]
+            # We found a '1', look for a '2'
+            # Do some trickery to allow an old1/new2 or old2/new1 combination
+            # If a user was being really obnoxious they could mix old1/new1
+            # as well, so handle that case too by throwing away one of them.
+            # This is so unusual we don't bother to make a message for it.
+            slug2 = strip_numeric_suffix(pi.slug)+'2'
+            if slug2 not in old_slugs and pi.old_slug:
+                slug2 = strip_numeric_suffix(pi.old_slug)+'2'
+            if slug2 in old_slugs:
+                if pi.old_slug:
+                    handled_slugs.append(strip_numeric_suffix(pi.old_slug)+'2')
+                handled_slugs.append(strip_numeric_suffix(pi.slug)+'2')
+                pi2 = get_param_info_by_slug(slug2, 'search')
+                if not pi2: # pragma: no cover
+                    log.error('api_normalize_url: Search term "%s" was found '
+                              +' but "%s" was not',
+                              escape(slug), escape(slug2))
+                else:
+                    # Don't bother checking .display and .display_results
+                    # here because this slug is governed by the '1' version.
+                    search2 = strip_numeric_suffix(pi2.slug)+'2'
+                    search2_val = old_slugs[slug2]
+            else:
+                search2 = strip_numeric_suffix(pi.slug)+'2'
+        elif slug[-1] == '2':
+            pi2 = pi
+            search2 = strip_numeric_suffix(pi.slug)+'2'
+            search2_val = old_slugs[slug]
+            # We found a '2', look for a '1'
+            # Do some trickery to allow an old1/new2 or old2/new1 combination
+            # If a user was being really obnoxious they could mix old1/new1
+            # as well, so handle that case too by throwing away one of them.
+            # This is so unusual we don't bother to make a message for it.
+            slug1 = strip_numeric_suffix(pi.slug)+'1'
+            if slug1 not in old_slugs and pi.old_slug:
+                slug1 = strip_numeric_suffix(pi.old_slug)+'1'
+            if slug1 in old_slugs:
+                if pi.old_slug: # pragma: no cover
+                    # This always has to be true if we got this far. We can
+                    # only be in this section if we had a '2' slug
+                    # alphabetically earlier than a '1' slug, which means they
+                    # must be a combination of old/new. But if they are a
+                    # combination, then by definition there's an old_slug!
+                    handled_slugs.append(strip_numeric_suffix(pi.old_slug)+'1')
+                handled_slugs.append(strip_numeric_suffix(pi.slug)+'1')
+                pi1 = get_param_info_by_slug(slug1, 'search')
+                if not pi1: # pragma: no cover
+                    log.error('api_normalize_url: Search term "%s" was found '
+                              +' but "%s" was not',
+                              escape(slug), escape(slug1))
+                else:
+                    search1 = strip_numeric_suffix(pi1.slug)+'1'
+                    search1_val = old_slugs[slug1]
+            else:
+                search1 = strip_numeric_suffix(pi.slug)+'1'
+        else:
+            # Not numeric
+            pi1 = pi
+            search1 = pi.slug
+            search1_val = old_slugs[slug]
+        valid_qtypes = None
+        if is_range and not is_single_column_range(pi.param_qualified_name()):
+            valid_qtypes = ('any','all','only')
+            qtype_default = 'any'
+        if is_string:
+            valid_qtypes = ('contains', 'begins', 'ends', 'matches', 'excludes')
+            qtype_default = 'contains'
+        if valid_qtypes:
+            # Only look for a qtype field if there's a reason to have one
+            # Same trick as above in case there is qtype-old and qtype-new
+            qtype_slug = 'qtype-' + strip_numeric_suffix(pi.slug)
+            old_qtype_slug = 'qtype-' + strip_numeric_suffix(pi.slug)
+            if old_qtype_slug not in old_slugs and pi.old_slug:
+                old_qtype_slug = 'qtype-' + strip_numeric_suffix(pi.old_slug)
+            if old_qtype_slug in old_slugs:
+                if pi.old_slug:
+                    handled_slugs.append('qtype-'
+                                         + strip_numeric_suffix(pi.old_slug))
+                handled_slugs.append('qtype-' + strip_numeric_suffix(pi.slug))
+                if old_slugs[old_qtype_slug] not in valid_qtypes:
+                    msg = ('Search field "'
+                           + escape(old_slugs[old_qtype_slug])
+                           + '" is unknown; it has been ignored.')
+                    msg_list.append(msg)
+                    qtype_val = qtype_default
+                else:
+                    qtype_val = old_slugs[old_qtype_slug]
+            else:
+                # Force a default qtype
+                qtype_val = qtype_default
+
+        # Now normalize all the values
+        temp_dict = {}
+        if search1 and search1_val:
+            temp_dict[search1] = search1_val
+        if search2 and search2_val:
+            temp_dict[search2] = search2_val
+        if qtype_slug and qtype_val:
+            temp_dict[qtype_slug] = qtype_val
+        (selections, extras) = url_to_search_params(temp_dict,
+                                                    allow_errors=True,
+                                                    return_slugs=True,
+                                                    pretty_results=True)
+        if selections is None: # pragma: no cover
+            # Even after all that effort, something still failed miserably
+            msg = ('Search query for "'+escape(slug)+'" failed for '
+                   +'internal reasons - ignoring')
+            msg_list.append(msg)
+            continue
+
+        if search1_val:
+            if not selections[search1]:
+                msg = ('Search query for "'
+                       + _escape_or_label_results(search1, pi1)
+                       + '" minimum had an illegal '
+                       'value; it has been ignored.')
+                msg_list.append(msg)
+                search1 = None
+            else:
+                search1_val = selections[search1]
+                if isinstance(search1_val, (list, tuple)):
+                    search1_val = search1_val[0]
+        if search2_val:
+            if not selections[search2]:
+                msg = ('Search query for "'
+                       + _escape_or_label_results(search2, pi2)
+                       + '" maximum had an illegal '
+                       'value; it has been ignored.')
+                msg_list.append(msg)
+                search2 = None
+            else:
+                search2_val = selections[search2]
+                if isinstance(search2_val, (list, tuple)): # pragma: no cover
+                    # This should never happen, because lists are only returned
+                    # for strings, and strings never have a '2' slug
+                    search2_val = search2_val[0]
+
+        if search1 and search1_val:
+            new_url_search_list.append((search1, search1_val))
+        if search2 and search2_val:
+            new_url_search_list.append((search2, search2_val))
+        if qtype_slug: # Always include the qtype
+            new_url_search_list.append((qtype_slug, qtype_val))
+
+        # Make sure that if we have values to search, that the search widget
+        # is also enabled.
+        required_widgets_list.append(strip_numeric_suffix(pi.slug))
+
+    #
+    # Deal with all the slugs we know about that AREN'T search terms.
+    #
+
+    ### COLS
+    cols_list = []
+    if 'cols' in old_slugs:
+        cols = old_slugs['cols']
+    else:
+        msg = 'The "cols" field is missing; it has been set to the default.'
+        msg_list.append(msg)
+        cols = settings.DEFAULT_COLUMNS
+    if (cols ==
+        'ringobsid,planet,target,phase1,phase2,time1,time2'):
+        msg = ('Your URL uses the old defaults for selected metadata; '
+               +'they have been replaced with the new defaults.')
+        msg_list.append(msg)
+        cols = settings.DEFAULT_COLUMNS
+    if cols == '':
+        msg = ('Your selected metadata list is empty; '
+               +'it has been replaced with the defaults.')
+        msg_list.append(msg)
+        cols = settings.DEFAULT_COLUMNS
+    for col in cols.split(','):
+        if col == '':
+            continue
+        if col == 'ringobsid':
+            col = 'opusid'
+        pi = get_param_info_by_slug(col, 'col')
+        # It used to be OK for single-column ranges to have a '1' at the end
+        if not pi and col[-1] == '1':
+            pi = get_param_info_by_slug(strip_numeric_suffix(col), 'widget')
+        if not pi:
+            msg = ('Selected metadata field "' + escape(col)
+                   + '" is unknown; it has been removed.')
+            msg_list.append(msg)
+            continue
+        if not pi.display_results:
+            msg = ('Selected metadata field "' + escape(col)
+                   +'" is not displayable; it has been removed.')
+            msg_list.append(msg)
+            continue
+        if pi.slug in cols_list:
+            msg = ('Selected metadata field "'
+                   + pi.body_qualified_label_results()
+                   +'" is duplicated in the list of selected metadata; '
+                   +'only one copy is being used.')
+            msg_list.append(msg)
+            continue
+        cols_list.append(pi.slug)
+        if col != pi.slug:
+            old_ui_slug_flag = True
+    if len(cols_list) == 0:
+        msg = ('Your new selected metadata list is empty; '
+               +'it has been replaced with the defaults.')
+        msg_list.append(msg)
+        new_cols = settings.DEFAULT_COLUMNS
+    else:
+        new_cols = ','.join(cols_list)
+    new_url_suffix_list.append(('cols', new_cols))
+
+    ### WIDGETS
+    widgets_list = []
+    if 'widgets' in old_slugs:
+        widgets = old_slugs['widgets']
+    else:
+        msg = 'The "widgets" field is missing; it has been set to the default.'
+        msg_list.append(msg)
+        widgets = settings.DEFAULT_WIDGETS
+    # Note: at least for now, these are the same
+    if (widgets == 'planet,target' and
+        widgets != settings.DEFAULT_WIDGETS): # pragma: no cover
+        msg = ('Your URL uses the old defaults for search fields; '
+               +'they have been replaced with the new defaults.')
+        msg_list.append(msg)
+        widgets = settings.DEFAULT_WIDGETS
+    for widget in widgets.split(','):
+        if widget == '':
+            continue
+        pi = get_param_info_by_slug(widget, 'widget')
+        if not pi and widget[-1] == '1':
+            pi = get_param_info_by_slug(strip_numeric_suffix(widget), 'widget')
+        if not pi:
+            msg = ('Search field "' + escape(widget) + '" is unknown; it '
+                   +'has been removed.')
+            msg_list.append(msg)
+            continue
+        if not pi.display:
+            msg = ('Search field "' + escape(widget) + '" is not '
+                   +'searchable; it has been removed.')
+            msg_list.append(msg)
+            continue
+        widget_name = strip_numeric_suffix(pi.slug)
+        if widget_name in widgets_list:
+            msg = ('Search field "' + pi.body_qualified_label_results()
+                   +'" is duplicated in the list of search fields; '
+                   +'only one copy is being used.')
+            msg_list.append(msg)
+            continue
+        widgets_list.append(widget_name)
+        if widget != strip_numeric_suffix(pi.slug):
+            old_ui_slug_flag = True
+    for widget in required_widgets_list:
+        if widget not in widgets_list:
+            pi = get_param_info_by_slug(widget, 'widget')
+            msg = ('Search field "' + pi.body_qualified_label_results()
+                   +'" has search parameters but is not listed as a displayed '
+                   +'search field; it has been added to the displayed search '
+                   +'field list.')
+            msg_list.append(msg)
+            widgets_list.append(widget)
+    new_url_suffix_list.append(('widgets', ','.join(widgets_list)))
+
+    ### ORDER
+    order_list = []
+    order_slug_list = []
+    if 'order' in old_slugs:
+        orders = old_slugs['order']
+    else:
+        msg = 'The "order" field is missing; it has been set to the default.'
+        msg_list.append(msg)
+        orders = settings.DEFAULT_SORT_ORDER
+    if orders == 'time1' and orders != settings.DEFAULT_SORT_ORDER:
+        msg = ('Your URL uses the old defaults for sort order; '
+               +'they have been replaced with the new defaults.')
+        msg_list.append(msg)
+        orders = settings.DEFAULT_SORT_ORDER
+    for order in orders.split(','):
+        if order == '':
+            continue
+        if order == 'ringobsid':
+            order = 'opusid'
+        desc = False
+        if order[0] == '-':
+            desc = True
+            order = order[1:]
+        pi = get_param_info_by_slug(order, 'col')
+        # It used to be OK for single-column ranges to have a '1' at the end
+        if not pi and order[-1] == '1':
+            pi = get_param_info_by_slug(strip_numeric_suffix(order), 'widget')
+        if not pi:
+            msg = ('Sort order metadata field "' + escape(order)
+                   +'" is unknown; it has been removed.')
+            msg_list.append(msg)
+            continue
+        if pi.slug in order_slug_list:
+            msg = ('Sort order metadata field "'
+                   + pi.body_qualified_label_results()
+                   +'" is duplicated in the list of sort orders; '
+                   +'only one copy is being used.')
+            msg_list.append(msg)
+            continue
+        if not pi.display_results:
+            msg = ('Sort order metadata field "' + escape(col)
+                   +'" is not displayable; it has been removed.')
+            msg_list.append(msg)
+            continue
+        order_slug_list.append(pi.slug)
+        if desc:
+            order_list.append('-'+pi.slug)
+        else:
+            order_list.append(pi.slug)
+        if order != pi.slug:
+            old_ui_slug_flag = True
+    if len(order_list) == 0:
+        msg = 'The "order" field is empty; it has been set to the default.'
+        msg_list.append(msg)
+        order_str = settings.DEFAULT_SORT_ORDER
+    else:
+        order_str = ','.join(order_list)
+    new_url_suffix_list.append(('order', order_str))
+
+    ### VIEW
+    view_val = None
+    if 'view' in old_slugs:
+        if old_slugs['view'] not in ('search', 'browse',
+                                     'collection', 'cart', 'detail'):
+            msg = ('The value for "view" was not one of '
+                   +'"search", "browse", "collection", "cart", or '
+                   +'"detail"); it has been set to "gallery".')
+            msg_list.append(msg)
+            view_val = 'gallery'
+        else:
+            view_val = old_slugs['view']
+            if view_val == 'collection':
+                old_ui_slug_flag = True
+                view_val = 'cart'
+        del old_slugs['view']
+    if view_val is None:
+        msg = 'The "view" field is missing; it has been set to the default.'
+        msg_list.append(msg)
+        view_val = 'gallery'
+    new_url_suffix_list.append(('view', view_val))
+
+    ### BROWSE
+    browse_val = None
+    if 'browse' in old_slugs:
+        if old_slugs['browse'] not in ('gallery', 'data'):
+            msg = ('The value for "browse" was not either "gallery" or "data"; '
+                   +'it has been set to "gallery".')
+            msg_list.append(msg)
+        else:
+            browse_val = old_slugs['browse']
+        del old_slugs['browse']
+    if browse_val is None:
+        msg = 'The "browse" field is missing; it has been set to the default.'
+        msg_list.append(msg)
+        browse_val = 'gallery'
+    new_url_suffix_list.append(('browse', browse_val))
+
+    ### PAGE and STARTOBS
+    startobs_val = None
+    if 'page' in old_slugs:
+        old_ui_slug_flag = True
+        page_no = 1
+        try:
+            page_no = int(old_slugs['page'])
+        except ValueError:
+            msg = ('The value for the "page" term was not a valid '
+                   +'integer; it has been set to 1.')
+            msg_list.append(msg)
+            page_no = 1
+        else:
+            if page_no < 1 or page_no > 20000:
+                page_no = 1
+                msg = ('The value for the "page" term was not between '
+                       +'1 and 20000; it has been set to 1.')
+                msg_list.append(msg)
+                page_no = 1
+        del old_slugs['page']
+        startobs_val = (page_no-1)*100+1
+    if 'startobs' in old_slugs:
+        try:
+            startobs_val = int(old_slugs['startobs'])
+        except ValueError:
+            msg = ('The value for the "startobs" term was not a valid '
+                   +'integer; it has been set to 1.')
+            msg_list.append(msg)
+            startobs_val = 1
+        else:
+            if startobs_val < 1 or startobs_val > 10000000:
+                msg = ('The value for the "startobs" term was not between '
+                       +'1 and 10000000; it has been set to 1.')
+                msg_list.append(msg)
+                startobs_val = 1
+        del old_slugs['startobs']
+    if not startobs_val:
+        msg = ('The "startobs" or "page" fields are missing; they have been '
+               +'set to the default.')
+        msg_list.append(msg)
+        startobs_val = 1
+    new_url_suffix_list.append(('startobs', startobs_val))
+
+    ### CART_BROWSE
+    cart_browse_val = None
+    # Force it to always be "gallery" for now since we don't support the
+    # table view!
+    # if 'colls_browse' in old_slugs or 'cart_browse' in old_slugs:
+    #     temp_val = (old_slugs.get('colls_browse', None) or
+    #                 old_slugs.get('cart_browse', None))
+    #     if temp_val not in ('gallery', 'data'):
+    #         msg = ('The value for "cart_browse" was not either "gallery" or '
+    #                +'"data"; it has been set to "gallery".')
+    #         msg_list.append(msg)
+    #     else:
+    #         cart_browse_val = temp_val
+    #     if 'colls_browse' in old_slugs:
+    #         del old_slugs['colls_browse']
+    #     if 'cart_browse' in old_slugs:
+    #         del old_slugs['cart_browse']
+    if cart_browse_val is None: # pragma: no cover
+        cart_browse_val = 'gallery'
+    new_url_suffix_list.append(('cart_browse', cart_browse_val))
+
+    ### DETAIL
+    detail_val = None
+    if 'detail' in old_slugs:
+        opus_id = convert_ring_obs_id_to_opus_id(old_slugs['detail'])
+        if opus_id != old_slugs['detail']:
+            msg = ('You appear to be using an obsolete RINGOBS_ID ('
+                   +old_slugs['detail']+') instead of the equivalent new '
+                   +'OPUS_ID ('+opus_id+'); it has been converted for you.')
+            msg_list.append(msg)
+        try:
+            obs_general = ObsGeneral.objects.get(opus_id=opus_id)
+        except ObjectDoesNotExist:
+            msg = ('The OPUS_ID or RINGOBS_ID specified for the "detail" tab '
+                   +'was not found in the current database; '
+                   +'it has been ignored.')
+            msg_list.append(msg)
+        else:
+            detail_val = opus_id
+    if detail_val is None:
+        detail_val = ''
+    new_url_suffix_list.append(('detail', detail_val))
+
+    #
+    # Anything left in the slug list that we would ignore for searching is
+    # just something that shouldn't be there anymore.
+    #
+
+    for slug_to_ignore in settings.SLUGS_NOT_IN_DB:
+        if slug_to_ignore in old_slugs:
+            del old_slugs[slug_to_ignore]
+
+    # Now let's see if we forgot anything
+    for slug in old_slugs:
+        if slug in handled_slugs:
+            continue
+        if not slug.startswith('qtype-'): # pragma: no cover
+            log.error('api_normalize_url: Failed to handle slug "'+slug+'"')
+            continue
+        handled_slugs.append(slug)
+        # If there's a qtype left behind, then it's either dead, or related to
+        # a widget that is active but has no search input.
+
+        qtype_base_slug = slug.split('-')[1]
+        pi = get_param_info_by_slug(qtype_base_slug, 'qtype')
+        if not pi:
+            msg = ('Search query field "' + escape(slug) +
+                   '" is unknown; it has been ignored.')
+            msg_list.append(msg)
+            continue
+        qtype_slug = 'qtype-' + strip_numeric_suffix(pi.slug)
+        if strip_numeric_suffix(pi.slug) not in widgets_list:
+            # Dead qtype
+            msg = ('Search query type "' + pi.body_qualified_label_results()
+                   +'" refers to a search field that is not being used; '
+                   +'it has been ignored.')
+            msg_list.append(msg)
+            continue
+        valid_qtypes = None
+        (form_type, form_type_func,
+         form_type_format) = parse_form_type(pi.form_type)
+        is_range = form_type in settings.RANGE_FORM_TYPES
+        is_string = not is_range and form_type not in settings.MULT_FORM_TYPES
+        if is_range and not is_single_column_range(pi.param_qualified_name()):
+            valid_qtypes = ('any','all','only')
+        if is_string:
+            valid_qtypes = ('contains', 'begins', 'ends', 'matches', 'excludes')
+        if valid_qtypes:
+            if old_slugs[slug] not in valid_qtypes:
+                msg = ('Search field "'
+                       + _escape_or_label_results(slug, pi)
+                       + '" has an unknown query type; it has been ignored.')
+                msg_list.append(msg)
+                continue
+            qtype_val = old_slugs[slug]
+            new_url_search_list.append((qtype_slug, qtype_val))
+        else:
+            msg = ('Search field "'
+                   + _escape_or_label_results(slug, pi)
+                   + '" does not accept query types; it has been ignored.')
+            msg_list.append(msg)
+
+    new_url_list = []
+    new_url_dict_list = []
+    for slug, val in new_url_search_list:
+        new_url_list.append(slug + '=' + str(val))
+        new_url_dict_list.append({slug: val})
+    for slug, val in new_url_suffix_list:
+        new_url_list.append(slug + '=' + str(val))
+        new_url_dict_list.append({slug: val})
+
+    final_msg = ''
+    if old_ui_slug_flag:
+        msg = ('<p>Your URL is from a previous version of OPUS. It has been '
+               +'adjusted to conform to the current version.</p><br>')
+        final_msg = msg + final_msg
+    if msg_list:
+        final_msg += '<p>We found the following issues with your bookmarked '
+        final_msg += 'URL:</p><br><ul>'
+        for msg in msg_list:
+            final_msg += '<li>'+msg+'</li>'
+        final_msg += '</ul><br>'
+    if final_msg:
+        msg = ('<p>We strongly recommend that you replace your old bookmark '
+               +'with the updated URL in your browser so that you will not see '
+               +'this message in the future.</p>')
+        final_msg += msg
+
+    ret = json_response({'new_url': '&'.join(new_url_list),
+                         'new_slugs': new_url_dict_list,
+                         'msg': final_msg})
+
     exit_api_call(api_code, ret)
     return ret
 
@@ -551,7 +1139,7 @@ def _get_menu_labels(request, labels_view):
     if labels_view == 'results':
         if 'obs_surface_geometry' in triggered_tables:
             triggered_tables.remove('obs_surface_geometry')
-            
+
     divs = (TableNames.objects.filter(display='Y',
                                       table_name__in=triggered_tables)
                                .order_by('disp_order'))
@@ -598,30 +1186,19 @@ def _get_menu_labels(request, labels_view):
             for sub_head in sub_headings[d.table_name]:
                 all_param_info = ParamInfo.objects.filter(**{filter:1, "category_name":d.table_name, "sub_heading": sub_head})
 
-                # before adding this to data structure, correct a problem with
-                # the naming of single column range slugs for menus like this
-                all_param_info = list(all_param_info)
-                for k,param_info in enumerate(all_param_info):
-                    param_info.slug = _adjust_slug_name_single_col_ranges(param_info)
-                    all_param_info[k] = param_info
-
                 menu_data[d.table_name]['data'][sub_head] = all_param_info
 
         else:
             # this div has no sub headings
             menu_data[d.table_name]['has_sub_heading'] = False
             for p in ParamInfo.objects.filter(**{filter:1, "category_name":d.table_name}):
-                p.slug = _adjust_slug_name_single_col_ranges(p)
+                if p.slug[-1] == '2':
+                    # We can just skip these because we never use them for
+                    # widgets
+                    continue
+                if p.slug[-1] == '1':
+                    # Strip the trailing 1 off all ranges
+                    p.slug = strip_numeric_suffix(p.slug)
                 menu_data[d.table_name].setdefault('data', []).append(p)
 
     return {'menu': {'data': menu_data, 'divs': divs}}
-
-
-def _adjust_slug_name_single_col_ranges(param_info):
-    return param_info.slug
-
-def _get_column_info(slugs):
-    info = OrderedDict()
-    for slug in slugs:
-        info[slug] = get_param_info_by_slug(slug)
-    return info

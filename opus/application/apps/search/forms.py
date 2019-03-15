@@ -72,7 +72,7 @@ class SearchForm(forms.Form):
         for slug,values in args[0].items():
             if slug.startswith('qtype-'):
                 continue
-            param_info = get_param_info_by_slug(slug)
+            param_info = get_param_info_by_slug(slug, 'search')
             if not param_info:
                 log.error(
             "SearchForm: Could not find param_info entry for slug %s",
@@ -113,7 +113,7 @@ class SearchForm(forms.Form):
 
                 label = 'max' if num == '2' else 'min'
 
-                pi = get_param_info_by_slug(slug)
+                pi = get_param_info_by_slug(slug, 'search')
 
                 self.fields[slug] = MultiFloatField(
                      required=False,

@@ -11,7 +11,8 @@ from ui.views import (
     api_get_menu,
     api_get_widget,
     api_get_metadata_selector,
-    api_init_detail_page
+    api_init_detail_page,
+    api_normalize_url
 )
 
 urlpatterns = [
@@ -23,4 +24,5 @@ urlpatterns = [
     url(r'^__forms/widget/(?P<slug>[-\w]+).html$', api_get_widget),
     url(r'^__forms/metadata_selector.html$', api_get_metadata_selector),
     url(r'^__initdetail/(?P<opus_id>[-\w]+).html$', api_init_detail_page),
+    url(r'^__normalizeurl.json$', api_normalize_url)
 ]

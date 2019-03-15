@@ -130,7 +130,7 @@ def api_string_search_choices(request, slug):
         exit_api_call(api_code, ret)
         raise ret
 
-    param_info = get_param_info_by_slug(slug)
+    param_info = get_param_info_by_slug(slug, 'search')
     if not param_info:
         log.error('api_string_search_choices: unknown slug "%s"',
                   slug)
@@ -461,7 +461,10 @@ def url_to_search_params(request_get, allow_errors=False, return_slugs=False,
                           'numeric suffix "%s"', slug)
                 return None, None
 
-        param_info = get_param_info_by_slug(slug)
+        if qtype:
+            param_info = get_param_info_by_slug(slug, 'qtype')
+        else:
+            param_info = get_param_info_by_slug(slug, 'search')
         if not param_info:
             log.error('url_to_search_params: unknown slug "%s"',
                       slug)
@@ -756,63 +759,114 @@ def set_user_search_number(selections, extras):
     return s.id, new_entry
 
 
-def get_param_info_by_slug(slug, from_ui=False):
+def get_param_info_by_slug(slug, source):
     """Given a slug, look up the corresponding ParamInfo.
 
-    If from_ui is True, we try stripping the trailing '1' off a slug
-    as well, because single-value slugs come in with this gratuitous
-    '1' on the end.
+    If source == 'col', then this is a column name. We look at the
+    slug name as given (current or old).
+
+    If source == 'widget', then this is a widget name. Widget names have a
+    '1' on the end even if they are single-column ranges, so we just remove the
+    '1' before searching if we don't find the original name.
+
+    If source == 'qtype', then this is a qtype for a column. Qtypes don't have
+    any numeric suffix, even if though the columns do, so we just add on a '1'
+    if we don't find the original name.
+
+    If source == 'search', then this is a search term. Numeric search terms
+    can always have a '1' or '2' suffix even for single-column ranges.
     """
-    slug_no_num = strip_numeric_suffix(slug)
+    assert source in ('col', 'widget', 'qtype', 'search')
 
-    # Try the current slug names first
+    # Qtypes are forbidden from having a numeric suffix`
+    if source == 'qtype' and slug[-1] in ('1', '2'):
+        log.error('get_param_info_by_slug: Qtype slug "%s" has unpermitted '+
+                  'numeric suffix', slug)
+        return None
+
+    ret = None
+    # Current slug as given
     try:
-        return ParamInfo.objects.get(slug=slug_no_num)
+        ret = ParamInfo.objects.get(slug=slug)
     except ParamInfo.DoesNotExist:
         pass
 
-    try:
-        return ParamInfo.objects.get(slug=slug)
-    except ParamInfo.DoesNotExist:
-        pass
-
-    try:
-        # qtypes for ranges come through as the param_name_no_num
-        # which doesn't exist in param_info, so grab the param_info
-        # for the lower side of the range
-        return ParamInfo.objects.get(slug=slug + '1')
-    except ParamInfo.DoesNotExist:
-        pass
-
-    if from_ui:
+    if not ret:
+        # Old slug as given
         try:
-            return ParamInfo.objects.get(slug=slug.strip('1'))
+            ret = ParamInfo.objects.get(old_slug=slug)
         except ParamInfo.DoesNotExist:
             pass
 
-    # Now try the same thing but with the old slug names
-    try:
-        return ParamInfo.objects.get(old_slug=slug_no_num)
-    except ParamInfo.DoesNotExist:
-        pass
+    if ret:
+        if source == 'search':
+            if slug[-1] in ('1', '2'):
+                # Search slug has 1/2, param_info has 1/2 - all is good
+                return ret
+            # For a single-column range, the slug we were given MUST end
+            # in a '1' or '2' - but for non-range types, it's OK to not
+            # have the '1' or '2'. Note the non-single-column ranges were
+            # already dealt with above.
+            (form_type, form_type_func,
+             form_type_format) = parse_form_type(ret.form_type)
+            if form_type in settings.RANGE_FORM_TYPES:
+                # Whoops! We are missing the numeric suffix.
+                return None
 
-    try:
-        return ParamInfo.objects.get(old_slug=slug)
-    except ParamInfo.DoesNotExist:
-        pass
+        return ret
 
-    try:
-        return ParamInfo.objects.get(old_slug=slug + '1')
-    except ParamInfo.DoesNotExist:
-        pass
-
-    if from_ui:
+    # For widgets, if this is a multi-column range, return the version with
+    # the '1' suffix.
+    if source == 'widget':
         try:
-            return ParamInfo.objects.get(old_slug=slug.strip('1'))
+            return ParamInfo.objects.get(slug=slug+'1')
         except ParamInfo.DoesNotExist:
             pass
 
-    log.error('get_param_info_by_slug: Slug "%s" not found', slug)
+        try:
+            return ParamInfo.objects.get(old_slug=slug+'1')
+        except ParamInfo.DoesNotExist:
+            pass
+
+    # Q-types can never have a '1' or '2' suffix, but the database entries
+    # might.
+    if source == 'qtype' and slug[-1] not in ('1', '2'):
+        try:
+            return ParamInfo.objects.get(slug=slug+'1')
+        except ParamInfo.DoesNotExist:
+            pass
+
+        try:
+            return ParamInfo.objects.get(old_slug=slug+'1')
+        except ParamInfo.DoesNotExist:
+            pass
+
+    # Searching on a single-column range is done with '1' or '2' suffixes
+    # even though the database entry is just a single column without a numeric
+    # suffix.
+    if source == 'search' and (slug[-1] == '1' or slug[-1] == '2'):
+        ret = None
+        try:
+            ret = ParamInfo.objects.get(slug=slug[:-1])
+        except ParamInfo.DoesNotExist:
+            pass
+
+        if not ret:
+            try:
+                ret = ParamInfo.objects.get(old_slug=slug[:-1])
+            except ParamInfo.DoesNotExist:
+                pass
+
+        if ret:
+            (form_type, form_type_func,
+             form_type_format) = parse_form_type(ret.form_type)
+            if form_type not in settings.RANGE_FORM_TYPES:
+                # Whoops! It's not a range, but we have a numeric suffix.
+                return None
+            return ret
+
+    log.error('get_param_info_by_slug: Slug "%s" source "%s" not found',
+              slug, source)
 
     return None
 
@@ -1380,7 +1434,7 @@ def parse_order_slug(all_order):
     for order in orders:
         descending = order[0] == '-'
         order = order.strip('-')
-        param_info = get_param_info_by_slug(order, from_ui=True)
+        param_info = get_param_info_by_slug(order, 'col')
         if not param_info:
             log.error('parse_order_slug: Unable to resolve order '
                       +'slug "%s"', order)
