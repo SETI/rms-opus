@@ -1311,6 +1311,13 @@ var o_browse = {
         $(".dataTable").height(containerHeight);
         o_browse.tableScrollbar.update();
     },
+    // adjustTableSize: function() {
+    //     let containerWidth = $(".gallery-contents").width();
+    //     let containerHeight = $(".gallery-contents").height() - $(".app-footer").height() + 8;
+    //     $(".dataTable > .col-lg").width(containerWidth);
+    //     $(".dataTable > .col-lg").height(containerHeight);
+    //     o_browse.tableScrollbar.update();
+    // },
 
     cartButtonInfo: function(status) {
         let icon = "fas fa-cart-plus";

@@ -388,13 +388,17 @@ th.sticky-header {
     transform: translateY(-50%);
 }
 
-.dataTable {
+.op-col {
+    width: 100%;
     position: relative;
-    /* display: block; */
+}
+
+.dataTable {
+    width: 100%;
+    position: relative;
     overflow: hidden;
-    margin-left: 0px;
-    margin-right: 0px;
-    /* padding-right: 10px; */
+    /* margin-left: 0px;
+    margin-right: 0px; */
 }
 
 .dataTable .ps__rail-y {
@@ -628,10 +632,8 @@ a:-webkit-any-link, a::any-link {
   overflow-y: hidden;
 }
 
-#cart .gallery-contents .ps__rail-y {
-    top: 40px !important;
-    /* we need this to make ps visible */
-    right: 15px !important;
+#cart .gallery-contents {
+    position: relative;
 }
 
 .hide_ps__rail-y {

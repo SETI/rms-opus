@@ -224,9 +224,12 @@ var o_cart = {
                     }
 
                     o_cart.downloadOptionsScrollbar = new PerfectScrollbar("#download-options-container");
-                    o_cart.cartGalleryScrollbar = new PerfectScrollbar("#cart .gallery-contents", {
-                        suppressScrollX: true,
-                    });
+
+                    if(!o_cart.cartGalleryScrollbar) {
+                        o_cart.cartGalleryScrollbar = new PerfectScrollbar("#cart .gallery-contents", {
+                            suppressScrollX: true,
+                        });
+                    }
                     let adjustProductInfoHeight = _.debounce(o_cart.adjustProductInfoHeight, 200);
                     adjustProductInfoHeight();
                 }
