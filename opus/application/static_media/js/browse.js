@@ -362,7 +362,7 @@ var o_browse = {
             return false;
         });
 
-        $("#observation-slider").slider({
+        $("#op-observation-slider").slider({
             animate: true,
             value:1,
             min: 1,
@@ -464,8 +464,8 @@ var o_browse = {
 
     updateSliderHandle: function(value, update) {
         value = (value == undefined? 1 : value);
-        let handle = `<label><i class="fas fa-angle-double-left"></i>${value}<i class="fas fa-angle-double-right"></i><\label>`;
-        $("#observation-slider .ui-slider-handle").html(handle);
+        let handle = `${value}`;
+        $("#op-observation-number").html(handle);
         if (update !== undefined && update == true) {
             // temp til we get rid of page
             let page = Math.round(value/100)+1;
@@ -1115,7 +1115,7 @@ var o_browse = {
             page = opus.lastPageDrawn[opus.prefs.view]+1;
         }
         o_browse.lastLoadDataRequestNo++;
-        // this is a workaround for firefox 
+        // this is a workaround for firefox
         let hashString = o_hash.getHash() ? o_hash.getHash() : o_browse.tempHash;
         let url = hashString + '&reqno=' + o_browse.lastLoadDataRequestNo + view.add_to_url;
         url = base_url + o_browse.updatePageInUrl(url, page);

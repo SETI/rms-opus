@@ -68,7 +68,7 @@ var opus = {
     last_hash:'',
     result_count:0,
     qtype_default: 'any',
-    force_load: false, // set this to true to force load() when selections haven't chnaged
+    force_load: true, // set this to true to force load() when selections haven't changed
 
     // searching - ui
     search_tab_drawn: false,
@@ -120,7 +120,7 @@ var opus = {
         }
 
         // if (!$.isEmptyObject(opus.selections) || !opus.checkIfDrawnWidgetsAreDefault() || !opus.checkIfMetadataAreDefault()) {
-        if (selections || !opus.checkIfDrawnWidgetsAreDefault()) {
+        if ($.isEmptyObject(selections) || !opus.checkIfDrawnWidgetsAreDefault()) {
             $(".op-reset-button button").prop("disabled", false);
         } else  if (!opus.checkIfMetadataAreDefault()) {
             $(".op-reset-button .op-reset-search-metadata").prop("disabled", false);
@@ -129,9 +129,9 @@ var opus = {
             $(".op-reset-button button").prop("disabled", true);
         }
 
-        if (!selections) {
+        if ($.isEmptyObject(selections)) {
             // there are no selections found in the url hash
-            if (!jQuery.isEmptyObject(opus.last_selections)) {
+            if (!$.isEmptyObject(opus.last_selections)) {
                 // last selections is also empty
                 opus.last_selections = {};
                 o_browse.resetQuery();

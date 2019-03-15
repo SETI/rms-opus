@@ -117,9 +117,7 @@ var o_hash = {
             }
         });
 
-        if (!$.isEmptyObject(selections)) {
-            return selections;
-        }
+        return selections;
     },
 
 
