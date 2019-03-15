@@ -1306,7 +1306,7 @@ var o_browse = {
 
     adjustTableSize: function() {
         let containerWidth = $(".gallery-contents").width();
-        let containerHeight = $(".gallery-contents").height() - $(".app-footer").height();
+        let containerHeight = $(".gallery-contents").height() - $(".app-footer").height() + 8;
         $(".dataTable").width(containerWidth);
         $(".dataTable").height(containerHeight);
         o_browse.tableScrollbar.update();
