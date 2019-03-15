@@ -33,10 +33,10 @@ var o_browse = {
 
         $(".gallery-contents, .dataTable").on('wheel ps-scroll-up', function(event) {
             if(o_browse.infiniteScrollCurrentMinPageNumber > 0) {
-                if(opus.prefs.browse == "dataTable" && $(".dataTable").scrollTop() === 0) {
+                if(opus.prefs.browse === "dataTable" && $(".dataTable").scrollTop() === 0) {
                     opus.lastPageDrawn[opus.prefs.view] = o_browse.infiniteScrollCurrentMinPageNumber - 1;
                     $(`#${opus.prefs.view} .gallery-contents`).infiniteScroll("loadNextPage");
-                } else if(opus.prefs.browse == "gallery" && $(".gallery-contents").scrollTop() === 0) {
+                } else if(opus.prefs.browse === "gallery" && $(".gallery-contents").scrollTop() === 0) {
                     opus.lastPageDrawn[opus.prefs.view] = o_browse.infiniteScrollCurrentMinPageNumber - 1;
                     $(`#${opus.prefs.view} .gallery-contents`).infiniteScroll("loadNextPage");
                 }

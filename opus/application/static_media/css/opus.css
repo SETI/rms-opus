@@ -84,8 +84,6 @@ body {
 /* Make sure y-axis rail is not moving and always visible */
 .gallery-contents > .ps__rail-y {
     background-color: transparent !important;
-    /* navbar height: 95px, this will match the scrollbar and gallery/table view */
-    /* top: 95px !important; */
 }
 
 #detail {
@@ -354,6 +352,7 @@ th.sticky-header {
     /* Fix the hidden th left/right border in firebox */
     background-clip: padding-box;
     text-align: center;
+    /* padding-right: 10px; */
 }
 
 #dataTable th a {
@@ -369,7 +368,16 @@ th.sticky-header {
 }
 
 #dataTable td {
-  white-space: nowrap;
+    white-space: nowrap;
+}
+
+/* Move y-scrollbar out of container in table view */
+#dataTable th:last-child {
+    border-right-width: 15px;
+}
+
+#dataTable tr > td:last-child {
+    border-right-width: 15px;
 }
 
 #dataTable th > div {
@@ -388,11 +396,6 @@ th.sticky-header {
     transform: translateY(-50%);
 }
 
-.op-col {
-    width: 100%;
-    position: relative;
-}
-
 .dataTable {
     width: 100%;
     position: relative;
@@ -403,10 +406,6 @@ th.sticky-header {
 
 .dataTable .ps__rail-y {
     background-color: transparent !important;
-    /* right: 0px !important; */
-    /* navbar + top_navbar + sort-order-container */
-    /* top: 118px !important; */
-    /* top: 30px !important; */
     z-index: 11;
 }
 
@@ -414,14 +413,18 @@ th.sticky-header {
 .dataTable .ps__rail-x {
     background-color: transparent !important;
     opacity: 0.9 !important;
-    /* left: 0px !important; */
-    /* bottom: 25px !important; */
+}
+
+/* change from 1px to 2px to make ps__thumb-y more cnetered */
+.dataTable .ps__thumb-y {
+    right: 2px;
 }
 
 /* avoid seeing through ps__rail_x in table view */
 .dataTable .ps__thumb-x {
     bottom: 1px;
 }
+
 
 /* Fix the spinner*/
 .table-page-load-status .loader {
