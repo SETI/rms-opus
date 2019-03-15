@@ -78,13 +78,14 @@ body {
 .gallery-contents {
     overflow-y:hidden;
     overflow-x:hidden;
+    position: relative;
 }
 
 /* Make sure y-axis rail is not moving and always visible */
 .gallery-contents > .ps__rail-y {
     background-color: transparent !important;
     /* navbar height: 95px, this will match the scrollbar and gallery/table view */
-    top: 95px !important;
+    /* top: 95px !important; */
 }
 
 #detail {
@@ -389,23 +390,33 @@ th.sticky-header {
 
 .dataTable {
     position: relative;
-    /* margin-left: -8px; */
+    /* display: block; */
+    overflow: hidden;
+    margin-left: 0px;
+    margin-right: 0px;
+    /* padding-right: 10px; */
 }
 
 .dataTable .ps__rail-y {
     background-color: transparent !important;
-    /* right: 2px !important; */
+    /* right: 0px !important; */
     /* navbar + top_navbar + sort-order-container */
     /* top: 118px !important; */
+    /* top: 30px !important; */
     z-index: 11;
 }
 
 /* Make sure x-scrollbar in dataTable is always at the left and visible */
 .dataTable .ps__rail-x {
     background-color: transparent !important;
-    opacity: 1 !important;
+    opacity: 0.9 !important;
     /* left: 0px !important; */
     /* bottom: 25px !important; */
+}
+
+/* avoid seeing through ps__rail_x in table view */
+.dataTable .ps__thumb-x {
+    bottom: 1px;
 }
 
 /* Fix the spinner*/
