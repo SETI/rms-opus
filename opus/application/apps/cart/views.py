@@ -68,10 +68,13 @@ def api_view_cart(request):
     This is a PRIVATE API.
 
     Format: __cart/view.html
-
-    For HTML format, returns the left side of the Selections page.
     """
     api_code = enter_api_call('api_view_cart', request)
+
+    if not request or request.GET is None:
+        ret = Http404(settings.HTTP404_NO_REQUEST)
+        exit_api_call(api_code, ret)
+        raise ret
 
     session_id = get_session_id(request)
 
@@ -127,6 +130,11 @@ def api_cart_status(request):
     """
     api_code = enter_api_call('api_cart_status', request)
 
+    if not request or request.GET is None:
+        ret = Http404(settings.HTTP404_NO_REQUEST)
+        exit_api_call(api_code, ret)
+        raise ret
+
     session_id = get_session_id(request)
 
     reqno = get_reqno(request)
@@ -170,6 +178,11 @@ def api_get_cart_csv(request):
     """
     api_code = enter_api_call('api_get_cart_csv', request)
 
+    if not request or request.GET is None:
+        ret = Http404(settings.HTTP404_NO_REQUEST)
+        exit_api_call(api_code, ret)
+        raise ret
+
     column_labels, page = _csv_helper(request, api_code)
     if column_labels is None:
         ret = Http404(settings.HTTP404_UNKNOWN_SLUG)
@@ -201,11 +214,16 @@ def api_edit_cart(request, **kwargs):
     """
     api_code = enter_api_call('api_edit_cart', request)
 
+    if not request or request.GET is None:
+        ret = Http404(settings.HTTP404_NO_REQUEST)
+        exit_api_call(api_code, ret)
+        raise ret
+
     session_id = get_session_id(request)
 
     try:
         action = kwargs['action']
-    except KeyError:
+    except KeyError: # pragma: no cover
         exit_api_call(api_code, None)
         raise Http404
 
@@ -233,7 +251,7 @@ def api_edit_cart(request, **kwargs):
             err = _edit_cart_range(request, session_id, action, api_code)
         elif action == 'addall':
             err = _edit_cart_addall(request, session_id, api_code)
-        else:
+        else: # pragma: no cover
             assert False
 
     download = request.GET.get('download', 0)
@@ -268,6 +286,11 @@ def api_reset_session(request):
     """
     api_code = enter_api_call('api_reset_session', request)
 
+    if not request or request.GET is None:
+        ret = Http404(settings.HTTP404_NO_REQUEST)
+        exit_api_call(api_code, ret)
+        raise ret
+
     session_id = get_session_id(request)
 
     sql = 'DELETE FROM '+connection.ops.quote_name('cart')
@@ -296,6 +319,11 @@ def api_create_download(request, opus_id=None):
                urlonly=1 (optional) means to not zip the actual data products
     """
     api_code = enter_api_call('api_create_download', request)
+
+    if not request or request.GET is None:
+        ret = Http404(settings.HTTP404_NO_REQUEST)
+        exit_api_call(api_code, ret)
+        raise ret
 
     url_file_only = request.GET.get('urlonly', 0)
 

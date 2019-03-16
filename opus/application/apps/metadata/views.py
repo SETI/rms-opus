@@ -432,7 +432,7 @@ def api_get_range_endpoints(request, slug, fmt, internal=False):
             del selections[to_remove]
     if selections:
         user_table = get_user_query_table(selections, extras, api_code=api_code)
-        if user_table is None:
+        if user_table is None: # pragma: no cover
             log.error('api_get_range_endpoints: Count not retrieve query table'
                       +' for *** Selections %s *** Extras %s',
                       str(selections), str(extras))

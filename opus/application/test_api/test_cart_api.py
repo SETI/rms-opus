@@ -1,24 +1,24 @@
 # opus/application/test_api/test_cart_api.py
 
-import json
+import logging
 import requests
+import sys
 from unittest import TestCase
 
+import django.conf
 from rest_framework.test import RequestsClient
 
 from api_test_helper import ApiTestHelper
 
 import settings
 
-import logging
-log = logging.getLogger(__name__)
-
-settings.CACHE_BACKEND = 'dummy:///'
+django.conf.settings.CACHE_BACKEND = 'dummy:///'
 
 class ApiCartTests(TestCase, ApiTestHelper):
-    # disable error logging and trace output before test
+
     def setUp(self):
         self.maxDiff = None
+        sys.tracebacklimit = 0 # default: 1000
         settings.CACHE_KEY_PREFIX = 'opustest:' + settings.OPUS_SCHEMA_NAME
         logging.disable(logging.ERROR)
         if settings.TEST_GO_LIVE:
@@ -26,8 +26,8 @@ class ApiCartTests(TestCase, ApiTestHelper):
         else:
             self.client = RequestsClient()
 
-    # enable error logging and trace output after test
     def tearDown(self):
+        sys.tracebacklimit = 1000 # default: 1000
         logging.disable(logging.NOTSET)
 
 
@@ -36,7 +36,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
             ##################################################
 
     def test__api_cart_status_no_reqno(self):
-        "/__cart/status: no reqno"
+        "[test_cart_api.py] /__cart/status: no reqno"
         url = '/opus/__cart/status.json'
         self._run_status_equal(url, 404, settings.HTTP404_MISSING_REQNO)
 
@@ -49,7 +49,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
             #################################################
 
     def test__api_cart_reset(self):
-        "/__cart/reset"
+        "[test_cart_api.py] /__cart/reset"
         url = '/opus/__cart/reset.json'
         self._run_status_equal(url, 200)
         url = '/opus/__cart/status.json?reqno=1'
@@ -62,12 +62,12 @@ class ApiCartTests(TestCase, ApiTestHelper):
             ###############################################
 
     def test__api_cart_add_no_reqno(self):
-        "/__cart/add: no reqno"
+        "[test_cart_api.py] /__cart/add: no reqno"
         url = '/opus/__cart/add.json?opusid=co-iss-n1460961026'
         self._run_status_equal(url, 404, settings.HTTP404_MISSING_REQNO)
 
     def test__api_cart_add_missing(self):
-        "/__cart/add: missing OPUSID no download"
+        "[test_cart_api.py] /__cart/add: missing OPUSID no download"
         url = '/opus/__cart/reset.json'
         self._run_status_equal(url, 200)
         url = '/opus/__cart/add.json?reqno=456'
@@ -78,7 +78,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
 
     def test__api_cart_add_empty(self):
-        "/__cart/add: empty OPUSID no download"
+        "[test_cart_api.py] /__cart/add: empty OPUSID no download"
         url = '/opus/__cart/reset.json'
         self._run_status_equal(url, 200)
         url = '/opus/__cart/add.json?opusid=&reqno=456'
@@ -89,7 +89,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
 
     def test__api_cart_add_one(self):
-        "/__cart/add: good OPUSID no download"
+        "[test_cart_api.py] /__cart/add: good OPUSID no download"
         url = '/opus/__cart/reset.json'
         self._run_status_equal(url, 200)
         url = '/opus/__cart/add.json?opusid=co-iss-n1460961026&reqno=456'
@@ -100,7 +100,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
 
     def test__api_cart_add_duplicate(self):
-        "/__cart/add: duplicate OPUSID no download"
+        "[test_cart_api.py] /__cart/add: duplicate OPUSID no download"
         url = '/opus/__cart/reset.json'
         self._run_status_equal(url, 200)
         url = '/opus/__cart/add.json?opusid=co-iss-n1460961026&reqno=456'
@@ -114,7 +114,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
 
     def test__api_cart_add_bad(self):
-        "/__cart/add: bad OPUSID no download"
+        "[test_cart_api.py] /__cart/add: bad OPUSID no download"
         url = '/opus/__cart/reset.json'
         self._run_status_equal(url, 200)
         url = '/opus/__cart/add.json?opusid=co-iss-xn1460961026&reqno=456'
@@ -125,7 +125,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
 
     def test__api_cart_add_good_bad(self):
-        "/__cart/add: good+bad OPUSID no download"
+        "[test_cart_api.py] /__cart/add: good+bad OPUSID no download"
         url = '/opus/__cart/reset.json'
         self._run_status_equal(url, 200)
         url = '/opus/__cart/add.json?opusid=co-iss-n1460961026&reqno=456'
@@ -139,7 +139,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
 
     def test__api_cart_add_mixture(self):
-        "/__cart/add: mixture no download"
+        "[test_cart_api.py] /__cart/add: mixture no download"
         url = '/opus/__cart/reset.json'
         self._run_status_equal(url, 200)
         url = '/opus/__cart/add.json?opusid=vg-iss-2-s-c4360010&reqno=456'
@@ -165,7 +165,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
 
     def test__api_cart_add_missing(self):
-        "/__cart/add: missing OPUSID no download"
+        "[test_cart_api.py] /__cart/add: missing OPUSID no download"
         url = '/opus/__cart/reset.json'
         self._run_status_equal(url, 200)
         url = '/opus/__cart/add.json?reqno=124'
@@ -176,7 +176,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
 
     def test__api_cart_add_one(self):
-        "/__cart/add: good OPUSID no download"
+        "[test_cart_api.py] /__cart/add: good OPUSID no download"
         url = '/opus/__cart/reset.json'
         self._run_status_equal(url, 200)
         url = '/opus/__cart/add.json?opusid=co-iss-n1460961026&reqno=12345'
@@ -187,7 +187,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
 
     def test__api_cart_add_bad(self):
-        "/__cart/add: bad OPUSID no download"
+        "[test_cart_api.py] /__cart/add: bad OPUSID no download"
         url = '/opus/__cart/reset.json'
         self._run_status_equal(url, 200)
         url = '/opus/__cart/add.json?opusid=co-iss-xn1460961026&reqno=101010101'
@@ -198,7 +198,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
 
     def test__api_cart_add_missing_download(self):
-        "/__cart/add: missing OPUSID with download"
+        "[test_cart_api.py] /__cart/add: missing OPUSID with download"
         url = '/opus/__cart/reset.json'
         self._run_status_equal(url, 200)
         url = '/opus/__cart/add.json?download=1&reqno=456'
@@ -209,7 +209,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
 
     def test__api_cart_add_download_one(self):
-        "/__cart/add: good OPUSID with download"
+        "[test_cart_api.py] /__cart/add: good OPUSID with download"
         url = '/opus/__cart/reset.json'
         self._run_status_equal(url, 200)
         url = '/opus/__cart/add.json?opusid=co-iss-n1460960653&download=1&reqno=101010101'
@@ -220,7 +220,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
 
     def test__api_cart_add_download_two(self):
-        "/__cart/add: two OPUSIDs with download"
+        "[test_cart_api.py] /__cart/add: two OPUSIDs with download"
         url = '/opus/__cart/reset.json'
         self._run_status_equal(url, 200)
         url = '/opus/__cart/add.json?opusid=co-iss-n1460960868&download=0&reqno=101010100'
@@ -239,12 +239,12 @@ class ApiCartTests(TestCase, ApiTestHelper):
             ##################################################
 
     def test__api_cart_remove_no_reqno(self):
-        "/__cart/remove: no reqno"
+        "[test_cart_api.py] /__cart/remove: no reqno"
         url = '/opus/__cart/remove.json?opusid=co-iss-n1460961026'
         self._run_status_equal(url, 404, settings.HTTP404_MISSING_REQNO)
 
     def test__api_cart_remove_missing(self):
-        "/__cart/remove: missing OPUSID no download"
+        "[test_cart_api.py] /__cart/remove: missing OPUSID no download"
         url = '/opus/__cart/reset.json'
         self._run_status_equal(url, 200)
         url = '/opus/__cart/remove.json?reqno=456'
@@ -255,7 +255,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
 
     def test__api_cart_remove_empty(self):
-        "/__cart/remove: empty OPUSID no download"
+        "[test_cart_api.py] /__cart/remove: empty OPUSID no download"
         url = '/opus/__cart/reset.json'
         self._run_status_equal(url, 200)
         url = '/opus/__cart/remove.json?opusid=&reqno=456'
@@ -266,7 +266,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
 
     def test__api_cart_remove_one(self):
-        "/__cart/remove: add+remove good OPUSID no download"
+        "[test_cart_api.py] /__cart/remove: add+remove good OPUSID no download"
         url = '/opus/__cart/reset.json'
         self._run_status_equal(url, 200)
         url = '/opus/__cart/add.json?opusid=co-vims-v1484504505_ir&reqno=456'
@@ -280,7 +280,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
 
     def test__api_cart_remove_duplicate(self):
-        "/__cart/remove: duplicate OPUSID no download"
+        "[test_cart_api.py] /__cart/remove: duplicate OPUSID no download"
         url = '/opus/__cart/reset.json'
         self._run_status_equal(url, 200)
         url = '/opus/__cart/add.json?opusid=co-vims-v1484528864_ir&reqno=456'
@@ -297,7 +297,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
 
     def test__api_cart_remove_bad(self):
-        "/__cart/remove: bad OPUSID no download"
+        "[test_cart_api.py] /__cart/remove: bad OPUSID no download"
         url = '/opus/__cart/reset.json'
         self._run_status_equal(url, 200)
         # Removing an unknown opusid doesn't throw an error
@@ -309,7 +309,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
 
     def test__api_cart_remove_good_bad(self):
-        "/__cart/remove: good+bad OPUSID no download"
+        "[test_cart_api.py] /__cart/remove: good+bad OPUSID no download"
         url = '/opus/__cart/reset.json'
         self._run_status_equal(url, 200)
         url = '/opus/__cart/add.json?opusid=co-vims-v1484528864_ir&reqno=456'
@@ -326,7 +326,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
 
     def test__api_cart_remove_mixture(self):
-        "/__cart/remove: mixture no download"
+        "[test_cart_api.py] /__cart/remove: mixture no download"
         url = '/opus/__cart/reset.json'
         self._run_status_equal(url, 200)
         url = '/opus/__cart/add.json?opusid=vg-iss-2-s-c4360010&reqno=456'
@@ -361,7 +361,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
 
     def test__api_cart_remove_missing(self):
-        "/__cart/remove: missing OPUSID no download"
+        "[test_cart_api.py] /__cart/remove: missing OPUSID no download"
         url = '/opus/__cart/reset.json'
         self._run_status_equal(url, 200)
         url = '/opus/__cart/remove.json?reqno=124'
@@ -372,7 +372,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
 
     def test__api_cart_remove_one(self):
-        "/__cart/remove: good OPUSID no download"
+        "[test_cart_api.py] /__cart/remove: good OPUSID no download"
         url = '/opus/__cart/reset.json'
         self._run_status_equal(url, 200)
         url = '/opus/__cart/add.json?opusid=co-iss-n1460961026&reqno=456'
@@ -386,7 +386,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
 
     def test__api_cart_remove_bad(self):
-        "/__cart/remove: bad OPUSID no download"
+        "[test_cart_api.py] /__cart/remove: bad OPUSID no download"
         url = '/opus/__cart/reset.json'
         self._run_status_equal(url, 200)
         url = '/opus/__cart/add.json?opusid=co-iss-xn1460961026&reqno=456'
@@ -401,7 +401,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
 
     def test__api_cart_remove_missing_download(self):
-        "/__cart/remove: missing OPUSID with download"
+        "[test_cart_api.py] /__cart/remove: missing OPUSID with download"
         url = '/opus/__cart/reset.json'
         self._run_status_equal(url, 200)
         url = '/opus/__cart/remove.json?download=1&reqno=456'
@@ -412,7 +412,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
 
     def test__api_cart_remove_one_download(self):
-        "/__cart/remove: good OPUSID with download"
+        "[test_cart_api.py] /__cart/remove: good OPUSID with download"
         url = '/opus/__cart/reset.json'
         self._run_status_equal(url, 200)
         url = '/opus/__cart/add.json?opusid=co-iss-n1460961026&reqno=456'
@@ -426,7 +426,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
 
     def test__api_cart_add_two_remove_one_download(self):
-        "/__cart/remove: two OPUSIDs remove one with download"
+        "[test_cart_api.py] /__cart/remove: two OPUSIDs remove one with download"
         url = '/opus/__cart/reset.json'
         self._run_status_equal(url, 200)
         url = '/opus/__cart/add.json?opusid=co-iss-n1460960868&download=0&reqno=101010100'
@@ -448,12 +448,12 @@ class ApiCartTests(TestCase, ApiTestHelper):
             ####################################################
 
     def test__api_cart_addrange_no_reqno(self):
-        "/__cart/addrange: no reqno"
+        "[test_cart_api.py] /__cart/addrange: no reqno"
         url = '/opus/__cart/addrange.json?volumeid=COVIMS_0006&range=co-vims-v1484504505_ir,co-vims-v1484504505_ir'
         self._run_status_equal(url, 404, settings.HTTP404_MISSING_REQNO)
 
     def test__api_cart_addrange_missing(self):
-        "/__cart/addrange: missing range no download"
+        "[test_cart_api.py] /__cart/addrange: missing range no download"
         url = '/opus/__cart/reset.json'
         self._run_status_equal(url, 200)
         url = '/opus/__cart/addrange.json?reqno=456'
@@ -464,7 +464,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
 
     def test__api_cart_addrange_empty(self):
-        "/__cart/addrange: empty range no download"
+        "[test_cart_api.py] /__cart/addrange: empty range no download"
         url = '/opus/__cart/reset.json'
         self._run_status_equal(url, 200)
         url = '/opus/__cart/addrange.json?range=&reqno=456'
@@ -475,7 +475,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
 
     def test__api_cart_addrange_bad_range1(self):
-        "/__cart/addrange: bad range 1 no download"
+        "[test_cart_api.py] /__cart/addrange: bad range 1 no download"
         url = '/opus/__cart/reset.json'
         self._run_status_equal(url, 200)
         url = '/opus/__cart/addrange.json?range=co-vims-v1484504505_ir&reqno=456'
@@ -486,7 +486,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
 
     def test__api_cart_addrange_bad_range2(self):
-        "/__cart/addrange: bad range 2 no download"
+        "[test_cart_api.py] /__cart/addrange: bad range 2 no download"
         url = '/opus/__cart/reset.json'
         self._run_status_equal(url, 200)
         url = '/opus/__cart/addrange.json?range=co-vims-v1484504505_ir,&reqno=456'
@@ -497,7 +497,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
 
     def test__api_cart_addrange_bad_range3(self):
-        "/__cart/addrange: bad range 3 no download"
+        "[test_cart_api.py] /__cart/addrange: bad range 3 no download"
         url = '/opus/__cart/reset.json'
         self._run_status_equal(url, 200)
         url = '/opus/__cart/addrange.json?range=,co-vims-v1484504505_ir&reqno=456'
@@ -508,7 +508,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
 
     def test__api_cart_addrange_bad_range4(self):
-        "/__cart/addrange: bad range 4 no download"
+        "[test_cart_api.py] /__cart/addrange: bad range 4 no download"
         url = '/opus/__cart/reset.json'
         self._run_status_equal(url, 200)
         url = '/opus/__cart/addrange.json?range=co-vims-v1484504505_ir,co-vims-v1484504505_ir,co-vims-v1484504505_ir&reqno=456'
@@ -519,7 +519,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
 
     def test__api_cart_addrange_one(self):
-        "/__cart/addrange: one good OPUSID no download"
+        "[test_cart_api.py] /__cart/addrange: one good OPUSID no download"
         url = '/opus/__cart/reset.json'
         self._run_status_equal(url, 200)
         url = '/opus/__cart/addrange.json?volumeid=COVIMS_0006&range=co-vims-v1484504505_ir,co-vims-v1484504505_ir&reqno=456'
@@ -530,7 +530,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
 
     def test__api_cart_addrange_duplicate(self):
-        "/__cart/addrange: duplicate OPUSID no download"
+        "[test_cart_api.py] /__cart/addrange: duplicate OPUSID no download"
         url = '/opus/__cart/reset.json'
         self._run_status_equal(url, 200)
         url = '/opus/__cart/add.json?opusid=co-vims-v1484528864_ir&reqno=456'
@@ -544,7 +544,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
 
     def test__api_cart_addrange_duplicate2(self):
-        "/__cart/addrange: duplicate 2 no download"
+        "[test_cart_api.py] /__cart/addrange: duplicate 2 no download"
         url = '/opus/__cart/reset.json'
         self._run_status_equal(url, 200)
         url = '/opus/__cart/addrange.json?volumeid=COVIMS_0006&range=co-vims-v1488642557_ir,co-vims-v1488646261_ir&reqno=456'
@@ -558,7 +558,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
 
     def test__api_cart_addrange_duplicate3(self):
-        "/__cart/addrange: duplicate 3 no download"
+        "[test_cart_api.py] /__cart/addrange: duplicate 3 no download"
         url = '/opus/__cart/reset.json'
         self._run_status_equal(url, 200)
         url = '/opus/__cart/addrange.json?volumeid=COVIMS_0006&range=co-vims-v1488642557_ir,co-vims-v1488646261_ir&reqno=456'
@@ -572,7 +572,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
 
     def test__api_cart_addrange_duplicate4(self):
-        "/__cart/addrange: duplicate 4 no download"
+        "[test_cart_api.py] /__cart/addrange: duplicate 4 no download"
         url = '/opus/__cart/reset.json'
         self._run_status_equal(url, 200)
         url = '/opus/__cart/addrange.json?volumeid=COVIMS_0006&range=co-vims-v1488642557_ir,co-vims-v1488646261_ir&reqno=456'
@@ -586,7 +586,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
 
     def test__api_cart_addrange_duplicate5(self):
-        "/__cart/addrange: duplicate 5 no download"
+        "[test_cart_api.py] /__cart/addrange: duplicate 5 no download"
         url = '/opus/__cart/reset.json'
         self._run_status_equal(url, 200)
         url = '/opus/__cart/add.json?opusid=co-vims-v1488642557_ir&reqno=456'
@@ -600,7 +600,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
 
     def test__api_cart_addrange_duplicate6(self):
-        "/__cart/addrange: duplicate 6 no download"
+        "[test_cart_api.py] /__cart/addrange: duplicate 6 no download"
         url = '/opus/__cart/reset.json'
         self._run_status_equal(url, 200)
         url = '/opus/__cart/addrange.json?volumeid=COVIMS_0006&range=co-vims-v1488642557_ir,co-vims-v1488646261_ir&reqno=456'
@@ -614,7 +614,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
 
     def test__api_cart_addrange_bad_opusid(self):
-        "/__cart/addrange: bad OPUSID no download"
+        "[test_cart_api.py] /__cart/addrange: bad OPUSID no download"
         url = '/opus/__cart/reset.json'
         self._run_status_equal(url, 200)
         url = '/opus/__cart/addrange.json?volumeid=COVIMS_0006&range=co-vims-v1484528864_irx,co-vims-v1484528864_ir&reqno=456'
@@ -625,7 +625,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
 
     def test__api_cart_addrange_bad_opusid2(self):
-        "/__cart/addrange: bad OPUSID 2 no download"
+        "[test_cart_api.py] /__cart/addrange: bad OPUSID 2 no download"
         url = '/opus/__cart/reset.json'
         self._run_status_equal(url, 200)
         url = '/opus/__cart/addrange.json?volumeid=COVIMS_0006&range=co-vims-v1484528864_ir,co-vims-v1484528864_irx&reqno=456'
@@ -636,7 +636,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
 
     def test__api_cart_addrange_not_search(self):
-        "/__cart/addrange: OPUSID not in search no download"
+        "[test_cart_api.py] /__cart/addrange: OPUSID not in search no download"
         url = '/opus/__cart/reset.json'
         self._run_status_equal(url, 200)
         url = '/opus/__cart/addrange.json?volumeid=COVIMS_0006&range=vg-iss-2-s-c4360001,vg-iss-2-s-c4360001&reqno=456'
@@ -647,7 +647,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
 
     def test__api_cart_addrange_bad_search(self):
-        "/__cart/addrange: bad search no download"
+        "[test_cart_api.py] /__cart/addrange: bad search no download"
         url = '/opus/__cart/reset.json'
         self._run_status_equal(url, 200)
         url = '/opus/__cart/addrange.json?volumeidXX=COVIMS_0006&range=vg-iss-2-s-c4360001,vg-iss-2-s-c4360001&reqno=456'
@@ -658,7 +658,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
 
     def test__api_cart_addrange_multi(self):
-        "/__cart/addrange: multiple no download"
+        "[test_cart_api.py] /__cart/addrange: multiple no download"
         url = '/opus/__cart/reset.json'
         self._run_status_equal(url, 200)
         url = '/opus/__cart/addrange.json?volumeid=COVIMS_0006&range=co-vims-v1488642557_ir,co-vims-v1488646261_ir&reqno=456'
@@ -669,7 +669,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
 
     def test__api_cart_addrange_multi_reverse(self):
-        "/__cart/addrange: multiple reversed no download"
+        "[test_cart_api.py] /__cart/addrange: multiple reversed no download"
         url = '/opus/__cart/reset.json'
         self._run_status_equal(url, 200)
         url = '/opus/__cart/addrange.json?volumeid=COVIMS_0006&range=co-vims-v1488646261_ir,co-vims-v1488642557_ir&reqno=456'
@@ -680,7 +680,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
 
     def test__api_cart_addrange_multi_sort(self):
-        "/__cart/addrange: multiple nonstandard sort no download"
+        "[test_cart_api.py] /__cart/addrange: multiple nonstandard sort no download"
         url = '/opus/__cart/reset.json'
         self._run_status_equal(url, 200)
         url = '/opus/__cart/addrange.json?volumeid=COVIMS_0006&instrument=Cassini+VIMS&primaryfilespec=8864&order=COVIMSswathlength,-time1,-opusid&range=co-vims-v1488649724_vis,co-vims-v1488647527_ir&reqno=456'
@@ -691,7 +691,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
 
     def test__api_cart_addrange_missing(self):
-        "/__cart/addrange: missing range no download"
+        "[test_cart_api.py] /__cart/addrange: missing range no download"
         url = '/opus/__cart/reset.json'
         self._run_status_equal(url, 200)
         url = '/opus/__cart/addrange.json?reqno=124'
@@ -702,7 +702,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
 
     def test__api_cart_addrange_one(self):
-        "/__cart/addrange: one good OPUSID no download"
+        "[test_cart_api.py] /__cart/addrange: one good OPUSID no download"
         url = '/opus/__cart/reset.json'
         self._run_status_equal(url, 200)
         url = '/opus/__cart/addrange.json?volumeid=COVIMS_0006&range=co-vims-v1484504505_ir,co-vims-v1484504505_ir&reqno=567'
@@ -713,7 +713,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
 
     def test__api_cart_addrange_missing_download(self):
-        "/__cart/addrange: missing range with download"
+        "[test_cart_api.py] /__cart/addrange: missing range with download"
         url = '/opus/__cart/reset.json'
         self._run_status_equal(url, 200)
         url = '/opus/__cart/addrange.json?download=1&reqno=456'
@@ -724,7 +724,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
 
     def test__api_cart_addrange_multi_download(self):
-        "/__cart/addrange: multiple with download"
+        "[test_cart_api.py] /__cart/addrange: multiple with download"
         url = '/opus/__cart/reset.json'
         self._run_status_equal(url, 200)
         url = '/opus/__cart/addrange.json?volumeid=COVIMS_0006&range=co-vims-v1488642557_ir,co-vims-v1488646261_ir&reqno=1234567&download=1'
@@ -740,12 +740,12 @@ class ApiCartTests(TestCase, ApiTestHelper):
             #######################################################
 
     def test__api_cart_removerange_no_reqno(self):
-        "/__cart/removerange: no reqno"
+        "[test_cart_api.py] /__cart/removerange: no reqno"
         url = '/opus/__cart/removerange.json?volumeid=COVIMS_0006&range=co-vims-v1484504505_ir,co-vims-v1484504505_ir'
         self._run_status_equal(url, 404, settings.HTTP404_MISSING_REQNO)
 
     def test__api_cart_removerange_missing(self):
-        "/__cart/removerange: missing range no download"
+        "[test_cart_api.py] /__cart/removerange: missing range no download"
         url = '/opus/__cart/reset.json'
         self._run_status_equal(url, 200)
         url = '/opus/__cart/removerange.json?reqno=456'
@@ -756,7 +756,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
 
     def test__api_cart_removerange_empty(self):
-        "/__cart/removerange: empty range no download"
+        "[test_cart_api.py] /__cart/removerange: empty range no download"
         url = '/opus/__cart/reset.json'
         self._run_status_equal(url, 200)
         url = '/opus/__cart/removerange.json?range=&reqno=456'
@@ -767,7 +767,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
 
     def test__api_cart_removerange_bad_range1(self):
-        "/__cart/removerange: bad range 1 no download"
+        "[test_cart_api.py] /__cart/removerange: bad range 1 no download"
         url = '/opus/__cart/reset.json'
         self._run_status_equal(url, 200)
         url = '/opus/__cart/removerange.json?range=co-vims-v1484504505_ir&reqno=456'
@@ -778,7 +778,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
 
     def test__api_cart_removerange_bad_range2(self):
-        "/__cart/removerange: bad range 2 no download"
+        "[test_cart_api.py] /__cart/removerange: bad range 2 no download"
         url = '/opus/__cart/reset.json'
         self._run_status_equal(url, 200)
         url = '/opus/__cart/removerange.json?range=co-vims-v1484504505_ir,&reqno=456'
@@ -789,7 +789,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
 
     def test__api_cart_removerange_bad_range3(self):
-        "/__cart/removerange: bad range 3 no download"
+        "[test_cart_api.py] /__cart/removerange: bad range 3 no download"
         url = '/opus/__cart/reset.json'
         self._run_status_equal(url, 200)
         url = '/opus/__cart/removerange.json?range=,co-vims-v1484504505_ir&reqno=456'
@@ -800,7 +800,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
 
     def test__api_cart_removerange_bad_range4(self):
-        "/__cart/removerange: bad range 4 no download"
+        "[test_cart_api.py] /__cart/removerange: bad range 4 no download"
         url = '/opus/__cart/reset.json'
         self._run_status_equal(url, 200)
         url = '/opus/__cart/removerange.json?range=co-vims-v1484504505_ir,co-vims-v1484504505_ir,co-vims-v1484504505_ir&reqno=456'
@@ -811,7 +811,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
 
     def test__api_cart_removerange_one(self):
-        "/__cart/removerange: one good OPUSID no download"
+        "[test_cart_api.py] /__cart/removerange: one good OPUSID no download"
         url = '/opus/__cart/reset.json'
         self._run_status_equal(url, 200)
         url = '/opus/__cart/add.json?opusid=co-vims-v1484504505_ir&reqno=456'
@@ -825,7 +825,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
 
     def test__api_cart_removerange_duplicate(self):
-        "/__cart/removerange: duplicate OPUSID no download"
+        "[test_cart_api.py] /__cart/removerange: duplicate OPUSID no download"
         url = '/opus/__cart/reset.json'
         self._run_status_equal(url, 200)
         url = '/opus/__cart/add.json?opusid=co-vims-v1484528864_ir&reqno=456'
@@ -842,7 +842,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
 
     def test__api_cart_removerange_duplicate2(self):
-        "/__cart/removerange: duplicate 2 no download"
+        "[test_cart_api.py] /__cart/removerange: duplicate 2 no download"
         url = '/opus/__cart/reset.json'
         self._run_status_equal(url, 200)
         url = '/opus/__cart/addrange.json?volumeid=COVIMS_0006&range=co-vims-v1488642557_ir,co-vims-v1488646261_ir&reqno=456'
@@ -859,7 +859,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
 
     def test__api_cart_removerange_duplicate3(self):
-        "/__cart/removerange: duplicate 3 no download"
+        "[test_cart_api.py] /__cart/removerange: duplicate 3 no download"
         url = '/opus/__cart/reset.json'
         self._run_status_equal(url, 200)
         url = '/opus/__cart/addrange.json?volumeid=COVIMS_0006&range=co-vims-v1488642557_ir,co-vims-v1488646261_ir&reqno=456'
@@ -876,7 +876,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
 
     def test__api_cart_removerange_bad_opusid(self):
-        "/__cart/removerange: bad OPUSID no download"
+        "[test_cart_api.py] /__cart/removerange: bad OPUSID no download"
         url = '/opus/__cart/reset.json'
         self._run_status_equal(url, 200)
         url = '/opus/__cart/removerange.json?volumeid=COVIMS_0006&range=co-vims-v1484528864_irx,co-vims-v1484528864_ir&reqno=456'
@@ -887,7 +887,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
 
     def test__api_cart_removerange_bad_opusid2(self):
-        "/__cart/removerange: bad OPUSID 2 no download"
+        "[test_cart_api.py] /__cart/removerange: bad OPUSID 2 no download"
         url = '/opus/__cart/reset.json'
         self._run_status_equal(url, 200)
         url = '/opus/__cart/addrange.json?volumeid=COVIMS_0006&range=co-vims-v1484528864_ir,co-vims-v1484528864_irx&reqno=456'
@@ -898,7 +898,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
 
     def test__api_cart_removerange_not_search(self):
-        "/__cart/removerange: OPUSID not in search no download"
+        "[test_cart_api.py] /__cart/removerange: OPUSID not in search no download"
         url = '/opus/__cart/reset.json'
         self._run_status_equal(url, 200)
         url = '/opus/__cart/removerange.json?volumeid=COVIMS_0006&range=vg-iss-2-s-c4360001,vg-iss-2-s-c4360001&reqno=456'
@@ -909,7 +909,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
 
     def test__api_cart_removerange_bad_search(self):
-        "/__cart/removerange: bad search no download"
+        "[test_cart_api.py] /__cart/removerange: bad search no download"
         url = '/opus/__cart/reset.json'
         self._run_status_equal(url, 200)
         url = '/opus/__cart/removerange.json?volumeidXX=COVIMS_0006&range=vg-iss-2-s-c4360001,vg-iss-2-s-c4360001&reqno=456'
@@ -920,7 +920,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
 
     def test__api_cart_removerange_multi(self):
-        "/__cart/removerange: multiple no download"
+        "[test_cart_api.py] /__cart/removerange: multiple no download"
         url = '/opus/__cart/reset.json'
         self._run_status_equal(url, 200)
         url = '/opus/__cart/addrange.json?volumeid=COVIMS_0006&range=co-vims-v1488642557_ir,co-vims-v1488646261_ir&reqno=456'
@@ -934,7 +934,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
 
     def test__api_cart_removerange_multi_reverse(self):
-        "/__cart/removerange: multiple reversed no download"
+        "[test_cart_api.py] /__cart/removerange: multiple reversed no download"
         url = '/opus/__cart/reset.json'
         self._run_status_equal(url, 200)
         url = '/opus/__cart/addrange.json?volumeid=COVIMS_0006&range=co-vims-v1488642557_ir,co-vims-v1488646261_ir&reqno=456'
@@ -948,7 +948,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
 
     def test__api_cart_removerange_multi_sort(self):
-        "/__cart/removerange: multiple nonstandard sort no download"
+        "[test_cart_api.py] /__cart/removerange: multiple nonstandard sort no download"
         url = '/opus/__cart/reset.json'
         self._run_status_equal(url, 200)
         url = '/opus/__cart/addrange.json?volumeid=COVIMS_0006&order=COVIMSswathlength,-time1,opusid&range=co-vims-v1490784910_ir,co-vims-v1490782254_vis&reqno=456'
@@ -965,7 +965,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
 
     def test__api_cart_removerange_missing(self):
-        "/__cart/removerange: missing range no download"
+        "[test_cart_api.py] /__cart/removerange: missing range no download"
         url = '/opus/__cart/reset.json'
         self._run_status_equal(url, 200)
         url = '/opus/__cart/removerange.json?reqno=124'
@@ -976,7 +976,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
 
     def test__api_cart_removerange_one(self):
-        "/__cart/removerange: one good OPUSID no download"
+        "[test_cart_api.py] /__cart/removerange: one good OPUSID no download"
         url = '/opus/__cart/reset.json'
         self._run_status_equal(url, 200)
         url = '/opus/__cart/removerange.json?volumeid=COVIMS_0006&range=co-vims-v1484504505_ir,co-vims-v1484504505_ir&reqno=567'
@@ -987,7 +987,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
 
     def test__api_cart_removerange_missing_download(self):
-        "/__cart/removerange: missing range with download"
+        "[test_cart_api.py] /__cart/removerange: missing range with download"
         url = '/opus/__cart/reset.json'
         self._run_status_equal(url, 200)
         url = '/opus/__cart/removerange.json?download=1&reqno=456'
@@ -998,7 +998,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
 
     def test__api_cart_removerange_multi_download(self):
-        "/__cart/removerange: multiple with download"
+        "[test_cart_api.py] /__cart/removerange: multiple with download"
         url = '/opus/__cart/reset.json'
         self._run_status_equal(url, 200)
         url = '/opus/__cart/addrange.json?volumeid=COVIMS_0006&range=co-vims-v1488642557_ir,co-vims-v1488646261_ir&reqno=1234567'
@@ -1017,12 +1017,12 @@ class ApiCartTests(TestCase, ApiTestHelper):
             ##################################################
 
     def test__api_cart_addall_no_reqno(self):
-        "/__cart/addall: no reqno"
+        "[test_cart_api.py] /__cart/addall: no reqno"
         url = '/opus/__cart/addall.json?volumeid=VGISS_6210'
         self._run_status_equal(url, 404, settings.HTTP404_MISSING_REQNO)
 
     def test__api_cart_addall_one(self):
-        "/__cart/addall: one time no download"
+        "[test_cart_api.py] /__cart/addall: one time no download"
         url = '/opus/__cart/reset.json'
         self._run_status_equal(url, 200)
         url = '/opus/__cart/addall.json?volumeid=VGISS_6210&reqno=456'
@@ -1033,7 +1033,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
 
     def test__api_cart_addall_duplicate(self):
-        "/__cart/addall: twice no download"
+        "[test_cart_api.py] /__cart/addall: twice no download"
         url = '/opus/__cart/reset.json'
         self._run_status_equal(url, 200)
         url = '/opus/__cart/addall.json?volumeid=VGISS_6210&reqno=456'
@@ -1044,7 +1044,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
 
     def test__api_cart_addall_duplicate2(self):
-        "/__cart/addall: add plus addall no download"
+        "[test_cart_api.py] /__cart/addall: add plus addall no download"
         url = '/opus/__cart/reset.json'
         self._run_status_equal(url, 200)
         url = '/opus/__cart/addrange.json?volumeid=VGISS_6210&range=vg-iss-2-s-c4360037,vg-iss-2-s-c4365644&reqno=456'
@@ -1058,7 +1058,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
 
     def test__api_cart_addall_bad_search(self):
-        "/__cart/addall: bad search no download"
+        "[test_cart_api.py] /__cart/addall: bad search no download"
         url = '/opus/__cart/reset.json'
         self._run_status_equal(url, 200)
         url = '/opus/__cart/addall.json?volumeidXX=COVIMS_0006&reqno=456'
@@ -1069,7 +1069,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
 
     def test__api_cart_addall_multi(self):
-        "/__cart/addall: multiple no download"
+        "[test_cart_api.py] /__cart/addall: multiple no download"
         url = '/opus/__cart/reset.json'
         self._run_status_equal(url, 200)
         url = '/opus/__cart/addrange.json?volumeid=COVIMS_0006&range=co-vims-v1484506475_ir,co-vims-v1484509868_vis&reqno=456'
@@ -1089,7 +1089,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
 
     def test__api_cart_addall_one(self):
-        "/__cart/addall: one time no download"
+        "[test_cart_api.py] /__cart/addall: one time no download"
         url = '/opus/__cart/reset.json'
         self._run_status_equal(url, 200)
         url = '/opus/__cart/addall.json?volumeid=VGISS_6210&reqno=987'
@@ -1100,7 +1100,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
 
     def test__api_cart_addall_one_download(self):
-        "/__cart/addall: one time with download"
+        "[test_cart_api.py] /__cart/addall: one time with download"
         url = '/opus/__cart/reset.json'
         self._run_status_equal(url, 200)
         url = '/opus/__cart/addall.json?volumeid=VGISS_8201&productid=12&reqno=9878&download=1'
@@ -1116,7 +1116,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
             ###############################################
 
     def test__api_cart_datacsv_empty(self):
-        "/__cart/datacsv: empty"
+        "[test_cart_api.py] /__cart/datacsv: empty"
         url = '/opus/__cart/reset.json'
         self._run_status_equal(url, 200)
         url = '/opus/__cart/data.csv?cols=opusid,instrument,planet'
@@ -1127,7 +1127,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
 
     def test__api_cart_datacsv_multi(self):
-        "/__cart/datacsv: multiple"
+        "[test_cart_api.py] /__cart/datacsv: multiple"
         url = '/opus/__cart/reset.json'
         self._run_status_equal(url, 200)
         url = '/opus/__cart/addrange.json?volumeid=COVIMS_0006&range=co-vims-v1488549680_ir,co-vims-v1488550102_ir&reqno=456'

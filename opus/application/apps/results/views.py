@@ -321,7 +321,7 @@ def api_get_data(request, fmt):
         ret = render(request, 'results/data.html', context)
     elif fmt == 'json':
         ret = HttpResponse(json.dumps(data), content_type='application/json')
-    else:
+    else: # pragma: no cover
         log.error('api_get_data: Unknown format "%s"', fmt)
         ret = Http404(settings.HTTP404_UNKNOWN_FORMAT)
         exit_api_call(api_code, ret)
@@ -423,7 +423,7 @@ def get_metadata(request, opus_id, fmt, api_name, return_db_names, internal):
         exit_api_call(api_code, ret)
         raise ret
 
-    if not opus_id:
+    if not opus_id: # pragma: no cover
         ret = Http404('No OPUS ID')
         exit_api_call(api_code, ret)
         raise ret
@@ -448,7 +448,7 @@ def get_metadata(request, opus_id, fmt, api_name, return_db_names, internal):
     # Make sure it's a valid OPUS ID
     try:
         results = query_table_for_opus_id('obs_general', opus_id)
-    except LookupError:
+    except LookupError: # pragma: no cover
         log.error('api_get_metadata: Could not find data model for obs_general')
         ret = HttpResponseServerError(settings.HTTP500_INTERNAL_ERROR)
         exit_api_call(api_code, ret)
@@ -507,7 +507,7 @@ def get_metadata(request, opus_id, fmt, api_name, return_db_names, internal):
 
             try:
                 results = query_table_for_opus_id(table_name, opus_id)
-            except LookupError:
+            except LookupError: # pragma: no cover
                 log.error('api_get_metadata: Could not find data model for '
                           +'category %s', model_name)
                 ret = HttpResponseServerError(settings.HTTP500_INTERNAL_ERROR)
@@ -570,7 +570,7 @@ def get_metadata(request, opus_id, fmt, api_name, return_db_names, internal):
             ret = render(request, 'results/detail_metadata.html', context)
     elif fmt == 'json':
         ret = HttpResponse(json.dumps(data), content_type='application/json')
-    else:
+    else: # pragma: no cover
         log.error('get_metadata: Unknown format "%s"', fmt)
         ret = Http404(settings.HTTP404_UNKNOWN_FORMAT)
         exit_api_call(api_code, ret)
