@@ -399,10 +399,8 @@ th.sticky-header {
 
 .dataTable {
     width: 100%;
-    position: fixed;
+    position: relative;
     overflow: hidden;
-    /* margin-left: 0px;
-    margin-right: 0px; */
 }
 
 .dataTable .ps__rail-y {
