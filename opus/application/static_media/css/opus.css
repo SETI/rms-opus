@@ -3,6 +3,7 @@ body {
 }
 .app-body {
   margin-top: 3.8em !important;
+  overflow: hidden;
 }
 
 .container-fluid {
@@ -398,7 +399,7 @@ th.sticky-header {
 
 .dataTable {
     width: 100%;
-    position: relative;
+    position: fixed;
     overflow: hidden;
     /* margin-left: 0px;
     margin-right: 0px; */

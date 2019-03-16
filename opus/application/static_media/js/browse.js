@@ -3,7 +3,6 @@ var o_browse = {
     keyPressAction: "",
     tableSorting: false,
     tableScrollbar: new PerfectScrollbar(".dataTable", { minScrollbarLength: 30 }),
-    // tableScrollbar: new PerfectScrollbar(".dataTable > .col-lg", { minScrollbarLength: 30 }),
     galleryScrollbar: new PerfectScrollbar(".gallery-contents", { suppressScrollX: true }),
     modalScrollbar: new PerfectScrollbar("#galleryViewContents .metadata"),
 
@@ -313,8 +312,7 @@ var o_browse = {
                 // not currently ordered, change to ascending
                 orderIndicator.data("sort", "sort-asc")
             }
-            console.log(opus.prefs["order"])
-            // opus.prefs["order"] is an array
+
             let newOrderInserted = false;
             $.each(opus.prefs["order"], function(idx, slug) {
                 if(orderBy === slug || orderBy === `-${slug}` || `-${orderBy}` === slug) {
@@ -324,10 +322,8 @@ var o_browse = {
                 }
             })
             if(!newOrderInserted) {
-                // opus.prefs["order"] = `${orderBy},${opus.prefs["order"]}`;
                 opus.prefs["order"].unshift(orderBy);
             }
-            console.log(opus.prefs["order"])
 
             o_hash.updateHash();
             opus.lastPageDrawn.browse = 0;
@@ -1096,6 +1092,8 @@ var o_browse = {
             opus.prefs.order.push(fullSlug);
         });
         $(".sort-contents").html(listHtml);
+        console.log("sort contents updated")
+        o_browse.adjustTableSize();
         o_hash.updateHash();
     },
 
@@ -1307,17 +1305,11 @@ var o_browse = {
     adjustTableSize: function() {
         let containerWidth = $(".gallery-contents").width();
         let containerHeight = $(".gallery-contents").height() - $(".app-footer").height() + 8;
+        console.log(`height: ${containerHeight}`)
         $(".dataTable").width(containerWidth);
         $(".dataTable").height(containerHeight);
         o_browse.tableScrollbar.update();
     },
-    // adjustTableSize: function() {
-    //     let containerWidth = $(".gallery-contents").width();
-    //     let containerHeight = $(".gallery-contents").height() - $(".app-footer").height() + 8;
-    //     $(".dataTable > .col-lg").width(containerWidth);
-    //     $(".dataTable > .col-lg").height(containerHeight);
-    //     o_browse.tableScrollbar.update();
-    // },
 
     cartButtonInfo: function(status) {
         let icon = "fas fa-cart-plus";
