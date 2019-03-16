@@ -1092,8 +1092,6 @@ var o_browse = {
             opus.prefs.order.push(fullSlug);
         });
         $(".sort-contents").html(listHtml);
-        console.log("sort contents updated")
-        o_browse.adjustTableSize();
         o_hash.updateHash();
     },
 
@@ -1305,7 +1303,6 @@ var o_browse = {
     adjustTableSize: function() {
         let containerWidth = $(".gallery-contents").width();
         let containerHeight = $(".gallery-contents").height() - $(".app-footer").height() + 8;
-        console.log(`height: ${containerHeight}`)
         $(".dataTable").width(containerWidth);
         $(".dataTable").height(containerHeight);
         o_browse.tableScrollbar.update();
