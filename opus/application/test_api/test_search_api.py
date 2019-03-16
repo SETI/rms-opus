@@ -90,86 +90,86 @@ class ApiSearchTests(TestCase, ApiTestHelper):
 
     def test__api_normalizeinput_int_empty(self):
         "/api/normalizeinput: integer empty"
-        url = '/opus/__api/normalizeinput.json?levels=&reqno=123'
-        expected = {"levels": "", "reqno": 123}
+        url = '/opus/__api/normalizeinput.json?levels1=&reqno=123'
+        expected = {"levels1": "", "reqno": 123}
         self._run_json_equal(url, expected)
 
     def test__api_normalizeinput_int_zero(self):
         "/api/normalizeinput: integer zero"
-        url = '/opus/__api/normalizeinput.json?levels=0&reqno=123'
-        expected = {"levels": "0", "reqno": 123}
+        url = '/opus/__api/normalizeinput.json?levels1=0&reqno=123'
+        expected = {"levels1": "0", "reqno": 123}
         self._run_json_equal(url, expected)
 
     def test__api_normalizeinput_int_neg(self):
         "/api/normalizeinput: integer negative"
-        url = '/opus/__api/normalizeinput.json?levels=-1234567890&reqno=123'
-        expected = {"levels": "-1234567890", "reqno": 123}
+        url = '/opus/__api/normalizeinput.json?levels1=-1234567890&reqno=123'
+        expected = {"levels1": "-1234567890", "reqno": 123}
         self._run_json_equal(url, expected)
 
     def test__api_normalizeinput_int_pos(self):
         "/api/normalizeinput: integer positive"
-        url = '/opus/__api/normalizeinput.json?levels=1234567890&reqno=123'
-        expected = {"levels": "1234567890", "reqno": 123}
+        url = '/opus/__api/normalizeinput.json?levels1=1234567890&reqno=123'
+        expected = {"levels1": "1234567890", "reqno": 123}
         self._run_json_equal(url, expected)
 
     def test__api_normalizeinput_int_spaces(self):
         "/api/normalizeinput: integer spaces"
-        url = '/opus/__api/normalizeinput.json?levels=+1234+&reqno=123'
-        expected = {"levels": "1234", "reqno": 123}
+        url = '/opus/__api/normalizeinput.json?levels1=+1234+&reqno=123'
+        expected = {"levels1": "1234", "reqno": 123}
         self._run_json_equal(url, expected)
 
     def test__api_normalizeinput_int_underscores(self):
         "/api/normalizeinput: integer underscores"
-        url = '/opus/__api/normalizeinput.json?levels=_12_34_&reqno=123'
-        expected = {"levels": "1234", "reqno": 123}
+        url = '/opus/__api/normalizeinput.json?levels1=_12_34_&reqno=123'
+        expected = {"levels1": "1234", "reqno": 123}
         self._run_json_equal(url, expected)
 
     def test__api_normalizeinput_int_commas(self):
         "/api/normalizeinput: integer commas"
-        url = '/opus/__api/normalizeinput.json?levels=,1,2,3,4,&reqno=123'
-        expected = {"levels": "1234", "reqno": 123}
+        url = '/opus/__api/normalizeinput.json?levels1=,1,2,3,4,&reqno=123'
+        expected = {"levels1": "1234", "reqno": 123}
         self._run_json_equal(url, expected)
 
     def test__api_normalizeinput_int_mixed_delim(self):
         "/api/normalizeinput: integer mixed delimiters"
-        url = '/opus/__api/normalizeinput.json?levels=+,1_23_,4+&reqno=123'
-        expected = {"levels": "1234", "reqno": 123}
+        url = '/opus/__api/normalizeinput.json?levels1=+,1_23_,4+&reqno=123'
+        expected = {"levels1": "1234", "reqno": 123}
         self._run_json_equal(url, expected)
 
     def test__api_normalizeinput_int_bad_val1(self):
         "/api/normalizeinput: integer bad value 1X1"
-        url = '/opus/__api/normalizeinput.json?levels=1X1&reqno=123'
-        expected = {"levels": None, "reqno": 123}
+        url = '/opus/__api/normalizeinput.json?levels1=1X1&reqno=123'
+        expected = {"levels1": None, "reqno": 123}
         self._run_json_equal(url, expected)
 
     def test__api_normalizeinput_int_bad_val2(self):
         "/api/normalizeinput: integer bad value 1.2"
-        url = '/opus/__api/normalizeinput.json?levels=1.2&reqno=123'
-        expected = {"levels": None, "reqno": 123}
+        url = '/opus/__api/normalizeinput.json?levels1=1.2&reqno=123'
+        expected = {"levels1": None, "reqno": 123}
         self._run_json_equal(url, expected)
 
     def test__api_normalizeinput_int_large_val(self):
         "/api/normalizeinput: integer large value 1e1234"
-        url = '/opus/__api/normalizeinput.json?levels=1e1234&reqno=123'
-        expected = {"levels": None, "reqno": 123}
+        url = '/opus/__api/normalizeinput.json?levels1=1e1234&reqno=123'
+        expected = {"levels1": None, "reqno": 123}
         self._run_json_equal(url, expected)
 
     def test__api_normalizeinput_int_inf(self):
         "/api/normalizeinput: integer inf"
-        url = '/opus/__api/normalizeinput.json?levels=inf&reqno=123'
-        expected = {"levels": None, "reqno": 123}
+        url = '/opus/__api/normalizeinput.json?levels1=inf&reqno=123'
+        expected = {"levels1": None, "reqno": 123}
         self._run_json_equal(url, expected)
 
     def test__api_normalizeinput_int_ninf(self):
         "/api/normalizeinput: integer -inf"
-        url = '/opus/__api/normalizeinput.json?levels=-inf&reqno=123'
-        expected = {"levels": None, "reqno": 123}
+        url = '/opus/__api/normalizeinput.json?levels1=-inf&reqno=123'
+        expected = {"levels1": None, "reqno": 123}
         self._run_json_equal(url, expected)
 
     def test__api_normalizeinput_int_nan(self):
         "/api/normalizeinput: integer nan"
-        url = '/opus/__api/normalizeinput.json?levels=nan&reqno=123'
-        expected = {"levels": None, "reqno": 123}
+        url = '/opus/__api/normalizeinput.json?levels1=nan&reqno=123'
+        expected = {"levels1": None, "reqno": 123}
         self._run_json_equal(url, expected)
 
     def test__api_normalizeinput_float_empty(self):

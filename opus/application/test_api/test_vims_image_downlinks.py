@@ -47,7 +47,7 @@ class ApiVimsDownlinksTests(TestCase):
             for primary_filespec in target_dict:
                 try:
                     image_count = self._collect_vims_image_numbers_for_single_primary_filespec(primary_filespec, target_dict)
-                except Exception as error:
+                except Exception as error: # pragma: no cover
                     error_msg.append(error)
 
                 # print(image_count)
@@ -66,21 +66,21 @@ class ApiVimsDownlinksTests(TestCase):
                                 v2_id = v2_vis_id
                             v2_count = image_count[v2_id][image]
 
-                            if not v1_count:
+                            if not v1_count: # pragma: no cover
                                 error_msg.append(f"{v1_id} is missing downlinks for image: {images}")
-                            if not v2_count:
+                            if not v2_count: # pragma: no cover
                                 error_msg.append(f"{v2_id} is missing downlinks for image: {image}")
-                            if v2_count >= v1_count:
+                            if v2_count >= v1_count: # pragma: no cover
                                 error_msg.append(f"{v1_id} is missing downlinks for image: {image}")
 
-        if error_msg:
+        if error_msg: # pragma: no cover
             for e in error_msg:
                 if e.args[0] in ["No VIMS data in test db",
                                  "VIMS image data is not fully available in test db"] :
                     test_data_not_available = e.args[0]
                 else:
                     raise Exception("VIMS downlinks test failed")
-        if test_data_not_available:
+        if test_data_not_available: # pragma: no cover
             print(test_data_not_available)
 
 
@@ -130,14 +130,14 @@ class ApiVimsDownlinksTests(TestCase):
         if response.status_code == 200:
             data_object = response.json()["data"]
             # When test db return empty object, we would NOT proceed to count the number of images
-            if not data_object and not settings.TEST_GO_LIVE:
+            if not data_object and not settings.TEST_GO_LIVE: # pragma: no cover
                 raise Exception("No VIMS data in test db")
 
             for image_id in primary_filespec_object["images_with_opus_id"]:
                 # When image is not fully available in test db, we would NOT proceed to count the number of images
                 for image_key in response_images:
                     available_image_in_test_db = data_object[image_id].keys()
-                    if image_key not in available_image_in_test_db:
+                    if image_key not in available_image_in_test_db: # pragma: no cover
                         raise Exception("VIMS image data is not fully available in test db")
 
                 image_count[image_id] = {
@@ -218,9 +218,6 @@ class ApiForVimsDownlinks(ApiFormats):
 
     def __init__(self, target):
         super().__init__(target)
-
-    def build_all_testing_api(self):
-        self.api_dict = self.build_api_dict()
 
     def build_api_dict(self):
         """Test info for api calls with VIMS product.

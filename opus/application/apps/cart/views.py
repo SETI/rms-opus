@@ -39,8 +39,7 @@ from dictionary.models import Definitions
 from results.views import (get_search_results_chunk,
                            labels_for_slugs)
 from search.models import ObsGeneral
-from search.views import (get_param_info_by_slug,
-                          url_to_search_params,
+from search.views import (url_to_search_params,
                           get_user_query_table)
 from cart.models import Cart
 from tools.app_utils import *
@@ -172,6 +171,11 @@ def api_get_cart_csv(request):
     api_code = enter_api_call('api_get_cart_csv', request)
 
     column_labels, page = _csv_helper(request, api_code)
+    if column_labels is None:
+        ret = Http404(settings.HTTP404_UNKNOWN_SLUG)
+        exit_api_call(api_code, ret)
+        raise ret
+
     ret = csv_response('data', page, column_labels)
 
     exit_api_call(api_code, ret)
@@ -850,6 +854,10 @@ def _csv_helper(request, api_code=None):
 def _create_csv_file(request, csv_file_name, api_code=None):
     "Create a CSV file containing the cart data."
     column_labels, page = _csv_helper(request, api_code)
+    if column_labels is None:
+        ret = Http404(settings.HTTP404_UNKNOWN_SLUG)
+        exit_api_call(api_code, ret)
+        raise ret
 
     with open(csv_file_name, 'a') as csv_file:
         wr = csv.writer(csv_file)

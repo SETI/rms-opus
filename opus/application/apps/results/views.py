@@ -166,9 +166,18 @@ def api_get_data_and_images(request):
     cols = request.GET.get('cols', settings.DEFAULT_COLUMNS)
 
     labels = labels_for_slugs(cols_to_slug_list(cols))
+    if labels is None:
+        ret = Http404(settings.HTTP404_UNKNOWN_SLUG)
+        exit_api_call(api_code, ret)
+        raise ret
+
     order_slugs = cols_to_slug_list(order)
     order_slugs_pure = [x[1:] if x[0] == '-' else x for x in order_slugs]
     order_labels = labels_for_slugs(order_slugs_pure, units=False)
+    if order_labels is None:
+        ret = Http404(settings.HTTP404_UNKNOWN_SLUG)
+        exit_api_call(api_code, ret)
+        raise ret
 
     order_list = []
     for idx, (slug, label) in enumerate(zip(order_slugs, order_labels)):
@@ -1023,7 +1032,7 @@ def get_search_results_chunk(request, use_cart=None,
     mult_tables = set()
     for slug in cols_to_slug_list(cols):
         # First try the full name, which might include a trailing 1 or 2
-        pi = get_param_info_by_slug(slug, from_ui=True)
+        pi = get_param_info_by_slug(slug, 'col')
         if not pi:
             log.error('get_search_results_chunk: Slug "%s" not found', slug)
             return none_return
@@ -1376,6 +1385,10 @@ def _get_metadata_by_slugs(request, opus_id, cols, fmt, use_param_names,
 
     slug_list = cols_to_slug_list(cols)
     labels = labels_for_slugs(slug_list)
+    if labels is None:
+        ret = Http404(settings.HTTP404_UNKNOWN_SLUG)
+        exit_api_call(api_code, ret)
+        raise ret
 
     if fmt == 'csv':
         return csv_response(opus_id, page, labels)
@@ -1392,7 +1405,7 @@ def _get_metadata_by_slugs(request, opus_id, cols, fmt, use_param_names,
     if fmt == 'html':
         if internal:
             for slug, label, result in zip(slug_list, labels, page[0]):
-                pi = get_param_info_by_slug(slug)
+                pi = get_param_info_by_slug(slug, 'col')
                 data.append({label: (result, pi)})
             return render(request,
                           'results/detail_metadata_slugs_internal.html',
@@ -1489,37 +1502,11 @@ def get_triggered_tables(selections, extras, api_code=None):
     return final_table_list
 
 
-def get_cart_in_page(opus_id_list, session_id):
-    """Returns obs_general_ids in page that are also in user cart.
-
-    This is for views in results where you have to display the gallery
-    and indicate which thumbnails are in cart.
-    """
-    if not session_id:
-        return
-
-    cursor = connection.cursor()
-    cart_in_page = []
-    sql = 'SELECT DISTINCT opus_id FROM '
-    sql += connection.ops.quote_name('cart')
-    sql += ' WHERE session_id=%s'
-    cursor.execute(sql, [session_id])
-    rows = []
-    more = True
-    while more:
-        part_rows = cursor.fetchall()
-        rows += part_rows
-        more = cursor.nextset()
-    coll_ids = [r[0] for r in rows]
-    ret = [opus_id for opus_id in opus_id_list if opus_id in coll_ids]
-    return ret
-
-
 def labels_for_slugs(slugs, units=True):
     labels = []
 
     for slug in slugs:
-        pi = get_param_info_by_slug(slug, from_ui=True)
+        pi = get_param_info_by_slug(slug, 'col')
         if not pi:
             log.error('api_get_data_and_images: Could not find param_info '
                       +'for %s', slug)

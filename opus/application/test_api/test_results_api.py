@@ -63,7 +63,7 @@ class ApiResultsTests(TestCase, ApiTestHelper):
 
     def test__api_data_CASSINIrevno_sort(self):
         "/api/data: CASSINIrevno sort"
-        url = '/opus/api/data.json?instrument=Cassini+ISS,Cassini+VIMS&CASSINIrevno=000,00A,00B,00C,003&CASSINItargetcode=RI+(Rings+-+general)&limit=5000&order=time1&cols=opusid,CASSINIrevno&order=-CASSINIrevnoint1'
+        url = '/opus/api/data.json?instrument=Cassini+ISS,Cassini+VIMS&CASSINIrevno=000,00A,00B,00C,003&CASSINItargetcode=RI+(Rings+-+general)&limit=5000&order=time1&cols=opusid,CASSINIrevno&order=-CASSINIrevnoint'
         print(url)
         response = self._get_response(url)
         self.assertEqual(response.status_code, 200)
@@ -117,17 +117,17 @@ class ApiResultsTests(TestCase, ApiTestHelper):
 
     def test__api_data_coiss_2002_more_cols_json(self):
         "/api/data: coiss_2002 more cols json"
-        url = '/opus/api/data.json?cols=opusid,instrument,planet,target,time1,observationduration,CASSINIspacecraftclockcount1,CASSINIobsname,CASSINIactivityname,CASSINImissionphasename,CASSINItargetcode,CASSINIrevnoint1,CASSINIprimeinst,CASSINIisprime,CASSINIsequenceid,CASSINIspacecraftclockcount2,CASSINIert1,CASSINIert2,COISScamera,COISSfilter,COISSshuttermode,COISSshutterstate,COISScompressiontype,COISSdataconversiontype,COISSgainmode,COISSinstrumentmode,COISSmissinglines1,COISSimagenumber1,COISStargetdesc,COISSimageobservationtype&volumeid=COISS_2002'
+        url = '/opus/api/data.json?cols=opusid,instrument,planet,target,time1,observationduration,CASSINIspacecraftclockcount1,CASSINIobsname,CASSINIactivityname,CASSINImissionphasename,CASSINItargetcode,CASSINIrevnoint,CASSINIprimeinst,CASSINIisprime,CASSINIsequenceid,CASSINIspacecraftclockcount2,CASSINIert1,CASSINIert2,COISScamera,COISSfilter,COISSshuttermode,COISSshutterstate,COISScompressiontype,COISSdataconversiontype,COISSgainmode,COISSinstrumentmode,COISSmissinglines,COISSimagenumber,COISStargetdesc,COISSimageobservationtype&volumeid=COISS_2002'
         self._run_json_equal_file(url, 'api_data_coiss_2002_more_cols_json.json')
 
     def test__api_data_coiss_2002_more_cols_csv(self):
         "/api/data: coiss_2002 more cols csv"
-        url = '/opus/api/data.csv?cols=opusid,instrument,planet,target,time1,observationduration,CASSINIspacecraftclockcount1,CASSINIobsname,CASSINIactivityname,CASSINImissionphasename,CASSINItargetcode,CASSINIrevnoint1,CASSINIprimeinst,CASSINIisprime,CASSINIsequenceid,CASSINIspacecraftclockcount2,CASSINIert1,CASSINIert2,COISScamera,COISSfilter,COISSshuttermode,COISSshutterstate,COISScompressiontype,COISSdataconversiontype,COISSgainmode,COISSinstrumentmode,COISSmissinglines1,COISSimagenumber1,COISStargetdesc,COISSimageobservationtype&volumeid=COISS_2002'
+        url = '/opus/api/data.csv?cols=opusid,instrument,planet,target,time1,observationduration,CASSINIspacecraftclockcount1,CASSINIobsname,CASSINIactivityname,CASSINImissionphasename,CASSINItargetcode,CASSINIrevnoint,CASSINIprimeinst,CASSINIisprime,CASSINIsequenceid,CASSINIspacecraftclockcount2,CASSINIert1,CASSINIert2,COISScamera,COISSfilter,COISSshuttermode,COISSshutterstate,COISScompressiontype,COISSdataconversiontype,COISSgainmode,COISSinstrumentmode,COISSmissinglines,COISSimagenumber,COISStargetdesc,COISSimageobservationtype&volumeid=COISS_2002'
         self._run_csv_equal_file(url, 'api_data_coiss_2002_more_cols_csv.csv')
 
     def test__api_data_coiss_2002_more_cols_html(self):
         "/api/data: coiss_2002 more cols html"
-        url = '/opus/api/data.html?cols=opusid,instrument,planet,target,time1,observationduration,CASSINIspacecraftclockcount1,CASSINIobsname,CASSINIactivityname,CASSINImissionphasename,CASSINItargetcode,CASSINIrevnoint1,CASSINIprimeinst,CASSINIisprime,CASSINIsequenceid,CASSINIspacecraftclockcount2,CASSINIert1,CASSINIert2,COISScamera,COISSfilter,COISSshuttermode,COISSshutterstate,COISScompressiontype,COISSdataconversiontype,COISSgainmode,COISSinstrumentmode,COISSmissinglines1,COISSimagenumber1,COISStargetdesc,COISSimageobservationtype&volumeid=COISS_2002'
+        url = '/opus/api/data.html?cols=opusid,instrument,planet,target,time1,observationduration,CASSINIspacecraftclockcount1,CASSINIobsname,CASSINIactivityname,CASSINImissionphasename,CASSINItargetcode,CASSINIrevnoint,CASSINIprimeinst,CASSINIisprime,CASSINIsequenceid,CASSINIspacecraftclockcount2,CASSINIert1,CASSINIert2,COISScamera,COISSfilter,COISSshuttermode,COISSshutterstate,COISScompressiontype,COISSdataconversiontype,COISSgainmode,COISSinstrumentmode,COISSmissinglines,COISSimagenumber,COISStargetdesc,COISSimageobservationtype&volumeid=COISS_2002'
         self._run_html_equal_file(url, 'api_data_coiss_2002_more_cols_html.html')
 
     def test__api_data_bad_cols_json(self):
@@ -299,62 +299,62 @@ class ApiResultsTests(TestCase, ApiTestHelper):
     # Specified columns, all Voyager or Cassini slugs
     def test__api_metadata_vg_iss_2_s_c4365507_cols_all_voyager_json(self):
         "/api/metadata: vg-iss-2-s-c4365507 cols all voyager json"
-        url = '/opus/api/metadata/vg-iss-2-s-c4365507.json?cols=opusid,VOYAGERmissionphasename,VOYAGERspacecraftclockcount1,VOYAGERspacecraftclockcount2,VOYAGERert1,VGISScamera,VGISSfilter,VGISSfilternumber,VGISSshuttermode,VGISSeditmode,VGISSgainmode,VGISSscanmode,VGISSimageid,VGISSusablelines1,VGISSusablesamples1'
+        url = '/opus/api/metadata/vg-iss-2-s-c4365507.json?cols=opusid,VOYAGERmissionphasename,VOYAGERspacecraftclockcount1,VOYAGERspacecraftclockcount2,VOYAGERert,VGISScamera,VGISSfilter,VGISSfilternumber,VGISSshuttermode,VGISSeditmode,VGISSgainmode,VGISSscanmode,VGISSimageid,VGISSusablelines,VGISSusablesamples'
         self._run_json_equal_file(url, 'api_metadata_vg_iss_2_s_c4365507_cols_all_voyager_json.json')
 
     def test__api_metadata2_vg_iss_2_s_c4365507_cols_all_voyager_json(self):
         "/api/metadata_v2: vg-iss-2-s-c4365507 cols all voyager json"
-        url = '/opus/api/metadata_v2/vg-iss-2-s-c4365507.json?cols=opusid,VOYAGERmissionphasename,VOYAGERspacecraftclockcount1,VOYAGERspacecraftclockcount2,VOYAGERert1,VGISScamera,VGISSfilter,VGISSfilternumber,VGISSshuttermode,VGISSeditmode,VGISSgainmode,VGISSscanmode,VGISSimageid,VGISSusablelines1,VGISSusablesamples1'
+        url = '/opus/api/metadata_v2/vg-iss-2-s-c4365507.json?cols=opusid,VOYAGERmissionphasename,VOYAGERspacecraftclockcount1,VOYAGERspacecraftclockcount2,VOYAGERert,VGISScamera,VGISSfilter,VGISSfilternumber,VGISSshuttermode,VGISSeditmode,VGISSgainmode,VGISSscanmode,VGISSimageid,VGISSusablelines,VGISSusablesamples'
         self._run_json_equal_file(url, 'api_metadata2_vg_iss_2_s_c4365507_cols_all_voyager_json.json')
 
     def test__api_metadata_vg_iss_2_s_c4365507_cols_all_cassini_json(self):
         "/api/metadata: vg-iss-2-s-c4365507 cols all cassini json"
-        url = '/opus/api/metadata/vg-iss-2-s-c4365507.json?cols=opusid,volumeid,greaterpixelsize1,lesserpixelsize1,wavelength1,wavelength2,CASSINIobsname,CASSINIactivityname,CASSINImissionphasename,CASSINItargetcode,CASSINIrevnoint1,CASSINIprimeinst,CASSINIisprime,CASSINIsequenceid,CASSINIspacecraftclockcount1,CASSINIspacecraftclockcount2,CASSINIert1,CASSINIert2'
+        url = '/opus/api/metadata/vg-iss-2-s-c4365507.json?cols=opusid,volumeid,greaterpixelsize,lesserpixelsize,wavelength1,wavelength2,CASSINIobsname,CASSINIactivityname,CASSINImissionphasename,CASSINItargetcode,CASSINIrevnoint,CASSINIprimeinst,CASSINIisprime,CASSINIsequenceid,CASSINIspacecraftclockcount1,CASSINIspacecraftclockcount2,CASSINIert1,CASSINIert2'
         self._run_json_equal_file(url, 'api_metadata_vg_iss_2_s_c4365507_cols_all_cassini_json.json')
 
     def test__api_metadata2_vg_iss_2_s_c4365507_cols_all_cassini_json(self):
         "/api/metadata_v2: vg-iss-2-s-c4365507 cols all cassini json"
-        url = '/opus/api/metadata_v2/vg-iss-2-s-c4365507.json?cols=opusid,volumeid,greaterpixelsize1,lesserpixelsize1,wavelength1,wavelength2,CASSINIobsname,CASSINIactivityname,CASSINImissionphasename,CASSINItargetcode,CASSINIrevnoint1,CASSINIprimeinst,CASSINIisprime,CASSINIsequenceid,CASSINIspacecraftclockcount1,CASSINIspacecraftclockcount2,CASSINIert1,CASSINIert2'
+        url = '/opus/api/metadata_v2/vg-iss-2-s-c4365507.json?cols=opusid,volumeid,greaterpixelsize,lesserpixelsize,wavelength1,wavelength2,CASSINIobsname,CASSINIactivityname,CASSINImissionphasename,CASSINItargetcode,CASSINIrevnoint,CASSINIprimeinst,CASSINIisprime,CASSINIsequenceid,CASSINIspacecraftclockcount1,CASSINIspacecraftclockcount2,CASSINIert1,CASSINIert2'
         self._run_json_equal_file(url, 'api_metadata2_vg_iss_2_s_c4365507_cols_all_cassini_json.json')
 
     def test__api_metadata_vg_iss_2_s_c4365507_cols_all_voyager_html(self):
         "/api/metadata: vg-iss-2-s-c4365507 cols all voyager html"
-        url = '/opus/api/metadata/vg-iss-2-s-c4365507.html?cols=opusid,VOYAGERmissionphasename,VOYAGERspacecraftclockcount1,VOYAGERspacecraftclockcount2,VOYAGERert1,VGISScamera,VGISSfilter,VGISSfilternumber,VGISSshuttermode,VGISSeditmode,VGISSgainmode,VGISSscanmode,VGISSimageid,VGISSusablelines1,VGISSusablesamples1'
+        url = '/opus/api/metadata/vg-iss-2-s-c4365507.html?cols=opusid,VOYAGERmissionphasename,VOYAGERspacecraftclockcount1,VOYAGERspacecraftclockcount2,VOYAGERert,VGISScamera,VGISSfilter,VGISSfilternumber,VGISSshuttermode,VGISSeditmode,VGISSgainmode,VGISSscanmode,VGISSimageid,VGISSusablelines,VGISSusablesamples'
         self._run_html_equal_file(url, 'api_metadata_vg_iss_2_s_c4365507_cols_all_voyager_html.html')
 
     def test__api_metadata2_vg_iss_2_s_c4365507_cols_all_voyager_html(self):
         "/api/metadata_v2: vg-iss-2-s-c4365507 cols all voyager html"
-        url = '/opus/api/metadata_v2/vg-iss-2-s-c4365507.html?cols=opusid,VOYAGERmissionphasename,VOYAGERspacecraftclockcount1,VOYAGERspacecraftclockcount2,VOYAGERert1,VGISScamera,VGISSfilter,VGISSfilternumber,VGISSshuttermode,VGISSeditmode,VGISSgainmode,VGISSscanmode,VGISSimageid,VGISSusablelines1,VGISSusablesamples1'
+        url = '/opus/api/metadata_v2/vg-iss-2-s-c4365507.html?cols=opusid,VOYAGERmissionphasename,VOYAGERspacecraftclockcount1,VOYAGERspacecraftclockcount2,VOYAGERert,VGISScamera,VGISSfilter,VGISSfilternumber,VGISSshuttermode,VGISSeditmode,VGISSgainmode,VGISSscanmode,VGISSimageid,VGISSusablelines,VGISSusablesamples'
         self._run_html_equal_file(url, 'api_metadata2_vg_iss_2_s_c4365507_cols_all_voyager_html.html')
 
     def test__api_metadata_vg_iss_2_s_c4365507_cols_all_cassini_html(self):
         "/api/metadata: vg-iss-2-s-c4365507 cols all cassini html"
-        url = '/opus/api/metadata/vg-iss-2-s-c4365507.html?cols=opusid,volumeid,greaterpixelsize1,lesserpixelsize1,wavelength1,wavelength2,CASSINIobsname,CASSINIactivityname,CASSINImissionphasename,CASSINItargetcode,CASSINIrevnoint1,CASSINIprimeinst,CASSINIisprime,CASSINIsequenceid,CASSINIspacecraftclockcount1,CASSINIspacecraftclockcount2,CASSINIert1,CASSINIert2'
+        url = '/opus/api/metadata/vg-iss-2-s-c4365507.html?cols=opusid,volumeid,greaterpixelsize,lesserpixelsize,wavelength1,wavelength2,CASSINIobsname,CASSINIactivityname,CASSINImissionphasename,CASSINItargetcode,CASSINIrevnoint,CASSINIprimeinst,CASSINIisprime,CASSINIsequenceid,CASSINIspacecraftclockcount1,CASSINIspacecraftclockcount2,CASSINIert1,CASSINIert2'
         self._run_html_equal_file(url, 'api_metadata_vg_iss_2_s_c4365507_cols_all_cassini_html.html')
 
     def test__api_metadata2_vg_iss_2_s_c4365507_cols_all_cassini_html(self):
         "/api/metadata_v2: vg-iss-2-s-c4365507 cols all cassini html"
-        url = '/opus/api/metadata_v2/vg-iss-2-s-c4365507.html?cols=opusid,volumeid,greaterpixelsize1,lesserpixelsize1,wavelength1,wavelength2,CASSINIobsname,CASSINIactivityname,CASSINImissionphasename,CASSINItargetcode,CASSINIrevnoint1,CASSINIprimeinst,CASSINIisprime,CASSINIsequenceid,CASSINIspacecraftclockcount1,CASSINIspacecraftclockcount2,CASSINIert1,CASSINIert2'
+        url = '/opus/api/metadata_v2/vg-iss-2-s-c4365507.html?cols=opusid,volumeid,greaterpixelsize,lesserpixelsize,wavelength1,wavelength2,CASSINIobsname,CASSINIactivityname,CASSINImissionphasename,CASSINItargetcode,CASSINIrevnoint,CASSINIprimeinst,CASSINIisprime,CASSINIsequenceid,CASSINIspacecraftclockcount1,CASSINIspacecraftclockcount2,CASSINIert1,CASSINIert2'
         self._run_html_equal_file(url, 'api_metadata2_vg_iss_2_s_c4365507_cols_all_cassini_html.html')
 
     def test__api_metadata_vg_iss_2_s_c4365507_cols_all_voyager_csv(self):
         "/api/metadata: vg-iss-2-s-c4365507 cols all voyager csv"
-        url = '/opus/api/metadata/vg-iss-2-s-c4365507.csv?cols=opusid,VOYAGERmissionphasename,VOYAGERspacecraftclockcount1,VOYAGERspacecraftclockcount2,VOYAGERert1,VGISScamera,VGISSfilter,VGISSfilternumber,VGISSshuttermode,VGISSeditmode,VGISSgainmode,VGISSscanmode,VGISSimageid,VGISSusablelines1,VGISSusablesamples1'
+        url = '/opus/api/metadata/vg-iss-2-s-c4365507.csv?cols=opusid,VOYAGERmissionphasename,VOYAGERspacecraftclockcount1,VOYAGERspacecraftclockcount2,VOYAGERert,VGISScamera,VGISSfilter,VGISSfilternumber,VGISSshuttermode,VGISSeditmode,VGISSgainmode,VGISSscanmode,VGISSimageid,VGISSusablelines,VGISSusablesamples'
         self._run_csv_equal_file(url, 'api_metadata_vg_iss_2_s_c4365507_cols_all_voyager_csv.csv')
 
     def test__api_metadata2_vg_iss_2_s_c4365507_cols_all_voyager_csv(self):
         "/api/metadata_v2: vg-iss-2-s-c4365507 cols all voyager csv"
-        url = '/opus/api/metadata_v2/vg-iss-2-s-c4365507.csv?cols=opusid,VOYAGERmissionphasename,VOYAGERspacecraftclockcount1,VOYAGERspacecraftclockcount2,VOYAGERert1,VGISScamera,VGISSfilter,VGISSfilternumber,VGISSshuttermode,VGISSeditmode,VGISSgainmode,VGISSscanmode,VGISSimageid,VGISSusablelines1,VGISSusablesamples1'
+        url = '/opus/api/metadata_v2/vg-iss-2-s-c4365507.csv?cols=opusid,VOYAGERmissionphasename,VOYAGERspacecraftclockcount1,VOYAGERspacecraftclockcount2,VOYAGERert,VGISScamera,VGISSfilter,VGISSfilternumber,VGISSshuttermode,VGISSeditmode,VGISSgainmode,VGISSscanmode,VGISSimageid,VGISSusablelines,VGISSusablesamples'
         self._run_csv_equal_file(url, 'api_metadata2_vg_iss_2_s_c4365507_cols_all_voyager_csv.csv')
 
     def test__api_metadata_vg_iss_2_s_c4365507_cols_all_cassini_csv(self):
         "/api/metadata: vg-iss-2-s-c4365507 cols all cassini csv"
-        url = '/opus/api/metadata/vg-iss-2-s-c4365507.csv?cols=opusid,volumeid,greaterpixelsize1,lesserpixelsize1,wavelength1,wavelength2,CASSINIobsname,CASSINIactivityname,CASSINImissionphasename,CASSINItargetcode,CASSINIrevnoint1,CASSINIprimeinst,CASSINIisprime,CASSINIsequenceid,CASSINIspacecraftclockcount1,CASSINIspacecraftclockcount2,CASSINIert1,CASSINIert2'
+        url = '/opus/api/metadata/vg-iss-2-s-c4365507.csv?cols=opusid,volumeid,greaterpixelsize,lesserpixelsize,wavelength1,wavelength2,CASSINIobsname,CASSINIactivityname,CASSINImissionphasename,CASSINItargetcode,CASSINIrevnoint,CASSINIprimeinst,CASSINIisprime,CASSINIsequenceid,CASSINIspacecraftclockcount1,CASSINIspacecraftclockcount2,CASSINIert1,CASSINIert2'
         self._run_csv_equal_file(url, 'api_metadata_vg_iss_2_s_c4365507_cols_all_cassini_csv.csv')
 
     def test__api_metadata2_vg_iss_2_s_c4365507_cols_all_cassini_csv(self):
         "/api/metadata_v2: vg-iss-2-s-c4365507 cols all cassini csv"
-        url = '/opus/api/metadata_v2/vg-iss-2-s-c4365507.csv?cols=opusid,volumeid,greaterpixelsize1,lesserpixelsize1,wavelength1,wavelength2,CASSINIobsname,CASSINIactivityname,CASSINImissionphasename,CASSINItargetcode,CASSINIrevnoint1,CASSINIprimeinst,CASSINIisprime,CASSINIsequenceid,CASSINIspacecraftclockcount1,CASSINIspacecraftclockcount2,CASSINIert1,CASSINIert2'
+        url = '/opus/api/metadata_v2/vg-iss-2-s-c4365507.csv?cols=opusid,volumeid,greaterpixelsize,lesserpixelsize,wavelength1,wavelength2,CASSINIobsname,CASSINIactivityname,CASSINImissionphasename,CASSINItargetcode,CASSINIrevnoint,CASSINIprimeinst,CASSINIisprime,CASSINIsequenceid,CASSINIspacecraftclockcount1,CASSINIspacecraftclockcount2,CASSINIert1,CASSINIert2'
         self._run_csv_equal_file(url, 'api_metadata2_vg_iss_2_s_c4365507_cols_all_cassini_csv.csv')
 
     # Specified cats, empty
