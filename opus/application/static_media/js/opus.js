@@ -227,9 +227,9 @@ var opus = {
         // just make the step size the number of the obserations across the page...
         if (o_browse.galleryBoundingRect.x > 0) {
             o_browse.gallerySliderStep = Math.ceil(o_browse.galleryBoundingRect.x/10)*10;
-            $("#op-observation-slider").slider("option", "step", o_browse.gallerySliderStep);
+            $(".op-slider-pointer").css("width", `${prettyCount.length*.68}em`);
         }
-        $("#op-observation-total").html(prettyCount);
+        $("#op-observation-slider")
     },
 
     triggerNavbarClick: function() {
