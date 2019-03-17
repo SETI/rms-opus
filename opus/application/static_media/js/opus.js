@@ -216,10 +216,20 @@ var opus = {
 
     updateResultCount: function(result_count) {
         opus.result_count = result_count;
+        let prettyCount = o_utils.addCommas(opus.result_count);
         $("#result_count").fadeOut("fast", function() {
-            $(this).html(o_utils.addCommas(opus.result_count)).fadeIn("fast");
+            $(this).html(prettyCount).fadeIn("fast");
             $(this).removeClass("browse_results_invalid");
         });
+
+        // update the range slider for the observation number selections
+        $("#op-observation-slider").slider("option", "max", opus.result_count);
+        // just make the step size the number of the obserations across the page...
+        if (o_browse.galleryBoundingRect.x > 0) {
+            o_browse.gallerySliderStep = Math.ceil(o_browse.galleryBoundingRect.x/10)*10;
+            $("#op-observation-slider").slider("option", "step", o_browse.gallerySliderStep);
+        }
+        $("#op-observation-total").html(prettyCount);
     },
 
     triggerNavbarClick: function() {

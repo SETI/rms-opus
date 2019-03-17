@@ -698,10 +698,14 @@ div.gallery {
 }
 
 #op-observation-slider.ui-slider {
-    display: none;
-    width:200px;
-    margin-left:45px;
+    /*display: none; */
+    width:400px;
     height:.1em;
+}
+
+.op-from-obs {
+    margin-left:45px;
+    padding-right:.5em;
 }
 
 #op-observation-number {
@@ -713,7 +717,7 @@ div.gallery {
     /*width: auto; */
     top:-.6em;
     display: inline-block;
-    height: 15px;
+    height: 1.5em;
     position: relative;
     min-width: 3em;
  }

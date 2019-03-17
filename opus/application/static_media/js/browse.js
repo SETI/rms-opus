@@ -12,6 +12,8 @@ var o_browse = {
 
     lastLoadDataRequestNo: 0,
 
+    galleryBoundingRect: {'x':[0], 'y':[0]},
+    gallerySliderStep: 10,
     allowKeydownOnMetaDataModal: true,
     infiniteScrollCurrentMaxPageNumber: 0, // the largest drawn page number
     infiniteScrollCurrentMinPageNumber: 1000, // prev page of the smallest drawn page number
@@ -367,7 +369,7 @@ var o_browse = {
             value:1,
             min: 1,
             max: 1000,
-            step: 100,
+            step: o_browse.gallerySliderStep,
             slide: function(event, ui) {
                 o_browse.updateSliderHandle(ui.value, true);
             }
@@ -472,7 +474,6 @@ var o_browse = {
             $("input#page").val(page).addClass("text-warning");;
             onRenderData();
         }
-        let test =1;
     },
 
     checkScroll: function() {
@@ -985,6 +986,7 @@ var o_browse = {
         // $(".gallery", namespace).append(html);
         $(".table-page-load-status").hide();
 
+        o_browse.adjustBrowseHeight();
         o_browse.adjustTableSize();
         o_browse.galleryScrollbar.update();
 
@@ -1276,16 +1278,32 @@ var o_browse = {
         }
 
         o_browse.loadData(page);
-        o_browse.adjustBrowseHeight();
-        o_browse.adjustTableSize();
+    },
 
-        o_hash.updateHash();
+    countGalleryImages: function() {
+        var xDir = 0;
+        var xCount = 0;
+        // we need to know how many images fit across; we can approx the y dir differently
+        $(".thumbnail-container").each(function(index, thumb) {
+            let offset = $(thumb).offset();
+            if (offset.left >= xDir) {
+                xDir = offset.left;
+                ++xCount;
+            } else {
+                // done; no need to continue
+                return false;
+            }
+        });
+        let yCount = Math.round($(".gallery-contents").height()/100);   // images are 100px
+        return {"x":xCount, "y":yCount};
     },
 
     adjustBrowseHeight: function() {
         let container_height = $(window).height()-120;
         $(".gallery-contents").height(container_height);
         o_browse.galleryScrollbar.update();
+        o_browse.galleryBoundingRect = o_browse.countGalleryImages();
+        $("#op-observation-slider").slider("option", "step", o_browse.galleryBoundingRect.x);
         //opus.limit =  (floor($(window).width()/thumbnailSize) * floor(container_height/thumbnailSize));
     },
 
