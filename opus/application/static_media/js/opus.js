@@ -227,7 +227,7 @@ var opus = {
         // just make the step size the number of the obserations across the page...
         if (o_browse.galleryBoundingRect.x > 0) {
             o_browse.gallerySliderStep = Math.ceil(o_browse.galleryBoundingRect.x/10)*10;
-            $(".op-slider-pointer").css("width", `${prettyCount.length*.68}em`);
+            $(".op-slider-pointer").css("width", `${opus.result_count.toString().length*0.7}em`);
         }
         $("#op-observation-slider")
     },
