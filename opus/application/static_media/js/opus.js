@@ -40,8 +40,6 @@ var opus = {
             'order': default_sort_order.split(','),  // result table ordering
             'cols': default_columns.split(','),  // default result table columns by slug
             'widgets':[], // search tab widget columns
-            'widget_size':{}, // search tab resized widgets
-            'widget_scroll':{}, // search tab widget internal scroll saved
             'detail':'', // opus_id of detail page content
 
 
@@ -74,7 +72,6 @@ var opus = {
     widgets_drawn:[], // keeps track of what widgets are actually drawn
     widgets_fetching:[], // this widget is currently being fetched
     widget_elements_drawn:[], // the element is drawn but the widget might not be fetched yet
-    widgets_paused:[],
     search_form_cols:1, // the number of search form cols, 1 or 2
     widget_full_sizes:{}, // when a widget is minimized and doesn't have a custom size defined we keep track of what the full size was so we can restore it when they unminimize/maximize widget
     menu_list_indicators: {'slug':[], 'cat':[], 'group':[] },
