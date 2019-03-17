@@ -408,7 +408,6 @@ var o_browse = {
             }
             // don't return false here or it will snatch all the user input!
         });
-        o_browse.updateSliderHandle();
     }, // end browse behaviors
 
     // check if we need infiniteScroll to load next page when there is no more prefected data
@@ -466,11 +465,14 @@ var o_browse = {
 
     updateSliderHandle: function(value, update) {
         value = (value == undefined? 1 : value);
-        let handle = `${value}`;
-        $("#op-observation-number").html(handle);
+        if (isNaN(value)) {
+            console.log("NaN");
+            return false;
+        }
+        $("#op-observation-number").html(value);
         if (update !== undefined && update == true) {
             // temp til we get rid of page
-            let page = Math.round(value/100)+1;
+            let page = Math.ceil(value/100);
             $("input#page").val(page).addClass("text-warning");;
             onRenderData();
         }
@@ -1397,6 +1399,21 @@ var o_browse = {
         o_browse.modalScrollbar.update();
     },
 
+    updateSlider: function() {
+        // when a new result comes in, reset the slider pointer back to 1.
+        $("#op-observation-number").html(1);
+        $(".op-slider-pointer").css("width", `${opus.result_count.toString().length*0.7}em`);
+        // just make the step size the number of the obserations across the page...
+        if (o_browse.galleryBoundingRect.x > 0) {
+            o_browse.gallerySliderStep = Math.ceil(o_browse.galleryBoundingRect.x/10)*10;
+        }
+        $("#op-observation-slider").slider({
+            "value": 1,
+            "step": o_browse.gallerySliderStep,
+            "max": opus.result_count,
+        });
+    },
+
     resetData: function() {
         $("#dataTable > tbody").empty();  // yes all namespaces
         $(".gallery").empty();
@@ -1405,6 +1422,7 @@ var o_browse = {
         opus.cart_change = true;  // forces redraw of cart tab because reset_lastPageDrawn
         opus.browse_view_scrolls = reset_browse_view_scrolls;
         opus.gallery_begun = false;
+        o_browse.updateSlider();
         o_hash.updateHash();
     },
 

@@ -156,6 +156,7 @@ var opus = {
 
         // start the result count spinner and do the yellow flash
         $("#result_count").html(opus.spinner).parent().effect("highlight", {}, 500);
+        $("#op-observation-number").html(opus.spinner).effect("highlight", {}, 500);
         // move this above allNormalizedApiCall to avoid recursive api call
         opus.last_selections = selections;
 
@@ -178,6 +179,7 @@ var opus = {
         if(!opus.allInputsValid) {
             // remove spinning effect on browse count
             $("#result_count").text("?");
+            $("#op-observation-number").html("?");
             return;
         }
 
@@ -221,15 +223,7 @@ var opus = {
             $(this).html(prettyCount).fadeIn("fast");
             $(this).removeClass("browse_results_invalid");
         });
-
-        // update the range slider for the observation number selections
-        $("#op-observation-slider").slider("option", "max", opus.result_count);
-        // just make the step size the number of the obserations across the page...
-        if (o_browse.galleryBoundingRect.x > 0) {
-            o_browse.gallerySliderStep = Math.ceil(o_browse.galleryBoundingRect.x/10)*10;
-            $(".op-slider-pointer").css("width", `${opus.result_count.toString().length*0.7}em`);
-        }
-        $("#op-observation-slider")
+        o_browse.updateSlider();
     },
 
     triggerNavbarClick: function() {
@@ -446,6 +440,7 @@ $(document).ready(function() {
     opus.prefs.widgets = [];
     o_widgets.updateWidgetCookies();
     opus.lastBlogUpdate();
+    opus.addAllBehaviors();
 
     o_hash.initFromHash(); // just returns null if no hash
 
@@ -587,8 +582,6 @@ $(document).ready(function() {
         let viewportBottom = viewportTop + $(window).height();
         return elementBottom > viewportTop && elementTop < viewportBottom;
     };
-
-    opus.addAllBehaviors();
 
     o_cart.initCart();
     opus.triggerNavbarClick();

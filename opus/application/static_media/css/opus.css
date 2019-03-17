@@ -703,9 +703,10 @@ div.gallery {
     height:.1em;
 }
 
-.op-from-obs {
+.op-observation-text {
     margin-left:45px;
     padding-right:.5em;
+    opacity: 0.5;
 }
 
 #op-observation-number {
