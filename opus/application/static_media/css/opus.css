@@ -714,12 +714,12 @@ div.gallery {
 }
 
 .ui-slider-horizontal .ui-slider-handle {
-    /*width: auto; */
+    width: auto;
     top:-.6em;
     display: inline-block;
     height: 1.5em;
     position: relative;
-    min-width: 3em;
+    /*min-width: 3em;*/
  }
 
 .table-page {
