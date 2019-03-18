@@ -19,7 +19,7 @@ class ApiReturnFormatTests(TestCase):
         sys.tracebacklimit = 0 # default: 1000
         settings.CACHE_KEY_PREFIX = 'opustest:' + settings.OPUS_SCHEMA_NAME
         logging.disable(logging.ERROR)
-        if settings.TEST_GO_LIVE:
+        if settings.TEST_GO_LIVE: # pragma: no cover
             self.client = requests.Session()
         else:
             self.client = RequestsClient()

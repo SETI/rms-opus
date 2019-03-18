@@ -22,7 +22,7 @@ class ApiUITests(TestCase, ApiTestHelper):
         sys.tracebacklimit = 0 # default: 1000
         settings.CACHE_KEY_PREFIX = 'opustest:' + settings.OPUS_SCHEMA_NAME
         logging.disable(logging.ERROR)
-        if settings.TEST_GO_LIVE:
+        if settings.TEST_GO_LIVE: # pragma: no cover
             self.client = requests.Session()
         else:
             self.client = RequestsClient()
@@ -425,8 +425,8 @@ class ApiUITests(TestCase, ApiTestHelper):
         new_slugs['qtype-rightasc'] = 'only'
         self._run_url_slugs_equal(url, new_slugs)
 
-    def test__api_normalizeurl_lonely_qtype_used_badval_XXX(self):
-        "[test_ui_api.py] /__normalizeurl: lonely qtype used badval XXX"
+    def test__api_normalizeurl_lonely_qtype_used_multi_badval_XXX(self):
+        "[test_ui_api.py] /__normalizeurl: lonely qtype used multi badval XXX"
         new_slugs = dict(self.default_url_slugs)
         url = '/opus/__normalizeurl.json?widgets=rightasc&qtype-rightasc=XXX'
         new_slugs['widgets'] = 'rightasc'
@@ -479,8 +479,8 @@ class ApiUITests(TestCase, ApiTestHelper):
         new_slugs['qtype-volumeid'] = 'ends'
         self._run_url_slugs_equal(url, new_slugs)
 
-    def test__api_normalizeurl_lonely_qtype_used_badval_XXX(self):
-        "[test_ui_api.py] /__normalizeurl: lonely qtype used badval XXX"
+    def test__api_normalizeurl_lonely_qtype_used_string_badval_XXX(self):
+        "[test_ui_api.py] /__normalizeurl: lonely qtype used string badval XXX"
         new_slugs = dict(self.default_url_slugs)
         url = '/opus/__normalizeurl.json?widgets=volumeid&qtype-volumeid=XXX'
         new_slugs['widgets'] = 'volumeid'

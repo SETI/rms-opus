@@ -28,7 +28,7 @@ class ApiSearchTests(TestCase, ApiTestHelper):
         settings.STRINGCHOICE_FULL_SEARCH_COUNT_THRESHOLD = 1000000000
         settings.STRINGCHOICE_FULL_SEARCH_COUNT_THRESHOLD = 1000000
         settings.STRINGCHOICE_FULL_SEARCH_COUNT_THRESHOLD = 1000000
-        if settings.TEST_GO_LIVE:
+        if settings.TEST_GO_LIVE: # pragma: no cover
             self.client = requests.Session()
         else:
             self.client = RequestsClient()
@@ -48,11 +48,11 @@ class ApiSearchTests(TestCase, ApiTestHelper):
         self.assertEqual(response.status_code, 200)
         jdata = json.loads(response.content)
         if 'full_search' not in expected:
-            if 'full_search' in jdata:
+            if 'full_search' in jdata: # pragma: no cover
                 del jdata['full_search']
         new_choices = []
         for choice in jdata['choices']:
-            if choice in expected['choices']:
+            if choice in expected['choices']: # pragma: no cover
                 new_choices.append(choice)
         print('Got:')
         print(str(jdata))
@@ -257,7 +257,7 @@ class ApiSearchTests(TestCase, ApiTestHelper):
         expected = {"rightasc1": None, "reqno": 123}
         self._run_json_equal(url, expected)
 
-    def test__api_normalizeinput_int_ninf(self):
+    def test__api_normalizeinput_float_ninf(self):
         "[test_search_api.py] /api/normalizeinput: float -inf"
         url = '/opus/__api/normalizeinput.json?rightasc1=-inf&reqno=123'
         expected = {"rightasc1": None, "reqno": 123}
@@ -407,14 +407,6 @@ class ApiSearchTests(TestCase, ApiTestHelper):
                     # 'full_search': False,
                     'truncated_results': False, "reqno": 123}
         self._run_json_equal(url, expected, ignore=['full_search'])
-
-    def test__api_stringsearchchoices_volumeid_O_0017(self):
-        "[test_search_api.py] /api/stringsearchchoices: volumeid O_0017"
-        url = '/opus/__api/stringsearchchoices/volumeid.json?volumeid=O_0017&reqno=123'
-        expected = {'choices': ['G<b>O_0017</b>'],
-                    'full_search': False,
-                    'truncated_results': False, "reqno": 123}
-        self._run_json_equal(url, expected)
 
     def test__api_stringsearchchoices_volumeid_O_0017(self):
         "[test_search_api.py] /api/stringsearchchoices: volumeid O_0017"

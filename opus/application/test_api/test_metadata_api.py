@@ -22,7 +22,7 @@ class ApiMetadataTests(TestCase, ApiTestHelper):
         sys.tracebacklimit = 0 # default: 1000
         settings.CACHE_KEY_PREFIX = 'opustest:' + settings.OPUS_SCHEMA_NAME
         logging.disable(logging.ERROR)
-        if settings.TEST_GO_LIVE:
+        if settings.TEST_GO_LIVE: # pragma: no cover
             self.client = requests.Session()
         else:
             self.client = RequestsClient()
@@ -61,15 +61,6 @@ class ApiMetadataTests(TestCase, ApiTestHelper):
             result_reqno = jdata['data'][0]['reqno']
             print(result_reqno)
             self.assertEqual(result_reqno, expected_reqno)
-
-    def _run_mults_equal(self, url, expected, mult_name):
-        print(url)
-        response = self._get_response(url)
-        self.assertEqual(response.status_code, 200)
-        jdata = json.loads(response.content)
-        result_count = int(jdata['mults'][mult_name])
-        print(result_count)
-        self.assertEqual(result_count, expected)
 
 
             #####################################################
