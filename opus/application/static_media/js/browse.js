@@ -44,30 +44,8 @@ var o_browse = {
             }
         });
 
-
-
         // nav stuff - NOTE - this needs to be a global
         onRenderData = _.debounce(o_browse.loadData, 500);
-
-        $("#browse").on('click', 'input#page', function() {
-            let newPage = parseInt($("input#page").val());
-            return false;
-        });
-
-        $("#browse").on('change', 'input#page', function() {
-            let newPage = parseInt($("input#page").val());
-            o_browse.currentPage = newPage;
-            if (newPage > 0 && newPage <= opus.pages ) {
-                opus.gallery_begun = false;     // so that we redraw from the beginning
-                $("input#page").addClass("text-warning");
-                onRenderData();
-            } else {
-                // put back
-                $("input#page").val(opus.lastPageDrawn[opus.prefs.view]);
-            }
-            o_browse.tempHash = o_hash.getHash();
-            return false;
-        });
 
         $("#browse").on("click", ".metadataModal", function() {
             o_browse.hideMenu();
@@ -463,6 +441,19 @@ var o_browse = {
         }
     },
 
+    // find the first displayed observation index & id in the upper left corner
+    updateSliderHandleOnScroll: function() {
+        $.each($(`#${opus.prefs.view} .gallery .thumbnail-container`), function(index, elem) {
+            if($(elem).offset().top > 0) {
+                let opusId = $(elem).data("id");
+                let obsNum = $(elem).data("obs");
+                $("#op-observation-slider").slider("value", obsNum);
+                $("#op-observation-number").html(obsNum);
+                return {"index": obsNum, "opusId": opusId};
+            }
+        });
+    },
+
     updateSliderHandle: function(value, update) {
         value = (value == undefined? 1 : value);
         if (isNaN(value)) {
@@ -472,8 +463,7 @@ var o_browse = {
         $("#op-observation-number").html(value);
         if (update !== undefined && update == true) {
             // temp til we get rid of page
-            let page = Math.ceil(value/100);
-            $("input#page").val(page).addClass("text-warning");;
+            opus.prefs.page[opus.prefs.browse] = Math.ceil(value/100);
             onRenderData();
         }
     },
@@ -486,9 +476,9 @@ var o_browse = {
                     // Update page number
                     let page = $(elem).data("page");
                     opus.prefs.page[opus.prefs.browse] = page;
-                    $("input#page").val(page).css("color","initial");
                     console.log("page: "+page);
                     o_browse.currentPage = page;
+                    o_browse.updateSliderHandleOnScroll();
                     return false;
                 }
             }
@@ -927,11 +917,13 @@ var o_browse = {
 
             $.each(page, function( index, item ) {
                 let opusId = item.opusid;
+                // we have to store the relative observation number because we may not have pages in succession, this is for the slider position
+                let observationNumber = (data.page_no*data.count)+index;
                 opus.gallery_data[opusId] = item.metadata;	// for galleryView, store in global array
 
                 // gallery
                 let images = item.images;
-                html += `<div class="thumbnail-container ${(item.in_cart ? ' in' : '')}" data-id="${opusId}">`;
+                html += `<div class="thumbnail-container ${(item.in_cart ? ' in' : '')}" data-id="${opusId}" data-obs="${observationNumber}">`;
                 html += `<a href="#" class="thumbnail" data-image="${images.full.url}">`;
                 html += `<img class="img-thumbnail img-fluid" src="${images.thumb.url}" alt="${images.thumb.alt_text}" title="${opusId}\r\nClick to enlarge">`;
                 // whenever the user clicks an image to show the modal, we need to highlight the selected image w/an icon
@@ -1128,8 +1120,7 @@ var o_browse = {
     },
 
     loadData: function(page) {
-        page = (page == undefined ? $("input#page").val() : page);
-        $("input#page").val(page).removeClass("text-warning");
+        page = (page == undefined ? opus.prefs.page[opus.prefs.browse] : page);
 
         let selector = `#${opus.prefs.view} .gallery-contents`;
 
@@ -1265,9 +1256,6 @@ var o_browse = {
         o_browse.updateBrowseNav();
         o_browse.renderMetadataSelector();   // just do this in background so there's no delay when we want it...
 
-        // total pages indicator
-        $("#pages", "#browse").html(opus.pages);
-
         // figure out the page
         let page = opus.prefs.page[opus.prefs.browse]; // default: {"gallery":1, "dataTable":1, 'colls_gallery':1, 'colls_data':1 };
 
@@ -1346,7 +1334,7 @@ var o_browse = {
         // list columns + values
         let html = "<dl>";
         $.each(opus.col_labels, function(index, columnLabel) {
-            let value = opus.gallery_data[opusId][index];
+            let value = opus.gallery_data[opusId]['metadata'][index];
             html += `<dt>${columnLabel}:</dt><dd>${value}</dd>`;
         });
         html += "</dl>";

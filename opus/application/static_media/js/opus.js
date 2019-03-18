@@ -148,7 +148,7 @@ var opus = {
         } else {
             // selections in the url hash is different from opus.last_selections
               // reset the pages:
-              opus.prefs.page = {"gallery":1, "data":1, "colls_gallery":1, "colls_data":1 };
+              opus.prefs.page = default_pages;
 
               // and reset the query:
               o_browse.resetQuery();
@@ -201,19 +201,13 @@ var opus = {
         // if all we wanted was a new gallery page we can stop here
         opus.pages = Math.ceil(opus.result_count/opus.prefs.limit);
         if (opus.prefs.view == "browse") {
-            $("#pages","#browse").html(opus.pages);
             return;
         }
 
         // result count is back, now send for widget hinting
-        var widget_cols = ["widgets","widgets2"];
-        for (key in widget_cols) {
-            col = widget_cols[key];
-            for (k in opus.prefs[col]) {
-                slug = opus.prefs[col][k];
-                o_search.getHinting(slug);
-            } // end for widget in..
-        } // endfor
+        $.each(opus.prefs.widgets, function(index, slug) {
+            o_search.getHinting(slug);
+        });
     },
 
     updateResultCount: function(result_count) {

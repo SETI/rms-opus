@@ -485,11 +485,6 @@ th.sticky-header {
     margin-right: 5px;
 }
 
-.paging_indicator {
-    color:#A8A8A8;
-    padding:0 10px;
-}
-
 .end_of_page {
     /*display:absolute;*/
     bottom:0;
