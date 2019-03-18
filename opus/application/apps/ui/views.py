@@ -1106,7 +1106,7 @@ def api_normalize_url(request):
 
     if final_msg == '':
         final_msg = None
-        
+
     ret = json_response({'new_url': '&'.join(new_url_list),
                          'new_slugs': new_url_dict_list,
                          'msg': final_msg})
@@ -1196,13 +1196,16 @@ def _get_menu_labels(request, labels_view):
             # this div has no sub headings
             menu_data[d.table_name]['has_sub_heading'] = False
             for p in ParamInfo.objects.filter(**{filter:1, "category_name":d.table_name}):
-                if p.slug[-1] == '2':
-                    # We can just skip these because we never use them for
-                    # widgets
-                    continue
-                if p.slug[-1] == '1':
-                    # Strip the trailing 1 off all ranges
-                    p.slug = strip_numeric_suffix(p.slug)
+                # in search view, we don't need trailing 1 & 2 for data-slug in menu
+                # but in metadata modal, we need trailing 1 & 2 for data-slug in modal menu
+                if labels_view == 'search':
+                    if p.slug[-1] == '2':
+                        # We can just skip these because we never use them for
+                        # widgets
+                        continue
+                    if p.slug[-1] == '1':
+                        # Strip the trailing 1 off all ranges
+                        p.slug = strip_numeric_suffix(p.slug)
                 menu_data[d.table_name].setdefault('data', []).append(p)
 
     return {'menu': {'data': menu_data, 'divs': divs}}
