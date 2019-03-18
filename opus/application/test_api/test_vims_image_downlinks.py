@@ -1,5 +1,7 @@
 # opus/application/test_api/test_vims_image_downlinks.py
 
+
+import json
 import logging
 import requests
 import sys
@@ -31,7 +33,7 @@ class ApiVimsDownlinksTests(TestCase):
     ### API VIMS downlink tests ###
     ###############################
     def test_check_and_compare_vims_downlinks_for_v1_and_v2(self):
-        """VIMS Downlinks: check the number of VIMS downlinks to see if they are valid
+        """[test_vims_image_downlinks.py] Check the number of VIMS downlinks to see if they are valid
            Check if any image numbers from 001 > ones in 002
            Check if image counts for each primary filespec are all > 0
         """
@@ -57,7 +59,7 @@ class ApiVimsDownlinksTests(TestCase):
                 v2_ir_id = primary_filespec_object["images_with_opus_id"][2]
                 v2_vis_id = primary_filespec_object["images_with_opus_id"][3]
 
-                if not error_msg:
+                if not error_msg: # pragma: no cover
                     for v1_id in [v1_ir_id, v1_vis_id]:
                         for image, v1_count in image_count[v1_id].items():
                             if v1_id == v1_ir_id:
@@ -103,7 +105,7 @@ class ApiVimsDownlinksTests(TestCase):
            }
         """
 
-        if settings.TEST_GO_LIVE:
+        if settings.TEST_GO_LIVE: # pragma: no cover
             client = requests.Session()
         else:
             client = RequestsClient()

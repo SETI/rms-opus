@@ -15,8 +15,6 @@ var o_hash = {
             }
         }
 
-        o_widgets.pauseWidgetControlVisibility(opus.selections);
-
         for (var key in opus.extras) {
             try {
                 hash.push(key + "=" + opus.extras[key].join(","));
@@ -40,16 +38,6 @@ var o_hash = {
                         page = o_browse.getCurrentPage();
                         hash.push("page=" + page);
                         break;
-
-                    case 'widget_size':
-                        for (slug in opus.prefs[key]) {
-                            hash.push(o_widgets.constructWidgetSizeHash(slug));
-                        }
-                        break;
-
-                    case 'widget_scroll':
-                        // these are prefs having to do with widget resize and scrolled
-                        break; // there's no scroll without size, so we handle scroll when size comes thru
 
                     default:
                         hash.push(key + "=" + opus.prefs[key]);
@@ -108,7 +96,7 @@ var o_hash = {
             let slug = pair.split('=')[0];
             let value = pair.split('=')[1];
 
-            if (!(slug in opus.prefs) && !slug.match(/sz-.*/) && value) {
+            if (!(slug in opus.prefs) && value) {
                 if (slug in selections) {
                     selections[slug].push(value);
                 } else {
@@ -134,15 +122,7 @@ var o_hash = {
             let slug = pair.split('=')[0];
             let value = pair.split('=')[1];
             if (value) {
-                if (slug.match(/sz-.*/)) {
-                    let id = slug.match(/sz-(.*)/)[1];
-                    // opus.extras['sz-' + id] = value;
-                    opus.prefs.widget_size[id] = value.split('+')[0];
-
-                    if (value.split('+')[1])
-                        opus.prefs.widget_scroll[id] = value.split('+')[1];
-                }
-                else if (slug.match(/qtype-.*/)) {
+                if (slug.match(/qtype-.*/)) {
                     // range drop down, add the qtype to the global extras array
                     let id = slug.match(/qtype-(.*)/)[1];
                     opus.extras['qtype-' + id] = value.split(',');

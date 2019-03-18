@@ -3,7 +3,7 @@ import sys
 from collections import OrderedDict
 
 _HAS_MEMCACHE = False
-try:
+try: # pragma: no cover
     import memcache
     _HAS_MEMCACHE = True
 except ImportError:
@@ -78,13 +78,13 @@ STATICFILES_DIRS = [
 ADMIN_MEDIA_PREFIX = ''
 
 MIDDLEWARE = (
+    'django.middleware.cache.UpdateCacheMiddleware',
     'django.middleware.gzip.GZipMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
-    'django.middleware.cache.UpdateCacheMiddleware',
     'django.middleware.cache.FetchFromCacheMiddleware',
     'apps.tools.opus_middleware.StripWhitespaceMiddleware',
     # prod remove:
@@ -155,20 +155,20 @@ REST_FRAMEWORK = {
     )
 }
 
-if _HAS_MEMCACHE:
-    # https://github.com/edavis/django-infinite-memcached/tree/
+if _HAS_MEMCACHE: # pragma: no cover
     CACHES = {
         "default": {
-    	"BACKEND":"django.core.cache.backends.memcached.MemcachedCache",
+            "BACKEND":"django.core.cache.backends.memcached.MemcachedCache",
             "LOCATION": "127.0.0.1:11211",
-    	"TIMEOUT": None,
+    	    "TIMEOUT": None,
         },
     }
 else:
     CACHES = {
        'default': {
+           # 'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
            'BACKEND': 'django.core.cache.backends.dummy.DummyCache',
-      }
+        }
     }
 
 CACHE_KEY_PREFIX = 'opus:' + OPUS_SCHEMA_NAME

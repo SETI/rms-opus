@@ -138,7 +138,7 @@ def api_get_result_count(request, fmt, internal=False):
         ret = render_to_response('metadata/result_count.html', {'data': data})
     elif fmt == 'csv':
         ret = csv_response('result_count', [['result count', count]])
-    else:
+    else: # pragma: no cover
         log.error('api_get_result_count: Unknown format "%s"', fmt)
         ret = Http404(settings.HTTP404_UNKNOWN_FORMAT)
         exit_api_call(api_code, ret)
@@ -432,7 +432,7 @@ def api_get_range_endpoints(request, slug, fmt, internal=False):
             del selections[to_remove]
     if selections:
         user_table = get_user_query_table(selections, extras, api_code=api_code)
-        if user_table is None:
+        if user_table is None: # pragma: no cover
             log.error('api_get_range_endpoints: Count not retrieve query table'
                       +' for *** Selections %s *** Extras %s',
                       str(selections), str(extras))
@@ -541,6 +541,7 @@ def api_get_fields(request, fmt='json', slug=None):
 
     Format: [__]api/fields/(?P<slug>\w+).(?P<fmt>json|zip|html|csv)
         or: [__]api/fields.(?P<fmt>json|zip|html|csv)
+    Arguments: [collapse=1]  Collapse surface geo slugs into one
 
     Can return JSON, ZIP, HTML, or CSV.
 
@@ -552,6 +553,9 @@ def api_get_fields(request, fmt='json', slug=None):
                 },
                 label: "Solar Hour Angle"
             }
+
+    If collapse=1, then all surface geometry is collapsed into a single
+    <TARGET> version based on the Saturn prototype.
     """
     api_code = enter_api_call('api_get_fields', request)
 
@@ -560,7 +564,14 @@ def api_get_fields(request, fmt='json', slug=None):
         exit_api_call(api_code, ret)
         raise ret
 
-    collapse = request.GET.get('collapse', False)
+    collapse = request.GET.get('collapse', '0')
+    try:
+        collapse = int(collapse) != 0
+    except ValueError:
+        ret = Http404()
+        exit_api_call(api_code, ret)
+        raise ret
+
     ret = get_fields_info(fmt, slug, collapse=collapse)
 
     exit_api_call(api_code, ret)
@@ -576,7 +587,8 @@ def api_get_fields(request, fmt='json', slug=None):
 # This routine is public because it's called by the API guide in guide/views.py
 def get_fields_info(fmt, slug=None, collapse=False):
     "Helper routine for api_get_fields."
-    cache_key = (settings.CACHE_KEY_PREFIX + ':getFields:field:' + str(slug))
+    cache_key = (settings.CACHE_KEY_PREFIX + ':getFields:field:' + str(slug)
+                 + ':' + str(collapse))
     return_obj = cache.get(cache_key)
     if return_obj is None:
         if slug:

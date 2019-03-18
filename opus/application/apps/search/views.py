@@ -17,10 +17,7 @@ import math
 import re
 import sys
 
-import settings
-
 from django.apps import apps
-from django.conf import settings
 from django.core.cache import cache
 from django.db import connection, DatabaseError
 from django.db.models import Q
@@ -32,6 +29,8 @@ from paraminfo.models import ParamInfo
 from search.models import *
 from tools.app_utils import *
 from tools.db_utils import *
+
+import settings
 
 import opus_support
 

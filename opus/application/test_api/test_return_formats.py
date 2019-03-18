@@ -13,13 +13,17 @@ import settings
 ### Test cases ###
 ##################
 class ApiReturnFormatTests(TestCase):
-    # disable error logging and trace output before test
-    def setUp(self):
-        settings.CACHE_KEY_PREFIX = 'opustest:' + settings.OPUS_SCHEMA_NAME
-        sys.tracebacklimit = 0 # default: 1000
-        logging.disable(logging.DEBUG)
 
-    # enable error logging and trace output after test
+    def setUp(self):
+        self.maxDiff = None
+        sys.tracebacklimit = 0 # default: 1000
+        settings.CACHE_KEY_PREFIX = 'opustest:' + settings.OPUS_SCHEMA_NAME
+        logging.disable(logging.ERROR)
+        if settings.TEST_GO_LIVE: # pragma: no cover
+            self.client = requests.Session()
+        else:
+            self.client = RequestsClient()
+
     def tearDown(self):
         sys.tracebacklimit = 1000 # default: 1000
         logging.disable(logging.NOTSET)
@@ -45,7 +49,7 @@ class ApiReturnFormatTests(TestCase):
     ### API return format tests ###
     ###############################
     def test_all_api_calls(self):
-        """API Calls: check different formats to see if response is 200
+        """[test_return_formats.py] API Calls: check different formats to see if response is 200
            Raise error when any response status code is NOT 200
         """
         api_public = ApiFormats(target=settings.TEST_GO_LIVE)

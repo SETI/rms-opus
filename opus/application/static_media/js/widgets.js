@@ -140,11 +140,6 @@ var o_widgets = {
 
             o_hash.updateHash();
 
-            // for some reason if the widget is scrolled it loses scroll position after sorting, bring it back:
-            if (opus.prefs.widget_scroll[slug]) {
-                let scrolltop = opus.prefs.widget_scroll[slug];
-                $('.widget_scroll_wrapper','#widget__'+slug).scrollTop(scrolltop);
-            }
             o_widgets.updateWidgetCookies();
     },
 
@@ -198,69 +193,18 @@ var o_widgets = {
     // adjusts the widths of the widgets in the main column so they fit users screen size
     adjustWidgetWidth: function(widget) {
             $(widget).animate({width:$('#search_widgets').width() - 2*20 + 'px'},'fast');  // 20px is the side margin of .widget
-            // $('.widget_scroll_wrapper',widget).width($('.formscolumn').width() - 2*20 + 'px'); // 20px is the side margin of .widget
-    },
-
-    resetWidgetScrolls: function() {
-        for (var slug in opus.prefs.widget_scroll) {
-            $('#widget__' + slug).scrollTop(0);
-            delete opus.prefs.widget_scroll[slug];
-        }
-        o_hash.updateHash();
-    },
-
-    pauseWidgetControlVisibility: function(selections) {
-        for (var key in opus.widgets_drawn) {
-            var slug = opus.widgets_drawn[key];
-            if (typeof(selections[slug]) != 'undefined' && selections[slug].length) {
-                $('.pause_widget','#widget__'+slug).show();
-            } else {
-                // this widget is unconstrained
-                if (typeof(opus.widgets_paused[slug]) == 'undefined') {
-                    // this widget is not merely paused, hide pause control
-                    $('.pause_widget','#widget__'+slug).hide();
-                }
-            }
-        }
-
     },
 
     maximizeWidget: function(slug, widget) {
         // un-minimize widget ... maximize widget
         $('.minimize_widget', '#' + widget).toggleClass('opened_triangle');
         $('.minimize_widget', '#' + widget).toggleClass('closed_triangle');
-        // $('.pause_widget', '#' + widget).show();
         $('#widget_control_' + slug + ' .remove_widget').show();
         $('#widget_control_' + slug + ' .divider').show();
         $('#' + widget + ' .widget_minimized').hide();
         $('#widget_control_' + slug).removeClass('widget_controls_minimized');
         $('#' + widget + ' .widget_inner').show("blind");
-
-
-        //////////////////// //////////////////// ////////////////////
-        // handle the inner widget scroll thing and hide its handle
-            // if (opus.prefs.widget_size[slug]) {
-
-                    // look for custom widget size and scrollstop
-                    opus.prefs.widget_scroll[slug] ? scrolltop = opus.prefs.widget_scroll[slug] : scrolltop = 0;
-                    opus.prefs.widget_size[slug] ? height = Math.ceil(opus.prefs.widget_size[slug]) : height = opus.widget_full_sizes[slug];
-
-                    // widget_full_sizes
-
-                    $('#widget__' + slug).height(height);
-
-                    $('.widget_scroll_wrapper','#widget__' + slug)
-                        .height(height)
-                        .animate({scrollTop:scrolltop}, 500);
-
-
-            // }
-        //////////////////// //////////////////// ////////////////////
-        /*
-        $('.widget_scroll_wrapper','#'+widget).css({
-            'overflow':'auto'
-        });
-        **/
+        $('#widget__' + slug).height(height);
         $('.ui-resizable-handle').show();
     },
 
@@ -284,10 +228,6 @@ var o_widgets = {
             $('#' + widget + ' .widget_minimized').html(simple).fadeIn("fast");
             $('#widget_control_' + slug).addClass('widget_controls_minimized');
 
-            // handle the inner widget scroll thing and hide its handle
-            $('.widget_scroll_wrapper','#'+widget).css({
-                'overflow':'hidden'
-            });
             $('.ui-resizable-handle','#'+widget).hide();
 
         }
@@ -445,9 +385,7 @@ var o_widgets = {
         let reqStart = new Date().getTime();
         $.ajax({ url: "/opus/__forms/widget/" + slug + '.html?' + o_hash.getHash(),
              success: function(widget_str){
-
                 $("#widget__"+slug).html(widget_str);
-                o_widgets.pauseWidgetControlVisibility(opus.selections);
             }}).done(function() {
 
             // o_search.adjustSearchHeight();
@@ -649,16 +587,4 @@ var o_widgets = {
             scrollTop: $("#"+ widget).offset().top
         }, 1000);
      },
-
-
-     constructWidgetSizeHash: function(slug) {
-         widget_sz = opus.prefs.widget_size[slug];
-         if (opus.prefs.widget_scroll[slug]) {
-             widget_sz += '+' + opus.prefs.widget_scroll[slug]; }
-         return 'sz-' + slug + '=' + widget_sz;
-     },
-
-
-
-
 };
