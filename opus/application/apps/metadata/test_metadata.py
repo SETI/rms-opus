@@ -4,13 +4,12 @@ import logging
 import sys
 from unittest import TestCase
 
-import django.conf
+from django.core.cache import cache
 from django.http import Http404
+from django.test import RequestFactory
 from django.test.client import Client
 
 from metadata.views import *
-
-django.conf.settings.CACHE_BACKEND = 'dummy:///'
 
 class MetadataTests(TestCase):
 
@@ -18,6 +17,8 @@ class MetadataTests(TestCase):
         self.maxDiff = None
         sys.tracebacklimit = 0 # default: 1000
         logging.disable(logging.ERROR)
+        cache.clear()
+        self.factory = RequestFactory()
 
     def tearDown(self):
         sys.tracebacklimit = 1000 # default: 1000
@@ -36,8 +37,7 @@ class MetadataTests(TestCase):
     def test__api_get_result_count_no_get(self):
         "[test_metadata.py] api_get_result_count: no GET"
         c = Client()
-        response = c.get('/api/meta/result_count.json')
-        request = response.wsgi_request
+        request = self.factory.get('/api/meta/result_count.json')
         request.GET = None
         with self.assertRaises(Http404):
             api_get_result_count(request, 'json')
@@ -45,8 +45,7 @@ class MetadataTests(TestCase):
     def test__api_get_result_count_bad_fmt(self):
         "[test_metadata.py] api_get_result_count: bad fmt"
         c = Client()
-        response = c.get('/api/meta/result_count.json')
-        request = response.wsgi_request
+        request = self.factory.get('/api/meta/result_count.json')
         with self.assertRaises(Http404):
             api_get_result_count(request, 'jsonx')
 
@@ -58,8 +57,7 @@ class MetadataTests(TestCase):
     def test__api_get_result_count_no_get_internal(self):
         "[test_metadata.py] api_get_result_count: no GET internal"
         c = Client()
-        response = c.get('/__api/meta/result_count.json')
-        request = response.wsgi_request
+        request = self.factory.get('/__api/meta/result_count.json')
         request.GET = None
         with self.assertRaises(Http404):
             api_get_result_count_internal(request)
@@ -77,8 +75,7 @@ class MetadataTests(TestCase):
     def test__api_get_mult_counts_no_get(self):
         "[test_metadata.py] api_get_mult_counts: no GET"
         c = Client()
-        response = c.get('/api/meta/mult_counts.json')
-        request = response.wsgi_request
+        request = self.factory.get('/api/meta/mult_counts.json')
         request.GET = None
         with self.assertRaises(Http404):
             api_get_mult_counts(request, 'target', 'json')
@@ -86,8 +83,7 @@ class MetadataTests(TestCase):
     def test__api_get_mult_counts_bad_fmt(self):
         "[test_metadata.py] api_get_mult_counts: bad fmt"
         c = Client()
-        response = c.get('/api/meta/mult_counts.json')
-        request = response.wsgi_request
+        request = self.factory.get('/api/meta/mult_counts.json')
         with self.assertRaises(Http404):
             api_get_mult_counts(request, 'target', 'jsonx')
 
@@ -99,8 +95,7 @@ class MetadataTests(TestCase):
     def test__api_get_mult_counts_no_get_internal(self):
         "[test_metadata.py] api_get_mult_counts: no GET internal"
         c = Client()
-        response = c.get('/__api/meta/mult_counts.json')
-        request = response.wsgi_request
+        request = self.factory.get('/__api/meta/mult_counts.json')
         request.GET = None
         with self.assertRaises(Http404):
             api_get_mult_counts_internal(request, 'target')
@@ -118,8 +113,7 @@ class MetadataTests(TestCase):
     def test__api_get_range_endpoints_no_get(self):
         "[test_metadata.py] api_get_range_endpoints: no GET"
         c = Client()
-        response = c.get('/api/meta/range/endpoints/observationduration.json')
-        request = response.wsgi_request
+        request = self.factory.get('/api/meta/range/endpoints/observationduration.json')
         request.GET = None
         with self.assertRaises(Http404):
             api_get_range_endpoints(request, 'observationduration', 'json')
@@ -127,8 +121,7 @@ class MetadataTests(TestCase):
     def test__api_get_range_endpoints_bad_fmt(self):
         "[test_metadata.py] api_get_range_endpoints: bad fmt"
         c = Client()
-        response = c.get('/api/meta/range/endpoints/observationduration.json')
-        request = response.wsgi_request
+        request = self.factory.get('/api/meta/range/endpoints/observationduration.json')
         with self.assertRaises(Http404):
             api_get_range_endpoints(request, 'observationduration', 'jsonx')
 
@@ -140,8 +133,7 @@ class MetadataTests(TestCase):
     def test__api_get_range_endpoints_no_get_internal(self):
         "[test_metadata.py] api_get_range_endpoints: no GET internal"
         c = Client()
-        response = c.get('/__api/meta/range/endpoints/observationduration.json')
-        request = response.wsgi_request
+        request = self.factory.get('/__api/meta/range/endpoints/observationduration.json')
         request.GET = None
         with self.assertRaises(Http404):
             api_get_range_endpoints_internal(request, 'observationduration')
@@ -159,8 +151,7 @@ class MetadataTests(TestCase):
     def test__api_get_fields_no_get(self):
         "[test_metadata.py] api_get_fields: no GET"
         c = Client()
-        response = c.get('/api/fields/rightasc1.json')
-        request = response.wsgi_request
+        request = self.factory.get('/api/fields/rightasc1.json')
         request.GET = None
         with self.assertRaises(Http404):
             api_get_fields(request)

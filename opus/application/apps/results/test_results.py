@@ -4,14 +4,13 @@ import logging
 import sys
 from unittest import TestCase
 
-import django.conf
+from django.core.cache import cache
 from django.db import connection
 from django.http import Http404, QueryDict
+from django.test import RequestFactory
 from django.test.client import Client
 
 from results.views import *
-
-django.conf.settings.CACHE_BACKEND = 'dummy:///'
 
 cursor = connection.cursor()
 
@@ -27,7 +26,7 @@ class resultsTests(TestCase):
             print(q)
             cursor.execute(q)
         cache.clear()
-        cache._cache.flush_all()  # clears memcache hopefully only on this port!
+        self.factory = RequestFactory()
 
     def setUp(self):
         self._empty_user_searches()
@@ -53,8 +52,7 @@ class resultsTests(TestCase):
     def test__api_get_data_and_images_no_get(self):
         "[test_results.py] api_get_data_and_images: no GET"
         c = Client()
-        response = c.get('/__api/dataimages.json')
-        request = response.wsgi_request
+        request = self.factory.get('/__api/dataimages.json')
         request.GET = None
         with self.assertRaises(Http404):
             api_get_data_and_images(request)
@@ -72,8 +70,7 @@ class resultsTests(TestCase):
     def test__api_get_data_no_get(self):
         "[test_results.py] api_get_data: no GET"
         c = Client()
-        response = c.get('/__api/data.json')
-        request = response.wsgi_request
+        request = self.factory.get('/__api/data.json')
         request.GET = None
         with self.assertRaises(Http404):
             api_get_data(request, 'json')
@@ -92,8 +89,7 @@ class resultsTests(TestCase):
     def test__api_get_metadata_no_get(self):
         "[test_results.py] api_get_metadata: no GET"
         c = Client()
-        response = c.get('/api/metadata/vg-iss-2-s-c4360845.json')
-        request = response.wsgi_request
+        request = self.factory.get('/api/metadata/vg-iss-2-s-c4360845.json')
         request.GET = None
         with self.assertRaises(Http404):
             api_get_metadata(request, 'vg-iss-2-s-c4360845', 'json')
@@ -111,8 +107,7 @@ class resultsTests(TestCase):
     def test__api_get_metadata_v2_no_get(self):
         "[test_results.py] api_get_metadata_v2: no GET"
         c = Client()
-        response = c.get('/api/metadata_v2/vg-iss-2-s-c4360845.json')
-        request = response.wsgi_request
+        request = self.factory.get('/api/metadata_v2/vg-iss-2-s-c4360845.json')
         request.GET = None
         with self.assertRaises(Http404):
             api_get_metadata_v2(request, 'vg-iss-2-s-c4360845', 'json')
@@ -130,8 +125,7 @@ class resultsTests(TestCase):
     def test__api_get_images_no_get(self):
         "[test_results.py] api_get_images: no GET"
         c = Client()
-        response = c.get('/api/images.json')
-        request = response.wsgi_request
+        request = self.factory.get('/api/images.json')
         request.GET = None
         with self.assertRaises(Http404):
             api_get_images(request, 'json')
@@ -149,8 +143,7 @@ class resultsTests(TestCase):
     def test__api_get_images_by_size_no_get(self):
         "[test_results.py] api_get_images_by_size: no GET"
         c = Client()
-        response = c.get('/api/images/small.json')
-        request = response.wsgi_request
+        request = self.factory.get('/api/images/small.json')
         request.GET = None
         with self.assertRaises(Http404):
             api_get_images_by_size(request, 'small', 'json')
@@ -168,8 +161,7 @@ class resultsTests(TestCase):
     def test__api_get_image_no_get(self):
         "[test_results.py] api_get_image: no GET"
         c = Client()
-        response = c.get('/api/image/small/vg-iss-2-s-c4360845.json')
-        request = response.wsgi_request
+        request = self.factory.get('/api/image/small/vg-iss-2-s-c4360845.json')
         request.GET = None
         with self.assertRaises(Http404):
             api_get_image(request, 'vg-iss-2-s-c4360845', 'small', 'json')
@@ -187,8 +179,7 @@ class resultsTests(TestCase):
     def test__api_get_files_no_get(self):
         "[test_results.py] api_get_files: no GET"
         c = Client()
-        response = c.get('/api/files/vg-iss-2-s-c4360845.json')
-        request = response.wsgi_request
+        request = self.factory.get('/api/files/vg-iss-2-s-c4360845.json')
         request.GET = None
         with self.assertRaises(Http404):
             api_get_files(request, 'vg-iss-2-s-c4360845')
@@ -206,8 +197,7 @@ class resultsTests(TestCase):
     def test__api_get_categories_for_opus_id_no_get(self):
         "[test_results.py] api_get_categories_for_opus_id: no GET"
         c = Client()
-        response = c.get('/api/categories/vg-iss-2-s-c4360845.json')
-        request = response.wsgi_request
+        request = self.factory.get('/api/categories/vg-iss-2-s-c4360845.json')
         request.GET = None
         with self.assertRaises(Http404):
             api_get_categories_for_opus_id(request, 'vg-iss-2-s-c4360845')
@@ -226,8 +216,7 @@ class resultsTests(TestCase):
     def test__api_get_categories_for_search_no_get(self):
         "[test_results.py] api_get_categories_for_search: no GET"
         c = Client()
-        response = c.get('/api/categories.json')
-        request = response.wsgi_request
+        request = self.factory.get('/api/categories.json')
         request.GET = None
         with self.assertRaises(Http404):
             api_get_categories_for_search(request)

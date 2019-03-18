@@ -5,13 +5,10 @@ import logging
 import sys
 from unittest import TestCase
 
-import django.conf
-
+from django.core.cache import cache
 from tools.file_utils import get_pds_products
 
 import settings
-
-django.conf.settings.CACHE_BACKEND = 'dummy:///'
 
 class fileUtilsTests(TestCase):
 
@@ -19,7 +16,8 @@ class fileUtilsTests(TestCase):
         self.maxDiff = None
         sys.tracebacklimit = 0 # default: 1000
         logging.disable(logging.ERROR)
-
+        cache.clear()
+        
     def tearDown(self):
         sys.tracebacklimit = 1000 # default: 1000
         logging.disable(logging.NOTSET)

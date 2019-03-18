@@ -4,13 +4,12 @@ import logging
 import sys
 from unittest import TestCase
 
-import django.conf
+from django.core.cache import cache
 from django.http import Http404
+from django.test import RequestFactory
 from django.test.client import Client
 
 from cart.views import *
-
-django.conf.settings.CACHE_BACKEND = 'dummy:///'
 
 class cartTests(TestCase):
 
@@ -18,7 +17,9 @@ class cartTests(TestCase):
         self.maxDiff = None
         sys.tracebacklimit = 0 # default: 1000
         logging.disable(logging.ERROR)
-
+        cache.clear()
+        self.factory = RequestFactory()
+        
     def tearDown(self):
         sys.tracebacklimit = 1000 # default: 1000
         logging.disable(logging.NOTSET)
@@ -36,8 +37,7 @@ class cartTests(TestCase):
     def test__api_view_cart_no_get(self):
         "[test_cart.py] api_view_cart: no GET"
         c = Client()
-        response = c.get('/__cart/view.html')
-        request = response.wsgi_request
+        request = self.factory.get('/__cart/view.html')
         request.GET = None
         with self.assertRaises(Http404):
             api_view_cart(request)
@@ -55,8 +55,7 @@ class cartTests(TestCase):
     def test__api_cart_status_no_get(self):
         "[test_cart.py] api_cart_status: no GET"
         c = Client()
-        response = c.get('/__cart/status.json')
-        request = response.wsgi_request
+        request = self.factory.get('/__cart/status.json')
         request.GET = None
         with self.assertRaises(Http404):
             api_cart_status(request)
@@ -74,8 +73,7 @@ class cartTests(TestCase):
     def test__api_get_cart_csv_no_get(self):
         "[test_cart.py] api_get_cart_csv: no GET"
         c = Client()
-        response = c.get('/__cart/data.csv')
-        request = response.wsgi_request
+        request = self.factory.get('/__cart/data.csv')
         request.GET = None
         with self.assertRaises(Http404):
             api_get_cart_csv(request)
@@ -93,8 +91,7 @@ class cartTests(TestCase):
     def test__api_edit_cart_no_get(self):
         "[test_cart.py] api_edit_cart: no GET"
         c = Client()
-        response = c.get('/__cart/add.json')
-        request = response.wsgi_request
+        request = self.factory.get('/__cart/add.json')
         request.GET = None
         with self.assertRaises(Http404):
             api_edit_cart(request)
@@ -112,8 +109,7 @@ class cartTests(TestCase):
     def test__api_reset_session_no_get(self):
         "[test_cart.py] api_reset_session: no GET"
         c = Client()
-        response = c.get('/__cart/reset.json')
-        request = response.wsgi_request
+        request = self.factory.get('/__cart/reset.json')
         request.GET = None
         with self.assertRaises(Http404):
             api_reset_session(request)
@@ -131,8 +127,7 @@ class cartTests(TestCase):
     def test__api_create_download_no_get(self):
         "[test_cart.py] api_create_download: no GET"
         c = Client()
-        response = c.get('/__cart/download.json')
-        request = response.wsgi_request
+        request = self.factory.get('/__cart/download.json')
         request.GET = None
         with self.assertRaises(Http404):
             api_create_download(request)

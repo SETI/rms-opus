@@ -6,14 +6,12 @@ import requests
 import sys
 from unittest import TestCase
 
-import django.conf
+from django.core.cache import cache
 from rest_framework.test import RequestsClient
 
 from api_test_helper import ApiTestHelper
 
 import settings
-
-django.conf.settings.CACHE_BACKEND = 'dummy:///'
 
 class ApiUITests(TestCase, ApiTestHelper):
 
@@ -26,6 +24,7 @@ class ApiUITests(TestCase, ApiTestHelper):
             self.client = requests.Session()
         else:
             self.client = RequestsClient()
+        cache.clear()
         self.default_url_slugs = {
             "cols": settings.DEFAULT_COLUMNS,
             "widgets": settings.DEFAULT_WIDGETS,

@@ -6,14 +6,12 @@ import requests
 import sys
 from unittest import TestCase
 
-import django.conf
+from django.core.cache import cache
 from rest_framework.test import RequestsClient
 
 from api_test_helper import ApiTestHelper
 
 import settings
-
-django.conf.settings.CACHE_BACKEND = 'dummy:///'
 
 class ApiMetadataTests(TestCase, ApiTestHelper):
 
@@ -26,6 +24,7 @@ class ApiMetadataTests(TestCase, ApiTestHelper):
             self.client = requests.Session()
         else:
             self.client = RequestsClient()
+        cache.clear()
 
     def tearDown(self):
         sys.tracebacklimit = 1000 # default: 1000
@@ -66,6 +65,22 @@ class ApiMetadataTests(TestCase, ApiTestHelper):
             #####################################################
             ######### /api/meta/result_count: API TESTS #########
             #####################################################
+
+    # Caching test (only visible through code coverage)
+    def test__api_meta_result_count_cache(self):
+        "[test_metadata_api.py] /api/meta/result_count: cache"
+        url = '/opus/api/meta/result_count.json?volumeid=COISS_2111&target=PAN&reqno=1'
+        self._run_result_count_equal(url, 56)
+        url = '/opus/api/meta/result_count.json?volumeid=COISS_2111&target=PAN&reqno=2'
+        self._run_result_count_equal(url, 56)
+        url = '/opus/api/meta/result_count.json?volumeid=COISS_2111&target=PAN&reqno=3'
+        self._run_result_count_equal(url, 56)
+        url = '/opus/api/meta/result_count.json?volumeid=COISS_2111&target=PAN&reqno=1'
+        self._run_result_count_equal(url, 56)
+        url = '/opus/api/meta/result_count.json?volumeid=COISS_2111&target=PAN&reqno=2'
+        self._run_result_count_equal(url, 56)
+        url = '/opus/api/meta/result_count.json?volumeid=COISS_2111&target=PAN&reqno=3'
+        self._run_result_count_equal(url, 56)
 
     # No arguments
     def test__api_meta_result_count_all(self):
@@ -248,6 +263,34 @@ class ApiMetadataTests(TestCase, ApiTestHelper):
             ######### /api/meta/mults: API TESTS #########
             ##############################################
 
+    # Caching (only visible through code coverage)
+    def test__api_meta_mults_cache(self):
+        "[test_metadata_api.py] /api/meta/meta/mults: cache"
+        url = '/opus/__api/meta/mults/target.json?volumeid=COISS_2111&reqno=1'
+        expected = {"field": "target", "mults": {"Atlas": 2, "Daphnis": 4, "Enceladus": 271, "Epimetheus": 27, "Hyrrokkin": 140, "Iapetus": 127, "Janus": 4, "Methone": 2, "Pallene": 2, "Pan": 56,
+                    "Polydeuces": 2, "Prometheus": 4, "Saturn": 1483, "Saturn Rings": 1040, "Sky": 90, "Telesto": 2, "Tethys": 11, "Titan": 384, "Unknown": 16}, "reqno": 1}
+        self._run_json_equal(url, expected)
+        url = '/opus/__api/meta/mults/target.json?volumeid=COISS_2111&reqno=2'
+        expected = {"field": "target", "mults": {"Atlas": 2, "Daphnis": 4, "Enceladus": 271, "Epimetheus": 27, "Hyrrokkin": 140, "Iapetus": 127, "Janus": 4, "Methone": 2, "Pallene": 2, "Pan": 56,
+                    "Polydeuces": 2, "Prometheus": 4, "Saturn": 1483, "Saturn Rings": 1040, "Sky": 90, "Telesto": 2, "Tethys": 11, "Titan": 384, "Unknown": 16}, "reqno": 2}
+        self._run_json_equal(url, expected)
+        url = '/opus/__api/meta/mults/target.json?volumeid=COISS_2111&reqno=3'
+        expected = {"field": "target", "mults": {"Atlas": 2, "Daphnis": 4, "Enceladus": 271, "Epimetheus": 27, "Hyrrokkin": 140, "Iapetus": 127, "Janus": 4, "Methone": 2, "Pallene": 2, "Pan": 56,
+                    "Polydeuces": 2, "Prometheus": 4, "Saturn": 1483, "Saturn Rings": 1040, "Sky": 90, "Telesto": 2, "Tethys": 11, "Titan": 384, "Unknown": 16}, "reqno": 3}
+        self._run_json_equal(url, expected)
+        url = '/opus/__api/meta/mults/target.json?volumeid=COISS_2111&reqno=1'
+        expected = {"field": "target", "mults": {"Atlas": 2, "Daphnis": 4, "Enceladus": 271, "Epimetheus": 27, "Hyrrokkin": 140, "Iapetus": 127, "Janus": 4, "Methone": 2, "Pallene": 2, "Pan": 56,
+                    "Polydeuces": 2, "Prometheus": 4, "Saturn": 1483, "Saturn Rings": 1040, "Sky": 90, "Telesto": 2, "Tethys": 11, "Titan": 384, "Unknown": 16}, "reqno": 1}
+        self._run_json_equal(url, expected)
+        url = '/opus/__api/meta/mults/target.json?volumeid=COISS_2111&reqno=2'
+        expected = {"field": "target", "mults": {"Atlas": 2, "Daphnis": 4, "Enceladus": 271, "Epimetheus": 27, "Hyrrokkin": 140, "Iapetus": 127, "Janus": 4, "Methone": 2, "Pallene": 2, "Pan": 56,
+                    "Polydeuces": 2, "Prometheus": 4, "Saturn": 1483, "Saturn Rings": 1040, "Sky": 90, "Telesto": 2, "Tethys": 11, "Titan": 384, "Unknown": 16}, "reqno": 2}
+        self._run_json_equal(url, expected)
+        url = '/opus/__api/meta/mults/target.json?volumeid=COISS_2111&reqno=3'
+        expected = {"field": "target", "mults": {"Atlas": 2, "Daphnis": 4, "Enceladus": 271, "Epimetheus": 27, "Hyrrokkin": 140, "Iapetus": 127, "Janus": 4, "Methone": 2, "Pallene": 2, "Pan": 56,
+                    "Polydeuces": 2, "Prometheus": 4, "Saturn": 1483, "Saturn Rings": 1040, "Sky": 90, "Telesto": 2, "Tethys": 11, "Titan": 384, "Unknown": 16}, "reqno": 3}
+        self._run_json_equal(url, expected)
+
     # Unrelated constraints
     def test__api_meta_mults_COISS_2111(self):
         "[test_metadata_api.py] /api/meta/meta/mults: for COISS_2111"
@@ -300,6 +343,19 @@ class ApiMetadataTests(TestCase, ApiTestHelper):
         "[test_metadata_api.py] /api/meta/meta/mults: for COISS_2111 target Daphnis targetclass"
         url = '/opus/api/meta/mults/targetclass.json?volumeid=COISS_2111&targetclass=Regular+Satellite&target=Daphnis'
         expected = {"field": "targetclass", "mults": {"Regular Satellite": 4}}
+        self._run_json_equal(url, expected)
+
+    def test__api_meta_mults_COISS_2111_daphnis(self):
+        "[test_metadata_api.py] /api/meta/meta/mults: for COISS_2111 target Daphnis targetclass"
+        url = '/opus/api/meta/mults/targetclass.json?volumeid=COISS_2111&targetclass=Regular+Satellite&target=Daphnis'
+        expected = {"field": "targetclass", "mults": {"Regular Satellite": 4}}
+        self._run_json_equal(url, expected)
+
+    def test__api_meta_mults_COISS_2111_imagetype(self):
+        "[test_metadata_api.py] /api/meta/meta/mults: for COISS_2111 imagetype"
+        # This joins in a non-obs_general table
+        url = '/opus/api/meta/mults/imagetype.json?volumeid=COISS_2111'
+        expected = {"field": "imagetype", "mults": {"Frame": 3667}}
         self._run_json_equal(url, expected)
 
     # Other return formats
@@ -384,6 +440,28 @@ class ApiMetadataTests(TestCase, ApiTestHelper):
             ########################################################
             ######### /api/meta/range/endpoints: API TESTS #########
             ########################################################
+
+    # Caching (only visible through code coverage)
+    def test__api_meta_range_endpoints_cache(self):
+        "[test_metadata_api.py] /api/meta/range/endpoints: cache"
+        url = '/opus/__api/meta/range/endpoints/timesec1.json?volumeid=COISS_2111&reqno=1'
+        expected = {"max": "2017-03-31T13:05:35.059", "nulls": 0, "min": "2017-02-17T23:59:39.059", "reqno": 1}
+        self._run_json_equal(url, expected)
+        url = '/opus/__api/meta/range/endpoints/timesec1.json?volumeid=COISS_2111&reqno=2'
+        expected = {"max": "2017-03-31T13:05:35.059", "nulls": 0, "min": "2017-02-17T23:59:39.059", "reqno": 2}
+        self._run_json_equal(url, expected)
+        url = '/opus/__api/meta/range/endpoints/timesec1.json?volumeid=COISS_2111&reqno=3'
+        expected = {"max": "2017-03-31T13:05:35.059", "nulls": 0, "min": "2017-02-17T23:59:39.059", "reqno": 3}
+        self._run_json_equal(url, expected)
+        url = '/opus/__api/meta/range/endpoints/timesec1.json?volumeid=COISS_2111&reqno=1'
+        expected = {"max": "2017-03-31T13:05:35.059", "nulls": 0, "min": "2017-02-17T23:59:39.059", "reqno": 1}
+        self._run_json_equal(url, expected)
+        url = '/opus/__api/meta/range/endpoints/timesec1.json?volumeid=COISS_2111&reqno=2'
+        expected = {"max": "2017-03-31T13:05:35.059", "nulls": 0, "min": "2017-02-17T23:59:39.059", "reqno": 2}
+        self._run_json_equal(url, expected)
+        url = '/opus/__api/meta/range/endpoints/timesec1.json?volumeid=COISS_2111&reqno=3'
+        expected = {"max": "2017-03-31T13:05:35.059", "nulls": 0, "min": "2017-02-17T23:59:39.059", "reqno": 3}
+        self._run_json_equal(url, expected)
 
     # General / Observation Time (string return)
     def test__api_meta_range_endpoints_times_COISS(self):
@@ -582,3 +660,94 @@ class ApiMetadataTests(TestCase, ApiTestHelper):
         "[test_metadata_api.py] /api/meta/range/endpoints: bad slug name"
         url = '/opus/__api/meta/range/endpoints/badslug.json?instrument=Cassini+ISS'
         self._run_status_equal(url, 404, settings.HTTP404_UNKNOWN_SLUG)
+
+
+            ##########################################
+            ######### /api/fields: API TESTS #########
+            ##########################################
+
+    # Test caching (only visible with code coverage)
+    def test__api_fields_time1_cache(self):
+        "[test_metadata_api.py] /api/fields: time1 json cache"
+        url = '/opus/__api/fields/time1.json?reqno=1'
+        expected = {"data": {"time1": {"label": "Observation Start Time", "search_label": "Observation Time", "full_label": "Observation Start Time", "full_search_label": "Observation Time [General]", "category": "General Constraints", "slug": "time1", "old_slug": "timesec1"}}}
+        self._run_json_equal(url, expected)
+        url = '/opus/__api/fields/time1.json?reqno=2'
+        expected = {"data": {"time1": {"label": "Observation Start Time", "search_label": "Observation Time", "full_label": "Observation Start Time", "full_search_label": "Observation Time [General]", "category": "General Constraints", "slug": "time1", "old_slug": "timesec1"}}}
+        self._run_json_equal(url, expected)
+        url = '/opus/__api/fields/time1.json?reqno=3'
+        expected = {"data": {"time1": {"label": "Observation Start Time", "search_label": "Observation Time", "full_label": "Observation Start Time", "full_search_label": "Observation Time [General]", "category": "General Constraints", "slug": "time1", "old_slug": "timesec1"}}}
+        self._run_json_equal(url, expected)
+        url = '/opus/__api/fields/time1.json?reqno=1'
+        expected = {"data": {"time1": {"label": "Observation Start Time", "search_label": "Observation Time", "full_label": "Observation Start Time", "full_search_label": "Observation Time [General]", "category": "General Constraints", "slug": "time1", "old_slug": "timesec1"}}}
+        self._run_json_equal(url, expected)
+        url = '/opus/__api/fields/time1.json?reqno=2'
+        expected = {"data": {"time1": {"label": "Observation Start Time", "search_label": "Observation Time", "full_label": "Observation Start Time", "full_search_label": "Observation Time [General]", "category": "General Constraints", "slug": "time1", "old_slug": "timesec1"}}}
+        self._run_json_equal(url, expected)
+        url = '/opus/__api/fields/time1.json?reqno=3'
+        expected = {"data": {"time1": {"label": "Observation Start Time", "search_label": "Observation Time", "full_label": "Observation Start Time", "full_search_label": "Observation Time [General]", "category": "General Constraints", "slug": "time1", "old_slug": "timesec1"}}}
+        self._run_json_equal(url, expected)
+
+    def test__api_fields_time1_json(self):
+        "[test_metadata_api.py] /api/fields: time1 json"
+        url = '/opus/__api/fields/time1.json'
+        expected = {"data": {"time1": {"label": "Observation Start Time", "search_label": "Observation Time", "full_label": "Observation Start Time", "full_search_label": "Observation Time [General]", "category": "General Constraints", "slug": "time1", "old_slug": "timesec1"}}}
+        self._run_json_equal(url, expected)
+
+    def test__api_fields_time1_html(self):
+        "[test_metadata_api.py] /api/fields: time1 html"
+        url = '/opus/__api/fields/time1.html'
+        self._run_html_equal_file(url, 'api_fields_time1_html.html')
+
+    def test__api_fields_all(self):
+        "[test_metadata_api.py] /api/fields: all json and collapse"
+        url = '/opus/__api/fields.json'
+        print(url)
+        response = self._get_response(url)
+        self.assertEqual(response.status_code, 200)
+        jdata = json.loads(response.content)
+        num_fields = len(jdata['data'])
+        url = '/opus/__api/fields.json?collapse=1'
+        print(url)
+        response = self._get_response(url)
+        self.assertEqual(response.status_code, 200)
+        jdata = json.loads(response.content)
+        num_fields_collapse = len(jdata['data'])
+        self.assertLess(num_fields_collapse, num_fields)
+
+    def test__api_fields_all_bad_collapse(self):
+        "[test_metadata_api.py] /api/fields: all json bad collapse"
+        url = '/opus/__api/fields.json?collapse=X'
+        self._run_status_equal(url, 404)
+
+    def test__api_fields_all_cache(self):
+        "[test_metadata_api.py] /api/fields: all json cache"
+        url = '/opus/__api/fields.json?reqno=1'
+        print(url)
+        response = self._get_response(url)
+        self.assertEqual(response.status_code, 200)
+        jdata1 = json.loads(response.content)
+        url = '/opus/__api/fields.json?reqno=2'
+        print(url)
+        response = self._get_response(url)
+        self.assertEqual(response.status_code, 200)
+        jdata2 = json.loads(response.content)
+        url = '/opus/__api/fields.json?reqno=3&collapse=1'
+        print(url)
+        response = self._get_response(url)
+        self.assertEqual(response.status_code, 200)
+        jdatac1 = json.loads(response.content)
+        url = '/opus/__api/fields.json?reqno=4'
+        print(url)
+        response = self._get_response(url)
+        self.assertEqual(response.status_code, 200)
+        jdata3 = json.loads(response.content)
+        url = '/opus/__api/fields.json?reqno=5&collapse=1'
+        print(url)
+        response = self._get_response(url)
+        self.assertEqual(response.status_code, 200)
+        jdatac2 = json.loads(response.content)
+        self.assertEqual(jdata1, jdata2)
+        self.assertEqual(jdata2, jdata3)
+        self.assertEqual(jdatac1, jdatac2)
+        self.assertNotEqual(jdata1, jdatac1)

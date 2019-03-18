@@ -7,15 +7,13 @@ import logging
 import sys
 from unittest import TestCase
 
-import django.conf
 from django.core.cache import cache
 from django.db import connection
 from django.http import QueryDict
+from django.test import RequestFactory
 from django.test.client import Client
 
 from search.views import *
-
-django.conf.settings.CACHE_BACKEND = 'dummy:///'
 
 class searchTests(TestCase):
 
@@ -29,7 +27,7 @@ class searchTests(TestCase):
             print(q)
             cursor.execute(q)
         cache.clear()
-        cache._cache.flush_all()  # clears memcache hopefully only on this port!
+        self.factory = RequestFactory()
 
     def setUp(self):
         self._empty_user_searches()
@@ -55,8 +53,7 @@ class searchTests(TestCase):
     def test__api_normalize_input_no_get(self):
         "[test_search.py] api_normalize_input: no GET"
         c = Client()
-        response = c.get('/__api/normalizeinput.json')
-        request = response.wsgi_request
+        request = self.factory.get('/__api/normalizeinput.json')
         request.GET = None
         with self.assertRaises(Http404):
             api_normalize_input(request)
@@ -74,8 +71,7 @@ class searchTests(TestCase):
     def test__api_string_search_choices_no_get(self):
         "[test_search.py] api_string_search_choices: no GET"
         c = Client()
-        response = c.get('/__api/stringsearchchoices/volumeid.json')
-        request = response.wsgi_request
+        request = self.factory.get('/__api/stringsearchchoices/volumeid.json')
         request.GET = None
         with self.assertRaises(Http404):
             api_string_search_choices(request, 'slug')

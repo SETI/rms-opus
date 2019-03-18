@@ -335,7 +335,7 @@ class DBIntegrityTest(TestCase):
         self.assertEqual(count_partables, count_tablenames)
 
     def test__planets_properly_ordered(self):
-        "DB Integrity: planets are properly ordered in the planet mult table"
+        "[test_local_db_integrity.py] DB Integrity: planets are properly ordered in the planet mult table"
         the_planets = [planet['label']
                        for planet in MultObsGeneralPlanetId.objects
                                         .filter(display='Y').values('label')]
@@ -345,6 +345,6 @@ class DBIntegrityTest(TestCase):
         self.assertEqual(expect, the_planets)
 
     def test__surface_geometry_table_label_is_correct(self):
-        "DB Integrity: label of the obs_surface_geometry table in table_names"
+        "[test_local_db_integrity.py] DB Integrity: label of the obs_surface_geometry table in table_names"
         label = TableNames.objects.get(table_name='obs_surface_geometry').label
         self.assertEqual(label, 'Surface Geometry Constraints')

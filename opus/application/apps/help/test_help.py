@@ -4,13 +4,12 @@ import logging
 import sys
 from unittest import TestCase
 
-import django.conf
+from django.core.cache import cache
 from django.http import Http404
+from django.test import RequestFactory
 from django.test.client import Client
 
 from help.views import *
-
-django.conf.settings.CACHE_BACKEND = 'dummy:///'
 
 class helpTests(TestCase):
 
@@ -18,6 +17,8 @@ class helpTests(TestCase):
         self.maxDiff = None
         sys.tracebacklimit = 0 # default: 1000
         logging.disable(logging.ERROR)
+        cache.clear()
+        self.factory = RequestFactory()
 
     def tearDown(self):
         sys.tracebacklimit = 1000 # default: 1000
@@ -36,8 +37,7 @@ class helpTests(TestCase):
     def test__api_about_no_get(self):
         "[test_help.py] api_about: no GET"
         c = Client()
-        response = c.get('__help/about.html')
-        request = response.wsgi_request
+        request = self.factory.get('__help/about.html')
         request.GET = None
         with self.assertRaises(Http404):
             api_about(request)
@@ -55,8 +55,7 @@ class helpTests(TestCase):
     def test__api_datasets_no_get(self):
         "[test_help.py] api_datasets: no GET"
         c = Client()
-        response = c.get('__help/datasets.html')
-        request = response.wsgi_request
+        request = self.factory.get('__help/datasets.html')
         request.GET = None
         with self.assertRaises(Http404):
             api_datasets(request)
@@ -74,8 +73,7 @@ class helpTests(TestCase):
     def test__api_faq_no_get(self):
         "[test_help.py] api_faq: no GET"
         c = Client()
-        response = c.get('__help/faq.html')
-        request = response.wsgi_request
+        request = self.factory.get('__help/faq.html')
         request.GET = None
         with self.assertRaises(Http404):
             api_faq(request)
@@ -93,8 +91,7 @@ class helpTests(TestCase):
     def test__api_guide_no_get(self):
         "[test_help.py] api_guide: no GET"
         c = Client()
-        response = c.get('__help/guide.html')
-        request = response.wsgi_request
+        request = self.factory.get('__help/guide.html')
         request.GET = None
         with self.assertRaises(Http404):
             api_guide(request)
@@ -112,8 +109,7 @@ class helpTests(TestCase):
     def test__api_tutorial_no_get(self):
         "[test_help.py] api_tutorial: no GET"
         c = Client()
-        response = c.get('__help/tutorial.html')
-        request = response.wsgi_request
+        request = self.factory.get('__help/tutorial.html')
         request.GET = None
         with self.assertRaises(Http404):
             api_tutorial(request)

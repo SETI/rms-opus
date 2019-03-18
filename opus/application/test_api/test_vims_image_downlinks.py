@@ -7,14 +7,11 @@ import requests
 import sys
 from unittest import TestCase
 
-import django.conf
 from rest_framework.test import APIClient, RequestsClient
 
 from test_return_formats import ApiFormats
 
 import settings
-
-django.conf.settings.CACHE_BACKEND = 'dummy:///'
 
 ##################
 ### Test cases ###
@@ -62,7 +59,7 @@ class ApiVimsDownlinksTests(TestCase):
                 v2_ir_id = primary_filespec_object["images_with_opus_id"][2]
                 v2_vis_id = primary_filespec_object["images_with_opus_id"][3]
 
-                if not error_msg:
+                if not error_msg: # pragma: no cover
                     for v1_id in [v1_ir_id, v1_vis_id]:
                         for image, v1_count in image_count[v1_id].items():
                             if v1_id == v1_ir_id:
@@ -108,7 +105,7 @@ class ApiVimsDownlinksTests(TestCase):
            }
         """
 
-        if settings.TEST_GO_LIVE:
+        if settings.TEST_GO_LIVE: # pragma: no cover
             client = requests.Session()
         else:
             client = RequestsClient()
