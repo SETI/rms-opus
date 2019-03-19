@@ -25,6 +25,7 @@ var opus = {
     lastRequestNo: 0,          // holds request numbers for main result count loop,
     lastAllNormalizeRequestNo: 0,
     lastResultCountRequestNo: 0,
+    lastNormalizeurlRequestNo: 0,
     waitingForAllNormalizedAPI: false,
 
     download_in_process: false,
@@ -100,6 +101,7 @@ var opus = {
     allInputsValid: true,
 
     helpPanelOpen: false,
+    lastHashObj: {},
     //------------------------------------------------------------------------------------//
 
     load: function () {
@@ -109,8 +111,27 @@ var opus = {
         tab etc. Load watches for changes to the hash to know
         whether to fire an ajax call.
         */
+        // let hash = o_hash.getHashArray();
+        let hashObj = o_hash.getHashObject();
+        // let hash = o_hash.updateHash(false);
+        console.log("==== current hash obj ====")
+        console.log(hashObj)
+        // console.log(hash)
+        // console.log(window.location.hash)
+        // console.log(`HAsh in load from getHash: ${hash}`)
+        // Call normalizeurl api to update url if there is an url change
+        if(!jQuery.isEmptyObject(opus.lastHashObj) || !o_utils.areObjectsEqual(hashObj, opus.lastHashObj)) {
+            let hash = o_hash.updateHash(false);
+            opus.lastNormalizeurlRequestNo++;
+            let url = "/opus/__normalizeurl.json?" + hash + "&reqno=" + opus.lastNormalizeurlRequestNo;
+            console.log(`URL: ${url}`);
+            $.getJSON(url, function(normailurlData){
+
+            });
+        }
 
         selections = o_hash.getSelectionsFromHash();
+        // console.log(selections)
 
         // if (!$.isEmptyObject(opus.selections) || !opus.checkIfDrawnWidgetsAreDefault() || !opus.checkIfMetadataAreDefault()) {
         if (selections || !opus.checkIfDrawnWidgetsAreDefault()) {
