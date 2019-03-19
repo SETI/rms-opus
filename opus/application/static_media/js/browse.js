@@ -529,7 +529,7 @@ var o_browse = {
         // otherwise use the state of the current observation - this will identify what will happen to the range
         let selectedElem = $(`#${opus.prefs.view}`).find(".selected");
         if (selectedElem.length != 0) {
-            inCart =  (o_cart.isIn($(selectedElem).data("id")) ? "in" : "");
+            inCart =  (o_cart.isIn($(selectedElem).data("id")) ? "" : "in");
         }
         let addRemoveText = (inCart != "in" ? "remove range from" : "add range to");
 
