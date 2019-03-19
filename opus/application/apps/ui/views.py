@@ -933,7 +933,7 @@ def api_normalize_url(request):
 
     ### DETAIL
     detail_val = None
-    if 'detail' in old_slugs:
+    if 'detail' in old_slugs and old_slugs['detail']:
         opus_id = convert_ring_obs_id_to_opus_id(old_slugs['detail'])
         if opus_id != old_slugs['detail']:
             msg = ('You appear to be using an obsolete RINGOBS_ID ('
