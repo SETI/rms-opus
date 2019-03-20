@@ -112,8 +112,11 @@ var o_browse = {
 
         // browse sort order - remove sort slug
         $(".sort-contents").on("click", "li .remove-sort", function() {
+            $(".table-page-load-status > .loader").show();
             let slug = $(this).parent().attr("data-slug");
             let descending = $(this).parent().attr("data-descending");
+            o_browse.tableSorting = true;
+
             if (descending == "true") {
                 slug = "-"+slug;
             }
@@ -123,13 +126,17 @@ var o_browse = {
                 opus.prefs.order.splice(slugIndex, 1);
             }
             o_hash.updateHash();
-            o_browse.updatePage();
+            // o_browse.updatePage();
+            o_browse.renderSortedDataFromBeginning();
         });
 
         // browse sort order - flip sort order of a slug
         $(".sort-contents").on("click", "li .flip-sort", function() {
+            $(".table-page-load-status > .loader").show();
+            console.log("click pill sort")
             let slug = $(this).parent().attr("data-slug");
             let descending = $(this).parent().attr("data-descending");
+            o_browse.tableSorting = true;
 
             let new_slug = slug;
             if (descending == "true") {
@@ -139,11 +146,14 @@ var o_browse = {
             }
             let slugIndex = $.inArray(slug, opus.prefs.order);
             if (slugIndex >= 0) {
+                console.log("here?")
                 // The clicked-on slug should always be in the order list; this is just a safety precaution
                 opus.prefs.order[slugIndex] = new_slug;
             }
+            console.log(opus.prefs["order"])
             o_hash.updateHash();
-            o_browse.updatePage();
+            // o_browse.updatePage();
+            o_browse.renderSortedDataFromBeginning();
         });
 
         // 1 - click on thumbnail opens modal window
@@ -333,11 +343,12 @@ var o_browse = {
             // }
 
             o_hash.updateHash();
-            opus.lastPageDrawn.browse = 0;
-            opus.gallery_begun = false;     // so that we redraw from the beginning
-            opus.gallery_data = {};
-            opus.prefs.page = default_pages; // reset pages to 1 when col ordering changes
-            o_browse.loadData(1);
+            // opus.lastPageDrawn.browse = 0;
+            // opus.gallery_begun = false;     // so that we redraw from the beginning
+            // opus.gallery_data = {};
+            // opus.prefs.page = default_pages; // reset pages to 1 when col ordering changes
+            // o_browse.loadData(1);
+            o_browse.renderSortedDataFromBeginning();
             return false;
         });
 
@@ -426,6 +437,14 @@ var o_browse = {
         });
         o_browse.updateSliderHandle();
     }, // end browse behaviors
+
+    renderSortedDataFromBeginning: function() {
+        opus.lastPageDrawn.browse = 0;
+        opus.gallery_begun = false;     // so that we redraw from the beginning
+        opus.gallery_data = {};
+        opus.prefs.page = default_pages; // reset pages to 1 when col ordering changes
+        o_browse.loadData(1);
+    },
 
     // check if we need infiniteScroll to load next page when there is no more prefected data
     checkIfLoadNextPageIsNeeded: function(opusId) {
@@ -1148,7 +1167,6 @@ var o_browse = {
         // wait! is this page already drawn?
         if ($(`${selector} .thumb-page[data-page='${page}']`).length > 0 && !o_browse.tableSorting) {
             o_browse.setScrollbarPosition(selector, page);
-            console.log("here?")
             return;
         } else {
             // reset counter
@@ -1163,6 +1181,10 @@ var o_browse = {
         $.getJSON(url, function(data) {
             let request_time = new Date().getTime() - start_time;
             if (data.reqno < o_browse.lastLoadDataRequestNo) {
+                // make sure to remove spinner before return
+                if($(".table-page-load-status > .loader").is(":visible")){
+                    $(".table-page-load-status > .loader").hide();
+                }
                 return;
             }
             // data.start_obs, data.count
@@ -1172,6 +1194,7 @@ var o_browse = {
             }
 
             if (!opus.gallery_begun) {
+                console.log("re-draw from beginning")
                 o_browse.initTable(data.columns);
 
                 if (!$(selector).data("infiniteScroll")) {
@@ -1214,8 +1237,9 @@ var o_browse = {
                 $(selector).infiniteScroll('loadNextPage');
                 opus.gallery_begun = true;
             }
-
-            $(".table-page-load-status > .loader").hide();
+            if($(".table-page-load-status > .loader").is(":visible")){
+                $(".table-page-load-status > .loader").hide();
+            }
             o_browse.tableSorting = false;
         });
     },
