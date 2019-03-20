@@ -156,6 +156,11 @@ Not sure if this is the desired behavior
     -webkit-box-sizing: border-box; -moz-box-sizing: border-box; box-sizing: border-box;
 }
 
+.op-redraw-menu .collapsing {
+     -webkit-transition: none;
+     transition: none;
+}
+
 hr.shadow-divider {
   height: 10px;
   border: 0;
@@ -333,6 +338,10 @@ tr.modal-show {
 .tools a:nth-child(3n) {
     position:relative;
     right:0;
+}
+
+td .tools {
+    width: 2em;
 }
 
 th.sticky-header {
@@ -1170,23 +1179,18 @@ ul.ui-autocomplete a.ui-state-active {
   vertical-align: middle;
   -webkit-transform: perspective(1px) translateZ(0);
   transform: perspective(1px) translateZ(0);
-  box-shadow: 0 0 1px rgba(0, 0, 0, 0);
   position: relative;
+  z-index: 20;
 }
 .hvr-ripple-in:before {
   content: '';
   position: absolute;
-  border: #20c997 solid 4px;
+  border: #20c997 solid 6px;
   top: -12px;
   right: -12px;
   bottom: -12px;
   left: -12px;
-  opacity: 0;
-  animation: hvr-ripple-in 2s infinite;
-  -webkit-animation: hvr-ripple-in 2s infinite;
-}
-
-.op-redraw-menu .collapsing {
-     -webkit-transition: none;
-     transition: none;
+  opacity: 0.5;
+  animation: hvr-ripple-in 1s infinite;
+  -webkit-animation: hvr-ripple-in 1s infinite;
 }
