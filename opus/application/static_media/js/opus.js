@@ -101,53 +101,10 @@ var opus = {
     allInputsValid: true,
 
     helpPanelOpen: false,
-    lastHash: "",
     //------------------------------------------------------------------------------------//
 
     load: function () {
-        /* When user makes any change to the interface, such as changing a query,
-        the load() will send an ajax request to the server to get information it
-        needs to update any hinting (green numbers), result counts, browse results
-        tab etc. Load watches for changes to the hash to know
-        whether to fire an ajax call.
-        */
-        // let hash = o_hash.getHashArray();
-        let hashObj = o_hash.getHashObject();
-        let hash = o_hash.getHash();
-        console.log("==== current hash obj ====")
-        console.log(hash)
-        // console.log(hash)
-        // console.log(window.location.hash)
-        // console.log(`HAsh in load from getHash: ${hash}`)
-        // Call normalizeurl api to update url if there is an url change
-        // TODO:
-        // need to update reqno in backend
-        // create a function to convert hash string to hash object and compare if they are the same
-
-        // if(!jQuery.isEmptyObject(opus.lastHashObj) || !o_utils.areObjectsEqual(hashObj, opus.lastHashObj)) {
-        console.log(hash === opus.lastHash)
-        if(!opus.lastHash || hash !== opus.lastHash) {
-            let normalizedHash = o_hash.updateHash(false);
-            opus.lastNormalizeurlRequestNo++;
-            let url = "/opus/__normalizeurl.json?" + normalizedHash + "&reqno=" + opus.lastNormalizeurlRequestNo;
-            console.log(`URL: ${url}`);
-            $.getJSON(url, function(normalizeurlData){
-                // if(normalizeurlData["reqno"] < opus.lastNormalizeurlRequestNo) {
-                //     return;
-                // }
-                console.log("return data=========")
-                console.log(normalizeurlData.new_url);
-                console.log(normalizeurlData.msg);
-                window.location.hash = "/" + normalizeurlData.new_url;
-                console.log("update url=====");
-                console.log(window.location.hash);
-                opus.lastHash = normalizeurlData.new_url;
-                console.log(o_hash.lastHash);
-            });
-        }
-
         selections = o_hash.getSelectionsFromHash();
-        // console.log(selections)
 
         // if (!$.isEmptyObject(opus.selections) || !opus.checkIfDrawnWidgetsAreDefault() || !opus.checkIfMetadataAreDefault()) {
         if (selections || !opus.checkIfDrawnWidgetsAreDefault()) {
