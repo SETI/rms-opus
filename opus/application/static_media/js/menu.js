@@ -70,7 +70,9 @@ var o_menu = {
         $('.menu_spinner').fadeIn("fast");
         var hash = o_hash.getHash();
 
-        $( "#sidebar").load( "/opus/__menu.html?" + hash, function() {
+        $("#sidebar").toggleClass("op-redraw-menu");
+
+        $("#sidebar").load( "/opus/__menu.html?" + hash, function() {
             // open menu items that were open before
             $.each(opus.menu_state.cats, function(key, category) {
                 if ($(`#submenu-${category}`).length != 0) {
@@ -81,6 +83,7 @@ var o_menu = {
                     opus.menu_state.cats.splice(opus.menu_state.cats.indexOf(category), 1);
                 }
             });
+            $("#sidebar").toggleClass("op-redraw-menu");
             $('.menu_spinner').fadeOut("fast");
         });
      },

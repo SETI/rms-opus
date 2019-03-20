@@ -1185,3 +1185,8 @@ ul.ui-autocomplete a.ui-state-active {
   animation: hvr-ripple-in 2s infinite;
   -webkit-animation: hvr-ripple-in 2s infinite;
 }
+
+.op-redraw-menu .collapsing {
+     -webkit-transition: none;
+     transition: none;
+}
