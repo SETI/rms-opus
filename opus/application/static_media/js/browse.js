@@ -155,7 +155,6 @@ var o_browse = {
                 }
             } else {
                 o_browse.showModal(opusId);
-                o_browse.undoRangeSelect();
             }
         });
 
@@ -529,7 +528,7 @@ var o_browse = {
         }
         let addRemoveText = (inCart != "in" ? "remove range from" : "add range to");
 
-        let rangeText = ($(e.delegateTarget).find(".selected").length == 0 ?
+        let rangeText = (selectedElem.length == 0 ?
                             `<i class='fas fa-sign-out-alt'></i>Start ${addRemoveText} cart here` :
                             `<i class='fas fa-sign-out-alt fa-rotate-180'></i>End ${addRemoveText} cart here`);
         $("#obs-menu .dropdown-item[data-action='range']").html(rangeText);
