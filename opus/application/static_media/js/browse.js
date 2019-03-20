@@ -299,6 +299,8 @@ var o_browse = {
 
         // click table column header to reorder by that column
         $("#browse").on("click", ".dataTable th a",  function() {
+            // show this spinner right away when table is clicked
+            // we will hide page status loader from infiniteScroll if table-page-load-status loader is spinning
             $(".table-page-load-status > .loader").show();
             let orderBy =  $(this).data("slug");
 
@@ -999,7 +1001,7 @@ var o_browse = {
             $(".gallery", namespace).append(html);
         }
         // $(".gallery", namespace).append(html);
-        $(".table-page-load-status").hide();
+        // $(".table-page-load-status").hide();
 
         o_browse.adjustTableSize();
         o_browse.galleryScrollbar.update();
@@ -1187,7 +1189,10 @@ var o_browse = {
                     });
 
                     $(selector).on("request.infiniteScroll", function( event, path ) {
-                        $(".table-page-load-status").show();
+                        // hide default page status loader if table-page-load-status loader is spinning
+                        if($(".table-page-load-status > .loader").is(":visible")){
+                            $(".infinite-scroll-request").hide();
+                        }
                     });
                     $(selector).on("scrollThreshold.infiniteScroll", function( event ) {
                         if(opus.lastPageDrawn[opus.prefs.view] < o_browse.infiniteScrollCurrentMaxPageNumber) {
@@ -1209,6 +1214,7 @@ var o_browse = {
                 $(selector).infiniteScroll('loadNextPage');
                 opus.gallery_begun = true;
             }
+
             $(".table-page-load-status > .loader").hide();
             o_browse.tableSorting = false;
         });
