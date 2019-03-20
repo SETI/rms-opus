@@ -25,7 +25,7 @@ class ApiResultsTests(TestCase, ApiTestHelper):
         else:
             self.client = RequestsClient()
         cache.clear()
-        
+
     def tearDown(self):
         sys.tracebacklimit = 1000 # default: 1000
         logging.disable(logging.NOTSET)
@@ -173,6 +173,21 @@ class ApiResultsTests(TestCase, ApiTestHelper):
         url = '/opus/api/metadata/vg-iss-2-s-c4360845.json'
         self._run_json_equal_file(url, 'api_metadata_vg_iss_2_s_c4360845_default_json.json')
 
+    def test__api_metadata_vg_iss_2_s_c4360845_default_page_json(self):
+        "[test_results_api.py] /api/metadata: vg-iss-2-s-c4360845 default page json"
+        url = '/opus/api/metadata/vg-iss-2-s-c4360845.json?page=5'
+        self._run_json_equal_file(url, 'api_metadata_vg_iss_2_s_c4360845_default_json.json')
+
+    def test__api_metadata_vg_iss_2_s_c4360845_default_startobs_json(self):
+        "[test_results_api.py] /api/metadata: vg-iss-2-s-c4360845 default startobs json"
+        url = '/opus/api/metadata/vg-iss-2-s-c4360845.json?startobs=500'
+        self._run_json_equal_file(url, 'api_metadata_vg_iss_2_s_c4360845_default_json.json')
+
+    def test__api_metadata_vg_iss_2_s_c4360845_default_page_startobs_limit_json(self):
+        "[test_results_api.py] /api/metadata: vg-iss-2-s-c4360845 default page startobs limit json"
+        url = '/opus/api/metadata/vg-iss-2-s-c4360845.json?page=8&startobs=500&limit=500'
+        self._run_json_equal_file(url, 'api_metadata_vg_iss_2_s_c4360845_default_json.json')
+
     def test__api_metadata2_vg_iss_2_s_c4360845_default_json(self):
         "[test_results_api.py] /api/metadata_v2: vg-iss-2-s-c4360845 default json"
         url = '/opus/api/metadata_v2/vg-iss-2-s-c4360845.json'
@@ -311,6 +326,21 @@ class ApiResultsTests(TestCase, ApiTestHelper):
     def test__api_metadata_vg_iss_2_s_c4365507_cols_all_cassini_json(self):
         "[test_results_api.py] /api/metadata: vg-iss-2-s-c4365507 cols all cassini json"
         url = '/opus/api/metadata/vg-iss-2-s-c4365507.json?cols=opusid,volumeid,greaterpixelsize,lesserpixelsize,wavelength1,wavelength2,CASSINIobsname,CASSINIactivityname,CASSINImissionphasename,CASSINItargetcode,CASSINIrevnoint,CASSINIprimeinst,CASSINIisprime,CASSINIsequenceid,CASSINIspacecraftclockcount1,CASSINIspacecraftclockcount2,CASSINIert1,CASSINIert2'
+        self._run_json_equal_file(url, 'api_metadata_vg_iss_2_s_c4365507_cols_all_cassini_json.json')
+
+    def test__api_metadata_vg_iss_2_s_c4365507_cols_all_cassini_page_json(self):
+        "[test_results_api.py] /api/metadata: vg-iss-2-s-c4365507 cols all cassini page json"
+        url = '/opus/api/metadata/vg-iss-2-s-c4365507.json?page=8&cols=opusid,volumeid,greaterpixelsize,lesserpixelsize,wavelength1,wavelength2,CASSINIobsname,CASSINIactivityname,CASSINImissionphasename,CASSINItargetcode,CASSINIrevnoint,CASSINIprimeinst,CASSINIisprime,CASSINIsequenceid,CASSINIspacecraftclockcount1,CASSINIspacecraftclockcount2,CASSINIert1,CASSINIert2'
+        self._run_json_equal_file(url, 'api_metadata_vg_iss_2_s_c4365507_cols_all_cassini_json.json')
+
+    def test__api_metadata_vg_iss_2_s_c4365507_cols_all_cassini_startobs_json(self):
+        "[test_results_api.py] /api/metadata: vg-iss-2-s-c4365507 cols all cassini startobs json"
+        url = '/opus/api/metadata/vg-iss-2-s-c4365507.json?startobs=800&cols=opusid,volumeid,greaterpixelsize,lesserpixelsize,wavelength1,wavelength2,CASSINIobsname,CASSINIactivityname,CASSINImissionphasename,CASSINItargetcode,CASSINIrevnoint,CASSINIprimeinst,CASSINIisprime,CASSINIsequenceid,CASSINIspacecraftclockcount1,CASSINIspacecraftclockcount2,CASSINIert1,CASSINIert2'
+        self._run_json_equal_file(url, 'api_metadata_vg_iss_2_s_c4365507_cols_all_cassini_json.json')
+
+    def test__api_metadata_vg_iss_2_s_c4365507_cols_all_cassini_pagestartobslimit_json(self):
+        "[test_results_api.py] /api/metadata: vg-iss-2-s-c4365507 cols all cassini page startobs lmiit json"
+        url = '/opus/api/metadata/vg-iss-2-s-c4365507.json?page=8&startobs=800&limit=0&cols=opusid,volumeid,greaterpixelsize,lesserpixelsize,wavelength1,wavelength2,CASSINIobsname,CASSINIactivityname,CASSINImissionphasename,CASSINItargetcode,CASSINIrevnoint,CASSINIprimeinst,CASSINIisprime,CASSINIsequenceid,CASSINIspacecraftclockcount1,CASSINIspacecraftclockcount2,CASSINIert1,CASSINIert2'
         self._run_json_equal_file(url, 'api_metadata_vg_iss_2_s_c4365507_cols_all_cassini_json.json')
 
     def test__api_metadata2_vg_iss_2_s_c4365507_cols_all_cassini_json(self):

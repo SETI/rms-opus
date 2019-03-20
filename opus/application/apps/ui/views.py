@@ -112,7 +112,7 @@ def api_get_widget(request, **kwargs):
     """
     api_code = enter_api_call('api_get_widget', request, kwargs)
 
-    slug = kwargs['slug']
+    slug = strip_numeric_suffix(kwargs['slug'])
     fmt = 'html'
     form = ''
 
@@ -933,7 +933,7 @@ def api_normalize_url(request):
 
     ### DETAIL
     detail_val = None
-    if 'detail' in old_slugs:
+    if 'detail' in old_slugs and old_slugs['detail']:
         opus_id = convert_ring_obs_id_to_opus_id(old_slugs['detail'])
         if opus_id != old_slugs['detail']:
             msg = ('You appear to be using an obsolete RINGOBS_ID ('
@@ -1123,8 +1123,16 @@ def _get_menu_labels(request, labels_view):
             menu_data[d.table_name].setdefault('data', OrderedDict())
             for sub_head in sub_headings[d.table_name]:
                 all_param_info = ParamInfo.objects.filter(**{filter:1, "category_name":d.table_name, "sub_heading": sub_head})
-
-                menu_data[d.table_name]['data'][sub_head] = all_param_info
+                for p in all_param_info:
+                    if labels_view == 'search':
+                        if p.slug[-1] == '2':
+                            # We can just skip these because we never use them for
+                            # widgets
+                            continue
+                        if p.slug[-1] == '1':
+                            # Strip the trailing 1 off all ranges
+                            p.slug = strip_numeric_suffix(p.slug)
+                    menu_data[d.table_name]['data'].setdefault(sub_head, []).append(p)
 
         else:
             # this div has no sub headings
@@ -1142,4 +1150,5 @@ def _get_menu_labels(request, labels_view):
                         p.slug = strip_numeric_suffix(p.slug)
                 menu_data[d.table_name].setdefault('data', []).append(p)
 
+    print(menu_data)
     return {'menu': {'data': menu_data, 'divs': divs}}

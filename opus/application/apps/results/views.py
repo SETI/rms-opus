@@ -788,6 +788,10 @@ def api_get_files(request, opus_id=None):
     Arguments: types=<types>
                     Product types
                loc_type=['url', 'path']
+               limit=<N>
+               page=<N>  OR  startobs=<N> (1-based)
+               order=<column>[,<column>...]
+               Normal search arguments
 
     Only returns JSON.
     """
@@ -944,6 +948,7 @@ def api_get_categories_for_search(request):
 def get_search_results_chunk(request, use_cart=None,
                              cols=None, prepend_cols=None, append_cols=None,
                              limit=None, opus_id=None,
+                             start_obs=None,
                              return_opusids=False,
                              return_ringobsids=False,
                              return_filespecs=False,
@@ -964,6 +969,8 @@ def get_search_results_chunk(request, use_cart=None,
                             or the default if none given.
         opus_id             Ignore the search parameters and instead return
                             the result for a single opusid.
+        start_obs           Ignore the page or startobs field in the request and
+                            use this startobs instead.
         return_opusids      Include 'opus_ids' in the returned aux dict.
                             This is a list of opus_ids 1:1 with the returned
                             data.
@@ -1096,35 +1103,37 @@ def get_search_results_chunk(request, use_cart=None,
 
     page_size = 100 # Pages are hard-coded to be 100 observations long
     page_no = None # Keep these for returning to the caller
-    start_obs = None
     offset = None
 
-    if use_cart:
-        start_obs = request.GET.get('colls_startobs', None)
-        if start_obs is None:
-            page_no = request.GET.get('colls_page', 1)
+    if start_obs is None:
+        if use_cart:
+            start_obs = request.GET.get('colls_startobs', None)
+            if start_obs is None:
+                page_no = request.GET.get('colls_page', 1)
+        else:
+            start_obs = request.GET.get('startobs', None)
+            if start_obs is None:
+                page_no = request.GET.get('page', None)
+            if start_obs is None and page_no is None:
+                start_obs = 1 # Default to using start_obs
+        if start_obs is not None:
+            try:
+                start_obs = int(start_obs)
+            except:
+                log.error('get_search_results_chunk: Unable to parse '
+                          +'startobs "%s"', start_obs)
+                return none_return
+            offset = start_obs-1
+        else:
+            try:
+                page_no = int(page_no)
+            except:
+                log.error('get_search_results_chunk: Unable to parse page_no "%s"',
+                          page_no)
+                return none_return
+            offset = (page_no-1)*page_size
     else:
-        start_obs = request.GET.get('startobs', None)
-        if start_obs is None:
-            page_no = request.GET.get('page', None)
-        if start_obs is None and page_no is None:
-            start_obs = 1 # Default to using start_obs
-    if start_obs is not None:
-        try:
-            start_obs = int(start_obs)
-        except:
-            log.error('get_search_results_chunk: Unable to parse startobs "%s"',
-                      start_obs)
-            return none_return
         offset = start_obs-1
-    else:
-        try:
-            page_no = int(page_no)
-        except:
-            log.error('get_search_results_chunk: Unable to parse page_no "%s"',
-                      page_no)
-            return none_return
-        offset = (page_no-1)*page_size
 
     if offset < 0 or offset > settings.SQL_MAX_LIMIT:
         log.error('get_search_results_chunk: Bad offset %s', str(offset))
@@ -1373,6 +1382,7 @@ def _get_metadata_by_slugs(request, opus_id, cols, fmt, use_param_names,
                                                      request,
                                                      cols=cols,
                                                      opus_id=opus_id,
+                                                     start_obs=1,
                                                      limit=1,
                                                      api_code=api_code)
 
