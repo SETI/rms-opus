@@ -645,27 +645,16 @@ var o_browse = {
             o_browse.selectedMetadataScrollbar.update();
         });
 
-        $('#metadataSelector .allMetadata').on("click", '.submenu li', function() {
+        $('#metadataSelector .allMetadata').on("click", '.submenu li a', function() {
 
-            let elem = this;
-            let slug = $(elem).data('slug');
-            if (!slug) {
-                if ($(this).children().length > 0) {
-                     elem = $(this).children()[0];
-                     slug = $(elem).data('slug');
-                     if (!slug) {
-                         return false;
-                     }
-                } else {
-                    return false;
-                }
-            }
+            let slug = $(this).data('slug');
+            if (!slug) { return; }
 
-            let label = $(elem).data('qualifiedlabel');
+            let label = $(this).data('qualifiedlabel');
 
             //CHANGE THESE TO USE DATA-ICON=
-            let def = $(elem).find('i.fa-info-circle').attr("title");
-            let selectedMetadata = $(elem).find("i.fa-check");
+            let def = $(this).find('i.fa-info-circle').attr("title");
+            let selectedMetadata = $(this).find("i.fa-check");
 
             if (!selectedMetadata.is(":visible")) {
                 selectedMetadata.fadeIn().css("display", "inline-block");
