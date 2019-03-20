@@ -133,7 +133,6 @@ var o_browse = {
         // browse sort order - flip sort order of a slug
         $(".sort-contents").on("click", "li .flip-sort", function() {
             $(".table-page-load-status > .loader").show();
-            console.log("click pill sort")
             let slug = $(this).parent().attr("data-slug");
             let descending = $(this).parent().attr("data-descending");
             o_browse.tableSorting = true;
@@ -146,11 +145,9 @@ var o_browse = {
             }
             let slugIndex = $.inArray(slug, opus.prefs.order);
             if (slugIndex >= 0) {
-                console.log("here?")
                 // The clicked-on slug should always be in the order list; this is just a safety precaution
                 opus.prefs.order[slugIndex] = new_slug;
             }
-            console.log(opus.prefs["order"])
             o_hash.updateHash();
             // o_browse.updatePage();
             o_browse.renderSortedDataFromBeginning();
@@ -1194,7 +1191,6 @@ var o_browse = {
             }
 
             if (!opus.gallery_begun) {
-                console.log("re-draw from beginning")
                 o_browse.initTable(data.columns);
 
                 if (!$(selector).data("infiniteScroll")) {
