@@ -25,7 +25,6 @@ var opus = {
     lastRequestNo: 0,          // holds request numbers for main result count loop,
     lastAllNormalizeRequestNo: 0,
     lastResultCountRequestNo: 0,
-    lastNormalizeurlRequestNo: 0,
     waitingForAllNormalizedAPI: false,
 
     download_in_process: false,
@@ -103,7 +102,14 @@ var opus = {
     helpPanelOpen: false,
     //------------------------------------------------------------------------------------//
 
-    load: function () {
+    load: function ()
+        /* When user makes any change to the interface, such as changing a query,
+        the load() will send an ajax request to the server to get information it
+        needs to update any hinting (green numbers), result counts, browse results
+        tab etc. Load watches for changes to the hash to know
+        whether to fire an ajax call.
+        */
+
         selections = o_hash.getSelectionsFromHash();
 
         // if (!$.isEmptyObject(opus.selections) || !opus.checkIfDrawnWidgetsAreDefault() || !opus.checkIfMetadataAreDefault()) {
