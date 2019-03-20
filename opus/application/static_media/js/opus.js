@@ -102,7 +102,7 @@ var opus = {
     helpPanelOpen: false,
     //------------------------------------------------------------------------------------//
 
-    load: function ()
+    load: function () {
         /* When user makes any change to the interface, such as changing a query,
         the load() will send an ajax request to the server to get information it
         needs to update any hinting (green numbers), result counts, browse results
