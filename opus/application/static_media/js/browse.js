@@ -169,7 +169,7 @@ var o_browse = {
                 return false;
             }
             let opusId = $(this).val();
-            let startElem = $(e.delegateTarget).find(".selected");
+            let startElem = $(`#${opus.prefs.view} .thumb.gallery`).find(".selected");
 
             if (e.shiftKey) {
                 if (startElem.length == 0) {
@@ -565,15 +565,22 @@ var o_browse = {
         return $(`#${opus.prefs.view} .thumbnail-container[data-id=${opusId}]`);
     },
 
+    getDataTableInputElement: function(opusId) {
+        return $(`#dataTable tr[data-id=${opusId}] input`);
+    },
+
     startRangeSelect: function(opusId) {
         o_browse.undoRangeSelect(); // probably not necessary...
         o_browse.getGalleryElement(opusId).addClass("selected hvr-ripple-in b-a-2");
+        o_browse.getDataTableInputElement(opusId).addClass("hvr-ripple-in b-a-2");
     },
 
     undoRangeSelect: function() {
         let startElem = $(`#${opus.prefs.view}`).find(".selected");
         if (startElem.length) {
             $(startElem).removeClass("selected hvr-ripple-in b-a-2");
+            let opusId = $(startElem).data("id");
+            o_browse.getDataTableInputElement(opusId).removeClass("hvr-ripple-in b-a-2");
         }
     },
 
