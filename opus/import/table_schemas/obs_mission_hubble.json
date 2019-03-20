@@ -367,7 +367,8 @@
               [   1,         "INDETERMINATE",         "Indeterminate",  20, "Y", null],
               [   2,           "INTERRUPTED",           "Interrupted",  30, "Y", null],
               [   3,                "NORMAL",                "Normal",  40, "Y", null],
-              [   4,  "TDF-DOWN AT EXPSTART",  "TDF-Down At Expstart",  50, "Y", null]
+              [   4,  "TDF-DOWN AT EXPSTART",  "TDF-Down At Expstart",  50, "Y", null],
+              [   5,               "UNKNOWN",               "Unknown",  60, "Y", null]
           ]
     },
     {
