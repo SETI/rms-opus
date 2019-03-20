@@ -159,7 +159,8 @@ var o_hash = {
                             opus.prefs.page['data'] = parseInt(value, 10);
                             break;
                         case "limit":
-                            opus.prefs[slug] = parseInt(value, 10);
+                            // limit is no longer supported and is calculated based on screen size, so ignore this param
+                            //opus.prefs[slug] = parseInt(value, 10);
                             break;
                         case "cols":
                             opus.prefs[slug] = value.split(',');
@@ -208,6 +209,8 @@ var o_hash = {
             opus.prefs.widgets.push(slug);
           }
         }
+        // figure out approx. how many 100px images will fit on the screen... this is an approx. calc.
+        opus.prefs.limit = Math.round($(".tab-content").width() * $(".tab-content").height()/10000);
         opus.load();
     },
 

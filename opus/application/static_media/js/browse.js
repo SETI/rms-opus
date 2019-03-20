@@ -443,7 +443,7 @@ var o_browse = {
 
     // find the first displayed observation index & id in the upper left corner
     updateSliderHandleOnScroll: function() {
-        $.each($(`#${opus.prefs.view} .gallery .thumbnail-container`), function(index, elem) {
+        $(`#${opus.prefs.view} .gallery .thumbnail-container`).each(function(index, elem) {
             if($(elem).offset().top > 0) {
                 let opusId = $(elem).data("id");
                 let obsNum = $(elem).data("obs");
@@ -456,20 +456,16 @@ var o_browse = {
 
     updateSliderHandle: function(value, update) {
         value = (value == undefined? 1 : value);
-        if (isNaN(value)) {
-            console.log("NaN");
-            return false;
-        }
         $("#op-observation-number").html(value);
         if (update !== undefined && update == true) {
             // temp til we get rid of page
-            opus.prefs.page[opus.prefs.browse] = Math.ceil(value/100);
+            opus.prefs.page[opus.prefs.browse] = Math.ceil(value/opus.prefs.limit);
             onRenderData();
         }
     },
 
     checkScroll: function() {
-        $.each($(".gallery .thumb-page"), function(index, elem) {
+        $(".gallery .thumb-page").each(function(index, elem) {
             let position = $(elem).children().offset();
             if (position) {
                 if (position.top > 0 && (position.top < $(".gallery-contents").height()-100)) {
@@ -482,7 +478,7 @@ var o_browse = {
                     return false;
                 }
             }
-        })
+        });
         // infinite scroll is attached to the gallery, so we have to force a loadData when we are in table mode
         if (opus.prefs.browse == "dataTable") {
             let bottom = $("tbody").offset().top + $("tbody").height();
@@ -492,7 +488,7 @@ var o_browse = {
                 }
                 $(`#${opus.prefs.view} .gallery-contents`).infiniteScroll("loadNextPage");
             }
-        } else if (opus.prefs.browse == "gallery") {
+        } else {
             opus.lastPageDrawn[opus.prefs.view] = Math.max(o_browse.currentPage, opus.lastPageDrawn[opus.prefs.view], o_browse.infiniteScrollCurrentMaxPageNumber);
         }
         return false;
@@ -572,13 +568,13 @@ var o_browse = {
 
     startRangeSelect: function(opusId) {
         o_browse.undoRangeSelect(); // probably not necessary...
-        o_browse.getGalleryElement(opusId).addClass("selected");
+        o_browse.getGalleryElement(opusId).addClass("selected hvr-ripple-in b-a-2");
     },
 
     undoRangeSelect: function() {
         let startElem = $(`#${opus.prefs.view}`).find(".selected");
         if (startElem.length) {
-            $(startElem).removeClass("selected");
+            $(startElem).removeClass("selected hvr-ripple-in b-a-2");
         }
     },
 
@@ -828,9 +824,24 @@ var o_browse = {
         }).join('&');
 
         page = (page === undefined ? ++urlPage : page);
-        //let startObs = (page-1)*100+1;
-        //url += '&startobs=${startObs}';
         url += `&page=${page}`;
+        return url;
+    },
+
+    updateStartobsInUrl: function(url, startobs) {
+        let urlStartobs = 0;
+        // remove any existing page= slug or startobs= slug
+        url = $.grep(url.split('&'), function(pair, index) {
+            if (pair.startsWith("page") || pair.startsWith("startobs")) {
+                urlPage = pair.split("=")[1];
+            }
+        }).join('&');
+
+        startobs = (startobs === undefined ? ++urlStartobs : startobs);
+
+        url += `&startobs=${startObs}`;
+        $("#op-observation-slider").slider("value", startObs);
+        $("#op-observation-number").html(startObs);
         return url;
     },
 
@@ -1114,6 +1125,7 @@ var o_browse = {
         // this is a workaround for firefox
         let hashString = o_hash.getHash() ? o_hash.getHash() : o_browse.tempHash;
         let url = hashString + '&reqno=' + o_browse.lastLoadDataRequestNo + view.add_to_url;
+        let startobs = (page * opus.prefs.limit);
         url = base_url + o_browse.updatePageInUrl(url, page);
 
         return url;
@@ -1334,7 +1346,7 @@ var o_browse = {
         // list columns + values
         let html = "<dl>";
         $.each(opus.col_labels, function(index, columnLabel) {
-            let value = opus.gallery_data[opusId]['metadata'][index];
+            let value = opus.gallery_data[opusId][index];
             html += `<dt>${columnLabel}:</dt><dd>${value}</dd>`;
         });
         html += "</dl>";
