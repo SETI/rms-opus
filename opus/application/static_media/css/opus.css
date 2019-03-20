@@ -428,7 +428,7 @@ th.sticky-header {
 /* Fix the spinner*/
 .table-page-load-status .loader {
     display: none;
-    top: 250px;
+    /* top: 250px; */
 }
 
 .fadey {
@@ -899,6 +899,7 @@ li a.search-param:hover {
     display:inline-block;
     background-repeat: no-repeat;
 }
+
 #cart_summary .spinner {
     display:none;
     margin:0px 10px;
