@@ -76,6 +76,18 @@ var o_hash = {
         return hashArray;
     },
 
+    // return a object of slug value pair: {'slug1': 'val1', 'slug2': 'val2'}
+    getHashObject: function() {
+        let hashObj = {};
+        let hashInfo = this.getHash();
+        $.each(hashInfo.split("&"), function(idx, valuePair) {
+            let paramArray = valuePair.split("=");
+            hashObj[paramArray[0]] = paramArray[1];
+        });
+
+        return hashObj;
+    },
+
     hashArrayToHashString: function(hashArray) {
         let hash = "";
         for (let param in hashArray) {
@@ -91,7 +103,6 @@ var o_hash = {
 
         hash = (hash.search('&') > -1 ? hash.split('&') : [hash]);
         var selections = {};  // the new set of pairs that will not include the result_table specific session vars
-
         $.each(hash, function(index, pair) {
             let slug = pair.split('=')[0];
             let value = pair.split('=')[1];
@@ -104,7 +115,6 @@ var o_hash = {
                 }
             }
         });
-
         if (!$.isEmptyObject(selections)) {
             return selections;
         }

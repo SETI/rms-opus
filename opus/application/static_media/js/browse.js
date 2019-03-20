@@ -41,6 +41,10 @@ var o_browse = {
                 }
             }
         });
+        // testing area for scrollbar event, will remove it later
+        // $(".gallery-contents, .dataTable").bind('mousewheel DOMMouseScroll', function(event) {
+        //     console.log("scroll up when it reaches to the top end")
+        // });
 
 
 
@@ -313,17 +317,18 @@ var o_browse = {
                 orderIndicator.data("sort", "sort-asc")
             }
 
-            let newOrderInserted = false;
-            $.each(opus.prefs["order"], function(idx, slug) {
-                if(orderBy === slug || orderBy === `-${slug}` || `-${orderBy}` === slug) {
-                    opus.prefs["order"][idx] = orderBy;
-                    newOrderInserted = true;
-                    return false; // break out of $.each loop
-                }
-            })
-            if(!newOrderInserted) {
-                opus.prefs["order"].unshift(orderBy);
-            }
+            opus.prefs["order"] = orderBy;
+            // let newOrderInserted = false;
+            // $.each(opus.prefs["order"], function(idx, slug) {
+            //     if(orderBy === slug || orderBy === `-${slug}` || `-${orderBy}` === slug) {
+            //         opus.prefs["order"][idx] = orderBy;
+            //         newOrderInserted = true;
+            //         return false; // break out of $.each loop
+            //     }
+            // })
+            // if(!newOrderInserted) {
+            //     opus.prefs["order"].unshift(orderBy);
+            // }
 
             o_hash.updateHash();
             opus.lastPageDrawn.browse = 0;

@@ -1138,6 +1138,8 @@ def _get_menu_labels(request, labels_view):
             # this div has no sub headings
             menu_data[d.table_name]['has_sub_heading'] = False
             for p in ParamInfo.objects.filter(**{filter:1, "category_name":d.table_name}):
+                # in search view, we don't need trailing 1 & 2 for data-slug in menu
+                # but in metadata modal, we need trailing 1 & 2 for data-slug in modal menu
                 if labels_view == 'search':
                     if p.slug[-1] == '2':
                         # We can just skip these because we never use them for
