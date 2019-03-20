@@ -1150,5 +1150,4 @@ def _get_menu_labels(request, labels_view):
                         p.slug = strip_numeric_suffix(p.slug)
                 menu_data[d.table_name].setdefault('data', []).append(p)
 
-    print(menu_data)
     return {'menu': {'data': menu_data, 'divs': divs}}
