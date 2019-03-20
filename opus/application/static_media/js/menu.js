@@ -70,10 +70,9 @@ var o_menu = {
         $('.menu_spinner').fadeIn("fast");
         var hash = o_hash.getHash();
 
-        $("#sidebar").toggleClass("op-redraw-menu");
-
         $("#sidebar").load( "/opus/__menu.html?" + hash, function() {
             // open menu items that were open before
+            $("#sidebar").toggleClass("op-redraw-menu");
             $.each(opus.menu_state.cats, function(key, category) {
                 if ($(`#submenu-${category}`).length != 0) {
                     $(`#submenu-${category}`).collapse('show');
