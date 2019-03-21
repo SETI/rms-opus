@@ -900,6 +900,10 @@ li a.search-param:hover {
     background-repeat: no-repeat;
 }
 
+.card-title .spinner {
+    /* display:inline-block; */
+}
+
 p > .spinner {
     /* display:inline-block; */
     display: none;
@@ -907,7 +911,6 @@ p > .spinner {
     margin: 0 10px;
 }
 
-/* #cart_summary .spinner { */
 #download_links .spinner {
     display:none;
     margin:0px 10px;
