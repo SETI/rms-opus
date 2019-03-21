@@ -1166,6 +1166,9 @@ var o_browse = {
         // wait! is this page already drawn?
         if ($(`${selector} .thumb-page[data-page='${page}']`).length > 0 && !o_browse.tableSorting) {
             o_browse.setScrollbarPosition(selector, page);
+            if($(".page-loading-status > .loader").is(":visible")){
+                $(".page-loading-status > .loader").hide();
+            }
             return;
         } else {
             // reset counter
@@ -1247,6 +1250,9 @@ var o_browse = {
         let data = JSON.parse( response );
         if ($(`.thumb-page[data-page='${data.page_no}']`).length != 0) {
             console.log(`data.reqno: ${data.reqno}, last reqno: ${o_browse.lastLoadDataRequestNo}`);
+            if($(".page-loading-status > .loader").is(":visible")){
+                $(".page-loading-status > .loader").hide();
+            }
             return;
         }
 
