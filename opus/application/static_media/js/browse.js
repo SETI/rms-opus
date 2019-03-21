@@ -677,6 +677,11 @@ var o_browse = {
                 o_browse.initTable(opus.col_labels);
                 opus.prefs.page.gallery = 1;
                 o_browse.loadData(1);
+            } else {
+                // remove spinner if nothing is re-draw when we click save changes
+                if($(".page-loading-status > .loader").is(":visible")){
+                    $(".page-loading-status > .loader").hide();
+                }
             }
         });
 
@@ -758,6 +763,7 @@ var o_browse = {
                     o_browse.resetMetadata(default_columns.split(','));
                     break;
                 case "submit":
+                    $(".page-loading-status > .loader").show();
                     break;
                 case "cancel":
                     $('#myModal').modal('hide')
