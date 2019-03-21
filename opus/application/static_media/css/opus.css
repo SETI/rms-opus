@@ -900,12 +900,7 @@ li a.search-param:hover {
     background-repeat: no-repeat;
 }
 
-.card-title .spinner {
-    /* display:inline-block; */
-}
-
 p > .spinner {
-    /* display:inline-block; */
     display: none;
     line-height: 16px;
     margin: 0 10px;
