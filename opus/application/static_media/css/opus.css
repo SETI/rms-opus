@@ -426,7 +426,7 @@ th.sticky-header {
 
 
 /* Fix the spinner*/
-.table-page-load-status .loader {
+.page-loading-status .loader {
     display: none;
     /* top: 250px; */
 }

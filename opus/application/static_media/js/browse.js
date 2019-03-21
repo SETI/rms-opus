@@ -112,7 +112,7 @@ var o_browse = {
 
         // browse sort order - remove sort slug
         $(".sort-contents").on("click", "li .remove-sort", function() {
-            $(".table-page-load-status > .loader").show();
+            $(".page-loading-status > .loader").show();
             let slug = $(this).parent().attr("data-slug");
             let descending = $(this).parent().attr("data-descending");
             o_browse.tableSorting = true;
@@ -132,7 +132,7 @@ var o_browse = {
 
         // browse sort order - flip sort order of a slug
         $(".sort-contents").on("click", "li .flip-sort", function() {
-            $(".table-page-load-status > .loader").show();
+            $(".page-loading-status > .loader").show();
             let slug = $(this).parent().attr("data-slug");
             let descending = $(this).parent().attr("data-descending");
             o_browse.tableSorting = true;
@@ -307,8 +307,8 @@ var o_browse = {
         // click table column header to reorder by that column
         $("#browse").on("click", ".dataTable th a",  function() {
             // show this spinner right away when table is clicked
-            // we will hide page status loader from infiniteScroll if table-page-load-status loader is spinning
-            $(".table-page-load-status > .loader").show();
+            // we will hide page status loader from infiniteScroll if page-loading-status loader is spinning
+            $(".page-loading-status > .loader").show();
             let orderBy =  $(this).data("slug");
 
             let orderIndicator = $(this).find("span:last")
@@ -1017,11 +1017,13 @@ var o_browse = {
             $(".gallery", namespace).append(html);
         }
         // $(".gallery", namespace).append(html);
-        // $(".table-page-load-status").hide();
+        // $(".page-loading-status").hide();
 
         o_browse.adjustTableSize();
         o_browse.galleryScrollbar.update();
-
+        if($(".page-loading-status > .loader").is(":visible")){
+            $(".page-loading-status > .loader").hide();
+        }
         o_hash.updateHash(true);
     },
 
@@ -1179,8 +1181,8 @@ var o_browse = {
             let request_time = new Date().getTime() - start_time;
             if (data.reqno < o_browse.lastLoadDataRequestNo) {
                 // make sure to remove spinner before return
-                if($(".table-page-load-status > .loader").is(":visible")){
-                    $(".table-page-load-status > .loader").hide();
+                if($(".page-loading-status > .loader").is(":visible")){
+                    $(".page-loading-status > .loader").hide();
                 }
                 return;
             }
@@ -1208,8 +1210,9 @@ var o_browse = {
                     });
 
                     $(selector).on("request.infiniteScroll", function( event, path ) {
-                        // hide default page status loader if table-page-load-status loader is spinning
-                        if($(".table-page-load-status > .loader").is(":visible")){
+                        // hide default page status loader if page-loading-status loader is spinning
+                        // && o_browse.tableSorting
+                        if($(".page-loading-status > .loader").is(":visible") ){
                             $(".infinite-scroll-request").hide();
                         }
                     });
@@ -1233,9 +1236,9 @@ var o_browse = {
                 $(selector).infiniteScroll('loadNextPage');
                 opus.gallery_begun = true;
             }
-            if($(".table-page-load-status > .loader").is(":visible")){
-                $(".table-page-load-status > .loader").hide();
-            }
+            // if($(".page-loading-status > .loader").is(":visible")){
+            //     $(".page-loading-status > .loader").hide();
+            // }
             o_browse.tableSorting = false;
         });
     },
@@ -1299,7 +1302,7 @@ var o_browse = {
         o_browse.undoRangeSelect();
 
         $(`.${opus.prefs.browse}#browse`).fadeIn();
-
+        $(".page-loading-status > .loader").show();
         o_browse.updateBrowseNav();
         o_browse.renderMetadataSelector();   // just do this in background so there's no delay when we want it...
 
