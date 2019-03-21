@@ -241,7 +241,6 @@ var opus = {
 
         // close any open modals
         $("#galleryView").modal('hide');
-
         opus.prefs.view = tab ? tab : opus.prefs.view;
         o_hash.updateHash();
         opus.lastBlogUpdate();
