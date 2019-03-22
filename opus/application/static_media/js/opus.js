@@ -56,8 +56,6 @@ var opus = {
     gallery_data: {},  // holds gallery column data
 
     lastPageDrawn: {"browse":0, "cart":0},
-    pages_drawn: {"browse": [], "cart": []},  // keeping track of currently rendered gallery pages
-                                                          // so underlying data can be refreshed after 'choose metadata'
 
     // additional defaults are in base.html
 
@@ -505,6 +503,10 @@ $(document).ready(function() {
             case "tutorial":
                 url += "tutorial.html";
                 header = "A Brief Tutorial";
+                break;
+            case "feedback":
+                url = "https://pds-rings.seti.org/cgi-bin/comments/form.pl";
+                header = "Questions/Feedback";
                 break;
         }
 

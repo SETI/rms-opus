@@ -442,13 +442,14 @@ var o_browse = {
 
     // find the first displayed observation index & id in the upper left corner
     updateSliderHandleOnScroll: function() {
-        $(`#${opus.prefs.view} .gallery .thumbnail-container`).each(function(index, elem) {
+        let selector = (opus.prefs.browse == "dataTable") ? `#${opus.prefs.view} #dataTable .tableBody tr` : `#${opus.prefs.view} .gallery .thumbnail-container`;
+        $(selector).each(function(index, elem) {
             if($(elem).offset().top > 0) {
                 let opusId = $(elem).data("id");
                 let obsNum = $(elem).data("obs");
                 $("#op-observation-slider").slider("value", obsNum);
                 $("#op-observation-number").html(obsNum);
-                return {"index": obsNum, "opusId": opusId};
+                return false;
             }
         });
     },
@@ -464,20 +465,6 @@ var o_browse = {
     },
 
     checkScroll: function() {
-        $(".gallery .thumb-page").each(function(index, elem) {
-            let position = $(elem).children().offset();
-            if (position) {
-                if (position.top > 0 && (position.top < $(".gallery-contents").height()-100)) {
-                    // Update page number
-                    let page = $(elem).data("page");
-                    opus.prefs.page[opus.prefs.browse] = page;
-                    console.log("page: "+page);
-                    o_browse.currentPage = page;
-                    o_browse.updateSliderHandleOnScroll();
-                    return false;
-                }
-            }
-        });
         // infinite scroll is attached to the gallery, so we have to force a loadData when we are in table mode
         if (opus.prefs.browse == "dataTable") {
             let bottom = $("tbody").offset().top + $("tbody").height();
@@ -488,8 +475,22 @@ var o_browse = {
                 $(`#${opus.prefs.view} .gallery-contents`).infiniteScroll("loadNextPage");
             }
         } else {
+            $(".gallery .thumb-page").each(function(index, elem) {
+                let position = $(elem).children().offset();
+                if (position) {
+                    if (position.top > 0 && (position.top < $(".gallery-contents").height()-100)) {
+                        // Update page number
+                        let page = $(elem).data("page");
+                        opus.prefs.page[opus.prefs.browse] = page;
+                        console.log("page: "+page);
+                        o_browse.currentPage = page;
+                        return false;
+                    }
+                }
+            });
             opus.lastPageDrawn[opus.prefs.view] = Math.max(o_browse.currentPage, opus.lastPageDrawn[opus.prefs.view], o_browse.infiniteScrollCurrentMaxPageNumber);
         }
+        o_browse.updateSliderHandleOnScroll();
         return false;
     },
 
@@ -566,7 +567,7 @@ var o_browse = {
     },
 
     getDataTableInputElement: function(opusId) {
-        return $(`#dataTable tr[data-id=${opusId}] input`);
+        return $(`#dataTable div[data-id=${opusId}]`).parent();
     },
 
     startRangeSelect: function(opusId) {
@@ -951,8 +952,8 @@ var o_browse = {
                 let checked = item.in_cart ? " checked" : "";
                 let checkbox = `<input type="checkbox" name="${opusId}" value="${opusId}" class="multichoice"${checked}/>`;
                 let minimenu = `<a href="#" data-icon="menu"><i class="fas fa-bars fa-xs"></i></a>`;
-                let row = `<td><div class="tools mx-1" data-id="${opusId}">${checkbox} ${minimenu}</div></td>`;
-                let tr = `<tr data-id="${opusId}" data-target="#galleryView">`;
+                let row = `<td><div class="tools mx-0" data-id="${opusId}">${checkbox} ${minimenu}</div></td>`;
+                let tr = `<tr data-id="${opusId}" data-target="#galleryView" data-obs="${observationNumber}">`;
                 $.each(item.metadata, function(index, cell) {
                     row += `<td>${cell}</td>`;
                 });
@@ -1129,6 +1130,16 @@ var o_browse = {
 
     loadData: function(page) {
         page = (page == undefined ? opus.prefs.page[opus.prefs.browse] : page);
+
+        // if the request is a block far away from current page cache, flush the cache and start over
+        var pagesDrawn = [];
+        $("[data-page]").each(function(index, elem) {
+            pagesDrawn.push($(elem).data("page"));
+        });
+        if (page > opus.lastPageDrawn[opus.prefs.view] + 1 ||
+            (page < opus.lastPageDrawn[opus.prefs.view] && !$.inArray(page, pagesDrawn))) {
+            opus.gallery_begun = false;
+        }
 
         let selector = `#${opus.prefs.view} .gallery-contents`;
 
