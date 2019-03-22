@@ -112,13 +112,13 @@
                                 </li>
                             </ul>
                         </div>
+                        <div class="sort-order-container">
+                            <span class="sort-order-icon" title="Results are sorted by these metadata fields">
+                                <i class="fas fa-random"></i>
+                            </span>&nbsp;
+                            <ul class="sort-contents list-inline"></ul>
+                        </div>
                     </nav>
-                    <div class="sort-order-container">
-                        <span class="sort-order-icon" title="Results are sorted by these metadata fields">
-                            <i class="fas fa-random"></i>
-                        </span>&nbsp;
-                        <ul class="sort-contents list-inline"></ul>
-                    </div>
                     <div class="panel-body gallery-contents container-fluid browse-infiniteScroll-element">
                         <div class="row">
                             <div class="mr-0 thumb gallery gallery-scroll"></div>
@@ -130,11 +130,12 @@
                                 <p class="infinite-scroll-error">No more pages to load</p>
                             </div>
                         </div>
-                        <div class="row dataTable browse-infiniteScroll-element">
-                            <div class="col-lg pr-0">
-                                <div class="table-page-load-status">
+                        <div class="row dataTable browse-infiniteScroll-element mx-0">
+                            <div class="col-lg p-0">
+                            <!-- <div class="col-lg pr-0"> -->
+                                <!-- <div class="page-loading-status">
                                     <div class="loader"></div>
-                                </div>
+                                </div> -->
                                 <table id="dataTable" class="table table-hover table-bordered table-striped table-dark table-sm">
                                     <thead>
                                         <tr></tr>
@@ -142,6 +143,9 @@
                                     <tbody></tbody>
                                 </table>
                             </div>
+                        </div>
+                        <div class="page-loading-status">
+                            <div class="loader"></div>
                         </div>
                     </div>
                 </div>
@@ -177,13 +181,13 @@
                                     </li>
                                 </ul>
                             </div>
+                            <div class="sort-order-container">
+                                <span class="sort-order-icon" title="Results are sorted by these metadata fields">
+                                    <i class="fas fa-random"></i>
+                                </span>&nbsp;
+                                <ul class="sort-contents list-inline"></ul>
+                            </div>
                         </nav>
-                        <div class="sort-order-container">
-                            <span class="sort-order-icon" title="Results are sorted by these metadata fields">
-                                        <i class="fas fa-random"></i>
-                            </span>&nbsp;
-                            <ul class="sort-contents list-inline"></ul>
-                        </div>
                         <div class="panel-body gallery-contents container-fluid    pr-2">
                             <div class="row mr-0 mt-0 thumb gallery gallery-scroll"></div>
                             <div class="page-load-status">
@@ -284,13 +288,13 @@
         {% include "confirm_modal.html" with
             id_name="op-reset-search-modal"
             confirm_title="Confirm Reset Search"
-            confirm_msg="Are you sure you want to reset your search? Your current search will be lost."
+            confirm_msg="This will delete any search constraints you have selected and reset the set of search fields back to the default. The selected metadata fields and the contents of your cart will not be affected. Are you sure you want to reset your search?"
             target="op-reset-search-modal"
         %}
         {% include "confirm_modal.html" with
             id_name="op-reset-search-metadata-modal"
             confirm_title="Confirm Reset Search and Metadata"
-            confirm_msg="Are you sure you want to reset your search and metadata? Your current search and metadata selection will be lost."
+            confirm_msg="This will delete any search constraints you have selected and reset the set of search fields and selected metadata back to the default. The contents of your cart will not be affected. Are you sure you want to reset your search and metadata?"
             target="op-reset-search-metadata-modal"
         %}
         {% include "confirm_modal.html" with

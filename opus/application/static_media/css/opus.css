@@ -3,6 +3,7 @@ body {
 }
 .app-body {
   margin-top: 3.8em !important;
+  overflow: hidden;
 }
 
 .container-fluid {
@@ -78,13 +79,12 @@ body {
 .gallery-contents {
     overflow-y:hidden;
     overflow-x:hidden;
+    position: relative;
 }
 
 /* Make sure y-axis rail is not moving and always visible */
-.gallery-contents .ps__rail-y {
+.gallery-contents > .ps__rail-y {
     background-color: transparent !important;
-    /* navbar height: 95px, this will match the scrollbar and gallery/table view */
-    top: 95px !important;
 }
 
 #detail {
@@ -362,6 +362,7 @@ th.sticky-header {
     /* Fix the hidden th left/right border in firebox */
     background-clip: padding-box;
     text-align: center;
+    /* padding-right: 10px; */
 }
 
 #dataTable th a {
@@ -377,7 +378,16 @@ th.sticky-header {
 }
 
 #dataTable td {
-  white-space: nowrap;
+    white-space: nowrap;
+}
+
+/* Move y-scrollbar out of container in table view */
+#dataTable th:last-child {
+    border-right-width: 15px;
+}
+
+#dataTable tr > td:last-child {
+    border-right-width: 15px;
 }
 
 #dataTable th > div {
@@ -396,25 +406,38 @@ th.sticky-header {
     transform: translateY(-50%);
 }
 
+.dataTable {
+    width: 100%;
+    position: relative;
+    overflow: hidden;
+}
+
 .dataTable .ps__rail-y {
     background-color: transparent !important;
-    right: 2px !important;
-    /* navbar + top_navbar + sort-order-container */
-    top: 118px !important;
+    z-index: 11;
 }
 
 /* Make sure x-scrollbar in dataTable is always at the left and visible */
 .dataTable .ps__rail-x {
     background-color: transparent !important;
-    left: 0px !important;
-    opacity: 1 !important;
-    bottom: 25px !important;
+    opacity: 0.9 !important;
 }
 
+/* change from 1px to 2px to make ps__thumb-y more cnetered */
+.dataTable .ps__thumb-y {
+    right: 2px;
+}
+
+/* avoid seeing through ps__rail_x in table view */
+.dataTable .ps__thumb-x {
+    bottom: 1px;
+}
+
+
 /* Fix the spinner*/
-.table-page-load-status .loader {
+.page-loading-status .loader {
     display: none;
-    top: 250px;
+    /* top: 250px; */
 }
 
 .fadey {
@@ -615,10 +638,8 @@ a:-webkit-any-link, a::any-link {
   overflow-y: hidden;
 }
 
-#cart .gallery-contents .ps__rail-y {
-    top: 40px !important;
-    /* we need this to make ps visible */
-    right: 15px !important;
+#cart .gallery-contents {
+    position: relative;
 }
 
 .hide_ps__rail-y {
@@ -649,6 +670,13 @@ div.gallery {
   overflow-y:hidden;
     margin-right:-80px;
 }
+
+/* Make sort-order-container wrapped within the same container as browse-nav-containers */
+nav.panel-heading {
+    flex-direction: column;
+    align-items: flex-start;
+}
+
 .browse-nav-container {
     height: 1.5em;
 }
@@ -664,8 +692,9 @@ div.gallery {
  }
 
 .sort-order-container {
-  display:inline-flex;
-    padding-left: 25px;
+    display:inline-flex;
+    padding-left: 0.5em;
+    /* padding-top: 0.5em; */
 }
 
 .sort-order-icon {
@@ -674,7 +703,9 @@ div.gallery {
 }
 
 .sort-contents {
-  display: flex;
+  /* display: flex; */
+  display: block;
+  margin-bottom: 0;
 }
 
 .sort-contents li {
@@ -892,11 +923,19 @@ li a.search-param:hover {
     display:inline-block;
     background-repeat: no-repeat;
 }
-#cart_summary .spinner {
+
+p > .spinner {
+    display: none;
+    line-height: 16px;
+    margin: 0 10px;
+}
+
+#download_links .spinner {
     display:none;
     margin:0px 10px;
     width:30px;
 }
+
 #cart_summary .button-container button {
   margin-bottom: 1em;
 }

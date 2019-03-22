@@ -6,10 +6,10 @@
     "volumeid": "VGISS_6210"
   },
   {
-    "greaterpixelsize1": "800"
+    "greaterpixelsize": "800"
   },
   {
-    "lesserpixelsize1": "544"
+    "lesserpixelsize": "544"
   },
   {
     "wavelength1": "0.2800"
@@ -30,7 +30,7 @@
     "CASSINItargetcode": "N/A"
   },
   {
-    "CASSINIrevnoint1": "N/A"
+    "CASSINIrevnoint": "N/A"
   },
   {
     "CASSINIprimeinst": "N/A"

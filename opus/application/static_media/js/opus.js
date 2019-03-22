@@ -1,7 +1,7 @@
 // generic globals, hmm..
-var default_pages = {"gallery":1, "dataTable":1, "colls_gallery":1, "colls_data":1 };
-var reset_footer_clicks = {"gallery":0, "dataTable":0, "colls_gallery":0, "colls_data":0 };
-var reset_browse_view_scrolls = {"gallery":0, "dataTable":0, "colls_gallery":0, "colls_data":0 };
+var default_pages = {"gallery":1, "dataTable":1, "cart_gallery":1, "cart_data":1 };
+var reset_footer_clicks = {"gallery":0, "dataTable":0, "cart_gallery":0, "cart_data":0 };
+var reset_browse_view_scrolls = {"gallery":0, "dataTable":0, "cart_gallery":0, "cart_data":0 };
 
 // defining the opus namespace first; document ready comes after...
 var opus = {
@@ -33,16 +33,13 @@ var opus = {
     // prefs gets added verbatim to the url, so don't add anything weird into here!
     prefs:{ 'view':'search', // search, browse, cart, detail
             'browse':'gallery', //either 'gallery' or 'data'
-            'colls_browse':'gallery',  // which view is showing on the cart page, gallery or data
+            'cart_browse':'gallery',  // which view is showing on the cart page, gallery or data
             'page':default_pages,  // what page are we on, per view, default defined in header.html
-                                   // like {"gallery":1, "data":1, "colls_gallery":1, "colls_data":1 };
-            'gallery_data_viewer': true, // true if you want to view data in the box rather than img
+                                   // like {"gallery":1, "data":1, "cart_gallery":1, "cart_data":1 };
             'limit': 100, // results per page
             'order': default_sort_order.split(','),  // result table ordering
             'cols': default_columns.split(','),  // default result table columns by slug
             'widgets':[], // search tab widget columns
-            'widget_size':{}, // search tab resized widgets
-            'widget_scroll':{}, // search tab widget internal scroll saved
             'detail':'', // opus_id of detail page content
 
 
@@ -73,13 +70,12 @@ var opus = {
     widgets_drawn:[], // keeps track of what widgets are actually drawn
     widgets_fetching:[], // this widget is currently being fetched
     widget_elements_drawn:[], // the element is drawn but the widget might not be fetched yet
-    widgets_paused:[],
     search_form_cols:1, // the number of search form cols, 1 or 2
     widget_full_sizes:{}, // when a widget is minimized and doesn't have a custom size defined we keep track of what the full size was so we can restore it when they unminimize/maximize widget
     menu_list_indicators: {'slug':[], 'cat':[], 'group':[] },
     // menu_state: {'cats':['obs_general'], 'groups':[]},  // keep track of menu items that are open
     menu_state: {'cats':['obs_general']},
-    default_widgets: ['target','planet'],
+    default_widgets: default_widgets.split(','),
     widget_click_timeout:0,
 
     // browse tab
@@ -88,12 +84,12 @@ var opus = {
     metadata_selector_drawn:false,
     gallery_begun:false, // have we started the gallery view
     browse_view_scrolls: reset_browse_view_scrolls, // same defaults as footer clicks (definied in header.html)
-                                                      // {"gallery":0, "data":0, "colls_gallery":0, "colls_data":0 };
+                                                      // {"gallery":0, "data":0, "cart_gallery":0, "cart_data":0 };
 
     // cart
     cart_change:true, // cart has changed since last load of cart_tab
     cart_q_intrvl: false,
-    colls_options_viz:false,
+    cart_options_viz:false,
 
     // these are for the process that detects there was a change in the selection criteria and updates things
     main_timer:false,
@@ -248,7 +244,6 @@ var opus = {
 
         // close any open modals
         $("#galleryView").modal('hide');
-
         opus.prefs.view = tab ? tab : opus.prefs.view;
         o_hash.updateHash();
         opus.lastBlogUpdate();
@@ -278,7 +273,7 @@ var opus = {
                 break;
 
             case 'cart':
-                if (opus.prefs.colls_browse == 'data') {
+                if (opus.prefs.cart_browse == 'data') {
                     $('.data_table','#cart').show();
                     $('.gallery','#cart').hide();
                 }

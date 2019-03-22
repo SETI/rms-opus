@@ -42,7 +42,7 @@
     {
         "pi_dict_context": "OPUS_PRODUCT_TYPE",
         "pi_dict_name": "inventory",
-        "definition": "Text files ([volume]_inventory.tab) that list every planet and moon inside the instrument field of view for everThumbnail-size (often 100x100) non-linearly stretched preview JPEGs of observations. Previews of images are colored according to the filter used. Previews from non-imaging instruments attempt to represent the contents of observations in a visual way. Previews are not appropriate for scientific use.y observation in a particular volume. Associated labels (*.lbl) describe the contents of the text files."
+        "definition": "Text files ([volume]_inventory.tab) that list every planet and moon inside the instrument field of view for every observation in a particular volume. Associated labels (*.lbl) describe the contents of the text files."
     },
     {
         "pi_dict_context": "OPUS_PRODUCT_TYPE",

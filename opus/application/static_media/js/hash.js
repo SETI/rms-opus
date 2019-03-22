@@ -15,41 +15,29 @@ var o_hash = {
             }
         }
 
-        o_widgets.pauseWidgetControlVisibility(opus.selections);
-
-		for (var key in opus.extras) {
-			try {
-				hash.push(key + "=" + opus.extras[key].join(","));
-			} catch(e) {
-				// oops not an arr
-				hash.push(key + "=" + opus.extras[key]);
-			}
-		}
+        for (var key in opus.extras) {
+            try {
+                hash.push(key + "=" + opus.extras[key].join(","));
+            } catch(e) {
+                // oops not an arr
+                hash.push(key + "=" + opus.extras[key]);
+            }
+        }
         $.each(opus.prefs, function(key, value) {
-    			switch (key) {
+                switch (key) {
                     case "browse":
                         value = (value == "dataTable" ? "data" : value);
                         hash.push(key + "=" + value);
                         break;
 
-    				case "page":
-    					// page is stored like {"gallery":1, "data":1, "colls_gallery":1, "colls_data":1 }
-    					// so the curent page depends on the view being shown
-    					// opus.prefs.view = search, browse, cart, or detail
-    					// opus.prefs.browse =  'gallery' or 'dataTable',
-    					page = o_browse.getCurrentPage();
-    					hash.push("page=" + page);
-    					break;
-
-                    case 'widget_size':
-                        for (slug in opus.prefs[key]) {
-                            hash.push(o_widgets.constructWidgetSizeHash(slug));
-                        }
+                    case "page":
+                        // page is stored like {"gallery":1, "data":1, "colls_gallery":1, "colls_data":1 }
+                        // so the curent page depends on the view being shown
+                        // opus.prefs.view = search, browse, cart, or detail
+                        // opus.prefs.browse =  'gallery' or 'dataTable',
+                        page = o_browse.getCurrentPage();
+                        hash.push("page=" + page);
                         break;
-
-                    case 'widget_scroll':
-                        // these are prefs having to do with widget resize and scrolled
-                        break; // there's no scroll without size, so we handle scroll when size comes thru
 
                     default:
                         hash.push(key + "=" + opus.prefs[key]);
@@ -103,12 +91,11 @@ var o_hash = {
 
         hash = (hash.search('&') > -1 ? hash.split('&') : [hash]);
         var selections = {};  // the new set of pairs that will not include the result_table specific session vars
-
         $.each(hash, function(index, pair) {
             let slug = pair.split('=')[0];
             let value = pair.split('=')[1];
 
-            if (!(slug in opus.prefs) && !slug.match(/sz-.*/) && value) {
+            if (!(slug in opus.prefs) && value) {
                 if (slug in selections) {
                     selections[slug].push(value);
                 } else {
@@ -116,7 +103,6 @@ var o_hash = {
                 }
             }
         });
-
         return selections;
     },
 
@@ -132,15 +118,7 @@ var o_hash = {
             let slug = pair.split('=')[0];
             let value = pair.split('=')[1];
             if (value) {
-                if (slug.match(/sz-.*/)) {
-                    let id = slug.match(/sz-(.*)/)[1];
-                    // opus.extras['sz-' + id] = value;
-                    opus.prefs.widget_size[id] = value.split('+')[0];
-
-                    if (value.split('+')[1])
-                        opus.prefs.widget_scroll[id] = value.split('+')[1];
-                }
-                else if (slug.match(/qtype-.*/)) {
+                if (slug.match(/qtype-.*/)) {
                     // range drop down, add the qtype to the global extras array
                     let id = slug.match(/qtype-(.*)/)[1];
                     opus.extras['qtype-' + id] = value.split(',');

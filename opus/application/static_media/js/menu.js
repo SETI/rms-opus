@@ -84,9 +84,9 @@ var o_menu = {
             });
             $("#sidebar").toggleClass("op-redraw-menu");
             $('.menu_spinner').fadeOut("fast");
+            o_menu.markCurrentMenuItem();
         });
      },
-
      markDefaultMenuItem: function() {
          o_menu.markMenuItem(".submenu li a", "unselect");
          $.each(opus.default_widgets, function(index, slug) {
@@ -102,6 +102,12 @@ var o_menu = {
             $(selector).css("background", "initial");
             $(selector).find("i.fa-check").hide();
       }
+     },
+
+     markCurrentMenuItem: function() {
+         $.each(opus.widgets_drawn, function(index, slug) {
+             o_menu.markMenuItem(`li > [data-slug="${slug}"]`);
+         });
      },
 
      // type = cat/group

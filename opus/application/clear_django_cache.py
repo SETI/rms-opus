@@ -7,4 +7,3 @@ settings.configure(CACHES=CACHES)
 
 from django.core.cache import cache
 cache.clear()
-cache._cache.flush_all()  # clears memcache hopefully only on this port!

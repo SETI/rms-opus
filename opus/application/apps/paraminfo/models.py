@@ -44,7 +44,7 @@ class ParamInfo(models.Model):
 
     def body_qualified_label(self):
         # Append "[Ring]" or "[<Surface Body>]" or "[Mission]" or "[Instrument]"
-        if self.label is None:
+        if self.label is None: # pragma: no cover
             return None
 
         append_to_label = None
@@ -87,7 +87,7 @@ class ParamInfo(models.Model):
 
     def fully_qualified_label_results(self):
         ret = self.body_qualified_label_results()
-        if ret is None:
+        if ret is None: # pragma: no cover
             return None
         units = self.get_units()
         if units != '':

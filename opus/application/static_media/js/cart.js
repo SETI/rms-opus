@@ -33,6 +33,9 @@ var o_cart = {
 
          // check an input on selected products and images updates file_info
          $("#cart").on("click","#download_options input", function() {
+             $("#total_download_size").hide();
+             $("p > .spinner").fadeIn().css("display", "inline-block");
+             
              let add_to_url = o_cart.getDownloadFiltersChecked();
              o_cart.lastCartRequestNo++;
              let url = "/opus/__cart/status.json?reqno=" + o_cart.lastCartRequestNo + "&" + add_to_url + "&download=1";
@@ -40,6 +43,7 @@ var o_cart = {
                  if(info.reqno < o_cart.lastCartRequestNo) {
                      return;
                  }
+                 $("p > .spinner").hide()
                  $("#total_download_size").fadeOut().html(info.total_download_size_pretty).fadeIn();
              });
          });
@@ -224,9 +228,12 @@ var o_cart = {
                     }
 
                     o_cart.downloadOptionsScrollbar = new PerfectScrollbar("#download-options-container");
-                    o_cart.cartGalleryScrollbar = new PerfectScrollbar("#cart .gallery-contents", {
-                        suppressScrollX: true,
-                    });
+
+                    if(!o_cart.cartGalleryScrollbar) {
+                        o_cart.cartGalleryScrollbar = new PerfectScrollbar("#cart .gallery-contents", {
+                            suppressScrollX: true,
+                        });
+                    }
                     let adjustProductInfoHeight = _.debounce(o_cart.adjustProductInfoHeight, 200);
                     adjustProductInfoHeight();
                 }

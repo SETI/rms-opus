@@ -138,7 +138,7 @@ def api_get_result_count(request, fmt, internal=False):
         ret = render_to_response('metadata/result_count.html', {'data': data})
     elif fmt == 'csv':
         ret = csv_response('result_count', [['result count', count]])
-    else:
+    else: # pragma: no cover
         log.error('api_get_result_count: Unknown format "%s"', fmt)
         ret = Http404(settings.HTTP404_UNKNOWN_FORMAT)
         exit_api_call(api_code, ret)
@@ -197,7 +197,7 @@ def api_get_mult_counts(request, slug, fmt, internal=False):
         exit_api_call(api_code, ret)
         raise ret
 
-    param_info = get_param_info_by_slug(slug)
+    param_info = get_param_info_by_slug(slug, 'col')
     if not param_info:
         log.error('api_get_mult_counts: Could not find param_info entry for '
                   +'slug %s *** Selections %s *** Extras %s', str(slug),
@@ -215,7 +215,7 @@ def api_get_mult_counts(request, slug, fmt, internal=False):
         del selections[param_qualified_name]
 
     cache_num, cache_new_flag = set_user_search_number(selections, extras)
-    if cache_num is None:
+    if cache_num is None: # pragma: no cover
         log.error('api_get_mult_counts: Failed to create user_selections entry'
                   +' for *** Selections %s *** Extras %s',
                   str(selections), str(extras))
@@ -237,7 +237,7 @@ def api_get_mult_counts(request, slug, fmt, internal=False):
         try:
             mult_model = apps.get_model('search',
                                         mult_name.title().replace('_',''))
-        except LookupError:
+        except LookupError: # pragma: no cover
             log.error('api_get_mult_counts: Could not get_model for %s',
                       mult_name.title().replace('_',''))
             ret = HttpResponseServerError(settings.HTTP500_INTERNAL_ERROR)
@@ -247,7 +247,7 @@ def api_get_mult_counts(request, slug, fmt, internal=False):
         try:
             table_model = apps.get_model('search',
                                          table_name.title().replace('_',''))
-        except LookupError:
+        except LookupError: # pragma: no cover
             log.error('api_get_mult_counts: Could not get_model for %s',
                       table_name.title().replace('_',''))
             ret = HttpResponseServerError(settings.HTTP500_INTERNAL_ERROR)
@@ -259,7 +259,7 @@ def api_get_mult_counts(request, slug, fmt, internal=False):
 
         user_table = get_user_query_table(selections, extras, api_code=api_code)
 
-        if selections and not user_table:
+        if selections and not user_table: # pragma: no cover
             log.error('api_get_mult_counts: has selections but no user_table '
                       +'found *** Selections %s *** Extras %s',
                       str(selections), str(extras))
@@ -285,7 +285,7 @@ def api_get_mult_counts(request, slug, fmt, internal=False):
                 mult = mult_model.objects.get(id=mult_id)
                 mult_disp_order = mult.disp_order
                 mult_label = mult.label
-            except ObjectDoesNotExist:
+            except ObjectDoesNotExist: # pragma: no cover
                 log.error('api_get_mult_counts: Could not find mult entry for '
                           +'mult_model %s id %s', str(mult_model), str(mult_id))
                 ret = HttpResponseServerError(settings.HTTP500_INTERNAL_ERROR)
@@ -382,7 +382,7 @@ def api_get_range_endpoints(request, slug, fmt, internal=False):
         exit_api_call(api_code, ret)
         raise ret
 
-    param_info = get_param_info_by_slug(slug, from_ui=True)
+    param_info = get_param_info_by_slug(slug, 'widget')
     if not param_info:
         log.error('get_range_endpoints: Could not find param_info entry for '+
                   'slug %s', str(slug))
@@ -398,7 +398,7 @@ def api_get_range_endpoints(request, slug, fmt, internal=False):
     try:
         table_model = apps.get_model('search',
                                      table_name.title().replace('_',''))
-    except LookupError:
+    except LookupError: # pragma: no cover
         log.error('api_get_range_endpoints: Could not get_model for %s',
                   table_name.title().replace('_',''))
         ret = HttpResponseServerError(settings.HTTP500_INTERNAL_ERROR)
@@ -432,7 +432,7 @@ def api_get_range_endpoints(request, slug, fmt, internal=False):
             del selections[to_remove]
     if selections:
         user_table = get_user_query_table(selections, extras, api_code=api_code)
-        if user_table is None:
+        if user_table is None: # pragma: no cover
             log.error('api_get_range_endpoints: Count not retrieve query table'
                       +' for *** Selections %s *** Extras %s',
                       str(selections), str(extras))
@@ -447,7 +447,7 @@ def api_get_range_endpoints(request, slug, fmt, internal=False):
                  + qualified_param_name_no_num)
     if user_table:
         cache_num, cache_new_flag = set_user_search_number(selections, extras)
-        if cache_num is None:
+        if cache_num is None: # pragma: no cover
             log.error('api_get_range_endpoints: Failed to create cache table '
                       +'for *** Selections %s *** Extras %s',
                       str(selections), str(extras))
@@ -541,6 +541,7 @@ def api_get_fields(request, fmt='json', slug=None):
 
     Format: [__]api/fields/(?P<slug>\w+).(?P<fmt>json|zip|html|csv)
         or: [__]api/fields.(?P<fmt>json|zip|html|csv)
+    Arguments: [collapse=1]  Collapse surface geo slugs into one
 
     Can return JSON, ZIP, HTML, or CSV.
 
@@ -552,6 +553,9 @@ def api_get_fields(request, fmt='json', slug=None):
                 },
                 label: "Solar Hour Angle"
             }
+
+    If collapse=1, then all surface geometry is collapsed into a single
+    <TARGET> version based on the Saturn prototype.
     """
     api_code = enter_api_call('api_get_fields', request)
 
@@ -560,7 +564,14 @@ def api_get_fields(request, fmt='json', slug=None):
         exit_api_call(api_code, ret)
         raise ret
 
-    collapse = request.GET.get('collapse', False)
+    collapse = request.GET.get('collapse', '0')
+    try:
+        collapse = int(collapse) != 0
+    except ValueError:
+        ret = Http404()
+        exit_api_call(api_code, ret)
+        raise ret
+
     ret = get_fields_info(fmt, slug, collapse=collapse)
 
     exit_api_call(api_code, ret)
@@ -574,16 +585,14 @@ def api_get_fields(request, fmt='json', slug=None):
 ################################################################################
 
 # This routine is public because it's called by the API guide in guide/views.py
-def get_fields_info(fmt, slug=None, category=None, collapse=False):
+def get_fields_info(fmt, slug=None, collapse=False):
     "Helper routine for api_get_fields."
     cache_key = (settings.CACHE_KEY_PREFIX + ':getFields:field:' + str(slug)
-                 + ':category:' + str(category))
+                 + ':' + str(collapse))
     return_obj = cache.get(cache_key)
     if return_obj is None:
         if slug:
             fields = ParamInfo.objects.filter(slug=slug)
-        elif category:
-            fields = ParamInfo.objects.filter(category_name=category)
         else:
             fields = ParamInfo.objects.all()
         fields.order_by('category_name', 'slug')

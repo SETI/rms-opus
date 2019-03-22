@@ -8,7 +8,8 @@
             </div>
             <h1>Download Options</h1>
             <!-- <p>Total Files: <span id="total_files">{{ download_count }}</span></p> -->
-            <p>Total Size (before zip): <span id="total_download_size">{{ total_download_size_pretty }}</span></p>
+            <!-- <p>Total Size (before zip): <span id="total_download_size">{{ total_download_size_pretty }}</span></p> -->
+            <p>Total Size (before zip): <span class="spinner">&nbsp;</span><span id="total_download_size">{{ total_download_size_pretty }}</span></p>
 
             <div id="download_options">
                 {% for product_cat, product_list in product_cat_list %}

@@ -166,9 +166,18 @@ def api_get_data_and_images(request):
     cols = request.GET.get('cols', settings.DEFAULT_COLUMNS)
 
     labels = labels_for_slugs(cols_to_slug_list(cols))
+    if labels is None:
+        ret = Http404(settings.HTTP404_UNKNOWN_SLUG)
+        exit_api_call(api_code, ret)
+        raise ret
+
     order_slugs = cols_to_slug_list(order)
     order_slugs_pure = [x[1:] if x[0] == '-' else x for x in order_slugs]
     order_labels = labels_for_slugs(order_slugs_pure, units=False)
+    if order_labels is None:
+        ret = Http404(settings.HTTP404_UNKNOWN_SLUG)
+        exit_api_call(api_code, ret)
+        raise ret
 
     order_list = []
     for idx, (slug, label) in enumerate(zip(order_slugs, order_labels)):
@@ -312,7 +321,7 @@ def api_get_data(request, fmt):
         ret = render(request, 'results/data.html', context)
     elif fmt == 'json':
         ret = HttpResponse(json.dumps(data), content_type='application/json')
-    else:
+    else: # pragma: no cover
         log.error('api_get_data: Unknown format "%s"', fmt)
         ret = Http404(settings.HTTP404_UNKNOWN_FORMAT)
         exit_api_call(api_code, ret)
@@ -414,7 +423,7 @@ def get_metadata(request, opus_id, fmt, api_name, return_db_names, internal):
         exit_api_call(api_code, ret)
         raise ret
 
-    if not opus_id:
+    if not opus_id: # pragma: no cover
         ret = Http404('No OPUS ID')
         exit_api_call(api_code, ret)
         raise ret
@@ -439,7 +448,7 @@ def get_metadata(request, opus_id, fmt, api_name, return_db_names, internal):
     # Make sure it's a valid OPUS ID
     try:
         results = query_table_for_opus_id('obs_general', opus_id)
-    except LookupError:
+    except LookupError: # pragma: no cover
         log.error('api_get_metadata: Could not find data model for obs_general')
         ret = HttpResponseServerError(settings.HTTP500_INTERNAL_ERROR)
         exit_api_call(api_code, ret)
@@ -498,7 +507,7 @@ def get_metadata(request, opus_id, fmt, api_name, return_db_names, internal):
 
             try:
                 results = query_table_for_opus_id(table_name, opus_id)
-            except LookupError:
+            except LookupError: # pragma: no cover
                 log.error('api_get_metadata: Could not find data model for '
                           +'category %s', model_name)
                 ret = HttpResponseServerError(settings.HTTP500_INTERNAL_ERROR)
@@ -561,7 +570,7 @@ def get_metadata(request, opus_id, fmt, api_name, return_db_names, internal):
             ret = render(request, 'results/detail_metadata.html', context)
     elif fmt == 'json':
         ret = HttpResponse(json.dumps(data), content_type='application/json')
-    else:
+    else: # pragma: no cover
         log.error('get_metadata: Unknown format "%s"', fmt)
         ret = Http404(settings.HTTP404_UNKNOWN_FORMAT)
         exit_api_call(api_code, ret)
@@ -779,6 +788,10 @@ def api_get_files(request, opus_id=None):
     Arguments: types=<types>
                     Product types
                loc_type=['url', 'path']
+               limit=<N>
+               page=<N>  OR  startobs=<N> (1-based)
+               order=<column>[,<column>...]
+               Normal search arguments
 
     Only returns JSON.
     """
@@ -935,6 +948,7 @@ def api_get_categories_for_search(request):
 def get_search_results_chunk(request, use_cart=None,
                              cols=None, prepend_cols=None, append_cols=None,
                              limit=None, opus_id=None,
+                             start_obs=None,
                              return_opusids=False,
                              return_ringobsids=False,
                              return_filespecs=False,
@@ -955,6 +969,8 @@ def get_search_results_chunk(request, use_cart=None,
                             or the default if none given.
         opus_id             Ignore the search parameters and instead return
                             the result for a single opusid.
+        start_obs           Ignore the page or startobs field in the request and
+                            use this startobs instead.
         return_opusids      Include 'opus_ids' in the returned aux dict.
                             This is a list of opus_ids 1:1 with the returned
                             data.
@@ -1023,7 +1039,7 @@ def get_search_results_chunk(request, use_cart=None,
     mult_tables = set()
     for slug in cols_to_slug_list(cols):
         # First try the full name, which might include a trailing 1 or 2
-        pi = get_param_info_by_slug(slug, from_ui=True)
+        pi = get_param_info_by_slug(slug, 'col')
         if not pi:
             log.error('get_search_results_chunk: Slug "%s" not found', slug)
             return none_return
@@ -1087,35 +1103,37 @@ def get_search_results_chunk(request, use_cart=None,
 
     page_size = 100 # Pages are hard-coded to be 100 observations long
     page_no = None # Keep these for returning to the caller
-    start_obs = None
     offset = None
 
-    if use_cart:
-        start_obs = request.GET.get('colls_startobs', None)
-        if start_obs is None:
-            page_no = request.GET.get('colls_page', 1)
+    if start_obs is None:
+        if use_cart:
+            start_obs = request.GET.get('colls_startobs', None)
+            if start_obs is None:
+                page_no = request.GET.get('colls_page', 1)
+        else:
+            start_obs = request.GET.get('startobs', None)
+            if start_obs is None:
+                page_no = request.GET.get('page', None)
+            if start_obs is None and page_no is None:
+                start_obs = 1 # Default to using start_obs
+        if start_obs is not None:
+            try:
+                start_obs = int(start_obs)
+            except:
+                log.error('get_search_results_chunk: Unable to parse '
+                          +'startobs "%s"', start_obs)
+                return none_return
+            offset = start_obs-1
+        else:
+            try:
+                page_no = int(page_no)
+            except:
+                log.error('get_search_results_chunk: Unable to parse page_no "%s"',
+                          page_no)
+                return none_return
+            offset = (page_no-1)*page_size
     else:
-        start_obs = request.GET.get('startobs', None)
-        if start_obs is None:
-            page_no = request.GET.get('page', None)
-        if start_obs is None and page_no is None:
-            start_obs = 1 # Default to using start_obs
-    if start_obs is not None:
-        try:
-            start_obs = int(start_obs)
-        except:
-            log.error('get_search_results_chunk: Unable to parse startobs "%s"',
-                      start_obs)
-            return none_return
         offset = start_obs-1
-    else:
-        try:
-            page_no = int(page_no)
-        except:
-            log.error('get_search_results_chunk: Unable to parse page_no "%s"',
-                      page_no)
-            return none_return
-        offset = (page_no-1)*page_size
 
     if offset < 0 or offset > settings.SQL_MAX_LIMIT:
         log.error('get_search_results_chunk: Bad offset %s', str(offset))
@@ -1364,6 +1382,7 @@ def _get_metadata_by_slugs(request, opus_id, cols, fmt, use_param_names,
                                                      request,
                                                      cols=cols,
                                                      opus_id=opus_id,
+                                                     start_obs=1,
                                                      limit=1,
                                                      api_code=api_code)
 
@@ -1376,6 +1395,10 @@ def _get_metadata_by_slugs(request, opus_id, cols, fmt, use_param_names,
 
     slug_list = cols_to_slug_list(cols)
     labels = labels_for_slugs(slug_list)
+    if labels is None:
+        ret = Http404(settings.HTTP404_UNKNOWN_SLUG)
+        exit_api_call(api_code, ret)
+        raise ret
 
     if fmt == 'csv':
         return csv_response(opus_id, page, labels)
@@ -1392,7 +1415,7 @@ def _get_metadata_by_slugs(request, opus_id, cols, fmt, use_param_names,
     if fmt == 'html':
         if internal:
             for slug, label, result in zip(slug_list, labels, page[0]):
-                pi = get_param_info_by_slug(slug)
+                pi = get_param_info_by_slug(slug, 'col')
                 data.append({label: (result, pi)})
             return render(request,
                           'results/detail_metadata_slugs_internal.html',
@@ -1489,37 +1512,11 @@ def get_triggered_tables(selections, extras, api_code=None):
     return final_table_list
 
 
-def get_cart_in_page(opus_id_list, session_id):
-    """Returns obs_general_ids in page that are also in user cart.
-
-    This is for views in results where you have to display the gallery
-    and indicate which thumbnails are in cart.
-    """
-    if not session_id:
-        return
-
-    cursor = connection.cursor()
-    cart_in_page = []
-    sql = 'SELECT DISTINCT opus_id FROM '
-    sql += connection.ops.quote_name('cart')
-    sql += ' WHERE session_id=%s'
-    cursor.execute(sql, [session_id])
-    rows = []
-    more = True
-    while more:
-        part_rows = cursor.fetchall()
-        rows += part_rows
-        more = cursor.nextset()
-    coll_ids = [r[0] for r in rows]
-    ret = [opus_id for opus_id in opus_id_list if opus_id in coll_ids]
-    return ret
-
-
 def labels_for_slugs(slugs, units=True):
     labels = []
 
     for slug in slugs:
-        pi = get_param_info_by_slug(slug, from_ui=True)
+        pi = get_param_info_by_slug(slug, 'col')
         if not pi:
             log.error('api_get_data_and_images: Could not find param_info '
                       +'for %s', slug)
