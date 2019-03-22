@@ -900,11 +900,18 @@ li a.search-param:hover {
     background-repeat: no-repeat;
 }
 
-#cart_summary .spinner {
+p > .spinner {
+    display: none;
+    line-height: 16px;
+    margin: 0 10px;
+}
+
+#download_links .spinner {
     display:none;
     margin:0px 10px;
     width:30px;
 }
+
 #cart_summary .button-container button {
   margin-bottom: 1em;
 }

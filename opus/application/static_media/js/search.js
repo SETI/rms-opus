@@ -476,7 +476,7 @@ var o_search = {
             // this is a mult field
             o_search.getValidMults(slug, deferredObj);
         } else {
-          $(`#widget__${slug}.spinner`).fadeOut();
+          $(`#widget__${slug} .spinner`).fadeOut();
           let adjustSearchWidgetHeight = _.debounce(o_search.adjustSearchWidgetHeight, 200);
           adjustSearchWidgetHeight();
         }
@@ -484,7 +484,7 @@ var o_search = {
 
     getRangeEndpoints: function(slug) {
 
-        $(`#widget__${slug}.spinner`).fadeIn();
+        $(`#widget__${slug} .spinner`).fadeIn();
 
         o_search.lastEndpointsRequestNo++;
         o_search.slugEndpointsReqno[slug] = o_search.lastEndpointsRequestNo;
@@ -492,7 +492,7 @@ var o_search = {
         $.ajax({url: url,
             dataType:"json",
             success: function(multdata){
-                $(`#widget__${slug}.spinner`).fadeOut();
+                $(`#widget__${slug} .spinner`).fadeOut();
 
                 if (multdata.reqno< o_search.slugEndpointsReqno[slug]) {
                     return;
@@ -503,11 +503,11 @@ var o_search = {
             },
             statusCode: {
                 404: function() {
-                    $(`#widget__${slug}.spinner`).removeClass("spinning");
+                    $(`#widget__${slug} .spinner`).fadeOut();
                 }
             },
             error:function (xhr, ajaxOptions, thrownError){
-                $(`#widget__${slug}.spinner`).removeClass("spinning");
+                $(`#widget__${slug} .spinner`).fadeOut();
                 // range input hints are "?" when wrong values of url is pasted
                 $(`#hint__${slug}`).html("<span>min: ?</span><span>max: ?</span><span> nulls: ?</span>");
             }
@@ -516,7 +516,7 @@ var o_search = {
 
     getValidMults: function (slug) {
         // turn on spinner
-        $(`#widget__${slug}.spinner`).fadeIn();
+        $(`#widget__${slug} .spinner`).fadeIn();
 
         o_search.lastMultsRequestNo++;
         o_search.slugMultsReqno[slug] = o_search.lastMultsRequestNo;
@@ -552,11 +552,11 @@ var o_search = {
             },
             statusCode: {
                 404: function() {
-                  $(`#widget__${slug}.spinner`).removeClass("spinning");
+                  $(`#widget__${slug} .spinner`).fadeOut();
               }
             },
             error:function (xhr, ajaxOptions, thrownError){
-                $(`#widget__${slug}.spinner`).removeClass("spinning");
+                $(`#widget__${slug} .spinner`).fadeOut();
                 // checkbox hints are "?" when wrong values of url is pasted
                 $(".hints").each(function() {
                     $(this).html("<span>?</span>");

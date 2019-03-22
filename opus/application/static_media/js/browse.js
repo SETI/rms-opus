@@ -677,6 +677,11 @@ var o_browse = {
                 o_browse.initTable(opus.col_labels);
                 opus.prefs.page.gallery = 1;
                 o_browse.loadData(1);
+            } else {
+                // remove spinner if nothing is re-draw when we click save changes
+                if($(".page-loading-status > .loader").is(":visible")){
+                    $(".page-loading-status > .loader").hide();
+                }
             }
         });
 
@@ -758,6 +763,7 @@ var o_browse = {
                     o_browse.resetMetadata(default_columns.split(','));
                     break;
                 case "submit":
+                    $(".page-loading-status > .loader").show();
                     break;
                 case "cancel":
                     $('#myModal').modal('hide')
@@ -1166,6 +1172,9 @@ var o_browse = {
         // wait! is this page already drawn?
         if ($(`${selector} .thumb-page[data-page='${page}']`).length > 0 && !o_browse.tableSorting) {
             o_browse.setScrollbarPosition(selector, page);
+            if($(".page-loading-status > .loader").is(":visible")){
+                $(".page-loading-status > .loader").hide();
+            }
             return;
         } else {
             // reset counter
@@ -1247,6 +1256,9 @@ var o_browse = {
         let data = JSON.parse( response );
         if ($(`.thumb-page[data-page='${data.page_no}']`).length != 0) {
             console.log(`data.reqno: ${data.reqno}, last reqno: ${o_browse.lastLoadDataRequestNo}`);
+            if($(".page-loading-status > .loader").is(":visible")){
+                $(".page-loading-status > .loader").hide();
+            }
             return;
         }
 
