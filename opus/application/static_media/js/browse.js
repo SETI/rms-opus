@@ -954,7 +954,7 @@ var o_browse = {
 
             // add an indicator row that says this is the start of page/observation X - needs to be two hidden rows so as not to mess with the stripes
             if(!prev) {
-                $(".dataTable tbody").append(`<tr class="table-page" data-page="${data.page_no}"><td colspan="${data.columns.length}"></td></tr><tr class="table-page"><td colspan="${data.columns.length}"></td></tr>`);
+                $(".dataTable tbody").append(`<tr class="table-page" data-page="${data.page_no}"><td colspan="${data.columns.length}"></td></tr>`);
             }
             // $(".dataTable tbody").append(`<tr class="table-page" data-page="${data.page_no}"><td colspan="${data.columns.length}"></td></tr><tr class="table-page"><td colspan="${data.columns.length}"></td></tr>`);
 
@@ -1011,7 +1011,7 @@ var o_browse = {
             });
 
             if(prev) {
-                $(".dataTable tbody").prepend(`<tr class="table-page" data-page="${data.page_no}"><td colspan="${data.columns.length}"></td></tr><tr class="table-page"><td colspan="${data.columns.length}"></td></tr>`);
+                $(".dataTable tbody").prepend(`<tr class="table-page" data-page="${data.page_no}"><td colspan="${data.columns.length}"></td></tr>`);
             }
 
             html += "</div>";
