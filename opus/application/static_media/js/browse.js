@@ -626,10 +626,8 @@ var o_browse = {
 
     // columns can be reordered wrt each other in 'metadata selector' by dragging them
     metadataDragged: function(element) {
-        let cols = $(element).sortable('toArray');
-        cols.unshift('cchoose__opusid');  // manually add opusid to this list
-        $.each(cols, function(key, value)  {
-            cols[key] = value.split('__')[1];
+        let cols = $.map($(element).sortable('toArray'), function( item ) {
+            return item.split('__')[1];
         });
         opus.prefs.cols = cols;
     },
