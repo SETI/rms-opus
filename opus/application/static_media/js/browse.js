@@ -918,7 +918,7 @@ var o_browse = {
         // gallery is var html; table is row/tr/td.
         let namespace = o_browse.getViewInfo().namespace;
         let page = data.page;
-        var html = "";
+        let html = "";
 
         if (data.count == 0) {
             // either there are no selections OR this is signaling the end of the infinite scroll
@@ -942,6 +942,7 @@ var o_browse = {
                 }
             } else {
                 // we've hit the end of the infinite scroll.
+                return;
             }
         } else {
             $("#cart .navbar").show();

@@ -236,6 +236,7 @@ var o_search = {
                var remove = opus.selections[id].indexOf(value); // find index of value to remove
                opus.selections[id].splice(remove,1);        // remove value from array
            }
+
            o_hash.updateHash();
         });
 
@@ -390,12 +391,15 @@ var o_search = {
     },
 
     adjustSearchSideBarHeight: function() {
+        // console.log(`hieght of 3 elements: ${$(".app-footer").height() + $(".shadow-divider").height() + $(".op-reset-button").height() + 32} `)
         let containerHeight = $("#search").height() - 120;
         let searchMenuHeight = $(".searchMenu").height();
         $("#search .sidebar_wrapper").height(containerHeight);
+        console.log(`container height: ${containerHeight}`);
+        console.log(`search menu height: ${searchMenuHeight}`);
 
-        if(containerHeight > searchMenuHeight) {
-            if(!$("#sidebar-container .ps__rail-y").hasClass("hide_ps__rail-y")) {
+        if (containerHeight > searchMenuHeight) {
+            if (!$("#sidebar-container .ps__rail-y").hasClass("hide_ps__rail-y")) {
                 $("#sidebar-container .ps__rail-y").addClass("hide_ps__rail-y");
                 o_search.searchScrollbar.settings.suppressScrollY = true;
             }
@@ -412,8 +416,8 @@ var o_search = {
         let searchWidgetHeight = $("#search_widgets").height();
         $(".widget_column").height(containerHeight);
 
-        if(containerHeight > searchWidgetHeight) {
-            if(!$("#widget-container .ps__rail-y").hasClass("hide_ps__rail-y")) {
+        if (containerHeight > searchWidgetHeight) {
+            if (!$("#widget-container .ps__rail-y").hasClass("hide_ps__rail-y")) {
                 $("#widget-container .ps__rail-y").addClass("hide_ps__rail-y");
                 o_search.widgetScrollbar.settings.suppressScrollY = true;
             }
