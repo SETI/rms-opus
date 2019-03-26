@@ -395,8 +395,6 @@ var o_search = {
         let containerHeight = $("#search").height() - 120;
         let searchMenuHeight = $(".searchMenu").height();
         $("#search .sidebar_wrapper").height(containerHeight);
-        console.log(`container height: ${containerHeight}`);
-        console.log(`search menu height: ${searchMenuHeight}`);
 
         if (containerHeight > searchMenuHeight) {
             if (!$("#sidebar-container .ps__rail-y").hasClass("hide_ps__rail-y")) {
@@ -415,6 +413,8 @@ var o_search = {
         let containerHeight = $("#search").height() - 80;
         let searchWidgetHeight = $("#search_widgets").height();
         $(".widget_column").height(containerHeight);
+        console.log(`container height: ${containerHeight}`);
+        console.log(`widgets height: ${searchWidgetHeight}`);
 
         if (containerHeight > searchWidgetHeight) {
             if (!$("#widget-container .ps__rail-y").hasClass("hide_ps__rail-y")) {
@@ -481,7 +481,7 @@ var o_search = {
             o_search.getValidMults(slug, deferredObj);
         } else {
           $(`#widget__${slug} .spinner`).fadeOut();
-          let adjustSearchWidgetHeight = _.debounce(o_search.adjustSearchWidgetHeight, 200);
+          let adjustSearchWidgetHeight = _.debounce(o_search.adjustSearchWidgetHeight, 800);
           adjustSearchWidgetHeight();
         }
     },
@@ -502,7 +502,7 @@ var o_search = {
                     return;
                 }
                 $('#hint__' + slug).html(`<span>min: ${multdata.min}</span><span>max: ${multdata.max}</span><span> nulls: ${multdata.nulls}</span>`);
-                let adjustSearchWidgetHeight = _.debounce(o_search.adjustSearchWidgetHeight, 200);
+                let adjustSearchWidgetHeight = _.debounce(o_search.adjustSearchWidgetHeight, 800);
                 adjustSearchWidgetHeight();
             },
             statusCode: {
@@ -551,7 +551,7 @@ var o_search = {
                         $(id).parent().addClass("fadey");
                     }
                 });
-                let adjustSearchWidgetHeight = _.debounce(o_search.adjustSearchWidgetHeight, 200);
+                let adjustSearchWidgetHeight = _.debounce(o_search.adjustSearchWidgetHeight, 800);
                 adjustSearchWidgetHeight();
             },
             statusCode: {

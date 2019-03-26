@@ -68,7 +68,6 @@ var o_menu = {
      },
 
      getMenu: function() {
-         console.log("get menu is called")
         $('.menu_spinner').fadeIn("fast");
         var hash = o_hash.getHash();
 
@@ -87,7 +86,6 @@ var o_menu = {
             o_menu.markCurrentMenuItem();
             // when a new category is open after an input is clicked, we update the scrollbar
             let adjustSearchSideBarHeight = _.debounce(o_search.adjustSearchSideBarHeight, 500);
-            console.log("adjust scrollbar")
             adjustSearchSideBarHeight();
         });
      },

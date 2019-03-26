@@ -12,7 +12,6 @@ var o_browse = {
 
     lastLoadDataRequestNo: 0,
 
-    allowKeydownOnMetaDataModal: true,
     infiniteScrollCurrentMaxPageNumber: 0, // the largest drawn page number
     infiniteScrollCurrentMinPageNumber: 1000, // prev page of the smallest drawn page number
     loadPrevPage: false,
@@ -426,7 +425,7 @@ var o_browse = {
                         o_browse.checkIfLoadPrevPageIsNeeded(opusId);
                         break;
                 }
-                if (opusId && o_browse.allowKeydownOnMetaDataModal) {
+                if (opusId && !$("#galleryViewContents").hasClass("op-disabled")) {
                     o_browse.updateGalleryView(opusId);
                 }
             }
@@ -456,10 +455,7 @@ var o_browse = {
         if(!nextNextId && !nextNext.hasClass("table-page")) {
             // disable keydown on modal when it's loading
             // this will make sure we have correct html elements displayed for next opus id
-            if(!$("#galleryViewContents").hasClass("op-disabled")) {
-                $("#galleryViewContents").addClass("op-disabled");
-            }
-            o_browse.allowKeydownOnMetaDataModal = false;
+            $("#galleryViewContents").addClass("op-disabled");
 
             $(`#${opus.prefs.view} .gallery-contents`).infiniteScroll("loadNextPage");
         }
@@ -485,10 +481,7 @@ var o_browse = {
             }
             // disable keydown on modal when it's loading
             // this will make sure we have correct html elements displayed for prev opus id
-            if(!$("#galleryViewContents").hasClass("op-disabled")) {
-                $("#galleryViewContents").addClass("op-disabled");
-            }
-            o_browse.allowKeydownOnMetaDataModal = false;
+            $("#galleryViewContents").addClass("op-disabled");
 
             o_browse.reRenderFirstMetadataModalOfThePage = true;
             $(`#${opus.prefs.view} .gallery-contents`).infiniteScroll("loadNextPage");
@@ -959,10 +952,6 @@ var o_browse = {
             }
             // $(".dataTable tbody").append(`<tr class="table-page" data-page="${data.page_no}"><td colspan="${data.columns.length}"></td></tr><tr class="table-page"><td colspan="${data.columns.length}"></td></tr>`);
 
-            if(!$(".dataTable tbody").hasClass("tableBody")) {
-                $(".dataTable tbody").addClass("tableBody")
-            }
-
             $.each(page, function( index, item ) {
                 let opusId = item.opusid;
                 opus.gallery_data[opusId] = item.metadata;	// for galleryView, store in global array
@@ -1303,7 +1292,6 @@ var o_browse = {
 
         // if left/right arrow are disabled, make them clickable again
         $("#galleryViewContents").removeClass("op-disabled");
-        o_browse.allowKeydownOnMetaDataModal = true;
     },
 
     getBrowseTab: function() {

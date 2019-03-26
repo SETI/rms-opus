@@ -388,8 +388,6 @@ var o_widgets = {
                 $("#widget__"+slug).html(widget_str);
             }}).done(function() {
 
-            // o_search.adjustSearchHeight();
-
              // if we are drawing a range widget we need to check if the qtype dropdown is
              // already defined by the url:
              if (slug.match(/.*(1|2)/)) {
