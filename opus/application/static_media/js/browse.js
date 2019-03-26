@@ -17,7 +17,6 @@ var o_browse = {
     loadPrevPage: false,
     currentPage: 1,
     currentOpusId: "",
-    displayPrevButtonInFirstMetadataModalOfThePage: false,
     tempHash: "",
     /**
     *
@@ -486,7 +485,6 @@ var o_browse = {
             // this will make sure we have correct html elements displayed for prev opus id
             $("#galleryViewContents").addClass("op-disabled");
 
-            o_browse.displayPrevButtonInFirstMetadataModalOfThePage = true;
             $(`#${opus.prefs.view} .gallery-contents`).infiniteScroll("loadNextPage");
 
         }
@@ -1248,6 +1246,7 @@ var o_browse = {
     infiniteScrollLoadEventListener: function( event, response, path ) {
         let data = JSON.parse( response );
         if ($(`.thumb-page[data-page='${data.page_no}']`).length != 0) {
+            console.log(`page ${data.page_no} has been rendered already`)
             console.log(`data.reqno: ${data.reqno}, last reqno: ${o_browse.lastLoadDataRequestNo}`);
             if($(".page-loading-status > .loader").is(":visible")){
                 $(".page-loading-status > .loader").hide();
@@ -1255,12 +1254,12 @@ var o_browse = {
             return;
         }
 
-        if(o_browse.infiniteScrollCurrentMaxPageNumber > data.page_no) {
+        if (o_browse.infiniteScrollCurrentMaxPageNumber > data.page_no) {
             // prepend data from new page
             o_browse.renderGalleryAndTable(data, path, true);
-            // update the 1st item's metadata modal to make sure prev button show up
-            // remove hidden attribute to display prev button
-            if(o_browse.displayPrevButtonInFirstMetadataModalOfThePage) {
+
+            // Update to make prev button appear when prefetching previous page is done 
+            if (!$(".text-center .prev").data("id") && $(".text-center .prev").is(":hidden")) {
                 let prev = $(`#browse tr[data-id=${o_browse.currentOpusId}]`).prev("tr");
                 while(prev.hasClass("table-page")) {
                     prev = prev.prev("tr");
@@ -1268,8 +1267,6 @@ var o_browse = {
                 prev = (prev.data("id") ? prev.data("id") : "");
                 $(".text-center .prev").data("id", prev);
                 $(".text-center .prev").removeAttr("hidden");
-
-                o_browse.displayPrevButtonInFirstMetadataModalOfThePage = false;
             }
 
             o_browse.loadPrevPage = true;
@@ -1284,7 +1281,7 @@ var o_browse = {
         }
         //console.log('Loaded page: ' + $('#browse .gallery-contents').data('infiniteScroll').pageIndex );
 
-        if(o_browse.loadPrevPage) {
+        if (o_browse.loadPrevPage) {
             let selector = `#${opus.prefs.view} .gallery-contents`;
             let newPage = o_browse.infiniteScrollCurrentMinPageNumber + 1;
             o_browse.infiniteScrollCurrentMinPageNumber -= 1;
