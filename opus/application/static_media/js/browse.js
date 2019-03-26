@@ -1258,15 +1258,16 @@ var o_browse = {
             // prepend data from new page
             o_browse.renderGalleryAndTable(data, path, true);
 
-            // Update to make prev button appear when prefetching previous page is done 
-            if (!$(".text-center .prev").data("id") && $(".text-center .prev").is(":hidden")) {
+            // Update to make prev button appear when prefetching previous page is done
+            if (!$("#galleryViewContents .prev").data("id") && $("#galleryViewContents .prev").hasClass("op-button-disabled")) {
                 let prev = $(`#browse tr[data-id=${o_browse.currentOpusId}]`).prev("tr");
                 while(prev.hasClass("table-page")) {
                     prev = prev.prev("tr");
                 }
                 prev = (prev.data("id") ? prev.data("id") : "");
-                $(".text-center .prev").data("id", prev);
-                $(".text-center .prev").removeAttr("hidden");
+
+                $("#galleryViewContents .prev").data("id", prev);
+                $("#galleryViewContents .prev").removeClass("op-button-disabled");
             }
 
             o_browse.loadPrevPage = true;
@@ -1400,7 +1401,7 @@ var o_browse = {
         if (prev != "") {
             html += `<a href="#" class="prev text-center" data-id="${prev}" title="Previous image"><i class="far fa-hand-point-left fa-2x"></i></a>`;
         } else {
-            html += `<a href="#" class="prev text-center" data-id="${prev}" title="Previous image" hidden><i class="far fa-hand-point-left fa-2x"></i></a>`;
+            html += `<a href="#" class="prev text-center op-button-disabled" data-id="${prev}" title="Previous image"><i class="far fa-hand-point-left fa-2x"></i></a>`;
         }
         if (next != "") {
             html += `<a href="#" class="next" data-id="${next}" title="Next image"><i class="far fa-hand-point-right fa-2x"></i></a>`;
