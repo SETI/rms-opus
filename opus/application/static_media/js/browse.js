@@ -374,7 +374,7 @@ var o_browse = {
             max: 1000,
             step: o_browse.gallerySliderStep,
             slide: function(event, ui) {
-                o_browse.updateSliderHandle(ui.value, true);
+                o_browse.onUpdateSlider(ui.value, true);
             }
         });
 
@@ -474,21 +474,8 @@ var o_browse = {
         }
     },
 
-    // find the first displayed observation index & id in the upper left corner
-    updateSliderHandleOnScroll: function() {
-        let selector = (opus.prefs.browse == "dataTable") ? `#${opus.prefs.view} #dataTable .tableBody tr` : `#${opus.prefs.view} .gallery .thumbnail-container`;
-        $(selector).each(function(index, elem) {
-            if($(elem).offset().top > 0) {
-                let opusId = $(elem).data("id");
-                let obsNum = $(elem).data("obs");
-                $("#op-observation-slider").slider("value", obsNum);
-                $("#op-observation-number").html(obsNum);
-                return false;
-            }
-        });
-    },
-
-    updateSliderHandle: function(value, update) {
+    // called when the slider is moved...
+    onUpdateSlider: function(value, update) {
         value = (value == undefined? 1 : value);
         $("#op-observation-number").html(value);
         if (update !== undefined && update == true) {
@@ -496,6 +483,28 @@ var o_browse = {
             opus.prefs.page[opus.prefs.browse] = Math.ceil(value/opus.prefs.limit);
             onRenderData();
         }
+    },
+
+    // find the first displayed observation index & id in the upper left corner
+    updateSliderHandle: function() {
+        let selector = (opus.prefs.browse == "dataTable") ? `#${opus.prefs.view} #dataTable tbody tr` : `#${opus.prefs.view} .gallery .thumbnail-container`;
+        $(selector).each(function(index, elem) {
+            if($(elem).offset().top > 0) {
+                let obsNum = $(elem).data("obs");
+                $("#op-observation-number").html(obsNum);
+                $(".op-slider-pointer").css("width", `${opus.result_count.toString().length*0.7}em`);
+                // just make the step size the number of the obserations across the page...
+                if (o_browse.galleryBoundingRect.x > 0) {
+                    o_browse.gallerySliderStep = Math.ceil(o_browse.galleryBoundingRect.x/10)*10;
+                }
+                $("#op-observation-slider").slider({
+                    "value": obsNum,
+                    "step": o_browse.gallerySliderStep,
+                    "max": opus.result_count,
+                });
+                return false;
+            }
+        });
     },
 
     checkScroll: function() {
@@ -524,7 +533,6 @@ var o_browse = {
             });
             opus.lastPageDrawn[opus.prefs.view] = Math.max(o_browse.currentPage, opus.lastPageDrawn[opus.prefs.view], o_browse.infiniteScrollCurrentMaxPageNumber);
         }
-        o_browse.updateSliderHandleOnScroll();
         return false;
     },
 
@@ -916,7 +924,7 @@ var o_browse = {
         // gallery is var html; table is row/tr/td.
         let namespace = o_browse.getViewInfo().namespace;
         let page = data.page;
-        var html = "";
+        let html = "";
 
         if (data.count == 0) {
             // either there are no selections OR this is signaling the end of the infinite scroll
@@ -940,24 +948,20 @@ var o_browse = {
                 }
             } else {
                 // we've hit the end of the infinite scroll.
+                return;
             }
         } else {
             $("#cart .navbar").show();
             $("#cart .sort-order-container").show();
             html += '<div class="thumb-page" data-page="'+data.page_no+'">';
             opus.lastPageDrawn[opus.prefs.view] = data.page_no;
-            if(o_browse.infiniteScrollCurrentMaxPageNumber < opus.lastPageDrawn[opus.prefs.view]) {
+            if (o_browse.infiniteScrollCurrentMaxPageNumber < opus.lastPageDrawn[opus.prefs.view]) {
                 o_browse.infiniteScrollCurrentMaxPageNumber = opus.lastPageDrawn[opus.prefs.view];
             }
 
             // add an indicator row that says this is the start of page/observation X - needs to be two hidden rows so as not to mess with the stripes
-            if(!prev) {
+            if (!prev) {
                 $(".dataTable tbody").append(`<tr class="table-page" data-page="${data.page_no}"><td colspan="${data.columns.length}"></td></tr><tr class="table-page"><td colspan="${data.columns.length}"></td></tr>`);
-            }
-            // $(".dataTable tbody").append(`<tr class="table-page" data-page="${data.page_no}"><td colspan="${data.columns.length}"></td></tr><tr class="table-page"><td colspan="${data.columns.length}"></td></tr>`);
-
-            if(!$(".dataTable tbody").hasClass("tableBody")) {
-                $(".dataTable tbody").addClass("tableBody")
             }
 
             $.each(page, function( index, item ) {
@@ -996,8 +1000,8 @@ var o_browse = {
                     row += `<td>${cell}</td>`;
                 });
                 //$(".dataTable tbody").append("<tr data-toggle='modal' data-id='"+galleryData[0]+"' data-target='#galleryView'>"+row+"</tr>");
-                if(prev) {
-                    if(index === 0) {
+                if (prev) {
+                    if (index === 0) {
                         $(".dataTable tbody").prepend(tr+row+"</tr>");
                     } else {
                         let prevIdx = index-1
@@ -1011,14 +1015,14 @@ var o_browse = {
                 // $(".dataTable tbody").append(tr+row+"</tr>");
             });
 
-            if(prev) {
+            if (prev) {
                 $(".dataTable tbody").prepend(`<tr class="table-page" data-page="${data.page_no}"><td colspan="${data.columns.length}"></td></tr><tr class="table-page"><td colspan="${data.columns.length}"></td></tr>`);
             }
 
             html += "</div>";
         }
 
-        if(prev) {
+        if (prev) {
             $(".gallery", namespace).prepend(html);
         } else {
             $(".gallery", namespace).append(html);
@@ -1029,9 +1033,10 @@ var o_browse = {
         o_browse.adjustBrowseHeight();
         o_browse.adjustTableSize();
         o_browse.galleryScrollbar.update();
-        if($(".page-loading-status > .loader").is(":visible")){
+        if ($(".page-loading-status > .loader").is(":visible")){
             $(".page-loading-status > .loader").hide();
         }
+        o_browse.updateSliderHandle();
         o_hash.updateHash(true);
     },
 
@@ -1259,6 +1264,7 @@ var o_browse = {
             // prefill next page
             if (!opus.gallery_begun) {
                 $(selector).infiniteScroll('loadNextPage');
+                o_browse.updateSliderHandle();
                 opus.gallery_begun = true;
             }
             // if($(".page-loading-status > .loader").is(":visible")){
@@ -1406,6 +1412,20 @@ var o_browse = {
         }
     },
 
+    getNextPrevHandles: function(opusId) {
+        let namespace = `#${opus.prefs.view}`;
+        let idArray = $(`${namespace} .thumbnail-container[data-id]`).map(function() {
+            return $(this).data("id");
+        });
+        let next = $.inArray(opusId, idArray) + 1;
+        next = (next < idArray.length ? idArray[next] : "");
+
+        let prev = $.inArray(opusId, idArray) - 1;
+        prev = (prev < 0 ? "" : idArray[prev]);
+
+        return {"next": next, "prev": prev};
+    },
+
     metadataboxHtml: function(opusId) {
         o_browse.currentOpusId = opusId;
 
@@ -1417,28 +1437,17 @@ var o_browse = {
         });
         html += "</dl>";
         $("#galleryViewContents .contents").html(html);
-        let next = $(`#browse tr[data-id=${opusId}]`).next("tr");
-        while(next.hasClass("table-page")) {
-            next = next.next("tr");
-        }
-        next = (next.data("id") ? next.data("id") : "");
-
-        let prev = $(`#browse tr[data-id=${opusId}]`).prev("tr");
-        while(prev.hasClass("table-page")) {
-            prev = prev.prev("tr");
-        }
-        prev = (prev.data("id") ? prev.data("id") : "");
-
+        let nextPrevHandles = o_browse.getNextPrevHandles(opusId);
         let status = o_cart.isIn(opusId) ? "" : "in";
         let buttonInfo = o_browse.cartButtonInfo(status);
 
         // prev/next buttons - put this in galleryView html...
         html = `<div class="col"><a href="#" class="select" data-id="${opusId}" title="${buttonInfo.title}"><i class="${buttonInfo.icon} fa-2x float-left"></i></a></div>`;
         html += `<div class="col text-center">`;
-        if (prev != "")
-            html += `<a href="#" class="prev text-center" data-id="${prev}" title="Previous image"><i class="far fa-hand-point-left fa-2x"></i></a>`;
-        if (next != "")
-            html += `<a href="#" class="next" data-id="${next}" title="Next image"><i class="far fa-hand-point-right fa-2x"></i></a>`;
+        if (nextPrevHandles.prev != "")
+            html += `<a href="#" class="prev text-center" data-id="${nextPrevHandles.prev}" title="Previous image"><i class="far fa-hand-point-left fa-2x"></i></a>`;
+        if (nextPrevHandles.next != "")
+            html += `<a href="#" class="next" data-id="${nextPrevHandles.next}" title="Next image"><i class="far fa-hand-point-right fa-2x"></i></a>`;
         html += `</div>`;
 
         // mini-menu like the hamburger on the observation/gallery page
@@ -1465,20 +1474,6 @@ var o_browse = {
         o_browse.modalScrollbar.update();
     },
 
-    updateSlider: function() {
-        // when a new result comes in, reset the slider pointer back to 1.
-        $("#op-observation-number").html(1);
-        $(".op-slider-pointer").css("width", `${opus.result_count.toString().length*0.7}em`);
-        // just make the step size the number of the obserations across the page...
-        if (o_browse.galleryBoundingRect.x > 0) {
-            o_browse.gallerySliderStep = Math.ceil(o_browse.galleryBoundingRect.x/10)*10;
-        }
-        $("#op-observation-slider").slider({
-            "value": 1,
-            "step": o_browse.gallerySliderStep,
-            "max": opus.result_count,
-        });
-    },
 
     resetData: function() {
         $("#dataTable > tbody").empty();  // yes all namespaces
@@ -1488,7 +1483,6 @@ var o_browse = {
         opus.cart_change = true;  // forces redraw of cart tab because reset_lastPageDrawn
         opus.browse_view_scrolls = reset_browse_view_scrolls;
         opus.gallery_begun = false;
-        o_browse.updateSlider();
         o_hash.updateHash();
     },
 

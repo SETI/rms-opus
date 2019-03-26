@@ -211,7 +211,6 @@ var opus = {
             $(this).html(prettyCount).fadeIn("fast");
             $(this).removeClass("browse_results_invalid");
         });
-        o_browse.updateSlider();
     },
 
     triggerNavbarClick: function() {
