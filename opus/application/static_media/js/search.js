@@ -391,7 +391,6 @@ var o_search = {
     },
 
     adjustSearchSideBarHeight: function() {
-        // console.log(`hieght of 3 elements: ${$(".app-footer").height() + $(".shadow-divider").height() + $(".op-reset-button").height() + 32} `)
         let containerHeight = $("#search").height() - 120;
         let searchMenuHeight = $(".searchMenu").height();
         $("#search .sidebar_wrapper").height(containerHeight);

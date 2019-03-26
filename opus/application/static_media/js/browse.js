@@ -17,7 +17,7 @@ var o_browse = {
     loadPrevPage: false,
     currentPage: 1,
     currentOpusId: "",
-    reRenderFirstMetadataModalOfThePage: false,
+    displayPrevButtonInFirstMetadataModalOfThePage: false,
     tempHash: "",
     /**
     *
@@ -463,6 +463,9 @@ var o_browse = {
 
     checkIfLoadPrevPageIsNeeded: function(opusId) {
         o_browse.currentOpusId = opusId;
+        if(!opusId) {
+            return;
+        }
         let prev = $(`#browse tr[data-id=${opusId}]`).prev("tr");
         while(prev.hasClass("table-page")) {
             prev = prev.prev("tr");
@@ -483,7 +486,7 @@ var o_browse = {
             // this will make sure we have correct html elements displayed for prev opus id
             $("#galleryViewContents").addClass("op-disabled");
 
-            o_browse.reRenderFirstMetadataModalOfThePage = true;
+            o_browse.displayPrevButtonInFirstMetadataModalOfThePage = true;
             $(`#${opus.prefs.view} .gallery-contents`).infiniteScroll("loadNextPage");
 
         }
@@ -1255,16 +1258,18 @@ var o_browse = {
         if(o_browse.infiniteScrollCurrentMaxPageNumber > data.page_no) {
             // prepend data from new page
             o_browse.renderGalleryAndTable(data, path, true);
-            // render the 1st item's metadata modal again to make sure prev button show up
-            if(o_browse.reRenderFirstMetadataModalOfThePage) {
-                let namespace = o_browse.getViewInfo().namespace;
-                $(namespace).find(".modal-show").removeClass("modal-show");
-                $(namespace).find(`[data-id='${o_browse.currentOpusId}'] div.modal-overlay`).addClass("modal-show");
-                $(namespace).find(`tr[data-id='${o_browse.currentOpusId}']`).addClass("modal-show");
-                let imageURL = $(namespace).find(`[data-id='${o_browse.currentOpusId}'] > a.thumbnail`).data("image");
-                o_browse.metadataboxHtml(o_browse.currentOpusId);
+            // update the 1st item's metadata modal to make sure prev button show up
+            // remove hidden attribute to display prev button
+            if(o_browse.displayPrevButtonInFirstMetadataModalOfThePage) {
+                let prev = $(`#browse tr[data-id=${o_browse.currentOpusId}]`).prev("tr");
+                while(prev.hasClass("table-page")) {
+                    prev = prev.prev("tr");
+                }
+                prev = (prev.data("id") ? prev.data("id") : "");
+                $(".text-center .prev").data("id", prev);
+                $(".text-center .prev").removeAttr("hidden");
 
-                o_browse.reRenderFirstMetadataModalOfThePage = false;
+                o_browse.displayPrevButtonInFirstMetadataModalOfThePage = false;
             }
 
             o_browse.loadPrevPage = true;
@@ -1395,10 +1400,14 @@ var o_browse = {
         // prev/next buttons - put this in galleryView html...
         html = `<div class="col"><a href="#" class="select" data-id="${opusId}" title="${buttonInfo.title}"><i class="${buttonInfo.icon} fa-2x float-left"></i></a></div>`;
         html += `<div class="col text-center">`;
-        if (prev != "")
+        if (prev != "") {
             html += `<a href="#" class="prev text-center" data-id="${prev}" title="Previous image"><i class="far fa-hand-point-left fa-2x"></i></a>`;
-        if (next != "")
+        } else {
+            html += `<a href="#" class="prev text-center" data-id="${prev}" title="Previous image" hidden><i class="far fa-hand-point-left fa-2x"></i></a>`;
+        }
+        if (next != "") {
             html += `<a href="#" class="next" data-id="${next}" title="Next image"><i class="far fa-hand-point-right fa-2x"></i></a>`;
+        }
         html += `</div>`;
 
         // mini-menu like the hamburger on the observation/gallery page
