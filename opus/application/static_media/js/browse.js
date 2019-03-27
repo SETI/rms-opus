@@ -18,6 +18,7 @@ var o_browse = {
     currentPage: 1,
     currentOpusId: "",
     tempHash: "",
+    maxPageNum: 265,
     /**
     *
     *  all the things that happen on the browse tab
@@ -443,6 +444,9 @@ var o_browse = {
 
     // check if we need infiniteScroll to load next page when there is no more prefected data
     checkIfLoadNextPageIsNeeded: function(opusId) {
+        if(!opusId) {
+            return;
+        }
         let next = $(`#browse tr[data-id=${opusId}]`).next("tr");
         let nextNext = next.next("tr");
         let nextNextId = (nextNext.data("id") ? nextNext.data("id") : "");
@@ -450,8 +454,9 @@ var o_browse = {
         if(opus.lastPageDrawn[opus.prefs.view] < o_browse.infiniteScrollCurrentMaxPageNumber) {
             opus.lastPageDrawn[opus.prefs.view] = o_browse.infiniteScrollCurrentMaxPageNumber;
         }
+
         // load the next page when the next next item is the dead end (no more prefected data)
-        if(!nextNextId && !nextNext.hasClass("table-page")) {
+        if(!nextNextId && !nextNext.hasClass("table-page") && opus.lastPageDrawn[opus.prefs.view] < o_browse.maxPageNum) {
             // disable keydown on modal when it's loading
             // this will make sure we have correct html elements displayed for next opus id
             $("#galleryViewContents").addClass("op-disabled");
@@ -1199,7 +1204,7 @@ var o_browse = {
                     $(selector).infiniteScroll({
                         path: function() {
                             let path = o_browse.getDataURL();
-                            return path;
+                                return path;
                         },
                         responseType: "text",
                         status: `#${opus.prefs.view} .page-load-status`,
@@ -1212,14 +1217,15 @@ var o_browse = {
                     $(selector).on("request.infiniteScroll", function( event, path ) {
                         // hide default page status loader if page-loading-status loader is spinning
                         // && o_browse.tableSorting
-                        if($(".page-loading-status > .loader").is(":visible") ){
+                        if ($(".page-loading-status > .loader").is(":visible")){
                             $(".infinite-scroll-request").hide();
                         }
                     });
                     $(selector).on("scrollThreshold.infiniteScroll", function( event ) {
-                        if(opus.lastPageDrawn[opus.prefs.view] < o_browse.infiniteScrollCurrentMaxPageNumber) {
+                        if (opus.lastPageDrawn[opus.prefs.view] < o_browse.infiniteScrollCurrentMaxPageNumber) {
                             opus.lastPageDrawn[opus.prefs.view] = o_browse.infiniteScrollCurrentMaxPageNumber;
                         }
+                        
                         $(selector).infiniteScroll("loadNextPage");
                     });
                     $(selector).on("load.infiniteScroll", o_browse.infiniteScrollLoadEventListener);
@@ -1274,6 +1280,18 @@ var o_browse = {
         } else {
             // append data from new page
             o_browse.renderGalleryAndTable(data, path);
+
+            // Update to make next button appear when prefetching next page is done
+            if (!$("#galleryViewContents .next").data("id") && $("#galleryViewContents .next").hasClass("op-button-disabled")) {
+                let next = $(`#browse tr[data-id=${o_browse.currentOpusId}]`).next("tr");
+                while(next.hasClass("table-page")) {
+                    next = next.next("tr");
+                }
+                next = (next.data("id") ? next.data("id") : "");
+
+                $("#galleryViewContents .prev").data("id", next);
+                $("#galleryViewContents .prev").removeClass("op-button-disabled");
+            }
         }
 
         // update the scroll position in the 'other' bit
@@ -1405,6 +1423,8 @@ var o_browse = {
         }
         if (next != "") {
             html += `<a href="#" class="next" data-id="${next}" title="Next image"><i class="far fa-hand-point-right fa-2x"></i></a>`;
+        } else {
+            html += `<a href="#" class="next  op-button-disabled" data-id="${next}" title="Next image"><i class="far fa-hand-point-right fa-2x"></i></a>`;
         }
         html += `</div>`;
 
