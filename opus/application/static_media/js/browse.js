@@ -530,6 +530,10 @@ var o_browse = {
                 if(opus.lastPageDrawn[opus.prefs.view] < o_browse.infiniteScrollCurrentMaxPageNumber) {
                     opus.lastPageDrawn[opus.prefs.view] = o_browse.infiniteScrollCurrentMaxPageNumber;
                 }
+                // remove spinner when the page already exists
+                if ($(`.thumb-page[data-page='${o_browse.currentPage}']`).length !== 0) {
+                    $(".infinite-scroll-request").hide();
+                }
                 $(`#${opus.prefs.view} .gallery-contents`).infiniteScroll("loadNextPage");
             }
         } else if (opus.prefs.browse == "gallery") {
@@ -1226,8 +1230,8 @@ var o_browse = {
                             opus.lastPageDrawn[opus.prefs.view] = o_browse.infiniteScrollCurrentMaxPageNumber;
                         }
 
-                        // remove spinner if scrollThreshold is triggered but page already exists
-                        if ($(`.thumb-page[data-page='${o_browse.currentPage}']`).length != 0) {
+                        // remove spinner when scrollThreshold is triggered and page already exists
+                        if ($(`.thumb-page[data-page='${o_browse.currentPage}']`).length !== 0) {
                             $(".infinite-scroll-request").hide();
                         }
                         $(selector).infiniteScroll("loadNextPage");
@@ -1257,7 +1261,7 @@ var o_browse = {
 
     infiniteScrollLoadEventListener: function( event, response, path ) {
         let data = JSON.parse( response );
-        if ($(`.thumb-page[data-page='${data.page_no}']`).length != 0) {
+        if ($(`.thumb-page[data-page='${data.page_no}']`).length !== 0) {
             console.log(`page ${data.page_no} has been rendered already`)
             console.log(`data.reqno: ${data.reqno}, last reqno: ${o_browse.lastLoadDataRequestNo}`);
             if($(".page-loading-status > .loader").is(":visible")){
