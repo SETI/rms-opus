@@ -5,7 +5,10 @@
 
                 {#  Each div has a top-level catgory  #}
           <a href="#submenu-{{ div.table_name }}" data-toggle="collapse" aria-expanded="false" class="dropdown-toggle" data-cat="{{ div.table_name }}">
-            <span class="menu-text title">{{ div.label }}</span>
+              <span class="menu-text title">{{ div.label }}</span>
+              {% if div.table_name == 'obs_general' %}
+                  <span class="menu_spinner spinner">&nbsp;</span>
+              {% endif %}
           </a>
 
           {% if div.table_name == 'obs_general' %}
@@ -19,9 +22,9 @@
             {% for name, info in menu.data.items %}
                       {% if name == div.table_name %}  {# this param_name IS contained in this div #}
 
-            				{% if info.menu_help %}
-            				    <li class="list-group-item list-group-item-action py-0 pl-0"><div class="menu_help text-info">{{ info.menu_help }}</div></li>
-            				{% endif %}
+                            {% if info.menu_help %}
+                                <li class="list-group-item list-group-item-action py-0 pl-0"><div class="menu_help text-info">{{ info.menu_help }}</div></li>
+                            {% endif %}
 
                     {% if info.has_sub_heading %}
                         {#  this div has sub_headings, level-3 menu sections.. start sub_heading loop  #}

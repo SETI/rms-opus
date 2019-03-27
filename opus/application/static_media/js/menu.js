@@ -68,7 +68,7 @@ var o_menu = {
      },
 
      getMenu: function() {
-        $('.menu_spinner').fadeIn("fast");
+        $('.menu_spinner').fadeIn("fast").css("display", "inline-block");
         var hash = o_hash.getHash();
 
         $( "#sidebar").load( "/opus/__menu.html?" + hash, function() {

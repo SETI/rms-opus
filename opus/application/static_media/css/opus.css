@@ -615,7 +615,7 @@ a:-webkit-any-link, a::any-link {
     cursor: default;
 }
 
-/* this is used to style grey out disabled buttons */ 
+/* this is used to style grey out disabled buttons */
 .op-button-disabled {
     pointer-events: none;
     cursor: default;
@@ -928,10 +928,13 @@ p > .spinner {
     margin:0px 10px;
     width:30px;
 }
+
+/* properly display menu spinner */
 .menu_spinner {
     display:none;
     margin-left:5px;
-    width:35px;
+    width:15px;
+    line-height:16px;
 }
 
 .badge-xlg {
