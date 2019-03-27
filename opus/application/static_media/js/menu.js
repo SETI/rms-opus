@@ -61,6 +61,7 @@ var o_menu = {
                 }
             }
         });
+
         $(".searchMenu").on("shown.bs.collapse", function(e) {
             o_search.adjustSearchHeight();
         });
@@ -85,6 +86,9 @@ var o_menu = {
             $("#sidebar").toggleClass("op-redraw-menu");
             $('.menu_spinner').fadeOut("fast");
             o_menu.markCurrentMenuItem();
+            // when a new category is open after an input is clicked, we update the scrollbar
+            let adjustSearchSideBarHeight = _.debounce(o_search.adjustSearchSideBarHeight, 500);
+            adjustSearchSideBarHeight();
         });
      },
      markDefaultMenuItem: function() {

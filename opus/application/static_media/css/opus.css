@@ -619,6 +619,13 @@ a:-webkit-any-link, a::any-link {
     cursor: default;
 }
 
+/* this is used to style grey out disabled buttons */ 
+.op-button-disabled {
+    pointer-events: none;
+    cursor: default;
+    opacity: 0.1;
+}
+
 #cart .cart-gallery-side {
     /*margin-top:.25em; */
     background-color: #303030; /* #383838; */
