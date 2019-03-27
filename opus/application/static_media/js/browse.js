@@ -374,7 +374,7 @@ var o_browse = {
             max: 1000,
             step: o_browse.gallerySliderStep,
             slide: function(event, ui) {
-                o_browse.onUpdateSlider(ui.value, true);
+                o_browse.onUpdateSlider(ui.value);
             }
         });
 
@@ -474,22 +474,41 @@ var o_browse = {
         }
     },
 
+    setScrollbarOnSlide: function(obsNum) {
+        let namespace = o_browse.getViewInfo().namespace;
+        let galleryTargetTopPosition = $(`${namespace} .thumbnail-container[data-obs="${obsNum}"]`).offset().top;
+        let galleryContainerTopPosition = $(".gallery-contents").offset().top;
+        let galleryScrollbarPosition = $(".gallery-contents").scrollTop();
+
+        let galleryTargetFinalPosition = galleryTargetTopPosition - galleryContainerTopPosition + galleryScrollbarPosition
+        $(`${namespace} .gallery-contents`).scrollTop(galleryTargetFinalPosition);
+        // make sure it's scrolled to the correct position in table view
+        let tableTargetTopPosition = $(`#dataTable tbody tr[data-obs='${obsNum}']`).offset().top;
+        let tableContainerTopPosition = $(".dataTable").offset().top;
+        let tableScrollbarPosition = $(".dataTable").scrollTop();
+        let tableTargetFinalPosition = tableTargetTopPosition - tableContainerTopPosition + tableScrollbarPosition
+        $(`${namespace} .dataTable`).scrollTop(tableTargetFinalPosition);
+    },
+
     // called when the slider is moved...
-    onUpdateSlider: function(value, update) {
+    onUpdateSlider: function(value) {
         value = (value == undefined? 1 : value);
         $("#op-observation-number").html(value);
-        if (update !== undefined && update == true) {
-            // temp til we get rid of page
-            opus.prefs.page[opus.prefs.browse] = Math.ceil(value/opus.prefs.limit);
-            onRenderData();
+        // temp til we get rid of page
+        opus.prefs.page[opus.prefs.browse] = Math.ceil(value/opus.prefs.limit);
+        let namespace = o_browse.getViewInfo().namespace;
+        let elem = $(`${namespace} .thumbnail-container[data-obs="${value}"]`);
+        if (elem.length > 0) {
+            o_browse.setScrollbarOnSlide(value);
         }
+        onRenderData();
     },
 
     // find the first displayed observation index & id in the upper left corner
     updateSliderHandle: function() {
         let selector = (opus.prefs.browse == "dataTable") ? `#${opus.prefs.view} #dataTable tbody tr` : `#${opus.prefs.view} .gallery .thumbnail-container`;
         $(selector).each(function(index, elem) {
-            if($(elem).offset().top > 0) {
+            if($(elem).offset().top > $(".gallery-contents").offset().top) {
                 let obsNum = $(elem).data("obs");
                 $("#op-observation-number").html(obsNum);
                 $(".op-slider-pointer").css("width", `${opus.result_count.toString().length*0.7}em`);
@@ -508,6 +527,8 @@ var o_browse = {
     },
 
     checkScroll: function() {
+        o_browse.updateSliderHandle();
+
         // infinite scroll is attached to the gallery, so we have to force a loadData when we are in table mode
         if (opus.prefs.browse == "dataTable") {
             let bottom = $("tbody").offset().top + $("tbody").height();
