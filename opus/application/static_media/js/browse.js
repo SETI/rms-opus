@@ -444,19 +444,19 @@ var o_browse = {
 
     // check if we need infiniteScroll to load next page when there is no more prefected data
     checkIfLoadNextPageIsNeeded: function(opusId) {
-        if(!opusId) {
+        if (!opusId) {
             return;
         }
         let next = $(`#browse tr[data-id=${opusId}]`).next("tr");
         let nextNext = next.next("tr");
         let nextNextId = (nextNext.data("id") ? nextNext.data("id") : "");
 
-        if(opus.lastPageDrawn[opus.prefs.view] < o_browse.infiniteScrollCurrentMaxPageNumber) {
+        if (opus.lastPageDrawn[opus.prefs.view] < o_browse.infiniteScrollCurrentMaxPageNumber) {
             opus.lastPageDrawn[opus.prefs.view] = o_browse.infiniteScrollCurrentMaxPageNumber;
         }
 
         // load the next page when the next next item is the dead end (no more prefected data)
-        if(!nextNextId && !nextNext.hasClass("table-page") && opus.lastPageDrawn[opus.prefs.view] < o_browse.maxPageNum) {
+        if (!nextNextId && !nextNext.hasClass("table-page") && opus.lastPageDrawn[opus.prefs.view] < o_browse.maxPageNum) {
             // disable keydown on modal when it's loading
             // this will make sure we have correct html elements displayed for next opus id
             $("#galleryViewContents").addClass("op-disabled");
@@ -467,11 +467,11 @@ var o_browse = {
 
     checkIfLoadPrevPageIsNeeded: function(opusId) {
         o_browse.currentOpusId = opusId;
-        if(!opusId) {
+        if (!opusId) {
             return;
         }
         let prev = $(`#browse tr[data-id=${opusId}]`).prev("tr");
-        while(prev.hasClass("table-page")) {
+        while (prev.hasClass("table-page")) {
             prev = prev.prev("tr");
             if(prev.data("page")) {
                 // if(o_browse.infiniteScrollCurrentMinPageNumber > (prev.data("page") - 1) && prev.data("page") > 0) {
@@ -482,8 +482,8 @@ var o_browse = {
         }
         prev = (prev.data("id") ? prev.data("id") : "");
 
-        if(!prev && o_browse.infiniteScrollCurrentMinPageNumber > 0) {
-            if(opus.lastPageDrawn[opus.prefs.view] >= o_browse.infiniteScrollCurrentMinPageNumber) {
+        if (!prev && o_browse.infiniteScrollCurrentMinPageNumber > 0) {
+            if (opus.lastPageDrawn[opus.prefs.view] >= o_browse.infiniteScrollCurrentMinPageNumber) {
                 opus.lastPageDrawn[opus.prefs.view] = o_browse.infiniteScrollCurrentMinPageNumber - 1;
             }
             // disable keydown on modal when it's loading
@@ -1225,8 +1225,14 @@ var o_browse = {
                         if (opus.lastPageDrawn[opus.prefs.view] < o_browse.infiniteScrollCurrentMaxPageNumber) {
                             opus.lastPageDrawn[opus.prefs.view] = o_browse.infiniteScrollCurrentMaxPageNumber;
                         }
-                        
+
+                        // remove spinner if scrollThreshold is triggered but page already exists
+                        if ($(`.thumb-page[data-page='${o_browse.currentPage}']`).length != 0) {
+                            $(".infinite-scroll-request").hide();
+                        }
                         $(selector).infiniteScroll("loadNextPage");
+
+
                     });
                     $(selector).on("load.infiniteScroll", o_browse.infiniteScrollLoadEventListener);
                 }
