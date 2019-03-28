@@ -34,8 +34,8 @@ var o_cart = {
          // check an input on selected products and images updates file_info
          $("#cart").on("click","#download_options input", function() {
              $("#total_download_size").hide();
-             $("p > .spinner").fadeIn().css("display", "inline-block");
-             
+             $(".total-size .spinner").fadeIn().css("display", "inline-block");
+
              let add_to_url = o_cart.getDownloadFiltersChecked();
              o_cart.lastCartRequestNo++;
              let url = "/opus/__cart/status.json?reqno=" + o_cart.lastCartRequestNo + "&" + add_to_url + "&download=1";
@@ -43,7 +43,7 @@ var o_cart = {
                  if(info.reqno < o_cart.lastCartRequestNo) {
                      return;
                  }
-                 $("p > .spinner").hide()
+                 $(".total-size .spinner").hide()
                  $("#total_download_size").fadeOut().html(info.total_download_size_pretty).fadeIn();
              });
          });
@@ -316,7 +316,8 @@ var o_cart = {
     // action = add/remove/addrange/removerange/addall
     editCart: function(opusId, action) {
         opus.cart_change = true;
-
+        $("#total_download_size").hide();
+        $(".total-size .spinner").fadeIn().css("display", "inline-block");
         var viewInfo = o_browse.getViewInfo();
         var url = "/opus/__cart/" + action + ".json?";
         switch (action) {
@@ -368,6 +369,7 @@ var o_cart = {
 
         o_cart.lastCartRequestNo++;
         $.getJSON(url  + add_to_url + "&reqno=" + o_cart.lastCartRequestNo, function(statusData) {
+            $(".total-size .spinner").hide()
             o_cart.updateCartStatus(statusData);
         });
     },

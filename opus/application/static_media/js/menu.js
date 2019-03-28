@@ -68,7 +68,7 @@ var o_menu = {
      },
 
      getMenu: function() {
-        $('.menu_spinner').fadeIn("fast").css("display", "inline-block");
+        $('.menu_spinner').fadeIn().css("display", "inline-block");
         var hash = o_hash.getHash();
 
         $( "#sidebar").load( "/opus/__menu.html?" + hash, function() {
@@ -82,7 +82,7 @@ var o_menu = {
                     opus.menu_state.cats.splice(opus.menu_state.cats.indexOf(category), 1);
                 }
             });
-            $('.menu_spinner').fadeOut("fast");
+            $('.menu_spinner').fadeOut();
             o_menu.markCurrentMenuItem();
             // when a new category is open after an input is clicked, we update the scrollbar
             let adjustSearchSideBarHeight = _.debounce(o_search.adjustSearchSideBarHeight, 500);

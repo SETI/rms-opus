@@ -18,7 +18,7 @@ var o_browse = {
     currentPage: 1,
     currentOpusId: "",
     tempHash: "",
-    maxPageNum: 265,
+    dataNotAvailable: false,
     /**
     *
     *  all the things that happen on the browse tab
@@ -456,12 +456,16 @@ var o_browse = {
         }
 
         // load the next page when the next next item is the dead end (no more prefected data)
-        if (!nextNextId && !nextNext.hasClass("table-page") && opus.lastPageDrawn[opus.prefs.view] < o_browse.maxPageNum) {
-            // disable keydown on modal when it's loading
+        if (!nextNextId && !nextNext.hasClass("table-page")) {
+            // If data reaches to the end, we don't need to load next page
             // this will make sure we have correct html elements displayed for next opus id
-            $("#galleryViewContents").addClass("op-disabled");
-
-            $(`#${opus.prefs.view} .gallery-contents`).infiniteScroll("loadNextPage");
+            if(!o_browse.dataNotAvailable) {
+                // disable keydown on modal when it's loading
+                $("#galleryViewContents").addClass("op-disabled");
+                $(`#${opus.prefs.view} .gallery-contents`).infiniteScroll("loadNextPage");
+            } else {
+                console.log("No more data to load");
+            }
         }
     },
 
@@ -1261,6 +1265,8 @@ var o_browse = {
 
     infiniteScrollLoadEventListener: function( event, response, path ) {
         let data = JSON.parse( response );
+        console.log("infiniteScroll data");
+        console.log(data);
         if ($(`.thumb-page[data-page='${data.page_no}']`).length !== 0) {
             console.log(`page ${data.page_no} has been rendered already`)
             console.log(`data.reqno: ${data.reqno}, last reqno: ${o_browse.lastLoadDataRequestNo}`);
@@ -1268,6 +1274,11 @@ var o_browse = {
                 $(".page-loading-status > .loader").hide();
             }
             return;
+        }
+        if (data.count === 0) {
+            o_browse.dataNotAvailable = true;
+        } else {
+            o_browse.dataNotAvailable = false;
         }
 
         if (o_browse.infiniteScrollCurrentMaxPageNumber > data.page_no) {

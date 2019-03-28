@@ -907,7 +907,7 @@ li a.search-param:hover {
     background-repeat: no-repeat;
 }
 
-p > .spinner {
+.total-size .spinner {
     display: none;
     line-height: 16px;
     margin: 0 10px;
