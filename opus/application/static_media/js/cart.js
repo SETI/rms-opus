@@ -316,8 +316,12 @@ var o_cart = {
     // action = add/remove/addrange/removerange/addall
     editCart: function(opusId, action) {
         opus.cart_change = true;
+
+        // display spinner next to cart badge & total size 
+        $("#cart_count").html(opus.spinner);
         $("#total_download_size").hide();
         $(".total-size .spinner").fadeIn().css("display", "inline-block");
+
         var viewInfo = o_browse.getViewInfo();
         var url = "/opus/__cart/" + action + ".json?";
         switch (action) {
