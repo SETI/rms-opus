@@ -149,6 +149,7 @@ var opus = {
 
         // start the result count spinner and do the yellow flash
         $("#result_count").html(opus.spinner).parent().effect("highlight", {}, 500);
+        $("#cart_count").html(opus.spinner);
         // move this above allNormalizedApiCall to avoid recursive api call
         opus.last_selections = selections;
 
