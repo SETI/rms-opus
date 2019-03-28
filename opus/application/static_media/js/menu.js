@@ -82,11 +82,11 @@ var o_menu = {
                     opus.menu_state.cats.splice(opus.menu_state.cats.indexOf(category), 1);
                 }
             });
-            $('.menu_spinner').fadeOut();
             o_menu.markCurrentMenuItem();
             // when a new category is open after an input is clicked, we update the scrollbar
             let adjustSearchSideBarHeight = _.debounce(o_search.adjustSearchSideBarHeight, 500);
             adjustSearchSideBarHeight();
+            $('.menu_spinner').fadeOut();
         });
      },
      markDefaultMenuItem: function() {

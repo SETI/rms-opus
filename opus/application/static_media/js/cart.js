@@ -145,6 +145,8 @@ var o_cart = {
 
      // init an existing cart on page load
      initCart: function() {
+        // display cart badge spinner, it will get updated after the return of status.json
+        $("#cart_count").html(opus.spinner);
         // returns any user cart saved in session
         o_cart.lastCartRequestNo++;
         $.getJSON("/opus/__cart/status.json?reqno=" + o_cart.lastCartRequestNo, function(statusData) {
@@ -317,11 +319,6 @@ var o_cart = {
     editCart: function(opusId, action) {
         opus.cart_change = true;
 
-        // display spinner next to cart badge & total size 
-        $("#cart_count").html(opus.spinner);
-        $("#total_download_size").hide();
-        $(".total-size .spinner").fadeIn().css("display", "inline-block");
-
         var viewInfo = o_browse.getViewInfo();
         var url = "/opus/__cart/" + action + ".json?";
         switch (action) {
@@ -370,6 +367,11 @@ var o_cart = {
         if (opus.prefs.view == "cart") {
             add_to_url = "&download=1&" + o_cart.getDownloadFiltersChecked();
         }
+
+        // display spinner next to cart badge & total size
+        $("#cart_count").html(opus.spinner);
+        $("#total_download_size").hide();
+        $(".total-size .spinner").fadeIn().css("display", "inline-block");
 
         o_cart.lastCartRequestNo++;
         $.getJSON(url  + add_to_url + "&reqno=" + o_cart.lastCartRequestNo, function(statusData) {
