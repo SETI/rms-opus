@@ -30,7 +30,7 @@ var o_browse = {
     browseBehaviors: function() {
         // note: using .on vs .click allows elements to be added dynamically w/out bind/rebind of handler
 
-        $(".gallery-contents, .dataTable").on('scroll', _.debounce(o_browse.checkScroll, 200));
+        $(".gallery-contents, .dataTable").on('scroll', _.debounce(o_browse.checkScroll, 500));
 
         $(".gallery-contents, .dataTable").on('wheel ps-scroll-up', function(event) {
             if(o_browse.infiniteScrollCurrentMinPageNumber > 0) {
@@ -374,6 +374,9 @@ var o_browse = {
             max: 1000,
             step: o_browse.gallerySliderStep,
             slide: function(event, ui) {
+                o_browse.onUpdateSliderHandle(ui.value);
+            },
+            stop: function(event, ui) {
                 o_browse.onUpdateSlider(ui.value);
             }
         });
@@ -481,27 +484,38 @@ var o_browse = {
         let galleryScrollbarPosition = $(".gallery-contents").scrollTop();
 
         let galleryTargetFinalPosition = galleryTargetTopPosition - galleryContainerTopPosition + galleryScrollbarPosition
-        $(`${namespace} .gallery-contents`).scrollTop(galleryTargetFinalPosition);
-        // make sure it's scrolled to the correct position in table view
+        $(".gallery-contents").scrollTop(galleryTargetFinalPosition);
+
+        // Create a new jQuery.Event object with specified event properties.
+        //let e = jQuery.Event( "DOMMouseScroll",{delta: -650} );
+
+        // trigger an artificial DOMMouseScroll event with delta -650
+        //$( ".gallery-contents" ).trigger( e );
+
+        /* make sure it's scrolled to the correct position in table view
         let tableTargetTopPosition = $(`#dataTable tbody tr[data-obs='${obsNum}']`).offset().top;
         let tableContainerTopPosition = $(".dataTable").offset().top;
         let tableScrollbarPosition = $(".dataTable").scrollTop();
         let tableTargetFinalPosition = tableTargetTopPosition - tableContainerTopPosition + tableScrollbarPosition
-        $(`${namespace} .dataTable`).scrollTop(tableTargetFinalPosition);
+        $(`${namespace} .dataTable`).scrollTop(tableTargetFinalPosition);*/
     },
 
     // called when the slider is moved...
-    onUpdateSlider: function(value) {
+    onUpdateSliderHandle: function(value) {
         value = (value == undefined? 1 : value);
         $("#op-observation-number").html(value);
+    },
+
+    onUpdateSlider: function(value) {
         // temp til we get rid of page
         opus.prefs.page[opus.prefs.browse] = Math.ceil(value/opus.prefs.limit);
         let namespace = o_browse.getViewInfo().namespace;
         let elem = $(`${namespace} .thumbnail-container[data-obs="${value}"]`);
         if (elem.length > 0) {
             o_browse.setScrollbarOnSlide(value);
+        } else {
+            onRenderData();
         }
-        onRenderData();
     },
 
     // find the first displayed observation index & id in the upper left corner
@@ -514,7 +528,7 @@ var o_browse = {
                 $(".op-slider-pointer").css("width", `${opus.result_count.toString().length*0.7}em`);
                 // just make the step size the number of the obserations across the page...
                 if (o_browse.galleryBoundingRect.x > 0) {
-                    o_browse.gallerySliderStep = Math.ceil(o_browse.galleryBoundingRect.x/10)*10;
+                    o_browse.gallerySliderStep = o_browse.galleryBoundingRect.x;
                 }
                 $("#op-observation-slider").slider({
                     "value": obsNum,
@@ -527,8 +541,6 @@ var o_browse = {
     },
 
     checkScroll: function() {
-        o_browse.updateSliderHandle();
-
         // infinite scroll is attached to the gallery, so we have to force a loadData when we are in table mode
         if (opus.prefs.browse == "dataTable") {
             let bottom = $("tbody").offset().top + $("tbody").height();
@@ -558,6 +570,7 @@ var o_browse = {
             });
             opus.lastPageDrawn[opus.prefs.view] = Math.max(o_browse.currentPage, opus.lastPageDrawn[opus.prefs.view], o_browse.infiniteScrollCurrentMaxPageNumber);
         }
+        o_browse.updateSliderHandle();
         return false;
     },
 
@@ -993,14 +1006,14 @@ var o_browse = {
             $.each(page, function( index, item ) {
                 let opusId = item.opusid;
                 // we have to store the relative observation number because we may not have pages in succession, this is for the slider position
-                let observationNumber = ((data.page_no-1)*data.count)+index+1;  // needs to be 1-based, not 0-based... 
+                let observationNumber = ((data.page_no-1)*data.count)+index+1;  // needs to be 1-based, not 0-based...
                 opus.gallery_data[opusId] = item.metadata;	// for galleryView, store in global array
 
                 // gallery
                 let images = item.images;
                 html += `<div class="thumbnail-container ${(item.in_cart ? ' in' : '')}" data-id="${opusId}" data-obs="${observationNumber}">`;
                 html += `<a href="#" class="thumbnail" data-image="${images.full.url}">`;
-                html += `<img class="img-thumbnail img-fluid" src="${images.thumb.url}" alt="${images.thumb.alt_text}" title="${opusId}\r\nClick to enlarge">`;
+                html += `<img class="img-thumbnail img-fluid" src="${images.thumb.url}" alt="${images.thumb.alt_text}" title="${observationNumber} - ${opusId}\r\nClick to enlarge">`;
                 // whenever the user clicks an image to show the modal, we need to highlight the selected image w/an icon
                 html += '<div class="modal-overlay">';
                 html += '<p class="content-text"><i class="fas fa-binoculars fa-4x text-info" aria-hidden="true"></i></p>';
@@ -1216,9 +1229,7 @@ var o_browse = {
         // wait! is this page already drawn?
         if ($(`${selector} .thumb-page[data-page='${page}']`).length > 0 && !o_browse.tableSorting) {
             o_browse.setScrollbarPosition(selector, page);
-            if($(".page-loading-status > .loader").is(":visible")){
-                $(".page-loading-status > .loader").hide();
-            }
+            $(".page-loading-status > .loader").hide();
             return;
         } else {
             // reset counter
@@ -1362,10 +1373,6 @@ var o_browse = {
             let selector = `#${opus.prefs.view} .gallery-contents`;
             let newPage = o_browse.infiniteScrollCurrentMinPageNumber + 1;
             o_browse.infiniteScrollCurrentMinPageNumber -= 1;
-
-            if ($(`${selector} .thumb-page[data-page='${newPage}']`).length > 0) {
-                o_browse.setScrollbarPosition(selector, newPage);
-            }
             o_browse.loadPrevPage = false;
         }
 
@@ -1539,17 +1546,5 @@ var o_browse = {
         */
         opus.metadata_selector_drawn = false;
         o_browse.resetData();
-    },
-
-    updatePage: function() {
-        /*
-        reloads the current results view from server and
-        sets other views back to undrawn
-        gets page/view info from from getViewInfo()
-        and opus.prefs[prefix + "browse"]
-        */
-        o_browse.resetQuery();
-        // FIX ME - RENDER BROWSE OR COLLECTION TAB, BUT DON'T CALL SAME FUNC FOR BOTH, YUCK
-        o_browse.getBrowseTab();
     },
 };
