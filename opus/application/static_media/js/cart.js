@@ -55,7 +55,7 @@ var o_cart = {
          let product_types = [];
          let image_types = [];
          let add_to_url = [];
-         $("ul#product_types input:checkbox:checked").each(function(){
+         $("ul#product_types input:checkbox:checked").each(function() {
              product_types.push($(this).val());
          });
          let checked_filters = {"types":product_types};
@@ -82,7 +82,7 @@ var o_cart = {
          $.ajax({
              url: url,
              dataType: "json",
-             success: function(data){
+             success: function(data) {
                  if (data.error !== undefined) {
                      $(`<li>${data.error}</li>`).hide().prependTo("ul.zippedFiles", "#cart_summary").slideDown("fast");
                  } else {
@@ -189,7 +189,7 @@ var o_cart = {
                     history: false,
                     debug: false,
                 });
-                $("#cart .gallery-contents").on( "load.infiniteScroll", function( event, response, path ) {
+                $("#cart .gallery-contents").on( "load.infiniteScroll", function(event, response, path) {
                     let jsonData = JSON.parse( response );
                     o_browse.renderGalleryAndTable(jsonData, path);
                 });

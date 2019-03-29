@@ -17,7 +17,7 @@ var o_utils = {
     },
 
     // num is an int
-    addCommas: function(num){
+    addCommas: function(num) {
           return num.toString().replace(/(\d)(?=(\d\d\d)+(?!\d))/g, "$1,");
     },
 

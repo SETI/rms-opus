@@ -24,7 +24,7 @@ var o_menu = {
 
              let slug = $(this).data('slug');
              if (!slug) { return; }
-             if ($.inArray(slug, opus.widgets_drawn)>-1){
+             if ($.inArray(slug, opus.widgets_drawn)>-1) {
                  // widget is already showing do not fetch another
                  try {
                     // scroll to widget and highlight it

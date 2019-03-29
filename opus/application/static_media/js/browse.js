@@ -261,7 +261,7 @@ var o_browse = {
         $(".modal-dialog").draggable({
             handle: ".modal-content",
             cancel: ".metadata",
-            drag: function( event, ui ) {
+            drag: function(event, ui) {
                 o_browse.hideMenu();
             }
         });
@@ -965,7 +965,7 @@ var o_browse = {
             }
             // $(".dataTable tbody").append(`<tr class="table-page" data-page="${data.page_no}"><td colspan="${data.columns.length}"></td></tr><tr class="table-page"><td colspan="${data.columns.length}"></td></tr>`);
 
-            $.each(page, function( index, item ) {
+            $.each(page, function(index, item) {
                 let opusId = item.opusid;
                 opus.gallery_data[opusId] = item.metadata;	// for galleryView, store in global array
 
@@ -1053,7 +1053,7 @@ var o_browse = {
         // check all box
         //let checkbox = "<input type='checkbox' name='all' value='all' class='multichoice'>";
         $(".dataTable thead tr").append("<th scope='col' class='sticky-header'></th>");
-        $.each(columns, function( index, header) {
+        $.each(columns, function(index, header) {
             let slug = slugs[index];
             // Assigning data attribute for table column sorting
             let icon = ($.inArray(slug, order) >= 0 ? "-down" : ($.inArray("-"+slug, order) >= 0 ? "-up" : ""));
@@ -1221,14 +1221,14 @@ var o_browse = {
                         debug: false,
                     });
 
-                    $(selector).on("request.infiniteScroll", function( event, path ) {
+                    $(selector).on("request.infiniteScroll", function(event, path) {
                         // hide default page status loader if op-page-loading-status loader is spinning
                         // && o_browse.tableSorting
                         if ($(".op-page-loading-status > .loader").is(":visible")) {
                             $(".infinite-scroll-request").hide();
                         }
                     });
-                    $(selector).on("scrollThreshold.infiniteScroll", function( event ) {
+                    $(selector).on("scrollThreshold.infiniteScroll", function(event) {
                         if (opus.lastPageDrawn[opus.prefs.view] < o_browse.infiniteScrollCurrentMaxPageNumber) {
                             opus.lastPageDrawn[opus.prefs.view] = o_browse.infiniteScrollCurrentMaxPageNumber;
                         }
@@ -1264,12 +1264,12 @@ var o_browse = {
         });
     },
 
-    infiniteScrollLoadEventListener: function( event, response, path ) {
+    infiniteScrollLoadEventListener: function(event, response, path) {
         let data = JSON.parse( response );
         // this variable is used let us know there is no data to load
         // we will use it as the flag to hide the spinner triggered by scrollThreshold
         o_browse.dataNotAvailable = (data.page_no > opus.pages)
-        
+
         if ($(`.thumb-page[data-page='${data.page_no}']`).length !== 0 || data.page_no > opus.pages) {
             console.log(`data.reqno: ${data.reqno}, last reqno: ${o_browse.lastLoadDataRequestNo}`);
             if ($(".op-page-loading-status > .loader").is(":visible")) {
