@@ -19,6 +19,7 @@ var o_browse = {
     currentOpusId: "",
     tempHash: "",
     dataNotAvailable: false,
+    reachLastData: false,
     /**
     *
     *  all the things that happen on the browse tab
@@ -463,8 +464,6 @@ var o_browse = {
                 // disable keydown on modal when it's loading
                 $("#galleryViewContents").addClass("op-disabled");
                 $(`#${opus.prefs.view} .gallery-contents`).infiniteScroll("loadNextPage");
-            } else {
-                console.log("No more data to load");
             }
         }
     },
@@ -534,8 +533,9 @@ var o_browse = {
                 if(opus.lastPageDrawn[opus.prefs.view] < o_browse.infiniteScrollCurrentMaxPageNumber) {
                     opus.lastPageDrawn[opus.prefs.view] = o_browse.infiniteScrollCurrentMaxPageNumber;
                 }
-                // remove spinner when the page already exists
-                if ($(`.thumb-page[data-page='${o_browse.currentPage}']`).length !== 0) {
+                // remove spinner when scrollThreshold is triggered and last data fetching has no data
+                // Need to revisit this one
+                if(o_browse.dataNotAvailable) {
                     $(".infinite-scroll-request").hide();
                 }
                 $(`#${opus.prefs.view} .gallery-contents`).infiniteScroll("loadNextPage");
@@ -1234,8 +1234,10 @@ var o_browse = {
                             opus.lastPageDrawn[opus.prefs.view] = o_browse.infiniteScrollCurrentMaxPageNumber;
                         }
 
-                        // remove spinner when scrollThreshold is triggered and page already exists
-                        if ($(`.thumb-page[data-page='${o_browse.currentPage}']`).length !== 0) {
+                        // remove spinner when scrollThreshold is triggered and last data fetching has no data
+                        // Need to revisit this one
+                        // console.log(`page about to be drawn: ${opus.lastPageDrawn[opus.prefs.view] + 1}`);
+                        if(o_browse.dataNotAvailable) {
                             $(".infinite-scroll-request").hide();
                         }
                         $(selector).infiniteScroll("loadNextPage");
@@ -1265,8 +1267,6 @@ var o_browse = {
 
     infiniteScrollLoadEventListener: function( event, response, path ) {
         let data = JSON.parse( response );
-        console.log("infiniteScroll data");
-        console.log(data);
         if ($(`.thumb-page[data-page='${data.page_no}']`).length !== 0) {
             console.log(`page ${data.page_no} has been rendered already`)
             console.log(`data.reqno: ${data.reqno}, last reqno: ${o_browse.lastLoadDataRequestNo}`);
