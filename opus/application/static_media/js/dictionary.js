@@ -1,4 +1,4 @@
-String.replacei = String.prototype.replacei = function (rep, rby) {
+String.replacei = String.prototype.replacei = function(rep, rby) {
     var pos = this.toLowerCase().indexOf(rep.toLowerCase());
     return pos == -1 ? this : this.substr(0, pos) + rby + this.substr(pos + rep.length);
 };
@@ -65,7 +65,7 @@ function searchDictionary(searchText, thepanel) {
 
 $( function() {
   var currentElement = "";
-  $( ".alphabetlist").click(function( event ){
+  $( ".alphabetlist").click(function(event) {
     var targetElement = 'def-'+event.currentTarget.id;
     if (currentElement != targetElement) {
       if (currentElement != "") {
@@ -83,7 +83,7 @@ $( function() {
     }
     $("#"+targetElement).show();
   });
-  $( "#searchbox" ).submit(function( event ) {
+  $( "#searchbox" ).submit(function(event) {
     //val searchText = $("input[name=q]").val();
     var searchText = $("input[name=q]").val();
     if (searchText != "") {
@@ -95,7 +95,7 @@ $( function() {
     event.preventDefault();
   });
   //close the search panel
-  $('.cd-panel').on('click', function (event) {
+  $('.cd-panel').on('click', function(event) {
     if ($(event.target).is('.cd-panel') || $(event.target).is('.cd-panel-close')) {
       $('.cd-panel').removeClass('is-visible');
       event.preventDefault();

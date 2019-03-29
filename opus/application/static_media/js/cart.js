@@ -40,7 +40,7 @@ var o_cart = {
              o_cart.lastCartRequestNo++;
              let url = "/opus/__cart/status.json?reqno=" + o_cart.lastCartRequestNo + "&" + add_to_url + "&download=1";
              $.getJSON(url, function(info) {
-                 if(info.reqno < o_cart.lastCartRequestNo) {
+                 if (info.reqno < o_cart.lastCartRequestNo) {
                      return;
                  }
                  $(".op-total-size .spinner").hide()
@@ -112,9 +112,9 @@ var o_cart = {
 
          // The following steps will hide the y-scrollbar when it's not needed.
          // Without these steps, y-scrollbar will exist at the beginning, and disappear after the first attempt of scrolling
-         if(o_cart.downloadOptionsScrollbar) {
-             if(downloadOptionsContainer > cartSummaryHeight) {
-                 if(!$("#download-options-container .ps__rail-y").hasClass("hide_ps__rail-y")) {
+         if (o_cart.downloadOptionsScrollbar) {
+             if (downloadOptionsContainer > cartSummaryHeight) {
+                 if (!$("#download-options-container .ps__rail-y").hasClass("hide_ps__rail-y")) {
                      $("#download-options-container .ps__rail-y").addClass("hide_ps__rail-y");
                      o_cart.downloadOptionsScrollbar.settings.suppressScrollY = true;
                  }
@@ -125,7 +125,7 @@ var o_cart = {
              o_cart.downloadOptionsScrollbar.update();
          }
 
-         if(o_cart.cartGalleryScrollbar) {
+         if (o_cart.cartGalleryScrollbar) {
              o_cart.cartGalleryScrollbar.update();
          }
      },
@@ -150,14 +150,14 @@ var o_cart = {
         // returns any user cart saved in session
         o_cart.lastCartRequestNo++;
         $.getJSON("/opus/__cart/status.json?reqno=" + o_cart.lastCartRequestNo, function(statusData) {
-            if(statusData.reqno < o_cart.lastCartRequestNo) {
+            if (statusData.reqno < o_cart.lastCartRequestNo) {
                 return;
             }
             o_cart.updateCartStatus(statusData);
         });
      },
 
-     loadCartData: function (page) {
+     loadCartData: function(page) {
         //window.scrollTo(0,opus.browse_view_scrolls[opus.prefs.browse]);
         page = (page == undefined ? 1 : (opus.cart_change ? 1 : page));
 
@@ -231,7 +231,7 @@ var o_cart = {
 
                     o_cart.downloadOptionsScrollbar = new PerfectScrollbar("#download-options-container");
 
-                    if(!o_cart.cartGalleryScrollbar) {
+                    if (!o_cart.cartGalleryScrollbar) {
                         o_cart.cartGalleryScrollbar = new PerfectScrollbar("#cart .gallery-contents", {
                             suppressScrollX: true,
                         });
@@ -257,7 +257,7 @@ var o_cart = {
             opus.cart_change = true;
             $("#cart .navbar").hide();
             $("#cart .sort-order-container").hide();
-            if(!returnToSearch){
+            if (!returnToSearch) {
                 opus.changeTab("cart");
             } else {
                 opus.changeTab("search");

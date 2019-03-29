@@ -1,6 +1,6 @@
 var o_detail = {
 
-    getDetail: function (opus_id) {
+    getDetail: function(opus_id) {
 
         $("#detail").on("click", ".download_csv", function() {
             $(this).attr("href", "/opus/__api/metadata_v2/"+opus_id+".csv?"+ o_hash.getHash());
@@ -38,7 +38,7 @@ var o_detail = {
         $(detailSelector).html(opus.spinner);
 
         $(detailSelector).load("/opus/__initdetail/" + opus_id + ".html",
-            function(response, status, xhr){
+            function(response, status, xhr) {
                 if (status == 'error') {
                     html = ' \
                         <div style = "margin:20px"><h2>Bad OPUS ID</h2>   \
@@ -98,7 +98,7 @@ var o_detail = {
 
     adjustDetailHeight: function() {
         let containerHeight = $(window).height()-100;
-        if(o_detail.detailPageScrollbar) {
+        if (o_detail.detailPageScrollbar) {
             $(".detail-metadata").height(containerHeight);
             o_detail.detailPageScrollbar.update();
         }

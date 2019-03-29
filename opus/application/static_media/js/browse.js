@@ -100,7 +100,7 @@ var o_browse = {
             let col_str = opus.prefs.cols.join(',');
             let hash = [];
             for (let param in opus.selections) {
-                if (opus.selections[param].length){
+                if (opus.selections[param].length) {
                     hash[hash.length] = param + '=' + opus.selections[param].join(',').replace(/ /g,'+');
                 }
             }
@@ -685,7 +685,7 @@ var o_browse = {
                 o_browse.loadData(1);
             } else {
                 // remove spinner if nothing is re-draw when we click save changes
-                if ($(".op-page-loading-status > .loader").is(":visible")){
+                if ($(".op-page-loading-status > .loader").is(":visible")) {
                     $(".op-page-loading-status > .loader").hide();
                 }
             }
@@ -696,7 +696,7 @@ var o_browse = {
             currentSelectedMetadata = opus.prefs.cols.slice();
         });
 
-        $("#metadataSelector").on("shown.bs.modal", function () {
+        $("#metadataSelector").on("shown.bs.modal", function() {
             o_browse.allMetadataScrollbar.update();
             o_browse.selectedMetadataScrollbar.update();
         });
@@ -1030,7 +1030,7 @@ var o_browse = {
 
         o_browse.adjustTableSize();
         o_browse.galleryScrollbar.update();
-        if ($(".op-page-loading-status > .loader").is(":visible")){
+        if ($(".op-page-loading-status > .loader").is(":visible")) {
             $(".op-page-loading-status > .loader").hide();
         }
         o_hash.updateHash(true);
@@ -1071,7 +1071,7 @@ var o_browse = {
         $("#dataTable th div").resizable({
             handles: "e",
             minWidth: 40,
-            resize: function (event, ui) {
+            resize: function(event, ui) {
                 let resizableContainerWidth = $(event.target).parent().width();
                 let columnTextWidth = $(event.target).find("a span:first").width();
                 let sortLabelWidth = $(event.target).find("a span:last").width();
@@ -1175,7 +1175,7 @@ var o_browse = {
         // wait! is this page already drawn?
         if ($(`${selector} .thumb-page[data-page='${page}']`).length > 0 && !o_browse.tableSorting) {
             o_browse.setScrollbarPosition(selector, page);
-            if ($(".op-page-loading-status > .loader").is(":visible")){
+            if ($(".op-page-loading-status > .loader").is(":visible")) {
                 $(".op-page-loading-status > .loader").hide();
             }
             return;
@@ -1193,7 +1193,7 @@ var o_browse = {
             let request_time = new Date().getTime() - start_time;
             if (data.reqno < o_browse.lastLoadDataRequestNo) {
                 // make sure to remove spinner before return
-                if ($(".op-page-loading-status > .loader").is(":visible")){
+                if ($(".op-page-loading-status > .loader").is(":visible")) {
                     $(".op-page-loading-status > .loader").hide();
                 }
                 return;
@@ -1224,7 +1224,7 @@ var o_browse = {
                     $(selector).on("request.infiniteScroll", function( event, path ) {
                         // hide default page status loader if op-page-loading-status loader is spinning
                         // && o_browse.tableSorting
-                        if ($(".op-page-loading-status > .loader").is(":visible")){
+                        if ($(".op-page-loading-status > .loader").is(":visible")) {
                             $(".infinite-scroll-request").hide();
                         }
                     });
@@ -1257,7 +1257,7 @@ var o_browse = {
                 $(selector).infiniteScroll('loadNextPage');
                 opus.gallery_begun = true;
             }
-            // if ($(".op-page-loading-status > .loader").is(":visible")){
+            // if ($(".op-page-loading-status > .loader").is(":visible")) {
             //     $(".op-page-loading-status > .loader").hide();
             // }
             o_browse.tableSorting = false;
@@ -1266,17 +1266,17 @@ var o_browse = {
 
     infiniteScrollLoadEventListener: function( event, response, path ) {
         let data = JSON.parse( response );
-        if ($(`.thumb-page[data-page='${data.page_no}']`).length !== 0) {
-            console.log(`page ${data.page_no} has been rendered already`)
+        // this variable is used let us know there is no data to load
+        // we will use it as the flag to hide the spinner triggered by scrollThreshold
+        o_browse.dataNotAvailable = (data.page_no > opus.pages)
+        
+        if ($(`.thumb-page[data-page='${data.page_no}']`).length !== 0 || data.page_no > opus.pages) {
             console.log(`data.reqno: ${data.reqno}, last reqno: ${o_browse.lastLoadDataRequestNo}`);
-            if ($(".op-page-loading-status > .loader").is(":visible")){
+            if ($(".op-page-loading-status > .loader").is(":visible")) {
                 $(".op-page-loading-status > .loader").hide();
             }
             return;
         }
-        // this variable is used let us know there is no data to load
-        // we will use it as the flag to hide the spinner triggered by scrollThreshold
-        o_browse.dataNotAvailable = (data.count === 0)
 
         if (o_browse.infiniteScrollCurrentMaxPageNumber > data.page_no) {
             // prepend data from new page
