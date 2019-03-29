@@ -10,10 +10,10 @@ var o_detail = {
             let href = $(this).attr("href").split('?')[0];
             switch($(this).data("action")) {
                 case "downloadData":
-                    $(this).attr("href", `${href}?cols=${opus.prefs.cols.join()}`);
+                    $(this).attr("href", `/opus/__api/download/${opusId}.zip?cols=${opus.prefs.cols.join()}`);
                     break;
                 case "downloadURL":
-                    $(this).attr("href", `${href}&cols=${opus.prefs.cols.join()}`);
+                    $(this).attr("href", `/opus/__api/download/${opusId}.zip?urlonly=1&cols=${opus.prefs.cols.join()}`);
                     break;
             }
             //return false;
