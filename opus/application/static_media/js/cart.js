@@ -1,6 +1,8 @@
 var o_cart = {
     lastCartRequestNo: 0,
     lastRequestNo: 0,
+    downloadInProcess: false,
+
 
     /**
      *
@@ -35,7 +37,7 @@ var o_cart = {
          $("#cart").on("click","#download_options input", function() {
              $("#total_download_size").hide();
              $("p > .spinner").fadeIn().css("display", "inline-block");
-             
+
              let add_to_url = o_cart.getDownloadFiltersChecked();
              o_cart.lastCartRequestNo++;
              let url = "/opus/__cart/status.json?reqno=" + o_cart.lastCartRequestNo + "&" + add_to_url + "&download=1";
@@ -69,11 +71,11 @@ var o_cart = {
      },
 
      downloadZip: function(type, errorMsg) {
-         if (opus.download_in_process) {
+         if (o_cart.downloadInProcess) {
              return false;
          }
          $("#download_links").show();
-         opus.download_in_process = true;
+         o_cart.downloadInProcess = true;
          $(".spinner", "#download_links").fadeIn().css("display","inline-block");
 
          let add_to_url = o_cart.getDownloadFiltersChecked();
@@ -98,7 +100,7 @@ var o_cart = {
                  $(`<li>${errorMsg}</li>`).hide().prependTo("ul.zippedFiles", "#cart_summary").slideDown("fast");
              },
              complete: function() {
-                 opus.download_in_process = false;
+                 o_cart.downloadInProcess = false;
              }
          });
      },
@@ -156,7 +158,6 @@ var o_cart = {
      },
 
      loadCartData: function (page) {
-        //window.scrollTo(0,opus.browse_view_scrolls[opus.prefs.browse]);
         page = (page == undefined ? 1 : (opus.cart_change ? 1 : page));
 
         let view = o_browse.getViewInfo();
@@ -217,7 +218,7 @@ var o_cart = {
                     // this div lives in the in the nav menu template
                     $(".cart_details", "#cart").hide().html(html).fadeIn();
 
-                    if (opus.download_in_process) {
+                    if (o_cart.downloadInProcess) {
                         $(".spinner", "#cart_summary").fadeIn();
                     }
 

@@ -1,7 +1,5 @@
 // generic globals, hmm..
 var default_pages = {"gallery":1, "dataTable":1, "cart_gallery":1, "cart_data":1 };
-var reset_footer_clicks = {"gallery":0, "dataTable":0, "cart_gallery":0, "cart_data":0 };
-var reset_browse_view_scrolls = {"gallery":0, "dataTable":0, "cart_gallery":0, "cart_data":0 };
 
 // defining the opus namespace first; document ready comes after...
 var opus = {
@@ -27,8 +25,6 @@ var opus = {
     lastResultCountRequestNo: 0,
     waitingForAllNormalizedAPI: false,
 
-    download_in_process: false,
-
     // client side prefs, changes to these *do not trigger results to refresh*
     // prefs gets added verbatim to the url, so don't add anything weird into here!
     prefs:{ 'view':'search', // search, browse, cart, detail
@@ -50,7 +46,6 @@ var opus = {
                       // this is not
 					  // note that this is also not a dictionary because we need to preserve the order.
 
-    gallery_data: {},  // holds gallery column data
 
     lastPageDrawn: {"browse":0, "cart":0},
 
@@ -66,25 +61,16 @@ var opus = {
     force_load: true, // set this to true to force load() when selections haven't changed
 
     // searching - ui
-    search_tab_drawn: false,
     widgets_drawn:[], // keeps track of what widgets are actually drawn
     widgets_fetching:[], // this widget is currently being fetched
     widget_elements_drawn:[], // the element is drawn but the widget might not be fetched yet
-    search_form_cols:1, // the number of search form cols, 1 or 2
     widget_full_sizes:{}, // when a widget is minimized and doesn't have a custom size defined we keep track of what the full size was so we can restore it when they unminimize/maximize widget
-    menu_list_indicators: {'slug':[], 'cat':[], 'group':[] },
-    // menu_state: {'cats':['obs_general'], 'groups':[]},  // keep track of menu items that are open
     menu_state: {'cats':['obs_general']},
     default_widgets: default_widgets.split(','),
     widget_click_timeout:0,
 
     // browse tab
     pages:0, // total number of pages this result
-    browse_auto:'.chosen_columns', // we are turning this on as default
-    metadata_selector_drawn:false,
-    gallery_begun:false, // have we started the gallery view
-    browse_view_scrolls: reset_browse_view_scrolls, // same defaults as footer clicks (definied in header.html)
-                                                      // {"gallery":0, "data":0, "cart_gallery":0, "cart_data":0 };
 
     // cart
     cart_change:true, // cart has changed since last load of cart_tab

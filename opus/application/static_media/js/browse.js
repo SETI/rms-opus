@@ -8,7 +8,11 @@ var o_browse = {
 
     // if the user entered a number/slider for page/obs number,
     // selector to set scrolltop to after data has been loaded
+    galleryBegun: false, // have we started the gallery view
+    galleryData: {},  // holds gallery column data
+
     galleryScrollTo: 0,
+    metadataSelectorDrawn: false,
 
     lastLoadDataRequestNo: 0,
 
@@ -71,7 +75,7 @@ var o_browse = {
             o_browse.updateBrowseNav();
 
             // reset scroll position
-            window.scrollTo(0,opus.browse_view_scrolls[opus.prefs.browse]); // restore previous scroll position
+            window.scrollTo(0,0); // restore previous scroll position
 
             return false;
         });
@@ -306,25 +310,9 @@ var o_browse = {
             }
 
             opus.prefs["order"] = orderBy;
-            // let newOrderInserted = false;
-            // $.each(opus.prefs["order"], function(idx, slug) {
-            //     if(orderBy === slug || orderBy === `-${slug}` || `-${orderBy}` === slug) {
-            //         opus.prefs["order"][idx] = orderBy;
-            //         newOrderInserted = true;
-            //         return false; // break out of $.each loop
-            //     }
-            // })
-            // if(!newOrderInserted) {
-            //     opus.prefs["order"].unshift(orderBy);
-            // }
-
             o_hash.updateHash();
-            // opus.lastPageDrawn.browse = 0;
-            // opus.gallery_begun = false;     // so that we redraw from the beginning
-            // opus.gallery_data = {};
-            // opus.prefs.page = default_pages; // reset pages to 1 when col ordering changes
-            // o_browse.loadData(1);
             o_browse.renderSortedDataFromBeginning();
+
             return false;
         });
 
@@ -418,9 +406,10 @@ var o_browse = {
 
     renderSortedDataFromBeginning: function() {
         opus.lastPageDrawn.browse = 0;
-        opus.gallery_begun = false;     // so that we redraw from the beginning
-        opus.gallery_data = {};
         opus.prefs.page = default_pages; // reset pages to 1 when col ordering changes
+
+        o_browse.galleryBegun = false;     // so that we redraw from the beginning
+        o_browse.galleryData = {};
         o_browse.loadData(1);
     },
 
@@ -926,11 +915,11 @@ var o_browse = {
     },
 
     renderMetadataSelector: function() {
-        if (!opus.metadata_selector_drawn) {
+        if (!o_browse.metadataSelectorDrawn) {
             let url = "/opus/__forms/metadata_selector.html?" + o_hash.getHash();
             $(".modal-body.metadata").load( url, function(response, status, xhr)  {
 
-                opus.metadata_selector_drawn=true;  // bc this gets saved not redrawn
+                o_browse.metadataSelectorDrawn=true;  // bc this gets saved not redrawn
                 $("#metadataSelector .op-reset-button").hide(); // we are not using this
 
                 // since we are rendering the left side of metadata selector w/the same code that builds the select menu, we need to unhighlight the selected widgets
@@ -1007,7 +996,7 @@ var o_browse = {
                 let opusId = item.opusid;
                 // we have to store the relative observation number because we may not have pages in succession, this is for the slider position
                 let observationNumber = ((data.page_no-1)*data.count)+index+1;  // needs to be 1-based, not 0-based...
-                opus.gallery_data[opusId] = item.metadata;	// for galleryView, store in global array
+                o_browse.galleryData[opusId] = item.metadata;	// for galleryView, store in global array
 
                 // gallery
                 let images = item.images;
@@ -1221,7 +1210,7 @@ var o_browse = {
         });
         if (page > opus.lastPageDrawn[opus.prefs.view] + 1 ||
             (page < opus.lastPageDrawn[opus.prefs.view] && !$.inArray(page, pagesDrawn))) {
-            opus.gallery_begun = false;
+            o_browse.galleryBegun = false;
         }
 
         let selector = `#${opus.prefs.view} .gallery-contents`;
@@ -1256,7 +1245,7 @@ var o_browse = {
                 o_browse.infiniteScrollCurrentMaxPageNumber = opus.lastPageDrawn[opus.prefs.view];
             }
 
-            if (!opus.gallery_begun) {
+            if (!o_browse.galleryBegun) {
                 o_browse.initTable(data.columns);
 
                 if (!$(selector).data("infiniteScroll")) {
@@ -1306,10 +1295,10 @@ var o_browse = {
             o_browse.updateSortOrder(data);
 
             // prefill next page
-            if (!opus.gallery_begun) {
+            if (!o_browse.galleryBegun) {
                 $(selector).infiniteScroll('loadNextPage');
                 o_browse.updateSliderHandle();
-                opus.gallery_begun = true;
+                o_browse.galleryBegun = true;
             }
             // if($(".page-loading-status > .loader").is(":visible")){
             //     $(".page-loading-status > .loader").hide();
@@ -1485,7 +1474,7 @@ var o_browse = {
         // list columns + values
         let html = "<dl>";
         $.each(opus.col_labels, function(index, columnLabel) {
-            let value = opus.gallery_data[opusId][index];
+            let value = o_browse.galleryData[opusId][index];
             html += `<dt>${columnLabel}:</dt><dd>${value}</dd>`;
         });
         html += "</dl>";
@@ -1531,11 +1520,10 @@ var o_browse = {
     resetData: function() {
         $("#dataTable > tbody").empty();  // yes all namespaces
         $(".gallery").empty();
-        opus.gallery_data = [];
+        o_browse.galleryData = [];
         opus.lastPageDrawn = {"browse":0, "cart":0};
         opus.cart_change = true;  // forces redraw of cart tab because reset_lastPageDrawn
-        opus.browse_view_scrolls = reset_browse_view_scrolls;
-        opus.gallery_begun = false;
+        o_browse.galleryBegun = false;
         o_hash.updateHash();
     },
 
@@ -1544,7 +1532,7 @@ var o_browse = {
         when the user changes the query and all this stuff is already drawn
         need to reset all of it (todo: replace with framework!)
         */
-        opus.metadata_selector_drawn = false;
+        o_browse.metadataSelectorDrawn = false;
         o_browse.resetData();
     },
 };
