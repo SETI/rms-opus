@@ -424,13 +424,6 @@ th.sticky-header {
     bottom: 1px;
 }
 
-
-/* Fix the spinner*/
-.page-loading-status .loader {
-    display: none;
-    /* top: 250px; */
-}
-
 .fadey {
     color:#b0b0b0;
 }
@@ -662,7 +655,7 @@ a:-webkit-any-link, a::any-link {
   max-width: 28em;
 }
 
-#download_links {
+#op-download-links {
   display: none;
 }
 
@@ -900,6 +893,7 @@ li a.search-param:hover {
     padding: 0px 5px;
 }
 
+/* small spinner */
 .spinner {
     background-image: url('https://tools.pds-rings.seti.org/static_media/img/spinner.gif');
     width:30px;
@@ -907,44 +901,48 @@ li a.search-param:hover {
     background-repeat: no-repeat;
 }
 
-.total-size .spinner {
+/* small spinner: shows up when zipped file links are loading (cart page)*/
+#op-download-links .spinner {
+    display:none;
+    margin:0px 10px;
+    width:30px;
+}
+
+/* smaller spinner: show up when observation dropdown menu is loading */
+#op-obs-menu .spinner {
+    display:none;
+    margin:0px 10px;
+    width:30px;
+}
+
+/* small spinner: shows up when total size is loading (cart page)*/
+.op-total-size .spinner {
     display: none;
     line-height: 16px;
     margin: 0 10px;
 }
 
-#download_links .spinner {
-    display:none;
-    margin:0px 10px;
-    width:30px;
-}
-
-#cart_summary .button-container button {
-  margin-bottom: 1em;
-}
-
-#obs-menu .spinner {
-    display:none;
-    margin:0px 10px;
-    width:30px;
-}
-
-/* properly display menu spinner */
-.menu_spinner {
+/* smaller spinner next to general constraints: shows up when menu is loading (search page)*/
+.op-menu-text .spinner {
     display:none;
     margin-left:5px;
     width:18px;
     line-height:16px;
 }
 
+/* large ellips spinner*/
+.op-page-loading-status .loader {
+    display: none;
+    /* top: 250px; */
+}
+
+#cart_summary .button-container button {
+    margin-bottom: 1em;
+}
+
 .badge-xlg {
     font-size:115%;
     font-weight:bold;
-}
-
-
-#zip_files .spinner {
-    display:none;
 }
 
 .mult_group_label {

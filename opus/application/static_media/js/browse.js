@@ -19,7 +19,6 @@ var o_browse = {
     currentOpusId: "",
     tempHash: "",
     dataNotAvailable: false,
-    reachLastData: false,
     /**
     *
     *  all the things that happen on the browse tab
@@ -112,7 +111,7 @@ var o_browse = {
 
         // browse sort order - remove sort slug
         $(".sort-contents").on("click", "li .remove-sort", function() {
-            $(".page-loading-status > .loader").show();
+            $(".op-page-loading-status > .loader").show();
             let slug = $(this).parent().attr("data-slug");
             let descending = $(this).parent().attr("data-descending");
             o_browse.tableSorting = true;
@@ -132,7 +131,7 @@ var o_browse = {
 
         // browse sort order - flip sort order of a slug
         $(".sort-contents").on("click", "li .flip-sort", function() {
-            $(".page-loading-status > .loader").show();
+            $(".op-page-loading-status > .loader").show();
             let slug = $(this).parent().attr("data-slug");
             let descending = $(this).parent().attr("data-descending");
             o_browse.tableSorting = true;
@@ -307,8 +306,8 @@ var o_browse = {
         // click table column header to reorder by that column
         $("#browse").on("click", ".dataTable th a",  function() {
             // show this spinner right away when table is clicked
-            // we will hide page status loader from infiniteScroll if page-loading-status loader is spinning
-            $(".page-loading-status > .loader").show();
+            // we will hide page status loader from infiniteScroll if op-page-loading-status loader is spinning
+            $(".op-page-loading-status > .loader").show();
             let orderBy =  $(this).data("slug");
 
             let orderIndicator = $(this).find("span:last")
@@ -349,12 +348,12 @@ var o_browse = {
             return false;
         });
 
-        $("#obs-menu").on("click", '.dropdown-header',  function(e) {
+        $("#op-obs-menu").on("click", '.dropdown-header',  function(e) {
             o_browse.hideMenu();
             return false;
         });
 
-        $("#obs-menu").on("click", '.dropdown-item',  function(e) {
+        $("#op-obs-menu").on("click", '.dropdown-item',  function(e) {
             let opusId = $(this).parent().attr("data-id");
             o_browse.hideMenu();
 
@@ -535,7 +534,7 @@ var o_browse = {
                 }
                 // remove spinner when scrollThreshold is triggered and last data fetching has no data
                 // Need to revisit this one
-                if(o_browse.dataNotAvailable) {
+                if (o_browse.dataNotAvailable) {
                     $(".infinite-scroll-request").hide();
                 }
                 $(`#${opus.prefs.view} .gallery-contents`).infiniteScroll("loadNextPage");
@@ -554,24 +553,24 @@ var o_browse = {
     },
 
     hideMenu: function() {
-        $("#obs-menu").removeClass("show").hide();
+        $("#op-obs-menu").removeClass("show").hide();
     },
 
     showMenu: function(e, opusId) {
         // make this like a default right click menu
-        if ($("#obs-menu").hasClass("show")) {
+        if ($("#op-obs-menu").hasClass("show")) {
             o_browse.hideMenu();
         }
         let inCart = (o_cart.isIn(opusId) ? "" : "in");
         let buttonInfo = o_browse.cartButtonInfo(inCart);
-        $("#obs-menu .dropdown-header").html(opusId);
-        $("#obs-menu .cart-item").html(`<i class="${buttonInfo.icon}"></i>${buttonInfo.title}`);
-        $("#obs-menu [data-action='cart']").attr("data-id", opusId);
-        $("#obs-menu [data-action='info']").attr("data-id", opusId);
-        $("#obs-menu [data-action='downloadCSV']").attr("href",`/opus/__api/metadata_v2/${opusId}.csv?cols=${opus.prefs.cols.join()}`);
-        $("#obs-menu [data-action='downloadCSVAll']").attr("href",`/opus/__api/metadata_v2/${opusId}.csv`);
-        $("#obs-menu [data-action='downloadData']").attr("href",`/opus/__api/download/${opusId}.zip?cols=${opus.prefs.cols.join()}`);
-        $("#obs-menu [data-action='downloadURL']").attr("href",`/opus/__api/download/${opusId}.zip?urlonly=1&cols=${opus.prefs.cols.join()}`);
+        $("#op-obs-menu .dropdown-header").html(opusId);
+        $("#op-obs-menu .cart-item").html(`<i class="${buttonInfo.icon}"></i>${buttonInfo.title}`);
+        $("#op-obs-menu [data-action='cart']").attr("data-id", opusId);
+        $("#op-obs-menu [data-action='info']").attr("data-id", opusId);
+        $("#op-obs-menu [data-action='downloadCSV']").attr("href",`/opus/__api/metadata_v2/${opusId}.csv?cols=${opus.prefs.cols.join()}`);
+        $("#op-obs-menu [data-action='downloadCSVAll']").attr("href",`/opus/__api/metadata_v2/${opusId}.csv`);
+        $("#op-obs-menu [data-action='downloadData']").attr("href",`/opus/__api/download/${opusId}.zip?cols=${opus.prefs.cols.join()}`);
+        $("#op-obs-menu [data-action='downloadURL']").attr("href",`/opus/__api/download/${opusId}.zip?urlonly=1&cols=${opus.prefs.cols.join()}`);
 
         // use the state of the current selected observation to set the icons if one has been selected,
         // otherwise use the state of the current observation - this will identify what will happen to the range
@@ -584,15 +583,15 @@ var o_browse = {
         let rangeText = ($(e.delegateTarget).find(".selected").length == 0 ?
                             `<i class='fas fa-sign-out-alt'></i>Start ${addRemoveText} cart here` :
                             `<i class='fas fa-sign-out-alt fa-rotate-180'></i>End ${addRemoveText} cart here`);
-        $("#obs-menu .dropdown-item[data-action='range']").html(rangeText);
+        $("#op-obs-menu .dropdown-item[data-action='range']").html(rangeText);
 
         let namespace = `#${opus.prefs.view}`;
-        let menu = {"height":$("#obs-menu").innerHeight(), "width":$("#obs-menu").innerWidth()};
+        let menu = {"height":$("#op-obs-menu").innerHeight(), "width":$("#op-obs-menu").innerWidth()};
 
         let top = ($(namespace).innerHeight() - e.pageY > menu.height) ? e.pageY-5 : e.pageY-menu.height;
         let left = ($(namespace).innerWidth() - e.pageX > menu.width)  ? e.pageX-5 : e.pageX-menu.width;
 
-        $("#obs-menu").css({
+        $("#op-obs-menu").css({
             display: "block",
             top: top,
             left: left
@@ -686,8 +685,8 @@ var o_browse = {
                 o_browse.loadData(1);
             } else {
                 // remove spinner if nothing is re-draw when we click save changes
-                if($(".page-loading-status > .loader").is(":visible")){
-                    $(".page-loading-status > .loader").hide();
+                if($(".op-page-loading-status > .loader").is(":visible")){
+                    $(".op-page-loading-status > .loader").hide();
                 }
             }
         });
@@ -770,7 +769,7 @@ var o_browse = {
                     o_browse.resetMetadata(default_columns.split(','));
                     break;
                 case "submit":
-                    $(".page-loading-status > .loader").show();
+                    $(".op-page-loading-status > .loader").show();
                     break;
                 case "cancel":
                     $('#myModal').modal('hide')
@@ -1027,12 +1026,12 @@ var o_browse = {
             $(".gallery", namespace).append(html);
         }
         // $(".gallery", namespace).append(html);
-        // $(".page-loading-status").hide();
+        // $(".op-page-loading-status").hide();
 
         o_browse.adjustTableSize();
         o_browse.galleryScrollbar.update();
-        if($(".page-loading-status > .loader").is(":visible")){
-            $(".page-loading-status > .loader").hide();
+        if($(".op-page-loading-status > .loader").is(":visible")){
+            $(".op-page-loading-status > .loader").hide();
         }
         o_hash.updateHash(true);
     },
@@ -1176,8 +1175,8 @@ var o_browse = {
         // wait! is this page already drawn?
         if ($(`${selector} .thumb-page[data-page='${page}']`).length > 0 && !o_browse.tableSorting) {
             o_browse.setScrollbarPosition(selector, page);
-            if($(".page-loading-status > .loader").is(":visible")){
-                $(".page-loading-status > .loader").hide();
+            if($(".op-page-loading-status > .loader").is(":visible")){
+                $(".op-page-loading-status > .loader").hide();
             }
             return;
         } else {
@@ -1194,8 +1193,8 @@ var o_browse = {
             let request_time = new Date().getTime() - start_time;
             if (data.reqno < o_browse.lastLoadDataRequestNo) {
                 // make sure to remove spinner before return
-                if($(".page-loading-status > .loader").is(":visible")){
-                    $(".page-loading-status > .loader").hide();
+                if($(".op-page-loading-status > .loader").is(":visible")){
+                    $(".op-page-loading-status > .loader").hide();
                 }
                 return;
             }
@@ -1223,9 +1222,9 @@ var o_browse = {
                     });
 
                     $(selector).on("request.infiniteScroll", function( event, path ) {
-                        // hide default page status loader if page-loading-status loader is spinning
+                        // hide default page status loader if op-page-loading-status loader is spinning
                         // && o_browse.tableSorting
-                        if ($(".page-loading-status > .loader").is(":visible")){
+                        if ($(".op-page-loading-status > .loader").is(":visible")){
                             $(".infinite-scroll-request").hide();
                         }
                     });
@@ -1237,7 +1236,7 @@ var o_browse = {
                         // remove spinner when scrollThreshold is triggered and last data fetching has no data
                         // Need to revisit this one
                         // console.log(`page about to be drawn: ${opus.lastPageDrawn[opus.prefs.view] + 1}`);
-                        if(o_browse.dataNotAvailable) {
+                        if (o_browse.dataNotAvailable) {
                             $(".infinite-scroll-request").hide();
                         }
                         $(selector).infiniteScroll("loadNextPage");
@@ -1258,8 +1257,8 @@ var o_browse = {
                 $(selector).infiniteScroll('loadNextPage');
                 opus.gallery_begun = true;
             }
-            // if($(".page-loading-status > .loader").is(":visible")){
-            //     $(".page-loading-status > .loader").hide();
+            // if($(".op-page-loading-status > .loader").is(":visible")){
+            //     $(".op-page-loading-status > .loader").hide();
             // }
             o_browse.tableSorting = false;
         });
@@ -1270,16 +1269,14 @@ var o_browse = {
         if ($(`.thumb-page[data-page='${data.page_no}']`).length !== 0) {
             console.log(`page ${data.page_no} has been rendered already`)
             console.log(`data.reqno: ${data.reqno}, last reqno: ${o_browse.lastLoadDataRequestNo}`);
-            if($(".page-loading-status > .loader").is(":visible")){
-                $(".page-loading-status > .loader").hide();
+            if($(".op-page-loading-status > .loader").is(":visible")){
+                $(".op-page-loading-status > .loader").hide();
             }
             return;
         }
-        if (data.count === 0) {
-            o_browse.dataNotAvailable = true;
-        } else {
-            o_browse.dataNotAvailable = false;
-        }
+        // this variable is used let us know there is no data to load
+        // we will use it as the flag to hide the spinner triggered by scrollThreshold
+        o_browse.dataNotAvailable = (data.count === 0)
 
         if (o_browse.infiniteScrollCurrentMaxPageNumber > data.page_no) {
             // prepend data from new page
@@ -1345,7 +1342,7 @@ var o_browse = {
         o_browse.undoRangeSelect();
 
         $(`.${opus.prefs.browse}#browse`).fadeIn();
-        $(".page-loading-status > .loader").show();
+        $(".op-page-loading-status > .loader").show();
         o_browse.updateBrowseNav();
         o_browse.renderMetadataSelector();   // just do this in background so there's no delay when we want it...
 

@@ -1,7 +1,7 @@
 <div id="download-options-container" class="sidebar_wrapper pr-0">
     <div id="cart-sidebar">
         <div id="cart_summary" class="well well-lg">
-            <div id="download_links">
+            <div id="op-download-links">
                 <h1>Zipped File Links</h1>
                 <ul class="zippedFiles"></ul>
                 <span class="spinner">&nbsp;</span>
@@ -9,7 +9,7 @@
             <h1>Download Options</h1>
             <!-- <p>Total Files: <span id="total_files">{{ download_count }}</span></p> -->
             <!-- <p>Total Size (before zip): <span id="total_download_size">{{ total_download_size_pretty }}</span></p> -->
-            <p class="total-size">Total Size (before zip): <span class="spinner">&nbsp;</span><span id="total_download_size">{{ total_download_size_pretty }}</span></p>
+            <p class="op-total-size">Total Size (before zip): <span class="spinner">&nbsp;</span><span id="total_download_size">{{ total_download_size_pretty }}</span></p>
 
             <div id="download_options">
                 {% for product_cat, product_list in product_cat_list %}

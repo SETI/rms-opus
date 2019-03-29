@@ -34,7 +34,7 @@ var o_cart = {
          // check an input on selected products and images updates file_info
          $("#cart").on("click","#download_options input", function() {
              $("#total_download_size").hide();
-             $(".total-size .spinner").fadeIn().css("display", "inline-block");
+             $(".op-total-size .spinner").fadeIn().css("display", "inline-block");
 
              let add_to_url = o_cart.getDownloadFiltersChecked();
              o_cart.lastCartRequestNo++;
@@ -43,7 +43,7 @@ var o_cart = {
                  if(info.reqno < o_cart.lastCartRequestNo) {
                      return;
                  }
-                 $(".total-size .spinner").hide()
+                 $(".op-total-size .spinner").hide()
                  $("#total_download_size").fadeOut().html(info.total_download_size_pretty).fadeIn();
              });
          });
@@ -72,9 +72,9 @@ var o_cart = {
          if (opus.download_in_process) {
              return false;
          }
-         $("#download_links").show();
+         $("#op-download-links").show();
          opus.download_in_process = true;
-         $(".spinner", "#download_links").fadeIn().css("display","inline-block");
+         $(".spinner", "#op-download-links").fadeIn().css("display","inline-block");
 
          let add_to_url = o_cart.getDownloadFiltersChecked();
          let url = "/opus/__cart/download.json?" + add_to_url + "&" + o_hash.getHash();
@@ -88,13 +88,13 @@ var o_cart = {
                  } else {
                      $(`<li><a href = "${data.filename}">${data.filename}</a></li>`).hide().prependTo("ul.zippedFiles", "#cart_summary").slideDown("slow");
                  }
-                 $(".spinner", "#download_links").fadeOut();
+                 $(".spinner", "#op-download-links").fadeOut();
                  // o_collections.downloadOptionsScrollbar.update();
                  let adjustProductInfoHeight = _.debounce(o_cart.adjustProductInfoHeight, 200);
                  adjustProductInfoHeight();
              },
              error: function(e) {
-                 $(".spinner", "#download_links").fadeOut();
+                 $(".spinner", "#op-download-links").fadeOut();
                  $(`<li>${errorMsg}</li>`).hide().prependTo("ul.zippedFiles", "#cart_summary").slideDown("fast");
              },
              complete: function() {
@@ -371,11 +371,11 @@ var o_cart = {
         // display spinner next to cart badge & total size
         $("#cart_count").html(opus.spinner);
         $("#total_download_size").hide();
-        $(".total-size .spinner").fadeIn().css("display", "inline-block");
+        $(".op-total-size .spinner").fadeIn().css("display", "inline-block");
 
         o_cart.lastCartRequestNo++;
         $.getJSON(url  + add_to_url + "&reqno=" + o_cart.lastCartRequestNo, function(statusData) {
-            $(".total-size .spinner").hide()
+            $(".op-total-size .spinner").hide()
             o_cart.updateCartStatus(statusData);
         });
     },

@@ -5,10 +5,11 @@
 
                 {#  Each div has a top-level catgory  #}
           <a href="#submenu-{{ div.table_name }}" data-toggle="collapse" aria-expanded="false" class="dropdown-toggle" data-cat="{{ div.table_name }}">
-              <span class="menu-text title">{{ div.label }}</span>
-              {% if div.table_name == 'obs_general' %}
-                  <span class="menu_spinner spinner">&nbsp;</span>
-              {% endif %}
+              <span class="op-menu-text title">{{ div.label }}
+                  {% if div.table_name == 'obs_general' %}
+                      <span class="spinner">&nbsp;</span>
+                  {% endif %}
+              </span>
           </a>
 
           {% if div.table_name == 'obs_general' %}
