@@ -33,18 +33,18 @@ var o_cart = {
 
          // check an input on selected products and images updates file_info
          $("#cart").on("click","#download_options input", function() {
-             $("#total_download_size").hide();
-             $("p > .spinner").fadeIn().css("display", "inline-block");
-             
+             $("#op-total-download-size").hide();
+             $(".op-total-size .spinner").addClass("op-show-spinner");
+
              let add_to_url = o_cart.getDownloadFiltersChecked();
              o_cart.lastCartRequestNo++;
              let url = "/opus/__cart/status.json?reqno=" + o_cart.lastCartRequestNo + "&" + add_to_url + "&download=1";
              $.getJSON(url, function(info) {
-                 if(info.reqno < o_cart.lastCartRequestNo) {
+                 if (info.reqno < o_cart.lastCartRequestNo) {
                      return;
                  }
-                 $("p > .spinner").hide()
-                 $("#total_download_size").fadeOut().html(info.total_download_size_pretty).fadeIn();
+                 $(".op-total-size .spinner").removeClass("op-show-spinner");
+                 $("#op-total-download-size").fadeOut().html(info.total_download_size_pretty).fadeIn();
              });
          });
      },
@@ -55,7 +55,7 @@ var o_cart = {
          let product_types = [];
          let image_types = [];
          let add_to_url = [];
-         $("ul#product_types input:checkbox:checked").each(function(){
+         $("ul#product_types input:checkbox:checked").each(function() {
              product_types.push($(this).val());
          });
          let checked_filters = {"types":product_types};
@@ -72,9 +72,9 @@ var o_cart = {
          if (opus.download_in_process) {
              return false;
          }
-         $("#download_links").show();
+         $("#op-download-links").show();
          opus.download_in_process = true;
-         $(".spinner", "#download_links").fadeIn().css("display","inline-block");
+         $(".spinner", "#op-download-links").fadeIn().css("display","inline-block");
 
          let add_to_url = o_cart.getDownloadFiltersChecked();
          let url = "/opus/__cart/download.json?" + add_to_url + "&" + o_hash.getHash();
@@ -82,19 +82,19 @@ var o_cart = {
          $.ajax({
              url: url,
              dataType: "json",
-             success: function(data){
+             success: function(data) {
                  if (data.error !== undefined) {
                      $(`<li>${data.error}</li>`).hide().prependTo("ul.zippedFiles", "#cart_summary").slideDown("fast");
                  } else {
                      $(`<li><a href = "${data.filename}">${data.filename}</a></li>`).hide().prependTo("ul.zippedFiles", "#cart_summary").slideDown("slow");
                  }
-                 $(".spinner", "#download_links").fadeOut();
+                 $(".spinner", "#op-download-links").fadeOut();
                  // o_collections.downloadOptionsScrollbar.update();
                  let adjustProductInfoHeight = _.debounce(o_cart.adjustProductInfoHeight, 200);
                  adjustProductInfoHeight();
              },
              error: function(e) {
-                 $(".spinner", "#download_links").fadeOut();
+                 $(".spinner", "#op-download-links").fadeOut();
                  $(`<li>${errorMsg}</li>`).hide().prependTo("ul.zippedFiles", "#cart_summary").slideDown("fast");
              },
              complete: function() {
@@ -112,9 +112,9 @@ var o_cart = {
 
          // The following steps will hide the y-scrollbar when it's not needed.
          // Without these steps, y-scrollbar will exist at the beginning, and disappear after the first attempt of scrolling
-         if(o_cart.downloadOptionsScrollbar) {
-             if(downloadOptionsContainer > cartSummaryHeight) {
-                 if(!$("#download-options-container .ps__rail-y").hasClass("hide_ps__rail-y")) {
+         if (o_cart.downloadOptionsScrollbar) {
+             if (downloadOptionsContainer > cartSummaryHeight) {
+                 if (!$("#download-options-container .ps__rail-y").hasClass("hide_ps__rail-y")) {
                      $("#download-options-container .ps__rail-y").addClass("hide_ps__rail-y");
                      o_cart.downloadOptionsScrollbar.settings.suppressScrollY = true;
                  }
@@ -125,7 +125,7 @@ var o_cart = {
              o_cart.downloadOptionsScrollbar.update();
          }
 
-         if(o_cart.cartGalleryScrollbar) {
+         if (o_cart.cartGalleryScrollbar) {
              o_cart.cartGalleryScrollbar.update();
          }
      },
@@ -135,9 +135,9 @@ var o_cart = {
              return;
          }
          let count = status.count;
-         $("#cart_count").html(count);
+         $("#op-cart-count").html(count);
          if (status.total_download_size_pretty !== undefined) {
-             $("#total_download_size").fadeOut().html(status.total_download_size_pretty).fadeIn();
+             $("#op-total-download-size").fadeOut().html(status.total_download_size_pretty).fadeIn();
          }
          o_cart.adjustProductInfoHeight();
      },
@@ -145,17 +145,19 @@ var o_cart = {
 
      // init an existing cart on page load
      initCart: function() {
+        // display cart badge spinner, it will get updated after the return of status.json
+        $("#op-cart-count").html(opus.spinner);
         // returns any user cart saved in session
         o_cart.lastCartRequestNo++;
         $.getJSON("/opus/__cart/status.json?reqno=" + o_cart.lastCartRequestNo, function(statusData) {
-            if(statusData.reqno < o_cart.lastCartRequestNo) {
+            if (statusData.reqno < o_cart.lastCartRequestNo) {
                 return;
             }
             o_cart.updateCartStatus(statusData);
         });
      },
 
-     loadCartData: function (page) {
+     loadCartData: function(page) {
         //window.scrollTo(0,opus.browse_view_scrolls[opus.prefs.browse]);
         page = (page == undefined ? 1 : (opus.cart_change ? 1 : page));
 
@@ -187,7 +189,7 @@ var o_cart = {
                     history: false,
                     debug: false,
                 });
-                $("#cart .gallery-contents").on( "load.infiniteScroll", function( event, response, path ) {
+                $("#cart .gallery-contents").on( "load.infiniteScroll", function(event, response, path) {
                     let jsonData = JSON.parse( response );
                     o_browse.renderGalleryAndTable(jsonData, path);
                 });
@@ -229,7 +231,7 @@ var o_cart = {
 
                     o_cart.downloadOptionsScrollbar = new PerfectScrollbar("#download-options-container");
 
-                    if(!o_cart.cartGalleryScrollbar) {
+                    if (!o_cart.cartGalleryScrollbar) {
                         o_cart.cartGalleryScrollbar = new PerfectScrollbar("#cart .gallery-contents", {
                             suppressScrollX: true,
                         });
@@ -251,11 +253,11 @@ var o_cart = {
     emptyCart: function(returnToSearch=false) {
         // change indicator to zero and let the server know:
         $.getJSON("/opus/__cart/reset.json", function(data) {
-            $("#cart_count").html("0");
+            $("#op-cart-count").html("0");
             opus.cart_change = true;
             $("#cart .navbar").hide();
             $("#cart .sort-order-container").hide();
-            if(!returnToSearch){
+            if (!returnToSearch) {
                 opus.changeTab("cart");
             } else {
                 opus.changeTab("search");
@@ -366,8 +368,14 @@ var o_cart = {
             add_to_url = "&download=1&" + o_cart.getDownloadFiltersChecked();
         }
 
+        // display spinner next to cart badge & total size
+        $("#op-cart-count").html(opus.spinner);
+        $("#op-total-download-size").hide();
+        $(".op-total-size .spinner").addClass("op-show-spinner");
+
         o_cart.lastCartRequestNo++;
         $.getJSON(url  + add_to_url + "&reqno=" + o_cart.lastCartRequestNo, function(statusData) {
+            $(".op-total-size .spinner").removeClass("op-show-spinner");
             o_cart.updateCartStatus(statusData);
         });
     },

@@ -23,7 +23,7 @@ var o_widgets = {
             },
         });
 
-        $("#search_widgets").on( "sortchange", function( event, ui ) {
+        $("#search_widgets").on( "sortchange", function(event, ui) {
             o_widgets.widgetDrop();
         });
 
@@ -35,7 +35,7 @@ var o_widgets = {
         });
 
         // open/close mult groupings in widgets
-        $('#search').on('click', '.mult_group_label_container', function () {
+        $('#search').on('click', '.mult_group_label_container', function() {
             $(this).find('.indicator').toggleClass('fa-plus');
             $(this).find('.indicator').toggleClass('fa-minus');
             $(this).next().slideToggle("fast");
@@ -57,7 +57,7 @@ var o_widgets = {
 
         // close opened surfacegeo widget if user select another surfacegeo target
         $('#search').on('change', 'input.singlechoice', function() {
-            $('a[data-slug^="SURFACEGEO"]').each( function (index) {
+            $('a[data-slug^="SURFACEGEO"]').each( function(index) {
                 let slug = $(this).data('slug');
                 o_widgets.closeWidget(slug);
                 try {
@@ -115,12 +115,12 @@ var o_widgets = {
             }
             o_search.validateRangeInput(normalizedData);
 
-            if(opus.allInputsValid) {
+            if (opus.allInputsValid) {
                 $("input.RANGE").removeClass("search_input_valid");
                 $("input.RANGE").removeClass("search_input_invalid");
                 $("input.RANGE").addClass("search_input_original");
                 $("#sidebar").removeClass("search_overlay");
-                $("#result_count").text(o_utils.addCommas(opus.result_count));
+                $("#op-result-count").text(o_utils.addCommas(opus.result_count));
             }
             let adjustSearchWidgetHeight = _.debounce(o_search.adjustSearchWidgetHeight, 200);
             adjustSearchWidgetHeight();
@@ -355,7 +355,7 @@ var o_widgets = {
      },
 
      // adds a widget and its behaviors, adjusts the opus.prefs variable to include this widget, will not update the hash
-     getWidget: function(slug, formscolumn, deferredObj=null){
+     getWidget: function(slug, formscolumn, deferredObj=null) {
 
          if (!slug) return;
 
@@ -384,7 +384,7 @@ var o_widgets = {
         }
         let reqStart = new Date().getTime();
         $.ajax({ url: "/opus/__forms/widget/" + slug + '.html?' + o_hash.getHash(),
-             success: function(widget_str){
+             success: function(widget_str) {
                 $("#widget__"+slug).html(widget_str);
             }}).done(function() {
 
@@ -440,32 +440,32 @@ var o_widgets = {
                      Refer to hash.js getSelectionsFromHash and updateHash functions
                      */
                      let regexForHashWithSearchParams = /(.*)&view/;
-                     if(newHash.match(regexForHashWithSearchParams)) {
+                     if (newHash.match(regexForHashWithSearchParams)) {
                          newHash = newHash.match(regexForHashWithSearchParams)[1];
                      }
                      // Avoid calling api when some inputs are not valid
-                     if(!opus.allInputsValid) {
+                     if (!opus.allInputsValid) {
                         return;
                      }
                      let url = `/opus/__api/stringsearchchoices/${slug}.json?` + newHash + "&reqno=" + opus.lastRequestNo;
                      $.getJSON(url, function(stringSearchChoicesData) {
-                         if(stringSearchChoicesData.reqno < o_search.slugStringSearchChoicesReqno[slug]) {
+                         if (stringSearchChoicesData.reqno < o_search.slugStringSearchChoicesReqno[slug]) {
                              return;
                          }
 
-                         if(stringSearchChoicesData.full_search) {
+                         if (stringSearchChoicesData.full_search) {
                              o_search.searchMsg = "Results from entire database, not current search constraints"
                          } else {
                              o_search.searchMsg = "Results from current search constraints"
                          }
 
-                         if(stringSearchChoicesData.choices.length !== 0) {
+                         if (stringSearchChoicesData.choices.length !== 0) {
                              stringSearchChoicesData.choices.unshift(o_search.searchMsg);
                              o_search.searchResultsNotEmpty = true;
                          } else {
                              o_search.searchResultsNotEmpty = false;
                          }
-                         if(stringSearchChoicesData.truncated_results) {
+                         if (stringSearchChoicesData.truncated_results) {
                              stringSearchChoicesData.choices.push(o_search.truncatedResultsMsg);
                          }
 
@@ -493,11 +493,11 @@ var o_widgets = {
                  (1) autocomplete dropdown list is closed
                  (2) change event is triggered if input is an empty string
                  */
-                 if(keyupEvent.which === 13) {
+                 if (keyupEvent.which === 13) {
                      displayDropDownList = false;
                      $(`input[name="${slug}"]`).autocomplete("close");
                      let currentStringInputValue = $(`input[name="${slug}"]`).val().trim();
-                     if(currentStringInputValue === "") {
+                     if (currentStringInputValue === "") {
                          $(`input[name="${slug}"]`).trigger("change");
                      }
                  } else {
@@ -506,7 +506,7 @@ var o_widgets = {
              })
              .focusout(function(focusoutEvent) {
                  let currentStringInputValue = $(`input[name="${slug}"]`).val().trim();
-                 if(currentStringInputValue === "") {
+                 if (currentStringInputValue === "") {
                      $(`input[name="${slug}"]`).trigger("change");
                  }
              })
@@ -516,7 +516,7 @@ var o_widgets = {
              let menuWidget = $(`input[name="${slug}"].STRING`).autocomplete("widget");
              menuWidget.menu( "option", "items", "> :not(.ui-autocomplete-not-selectable)" );
 
-             if(stringInputDropDown) {
+             if (stringInputDropDown) {
                  // Add header and footer for dropdown list
                  stringInputDropDown._renderMenu = function(ul, items) {
                    let self = this;
@@ -524,10 +524,10 @@ var o_widgets = {
                        self._renderItem(ul, item );
                    });
 
-                   if(o_search.searchResultsNotEmpty) {
+                   if (o_search.searchResultsNotEmpty) {
                        ul.find("li:first").addClass("ui-state-disabled ui-autocomplete-not-selectable");
                    }
-                   if(o_search.truncatedResults) {
+                   if (o_search.truncatedResults) {
                        ul.find("li:last").addClass("ui-state-disabled ui-autocomplete-not-selectable");
                    }
                  };
@@ -549,7 +549,7 @@ var o_widgets = {
 
              // add the spans that hold the hinting
              try {
-                 $('#' + widget + ' ul label').after( function () {
+                 $('#' + widget + ' ul label').after(function() {
                     var value = $(this).find('input').attr("value");
                     var span_id = 'hint__' + slug + '_' + value.replace(/ /g,'-').replace(/[^\w\s]/gi, '')  // special chars not allowed in id element
                     return '<span class = "hints" id = "' + span_id + '"></span>';
@@ -569,7 +569,7 @@ var o_widgets = {
              o_widgets.scrollToWidget(widget);
              o_search.getHinting(slug);
 
-             if(deferredObj) {
+             if (deferredObj) {
                  deferredObj.resolve();
              }
 

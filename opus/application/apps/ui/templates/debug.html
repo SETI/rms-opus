@@ -17,7 +17,7 @@ $(document).ready(function() {
     if (!window.location.hash) alert ("no hash param");
     var hash = window.location.hash;
     $.ajax({ url: "result_count/?"+ hash.substr(1, hash.length), success: function(json) {
-            $('#result_count').html(json.result_count);
+            $('#op-result-count').html(json.result_count);
             var fields = ['planet','target'];
             // testing mult requests
             for (i=0;i<fields.length;i++) {
