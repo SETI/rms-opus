@@ -24,7 +24,7 @@ var o_menu = {
 
              let slug = $(this).data('slug');
              if (!slug) { return; }
-             if ($.inArray(slug, opus.widgets_drawn)>-1){
+             if ($.inArray(slug, opus.widgets_drawn)>-1) {
                  // widget is already showing do not fetch another
                  try {
                     // scroll to widget and highlight it
@@ -68,7 +68,7 @@ var o_menu = {
      },
 
      getMenu: function() {
-        $('.menu_spinner').fadeIn("fast");
+        $('.op-menu-text .spinner').addClass("op-show-spinner");
         var hash = o_hash.getHash();
 
         $("#sidebar").load( "/opus/__menu.html?" + hash, function() {
@@ -85,10 +85,13 @@ var o_menu = {
             });
             $("#sidebar").toggleClass("op-redraw-menu");
             $('.menu_spinner').fadeOut("fast");
+
             o_menu.markCurrentMenuItem();
             // when a new category is open after an input is clicked, we update the scrollbar
             let adjustSearchSideBarHeight = _.debounce(o_search.adjustSearchSideBarHeight, 500);
             adjustSearchSideBarHeight();
+
+            $('.op-menu-text .spinner').removeClass("op-show-spinner");
         });
      },
      markDefaultMenuItem: function() {

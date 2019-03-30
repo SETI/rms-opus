@@ -86,7 +86,7 @@ var opus = {
     helpPanelOpen: false,
     //------------------------------------------------------------------------------------//
 
-    load: function () {
+    load: function() {
         /* When user makes any change to the interface, such as changing a query,
         the load() will send an ajax request to the server to get information it
         needs to update any hinting (green numbers), result counts, browse results
@@ -135,7 +135,7 @@ var opus = {
         }
 
         // start the result count spinner and do the yellow flash
-        $("#result_count").html(opus.spinner).parent().effect("highlight", {}, 500);
+        $("#op-result-count").html(opus.spinner).parent().effect("highlight", {}, 500);
         $("#op-observation-number").html(opus.spinner).effect("highlight", {}, 500);
         // move this above allNormalizedApiCall to avoid recursive api call
         opus.last_selections = selections;
@@ -156,9 +156,9 @@ var opus = {
         opus.lastResultCountRequestNo++;
         let resultCountHash = o_hash.getHash();
 
-        if(!opus.allInputsValid) {
+        if (!opus.allInputsValid) {
             // remove spinning effect on browse count
-            $("#result_count").text("?");
+            $("#op-result-count").text("?");
             $("#op-observation-number").html("?");
             return;
         }
@@ -167,7 +167,7 @@ var opus = {
     },
 
     updatePageAfterResultCountAPI: function(resultCountData) {
-        if(!opus.allInputsValid || !resultCountData) {
+        if (!opus.allInputsValid || !resultCountData) {
             return;
         }
         if (resultCountData.data[0].reqno < opus.lastResultCountRequestNo) {
@@ -192,9 +192,8 @@ var opus = {
 
     updateResultCount: function(result_count) {
         opus.result_count = result_count;
-        let prettyCount = o_utils.addCommas(opus.result_count);
-        $("#result_count").fadeOut("fast", function() {
-            $(this).html(prettyCount).fadeIn("fast");
+        $("#op-result-count").fadeOut("fast", function() {
+            $(this).html(o_utils.addCommas(opus.result_count)).fadeIn("fast");
             $(this).removeClass("browse_results_invalid");
         });
     },
@@ -296,11 +295,11 @@ var opus = {
         opus.widgets_drawn = [];
         opus.widget_elements_drawn = [];
 
-        if(resetMetadata && !opus.checkIfMetadataAreDefault()) {
+        if (resetMetadata && !opus.checkIfMetadataAreDefault()) {
             opus.prefs.cols = [];
             o_browse.resetMetadata(default_columns.split(','), true);
             $(".op-reset-button button").prop("disabled", true);
-        } else if(!opus.checkIfMetadataAreDefault()) {
+        } else if (!opus.checkIfMetadataAreDefault()) {
             $(".op-reset-button .op-reset-search-metadata").prop("disabled", false);
             $(".op-reset-button .op-reset-search").prop("disabled", true);
         } else {
@@ -315,14 +314,14 @@ var opus = {
             o_widgets.getWidget(slug,"#search_widgets",deferredArr[index]);
         });
         // wait until all widgets are get
-        $.when.apply(null, deferredArr).then(function(){
+        $.when.apply(null, deferredArr).then(function() {
             let adjustSearchWidgetHeight = _.debounce(o_search.adjustSearchHeight, 800);
             adjustSearchWidgetHeight();
         });
 
-        // if(resetMetadata) {
+        // if (resetMetadata) {
         //     $(".op-reset-button button").prop("disabled", false);
-        // } else if(!opus.checkIfMetadataAreDefault()) {
+        // } else if (!opus.checkIfMetadataAreDefault()) {
         //     $(".op-reset-button .op-reset-search-metadata").prop("disabled", false);
         //     $(".op-reset-button .op-reset-search").prop("disabled", true);
         // } else {
@@ -349,14 +348,14 @@ var opus = {
 
     // check if current drawn widgets are default ones
     checkIfDrawnWidgetsAreDefault: function() {
-        if(opus.prefs.widgets.length !== opus.default_widgets.length) {
+        if (opus.prefs.widgets.length !== opus.default_widgets.length) {
             return false;
         }
         let reversedDefaultWidgets = new Array(...opus.default_widgets)
         reversedDefaultWidgets.reverse();
         let defaultWidgetsString = JSON.stringify(reversedDefaultWidgets);
         let drawnWidgetsString = JSON.stringify(opus.prefs.widgets);
-        if(defaultWidgetsString !== drawnWidgetsString) {
+        if (defaultWidgetsString !== drawnWidgetsString) {
             return false;
         }
         return true;
@@ -364,12 +363,12 @@ var opus = {
 
     // check if current cols (metadata) are default ones
     checkIfMetadataAreDefault: function() {
-        if(opus.prefs.cols.length !== default_columns.split(',').length) {
+        if (opus.prefs.cols.length !== default_columns.split(',').length) {
             return false;
         }
         let defaultColsString = JSON.stringify(default_columns.split(','));
         let selectedColsString = JSON.stringify(opus.prefs.cols);
-        if(defaultColsString !== selectedColsString) {
+        if (defaultColsString !== selectedColsString) {
             return false;
         }
         return true;
@@ -386,7 +385,7 @@ var opus = {
     adjustHelpPanelHeight: function() {
         let height = $(window).height()-120;
         $("#op-help-panel .card-body").css("height", height);
-        if(opus.helpScrollbar) {
+        if (opus.helpScrollbar) {
             // Make ps always start from top
             $("#op-help-panel .card-body").scrollTop(0);
             opus.helpScrollbar.update();
@@ -494,7 +493,7 @@ $(document).ready(function() {
         $("#op-help-panel .op-card-contents").html("Loading... please wait.");
         $("#op-help-panel .loader").show();
         // We only need one perfectScrollbar
-        if(!opus.helpScrollbar) {
+        if (!opus.helpScrollbar) {
             opus.helpScrollbar = new PerfectScrollbar("#op-help-panel .card-body", { suppressScrollX: true });
         }
         adjustHelpPanelHeight();
@@ -523,7 +522,7 @@ $(document).ready(function() {
 
         if (!$.isEmptyObject(opus.selections) || !opus.checkIfDrawnWidgetsAreDefault()) {
             $(targetModal).modal("show")
-        } else if(targetModal === "#op-reset-search-metadata-modal" && !opus.checkIfMetadataAreDefault()){
+        } else if (targetModal === "#op-reset-search-metadata-modal" && !opus.checkIfMetadataAreDefault()) {
             $(targetModal).modal("show")
         }
     });
