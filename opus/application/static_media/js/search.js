@@ -325,7 +325,7 @@ var o_search = {
         });
 
         if (!opus.allInputsValid) {
-            $("#result_count").text("?");
+            $("#op-result-count").text("?");
             // set hinting info to ? when any range input has invalid value
             // for range
             $(".range_hints").each(function() {
@@ -363,7 +363,7 @@ var o_search = {
                 opus.widgets_drawn.forEach(function(eachSlug) {
                     o_search.getHinting(eachSlug);
                 });
-                $("#result_count").text(o_utils.addCommas(opus.result_count));
+                $("#op-result-count").text(o_utils.addCommas(opus.result_count));
             }
             $("input.RANGE").each(function() {
                 if (!$(this).hasClass("input_currently_focused")) {

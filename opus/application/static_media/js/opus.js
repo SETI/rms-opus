@@ -148,7 +148,7 @@ var opus = {
         }
 
         // start the result count spinner and do the yellow flash
-        $("#result_count").html(opus.spinner).parent().effect("highlight", {}, 500);
+        $("#op-result-count").html(opus.spinner).parent().effect("highlight", {}, 500);
         // move this above allNormalizedApiCall to avoid recursive api call
         opus.last_selections = selections;
 
@@ -170,7 +170,7 @@ var opus = {
 
         if (!opus.allInputsValid) {
             // remove spinning effect on browse count
-            $("#result_count").text("?");
+            $("#op-result-count").text("?");
             return;
         }
 
@@ -205,7 +205,7 @@ var opus = {
 
     updateResultCount: function(result_count) {
         opus.result_count = result_count;
-        $("#result_count").fadeOut("fast", function() {
+        $("#op-result-count").fadeOut("fast", function() {
             $(this).html(o_utils.addCommas(opus.result_count)).fadeIn("fast");
             $(this).removeClass("browse_results_invalid");
         });

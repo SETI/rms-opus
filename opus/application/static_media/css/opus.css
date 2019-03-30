@@ -587,7 +587,7 @@ img.preview {
 }
 
 /* note - this is here to allow the user-style to be overridden on the modal */
-a:-webkit-any-link, a:any-link {
+a:-webkit-any-link, a::any-link {
     cursor: inherit;
 }
 
@@ -680,6 +680,7 @@ nav.panel-heading {
 .browse-nav-container {
     height: 1.5em;
 }
+
 .browse-nav-container li {
     display: flex;
     align-items: center;
@@ -857,6 +858,7 @@ nav.panel-heading {
     padding-top: 2px;
     padding-bottom: 2px;
 }
+
 .nav-list > li a > .arrow {
     position: absolute;
     right: 10px;
@@ -932,6 +934,10 @@ nav.panel-heading {
     margin-left: 5px;
     width: 18px;
     line-height: 16px;
+}
+
+.spinner.op-show-spinner {
+    display: inline-block;
 }
 
 /* large ellips spinner */

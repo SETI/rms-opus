@@ -68,7 +68,7 @@ var o_menu = {
      },
 
      getMenu: function() {
-        $('.op-menu-text .spinner').fadeIn().css("display", "inline-block");
+        $('.op-menu-text .spinner').addClass("op-show-spinner");
         var hash = o_hash.getHash();
 
         $( "#sidebar").load( "/opus/__menu.html?" + hash, function() {
@@ -86,7 +86,8 @@ var o_menu = {
             // when a new category is open after an input is clicked, we update the scrollbar
             let adjustSearchSideBarHeight = _.debounce(o_search.adjustSearchSideBarHeight, 500);
             adjustSearchSideBarHeight();
-            $('.op-menu-text .spinner').fadeOut();
+            
+            $('.op-menu-text .spinner').removeClass("op-show-spinner");
         });
      },
      markDefaultMenuItem: function() {

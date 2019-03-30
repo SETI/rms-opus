@@ -120,7 +120,7 @@ var o_widgets = {
                 $("input.RANGE").removeClass("search_input_invalid");
                 $("input.RANGE").addClass("search_input_original");
                 $("#sidebar").removeClass("search_overlay");
-                $("#result_count").text(o_utils.addCommas(opus.result_count));
+                $("#op-result-count").text(o_utils.addCommas(opus.result_count));
             }
             let adjustSearchWidgetHeight = _.debounce(o_search.adjustSearchWidgetHeight, 200);
             adjustSearchWidgetHeight();

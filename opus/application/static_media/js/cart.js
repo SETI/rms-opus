@@ -33,8 +33,8 @@ var o_cart = {
 
          // check an input on selected products and images updates file_info
          $("#cart").on("click","#download_options input", function() {
-             $("#total_download_size").hide();
-             $(".op-total-size .spinner").fadeIn().css("display", "inline-block");
+             $("#op-total-download-size").hide();
+             $(".op-total-size .spinner").addClass("op-show-spinner");
 
              let add_to_url = o_cart.getDownloadFiltersChecked();
              o_cart.lastCartRequestNo++;
@@ -43,8 +43,8 @@ var o_cart = {
                  if (info.reqno < o_cart.lastCartRequestNo) {
                      return;
                  }
-                 $(".op-total-size .spinner").hide()
-                 $("#total_download_size").fadeOut().html(info.total_download_size_pretty).fadeIn();
+                 $(".op-total-size .spinner").removeClass("op-show-spinner");
+                 $("#op-total-download-size").fadeOut().html(info.total_download_size_pretty).fadeIn();
              });
          });
      },
@@ -135,9 +135,9 @@ var o_cart = {
              return;
          }
          let count = status.count;
-         $("#cart_count").html(count);
+         $("#op-cart-count").html(count);
          if (status.total_download_size_pretty !== undefined) {
-             $("#total_download_size").fadeOut().html(status.total_download_size_pretty).fadeIn();
+             $("#op-total-download-size").fadeOut().html(status.total_download_size_pretty).fadeIn();
          }
          o_cart.adjustProductInfoHeight();
      },
@@ -146,7 +146,7 @@ var o_cart = {
      // init an existing cart on page load
      initCart: function() {
         // display cart badge spinner, it will get updated after the return of status.json
-        $("#cart_count").html(opus.spinner);
+        $("#op-cart-count").html(opus.spinner);
         // returns any user cart saved in session
         o_cart.lastCartRequestNo++;
         $.getJSON("/opus/__cart/status.json?reqno=" + o_cart.lastCartRequestNo, function(statusData) {
@@ -253,7 +253,7 @@ var o_cart = {
     emptyCart: function(returnToSearch=false) {
         // change indicator to zero and let the server know:
         $.getJSON("/opus/__cart/reset.json", function(data) {
-            $("#cart_count").html("0");
+            $("#op-cart-count").html("0");
             opus.cart_change = true;
             $("#cart .navbar").hide();
             $("#cart .sort-order-container").hide();
@@ -369,13 +369,13 @@ var o_cart = {
         }
 
         // display spinner next to cart badge & total size
-        $("#cart_count").html(opus.spinner);
-        $("#total_download_size").hide();
-        $(".op-total-size .spinner").fadeIn().css("display", "inline-block");
+        $("#op-cart-count").html(opus.spinner);
+        $("#op-total-download-size").hide();
+        $(".op-total-size .spinner").addClass("op-show-spinner");
 
         o_cart.lastCartRequestNo++;
         $.getJSON(url  + add_to_url + "&reqno=" + o_cart.lastCartRequestNo, function(statusData) {
-            $(".op-total-size .spinner").hide()
+            $(".op-total-size .spinner").removeClass("op-show-spinner");
             o_cart.updateCartStatus(statusData);
         });
     },
