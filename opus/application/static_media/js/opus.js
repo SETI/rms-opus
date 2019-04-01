@@ -95,7 +95,7 @@ var opus = {
         */
 
         let selections = o_hash.getSelectionsFromHash();
-        if (selections == undefined) {
+        if (selections === undefined) {
             return;
         }
 

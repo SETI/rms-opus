@@ -16,7 +16,7 @@ var o_browse = {
 
     lastLoadDataRequestNo: 0,
 
-    galleryBoundingRect: {'x':[0], 'y':[0]},
+    galleryBoundingRect: {'x': 0, 'y': 0},
     gallerySliderStep: 10,
 
     infiniteScrollCurrentMaxPageNumber: 0, // the largest drawn page number
@@ -75,7 +75,7 @@ var o_browse = {
             o_browse.updateBrowseNav();
 
             // reset scroll position
-            window.scrollTo(0,0); // restore previous scroll position
+            window.scrollTo(0, 0); // restore previous scroll position
 
             return false;
         });
@@ -357,7 +357,7 @@ var o_browse = {
 
         $("#op-observation-slider").slider({
             animate: true,
-            value:1,
+            value: 1,
             min: 1,
             max: 1000,
             step: o_browse.gallerySliderStep,
@@ -511,13 +511,14 @@ var o_browse = {
 
     // find the first displayed observation index & id in the upper left corner
     updateSliderHandle: function() {
-        let selector = (opus.prefs.browse == "dataTable") ? `#${opus.prefs.view} #dataTable tbody tr` : `#${opus.prefs.view} .gallery .thumbnail-container`;
+        let selector = (opus.prefs.browse === "dataTable") ? `#${opus.prefs.view} #dataTable tbody tr` : `#${opus.prefs.view} .gallery .thumbnail-container`;
         $(selector).each(function(index, elem) {
             if($(elem).offset().top > $(".gallery-contents").offset().top) {
                 let obsNum = $(elem).data("obs");
                 $("#op-observation-number").html(obsNum);
                 $(".op-slider-pointer").css("width", `${opus.result_count.toString().length*0.7}em`);
                 // just make the step size the number of the obserations across the page...
+                // if the observations have not yet been rendered, leave the default, it will get changed later
                 if (o_browse.galleryBoundingRect.x > 0) {
                     o_browse.gallerySliderStep = o_browse.galleryBoundingRect.x;
                 }
@@ -597,11 +598,11 @@ var o_browse = {
         // otherwise use the state of the current observation - this will identify what will happen to the range
         let selectedElem = $(`#${opus.prefs.view}`).find(".selected");
         if (selectedElem.length != 0) {
-            inCart =  (o_cart.isIn($(selectedElem).data("id")) ? "" : "in");
+            inCart = (o_cart.isIn($(selectedElem).data("id")) ? "" : "in");
         }
         let addRemoveText = (inCart != "in" ? "remove range from" : "add range to");
 
-        let rangeText = (selectedElem.length == 0 ?
+        let rangeText = (selectedElem.length === 0 ?
                             `<i class='fas fa-sign-out-alt'></i>Start ${addRemoveText} cart here` :
                             `<i class='fas fa-sign-out-alt fa-rotate-180'></i>End ${addRemoveText} cart here`);
         $("#op-obs-menu .dropdown-item[data-action='range']").html(rangeText);
@@ -763,6 +764,9 @@ var o_browse = {
 
         // removes chosen column
         $("#metadataSelector .selectedMetadata").on("click", "li .unselect", function() {
+            if (opus.prefs.cols.length <= 1) {
+                return;     // prevent user from removing all the columns
+            }
             let slug = $(this).parent().attr("id").split('__')[1];
 
             if ($.inArray(slug, opus.prefs.cols) >= 0) {
@@ -922,7 +926,7 @@ var o_browse = {
             let url = "/opus/__forms/metadata_selector.html?" + o_hash.getHash();
             $(".modal-body.metadata").load( url, function(response, status, xhr)  {
 
-                o_browse.metadataSelectorDrawn=true;  // bc this gets saved not redrawn
+                o_browse.metadataSelectorDrawn = true;  // bc this gets saved not redrawn
                 $("#metadataSelector .op-reset-button").hide(); // we are not using this
 
                 // since we are rendering the left side of metadata selector w/the same code that builds the select menu, we need to unhighlight the selected widgets
@@ -1193,16 +1197,16 @@ var o_browse = {
         }
         o_browse.lastLoadDataRequestNo++;
         // this is a workaround for firefox
-        let hashString = o_hash.getHash() ? o_hash.getHash() : o_browse.tempHash;
+        let hashString = (o_hash.getHash() ? o_hash.getHash() : o_browse.tempHash);
         let url = hashString + '&reqno=' + o_browse.lastLoadDataRequestNo + view.add_to_url;
-        let startobs = (page * opus.prefs.limit);
+        let startobs = page * opus.prefs.limit;
         url = base_url + o_browse.updatePageInUrl(url, page);
 
         return url;
     },
 
     loadData: function(page) {
-        page = (page == undefined ? opus.prefs.page[opus.prefs.browse] : page);
+        page = (page === undefined ? opus.prefs.page[opus.prefs.browse] : page);
 
         // if the request is a block far away from current page cache, flush the cache and start over
         var pagesDrawn = [];
@@ -1403,8 +1407,8 @@ var o_browse = {
     },
 
     countGalleryImages: function() {
-        var xDir = 0;
-        var xCount = 0;
+        let xDir = 0;
+        let xCount = 0;
         // we need to know how many images fit across; we can approx the y dir differently
         $(".thumbnail-container").each(function(index, thumb) {
             let offset = $(thumb).offset();
@@ -1417,7 +1421,7 @@ var o_browse = {
             }
         });
         let yCount = Math.round($(".gallery-contents").height()/100);   // images are 100px
-        return {"x":xCount, "y":yCount};
+        return {"x": xCount, "y": yCount};
     },
 
     adjustBrowseHeight: function() {

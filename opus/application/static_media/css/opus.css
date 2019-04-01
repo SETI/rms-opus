@@ -745,13 +745,13 @@ nav.panel-heading {
 
 #op-observation-slider.ui-slider {
     /*display: none; */
-    width:400px;
-    height:.1em;
+    width: 400px;
+    height: .1em;
 }
 
 .op-observation-text {
-    margin-left:45px;
-    padding-right:.5em;
+    margin-left: 45px;
+    padding-right: .5em;
     opacity: 0.5;
 }
 
@@ -762,7 +762,7 @@ nav.panel-heading {
 
 .ui-slider-horizontal .ui-slider-handle {
     /*width: auto; */
-    top:-.6em;
+    top: -.6em;
     display: inline-block;
     height: 1.5em;
     position: relative;
@@ -1177,45 +1177,6 @@ ul.ui-autocomplete a.ui-state-active {
 /* remove that extra space on top when loading table page */
 .justify-content-center {
     height: 0px;
-}
-
-/* Ripple Out */
-@-webkit-keyframes hvr-ripple-out {
-  100% {
-    top: -12px;
-    right: -12px;
-    bottom: -12px;
-    left: -12px;
-    opacity: 0;
-  }
-}
-@keyframes hvr-ripple-out {
-  100% {
-    top: -12px;
-    right: -12px;
-    bottom: -12px;
-    left: -12px;
-    opacity: 0;
-  }
-}
-.hvr-ripple-out {
-  display: inline-block;
-  vertical-align: middle;
-  -webkit-transform: perspective(1px) translateZ(0);
-  transform: perspective(1px) translateZ(0);
-  box-shadow: 0 0 1px rgba(0, 0, 0, 0);
-  position: relative;
-}
-.hvr-ripple-out:before {
-  content: '';
-  position: absolute;
-  border: #20c997 solid 6px;
-  top: 0;
-  right: 0;
-  bottom: 0;
-  left: 0;
-  animation: hvr-ripple-out 2s infinite;
-  -webkit-animation: hvr-ripple-out 2s infinite;
 }
 
 /* Ripple In */

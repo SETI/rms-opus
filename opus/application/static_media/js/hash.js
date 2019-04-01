@@ -187,8 +187,6 @@ var o_hash = {
             opus.prefs.widgets.push(slug);
           }
         }
-        // figure out approx. how many 100px images will fit on the screen... this is an approx. calc.
-        //opus.prefs.limit = Math.round($(".tab-content").width() * $(".tab-content").height()/10000);
         opus.load();
     },
 
