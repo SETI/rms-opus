@@ -18,7 +18,7 @@ class ApiSearchTests(TestCase, ApiTestHelper):
     def setUp(self):
         self.maxDiff = None
         sys.tracebacklimit = 0 # default: 1000
-        settings.CACHE_KEY_PREFIX = 'opustest:' + settings.OPUS_SCHEMA_NAME
+        settings.CACHE_KEY_PREFIX = 'opustest:' + settings.DB_SCHEMA_NAME
         logging.disable(logging.ERROR)
         self.search_count_threshold = settings.STRINGCHOICE_FULL_SEARCH_COUNT_THRESHOLD
         self.search_time_threshold = settings.STRINGCHOICE_FULL_SEARCH_COUNT_THRESHOLD

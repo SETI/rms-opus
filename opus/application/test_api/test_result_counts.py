@@ -21,7 +21,7 @@ class APIResultCountsTests(TestCase):
     def setUp(self):
         self.maxDiff = None
         sys.tracebacklimit = 0 # default: 1000
-        settings.CACHE_KEY_PREFIX = 'opustest:' + settings.OPUS_SCHEMA_NAME
+        settings.CACHE_KEY_PREFIX = 'opustest:' + settings.DB_SCHEMA_NAME
         logging.disable(logging.DEBUG)
 
     # enable error logging and trace output after test
