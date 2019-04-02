@@ -134,7 +134,7 @@ var o_hash = {
                             break;
                         case "page":
                             opus.prefs.page['gallery'] = parseInt(value, 10);
-                            opus.prefs.page['data'] = parseInt(value, 10);
+                            opus.prefs.page['dataTable'] = parseInt(value, 10);
                             break;
                         case "limit":
                             // limit is no longer supported and is calculated based on screen size, so ignore this param

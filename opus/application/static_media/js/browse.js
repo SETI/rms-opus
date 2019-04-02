@@ -513,7 +513,7 @@ var o_browse = {
     updateSliderHandle: function() {
         let selector = (opus.prefs.browse === "dataTable") ? `#${opus.prefs.view} #dataTable tbody tr` : `#${opus.prefs.view} .gallery .thumbnail-container`;
         $(selector).each(function(index, elem) {
-            if($(elem).offset().top > $(".gallery-contents").offset().top) {
+            if ($(elem).offset().top > $(".gallery-contents").offset().top) {
                 let obsNum = $(elem).data("obs");
                 $("#op-observation-number").html(obsNum);
                 $(".op-slider-pointer").css("width", `${opus.result_count.toString().length*0.7}em`);
@@ -659,21 +659,21 @@ var o_browse = {
     },
 
     openDetailTab: function() {
-        $("#galleryView").modal('hide');
-        opus.changeTab('detail');
+        $("#galleryView").modal("hide");
+        opus.changeTab("detail");
     },
 
     // columns can be reordered wrt each other in 'metadata selector' by dragging them
     metadataDragged: function(element) {
-        let cols = $.map($(element).sortable('toArray'), function( item ) {
-            return item.split('__')[1];
+        let cols = $.map($(element).sortable("toArray"), function(item) {
+            return item.split("__")[1];
         });
         opus.prefs.cols = cols;
     },
 
     addColumn: function(slug) {
         let elem = $(`#metadataSelector .allMetadata a[data-slug=${slug}]`);
-        elem.find("i.fa-check").fadeIn().css('display', 'inline-block');
+        elem.find("i.fa-check").fadeIn().css("display", "inline-block");
 
         let label = elem.data("qualifiedlabel");
         let info = '<i class = "fas fa-info-circle" title = "' + elem.find('*[title]').attr("title") + '"></i>';
@@ -839,7 +839,7 @@ var o_browse = {
         let page = 1;
 
         if (view_var == "data") {
-            page = opus.prefs.page[prefix + "data"];
+            page = opus.prefs.page[prefix + "dataTable"];
         } else {
             page = opus.prefs.page[prefix + "gallery"];
         }
@@ -957,6 +957,8 @@ var o_browse = {
         // render the gallery and table at the same time.
         // gallery is var html; table is row/tr/td.
         let namespace = o_browse.getViewInfo().namespace;
+
+        // this is the list of all observations requested from dataimages.json
         let page = data.page;
         let html = "";
 
@@ -1195,9 +1197,10 @@ var o_browse = {
         if (page == undefined) {
             page = opus.lastPageDrawn[opus.prefs.view]+1;
         }
-        o_browse.lastLoadDataRequestNo++;
         // this is a workaround for firefox
         let hashString = (o_hash.getHash() ? o_hash.getHash() : o_browse.tempHash);
+
+        o_browse.lastLoadDataRequestNo++;
         let url = hashString + '&reqno=' + o_browse.lastLoadDataRequestNo + view.add_to_url;
         let startobs = page * opus.prefs.limit;
         url = base_url + o_browse.updatePageInUrl(url, page);
@@ -1210,7 +1213,8 @@ var o_browse = {
 
         // if the request is a block far away from current page cache, flush the cache and start over
         var pagesDrawn = [];
-        $("[data-page]").each(function(index, elem) {
+        let namespace = o_browse.getViewInfo().namespace;
+        $(`${namespace} [data-page]`).each(function(index, elem) {
             pagesDrawn.push($(elem).data("page"));
         });
         if (page > opus.lastPageDrawn[opus.prefs.view] + 1 ||
@@ -1257,7 +1261,7 @@ var o_browse = {
                     $(selector).infiniteScroll({
                         path: function() {
                             let path = o_browse.getDataURL();
-                                return path;
+                            return path;
                         },
                         responseType: "text",
                         status: `#${opus.prefs.view} .page-load-status`,

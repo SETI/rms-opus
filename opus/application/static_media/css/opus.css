@@ -112,19 +112,8 @@ body {
     height: 100%;
 }
 
-#sidebar ul.nav-lst {
-    margin-left: 0px;
-}
-#sidebar .nav-list .fa-info-circle {
-    font-size: 1.1em;
-    color: #C0C0C0;
-}
 #sidebar .submenu {  /* labels in 3rd submenu need schootch over a bit */
     margin-left: 15px;
-}
-#sidebar .sidenav_spacer {
-    display: block;
-    height:500px;
 }
 
 #sidebar .menu_help {
@@ -139,13 +128,6 @@ Not sure if this is the desired behavior
 */
 .sidebar-area {
     width: 400px;
-}
-
-/* Styling for sidebar nav in search page */
-.sidebar-nav {
-    /* border: 1px solid #C8CED3;
-    border-radius: 3px; */
-    background-color: #F0F3F5;
 }
 
 .sidebar_wrapper {
@@ -877,22 +859,6 @@ nav.panel-heading {
 
 .sidebar_wrapper i.fa-check {
     display: none;
-}
-
-#sidebar ul.nav-list, #sidebar ul.nav-list li {
-    margin: 0;
-    padding: 0;
-}
-
-#sidebar .nav-list > li .submenu > li > a {
-    padding-top: 2px;
-    padding-bottom: 2px;
-}
-
-.nav-list > li a > .arrow {
-    position: absolute;
-    right: 10px;
-    top: 5px;
 }
 
 /* This is to make sortable scrolling (when sorting happened) works with ps */
