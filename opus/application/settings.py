@@ -25,23 +25,8 @@ sys.path.insert(0, os.path.join(PROJECT_ROOT, PDS_OPUS_LIB_PATH))
 import opus_support
 import julian
 
-ALLOWED_HOSTS = ('127.0.0.1',
-                 'localhost',
-                 'dev.pds-rings.seti.org',
-                 '104.244.248.18',
-                 'pds-rings-tools.seti.org',
-                 'tools.pds-rings.seti.org',
-                 '104.244.248.20')
-
-DEBUG = True
-
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True
 SESSION_SAVE_EVERY_REQUEST = True
-
-ADMINS = (
-    ('Robert French', 'rfrench@seti.org'),
-)
-MANAGERS = ADMINS
 
 STATIC_URL = '/static_media/'
 
@@ -171,7 +156,7 @@ else:
         }
     }
 
-CACHE_KEY_PREFIX = 'opus:' + OPUS_SCHEMA_NAME
+CACHE_KEY_PREFIX = 'opus:' + DB_SCHEMA_NAME
 
 INTERNAL_IPS = ('127.0.0.1',)
 
@@ -279,13 +264,14 @@ os.environ['REUSE_DB'] = "1"  # for test runner
 
 DATABASES = {
     'default': {
-        'NAME': OPUS_SCHEMA_NAME,  # local database name
+        'NAME': DB_SCHEMA_NAME,  # local database name
+        'HOST': DB_HOST_NAME,
         'ENGINE': 'django.db.backends.mysql',
         'USER': DB_USER,
         'PASSWORD': DB_PASSWORD,
         # 'OPTIONS':{ 'unix_socket': '/private/tmp/mysql.sock'}
         'TEST': {
-                    'NAME': OPUS_SCHEMA_NAME,  # use same database for test as prod YES
+                    'NAME': DB_SCHEMA_NAME,  # use same database for test as prod YES
                 },
     },
 }
@@ -308,10 +294,13 @@ BASE_TABLES = ['obs_general', 'obs_pds', 'obs_ring_geometry',
 
 # These slugs may show up in the hash but are not actually database
 # queries and thus should be ignored when creating SQL
-SLUGS_NOT_IN_DB = ('browse', 'col_chooser', 'cart_browse', 'colls_browse',
-                   'cols', 'detail',
-                   'download', 'gallery_data_viewer', 'limit', 'loc_type',
-                   'order', 'page', 'range', 'reqno', 'request', 'startobs',
+SLUGS_NOT_IN_DB = ('browse', 'order', 'page', 'startobs',
+                   'cart_browse', 'cart_order', 'cart_page', 'cart_startobs',
+                   'colls_browse', 'colls_order', 'colls_page',
+                   'colls_startobs',
+                   'cols', 'col_chooser', 'detail', 'download',
+                   'gallery_data_viewer', 'limit', 'loc_type',
+                   'range', 'reqno', 'request',
                    'types', 'view', 'widgets', 'widgets2', '__sessionid')
 
 # The root URL used to retrieve product files from a web server

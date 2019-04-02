@@ -31,7 +31,7 @@ var o_menu = {
 
              } else {
                   o_menu.markMenuItem(this);
-                  o_widgets.getWidget(slug,"#search_widgets");
+                  o_widgets.getWidget(slug,'#op-search-widgets');
              }
 
              o_hash.updateHash();
@@ -62,7 +62,8 @@ var o_menu = {
      },
 
      getMenu: function() {
-        $(".op-menu-text .spinner").addClass("op-show-spinner");
+        $('.op-menu-text.spinner').addClass("op-show-spinner");
+
         var hash = o_hash.getHash();
 
         $("#sidebar").load("/opus/__menu.html?" + hash, function() {
@@ -85,7 +86,7 @@ var o_menu = {
             let adjustSearchSideBarHeight = _.debounce(o_search.adjustSearchSideBarHeight, 500);
             adjustSearchSideBarHeight();
 
-            $(".op-menu-text .spinner").removeClass("op-show-spinner");
+            $('.op-menu-text.spinner').removeClass("op-show-spinner");
         });
      },
      markDefaultMenuItem: function() {
