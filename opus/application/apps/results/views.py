@@ -82,6 +82,7 @@ def api_get_data_and_images(request):
 
         {'page': [
             {'opus_id': OPUS_ID,
+             'obs_num': <obsnum>,    (only if start_obs=N was used)
              'metadata': ['<col1>', '<col2>', '<col3>'],
              'images': {
                 'full':
@@ -161,6 +162,8 @@ def api_get_data_and_images(request):
             'images': new_image_list[i],
             'in_cart': cart_status[i] is not None
         }
+        if start_obs is not None:
+            new_entry['obs_num'] = start_obs+i
         new_page.append(new_entry)
 
     cols = request.GET.get('cols', settings.DEFAULT_COLUMNS)
@@ -1086,10 +1089,9 @@ def get_search_results_chunk(request, use_cart=None,
             column_names.append('obs_general.opus_id')
             added_extra_columns += 1 # So we know to strip it off later
 
-    # XXX Something here should specify order for cart
-    # colls_order is currently ignored!
-
     # Figure out the sort order
+    # Note: There is only a single sort order that is used for both the
+    # browse tab and the cart tab.
     all_order = request.GET.get('order', settings.DEFAULT_SORT_ORDER)
     if not all_order:
         all_order = settings.DEFAULT_SORT_ORDER
@@ -1107,9 +1109,9 @@ def get_search_results_chunk(request, use_cart=None,
 
     if start_obs is None:
         if use_cart:
-            start_obs = request.GET.get('colls_startobs', None)
+            start_obs = request.GET.get('cart_startobs', None)
             if start_obs is None:
-                page_no = request.GET.get('colls_page', 1)
+                page_no = request.GET.get('cart_page', 1)
         else:
             start_obs = request.GET.get('startobs', None)
             if start_obs is None:
