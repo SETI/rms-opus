@@ -8,7 +8,7 @@ var o_widgets = {
 
 
     addWidgetBehaviors: function() {
-        $("#search_widgets").sortable({
+        $("#op-search-widgets").sortable({
             items: "> li",
             cursor: "move",
             // we need the clone so that widgets in url gets changed only when sorting is stopped
@@ -23,7 +23,7 @@ var o_widgets = {
             },
         });
 
-        $("#search_widgets").on( "sortchange", function(event, ui) {
+        $("#op-search-widgets").on( "sortchange", function(event, ui) {
             o_widgets.widgetDrop();
         });
 
@@ -132,7 +132,7 @@ var o_widgets = {
     widgetDrop: function(obj) {
             // if widget is moved to a different formscolumn,
             // redefine the opus.prefs.widgets (preserves order)
-            let widgets = $('#search_widgets').sortable('toArray');
+            let widgets = $('#op-search-widgets').sortable('toArray');
             $.each(widgets, function(index,value) {
                 widgets[index]=value.split('__')[1];
             });
@@ -192,7 +192,7 @@ var o_widgets = {
 
     // adjusts the widths of the widgets in the main column so they fit users screen size
     adjustWidgetWidth: function(widget) {
-            $(widget).animate({width:$('#search_widgets').width() - 2*20 + 'px'},'fast');  // 20px is the side margin of .widget
+            $(widget).animate({width:$('#op-search-widgets').width() - 2*20 + 'px'},'fast');  // 20px is the side margin of .widget
     },
 
     maximizeWidget: function(slug, widget) {
@@ -348,8 +348,8 @@ var o_widgets = {
              var slug = opus.prefs.widgets[k];
              var widget = 'widget__' + slug;
              var html = '<li id = "' + widget + '" class = "widget"></li>';
-             $(html).appendTo('#search_widgets ');
-             // $(html).hide().appendTo('#search_widgets').show("blind",{direction: "vertical" },200);
+             $(html).appendTo('#op-search-widgets ');
+             // $(html).hide().appendTo('#op-search-widgets').show("blind",{direction: "vertical" },200);
              opus.widget_elements_drawn.push(slug);
          }
      },

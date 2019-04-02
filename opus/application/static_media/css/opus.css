@@ -1,6 +1,7 @@
 body {
     overflow: hidden;
 }
+
 .app-body {
     margin-top: 3.8em !important;
     overflow: hidden;
@@ -61,9 +62,11 @@ body {
     padding: 0; margin:0;
     display: none;
 }
+
 #browse {
     background-color: #303030; /* #383838; */
 }
+
 #browse .data {
     background-color: white;
 }
@@ -115,13 +118,16 @@ body {
 #sidebar ul.nav-lst {
     margin-left: 0px;
 }
+
 #sidebar .nav-list .fa-info-circle {
     font-size: 1.1em;
     color: #C0C0C0;
 }
+
 #sidebar .submenu {  /* labels in 3rd submenu need schootch over a bit */
     margin-left: 15px;
 }
+
 #sidebar .sidenav_spacer {
     display: block;
     height:500px;
@@ -174,6 +180,7 @@ ul.searchMenu {
 .card-header .icon-action {
     transition: .3s transform ease-in-out;
 }
+
 .card-header .collapsed .icon-action {
     -ms-transform: rotate(90deg); /* IE 9 */
     -ms-transform-origin: 80%; /* IE 9 */
@@ -255,9 +262,11 @@ ul.searchMenu {
 .modal {
     top: 4%;
 }
+
 .modal-content {
     border-radius: 1%;
 }
+
 .modal-footer .left-container {
     width: 74%;
 }
@@ -273,6 +282,7 @@ ul.searchMenu {
     opacity: 0;
     z-index: -1;
 }
+
 .thumbnail-container .modal-show {
     z-index: 999;
     -webkit-transform: translate(-50%, -50%);
@@ -448,15 +458,18 @@ th.sticky-header {
 #metadataSelector ul li {
     text-decoration: none;
 }
+
 .allMetadata, .selectedMetadata {
     height: 450px;
     overflow: scroll;
     overflow-x: auto;
 }
+
 .allMetadata ul li {
     padding-bottom: 3px;
 
 }
+
 .allMetadata .cat_label {
     margin-top: 15px;
     margin-bottom: -5px;
@@ -466,15 +479,19 @@ th.sticky-header {
     padding-inline-start: 0.5em;
     padding-inline-end: 1em;
 }
+
 .selectedMetadata ul li:hover {
     cursor: grab;
 }
+
 .selectedMetadata ul li .unselect:hover {
     cursor: default;
- }
- .selectedMetadata ul li .info:hover {
+}
+
+.selectedMetadata ul li .info:hover {
     cursor: default;
- }
+}
+
 .selectedMetadata .unselect {
     float: right;
 }
@@ -483,22 +500,25 @@ th.sticky-header {
     border: 0;
     z-index: 9999;
 }
+
 .selectedMetadata ul li {
     padding: 5px 15px;
     border: 1px dotted gray;
     list-style-type: none;
- }
+}
 
 .hints {
     color: green;
     margin: 0 2px 0 5px;
 }
+
 .range_hints {
     display: block;
     clear: both;
     padding: 5px 0 10px 50px;
     color: green;
 }
+
 .range_hints span {
     margin-right: 5px;
 }
@@ -795,18 +815,18 @@ nav.panel-heading {
 }
 
 
-#search_widgets li {
+#op-search-widgets li {
     display: inline;
     list-style-type: none;
 }
 
 /* this is for sorting widgets cards, display has to be block */
-#search_widgets > li {
+#op-search-widgets > li {
     display: block;
     list-style-type: none;
 }
 
-#search_widgets {  /* this fixes problem scrolling when widget column is short */
+#op-search-widgets {  /* this fixes problem scrolling when widget column is short */
     padding-bottom: 20px;
     padding-right: 2em;
 }
@@ -815,10 +835,12 @@ nav.panel-heading {
     font-size: 130%;
     color: gray;
 }
+
 #range_query_widget_helper_html {
     display: none;
     width: 500px;
 }
+
 .widget-main ul li ul li {  /* mult labels */
     white-space: nowrap;
 }
@@ -929,7 +951,8 @@ nav.panel-heading {
 }
 
 /* smaller spinner next to general constraints: shows up when menu is loading (search page) */
-.op-menu-text .spinner {
+.op-menu-text.spinner {
+    /* float: right; */
     display: none;
     margin-left: 5px;
     width: 18px;
@@ -959,6 +982,7 @@ nav.panel-heading {
     padding: 5px 4px;
     padding-left: 5px;
 }
+
 .mult_group {
     padding-left: 0;
     display: none;
@@ -1019,6 +1043,7 @@ footer {
     z-index: 9999;
     top: 2em;
 }
+
 .op-header-text {
     display: inline-block;
 }
