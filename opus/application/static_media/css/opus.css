@@ -21,6 +21,11 @@ body {
     width: 100%;
 }
 
+.navbar-dark .navbar-nav .nav-link.active:hover,
+.navbar-dark .navbar-nav .nav-link.active:focus {
+    color: #FFFFFF;
+}
+
 .navbar-brand {
     width: 3em !important;
 }
