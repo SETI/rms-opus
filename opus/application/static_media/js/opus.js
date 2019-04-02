@@ -149,6 +149,10 @@ var opus = {
 
         // start the result count spinner and do the yellow flash
         $("#op-result-count").html(opus.spinner).parent().effect("highlight", {}, 500);
+        // start op-menu-text and search_widgets spinner
+        $(".op-menu-text.spinner").addClass("op-show-spinner");
+        $("#search_widgets .spinner").fadeIn();
+        
         // move this above allNormalizedApiCall to avoid recursive api call
         opus.last_selections = selections;
 
