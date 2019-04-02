@@ -1141,8 +1141,8 @@ ul.ui-autocomplete a.ui-state-active {
 }
 
 /* remove that extra space on top when loading table page */
-.justify-content-center {
-    height: 0px;
+.op-height-0 {
+    height: 0;
 }
 
 /* Ripple In */
