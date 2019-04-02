@@ -386,7 +386,7 @@ if (impglobals.ARGUMENTS.drop_permanent_tables !=
         '--drop-permanent-tables and --scorched-earth must be used together')
     sys.exit(-1)
 
-our_schema_name = OPUS_SCHEMA_NAME
+our_schema_name = DB_SCHEMA_NAME
 if impglobals.ARGUMENTS.override_db_schema:
     our_schema_name = impglobals.ARGUMENTS.override_db_schema
 

@@ -18,6 +18,11 @@ DB_BRAND = 'MySQL'
 DB_HOST_NAME = '<HOST_NAME>'
 DB_DATABASE_NAME = '<DB_NAME>'
 
+# The main namespace in which OPUS tables live.
+# For MySQL this is the database name.
+# For PostgreSQL this is the schema name.
+DB_SCHEMA_NAME = 'XXX'
+
 # The database user and password. This user needs to have most privileges,
 # including table creation and deletion.
 DB_USER = '<DB_USER>'
@@ -47,10 +52,19 @@ PDS_TOOLS_PATH = '<PATH>'
 ### NEEDED FOR THE MAIN OPUS APPLICATION ###
 ############################################
 
-# The main namespace in which OPUS tables live.
-# For MySQL this is the database name.
-# For PostgreSQL this is the schema name.
-OPUS_SCHEMA_NAME = 'XXX'
+# The Django debug setting. NEVER deploy a production site with DEBUG set to
+# True.
+DEBUG = True
+
+# The list of hosts or IP addresses that Django is permitted to serve
+ALLOWED_HOSTS = ('127.0.0.1',
+                 'localhost')
+
+# These settings are useful to include on a production server
+# ADMINS = (<email list>)
+# MANAGERS = ADMINS
+# EMAIL_* (see https://docs.djangoproject.com/en/2.1/topics/email/)
+# SERVER_EMAIL
 
 # The Django "secret key". This needs to be a unique, secret string.
 # Generator tools are available:
