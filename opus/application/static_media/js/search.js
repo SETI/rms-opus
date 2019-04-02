@@ -241,24 +241,23 @@ var o_search = {
         });
 
         // range behaviors and string behaviors for search widgets - qtype select dropdown
-        $('#search').on("change","select", function() {
-            var qtypes = [];
+        $('#search').on("change", "select", function() {
+            let qtypes = [];
 
             switch ($(this).attr("class")) {  // form type
                 case "RANGE":
-                    var slug_no_num = $(this).attr("name").match(/-(.*)/)[1];
-                    var slug = slug_no_num + '1';
+                    let slug_no_num = $(this).attr("name").match(/-(.*)/)[1];
 
-                    $("#widget__" + slug + ' select').each(function() {
-                        qtypes[qtypes.length] = $(this).val();
+                    $("#widget__" + slug_no_num + ' select').each(function() {
+                        qtypes.push($(this).val());
                     });
                     opus.extras['qtype-' + slug_no_num] = qtypes;
                     break;
 
                 case "STRING":
-                    var slug = $(this).attr("name").match(/-(.*)/)[1];
+                    let slug = $(this).attr("name").match(/-(.*)/)[1];
                     $("#widget__" + slug + ' select').each(function() {
-                        qtypes[qtypes.length] = $(this).val();
+                        qtypes.push($(this).val());
                     });
                     opus.extras['qtype-' + slug] = qtypes;
                     break;

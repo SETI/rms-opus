@@ -140,13 +140,20 @@ def api_get_widget(request, **kwargs):
             selections = {}
             extras = {}
 
+    param_qualified_name_no_num = strip_numeric_suffix(param_qualified_name)
+
+    initial_qtype = None
+    if 'qtypes' in extras:
+        qtypes = extras['qtypes']
+        if param_qualified_name_no_num in qtypes:
+            initial_qtype = qtypes[param_qualified_name_no_num][0]
+
     search_form = param_info.category_name
 
     if form_type in settings.RANGE_FORM_TYPES:
         auto_id = False
 
         slug_no_num = strip_numeric_suffix(slug)
-        param_qualified_name_no_num = strip_numeric_suffix(param_qualified_name)
 
         slug1 = slug_no_num+'1'
         slug2 = slug_no_num+'2'
@@ -190,12 +197,6 @@ def api_get_widget(request, **kwargs):
                 except (IndexError, KeyError, ValueError, TypeError) as e:
                     form_vals[slug2] = None
 
-                qtypes = request.GET.get('qtype-' + slug, False)
-                if qtypes:
-                    try:
-                        form_vals['qtype-'+slug] = qtypes.split(',')[key]
-                    except KeyError:
-                        form_vals['qtype-'+slug] = False
                 form = form + str(SearchForm(form_vals, auto_id=auto_id).as_ul())
 
                 if length > 1:
@@ -208,12 +209,6 @@ def api_get_widget(request, **kwargs):
             key = 0
             for value in selections[param_qualified_name]:
                 form_vals[slug] = value
-                qtypes = request.GET.get('qtype-' + slug, False)
-                if qtypes:
-                    try:
-                        form_vals['qtype-'+slug] = qtypes.split(',')[key]
-                    except KeyError:
-                        form_vals['qtype-'+slug] = False
                 form = form + str(SearchForm(form_vals, auto_id=auto_id).as_ul())
                 key = key+1
         else:
@@ -266,6 +261,19 @@ def api_get_widget(request, **kwargs):
         if param_qualified_name in selections:
             form_vals = {slug:selections[param_qualified_name]}
         form = SearchForm(form_vals, auto_id=auto_id).as_ul()
+
+    # This is a really horrible hack. They removed the ability to set a default
+    # dropdown choice in Django 2.x. See the Django template file
+    #   .../django/forms/templates/django/forms/widgets/select.html
+    # At this point, "form" contains the entire widget as an HTML <ul>.
+    # Somewhere in that string is an element like:
+    #   <option value="QQQ">QQQ</option>
+    # we need to replace it with:
+    #   <option value="QQQ" selected>QQQ</option>
+    # where QQQ is the initial_qtype.
+    if initial_qtype:
+        form = form.replace(f'<option value="{initial_qtype}">',
+                            f'<option value="{initial_qtype}" selected>')
 
     label = param_info.body_qualified_label()
     intro = param_info.intro
