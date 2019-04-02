@@ -149,10 +149,10 @@ var opus = {
 
         // start the result count spinner and do the yellow flash
         $("#op-result-count").html(opus.spinner).parent().effect("highlight", {}, 500);
-        // start op-menu-text and search_widgets spinner
+        // start op-menu-text and op-search-widgets spinner
         $(".op-menu-text.spinner").addClass("op-show-spinner");
-        $("#search_widgets .spinner").fadeIn();
-        
+        $("#op-search-widgets .spinner").fadeIn();
+
         // move this above allNormalizedApiCall to avoid recursive api call
         opus.last_selections = selections;
 
@@ -297,7 +297,7 @@ var opus = {
         // the application default widgets
 
         clearInterval(opus.main_timer);  // stop polling for UI changes for a moment
-        $("#search_widgets").empty(); // remove all widgets on the screen
+        $("#op-search-widgets").empty(); // remove all widgets on the screen
 
         // reset the search query
         opus.selections = {};
@@ -328,7 +328,7 @@ var opus = {
         let deferredArr = [];
         $.each(opus.default_widgets, function(index, slug) {
             deferredArr.push($.Deferred());
-            o_widgets.getWidget(slug,"#search_widgets",deferredArr[index]);
+            o_widgets.getWidget(slug,"#op-search-widgets",deferredArr[index]);
         });
         // wait until all widgets are get
         $.when.apply(null, deferredArr).then(function() {

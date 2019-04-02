@@ -37,7 +37,7 @@ var o_menu = {
 
              } else {
                   o_menu.markMenuItem(this);
-                  o_widgets.getWidget(slug,'#search_widgets');
+                  o_widgets.getWidget(slug,'#op-search-widgets');
              }
 
              o_hash.updateHash();

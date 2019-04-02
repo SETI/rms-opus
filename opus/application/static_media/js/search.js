@@ -410,7 +410,7 @@ var o_search = {
 
     adjustSearchWidgetHeight: function() {
         let containerHeight = $("#search").height() - 80;
-        let searchWidgetHeight = $("#search_widgets").height();
+        let searchWidgetHeight = $("#op-search-widgets").height();
         $(".widget_column").height(containerHeight);
 
         if (containerHeight > searchWidgetHeight) {
@@ -445,8 +445,8 @@ var o_search = {
             // no widgets defined, get the default widgets
             opus.prefs.widgets = ["planet","target"];
             o_widgets.placeWidgetContainers();
-            o_widgets.getWidget("planet","#search_widgets");
-            o_widgets.getWidget("target","#search_widgets");
+            o_widgets.getWidget("planet","#op-search-widgets");
+            o_widgets.getWidget("target","#op-search-widgets");
         } else {
             if (!opus.widget_elements_drawn.length) {
                 o_widgets.placeWidgetContainers();
@@ -458,7 +458,7 @@ var o_search = {
         for (key in opus.prefs.widgets) {  // fetch each widget
             slug = opus.prefs.widgets[key];
             if ($.inArray(slug, opus.widgets_drawn) < 0) {  // only draw if not already drawn
-                o_widgets.getWidget(slug,"#search_widgets");
+                o_widgets.getWidget(slug,"#op-search-widgets");
             }
         }
 

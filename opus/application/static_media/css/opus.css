@@ -815,18 +815,18 @@ nav.panel-heading {
 }
 
 
-#search_widgets li {
+#op-search-widgets li {
     display: inline;
     list-style-type: none;
 }
 
 /* this is for sorting widgets cards, display has to be block */
-#search_widgets > li {
+#op-search-widgets > li {
     display: block;
     list-style-type: none;
 }
 
-#search_widgets {  /* this fixes problem scrolling when widget column is short */
+#op-search-widgets {  /* this fixes problem scrolling when widget column is short */
     padding-bottom: 20px;
     padding-right: 2em;
 }
