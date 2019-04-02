@@ -951,7 +951,8 @@ nav.panel-heading {
 }
 
 /* smaller spinner next to general constraints: shows up when menu is loading (search page) */
-.op-menu-text .spinner {
+.op-menu-text.spinner {
+    /* float: right; */
     display: none;
     margin-left: 5px;
     width: 18px;
