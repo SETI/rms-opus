@@ -41,7 +41,7 @@ var o_detail = {
                 if (status == 'error') {
                     let html = ' \
                         <div style = "margin:20px"><h2>Bad OPUS ID</h2>   \
-                        <p>The specified opusId (or old RING_OBS_ID) was not found in the database.</p>   \
+                        <p>The specified OPUS_ID (or old RING_OBS_ID) was not found in the database.</p>   \
                         </div>';
 
                     $(detailSelector).html(html).fadeIn();
