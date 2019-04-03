@@ -726,7 +726,6 @@ nav.panel-heading {
 }
 
 #op-observation-slider.ui-slider {
-    /*display: none; */
     width: 400px;
     height: .1em;
 }
@@ -743,7 +742,7 @@ nav.panel-heading {
 }
 
 .ui-slider-horizontal .ui-slider-handle {
-    /*width: auto; */
+    /* width: auto; */
     top: -.6em;
     display: inline-block;
     height: 1.5em;
@@ -807,18 +806,18 @@ nav.panel-heading {
 }
 
 
-#search_widgets li {
+#op-search-widgets li {
     display: inline;
     list-style-type: none;
 }
 
 /* this is for sorting widgets cards, display has to be block */
-#search_widgets > li {
+#op-search-widgets > li {
     display: block;
     list-style-type: none;
 }
 
-#search_widgets {  /* this fixes problem scrolling when widget column is short */
+#op-search-widgets {  /* this fixes problem scrolling when widget column is short */
     padding-bottom: 20px;
     padding-right: 2em;
 }
@@ -925,7 +924,7 @@ nav.panel-heading {
 }
 
 /* smaller spinner next to general constraints: shows up when menu is loading (search page) */
-.op-menu-text .spinner {
+.op-menu-text.spinner {
     display: none;
     margin-left: 5px;
     width: 18px;
@@ -1165,22 +1164,22 @@ ul.ui-autocomplete a.ui-state-active {
   }
 }
 .hvr-ripple-in {
-  display: inline-block;
-  vertical-align: middle;
-  -webkit-transform: perspective(1px) translateZ(0);
-  transform: perspective(1px) translateZ(0);
-  position: relative;
-  z-index: 20;
+    display: inline-block;
+    vertical-align: middle;
+    -webkit-transform: perspective(1px) translateZ(0);
+    transform: perspective(1px) translateZ(0);
+    position: relative;
+    z-index: 20;
 }
 .hvr-ripple-in:before {
-  content: '';
-  position: absolute;
-  border: #20c997 solid 6px;
-  top: -12px;
-  right: -12px;
-  bottom: -12px;
-  left: -12px;
-  opacity: 0.5;
-  animation: hvr-ripple-in 1s infinite;
-  -webkit-animation: hvr-ripple-in 1s infinite;
+    content: '';
+    position: absolute;
+    border: #20c997 solid 6px;
+    top: -12px;
+    right: -12px;
+    bottom: -12px;
+    left: -12px;
+    opacity: 0.5;
+    animation: hvr-ripple-in 1s infinite;
+    -webkit-animation: hvr-ripple-in 1s infinite;
 }
