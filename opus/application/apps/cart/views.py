@@ -36,6 +36,7 @@ from django.views.decorators.cache import never_cache
 from hurry.filesize import size as nice_file_size
 
 from dictionary.models import Definitions
+from metadata.views import get_result_count_helper
 from results.views import (get_search_results_chunk,
                            labels_for_slugs)
 from search.models import ObsGeneral
@@ -196,7 +197,7 @@ def api_get_cart_csv(request):
 
 
 @never_cache
-def api_edit_cart(request, **kwargs):
+def api_edit_cart(request, action, **kwargs):
     """Add or remove items from a cart.
 
     This is a PRIVATE API.
@@ -221,38 +222,42 @@ def api_edit_cart(request, **kwargs):
 
     session_id = get_session_id(request)
 
-    try:
-        action = kwargs['action']
-    except KeyError: # pragma: no cover
-        exit_api_call(api_code, None)
-        raise Http404
-
     reqno = get_reqno(request)
     if reqno is None:
-        log.error('api_edit_cart: Missing or badly formatted reqno')
+        log.error('api_edit_cart: Missing or badly formatted reqno: %s',
+                  request.GET)
         ret = Http404(settings.HTTP404_MISSING_REQNO)
         exit_api_call(api_code, ret)
         raise ret
-
-    err = False
 
     opus_id = None
     if action in ('add', 'remove'):
         opus_id = request.GET.get('opusid', None)
         if not opus_id: # Also catches empty string
-            err = 'No opusid specified'
+            log.error('api_edit_cart: Missing opusid: %s',
+                      request.GET)
+            ret = Http404(settings.HTTP404_MISSING_OPUS_ID)
+            exit_api_call(api_code, ret)
+            raise ret
 
-    if not err:
-        if action == 'add':
-            err = _add_to_cart_table(opus_id, session_id, api_code)
-        elif action == 'remove':
-            err = _remove_from_cart_table(opus_id, session_id, api_code)
-        elif action in ('addrange', 'removerange'):
-            err = _edit_cart_range(request, session_id, action, api_code)
-        elif action == 'addall':
-            err = _edit_cart_addall(request, session_id, api_code)
-        else: # pragma: no cover
-            assert False
+    if action == 'add':
+        err = _add_to_cart_table(opus_id, session_id, api_code)
+    elif action == 'remove':
+        err = _remove_from_cart_table(opus_id, session_id, api_code)
+    elif action in ('addrange', 'removerange'):
+        err = _edit_cart_range(request, session_id, action, api_code)
+    elif action == 'addall':
+        err = _edit_cart_addall(request, session_id, api_code)
+    else: # pragma: no cover
+        log.error('api_edit_cart: Unknown action %s: %s', action,
+                  request.GET)
+        ret = HttpResponseServerError(settings.HTTP500_INTERNAL_ERROR)
+        exit_api_call(api_code, ret)
+        return ret
+
+    if isinstance(err, HttpResponse):
+        exit_api_call(api_code, err)
+        return err
 
     download = request.GET.get('download', 0)
     try:
@@ -698,6 +703,13 @@ def _add_to_cart_table(opus_id_list, session_id, api_code):
     if len(opus_id_list) != len(res):
         return 'opusid not found'
 
+    # Note that this doesn't handle the case where some or all of the opus_ids
+    # are already in the cart. It's difficult to handle this well, would slow
+    # down the API, and should never happen when using the UI anyway.
+    num_selections = _get_cart_count(session_id)
+    if num_selections+len(opus_id_list) > settings.MAX_SELECTIONS_ALLOWED:
+        return 'Too many observations in cart'
+
     # We use REPLACE INTO to avoid problems with duplicate entries or
     # race conditions that would be caused by deleting first and then adding.
     # Note that REPLACE INTO only works because we have a constraint on the
@@ -729,22 +741,27 @@ def _edit_cart_range(request, session_id, action, api_code):
     "Add or remove a range of opus_ids based on the current sort order."
     id_range = request.GET.get('range', False)
     if not id_range:
-        return 'no range given'
+        log.error('_edit_cart_range: No range given: %s', request.GET)
+        ret = Http404(settings.HTTP404_BAD_OR_MISSING_RANGE)
+        exit_api_call(api_code, ret)
+        raise ret
 
     ids = id_range.split(',')
-    if len(ids) != 2:
-        return 'bad range'
-
-    if not ids[0] or not ids[1]:
-        return 'bad range'
+    if len(ids) != 2 or not ids[0] or not ids[1]:
+        log.error('_edit_cart_range: Bad range format: %s', request.GET)
+        ret = Http404(settings.HTTP404_BAD_OR_MISSING_RANGE)
+        exit_api_call(api_code, ret)
+        raise ret
 
     # Find the index in the cache table for the min and max opus_ids
 
     (selections, extras) = url_to_search_params(request.GET)
     if selections is None:
         log.error('_edit_cart_range: Could not find selections for'
-                  +' request %s', str(request.GET))
-        return 'bad search'
+                  +' request %s', request.GET)
+        ret = Http404(settings.HTTP404_SEARCH_PARAMS_INVALID)
+        exit_api_call(api_code, ret)
+        raise ret
 
     user_query_table = get_user_query_table(selections, extras,
                                             api_code=api_code)
@@ -752,7 +769,8 @@ def _edit_cart_range(request, session_id, action, api_code):
         log.error('_edit_cart_range: get_user_query_table failed '
                   +'*** Selections %s *** Extras %s',
                   str(selections), str(extras))
-        return 'search failed'
+        ret = HttpResponseServerError(settings.HTTP500_SEARCH_FAILED)
+        return ret
 
     cursor = connection.cursor()
 
@@ -776,17 +794,48 @@ def _edit_cart_range(request, session_id, action, api_code):
             return 'opusid not found'
         sort_orders.append(results[0][0])
 
+    sql_where  = ' WHERE '
+    sql_where += q(user_query_table)+'.'+q('sort_order')
+    sql_where += ' >= '+str(min(sort_orders))+' AND '
+    sql_where += q(user_query_table)+'.'+q('sort_order')
+    sql_where += ' <= '+str(max(sort_orders))
+
     if action == 'addrange':
+        # Note that this doesn't handle the case where some or all of the
+        # observations in the range are already in the cart. It's difficult to
+        # handle this well and would slow down the API, so we're just going to
+        # ignore it for now even though it's possible a user would run into
+        # it when adding a range that already contains observations that are in
+        # the cart.
+        num_selections = _get_cart_count(session_id)
+
+        sql_from = ' FROM '+q('obs_general')
+        # INNER JOIN because we only want rows that exist in the
+        # user_query_table
+        sql_from += ' INNER JOIN '+q(user_query_table)+' ON '
+        sql_from += q(user_query_table)+'.'+q('id')+'='
+        sql_from += q('obs_general')+'.'+q('id')
+
+        sql = 'SELECT COUNT(*)'+sql_from+sql_where
+        cursor.execute(sql)
+        try:
+            num_new = cursor.fetchone()[0]
+        except DatabaseError as e: # pragma: no cover
+            log.error('_edit_cart_range: SQL query failed for request %s: '
+                      +' SQL "%s" ERR "%s"', request.GET, sql, e)
+            ret = HttpResponseServerError(settings.HTTP500_SQL_FAILED)
+            return ret
+
+        if num_selections+num_new > settings.MAX_SELECTIONS_ALLOWED:
+            return 'Too many observations in cart'
+
         values = [session_id]
         sql = 'REPLACE INTO '+q('cart')+' ('
         sql += q('session_id')+','+q('obs_general_id')+','+q('opus_id')+')'
         sql += ' SELECT %s,'
         sql += q('obs_general')+'.'+q('id')+','
-        sql += q('obs_general')+'.'+q('opus_id')+' FROM '+q('obs_general')
-        # INNER JOIN because we only want rows that exist in the
-        # user_query_table
-        sql += ' INNER JOIN '+q(user_query_table)+' ON '
-        sql += q(user_query_table)+'.'+q('id')+'='+q('obs_general')+'.'+q('id')
+        sql += q('obs_general')+'.'+q('opus_id')
+        sql += sql_from
 
     elif action == 'removerange':
         values = []
@@ -796,13 +845,13 @@ def _edit_cart_range(request, session_id, action, api_code):
         sql += q(user_query_table)+'.'+q('id')+'='
         sql += q('cart')+'.'+q('obs_general_id')
     else:
-        assert False
+        log.error('_edit_cart_range: Unknown action %s: %s', action,
+                  request.GET)
+        ret = HttpResponseServerError(settings.HTTP500_INTERNAL_ERROR)
+        return ret
 
-    sql += ' WHERE '
-    sql += q(user_query_table)+'.'+q('sort_order')
-    sql += ' >= '+str(min(sort_orders))+' AND '
-    sql += q(user_query_table)+'.'+q('sort_order')
-    sql += ' <= '+str(max(sort_orders))
+    sql += sql_where
+
     log.debug('_edit_cart_range SQL: %s %s', sql, values)
     cursor.execute(sql, values)
 
@@ -811,20 +860,19 @@ def _edit_cart_range(request, session_id, action, api_code):
 
 def _edit_cart_addall(request, session_id, api_code):
     "Add all results from a search into the cart table."
-    # Find the index in the cache table for the min and max opus_ids
-    (selections, extras) = url_to_search_params(request.GET)
-    if selections is None:
-        log.error('_edit_cart_addall: Could not find selections for'
-                  +' request %s', str(request.GET))
-        return 'bad search'
+    count, user_query_table, err = get_result_count_helper(request, api_code)
+    if err is not None:
+        return err
 
-    user_query_table = get_user_query_table(selections, extras,
-                                            api_code=api_code)
-    if not user_query_table:
-        log.error('_edit_cart_addall: get_user_query_table failed '
-                  +'*** Selections %s *** Extras %s',
-                  str(selections), str(extras))
-        return 'search failed'
+    # Note that this doesn't handle the case where some or all of the
+    # observations in the current search results are already in the cart. It's
+    # difficult to handle this well and would slow down the API, so we're just
+    # going to ignore it for now even though it's possible a user would run into
+    # it when adding all from a search that already contains observations that
+    # are in the cart.
+    num_selections = _get_cart_count(session_id)
+    if num_selections+count > settings.MAX_SELECTIONS_ALLOWED:
+        return 'Too many observations in cart'
 
     cursor = connection.cursor()
 
