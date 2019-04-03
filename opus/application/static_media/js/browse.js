@@ -208,7 +208,7 @@ var o_browse = {
         });
 
         // thumbnail overlay tools
-        $('.gallery, #dataTable').on("click", ".tools a", function(e) {
+        $('.gallery, #dataTable').on("click", ".op-tools a", function(e) {
           //snipe the id off of the image..
           let opusId = $(this).parent().data("id");
 
@@ -1018,7 +1018,7 @@ var o_browse = {
                 html += '</div></a>';
 
                 html += '<div class="thumb-overlay">';
-                html += `<div class="tools dropdown" data-id="${opusId}">`;
+                html += `<div class="op-tools dropdown" data-id="${opusId}">`;
                 html +=     '<a href="#" data-icon="info" title="View observation detail"><i class="fas fa-info-circle fa-xs"></i></a>';
 
                 let buttonInfo = o_browse.cartButtonInfo((item.in_cart ? 'add' : 'remove'));
@@ -1031,7 +1031,7 @@ var o_browse = {
                 let checked = item.in_cart ? " checked" : "";
                 let checkbox = `<input type="checkbox" name="${opusId}" value="${opusId}" class="multichoice"${checked}/>`;
                 let minimenu = `<a href="#" data-icon="menu"><i class="fas fa-bars fa-xs"></i></a>`;
-                let row = `<td><div class="tools mx-0" data-id="${opusId}">${checkbox} ${minimenu}</div></td>`;
+                let row = `<td><div class="op-tools mx-0" data-id="${opusId}">${checkbox} ${minimenu}</div></td>`;
                 let tr = `<tr data-id="${opusId}" data-target="#galleryView" data-obs="${observationNumber}">`;
                 $.each(item.metadata, function(index, cell) {
                     row += `<td>${cell}</td>`;

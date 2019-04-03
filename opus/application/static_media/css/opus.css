@@ -161,6 +161,7 @@ ul.searchMenu {
 .card-header .icon-action {
     transition: .3s transform ease-in-out;
 }
+
 .card-header .collapsed .icon-action {
     -ms-transform: rotate(90deg); /* IE 9 */
     -ms-transform-origin: 80%; /* IE 9 */
@@ -242,9 +243,11 @@ ul.searchMenu {
 .modal {
     top: 4%;
 }
+
 .modal-content {
     border-radius: 1%;
 }
+
 .modal-footer .left-container {
     width: 74%;
 }
@@ -260,6 +263,7 @@ ul.searchMenu {
     opacity: 0;
     z-index: -1;
 }
+
 .thumbnail-container .modal-show {
     z-index: 999;
     -webkit-transform: translate(-50%, -50%);
@@ -293,11 +297,11 @@ tr.modal-show {
     border: 0px solid #000000 !important;
 }
 
-.tools {
+.op-tools {
     text-align: center;
 }
 
-.tools > a {
+.op-tools > a {
     color: white;
     font-size: 20px;
     position: absolute;
@@ -309,22 +313,22 @@ tr.modal-show {
     text-align: center;
 }
 
-.tools a:nth-child(1n) {
+.op-tools a:nth-child(1n) {
     position: relative;
     left: 0;
 }
 
-.tools a:nth-child(2n) {
+.op-tools a:nth-child(2n) {
     margin-right: 0.8em;
     margin-left: 0.8em;
 }
 
-.tools a:nth-child(3n) {
+.op-tools a:nth-child(3n) {
     position: relative;
     right: 0;
 }
 
-td .tools {
+td .op-tools {
     width: 2em;
 }
 
@@ -439,15 +443,18 @@ th.sticky-header {
 #metadataSelector ul li {
     text-decoration: none;
 }
+
 .allMetadata, .selectedMetadata {
     height: 450px;
     overflow: scroll;
     overflow-x: auto;
 }
+
 .allMetadata ul li {
     padding-bottom: 3px;
 
 }
+
 .allMetadata .cat_label {
     margin-top: 15px;
     margin-bottom: -5px;
@@ -457,9 +464,11 @@ th.sticky-header {
     padding-inline-start: 0.5em;
     padding-inline-end: 1em;
 }
+
 .selectedMetadata ul li:hover {
     cursor: grab;
 }
+
 .selectedMetadata ul li .unselect:hover {
     cursor: default;
  }
@@ -474,6 +483,7 @@ th.sticky-header {
     border: 0;
     z-index: 9999;
 }
+
 .selectedMetadata ul li {
     padding: 5px 15px;
     border: 1px dotted gray;
@@ -484,6 +494,7 @@ th.sticky-header {
     color: green;
     margin: 0 2px 0 5px;
 }
+
 .range_hints {
     display: block;
     clear: both;
@@ -826,6 +837,7 @@ nav.panel-heading {
     font-size: 130%;
     color: gray;
 }
+
 #range_query_widget_helper_html {
     display: none;
     width: 500px;
@@ -954,6 +966,7 @@ nav.panel-heading {
     padding: 5px 4px;
     padding-left: 5px;
 }
+
 .mult_group {
     padding-left: 0;
     display: none;
@@ -1014,6 +1027,7 @@ footer {
     z-index: 9999;
     top: 2em;
 }
+
 .op-header-text {
     display: inline-block;
 }
