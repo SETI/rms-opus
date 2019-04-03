@@ -29,7 +29,6 @@ var o_widgets = {
 
         // click the dictionary icon, the definition slides open
         $('#search').on('click', 'a.dict_link', function() {
-            var temp = $(this).parent().parent().find('.dictionary');
             $(this).parent().parent().find('.dictionary').slideToggle();
             return false;
         });
@@ -47,11 +46,11 @@ var o_widgets = {
         $('#search').on('click', '.close_card', function(myevent) {
             var slug = $(this).data('slug');
             o_widgets.closeWidget(slug);
+            let id = "#widget__"+slug;
             try {
-              var id = "#widget__"+slug;
-              $(id).remove();
+                $(id).remove();
             } catch (e) {
-              console.log("error on close widget, id="+id);
+                console.log("error on close widget, id="+id);
             }
         });
 
@@ -60,11 +59,11 @@ var o_widgets = {
             $('a[data-slug^="SURFACEGEO"]').each( function(index) {
                 let slug = $(this).data('slug');
                 o_widgets.closeWidget(slug);
+                let id = "#widget__"+slug;
                 try {
-                  var id = "#widget__"+slug;
-                  $(id).remove();
+                    $(id).remove();
                 } catch (e) {
-                  console.log("error on close widget, id="+id);
+                    console.log("error on close widget, id="+id);
                 }
             });
         });
@@ -73,11 +72,11 @@ var o_widgets = {
 
     closeWidget: function(slug) {
 
-        var slug_no_num;
+        var slugNoNum;
         try {
-            slug_no_num = slug.match(/(.*)[1|2]/)[1];
+            slugNoNum = slug.match(/(.*)[1|2]/)[1];
         } catch (e) {
-            slug_no_num = slug;
+            slugNoNum = slug;
         }
 
         if ($.inArray(slug,opus.prefs.widgets) > -1) {
@@ -96,15 +95,15 @@ var o_widgets = {
             delete opus.selections[slug];
         }
         // handle for range queries
-        if (slug_no_num + '1' in opus.selections) {
-            delete opus.selections[slug_no_num + '1'];
+        if (slugNoNum + '1' in opus.selections) {
+            delete opus.selections[slugNoNum + '1'];
         }
-        if (slug_no_num + '2' in opus.selections) {
-            delete opus.selections[slug_no_num + '2'];
+        if (slugNoNum + '2' in opus.selections) {
+            delete opus.selections[slugNoNum + '2'];
         }
 
-        delete opus.extras[`qtype-${slug_no_num}`];
-        delete opus.extras[`z-${slug_no_num}`];
+        delete opus.extras[`qtype-${slugNoNum}`];
+        delete opus.extras[`z-${slugNoNum}`];
 
         var selector = `li [data-slug='${slug}']`;
         o_menu.markMenuItem(selector, "unselect");
@@ -160,7 +159,7 @@ var o_widgets = {
                 });
                 break;
 
-           case 'target':
+            case 'target':
                 // when target widget is drawn, look for any checked planets:
                 // usually for when a planet checkbox is checked on page load
                 $('#widget__planet input:checkbox:checked', '#search').each(function() {
@@ -173,7 +172,7 @@ var o_widgets = {
                 });
                 break;
 
-          case 'surfacegeometrytargetname':
+            case 'surfacegeometrytargetname':
                // when target widget is drawn, look for any checked planets:
                // usually for when a planet checkbox is checked on page load
                $('#widget__planet input:checkbox:checked', '#search').each(function() {
@@ -192,7 +191,7 @@ var o_widgets = {
 
     // adjusts the widths of the widgets in the main column so they fit users screen size
     adjustWidgetWidth: function(widget) {
-            $(widget).animate({width:$('#op-search-widgets').width() - 2*20 + 'px'},'fast');  // 20px is the side margin of .widget
+        $(widget).animate({width:$('#op-search-widgets').width() - 2*20 + 'px'},'fast');  // 20px is the side margin of .widget
     },
 
     maximizeWidget: function(slug, widget) {
@@ -204,7 +203,6 @@ var o_widgets = {
         $('#' + widget + ' .widget_minimized').hide();
         $('#widget_control_' + slug).removeClass('widget_controls_minimized');
         $('#' + widget + ' .widget_inner').show("blind");
-        $('#widget__' + slug).height(height);
         $('.ui-resizable-handle').show();
     },
 
@@ -220,8 +218,8 @@ var o_widgets = {
         $('#widget_control_' + slug + ' .remove_widget').hide();
         $('#widget_control_' + slug + ' .divider').hide();
 
-        var simple = o_widgets.minimizeWidgetLabel(slug);
-        function doit() {
+        let simple = o_widgets.minimizeWidgetLabel(slug);
+        function doit() { // XXX WHY IS THIS A FUNCTION?
             $('#' + widget + ' .widget_inner').hide();
 
             $('#' + widget).animate({height:'1.2em'}, 'fast');
@@ -236,18 +234,22 @@ var o_widgets = {
 
     // the string that shows when a widget is minimized
     minimizeWidgetLabel: function(slug) {
-        var label;
+        // XXX This entire function needs review and help
+        let label;
+        let simple;
          try {
              label = $('#widget__' + slug + ' h2.widget_label').html();
          } catch(e) {
              label = slug;
          }
 
-         var min = false;
+         let slugMin = false;
+         let slugMax = false;
+         let slugNoNum = false;
          if (slug.match(/.*(1|2)/)) {
-             var slug_no_num = slug.match(/(.*)[1|2]/)[1];
-             var min = slug_no_num + '1';
-             var max = slug_no_num + '2';
+             slugNoNum = slug.match(/(.*)[1|2]/)[1];
+             slugMin = slugNoNum + '1';
+             slugMax = slugNoNum + '2';
          }
 
          if (opus.selections[slug]) {
@@ -259,14 +261,14 @@ var o_widgets = {
                  // this is a range widget
                  var qtypes;
                  try {
-                     qtypes = opus.extras['qtype-' + slug_no_num];
+                     qtypes = opus.extras['qtype-' + slugNoNum];
                  } catch(e) {
                      qtypes = [opus.qtype_default];
                  }
 
-                 var length = (opus.selections[min].length > opus.selections[max].length) ? opus.selections[min].length : opus.selections[max].length;
+                 var length = (opus.selections[slugMin].length > opus.selections[slugMax].length) ? opus.selections[slugMin].length : opus.selections[slugMax].length;
 
-                 var simple = [];
+                 simple = [];
                  for (var i=0;i<length;i++) {
                      // ouch:
                      var qtype;
@@ -282,18 +284,18 @@ var o_widgets = {
 
                      switch(qtype) {
                           case 'only':
-                              simple[simple.length] = ' min >= ' + opus.selections[min][i] + ', ' +
-                                                      ' max <= ' + opus.selections[max][i];
+                              simple[simple.length] = ' min >= ' + opus.selections[slugMin][i] + ', ' +
+                                                      ' max <= ' + opus.selections[slugMax][i];
                               break;
 
                           case 'all':
-                              simple[simple.length] = ' min <= ' + opus.selections[min][i] + ', ' +
-                                                      ' max  >= ' + opus.selections[max][i];
+                              simple[simple.length] = ' min <= ' + opus.selections[slugMin][i] + ', ' +
+                                                      ' max  >= ' + opus.selections[slugMax][i];
                               break;
 
                           default:
-                              simple[simple.length] = ' min  <= ' + opus.selections[max][i] + ', ' +
-                                                      ' max  >= ' + opus.selections[min][i];
+                              simple[simple.length] = ' min  <= ' + opus.selections[slugMax][i] + ', ' +
+                                                      ' max  >= ' + opus.selections[slugMin][i];
                       }
 
                       break;  // we have decided to only show the first range in the minimized display
@@ -304,9 +306,9 @@ var o_widgets = {
              } else if (form_type == 'STRING') {
                  var s_arr = [];
                  var last_qtype = '';
-                 for (var key in opus.selections[slug]) {
-                     var value = opus.selections[slug][key];
-                     var qtype;
+                 for (let key in opus.selections[slug]) {
+                     let value = opus.selections[slug][key];
+                     let qtype;
                      try {
                          qtype = opus.extras['qtype-'+slug][key];
                      } catch(err) {
@@ -321,19 +323,19 @@ var o_widgets = {
                              s_arr[s_arr.length] = qtype + ": " + value;
                          }
                      }
-                     last_qtype = qtype
+                     last_qtype = qtype;
                  }
-                 var simple = s_arr.join(' or ');
+                 simple = s_arr.join(' or ');
 
 
              } else {
                  // this is not a range widget
-                 var simple = label + ' = ' + opus.selections[slug].join(', ');
+                 simple = label + ' = ' + opus.selections[slug].join(', ');
              }
          } else {
-             var simple = label + ' not constrained';
+             simple = label + ' not constrained';
          }
-         return simple
+         return simple;
      },
 
      updateWidgetCookies: function() {
@@ -355,20 +357,20 @@ var o_widgets = {
      },
 
      // adds a widget and its behaviors, adjusts the opus.prefs variable to include this widget, will not update the hash
-     getWidget: function(slug, formscolumn, deferredObj=null) {
+    getWidget: function(slug, formscolumn, deferredObj=null) {
 
-         if (!slug) return;
+        if (!slug) return;
 
-         if ($.inArray(slug, opus.widgets_drawn) > -1) {
-             return; // widget already drawn
-         }
-         if ($.inArray(slug, opus.widgets_fetching) > -1) {
-             return; // widget being fetched
-         }
+        if ($.inArray(slug, opus.widgets_drawn) > -1) {
+            return; // widget already drawn
+        }
+        if ($.inArray(slug, opus.widgets_fetching) > -1) {
+            return; // widget being fetched
+        }
 
-         var widget = 'widget__' + slug;
+        var widget = 'widget__' + slug;
 
-         opus.widgets_fetching.push(slug);
+        opus.widgets_fetching.push(slug);
 
         // add the div that will hold the widget
         if ($.inArray(slug,opus.widget_elements_drawn) < 0) {
@@ -382,9 +384,8 @@ var o_widgets = {
             opus.widget_elements_drawn.unshift(slug);
 
         }
-        let reqStart = new Date().getTime();
         $.ajax({ url: "/opus/__forms/widget/" + slug + '.html?' + o_hash.getHash(),
-             success: function(widget_str) {
+                 success: function(widget_str) {
                 $("#widget__"+slug).html(widget_str);
             }}).done(function() {
 
@@ -431,7 +432,7 @@ var o_widgets = {
                      opus.lastRequestNo++;
                      o_search.slugStringSearchChoicesReqno[slug] = opus.lastRequestNo;
 
-                     values.push(currentValue)
+                     values.push(currentValue);
                      opus.selections[slug] = values;
                      let newHash = o_hash.updateHash(false);
                      /*
@@ -454,9 +455,9 @@ var o_widgets = {
                          }
 
                          if (stringSearchChoicesData.full_search) {
-                             o_search.searchMsg = "Results from entire database, not current search constraints"
+                             o_search.searchMsg = "Results from entire database, not current search constraints";
                          } else {
-                             o_search.searchMsg = "Results from current search constraints"
+                             o_search.searchMsg = "Results from current search constraints";
                          }
 
                          if (stringSearchChoicesData.choices.length !== 0) {
@@ -551,7 +552,7 @@ var o_widgets = {
              try {
                  $('#' + widget + ' ul label').after(function() {
                     var value = $(this).find('input').attr("value");
-                    var span_id = 'hint__' + slug + '_' + value.replace(/ /g,'-').replace(/[^\w\s]/gi, '')  // special chars not allowed in id element
+                    var span_id = 'hint__' + slug + '_' + value.replace(/ /g,'-').replace(/[^\w\s]/gi, '');  // special chars not allowed in id element
                     return '<span class = "hints" id = "' + span_id + '"></span>';
                  });
              } catch(e) { } // these only apply to mult widgets

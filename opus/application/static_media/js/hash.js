@@ -8,7 +8,7 @@ var o_hash = {
     // updates the hash according to user selections
     updateHash: function(updateURL=true) {
 
-        hash = [];
+        let hash = [];
         for (var param in opus.selections) {
             if (opus.selections[param].length) {
                 hash.push(param + "=" + opus.selections[param].join(",").replace(/ /g,"+"));
@@ -35,7 +35,7 @@ var o_hash = {
                         // so the curent page depends on the view being shown
                         // opus.prefs.view = search, browse, cart, or detail
                         // opus.prefs.browse =  'gallery' or 'dataTable',
-                        page = o_browse.getCurrentPage();
+                        let page = o_browse.getCurrentPage();
                         hash.push("page=" + page);
                         break;
 
@@ -43,7 +43,7 @@ var o_hash = {
                         hash.push(key + "=" + opus.prefs[key]);
                 }
             }
-        )
+        );
         if (updateURL) {
             window.location.hash = '/' + hash.join('&');
         }
@@ -133,8 +133,8 @@ var o_hash = {
                             opus.prefs[slug] = value.replace(/\s+/g, '').split(',');
                             break;
                         case "page":
-                            opus.prefs.page['gallery'] = parseInt(value, 10);
-                            opus.prefs.page['dataTable'] = parseInt(value, 10);
+                            opus.prefs.page.gallery = parseInt(value, 10);
+                            opus.prefs.page.dataTable = parseInt(value, 10);
                             break;
                         case "limit":
                             // limit is no longer supported and is calculated based on screen size, so ignore this param
@@ -158,7 +158,7 @@ var o_hash = {
 
         // despite what the url says, make sure every widget that is constrained is actually visible
         //$.each(opus.selections, function(index, slug) { })
-        for (slug in opus.selections) {
+        for (let slug in opus.selections) {
           if ($.inArray(slug, opus.prefs.widgets) < 0) {
             // this slug is constrained in selections but is not
             // found in widgets, but do some extra checking for
@@ -168,10 +168,9 @@ var o_hash = {
               // range widges are represented by a single param and that's
               // the first param in the range, but this is the 2nd
               // let's see if the first half of this range is constrained
-              slug_no_num = slug.slice(0, -1)
-              if ($.inArray(slug_no_num, opus.prefs.widgets) >= 0
-                  ||
-                 $.inArray(slug_no_num + '1', opus.prefs.widgets) >= 0) {
+              let slugNoNum = slug.slice(0, -1);
+              if ($.inArray(slugNoNum, opus.prefs.widgets) >= 0 ||
+                  $.inArray(slugNoNum + '1', opus.prefs.widgets) >= 0) {
                    // the first half of this range is found in widgets
                    // so nothing to do
                    continue;
@@ -180,7 +179,7 @@ var o_hash = {
                    // but NOT found in widgets, so we add it, but don't
                    // add the param with the '2' index, only add the first
                    // '1' indexed param
-                   slug = slug_no_num + '1'
+                   slug = slugNoNum + '1';
                  }
             }
 
