@@ -1,13 +1,12 @@
 var o_detail = {
 
-    getDetail: function(opus_id) {
+    getDetail: function(opusId) {
 
         $("#detail").on("click", ".download_csv", function() {
-            $(this).attr("href", "/opus/__api/metadata_v2/"+opus_id+".csv?"+ o_hash.getHash());
+            $(this).attr("href", "/opus/__api/metadata_v2/"+opusId+".csv?"+ o_hash.getHash());
         });
 
         $("#detail").on("click", "a[data-action]", function() {
-            let href = $(this).attr("href").split('?')[0];
             switch($(this).data("action")) {
                 case "downloadData":
                     $(this).attr("href", `/opus/__api/download/${opusId}.zip?cols=${opus.prefs.cols.join()}`);
@@ -19,16 +18,16 @@ var o_detail = {
             //return false;
         });
 
-        opus.prefs.detail = opus_id;
+        opus.prefs.detail = opusId;
         let detailSelector = "#detail .panel";
 
-        if (!opus_id) {
+        if (!opusId) {
             // helpful
-            html = ' \
+            let html = ' \
                 <div style = "margin:20px"><h2>No Observation Selected</h2>   \
                 <p>To view details about an observation, click on the Browse Results tab<br>  \
                 at the top of the page. Click on a thumbnail and then "View Detail".</p>   \
-                </div>'
+                </div>';
 
             $(detailSelector).html(html).fadeIn();
 
@@ -37,43 +36,43 @@ var o_detail = {
 
         $(detailSelector).html(opus.spinner);
 
-        $(detailSelector).load("/opus/__initdetail/" + opus_id + ".html",
+        $(detailSelector).load("/opus/__initdetail/" + opusId + ".html",
             function(response, status, xhr) {
                 if (status == 'error') {
-                    html = ' \
+                    let html = ' \
                         <div style = "margin:20px"><h2>Bad OPUS ID</h2>   \
-                        <p>The specified OPUS_ID (or old RING_OBS_ID) was not found in the database.</p>   \
-                        </div>'
+                        <p>The specified opusId (or old RING_OBS_ID) was not found in the database.</p>   \
+                        </div>';
 
                     $(detailSelector).html(html).fadeIn();
                     return;
                 }
                 let arrOfDeferred = [];
                 // get the column metadata, this part is fast
-                url = "/opus/__api/metadata_v2/" + opus_id + ".html?" + o_hash.getHash();
-                $("#cols_metadata_"+opus_id)
-                    .load(url, function() {
+                let urlMetadataColumn = "/opus/__api/metadata_v2/" + opusId + ".html?" + o_hash.getHash();
+                $("#cols_metadata_"+opusId)
+                    .load(urlMetadataColumn, function() {
                         $(this).hide().fadeIn("fast");
                     }
                 );
 
                 // get categories and then send for data for each category separately:
-                url = "/opus/__api/categories/" + opus_id + ".json?" + o_hash.getHash();
-                $.getJSON(url, function(categories) {
+                let urlCategories = "/opus/__api/categories/" + opusId + ".json?" + o_hash.getHash();
+                $.getJSON(urlCategories, function(categories) {
                     $.each(categories, function(idx, val) {
                         arrOfDeferred.push($.Deferred());
-                    })
+                    });
 
                     for (let index in categories) {
-                        name = categories[index]['table_name'];
-                        label = categories[index]['label'];
-                        var html = '<h3>' + label + '</h3><div class = "detail_' + name + '">Loading <span class = "spinner">&nbsp;</span></div>'
-                        $("#all_metadata_" + opus_id).append(html);
+                        let tableName = categories[index].table_name;
+                        let label = categories[index].label;
+                        let html = '<h3>' + label + '</h3><div class = "detail_' + tableName + '">Loading <span class = "spinner">&nbsp;</span></div>';
+                        $("#all_metadata_" + opusId).append(html);
 
                         // now send for data
-                        url ="/opus/__api/metadata_v2/" + opus_id + ".html?cats=" + name;
-                        $("#all_metadata_" + opus_id + ' .detail_' + name)
-                            .load(url, function() {
+                        let urlMetadata ="/opus/__api/metadata_v2/" + opusId + ".html?cats=" + tableName;
+                        $("#all_metadata_" + opusId + ' .detail_' + tableName)
+                            .load(urlMetadata, function() {
                                 $(this).hide().slideDown("fast");
                                 arrOfDeferred[index].resolve();
                             }
@@ -85,7 +84,7 @@ var o_detail = {
                     $.when.apply(null, arrOfDeferred).then(function() {
                         let initDetailPageScrollbar = _.debounce(o_detail.initAndUpdatePerfectScrollbar, 200);
                         initDetailPageScrollbar();
-                    })
+                    });
                 });
             } // /detail.load
         );
@@ -93,7 +92,7 @@ var o_detail = {
 
     initAndUpdatePerfectScrollbar: function() {
         o_detail.detailPageScrollbar = new PerfectScrollbar(".detail-metadata");
-        o_detail.detailPageScrollbar.update()
+        o_detail.detailPageScrollbar.update();
     },
 
     adjustDetailHeight: function() {

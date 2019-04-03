@@ -11,7 +11,7 @@ var o_menu = {
          $("#sidebar").on("click", ".searchMenu li .dropdown-toggle", function() {
              let adjustSearchSideBarHeight = _.debounce(o_search.adjustSearchSideBarHeight, 500);
              adjustSearchSideBarHeight();
-         })
+         });
 
          // click param in menu get new widget
          $("#sidebar").on("click", ".submenu li a", function() {
