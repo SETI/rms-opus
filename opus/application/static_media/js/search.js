@@ -9,6 +9,7 @@ var o_search = {
     widgetScrollbar: new PerfectScrollbar("#widget-container" , { suppressScrollX: true }),
 
     // for input validation in the search widgets
+    searchTabDrawn: false,
     searchResultsNotEmpty: false,
     searchMsg: "",
     truncatedResults: false,
@@ -426,7 +427,7 @@ var o_search = {
 
     getSearchTab: function() {
 
-        if (opus.search_tab_drawn) {
+        if (o_search.searchTabDrawn) {
             o_search.adjustSearchHeight();
             return;
         }
@@ -460,7 +461,7 @@ var o_search = {
             }
         }
 
-        opus.search_tab_drawn = true;
+        o_search.searchTabDrawn = true;
 
         o_search.adjustSearchHeight();
     },

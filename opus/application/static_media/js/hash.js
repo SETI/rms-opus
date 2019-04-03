@@ -76,18 +76,6 @@ var o_hash = {
         return hashArray;
     },
 
-    // return a object of slug value pair: {'slug1': 'val1', 'slug2': 'val2'}
-    getHashObject: function() {
-        let hashObj = {};
-        let hashInfo = this.getHash();
-        $.each(hashInfo.split("&"), function(idx, valuePair) {
-            let paramArray = valuePair.split("=");
-            hashObj[paramArray[0]] = paramArray[1];
-        });
-
-        return hashObj;
-    },
-
     hashArrayToHashString: function(hashArray) {
         let hash = "";
         for (let param in hashArray) {
@@ -115,9 +103,7 @@ var o_hash = {
                 }
             }
         });
-        if (!$.isEmptyObject(selections)) {
-            return selections;
-        }
+        return selections;
     },
 
 
@@ -148,10 +134,11 @@ var o_hash = {
                             break;
                         case "page":
                             opus.prefs.page['gallery'] = parseInt(value, 10);
-                            opus.prefs.page['data'] = parseInt(value, 10);
+                            opus.prefs.page['dataTable'] = parseInt(value, 10);
                             break;
                         case "limit":
-                            opus.prefs[slug] = parseInt(value, 10);
+                            // limit is no longer supported and is calculated based on screen size, so ignore this param
+                            //opus.prefs[slug] = parseInt(value, 10);
                             break;
                         case "cols":
                             opus.prefs[slug] = value.split(',');

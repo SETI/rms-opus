@@ -1,7 +1,5 @@
 // generic globals, hmm..
 var default_pages = {"gallery":1, "dataTable":1, "cart_gallery":1, "cart_data":1 };
-var reset_footer_clicks = {"gallery":0, "dataTable":0, "cart_gallery":0, "cart_data":0 };
-var reset_browse_view_scrolls = {"gallery":0, "dataTable":0, "cart_gallery":0, "cart_data":0 };
 
 // defining the opus namespace first; document ready comes after...
 var opus = {
@@ -27,8 +25,6 @@ var opus = {
     lastResultCountRequestNo: 0,
     waitingForAllNormalizedAPI: false,
 
-    download_in_process: false,
-
     // client side prefs, changes to these *do not trigger results to refresh*
     // prefs gets added verbatim to the url, so don't add anything weird into here!
     prefs:{ 'view':'search', // search, browse, cart, detail
@@ -50,11 +46,8 @@ var opus = {
                       // this is not
 					  // note that this is also not a dictionary because we need to preserve the order.
 
-    gallery_data: {},  // holds gallery column data
 
     lastPageDrawn: {"browse":0, "cart":0},
-    pages_drawn: {"browse": [], "cart": []},  // keeping track of currently rendered gallery pages
-                                                          // so underlying data can be refreshed after 'choose metadata'
 
     // additional defaults are in base.html
 
@@ -65,28 +58,19 @@ var opus = {
     last_hash:'',
     result_count:0,
     qtype_default: 'any',
-    force_load: false, // set this to true to force load() when selections haven't chnaged
+    force_load: true, // set this to true to force load() when selections haven't changed
 
     // searching - ui
-    search_tab_drawn: false,
     widgets_drawn:[], // keeps track of what widgets are actually drawn
     widgets_fetching:[], // this widget is currently being fetched
     widget_elements_drawn:[], // the element is drawn but the widget might not be fetched yet
-    search_form_cols:1, // the number of search form cols, 1 or 2
     widget_full_sizes:{}, // when a widget is minimized and doesn't have a custom size defined we keep track of what the full size was so we can restore it when they unminimize/maximize widget
-    menu_list_indicators: {'slug':[], 'cat':[], 'group':[] },
-    // menu_state: {'cats':['obs_general'], 'groups':[]},  // keep track of menu items that are open
     menu_state: {'cats':['obs_general']},
     default_widgets: default_widgets.split(','),
     widget_click_timeout:0,
 
     // browse tab
     pages:0, // total number of pages this result
-    browse_auto:'.chosen_columns', // we are turning this on as default
-    metadata_selector_drawn:false,
-    gallery_begun:false, // have we started the gallery view
-    browse_view_scrolls: reset_browse_view_scrolls, // same defaults as footer clicks (definied in header.html)
-                                                      // {"gallery":0, "data":0, "cart_gallery":0, "cart_data":0 };
 
     // cart
     cart_change:true, // cart has changed since last load of cart_tab
@@ -110,10 +94,13 @@ var opus = {
         whether to fire an ajax call.
         */
 
-        selections = o_hash.getSelectionsFromHash();
+        let selections = o_hash.getSelectionsFromHash();
+        if (selections === undefined) {
+            return;
+        }
 
         // if (!$.isEmptyObject(opus.selections) || !opus.checkIfDrawnWidgetsAreDefault() || !opus.checkIfMetadataAreDefault()) {
-        if (selections || !opus.checkIfDrawnWidgetsAreDefault()) {
+        if ($.isEmptyObject(selections) || !opus.checkIfDrawnWidgetsAreDefault()) {
             $(".op-reset-button button").prop("disabled", false);
         } else  if (!opus.checkIfMetadataAreDefault()) {
             $(".op-reset-button .op-reset-search-metadata").prop("disabled", false);
@@ -122,9 +109,9 @@ var opus = {
             $(".op-reset-button button").prop("disabled", true);
         }
 
-        if (!selections) {
+        if ($.isEmptyObject(selections)) {
             // there are no selections found in the url hash
-            if (!jQuery.isEmptyObject(opus.last_selections)) {
+            if (!$.isEmptyObject(opus.last_selections)) {
                 // last selections is also empty
                 opus.last_selections = {};
                 o_browse.resetQuery();
@@ -141,7 +128,7 @@ var opus = {
         } else {
             // selections in the url hash is different from opus.last_selections
               // reset the pages:
-              opus.prefs.page = {"gallery":1, "data":1, "cart_gallery":1, "cart_data":1 };
+              opus.prefs.page = default_pages;
 
               // and reset the query:
               o_browse.resetQuery();
@@ -149,10 +136,7 @@ var opus = {
 
         // start the result count spinner and do the yellow flash
         $("#op-result-count").html(opus.spinner).parent().effect("highlight", {}, 500);
-        // start op-menu-text and op-search-widgets spinner
-        $(".op-menu-text.spinner").addClass("op-show-spinner");
-        $("#op-search-widgets .spinner").fadeIn();
-
+        $("#op-observation-number").html(opus.spinner).effect("highlight", {}, 500);
         // move this above allNormalizedApiCall to avoid recursive api call
         opus.last_selections = selections;
 
@@ -175,6 +159,7 @@ var opus = {
         if (!opus.allInputsValid) {
             // remove spinning effect on browse count
             $("#op-result-count").text("?");
+            $("#op-observation-number").html("?");
             return;
         }
 
@@ -196,15 +181,13 @@ var opus = {
         // if all we wanted was a new gallery page we can stop here
         opus.pages = Math.ceil(opus.result_count/opus.prefs.limit);
         if (opus.prefs.view == "browse") {
-            $("#pages","#browse").html(opus.pages);
             return;
         }
 
         // result count is back, now send for widget hinting
-        for (k in opus.prefs.widgets) {
-            slug = opus.prefs.widgets[k];
+        $.each(opus.prefs.widgets, function(index, slug) {
             o_search.getHinting(slug);
-        } // endfor
+        });
     },
 
     updateResultCount: function(result_count) {
@@ -297,7 +280,7 @@ var opus = {
         // the application default widgets
 
         clearInterval(opus.main_timer);  // stop polling for UI changes for a moment
-        $("#op-search-widgets").empty(); // remove all widgets on the screen
+        $("#search_widgets").empty(); // remove all widgets on the screen
 
         // reset the search query
         opus.selections = {};
@@ -328,7 +311,7 @@ var opus = {
         let deferredArr = [];
         $.each(opus.default_widgets, function(index, slug) {
             deferredArr.push($.Deferred());
-            o_widgets.getWidget(slug,"#op-search-widgets",deferredArr[index]);
+            o_widgets.getWidget(slug,"#search_widgets",deferredArr[index]);
         });
         // wait until all widgets are get
         $.when.apply(null, deferredArr).then(function() {
@@ -428,6 +411,7 @@ $(document).ready(function() {
     opus.prefs.widgets = [];
     o_widgets.updateWidgetCookies();
     opus.lastBlogUpdate();
+    opus.addAllBehaviors();
 
     o_hash.initFromHash(); // just returns null if no hash
 
@@ -499,6 +483,10 @@ $(document).ready(function() {
                 url += "tutorial.html";
                 header = "A Brief Tutorial";
                 break;
+            case "feedback":
+                url = "https://pds-rings.seti.org/cgi-bin/comments/form.pl";
+                header = "Questions/Feedback";
+                break;
         }
 
         $("#op-help-panel .op-header-text").html(`<h2>${header}</h2`);
@@ -569,8 +557,6 @@ $(document).ready(function() {
         let viewportBottom = viewportTop + $(window).height();
         return elementBottom > viewportTop && elementTop < viewportBottom;
     };
-
-    opus.addAllBehaviors();
 
     o_cart.initCart();
     opus.triggerNavbarClick();

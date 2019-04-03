@@ -1,6 +1,8 @@
 var o_cart = {
     lastCartRequestNo: 0,
     lastRequestNo: 0,
+    downloadInProcess: false,
+
 
     /**
      *
@@ -69,11 +71,12 @@ var o_cart = {
      },
 
      downloadZip: function(type, errorMsg) {
-         if (opus.download_in_process) {
+         if (o_cart.downloadInProcess) {
              return false;
          }
+
          $("#op-download-links").show();
-         opus.download_in_process = true;
+         opus.downloadInProcess = true;
          $(".spinner", "#op-download-links").fadeIn().css("display","inline-block");
 
          let add_to_url = o_cart.getDownloadFiltersChecked();
@@ -98,7 +101,7 @@ var o_cart = {
                  $(`<li>${errorMsg}</li>`).hide().prependTo("ul.zippedFiles", "#cart_summary").slideDown("fast");
              },
              complete: function() {
-                 opus.download_in_process = false;
+                 o_cart.downloadInProcess = false;
              }
          });
      },
@@ -219,7 +222,7 @@ var o_cart = {
                     // this div lives in the in the nav menu template
                     $(".cart_details", "#cart").hide().html(html).fadeIn();
 
-                    if (opus.download_in_process) {
+                    if (o_cart.downloadInProcess) {
                         $(".spinner", "#cart_summary").fadeIn();
                     }
 
@@ -275,19 +278,19 @@ var o_cart = {
 
         // handle it as range
         if (toOpusId != undefined) {
+            let namespace = o_browse.getViewInfo().namespace;
             let action = (fromElem.hasClass("in") ? "removerange" : "addrange");
             let cartAction = (action == "addrange");
             let toElem = o_browse.getGalleryElement(toOpusId);
-            let fromIndex = $(".thumbnail-container").index(fromElem);
-            let toIndex = $(".thumbnail-container").index(toElem);
+            let fromIndex = $(`${namespace} .thumbnail-container`).index(fromElem);
+            let toIndex = $(`${namespace} .thumbnail-container`).index(toElem);
 
             // reorder if need be
             if (fromIndex > toIndex) {
                 [fromIndex, toIndex] = [toIndex, fromIndex];
             }
             let length = toIndex - fromIndex+1;
-            let namespace = o_browse.getViewInfo().namespace;
-            let elementArray = $(namespace + " .thumbnail-container");
+            let elementArray = $(`${namespace} .thumbnail-container`);
             let opusIdRange = $(elementArray[fromIndex]).data("id") + ","+ $(elementArray[toIndex]).data("id")
             console.log("end range "+action+" : "+opusIdRange);
             $.each(elementArray.splice(fromIndex, length), function(index, elem) {
@@ -301,8 +304,15 @@ var o_cart = {
                 }
                 $("input[name="+opusId+"]").prop("checked", (action == "addrange"));
                 o_browse.updateCartIcon(opusId, status);
+                // this is here because the cart doesn't have support for add/remove range, so we will do them one at a time
+                if (opus.prefs.view == "cart") {
+                    o_cart.editCart(opusId, action.replace("range", ""));
+                }
             });
-            o_cart.editCart(opusIdRange, action);
+            // temporary hack; cart has already been committed in loop so only do this for browse.
+            if (opus.prefs.view != "cart") {
+                o_cart.editCart(opusIdRange, action);
+            }
             o_browse.undoRangeSelect(namespace);
         } else {
             // note - doing it this way handles the obs on the browse tab at the same time
