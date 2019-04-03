@@ -246,20 +246,19 @@ var o_search = {
 
             switch ($(this).attr("class")) {  // form type
                 case "RANGE":
-                    let slug_no_num = $(this).attr("name").match(/-(.*)/)[1];
-
-                    $("#widget__" + slug_no_num + ' select').each(function() {
+                    let slugNoNum = $(this).attr("name").match(/-(.*)/)[1];
+                    $(`#widget__${slugNoNum} select`).each(function() {
                         qtypes.push($(this).val());
                     });
-                    opus.extras['qtype-' + slug_no_num] = qtypes;
+                    opus.extras[`qtype-${slugNoNum}`] = qtypes;
                     break;
 
                 case "STRING":
                     let slug = $(this).attr("name").match(/-(.*)/)[1];
-                    $("#widget__" + slug + ' select').each(function() {
+                    $(`#widget__${slug} select`).each(function() {
                         qtypes.push($(this).val());
                     });
-                    opus.extras['qtype-' + slug] = qtypes;
+                    opus.extras[`qtype-${slug}`] = qtypes;
                     break;
             }
 
