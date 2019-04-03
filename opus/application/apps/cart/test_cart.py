@@ -19,7 +19,7 @@ class cartTests(TestCase):
         logging.disable(logging.ERROR)
         cache.clear()
         self.factory = RequestFactory()
-        
+
     def tearDown(self):
         sys.tracebacklimit = 1000 # default: 1000
         logging.disable(logging.NOTSET)
@@ -86,7 +86,7 @@ class cartTests(TestCase):
     def test__api_edit_cart_no_request(self):
         "[test_cart.py] api_edit_cart: no request"
         with self.assertRaises(Http404):
-            api_edit_cart(None)
+            api_edit_cart(None, 'add')
 
     def test__api_edit_cart_no_get(self):
         "[test_cart.py] api_edit_cart: no GET"
@@ -94,7 +94,7 @@ class cartTests(TestCase):
         request = self.factory.get('/__cart/add.json')
         request.GET = None
         with self.assertRaises(Http404):
-            api_edit_cart(request)
+            api_edit_cart(request, 'add')
 
 
             ################################################

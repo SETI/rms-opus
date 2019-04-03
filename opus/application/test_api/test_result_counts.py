@@ -20,13 +20,11 @@ class APIResultCountsTests(TestCase):
     # disable error logging and trace output before test
     def setUp(self):
         self.maxDiff = None
-        sys.tracebacklimit = 0 # default: 1000
         settings.CACHE_KEY_PREFIX = 'opustest:' + settings.DB_SCHEMA_NAME
         logging.disable(logging.DEBUG)
 
     # enable error logging and trace output after test
     def tearDown(self):
-        sys.tracebacklimit = 1000 # default: 1000
         logging.disable(logging.NOTSET)
 
     def test_api_result_counts_from_csv(self):
