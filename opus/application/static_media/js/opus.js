@@ -101,7 +101,6 @@ var opus = {
 
     helpPanelOpen: false,
     //------------------------------------------------------------------------------------//
-
     load: function() {
         /* When user makes any change to the interface, such as changing a query,
         the load() will send an ajax request to the server to get information it
@@ -450,6 +449,22 @@ $(document).ready(function() {
         adjustDetailHeight();
         adjustHelpPanelHeight();
     });
+
+    // setup and initilize MutationObserver to detech any DOM changes
+    let config = {
+          attributes: true,
+          childList: true,
+          subtree: true,
+    };
+
+    let observer = new MutationObserver(function(mutationsList, observer) {
+      for(let mutation of mutationsList) {
+        console.log(mutation);
+        console.log(mutation.type);
+      }
+    });
+    let searchPage = document.getElementById("search");
+    observer.observe(searchPage, config);
 
     // add the navbar clicking behaviors, selecting which tab to view:
     // see triggerNavbarClick
