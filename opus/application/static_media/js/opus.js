@@ -1,6 +1,3 @@
-// generic globals, hmm..
-var default_pages = {"gallery":1, "dataTable":1, "cart_gallery":1, "cart_data":1 };
-
 // defining the opus namespace first; document ready comes after...
 var opus = {
 
@@ -30,9 +27,8 @@ var opus = {
     prefs:{ 'view':'search', // search, browse, cart, detail
             'browse':'gallery', //either 'gallery' or 'data'
             'cart_browse':'gallery',  // which view is showing on the cart page, gallery or data
-            'page':default_pages,  // what page are we on, per view, default defined in header.html
-                                   // like {"gallery":1, "data":1, "cart_gallery":1, "cart_data":1 };
-            'limit': 100, // results per page
+            'startobs': 1,  // for gallery
+            'cart_startobs': 1, // for the cart
             'order': default_sort_order.split(','),  // result table ordering
             'cols': default_columns.split(','),  // default result table columns by slug
             'widgets':[], // search tab widget columns
@@ -45,11 +41,6 @@ var opus = {
                       // it's outside of prefs because those are things loaded into urls
                       // this is not
 					  // note that this is also not a dictionary because we need to preserve the order.
-
-
-    lastPageDrawn: {"browse":0, "cart":0},
-
-    // additional defaults are in base.html
 
     // searching - making queries
     selections:{},        // the user's search
@@ -69,13 +60,10 @@ var opus = {
     default_widgets: default_widgets.split(','),
     widget_click_timeout:0,
 
-    // browse tab
-    pages:0, // total number of pages this result
-
     // cart
-    cart_change:true, // cart has changed since last load of cart_tab
+    cart_change: true, // cart has changed since last load of cart_tab
     cart_q_intrvl: false,
-    cart_options_viz:false,
+    cart_options_viz: false,
 
     // these are for the process that detects there was a change in the selection criteria and updates things
     main_timer:false,
@@ -141,7 +129,7 @@ var opus = {
         opus.last_selections = selections;
 
         // chain ajax calls, validate range inputs before result count api call
-        o_search.allNormalizedApiCall().then(opus.getResultCount).then(opus.updatePageAfterResultCountAPI);
+        o_search.allNormalizedApiCall().then(opus.getResultCount).then(opus.updateSearchTabHinting);
     },
 
     getResultCount: function(normalizedData) {
@@ -166,7 +154,7 @@ var opus = {
         return $.getJSON("/opus/__api/meta/result_count.json?" + resultCountHash + "&reqno=" + opus.lastResultCountRequestNo);
     },
 
-    updatePageAfterResultCountAPI: function(resultCountData) {
+    updateSearchTabHinting: function(resultCountData) {
         if (!opus.allInputsValid || !resultCountData) {
             return;
         }
@@ -179,7 +167,6 @@ var opus = {
         o_menu.getMenu();
 
         // if all we wanted was a new gallery page we can stop here
-        opus.pages = Math.ceil(opus.result_count/opus.prefs.limit);
         if (opus.prefs.view == "browse") {
             return;
         }

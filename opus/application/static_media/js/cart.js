@@ -160,16 +160,16 @@ var o_cart = {
         });
      },
 
-     loadCartData: function(page) {
+     loadCartData: function(startObs) {
         //window.scrollTo(0,opus.browse_view_scrolls[opus.prefs.browse]);
-        page = (page == undefined ? 1 : (opus.cart_change ? 1 : page));
+        startObs = (startObs === undefined ? opus.prefs.cart_startobs] : startObs);
 
         let view = o_browse.getViewInfo();
         let base_url = "/opus/__api/dataimages.json?";
         o_cart.lastRequestNo++;
         let url = o_hash.getHash() + "&reqno=" + o_cart.lastRequestNo + view.add_to_url;
 
-        url = o_browse.updatePageInUrl(url, page);
+        url = o_browse.updateStartobsInUrl(url, startObs);
 
         // metadata; used for both table and gallery
         $.getJSON(base_url + url, function(data) {
@@ -185,9 +185,12 @@ var o_cart = {
             if (opus.cart_change) {
                 // for infinite scroll
                 $("#cart .gallery-contents").infiniteScroll({
-                    path: o_browse.updatePageInUrl(this.url, "{{#}}"),
+                    path: function() {
+                        let path = o_browse.getDataURL();
+                        return path;
+                    },
                     responseType: "text",
-                    status: "#cart .page-load-status",
+                    status: `#${opus.prefs.view} .page-load-status`,
                     elementScroll: true,
                     history: false,
                     debug: false,
@@ -212,9 +215,6 @@ var o_cart = {
             $(".gallery", "#cart").html("");
 
             $(".cart_details", "#cart").html(opus.spinner);
-
-            // reset page no
-            opus.lastPageDrawn.cart = 0;
 
             // redux: and nix this big thing:
             $.ajax({ url: "/opus/__cart/view.html",
@@ -329,8 +329,7 @@ var o_cart = {
     editCart: function(opusId, action) {
         opus.cart_change = true;
 
-        var viewInfo = o_browse.getViewInfo();
-        var url = "/opus/__cart/" + action + ".json?";
+        let url = "/opus/__cart/" + action + ".json?";
         switch (action) {
             case "add":
             case "remove":
@@ -340,30 +339,7 @@ var o_cart = {
             case "removerange":
             case "addrange":
                 url += "range=" + opusId;
-                // need to send to server what page this range lands and what limit of that page is
-                // limit should include all observations showing on page
-                // must adjust limit + page to account for total number of results showing on page
-
-                // server uses offset = (page_no-1)*limit
-                // i.e. the offset of the 23rd page at 100 per page starts with the 2200st record:
-
-                let first_page = o_browse.getCurrentPage();
-                let last_page = opus.lastPageDrawn[opus.prefs.view];
-
-                // now find the number of results showing on the page, different from opus.prefs.limit:
-                // number of "pages" showing on screen at any time = limit * (1+footer_clicks)
-                // i.e., you've got 100 on screen, you click footer 4 times, now you've got 500 showing
-                // multiply that by 2 because our results may span no more than 2 "pages" at our new limit on the server
-                let limit = opus.prefs.limit * (last_page - first_page + 1);
-
-                let hashArray = o_hash.getHashArray();
-                if (hashArray.page !== undefined)
-                    delete hashArray.page;
-                if (hashArray.limit !== undefined)
-                    delete hashArray.limit;
-
                 url += '&' + o_hash.hashArrayToHashString(hashArray);
-                url = url + "&limit=" + limit + "&page=" + first_page;
                 break;
 
           case "addall":

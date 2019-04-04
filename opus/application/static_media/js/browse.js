@@ -1,28 +1,22 @@
 var o_browse = {
     selectedImageID: "",
-    keyPressAction: "",
     tableSorting: false,
+    metadataSelectorDrawn: false,
+
     tableScrollbar: new PerfectScrollbar(".dataTable", { minScrollbarLength: 30 }),
     galleryScrollbar: new PerfectScrollbar(".gallery-contents", { suppressScrollX: true }),
     modalScrollbar: new PerfectScrollbar("#galleryViewContents .metadata"),
 
-    // if the user entered a number/slider for page/obs number,
-    // selector to set scrolltop to after data has been loaded
     galleryBegun: false, // have we started the gallery view
     galleryData: {},  // holds gallery column data
 
-    galleryScrollTo: 0,
-    metadataSelectorDrawn: false,
-
+    limit: 100,  // results per page
     lastLoadDataRequestNo: 0,
 
     galleryBoundingRect: {'x': 0, 'y': 0},
     gallerySliderStep: 10,
 
-    infiniteScrollCurrentMaxPageNumber: 0, // the largest drawn page number
-    infiniteScrollCurrentMinPageNumber: 1000, // prev page of the smallest drawn page number
     loadPrevPage: false,
-    currentPage: 1,
     currentOpusId: "",
     tempHash: "",
     dataNotAvailable: false,
@@ -37,13 +31,15 @@ var o_browse = {
         $(".gallery-contents, .dataTable").on('scroll', _.debounce(o_browse.checkScroll, 500));
 
         $(".gallery-contents, .dataTable").on('wheel ps-scroll-up', function(event) {
-            if (o_browse.infiniteScrollCurrentMinPageNumber > 0) {
-                if (opus.prefs.browse === "dataTable" && $(".dataTable").scrollTop() === 0) {
-                    opus.lastPageDrawn[opus.prefs.view] = o_browse.infiniteScrollCurrentMinPageNumber - 1;
-                    $(`#${opus.prefs.view} .gallery-contents`).infiniteScroll("loadNextPage");
-                } else if (opus.prefs.browse === "gallery" && $(".gallery-contents").scrollTop() === 0) {
-                    opus.lastPageDrawn[opus.prefs.view] = o_browse.infiniteScrollCurrentMinPageNumber - 1;
-                    $(`#${opus.prefs.view} .gallery-contents`).infiniteScroll("loadNextPage");
+            // if time to load...
+                if (opus.prefs.browse === "dataTable") {
+                    if ($(".dataTable").scrollTop() === 0) {
+                        $(`#${opus.prefs.view} .gallery-contents`).infiniteScroll("loadNextPage");
+                    }
+                } else {
+                    if ($(".gallery-contents").scrollTop() === 0) {
+                        $(`#${opus.prefs.view} .gallery-contents`).infiniteScroll("loadNextPage");
+                    }
                 }
             }
         });
@@ -405,8 +401,8 @@ var o_browse = {
     }, // end browse behaviors
 
     renderSortedDataFromBeginning: function() {
-        opus.lastPageDrawn.browse = 0;
-        opus.prefs.page = default_pages; // reset pages to 1 when col ordering changes
+        opus.prefs.startobs = 1; // reset startobs to 1 when col ordering changes
+        opus.prefs.cart_startobs = 1;
 
         o_browse.galleryBegun = false;     // so that we redraw from the beginning
         o_browse.galleryData = {};
@@ -421,10 +417,6 @@ var o_browse = {
         let next = $(`#browse tr[data-id=${opusId}]`).next("tr");
         let nextNext = next.next("tr");
         let nextNextId = (nextNext.data("id") ? nextNext.data("id") : "");
-
-        if (opus.lastPageDrawn[opus.prefs.view] < o_browse.infiniteScrollCurrentMaxPageNumber) {
-            opus.lastPageDrawn[opus.prefs.view] = o_browse.infiniteScrollCurrentMaxPageNumber;
-        }
 
         // load the next page when the next next item is the dead end (no more prefected data)
         if (!nextNextId && !nextNext.hasClass("table-page")) {
@@ -444,7 +436,7 @@ var o_browse = {
             return;
         }
         let prev = $(`#browse tr[data-id=${opusId}]`).prev("tr");
-        while (prev.hasClass("table-page")) {
+/*        while (prev.hasClass("table-page")) {
             prev = prev.prev("tr");
             if (prev.data("page")) {
                 // if (o_browse.infiniteScrollCurrentMinPageNumber > (prev.data("page") - 1) && prev.data("page") > 0) {
@@ -456,16 +448,13 @@ var o_browse = {
         prev = (prev.data("id") ? prev.data("id") : "");
 
         if (!prev && o_browse.infiniteScrollCurrentMinPageNumber > 0) {
-            if (opus.lastPageDrawn[opus.prefs.view] >= o_browse.infiniteScrollCurrentMinPageNumber) {
-                opus.lastPageDrawn[opus.prefs.view] = o_browse.infiniteScrollCurrentMinPageNumber - 1;
-            }
             // disable keydown on modal when it's loading
             // this will make sure we have correct html elements displayed for prev opus id
             $("#galleryViewContents").addClass("op-disabled");
 
             $(`#${opus.prefs.view} .gallery-contents`).infiniteScroll("loadNextPage");
 
-        }
+        }*/
     },
 
     setScrollbarOnSlide: function(obsNum) {
@@ -499,7 +488,7 @@ var o_browse = {
 
     onUpdateSlider: function(value) {
         // temp til we get rid of page
-        opus.prefs.page[opus.prefs.browse] = Math.ceil(value/opus.prefs.limit);
+        opus.prefs.page[opus.prefs.browse] = Math.ceil(value/o_browse.limit);
         let namespace = o_browse.getViewInfo().namespace;
         let elem = $(`${namespace} .thumbnail-container[data-obs="${value}"]`);
         if (elem.length > 0) {
@@ -537,9 +526,6 @@ var o_browse = {
         if (opus.prefs.browse == "dataTable") {
             let bottom = $("tbody").offset().top + $("tbody").height();
             if (bottom <= $(document).height()) {
-                if (opus.lastPageDrawn[opus.prefs.view] < o_browse.infiniteScrollCurrentMaxPageNumber) {
-                    opus.lastPageDrawn[opus.prefs.view] = o_browse.infiniteScrollCurrentMaxPageNumber;
-                }
                 // remove spinner when scrollThreshold is triggered and last data fetching has no data
                 // Need to revisit this one
                 if (o_browse.dataNotAvailable) {
@@ -552,16 +538,10 @@ var o_browse = {
                 let position = $(elem).children().offset();
                 if (position) {
                     if (position.top > 0 && (position.top < $(".gallery-contents").height()-100)) {
-                        // Update page number
-                        let page = $(elem).data("page");
-                        opus.prefs.page[opus.prefs.browse] = page;
-                        console.log("page: "+page);
-                        o_browse.currentPage = page;
                         return false;
                     }
                 }
             });
-            opus.lastPageDrawn[opus.prefs.view] = Math.max(o_browse.currentPage, opus.lastPageDrawn[opus.prefs.view], o_browse.infiniteScrollCurrentMaxPageNumber);
         }
         o_browse.updateSliderHandle();
         return false;
@@ -829,25 +809,6 @@ var o_browse = {
 
     },
 
-    getCurrentPage: function() {
-        // sometimes other functions need to know current page for whatever view we
-        // are currently looking at..
-        let view_info = o_browse.getViewInfo();
-        let namespace = view_info.namespace; // either '#cart' or '#browse'
-        let prefix = view_info.prefix;       // either 'cart_' or ''
-        let view_var = opus.prefs[prefix + "browse"];  // either "gallery" or "data"
-        let page = 1;
-
-        if (view_var == "data") {
-            page = opus.prefs.page[prefix + "dataTable"];
-        } else {
-            page = opus.prefs.page[prefix + "gallery"];
-        }
-        if (!page) { page = 1; }
-
-        return page;
-    },
-
     updateBrowseNav: function() {
         if (opus.prefs.browse == "gallery") {
             $("." + "dataTable", "#browse").hide();
@@ -908,12 +869,12 @@ var o_browse = {
         let urlStartobs = 0;
         // remove any existing page= slug or startobs= slug
         url = $.grep(url.split('&'), function(pair, index) {
-            if (pair.startsWith("page") || pair.startsWith("startobs")) {
-                urlPage = pair.split("=")[1];
+            if (pair.startsWith("startobs")) {
+                urlStartobs = pair.split("=")[1];
             }
         }).join('&');
 
-        startobs = (startobs === undefined ? ++urlStartobs : startobs);
+        startobs = (startobs === undefined ? urlStartobs + o_browse.galleryBoundingRect.y : startobs);
 
         url += `&startobs=${startObs}`;
         $("#op-observation-slider").slider("value", startObs);
@@ -990,10 +951,6 @@ var o_browse = {
             $("#cart .navbar").show();
             $("#cart .sort-order-container").show();
             html += '<div class="thumb-page" data-page="'+data.page_no+'">';
-            opus.lastPageDrawn[opus.prefs.view] = data.page_no;
-            if (o_browse.infiniteScrollCurrentMaxPageNumber < opus.lastPageDrawn[opus.prefs.view]) {
-                o_browse.infiniteScrollCurrentMaxPageNumber = opus.lastPageDrawn[opus.prefs.view];
-            }
 
             // add an indicator row that says this is the start of page/observation X - needs to be two hidden rows so as not to mess with the stripes
             if (!prev) {
@@ -1191,51 +1148,44 @@ var o_browse = {
         }
     },
 
-    getDataURL: function(page) {
+    getDataURL: function(startObs) {
         let view = o_browse.getViewInfo();
         let base_url = "/opus/__api/dataimages.json?";
-        if (page == undefined) {
-            page = opus.lastPageDrawn[opus.prefs.view]+1;
-        }
         // this is a workaround for firefox
         let hashString = (o_hash.getHash() ? o_hash.getHash() : o_browse.tempHash);
 
         o_browse.lastLoadDataRequestNo++;
         let url = hashString + '&reqno=' + o_browse.lastLoadDataRequestNo + view.add_to_url;
-        let startobs = page * opus.prefs.limit;
-        url = base_url + o_browse.updatePageInUrl(url, page);
+        url = base_url + o_browse.updateStartobsInUrl(url, startObs);
 
         return url;
     },
 
-    loadData: function(page) {
-        page = (page === undefined ? opus.prefs.page[opus.prefs.browse] : page);
+    loadData: function(startObs) {
+        let viewInfo = o_browse.getViewInfo();
+
+        startObs = (startObs === undefined ? opus.prefs[`${viewInfo.prefix}startobs`] : startObs);
 
         // if the request is a block far away from current page cache, flush the cache and start over
-        var pagesDrawn = [];
-        let namespace = o_browse.getViewInfo().namespace;
-        $(`${namespace} [data-page]`).each(function(index, elem) {
-            pagesDrawn.push($(elem).data("page"));
-        });
-        if (page > opus.lastPageDrawn[opus.prefs.view] + 1 ||
-            (page < opus.lastPageDrawn[opus.prefs.view] && !$.inArray(page, pagesDrawn))) {
-            o_browse.galleryBegun = false;
-        }
+        let elemArray = $(`${viewInfo.namespace} [data-obs]`);
+
+        // pseudo code
+        // if startObs is not rendered
+        //      if startObs is w/in a page amount of images, just get the page either before or after and make it contiguous
+        //  else {
+        //      clear the cache and start over...
+        //      o_browse.galleryBegun = false;
+        //
 
         let selector = `#${opus.prefs.view} .gallery-contents`;
 
         // wait! is this page already drawn?
-        if ($(`${selector} .thumb-page[data-page='${page}']`).length > 0 && !o_browse.tableSorting) {
+        // if startObs drawn, move the slider to that line, fetch if need be after
             o_browse.setScrollbarPosition(selector, page);
             $(".op-page-loading-status > .loader").hide();
-            return;
-        } else {
-            // reset counter
-            o_browse.infiniteScrollCurrentMinPageNumber = parseInt(page) - 1;
-            o_browse.infiniteScrollCurrentMaxPageNumber = parseInt(page) + 1;
-        }
+            //return;
 
-        let url = o_browse.getDataURL(page);
+        let url = o_browse.getDataURL(startObs);
 
         // metadata; used for both table and gallery
         start_time = new Date().getTime();
@@ -1249,11 +1199,6 @@ var o_browse = {
                 return;
             }
             // data.start_obs, data.count
-            opus.lastPageDrawn[opus.prefs.view] = data.page_no;
-            if (o_browse.infiniteScrollCurrentMaxPageNumber < opus.lastPageDrawn[opus.prefs.view]) {
-                o_browse.infiniteScrollCurrentMaxPageNumber = opus.lastPageDrawn[opus.prefs.view];
-            }
-
             if (!o_browse.galleryBegun) {
                 o_browse.initTable(data.columns);
 
@@ -1279,10 +1224,6 @@ var o_browse = {
                         }
                     });
                     $(selector).on("scrollThreshold.infiniteScroll", function(event) {
-                        if (opus.lastPageDrawn[opus.prefs.view] < o_browse.infiniteScrollCurrentMaxPageNumber) {
-                            opus.lastPageDrawn[opus.prefs.view] = o_browse.infiniteScrollCurrentMaxPageNumber;
-                        }
-
                         // remove spinner when scrollThreshold is triggered and last data fetching has no data
                         // Need to revisit this one
                         // console.log(`page about to be drawn: ${opus.lastPageDrawn[opus.prefs.view] + 1}`);
@@ -1322,7 +1263,7 @@ var o_browse = {
         let data = JSON.parse( response );
         // this variable is used let us know there is no data to load
         // we will use it as the flag to hide the spinner triggered by scrollThreshold
-        o_browse.dataNotAvailable = (data.page_no > opus.pages)
+/*        o_browse.dataNotAvailable = (data.page_no > opus.pages)
 
         if ($(`.thumb-page[data-page='${data.page_no}']`).length !== 0 || data.page_no > opus.pages) {
             console.log(`data.reqno: ${data.reqno}, last reqno: ${o_browse.lastLoadDataRequestNo}`);
@@ -1331,8 +1272,9 @@ var o_browse = {
             }
             return;
         }
-
-        if (o_browse.infiniteScrollCurrentMaxPageNumber > data.page_no) {
+*/
+    // if prepend...
+    {
             // prepend data from new page
             o_browse.renderGalleryAndTable(data, path, true);
 
@@ -1349,7 +1291,7 @@ var o_browse = {
             }
 
             o_browse.loadPrevPage = true;
-        } else {
+        } /*else {
             // append data from new page
             o_browse.renderGalleryAndTable(data, path);
 
@@ -1364,20 +1306,9 @@ var o_browse = {
                 $("#galleryViewContents .prev").data("id", next);
                 $("#galleryViewContents .prev").removeClass("op-button-disabled");
             }
-        }
+        } */
 
         // update the scroll position in the 'other' bit
-        if (opus.prefs.browse == "dataTable") {
-            $(`.thumb-page[data-page='${data.page_no}']`).scrollTop(0);
-        }
-        //console.log('Loaded page: ' + $('#browse .gallery-contents').data('infiniteScroll').pageIndex );
-
-        if (o_browse.loadPrevPage) {
-            let selector = `#${opus.prefs.view} .gallery-contents`;
-            let newPage = o_browse.infiniteScrollCurrentMinPageNumber + 1;
-            o_browse.infiniteScrollCurrentMinPageNumber -= 1;
-            o_browse.loadPrevPage = false;
-        }
 
         // if left/right arrow are disabled, make them clickable again
         $("#galleryViewContents").removeClass("op-disabled");
@@ -1396,6 +1327,7 @@ var o_browse = {
         o_browse.updateBrowseNav();
         o_browse.renderMetadataSelector();   // just do this in background so there's no delay when we want it...
 
+/*
         // figure out the page
         let page = opus.prefs.page[opus.prefs.browse]; // default: {"gallery":1, "dataTable":1, 'cart_gallery':1, 'cart_data':1 };
 
@@ -1406,7 +1338,7 @@ var o_browse = {
             // page is higher than the total number of pages, reset it to the last page
             page = opus.pages;
         }
-
+*/
         o_browse.loadData(page);
     },
 
@@ -1536,8 +1468,7 @@ var o_browse = {
         $("#dataTable > tbody").empty();  // yes all namespaces
         $(".gallery").empty();
         o_browse.galleryData = [];
-        opus.lastPageDrawn = {"browse":0, "cart":0};
-        opus.cart_change = true;  // forces redraw of cart tab because reset_lastPageDrawn
+        opus.cart_change = true;  // forces redraw of cart tab
         o_browse.galleryBegun = false;
         o_hash.updateHash();
     },
