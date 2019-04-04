@@ -55,7 +55,6 @@ var o_cart = {
      getDownloadFiltersChecked: function() {
          // returned as url string
          let product_types = [];
-         let image_types = [];
          let add_to_url = [];
          $("ul#product_types input:checkbox:checked").each(function() {
              product_types.push($(this).val());
@@ -280,7 +279,6 @@ var o_cart = {
         if (toOpusId != undefined) {
             let namespace = o_browse.getViewInfo().namespace;
             let action = (fromElem.hasClass("in") ? "removerange" : "addrange");
-            let cartAction = (action == "addrange");
             let toElem = o_browse.getGalleryElement(toOpusId);
             let fromIndex = $(`${namespace} .thumbnail-container`).index(fromElem);
             let toIndex = $(`${namespace} .thumbnail-container`).index(toElem);
@@ -291,7 +289,7 @@ var o_cart = {
             }
             let length = toIndex - fromIndex+1;
             let elementArray = $(`${namespace} .thumbnail-container`);
-            let opusIdRange = $(elementArray[fromIndex]).data("id") + ","+ $(elementArray[toIndex]).data("id")
+            let opusIdRange = $(elementArray[fromIndex]).data("id") + ","+ $(elementArray[toIndex]).data("id");
             console.log("end range "+action+" : "+opusIdRange);
             $.each(elementArray.splice(fromIndex, length), function(index, elem) {
                 let opusId = $(elem).data("id");

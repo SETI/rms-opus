@@ -21,12 +21,10 @@ class ApiVimsDownlinksTests(TestCase):
     # disable error logging and trace output before test
     def setUp(self):
         settings.CACHE_KEY_PREFIX = 'opustest:' + settings.DB_SCHEMA_NAME
-    #     sys.tracebacklimit = 0 # default: 1000
         logging.disable(logging.ERROR)
 
-    # # enable error logging and trace output after test
+    # enable error logging and trace output after test
     def tearDown(self):
-    #     sys.tracebacklimit = 1000 # default: 1000
         logging.disable(logging.NOTSET)
 
     ###############################

@@ -20,6 +20,7 @@ var o_browse = {
     currentOpusId: "",
     tempHash: "",
     dataNotAvailable: false,
+    onRenderData: false,
     /**
     *
     *  all the things that happen on the browse tab
@@ -49,7 +50,7 @@ var o_browse = {
         // });
 
         // nav stuff - NOTE - this needs to be a global
-        onRenderData = _.debounce(o_browse.loadData, 500);
+        o_browse.onRenderData = _.debounce(o_browse.loadData, 500);
 
         $("#browse").on("click", ".metadataModal", function() {
             o_browse.hideMenu();
@@ -60,7 +61,7 @@ var o_browse = {
             keyboard: false,
             backdrop: 'static',
             show: false,
-        })
+        });
 
         // browse nav menu - the gallery/table toggle
         $("#browse").on("click", ".browse_view", function() {
@@ -256,7 +257,7 @@ var o_browse = {
             if (opusId) {
                 // clicking on the cart/trash can aborts range select
                 o_browse.undoRangeSelect();
-                let status = o_cart.toggleInCart(opusId) == "add" ? "" : "in";
+                o_cart.toggleInCart(opusId);
             }
             return false;
         });
@@ -290,22 +291,22 @@ var o_browse = {
             $(".op-page-loading-status > .loader").show();
             let orderBy =  $(this).data("slug");
 
-            let orderIndicator = $(this).find("span:last")
+            let orderIndicator = $(this).find("span:last");
             o_browse.tableSorting = true;
             if (orderIndicator.data("sort") === "sort-asc") {
                 // currently ascending, change to descending order
-                orderIndicator.data("sort", "sort-desc")
+                orderIndicator.data("sort", "sort-desc");
                 orderBy = '-' + orderBy;
             } else if (orderIndicator.data("sort") === "sort-desc") {
                 // currently descending, change to ascending order
-                orderIndicator.data("sort", "sort-asc")
+                orderIndicator.data("sort", "sort-asc");
                 orderBy = orderBy;
             } else {
                 // not currently ordered, change to ascending
-                orderIndicator.data("sort", "sort-asc")
+                orderIndicator.data("sort", "sort-asc");
             }
 
-            opus.prefs["order"] = orderBy;
+            opus.prefs.order = orderBy;
             o_hash.updateHash();
             o_browse.renderSortedDataFromBeginning();
 
@@ -463,7 +464,7 @@ var o_browse = {
         let galleryContainerTopPosition = $(".gallery-contents").offset().top;
         let galleryScrollbarPosition = $(".gallery-contents").scrollTop();
 
-        let galleryTargetFinalPosition = galleryTargetTopPosition - galleryContainerTopPosition + galleryScrollbarPosition
+        let galleryTargetFinalPosition = galleryTargetTopPosition - galleryContainerTopPosition + galleryScrollbarPosition;
         $(".gallery-contents").scrollTop(galleryTargetFinalPosition);
 
         // Create a new jQuery.Event object with specified event properties.
@@ -494,7 +495,7 @@ var o_browse = {
         if (elem.length > 0) {
             o_browse.setScrollbarOnSlide(value);
         } else {
-            onRenderData();
+            o_browse.onRenderData();
         }
     },
 
@@ -657,7 +658,7 @@ var o_browse = {
 
         let label = elem.data("qualifiedlabel");
         let info = '<i class = "fas fa-info-circle" title = "' + elem.find('*[title]').attr("title") + '"></i>';
-        let html = `<li id = "cchoose__${slug}">${label}${info}<span class="unselect"><i class="far fa-trash-alt"></span></li>`
+        let html = `<li id = "cchoose__${slug}">${label}${info}<span class="unselect"><i class="far fa-trash-alt"></span></li>`;
         $(".selectedMetadata > ul").append(html);
     },
 
@@ -771,7 +772,7 @@ var o_browse = {
                     $(".op-page-loading-status > .loader").show();
                     break;
                 case "cancel":
-                    $('#myModal').modal('hide')
+                    $('#myModal').modal('hide');
                     opus.prefs.cols = [];
                     o_browse.resetMetadata(currentSelectedMetadata, true);
                     break;
@@ -796,16 +797,15 @@ var o_browse = {
     getViewInfo: function() {
         // this function returns some data you need depending on whether
         // you are in #cart or #browse views
+        let namespace = "#browse";
+        let prefix = "";
+        let addToURL = "";
         if (opus.prefs.view == "cart") {
             namespace = "#cart";
             prefix = "cart_";
-            add_to_url = "&colls=true";
-        } else {
-            namespace = "#browse";
-            prefix = "";
-            add_to_url = "";
+            addToURL = "&colls=true";
         }
-        return {"namespace":namespace, "prefix":prefix, "add_to_url":add_to_url};
+        return {"namespace":namespace, "prefix":prefix, "add_to_url":addToURL};
 
     },
 
@@ -855,7 +855,7 @@ var o_browse = {
         // remove any existing page= slug before adding in the current page= slug w/new page number
         url = $.grep(url.split('&'), function(pair, index) {
             if (pair.startsWith("page")) {
-                urlPage = pair.split("=")[1];
+                urlPage = pair.split("=")[1]; // XXX WARNING NOT USED BELOW
             }
             return !pair.startsWith("page");
         }).join('&');
@@ -876,9 +876,9 @@ var o_browse = {
 
         startobs = (startobs === undefined ? urlStartobs + o_browse.galleryBoundingRect.y : startobs);
 
-        url += `&startobs=${startObs}`;
-        $("#op-observation-slider").slider("value", startObs);
-        $("#op-observation-number").html(startObs);
+        url += `&startobs=${startobs}`;
+        $("#op-observation-slider").slider("value", startobs);
+        $("#op-observation-number").html(startobs);
         return url;
     },
 
@@ -998,8 +998,8 @@ var o_browse = {
                     if (index === 0) {
                         $(".dataTable tbody").prepend(tr+row+"</tr>");
                     } else {
-                        let prevIdx = index-1
-                        let selector = `.dataTable tbody tr:eq(${prevIdx})`
+                        let prevIdx = index-1;
+                        let selector = `.dataTable tbody tr:eq(${prevIdx})`;
                         let currentEl = tr+row+"</tr>";
                         $(currentEl).insertAfter($(selector));
                     }
@@ -1041,8 +1041,8 @@ var o_browse = {
 
         // because i need the slugs for the columns
         let hashArray = o_hash.getHashArray();
-        let slugs = hashArray["cols"].split(",");
-        let order = hashArray["order"].split(",");
+        let slugs = hashArray.cols.split(",");
+        let order = hashArray.order.split(",");
 
         opus.col_labels = columns;
 
@@ -1094,7 +1094,7 @@ var o_browse = {
 
     updateSortOrder: function(data) {
         let listHtml = "";
-        opus.prefs.order = []
+        opus.prefs.order = [];
         $.each(data.order_list, function(index, order_entry) {
             let slug = order_entry.slug;
             let label = order_entry.label;
@@ -1137,13 +1137,13 @@ var o_browse = {
             let galleryContainerTopPosition = $(".gallery-contents").offset().top;
             let galleryScrollbarPosition = $(".gallery-contents").scrollTop();
 
-            let galleryTargetFinalPosition = galleryTargetTopPosition - galleryContainerTopPosition + galleryScrollbarPosition
+            let galleryTargetFinalPosition = galleryTargetTopPosition - galleryContainerTopPosition + galleryScrollbarPosition;
             $(`#browse .gallery-contents`).scrollTop(galleryTargetFinalPosition);
             // make sure it's scrolled to the correct position in table view
             let tableTargetTopPosition = $(`.table-page[data-page='${page}']`).prev().offset().top;
             let tableContainerTopPosition = $(".dataTable").offset().top;
             let tableScrollbarPosition = $(".dataTable").scrollTop();
-            let tableTargetFinalPosition = tableTargetTopPosition - tableContainerTopPosition + tableScrollbarPosition
+            let tableTargetFinalPosition = tableTargetTopPosition - tableContainerTopPosition + tableScrollbarPosition;
             $(`${selector} .dataTable`).scrollTop(tableTargetFinalPosition);
         }
     },
@@ -1188,9 +1188,7 @@ var o_browse = {
         let url = o_browse.getDataURL(startObs);
 
         // metadata; used for both table and gallery
-        start_time = new Date().getTime();
         $.getJSON(url, function(data) {
-            let request_time = new Date().getTime() - start_time;
             if (data.reqno < o_browse.lastLoadDataRequestNo) {
                 // make sure to remove spinner before return
                 if ($(".op-page-loading-status > .loader").is(":visible")) {
@@ -1265,6 +1263,7 @@ var o_browse = {
         // we will use it as the flag to hide the spinner triggered by scrollThreshold
 /*        o_browse.dataNotAvailable = (data.page_no > opus.pages)
 
+
         if ($(`.thumb-page[data-page='${data.page_no}']`).length !== 0 || data.page_no > opus.pages) {
             console.log(`data.reqno: ${data.reqno}, last reqno: ${o_browse.lastLoadDataRequestNo}`);
             if ($(".op-page-loading-status > .loader").is(":visible")) {
@@ -1309,6 +1308,7 @@ var o_browse = {
         } */
 
         // update the scroll position in the 'other' bit
+
 
         // if left/right arrow are disabled, make them clickable again
         $("#galleryViewContents").removeClass("op-disabled");
@@ -1433,8 +1433,8 @@ var o_browse = {
         // prev/next buttons - put this in galleryView html...
         html = `<div class="col"><a href="#" class="select" data-id="${opusId}" title="${buttonInfo.title}"><i class="${buttonInfo.icon} fa-2x float-left"></i></a></div>`;
         html += `<div class="col text-center">`;
-        opPrevDisabled = (nextPrevHandles.prev == "" ? "op-button-disabled" : "");
-        opNextDisabled = (nextPrevHandles.next == "" ? "op-button-disabled" : "");
+        let opPrevDisabled = (nextPrevHandles.prev == "" ? "op-button-disabled" : "");
+        let opNextDisabled = (nextPrevHandles.next == "" ? "op-button-disabled" : "");
         html += `<a href="#" class="prev text-center ${opPrevDisabled}" data-id="${nextPrevHandles.prev}" title="Previous image"><i class="far fa-hand-point-left fa-2x"></i></a>`;
         html += `<a href="#" class="next ${opNextDisabled}" data-id="${nextPrevHandles.next}" title="Next image"><i class="far fa-hand-point-right fa-2x"></i></a>`;
         html += `</div>`;

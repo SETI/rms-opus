@@ -17,7 +17,6 @@ class ApiResultsTests(TestCase, ApiTestHelper):
 
     def setUp(self):
         self.maxDiff = None
-        sys.tracebacklimit = 0 # default: 1000
         settings.CACHE_KEY_PREFIX = 'opustest:' + settings.DB_SCHEMA_NAME
         logging.disable(logging.ERROR)
         if settings.TEST_GO_LIVE: # pragma: no cover
@@ -27,7 +26,6 @@ class ApiResultsTests(TestCase, ApiTestHelper):
         cache.clear()
 
     def tearDown(self):
-        sys.tracebacklimit = 1000 # default: 1000
         logging.disable(logging.NOTSET)
 
 

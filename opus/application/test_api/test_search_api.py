@@ -17,7 +17,6 @@ class ApiSearchTests(TestCase, ApiTestHelper):
 
     def setUp(self):
         self.maxDiff = None
-        sys.tracebacklimit = 0 # default: 1000
         settings.CACHE_KEY_PREFIX = 'opustest:' + settings.DB_SCHEMA_NAME
         logging.disable(logging.ERROR)
         self.search_count_threshold = settings.STRINGCHOICE_FULL_SEARCH_COUNT_THRESHOLD
@@ -31,9 +30,8 @@ class ApiSearchTests(TestCase, ApiTestHelper):
         else:
             self.client = RequestsClient()
         cache.clear()
-        
+
     def tearDown(self):
-        sys.tracebacklimit = 1000 # default: 1000
         logging.disable(logging.NOTSET)
         settings.STRINGCHOICE_FULL_SEARCH_COUNT_THRESHOLD = self.search_count_threshold
         settings.STRINGCHOICE_FULL_SEARCH_TIME_THRESHOLD = self.search_time_threshold

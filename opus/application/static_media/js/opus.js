@@ -338,7 +338,7 @@ var opus = {
         if (opus.prefs.widgets.length !== opus.default_widgets.length) {
             return false;
         }
-        let reversedDefaultWidgets = new Array(...opus.default_widgets)
+        let reversedDefaultWidgets = new Array(...opus.default_widgets);
         reversedDefaultWidgets.reverse();
         let defaultWidgetsString = JSON.stringify(reversedDefaultWidgets);
         let drawnWidgetsString = JSON.stringify(opus.prefs.widgets);
@@ -494,7 +494,7 @@ $(document).ready(function() {
                 $("#op-help-panel .loader").hide();
                 $("#op-help-panel .op-card-contents").html(page);
                 opus.helpPanelOpen = true;
-                adjustHelpPanelHeight()
+                adjustHelpPanelHeight();
             }
         });
     });
@@ -508,9 +508,9 @@ $(document).ready(function() {
         let targetModal = $(this).data("target");
 
         if (!$.isEmptyObject(opus.selections) || !opus.checkIfDrawnWidgetsAreDefault()) {
-            $(targetModal).modal("show")
+            $(targetModal).modal("show");
         } else if (targetModal === "#op-reset-search-metadata-modal" && !opus.checkIfMetadataAreDefault()) {
-            $(targetModal).modal("show")
+            $(targetModal).modal("show");
         }
     });
 
@@ -529,8 +529,9 @@ $(document).ready(function() {
                         o_cart.emptyCart();
                         break;
                 }
+                // This intentionally falls through to hide the modal
             case "cancel":
-                $(".modal").modal("hide")
+                $(".modal").modal("hide");
                 break;
         }
     });
