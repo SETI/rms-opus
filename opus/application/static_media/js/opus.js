@@ -450,8 +450,17 @@ $(document).ready(function() {
         adjustHelpPanelHeight();
     });
 
-    // setup and initilize MutationObserver to detech any DOM changes
-    let config = {
+    // MutationObserver to detect any DOM changes
+    // Config object: tell the MutationObserver what type of changes to be detected
+    let appObserverConfig = {
+          // attributes: true,
+          childList: true,
+          subtree: true,
+    };
+
+    // Widgets and sidebar menu items can be collapsed, so we need to detect attribute changes
+    // set attributes to true
+    let searchObserverConfig = {
           attributes: true,
           childList: true,
           subtree: true,
@@ -460,16 +469,45 @@ $(document).ready(function() {
     let adjustSearchSideBarHeight = _.debounce(o_search.adjustSearchSideBarHeight, 500);
     let adjustSearchWidgetHeight = _.debounce(o_search.adjustSearchHeight, 800);
 
-    let observer = new MutationObserver(function(mutationsList, observer) {
-      // for(let mutation of mutationsList) {
-      //   console.log(mutation);
-      //   // console.log(mutation.type);
-      // }
-      adjustSearchSideBarHeight();
-      adjustSearchWidgetHeight();
+    // Init MutationObserver with a callback function. Callback will be called when changes are detected.
+    let appObserver = new MutationObserver(function(mutationsList) {
+        // for(let mutation of mutationsList) {
+        //   console.log(mutation);
+        //   // console.log(mutation.type);
+        // }
+        adjustSearchWidgetHeight();
     });
+
+    let searchSidebarObserver =  new MutationObserver(function(mutationsList) {
+        // for(let mutation of mutationsList) {
+        //   console.log(mutation);
+        //   // console.log(mutation.type);
+        // }
+        adjustSearchSideBarHeight();
+    });
+    let searchWidgetObserver =  new MutationObserver(function(mutationsList) {
+        // for(let mutation of mutationsList) {
+        //   console.log(mutation);
+        //   // console.log(mutation.type);
+        // }
+        adjustSearchWidgetHeight();
+    });
+
+    // target node: target element that MutationObserver is observing
     let app = document.getElementById("op-app");
-    observer.observe(app, config);
+    let searchSidebar = document.getElementById("sidebar");
+    let searchWidget = document.getElementById("op-search-widgets");
+
+    // Note:
+    // The reason of observing sidebar and widdget content element (ps sibling) in search page instead of observing the whole page (html structure) is because:
+    /* We want to update ps (attribute changes) in observer callback function.
+    If the target node (ex: #sidebar-container, #widget-container, or #app) has a child ps element which is updating, callback function will be triggered again due to another detection of attributes change from that ps update.
+    It will end up being a non-stop call of callback function.
+    By observing each content element (ps silbling), ps update will not trigger callback function since ps element is not a child element of target node (content element), and this will prevent that non-stop call of callback function. */
+    // Watch for changes:
+    // appObserver.observe(app, appObserverConfig);
+    searchSidebarObserver.observe(searchSidebar, searchObserverConfig);
+    searchWidgetObserver.observe(searchWidget, searchObserverConfig);
 
     // add the navbar clicking behaviors, selecting which tab to view:
     // see triggerNavbarClick
