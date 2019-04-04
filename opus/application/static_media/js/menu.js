@@ -15,8 +15,8 @@ var o_menu = {
 
          //});
          $('#sidebar').on("click", '.searchMenu li .dropdown-toggle', function() {
-             let adjustSearchSideBarHeight = _.debounce(o_search.adjustSearchSideBarHeight, 500);
-             adjustSearchSideBarHeight();
+             // let adjustSearchSideBarHeight = _.debounce(o_search.adjustSearchSideBarHeight, 500);
+             // adjustSearchSideBarHeight();
          })
 
          // click param in menu get new widget
@@ -63,7 +63,7 @@ var o_menu = {
         });
 
         $(".searchMenu").on("shown.bs.collapse", function(e) {
-            o_search.adjustSearchHeight();
+            // o_search.adjustSearchHeight();
         });
      },
 
@@ -84,8 +84,8 @@ var o_menu = {
             });
             o_menu.markCurrentMenuItem();
             // when a new category is open after an input is clicked, we update the scrollbar
-            let adjustSearchSideBarHeight = _.debounce(o_search.adjustSearchSideBarHeight, 500);
-            adjustSearchSideBarHeight();
+            // let adjustSearchSideBarHeight = _.debounce(o_search.adjustSearchSideBarHeight, 500);
+            // adjustSearchSideBarHeight();
 
             $('.op-menu-text.spinner').removeClass("op-show-spinner");
         });

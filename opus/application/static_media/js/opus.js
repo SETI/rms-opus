@@ -331,8 +331,8 @@ var opus = {
         });
         // wait until all widgets are get
         $.when.apply(null, deferredArr).then(function() {
-            let adjustSearchWidgetHeight = _.debounce(o_search.adjustSearchHeight, 800);
-            adjustSearchWidgetHeight();
+            // let adjustSearchWidgetHeight = _.debounce(o_search.adjustSearchHeight, 800);
+            // adjustSearchWidgetHeight();
         });
 
         // if (resetMetadata) {
@@ -457,14 +457,19 @@ $(document).ready(function() {
           subtree: true,
     };
 
+    let adjustSearchSideBarHeight = _.debounce(o_search.adjustSearchSideBarHeight, 500);
+    let adjustSearchWidgetHeight = _.debounce(o_search.adjustSearchHeight, 800);
+
     let observer = new MutationObserver(function(mutationsList, observer) {
-      for(let mutation of mutationsList) {
-        console.log(mutation);
-        console.log(mutation.type);
-      }
+      // for(let mutation of mutationsList) {
+      //   console.log(mutation);
+      //   // console.log(mutation.type);
+      // }
+      adjustSearchSideBarHeight();
+      adjustSearchWidgetHeight();
     });
-    let searchPage = document.getElementById("search");
-    observer.observe(searchPage, config);
+    let app = document.getElementById("op-app");
+    observer.observe(app, config);
 
     // add the navbar clicking behaviors, selecting which tab to view:
     // see triggerNavbarClick

@@ -427,7 +427,7 @@ var o_search = {
     getSearchTab: function() {
 
         if (opus.search_tab_drawn) {
-            o_search.adjustSearchHeight();
+            // o_search.adjustSearchHeight();
             return;
         }
 
@@ -462,7 +462,7 @@ var o_search = {
 
         opus.search_tab_drawn = true;
 
-        o_search.adjustSearchHeight();
+        // o_search.adjustSearchHeight();
     },
 
     getHinting: function(slug, deferredObj) {
@@ -476,8 +476,8 @@ var o_search = {
             o_search.getValidMults(slug, deferredObj);
         } else {
           $(`#widget__${slug} .spinner`).fadeOut();
-          let adjustSearchWidgetHeight = _.debounce(o_search.adjustSearchWidgetHeight, 800);
-          adjustSearchWidgetHeight();
+          // let adjustSearchWidgetHeight = _.debounce(o_search.adjustSearchWidgetHeight, 800);
+          // adjustSearchWidgetHeight();
         }
     },
 
@@ -497,8 +497,8 @@ var o_search = {
                     return;
                 }
                 $('#hint__' + slug).html(`<span>min: ${multdata.min}</span><span>max: ${multdata.max}</span><span> nulls: ${multdata.nulls}</span>`);
-                let adjustSearchWidgetHeight = _.debounce(o_search.adjustSearchWidgetHeight, 800);
-                adjustSearchWidgetHeight();
+                // let adjustSearchWidgetHeight = _.debounce(o_search.adjustSearchWidgetHeight, 800);
+                // adjustSearchWidgetHeight();
             },
             statusCode: {
                 404: function() {
@@ -546,8 +546,8 @@ var o_search = {
                         $(id).parent().addClass("fadey");
                     }
                 });
-                let adjustSearchWidgetHeight = _.debounce(o_search.adjustSearchWidgetHeight, 800);
-                adjustSearchWidgetHeight();
+                // let adjustSearchWidgetHeight = _.debounce(o_search.adjustSearchWidgetHeight, 800);
+                // adjustSearchWidgetHeight();
             },
             statusCode: {
                 404: function() {
