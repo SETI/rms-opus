@@ -343,12 +343,6 @@ class ApiMetadataTests(TestCase, ApiTestHelper):
         expected = {"field": "targetclass", "mults": {"Regular Satellite": 4}}
         self._run_json_equal(url, expected)
 
-    def test__api_meta_mults_COISS_2111_daphnis(self):
-        "[test_metadata_api.py] /api/meta/meta/mults: for COISS_2111 target Daphnis targetclass"
-        url = '/opus/api/meta/mults/targetclass.json?volumeid=COISS_2111&targetclass=Regular+Satellite&target=Daphnis'
-        expected = {"field": "targetclass", "mults": {"Regular Satellite": 4}}
-        self._run_json_equal(url, expected)
-
     def test__api_meta_mults_COISS_2111_imagetype(self):
         "[test_metadata_api.py] /api/meta/meta/mults: for COISS_2111 imagetype"
         # This joins in a non-obs_general table
