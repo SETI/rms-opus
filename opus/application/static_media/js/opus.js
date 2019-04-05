@@ -482,7 +482,7 @@ $(document).ready(function() {
         }
         adjustSearchHeight();
     });
-    let switchTabObserver = new MutationObserver(function(mutationsList) {
+    let adjustAllPSObserver = new MutationObserver(function(mutationsList) {
         for(let mutation of mutationsList) {
           console.log(mutation);
           // console.log(mutation.type);
@@ -527,10 +527,10 @@ $(document).ready(function() {
     By observing each content element (ps silbling), ps update will not trigger callback function since ps element is not a child element of target node (content element), and this will prevent that non-stop call of callback function. */
     // Watch for changes:
     // appObserver.observe(app, appObserverConfig);
-    switchTabObserver.observe(searchTab, switchTabObserverConfig);
-    switchTabObserver.observe(browseTab, switchTabObserverConfig);
-    switchTabObserver.observe(cartTab, switchTabObserverConfig);
-    switchTabObserver.observe(detailTab, switchTabObserverConfig);
+    adjustAllPSObserver.observe(searchTab, switchTabObserverConfig);
+    adjustAllPSObserver.observe(browseTab, switchTabObserverConfig);
+    adjustAllPSObserver.observe(cartTab, switchTabObserverConfig);
+    adjustAllPSObserver.observe(detailTab, switchTabObserverConfig);
     searchSidebarObserver.observe(searchSidebar, searchObserverConfig);
     searchWidgetObserver.observe(searchWidget, searchObserverConfig);
 
