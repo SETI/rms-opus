@@ -452,13 +452,6 @@ $(document).ready(function() {
 
     // MutationObserver to detect any DOM changes
     // Config object: tell the MutationObserver what type of changes to be detected
-    let appObserverConfig = {
-        // attributes: true,
-        attributeFilter: ["class"], // detect action of switching tabs
-        // childList: true,
-        // subtree: true,
-    };
-
     let switchTabObserverConfig = {
         attributeFilter: ["class"], // detect action of switching tabs
     };
@@ -475,18 +468,9 @@ $(document).ready(function() {
     let adjustSearchWidgetHeight = _.debounce(o_search.adjustSearchHeight, 200); // 800
 
     // Init MutationObserver with a callback function. Callback will be called when changes are detected.
-    let appObserver = new MutationObserver(function(mutationsList) {
-        for(let mutation of mutationsList) {
-          console.log(mutation);
-          // console.log(mutation.type);
-        }
-        adjustSearchHeight();
-    });
     let adjustAllPSObserver = new MutationObserver(function(mutationsList) {
-        for(let mutation of mutationsList) {
-          console.log(mutation);
-          // console.log(mutation.type);
-        }
+        // this is for switch from other tabs to target page
+        // for experiment, put all ps update here
         adjustSearchHeight();
         adjustBrowseHeight();
         adjustTableSize();
@@ -496,22 +480,53 @@ $(document).ready(function() {
     });
 
     let searchSidebarObserver =  new MutationObserver(function(mutationsList) {
-        // for(let mutation of mutationsList) {
-        //   console.log(mutation);
-        //   // console.log(mutation.type);
-        // }
-        adjustSearchSideBarHeight();
+        let lastMutationIdx = mutationsList.length - 1;
+        mutationsList.forEach((mutation, idx) => {
+            // console.log(mutation);
+            if (mutation.type === "childList") {
+                // update ps when there is any children added/removed
+                adjustSearchSideBarHeight();
+            } else if (mutation.type === "attributes") {
+                // at the last mutation
+                if (idx === lastMutationIdx){
+                    if (mutation.target.classList.value.match(/collapse/)) {
+                        // If there is a collapse/expand happened (attribute changes), we only update ps at the last mutation when the animation finishes and class/style are finalized
+                        adjustSearchSideBarHeight();
+                    } else if (mutation.target.classList.value.match(/spinner/)) {
+                        // If new submenu is added but spinner is still running, we update ps after spinner is done
+                        adjustSearchSideBarHeight();
+                    }
+                }
+            }
+        });
     });
+
     let searchWidgetObserver =  new MutationObserver(function(mutationsList) {
-        // for(let mutation of mutationsList) {
-        //   console.log(mutation);
-        //   // console.log(mutation.type);
-        // }
-        adjustSearchWidgetHeight();
+        let lastMutationIdx = mutationsList.length - 1;
+        mutationsList.forEach((mutation, idx) => {
+            // console.log(mutation);
+            if (mutation.type === "childList") {
+                // update ps when there is any children added/removed
+                adjustSearchWidgetHeight();
+            } else if (mutation.type === "attributes") {
+                // at the last mutation
+                if (idx === lastMutationIdx){
+                    if (mutation.target.classList.value.match(/collapse/)) {
+                        // If there is a collapse/expand happened (attribute changes), we only update ps when the animation finishes and class/style are finalized
+                        adjustSearchWidgetHeight();
+                    } else if (mutation.target.classList.value.match(/spinner/)) {
+                        // If new widget is added but spinner is still spinning, we update ps after spinner is done
+                        adjustSearchWidgetHeight();
+                    } else if (mutation.target.classList.value.match(/mult_group/)) {
+                        // If new mult_group is open inside widgets, we update ps
+                        adjustSearchWidgetHeight();
+                    }
+                }
+            }
+        });
     });
 
     // target node: target element that MutationObserver is observing, need to be a node (need to use regular js)
-    // let app = document.getElementById("op-app");
     let searchTab = document.getElementById("search");
     let browseTab = document.getElementById("browse");
     let cartTab = document.getElementById("cart");
@@ -526,11 +541,12 @@ $(document).ready(function() {
     It will end up being a non-stop call of callback function.
     By observing each content element (ps silbling), ps update will not trigger callback function since ps element is not a child element of target node (content element), and this will prevent that non-stop call of callback function. */
     // Watch for changes:
-    // appObserver.observe(app, appObserverConfig);
+    // update ps when switch tabs
     adjustAllPSObserver.observe(searchTab, switchTabObserverConfig);
     adjustAllPSObserver.observe(browseTab, switchTabObserverConfig);
     adjustAllPSObserver.observe(cartTab, switchTabObserverConfig);
     adjustAllPSObserver.observe(detailTab, switchTabObserverConfig);
+    // update ps in search page
     searchSidebarObserver.observe(searchSidebar, searchObserverConfig);
     searchWidgetObserver.observe(searchWidget, searchObserverConfig);
 
