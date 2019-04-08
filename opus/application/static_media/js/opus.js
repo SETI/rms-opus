@@ -406,7 +406,134 @@ var opus = {
             $("#op-help-panel .card-body").scrollTop(0);
             opus.helpScrollbar.update();
         }
-    }
+    },
+
+    observePerfectScrollbar: function() {
+        // MutationObserver to detect any DOM changes
+        // Config object: tell the MutationObserver what type of changes to be detected
+        let switchTabObserverConfig = {
+            attributeFilter: ["class"], // detect action of switching tabs
+        };
+
+        // Widgets and sidebar menu items can be collapsed, so we need to detect attribute changes
+        // set attributes to true
+        let searchObserverConfig = {
+            attributes: true,
+            childList: true,
+            subtree: true,
+        };
+
+        let generalObserverConfig = {
+            childList: true,
+            subtree: true,
+        };
+
+        let adjustSearchSideBarHeight = _.debounce(o_search.adjustSearchSideBarHeight, 200); // 500
+        let adjustSearchWidgetHeight = _.debounce(o_search.adjustSearchHeight, 200); // 800
+        let adjustSearchHeight = _.debounce(o_search.adjustSearchHeight, 200);
+        let adjustBrowseHeight = _.debounce(o_browse.adjustBrowseHeight, 200);
+        let adjustTableSize = _.debounce(o_browse.adjustTableSize, 200);
+        let adjustProductInfoHeight = _.debounce(o_cart.adjustProductInfoHeight, 200);
+        let adjustDetailHeight = _.debounce(o_detail.adjustDetailHeight, 200);
+        let adjustHelpPanelHeight = _.debounce(opus.adjustHelpPanelHeight, 200);
+
+        // Init MutationObserver with a callback function. Callback will be called when changes are detected.
+        let adjustAllPSObserver = new MutationObserver(function(mutationsList) {
+            // this is for switch from other tabs to target page
+            // for experiment, put all ps update here
+            adjustSearchHeight();
+            adjustBrowseHeight();
+            adjustTableSize();
+            adjustProductInfoHeight();
+            adjustDetailHeight();
+            adjustHelpPanelHeight();
+        });
+
+        // ps in search sidebar
+        let searchSidebarObserver = new MutationObserver(function(mutationsList) {
+            let lastMutationIdx = mutationsList.length - 1;
+            mutationsList.forEach((mutation, idx) => {
+                // console.log(mutation);
+                if (mutation.type === "childList") {
+                    // update ps when there is any children added/removed
+                    adjustSearchSideBarHeight();
+                } else if (mutation.type === "attributes") {
+                    // at the last mutation
+                    if (idx === lastMutationIdx) {
+                        if (mutation.target.classList.value.match(/collapse/)) {
+                            // If there is a collapse/expand happened (attribute changes), we only update ps at the last mutation when the animation finishes and class/style are finalized
+                            adjustSearchSideBarHeight();
+                        } else if (mutation.target.classList.value.match(/spinner/)) {
+                            // If new submenu is added but spinner is still running, we update ps after spinner is done
+                            adjustSearchSideBarHeight();
+                        }
+                    }
+                }
+            });
+        });
+
+        // ps in search widgets
+        let searchWidgetObserver =  new MutationObserver(function(mutationsList) {
+            let lastMutationIdx = mutationsList.length - 1;
+            mutationsList.forEach((mutation, idx) => {
+                // console.log(mutation);
+                if (mutation.type === "childList") {
+                    // update ps when there is any children added/removed
+                    adjustSearchWidgetHeight();
+                } else if (mutation.type === "attributes") {
+                    // at the last mutation
+                    if (idx === lastMutationIdx) {
+                        if (mutation.target.classList.value.match(/collapse/)) {
+                            // If there is a collapse/expand happened (attribute changes), we only update ps when the animation finishes and class/style are finalized
+                            adjustSearchWidgetHeight();
+                        } else if (mutation.target.classList.value.match(/spinner/)) {
+                            // If new widget is added but spinner is still spinning, we update ps after spinner is done
+                            adjustSearchWidgetHeight();
+                        } else if (mutation.target.classList.value.match(/mult_group/)) {
+                            // If new mult_group is open inside widgets, we update ps
+                            adjustSearchWidgetHeight();
+                        }
+                    }
+                }
+            });
+        });
+
+        // ps in cart page
+        let cartObserver =  new MutationObserver(function(mutationsList) {
+            mutationsList.forEach((mutation, idx) => {
+                if (mutation.type === "childList") {
+                    adjustProductInfoHeight();
+                }
+            });
+        });
+
+        // target node: target element that MutationObserver is observing, need to be a node (need to use regular js)
+        let searchTab = document.getElementById("search");
+        let browseTab = document.getElementById("browse");
+        let cartTab = document.getElementById("cart");
+        let detailTab = document.getElementById("detail");
+
+        let searchSidebar = document.getElementById("sidebar");
+        let searchWidget = document.getElementById("op-search-widgets");
+
+        // Note:
+        // The reason of observing sidebar and widdget content element (ps sibling) in search page instead of observing the whole page (html structure) is because:
+        /* We want to update ps (attribute changes) in observer callback function.
+        If the target node (ex: #sidebar-container, #widget-container, or #app) has a child ps element which is updating, callback function will be triggered again due to another detection of attributes change from that ps update.
+        It will end up being a non-stop call of callback function.
+        By observing each content element (ps silbling), ps update will not trigger callback function since ps element is not a child element of target node (content element), and this will prevent that non-stop call of callback function. */
+        // Watch for changes:
+        // update ps when switch tabs
+        adjustAllPSObserver.observe(searchTab, switchTabObserverConfig);
+        adjustAllPSObserver.observe(browseTab, switchTabObserverConfig);
+        adjustAllPSObserver.observe(cartTab, switchTabObserverConfig);
+        adjustAllPSObserver.observe(detailTab, switchTabObserverConfig);
+        // update ps in search page
+        searchSidebarObserver.observe(searchSidebar, searchObserverConfig);
+        searchWidgetObserver.observe(searchWidget, searchObserverConfig);
+        cartObserver.observe(cartTab, generalObserverConfig);
+
+    },
 }; // end opus namespace
 
 /*
@@ -450,105 +577,7 @@ $(document).ready(function() {
         adjustHelpPanelHeight();
     });
 
-    // MutationObserver to detect any DOM changes
-    // Config object: tell the MutationObserver what type of changes to be detected
-    let switchTabObserverConfig = {
-        attributeFilter: ["class"], // detect action of switching tabs
-    };
-
-    // Widgets and sidebar menu items can be collapsed, so we need to detect attribute changes
-    // set attributes to true
-    let searchObserverConfig = {
-        attributes: true,
-        childList: true,
-        subtree: true,
-    };
-
-    let adjustSearchSideBarHeight = _.debounce(o_search.adjustSearchSideBarHeight, 200); // 500
-    let adjustSearchWidgetHeight = _.debounce(o_search.adjustSearchHeight, 200); // 800
-
-    // Init MutationObserver with a callback function. Callback will be called when changes are detected.
-    let adjustAllPSObserver = new MutationObserver(function(mutationsList) {
-        // this is for switch from other tabs to target page
-        // for experiment, put all ps update here
-        adjustSearchHeight();
-        adjustBrowseHeight();
-        adjustTableSize();
-        adjustProductInfoHeight();
-        adjustDetailHeight();
-        adjustHelpPanelHeight();
-    });
-
-    let searchSidebarObserver =  new MutationObserver(function(mutationsList) {
-        let lastMutationIdx = mutationsList.length - 1;
-        mutationsList.forEach((mutation, idx) => {
-            // console.log(mutation);
-            if (mutation.type === "childList") {
-                // update ps when there is any children added/removed
-                adjustSearchSideBarHeight();
-            } else if (mutation.type === "attributes") {
-                // at the last mutation
-                if (idx === lastMutationIdx){
-                    if (mutation.target.classList.value.match(/collapse/)) {
-                        // If there is a collapse/expand happened (attribute changes), we only update ps at the last mutation when the animation finishes and class/style are finalized
-                        adjustSearchSideBarHeight();
-                    } else if (mutation.target.classList.value.match(/spinner/)) {
-                        // If new submenu is added but spinner is still running, we update ps after spinner is done
-                        adjustSearchSideBarHeight();
-                    }
-                }
-            }
-        });
-    });
-
-    let searchWidgetObserver =  new MutationObserver(function(mutationsList) {
-        let lastMutationIdx = mutationsList.length - 1;
-        mutationsList.forEach((mutation, idx) => {
-            // console.log(mutation);
-            if (mutation.type === "childList") {
-                // update ps when there is any children added/removed
-                adjustSearchWidgetHeight();
-            } else if (mutation.type === "attributes") {
-                // at the last mutation
-                if (idx === lastMutationIdx){
-                    if (mutation.target.classList.value.match(/collapse/)) {
-                        // If there is a collapse/expand happened (attribute changes), we only update ps when the animation finishes and class/style are finalized
-                        adjustSearchWidgetHeight();
-                    } else if (mutation.target.classList.value.match(/spinner/)) {
-                        // If new widget is added but spinner is still spinning, we update ps after spinner is done
-                        adjustSearchWidgetHeight();
-                    } else if (mutation.target.classList.value.match(/mult_group/)) {
-                        // If new mult_group is open inside widgets, we update ps
-                        adjustSearchWidgetHeight();
-                    }
-                }
-            }
-        });
-    });
-
-    // target node: target element that MutationObserver is observing, need to be a node (need to use regular js)
-    let searchTab = document.getElementById("search");
-    let browseTab = document.getElementById("browse");
-    let cartTab = document.getElementById("cart");
-    let detailTab = document.getElementById("detail");
-    let searchSidebar = document.getElementById("sidebar");
-    let searchWidget = document.getElementById("op-search-widgets");
-
-    // Note:
-    // The reason of observing sidebar and widdget content element (ps sibling) in search page instead of observing the whole page (html structure) is because:
-    /* We want to update ps (attribute changes) in observer callback function.
-    If the target node (ex: #sidebar-container, #widget-container, or #app) has a child ps element which is updating, callback function will be triggered again due to another detection of attributes change from that ps update.
-    It will end up being a non-stop call of callback function.
-    By observing each content element (ps silbling), ps update will not trigger callback function since ps element is not a child element of target node (content element), and this will prevent that non-stop call of callback function. */
-    // Watch for changes:
-    // update ps when switch tabs
-    adjustAllPSObserver.observe(searchTab, switchTabObserverConfig);
-    adjustAllPSObserver.observe(browseTab, switchTabObserverConfig);
-    adjustAllPSObserver.observe(cartTab, switchTabObserverConfig);
-    adjustAllPSObserver.observe(detailTab, switchTabObserverConfig);
-    // update ps in search page
-    searchSidebarObserver.observe(searchSidebar, searchObserverConfig);
-    searchWidgetObserver.observe(searchWidget, searchObserverConfig);
+    opus.observePerfectScrollbar();
 
     // add the navbar clicking behaviors, selecting which tab to view:
     // see triggerNavbarClick
