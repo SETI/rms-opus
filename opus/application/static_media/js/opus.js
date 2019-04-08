@@ -501,9 +501,9 @@ var opus = {
         // ps in cart page
         let cartObserver =  new MutationObserver(function(mutationsList) {
             mutationsList.forEach((mutation, idx) => {
-                if (mutation.type === "childList") {
-                    adjustProductInfoHeight();
-                }
+                // console.log(mutation);
+                // in cart page, we only need to detect element change. We don't need to worry about attribute change (no expanding/collapsing event).
+                adjustProductInfoHeight();
             });
         });
 
