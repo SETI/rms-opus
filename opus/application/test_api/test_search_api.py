@@ -356,22 +356,22 @@ class ApiSearchTests(TestCase, ApiTestHelper):
 
     def test__api_stringsearchchoices_bad_limit(self):
         "[test_search_api.py] /api/stringsearchchoices: bad limit"
-        url = '/opus/__api/stringsearchchoices/volumeid.json&limit=0A&reqno=123'
+        url = '/opus/__api/stringsearchchoices/volumeid.json?limit=0A&reqno=123'
         self._run_status_equal(url, 404)
 
     def test__api_stringsearchchoices_bad_limit_val_n1(self):
         "[test_search_api.py] /api/stringsearchchoices: bad limit -1"
-        url = '/opus/__api/stringsearchchoices/volumeid.json&limit=-1&reqno=123'
+        url = '/opus/__api/stringsearchchoices/volumeid.json?limit=-1&reqno=123'
         self._run_status_equal(url, 404)
 
     def test__api_stringsearchchoices_bad_limit_val_0(self):
         "[test_search_api.py] /api/stringsearchchoices: bad limit 0"
-        url = '/opus/__api/stringsearchchoices/volumeid.json&limit=0&reqno=123'
+        url = '/opus/__api/stringsearchchoices/volumeid.json?limit=0&reqno=123'
         self._run_status_equal(url, 404)
 
     def test__api_stringsearchchoices_bad_limit_val_1000000000001(self):
         "[test_search_api.py] /api/stringsearchchoices: bad limit 1000000000001"
-        url = '/opus/__api/stringsearchchoices/volumeid.json&limit=1000000000001&reqno=123'
+        url = '/opus/__api/stringsearchchoices/volumeid.json?limit=1000000000001&reqno=123'
         self._run_status_equal(url, 404)
 
     def test__api_stringsearchchoices_bad_search(self):

@@ -31,12 +31,10 @@ class resultsTests(TestCase):
     def setUp(self):
         self._empty_user_searches()
         self.maxDiff = None
-        sys.tracebacklimit = 0 # default: 1000
         logging.disable(logging.ERROR)
 
     def tearDown(self):
         self._empty_user_searches()
-        sys.tracebacklimit = 1000 # default: 1000
         logging.disable(logging.NOTSET)
 
 
