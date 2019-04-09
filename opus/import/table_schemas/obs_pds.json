@@ -27,6 +27,21 @@
             "TAB:obs_general",
             "opus_id"
         ],
+        "definition": "A unique ID assigned to an observation by the Ring-Moon Systems Node of the PDS. The OPUS ID is useful for referencing specific observations in a mission-independent manner but should never be used outside of OPUS. To reference an observation outside of OPUS, use the Volume ID, Product ID, and/or Primary File Spec. Note: The format of the OPUS ID is not guaranteed to remain the same over time.",
+        "pi_category_name": "obs_pds",
+        "pi_dict_context": "OPUS_GENERAL",
+        "pi_dict_name": "OPUS_ID",
+        "pi_disp_order": 60,
+        "pi_display": 1,
+        "pi_display_results": 1,
+        "pi_form_type": "STRING",
+        "pi_intro": null,
+        "pi_label": "OPUS ID",
+        "pi_label_results": "OPUS ID",
+        "pi_slug": "opusid",
+        "pi_sub_heading": null,
+        "pi_tooltip": null,
+        "pi_units": null,
         "comments": "This is the secondary key linking the record to obs_general."
     },
     {
@@ -38,8 +53,9 @@
             "TAB:obs_general",
             "volume_id"
         ],
+        "definition": "The PDS3 volume containing the observation. Volumes are artificial constructs used to group consecutive observations into manageable chunks. They are formatted as MMIII_NNNN, where MMIII is an abbreviation for the mission and instrument (e.g. COISS for Cassini Orbiter ISS) and NNNN is a four-digit volume number. Hubble volumes have 5-digit volume numbers and are formatted as HSTIN_NNNN. See Help/Data Sets for the list of volumes available in OPUS.",
         "pi_category_name": "obs_pds",
-        "pi_dict_context": "PSDD",
+        "pi_dict_context": "OPUS_GENERAL",
         "pi_dict_name": "VOLUME_ID",
         "pi_disp_order": 10,
         "pi_display": 1,
@@ -74,7 +90,7 @@
             "FUNCTION",
             "obs_pds_<INST>_data_set_id"
         ],
-        "definition": "PDS-supplied name for this data set.",
+        "definition": "A string assigned by the PDS describing a collection of observations. A Data Set ID usually encodes, at a minimum, the mission, instrument, and version number of the data as provided by the instrument team.",
         "pi_category_name": "obs_pds",
         "pi_dict_context": "OPUS_GENERAL",
         "pi_dict_name": "DATA_SET_ID",
@@ -100,7 +116,7 @@
             "FUNCTION",
             "obs_pds_<INST>_product_id"
         ],
-        "definition": "A permanent, unique identifier assigned to a data product.",
+        "definition": "A permanent, unique identifier assigned to a data product by the PDS.",
         "pi_category_name": "obs_pds",
         "pi_dict_context": "OPUS_GENERAL",
         "pi_dict_name": "PRODUCT_ID",
@@ -127,7 +143,7 @@
             "obs_pds_<INST>_product_creation_time"
         ],
         "data_source_order": 10,
-        "definition": "Approximate UTC date and time when the PDS data product was created. Often rounded to 12:00.",
+        "definition": "The approximate date and time when the PDS data product was created for inclusion in the archive.",
         "pi_category_name": "obs_pds",
         "pi_dict_context": "OPUS_GENERAL",
         "pi_dict_name": "PRODUCT_CREATION_TIME",
@@ -154,8 +170,9 @@
             "obs_pds_<INST>_primary_file_spec"
         ],
         "data_source_order": 0,
+        "definition": "The full primary data filename, including the path, relative to its containing volume in the PDS archive.",
         "pi_category_name": "obs_pds",
-        "pi_dict_context": "PSDD",
+        "pi_dict_context": "OPUS_GENERAL",
         "pi_dict_name": "FILE_SPECIFICATION_NAME",
         "pi_disp_order": 50,
         "pi_display": 1,
@@ -179,8 +196,9 @@
             "obs_pds_<INST>_note"
         ],
         "data_source_order": 0,
+        "definition": "Miscellaneous notes or comments about an observation, such as why the observation was taken or known problems with the data.",
         "pi_category_name": "obs_pds",
-        "pi_dict_context": "PSDD",
+        "pi_dict_context": "OPUS_GENERAL",
         "pi_dict_name": "NOTE",
         "pi_disp_order": 70,
         "pi_display": 1,

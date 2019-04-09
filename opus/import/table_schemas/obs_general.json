@@ -18,22 +18,7 @@
             "FUNCTION",
             "obs_general_<INST>_opus_id"
         ],
-        "data_source_order": 30,
-        "definition": "A unique ID assigned to an observation by the Ring-Moon Systems Node of the PDS.",
-        "pi_category_name": "obs_general",
-        "pi_dict_context": "OPUS_GENERAL",
-        "pi_dict_name": "OPUS_ID",
-        "pi_disp_order": 400,
-        "pi_display": 0,
-        "pi_display_results": 1,
-        "pi_form_type": "STRING",
-        "pi_intro": null,
-        "pi_label": "OPUS ID",
-        "pi_label_results": "OPUS ID",
-        "pi_slug": "opusid",
-        "pi_sub_heading": null,
-        "pi_tooltip": null,
-        "pi_units": null
+        "data_source_order": 30
     },
     {
         "field_name": "volume_id",
@@ -55,8 +40,8 @@
             "FUNCTION",
             "obs_general_instrument_id"
         ],
-        "definition": "The specific instrument that was used to take the observation. See Help/About for a discussion of the instruments supported by OPUS.",
         "data_source_order": 0,
+        "definition": "The specific instrument that was used to take the observation. See Help/About for a discussion of the instruments supported by OPUS.",
         "pi_category_name": "obs_general",
         "pi_dict_context": "OPUS_GENERAL",
         "pi_dict_name": "INSTRUMENT_ID",
@@ -97,8 +82,8 @@
             "FUNCTION",
             "obs_general_mission_id"
         ],
-        "definition": "The major planetary mission or project used to take the observation. A mission may be associated with more than one spacecraft, such as Voyager 1 and 2. To search for a specific spacecraft or observatory, use Instrument Host Name. See Help/About for a discussion of the missions supported by OPUS.",
         "data_source_order": 0,
+        "definition": "The major planetary mission or project used to take the observation. A mission may be associated with more than one spacecraft, such as Voyager 1 and 2. To search for a specific spacecraft or observatory, use Instrument Host Name. See Help/About for a discussion of the missions supported by OPUS.",
         "pi_category_name": "obs_general",
         "pi_dict_context": "OPUS_GENERAL",
         "pi_dict_name": "MISSION_NAME",
@@ -131,8 +116,8 @@
             "FUNCTION",
             "obs_general_<INST>_inst_host_id"
         ],
-        "definition": "The name of the spacecraft, satellite, or Earth-based observatory that took the observation. See Help/About for a discussion of the instrument hosts supported by OPUS.",
         "data_source_order": 0,
+        "definition": "The name of the spacecraft, satellite, or Earth-based observatory that took the observation. See Help/About for a discussion of the instrument hosts supported by OPUS.",
         "pi_category_name": "obs_general",
         "pi_dict_context": "OPUS_GENERAL",
         "pi_dict_name": "INSTRUMENT_HOST_NAME",
@@ -229,8 +214,8 @@
             "FUNCTION",
             "obs_general_target_class"
         ],
-        "definition": "The general class of object indicated by the Intended Target Name. Possible values include Planet, Regular Satellite, Irregular Satellite, Ring, Sky, Calibration, and Other.",
         "data_source_order": 1,
+        "definition": "The general class of object indicated by the Intended Target Name. Possible values include Planet, Regular Satellite, Irregular Satellite, Ring, Sky, Calibration, and Other.",
         "pi_category_name": "obs_general",
         "pi_dict_context": "OPUS_GENERAL",
         "pi_dict_name": "TARGET_TYPE",
