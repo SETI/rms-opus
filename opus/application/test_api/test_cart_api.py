@@ -161,38 +161,6 @@ class ApiCartTests(TestCase, ApiTestHelper):
         expected = {'count': 2, 'reqno': 456}
         self._run_json_equal(url, expected)
 
-    def test__api_cart_add_missing(self):
-        "[test_cart_api.py] /__cart/add: missing OPUSID no download"
-        url = '/opus/__cart/reset.json'
-        self._run_status_equal(url, 200)
-        url = '/opus/__cart/add.json?reqno=124'
-        self._run_status_equal(url, 404, settings.HTTP404_MISSING_OPUS_ID)
-        url = '/opus/__cart/status.json?reqno=456'
-        expected = {'count': 0, 'reqno': 456}
-        self._run_json_equal(url, expected)
-
-    def test__api_cart_add_one(self):
-        "[test_cart_api.py] /__cart/add: good OPUSID no download"
-        url = '/opus/__cart/reset.json'
-        self._run_status_equal(url, 200)
-        url = '/opus/__cart/add.json?opusid=co-iss-n1460961026&reqno=12345'
-        expected = {'count': 1, 'error': False, 'reqno': 12345}
-        self._run_json_equal(url, expected)
-        url = '/opus/__cart/status.json?reqno=789'
-        expected = {'count': 1, 'reqno': 789}
-        self._run_json_equal(url, expected)
-
-    def test__api_cart_add_bad(self):
-        "[test_cart_api.py] /__cart/add: bad OPUSID no download"
-        url = '/opus/__cart/reset.json'
-        self._run_status_equal(url, 200)
-        url = '/opus/__cart/add.json?opusid=co-iss-xn1460961026&reqno=101010101'
-        expected = {'count': 0, 'error': 'opusid not found', 'reqno': 101010101}
-        self._run_json_equal(url, expected)
-        url = '/opus/__cart/status.json?reqno=0'
-        expected = {'count': 0, 'reqno': 0}
-        self._run_json_equal(url, expected)
-
     def test__api_cart_add_missing_download(self):
         "[test_cart_api.py] /__cart/add: missing OPUSID with download"
         url = '/opus/__cart/reset.json'
@@ -416,32 +384,8 @@ class ApiCartTests(TestCase, ApiTestHelper):
         expected = {'count': 1, 'reqno': 456}
         self._run_json_equal(url, expected)
 
-    def test__api_cart_remove_missing(self):
-        "[test_cart_api.py] /__cart/remove: missing OPUSID no download"
-        url = '/opus/__cart/reset.json'
-        self._run_status_equal(url, 200)
-        url = '/opus/__cart/remove.json?reqno=124'
-        self._run_status_equal(url, 404, settings.HTTP404_MISSING_OPUS_ID)
-        url = '/opus/__cart/status.json?reqno=456'
-        expected = {'count': 0, 'reqno': 456}
-        self._run_json_equal(url, expected)
-
-    def test__api_cart_remove_one(self):
-        "[test_cart_api.py] /__cart/remove: good OPUSID no download"
-        url = '/opus/__cart/reset.json'
-        self._run_status_equal(url, 200)
-        url = '/opus/__cart/add.json?opusid=co-iss-n1460961026&reqno=456'
-        expected = {'count': 1, 'error': False, 'reqno': 456}
-        self._run_json_equal(url, expected)
-        url = '/opus/__cart/remove.json?opusid=co-iss-n1460961026&reqno=123456'
-        expected = {'count': 0, 'error': False, 'reqno': 123456}
-        self._run_json_equal(url, expected)
-        url = '/opus/__cart/status.json?reqno=789'
-        expected = {'count': 0, 'reqno': 789}
-        self._run_json_equal(url, expected)
-
-    def test__api_cart_remove_bad(self):
-        "[test_cart_api.py] /__cart/remove: bad OPUSID no download"
+    def test__api_cart_remove_add_bad(self):
+        "[test_cart_api.py] /__cart/remove: add+remove bad OPUSID no download"
         url = '/opus/__cart/reset.json'
         self._run_status_equal(url, 200)
         url = '/opus/__cart/add.json?opusid=co-iss-xn1460961026&reqno=456'
@@ -737,27 +681,6 @@ class ApiCartTests(TestCase, ApiTestHelper):
         expected = {'count': 10, 'reqno': 456}
         self._run_json_equal(url, expected)
 
-    def test__api_cart_addrange_missing(self):
-        "[test_cart_api.py] /__cart/addrange: missing range no download"
-        url = '/opus/__cart/reset.json'
-        self._run_status_equal(url, 200)
-        url = '/opus/__cart/addrange.json?reqno=124'
-        self._run_status_equal(url, 404, settings.HTTP404_BAD_OR_MISSING_RANGE)
-        url = '/opus/__cart/status.json?reqno=456'
-        expected = {'count': 0, 'reqno': 456}
-        self._run_json_equal(url, expected)
-
-    def test__api_cart_addrange_one(self):
-        "[test_cart_api.py] /__cart/addrange: one good OPUSID no download"
-        url = '/opus/__cart/reset.json'
-        self._run_status_equal(url, 200)
-        url = '/opus/__cart/addrange.json?volumeid=COVIMS_0006&range=co-vims-v1484504505_ir,co-vims-v1484504505_ir&reqno=567'
-        expected = {'count': 1, 'error': False, 'reqno': 567}
-        self._run_json_equal(url, expected)
-        url = '/opus/__cart/status.json?reqno=456'
-        expected = {'count': 1, 'reqno': 456}
-        self._run_json_equal(url, expected)
-
     def test__api_cart_addrange_missing_download(self):
         "[test_cart_api.py] /__cart/addrange: missing range with download"
         url = '/opus/__cart/reset.json'
@@ -904,8 +827,8 @@ class ApiCartTests(TestCase, ApiTestHelper):
         expected = {'count': 0, 'reqno': 456}
         self._run_json_equal(url, expected)
 
-    def test__api_cart_removerange_one(self):
-        "[test_cart_api.py] /__cart/removerange: one good OPUSID no download"
+    def test__api_cart_removerange_add_one(self):
+        "[test_cart_api.py] /__cart/removerange: add+removerange one good OPUSID no download"
         url = '/opus/__cart/reset.json'
         self._run_status_equal(url, 200)
         url = '/opus/__cart/add.json?opusid=co-vims-v1484504505_ir&reqno=456'
@@ -1055,16 +978,6 @@ class ApiCartTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
         url = '/opus/__cart/status.json?reqno=456'
         expected = {'count': 2, 'reqno': 456}
-        self._run_json_equal(url, expected)
-
-    def test__api_cart_removerange_missing(self):
-        "[test_cart_api.py] /__cart/removerange: missing range no download"
-        url = '/opus/__cart/reset.json'
-        self._run_status_equal(url, 200)
-        url = '/opus/__cart/removerange.json?reqno=124'
-        self._run_status_equal(url, 404, settings.HTTP404_BAD_OR_MISSING_RANGE)
-        url = '/opus/__cart/status.json?reqno=456'
-        expected = {'count': 0, 'reqno': 456}
         self._run_json_equal(url, expected)
 
     def test__api_cart_removerange_one(self):
