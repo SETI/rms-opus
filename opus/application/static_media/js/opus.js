@@ -435,13 +435,15 @@ var opus = {
             subtree: true,
         };
 
-        let adjustSearchSideBarHeight = _.debounce(o_search.adjustSearchSideBarHeight, 200); // 500
-        let adjustSearchWidgetHeight = _.debounce(o_search.adjustSearchHeight, 200); // 800
+        let adjustSearchSideBarHeight = _.debounce(o_search.adjustSearchSideBarHeight, 200); 
+        let adjustSearchWidgetHeight = _.debounce(o_search.adjustSearchHeight, 200);
         let adjustSearchHeight = _.debounce(o_search.adjustSearchHeight, 200);
         let adjustBrowseHeight = _.debounce(o_browse.adjustBrowseHeight, 200);
         let adjustTableSize = _.debounce(o_browse.adjustTableSize, 200);
         let adjustProductInfoHeight = _.debounce(o_cart.adjustProductInfoHeight, 200);
         let adjustHelpPanelHeight = _.debounce(opus.adjustHelpPanelHeight, 200);
+        let adjustmetadataModalMenu = _.debounce(o_browse.adjustmetadataModalMenu, 200);
+        let adjustSelectedMetadata = _.debounce(o_browse.adjustSelectedMetadata, 200);
 
         // Init MutationObserver with a callback function. Callback will be called when changes are detected.
         let adjustAllPSObserver = new MutationObserver(function(mutationsList) {
@@ -522,33 +524,36 @@ var opus = {
             });
         });
 
-        let adjustmetaDataModalMenu = _.debounce(o_browse.adjustmetaDataModalMenu, 200);
         // ps in select metadata modal
         let metadataSelectorObserver =  new MutationObserver(function(mutationsList) {
             mutationsList.forEach((mutation, idx) => {
                 // console.log(mutation);
-                o_browse.allMetadataScrollbar.update();
-                o_browse.selectedMetadataScrollbar.update();
+                adjustmetadataModalMenu();
+                adjustSelectedMetadata();
             });
         });
 
-        let metadataModalContentObserver =  new MutationObserver(function(mutationsList) {
+        let metadataSelectorMenuObserver =  new MutationObserver(function(mutationsList) {
+            let lastMutationIdx = mutationsList.length - 1;
+            mutationsList.forEach((mutation, idx) => {
+                // console.log(mutation);
+                if (idx === lastMutationIdx) {
+                    if (mutation.target.classList.value.match(/submenu.collapse/)) {
+                        adjustmetadataModalMenu();
+                    }
+                }
+            });
+        });
+
+        let selectedMetadataObserver =  new MutationObserver(function(mutationsList) {
             let lastMutationIdx = mutationsList.length - 1;
             mutationsList.forEach((mutation, idx) => {
                 console.log(mutation);
-                if (mutation.type === "attributes") {
-                    // at the last mutation
-                    if (idx === lastMutationIdx) {
-                        if (mutation.target.classList.value.match(/submenu.collapse/)) {
-                            console.log("CCCCCEEEEE");
-                            adjustmetaDataModalMenu();
-                        }
+                if (idx === lastMutationIdx) {
+                    if (mutation.target.classList.value.match(/ui-sortable/)) {
+                        adjustSelectedMetadata();
                     }
                 }
-                // if (mutation.target.classList.value.match(/submenu-obs/)) {
-                //     o_browse.allMetadataScrollbar.update();
-                //     o_browse.selectedMetadataScrollbar.update();
-                // }
             });
         });
 
@@ -557,12 +562,11 @@ var opus = {
         let browseTab = document.getElementById("browse");
         let cartTab = document.getElementById("cart");
         let detailTab = document.getElementById("detail");
-
         let searchSidebar = document.getElementById("sidebar");
         let searchWidget = document.getElementById("op-search-widgets");
         let helpPanel = document.getElementById("op-help-panel");
         let metadataSelector = document.getElementById("metadataSelector");
-        let metadataModalContent = document.getElementById("metadataSelectorContents");
+        let metadataSelectorContents = document.getElementById("metadataSelectorContents");
 
         // Note:
         // The reason of observing sidebar and widdget content element (ps sibling) in search page instead of observing the whole page (html structure) is because:
@@ -584,7 +588,10 @@ var opus = {
         helpPanelObserver.observe(helpPanel, attrObserverConfig);
         // update ps when select metadata modal open/close,
         metadataSelectorObserver.observe(metadataSelector, {attributes: true});
-        metadataModalContentObserver.observe(metadataModalContent, attrObserverConfig);
+        // udpate ps when select metadata menu expand/collapse
+        metadataSelectorMenuObserver.observe(metadataSelectorContents, attrObserverConfig);
+        // update ps when selected metadata are added/removed
+        selectedMetadataObserver.observe(metadataSelectorContents, childListObserverConfig);
 
 
     },

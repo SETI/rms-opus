@@ -919,7 +919,7 @@ var o_browse = {
         }
     },
 
-    adjustmetaDataModalMenu: function() {
+    adjustmetadataModalMenu: function() {
         let containerHeight = $(".allMetadata").height();
         let menuHeight = $(".allMetadata .searchMenu").height();
 
@@ -932,8 +932,23 @@ var o_browse = {
             $(".allMetadata .ps__rail-y").removeClass("hide_ps__rail-y");
             o_browse.allMetadataScrollbar.settings.suppressScrollY = false;
         }
-
         o_browse.allMetadataScrollbar.update();
+    },
+
+    adjustSelectedMetadata: function() {
+        let containerHeight = $(".selectedMetadata").height();
+        let selectedMetadataHeight = $(".selectedMetadata .ui-sortable").height();
+
+        if (containerHeight > selectedMetadataHeight) {
+            if (!$(".selectedMetadata .ps__rail-y").hasClass("hide_ps__rail-y")) {
+                $(".selectedMetadata .ps__rail-y").addClass("hide_ps__rail-y");
+                o_browse.selectedMetadataScrollbar.settings.suppressScrollY = true;
+            }
+        } else {
+            $(".selectedMetadata .ps__rail-y").removeClass("hide_ps__rail-y");
+            o_browse.selectedMetadataScrollbar.settings.suppressScrollY = false;
+        }
+        o_browse.selectedMetadataScrollbar.update();
     },
 
     renderGalleryAndTable: function(data, url, prev=false) {
