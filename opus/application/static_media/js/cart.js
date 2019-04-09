@@ -161,7 +161,7 @@ var o_cart = {
 
      loadCartData: function(startObs) {
         //window.scrollTo(0,opus.browse_view_scrolls[opus.prefs.browse]);
-        startObs = (startObs === undefined ? opus.prefs.cart_startobs] : startObs);
+        startObs = (startObs === undefined ? opus.prefs.cart_startobs : startObs);
 
         let view = o_browse.getViewInfo();
         let base_url = "/opus/__api/dataimages.json?";

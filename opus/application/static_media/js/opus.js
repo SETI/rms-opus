@@ -47,7 +47,7 @@ var opus = {
     extras:{},            // extras to the query, carries units, string_selects, qtypes, size, refreshes result count!!
     last_selections:{},   // last_ are used to moniter changes
     last_hash:'',
-    result_count:0,
+    resultCount:0,
     qtype_default: 'any',
     force_load: true, // set this to true to force load() when selections haven't changed
 
@@ -83,9 +83,6 @@ var opus = {
         */
 
         let selections = o_hash.getSelectionsFromHash();
-        if (selections === undefined) {
-            return;
-        }
 
         // if (!$.isEmptyObject(opus.selections) || !opus.checkIfDrawnWidgetsAreDefault() || !opus.checkIfMetadataAreDefault()) {
         if ($.isEmptyObject(selections) || !opus.checkIfDrawnWidgetsAreDefault()) {
@@ -116,7 +113,8 @@ var opus = {
         } else {
             // selections in the url hash is different from opus.last_selections
               // reset the pages:
-              opus.prefs.page = default_pages;
+              opus.prefs.startobs = 1;
+              opus.prefs.cart_startobs = 1;
 
               // and reset the query:
               o_browse.resetQuery();
@@ -177,10 +175,10 @@ var opus = {
         });
     },
 
-    updateResultCount: function(result_count) {
-        opus.result_count = result_count;
+    updateResultCount: function(resultCount) {
+        opus.resultCount = resultCount;
         $("#op-result-count").fadeOut("fast", function() {
-            $(this).html(o_utils.addCommas(opus.result_count)).fadeIn("fast");
+            $(this).html(o_utils.addCommas(opus.resultCount)).fadeIn("fast");
             $(this).removeClass("browse_results_invalid");
         });
     },
