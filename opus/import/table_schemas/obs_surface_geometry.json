@@ -60,7 +60,7 @@
             "FUNCTION",
             "obs_surface_geo_target_name"
         ],
-        "definition": "The target name is the name of the body for which the surface geometry parameters in this row of the table are applicable.",
+        "definition": "The name of the target for which surface geometry parameters will be searchable. Once a target is selected, new search parameters specific to that target will appear. Only one target may be selected at a time.",
         "pi_category_name": "obs_surface_geometry",
         "pi_dict_context": "SURFACE_GEO",
         "pi_dict_name": "TARGET_NAME",

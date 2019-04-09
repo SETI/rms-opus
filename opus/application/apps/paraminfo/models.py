@@ -25,6 +25,8 @@ class ParamInfo(models.Model):
     tooltip = models.CharField(max_length=255, blank=True, null=True)
     dict_context = models.CharField(max_length=255, blank=True, null=True)
     dict_name = models.CharField(max_length=255, blank=True, null=True)
+    dict_context_results = models.CharField(max_length=255, blank=True, null=True)
+    dict_name_results = models.CharField(max_length=255, blank=True, null=True)
     sub_heading = models.CharField(max_length=150, blank=True, null=True)
     timestamp = models.DateTimeField()
 
@@ -42,6 +44,14 @@ class ParamInfo(models.Model):
         definition = get_def_for_tooltip(self.dict_name, self.dict_context)
         return definition
 
+    def get_tooltip_results(self):
+        if self.dict_name_results:
+            definition = get_def_for_tooltip(self.dict_name_results,
+                                             self.dict_context_results)
+        else:
+            definition = get_def_for_tooltip(self.dict_name, self.dict_context)
+        return definition
+        
     def body_qualified_label(self):
         # Append "[Ring]" or "[<Surface Body>]" or "[Mission]" or "[Instrument]"
         if self.label is None: # pragma: no cover

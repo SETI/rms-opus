@@ -3,9 +3,9 @@
     <li>
       {% for param, values in entry.items %}
         {{ param }}: {{ values.0 }}
-        {% if values.1.get_tooltip %}
+        {% if values.1.get_tooltip_results %}
           <i class="fa fa-info-circle" data-toggle="tooltip"
-             title="{{ values.1.get_tooltip|striptags }}"></i>
+             title="{{ values.1.get_tooltip_results|striptags }}"></i>
         {% endif %}
       {% endfor %}
     </li>

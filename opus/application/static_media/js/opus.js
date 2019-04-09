@@ -467,9 +467,9 @@ $(document).ready(function() {
                 url += "about.html";
                 header = "About OPUS";
                 break;
-            case "datasets":
-                url += "datasets.html";
-                header = "Datasets Available for Searching with OPUS";
+            case "volumes":
+                url += "volumes.html";
+                header = "Volumes Available for Searching with OPUS";
                 break;
             case "faq":
                 url += "faq.html";

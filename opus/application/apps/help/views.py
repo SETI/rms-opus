@@ -13,6 +13,7 @@ from django.shortcuts import render
 from django.http import Http404, HttpResponse, HttpRequest
 
 from metadata.views import get_fields_info
+from search.views import ObsGeneral, MultObsGeneralInstrumentId
 from tools.app_utils import *
 
 log = logging.getLogger(__name__)
@@ -42,14 +43,14 @@ def api_about(request):
     exit_api_call(api_code, ret)
     return ret
 
-def api_datasets(request):
-    """Renders the datasets page.
+def api_volumes(request):
+    """Renders the volumes page.
 
     This is a PRIVATE API.
 
-    Format: __help/datasets.html
+    Format: __help/volumes.html
     """
-    api_code = enter_api_call('api_datasets', request)
+    api_code = enter_api_call('api_volumes', request)
 
     if not request or request.GET is None:
         ret = Http404(settings.HTTP404_NO_REQUEST)
@@ -60,13 +61,15 @@ def api_datasets(request):
     all_volumes = OrderedDict()
     for d in (ObsGeneral.objects.values('instrument_id','volume_id')
               .order_by('instrument_id','volume_id').distinct()):
-        all_volumes.setdefault(d['instrument_id'],
+        instrument_name = (MultObsGeneralInstrumentId.objects.values('label')
+                           .filter(value=d['instrument_id']))
+        all_volumes.setdefault(instrument_name[0]['label'],
                                []).append(d['volume_id'])
     for k,v in all_volumes.items():
         all_volumes[k] = ', '.join(all_volumes[k])
     data = {'all_volumes': all_volumes}
 
-    ret = render(request, 'help/datasets.html', data)
+    ret = render(request, 'help/volumes.html', data)
     exit_api_call(api_code, ret)
     return ret
 
