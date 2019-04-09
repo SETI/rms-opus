@@ -430,7 +430,7 @@ var opus = {
 
         let attrObserverConfig = {
             attributes: true,
-            
+
         };
 
         let adjustSearchSideBarHeight = _.debounce(o_search.adjustSearchSideBarHeight, 200); // 500
@@ -526,7 +526,6 @@ var opus = {
 
         let searchSidebar = document.getElementById("sidebar");
         let searchWidget = document.getElementById("op-search-widgets");
-        // let helpPanel = document.getElementById("op-dropdown-panel");
         let helpPanel = document.getElementById("op-help-panel");
 
         // Note:
