@@ -430,7 +430,7 @@ var opus = {
 
         let attrObserverConfig = {
             attributes: true,
-
+            subtree: true,
         };
 
         let adjustSearchSideBarHeight = _.debounce(o_search.adjustSearchSideBarHeight, 200); // 500
@@ -512,9 +512,12 @@ var opus = {
 
         // ps in help page
         let helpPanelObserver =  new MutationObserver(function(mutationsList) {
+            let lastMutationIdx = mutationsList.length - 1;
             mutationsList.forEach((mutation, idx) => {
-                console.log(mutation);
-                adjustHelpPanelHeight();
+                //ignore attribute change in ps to avoid infinite loop of callback function caused by ps update
+                if (!mutation.target.classList.value.match(/ps/)) {
+                    adjustHelpPanelHeight();
+                }
             });
         });
 
