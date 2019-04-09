@@ -415,19 +415,21 @@ var opus = {
             attributeFilter: ["class"], // detect action of switching tabs
         };
 
-        // Widgets and sidebar menu items can be collapsed, so we need to detect attribute changes
+        // select metadata, widgets and sidebar menu items can be collapsed, so we need to detect attribute changes
         // set attributes to true
-        let searchObserverConfig = {
+        let generalObserverConfig = {
             attributes: true,
             childList: true,
             subtree: true,
         };
 
+        // detect add/removal of each element's children
         let childListObserverConfig = {
             childList: true,
             subtree: true,
         };
 
+        // detect attribute changes of each element
         let attrObserverConfig = {
             attributes: true,
             subtree: true,
@@ -444,7 +446,6 @@ var opus = {
         // Init MutationObserver with a callback function. Callback will be called when changes are detected.
         let adjustAllPSObserver = new MutationObserver(function(mutationsList) {
             // this is for switch from other tabs to target page
-            // for experiment, put all ps update here
             adjustSearchHeight();
             adjustBrowseHeight();
             adjustTableSize();
@@ -512,12 +513,42 @@ var opus = {
 
         // ps in help page
         let helpPanelObserver =  new MutationObserver(function(mutationsList) {
-            let lastMutationIdx = mutationsList.length - 1;
             mutationsList.forEach((mutation, idx) => {
+                // console.log(mutation);
                 //ignore attribute change in ps to avoid infinite loop of callback function caused by ps update
                 if (!mutation.target.classList.value.match(/ps/)) {
                     adjustHelpPanelHeight();
                 }
+            });
+        });
+
+        let adjustmetaDataModalMenu = _.debounce(o_browse.adjustmetaDataModalMenu, 200);
+        // ps in select metadata modal
+        let metadataSelectorObserver =  new MutationObserver(function(mutationsList) {
+            mutationsList.forEach((mutation, idx) => {
+                // console.log(mutation);
+                o_browse.allMetadataScrollbar.update();
+                o_browse.selectedMetadataScrollbar.update();
+            });
+        });
+
+        let metadataModalContentObserver =  new MutationObserver(function(mutationsList) {
+            let lastMutationIdx = mutationsList.length - 1;
+            mutationsList.forEach((mutation, idx) => {
+                console.log(mutation);
+                if (mutation.type === "attributes") {
+                    // at the last mutation
+                    if (idx === lastMutationIdx) {
+                        if (mutation.target.classList.value.match(/submenu.collapse/)) {
+                            console.log("CCCCCEEEEE");
+                            adjustmetaDataModalMenu();
+                        }
+                    }
+                }
+                // if (mutation.target.classList.value.match(/submenu-obs/)) {
+                //     o_browse.allMetadataScrollbar.update();
+                //     o_browse.selectedMetadataScrollbar.update();
+                // }
             });
         });
 
@@ -530,6 +561,8 @@ var opus = {
         let searchSidebar = document.getElementById("sidebar");
         let searchWidget = document.getElementById("op-search-widgets");
         let helpPanel = document.getElementById("op-help-panel");
+        let metadataSelector = document.getElementById("metadataSelector");
+        let metadataModalContent = document.getElementById("metadataSelectorContents");
 
         // Note:
         // The reason of observing sidebar and widdget content element (ps sibling) in search page instead of observing the whole page (html structure) is because:
@@ -543,10 +576,16 @@ var opus = {
         adjustAllPSObserver.observe(browseTab, switchTabObserverConfig);
         adjustAllPSObserver.observe(cartTab, switchTabObserverConfig);
         // update ps in search page
-        searchSidebarObserver.observe(searchSidebar, searchObserverConfig);
-        searchWidgetObserver.observe(searchWidget, searchObserverConfig);
+        searchSidebarObserver.observe(searchSidebar, generalObserverConfig);
+        searchWidgetObserver.observe(searchWidget, generalObserverConfig);
+        // update ps in cart page
         cartObserver.observe(cartTab, childListObserverConfig);
+        // update ps in help panel
         helpPanelObserver.observe(helpPanel, attrObserverConfig);
+        // update ps when select metadata modal open/close,
+        metadataSelectorObserver.observe(metadataSelector, {attributes: true});
+        metadataModalContentObserver.observe(metadataModalContent, attrObserverConfig);
+
 
     },
 }; // end opus namespace

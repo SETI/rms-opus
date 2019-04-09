@@ -697,8 +697,8 @@ var o_browse = {
         });
 
         $("#metadataSelector").on("shown.bs.modal", function() {
-            o_browse.allMetadataScrollbar.update();
-            o_browse.selectedMetadataScrollbar.update();
+            // o_browse.allMetadataScrollbar.update();
+            // o_browse.selectedMetadataScrollbar.update();
         });
 
         $('#metadataSelector .allMetadata').on("click", '.submenu li', function() {
@@ -741,7 +741,7 @@ var o_browse = {
                     });
                 }
             }
-            o_browse.selectedMetadataScrollbar.update();
+            // o_browse.selectedMetadataScrollbar.update();
             return false;
         });
 
@@ -758,7 +758,7 @@ var o_browse = {
                 });
                 $(`#metadataSelector .allMetadata [data-slug=${slug}]`).find("i.fa-check").hide();
             }
-            o_browse.selectedMetadataScrollbar.update();
+            // o_browse.selectedMetadataScrollbar.update();
             return false;
         });
         // buttons
@@ -917,6 +917,23 @@ var o_browse = {
                 });
             });
         }
+    },
+
+    adjustmetaDataModalMenu: function() {
+        let containerHeight = $(".allMetadata").height();
+        let menuHeight = $(".allMetadata .searchMenu").height();
+
+        if (containerHeight > menuHeight) {
+            if (!$(".allMetadata .ps__rail-y").hasClass("hide_ps__rail-y")) {
+                $(".allMetadata .ps__rail-y").addClass("hide_ps__rail-y");
+                o_browse.allMetadataScrollbar.settings.suppressScrollY = true;
+            }
+        } else {
+            $(".allMetadata .ps__rail-y").removeClass("hide_ps__rail-y");
+            o_browse.allMetadataScrollbar.settings.suppressScrollY = false;
+        }
+
+        o_browse.allMetadataScrollbar.update();
     },
 
     renderGalleryAndTable: function(data, url, prev=false) {
