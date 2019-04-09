@@ -423,9 +423,14 @@ var opus = {
             subtree: true,
         };
 
-        let generalObserverConfig = {
+        let childListObserverConfig = {
             childList: true,
             subtree: true,
+        };
+
+        let attrObserverConfig = {
+            attributes: true,
+            
         };
 
         let adjustSearchSideBarHeight = _.debounce(o_search.adjustSearchSideBarHeight, 200); // 500
@@ -505,6 +510,14 @@ var opus = {
             });
         });
 
+        // ps in help page
+        let helpPanelObserver =  new MutationObserver(function(mutationsList) {
+            mutationsList.forEach((mutation, idx) => {
+                console.log(mutation);
+                adjustHelpPanelHeight();
+            });
+        });
+
         // target node: target element that MutationObserver is observing, need to be a node (need to use regular js)
         let searchTab = document.getElementById("search");
         let browseTab = document.getElementById("browse");
@@ -513,7 +526,8 @@ var opus = {
 
         let searchSidebar = document.getElementById("sidebar");
         let searchWidget = document.getElementById("op-search-widgets");
-        // let detailMetaData = document.getElementById("op-detail-metadata");
+        // let helpPanel = document.getElementById("op-dropdown-panel");
+        let helpPanel = document.getElementById("op-help-panel");
 
         // Note:
         // The reason of observing sidebar and widdget content element (ps sibling) in search page instead of observing the whole page (html structure) is because:
@@ -522,14 +536,15 @@ var opus = {
         It will end up being a non-stop call of callback function.
         By observing each content element (ps silbling), ps update will not trigger callback function since ps element is not a child element of target node (content element), and this will prevent that non-stop call of callback function. */
         // Watch for changes:
-        // update ps when switch tabs
+        // update ps when switching tabs
         adjustAllPSObserver.observe(searchTab, switchTabObserverConfig);
         adjustAllPSObserver.observe(browseTab, switchTabObserverConfig);
         adjustAllPSObserver.observe(cartTab, switchTabObserverConfig);
         // update ps in search page
         searchSidebarObserver.observe(searchSidebar, searchObserverConfig);
         searchWidgetObserver.observe(searchWidget, searchObserverConfig);
-        cartObserver.observe(cartTab, generalObserverConfig);
+        cartObserver.observe(cartTab, childListObserverConfig);
+        helpPanelObserver.observe(helpPanel, attrObserverConfig);
 
     },
 }; // end opus namespace
@@ -634,7 +649,7 @@ $(document).ready(function() {
         if (!opus.helpScrollbar) {
             opus.helpScrollbar = new PerfectScrollbar("#op-help-panel .card-body", { suppressScrollX: true });
         }
-        adjustHelpPanelHeight();
+        // adjustHelpPanelHeight();
         $("#op-help-panel").toggle("slide", {direction:'right'}, function() {
             $(".op-overlay").addClass("active");
         });
@@ -645,7 +660,7 @@ $(document).ready(function() {
                 $("#op-help-panel .loader").hide();
                 $("#op-help-panel .op-card-contents").html(page);
                 opus.helpPanelOpen = true;
-                adjustHelpPanelHeight()
+                // adjustHelpPanelHeight()
             }
         });
     });
