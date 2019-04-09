@@ -1,9 +1,10 @@
 PSDD,NASA PDS Planetary Science Data Dictionary,NULL
 OPUS_GENERAL,OPUS General Constraints,PSDD
-RING_GEO,Ring Geometry,PSDD
-SURFACE_GEO,Surface Geometry,PSDD
-OPUS_WAVELENGTH,OPUS Wavelength Constraints,PSDD
+OPUS_PDS,OPUS PDS Constraints,PSDD
 OPUS_TYPE_IMAGE,OPUS Image Constraints,PSDD
+OPUS_WAVELENGTH,OPUS Wavelength Constraints,PSDD
+SURFACE_GEO,Surface Geometry,PSDD
+RING_GEO,Ring Geometry,PSDD
 CASSINI,Cassini Mission,OPUS_GENERAL
 COCIRS,Cassini Composite Infrared Spectrometer (CIRS),CASSINI
 COISS,Cassini Imaging Science Subsystem (ISS),CASSINI

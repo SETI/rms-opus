@@ -527,7 +527,6 @@
         "pi_sub_heading": null,
         "pi_tooltip": null,
         "pi_units": null,
-        "comments": "XXX Definition needs review",
         "mult_options": [
               [   0, "IMG",                "Image",  10, "Y", null],
               [   1, "SPE",             "Spectrum",  20, "Y", null],
