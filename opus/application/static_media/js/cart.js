@@ -84,9 +84,9 @@ var o_cart = {
              dataType: "json",
              success: function(data) {
                  if (data.error !== undefined) {
-                     $(`<li>${data.error}</li>`).hide().prependTo("ul.zippedFiles", "#op-cart-summary").slideDown("fast");
+                     $(`<li>${data.error}</li>`).hide().prependTo("ul.zippedFiles", "#cart_summary").slideDown("fast");
                  } else {
-                     $(`<li><a href = "${data.filename}">${data.filename}</a></li>`).hide().prependTo("ul.zippedFiles", "#op-cart-summary").slideDown("slow");
+                     $(`<li><a href = "${data.filename}">${data.filename}</a></li>`).hide().prependTo("ul.zippedFiles", "#cart_summary").slideDown("slow");
                  }
                  $(".spinner", "#op-download-links").fadeOut();
                  // o_collections.downloadOptionsScrollbar.update();
@@ -95,7 +95,7 @@ var o_cart = {
              },
              error: function(e) {
                  $(".spinner", "#op-download-links").fadeOut();
-                 $(`<li>${errorMsg}</li>`).hide().prependTo("ul.zippedFiles", "#op-cart-summary").slideDown("fast");
+                 $(`<li>${errorMsg}</li>`).hide().prependTo("ul.zippedFiles", "#cart_summary").slideDown("fast");
              },
              complete: function() {
                  opus.download_in_process = false;
@@ -106,7 +106,7 @@ var o_cart = {
      adjustProductInfoHeight: function() {
          let containerHeight = $(window).height()-120;
          let downloadOptionsContainer = $(window).height()-90;
-         let cartSummaryHeight = $("#op-cart-summary").height();
+         let cartSummaryHeight = $("#cart_summary").height();
          $("#cart .sidebar_wrapper").height(downloadOptionsContainer);
          $("#cart .gallery-contents").height(containerHeight);
 
@@ -220,7 +220,7 @@ var o_cart = {
                     $(".cart_details", "#cart").hide().html(html).fadeIn();
 
                     if (opus.download_in_process) {
-                        $(".spinner", "#op-cart-summary").fadeIn();
+                        $(".spinner", "#cart_summary").fadeIn();
                     }
 
                     o_cart.loadCartData();

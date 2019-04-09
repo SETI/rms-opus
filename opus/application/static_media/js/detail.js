@@ -93,7 +93,7 @@ var o_detail = {
 
     initAndUpdatePerfectScrollbar: function() {
         o_detail.detailPageScrollbar = new PerfectScrollbar(".detail-metadata");
-        o_detail.detailPageScrollbar.update()
+        o_detail.detailPageScrollbar.update();
     },
 
     adjustDetailHeight: function() {

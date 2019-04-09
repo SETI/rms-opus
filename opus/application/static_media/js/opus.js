@@ -434,7 +434,6 @@ var opus = {
         let adjustBrowseHeight = _.debounce(o_browse.adjustBrowseHeight, 200);
         let adjustTableSize = _.debounce(o_browse.adjustTableSize, 200);
         let adjustProductInfoHeight = _.debounce(o_cart.adjustProductInfoHeight, 200);
-        let adjustDetailHeight = _.debounce(o_detail.adjustDetailHeight, 200);
         let adjustHelpPanelHeight = _.debounce(opus.adjustHelpPanelHeight, 200);
 
         // Init MutationObserver with a callback function. Callback will be called when changes are detected.
@@ -445,7 +444,6 @@ var opus = {
             adjustBrowseHeight();
             adjustTableSize();
             adjustProductInfoHeight();
-            adjustDetailHeight();
             adjustHelpPanelHeight();
         });
 
@@ -515,6 +513,7 @@ var opus = {
 
         let searchSidebar = document.getElementById("sidebar");
         let searchWidget = document.getElementById("op-search-widgets");
+        // let detailMetaData = document.getElementById("op-detail-metadata");
 
         // Note:
         // The reason of observing sidebar and widdget content element (ps sibling) in search page instead of observing the whole page (html structure) is because:
@@ -527,7 +526,6 @@ var opus = {
         adjustAllPSObserver.observe(searchTab, switchTabObserverConfig);
         adjustAllPSObserver.observe(browseTab, switchTabObserverConfig);
         adjustAllPSObserver.observe(cartTab, switchTabObserverConfig);
-        adjustAllPSObserver.observe(detailTab, switchTabObserverConfig);
         // update ps in search page
         searchSidebarObserver.observe(searchSidebar, searchObserverConfig);
         searchWidgetObserver.observe(searchWidget, searchObserverConfig);
