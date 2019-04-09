@@ -493,7 +493,7 @@ var o_browse = {
         if (elem.length > 0) {
             o_browse.setScrollbarOnSlide(value);
         } else {
-            o_browse.onRenderData();
+            o_browse.loadData(value);
         }
     },
 
@@ -501,7 +501,7 @@ var o_browse = {
     updateSliderHandle: function() {
         let selector = (opus.prefs.browse === "dataTable") ? `#${opus.prefs.view} #dataTable tbody tr` : `#${opus.prefs.view} .gallery .thumbnail-container`;
         $(selector).each(function(index, elem) {
-            if ($(elem).offset().top > $(".gallery-contents").offset().top) {
+            if ($(elem).offset().top >= $(".gallery-scroll").offset().top) {
                 let obsNum = $(elem).data("obs");
                 $("#op-observation-number").html(obsNum);
                 $(".op-slider-pointer").css("width", `${opus.resultCount.toString().length*0.7}em`);
@@ -691,9 +691,7 @@ var o_browse = {
                 o_browse.loadData(1);
             } else {
                 // remove spinner if nothing is re-draw when we click save changes
-                if ($(".op-page-loading-status > .loader").is(":visible")) {
-                    $(".op-page-loading-status > .loader").hide();
-                }
+                $(".op-page-loading-status > .loader").hide();
             }
         });
 
@@ -1092,26 +1090,9 @@ var o_browse = {
     },
 
     // set the scrollbar position in gallery / table view
-    setScrollbarPosition: function(selector, page) {
-        if (!$(`.table-page[data-page='${page}']`).prev().offset()) {
-            $(`${selector}`).scrollTop(0);
-            // make sure it's scrolled to the correct position in table view
-            $(`${selector} .dataTable`).scrollTop(0);
-        } else {
-            let galleryTargetTopPosition = $(`#browse .gallery-contents .thumb-page[data-page='${page}'] .thumbnail-container:eq(0) a img`).offset().top;
-            // console.log($(`#browse .gallery-contents .thumb-page[data-page='${newPage}'] .thumbnail-container:eq(0)`).data("id"))
-            let galleryContainerTopPosition = $(".gallery-contents").offset().top;
-            let galleryScrollbarPosition = $(".gallery-contents").scrollTop();
-
-            let galleryTargetFinalPosition = galleryTargetTopPosition - galleryContainerTopPosition + galleryScrollbarPosition;
-            $(`#browse .gallery-contents`).scrollTop(galleryTargetFinalPosition);
-            // make sure it's scrolled to the correct position in table view
-            let tableTargetTopPosition = $(`.table-page[data-page='${page}']`).prev().offset().top;
-            let tableContainerTopPosition = $(".dataTable").offset().top;
-            let tableScrollbarPosition = $(".dataTable").scrollTop();
-            let tableTargetFinalPosition = tableTargetTopPosition - tableContainerTopPosition + tableScrollbarPosition;
-            $(`${selector} .dataTable`).scrollTop(tableTargetFinalPosition);
-        }
+    setScrollbarPosition: function(selector, obsNum) {
+        $(`${selector}`).scrollTop(0);
+        $(`${selector} .dataTable`).scrollTop(0);
     },
 
     getLimit: function() {
@@ -1120,6 +1101,9 @@ var o_browse = {
     },
 
     getDataURL: function(startObs) {
+        // this method is always called before a load, so might as well drop the loader here..
+        $(".op-page-loading-status > .loader").show();
+
         let view = o_browse.getViewInfo();
         let base_url = "/opus/__api/dataimages.json?";
         // this is a workaround for firefox
@@ -1141,23 +1125,24 @@ var o_browse = {
         startObs = (startObs === undefined ? opus.prefs[`${viewInfo.prefix}startobs`] : startObs);
 
         // if the request is a block far away from current page cache, flush the cache and start over
-        let elemArray = $(`${viewInfo.namespace} [data-obs]`);
+        let elem = $(`${viewInfo.namespace} [data-obs=${startObs}]`);
+        let lastObs = $(`${viewInfo.namespace} [data-obs]`).last().data("obs");
+        let firstObs = $(`${viewInfo.namespace} [data-obs]`).first().data("obs");
 
-        // pseudo code
-        // if startObs is not rendered
-        //      if startObs is w/in a page amount of images, just get the page either before or after and make it contiguous
-        //  else {
-        //      clear the cache and start over...
-        //      o_browse.galleryBegun = false;
-        //
-
-        let selector = `#${opus.prefs.view} .gallery-contents`;
-
-        // wait! is this page already drawn?
-        // if startObs drawn, move the slider to that line, fetch if need be after
-            //o_browse.setScrollbarPosition(selector, page);
-            $(".op-page-loading-status > .loader").hide();
-            //return;
+        // if the startObs is not already rendered and is obviously not contiguous, clear the cache and start over
+        if (lastObs === undefined || firstObs === undefined || $(elem).length === 0 ||
+            (startObs > lastObs + 1) || (startObs < firstObs - 1)) {
+            o_browse.galleryBegun = false;
+        } else {
+            // wait! is this page already drawn?
+            // if startObs drawn, move the slider to that line, fetch if need be after
+            if (startObs >= firstObs && startObs <= lastObs) {
+                // may need to do a prefetch here...
+                o_browse.setScrollbarPosition(selector, startObs);
+                $(".op-page-loading-status > .loader").hide();
+                return;
+            }
+        }
 
         let url = o_browse.getDataURL(startObs);
 
@@ -1165,12 +1150,11 @@ var o_browse = {
         $.getJSON(url, function(data) {
             if (data.reqno < o_browse.lastLoadDataRequestNo) {
                 // make sure to remove spinner before return
-                if ($(".op-page-loading-status > .loader").is(":visible")) {
-                    $(".op-page-loading-status > .loader").hide();
-                }
+                $(".op-page-loading-status > .loader").hide();
                 return;
             }
-            // data.start_obs, data.count
+
+            let selector = `#${opus.prefs.view} .gallery-contents`;
             if (!o_browse.galleryBegun) {
                 o_browse.initTable(data.columns);
 
@@ -1195,9 +1179,7 @@ var o_browse = {
                     $(selector).on("request.infiniteScroll", function(event, path) {
                         // hide default page status loader if op-page-loading-status loader is spinning
                         // && o_browse.tableSorting
-                        if ($(".op-page-loading-status > .loader").is(":visible")) {
-                            $(".infinite-scroll-request").hide();
-                        }
+                        $(".infinite-scroll-request").hide();
                     });
                     $(selector).on("scrollThreshold.infiniteScroll", function(event) {
                         // remove spinner when scrollThreshold is triggered and last data fetching has no data
@@ -1215,7 +1197,7 @@ var o_browse = {
             }
 
             // Because we redraw from the beginning or user inputted page, we need to remove previous drawn thumb-pages
-            $(".gallery > .thumb-page").detach();
+            $(`${viewInfo.namespace} .thumbnail-container`).detach();
             o_browse.renderGalleryAndTable(data, this.url);
             if (o_browse.currentOpusId != "") {
                 o_browse.metadataboxHtml(o_browse.currentOpusId);
@@ -1228,9 +1210,6 @@ var o_browse = {
                 o_browse.updateSliderHandle();
                 o_browse.galleryBegun = true;
             }
-            // if ($(".op-page-loading-status > .loader").is(":visible")) {
-            //     $(".op-page-loading-status > .loader").hide();
-            // }
             o_browse.tableSorting = false;
         });
     },
