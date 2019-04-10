@@ -234,7 +234,8 @@ var o_search = {
                var remove = opus.selections[id].indexOf(value); // find index of value to remove
                opus.selections[id].splice(remove,1);        // remove value from array
            }
-
+           // console.log("Current opus selection: ")
+           // console.log(opus.selections)
            o_hash.updateHash();
         });
 

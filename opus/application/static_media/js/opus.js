@@ -94,6 +94,7 @@ var opus = {
         */
 
         let selections = o_hash.getSelectionsFromHash();
+
         if (selections === undefined) {
             return;
         }
@@ -114,6 +115,7 @@ var opus = {
                 // last selections is also empty
                 opus.last_selections = {};
                 o_browse.resetQuery();
+                opus.force_load = true;
             }
         }
 
@@ -126,7 +128,7 @@ var opus = {
 
         } else {
             // selections in the url hash is different from opus.last_selections
-              // reset the pages:
+              // reset the pages: {"gallery":1, "data":1, "cart_gallery":1, "cart_data":1 };
               opus.prefs.page = default_pages;
 
               // and reset the query:
