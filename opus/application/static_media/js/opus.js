@@ -408,8 +408,8 @@ var opus = {
         }
     },
 
+    // MutationObserver: detect any DOM changes and update ps correspondingly
     observePerfectScrollbar: function() {
-        // MutationObserver to detect any DOM changes
         // Config object: tell the MutationObserver what type of changes to be detected
         let switchTabObserverConfig = {
             attributeFilter: ["class"], // detect action of switching tabs
@@ -561,11 +561,34 @@ var opus = {
         // ps in browse dialog
         let browseDialogObserver =  new MutationObserver(function(mutationsList) {
             mutationsList.forEach((mutation, idx) => {
-                console.log(mutation);
+                // console.log(mutation);
+                // only one mutation detected when we click thumbnail
                 adjustBrowseDialogPS();
             });
         });
 
+        // ps in gallery view
+        let galleryViewObserver =  new MutationObserver(function(mutationsList) {
+            let lastMutationIdx = mutationsList.length - 1;
+            mutationsList.forEach((mutation, idx) => {
+                // console.log(mutation);
+                if (idx === lastMutationIdx) {
+                    adjustBrowseHeight();
+                }
+            });
+        });
+
+        // ps in table view
+        let tableViewObserver =  new MutationObserver(function(mutationsList) {
+            let lastMutationIdx = mutationsList.length - 1;
+            mutationsList.forEach((mutation, idx) => {
+                // console.log(mutation);
+                if (idx === lastMutationIdx) {
+                    console.log("update at the last mutation");
+                    adjustTableSize();
+                }
+            });
+        });
 
         // target node: target element that MutationObserver is observing, need to be a node (need to use regular js)
         let searchTab = document.getElementById("search");
@@ -579,6 +602,8 @@ var opus = {
         let metadataSelectorContents = document.getElementById("metadataSelectorContents");
         let browseDialogModal = document.getElementById("galleryView");
         let browseDailogContents = document.getElementById("op-browse-dialog");
+        let galleryView = document.getElementById("op-gallery-view");
+        let tableView = document.getElementById("dataTable");
 
         // Note:
         // The reason of observing sidebar and widdget content element (ps sibling) in search page instead of observing the whole page (html structure) is because:
@@ -608,8 +633,10 @@ var opus = {
         browseDialogObserver.observe(browseDialogModal, {attributes: true});
         // update ps when contents in dialog is added/removed
         browseDialogObserver.observe(browseDailogContents, childListObserverConfig);
-
-
+        // udpate ps in browse gallery view
+        galleryViewObserver.observe(galleryView, generalObserverConfig);
+        // update ps in browse table view
+        tableViewObserver.observe(galleryView, generalObserverConfig);
     },
 }; // end opus namespace
 

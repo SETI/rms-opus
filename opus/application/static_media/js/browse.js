@@ -847,7 +847,7 @@ var o_browse = {
                 $(".dataTable > .ps__rail-y").addClass("hide_ps__rail-y");
             }
 
-            o_browse.galleryScrollbar.update();
+            // o_browse.galleryScrollbar.update();
         } else {
             $("." + "gallery", "#browse").hide();
             $("." + opus.prefs.browse, "#browse").fadeIn();
@@ -866,7 +866,7 @@ var o_browse = {
             }
             $(".dataTable > .ps__rail-y").removeClass("hide_ps__rail-y");
 
-            o_browse.tableScrollbar.update();
+            // o_browse.tableScrollbar.update();
         }
     },
 
@@ -917,54 +917,6 @@ var o_browse = {
                 });
             });
         }
-    },
-
-    adjustmetadataModalMenu: function() {
-        let containerHeight = $(".allMetadata").height();
-        let menuHeight = $(".allMetadata .searchMenu").height();
-
-        if (containerHeight > menuHeight) {
-            if (!$(".allMetadata .ps__rail-y").hasClass("hide_ps__rail-y")) {
-                $(".allMetadata .ps__rail-y").addClass("hide_ps__rail-y");
-                o_browse.allMetadataScrollbar.settings.suppressScrollY = true;
-            }
-        } else {
-            $(".allMetadata .ps__rail-y").removeClass("hide_ps__rail-y");
-            o_browse.allMetadataScrollbar.settings.suppressScrollY = false;
-        }
-        o_browse.allMetadataScrollbar.update();
-    },
-
-    adjustSelectedMetadataPS: function() {
-        let containerHeight = $(".selectedMetadata").height();
-        let selectedMetadataHeight = $(".selectedMetadata .ui-sortable").height();
-
-        if (containerHeight > selectedMetadataHeight) {
-            if (!$(".selectedMetadata .ps__rail-y").hasClass("hide_ps__rail-y")) {
-                $(".selectedMetadata .ps__rail-y").addClass("hide_ps__rail-y");
-                o_browse.selectedMetadataScrollbar.settings.suppressScrollY = true;
-            }
-        } else {
-            $(".selectedMetadata .ps__rail-y").removeClass("hide_ps__rail-y");
-            o_browse.selectedMetadataScrollbar.settings.suppressScrollY = false;
-        }
-        o_browse.selectedMetadataScrollbar.update();
-    },
-
-    adjustBrowseDialogPS: function() {
-        let containerHeight = $("#galleryViewContents .metadata").height();
-        let browseDialogHeight = $("#op-browse-dialog").height();
-
-        if (containerHeight > browseDialogHeight) {
-            if (!$("#galleryViewContents .metadata .ps__rail-y").hasClass("hide_ps__rail-y")) {
-                $("#galleryViewContents .metadata .ps__rail-y").addClass("hide_ps__rail-y");
-                o_browse.modalScrollbar.settings.suppressScrollY = true;
-            }
-        } else {
-            $("#galleryViewContents .metadata .ps__rail-y").removeClass("hide_ps__rail-y");
-            o_browse.modalScrollbar.settings.suppressScrollY = false;
-        }
-        o_browse.modalScrollbar.update();
     },
 
     renderGalleryAndTable: function(data, url, prev=false) {
@@ -1076,8 +1028,8 @@ var o_browse = {
         // $(".gallery", namespace).append(html);
         // $(".op-page-loading-status").hide();
 
-        o_browse.adjustTableSize();
-        o_browse.galleryScrollbar.update();
+        // o_browse.adjustTableSize();
+        // o_browse.galleryScrollbar.update();
         if ($(".op-page-loading-status > .loader").is(":visible")) {
             $(".op-page-loading-status > .loader").hide();
         }
@@ -1112,7 +1064,7 @@ var o_browse = {
         });
 
         o_browse.initResizableColumn();
-        o_browse.adjustTableSize();
+        // o_browse.adjustTableSize();
     },
 
     initResizableColumn: function() {
@@ -1409,8 +1361,8 @@ var o_browse = {
         }
 
         o_browse.loadData(page);
-        o_browse.adjustBrowseHeight();
-        o_browse.adjustTableSize();
+        // o_browse.adjustBrowseHeight();
+        // o_browse.adjustTableSize();
 
         o_hash.updateHash();
     },
@@ -1428,6 +1380,54 @@ var o_browse = {
         $(".dataTable").width(containerWidth);
         $(".dataTable").height(containerHeight);
         o_browse.tableScrollbar.update();
+    },
+
+    adjustmetadataModalMenu: function() {
+        let containerHeight = $(".allMetadata").height();
+        let menuHeight = $(".allMetadata .searchMenu").height();
+
+        if (containerHeight > menuHeight) {
+            if (!$(".allMetadata .ps__rail-y").hasClass("hide_ps__rail-y")) {
+                $(".allMetadata .ps__rail-y").addClass("hide_ps__rail-y");
+                o_browse.allMetadataScrollbar.settings.suppressScrollY = true;
+            }
+        } else {
+            $(".allMetadata .ps__rail-y").removeClass("hide_ps__rail-y");
+            o_browse.allMetadataScrollbar.settings.suppressScrollY = false;
+        }
+        o_browse.allMetadataScrollbar.update();
+    },
+
+    adjustSelectedMetadataPS: function() {
+        let containerHeight = $(".selectedMetadata").height();
+        let selectedMetadataHeight = $(".selectedMetadata .ui-sortable").height();
+
+        if (containerHeight > selectedMetadataHeight) {
+            if (!$(".selectedMetadata .ps__rail-y").hasClass("hide_ps__rail-y")) {
+                $(".selectedMetadata .ps__rail-y").addClass("hide_ps__rail-y");
+                o_browse.selectedMetadataScrollbar.settings.suppressScrollY = true;
+            }
+        } else {
+            $(".selectedMetadata .ps__rail-y").removeClass("hide_ps__rail-y");
+            o_browse.selectedMetadataScrollbar.settings.suppressScrollY = false;
+        }
+        o_browse.selectedMetadataScrollbar.update();
+    },
+
+    adjustBrowseDialogPS: function() {
+        let containerHeight = $("#galleryViewContents .metadata").height();
+        let browseDialogHeight = $("#op-browse-dialog").height();
+
+        if (containerHeight > browseDialogHeight) {
+            if (!$("#galleryViewContents .metadata .ps__rail-y").hasClass("hide_ps__rail-y")) {
+                $("#galleryViewContents .metadata .ps__rail-y").addClass("hide_ps__rail-y");
+                o_browse.modalScrollbar.settings.suppressScrollY = true;
+            }
+        } else {
+            $("#galleryViewContents .metadata .ps__rail-y").removeClass("hide_ps__rail-y");
+            o_browse.modalScrollbar.settings.suppressScrollY = false;
+        }
+        o_browse.modalScrollbar.update();
     },
 
     cartButtonInfo: function(status) {
