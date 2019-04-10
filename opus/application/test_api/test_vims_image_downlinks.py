@@ -21,12 +21,10 @@ class ApiVimsDownlinksTests(TestCase):
     # disable error logging and trace output before test
     def setUp(self):
         settings.CACHE_KEY_PREFIX = 'opustest:' + settings.DB_SCHEMA_NAME
-    #     sys.tracebacklimit = 0 # default: 1000
         logging.disable(logging.ERROR)
 
-    # # enable error logging and trace output after test
+    # enable error logging and trace output after test
     def tearDown(self):
-    #     sys.tracebacklimit = 1000 # default: 1000
         logging.disable(logging.NOTSET)
 
     ###############################
@@ -129,7 +127,7 @@ class ApiVimsDownlinksTests(TestCase):
                             "covims-full",
                           ]
         # print(test_url)
-        if response.status_code == 200:
+        if response.status_code == 200: # pragma: no cover
             data_object = response.json()["data"]
             # When test db return empty object, we would NOT proceed to count the number of images
             if not data_object and not settings.TEST_GO_LIVE: # pragma: no cover
@@ -153,7 +151,7 @@ class ApiVimsDownlinksTests(TestCase):
                     "covims-full": len(data_object[image_id]["covims-full"]),
                 }
             return image_count
-        else:
+        else: # pragma: no cover
             raise Exception(f"{format}: Error, http status code: {http_status_code}")
 
 

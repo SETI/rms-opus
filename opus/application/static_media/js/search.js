@@ -9,6 +9,7 @@ var o_search = {
     widgetScrollbar: new PerfectScrollbar("#widget-container" , { suppressScrollX: true }),
 
     // for input validation in the search widgets
+    searchTabDrawn: false,
     searchResultsNotEmpty: false,
     searchMsg: "",
     truncatedResults: false,
@@ -43,8 +44,6 @@ var o_search = {
         when user focus out and there is no "change" event
         */
         $("#search").on("focusout", "input.RANGE", function(event) {
-            let slug = $(this).attr("name");
-            let currentValue = $(this).val().trim();
             $(this).removeClass("input_currently_focused");
             if ($(this).hasClass("search_input_invalid")) {
                 $(this).addClass("search_input_invalid_no_focus");
@@ -60,7 +59,6 @@ var o_search = {
 
             let slug = $(this).attr("name");
             let currentValue = $(this).val().trim();
-            let values = []
 
             o_search.lastSlugNormalizeRequestNo++;
             o_search.slugNormalizeReqno[slug] = o_search.lastSlugNormalizeRequestNo;
@@ -84,7 +82,7 @@ var o_search = {
             let url = "/opus/__api/normalizeinput.json?" + newHash + "&reqno=" + o_search.lastSlugNormalizeRequestNo;
             $.getJSON(url, function(data) {
                 // Make sure the return json data is from the latest normalized api call
-                if (data["reqno"] < o_search.slugNormalizeReqno[slug]) {
+                if (data.reqno < o_search.slugNormalizeReqno[slug]) {
                     return;
                 }
 
@@ -118,8 +116,8 @@ var o_search = {
         $("#search").on("change", "input.RANGE", function(event) {
             let slug = $(this).attr("name");
             let currentValue = $(this).val().trim();
-            let values = []
-            values.push(currentValue)
+            let values = [];
+            values.push(currentValue);
             opus.selections[slug] = values;
 
             let newHash = o_hash.updateHash(false);
@@ -151,36 +149,36 @@ var o_search = {
             var values = [];
             if (css_class == 'STRING') {
                 $("#widget__" + slug + ' input.STRING').each(function() {
-                    values[values.length] = $(this).val();
+                    values.push($(this).val());
                 });
                 opus.selections[slug] = values;
             } else {
                 // range query
-                var slug_no_num = slug.match(/(.*)[1|2]/)[1];
+                var slugNoNum = slug.match(/(.*)[1|2]/)[1];
                 // min
                 values = [];
-                $("#widget__" + slug_no_num + '1 input.min', '#search').each(function() {
+                $("#widget__" + slugNoNum + '1 input.min', '#search').each(function() {
                     values[values.length] = $(this).val();
                 });
                 if (values.length == 0) {
-                    $("#widget__" + slug_no_num + ' input.min', '#search').each(function() {
+                    $("#widget__" + slugNoNum + ' input.min', '#search').each(function() {
                         values[values.length] = $(this).val();
                     });
                 }
 
-                opus.selections[slug_no_num + '1'] = values;
+                opus.selections[slugNoNum + '1'] = values;
                 // max
                 values = [];
-                $("#widget__" + slug_no_num + '1 input.max', '#search').each(function() {
+                $("#widget__" + slugNoNum + '1 input.max', '#search').each(function() {
                     values[values.length] = $(this).val();
                 });
                 if (values.length == 0) {
-                    $("#widget__" + slug_no_num + ' input.max', '#search').each(function() {
+                    $("#widget__" + slugNoNum + ' input.max', '#search').each(function() {
                         values[values.length] = $(this).val();
                     });
                 }
 
-                opus.selections[slug_no_num + '2'] = values;
+                opus.selections[slugNoNum + '2'] = values;
             }
 
             if (opus.last_selections && opus.last_selections[slug]) {
@@ -211,9 +209,9 @@ var o_search = {
            var value = $(this).attr("value").replace(/\+/g, '%2B');
 
            if ($(this).is(':checked')) {
-               var values = [];
+               let values = [];
                if (opus.selections[id]) {
-                   var values = opus.selections[id]; // this param already has been constrained
+                   values = opus.selections[id]; // this param already has been constrained
                }
 
                // for surfacegeometry we only want a target selected
@@ -345,7 +343,7 @@ var o_search = {
     parseFinalNormalizedInputDataAndUpdateHash: function(slug, url) {
         $.getJSON(url, function(normalizedInputData) {
             // Make sure it's the final call before parsing normalizedInputData
-            if (normalizedInputData["reqno"] < o_search.slugNormalizeReqno[slug]) {
+            if (normalizedInputData.reqno < o_search.slugNormalizeReqno[slug]) {
                 return;
             }
 
@@ -426,7 +424,7 @@ var o_search = {
 
     getSearchTab: function() {
 
-        if (opus.search_tab_drawn) {
+        if (o_search.searchTabDrawn) {
             // o_search.adjustSearchHeight();
             return;
         }
@@ -453,14 +451,14 @@ var o_search = {
 
         o_widgets.updateWidgetCookies();
 
-        for (key in opus.prefs.widgets) {  // fetch each widget
-            slug = opus.prefs.widgets[key];
+        for (let key in opus.prefs.widgets) {  // fetch each widget
+            let slug = opus.prefs.widgets[key];
             if ($.inArray(slug, opus.widgets_drawn) < 0) {  // only draw if not already drawn
                 o_widgets.getWidget(slug,"#op-search-widgets");
             }
         }
 
-        opus.search_tab_drawn = true;
+        o_search.searchTabDrawn = true;
 
         // o_search.adjustSearchHeight();
     },

@@ -17,7 +17,6 @@ class ApiMetadataTests(TestCase, ApiTestHelper):
 
     def setUp(self):
         self.maxDiff = None
-        sys.tracebacklimit = 0 # default: 1000
         settings.CACHE_KEY_PREFIX = 'opustest:' + settings.DB_SCHEMA_NAME
         logging.disable(logging.ERROR)
         if settings.TEST_GO_LIVE: # pragma: no cover
@@ -27,7 +26,6 @@ class ApiMetadataTests(TestCase, ApiTestHelper):
         cache.clear()
 
     def tearDown(self):
-        sys.tracebacklimit = 1000 # default: 1000
         logging.disable(logging.NOTSET)
 
     def _run_result_count_equal(self, url, expected, expected_reqno=None):
@@ -337,12 +335,6 @@ class ApiMetadataTests(TestCase, ApiTestHelper):
         "[test_metadata_api.py] /api/meta/meta/mults: for COISS_2111 target Dione targetclass 2"
         url = '/opus/api/meta/mults/targetclass.json?volumeid=COISS_2111&targetclass=Regular+Satellite&target=Dione'
         expected = {"field": "targetclass", "mults": {}}
-        self._run_json_equal(url, expected)
-
-    def test__api_meta_mults_COISS_2111_daphnis(self):
-        "[test_metadata_api.py] /api/meta/meta/mults: for COISS_2111 target Daphnis targetclass"
-        url = '/opus/api/meta/mults/targetclass.json?volumeid=COISS_2111&targetclass=Regular+Satellite&target=Daphnis'
-        expected = {"field": "targetclass", "mults": {"Regular Satellite": 4}}
         self._run_json_equal(url, expected)
 
     def test__api_meta_mults_COISS_2111_daphnis(self):

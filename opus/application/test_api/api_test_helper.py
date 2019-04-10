@@ -9,9 +9,10 @@ _RESPONSES_FILE_ROOT = 'test_api/responses/'
 
 class ApiTestHelper:
     def _get_response(self, url):
-        if not settings.TEST_GO_LIVE or settings.TEST_GO_LIVE == "production":
+        if (not settings.TEST_GO_LIVE or
+            settings.TEST_GO_LIVE == "production"): # pragma: no cover
             url = "https://tools.pds-rings.seti.org" + url
-        else:
+        else: # pragma: no cover
             url = "http://dev.pds-rings.seti.org" + url
         return self.client.get(url)
 
@@ -33,7 +34,7 @@ class ApiTestHelper:
             for key in data:
                 ApiTestHelper._depth_first_remove(data[key], ignore_list)
         if isinstance(data, list):
-            for ignore in ignore_list:
+            for ignore in ignore_list: # pragma: no cover
                 while ignore in data:
                     data.remove(ignore)
             for el in data:

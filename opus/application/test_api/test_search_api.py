@@ -17,7 +17,6 @@ class ApiSearchTests(TestCase, ApiTestHelper):
 
     def setUp(self):
         self.maxDiff = None
-        sys.tracebacklimit = 0 # default: 1000
         settings.CACHE_KEY_PREFIX = 'opustest:' + settings.DB_SCHEMA_NAME
         logging.disable(logging.ERROR)
         self.search_count_threshold = settings.STRINGCHOICE_FULL_SEARCH_COUNT_THRESHOLD
@@ -31,9 +30,8 @@ class ApiSearchTests(TestCase, ApiTestHelper):
         else:
             self.client = RequestsClient()
         cache.clear()
-        
+
     def tearDown(self):
-        sys.tracebacklimit = 1000 # default: 1000
         logging.disable(logging.NOTSET)
         settings.STRINGCHOICE_FULL_SEARCH_COUNT_THRESHOLD = self.search_count_threshold
         settings.STRINGCHOICE_FULL_SEARCH_TIME_THRESHOLD = self.search_time_threshold
@@ -358,22 +356,22 @@ class ApiSearchTests(TestCase, ApiTestHelper):
 
     def test__api_stringsearchchoices_bad_limit(self):
         "[test_search_api.py] /api/stringsearchchoices: bad limit"
-        url = '/opus/__api/stringsearchchoices/volumeid.json&limit=0A&reqno=123'
+        url = '/opus/__api/stringsearchchoices/volumeid.json?limit=0A&reqno=123'
         self._run_status_equal(url, 404)
 
     def test__api_stringsearchchoices_bad_limit_val_n1(self):
         "[test_search_api.py] /api/stringsearchchoices: bad limit -1"
-        url = '/opus/__api/stringsearchchoices/volumeid.json&limit=-1&reqno=123'
+        url = '/opus/__api/stringsearchchoices/volumeid.json?limit=-1&reqno=123'
         self._run_status_equal(url, 404)
 
     def test__api_stringsearchchoices_bad_limit_val_0(self):
         "[test_search_api.py] /api/stringsearchchoices: bad limit 0"
-        url = '/opus/__api/stringsearchchoices/volumeid.json&limit=0&reqno=123'
+        url = '/opus/__api/stringsearchchoices/volumeid.json?limit=0&reqno=123'
         self._run_status_equal(url, 404)
 
     def test__api_stringsearchchoices_bad_limit_val_1000000000001(self):
         "[test_search_api.py] /api/stringsearchchoices: bad limit 1000000000001"
-        url = '/opus/__api/stringsearchchoices/volumeid.json&limit=1000000000001&reqno=123'
+        url = '/opus/__api/stringsearchchoices/volumeid.json?limit=1000000000001&reqno=123'
         self._run_status_equal(url, 404)
 
     def test__api_stringsearchchoices_bad_search(self):

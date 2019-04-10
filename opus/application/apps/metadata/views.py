@@ -87,40 +87,10 @@ def api_get_result_count(request, fmt, internal=False):
         exit_api_call(api_code, ret)
         raise ret
 
-    (selections, extras) = url_to_search_params(request.GET)
-    if selections is None:
-        log.error('api_get_result_count: Could not find selections for '
-                  +'request %s', str(request.GET))
-        ret = Http404(settings.HTTP404_SEARCH_PARAMS_INVALID)
-        exit_api_call(api_code, ret)
-        raise ret
-
-    table = get_user_query_table(selections, extras, api_code=api_code)
-
-    if not table: # pragma: no cover
-        log.error('api_get_result_count: Could not find/create query table for '
-                  +'request %s', str(request.GET))
-        ret = HttpResponseServerError(settings.HTTP500_SEARCH_FAILED)
-        exit_api_call(api_code, ret)
-        return ret
-
-    cache_key = settings.CACHE_KEY_PREFIX + ':resultcount:' + table
-    count = cache.get(cache_key)
-    if count is None:
-        cursor = connection.cursor()
-        sql = 'SELECT COUNT(*) FROM ' + connection.ops.quote_name(table)
-        cursor.execute(sql)
-        try:
-            count = cursor.fetchone()[0]
-        except DatabaseError as e: # pragma: no cover
-            log.error('api_get_result_count: SQL query failed for request %s: '
-                      +' SQL "%s" ERR "%s"',
-                      str(request.GET), sql, str(e))
-            ret = HttpResponseServerError(settings.HTTP500_SQL_FAILED)
-            exit_api_call(api_code, ret)
-            return ret
-
-        cache.set(cache_key, count)
+    count, _, err = get_result_count_helper(request, api_code)
+    if err is not None: # pragma: no cover
+        exit_api_call(api_code, err)
+        return err
 
     data = {'result_count': count}
     if internal:
@@ -583,6 +553,45 @@ def api_get_fields(request, fmt='json', slug=None):
 # SUPPORT ROUTINES
 #
 ################################################################################
+
+# This routine is public because it's called by _edit_cart_addall
+# in cart/views.py
+def get_result_count_helper(request, api_code):
+    (selections, extras) = url_to_search_params(request.GET)
+    if selections is None:
+        log.error('get_result_count_helper: Could not find selections for '
+                  +'request %s', str(request.GET))
+        ret = Http404(settings.HTTP404_SEARCH_PARAMS_INVALID)
+        exit_api_call(api_code, ret)
+        raise ret
+
+    table = get_user_query_table(selections, extras, api_code=api_code)
+
+    if not table: # pragma: no cover
+        log.error('get_result_count_helper: Could not find/create query table '
+                  +'for request %s', str(request.GET))
+        ret = HttpResponseServerError(settings.HTTP500_SEARCH_FAILED)
+        return None, None, ret
+
+    cache_key = settings.CACHE_KEY_PREFIX + ':resultcount:' + table
+    count = cache.get(cache_key)
+    if count is None:
+        cursor = connection.cursor()
+        sql = 'SELECT COUNT(*) FROM ' + connection.ops.quote_name(table)
+        cursor.execute(sql)
+        try:
+            count = cursor.fetchone()[0]
+        except DatabaseError as e: # pragma: no cover
+            log.error('get_result_count_helper: SQL query failed for request '
+                      +'%s: SQL "%s" ERR "%s"',
+                      str(request.GET), sql, str(e))
+            ret = HttpResponseServerError(settings.HTTP500_SQL_FAILED)
+            return None, None, ret
+
+        cache.set(cache_key, count)
+
+    return count, table, None
+
 
 # This routine is public because it's called by the API guide in guide/views.py
 def get_fields_info(fmt, slug=None, collapse=False):

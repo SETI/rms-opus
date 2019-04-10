@@ -50,12 +50,13 @@
                         <a class="nav-link dropdown-toggle my-0" href="#" id="op-help-menu" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                             <i class="fas fa-question-circle"></i> Help
                         </a>
-                        <div class="dropdown-menu" aria-labelledby="op-help-menu">
+                        <div class="dropdown-menu dropdown-menu-right" aria-labelledby="op-help-menu">
                             <a class="dropdown-item op-help-item" data-action="about" href="#">About</a>
                             <a class="dropdown-item op-help-item" data-action="datasets" href="#">Datasets</a>
                             <a class="dropdown-item op-help-item" data-action="faq" href="#">FAQ</a>
                             <a class="dropdown-item op-help-item" data-action="guide" href="#">API Guide</a>
                             <a class="dropdown-item op-help-item" data-action="tutorial" href="#">Tutorial</a>
+                            <!--a class="dropdown-item op-help-item" data-action="feedback" href="#">Questions/Feedback</a-->
                        </div>
                    </li>
                 </ul>
@@ -100,18 +101,13 @@
                                     <a href="#" class="metadataModal nav-link" data-toggle="modal" data-target="#metadataSelector" title="Select metadata to display or include in CSV files for each observation"><i class="fas fa-columns"></i>&nbsp;Select Metadata</a>
                                 </li>
                                 <li class="nav-item">
-                                    <a href="#" class="paging_indicator nav-link">
-                                        page <input size="4" id="page" type="number">
-                                        <span class = "text-nowrap">of <span id="pages"></span></span>
-                                    </a>
-                                </li>
-                                <li class="nav-item">
                                     <a href="#" class="download_csv nav-link" title="Download CSV of selected metadata for ALL observations in current results"><i class="fas fa-download"></i>&nbsp;Download CSV (all results)</a>
                                 </li>
                                 <li class="nav-item">
-                                    <div id="observation-slider">
-										<div class="ui-slider-handle"></div>
-									</div>
+                                    <span class="op-observation-text mr-2">Observation #</span>
+                                    <div id="op-observation-slider">
+                                        <div class="ui-slider-handle op-slider-pointer"><div id="op-observation-number"></div></div>
+                                    </div>
                                 </li>
                             </ul>
                         </div>
@@ -123,7 +119,7 @@
                         </div>
                     </nav>
                     <div class="panel-body gallery-contents container-fluid browse-infiniteScroll-element">
-                        <div id="op-gallery-view" class="row justify-content-center">
+                        <div id="op-gallery-view" class="row justify-content-start op-height-0">
                             <div class="mr-0 thumb gallery gallery-scroll"></div>
                             <div class="page-load-status">
                                 <div class="infinite-scroll-request loader-ellips">
@@ -220,11 +216,11 @@
             <a class="dropdown-item cart-item" data-action="cart" href="#"><i class="fas fa-shopping-cart"></i>Add to cart</a>
             <a class="dropdown-item" data-action="range" href="#"><i class="fas fa-step-backward"></i>Range selection</a>
             <a class="dropdown-item" data-action="info" href="#"><i class="fas fa-info-circle"></i>Show detail</a>
-            <a class="dropdown-item" data-action="downloadCSV" href="#" target="__blank"><i class="fas fa-file-csv"></i>Download CSV of selected metadata&nbsp;<span class="spinner">&nbsp;</span></a>
-            <a class="dropdown-item" data-action="downloadCSVAll" href="#" target="__blank"><i class="fas fa-file-csv"></i>Download CSV of all metadata&nbsp;<span class="spinner">&nbsp;</span></a>
-            <a class="dropdown-item" data-action="downloadData" href="#" target="__blank"><i class="fas fa-download"></i>Download zipped data archive&nbsp;<span class="spinner">&nbsp;</span></a>
-            <a class="dropdown-item" data-action="downloadURL" href="#" target="__blank"><i class="fas fa-download"></i>Download zipped URL archive&nbsp;<span class="spinner">&nbsp;</span></a>
-            <a class="dropdown-item" data-action="help" href="#"><i class="far fa-question-circle"></i>Help</a>
+            <a class="dropdown-item" data-action="downloadCSV" href="#" target="__blank"><i class="fas fa-file-csv"></i>Download CSV of selected metadata&nbsp;</a>
+            <a class="dropdown-item" data-action="downloadCSVAll" href="#" target="__blank"><i class="fas fa-file-csv"></i>Download CSV of all metadata&nbsp;</a>
+            <a class="dropdown-item" data-action="downloadData" href="#" target="__blank"><i class="fas fa-download"></i>Download zipped data archive&nbsp;</a>
+            <a class="dropdown-item" data-action="downloadURL" href="#" target="__blank"><i class="fas fa-download"></i>Download zipped URL archive&nbsp;</a>
+            <!--a class="dropdown-item" data-action="help" href="#"><i class="far fa-question-circle"></i>Help</a-->
         </div>
 
         <!--sliding panel for the help menu items -->

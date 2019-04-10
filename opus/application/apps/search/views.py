@@ -162,7 +162,7 @@ def api_string_search_choices(request, slug):
     qtypes = {}
     query_qtype_list = []
     query_qtype = 'contains'
-    if 'qtypes' in extras:
+    if 'qtypes' in extras: # pragma: no cover
         qtypes = extras['qtypes']
     if param_qualified_name in qtypes:
         query_qtype_list = qtypes[param_qualified_name]
