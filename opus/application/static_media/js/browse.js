@@ -501,7 +501,9 @@ var o_browse = {
     updateSliderHandle: function() {
         let selector = (opus.prefs.browse === "dataTable") ? `#${opus.prefs.view} #dataTable tbody tr` : `#${opus.prefs.view} .gallery .thumbnail-container`;
         $(selector).each(function(index, elem) {
-            if ($(elem).offset().top >= $(".gallery-scroll").offset().top) {
+            // compare the image .top + its height in order to make sure we account for partial images
+            let topBox = $(elem).offset().top + $(elem).height();
+            if (topBox >= $(".gallery-contents").offset().top) {
                 let obsNum = $(elem).data("obs");
                 $("#op-observation-number").html(obsNum);
                 $(".op-slider-pointer").css("width", `${opus.resultCount.toString().length*0.7}em`);
@@ -532,16 +534,8 @@ var o_browse = {
                 }
                 $(`#${opus.prefs.view} .gallery-contents`).infiniteScroll("loadNextPage");
             }
-        } else {
-            $(".gallery .thumb-page").each(function(index, elem) {
-                let position = $(elem).children().offset();
-                if (position) {
-                    if (position.top > 0 && (position.top < $(".gallery-contents").height()-100)) {
-                        return false;
-                    }
-                }
-            });
         }
+
         o_browse.updateSliderHandle();
         return false;
     },
@@ -855,11 +849,6 @@ var o_browse = {
         }).join('&');
 
         url += `&${obsStr}=${startobs}`;
-        // for now, only update the slider for the browse page
-        if (opus.prefs.view == "browse") {
-            $("#op-observation-slider").slider("value", startobs);
-            $("#op-observation-number").html(startobs);
-        }
         return url;
     },
 
@@ -1121,6 +1110,7 @@ var o_browse = {
 
     loadData: function(startObs) {
         let viewInfo = o_browse.getViewInfo();
+        console.log("loadData");
 
         startObs = (startObs === undefined ? opus.prefs[`${viewInfo.prefix}startobs`] : startObs);
 
@@ -1148,6 +1138,7 @@ var o_browse = {
 
         // metadata; used for both table and gallery
         $.getJSON(url, function(data) {
+            console.log("loadData - return from getJSON");
             if (data.reqno < o_browse.lastLoadDataRequestNo) {
                 // make sure to remove spinner before return
                 $(".op-page-loading-status > .loader").hide();
