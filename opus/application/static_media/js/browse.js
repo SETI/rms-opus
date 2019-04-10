@@ -549,7 +549,7 @@ var o_browse = {
         o_browse.checkIfLoadPrevPageIsNeeded(opusId);
         o_browse.updateGalleryView(opusId);
         $("#galleryView").modal("show");
-        o_browse.modalScrollbar.update();
+        // o_browse.modalScrollbar.update();
     },
 
     hideMenu: function() {
@@ -935,7 +935,7 @@ var o_browse = {
         o_browse.allMetadataScrollbar.update();
     },
 
-    adjustSelectedMetadata: function() {
+    adjustSelectedMetadataPS: function() {
         let containerHeight = $(".selectedMetadata").height();
         let selectedMetadataHeight = $(".selectedMetadata .ui-sortable").height();
 
@@ -949,6 +949,22 @@ var o_browse = {
             o_browse.selectedMetadataScrollbar.settings.suppressScrollY = false;
         }
         o_browse.selectedMetadataScrollbar.update();
+    },
+
+    adjustBrowseDialogPS: function() {
+        let containerHeight = $("#galleryViewContents .metadata").height();
+        let browseDialogHeight = $("#op-browse-dialog").height();
+
+        if (containerHeight > browseDialogHeight) {
+            if (!$("#galleryViewContents .metadata .ps__rail-y").hasClass("hide_ps__rail-y")) {
+                $("#galleryViewContents .metadata .ps__rail-y").addClass("hide_ps__rail-y");
+                o_browse.modalScrollbar.settings.suppressScrollY = true;
+            }
+        } else {
+            $("#galleryViewContents .metadata .ps__rail-y").removeClass("hide_ps__rail-y");
+            o_browse.modalScrollbar.settings.suppressScrollY = false;
+        }
+        o_browse.modalScrollbar.update();
     },
 
     renderGalleryAndTable: function(data, url, prev=false) {
@@ -1499,7 +1515,7 @@ var o_browse = {
     updateMetaGalleryView: function(opusId, imageURL) {
         $("#galleryViewContents .left").html(`<a href='${imageURL}' target='_blank'><img src='${imageURL}' title='${opusId}' class='preview'/></a>`);
         o_browse.metadataboxHtml(opusId);
-        o_browse.modalScrollbar.update();
+        // o_browse.modalScrollbar.update();
     },
 
     resetData: function() {

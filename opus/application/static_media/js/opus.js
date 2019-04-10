@@ -435,7 +435,7 @@ var opus = {
             subtree: true,
         };
 
-        let adjustSearchSideBarHeight = _.debounce(o_search.adjustSearchSideBarHeight, 200); 
+        let adjustSearchSideBarHeight = _.debounce(o_search.adjustSearchSideBarHeight, 200);
         let adjustSearchWidgetHeight = _.debounce(o_search.adjustSearchHeight, 200);
         let adjustSearchHeight = _.debounce(o_search.adjustSearchHeight, 200);
         let adjustBrowseHeight = _.debounce(o_browse.adjustBrowseHeight, 200);
@@ -443,7 +443,8 @@ var opus = {
         let adjustProductInfoHeight = _.debounce(o_cart.adjustProductInfoHeight, 200);
         let adjustHelpPanelHeight = _.debounce(opus.adjustHelpPanelHeight, 200);
         let adjustmetadataModalMenu = _.debounce(o_browse.adjustmetadataModalMenu, 200);
-        let adjustSelectedMetadata = _.debounce(o_browse.adjustSelectedMetadata, 200);
+        let adjustSelectedMetadataPS = _.debounce(o_browse.adjustSelectedMetadataPS, 200);
+        let adjustBrowseDialogPS = _.debounce(o_browse.adjustBrowseDialogPS, 200);
 
         // Init MutationObserver with a callback function. Callback will be called when changes are detected.
         let adjustAllPSObserver = new MutationObserver(function(mutationsList) {
@@ -529,7 +530,7 @@ var opus = {
             mutationsList.forEach((mutation, idx) => {
                 // console.log(mutation);
                 adjustmetadataModalMenu();
-                adjustSelectedMetadata();
+                adjustSelectedMetadataPS();
             });
         });
 
@@ -548,14 +549,23 @@ var opus = {
         let selectedMetadataObserver =  new MutationObserver(function(mutationsList) {
             let lastMutationIdx = mutationsList.length - 1;
             mutationsList.forEach((mutation, idx) => {
-                console.log(mutation);
+                // console.log(mutation);
                 if (idx === lastMutationIdx) {
                     if (mutation.target.classList.value.match(/ui-sortable/)) {
-                        adjustSelectedMetadata();
+                        adjustSelectedMetadataPS();
                     }
                 }
             });
         });
+
+        // ps in browse dialog
+        let browseDialogObserver =  new MutationObserver(function(mutationsList) {
+            mutationsList.forEach((mutation, idx) => {
+                console.log(mutation);
+                adjustBrowseDialogPS();
+            });
+        });
+
 
         // target node: target element that MutationObserver is observing, need to be a node (need to use regular js)
         let searchTab = document.getElementById("search");
@@ -567,6 +577,8 @@ var opus = {
         let helpPanel = document.getElementById("op-help-panel");
         let metadataSelector = document.getElementById("metadataSelector");
         let metadataSelectorContents = document.getElementById("metadataSelectorContents");
+        let browseDialogModal = document.getElementById("galleryView");
+        let browseDailogContents = document.getElementById("op-browse-dialog");
 
         // Note:
         // The reason of observing sidebar and widdget content element (ps sibling) in search page instead of observing the whole page (html structure) is because:
@@ -592,6 +604,10 @@ var opus = {
         metadataSelectorMenuObserver.observe(metadataSelectorContents, attrObserverConfig);
         // update ps when selected metadata are added/removed
         selectedMetadataObserver.observe(metadataSelectorContents, childListObserverConfig);
+        // update ps when browse dialog open/close
+        browseDialogObserver.observe(browseDialogModal, {attributes: true});
+        // update ps when contents in dialog is added/removed
+        browseDialogObserver.observe(browseDailogContents, childListObserverConfig);
 
 
     },
