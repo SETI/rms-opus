@@ -447,13 +447,12 @@ var opus = {
         let adjustBrowseDialogPS = _.debounce(o_browse.adjustBrowseDialogPS, 200);
 
         // Init MutationObserver with a callback function. Callback will be called when changes are detected.
-        let adjustAllPSObserver = new MutationObserver(function(mutationsList) {
+        let switchTabObserver = new MutationObserver(function(mutationsList) {
             // this is for switch from other tabs to target page
             adjustSearchHeight();
             adjustBrowseHeight();
             adjustTableSize();
             adjustProductInfoHeight();
-            adjustHelpPanelHeight();
         });
 
         // ps in search sidebar
@@ -613,9 +612,9 @@ var opus = {
         By observing each content element (ps silbling), ps update will not trigger callback function since ps element is not a child element of target node (content element), and this will prevent that non-stop call of callback function. */
         // Watch for changes:
         // update ps when switching tabs
-        adjustAllPSObserver.observe(searchTab, switchTabObserverConfig);
-        adjustAllPSObserver.observe(browseTab, switchTabObserverConfig);
-        adjustAllPSObserver.observe(cartTab, switchTabObserverConfig);
+        switchTabObserver.observe(searchTab, switchTabObserverConfig);
+        switchTabObserver.observe(browseTab, switchTabObserverConfig);
+        switchTabObserver.observe(cartTab, switchTabObserverConfig);
         // update ps in search page
         searchSidebarObserver.observe(searchSidebar, generalObserverConfig);
         searchWidgetObserver.observe(searchWidget, generalObserverConfig);
