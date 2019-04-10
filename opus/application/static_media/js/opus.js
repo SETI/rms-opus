@@ -566,7 +566,6 @@ var opus = {
             mutationsList.forEach((mutation, idx) => {
                 // console.log(mutation);
                 if (idx === lastMutationIdx) {
-                    console.log("update at the last mutation");
                     adjustTableSize();
                 }
             });
