@@ -470,7 +470,7 @@ var opus = {
         });
 
         // ps in search widgets
-        let searchWidgetObserver =  new MutationObserver(function(mutationsList) {
+        let searchWidgetObserver = new MutationObserver(function(mutationsList) {
             let lastMutationIdx = mutationsList.length - 1;
             mutationsList.forEach((mutation, idx) => {
                 // console.log(mutation);
@@ -496,7 +496,7 @@ var opus = {
         });
 
         // ps in cart page
-        let cartObserver =  new MutationObserver(function(mutationsList) {
+        let cartObserver = new MutationObserver(function(mutationsList) {
             mutationsList.forEach((mutation, idx) => {
                 // console.log(mutation);
                 // in cart page, we only need to detect element change. We don't need to worry about attribute change (no expanding/collapsing event).
@@ -505,7 +505,7 @@ var opus = {
         });
 
         // ps in help page
-        let helpPanelObserver =  new MutationObserver(function(mutationsList) {
+        let helpPanelObserver = new MutationObserver(function(mutationsList) {
             mutationsList.forEach((mutation, idx) => {
                 // console.log(mutation);
                 //ignore attribute change in ps to avoid infinite loop of callback function caused by ps update
@@ -516,7 +516,7 @@ var opus = {
         });
 
         // ps in select metadata modal
-        let metadataSelectorObserver =  new MutationObserver(function(mutationsList) {
+        let metadataSelectorObserver = new MutationObserver(function(mutationsList) {
             mutationsList.forEach((mutation, idx) => {
                 // console.log(mutation);
                 adjustmetadataModalMenu();
@@ -524,7 +524,7 @@ var opus = {
             });
         });
 
-        let metadataSelectorMenuObserver =  new MutationObserver(function(mutationsList) {
+        let metadataSelectorMenuObserver = new MutationObserver(function(mutationsList) {
             let lastMutationIdx = mutationsList.length - 1;
             mutationsList.forEach((mutation, idx) => {
                 // console.log(mutation);
@@ -536,7 +536,7 @@ var opus = {
             });
         });
 
-        let selectedMetadataObserver =  new MutationObserver(function(mutationsList) {
+        let selectedMetadataObserver = new MutationObserver(function(mutationsList) {
             let lastMutationIdx = mutationsList.length - 1;
             mutationsList.forEach((mutation, idx) => {
                 // console.log(mutation);
@@ -549,7 +549,7 @@ var opus = {
         });
 
         // ps in browse dialog
-        let browseDialogObserver =  new MutationObserver(function(mutationsList) {
+        let browseDialogObserver = new MutationObserver(function(mutationsList) {
             mutationsList.forEach((mutation, idx) => {
                 // console.log(mutation);
                 // only one mutation detected when we click thumbnail
@@ -558,7 +558,7 @@ var opus = {
         });
 
         // ps in gallery view
-        let galleryViewObserver =  new MutationObserver(function(mutationsList) {
+        let galleryViewObserver = new MutationObserver(function(mutationsList) {
             let lastMutationIdx = mutationsList.length - 1;
             mutationsList.forEach((mutation, idx) => {
                 // console.log(mutation);
@@ -569,7 +569,7 @@ var opus = {
         });
 
         // ps in table view
-        let tableViewObserver =  new MutationObserver(function(mutationsList) {
+        let tableViewObserver = new MutationObserver(function(mutationsList) {
             let lastMutationIdx = mutationsList.length - 1;
             mutationsList.forEach((mutation, idx) => {
                 // console.log(mutation);
