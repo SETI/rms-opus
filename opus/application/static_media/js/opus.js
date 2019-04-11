@@ -138,6 +138,12 @@ var opus = {
         // start the result count spinner and do the yellow flash
         $("#op-result-count").html(opus.spinner).parent().effect("highlight", {}, 500);
         $("#op-observation-number").html(opus.spinner).effect("highlight", {}, 500);
+
+        // start op-menu-text and op-search-widgets spinner
+        // this is to trigger these two spinners right away when result count spinner is running
+        $(".op-menu-text.spinner").addClass("op-show-spinner");
+        $("#op-search-widgets .spinner").fadeIn();
+
         // move this above allNormalizedApiCall to avoid recursive api call
         opus.last_selections = selections;
 
