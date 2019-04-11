@@ -231,11 +231,14 @@ var o_cart = {
                         $(".zippedFiles", "#cart").html(zippedFiles_html);
                     }
 
-                    o_cart.downloadOptionsScrollbar = new PerfectScrollbar("#download-options-container");
+                    o_cart.downloadOptionsScrollbar = new PerfectScrollbar("#download-options-container", {
+                        minScrollbarLength: 30
+                    });
 
                     if (!o_cart.cartGalleryScrollbar) {
                         o_cart.cartGalleryScrollbar = new PerfectScrollbar("#cart .gallery-contents", {
                             suppressScrollX: true,
+                            minScrollbarLength: 30
                         });
                     }
                     // let adjustProductInfoHeight = _.debounce(o_cart.adjustProductInfoHeight, 200);

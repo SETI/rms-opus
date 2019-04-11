@@ -2,9 +2,16 @@ var o_browse = {
     selectedImageID: "",
     keyPressAction: "",
     tableSorting: false,
-    tableScrollbar: new PerfectScrollbar(".dataTable", { minScrollbarLength: 30 }),
-    galleryScrollbar: new PerfectScrollbar(".gallery-contents", { suppressScrollX: true }),
-    modalScrollbar: new PerfectScrollbar("#galleryViewContents .metadata"),
+    tableScrollbar: new PerfectScrollbar(".dataTable", {
+        minScrollbarLength: 30
+    }),
+    galleryScrollbar: new PerfectScrollbar(".gallery-contents", {
+        suppressScrollX: true,
+        minScrollbarLength: 30
+    }),
+    modalScrollbar: new PerfectScrollbar("#galleryViewContents .metadata", {
+        minScrollbarLength: 30
+    }),
 
     // if the user entered a number/slider for page/obs number,
     // selector to set scrolltop to after data has been loaded
@@ -939,8 +946,12 @@ var o_browse = {
 
                 o_browse.addMetadataSelectorBehaviors();
 
-                o_browse.allMetadataScrollbar = new PerfectScrollbar("#metadataSelectorContents .allMetadata");
-                o_browse.selectedMetadataScrollbar = new PerfectScrollbar("#metadataSelectorContents .selectedMetadata");
+                o_browse.allMetadataScrollbar = new PerfectScrollbar("#metadataSelectorContents .allMetadata", {
+                    minScrollbarLength: 30
+                });
+                o_browse.selectedMetadataScrollbar = new PerfectScrollbar("#metadataSelectorContents .selectedMetadata", {
+                    minScrollbarLength: 30
+                });
 
                 // dragging to reorder the chosen
                 $( ".selectedMetadata > ul").sortable({

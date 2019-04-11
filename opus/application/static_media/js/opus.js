@@ -732,7 +732,10 @@ $(document).ready(function() {
         $("#op-help-panel .loader").show();
         // We only need one perfectScrollbar
         if (!opus.helpScrollbar) {
-            opus.helpScrollbar = new PerfectScrollbar("#op-help-panel .card-body", { suppressScrollX: true });
+            opus.helpScrollbar = new PerfectScrollbar("#op-help-panel .card-body", {
+                suppressScrollX: true,
+                minScrollbarLength: 30
+            });
         }
         // adjustHelpPanelHeight();
         $("#op-help-panel").toggle("slide", {direction:'right'}, function() {

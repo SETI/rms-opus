@@ -91,7 +91,9 @@ var o_detail = {
     }, // / getDetail
 
     initAndUpdatePerfectScrollbar: function() {
-        o_detail.detailPageScrollbar = new PerfectScrollbar(".detail-metadata");
+        o_detail.detailPageScrollbar = new PerfectScrollbar(".detail-metadata", {
+            minScrollbarLength: 30
+        });
         o_detail.detailPageScrollbar.update();
     },
 

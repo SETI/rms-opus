@@ -5,8 +5,14 @@ var o_search = {
      *  Everything that appears on the search tab
      *
      **/
-    searchScrollbar: new PerfectScrollbar("#sidebar-container", { suppressScrollX: true }),
-    widgetScrollbar: new PerfectScrollbar("#widget-container" , { suppressScrollX: true }),
+    searchScrollbar: new PerfectScrollbar("#sidebar-container", {
+        suppressScrollX: true,
+        minScrollbarLength: 30
+    }),
+    widgetScrollbar: new PerfectScrollbar("#widget-container" , {
+        suppressScrollX: true,
+        minScrollbarLength: 30
+    }),
 
     // for input validation in the search widgets
     searchTabDrawn: false,
