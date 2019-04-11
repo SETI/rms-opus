@@ -729,7 +729,10 @@ var o_browse = {
             o_browse.selectedMetadataScrollbar.update();
         });
 
+        var metadataClicked = false;
         $('#metadataSelector .allMetadata').on("click", '.submenu li a', function() {
+            // prevent multiple clicks before fadein/fadout complete
+            if (metadataClicked) return;
 
             let slug = $(this).data('slug');
             if (!slug) { return; }
@@ -740,8 +743,11 @@ var o_browse = {
             let def = $(this).find('i.fa-info-circle').attr("title");
             let selectedMetadata = $(this).find("i.fa-check");
 
+            metadataClicked = true;
             if (!selectedMetadata.is(":visible")) {
-                selectedMetadata.fadeIn().css("display", "inline-block");
+                selectedMetadata.fadeIn(function() {
+                    metadataClicked = false;
+                }).css("display", "inline-block");
                 if ($.inArray(slug, opus.prefs.cols ) < 0) {
                     // this slug was previously unselected, add to cols
                     $(`<li id = "cchoose__${slug}">${label}<span class="info">&nbsp;<i class = "fas fa-info-circle" title = "${def}"></i>&nbsp;&nbsp;&nbsp;</span><span class="unselect"><i class="far fa-trash-alt"></span></li>`).hide().appendTo(".selectedMetadata > ul").fadeIn();
@@ -755,6 +761,7 @@ var o_browse = {
                     opus.prefs.cols.splice($.inArray(slug,opus.prefs.cols),1);
                     $(`#cchoose__${slug}`).fadeOut(function() {
                         $(`#cchoose__${slug}`).remove();
+                        metadataClicked = false;
                     });
                 }
             }
