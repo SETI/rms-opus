@@ -471,6 +471,10 @@ def url_to_search_params(request_get, allow_errors=False, return_slugs=False,
             return None, None
 
         param_qualified_name = param_info.param_qualified_name()
+        if param_qualified_name == 'obs_pds.opus_id':
+            # Force OPUS_ID to be searched from obs_general for efficiency
+            # even though the user sees it in PDS Constraints.
+            param_qualified_name = 'obs_general.opus_id'
         (form_type, form_type_func,
          form_type_format) = parse_form_type(param_info.form_type)
 
@@ -1442,7 +1446,11 @@ def parse_order_slug(all_order):
             log.error('parse_order_slug: Unable to resolve order '
                       +'slug "%s"', order)
             return None, None
-        order_params.append(param_info.param_qualified_name())
+        order_param = param_info.param_qualified_name()
+        if order_param == 'obs_pds.opus_id':
+            # Force opus_id to be from obs_general for efficiency
+            order_param = 'obs_general.opus_id'
+        order_params.append(order_param)
         order_descending_params.append(descending)
 
     return order_params, order_descending_params
@@ -1458,7 +1466,7 @@ def create_order_by_sql(order_params, descending_params):
             order_slug = order_params[i]
             pi = _get_param_info_by_qualified_name(order_slug)
             if not pi:
-                log.error('construct_query_string: Unable to resolve order'
+                log.error('create_order_by_sql: Unable to resolve order'
                           +' slug "%s"', order_slug)
                 return None, None, None
             (form_type, form_type_func,
