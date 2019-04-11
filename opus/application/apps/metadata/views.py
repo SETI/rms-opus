@@ -609,8 +609,10 @@ def get_fields_info(fmt, slug=None, collapse=False):
         # surface geometry down to a single target version to save screen
         # space. This is a horrible hack, but for right now we just assume
         # there will always be surface geometry data for Saturn.
-        return_obj = OrderedDict()
+        return_obj = {}
         for f in fields:
+            if not f.slug:
+                continue
             if (collapse and
                 f.slug.startswith('SURFACEGEO') and
                 not f.slug.startswith('SURFACEGEOsaturn')):
@@ -620,6 +622,8 @@ def get_fields_info(fmt, slug=None, collapse=False):
                 continue
             entry = OrderedDict()
             table_name = TableNames.objects.get(table_name=f.category_name)
+            entry['table_order'] = table_name.disp_order
+            entry['disp_order'] = f.disp_order
             entry['label'] = f.label_results
             entry['search_label'] = f.label
             entry['full_label'] = f.body_qualified_label_results()
@@ -638,6 +642,14 @@ def get_fields_info(fmt, slug=None, collapse=False):
             else:
                 entry['old_slug'] = f.old_slug
             return_obj[collapsed_slug] = entry
+
+        return_obj = OrderedDict(sorted(return_obj.items(),
+                                        key=lambda x: (x[1]['table_order'],
+                                                       x[1]['disp_order'])))
+        # Hide internal sort order info from the end user
+        for key, val in return_obj.items():
+            del val['table_order']
+            del val['disp_order']
 
         cache.set(cache_key, return_obj)
 
