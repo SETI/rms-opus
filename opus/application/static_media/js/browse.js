@@ -501,8 +501,8 @@ var o_browse = {
     updateSliderHandle: function() {
         let selector = (opus.prefs.browse === "dataTable") ? `#${opus.prefs.view} #dataTable tbody tr` : `#${opus.prefs.view} .gallery .thumbnail-container`;
         $(selector).each(function(index, elem) {
-            // compare the image .top + its height in order to make sure we account for partial images
-            let topBox = $(elem).offset().top + $(elem).height();
+            // compare the image .top + half its height in order to make sure we account for partial images
+            let topBox = $(elem).offset().top + $(elem).height()/2;
             if (topBox >= $(".gallery-contents").offset().top) {
                 let obsNum = $(elem).data("obs");
                 $("#op-observation-number").html(obsNum);
@@ -915,6 +915,7 @@ var o_browse = {
                 }
             } else {
                 // we've hit the end of the infinite scroll.
+                $(".op-page-loading-status > .loader").hide();
                 return;
             }
         } else {
@@ -1090,9 +1091,6 @@ var o_browse = {
     },
 
     getDataURL: function(startObs) {
-        // this method is always called before a load, so might as well drop the loader here..
-        $(".op-page-loading-status > .loader").show();
-
         let view = o_browse.getViewInfo();
         let base_url = "/opus/__api/dataimages.json?";
         // this is a workaround for firefox
@@ -1129,11 +1127,11 @@ var o_browse = {
             if (startObs >= firstObs && startObs <= lastObs) {
                 // may need to do a prefetch here...
                 o_browse.setScrollbarPosition(selector, startObs);
-                $(".op-page-loading-status > .loader").hide();
                 return;
             }
         }
 
+        $(".op-page-loading-status > .loader").show();
         let url = o_browse.getDataURL(startObs);
 
         // metadata; used for both table and gallery
@@ -1180,8 +1178,6 @@ var o_browse = {
                             $(".infinite-scroll-request").hide();
                         }
                         $(selector).infiniteScroll("loadNextPage");
-
-
                     });
                     $(selector).on("load.infiniteScroll", o_browse.infiniteScrollLoadEventListener);
                 }
@@ -1206,6 +1202,7 @@ var o_browse = {
     },
 
     infiniteScrollLoadEventListener: function(event, response, path) {
+        $(".op-page-loading-status > .loader").show();
         let data = JSON.parse( response );
 
         o_browse.renderGalleryAndTable(data, path);
