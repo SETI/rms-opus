@@ -127,7 +127,7 @@ class ApiVimsDownlinksTests(TestCase):
                             "covims-full",
                           ]
         # print(test_url)
-        if response.status_code == 200:
+        if response.status_code == 200: # pragma: no cover
             data_object = response.json()["data"]
             # When test db return empty object, we would NOT proceed to count the number of images
             if not data_object and not settings.TEST_GO_LIVE: # pragma: no cover
@@ -151,7 +151,7 @@ class ApiVimsDownlinksTests(TestCase):
                     "covims-full": len(data_object[image_id]["covims-full"]),
                 }
             return image_count
-        else:
+        else: # pragma: no cover
             raise Exception(f"{format}: Error, http status code: {http_status_code}")
 
 

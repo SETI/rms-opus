@@ -65,14 +65,14 @@ class ApiReturnFormatTests(TestCase):
                 try:
                     self._one_api_call(api_url, target_dict, target_format)
 
-                except Exception as e:
+                except Exception as e: # pragma: no cover
                     error_flag = 1
                     if not flag:
                         flag = 1
                         print("---------------------------------------------------")
                         print(f"Testing API: {target_dict[api_url]['api']}")
                     print(f"{target_format}: return format error, status code: {e.args[0]}")
-        if error_flag:
+        if error_flag: # pragma: no cover
             raise Exception("API return formats test failed")
 
     ########################
@@ -84,7 +84,7 @@ class ApiReturnFormatTests(TestCase):
            api_dict: a dictionary containing the payload
            format: a return format string that concatenates with api_url_base
         """
-        if settings.TEST_GO_LIVE:
+        if settings.TEST_GO_LIVE: # pragma: no cover
             client = requests.Session()
         else:
             client = RequestsClient()
@@ -98,7 +98,7 @@ class ApiReturnFormatTests(TestCase):
         try:
             self.assertEqual(response.status_code, 200)
             # print(response.url)
-        except Exception as e:
+        except Exception as e: # pragma: no cover
             # print(response.url)
             raise
 
@@ -147,11 +147,11 @@ class ApiFormats:
         """build up base api depending on target site: dev/production
         """
         if (not self.target or self.target == "production"
-            or self.target == "internal"):
+            or self.target == "internal"): # pragma: no cover
             return "https://tools.pds-rings.seti.org/opus/api/"
-        elif self.target == "dev":
+        elif self.target == "dev": # pragma: no cover
             return "http://dev.pds-rings.seti.org/opus/api/"
-        else:
+        else: # pragma: no cover
             assert False, self.target
 
     def build_api_data_base(self):

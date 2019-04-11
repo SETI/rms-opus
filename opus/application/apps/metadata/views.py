@@ -88,7 +88,7 @@ def api_get_result_count(request, fmt, internal=False):
         raise ret
 
     count, _, err = get_result_count_helper(request, api_code)
-    if err is not None:
+    if err is not None: # pragma: no cover
         exit_api_call(api_code, err)
         return err
 

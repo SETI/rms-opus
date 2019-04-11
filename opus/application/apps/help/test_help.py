@@ -15,13 +15,11 @@ class helpTests(TestCase):
 
     def setUp(self):
         self.maxDiff = None
-        sys.tracebacklimit = 0 # default: 1000
         logging.disable(logging.ERROR)
         cache.clear()
         self.factory = RequestFactory()
 
     def tearDown(self):
-        sys.tracebacklimit = 1000 # default: 1000
         logging.disable(logging.NOTSET)
 
 
