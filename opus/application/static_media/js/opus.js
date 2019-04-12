@@ -450,7 +450,6 @@ var opus = {
         let searchSidebarObserver = new MutationObserver(function(mutationsList) {
             let lastMutationIdx = mutationsList.length - 1;
             mutationsList.forEach((mutation, idx) => {
-                // console.log(mutation);
                 if (mutation.type === "childList") {
                     // update ps when there is any children added/removed
                     adjustSearchSideBarHeight();
@@ -473,7 +472,6 @@ var opus = {
         let searchWidgetObserver = new MutationObserver(function(mutationsList) {
             let lastMutationIdx = mutationsList.length - 1;
             mutationsList.forEach((mutation, idx) => {
-                // console.log(mutation);
                 if (mutation.type === "childList") {
                     // update ps when there is any children added/removed
                     adjustSearchWidgetHeight();
@@ -498,7 +496,6 @@ var opus = {
         // ps in cart page
         let cartObserver = new MutationObserver(function(mutationsList) {
             mutationsList.forEach((mutation, idx) => {
-                // console.log(mutation);
                 // in cart page, we only need to detect element change. We don't need to worry about attribute change (no expanding/collapsing event).
                 adjustProductInfoHeight();
             });
@@ -507,7 +504,6 @@ var opus = {
         // ps in help page
         let helpPanelObserver = new MutationObserver(function(mutationsList) {
             mutationsList.forEach((mutation, idx) => {
-                // console.log(mutation);
                 //ignore attribute change in ps to avoid infinite loop of callback function caused by ps update
                 if (!mutation.target.classList.value.match(/ps/)) {
                     adjustHelpPanelHeight();
@@ -518,7 +514,6 @@ var opus = {
         // ps in select metadata modal
         let metadataSelectorObserver = new MutationObserver(function(mutationsList) {
             mutationsList.forEach((mutation, idx) => {
-                // console.log(mutation);
                 adjustmetadataModalMenu();
                 adjustSelectedMetadataPS();
             });
@@ -527,7 +522,6 @@ var opus = {
         let metadataSelectorMenuObserver = new MutationObserver(function(mutationsList) {
             let lastMutationIdx = mutationsList.length - 1;
             mutationsList.forEach((mutation, idx) => {
-                // console.log(mutation);
                 if (idx === lastMutationIdx) {
                     if (mutation.target.classList.value.match(/submenu.collapse/)) {
                         adjustmetadataModalMenu();
@@ -539,7 +533,6 @@ var opus = {
         let selectedMetadataObserver = new MutationObserver(function(mutationsList) {
             let lastMutationIdx = mutationsList.length - 1;
             mutationsList.forEach((mutation, idx) => {
-                // console.log(mutation);
                 if (idx === lastMutationIdx) {
                     if (mutation.target.classList.value.match(/ui-sortable/)) {
                         adjustSelectedMetadataPS();
@@ -550,10 +543,11 @@ var opus = {
 
         // ps in browse dialog
         let browseDialogObserver = new MutationObserver(function(mutationsList) {
+            let lastMutationIdx = mutationsList.length - 1;
             mutationsList.forEach((mutation, idx) => {
-                // console.log(mutation);
-                // only one mutation detected when we click thumbnail
-                adjustBrowseDialogPS();
+                if (idx === lastMutationIdx) {
+                    adjustBrowseDialogPS();
+                }
             });
         });
 
@@ -561,7 +555,6 @@ var opus = {
         let galleryViewObserver = new MutationObserver(function(mutationsList) {
             let lastMutationIdx = mutationsList.length - 1;
             mutationsList.forEach((mutation, idx) => {
-                // console.log(mutation);
                 if (idx === lastMutationIdx) {
                     adjustBrowseHeight();
                 }
@@ -572,7 +565,6 @@ var opus = {
         let tableViewObserver = new MutationObserver(function(mutationsList) {
             let lastMutationIdx = mutationsList.length - 1;
             mutationsList.forEach((mutation, idx) => {
-                // console.log(mutation);
                 if (idx === lastMutationIdx) {
                     adjustTableSize();
                 }
@@ -589,10 +581,10 @@ var opus = {
         let helpPanel = document.getElementById("op-help-panel");
         let metadataSelector = document.getElementById("metadataSelector");
         let metadataSelectorContents = document.getElementById("metadataSelectorContents");
-        let browseDialogModal = document.getElementById("galleryView");
-        let browseDailogContents = document.getElementById("op-browse-dialog");
-        let galleryView = document.getElementById("op-gallery-view");
-        let tableView = document.getElementById("dataTable");
+        let browseDialogModal = $("#galleryView.modal")[0];
+        let browseDailogContents = $(".metadata .contents")[0];
+        let galleryView = $(".op-gallery-view")[0];
+        let tableView = $("#dataTable")[0];
 
         // Note:
         // The reason of observing sidebar and widdget content element (ps sibling) in search page instead of observing the whole page (html structure) is because:
@@ -621,7 +613,7 @@ var opus = {
         // update ps when browse dialog open/close
         browseDialogObserver.observe(browseDialogModal, {attributes: true});
         // update ps when contents in dialog is added/removed
-        browseDialogObserver.observe(browseDailogContents, childListObserverConfig);
+        // browseDialogObserver.observe(browseDailogContents, childListObserverConfig);
         // udpate ps in browse gallery view
         galleryViewObserver.observe(galleryView, generalObserverConfig);
         // update ps in browse table view

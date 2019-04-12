@@ -1485,7 +1485,7 @@ var o_browse = {
 
     adjustBrowseDialogPS: function() {
         let containerHeight = $("#galleryViewContents .metadata").height();
-        let browseDialogHeight = $("#op-browse-dialog").height();
+        let browseDialogHeight = $(".metadata .contents").height();
 
         if (containerHeight > browseDialogHeight) {
             if (!$("#galleryViewContents .metadata .ps__rail-y").hasClass("hide_ps__rail-y")) {
