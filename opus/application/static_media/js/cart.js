@@ -290,7 +290,6 @@ var o_cart = {
             let length = toIndex - fromIndex+1;
             let elementArray = $(`${namespace} .thumbnail-container`);
             let opusIdRange = $(elementArray[fromIndex]).data("id") + ","+ $(elementArray[toIndex]).data("id");
-            console.log("end range "+action+" : "+opusIdRange);
             $.each(elementArray.splice(fromIndex, length), function(index, elem) {
                 let opusId = $(elem).data("id");
                 let status = "in";
@@ -314,9 +313,11 @@ var o_cart = {
             o_browse.undoRangeSelect(namespace);
         } else {
             // note - doing it this way handles the obs on the browse tab at the same time
-            $(`.thumbnail-container[data-id=${fromOpusId}]`).toggleClass("in");
-
             let action = (fromElem.hasClass("in") ? "add" : "remove");
+
+            $(`.thumbnail-container[data-id=${fromOpusId}]`).toggleClass("in");
+            $("input[name="+fromOpusId+"]").prop("checked", (action == "remove"));
+
             o_browse.updateCartIcon(fromOpusId, action);
             o_cart.editCart(fromOpusId, action);
             return action;

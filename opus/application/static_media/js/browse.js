@@ -1101,7 +1101,6 @@ var o_browse = {
 
     loadData: function(startObs) {
         let viewInfo = o_browse.getViewInfo();
-        console.log("loadData");
 
         startObs = (startObs === undefined ? opus.prefs[`${viewInfo.prefix}startobs`] : startObs);
 
@@ -1129,7 +1128,6 @@ var o_browse = {
 
         // metadata; used for both table and gallery
         $.getJSON(url, function(data) {
-            console.log("loadData - return from getJSON");
             if (data.reqno < o_browse.lastLoadDataRequestNo) {
                 // make sure to remove spinner before return
                 $(".op-page-loading-status > .loader").hide();
@@ -1166,7 +1164,6 @@ var o_browse = {
                     $(selector).on("scrollThreshold.infiniteScroll", function(event) {
                         // remove spinner when scrollThreshold is triggered and last data fetching has no data
                         // Need to revisit this one
-                        // console.log(`page about to be drawn: ${opus.lastPageDrawn[opus.prefs.view] + 1}`);
                         if (o_browse.dataNotAvailable) {
                             $(".infinite-scroll-request").hide();
                         }
