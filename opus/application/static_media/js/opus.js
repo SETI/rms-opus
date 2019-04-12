@@ -571,16 +571,16 @@ var opus = {
             });
         });
 
-        // target node: target element that MutationObserver is observing, need to be a node (need to use regular js)
-        let searchTab = document.getElementById("search");
-        let browseTab = document.getElementById("browse");
-        let cartTab = document.getElementById("cart");
-        let detailTab = document.getElementById("detail");
-        let searchSidebar = document.getElementById("sidebar");
-        let searchWidget = document.getElementById("op-search-widgets");
-        let helpPanel = document.getElementById("op-help-panel");
-        let metadataSelector = document.getElementById("metadataSelector");
-        let metadataSelectorContents = document.getElementById("metadataSelectorContents");
+        // target node: target element that MutationObserver is observing, need to be a node 
+        let searchTab = $("#search")[0];
+        let browseTab = $("#browse")[0];
+        let cartTab = $("#cart")[0];
+        let detailTab = $("#detail")[0];
+        let searchSidebar = $("#sidebar")[0];
+        let searchWidget = $("#op-search-widgets")[0];
+        let helpPanel = $("#op-help-panel")[0];
+        let metadataSelector = $("#metadataSelector")[0];
+        let metadataSelectorContents = $("#metadataSelectorContents")[0];
         let browseDialogModal = $("#galleryView.modal")[0];
         let browseDailogContents = $(".metadata .contents")[0];
         let galleryView = $(".op-gallery-view")[0];
