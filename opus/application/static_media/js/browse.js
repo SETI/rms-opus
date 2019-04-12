@@ -730,33 +730,26 @@ var o_browse = {
         });
 
         $('#metadataSelector .allMetadata').on("click", '.submenu li a', function() {
-
             let slug = $(this).data('slug');
             if (!slug) { return; }
 
+            let chosenSlugSelector = `#cchoose__${slug}`;
             let label = $(this).data('qualifiedlabel');
 
             //CHANGE THESE TO USE DATA-ICON=
             let def = $(this).find('i.fa-info-circle').attr("title");
             let selectedMetadata = $(this).find("i.fa-check");
 
-            if (!selectedMetadata.is(":visible")) {
-                selectedMetadata.fadeIn().css("display", "inline-block");
-                if ($.inArray(slug, opus.prefs.cols ) < 0) {
-                    // this slug was previously unselected, add to cols
-                    $(`<li id = "cchoose__${slug}">${label}<span class="info">&nbsp;<i class = "fas fa-info-circle" title = "${def}"></i>&nbsp;&nbsp;&nbsp;</span><span class="unselect"><i class="far fa-trash-alt"></span></li>`).hide().appendTo(".selectedMetadata > ul").fadeIn();
-                    opus.prefs.cols.push(slug);
-                }
-
+            if ($(chosenSlugSelector).length === 0) {
+                selectedMetadata.fadeIn();
+                // this slug was previously unselected, add to cols
+                $(`<li id = "${chosenSlugSelector.substr(1)}">${label}<span class="info">&nbsp;<i class = "fas fa-info-circle" title = "${def}"></i>&nbsp;&nbsp;&nbsp;</span><span class="unselect"><i class="far fa-trash-alt"></span></li>`).hide().appendTo(".selectedMetadata > ul").fadeIn();
+                opus.prefs.cols.push(slug);
             } else {
                 selectedMetadata.hide();
-                if ($.inArray(slug,opus.prefs.cols) > -1) {
-                    // slug had been checked, remove from the chosen
-                    opus.prefs.cols.splice($.inArray(slug,opus.prefs.cols),1);
-                    $(`#cchoose__${slug}`).fadeOut(function() {
-                        $(`#cchoose__${slug}`).remove();
-                    });
-                }
+                // slug had been checked, remove from the chosen
+                opus.prefs.cols.splice($.inArray(slug,opus.prefs.cols),1);
+                $(chosenSlugSelector).remove();
             }
             o_browse.selectedMetadataScrollbar.update();
             return false;
