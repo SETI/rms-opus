@@ -729,29 +729,22 @@ var o_browse = {
             o_browse.selectedMetadataScrollbar.update();
         });
 
-        var metadataClicked = "";
         $('#metadataSelector .allMetadata').on("click", '.submenu li a', function() {
             let slug = $(this).data('slug');
             if (!slug) { return; }
 
-            // prevent multiple clicks before fadein/fadout complete
-            if (metadataClicked == slug) return;
-
-            metadataClicked = slug;
-
+            let chosenSlugSelector = `#cchoose__${slug}`;
             let label = $(this).data('qualifiedlabel');
 
             //CHANGE THESE TO USE DATA-ICON=
             let def = $(this).find('i.fa-info-circle').attr("title");
             let selectedMetadata = $(this).find("i.fa-check");
 
-            if (!selectedMetadata.is(":visible")) {
-                selectedMetadata.fadeIn(function(e) {
-                    metadataClicked = "";
-                }).css("display", "inline-block");
+            if ($(chosenSlugSelector).length === 0) {
+                selectedMetadata.fadeIn();
                 if ($.inArray(slug, opus.prefs.cols ) < 0) {
                     // this slug was previously unselected, add to cols
-                    $(`<li id = "cchoose__${slug}">${label}<span class="info">&nbsp;<i class = "fas fa-info-circle" title = "${def}"></i>&nbsp;&nbsp;&nbsp;</span><span class="unselect"><i class="far fa-trash-alt"></span></li>`).hide().appendTo(".selectedMetadata > ul").fadeIn();
+                    $(`<li id = "${chosenSlugSelector.substr(1)}">${label}<span class="info">&nbsp;<i class = "fas fa-info-circle" title = "${def}"></i>&nbsp;&nbsp;&nbsp;</span><span class="unselect"><i class="far fa-trash-alt"></span></li>`).hide().appendTo(".selectedMetadata > ul").fadeIn();
                     opus.prefs.cols.push(slug);
                 }
 
@@ -760,9 +753,8 @@ var o_browse = {
                 if ($.inArray(slug,opus.prefs.cols) > -1) {
                     // slug had been checked, remove from the chosen
                     opus.prefs.cols.splice($.inArray(slug,opus.prefs.cols),1);
-                    $(`#cchoose__${slug}`).fadeOut(function(e) {
-                        $(`#cchoose__${slug}`).remove();
-                        metadataClicked = "";
+                    $(chosenSlugSelector).fadeOut(function() {
+                        $(chosenSlugSelector).remove();
                     });
                 }
             }
