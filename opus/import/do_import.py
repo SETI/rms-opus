@@ -12,7 +12,7 @@ import pdsfile
 import opus_support
 
 from config_data import *
-import do_collections
+import do_cart
 import do_django
 import impglobals
 import import_util
@@ -51,7 +51,7 @@ def delete_all_obs_mult_tables(namespace):
 
     table_names = impglobals.DATABASE.table_names(namespace,
                                                   prefix=['obs_', 'mult_',
-                                                          'collections'])
+                                                          'cart'])
     table_names = sorted(table_names)
     # This has to happen in four phases to handle foreign key contraints:
     # 1. All obs_ tables except obs_general
@@ -60,9 +60,9 @@ def delete_all_obs_mult_tables(namespace):
             table_name != 'obs_general'):
             impglobals.DATABASE.drop_table(namespace, table_name)
 
-    # 2. collections
-    if 'collections' in table_names:
-        impglobals.DATABASE.drop_table(namespace, 'collections')
+    # 2. cart
+    if 'cart' in table_names:
+        impglobals.DATABASE.drop_table(namespace, 'cart')
 
     # 3. obs_general
     if 'obs_general' in table_names:
@@ -1577,14 +1577,14 @@ def do_import_steps():
         # that process also deleted these tables. In this case, we didn't do
         # this step earlier.
         if (impglobals.ARGUMENTS.drop_cache_tables or
-            impglobals.ARGUMENTS.create_collections):
+            impglobals.ARGUMENTS.create_cart):
             impglobals.LOGGER.open(
                 f'Cleaning up OPUS/Django tables',
                 limits={'info': impglobals.ARGUMENTS.log_info_limit,
                         'debug': impglobals.ARGUMENTS.log_debug_limit})
 
-            if impglobals.ARGUMENTS.create_collections:
-                do_collections.create_collections()
+            if impglobals.ARGUMENTS.create_cart:
+                do_cart.create_cart()
             if impglobals.ARGUMENTS.drop_cache_tables:
                 do_django.drop_cache_tables()
 
@@ -1631,9 +1631,9 @@ def do_import_steps():
                      ]
         if not old_perm_tables_dropped:
             # Don't bother if there's nothing there!
-            if not impglobals.ARGUMENTS.create_collections:
+            if not impglobals.ARGUMENTS.create_cart:
                 impglobals.LOGGER.log('warning',
-        'Deleting volumes from perm tables but collections table not wiped')
+        'Deleting volumes from perm tables but cart table not wiped')
             for volume_id in import_volume_ids:
                 delete_volume_from_obs_tables(volume_id, 'perm')
 
