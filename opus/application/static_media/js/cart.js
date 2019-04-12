@@ -91,9 +91,6 @@ var o_cart = {
                      $(`<li><a href = "${data.filename}">${data.filename}</a></li>`).hide().prependTo("ul.zippedFiles", "#cart_summary").slideDown("slow");
                  }
                  $(".spinner", "#op-download-links").fadeOut();
-                 // o_collections.downloadOptionsScrollbar.update();
-                 // let adjustProductInfoHeight = _.debounce(o_cart.adjustProductInfoHeight, 200);
-                 // adjustProductInfoHeight();
              },
              error: function(e) {
                  $(".spinner", "#op-download-links").fadeOut();
@@ -141,9 +138,7 @@ var o_cart = {
          if (status.total_download_size_pretty !== undefined) {
              $("#op-total-download-size").fadeOut().html(status.total_download_size_pretty).fadeIn();
          }
-         // o_cart.adjustProductInfoHeight();
      },
-
 
      // init an existing cart on page load
      initCart: function() {
@@ -197,7 +192,6 @@ var o_cart = {
                 });
                 opus.cart_change = false;
             }
-            // o_cart.adjustProductInfoHeight();
         });
     },
 
@@ -241,12 +235,9 @@ var o_cart = {
                             minScrollbarLength: 30
                         });
                     }
-                    // let adjustProductInfoHeight = _.debounce(o_cart.adjustProductInfoHeight, 200);
-                    // adjustProductInfoHeight();
                 }
             });
         } else {
-            // o_cart.adjustProductInfoHeight();
             return;
         }
     },

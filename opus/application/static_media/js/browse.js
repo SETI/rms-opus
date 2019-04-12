@@ -579,7 +579,6 @@ var o_browse = {
         o_browse.checkIfLoadPrevPageIsNeeded(opusId);
         o_browse.updateGalleryView(opusId);
         $("#galleryView").modal("show");
-        // o_browse.modalScrollbar.update();
     },
 
     hideMenu: function() {
@@ -731,11 +730,6 @@ var o_browse = {
             currentSelectedMetadata = opus.prefs.cols.slice();
         });
 
-        $("#metadataSelector").on("shown.bs.modal", function() {
-            // o_browse.allMetadataScrollbar.update();
-            // o_browse.selectedMetadataScrollbar.update();
-        });
-
         $('#metadataSelector .allMetadata').on("click", '.submenu li a', function() {
 
             let slug = $(this).data('slug');
@@ -765,7 +759,6 @@ var o_browse = {
                     });
                 }
             }
-            // o_browse.selectedMetadataScrollbar.update();
             return false;
         });
 
@@ -785,7 +778,6 @@ var o_browse = {
                 });
                 $(`#metadataSelector .allMetadata [data-slug=${slug}]`).find("i.fa-check").hide();
             }
-            // o_browse.selectedMetadataScrollbar.update();
             return false;
         });
         // buttons
@@ -871,8 +863,6 @@ var o_browse = {
             if (!$(".dataTable > .ps__rail-y").hasClass("hide_ps__rail-y")) {
                 $(".dataTable > .ps__rail-y").addClass("hide_ps__rail-y");
             }
-
-            // o_browse.galleryScrollbar.update();
         } else {
             $("." + "gallery", "#browse").hide();
             $("." + opus.prefs.browse, "#browse").fadeIn();
@@ -890,8 +880,6 @@ var o_browse = {
                 $(".gallery-contents > .ps__rail-y").addClass("hide_ps__rail-y");
             }
             $(".dataTable > .ps__rail-y").removeClass("hide_ps__rail-y");
-
-            // o_browse.tableScrollbar.update();
         }
     },
 
@@ -1077,9 +1065,6 @@ var o_browse = {
         // $(".gallery", namespace).append(html);
         // $(".op-page-loading-status").hide();
 
-        // o_browse.adjustBrowseHeight();
-        // o_browse.adjustTableSize();
-        // o_browse.galleryScrollbar.update();
         $(".op-page-loading-status > .loader").hide();
         o_browse.updateSliderHandle();
         o_hash.updateHash(true);
@@ -1113,7 +1098,6 @@ var o_browse = {
         });
 
         o_browse.initResizableColumn();
-        // o_browse.adjustTableSize();
     },
 
     initResizableColumn: function() {
@@ -1582,7 +1566,6 @@ var o_browse = {
     updateMetaGalleryView: function(opusId, imageURL) {
         $("#galleryViewContents .left").html(`<a href='${imageURL}' target='_blank'><img src='${imageURL}' title='${opusId}' class='preview'/></a>`);
         o_browse.metadataboxHtml(opusId);
-        // o_browse.modalScrollbar.update();
     },
 
 

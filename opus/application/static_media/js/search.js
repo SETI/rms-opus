@@ -240,8 +240,6 @@ var o_search = {
                var remove = opus.selections[id].indexOf(value); // find index of value to remove
                opus.selections[id].splice(remove,1);        // remove value from array
            }
-           // console.log("Current opus selection: ")
-           // console.log(opus.selections)
            o_hash.updateHash();
         });
 
@@ -432,7 +430,6 @@ var o_search = {
     getSearchTab: function() {
 
         if (o_search.searchTabDrawn) {
-            // o_search.adjustSearchHeight();
             return;
         }
 
@@ -466,8 +463,6 @@ var o_search = {
         }
 
         o_search.searchTabDrawn = true;
-
-        // o_search.adjustSearchHeight();
     },
 
     getHinting: function(slug, deferredObj) {
@@ -481,8 +476,6 @@ var o_search = {
             o_search.getValidMults(slug, deferredObj);
         } else {
           $(`#widget__${slug} .spinner`).fadeOut();
-          // let adjustSearchWidgetHeight = _.debounce(o_search.adjustSearchWidgetHeight, 800);
-          // adjustSearchWidgetHeight();
         }
     },
 
@@ -502,8 +495,6 @@ var o_search = {
                     return;
                 }
                 $('#hint__' + slug).html(`<span>min: ${multdata.min}</span><span>max: ${multdata.max}</span><span> nulls: ${multdata.nulls}</span>`);
-                // let adjustSearchWidgetHeight = _.debounce(o_search.adjustSearchWidgetHeight, 800);
-                // adjustSearchWidgetHeight();
             },
             statusCode: {
                 404: function() {
@@ -551,8 +542,6 @@ var o_search = {
                         $(id).parent().addClass("fadey");
                     }
                 });
-                // let adjustSearchWidgetHeight = _.debounce(o_search.adjustSearchWidgetHeight, 800);
-                // adjustSearchWidgetHeight();
             },
             statusCode: {
                 404: function() {

@@ -109,16 +109,7 @@ var opus = {
             $(".op-reset-button button").prop("disabled", true);
         }
 
-        if ($.isEmptyObject(selections)) {
-            // there are no selections found in the url hash
-            if (!$.isEmptyObject(opus.last_selections)) {
-                // last selections is also empty
-                opus.last_selections = {};
-                o_browse.resetQuery();
-                opus.force_load = true;
-            }
-        }
-
+        // compare selections and last selections
         if (o_utils.areObjectsEqual(selections, opus.last_selections))  {
             // selections have not changed from opus.last_selections
             if (!opus.force_load) { // so we do only non-reloading pref changes
@@ -128,11 +119,11 @@ var opus = {
 
         } else {
             // selections in the url hash is different from opus.last_selections
-              // reset the pages: {"gallery":1, "data":1, "cart_gallery":1, "cart_data":1 };
-              opus.prefs.page = default_pages;
+            // reset the pages: {"gallery":1, "data":1, "cart_gallery":1, "cart_data":1 };
+            opus.prefs.page = default_pages;
 
-              // and reset the query:
-              o_browse.resetQuery();
+            // and reset the query:
+            o_browse.resetQuery();
         }
 
         // start the result count spinner and do the yellow flash
@@ -144,6 +135,7 @@ var opus = {
         $(".op-menu-text.spinner").addClass("op-show-spinner");
         $("#op-search-widgets .spinner").fadeIn();
 
+        // update last selections after the comparison of selections and last selections
         // move this above allNormalizedApiCall to avoid recursive api call
         opus.last_selections = selections;
 
@@ -320,11 +312,8 @@ var opus = {
             deferredArr.push($.Deferred());
             o_widgets.getWidget(slug,"#search_widgets",deferredArr[index]);
         });
-        // wait until all widgets are get
-        $.when.apply(null, deferredArr).then(function() {
-            // let adjustSearchWidgetHeight = _.debounce(o_search.adjustSearchHeight, 800);
-            // adjustSearchWidgetHeight();
-        });
+        // wait until all widgets are get, do somthing here:
+        // $.when.apply(null, deferredArr).then(function() {});
 
         // if (resetMetadata) {
         //     $(".op-reset-button button").prop("disabled", false);
@@ -508,7 +497,6 @@ $(document).ready(function() {
                 minScrollbarLength: 30
             });
         }
-        // adjustHelpPanelHeight();
         $("#op-help-panel").toggle("slide", {direction:'right'}, function() {
             $(".op-overlay").addClass("active");
         });
@@ -519,7 +507,6 @@ $(document).ready(function() {
                 $("#op-help-panel .loader").hide();
                 $("#op-help-panel .op-card-contents").html(page);
                 opus.helpPanelOpen = true;
-                // adjustHelpPanelHeight();
             }
         });
     });
