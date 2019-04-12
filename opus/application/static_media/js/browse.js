@@ -742,21 +742,14 @@ var o_browse = {
 
             if ($(chosenSlugSelector).length === 0) {
                 selectedMetadata.fadeIn();
-                if ($.inArray(slug, opus.prefs.cols ) < 0) {
-                    // this slug was previously unselected, add to cols
-                    $(`<li id = "${chosenSlugSelector.substr(1)}">${label}<span class="info">&nbsp;<i class = "fas fa-info-circle" title = "${def}"></i>&nbsp;&nbsp;&nbsp;</span><span class="unselect"><i class="far fa-trash-alt"></span></li>`).hide().appendTo(".selectedMetadata > ul").fadeIn();
-                    opus.prefs.cols.push(slug);
-                }
-
+                // this slug was previously unselected, add to cols
+                $(`<li id = "${chosenSlugSelector.substr(1)}">${label}<span class="info">&nbsp;<i class = "fas fa-info-circle" title = "${def}"></i>&nbsp;&nbsp;&nbsp;</span><span class="unselect"><i class="far fa-trash-alt"></span></li>`).hide().appendTo(".selectedMetadata > ul").fadeIn();
+                opus.prefs.cols.push(slug);
             } else {
                 selectedMetadata.hide();
-                if ($.inArray(slug,opus.prefs.cols) > -1) {
-                    // slug had been checked, remove from the chosen
-                    opus.prefs.cols.splice($.inArray(slug,opus.prefs.cols),1);
-                    $(chosenSlugSelector).fadeOut(function() {
-                        $(chosenSlugSelector).remove();
-                    });
-                }
+                // slug had been checked, remove from the chosen
+                opus.prefs.cols.splice($.inArray(slug,opus.prefs.cols),1);
+                $(chosenSlugSelector).remove();
             }
             o_browse.selectedMetadataScrollbar.update();
             return false;
