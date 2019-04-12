@@ -441,7 +441,7 @@ th.sticky-header {
 }
 
 #metadataSelector i.fa-check {
-    display: none;
+    display: inline-block;
 }
 
 #metadataSelector ul li {
