@@ -729,13 +729,15 @@ var o_browse = {
             o_browse.selectedMetadataScrollbar.update();
         });
 
-        var metadataClicked = false;
+        var metadataClicked = "";
         $('#metadataSelector .allMetadata').on("click", '.submenu li a', function() {
-            // prevent multiple clicks before fadein/fadout complete
-            if (metadataClicked) return;
-
             let slug = $(this).data('slug');
             if (!slug) { return; }
+
+            // prevent multiple clicks before fadein/fadout complete
+            if (metadataClicked == slug) return;
+
+            metadataClicked = slug;
 
             let label = $(this).data('qualifiedlabel');
 
@@ -743,10 +745,9 @@ var o_browse = {
             let def = $(this).find('i.fa-info-circle').attr("title");
             let selectedMetadata = $(this).find("i.fa-check");
 
-            metadataClicked = true;
             if (!selectedMetadata.is(":visible")) {
-                selectedMetadata.fadeIn(function() {
-                    metadataClicked = false;
+                selectedMetadata.fadeIn(function(e) {
+                    metadataClicked = "";
                 }).css("display", "inline-block");
                 if ($.inArray(slug, opus.prefs.cols ) < 0) {
                     // this slug was previously unselected, add to cols
@@ -759,9 +760,9 @@ var o_browse = {
                 if ($.inArray(slug,opus.prefs.cols) > -1) {
                     // slug had been checked, remove from the chosen
                     opus.prefs.cols.splice($.inArray(slug,opus.prefs.cols),1);
-                    $(`#cchoose__${slug}`).fadeOut(function() {
+                    $(`#cchoose__${slug}`).fadeOut(function(e) {
                         $(`#cchoose__${slug}`).remove();
-                        metadataClicked = false;
+                        metadataClicked = "";
                     });
                 }
             }
