@@ -33,7 +33,7 @@ var opus_mutationObserver = {
         let adjustTableSize = _.debounce(o_browse.adjustTableSize, 200);
         let adjustProductInfoHeight = _.debounce(o_cart.adjustProductInfoHeight, 200);
         let adjustHelpPanelHeight = _.debounce(opus.adjustHelpPanelHeight, 200);
-        let adjustmetadataModalMenu = _.debounce(o_browse.adjustmetadataModalMenu, 200);
+        let adjustMetadataSelectorMenu = _.debounce(o_browse.adjustMetadataSelectorMenu, 200);
         let adjustSelectedMetadataPS = _.debounce(o_browse.adjustSelectedMetadataPS, 200);
         let adjustBrowseDialogPS = _.debounce(o_browse.adjustBrowseDialogPS, 200);
 
@@ -114,7 +114,7 @@ var opus_mutationObserver = {
         // ps in select metadata modal
         let metadataSelectorObserver = new MutationObserver(function(mutationsList) {
             mutationsList.forEach((mutation, idx) => {
-                adjustmetadataModalMenu();
+                adjustMetadataSelectorMenu();
                 adjustSelectedMetadataPS();
             });
         });
@@ -124,7 +124,7 @@ var opus_mutationObserver = {
             mutationsList.forEach((mutation, idx) => {
                 if (idx === lastMutationIdx) {
                     if (mutation.target.classList.value.match(/submenu.collapse/)) {
-                        adjustmetadataModalMenu();
+                        adjustMetadataSelectorMenu();
                     }
                 }
             });

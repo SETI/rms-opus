@@ -312,17 +312,6 @@ var opus = {
             deferredArr.push($.Deferred());
             o_widgets.getWidget(slug,"#search_widgets",deferredArr[index]);
         });
-        // wait until all widgets are get, do somthing here:
-        // $.when.apply(null, deferredArr).then(function() {});
-
-        // if (resetMetadata) {
-        //     $(".op-reset-button button").prop("disabled", false);
-        // } else if (!opus.checkIfMetadataAreDefault()) {
-        //     $(".op-reset-button .op-reset-search-metadata").prop("disabled", false);
-        //     $(".op-reset-button .op-reset-search").prop("disabled", true);
-        // } else {
-        //     $(".op-reset-button button").prop("disabled", true);
-        // }
 
         // start the main timer again
         opus.main_timer = setInterval(opus.load, opus.main_timer_interval);
@@ -386,7 +375,7 @@ var opus = {
             $("#op-help-panel .card-body").scrollTop(0);
             opus.helpScrollbar.update();
         }
-    },
+    }
 }; // end opus namespace
 
 /*

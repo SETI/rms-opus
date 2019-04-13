@@ -1435,7 +1435,7 @@ var o_browse = {
         o_browse.tableScrollbar.update();
     },
 
-    adjustmetadataModalMenu: function() {
+    adjustMetadataSelectorMenu: function() {
         let containerHeight = $(".allMetadata").height();
         let menuHeight = $(".allMetadata .searchMenu").height();
 
