@@ -32,14 +32,15 @@ var o_browse = {
         $(".gallery-contents, .dataTable").on('scroll', _.debounce(o_browse.checkScroll, 500));
 
         $(".gallery-contents, .dataTable").on('wheel ps-scroll-up', function(event) {
+            let namespace = o_browse.getViewInfo().namespace;
             // if time to load...
                 if (opus.prefs.browse === "dataTable") {
-                    if ($(".dataTable").scrollTop() === 0) {
-                        $(`#${opus.prefs.view} .gallery-contents`).infiniteScroll("loadNextPage");
+                    if ($(`${namespace} .gallery-contents`).scrollTop() === 0) {
+                        $(`${namespace} .gallery-contents`).infiniteScroll("loadNextPage");
                     }
                 } else {
-                    if ($(".gallery-contents").scrollTop() === 0) {
-                        $(`#${opus.prefs.view} .gallery-contents`).infiniteScroll("loadNextPage");
+                    if ($(`${namespace} .gallery-contents`).scrollTop() === 0) {
+                        $(`${namespace} .gallery-contents`).infiniteScroll("loadNextPage");
                     }
                 }
             //}
@@ -879,7 +880,8 @@ var o_browse = {
 
     renderGalleryAndTable: function(data, url) {
         // render the gallery and table at the same time.
-        let namespace = o_browse.getViewInfo().namespace;
+        let viewInfo = o_browse.getViewInfo();
+        let namespace = viewInfo.namespace;
 
         // this is the list of all observations requested from dataimages.json
         let galleryHtml = "";
@@ -915,6 +917,7 @@ var o_browse = {
             $("#cart .navbar").show();
             $("#cart .sort-order-container").show();
 
+            opus.prefs[`${viewInfo.prefix}startobs`] = data.start_obs;
             $.each(data.page, function(index, item) {
                 let opusId = item.opusid;
                 // we have to store the relative observation number because we may not have pages in succession, this is for the slider position
