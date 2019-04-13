@@ -109,15 +109,6 @@ var opus = {
             $(".op-reset-button button").prop("disabled", true);
         }
 
-        if ($.isEmptyObject(selections)) {
-            // there are no selections found in the url hash
-            if (!$.isEmptyObject(opus.last_selections)) {
-                // last selections is also empty
-                opus.last_selections = {};
-                o_browse.resetQuery();
-            }
-        }
-
         if (o_utils.areObjectsEqual(selections, opus.last_selections))  {
             // selections have not changed from opus.last_selections
             if (!opus.force_load) { // so we do only non-reloading pref changes
@@ -137,6 +128,12 @@ var opus = {
         // start the result count spinner and do the yellow flash
         $("#op-result-count").html(opus.spinner).parent().effect("highlight", {}, 500);
         $("#op-observation-number").html(opus.spinner).effect("highlight", {}, 500);
+        
+        // start op-menu-text and op-search-widgets spinner
+        // this is to trigger these two spinners right away when result count spinner is running
+        $(".op-menu-text.spinner").addClass("op-show-spinner");
+        $("#op-search-widgets .spinner").fadeIn();
+
         // move this above allNormalizedApiCall to avoid recursive api call
         opus.last_selections = selections;
 
