@@ -128,7 +128,7 @@ var opus = {
         // start the result count spinner and do the yellow flash
         $("#op-result-count").html(opus.spinner).parent().effect("highlight", {}, 500);
         $("#op-observation-number").html(opus.spinner).effect("highlight", {}, 500);
-        
+
         // start op-menu-text and op-search-widgets spinner
         // this is to trigger these two spinners right away when result count spinner is running
         $(".op-menu-text.spinner").addClass("op-show-spinner");
@@ -558,6 +558,42 @@ $(document).ready(function() {
 
     o_cart.initCart();
     opus.triggerNavbarClick();
+
+    /// Normalized url for the 1st time
+    console.log("======== in document .ready function ========");
+    console.log("======== call normalized for the first time =======");
+    let hash = o_hash.getHash();
+    let url = "/opus/__normalizeurl.json?" + hash;
+    console.log(`CALL API URL: ${url}`);
+    $.getJSON(url, function(normalizeurlData){
+        // if (normalizeurlData["reqno"] < opus.lastNormalizeurlRequestNo) {
+        //     return;
+        // }
+        // console.log("return data=========")
+        // // console.log(normalizeurlData)
+        // console.log(normalizeurlData.new_url);
+        // console.log("return message =========")
+        // console.log(normalizeurlData.msg);
+        // console.log("update lastHash =========")
+        // replace whitespace with %20 in url
+        // opus.lastHash = normalizeurlData.new_url.replace(" ", "%20");
+        // opus.lastHashDict = o_hash.hashStringToDictionary(opus.lastHash);
+        // console.log(opus.lastHash.replace(" ", "%20"));
+        // console.log("update url=====");
+
+        // opus.prefs.page = {"gallery":1, "data":1, "cart_gallery":1, "cart_data":1 };
+        o_browse.resetQuery();
+        window.location.hash = "/" + normalizeurlData.new_url
+        o_hash.updateHash();
+        console.log("Update URL ======");
+        console.log(normalizeurlData.new_url);
+        console.log("window location hash");
+        console.log(window.location.hash);
+        // opus.updateNormalizedURL = true;
+        // console.log(window.location.hash);
+        // opus.prevNormalizeurlIsDone = true;
+        // opus.main_timer = setInterval(opus.load, opus.main_timer_interval);
+    });
 
     // watch the url for changes, this runs continuously
     opus.main_timer = setInterval(opus.load, opus.main_timer_interval);
