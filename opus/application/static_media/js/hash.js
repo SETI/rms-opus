@@ -38,12 +38,16 @@ var o_hash = {
                         let page = o_browse.getCurrentPage();
                         hash.push("page=" + page);
                         break;
-
+                    case "startobs":
+                        hash.push("startobs=" + opus.currentObs);
+                        break;
                     default:
                         hash.push(key + "=" + opus.prefs[key]);
                 }
             }
         );
+        // console.log("hash from hash.js");
+        // console.log(hash);
         if (updateURL) {
             window.location.hash = '/' + hash.join('&');
         }

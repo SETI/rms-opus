@@ -37,6 +37,7 @@ var opus = {
             'cols': default_columns.split(','),  // default result table columns by slug
             'widgets':[], // search tab widget columns
             'detail':'', // opus_id of detail page content
+            'startobs': 1,
 
 
      }, // pref changes do not trigger load()
@@ -84,8 +85,37 @@ var opus = {
     allInputsValid: true,
 
     helpPanelOpen: false,
+    currentObs: 1,
     //------------------------------------------------------------------------------------//
+    checkIfObjectsAreTheSame: function(currentHashDict, prevHashDict) {
+        if (Object.keys(currentHashDict).length !== Object.keys(prevHashDict).length) {
+            console.log("Length difference")
+            return false;
+        }
+        // console.log(currentHashDict);
+        // console.log(prevHashDict);
+        let isTheSame = true;
+        $.each(currentHashDict, function(slug, value) {
+            // return false if slug value is different
+            if (!prevHashDict[slug]) {
+                console.log("Slug difference")
+                isTheSame = false;
+                return;
+            } else {
+                let slugStringInOrder = JSON.stringify(currentHashDict[slug].sort());
+                let prevSlugStringInOrder = JSON.stringify(prevHashDict[slug].sort());
+                if(slugStringInOrder !== prevSlugStringInOrder) {
+                    console.log(slugStringInOrder)
+                    console.log(prevSlugStringInOrder)
+                    console.log("Value difference");
+                    isTheSame = false;
+                    return;
+                }
+            }
+        });
 
+        return isTheSame;
+    },
     load: function() {
         /* When user makes any change to the interface, such as changing a query,
         the load() will send an ajax request to the server to get information it
@@ -117,12 +147,41 @@ var opus = {
             opus.force_load = false;
 
         } else {
+            console.log("### selections changes ###");
+            console.log("=== current selections ===");
+            console.log(selections);
+            console.log(opus.selections);
+            console.log("=== last selections ===");
+            console.log(opus.last_selections);
             // selections in the url hash is different from opus.last_selections
-              // reset the pages:
-              opus.prefs.page = default_pages;
+            // reset the pages:
+            opus.prefs.page = default_pages;
 
-              // and reset the query:
-              o_browse.resetQuery();
+            // if selections != opus.selections, then reload (modified url in url bar and hit enter)
+            let modifiedSelections = {};
+            $.each(Object.keys(selections), function(idx, slug) {
+                console.log(slug)
+                // modifiedSelections[slug] = [selections[slug].join(",")];
+                modifiedSelections[slug] = selections[slug][0].split(",");
+            });
+            console.log("Are selections and opus.selections the same????")
+            console.log(opus.checkIfObjectsAreTheSame(modifiedSelections, opus.selections));
+            console.log("=== modifiedSelections ===");
+            console.log(modifiedSelections);
+            if (!opus.checkIfObjectsAreTheSame(modifiedSelections, opus.selections)) {
+                console.log("@@@@")
+                opus.selections = modifiedSelections;
+                console.log("opus.selections after mod")
+                console.log(opus.selections)
+                // and reset the query:
+                // o_browse.resetQuery();
+                o_hash.updateHash();
+                location.reload();
+                return;
+            } else {
+                // and reset the query:
+                o_browse.resetQuery();
+            }
         }
 
         // start the result count spinner and do the yellow flash
@@ -561,38 +620,26 @@ $(document).ready(function() {
 
     /// Normalized url for the 1st time
     console.log("======== in document .ready function ========");
-    console.log("======== call normalized for the first time =======");
+    console.log("======== call normalized for the 1st time =======");
     let hash = o_hash.getHash();
     let url = "/opus/__normalizeurl.json?" + hash;
     console.log(`CALL API URL: ${url}`);
     $.getJSON(url, function(normalizeurlData){
+        // TODO: add reqno
         // if (normalizeurlData["reqno"] < opus.lastNormalizeurlRequestNo) {
         //     return;
         // }
-        // console.log("return data=========")
-        // // console.log(normalizeurlData)
-        // console.log(normalizeurlData.new_url);
-        // console.log("return message =========")
-        // console.log(normalizeurlData.msg);
-        // console.log("update lastHash =========")
-        // replace whitespace with %20 in url
-        // opus.lastHash = normalizeurlData.new_url.replace(" ", "%20");
-        // opus.lastHashDict = o_hash.hashStringToDictionary(opus.lastHash);
-        // console.log(opus.lastHash.replace(" ", "%20"));
-        // console.log("update url=====");
+        $.each(normalizeurlData.new_slugs, function(idx, slug) {
+            if (slug.startobs) {
+                opus.currentObs = slug.startobs;
+            }
+        });
 
-        // opus.prefs.page = {"gallery":1, "data":1, "cart_gallery":1, "cart_data":1 };
-        o_browse.resetQuery();
-        window.location.hash = "/" + normalizeurlData.new_url
-        o_hash.updateHash();
-        console.log("Update URL ======");
-        console.log(normalizeurlData.new_url);
-        console.log("window location hash");
-        console.log(window.location.hash);
-        // opus.updateNormalizedURL = true;
+        window.location.hash = "/" + normalizeurlData.new_url.replace(" ", "%20");
+        // console.log("Update URL ======");
+        // console.log(normalizeurlData.new_url);
+        // console.log("window location hash");
         // console.log(window.location.hash);
-        // opus.prevNormalizeurlIsDone = true;
-        // opus.main_timer = setInterval(opus.load, opus.main_timer_interval);
     });
 
     // watch the url for changes, this runs continuously
