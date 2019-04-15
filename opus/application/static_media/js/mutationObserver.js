@@ -1,4 +1,4 @@
-var opus_mutationObserver = {
+var o_mutationObserver = {
     // MutationObserver: detect any DOM changes and update ps correspondingly
     observePerfectScrollbar: function() {
         // Config object: tell the MutationObserver what type of changes to be detected
@@ -95,10 +95,8 @@ var opus_mutationObserver = {
 
         // ps in cart page
         let cartObserver = new MutationObserver(function(mutationsList) {
-            mutationsList.forEach((mutation, idx) => {
                 // in cart page, we only need to detect element change. We don't need to worry about attribute change (no expanding/collapsing event).
                 adjustProductInfoHeight();
-            });
         });
 
         // ps in help page
@@ -200,7 +198,7 @@ var opus_mutationObserver = {
         // update ps in search page
         searchSidebarObserver.observe(searchSidebar, generalObserverConfig);
         searchWidgetObserver.observe(searchWidget, generalObserverConfig);
-        // update ps in cart page
+        // update ps in cart page, including both o_cart.cartGalleryScrollbar and o_cart.downloadOptionsScrollbar
         cartObserver.observe(cartTab, childListObserverConfig);
         // update ps in help panel
         helpPanelObserver.observe(helpPanel, attrObserverConfig);
@@ -217,6 +215,6 @@ var opus_mutationObserver = {
         // udpate ps in browse gallery view
         galleryViewObserver.observe(galleryView, generalObserverConfig);
         // update ps in browse table view
-        tableViewObserver.observe(galleryView, generalObserverConfig);
+        tableViewObserver.observe(tableView, generalObserverConfig);
     },
 };

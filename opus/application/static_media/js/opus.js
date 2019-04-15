@@ -422,7 +422,7 @@ $(document).ready(function() {
         adjustHelpPanelHeight();
     });
 
-    opus_mutationObserver.observePerfectScrollbar();
+    o_mutationObserver.observePerfectScrollbar();
 
     // add the navbar clicking behaviors, selecting which tab to view:
     // see triggerNavbarClick

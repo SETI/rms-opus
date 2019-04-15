@@ -2,10 +2,10 @@ var o_browse = {
     selectedImageID: "",
     keyPressAction: "",
     tableSorting: false,
-    tableScrollbar: new PerfectScrollbar(".dataTable", {
+    tableScrollbar: new PerfectScrollbar("#browse .dataTable", {
         minScrollbarLength: opus.minimumPSLength
     }),
-    galleryScrollbar: new PerfectScrollbar(".gallery-contents", {
+    galleryScrollbar: new PerfectScrollbar("#browse .gallery-contents", {
         suppressScrollX: true,
         minScrollbarLength: opus.minimumPSLength
     }),
