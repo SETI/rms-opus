@@ -100,7 +100,7 @@ var opus = {
     helpPanelOpen: false,
 
     minimumPSLength: 30,
-    
+
     currentObs: 1,
     //------------------------------------------------------------------------------------//
     checkIfOpusSelectionsAreEmpty: function() {
@@ -143,6 +143,7 @@ var opus = {
 
         return isTheSame;
     },
+
     load: function() {
         /* When user makes any change to the interface, such as changing a query,
         the load() will send an ajax request to the server to get information it
@@ -180,8 +181,8 @@ var opus = {
             console.log("=== current selections ===");
             console.log(selections);
             console.log(opus.selections);
-            console.log("=== last selections ===");
-            console.log(opus.last_selections);
+            // console.log("=== last selections ===");
+            // console.log(opus.last_selections);
             // selections in the url hash is different from opus.last_selections
             // reset the pages:
             opus.prefs.page = default_pages;
@@ -621,6 +622,10 @@ $(document).ready(function() {
                     case "op-empty-cart":
                         o_cart.emptyCart();
                         break;
+                    case "op-update-url":
+                        // if user clicks "ok", we hide the link to url message on navabr
+                        $(".op-update-url-msg").removeClass("op-show-msg");
+                        break;
                 }
                 // This intentionally falls through to hide the modal
             case "cancel":
@@ -639,14 +644,18 @@ $(document).ready(function() {
         return elementBottom > viewportTop && elementTop < viewportBottom;
     };
 
+    let hash = o_hash.getHash();
+    console.log("1st get hash");
+    console.log(hash);
     o_cart.initCart();
     opus.triggerNavbarClick();
 
     /// Normalized url for the 1st time
     console.log("======== in document .ready function ========");
     console.log("======== call normalized for the 1st time =======");
-    let hash = o_hash.getHash();
-    console.log(hash)
+    hash = hash ? hash : o_hash.getHash();
+    console.log("2nd get hash");
+    console.log(hash);
     let url = "/opus/__normalizeurl.json?" + hash;
     console.log(`CALL API URL: ${url}`);
     $.getJSON(url, function(normalizeurlData){
@@ -659,7 +668,10 @@ $(document).ready(function() {
                 opus.currentObs = slug.startobs;
             }
         });
-        $("#op-update-url .modal-body").html(normalizeurlData.msg);
+        if (normalizeurlData.msg) {
+            $("#op-update-url .modal-body").html(normalizeurlData.msg);
+            $(".op-update-url-msg").addClass("op-show-msg");
+        }
         window.location.hash = "/" + normalizeurlData.new_url.replace(" ", "%20");
 
         // watch the url for changes, this runs continuously
