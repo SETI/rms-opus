@@ -1232,8 +1232,10 @@ var o_browse = {
     countGalleryImages: function() {
         let xDir = 0;
         let xCount = 0;
+        let tab = `#${opus.prefs.view}`;
+
         // we need to know how many images fit across; we can approx the y dir differently
-        $(".thumbnail-container").each(function(index, thumb) {
+        $(`${tab} .thumbnail-container`).each(function(index, thumb) {
             let offset = $(thumb).offset();
             if (offset.left >= xDir) {
                 xDir = offset.left;
@@ -1243,13 +1245,14 @@ var o_browse = {
                 return false;
             }
         });
-        let yCount = Math.round($(".gallery-contents").height()/100);   // images are 100px
+        let yCount = Math.round($(`${tab} .gallery-contents`).height()/100);   // images are 100px
         return {"x": xCount, "y": yCount};
     },
 
     adjustBrowseHeight: function() {
+        let tab = `#${opus.prefs.view}`;
         let container_height = $(window).height()-120;
-        $(".gallery-contents").height(container_height);
+        $(`${tab} .gallery-contents`).height(container_height);
         o_browse.galleryScrollbar.update();
         o_browse.galleryBoundingRect = o_browse.countGalleryImages();
         $("#op-observation-slider").slider("option", "step", o_browse.galleryBoundingRect.x);
@@ -1257,10 +1260,11 @@ var o_browse = {
     },
 
     adjustTableSize: function() {
-        let containerWidth = $(".gallery-contents").width();
-        let containerHeight = $(".gallery-contents").height() - $(".app-footer").height() + 8;
-        $(".dataTable").width(containerWidth);
-        $(".dataTable").height(containerHeight);
+        let tab = `#${opus.prefs.view}`;
+        let containerWidth = $(`${tab} .gallery-contents`).width();
+        let containerHeight = $(`${tab} .gallery-contents`).height() - $(".app-footer").height() + 8;
+        $(`${tab} .dataTable`).width(containerWidth);
+        $(`${tab} .dataTable`).height(containerHeight);
         o_browse.tableScrollbar.update();
     },
 
@@ -1288,8 +1292,8 @@ var o_browse = {
     },
 
     getNextPrevHandles: function(opusId) {
-        let namespace = `#${opus.prefs.view}`;
-        let idArray = $(`${namespace} .thumbnail-container[data-id]`).map(function() {
+        let tab = `#${opus.prefs.view}`;
+        let idArray = $(`${tab} .thumbnail-container[data-id]`).map(function() {
             return $(this).data("id");
         });
         let next = $.inArray(opusId, idArray) + 1;
