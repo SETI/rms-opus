@@ -173,7 +173,6 @@ var o_mutationObserver = {
         let searchTab = $("#search")[0];
         let browseTab = $("#browse")[0];
         let cartTab = $("#cart")[0];
-        let detailTab = $("#detail")[0];
         let searchSidebar = $("#sidebar")[0];
         let searchWidget = $("#op-search-widgets")[0];
         let helpPanel = $("#op-help-panel")[0];
