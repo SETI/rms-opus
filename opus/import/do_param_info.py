@@ -56,8 +56,12 @@ def create_import_param_info_table():
 
             new_row = {
                 'category_name': category_name,
-                'dict_context': column['pi_dict_context'],
-                'dict_name': column['pi_dict_name'],
+                'dict_context': column.get('pi_dict_context', None),
+                'dict_name': column.get('pi_dict_name', None),
+                'dict_context_results': column.get('pi_dict_context_results',
+                                                   None),
+                'dict_name_results': column.get('pi_dict_name_results',
+                                                None),
                 'disp_order': column['pi_disp_order'],
                 'display': column['pi_display'],
                 'display_results': column['pi_display_results'],

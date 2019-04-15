@@ -1,4 +1,15 @@
+/* jshint esversion: 6 */
+/* jshint bitwise: true, curly: true, freeze: true, futurehostile: true */
+/* jshint latedef: true, leanswitch: true, noarg: true, nocomma: true */
+/* jshint nonbsp: true, nonew: true */
+/* jshint varstmt: true */
+/* jshint multistr: true */
+/* globals $, _, PerfectScrollbar */
+/* globals o_hash, opus */
+
+/* jshint varstmt: false */
 var o_detail = {
+/* jshint varstmt: true */
 
     getDetail: function(opusId) {
 
@@ -90,8 +101,11 @@ var o_detail = {
         );
     }, // / getDetail
 
+    // Note: PS is init every time when html is rendered. The previous PS will be garbage collected and there isn't a memory leak here even though we're calling new (to init ps) over and over.
     initAndUpdatePerfectScrollbar: function() {
-        o_detail.detailPageScrollbar = new PerfectScrollbar(".detail-metadata");
+        o_detail.detailPageScrollbar = new PerfectScrollbar(".detail-metadata", {
+            minScrollbarLength: opus.minimumPSLength
+        });
         o_detail.detailPageScrollbar.update();
     },
 

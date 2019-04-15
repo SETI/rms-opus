@@ -1,4 +1,14 @@
+/* jshint esversion: 6 */
+/* jshint bitwise: true, curly: true, freeze: true, futurehostile: true */
+/* jshint latedef: true, leanswitch: true, noarg: true, nocomma: true */
+/* jshint nonbsp: true, nonew: true */
+/* jshint varstmt: true */
+/* globals $, PerfectScrollbar */
+/* globals o_browse, o_hash, opus */
+
+/* jshint varstmt: false */
 var o_cart = {
+/* jshint varstmt: true */
     lastCartRequestNo: 0,
     lastRequestNo: 0,
     downloadInProcess: false,
@@ -91,9 +101,6 @@ var o_cart = {
                      $(`<li><a href = "${data.filename}">${data.filename}</a></li>`).hide().prependTo("ul.zippedFiles", "#cart_summary").slideDown("slow");
                  }
                  $(".spinner", "#op-download-links").fadeOut();
-                 // o_collections.downloadOptionsScrollbar.update();
-                 let adjustProductInfoHeight = _.debounce(o_cart.adjustProductInfoHeight, 200);
-                 adjustProductInfoHeight();
              },
              error: function(e) {
                  $(".spinner", "#op-download-links").fadeOut();
@@ -141,9 +148,7 @@ var o_cart = {
          if (status.total_download_size_pretty !== undefined) {
              $("#op-total-download-size").fadeOut().html(status.total_download_size_pretty).fadeIn();
          }
-         o_cart.adjustProductInfoHeight();
      },
-
 
      // init an existing cart on page load
      initCart: function() {
@@ -207,7 +212,6 @@ var o_cart = {
                 });
                 opus.cart_change = false;
             }
-            o_cart.adjustProductInfoHeight();
         });
     },
 
@@ -215,7 +219,7 @@ var o_cart = {
     getCartTab: function() {
         o_browse.renderMetadataSelector();   // just do this in background so there's no delay when we want it...
         if (opus.cart_change) {
-            var zippedFiles_html = $(".zippedFiles", "#cart").html();
+            let zippedFiles_html = $(".zippedFiles", "#cart").html();
 
             // don't forget to remove existing stuff before append
             $(".gallery", "#cart").html("");
@@ -238,19 +242,19 @@ var o_cart = {
                         $(".zippedFiles", "#cart").html(zippedFiles_html);
                     }
 
-                    o_cart.downloadOptionsScrollbar = new PerfectScrollbar("#download-options-container");
+                    o_cart.downloadOptionsScrollbar = new PerfectScrollbar("#download-options-container", {
+                        minScrollbarLength: opus.minimumPSLength
+                    });
 
                     if (!o_cart.cartGalleryScrollbar) {
                         o_cart.cartGalleryScrollbar = new PerfectScrollbar("#cart .gallery-contents", {
                             suppressScrollX: true,
+                            minScrollbarLength: opus.minimumPSLength
                         });
                     }
-                    let adjustProductInfoHeight = _.debounce(o_cart.adjustProductInfoHeight, 200);
-                    adjustProductInfoHeight();
                 }
             });
         } else {
-            o_cart.adjustProductInfoHeight();
             return;
         }
     },

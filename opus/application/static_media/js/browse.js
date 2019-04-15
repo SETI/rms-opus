@@ -1,11 +1,29 @@
+/* jshint esversion: 6 */
+/* jshint bitwise: true, curly: true, freeze: true, futurehostile: true */
+/* jshint latedef: true, leanswitch: true, noarg: true, nocomma: true */
+/* jshint nonbsp: true, nonew: true */
+/* jshint varstmt: true */
+/* globals $, _, PerfectScrollbar */
+/* globals o_cart, o_hash, o_menu, o_utils, opus */
+/* globals default_pages, default_columns */
+
+/* jshint varstmt: false */
 var o_browse = {
+/* jshint varstmt: true */
     selectedImageID: "",
     tableSorting: false,
     metadataSelectorDrawn: false,
 
-    tableScrollbar: new PerfectScrollbar(".dataTable", { minScrollbarLength: 30 }),
-    galleryScrollbar: new PerfectScrollbar(".gallery-contents", { suppressScrollX: true }),
-    modalScrollbar: new PerfectScrollbar("#galleryViewContents .metadata"),
+    tableScrollbar: new PerfectScrollbar("#browse .dataTable", {
+        minScrollbarLength: opus.minimumPSLength
+    }),
+    galleryScrollbar: new PerfectScrollbar("#browse .gallery-contents", {
+        suppressScrollX: true,
+        minScrollbarLength: opus.minimumPSLength
+    }),
+    modalScrollbar: new PerfectScrollbar("#galleryViewContents .metadata", {
+        minScrollbarLength: opus.minimumPSLength
+    }),
 
     galleryBegun: false, // have we started the gallery view
     galleryData: {},  // holds gallery column data
@@ -339,6 +357,7 @@ var o_browse = {
                 case "downloadData":
                 case "downloadURL":
                     document.location.href = $(this).attr("href");
+                    break;
                 case "help":
                     break;
             }
@@ -537,7 +556,6 @@ var o_browse = {
         o_browse.checkIfLoadPrevPageIsNeeded(opusId);
         o_browse.updateGalleryView(opusId);
         $("#galleryView").modal("show");
-        o_browse.modalScrollbar.update();
     },
 
     hideMenu: function() {
@@ -649,8 +667,10 @@ var o_browse = {
 
     resetMetadata: function(cols, closeModal) {
         opus.prefs.cols = cols.slice();
-        if (closeModal == true)
+
+        if (closeModal == true) {
             $("#metadataSelector").modal('hide');
+        }
 
         // uncheck all on left; we will check them as we go
         $("#metadataSelector .allMetadata .fa-check").hide();
@@ -666,7 +686,7 @@ var o_browse = {
 
     // metadata selector behaviors
     addMetadataSelectorBehaviors: function() {
-        // this is a global
+        // Global within this function so behaviors can communicate
         var currentSelectedMetadata = opus.prefs.cols.slice();
 
         $("#metadataSelector").on("hide.bs.modal", function(e) {
@@ -685,11 +705,6 @@ var o_browse = {
         $("#metadataSelector").on("show.bs.modal", function(e) {
             // save current column state so we can look for changes
             currentSelectedMetadata = opus.prefs.cols.slice();
-        });
-
-        $("#metadataSelector").on("shown.bs.modal", function() {
-            o_browse.allMetadataScrollbar.update();
-            o_browse.selectedMetadataScrollbar.update();
         });
 
         $('#metadataSelector .allMetadata').on("click", '.submenu li a', function() {
@@ -714,10 +729,8 @@ var o_browse = {
                 opus.prefs.cols.splice($.inArray(slug,opus.prefs.cols),1);
                 $(chosenSlugSelector).remove();
             }
-            o_browse.selectedMetadataScrollbar.update();
             return false;
         });
-
 
         // removes chosen column
         $("#metadataSelector .selectedMetadata").on("click", "li .unselect", function() {
@@ -734,9 +747,9 @@ var o_browse = {
                 });
                 $(`#metadataSelector .allMetadata [data-slug=${slug}]`).find("i.fa-check").hide();
             }
-            o_browse.selectedMetadataScrollbar.update();
             return false;
         });
+
         // buttons
         $("#metadataSelector").on("click", ".btn", function() {
             switch($(this).attr("type")) {
@@ -802,8 +815,6 @@ var o_browse = {
             if (!$(".dataTable > .ps__rail-y").hasClass("hide_ps__rail-y")) {
                 $(".dataTable > .ps__rail-y").addClass("hide_ps__rail-y");
             }
-
-            o_browse.galleryScrollbar.update();
         } else {
             $("." + "gallery", "#browse").hide();
             $("." + opus.prefs.browse, "#browse").fadeIn();
@@ -821,8 +832,6 @@ var o_browse = {
                 $(".gallery-contents > .ps__rail-y").addClass("hide_ps__rail-y");
             }
             $(".dataTable > .ps__rail-y").removeClass("hide_ps__rail-y");
-
-            o_browse.tableScrollbar.update();
         }
     },
 
@@ -857,8 +866,12 @@ var o_browse = {
 
                 o_browse.addMetadataSelectorBehaviors();
 
-                o_browse.allMetadataScrollbar = new PerfectScrollbar("#metadataSelectorContents .allMetadata");
-                o_browse.selectedMetadataScrollbar = new PerfectScrollbar("#metadataSelectorContents .selectedMetadata");
+                o_browse.allMetadataScrollbar = new PerfectScrollbar("#metadataSelectorContents .allMetadata", {
+                    minScrollbarLength: opus.minimumPSLength
+                });
+                o_browse.selectedMetadataScrollbar = new PerfectScrollbar("#metadataSelectorContents .selectedMetadata", {
+                    minScrollbarLength: opus.minimumPSLength
+                });
 
                 // dragging to reorder the chosen
                 $( ".selectedMetadata > ul").sortable({
@@ -966,9 +979,6 @@ var o_browse = {
             }
         }
 
-        o_browse.adjustBrowseHeight();
-        o_browse.adjustTableSize();
-        o_browse.galleryScrollbar.update();
         $(".op-page-loading-status > .loader").hide();
         o_browse.updateSliderHandle();
         o_hash.updateHash(true);
@@ -1002,7 +1012,6 @@ var o_browse = {
         });
 
         o_browse.initResizableColumn();
-        o_browse.adjustTableSize();
     },
 
     initResizableColumn: function() {
@@ -1267,6 +1276,54 @@ var o_browse = {
         o_browse.tableScrollbar.update();
     },
 
+    adjustMetadataSelectorMenuPS: function() {
+        let containerHeight = $(".allMetadata").height();
+        let menuHeight = $(".allMetadata .searchMenu").height();
+
+        if (containerHeight > menuHeight) {
+            if (!$(".allMetadata .ps__rail-y").hasClass("hide_ps__rail-y")) {
+                $(".allMetadata .ps__rail-y").addClass("hide_ps__rail-y");
+                o_browse.allMetadataScrollbar.settings.suppressScrollY = true;
+            }
+        } else {
+            $(".allMetadata .ps__rail-y").removeClass("hide_ps__rail-y");
+            o_browse.allMetadataScrollbar.settings.suppressScrollY = false;
+        }
+        o_browse.allMetadataScrollbar.update();
+    },
+
+    adjustSelectedMetadataPS: function() {
+        let containerHeight = $(".selectedMetadata").height();
+        let selectedMetadataHeight = $(".selectedMetadata .ui-sortable").height();
+
+        if (containerHeight > selectedMetadataHeight) {
+            if (!$(".selectedMetadata .ps__rail-y").hasClass("hide_ps__rail-y")) {
+                $(".selectedMetadata .ps__rail-y").addClass("hide_ps__rail-y");
+                o_browse.selectedMetadataScrollbar.settings.suppressScrollY = true;
+            }
+        } else {
+            $(".selectedMetadata .ps__rail-y").removeClass("hide_ps__rail-y");
+            o_browse.selectedMetadataScrollbar.settings.suppressScrollY = false;
+        }
+        o_browse.selectedMetadataScrollbar.update();
+    },
+
+    adjustBrowseDialogPS: function() {
+        let containerHeight = $("#galleryViewContents .metadata").height();
+        let browseDialogHeight = $(".metadata .contents").height();
+
+        if (containerHeight > browseDialogHeight) {
+            if (!$("#galleryViewContents .metadata .ps__rail-y").hasClass("hide_ps__rail-y")) {
+                $("#galleryViewContents .metadata .ps__rail-y").addClass("hide_ps__rail-y");
+                o_browse.modalScrollbar.settings.suppressScrollY = true;
+            }
+        } else {
+            $("#galleryViewContents .metadata .ps__rail-y").removeClass("hide_ps__rail-y");
+            o_browse.modalScrollbar.settings.suppressScrollY = false;
+        }
+        o_browse.modalScrollbar.update();
+    },
+
     cartButtonInfo: function(status) {
         let icon = "fas fa-cart-plus";
         let title = "Add to cart";
@@ -1350,7 +1407,6 @@ var o_browse = {
     updateMetaGalleryView: function(opusId, imageURL) {
         $("#galleryViewContents .left").html(`<a href='${imageURL}' target='_blank'><img src='${imageURL}' title='${opusId}' class='preview'/></a>`);
         o_browse.metadataboxHtml(opusId);
-        o_browse.modalScrollbar.update();
     },
 
 

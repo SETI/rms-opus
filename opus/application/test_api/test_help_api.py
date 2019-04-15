@@ -37,9 +37,9 @@ class ApiHelpTests(TestCase, ApiTestHelper):
         url = '/opus/__help/about.html'
         self._run_status_equal(url, 200)
 
-    def test__api_help_datasets(self):
-        "[test_help_api.py] /__help: datasets"
-        url = '/opus/__help/datasets.html'
+    def test__api_help_volumes(self):
+        "[test_help_api.py] /__help: volumes"
+        url = '/opus/__help/volumes.html'
         self._run_status_equal(url, 200)
 
     def test__api_help_faq(self):

@@ -505,21 +505,7 @@ def populate_obs_wavelength_COUVIS_wave_no_res2(**kwargs):
 
     return wave_res1 * 10000. / (wl1*wl1)
 
-def populate_obs_wavelength_COUVIS_spec_flag(**kwargs):
-    channel, image_time = _COUVIS_channel_time_helper(**kwargs)
-    metadata = kwargs['metadata']
-    index_row = metadata['index_row']
-    slit_state = index_row['SLIT_STATE']
-
-    if channel == 'HSP' or channel == 'HDAC':
-        return 'N'
-    assert channel == 'EUV' or channel == 'FUV'
-    if slit_state == 'OCCULTATION':
-        return 'N'
-
-    return 'Y'
-
-def populate_obs_wavelength_COUVIS_spec_size(**kwargs):
+def _spec_size_helper(**kwargs):
     channel, image_time = _COUVIS_channel_time_helper(**kwargs)
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
@@ -538,6 +524,15 @@ def populate_obs_wavelength_COUVIS_spec_size(**kwargs):
         return None
 
     return (band2 - band1 + 1) // band_bin
+
+def populate_obs_wavelength_COUVIS_spec_flag(**kwargs):
+    spec_size = _spec_size_helper(**kwargs)
+    if spec_size is None or spec_size <= 1:
+        return 'N'
+    return 'Y'
+
+def populate_obs_wavelength_COUVIS_spec_size(**kwargs):
+    return _spec_size_helper(**kwargs)
 
 def populate_obs_wavelength_COUVIS_polarization_type(**kwargs):
     return 'NONE'

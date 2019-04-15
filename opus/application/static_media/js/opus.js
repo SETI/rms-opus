@@ -1,5 +1,17 @@
+/* jshint esversion: 6 */
+/* jshint bitwise: true, curly: true, freeze: true, futurehostile: true */
+/* jshint latedef: true, leanswitch: true, noarg: true, nocomma: true */
+/* jshint nonbsp: true, nonew: true */
+/* jshint varstmt: true */
+/* jshint multistr: true */
+/* globals $, _, PerfectScrollbar */
+/* globals o_browse, o_cart, o_detail, o_hash, o_menu, o_mutationObserver, o_search, o_utils, o_widgets */
+/* globals default_columns, default_widgets, default_sort_order, static_url */
+
 // defining the opus namespace first; document ready comes after...
+/* jshint varstmt: false */
 var opus = {
+/* jshint varstmt: true */
 
 
     /**
@@ -40,7 +52,7 @@ var opus = {
     col_labels: [],  // contains labels that match prefs.cols, which are slugs for each column label
                       // it's outside of prefs because those are things loaded into urls
                       // this is not
-					  // note that this is also not a dictionary because we need to preserve the order.
+                      // note that this is also not a dictionary because we need to preserve the order.
 
     // searching - making queries
     selections:{},        // the user's search
@@ -72,8 +84,9 @@ var opus = {
     allInputsValid: true,
 
     helpPanelOpen: false,
-    //------------------------------------------------------------------------------------//
 
+    minimumPSLength: 30,
+    //------------------------------------------------------------------------------------//
     load: function() {
         /* When user makes any change to the interface, such as changing a query,
         the load() will send an ajax request to the server to get information it
@@ -94,15 +107,7 @@ var opus = {
             $(".op-reset-button button").prop("disabled", true);
         }
 
-        if ($.isEmptyObject(selections)) {
-            // there are no selections found in the url hash
-            if (!$.isEmptyObject(opus.last_selections)) {
-                // last selections is also empty
-                opus.last_selections = {};
-                o_browse.resetQuery();
-            }
-        }
-
+        // compare selections and last selections
         if (o_utils.areObjectsEqual(selections, opus.last_selections))  {
             // selections have not changed from opus.last_selections
             if (!opus.force_load) { // so we do only non-reloading pref changes
@@ -112,17 +117,23 @@ var opus = {
 
         } else {
             // selections in the url hash is different from opus.last_selections
-              // reset the pages:
-              opus.prefs.startobs = 1;
-              opus.prefs.cart_startobs = 1;
+            opus.prefs.startobs = 1;
+            opus.prefs.cart_startobs = 1;
 
-              // and reset the query:
-              o_browse.resetQuery();
+            // and reset the query:
+            o_browse.resetQuery();
         }
 
         // start the result count spinner and do the yellow flash
         $("#op-result-count").html(opus.spinner).parent().effect("highlight", {}, 500);
         $("#op-observation-number").html(opus.spinner).effect("highlight", {}, 500);
+
+        // start op-menu-text and op-search-widgets spinner
+        // this is to trigger these two spinners right away when result count spinner is running
+        $(".op-menu-text.spinner").addClass("op-show-spinner");
+        $("#op-search-widgets .spinner").fadeIn();
+
+        // update last selections after the comparison of selections and last selections
         // move this above allNormalizedApiCall to avoid recursive api call
         opus.last_selections = selections;
 
@@ -298,20 +309,6 @@ var opus = {
             deferredArr.push($.Deferred());
             o_widgets.getWidget(slug,"#search_widgets",deferredArr[index]);
         });
-        // wait until all widgets are get
-        $.when.apply(null, deferredArr).then(function() {
-            let adjustSearchWidgetHeight = _.debounce(o_search.adjustSearchHeight, 800);
-            adjustSearchWidgetHeight();
-        });
-
-        // if (resetMetadata) {
-        //     $(".op-reset-button button").prop("disabled", false);
-        // } else if (!opus.checkIfMetadataAreDefault()) {
-        //     $(".op-reset-button .op-reset-search-metadata").prop("disabled", false);
-        //     $(".op-reset-button .op-reset-search").prop("disabled", true);
-        // } else {
-        //     $(".op-reset-button button").prop("disabled", true);
-        // }
 
         // start the main timer again
         opus.main_timer = setInterval(opus.load, opus.main_timer_interval);
@@ -404,21 +401,23 @@ $(document).ready(function() {
         opus.prefs.view = 'search';
     }
 
-    var adjustSearchHeight = _.debounce(o_search.adjustSearchHeight, 200);
-    var adjustBrowseHeight = _.debounce(o_browse.adjustBrowseHeight, 200);
-    var adjustTableSize = _.debounce(o_browse.adjustTableSize, 200);
-    var adjustProductInfoHeight = _.debounce(o_cart.adjustProductInfoHeight, 200);
-    var adjustDetailHeight = _.debounce(o_detail.adjustDetailHeight, 200);
-    var adjustHelpPanelHeight = _.debounce(opus.adjustHelpPanelHeight, 200);
+    let adjustSearchHeightDB = _.debounce(o_search.adjustSearchHeight, 200);
+    let adjustBrowseHeightDB = _.debounce(o_browse.adjustBrowseHeight, 200);
+    let adjustTableSizeDB = _.debounce(o_browse.adjustTableSize, 200);
+    let adjustProductInfoHeightDB = _.debounce(o_cart.adjustProductInfoHeight, 200);
+    let adjustDetailHeightDB = _.debounce(o_detail.adjustDetailHeight, 200);
+    let adjustHelpPanelHeightDB = _.debounce(opus.adjustHelpPanelHeight, 200);
 
-    $( window ).on("resize", function() {
-        adjustSearchHeight();
-        adjustBrowseHeight();
-        adjustTableSize();
-        adjustProductInfoHeight();
-        adjustDetailHeight();
-        adjustHelpPanelHeight();
+    $(window).on("resize", function() {
+        adjustSearchHeightDB();
+        adjustBrowseHeightDB();
+        adjustTableSizeDB();
+        adjustProductInfoHeightDB();
+        adjustDetailHeightDB();
+        adjustHelpPanelHeightDB();
     });
+
+    o_mutationObserver.observePerfectScrollbar();
 
     // add the navbar clicking behaviors, selecting which tab to view:
     // see triggerNavbarClick
@@ -429,7 +428,7 @@ $(document).ready(function() {
         }
 
         // find out which tab they clicked
-        var tab = $(this).find("a").attr("href").substring(1);
+        let tab = $(this).find("a").attr("href").substring(1);
         if (tab == '/') {
             return true;  // they clicked the brand icon, take them to its link
         }
@@ -446,15 +445,15 @@ $(document).ready(function() {
 
     $(".op-help-item").on("click", function() {
         let url = "/opus/__help/";
-        var header = "";
+        let header = "";
         switch ($(this).data("action")) {
             case "about":
                 url += "about.html";
                 header = "About OPUS";
                 break;
-            case "datasets":
-                url += "datasets.html";
-                header = "Datasets Available for Searching with OPUS";
+            case "volumes":
+                url += "volumes.html";
+                header = "Volumes Available for Searching with OPUS";
                 break;
             case "faq":
                 url += "faq.html";
@@ -479,9 +478,11 @@ $(document).ready(function() {
         $("#op-help-panel .loader").show();
         // We only need one perfectScrollbar
         if (!opus.helpScrollbar) {
-            opus.helpScrollbar = new PerfectScrollbar("#op-help-panel .card-body", { suppressScrollX: true });
+            opus.helpScrollbar = new PerfectScrollbar("#op-help-panel .card-body", {
+                suppressScrollX: true,
+                minScrollbarLength: opus.minimumPSLength
+            });
         }
-        adjustHelpPanelHeight();
         $("#op-help-panel").toggle("slide", {direction:'right'}, function() {
             $(".op-overlay").addClass("active");
         });
@@ -492,7 +493,6 @@ $(document).ready(function() {
                 $("#op-help-panel .loader").hide();
                 $("#op-help-panel .op-card-contents").html(page);
                 opus.helpPanelOpen = true;
-                adjustHelpPanelHeight();
             }
         });
     });

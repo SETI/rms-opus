@@ -427,12 +427,16 @@ def get_metadata(request, opus_id, fmt, api_name, return_db_names, internal):
         raise ret
 
     if not opus_id: # pragma: no cover
-        ret = Http404('No OPUS ID')
+        ret = Http404(settings.HTTP404_MISSING_OPUS_ID)
         exit_api_call(api_code, ret)
         raise ret
 
     # Backwards compatibility
     opus_id = convert_ring_obs_id_to_opus_id(opus_id)
+    if not opus_id:
+        ret = Http404(settings.HTTP404_UNKNOWN_RING_OBS_ID)
+        exit_api_call(api_code, ret)
+        raise ret
 
     cols = request.GET.get('cols', False)
     if cols or cols == '':
@@ -753,8 +757,17 @@ def api_get_image(request, opus_id, size='med', fmt='raw'):
         exit_api_call(api_code, ret)
         raise ret
 
+    if not opus_id: # pragma: no cover
+        ret = Http404(settings.HTTP404_MISSING_OPUS_ID)
+        exit_api_call(api_code, ret)
+        raise ret
+
     # Backwards compatibility
     opus_id = convert_ring_obs_id_to_opus_id(opus_id)
+    if not opus_id:
+        ret = Http404(settings.HTTP404_UNKNOWN_RING_OBS_ID)
+        exit_api_call(api_code, ret)
+        raise ret
 
     image_list = get_pds_preview_images(opus_id, None, size)
     if len(image_list) != 1:
@@ -813,6 +826,10 @@ def api_get_files(request, opus_id=None):
     if opus_id:
         # Backwards compatibility
         opus_id = convert_ring_obs_id_to_opus_id(opus_id)
+        if not opus_id:
+            ret = Http404(settings.HTTP404_UNKNOWN_RING_OBS_ID)
+            exit_api_call(api_code, ret)
+            raise ret
         opus_ids = [opus_id]
     else:
         # No opus_id passed, get files from search results
@@ -865,8 +882,17 @@ def api_get_categories_for_opus_id(request, opus_id):
         exit_api_call(api_code, ret)
         raise ret
 
+    if not opus_id: # pragma: no cover
+        ret = Http404(settings.HTTP404_MISSING_OPUS_ID)
+        exit_api_call(api_code, ret)
+        raise ret
+
     # Backwards compatibility
     opus_id = convert_ring_obs_id_to_opus_id(opus_id)
+    if not opus_id:
+        ret = Http404(settings.HTTP404_UNKNOWN_RING_OBS_ID)
+        exit_api_call(api_code, ret)
+        raise ret
 
     all_categories = []
     table_info = (TableNames.objects.all().values('table_name', 'label')
