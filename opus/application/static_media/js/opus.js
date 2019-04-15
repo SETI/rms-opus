@@ -44,7 +44,7 @@ var opus = {
     col_labels: [],  // contains labels that match prefs.cols, which are slugs for each column label
                       // it's outside of prefs because those are things loaded into urls
                       // this is not
-					  // note that this is also not a dictionary because we need to preserve the order.
+                      // note that this is also not a dictionary because we need to preserve the order.
 
 
     lastPageDrawn: {"browse":0, "cart":0},
@@ -84,6 +84,8 @@ var opus = {
     allInputsValid: true,
 
     helpPanelOpen: false,
+
+    minimumPSLength: 30,
     //------------------------------------------------------------------------------------//
     load: function() {
         /* When user makes any change to the interface, such as changing a query,
@@ -483,7 +485,7 @@ $(document).ready(function() {
         if (!opus.helpScrollbar) {
             opus.helpScrollbar = new PerfectScrollbar("#op-help-panel .card-body", {
                 suppressScrollX: true,
-                minScrollbarLength: 30
+                minScrollbarLength: opus.minimumPSLength
             });
         }
         $("#op-help-panel").toggle("slide", {direction:'right'}, function() {

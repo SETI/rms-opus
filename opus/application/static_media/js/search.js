@@ -7,11 +7,11 @@ var o_search = {
      **/
     searchScrollbar: new PerfectScrollbar("#sidebar-container", {
         suppressScrollX: true,
-        minScrollbarLength: 30
+        minScrollbarLength: opus.minimumPSLength
     }),
     widgetScrollbar: new PerfectScrollbar("#widget-container" , {
         suppressScrollX: true,
-        minScrollbarLength: 30
+        minScrollbarLength: opus.minimumPSLength
     }),
 
     // for input validation in the search widgets

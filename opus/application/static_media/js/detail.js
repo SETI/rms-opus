@@ -92,7 +92,7 @@ var o_detail = {
 
     initAndUpdatePerfectScrollbar: function() {
         o_detail.detailPageScrollbar = new PerfectScrollbar(".detail-metadata", {
-            minScrollbarLength: 30
+            minScrollbarLength: opus.minimumPSLength
         });
         o_detail.detailPageScrollbar.update();
     },

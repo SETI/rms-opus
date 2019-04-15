@@ -226,13 +226,13 @@ var o_cart = {
                     }
 
                     o_cart.downloadOptionsScrollbar = new PerfectScrollbar("#download-options-container", {
-                        minScrollbarLength: 30
+                        minScrollbarLength: opus.minimumPSLength
                     });
 
                     if (!o_cart.cartGalleryScrollbar) {
                         o_cart.cartGalleryScrollbar = new PerfectScrollbar("#cart .gallery-contents", {
                             suppressScrollX: true,
-                            minScrollbarLength: 30
+                            minScrollbarLength: opus.minimumPSLength
                         });
                     }
                 }

@@ -3,14 +3,14 @@ var o_browse = {
     keyPressAction: "",
     tableSorting: false,
     tableScrollbar: new PerfectScrollbar(".dataTable", {
-        minScrollbarLength: 30
+        minScrollbarLength: opus.minimumPSLength
     }),
     galleryScrollbar: new PerfectScrollbar(".gallery-contents", {
         suppressScrollX: true,
-        minScrollbarLength: 30
+        minScrollbarLength: opus.minimumPSLength
     }),
     modalScrollbar: new PerfectScrollbar("#galleryViewContents .metadata", {
-        minScrollbarLength: 30
+        minScrollbarLength: opus.minimumPSLength
     }),
 
     // if the user entered a number/slider for page/obs number,
@@ -935,10 +935,10 @@ var o_browse = {
                 o_browse.addMetadataSelectorBehaviors();
 
                 o_browse.allMetadataScrollbar = new PerfectScrollbar("#metadataSelectorContents .allMetadata", {
-                    minScrollbarLength: 30
+                    minScrollbarLength: opus.minimumPSLength
                 });
                 o_browse.selectedMetadataScrollbar = new PerfectScrollbar("#metadataSelectorContents .selectedMetadata", {
-                    minScrollbarLength: 30
+                    minScrollbarLength: opus.minimumPSLength
                 });
 
                 // dragging to reorder the chosen
@@ -1435,7 +1435,7 @@ var o_browse = {
         o_browse.tableScrollbar.update();
     },
 
-    adjustMetadataSelectorMenu: function() {
+    adjustMetadataSelectorMenuPS: function() {
         let containerHeight = $(".allMetadata").height();
         let menuHeight = $(".allMetadata .searchMenu").height();
 
