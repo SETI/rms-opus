@@ -44,6 +44,9 @@
                             </div>
                         </a>
                     </li>
+                    <li class="nav-item">
+                        <a href="#" class="updateURL nav-link" data-toggle="modal" data-target="#op-update-url" title="Update to normalized URL">Update URL</a>
+                    </li>
                 </ul>
                 <ul class="nav navbar-nav flex-column flex-sm-row">
                     <li id="op-help" class="nav-item dropdown">
@@ -301,6 +304,12 @@
             confirm_title="Confirm Remove All Observations From Cart"
             confirm_msg="Are you sure you want to remove all observations from your cart?"
             target="op-empty-cart"
+        %}
+        {% include "confirm_modal.html" with
+            id_name="op-update-url"
+            confirm_title="Update to normalized URL"
+            confirm_msg="Placeholder"
+            target="op-update-url"
         %}
 
         {% endblock %}

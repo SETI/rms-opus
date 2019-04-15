@@ -12,8 +12,12 @@
         {{confirm_msg}}
       </div>
       <div class="modal-footer">
-        <button type="submit" class="btn btn-primary" data-dismiss="modal" data-target={{target}}>Yes</button>
-        <button type="cancel" class="btn btn-danger">No</button>
+        {% if confirm_title == "Update to normalized URL" %}
+            <button type="submit" class="btn btn-primary" data-dismiss="modal" data-target={{target}}>OK</button>
+        {% else %}
+            <button type="submit" class="btn btn-primary" data-dismiss="modal" data-target={{target}}>Yes</button>
+            <button type="cancel" class="btn btn-danger">No</button>
+        {% endif %}
       </div>
     </div>
   </div>

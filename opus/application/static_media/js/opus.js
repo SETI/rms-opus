@@ -89,17 +89,15 @@ var opus = {
     //------------------------------------------------------------------------------------//
     checkIfOpusSelectionsAreEmpty: function() {
         let isEmpty = true;
-        if ($.isEmptyObject(selections)) {
-            $.each(Object.keys(opus.selections), function(idx, slug) {
-                if (opus.selections[slug].length !== 0) {
-                    isEmpty = false;
-                    return;
-                };
-            });
-        }
+        $.each(Object.keys(opus.selections), function(idx, slug) {
+            if (opus.selections[slug].length !== 0) {
+                isEmpty = false;
+                return;
+            }
+        });
         return isEmpty;
     },
-    
+
     checkIfObjectsAreTheSame: function(obj1, obj2) {
         // TODO: Need to figure out a way to compare {} and {planet:[]}
         if (Object.keys(obj1).length !== Object.keys(obj2).length) {
@@ -161,11 +159,11 @@ var opus = {
 
         } else {
             console.log("### selections changes ###");
-            console.log("=== current selections ===");
-            console.log(selections);
-            console.log(opus.selections);
-            console.log("=== last selections ===");
-            console.log(opus.last_selections);
+            // console.log("=== current selections ===");
+            // console.log(selections);
+            // console.log(opus.selections);
+            // console.log("=== last selections ===");
+            // console.log(opus.last_selections);
             // selections in the url hash is different from opus.last_selections
             // reset the pages:
             opus.prefs.page = default_pages;
@@ -176,15 +174,17 @@ var opus = {
                 // modifiedSelections[slug] = [selections[slug].join(",")];
                 modifiedSelections[slug] = selections[slug][0].split(",");
             });
-            console.log("Are selections and opus.selections the same????")
-            console.log(opus.checkIfObjectsAreTheSame(modifiedSelections, opus.selections));
-            console.log("=== modifiedSelections ===");
-            console.log(modifiedSelections);
-            if (!opus.checkIfObjectsAreTheSame(modifiedSelections, opus.selections)) {
+            // console.log("Are selections and opus.selections the same????")
+            // console.log(opus.checkIfObjectsAreTheSame(modifiedSelections, opus.selections));
+            // console.log("=== modifiedSelections ===");
+            // console.log(modifiedSelections);
+            // console.log(!($.isEmptyObject(selections) && !$.isEmptyObject(opus.selections) && opus.checkIfOpusSelectionsAreEmpty()))
+            let hasSelections = !(($.isEmptyObject(selections) && !$.isEmptyObject(opus.selections) && opus.checkIfOpusSelectionsAreEmpty()))
+            if (hasSelections && !opus.checkIfObjectsAreTheSame(modifiedSelections, opus.selections)) {
                 console.log("@@@@")
                 opus.selections = modifiedSelections;
-                console.log("opus.selections after mod")
-                console.log(opus.selections)
+                // console.log("opus.selections after mod")
+                // console.log(opus.selections)
                 location.reload();
                 return;
             } else {
@@ -650,10 +650,6 @@ $(document).ready(function() {
         });
 
         window.location.hash = "/" + normalizeurlData.new_url.replace(" ", "%20");
-        // console.log("Update URL ======");
-        // console.log(normalizeurlData.new_url);
-        // console.log("window location hash");
-        // console.log(window.location.hash);
     });
 
     // watch the url for changes, this runs continuously
