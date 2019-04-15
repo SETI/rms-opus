@@ -95,7 +95,7 @@ var o_mutationObserver = {
 
         // ps in cart page
         let cartObserver = new MutationObserver(function(mutationsList) {
-                // in cart page, we only need to detect element change. We don't need to worry about attribute change (no expanding/collapsing event).
+                // in cart page, we only need to detect element change. We don't need to worry about attribute change (no expanding/collapsing event). Whenever there is an element added/removed in cart page, o_cart.cartGalleryScrollbar and o_cart.downloadOptionsScrollbar are updated.
                 adjustProductInfoHeight();
         });
 
@@ -180,7 +180,6 @@ var o_mutationObserver = {
         let metadataSelector = $("#metadataSelector")[0];
         let metadataSelectorContents = $("#metadataSelectorContents")[0];
         let browseDialogModal = $("#galleryView.modal")[0];
-        let browseDailogContents = $(".metadata .contents")[0];
         let galleryView = $(".op-gallery-view")[0];
         let tableView = $("#dataTable")[0];
 
@@ -210,8 +209,6 @@ var o_mutationObserver = {
         selectedMetadataObserver.observe(metadataSelectorContents, childListObserverConfig);
         // update ps when browse dialog open/close
         browseDialogObserver.observe(browseDialogModal, {attributes: true});
-        // update ps when contents in dialog is added/removed
-        // browseDialogObserver.observe(browseDailogContents, childListObserverConfig);
         // udpate ps in browse gallery view
         galleryViewObserver.observe(galleryView, generalObserverConfig);
         // update ps in browse table view
