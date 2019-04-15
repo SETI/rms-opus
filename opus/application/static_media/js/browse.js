@@ -1,4 +1,15 @@
+/* jshint esversion: 6 */
+/* jshint bitwise: true, curly: true, freeze: true, futurehostile: true */
+/* jshint latedef: true, leanswitch: true, noarg: true, nocomma: true */
+/* jshint nonbsp: true, nonew: true */
+/* jshint varstmt: true */
+/* globals $, _, PerfectScrollbar */
+/* globals o_cart, o_hash, o_menu, o_utils, opus */
+/* globals default_pages, default_columns */
+
+/* jshint varstmt: false */
 var o_browse = {
+/* jshint varstmt: true */
     selectedImageID: "",
     keyPressAction: "",
     tableSorting: false,
@@ -357,6 +368,7 @@ var o_browse = {
                 case "downloadData":
                 case "downloadURL":
                     document.location.href = $(this).attr("href");
+                    break;
                 case "help":
                     break;
             }
@@ -690,8 +702,10 @@ var o_browse = {
 
     resetMetadata: function(cols, closeModal) {
         opus.prefs.cols = cols.slice();
-        if (closeModal == true)
+
+        if (closeModal == true) {
             $("#metadataSelector").modal('hide');
+        }
 
         // uncheck all on left; we will check them as we go
         $("#metadataSelector .allMetadata .fa-check").hide();
@@ -707,7 +721,7 @@ var o_browse = {
 
     // metadata selector behaviors
     addMetadataSelectorBehaviors: function() {
-        // this is a global
+        // Global within this function so behaviors can communicate
         var currentSelectedMetadata = opus.prefs.cols.slice();
 
         $("#metadataSelector").on("hide.bs.modal", function(e) {
@@ -755,7 +769,6 @@ var o_browse = {
             return false;
         });
 
-
         // removes chosen column
         $("#metadataSelector .selectedMetadata").on("click", "li .unselect", function() {
             if (opus.prefs.cols.length <= 1) {
@@ -773,6 +786,7 @@ var o_browse = {
             }
             return false;
         });
+
         // buttons
         $("#metadataSelector").on("click", ".btn", function() {
             switch($(this).attr("type")) {
@@ -1199,7 +1213,7 @@ var o_browse = {
         page = (page === undefined ? opus.prefs.page[opus.prefs.browse] : page);
 
         // if the request is a block far away from current page cache, flush the cache and start over
-        var pagesDrawn = [];
+        let pagesDrawn = [];
         let namespace = o_browse.getViewInfo().namespace;
         $(`${namespace} [data-page]`).each(function(index, elem) {
             pagesDrawn.push($(elem).data("page"));

@@ -1,4 +1,15 @@
+/* jshint esversion: 6 */
+/* jshint bitwise: true, curly: true, freeze: true, futurehostile: true */
+/* jshint latedef: true, leanswitch: true, noarg: true, nocomma: true */
+/* jshint nonbsp: true, nonew: true */
+/* jshint varstmt: true */
+/* jshint multistr: true */
+/* globals $ */
+/* globals o_hash, o_menu, o_search, o_utils, opus */
+
+/* jshint varstmt: false */
 var o_widgets = {
+/* jshint varstmt: true */
 
     /**
      *
@@ -41,7 +52,7 @@ var o_widgets = {
 
         // close a card
         $('#search').on('click', '.close_card', function(myevent) {
-            var slug = $(this).data('slug');
+            let slug = $(this).data('slug');
             o_widgets.closeWidget(slug);
             let id = "#widget__"+slug;
             try {
@@ -69,7 +80,7 @@ var o_widgets = {
 
     closeWidget: function(slug) {
 
-        var slugNoNum;
+        let slugNoNum;
         try {
             slugNoNum = slug.match(/(.*)[1|2]/)[1];
         } catch (e) {
@@ -102,7 +113,7 @@ var o_widgets = {
         delete opus.extras[`qtype-${slugNoNum}`];
         delete opus.extras[`z-${slugNoNum}`];
 
-        var selector = `li [data-slug='${slug}']`;
+        let selector = `li [data-slug='${slug}']`;
         o_menu.markMenuItem(selector, "unselect");
 
         o_search.allNormalizedApiCall().then(function(normalizedData) {
@@ -147,7 +158,7 @@ var o_widgets = {
                 // adding a behavior: checking a planet box opens the corresponding targets
                 $('#search').on('change', '#widget__planet input:checkbox:checked', function() {
                     // a planet is .chosen_columns, and its corresponding target is not already open
-                    var mult_id = '.mult_group_' + $(this).attr('value');
+                    let mult_id = '.mult_group_' + $(this).attr('value');
                     $(mult_id).find('.indicator').addClass('fa-minus');
                     $(mult_id).find('.indicator').removeClass('fa-plus');
                     $(mult_id).next().slideDown("fast");
@@ -159,7 +170,7 @@ var o_widgets = {
                 // usually for when a planet checkbox is checked on page load
                 $('#widget__planet input:checkbox:checked', '#search').each(function() {
                     if ($(this).attr('id') && $(this).attr('id').split('_')[0] == 'planet') { // confine to param/vals - not other input controls
-                        var mult_id = '.mult_group_' + $(this).attr('value');
+                        let mult_id = '.mult_group_' + $(this).attr('value');
                         $(mult_id).find('.indicator').addClass('fa-minus');
                         $(mult_id).find('.indicator').removeClass('fa-plus');
                         $(mult_id).next().slideDown("fast");
@@ -172,7 +183,7 @@ var o_widgets = {
                // usually for when a planet checkbox is checked on page load
                $('#widget__planet input:checkbox:checked', '#search').each(function() {
                    if ($(this).attr('id') && $(this).attr('id').split('_')[0] == 'planet') { // confine to param/vals - not other input controls
-                       var mult_id = '.mult_group_' + $(this).attr('value');
+                       let mult_id = '.mult_group_' + $(this).attr('value');
                        $(mult_id).find('.indicator').addClass('fa-minus');
                        $(mult_id).find('.indicator').removeClass('fa-plus');
                        $(mult_id).next().slideDown("fast");
@@ -249,24 +260,24 @@ var o_widgets = {
 
          if (opus.selections[slug]) {
 
-             var form_type = $('#widget__' + slug + ' .widget_inner').attr("class").split(' ')[1];
+             let form_type = $('#widget__' + slug + ' .widget_inner').attr("class").split(' ')[1];
 
              if (form_type == 'RANGE') {
 
                  // this is a range widget
-                 var qtypes;
+                 let qtypes;
                  try {
                      qtypes = opus.extras['qtype-' + slugNoNum];
                  } catch(e) {
                      qtypes = [opus.qtype_default];
                  }
 
-                 var length = (opus.selections[slugMin].length > opus.selections[slugMax].length) ? opus.selections[slugMin].length : opus.selections[slugMax].length;
+                 let length = (opus.selections[slugMin].length > opus.selections[slugMax].length) ? opus.selections[slugMin].length : opus.selections[slugMax].length;
 
                  simple = [];
-                 for (var i=0;i<length;i++) {
+                 for (let i=0;i<length;i++) {
                      // ouch:
-                     var qtype;
+                     let qtype;
                      try{
                          qtype = qtypes[i];
                      } catch(e) {
@@ -296,11 +307,13 @@ var o_widgets = {
                       break;  // we have decided to only show the first range in the minimized display
                   }
                   simple = label + simple.join(' and ');
-                  if (length > 1) simple = simple + ' and more..';
+                  if (length > 1) {
+                      simple = simple + ' and more..';
+                  }
 
              } else if (form_type == 'STRING') {
-                 var s_arr = [];
-                 var last_qtype = '';
+                 let s_arr = [];
+                 let last_qtype = '';
                  for (let key in opus.selections[slug]) {
                      let value = opus.selections[slug][key];
                      let qtype;
@@ -341,10 +354,10 @@ var o_widgets = {
          // this is for when you are first drawing the browse tab and there
          // multiple widgets being requested at once and we want to preserve their order
          // and avoid race conditions that will throw them out of order
-         for (var k in opus.prefs.widgets) {
-             var slug = opus.prefs.widgets[k];
-             var widget = 'widget__' + slug;
-             var html = '<li id = "' + widget + '" class = "widget"></li>';
+         for (let k in opus.prefs.widgets) {
+             let slug = opus.prefs.widgets[k];
+             let widget = 'widget__' + slug;
+             let html = '<li id = "' + widget + '" class = "widget"></li>';
              $(html).appendTo('#op-search-widgets ');
              // $(html).hide().appendTo('#op-search-widgets').show("blind",{direction: "vertical" },200);
              opus.widget_elements_drawn.push(slug);
@@ -354,7 +367,9 @@ var o_widgets = {
      // adds a widget and its behaviors, adjusts the opus.prefs variable to include this widget, will not update the hash
     getWidget: function(slug, formscolumn, deferredObj=null) {
 
-        if (!slug) return;
+        if (!slug) {
+            return;
+        }
 
         if ($.inArray(slug, opus.widgets_drawn) > -1) {
             return; // widget already drawn
@@ -363,7 +378,7 @@ var o_widgets = {
             return; // widget being fetched
         }
 
-        var widget = 'widget__' + slug;
+        let widget = 'widget__' + slug;
 
         opus.widgets_fetching.push(slug);
 
@@ -374,7 +389,7 @@ var o_widgets = {
 
             o_widgets.updateWidgetCookies();
             // these sometimes get drawn on page load by placeWidgetContainers, but not this time:
-            var html = '<li id = "' + widget + '" class = "widget"></li>';
+            let html = '<li id = "' + widget + '" class = "widget"></li>';
             $(html).hide().prependTo(formscolumn).show("slow");
             opus.widget_elements_drawn.unshift(slug);
 
@@ -388,7 +403,7 @@ var o_widgets = {
              // already defined by the url:
              if (slug.match(/.*(1|2)/)) {
                // this is a range widget
-                 var id = slug.match(/(.*)[1|2]/)[1];
+                 let id = slug.match(/(.*)[1|2]/)[1];
 
                 // is the qtype constrained in the url?
                  if ($.inArray('qtype-' + id,opus.extras) > -1 && opus.extras['qtype-'+id]) {
@@ -400,7 +415,7 @@ var o_widgets = {
                 // add the helper text for range widgets
                 if ($('.' + widget).hasClass('range-widget') && $('.' + widget).find('select').length) {
                     // this is a range widget and also the any/all/only dropdown is included
-                    var help_icon = '<a href = "#" data-toggle="popover" data-placement="left">\
+                    let help_icon = '<a href = "#" data-toggle="popover" data-placement="left">\
                                     <i class="fa fa-info-circle"></i></a>';
 
                     $('.' + widget + ' .widget-main>ul>ul').append('<li class = "range-qtype-helper">' + help_icon + '</li>');
@@ -546,8 +561,8 @@ var o_widgets = {
              // add the spans that hold the hinting
              try {
                  $('#' + widget + ' ul label').after(function() {
-                    var value = $(this).find('input').attr("value");
-                    var span_id = 'hint__' + slug + '_' + value.replace(/ /g,'-').replace(/[^\w\s]/gi, '');  // special chars not allowed in id element
+                    let value = $(this).find('input').attr("value");
+                    let span_id = 'hint__' + slug + '_' + value.replace(/ /g,'-').replace(/[^\w\s]/gi, '');  // special chars not allowed in id element
                     return '<span class = "hints" id = "' + span_id + '"></span>';
                  });
              } catch(e) { } // these only apply to mult widgets

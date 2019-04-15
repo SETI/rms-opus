@@ -1,4 +1,15 @@
+/* jshint esversion: 6 */
+/* jshint bitwise: true, curly: true, freeze: true, futurehostile: true */
+/* jshint latedef: true, leanswitch: true, noarg: true, nocomma: true */
+/* jshint nonbsp: true, nonew: true */
+/* jshint varstmt: true */
+/* jshint multistr: true */
+/* globals $, _ */
+/* globals o_browse, o_cart, o_search, opus */
+
+/* jshint varstmt: false */
 var o_mutationObserver = {
+/* jshint varstmt: true */
     // MutationObserver: detect any DOM changes and update ps correspondingly
     observePerfectScrollbar: function() {
         // Config object: tell the MutationObserver what type of changes to be detected

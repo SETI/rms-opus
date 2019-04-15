@@ -1,8 +1,22 @@
+/* jshint esversion: 6 */
+/* jshint bitwise: true, curly: true, freeze: true, futurehostile: true */
+/* jshint latedef: true, leanswitch: true, noarg: true, nocomma: true */
+/* jshint nonbsp: true, nonew: true */
+/* jshint varstmt: true */
+/* jshint multistr: true */
+/* globals $, _, PerfectScrollbar */
+/* globals o_browse, o_cart, o_detail, o_hash, o_menu, o_mutationObserver, o_search, o_utils, o_widgets */
+/* globals default_columns, default_widgets, default_sort_order, static_url */
+
 // generic globals, hmm..
+/* jshint varstmt: false */
 var default_pages = {"gallery":1, "dataTable":1, "cart_gallery":1, "cart_data":1 };
+/* jshint varstmt: true */
 
 // defining the opus namespace first; document ready comes after...
+/* jshint varstmt: false */
 var opus = {
+/* jshint varstmt: true */
 
 
     /**
@@ -406,20 +420,20 @@ $(document).ready(function() {
         opus.prefs.view = 'search';
     }
 
-    var adjustSearchHeight = _.debounce(o_search.adjustSearchHeight, 200);
-    var adjustBrowseHeight = _.debounce(o_browse.adjustBrowseHeight, 200);
-    var adjustTableSize = _.debounce(o_browse.adjustTableSize, 200);
-    var adjustProductInfoHeight = _.debounce(o_cart.adjustProductInfoHeight, 200);
-    var adjustDetailHeight = _.debounce(o_detail.adjustDetailHeight, 200);
-    var adjustHelpPanelHeight = _.debounce(opus.adjustHelpPanelHeight, 200);
+    let adjustSearchHeightDB = _.debounce(o_search.adjustSearchHeight, 200);
+    let adjustBrowseHeightDB = _.debounce(o_browse.adjustBrowseHeight, 200);
+    let adjustTableSizeDB = _.debounce(o_browse.adjustTableSize, 200);
+    let adjustProductInfoHeightDB = _.debounce(o_cart.adjustProductInfoHeight, 200);
+    let adjustDetailHeightDB = _.debounce(o_detail.adjustDetailHeight, 200);
+    let adjustHelpPanelHeightDB = _.debounce(opus.adjustHelpPanelHeight, 200);
 
-    $( window ).on("resize", function() {
-        adjustSearchHeight();
-        adjustBrowseHeight();
-        adjustTableSize();
-        adjustProductInfoHeight();
-        adjustDetailHeight();
-        adjustHelpPanelHeight();
+    $(window).on("resize", function() {
+        adjustSearchHeightDB();
+        adjustBrowseHeightDB();
+        adjustTableSizeDB();
+        adjustProductInfoHeightDB();
+        adjustDetailHeightDB();
+        adjustHelpPanelHeightDB();
     });
 
     o_mutationObserver.observePerfectScrollbar();
@@ -433,7 +447,7 @@ $(document).ready(function() {
         }
 
         // find out which tab they clicked
-        var tab = $(this).find("a").attr("href").substring(1);
+        let tab = $(this).find("a").attr("href").substring(1);
         if (tab == '/') {
             return true;  // they clicked the brand icon, take them to its link
         }
@@ -450,7 +464,7 @@ $(document).ready(function() {
 
     $(".op-help-item").on("click", function() {
         let url = "/opus/__help/";
-        var header = "";
+        let header = "";
         switch ($(this).data("action")) {
             case "about":
                 url += "about.html";
