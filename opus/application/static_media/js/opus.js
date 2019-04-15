@@ -27,19 +27,18 @@ var opus = {
 
     // client side prefs, changes to these *do not trigger results to refresh*
     // prefs gets added verbatim to the url, so don't add anything weird into here!
-    prefs:{ 'view':'search', // search, browse, cart, detail
-            'browse':'gallery', //either 'gallery' or 'data'
-            'cart_browse':'gallery',  // which view is showing on the cart page, gallery or data
-            'page':default_pages,  // what page are we on, per view, default defined in header.html
-                                   // like {"gallery":1, "data":1, "cart_gallery":1, "cart_data":1 };
-            'limit': 100, // results per page
-            'order': default_sort_order.split(','),  // result table ordering
-            'cols': default_columns.split(','),  // default result table columns by slug
-            'widgets':[], // search tab widget columns
-            'detail':'', // opus_id of detail page content
-            'startobs': 1,
-
-
+    prefs:{
+        'cols': default_columns.split(','),  // default result table columns by slug
+        'widgets':[], // search tab widget columns
+        'order': default_sort_order.split(','),  // result table ordering
+        'view':'search', // search, browse, cart, detail
+        'browse':'gallery', //either 'gallery' or 'data'
+        'startobs': 1,
+        'cart_browse':'gallery',  // which view is showing on the cart page, gallery or data
+        'detail':'', // opus_id of detail page content
+        'page':default_pages,  // what page are we on, per view, default defined in header.html
+                               // like {"gallery":1, "data":1, "cart_gallery":1, "cart_data":1 };
+        'limit': 100, // results per page
      }, // pref changes do not trigger load()
 
     col_labels: [],  // contains labels that match prefs.cols, which are slugs for each column label
@@ -479,7 +478,8 @@ $(document).ready(function() {
     });
     alert(temp);
 */
-
+console.log("======== in document .ready function ========");
+console.log("======== call normalized for the 1st time =======");
     opus.prefs.widgets = [];
     o_widgets.updateWidgetCookies();
     opus.lastBlogUpdate();
@@ -635,9 +635,9 @@ $(document).ready(function() {
     opus.triggerNavbarClick();
 
     /// Normalized url for the 1st time
-    console.log("======== in document .ready function ========");
-    console.log("======== call normalized for the 1st time =======");
+
     let hash = o_hash.getHash();
+    console.log(hash)
     let url = "/opus/__normalizeurl.json?" + hash;
     console.log(`CALL API URL: ${url}`);
     $.getJSON(url, function(normalizeurlData){

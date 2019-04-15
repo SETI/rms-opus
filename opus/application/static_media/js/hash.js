@@ -113,6 +113,8 @@ var o_hash = {
 
     initFromHash: function() {
         let hash = o_hash.getHash();
+        console.log("=== hash from initFromHash ===")
+        console.log(hash)
         if (!hash) return;
         // first are any custom widget sizes in the hash?
         // just updating prefs here..
