@@ -77,6 +77,16 @@
         "field_default": null
     },
     {
+        "field_name": "dict_context_results",
+        "field_type": "varchar255",
+        "field_default": null
+    },
+    {
+        "field_name": "dict_name_results",
+        "field_type": "varchar255",
+        "field_default": null
+    },
+    {
         "field_name": "sub_heading",
         "field_type": "varchar150",
         "field_default": null

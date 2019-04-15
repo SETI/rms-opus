@@ -1,12 +1,29 @@
+/* jshint esversion: 6 */
+/* jshint bitwise: true, curly: true, freeze: true, futurehostile: true */
+/* jshint latedef: true, leanswitch: true, noarg: true, nocomma: true */
+/* jshint nonbsp: true, nonew: true */
+/* jshint varstmt: true */
+/* jshint multistr: true */
+/* globals $, PerfectScrollbar */
+/* globals o_hash, o_menu, o_utils, o_widgets, opus */
+
+/* jshint varstmt: false */
 var o_search = {
+/* jshint varstmt: true */
 
     /**
      *
      *  Everything that appears on the search tab
      *
      **/
-    searchScrollbar: new PerfectScrollbar("#sidebar-container", { suppressScrollX: true }),
-    widgetScrollbar: new PerfectScrollbar("#widget-container" , { suppressScrollX: true }),
+    searchScrollbar: new PerfectScrollbar("#sidebar-container", {
+        suppressScrollX: true,
+        minScrollbarLength: opus.minimumPSLength
+    }),
+    widgetScrollbar: new PerfectScrollbar("#widget-container" , {
+        suppressScrollX: true,
+        minScrollbarLength: opus.minimumPSLength
+    }),
 
     // for input validation in the search widgets
     searchTabDrawn: false,
@@ -146,7 +163,7 @@ var o_search = {
             let css_class = $(this).attr("class").split(' ')[0]; // class will be STRING, min or max
 
             // get values of all inputs
-            var values = [];
+            let values = [];
             if (css_class == 'STRING') {
                 $("#widget__" + slug + ' input.STRING').each(function() {
                     values.push($(this).val());
@@ -154,7 +171,7 @@ var o_search = {
                 opus.selections[slug] = values;
             } else {
                 // range query
-                var slugNoNum = slug.match(/(.*)[1|2]/)[1];
+                let slugNoNum = slug.match(/(.*)[1|2]/)[1];
                 // min
                 values = [];
                 $("#widget__" + slugNoNum + '1 input.min', '#search').each(function() {
@@ -205,8 +222,8 @@ var o_search = {
 
         $('#search').on("change", 'input.multichoice, input.singlechoice', function() {
            // mult widget gets changed
-           var id = $(this).attr("id").split('_')[0];
-           var value = $(this).attr("value").replace(/\+/g, '%2B');
+           let id = $(this).attr("id").split('_')[0];
+           let value = $(this).attr("value").replace(/\+/g, '%2B');
 
            if ($(this).is(':checked')) {
                let values = [];
@@ -226,15 +243,14 @@ var o_search = {
 
                // special menu behavior for surface geo, slide in a loading indicator..
                if (id == 'surfacetarget') {
-                    var surface_loading = '<li style = "margin-left:50%; display:none" class = "spinner">&nbsp;</li>';
+                    let surface_loading = '<li style = "margin-left:50%; display:none" class = "spinner">&nbsp;</li>';
                     $(surface_loading).appendTo($('a.surfacetarget').parent()).slideDown("slow").delay(500);
                }
 
            } else {
-               var remove = opus.selections[id].indexOf(value); // find index of value to remove
+               let remove = opus.selections[id].indexOf(value); // find index of value to remove
                opus.selections[id].splice(remove,1);        // remove value from array
            }
-
            o_hash.updateHash();
         });
 
@@ -425,7 +441,6 @@ var o_search = {
     getSearchTab: function() {
 
         if (o_search.searchTabDrawn) {
-            o_search.adjustSearchHeight();
             return;
         }
 
@@ -459,8 +474,6 @@ var o_search = {
         }
 
         o_search.searchTabDrawn = true;
-
-        o_search.adjustSearchHeight();
     },
 
     getHinting: function(slug, deferredObj) {
@@ -474,8 +487,6 @@ var o_search = {
             o_search.getValidMults(slug, deferredObj);
         } else {
           $(`#widget__${slug} .spinner`).fadeOut();
-          let adjustSearchWidgetHeight = _.debounce(o_search.adjustSearchWidgetHeight, 800);
-          adjustSearchWidgetHeight();
         }
     },
 
@@ -485,7 +496,7 @@ var o_search = {
 
         o_search.lastEndpointsRequestNo++;
         o_search.slugEndpointsReqno[slug] = o_search.lastEndpointsRequestNo;
-        var url = `/opus/__api/meta/range/endpoints/${slug}.json?${o_hash.getHash()}&reqno=${o_search.slugEndpointsReqno[slug]}`;
+        let url = `/opus/__api/meta/range/endpoints/${slug}.json?${o_hash.getHash()}&reqno=${o_search.slugEndpointsReqno[slug]}`;
         $.ajax({url: url,
             dataType:"json",
             success: function(multdata) {
@@ -495,8 +506,6 @@ var o_search = {
                     return;
                 }
                 $('#hint__' + slug).html(`<span>min: ${multdata.min}</span><span>max: ${multdata.max}</span><span> nulls: ${multdata.nulls}</span>`);
-                let adjustSearchWidgetHeight = _.debounce(o_search.adjustSearchWidgetHeight, 800);
-                adjustSearchWidgetHeight();
             },
             statusCode: {
                 404: function() {
@@ -517,7 +526,7 @@ var o_search = {
 
         o_search.lastMultsRequestNo++;
         o_search.slugMultsReqno[slug] = o_search.lastMultsRequestNo;
-        var url = `/opus/__api/meta/mults/${slug}.json?${o_hash.getHash()}&reqno=${o_search.slugMultsReqno[slug]}`;
+        let url = `/opus/__api/meta/mults/${slug}.json?${o_hash.getHash()}&reqno=${o_search.slugMultsReqno[slug]}`;
         $.ajax({url: url,
             dataType:"json",
             success: function(multdata) {
@@ -525,14 +534,14 @@ var o_search = {
                     return;
                 }
 
-                var dataSlug = multdata.field;
+                let dataSlug = multdata.field;
                 $("#widget__" + dataSlug + " .spinner").fadeOut('');
 
-                var widget = "widget__" + dataSlug;
-                var mults = multdata.mults;
+                let widget = "widget__" + dataSlug;
+                let mults = multdata.mults;
                 $('#' + widget + ' input').each( function() {
-                    var value = $(this).attr("value");
-                    var id = '#hint__' + slug + "_" + value.replace(/ /g,'-').replace(/[^\w\s]/gi, '');  // id of hinting span, defined in widgets.js getWidget
+                    let value = $(this).attr("value");
+                    let id = '#hint__' + slug + "_" + value.replace(/ /g,'-').replace(/[^\w\s]/gi, '');  // id of hinting span, defined in widgets.js getWidget
 
                     if (mults[value]) {
                           $(id).html('<span>' + mults[value] + '</span>');
@@ -544,8 +553,6 @@ var o_search = {
                         $(id).parent().addClass("fadey");
                     }
                 });
-                let adjustSearchWidgetHeight = _.debounce(o_search.adjustSearchWidgetHeight, 800);
-                adjustSearchWidgetHeight();
             },
             statusCode: {
                 404: function() {

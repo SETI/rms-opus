@@ -337,11 +337,23 @@ class ApiUITests(TestCase, ApiTestHelper):
         new_slugs['detail'] = 'co-iss-n1460961026'
         self._run_url_slugs_equal(url, new_slugs)
 
+    def test__api_normalizeurl_detail_opusid_bad(self):
+        "[test_ui_api.py] /__normalizeurl: detail opusid bad"
+        new_slugs = dict(self.default_url_slugs)
+        url = '/opus/__normalizeurl.json?detail=co-iss-n1460961027'
+        self._run_url_slugs_equal(url, new_slugs)
+
     def test__api_normalizeurl_detail_ringobsid(self):
         "[test_ui_api.py] /__normalizeurl: detail ringobsid"
         new_slugs = dict(self.default_url_slugs)
         url = '/opus/__normalizeurl.json?detail=S_IMG_CO_ISS_1460961026_N'
         new_slugs['detail'] = 'co-iss-n1460961026'
+        self._run_url_slugs_equal(url, new_slugs)
+
+    def test__api_normalizeurl_detail_ringobsid_bad(self):
+        "[test_ui_api.py] /__normalizeurl: detail ringobsid bad"
+        new_slugs = dict(self.default_url_slugs)
+        url = '/opus/__normalizeurl.json?detail=S_IMG_CO_ISS_14609610267_N'
         self._run_url_slugs_equal(url, new_slugs)
 
     def test__api_normalizeurl_detail_badval(self):
@@ -534,6 +546,13 @@ class ApiUITests(TestCase, ApiTestHelper):
 
     # Something that has an old_slug
 
+    def test__api_normalizeurl_widgets_ringobsid(self):
+        "[test_ui_api.py] /__normalizeurl: widgets ringobsid"
+        new_slugs = dict(self.default_url_slugs)
+        url = '/opus/__normalizeurl.json?widgets=ringobsid'
+        new_slugs['widgets'] = 'opusid'
+        self._run_url_slugs_equal(url, new_slugs)
+
     def test__api_normalizeurl_widgets_instrument(self):
         "[test_ui_api.py] /__normalizeurl: widgets instrument"
         new_slugs = dict(self.default_url_slugs)
@@ -604,10 +623,10 @@ class ApiUITests(TestCase, ApiTestHelper):
 
     # Not searchable
 
-    def test__api_normalizeurl_widgets_ringobsid(self):
-        "[test_ui_api.py] /__normalizeurl: widgets ringobsid"
+    def test__api_normalizeurl_widgets_not_searchable(self):
+        "[test_ui_api.py] /__normalizeurl: widgets not searchable"
+        url = '/opus/__normalizeurl.json?widgets=**previewimages'
         new_slugs = dict(self.default_url_slugs)
-        url = '/opus/__normalizeurl.json?widgets=ringobsid'
         new_slugs['widgets'] = ''
         self._run_url_slugs_equal(url, new_slugs)
 
@@ -1505,10 +1524,23 @@ class ApiUITests(TestCase, ApiTestHelper):
 
     def test__api_normalizeurl_search_ringobsid(self):
         "[test_ui_api.py] /__normalizeurl: search ringobsid"
+        url = '/opus/__normalizeurl.json?ringobsid=S_IMG_VG2_ISS_4360845_N'
+        new_slugs = dict(self.default_url_slugs)
+        new_slugs['opusid'] = 'vg-iss-2-s-c4360845'
+        new_slugs['qtype-opusid'] = 'contains'
+        new_slugs['widgets'] = 'planet,target,opusid'
+        self._run_url_slugs_equal(url, new_slugs)
+
+    def test__api_normalizeurl_search_ringobsid_bad(self):
+        "[test_ui_api.py] /__normalizeurl: search ringobsid bad"
+        url = '/opus/__normalizeurl.json?ringobsid=S_IMG_VG2_ISS_4360846_N'
+        new_slugs = dict(self.default_url_slugs)
+        self._run_url_slugs_equal(url, new_slugs)
+
+    def test__api_normalizeurl_search_ringobsid_bad_2(self):
+        "[test_ui_api.py] /__normalizeurl: search ringobsid bad 2"
         url = '/opus/__normalizeurl.json?ringobsid=XXX'
         new_slugs = dict(self.default_url_slugs)
-        # OPUSID is not searchable at the moment
-        # new_slugs['opusid'] = 'XXX'
         self._run_url_slugs_equal(url, new_slugs)
 
     ### Real-world tests
@@ -1521,8 +1553,8 @@ class ApiUITests(TestCase, ApiTestHelper):
 
     def test__api_normalizeurl_real_2(self):
         "[test_ui_api.py] /__normalizeurl: real 2"
-        url = '/opus/__normalizeurl.json?planet=Jupiter&target=EUROPA&missionid=Voyager&view=detail&browse=data&colls_browse=gallery&page=1&gallery_data_viewer=true&limit=100&order=time1&cols=ringobsid,planet,target,phase1,phase2,time1,time2&widgets=missionid,planet,target&widgets2=&detail=J_IMG_VG2_ISS_2076737_N'
-        expected = {"new_url": "mission=Voyager&planet=Jupiter&target=EUROPA&cols=opusid,instrument,planet,target,time1,observationduration&widgets=mission,planet,target&order=time1,opusid&view=detail&browse=data&startobs=1&cart_browse=gallery&detail=", "new_slugs": [{"mission": "Voyager"}, {"planet": "Jupiter"}, {"target": "EUROPA"}, {"cols": "opusid,instrument,planet,target,time1,observationduration"}, {"widgets": "mission,planet,target"}, {"order": "time1,opusid"}, {"view": "detail"}, {"browse": "data"}, {"startobs": 1}, {"cart_browse": "gallery"}, {"detail": ""}], "msg": "<p>Your URL is from a previous version of OPUS. It has been adjusted to conform to the current version.</p><br><p>We found the following issues with your bookmarked URL:</p><br><ul><li>Your URL uses the old defaults for selected metadata; they have been replaced with the new defaults.</li><li>Your URL uses the old defaults for sort order; they have been replaced with the new defaults.</li><li>The OPUS_ID or RINGOBS_ID specified for the \"detail\" tab was not found in the current database; it has been ignored.</li></ul><br><p>We strongly recommend that you replace your old bookmark with the updated URL in your browser so that you will not see this message in the future.</p>"}
+        url = '/opus/__normalizeurl.json?planet=Jupiter&target=EUROPA&missionid=Voyager&view=detail&browse=data&colls_browse=gallery&page=1&gallery_data_viewer=true&limit=100&order=time1&cols=ringobsid,planet,target,phase1,phase2,time1,time2&widgets=missionid,planet,target&widgets2=&detail=S_IMG_CO_ISS_1460961026_N'
+        expected = {"new_url": "mission=Voyager&planet=Jupiter&target=EUROPA&cols=opusid,instrument,planet,target,time1,observationduration&widgets=mission,planet,target&order=time1,opusid&view=detail&browse=data&startobs=1&cart_browse=gallery&detail=co-iss-n1460961026", "new_slugs": [{"mission": "Voyager"}, {"planet": "Jupiter"}, {"target": "EUROPA"}, {"cols": "opusid,instrument,planet,target,time1,observationduration"}, {"widgets": "mission,planet,target"}, {"order": "time1,opusid"}, {"view": "detail"}, {"browse": "data"}, {"startobs": 1}, {"cart_browse": "gallery"}, {"detail": "co-iss-n1460961026"}], "msg": "<p>Your URL is from a previous version of OPUS. It has been adjusted to conform to the current version.</p><br><p>We found the following issues with your bookmarked URL:</p><br><ul><li>Your URL uses the old defaults for selected metadata; they have been replaced with the new defaults.</li><li>Your URL uses the old defaults for sort order; they have been replaced with the new defaults.</li><li>You appear to be using an obsolete RINGOBS_ID (S_IMG_CO_ISS_1460961026_N) instead of the equivalent new OPUS_ID (co-iss-n1460961026); it has been converted for you.</li></ul><br><p>We strongly recommend that you replace your old bookmark with the updated URL in your browser so that you will not see this message in the future.</p>"}
         self._run_json_equal(url, expected)
 
     def test__api_normalizeurl_real_3(self):

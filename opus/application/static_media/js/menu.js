@@ -1,4 +1,15 @@
+/* jshint esversion: 6 */
+/* jshint bitwise: true, curly: true, freeze: true, futurehostile: true */
+/* jshint latedef: true, leanswitch: true, noarg: true, nocomma: true */
+/* jshint nonbsp: true, nonew: true */
+/* jshint varstmt: true */
+/* jshint multistr: true */
+/* globals $ */
+/* globals o_hash, o_widgets, opus */
+
+/* jshint varstmt: false */
 var o_menu = {
+/* jshint varstmt: true */
 
     /**
      *
@@ -7,12 +18,6 @@ var o_menu = {
      **/
 
      menuBehaviors: function() {
-         // search menu behaviors
-         $("#sidebar").on("click", ".searchMenu li .dropdown-toggle", function() {
-             let adjustSearchSideBarHeight = _.debounce(o_search.adjustSearchSideBarHeight, 500);
-             adjustSearchSideBarHeight();
-         });
-
          // click param in menu get new widget
          $("#sidebar").on("click", ".submenu li a", function() {
 
@@ -55,16 +60,12 @@ var o_menu = {
                 }
             }
         });
-
-        $(".searchMenu").on("shown.bs.collapse", function(e) {
-            o_search.adjustSearchHeight();
-        });
      },
 
      getMenu: function() {
         $('.op-menu-text.spinner').addClass("op-show-spinner");
 
-        var hash = o_hash.getHash();
+        let hash = o_hash.getHash();
 
         $("#sidebar").load("/opus/__menu.html?" + hash, function() {
             // open menu items that were open before
@@ -82,9 +83,6 @@ var o_menu = {
             $(".menu_spinner").fadeOut("fast");
 
             o_menu.markCurrentMenuItem();
-            // when a new category is open after an input is clicked, we update the scrollbar
-            let adjustSearchSideBarHeight = _.debounce(o_search.adjustSearchSideBarHeight, 500);
-            adjustSearchSideBarHeight();
 
             $('.op-menu-text.spinner').removeClass("op-show-spinner");
         });
@@ -114,8 +112,8 @@ var o_menu = {
 
      // type = cat/group
      getCatGroupFromSlug: function(slug) {
-         var cat = "";
-         var group = "";
+         let cat = "";
+         let group = "";
          $("ul.menu_list>li a", "#search").each(function() {
              if (slug == $(this).data("slug")) {
                  cat = $(this).data("cat");
