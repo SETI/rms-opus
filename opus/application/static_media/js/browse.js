@@ -31,7 +31,6 @@ var o_browse = {
 
     galleryScrollTo: 0,
     metadataSelectorDrawn: false,
-    currentSelectedMetadata: undefined,
 
     lastLoadDataRequestNo: 0,
 
@@ -722,11 +721,12 @@ var o_browse = {
 
     // metadata selector behaviors
     addMetadataSelectorBehaviors: function() {
-        o_browse.currentSelectedMetadata = opus.prefs.cols.slice();
+        // Global within this function so behaviors can communicate
+        var currentSelectedMetadata = opus.prefs.cols.slice();
 
         $("#metadataSelector").on("hide.bs.modal", function(e) {
             // update the data table w/the new columns
-            if (!o_utils.areObjectsEqual(opus.prefs.cols, o_browse.currentSelectedMetadata)) {
+            if (!o_utils.areObjectsEqual(opus.prefs.cols, currentSelectedMetadata)) {
                 o_browse.resetData();
                 o_browse.initTable(opus.col_labels);
                 opus.prefs.page.gallery = 1;
@@ -741,7 +741,7 @@ var o_browse = {
 
         $("#metadataSelector").on("show.bs.modal", function(e) {
             // save current column state so we can look for changes
-            o_browse.currentSelectedMetadata = opus.prefs.cols.slice();
+            currentSelectedMetadata = opus.prefs.cols.slice();
         });
 
         $('#metadataSelector .allMetadata').on("click", '.submenu li a', function() {
@@ -769,7 +769,6 @@ var o_browse = {
             return false;
         });
 
-
         // removes chosen column
         $("#metadataSelector .selectedMetadata").on("click", "li .unselect", function() {
             if (opus.prefs.cols.length <= 1) {
@@ -787,6 +786,7 @@ var o_browse = {
             }
             return false;
         });
+
         // buttons
         $("#metadataSelector").on("click", ".btn", function() {
             switch($(this).attr("type")) {
@@ -800,7 +800,7 @@ var o_browse = {
                 case "cancel":
                     $('#myModal').modal('hide');
                     opus.prefs.cols = [];
-                    o_browse.resetMetadata(o_browse.currentSelectedMetadata, true);
+                    o_browse.resetMetadata(currentSelectedMetadata, true);
                     break;
             }
         });
