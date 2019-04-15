@@ -159,11 +159,11 @@ var opus = {
 
         } else {
             console.log("### selections changes ###");
-            // console.log("=== current selections ===");
-            // console.log(selections);
-            // console.log(opus.selections);
-            // console.log("=== last selections ===");
-            // console.log(opus.last_selections);
+            console.log("=== current selections ===");
+            console.log(selections);
+            console.log(opus.selections);
+            console.log("=== last selections ===");
+            console.log(opus.last_selections);
             // selections in the url hash is different from opus.last_selections
             // reset the pages:
             opus.prefs.page = default_pages;
@@ -174,18 +174,20 @@ var opus = {
                 // modifiedSelections[slug] = [selections[slug].join(",")];
                 modifiedSelections[slug] = selections[slug][0].split(",");
             });
-            // console.log("Are selections and opus.selections the same????")
-            // console.log(opus.checkIfObjectsAreTheSame(modifiedSelections, opus.selections));
-            // console.log("=== modifiedSelections ===");
-            // console.log(modifiedSelections);
-            // console.log(!($.isEmptyObject(selections) && !$.isEmptyObject(opus.selections) && opus.checkIfOpusSelectionsAreEmpty()))
+            console.log("Are selections and opus.selections the same????")
+            console.log(opus.checkIfObjectsAreTheSame(modifiedSelections, opus.selections));
+            console.log("=== modifiedSelections ===");
+            console.log(modifiedSelections);
+            console.log(!($.isEmptyObject(selections) && !$.isEmptyObject(opus.selections) && opus.checkIfOpusSelectionsAreEmpty()))
             let hasSelections = !(($.isEmptyObject(selections) && !$.isEmptyObject(opus.selections) && opus.checkIfOpusSelectionsAreEmpty()))
             if (hasSelections && !opus.checkIfObjectsAreTheSame(modifiedSelections, opus.selections)) {
                 console.log("@@@@")
                 opus.selections = modifiedSelections;
                 // console.log("opus.selections after mod")
                 // console.log(opus.selections)
-                location.reload();
+                if (!opus.force_load) {
+                    location.reload();
+                }
                 return;
             } else {
                 // and reset the query:
@@ -648,12 +650,15 @@ $(document).ready(function() {
                 opus.currentObs = slug.startobs;
             }
         });
-
+        $("#op-update-url .modal-body").html(normalizeurlData.msg);
         window.location.hash = "/" + normalizeurlData.new_url.replace(" ", "%20");
+
+        // watch the url for changes, this runs continuously
+        opus.main_timer = setInterval(opus.load, opus.main_timer_interval);
     });
 
     // watch the url for changes, this runs continuously
-    opus.main_timer = setInterval(opus.load, opus.main_timer_interval);
+    // opus.main_timer = setInterval(opus.load, opus.main_timer_interval);
 
     return;
 
