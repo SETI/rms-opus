@@ -294,21 +294,22 @@ def is_old_format_ring_obs_id(s):
     "Return True if the string is a valid old-format ringobsid"
     return len(s) > 2 and (s[0] == '_' or s[1] == '_')
 
-def convert_ring_obs_id_to_opus_id(ring_obs_id):
+def convert_ring_obs_id_to_opus_id(ring_obs_id, force_ring_obs_id_fmt=False):
     "Given an old-format ringobsid, return the new opusid"
-    if not is_old_format_ring_obs_id(ring_obs_id):
+    if (not force_ring_obs_id_fmt and
+        not is_old_format_ring_obs_id(ring_obs_id)):
         return ring_obs_id
     try:
         return ObsGeneral.objects.get(ring_obs_id=ring_obs_id).opus_id
     except ObjectDoesNotExist:
         log.error('No matching RING_OBS_ID for "%s"', ring_obs_id)
-        return ring_obs_id
+        return None
     except MultipleObjectsReturned:
         log.error('More than one matching RING_OBS_ID for "%s"', ring_obs_id)
         return (ObsGeneral.objects.filter(ring_obs_id=ring_obs_id)
                 .first().opus_id)
 
-    return ring_obs_id
+    return None
 
 def get_mult_name(param_qualified_name):
     "Returns mult widget foreign key table name"

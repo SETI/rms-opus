@@ -60,7 +60,7 @@
             "FUNCTION",
             "obs_type_image_<INST>_image_type_id"
         ],
-        "definition": "The IMAGE_TYPE element describes the type of image acquired. This may be used to describe characteristics that differentiate one group of images from another such as the nature of the data in the image file, the purpose for which the image was acquired, or the way in which it was acquired. Within OPUS, it is used to define the type of camera used. In a framing camera, all pixels are exposed simultaneously. In a pushbroom camera, the image is obtained by sweeping a single line of pixels across the target. In a raster-scan camera, the image is constructed by repeatedly sweeping a single pixel across a field of view.",
+        "definition": "The type of camera used. In a Frame camera, all pixels are exposed simultaneously. In a Pushbroom camera, the image is obtained by sweeping a single line of pixels across the target. In a Raster Scan camera, the image is constructed by repeatedly sweeping a single pixel across a field of view.",
         "pi_category_name": "obs_type_image",
         "pi_dict_context": "OPUS_TYPE_IMAGE",
         "pi_dict_name": "IMAGE_TYPE",
@@ -76,13 +76,11 @@
         "pi_sub_heading": null,
         "pi_tooltip": "",
         "pi_units": null,
-        "comments": "Definition is from old OPUS dictionary.",
         "mult_options": [
-              [   0, "CUBE",        "Cube",   10, "Y", null],
-              [   1, "FRAM",       "Frame",   20, "Y", null],
-              [   2, "RAST", "Raster Scan",   30, "Y", null],
-              [   3, "PUSH",   "Pushbroom",   40, "Y", null],
-              [   4,   null,         "N/A",   50, "Y", null]
+              [   0, "FRAM",       "Frame",   10, "Y", null],
+              [   1, "RAST", "Raster Scan",   20, "Y", null],
+              [   2, "PUSH",   "Pushbroom",   30, "Y", null],
+              [   3,   null,         "N/A",   40, "Y", null]
           ]
     },
     {
@@ -94,8 +92,9 @@
             "FUNCTION",
             "obs_type_image_<INST>_duration"
         ],
+        "definition": "The time interval between the opening and closing of an instrument aperture (such as a camera shutter). For most instruments this is the same as Observation Duration. For Cassini UVIS this is the integration duration. For Cassini VIMS this is the exposure duration for the given detector.",
         "pi_category_name": "obs_type_image",
-        "pi_dict_context": "PSDD",
+        "pi_dict_context": "OPUS_TYPE_IMAGE",
         "pi_dict_name": "EXPOSURE_DURATION",
         "pi_disp_order": 10,
         "pi_display": 1,
@@ -119,7 +118,7 @@
             "FUNCTION",
             "obs_type_image_<INST>_levels"
         ],
-        "definition": "Intensity levels indicates the number of shades of gray to which an image is sensitive. This is typically a property of the camera and not necessarily the number of gray levels that appear inside the data product.",
+        "definition": "The number of discrete values that can appear in a single data point. This is a property of the instrument and does not represent the actual contents of the observation. For example, a camera with 12-bit pixels will support 4096 levels.",
         "pi_category_name": "obs_type_image",
         "pi_dict_context": "OPUS_TYPE_IMAGE",
         "pi_dict_name": "INTENSITY_LEVELS",
@@ -133,8 +132,7 @@
         "pi_slug": "levels",
         "pi_sub_heading": null,
         "pi_tooltip": "",
-        "pi_units": null,
-        "comments": "Definition is from old OPUS dictionary."
+        "pi_units": null
     },
     {
         "field_name": "greater_pixel_size",
@@ -147,7 +145,7 @@
         ],
         "val_min": 0,
         "val_max": 1e8,
-        "definition": "Greater size in pixels defines the number of pixels along the longer axis of an image array.",
+        "definition": "For an observation that can be represented as a 2-D array of pixels, this is the number of pixels along the longer of the two axes.",
         "pi_category_name": "obs_type_image",
         "pi_dict_context": "OPUS_TYPE_IMAGE",
         "pi_dict_name": "GREATER_PIXEL_SIZE",
@@ -161,8 +159,7 @@
         "pi_slug": "greaterpixelsize",
         "pi_sub_heading": null,
         "pi_tooltip": "",
-        "pi_units": null,
-        "comments": "Definition is from old OPUS dictionary."
+        "pi_units": null
     },
     {
         "field_name": "lesser_pixel_size",
@@ -175,7 +172,7 @@
         ],
         "val_min": 0,
         "val_max": 1e8,
-        "definition": "Lesser size in pixels defines the number of pixels along the shorter axis of an image array.",
+        "definition": "For an observation that can be represented as a 2-D array of pixels, this is the number of pixels along the shorter of the two axes.",
         "pi_category_name": "obs_type_image",
         "pi_dict_context": "OPUS_TYPE_IMAGE",
         "pi_dict_name": "LESSER_PIXEL_SIZE",
@@ -189,8 +186,7 @@
         "pi_slug": "lesserpixelsize",
         "pi_sub_heading": null,
         "pi_tooltip": "",
-        "pi_units": null,
-        "comments": "Definition is from old OPUS dictionary."
+        "pi_units": null
     },
     {
         "put_mults_here": true
