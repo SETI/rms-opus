@@ -171,6 +171,11 @@ class ApiResultsTests(TestCase, ApiTestHelper):
         url = '/opus/api/metadata/vg-iss-2-s-c4360845.json'
         self._run_json_equal_file(url, 'api_metadata_vg_iss_2_s_c4360845_default_json.json')
 
+    def test__api_metadata_vg_iss_2_s_c4360845_default_json_ringobsid(self):
+        "[test_results_api.py] /api/metadata: S_IMG_VG2_ISS_4360845_N default json"
+        url = '/opus/api/metadata/S_IMG_VG2_ISS_4360845_N.json'
+        self._run_json_equal_file(url, 'api_metadata_vg_iss_2_s_c4360845_default_json.json')
+
     def test__api_metadata_vg_iss_2_s_c4360845_default_page_json(self):
         "[test_results_api.py] /api/metadata: vg-iss-2-s-c4360845 default page json"
         url = '/opus/api/metadata/vg-iss-2-s-c4360845.json?page=5'
@@ -189,6 +194,11 @@ class ApiResultsTests(TestCase, ApiTestHelper):
     def test__api_metadata2_vg_iss_2_s_c4360845_default_json(self):
         "[test_results_api.py] /api/metadata_v2: vg-iss-2-s-c4360845 default json"
         url = '/opus/api/metadata_v2/vg-iss-2-s-c4360845.json'
+        self._run_json_equal_file(url, 'api_metadata2_vg_iss_2_s_c4360845_default_json.json')
+
+    def test__api_metadata2_vg_iss_2_s_c4360845_default_json_ringobsid(self):
+        "[test_results_api.py] /api/metadata_v2: S_IMG_VG2_ISS_4360845_N default json"
+        url = '/opus/api/metadata_v2/S_IMG_VG2_ISS_4360845_N.json'
         self._run_json_equal_file(url, 'api_metadata2_vg_iss_2_s_c4360845_default_json.json')
 
     def test__api_metadata_vg_iss_2_s_c4360845_default_html(self):
@@ -539,10 +549,20 @@ class ApiResultsTests(TestCase, ApiTestHelper):
         url = '/opus/api/metadata/vg-iss-2-s-c4360845x.json'
         self._run_status_equal(url, 404, settings.HTTP404_UNKNOWN_OPUS_ID)
 
+    def test__api_metadata_bad_ringobsid_json(self):
+        "[test_results_api.py] /api/metadata: bad ringobsid json"
+        url = '/opus/api/metadata/S_IMG_VG2_ISS_4360846_N.json'
+        self._run_status_equal(url, 404, settings.HTTP404_UNKNOWN_RING_OBS_ID)
+
     def test__api_metadata2_bad_opusid_json(self):
         "[test_results_api.py] /api/metadata_v2: bad opusid json"
         url = '/opus/api/metadata_v2/vg-iss-2-s-,c4360845.json'
         self._run_status_equal(url, 404, settings.HTTP404_UNKNOWN_OPUS_ID)
+
+    def test__api_metadata2_bad_ringobsid_json(self):
+        "[test_results_api.py] /api/metadata_v2: bad ringobsid json"
+        url = '/opus/api/metadata_v2/S_IMG_VG2_ISS_4360846_N.json'
+        self._run_status_equal(url, 404, settings.HTTP404_UNKNOWN_RING_OBS_ID)
 
     def test__api_metadata_bad_opusid_html(self):
         "[test_results_api.py] /api/metadata: bad opusid html"

@@ -41,22 +41,22 @@ class helpTests(TestCase):
             api_about(request)
 
 
-            ###########################################
-            ######### api_datasets UNIT TESTS #########
-            ###########################################
+            ##########################################
+            ######### api_volumes UNIT TESTS #########
+            ##########################################
 
-    def test__api_datasets_no_request(self):
-        "[test_help.py] api_datasets: no request"
+    def test__api_volumes_no_request(self):
+        "[test_help.py] api_volumes: no request"
         with self.assertRaises(Http404):
-            api_datasets(None)
+            api_volumes(None)
 
-    def test__api_datasets_no_get(self):
-        "[test_help.py] api_datasets: no GET"
+    def test__api_volumes_no_get(self):
+        "[test_help.py] api_volumes: no GET"
         c = Client()
-        request = self.factory.get('__help/datasets.html')
+        request = self.factory.get('__help/volumes.html')
         request.GET = None
         with self.assertRaises(Http404):
-            api_datasets(request)
+            api_volumes(request)
 
 
             ######################################
