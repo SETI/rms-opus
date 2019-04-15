@@ -703,9 +703,11 @@ var o_browse = {
 
     resetMetadata: function(cols, closeModal) {
         opus.prefs.cols = cols.slice();
+
         if (closeModal == true) {
             $("#metadataSelector").modal('hide');
         }
+
         // uncheck all on left; we will check them as we go
         $("#metadataSelector .allMetadata .fa-check").hide();
 
@@ -755,13 +757,13 @@ var o_browse = {
 
             if ($(chosenSlugSelector).length === 0) {
                 selectedMetadata.fadeIn();
-                    // this slug was previously unselected, add to cols
+                // this slug was previously unselected, add to cols
                 $(`<li id = "${chosenSlugSelector.substr(1)}">${label}<span class="info">&nbsp;<i class = "fas fa-info-circle" title = "${def}"></i>&nbsp;&nbsp;&nbsp;</span><span class="unselect"><i class="far fa-trash-alt"></span></li>`).hide().appendTo(".selectedMetadata > ul").fadeIn();
-                    opus.prefs.cols.push(slug);
+                opus.prefs.cols.push(slug);
             } else {
                 selectedMetadata.hide();
-                    // slug had been checked, remove from the chosen
-                    opus.prefs.cols.splice($.inArray(slug,opus.prefs.cols),1);
+                // slug had been checked, remove from the chosen
+                opus.prefs.cols.splice($.inArray(slug,opus.prefs.cols),1);
                 $(chosenSlugSelector).remove();
             }
             return false;
