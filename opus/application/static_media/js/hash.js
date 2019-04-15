@@ -1,4 +1,15 @@
+/* jshint esversion: 6 */
+/* jshint bitwise: true, curly: true, freeze: true, futurehostile: true */
+/* jshint latedef: true, leanswitch: true, noarg: true, nocomma: true */
+/* jshint nonbsp: true, nonew: true */
+/* jshint varstmt: true */
+/* jshint multistr: true */
+/* globals $ */
+/* globals o_browse, opus */
+
+/* jshint varstmt: false */
 var o_hash = {
+/* jshint varstmt: true */
     /**
      *
      *  changing, reading, and initiating a session from the browser hash
@@ -9,13 +20,13 @@ var o_hash = {
     updateHash: function(updateURL=true) {
 
         let hash = [];
-        for (var param in opus.selections) {
+        for (let param in opus.selections) {
             if (opus.selections[param].length) {
                 hash.push(param + "=" + opus.selections[param].join(",").replace(/ /g,"+"));
             }
         }
 
-        for (var key in opus.extras) {
+        for (let key in opus.extras) {
             try {
                 hash.push(key + "=" + opus.extras[key].join(","));
             } catch(e) {
@@ -65,12 +76,12 @@ var o_hash = {
     },
 
     getHashArray: function() {
-        var hashArray = [];
+        let hashArray = [];
         // this is a workaround for firefox
         // when user hit enter in input#page, the url hash will be "", we will remove input#page eventually
         let hashInfo = this.getHash() ? this.getHash() : o_browse.tempHash;
         $.each(hashInfo.split('&'), function(index, valuePair) {
-            var paramArray = valuePair.split("=");
+            let paramArray = valuePair.split("=");
             hashArray[paramArray[0]] = paramArray[1];
         });
         return hashArray;
@@ -87,10 +98,12 @@ var o_hash = {
     // part is part of the hash, selections or prefs
     getSelectionsFromHash: function() {
         let hash = o_hash.getHash();
-        if (!hash) return;
+        if (!hash) {
+            return;
+        }
 
         hash = (hash.search('&') > -1 ? hash.split('&') : [hash]);
-        var selections = {};  // the new set of pairs that will not include the result_table specific session vars
+        let selections = {};  // the new set of pairs that will not include the result_table specific session vars
         $.each(hash, function(index, pair) {
             let slug = pair.split('=')[0];
             let value = pair.split('=')[1];
@@ -110,7 +123,9 @@ var o_hash = {
 
     initFromHash: function() {
         let hash = o_hash.getHash();
-        if (!hash) return;
+        if (!hash) {
+            return;
+        }
         // first are any custom widget sizes in the hash?
         // just updating prefs here..
         hash = hash.split('&');

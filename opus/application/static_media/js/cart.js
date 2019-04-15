@@ -1,4 +1,14 @@
+/* jshint esversion: 6 */
+/* jshint bitwise: true, curly: true, freeze: true, futurehostile: true */
+/* jshint latedef: true, leanswitch: true, noarg: true, nocomma: true */
+/* jshint nonbsp: true, nonew: true */
+/* jshint varstmt: true */
+/* globals $, PerfectScrollbar */
+/* globals o_browse, o_hash, opus */
+
+/* jshint varstmt: false */
 var o_cart = {
+/* jshint varstmt: true */
     lastCartRequestNo: 0,
     lastRequestNo: 0,
     downloadInProcess: false,
@@ -199,7 +209,7 @@ var o_cart = {
     getCartTab: function() {
         o_browse.renderMetadataSelector();   // just do this in background so there's no delay when we want it...
         if (opus.cart_change) {
-            var zippedFiles_html = $(".zippedFiles", "#cart").html();
+            let zippedFiles_html = $(".zippedFiles", "#cart").html();
 
             // don't forget to remove existing stuff before append
             $(".gallery", "#cart").html("");
@@ -321,7 +331,7 @@ var o_cart = {
     editCart: function(opusId, action) {
         opus.cart_change = true;
 
-        var url = "/opus/__cart/" + action + ".json?";
+        let url = "/opus/__cart/" + action + ".json?";
         switch (action) {
             case "add":
             case "remove":
@@ -348,10 +358,12 @@ var o_cart = {
                 let limit = opus.prefs.limit * (last_page - first_page + 1);
 
                 let hashArray = o_hash.getHashArray();
-                if (hashArray.page !== undefined)
+                if (hashArray.page !== undefined) {
                     delete hashArray.page;
-                if (hashArray.limit !== undefined)
+                }
+                if (hashArray.limit !== undefined) {
                     delete hashArray.limit;
+                }
 
                 url += '&' + o_hash.hashArrayToHashString(hashArray);
                 url = url + "&limit=" + limit + "&page=" + first_page;

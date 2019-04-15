@@ -1,5 +1,13 @@
+/* jshint esversion: 6 */
+/* jshint bitwise: true, curly: true, freeze: true, futurehostile: true */
+/* jshint latedef: true, leanswitch: true, noarg: true, nocomma: true */
+/* jshint nonbsp: true, nonew: true */
+/* jshint varstmt: true */
+/* jshint multistr: true */
 
+/* jshint varstmt: false */
 var o_utils = {
+/* jshint varstmt: true */
 
     /**
      *

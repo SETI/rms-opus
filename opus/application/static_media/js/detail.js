@@ -1,4 +1,15 @@
+/* jshint esversion: 6 */
+/* jshint bitwise: true, curly: true, freeze: true, futurehostile: true */
+/* jshint latedef: true, leanswitch: true, noarg: true, nocomma: true */
+/* jshint nonbsp: true, nonew: true */
+/* jshint varstmt: true */
+/* jshint multistr: true */
+/* globals $, _, PerfectScrollbar */
+/* globals o_hash, opus */
+
+/* jshint varstmt: false */
 var o_detail = {
+/* jshint varstmt: true */
 
     getDetail: function(opusId) {
 
