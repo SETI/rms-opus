@@ -87,26 +87,39 @@ var opus = {
     helpPanelOpen: false,
     currentObs: 1,
     //------------------------------------------------------------------------------------//
-    checkIfObjectsAreTheSame: function(currentHashDict, prevHashDict) {
-        if (Object.keys(currentHashDict).length !== Object.keys(prevHashDict).length) {
+    checkIfOpusSelectionsAreEmpty: function() {
+        let isEmpty = true;
+        if ($.isEmptyObject(selections)) {
+            $.each(Object.keys(opus.selections), function(idx, slug) {
+                if (opus.selections[slug].length !== 0) {
+                    isEmpty = false;
+                    return;
+                };
+            });
+        }
+        return isEmpty;
+    },
+    
+    checkIfObjectsAreTheSame: function(obj1, obj2) {
+        // TODO: Need to figure out a way to compare {} and {planet:[]}
+        if (Object.keys(obj1).length !== Object.keys(obj2).length) {
             console.log("Length difference")
             return false;
         }
-        // console.log(currentHashDict);
-        // console.log(prevHashDict);
+
         let isTheSame = true;
-        $.each(currentHashDict, function(slug, value) {
+        $.each(obj1, function(slug, value) {
             // return false if slug value is different
-            if (!prevHashDict[slug]) {
+            if (!obj2[slug]) {
                 console.log("Slug difference")
                 isTheSame = false;
                 return;
             } else {
-                let slugStringInOrder = JSON.stringify(currentHashDict[slug].sort());
-                let prevSlugStringInOrder = JSON.stringify(prevHashDict[slug].sort());
-                if(slugStringInOrder !== prevSlugStringInOrder) {
-                    console.log(slugStringInOrder)
-                    console.log(prevSlugStringInOrder)
+                let dupObj1SlugValue = new Array(...obj1[slug]);
+                let dupObj2SlugValue = new Array(...obj2[slug]);
+                let obj1SlugValueString = JSON.stringify(dupObj1SlugValue.sort());
+                let obj2SlugValueString = JSON.stringify(dupObj2SlugValue.sort());
+                if (obj1SlugValueString !== obj2SlugValueString) {
                     console.log("Value difference");
                     isTheSame = false;
                     return;
@@ -160,7 +173,6 @@ var opus = {
             // if selections != opus.selections, then reload (modified url in url bar and hit enter)
             let modifiedSelections = {};
             $.each(Object.keys(selections), function(idx, slug) {
-                console.log(slug)
                 // modifiedSelections[slug] = [selections[slug].join(",")];
                 modifiedSelections[slug] = selections[slug][0].split(",");
             });
@@ -173,15 +185,17 @@ var opus = {
                 opus.selections = modifiedSelections;
                 console.log("opus.selections after mod")
                 console.log(opus.selections)
-                // and reset the query:
-                // o_browse.resetQuery();
-                o_hash.updateHash();
                 location.reload();
                 return;
             } else {
                 // and reset the query:
                 o_browse.resetQuery();
             }
+            // // selections in the url hash is different from opus.last_selections
+            // // reset the pages:
+            // opus.prefs.page = default_pages;
+            // // and reset the query:
+            // o_browse.resetQuery();
         }
 
         // start the result count spinner and do the yellow flash
