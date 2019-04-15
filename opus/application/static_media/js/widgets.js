@@ -19,7 +19,6 @@ var o_widgets = {
             cursorAt: {top: 10, left: 10},
             stop: function(event, ui) {
                 o_widgets.widgetDrop(this);
-                o_search.adjustSearchWidgetHeight();
             },
         });
 
@@ -38,8 +37,6 @@ var o_widgets = {
             $(this).find('.indicator').toggleClass('fa-plus');
             $(this).find('.indicator').toggleClass('fa-minus');
             $(this).next().slideToggle("fast");
-            let adjustSearchWidgetHeight = _.debounce(o_search.adjustSearchWidgetHeight, 200);
-            adjustSearchWidgetHeight();
         });
 
         // close a card
@@ -121,8 +118,6 @@ var o_widgets = {
                 $("#sidebar").removeClass("search_overlay");
                 $("#op-result-count").text(o_utils.addCommas(opus.result_count));
             }
-            let adjustSearchWidgetHeight = _.debounce(o_search.adjustSearchWidgetHeight, 200);
-            adjustSearchWidgetHeight();
             o_hash.updateHash(opus.allInputsValid);
             o_widgets.updateWidgetCookies();
         });

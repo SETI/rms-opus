@@ -44,7 +44,7 @@ var opus = {
     col_labels: [],  // contains labels that match prefs.cols, which are slugs for each column label
                       // it's outside of prefs because those are things loaded into urls
                       // this is not
-					  // note that this is also not a dictionary because we need to preserve the order.
+                      // note that this is also not a dictionary because we need to preserve the order.
 
 
     lastPageDrawn: {"browse":0, "cart":0},
@@ -84,8 +84,9 @@ var opus = {
     allInputsValid: true,
 
     helpPanelOpen: false,
-    //------------------------------------------------------------------------------------//
 
+    minimumPSLength: 30,
+    //------------------------------------------------------------------------------------//
     load: function() {
         /* When user makes any change to the interface, such as changing a query,
         the load() will send an ajax request to the server to get information it
@@ -95,6 +96,7 @@ var opus = {
         */
 
         let selections = o_hash.getSelectionsFromHash();
+
         if (selections === undefined) {
             return;
         }
@@ -109,15 +111,7 @@ var opus = {
             $(".op-reset-button button").prop("disabled", true);
         }
 
-        if ($.isEmptyObject(selections)) {
-            // there are no selections found in the url hash
-            if (!$.isEmptyObject(opus.last_selections)) {
-                // last selections is also empty
-                opus.last_selections = {};
-                o_browse.resetQuery();
-            }
-        }
-
+        // compare selections and last selections
         if (o_utils.areObjectsEqual(selections, opus.last_selections))  {
             // selections have not changed from opus.last_selections
             if (!opus.force_load) { // so we do only non-reloading pref changes
@@ -127,16 +121,23 @@ var opus = {
 
         } else {
             // selections in the url hash is different from opus.last_selections
-              // reset the pages:
-              opus.prefs.page = default_pages;
+            // reset the pages: {"gallery":1, "data":1, "cart_gallery":1, "cart_data":1 };
+            opus.prefs.page = default_pages;
 
-              // and reset the query:
-              o_browse.resetQuery();
+            // and reset the query:
+            o_browse.resetQuery();
         }
 
         // start the result count spinner and do the yellow flash
         $("#op-result-count").html(opus.spinner).parent().effect("highlight", {}, 500);
         $("#op-observation-number").html(opus.spinner).effect("highlight", {}, 500);
+
+        // start op-menu-text and op-search-widgets spinner
+        // this is to trigger these two spinners right away when result count spinner is running
+        $(".op-menu-text.spinner").addClass("op-show-spinner");
+        $("#op-search-widgets .spinner").fadeIn();
+
+        // update last selections after the comparison of selections and last selections
         // move this above allNormalizedApiCall to avoid recursive api call
         opus.last_selections = selections;
 
@@ -313,20 +314,6 @@ var opus = {
             deferredArr.push($.Deferred());
             o_widgets.getWidget(slug,"#search_widgets",deferredArr[index]);
         });
-        // wait until all widgets are get
-        $.when.apply(null, deferredArr).then(function() {
-            let adjustSearchWidgetHeight = _.debounce(o_search.adjustSearchHeight, 800);
-            adjustSearchWidgetHeight();
-        });
-
-        // if (resetMetadata) {
-        //     $(".op-reset-button button").prop("disabled", false);
-        // } else if (!opus.checkIfMetadataAreDefault()) {
-        //     $(".op-reset-button .op-reset-search-metadata").prop("disabled", false);
-        //     $(".op-reset-button .op-reset-search").prop("disabled", true);
-        // } else {
-        //     $(".op-reset-button button").prop("disabled", true);
-        // }
 
         // start the main timer again
         opus.main_timer = setInterval(opus.load, opus.main_timer_interval);
@@ -435,6 +422,8 @@ $(document).ready(function() {
         adjustHelpPanelHeight();
     });
 
+    o_mutationObserver.observePerfectScrollbar();
+
     // add the navbar clicking behaviors, selecting which tab to view:
     // see triggerNavbarClick
     $("#op-main-nav").on("click", ".main_site_tabs .nav-item", function() {
@@ -494,9 +483,11 @@ $(document).ready(function() {
         $("#op-help-panel .loader").show();
         // We only need one perfectScrollbar
         if (!opus.helpScrollbar) {
-            opus.helpScrollbar = new PerfectScrollbar("#op-help-panel .card-body", { suppressScrollX: true });
+            opus.helpScrollbar = new PerfectScrollbar("#op-help-panel .card-body", {
+                suppressScrollX: true,
+                minScrollbarLength: opus.minimumPSLength
+            });
         }
-        adjustHelpPanelHeight();
         $("#op-help-panel").toggle("slide", {direction:'right'}, function() {
             $(".op-overlay").addClass("active");
         });
@@ -507,7 +498,6 @@ $(document).ready(function() {
                 $("#op-help-panel .loader").hide();
                 $("#op-help-panel .op-card-contents").html(page);
                 opus.helpPanelOpen = true;
-                adjustHelpPanelHeight();
             }
         });
     });
