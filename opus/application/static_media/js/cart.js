@@ -160,41 +160,48 @@ var o_cart = {
      },
 
      loadCartData: function(startObs) {
-        //window.scrollTo(0,opus.browse_view_scrolls[opus.prefs.browse]);
-        startObs = (startObs === undefined ? opus.prefs.cart_startobs : startObs);
+         let view = o_browse.getViewInfo();
 
-        let view = o_browse.getViewInfo();
-        let base_url = "/opus/__api/dataimages.json?";
-        o_cart.lastRequestNo++;
-        let url = o_hash.getHash() + "&reqno=" + o_cart.lastRequestNo + view.add_to_url;
+         startObs = (startObs === undefined ? opus.prefs[`${view.prefix}startobs`] : startObs);
 
-        url = o_browse.updateStartobsInUrl(url, startObs);
+         $(".op-page-loading-status > .loader").show();
+         let base_url = "/opus/__api/dataimages.json?";
+         o_cart.lastRequestNo++;
+         let url = o_hash.getHash() + "&reqno=" + o_cart.lastRequestNo + view.add_to_url;
 
-        // metadata; used for both table and gallery
-        $.getJSON(base_url + url, function(data) {
-            if (data.reqno < o_cart.lastRequestNo) {
-                return;
-            }
-            if (opus.col_labels.length === 0) {
-                opus.col_labels = data.columns;
-            }
-            o_browse.renderGalleryAndTable(data, this.url);
-            o_browse.updateSortOrder(data);
+         url = o_browse.updateStartobsInUrl(url, startObs);
 
-            if (opus.cart_change) {
+         // metadata; used for both table and gallery
+         $.getJSON(base_url + url, function(data) {
+             if (data.reqno < o_cart.lastRequestNo) {
+                 $(".op-page-loading-status > .loader").hide();
+                 return;
+             }
+             if (opus.col_labels.length === 0) {
+                 opus.col_labels = data.columns;
+             }
+             o_browse.renderGalleryAndTable(data, this.url);
+             o_browse.updateSortOrder(data);
+
+             if (opus.cart_change) {
                 // for infinite scroll
                 $("#cart .gallery-contents").infiniteScroll({
                     path: function() {
-                        let path = o_browse.getDataURL();
+                        let startObs = opus.prefs[`${viewInfo.prefix}startobs`];
+                        let lastObs = $(`${viewInfo.namespace} .thumbnail-container`).last().data("obs");
+                        // start from the last observation drawn; if none yet drawn ...???
+                        startObs = (lastObs != undefined ? lastObs : startObs + o_browse.getLimit());
+                        console.log(`after: ${startObs}`);
+                        let path = o_browse.getDataURL(startObs);
                         return path;
                     },
                     responseType: "text",
-                    status: `#${opus.prefs.view} .page-load-status`,
+                    status: `${view.namespace} .page-load-status`,
                     elementScroll: true,
                     history: false,
                     debug: false,
                 });
-                $("#cart .gallery-contents").on( "load.infiniteScroll", function(event, response, path) {
+                $(`${view.namespace} .gallery-contents`).on( "load.infiniteScroll", function(event, response, path) {
                     let jsonData = JSON.parse( response );
                     o_browse.renderGalleryAndTable(jsonData, path);
                 });
@@ -337,8 +344,7 @@ var o_cart = {
 
             case "removerange":
             case "addrange":
-                url += "range=" + opusId;
-                url += '&' + o_hash.hashArrayToHashString(hashArray);
+                url += `range=${opusId}&${o_hash.getHash()}`;
                 break;
 
           case "addall":
