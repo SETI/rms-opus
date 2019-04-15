@@ -1095,14 +1095,14 @@ var o_browse = {
     },
 
     loadData: function(startObs) {
-        let viewInfo = o_browse.getViewInfo();
+        let view = o_browse.getViewInfo();
 
-        startObs = (startObs === undefined ? opus.prefs[`${viewInfo.prefix}startobs`] : startObs);
+        startObs = (startObs === undefined ? opus.prefs[`${view.prefix}startobs`] : startObs);
 
         // if the request is a block far away from current page cache, flush the cache and start over
-        let elem = $(`${viewInfo.namespace} [data-obs=${startObs}]`);
-        let lastObs = $(`${viewInfo.namespace} [data-obs]`).last().data("obs");
-        let firstObs = $(`${viewInfo.namespace} [data-obs]`).first().data("obs");
+        let elem = $(`${view.namespace} [data-obs=${startObs}]`);
+        let lastObs = $(`${view.namespace} [data-obs]`).last().data("obs");
+        let firstObs = $(`${view.namespace} [data-obs]`).first().data("obs");
 
         // if the startObs is not already rendered and is obviously not contiguous, clear the cache and start over
         if (lastObs === undefined || firstObs === undefined || $(elem).length === 0 ||
@@ -1129,23 +1129,22 @@ var o_browse = {
                 return;
             }
 
-            let selector = `#${opus.prefs.view} .gallery-contents`;
+            let selector = `${view.namespace} .gallery-contents`;
             if (!o_browse.galleryBegun) {
                 o_browse.initTable(data.columns);
 
                 if (!$(selector).data("infiniteScroll")) {
                     $(selector).infiniteScroll({
                         path: function() {
-                            let startObs = opus.prefs[`${viewInfo.prefix}startobs`];
-                            let lastObs = $("#browse .thumbnail-container").last().data("obs");
+                            let startObs = opus.prefs[`${view.prefix}startobs`];
+                            let lastObs = $(`${view.namespace} .thumbnail-container`).last().data("obs");
                             // start from the last observation drawn; if none yet drawn ...???
                             startObs = (lastObs != undefined ? lastObs : startObs + o_browse.getLimit());
-                            console.log(`after: ${startObs}`);
                             let path = o_browse.getDataURL(startObs);
                             return path;
                         },
                         responseType: "text",
-                        status: `#${opus.prefs.view} .page-load-status`,
+                        status: `${view.namespace}  .page-load-status`,
                         elementScroll: true,
                         history: false,
                         scrollThreshold: 500,
@@ -1170,7 +1169,7 @@ var o_browse = {
             }
 
             // Because we redraw from the beginning or user inputted page, we need to remove previous drawn thumb-pages
-            $(`${viewInfo.namespace} .thumbnail-container`).detach();
+            $(`${view.namespace} .thumbnail-container`).detach();
             o_browse.renderGalleryAndTable(data, this.url);
             if (o_browse.currentOpusId != "") {
                 o_browse.metadataboxHtml(o_browse.currentOpusId);
