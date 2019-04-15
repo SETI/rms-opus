@@ -20,7 +20,6 @@ var o_browse = {
     currentOpusId: "",
     tempHash: "",
     dataNotAvailable: false,
-    onRenderData: false,
     /**
     *
     *  all the things that happen on the browse tab
@@ -35,7 +34,7 @@ var o_browse = {
             let namespace = o_browse.getViewInfo().namespace;
             // if time to load...
                 if (opus.prefs.browse === "dataTable") {
-                    if ($(`${namespace} .gallery-contents`).scrollTop() === 0) {
+                    if ($(`${namespace} .dataTable`).scrollTop() === 0) {
                         $(`${namespace} .gallery-contents`).infiniteScroll("loadNextPage");
                     }
                 } else {
@@ -45,13 +44,6 @@ var o_browse = {
                 }
             //}
         });
-        // testing area for scrollbar event, will remove it later
-        // $(".gallery-contents, .dataTable").bind('mousewheel DOMMouseScroll', function(event) {
-        //     console.log("scroll up when it reaches to the top end")
-        // });
-
-        // nav stuff - NOTE - this needs to be a global
-        o_browse.onRenderData = _.debounce(o_browse.loadData, 500);
 
         $("#browse").on("click", ".metadataModal", function() {
             o_browse.hideMenu();
@@ -1144,10 +1136,11 @@ var o_browse = {
                 if (!$(selector).data("infiniteScroll")) {
                     $(selector).infiniteScroll({
                         path: function() {
-                            let startObs = parseInt(opus.prefs[`${viewInfo.prefix}startobs`]);
+                            let startObs = opus.prefs[`${viewInfo.prefix}startobs`];
                             let lastObs = $("#browse .thumbnail-container").last().data("obs");
                             // start from the last observation drawn; if none yet drawn ...???
-                            startObs += (lastObs != undefined ? lastObs : o_browse.getLimit());
+                            startObs = (lastObs != undefined ? lastObs : startObs + o_browse.getLimit());
+                            console.log(`after: ${startObs}`);
                             let path = o_browse.getDataURL(startObs);
                             return path;
                         },
