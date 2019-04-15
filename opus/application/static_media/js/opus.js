@@ -478,8 +478,7 @@ $(document).ready(function() {
     });
     alert(temp);
 */
-console.log("======== in document .ready function ========");
-console.log("======== call normalized for the 1st time =======");
+
     opus.prefs.widgets = [];
     o_widgets.updateWidgetCookies();
     opus.lastBlogUpdate();
@@ -635,7 +634,8 @@ console.log("======== call normalized for the 1st time =======");
     opus.triggerNavbarClick();
 
     /// Normalized url for the 1st time
-
+    console.log("======== in document .ready function ========");
+    console.log("======== call normalized for the 1st time =======");
     let hash = o_hash.getHash();
     console.log(hash)
     let url = "/opus/__normalizeurl.json?" + hash;
