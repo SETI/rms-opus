@@ -167,6 +167,7 @@ var o_cart = {
 
      loadCartData: function(startObs) {
          let view = o_browse.getViewInfo();
+         let selector = `${view.namespace} .gallery-contents`;
 
          startObs = (startObs === undefined ? opus.prefs[`${view.prefix}startobs`] : startObs);
 
@@ -191,7 +192,6 @@ var o_cart = {
              o_browse.renderGalleryAndTable(data, this.url);
              o_browse.updateSortOrder(data);
 
-             let selector = `${view.namespace} .gallery-contents`;
              if (o_cart.cartChange) {
                 // for infinite scroll
                 $(selector).infiniteScroll({

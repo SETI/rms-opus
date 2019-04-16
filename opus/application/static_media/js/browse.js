@@ -449,6 +449,7 @@ var o_browse = {
             return;
         }
         let prev = $(`#browse tr[data-id=${opusId}]`).prev("tr");
+        // DAVE
 /*        while (prev.hasClass("table-page")) {
             prev = prev.prev("tr");
             if (prev.data("page")) {
@@ -479,6 +480,7 @@ var o_browse = {
         let galleryTargetFinalPosition = galleryTargetTopPosition - galleryContainerTopPosition + galleryScrollbarPosition;
         $(".gallery-contents").scrollTop(galleryTargetFinalPosition);
 
+        // DAVE
         // Create a new jQuery.Event object with specified event properties.
         //let e = jQuery.Event( "DOMMouseScroll",{delta: -650} );
 
@@ -1105,6 +1107,7 @@ var o_browse = {
 
     loadData: function(startObs) {
         let view = o_browse.getViewInfo();
+        let selector = `${view.namespace} .gallery-contents`;
 
         startObs = (startObs === undefined ? opus.prefs[`${view.prefix}startobs`] : startObs);
 
@@ -1123,6 +1126,7 @@ var o_browse = {
             if (startObs >= firstObs && startObs <= lastObs) {
                 // may need to do a prefetch here...
                 o_browse.setScrollbarPosition(selector, startObs);
+                $(".op-page-loading-status > .loader").hide();
                 return;
             }
         }
@@ -1138,7 +1142,6 @@ var o_browse = {
                 return;
             }
 
-            let selector = `${view.namespace} .gallery-contents`;
             if (!o_browse.galleryBegun) {
                 o_browse.initTable(data.columns);
 
