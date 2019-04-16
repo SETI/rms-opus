@@ -1324,7 +1324,10 @@ def get_search_results_chunk(request, use_cart=None,
 
         # Finally add in the sort order
         sql += order_sql
-
+        if limit != 'all':
+            sql += ' LIMIT '+str(limit)
+        sql += ' OFFSET '+str(offset)
+        
     # if page_no != 'all':
     #     base_limit = 100  # explainer of sorts is above
     #     offset = (page_no-1)*base_limit

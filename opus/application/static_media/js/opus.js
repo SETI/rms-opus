@@ -72,11 +72,6 @@ var opus = {
     default_widgets: default_widgets.split(','),
     widget_click_timeout:0,
 
-    // cart
-    cart_change: true, // cart has changed since last load of cart_tab
-    cart_q_intrvl: false,
-    cart_options_viz: false,
-
     // these are for the process that detects there was a change in the selection criteria and updates things
     main_timer:false,
     main_timer_interval:1000,

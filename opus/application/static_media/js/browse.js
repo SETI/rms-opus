@@ -1072,7 +1072,7 @@ var o_browse = {
             }
             opus.prefs.order.push(fullSlug);
         });
-        $(".sort-contents").html(listHtml);
+        $(`#${opus.prefs.view} .sort-contents`).html(listHtml);
         o_hash.updateHash();
     },
 
@@ -1093,8 +1093,8 @@ var o_browse = {
         // this is a workaround for firefox
         let hashString = (o_hash.getHash() ? o_hash.getHash() : o_browse.tempHash);
 
-        o_browse.lastLoadDataRequestNo++;
-        let url = hashString + '&reqno=' + o_browse.lastLoadDataRequestNo + view.add_to_url;
+        let reqno = (opus.prefs.view === "browse" ? ++o_browse.lastLoadDataRequestNo : ++o_cart.lastLoadDataRequestNo);
+        let url = hashString + '&reqno=' + reqno + view.add_to_url;
         url = base_url + o_browse.updateStartobsInUrl(url, startObs);
 
         // need to add limit
@@ -1414,7 +1414,7 @@ var o_browse = {
         $("#dataTable > tbody").empty();  // yes all namespaces
         $(".gallery").empty();
         o_browse.galleryData = [];
-        opus.cart_change = true;  // forces redraw of cart tab
+        o_cart.cartChange = true;  // forces redraw of cart tab
         o_browse.galleryBegun = false;
         o_hash.updateHash();
     },

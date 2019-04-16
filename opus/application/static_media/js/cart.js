@@ -9,10 +9,11 @@
 /* jshint varstmt: false */
 var o_cart = {
 /* jshint varstmt: true */
-    lastCartRequestNo: 0,
+    // cart
+    cartChange: true, // cart has changed since last load of cart_tab
     lastRequestNo: 0,
+    lastLoadDataRequestNo: 0,
     downloadInProcess: false,
-
 
     /**
      *
@@ -49,10 +50,10 @@ var o_cart = {
              $(".op-total-size .spinner").addClass("op-show-spinner");
 
              let add_to_url = o_cart.getDownloadFiltersChecked();
-             o_cart.lastCartRequestNo++;
-             let url = "/opus/__cart/status.json?reqno=" + o_cart.lastCartRequestNo + "&" + add_to_url + "&download=1";
+             o_cart.lastRequestNo++;
+             let url = "/opus/__cart/status.json?reqno=" + o_cart.lastRequestNo + "&" + add_to_url + "&download=1";
              $.getJSON(url, function(info) {
-                 if (info.reqno < o_cart.lastCartRequestNo) {
+                 if (info.reqno < o_cart.lastRequestNo) {
                      return;
                  }
                  $(".op-total-size .spinner").removeClass("op-show-spinner");
@@ -140,7 +141,7 @@ var o_cart = {
      },
 
      updateCartStatus: function(status) {
-         if (status.reqno < o_cart.lastCartRequestNo) {
+         if (status.reqno < o_cart.lastRequestNo) {
              return;
          }
          let count = status.count;
@@ -155,9 +156,9 @@ var o_cart = {
         // display cart badge spinner, it will get updated after the return of status.json
         $("#op-cart-count").html(opus.spinner);
         // returns any user cart saved in session
-        o_cart.lastCartRequestNo++;
-        $.getJSON("/opus/__cart/status.json?reqno=" + o_cart.lastCartRequestNo, function(statusData) {
-            if (statusData.reqno < o_cart.lastCartRequestNo) {
+        o_cart.lastRequestNo++;
+        $.getJSON("/opus/__cart/status.json?reqno=" + o_cart.lastRequestNo, function(statusData) {
+            if (statusData.reqno < o_cart.lastRequestNo) {
                 return;
             }
             o_cart.updateCartStatus(statusData);
@@ -169,16 +170,18 @@ var o_cart = {
 
          startObs = (startObs === undefined ? opus.prefs[`${view.prefix}startobs`] : startObs);
 
-         $(".op-page-loading-status > .loader").show();
-         let base_url = "/opus/__api/dataimages.json?";
-         o_cart.lastRequestNo++;
-         let url = o_hash.getHash() + "&reqno=" + o_cart.lastRequestNo + view.add_to_url;
+         // if the request is a block far away from current page cache, flush the cache and start over
+         let elem = $(`${view.namespace} [data-obs=${startObs}]`);
+         let lastObs = $(`${view.namespace} [data-obs]`).last().data("obs");
+         let firstObs = $(`${view.namespace} [data-obs]`).first().data("obs");
 
-         url = o_browse.updateStartobsInUrl(url, startObs);
+         $(".op-page-loading-status > .loader").show();
+         let url = o_browse.getDataURL(startObs);
 
          // metadata; used for both table and gallery
-         $.getJSON(base_url + url, function(data) {
-             if (data.reqno < o_cart.lastRequestNo) {
+         $.getJSON(url, function(data) {
+             if (data.reqno < o_cart.lastLoadDataRequestNo) {
+                 // make sure to remove spinner before return
                  $(".op-page-loading-status > .loader").hide();
                  return;
              }
@@ -188,12 +191,13 @@ var o_cart = {
              o_browse.renderGalleryAndTable(data, this.url);
              o_browse.updateSortOrder(data);
 
-             if (opus.cart_change) {
+             let selector = `${view.namespace} .gallery-contents`;
+             if (o_cart.cartChange) {
                 // for infinite scroll
-                $("#cart .gallery-contents").infiniteScroll({
+                $(selector).infiniteScroll({
                     path: function() {
-                        let startObs = opus.prefs[`${viewInfo.prefix}startobs`];
-                        let lastObs = $(`${viewInfo.namespace} .thumbnail-container`).last().data("obs");
+                        let startObs = opus.prefs[`${view.prefix}startobs`];
+                        let lastObs = $(`${view.namespace} .thumbnail-container`).last().data("obs");
                         // start from the last observation drawn; if none yet drawn ...???
                         startObs = (lastObs != undefined ? lastObs : startObs + o_browse.getLimit());
                         console.log(`after: ${startObs}`);
@@ -206,11 +210,34 @@ var o_cart = {
                     history: false,
                     debug: false,
                 });
-                $(`${view.namespace} .gallery-contents`).on( "load.infiniteScroll", function(event, response, path) {
-                    let jsonData = JSON.parse( response );
-                    o_browse.renderGalleryAndTable(jsonData, path);
+                $(selector).on("request.infiniteScroll", function(event, path) {
+                    // hide default page status loader if op-page-loading-status loader is spinning
+                    // && o_browse.tableSorting
+                    $(".infinite-scroll-request").hide();
                 });
-                opus.cart_change = false;
+                $(selector).on("scrollThreshold.infiniteScroll", function(event) {
+                    // remove spinner when scrollThreshold is triggered and last data fetching has no data
+                    // Need to revisit this one
+                    if (o_cart.dataNotAvailable !== undefined && o_cart.dataNotAvailable) {
+                        $(".infinite-scroll-request").hide();
+                    }
+                    $(selector).infiniteScroll("loadNextPage");
+                });
+                $(selector).on("load.infiniteScroll", o_browse.infiniteScrollLoadEventListener);
+                o_cart.cartChange = false;
+            }
+
+            // Because we redraw from the beginning or user inputted page, we need to remove previous drawn thumb-pages
+            $(`${view.namespace} .thumbnail-container`).detach();
+            o_browse.renderGalleryAndTable(data, this.url);
+/*            if (o_browse.currentOpusId != "") {
+                o_browse.metadataboxHtml(o_browse.currentOpusId);
+            }
+            o_browse.updateSortOrder(data);
+*/
+            // prefill next page
+            if (!o_cart.cartChange) {
+                $(selector).infiniteScroll('loadNextPage');
             }
         });
     },
@@ -218,7 +245,7 @@ var o_cart = {
     // get Cart tab
     getCartTab: function() {
         o_browse.renderMetadataSelector();   // just do this in background so there's no delay when we want it...
-        if (opus.cart_change) {
+        if (o_cart.cartChange) {
             let zippedFiles_html = $(".zippedFiles", "#cart").html();
 
             // don't forget to remove existing stuff before append
@@ -267,7 +294,7 @@ var o_cart = {
         // change indicator to zero and let the server know:
         $.getJSON("/opus/__cart/reset.json", function(data) {
             $("#op-cart-count").html("0");
-            opus.cart_change = true;
+            o_cart.cartChange = true;
             $("#cart .navbar").hide();
             $("#cart .sort-order-container").hide();
             if (!returnToSearch) {
@@ -288,18 +315,18 @@ var o_cart = {
 
         // handle it as range
         if (toOpusId != undefined) {
-            let namespace = o_browse.getViewInfo().namespace;
+            let tab = o_browse.getViewInfo().namespace;
             let action = (fromElem.hasClass("in") ? "removerange" : "addrange");
             let toElem = o_browse.getGalleryElement(toOpusId);
-            let fromIndex = $(`${namespace} .thumbnail-container`).index(fromElem);
-            let toIndex = $(`${namespace} .thumbnail-container`).index(toElem);
+            let fromIndex = $(`${tab} .thumbnail-container`).index(fromElem);
+            let toIndex = $(`${tab} .thumbnail-container`).index(toElem);
 
             // reorder if need be
             if (fromIndex > toIndex) {
                 [fromIndex, toIndex] = [toIndex, fromIndex];
             }
             let length = toIndex - fromIndex+1;
-            let elementArray = $(`${namespace} .thumbnail-container`);
+            let elementArray = $(`${tab} .thumbnail-container`);
             let opusIdRange = $(elementArray[fromIndex]).data("id") + ","+ $(elementArray[toIndex]).data("id");
             $.each(elementArray.splice(fromIndex, length), function(index, elem) {
                 let opusId = $(elem).data("id");
@@ -321,7 +348,7 @@ var o_cart = {
             if (opus.prefs.view != "cart") {
                 o_cart.editCart(opusIdRange, action);
             }
-            o_browse.undoRangeSelect(namespace);
+            o_browse.undoRangeSelect(tab);
         } else {
             // note - doing it this way handles the obs on the browse tab at the same time
             let action = (fromElem.hasClass("in") ? "add" : "remove");
@@ -337,7 +364,7 @@ var o_cart = {
 
     // action = add/remove/addrange/removerange/addall
     editCart: function(opusId, action) {
-        opus.cart_change = true;
+        o_cart.cartChange = true;
 
         let url = "/opus/__cart/" + action + ".json?";
         switch (action) {
@@ -368,8 +395,8 @@ var o_cart = {
         $("#op-total-download-size").hide();
         $(".op-total-size .spinner").addClass("op-show-spinner");
 
-        o_cart.lastCartRequestNo++;
-        $.getJSON(url  + add_to_url + "&reqno=" + o_cart.lastCartRequestNo, function(statusData) {
+        o_cart.lastRequestNo++;
+        $.getJSON(url  + add_to_url + "&reqno=" + o_cart.lastRequestNo, function(statusData) {
             $(".op-total-size .spinner").removeClass("op-show-spinner");
             o_cart.updateCartStatus(statusData);
         });
