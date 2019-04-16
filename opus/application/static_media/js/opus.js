@@ -37,11 +37,13 @@ var opus = {
     lastRequestNo: 0,          // holds request numbers for main result count loop,
     lastAllNormalizeRequestNo: 0,
     lastResultCountRequestNo: 0,
+    lastNormalizeurlRequestNo: 0,
     waitingForAllNormalizedAPI: false,
 
     // client side prefs, changes to these *do not trigger results to refresh*
     // prefs gets added verbatim to the url, so don't add anything weird into here!
-    prefs:{
+    // prefs key:value pair order has been re-orgnized to match up with normalized url
+    prefs: {
         'cols': default_columns.split(','),  // default result table columns by slug
         'widgets':[], // search tab widget columns
         'order': default_sort_order.split(','),  // result table ordering
@@ -143,21 +145,23 @@ var opus = {
             // create an object from selections to compare with opus.selections
             let modifiedSelections = {};
             $.each(Object.keys(selections), function(idx, slug) {
-                modifiedSelections[slug] = selections[slug][0].replace("+", " ").split(",");
+                // qtype is not updated in opus.selections
+                if (!slug.match(/qtype/)) {
+                    modifiedSelections[slug] = selections[slug][0].replace("+", " ").split(",");
+                }
             });
-            console.log("=== selections ===")
-            console.log(selections);
-            console.log("=== modifiedSelections ===")
-            console.log(modifiedSelections);
-            console.log("=== opus.selections ===");
-            console.log(opus.selections);
-            console.log("Are modifiedSelections and opus.selections the same ?");
-            console.log(opus.checkIfSelectionsObjectsAreTheSame(modifiedSelections, opus.selections));
-            let opusSelectionsWithEmptyArray = !$.isEmptyObject(opus.selections) && opus.checkIfOpusSelectionsAreEmpty();
-            let selectionsIsEmptyObject = $.isEmptyObject(selections);
-            let hasSelections = !(opusSelectionsWithEmptyArray && selectionsIsEmptyObject)
-            // if data in selections !== data in opus.selections AND both data are not empty, it means selections are modified manually in url, reload the page (modified url in url bar and hit enter)
-            // if (hasSelections && !opus.checkIfSelectionsObjectsAreTheSame(modifiedSelections, opus.selections)) {
+
+            // debug print out
+            // console.log("=== selections ===")
+            // console.log(selections);
+            // console.log("=== modifiedSelections ===")
+            // console.log(modifiedSelections);
+            // console.log("=== opus.selections ===");
+            // console.log(opus.selections);
+            // console.log("Are modifiedSelections and opus.selections the same ?");
+            // console.log(opus.checkIfSelectionsObjectsAreTheSame(modifiedSelections, opus.selections));
+
+            // if data in selections !== data in opus.selections, it means selections are modified manually in url, reload the page (modified url in url bar and hit enter)
             if (!opus.checkIfSelectionsObjectsAreTheSame(modifiedSelections, opus.selections)) {
                 opus.selections = modifiedSelections;
                 location.reload();
@@ -191,39 +195,28 @@ var opus = {
         let selections = o_hash.getSelectionsFromHash();
         let modifiedSelections = {};
         $.each(Object.keys(selections), function(idx, slug) {
-            modifiedSelections[slug] = selections[slug][0].split(",");
+            // qtype is not updated in opus.selections
+            if (!slug.match(/qtype/)) {
+                modifiedSelections[slug] = selections[slug][0].replace("+", " ").split(",");
+            }
         });
         opus.last_selections = selections;
         opus.selections = modifiedSelections;
     },
 
-    // Check if opus.selections have empty array for each slug, e.g.: {planet: [], mission: []}
-    checkIfOpusSelectionsAreEmpty: function() {
-        let isEmpty = true;
-        $.each(Object.keys(opus.selections), function(idx, slug) {
-            if (opus.selections[slug].length !== 0) {
-                isEmpty = false;
-                return;
-            }
-        });
-        return isEmpty;
-    },
-
     // Check if two selections objects are the same, regardless of the order of array for each slug, e.g.:
-    // These two are the same:
-    // obj1 = {planet: [mars, netpune], mission: [hubble]}
-    // obj2 = {planet: [neptune, mars], mission: [hubble]}
+    // These two cases: obj1 & obj2 are the same:
+    // obj1 (convert from selections) = {planet: [mars, netpune], mission: [hubble]}
+    // obj2 (opus.selections) = {planet: [neptune, mars], mission: [hubble]}
+    // OR
+    // obj1 (convert from selections) = {planet: [mars, netpune]}
+    // obj2 (opus.selections) = {planet: [neptune, mars], mission: []}
     // This is used to check if selections are changed manually by user or changed by actions done in opus
     // Selections and opus.selections are the same when user makes selections in opus (url gets updated as well).
     // If selections and opus.selections are not the same, it means the url is changed manually by user
     checkIfSelectionsObjectsAreTheSame: function(obj1, obj2) {
-        // [obj1, obj2] = Object.keys(obj1).length > Object.keys(obj2).length ? [obj1, obj2] : [obj2, obj1];
-        // if (Object.keys(obj1).length !== Object.keys(obj2).length) {
-        //     // return false if they have different number of slugs
-        //     return false;
-        // }
-
         let isTheSame = true;
+
         $.each(obj1, function(slug, value) {
             if (!obj2[slug]) {
                 // return false if slug only exists in one of objects
@@ -248,13 +241,16 @@ var opus = {
     // Normalized URL API call
     normalizedURLAPICall: function() {
         let hash = o_hash.getHash();
-        let url = "/opus/__normalizeurl.json?" + hash;
+        // Note: temporarily add reqno, but maybe we don't need a reqno here.
+        // Because in our implementation, this api is call during document ready (or when reload), and every time this event is triggered, it means everything is reloaded so reqno will always be starting from 0 and passed in as 1 in API call.
+        opus.lastNormalizeurlRequestNo++;
+        let url = "/opus/__normalizeurl.json?" + hash + "&reqno=" + opus.lastNormalizeurlRequestNo;
+        $.getJSON(url, function(normalizeurlData) {
 
-        $.getJSON(url, function(normalizeurlData){
-            // TODO: add reqno
-            // if (normalizeurlData["reqno"] < opus.lastNormalizeurlRequestNo) {
-            //     return;
-            // }
+            if (normalizeurlData["reqno"] < opus.lastNormalizeurlRequestNo) {
+                return;
+            }
+
             $.each(normalizeurlData.new_slugs, function(idx, slug) {
                 if (slug.startobs) {
                     opus.currentObs = slug.startobs;
@@ -559,7 +555,7 @@ $(document).ready(function() {
     // add the navbar clicking behaviors, selecting which tab to view:
     // see triggerNavbarClick
     $("#op-main-nav").on("click", ".main_site_tabs .nav-item", function() {
-        if ($(this).hasClass("external-link") || $(this).hasClass("op-show-msg")) {
+        if ($(this).hasClass("external-link") || $(this).children().hasClass("op-show-msg")) {
             // this is a link to an external site or a link to open up a message modal
             return true;
         }
