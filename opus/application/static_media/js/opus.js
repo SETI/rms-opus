@@ -143,7 +143,7 @@ var opus = {
             // create an object from selections to compare with opus.selections
             let modifiedSelections = {};
             $.each(Object.keys(selections), function(idx, slug) {
-                modifiedSelections[slug] = selections[slug][0].split(",");
+                modifiedSelections[slug] = selections[slug][0].replace("+", " ").split(",");
             });
             console.log("=== selections ===")
             console.log(selections);
@@ -269,6 +269,7 @@ var opus = {
 
             // update URL
             window.location.hash = "/" + normalizeurlData.new_url.replace(" ", "%20");
+            window.location.hash = "/" + normalizeurlData.new_url.replace(" ", "+");
             opus.InitSelections();
 
             // watch the url for changes, this runs continuously
