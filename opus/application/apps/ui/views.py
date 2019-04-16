@@ -647,8 +647,7 @@ def api_normalize_url(request):
             if not selections[search1]:
                 msg = ('Search query for "'
                        + _escape_or_label_results(search1, pi1)
-                       + '" minimum had an illegal '
-                       'value; it has been ignored.')
+                       + '" had an illegal value; it has been ignored.')
                 msg_list.append(msg)
                 search1 = None
             else:
@@ -660,7 +659,7 @@ def api_normalize_url(request):
                 msg = ('Search query for "'
                        + _escape_or_label_results(search2, pi2)
                        + '" maximum had an illegal '
-                       'value; it has been ignored.')
+                       +'value; it has been ignored.')
                 msg_list.append(msg)
                 search2 = None
             else:
@@ -888,6 +887,7 @@ def api_normalize_url(request):
             msg = ('The value for "browse" was not either "gallery" or "data"; '
                    +'it has been set to "gallery".')
             msg_list.append(msg)
+            browse_val = 'gallery'
         else:
             browse_val = old_slugs['browse']
         del old_slugs['browse']
@@ -1062,14 +1062,14 @@ def api_normalize_url(request):
     final_msg = ''
     if old_ui_slug_flag:
         msg = ('<p>Your URL is from a previous version of OPUS. It has been '
-               +'adjusted to conform to the current version.</p><br>')
+               +'adjusted to conform to the current version.</p>')
         final_msg = msg + final_msg
     if msg_list:
         final_msg += '<p>We found the following issues with your bookmarked '
-        final_msg += 'URL:</p><br><ul>'
+        final_msg += 'URL:</p><ul>'
         for msg in msg_list:
             final_msg += '<li>'+msg+'</li>'
-        final_msg += '</ul><br>'
+        final_msg += '</ul>'
     if final_msg:
         msg = ('<p>We strongly recommend that you replace your old bookmark '
                +'with the updated URL in your browser so that you will not see '
