@@ -136,49 +136,35 @@ var opus = {
             opus.force_load = false;
 
         } else {
-            console.log("### selections changes ###");
-            console.log("=== current selections ===");
-            console.log(selections);
-            console.log(opus.selections);
-            console.log("=== last selections ===");
-            console.log(opus.last_selections);
             // selections in the url hash is different from opus.last_selections
             // reset the pages:
             opus.prefs.page = default_pages;
 
-            // if selections != opus.selections, then reload (modified url in url bar and hit enter)
+            // create an object from selections to compare with opus.selections
             let modifiedSelections = {};
             $.each(Object.keys(selections), function(idx, slug) {
                 modifiedSelections[slug] = selections[slug][0].split(",");
             });
-            console.log("Are selections and opus.selections the same????")
-            console.log(opus.checkIfSelectionsObjectsAreTheSame(modifiedSelections, opus.selections));
-            console.log("=== modifiedSelections ===");
+            console.log("=== selections ===")
+            console.log(selections);
+            console.log("=== modifiedSelections ===")
             console.log(modifiedSelections);
-            console.log(!($.isEmptyObject(selections) && !$.isEmptyObject(opus.selections) && opus.checkIfOpusSelectionsAreEmpty()))
-            let hasSelections = !(($.isEmptyObject(selections) && !$.isEmptyObject(opus.selections) && opus.checkIfOpusSelectionsAreEmpty()))
+            console.log("=== opus.selections ===");
+            console.log(opus.selections);
+            console.log("Are modifiedSelections and opus.selections the same ?");
+            console.log(opus.checkIfSelectionsObjectsAreTheSame(modifiedSelections, opus.selections));
+            let opusSelectionsWithEmptyArray = !$.isEmptyObject(opus.selections) && opus.checkIfOpusSelectionsAreEmpty();
+            let selectionsIsEmptyObject = $.isEmptyObject(selections);
+            let hasSelections = !(opusSelectionsWithEmptyArray && selectionsIsEmptyObject)
+            // if data in selections !== data in opus.selections AND both data are not empty, it means selections are modified manually in url, reload the page (modified url in url bar and hit enter)
             if (hasSelections && !opus.checkIfSelectionsObjectsAreTheSame(modifiedSelections, opus.selections)) {
-                console.log("@@@@")
-                console.log("force_load")
-                console.log(opus.force_load)
                 opus.selections = modifiedSelections;
-                // console.log("opus.selections after mod")
-                // console.log(opus.selections)
-                // if (!opus.force_load) {
-                //     // clearInterval(opus.main_timer);
-                //     location.reload();
-                // }
                 location.reload();
                 return;
             } else {
                 // and reset the query:
                 o_browse.resetQuery();
             }
-            // // selections in the url hash is different from opus.last_selections
-            // // reset the pages:
-            // opus.prefs.page = default_pages;
-            // // and reset the query:
-            // o_browse.resetQuery();
         }
 
         // start the result count spinner and do the yellow flash
@@ -230,16 +216,15 @@ var opus = {
     // Selections and opus.selections are the same when user makes selections in opus (url gets updated as well).
     // If selections and opus.selections are not the same, it means the url is changed manually by user
     checkIfSelectionsObjectsAreTheSame: function(obj1, obj2) {
-        if (Object.keys(obj1).length !== Object.keys(obj2).length) {
-            console.log("Length difference")
-            // return false if they have different number of slugs
-            return false;
-        }
+        // [obj1, obj2] = Object.keys(obj1).length > Object.keys(obj2).length ? [obj1, obj2] : [obj2, obj1];
+        // if (Object.keys(obj1).length !== Object.keys(obj2).length) {
+        //     // return false if they have different number of slugs
+        //     return false;
+        // }
 
         let isTheSame = true;
         $.each(obj1, function(slug, value) {
             if (!obj2[slug]) {
-                console.log("Slug difference")
                 // return false if slug only exists in one of objects
                 isTheSame = false;
                 return;
@@ -249,8 +234,7 @@ var opus = {
                 let obj1SlugValueString = JSON.stringify(dupObj1SlugValue.sort());
                 let obj2SlugValueString = JSON.stringify(dupObj2SlugValue.sort());
                 if (obj1SlugValueString !== obj2SlugValueString) {
-                    console.log("Value difference");
-                    // reutnr false if values to the same slug are different in two objects
+                    // return false if values to the same slug are different in two objects
                     isTheSame = false;
                     return;
                 }
@@ -260,8 +244,35 @@ var opus = {
         return isTheSame;
     },
 
-    normalizedURL: function() {
+    // Normalized URL API call
+    normalizedURLAPICall: function() {
+        let hash = o_hash.getHash();
+        let url = "/opus/__normalizeurl.json?" + hash;
 
+        $.getJSON(url, function(normalizeurlData){
+            // TODO: add reqno
+            // if (normalizeurlData["reqno"] < opus.lastNormalizeurlRequestNo) {
+            //     return;
+            // }
+            $.each(normalizeurlData.new_slugs, function(idx, slug) {
+                if (slug.startobs) {
+                    opus.currentObs = slug.startobs;
+                }
+            });
+
+            // display returned message in the modal
+            if (normalizeurlData.msg) {
+                $("#op-update-url .modal-body").html(normalizeurlData.msg);
+                $(".op-update-url-msg").addClass("op-show-msg");
+            }
+
+            // update URL
+            window.location.hash = "/" + normalizeurlData.new_url.replace(" ", "%20");
+            opus.InitSelections();
+
+            // watch the url for changes, this runs continuously
+            opus.main_timer = setInterval(opus.load, opus.main_timer_interval);
+        });
     },
 
     getResultCount: function(normalizedData) {
@@ -546,8 +557,8 @@ $(document).ready(function() {
     // add the navbar clicking behaviors, selecting which tab to view:
     // see triggerNavbarClick
     $("#op-main-nav").on("click", ".main_site_tabs .nav-item", function() {
-        if ($(this).hasClass("external-link")) {
-            // this is a link to an external site, so just go there...
+        if ($(this).hasClass("external-link") || $(this).hasClass("op-show-msg")) {
+            // this is a link to an external site or a link to open up a message modal
             return true;
         }
 
@@ -672,49 +683,10 @@ $(document).ready(function() {
         return elementBottom > viewportTop && elementTop < viewportBottom;
     };
 
-    // let hash = o_hash.getHash();
-    // console.log("1st get hash");
-    // console.log(hash);
     o_cart.initCart();
     opus.triggerNavbarClick();
 
-    /// Normalized url for the 1st time
-    console.log("======== in document .ready function ========");
-    console.log("======== call normalized for the 1st time =======");
-    // hash = hash ? hash : o_hash.getHash();
-    let hash = o_hash.getHash();
-    console.log("2nd get hash");
-    console.log(hash);
-    let url = "/opus/__normalizeurl.json?" + hash;
-    console.log(`CALL API URL: ${url}`);
-    $.getJSON(url, function(normalizeurlData){
-        // TODO: add reqno
-        // if (normalizeurlData["reqno"] < opus.lastNormalizeurlRequestNo) {
-        //     return;
-        // }
-        $.each(normalizeurlData.new_slugs, function(idx, slug) {
-            if (slug.startobs) {
-                opus.currentObs = slug.startobs;
-            }
-        });
-        if (normalizeurlData.msg) {
-            $("#op-update-url .modal-body").html(normalizeurlData.msg);
-            $(".op-update-url-msg").addClass("op-show-msg");
-        }
-        window.location.hash = "/" + normalizeurlData.new_url.replace(" ", "%20");
-        console.log("window hash");
-        console.log(window.location.hash);
-
-        opus.InitSelections();
-
-        console.log("===== AFTER UPDATE: opus.selections =====")
-        console.log(opus.selections)
-        // watch the url for changes, this runs continuously
-        opus.main_timer = setInterval(opus.load, opus.main_timer_interval);
-    });
-
-    // watch the url for changes, this runs continuously
-    // opus.main_timer = setInterval(opus.load, opus.main_timer_interval);
+    opus.normalizedURLAPICall();
 
     return;
 
