@@ -157,7 +157,8 @@ var opus = {
             let selectionsIsEmptyObject = $.isEmptyObject(selections);
             let hasSelections = !(opusSelectionsWithEmptyArray && selectionsIsEmptyObject)
             // if data in selections !== data in opus.selections AND both data are not empty, it means selections are modified manually in url, reload the page (modified url in url bar and hit enter)
-            if (hasSelections && !opus.checkIfSelectionsObjectsAreTheSame(modifiedSelections, opus.selections)) {
+            // if (hasSelections && !opus.checkIfSelectionsObjectsAreTheSame(modifiedSelections, opus.selections)) {
+            if (!opus.checkIfSelectionsObjectsAreTheSame(modifiedSelections, opus.selections)) {
                 opus.selections = modifiedSelections;
                 location.reload();
                 return;
