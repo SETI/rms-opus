@@ -103,65 +103,6 @@ var opus = {
 
     currentObs: 1,
     //------------------------------------------------------------------------------------//
-    // If the pasted url has selections, init opus.selections & opus.last_selections to the current hash's selections.
-    // This is like we init both opus.selections & opus.last_selections to {} when starting opus fresh.
-    InitSelections: function() {
-        let selections = o_hash.getSelectionsFromHash();
-        let modifiedSelections = {};
-        $.each(Object.keys(selections), function(idx, slug) {
-            modifiedSelections[slug] = selections[slug][0].split(",");
-        });
-        opus.last_selections = selections;
-        opus.selections = modifiedSelections;
-    },
-
-    // Check if opus.selections have empty array for each slug, e.g.: {planet: [], mission: []}
-    checkIfOpusSelectionsAreEmpty: function() {
-        let isEmpty = true;
-        $.each(Object.keys(opus.selections), function(idx, slug) {
-            if (opus.selections[slug].length !== 0) {
-                isEmpty = false;
-                return;
-            }
-        });
-        return isEmpty;
-    },
-
-    // Check if two selections objects are the same, regardless of the order of array for each slug, e.g.:
-    // These two are the same:
-    // obj1 = {planet: [mars, netpune], mission: [hubble]}
-    // obj2 = {planet: [neptune, mars], mission: [hubble]}
-    checkIfSelectionsObjectsAreTheSame: function(obj1, obj2) {
-        if (Object.keys(obj1).length !== Object.keys(obj2).length) {
-            console.log("Length difference")
-            // return false if they have different number of slugs
-            return false;
-        }
-
-        let isTheSame = true;
-        $.each(obj1, function(slug, value) {
-            if (!obj2[slug]) {
-                console.log("Slug difference")
-                // return false if slug only exists in one of objects
-                isTheSame = false;
-                return;
-            } else {
-                let dupObj1SlugValue = new Array(...obj1[slug]);
-                let dupObj2SlugValue = new Array(...obj2[slug]);
-                let obj1SlugValueString = JSON.stringify(dupObj1SlugValue.sort());
-                let obj2SlugValueString = JSON.stringify(dupObj2SlugValue.sort());
-                if (obj1SlugValueString !== obj2SlugValueString) {
-                    console.log("Value difference");
-                    // reutnr false if values to the same slug are different in two objects
-                    isTheSame = false;
-                    return;
-                }
-            }
-        });
-
-        return isTheSame;
-    },
-
     load: function() {
         /* When user makes any change to the interface, such as changing a query,
         the load() will send an ajax request to the server to get information it
@@ -208,7 +149,6 @@ var opus = {
             // if selections != opus.selections, then reload (modified url in url bar and hit enter)
             let modifiedSelections = {};
             $.each(Object.keys(selections), function(idx, slug) {
-                // modifiedSelections[slug] = [selections[slug].join(",")];
                 modifiedSelections[slug] = selections[slug][0].split(",");
             });
             console.log("Are selections and opus.selections the same????")
@@ -224,10 +164,11 @@ var opus = {
                 opus.selections = modifiedSelections;
                 // console.log("opus.selections after mod")
                 // console.log(opus.selections)
-                if (!opus.force_load) {
-                    // clearInterval(opus.main_timer);
-                    location.reload();
-                }
+                // if (!opus.force_load) {
+                //     // clearInterval(opus.main_timer);
+                //     location.reload();
+                // }
+                location.reload();
                 return;
             } else {
                 // and reset the query:
@@ -255,6 +196,72 @@ var opus = {
 
         // chain ajax calls, validate range inputs before result count api call
         o_search.allNormalizedApiCall().then(opus.getResultCount).then(opus.updatePageAfterResultCountAPI);
+    },
+
+    // If the pasted url has selections, init opus.selections & opus.last_selections to the current hash's selections.
+    // This is like we init both opus.selections & opus.last_selections to {} when starting opus fresh.
+    InitSelections: function() {
+        let selections = o_hash.getSelectionsFromHash();
+        let modifiedSelections = {};
+        $.each(Object.keys(selections), function(idx, slug) {
+            modifiedSelections[slug] = selections[slug][0].split(",");
+        });
+        opus.last_selections = selections;
+        opus.selections = modifiedSelections;
+    },
+
+    // Check if opus.selections have empty array for each slug, e.g.: {planet: [], mission: []}
+    checkIfOpusSelectionsAreEmpty: function() {
+        let isEmpty = true;
+        $.each(Object.keys(opus.selections), function(idx, slug) {
+            if (opus.selections[slug].length !== 0) {
+                isEmpty = false;
+                return;
+            }
+        });
+        return isEmpty;
+    },
+
+    // Check if two selections objects are the same, regardless of the order of array for each slug, e.g.:
+    // These two are the same:
+    // obj1 = {planet: [mars, netpune], mission: [hubble]}
+    // obj2 = {planet: [neptune, mars], mission: [hubble]}
+    // This is used to check if selections are changed manually by user or changed by actions done in opus
+    // Selections and opus.selections are the same when user makes selections in opus (url gets updated as well).
+    // If selections and opus.selections are not the same, it means the url is changed manually by user
+    checkIfSelectionsObjectsAreTheSame: function(obj1, obj2) {
+        if (Object.keys(obj1).length !== Object.keys(obj2).length) {
+            console.log("Length difference")
+            // return false if they have different number of slugs
+            return false;
+        }
+
+        let isTheSame = true;
+        $.each(obj1, function(slug, value) {
+            if (!obj2[slug]) {
+                console.log("Slug difference")
+                // return false if slug only exists in one of objects
+                isTheSame = false;
+                return;
+            } else {
+                let dupObj1SlugValue = new Array(...obj1[slug]);
+                let dupObj2SlugValue = new Array(...obj2[slug]);
+                let obj1SlugValueString = JSON.stringify(dupObj1SlugValue.sort());
+                let obj2SlugValueString = JSON.stringify(dupObj2SlugValue.sort());
+                if (obj1SlugValueString !== obj2SlugValueString) {
+                    console.log("Value difference");
+                    // reutnr false if values to the same slug are different in two objects
+                    isTheSame = false;
+                    return;
+                }
+            }
+        });
+
+        return isTheSame;
+    },
+
+    normalizedURL: function() {
+
     },
 
     getResultCount: function(normalizedData) {
@@ -665,16 +672,17 @@ $(document).ready(function() {
         return elementBottom > viewportTop && elementTop < viewportBottom;
     };
 
-    let hash = o_hash.getHash();
-    console.log("1st get hash");
-    console.log(hash);
+    // let hash = o_hash.getHash();
+    // console.log("1st get hash");
+    // console.log(hash);
     o_cart.initCart();
     opus.triggerNavbarClick();
 
     /// Normalized url for the 1st time
     console.log("======== in document .ready function ========");
     console.log("======== call normalized for the 1st time =======");
-    hash = hash ? hash : o_hash.getHash();
+    // hash = hash ? hash : o_hash.getHash();
+    let hash = o_hash.getHash();
     console.log("2nd get hash");
     console.log(hash);
     let url = "/opus/__normalizeurl.json?" + hash;
