@@ -45,7 +45,7 @@ var opus = {
     // prefs key:value pair order has been re-organized to match up with normalized url
     prefs: {
         "cols": default_columns.split(","),  // default result table columns by slug
-        "widgets":[], // search tab widget columns
+        "widgets": [], // search tab widget columns
         "order": default_sort_order.split(","),  // result table ordering
         "view": "search", // search, browse, cart, detail
         "browse": "gallery", //either 'gallery' or 'data'
