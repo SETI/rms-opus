@@ -12,8 +12,12 @@
         {{confirm_msg}}
       </div>
       <div class="modal-footer">
-        <button type="submit" class="btn btn-primary" data-dismiss="modal" data-target={{target}}>Yes</button>
-        <button type="cancel" class="btn btn-danger">No</button>
+        {% if yes_text != None %}
+            <button type="submit" class="btn btn-primary" data-dismiss="modal" data-target={{target}}>{{yes_text}}</button>
+        {% endif %}
+        {% if no_text != None %}
+            <button type="cancel" class="btn btn-danger">{{no_text}}</button>
+        {% endif %}
       </div>
     </div>
   </div>

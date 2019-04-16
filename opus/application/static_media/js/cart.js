@@ -388,6 +388,17 @@ var o_cart = {
 
         o_cart.lastCartRequestNo++;
         $.getJSON(url  + add_to_url + "&reqno=" + o_cart.lastCartRequestNo, function(statusData) {
+
+            // error message returned from api call
+            if (statusData.error) {
+                $("#op-cart-status-error-msg .modal-body").text(statusData.error)
+                $("#op-cart-status-error-msg").modal("show");
+                // reload data
+                // Note: result count on cart badge will stay the same, so no need to update
+                o_browse.reRenderData = true;
+                o_browse.loadData();
+            }
+
             $(".op-total-size .spinner").removeClass("op-show-spinner");
             o_cart.updateCartStatus(statusData);
         });
