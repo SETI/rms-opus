@@ -388,13 +388,15 @@ var o_cart = {
 
         o_cart.lastCartRequestNo++;
         $.getJSON(url  + add_to_url + "&reqno=" + o_cart.lastCartRequestNo, function(statusData) {
-
+            if (statusData.reqno < o_cart.lastCartRequestNo) {
+                return;
+            }
             // error message returned from api call
             if (statusData.error) {
                 $("#op-cart-status-error-msg .modal-body").text(statusData.error)
                 $("#op-cart-status-error-msg").modal("show");
                 // reload data
-                // Note: result count on cart badge will stay the same, so no need to update
+                // Note: we don't return after loadData because we still have to update the result count in cart badge (updateCartStatus)
                 o_browse.reRenderData = true;
                 o_browse.loadData();
             }

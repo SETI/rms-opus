@@ -352,9 +352,8 @@ STRINGCHOICE_FULL_SEARCH_TIME_THRESHOLD2 = 500 # ms
 
 THUMBNAIL_NOT_FOUND = 'https://tools.pds-rings.seti.org/static_media/img/thumbnail_not_found.png'
 
-# Change to 5 to reproduce the cart error (B051), add to 6
-MAX_SELECTIONS_ALLOWED = 5
 # MAX_SELECTIONS_ALLOWED = 10000
+MAX_SELECTIONS_ALLOWED = 5
 
 MAX_SELECTIONS_FOR_DATA_DOWNLOAD = 250
 MAX_SELECTIONS_FOR_URL_DOWNLOAD = 10000
