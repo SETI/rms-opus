@@ -134,9 +134,17 @@ var o_search = {
             let slug = $(this).attr("name");
             let currentValue = $(this).val().trim();
             let values = [];
-            values.push(currentValue);
-            opus.selections[slug] = values;
+            // values.push(currentValue);
+            // opus.selections[slug] = values;
 
+            if (currentValue) {
+                values.push(currentValue);
+            }
+            if (values.length) {
+                opus.selections[slug] = values;
+            } else {
+                delete opus.selections[slug]
+            }
             let newHash = o_hash.updateHash(false);
             /*
             We are relying on URL order now to parse and get slugs before "&view" in the URL
@@ -168,6 +176,8 @@ var o_search = {
                 $("#widget__" + slug + ' input.STRING').each(function() {
                     values.push($(this).val());
                 });
+
+                if (values[0])
                 opus.selections[slug] = values;
             } else {
                 // range query
@@ -203,6 +213,7 @@ var o_search = {
                     return;
                 }
             }
+
             // make a normalized call to avoid changing url whenever there is an invalid range input value
             let newHash = o_hash.updateHash(false);
             /*
@@ -250,6 +261,10 @@ var o_search = {
            } else {
                let remove = opus.selections[id].indexOf(value); // find index of value to remove
                opus.selections[id].splice(remove,1);        // remove value from array
+
+               if (opus.selections[id].length === 0) {
+                   delete opus.selections[id];
+               }
            }
            o_hash.updateHash();
         });
