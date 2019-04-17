@@ -47,12 +47,13 @@ var o_hash = {
                         // opus.prefs.view = search, browse, cart, or detail
                         // opus.prefs.browse =  'gallery' or 'dataTable',
                         let page = o_browse.getCurrentPage();
-                        // we will no longer have page in url, so no need to push page
-                        // hash.push("page=" + page);
+                        // Note: page will be removed later on in Debby's repo
+                        hash.push("page=" + page);
                         break;
-                    case "startobs":
-                        hash.push("startobs=" + opus.currentObs);
-                        break;
+                    // comment out starobs for now
+                    // case "startobs":
+                    //     hash.push("startobs=" + opus.currentObs);
+                    //     break;
                     default:
                         hash.push(key + "=" + opus.prefs[key]);
                 }

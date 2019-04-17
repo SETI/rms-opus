@@ -37,7 +37,7 @@ var opus = {
     lastRequestNo: 0,          // holds request numbers for main result count loop,
     lastAllNormalizeRequestNo: 0,
     lastResultCountRequestNo: 0,
-    lastNormalizeurlRequestNo: 0,
+    lastNormalizeURLRequestNo: 0,
     waitingForAllNormalizedAPI: false,
 
     // client side prefs, changes to these *do not trigger results to refresh*
@@ -48,8 +48,8 @@ var opus = {
         "widgets": [], // search tab widget columns
         "order": default_sort_order.split(","),  // result table ordering
         "view": "search", // search, browse, cart, detail
-        "browse": "gallery", //either 'gallery' or 'data'
-        "startobs": 1,
+        "browse": "gallery", // either 'gallery' or 'data'
+        "startobs": 1, // for this branch it will not get updated
         "cart_browse": "gallery",  // which view is showing on the cart page, gallery or data
         "detail": "", // opus_id of detail page content
         "page": default_pages,  // what page are we on, per view, default defined in header.html
@@ -103,7 +103,7 @@ var opus = {
 
     minimumPSLength: 30,
 
-    currentObs: 1,
+    // currentObs: 1,
     //------------------------------------------------------------------------------------//
     load: function() {
         /* When user makes any change to the interface, such as changing a query,
@@ -243,11 +243,11 @@ var opus = {
         let hash = o_hash.getHash();
         // Note: temporarily add reqno, but maybe we don't need a reqno here.
         // Because in our implementation, this api is call during document ready (or when reload), and every time this event is triggered, it means everything is reloaded so reqno will always be starting from 0 and passed in as 1 in API call.
-        opus.lastNormalizeurlRequestNo++;
-        let url = "/opus/__normalizeurl.json?" + hash + "&reqno=" + opus.lastNormalizeurlRequestNo;
+        opus.lastNormalizeURLRequestNo++;
+        let url = "/opus/__normalizeurl.json?" + hash + "&reqno=" + opus.lastNormalizeURLRequestNo;
         $.getJSON(url, function(normalizeurlData) {
 
-            if (normalizeurlData["reqno"] < opus.lastNormalizeurlRequestNo) {
+            if (normalizeurlData["reqno"] < opus.lastNormalizeURLRequestNo) {
                 return;
             }
 
