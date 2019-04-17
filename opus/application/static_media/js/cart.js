@@ -62,7 +62,7 @@ var o_cart = {
          });
 
          // Display the whole series of modals.
-         // This will keep displaying multiple error message modals one after another when the previous modal is close.
+         // This will keep displaying multiple error message modals one after another when the previous modal is closed.
          $("#op-cart-status-error-msg").on("hidden.bs.modal", function(e) {
              if (o_cart.statusDataErrorCollector.length !== 0) {
                  $("#op-cart-status-error-msg .modal-body").text(o_cart.statusDataErrorCollector.pop());
