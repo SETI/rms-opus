@@ -152,17 +152,17 @@ var opus = {
             });
 
             // debug print out
-            // console.log("=== selections ===")
-            // console.log(selections);
-            // console.log("=== modifiedSelections ===")
-            // console.log(modifiedSelections);
-            // console.log("=== opus.selections ===");
-            // console.log(opus.selections);
-            // console.log("Are modifiedSelections and opus.selections the same ?");
-            // console.log(opus.checkIfSelectionsObjectsAreTheSame(modifiedSelections, opus.selections));
+            console.log("=== selections ===")
+            console.log(selections);
+            console.log("=== modifiedSelections ===")
+            console.log(modifiedSelections);
+            console.log("=== opus.selections ===");
+            console.log(opus.selections);
+            console.log("Are modifiedSelections and opus.selections the same ?");
+            console.log(opus.selectionsObjectsAreTheSame(modifiedSelections, opus.selections));
 
             // if data in selections !== data in opus.selections, it means selections are modified manually in url, reload the page (modified url in url bar and hit enter)
-            if (!opus.checkIfSelectionsObjectsAreTheSame(modifiedSelections, opus.selections)) {
+            if (!opus.selectionsObjectsAreTheSame(modifiedSelections, opus.selections)) {
                 opus.selections = modifiedSelections;
                 location.reload();
                 return;
@@ -214,7 +214,7 @@ var opus = {
     // This is used to check if selections are changed manually by user or changed by actions done in opus
     // Selections and opus.selections are the same when user makes selections in opus (url gets updated as well).
     // If selections and opus.selections are not the same, it means the url is changed manually by user
-    checkIfSelectionsObjectsAreTheSame: function(obj1, obj2) {
+    selectionsObjectsAreTheSame: function(obj1, obj2) {
         let isTheSame = true;
 
         $.each(obj1, function(slug, value) {
@@ -260,7 +260,7 @@ var opus = {
             // display returned message in the modal
             if (normalizeurlData.msg) {
                 $("#op-update-url .modal-body").html(normalizeurlData.msg);
-                $(".op-update-url-msg").addClass("op-show-msg");
+                $(".op-user-msg").addClass("op-show-msg");
             }
 
             // update URL
@@ -659,8 +659,8 @@ $(document).ready(function() {
                         o_cart.emptyCart();
                         break;
                     case "op-update-url":
-                        // if user clicks "ok", we hide the link to url message on navabr
-                        $(".op-update-url-msg").removeClass("op-show-msg");
+                        // if user clicks "ok", we hide the link to url message on navbar
+                        $(".op-user-msg").removeClass("op-show-msg");
                         break;
                 }
                 // This intentionally falls through to hide the modal
