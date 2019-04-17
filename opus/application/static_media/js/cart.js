@@ -12,7 +12,7 @@ var o_cart = {
     lastCartRequestNo: 0,
     lastRequestNo: 0,
     downloadInProcess: false,
-    // collector all cart status error messages
+    // collector for all cart status error messages
     statusDataErrorCollector: [],
 
     /**
