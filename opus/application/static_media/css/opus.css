@@ -238,7 +238,7 @@ ul.searchMenu {
 
 #op-confirm-modal {
     border-radius: 6px;
-    border-color: #D3D3D3;
+    border: solid 3px #D3D3D3;
 }
 
 .modal {
