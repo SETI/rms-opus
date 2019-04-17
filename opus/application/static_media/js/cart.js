@@ -12,7 +12,8 @@ var o_cart = {
     lastCartRequestNo: 0,
     lastRequestNo: 0,
     downloadInProcess: false,
-
+    // collector all cart status error messages
+    statusDataErrorCollector: [],
 
     /**
      *
@@ -58,6 +59,15 @@ var o_cart = {
                  $(".op-total-size .spinner").removeClass("op-show-spinner");
                  $("#op-total-download-size").fadeOut().html(info.total_download_size_pretty).fadeIn();
              });
+         });
+
+         // Display the whole series of modals.
+         // This will keep displaying multiple error message modals one after another when the previous modal is close.
+         $("#op-cart-status-error-msg").on("hidden.bs.modal", function(e) {
+             if (o_cart.statusDataErrorCollector.length !== 0) {
+                 $("#op-cart-status-error-msg .modal-body").text(o_cart.statusDataErrorCollector.pop());
+                 $("#op-cart-status-error-msg").modal("show");
+             }
          });
      },
 
@@ -388,17 +398,23 @@ var o_cart = {
 
         o_cart.lastCartRequestNo++;
         $.getJSON(url  + add_to_url + "&reqno=" + o_cart.lastCartRequestNo, function(statusData) {
-            if (statusData.reqno < o_cart.lastCartRequestNo) {
-                return;
-            }
-            // error message returned from api call
+            // display modal for every error message returned from api call
             if (statusData.error) {
-                $("#op-cart-status-error-msg .modal-body").text(statusData.error)
-                $("#op-cart-status-error-msg").modal("show");
+                // if previous error modal is currently open, we store the error message for later displaying
+                if ($("#op-cart-status-error-msg").hasClass("show")) {
+                    o_cart.statusDataErrorCollector.push(statusData.error);
+                } else {
+                    $("#op-cart-status-error-msg .modal-body").text(statusData.error)
+                    $("#op-cart-status-error-msg").modal("show");
+                }
                 // reload data
                 // Note: we don't return after loadData because we still have to update the result count in cart badge (updateCartStatus)
                 o_browse.reRenderData = true;
                 o_browse.loadData();
+            }
+            // we only update the cart badge result count from the latest request
+            if (statusData.reqno < o_cart.lastCartRequestNo) {
+                return;
             }
 
             $(".op-total-size .spinner").removeClass("op-show-spinner");
