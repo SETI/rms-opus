@@ -277,13 +277,13 @@ var o_browse = {
             let action = $(this).hasClass("prev") ? "prev" : "next";
             let opusId = $(this).data("id");
 
-            if (action === "next") {
-                o_browse.checkIfLoadNextPageIsNeeded(opusId);
-            } else if (action === "prev") {
-                o_browse.checkIfLoadPrevPageIsNeeded(opusId);
-            }
-
             if (opusId) {
+                if (action === "next") {
+                    o_browse.loadNextPageIfNeeded(opusId);
+                } else {
+                    o_browse.loadPrevPageIfNeeded(opusId);
+                }
+
                 o_browse.updateGalleryView(opusId);
             }
             return false;
@@ -398,11 +398,11 @@ var o_browse = {
                 switch (e.which || e.keyCode) {
                     case 39:  // next
                         opusId = $("#galleryView").find(".next").data("id");
-                        o_browse.checkIfLoadNextPageIsNeeded(opusId);
+                        o_browse.loadNextPageIfNeeded(opusId);
                         break;
                     case 37:  // prev
                         opusId = $("#galleryView").find(".prev").data("id");
-                        o_browse.checkIfLoadPrevPageIsNeeded(opusId);
+                        o_browse.loadPrevPageIfNeeded(opusId);
                         break;
                 }
                 if (opusId && !$("#galleryViewContents").hasClass("op-disabled")) {
@@ -423,52 +423,42 @@ var o_browse = {
     },
 
     // check if we need infiniteScroll to load next page when there is no more prefected data
-    checkIfLoadNextPageIsNeeded: function(opusId) {
-        if (!opusId) {
-            return;
-        }
-        let next = $(`#browse tr[data-id=${opusId}]`).next("tr");
-        let nextNext = next.next("tr");
-        let nextNextId = (nextNext.data("id") ? nextNext.data("id") : "");
+    loadNextPageIfNeeded: function(opusId) {
+        let view = o_browse.getViewInfo();
+        let tab = view.namespace;
 
-        // load the next page when the next next item is the dead end (no more prefected data)
-        if (!nextNextId && !nextNext.hasClass("table-page")) {
-            // If data reaches to the end, we don't need to load next page
-            // this will make sure we have correct html elements displayed for next opus id
-            if (!o_browse.dataNotAvailable) {
+        let obsNum = $(`${tab} .thumbnail-container[data-id=${opusId}]`).data("obs") + 1;
+        if (obsNum <= parseInt($("#op-cart-count").html())) {
+            let nextElem = $(`${tab} .thumbnail-container[data-obs=${obsNum}]`);
+            if (nextElem.length === 0) {
                 // disable keydown on modal when it's loading
+                // this will make sure we have correct html elements displayed for prev observation
                 $("#galleryViewContents").addClass("op-disabled");
-                $(`#${opus.prefs.view} .gallery-contents`).infiniteScroll("loadNextPage");
+                opus.prefs[`${view.prefix}startobs`] = obsNum;
+                $(`${tab} .gallery-contents`).infiniteScroll("loadNextPage");
             }
         }
     },
 
-    checkIfLoadPrevPageIsNeeded: function(opusId) {
-        o_browse.currentOpusId = opusId;
-        if (!opusId) {
-            return;
-        }
-        let prev = $(`#browse tr[data-id=${opusId}]`).prev("tr");
-        // DAVE
-/*        while (prev.hasClass("table-page")) {
-            prev = prev.prev("tr");
-            if (prev.data("page")) {
-                // if (o_browse.infiniteScrollCurrentMinPageNumber > (prev.data("page") - 1) && prev.data("page") > 0) {
-                // if (o_browse.infiniteScrollCurrentMinPageNumber > prev.data("page")) {
-                    o_browse.infiniteScrollCurrentMinPageNumber = prev.data("page") - 1;
+    loadPrevPageIfNeeded: function(opusId) {
+        let view = o_browse.getViewInfo();
+        let tab = view.namespace;
 
+        o_browse.currentOpusId = opusId;
+        // decrement obsNum to see if there is a previous one to retrieve
+        let obsNum = $(`${tab} .thumbnail-container[data-id=${opusId}]`).data("obs") - 1;
+        if (obsNum > 0) {
+            let prevElem = $(`${tab} .thumbnail-container[data-obs=${obsNum}]`);
+            // if it's not there go retrieve it...
+            if (prevElem.length === 0) {
+                // disable keydown on modal when it's loading
+                // this will make sure we have correct html elements displayed for prev observation
+                $("#galleryViewContents").addClass("op-disabled");
+                let startObs = obsNum - o_browse.getLimit();
+                opus.prefs[`${view.prefix}startobs`] = (startObs > 0 ? startObs : 1);
+                $(`${tab} .gallery-contents`).infiniteScroll("loadNextPage");
             }
         }
-        prev = (prev.data("id") ? prev.data("id") : "");
-
-        if (!prev && o_browse.infiniteScrollCurrentMinPageNumber > 0) {
-            // disable keydown on modal when it's loading
-            // this will make sure we have correct html elements displayed for prev opus id
-            $("#galleryViewContents").addClass("op-disabled");
-
-            $(`#${opus.prefs.view} .gallery-contents`).infiniteScroll("loadNextPage");
-
-        }*/
     },
 
     setScrollbarOnSlide: function(obsNum) {
@@ -480,7 +470,7 @@ var o_browse = {
         let galleryTargetFinalPosition = galleryTargetTopPosition - galleryContainerTopPosition + galleryScrollbarPosition;
         $(".gallery-contents").scrollTop(galleryTargetFinalPosition);
 
-        // DAVE
+        // TODO
         // Create a new jQuery.Event object with specified event properties.
         //let e = jQuery.Event( "DOMMouseScroll",{delta: -650} );
 
@@ -555,7 +545,7 @@ var o_browse = {
     },
 
     showModal: function(opusId) {
-        o_browse.checkIfLoadPrevPageIsNeeded(opusId);
+        o_browse.loadPrevPageIfNeeded(opusId);
         o_browse.updateGalleryView(opusId);
         $("#galleryView").modal("show");
     },
@@ -837,7 +827,7 @@ var o_browse = {
         }
     },
 
-    updateStartobsInUrl: function(url, startobs) {
+    updateStartobsInUrl: function(url, startObs) {
         let viewInfo = o_browse.getViewInfo();
         let obsStr = `${viewInfo.prefix}startobs`;
         // remove any existing page= slug or startobs= slug
@@ -845,7 +835,7 @@ var o_browse = {
             return !pair.startsWith(obsStr);
         }).join('&');
 
-        url += `&${obsStr}=${startobs}`;
+        url += `&${obsStr}=${startObs}`;
         return url;
     },
 
@@ -1149,9 +1139,10 @@ var o_browse = {
                     $(selector).infiniteScroll({
                         path: function() {
                             let startObs = opus.prefs[`${view.prefix}startobs`];
+                            /// this may not work w/prev TODO
                             let lastObs = $(`${view.namespace} .thumbnail-container`).last().data("obs");
                             // start from the last observation drawn; if none yet drawn ...???
-                            startObs = (lastObs != undefined ? lastObs : startObs + o_browse.getLimit());
+                            startObs = (lastObs != undefined ? lastObs + 1 : startObs + o_browse.getLimit());
                             let path = o_browse.getDataURL(startObs);
                             return path;
                         },
@@ -1207,6 +1198,7 @@ var o_browse = {
         // Maybe we only care to do this if the modal is visible...  right now, just let it be.
         // Update to make prev button appear when prefetching previous page is done
         if (!$("#galleryViewContents .prev").data("id") && $("#galleryViewContents .prev").hasClass("op-button-disabled")) {
+            // TODO
             let prev = $(`#browse tr[data-id=${o_browse.currentOpusId}]`).prev("tr");
             while (prev.hasClass("table-page")) {
                 prev = prev.prev("tr");
