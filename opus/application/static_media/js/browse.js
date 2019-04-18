@@ -149,8 +149,14 @@ var o_browse = {
             let new_slug = slug;
             if (descending == "true") {
                 slug = "-"+slug; // Old descending, new ascending
+                $(this).parent().attr("data-descending", "false");
+                $(this).attr("title", "Change to descending sort");
+                $(this).find("i").attr("class", `${o_browse.pillSortDownArrow}`);
             } else {
                 new_slug = "-"+slug; // Old ascending, new descending
+                $(this).parent().attr("data-descending", "true");
+                $(this).attr("title", "Change to ascending sort");
+                $(this).find("i").attr("class", `${o_browse.pillSortUpArrow}`);
             }
             let slugIndex = $.inArray(slug, opus.prefs.order);
             if (slugIndex >= 0) {
@@ -158,18 +164,16 @@ var o_browse = {
                 opus.prefs.order[slugIndex] = new_slug;
             }
 
-            // update the pill sort arrow right away
-            if (descending === "false") {
-                $(this).parent().attr("data-descending", "true");
-                $(this).attr("title", "Change to ascending sort");
-                // $(this).find("i").attr("class", "fas fa-arrow-circle-up");
-                $(this).find("i").attr("class", `${o_browse.pillSortUpArrow}`);
-            } else {
-                $(this).parent().attr("data-descending", "false");
-                $(this).attr("title", "Change to descending sort");
-                // $(this).find("i").attr("class", "fas fa-arrow-circle-down");
-                $(this).find("i").attr("class", `${o_browse.pillSortDownArrow}`);
-            }
+            // // update the pill sort arrow right away
+            // if (descending === "false") {
+            //     $(this).parent().attr("data-descending", "true");
+            //     $(this).attr("title", "Change to ascending sort");
+            //     $(this).find("i").attr("class", `${o_browse.pillSortUpArrow}`);
+            // } else {
+            //     $(this).parent().attr("data-descending", "false");
+            //     $(this).attr("title", "Change to descending sort");
+            //     $(this).find("i").attr("class", `${o_browse.pillSortDownArrow}`);
+            // }
 
             // order in the url will get updated right away
             o_hash.updateHash();
@@ -1127,7 +1131,10 @@ var o_browse = {
             let icon = ($.inArray(slug, order) >= 0 ? "-down" : ($.inArray("-"+slug, order) >= 0 ? "-up" : ""));
             let columnSorting = icon === "-down" ? "sort-asc" : icon === "-up" ? "sort-desc" : "none";
             let columnOrdering = `<a href='' data-slug='${slug}'><span>${header}</span><span data-sort='${columnSorting}' class='column_ordering fas fa-sort${icon}'></span></a>`;
-
+            if (slug === "planet") {
+                console.log("=== columnOrdering ===")
+                console.log(columnOrdering);
+            }
             $(".dataTable thead tr").append(`<th id='${slug} 'scope='col' class='sticky-header'><div>${columnOrdering}</div></th>`);
         });
 
