@@ -101,8 +101,6 @@ var opus = {
     helpPanelOpen: false,
 
     minimumPSLength: 30,
-
-    // currentObs: 1,
     //------------------------------------------------------------------------------------//
     load: function() {
         /* When user makes any change to the interface, such as changing a query,
