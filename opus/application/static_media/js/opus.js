@@ -601,34 +601,34 @@ var opus = {
         $(".op-reset-button button").on("click", function() {
             let targetModal = $(this).data("target");
 
-        if (!$.isEmptyObject(opus.selections) || !opus.checkIfDrawnWidgetsAreDefault()) {
-            $(targetModal).modal("show");
-        } else if (targetModal === "#op-reset-search-metadata-modal" && !opus.checkIfMetadataAreDefault()) {
-            $(targetModal).modal("show");
-        }
-    });
+            if (!$.isEmptyObject(opus.selections) || !opus.checkIfDrawnWidgetsAreDefault()) {
+                $(targetModal).modal("show");
+            } else if (targetModal === "#op-reset-search-metadata-modal" && !opus.checkIfMetadataAreDefault()) {
+                $(targetModal).modal("show");
+            }
+        });
 
-    $(".op-confirm-modal").on("click", ".btn", function() {
-        let target = $(this).data("target");
-        switch($(this).attr("type")) {
-            case "submit":
-                switch(target) {
-                    case "op-reset-search-metadata-modal":
-                        opus.startOver(resetMetadata=true);
-                        break;
-                    case "op-reset-search-modal":
-                        opus.startOver();
-                        break;
-                    case "op-empty-cart":
-                        o_cart.emptyCart();
-                        break;
-                }
-                // This intentionally falls through to hide the modal
-            case "cancel":
-                $(".modal").modal("hide");
-                break;
-        }
-    });
+        $(".op-confirm-modal").on("click", ".btn", function() {
+            let target = $(this).data("target");
+            switch($(this).attr("type")) {
+                case "submit":
+                    switch(target) {
+                        case "op-reset-search-metadata-modal":
+                            opus.startOver(resetMetadata=true);
+                            break;
+                        case "op-reset-search-modal":
+                            opus.startOver();
+                            break;
+                        case "op-empty-cart":
+                            o_cart.emptyCart();
+                            break;
+                    }
+                    // This intentionally falls through to hide the modal
+                case "cancel":
+                    $(".modal").modal("hide");
+                    break;
+            }
+        });
 
         $(".op-confirm-modal").on("click", ".btn", function() {
             let target = $(this).data("target");
