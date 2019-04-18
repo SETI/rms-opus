@@ -11,7 +11,8 @@
 var o_browse = {
 /* jshint varstmt: true */
     selectedImageID: "",
-    tableSorting: false,
+
+    reRenderData: false,
     metadataSelectorDrawn: false,
 
     tableScrollbar: new PerfectScrollbar("#browse .dataTable", {
@@ -107,7 +108,7 @@ var o_browse = {
             $(".op-page-loading-status > .loader").show();
             let slug = $(this).parent().attr("data-slug");
             let descending = $(this).parent().attr("data-descending");
-            o_browse.tableSorting = true;
+            o_browse.reRenderData = true;
 
             if (descending == "true") {
                 slug = "-"+slug;
@@ -127,7 +128,7 @@ var o_browse = {
             $(".op-page-loading-status > .loader").show();
             let slug = $(this).parent().attr("data-slug");
             let descending = $(this).parent().attr("data-descending");
-            o_browse.tableSorting = true;
+            o_browse.reRenderData = true;
 
             let new_slug = slug;
             if (descending == "true") {
@@ -303,7 +304,7 @@ var o_browse = {
             let orderBy =  $(this).data("slug");
 
             let orderIndicator = $(this).find("span:last");
-            o_browse.tableSorting = true;
+            o_browse.reRenderData = true;
             if (orderIndicator.data("sort") === "sort-asc") {
                 // currently ascending, change to descending order
                 orderIndicator.data("sort", "sort-desc");
@@ -1111,6 +1112,7 @@ var o_browse = {
             (startObs > lastObs + 1) || (startObs < firstObs - 1)) {
             o_browse.galleryBegun = false;
         } else {
+                // TODO - couldn't resolve w/a reRender var so making a note... 
             // wait! is this page already drawn?
             // if startObs drawn, move the slider to that line, fetch if need be after
             if (startObs >= firstObs && startObs <= lastObs) {
@@ -1185,7 +1187,7 @@ var o_browse = {
                 o_browse.updateSliderHandle();
                 o_browse.galleryBegun = true;
             }
-            o_browse.tableSorting = false;
+            o_browse.reRenderData = false;
         });
     },
 

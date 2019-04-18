@@ -1,7 +1,7 @@
 <!-- generic confirmation Modal -->
-<div class="modal confirm-modal fade" id={{id_name}} tabindex="-1" role="dialog" aria-labelledby="confirm-modalLabel" aria-hidden="true">
+<div class="modal op-confirm-modal fade" id={{id_name}} tabindex="-1" data-backdrop="false" data-keyboard="false" role="dialog" aria-labelledby="confirm-modalLabel" aria-hidden="true">
   <div class="modal-dialog" role="document">
-    <div id="confirm-modal" class="modal-content">
+    <div id="op-confirm-modal" class="modal-content border-light">
       <div class="modal-header bg-dark text-light font-weight-bold font-lg py-3">
         <div>{{confirm_title}}</div>
         <button type="button" class="close" data-dismiss="modal" aria-label="Close">
@@ -12,8 +12,12 @@
         {{confirm_msg}}
       </div>
       <div class="modal-footer">
-        <button type="submit" class="btn btn-primary" data-dismiss="modal" data-target={{target}}>Yes</button>
-        <button type="cancel" class="btn btn-danger">No</button>
+        {% if yes_text %}
+            <button type="submit" class="btn btn-primary" data-dismiss="modal" data-target={{target}}>{{yes_text}}</button>
+        {% endif %}
+        {% if no_text %}
+            <button type="cancel" class="btn btn-danger">{{no_text}}</button>
+        {% endif %}
       </div>
     </div>
   </div>
