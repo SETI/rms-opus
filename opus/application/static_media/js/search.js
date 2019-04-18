@@ -133,15 +133,9 @@ var o_search = {
         $("#search").on("change", "input.RANGE", function(event) {
             let slug = $(this).attr("name");
             let currentValue = $(this).val().trim();
-            let values = [];
-            // values.push(currentValue);
-            // opus.selections[slug] = values;
 
             if (currentValue) {
-                values.push(currentValue);
-            }
-            if (values.length) {
-                opus.selections[slug] = values;
+                opus.selections[slug] = [currentValue];
             } else {
                 delete opus.selections[slug]
             }
