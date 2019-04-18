@@ -151,16 +151,6 @@ var opus = {
                 }
             });
 
-            // debug print out
-            console.log("=== selections ===")
-            console.log(selections);
-            console.log("=== modifiedSelections ===")
-            console.log(modifiedSelections);
-            console.log("=== opus.selections ===");
-            console.log(opus.selections);
-            console.log("Are modifiedSelections and opus.selections the same ?");
-            console.log(opus.selectionsObjectsAreTheSame(modifiedSelections, opus.selections));
-
             // if data in selections !== data in opus.selections, it means selections are modified manually in url, reload the page (modified url in url bar and hit enter)
             if (!opus.selectionsObjectsAreTheSame(modifiedSelections, opus.selections)) {
                 opus.selections = modifiedSelections;
@@ -228,10 +218,7 @@ var opus = {
         let hash = o_hash.getHash();
         // Note: We don't need a reqno here.
         // Because in our implementation, this api is call at the beginning of document ready (or when reload), and every time this event is triggered, it means everything is reloaded. If we put reqno here, reqno will always be 1, so we don't need reqno.
-        opus.lastNormalizeURLRequestNo++;
         let url = "/opus/__normalizeurl.json?" + hash;
-        console.log("=== URL ===");
-        console.log(url);
         $.getJSON(url, function(normalizeurlData) {
             // Comment out action of updating startobs
             // $.each(normalizeurlData.new_slugs, function(idx, slug) {
