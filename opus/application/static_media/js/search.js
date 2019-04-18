@@ -174,11 +174,16 @@ var o_search = {
             let values = [];
             if (css_class == 'STRING') {
                 $("#widget__" + slug + ' input.STRING').each(function() {
-                    values.push($(this).val());
+                    if ($(this).val()) {
+                        values.push($(this).val());
+                    }
                 });
 
-                if (values[0])
-                opus.selections[slug] = values;
+                if (values.length) {
+                    opus.selections[slug] = values;
+                } else {
+                    delete opus.selections[slug];
+                }
             } else {
                 // range query
                 let slugNoNum = slug.match(/(.*)[1|2]/)[1];
@@ -193,7 +198,11 @@ var o_search = {
                     });
                 }
 
-                opus.selections[slugNoNum + '1'] = values;
+                if (values.length && values[0]) {
+                    opus.selections[slugNoNum + '1'] = values;
+                } else {
+                    delete opus.selections[slugNoNum + '1']
+                }
                 // max
                 values = [];
                 $("#widget__" + slugNoNum + '1 input.max', '#search').each(function() {
@@ -205,7 +214,11 @@ var o_search = {
                     });
                 }
 
-                opus.selections[slugNoNum + '2'] = values;
+                if (values.length && values[0]) {
+                    opus.selections[slugNoNum + '2'] = values;
+                } else {
+                    delete opus.selections[slugNoNum + '2']
+                }
             }
 
             if (opus.last_selections && opus.last_selections[slug]) {
