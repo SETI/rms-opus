@@ -253,11 +253,12 @@ var opus = {
                 return;
             }
 
-            $.each(normalizeurlData.new_slugs, function(idx, slug) {
-                if (slug.startobs) {
-                    opus.currentObs = slug.startobs;
-                }
-            });
+            // Comment out action of updating startobs
+            // $.each(normalizeurlData.new_slugs, function(idx, slug) {
+            //     if (slug.startobs) {
+            //         opus.currentObs = slug.startobs;
+            //     }
+            // });
 
             // display returned message in the modal
             if (normalizeurlData.msg) {
@@ -267,7 +268,9 @@ var opus = {
 
             // update URL
             window.location.hash = "/" + normalizeurlData.new_url.replace(" ", "+");
-            opus.InitSelections();
+            // opus.InitSelections();
+
+            opus.opusInitialization();
 
             // watch the url for changes, this runs continuously
             opus.main_timer = setInterval(opus.load, opus.main_timer_interval);
@@ -506,187 +509,189 @@ var opus = {
             $("#op-help-panel .card-body").scrollTop(0);
             opus.helpScrollbar.update();
         }
+    },
+
+    // OPUS initialization process after document.ready and normalized url api call
+    opusInitialization: function() {
+        /* displays a list of the included css for debug only!
+            let temp = "";
+            $.each($("link"), function(index, elem) {
+                temp += elem.href + "\n"
+            });
+            alert(temp);
+        */
+
+        opus.prefs.widgets = [];
+        o_widgets.updateWidgetCookies();
+        opus.lastBlogUpdate();
+        opus.addAllBehaviors();
+
+        o_hash.initFromHash(); // just returns null if no hash
+
+        if (!opus.prefs.view) {
+            opus.prefs.view = 'search';
+        }
+
+        let adjustSearchHeightDB = _.debounce(o_search.adjustSearchHeight, 200);
+        let adjustBrowseHeightDB = _.debounce(o_browse.adjustBrowseHeight, 200);
+        let adjustTableSizeDB = _.debounce(o_browse.adjustTableSize, 200);
+        let adjustProductInfoHeightDB = _.debounce(o_cart.adjustProductInfoHeight, 200);
+        let adjustDetailHeightDB = _.debounce(o_detail.adjustDetailHeight, 200);
+        let adjustHelpPanelHeightDB = _.debounce(opus.adjustHelpPanelHeight, 200);
+
+        $(window).on("resize", function() {
+            adjustSearchHeightDB();
+            adjustBrowseHeightDB();
+            adjustTableSizeDB();
+            adjustProductInfoHeightDB();
+            adjustDetailHeightDB();
+            adjustHelpPanelHeightDB();
+        });
+
+        o_mutationObserver.observePerfectScrollbar();
+
+        // add the navbar clicking behaviors, selecting which tab to view:
+        // see triggerNavbarClick
+        $("#op-main-nav").on("click", ".main_site_tabs .nav-item", function() {
+            if ($(this).hasClass("external-link") || $(this).children().hasClass("op-show-msg")) {
+                // this is a link to an external site or a link to open up a message modal
+                return true;
+            }
+
+            // find out which tab they clicked
+            let tab = $(this).find("a").attr("href").substring(1);
+            if (tab == '/') {
+                return true;  // they clicked the brand icon, take them to its link
+            }
+
+            // little hack in case something calls onclick programmatically....
+            tab = tab ? tab : opus.prefs.search;
+            opus.changeTab(tab);
+
+            //$(this).find('a').blur(); // or else it holds the hover style which is stoo pid.
+
+            //return false;
+
+        });
+
+        $(".op-help-item").on("click", function() {
+            let url = "/opus/__help/";
+            let header = "";
+            switch ($(this).data("action")) {
+                case "about":
+                    url += "about.html";
+                    header = "About OPUS";
+                    break;
+                case "volumes":
+                    url += "volumes.html";
+                    header = "Volumes Available for Searching with OPUS";
+                    break;
+                case "faq":
+                    url += "faq.html";
+                    header = "Frequently Asked Questions (FAQ)";
+                    break;
+                case "guide":
+                    url += "guide.html";
+                    header = "OPUS API Guide";
+                    break;
+                case "tutorial":
+                    url += "tutorial.html";
+                    header = "A Brief Tutorial";
+                    break;
+                case "feedback":
+                    url = "https://pds-rings.seti.org/cgi-bin/comments/form.pl";
+                    header = "Questions/Feedback";
+                    break;
+            }
+
+            $("#op-help-panel .op-header-text").html(`<h2>${header}</h2`);
+            $("#op-help-panel .op-card-contents").html("Loading... please wait.");
+            $("#op-help-panel .loader").show();
+            // We only need one perfectScrollbar
+            if (!opus.helpScrollbar) {
+                opus.helpScrollbar = new PerfectScrollbar("#op-help-panel .card-body", {
+                    suppressScrollX: true,
+                    minScrollbarLength: opus.minimumPSLength
+                });
+            }
+            $("#op-help-panel").toggle("slide", {direction:'right'}, function() {
+                $(".op-overlay").addClass("active");
+            });
+            $.ajax({
+                url: url,
+                dataType: "html",
+                success: function(page) {
+                    $("#op-help-panel .loader").hide();
+                    $("#op-help-panel .op-card-contents").html(page);
+                    opus.helpPanelOpen = true;
+                }
+            });
+        });
+
+        $("#op-help-panel .close, .op-overlay").on("click", function() {
+            opus.hideHelpPanel();
+            return false;
+        });
+
+        $(".op-reset-button button").on("click", function() {
+            let targetModal = $(this).data("target");
+
+            if (!$.isEmptyObject(opus.selections) || !opus.checkIfDrawnWidgetsAreDefault()) {
+                $(targetModal).modal("show");
+            } else if (targetModal === "#op-reset-search-metadata-modal" && !opus.checkIfMetadataAreDefault()) {
+                $(targetModal).modal("show");
+            }
+        });
+
+        $(".confirm-modal").on("click", ".btn", function() {
+            let target = $(this).data("target");
+            switch($(this).attr("type")) {
+                case "submit":
+                    switch(target) {
+                        case "op-reset-search-metadata-modal":
+                            opus.startOver(resetMetadata=true);
+                            break;
+                        case "op-reset-search-modal":
+                            opus.startOver();
+                            break;
+                        case "op-empty-cart":
+                            o_cart.emptyCart();
+                            break;
+                        case "op-update-url":
+                            // if user clicks "ok", we hide the link to url message on navbar
+                            $(".op-user-msg").removeClass("op-show-msg");
+                            break;
+                    }
+                    // This intentionally falls through to hide the modal
+                case "cancel":
+                    $(".modal").modal("hide");
+                    break;
+            }
+        });
+
+        // general functionality to discover if an element is in the viewport
+        // used like this: if ($(this).isInViewport()) {}
+        $.fn.isInViewport = function() {
+            let elementTop = $(this).offset().top;
+            let elementBottom = elementTop + $(this).outerHeight();
+            let viewportTop = $(window).scrollTop();
+            let viewportBottom = viewportTop + $(window).height();
+            return elementBottom > viewportTop && elementTop < viewportBottom;
+        };
+
+        o_cart.initCart();
+        opus.triggerNavbarClick();
     }
+
 }; // end opus namespace
 
 /*
  * there are 3 main content sections can use for jquery contexts: search, browse, detail
  *
  */
-
 $(document).ready(function() {
-
-/* displays a list of the included css for debug only!
-    let temp = "";
-    $.each($("link"), function(index, elem) {
-        temp += elem.href + "\n"
-    });
-    alert(temp);
-*/
-
-    opus.prefs.widgets = [];
-    o_widgets.updateWidgetCookies();
-    opus.lastBlogUpdate();
-    opus.addAllBehaviors();
-
-    o_hash.initFromHash(); // just returns null if no hash
-
-    if (!opus.prefs.view) {
-        opus.prefs.view = 'search';
-    }
-
-    let adjustSearchHeightDB = _.debounce(o_search.adjustSearchHeight, 200);
-    let adjustBrowseHeightDB = _.debounce(o_browse.adjustBrowseHeight, 200);
-    let adjustTableSizeDB = _.debounce(o_browse.adjustTableSize, 200);
-    let adjustProductInfoHeightDB = _.debounce(o_cart.adjustProductInfoHeight, 200);
-    let adjustDetailHeightDB = _.debounce(o_detail.adjustDetailHeight, 200);
-    let adjustHelpPanelHeightDB = _.debounce(opus.adjustHelpPanelHeight, 200);
-
-    $(window).on("resize", function() {
-        adjustSearchHeightDB();
-        adjustBrowseHeightDB();
-        adjustTableSizeDB();
-        adjustProductInfoHeightDB();
-        adjustDetailHeightDB();
-        adjustHelpPanelHeightDB();
-    });
-
-    o_mutationObserver.observePerfectScrollbar();
-
-    // add the navbar clicking behaviors, selecting which tab to view:
-    // see triggerNavbarClick
-    $("#op-main-nav").on("click", ".main_site_tabs .nav-item", function() {
-        if ($(this).hasClass("external-link") || $(this).children().hasClass("op-show-msg")) {
-            // this is a link to an external site or a link to open up a message modal
-            return true;
-        }
-
-        // find out which tab they clicked
-        let tab = $(this).find("a").attr("href").substring(1);
-        if (tab == '/') {
-            return true;  // they clicked the brand icon, take them to its link
-        }
-
-        // little hack in case something calls onclick programmatically....
-        tab = tab ? tab : opus.prefs.search;
-        opus.changeTab(tab);
-
-        //$(this).find('a').blur(); // or else it holds the hover style which is stoo pid.
-
-        //return false;
-
-    });
-
-    $(".op-help-item").on("click", function() {
-        let url = "/opus/__help/";
-        let header = "";
-        switch ($(this).data("action")) {
-            case "about":
-                url += "about.html";
-                header = "About OPUS";
-                break;
-            case "volumes":
-                url += "volumes.html";
-                header = "Volumes Available for Searching with OPUS";
-                break;
-            case "faq":
-                url += "faq.html";
-                header = "Frequently Asked Questions (FAQ)";
-                break;
-            case "guide":
-                url += "guide.html";
-                header = "OPUS API Guide";
-                break;
-            case "tutorial":
-                url += "tutorial.html";
-                header = "A Brief Tutorial";
-                break;
-            case "feedback":
-                url = "https://pds-rings.seti.org/cgi-bin/comments/form.pl";
-                header = "Questions/Feedback";
-                break;
-        }
-
-        $("#op-help-panel .op-header-text").html(`<h2>${header}</h2`);
-        $("#op-help-panel .op-card-contents").html("Loading... please wait.");
-        $("#op-help-panel .loader").show();
-        // We only need one perfectScrollbar
-        if (!opus.helpScrollbar) {
-            opus.helpScrollbar = new PerfectScrollbar("#op-help-panel .card-body", {
-                suppressScrollX: true,
-                minScrollbarLength: opus.minimumPSLength
-            });
-        }
-        $("#op-help-panel").toggle("slide", {direction:'right'}, function() {
-            $(".op-overlay").addClass("active");
-        });
-        $.ajax({
-            url: url,
-            dataType: "html",
-            success: function(page) {
-                $("#op-help-panel .loader").hide();
-                $("#op-help-panel .op-card-contents").html(page);
-                opus.helpPanelOpen = true;
-            }
-        });
-    });
-
-    $("#op-help-panel .close, .op-overlay").on("click", function() {
-        opus.hideHelpPanel();
-        return false;
-    });
-
-    $(".op-reset-button button").on("click", function() {
-        let targetModal = $(this).data("target");
-
-        if (!$.isEmptyObject(opus.selections) || !opus.checkIfDrawnWidgetsAreDefault()) {
-            $(targetModal).modal("show");
-        } else if (targetModal === "#op-reset-search-metadata-modal" && !opus.checkIfMetadataAreDefault()) {
-            $(targetModal).modal("show");
-        }
-    });
-
-    $(".confirm-modal").on("click", ".btn", function() {
-        let target = $(this).data("target");
-        switch($(this).attr("type")) {
-            case "submit":
-                switch(target) {
-                    case "op-reset-search-metadata-modal":
-                        opus.startOver(resetMetadata=true);
-                        break;
-                    case "op-reset-search-modal":
-                        opus.startOver();
-                        break;
-                    case "op-empty-cart":
-                        o_cart.emptyCart();
-                        break;
-                    case "op-update-url":
-                        // if user clicks "ok", we hide the link to url message on navbar
-                        $(".op-user-msg").removeClass("op-show-msg");
-                        break;
-                }
-                // This intentionally falls through to hide the modal
-            case "cancel":
-                $(".modal").modal("hide");
-                break;
-        }
-    });
-
-    // general functionality to discover if an element is in the viewport
-    // used like this: if ($(this).isInViewport()) {}
-    $.fn.isInViewport = function() {
-        let elementTop = $(this).offset().top;
-        let elementBottom = elementTop + $(this).outerHeight();
-        let viewportTop = $(window).scrollTop();
-        let viewportBottom = viewportTop + $(window).height();
-        return elementBottom > viewportTop && elementTop < viewportBottom;
-    };
-
-    o_cart.initCart();
-    opus.triggerNavbarClick();
-
+    // Call normalized url api first
+    // Rest of initialization prcoess will be performed afterwards
     opus.normalizedURLAPICall();
-
     return;
-
 });
