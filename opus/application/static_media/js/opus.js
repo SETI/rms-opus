@@ -152,7 +152,7 @@ var opus = {
             });
 
             // if data in selections !== data in opus.selections, it means selections are modified manually in url, reload the page (modified url in url bar and hit enter)
-            if (!opus.selectionsObjectsAreTheSame(modifiedSelections, opus.selections)) {
+            if (!o_utils.areObjectsEqual(modifiedSelections, opus.selections)) {
                 opus.selections = modifiedSelections;
                 location.reload();
                 return;
@@ -177,40 +177,6 @@ var opus = {
 
         // chain ajax calls, validate range inputs before result count api call
         o_search.allNormalizedApiCall().then(opus.getResultCount).then(opus.updatePageAfterResultCountAPI);
-    },
-
-    // Check if two selections objects are exactly the same, e.g.:
-    // These two cases: obj1 & obj2 are the same:
-    // obj1 (convert from selections) = {planet: [mars, netpune], mission: [hubble]}
-    // obj2 (opus.selections) = {planet: [mars, netpune], mission: [hubble]}
-    // This is used to check if selections are changed manually by user or changed by actions done in opus
-    // Selections and opus.selections are the same when user makes selections in opus (url gets updated as well).
-    // If selections and opus.selections are not the same, it means the url is changed manually by user
-    selectionsObjectsAreTheSame: function(obj1, obj2) {
-        let isTheSame = true;
-        if (Object.keys(obj1).length !== Object.keys(obj2).length) {
-            // return false if both objects have different numbers of slugs
-            return false;
-        }
-
-        // when both objects have the same number of slugs:
-        $.each(obj1, function(slug, value) {
-            if (!obj2[slug]) {
-                // return false if slug only exists in one of objects
-                isTheSame = false;
-                return false; // break $.each loop
-            } else {
-                let obj1SlugValueString = JSON.stringify(obj1[slug]);
-                let obj2SlugValueString = JSON.stringify(obj2[slug]);
-                if (obj1SlugValueString !== obj2SlugValueString) {
-                    // return false if values to the same slug are different in two objects
-                    isTheSame = false;
-                    return false; // break $.each loop
-                }
-            }
-        });
-
-        return isTheSame;
     },
 
     // Normalized URL API call
