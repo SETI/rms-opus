@@ -1079,12 +1079,9 @@ def api_normalize_url(request):
     if final_msg == '':
         final_msg = None
 
-    reqno = get_reqno(request)
-
     ret = json_response({'new_url': '&'.join(new_url_list),
                          'new_slugs': new_url_dict_list,
-                         'msg': final_msg,
-                         'reqno': reqno})
+                         'msg': final_msg})
 
     exit_api_call(api_code, ret)
     return ret
