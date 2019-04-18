@@ -45,7 +45,7 @@
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="btn op-update-url-msg nav-link" data-toggle="modal" data-target="#op-update-url" title="Update to normalized URL">Update URL</a>
+                        <a class="btn op-user-msg nav-link" data-toggle="modal" data-target="#op-update-url" title="Click to read an important message"><i class="far fa-envelope-open"></i> User Notification Available</a>
                     </li>
                 </ul>
                 <ul class="nav navbar-nav flex-column flex-sm-row">
@@ -228,10 +228,10 @@
 
         <!--sliding panel for the help menu items -->
         <div id="op-help-panel" class="card w-75">
-        	<div class="card-header align-items-center h-auto pb-0 bg-secondary">
-        		<h3 class='op-header-text'></h3>
+            <div class="card-header align-items-center h-auto pb-0 bg-secondary">
+                <h3 class='op-header-text'></h3>
                 <a class="close" aria-label="Close"><i class="far fa-times-circle fa-lg"></i></a>
-         	</div>
+             </div>
             <div class="card-body bg-light">
                 <div class="op-card-contents">
                     Loading... please wait.
@@ -320,9 +320,10 @@
         %}
         {% include "confirm_modal.html" with
             id_name="op-update-url"
-            confirm_title="Update URL"
-            confirm_msg="Placeholder"
+            confirm_title="Message About Your URL"
+            confirm_msg=""
             target="op-update-url"
+            yes_text="OK"
         %}
 
         {% endblock %}
@@ -331,10 +332,10 @@
 
     <!--sliding panel for the help menu items -->
     <div id="op-help-panel" class="card w-75">
-    	<div class="card-header align-items-center h-auto pb-0 bg-secondary">
-    		<h3 class='op-header-text'></h3>
+        <div class="card-header align-items-center h-auto pb-0 bg-secondary">
+            <h3 class='op-header-text'></h3>
             <a class="close" aria-label="Close"><i class="far fa-times-circle fa-lg"></i></a>
-     	</div>
+         </div>
         <div class="card-body bg-light">
             <div class="op-card-contents">
                 Loading... please wait.
