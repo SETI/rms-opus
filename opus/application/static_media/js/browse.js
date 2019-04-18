@@ -151,7 +151,23 @@ var o_browse = {
                 // The clicked-on slug should always be in the order list; this is just a safety precaution
                 opus.prefs.order[slugIndex] = new_slug;
             }
+
+            // update the pill right away
+            console.log("=== descending ===");
+            console.log(descending);
+            if (descending === "false") {
+                $(this).parent().attr("data-descending", "true");
+                $(this).attr("title", "Change to ascending sort");
+                $(this).find("i").attr("class", "fas fa-arrow-circle-up")
+            } else {
+                $(this).parent().attr("data-descending", "false");
+                $(this).attr("title", "Change to descending sort");
+                $(this).find("i").attr("class", "fas fa-arrow-circle-down")
+            }
+
+            // order in the url will get updated right away
             o_hash.updateHash();
+
             // o_browse.updatePage();
             o_browse.renderSortedDataFromBeginning();
         });
@@ -1139,6 +1155,8 @@ var o_browse = {
     updateSortOrder: function(data) {
         let listHtml = "";
         opus.prefs.order = [];
+        console.log("=== data ===");
+        console.log(data.order_list);
         $.each(data.order_list, function(index, order_entry) {
             let slug = order_entry.slug;
             let label = order_entry.label;
@@ -1165,6 +1183,10 @@ var o_browse = {
             }
             opus.prefs.order.push(fullSlug);
         });
+        // if ($(".sort-contents").is(":empty")) {
+        //     console.log("empty")
+        //     $(".sort-contents").html(listHtml);
+        // }
         $(".sort-contents").html(listHtml);
         o_hash.updateHash();
     },
