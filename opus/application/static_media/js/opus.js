@@ -37,7 +37,6 @@ var opus = {
     lastRequestNo: 0,          // holds request numbers for main result count loop,
     lastAllNormalizeRequestNo: 0,
     lastResultCountRequestNo: 0,
-    lastNormalizeURLRequestNo: 0,
     waitingForAllNormalizedAPI: false,
 
     // client side prefs, changes to these *do not trigger results to refresh*
@@ -145,7 +144,8 @@ var opus = {
             // create an object from selections to compare with opus.selections
             let modifiedSelections = {};
             $.each(Object.keys(selections), function(idx, slug) {
-                // qtype is not updated in opus.selections
+                // Note: when we select qtype, it is not updated in opus.selections
+                // Therefore, we will not put qtype in modifiedSelections to compare with opus.selection
                 if (!slug.match(/qtype/)) {
                     modifiedSelections[slug] = selections[slug][0].replace("+", " ").split(",");
                 }
@@ -189,21 +189,6 @@ var opus = {
         o_search.allNormalizedApiCall().then(opus.getResultCount).then(opus.updatePageAfterResultCountAPI);
     },
 
-    // If the pasted url has selections, init opus.selections & opus.last_selections to the current hash's selections.
-    // This is like we init both opus.selections & opus.last_selections to {} when starting opus fresh.
-    InitSelections: function() {
-        let selections = o_hash.getSelectionsFromHash();
-        let modifiedSelections = {};
-        $.each(Object.keys(selections), function(idx, slug) {
-            // qtype is not updated in opus.selections
-            if (!slug.match(/qtype/)) {
-                modifiedSelections[slug] = selections[slug][0].replace("+", " ").split(",");
-            }
-        });
-        opus.last_selections = selections;
-        opus.selections = modifiedSelections;
-    },
-
     // Check if two selections objects are exactly the same, e.g.:
     // These two cases: obj1 & obj2 are the same:
     // obj1 (convert from selections) = {planet: [mars, netpune], mission: [hubble]}
@@ -241,18 +226,13 @@ var opus = {
     // Normalized URL API call
     normalizedURLAPICall: function() {
         let hash = o_hash.getHash();
-        // Note: temporarily add reqno, but maybe we don't need a reqno here.
-        // Because in our implementation, this api is call during document ready (or when reload), and every time this event is triggered, it means everything is reloaded so reqno will always be starting from 0 and passed in as 1 in API call.
+        // Note: We don't need a reqno here.
+        // Because in our implementation, this api is call at the beginning of document ready (or when reload), and every time this event is triggered, it means everything is reloaded. If we put reqno here, reqno will always be 1, so we don't need reqno.
         opus.lastNormalizeURLRequestNo++;
-        let url = "/opus/__normalizeurl.json?" + hash + "&reqno=" + opus.lastNormalizeURLRequestNo;
-        console.log("=== URL ===")
+        let url = "/opus/__normalizeurl.json?" + hash;
+        console.log("=== URL ===");
         console.log(url);
         $.getJSON(url, function(normalizeurlData) {
-
-            if (normalizeurlData["reqno"] < opus.lastNormalizeURLRequestNo) {
-                return;
-            }
-
             // Comment out action of updating startobs
             // $.each(normalizeurlData.new_slugs, function(idx, slug) {
             //     if (slug.startobs) {
@@ -268,10 +248,8 @@ var opus = {
 
             // update URL
             window.location.hash = "/" + normalizeurlData.new_url.replace(" ", "+");
-            // opus.InitSelections();
-
+            // perform rest of initialization process
             opus.opusInitialization();
-
             // watch the url for changes, this runs continuously
             opus.main_timer = setInterval(opus.load, opus.main_timer_interval);
         });
