@@ -247,8 +247,9 @@ ul.searchMenu {
     opacity: 0.15;
 }
 
-#confirm-modal {
+#op-confirm-modal {
     border-radius: 6px;
+    border-width: 3px;
 }
 
 .modal {

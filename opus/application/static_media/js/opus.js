@@ -644,7 +644,7 @@ $(document).ready(function() {
         }
     });
 
-    $(".confirm-modal").on("click", ".btn", function() {
+    $(".op-confirm-modal").on("click", ".btn", function() {
         let target = $(this).data("target");
         switch($(this).attr("type")) {
             case "submit":

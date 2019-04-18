@@ -12,7 +12,7 @@ var o_browse = {
 /* jshint varstmt: true */
     selectedImageID: "",
     keyPressAction: "",
-    tableSorting: false,
+    reRenderData: false,
     tableScrollbar: new PerfectScrollbar("#browse .dataTable", {
         minScrollbarLength: opus.minimumPSLength
     }),
@@ -118,7 +118,7 @@ var o_browse = {
             $(".op-page-loading-status > .loader").show();
             let slug = $(this).parent().attr("data-slug");
             let descending = $(this).parent().attr("data-descending");
-            o_browse.tableSorting = true;
+            o_browse.reRenderData = true;
 
             if (descending == "true") {
                 slug = "-"+slug;
@@ -138,7 +138,7 @@ var o_browse = {
             $(".op-page-loading-status > .loader").show();
             let slug = $(this).parent().attr("data-slug");
             let descending = $(this).parent().attr("data-descending");
-            o_browse.tableSorting = true;
+            o_browse.reRenderData = true;
 
             let new_slug = slug;
             if (descending == "true") {
@@ -314,7 +314,7 @@ var o_browse = {
             let orderBy =  $(this).data("slug");
 
             let orderIndicator = $(this).find("span:last");
-            o_browse.tableSorting = true;
+            o_browse.reRenderData = true;
             if (orderIndicator.data("sort") === "sort-asc") {
                 // currently ascending, change to descending order
                 orderIndicator.data("sort", "sort-desc");
@@ -1226,7 +1226,7 @@ var o_browse = {
         let selector = `#${opus.prefs.view} .gallery-contents`;
 
         // wait! is this page already drawn?
-        if ($(`${selector} .thumb-page[data-page='${page}']`).length > 0 && !o_browse.tableSorting) {
+        if ($(`${selector} .thumb-page[data-page='${page}']`).length > 0 && !o_browse.reRenderData) {
             o_browse.setScrollbarPosition(selector, page);
             $(".op-page-loading-status > .loader").hide();
             return;
@@ -1272,7 +1272,7 @@ var o_browse = {
 
                     $(selector).on("request.infiniteScroll", function(event, path) {
                         // hide default page status loader if op-page-loading-status loader is spinning
-                        // && o_browse.tableSorting
+                        // && o_browse.reRenderData
                         if ($(".op-page-loading-status > .loader").is(":visible")) {
                             $(".infinite-scroll-request").hide();
                         }
@@ -1313,7 +1313,7 @@ var o_browse = {
             // if ($(".op-page-loading-status > .loader").is(":visible")) {
             //     $(".op-page-loading-status > .loader").hide();
             // }
-            o_browse.tableSorting = false;
+            o_browse.reRenderData = false;
         });
     },
 
