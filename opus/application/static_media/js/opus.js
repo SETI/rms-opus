@@ -204,33 +204,33 @@ var opus = {
         opus.selections = modifiedSelections;
     },
 
-    // Check if two selections objects are the same, regardless of the order of array for each slug, e.g.:
+    // Check if two selections objects are exactly the same, e.g.:
     // These two cases: obj1 & obj2 are the same:
     // obj1 (convert from selections) = {planet: [mars, netpune], mission: [hubble]}
-    // obj2 (opus.selections) = {planet: [neptune, mars], mission: [hubble]}
-    // OR
-    // obj1 (convert from selections) = {planet: [mars, netpune]}
-    // obj2 (opus.selections) = {planet: [neptune, mars], mission: []}
+    // obj2 (opus.selections) = {planet: [mars, netpune], mission: [hubble]}
     // This is used to check if selections are changed manually by user or changed by actions done in opus
     // Selections and opus.selections are the same when user makes selections in opus (url gets updated as well).
     // If selections and opus.selections are not the same, it means the url is changed manually by user
     selectionsObjectsAreTheSame: function(obj1, obj2) {
         let isTheSame = true;
+        if (Object.keys(obj1).length !== Object.keys(obj2).length) {
+            // return false if both objects have different numbers of slugs
+            return false;
+        }
 
+        // when both objects have the same number of slugs:
         $.each(obj1, function(slug, value) {
             if (!obj2[slug]) {
                 // return false if slug only exists in one of objects
                 isTheSame = false;
-                return;
+                return false; // break $.each loop
             } else {
-                let dupObj1SlugValue = new Array(...obj1[slug]);
-                let dupObj2SlugValue = new Array(...obj2[slug]);
-                let obj1SlugValueString = JSON.stringify(dupObj1SlugValue.sort());
-                let obj2SlugValueString = JSON.stringify(dupObj2SlugValue.sort());
+                let obj1SlugValueString = JSON.stringify(obj1[slug]);
+                let obj2SlugValueString = JSON.stringify(obj2[slug]);
                 if (obj1SlugValueString !== obj2SlugValueString) {
                     // return false if values to the same slug are different in two objects
                     isTheSame = false;
-                    return;
+                    return false; // break $.each loop
                 }
             }
         });
@@ -245,6 +245,8 @@ var opus = {
         // Because in our implementation, this api is call during document ready (or when reload), and every time this event is triggered, it means everything is reloaded so reqno will always be starting from 0 and passed in as 1 in API call.
         opus.lastNormalizeURLRequestNo++;
         let url = "/opus/__normalizeurl.json?" + hash + "&reqno=" + opus.lastNormalizeURLRequestNo;
+        console.log("=== URL ===")
+        console.log(url);
         $.getJSON(url, function(normalizeurlData) {
 
             if (normalizeurlData["reqno"] < opus.lastNormalizeURLRequestNo) {
