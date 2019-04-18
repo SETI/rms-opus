@@ -693,22 +693,23 @@ def _get_cart_count(session_id):
 #
 ################################################################################
 
-def _add_to_cart_table(opus_id_list, session_id, api_code):
+def _add_to_cart_table(opus_id, session_id, api_code):
     "Add OPUS_IDs to the cart table."
     cursor = connection.cursor()
-    if not isinstance(opus_id_list, (list, tuple)):
-        opus_id_list = [opus_id_list]
-    res = (ObsGeneral.objects.filter(opus_id__in=opus_id_list)
+    res = (ObsGeneral.objects.filter(opus_id__exact=opus_id)
            .values_list('opus_id', 'id'))
-    if len(opus_id_list) != len(res):
-        return 'opusid not found'
+    if len(res) != 1:
+        return (f'Internal Error: OPUS ID {opus_id} not found; nothing added '
+                +'to cart')
 
     # Note that this doesn't handle the case where some or all of the opus_ids
     # are already in the cart. It's difficult to handle this well, would slow
     # down the API, and should never happen when using the UI anyway.
     num_selections = _get_cart_count(session_id)
-    if num_selections+len(opus_id_list) > settings.MAX_SELECTIONS_ALLOWED:
-        return 'Too many observations in cart'
+    if num_selections >= settings.MAX_SELECTIONS_ALLOWED:
+        return (f'Your request to add OPUS ID {opus_id} to the cart failed '
+                +f'- there are already too many observations there. The '
+                +f'maximum allowed is {settings.MAX_SELECTIONS_ALLOWED:,d}.')
 
     # We use REPLACE INTO to avoid problems with duplicate entries or
     # race conditions that would be caused by deleting first and then adding.
@@ -827,7 +828,12 @@ def _edit_cart_range(request, session_id, action, api_code):
             return ret
 
         if num_selections+num_new > settings.MAX_SELECTIONS_ALLOWED:
-            return 'Too many observations in cart'
+            return (f'Your request to add {num_new:,d} observations ('
+                    +f'OPUS IDs {ids[0]} to {ids[1]}) '
+                    +f'to the cart failed. The resulting cart would have more '
+                    +f'than the maximum '
+                    +f'({settings.MAX_SELECTIONS_ALLOWED:,d}) '
+                    +f'allowed. None of the observations were added.')
 
         values = [session_id]
         sql = 'REPLACE INTO '+q('cart')+' ('
@@ -872,7 +878,10 @@ def _edit_cart_addall(request, session_id, api_code):
     # are in the cart.
     num_selections = _get_cart_count(session_id)
     if num_selections+count > settings.MAX_SELECTIONS_ALLOWED:
-        return 'Too many observations in cart'
+        return (f'Your request to add all {count:,d} observations '
+                +f'to the cart failed. The resulting cart would have more '
+                +f'than the maximum ({settings.MAX_SELECTIONS_ALLOWED:,d}) '
+                +f'allowed. None of the observations were added.')
 
     cursor = connection.cursor()
 
