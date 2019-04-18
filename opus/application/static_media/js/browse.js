@@ -45,6 +45,12 @@ var o_browse = {
     tempHash: "",
     dataNotAvailable: false,
     onRenderData: false,
+
+    // font awesome icon class
+    pillSortUpArrow: "fas fa-arrow-circle-up",
+    pillSortDownArrow: "fas fa-arrow-circle-down",
+    tableSortUpArrow: "fas fa-sort-up",
+    tableSortDownArrow: "fas fa-sort-down",
     /**
     *
     *  all the things that happen on the browse tab
@@ -152,17 +158,17 @@ var o_browse = {
                 opus.prefs.order[slugIndex] = new_slug;
             }
 
-            // update the pill right away
-            console.log("=== descending ===");
-            console.log(descending);
+            // update the pill sort arrow right away
             if (descending === "false") {
                 $(this).parent().attr("data-descending", "true");
                 $(this).attr("title", "Change to ascending sort");
-                $(this).find("i").attr("class", "fas fa-arrow-circle-up")
+                // $(this).find("i").attr("class", "fas fa-arrow-circle-up");
+                $(this).find("i").attr("class", `${o_browse.pillSortUpArrow}`);
             } else {
                 $(this).parent().attr("data-descending", "false");
                 $(this).attr("title", "Change to descending sort");
-                $(this).find("i").attr("class", "fas fa-arrow-circle-down")
+                // $(this).find("i").attr("class", "fas fa-arrow-circle-down");
+                $(this).find("i").attr("class", `${o_browse.pillSortDownArrow}`);
             }
 
             // order in the url will get updated right away
@@ -334,15 +340,20 @@ var o_browse = {
             if (orderIndicator.data("sort") === "sort-asc") {
                 // currently ascending, change to descending order
                 orderIndicator.data("sort", "sort-desc");
+                orderIndicator.attr("class", `column_ordering ${o_browse.tableSortUpArrow}`);
                 orderBy = '-' + orderBy;
             } else if (orderIndicator.data("sort") === "sort-desc") {
                 // currently descending, change to ascending order
                 orderIndicator.data("sort", "sort-asc");
+                orderIndicator.attr("class", `column_ordering ${o_browse.tableSortDownArrow}`);
                 orderBy = orderBy;
             } else {
                 // not currently ordered, change to ascending
                 orderIndicator.data("sort", "sort-asc");
+                orderIndicator.attr("class", `column_ordering ${o_browse.tableSortDownArrow}`);
             }
+            // update table header arrow right away
+
 
             opus.prefs.order = orderBy;
             o_hash.updateHash();
@@ -1170,11 +1181,13 @@ var o_browse = {
             if (descending) {
                 listHtml += "<span class='flip-sort' title='Change to ascending sort'>";
                 listHtml += label;
-                listHtml += " <i class='fas fa-arrow-circle-up'></i>";
+                // listHtml += " <i class='fas fa-arrow-circle-up'></i>";
+                listHtml += ` <i class="${o_browse.pillSortUpArrow}"></i>`;
             } else {
                 listHtml += "<span class='flip-sort' title='Change to descending sort'>";
                 listHtml += label;
-                listHtml += " <i class='fas fa-arrow-circle-down'></i>";
+                // listHtml += " <i class='fas fa-arrow-circle-down'></i>";
+                listHtml += ` <i class="${o_browse.pillSortDownArrow}"></i>`;
             }
             listHtml += "</span></span></li>";
             let fullSlug = slug;
