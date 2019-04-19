@@ -47,14 +47,20 @@ var o_hash = {
                         // opus.prefs.view = search, browse, cart, or detail
                         // opus.prefs.browse =  'gallery' or 'dataTable',
                         let page = o_browse.getCurrentPage();
+                        // Note: page will be removed later on in Debby's repo
                         hash.push("page=" + page);
                         break;
-
+                    // comment out starobs for now
+                    // case "startobs":
+                    //     hash.push("startobs=" + opus.currentObs);
+                    //     break;
                     default:
                         hash.push(key + "=" + opus.prefs[key]);
                 }
             }
         );
+        // console.log("hash from hash.js");
+        // console.log(hash);
         if (updateURL) {
             window.location.hash = '/' + hash.join('&');
         }
