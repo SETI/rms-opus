@@ -475,6 +475,25 @@ class searchTests(TestCase):
         self.assertEqual(extras['order'], order_expected)
         self.assertEqual(extras['qtypes'], qtypes_expected)
 
+    def test__url_to_search_params_mults_bad_1(self):
+        "[test_search.py] url_to_search_params: mult bad val"
+        q = QueryDict('planet=XXX&target=PAN')
+        (selections, extras) = url_to_search_params(q)
+        print(selections)
+        print(extras)
+        self.assertEqual(selections, None)
+        self.assertEqual(extras, None)
+
+    def test__url_to_search_params_mults_bad_2(self):
+        "[test_search.py] url_to_search_params: mult bad val 2"
+        q = QueryDict('planet=SATURN,XXX&target=PAN')
+        (selections, extras) = url_to_search_params(q)
+        print(selections)
+        print(extras)
+        self.assertEqual(selections, None)
+        self.assertEqual(extras, None)
+
+
     ##################
     ### SORT ORDER ###
     ##################

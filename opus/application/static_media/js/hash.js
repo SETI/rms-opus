@@ -178,36 +178,6 @@ var o_hash = {
             }
         });
 
-        // despite what the url says, make sure every widget that is constrained is actually visible
-        //$.each(opus.selections, function(index, slug) { })
-        for (let slug in opus.selections) {
-          if ($.inArray(slug, opus.prefs.widgets) < 0) {
-            // this slug is constrained in selections but is not
-            // found in widgets, but do some extra checking for
-            // range widgets:
-
-            if (slug.indexOf('2') !== -1) {
-              // range widges are represented by a single param and that's
-              // the first param in the range, but this is the 2nd
-              // let's see if the first half of this range is constrained
-              let slugNoNum = slug.slice(0, -1);
-              if ($.inArray(slugNoNum, opus.prefs.widgets) >= 0 ||
-                  $.inArray(slugNoNum + '1', opus.prefs.widgets) >= 0) {
-                   // the first half of this range is found in widgets
-                   // so nothing to do
-                   continue;
-                 } else {
-                   // the first half of this range is constrained by selections
-                   // but NOT found in widgets, so we add it, but don't
-                   // add the param with the '2' index, only add the first
-                   // '1' indexed param
-                   slug = slugNoNum + '1';
-                 }
-            }
-
-            opus.prefs.widgets.push(slug);
-          }
-        }
         opus.load();
     },
 

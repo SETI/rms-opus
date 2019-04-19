@@ -452,6 +452,13 @@ def api_normalize_url(request):
         raise ret
 
     old_slugs = dict(list(request.GET.items())) # Make it mutable
+
+    # When we are given a URL, this is the user just selecting something like
+    # tools.pds-rings.seti.org/opus
+    # We don't want to give error messages in that case, but instead use all
+    # the defaults.
+    url_was_empty = len(old_slugs) == 0
+
     msg_list = []
     new_url_suffix_list = []
     new_url_search_list = []
@@ -647,8 +654,7 @@ def api_normalize_url(request):
             if not selections[search1]:
                 msg = ('Search query for "'
                        + _escape_or_label_results(search1, pi1)
-                       + '" minimum had an illegal '
-                       'value; it has been ignored.')
+                       + '" had an illegal value; it has been ignored.')
                 msg_list.append(msg)
                 search1 = None
             else:
@@ -660,7 +666,7 @@ def api_normalize_url(request):
                 msg = ('Search query for "'
                        + _escape_or_label_results(search2, pi2)
                        + '" maximum had an illegal '
-                       'value; it has been ignored.')
+                       +'value; it has been ignored.')
                 msg_list.append(msg)
                 search2 = None
             else:
@@ -694,8 +700,8 @@ def api_normalize_url(request):
     if 'cols' in old_slugs:
         cols = old_slugs['cols']
     else:
-        msg = 'The "cols" field is missing; it has been set to the default.'
-        msg_list.append(msg)
+        # msg = 'The "cols" field is missing; it has been set to the default.'
+        # msg_list.append(msg)
         cols = settings.DEFAULT_COLUMNS
     if (cols ==
         'ringobsid,planet,target,phase1,phase2,time1,time2'):
@@ -751,8 +757,8 @@ def api_normalize_url(request):
     if 'widgets' in old_slugs:
         widgets = old_slugs['widgets']
     else:
-        msg = 'The "widgets" field is missing; it has been set to the default.'
-        msg_list.append(msg)
+        # msg = 'The "widgets" field is missing; it has been set to the default.'
+        # msg_list.append(msg)
         widgets = settings.DEFAULT_WIDGETS
     # Note: at least for now, these are the same
     if (widgets == 'planet,target' and
@@ -806,13 +812,13 @@ def api_normalize_url(request):
     if 'order' in old_slugs:
         orders = old_slugs['order']
     else:
-        msg = 'The "order" field is missing; it has been set to the default.'
-        msg_list.append(msg)
+        # msg = 'The "order" field is missing; it has been set to the default.'
+        # msg_list.append(msg)
         orders = settings.DEFAULT_SORT_ORDER
     if orders == 'time1' and orders != settings.DEFAULT_SORT_ORDER:
-        msg = ('Your URL uses the old defaults for sort order; '
-               +'they have been replaced with the new defaults.')
-        msg_list.append(msg)
+        # msg = ('Your URL uses the old defaults for sort order; '
+        #        +'they have been replaced with the new defaults.')
+        # msg_list.append(msg)
         orders = settings.DEFAULT_SORT_ORDER
     for order in orders.split(','):
         if order == '':
@@ -866,9 +872,9 @@ def api_normalize_url(request):
                                      'collection', 'cart', 'detail'):
             msg = ('The value for "view" was not one of '
                    +'"search", "browse", "collection", "cart", or '
-                   +'"detail"); it has been set to "gallery".')
+                   +'"detail"; it has been set to "search".')
             msg_list.append(msg)
-            view_val = 'gallery'
+            view_val = 'search'
         else:
             view_val = old_slugs['view']
             if view_val == 'collection':
@@ -876,9 +882,9 @@ def api_normalize_url(request):
                 view_val = 'cart'
         del old_slugs['view']
     if view_val is None:
-        msg = 'The "view" field is missing; it has been set to the default.'
-        msg_list.append(msg)
-        view_val = 'gallery'
+        # msg = 'The "view" field is missing; it has been set to the default.'
+        # msg_list.append(msg)
+        view_val = 'search'
     new_url_suffix_list.append(('view', view_val))
 
     ### BROWSE
@@ -888,57 +894,15 @@ def api_normalize_url(request):
             msg = ('The value for "browse" was not either "gallery" or "data"; '
                    +'it has been set to "gallery".')
             msg_list.append(msg)
+            browse_val = 'gallery'
         else:
             browse_val = old_slugs['browse']
         del old_slugs['browse']
     if browse_val is None:
-        msg = 'The "browse" field is missing; it has been set to the default.'
-        msg_list.append(msg)
+        # msg = 'The "browse" field is missing; it has been set to the default.'
+        # msg_list.append(msg)
         browse_val = 'gallery'
     new_url_suffix_list.append(('browse', browse_val))
-
-    ### PAGE and STARTOBS
-    startobs_val = None
-    if 'page' in old_slugs:
-        old_ui_slug_flag = True
-        page_no = 1
-        try:
-            page_no = int(old_slugs['page'])
-        except ValueError:
-            msg = ('The value for the "page" term was not a valid '
-                   +'integer; it has been set to 1.')
-            msg_list.append(msg)
-            page_no = 1
-        else:
-            if page_no < 1 or page_no > 20000:
-                page_no = 1
-                msg = ('The value for the "page" term was not between '
-                       +'1 and 20000; it has been set to 1.')
-                msg_list.append(msg)
-                page_no = 1
-        del old_slugs['page']
-        startobs_val = (page_no-1)*100+1
-    if 'startobs' in old_slugs:
-        try:
-            startobs_val = int(old_slugs['startobs'])
-        except ValueError:
-            msg = ('The value for the "startobs" term was not a valid '
-                   +'integer; it has been set to 1.')
-            msg_list.append(msg)
-            startobs_val = 1
-        else:
-            if startobs_val < 1 or startobs_val > 10000000:
-                msg = ('The value for the "startobs" term was not between '
-                       +'1 and 10000000; it has been set to 1.')
-                msg_list.append(msg)
-                startobs_val = 1
-        del old_slugs['startobs']
-    if not startobs_val:
-        msg = ('The "startobs" or "page" fields are missing; they have been '
-               +'set to the default.')
-        msg_list.append(msg)
-        startobs_val = 1
-    new_url_suffix_list.append(('startobs', startobs_val))
 
     ### CART_BROWSE
     cart_browse_val = None
@@ -960,6 +924,51 @@ def api_normalize_url(request):
     if cart_browse_val is None: # pragma: no cover
         cart_browse_val = 'gallery'
     new_url_suffix_list.append(('cart_browse', cart_browse_val))
+
+    ### PAGE and STARTOBS (and CART_PAGE and CART_STARTOBS)
+    for prefix in ('', 'cart_'):
+        startobs_val = None
+        if prefix+'page' in old_slugs:
+            # XXX old_ui_slug_flag = True
+            page_no = 1
+            try:
+                page_no = int(old_slugs[prefix+'page'])
+            except ValueError:
+                msg = (f'The value for the "{prefix}page" term was not a valid '
+                       +'integer; it has been set to 1.')
+                msg_list.append(msg)
+                page_no = 1
+            else:
+                if page_no < 1 or page_no > 20000:
+                    page_no = 1
+                    msg = (f'The value for the "{prefix}page" term was not '
+                           +'between 1 and 20000; it has been set to 1.')
+                    msg_list.append(msg)
+                    page_no = 1
+            del old_slugs[prefix+'page']
+            startobs_val = (page_no-1)*100+1
+        if prefix+'startobs' in old_slugs:
+            try:
+                startobs_val = int(old_slugs[prefix+'startobs'])
+            except ValueError:
+                msg = (f'The value for the "{prefix}startobs" term was not a '
+                       +'valid integer; it has been set to 1.')
+                msg_list.append(msg)
+                startobs_val = 1
+            else:
+                if startobs_val < 1 or startobs_val > 10000000:
+                    msg = (f'The value for the "{prefix}startobs" term was not '
+                           +'between 1 and 10000000; it has been set to 1.')
+                    msg_list.append(msg)
+                    startobs_val = 1
+            del old_slugs[prefix+'startobs']
+        if not startobs_val:
+            # msg = (f'The "{prefix}startobs" or "{prefix}page" fields are '
+            #        +f'missing; {prefix}startobs has been set to 1.')
+            # msg_list.append(msg)
+            startobs_val = 1
+        # XXX new_url_suffix_list.append((prefix+'startobs', startobs_val))
+        new_url_suffix_list.append((prefix+'page', (startobs_val-1)//100+1))
 
     ### DETAIL
     detail_val = None
@@ -1061,22 +1070,22 @@ def api_normalize_url(request):
 
     final_msg = ''
     if old_ui_slug_flag:
-        msg = ('<p>Your URL is from a previous version of OPUS. It has been '
-               +'adjusted to conform to the current version.</p><br>')
+        msg = ('<p>Your bookmarked URL is from a previous version of OPUS. '
+               +'It has been adjusted to conform to the current version.</p>')
         final_msg = msg + final_msg
     if msg_list:
         final_msg += '<p>We found the following issues with your bookmarked '
-        final_msg += 'URL:</p><br><ul>'
+        final_msg += 'URL:</p><ul>'
         for msg in msg_list:
             final_msg += '<li>'+msg+'</li>'
-        final_msg += '</ul><br>'
+        final_msg += '</ul>'
     if final_msg:
         msg = ('<p>We strongly recommend that you replace your old bookmark '
                +'with the updated URL in your browser so that you will not see '
                +'this message in the future.</p>')
         final_msg += msg
 
-    if final_msg == '':
+    if url_was_empty or final_msg == '':
         final_msg = None
 
     ret = json_response({'new_url': '&'.join(new_url_list),
