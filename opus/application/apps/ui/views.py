@@ -502,7 +502,7 @@ def api_normalize_url(request):
             # Special exception for ringobsid - we don't have it marked
             # searchable in param_info, but we want to allow it here
             msg = ('Search field "' + _escape_or_label_results(slug, pi)
-                   + '" is not searchable; it has been removed.')
+                   +'" is not searchable; it has been removed.')
             msg_list.append(msg)
             continue
         (form_type, form_type_func,
@@ -614,12 +614,12 @@ def api_normalize_url(request):
             if old_qtype_slug in old_slugs:
                 if pi.old_slug:
                     handled_slugs.append('qtype-'
-                                         + strip_numeric_suffix(pi.old_slug))
+                                         +strip_numeric_suffix(pi.old_slug))
                 handled_slugs.append('qtype-' + strip_numeric_suffix(pi.slug))
                 if old_slugs[old_qtype_slug] not in valid_qtypes:
                     msg = ('Search field "'
-                           + escape(old_slugs[old_qtype_slug])
-                           + '" is unknown; it has been ignored.')
+                           +escape(old_slugs[old_qtype_slug])
+                           +'" is unknown; it has been ignored.')
                     msg_list.append(msg)
                     qtype_val = qtype_default
                 else:
@@ -653,8 +653,8 @@ def api_normalize_url(request):
         if search1_val:
             if not selections[search1]:
                 msg = ('Search query for "'
-                       + _escape_or_label_results(search1, pi1)
-                       + '" had an illegal value; it has been ignored.')
+                       +_escape_or_label_results(search1, pi1)
+                       +'" had an illegal value; it has been ignored.')
                 msg_list.append(msg)
                 search1 = None
             else:
@@ -664,9 +664,8 @@ def api_normalize_url(request):
         if search2_val:
             if not selections[search2]:
                 msg = ('Search query for "'
-                       + _escape_or_label_results(search2, pi2)
-                       + '" maximum had an illegal '
-                       +'value; it has been ignored.')
+                       +_escape_or_label_results(search2, pi2)
+                       +'" maximum had an illegal value; it has been ignored.')
                 msg_list.append(msg)
                 search2 = None
             else:
@@ -725,7 +724,7 @@ def api_normalize_url(request):
             pi = get_param_info_by_slug(strip_numeric_suffix(col), 'widget')
         if not pi:
             msg = ('Selected metadata field "' + escape(col)
-                   + '" is unknown; it has been removed.')
+                   +'" is unknown; it has been removed.')
             msg_list.append(msg)
             continue
         if not pi.display_results:
@@ -735,7 +734,7 @@ def api_normalize_url(request):
             continue
         if pi.slug in cols_list:
             msg = ('Selected metadata field "'
-                   + pi.body_qualified_label_results()
+                   +pi.body_qualified_label_results()
                    +'" is duplicated in the list of selected metadata; '
                    +'only one copy is being used.')
             msg_list.append(msg)
@@ -840,7 +839,7 @@ def api_normalize_url(request):
             continue
         if pi.slug in order_slug_list:
             msg = ('Sort order metadata field "'
-                   + pi.body_qualified_label_results()
+                   +pi.body_qualified_label_results()
                    +'" is duplicated in the list of sort orders; '
                    +'only one copy is being used.')
             msg_list.append(msg)
@@ -906,21 +905,24 @@ def api_normalize_url(request):
 
     ### CART_BROWSE
     cart_browse_val = None
-    # Force it to always be "gallery" for now since we don't support the
-    # table view!
-    # if 'colls_browse' in old_slugs or 'cart_browse' in old_slugs:
-    #     temp_val = (old_slugs.get('colls_browse', None) or
-    #                 old_slugs.get('cart_browse', None))
-    #     if temp_val not in ('gallery', 'data'):
-    #         msg = ('The value for "cart_browse" was not either "gallery" or '
-    #                +'"data"; it has been set to "gallery".')
-    #         msg_list.append(msg)
-    #     else:
-    #         cart_browse_val = temp_val
-    #     if 'colls_browse' in old_slugs:
-    #         del old_slugs['colls_browse']
-    #     if 'cart_browse' in old_slugs:
-    #         del old_slugs['cart_browse']
+    if 'colls_browse' in old_slugs or 'cart_browse' in old_slugs:
+        temp_val = (old_slugs.get('cart_browse', None) or
+                    old_slugs.get('colls_browse', None))
+        # Force it to always be "gallery" for now since we don't support the
+        # table view!
+        # if temp_val not in ('gallery', 'data'):
+        #     msg = ('The value for "cart_browse" was not either "gallery" or '
+        #            +'"data"; it has been set to "gallery".')
+        if temp_val != 'gallery':
+            msg = ('The value for "cart_browse" was not "gallery"; '
+                   +'it has been set to "gallery".')
+            msg_list.append(msg)
+        else:
+            cart_browse_val = temp_val
+        if 'colls_browse' in old_slugs:
+            del old_slugs['colls_browse']
+        if 'cart_browse' in old_slugs:
+            del old_slugs['cart_browse']
     if cart_browse_val is None: # pragma: no cover
         cart_browse_val = 'gallery'
     new_url_suffix_list.append(('cart_browse', cart_browse_val))
@@ -1047,16 +1049,16 @@ def api_normalize_url(request):
         if valid_qtypes:
             if old_slugs[slug] not in valid_qtypes:
                 msg = ('Search field "'
-                       + _escape_or_label_results(slug, pi)
-                       + '" has an unknown query type; it has been ignored.')
+                       +_escape_or_label_results(slug, pi)
+                       +'" has an unknown query type; it has been ignored.')
                 msg_list.append(msg)
                 continue
             qtype_val = old_slugs[slug]
             new_url_search_list.append((qtype_slug, qtype_val))
         else:
             msg = ('Search field "'
-                   + _escape_or_label_results(slug, pi)
-                   + '" does not accept query types; it has been ignored.')
+                   +_escape_or_label_results(slug, pi)
+                   +'" does not accept query types; it has been ignored.')
             msg_list.append(msg)
 
     new_url_list = []

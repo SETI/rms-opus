@@ -573,31 +573,15 @@ var opus = {
             }
         });
 
-        $(".op-confirm-modal").on("click", ".btn", function() {
-            let target = $(this).data("target");
-            switch($(this).attr("type")) {
-                case "submit":
-                    switch(target) {
-                        case "op-reset-search-metadata-modal":
-                            opus.startOver(resetMetadata=true);
-                            break;
-                        case "op-reset-search-modal":
-                            opus.startOver();
-                            break;
-                        case "op-empty-cart":
-                            o_cart.emptyCart();
-                            break;
-                    }
-                    // This intentionally falls through to hide the modal
-                case "cancel":
-                    $(".modal").modal("hide");
-                    break;
+        $(document).on("keydown click", function(e) {
+            if ((e.which || e.keyCode) == 27) { // esc - close modals
+                $(".op-confirm-modal").modal('hide');
             }
         });
 
         $(".op-confirm-modal").on("click", ".btn", function() {
             let target = $(this).data("target");
-            switch($(this).attr("type")) {
+            switch ($(this).attr("type")) {
                 case "submit":
                     switch(target) {
                         case "op-reset-search-metadata-modal":
@@ -609,13 +593,17 @@ var opus = {
                         case "op-empty-cart":
                             o_cart.emptyCart();
                             break;
+                    }
+                    $(".modal").modal("hide");
+                    break;
+                case "cancel":
+                    console.log(target)
+                    switch (target) {
                         case "op-update-url":
-                            // if user clicks "ok", we hide the link to url message on navbar
+                            // if user clicks "Dismiss Message" ("No" button), we hide the link to url message on navbar
                             $(".op-user-msg").removeClass("op-show-msg");
                             break;
                     }
-                    // This intentionally falls through to hide the modal
-                case "cancel":
                     $(".modal").modal("hide");
                     break;
             }
