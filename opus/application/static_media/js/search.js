@@ -133,10 +133,12 @@ var o_search = {
         $("#search").on("change", "input.RANGE", function(event) {
             let slug = $(this).attr("name");
             let currentValue = $(this).val().trim();
-            let values = [];
-            values.push(currentValue);
-            opus.selections[slug] = values;
 
+            if (currentValue) {
+                opus.selections[slug] = [currentValue];
+            } else {
+                delete opus.selections[slug]
+            }
             let newHash = o_hash.updateHash(false);
             /*
             We are relying on URL order now to parse and get slugs before "&view" in the URL
@@ -166,9 +168,16 @@ var o_search = {
             let values = [];
             if (css_class == 'STRING') {
                 $("#widget__" + slug + ' input.STRING').each(function() {
-                    values.push($(this).val());
+                    if ($(this).val()) {
+                        values.push($(this).val());
+                    }
                 });
-                opus.selections[slug] = values;
+
+                if (values.length) {
+                    opus.selections[slug] = values;
+                } else {
+                    delete opus.selections[slug];
+                }
             } else {
                 // range query
                 let slugNoNum = slug.match(/(.*)[1|2]/)[1];
@@ -183,7 +192,11 @@ var o_search = {
                     });
                 }
 
-                opus.selections[slugNoNum + '1'] = values;
+                if (values.length && values[0]) {
+                    opus.selections[slugNoNum + '1'] = values;
+                } else {
+                    delete opus.selections[slugNoNum + '1']
+                }
                 // max
                 values = [];
                 $("#widget__" + slugNoNum + '1 input.max', '#search').each(function() {
@@ -195,7 +208,11 @@ var o_search = {
                     });
                 }
 
-                opus.selections[slugNoNum + '2'] = values;
+                if (values.length && values[0]) {
+                    opus.selections[slugNoNum + '2'] = values;
+                } else {
+                    delete opus.selections[slugNoNum + '2']
+                }
             }
 
             if (opus.last_selections && opus.last_selections[slug]) {
@@ -203,6 +220,7 @@ var o_search = {
                     return;
                 }
             }
+
             // make a normalized call to avoid changing url whenever there is an invalid range input value
             let newHash = o_hash.updateHash(false);
             /*
@@ -250,6 +268,10 @@ var o_search = {
            } else {
                let remove = opus.selections[id].indexOf(value); // find index of value to remove
                opus.selections[id].splice(remove,1);        // remove value from array
+
+               if (opus.selections[id].length === 0) {
+                   delete opus.selections[id];
+               }
            }
            o_hash.updateHash();
         });

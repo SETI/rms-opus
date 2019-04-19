@@ -39,6 +39,15 @@ body {
     }
 }
 
+.op-user-msg {
+    display: none;
+}
+
+/* display normalized url message */
+.op-show-msg {
+    display: block;
+}
+
 #op-tab img.newGIF {
     display: none;
 }
@@ -50,6 +59,7 @@ body {
     margin: 0;
 
 }
+
 #search .add_input {
     display: none;
 }
@@ -766,7 +776,7 @@ nav.panel-heading {
     height: 1.5em;
     position: relative;
     min-width: .68em;
- }
+}
 
 .table-page {
     display: none;
