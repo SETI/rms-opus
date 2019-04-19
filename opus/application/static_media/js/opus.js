@@ -128,13 +128,11 @@ var opus = {
         }
 
         // compare selections and last selections
-        if (o_utils.areObjectsEqual(selections, opus.last_selections))  {
+        if (o_utils.areObjectsEqual(selections, opus.last_selections)) {
             // selections have not changed from opus.last_selections
             if (!opus.force_load) { // so we do only non-reloading pref changes
                 return;
             }
-            opus.force_load = false;
-
         } else {
             // selections in the url hash is different from opus.last_selections
             // reset the pages:
@@ -160,6 +158,7 @@ var opus = {
                 o_browse.resetQuery();
             }
         }
+        opus.force_load = false;
 
         // start the result count spinner and do the yellow flash
         $("#op-result-count").html(opus.spinner).parent().effect("highlight", {}, 500);
@@ -597,7 +596,6 @@ var opus = {
                     $(".modal").modal("hide");
                     break;
                 case "cancel":
-                    console.log(target)
                     switch (target) {
                         case "op-update-url":
                             // if user clicks "Dismiss Message" ("No" button), we hide the link to url message on navbar
