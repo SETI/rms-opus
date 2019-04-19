@@ -38,6 +38,15 @@ body {
     }
 }
 
+.op-user-msg {
+    display: none;
+}
+
+/* display normalized url message */
+.op-show-msg {
+    display: block;
+}
+
 #op-tab img.newGIF {
     display: none;
 }
@@ -49,6 +58,7 @@ body {
     margin: 0;
 
 }
+
 #search .add_input {
     display: none;
 }
@@ -64,6 +74,7 @@ body {
 #browse {
     background-color: #303030; /* #383838; */
 }
+
 #browse .data {
     background-color: white;
 }
@@ -472,10 +483,12 @@ th.sticky-header {
 
 .selectedMetadata ul li .unselect:hover {
     cursor: default;
- }
- .selectedMetadata ul li .info:hover {
+}
+
+.selectedMetadata ul li .info:hover {
     cursor: default;
- }
+}
+
 .selectedMetadata .unselect {
     float: right;
 }
@@ -489,7 +502,7 @@ th.sticky-header {
     padding: 5px 15px;
     border: 1px dotted gray;
     list-style-type: none;
- }
+}
 
 .hints {
     color: green;
@@ -505,7 +518,6 @@ th.sticky-header {
 .range_hints span {
     margin-right: 5px;
 }
-
 
 .paging_indicator {
     color: #A8A8A8;
@@ -760,7 +772,7 @@ nav.panel-heading {
     height: 1.5em;
     position: relative;
     min-width: .68em;
- }
+}
 
 .table-page {
     display: none;
@@ -816,7 +828,6 @@ nav.panel-heading {
 #searchMenu .list-group li:nth-child(1) {
     border-top: 0 none;
 }
-
 
 #op-search-widgets li {
     display: inline;
@@ -1017,6 +1028,7 @@ footer {
     padding: 10px 20px;
     text-align: right;
 }
+
 .footer a {
     white-space: nowrap;
 }
@@ -1161,23 +1173,25 @@ ul.ui-autocomplete a.ui-state-active {
 
 /* Ripple In */
 @-webkit-keyframes hvr-ripple-in {
-  100% {
-    top: 0;
-    right: 0;
-    bottom: 0;
-    left: 0;
-    opacity: 1;
-  }
+    100% {
+        top: 0;
+        right: 0;
+        bottom: 0;
+        left: 0;
+        opacity: 1;
+    }
 }
+
 @keyframes hvr-ripple-in {
-  100% {
-    top: 0;
-    right: 0;
-    bottom: 0;
-    left: 0;
-    opacity: 1;
-  }
+    100% {
+        top: 0;
+        right: 0;
+        bottom: 0;
+        left: 0;
+        opacity: 1;
+    }
 }
+
 .hvr-ripple-in {
     display: inline-block;
     vertical-align: middle;
@@ -1186,6 +1200,7 @@ ul.ui-autocomplete a.ui-state-active {
     position: relative;
     z-index: 20;
 }
+
 .hvr-ripple-in:before {
     content: '';
     position: absolute;

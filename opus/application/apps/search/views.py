@@ -501,7 +501,24 @@ def url_to_search_params(request_get, allow_errors=False, return_slugs=False,
                           +'"%s": %s', param_qualified_name, request_get)
                 return None, None
             new_val = sorted(set(values))
-            if pretty_results:
+            # Now check to see if the mult values are all valid
+            mult_name = get_mult_name(param_qualified_name)
+            model_name = mult_name.title().replace('_','')
+            model = apps.get_model('search', model_name)
+            mult_values = [x['pk'] for x in
+                           list(model.objects.filter(  Q(label__in=new_val)
+                                                     | Q(value__in=new_val))
+                                             .values('pk'))]
+            if len(mult_values) != len(new_val):
+                if allow_errors:
+                    new_val = None
+                else:
+                    log.error('url_to_search_params: Bad mult data for "%s", '
+                              +'wanted "%s" found "%s"',
+                              param_qualified_name, str(new_val),
+                              str(mult_values))
+                    return None, None
+            if pretty_results and new_val:
                 new_val = ','.join(new_val)
             if return_slugs:
                 selections[slug] = new_val
