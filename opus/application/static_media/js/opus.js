@@ -48,8 +48,9 @@ var opus = {
         "order": default_sort_order.split(","),  // result table ordering
         "view": "search", // search, browse, cart, detail
         "browse": "gallery", // either 'gallery' or 'data'
-        "startobs": 1, // for this branch it will not get updated
         "cart_browse": "gallery",  // which view is showing on the cart page, gallery or data
+        "startobs": 1, // for this branch it will not get updated
+        "cart_startobs": 1, // for this branch it will not get updated
         "detail": "", // opus_id of detail page content
         "page": default_pages,  // what page are we on, per view, default defined in header.html
                                // like {"gallery":1, "data":1, "cart_gallery":1, "cart_data":1 };
