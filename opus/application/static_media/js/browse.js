@@ -476,6 +476,31 @@ var o_browse = {
         });
     }, // end browse behaviors
 
+    updateOrderIndicator: function(headerOrderIndicator, pillOrderIndicator, descending) {
+        let headerOrder = descending ? "sort-desc" : "sort-asc";
+        let headerOrderArrow = descending ? o_browse.tableSortUpArrow : o_browse.tableSortDownArrow;
+        let isPillOrderDesc = descending ? "true" : "false";
+        let pillOrderTooltip = descending ? "Change to ascending sort" : "Change to descending sort";
+        let pillOrderArrow = descending ? o_browse.pillSortUpArrow : o_browse.pillSortDownArrow;
+
+        headerOrderIndicator.data("sort", `${headerOrder}`);
+        headerOrderIndicator.attr("class", `column_ordering ${headerOrderArrow}`);
+        pillOrderIndicator.parent().attr("data-descending", `${isPillOrderDesc}`);
+        pillOrderIndicator.attr("title", `${pillOrderTooltip}`);
+        pillOrderIndicator.find("i").attr("class", `${pillOrderArrow}`);
+        // headerOrderIndicator.data("sort", "sort-asc");
+        // headerOrderIndicator.attr("class", `column_ordering ${o_browse.tableSortDownArrow}`);
+        // pillOrderIndicator.parent().attr("data-descending", "false");
+        // pillOrderIndicator.attr("title", "Change to descending sort");
+        // pillOrderIndicator.find("i").attr("class", `${o_browse.pillSortDownArrow}`);
+        //
+        // headerOrderIndicator.data("sort", "sort-desc");
+        // headerOrderIndicator.attr("class", `column_ordering ${o_browse.tableSortUpArrow}`);
+        // pillOrderIndicator.parent().attr("data-descending", "true");
+        // pillOrderIndicator.attr("title", "Change to ascending sort");
+        // pillOrderIndicator.find("i").attr("class", `${o_browse.pillSortUpArrow}`);
+    },
+
     renderSortedDataFromBeginning: function() {
         opus.lastPageDrawn.browse = 0;
         opus.prefs.page = default_pages; // reset pages to 1 when col ordering changes
