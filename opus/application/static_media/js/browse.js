@@ -148,7 +148,6 @@ var o_browse = {
             $(".op-page-loading-status > .loader").show();
             let slug = $(this).parent().attr("data-slug");
             let descending = $(this).parent().attr("data-descending");
-            // Sync up arrows in table header
             let headerOrderIndicator = $(`.dataTable th a[data-slug="${slug}"]`).find("span:last");
             let pillOrderIndicator = $(this);
             o_browse.reRenderData = true;
@@ -446,6 +445,8 @@ var o_browse = {
         });
     }, // end browse behaviors
 
+    // update order arrows right away when user clicks on sorting arrows in pill or table header
+    // sync up arrows in both sorting pill and table header
     updateOrderIndicator: function(headerOrderIndicator, pillOrderIndicator, isDescending) {
         let headerOrder = isDescending ? "sort-desc" : "sort-asc";
         let headerOrderArrow = isDescending ? o_browse.tableSortUpArrow : o_browse.tableSortDownArrow;
@@ -1136,6 +1137,7 @@ var o_browse = {
             let icon = ($.inArray(slug, order) >= 0 ? "-down" : ($.inArray("-"+slug, order) >= 0 ? "-up" : ""));
             let columnSorting = icon === "-down" ? "sort-asc" : icon === "-up" ? "sort-desc" : "none";
             let columnOrdering = `<a href='' data-slug='${slug}'><span>${header}</span><span data-sort='${columnSorting}' class='column_ordering fas fa-sort${icon}'></span></a>`;
+
             $(".dataTable thead tr").append(`<th id='${slug} 'scope='col' class='sticky-header'><div>${columnOrdering}</div></th>`);
         });
 
