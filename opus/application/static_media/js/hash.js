@@ -77,9 +77,7 @@ var o_hash = {
 
     getHashArray: function() {
         let hashArray = [];
-        // this is a workaround for firefox
-        // when user hit enter in input#page, the url hash will be "", we will remove input#page eventually
-        let hashInfo = this.getHash() ? this.getHash() : o_browse.tempHash;
+        let hashInfo = o_hash.getHash()
         $.each(hashInfo.split('&'), function(index, valuePair) {
             let paramArray = valuePair.split("=");
             hashArray[paramArray[0]] = paramArray[1];

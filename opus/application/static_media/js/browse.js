@@ -119,60 +119,6 @@ var o_browse = {
             $(this).attr("href", csv_link);
         });
 
-        // browse sort order - remove sort slug
-        $(".sort-contents").on("click", "li .remove-sort", function() {
-            $(".op-page-loading-status > .loader").show();
-            let slug = $(this).parent().attr("data-slug");
-            let descending = $(this).parent().attr("data-descending");
-            o_browse.reRenderData = true;
-
-            if (descending == "true") {
-                slug = "-"+slug;
-            }
-            let slugIndex = $.inArray(slug, opus.prefs.order);
-            if (slugIndex >= 0) {
-                // The clicked-on slug should always be in the order list; this is just a safety precaution
-                opus.prefs.order.splice(slugIndex, 1);
-            }
-
-            // remove the sort pill right away
-            $(this).closest("li").remove();
-
-            o_hash.updateHash();
-            // o_browse.updatePage();
-            o_browse.renderSortedDataFromBeginning();
-        });
-
-        // browse sort order - flip sort order of a slug
-        $(".sort-contents").on("click", "li .flip-sort", function() {
-            $(".op-page-loading-status > .loader").show();
-            let slug = $(this).parent().attr("data-slug");
-            let descending = $(this).parent().attr("data-descending");
-            let headerOrderIndicator = $(`.dataTable th a[data-slug="${slug}"]`).find("span:last");
-            let pillOrderIndicator = $(this);
-            o_browse.reRenderData = true;
-
-            let new_slug = slug;
-            if (descending == "true") {
-                slug = "-"+slug; // Old descending, new ascending
-                o_browse.updateOrderIndicator(headerOrderIndicator, pillOrderIndicator, false);
-            } else {
-                new_slug = "-"+slug; // Old ascending, new descending
-                o_browse.updateOrderIndicator(headerOrderIndicator, pillOrderIndicator, true);
-            }
-            let slugIndex = $.inArray(slug, opus.prefs.order);
-            if (slugIndex >= 0) {
-                // The clicked-on slug should always be in the order list; this is just a safety precaution
-                opus.prefs.order[slugIndex] = new_slug;
-            }
-
-            // order in the url will get updated right away
-            o_hash.updateHash();
-
-            // o_browse.updatePage();
-            o_browse.renderSortedDataFromBeginning();
-        });
-
         // 1 - click on thumbnail opens modal window
         // 2-  Shift+click or menu/"Start Add[Remove] Range Here" starts a range
         //          Shfit+click on menu/"End Add[Remove] Range Here" ends a range
@@ -330,6 +276,11 @@ var o_browse = {
             $(".op-page-loading-status > .loader").show();
             let orderBy =  $(this).data("slug");
 
+            // get order of opusid when table header is clicked
+            let hash = o_hash.getHashArray();
+            let opusidOrder = hash.order ? hash.order.match(/(-?opusid)/)[0] : "opusid";
+            console.log(opusidOrder);
+
             let orderIndicator = $(this).find("span:last");
             let pillOrderIndicator = $(`.sort-contents span[data-slug="${orderBy}"] .flip-sort`)
             o_browse.reRenderData = true;
@@ -346,14 +297,67 @@ var o_browse = {
                 // not currently ordered, change to ascending
                 o_browse.updateOrderIndicator(orderIndicator, pillOrderIndicator, false);
             }
-            // update table header arrow right away
 
-
-            opus.prefs.order = orderBy;
+            // make sure opusid is always in order slug values
+            opus.prefs.order = orderBy.match(/opusid/) ? orderBy : [orderBy, opusidOrder];
             o_hash.updateHash();
             o_browse.renderSortedDataFromBeginning();
 
             return false;
+        });
+
+        // browse sort order - remove sort slug
+        $(".sort-contents").on("click", "li .remove-sort", function() {
+            $(".op-page-loading-status > .loader").show();
+            let slug = $(this).parent().attr("data-slug");
+            let descending = $(this).parent().attr("data-descending");
+            o_browse.reRenderData = true;
+
+            if (descending == "true") {
+                slug = "-"+slug;
+            }
+            let slugIndex = $.inArray(slug, opus.prefs.order);
+            if (slugIndex >= 0) {
+                // The clicked-on slug should always be in the order list; this is just a safety precaution
+                opus.prefs.order.splice(slugIndex, 1);
+            }
+
+            // remove the sort pill right away
+            $(this).closest("li").remove();
+
+            o_hash.updateHash();
+            // o_browse.updatePage();
+            o_browse.renderSortedDataFromBeginning();
+        });
+
+        // browse sort order - flip sort order of a slug
+        $(".sort-contents").on("click", "li .flip-sort", function() {
+            $(".op-page-loading-status > .loader").show();
+            let slug = $(this).parent().attr("data-slug");
+            let descending = $(this).parent().attr("data-descending");
+            let headerOrderIndicator = $(`.dataTable th a[data-slug="${slug}"]`).find("span:last");
+            let pillOrderIndicator = $(this);
+            o_browse.reRenderData = true;
+
+            let new_slug = slug;
+            if (descending == "true") {
+                slug = "-"+slug; // Old descending, new ascending
+                o_browse.updateOrderIndicator(headerOrderIndicator, pillOrderIndicator, false);
+            } else {
+                new_slug = "-"+slug; // Old ascending, new descending
+                o_browse.updateOrderIndicator(headerOrderIndicator, pillOrderIndicator, true);
+            }
+            let slugIndex = $.inArray(slug, opus.prefs.order);
+            if (slugIndex >= 0) {
+                // The clicked-on slug should always be in the order list; this is just a safety precaution
+                opus.prefs.order[slugIndex] = new_slug;
+            }
+
+            // order in the url will get updated right away
+            o_hash.updateHash();
+
+            // o_browse.updatePage();
+            o_browse.renderSortedDataFromBeginning();
         });
 
         $("#op-obs-menu").on("click", '.dropdown-header',  function(e) {
