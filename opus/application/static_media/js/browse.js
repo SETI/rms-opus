@@ -1090,8 +1090,8 @@ var o_browse = {
         let url = hashString + '&reqno=' + reqno + view.add_to_url;
         url = base_url + o_browse.updateStartobsInUrl(url, startObs);
 
-        // need to add limit
-        url += `&limit=${o_browse.getLimit()}`;
+        // need to add limit - getting twice as much so that the prefetch is done in one get instead of two.
+        url += `&limit=${o_browse.getLimit() * 2}`;
 
         return url;
     },
@@ -1183,8 +1183,8 @@ var o_browse = {
 
             // prefill next page
             if (!o_browse.galleryBegun) {
-                $(selector).infiniteScroll('loadNextPage');
-                o_browse.updateSliderHandle();
+                //$(selector).infiniteScroll('loadNextPage');
+                //o_browse.updateSliderHandle();        -- i think this is causing grief
                 o_browse.galleryBegun = true;
             }
             o_browse.reRenderData = false;
