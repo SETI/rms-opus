@@ -1137,6 +1137,9 @@ var o_browse = {
             if (!o_browse.galleryBegun) {
                 o_browse.initTable(data.columns);
 
+                $(`${selector}`).scrollTop(0);
+                $(`${selector} .dataTable`).scrollTop(0);
+
                 if (!$(selector).data("infiniteScroll")) {
                     $(selector).infiniteScroll({
                         path: function() {
