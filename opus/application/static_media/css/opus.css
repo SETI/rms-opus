@@ -1,6 +1,7 @@
 body {
     overflow: hidden;
 }
+
 .app-body {
     margin-top: 3.8em !important;
     overflow: hidden;
@@ -71,6 +72,7 @@ body {
     padding: 0; margin:0;
     display: none;
 }
+
 #browse {
     background-color: #303030; /* #383838; */
 }
@@ -217,6 +219,7 @@ ul.searchMenu {
     height: 0;
     transition: .5s ease;
 }
+
 .thumb-overlay a:hover {
     color: #097da5;
     /* font-size: 130%; */
@@ -515,6 +518,7 @@ th.sticky-header {
     padding: 5px 0 10px 50px;
     color: green;
 }
+
 .range_hints span {
     margin-right: 5px;
 }
@@ -877,8 +881,6 @@ nav.panel-heading {
 .widget-main label {
     font-size: 95%;
 }
-
-/* Overwrite the default to keep the scrollbar always visiblepadding-top: 1.5em; */
 
 .sidebar_wrapper i.fa-check {
     display: none;

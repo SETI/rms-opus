@@ -127,7 +127,7 @@ var o_widgets = {
                 $("input.RANGE").removeClass("search_input_invalid");
                 $("input.RANGE").addClass("search_input_original");
                 $("#sidebar").removeClass("search_overlay");
-                $("#op-result-count").text(o_utils.addCommas(opus.result_count));
+                $("#op-result-count").text(o_utils.addCommas(opus.resultCount));
             }
             o_hash.updateHash(opus.allInputsValid);
             o_widgets.updateWidgetCookies();

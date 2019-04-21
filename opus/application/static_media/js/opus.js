@@ -8,11 +8,6 @@
 /* globals o_browse, o_cart, o_detail, o_hash, o_menu, o_mutationObserver, o_search, o_utils, o_widgets */
 /* globals default_columns, default_widgets, default_sort_order, static_url */
 
-// generic globals, hmm..
-/* jshint varstmt: false */
-var default_pages = {"gallery":1, "dataTable":1, "cart_gallery":1, "cart_data":1 };
-/* jshint varstmt: true */
-
 // defining the opus namespace first; document ready comes after...
 /* jshint varstmt: false */
 var opus = {
@@ -40,7 +35,6 @@ var opus = {
     waitingForAllNormalizedAPI: false,
 
     // client side prefs, changes to these *do not trigger results to refresh*
-    // prefs gets added verbatim to the url, so don't add anything weird into here!
     // prefs key:value pair order has been re-organized to match up with normalized url
     prefs: {
         "cols": default_columns.split(","),  // default result table columns by slug
@@ -52,9 +46,6 @@ var opus = {
         "startobs": 1, // for this branch it will not get updated
         "cart_startobs": 1, // for this branch it will not get updated
         "detail": "", // opus_id of detail page content
-        "page": default_pages,  // what page are we on, per view, default defined in header.html
-                               // like {"gallery":1, "data":1, "cart_gallery":1, "cart_data":1 };
-        "limit": 100, // results per page
      }, // pref changes do not trigger load()
 
     col_labels: [],  // contains labels that match prefs.cols, which are slugs for each column label
@@ -62,17 +53,12 @@ var opus = {
                       // this is not
                       // note that this is also not a dictionary because we need to preserve the order.
 
-
-    lastPageDrawn: {"browse":0, "cart":0},
-
-    // additional defaults are in base.html
-
     // searching - making queries
     selections:{},        // the user's search
     extras:{},            // extras to the query, carries units, string_selects, qtypes, size, refreshes result count!!
     last_selections:{},   // last_ are used to moniter changes
     last_hash:'',
-    result_count:0,
+    resultCount:0,
     qtype_default: 'any',
     force_load: true, // set this to true to force load() when selections haven't changed
 
@@ -84,14 +70,6 @@ var opus = {
     menu_state: {'cats':['obs_general']},
     default_widgets: default_widgets.split(','),
     widget_click_timeout:0,
-
-    // browse tab
-    pages:0, // total number of pages this result
-
-    // cart
-    cart_change:true, // cart has changed since last load of cart_tab
-    cart_q_intrvl: false,
-    cart_options_viz:false,
 
     // these are for the process that detects there was a change in the selection criteria and updates things
     main_timer:false,
@@ -113,10 +91,6 @@ var opus = {
 
         let selections = o_hash.getSelectionsFromHash();
 
-        if (selections === undefined) {
-            return;
-        }
-
         // if (!$.isEmptyObject(opus.selections) || !opus.checkIfDrawnWidgetsAreDefault() || !opus.checkIfMetadataAreDefault()) {
         if ($.isEmptyObject(selections) || !opus.checkIfDrawnWidgetsAreDefault()) {
             $(".op-reset-button button").prop("disabled", false);
@@ -135,8 +109,8 @@ var opus = {
             }
         } else {
             // selections in the url hash is different from opus.last_selections
-            // reset the pages:
-            opus.prefs.page = default_pages;
+            opus.prefs.startobs = 1;
+            opus.prefs.cart_startobs = 1;
 
             // create an object from selections to compare with opus.selections
             let modifiedSelections = {};
@@ -174,7 +148,7 @@ var opus = {
         opus.last_selections = selections;
 
         // chain ajax calls, validate range inputs before result count api call
-        o_search.allNormalizedApiCall().then(opus.getResultCount).then(opus.updatePageAfterResultCountAPI);
+        o_search.allNormalizedApiCall().then(opus.getResultCount).then(opus.updateSearchTabHinting);
     },
 
     // Normalized URL API call
@@ -228,7 +202,7 @@ var opus = {
         return $.getJSON("/opus/__api/meta/result_count.json?" + resultCountHash + "&reqno=" + opus.lastResultCountRequestNo);
     },
 
-    updatePageAfterResultCountAPI: function(resultCountData) {
+    updateSearchTabHinting: function(resultCountData) {
         if (!opus.allInputsValid || !resultCountData) {
             return;
         }
@@ -241,7 +215,6 @@ var opus = {
         o_menu.getMenu();
 
         // if all we wanted was a new gallery page we can stop here
-        opus.pages = Math.ceil(opus.result_count/opus.prefs.limit);
         if (opus.prefs.view == "browse") {
             return;
         }
@@ -252,10 +225,10 @@ var opus = {
         });
     },
 
-    updateResultCount: function(result_count) {
-        opus.result_count = result_count;
+    updateResultCount: function(resultCount) {
+        opus.resultCount = resultCount;
         $("#op-result-count").fadeOut("fast", function() {
-            $(this).html(o_utils.addCommas(opus.result_count)).fadeIn("fast");
+            $(this).html(o_utils.addCommas(opus.resultCount)).fadeIn("fast");
             $(this).removeClass("browse_results_invalid");
         });
     },

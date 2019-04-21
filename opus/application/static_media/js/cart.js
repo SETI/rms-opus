@@ -9,9 +9,12 @@
 /* jshint varstmt: false */
 var o_cart = {
 /* jshint varstmt: true */
-    lastCartRequestNo: 0,
+    // cart
+    cartChange: true, // cart has changed since last load of cart_tab
     lastRequestNo: 0,
+    lastLoadDataRequestNo: 0,
     downloadInProcess: false,
+
     // collector for all cart status error messages
     statusDataErrorCollector: [],
 
@@ -50,10 +53,10 @@ var o_cart = {
              $(".op-total-size .spinner").addClass("op-show-spinner");
 
              let add_to_url = o_cart.getDownloadFiltersChecked();
-             o_cart.lastCartRequestNo++;
-             let url = "/opus/__cart/status.json?reqno=" + o_cart.lastCartRequestNo + "&" + add_to_url + "&download=1";
+             o_cart.lastRequestNo++;
+             let url = "/opus/__cart/status.json?reqno=" + o_cart.lastRequestNo + "&" + add_to_url + "&download=1";
              $.getJSON(url, function(info) {
-                 if (info.reqno < o_cart.lastCartRequestNo) {
+                 if (info.reqno < o_cart.lastRequestNo) {
                      return;
                  }
                  $(".op-total-size .spinner").removeClass("op-show-spinner");
@@ -150,7 +153,7 @@ var o_cart = {
      },
 
      updateCartStatus: function(status) {
-         if (status.reqno < o_cart.lastCartRequestNo) {
+         if (status.reqno < o_cart.lastRequestNo) {
              return;
          }
          let count = status.count;
@@ -165,52 +168,88 @@ var o_cart = {
         // display cart badge spinner, it will get updated after the return of status.json
         $("#op-cart-count").html(opus.spinner);
         // returns any user cart saved in session
-        o_cart.lastCartRequestNo++;
-        $.getJSON("/opus/__cart/status.json?reqno=" + o_cart.lastCartRequestNo, function(statusData) {
-            if (statusData.reqno < o_cart.lastCartRequestNo) {
+        o_cart.lastRequestNo++;
+        $.getJSON("/opus/__cart/status.json?reqno=" + o_cart.lastRequestNo, function(statusData) {
+            if (statusData.reqno < o_cart.lastRequestNo) {
                 return;
             }
             o_cart.updateCartStatus(statusData);
         });
      },
 
-     loadCartData: function(page) {
-        //window.scrollTo(0,opus.browse_view_scrolls[opus.prefs.browse]);
-        page = (page == undefined ? 1 : (opus.cart_change ? 1 : page));
+     loadCartData: function(startObs) {
+         let view = o_browse.getViewInfo();
+         let selector = `${view.namespace} .gallery-contents`;
 
-        let view = o_browse.getViewInfo();
-        let base_url = "/opus/__api/dataimages.json?";
-        o_cart.lastRequestNo++;
-        let url = o_hash.getHash() + "&reqno=" + o_cart.lastRequestNo + view.add_to_url;
+         startObs = (startObs === undefined ? opus.prefs[`${view.prefix}startobs`] : startObs);
 
-        url = o_browse.updatePageInUrl(url, page);
+         // if the request is a block far away from current page cache, flush the cache and start over
+         let elem = $(`${view.namespace} [data-obs=${startObs}]`);
+         let lastObs = $(`${view.namespace} [data-obs]`).last().data("obs");
+         let firstObs = $(`${view.namespace} [data-obs]`).first().data("obs");
 
-        // metadata; used for both table and gallery
-        $.getJSON(base_url + url, function(data) {
-            if (data.reqno < o_cart.lastRequestNo) {
-                return;
-            }
-            if (opus.col_labels.length === 0) {
-                opus.col_labels = data.columns;
-            }
-            o_browse.renderGalleryAndTable(data, this.url);
-            o_browse.updateSortOrder(data);
+         $(".op-page-loading-status > .loader").show();
+         let url = o_browse.getDataURL(startObs);
 
-            if (opus.cart_change) {
+         // metadata; used for both table and gallery
+         $.getJSON(url, function(data) {
+             if (data.reqno < o_cart.lastLoadDataRequestNo) {
+                 // make sure to remove spinner before return
+                 $(".op-page-loading-status > .loader").hide();
+                 return;
+             }
+             if (opus.col_labels.length === 0) {
+                 opus.col_labels = data.columns;
+             }
+             o_browse.renderGalleryAndTable(data, this.url);
+             o_browse.updateSortOrder(data);
+
+             if (o_cart.cartChange) {
                 // for infinite scroll
-                $("#cart .gallery-contents").infiniteScroll({
-                    path: o_browse.updatePageInUrl(this.url, "{{#}}"),
+                $(selector).infiniteScroll({
+                    path: function() {
+                        let startObs = opus.prefs[`${view.prefix}startobs`];
+                        let lastObs = $(`${view.namespace} .thumbnail-container`).last().data("obs");
+                        // start from the last observation drawn; if none yet drawn ...???
+                        startObs = (lastObs != undefined ? lastObs + 1 : startObs + o_browse.getLimit());
+                        console.log(`after: ${startObs}`);
+                        let path = o_browse.getDataURL(startObs);
+                        return path;
+                    },
                     responseType: "text",
-                    status: "#cart .page-load-status",
+                    status: `${view.namespace} .page-load-status`,
                     elementScroll: true,
                     history: false,
                     debug: false,
                 });
-                $("#cart .gallery-contents").on( "load.infiniteScroll", function(event, response, path) {
-                    let jsonData = JSON.parse( response );
-                    o_browse.renderGalleryAndTable(jsonData, path);
+                $(selector).on("request.infiniteScroll", function(event, path) {
+                    // hide default page status loader if op-page-loading-status loader is spinning
+                    // && o_browse.tableSorting
+                    $(".infinite-scroll-request").hide();
                 });
-                opus.cart_change = false;
+                $(selector).on("scrollThreshold.infiniteScroll", function(event) {
+                    // remove spinner when scrollThreshold is triggered and last data fetching has no data
+                    // Need to revisit this one
+                    if (o_cart.dataNotAvailable !== undefined && o_cart.dataNotAvailable) {
+                        $(".infinite-scroll-request").hide();
+                    }
+                    $(selector).infiniteScroll("loadNextPage");
+                });
+                $(selector).on("load.infiniteScroll", o_browse.infiniteScrollLoadEventListener);
+                o_cart.cartChange = false;
+            }
+
+            // Because we redraw from the beginning or user inputted page, we need to remove previous drawn thumb-pages
+            $(`${view.namespace} .thumbnail-container`).detach();
+            o_browse.renderGalleryAndTable(data, this.url);
+/*            if (o_browse.currentOpusId != "") {
+                o_browse.metadataboxHtml(o_browse.currentOpusId);
+            }
+            o_browse.updateSortOrder(data);
+*/
+            // prefill next page
+            if (!o_cart.cartChange) {
+                $(selector).infiniteScroll('loadNextPage');
             }
         });
     },
@@ -218,16 +257,13 @@ var o_cart = {
     // get Cart tab
     getCartTab: function() {
         o_browse.renderMetadataSelector();   // just do this in background so there's no delay when we want it...
-        if (opus.cart_change) {
+        if (o_cart.cartChange) {
             let zippedFiles_html = $(".zippedFiles", "#cart").html();
 
             // don't forget to remove existing stuff before append
             $(".gallery", "#cart").html("");
 
             $(".cart_details", "#cart").html(opus.spinner);
-
-            // reset page no
-            opus.lastPageDrawn.cart = 0;
 
             // redux: and nix this big thing:
             $.ajax({ url: "/opus/__cart/view.html",
@@ -270,7 +306,7 @@ var o_cart = {
         // change indicator to zero and let the server know:
         $.getJSON("/opus/__cart/reset.json", function(data) {
             $("#op-cart-count").html("0");
-            opus.cart_change = true;
+            o_cart.cartChange = true;
             $("#cart .navbar").hide();
             $("#cart .sort-order-container").hide();
             if (!returnToSearch) {
@@ -291,20 +327,19 @@ var o_cart = {
 
         // handle it as range
         if (toOpusId != undefined) {
-            let namespace = o_browse.getViewInfo().namespace;
+            let tab = o_browse.getViewInfo().namespace;
             let action = (fromElem.hasClass("in") ? "removerange" : "addrange");
             let toElem = o_browse.getGalleryElement(toOpusId);
-            let fromIndex = $(`${namespace} .thumbnail-container`).index(fromElem);
-            let toIndex = $(`${namespace} .thumbnail-container`).index(toElem);
+            let fromIndex = $(`${tab} .thumbnail-container`).index(fromElem);
+            let toIndex = $(`${tab} .thumbnail-container`).index(toElem);
 
             // reorder if need be
             if (fromIndex > toIndex) {
                 [fromIndex, toIndex] = [toIndex, fromIndex];
             }
             let length = toIndex - fromIndex+1;
-            let elementArray = $(`${namespace} .thumbnail-container`);
+            let elementArray = $(`${tab} .thumbnail-container`);
             let opusIdRange = $(elementArray[fromIndex]).data("id") + ","+ $(elementArray[toIndex]).data("id");
-            console.log("end range "+action+" : "+opusIdRange);
             $.each(elementArray.splice(fromIndex, length), function(index, elem) {
                 let opusId = $(elem).data("id");
                 let status = "in";
@@ -325,12 +360,14 @@ var o_cart = {
             if (opus.prefs.view != "cart") {
                 o_cart.editCart(opusIdRange, action);
             }
-            o_browse.undoRangeSelect(namespace);
+            o_browse.undoRangeSelect(tab);
         } else {
             // note - doing it this way handles the obs on the browse tab at the same time
-            $(`.thumbnail-container[data-id=${fromOpusId}]`).toggleClass("in");
-
             let action = (fromElem.hasClass("in") ? "add" : "remove");
+
+            $(`.thumbnail-container[data-id=${fromOpusId}]`).toggleClass("in");
+            $("input[name="+fromOpusId+"]").prop("checked", (action == "remove"));
+
             o_browse.updateCartIcon(fromOpusId, action);
             o_cart.editCart(fromOpusId, action);
             return action;
@@ -339,7 +376,7 @@ var o_cart = {
 
     // action = add/remove/addrange/removerange/addall
     editCart: function(opusId, action) {
-        opus.cart_change = true;
+        o_cart.cartChange = true;
 
         let url = "/opus/__cart/" + action + ".json?";
         switch (action) {
@@ -350,33 +387,7 @@ var o_cart = {
 
             case "removerange":
             case "addrange":
-                url += "range=" + opusId;
-                // need to send to server what page this range lands and what limit of that page is
-                // limit should include all observations showing on page
-                // must adjust limit + page to account for total number of results showing on page
-
-                // server uses offset = (page_no-1)*limit
-                // i.e. the offset of the 23rd page at 100 per page starts with the 2200st record:
-
-                let first_page = o_browse.getCurrentPage();
-                let last_page = opus.lastPageDrawn[opus.prefs.view];
-
-                // now find the number of results showing on the page, different from opus.prefs.limit:
-                // number of "pages" showing on screen at any time = limit * (1+footer_clicks)
-                // i.e., you've got 100 on screen, you click footer 4 times, now you've got 500 showing
-                // multiply that by 2 because our results may span no more than 2 "pages" at our new limit on the server
-                let limit = opus.prefs.limit * (last_page - first_page + 1);
-
-                let hashArray = o_hash.getHashArray();
-                if (hashArray.page !== undefined) {
-                    delete hashArray.page;
-                }
-                if (hashArray.limit !== undefined) {
-                    delete hashArray.limit;
-                }
-
-                url += '&' + o_hash.hashArrayToHashString(hashArray);
-                url = url + "&limit=" + limit + "&page=" + first_page;
+                url += `range=${opusId}&${o_hash.getHash()}`;
                 break;
 
           case "addall":
@@ -396,8 +407,8 @@ var o_cart = {
         $("#op-total-download-size").hide();
         $(".op-total-size .spinner").addClass("op-show-spinner");
 
-        o_cart.lastCartRequestNo++;
-        $.getJSON(url  + add_to_url + "&reqno=" + o_cart.lastCartRequestNo, function(statusData) {
+        o_cart.lastRequestNo++;
+        $.getJSON(url  + add_to_url + "&reqno=" + o_cart.lastRequestNo, function(statusData) {
             // display modal for every error message returned from api call
             if (statusData.error) {
                 // if previous error modal is currently open, we store the error message for later displaying
@@ -413,7 +424,7 @@ var o_cart = {
                 o_browse.loadData();
             }
             // we only update the cart badge result count from the latest request
-            if (statusData.reqno < o_cart.lastCartRequestNo) {
+            if (statusData.reqno < o_cart.lastRequestNo) {
                 return;
             }
 
