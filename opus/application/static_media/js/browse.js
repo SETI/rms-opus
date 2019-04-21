@@ -937,7 +937,7 @@ var o_browse = {
                 galleryHtml +=     '<a href="#" data-icon="info" title="View observation detail"><i class="fas fa-info-circle fa-xs"></i></a>';
 
                 let buttonInfo = o_browse.cartButtonInfo((item.in_cart ? 'add' : 'remove'));
-                galleryHtml +=     `<a href="#" data-icon="cart" title="Add to cart"><i class="${buttonInfo.icon} fa-xs"></i></a>`;
+                galleryHtml +=     `<a href="#" data-icon="cart" title="${buttonInfo.title}"><i class="${buttonInfo.icon} fa-xs"></i></a>`;
                 galleryHtml +=     '<a href="#" data-icon="menu"><i class="fas fa-bars fa-xs"></i></a>';
                 galleryHtml += '</div>';
                 galleryHtml += '</div></div>';
@@ -1240,10 +1240,13 @@ var o_browse = {
 
     countGalleryImages: function() {
         let tab = `#${opus.prefs.view}`;
+        let xCount = 0;
+        let yCount = 0;
 
-        let xCount = Math.floor($(`${tab} .gallery-contents`).width()/o_browse.imageSize);   // images are 100px
-        let yCount = Math.round($(`${tab} .gallery-contents`).height()/o_browse.imageSize);   // images are 100px
-
+        if ($(`${tab} .gallery-contents`).length > 0) {
+            xCount = Math.round($(`${tab} .gallery-contents`).width()/o_browse.imageSize);   // images are 100px
+            yCount = Math.ceil($(`${tab} .gallery-contents`).height()/o_browse.imageSize);   // images are 100px
+        }
         return {"x": xCount, "y": yCount};
     },
 

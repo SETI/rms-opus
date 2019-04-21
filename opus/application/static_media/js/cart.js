@@ -247,10 +247,6 @@ var o_cart = {
             }
             o_browse.updateSortOrder(data);
 */
-            // prefill next page
-            if (!o_cart.cartChange) {
-                $(selector).infiniteScroll('loadNextPage');
-            }
         });
     },
 
@@ -363,7 +359,7 @@ var o_cart = {
             o_browse.undoRangeSelect(tab);
         } else {
             // note - doing it this way handles the obs on the browse tab at the same time
-            let action = (fromElem.hasClass("in") ? "add" : "remove");
+            let action = (fromElem.hasClass("in") ? "remove" : "add");
 
             $(`.thumbnail-container[data-id=${fromOpusId}]`).toggleClass("in");
             $("input[name="+fromOpusId+"]").prop("checked", (action == "remove"));
