@@ -28,6 +28,7 @@ var o_browse = {
 
     galleryBegun: false, // have we started the gallery view
     galleryData: {},  // holds gallery column data
+    imageSize: 100,     // default
 
     limit: 100,  // results per page
     lastLoadDataRequestNo: 0,
@@ -1112,7 +1113,7 @@ var o_browse = {
             (startObs > lastObs + 1) || (startObs < firstObs - 1)) {
             o_browse.galleryBegun = false;
         } else {
-                // TODO - couldn't resolve w/a reRender var so making a note... 
+            // TODO - couldn't resolve w/a reRender var so making a note...
             // wait! is this page already drawn?
             // if startObs drawn, move the slider to that line, fetch if need be after
             if (startObs >= firstObs && startObs <= lastObs) {
@@ -1238,22 +1239,11 @@ var o_browse = {
     },
 
     countGalleryImages: function() {
-        let xDir = 0;
-        let xCount = 0;
         let tab = `#${opus.prefs.view}`;
 
-        // we need to know how many images fit across; we can approx the y dir differently
-        $(`${tab} .thumbnail-container`).each(function(index, thumb) {
-            let offset = $(thumb).offset();
-            if (offset.left >= xDir) {
-                xDir = offset.left;
-                ++xCount;
-            } else {
-                // done; no need to continue
-                return false;
-            }
-        });
-        let yCount = Math.round($(`${tab} .gallery-contents`).height()/100);   // images are 100px
+        let xCount = Math.floor($(`${tab} .gallery-contents`).width()/o_browse.imageSize);   // images are 100px
+        let yCount = Math.round($(`${tab} .gallery-contents`).height()/o_browse.imageSize);   // images are 100px
+
         return {"x": xCount, "y": yCount};
     },
 
