@@ -1245,12 +1245,10 @@ var o_browse = {
             if (descending) {
                 listHtml += "<span class='flip-sort' title='Change to ascending sort'>";
                 listHtml += label;
-                // listHtml += " <i class='fas fa-arrow-circle-up'></i>";
                 listHtml += ` <i class="${pillSortUpArrow}"></i>`;
             } else {
                 listHtml += "<span class='flip-sort' title='Change to descending sort'>";
                 listHtml += label;
-                // listHtml += " <i class='fas fa-arrow-circle-down'></i>";
                 listHtml += ` <i class="${pillSortDownArrow}"></i>`;
             }
             listHtml += "</span></span></li>";
@@ -1260,10 +1258,7 @@ var o_browse = {
             }
             opus.prefs.order.push(fullSlug);
         });
-        // if ($(".sort-contents").is(":empty")) {
-        //     console.log("empty")
-        //     $(".sort-contents").html(listHtml);
-        // }
+
         $(".sort-contents").html(listHtml);
         o_hash.updateHash();
     },
