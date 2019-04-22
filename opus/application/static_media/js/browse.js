@@ -51,18 +51,18 @@ var o_browse = {
         $(".gallery-contents, .dataTable").on('scroll', _.debounce(o_browse.checkScroll, 500));
 
         $(".gallery-contents, .dataTable").on('wheel ps-scroll-up', function(event) {
-            let namespace = o_browse.getViewInfo().namespace;
-            // if time to load...
-                if (opus.prefs.browse === "dataTable") {
-                    if ($(`${namespace} .dataTable`).scrollTop() === 0) {
-                        $(`${namespace} .gallery-contents`).infiniteScroll("loadNextPage");
-                    }
-                } else {
-                    if ($(`${namespace} .gallery-contents`).scrollTop() === 0) {
-                        $(`${namespace} .gallery-contents`).infiniteScroll("loadNextPage");
-                    }
+            let view = o_browse.getViewInfo();
+            let tab = view.namespace;
+            if (opus.prefs[`${view.prefix}startobs`] > 0) {
+                let prev = $(`${view.namespace} [data-obs]`).first().data("obs") - o_browse.getLimit();
+                if ($(`${tab} .gallery-contents`).scrollTop() || $(`${tab} .dataTable`).scrollTop() === 0) {
+                    opus.prefs[`${view.prefix}startobs`] = (prev > 0 ? prev : 1);
+                    $(`${tab} .gallery-contents`).infiniteScroll({
+                        "loadPrevPage": true
+                    });
+                    $(`${tab} .gallery-contents`).infiniteScroll("loadNextPage");
                 }
-            //}
+            }
         });
 
         $("#browse").on("click", ".metadataModal", function() {
@@ -213,8 +213,28 @@ var o_browse = {
 
         $("#dataTable").on("click", "td:not(:first-child)", function(e) {
             let opusId = $(this).parent().data("id");
-            o_browse.showModal(opusId);
-            o_browse.undoRangeSelect();
+            e.preventDefault();
+            o_browse.hideMenu();
+
+            let startElem = $(`#${opus.prefs.view} .thumb.gallery`).find(".selected");
+
+            // Detecting ctrl (windows) / meta (mac) key.
+            if (e.ctrlKey || e.metaKey) {
+                o_cart.toggleInCart(opusId);
+                o_browse.undoRangeSelect();
+            }
+            // Detecting shift key
+            else if (e.shiftKey) {
+                if (startElem.length == 0) {
+                    o_browse.startRangeSelect(opusId);
+                    //o_cart.toggleInCart(opusId);
+                } else {
+                    let fromOpusId = $(startElem).data("id");
+                    o_cart.toggleInCart(fromOpusId, opusId);
+                }
+            } else {
+                o_browse.showModal(opusId);
+            }
         });
 
         // thumbnail overlay tools
@@ -688,7 +708,8 @@ var o_browse = {
             if (!o_utils.areObjectsEqual(opus.prefs.cols, currentSelectedMetadata)) {
                 o_browse.resetData();
                 o_browse.initTable(opus.col_labels);
-                opus.prefs.page.gallery = 1;
+                opus.prefs.startobs = 1;
+                opus.prefs.cart_startobs = 1;
                 o_browse.loadData(1);
             } else {
                 // remove spinner if nothing is re-draw when we click save changes
@@ -1147,10 +1168,13 @@ var o_browse = {
                     $(selector).infiniteScroll({
                         path: function() {
                             let startObs = opus.prefs[`${view.prefix}startobs`];
-                            /// this may not work w/prev TODO
-                            let lastObs = $(`${view.namespace} .thumbnail-container`).last().data("obs");
-                            // start from the last observation drawn; if none yet drawn ...???
-                            startObs = (lastObs != undefined ? lastObs + 1 : startObs + o_browse.getLimit());
+                            if ($(selector).data("infiniteScroll") != undefined && $(selector).data("infiniteScroll").options.loadPrevPage === true) {
+                                $(selector).infiniteScroll({"loadPrevPage": true});
+                            } else {
+                                let lastObs = $(`${view.namespace} .thumbnail-container`).last().data("obs");
+                                // start from the last observation drawn; if none yet drawn ...???
+                                startObs = (lastObs != undefined ? lastObs + 1 : startObs + o_browse.getLimit());
+                            }
                             let path = o_browse.getDataURL(startObs);
                             return path;
                         },

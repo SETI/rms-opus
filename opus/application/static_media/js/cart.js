@@ -212,7 +212,6 @@ var o_cart = {
                         let lastObs = $(`${view.namespace} .thumbnail-container`).last().data("obs");
                         // start from the last observation drawn; if none yet drawn ...???
                         startObs = (lastObs != undefined ? lastObs + 1 : startObs + o_browse.getLimit());
-                        console.log(`after: ${startObs}`);
                         let path = o_browse.getDataURL(startObs);
                         return path;
                     },
