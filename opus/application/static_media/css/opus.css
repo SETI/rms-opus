@@ -1173,6 +1173,19 @@ ul.ui-autocomplete a.ui-state-active {
     height: 0;
 }
 
+.op-noSelect {
+    -moz-user-select: none;
+    -khtml-user-select: none;
+    -webkit-user-select: none;
+
+    /*
+      Introduced in IE 10.
+      See http://ie.microsoft.com/testdrive/HTML5/msUserSelect/
+    */
+    -ms-user-select: none;
+    user-select: none;
+}
+
 /* Ripple In */
 @-webkit-keyframes hvr-ripple-in {
     100% {

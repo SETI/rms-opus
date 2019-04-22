@@ -28,6 +28,7 @@ var o_browse = {
 
     galleryBegun: false, // have we started the gallery view
     galleryData: {},  // holds gallery column data
+    imageSize: 100,     // default
 
     limit: 100,  // results per page
     lastLoadDataRequestNo: 0,
@@ -50,18 +51,18 @@ var o_browse = {
         $(".gallery-contents, .dataTable").on('scroll', _.debounce(o_browse.checkScroll, 500));
 
         $(".gallery-contents, .dataTable").on('wheel ps-scroll-up', function(event) {
-            let namespace = o_browse.getViewInfo().namespace;
-            // if time to load...
-                if (opus.prefs.browse === "dataTable") {
-                    if ($(`${namespace} .dataTable`).scrollTop() === 0) {
-                        $(`${namespace} .gallery-contents`).infiniteScroll("loadNextPage");
-                    }
-                } else {
-                    if ($(`${namespace} .gallery-contents`).scrollTop() === 0) {
-                        $(`${namespace} .gallery-contents`).infiniteScroll("loadNextPage");
-                    }
+            let view = o_browse.getViewInfo();
+            let tab = view.namespace;
+            if (opus.prefs[`${view.prefix}startobs`] > 0) {
+                let prev = $(`${view.namespace} [data-obs]`).first().data("obs") - o_browse.getLimit();
+                if ($(`${tab} .gallery-contents`).scrollTop() || $(`${tab} .dataTable`).scrollTop() === 0) {
+                    opus.prefs[`${view.prefix}startobs`] = (prev > 0 ? prev : 1);
+                    $(`${tab} .gallery-contents`).infiniteScroll({
+                        "loadPrevPage": true
+                    });
+                    $(`${tab} .gallery-contents`).infiniteScroll("loadNextPage");
                 }
-            //}
+            }
         });
 
         $("#browse").on("click", ".metadataModal", function() {
@@ -212,8 +213,28 @@ var o_browse = {
 
         $("#dataTable").on("click", "td:not(:first-child)", function(e) {
             let opusId = $(this).parent().data("id");
-            o_browse.showModal(opusId);
-            o_browse.undoRangeSelect();
+            e.preventDefault();
+            o_browse.hideMenu();
+
+            let startElem = $(`#${opus.prefs.view} .thumb.gallery`).find(".selected");
+
+            // Detecting ctrl (windows) / meta (mac) key.
+            if (e.ctrlKey || e.metaKey) {
+                o_cart.toggleInCart(opusId);
+                o_browse.undoRangeSelect();
+            }
+            // Detecting shift key
+            else if (e.shiftKey) {
+                if (startElem.length == 0) {
+                    o_browse.startRangeSelect(opusId);
+                    //o_cart.toggleInCart(opusId);
+                } else {
+                    let fromOpusId = $(startElem).data("id");
+                    o_cart.toggleInCart(fromOpusId, opusId);
+                }
+            } else {
+                o_browse.showModal(opusId);
+            }
         });
 
         // thumbnail overlay tools
@@ -687,7 +708,8 @@ var o_browse = {
             if (!o_utils.areObjectsEqual(opus.prefs.cols, currentSelectedMetadata)) {
                 o_browse.resetData();
                 o_browse.initTable(opus.col_labels);
-                opus.prefs.page.gallery = 1;
+                opus.prefs.startobs = 1;
+                opus.prefs.cart_startobs = 1;
                 o_browse.loadData(1);
             } else {
                 // remove spinner if nothing is re-draw when we click save changes
@@ -906,6 +928,7 @@ var o_browse = {
                     galleryHtml += 'then click on the cart icon.  </p>';
                     galleryHtml += '</div>';
                 }
+                $(".gallery", namespace).html(galleryHtml);
             } else {
                 // we've hit the end of the infinite scroll.
                 $(".op-page-loading-status > .loader").hide();
@@ -936,7 +959,7 @@ var o_browse = {
                 galleryHtml +=     '<a href="#" data-icon="info" title="View observation detail"><i class="fas fa-info-circle fa-xs"></i></a>';
 
                 let buttonInfo = o_browse.cartButtonInfo((item.in_cart ? 'add' : 'remove'));
-                galleryHtml +=     `<a href="#" data-icon="cart" title="Add to cart"><i class="${buttonInfo.icon} fa-xs"></i></a>`;
+                galleryHtml +=     `<a href="#" data-icon="cart" title="${buttonInfo.title}"><i class="${buttonInfo.icon} fa-xs"></i></a>`;
                 galleryHtml +=     '<a href="#" data-icon="menu"><i class="fas fa-bars fa-xs"></i></a>';
                 galleryHtml += '</div>';
                 galleryHtml += '</div></div>';
@@ -946,7 +969,7 @@ var o_browse = {
                     let checked = item.in_cart ? " checked" : "";
                     let checkbox = `<input type="checkbox" name="${opusId}" value="${opusId}" class="multichoice"${checked}/>`;
                     let minimenu = `<a href="#" data-icon="menu"><i class="fas fa-bars fa-xs"></i></a>`;
-                    let row = `<td><div class="op-tools mx-0" data-id="${opusId}">${checkbox} ${minimenu}</div></td>`;
+                    let row = `<td><div class="op-tools mx-0" title="${item.obs_num}" data-id="${opusId}">${checkbox} ${minimenu}</div></td>`;
                     let tr = `<tr data-id="${opusId}" data-target="#galleryView" data-obs="${item.obs_num}">`;
                     $.each(item.metadata, function(index, cell) {
                         row += `<td>${cell}</td>`;
@@ -956,19 +979,18 @@ var o_browse = {
             });
 
             galleryHtml += "</div>";
-        }
-
-        // wondering if there should be more logic here to determine if the new block of observations
-        // is contiguous w/the existing block of observations, not just before/after...
-        if ($(`${namespace} .thumbnail-container`).first().data("obs") > data.start_obs) {
-            $(".gallery", namespace).prepend(galleryHtml);
-            if (namespace == "#browse") {   // not yet supported for cart
-                $(".dataTable tbody").prepend(tableHtml);
-            }
-        } else {
-            $(".gallery", namespace).append(galleryHtml);
-            if (namespace == "#browse") {   // not yet supported for cart
-                $(".dataTable tbody").append(tableHtml);
+            // wondering if there should be more logic here to determine if the new block of observations
+            // is contiguous w/the existing block of observations, not just before/after...
+            if ($(`${namespace} .thumbnail-container`).first().data("obs") > data.start_obs) {
+                $(".gallery", namespace).prepend(galleryHtml);
+                if (namespace == "#browse") {   // not yet supported for cart
+                    $(".dataTable tbody").prepend(tableHtml);
+                }
+            } else {
+                $(".gallery", namespace).append(galleryHtml);
+                if (namespace == "#browse") {   // not yet supported for cart
+                    $(".dataTable tbody").append(tableHtml);
+                }
             }
         }
 
@@ -979,8 +1001,8 @@ var o_browse = {
 
     initTable: function(columns) {
         // prepare table and headers...
-        $(".dataTable thead > tr > th").detach();
-        $(".dataTable tbody > tr").detach();
+        $(".dataTable thead > tr > th").remove();
+        $(".dataTable tbody > tr").remove();
 
         // NOTE:  At some point, ORDER needs to be identified in the table, as to which column we are ordering on
 
@@ -1090,8 +1112,8 @@ var o_browse = {
         let url = hashString + '&reqno=' + reqno + view.add_to_url;
         url = base_url + o_browse.updateStartobsInUrl(url, startObs);
 
-        // need to add limit
-        url += `&limit=${o_browse.getLimit()}`;
+        // need to add limit - getting twice as much so that the prefetch is done in one get instead of two.
+        url += `&limit=${o_browse.getLimit() * 2}`;
 
         return url;
     },
@@ -1102,24 +1124,26 @@ var o_browse = {
 
         startObs = (startObs === undefined ? opus.prefs[`${view.prefix}startobs`] : startObs);
 
-        // if the request is a block far away from current page cache, flush the cache and start over
-        let elem = $(`${view.namespace} [data-obs=${startObs}]`);
-        let lastObs = $(`${view.namespace} [data-obs]`).last().data("obs");
-        let firstObs = $(`${view.namespace} [data-obs]`).first().data("obs");
+        // TODO - need to resolve what reRenderData is vs. galleryBegun - and comment, etc...
+        if (!o_browse.reRenderData) {
+            // if the request is a block far away from current page cache, flush the cache and start over
+            let elem = $(`${view.namespace} [data-obs=${startObs}]`);
+            let lastObs = $(`${view.namespace} [data-obs]`).last().data("obs");
+            let firstObs = $(`${view.namespace} [data-obs]`).first().data("obs");
 
-        // if the startObs is not already rendered and is obviously not contiguous, clear the cache and start over
-        if (lastObs === undefined || firstObs === undefined || $(elem).length === 0 ||
-            (startObs > lastObs + 1) || (startObs < firstObs - 1)) {
-            o_browse.galleryBegun = false;
-        } else {
-                // TODO - couldn't resolve w/a reRender var so making a note... 
-            // wait! is this page already drawn?
-            // if startObs drawn, move the slider to that line, fetch if need be after
-            if (startObs >= firstObs && startObs <= lastObs) {
-                // may need to do a prefetch here...
-                o_browse.setScrollbarPosition(selector, startObs);
-                $(".op-page-loading-status > .loader").hide();
-                return;
+            // if the startObs is not already rendered and is obviously not contiguous, clear the cache and start over
+            if (lastObs === undefined || firstObs === undefined || $(elem).length === 0 ||
+                (startObs > lastObs + 1) || (startObs < firstObs - 1)) {
+                o_browse.galleryBegun = false;
+            } else {
+                // wait! is this page already drawn?
+                // if startObs drawn, move the slider to that line, fetch if need be after
+                if (startObs >= firstObs && startObs <= lastObs) {
+                    // may need to do a prefetch here...
+                    o_browse.setScrollbarPosition(selector, startObs);
+                    $(".op-page-loading-status > .loader").hide();
+                    return;
+                }
             }
         }
 
@@ -1137,14 +1161,20 @@ var o_browse = {
             if (!o_browse.galleryBegun) {
                 o_browse.initTable(data.columns);
 
+                $(`${selector}`).scrollTop(0);
+                $(`${selector} .dataTable`).scrollTop(0);
+
                 if (!$(selector).data("infiniteScroll")) {
                     $(selector).infiniteScroll({
                         path: function() {
                             let startObs = opus.prefs[`${view.prefix}startobs`];
-                            /// this may not work w/prev TODO
-                            let lastObs = $(`${view.namespace} .thumbnail-container`).last().data("obs");
-                            // start from the last observation drawn; if none yet drawn ...???
-                            startObs = (lastObs != undefined ? lastObs + 1 : startObs + o_browse.getLimit());
+                            if ($(selector).data("infiniteScroll") != undefined && $(selector).data("infiniteScroll").options.loadPrevPage === true) {
+                                $(selector).infiniteScroll({"loadPrevPage": true});
+                            } else {
+                                let lastObs = $(`${view.namespace} .thumbnail-container`).last().data("obs");
+                                // start from the last observation drawn; if none yet drawn ...???
+                                startObs = (lastObs != undefined ? lastObs + 1 : startObs + o_browse.getLimit());
+                            }
                             let path = o_browse.getDataURL(startObs);
                             return path;
                         },
@@ -1174,7 +1204,7 @@ var o_browse = {
             }
 
             // Because we redraw from the beginning or user inputted page, we need to remove previous drawn thumb-pages
-            $(`${view.namespace} .thumbnail-container`).detach();
+            $(`${view.namespace} .thumbnail-container`).remove();
             o_browse.renderGalleryAndTable(data, this.url);
             if (o_browse.currentOpusId != "") {
                 o_browse.metadataboxHtml(o_browse.currentOpusId);
@@ -1183,8 +1213,8 @@ var o_browse = {
 
             // prefill next page
             if (!o_browse.galleryBegun) {
-                $(selector).infiniteScroll('loadNextPage');
-                o_browse.updateSliderHandle();
+                //$(selector).infiniteScroll('loadNextPage');
+                //o_browse.updateSliderHandle();        -- i think this is causing grief
                 o_browse.galleryBegun = true;
             }
             o_browse.reRenderData = false;
@@ -1235,22 +1265,14 @@ var o_browse = {
     },
 
     countGalleryImages: function() {
-        let xDir = 0;
-        let xCount = 0;
         let tab = `#${opus.prefs.view}`;
+        let xCount = 0;
+        let yCount = 0;
 
-        // we need to know how many images fit across; we can approx the y dir differently
-        $(`${tab} .thumbnail-container`).each(function(index, thumb) {
-            let offset = $(thumb).offset();
-            if (offset.left >= xDir) {
-                xDir = offset.left;
-                ++xCount;
-            } else {
-                // done; no need to continue
-                return false;
-            }
-        });
-        let yCount = Math.round($(`${tab} .gallery-contents`).height()/100);   // images are 100px
+        if ($(`${tab} .gallery-contents`).length > 0) {
+            xCount = Math.round($(`${tab} .gallery-contents`).width()/o_browse.imageSize);   // images are 100px
+            yCount = Math.ceil($(`${tab} .gallery-contents`).height()/o_browse.imageSize);   // images are 100px
+        }
         return {"x": xCount, "y": yCount};
     },
 
@@ -1410,7 +1432,7 @@ var o_browse = {
     resetData: function() {
         $("#dataTable > tbody").empty();  // yes all namespaces
         $(".gallery").empty();
-        o_browse.galleryData = [];
+        o_browse.galleryData = {};
         o_cart.cartChange = true;  // forces redraw of cart tab
         o_browse.galleryBegun = false;
         o_hash.updateHash();

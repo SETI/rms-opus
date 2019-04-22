@@ -212,7 +212,6 @@ var o_cart = {
                         let lastObs = $(`${view.namespace} .thumbnail-container`).last().data("obs");
                         // start from the last observation drawn; if none yet drawn ...???
                         startObs = (lastObs != undefined ? lastObs + 1 : startObs + o_browse.getLimit());
-                        console.log(`after: ${startObs}`);
                         let path = o_browse.getDataURL(startObs);
                         return path;
                     },
@@ -247,10 +246,6 @@ var o_cart = {
             }
             o_browse.updateSortOrder(data);
 */
-            // prefill next page
-            if (!o_cart.cartChange) {
-                $(selector).infiniteScroll('loadNextPage');
-            }
         });
     },
 
@@ -363,10 +358,10 @@ var o_cart = {
             o_browse.undoRangeSelect(tab);
         } else {
             // note - doing it this way handles the obs on the browse tab at the same time
-            let action = (fromElem.hasClass("in") ? "add" : "remove");
+            let action = (fromElem.hasClass("in") ? "remove" : "add");
 
             $(`.thumbnail-container[data-id=${fromOpusId}]`).toggleClass("in");
-            $("input[name="+fromOpusId+"]").prop("checked", (action == "remove"));
+            $("input[name="+fromOpusId+"]").prop("checked", (action === "add"));
 
             o_browse.updateCartIcon(fromOpusId, action);
             o_cart.editCart(fromOpusId, action);
