@@ -363,7 +363,15 @@ var o_browse = {
                 // The clicked-on slug should always be in the order list; this is just a safety precaution
                 opus.prefs.order[slugIndex] = new_slug;
             }
-            o_browse.updateOrderIndicator(headerOrderIndicator, pillOrderIndicator, isDescending, targetSlug);
+
+            // When clicking on opusid sorting pill AND there is another sort order other an opusid, we don't update the table header arrows
+            // Only one arrow will displayed either up or down at a time, rest of arrows will be up + down in table header
+            if (targetSlug === "opusid" && opus.prefs.order.length > 1) {
+                o_browse.updateOrderIndicator(null, pillOrderIndicator, isDescending, targetSlug);
+            } else {
+                o_browse.updateOrderIndicator(headerOrderIndicator, pillOrderIndicator, isDescending, targetSlug);
+            }
+
             // order in the url will get updated right away
             o_hash.updateHash();
 
@@ -471,7 +479,9 @@ var o_browse = {
         let pillOrderTooltip = isDescending ? "Change to ascending sort" : "Change to descending sort";
         let pillOrderArrow = isDescending ? o_browse.pillSortUpArrow : o_browse.pillSortDownArrow;
 
-        if (headerOrderIndicator) {
+        // If header already exists, we update the header arrow, else we do nothing
+        if (headerOrderIndicator && headerOrderIndicator.length !== 0) {
+            console.log("header exists")
             headerOrderIndicator.data("sort", `${headerOrder}`);
             headerOrderIndicator.attr("class", `column_ordering ${headerOrderArrow}`);
 
@@ -482,7 +492,7 @@ var o_browse = {
             headers.attr("class", o_browse.defaultTableSortArrow);
         }
 
-        // If pill already exists, we update the pill else we re-render the pill
+        // If pill already exists, we update the pill, else we re-render the pill
         if (pillOrderIndicator.length !== 0 && slug !== "opusid") {
             console.log("pill exists")
             console.log(pillOrderIndicator)
@@ -491,8 +501,8 @@ var o_browse = {
             pillOrderIndicator.find("i").attr("class", `${pillOrderArrow}`);
         } else {
             // re-render each pill
-            console.log("re-render pill");
             let listHtml = "";
+            console.log("re-render pill");
             console.log("=== opus.prefs.order ===");
             console.log(opus.prefs.order);
             $.each(opus.prefs.order, function(index, orderEntry) {
@@ -500,7 +510,11 @@ var o_browse = {
                 pillOrderArrow = orderEntry[0] === "-" ? o_browse.pillSortUpArrow : o_browse.pillSortDownArrow;
                 orderEntry = orderEntry[0] === "-" ? orderEntry.slice(1) : orderEntry;
 
-                let label = $(`.dataTable th a[data-slug="${orderEntry}"]`).find("span:first").text();
+                let label = $(`#browse .dataTable th a[data-slug="${orderEntry}"]`).find("span:first").text() || $(`#browse .sort-contents span[data-slug="${orderEntry}"] .flip-sort`).text();
+                let indexOfUnit = label.indexOf("(")
+                // remove the unit from label
+                label = (indexOfUnit === -1) ? label : label.slice(0, indexOfUnit);
+
                 listHtml += "<li class='list-inline-item'>";
                 listHtml += `<span class='badge badge-pill badge-light' data-slug="${orderEntry}" data-descending="${isPillOrderDesc}">`;
                 if (orderEntry !== "opusid") {
