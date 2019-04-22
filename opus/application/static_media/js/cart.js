@@ -361,7 +361,7 @@ var o_cart = {
             let action = (fromElem.hasClass("in") ? "remove" : "add");
 
             $(`.thumbnail-container[data-id=${fromOpusId}]`).toggleClass("in");
-            $("input[name="+fromOpusId+"]").prop("checked", (action == "remove"));
+            $("input[name="+fromOpusId+"]").prop("checked", (action === "add"));
 
             o_browse.updateCartIcon(fromOpusId, action);
             o_cart.editCart(fromOpusId, action);
