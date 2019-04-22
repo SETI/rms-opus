@@ -1182,8 +1182,6 @@ var o_browse = {
         order.splice(1);
 
         opus.col_labels = columns;
-        console.log("=== col_labels ===");
-        console.log(opus.col_labels);
 
         // check all box
         //let checkbox = "<input type='checkbox' name='all' value='all' class='multichoice'>";
