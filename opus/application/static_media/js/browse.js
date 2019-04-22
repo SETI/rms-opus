@@ -7,7 +7,6 @@
 /* globals o_cart, o_hash, o_menu, o_utils, opus */
 /* globals default_pages, default_columns */
 
-/* jshint varstmt: false */
 // font awesome icon class
 const pillSortUpArrow = "fas fa-arrow-circle-up";
 const pillSortDownArrow = "fas fa-arrow-circle-down";
@@ -15,6 +14,7 @@ const tableSortUpArrow = "fas fa-sort-up";
 const tableSortDownArrow = "fas fa-sort-down";
 const defaultTableSortArrow = "fas fa-sort";
 
+/* jshint varstmt: false */
 var o_browse = {
 /* jshint varstmt: true */
     selectedImageID: "",
@@ -281,7 +281,7 @@ var o_browse = {
 
             // get order of opusid when table header is clicked
             let hash = o_hash.getHashArray();
-            let opusidOrder = (hash.order || hash.order.match(/(-?opusid)/)) ? hash.order.match(/(-?opusid)/)[0] : "opusid";
+            let opusidOrder = (hash.order && hash.order.match(/(-?opusid)/)) ? hash.order.match(/(-?opusid)/)[0] : "opusid";
             let isDescending = true;
             let orderIndicator = $(this).find("span:last");
             let pillOrderIndicator = $(`.sort-contents span[data-slug="${orderBy}"] .flip-sort`)
@@ -320,8 +320,8 @@ var o_browse = {
                 slug = "-"+slug;
             }
             let slugIndex = $.inArray(slug, opus.prefs.order);
+            // The clicked-on slug should always be in the order list; this is just a safety precaution
             if (slugIndex >= 0) {
-                // The clicked-on slug should always be in the order list; this is just a safety precaution
                 opus.prefs.order.splice(slugIndex, 1);
             }
 
@@ -353,8 +353,8 @@ var o_browse = {
                 isDescending = true;
             }
             let slugIndex = $.inArray(slug, opus.prefs.order);
+            // The clicked-on slug should always be in the order list; this is just a safety precaution
             if (slugIndex >= 0) {
-                // The clicked-on slug should always be in the order list; this is just a safety precaution
                 opus.prefs.order[slugIndex] = new_slug;
             }
 
@@ -484,6 +484,7 @@ var o_browse = {
         }
 
         // If pill already exists, we update the pill, else we re-render the pill
+        // Note: we have to re-render the pill if user clicks on opus id table header, because in this case, we only want one pill (opus id) displayed.
         if (pillOrderIndicator.length !== 0 && slug !== "opusid") {
             pillOrderIndicator.parent().attr("data-descending", `${isPillOrderDesc}`);
             pillOrderIndicator.attr("title", `${pillOrderTooltip}`);
@@ -496,10 +497,8 @@ var o_browse = {
                 pillOrderArrow = orderEntry[0] === "-" ? pillSortUpArrow : pillSortDownArrow;
                 orderEntry = orderEntry[0] === "-" ? orderEntry.slice(1) : orderEntry;
 
-                let label = $(`#browse .dataTable th a[data-slug="${orderEntry}"]`).find("span:first").text() || $(`#browse .sort-contents span[data-slug="${orderEntry}"] .flip-sort`).text();
-                let indexOfUnit = label.indexOf("(")
-                // remove the unit from label
-                label = (indexOfUnit === -1) ? label : label.slice(0, indexOfUnit);
+                // retrieve label from either displayed header's data-label attribute or displayed pill's text
+                let label = $(`#browse .dataTable th a[data-slug="${orderEntry}"]`).data("label") || $(`#browse .sort-contents span[data-slug="${orderEntry}"] .flip-sort`).text();
 
                 listHtml += "<li class='list-inline-item'>";
                 listHtml += `<span class='badge badge-pill badge-light' data-slug="${orderEntry}" data-descending="${isPillOrderDesc}">`;
@@ -1183,16 +1182,25 @@ var o_browse = {
         order.splice(1);
 
         opus.col_labels = columns;
+        console.log("=== col_labels ===");
+        console.log(opus.col_labels);
 
         // check all box
         //let checkbox = "<input type='checkbox' name='all' value='all' class='multichoice'>";
         $(".dataTable thead tr").append("<th scope='col' class='sticky-header'></th>");
         $.each(columns, function(index, header) {
             let slug = slugs[index];
+
+            // Store labels of each header in data-label attributes
+            let count = (header.match(/\(Max\)|\(Min\)/) || []).length;
+            let indexOfUnit = header.indexOf("(");
+            indexOfUnit = count ? header.indexOf("(", indexOfUnit + 1) : indexOfUnit;
+            let label = (indexOfUnit === -1) ? header : header.slice(0, indexOfUnit);
+
             // Assigning data attribute for table column sorting
             let icon = ($.inArray(slug, order) >= 0 ? "-down" : ($.inArray("-"+slug, order) >= 0 ? "-up" : ""));
             let columnSorting = icon === "-down" ? "sort-asc" : icon === "-up" ? "sort-desc" : "none";
-            let columnOrdering = `<a href='' data-slug='${slug}'><span>${header}</span><span data-sort='${columnSorting}' class='column_ordering fas fa-sort${icon}'></span></a>`;
+            let columnOrdering = `<a href='' data-slug='${slug}' data-label='${label}'><span>${header}</span><span data-sort='${columnSorting}' class='column_ordering fas fa-sort${icon}'></span></a>`;
 
             $(".dataTable thead tr").append(`<th id='${slug} 'scope='col' class='sticky-header'><div>${columnOrdering}</div></th>`);
         });
