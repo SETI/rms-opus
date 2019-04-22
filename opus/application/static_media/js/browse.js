@@ -8,6 +8,13 @@
 /* globals default_pages, default_columns */
 
 /* jshint varstmt: false */
+// font awesome icon class
+const pillSortUpArrow = "fas fa-arrow-circle-up";
+const pillSortDownArrow = "fas fa-arrow-circle-down";
+const tableSortUpArrow = "fas fa-sort-up";
+const tableSortDownArrow = "fas fa-sort-down";
+const defaultTableSortArrow = "fas fa-sort";
+
 var o_browse = {
 /* jshint varstmt: true */
     selectedImageID: "",
@@ -46,12 +53,6 @@ var o_browse = {
     dataNotAvailable: false,
     onRenderData: false,
 
-    // font awesome icon class
-    pillSortUpArrow: "fas fa-arrow-circle-up",
-    pillSortDownArrow: "fas fa-arrow-circle-down",
-    tableSortUpArrow: "fas fa-sort-up",
-    tableSortDownArrow: "fas fa-sort-down",
-    defaultTableSortArrow: "fas fa-sort",
     /**
     *
     *  all the things that happen on the browse tab
@@ -301,7 +302,7 @@ var o_browse = {
             // make sure opusid is always in order slug values
             opus.prefs.order = orderBy.match(/opusid/) ? [orderBy] : [orderBy, opusidOrder];
             o_browse.updateOrderIndicator(orderIndicator, pillOrderIndicator, isDescending, targetSlug);
-            
+
             o_hash.updateHash();
             o_browse.renderSortedDataFromBeginning();
 
@@ -465,10 +466,10 @@ var o_browse = {
     // sync up arrows in both sorting pill and table header
     updateOrderIndicator: function(headerOrderIndicator, pillOrderIndicator, isDescending, slug) {
         let headerOrder = isDescending ? "sort-desc" : "sort-asc";
-        let headerOrderArrow = isDescending ? o_browse.tableSortUpArrow : o_browse.tableSortDownArrow;
+        let headerOrderArrow = isDescending ? tableSortUpArrow : tableSortDownArrow;
         let isPillOrderDesc = isDescending ? "true" : "false";
         let pillOrderTooltip = isDescending ? "Change to ascending sort" : "Change to descending sort";
-        let pillOrderArrow = isDescending ? o_browse.pillSortUpArrow : o_browse.pillSortDownArrow;
+        let pillOrderArrow = isDescending ? pillSortUpArrow : pillSortDownArrow;
 
         // If header already exists, we update the header arrow, else we do nothing
         if (headerOrderIndicator && headerOrderIndicator.length !== 0) {
@@ -479,7 +480,7 @@ var o_browse = {
             // let headers = $(`.dataTable th a:not([data-slug="opusid"], [data-slug=${slug}])`).find("span:last");
             let headers = $(`.dataTable th a:not([data-slug=${slug}])`).find("span:last");
             headers.data("sort", "none");
-            headers.attr("class", o_browse.defaultTableSortArrow);
+            headers.attr("class", defaultTableSortArrow);
         }
 
         // If pill already exists, we update the pill, else we re-render the pill
@@ -492,7 +493,7 @@ var o_browse = {
             let listHtml = "";
             $.each(opus.prefs.order, function(index, orderEntry) {
                 isPillOrderDesc = orderEntry[0] === "-" ? "true" : "false";
-                pillOrderArrow = orderEntry[0] === "-" ? o_browse.pillSortUpArrow : o_browse.pillSortDownArrow;
+                pillOrderArrow = orderEntry[0] === "-" ? pillSortUpArrow : pillSortDownArrow;
                 orderEntry = orderEntry[0] === "-" ? orderEntry.slice(1) : orderEntry;
 
                 let label = $(`#browse .dataTable th a[data-slug="${orderEntry}"]`).find("span:first").text() || $(`#browse .sort-contents span[data-slug="${orderEntry}"] .flip-sort`).text();
@@ -1245,12 +1246,12 @@ var o_browse = {
                 listHtml += "<span class='flip-sort' title='Change to ascending sort'>";
                 listHtml += label;
                 // listHtml += " <i class='fas fa-arrow-circle-up'></i>";
-                listHtml += ` <i class="${o_browse.pillSortUpArrow}"></i>`;
+                listHtml += ` <i class="${pillSortUpArrow}"></i>`;
             } else {
                 listHtml += "<span class='flip-sort' title='Change to descending sort'>";
                 listHtml += label;
                 // listHtml += " <i class='fas fa-arrow-circle-down'></i>";
-                listHtml += ` <i class="${o_browse.pillSortDownArrow}"></i>`;
+                listHtml += ` <i class="${pillSortDownArrow}"></i>`;
             }
             listHtml += "</span></span></li>";
             let fullSlug = slug;
