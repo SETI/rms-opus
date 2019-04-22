@@ -281,32 +281,27 @@ var o_browse = {
             // get order of opusid when table header is clicked
             let hash = o_hash.getHashArray();
             let opusidOrder = (hash.order || hash.order.match(/(-?opusid)/)) ? hash.order.match(/(-?opusid)/)[0] : "opusid";
-            // console.log(opusidOrder);
             let isDescending = true;
-
             let orderIndicator = $(this).find("span:last");
             let pillOrderIndicator = $(`.sort-contents span[data-slug="${orderBy}"] .flip-sort`)
             o_browse.reRenderData = true;
 
             if (orderIndicator.data("sort") === "sort-asc") {
                 // currently ascending, change to descending order
-                // o_browse.updateOrderIndicator(orderIndicator, pillOrderIndicator, true);
                 orderBy = '-' + orderBy;
             } else if (orderIndicator.data("sort") === "sort-desc") {
                 // currently descending, change to ascending order
-                // o_browse.updateOrderIndicator(orderIndicator, pillOrderIndicator, false);
                 isDescending = false;
                 orderBy = orderBy;
             } else {
                 // not currently ordered, change to ascending
-                // o_browse.updateOrderIndicator(orderIndicator, pillOrderIndicator, false);
                 isDescending = false;
             }
 
             // make sure opusid is always in order slug values
             opus.prefs.order = orderBy.match(/opusid/) ? [orderBy] : [orderBy, opusidOrder];
-            console.log(opus.prefs.order)
             o_browse.updateOrderIndicator(orderIndicator, pillOrderIndicator, isDescending, targetSlug);
+            
             o_hash.updateHash();
             o_browse.renderSortedDataFromBeginning();
 
@@ -351,11 +346,9 @@ var o_browse = {
             let new_slug = slug;
             if (descending == "true") {
                 slug = "-"+slug; // Old descending, new ascending
-                // o_browse.updateOrderIndicator(headerOrderIndicator, pillOrderIndicator, false, targetSlug);
                 isDescending = false;
             } else {
                 new_slug = "-"+slug; // Old ascending, new descending
-                // o_browse.updateOrderIndicator(headerOrderIndicator, pillOrderIndicator, true, targetSlug);
                 isDescending = true;
             }
             let slugIndex = $.inArray(slug, opus.prefs.order);
@@ -471,8 +464,6 @@ var o_browse = {
     // update order arrows right away when user clicks on sorting arrows in pill or table header
     // sync up arrows in both sorting pill and table header
     updateOrderIndicator: function(headerOrderIndicator, pillOrderIndicator, isDescending, slug) {
-        console.log("=== current target slug ===");
-        console.log(slug);
         let headerOrder = isDescending ? "sort-desc" : "sort-asc";
         let headerOrderArrow = isDescending ? o_browse.tableSortUpArrow : o_browse.tableSortDownArrow;
         let isPillOrderDesc = isDescending ? "true" : "false";
@@ -481,7 +472,6 @@ var o_browse = {
 
         // If header already exists, we update the header arrow, else we do nothing
         if (headerOrderIndicator && headerOrderIndicator.length !== 0) {
-            console.log("header exists")
             headerOrderIndicator.data("sort", `${headerOrder}`);
             headerOrderIndicator.attr("class", `column_ordering ${headerOrderArrow}`);
 
@@ -494,17 +484,12 @@ var o_browse = {
 
         // If pill already exists, we update the pill, else we re-render the pill
         if (pillOrderIndicator.length !== 0 && slug !== "opusid") {
-            console.log("pill exists")
-            console.log(pillOrderIndicator)
             pillOrderIndicator.parent().attr("data-descending", `${isPillOrderDesc}`);
             pillOrderIndicator.attr("title", `${pillOrderTooltip}`);
             pillOrderIndicator.find("i").attr("class", `${pillOrderArrow}`);
         } else {
             // re-render each pill
             let listHtml = "";
-            console.log("re-render pill");
-            console.log("=== opus.prefs.order ===");
-            console.log(opus.prefs.order);
             $.each(opus.prefs.order, function(index, orderEntry) {
                 isPillOrderDesc = orderEntry[0] === "-" ? "true" : "false";
                 pillOrderArrow = orderEntry[0] === "-" ? o_browse.pillSortUpArrow : o_browse.pillSortDownArrow;
