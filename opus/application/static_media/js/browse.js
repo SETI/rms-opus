@@ -907,6 +907,7 @@ var o_browse = {
                     galleryHtml += 'then click on the cart icon.  </p>';
                     galleryHtml += '</div>';
                 }
+                $(".gallery", namespace).html(galleryHtml);
             } else {
                 // we've hit the end of the infinite scroll.
                 $(".op-page-loading-status > .loader").hide();
@@ -957,19 +958,18 @@ var o_browse = {
             });
 
             galleryHtml += "</div>";
-        }
-
-        // wondering if there should be more logic here to determine if the new block of observations
-        // is contiguous w/the existing block of observations, not just before/after...
-        if ($(`${namespace} .thumbnail-container`).first().data("obs") > data.start_obs) {
-            $(".gallery", namespace).prepend(galleryHtml);
-            if (namespace == "#browse") {   // not yet supported for cart
-                $(".dataTable tbody").prepend(tableHtml);
-            }
-        } else {
-            $(".gallery", namespace).append(galleryHtml);
-            if (namespace == "#browse") {   // not yet supported for cart
-                $(".dataTable tbody").append(tableHtml);
+            // wondering if there should be more logic here to determine if the new block of observations
+            // is contiguous w/the existing block of observations, not just before/after...
+            if ($(`${namespace} .thumbnail-container`).first().data("obs") > data.start_obs) {
+                $(".gallery", namespace).prepend(galleryHtml);
+                if (namespace == "#browse") {   // not yet supported for cart
+                    $(".dataTable tbody").prepend(tableHtml);
+                }
+            } else {
+                $(".gallery", namespace).append(galleryHtml);
+                if (namespace == "#browse") {   // not yet supported for cart
+                    $(".dataTable tbody").append(tableHtml);
+                }
             }
         }
 
