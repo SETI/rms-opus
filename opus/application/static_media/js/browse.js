@@ -304,7 +304,7 @@ var o_browse = {
             }
 
             // make sure opusid is always in order slug values
-            opus.prefs.order = orderBy.match(/opusid/) ? orderBy : [orderBy, opusidOrder];
+            opus.prefs.order = orderBy.match(/opusid/) ? [orderBy] : [orderBy, opusidOrder];
             console.log(opus.prefs.order)
             o_browse.updateOrderIndicator(orderIndicator, pillOrderIndicator, isDescending, targetSlug);
             o_hash.updateHash();
@@ -481,12 +481,37 @@ var o_browse = {
             headers.data("sort", "none");
             headers.attr("class", o_browse.defaultTableSortArrow);
         }
-        if (pillOrderIndicator) {
+
+        // If pill already exists, we update the pill else we re-render the pill
+        if (pillOrderIndicator.length !== 0 && slug !== "opusid") {
+            console.log("pill exists")
+            console.log(pillOrderIndicator)
             pillOrderIndicator.parent().attr("data-descending", `${isPillOrderDesc}`);
             pillOrderIndicator.attr("title", `${pillOrderTooltip}`);
             pillOrderIndicator.find("i").attr("class", `${pillOrderArrow}`);
         } else {
+            // re-render each pill
+            console.log("re-render pill");
+            let listHtml = "";
+            console.log("=== opus.prefs.order ===");
+            console.log(opus.prefs.order);
+            $.each(opus.prefs.order, function(index, orderEntry) {
+                isPillOrderDesc = orderEntry[0] === "-" ? "true" : "false";
+                pillOrderArrow = orderEntry[0] === "-" ? o_browse.pillSortUpArrow : o_browse.pillSortDownArrow;
+                orderEntry = orderEntry[0] === "-" ? orderEntry.slice(1) : orderEntry;
 
+                let label = $(`.dataTable th a[data-slug="${orderEntry}"]`).find("span:first").text();
+                listHtml += "<li class='list-inline-item'>";
+                listHtml += `<span class='badge badge-pill badge-light' data-slug="${orderEntry}" data-descending="${isPillOrderDesc}">`;
+                if (orderEntry !== "opusid") {
+                    listHtml += "<span class='remove-sort' title='Remove metadata field from sort'><i class='fas fa-times-circle'></i></span> ";
+                }
+                listHtml += `<span class='flip-sort' title="${pillOrderTooltip}">`;
+                listHtml += label;
+                listHtml += ` <i class="${pillOrderArrow}"></i>`;
+                listHtml += "</span></span></li>";
+            });
+            $(".sort-contents").html(listHtml);
         }
     },
 
