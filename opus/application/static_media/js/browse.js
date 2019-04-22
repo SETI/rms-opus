@@ -947,7 +947,7 @@ var o_browse = {
                     let checked = item.in_cart ? " checked" : "";
                     let checkbox = `<input type="checkbox" name="${opusId}" value="${opusId}" class="multichoice"${checked}/>`;
                     let minimenu = `<a href="#" data-icon="menu"><i class="fas fa-bars fa-xs"></i></a>`;
-                    let row = `<td><div class="op-tools mx-0" data-id="${opusId}">${checkbox} ${minimenu}</div></td>`;
+                    let row = `<td><div class="op-tools mx-0" title="${item.obs_num}" data-id="${opusId}">${checkbox} ${minimenu}</div></td>`;
                     let tr = `<tr data-id="${opusId}" data-target="#galleryView" data-obs="${item.obs_num}">`;
                     $.each(item.metadata, function(index, cell) {
                         row += `<td>${cell}</td>`;
@@ -980,8 +980,8 @@ var o_browse = {
 
     initTable: function(columns) {
         // prepare table and headers...
-        $(".dataTable thead > tr > th").detach();
-        $(".dataTable tbody > tr").detach();
+        $(".dataTable thead > tr > th").remove();
+        $(".dataTable tbody > tr").remove();
 
         // NOTE:  At some point, ORDER needs to be identified in the table, as to which column we are ordering on
 
@@ -1103,24 +1103,26 @@ var o_browse = {
 
         startObs = (startObs === undefined ? opus.prefs[`${view.prefix}startobs`] : startObs);
 
-        // if the request is a block far away from current page cache, flush the cache and start over
-        let elem = $(`${view.namespace} [data-obs=${startObs}]`);
-        let lastObs = $(`${view.namespace} [data-obs]`).last().data("obs");
-        let firstObs = $(`${view.namespace} [data-obs]`).first().data("obs");
+        // TODO - need to resolve what reRenderData is vs. galleryBegun - and comment, etc...
+        if (!o_browse.reRenderData) {
+            // if the request is a block far away from current page cache, flush the cache and start over
+            let elem = $(`${view.namespace} [data-obs=${startObs}]`);
+            let lastObs = $(`${view.namespace} [data-obs]`).last().data("obs");
+            let firstObs = $(`${view.namespace} [data-obs]`).first().data("obs");
 
-        // if the startObs is not already rendered and is obviously not contiguous, clear the cache and start over
-        if (lastObs === undefined || firstObs === undefined || $(elem).length === 0 ||
-            (startObs > lastObs + 1) || (startObs < firstObs - 1)) {
-            o_browse.galleryBegun = false;
-        } else {
-            // TODO - couldn't resolve w/a reRender var so making a note...
-            // wait! is this page already drawn?
-            // if startObs drawn, move the slider to that line, fetch if need be after
-            if (startObs >= firstObs && startObs <= lastObs) {
-                // may need to do a prefetch here...
-                o_browse.setScrollbarPosition(selector, startObs);
-                $(".op-page-loading-status > .loader").hide();
-                return;
+            // if the startObs is not already rendered and is obviously not contiguous, clear the cache and start over
+            if (lastObs === undefined || firstObs === undefined || $(elem).length === 0 ||
+                (startObs > lastObs + 1) || (startObs < firstObs - 1)) {
+                o_browse.galleryBegun = false;
+            } else {
+                // wait! is this page already drawn?
+                // if startObs drawn, move the slider to that line, fetch if need be after
+                if (startObs >= firstObs && startObs <= lastObs) {
+                    // may need to do a prefetch here...
+                    o_browse.setScrollbarPosition(selector, startObs);
+                    $(".op-page-loading-status > .loader").hide();
+                    return;
+                }
             }
         }
 
@@ -1178,7 +1180,7 @@ var o_browse = {
             }
 
             // Because we redraw from the beginning or user inputted page, we need to remove previous drawn thumb-pages
-            $(`${view.namespace} .thumbnail-container`).detach();
+            $(`${view.namespace} .thumbnail-container`).remove();
             o_browse.renderGalleryAndTable(data, this.url);
             if (o_browse.currentOpusId != "") {
                 o_browse.metadataboxHtml(o_browse.currentOpusId);
@@ -1406,7 +1408,7 @@ var o_browse = {
     resetData: function() {
         $("#dataTable > tbody").empty();  // yes all namespaces
         $(".gallery").empty();
-        o_browse.galleryData = [];
+        o_browse.galleryData = {};
         o_cart.cartChange = true;  // forces redraw of cart tab
         o_browse.galleryBegun = false;
         o_hash.updateHash();
