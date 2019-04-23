@@ -6,7 +6,7 @@
 # lists of images or files):
 #
 #    Format: __api/dataimages.json
-#    Format: [__]api/data.(json|zip|html|csv)
+#    Format: [__]api/data.(json|html|csv)
 #    Format: [__]api/data/(?P<opus_id>[-\w]+).csv
 #    Format: [__]api/metadata/(?P<opus_id>[-\w]+).(?P<fmt>json|html)
 #    Format: [__]api/metadata_v2/(?P<opus_id>[-\w]+).(?P<fmt>json|html)
@@ -673,7 +673,7 @@ def api_get_images_by_size(request, size, fmt):
         data['start_obs'] = start_obs
 
     ret = response_formats(data, fmt,
-                          template='results/gallery.html', order=order)
+                          template='results/image_list.html', order=order)
     exit_api_call(api_code, ret)
     return ret
 
@@ -742,7 +742,7 @@ def api_get_images(request, fmt):
     if start_obs is not None:
         data['start_obs'] = start_obs
     ret = response_formats(data, fmt,
-                          template='results/gallery.html', order=order)
+                          template='results/image_list.html', order=order)
     exit_api_call(api_code, ret)
     return ret
 

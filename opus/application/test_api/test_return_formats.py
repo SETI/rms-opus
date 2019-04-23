@@ -5,113 +5,141 @@ import requests
 import sys
 from unittest import TestCase
 
-from rest_framework.test import APIClient, CoreAPIClient, RequestsClient
+from django.core.cache import cache
+from rest_framework.test import RequestsClient
+
+from api_test_helper import ApiTestHelper
 
 import settings
 
-##################
-### Test cases ###
-##################
-class ApiReturnFormatTests(TestCase):
+class ApiReturnFormatTests(TestCase, ApiTestHelper):
 
     def setUp(self):
         self.maxDiff = None
         settings.CACHE_KEY_PREFIX = 'opustest:' + settings.DB_SCHEMA_NAME
-        logging.disable(logging.ERROR)
+        # logging.disable(logging.ERROR)
         if settings.TEST_GO_LIVE: # pragma: no cover
             self.client = requests.Session()
         else:
             self.client = RequestsClient()
+        cache.clear()
 
     def tearDown(self):
         logging.disable(logging.NOTSET)
 
-    # FOR DEBUGGING PURPOSE: just run one single api call
-    # def test_api_call_without_runserver(self):
-    #     # client = APIClient()
-    #     # response = client.get('/opus/__api/metadata/co-iss-n1867600335.json', {"cats": "PDS Constraints"})
-    #     client = RequestsClient()
-    #     response = client.get('https://tools.pds-rings.seti.org/opus/__api/metadata/vg-iss-2-s-c4362550.html', params={"cats": "PDS Constraints"})
-    # #     # client = CoreAPIClient()
-    # #     # schema = client.get('https://tools.pds-rings.seti.org/opus/api/metadata/vg-iss-2-s-c4362550.html')
-    # #     # response = client.action(schema, params = {"cats": "PDS Constraints"})
-    # #
-    #     try:
-    #         self.assertEqual(response.status_code, 200)
-    #         # print(response.json())
-    #         print(response.client)
-    #     except Exception as e:
-    #         raise
-
-    ###############################
-    ### API return format tests ###
-    ###############################
-    def test_all_api_calls(self):
-        """[test_return_formats.py] API Calls: check different formats to see if response is 200
-           Raise error when any response status code is NOT 200
-        """
-        api_public = ApiFormats(target=settings.TEST_GO_LIVE)
-        api_internal = ApiFormats(target=settings.TEST_GO_LIVE or "internal")
-        test_dict =  {**api_internal.api_dict, **api_public.api_dict}
-
-        target_dict = test_dict
-        error_flag = None
-
-        for api_url in target_dict:
-            flag = 0
-            for target_format in target_dict[api_url]["support_format"]:
-            # for target_format in ApiFormats.formats:
-
-                try:
-                    self._one_api_call(api_url, target_dict, target_format)
-
-                except Exception as e: # pragma: no cover
-                    error_flag = 1
-                    if not flag:
-                        flag = 1
-                        print("---------------------------------------------------")
-                        print(f"Testing API: {target_dict[api_url]['api']}")
-                    print(f"{target_format}: return format error, status code: {e.args[0]}")
-        if error_flag: # pragma: no cover
-            raise Exception("API return formats test failed")
-
-    ########################
-    ### Helper functions ###
-    ########################
-    def _one_api_call(self, api_url_base, api_dict, format):
-        """Check single api call to see if response is 200.
-           api_url_base: a string of api url
-           api_dict: a dictionary containing the payload
-           format: a return format string that concatenates with api_url_base
-        """
-        if settings.TEST_GO_LIVE: # pragma: no cover
-            client = requests.Session()
-        else:
-            client = RequestsClient()
-
-        api_url = api_url_base + format
-        payload = api_dict[api_url_base]["payload"]
-        print("Testing URL", api_url, "Payload", payload)
-        response = client.get(api_url, params=payload)
-        # response = client.get("https://tools.pds-rings.seti.org/opus/api/meta/mults/planet.json", params={'target': 'Jupiter'})
-
-        try:
-            self.assertEqual(response.status_code, 200)
-            # print(response.url)
-        except Exception as e: # pragma: no cover
-            # print(response.url)
-            raise
+    def _test_return_formats(self, url, good_formats):
+        formats = ('csv', 'json', 'html', 'zip')
+        ret_status_list = []
+        expected_status_list = []
+        for format in formats:
+            actual_url = url.replace('[fmt]', format)
+            print(actual_url)
+            response = self._get_response(actual_url)
+            ret_status_list.append(response.status_code)
+            if format in good_formats:
+                expected_status_list.append(200)
+            else:
+                expected_status_list.append(404)
+        print('Formats:', formats)
+        print('Got:', ret_status_list)
+        print('Expected:', expected_status_list)
+        self.assertEqual(ret_status_list, expected_status_list)
 
 
-########################################
-### Api url and payload for the test ###
-########################################
+            ###########################################
+            ######### API Return Format Tests #########
+            ###########################################
+
+    # metadata/urls.py
+
+    def test__api_retfmt_result_count(self):
+        "[test_return_formats.py] return formats /api/meta/result_count.[fmt]"
+        self._test_return_formats('/api/meta/result_count.[fmt]?planet=Saturn&target=Pan', ('json', 'html', 'csv'))
+
+    def test__api_retfmt_result_count_pvt(self):
+        "[test_return_formats.py] return formats /__api/meta/result_count.[fmt]"
+        self._test_return_formats('/__api/meta/result_count.[fmt]?planet=Saturn&target=Pan&reqno=1', ('json'))
+
+    def test__api_retfmt_mults(self):
+        "[test_return_formats.py] return formats /api/meta/mults/slug.[fmt]"
+        self._test_return_formats('/api/meta/mults/planet.[fmt]?target=Jupiter', ('json', 'html', 'csv'))
+
+    def test__api_retfmt_mults_pvt(self):
+        "[test_return_formats.py] return formats /__api/meta/mults/slug.[fmt]"
+        self._test_return_formats('/__api/meta/mults/planet.[fmt]?target=Jupiter&reqno=1', ('json'))
+
+    def test__api_retfmt_endpoints(self):
+        "[test_return_formats.py] return formats /api/meta/range/endpoints/slug.[fmt]"
+        self._test_return_formats('/api/meta/range/endpoints/wavelength1.[fmt]?planet=Jupiter&target=Callisto', ('json', 'html', 'csv'))
+
+    def test__api_retfmt_endpoints_pvt(self):
+        "[test_return_formats.py] return formats /__api/meta/range/endpoints/slug.[fmt]"
+        self._test_return_formats('/__api/meta/range/endpoints/wavelength1.[fmt]?planet=Jupiter&target=Callisto&reqno=1', ('json'))
+
+    def test__api_retfmt_fields_slug(self):
+        "[test_return_formats.py] return formats /api/fields/slug.[fmt]"
+        self._test_return_formats('/api/fields/mission.[fmt]', ('json', 'csv'))
+
+    def test__api_retfmt_fields(self):
+        "[test_return_formats.py] return formats /api/fields.[fmt]"
+        self._test_return_formats('/api/fields/mission.[fmt]', ('json', 'csv'))
+
+    # results/urls.py
+
+    def test__api_retfmt_dataimages_pvt(self):
+        "[test_return_formats.py] return formats /__api/dataimages.[fmt]"
+        self._test_return_formats('/__api/dataimages.[fmt]?target=Jupiter&limit=2&reqno=1', ('json',))
+
+    def test__api_retfmt_data(self):
+        "[test_return_formats.py] return formats /api/data.[fmt]"
+        self._test_return_formats('/api/data.[fmt]', ('json', 'html', 'csv'))
+
+    def test__api_retfmt_data_pvt(self):
+        "[test_return_formats.py] return formats /__api/data.[fmt]"
+        self._test_return_formats('/__api/data.[fmt]', ('csv',))
+
+    def test__api_retfmt_metadata(self):
+        "[test_return_formats.py] return formats /api/metadata/opusid.[fmt]"
+        self._test_return_formats('/api/metadata/vg-iss-2-s-c4362550.[fmt]', ('csv', 'json', 'html'))
+
+    def test__api_retfmt_metadata_v2(self):
+        "[test_return_formats.py] return formats /api/metadata_v2/opusid.[fmt]"
+        self._test_return_formats('/api/metadata_v2/vg-iss-2-s-c4362550.[fmt]', ('csv', 'json', 'html'))
+
+    def test__api_retfmt_metadata_v2_pvt(self):
+        "[test_return_formats.py] return formats /__api/metadata_v2/opusid.[fmt]"
+        self._test_return_formats('/__api/metadata_v2/vg-iss-2-s-c4362550.[fmt]', ('csv', 'json', 'html'))
+
+    def test__api_retfmt_images(self):
+        "[test_return_formats.py] return formats /api/images.[fmt]"
+        self._test_return_formats('/api/images.[fmt]?target=Jupiter&limit=2', ('csv', 'json', 'html', 'zip'))
+
+    def test__api_retfmt_image(self):
+        "[test_return_formats.py] return formats /api/image/small/opusid.[fmt]"
+        self._test_return_formats('/api/image/small/vg-iss-2-s-c4362550.[fmt]', ('csv', 'json', 'html', 'zip'))
+
+    def test__api_retfmt_files_opusid(self):
+        "[test_return_formats.py] return formats /api/files/opusid.[fmt]"
+        self._test_return_formats('/api/files/vg-iss-2-s-c4362550.[fmt]', ('json',))
+
+    def test__api_retfmt_files(self):
+        "[test_return_formats.py] return formats /api/files.[fmt]"
+        self._test_return_formats('/api/files.[fmt]?target=Jupiter&limit=2', ('json',))
+
+    def test__api_retfmt_categories_opusid(self):
+        "[test_return_formats.py] return formats /api/categories/opusid.[fmt]"
+        self._test_return_formats('/api/categories/vg-iss-2-s-c4362550.[fmt]', ('json',))
+
+    def test__api_retfmt_categories_opusid_pvt(self):
+        "[test_return_formats.py] return formats /__api/categories/opusid.[fmt]"
+        self._test_return_formats('/__api/categories/vg-iss-2-s-c4362550.[fmt]', ('json',))
+
+    def test__api_retfmt_categories(self):
+        "[test_return_formats.py] return formats /api/categories.[fmt]"
+        self._test_return_formats('/api/categories.[fmt]?target=Jupiter', ('json',))
+
 class ApiFormats:
-    formats = ["json", "html", "csv", "zip"]
     # slugs for testing
-    payload_for_result_count = {"planet": "Saturn", "target": "Pan", "limit": 2}
-    payload_for_mults = {"planet": "Jupiter", "target": "Jupiter", "limit": 2}
-    payload_for_endpoints = {"planet": "Jupiter", "target": "Callisto", "limit": 2}
     payload_for_all_categories = {"planet": "Jupiter", "target": "Callisto", "mission": "Galileo", "limit": 2}
     payload_for_data = {"planet": "Saturn", "target": "Pan", "instrument": "Cassini ISS", "limit": 2}
     payload_for_metadata = {"cats": "PDS Constraints"}
@@ -125,9 +153,6 @@ class ApiFormats:
         self.api_images_size_base = self.build_api_images_size_base()
         self.api_images_base = self.build_api_images_base()
         self.api_all_files_base = self.build_api_all_files_base()
-        self.api_result_count_base = self.build_api_result_count_base()
-        self.api_mults_base = self.build_api_mults_base()
-        self.api_endpoints_base = self.build_api_endpoints_base()
         self.api_all_categories_base = self.build_api_all_categories_base()
         self.api_fields_base = self.build_api_fields_base()
         self.api_all_fields_base = self.build_api_all_fields_base()
@@ -194,20 +219,6 @@ class ApiFormats:
         """
         return self.api_base + "files."
 
-    def build_api_result_count_base(self):
-        """api/meta/result_count.[fmt]
-        """
-        return self.api_base + "meta/result_count."
-
-    def build_api_mults_base(self):
-        """api/meta/mults/[param].[fmt]
-        """
-        return self.api_base + "meta/mults/planet." # use planet
-
-    def build_api_endpoints_base(self):
-        """api/meta/range/endpoints/[param].[fmt]
-        """
-        return self.api_base + "meta/range/endpoints/wavelength1." # use wavelength1
 
     def build_api_categories_with_opus_id_base(self, opus_id):
         """api/categories/[opus_id].json
@@ -280,21 +291,6 @@ class ApiFormats:
                 "api": "api/files.[fmt]",
                 "payload": ApiFormats.payload_for_files,
                 "support_format": ["json"]
-            },
-            self.api_result_count_base: {
-                "api": "api/meta/result_count.[fmt]",
-                "payload": ApiFormats.payload_for_result_count,
-                "support_format": ["json", "html", "csv"]
-            },
-            self.api_mults_base: {
-                "api": "api/meta/mults/[param].[fmt]",
-                "payload": ApiFormats.payload_for_mults,
-                "support_format": ["json", "html", "csv"]
-            },
-            self.api_endpoints_base: {
-                "api": "api/meta/range/endpoints/[param].[fmt]",
-                "payload": ApiFormats.payload_for_endpoints,
-                "support_format": ["json", "html", "csv"]
             },
             self.api_categories_with_opus_id_base: {
                 "api": "api/categories/[opus_id].json",

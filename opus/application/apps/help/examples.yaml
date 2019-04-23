@@ -17,7 +17,7 @@ sections:
 
             examples:
                 - desc: Target Enceladus plumes taken with COISS in JSON
-                  url: <HOST>/opus/api/data.json?instrument=Cassini+ISS&SURFACEGEOenceladusplanetographiclatitude1=70&SURFACEGEOenceladuscenterphaseangle1=160&order=time1&cols=opusid,target,time1,SURFACEGEOenceladuscenterphaseangle1
+                  url: <HOST>/opus/api/data.json?instrument=Cassini+ISS&SURFACEGEOenceladusplanetographiclatitude1=70&SURFACEGEOenceladuscenterphaseangle=160&order=time1&cols=opusid,target,time1,SURFACEGEOenceladuscenterphaseangle
 
           - title: api/metadata/[opus_id].[fmt]
             desc: Get all available, or particular, metadata for a single observation. NOTE - USE OF THIS API IS DEPRECATED. THIS IS BECAUSE RATHER THAN RETURNING THE SAME SLUG NAMES USED TO PERFORM SEARCHES, IT ERRONEOUSLY RETURNS INTERNAL DATABASE NAMES THAT ARE NOT DOCUMENTED. THESE INTERNAL NAMES MAY NOT BE UNIQUE AND COULD CAUSE PROBLEMS. PLEASE USE THE V2 VERSION OF THIS API BELOW INSTEAD.
@@ -101,7 +101,7 @@ sections:
                 JSON return: "{'page_no': given page number OR 'start_obs': given starting observation, 'limit': given limit, 'count': number of observations returned, 'order': sort order, 'data': List of: {'opus_id': opus_id, '<size>_url': full URL, '<size>_alt_text': alt text, '<size>_size_bytes': image size in bytes, '<size>_width': image width in pixels, '<size>_height': image height in pixels}"
             examples:
                 - desc: planet = Saturn, sorted reverse by Saturn phase angle, in JSON
-                  url: <HOST>/opus/api/images.json?planet=Saturn&order=-SURFACEGEOsaturncenterphaseangle1
+                  url: <HOST>/opus/api/images.json?planet=Saturn&order=-SURFACEGEOsaturncenterphaseangle
 
           - title: api/image/[size]/[opus_id].[fmt]
             desc: Get an image of the given size for a single observation.
@@ -221,7 +221,7 @@ sections:
             desc: Get information about a particular field
             info:
                 field: field slug
-                fmt: json,html
+                fmt: json,csv
                 JSON response: "{'data': {slug: {'category': Pretty category name, 'label': Pretty field name, 'slug': slug, 'old_slug': previous slug (deprecated)}}}"
             examples:
                 - desc: Get information about the "planet" field
@@ -232,7 +232,7 @@ sections:
           - title: api/fields.[fmt]
             desc: Get information about all fields
             info:
-                fmt: json,html
+                fmt: json,csv
                 GET param 1: collapse=1 (collapse all surface geo entries into single generic-target entries)
                 JSON response: "{'data': {slug: {'category': Pretty category name, 'label': Pretty field name, 'slug': slug, 'old_slug': previous slug (deprecated)}}}"
             examples:
