@@ -109,6 +109,29 @@ class ApiReturnFormatTests(TestCase, ApiTestHelper):
         "[test_return_formats.py] return formats /__api/download/opusid.[fmt]"
         self._test_return_formats('/__api/download/co-vims-v1488549680_ir.[fmt]', ('zip',))
 
+    # help/urls.py
+
+    def test__api_retfmt_help_about(self):
+        "[test_return_formats.py] return formats /__help/about.[fmt]"
+        self._test_return_formats('/__help/about.[fmt]', ('html',))
+
+    def test__api_retfmt_help_volumes(self):
+        "[test_return_formats.py] return formats /__help/volumes.[fmt]"
+        self._test_return_formats('/__help/volumes.[fmt]', ('html',))
+
+    def test__api_retfmt_help_faq(self):
+        "[test_return_formats.py] return formats /__help/faq.[fmt]"
+        self._test_return_formats('/__help/faq.[fmt]', ('html',))
+
+    def test__api_retfmt_help_tutorial(self):
+        "[test_return_formats.py] return formats /__help/tutorial.[fmt]"
+        self._test_return_formats('/__help/tutorial.[fmt]', ('html',))
+
+    def test__api_retfmt_help_guide(self):
+        "[test_return_formats.py] return formats /__help/guide.[fmt]"
+        self._test_return_formats('/__help/guide.[fmt]', ('html',))
+
+
     # metadata/urls.py
 
     def test__api_retfmt_result_count(self):
