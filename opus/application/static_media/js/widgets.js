@@ -400,7 +400,7 @@ var o_widgets = {
             }}).done(function() {
 
                 // If there is no specified qtype in the url, we want default qtype to be in the url
-                // This will also put qtype in the url when a widget is open.
+                // This will also put qtype in the url when a widget with qtype is open.
                 // Need to wait until api return to determine if the widget has qtype selections
                 let hash = o_hash.getHashArray();
                 let qtype = "qtype-" + slug;
