@@ -486,6 +486,8 @@ def api_normalize_url(request):
                    +'it has been ignored.')
             msg_list.append(msg)
             continue
+        if slug != pi.slug:
+            old_ui_slug_flag = True
         pi_searchable = pi
         if pi.slug[-1] == '2':
             # We have to look at the '1' version to see if it's searchable
@@ -969,7 +971,7 @@ def api_normalize_url(request):
             #        +f'missing; {prefix}startobs has been set to 1.')
             # msg_list.append(msg)
             startobs_val = 1
-            new_url_suffix_list.append((prefix+'startobs', startobs_val))
+        new_url_suffix_list.append((prefix+'startobs', startobs_val))
 
     ### DETAIL
     detail_val = None

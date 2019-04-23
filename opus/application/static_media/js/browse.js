@@ -807,7 +807,7 @@ var o_browse = {
         if (opus.prefs.view == "cart") {
             namespace = "#cart";
             prefix = "cart_";
-            addToURL = "&colls=true";
+            addToURL = "";
         }
         return {"namespace":namespace, "prefix":prefix, "add_to_url":addToURL};
 

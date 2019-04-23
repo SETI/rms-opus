@@ -184,7 +184,7 @@ def api_get_cart_csv(request):
         exit_api_call(api_code, ret)
         raise ret
 
-    column_labels, page = _csv_helper(request, api_code)
+    column_labels, page = _csv_helper(request, None, api_code)
     if column_labels is None:
         ret = Http404(settings.HTTP404_UNKNOWN_SLUG)
         exit_api_call(api_code, ret)
@@ -388,7 +388,7 @@ def api_create_download(request, opus_id=None):
     csv_file_name = settings.TAR_FILE_PATH + f'csv_{zip_root}.txt'
     url_file_name = settings.TAR_FILE_PATH + f'url_{zip_root}.txt'
 
-    _create_csv_file(request, csv_file_name, api_code=api_code)
+    _create_csv_file(request, csv_file_name, opus_id, api_code=api_code)
 
     # Don't create download if the resultant zip file would be too big
     if not url_file_only:
@@ -922,13 +922,14 @@ def _zip_filename(opus_id, url_file_only):
     return f'pdsrms-{data_url}-{random_ascii}-{timestamp}.zip'
 
 
-def _csv_helper(request, api_code=None):
+def _csv_helper(request, opus_id, api_code=None):
     "Create the data for a CSV file containing the cart data."
     slugs = request.GET.get('cols', settings.DEFAULT_COLUMNS)
     (page_no, start_obs, limit, page, order, aux) = get_search_results_chunk(
                                                      request,
-                                                     use_cart=True,
+                                                     use_cart=(opus_id is None),
                                                      limit='all',
+                                                     opus_id=opus_id,
                                                      api_code=api_code)
 
     slug_list = cols_to_slug_list(slugs)
@@ -936,9 +937,9 @@ def _csv_helper(request, api_code=None):
     return labels_for_slugs(slug_list), page
 
 
-def _create_csv_file(request, csv_file_name, api_code=None):
+def _create_csv_file(request, csv_file_name, opus_id, api_code=None):
     "Create a CSV file containing the cart data."
-    column_labels, page = _csv_helper(request, api_code)
+    column_labels, page = _csv_helper(request, opus_id, api_code)
     if column_labels is None:
         ret = Http404(settings.HTTP404_UNKNOWN_SLUG)
         exit_api_call(api_code, ret)
