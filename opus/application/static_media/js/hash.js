@@ -116,12 +116,14 @@ var o_hash = {
             if (!(slug in opus.prefs) && value) {
 
                 if (slug.match(/qtype/)) {
+                    // each qtype will only have one value at a time
                     extras[slug] = [value];
                 } else {
                     if (slug in selections) {
                         selections[slug].push(value);
                     } else {
-                        selections[slug] = [value];
+                        // selections[slug] = [value];
+                        selections[slug] = value.replace("+", " ").split(",");
                     }
                 }
 

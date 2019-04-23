@@ -72,6 +72,7 @@ var opus = {
     selections: {},        // the user's search
     extras: {},            // extras to the query, carries units, string_selects, qtypes, size, refreshes result count!!
     last_selections: {},   // last_ are used to moniter changes
+    last_extras: {},
     last_hash: '',
     result_count: 0,
     qtype_default: 'any',
@@ -114,9 +115,9 @@ var opus = {
 
         // let selections = o_hash.getSelectionsFromHash();
         let [selections, extras] = o_hash.getSelectionsExtrasFromHash();
-        console.log("=== From getSelectionsExtrasFromHash ===");
-        console.log(selections);
-        console.log(extras);
+        // console.log("=== From getSelectionsExtrasFromHash ===");
+        // console.log(selections);
+        // console.log(extras);
 
         if (selections === undefined) {
             return;
@@ -135,7 +136,7 @@ var opus = {
         }
 
         // compare selections and last selections
-        if (o_utils.areObjectsEqual(selections, opus.last_selections)) {
+        if (o_utils.areObjectsEqual(selections, opus.last_selections) && o_utils.areObjectsEqual(extras, opus.extras)) {
             // selections have not changed from opus.last_selections
             if (!opus.force_load) { // so we do only non-reloading pref changes
                 return;
@@ -146,30 +147,39 @@ var opus = {
             opus.prefs.page = default_pages;
 
             // create an object from selections to compare with opus.selections
-            let modifiedSelections = {};
-            $.each(Object.keys(selections), function(idx, slug) {
-                // Note: when we select qtype, it is not updated in opus.selections
-                // Therefore, we will not put qtype in modifiedSelections to compare with opus.selection
-                if (!slug.match(/qtype/)) {
-                    modifiedSelections[slug] = selections[slug][0].replace("+", " ").split(",");
-                }
-            });
+            // let modifiedSelections = {};
+            // $.each(Object.keys(selections), function(idx, slug) {
+            //     // Note: when we select qtype, it is not updated in opus.selections
+            //     // Therefore, we will not put qtype in modifiedSelections to compare with opus.selection
+            //     if (!slug.match(/qtype/)) {
+            //         modifiedSelections[slug] = selections[slug][0].replace("+", " ").split(",");
+            //     }
+            // });
 
             // debug print out
             console.log("=== selections ===")
             console.log(selections);
-            console.log("=== modifiedSelections ===")
-            console.log(modifiedSelections);
+            // console.log("=== modifiedSelections ===")
+            // console.log(modifiedSelections);
             console.log("=== opus.selections ===");
             console.log(opus.selections);
             console.log("=== opus.last_selections ===");
             console.log(opus.last_selections);
-            console.log("Are modifiedSelections and opus.selections the same ?");
-            console.log(o_utils.areObjectsEqual(modifiedSelections, opus.selections));
+            console.log("=== opus.extras ===");
+            console.log(opus.extras);
+            console.log("=== opus.last_extras ===");
+            console.log(opus.last_extras);
+            // console.log("Are modifiedSelections and opus.selections the same ?");
+            // console.log(o_utils.areObjectsEqual(modifiedSelections, opus.selections));
+            console.log("Are selections and opus.selections the same?");
+            console.log(o_utils.areObjectsEqual(selections, opus.selections));
+            console.log("Are extras and opus.extras the same?");
+            console.log(o_utils.areObjectsEqual(extras, opus.extras));
 
             // if data in selections !== data in opus.selections, it means selections are modified manually in url, reload the page (modified url in url bar and hit enter)
-            if (!o_utils.areObjectsEqual(modifiedSelections, opus.selections)) {
-                opus.selections = modifiedSelections;
+            if (!o_utils.areObjectsEqual(selections, opus.selections) || !o_utils.areObjectsEqual(extras, opus.extras)) {
+                opus.selections = selections;
+                opus.extras = extras;
                 location.reload();
                 return;
             } else {
@@ -191,6 +201,7 @@ var opus = {
         // update last selections after the comparison of selections and last selections
         // move this above allNormalizedApiCall to avoid recursive api call
         opus.last_selections = selections;
+        opus.last_extras = extras;
 
         // chain ajax calls, validate range inputs before result count api call
         o_search.allNormalizedApiCall().then(opus.getResultCount).then(opus.updatePageAfterResultCountAPI);
