@@ -399,8 +399,16 @@ var o_widgets = {
                 $("#widget__"+slug).html(widget_str);
             }}).done(function() {
 
-                // console.log("=== opus.extras ===");
-                // console.log(opus.extras);
+                // If there is no specified qtype in the url, we want default qtype to be in the url
+                // This will also put qtype in the url when a widget is open.
+                // Need to wait until api return to determine if the widget has qtype selections
+                let hash = o_hash.getHashArray();
+                let qtype = "qtype-" + slug;
+                if ($(`#widget__${slug} select[name="${qtype}"]`).length !== 0 && !hash[qtype]) {
+                    opus.extras[qtype] = [opus.qtype_default];
+                    o_hash.updateHash();
+                }
+
              // if we are drawing a range widget we need to check if the qtype dropdown is
              // already defined by the url:
              if (slug.match(/.*(1|2)/)) {
@@ -411,13 +419,8 @@ var o_widgets = {
                  if ($.inArray('qtype-' + id, opus.extras) > -1 && opus.extras['qtype-'+id]) {
                      // this widgets dropdown is defined in the url, update the html select dropdown to match
                      $('#' + widget + ' select').attr("value", opus.extras['qtype-'+id]);
-                 } else {
-                     // If there is no specified qtype in the url, we want default qtype to be in the url
-                     // This will also put qtype in the url when a widget is open
-                     opus.extras["qype-" + id] = opus.qtype_default;
                  }
-                 console.log("=== opus.extras ===");
-                 console.log(opus.extras);
+
                  // add the helper icon to range widgets.
                 // add the helper text for range widgets
                 if ($('.' + widget).hasClass('range-widget') && $('.' + widget).find('select').length) {
