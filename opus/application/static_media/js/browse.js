@@ -51,12 +51,14 @@ var o_browse = {
         $(".gallery-contents, .dataTable").on('scroll', _.debounce(o_browse.checkScroll, 500));
 
         $(".gallery-contents, .dataTable").on('wheel ps-scroll-up', function(event) {
-            let view = o_browse.getViewInfo();
-            let tab = view.namespace;
-            if (opus.prefs[`${view.prefix}startobs`] > 0) {
-                let prev = $(`${view.namespace} [data-obs]`).first().data("obs") - o_browse.getLimit();
-                if ($(`${tab} .gallery-contents`).scrollTop() || $(`${tab} .dataTable`).scrollTop() === 0) {
-                    opus.prefs[`${view.prefix}startobs`] = (prev > 0 ? prev : 1);
+            let startobs = (opus.prefs.view === "cart" ? "cart_startobs" : "startobs");
+            let tab = `#${opus.prefs.view}`;
+            if (opus.prefs[startobs] > 0) {
+                // we need something like this to see if the scroll is in the 'up' direction
+                //if (event.originalEvent.deltaY !== undefined && event.originalEvent.deltaY < 0)
+                let prev = $(`${tab} [data-obs]`).first().data("obs") - o_browse.getLimit();
+                if ($(`${tab} .gallery-contents`).scrollTop() === 0 || $(`${tab} .dataTable`).scrollTop() === 0) {
+                    opus.prefs[startobs] = (prev > 0 ? prev : 1);
                     $(`${tab} .gallery-contents`).infiniteScroll({
                         "loadPrevPage": true
                     });
@@ -446,25 +448,26 @@ var o_browse = {
 
     // check if we need infiniteScroll to load next page when there is no more prefected data
     loadNextPageIfNeeded: function(opusId) {
-        let view = o_browse.getViewInfo();
-        let tab = view.namespace;
+        let startobs = (opus.prefs.view === "cart" ? "cart__startobs" : "startobs");
+        let tab = `#${opus.prefs.view}`;
+        let maxObs = (opus.prefs.view === "browse" ? opus.resultCount : parseInt($("#op-cart-count").html()));
 
         let obsNum = $(`${tab} .thumbnail-container[data-id=${opusId}]`).data("obs") + 1;
-        if (obsNum <= parseInt($("#op-cart-count").html())) {
+        if (obsNum <= maxObs) {
             let nextElem = $(`${tab} .thumbnail-container[data-obs=${obsNum}]`);
             if (nextElem.length === 0) {
                 // disable keydown on modal when it's loading
                 // this will make sure we have correct html elements displayed for prev observation
                 $("#galleryViewContents").addClass("op-disabled");
-                opus.prefs[`${view.prefix}startobs`] = obsNum;
+                opus.prefs[startobs] = obsNum;
                 $(`${tab} .gallery-contents`).infiniteScroll("loadNextPage");
             }
         }
     },
 
     loadPrevPageIfNeeded: function(opusId) {
-        let view = o_browse.getViewInfo();
-        let tab = view.namespace;
+        let startobs = (opus.prefs.view === "cart" ? "cart__startobs" : "startobs");
+        let tab = `#${opus.prefs.view}`;
 
         o_browse.currentOpusId = opusId;
         // decrement obsNum to see if there is a previous one to retrieve
@@ -477,20 +480,20 @@ var o_browse = {
                 // this will make sure we have correct html elements displayed for prev observation
                 $("#galleryViewContents").addClass("op-disabled");
                 let startObs = obsNum - o_browse.getLimit();
-                opus.prefs[`${view.prefix}startobs`] = (startObs > 0 ? startObs : 1);
+                opus.prefs[startobs] = (startObs > 0 ? startObs : 1);
                 $(`${tab} .gallery-contents`).infiniteScroll("loadNextPage");
             }
         }
     },
 
     setScrollbarOnSlide: function(obsNum) {
-        let namespace = o_browse.getViewInfo().namespace;
-        let galleryTargetTopPosition = $(`${namespace} .thumbnail-container[data-obs="${obsNum}"]`).offset().top;
-        let galleryContainerTopPosition = $(".gallery-contents").offset().top;
-        let galleryScrollbarPosition = $(".gallery-contents").scrollTop();
+        let tab = `#${opus.prefs.view}`;
+        let galleryTargetTopPosition = $(`${tab} .thumbnail-container[data-obs="${obsNum}"]`).offset().top;
+        let galleryContainerTopPosition = $(`${tab} .gallery-contents`).offset().top;
+        let galleryScrollbarPosition = $(`${tab} .gallery-contents`).scrollTop();
 
         let galleryTargetFinalPosition = galleryTargetTopPosition - galleryContainerTopPosition + galleryScrollbarPosition;
-        $(".gallery-contents").scrollTop(galleryTargetFinalPosition);
+        $(`${tab} .gallery-contents`).scrollTop(galleryTargetFinalPosition);
 
         // TODO
         // Create a new jQuery.Event object with specified event properties.
@@ -514,8 +517,7 @@ var o_browse = {
     },
 
     onUpdateSlider: function(value) {
-        let namespace = o_browse.getViewInfo().namespace;
-        let elem = $(`${namespace} .thumbnail-container[data-obs="${value}"]`);
+        let elem = $(`#${opus.prefs.view} .thumbnail-container[data-obs="${value}"]`);
         if (elem.length > 0) {
             o_browse.setScrollbarOnSlide(value);
         } else {
@@ -785,7 +787,7 @@ var o_browse = {
     },  // /addMetadataSelectorBehaviors
 
     // there are interactions that are applied to different code snippets,
-    // this returns the namespace, view_var, prefix, and add_to_url
+    // this returns the namespace, view_var
     // that distinguishes cart vs result tab views
     // NOTE: get rid of all this with a framework!
     // usage:
@@ -794,22 +796,18 @@ var o_browse = {
         // usage
         view_info = o_browse.getViewInfo();
         namespace = view_info['namespace'];
-        view_var = view_info['view_var'];
         prefix = view_info['prefix'];
-        add_to_url = view_info['add_to_url'];
     */
     getViewInfo: function() {
         // this function returns some data you need depending on whether
         // you are in #cart or #browse views
         let namespace = "#browse";
         let prefix = "";
-        let addToURL = "";
         if (opus.prefs.view == "cart") {
             namespace = "#cart";
             prefix = "cart_";
-            addToURL = "";
         }
-        return {"namespace":namespace, "prefix":prefix, "add_to_url":addToURL};
+        return {"namespace":namespace, "prefix":prefix};
 
     },
 
@@ -937,6 +935,7 @@ var o_browse = {
         } else {
             $("#cart .navbar").show();
             $("#cart .sort-order-container").show();
+            opus.resultCount = data.result_count;
 
             opus.prefs[`${viewInfo.prefix}startobs`] = data.start_obs;
             $.each(data.page, function(index, item) {
@@ -1103,13 +1102,12 @@ var o_browse = {
     },
 
     getDataURL: function(startObs) {
-        let view = o_browse.getViewInfo();
         let base_url = "/opus/__api/dataimages.json?";
         // this is a workaround for firefox
         let hashString = (o_hash.getHash() ? o_hash.getHash() : o_browse.tempHash);
 
         let reqno = (opus.prefs.view === "browse" ? ++o_browse.lastLoadDataRequestNo : ++o_cart.lastLoadDataRequestNo);
-        let url = hashString + '&reqno=' + reqno + view.add_to_url;
+        let url = hashString + '&reqno=' + reqno;
         url = base_url + o_browse.updateStartobsInUrl(url, startObs);
 
         // need to add limit - getting twice as much so that the prefetch is done in one get instead of two.
@@ -1168,14 +1166,20 @@ var o_browse = {
                     $(selector).infiniteScroll({
                         path: function() {
                             let startObs = opus.prefs[`${view.prefix}startobs`];
-                            if ($(selector).data("infiniteScroll") != undefined && $(selector).data("infiniteScroll").options.loadPrevPage === true) {
-                                $(selector).infiniteScroll({"loadPrevPage": true});
+                            console.log(`in path - startObs: ${startObs}`);
+                            let infiniteScrollData = $(selector).data("infiniteScroll");
+                            if (infiniteScrollData !== undefined && infiniteScrollData.options.loadPrevPage === true) {
+                                console.log(`loadPrevPage = true`);
+                                infiniteScrollData.options.loadPrevPage = false;
                             } else {
                                 let lastObs = $(`${view.namespace} .thumbnail-container`).last().data("obs");
                                 // start from the last observation drawn; if none yet drawn ...???
                                 startObs = (lastObs != undefined ? lastObs + 1 : startObs + o_browse.getLimit());
+                                console.log(` - startObs: ${startObs}, lastObs: ${lastObs}, getLimit: ${o_browse.getLimit()}`);
+                                console.trace();
                             }
                             let path = o_browse.getDataURL(startObs);
+                            console.log(`in path: path: ${path}`);
                             return path;
                         },
                         responseType: "text",
@@ -1183,6 +1187,8 @@ var o_browse = {
                         elementScroll: true,
                         history: false,
                         scrollThreshold: 500,
+                        checkLastPage: false,
+                        loadPrevPage: false,
                         debug: false,
                     });
 
@@ -1401,8 +1407,8 @@ var o_browse = {
         html += `<div class="col text-center">`;
         let opPrevDisabled = (nextPrevHandles.prev == "" ? "op-button-disabled" : "");
         let opNextDisabled = (nextPrevHandles.next == "" ? "op-button-disabled" : "");
-        html += `<a href="#" class="prev text-center ${opPrevDisabled}" data-id="${nextPrevHandles.prev}" title="Previous image"><i class="far fa-hand-point-left fa-2x"></i></a>`;
-        html += `<a href="#" class="next ${opNextDisabled}" data-id="${nextPrevHandles.next}" title="Next image"><i class="far fa-hand-point-right fa-2x"></i></a>`;
+        html += `<a href="#" class="prev text-center ${opPrevDisabled}" data-id="${nextPrevHandles.prev}" title="Previous image: ${nextPrevHandles.prev}"><i class="far fa-hand-point-left fa-2x"></i></a>`;
+        html += `<a href="#" class="next ${opNextDisabled}" data-id="${nextPrevHandles.next}" title="Next image: ${nextPrevHandles.next}"><i class="far fa-hand-point-right fa-2x"></i></a>`;
         html += `</div>`;
 
         // mini-menu like the hamburger on the observation/gallery page
