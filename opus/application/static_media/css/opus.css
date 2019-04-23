@@ -202,11 +202,11 @@ ul.searchMenu {
     margin: auto;
 }
 
-.thumbnail-container:hover .thumb-overlay {
+.thumbnail-container:hover .op-thumb-overlay {
     height: 30%;
 }
 
-.thumb-overlay {
+.op-thumb-overlay {
     position: absolute;
     bottom: 0;
     left: 0;
@@ -220,7 +220,7 @@ ul.searchMenu {
     transition: .5s ease;
 }
 
-.thumb-overlay a:hover {
+.op-thumb-overlay a:hover {
     color: #097da5;
     /* font-size: 130%; */
 }
@@ -312,11 +312,11 @@ tr.modal-show {
     border: 0px solid #000000 !important;
 }
 
-.op-tools {
+.op-thumb-overlay .op-tools {
     text-align: center;
 }
 
-.op-tools > a {
+.op-thumb-overlay .op-tools > a {
     color: white;
     font-size: 20px;
     position: absolute;
@@ -328,23 +328,34 @@ tr.modal-show {
     text-align: center;
 }
 
-.op-tools a:nth-child(1n) {
+.op-thumb-overlay .op-tools a:nth-child(1n) {
     position: relative;
     left: 0;
 }
 
-.op-tools a:nth-child(2n) {
+.op-thumb-overlay .op-tools a:nth-child(2n) {
     margin-right: 0.8em;
     margin-left: 0.8em;
 }
 
-.op-tools a:nth-child(3n) {
+.op-thumb-overlay .op-tools a:nth-child(3n) {
     position: relative;
     right: 0;
 }
 
-td .op-tools {
-    width: 2em;
+td.op-table-tools {
+    width: 3em;
+}
+
+td .form-group {
+    padding: 0px 8px;
+    height: 0.5em;
+    margin-top: -5px;
+}
+
+td .form-group > a {
+    color: white;
+    font-size: 20px;
 }
 
 th.sticky-header {
@@ -382,6 +393,7 @@ th.sticky-header {
 
 #dataTable td {
     white-space: nowrap;
+    min-width: 4.2em;
 }
 
 /* Move y-scrollbar out of container in table view */

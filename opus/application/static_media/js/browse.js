@@ -954,7 +954,7 @@ var o_browse = {
                 galleryHtml += '<p class="content-text"><i class="fas fa-binoculars fa-4x text-info" aria-hidden="true"></i></p>';
                 galleryHtml += '</div></a>';
 
-                galleryHtml += '<div class="thumb-overlay">';
+                galleryHtml += '<div class="op-thumb-overlay">';
                 galleryHtml += `<div class="op-tools dropdown" data-id="${opusId}">`;
                 galleryHtml +=     '<a href="#" data-icon="info" title="View observation detail"><i class="fas fa-info-circle fa-xs"></i></a>';
 
@@ -969,7 +969,7 @@ var o_browse = {
                     let checked = item.in_cart ? " checked" : "";
                     let checkbox = `<input type="checkbox" name="${opusId}" value="${opusId}" class="multichoice"${checked}/>`;
                     let minimenu = `<a href="#" data-icon="menu"><i class="fas fa-bars fa-xs"></i></a>`;
-                    let row = `<td><div class="op-tools mx-0" title="${item.obs_num}" data-id="${opusId}">${checkbox} ${minimenu}</div></td>`;
+                    let row = `<td class="op-table-tools"><div class="op-tools mx-0 form-group" title="${item.obs_num}" data-id="${opusId}">${checkbox} ${minimenu}</div></td>`;
                     let tr = `<tr data-id="${opusId}" data-target="#galleryView" data-obs="${item.obs_num}">`;
                     $.each(item.metadata, function(index, cell) {
                         row += `<td>${cell}</td>`;
@@ -1355,7 +1355,7 @@ var o_browse = {
 
     updateCartIcon: function(opusId, action) {
         let buttonInfo = o_browse.cartButtonInfo(action);
-        let selector = `.thumb-overlay [data-id=${opusId}] [data-icon="cart"]`;
+        let selector = `.op-thumb-overlay [data-id=${opusId}] [data-icon="cart"]`;
         $(selector).html(`<i class="${buttonInfo.icon} fa-xs"></i>`);
         $(selector).prop("title", buttonInfo.title);
 
