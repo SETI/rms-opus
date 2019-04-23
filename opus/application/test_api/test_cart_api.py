@@ -1219,6 +1219,13 @@ class ApiCartTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
 
 
+            ################################################
+            ######### /__cart/view.html: API TESTS #########
+            ################################################
+
+    # XXX Need to implement tests
+
+
             ####################################################
             ######### /__cart/download.json: API TESTS #########
             ####################################################
@@ -1226,8 +1233,8 @@ class ApiCartTests(TestCase, ApiTestHelper):
     # XXX Need to implement tests
 
 
-            ##################################################
-            ######### /__zip/<opusid>.zip: API TESTS #########
-            ##################################################
+            #########################################################
+            ######### /api/download/<opusid>.zip: API TESTS #########
+            #########################################################
 
     # XXX Need to implement tests

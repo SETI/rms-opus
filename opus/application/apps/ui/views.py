@@ -132,8 +132,9 @@ def api_get_widget(request, **kwargs):
     form_vals = {slug: None}
     auto_id = True
     selections = {}
+    extras = {}
 
-    if request and request.GET:
+    if request and request.GET is not None:
         (selections, extras) = url_to_search_params(request.GET,
                                                     allow_errors=True)
         if selections is None: # XXX Really should throw an error of some kind

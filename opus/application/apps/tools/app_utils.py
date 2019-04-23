@@ -125,8 +125,14 @@ def response_formats(data, fmt, **kwargs):
     # like: [{opus_id=something1, planet=SAt, target = Pan}, {opus_id=something21, planet=Sat, target = Pan}]
     # each row is one dictionary
     elif fmt == 'csv':   # must pass a list of dicts
-        data = data['page']
-        field_names = kwargs['labels']
+        if 'page' not in data:
+            # Placeholder until this routine goes away
+            log.error('response_formats: Tried to write CSV but no page')
+            data = []
+            field_names = []
+        else:
+            data = data['page']
+            field_names = kwargs['labels']
         filename = download_file_name()
         response = HttpResponse(content_type='text/csv')
         response['Content-Disposition'] = 'attachment; filename=' + filename + '.csv'
@@ -140,23 +146,27 @@ def response_formats(data, fmt, **kwargs):
 
 def zipped(data):
     "Create a zip file from the given data"
+    # XXX NOTE: Zip file creation is completely broken and all of this needs
+    # to be rewritten. This is just a placeholder for now so that the API calls
+    # don't crash. Downloading of archive zip files does not use this routine
+    # and still works fine.
     filename = download_file_name()
 
-    in_memory = StringIO()
-    zip = ZipFile(in_memory, "a")
-    zip.writestr(filename + '.txt', str(data))
-
-    # fix for Linux zip files read in Windows
-    for file in zip.filelist:
-        file.create_system = 0
-
-    zip.close()
+    # in_memory = StringIO()
+    # zip = ZipFile(in_memory, "a")
+    # zip.writestr(filename + '.txt', str(data))
+    #
+    # # fix for Linux zip files read in Windows
+    # for file in zip.filelist:
+    #     file.create_system = 0
+    #
+    # zip.close()
 
     response = HttpResponse(content_type="application/zip")
     response["Content-Disposition"] = "attachment; filename=" + filename + ".zip"
 
-    in_memory.seek(0)
-    response.write(in_memory.read())
+    # in_memory.seek(0)
+    # response.write(in_memory.read())
 
     return response
 

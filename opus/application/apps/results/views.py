@@ -6,19 +6,18 @@
 # lists of images or files):
 #
 #    Format: __api/dataimages.json
-#    Format: [__]api/data.(json|zip|html|csv)
-#    Format: [__]api/data/(?P<opus_id>[-\w]+).csv
-#    Format: [__]api/metadata/(?P<opus_id>[-\w]+).(?P<fmt>json|html)
-#    Format: [__]api/metadata_v2/(?P<opus_id>[-\w]+).(?P<fmt>json|html)
-#    Format: [__]api/images/(?P<size>thumb|small|med|full).
+#    Format: api/data.(json|html|csv)
+#    Format: api/metadata/(?P<opus_id>[-\w]+).(?P<fmt>json|html|csv)
+#    Format: [__]api/metadata_v2/(?P<opus_id>[-\w]+).(?P<fmt>json|html|csv)
+#    Format: api/images/(?P<size>thumb|small|med|full).
 #                           (?P<fmt>json|zip|html|csv)
-#    Format: [__]api/images.(json|zip|html|csv)
-#    Format: [__]api/image/(?P<size>thumb|small|med|full)/(?P<opus_id>[-\w]+)
+#    Format: api/images.(json|zip|html|csv)
+#    Format: api/image/(?P<size>thumb|small|med|full)/(?P<opus_id>[-\w]+)
 #                          .(?P<fmt>json|zip|html|csv)
-#    Format: [__]api/files/(?P<opus_id>[-\w]+).(?P<fmt>json|zip|html|csv)
+#    Format: api/files/(?P<opus_id>[-\w]+).(?P<fmt>json|zip|html|csv)
 #        or: api/files.(?P<fmt>json|zip|html|csv)
 #    Format: [__]api/categories/(?P<opus_id>[-\w]+).json
-#    Format: [__]api/categories.json
+#    Format: api/categories.json
 #
 ################################################################################
 
@@ -673,7 +672,7 @@ def api_get_images_by_size(request, size, fmt):
         data['start_obs'] = start_obs
 
     ret = response_formats(data, fmt,
-                          template='results/gallery.html', order=order)
+                          template='results/image_list.html', order=order)
     exit_api_call(api_code, ret)
     return ret
 
@@ -742,7 +741,7 @@ def api_get_images(request, fmt):
     if start_obs is not None:
         data['start_obs'] = start_obs
     ret = response_formats(data, fmt,
-                          template='results/gallery.html', order=order)
+                          template='results/image_list.html', order=order)
     exit_api_call(api_code, ret)
     return ret
 
@@ -871,7 +870,7 @@ def api_get_files(request, opus_id=None):
     data['data'] = current_ret
     data['versions'] = versioned_ret
 
-    ret = HttpResponse(json.dumps(data), content_type='application/json')
+    ret = json_response(data)
     exit_api_call(api_code, ret)
     return ret
 
@@ -924,8 +923,7 @@ def api_get_categories_for_opus_id(request, opus_id):
             cat = {'table_name': table_name, 'label': tbl['label']}
             all_categories.append(cat)
 
-    ret = HttpResponse(json.dumps(all_categories),
-                       content_type="application/json")
+    ret = json_response(all_categories)
     exit_api_call(api_code, ret)
     return ret
 
@@ -970,8 +968,7 @@ def api_get_categories_for_search(request):
     labels = (TableNames.objects.filter(table_name__in=triggered_tables)
               .values('table_name','label').order_by('disp_order'))
 
-    ret = HttpResponse(json.dumps([ob for ob in labels]),
-                       content_type="application/json")
+    ret = json_response([ob for ob in labels])
     exit_api_call(api_code, ret)
     return ret
 
