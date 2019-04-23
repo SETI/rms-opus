@@ -50,6 +50,65 @@ class ApiReturnFormatTests(TestCase, ApiTestHelper):
             ######### API Return Format Tests #########
             ###########################################
 
+    # cart/urls.py
+
+    def test__api_retfmt_cart_view(self):
+        "[test_return_formats.py] return formats /__cart/view.[fmt]"
+        self._run_status_equal('/opus/__cart/reset.json?reqno=1', 200)
+        self._test_return_formats('/__cart/view.[fmt]', ('html',))
+
+    def test__api_retfmt_cart_status(self):
+        "[test_return_formats.py] return formats /__cart/status.[fmt]"
+        self._run_status_equal('/opus/__cart/reset.json?reqno=1', 200)
+        self._test_return_formats('/__cart/status.[fmt]?reqno=1', ('json',))
+
+    def test__api_retfmt_cart_data(self):
+        "[test_return_formats.py] return formats /__cart/data.[fmt]"
+        self._run_status_equal('/opus/__cart/reset.json?reqno=1', 200)
+        self._test_return_formats('/__cart/data.[fmt]', ('csv',))
+
+    def test__api_retfmt_cart_add(self):
+        "[test_return_formats.py] return formats /__cart/add.[fmt]"
+        self._run_status_equal('/opus/__cart/reset.json?reqno=1', 200)
+        self._test_return_formats('/__cart/add.[fmt]?opusid=vg-iss-2-s-c4362550&reqno=1', ('json',))
+
+    def test__api_retfmt_cart_remove(self):
+        "[test_return_formats.py] return formats /__cart/remove.[fmt]"
+        self._run_status_equal('/opus/__cart/reset.json?reqno=1', 200)
+        self._test_return_formats('/__cart/remove.[fmt]?opusid=vg-iss-2-s-c4362550&reqno=1', ('json',))
+
+    def test__api_retfmt_cart_addrange(self):
+        "[test_return_formats.py] return formats /__cart/addrange.[fmt]"
+        self._run_status_equal('/opus/__cart/reset.json?reqno=1', 200)
+        self._test_return_formats('/__cart/addrange.[fmt]?volumeid=COVIMS_0006&range=co-vims-v1488549680_ir,co-vims-v1488550102_ir&reqno=1', ('json',))
+
+    def test__api_retfmt_cart_removerange(self):
+        "[test_return_formats.py] return formats /__cart/removerange.[fmt]"
+        self._run_status_equal('/opus/__cart/reset.json?reqno=1', 200)
+        self._test_return_formats('/__cart/removerange.[fmt]?volumeid=COVIMS_0006&range=co-vims-v1488549680_ir,co-vims-v1488550102_ir&reqno=1', ('json',))
+
+    def test__api_retfmt_cart_addall(self):
+        "[test_return_formats.py] return formats /__cart/addall.[fmt]"
+        self._run_status_equal('/opus/__cart/reset.json?reqno=1', 200)
+        self._test_return_formats('/__cart/addall.[fmt]?volumeid=COVIMS_0006&reqno=1', ('json',))
+
+    def test__api_retfmt_cart_reset(self):
+        "[test_return_formats.py] return formats /__cart/reset.[fmt]"
+        self._test_return_formats('/__cart/reset.[fmt]', ('json',))
+
+    def test__api_retfmt_cart_download(self):
+        "[test_return_formats.py] return formats /__cart/download.[fmt]"
+        self._run_status_equal('/opus/__cart/reset.json?reqno=1', 200)
+        self._test_return_formats('/__cart/download.[fmt]', ('json',))
+
+    def test__api_retfmt_cart_download_opusid(self):
+        "[test_return_formats.py] return formats /api/download/opusid.[fmt]"
+        self._test_return_formats('/api/download/co-vims-v1488549680_ir.[fmt]', ('zip',))
+
+    def test__api_retfmt_cart_download_opusid_pvt(self):
+        "[test_return_formats.py] return formats /__api/download/opusid.[fmt]"
+        self._test_return_formats('/__api/download/co-vims-v1488549680_ir.[fmt]', ('zip',))
+
     # metadata/urls.py
 
     def test__api_retfmt_result_count(self):
