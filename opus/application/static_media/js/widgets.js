@@ -394,209 +394,178 @@ var o_widgets = {
             opus.widget_elements_drawn.unshift(slug);
 
         }
-        $.ajax({ url: "/opus/__forms/widget/" + slug + '.html?' + o_hash.getHash(),
-                 success: function(widget_str) {
+        $.ajax({
+            url: "/opus/__forms/widget/" + slug + '.html?' + o_hash.getHash(),
+            success: function(widget_str) {
                 $("#widget__"+slug).html(widget_str);
-            }}).done(function() {
+            }
+        }).done(function() {
+            // If there is no specified qtype in the url, we want default qtype to be in the url
+            // This will also put qtype in the url when a widget with qtype is open.
+            // Need to wait until api return to determine if the widget has qtype selections
+            let hash = o_hash.getHashArray();
+            let qtype = "qtype-" + slug;
+            if ($(`#widget__${slug} select[name="${qtype}"]`).length !== 0 && !hash[qtype]) {
+                let defaultOption = $(`#widget__${slug} select[name="${qtype}"]`).first("option").val();
+                opus.extras[qtype] = [defaultOption];
+                o_hash.updateHash();
+            }
 
-                // If there is no specified qtype in the url, we want default qtype to be in the url
-                // This will also put qtype in the url when a widget with qtype is open.
-                // Need to wait until api return to determine if the widget has qtype selections
-                let hash = o_hash.getHashArray();
-                let qtype = "qtype-" + slug;
-                if ($(`#widget__${slug} select[name="${qtype}"]`).length !== 0 && !hash[qtype]) {
-                    let defaultOption = $(`#widget__${slug} select[name="${qtype}"]`).first("option").val();
-                    opus.extras[qtype] = [defaultOption];
-                    o_hash.updateHash();
-                }
+            // If we have a string input widget open, initialize autocomplete for string input
+            let displayDropDownList = true;
+            let stringInputDropDown = $(`input[name="${slug}"].STRING`).autocomplete({
+                minLength: 1,
+                source: function(request, response) {
+                    let currentValue = request.term;
+                    let values = [];
 
-             // if we are drawing a range widget we need to check if the qtype dropdown is
-             // already defined by the url:
-             if (slug.match(/.*(1|2)/)) {
-               // this is a range widget
-                 let id = slug.match(/(.*)[1|2]/)[1];
+                    opus.lastRequestNo++;
+                    o_search.slugStringSearchChoicesReqno[slug] = opus.lastRequestNo;
 
-                // is the qtype constrained in the url?
-                 if ($.inArray('qtype-' + id, opus.extras) > -1 && opus.extras['qtype-'+id]) {
-                     // this widgets dropdown is defined in the url, update the html select dropdown to match
-                     $('#' + widget + ' select').attr("value", opus.extras['qtype-'+id]);
-                 }
-
-                 // add the helper icon to range widgets.
-                // add the helper text for range widgets
-                if ($('.' + widget).hasClass('range-widget') && $('.' + widget).find('select').length) {
-                    // this is a range widget and also the any/all/only dropdown is included
-                    let help_icon = '<a href = "#" data-toggle="popover" data-placement="left">\
-                                    <i class="fa fa-info-circle"></i></a>';
-
-                    $('.' + widget + ' .widget-main>ul>ul').append('<li class = "range-qtype-helper">' + help_icon + '</li>');
-
-                    $('.' + widget + ' .widget-main .range-qtype-helper a').popover({
-                      html:true,
-                      trigger:"focus",
-                      content: function() {
-                        return $('#range_query_widget_helper_html').html();
-                      }
-                    });
-                }
-             }
-
-
-             // If we have a string input widget open, initialize autocomplete for string input
-             let displayDropDownList = true;
-             let stringInputDropDown = $(`input[name="${slug}"].STRING`).autocomplete({
-                 minLength: 1,
-                 source: function(request, response) {
-                     let currentValue = request.term;
-                     let values = [];
-
-                     opus.lastRequestNo++;
-                     o_search.slugStringSearchChoicesReqno[slug] = opus.lastRequestNo;
-
-                     values.push(currentValue);
-                     opus.selections[slug] = values;
-                     let newHash = o_hash.updateHash(false);
-                     /*
-                     We are relying on URL order now to parse and get slugs before "&view" in the URL
-                     Opus will rewrite the URL when a URL is pasted, all the search related slugs would be moved ahead of "&view"
-                     Refer to hash.js getSelectionsFromHash and updateHash functions
-                     */
-                     let regexForHashWithSearchParams = /(.*)&view/;
-                     if (newHash.match(regexForHashWithSearchParams)) {
-                         newHash = newHash.match(regexForHashWithSearchParams)[1];
-                     }
-                     // Avoid calling api when some inputs are not valid
-                     if (!opus.allInputsValid) {
+                    values.push(currentValue);
+                    opus.selections[slug] = values;
+                    let newHash = o_hash.updateHash(false);
+                    /*
+                    We are relying on URL order now to parse and get slugs before "&view" in the URL
+                    Opus will rewrite the URL when a URL is pasted, all the search related slugs would be moved ahead of "&view"
+                    Refer to hash.js getSelectionsFromHash and updateHash functions
+                    */
+                    let regexForHashWithSearchParams = /(.*)&view/;
+                    if (newHash.match(regexForHashWithSearchParams)) {
+                        newHash = newHash.match(regexForHashWithSearchParams)[1];
+                    }
+                    // Avoid calling api when some inputs are not valid
+                    if (!opus.allInputsValid) {
                         return;
-                     }
-                     let url = `/opus/__api/stringsearchchoices/${slug}.json?` + newHash + "&reqno=" + opus.lastRequestNo;
-                     $.getJSON(url, function(stringSearchChoicesData) {
-                         if (stringSearchChoicesData.reqno < o_search.slugStringSearchChoicesReqno[slug]) {
-                             return;
-                         }
+                    }
+                    let url = `/opus/__api/stringsearchchoices/${slug}.json?` + newHash + "&reqno=" + opus.lastRequestNo;
+                    $.getJSON(url, function(stringSearchChoicesData) {
+                        if (stringSearchChoicesData.reqno < o_search.slugStringSearchChoicesReqno[slug]) {
+                            return;
+                        }
 
-                         if (stringSearchChoicesData.full_search) {
-                             o_search.searchMsg = "Results from entire database, not current search constraints";
-                         } else {
-                             o_search.searchMsg = "Results from current search constraints";
-                         }
+                        if (stringSearchChoicesData.full_search) {
+                            o_search.searchMsg = "Results from entire database, not current search constraints";
+                        } else {
+                            o_search.searchMsg = "Results from current search constraints";
+                        }
 
-                         if (stringSearchChoicesData.choices.length !== 0) {
-                             stringSearchChoicesData.choices.unshift(o_search.searchMsg);
-                             o_search.searchResultsNotEmpty = true;
-                         } else {
-                             o_search.searchResultsNotEmpty = false;
-                         }
-                         if (stringSearchChoicesData.truncated_results) {
-                             stringSearchChoicesData.choices.push(o_search.truncatedResultsMsg);
-                         }
+                        if (stringSearchChoicesData.choices.length !== 0) {
+                            stringSearchChoicesData.choices.unshift(o_search.searchMsg);
+                            o_search.searchResultsNotEmpty = true;
+                        } else {
+                            o_search.searchResultsNotEmpty = false;
+                        }
+                        if (stringSearchChoicesData.truncated_results) {
+                            stringSearchChoicesData.choices.push(o_search.truncatedResultsMsg);
+                        }
 
-                         let hintsOfString = stringSearchChoicesData.choices;
-                         o_search.truncatedResults = stringSearchChoicesData.truncated_results;
-                         response(displayDropDownList ? hintsOfString : null);
-                     });
-                 },
-                 focus: function(focusEvent, ui) {
-                     return false;
-                 },
-                 select: function(selectEvent, ui) {
-                     let displayValue = o_search.extractHtmlContent(ui.item.label);
-                     $(`input[name="${slug}"]`).val(displayValue);
-                     $(`input[name="${slug}"]`).trigger("change");
-                     // If an item in the list is selected, we update the hash with selected value
-                     // opus.selections[slug] = [displayValue];
-                     // o_hash.updateHash();
-                     return false;
-                 },
-             })
-             .keyup(function(keyupEvent) {
-                 /*
-                 When "enter" key is pressed:
-                 (1) autocomplete dropdown list is closed
-                 (2) change event is triggered if input is an empty string
-                 */
-                 if (keyupEvent.which === 13) {
-                     displayDropDownList = false;
-                     $(`input[name="${slug}"]`).autocomplete("close");
-                     let currentStringInputValue = $(`input[name="${slug}"]`).val().trim();
-                     if (currentStringInputValue === "") {
-                         $(`input[name="${slug}"]`).trigger("change");
-                     }
-                 } else {
-                     displayDropDownList = true;
-                 }
-             })
-             .focusout(function(focusoutEvent) {
-                 let currentStringInputValue = $(`input[name="${slug}"]`).val().trim();
-                 if (currentStringInputValue === "") {
-                     $(`input[name="${slug}"]`).trigger("change");
-                 }
-             })
-             .data( "ui-autocomplete" );
+                        let hintsOfString = stringSearchChoicesData.choices;
+                        o_search.truncatedResults = stringSearchChoicesData.truncated_results;
+                        response(displayDropDownList ? hintsOfString : null);
+                    });
+                },
+                focus: function(focusEvent, ui) {
+                    return false;
+                },
+                select: function(selectEvent, ui) {
+                    let displayValue = o_search.extractHtmlContent(ui.item.label);
+                    $(`input[name="${slug}"]`).val(displayValue);
+                    $(`input[name="${slug}"]`).trigger("change");
+                    // If an item in the list is selected, we update the hash with selected value
+                    // opus.selections[slug] = [displayValue];
+                    // o_hash.updateHash();
+                    return false;
+                },
+            })
+            .keyup(function(keyupEvent) {
+                /*
+                When "enter" key is pressed:
+                (1) autocomplete dropdown list is closed
+                (2) change event is triggered if input is an empty string
+                */
+                if (keyupEvent.which === 13) {
+                    displayDropDownList = false;
+                    $(`input[name="${slug}"]`).autocomplete("close");
+                    let currentStringInputValue = $(`input[name="${slug}"]`).val().trim();
+                    if (currentStringInputValue === "") {
+                        $(`input[name="${slug}"]`).trigger("change");
+                    }
+                } else {
+                    displayDropDownList = true;
+                }
+            })
+            .focusout(function(focusoutEvent) {
+                let currentStringInputValue = $(`input[name="${slug}"]`).val().trim();
+                if (currentStringInputValue === "") {
+                    $(`input[name="${slug}"]`).trigger("change");
+                }
+            })
+            .data( "ui-autocomplete" );
 
-             // element with ui-autocomplete-category class will not be selectable
-             let menuWidget = $(`input[name="${slug}"].STRING`).autocomplete("widget");
-             menuWidget.menu( "option", "items", "> :not(.ui-autocomplete-not-selectable)" );
+            // element with ui-autocomplete-category class will not be selectable
+            let menuWidget = $(`input[name="${slug}"].STRING`).autocomplete("widget");
+            menuWidget.menu( "option", "items", "> :not(.ui-autocomplete-not-selectable)" );
 
-             if (stringInputDropDown) {
-                 // Add header and footer for dropdown list
-                 stringInputDropDown._renderMenu = function(ul, items) {
-                   let self = this;
-                   $.each(items, function(index, item) {
+            if (stringInputDropDown) {
+                // Add header and footer for dropdown list
+                stringInputDropDown._renderMenu = function(ul, items) {
+                    let self = this;
+                    $.each(items, function(index, item) {
                        self._renderItem(ul, item );
-                   });
+                    });
 
-                   if (o_search.searchResultsNotEmpty) {
-                       ul.find("li:first").addClass("ui-state-disabled ui-autocomplete-not-selectable");
-                   }
-                   if (o_search.truncatedResults) {
-                       ul.find("li:last").addClass("ui-state-disabled ui-autocomplete-not-selectable");
-                   }
-                 };
-                 // Customized dropdown list item
-                 stringInputDropDown._renderItem = function(ul, item) {
-                     return $( "<li>" )
-                     .data( "ui-autocomplete-item", item )
-                     .attr( "data-value", item.value )
-                     // Need to wrap with <a> tag because of jquery-ui 1.10
-                     .append("<a>" + item.label + "</a>")
-                     .appendTo(ul);
-                 };
-             }
+                    if (o_search.searchResultsNotEmpty) {
+                        ul.find("li:first").addClass("ui-state-disabled ui-autocomplete-not-selectable");
+                    }
+                    if (o_search.truncatedResults) {
+                        ul.find("li:last").addClass("ui-state-disabled ui-autocomplete-not-selectable");
+                    }
+                };
+                // Customized dropdown list item
+                stringInputDropDown._renderItem = function(ul, item) {
+                    return $( "<li>" )
+                    .data( "ui-autocomplete-item", item )
+                    .attr( "data-value", item.value )
+                    // Need to wrap with <a> tag because of jquery-ui 1.10
+                    .append("<a>" + item.label + "</a>")
+                    .appendTo(ul);
+                };
+            }
 
-             // close autocomplete dropdown menu when y-axis scrolling happens
-             $("#widget-container").on("ps-scroll-y", function() {
-                 $("input.STRING").autocomplete("close");
-             });
+            // close autocomplete dropdown menu when y-axis scrolling happens
+            $("#widget-container").on("ps-scroll-y", function() {
+                $("input.STRING").autocomplete("close");
+            });
 
-             // add the spans that hold the hinting
-             try {
-                 $('#' + widget + ' ul label').after(function() {
+            // add the spans that hold the hinting
+            try {
+                $('#' + widget + ' ul label').after(function() {
                     let value = $(this).find('input').attr("value");
                     let span_id = 'hint__' + slug + '_' + value.replace(/ /g,'-').replace(/[^\w\s]/gi, '');  // special chars not allowed in id element
                     return '<span class = "hints" id = "' + span_id + '"></span>';
-                 });
-             } catch(e) { } // these only apply to mult widgets
+                });
+            } catch(e) { } // these only apply to mult widgets
 
 
-             if ($.inArray(slug,opus.widgets_fetching) > -1) {
-                 opus.widgets_fetching.splice(opus.widgets_fetching.indexOf(slug), 1);
-             }
+            if ($.inArray(slug,opus.widgets_fetching) > -1) {
+                opus.widgets_fetching.splice(opus.widgets_fetching.indexOf(slug), 1);
+            }
 
             if ($.isEmptyObject(opus.selections)) {
                 $('#widget__' + slug + ' .spinner').fadeOut('');
             }
-             opus.widgets_drawn.unshift(slug);
-             o_widgets.customWidgetBehaviors(slug);
-             o_widgets.scrollToWidget(widget);
-             o_search.getHinting(slug);
+            opus.widgets_drawn.unshift(slug);
+            o_widgets.customWidgetBehaviors(slug);
+            o_widgets.scrollToWidget(widget);
+            o_search.getHinting(slug);
 
-             if (deferredObj) {
-                 deferredObj.resolve();
-             }
+            if (deferredObj) {
+                deferredObj.resolve();
+            }
 
-      }); // end function success, end ajax
-     }, // end func
+        }); // end callback for .done()
+    }, // end getWidget function
 
 
      scrollToWidget: function(widget) {
