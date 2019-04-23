@@ -79,7 +79,7 @@ sections:
             desc: Get image results of a given size for a search.
             info:
                 size: thumb,small,med,full
-                fmt: json,html
+                fmt: json,html,csv,zip
                 GET param 1: search params (If not supplied, all results are returned)
                 GET param 2: order=column_slug,... (Column(s) to sort on; if not supplied, default sort order is used)
                 GET param 3: limit=N (The maximum number of observations to return; defaults to 100)
@@ -92,7 +92,7 @@ sections:
           - title: api/images.[fmt]
             desc: Get image results of all sizes for a search.
             info:
-                fmt: json,html
+                fmt: json,html,csv,zip
                 GET param 1: search params (If not supplied, all results are returned)
                 GET param 2: order=column_slug,... (Column(s) to sort on; if not supplied, default sort order is used)
                 GET param 3: limit=N (The maximum number of observations to return; defaults to 100)
@@ -107,7 +107,7 @@ sections:
             desc: Get an image of the given size for a single observation.
             info:
                 size: thumb,small,med,full
-                fmt: json,html
+                fmt: json,html,csv,zip
                 opus_id: valid opus_id (or old ring_obs_id)
                 JSON return: "{'path': root path of the preview directory (deprecated), 'data': ingle-element list: {'opus_id': opus_id, '<size>_url': full URL, '<size>_alt_text': alt text, '<size>_size_bytes': image size in bytes, '<size>_width': image width in pixels, '<size>_height': image height in pixels, 'path': oot path of preview directory (deprecated), 'img': path to image relative to root path (deprecated), 'url': full URL (deprecated)}"
             examples:

@@ -17,7 +17,7 @@ class ApiReturnFormatTests(TestCase, ApiTestHelper):
     def setUp(self):
         self.maxDiff = None
         settings.CACHE_KEY_PREFIX = 'opustest:' + settings.DB_SCHEMA_NAME
-        # logging.disable(logging.ERROR)
+        logging.disable(logging.ERROR)
         if settings.TEST_GO_LIVE: # pragma: no cover
             self.client = requests.Session()
         else:
@@ -131,7 +131,6 @@ class ApiReturnFormatTests(TestCase, ApiTestHelper):
         "[test_return_formats.py] return formats /__help/guide.[fmt]"
         self._test_return_formats('/__help/guide.[fmt]', ('html',))
 
-
     # metadata/urls.py
 
     def test__api_retfmt_result_count(self):
@@ -176,10 +175,6 @@ class ApiReturnFormatTests(TestCase, ApiTestHelper):
         "[test_return_formats.py] return formats /api/data.[fmt]"
         self._test_return_formats('/api/data.[fmt]', ('json', 'html', 'csv'))
 
-    def test__api_retfmt_data_pvt(self):
-        "[test_return_formats.py] return formats /__api/data.[fmt]"
-        self._test_return_formats('/__api/data.[fmt]', ('csv',))
-
     def test__api_retfmt_metadata(self):
         "[test_return_formats.py] return formats /api/metadata/opusid.[fmt]"
         self._test_return_formats('/api/metadata/vg-iss-2-s-c4362550.[fmt]', ('csv', 'json', 'html'))
@@ -219,6 +214,17 @@ class ApiReturnFormatTests(TestCase, ApiTestHelper):
     def test__api_retfmt_categories(self):
         "[test_return_formats.py] return formats /api/categories.[fmt]"
         self._test_return_formats('/api/categories.[fmt]?target=Jupiter', ('json',))
+
+    # search/urls.py
+
+    def test__api_retfmt_normalizeinput_pvt(self):
+        "[test_return_formats.py] return formats /__api/normalizeinput.[fmt]"
+        self._test_return_formats('/__api/normalizeinput.[fmt]?target=Jupiter&reqno=1', ('json',))
+
+    def test__api_retfmt_stringsearchchoices_pvt(self):
+        "[test_return_formats.py] return formats /__api/stringsearchchoices.[fmt]"
+        self._test_return_formats('/__api/stringsearchchoices/volumeid.[fmt]?volumeid=COISS_2002&reqno=1&target=Jupiter', ('json',))
+
 
 class ApiFormats:
     # slugs for testing
