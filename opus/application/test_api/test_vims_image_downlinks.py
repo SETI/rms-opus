@@ -9,8 +9,6 @@ from unittest import TestCase
 
 from rest_framework.test import APIClient, RequestsClient
 
-from test_return_formats import ApiFormats
-
 import settings
 
 ##################
@@ -158,7 +156,7 @@ class ApiVimsDownlinksTests(TestCase):
 ########################################
 ### Api url and payload for the test ###
 ########################################
-class ApiForVimsDownlinks(ApiFormats):
+class ApiForVimsDownlinks:
     opus_id_all = {
         "v1490874598": [
             "co-vims-v1490874598_001_ir",
@@ -216,8 +214,27 @@ class ApiForVimsDownlinks(ApiFormats):
         ],
     }
 
-    def __init__(self, target):
-        super().__init__(target)
+    def __init__(self, target="production"):
+        self.target = target
+        self.api_base = self.build_api_base()
+        self.api_all_files_base = self.build_api_all_files_base()
+        self.api_dict = self.build_api_dict()
+
+    def build_api_base(self):
+        """build up base api depending on target site: dev/production
+        """
+        if (not self.target or self.target == "production"
+            or self.target == "internal"): # pragma: no cover
+            return "https://tools.pds-rings.seti.org/opus/api/"
+        elif self.target == "dev": # pragma: no cover
+            return "http://dev.pds-rings.seti.org/opus/api/"
+        else: # pragma: no cover
+            assert False, self.target
+
+    def build_api_all_files_base(self):
+        """api/files.[fmt]
+        """
+        return self.api_base + "files."
 
     def build_api_dict(self):
         """Test info for api calls with VIMS product.
