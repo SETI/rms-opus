@@ -98,11 +98,11 @@ var o_hash = {
         return hash;
     },
 
-    // part is part of the hash, selections or prefs
+    // get both selections and extras (qtype) from hash.
     getSelectionsExtrasFromHash: function() {
         let hash = o_hash.getHash();
         if (!hash) {
-            return;
+            return [undefined, undefined];
         }
 
         hash = (hash.search('&') > -1 ? hash.split('&') : [hash]);

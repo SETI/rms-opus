@@ -405,7 +405,8 @@ var o_widgets = {
                 let hash = o_hash.getHashArray();
                 let qtype = "qtype-" + slug;
                 if ($(`#widget__${slug} select[name="${qtype}"]`).length !== 0 && !hash[qtype]) {
-                    opus.extras[qtype] = [opus.qtype_default];
+                    let defaultOption = $(`#widget__${slug} select[name="${qtype}"]`).first("option").val();
+                    opus.extras[qtype] = [defaultOption];
                     o_hash.updateHash();
                 }
 
