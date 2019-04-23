@@ -68,34 +68,34 @@ var opus = {
     // additional defaults are in base.html
 
     // searching - making queries
-    selections:{},        // the user's search
-    extras:{},            // extras to the query, carries units, string_selects, qtypes, size, refreshes result count!!
-    last_selections:{},   // last_ are used to moniter changes
-    last_hash:'',
-    result_count:0,
+    selections: {},        // the user's search
+    extras: {},            // extras to the query, carries units, string_selects, qtypes, size, refreshes result count!!
+    last_selections: {},   // last_ are used to moniter changes
+    last_hash: '',
+    result_count: 0,
     qtype_default: 'any',
     force_load: true, // set this to true to force load() when selections haven't changed
 
     // searching - ui
-    widgets_drawn:[], // keeps track of what widgets are actually drawn
-    widgets_fetching:[], // this widget is currently being fetched
-    widget_elements_drawn:[], // the element is drawn but the widget might not be fetched yet
-    widget_full_sizes:{}, // when a widget is minimized and doesn't have a custom size defined we keep track of what the full size was so we can restore it when they unminimize/maximize widget
+    widgets_drawn: [], // keeps track of what widgets are actually drawn
+    widgets_fetching: [], // this widget is currently being fetched
+    widget_elements_drawn: [], // the element is drawn but the widget might not be fetched yet
+    widget_full_sizes: {}, // when a widget is minimized and doesn't have a custom size defined we keep track of what the full size was so we can restore it when they unminimize/maximize widget
     menu_state: {'cats':['obs_general']},
     default_widgets: default_widgets.split(','),
-    widget_click_timeout:0,
+    widget_click_timeout: 0,
 
     // browse tab
-    pages:0, // total number of pages this result
+    pages: 0, // total number of pages this result
 
     // cart
-    cart_change:true, // cart has changed since last load of cart_tab
+    cart_change: true, // cart has changed since last load of cart_tab
     cart_q_intrvl: false,
-    cart_options_viz:false,
+    cart_options_viz: false,
 
     // these are for the process that detects there was a change in the selection criteria and updates things
-    main_timer:false,
-    main_timer_interval:1000,
+    main_timer: false,
+    main_timer_interval: 1000,
 
     allInputsValid: true,
 
@@ -117,6 +117,8 @@ var opus = {
             return;
         }
 
+        // console.log("=== selections from getSelectionsFromHash ===")
+        // console.log(selections);
         // if (!$.isEmptyObject(opus.selections) || !opus.checkIfDrawnWidgetsAreDefault() || !opus.checkIfMetadataAreDefault()) {
         if ($.isEmptyObject(selections) || !opus.checkIfDrawnWidgetsAreDefault()) {
             $(".op-reset-button button").prop("disabled", false);
@@ -147,6 +149,18 @@ var opus = {
                     modifiedSelections[slug] = selections[slug][0].replace("+", " ").split(",");
                 }
             });
+
+            // debug print out
+            console.log("=== selections ===")
+            console.log(selections);
+            console.log("=== modifiedSelections ===")
+            console.log(modifiedSelections);
+            console.log("=== opus.selections ===");
+            console.log(opus.selections);
+            console.log("=== opus.last_selections ===");
+            console.log(opus.last_selections);
+            console.log("Are modifiedSelections and opus.selections the same ?");
+            console.log(o_utils.areObjectsEqual(modifiedSelections, opus.selections));
 
             // if data in selections !== data in opus.selections, it means selections are modified manually in url, reload the page (modified url in url bar and hit enter)
             if (!o_utils.areObjectsEqual(modifiedSelections, opus.selections)) {

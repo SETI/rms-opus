@@ -107,6 +107,7 @@ var o_hash = {
 
         hash = (hash.search('&') > -1 ? hash.split('&') : [hash]);
         let selections = {};  // the new set of pairs that will not include the result_table specific session vars
+
         $.each(hash, function(index, pair) {
             let slug = pair.split('=')[0];
             let value = pair.split('=')[1];
