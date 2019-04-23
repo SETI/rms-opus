@@ -133,95 +133,95 @@ class ApiReturnFormatTests(TestCase, ApiTestHelper):
 
     # metadata/urls.py
 
-    def test__api_retfmt_result_count(self):
+    def test__api_retfmt_metadata_result_count(self):
         "[test_return_formats.py] return formats /api/meta/result_count.[fmt]"
         self._test_return_formats('/api/meta/result_count.[fmt]?planet=Saturn&target=Pan', ('json', 'html', 'csv'))
 
-    def test__api_retfmt_result_count_pvt(self):
+    def test__api_retfmt_metadata_result_count_pvt(self):
         "[test_return_formats.py] return formats /__api/meta/result_count.[fmt]"
         self._test_return_formats('/__api/meta/result_count.[fmt]?planet=Saturn&target=Pan&reqno=1', ('json'))
 
-    def test__api_retfmt_mults(self):
+    def test__api_retfmt_metadata_mults(self):
         "[test_return_formats.py] return formats /api/meta/mults/slug.[fmt]"
         self._test_return_formats('/api/meta/mults/planet.[fmt]?target=Jupiter', ('json', 'html', 'csv'))
 
-    def test__api_retfmt_mults_pvt(self):
+    def test__api_retfmt_metadata_mults_pvt(self):
         "[test_return_formats.py] return formats /__api/meta/mults/slug.[fmt]"
         self._test_return_formats('/__api/meta/mults/planet.[fmt]?target=Jupiter&reqno=1', ('json'))
 
-    def test__api_retfmt_endpoints(self):
+    def test__api_retfmt_metadata_endpoints(self):
         "[test_return_formats.py] return formats /api/meta/range/endpoints/slug.[fmt]"
         self._test_return_formats('/api/meta/range/endpoints/wavelength1.[fmt]?planet=Jupiter&target=Callisto', ('json', 'html', 'csv'))
 
-    def test__api_retfmt_endpoints_pvt(self):
+    def test__api_retfmt_metadata_endpoints_pvt(self):
         "[test_return_formats.py] return formats /__api/meta/range/endpoints/slug.[fmt]"
         self._test_return_formats('/__api/meta/range/endpoints/wavelength1.[fmt]?planet=Jupiter&target=Callisto&reqno=1', ('json'))
 
-    def test__api_retfmt_fields_slug(self):
+    def test__api_retfmt_metadata_fields_slug(self):
         "[test_return_formats.py] return formats /api/fields/slug.[fmt]"
         self._test_return_formats('/api/fields/mission.[fmt]', ('json', 'csv'))
 
-    def test__api_retfmt_fields(self):
+    def test__api_retfmt_metadata_fields(self):
         "[test_return_formats.py] return formats /api/fields.[fmt]"
         self._test_return_formats('/api/fields/mission.[fmt]', ('json', 'csv'))
 
     # results/urls.py
 
-    def test__api_retfmt_dataimages_pvt(self):
+    def test__api_retfmt_results_dataimages_pvt(self):
         "[test_return_formats.py] return formats /__api/dataimages.[fmt]"
         self._test_return_formats('/__api/dataimages.[fmt]?target=Jupiter&limit=2&reqno=1', ('json',))
 
-    def test__api_retfmt_data(self):
+    def test__api_retfmt_results_data(self):
         "[test_return_formats.py] return formats /api/data.[fmt]"
         self._test_return_formats('/api/data.[fmt]', ('json', 'html', 'csv'))
 
-    def test__api_retfmt_metadata(self):
+    def test__api_retfmt_results_metadata(self):
         "[test_return_formats.py] return formats /api/metadata/opusid.[fmt]"
         self._test_return_formats('/api/metadata/vg-iss-2-s-c4362550.[fmt]', ('csv', 'json', 'html'))
 
-    def test__api_retfmt_metadata_v2(self):
+    def test__api_retfmt_results_metadata_v2(self):
         "[test_return_formats.py] return formats /api/metadata_v2/opusid.[fmt]"
         self._test_return_formats('/api/metadata_v2/vg-iss-2-s-c4362550.[fmt]', ('csv', 'json', 'html'))
 
-    def test__api_retfmt_metadata_v2_pvt(self):
+    def test__api_retfmt_results_metadata_v2_pvt(self):
         "[test_return_formats.py] return formats /__api/metadata_v2/opusid.[fmt]"
         self._test_return_formats('/__api/metadata_v2/vg-iss-2-s-c4362550.[fmt]', ('csv', 'json', 'html'))
 
-    def test__api_retfmt_images(self):
+    def test__api_retfmt_results_images(self):
         "[test_return_formats.py] return formats /api/images.[fmt]"
         self._test_return_formats('/api/images.[fmt]?target=Jupiter&limit=2', ('csv', 'json', 'html', 'zip'))
 
-    def test__api_retfmt_image(self):
+    def test__api_retfmt_results_image(self):
         "[test_return_formats.py] return formats /api/image/small/opusid.[fmt]"
         self._test_return_formats('/api/image/small/vg-iss-2-s-c4362550.[fmt]', ('csv', 'json', 'html', 'zip'))
 
-    def test__api_retfmt_files_opusid(self):
+    def test__api_retfmt_results_files_opusid(self):
         "[test_return_formats.py] return formats /api/files/opusid.[fmt]"
         self._test_return_formats('/api/files/vg-iss-2-s-c4362550.[fmt]', ('json',))
 
-    def test__api_retfmt_files(self):
+    def test__api_retfmt_results_files(self):
         "[test_return_formats.py] return formats /api/files.[fmt]"
         self._test_return_formats('/api/files.[fmt]?target=Jupiter&limit=2', ('json',))
 
-    def test__api_retfmt_categories_opusid(self):
+    def test__api_retfmt_results_categories_opusid(self):
         "[test_return_formats.py] return formats /api/categories/opusid.[fmt]"
         self._test_return_formats('/api/categories/vg-iss-2-s-c4362550.[fmt]', ('json',))
 
-    def test__api_retfmt_categories_opusid_pvt(self):
+    def test__api_retfmt_results_categories_opusid_pvt(self):
         "[test_return_formats.py] return formats /__api/categories/opusid.[fmt]"
         self._test_return_formats('/__api/categories/vg-iss-2-s-c4362550.[fmt]', ('json',))
 
-    def test__api_retfmt_categories(self):
+    def test__api_retfmt_results_categories(self):
         "[test_return_formats.py] return formats /api/categories.[fmt]"
         self._test_return_formats('/api/categories.[fmt]?target=Jupiter', ('json',))
 
     # search/urls.py
 
-    def test__api_retfmt_normalizeinput_pvt(self):
+    def test__api_retfmt_search_normalizeinput_pvt(self):
         "[test_return_formats.py] return formats /__api/normalizeinput.[fmt]"
         self._test_return_formats('/__api/normalizeinput.[fmt]?target=Jupiter&reqno=1', ('json',))
 
-    def test__api_retfmt_stringsearchchoices_pvt(self):
+    def test__api_retfmt_search_stringsearchchoices_pvt(self):
         "[test_return_formats.py] return formats /__api/stringsearchchoices.[fmt]"
         self._test_return_formats('/__api/stringsearchchoices/volumeid.[fmt]?volumeid=COISS_2002&reqno=1&target=Jupiter', ('json',))
 
