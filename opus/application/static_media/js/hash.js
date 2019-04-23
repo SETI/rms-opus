@@ -99,7 +99,7 @@ var o_hash = {
     },
 
     // part is part of the hash, selections or prefs
-    getSelectionsFromHash: function() {
+    getSelectionsExtrasFromHash: function() {
         let hash = o_hash.getHash();
         if (!hash) {
             return;
@@ -107,21 +107,28 @@ var o_hash = {
 
         hash = (hash.search('&') > -1 ? hash.split('&') : [hash]);
         let selections = {};  // the new set of pairs that will not include the result_table specific session vars
+        let extras = {}; // store qtype from url
 
         $.each(hash, function(index, pair) {
             let slug = pair.split('=')[0];
             let value = pair.split('=')[1];
 
             if (!(slug in opus.prefs) && value) {
-                if (slug in selections) {
-                    selections[slug].push(value);
+
+                if (slug.match(/qtype/)) {
+                    extras[slug] = [value];
                 } else {
-                    selections[slug] = [value];
+                    if (slug in selections) {
+                        selections[slug].push(value);
+                    } else {
+                        selections[slug] = [value];
+                    }
                 }
+
             }
         });
 
-        return selections;
+        return [selections, extras];
     },
 
 

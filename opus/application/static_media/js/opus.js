@@ -55,6 +55,7 @@ var opus = {
         "page": default_pages,  // what page are we on, per view, default defined in header.html
                                // like {"gallery":1, "data":1, "cart_gallery":1, "cart_data":1 };
         "limit": 100, // results per page
+        "cart_page": 1, // this will be removed in startobs branch, we put it here for now because it should not be included in selections
      }, // pref changes do not trigger load()
 
     col_labels: [],  // contains labels that match prefs.cols, which are slugs for each column label
@@ -111,7 +112,11 @@ var opus = {
         whether to fire an ajax call.
         */
 
-        let selections = o_hash.getSelectionsFromHash();
+        // let selections = o_hash.getSelectionsFromHash();
+        let [selections, extras] = o_hash.getSelectionsExtrasFromHash();
+        console.log("=== From getSelectionsExtrasFromHash ===");
+        console.log(selections);
+        console.log(extras);
 
         if (selections === undefined) {
             return;
