@@ -77,7 +77,7 @@ var o_hash = {
 
     getHashArray: function() {
         let hashArray = [];
-        let hashInfo = o_hash.getHash()
+        let hashInfo = o_hash.getHash();
         $.each(hashInfo.split('&'), function(index, valuePair) {
             let paramArray = valuePair.split("=");
             hashArray[paramArray[0]] = paramArray[1];
