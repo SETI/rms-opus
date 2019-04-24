@@ -131,11 +131,13 @@ var opus = {
         // compare selections and last selections, extras and last extras
         if (o_utils.areObjectsEqual(selections, opus.lastSelections) && o_utils.areObjectsEqual(extras, opus.lastExtras)) {
             // selections have not changed from opus.lastSelections
+            // AND extras have not changed from opus.lastExtras
             if (!opus.force_load) { // so we do only non-reloading pref changes
                 return;
             }
         } else {
             // selections in the url hash is different from opus.lastSelections
+            // OR extras in the url hash is different from opus.lastExtras
             // reset the pages:
             opus.prefs.page = default_pages;
 

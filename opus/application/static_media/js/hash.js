@@ -119,12 +119,7 @@ var o_hash = {
                     // each qtype will only have one value at a time
                     extras[slug] = [value];
                 } else {
-                    if (slug in selections) {
-                        selections[slug].push(value);
-                    } else {
-                        // selections[slug] = [value];
-                        selections[slug] = value.replace("+", " ").split(",");
-                    }
+                    selections[slug] = value.replace("+", " ").split(",");
                 }
 
             }
