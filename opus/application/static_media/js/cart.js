@@ -405,7 +405,7 @@ var o_cart = {
                 if ($("#op-cart-status-error-msg").hasClass("show")) {
                     o_cart.statusDataErrorCollector.push(statusData.error);
                 } else {
-                    $("#op-cart-status-error-msg .modal-body").text(statusData.error)
+                    $("#op-cart-status-error-msg .modal-body").text(statusData.error);
                     $("#op-cart-status-error-msg").modal("show");
                 }
                 // reload data

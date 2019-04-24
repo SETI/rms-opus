@@ -187,7 +187,7 @@ def api_get_data_and_images(request):
 
     order_list = []
     for idx, (slug, label) in enumerate(zip(order_slugs, order_labels)):
-        removeable = idx != len(order_slugs)-1;
+        removeable = not slug.endswith('opusid')
         desc = False
         if slug[0] == '-':
             slug = slug[1:]
