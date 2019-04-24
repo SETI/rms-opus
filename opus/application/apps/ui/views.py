@@ -1098,6 +1098,25 @@ def api_normalize_url(request):
     return ret
 
 
+@never_cache
+def api_dummy(request):
+    """This API does nothing and is used for network performance testing.
+
+    This is a PRIVATE API.
+
+    Format: __dummy.json
+
+    JSON return:
+        {}
+    """
+    api_code = enter_api_call('api_dummy', request)
+
+    ret = json_response({})
+
+    exit_api_call(api_code, ret)
+    return ret
+
+
 ################################################################################
 #
 # SUPPORT ROUTINES

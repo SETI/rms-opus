@@ -299,7 +299,7 @@ SLUGS_NOT_IN_DB = ('browse', 'order', 'page', 'startobs',
                    'colls_browse', 'colls_order', 'colls_page',
                    'colls_startobs',
                    'cols', 'col_chooser', 'detail', 'download',
-                   'gallery_data_viewer', 'limit', 'loc_type',
+                   'gallery_data_viewer', 'ignorelog', 'limit', 'loc_type',
                    'range', 'reqno', 'request',
                    'types', 'view', 'widgets', 'widgets2', '__sessionid')
 
