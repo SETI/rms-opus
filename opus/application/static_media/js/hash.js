@@ -115,7 +115,7 @@ var o_hash = {
 
             if (!(slug in opus.prefs) && value) {
 
-                if (slug.match(/qtype/)) {
+                if (slug.startsWith("qtype-")) {
                     // each qtype will only have one value at a time
                     extras[slug] = [value];
                 } else {

@@ -71,7 +71,7 @@ var opus = {
     // searching - making queries
     selections: {},        // the user's search
     extras: {},            // extras to the query, carries units, string_selects, qtypes, size, refreshes result count!!
-    lastSelections: {},   // last_ are used to moniter changes
+    lastSelections: {},   // last_ are used to monitor changes
     lastExtras: {},
     result_count: 0,
     qtype_default: 'any',
@@ -130,14 +130,10 @@ var opus = {
 
         // compare selections and last selections, extras and last extras
         if (o_utils.areObjectsEqual(selections, opus.lastSelections) && o_utils.areObjectsEqual(extras, opus.lastExtras)) {
-            // selections have not changed from opus.lastSelections
-            // AND extras have not changed from opus.lastExtras
             if (!opus.force_load) { // so we do only non-reloading pref changes
                 return;
             }
         } else {
-            // selections in the url hash is different from opus.lastSelections
-            // OR extras in the url hash is different from opus.lastExtras
             // reset the pages:
             opus.prefs.page = default_pages;
 
@@ -209,8 +205,6 @@ var opus = {
         }
         o_search.validateRangeInput(normalizedData, true);
 
-        // query string has changed
-        // opus.lastSelections = selections;
         opus.lastResultCountRequestNo++;
         let resultCountHash = o_hash.getHash();
 
