@@ -190,8 +190,8 @@ var o_cart = {
             if (data.reqno < o_cart.lastRequestNo) {
                 return;
             }
-            if (opus.col_labels.length === 0) {
-                opus.col_labels = data.columns;
+            if (opus.colLabels.length === 0) {
+                opus.colLabels = data.columns;
             }
             o_browse.renderGalleryAndTable(data, this.url);
             o_browse.updateSortOrder(data);

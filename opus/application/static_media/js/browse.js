@@ -812,7 +812,7 @@ var o_browse = {
             // update the data table w/the new columns
             if (!o_utils.areObjectsEqual(opus.prefs.cols, currentSelectedMetadata)) {
                 o_browse.resetData();
-                o_browse.initTable(opus.col_labels);
+                o_browse.initTable(opus.colLabels, opus.colLabelsNoUnits);
                 opus.prefs.page.gallery = 1;
                 o_browse.loadData(1);
             } else {
@@ -1161,7 +1161,7 @@ var o_browse = {
         o_hash.updateHash(true);
     },
 
-    initTable: function(columns) {
+    initTable: function(columns, columnsNoUnits) {
         // prepare table and headers...
         $(".dataTable thead > tr > th").detach();
         $(".dataTable tbody > tr").detach();
@@ -1175,7 +1175,8 @@ var o_browse = {
         // we only want to sort the column based on first slug in order for now
         order.splice(1);
 
-        opus.col_labels = columns;
+        opus.colLabels = columns;
+        opus.colLabelsNoUnits = columnsNoUnits;
 
         // check all box
         //let checkbox = "<input type='checkbox' name='all' value='all' class='multichoice'>";
@@ -1183,11 +1184,8 @@ var o_browse = {
         $.each(columns, function(index, header) {
             let slug = slugs[index];
 
-            // Store labels of each header in data-label attributes
-            let count = (header.match(/\(Max\)|\(Min\)/) || []).length;
-            let indexOfUnit = header.indexOf("(");
-            indexOfUnit = count ? header.indexOf("(", indexOfUnit + 1) : indexOfUnit;
-            let label = (indexOfUnit === -1) ? header : header.slice(0, indexOfUnit);
+            // Store label (without units) of each header in data-label attributes
+            let label = columnsNoUnits[index];
 
             // Assigning data attribute for table column sorting
             let icon = ($.inArray(slug, order) >= 0 ? "-down" : ($.inArray("-"+slug, order) >= 0 ? "-up" : ""));
@@ -1348,7 +1346,7 @@ var o_browse = {
             }
 
             if (!o_browse.galleryBegun) {
-                o_browse.initTable(data.columns);
+                o_browse.initTable(data.columns, data.columns_no_units);
 
                 if (!$(selector).data("infiniteScroll")) {
                     $(selector).infiniteScroll({
@@ -1626,7 +1624,7 @@ var o_browse = {
 
         // list columns + values
         let html = "<dl>";
-        $.each(opus.col_labels, function(index, columnLabel) {
+        $.each(opus.colLabels, function(index, columnLabel) {
             let value = o_browse.galleryData[opusId][index];
             html += `<dt>${columnLabel}:</dt><dd>${value}</dd>`;
         });
