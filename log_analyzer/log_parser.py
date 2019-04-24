@@ -1,18 +1,18 @@
 import datetime
 import functools
+import ipaddress
 import itertools
 import socket
 import textwrap
 from collections import deque
 from ipaddress import IPv4Address
 from random import randrange, choice, seed
-from typing import List, Iterator, Dict, NamedTuple, Optional, Tuple, Iterable, TextIO, Any
+from typing import List, Iterator, Dict, NamedTuple, Optional, TextIO, Any
 
 from jinja2 import Environment, FileSystemLoader, StrictUndefined
 
+from abstract_session_info import AbstractConfiguration, AbstractSessionInfo
 from log_entry import LogEntry
-from session_info import SessionInfo, SessionInfoGenerator, ActionFlags
-from slug import Info
 
 JINJA_ENVIRONMENT = Environment(
     loader=FileSystemLoader("templates/"),
@@ -25,15 +25,15 @@ JINJA_ENVIRONMENT = Environment(
 )
 
 
-class _LiveSession(NamedTuple):
+class LiveSession(NamedTuple):
     """Used by LogParser.run_realtime to keep track of active session"""
     host_ip: IPv4Address
-    session_info: SessionInfo
+    session_info: AbstractSessionInfo
     start_time_string: str
     start_time: datetime.datetime
     timeout: datetime.datetime
 
-    def with_timeout(self, timeout: datetime.datetime) -> '_LiveSession':
+    def with_timeout(self, timeout: datetime.datetime) -> 'LiveSession':
         return self._replace(timeout=timeout)
 
 
@@ -50,9 +50,10 @@ class Entry(NamedTuple):
 class Session(NamedTuple):
     host_ip: IPv4Address
     entries: List[Entry]
-    search_slug_list: List[Tuple[str, bool]]
-    column_slug_list: List[Tuple[str, bool]]
-    action_flags: ActionFlags
+    session_info: AbstractSessionInfo
+    # search_slug_list: List[Tuple[str, bool]]
+    # column_slug_list: List[Tuple[str, bool]]
+    # action_flags: Flag
     id: str
 
     def start_time(self) -> datetime.datetime:
@@ -60,15 +61,6 @@ class Session(NamedTuple):
 
     def duration(self) -> datetime.timedelta:
         return self.entries[-1].log_entry.time - self.entries[0].log_entry.time
-
-    def slug_info(self) -> Iterable[Tuple[str, List[Tuple[str, bool]]]]:
-        return ('search', self.search_slug_list), ('column', self.column_slug_list)
-
-    def flag_info(self) -> List[str]:
-        if not self.action_flags:
-            return []
-        result = str(self.action_flags).replace('ActionFlags.', '').replace('_', '-').lower().split('|')
-        return result[::-1]
 
 
 class HostInfo(NamedTuple):
@@ -90,18 +82,19 @@ class LogParser:
     """
     Code that reads through the log entries, groups them by host and by session, and prints them out in a nice format.
     """
-    _session_info_generator: SessionInfoGenerator
+    configuration: AbstractConfiguration
     _uses_reverse_dns: bool
     _session_timeout: datetime.timedelta
     _output: TextIO
     _uses_local: bool
     _by_ip: bool
     _id_generator: Iterator[str]
+    _ignored_ips: List[ipaddress.IPv4Network]
 
-    def __init__(self, session_info_generator: SessionInfoGenerator, uses_reverse_dns: bool,
-                 session_timeout_minutes: int, output: TextIO, api_host_url: str, uses_html: bool,
-                 uses_local: bool, by_ip: bool, **_: Any):
-        self._session_info_generator = session_info_generator
+    def __init__(self, configuration: AbstractConfiguration, *,
+                 uses_reverse_dns: bool, session_timeout_minutes: int, output: TextIO, api_host_url: str,
+                 uses_html: bool, uses_local: bool, by_ip: bool, ignored_ips: List[ipaddress.IPv4Network], **_: Any):
+        self.configuration = configuration
         self._uses_reverse_dns = uses_reverse_dns
         self._session_timeout = datetime.timedelta(minutes=session_timeout_minutes)
         self._output = output
@@ -109,6 +102,7 @@ class LogParser:
         self._uses_html = uses_html
         self._uses_local = uses_local
         self._by_ip = by_ip
+        self._ignored_ips = ignored_ips
         self._id_generator = (f'{value:X}' for value in itertools.count(100))
 
     def run_batch(self, log_entries: List[LogEntry]) -> None:
@@ -172,10 +166,13 @@ class LogParser:
         appearing in other sessions.  Note that log_entries is typically a generator tailing a file.
         """
         output = self._output
-        live_sessions: Dict[IPv4Address, _LiveSession] = {}
+        live_sessions: Dict[IPv4Address, LiveSession] = {}
         previous_host_ip: Optional[IPv4Address] = None
         need_host_separator: bool = False
         for entry in log_entries:
+            if any(entry.host_ip in ipNetwork for ipNetwork in self._ignored_ips):
+                continue
+
             current_time = entry.time
             next_timeout = current_time + self._session_timeout
 
@@ -199,13 +196,13 @@ class LogParser:
                     continue
             else:
                 is_just_created_session = True
-                session_info = self._session_info_generator.create()
+                session_info = self.configuration.create_session_info()
                 entry_info, _ = session_info.parse_log_entry(entry)
                 if not entry_info:
                     continue
-                current_session = _LiveSession(host_ip=entry.host_ip, session_info=session_info,
-                                               start_time_string=entry.time_string, start_time=entry.time,
-                                               timeout=next_timeout)
+                current_session = LiveSession(host_ip=entry.host_ip, session_info=session_info,
+                                              start_time_string=entry.time_string, start_time=entry.time,
+                                              timeout=next_timeout)
                 live_sessions[entry.host_ip] = current_session
 
             # Print out information about this entry.
@@ -228,11 +225,13 @@ class LogParser:
         sessions: List[Session] = []
         log_entries.sort(key=lambda entry: (entry.host_ip, entry.time))
         for session_host_ip, session_log_entries_iter in itertools.groupby(log_entries, lambda entry: entry.host_ip):
+            if any(session_host_ip in ipNetwork for ipNetwork in self._ignored_ips):
+                continue
             session_log_entries = deque(session_log_entries_iter)
             while session_log_entries:
                 # If the first entry has no information, it doesn't start a session
                 entry = session_log_entries.popleft()
-                session_info = self._session_info_generator.create(uses_html=uses_html)
+                session_info = self.configuration.create_session_info(uses_html=uses_html)
                 entry_info, opus_url = session_info.parse_log_entry(entry)
                 if not entry_info:
                     continue
@@ -255,17 +254,9 @@ class LogParser:
                     if entry_info:
                         current_session_entries.append(create_session_entry(entry, entry_info, opus_url))
 
-                def slug_info(info: Dict[str, Info]) -> List[Tuple[str, bool]]:
-                    return [(slug, info[slug].flags.is_obsolete())
-                            for slug in sorted(info, key=str.lower)
-                            # Rob doesn't want to see slugs that start with 'qtype-' in the list.
-                            if not slug.startswith('qtype-')]
-
                 sessions.append(Session(host_ip=session_host_ip,
                                         entries=current_session_entries,
-                                        search_slug_list=slug_info(session_info.session_search_slugs),
-                                        column_slug_list=slug_info(session_info.session_column_slugs),
-                                        action_flags=session_info.action_flags,
+                                        session_info=session_info,
                                         id=next(self._id_generator)))
         return sessions
 
@@ -291,11 +282,10 @@ class LogParser:
                                                                     lambda host_info: host_info.start_time().date())]
 
         # noinspection PyTypeChecker
-        action_flags_list = list(ActionFlags)  # python type checker doesn't realize that class of enum is Iterable.
         summary_context = {'host_infos_by_ip': host_infos_by_ip,
                            'host_infos_by_date': host_infos_by_date,
                            'api_host_url': self._api_host_url,
-                           'action_flags_list': action_flags_list,
+                           'action_flags_list': self.configuration.get_session_flag_list(),
                            }
         template = JINJA_ENVIRONMENT.get_template('log_analysis.html')
         for result in template.generate(**summary_context):

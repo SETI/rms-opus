@@ -1,45 +1,14 @@
-import abc
-import ipaddress
 import re
 import urllib.parse
 from enum import auto, Flag
-from typing import List, Dict, Optional, Match, Tuple, Pattern, Callable, Any
+from typing import List, Dict, Optional, Match, Any, Iterable, Tuple
 
-from markupsafe import Markup
-
-import slug
+from opus import slug
 from log_entry import LogEntry
-from query_handler import QueryHandler, ColumnSlugInfo
+from opus.query_handler import QueryHandler, ColumnSlugInfo
 
-SESSION_INFO = Tuple[List[str], Optional[str]]
-
-
-class SessionInfoGenerator:
-    """
-    A generator class for creating a SessionInfo.
-    """
-    _slug_map: slug.ToInfoMap
-    _default_column_slug_info: ColumnSlugInfo
-    _ignored_ips: List[ipaddress.IPv4Network]
-    _debug_show_all: bool
-
-    DEFAULT_COLUMN_INFO = 'opusid,instrument,planet,target,time1,observationduration'.split(',')
-
-    def __init__(self, slug_info: slug.ToInfoMap, ignored_ips: List[ipaddress.IPv4Network], debug_show_all: bool):
-        """
-
-        :param slug_info: Information about the slugs we expect to see in the URL
-        :param ignored_ips: A list representing hosts that we want to ignore
-        """
-        self._slug_map = slug_info
-        self._default_column_slug_info = QueryHandler.get_column_slug_info(self.DEFAULT_COLUMN_INFO, slug_info)
-        self._ignored_ips = ignored_ips
-        self._debug_show_all = debug_show_all
-
-    def create(self, uses_html: bool = False) -> 'SessionInfo':
-        """Create a new SessionInfo"""
-        return SessionInfoImpl(
-            self._slug_map, self._default_column_slug_info, self._ignored_ips, self._debug_show_all, uses_html)
+from abstract_session_info import SESSION_INFO, AbstractSessionInfo, AbstractConfiguration, ForPattern
+from opus.slug import Info
 
 
 class ActionFlags(Flag):
@@ -51,25 +20,55 @@ class ActionFlags(Flag):
     HAS_OBSOLETE_SLUG = auto()
 
 
-class SessionInfo(metaclass=abc.ABCMeta):
+class Configuration(AbstractConfiguration):
+    """
+    A generator class for creating a SessionInfo.
+    """
+    _slug_map: slug.ToInfoMap
+    _default_column_slug_info: ColumnSlugInfo
+    _debug_show_all: bool
+
+    DEFAULT_COLUMN_INFO = 'opusid,instrument,planet,target,time1,observationduration'.split(',')
+
+    def __init__(self, *, api_host_url: str, debug_show_all: bool, **_: Any):
+        self._slug_map = slug.ToInfoMap(api_host_url)
+        self._default_column_slug_info = QueryHandler.get_column_slug_info(self.DEFAULT_COLUMN_INFO, self._slug_map)
+        self._debug_show_all = debug_show_all
+
+    def create_session_info(self, uses_html: bool = False) -> 'SessionInfo':
+        """Create a new SessionInfo"""
+        return SessionInfo(self._slug_map, self._default_column_slug_info, self._debug_show_all, uses_html)
+
+    def get_session_flag_list(self) -> List[Flag]:
+        # noinspection PyTypeChecker
+        return list(ActionFlags)
+
+
+class SessionInfo(AbstractSessionInfo):
     """
     A class that keeps track of information about the current user session and parses log entries based on information
     that it already knows about this session.
 
-    This is an abstract class.  The user should only get instances of this class from the SessionInfoGenerator.
+    This is an abstract class.  The user should only get instances of this class from the Configuration.
     """
     _session_search_slugs: Dict[str, slug.Info]
     _session_column_slugs: Dict[str, slug.Info]
     _action_flags: ActionFlags
+    _previous_product_info_type: Optional[List[str]]
+    _query_handler: QueryHandler
+    _show_all: bool
 
-    def __init__(self) -> None:
+    def __init__(self, slug_map: slug.ToInfoMap, default_column_slug_info: ColumnSlugInfo,
+                 show_all: bool, uses_html: bool):
         self._session_search_slugs = dict()
         self._session_column_slugs = dict()
         self._action_flags = ActionFlags(0)
+        self._query_handler = QueryHandler(self, slug_map, default_column_slug_info, uses_html)
+        self._uses_html = uses_html
+        self._show_all = show_all
 
-    @abc.abstractmethod
-    def parse_log_entry(self, entry: LogEntry) -> SESSION_INFO:
-        raise Exception()
+        # The previous value of types when downloading a collection
+        self._previous_product_info_type = None
 
     def add_search_slug(self, slug: str, slug_info: slug.Info) -> None:
         self._session_search_slugs[slug] = slug_info
@@ -93,66 +92,19 @@ class SessionInfo(metaclass=abc.ABCMeta):
     def fetched_gallery(self) -> None:
         self._action_flags |= ActionFlags.FETCHED_GALLERY
 
-    @property
-    def session_search_slugs(self) -> Dict[str, slug.Info]:
-        return self._session_search_slugs
+    def get_slug_info(self) -> Iterable[Tuple[str, List[Tuple[str, bool]]]]:
+        def fixit(info: Dict[str, Info]) -> List[Tuple[str, bool]]:
+            return [(slug, info[slug].flags.is_obsolete())
+                    for slug in sorted(info, key=str.lower)
+                    # Rob doesn't want to see slugs that start with 'qtype-' in the list.
+                    if not slug.startswith('qtype-')]
 
-    @property
-    def session_column_slugs(self) -> Dict[str, slug.Info]:
-        return self._session_column_slugs
+        search_slug_list = fixit(self._session_search_slugs)
+        column_slug_list = fixit(self._session_column_slugs)
+        return ('search', search_slug_list), ('column', column_slug_list)
 
-    @property
-    def action_flags(self) -> ActionFlags:
+    def get_session_flags(self) -> ActionFlags:
         return self._action_flags
-
-    @staticmethod
-    def quote_and_join_list(string_list: List[str]) -> str:
-        return ', '.join(f'"{string}"' for string in string_list)
-
-    @staticmethod
-    def safe_format(format_string: str, *args: Any) -> str:
-        return Markup(format_string).format(*args)
-
-
-class ForPattern:
-    """
-    A Decorator used by SessionInfo.
-    A method is decorated with the regex of the URLs that it knows how to parse.
-    """
-
-    METHOD = Callable[[Any, Dict[str, str], Match[str]], SESSION_INFO]
-
-    PATTERNS: List[Tuple[Pattern[str], METHOD]] = []
-
-    def __init__(self, pattern: str):
-        self.pattern = re.compile(pattern + '$')
-
-    def __call__(self, fn: METHOD, *args: Any, **kwargs: Any) -> METHOD:
-        # We leave the function unchanged, but we add the regular expression and the function to our list of
-        # regexp/function pairs
-        ForPattern.PATTERNS.append((self.pattern, fn))
-        return fn
-
-
-# noinspection PyUnusedLocal
-class SessionInfoImpl(SessionInfo):
-    _ignored_ips: List[ipaddress.IPv4Network]
-    _previous_product_info_type: Optional[List[str]]
-    _query_handler: QueryHandler
-    _show_all: bool
-
-    def __init__(self, slug_map: slug.ToInfoMap, default_column_slug_info: ColumnSlugInfo,
-                 ignored_ips: List[ipaddress.IPv4Network], show_all: bool, uses_html: bool):
-        """This initialization should only be called by SessionInfoGenerator above.
-        """
-        super(SessionInfoImpl, self).__init__()
-        self._ignored_ips = ignored_ips
-        self._query_handler = QueryHandler(self, slug_map, default_column_slug_info, uses_html)
-        self._uses_html = uses_html
-        self._show_all = show_all
-
-        # The previous value of types when downloading a collection
-        self._previous_product_info_type = None
 
     def parse_log_entry(self, entry: LogEntry) -> SESSION_INFO:
         """Parses a log record within the context of the current session."""
@@ -164,8 +116,6 @@ class SessionInfoImpl(SessionInfo):
             return [], None
         path = entry.url.path
         if not path.startswith('/opus/__'):
-            return [], None
-        if any(entry.host_ip in ipNetwork for ipNetwork in self._ignored_ips):
             return [], None
 
         # See if the path matches one of our patterns.

@@ -1,13 +1,12 @@
 import argparse
+import importlib
 import ipaddress
 import operator
 import sys
 from typing import List, Optional
 
-import slug
 from log_entry import LogReader
 from log_parser import LogParser
-from session_info import SessionInfoGenerator
 
 DEFAULT_FIELDS_PREFIX = 'https://tools.pds-rings.seti.org'
 LOCAL_SLUGS_PREFIX = 'file:///users/fy/SETI/pds-opus'
@@ -57,12 +56,12 @@ def main(arguments: Optional[List[str]] = None) -> None:
 
     parser.add_argument('log_files', nargs=argparse.REMAINDER, help='log files')
     args = parser.parse_args(arguments)
-
-    slugs = slug.ToInfoMap(LOCAL_SLUGS_PREFIX if args.uses_local else args.api_host_url)
     # args.ignored_ip comes out as a list of lists, and it needs to be flattened.
-    ignored_ips = [ip for arg_list in args.ignore_ip for ip in arg_list]
-    session_info_generator = SessionInfoGenerator(slugs, ignored_ips, args.debug_show_all)
-    log_parser = LogParser(session_info_generator, **vars(args))
+    args.ignored_ips = [ip for arg_list in args.ignore_ip for ip in arg_list]
+
+    module = importlib.import_module("opus.session_info")
+    configuration = module.Configuration(**vars(args)) # type: ignore
+    log_parser = LogParser(configuration, **vars(args))
 
     if args.realtime:
         if len(args.log_files) != 1:

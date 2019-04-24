@@ -8,7 +8,7 @@ from typing import Dict, Tuple, List, Optional, Any, cast
 
 from markupsafe import Markup
 
-import slug as slug
+from opus import slug as slug
 
 SearchSlugInfo = Dict[slug.Family, List[Tuple[slug.Info, str]]]
 ColumnSlugInfo = Dict[slug.Family, slug.Info]
