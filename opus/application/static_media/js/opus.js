@@ -114,7 +114,13 @@ var opus = {
 
         let [selections, extras] = o_hash.getSelectionsExtrasFromHash();
 
-        if (selections === undefined && extras === undefined) {
+        // Note: When URL has an empty hash, both selections and extras returned from getSelectionsExtrasFromHash will be undefined.
+        // There won't be a case with only one of them is undefined.
+        if (selections === undefined) {
+            // safety check, the if condition should never be true
+            if (extras !== undefined) {
+                console.error("Returned extras is wrong when URL has an empty hash")
+            }
             return;
         }
 
