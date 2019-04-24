@@ -469,9 +469,7 @@ var o_browse = {
     updateOrderIndicator: function(headerOrderIndicator, pillOrderIndicator, isDescending, slug) {
         let headerOrder = isDescending ? "sort-desc" : "sort-asc";
         let headerOrderArrow = isDescending ? tableSortUpArrow : tableSortDownArrow;
-        let isPillOrderDesc = isDescending ? "true" : "false";
         let pillOrderTooltip = isDescending ? "Change to ascending sort" : "Change to descending sort";
-        let pillOrderArrow = isDescending ? pillSortUpArrow : pillSortDownArrow;
 
         // If header already exists, we update the header arrow, else we do nothing
         if (headerOrderIndicator && headerOrderIndicator.length !== 0) {
@@ -488,16 +486,16 @@ var o_browse = {
         // Re-render each pill
         let listHtml = "";
         $.each(opus.prefs.order, function(index, orderEntry) {
-            isPillOrderDesc = orderEntry[0] === "-" ? "true" : "false";
-            pillOrderArrow = orderEntry[0] === "-" ? pillSortUpArrow : pillSortDownArrow;
-            let order = orderEntry[0] === "-" ? orderEntry.slice(1) : orderEntry;
+            let isPillOrderDesc = orderEntry[0] === "-" ? "true" : "false";
+            let pillOrderArrow = orderEntry[0] === "-" ? pillSortUpArrow : pillSortDownArrow;
+            let orderEntrySlug = orderEntry[0] === "-" ? orderEntry.slice(1) : orderEntry;
 
             // retrieve label from either displayed header's data-label attribute or displayed pill's text
-            let label = $(`#browse .dataTable th a[data-slug="${order}"]`).data("label") || $(`#browse .sort-contents span[data-slug="${order}"] .flip-sort`).text();
+            let label = $(`#browse .dataTable th a[data-slug="${orderEntrySlug}"]`).data("label") || $(`#browse .sort-contents span[data-slug="${orderEntrySlug}"] .flip-sort`).text();
 
             listHtml += "<li class='list-inline-item'>";
-            listHtml += `<span class='badge badge-pill badge-light' data-slug="${order}" data-descending="${isPillOrderDesc}">`;
-            if (order !== "opusid") {
+            listHtml += `<span class='badge badge-pill badge-light' data-slug="${orderEntrySlug}" data-descending="${isPillOrderDesc}">`;
+            if (orderEntrySlug !== "opusid") {
                 listHtml += "<span class='remove-sort' title='Remove metadata field from sort'><i class='fas fa-times-circle'></i></span> ";
             }
             listHtml += `<span class='flip-sort' title="${pillOrderTooltip}">`;
