@@ -408,6 +408,8 @@ var o_browse = {
             if ((e.which || e.keyCode) == 27) { // esc - close modals
                 $("#galleryView").modal('hide');
                 $("#metadataSelector").modal('hide');
+                // reset range select
+                o_browse.undoRangeSelect();
                 opus.hideHelpPanel();
             }
             if ($("#galleryView").hasClass("show")) {
