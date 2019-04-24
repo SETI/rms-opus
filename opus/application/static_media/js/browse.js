@@ -485,35 +485,27 @@ var o_browse = {
             headers.attr("class", defaultTableSortArrow);
         }
 
-        // If pill already exists, we update the pill, else we re-render the pill
-        // Note: we have to re-render the pill if user clicks on opus id table header, because in this case, we only want one pill (opus id) displayed.
-        if (pillOrderIndicator.length !== 0 && slug !== "opusid") {
-            pillOrderIndicator.parent().attr("data-descending", `${isPillOrderDesc}`);
-            pillOrderIndicator.attr("title", `${pillOrderTooltip}`);
-            pillOrderIndicator.find("i").attr("class", `${pillOrderArrow}`);
-        } else {
-            // re-render each pill
-            let listHtml = "";
-            $.each(opus.prefs.order, function(index, orderEntry) {
-                isPillOrderDesc = orderEntry[0] === "-" ? "true" : "false";
-                pillOrderArrow = orderEntry[0] === "-" ? pillSortUpArrow : pillSortDownArrow;
-                orderEntry = orderEntry[0] === "-" ? orderEntry.slice(1) : orderEntry;
+        // Re-render each pill
+        let listHtml = "";
+        $.each(opus.prefs.order, function(index, orderEntry) {
+            isPillOrderDesc = orderEntry[0] === "-" ? "true" : "false";
+            pillOrderArrow = orderEntry[0] === "-" ? pillSortUpArrow : pillSortDownArrow;
+            orderEntry = orderEntry[0] === "-" ? orderEntry.slice(1) : orderEntry;
 
-                // retrieve label from either displayed header's data-label attribute or displayed pill's text
-                let label = $(`#browse .dataTable th a[data-slug="${orderEntry}"]`).data("label") || $(`#browse .sort-contents span[data-slug="${orderEntry}"] .flip-sort`).text();
+            // retrieve label from either displayed header's data-label attribute or displayed pill's text
+            let label = $(`#browse .dataTable th a[data-slug="${orderEntry}"]`).data("label") || $(`#browse .sort-contents span[data-slug="${orderEntry}"] .flip-sort`).text();
 
-                listHtml += "<li class='list-inline-item'>";
-                listHtml += `<span class='badge badge-pill badge-light' data-slug="${orderEntry}" data-descending="${isPillOrderDesc}">`;
-                if (orderEntry !== "opusid") {
-                    listHtml += "<span class='remove-sort' title='Remove metadata field from sort'><i class='fas fa-times-circle'></i></span> ";
-                }
-                listHtml += `<span class='flip-sort' title="${pillOrderTooltip}">`;
-                listHtml += label;
-                listHtml += ` <i class="${pillOrderArrow}"></i>`;
-                listHtml += "</span></span></li>";
-            });
-            $(".sort-contents").html(listHtml);
-        }
+            listHtml += "<li class='list-inline-item'>";
+            listHtml += `<span class='badge badge-pill badge-light' data-slug="${orderEntry}" data-descending="${isPillOrderDesc}">`;
+            if (orderEntry !== "opusid") {
+                listHtml += "<span class='remove-sort' title='Remove metadata field from sort'><i class='fas fa-times-circle'></i></span> ";
+            }
+            listHtml += `<span class='flip-sort' title="${pillOrderTooltip}">`;
+            listHtml += label;
+            listHtml += ` <i class="${pillOrderArrow}"></i>`;
+            listHtml += "</span></span></li>";
+        });
+        $(".sort-contents").html(listHtml);
     },
 
     renderSortedDataFromBeginning: function() {
