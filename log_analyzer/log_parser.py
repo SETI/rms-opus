@@ -1,17 +1,14 @@
 import datetime
-import functools
 import ipaddress
 import itertools
-import socket
-import textwrap
 from collections import deque
 from ipaddress import IPv4Address
-from random import randrange, choice, seed
 from typing import List, Iterator, Dict, NamedTuple, Optional, TextIO, Any
 
 from jinja2 import Environment, FileSystemLoader, StrictUndefined
 
 from abstract_session_info import AbstractConfiguration, AbstractSessionInfo
+from ip_to_host_converter import IpToHostConverter
 from log_entry import LogEntry
 
 JINJA_ENVIRONMENT = Environment(
@@ -82,27 +79,27 @@ class LogParser:
     """
     Code that reads through the log entries, groups them by host and by session, and prints them out in a nice format.
     """
-    configuration: AbstractConfiguration
-    _uses_reverse_dns: bool
+    _configuration: AbstractConfiguration
     _session_timeout: datetime.timedelta
     _output: TextIO
-    _uses_local: bool
     _by_ip: bool
-    _id_generator: Iterator[str]
     _ignored_ips: List[ipaddress.IPv4Network]
+    _ip_to_host_converter: IpToHostConverter
+    _id_generator: Iterator[str]
 
     def __init__(self, configuration: AbstractConfiguration, *,
-                 uses_reverse_dns: bool, session_timeout_minutes: int, output: TextIO, api_host_url: str,
-                 uses_html: bool, uses_local: bool, by_ip: bool, ignored_ips: List[ipaddress.IPv4Network], **_: Any):
-        self.configuration = configuration
-        self._uses_reverse_dns = uses_reverse_dns
+                 session_timeout_minutes: int, output: TextIO,
+                 uses_html: bool, by_ip: bool,
+                 ip_to_host_converter: IpToHostConverter,
+                 ignored_ips: List[ipaddress.IPv4Network],
+                 **_: Any):
+        self._configuration = configuration
         self._session_timeout = datetime.timedelta(minutes=session_timeout_minutes)
         self._output = output
-        self._api_host_url = api_host_url
         self._uses_html = uses_html
-        self._uses_local = uses_local
         self._by_ip = by_ip
         self._ignored_ips = ignored_ips
+        self._ip_to_host_converter = ip_to_host_converter
         self._id_generator = (f'{value:X}' for value in itertools.count(100))
 
     def run_batch(self, log_entries: List[LogEntry]) -> None:
@@ -118,7 +115,7 @@ class LogParser:
                 # Rob wants the .html output to be in reverse order
                 all_sessions.sort(key=lambda session: session.start_time(), reverse=self._uses_html)
                 sessions_list = [[session] for session in all_sessions]
-            host_infos = [HostInfo(ip=ip, name=self.__get_reverse_dns_from_ip(ip), sessions=sessions)
+            host_infos = [HostInfo(ip=ip, name=self._ip_to_host_converter.convert(ip), sessions=sessions)
                           for sessions in sessions_list
                           for ip in [sessions[0].host_ip]]
             if by_ip:
@@ -134,29 +131,11 @@ class LogParser:
             self.__generate_batch_html_output(host_infos_by_ip=do_grouping(by_ip=True),
                                               host_infos_by_time=do_grouping(by_ip=False))
 
-    def show_slugs(self, log_entries: List[LogEntry]) -> None:
+    def run_summary(self, log_entries: List[LogEntry]) -> None:
         """Print out all slugs that have appeared in the text."""
         output = self._output
         all_sessions = self.__get_session_list(log_entries, uses_html=False)
-
-        def show_info(info_type: str) -> None:
-            all_info: Dict[str, bool] = {}
-            for session in all_sessions:
-                slug_list = session.column_slug_list if info_type == 'column' else session.search_slug_list
-                for slug, is_obsolete in slug_list:
-                    all_info[slug] = is_obsolete
-            result = ', '.join(
-                # Use ~ as a non-breaking space for textwrap.  We replace it with a space, below
-                (slug + '~[OBSOLETE]') if all_info[slug] else slug
-                for slug in sorted(all_info, key=str.lower))
-
-            wrapped = textwrap.fill(result, 100,
-                                    initial_indent=f'{info_type.title()} slugs: ', subsequent_indent='    ')
-            print(wrapped.replace('~', ' '), file=output)
-
-        show_info('search')
-        print('', file=output)
-        show_info('column')
+        self._configuration.show_summary(all_sessions, self._output)
 
     def run_realtime(self, log_entries: Iterator[LogEntry]) -> None:
         """
@@ -196,7 +175,7 @@ class LogParser:
                     continue
             else:
                 is_just_created_session = True
-                session_info = self.configuration.create_session_info()
+                session_info = self._configuration.create_session_info()
                 entry_info, _ = session_info.parse_log_entry(entry)
                 if not entry_info:
                     continue
@@ -213,6 +192,7 @@ class LogParser:
                     print('\n----------\n', file=output)
                 need_host_separator = True
                 previous_host_ip = current_session.host_ip
+
                 hostname_from_ip = self.__get_hostname_from_ip(current_session.host_ip)
                 postscript = '' if is_just_created_session else ' CONTINUED'
                 print(f'Host {hostname_from_ip}: {current_session.start_time_string}{postscript}', file=output)
@@ -231,7 +211,7 @@ class LogParser:
             while session_log_entries:
                 # If the first entry has no information, it doesn't start a session
                 entry = session_log_entries.popleft()
-                session_info = self.configuration.create_session_info(uses_html=uses_html)
+                session_info = self._configuration.create_session_info(uses_html=uses_html)
                 entry_info, opus_url = session_info.parse_log_entry(entry)
                 if not entry_info:
                     continue
@@ -280,15 +260,10 @@ class LogParser:
         host_infos_by_date = [(date, list(values))
                               for date, values in itertools.groupby(host_infos_by_time,
                                                                     lambda host_info: host_info.start_time().date())]
-
-        # noinspection PyTypeChecker
-        summary_context = {'host_infos_by_ip': host_infos_by_ip,
-                           'host_infos_by_date': host_infos_by_date,
-                           'api_host_url': self._api_host_url,
-                           'action_flags_list': self.configuration.get_session_flag_list(),
-                           }
         template = JINJA_ENVIRONMENT.get_template('log_analysis.html')
-        for result in template.generate(**summary_context):
+        for result in template.generate(host_infos_by_ip=host_infos_by_ip,
+                                        host_infos_by_date=host_infos_by_date,
+                                        **self._configuration.additional_template_info()):
             self._output.write(result)
 
     def __print_entry_info(self, this_entry: LogEntry, this_entry_info: List[str],
@@ -300,44 +275,12 @@ class LogParser:
             print(f'              {info}', file=self._output)
 
     def __get_hostname_from_ip(self, ip: IPv4Address) -> str:
-        name = self.__get_reverse_dns_from_ip(ip)
+        name = self._ip_to_host_converter.convert(ip)
         if name:
             return f'{name} ({ip})'
         else:
             return f'{ip}'
 
-    def __get_reverse_dns_from_ip(self, ip: IPv4Address) -> Optional[str]:
-        """Returns the hostname of the ip if we can find it.  Otherwise None."""
-        if not self._uses_reverse_dns:
-            return None
-        elif self._uses_local:
-            return self.__get_fake_host_by_address(ip)
-        else:
-            return self.__get_host_by_address(ip)
 
-    @staticmethod
-    @functools.lru_cache(maxsize=None)
-    def __get_host_by_address(ip: IPv4Address) -> Optional[str]:
-        """Call to the socket implementation, but it catches errors and caches the results."""
-        try:
-            name, _, _ = socket.gethostbyaddr(str(ip))
-            return name
-        except OSError:
-            return None
 
-    COMPANIES = ('nasa', 'cia', 'pets', 'whitehouse', 'toysRus', 'sears', 'enron', 'pan-am', 'twa')
-    ISPS = ('comcast', 'verizon', 'warner')
-    TLDS = ('gov', 'mil', 'us', 'fr', 'uk', 'edu', 'es', 'eu')
 
-    @classmethod
-    @functools.lru_cache(maxsize=None)
-    def __get_fake_host_by_address(cls, ip: IPv4Address) -> Optional[str]:
-        seed(str(ip))  # seemingly random, but deterministic, so we'll get the same result between runs.
-        i = randrange(5)
-        if i == 0:
-            ip_str = str(ip).replace('.', '-')
-            return f'{choice(cls.ISPS)}.{ip_str}.{choice(cls.TLDS)}'
-        elif i == 1:
-            return None
-        else:
-            return f'{choice(cls.COMPANIES)}.{randrange(256)}.{choice(cls.TLDS)}'

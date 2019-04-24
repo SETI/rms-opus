@@ -1,7 +1,7 @@
 import abc
 import re
 from enum import Flag
-from typing import List, Dict, Optional, Match, Tuple, Pattern, Callable, Any
+from typing import List, Dict, Optional, Match, Tuple, Pattern, Callable, Any, TextIO
 
 from markupsafe import Markup
 
@@ -16,7 +16,11 @@ class AbstractConfiguration(metaclass=abc.ABCMeta):
         raise Exception()
 
     @abc.abstractmethod
-    def get_session_flag_list(self) -> List[Flag]:
+    def additional_template_info(self) -> Dict[str, Any]:
+        raise Exception()
+
+    @abc.abstractmethod
+    def show_summary(self, sessions: List['log_parser.Session'], output: TextIO) -> None:
         raise Exception()
 
 

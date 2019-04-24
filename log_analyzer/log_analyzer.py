@@ -7,6 +7,7 @@ from typing import List, Optional
 
 from log_entry import LogReader
 from log_parser import LogParser
+from ip_to_host_converter import IpToHostConverter
 
 DEFAULT_FIELDS_PREFIX = 'https://tools.pds-rings.seti.org'
 LOCAL_SLUGS_PREFIX = 'file:///users/fy/SETI/pds-opus'
@@ -23,9 +24,9 @@ def main(arguments: Optional[List[str]] = None) -> None:
                        help='Watch a single log file in realtime')
     group.add_argument('--batch', '-b', action='store_true',
                        help='Print a report on one or more completed log files')
-    group.add_argument('--slug-summary', action='store_true', dest='show_slugs',
+    group.add_argument('--summary', action='store_true', dest='summary',
                        help="Show the slugs that have been used in a log file")
-    group.add_argument('--xxfake', action='store_true', help=argparse.SUPPRESS, dest='fake')  # For testing only
+    group.add_argument('--xxfake-realtime', action='store_true', help=argparse.SUPPRESS, dest='fake_realtime')
 
     group2 = parser.add_mutually_exclusive_group()
     group2.add_argument('--by-ip', action='store_true', dest='by_ip',
@@ -56,8 +57,11 @@ def main(arguments: Optional[List[str]] = None) -> None:
 
     parser.add_argument('log_files', nargs=argparse.REMAINDER, help='log files')
     args = parser.parse_args(arguments)
+
     # args.ignored_ip comes out as a list of lists, and it needs to be flattened.
     args.ignored_ips = [ip for arg_list in args.ignore_ip for ip in arg_list]
+    # Another fake argument we need
+    args.ip_to_host_converter = IpToHostConverter.get_ip_to_host_converter(args.uses_reverse_dns, args.uses_local)
 
     module = importlib.import_module("opus.session_info")
     configuration = module.Configuration(**vars(args)) # type: ignore
@@ -74,9 +78,9 @@ def main(arguments: Optional[List[str]] = None) -> None:
         log_entries_list = LogReader.read_logs(args.log_files)
         if args.batch:
             log_parser.run_batch(log_entries_list)
-        elif args.show_slugs:
-            log_parser.show_slugs(log_entries_list)
-        elif args.fake:
+        elif args.summary:
+            log_parser.run_summary(log_entries_list)
+        elif args.fake_realtime:
             log_entries_list.sort(key=operator.attrgetter('time'))
             log_parser.run_realtime(iter(log_entries_list))
 

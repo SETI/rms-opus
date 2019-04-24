@@ -1,13 +1,15 @@
+import collections
 import re
+import textwrap
 import urllib.parse
 from enum import auto, Flag
-from typing import List, Dict, Optional, Match, Any, Iterable, Tuple
-
-from opus import slug
-from log_entry import LogEntry
-from opus.query_handler import QueryHandler, ColumnSlugInfo
+from typing import List, Dict, Optional, Match, Any, Iterable, Tuple, TextIO, cast
 
 from abstract_session_info import SESSION_INFO, AbstractSessionInfo, AbstractConfiguration, ForPattern
+from log_entry import LogEntry
+from log_parser import Session
+from opus import slug
+from opus.query_handler import QueryHandler, ColumnSlugInfo
 from opus.slug import Info
 
 
@@ -26,6 +28,7 @@ class Configuration(AbstractConfiguration):
     """
     _slug_map: slug.ToInfoMap
     _default_column_slug_info: ColumnSlugInfo
+    _api_host_url: str
     _debug_show_all: bool
 
     DEFAULT_COLUMN_INFO = 'opusid,instrument,planet,target,time1,observationduration'.split(',')
@@ -33,15 +36,40 @@ class Configuration(AbstractConfiguration):
     def __init__(self, *, api_host_url: str, debug_show_all: bool, **_: Any):
         self._slug_map = slug.ToInfoMap(api_host_url)
         self._default_column_slug_info = QueryHandler.get_column_slug_info(self.DEFAULT_COLUMN_INFO, self._slug_map)
+        self._api_host_url = api_host_url
         self._debug_show_all = debug_show_all
 
     def create_session_info(self, uses_html: bool = False) -> 'SessionInfo':
         """Create a new SessionInfo"""
         return SessionInfo(self._slug_map, self._default_column_slug_info, self._debug_show_all, uses_html)
 
-    def get_session_flag_list(self) -> List[Flag]:
-        # noinspection PyTypeChecker
-        return list(ActionFlags)
+    def additional_template_info(self) -> Dict[str, Any]:
+        return {
+            'api_host_url': self._api_host_url,
+            # noinspection PyTypeChecker
+            'action_flags_list': list(ActionFlags),
+        }
+
+    def show_summary(self, sessions: List[Session], output: TextIO) -> None:
+        all_info: Dict[str, Dict[str, bool]] = collections.defaultdict(dict)
+        for session in sessions:
+            session_info = cast(SessionInfo, session.session_info)
+            for info_type, slug_and_flags in session_info.get_slug_info():
+                for slug, is_obsolete in slug_and_flags:
+                    all_info[info_type][slug] = is_obsolete
+
+        def show_info(info_type: str) -> None:
+            result = ', '.join(
+                # Use ~ as a non-breaking space for textwrap.  We replace it with a space, below
+                (slug + '~[OBSOLETE]') if all_info[slug] else slug
+                for slug in sorted(all_info[info_type], key=str.lower))
+            wrapped = textwrap.fill(result, 100,
+                                    initial_indent=f'{info_type.title()} slugs: ', subsequent_indent='    ')
+            print(wrapped.replace('~', ' '), file=output)
+
+        show_info('search')
+        print('', file=output)
+        show_info('column')
 
 
 class SessionInfo(AbstractSessionInfo):
