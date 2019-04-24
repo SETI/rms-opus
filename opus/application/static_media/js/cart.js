@@ -192,6 +192,7 @@ var o_cart = {
             }
             if (opus.colLabels.length === 0) {
                 opus.colLabels = data.columns;
+                opus.colLabelsNoUnits = data.columns_no_units;
             }
             o_browse.renderGalleryAndTable(data, this.url);
             o_browse.updateSortOrder(data);

@@ -101,7 +101,8 @@ def api_get_data_and_images(request):
                                         'descending': True/False,
                                         'removeable': True/False},
          'count':                       len(page),
-         'columns':             columns with units(corresponds to <col1> etc. in 'metadata'),
+         'columns':             columns with units
+                                (corresponds to <col1> etc. in 'metadata'),
          'columns_no_units':    columns without units,
          'reqno':               reqno
         }

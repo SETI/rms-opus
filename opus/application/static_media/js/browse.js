@@ -284,7 +284,7 @@ var o_browse = {
             let opusidOrder = (hash.order && hash.order.match(/(-?opusid)/)) ? hash.order.match(/(-?opusid)/)[0] : "opusid";
             let isDescending = true;
             let orderIndicator = $(this).find("span:last");
-            let pillOrderIndicator = $(`.sort-contents span[data-slug="${orderBy}"] .flip-sort`)
+            let pillOrderIndicator = $(`.sort-contents span[data-slug="${orderBy}"] .flip-sort`);
             o_browse.reRenderData = true;
 
             if (orderIndicator.data("sort") === "sort-asc") {
@@ -490,14 +490,14 @@ var o_browse = {
         $.each(opus.prefs.order, function(index, orderEntry) {
             isPillOrderDesc = orderEntry[0] === "-" ? "true" : "false";
             pillOrderArrow = orderEntry[0] === "-" ? pillSortUpArrow : pillSortDownArrow;
-            orderEntry = orderEntry[0] === "-" ? orderEntry.slice(1) : orderEntry;
+            let order = orderEntry[0] === "-" ? orderEntry.slice(1) : orderEntry;
 
             // retrieve label from either displayed header's data-label attribute or displayed pill's text
-            let label = $(`#browse .dataTable th a[data-slug="${orderEntry}"]`).data("label") || $(`#browse .sort-contents span[data-slug="${orderEntry}"] .flip-sort`).text();
+            let label = $(`#browse .dataTable th a[data-slug="${order}"]`).data("label") || $(`#browse .sort-contents span[data-slug="${order}"] .flip-sort`).text();
 
             listHtml += "<li class='list-inline-item'>";
-            listHtml += `<span class='badge badge-pill badge-light' data-slug="${orderEntry}" data-descending="${isPillOrderDesc}">`;
-            if (orderEntry !== "opusid") {
+            listHtml += `<span class='badge badge-pill badge-light' data-slug="${order}" data-descending="${isPillOrderDesc}">`;
+            if (order !== "opusid") {
                 listHtml += "<span class='remove-sort' title='Remove metadata field from sort'><i class='fas fa-times-circle'></i></span> ";
             }
             listHtml += `<span class='flip-sort' title="${pillOrderTooltip}">`;
