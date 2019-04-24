@@ -320,7 +320,8 @@ var o_browse = {
                 slug = "-"+slug;
             }
             let slugIndex = $.inArray(slug, opus.prefs.order);
-            // The clicked-on slug should always be in the order list; this is just a safety precaution
+            // The clicked-on slug should always be in the order list;
+            // The "if" is a safety precaution and the condition should always be true
             if (slugIndex >= 0) {
                 opus.prefs.order.splice(slugIndex, 1);
             }
@@ -353,7 +354,8 @@ var o_browse = {
                 isDescending = true;
             }
             let slugIndex = $.inArray(slug, opus.prefs.order);
-            // The clicked-on slug should always be in the order list; this is just a safety precaution
+            // The clicked-on slug should always be in the order list;
+            // The "if" is a safety precaution and the condition should always be true
             if (slugIndex >= 0) {
                 opus.prefs.order[slugIndex] = new_slug;
             }
