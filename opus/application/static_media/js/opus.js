@@ -119,7 +119,7 @@ var opus = {
         if (selections === undefined) {
             // safety check, the if condition should never be true
             if (extras !== undefined) {
-                console.error("Returned extras is wrong when URL has an empty hash")
+                console.error("Returned extras is wrong when URL has an empty hash");
             }
             return;
         }
