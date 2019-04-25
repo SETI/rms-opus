@@ -406,6 +406,7 @@ var o_widgets = {
             let hash = o_hash.getHashArray();
             let qtype = "qtype-" + slug;
             if ($(`#widget__${slug} select[name="${qtype}"]`).length !== 0 && !hash[qtype]) {
+                // When a widget with qtype is open, the value of the first option tag is the default value for qtype
                 let defaultOption = $(`#widget__${slug} select[name="${qtype}"]`).first("option").val();
                 opus.extras[qtype] = [defaultOption];
                 o_hash.updateHash();
