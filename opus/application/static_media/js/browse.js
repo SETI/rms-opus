@@ -327,7 +327,7 @@ var o_browse = {
             }
 
             // remove the sort pill right away
-            $(this).closest("li").remove();
+            $(this).closest(".list-inline-item").remove();
 
             o_hash.updateHash();
             // o_browse.updatePage();
