@@ -327,6 +327,7 @@ var o_browse = {
             }
 
             // remove the sort pill right away
+            // NOTE: we will find a better way to do this using data-xxx in the future.
             $(this).closest(".list-inline-item").remove();
 
             o_hash.updateHash();
