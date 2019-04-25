@@ -58,11 +58,11 @@ var opus = {
         "cart_page": 1, // this will be removed in startobs branch, we put it here for now because it should not be included in selections
      }, // pref changes do not trigger load()
 
-    col_labels: [],  // contains labels that match prefs.cols, which are slugs for each column label
+    colLabels: [],  // contains labels that match prefs.cols, which are slugs for each column label
                       // it's outside of prefs because those are things loaded into urls
                       // this is not
                       // note that this is also not a dictionary because we need to preserve the order.
-
+    colLabelsNoUnits: [], // store labels without units (similar to data in colLabels but no units )
 
     lastPageDrawn: {"browse":0, "cart":0},
 
