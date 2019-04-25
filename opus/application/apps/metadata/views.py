@@ -7,13 +7,12 @@
 #
 #    Format: api/meta/result_count.(?P<fmt>json|html|csv)
 #            __api/meta/result_count.json
-#    Format: api/meta/mults/(?P<slug>[-\w]+).(?P<fmt>json|zip|html|csv)
+#    Format: api/meta/mults/(?P<slug>[-\w]+).(?P<fmt>json|html|csv)
 #            __api/meta/mults/(?P<slug>[-\w]+).json
-#    Format: api/meta/range/endpoints/(?P<slug>[-\w]+)
-#            .(?P<fmt>json|zip|html|csv)
+#    Format: api/meta/range/endpoints/(?P<slug>[-\w]+).(?P<fmt>json|html|csv)
 #            __api/meta/range/endpoints/(?P<slug>[-\w]+).json
-#    Format: api/fields/(?P<slug>\w+).(?P<fmt>json|zip|html|csv)
-#        or: api/fields.(?P<fmt>json|zip|html|csv)
+#    Format: api/fields/(?P<slug>\w+).(?P<fmt>json|csv)
+#        or: api/fields.(?P<fmt>json|csv)
 #
 ################################################################################
 
@@ -312,8 +311,7 @@ def api_get_range_endpoints(request, slug, fmt, internal=False):
     Compute and return range widget endpoints (min, max, nulls) for the
     widget defined by [slug] based on current search defined in request.
 
-    Format: api/meta/range/endpoints/(?P<slug>[-\w]+)
-            .(?P<fmt>json|html|csv)
+    Format: api/meta/range/endpoints/(?P<slug>[-\w]+).(?P<fmt>json|html|csv)
             __api/meta/range/endpoints/(?P<slug>[-\w]+).json
     Arguments: Normal search arguments
                reqno=<N> (Required for internal, ignored for external)
@@ -509,20 +507,26 @@ def api_get_fields(request, fmt='json', slug=None):
     It's provides a list of all slugs in the database and helpful info
     about each one like label, dict/more_info links, etc.
 
-    Format: [__]api/fields/(?P<slug>\w+).(?P<fmt>json|zip|html|csv)
-        or: [__]api/fields.(?P<fmt>json|zip|html|csv)
+    Format: api/fields/(?P<slug>\w+).(?P<fmt>json|html|csv)
+        or: api/fields.(?P<fmt>json|html|csv)
     Arguments: [collapse=1]  Collapse surface geo slugs into one
 
-    Can return JSON, ZIP, HTML, or CSV.
+    Can return JSON or CSV.
 
-    Returned JSON is of the format:
-            surfacegeometryJUPITERsolarhourangle: {
-                more_info: {
-                    def: false,
-                    more_info: false
-                },
-                label: "Solar Hour Angle"
-            }
+    Returned JSON:
+        {"time1":
+            {"label": "Observation Start Time",
+             "search_label": "Observation Time",
+             "full_label": "Observation Start Time",
+             "full_search_label": "Observation Time [General]",
+             "category": "General Constraints",
+             "slug": "time1",
+             "old_slug": "timesec1"}
+        }
+
+    Returned CSV:
+        Slug,Category,Search Label,Results Label,Full Search Label,Full Results Label,Old Slug
+        time1,General Constraints,Observation Time,Observation Start Time,Observation Time [General],Observation Start Time,timesec1
 
     If collapse=1, then all surface geometry is collapsed into a single
     <TARGET> version based on the Saturn prototype.
@@ -654,7 +658,25 @@ def get_fields_info(fmt, slug=None, collapse=False):
         cache.set(cache_key, return_obj)
 
     if fmt == 'raw':
-        return return_obj
+        ret = return_obj
+    elif fmt == 'json':
+        ret = json_response({'data': return_obj})
+    elif fmt == 'csv':
+        labels = ['Slug', 'Category',
+                  'Search Label', 'Results Label',
+                  'Full Search Label', 'Full Results Label',
+                  'Old Slug'
+                 ]
+        rows = [(v['slug'], v['category'],
+                 v['search_label'], v['label'],
+                 v['full_search_label'],
+                 v['full_label'],
+                 v['old_slug']) for k,v in return_obj.items()]
+        ret = csv_response('fields', rows, labels)
+    else:
+        log.error('get_fields_info: Unknown format "%s"', fmt)
+        ret = Http404(settings.HTTP404_UNKNOWN_FORMAT)
+        exit_api_call(api_code, ret)
+        raise ret
 
-    return response_formats({'data': return_obj}, fmt=fmt,
-                           template='metadata/fields.html')
+    return ret

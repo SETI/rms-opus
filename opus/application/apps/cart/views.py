@@ -5,11 +5,11 @@
 # The (private) API interface for adding and removing items from the cart
 # and creating download .zip and .csv files.
 #
-#    Format: __cart/view.(html|json)
+#    Format: __cart/view.html
 #    Format: __cart/status.json
 #    Format: __cart/data.csv
 #    Format: __cart/(?P<action>add|remove|addrange|removerange|addall).json
-#    Format: __cart/reset.html
+#    Format: __cart/reset.json
 #    Format: __cart/download.json
 #    Format: [__]api/download/(?P<opus_id>[-\w]+).zip
 #
