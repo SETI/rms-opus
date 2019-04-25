@@ -238,11 +238,6 @@ class SessionInfoImpl(SessionInfo):
     # Collections
     #
 
-    @ForPattern(r'/__collections/view\.json')
-    @ForPattern(r'/__cart/view\.json')
-    def __download_product_types(self, query: Dict[str, str], match: Match[str]) -> SESSION_INFO:
-        return ['Download Product Types'], None
-
     @ForPattern(r'/__collections/view\.html')
     @ForPattern(r'/__cart/view\.html')
     def __collections_view_cart(self, query: Dict[str, str], match: Match[str]) -> SESSION_INFO:
@@ -262,10 +257,12 @@ class SessionInfoImpl(SessionInfo):
         text = f'Download {"URL" if has_url else "Data"} Archive for Cart'
         return [text], None
 
-    @ForPattern(r'/__collections/status\.json')
-    @ForPattern(r'/__cart/status\.json')
+    # Note that the __collections/ and the __cart/ are different.
+    @ForPattern(r'/__collections/(view)\.json')
+    @ForPattern(r'/__cart/(status)\.json')
     def __download_product_types(self, query: Dict[str, str], match: Match[str]) -> SESSION_INFO:
-        if query.get('download') != '1':
+        if match.group(1) == 'status' and query.get('download') != '1':
+            # The __cart/status version requires &download=1
             return [], None
         self.performed_download()
         ptypes_field = query.get('types', None)
