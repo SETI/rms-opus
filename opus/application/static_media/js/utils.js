@@ -16,7 +16,7 @@ var o_utils = {
      **/
 
 
-    // this is for comparing selections to last_selections
+    // this is for comparing selections to lastSelections
     // expects an object whose values are all arrays
     areObjectsEqual: function(obj1, obj2) {
       // perhaps not fabulous; see https://stackoverflow.com/questions/3791516/comparing-native-javascript-objects-with-jquery
