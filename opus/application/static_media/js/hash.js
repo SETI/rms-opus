@@ -41,19 +41,6 @@ var o_hash = {
                         hash.push(key + "=" + value);
                         break;
 
-                    case "page":
-                        // page is stored like {"gallery":1, "data":1, "colls_gallery":1, "colls_data":1 }
-                        // so the curent page depends on the view being shown
-                        // opus.prefs.view = search, browse, cart, or detail
-                        // opus.prefs.browse =  'gallery' or 'dataTable',
-                        let page = o_browse.getCurrentPage();
-                        // Note: page will be removed later on in Debby's repo
-                        hash.push("page=" + page);
-                        break;
-                    // comment out starobs for now
-                    // case "startobs":
-                    //     hash.push("startobs=" + opus.currentObs);
-                    //     break;
                     default:
                         hash.push(key + "=" + opus.prefs[key]);
                 }
@@ -157,12 +144,10 @@ var o_hash = {
                             opus.prefs[slug] = value.replace(/\s+/g, '').split(',');
                             break;
                         case "page":
-                            opus.prefs.page.gallery = parseInt(value, 10);
-                            opus.prefs.page.dataTable = parseInt(value, 10);
+                            // page is no longer supported and should have been normalized out
                             break;
                         case "limit":
                             // limit is no longer supported and is calculated based on screen size, so ignore this param
-                            //opus.prefs[slug] = parseInt(value, 10);
                             break;
                         case "cols":
                             opus.prefs[slug] = value.split(',');

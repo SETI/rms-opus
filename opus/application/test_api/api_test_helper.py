@@ -116,15 +116,19 @@ class ApiTestHelper:
         print(expected)
         self.assertEqual(expected, resp)
 
+    @staticmethod
+    def _cleanup_csv(text):
+        text = str(text)[2:-1]
+        text = (text.replace('\\\\r', '').replace('\\r', '')
+                .replace('\r', ''))
+        return text
+
     def _run_csv_equal(self, url, expected):
         print(url)
         response = self._get_response(url)
         self.assertEqual(response.status_code, 200)
-        expected = str(expected)[2:-1]
-        expected = (expected.replace('\\\\r', '').replace('\\r', '')
-                    .replace('\r', ''))
-        resp = str(response.content)[2:-1]
-        resp = resp.replace('\\\\r', '').replace('\\r', '').replace('\r', '')
+        expected = self._cleanup_csv(expected)
+        resp = self._cleanup_csv(response.content)
         print('Got:')
         print(resp)
         print('Expected:')
@@ -137,11 +141,8 @@ class ApiTestHelper:
         print(url)
         response = self._get_response(url)
         self.assertEqual(response.status_code, 200)
-        expected = str(expected)[2:-1]
-        expected = (expected.replace('\\\\r', '').replace('\\r', '')
-                    .replace('\r', ''))
-        resp = str(response.content)[2:-1]
-        resp = resp.replace('\\\\r', '').replace('\\r', '').replace('\r', '')
+        expected = self._cleanup_csv(expected)
+        resp = self._cleanup_csv(response.content)
         print('Got:')
         print(resp)
         print('Expected:')

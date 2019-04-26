@@ -397,7 +397,7 @@ var o_search = {
                 opus.widgets_drawn.forEach(function(eachSlug) {
                     o_search.getHinting(eachSlug);
                 });
-                $("#op-result-count").text(o_utils.addCommas(opus.result_count));
+                $("#op-result-count").text(o_utils.addCommas(opus.resultCount));
             }
             $("input.RANGE").each(function() {
                 if (!$(this).hasClass("input_currently_focused")) {

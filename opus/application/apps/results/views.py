@@ -6,19 +6,18 @@
 # lists of images or files):
 #
 #    Format: __api/dataimages.json
-#    Format: [__]api/data.(json|zip|html|csv)
-#    Format: [__]api/data/(?P<opus_id>[-\w]+).csv
-#    Format: [__]api/metadata/(?P<opus_id>[-\w]+).(?P<fmt>json|html)
-#    Format: [__]api/metadata_v2/(?P<opus_id>[-\w]+).(?P<fmt>json|html)
-#    Format: [__]api/images/(?P<size>thumb|small|med|full).
+#    Format: api/data.(json|html|csv)
+#    Format: api/metadata/(?P<opus_id>[-\w]+).(?P<fmt>json|html|csv)
+#    Format: [__]api/metadata_v2/(?P<opus_id>[-\w]+).(?P<fmt>json|html|csv)
+#    Format: api/images/(?P<size>thumb|small|med|full).
 #                           (?P<fmt>json|zip|html|csv)
-#    Format: [__]api/images.(json|zip|html|csv)
-#    Format: [__]api/image/(?P<size>thumb|small|med|full)/(?P<opus_id>[-\w]+)
+#    Format: api/images.(json|zip|html|csv)
+#    Format: api/image/(?P<size>thumb|small|med|full)/(?P<opus_id>[-\w]+)
 #                          .(?P<fmt>json|zip|html|csv)
-#    Format: [__]api/files/(?P<opus_id>[-\w]+).(?P<fmt>json|zip|html|csv)
+#    Format: api/files/(?P<opus_id>[-\w]+).(?P<fmt>json|zip|html|csv)
 #        or: api/files.(?P<fmt>json|zip|html|csv)
 #    Format: [__]api/categories/(?P<opus_id>[-\w]+).json
-#    Format: [__]api/categories.json
+#    Format: api/categories.json
 #
 ################################################################################
 
@@ -37,6 +36,7 @@ from django.http import Http404, HttpResponseServerError
 from django.shortcuts import render
 from django.views.decorators.cache import never_cache
 
+from metadata.views import get_result_count_helper
 from paraminfo.models import *
 from search.models import *
 from search.views import (get_param_info_by_slug,
@@ -104,6 +104,7 @@ def api_get_data_and_images(request):
          'columns':             columns with units
                                 (corresponds to <col1> etc. in 'metadata'),
          'columns_no_units':    columns without units,
+         'result_count':    result count as returned by result_count.json,
          'reqno':               reqno
         }
     """
@@ -198,6 +199,11 @@ def api_get_data_and_images(request):
                        'removeable': removeable}
         order_list.append(order_entry)
 
+    count, _, err = get_result_count_helper(request, api_code)
+    if err is not None: # pragma: no cover
+        exit_api_call(api_code, err)
+        return err
+
     reqno = get_reqno(request)
     if reqno is None:
         log.error('api_get_data_and_images: Missing or badly formatted reqno')
@@ -212,6 +218,7 @@ def api_get_data_and_images(request):
             'order_list':       order_list,
             'columns':          labels,
             'columns_no_units': labels_no_units,
+            'result_count': count,
             'reqno':            reqno
            }
 
@@ -669,7 +676,7 @@ def api_get_images_by_size(request, size, fmt):
         data['start_obs'] = start_obs
 
     ret = response_formats(data, fmt,
-                          template='results/gallery.html', order=order)
+                          template='results/image_list.html', order=order)
     exit_api_call(api_code, ret)
     return ret
 
@@ -738,7 +745,7 @@ def api_get_images(request, fmt):
     if start_obs is not None:
         data['start_obs'] = start_obs
     ret = response_formats(data, fmt,
-                          template='results/gallery.html', order=order)
+                          template='results/image_list.html', order=order)
     exit_api_call(api_code, ret)
     return ret
 
@@ -867,7 +874,7 @@ def api_get_files(request, opus_id=None):
     data['data'] = current_ret
     data['versions'] = versioned_ret
 
-    ret = HttpResponse(json.dumps(data), content_type='application/json')
+    ret = json_response(data)
     exit_api_call(api_code, ret)
     return ret
 
@@ -920,8 +927,7 @@ def api_get_categories_for_opus_id(request, opus_id):
             cat = {'table_name': table_name, 'label': tbl['label']}
             all_categories.append(cat)
 
-    ret = HttpResponse(json.dumps(all_categories),
-                       content_type="application/json")
+    ret = json_response(all_categories)
     exit_api_call(api_code, ret)
     return ret
 
@@ -966,8 +972,7 @@ def api_get_categories_for_search(request):
     labels = (TableNames.objects.filter(table_name__in=triggered_tables)
               .values('table_name','label').order_by('disp_order'))
 
-    ret = HttpResponse(json.dumps([ob for ob in labels]),
-                       content_type="application/json")
+    ret = json_response([ob for ob in labels])
     exit_api_call(api_code, ret)
     return ret
 
@@ -1203,32 +1208,31 @@ def get_search_results_chunk(request, use_cart=None,
         # in the limit window that we care about (if there's a limit window).
         # Then we use that temporary table (or the original cache table) to
         # extract data from all our data tables.
-        temp_table_name = user_query_table
-
-        if page_no != 'all':
-            drop_temp_table = True
-            pid_sfx = str(os.getpid())
-            time1 = time.time()
-            time_sfx = ('%.6f' % time1).replace('.', '_')
-            temp_table_name = 'temp_'+user_query_table
-            temp_table_name += '_'+pid_sfx+'_'+time_sfx
-            temp_sql = 'CREATE TEMPORARY TABLE '
-            temp_sql += connection.ops.quote_name(temp_table_name)
-            temp_sql += ' SELECT sort_order, id FROM '
-            temp_sql += connection.ops.quote_name(user_query_table)
-            temp_sql += ' ORDER BY sort_order'
-            if limit != 'all':
-                temp_sql += ' LIMIT '+str(limit)
-            temp_sql += ' OFFSET '+str(offset)
-            cursor = connection.cursor()
-            try:
-                cursor.execute(temp_sql)
-            except DatabaseError as e:
-                log.error('get_search_results_chunk: "%s" returned %s',
-                          temp_sql, str(e))
-                return none_return
-            log.debug('get_search_results_chunk SQL (%.2f secs): %s',
-                      time.time()-time1, temp_sql)
+        drop_temp_table = True
+        pid_sfx = str(os.getpid())
+        time1 = time.time()
+        time_sfx = ('%.6f' % time1).replace('.', '_')
+        temp_table_name = 'temp_'+user_query_table
+        temp_table_name += '_'+pid_sfx+'_'+time_sfx
+        temp_sql = 'CREATE TEMPORARY TABLE '
+        temp_sql += connection.ops.quote_name(temp_table_name)
+        temp_sql += ' SELECT sort_order, id FROM '
+        temp_sql += connection.ops.quote_name(user_query_table)
+        temp_sql += ' ORDER BY sort_order'
+        if limit == 'all':
+            temp_sql += ' LIMIT '+str(settings.SQL_MAX_LIMIT)
+        else:
+            temp_sql += ' LIMIT '+str(limit)
+        temp_sql += ' OFFSET '+str(offset)
+        cursor = connection.cursor()
+        try:
+            cursor.execute(temp_sql)
+        except DatabaseError as e:
+            log.error('get_search_results_chunk: "%s" returned %s',
+                      temp_sql, str(e))
+            return none_return
+        log.debug('get_search_results_chunk SQL (%.2f secs): %s',
+                  time.time()-time1, temp_sql)
 
         sql = 'SELECT '
         sql += ','.join([connection.ops.quote_name(x.split('.')[0])+'.'+
@@ -1328,17 +1332,21 @@ def get_search_results_chunk(request, use_cart=None,
 
         # Finally add in the sort order
         sql += order_sql
-
-    # if page_no != 'all':
-    #     base_limit = 100  # explainer of sorts is above
-    #     offset = (page_no-1)*base_limit
-    #     sql += ' LIMIT '+str(limit)
-    #     sql += ' OFFSET '+str(offset)
+        if limit == 'all':
+            sql += ' LIMIT '+str(settings.SQL_MAX_LIMIT)
+        else:
+            sql += ' LIMIT '+str(limit)
+        sql += ' OFFSET '+str(offset)
 
     time1 = time.time()
 
     cursor = connection.cursor()
-    cursor.execute(sql, params)
+    try:
+        cursor.execute(sql, params)
+    except DatabaseError as e:
+        log.error('get_search_results_chunk: "%s" + "%s" returned %s',
+                  sql, params, str(e))
+        return none_return
     results = []
     more = True
     while more:

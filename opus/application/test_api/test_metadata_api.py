@@ -661,45 +661,45 @@ class ApiMetadataTests(TestCase, ApiTestHelper):
     # Test caching (only visible with code coverage)
     def test__api_fields_time1_cache(self):
         "[test_metadata_api.py] /api/fields: time1 json cache"
-        url = '/opus/__api/fields/time1.json?reqno=1'
+        url = '/opus/api/fields/time1.json'
         expected = {"data": {"time1": {"label": "Observation Start Time", "search_label": "Observation Time", "full_label": "Observation Start Time", "full_search_label": "Observation Time [General]", "category": "General Constraints", "slug": "time1", "old_slug": "timesec1"}}}
         self._run_json_equal(url, expected)
-        url = '/opus/__api/fields/time1.json?reqno=2'
+        url = '/opus/api/fields/time1.json'
         expected = {"data": {"time1": {"label": "Observation Start Time", "search_label": "Observation Time", "full_label": "Observation Start Time", "full_search_label": "Observation Time [General]", "category": "General Constraints", "slug": "time1", "old_slug": "timesec1"}}}
         self._run_json_equal(url, expected)
-        url = '/opus/__api/fields/time1.json?reqno=3'
+        url = '/opus/api/fields/time1.json'
         expected = {"data": {"time1": {"label": "Observation Start Time", "search_label": "Observation Time", "full_label": "Observation Start Time", "full_search_label": "Observation Time [General]", "category": "General Constraints", "slug": "time1", "old_slug": "timesec1"}}}
         self._run_json_equal(url, expected)
-        url = '/opus/__api/fields/time1.json?reqno=1'
+        url = '/opus/api/fields/time1.json'
         expected = {"data": {"time1": {"label": "Observation Start Time", "search_label": "Observation Time", "full_label": "Observation Start Time", "full_search_label": "Observation Time [General]", "category": "General Constraints", "slug": "time1", "old_slug": "timesec1"}}}
         self._run_json_equal(url, expected)
-        url = '/opus/__api/fields/time1.json?reqno=2'
+        url = '/opus/api/fields/time1.json'
         expected = {"data": {"time1": {"label": "Observation Start Time", "search_label": "Observation Time", "full_label": "Observation Start Time", "full_search_label": "Observation Time [General]", "category": "General Constraints", "slug": "time1", "old_slug": "timesec1"}}}
         self._run_json_equal(url, expected)
-        url = '/opus/__api/fields/time1.json?reqno=3'
+        url = '/opus/api/fields/time1.json'
         expected = {"data": {"time1": {"label": "Observation Start Time", "search_label": "Observation Time", "full_label": "Observation Start Time", "full_search_label": "Observation Time [General]", "category": "General Constraints", "slug": "time1", "old_slug": "timesec1"}}}
         self._run_json_equal(url, expected)
 
     def test__api_fields_time1_json(self):
         "[test_metadata_api.py] /api/fields: time1 json"
-        url = '/opus/__api/fields/time1.json'
+        url = '/opus/api/fields/time1.json'
         expected = {"data": {"time1": {"label": "Observation Start Time", "search_label": "Observation Time", "full_label": "Observation Start Time", "full_search_label": "Observation Time [General]", "category": "General Constraints", "slug": "time1", "old_slug": "timesec1"}}}
         self._run_json_equal(url, expected)
 
-    def test__api_fields_time1_html(self):
-        "[test_metadata_api.py] /api/fields: time1 html"
-        url = '/opus/__api/fields/time1.html'
-        self._run_html_equal_file(url, 'api_fields_time1_html.html')
+    def test__api_fields_time1_csv(self):
+        "[test_metadata_api.py] /api/fields: time1 csv"
+        url = '/opus/api/fields/time1.csv'
+        self._run_html_equal_file(url, 'api_fields_time1_csv.csv')
 
-    def test__api_fields_all(self):
+    def test__api_fields_all_json(self):
         "[test_metadata_api.py] /api/fields: all json and collapse"
-        url = '/opus/__api/fields.json'
+        url = '/opus/api/fields.json'
         print(url)
         response = self._get_response(url)
         self.assertEqual(response.status_code, 200)
         jdata = json.loads(response.content)
         num_fields = len(jdata['data'])
-        url = '/opus/__api/fields.json?collapse=1'
+        url = '/opus/api/fields.json?collapse=1'
         print(url)
         response = self._get_response(url)
         self.assertEqual(response.status_code, 200)
@@ -707,34 +707,49 @@ class ApiMetadataTests(TestCase, ApiTestHelper):
         num_fields_collapse = len(jdata['data'])
         self.assertLess(num_fields_collapse, num_fields)
 
+    def test__api_fields_all_csv(self):
+        "[test_metadata_api.py] /api/fields: all csv and collapse"
+        url = '/opus/api/fields.csv'
+        print(url)
+        response = self._get_response(url)
+        self.assertEqual(response.status_code, 200)
+        num_fields = len(self._cleanup_csv(response.content).split('\\n'))
+        url = '/opus/api/fields.csv?collapse=1'
+        print(url)
+        response = self._get_response(url)
+        self.assertEqual(response.status_code, 200)
+        num_fields_collapse = len(self._cleanup_csv(response.content)
+                                  .split('\\n'))
+        self.assertLess(num_fields_collapse, num_fields)
+
     def test__api_fields_all_bad_collapse(self):
         "[test_metadata_api.py] /api/fields: all json bad collapse"
-        url = '/opus/__api/fields.json?collapse=X'
+        url = '/opus/api/fields.json?collapse=X'
         self._run_status_equal(url, 404)
 
     def test__api_fields_all_cache(self):
         "[test_metadata_api.py] /api/fields: all json cache"
-        url = '/opus/__api/fields.json?reqno=1'
+        url = '/opus/api/fields.json'
         print(url)
         response = self._get_response(url)
         self.assertEqual(response.status_code, 200)
         jdata1 = json.loads(response.content)
-        url = '/opus/__api/fields.json?reqno=2'
+        url = '/opus/api/fields.json'
         print(url)
         response = self._get_response(url)
         self.assertEqual(response.status_code, 200)
         jdata2 = json.loads(response.content)
-        url = '/opus/__api/fields.json?reqno=3&collapse=1'
+        url = '/opus/api/fields.json?collapse=1'
         print(url)
         response = self._get_response(url)
         self.assertEqual(response.status_code, 200)
         jdatac1 = json.loads(response.content)
-        url = '/opus/__api/fields.json?reqno=4'
+        url = '/opus/api/fields.json'
         print(url)
         response = self._get_response(url)
         self.assertEqual(response.status_code, 200)
         jdata3 = json.loads(response.content)
-        url = '/opus/__api/fields.json?reqno=5&collapse=1'
+        url = '/opus/api/fields.json?collapse=1'
         print(url)
         response = self._get_response(url)
         self.assertEqual(response.status_code, 200)
