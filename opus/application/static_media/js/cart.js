@@ -198,8 +198,9 @@ var o_cart = {
                  $(".op-page-loading-status > .loader").hide();
                  return;
              }
-             if (opus.col_labels.length === 0) {
-                 opus.col_labels = data.columns;
+             if (opus.colLabels.length === 0) {
+                 opus.colLabels = data.columns;
+                 opus.colLabelsNoUnits = data.columns_no_units;
              }
              o_browse.renderGalleryAndTable(data, this.url);
              o_browse.updateSortOrder(data);
@@ -410,7 +411,7 @@ var o_cart = {
                 if ($("#op-cart-status-error-msg").hasClass("show")) {
                     o_cart.statusDataErrorCollector.push(statusData.error);
                 } else {
-                    $("#op-cart-status-error-msg .modal-body").text(statusData.error)
+                    $("#op-cart-status-error-msg .modal-body").text(statusData.error);
                     $("#op-cart-status-error-msg").modal("show");
                 }
                 // reload data

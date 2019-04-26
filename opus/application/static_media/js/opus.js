@@ -48,32 +48,34 @@ var opus = {
         "detail": "", // opus_id of detail page content
      }, // pref changes do not trigger load()
 
-    col_labels: [],  // contains labels that match prefs.cols, which are slugs for each column label
+    colLabels: [],  // contains labels that match prefs.cols, which are slugs for each column label
                       // it's outside of prefs because those are things loaded into urls
                       // this is not
                       // note that this is also not a dictionary because we need to preserve the order.
+    colLabelsNoUnits: [], // store labels without units (similar to data in colLabels but no units )
 
     // searching - making queries
     selections:{},        // the user's search
     extras:{},            // extras to the query, carries units, string_selects, qtypes, size, refreshes result count!!
-    last_selections:{},   // last_ are used to moniter changes
-    last_hash:'',
+    lastSelections: {},   // last_ are used to monitor changes
+    lastExtras: {},
     resultCount:0,
+
     qtype_default: 'any',
     force_load: true, // set this to true to force load() when selections haven't changed
 
     // searching - ui
-    widgets_drawn:[], // keeps track of what widgets are actually drawn
-    widgets_fetching:[], // this widget is currently being fetched
-    widget_elements_drawn:[], // the element is drawn but the widget might not be fetched yet
-    widget_full_sizes:{}, // when a widget is minimized and doesn't have a custom size defined we keep track of what the full size was so we can restore it when they unminimize/maximize widget
+    widgets_drawn: [], // keeps track of what widgets are actually drawn
+    widgets_fetching: [], // this widget is currently being fetched
+    widget_elements_drawn: [], // the element is drawn but the widget might not be fetched yet
+    widget_full_sizes: {}, // when a widget is minimized and doesn't have a custom size defined we keep track of what the full size was so we can restore it when they unminimize/maximize widget
     menu_state: {'cats':['obs_general']},
     default_widgets: default_widgets.split(','),
-    widget_click_timeout:0,
+    widget_click_timeout: 0,
 
     // these are for the process that detects there was a change in the selection criteria and updates things
-    main_timer:false,
-    main_timer_interval:1000,
+    main_timer: false,
+    main_timer_interval: 1000,
 
     allInputsValid: true,
 
@@ -89,7 +91,17 @@ var opus = {
         whether to fire an ajax call.
         */
 
-        let selections = o_hash.getSelectionsFromHash();
+        let [selections, extras] = o_hash.getSelectionsExtrasFromHash();
+
+        // Note: When URL has an empty hash, both selections and extras returned from getSelectionsExtrasFromHash will be undefined.
+        // There won't be a case with only one of them is undefined.
+        if (selections === undefined) {
+            // safety check, the if condition should never be true
+            if (extras !== undefined) {
+                console.error("Returned extras is wrong when URL has an empty hash");
+            }
+            return;
+        }
 
         // if (!$.isEmptyObject(opus.selections) || !opus.checkIfDrawnWidgetsAreDefault() || !opus.checkIfMetadataAreDefault()) {
         if ($.isEmptyObject(selections) || !opus.checkIfDrawnWidgetsAreDefault()) {
@@ -101,9 +113,8 @@ var opus = {
             $(".op-reset-button button").prop("disabled", true);
         }
 
-        // compare selections and last selections
-        if (o_utils.areObjectsEqual(selections, opus.last_selections)) {
-            // selections have not changed from opus.last_selections
+        // compare selections and last selections, extras and last extras
+        if (o_utils.areObjectsEqual(selections, opus.lastSelections) && o_utils.areObjectsEqual(extras, opus.lastExtras)) {
             if (!opus.force_load) { // so we do only non-reloading pref changes
                 return;
             }
@@ -112,19 +123,10 @@ var opus = {
             opus.prefs.startobs = 1;
             opus.prefs.cart_startobs = 1;
 
-            // create an object from selections to compare with opus.selections
-            let modifiedSelections = {};
-            $.each(Object.keys(selections), function(idx, slug) {
-                // Note: when we select qtype, it is not updated in opus.selections
-                // Therefore, we will not put qtype in modifiedSelections to compare with opus.selection
-                if (!slug.match(/qtype/)) {
-                    modifiedSelections[slug] = selections[slug][0].replace("+", " ").split(",");
-                }
-            });
-
-            // if data in selections !== data in opus.selections, it means selections are modified manually in url, reload the page (modified url in url bar and hit enter)
-            if (!o_utils.areObjectsEqual(modifiedSelections, opus.selections)) {
-                opus.selections = modifiedSelections;
+            // if data in selections !== data in opus.selections or extras !== data in opus.extras, it means selections/qtype are modified manually in url, reload the page (modified url in url bar and hit enter)
+            if (!o_utils.areObjectsEqual(selections, opus.selections) || !o_utils.areObjectsEqual(extras, opus.extras)) {
+                opus.selections = selections;
+                opus.extras = extras;
                 location.reload();
                 return;
             } else {
@@ -144,8 +146,10 @@ var opus = {
         $("#op-search-widgets .spinner").fadeIn();
 
         // update last selections after the comparison of selections and last selections
+        // update last extras after the comparison of extras and last extras
         // move this above allNormalizedApiCall to avoid recursive api call
-        opus.last_selections = selections;
+        opus.lastSelections = selections;
+        opus.lastExtras = extras;
 
         // chain ajax calls, validate range inputs before result count api call
         o_search.allNormalizedApiCall().then(opus.getResultCount).then(opus.updateSearchTabHinting);
@@ -187,8 +191,6 @@ var opus = {
         }
         o_search.validateRangeInput(normalizedData, true);
 
-        // query string has changed
-        // opus.last_selections = selections;
         opus.lastResultCountRequestNo++;
         let resultCountHash = o_hash.getHash();
 

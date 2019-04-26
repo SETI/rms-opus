@@ -92,18 +92,20 @@ def api_get_data_and_images(request):
             },
             ...
          ],
-         'page_no':         page_no,   OR   'start_obs': start_obs,
-         'limit':           limit,
-         'order':           comma-separate list of slugs,
-         'order_list':      [entry, entry...]
-                            entry is {'slug': slug_name,
-                                      'label': pretty_name,
-                                      'descending': True/False,
-                                      'removeable': True/False},
-         'count':           len(page),
-         'columns':         columns (corresponds to <col1> etc. in 'metadata'),
+         'page_no':             page_no,   OR   'start_obs': start_obs,
+         'limit':               limit,
+         'order':               comma-separate list of slugs,
+         'order_list':          [entry, entry...]
+                                entry is {'slug': slug_name,
+                                        'label': pretty_name,
+                                        'descending': True/False,
+                                        'removeable': True/False},
+         'count':                       len(page),
+         'columns':             columns with units
+                                (corresponds to <col1> etc. in 'metadata'),
+         'columns_no_units':    columns without units,
          'result_count':    result count as returned by result_count.json,
-         'reqno':           reqno
+         'reqno':               reqno
         }
     """
     api_code = enter_api_call('api_get_data_and_images', request)
@@ -170,7 +172,8 @@ def api_get_data_and_images(request):
     cols = request.GET.get('cols', settings.DEFAULT_COLUMNS)
 
     labels = labels_for_slugs(cols_to_slug_list(cols))
-    if labels is None:
+    labels_no_units = labels_for_slugs(cols_to_slug_list(cols), units=False)
+    if labels is None or labels_no_units is None:
         ret = Http404(settings.HTTP404_UNKNOWN_SLUG)
         exit_api_call(api_code, ret)
         raise ret
@@ -185,7 +188,7 @@ def api_get_data_and_images(request):
 
     order_list = []
     for idx, (slug, label) in enumerate(zip(order_slugs, order_labels)):
-        removeable = idx != len(order_slugs)-1;
+        removeable = not slug.endswith('opusid')
         desc = False
         if slug[0] == '-':
             slug = slug[1:]
@@ -208,14 +211,15 @@ def api_get_data_and_images(request):
         exit_api_call(api_code, ret)
         raise ret
 
-    data = {'page':         new_page,
-            'limit':        limit,
-            'count':        len(image_list),
-            'order':        order,
-            'order_list':   order_list,
-            'columns':      labels,
+    data = {'page':             new_page,
+            'limit':            limit,
+            'count':            len(image_list),
+            'order':            order,
+            'order_list':       order_list,
+            'columns':          labels,
+            'columns_no_units': labels_no_units,
             'result_count': count,
-            'reqno':        reqno
+            'reqno':            reqno
            }
 
     if page_no is not None:

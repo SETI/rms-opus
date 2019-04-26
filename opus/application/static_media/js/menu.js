@@ -38,7 +38,7 @@ var o_menu = {
                   o_menu.markMenuItem(this);
                   o_widgets.getWidget(slug,'#op-search-widgets');
              }
-
+             
              o_hash.updateHash();
              return false;
          });
