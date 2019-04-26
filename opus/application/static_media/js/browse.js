@@ -906,12 +906,7 @@ var o_browse = {
             $(".op-browse-view", "#browse").attr("title", "View sortable metadata table");
             $(".op-browse-view", "#browse").data("view", "dataTable");
 
-            // $(".justify-content-center").show();
-
             o_browse.galleryScrollbar.settings.suppressScrollY = false;
-
-            $(".gallery-contents > .ps__rail-y").removeClass("hide_ps__rail-y");
-            $(".dataTable > .ps__rail-y").addClass("hide_ps__rail-y");
         } else {
             $(".op-gallery-view", "#browse").hide();
             $(".dataTable", "#browse").fadeIn();
@@ -920,13 +915,7 @@ var o_browse = {
             $(".op-browse-view", "#browse").attr("title", "View sortable thumbnail gallery");
             $(".op-browse-view", "#browse").data("view", "gallery");
 
-            // remove that extra space on top when loading table page
-            // $(".justify-content-center").hide();
-
             o_browse.galleryScrollbar.settings.suppressScrollY = true;
-
-            $(".gallery-contents > .ps__rail-y").addClass("hide_ps__rail-y");
-            $(".dataTable > .ps__rail-y").removeClass("hide_ps__rail-y");
         }
     },
 
