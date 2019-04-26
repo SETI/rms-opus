@@ -165,6 +165,8 @@ var o_mutationObserver = {
             let lastMutationIdx = mutationsList.length - 1;
             mutationsList.forEach((mutation, idx) => {
                 if (idx === lastMutationIdx) {
+                    console.log("gallery view")
+                    console.log(mutation)
                     adjustBrowseHeight();
                 }
             });
@@ -175,6 +177,21 @@ var o_mutationObserver = {
             let lastMutationIdx = mutationsList.length - 1;
             mutationsList.forEach((mutation, idx) => {
                 if (idx === lastMutationIdx) {
+                    console.log("table view")
+                    console.log(mutation)
+                    adjustTableSize();
+                }
+            });
+        });
+
+        // update ps when switching between gallery and table view
+        let switchGalleryAndTableObserver = new MutationObserver(function(mutationsList) {
+            let lastMutationIdx = mutationsList.length - 1;
+            mutationsList.forEach((mutation, idx) => {
+                if (idx === lastMutationIdx) {
+                    console.log("switch gallery and table view")
+                    console.log(mutation)
+                    adjustBrowseHeight();
                     adjustTableSize();
                 }
             });
@@ -190,8 +207,9 @@ var o_mutationObserver = {
         let metadataSelector = $("#metadataSelector")[0];
         let metadataSelectorContents = $("#metadataSelectorContents")[0];
         let browseDialogModal = $("#galleryView.modal")[0];
-        let galleryView = $(".op-gallery-view")[0];
+        let galleryView = $(".gallery")[0];
         let tableView = $("#dataTable")[0];
+        let switchGalleryAndTable = $(".op-browse-view")[0]
 
         // Note:
         // The reason of observing sidebar and widdget content element (ps sibling) in search page instead of observing the whole page (html structure) is because:
@@ -223,5 +241,7 @@ var o_mutationObserver = {
         galleryViewObserver.observe(galleryView, generalObserverConfig);
         // update ps in browse table view
         tableViewObserver.observe(tableView, generalObserverConfig);
+        // update ps when switching between gallery and table view
+        switchGalleryAndTableObserver.observe(switchGalleryAndTable, attrObserverConfig);
     },
 };

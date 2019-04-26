@@ -90,20 +90,14 @@ body {
     min-height: 700px;
 }
 
-/* .gallery-contents {
-    overflow-y: hidden;
-    overflow-x: hidden;
+.op-gallery-view {
+    overflow: hidden;
     position: relative;
-} */
+}
 
 /* Make sure y-axis rail is not moving and always visible */
 .op-gallery-view > .ps__rail-y {
     background-color: transparent !important;
-}
-
-.op-gallery-view {
-    overflow: hidden;
-    position: relative;
 }
 
 #detail {

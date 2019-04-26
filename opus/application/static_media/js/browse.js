@@ -88,7 +88,7 @@ var o_browse = {
         });
 
         // browse nav menu - the gallery/table toggle
-        $("#browse").on("click", ".browse_view", function() {
+        $("#browse").on("click", ".op-browse-view", function() {
             o_browse.hideMenu();
             opus.prefs.browse = $(this).data("view");
 
@@ -902,9 +902,9 @@ var o_browse = {
             $(".dataTable", "#browse").hide();
             $(".op-gallery-view", "#browse").fadeIn();
 
-            $(".browse_view", "#browse").html("<i class='far fa-list-alt'></i>&nbsp;View Table");
-            $(".browse_view", "#browse").attr("title", "View sortable metadata table");
-            $(".browse_view", "#browse").data("view", "dataTable");
+            $(".op-browse-view", "#browse").html("<i class='far fa-list-alt'></i>&nbsp;View Table");
+            $(".op-browse-view", "#browse").attr("title", "View sortable metadata table");
+            $(".op-browse-view", "#browse").data("view", "dataTable");
 
             // $(".justify-content-center").show();
 
@@ -916,9 +916,9 @@ var o_browse = {
             $(".op-gallery-view", "#browse").hide();
             $(".dataTable", "#browse").fadeIn();
 
-            $(".browse_view", "#browse").html("<i class='far fa-images'></i>&nbsp;View Gallery");
-            $(".browse_view", "#browse").attr("title", "View sortable thumbnail gallery");
-            $(".browse_view", "#browse").data("view", "gallery");
+            $(".op-browse-view", "#browse").html("<i class='far fa-images'></i>&nbsp;View Gallery");
+            $(".op-browse-view", "#browse").attr("title", "View sortable thumbnail gallery");
+            $(".op-browse-view", "#browse").data("view", "gallery");
 
             // remove that extra space on top when loading table page
             // $(".justify-content-center").hide();
