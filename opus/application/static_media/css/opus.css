@@ -1175,11 +1175,6 @@ ul.ui-autocomplete a.ui-state-active {
     background-color: #F9F6F6;
 }
 
-/* remove that extra space on top when loading table page */
-.op-height-0 {
-    height: 0;
-}
-
 .op-noSelect {
     -moz-user-select: none;
     -khtml-user-select: none;
