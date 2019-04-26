@@ -25,7 +25,7 @@ var o_browse = {
     tableScrollbar: new PerfectScrollbar("#browse .dataTable", {
         minScrollbarLength: opus.minimumPSLength
     }),
-    galleryScrollbar: new PerfectScrollbar("#browse .gallery-contents", {
+    galleryScrollbar: new PerfectScrollbar("#browse .op-gallery-view", {
         suppressScrollX: true,
         minScrollbarLength: opus.minimumPSLength
     }),
@@ -575,11 +575,11 @@ var o_browse = {
     setScrollbarOnSlide: function(obsNum) {
         let tab = `#${opus.prefs.view}`;
         let galleryTargetTopPosition = $(`${tab} .thumbnail-container[data-obs="${obsNum}"]`).offset().top;
-        let galleryContainerTopPosition = $(`${tab} .gallery-contents`).offset().top;
-        let galleryScrollbarPosition = $(`${tab} .gallery-contents`).scrollTop();
+        let galleryContainerTopPosition = $(`${tab} .gallery-contents .op-gallery-view`).offset().top;
+        let galleryScrollbarPosition = $(`${tab} .gallery-contents .op-gallery-view`).scrollTop();
 
         let galleryTargetFinalPosition = galleryTargetTopPosition - galleryContainerTopPosition + galleryScrollbarPosition;
-        $(`${tab} .gallery-contents`).scrollTop(galleryTargetFinalPosition);
+        $(`${tab} .gallery-contents .op-gallery-view`).scrollTop(galleryTargetFinalPosition);
 
         // TODO
         // Create a new jQuery.Event object with specified event properties.
@@ -899,8 +899,8 @@ var o_browse = {
 
     updateBrowseNav: function() {
         if (opus.prefs.browse == "gallery") {
-            $("." + "dataTable", "#browse").hide();
-            $("." + opus.prefs.browse, "#browse").fadeIn();
+            $(".dataTable", "#browse").hide();
+            $(".op-gallery-view", "#browse").fadeIn();
 
             $(".browse_view", "#browse").html("<i class='far fa-list-alt'></i>&nbsp;View Table");
             $(".browse_view", "#browse").attr("title", "View sortable metadata table");
@@ -911,12 +911,10 @@ var o_browse = {
             o_browse.galleryScrollbar.settings.suppressScrollY = false;
 
             $(".gallery-contents > .ps__rail-y").removeClass("hide_ps__rail-y");
-            if (!$(".dataTable > .ps__rail-y").hasClass("hide_ps__rail-y")) {
-                $(".dataTable > .ps__rail-y").addClass("hide_ps__rail-y");
-            }
+            $(".dataTable > .ps__rail-y").addClass("hide_ps__rail-y");
         } else {
-            $("." + "gallery", "#browse").hide();
-            $("." + opus.prefs.browse, "#browse").fadeIn();
+            $(".op-gallery-view", "#browse").hide();
+            $(".dataTable", "#browse").fadeIn();
 
             $(".browse_view", "#browse").html("<i class='far fa-images'></i>&nbsp;View Gallery");
             $(".browse_view", "#browse").attr("title", "View sortable thumbnail gallery");
@@ -927,9 +925,7 @@ var o_browse = {
 
             o_browse.galleryScrollbar.settings.suppressScrollY = true;
 
-            if (!$(".gallery-contents > .ps__rail-y").hasClass("hide_ps__rail-y")) {
-                $(".gallery-contents > .ps__rail-y").addClass("hide_ps__rail-y");
-            }
+            $(".gallery-contents > .ps__rail-y").addClass("hide_ps__rail-y");
             $(".dataTable > .ps__rail-y").removeClass("hide_ps__rail-y");
         }
     },
@@ -1377,12 +1373,13 @@ var o_browse = {
 
     adjustBrowseHeight: function() {
         let tab = `#${opus.prefs.view}`;
-        let container_height = $(window).height()-120;
-        $(`${tab} .gallery-contents`).height(container_height);
+        let containerHeight = $(window).height()-120;
+        $(`${tab} .gallery-contents`).height(containerHeight);
+        $(`${tab} .gallery-contents .op-gallery-view`).height(containerHeight);
         o_browse.galleryScrollbar.update();
         o_browse.galleryBoundingRect = o_browse.countGalleryImages();
         $("#op-observation-slider").slider("option", "step", o_browse.galleryBoundingRect.x);
-        //opus.limit =  (floor($(window).width()/thumbnailSize) * floor(container_height/thumbnailSize));
+        //opus.limit =  (floor($(window).width()/thumbnailSize) * floor(containerHeight/thumbnailSize));
     },
 
     adjustTableSize: function() {
