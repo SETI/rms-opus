@@ -165,8 +165,6 @@ var o_mutationObserver = {
             let lastMutationIdx = mutationsList.length - 1;
             mutationsList.forEach((mutation, idx) => {
                 if (idx === lastMutationIdx) {
-                    console.log("gallery view")
-                    console.log(mutation)
                     adjustBrowseHeight();
                 }
             });
@@ -177,8 +175,6 @@ var o_mutationObserver = {
             let lastMutationIdx = mutationsList.length - 1;
             mutationsList.forEach((mutation, idx) => {
                 if (idx === lastMutationIdx) {
-                    console.log("table view")
-                    console.log(mutation)
                     adjustTableSize();
                 }
             });
@@ -189,8 +185,6 @@ var o_mutationObserver = {
             let lastMutationIdx = mutationsList.length - 1;
             mutationsList.forEach((mutation, idx) => {
                 if (idx === lastMutationIdx) {
-                    console.log("switch gallery and table view")
-                    console.log(mutation)
                     adjustBrowseHeight();
                     adjustTableSize();
                 }
